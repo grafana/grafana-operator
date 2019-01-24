@@ -1,0 +1,14 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ .GrafanaRouteName }}
+  namespace: {{ .Namespace }}
+spec:
+  port:
+    targetPort: grafana
+  tls:
+    termination: edge
+  to:
+    kind: Service
+    name: {{ .GrafanaServiceName }}
+  wildcardPolicy: None

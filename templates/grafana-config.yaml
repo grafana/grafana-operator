@@ -1,0 +1,41 @@
+apiVersion: v1
+data:
+  grafana.ini: |-
+    [paths]
+    data = /var/lib/grafana
+    logs = /var/log/grafana
+    plugins = /var/lib/grafana/plugins
+    provisioning = /etc/grafana/provisioning
+
+    [log]
+    # Either "console", "file", "syslog". Default is console and  file
+    # Use space to separate multiple modes, e.g. "console file"
+    mode = console
+
+    [security]
+    # default admin user, created on startup
+    admin_user = root
+    admin_password = secret
+
+    [auth.basic]
+    # Disable basic auth so the Authorization header from OAuth is ignored
+    # See https://github.com/grafana/grafana/issues/2357
+    enabled = false
+
+    [auth]
+    # Set to true to disable (hide) the login form, useful if you use OAuth, defaults to false.
+    disable_login_form = true
+
+    # Set to true to disable the signout link in the side menu. useful if you use auth.proxy, defaults to false.
+    disable_signout_menu = true
+
+    [auth.anonymous]
+    enabled = true
+
+    [log]
+    # Either "debug", "info", "warn", "error", "critical", default is "info"
+    level = {{ .LogLevel }}
+kind: ConfigMap
+metadata:
+  name: {{ .GrafanaConfigMapName }}
+  namespace: {{ .Namespace }}

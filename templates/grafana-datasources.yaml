@@ -1,0 +1,20 @@
+apiVersion: v1
+data:
+  datasources.yaml: |-
+    datasources:
+    - name: Prometheus
+      # <string, required> datasource type. Required
+      type: prometheus
+      # <string, required> access mode. direct or proxy. Required
+      access: proxy
+      # <string> url
+      url: {{ .PrometheusUrl }}
+      # <bool> mark as default datasource. Max one per org
+      is_default: true
+      version: 1
+      editable: true
+      json_data: {"timeInterval": "5s"}
+kind: ConfigMap
+metadata:
+  name: {{ .GrafanaDatasourcesConfigMapName }}
+  namespace: {{ .Namespace }}

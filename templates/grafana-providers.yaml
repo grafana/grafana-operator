@@ -1,0 +1,14 @@
+apiVersion: v1
+data:
+  provider.yaml: |-
+    - name: 'default'
+      org_id: 1
+      folder: ''
+      type: file
+      updateIntervalSeconds: 10
+      options:
+        path: /etc/grafana-dashboards
+kind: ConfigMap
+metadata:
+  name: {{ .GrafanaProvidersConfigMapName }}
+  namespace: {{ .Namespace }}
