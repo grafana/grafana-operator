@@ -31,6 +31,8 @@ spec:
             periodSeconds: 10
             failureThreshold: 1
           env:
+            - name: TEMPLATE_PATH
+              value: /usr/local/bin/templates
             - name: WATCH_NAMESPACE
               valueFrom:
                 fieldRef:
