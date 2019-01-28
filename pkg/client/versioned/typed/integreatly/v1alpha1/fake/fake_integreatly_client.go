@@ -19,16 +19,16 @@ limitations under the License.
 package fake
 
 import (
-	testing "k8s.io/client-go/testing"
-	rest "k8s.io/client-go/rest"
-	v1alpha12 "github.com/integr8ly/grafana-operator/pkg/client/versioned/typed/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/pkg/client/versioned/typed/integreatly/v1alpha1"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/testing"
 )
 
 type FakeIntegreatlyV1alpha1 struct {
 	*testing.Fake
 }
 
-func (c *FakeIntegreatlyV1alpha1) GrafanaDashboards(namespace string) v1alpha12.GrafanaDashboardInterface {
+func (c *FakeIntegreatlyV1alpha1) GrafanaDashboards(namespace string) v1alpha1.GrafanaDashboardInterface {
 	return nil
 }
 
