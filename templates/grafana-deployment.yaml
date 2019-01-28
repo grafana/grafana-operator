@@ -49,6 +49,8 @@ spec:
               name: grafana-logs
             - mountPath: /etc/grafana/
               name: {{ .GrafanaConfigMapName }}
+            - mountPath: /var/lib/grafana/plugins
+              name: grafana-plugins
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
@@ -73,3 +75,5 @@ spec:
           name: grafana-data
         - emptyDir: {}
           name: grafana-logs
+        - emptyDir: {}
+          name: grafana-plugins
