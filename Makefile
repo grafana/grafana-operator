@@ -18,7 +18,7 @@ setup/dep:
 .PHONY: setup/travis
 setup/travis:
 	@echo Installing Operator SDK
-	@curl -Lo operator-sdk https://github.com/operator-framework/operator-sdk/releases/download/v0.0.7/operator-sdk-v0.0.7-x86_64-linux-gnu && chmod +x operator-sdk && sudo mv operator-sdk /usr/local/bin/
+	@curl -Lo operator-sdk https://github.com/operator-framework/operator-sdk/releases/download/v0.2.1/operator-sdk-v0.2.1-x86_64-linux-gnu && chmod +x operator-sdk && sudo mv operator-sdk /usr/local/bin/
 
 .PHONY: code/run
 code/run:

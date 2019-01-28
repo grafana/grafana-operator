@@ -1,0 +1,33 @@
+language: go
+
+sudo: required
+
+go:
+  - 1.10.x
+
+env:
+  global:
+    - OPERATOR_NAME=grafana-operator
+
+stages:
+  - test
+  - compile
+  - name: push
+    if: fork = false
+
+jobs:
+  include:
+    - stage: test
+      script:
+        - make setup/dep setup/travis code/check test/unit
+    - stage: compile
+      script:
+        - make setup/dep setup/travis image/build TAG=$(git rev-parse --short ${TRAVIS_COMMIT})
+    - stage: push
+      script:
+        - export BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
+        - export TAG=$(git rev-parse --short ${TRAVIS_COMMIT})
+        - docker login --password "$QUAY_PASSWORD" --username "$QUAY_USERNAME" quay.io
+        - make setup/dep setup/travis image/build/push TAG=$TAG
+        - docker tag quay.io/integreatly/$OPERATOR_NAME:$TAG quay.io/integreatly/$OPERATOR_NAME:$BRANCH
+        - docker push quay.io/integreatly/$OPERATOR_NAME:$BRANCH

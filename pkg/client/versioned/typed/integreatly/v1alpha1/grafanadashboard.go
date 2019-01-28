@@ -18,13 +18,13 @@ type GrafanaDashboardInterface interface {
 
 type grafanadashboards struct {
 	client rest.Interface
-	ns string
+	ns     string
 }
 
 func newGrafanaDashboards(c *IntegreatlyV1alpha1Client, namespace string) *grafanadashboards {
 	return &grafanadashboards{
 		client: c.RESTClient(),
-		ns: namespace,
+		ns:     namespace,
 	}
 }
 

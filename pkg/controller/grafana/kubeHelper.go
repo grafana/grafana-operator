@@ -69,7 +69,6 @@ func (h KubeHelperImpl) updateDashboard(monitoringNamespace string, dashboardNam
 		configMap.Data = make(map[string]string)
 	}
 
-
 	configMap.Data[dashboard.Spec.Name] = dashboard.Spec.Json
 	_, err = h.k8client.CoreV1().ConfigMaps(monitoringNamespace).Update(configMap)
 
