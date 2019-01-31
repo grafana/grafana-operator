@@ -1,7 +1,7 @@
 apiVersion: authorization.openshift.io/v1
 kind: ClusterRole
 metadata:
-  name: grafana-operator
+  name: grafana-operator-cluster-role
 rules:
   - apiGroups:
       - ""
