@@ -4,3 +4,6 @@ metadata:
   name: example-grafana
 spec:
   prometheusUrl: "http://prometheus-application-monitoring:9090"
+  monitoringNamespaceSelector:
+    matchLabels:
+      monitoring-key: middleware

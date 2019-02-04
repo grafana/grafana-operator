@@ -127,7 +127,7 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 }
 
 func (r *ReconcileGrafana) ReconcileNamespaces(cr *integreatly.Grafana) (reconcile.Result, error) {
-	namespaces, err := r.helper.getMonitoringNamespaces()
+	namespaces, err := r.helper.getMonitoringNamespaces(cr.Spec.MonitoringNamespaceSelector)
 	if err != nil {
 		log.Error(err, "Error listing namespaces")
 		return reconcile.Result{}, err

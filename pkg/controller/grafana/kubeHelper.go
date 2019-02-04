@@ -30,12 +30,19 @@ func newKubeHelper() *KubeHelperImpl {
 	return helper
 }
 
-func (h KubeHelperImpl) getMonitoringNamespaces() ([]v1.Namespace, error) {
-	selector := metav1.ListOptions{
-		LabelSelector: "monitoring=enabled",
+func (h KubeHelperImpl) getMonitoringNamespaces(ls *metav1.LabelSelector) ([]v1.Namespace, error) {
+	selector, err := metav1.LabelSelectorAsSelector(ls)
+	if err != nil {
+		return nil, err
 	}
 
-	namespaces, err := h.k8client.CoreV1().Namespaces().List(selector)
+	var selectorString string
+	metav1.Convert_labels_Selector_To_string(&selector, &selectorString, nil)
+	opts := metav1.ListOptions{
+		LabelSelector: selectorString,
+	}
+
+	namespaces, err := h.k8client.CoreV1().Namespaces().List(opts)
 	if err != nil {
 		return nil, err
 	}
