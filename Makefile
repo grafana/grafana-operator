@@ -31,7 +31,6 @@ code/compile:
 .PHONY: code/gen
 code/gen:
 	operator-sdk generate k8s
-	@go generate ./...s
 
 .PHONY: code/check
 code/check:
