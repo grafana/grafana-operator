@@ -11,7 +11,7 @@ import (
 type GrafanaSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	PrometheusUrl               string                `json:"prometheusUrl"`
+	PrometheusUrl              string                `json:"prometheusUrl"`
 	DashboardNamespaceSelector *metav1.LabelSelector `json:"dashboardNamespaceSelector,omitempty"`
 }
 
