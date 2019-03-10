@@ -11,8 +11,9 @@ import (
 type GrafanaDashboardSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	Json string `json:"json"`
-	Name string `json:"name"`
+	Json    string          `json:"json"`
+	Name    string          `json:"name"`
+	Plugins []GrafanaPlugin `json:"plugins,omitempty"`
 }
 
 // GrafanaDashboardStatus defines the observed state of GrafanaDashboard

@@ -19,7 +19,8 @@ type GrafanaSpec struct {
 type GrafanaStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	Phase int `json:"phase"`
+	Phase            int             `json:"phase"`
+	InstalledPlugins []GrafanaPlugin `json:"installedPlugins,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -41,6 +42,11 @@ type GrafanaList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Grafana `json:"items"`
+}
+
+type GrafanaPlugin struct {
+	Name    string
+	Version string
 }
 
 func init() {

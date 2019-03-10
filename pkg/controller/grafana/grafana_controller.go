@@ -46,6 +46,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 		client: mgr.GetClient(),
 		scheme: mgr.GetScheme(),
 		helper: newKubeHelper(),
+		plugins: newPluginsHelper(),
 	}
 }
 
@@ -85,6 +86,7 @@ type ReconcileGrafana struct {
 	client client.Client
 	scheme *runtime.Scheme
 	helper *KubeHelperImpl
+	plugins *PluginsHelperImpl
 }
 
 // Reconcile reads that state of the cluster for a Grafana object and makes changes based on the state read
@@ -143,7 +145,7 @@ func (r *ReconcileGrafana) ReconcileNamespaces(cr *integreatly.Grafana) (reconci
 			} else {
 				if len(dashboards.Items) >= 1 {
 					for _, d := range dashboards.Items {
-						r.ReconcileDashboards(cr.Namespace, d)
+						r.ReconcileDashboards(cr, d)
 					}
 				}
 			}
@@ -155,17 +157,52 @@ func (r *ReconcileGrafana) ReconcileNamespaces(cr *integreatly.Grafana) (reconci
 	return reconcile.Result{RequeueAfter: time.Second * 10}, nil
 }
 
-func (r *ReconcileGrafana) ReconcileDashboards(monitoringNamespace string, d integreatly.GrafanaDashboard) {
-	if d.Status.Created {
-		log.Info(fmt.Sprintf("Dashboard %s already created", d.Name))
-		return
-	}
-
+func (r *ReconcileGrafana) ReconcileDashboards(cr *integreatly.Grafana, d integreatly.GrafanaDashboard) {
 	log.Info(fmt.Sprintf("Reconciling dashboard: %s", d.Name))
-	err := r.helper.updateDashboard(monitoringNamespace, d.Namespace, &d)
+	err := r.helper.updateDashboard(cr.Namespace, d.Namespace, &d)
 	if err != nil {
 		log.Error(err, "Error updating dashboard config")
 	}
+
+	err = r.ReconcilePlugins(cr, d)
+	if err != nil {
+		log.Error(err, "Error reconciling grafana plugins")
+	}
+}
+
+func (r *ReconcileGrafana) ReconcilePlugins(cr *integreatly.Grafana, d integreatly.GrafanaDashboard) error {
+	if len(d.Spec.Plugins) > 0 {
+		pluginsAdded := false
+		for _, plugin := range d.Spec.Plugins {
+			log.Info(fmt.Sprintf("Processing requested plugin %s", plugin.Name))
+			if r.plugins.pluginInstalled(plugin, cr) {
+				log.Info(fmt.Sprintf("%s is already installed", plugin.Name))
+				continue
+			}
+
+			if r.plugins.pluginExists(plugin) == false {
+				log.Info(fmt.Sprintf("Unknown plugin %s", plugin.Name))
+				continue
+			}
+
+			log.Info("Adding new plugin %s", plugin.Name)
+			cr.Status.InstalledPlugins = append(cr.Status.InstalledPlugins, plugin)
+			pluginsAdded = true
+		}
+
+		if pluginsAdded {
+			err := r.client.Update(context.TODO(), cr)
+			if err != nil {
+				return err
+			}
+
+			newEnv := r.plugins.buildEnv(cr)
+			err = r.helper.updateGrafanaDeployment(cr.Namespace, newEnv)
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (r *ReconcileGrafana) CreateConfigFiles(cr *integreatly.Grafana) (reconcile.Result, error) {

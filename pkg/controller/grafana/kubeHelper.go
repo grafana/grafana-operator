@@ -3,15 +3,12 @@ package grafana
 import (
 	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	gr "github.com/integr8ly/grafana-operator/pkg/client/versioned"
+	apps "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
-
-type KubeHelper interface {
-	listNamespaces()
-}
 
 type KubeHelperImpl struct {
 	k8client *kubernetes.Clientset
@@ -85,4 +82,37 @@ func (h KubeHelperImpl) updateDashboard(monitoringNamespace string, dashboardNam
 	}
 
 	return err
+}
+
+func (h KubeHelperImpl) getGrafanaDeployment(namespaceName string) (*apps.Deployment, error) {
+	opts := metav1.GetOptions{}
+	return h.k8client.AppsV1().Deployments(namespaceName).Get(GrafanaDeploymentName, opts)
+}
+
+
+func (h KubeHelperImpl) updateGrafanaDeployment(monitoringNamespace string, newEnv string) error {
+	deployment, err := h.getGrafanaDeployment(monitoringNamespace)
+	if err != nil {
+		return err
+	}
+
+	updated := false
+	for _, container := range deployment.Spec.Template.Spec.Containers {
+		if container.Name == "grafana" {
+			for _, env := range container.Env {
+				if env.Name == PluginsEnvVar {
+					env.Value = newEnv
+					updated = true
+					break
+				}
+			}
+		}
+	}
+
+	if updated {
+		_, err := h.k8client.AppsV1().Deployments(monitoringNamespace).Update(deployment)
+		return err
+	}
+
+	return nil
 }

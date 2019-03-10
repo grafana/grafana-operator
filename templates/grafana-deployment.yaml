@@ -25,6 +25,9 @@ spec:
     spec:
       containers:
         - image: '{{ .GrafanaImage }}:{{ .GrafanaVersion }}'
+          env:
+            - name: GRAFANA_PLUGINS
+            - value: ""
           args:
             - -config=/etc/grafana/grafana.ini
           imagePullPolicy: IfNotPresent
