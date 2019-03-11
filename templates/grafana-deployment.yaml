@@ -23,11 +23,21 @@ spec:
         app: grafana
       name: grafana
     spec:
+      initContainers:
+        - env:
+            - name: GRAFANA_PLUGINS
+              value: ""
+          image: 'docker.io/pb82/grafana_plugins_init:latest'
+          imagePullPolicy: IfNotPresent
+          name: grafana-plugins-init
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /opt/plugins
+              name: grafana-plugins
       containers:
         - image: '{{ .GrafanaImage }}:{{ .GrafanaVersion }}'
-          env:
-            - name: GRAFANA_PLUGINS
-            - value: ""
           args:
             - -config=/etc/grafana/grafana.ini
           imagePullPolicy: IfNotPresent

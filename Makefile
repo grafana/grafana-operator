@@ -1,9 +1,9 @@
-ORG=integreatly
+ORG=pb82
 NAMESPACE=application-monitoring
 PROJECT=grafana-operator
-REG=quay.io
+REG=docker.io
 SHELL=/bin/bash
-TAG=0.0.1
+TAG=latest
 PKG=github.com/integr8ly/grafana-operator
 TEST_DIRS?=$(shell sh -c "find $(TOP_SRC_DIRS) -name \\*_test.go -exec dirname {} \\; | sort | uniq")
 TEST_POD_NAME=grafana-operator-test

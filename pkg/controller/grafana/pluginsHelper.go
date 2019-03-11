@@ -5,6 +5,7 @@ import (
 	integreatly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"net/http"
 	"strings"
+	"time"
 )
 
 const (
@@ -24,7 +25,7 @@ func newPluginsHelper() *PluginsHelperImpl {
 
 // Query the Grafana plugin database for the given plugin and version
 // A 200 OK response indicates that the plugin exists and can be downloaded
-func (h *PluginsHelperImpl) pluginExists(plugin integreatly.GrafanaPlugin) bool {
+func (h *PluginsHelperImpl) PluginExists(plugin integreatly.GrafanaPlugin) bool {
 	url := fmt.Sprintf(h.BaseUrl, plugin.Name, plugin.Version)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -42,7 +43,7 @@ func (h *PluginsHelperImpl) pluginExists(plugin integreatly.GrafanaPlugin) bool 
 // Turns an array of plugins into a string representation of the form
 // `<name>:<version>,...` that is used as the value for the GRAFANA_PLUGINS
 // environment variable
-func (h *PluginsHelperImpl) buildEnv(cr *integreatly.Grafana) string {
+func (h *PluginsHelperImpl) BuildEnv(cr *integreatly.Grafana) string {
 	var env []string
 	for _, plugin := range cr.Status.InstalledPlugins {
 		env = append(env, fmt.Sprintf("%s:%s", plugin.Name, plugin.Version))
@@ -50,13 +51,66 @@ func (h *PluginsHelperImpl) buildEnv(cr *integreatly.Grafana) string {
 	return strings.Join(env, ",")
 }
 
-// Checks if a given plugin is already installed. We do not allow to install
-// multiple versions of the same plugin
-func (h *PluginsHelperImpl) pluginInstalled(plugin integreatly.GrafanaPlugin, cr *integreatly.Grafana) bool {
-	for _, installedPlugin := range cr.Status.InstalledPlugins {
-		if installedPlugin.Name == plugin.Name {
-			return true
+func (h *PluginsHelperImpl) AppendMessage(message string, d *integreatly.GrafanaDashboard) {
+	status := integreatly.GrafanaDashboardStatusMessage{
+		Message:   message,
+		Timestamp: time.Now().Format(time.RFC850),
+	}
+
+	d.Status.Messages = append(d.Status.Messages, status)
+}
+
+// Creates the list of plugins that can be added or updated
+// Does not directly deal with removing plugins: if a plugin is not in the list and the env var is updated, it will
+// automatically be removed
+func (h *PluginsHelperImpl) FilterPlugins(cr *integreatly.Grafana, requested integreatly.PluginList) (integreatly.PluginList, bool) {
+	filteredPlugins := integreatly.PluginList{}
+	pluginsUpdated := false
+
+	// Remove all plugins
+	if len(requested) == 0 && len(cr.Status.InstalledPlugins) > 0 {
+		return filteredPlugins, true
+	}
+
+	for _, plugin := range requested {
+		// Don't allow to install multiple versions of the same plugin
+		if filteredPlugins.HasSomeVersionOf(&plugin) == true {
+			h.AppendMessage(fmt.Sprintf("Another version of %s is already installed", plugin.Name), plugin.Origin)
+			continue
+		}
+
+		// Already installed: append it to the list to keep it
+		if cr.Status.InstalledPlugins.HasExactVersionOf(&plugin) {
+			filteredPlugins = append(filteredPlugins, plugin)
+			continue
+		}
+
+		// New plugin
+		if cr.Status.InstalledPlugins.HasSomeVersionOf(&plugin) == false {
+			filteredPlugins = append(filteredPlugins, plugin)
+			h.AppendMessage(fmt.Sprintf("Installing plugin %s@%s", plugin.Name, plugin.Version), plugin.Origin)
+			pluginsUpdated = true
+			continue
+		}
+
+		// Plugin update: allow to update a plugin if only one dashboard requests it
+		// If multiple dashboards request different versions of the same plugin, then we can't upgrade because
+		// there is no way to decide which version is the correct one
+		if cr.Status.InstalledPlugins.HasSomeVersionOf(&plugin) == true &&
+			cr.Status.InstalledPlugins.HasExactVersionOf(&plugin) == false &&
+			requested.VersionsOf(&plugin) == 1 {
+			filteredPlugins = append(filteredPlugins, plugin)
+			pluginsUpdated = true
+			continue
 		}
 	}
-	return false
+
+	// Check for removed plugins
+	for _, plugin := range cr.Status.InstalledPlugins {
+		if requested.HasSomeVersionOf(&plugin) == false {
+			pluginsUpdated = true
+		}
+	}
+
+	return filteredPlugins, pluginsUpdated
 }

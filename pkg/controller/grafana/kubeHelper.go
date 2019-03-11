@@ -10,6 +10,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
+const (
+	InitContainerName = "grafana-plugins-init"
+)
+
 type KubeHelperImpl struct {
 	k8client *kubernetes.Clientset
 	grclient *gr.Clientset
@@ -74,13 +78,7 @@ func (h KubeHelperImpl) updateDashboard(monitoringNamespace string, dashboardNam
 	}
 
 	configMap.Data[dashboard.Spec.Name] = dashboard.Spec.Json
-	_, err = h.k8client.CoreV1().ConfigMaps(monitoringNamespace).Update(configMap)
-
-	if err == nil {
-		dashboard.Status.Created = true
-		_, err = h.grclient.IntegreatlyV1alpha1().GrafanaDashboards(dashboardNamespace).Update(dashboard)
-	}
-
+	configMap, err = h.k8client.CoreV1().ConfigMaps(monitoringNamespace).Update(configMap)
 	return err
 }
 
@@ -89,19 +87,25 @@ func (h KubeHelperImpl) getGrafanaDeployment(namespaceName string) (*apps.Deploy
 	return h.k8client.AppsV1().Deployments(namespaceName).Get(GrafanaDeploymentName, opts)
 }
 
-
 func (h KubeHelperImpl) updateGrafanaDeployment(monitoringNamespace string, newEnv string) error {
 	deployment, err := h.getGrafanaDeployment(monitoringNamespace)
 	if err != nil {
 		return err
 	}
 
+	// Leave the deployment alone when it's busy with another operation
+	if deployment.Status.Replicas != deployment.Status.ReadyReplicas {
+		return nil
+	}
+
 	updated := false
-	for _, container := range deployment.Spec.Template.Spec.Containers {
-		if container.Name == "grafana" {
-			for _, env := range container.Env {
+
+	// find and update the init container env var
+	for i, container := range deployment.Spec.Template.Spec.InitContainers {
+		if container.Name == InitContainerName {
+			for j, env := range deployment.Spec.Template.Spec.InitContainers[i].Env {
 				if env.Name == PluginsEnvVar {
-					env.Value = newEnv
+					deployment.Spec.Template.Spec.InitContainers[i].Env[j].Value = newEnv
 					updated = true
 					break
 				}
