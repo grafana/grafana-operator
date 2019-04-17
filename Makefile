@@ -1,7 +1,7 @@
-ORG=pb82
+ORG=integr8ly
 NAMESPACE=application-monitoring
 PROJECT=grafana-operator
-REG=docker.io
+REG=quay.io
 SHELL=/bin/bash
 TAG=latest
 PKG=github.com/integr8ly/grafana-operator

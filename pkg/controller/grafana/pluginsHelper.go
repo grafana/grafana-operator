@@ -51,13 +51,39 @@ func (h *PluginsHelperImpl) BuildEnv(cr *integreatly.Grafana) string {
 	return strings.Join(env, ",")
 }
 
-func (h *PluginsHelperImpl) AppendMessage(message string, d *integreatly.GrafanaDashboard) {
+// Append a status message to the origin dashboard of a plugin
+func (h *PluginsHelperImpl) AppendMessage(message string, dashboard *integreatly.GrafanaDashboard) {
+	if dashboard == nil {
+		return
+	}
+
 	status := integreatly.GrafanaDashboardStatusMessage{
 		Message:   message,
 		Timestamp: time.Now().Format(time.RFC850),
 	}
 
-	d.Status.Messages = append(d.Status.Messages, status)
+	dashboard.Status.Messages = append(dashboard.Status.Messages, status)
+}
+
+// Append a status message to the origin dashboard of a plugin
+func (h *PluginsHelperImpl) PickLatestVersions(requested integreatly.PluginList) (integreatly.PluginList, error) {
+	var latestVersions integreatly.PluginList
+	for _, plugin := range requested {
+		result, err := requested.HasNewerVersionOf(&plugin)
+
+		// Errors might happen if plugins don't use semver
+		// In that case fall back to whichever comes first
+		if err != nil {
+			return requested, err
+		}
+
+		// Skip this version if there is a more recent one
+		if result {
+			continue
+		}
+		latestVersions = append(latestVersions, plugin)
+	}
+	return latestVersions, nil
 }
 
 // Creates the list of plugins that can be added or updated
@@ -67,6 +93,12 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *integreatly.Grafana, requested int
 	filteredPlugins := integreatly.PluginList{}
 	pluginsUpdated := false
 
+	// Try to pick the latest versions of all plugins
+	requested, err := h.PickLatestVersions(requested)
+	if err != nil {
+		log.Error(err, "Unable to pick latest plugin versions")
+	}
+
 	// Remove all plugins
 	if len(requested) == 0 && len(cr.Status.InstalledPlugins) > 0 {
 		return filteredPlugins, true
@@ -75,7 +107,8 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *integreatly.Grafana, requested int
 	for _, plugin := range requested {
 		// Don't allow to install multiple versions of the same plugin
 		if filteredPlugins.HasSomeVersionOf(&plugin) == true {
-			h.AppendMessage(fmt.Sprintf("Another version of %s is already installed", plugin.Name), plugin.Origin)
+			installedVersion := filteredPlugins.GetInstalledVersionOf(&plugin)
+			h.AppendMessage(fmt.Sprintf("Not installing version %s of %s because %s is already installed", plugin.Version, plugin.Name, installedVersion.Version), plugin.Origin)
 			continue
 		}
 
@@ -94,12 +127,16 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *integreatly.Grafana, requested int
 		}
 
 		// Plugin update: allow to update a plugin if only one dashboard requests it
+		// The condition is: some version of the plugin is aleady installed, but it's not the exact same version
+		// and there is only one dashboard that requires this plugin
 		// If multiple dashboards request different versions of the same plugin, then we can't upgrade because
 		// there is no way to decide which version is the correct one
 		if cr.Status.InstalledPlugins.HasSomeVersionOf(&plugin) == true &&
 			cr.Status.InstalledPlugins.HasExactVersionOf(&plugin) == false &&
 			requested.VersionsOf(&plugin) == 1 {
+			installedVersion := cr.Status.InstalledPlugins.GetInstalledVersionOf(&plugin)
 			filteredPlugins = append(filteredPlugins, plugin)
+			h.AppendMessage(fmt.Sprintf("Changing version of plugin %s form %s to %s", plugin.Name, installedVersion.Version, plugin.Version), plugin.Origin)
 			pluginsUpdated = true
 			continue
 		}

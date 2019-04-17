@@ -128,7 +128,7 @@ func (r *ReconcileGrafana) ReconcileNamespaces(cr *integreatly.Grafana) (reconci
 						dashboardCopy := d.DeepCopy()
 						dashboardCopy.Spec.Plugins.SetOrigin(dashboardCopy)
 						requestedPlugins = append(requestedPlugins, dashboardCopy.Spec.Plugins...)
-						r.ReconcileDashboards(cr, dashboardCopy)
+						r.ReconcileDashboardConfigMap(cr, dashboardCopy)
 					}
 				}
 			}
@@ -137,14 +137,27 @@ func (r *ReconcileGrafana) ReconcileNamespaces(cr *integreatly.Grafana) (reconci
 		filteredPlugins, updated := r.plugins.FilterPlugins(cr, requestedPlugins)
 		if updated {
 			r.ReconcilePlugins(cr, filteredPlugins)
+
+			// Update the dashboards that had their plugins modified
+			// to let the owners know about the status
+			err = r.ReconcileDashboards(filteredPlugins)
 		}
 	}
 
-	return reconcile.Result{RequeueAfter: time.Second * 10}, nil
+	return reconcile.Result{RequeueAfter: time.Second * 10}, err
 }
 
+func (r *ReconcileGrafana) ReconcileDashboards(plugins integreatly.PluginList) error {
+	for _, plugin := range plugins {
+		err := r.client.Update(context.TODO(), plugin.Origin)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
-func (r *ReconcileGrafana) ReconcileDashboards(cr *integreatly.Grafana, d *integreatly.GrafanaDashboard) {
+func (r *ReconcileGrafana) ReconcileDashboardConfigMap(cr *integreatly.Grafana, d *integreatly.GrafanaDashboard) {
 	err := r.helper.updateDashboard(cr.Namespace, d.Namespace, d)
 	if err != nil {
 		log.Error(err, "Error updating dashboard config")
@@ -170,16 +183,6 @@ func (r *ReconcileGrafana) ReconcilePlugins(cr *integreatly.Grafana, plugins []i
 
 	newEnv := r.plugins.BuildEnv(cr)
 	err = r.helper.updateGrafanaDeployment(cr.Namespace, newEnv)
-	if err != nil {
-		return err
-	}
-
-	for _, plugin := range plugins {
-		log.Info(fmt.Sprintf("== Updating dashboard for plugin"))
-		log.Info(fmt.Sprintf("%v", plugin.Origin.Status))
-		r.ReconcileDashboards(cr, plugin.Origin)
-	}
-
 	return err
 }
 
