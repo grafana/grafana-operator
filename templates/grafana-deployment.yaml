@@ -27,7 +27,7 @@ spec:
         - env:
             - name: GRAFANA_PLUGINS
               value: ""
-          image: 'docker.io/pb82/grafana_plugins_init:latest'
+          image: 'quay.io/integreatly/grafana_plugins_init:{{ .PluginsInitContainerImageTag }}'
           imagePullPolicy: IfNotPresent
           name: grafana-plugins-init
           resources: {}
