@@ -22,6 +22,7 @@ const (
 	GrafanaDeploymentName           = "grafana-deployment"
 	GrafanaRouteName                = "grafana-route"
 	GrafanaServiceName              = "grafana-service"
+	PluginsInitContainerImageTag    = "0.0.1"
 )
 
 type GrafanaParamaeters struct {
@@ -38,6 +39,7 @@ type GrafanaParamaeters struct {
 	LogLevel                        string
 	GrafanaRouteName                string
 	GrafanaServiceName              string
+	PluginsInitContainerImageTag    string
 }
 
 type GrafanaTemplateHelper struct {
@@ -63,6 +65,7 @@ func newTemplateHelper(cr *integreatly.Grafana) *GrafanaTemplateHelper {
 		LogLevel:                        LogLevel,
 		GrafanaRouteName:                GrafanaRouteName,
 		GrafanaServiceName:              GrafanaServiceName,
+		PluginsInitContainerImageTag:    PluginsInitContainerImageTag,
 	}
 
 	templatePath := os.Getenv("TEMPLATE_PATH")

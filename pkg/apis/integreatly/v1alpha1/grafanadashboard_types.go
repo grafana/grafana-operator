@@ -11,15 +11,14 @@ import (
 type GrafanaDashboardSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	Json string `json:"json"`
-	Name string `json:"name"`
+	Json    string     `json:"json"`
+	Name    string     `json:"name"`
+	Plugins PluginList `json:"plugins"`
 }
 
 // GrafanaDashboardStatus defines the observed state of GrafanaDashboard
 type GrafanaDashboardStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	Created bool `json: "created"`
+	Messages []GrafanaDashboardStatusMessage `json:"messages"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -41,6 +40,11 @@ type GrafanaDashboardList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []GrafanaDashboard `json:"items"`
+}
+
+type GrafanaDashboardStatusMessage struct {
+	Message   string `json:"message"`
+	Timestamp string `json:"timestamp"`
 }
 
 func init() {

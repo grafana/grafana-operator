@@ -3,15 +3,16 @@ package grafana
 import (
 	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	gr "github.com/integr8ly/grafana-operator/pkg/client/versioned"
+	apps "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
-type KubeHelper interface {
-	listNamespaces()
-}
+const (
+	InitContainerName = "grafana-plugins-init"
+)
 
 type KubeHelperImpl struct {
 	k8client *kubernetes.Clientset
@@ -77,12 +78,45 @@ func (h KubeHelperImpl) updateDashboard(monitoringNamespace string, dashboardNam
 	}
 
 	configMap.Data[dashboard.Spec.Name] = dashboard.Spec.Json
-	_, err = h.k8client.CoreV1().ConfigMaps(monitoringNamespace).Update(configMap)
+	configMap, err = h.k8client.CoreV1().ConfigMaps(monitoringNamespace).Update(configMap)
+	return err
+}
 
-	if err == nil {
-		dashboard.Status.Created = true
-		_, err = h.grclient.IntegreatlyV1alpha1().GrafanaDashboards(dashboardNamespace).Update(dashboard)
+func (h KubeHelperImpl) getGrafanaDeployment(namespaceName string) (*apps.Deployment, error) {
+	opts := metav1.GetOptions{}
+	return h.k8client.AppsV1().Deployments(namespaceName).Get(GrafanaDeploymentName, opts)
+}
+
+func (h KubeHelperImpl) updateGrafanaDeployment(monitoringNamespace string, newEnv string) error {
+	deployment, err := h.getGrafanaDeployment(monitoringNamespace)
+	if err != nil {
+		return err
 	}
 
-	return err
+	// Leave the deployment alone when it's busy with another operation
+	if deployment.Status.Replicas != deployment.Status.ReadyReplicas {
+		return nil
+	}
+
+	updated := false
+
+	// find and update the init container env var
+	for i, container := range deployment.Spec.Template.Spec.InitContainers {
+		if container.Name == InitContainerName {
+			for j, env := range deployment.Spec.Template.Spec.InitContainers[i].Env {
+				if env.Name == PluginsEnvVar {
+					deployment.Spec.Template.Spec.InitContainers[i].Env[j].Value = newEnv
+					updated = true
+					break
+				}
+			}
+		}
+	}
+
+	if updated {
+		_, err := h.k8client.AppsV1().Deployments(monitoringNamespace).Update(deployment)
+		return err
+	}
+
+	return nil
 }
