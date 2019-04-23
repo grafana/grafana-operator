@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/integr8ly/grafana-operator/pkg/controller/grafana"
 	"os"
 	"runtime"
 
@@ -29,6 +30,8 @@ func printVersion() {
 }
 
 func main() {
+	flagImage := flag.String("grafana-image", "", "Overrides the default Grafana image")
+	flagImageTag := flag.String("grafana-image-tag", "", "Overrides the default Grafana image tag")
 	flag.Parse()
 
 	// The logger instantiated here can be changed to any logger
@@ -38,6 +41,11 @@ func main() {
 	logf.SetLogger(logf.ZapLogger(false))
 
 	printVersion()
+
+	// Controller configuration
+	controllerConfig := grafana.GetControllerConfig()
+	controllerConfig.AddConfigItem(grafana.ConfigGrafanaImage, *flagImage)
+	controllerConfig.AddConfigItem(grafana.ConfigGrafanaImageTag, *flagImageTag)
 
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
