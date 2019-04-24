@@ -51,9 +51,11 @@ type GrafanaTemplateHelper struct {
 // templates properties. Some of them (like the hostname) are set
 // by the user in the custom resource
 func newTemplateHelper(cr *integreatly.Grafana) *GrafanaTemplateHelper {
+	controllerConfig := GetControllerConfig()
+
 	param := GrafanaParamaeters{
-		GrafanaImage:                    GrafanaImage,
-		GrafanaVersion:                  GrafanaVersion,
+		GrafanaImage:                    controllerConfig.GetConfigItem(ConfigGrafanaImage, GrafanaImage),
+		GrafanaVersion:                  controllerConfig.GetConfigItem(ConfigGrafanaImageTag, GrafanaVersion),
 		Namespace:                       cr.Namespace,
 		GrafanaConfigMapName:            GrafanaConfigMapName,
 		GrafanaProvidersConfigMapName:   GrafanaProvidersConfigMapName,

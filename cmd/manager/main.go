@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/integr8ly/grafana-operator/pkg/controller/grafana"
 	"os"
 	"runtime"
 
@@ -21,6 +22,8 @@ import (
 )
 
 var log = logf.Log.WithName("cmd")
+var flagImage string
+var flagImageTag string
 
 func printVersion() {
 	log.Info(fmt.Sprintf("Go Version: %s", runtime.Version()))
@@ -28,9 +31,14 @@ func printVersion() {
 	log.Info(fmt.Sprintf("operator-sdk Version: %v", sdkVersion.Version))
 }
 
-func main() {
-	flag.Parse()
+func init() {
+	flagset := flag.CommandLine
+	flagset.StringVar(&flagImage, "grafana-image", "", "Overrides the default Grafana image")
+	flagset.StringVar(&flagImageTag, "grafana-image-tag", "", "Overrides the default Grafana image tag")
+	flagset.Parse(os.Args[1:])
+}
 
+func main() {
 	// The logger instantiated here can be changed to any logger
 	// implementing the logr.Logger interface. This logger will
 	// be propagated through the whole operator, generating
@@ -38,6 +46,11 @@ func main() {
 	logf.SetLogger(logf.ZapLogger(false))
 
 	printVersion()
+
+	// Controller configuration
+	controllerConfig := grafana.GetControllerConfig()
+	controllerConfig.AddConfigItem(grafana.ConfigGrafanaImage, flagImage)
+	controllerConfig.AddConfigItem(grafana.ConfigGrafanaImageTag, flagImageTag)
 
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {

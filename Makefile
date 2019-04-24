@@ -1,5 +1,5 @@
-ORG=integr8ly
-NAMESPACE=application-monitoring
+ORG=integreatly
+NAMESPACE=middleware-monitoring
 PROJECT=grafana-operator
 REG=quay.io
 SHELL=/bin/bash
