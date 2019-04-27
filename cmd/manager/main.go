@@ -4,9 +4,12 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/integr8ly/grafana-operator/pkg/controller/grafana"
+	"github.com/integr8ly/grafana-operator/pkg/controller/common"
+	"github.com/integr8ly/grafana-operator/pkg/controller/grafanadashboard"
+	"k8s.io/client-go/rest"
 	"os"
 	"runtime"
+	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 
 	"github.com/integr8ly/grafana-operator/pkg/apis"
 	"github.com/integr8ly/grafana-operator/pkg/controller"
@@ -18,12 +21,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
-	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 )
 
 var log = logf.Log.WithName("cmd")
 var flagImage string
 var flagImageTag string
+var scanAll bool
 
 func printVersion() {
 	log.Info(fmt.Sprintf("Go Version: %s", runtime.Version()))
@@ -35,7 +38,34 @@ func init() {
 	flagset := flag.CommandLine
 	flagset.StringVar(&flagImage, "grafana-image", "", "Overrides the default Grafana image")
 	flagset.StringVar(&flagImageTag, "grafana-image-tag", "", "Overrides the default Grafana image tag")
+	flagset.BoolVar(&scanAll, "scan-all", false, "Scans all namespaces for dashboards")
 	flagset.Parse(os.Args[1:])
+}
+
+// Starts a separate controller for the dashboard reconciliation in the background
+func startDashboardController(ns string, cfg *rest.Config, signalHandler <-chan struct{}) {
+	// Create a new Cmd to provide shared dependencies and start components
+	dashboardMgr, err := manager.New(cfg, manager.Options{Namespace: ns})
+	if err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
+	// Setup Scheme for the dashboard resource
+	if err := apis.AddToScheme(dashboardMgr.GetScheme()); err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
+	// Use a separate manager for the dashboard controller
+	grafanadashboard.Add(dashboardMgr)
+
+	go func() {
+		if err := dashboardMgr.Start(signalHandler); err != nil {
+			log.Error(err, "dashboard manager exited non-zero")
+			os.Exit(1)
+		}
+	}()
 }
 
 func main() {
@@ -47,15 +77,26 @@ func main() {
 
 	printVersion()
 
-	// Controller configuration
-	controllerConfig := grafana.GetControllerConfig()
-	controllerConfig.AddConfigItem(grafana.ConfigGrafanaImage, flagImage)
-	controllerConfig.AddConfigItem(grafana.ConfigGrafanaImageTag, flagImageTag)
-
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
 		log.Error(err, "failed to get watch namespace")
 		os.Exit(1)
+	}
+
+	// Controller configuration
+	controllerConfig := common.GetControllerConfig()
+	controllerConfig.AddConfigItem(common.ConfigGrafanaImage, flagImage)
+	controllerConfig.AddConfigItem(common.ConfigGrafanaImageTag, flagImageTag)
+	controllerConfig.AddConfigItem(common.ConfigOperatorNamespace, namespace)
+	controllerConfig.AddConfigItem(common.ConfigDashboardLabelSelector, "")
+
+	// Get the namespaces to scan for dashboards
+	// It's either the same namespace as the controller's or it's all namespaces if the
+	// --scan-all flag has been passed
+	var dashboardNamespace = namespace
+	if scanAll {
+		dashboardNamespace = ""
+		log.Info("Scanning for dashboards in all namespaces")
 	}
 
 	// Get a config to talk to the apiserver
@@ -99,8 +140,10 @@ func main() {
 
 	log.Info("Starting the Cmd.")
 
-	// Start the Cmd
-	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
+	signalHandler := signals.SetupSignalHandler()
+	startDashboardController(dashboardNamespace, cfg, signalHandler)
+
+	if err := mgr.Start(signalHandler); err != nil {
 		log.Error(err, "manager exited non-zero")
 		os.Exit(1)
 	}

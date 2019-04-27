@@ -1,6 +1,7 @@
 package grafana
 
 import (
+	"fmt"
 	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	gr "github.com/integr8ly/grafana-operator/pkg/client/versioned"
 	apps "k8s.io/api/apps/v1"
@@ -11,7 +12,8 @@ import (
 )
 
 const (
-	InitContainerName = "grafana-plugins-init"
+	InitContainerName      = "grafana-plugins-init"
+	DashboardFinalizerName = "grafana.dashboard.cleanup"
 )
 
 type KubeHelperImpl struct {
@@ -19,7 +21,7 @@ type KubeHelperImpl struct {
 	grclient *gr.Clientset
 }
 
-func newKubeHelper() *KubeHelperImpl {
+func NewKubeHelper() *KubeHelperImpl {
 	config := config.GetConfigOrDie()
 
 	k8client := kubernetes.NewForConfigOrDie(config)
@@ -67,19 +69,75 @@ func (h KubeHelperImpl) getDashboardsConfigMap(namespaceName string) (*v1.Config
 	return h.k8client.CoreV1().ConfigMaps(namespaceName).Get("grafana-dashboards", opts)
 }
 
-func (h KubeHelperImpl) updateDashboard(monitoringNamespace string, dashboardNamespace string, dashboard *v1alpha1.GrafanaDashboard) error {
+func (h KubeHelperImpl) UpdateDashboard(monitoringNamespace string, dashboardNamespace string, dashboard *v1alpha1.GrafanaDashboard) error {
 	configMap, err := h.getDashboardsConfigMap(monitoringNamespace)
 	if err != nil {
 		return err
 	}
 
+	// Prefix the dashboard filename with the namespace to allow multiple namespaces
+	// to import the same dashboard
+	dashboardName := fmt.Sprintf("%s_%s", dashboardNamespace, dashboard.Name)
+
 	if configMap.Data == nil {
 		configMap.Data = make(map[string]string)
 	}
 
-	configMap.Data[dashboard.Spec.Name] = dashboard.Spec.Json
+	configMap.Data[dashboardName] = dashboard.Spec.Json
 	configMap, err = h.k8client.CoreV1().ConfigMaps(monitoringNamespace).Update(configMap)
-	return err
+	if err != nil {
+		return err
+	}
+
+	if len(dashboard.Finalizers) == 0 {
+		dashboard.Finalizers = append(dashboard.Finalizers, "grafana.dashboard.cleanup")
+		dashboard, err = h.grclient.IntegreatlyV1alpha1().GrafanaDashboards(dashboardNamespace).Update(dashboard)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	log.Info(fmt.Sprintf("Dashboard '%s' imported from '%s'", dashboard.Name, dashboardNamespace))
+
+	return nil
+}
+
+func (h KubeHelperImpl) DeleteDashboard(monitoringNamespace string, dashboardNamespace string, dashboard *v1alpha1.GrafanaDashboard) error {
+	configMap, err := h.getDashboardsConfigMap(monitoringNamespace)
+	if err != nil {
+		return err
+	}
+
+	// Prefix the dashboard filename with the namespace to allow multiple namespaces
+	// to import the same dashboard
+	dashboardName := fmt.Sprintf("%s_%s", dashboardNamespace, dashboard.Spec.Name)
+
+	if configMap.Data == nil {
+		return nil
+	}
+
+	if _, ok := configMap.Data[dashboardName]; !ok {
+		log.Info(fmt.Sprintf("cannot delete dashboard '%s' because it does not exist", dashboardName))
+		return nil
+	}
+
+	delete(configMap.Data, dashboardName)
+	configMap, err = h.k8client.CoreV1().ConfigMaps(monitoringNamespace).Update(configMap)
+
+	if err != nil {
+		return err
+	}
+
+	dashboard.Finalizers = nil
+	dashboard, err = h.grclient.IntegreatlyV1alpha1().GrafanaDashboards(dashboardNamespace).Update(dashboard)
+
+	if err != nil {
+		return err
+	}
+
+	log.Info(fmt.Sprintf("dashboard '%s' removed", dashboard.Name))
+	return nil
 }
 
 func (h KubeHelperImpl) getGrafanaDeployment(namespaceName string) (*apps.Deployment, error) {

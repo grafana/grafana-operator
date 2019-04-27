@@ -3,6 +3,7 @@ package grafana
 import (
 	"fmt"
 	integreatly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	"net/http"
 	"strings"
 	"time"
@@ -11,6 +12,7 @@ import (
 const (
 	PluginsEnvVar = "GRAFANA_PLUGINS"
 	PluginsUrl    = "https://grafana.com/api/plugins/%s/versions/%s"
+	PluginsMinAge = 5
 )
 
 type PluginsHelperImpl struct {
@@ -84,6 +86,12 @@ func (h *PluginsHelperImpl) PickLatestVersions(requested integreatly.PluginList)
 		latestVersions = append(latestVersions, plugin)
 	}
 	return latestVersions, nil
+}
+
+func (h *PluginsHelperImpl) CanUpdatePlugins() bool {
+	lastUpdate := common.GetControllerConfig().GetConfigTimestamp(common.ConfigGrafanaPluginsUpdated, time.Now())
+	difference := time.Now().Sub(lastUpdate)
+	return difference.Seconds() >= PluginsMinAge
 }
 
 // Creates the list of plugins that can be added or updated

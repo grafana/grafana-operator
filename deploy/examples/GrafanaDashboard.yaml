@@ -1,9 +1,11 @@
 apiVersion: integreatly.org/v1alpha1
 kind: GrafanaDashboard
 metadata:
-  name: example
+  name: experimental2
+  labels:
+    monitoring-key: experimental
 spec:
-  name: dashboard.json
+  name: dashboard2.json
   json: "{}"
   plugins:
     - name: "grafana-piechart-panel"

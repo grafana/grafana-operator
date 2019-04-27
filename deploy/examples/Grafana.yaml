@@ -3,7 +3,11 @@ kind: Grafana
 metadata:
   name: example-grafana
 spec:
+  hostname: "grafana.apps.127.0.0.1.nip.io"
   prometheusUrl: "http://prometheus-application-monitoring:9090"
   dashboardNamespaceSelector:
     matchLabels:
-      monitoring-key: middleware
+      monitoring-key: experimental
+  dashboardLabelSelector:
+    matchLabels:
+      monitoring-key: experimental

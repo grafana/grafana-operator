@@ -3,6 +3,7 @@ package grafana
 import (
 	"bytes"
 	"fmt"
+	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	"io/ioutil"
 	"os"
 	"text/template"
@@ -21,6 +22,7 @@ const (
 	GrafanaServiceAccountName       = "grafana-serviceaccount"
 	GrafanaDeploymentName           = "grafana-deployment"
 	GrafanaRouteName                = "grafana-route"
+	GrafanaIngressName              = "grafana-ingress"
 	GrafanaServiceName              = "grafana-service"
 	PluginsInitContainerImageTag    = "0.0.1"
 )
@@ -40,6 +42,8 @@ type GrafanaParamaeters struct {
 	GrafanaRouteName                string
 	GrafanaServiceName              string
 	PluginsInitContainerImageTag    string
+	GrafanaIngressName              string
+	Hostname                        string
 }
 
 type GrafanaTemplateHelper struct {
@@ -51,11 +55,11 @@ type GrafanaTemplateHelper struct {
 // templates properties. Some of them (like the hostname) are set
 // by the user in the custom resource
 func newTemplateHelper(cr *integreatly.Grafana) *GrafanaTemplateHelper {
-	controllerConfig := GetControllerConfig()
+	controllerConfig := common.GetControllerConfig()
 
 	param := GrafanaParamaeters{
-		GrafanaImage:                    controllerConfig.GetConfigItem(ConfigGrafanaImage, GrafanaImage),
-		GrafanaVersion:                  controllerConfig.GetConfigItem(ConfigGrafanaImageTag, GrafanaVersion),
+		GrafanaImage:                    controllerConfig.GetConfigString(common.ConfigGrafanaImage, GrafanaImage),
+		GrafanaVersion:                  controllerConfig.GetConfigString(common.ConfigGrafanaImageTag, GrafanaVersion),
 		Namespace:                       cr.Namespace,
 		GrafanaConfigMapName:            GrafanaConfigMapName,
 		GrafanaProvidersConfigMapName:   GrafanaProvidersConfigMapName,
@@ -68,6 +72,8 @@ func newTemplateHelper(cr *integreatly.Grafana) *GrafanaTemplateHelper {
 		GrafanaRouteName:                GrafanaRouteName,
 		GrafanaServiceName:              GrafanaServiceName,
 		PluginsInitContainerImageTag:    PluginsInitContainerImageTag,
+		GrafanaIngressName:              GrafanaIngressName,
+		Hostname:                        cr.Spec.Hostname,
 	}
 
 	templatePath := os.Getenv("TEMPLATE_PATH")

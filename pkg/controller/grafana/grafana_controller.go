@@ -3,6 +3,7 @@ package grafana
 import (
 	"context"
 	"fmt"
+	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
@@ -27,7 +28,10 @@ const (
 	PhaseConfigFiles int = iota
 	PhaseInstallGrafana
 	PhaseDone
+	PhasePlugins
 )
+
+const ReconcilePauseSeconds = 5
 
 /**
 * USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
@@ -45,8 +49,9 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &ReconcileGrafana{
 		client:  mgr.GetClient(),
 		scheme:  mgr.GetScheme(),
-		helper:  newKubeHelper(),
+		helper:  NewKubeHelper(),
 		plugins: newPluginsHelper(),
+		config:  common.GetControllerConfig(),
 	}
 }
 
@@ -60,10 +65,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 
 	// Watch for changes to primary resource Grafana
 	err = c.Watch(&source.Kind{Type: &integreatly.Grafana{}}, &handler.EnqueueRequestForObject{})
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 var _ reconcile.Reconciler = &ReconcileGrafana{}
@@ -76,22 +78,18 @@ type ReconcileGrafana struct {
 	scheme  *runtime.Scheme
 	helper  *KubeHelperImpl
 	plugins *PluginsHelperImpl
+	config  *common.ControllerConfig
 }
 
 // Reconcile reads that state of the cluster for a Grafana object and makes changes based on the state read
 // and what is in the Grafana.Spec
 func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	// Fetch the Grafana instance
 	instance := &integreatly.Grafana{}
 	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			// Request object not found, could have been deleted after reconcile request.
-			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
-			// Return and don't requeue
 			return reconcile.Result{}, nil
 		}
-		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	}
 
@@ -103,66 +101,40 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 	case PhaseInstallGrafana:
 		return r.InstallGrafana(instanceCopy)
 	case PhaseDone:
-		return r.ReconcileNamespaces(instanceCopy)
+		r.config.AddConfigItem(common.ConfigDashboardLabelSelector, instanceCopy.Spec.DashboardLabelSelector)
+		return reconcile.Result{Requeue: true}, r.UpdatePhase(instanceCopy, PhasePlugins)
+	case PhasePlugins:
+		return r.ReconcileDashboardPlugins(instanceCopy)
 	}
 
-	return reconcile.Result{RequeueAfter: time.Second * 10}, nil
+	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileGrafana) ReconcileNamespaces(cr *integreatly.Grafana) (reconcile.Result, error) {
-	namespaces, err := r.helper.getMonitoringNamespaces(cr.Spec.DashboardNamespaceSelector)
-	if err != nil {
-		log.Error(err, "Error listing namespaces")
-		return reconcile.Result{}, err
+func (r *ReconcileGrafana) ReconcileDashboardPlugins(cr *integreatly.Grafana) (reconcile.Result, error) {
+	// Waited long enough for dashboards to be ready?
+	if r.plugins.CanUpdatePlugins() == false {
+		return reconcile.Result{RequeueAfter: time.Second * ReconcilePauseSeconds}, nil
 	}
 
-	if len(namespaces) >= 1 {
-		var requestedPlugins integreatly.PluginList
-
-		for _, ns := range namespaces {
-			dashboards, err := r.helper.getNamespaceDashboards(ns.Name)
-			if err != nil {
-				return reconcile.Result{}, err
-			} else {
-				if len(dashboards.Items) >= 1 {
-					for _, d := range dashboards.Items {
-						dashboardCopy := d.DeepCopy()
-						dashboardCopy.Spec.Plugins.SetOrigin(dashboardCopy)
-						requestedPlugins = append(requestedPlugins, dashboardCopy.Spec.Plugins...)
-						r.ReconcileDashboardConfigMap(cr, dashboardCopy)
-					}
-				}
-			}
-		}
-
-		filteredPlugins, updated := r.plugins.FilterPlugins(cr, requestedPlugins)
-		if updated {
-			r.ReconcilePlugins(cr, filteredPlugins)
-
-			// Update the dashboards that had their plugins modified
-			// to let the owners know about the status
-			err = r.ReconcileDashboards(filteredPlugins)
-		}
+	// Fetch all plugins of all dashboards
+	var requestedPlugins integreatly.PluginList
+	for _, v := range common.GetControllerConfig().Plugins {
+		requestedPlugins = append(requestedPlugins, v...)
 	}
 
-	return reconcile.Result{RequeueAfter: time.Second * 10}, err
-}
+	filteredPlugins, updated := r.plugins.FilterPlugins(cr, requestedPlugins)
+	if updated {
+		r.ReconcilePlugins(cr, filteredPlugins)
 
-func (r *ReconcileGrafana) ReconcileDashboards(plugins integreatly.PluginList) error {
-	for _, plugin := range plugins {
-		err := r.client.Update(context.TODO(), plugin.Origin)
+		// Update the dashboards that had their plugins modified
+		// to let the owners know about the status
+		err := r.UpdateDashboardMessages(filteredPlugins)
 		if err != nil {
-			return err
+			return reconcile.Result{}, err
 		}
 	}
-	return nil
-}
 
-func (r *ReconcileGrafana) ReconcileDashboardConfigMap(cr *integreatly.Grafana, d *integreatly.GrafanaDashboard) {
-	err := r.helper.updateDashboard(cr.Namespace, d.Namespace, d)
-	if err != nil {
-		log.Error(err, "Error updating dashboard config")
-	}
+	return reconcile.Result{RequeueAfter: time.Second * ReconcilePauseSeconds}, nil
 }
 
 func (r *ReconcileGrafana) ReconcilePlugins(cr *integreatly.Grafana, plugins []integreatly.GrafanaPlugin) error {
@@ -187,10 +159,20 @@ func (r *ReconcileGrafana) ReconcilePlugins(cr *integreatly.Grafana, plugins []i
 	return err
 }
 
+func (r *ReconcileGrafana) UpdateDashboardMessages(plugins integreatly.PluginList) error {
+	for _, plugin := range plugins {
+		err := r.client.Update(context.TODO(), plugin.Origin)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (r *ReconcileGrafana) CreateConfigFiles(cr *integreatly.Grafana) (reconcile.Result, error) {
 	log.Info("Phase: Create Config Files")
 
-	for _, resourceName := range []string{GrafanaServiceAccountName, GrafanaConfigMapName, GrafanaDashboardsConfigMapName, GrafanaProvidersConfigMapName, GrafanaDatasourcesConfigMapName, GrafanaServiceName, GrafanaRouteName} {
+	for _, resourceName := range []string{GrafanaServiceAccountName, GrafanaConfigMapName, GrafanaDashboardsConfigMapName, GrafanaProvidersConfigMapName, GrafanaDatasourcesConfigMapName, GrafanaServiceName, GrafanaIngressName} {
 		if err := r.CreateResource(cr, resourceName); err != nil {
 			log.Info(fmt.Sprintf("Error in CreateConfigFiles, resourceName=%s : err=%s", resourceName, err))
 			// Requeue so it can be attempted again
@@ -199,7 +181,13 @@ func (r *ReconcileGrafana) CreateConfigFiles(cr *integreatly.Grafana) (reconcile
 	}
 
 	log.Info("Config files created")
-	return reconcile.Result{Requeue: true}, r.UpdatePhase(cr, PhaseInstallGrafana)
+
+	err := r.UpdatePhase(cr, PhaseInstallGrafana)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	return reconcile.Result{RequeueAfter: time.Second * ReconcilePauseSeconds}, nil
 }
 
 func (r *ReconcileGrafana) InstallGrafana(cr *integreatly.Grafana) (reconcile.Result, error) {
