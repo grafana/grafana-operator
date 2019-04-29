@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"time"
@@ -203,20 +204,46 @@ func (r *ReconcileGrafana) CreateConfigFiles(cr *integreatly.Grafana) (reconcile
 
 func (r *ReconcileGrafana) InstallGrafana(cr *integreatly.Grafana) (reconcile.Result, error) {
 	log.Info("Phase: Install Grafana")
+	err := r.CreateDeployment(cr, GrafanaDeploymentName)
 
-	for _, resourceName := range []string{GrafanaDeploymentName} {
-		if err := r.CreateResource(cr, resourceName); err != nil {
-			log.Info(fmt.Sprintf("Error in InstallGrafana, resourceName=%s : err=%s", resourceName, err))
-			// Requeue so it can be attempted again
-			return reconcile.Result{Requeue: true}, err
-		}
+	if err != nil {
+		return reconcile.Result{Requeue: true}, err
 	}
 
 	log.Info("Grafana installation complete")
-	return reconcile.Result{Requeue: true}, r.UpdatePhase(cr, PhaseDone)
+	return reconcile.Result{}, r.UpdatePhase(cr, PhaseDone)
 }
 
-// Creates a generic kubernetes resource from a templates
+// Creates the deployment from the template and injects any specified extra containers before
+// submitting it
+func (r *ReconcileGrafana) CreateDeployment(cr *integreatly.Grafana, resourceName string) error {
+
+	resourceHelper := newResourceHelper(cr)
+	resource, err := resourceHelper.createResource(resourceName)
+
+	if err != nil {
+		return err
+	}
+
+	// Deploy the unmodified resource if no extra containers are specified
+	if len(cr.Spec.Containers) == 0 {
+		return r.DeployResource(cr, resource, resourceName)
+	}
+
+	// Otherwise append extra containers before submitting the resource
+	rawResource := newUnstructuredResourceMap(resource.(*unstructured.Unstructured))
+	containers := rawResource.access("spec").access("template").access("spec").get("containers").([]interface{})
+
+	for _, container := range cr.Spec.Containers {
+		containers = append(containers, container)
+		log.Info(fmt.Sprintf("adding extra container '%v' to '%v'", container.Name, GrafanaDeploymentName))
+	}
+
+	rawResource.access("spec").access("template").access("spec").set("containers", containers)
+	return r.DeployResource(cr, resource, resourceName)
+}
+
+// Creates a generic kubernetes resource from a template
 func (r *ReconcileGrafana) CreateResource(cr *integreatly.Grafana, resourceName string) error {
 	resourceHelper := newResourceHelper(cr)
 	resource, err := resourceHelper.createResource(resourceName)
@@ -225,12 +252,17 @@ func (r *ReconcileGrafana) CreateResource(cr *integreatly.Grafana, resourceName 
 		return err
 	}
 
+	return r.DeployResource(cr, resource, resourceName)
+}
+
+// Deploys a resource given by a runtime object
+func (r *ReconcileGrafana) DeployResource(cr *integreatly.Grafana, resource runtime.Object, resourceName string) error {
 	// Try to find the resource, it may already exist
 	selector := types.NamespacedName{
 		Namespace: cr.Namespace,
 		Name:      resourceName,
 	}
-	err = r.client.Get(context.TODO(), selector, resource)
+	err := r.client.Get(context.TODO(), selector, resource)
 
 	// The resource exists, do nothing
 	if err == nil {
