@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -13,6 +14,7 @@ type GrafanaSpec struct {
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	PrometheusUrl              string                `json:"prometheusUrl"`
 	DashboardNamespaceSelector *metav1.LabelSelector `json:"dashboardNamespaceSelector,omitempty"`
+	Containers                 []v1.Container        `json:"containers,omitempty"`
 }
 
 // GrafanaStatus defines the observed state of Grafana

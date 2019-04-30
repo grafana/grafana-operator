@@ -5,6 +5,7 @@
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
@@ -219,6 +220,13 @@ func (in *GrafanaSpec) DeepCopyInto(out *GrafanaSpec) {
 		in, out := &in.DashboardNamespaceSelector, &out.DashboardNamespaceSelector
 		*out = new(v1.LabelSelector)
 		(*in).DeepCopyInto(*out)
+	}
+	if in.Containers != nil {
+		in, out := &in.Containers, &out.Containers
+		*out = make([]corev1.Container, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
 	}
 	return
 }

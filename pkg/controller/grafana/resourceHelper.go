@@ -7,6 +7,37 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
+// An abstraction type that allows easier access to the contents of an
+// unstructured resource
+type UnstructuredResourceMap struct {
+	Values map[string]interface{}
+}
+
+// Go one level deeper in the unstructured resource map
+func (m UnstructuredResourceMap) access(key string) *UnstructuredResourceMap {
+	return &UnstructuredResourceMap{
+		Values: m.Values[key].(map[string]interface{}),
+	}
+}
+
+// Return value of the current level in the unstructured resource map
+func (m UnstructuredResourceMap) get(key string) interface{} {
+	return m.Values[key]
+}
+
+// Set value in an unstructured resource map
+func (m UnstructuredResourceMap) set(key string, value interface{}) {
+	m.Values[key] = value
+}
+
+// Create a new unstructured resource map
+func newUnstructuredResourceMap(unstructured *unstructured.Unstructured) *UnstructuredResourceMap {
+	return &UnstructuredResourceMap{
+		Values: unstructured.UnstructuredContent(),
+	}
+}
+
+// Helps with creating kubernetes resources from yaml templates
 type ResourceHelper struct {
 	templateHelper *GrafanaTemplateHelper
 	cr             *integreatly.Grafana

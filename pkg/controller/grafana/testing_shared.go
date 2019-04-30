@@ -1,6 +1,31 @@
 package grafana
 
-import "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
+import (
+	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
+	v12 "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+var MockCR = v1alpha1.Grafana{
+	ObjectMeta: v1.ObjectMeta{
+		Name:      "test",
+		Namespace: "dummy",
+	},
+	Spec: v1alpha1.GrafanaSpec{
+		Containers:    []v12.Container{},
+		PrometheusUrl: "http://dummy",
+	},
+}
+
+var Templates = []string{
+	GrafanaDeploymentName,
+	GrafanaDashboardsConfigMapName,
+	GrafanaDatasourcesConfigMapName,
+	GrafanaRouteName,
+	GrafanaProvidersConfigMapName,
+	GrafanaServiceAccountName,
+	GrafanaServiceName,
+}
 
 var Mockplugina100 = v1alpha1.GrafanaPlugin{
 	Name:    "a",
