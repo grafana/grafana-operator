@@ -24,7 +24,7 @@ import (
 var log = logf.Log.WithName("controller_grafana")
 
 const (
-	PhaseConfigFiles = iota
+	PhaseConfigFiles int = iota
 	PhaseInstallGrafana
 	PhaseDone
 )
@@ -204,14 +204,19 @@ func (r *ReconcileGrafana) CreateConfigFiles(cr *integreatly.Grafana) (reconcile
 
 func (r *ReconcileGrafana) InstallGrafana(cr *integreatly.Grafana) (reconcile.Result, error) {
 	log.Info("Phase: Install Grafana")
-	err := r.CreateDeployment(cr, GrafanaDeploymentName)
 
+	err := r.CreateDeployment(cr, GrafanaDeploymentName)
 	if err != nil {
 		return reconcile.Result{Requeue: true}, err
 	}
 
+	err = r.UpdatePhase(cr, PhaseDone)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
 	log.Info("Grafana installation complete")
-	return reconcile.Result{}, r.UpdatePhase(cr, PhaseDone)
+	return reconcile.Result{Requeue: true}, nil
 }
 
 // Creates the deployment from the template and injects any specified extra containers before
@@ -291,6 +296,21 @@ func (r *ReconcileGrafana) DeployResource(cr *integreatly.Grafana, resource runt
 }
 
 func (r *ReconcileGrafana) UpdatePhase(cr *integreatly.Grafana, phase int) error {
+	key := types.NamespacedName{
+		Name:      cr.Name,
+		Namespace: cr.Namespace,
+	}
+
+	// Refresh the resource before updating the status
+	err := r.client.Get(context.TODO(), key, cr)
+	if err != nil {
+		return err
+	}
+
+	if cr.Status.Phase == phase {
+		return nil
+	}
+
 	cr.Status.Phase = phase
 	return r.client.Update(context.TODO(), cr)
 }
