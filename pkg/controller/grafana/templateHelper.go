@@ -24,7 +24,7 @@ const (
 	GrafanaRouteName                = "grafana-route"
 	GrafanaIngressName              = "grafana-ingress"
 	GrafanaServiceName              = "grafana-service"
-	PluginsInitContainerImageTag    = "0.0.1"
+	PluginsInitContainerImageTag    = "0.0.2"
 )
 
 type GrafanaParamaeters struct {

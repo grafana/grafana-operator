@@ -13,6 +13,7 @@ const (
 	ConfigOperatorNamespace      = "grafana.operator.namespace"
 	ConfigDashboardLabelSelector = "grafana.dashboard.selector"
 	ConfigGrafanaPluginsUpdated  = "grafana.plugins.updated"
+ 	ConfigOpenshift              = "mode.openshift"
 )
 
 type ControllerConfig struct {
@@ -48,7 +49,7 @@ func (c *ControllerConfig) SetPluginsFor(dashboard *v1alpha1.GrafanaDashboard) {
 	c.AddConfigItem(ConfigGrafanaPluginsUpdated, time.Now())
 }
 
-func (c *ControllerConfig) EmptyPluginsFor(dashboard *v1alpha1.GrafanaDashboard) {
+func (c *ControllerConfig) RemovePluginsFor(dashboard *v1alpha1.GrafanaDashboard) {
 	id := c.GetDashboardId(dashboard)
 	c.Plugins[id] = nil
 	c.AddConfigItem(ConfigGrafanaPluginsUpdated, time.Now())
@@ -70,6 +71,13 @@ func (c *ControllerConfig) GetConfigItem(key string, defaultValue interface{}) i
 func (c *ControllerConfig) GetConfigString(key, defaultValue string) string {
 	if c.HasConfigItem(key) {
 		return c.Values[key].(string)
+	}
+	return defaultValue
+}
+
+func (c *ControllerConfig) GetConfigBool(key string, defaultValue bool) bool {
+	if c.HasConfigItem(key) {
+		return c.Values[key].(bool)
 	}
 	return defaultValue
 }

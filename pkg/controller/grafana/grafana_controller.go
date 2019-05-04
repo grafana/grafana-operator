@@ -32,6 +32,7 @@ const (
 )
 
 const ReconcilePauseSeconds = 5
+const OpenShiftOAuthRedirect = "serviceaccounts.openshift.io/oauth-redirectreference.primary"
 
 /**
 * USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
@@ -172,7 +173,17 @@ func (r *ReconcileGrafana) UpdateDashboardMessages(plugins integreatly.PluginLis
 func (r *ReconcileGrafana) CreateConfigFiles(cr *integreatly.Grafana) (reconcile.Result, error) {
 	log.Info("Phase: Create Config Files")
 
-	for _, resourceName := range []string{GrafanaServiceAccountName, GrafanaConfigMapName, GrafanaDashboardsConfigMapName, GrafanaProvidersConfigMapName, GrafanaDatasourcesConfigMapName, GrafanaServiceName, GrafanaIngressName} {
+	ingressType := GrafanaIngressName
+	if common.GetControllerConfig().GetConfigBool(common.ConfigOpenshift, false) == true {
+		ingressType = GrafanaRouteName
+	}
+
+	err := r.CreateServiceAccount(cr, GrafanaServiceAccountName)
+	if err != nil {
+		return reconcile.Result{Requeue: true}, err
+	}
+
+	for _, resourceName := range []string{GrafanaConfigMapName, GrafanaDashboardsConfigMapName, GrafanaProvidersConfigMapName, GrafanaDatasourcesConfigMapName, GrafanaServiceName, ingressType} {
 		if err := r.CreateResource(cr, resourceName); err != nil {
 			log.Info(fmt.Sprintf("Error in CreateConfigFiles, resourceName=%s : err=%s", resourceName, err))
 			// Requeue so it can be attempted again
@@ -182,7 +193,7 @@ func (r *ReconcileGrafana) CreateConfigFiles(cr *integreatly.Grafana) (reconcile
 
 	log.Info("Config files created")
 
-	err := r.UpdatePhase(cr, PhaseInstallGrafana)
+	err = r.UpdatePhase(cr, PhaseInstallGrafana)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -210,7 +221,6 @@ func (r *ReconcileGrafana) InstallGrafana(cr *integreatly.Grafana) (reconcile.Re
 // Creates the deployment from the template and injects any specified extra containers before
 // submitting it
 func (r *ReconcileGrafana) CreateDeployment(cr *integreatly.Grafana, resourceName string) error {
-
 	resourceHelper := newResourceHelper(cr)
 	resource, err := resourceHelper.createResource(resourceName)
 
@@ -235,6 +245,31 @@ func (r *ReconcileGrafana) CreateDeployment(cr *integreatly.Grafana, resourceNam
 	rawResource.access("spec").access("template").access("spec").set("containers", containers)
 	return r.DeployResource(cr, resource, resourceName)
 }
+
+func (r *ReconcileGrafana) CreateServiceAccount(cr *integreatly.Grafana, resourceName string) error {
+	resourceHelper := newResourceHelper(cr)
+	resource, err := resourceHelper.createResource(resourceName)
+
+	if err != nil {
+		return err
+	}
+
+	// Deploy the unmodified resource if not on OpenShift
+	if common.GetControllerConfig().GetConfigBool(common.ConfigOpenshift, false) == false {
+		return r.DeployResource(cr, resource, resourceName)
+	}
+
+	// Otherwise add an annotation that allows using the OAuthProxy (and will have no
+	// effect otherwise)
+	annotations := make(map[string]string)
+	annotations[OpenShiftOAuthRedirect] = fmt.Sprintf(`{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"%s"}}`, GrafanaRouteName)
+
+	rawResource := newUnstructuredResourceMap(resource.(*unstructured.Unstructured))
+	rawResource.access("metadata").set("annotations", annotations)
+
+	return r.DeployResource(cr, resource, resourceName)
+}
+
 
 // Creates a generic kubernetes resource from a template
 func (r *ReconcileGrafana) CreateResource(cr *integreatly.Grafana, resourceName string) error {

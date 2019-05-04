@@ -117,7 +117,7 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 		if err != nil {
 			return reconcile.Result{}, err
 		}
-		r.config.EmptyPluginsFor(instanceCopy)
+		r.config.RemovePluginsFor(instanceCopy)
 	} else {
 		err = r.ImportDashboard(instanceCopy)
 		if err != nil {

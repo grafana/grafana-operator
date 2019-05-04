@@ -39,6 +39,7 @@ func init() {
 	flagset.StringVar(&flagImage, "grafana-image", "", "Overrides the default Grafana image")
 	flagset.StringVar(&flagImageTag, "grafana-image-tag", "", "Overrides the default Grafana image tag")
 	flagset.BoolVar(&scanAll, "scan-all", false, "Scans all namespaces for dashboards")
+	flagset.BoolVar(&scanAll, "openshift", false, "Use Route instead of Ingress")
 	flagset.Parse(os.Args[1:])
 }
 
@@ -89,6 +90,7 @@ func main() {
 	controllerConfig.AddConfigItem(common.ConfigGrafanaImageTag, flagImageTag)
 	controllerConfig.AddConfigItem(common.ConfigOperatorNamespace, namespace)
 	controllerConfig.AddConfigItem(common.ConfigDashboardLabelSelector, "")
+	controllerConfig.AddConfigItem(common.ConfigOpenshift, false)
 
 	// Get the namespaces to scan for dashboards
 	// It's either the same namespace as the controller's or it's all namespaces if the
