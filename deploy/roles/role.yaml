@@ -44,5 +44,6 @@ rules:
   resources:
   - '*'
   - grafanadashboards
+  - grafanadatasources
   verbs:
   - '*'
