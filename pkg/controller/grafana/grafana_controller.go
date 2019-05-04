@@ -270,7 +270,6 @@ func (r *ReconcileGrafana) CreateServiceAccount(cr *integreatly.Grafana, resourc
 	return r.DeployResource(cr, resource, resourceName)
 }
 
-
 // Creates a generic kubernetes resource from a template
 func (r *ReconcileGrafana) CreateResource(cr *integreatly.Grafana, resourceName string) error {
 	resourceHelper := newResourceHelper(cr)

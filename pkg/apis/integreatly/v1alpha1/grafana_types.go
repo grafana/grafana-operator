@@ -12,11 +12,10 @@ import (
 type GrafanaSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	PrometheusUrl              string                `json:"prometheusUrl"`
-	Hostname                   string                `json:"hostname"`
-	DashboardNamespaceSelector *metav1.LabelSelector `json:"dashboardNamespaceSelector,omitempty"`
-	Containers                 []v1.Container        `json:"containers,omitempty"`
-	DashboardLabelSelector     *metav1.LabelSelector `json:"dashboardLabelSelector,omitempty"`
+	PrometheusUrl          string                `json:"prometheusUrl"`
+	Hostname               string                `json:"hostname,omitempty"`
+	Containers             []v1.Container        `json:"containers,omitempty"`
+	DashboardLabelSelector *metav1.LabelSelector `json:"dashboardLabelSelector,omitempty"`
 }
 
 // GrafanaStatus defines the observed state of Grafana

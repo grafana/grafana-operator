@@ -13,7 +13,7 @@ const (
 	ConfigOperatorNamespace      = "grafana.operator.namespace"
 	ConfigDashboardLabelSelector = "grafana.dashboard.selector"
 	ConfigGrafanaPluginsUpdated  = "grafana.plugins.updated"
- 	ConfigOpenshift              = "mode.openshift"
+	ConfigOpenshift              = "mode.openshift"
 )
 
 type ControllerConfig struct {
