@@ -3,7 +3,6 @@ package grafana
 import (
 	"fmt"
 	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
-	gr "github.com/integr8ly/grafana-operator/pkg/client/versioned"
 	apps "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
 	core "k8s.io/api/core/v1"
@@ -20,18 +19,15 @@ const (
 
 type KubeHelperImpl struct {
 	k8client *kubernetes.Clientset
-	grclient *gr.Clientset
 }
 
 func NewKubeHelper() *KubeHelperImpl {
 	config := config.GetConfigOrDie()
 
 	k8client := kubernetes.NewForConfigOrDie(config)
-	grclient := gr.NewForConfigOrDie(config)
 
 	helper := new(KubeHelperImpl)
 	helper.k8client = k8client
-	helper.grclient = grclient
 	return helper
 }
 
