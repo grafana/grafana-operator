@@ -5,9 +5,7 @@ import (
 	"fmt"
 	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
-	"github.com/integr8ly/grafana-operator/pkg/controller/grafana"
 	"gopkg.in/yaml.v2"
-	"k8s.io/apimachinery/pkg/types"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -19,11 +17,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-)
-
-const (
-	DataSourceFinalizerName = "grafana.datasource.cleanup"
-	RequeueDelaySeconds     = 10
 )
 
 var log = logf.Log.WithName("controller_grafanadatasource")
@@ -44,7 +37,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &ReconcileGrafanaDataSource{
 		client: mgr.GetClient(),
 		scheme: mgr.GetScheme(),
-		helper: grafana.NewKubeHelper(),
+		helper: common.NewKubeHelper(),
 	}
 }
 
@@ -73,7 +66,7 @@ type ReconcileGrafanaDataSource struct {
 	// that reads objects from the cache and writes to the apiserver
 	client client.Client
 	scheme *runtime.Scheme
-	helper *grafana.KubeHelperImpl
+	helper *common.KubeHelperImpl
 }
 
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
@@ -100,13 +93,13 @@ func (r *ReconcileGrafanaDataSource) Reconcile(request reconcile.Request) (recon
 	switch cr.Status.Phase {
 	case common.StatusResourceUninitialized:
 		// New resource
-		return reconcile.Result{}, r.updatePhase(cr, common.StatusResourceSetFinalizer)
+		return r.updatePhase(cr, common.StatusResourceSetFinalizer)
 	case common.StatusResourceSetFinalizer:
 		// Set finalizer first
 		if len(cr.Finalizers) > 0 {
-			return reconcile.Result{}, r.updatePhase(cr, common.StatusResourceCreated)
+			return r.updatePhase(cr, common.StatusResourceCreated)
 		} else {
-			return reconcile.Result{}, r.setFinalizer(cr)
+			return r.setFinalizer(cr)
 		}
 	case common.StatusResourceCreated:
 		return r.reconcileDatasource(cr)
@@ -128,7 +121,7 @@ func (r *ReconcileGrafanaDataSource) reconcileDatasource(cr *i8ly.GrafanaDataSou
 	}
 
 	if !updated {
-		return reconcile.Result{RequeueAfter: time.Second * RequeueDelaySeconds}, err
+		return reconcile.Result{RequeueAfter: time.Second * common.RequeueDelaySeconds}, err
 	}
 
 	err = r.helper.RestartGrafana(cr.Namespace)
@@ -176,11 +169,12 @@ func (r *ReconcileGrafanaDataSource) parseDataSource(cr *i8ly.GrafanaDataSource)
 	return string(bytes), nil
 }
 
-func (r *ReconcileGrafanaDataSource) setFinalizer(cr *i8ly.GrafanaDataSource) error {
+func (r *ReconcileGrafanaDataSource) setFinalizer(cr *i8ly.GrafanaDataSource) (reconcile.Result, error) {
 	if len(cr.Finalizers) == 0 {
-		cr.Finalizers = append(cr.Finalizers, DataSourceFinalizerName)
+		cr.Finalizers = append(cr.Finalizers, common.ResourceFinalizerName)
 	}
-	return r.client.Update(context.TODO(), cr)
+	err := r.client.Update(context.TODO(), cr)
+	return reconcile.Result{}, err
 }
 
 func (r *ReconcileGrafanaDataSource) removeFinalizer(cr *i8ly.GrafanaDataSource) error {
@@ -188,22 +182,8 @@ func (r *ReconcileGrafanaDataSource) removeFinalizer(cr *i8ly.GrafanaDataSource)
 	return r.client.Update(context.TODO(), cr)
 }
 
-func (r *ReconcileGrafanaDataSource) updatePhase(cr *i8ly.GrafanaDataSource, phase int) error {
-	key := types.NamespacedName{
-		Name:      cr.Name,
-		Namespace: cr.Namespace,
-	}
-
-	// Refresh the resource before updating the status
-	err := r.client.Get(context.TODO(), key, cr)
-	if err != nil {
-		return err
-	}
-
-	if cr.Status.Phase == phase {
-		return nil
-	}
-
+func (r *ReconcileGrafanaDataSource) updatePhase(cr *i8ly.GrafanaDataSource, phase int) (reconcile.Result, error) {
 	cr.Status.Phase = phase
-	return r.client.Update(context.TODO(), cr)
+	err := r.client.Update(context.TODO(), cr)
+	return reconcile.Result{}, err
 }

@@ -1,6 +1,7 @@
 package grafana
 
 import (
+	"crypto/tls"
 	"fmt"
 	integreatly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
@@ -9,19 +10,20 @@ import (
 	"time"
 )
 
-const (
-	PluginsEnvVar = "GRAFANA_PLUGINS"
-	PluginsUrl    = "https://grafana.com/api/plugins/%s/versions/%s"
-	PluginsMinAge = 5
-)
-
 type PluginsHelperImpl struct {
-	BaseUrl string
+	BaseUrl    string
+	HttpClient *http.Client
 }
 
 func newPluginsHelper() *PluginsHelperImpl {
+	insecureTransport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
 	helper := new(PluginsHelperImpl)
-	helper.BaseUrl = PluginsUrl
+	helper.BaseUrl = common.PluginsUrl
+	helper.HttpClient = &http.Client{Transport: insecureTransport}
+
 	return helper
 }
 
@@ -29,7 +31,7 @@ func newPluginsHelper() *PluginsHelperImpl {
 // A 200 OK response indicates that the plugin exists and can be downloaded
 func (h *PluginsHelperImpl) PluginExists(plugin integreatly.GrafanaPlugin) bool {
 	url := fmt.Sprintf(h.BaseUrl, plugin.Name, plugin.Version)
-	resp, err := http.Get(url)
+	resp, err := h.HttpClient.Get(url)
 	if err != nil {
 		return false
 	}
@@ -91,7 +93,7 @@ func (h *PluginsHelperImpl) PickLatestVersions(requested integreatly.PluginList)
 func (h *PluginsHelperImpl) CanUpdatePlugins() bool {
 	lastUpdate := common.GetControllerConfig().GetConfigTimestamp(common.ConfigGrafanaPluginsUpdated, time.Now())
 	difference := time.Now().Sub(lastUpdate)
-	return difference.Seconds() >= PluginsMinAge
+	return difference.Seconds() >= common.PluginsMinAge
 }
 
 // Creates the list of plugins that can be added or updated

@@ -26,11 +26,12 @@ import (
 	"syscall"
 	"testing"
 
-	"k8s.io/client-go/tools/clientcmd"
-
+	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
-	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+
 	log "github.com/sirupsen/logrus"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 const (
@@ -54,19 +55,26 @@ func MainEntry(m *testing.M) {
 	// go test always runs from the test directory; change to project root
 	err := os.Chdir(*projRoot)
 	if err != nil {
-		log.Fatalf("failed to change directory to project root: %v", err)
+		log.Fatalf("Failed to change directory to project root: %v", err)
 	}
 	if err := setup(kubeconfigPath, namespacedManPath, *localOperator); err != nil {
-		log.Fatalf("failed to set up framework: %v", err)
+		log.Fatalf("Failed to set up framework: %v", err)
 	}
 	// setup local operator command, but don't start it yet
 	var localCmd *exec.Cmd
 	var localCmdOutBuf, localCmdErrBuf bytes.Buffer
 	if *localOperator {
-		// TODO: make a generic 'up-local' function to deduplicate shared code between this and cmd/up/local
-		// taken from commands/operator-sdk/cmd/up/local.go
-		runArgs := append([]string{"run"}, []string{filepath.Join(scaffold.ManagerDir, scaffold.CmdFile)}...)
-		localCmd = exec.Command("go", runArgs...)
+		projectName := filepath.Base(projutil.MustGetwd())
+		outputBinName := filepath.Join(scaffold.BuildBinDir, projectName+"-local")
+		opts := projutil.GoCmdOptions{
+			BinName:     outputBinName,
+			PackagePath: filepath.Join(scaffold.ManagerDir, scaffold.CmdFile),
+			GoMod:       projutil.IsDepManagerGoMod(),
+		}
+		if err := projutil.GoBuild(opts); err != nil {
+			log.Fatalf("Failed to build local operator binary: %s", err)
+		}
+		localCmd = exec.Command(outputBinName)
 		localCmd.Stdout = &localCmdOutBuf
 		localCmd.Stderr = &localCmdErrBuf
 		c := make(chan os.Signal)
@@ -75,7 +83,7 @@ func MainEntry(m *testing.M) {
 			<-c
 			err := localCmd.Process.Signal(os.Interrupt)
 			if err != nil {
-				log.Fatalf("failed to terminate the operator: (%v)", err)
+				log.Fatalf("Failed to terminate the operator: (%v)", err)
 			}
 			os.Exit(0)
 		}()
@@ -97,31 +105,29 @@ func MainEntry(m *testing.M) {
 		if *localOperator {
 			err := localCmd.Start()
 			if err != nil {
-				log.Fatalf("failed to run operator locally: (%v)", err)
+				log.Fatalf("Failed to run operator locally: (%v)", err)
 			}
-			log.Info("started local operator")
+			log.Info("Started local operator")
 		}
 		exitCode := m.Run()
 		if *localOperator {
 			err := localCmd.Process.Kill()
 			if err != nil {
-				log.Warn("failed to stop local operator process")
+				log.Warn("Failed to stop local operator process")
 			}
-			log.Infof("local operator stdout: %s", string(localCmdOutBuf.Bytes()))
-			log.Infof("local operator stderr: %s", string(localCmdErrBuf.Bytes()))
+			log.Infof("Local operator stdout: %s", string(localCmdOutBuf.Bytes()))
+			log.Infof("Local operator stderr: %s", string(localCmdErrBuf.Bytes()))
 		}
-		ctx.CleanupNoT()
+		ctx.Cleanup()
 		os.Exit(exitCode)
 	}()
 	// create crd
-	if *kubeconfigPath != "incluster" {
-		globalYAML, err := ioutil.ReadFile(*globalManPath)
-		if err != nil {
-			log.Fatalf("failed to read global resource manifest: %v", err)
-		}
-		err = ctx.createFromYAML(globalYAML, true, &CleanupOptions{TestContext: ctx})
-		if err != nil {
-			log.Fatalf("failed to create resource(s) in global resource manifest: %v", err)
-		}
+	globalYAML, err := ioutil.ReadFile(*globalManPath)
+	if err != nil {
+		log.Fatalf("Failed to read global resource manifest: %v", err)
+	}
+	err = ctx.createFromYAML(globalYAML, true, &CleanupOptions{TestContext: ctx})
+	if err != nil {
+		log.Fatalf("Failed to create resource(s) in global resource manifest: %v", err)
 	}
 }

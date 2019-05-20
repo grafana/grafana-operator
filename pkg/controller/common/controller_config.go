@@ -8,12 +8,31 @@ import (
 )
 
 const (
-	ConfigGrafanaImage           = "grafana.image.url"
-	ConfigGrafanaImageTag        = "grafana.image.tag"
-	ConfigOperatorNamespace      = "grafana.operator.namespace"
-	ConfigDashboardLabelSelector = "grafana.dashboard.selector"
-	ConfigGrafanaPluginsUpdated  = "grafana.plugins.updated"
-	ConfigOpenshift              = "mode.openshift"
+	ConfigGrafanaImage              = "grafana.image.url"
+	ConfigGrafanaImageTag           = "grafana.image.tag"
+	ConfigOperatorNamespace         = "grafana.operator.namespace"
+	ConfigDashboardLabelSelector    = "grafana.dashboard.selector"
+	ConfigGrafanaPluginsUpdated     = "grafana.plugins.updated"
+	ConfigOpenshift                 = "mode.openshift"
+	GrafanaImage                    = "docker.io/grafana/grafana"
+	GrafanaVersion                  = "5.4.2"
+	LogLevel                        = "error"
+	GrafanaConfigMapName            = "grafana-config"
+	GrafanaProvidersConfigMapName   = "grafana-providers"
+	GrafanaDatasourcesConfigMapName = "grafana-datasources"
+	GrafanaDashboardsConfigMapName  = "grafana-dashboards"
+	GrafanaServiceAccountName       = "grafana-serviceaccount"
+	GrafanaDeploymentName           = "grafana-deployment"
+	GrafanaRouteName                = "grafana-route"
+	GrafanaIngressName              = "grafana-ingress"
+	GrafanaServiceName              = "grafana-service"
+	PluginsInitContainerImageTag    = "0.0.2"
+	PluginsEnvVar                   = "GRAFANA_PLUGINS"
+	PluginsUrl                      = "https://grafana.com/api/plugins/%s/versions/%s"
+	PluginsMinAge                   = 5
+	InitContainerName               = "grafana-plugins-init"
+	ResourceFinalizerName           = "grafana.cleanup"
+	RequeueDelaySeconds             = 10
 )
 
 type ControllerConfig struct {

@@ -50,7 +50,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &ReconcileGrafana{
 		client:  mgr.GetClient(),
 		scheme:  mgr.GetScheme(),
-		helper:  NewKubeHelper(),
+		helper:  common.NewKubeHelper(),
 		plugins: newPluginsHelper(),
 		config:  common.GetControllerConfig(),
 	}
@@ -77,7 +77,7 @@ type ReconcileGrafana struct {
 	// that reads objects from the cache and writes to the apiserver
 	client  client.Client
 	scheme  *runtime.Scheme
-	helper  *KubeHelperImpl
+	helper  *common.KubeHelperImpl
 	plugins *PluginsHelperImpl
 	config  *common.ControllerConfig
 }
@@ -102,10 +102,11 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 	case PhaseInstallGrafana:
 		return r.InstallGrafana(cr)
 	case PhaseDone:
-		return reconcile.Result{Requeue: true}, r.UpdatePhase(cr, PhasePlugins)
+		log.Info("Grafana installation complete")
+		return r.UpdatePhase(cr, PhasePlugins)
 	case PhasePlugins:
 		// Make the label selector available to other controllers
-		r.config.AddConfigItem(common.ConfigDashboardLabelSelector, cr.Spec.DashboardLabelSelector)
+		r.config.AddConfigItem(common.ConfigDashboardLabelSelector, cr.Spec.DashboardLabelSelectors)
 		return r.ReconcileDashboardPlugins(cr)
 	}
 
@@ -124,7 +125,10 @@ func (r *ReconcileGrafana) ReconcileDashboardPlugins(cr *i8ly.Grafana) (reconcil
 		requestedPlugins = append(requestedPlugins, v...)
 	}
 
+	// Consolidate plugins and create the new list of plugin requirements
+	// If 'updated' is false then no changes have to be applied
 	filteredPlugins, updated := r.plugins.FilterPlugins(cr, requestedPlugins)
+
 	if updated {
 		r.ReconcilePlugins(cr, filteredPlugins)
 
@@ -157,7 +161,7 @@ func (r *ReconcileGrafana) ReconcilePlugins(cr *i8ly.Grafana, plugins []i8ly.Gra
 	}
 
 	newEnv := r.plugins.BuildEnv(cr)
-	err = r.helper.updateGrafanaDeployment(cr.Namespace, newEnv)
+	err = r.helper.UpdateGrafanaDeployment(cr.Namespace, newEnv)
 	return err
 }
 
@@ -174,17 +178,17 @@ func (r *ReconcileGrafana) UpdateDashboardMessages(plugins i8ly.PluginList) erro
 func (r *ReconcileGrafana) CreateConfigFiles(cr *i8ly.Grafana) (reconcile.Result, error) {
 	log.Info("Phase: Create Config Files")
 
-	ingressType := GrafanaIngressName
+	ingressType := common.GrafanaIngressName
 	if common.GetControllerConfig().GetConfigBool(common.ConfigOpenshift, false) == true {
-		ingressType = GrafanaRouteName
+		ingressType = common.GrafanaRouteName
 	}
 
-	err := r.CreateServiceAccount(cr, GrafanaServiceAccountName)
+	err := r.CreateServiceAccount(cr, common.GrafanaServiceAccountName)
 	if err != nil {
 		return reconcile.Result{Requeue: true}, err
 	}
 
-	for _, resourceName := range []string{GrafanaConfigMapName, GrafanaDashboardsConfigMapName, GrafanaProvidersConfigMapName, GrafanaDatasourcesConfigMapName, GrafanaServiceName, ingressType} {
+	for _, resourceName := range []string{common.GrafanaConfigMapName, common.GrafanaDashboardsConfigMapName, common.GrafanaProvidersConfigMapName, common.GrafanaDatasourcesConfigMapName, common.GrafanaServiceName, ingressType} {
 		if err := r.CreateResource(cr, resourceName); err != nil {
 			log.Info(fmt.Sprintf("Error in CreateConfigFiles, resourceName=%s : err=%s", resourceName, err))
 			// Requeue so it can be attempted again
@@ -194,29 +198,18 @@ func (r *ReconcileGrafana) CreateConfigFiles(cr *i8ly.Grafana) (reconcile.Result
 
 	log.Info("Config files created")
 
-	err = r.UpdatePhase(cr, PhaseInstallGrafana)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-
-	return reconcile.Result{RequeueAfter: time.Second * ReconcilePauseSeconds}, nil
+	return r.UpdatePhase(cr, PhaseInstallGrafana)
 }
 
 func (r *ReconcileGrafana) InstallGrafana(cr *i8ly.Grafana) (reconcile.Result, error) {
 	log.Info("Phase: Install Grafana")
 
-	err := r.CreateDeployment(cr, GrafanaDeploymentName)
-	if err != nil {
-		return reconcile.Result{Requeue: true}, err
-	}
-
-	err = r.UpdatePhase(cr, PhaseDone)
+	err := r.CreateDeployment(cr, common.GrafanaDeploymentName)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
-	log.Info("Grafana installation complete")
-	return reconcile.Result{Requeue: true}, nil
+	return r.UpdatePhase(cr, PhaseDone)
 }
 
 // Creates the deployment from the template and injects any specified extra containers before
@@ -240,7 +233,7 @@ func (r *ReconcileGrafana) CreateDeployment(cr *i8ly.Grafana, resourceName strin
 
 	for _, container := range cr.Spec.Containers {
 		containers = append(containers, container)
-		log.Info(fmt.Sprintf("adding extra container '%v' to '%v'", container.Name, GrafanaDeploymentName))
+		log.Info(fmt.Sprintf("adding extra container '%v' to '%v'", container.Name, common.GrafanaDeploymentName))
 	}
 
 	rawResource.access("spec").access("template").access("spec").set("containers", containers)
@@ -263,7 +256,7 @@ func (r *ReconcileGrafana) CreateServiceAccount(cr *i8ly.Grafana, resourceName s
 	// Otherwise add an annotation that allows using the OAuthProxy (and will have no
 	// effect otherwise)
 	annotations := make(map[string]string)
-	annotations[OpenShiftOAuthRedirect] = fmt.Sprintf(`{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"%s"}}`, GrafanaRouteName)
+	annotations[OpenShiftOAuthRedirect] = fmt.Sprintf(`{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"%s"}}`, common.GrafanaRouteName)
 
 	rawResource := newUnstructuredResourceMap(resource.(*unstructured.Unstructured))
 	rawResource.access("metadata").set("annotations", annotations)
@@ -318,22 +311,8 @@ func (r *ReconcileGrafana) DeployResource(cr *i8ly.Grafana, resource runtime.Obj
 	return nil
 }
 
-func (r *ReconcileGrafana) UpdatePhase(cr *i8ly.Grafana, phase int) error {
-	key := types.NamespacedName{
-		Name:      cr.Name,
-		Namespace: cr.Namespace,
-	}
-
-	// Refresh the resource before updating the status
-	err := r.client.Get(context.TODO(), key, cr)
-	if err != nil {
-		return err
-	}
-
-	if cr.Status.Phase == phase {
-		return nil
-	}
-
+func (r *ReconcileGrafana) UpdatePhase(cr *i8ly.Grafana, phase int) (reconcile.Result, error) {
 	cr.Status.Phase = phase
-	return r.client.Update(context.TODO(), cr)
+	err := r.client.Update(context.TODO(), cr)
+	return reconcile.Result{}, err
 }
