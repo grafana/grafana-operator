@@ -5,9 +5,9 @@ metadata:
   namespace: {{ .Namespace }}
 spec:
   port:
-    targetPort: grafana
+    targetPort: web
   tls:
-    termination: edge
+    termination: Reencrypt
   to:
     kind: Service
     name: {{ .GrafanaServiceName }}

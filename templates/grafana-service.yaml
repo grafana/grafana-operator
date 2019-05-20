@@ -5,11 +5,13 @@ metadata:
     application-monitoring: "true"
   name: {{ .GrafanaServiceName }}
   namespace: {{ .Namespace }}
+  annotations:
+    service.alpha.openshift.io/serving-cert-secret-name: grafana-k8s-tls
 spec:
   ports:
-  - name: grafana
-    port: 3000
+  - name: web
+    port: 9091
     protocol: TCP
-    targetPort: grafana-http
+    targetPort: gproxy
   selector:
     app: grafana

@@ -12,7 +12,7 @@ import (
 
 const (
 	GrafanaImage                    = "docker.io/grafana/grafana"
-	GrafanaVersion                  = "5.4.2"
+	GrafanaVersion                  = "6.0.1"
 	LogLevel                        = "error"
 	GrafanaConfigMapName            = "grafana-config"
 	GrafanaProvidersConfigMapName   = "grafana-providers"

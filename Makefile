@@ -3,7 +3,7 @@ NAMESPACE=middleware-monitoring
 PROJECT=grafana-operator
 REG=quay.io
 SHELL=/bin/bash
-TAG=latest
+TAG=0.0.3
 PKG=github.com/integr8ly/grafana-operator
 TEST_DIRS?=$(shell sh -c "find $(TOP_SRC_DIRS) -name \\*_test.go -exec dirname {} \\; | sort | uniq")
 TEST_POD_NAME=grafana-operator-test
@@ -31,6 +31,7 @@ code/compile:
 .PHONY: code/gen
 code/gen:
 	operator-sdk generate k8s
+	@go generate ./...s
 
 .PHONY: code/check
 code/check:

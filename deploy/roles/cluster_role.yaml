@@ -3,20 +3,32 @@ kind: ClusterRole
 metadata:
   name: grafana-operator
 rules:
-  - apiGroups:
-      - ""
-    attributeRestrictions: null
-    resources:
-      - namespaces
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - integreatly.org
-    attributeRestrictions: null
-    resources:
-      - grafanadashboards
-      - grafanas
-    verbs:
-      - '*'
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+- apiGroups:
+    - ""
+  attributeRestrictions: null
+  resources:
+    - namespaces
+  verbs:
+    - get
+    - list
+    - watch
+- apiGroups:
+    - integreatly.org
+  attributeRestrictions: null
+  resources:
+    - grafanadashboards
+    - grafanas
+  verbs:
+    - '*'
