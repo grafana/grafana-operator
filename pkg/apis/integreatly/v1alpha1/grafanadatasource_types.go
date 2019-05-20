@@ -13,14 +13,14 @@ type GrafanaDataSourceSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
+	Datasources []GrafanaDataSourceFields `json:"datasources"`
+	Name        string                    `json:"name"`
 }
 
 // GrafanaDataSourceStatus defines the observed state of GrafanaDataSource
 // +k8s:openapi-gen=true
 type GrafanaDataSourceStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
+	Phase int `json:"phase"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -42,6 +42,26 @@ type GrafanaDataSourceList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []GrafanaDataSource `json:"items"`
+}
+
+type GrafanaDataSourceFields struct {
+	Name              string `json:"name"`
+	Type              string `json:"type"`
+	Access            string `json:"access"`
+	OrgId             int    `json:"orgId,omitempty"`
+	Url               string `json:"url"`
+	Password          string `json:"password,omitempty"`
+	User              string `json:"user,omitempty"`
+	Database          string `json:"database,omitempty"`
+	BasicAuth         bool   `json:"basicAuth,omitempty"`
+	BasicAuthUser     string `json:"basicAuthUser,omitempty"`
+	BasicAuthPassword string `json:"basicAuthPassword,omitempty"`
+	WithCredentials   bool   `json:"withCredentials,omitempty"`
+	IsDefault         bool   `json:"is_default,omitempty"`
+	JsonData          string `json:"json_data,omitempty"`
+	SecureJsonData    string `json:"secure_json_data,omitempty"`
+	Version           int    `json:"version,omitempty"`
+	Editable          bool   `json:"editable,omitempty"`
 }
 
 func init() {

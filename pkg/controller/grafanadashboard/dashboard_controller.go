@@ -4,11 +4,12 @@ import (
 	"context"
 	defaultErrors "errors"
 	"fmt"
-	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
+	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/pkg/controller/grafana"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/types"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -20,6 +21,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+)
+
+const (
+	DashboardFinalizerName = "grafana.dashboard.cleanup"
 )
 
 var log = logf.Log.WithName("controller_grafanadashboard")
@@ -54,7 +59,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to primary resource GrafanaDashboard
-	err = c.Watch(&source.Kind{Type: &v1alpha1.GrafanaDashboard{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &i8ly.GrafanaDashboard{}}, &handler.EnqueueRequestForObject{})
 	if err == nil {
 		log.Info("Starting dashboard controller")
 	}
@@ -74,7 +79,7 @@ type ReconcileGrafanaDashboard struct {
 	helper *grafana.KubeHelperImpl
 }
 
-func (r *ReconcileGrafanaDashboard) matchesSelector(d *v1alpha1.GrafanaDashboard, s *v1.LabelSelector) (bool, error) {
+func (r *ReconcileGrafanaDashboard) matchesSelector(d *i8ly.GrafanaDashboard, s *v1.LabelSelector) (bool, error) {
 	selector, err := v1.LabelSelectorAsSelector(s)
 	if err != nil {
 		return false, err
@@ -92,7 +97,7 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 	}
 
 	// Fetch the GrafanaDashboard instance
-	instance := &v1alpha1.GrafanaDashboard{}
+	instance := &i8ly.GrafanaDashboard{}
 	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -105,44 +110,105 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 		return reconcile.Result{}, err
 	}
 
-	instanceCopy := instance.DeepCopy()
-	if match, err := r.matchesSelector(instanceCopy, dashboardLabelSelector.(*v1.LabelSelector)); err != nil {
+	cr := instance.DeepCopy()
+	if match, err := r.matchesSelector(cr, dashboardLabelSelector.(*v1.LabelSelector)); err != nil {
 		return reconcile.Result{}, err
 	} else if !match {
-		log.Info(fmt.Sprintf("Ignoring dashboard '%s' in '%s' because the labels do not match", instanceCopy.Name, instanceCopy.Namespace))
+		log.Info(fmt.Sprintf("found dashboard '%s/%s' but labels do not match", cr.Namespace, cr.Name))
 	}
 
-	if instanceCopy.DeletionTimestamp != nil {
-		err = r.DeleteDashboard(instanceCopy)
+	// Resource deleted?
+	if cr.DeletionTimestamp != nil {
+		err = r.deleteDashboard(cr)
 		if err != nil {
 			return reconcile.Result{}, err
 		}
-		r.config.RemovePluginsFor(instanceCopy)
-	} else {
-		err = r.ImportDashboard(instanceCopy)
+		r.config.RemovePluginsFor(cr)
+		err = r.removeFinalizer(cr)
+		return reconcile.Result{Requeue: false}, err
+	}
+
+	switch cr.Status.Phase {
+	case common.StatusResourceUninitialized:
+		// New resource
+		return reconcile.Result{}, r.updatePhase(cr, common.StatusResourceSetFinalizer)
+	case common.StatusResourceSetFinalizer:
+		// Set finalizer first
+		if len(cr.Finalizers) > 0 {
+			return reconcile.Result{}, r.updatePhase(cr, common.StatusResourceCreated)
+		} else {
+			return reconcile.Result{}, r.setFinalizer(cr)
+		}
+	case common.StatusResourceCreated:
+		// Import / update dashboard
+		err := r.importDashboard(cr)
 		if err != nil {
 			return reconcile.Result{}, err
 		}
-		r.config.SetPluginsFor(instanceCopy)
+		r.config.SetPluginsFor(cr)
+		return reconcile.Result{}, err
+	default:
+		return reconcile.Result{}, nil
 	}
-
-	return reconcile.Result{}, err
 }
 
-func (r *ReconcileGrafanaDashboard) ImportDashboard(d *v1alpha1.GrafanaDashboard) error {
+func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) error {
 	operatorNamespace := r.config.GetConfigString(common.ConfigOperatorNamespace, "")
 	if operatorNamespace == "" {
 		return defaultErrors.New("no monitoring namespace set")
 	}
 
-	return r.helper.UpdateDashboard(operatorNamespace, d.Namespace, d)
+	err := r.helper.UpdateDashboard(operatorNamespace, d.Namespace, d)
+	if err == nil {
+		log.Info(fmt.Sprintf("dashboard '%s/%s' updated", d.Namespace, d.Spec.Name))
+	}
+
+	return err
 }
 
-func (r *ReconcileGrafanaDashboard) DeleteDashboard(d *v1alpha1.GrafanaDashboard) error {
+func (r *ReconcileGrafanaDashboard) deleteDashboard(d *i8ly.GrafanaDashboard) error {
 	operatorNamespace := r.config.GetConfigString(common.ConfigOperatorNamespace, "")
 	if operatorNamespace == "" {
 		return defaultErrors.New("no monitoring namespace set")
 	}
 
-	return r.helper.DeleteDashboard(operatorNamespace, d.Namespace, d)
+	err := r.helper.DeleteDashboard(operatorNamespace, d.Namespace, d)
+	if err == nil {
+		log.Info(fmt.Sprintf("dashboard '%s/%s' deleted", d.Namespace, d.Spec.Name))
+	}
+
+	return err
+}
+
+func (r *ReconcileGrafanaDashboard) setFinalizer(cr *i8ly.GrafanaDashboard) error {
+	if len(cr.Finalizers) == 0 {
+		cr.Finalizers = append(cr.Finalizers, DashboardFinalizerName)
+	}
+	return r.client.Update(context.TODO(), cr)
+}
+
+func (r *ReconcileGrafanaDashboard) removeFinalizer(cr *i8ly.GrafanaDashboard) error {
+	cr.Finalizers = nil
+	return r.client.Update(context.TODO(), cr)
+}
+
+
+func (r *ReconcileGrafanaDashboard) updatePhase(cr *i8ly.GrafanaDashboard, phase int) error {
+	key := types.NamespacedName{
+		Name:      cr.Name,
+		Namespace: cr.Namespace,
+	}
+
+	// Refresh the resource before updating the status
+	err := r.client.Get(context.TODO(), key, cr)
+	if err != nil {
+		return err
+	}
+
+	if cr.Status.Phase == phase {
+		return nil
+	}
+
+	cr.Status.Phase = phase
+	return r.client.Update(context.TODO(), cr)
 }

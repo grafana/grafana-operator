@@ -19,6 +19,7 @@ type GrafanaDashboardSpec struct {
 // GrafanaDashboardStatus defines the observed state of GrafanaDashboard
 type GrafanaDashboardStatus struct {
 	Messages []GrafanaDashboardStatusMessage `json:"messages"`
+	Phase    int                             `json:"phase"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

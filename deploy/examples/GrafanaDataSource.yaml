@@ -3,12 +3,13 @@ kind: GrafanaDataSource
 metadata:
   name: example-grafanadatasource
 spec:
-  datasource: |-
-    name: Prometheus
-    type: prometheus
-    access: proxy
-    url: http://prometheus-application-monitoring:9090
-    is_default: true
-    version: 1
-    editable: true
-    json_data: {"timeInterval": "5s"}
+  name: middleware
+  datasources:
+    - name: Prometheus
+      type: prometheus
+      access: proxy
+      url: http://prometheus-application-monitoring:9090
+      is_default: true
+      version: 1
+      editable: true
+      json_data: '{"timeInterval": "5s"}'

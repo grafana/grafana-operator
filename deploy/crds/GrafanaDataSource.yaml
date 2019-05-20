@@ -26,12 +26,16 @@ spec:
         metadata:
           type: object
         spec:
-          required: ["datasource"]
+          required: ["datasources", "name"]
           properties:
-            datasource:
+            name:
               type: string
               minimum: 1
-              description: The definition of the datasource as a yaml string
+            datasources:
+              type: array
+              items:
+                description: Grafana Datasource Object
+                type: object
         status:
           type: object
   version: v1alpha1

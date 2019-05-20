@@ -10,7 +10,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"time"
 
-	integreatly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
+	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -65,7 +65,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to primary resource Grafana
-	err = c.Watch(&source.Kind{Type: &integreatly.Grafana{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &i8ly.Grafana{}}, &handler.EnqueueRequestForObject{})
 	return err
 }
 
@@ -85,7 +85,7 @@ type ReconcileGrafana struct {
 // Reconcile reads that state of the cluster for a Grafana object and makes changes based on the state read
 // and what is in the Grafana.Spec
 func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	instance := &integreatly.Grafana{}
+	instance := &i8ly.Grafana{}
 	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -94,31 +94,32 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, err
 	}
 
-	instanceCopy := instance.DeepCopy()
+	cr := instance.DeepCopy()
 
-	switch instanceCopy.Status.Phase {
+	switch cr.Status.Phase {
 	case PhaseConfigFiles:
-		return r.CreateConfigFiles(instanceCopy)
+		return r.CreateConfigFiles(cr)
 	case PhaseInstallGrafana:
-		return r.InstallGrafana(instanceCopy)
+		return r.InstallGrafana(cr)
 	case PhaseDone:
-		r.config.AddConfigItem(common.ConfigDashboardLabelSelector, instanceCopy.Spec.DashboardLabelSelector)
-		return reconcile.Result{Requeue: true}, r.UpdatePhase(instanceCopy, PhasePlugins)
+		return reconcile.Result{Requeue: true}, r.UpdatePhase(cr, PhasePlugins)
 	case PhasePlugins:
-		return r.ReconcileDashboardPlugins(instanceCopy)
+		// Make the label selector available to other controllers
+		r.config.AddConfigItem(common.ConfigDashboardLabelSelector, cr.Spec.DashboardLabelSelector)
+		return r.ReconcileDashboardPlugins(cr)
 	}
 
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileGrafana) ReconcileDashboardPlugins(cr *integreatly.Grafana) (reconcile.Result, error) {
+func (r *ReconcileGrafana) ReconcileDashboardPlugins(cr *i8ly.Grafana) (reconcile.Result, error) {
 	// Waited long enough for dashboards to be ready?
 	if r.plugins.CanUpdatePlugins() == false {
 		return reconcile.Result{RequeueAfter: time.Second * ReconcilePauseSeconds}, nil
 	}
 
 	// Fetch all plugins of all dashboards
-	var requestedPlugins integreatly.PluginList
+	var requestedPlugins i8ly.PluginList
 	for _, v := range common.GetControllerConfig().Plugins {
 		requestedPlugins = append(requestedPlugins, v...)
 	}
@@ -138,8 +139,8 @@ func (r *ReconcileGrafana) ReconcileDashboardPlugins(cr *integreatly.Grafana) (r
 	return reconcile.Result{RequeueAfter: time.Second * ReconcilePauseSeconds}, nil
 }
 
-func (r *ReconcileGrafana) ReconcilePlugins(cr *integreatly.Grafana, plugins []integreatly.GrafanaPlugin) error {
-	var validPlugins []integreatly.GrafanaPlugin
+func (r *ReconcileGrafana) ReconcilePlugins(cr *i8ly.Grafana, plugins []i8ly.GrafanaPlugin) error {
+	var validPlugins []i8ly.GrafanaPlugin
 	for _, plugin := range plugins {
 		if r.plugins.PluginExists(plugin) == false {
 			continue
@@ -160,7 +161,7 @@ func (r *ReconcileGrafana) ReconcilePlugins(cr *integreatly.Grafana, plugins []i
 	return err
 }
 
-func (r *ReconcileGrafana) UpdateDashboardMessages(plugins integreatly.PluginList) error {
+func (r *ReconcileGrafana) UpdateDashboardMessages(plugins i8ly.PluginList) error {
 	for _, plugin := range plugins {
 		err := r.client.Update(context.TODO(), plugin.Origin)
 		if err != nil {
@@ -170,7 +171,7 @@ func (r *ReconcileGrafana) UpdateDashboardMessages(plugins integreatly.PluginLis
 	return nil
 }
 
-func (r *ReconcileGrafana) CreateConfigFiles(cr *integreatly.Grafana) (reconcile.Result, error) {
+func (r *ReconcileGrafana) CreateConfigFiles(cr *i8ly.Grafana) (reconcile.Result, error) {
 	log.Info("Phase: Create Config Files")
 
 	ingressType := GrafanaIngressName
@@ -201,7 +202,7 @@ func (r *ReconcileGrafana) CreateConfigFiles(cr *integreatly.Grafana) (reconcile
 	return reconcile.Result{RequeueAfter: time.Second * ReconcilePauseSeconds}, nil
 }
 
-func (r *ReconcileGrafana) InstallGrafana(cr *integreatly.Grafana) (reconcile.Result, error) {
+func (r *ReconcileGrafana) InstallGrafana(cr *i8ly.Grafana) (reconcile.Result, error) {
 	log.Info("Phase: Install Grafana")
 
 	err := r.CreateDeployment(cr, GrafanaDeploymentName)
@@ -220,7 +221,7 @@ func (r *ReconcileGrafana) InstallGrafana(cr *integreatly.Grafana) (reconcile.Re
 
 // Creates the deployment from the template and injects any specified extra containers before
 // submitting it
-func (r *ReconcileGrafana) CreateDeployment(cr *integreatly.Grafana, resourceName string) error {
+func (r *ReconcileGrafana) CreateDeployment(cr *i8ly.Grafana, resourceName string) error {
 	resourceHelper := newResourceHelper(cr)
 	resource, err := resourceHelper.createResource(resourceName)
 
@@ -246,7 +247,7 @@ func (r *ReconcileGrafana) CreateDeployment(cr *integreatly.Grafana, resourceNam
 	return r.DeployResource(cr, resource, resourceName)
 }
 
-func (r *ReconcileGrafana) CreateServiceAccount(cr *integreatly.Grafana, resourceName string) error {
+func (r *ReconcileGrafana) CreateServiceAccount(cr *i8ly.Grafana, resourceName string) error {
 	resourceHelper := newResourceHelper(cr)
 	resource, err := resourceHelper.createResource(resourceName)
 
@@ -271,7 +272,7 @@ func (r *ReconcileGrafana) CreateServiceAccount(cr *integreatly.Grafana, resourc
 }
 
 // Creates a generic kubernetes resource from a template
-func (r *ReconcileGrafana) CreateResource(cr *integreatly.Grafana, resourceName string) error {
+func (r *ReconcileGrafana) CreateResource(cr *i8ly.Grafana, resourceName string) error {
 	resourceHelper := newResourceHelper(cr)
 	resource, err := resourceHelper.createResource(resourceName)
 
@@ -283,7 +284,7 @@ func (r *ReconcileGrafana) CreateResource(cr *integreatly.Grafana, resourceName 
 }
 
 // Deploys a resource given by a runtime object
-func (r *ReconcileGrafana) DeployResource(cr *integreatly.Grafana, resource runtime.Object, resourceName string) error {
+func (r *ReconcileGrafana) DeployResource(cr *i8ly.Grafana, resource runtime.Object, resourceName string) error {
 	// Try to find the resource, it may already exist
 	selector := types.NamespacedName{
 		Namespace: cr.Namespace,
@@ -317,7 +318,7 @@ func (r *ReconcileGrafana) DeployResource(cr *integreatly.Grafana, resource runt
 	return nil
 }
 
-func (r *ReconcileGrafana) UpdatePhase(cr *integreatly.Grafana, phase int) error {
+func (r *ReconcileGrafana) UpdatePhase(cr *i8ly.Grafana, phase int) error {
 	key := types.NamespacedName{
 		Name:      cr.Name,
 		Namespace: cr.Namespace,
