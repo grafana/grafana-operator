@@ -17,7 +17,8 @@ spec:
         - name: grafana-operator
           image: quay.io/integreatly/grafana-operator:latest
           args:
-            - '--scan-all'
+            - '--grafana-image=docker.io/grafana/grafana'
+            - '--grafana-image-tag=5.4.2'
           ports:
           - containerPort: 60000
             name: metrics

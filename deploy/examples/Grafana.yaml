@@ -14,5 +14,3 @@ spec:
   dashboardLabelSelector:
     - matchExpressions:
         - {key: app, operator: In, values: [grafana]}
-    - matchExpressions:
-        - {key: app, operator: In, values: [monitoring]}
