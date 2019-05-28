@@ -27,6 +27,7 @@ var log = logf.Log.WithName("cmd")
 var flagImage string
 var flagImageTag string
 var scanAll bool
+var openshift bool
 
 func printVersion() {
 	log.Info(fmt.Sprintf("Go Version: %s", runtime.Version()))
@@ -39,7 +40,7 @@ func init() {
 	flagset.StringVar(&flagImage, "grafana-image", "", "Overrides the default Grafana image")
 	flagset.StringVar(&flagImageTag, "grafana-image-tag", "", "Overrides the default Grafana image tag")
 	flagset.BoolVar(&scanAll, "scan-all", false, "Scans all namespaces for dashboards")
-	flagset.BoolVar(&scanAll, "openshift", false, "Use Route instead of Ingress")
+	flagset.BoolVar(&openshift, "openshift", false, "Use Route instead of Ingress")
 	flagset.Parse(os.Args[1:])
 }
 
@@ -90,7 +91,7 @@ func main() {
 	controllerConfig.AddConfigItem(common.ConfigGrafanaImageTag, flagImageTag)
 	controllerConfig.AddConfigItem(common.ConfigOperatorNamespace, namespace)
 	controllerConfig.AddConfigItem(common.ConfigDashboardLabelSelector, "")
-	controllerConfig.AddConfigItem(common.ConfigOpenshift, false)
+	controllerConfig.AddConfigItem(common.ConfigOpenshift, openshift)
 
 	// Get the namespaces to scan for dashboards
 	// It's either the same namespace as the controller's or it's all namespaces if the

@@ -7,10 +7,10 @@ spec:
   logLevel: "error"
   adminUser: "admin"
   adminPassword: "Password1"
-  basicAuth: false
-  disableLoginForm: false
-  disableSignoutMenu: true
-  anonymous: true
+  basicAuth: False
+  disableLoginForm: False
+  disableSignoutMenu: True
+  anonymous: True
   dashboardLabelSelector:
     - matchExpressions:
         - {key: app, operator: In, values: [grafana]}

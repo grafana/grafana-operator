@@ -30,16 +30,16 @@ spec:
               type: string
               description: Default admin password
             basicAuth:
-              type: bool
+              type: boolean
               description: Basic auth enabled
             disableLoginForm:
-              type: bool
+              type: boolean
               description: Disable login form
             disableSignoutMenu:
-              type: bool
+              type: boolean
               description: Disable signout menu
             anonymous:
-              type: bool
+              type: boolean
               description: Anonymous auth enabled
             dashboardLabelSelectors:
               type: array
