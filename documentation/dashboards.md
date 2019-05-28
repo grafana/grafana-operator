@@ -16,4 +16,29 @@ The following properties are accepted in the `spec`:
 
 By default the operator only watches for dashboards in it's own namespace. To watch for dashboards in other namespaces, the `--scan-all` flag must be passed.
 
- 
+To create a dashboard in the `grafana` namespace run:
+
+```sh
+$ kubectl create -f deploy/examples/dashboards/SimpleDashboard.yaml -n grafana
+```
+
+*NOTE*: it can take up to a minute until new dashboards are discovered by Grafana.
+
+## Plugins
+
+Dashboards can specify plugins (panels) they depend on. The operator will automatically install them.
+
+You need to provide a name and a version for every plugins, e.g.:
+
+```yaml
+spec:
+  name: "dummy"
+  json: "{}"
+  plugins:
+    - name: "grafana-piechart-panel"
+      version: "1.3.6"
+    - name: "grafana-clock-panel"
+      version: "1.0.2"
+```
+
+Plugins are installed from the [Grafana plugin registry](https://grafana.com/plugins).

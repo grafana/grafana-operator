@@ -40,11 +40,12 @@ Represents a Grafana instance. See [the documentation](./documentation/deploy_gr
 
 Represents a Grafana dashboard and allows to specify required plugins. See [the documentation](./documentation/dashboards.md) for a description of properties supported in the spec.
 
+## GrafanaDatasource
+
 # Running locally
 
-You can run the Operator locally against a remote namespace. The name of the namespace should be `application-monitoring`. To run the operator execute:
+You can run the Operator locally against a remote namespace using the operator-sdk:
 
 ```sh
-$ make setup/dep
-$ make code/run
+$ operator-sdk up local --namespace=<namespace> --operator-flags="<flags to pass>"
 ```

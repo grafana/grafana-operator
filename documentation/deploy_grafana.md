@@ -45,6 +45,8 @@ The resource accepts the following properties in it's `spec`:
 
 * *hostname*:  The host to be used for the [ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/). Optional when `--openshift` is set.
 * *dashboardLabelSelector*: A list of either `matchLabels` or `matchExpressions` to filter the dashboards before importing them.
+* *containers*: Extra containers to be added to the Grafana deployment. Can be used for example to add auth proxy side cars.
+* *secrets*: Secrets to be added to the Grafana deployment.
 
 The other accepted properties are `logLevel`, `adminUser`, `adminUser`, `adminPassword`, `basicAuth`, `disableLoginForm`, `disableSignoutMenu` and `anonymous`. They map to the properties described in the [official documentation](https://grafana.com/docs/installation/configuration/#configuration), just use camel case instead of underscores.
 
