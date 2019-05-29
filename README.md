@@ -42,6 +42,8 @@ Represents a Grafana dashboard and allows to specify required plugins. See [the 
 
 ## GrafanaDatasource
 
+Represents a Grafana datasource. See [the documentation](./documentation/datasources.md) for a description of properties supported in the spec.
+
 # Running locally
 
 You can run the Operator locally against a remote namespace using the operator-sdk:

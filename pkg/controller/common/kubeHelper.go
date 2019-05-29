@@ -72,9 +72,9 @@ func (h KubeHelperImpl) UpdateDataSources(name, namespace, ds string) (bool, err
 		return false, err
 	}
 
-	// Prefix the dashboard filename with the namespace to allow multiple namespaces
+	// Prefix the data source filename with the namespace to allow multiple namespaces
 	// to import the same dashboard
-	key := fmt.Sprintf("%s.yaml", strings.ToLower(name))
+	key := fmt.Sprintf("%s_%s", namespace, strings.ToLower(name))
 
 	if configMap.Data == nil {
 		configMap.Data = make(map[string]string)
@@ -100,7 +100,7 @@ func (h KubeHelperImpl) DeleteDataSources(name, namespace string) error {
 
 	// Prefix the dashboard filename with the namespace to allow multiple namespaces
 	// to import the same dashboard
-	key := fmt.Sprintf("%s.yaml", strings.ToLower(name))
+	key := fmt.Sprintf("%s_%s", namespace, strings.ToLower(name))
 
 	if configMap.Data == nil {
 		return nil

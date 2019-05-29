@@ -102,7 +102,6 @@ func (r *ReconcileGrafanaDashboard) matchesSelectors(d *i8ly.GrafanaDashboard, s
 func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	dashboardLabelSelectors := r.config.GetConfigItem(common.ConfigDashboardLabelSelector, nil)
 	if dashboardLabelSelectors == nil {
-		log.Info("No label selector present")
 		return reconcile.Result{RequeueAfter: time.Second * 10}, nil
 	}
 

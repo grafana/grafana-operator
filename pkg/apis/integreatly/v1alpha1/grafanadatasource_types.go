@@ -57,9 +57,9 @@ type GrafanaDataSourceFields struct {
 	BasicAuthUser     string `json:"basicAuthUser,omitempty"`
 	BasicAuthPassword string `json:"basicAuthPassword,omitempty"`
 	WithCredentials   bool   `json:"withCredentials,omitempty"`
-	IsDefault         bool   `json:"is_default,omitempty"`
-	JsonData          string `json:"json_data,omitempty"`
-	SecureJsonData    string `json:"secure_json_data,omitempty"`
+	IsDefault         bool   `json:"isDefault,omitempty"`
+	JsonData          string `json:"jsonData,omitempty"`
+	SecureJsonData    string `json:"secureJsonData,omitempty"`
 	Version           int    `json:"version,omitempty"`
 	Editable          bool   `json:"editable,omitempty"`
 }
