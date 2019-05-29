@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
+	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
@@ -185,19 +186,18 @@ func (r *ReconcileGrafana) CreateConfigFiles(cr *i8ly.Grafana) (reconcile.Result
 
 	err := r.CreateServiceAccount(cr, common.GrafanaServiceAccountName)
 	if err != nil {
-		return reconcile.Result{Requeue: true}, err
+		return reconcile.Result{}, err
 	}
 
 	for _, resourceName := range []string{common.GrafanaConfigMapName, common.GrafanaDashboardsConfigMapName, common.GrafanaProvidersConfigMapName, common.GrafanaDatasourcesConfigMapName, common.GrafanaServiceName, ingressType} {
 		if err := r.CreateResource(cr, resourceName); err != nil {
 			log.Info(fmt.Sprintf("Error in CreateConfigFiles, resourceName=%s : err=%s", resourceName, err))
 			// Requeue so it can be attempted again
-			return reconcile.Result{Requeue: true}, err
+			return reconcile.Result{}, err
 		}
 	}
 
 	log.Info("Config files created")
-
 	return r.UpdatePhase(cr, PhaseInstallGrafana)
 }
 
@@ -217,27 +217,47 @@ func (r *ReconcileGrafana) InstallGrafana(cr *i8ly.Grafana) (reconcile.Result, e
 func (r *ReconcileGrafana) CreateDeployment(cr *i8ly.Grafana, resourceName string) error {
 	resourceHelper := newResourceHelper(cr)
 	resource, err := resourceHelper.createResource(resourceName)
-
 	if err != nil {
 		return err
 	}
 
-	// Deploy the unmodified resource if no extra containers are specified
-	if len(cr.Spec.Containers) == 0 {
-		return r.DeployResource(cr, resource, resourceName)
-	}
-
-	// Otherwise append extra containers before submitting the resource
 	rawResource := newUnstructuredResourceMap(resource.(*unstructured.Unstructured))
-	containers := rawResource.access("spec").access("template").access("spec").get("containers").([]interface{})
 
-	for _, container := range cr.Spec.Containers {
-		containers = append(containers, container)
-		log.Info(fmt.Sprintf("adding extra container '%v' to '%v'", container.Name, common.GrafanaDeploymentName))
+	// Extra secrets to be added as volumes?
+	if len(cr.Spec.Secrets) > 0 {
+		volumes := rawResource.access("spec").access("template").access("spec").get("volumes").([]interface{})
+
+		for _, secret := range cr.Spec.Secrets {
+			volumeName := fmt.Sprintf("secret-%s", secret)
+			log.Info(fmt.Sprintf("adding volume for secret '%s' as '%s'", secret, volumeName))
+			volumes = append(volumes, core.Volume{
+				Name: volumeName,
+				VolumeSource: core.VolumeSource{
+					Secret: &core.SecretVolumeSource{
+						SecretName: secret,
+					},
+				},
+			})
+		}
+
+		rawResource.access("spec").access("template").access("spec").set("volumes", volumes)
 	}
 
-	rawResource.access("spec").access("template").access("spec").set("containers", containers)
+	// Extra containers to add to the deployment?
+	if len(cr.Spec.Containers) > 0 {
+		// Otherwise append extra containers before submitting the resource
+		containers := rawResource.access("spec").access("template").access("spec").get("containers").([]interface{})
+
+		for _, container := range cr.Spec.Containers {
+			containers = append(containers, container)
+			log.Info(fmt.Sprintf("adding extra container '%v' to '%v'", container.Name, common.GrafanaDeploymentName))
+		}
+
+		rawResource.access("spec").access("template").access("spec").set("containers", containers)
+	}
+
 	return r.DeployResource(cr, resource, resourceName)
+
 }
 
 func (r *ReconcileGrafana) CreateServiceAccount(cr *i8ly.Grafana, resourceName string) error {

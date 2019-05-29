@@ -337,6 +337,11 @@ func (in *GrafanaSpec) DeepCopyInto(out *GrafanaSpec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.Secrets != nil {
+		in, out := &in.Secrets, &out.Secrets
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.DashboardLabelSelectors != nil {
 		in, out := &in.DashboardLabelSelectors, &out.DashboardLabelSelectors
 		*out = make([]*metav1.LabelSelector, len(*in))

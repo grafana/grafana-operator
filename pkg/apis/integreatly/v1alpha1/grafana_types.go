@@ -14,6 +14,7 @@ type GrafanaSpec struct {
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	Hostname                string                  `json:"hostname,omitempty"`
 	Containers              []v1.Container          `json:"containers,omitempty"`
+	Secrets                 []string                `json:"secrets,omitempty"`
 	DashboardLabelSelectors []*metav1.LabelSelector `json:"dashboardLabelSelector,omitempty"`
 	LogLevel                string                  `json:"logLevel"`
 	AdminUser               string                  `json:"adminUser"`
