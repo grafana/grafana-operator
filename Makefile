@@ -3,10 +3,8 @@ NAMESPACE=grafana
 PROJECT=grafana-operator
 REG=quay.io
 SHELL=/bin/bash
-TAG=latest
+TAG?=v1.0.0
 PKG=github.com/integr8ly/grafana-operator
-TEST_DIRS?=$(shell sh -c "find $(TOP_SRC_DIRS) -name \\*_test.go -exec dirname {} \\; | sort | uniq")
-TEST_POD_NAME=grafana-operator-test
 COMPILE_TARGET=./tmp/_output/bin/$(PROJECT)
 
 .PHONY: setup/dep
@@ -51,33 +49,7 @@ image/push:
 .PHONY: image/build/push
 image/build/push: image/build image/push
 
-.PHONY: image/build/test
-image/build/test:
-	operator-sdk build --enable-tests docker.io/${ORG}/${PROJECT}:${TAG}
-
 .PHONY: test/unit
 test/unit:
 	@echo Running tests:
 	go test -v -race -cover ./pkg/...
-
-.PHONY: test/e2e
-test/e2e:
-	kubectl apply -f deploy/test-e2e-pod.yaml -n ${PROJECT}
-	${SHELL} ./scripts/stream-pod ${TEST_POD_NAME} ${PROJECT}
-
-.PHONY: cluster/prepare
-cluster/prepare:
-	-kubectl apply -f deploy/crds/
-	-oc new-project $(NAMESPACE)
-	-kubectl create --insecure-skip-tls-verify -f deploy/rbac.yaml -n $(NAMESPACE)
-
-.PHONY: cluster/clean
-cluster/clean:
-	-kubectl delete role grafana-operator -n $(NAMESPACE)
-	-kubectl delete rolebinding grafana-operator -n $(NAMESPACE)
-	-kubectl delete crd grafanas.integreatly.org
-	-kubectl delete namespace $(NAMESPACE)
-
-.PHONY: cluster/create/examples
-cluster/create/examples:
-		-kubectl create -f deploy/examples/Grafana.yaml -n $(NAMESPACE)

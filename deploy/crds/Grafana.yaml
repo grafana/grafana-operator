@@ -20,6 +20,16 @@ spec:
             hostname:
               type: string
               description: Hostname for the ingress. Optional when --openshift is set
+            containers:
+              type: array
+              items:
+                type: object
+                description: Additional container to add to the grafana pod
+            secrets:
+              type: array
+              items:
+                type: string
+                description: Secret to be mounted as volume into the grafana deployment
             logLevel:
               type: string
               description: Log level of the grafana instance, defaults to info
