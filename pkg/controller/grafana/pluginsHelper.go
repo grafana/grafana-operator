@@ -122,6 +122,11 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *integreatly.Grafana, requested int
 			continue
 		}
 
+		if cr.Status.FailedPlugins.HasExactVersionOf(&plugin) {
+			// Don't attempt to install plugins that failed to install previously
+			continue
+		}
+
 		// Already installed: append it to the list to keep it
 		if cr.Status.InstalledPlugins.HasExactVersionOf(&plugin) {
 			filteredPlugins = append(filteredPlugins, plugin)

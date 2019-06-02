@@ -146,8 +146,12 @@ func (r *ReconcileGrafana) ReconcileDashboardPlugins(cr *i8ly.Grafana) (reconcil
 
 func (r *ReconcileGrafana) ReconcilePlugins(cr *i8ly.Grafana, plugins []i8ly.GrafanaPlugin) error {
 	var validPlugins []i8ly.GrafanaPlugin
+	var failedPlugins []i8ly.GrafanaPlugin
+
 	for _, plugin := range plugins {
 		if r.plugins.PluginExists(plugin) == false {
+			log.Info(fmt.Sprintf("Invalid plugin: %s@%s", plugin.Name, plugin.Version))
+			failedPlugins = append(failedPlugins, plugin)
 			continue
 		}
 
@@ -156,6 +160,8 @@ func (r *ReconcileGrafana) ReconcilePlugins(cr *i8ly.Grafana, plugins []i8ly.Gra
 	}
 
 	cr.Status.InstalledPlugins = validPlugins
+	cr.Status.FailedPlugins = failedPlugins
+
 	err := r.client.Update(context.TODO(), cr)
 	if err != nil {
 		return err

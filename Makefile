@@ -3,7 +3,7 @@ NAMESPACE=grafana
 PROJECT=grafana-operator
 REG=quay.io
 SHELL=/bin/bash
-TAG?=v1.0.0
+TAG?=latest
 PKG=github.com/integr8ly/grafana-operator
 COMPILE_TARGET=./tmp/_output/bin/$(PROJECT)
 

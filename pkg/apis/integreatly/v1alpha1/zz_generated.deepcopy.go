@@ -376,6 +376,13 @@ func (in *GrafanaStatus) DeepCopyInto(out *GrafanaStatus) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.FailedPlugins != nil {
+		in, out := &in.FailedPlugins, &out.FailedPlugins
+		*out = make(PluginList, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
 	return
 }
 

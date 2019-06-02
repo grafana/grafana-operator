@@ -31,6 +31,7 @@ type GrafanaStatus struct {
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	Phase            int        `json:"phase"`
 	InstalledPlugins PluginList `json:"installedPlugins"`
+	FailedPlugins    PluginList `json:"failedPlugins"`
 }
 
 // GrafanaPlugin contains information about a single plugin
