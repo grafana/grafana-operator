@@ -46,9 +46,9 @@ The resource accepts the following properties in it's `spec`:
 * *hostname*:  The host to be used for the [ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/). Optional when `--openshift` is set.
 * *dashboardLabelSelector*: A list of either `matchLabels` or `matchExpressions` to filter the dashboards before importing them.
 * *containers*: Extra containers to be added to the Grafana deployment. Can be used for example to add auth proxy side cars.
-* *secrets*: List of secrets that are added as volumes to the deployment. Mostly useful in combination with extra `containers`.
+* *secrets*: A list of secrets that are added as volumes to the deployment. Mostly useful in combination with extra `containers`.
 
-The other accepted properties are `logLevel`, `adminUser`, `adminUser`, `adminPassword`, `basicAuth`, `disableLoginForm`, `disableSignoutMenu` and `anonymous`. They map to the properties described in the [official documentation](https://grafana.com/docs/installation/configuration/#configuration), just use camel case instead of underscores.
+The other accepted properties are `logLevel`, `adminUser`, `adminPassword`, `basicAuth`, `disableLoginForm`, `disableSignoutMenu` and `anonymous`. They map to the properties described in the [official documentation](https://grafana.com/docs/installation/configuration/#configuration), just use camel case instead of underscores.
 
 To create a new Grafana instance in the `grafana` namespace, run:
 
