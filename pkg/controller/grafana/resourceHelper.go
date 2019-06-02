@@ -39,7 +39,7 @@ func newUnstructuredResourceMap(unstructured *unstructured.Unstructured) *Unstru
 
 // Helps with creating kubernetes resources from yaml templates
 type ResourceHelper struct {
-	templateHelper *GrafanaTemplateHelper
+	templateHelper *TemplateHelper
 	cr             *integreatly.Grafana
 }
 

@@ -15,7 +15,10 @@ spec:
       serviceAccountName: grafana-operator
       containers:
         - name: grafana-operator
-          image: quay.io/integreatly/grafana-operator:0.0.1
+          image: quay.io/integreatly/grafana-operator:latest
+          args:
+            - '--grafana-image=docker.io/grafana/grafana'
+            - '--grafana-image-tag=5.4.2'
           ports:
           - containerPort: 60000
             name: metrics

@@ -40,9 +40,16 @@ rules:
   - get
   - create
 - apiGroups:
+    - extensions
+  resources:
+    - ingresses
+  verbs:
+    - '*'
+- apiGroups:
   - integreatly.org
   resources:
-  - '*'
+  - grafanas
   - grafanadashboards
+  - grafanadatasources
   verbs:
   - '*'

@@ -3,26 +3,17 @@ package grafana
 import (
 	"bytes"
 	"fmt"
+	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	"io/ioutil"
 	"os"
+	"strings"
 	"text/template"
 
 	integreatly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 )
 
 const (
-	GrafanaImage                    = "docker.io/grafana/grafana"
-	GrafanaVersion                  = "5.4.2"
-	LogLevel                        = "error"
-	GrafanaConfigMapName            = "grafana-config"
-	GrafanaProvidersConfigMapName   = "grafana-providers"
-	GrafanaDatasourcesConfigMapName = "grafana-datasources"
-	GrafanaDashboardsConfigMapName  = "grafana-dashboards"
-	GrafanaServiceAccountName       = "grafana-serviceaccount"
-	GrafanaDeploymentName           = "grafana-deployment"
-	GrafanaRouteName                = "grafana-route"
-	GrafanaServiceName              = "grafana-service"
-	PluginsInitContainerImageTag    = "0.0.1"
+	DefaultLogLevel = "info"
 )
 
 type GrafanaParamaeters struct {
@@ -32,7 +23,6 @@ type GrafanaParamaeters struct {
 	GrafanaConfigMapName            string
 	GrafanaProvidersConfigMapName   string
 	GrafanaDatasourcesConfigMapName string
-	PrometheusUrl                   string
 	GrafanaDashboardsConfigMapName  string
 	GrafanaServiceAccountName       string
 	GrafanaDeploymentName           string
@@ -40,34 +30,76 @@ type GrafanaParamaeters struct {
 	GrafanaRouteName                string
 	GrafanaServiceName              string
 	PluginsInitContainerImageTag    string
+	GrafanaIngressName              string
+	Hostname                        string
+	AdminUser                       string
+	AdminPassword                   string
+	BasicAuth                       bool
+	DisableLoginForm                bool
+	DisableSignoutMenu              bool
+	Anonymous                       bool
 }
 
-type GrafanaTemplateHelper struct {
+type TemplateHelper struct {
 	Parameters   GrafanaParamaeters
 	TemplatePath string
+}
+
+func option(val, defaultVal string) string {
+	if val == "" {
+		return defaultVal
+	}
+	return val
+}
+
+func getLogLevel(userLogLevel string) string {
+	level := strings.TrimSpace(userLogLevel)
+	level = strings.ToLower(level)
+
+	switch level {
+	case "debug":
+		return level
+	case "info":
+		return level
+	case "warn":
+		return level
+	case "error":
+		return level
+	case "critical":
+		return level
+	default:
+		return DefaultLogLevel
+	}
 }
 
 // Creates a new templates helper and populates the values for all
 // templates properties. Some of them (like the hostname) are set
 // by the user in the custom resource
-func newTemplateHelper(cr *integreatly.Grafana) *GrafanaTemplateHelper {
-	controllerConfig := GetControllerConfig()
+func newTemplateHelper(cr *integreatly.Grafana) *TemplateHelper {
+	controllerConfig := common.GetControllerConfig()
 
 	param := GrafanaParamaeters{
-		GrafanaImage:                    controllerConfig.GetConfigItem(ConfigGrafanaImage, GrafanaImage),
-		GrafanaVersion:                  controllerConfig.GetConfigItem(ConfigGrafanaImageTag, GrafanaVersion),
+		GrafanaImage:                    controllerConfig.GetConfigString(common.ConfigGrafanaImage, common.GrafanaImage),
+		GrafanaVersion:                  controllerConfig.GetConfigString(common.ConfigGrafanaImageTag, common.GrafanaVersion),
 		Namespace:                       cr.Namespace,
-		GrafanaConfigMapName:            GrafanaConfigMapName,
-		GrafanaProvidersConfigMapName:   GrafanaProvidersConfigMapName,
-		GrafanaDatasourcesConfigMapName: GrafanaDatasourcesConfigMapName,
-		PrometheusUrl:                   cr.Spec.PrometheusUrl,
-		GrafanaDashboardsConfigMapName:  GrafanaDashboardsConfigMapName,
-		GrafanaServiceAccountName:       GrafanaServiceAccountName,
-		GrafanaDeploymentName:           GrafanaDeploymentName,
-		LogLevel:                        LogLevel,
-		GrafanaRouteName:                GrafanaRouteName,
-		GrafanaServiceName:              GrafanaServiceName,
-		PluginsInitContainerImageTag:    PluginsInitContainerImageTag,
+		GrafanaConfigMapName:            common.GrafanaConfigMapName,
+		GrafanaProvidersConfigMapName:   common.GrafanaProvidersConfigMapName,
+		GrafanaDatasourcesConfigMapName: common.GrafanaDatasourcesConfigMapName,
+		GrafanaDashboardsConfigMapName:  common.GrafanaDashboardsConfigMapName,
+		GrafanaServiceAccountName:       common.GrafanaServiceAccountName,
+		GrafanaDeploymentName:           common.GrafanaDeploymentName,
+		LogLevel:                        getLogLevel(cr.Spec.LogLevel),
+		GrafanaRouteName:                common.GrafanaRouteName,
+		GrafanaServiceName:              common.GrafanaServiceName,
+		PluginsInitContainerImageTag:    common.PluginsInitContainerImageTag,
+		GrafanaIngressName:              common.GrafanaIngressName,
+		Hostname:                        cr.Spec.Hostname,
+		AdminUser:                       option(cr.Spec.AdminUser, "root"),
+		AdminPassword:                   option(cr.Spec.AdminPassword, "secret"),
+		BasicAuth:                       cr.Spec.BasicAuth,
+		DisableLoginForm:                cr.Spec.DisableLoginForm,
+		DisableSignoutMenu:              cr.Spec.DisableSignoutMenu,
+		Anonymous:                       cr.Spec.Anonymous,
 	}
 
 	templatePath := os.Getenv("TEMPLATE_PATH")
@@ -75,7 +107,7 @@ func newTemplateHelper(cr *integreatly.Grafana) *GrafanaTemplateHelper {
 		templatePath = "./templates"
 	}
 
-	return &GrafanaTemplateHelper{
+	return &TemplateHelper{
 		Parameters:   param,
 		TemplatePath: templatePath,
 	}
@@ -83,7 +115,7 @@ func newTemplateHelper(cr *integreatly.Grafana) *GrafanaTemplateHelper {
 
 // load a templates from a given resource name. The templates must be located
 // under ./templates and the filename must be <resource-name>.yaml
-func (h *GrafanaTemplateHelper) loadTemplate(name string) ([]byte, error) {
+func (h *TemplateHelper) loadTemplate(name string) ([]byte, error) {
 	path := fmt.Sprintf("%s/%s.yaml", h.TemplatePath, name)
 	tpl, err := ioutil.ReadFile(path)
 	if err != nil {

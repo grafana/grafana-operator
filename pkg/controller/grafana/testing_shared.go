@@ -2,6 +2,7 @@ package grafana
 
 import (
 	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	v12 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -12,19 +13,18 @@ var MockCR = v1alpha1.Grafana{
 		Namespace: "dummy",
 	},
 	Spec: v1alpha1.GrafanaSpec{
-		Containers:    []v12.Container{},
-		PrometheusUrl: "http://dummy",
+		Containers: []v12.Container{},
 	},
 }
 
 var Templates = []string{
-	GrafanaDeploymentName,
-	GrafanaDashboardsConfigMapName,
-	GrafanaDatasourcesConfigMapName,
-	GrafanaRouteName,
-	GrafanaProvidersConfigMapName,
-	GrafanaServiceAccountName,
-	GrafanaServiceName,
+	common.GrafanaDeploymentName,
+	common.GrafanaDashboardsConfigMapName,
+	common.GrafanaDatasourcesConfigMapName,
+	common.GrafanaRouteName,
+	common.GrafanaProvidersConfigMapName,
+	common.GrafanaServiceAccountName,
+	common.GrafanaServiceName,
 }
 
 var Mockplugina100 = v1alpha1.GrafanaPlugin{

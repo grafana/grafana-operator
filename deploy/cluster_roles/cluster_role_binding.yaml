@@ -1,0 +1,12 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: grafana-operator
+roleRef:
+  name: grafana-operator
+  kind: ClusterRole
+  apiGroup: ""
+subjects:
+  - kind: ServiceAccount
+    name: grafana-operator
+    namespace: grafana

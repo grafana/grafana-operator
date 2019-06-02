@@ -13,48 +13,46 @@ spec:
   version: v1alpha1
   validation:
     openAPIV3Schema:
+      required: ["spec"]
       properties:
         spec:
           properties:
-            dashboardNamespaceSelector:
-              description: A label selector is a label query over a set of resources.
-                The result of matchLabels and matchExpressions are ANDed. An empty
-                label selector matches all objects. A null label selector matches
-                no objects.
-              properties:
-                matchLabels:
-                  description: matchLabels is a map of {key,value} pairs. A single
-                    {key,value} in the matchLabels map is equivalent to an element
-                                 of matchExpressions, whose key field is "key", the operator is
-                                 "In", and the values array contains only "value". The requirements
-                                 are ANDed.
-                  type: object
-                matchExpressions:
-                  description: matchExpressions is a list of label selector requirements.
-                    The requirements are ANDed.
-                  items:
-                    description: A label selector requirement is a selector that contains
-                      values, a key, and an operator that relates the key and values.
-                    properties:
-                      key:
-                        description: key is the label key that the selector applies
-                          to.
-                        type: string
-                      operator:
-                        description: operator represents a key's relationship to a
-                          set of values. Valid operators are In, NotIn, Exists and
-                          DoesNotExist.
-                        type: string
-                      values:
-                        description: values is an array of string values. If the operator
-                          is In or NotIn, the values array must be non-empty. If the
-                          operator is Exists or DoesNotExist, the values array must
-                          be empty. This array is replaced during a strategic merge
-                          patch.
-                        items:
-                          type: string
-                        type: array
-                    required:
-                    - key
-                    - operator
-                  type: array
+            hostname:
+              type: string
+              description: Hostname for the ingress. Optional when --openshift is set
+            containers:
+              type: array
+              items:
+                type: object
+                description: Additional container to add to the grafana pod
+            secrets:
+              type: array
+              items:
+                type: string
+                description: Secret to be mounted as volume into the grafana deployment
+            logLevel:
+              type: string
+              description: Log level of the grafana instance, defaults to info
+            adminUser:
+              type: string
+              description: Default admin user name
+            adminPassword:
+              type: string
+              description: Default admin password
+            basicAuth:
+              type: boolean
+              description: Basic auth enabled
+            disableLoginForm:
+              type: boolean
+              description: Disable login form
+            disableSignoutMenu:
+              type: boolean
+              description: Disable signout menu
+            anonymous:
+              type: boolean
+              description: Anonymous auth enabled
+            dashboardLabelSelectors:
+              type: array
+              items:
+                type: object
+                description: Label selector or match expressions

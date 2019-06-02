@@ -3,7 +3,14 @@ kind: Grafana
 metadata:
   name: example-grafana
 spec:
-  prometheusUrl: "http://prometheus-application-monitoring:9090"
-  dashboardNamespaceSelector:
-    matchLabels:
-      monitoring-key: middleware
+  hostname: "grafana.apps.127.0.0.1.nip.io"
+  logLevel: "error"
+  adminUser: "admin"
+  adminPassword: "Password1"
+  basicAuth: False
+  disableLoginForm: False
+  disableSignoutMenu: True
+  anonymous: True
+  dashboardLabelSelector:
+    - matchExpressions:
+        - {key: app, operator: In, values: [grafana]}

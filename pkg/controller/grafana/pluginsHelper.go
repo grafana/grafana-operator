@@ -1,25 +1,29 @@
 package grafana
 
 import (
+	"crypto/tls"
 	"fmt"
 	integreatly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	"net/http"
 	"strings"
 	"time"
 )
 
-const (
-	PluginsEnvVar = "GRAFANA_PLUGINS"
-	PluginsUrl    = "https://grafana.com/api/plugins/%s/versions/%s"
-)
-
 type PluginsHelperImpl struct {
-	BaseUrl string
+	BaseUrl    string
+	HttpClient *http.Client
 }
 
 func newPluginsHelper() *PluginsHelperImpl {
+	insecureTransport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
 	helper := new(PluginsHelperImpl)
-	helper.BaseUrl = PluginsUrl
+	helper.BaseUrl = common.PluginsUrl
+	helper.HttpClient = &http.Client{Transport: insecureTransport}
+
 	return helper
 }
 
@@ -27,7 +31,7 @@ func newPluginsHelper() *PluginsHelperImpl {
 // A 200 OK response indicates that the plugin exists and can be downloaded
 func (h *PluginsHelperImpl) PluginExists(plugin integreatly.GrafanaPlugin) bool {
 	url := fmt.Sprintf(h.BaseUrl, plugin.Name, plugin.Version)
-	resp, err := http.Get(url)
+	resp, err := h.HttpClient.Get(url)
 	if err != nil {
 		return false
 	}
@@ -86,6 +90,12 @@ func (h *PluginsHelperImpl) PickLatestVersions(requested integreatly.PluginList)
 	return latestVersions, nil
 }
 
+func (h *PluginsHelperImpl) CanUpdatePlugins() bool {
+	lastUpdate := common.GetControllerConfig().GetConfigTimestamp(common.ConfigGrafanaPluginsUpdated, time.Now())
+	difference := time.Now().Sub(lastUpdate)
+	return difference.Seconds() >= common.PluginsMinAge
+}
+
 // Creates the list of plugins that can be added or updated
 // Does not directly deal with removing plugins: if a plugin is not in the list and the env var is updated, it will
 // automatically be removed
@@ -109,6 +119,11 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *integreatly.Grafana, requested int
 		if filteredPlugins.HasSomeVersionOf(&plugin) == true {
 			installedVersion := filteredPlugins.GetInstalledVersionOf(&plugin)
 			h.AppendMessage(fmt.Sprintf("Not installing version %s of %s because %s is already installed", plugin.Version, plugin.Name, installedVersion.Version), plugin.Origin)
+			continue
+		}
+
+		if cr.Status.FailedPlugins.HasExactVersionOf(&plugin) {
+			// Don't attempt to install plugins that failed to install previously
 			continue
 		}
 

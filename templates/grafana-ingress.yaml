@@ -1,0 +1,16 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ .GrafanaIngressName }}
+  namespace: {{ .Namespace }}
+  labels:
+    app: grafana
+spec:
+  rules:
+    - host: {{ .Hostname }}
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: {{ .GrafanaServiceName }}
+              servicePort: 3000

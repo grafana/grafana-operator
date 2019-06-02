@@ -20,16 +20,15 @@ const (
 	KubeConfigEnvVar = "KUBECONFIG"
 
 	// WatchNamespaceEnvVar is the constant for env variable WATCH_NAMESPACE
-	// which is the namespace that the pod is currently running in.
+	// which is the namespace where the watch activity happens.
+	// this value is empty if the operator is running with clusterScope.
 	WatchNamespaceEnvVar = "WATCH_NAMESPACE"
 
 	// OperatorNameEnvVar is the constant for env variable OPERATOR_NAME
-	// wich is the name of the current operator
+	// which is the name of the current operator
 	OperatorNameEnvVar = "OPERATOR_NAME"
 
-	// PrometheusMetricsPort defines the port which expose prometheus metrics
-	PrometheusMetricsPort = 60000
-
-	// PrometheusMetricsPortName define the port name used in kubernetes deployment and service
-	PrometheusMetricsPortName = "metrics"
+	// PodNameEnvVar is the constant for env variable POD_NAME
+	// which is the name of the current pod.
+	PodNameEnvVar = "POD_NAME"
 )

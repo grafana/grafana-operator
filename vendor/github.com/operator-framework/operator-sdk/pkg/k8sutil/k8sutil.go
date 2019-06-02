@@ -15,13 +15,19 @@
 package k8sutil
 
 import (
+	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"strings"
 
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	intstr "k8s.io/apimachinery/pkg/util/intstr"
+	corev1 "k8s.io/api/core/v1"
+	discovery "k8s.io/client-go/discovery"
+	crclient "sigs.k8s.io/controller-runtime/pkg/client"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
+
+var log = logf.Log.WithName("k8sutil")
 
 // GetWatchNamespace returns the namespace the operator should be watching for changes
 func GetWatchNamespace() (string, error) {
@@ -29,6 +35,24 @@ func GetWatchNamespace() (string, error) {
 	if !found {
 		return "", fmt.Errorf("%s must be set", WatchNamespaceEnvVar)
 	}
+	return ns, nil
+}
+
+// errNoNS indicates that a namespace could not be found for the current
+// environment
+var ErrNoNamespace = fmt.Errorf("namespace not found for current environment")
+
+// GetOperatorNamespace returns the namespace the operator should be running in.
+func GetOperatorNamespace() (string, error) {
+	nsBytes, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", ErrNoNamespace
+		}
+		return "", err
+	}
+	ns := strings.TrimSpace(string(nsBytes))
+	log.V(1).Info("Found namespace", "Namespace", ns)
 	return ns, nil
 }
 
@@ -44,40 +68,50 @@ func GetOperatorName() (string, error) {
 	return operatorName, nil
 }
 
-// InitOperatorService return the static service which expose operator metrics
-func InitOperatorService() (*v1.Service, error) {
-	operatorName, err := GetOperatorName()
+// ResourceExists returns true if the given resource kind exists
+// in the given api groupversion
+func ResourceExists(dc discovery.DiscoveryInterface, apiGroupVersion, kind string) (bool, error) {
+	apiLists, err := dc.ServerResources()
 	if err != nil {
+		return false, err
+	}
+	for _, apiList := range apiLists {
+		if apiList.GroupVersion == apiGroupVersion {
+			for _, r := range apiList.APIResources {
+				if r.Kind == kind {
+					return true, nil
+				}
+			}
+		}
+	}
+	return false, nil
+}
+
+// GetPod returns a Pod object that corresponds to the pod in which the code
+// is currently running.
+// It expects the environment variable POD_NAME to be set by the downwards API.
+func GetPod(ctx context.Context, client crclient.Client, ns string) (*corev1.Pod, error) {
+	podName := os.Getenv(PodNameEnvVar)
+	if podName == "" {
+		return nil, fmt.Errorf("required env %s not set, please configure downward API", PodNameEnvVar)
+	}
+
+	log.V(1).Info("Found podname", "Pod.Name", podName)
+
+	pod := &corev1.Pod{}
+	key := crclient.ObjectKey{Namespace: ns, Name: podName}
+	err := client.Get(ctx, key, pod)
+	if err != nil {
+		log.Error(err, "Failed to get Pod", "Pod.Namespace", ns, "Pod.Name", podName)
 		return nil, err
 	}
-	namespace, err := GetWatchNamespace()
-	if err != nil {
-		return nil, err
-	}
-	service := &v1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      operatorName,
-			Namespace: namespace,
-			Labels:    map[string]string{"name": operatorName},
-		},
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Service",
-			APIVersion: "v1",
-		},
-		Spec: v1.ServiceSpec{
-			Ports: []v1.ServicePort{
-				{
-					Port:     PrometheusMetricsPort,
-					Protocol: v1.ProtocolTCP,
-					TargetPort: intstr.IntOrString{
-						Type:   intstr.String,
-						StrVal: PrometheusMetricsPortName,
-					},
-					Name: PrometheusMetricsPortName,
-				},
-			},
-			Selector: map[string]string{"name": operatorName},
-		},
-	}
-	return service, nil
+
+	// .Get() clears the APIVersion and Kind,
+	// so we need to set them before returning the object.
+	pod.TypeMeta.APIVersion = "v1"
+	pod.TypeMeta.Kind = "Pod"
+
+	log.V(1).Info("Found Pod", "Pod.Namespace", ns, "Pod.Name", pod.Name)
+
+	return pod, nil
 }

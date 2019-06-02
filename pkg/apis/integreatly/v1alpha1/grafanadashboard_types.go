@@ -13,12 +13,13 @@ type GrafanaDashboardSpec struct {
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	Json    string     `json:"json"`
 	Name    string     `json:"name"`
-	Plugins PluginList `json:"plugins"`
+	Plugins PluginList `json:"plugins,omitempty"`
 }
 
 // GrafanaDashboardStatus defines the observed state of GrafanaDashboard
 type GrafanaDashboardStatus struct {
-	Messages []GrafanaDashboardStatusMessage `json:"messages"`
+	Messages []GrafanaDashboardStatusMessage `json:"messages,omitempty"`
+	Phase    int                             `json:"phase"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
