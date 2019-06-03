@@ -48,6 +48,11 @@ Represents a Grafana datasource. See [the documentation](./documentation/datasou
 
 You can run the Operator locally against a remote namespace using the operator-sdk:
 
+Prerequisites:
+
+* [operator-sdk](https://github.com/operator-framework/operator-sdk) installed
+* kubectl pointing to the local context. [minikube](https://github.com/kubernetes/minikube) automatically sets the context to the local VM. If not you can use `kubectl config use <context>` or (if using the OpenShift CLI) `oc login -u <user> <url>`
+
 ```sh
 $ operator-sdk up local --namespace=<namespace> --operator-flags="<flags to pass>"
 ```
