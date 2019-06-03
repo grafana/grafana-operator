@@ -17,7 +17,7 @@ The operator supports the following flags on startup:
 
 * *--grafana-image*: overrides the Grafana image, defaults to `docker.io/grafana/grafana`.
 * *--grafana-image-tag*: overrides the Grafana tag, defaults to `5.4.2`.
-* *--scan-all*: watch for dashboards in all namespaces. This requires the the operator service account to have cluster wide permissions to `get`, `list`, `update` and `watch` dashboards. See `deploy/examples/cluster_roles`.
+* *--scan-all*: watch for dashboards in all namespaces. This requires the the operator service account to have cluster wide permissions to `get`, `list`, `update` and `watch` dashboards. See `deploy/cluster_roles`.
 * *--openshift*: force the operator to use a [route](https://docs.openshift.com/container-platform/3.11/architecture/networking/routes.html) instead of an [ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/). Note that routes are only supported on OpenShift.
 
 Flags can be passed as `args` to the container.
