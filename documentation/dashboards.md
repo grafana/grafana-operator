@@ -28,7 +28,7 @@ $ kubectl create -f deploy/examples/dashboards/SimpleDashboard.yaml -n grafana
 
 Dashboards can specify plugins (panels) they depend on. The operator will automatically install them.
 
-You need to provide a name and a version for every plugins, e.g.:
+You need to provide a name and a version for every plugin, e.g.:
 
 ```yaml
 spec:
