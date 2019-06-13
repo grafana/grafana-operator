@@ -27,7 +27,7 @@ spec:
         - env:
             - name: GRAFANA_PLUGINS
               value: ""
-          image: 'quay.io/integreatly/grafana_plugins_init:{{ .PluginsInitContainerImageTag }}'
+          image: '{{ .PluginsInitContainerImage }}:{{ .PluginsInitContainerImageTag }}'
           imagePullPolicy: IfNotPresent
           name: grafana-plugins-init
           resources: {}
