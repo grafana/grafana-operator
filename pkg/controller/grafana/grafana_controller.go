@@ -29,10 +29,10 @@ const (
 	PhaseConfigFiles int = iota
 	PhaseInstallGrafana
 	PhaseDone
-	PhasePlugins
+	PhaseReconcile
 )
 
-const ReconcilePauseSeconds = 5
+const ReconcilePauseSeconds = 10000
 const OpenShiftOAuthRedirect = "serviceaccounts.openshift.io/oauth-redirectreference.primary"
 
 /**
@@ -104,20 +104,64 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 		return r.InstallGrafana(cr)
 	case PhaseDone:
 		log.Info("Grafana installation complete")
-		return r.UpdatePhase(cr, PhasePlugins)
-	case PhasePlugins:
-		// Make the label selector available to other controllers
-		r.config.AddConfigItem(common.ConfigDashboardLabelSelector, cr.Spec.DashboardLabelSelectors)
-		return r.ReconcileDashboardPlugins(cr)
+		return r.UpdatePhase(cr, PhaseReconcile)
+	case PhaseReconcile:
+		return r.ReconcileGrafana(cr)
 	}
 
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileGrafana) ReconcileDashboardPlugins(cr *i8ly.Grafana) (reconcile.Result, error) {
+// Constantly reconcile the grafana config and plugins
+func (r *ReconcileGrafana) ReconcileGrafana(cr *i8ly.Grafana) (reconcile.Result, error) {
+	// Update the label selector and make it available to the dashboard controller
+	r.config.AddConfigItem(common.ConfigDashboardLabelSelector, cr.Spec.DashboardLabelSelectors)
+	
+	// Config updated?
+	newConfig := NewIniConfig(cr)
+	err := newConfig.Build()
+
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	if newConfig.DiffersFrom(cr.Status.LastConfig) {
+		err := r.helper.UpdateGrafanaConfig(newConfig.Contents, cr)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+
+		// Store the new config hash
+		cr.Status.LastConfig = newConfig.Hash
+		err = r.client.Update(context.TODO(), cr)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+
+		// Grafana needs to be restarted after a config change
+		err = r.helper.RestartGrafana(cr.Namespace)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+		log.Info("grafana restarted due to config change")
+
+		// Skip plugins reconciliation while grafana is restarting
+		return reconcile.Result{RequeueAfter: time.Second * ReconcilePauseSeconds}, err
+	}
+
+	// Plugins updated?
+	err = r.ReconcileDashboardPlugins(cr)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	return reconcile.Result{RequeueAfter: time.Second * ReconcilePauseSeconds}, err
+}
+
+func (r *ReconcileGrafana) ReconcileDashboardPlugins(cr *i8ly.Grafana) error {
 	// Waited long enough for dashboards to be ready?
 	if r.plugins.CanUpdatePlugins() == false {
-		return reconcile.Result{RequeueAfter: time.Second * ReconcilePauseSeconds}, nil
+		return nil
 	}
 
 	// Fetch all plugins of all dashboards
@@ -137,11 +181,11 @@ func (r *ReconcileGrafana) ReconcileDashboardPlugins(cr *i8ly.Grafana) (reconcil
 		// to let the owners know about the status
 		err := r.UpdateDashboardMessages(filteredPlugins)
 		if err != nil {
-			return reconcile.Result{}, err
+			return err
 		}
 	}
 
-	return reconcile.Result{RequeueAfter: time.Second * ReconcilePauseSeconds}, nil
+	return nil
 }
 
 func (r *ReconcileGrafana) ReconcilePlugins(cr *i8ly.Grafana, plugins []i8ly.GrafanaPlugin) error {
@@ -182,6 +226,30 @@ func (r *ReconcileGrafana) UpdateDashboardMessages(plugins i8ly.PluginList) erro
 	return nil
 }
 
+// Initially create the config map that contains grafana.ini
+func (r *ReconcileGrafana) createGrafanaConfig(cr *i8ly.Grafana) error {
+	grafanaIni := NewIniConfig(cr)
+	err := grafanaIni.Build()
+	if err != nil {
+		return err
+	}
+
+	configMap := core.ConfigMap{}
+	configMap.ObjectMeta = v1.ObjectMeta{
+		Name:      common.GrafanaConfigMapName,
+		Namespace: cr.Namespace,
+	}
+	configMap.Data = map[string]string{}
+	configMap.Data[common.GrafanaConfigFileName] = grafanaIni.Contents
+	err = controllerutil.SetControllerReference(cr, &configMap, r.scheme)
+	if err != nil {
+		return err
+	}
+
+	cr.Status.LastConfig = grafanaIni.Hash
+	return r.client.Create(context.TODO(), &configMap)
+}
+
 func (r *ReconcileGrafana) CreateConfigFiles(cr *i8ly.Grafana) (reconcile.Result, error) {
 	log.Info("Phase: Create Config Files")
 
@@ -195,7 +263,12 @@ func (r *ReconcileGrafana) CreateConfigFiles(cr *i8ly.Grafana) (reconcile.Result
 		return reconcile.Result{}, err
 	}
 
-	for _, resourceName := range []string{common.GrafanaConfigMapName, common.GrafanaDashboardsConfigMapName, common.GrafanaProvidersConfigMapName, common.GrafanaDatasourcesConfigMapName, common.GrafanaServiceName, ingressType} {
+	err = r.createGrafanaConfig(cr)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	for _, resourceName := range []string{common.GrafanaDashboardsConfigMapName, common.GrafanaProvidersConfigMapName, common.GrafanaDatasourcesConfigMapName, common.GrafanaServiceName, ingressType} {
 		if err := r.CreateResource(cr, resourceName); err != nil {
 			log.Info(fmt.Sprintf("Error in CreateConfigFiles, resourceName=%s : err=%s", resourceName, err))
 			// Requeue so it can be attempted again

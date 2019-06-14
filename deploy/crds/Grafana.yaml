@@ -51,6 +51,9 @@ spec:
             anonymous:
               type: boolean
               description: Anonymous auth enabled
+            config:
+              type: object
+              description: Grafana config
             dashboardLabelSelectors:
               type: array
               items:

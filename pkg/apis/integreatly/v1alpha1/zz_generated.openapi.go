@@ -159,10 +159,32 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSourceSpec(ref common.Refer
 			SchemaProps: spec.SchemaProps{
 				Description: "GrafanaDataSourceSpec defines the desired state of GrafanaDataSource",
 				Type:        []string{"object"},
-				Properties:  map[string]spec.Schema{},
+				Properties: map[string]spec.Schema{
+					"datasources": {
+						SchemaProps: spec.SchemaProps{
+							Description: "INSERT ADDITIONAL SPEC FIELDS - desired state of cluster Important: Run \"operator-sdk generate k8s\" to regenerate code after modifying this file Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDataSourceFields"),
+									},
+								},
+							},
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"datasources", "name"},
 			},
 		},
-		Dependencies: []string{},
+		Dependencies: []string{
+			"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDataSourceFields"},
 	}
 }
 
@@ -172,7 +194,21 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSourceStatus(ref common.Ref
 			SchemaProps: spec.SchemaProps{
 				Description: "GrafanaDataSourceStatus defines the observed state of GrafanaDataSource",
 				Type:        []string{"object"},
-				Properties:  map[string]spec.Schema{},
+				Properties: map[string]spec.Schema{
+					"phase": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int32",
+						},
+					},
+					"lastConfig": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"phase", "lastConfig"},
 			},
 		},
 		Dependencies: []string{},
