@@ -29,6 +29,7 @@ type GrafanaParamaeters struct {
 	LogLevel                        string
 	GrafanaRouteName                string
 	GrafanaServiceName              string
+	PluginsInitContainerImage       string
 	PluginsInitContainerImageTag    string
 	GrafanaIngressName              string
 	Hostname                        string
@@ -91,6 +92,7 @@ func newTemplateHelper(cr *integreatly.Grafana) *TemplateHelper {
 		LogLevel:                        getLogLevel(cr.Spec.LogLevel),
 		GrafanaRouteName:                common.GrafanaRouteName,
 		GrafanaServiceName:              common.GrafanaServiceName,
+		PluginsInitContainerImage:       controllerConfig.GetConfigString(common.ConfigPluginsInitContainerImage, common.PluginsInitContainerImage),
 		PluginsInitContainerImageTag:    common.PluginsInitContainerImageTag,
 		GrafanaIngressName:              common.GrafanaIngressName,
 		Hostname:                        cr.Spec.Hostname,
