@@ -27,7 +27,7 @@ spec:
         - env:
             - name: GRAFANA_PLUGINS
               value: ""
-          image: '{{ .PluginsInitContainerImage }}:{{ .PluginsInitContainerImageTag }}'
+          image: '{{ .PluginsInitContainerImage }}:{{ .PluginsInitContainerTag }}'
           imagePullPolicy: IfNotPresent
           name: grafana-plugins-init
           resources: {}

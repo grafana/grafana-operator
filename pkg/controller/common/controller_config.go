@@ -11,6 +11,7 @@ const (
 	ConfigGrafanaImage              = "grafana.image.url"
 	ConfigGrafanaImageTag           = "grafana.image.tag"
 	ConfigPluginsInitContainerImage = "grafana.plugins.init.container.image.url"
+	ConfigPluginsInitContainerTag   = "grafana.plugins.init.container.image.tag"
 	ConfigOperatorNamespace         = "grafana.operator.namespace"
 	ConfigDashboardLabelSelector    = "grafana.dashboard.selector"
 	ConfigGrafanaPluginsUpdated     = "grafana.plugins.updated"
@@ -28,7 +29,7 @@ const (
 	GrafanaIngressName              = "grafana-ingress"
 	GrafanaServiceName              = "grafana-service"
 	PluginsInitContainerImage       = "quay.io/integreatly/grafana_plugins_init"
-	PluginsInitContainerImageTag    = "0.0.2"
+	PluginsInitContainerTag         = "0.0.2"
 	PluginsEnvVar                   = "GRAFANA_PLUGINS"
 	PluginsUrl                      = "https://grafana.com/api/plugins/%s/versions/%s"
 	PluginsMinAge                   = 5

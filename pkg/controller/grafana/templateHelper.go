@@ -30,7 +30,7 @@ type GrafanaParamaeters struct {
 	GrafanaRouteName                string
 	GrafanaServiceName              string
 	PluginsInitContainerImage       string
-	PluginsInitContainerImageTag    string
+	PluginsInitContainerTag         string
 	GrafanaIngressName              string
 	Hostname                        string
 	AdminUser                       string
@@ -93,7 +93,7 @@ func newTemplateHelper(cr *integreatly.Grafana) *TemplateHelper {
 		GrafanaRouteName:                common.GrafanaRouteName,
 		GrafanaServiceName:              common.GrafanaServiceName,
 		PluginsInitContainerImage:       controllerConfig.GetConfigString(common.ConfigPluginsInitContainerImage, common.PluginsInitContainerImage),
-		PluginsInitContainerImageTag:    common.PluginsInitContainerImageTag,
+		PluginsInitContainerTag:         controllerConfig.GetConfigString(common.ConfigPluginsInitContainerTag, common.PluginsInitContainerTag),
 		GrafanaIngressName:              common.GrafanaIngressName,
 		Hostname:                        cr.Spec.Hostname,
 		AdminUser:                       option(cr.Spec.AdminUser, "root"),
