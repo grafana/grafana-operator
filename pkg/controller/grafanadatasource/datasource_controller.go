@@ -2,6 +2,7 @@ package grafanadatasource
 
 import (
 	"context"
+	"crypto/md5"
 	"fmt"
 	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
@@ -115,6 +116,14 @@ func (r *ReconcileGrafanaDataSource) reconcileDatasource(cr *i8ly.GrafanaDataSou
 		return reconcile.Result{}, err
 	}
 
+	changed, hash := r.hasDatasourceChanged(ds, cr)
+	if !changed {
+		log.Info("data source reconciled but no changes")
+		return reconcile.Result{}, nil
+	}
+
+	cr.Status.LastConfig = hash
+
 	updated, err := r.helper.UpdateDataSources(cr.Spec.Name, cr.Namespace, ds)
 	if err != nil {
 		return reconcile.Result{}, err
@@ -130,7 +139,12 @@ func (r *ReconcileGrafanaDataSource) reconcileDatasource(cr *i8ly.GrafanaDataSou
 	}
 
 	log.Info(fmt.Sprintf("datasource '%s' updated", cr.Spec.Name))
-	return reconcile.Result{}, err
+	return r.updatePhase(cr, common.StatusResourceCreated)
+}
+
+func (r *ReconcileGrafanaDataSource) hasDatasourceChanged(newConfig string, cr *i8ly.GrafanaDataSource) (bool, string) {
+	hash := fmt.Sprintf("%x", md5.Sum([]byte(newConfig)))
+	return hash != cr.Status.LastConfig, hash
 }
 
 func (r *ReconcileGrafanaDataSource) DeleteDatasource(cr *i8ly.GrafanaDataSource) (reconcile.Result, error) {
