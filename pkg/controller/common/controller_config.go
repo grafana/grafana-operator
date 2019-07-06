@@ -73,8 +73,10 @@ func (c *ControllerConfig) SetPluginsFor(dashboard *v1alpha1.GrafanaDashboard) {
 
 func (c *ControllerConfig) RemovePluginsFor(dashboard *v1alpha1.GrafanaDashboard) {
 	id := c.GetDashboardId(dashboard)
-	c.Plugins[id] = nil
-	c.AddConfigItem(ConfigGrafanaPluginsUpdated, time.Now())
+	if _, ok := c.Plugins[id]; ok {
+		delete(c.Plugins, id)
+		c.AddConfigItem(ConfigGrafanaPluginsUpdated, time.Now())
+	}
 }
 
 func (c *ControllerConfig) AddConfigItem(key string, value interface{}) {
