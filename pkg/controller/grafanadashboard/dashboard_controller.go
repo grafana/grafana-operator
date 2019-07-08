@@ -184,6 +184,7 @@ func (r *ReconcileGrafanaDashboard) deleteDashboard(d *i8ly.GrafanaDashboard) (r
 		log.Info(fmt.Sprintf("dashboard '%s/%s' deleted", d.Namespace, d.Spec.Name))
 	}
 
+	r.config.RemovePluginsFor(d)
 	return r.removeFinalizer(d)
 }
 
