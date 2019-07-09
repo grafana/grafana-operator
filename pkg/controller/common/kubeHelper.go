@@ -63,6 +63,25 @@ func (h KubeHelperImpl) UpdateDashboard(ns string, d *v1alpha1.GrafanaDashboard)
 	return true, nil
 }
 
+func (h KubeHelperImpl) IsKnownDataSource(ds *v1alpha1.GrafanaDataSource) (bool, error) {
+	configMap, err := h.getConfigMap(ds.Spec.Name, GrafanaDatasourcesConfigMapName)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	if configMap.Data == nil {
+		return false, nil
+	}
+
+	key := fmt.Sprintf("%s_%s", ds.Namespace, strings.ToLower(ds.Spec.Name))
+	_, found := configMap.Data[key]
+
+	return found, nil
+}
+
 func (h KubeHelperImpl) UpdateDataSources(name, namespace, ds string) (bool, error) {
 	configMap, err := h.getConfigMap(namespace, GrafanaDatasourcesConfigMapName)
 	if err != nil {
