@@ -4,7 +4,6 @@ metadata:
   name: {{ .GrafanaRouteName }}
   namespace: {{ .Namespace }}
 spec:
-  host: {{ .Hostname }}
   port:
     targetPort: grafana
   tls:

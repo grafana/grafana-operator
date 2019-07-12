@@ -12,6 +12,18 @@ To create a namespace named `grafana` run:
 $ kubectl create namespace grafana
 ```
 
+Create the operator roles:
+
+```sh
+$ kubectl create -f deploy/roles
+```
+
+If you want to scan for dashboards in other namespaces you also need the cluster roles:
+
+```sh
+$ kubectl create -f deploy/cluster_roles
+```
+
 To deploy the operator to that namespace you can use `deploy/operator.yaml`:
 
 ```sh
@@ -43,12 +55,14 @@ Create a custom resource of type `Grafana`, or use the one in `deploy/examples/G
 
 The resource accepts the following properties in it's `spec`:
 
-* *hostname*:  The host to be used for the [ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/). Optional when `--openshift` is set.
+* *hostname*:  The host to be used for the [ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/). Ignored when `--openshift` is set.
 * *dashboardLabelSelector*: A list of either `matchLabels` or `matchExpressions` to filter the dashboards before importing them.
 * *containers*: Extra containers to be added to the Grafana deployment. Can be used for example to add auth proxy side cars.
 * *secrets*: A list of secrets that are added as volumes to the deployment. Mostly useful in combination with extra `containers`.
 
 The other accepted properties are `logLevel`, `adminUser`, `adminPassword`, `basicAuth`, `disableLoginForm`, `disableSignoutMenu` and `anonymous`. They map to the properties described in the [official documentation](https://grafana.com/docs/installation/configuration/#configuration), just use camel case instead of underscores.
+
+*NOTE*: setting `hostname` on Ingresses is not permitted on OpenShift. We recommend using the `--openshift` flag which will use a `Route` with an automatically assigned host instead. You can still use `Ingress` on OpenShift if you don't provide a `hostname` in the `Grafana` resource.
 
 To create a new Grafana instance in the `grafana` namespace, run:
 
