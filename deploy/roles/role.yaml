@@ -51,5 +51,8 @@ rules:
   - grafanas
   - grafanadashboards
   - grafanadatasources
+  - grafanas/finalizers
+  - grafanadashboards/finalizers
+  - grafanadatasources/finalizers
   verbs:
   - '*'
