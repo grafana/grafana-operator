@@ -116,13 +116,21 @@ func (r *ReconcileGrafanaDataSource) reconcileDatasource(cr *i8ly.GrafanaDataSou
 		return reconcile.Result{}, err
 	}
 
-	changed, hash := r.hasDatasourceChanged(ds, cr)
-	if !changed {
-		log.Info("data source reconciled but no changes")
-		return reconcile.Result{}, nil
+	known, err := r.helper.IsKnownDataSource(cr)
+	if err != nil {
+		return reconcile.Result{}, err
 	}
 
-	cr.Status.LastConfig = hash
+	// If the datasource is already known, only update it if the configuration
+	// has changed
+	if known {
+		changed, hash := r.hasDatasourceChanged(ds, cr)
+		if !changed {
+			log.Info("data source reconciled but no changes")
+			return reconcile.Result{}, nil
+		}
+		cr.Status.LastConfig = hash
+	}
 
 	updated, err := r.helper.UpdateDataSources(cr.Spec.Name, cr.Namespace, ds)
 	if err != nil {
