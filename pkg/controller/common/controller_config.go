@@ -2,9 +2,10 @@ package common
 
 import (
 	"fmt"
-	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"sync"
 	"time"
+
+	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 )
 
 const (
@@ -16,8 +17,8 @@ const (
 	ConfigDashboardLabelSelector    = "grafana.dashboard.selector"
 	ConfigGrafanaPluginsUpdated     = "grafana.plugins.updated"
 	ConfigOpenshift                 = "mode.openshift"
-	GrafanaImage                    = "docker.io/grafana/grafana"
-	GrafanaVersion                  = "5.4.2"
+	GrafanaImage                    = "quay.io/openshift/origin-grafana"
+	GrafanaVersion                  = "4.2"
 	LogLevel                        = "error"
 	GrafanaConfigMapName            = "grafana-config"
 	GrafanaProvidersConfigMapName   = "grafana-providers"
