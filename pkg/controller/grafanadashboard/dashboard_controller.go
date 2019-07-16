@@ -2,12 +2,14 @@ package grafanadashboard
 
 import (
 	"context"
+	"crypto/md5"
 	defaultErrors "errors"
 	"fmt"
 	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/util/json"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -132,6 +134,57 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 		return r.deleteDashboard(cr)
 	}
 
+	changed, hash := r.hasDashboardChanged(cr.Spec.Json, cr)
+	if changed {
+		cr.Status.LastConfig = hash
+		r.client.Update(context.TODO(), cr)
+	}
+
+	known, err := r.helper.IsKnownDashboard(cr)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	jsonTest, err := isJSON(cr.Spec.Json)
+	// Dashboard is in cm and JSON is valid
+	if known && jsonTest == true{
+		if !changed {
+			log.Info(fmt.Sprintf("dashboard '%s' reconciled but no changes", cr.Name))
+			return reconcile.Result{}, nil
+		}
+	}
+
+	// Dashboard is in cm and JSON is invalid
+	if jsonTest == false && changed{
+		jsonError := err.Error()
+		msg := fmt.Sprintf("Invalid JSON, Error: %s", jsonError)
+		r.helper.AppendMessage(msg, cr)
+		if known {
+			log.Info(fmt.Sprintf("invalid JSON found in reconciled dashboard '%s'", cr.Name))
+			r.deleteDashboard(cr)
+			cr.Status.Phase = common.StatusResourceUninitialized
+			r.client.Update(context.TODO(), cr)
+			return reconcile.Result{}, nil
+		}
+		log.Info(fmt.Sprintf("invalid JSON found in dashboard '%s'", cr.Name))
+		r.client.Update(context.TODO(), cr)
+		return reconcile.Result{}, nil
+	}
+
+	if jsonTest == false && !changed {
+		if !known {
+			log.Info(fmt.Sprintf("dashboard with invalid JSON '%s' reconciled but no changes", cr.Name))
+			return reconcile.Result{}, nil
+		}
+		if known {
+			r.deleteDashboard(cr)
+			cr.Status.Phase = common.StatusResourceUninitialized
+			r.client.Update(context.TODO(), cr)
+			log.Info(fmt.Sprintf("dashboard with invalid JSON '%s' reconciled and deleted", cr.Name))
+			return reconcile.Result{}, nil
+		}
+	}
+
 	switch cr.Status.Phase {
 	case common.StatusResourceUninitialized:
 		// New resource
@@ -206,4 +259,16 @@ func (r *ReconcileGrafanaDashboard) updatePhase(cr *i8ly.GrafanaDashboard, phase
 	cr.Status.Phase = phase
 	err := r.client.Update(context.TODO(), cr)
 	return reconcile.Result{}, err
+}
+
+func isJSON(s string) (bool, error) {
+	var js map[string]interface{}
+	err := json.Unmarshal([]byte(s), &js)
+	return json.Unmarshal([]byte(s), &js) == nil, err
+
+}
+
+func (r *ReconcileGrafanaDashboard) hasDashboardChanged(newConfig string, cr *i8ly.GrafanaDashboard) (bool, string) {
+	hash := fmt.Sprintf("%x", md5.Sum([]byte(newConfig)))
+	return hash != cr.Status.LastConfig, hash
 }

@@ -12,6 +12,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	"time"
+
 )
 
 type KubeHelperImpl struct {
@@ -77,6 +79,25 @@ func (h KubeHelperImpl) UpdateDashboard(ns string, d *v1alpha1.GrafanaDashboard)
 
 func (h KubeHelperImpl) IsKnownDataSource(ds *v1alpha1.GrafanaDataSource) (bool, error) {
 	configMap, err := h.getConfigMap(ds.Namespace, GrafanaDatasourcesConfigMapName)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	if configMap.Data == nil {
+		return false, nil
+	}
+
+	key := fmt.Sprintf("%s_%s", ds.Namespace, strings.ToLower(ds.Spec.Name))
+	_, found := configMap.Data[key]
+
+	return found, nil
+}
+
+func (h KubeHelperImpl) IsKnownDashboard(ds *v1alpha1.GrafanaDashboard) (bool, error) {
+	configMap, err := h.getConfigMap(ds.Namespace, GrafanaDashboardsConfigMapName)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return false, nil
@@ -240,4 +261,18 @@ func (h KubeHelperImpl) RestartGrafana(monitoringNamespace string) error {
 	}
 
 	return h.k8client.CoreV1().Pods(monitoringNamespace).Delete(pod.Name, nil)
+}
+
+// Append a status message to the origin dashboard of a plugin
+func (h KubeHelperImpl) AppendMessage(message string, dashboard *v1alpha1.GrafanaDashboard) {
+	if dashboard == nil {
+		return
+	}
+
+	status := v1alpha1.GrafanaDashboardStatusMessage{
+		Message:   message,
+		Timestamp: time.Now().Format(time.RFC850),
+	}
+
+	dashboard.Status.Messages = append(dashboard.Status.Messages, status)
 }
