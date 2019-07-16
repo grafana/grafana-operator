@@ -65,7 +65,7 @@ func (h KubeHelperImpl) UpdateDashboard(ns string, d *v1alpha1.GrafanaDashboard)
 }
 
 func (h KubeHelperImpl) IsKnownDataSource(ds *v1alpha1.GrafanaDataSource) (bool, error) {
-	configMap, err := h.getConfigMap(ds.Spec.Name, GrafanaDatasourcesConfigMapName)
+	configMap, err := h.getConfigMap(ds.Namespace, GrafanaDatasourcesConfigMapName)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return false, nil
