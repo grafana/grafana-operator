@@ -2,15 +2,16 @@ package common
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	apps "k8s.io/api/apps/v1"
-	"k8s.io/api/core/v1"
 	core "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
-	"strings"
 )
 
 type KubeHelperImpl struct {
@@ -191,11 +192,6 @@ func (h KubeHelperImpl) UpdateGrafanaDeployment(monitoringNamespace string, newE
 	deployment, err := h.getGrafanaDeployment(monitoringNamespace)
 	if err != nil {
 		return err
-	}
-
-	// Leave the deployment alone when it's busy with another operation
-	if deployment.Status.Replicas != deployment.Status.ReadyReplicas {
-		return nil
 	}
 
 	updated := false
