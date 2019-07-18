@@ -46,23 +46,23 @@ type GrafanaDataSourceList struct {
 }
 
 type GrafanaDataSourceFields struct {
-	Name              string `json:"name"`
-	Type              string `json:"type"`
-	Access            string `json:"access"`
-	OrgId             int    `json:"orgId,omitempty"`
-	Url               string `json:"url"`
-	Password          string `json:"password,omitempty"`
-	User              string `json:"user,omitempty"`
-	Database          string `json:"database,omitempty"`
-	BasicAuth         bool   `json:"basicAuth,omitempty"`
-	BasicAuthUser     string `json:"basicAuthUser,omitempty"`
-	BasicAuthPassword string `json:"basicAuthPassword,omitempty"`
-	WithCredentials   bool   `json:"withCredentials,omitempty"`
-	IsDefault         bool   `json:"isDefault,omitempty"`
-	JsonData          string `json:"jsonData,omitempty"`
-	SecureJsonData    string `json:"secureJsonData,omitempty"`
-	Version           int    `json:"version,omitempty"`
-	Editable          bool   `json:"editable,omitempty"`
+	Name              string            `json:"name"`
+	Type              string            `json:"type"`
+	Access            string            `json:"access"`
+	OrgId             int               `json:"orgId,omitempty"`
+	Url               string            `json:"url"`
+	Password          string            `json:"password,omitempty"`
+	User              string            `json:"user,omitempty"`
+	Database          string            `json:"database,omitempty"`
+	BasicAuth         bool              `json:"basicAuth,omitempty"`
+	BasicAuthUser     string            `json:"basicAuthUser,omitempty"`
+	BasicAuthPassword string            `json:"basicAuthPassword,omitempty"`
+	WithCredentials   bool              `json:"withCredentials,omitempty"`
+	IsDefault         bool              `json:"isDefault,omitempty"`
+	JsonData          map[string]string `json:"jsonData,omitempty"`
+	SecureJsonData    map[string]string `json:"secureJsonData,omitempty"`
+	Version           int               `json:"version,omitempty"`
+	Editable          bool              `json:"editable,omitempty"`
 }
 
 func init() {

@@ -38,6 +38,17 @@ func (h KubeHelperImpl) getGrafanaDeployment(namespaceName string) (*apps.Deploy
 	return h.k8client.AppsV1().Deployments(namespaceName).Get(GrafanaDeploymentName, opts)
 }
 
+func (h KubeHelperImpl) UpdateGrafanaConfig(config string, cr *v1alpha1.Grafana) error {
+	configMap, err := h.getConfigMap(cr.Namespace, GrafanaConfigMapName)
+	if err != nil {
+		return err
+	}
+
+	configMap.Data[GrafanaConfigFileName] = config
+	_, err = h.k8client.CoreV1().ConfigMaps(cr.Namespace).Update(configMap)
+	return err
+}
+
 func (h KubeHelperImpl) UpdateDashboard(ns string, d *v1alpha1.GrafanaDashboard) (bool, error) {
 	configMap, err := h.getConfigMap(ns, GrafanaDashboardsConfigMapName)
 	if err != nil {

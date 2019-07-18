@@ -54,6 +54,8 @@ spec:
               name: {{ .GrafanaProvidersConfigMapName }}
             - mountPath: /etc/grafana/provisioning/datasources
               name: {{ .GrafanaDatasourcesConfigMapName }}
+            - mountPath: /etc/grafana/provisioning/notifiers
+              name: grafana-notifiers-provisioning
             - mountPath: /etc/grafana-dashboards
               name: {{ .GrafanaDashboardsConfigMapName }}
             - mountPath: /var/lib/grafana
@@ -90,3 +92,5 @@ spec:
           name: grafana-logs
         - emptyDir: {}
           name: grafana-plugins
+        - emptyDir: {}
+          name: grafana-notifiers-provisioning

@@ -4,9 +4,9 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
+	"github.com/ghodss/yaml"
 	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
-	"gopkg.in/yaml.v2"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -21,6 +21,10 @@ import (
 )
 
 var log = logf.Log.WithName("controller_grafanadatasource")
+
+const (
+	DatasourcesApiVersion = 1
+)
 
 /**
 * USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
@@ -178,8 +182,10 @@ func (r *ReconcileGrafanaDataSource) DeleteDatasource(cr *i8ly.GrafanaDataSource
 
 func (r *ReconcileGrafanaDataSource) parseDataSource(cr *i8ly.GrafanaDataSource) (string, error) {
 	datasources := struct {
+		ApiVersion  int                            `json:"apiVersion"`
 		Datasources []i8ly.GrafanaDataSourceFields `json:"datasources"`
 	}{
+		ApiVersion:  DatasourcesApiVersion,
 		Datasources: cr.Spec.Datasources,
 	}
 

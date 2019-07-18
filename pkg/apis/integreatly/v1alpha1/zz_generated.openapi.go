@@ -18,6 +18,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDataSource":       schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSource(ref),
 		"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDataSourceSpec":   schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSourceSpec(ref),
 		"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDataSourceStatus": schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSourceStatus(ref),
+		"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaSpec":             schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref),
+		"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaStatus":           schema_pkg_apis_integreatly_v1alpha1_GrafanaStatus(ref),
 	}
 }
 
@@ -159,10 +161,32 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSourceSpec(ref common.Refer
 			SchemaProps: spec.SchemaProps{
 				Description: "GrafanaDataSourceSpec defines the desired state of GrafanaDataSource",
 				Type:        []string{"object"},
-				Properties:  map[string]spec.Schema{},
+				Properties: map[string]spec.Schema{
+					"datasources": {
+						SchemaProps: spec.SchemaProps{
+							Description: "INSERT ADDITIONAL SPEC FIELDS - desired state of cluster Important: Run \"operator-sdk generate k8s\" to regenerate code after modifying this file Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDataSourceFields"),
+									},
+								},
+							},
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"datasources", "name"},
 			},
 		},
-		Dependencies: []string{},
+		Dependencies: []string{
+			"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDataSourceFields"},
 	}
 }
 
@@ -172,9 +196,183 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSourceStatus(ref common.Ref
 			SchemaProps: spec.SchemaProps{
 				Description: "GrafanaDataSourceStatus defines the observed state of GrafanaDataSource",
 				Type:        []string{"object"},
-				Properties:  map[string]spec.Schema{},
+				Properties: map[string]spec.Schema{
+					"phase": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int32",
+						},
+					},
+					"lastConfig": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"phase", "lastConfig"},
 			},
 		},
 		Dependencies: []string{},
+	}
+}
+
+func schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "GrafanaSpec defines the desired state of Grafana",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"hostname": {
+						SchemaProps: spec.SchemaProps{
+							Description: "INSERT ADDITIONAL SPEC FIELDS - desired state of cluster Important: Run \"operator-sdk generate k8s\" to regenerate code after modifying this file",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"containers": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("k8s.io/api/core/v1.Container"),
+									},
+								},
+							},
+						},
+					},
+					"secrets": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"dashboardLabelSelector": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector"),
+									},
+								},
+							},
+						},
+					},
+					"logLevel": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"adminUser": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"adminPassword": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"basicAuth": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"disableLoginForm": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"disableSignoutMenu": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"anonymous": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"config": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaConfig"),
+						},
+					},
+				},
+				Required: []string{"logLevel", "adminUser", "adminPassword", "basicAuth", "disableLoginForm", "disableSignoutMenu", "anonymous", "config"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaConfig", "k8s.io/api/core/v1.Container", "k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector"},
+	}
+}
+
+func schema_pkg_apis_integreatly_v1alpha1_GrafanaStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "GrafanaStatus defines the observed state of Grafana",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"phase": {
+						SchemaProps: spec.SchemaProps{
+							Description: "INSERT ADDITIONAL STATUS FIELD - define observed state of cluster Important: Run \"operator-sdk generate k8s\" to regenerate code after modifying this file",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"installedPlugins": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaPlugin"),
+									},
+								},
+							},
+						},
+					},
+					"failedPlugins": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaPlugin"),
+									},
+								},
+							},
+						},
+					},
+					"lastConfig": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"phase", "installedPlugins", "failedPlugins", "lastConfig"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaPlugin"},
 	}
 }

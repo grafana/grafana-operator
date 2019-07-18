@@ -51,3 +51,9 @@ Prerequisites:
 ```sh
 $ operator-sdk up local --namespace=<namespace> --operator-flags="<flags to pass>"
 ```
+
+# Grafana features not yet supported in the operator
+
+## Notifier provisioning
+
+Grafana has provisioning support for multiple channels (notifiers) of alerts. The operator does currently not support this type of provisioning. An empty directory is mounted at the expected location to prevent a warning in the grafana log. This feature might be supported in the future. 

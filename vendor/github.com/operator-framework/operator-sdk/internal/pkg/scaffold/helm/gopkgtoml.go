@@ -38,32 +38,32 @@ func (s *GopkgToml) GetInput() (input.Input, error) {
 const gopkgTomlTmpl = `[[constraint]]
   name = "github.com/operator-framework/operator-sdk"
   # The version rule is used for a specific release and the master branch for in between releases.
-  # branch = "v0.8.x" #osdk_branch_annotation
-  version = "=v0.8.1" #osdk_version_annotation
+  # branch = "master" #osdk_branch_annotation
+  version = "=v0.9.0" #osdk_version_annotation
 
 [[override]]
   name = "k8s.io/api"
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.13.4"
 
 [[override]]
   name = "k8s.io/apimachinery"
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.13.4"
 
 [[override]]
   name = "k8s.io/apiextensions-apiserver"
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.13.4"
 
 [[override]]
   name = "k8s.io/apiserver"
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.13.4"
 
 [[override]]
   name = "k8s.io/client-go"
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.13.4"
 
 [[override]]
   name = "k8s.io/cli-runtime"
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.13.4"
 
 # We need overrides for the following imports because dep can't resolve them
 # correctly. The easiest way to get this right is to use the versions that
