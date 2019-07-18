@@ -147,7 +147,7 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 
 	jsonTest, err := isJSON(cr.Spec.Json)
 	// Dashboard is in cm and JSON is valid
-	if known && jsonTest == true{
+	if known && jsonTest == true {
 		if !changed {
 			log.Info(fmt.Sprintf("dashboard '%s' reconciled but no changes", cr.Name))
 			return reconcile.Result{}, nil
@@ -155,7 +155,7 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 	}
 
 	// Dashboard is in cm and JSON is invalid
-	if jsonTest == false && changed{
+	if jsonTest == false && changed {
 		jsonError := err.Error()
 		msg := fmt.Sprintf("Invalid JSON, Error: %s", jsonError)
 		r.helper.AppendMessage(msg, cr)

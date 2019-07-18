@@ -2,8 +2,6 @@ package common
 
 import (
 	"fmt"
-	"strings"
-
 	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	apps "k8s.io/api/apps/v1"
 	core "k8s.io/api/core/v1"
@@ -12,8 +10,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	"strings"
 	"time"
-
 )
 
 type KubeHelperImpl struct {
