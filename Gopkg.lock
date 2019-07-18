@@ -268,7 +268,7 @@
   version = "1.0.1"
 
 [[projects]]
-  digest = "1:fe3c97fb1956829a81d7b8221b4710c40d6dae2c6c3b4d222db5b7f96c975d99"
+  digest = "1:7e2c55ad751405c43281c7546295524ae848f642df8a8c464822a6b598d575b8"
   name = "github.com/operator-framework/operator-sdk"
   packages = [
     "pkg/k8sutil",
@@ -277,8 +277,8 @@
     "version"
   ]
   pruneopts = "NT"
-  revision = "33b3bfe10176f8647f5354516fff29dea42b6342"
-  version = "v0.8.1"
+  revision = "560208dc998de497bbf59fea1b63426aec430934"
+  version = "v0.9.0"
 
 [[projects]]
   digest = "1:93b1d84c5fa6d1ea52f4114c37714cddd84d5b78f151b62bb101128dd51399bf"
@@ -759,7 +759,6 @@
     "github.com/operator-framework/operator-sdk/pkg/leader",
     "github.com/operator-framework/operator-sdk/pkg/ready",
     "github.com/operator-framework/operator-sdk/version",
-    "gopkg.in/yaml.v2",
     "k8s.io/api/apps/v1",
     "k8s.io/api/core/v1",
     "k8s.io/apimachinery/pkg/api/errors",

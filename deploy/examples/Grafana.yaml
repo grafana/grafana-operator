@@ -11,8 +11,8 @@ spec:
     dashboards:
       versions_to_keep: 2
     security:
-      admin_user: "admin"
-      admin_password: "Password1"
+      admin_user: "root"
+      admin_password: "secret"
     auth:
       disable_login_form: False
       disable_signout_menu: True

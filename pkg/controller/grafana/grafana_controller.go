@@ -32,7 +32,7 @@ const (
 	PhaseReconcile
 )
 
-const ReconcilePauseSeconds = 10000
+const ReconcilePauseSeconds = 5
 const OpenShiftOAuthRedirect = "serviceaccounts.openshift.io/oauth-redirectreference.primary"
 
 /**
@@ -115,8 +115,8 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 // Constantly reconcile the grafana config and plugins
 func (r *ReconcileGrafana) ReconcileGrafana(cr *i8ly.Grafana) (reconcile.Result, error) {
 	// Update the label selector and make it available to the dashboard controller
-	r.config.AddConfigItem(common.ConfigDashboardLabelSelector, cr.Spec.DashboardLabelSelectors)
-	
+	r.config.AddConfigItem(common.ConfigDashboardLabelSelector, cr.Spec.DashboardLabelSelector)
+
 	// Config updated?
 	newConfig := NewIniConfig(cr)
 	err := newConfig.Build()

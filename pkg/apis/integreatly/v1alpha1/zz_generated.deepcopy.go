@@ -900,8 +900,8 @@ func (in *GrafanaSpec) DeepCopyInto(out *GrafanaSpec) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
-	if in.DashboardLabelSelectors != nil {
-		in, out := &in.DashboardLabelSelectors, &out.DashboardLabelSelectors
+	if in.DashboardLabelSelector != nil {
+		in, out := &in.DashboardLabelSelector, &out.DashboardLabelSelector
 		*out = make([]*metav1.LabelSelector, len(*in))
 		for i := range *in {
 			if (*in)[i] != nil {

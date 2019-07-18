@@ -9,21 +9,22 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // GrafanaSpec defines the desired state of Grafana
+// +k8s:openapi-gen=true
 type GrafanaSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	Hostname                string                  `json:"hostname,omitempty"`
-	Containers              []v1.Container          `json:"containers,omitempty"`
-	Secrets                 []string                `json:"secrets,omitempty"`
-	DashboardLabelSelectors []*metav1.LabelSelector `json:"dashboardLabelSelector,omitempty"`
-	LogLevel                string                  `json:"logLevel"`
-	AdminUser               string                  `json:"adminUser"`
-	AdminPassword           string                  `json:"adminPassword"`
-	BasicAuth               bool                    `json:"basicAuth"`
-	DisableLoginForm        bool                    `json:"disableLoginForm"`
-	DisableSignoutMenu      bool                    `json:"disableSignoutMenu"`
-	Anonymous               bool                    `json:"anonymous"`
-	Config                  GrafanaConfig           `json:"config"`
+	Hostname               string                  `json:"hostname,omitempty"`
+	Containers             []v1.Container          `json:"containers,omitempty"`
+	Secrets                []string                `json:"secrets,omitempty"`
+	DashboardLabelSelector []*metav1.LabelSelector `json:"dashboardLabelSelector,omitempty"`
+	LogLevel               string                  `json:"logLevel"`
+	AdminUser              string                  `json:"adminUser"`
+	AdminPassword          string                  `json:"adminPassword"`
+	BasicAuth              bool                    `json:"basicAuth"`
+	DisableLoginForm       bool                    `json:"disableLoginForm"`
+	DisableSignoutMenu     bool                    `json:"disableSignoutMenu"`
+	Anonymous              bool                    `json:"anonymous"`
+	Config                 GrafanaConfig           `json:"config"`
 }
 
 type GrafanaConfig struct {
@@ -325,6 +326,7 @@ type GrafanaConfigPlugins struct {
 }
 
 // GrafanaStatus defines the observed state of Grafana
+// +k8s:openapi-gen=true
 type GrafanaStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
