@@ -262,7 +262,7 @@ func (h KubeHelperImpl) RestartGrafana(monitoringNamespace string) error {
 }
 
 // Append a status message to the origin dashboard of a plugin
-func (h KubeHelperImpl) AppendMessage(message string, dashboard *v1alpha1.GrafanaDashboard) {
+func AppendMessage(message string, dashboard *v1alpha1.GrafanaDashboard) {
 	if dashboard == nil {
 		return
 	}

@@ -105,7 +105,7 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *integreatly.Grafana, requested int
 		if filteredPlugins.HasSomeVersionOf(&plugin) == true {
 			installedVersion := filteredPlugins.GetInstalledVersionOf(&plugin)
 			msg := fmt.Sprintf("Not installing version %s of %s because %s is already installed", plugin.Version, plugin.Name, installedVersion.Version)
-			common.KubeHelperImpl{}.AppendMessage(msg, plugin.Origin)
+			common.AppendMessage(msg, plugin.Origin)
 			continue
 		}
 
@@ -124,7 +124,7 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *integreatly.Grafana, requested int
 		if cr.Status.InstalledPlugins.HasSomeVersionOf(&plugin) == false {
 			filteredPlugins = append(filteredPlugins, plugin)
 			msg := fmt.Sprintf("Installing plugin %s@%s", plugin.Name, plugin.Version)
-			common.KubeHelperImpl{}.AppendMessage(msg, plugin.Origin)
+			common.AppendMessage(msg, plugin.Origin)
 			pluginsUpdated = true
 			continue
 		}
@@ -140,7 +140,7 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *integreatly.Grafana, requested int
 			installedVersion := cr.Status.InstalledPlugins.GetInstalledVersionOf(&plugin)
 			filteredPlugins = append(filteredPlugins, plugin)
 			msg := fmt.Sprintf("Changing version of plugin %s form %s to %s", plugin.Name, installedVersion.Version, plugin.Version)
-			common.KubeHelperImpl{}.AppendMessage(msg, plugin.Origin)
+			common.AppendMessage(msg, plugin.Origin)
 			pluginsUpdated = true
 			continue
 		}

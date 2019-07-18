@@ -158,7 +158,7 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 	if jsonTest == false && changed {
 		jsonError := err.Error()
 		msg := fmt.Sprintf("Invalid JSON, Error: %s", jsonError)
-		r.helper.AppendMessage(msg, cr)
+		common.AppendMessage(msg, cr)
 		if known {
 			log.Info(fmt.Sprintf("invalid JSON found in reconciled dashboard '%s'", cr.Name))
 			r.deleteDashboard(cr)
