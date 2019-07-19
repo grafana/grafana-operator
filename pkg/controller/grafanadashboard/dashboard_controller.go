@@ -182,7 +182,6 @@ func (r *ReconcileGrafanaDashboard) checkPrerequisites(d *i8ly.GrafanaDashboard)
 	return false
 }
 
-
 func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (reconcile.Result, error) {
 	operatorNamespace := r.config.GetConfigString(common.ConfigOperatorNamespace, "")
 	if operatorNamespace == "" {
@@ -191,7 +190,7 @@ func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (r
 
 	valid := r.checkPrerequisites(d)
 	if valid == false {
-		log.Info( "dashboard prerequisite check failed")
+		log.Info("dashboard prerequisite check failed")
 		return reconcile.Result{Requeue: false}, nil
 	}
 
