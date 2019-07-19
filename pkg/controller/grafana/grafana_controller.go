@@ -194,12 +194,12 @@ func (r *ReconcileGrafana) ReconcilePlugins(cr *i8ly.Grafana, plugins []i8ly.Gra
 
 	for _, plugin := range plugins {
 		if r.plugins.PluginExists(plugin) == false {
-			log.Info(fmt.Sprintf("Invalid plugin: %s@%s", plugin.Name, plugin.Version))
+			log.Info(fmt.Sprintf("invalid plugin: %s@%s", plugin.Name, plugin.Version))
 			failedPlugins = append(failedPlugins, plugin)
 			continue
 		}
 
-		log.Info(fmt.Sprintf("Installing plugin: %s@%s", plugin.Name, plugin.Version))
+		log.Info(fmt.Sprintf("installing plugin: %s@%s", plugin.Name, plugin.Version))
 		validPlugins = append(validPlugins, plugin)
 	}
 
