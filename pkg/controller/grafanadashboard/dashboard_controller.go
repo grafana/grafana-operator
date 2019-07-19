@@ -157,14 +157,16 @@ func (r *ReconcileGrafanaDashboard) checkPrerequisites(d *i8ly.GrafanaDashboard)
 	changed, hash := r.hasDashboardChanged(d)
 	if !changed {
 		log.Info("dashboard reconciled but no changes")
+		return false
 	}
 	d.Status.LastConfig = hash
 
-	valid, err := isJSON(d.Spec.Json)
+	valid, err := r.isJsonValid(d)
 	if valid {
 		return true
 	}
 
+	// Don't append the same error twice
 	msg := fmt.Sprintf("invalid JSON, error: %s", err)
 	for _, statusMessage := range d.Status.Messages {
 		if statusMessage.Message == msg {
@@ -179,6 +181,7 @@ func (r *ReconcileGrafanaDashboard) checkPrerequisites(d *i8ly.GrafanaDashboard)
 		log.Error(err, "update dashboard messages failed")
 	}
 
+	log.Info("dashboard reconciled but json invalid")
 	return false
 }
 
@@ -190,7 +193,6 @@ func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (r
 
 	valid := r.checkPrerequisites(d)
 	if valid == false {
-		log.Info("dashboard prerequisite check failed")
 		return reconcile.Result{Requeue: false}, nil
 	}
 
@@ -206,10 +208,13 @@ func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (r
 	// Reconcile dashboard plugins
 	r.config.SetPluginsFor(d)
 
-	// Update the dashboard to persist the new hash
+	msg := fmt.Sprintf("dashboard '%s/%s' imported", d.Namespace, d.Spec.Name)
+	common.AppendMessage(msg, d)
+
+	// Update the dashboard to persist the new hash and the satus message
 	err = r.client.Update(context.TODO(), d)
 	if err == nil {
-		log.Info(fmt.Sprintf("dashboard '%s/%s' updated", d.Namespace, d.Spec.Name))
+		log.Info(msg)
 	}
 
 	return reconcile.Result{}, err
@@ -250,9 +255,9 @@ func (r *ReconcileGrafanaDashboard) updatePhase(cr *i8ly.GrafanaDashboard, phase
 	return reconcile.Result{}, err
 }
 
-func isJSON(s string) (bool, error) {
+func (r *ReconcileGrafanaDashboard) isJsonValid(cr *i8ly.GrafanaDashboard) (bool, error) {
 	var js map[string]interface{}
-	err := json.Unmarshal([]byte(s), &js)
+	err := json.Unmarshal([]byte(cr.Spec.Json), &js)
 	return err == nil, err
 
 }
