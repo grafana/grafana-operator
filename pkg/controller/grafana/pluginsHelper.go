@@ -92,7 +92,7 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *integreatly.Grafana, requested int
 	// Try to pick the latest versions of all plugins
 	requested, err := h.PickLatestVersions(requested)
 	if err != nil {
-		log.Error(err, "Unable to pick latest plugin versions")
+		log.Error(err, "unable to pick latest plugin versions")
 	}
 
 	// Remove all plugins
@@ -104,7 +104,7 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *integreatly.Grafana, requested int
 		// Don't allow to install multiple versions of the same plugin
 		if filteredPlugins.HasSomeVersionOf(&plugin) == true {
 			installedVersion := filteredPlugins.GetInstalledVersionOf(&plugin)
-			msg := fmt.Sprintf("Not installing version %s of %s because %s is already installed", plugin.Version, plugin.Name, installedVersion.Version)
+			msg := fmt.Sprintf("not installing version %s of %s because %s is already installed", plugin.Version, plugin.Name, installedVersion.Version)
 			common.AppendMessage(msg, plugin.Origin)
 			continue
 		}
@@ -123,7 +123,7 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *integreatly.Grafana, requested int
 		// New plugin
 		if cr.Status.InstalledPlugins.HasSomeVersionOf(&plugin) == false {
 			filteredPlugins = append(filteredPlugins, plugin)
-			msg := fmt.Sprintf("Installing plugin %s@%s", plugin.Name, plugin.Version)
+			msg := fmt.Sprintf("installing plugin %s@%s", plugin.Name, plugin.Version)
 			common.AppendMessage(msg, plugin.Origin)
 			pluginsUpdated = true
 			continue
@@ -139,7 +139,7 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *integreatly.Grafana, requested int
 			requested.VersionsOf(&plugin) == 1 {
 			installedVersion := cr.Status.InstalledPlugins.GetInstalledVersionOf(&plugin)
 			filteredPlugins = append(filteredPlugins, plugin)
-			msg := fmt.Sprintf("Changing version of plugin %s form %s to %s", plugin.Name, installedVersion.Version, plugin.Version)
+			msg := fmt.Sprintf("changing version of plugin %s form %s to %s", plugin.Name, installedVersion.Version, plugin.Version)
 			common.AppendMessage(msg, plugin.Origin)
 			pluginsUpdated = true
 			continue

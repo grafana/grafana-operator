@@ -134,57 +134,6 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 		return r.deleteDashboard(cr)
 	}
 
-	changed, hash := r.hasDashboardChanged(cr.Spec.Json, cr)
-	if changed {
-		cr.Status.LastConfig = hash
-		r.client.Update(context.TODO(), cr)
-	}
-
-	known, err := r.helper.IsKnownDashboard(cr)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-
-	jsonTest, err := isJSON(cr.Spec.Json)
-	// Dashboard is in cm and JSON is valid
-	if known && jsonTest == true {
-		if !changed {
-			log.Info(fmt.Sprintf("dashboard '%s' reconciled but no changes", cr.Name))
-			return reconcile.Result{}, nil
-		}
-	}
-
-	// Dashboard is in cm and JSON is invalid
-	if jsonTest == false && changed {
-		jsonError := err.Error()
-		msg := fmt.Sprintf("Invalid JSON, Error: %s", jsonError)
-		common.AppendMessage(msg, cr)
-		if known {
-			log.Info(fmt.Sprintf("invalid JSON found in reconciled dashboard '%s'", cr.Name))
-			r.deleteDashboard(cr)
-			cr.Status.Phase = common.StatusResourceUninitialized
-			r.client.Update(context.TODO(), cr)
-			return reconcile.Result{}, nil
-		}
-		log.Info(fmt.Sprintf("invalid JSON found in dashboard '%s'", cr.Name))
-		r.client.Update(context.TODO(), cr)
-		return reconcile.Result{}, nil
-	}
-
-	if jsonTest == false && !changed {
-		if !known {
-			log.Info(fmt.Sprintf("dashboard with invalid JSON '%s' reconciled but no changes", cr.Name))
-			return reconcile.Result{}, nil
-		}
-		if known {
-			r.deleteDashboard(cr)
-			cr.Status.Phase = common.StatusResourceUninitialized
-			r.client.Update(context.TODO(), cr)
-			log.Info(fmt.Sprintf("dashboard with invalid JSON '%s' reconciled and deleted", cr.Name))
-			return reconcile.Result{}, nil
-		}
-	}
-
 	switch cr.Status.Phase {
 	case common.StatusResourceUninitialized:
 		// New resource
@@ -204,10 +153,46 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 	}
 }
 
+func (r *ReconcileGrafanaDashboard) checkPrerequisites(d *i8ly.GrafanaDashboard) bool {
+	changed, hash := r.hasDashboardChanged(d)
+	if !changed {
+		log.Info("dashboard reconciled but no changes")
+	}
+	d.Status.LastConfig = hash
+
+	valid, err := isJSON(d.Spec.Json)
+	if valid {
+		return true
+	}
+
+	msg := fmt.Sprintf("invalid JSON, error: %s", err)
+	for _, statusMessage := range d.Status.Messages {
+		if statusMessage.Message == msg {
+			log.Info("dashboard reconciled but json still invalid")
+			return false
+		}
+	}
+
+	common.AppendMessage(msg, d)
+	err = r.client.Update(context.TODO(), d)
+	if err != nil {
+		log.Error(err, "update dashboard messages failed")
+	}
+
+	return false
+}
+
+
 func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (reconcile.Result, error) {
 	operatorNamespace := r.config.GetConfigString(common.ConfigOperatorNamespace, "")
 	if operatorNamespace == "" {
-		return reconcile.Result{}, defaultErrors.New("no monitoring namespace set")
+		return reconcile.Result{}, defaultErrors.New("operator namespace not yet known")
+	}
+
+	valid := r.checkPrerequisites(d)
+	if valid == false {
+		log.Info( "dashboard prerequisite check failed")
+		return reconcile.Result{Requeue: false}, nil
 	}
 
 	updated, err := r.helper.UpdateDashboard(operatorNamespace, d)
@@ -222,8 +207,13 @@ func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (r
 	// Reconcile dashboard plugins
 	r.config.SetPluginsFor(d)
 
-	log.Info(fmt.Sprintf("dashboard '%s/%s' updated", d.Namespace, d.Spec.Name))
-	return reconcile.Result{}, nil
+	// Update the dashboard to persist the new hash
+	err = r.client.Update(context.TODO(), d)
+	if err == nil {
+		log.Info(fmt.Sprintf("dashboard '%s/%s' updated", d.Namespace, d.Spec.Name))
+	}
+
+	return reconcile.Result{}, err
 }
 
 func (r *ReconcileGrafanaDashboard) deleteDashboard(d *i8ly.GrafanaDashboard) (reconcile.Result, error) {
@@ -264,11 +254,11 @@ func (r *ReconcileGrafanaDashboard) updatePhase(cr *i8ly.GrafanaDashboard, phase
 func isJSON(s string) (bool, error) {
 	var js map[string]interface{}
 	err := json.Unmarshal([]byte(s), &js)
-	return json.Unmarshal([]byte(s), &js) == nil, err
+	return err == nil, err
 
 }
 
-func (r *ReconcileGrafanaDashboard) hasDashboardChanged(newConfig string, cr *i8ly.GrafanaDashboard) (bool, string) {
-	hash := fmt.Sprintf("%x", md5.Sum([]byte(newConfig)))
+func (r *ReconcileGrafanaDashboard) hasDashboardChanged(cr *i8ly.GrafanaDashboard) (bool, string) {
+	hash := fmt.Sprintf("%x", md5.Sum([]byte(cr.Spec.Json)))
 	return hash != cr.Status.LastConfig, hash
 }
