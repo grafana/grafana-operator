@@ -24,6 +24,10 @@ $ kubectl create -f deploy/examples/dashboards/SimpleDashboard.yaml -n grafana
 
 *NOTE*: it can take up to a minute until new dashboards are discovered by Grafana.
 
+## Dashboard error handling
+
+If the dashboard contains invalid JSON a message with the parser error will be appended to the status field of the dashboard resource.
+
 ## Plugins
 
 Dashboards can specify plugins (panels) they depend on. The operator will automatically install them.
