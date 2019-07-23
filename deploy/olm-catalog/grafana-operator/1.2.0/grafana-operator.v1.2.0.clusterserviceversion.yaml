@@ -111,7 +111,19 @@ spec:
       version: v1alpha1
       description: Represents a Grafana Data Source
       displayName: Grafana Data Source
-  description: An Operator for creating and managing Grafana instances, dashboards, plugins and data sources
+  description: >
+    # Grafana Operator
+
+    A Kubernetes Operator based on the Operator SDK for creating and managing Grafana instances.
+
+    # Current status
+
+    The Operator can deploy and manage a Grafana instance on Kubernetes and OpenShift. The following features are supported:
+
+    * Install Grafana to a namespace
+    * Import Grafana dashboards from the same or other namespaces
+    * Import Grafana data sources from the same namespace
+    * Install Plugins (panels) defined as dependencies of dashboards
   displayName: Grafana Operator
   links:
     - name: Documentation
@@ -239,6 +251,7 @@ spec:
   keywords:
   - Grafana
   - Metrics
+  - Monitoring
   maintainers:
   - email: integreatly@redhat.com
     name: Integreatly
