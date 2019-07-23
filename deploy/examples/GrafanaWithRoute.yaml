@@ -3,6 +3,7 @@ kind: Grafana
 metadata:
   name: example-grafana
 spec:
+  createRoute: True
   config:
     log:
       mode: "console"

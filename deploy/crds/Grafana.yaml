@@ -54,6 +54,9 @@ spec:
             config:
               type: object
               description: Grafana config
+            createRoute:
+              type: boolean
+              description: Create an OpenShift Route instead of Ingress
             dashboardLabelSelectors:
               type: array
               items:
