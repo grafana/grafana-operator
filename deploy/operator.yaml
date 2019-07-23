@@ -15,7 +15,7 @@ spec:
       serviceAccountName: grafana-operator
       containers:
         - name: grafana-operator
-          image: quay.io/integreatly/grafana-operator:latest
+          image: quay.io/integreatly/grafana-operator:v1.2.0
           args:
             - '--grafana-image=quay.io/openshift/origin-grafana'
             - '--grafana-image-tag=4.2'
