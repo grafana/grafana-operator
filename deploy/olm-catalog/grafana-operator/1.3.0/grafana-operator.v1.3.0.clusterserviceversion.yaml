@@ -7,7 +7,7 @@ metadata:
     categories: "Monitoring"
     containerImage: quay.io/integreatly/grafana-operator:v1.3.0
     createdAt: 2019-07-23T00:00:00Z
-    support: Integreatly
+    support: Red Hat
     certified: "False"
     repository: https://github.com/integr8ly/grafana-operator
     alm-examples: |-
@@ -251,7 +251,7 @@ spec:
   - Monitoring
   maintainers:
   - email: integreatly@redhat.com
-    name: Integreatly
+    name: Red Hat
   maturity: alpha
   provider:
     name: Integreatly
