@@ -3,6 +3,7 @@ kind: Grafana
 metadata:
   name: example-grafana
 spec:
+  hostname: "grafana.apps.127.0.0.1.nip.io"
   config:
     log:
       mode: "console"

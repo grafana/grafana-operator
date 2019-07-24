@@ -99,12 +99,12 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 
 	switch cr.Status.Phase {
 	case PhaseConfigFiles:
-		return r.CreateConfigFiles(cr)
+		return r.createConfigFiles(cr)
 	case PhaseInstallGrafana:
-		return r.InstallGrafana(cr)
+		return r.installGrafana(cr)
 	case PhaseDone:
 		log.Info("Grafana installation complete")
-		return r.UpdatePhase(cr, PhaseReconcile)
+		return r.updatePhase(cr, PhaseReconcile)
 	case PhaseReconcile:
 		return r.ReconcileGrafana(cr)
 	}
@@ -247,18 +247,27 @@ func (r *ReconcileGrafana) createGrafanaConfig(cr *i8ly.Grafana) error {
 	}
 
 	cr.Status.LastConfig = grafanaIni.Hash
-	return r.client.Create(context.TODO(), &configMap)
+	err = r.client.Create(context.TODO(), &configMap)
+	if err != nil {
+		// This might be called multiple times if creating one of the other config
+		// resources fails
+		if errors.IsAlreadyExists(err) {
+			return nil
+		}
+	}
+	return err
 }
 
-func (r *ReconcileGrafana) CreateConfigFiles(cr *i8ly.Grafana) (reconcile.Result, error) {
+func (r *ReconcileGrafana) createConfigFiles(cr *i8ly.Grafana) (reconcile.Result, error) {
 	log.Info("Phase: Create Config Files")
 
 	ingressType := common.GrafanaIngressName
-	if common.GetControllerConfig().GetConfigBool(common.ConfigOpenshift, false) == true {
+	if cr.Spec.CreateRoute ||
+		common.GetControllerConfig().GetConfigBool(common.ConfigOpenshift, false) == true {
 		ingressType = common.GrafanaRouteName
 	}
 
-	err := r.CreateServiceAccount(cr, common.GrafanaServiceAccountName)
+	err := r.createServiceAccount(cr, common.GrafanaServiceAccountName)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -269,7 +278,7 @@ func (r *ReconcileGrafana) CreateConfigFiles(cr *i8ly.Grafana) (reconcile.Result
 	}
 
 	for _, resourceName := range []string{common.GrafanaDashboardsConfigMapName, common.GrafanaProvidersConfigMapName, common.GrafanaDatasourcesConfigMapName, common.GrafanaServiceName, ingressType} {
-		if err := r.CreateResource(cr, resourceName); err != nil {
+		if err := r.createResource(cr, resourceName); err != nil {
 			log.Info(fmt.Sprintf("Error in CreateConfigFiles, resourceName=%s : err=%s", resourceName, err))
 			// Requeue so it can be attempted again
 			return reconcile.Result{}, err
@@ -277,23 +286,23 @@ func (r *ReconcileGrafana) CreateConfigFiles(cr *i8ly.Grafana) (reconcile.Result
 	}
 
 	log.Info("Config files created")
-	return r.UpdatePhase(cr, PhaseInstallGrafana)
+	return r.updatePhase(cr, PhaseInstallGrafana)
 }
 
-func (r *ReconcileGrafana) InstallGrafana(cr *i8ly.Grafana) (reconcile.Result, error) {
+func (r *ReconcileGrafana) installGrafana(cr *i8ly.Grafana) (reconcile.Result, error) {
 	log.Info("Phase: Install Grafana")
 
-	err := r.CreateDeployment(cr, common.GrafanaDeploymentName)
+	err := r.createDeployment(cr, common.GrafanaDeploymentName)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
-	return r.UpdatePhase(cr, PhaseDone)
+	return r.updatePhase(cr, PhaseDone)
 }
 
 // Creates the deployment from the template and injects any specified extra containers before
 // submitting it
-func (r *ReconcileGrafana) CreateDeployment(cr *i8ly.Grafana, resourceName string) error {
+func (r *ReconcileGrafana) createDeployment(cr *i8ly.Grafana, resourceName string) error {
 	resourceHelper := newResourceHelper(cr)
 	resource, err := resourceHelper.createResource(resourceName)
 	if err != nil {
@@ -335,11 +344,11 @@ func (r *ReconcileGrafana) CreateDeployment(cr *i8ly.Grafana, resourceName strin
 		rawResource.access("spec").access("template").access("spec").set("containers", containers)
 	}
 
-	return r.DeployResource(cr, resource, resourceName)
+	return r.deployResource(cr, resource, resourceName)
 
 }
 
-func (r *ReconcileGrafana) CreateServiceAccount(cr *i8ly.Grafana, resourceName string) error {
+func (r *ReconcileGrafana) createServiceAccount(cr *i8ly.Grafana, resourceName string) error {
 	resourceHelper := newResourceHelper(cr)
 	resource, err := resourceHelper.createResource(resourceName)
 
@@ -349,7 +358,7 @@ func (r *ReconcileGrafana) CreateServiceAccount(cr *i8ly.Grafana, resourceName s
 
 	// Deploy the unmodified resource if not on OpenShift
 	if common.GetControllerConfig().GetConfigBool(common.ConfigOpenshift, false) == false {
-		return r.DeployResource(cr, resource, resourceName)
+		return r.deployResource(cr, resource, resourceName)
 	}
 
 	// Otherwise add an annotation that allows using the OAuthProxy (and will have no
@@ -360,11 +369,11 @@ func (r *ReconcileGrafana) CreateServiceAccount(cr *i8ly.Grafana, resourceName s
 	rawResource := newUnstructuredResourceMap(resource.(*unstructured.Unstructured))
 	rawResource.access("metadata").set("annotations", annotations)
 
-	return r.DeployResource(cr, resource, resourceName)
+	return r.deployResource(cr, resource, resourceName)
 }
 
 // Creates a generic kubernetes resource from a template
-func (r *ReconcileGrafana) CreateResource(cr *i8ly.Grafana, resourceName string) error {
+func (r *ReconcileGrafana) createResource(cr *i8ly.Grafana, resourceName string) error {
 	resourceHelper := newResourceHelper(cr)
 	resource, err := resourceHelper.createResource(resourceName)
 
@@ -372,11 +381,11 @@ func (r *ReconcileGrafana) CreateResource(cr *i8ly.Grafana, resourceName string)
 		return err
 	}
 
-	return r.DeployResource(cr, resource, resourceName)
+	return r.deployResource(cr, resource, resourceName)
 }
 
 // Deploys a resource given by a runtime object
-func (r *ReconcileGrafana) DeployResource(cr *i8ly.Grafana, resource runtime.Object, resourceName string) error {
+func (r *ReconcileGrafana) deployResource(cr *i8ly.Grafana, resource runtime.Object, resourceName string) error {
 	// Try to find the resource, it may already exist
 	selector := types.NamespacedName{
 		Namespace: cr.Namespace,
@@ -410,7 +419,7 @@ func (r *ReconcileGrafana) DeployResource(cr *i8ly.Grafana, resource runtime.Obj
 	return nil
 }
 
-func (r *ReconcileGrafana) UpdatePhase(cr *i8ly.Grafana, phase int) (reconcile.Result, error) {
+func (r *ReconcileGrafana) updatePhase(cr *i8ly.Grafana, phase int) (reconcile.Result, error) {
 	cr.Status.Phase = phase
 	err := r.client.Update(context.TODO(), cr)
 	return reconcile.Result{}, err

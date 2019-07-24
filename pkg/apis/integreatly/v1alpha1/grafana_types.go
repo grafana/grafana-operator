@@ -25,6 +25,7 @@ type GrafanaSpec struct {
 	DisableSignoutMenu     bool                    `json:"disableSignoutMenu"`
 	Anonymous              bool                    `json:"anonymous"`
 	Config                 GrafanaConfig           `json:"config"`
+	CreateRoute            bool                    `json:"createRoute"`
 }
 
 type GrafanaConfig struct {

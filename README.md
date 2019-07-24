@@ -4,7 +4,7 @@ A Kubernetes Operator based on the Operator SDK for creating and managing Grafan
 
 # Current status
 
-The Operator is functional and can deploy and manage a Grafana instance on Kubernetes and OpenShift. The following features are supported:
+The Operator can deploy and manage a Grafana instance on Kubernetes and OpenShift. The following features are supported:
 
 * Install Grafana to a namespace
 * Import Grafana dashboards from the same or other namespaces
