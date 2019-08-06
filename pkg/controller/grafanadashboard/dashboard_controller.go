@@ -120,7 +120,13 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 		}
 	case common.StatusResourceCreated:
 		// Import / update dashboard
-		return r.importDashboard(cr)
+		res, err := r.importDashboard(cr)
+
+		// Requeue periodically to find dashboards that have not been updated
+		// but are not yet imported (can happen if Grafana is uninstalled and
+		// then reinstalled without an Operator restart
+		res.RequeueAfter = common.RequeueDelay
+		return res, err
 	default:
 		return reconcile.Result{}, nil
 	}
@@ -242,7 +248,6 @@ func (r *ReconcileGrafanaDashboard) isJsonValid(cr *i8ly.GrafanaDashboard) (bool
 	var js map[string]interface{}
 	err := json.Unmarshal([]byte(cr.Spec.Json), &js)
 	return err == nil, err
-
 }
 
 func (r *ReconcileGrafanaDashboard) hasDashboardChanged(cr *i8ly.GrafanaDashboard) (bool, string) {

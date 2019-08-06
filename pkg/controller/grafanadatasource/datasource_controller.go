@@ -105,7 +105,13 @@ func (r *ReconcileGrafanaDataSource) Reconcile(request reconcile.Request) (recon
 			return r.setFinalizer(cr)
 		}
 	case common.StatusResourceCreated:
-		return r.reconcileDatasource(cr)
+		res, err := r.reconcileDatasource(cr)
+
+		// Requeue periodically to find datasources that have not been updated
+		// but are not yet imported (can happen if Grafana is uninstalled and
+		// then reinstalled without an Operator restart
+		res.RequeueAfter = common.RequeueDelay
+		return res, err
 	default:
 		return reconcile.Result{}, nil
 	}
