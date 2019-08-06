@@ -4,23 +4,23 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/integr8ly/grafana-operator/pkg/controller/common"
-	"github.com/integr8ly/grafana-operator/pkg/controller/grafanadashboard"
-	"k8s.io/client-go/rest"
-	"os"
-	"runtime"
-	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
-
 	"github.com/integr8ly/grafana-operator/pkg/apis"
 	"github.com/integr8ly/grafana-operator/pkg/controller"
+	"github.com/integr8ly/grafana-operator/pkg/controller/common"
+	"github.com/integr8ly/grafana-operator/pkg/controller/grafanadashboard"
+	"github.com/integr8ly/grafana-operator/version"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/ready"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	"k8s.io/client-go/rest"
+	"os"
+	"runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 )
 
 var log = logf.Log.WithName("cmd")
@@ -35,6 +35,7 @@ func printVersion() {
 	log.Info(fmt.Sprintf("Go Version: %s", runtime.Version()))
 	log.Info(fmt.Sprintf("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH))
 	log.Info(fmt.Sprintf("operator-sdk Version: %v", sdkVersion.Version))
+	log.Info(fmt.Sprintf("operator Version: %v", version.Version))
 }
 
 func init() {

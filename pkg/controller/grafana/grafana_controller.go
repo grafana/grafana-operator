@@ -3,19 +3,17 @@ package grafana
 import (
 	"context"
 	"fmt"
+	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	core "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"time"
-
-	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -32,7 +30,6 @@ const (
 	PhaseReconcile
 )
 
-const ReconcilePauseSeconds = 5
 const OpenShiftOAuthRedirect = "serviceaccounts.openshift.io/oauth-redirectreference.primary"
 
 /**
@@ -139,14 +136,14 @@ func (r *ReconcileGrafana) ReconcileGrafana(cr *i8ly.Grafana) (reconcile.Result,
 		}
 
 		// Grafana needs to be restarted after a config change
-		err = r.helper.RestartGrafana(cr.Namespace)
+		err = r.helper.RestartGrafana()
 		if err != nil {
 			return reconcile.Result{}, err
 		}
 		log.Info("grafana restarted due to config change")
 
 		// Skip plugins reconciliation while grafana is restarting
-		return reconcile.Result{RequeueAfter: time.Second * ReconcilePauseSeconds}, err
+		return reconcile.Result{RequeueAfter: common.RequeueDelay}, err
 	}
 
 	// Plugins updated?
@@ -155,7 +152,7 @@ func (r *ReconcileGrafana) ReconcileGrafana(cr *i8ly.Grafana) (reconcile.Result,
 		return reconcile.Result{}, err
 	}
 
-	return reconcile.Result{RequeueAfter: time.Second * ReconcilePauseSeconds}, err
+	return reconcile.Result{RequeueAfter: common.RequeueDelay}, err
 }
 
 func (r *ReconcileGrafana) ReconcileDashboardPlugins(cr *i8ly.Grafana) error {
@@ -179,7 +176,7 @@ func (r *ReconcileGrafana) ReconcileDashboardPlugins(cr *i8ly.Grafana) error {
 
 		// Update the dashboards that had their plugins modified
 		// to let the owners know about the status
-		err := r.UpdateDashboardMessages(filteredPlugins)
+		err := r.updateDashboardMessages(filteredPlugins)
 		if err != nil {
 			return err
 		}
@@ -212,11 +209,11 @@ func (r *ReconcileGrafana) ReconcilePlugins(cr *i8ly.Grafana, plugins []i8ly.Gra
 	}
 
 	newEnv := r.plugins.BuildEnv(cr)
-	err = r.helper.UpdateGrafanaDeployment(cr.Namespace, newEnv)
+	err = r.helper.UpdateGrafanaDeployment(newEnv)
 	return err
 }
 
-func (r *ReconcileGrafana) UpdateDashboardMessages(plugins i8ly.PluginList) error {
+func (r *ReconcileGrafana) updateDashboardMessages(plugins i8ly.PluginList) error {
 	for _, plugin := range plugins {
 		err := r.client.Update(context.TODO(), plugin.Origin)
 		if err != nil {

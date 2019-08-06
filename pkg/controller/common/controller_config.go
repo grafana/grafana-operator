@@ -40,7 +40,7 @@ const (
 	PluginsMinAge                   = 5
 	InitContainerName               = "grafana-plugins-init"
 	ResourceFinalizerName           = "grafana.cleanup"
-	RequeueDelaySeconds             = 10
+	RequeueDelay                    = time.Second * 15
 )
 
 type ControllerConfig struct {
