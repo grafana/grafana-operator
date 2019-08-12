@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scorecard
+package schelpers
 
 import (
 	"fmt"
@@ -88,7 +88,7 @@ func CalculateResult(tests []scapiv1alpha1.ScorecardTestResult) scapiv1alpha1.Sc
 }
 
 // TestSuitesToScorecardOutput takes an array of test suites and generates a v1alpha1 ScorecardOutput object with the
-// provided name, description, and log
+// provided suites and log
 func TestSuitesToScorecardOutput(suites []TestSuite, log string) scapiv1alpha1.ScorecardOutput {
 	test := scapiv1alpha1.ScorecardOutput{
 		TypeMeta: metav1.TypeMeta{
@@ -176,10 +176,6 @@ func UpdateSuiteStates(suite scapiv1alpha1.ScorecardSuiteResult) scapiv1alpha1.S
 
 func CombineScorecardOutput(outputs []scapiv1alpha1.ScorecardOutput, log string) scapiv1alpha1.ScorecardOutput {
 	output := scapiv1alpha1.ScorecardOutput{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ScorecardOutput",
-			APIVersion: "osdk.openshift.io/v1alpha1",
-		},
 		Log: log,
 	}
 	for _, item := range outputs {

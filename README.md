@@ -4,7 +4,9 @@ A Kubernetes Operator based on the Operator SDK for creating and managing Grafan
 
 # Current status
 
-The Operator is functional and can deploy and manage a Grafana instance on Kubernetes and OpenShift. The following features are supported:
+The Operator is available on [Operator Hub](https://operatorhub.io/operator/grafana-operator).
+
+It can deploy and manage a Grafana instance on Kubernetes and OpenShift. The following features are supported:
 
 * Install Grafana to a namespace
 * Import Grafana dashboards from the same or other namespaces
@@ -51,3 +53,9 @@ Prerequisites:
 ```sh
 $ operator-sdk up local --namespace=<namespace> --operator-flags="<flags to pass>"
 ```
+
+# Grafana features not yet supported in the operator
+
+## Notifier provisioning
+
+Grafana has provisioning support for multiple channels (notifiers) of alerts. The operator does currently not support this type of provisioning. An empty directory is mounted at the expected location to prevent a warning in the grafana log. This feature might be supported in the future. 

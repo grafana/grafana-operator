@@ -2,8 +2,6 @@ package common
 
 import (
 	"fmt"
-	"strings"
-
 	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	apps "k8s.io/api/apps/v1"
 	core "k8s.io/api/core/v1"
@@ -12,6 +10,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	"strings"
+	"time"
 )
 
 type KubeHelperImpl struct {
@@ -36,6 +36,17 @@ func (h KubeHelperImpl) getConfigMap(namespace, name string) (*v1.ConfigMap, err
 func (h KubeHelperImpl) getGrafanaDeployment(namespaceName string) (*apps.Deployment, error) {
 	opts := metav1.GetOptions{}
 	return h.k8client.AppsV1().Deployments(namespaceName).Get(GrafanaDeploymentName, opts)
+}
+
+func (h KubeHelperImpl) UpdateGrafanaConfig(config string, cr *v1alpha1.Grafana) error {
+	configMap, err := h.getConfigMap(cr.Namespace, GrafanaConfigMapName)
+	if err != nil {
+		return err
+	}
+
+	configMap.Data[GrafanaConfigFileName] = config
+	_, err = h.k8client.CoreV1().ConfigMaps(cr.Namespace).Update(configMap)
+	return err
 }
 
 func (h KubeHelperImpl) UpdateDashboard(ns string, d *v1alpha1.GrafanaDashboard) (bool, error) {
@@ -229,4 +240,18 @@ func (h KubeHelperImpl) RestartGrafana(monitoringNamespace string) error {
 	}
 
 	return h.k8client.CoreV1().Pods(monitoringNamespace).Delete(pod.Name, nil)
+}
+
+// Append a status message to the origin dashboard of a plugin
+func AppendMessage(message string, dashboard *v1alpha1.GrafanaDashboard) {
+	if dashboard == nil {
+		return
+	}
+
+	status := v1alpha1.GrafanaDashboardStatusMessage{
+		Message:   message,
+		Timestamp: time.Now().Format(time.RFC850),
+	}
+
+	dashboard.Status.Messages = append(dashboard.Status.Messages, status)
 }

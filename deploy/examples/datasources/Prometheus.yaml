@@ -12,4 +12,5 @@ spec:
       isDefault: true
       version: 1
       editable: true
-      jsonData: '{"timeInterval": "5s"}'
+      jsonData:
+        timeInterval: "5s"

@@ -61,8 +61,10 @@ The resource accepts the following properties in it's `spec`:
 * *dashboardLabelSelector*: A list of either `matchLabels` or `matchExpressions` to filter the dashboards before importing them.
 * *containers*: Extra containers to be added to the Grafana deployment. Can be used for example to add auth proxy side cars.
 * *secrets*: A list of secrets that are added as volumes to the deployment. Mostly useful in combination with extra `containers`.
+* *config*: The properties used to generate `grafana.ini`. All properties defined in the [official documentation](https://grafana.com/docs/installation/configuration/) are supported although some of them are not allowed to be overridden (path configuration). See `deploy/examples/Grafana.yaml` for an example.  
+* *createRoute*: Force the operator to create a Route instead of an Ingress even if the `--openshift` flag is not set.
 
-The other accepted properties are `logLevel`, `adminUser`, `adminPassword`, `basicAuth`, `disableLoginForm`, `disableSignoutMenu` and `anonymous`. They map to the properties described in the [official documentation](https://grafana.com/docs/installation/configuration/#configuration), just use camel case instead of underscores.
+The other accepted properties are `logLevel`, `adminUser`, `adminPassword`, `basicAuth`, `disableLoginForm`, `disableSignoutMenu` and `anonymous`. They are supported for legacy reasons, but new instances should use the `config` field. If a value is set in `config` then it will override the legacy field. 
 
 *NOTE*: setting `hostname` on Ingresses is not permitted on OpenShift. We recommend using the `--openshift` flag which will use a `Route` with an automatically assigned host instead. You can still use `Ingress` on OpenShift if you don't provide a `hostname` in the `Grafana` resource.
 
@@ -79,3 +81,9 @@ $ kubectl get ingress -n grafana
 NAME              HOSTS                           ADDRESS   PORTS     AGE
 grafana-ingress   grafana.apps.127.0.0.1.nip.io             80        28s
 ```
+
+## Config reconciliation
+
+When the config object in the `Grafana` CR is modified, then `grafana.ini` will be automatically updated and Grafana will be restarted.
+
+*NOTE*: there is a known issue when removing whole sections from the config object. The operator might not detect the update in such cases. As a workaround we recommend to leave the section header in place and only removing all the sections properties.

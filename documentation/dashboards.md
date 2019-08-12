@@ -24,6 +24,10 @@ $ kubectl create -f deploy/examples/dashboards/SimpleDashboard.yaml -n grafana
 
 *NOTE*: it can take up to a minute until new dashboards are discovered by Grafana.
 
+## Dashboard error handling
+
+If the dashboard contains invalid JSON a message with the parser error will be appended to the status field of the dashboard resource.
+
 ## Plugins
 
 Dashboards can specify plugins (panels) they depend on. The operator will automatically install them.
@@ -71,3 +75,13 @@ dashboardLabelSelector:
   - matchExpressions:
       - {key: group, operator: In, values: [grafana]}          
 ```
+
+## Discovering dashboards in other namespaces
+
+The operator can discover dashboards in other namespaces if the `--scan-all` flag is set. However this requires cluster wide permissions to the `GrafanaDashboard` custom resource. Create the permissions with:
+
+```sh
+$ oc create -f deploy/cluster_roles
+```
+
+*NOTE*: when installing the operator from [operatorhub](https://operatorhub.io/) it will only have permissions to the namespace it's installed in. To discover dashboards in other namespaces you need to apply the cluster roles after installing the operator and add the `--scan-all` flag to the operator container. 

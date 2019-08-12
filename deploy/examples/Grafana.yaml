@@ -3,14 +3,20 @@ kind: Grafana
 metadata:
   name: example-grafana
 spec:
-  hostname: "grafana.apps.127.0.0.1.nip.io"
-  logLevel: "error"
-  adminUser: "admin"
-  adminPassword: "Password1"
-  basicAuth: False
-  disableLoginForm: False
-  disableSignoutMenu: True
-  anonymous: True
+  config:
+    log:
+      mode: "console"
+      level: "warn"
+    security:
+      admin_user: "root"
+      admin_password: "secret"
+    auth:
+      disable_login_form: False
+      disable_signout_menu: True
+    auth.basic:
+      enabled: False
+    auth.anonymous:
+      enabled: True
   dashboardLabelSelector:
     - matchExpressions:
         - {key: app, operator: In, values: [grafana]}

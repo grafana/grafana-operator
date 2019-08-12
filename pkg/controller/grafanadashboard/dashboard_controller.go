@@ -2,12 +2,14 @@ package grafanadashboard
 
 import (
 	"context"
+	"crypto/md5"
 	defaultErrors "errors"
 	"fmt"
 	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/util/json"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -151,10 +153,47 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 	}
 }
 
+func (r *ReconcileGrafanaDashboard) checkPrerequisites(d *i8ly.GrafanaDashboard) bool {
+	changed, hash := r.hasDashboardChanged(d)
+	if !changed {
+		log.Info("dashboard reconciled but no changes")
+		return false
+	}
+	d.Status.LastConfig = hash
+
+	valid, err := r.isJsonValid(d)
+	if valid {
+		return true
+	}
+
+	// Don't append the same error twice
+	msg := fmt.Sprintf("invalid JSON, error: %s", err)
+	for _, statusMessage := range d.Status.Messages {
+		if statusMessage.Message == msg {
+			log.Info("dashboard reconciled but json still invalid")
+			return false
+		}
+	}
+
+	common.AppendMessage(msg, d)
+	err = r.client.Update(context.TODO(), d)
+	if err != nil {
+		log.Error(err, "update dashboard messages failed")
+	}
+
+	log.Info("dashboard reconciled but json invalid")
+	return false
+}
+
 func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (reconcile.Result, error) {
 	operatorNamespace := r.config.GetConfigString(common.ConfigOperatorNamespace, "")
 	if operatorNamespace == "" {
-		return reconcile.Result{}, defaultErrors.New("no monitoring namespace set")
+		return reconcile.Result{}, defaultErrors.New("operator namespace not yet known")
+	}
+
+	valid := r.checkPrerequisites(d)
+	if valid == false {
+		return reconcile.Result{Requeue: false}, nil
 	}
 
 	updated, err := r.helper.UpdateDashboard(operatorNamespace, d)
@@ -169,8 +208,16 @@ func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (r
 	// Reconcile dashboard plugins
 	r.config.SetPluginsFor(d)
 
-	log.Info(fmt.Sprintf("dashboard '%s/%s' updated", d.Namespace, d.Spec.Name))
-	return reconcile.Result{}, nil
+	msg := fmt.Sprintf("dashboard '%s/%s' imported", d.Namespace, d.Spec.Name)
+	common.AppendMessage(msg, d)
+
+	// Update the dashboard to persist the new hash and the satus message
+	err = r.client.Update(context.TODO(), d)
+	if err == nil {
+		log.Info(msg)
+	}
+
+	return reconcile.Result{}, err
 }
 
 func (r *ReconcileGrafanaDashboard) deleteDashboard(d *i8ly.GrafanaDashboard) (reconcile.Result, error) {
@@ -206,4 +253,16 @@ func (r *ReconcileGrafanaDashboard) updatePhase(cr *i8ly.GrafanaDashboard, phase
 	cr.Status.Phase = phase
 	err := r.client.Update(context.TODO(), cr)
 	return reconcile.Result{}, err
+}
+
+func (r *ReconcileGrafanaDashboard) isJsonValid(cr *i8ly.GrafanaDashboard) (bool, error) {
+	var js map[string]interface{}
+	err := json.Unmarshal([]byte(cr.Spec.Json), &js)
+	return err == nil, err
+
+}
+
+func (r *ReconcileGrafanaDashboard) hasDashboardChanged(cr *i8ly.GrafanaDashboard) (bool, string) {
+	hash := fmt.Sprintf("%x", md5.Sum([]byte(cr.Spec.Json)))
+	return hash != cr.Status.LastConfig, hash
 }
