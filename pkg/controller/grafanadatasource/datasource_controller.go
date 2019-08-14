@@ -7,8 +7,6 @@ import (
 	"github.com/ghodss/yaml"
 	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
-	"time"
-
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -107,7 +105,13 @@ func (r *ReconcileGrafanaDataSource) Reconcile(request reconcile.Request) (recon
 			return r.setFinalizer(cr)
 		}
 	case common.StatusResourceCreated:
-		return r.reconcileDatasource(cr)
+		res, err := r.reconcileDatasource(cr)
+
+		// Requeue periodically to find datasources that have not been updated
+		// but are not yet imported (can happen if Grafana is uninstalled and
+		// then reinstalled without an Operator restart
+		res.RequeueAfter = common.RequeueDelay
+		return res, err
 	default:
 		return reconcile.Result{}, nil
 	}
@@ -120,7 +124,7 @@ func (r *ReconcileGrafanaDataSource) reconcileDatasource(cr *i8ly.GrafanaDataSou
 		return reconcile.Result{}, err
 	}
 
-	known, err := r.helper.IsKnownDataSource(cr)
+	known, err := r.helper.IsKnown(i8ly.GrafanaDataSourceKind, cr)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -142,10 +146,10 @@ func (r *ReconcileGrafanaDataSource) reconcileDatasource(cr *i8ly.GrafanaDataSou
 	}
 
 	if !updated {
-		return reconcile.Result{RequeueAfter: time.Second * common.RequeueDelaySeconds}, err
+		return reconcile.Result{RequeueAfter: common.RequeueDelay}, err
 	}
 
-	err = r.helper.RestartGrafana(cr.Namespace)
+	err = r.helper.RestartGrafana()
 	if err != nil {
 		log.Error(err, "error restarting grafana")
 	}
@@ -171,7 +175,7 @@ func (r *ReconcileGrafanaDataSource) DeleteDatasource(cr *i8ly.GrafanaDataSource
 		log.Error(err, "error removing finalizer")
 	}
 
-	err = r.helper.RestartGrafana(cr.Namespace)
+	err = r.helper.RestartGrafana()
 	if err != nil {
 		log.Error(err, "error restarting grafana")
 	}

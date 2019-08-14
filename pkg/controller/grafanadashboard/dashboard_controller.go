@@ -7,13 +7,10 @@ import (
 	"fmt"
 	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/util/json"
-	"time"
-
 	"k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/json"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -75,36 +72,12 @@ type ReconcileGrafanaDashboard struct {
 	helper *common.KubeHelperImpl
 }
 
-func (r *ReconcileGrafanaDashboard) matchesSelector(d *i8ly.GrafanaDashboard, s *v1.LabelSelector) (bool, error) {
-	selector, err := v1.LabelSelectorAsSelector(s)
-	if err != nil {
-		return false, err
-	}
-
-	return selector.Empty() || selector.Matches(labels.Set(d.Labels)), nil
-}
-
-func (r *ReconcileGrafanaDashboard) matchesSelectors(d *i8ly.GrafanaDashboard, s []*v1.LabelSelector) (bool, error) {
-	result := false
-
-	for _, selector := range s {
-		match, err := r.matchesSelector(d, selector)
-		if err != nil {
-			return false, err
-		}
-
-		result = result || match
-	}
-
-	return result, nil
-}
-
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	dashboardLabelSelectors := r.config.GetConfigItem(common.ConfigDashboardLabelSelector, nil)
 	if dashboardLabelSelectors == nil {
-		return reconcile.Result{RequeueAfter: time.Second * 10}, nil
+		return reconcile.Result{RequeueAfter: common.RequeueDelay}, nil
 	}
 
 	// Fetch the GrafanaDashboard instance
@@ -122,7 +95,7 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 	}
 
 	cr := instance.DeepCopy()
-	if match, err := r.matchesSelectors(cr, dashboardLabelSelectors.([]*v1.LabelSelector)); err != nil {
+	if match, err := cr.MatchesSelectors(dashboardLabelSelectors.([]*v1.LabelSelector)); err != nil {
 		return reconcile.Result{}, err
 	} else if !match {
 		log.Info(fmt.Sprintf("found dashboard '%s/%s' but labels do not match", cr.Namespace, cr.Name))
@@ -147,7 +120,13 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 		}
 	case common.StatusResourceCreated:
 		// Import / update dashboard
-		return r.importDashboard(cr)
+		res, err := r.importDashboard(cr)
+
+		// Requeue periodically to find dashboards that have not been updated
+		// but are not yet imported (can happen if Grafana is uninstalled and
+		// then reinstalled without an Operator restart
+		res.RequeueAfter = common.RequeueDelay
+		return res, err
 	default:
 		return reconcile.Result{}, nil
 	}
@@ -156,8 +135,18 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 func (r *ReconcileGrafanaDashboard) checkPrerequisites(d *i8ly.GrafanaDashboard) bool {
 	changed, hash := r.hasDashboardChanged(d)
 	if !changed {
-		log.Info("dashboard reconciled but no changes")
-		return false
+		known, err := r.helper.IsKnown(i8ly.GrafanaDashboardKind, d)
+		if err != nil {
+			log.Error(err, "error checking dashboard status")
+			return false
+		}
+
+		// If the dashboard is known and unchanged we don't have to
+		// import it again
+		if known {
+			log.Info("dashboard reconciled but no changes")
+			return false
+		}
 	}
 	d.Status.LastConfig = hash
 
@@ -196,13 +185,13 @@ func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (r
 		return reconcile.Result{Requeue: false}, nil
 	}
 
-	updated, err := r.helper.UpdateDashboard(operatorNamespace, d)
+	updated, err := r.helper.UpdateDashboard(d)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
 	if !updated {
-		return reconcile.Result{RequeueAfter: time.Second * common.RequeueDelaySeconds}, err
+		return reconcile.Result{RequeueAfter: common.RequeueDelay}, err
 	}
 
 	// Reconcile dashboard plugins
@@ -226,7 +215,7 @@ func (r *ReconcileGrafanaDashboard) deleteDashboard(d *i8ly.GrafanaDashboard) (r
 		return reconcile.Result{}, defaultErrors.New("no monitoring namespace set")
 	}
 
-	err := r.helper.DeleteDashboard(operatorNamespace, d.Namespace, d)
+	err := r.helper.DeleteDashboard(d)
 	if err == nil {
 		log.Info(fmt.Sprintf("dashboard '%s/%s' deleted", d.Namespace, d.Spec.Name))
 	}
@@ -259,7 +248,6 @@ func (r *ReconcileGrafanaDashboard) isJsonValid(cr *i8ly.GrafanaDashboard) (bool
 	var js map[string]interface{}
 	err := json.Unmarshal([]byte(cr.Spec.Json), &js)
 	return err == nil, err
-
 }
 
 func (r *ReconcileGrafanaDashboard) hasDashboardChanged(cr *i8ly.GrafanaDashboard) (bool, string) {
