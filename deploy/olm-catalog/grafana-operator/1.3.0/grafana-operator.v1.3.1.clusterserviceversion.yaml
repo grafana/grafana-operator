@@ -89,7 +89,7 @@ metadata:
         }
       }
       ]
-  name: grafana-operator.v1.3.0
+  name: grafana-operator.v1.3.1
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -127,7 +127,7 @@ spec:
   displayName: Grafana Operator
   links:
     - name: Documentation
-      url: https://github.com/integr8ly/grafana-operator/tree/v1.3.0/documentation
+      url: https://github.com/integr8ly/grafana-operator/tree/v1.3.1/documentation
     - name: Grafana
       url: https://grafana.com
   icon:
@@ -258,4 +258,4 @@ spec:
   maturity: alpha
   provider:
     name: Red Hat
-  version: 1.3.0
+  version: 1.3.1
