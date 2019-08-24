@@ -13,6 +13,7 @@ const (
 	ConfigGrafanaImageTag           = "grafana.image.tag"
 	ConfigPluginsInitContainerImage = "grafana.plugins.init.container.image.url"
 	ConfigPluginsInitContainerTag   = "grafana.plugins.init.container.image.tag"
+	ConfigPodLabelValue             = "grafana.pod.label"
 	ConfigOperatorNamespace         = "grafana.operator.namespace"
 	ConfigDashboardLabelSelector    = "grafana.dashboard.selector"
 	ConfigGrafanaPluginsUpdated     = "grafana.plugins.updated"
@@ -41,6 +42,7 @@ const (
 	InitContainerName               = "grafana-plugins-init"
 	ResourceFinalizerName           = "grafana.cleanup"
 	RequeueDelay                    = time.Second * 15
+	PodLabelDefaultValue            = "grafana"
 )
 
 type ControllerConfig struct {

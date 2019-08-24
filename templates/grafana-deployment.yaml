@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: grafana
+    app: {{ .PodLabelValue }}
   name: {{ .GrafanaDeploymentName }}
   namespace: {{ .Namespace }}
 spec:
@@ -10,7 +10,7 @@ spec:
   revisionHistoryLimit: 10
   selector:
     matchLabels:
-      app: grafana
+      app: {{ .PodLabelValue }}
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -20,7 +20,7 @@ spec:
     metadata:
       creationTimestamp: null
       labels:
-        app: grafana
+        app: {{ .PodLabelValue }}
       name: grafana
     spec:
       initContainers:

@@ -12,4 +12,4 @@ spec:
     protocol: TCP
     targetPort: grafana-http
   selector:
-    app: grafana
+    app: {{ .PodLabelValue }}
