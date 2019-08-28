@@ -13,4 +13,5 @@ spec:
       version: 1
       editable: true
       jsonData:
+        tlsSkipVerify: true
         timeInterval: "5s"
