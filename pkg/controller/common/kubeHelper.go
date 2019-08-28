@@ -203,8 +203,10 @@ func (h KubeHelperImpl) DeleteDashboard(d *v1alpha1.GrafanaDashboard) error {
 }
 
 func (h KubeHelperImpl) getGrafanaPod(namespaceName string) (*core.Pod, error) {
+	podLabel := h.config.GetConfigString(ConfigPodLabelValue, PodLabelDefaultValue)
+
 	opts := metav1.ListOptions{
-		LabelSelector: "app=grafana",
+		LabelSelector: fmt.Sprintf("app=%s", podLabel),
 	}
 
 	pods, err := h.k8client.CoreV1().Pods(namespaceName).List(opts)

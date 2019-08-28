@@ -35,6 +35,7 @@ type GrafanaParamaeters struct {
 	Hostname                        string
 	AdminUser                       string
 	AdminPassword                   string
+	PodLabelValue                   string
 	BasicAuth                       bool
 	DisableLoginForm                bool
 	DisableSignoutMenu              bool
@@ -102,6 +103,7 @@ func newTemplateHelper(cr *integreatly.Grafana) *TemplateHelper {
 		DisableLoginForm:                cr.Spec.DisableLoginForm,
 		DisableSignoutMenu:              cr.Spec.DisableSignoutMenu,
 		Anonymous:                       cr.Spec.Anonymous,
+		PodLabelValue:                   controllerConfig.GetConfigString(common.ConfigPodLabelValue, common.PodLabelDefaultValue),
 	}
 
 	templatePath := os.Getenv("TEMPLATE_PATH")
