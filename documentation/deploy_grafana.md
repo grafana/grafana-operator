@@ -1,6 +1,6 @@
 # Deploying a Grafana instance
 
-This document describes how to get up and running with a new Grafana instance no Kubernetes.
+This document describes how to get up and running with a new Grafana instance on Kubernetes.
 
 ## Deploying the operator
 
