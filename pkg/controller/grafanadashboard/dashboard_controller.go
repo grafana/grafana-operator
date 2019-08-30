@@ -5,6 +5,10 @@ import (
 	"crypto/md5"
 	defaultErrors "errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+
 	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -180,6 +184,11 @@ func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (r
 		return reconcile.Result{}, defaultErrors.New("operator namespace not yet known")
 	}
 
+	json, err := r.loadDashboardFromURL(d)
+	if err == nil {
+		d.Spec.Json = json
+	}
+
 	valid := r.checkPrerequisites(d)
 	if valid == false {
 		return reconcile.Result{Requeue: false}, nil
@@ -207,6 +216,40 @@ func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (r
 	}
 
 	return reconcile.Result{}, err
+}
+
+func (r *ReconcileGrafanaDashboard) loadDashboardFromURL(d *i8ly.GrafanaDashboard) (string, error) {
+
+	if d.Spec.Url == "" {
+		return "", defaultErrors.New("url not specified in grafana dashboard CR")
+	}
+
+	_, err := url.ParseRequestURI(d.Spec.Url)
+	if err != nil {
+		log.Error(err, "url specified in grafana dashboard CR is not valid")
+		return "", defaultErrors.New("wrong url")
+	}
+
+	resp, err := http.Get(d.Spec.Url)
+	if err != nil {
+		log.Error(err, "request to import json with dashboard from URL failed")
+	}
+
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Error(err, "response to import json with dashboard from URL failed")
+	}
+
+	responseString := string(body)
+
+	if resp.StatusCode != 200 {
+		log.Error(defaultErrors.New(responseString), "the URL to import json dashboard return error")
+		return "", defaultErrors.New(responseString)
+	}
+
+	return responseString, err
 }
 
 func (r *ReconcileGrafanaDashboard) deleteDashboard(d *i8ly.GrafanaDashboard) (reconcile.Result, error) {
