@@ -184,14 +184,14 @@ func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (r
 		return reconcile.Result{}, defaultErrors.New("operator namespace not yet known")
 	}
 
-	json, err := r.loadDashboardFromURL(d)
-	if err == nil {
-		d.Spec.Json = json
-	}
-
 	valid := r.checkPrerequisites(d)
 	if valid == false {
 		return reconcile.Result{Requeue: false}, nil
+	}
+
+	json, err := r.loadDashboardFromURL(d)
+	if err == nil {
+		d.Spec.Json = json
 	}
 
 	updated, err := r.helper.UpdateDashboard(d)
@@ -294,6 +294,6 @@ func (r *ReconcileGrafanaDashboard) isJsonValid(cr *i8ly.GrafanaDashboard) (bool
 }
 
 func (r *ReconcileGrafanaDashboard) hasDashboardChanged(cr *i8ly.GrafanaDashboard) (bool, string) {
-	hash := fmt.Sprintf("%x", md5.Sum([]byte(cr.Spec.Json)))
+	hash := fmt.Sprintf("%x", md5.Sum([]byte(cr.Spec.Json+cr.Spec.Url)))
 	return hash != cr.Status.LastConfig, hash
 }
