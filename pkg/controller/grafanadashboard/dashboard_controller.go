@@ -3,6 +3,7 @@ package grafanadashboard
 import (
 	"context"
 	"crypto/md5"
+	"encoding/json"
 	defaultErrors "errors"
 	"fmt"
 	"io/ioutil"
@@ -14,7 +15,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/json"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -154,7 +154,7 @@ func (r *ReconcileGrafanaDashboard) checkPrerequisites(d *i8ly.GrafanaDashboard)
 	}
 	d.Status.LastConfig = hash
 
-	valid, err := r.isJsonValid(d)
+	valid, err := r.isJsonValid(d.Spec.Json)
 	if valid {
 		return true
 	}
@@ -189,9 +189,9 @@ func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (r
 		return reconcile.Result{Requeue: false}, nil
 	}
 
-	json, err := r.loadDashboardFromURL(d)
+	dashboardJson, err := r.loadDashboardFromURL(d)
 	if err == nil {
-		d.Spec.Json = json
+		log.Error(err, "failed to load dashboard from url")
 	}
 
 	updated, err := r.helper.UpdateDashboard(d)
@@ -221,35 +221,33 @@ func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (r
 func (r *ReconcileGrafanaDashboard) loadDashboardFromURL(d *i8ly.GrafanaDashboard) (string, error) {
 
 	if d.Spec.Url == "" {
-		return "", defaultErrors.New("url not specified in grafana dashboard CR")
+		return "", defaultErrors.New("dashboard url not specified")
 	}
 
 	_, err := url.ParseRequestURI(d.Spec.Url)
 	if err != nil {
-		log.Error(err, "url specified in grafana dashboard CR is not valid")
-		return "", defaultErrors.New("wrong url")
+		return "", defaultErrors.New("dashboard url specified is not valid")
 	}
 
 	resp, err := http.Get(d.Spec.Url)
 	if err != nil {
-		log.Error(err, "request to import json with dashboard from URL failed")
+		return "", defaultErrors.New("request to import dashboard failed")
 	}
-
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Error(err, "response to import json with dashboard from URL failed")
-	}
-
-	responseString := string(body)
+	body, _ := ioutil.ReadAll(resp.Body)
+	response := string(body)
 
 	if resp.StatusCode != 200 {
-		log.Error(defaultErrors.New(responseString), "the URL to import json dashboard return error")
-		return "", defaultErrors.New(responseString)
+		return "", defaultErrors.New(fmt.Sprintf("request to import dashboard returned with %s", response))
 	}
 
-	return responseString, err
+	valid, err := r.isJsonValid(response)
+	if !valid {
+		return "", defaultErrors.New("dashboard import from url is not valid")
+	}
+
+	return response, err
 }
 
 func (r *ReconcileGrafanaDashboard) deleteDashboard(d *i8ly.GrafanaDashboard) (reconcile.Result, error) {
@@ -287,9 +285,9 @@ func (r *ReconcileGrafanaDashboard) updatePhase(cr *i8ly.GrafanaDashboard, phase
 	return reconcile.Result{}, err
 }
 
-func (r *ReconcileGrafanaDashboard) isJsonValid(cr *i8ly.GrafanaDashboard) (bool, error) {
+func (r *ReconcileGrafanaDashboard) isJsonValid(parseJson string) (bool, error) {
 	var js map[string]interface{}
-	err := json.Unmarshal([]byte(cr.Spec.Json), &js)
+	err := json.Unmarshal([]byte(parseJson), &js)
 	return err == nil, err
 }
 
