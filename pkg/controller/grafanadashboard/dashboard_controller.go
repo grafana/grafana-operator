@@ -136,8 +136,10 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 	}
 }
 
-func (r *ReconcileGrafanaDashboard) checkPrerequisites(d *i8ly.GrafanaDashboard) bool {
-	changed, hash := r.hasDashboardChanged(d)
+func (r *ReconcileGrafanaDashboard) hasDashboardChanged(d *i8ly.GrafanaDashboard) bool {
+	hash := fmt.Sprintf("%x", md5.Sum([]byte(d.Spec.Json+d.Spec.Url)))
+	changed := hash != d.Status.LastConfig
+
 	if !changed {
 		known, err := r.helper.IsKnown(i8ly.GrafanaDashboardKind, d)
 		if err != nil {
@@ -154,14 +156,14 @@ func (r *ReconcileGrafanaDashboard) checkPrerequisites(d *i8ly.GrafanaDashboard)
 	}
 	d.Status.LastConfig = hash
 
-	json := r.loadDashboardFromURL(d)
-	if json != "" {
-		d.Spec.Json = json
-		return true
-	}
+	return true
+}
 
-	valid, err := r.isJsonValid(d.Spec.Json)
-	if valid {
+func (r *ReconcileGrafanaDashboard) isJsonValid(d *i8ly.GrafanaDashboard, dashboardJson string) bool {
+	var js map[string]interface{}
+	err := json.Unmarshal([]byte(dashboardJson), &js)
+
+	if err == nil {
 		return true
 	}
 
@@ -190,12 +192,23 @@ func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (r
 		return reconcile.Result{}, defaultErrors.New("operator namespace not yet known")
 	}
 
-	valid := r.checkPrerequisites(d)
-	if valid == false {
+	changed := r.hasDashboardChanged(d)
+	if !changed {
 		return reconcile.Result{Requeue: false}, nil
 	}
 
-	updated, err := r.helper.UpdateDashboard(d)
+	json, err := r.loadDashboardFromURL(d)
+	if err != nil {
+		log.Error(err, "failed to load dashboard from url")
+		json = d.Spec.Json
+	}
+
+	valid := r.isJsonValid(d, json)
+	if !valid {
+		return reconcile.Result{Requeue: false}, nil
+	}
+
+	updated, err := r.helper.UpdateDashboard(d, json)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -219,23 +232,20 @@ func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (r
 	return reconcile.Result{}, err
 }
 
-func (r *ReconcileGrafanaDashboard) loadDashboardFromURL(d *i8ly.GrafanaDashboard) string {
+func (r *ReconcileGrafanaDashboard) loadDashboardFromURL(d *i8ly.GrafanaDashboard) (string, error) {
 
 	if d.Spec.Url == "" {
-		log.Info("dashboard url not specified")
-		return ""
+		return "", defaultErrors.New("dashboard url not specified")
 	}
 
 	_, err := url.ParseRequestURI(d.Spec.Url)
 	if err != nil {
-		log.Info("dashboard url specified is not valid")
-		return ""
+		return "", defaultErrors.New("dashboard url specified is not valid")
 	}
 
 	resp, err := http.Get(d.Spec.Url)
 	if err != nil {
-		log.Info("request to import dashboard failed")
-		return ""
+		return "", defaultErrors.New("request to import dashboard failed")
 	}
 	defer resp.Body.Close()
 
@@ -243,17 +253,10 @@ func (r *ReconcileGrafanaDashboard) loadDashboardFromURL(d *i8ly.GrafanaDashboar
 	response := string(body)
 
 	if resp.StatusCode != 200 {
-		log.Info(fmt.Sprintf("request to import dashboard returned with %s", response))
-		return ""
+		return "", defaultErrors.New(fmt.Sprintf("request to import dashboard returned with %s", response))
 	}
 
-	valid, err := r.isJsonValid(response)
-	if !valid {
-		log.Info("dashboard import from url is not valid")
-		return ""
-	}
-
-	return response
+	return response, nil
 }
 
 func (r *ReconcileGrafanaDashboard) deleteDashboard(d *i8ly.GrafanaDashboard) (reconcile.Result, error) {
@@ -291,13 +294,13 @@ func (r *ReconcileGrafanaDashboard) updatePhase(cr *i8ly.GrafanaDashboard, phase
 	return reconcile.Result{}, err
 }
 
-func (r *ReconcileGrafanaDashboard) isJsonValid(dashboardJson string) (bool, error) {
-	var js map[string]interface{}
-	err := json.Unmarshal([]byte(dashboardJson), &js)
-	return err == nil, err
-}
+// func (r *ReconcileGrafanaDashboard) isJsonValid(dashboardJson string) (bool, error) {
+// 	var js map[string]interface{}
+// 	err := json.Unmarshal([]byte(dashboardJson), &js)
+// 	return err == nil, err
+// }
 
-func (r *ReconcileGrafanaDashboard) hasDashboardChanged(cr *i8ly.GrafanaDashboard) (bool, string) {
-	hash := fmt.Sprintf("%x", md5.Sum([]byte(cr.Spec.Json+cr.Spec.Url)))
-	return hash != cr.Status.LastConfig, hash
-}
+// func (r *ReconcileGrafanaDashboard) hasDashboardChanged(cr *i8ly.GrafanaDashboard) (bool, string) {
+// 	hash := fmt.Sprintf("%x", md5.Sum([]byte(cr.Spec.Json+cr.Spec.Url)))
+// 	return hash != cr.Status.LastConfig, hash
+// }

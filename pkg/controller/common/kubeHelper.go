@@ -3,6 +3,9 @@ package common
 import (
 	stdErrors "errors"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	apps "k8s.io/api/apps/v1"
 	core "k8s.io/api/core/v1"
@@ -13,8 +16,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
-	"strings"
-	"time"
 )
 
 var log = logf.Log.WithName("kube_helper")
@@ -64,7 +65,7 @@ func (h KubeHelperImpl) UpdateGrafanaConfig(config string, cr *v1alpha1.Grafana)
 	return h.updateConfigMap(configMap)
 }
 
-func (h KubeHelperImpl) UpdateDashboard(d *v1alpha1.GrafanaDashboard) (bool, error) {
+func (h KubeHelperImpl) UpdateDashboard(d *v1alpha1.GrafanaDashboard, json string) (bool, error) {
 	configMap, err := h.getConfigMap(GrafanaDashboardsConfigMapName)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -80,7 +81,7 @@ func (h KubeHelperImpl) UpdateDashboard(d *v1alpha1.GrafanaDashboard) (bool, err
 		configMap.Data = make(map[string]string)
 	}
 
-	configMap.Data[dashboardName] = d.Spec.Json
+	configMap.Data[dashboardName] = json
 	err = h.updateConfigMap(configMap)
 	if err != nil {
 		return false, err
