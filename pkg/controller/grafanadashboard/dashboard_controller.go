@@ -291,9 +291,9 @@ func (r *ReconcileGrafanaDashboard) updatePhase(cr *i8ly.GrafanaDashboard, phase
 	return reconcile.Result{}, err
 }
 
-func (r *ReconcileGrafanaDashboard) isJsonValid(parseJson string) (bool, error) {
+func (r *ReconcileGrafanaDashboard) isJsonValid(dashboardJson string) (bool, error) {
 	var js map[string]interface{}
-	err := json.Unmarshal([]byte(parseJson), &js)
+	err := json.Unmarshal([]byte(dashboardJson), &js)
 	return err == nil, err
 }
 
