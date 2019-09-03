@@ -154,6 +154,12 @@ func (r *ReconcileGrafanaDashboard) checkPrerequisites(d *i8ly.GrafanaDashboard)
 	}
 	d.Status.LastConfig = hash
 
+	json := r.loadDashboardFromURL(d)
+	if json != "" {
+		d.Spec.Json = json
+		return true
+	}
+
 	valid, err := r.isJsonValid(d.Spec.Json)
 	if valid {
 		return true
@@ -189,11 +195,6 @@ func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (r
 		return reconcile.Result{Requeue: false}, nil
 	}
 
-	dashboardJson, err := r.loadDashboardFromURL(d)
-	if err == nil {
-		log.Error(err, "failed to load dashboard from url")
-	}
-
 	updated, err := r.helper.UpdateDashboard(d)
 	if err != nil {
 		return reconcile.Result{}, err
@@ -218,20 +219,23 @@ func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (r
 	return reconcile.Result{}, err
 }
 
-func (r *ReconcileGrafanaDashboard) loadDashboardFromURL(d *i8ly.GrafanaDashboard) (string, error) {
+func (r *ReconcileGrafanaDashboard) loadDashboardFromURL(d *i8ly.GrafanaDashboard) string {
 
 	if d.Spec.Url == "" {
-		return "", defaultErrors.New("dashboard url not specified")
+		log.Info("dashboard url not specified")
+		return ""
 	}
 
 	_, err := url.ParseRequestURI(d.Spec.Url)
 	if err != nil {
-		return "", defaultErrors.New("dashboard url specified is not valid")
+		log.Info("dashboard url specified is not valid")
+		return ""
 	}
 
 	resp, err := http.Get(d.Spec.Url)
 	if err != nil {
-		return "", defaultErrors.New("request to import dashboard failed")
+		log.Info("request to import dashboard failed")
+		return ""
 	}
 	defer resp.Body.Close()
 
@@ -239,15 +243,17 @@ func (r *ReconcileGrafanaDashboard) loadDashboardFromURL(d *i8ly.GrafanaDashboar
 	response := string(body)
 
 	if resp.StatusCode != 200 {
-		return "", defaultErrors.New(fmt.Sprintf("request to import dashboard returned with %s", response))
+		log.Info(fmt.Sprintf("request to import dashboard returned with %s", response))
+		return ""
 	}
 
 	valid, err := r.isJsonValid(response)
 	if !valid {
-		return "", defaultErrors.New("dashboard import from url is not valid")
+		log.Info("dashboard import from url is not valid")
+		return ""
 	}
 
-	return response, err
+	return response
 }
 
 func (r *ReconcileGrafanaDashboard) deleteDashboard(d *i8ly.GrafanaDashboard) (reconcile.Result, error) {
