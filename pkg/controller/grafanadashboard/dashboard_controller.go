@@ -295,14 +295,3 @@ func (r *ReconcileGrafanaDashboard) updatePhase(cr *i8ly.GrafanaDashboard, phase
 	err := r.client.Update(context.TODO(), cr)
 	return reconcile.Result{}, err
 }
-
-// func (r *ReconcileGrafanaDashboard) isJsonValid(dashboardJson string) (bool, error) {
-// 	var js map[string]interface{}
-// 	err := json.Unmarshal([]byte(dashboardJson), &js)
-// 	return err == nil, err
-// }
-
-// func (r *ReconcileGrafanaDashboard) hasDashboardChanged(cr *i8ly.GrafanaDashboard) (bool, string) {
-// 	hash := fmt.Sprintf("%x", md5.Sum([]byte(cr.Spec.Json+cr.Spec.Url)))
-// 	return hash != cr.Status.LastConfig, hash
-// }
