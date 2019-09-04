@@ -3,14 +3,18 @@ package grafanadashboard
 import (
 	"context"
 	"crypto/md5"
+	"encoding/json"
 	defaultErrors "errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+
 	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/json"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -132,8 +136,10 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 	}
 }
 
-func (r *ReconcileGrafanaDashboard) checkPrerequisites(d *i8ly.GrafanaDashboard) bool {
-	changed, hash := r.hasDashboardChanged(d)
+func (r *ReconcileGrafanaDashboard) hasDashboardChanged(d *i8ly.GrafanaDashboard) bool {
+	hash := fmt.Sprintf("%x", md5.Sum([]byte(d.Spec.Json+d.Spec.Url)))
+	changed := hash != d.Status.LastConfig
+
 	if !changed {
 		known, err := r.helper.IsKnown(i8ly.GrafanaDashboardKind, d)
 		if err != nil {
@@ -150,8 +156,14 @@ func (r *ReconcileGrafanaDashboard) checkPrerequisites(d *i8ly.GrafanaDashboard)
 	}
 	d.Status.LastConfig = hash
 
-	valid, err := r.isJsonValid(d)
-	if valid {
+	return true
+}
+
+func (r *ReconcileGrafanaDashboard) isJsonValid(d *i8ly.GrafanaDashboard, dashboardJson string) bool {
+	var js map[string]interface{}
+	err := json.Unmarshal([]byte(dashboardJson), &js)
+
+	if err == nil {
 		return true
 	}
 
@@ -180,12 +192,29 @@ func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (r
 		return reconcile.Result{}, defaultErrors.New("operator namespace not yet known")
 	}
 
-	valid := r.checkPrerequisites(d)
-	if valid == false {
+	changed := r.hasDashboardChanged(d)
+	if !changed {
 		return reconcile.Result{Requeue: false}, nil
 	}
 
-	updated, err := r.helper.UpdateDashboard(d)
+	dashboardJson := d.Spec.Json
+
+	// If a URL is provided, try to fetch the dashboard json from there
+	if d.Spec.Url != "" {
+		remoteJson, err := r.loadDashboardFromURL(d)
+		if err != nil {
+			log.Error(err, "failed to load dashboard from url")
+		} else {
+			dashboardJson = remoteJson
+		}
+	}
+
+	valid := r.isJsonValid(d, dashboardJson)
+	if !valid {
+		return reconcile.Result{Requeue: false}, nil
+	}
+
+	updated, err := r.helper.UpdateDashboard(d, dashboardJson)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -207,6 +236,29 @@ func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (r
 	}
 
 	return reconcile.Result{}, err
+}
+
+// Try to load remote dashboard json from an url
+func (r *ReconcileGrafanaDashboard) loadDashboardFromURL(d *i8ly.GrafanaDashboard) (string, error) {
+	_, err := url.ParseRequestURI(d.Spec.Url)
+	if err != nil {
+		return "", defaultErrors.New("dashboard url specified is not valid")
+	}
+
+	resp, err := http.Get(d.Spec.Url)
+	if err != nil {
+		return "", defaultErrors.New("request to import dashboard failed")
+	}
+	defer resp.Body.Close()
+
+	body, _ := ioutil.ReadAll(resp.Body)
+	response := string(body)
+
+	if resp.StatusCode != 200 {
+		return "", defaultErrors.New(fmt.Sprintf("request to import dashboard returned with status %v", resp.StatusCode))
+	}
+
+	return response, nil
 }
 
 func (r *ReconcileGrafanaDashboard) deleteDashboard(d *i8ly.GrafanaDashboard) (reconcile.Result, error) {
@@ -242,15 +294,4 @@ func (r *ReconcileGrafanaDashboard) updatePhase(cr *i8ly.GrafanaDashboard, phase
 	cr.Status.Phase = phase
 	err := r.client.Update(context.TODO(), cr)
 	return reconcile.Result{}, err
-}
-
-func (r *ReconcileGrafanaDashboard) isJsonValid(cr *i8ly.GrafanaDashboard) (bool, error) {
-	var js map[string]interface{}
-	err := json.Unmarshal([]byte(cr.Spec.Json), &js)
-	return err == nil, err
-}
-
-func (r *ReconcileGrafanaDashboard) hasDashboardChanged(cr *i8ly.GrafanaDashboard) (bool, string) {
-	hash := fmt.Sprintf("%x", md5.Sum([]byte(cr.Spec.Json)))
-	return hash != cr.Status.LastConfig, hash
 }
