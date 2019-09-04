@@ -197,18 +197,24 @@ func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (r
 		return reconcile.Result{Requeue: false}, nil
 	}
 
-	json, err := r.loadDashboardFromURL(d)
-	if err != nil {
-		log.Error(err, "failed to load dashboard from url")
-		json = d.Spec.Json
+	dashboardJson := d.Spec.Json
+
+	// If a URL is provided, try to fetch the dashboard json from there
+	if d.Spec.Url != "" {
+		remoteJson, err := r.loadDashboardFromURL(d)
+		if err != nil {
+			log.Error(err, "failed to load dashboard from url")
+		} else {
+			dashboardJson = remoteJson
+		}
 	}
 
-	valid := r.isJsonValid(d, json)
+	valid := r.isJsonValid(d, dashboardJson)
 	if !valid {
 		return reconcile.Result{Requeue: false}, nil
 	}
 
-	updated, err := r.helper.UpdateDashboard(d, json)
+	updated, err := r.helper.UpdateDashboard(d, dashboardJson)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -232,12 +238,8 @@ func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (r
 	return reconcile.Result{}, err
 }
 
+// Try to load remote dashboard json from an url
 func (r *ReconcileGrafanaDashboard) loadDashboardFromURL(d *i8ly.GrafanaDashboard) (string, error) {
-
-	if d.Spec.Url == "" {
-		return "", defaultErrors.New("dashboard url not specified")
-	}
-
 	_, err := url.ParseRequestURI(d.Spec.Url)
 	if err != nil {
 		return "", defaultErrors.New("dashboard url specified is not valid")
@@ -253,7 +255,7 @@ func (r *ReconcileGrafanaDashboard) loadDashboardFromURL(d *i8ly.GrafanaDashboar
 	response := string(body)
 
 	if resp.StatusCode != 200 {
-		return "", defaultErrors.New(fmt.Sprintf("request to import dashboard returned with %s", response))
+		return "", defaultErrors.New(fmt.Sprintf("request to import dashboard returned with status %v", resp.StatusCode))
 	}
 
 	return response, nil
