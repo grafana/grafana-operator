@@ -6,7 +6,7 @@ metadata:
     app: grafana
 spec: 
   name: grafana-dashboard-from-url.json
-  url: https://raw.githubusercontent.com/jjaferson/grafana-operator/dashboard-from-url/deploy/examples/dashboards/grafana-dashboard.json
+  url: https://raw.githubusercontent.com/integr8ly/grafana-operator/master/deploy/examples/remote/grafana-dashboard.json
   json: >
     {
       "id": null,
