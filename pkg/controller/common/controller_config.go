@@ -17,6 +17,7 @@ const (
 	ConfigOperatorNamespace         = "grafana.operator.namespace"
 	ConfigDashboardLabelSelector    = "grafana.dashboard.selector"
 	ConfigGrafanaPluginsUpdated     = "grafana.plugins.updated"
+	ConfigServiceType               = "grafana.service.type"
 	ConfigOpenshift                 = "mode.openshift"
 	GrafanaImage                    = "quay.io/openshift/origin-grafana"
 	GrafanaVersion                  = "4.2"
@@ -43,6 +44,8 @@ const (
 	ResourceFinalizerName           = "grafana.cleanup"
 	RequeueDelay                    = time.Second * 15
 	PodLabelDefaultValue            = "grafana"
+	DefaultServiceType              = "ClusterIP"
+	DefaultLogLevel                 = "info"
 )
 
 type ControllerConfig struct {
@@ -89,6 +92,12 @@ func (c *ControllerConfig) RemovePluginsFor(dashboard *v1alpha1.GrafanaDashboard
 func (c *ControllerConfig) AddConfigItem(key string, value interface{}) {
 	if key != "" && value != nil && value != "" {
 		c.Values[key] = value
+	}
+}
+
+func (c *ControllerConfig) RemoveConfigItem(key string) {
+	if _, ok := c.Values[key]; ok {
+		delete(c.Values, key)
 	}
 }
 

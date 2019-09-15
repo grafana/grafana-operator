@@ -94,7 +94,9 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 			// Return and don't requeue
 			return reconcile.Result{}, nil
 		}
-		// Error reading the object - requeue the request.
+		// Error reading the object - requeue the r
+		//
+		// equest.
 		return reconcile.Result{}, err
 	}
 
@@ -203,7 +205,7 @@ func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (r
 	if d.Spec.Url != "" {
 		remoteJson, err := r.loadDashboardFromURL(d)
 		if err != nil {
-			log.Error(err, "failed to load dashboard from url")
+			log.Info(fmt.Sprintf("cannot load dashboard from %s, falling back to embedded json", d.Spec.Url))
 		} else {
 			dashboardJson = remoteJson
 		}

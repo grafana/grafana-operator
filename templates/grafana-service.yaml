@@ -13,6 +13,7 @@ metadata:
     {{ $k }}: {{ $v }}
     {{- end }}
 spec:
+  type: {{ .GrafanaServiceType }}
   ports:
   - name: grafana
     port: 3000

@@ -87,6 +87,8 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
+			// Stop the dashboard controller from reconciling when grafana is not installed
+			r.config.RemoveConfigItem(common.ConfigDashboardLabelSelector)
 			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{}, err
