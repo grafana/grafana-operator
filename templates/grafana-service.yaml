@@ -6,6 +6,7 @@ metadata:
   name: {{ .GrafanaServiceName }}
   namespace: {{ .Namespace }}
 spec:
+  type: {{ .GrafanaServiceType }}
   ports:
   - name: grafana
     port: 3000

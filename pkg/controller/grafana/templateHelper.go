@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	"io/ioutil"
+	v1 "k8s.io/api/core/v1"
 	"os"
 	"strings"
 	"text/template"
@@ -12,9 +13,7 @@ import (
 	integreatly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 )
 
-const (
-	DefaultLogLevel = "info"
-)
+const ()
 
 type GrafanaParamaeters struct {
 	GrafanaImage                    string
@@ -36,6 +35,7 @@ type GrafanaParamaeters struct {
 	AdminUser                       string
 	AdminPassword                   string
 	PodLabelValue                   string
+	GrafanaServiceType              string
 	BasicAuth                       bool
 	DisableLoginForm                bool
 	DisableSignoutMenu              bool
@@ -54,6 +54,19 @@ func option(val, defaultVal string) string {
 	return val
 }
 
+func getServiceType(serviceType string) string {
+	switch v1.ServiceType(strings.TrimSpace(serviceType)) {
+	case v1.ServiceTypeClusterIP:
+		return serviceType
+	case v1.ServiceTypeNodePort:
+		return serviceType
+	case v1.ServiceTypeLoadBalancer:
+		return serviceType
+	default:
+		return common.DefaultServiceType
+	}
+}
+
 func getLogLevel(userLogLevel string) string {
 	level := strings.TrimSpace(userLogLevel)
 	level = strings.ToLower(level)
@@ -70,7 +83,7 @@ func getLogLevel(userLogLevel string) string {
 	case "critical":
 		return level
 	default:
-		return DefaultLogLevel
+		return common.DefaultLogLevel
 	}
 }
 
@@ -104,6 +117,7 @@ func newTemplateHelper(cr *integreatly.Grafana) *TemplateHelper {
 		DisableSignoutMenu:              cr.Spec.DisableSignoutMenu,
 		Anonymous:                       cr.Spec.Anonymous,
 		PodLabelValue:                   controllerConfig.GetConfigString(common.ConfigPodLabelValue, common.PodLabelDefaultValue),
+		GrafanaServiceType:              getServiceType(controllerConfig.GetConfigString(common.ConfigServiceType, common.DefaultServiceType)),
 	}
 
 	templatePath := os.Getenv("TEMPLATE_PATH")

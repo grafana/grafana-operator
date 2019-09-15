@@ -29,6 +29,7 @@ var flagImageTag string
 var flagPluginsInitContainerImage string
 var flagPluginsInitContainerTag string
 var flagPodLabelValue string
+var flagServiceType string
 var scanAll bool
 var openshift bool
 
@@ -46,6 +47,7 @@ func init() {
 	flagset.StringVar(&flagPluginsInitContainerImage, "grafana-plugins-init-container-image", "", "Overrides the default Grafana Plugins Init Container image")
 	flagset.StringVar(&flagPluginsInitContainerTag, "grafana-plugins-init-container-tag", "", "Overrides the default Grafana Plugins Init Container tag")
 	flagset.StringVar(&flagPodLabelValue, "pod-label-value", common.PodLabelDefaultValue, "Overrides the default value of the app label")
+	flagset.StringVar(&flagServiceType, "service-type", common.DefaultServiceType, "Overrides the default type of the grafana service. Must be either 'ClusterIP', 'NodePort', or 'LoadBalancer'")
 	flagset.BoolVar(&scanAll, "scan-all", false, "Scans all namespaces for dashboards")
 	flagset.BoolVar(&openshift, "openshift", false, "Use Route instead of Ingress")
 	flagset.Parse(os.Args[1:])
@@ -99,6 +101,7 @@ func main() {
 	controllerConfig.AddConfigItem(common.ConfigPluginsInitContainerImage, flagPluginsInitContainerImage)
 	controllerConfig.AddConfigItem(common.ConfigPluginsInitContainerTag, flagPluginsInitContainerTag)
 	controllerConfig.AddConfigItem(common.ConfigPodLabelValue, flagPodLabelValue)
+	controllerConfig.AddConfigItem(common.ConfigServiceType, flagServiceType)
 	controllerConfig.AddConfigItem(common.ConfigOperatorNamespace, namespace)
 	controllerConfig.AddConfigItem(common.ConfigDashboardLabelSelector, "")
 	controllerConfig.AddConfigItem(common.ConfigOpenshift, openshift)
