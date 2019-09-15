@@ -46,6 +46,8 @@ const (
 	PodLabelDefaultValue            = "grafana"
 	DefaultServiceType              = "ClusterIP"
 	DefaultLogLevel                 = "info"
+	SecretsMountDir                 = "/etc/grafana-secrets/"
+	ConfigMapsMountDir              = "/etc/grafana-configmaps/"
 )
 
 type ControllerConfig struct {

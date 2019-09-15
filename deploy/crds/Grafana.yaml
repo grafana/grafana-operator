@@ -27,6 +27,11 @@ spec:
               items:
                 type: string
                 description: Secret to be mounted as volume into the grafana deployment
+            configMaps:
+              type: array
+              items:
+                type: string
+                description: Config map to be mounted as volume into the grafana deployment
             logLevel:
               type: string
               description: Log level of the grafana instance, defaults to info

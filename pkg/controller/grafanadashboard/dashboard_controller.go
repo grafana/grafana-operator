@@ -94,9 +94,7 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 			// Return and don't requeue
 			return reconcile.Result{}, nil
 		}
-		// Error reading the object - requeue the r
-		//
-		// equest.
+		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	}
 

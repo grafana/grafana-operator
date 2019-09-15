@@ -67,7 +67,8 @@ The resource accepts the following properties in it's `spec`:
 
 * *dashboardLabelSelector*: A list of either `matchLabels` or `matchExpressions` to filter the dashboards before importing them.
 * *containers*: Extra containers to be added to the Grafana deployment. Can be used for example to add auth proxy side cars.
-* *secrets*: A list of secrets that are added as volumes to the deployment. Mostly useful in combination with extra `containers`.
+* *secrets*: A list of secrets that are added as volumes to the deployment. Useful in combination with extra `containers` or when extra configuraton files are required.
+* *configMaps*: A list of config maps that are added as volumes to the deployment. Useful in combination with extra `containers` or when extra configuraton files are required.
 * *config*: The properties used to generate `grafana.ini`. All properties defined in the [official documentation](https://grafana.com/docs/installation/configuration/) are supported although some of them are not allowed to be overridden (path configuration). See `deploy/examples/Grafana.yaml` for an example.  
 * *createRoute*: Force the operator to create a Route instead of an Ingress even if the `--openshift` flag is not set.
 * *ingress*: Allows configuring the Ingress / Route resource (see [here](#configuring-the-ingress-or-route)).

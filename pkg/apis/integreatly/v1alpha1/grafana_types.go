@@ -27,6 +27,7 @@ type GrafanaSpec struct {
 	InitialReplicas        int                     `json:"initialReplicas,omitempty"`
 	LogLevel               string                  `json:"logLevel"`
 	Secrets                []string                `json:"secrets,omitempty"`
+	ConfigMaps             []string                `json:"configMaps,omitempty"`
 	Service                GrafanaService          `json:"service,omitempty"`
 }
 
