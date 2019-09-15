@@ -49,7 +49,7 @@ The operator accepts a number of flags that can be passed in the `args` section 
 * *--scan-all*: watch for dashboards in all namespaces. This requires the the operator service account to have cluster wide permissions to `get`, `list`, `update` and `watch` dashboards. See `deploy/cluster_roles`.
 * *--openshift*: force the operator to use a [route](https://docs.openshift.com/container-platform/3.11/architecture/networking/routes.html) instead of an [ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/). Note that routes are only supported on OpenShift.
 * *--pod-label-value*: override the value of the `app` label that gets attached to pods and other resources.
-
+* *--service-type*: override the type of the grafana service. Defaults to `ClusterIP`. Must be either `ClusterIP`, `NodePort` or `LoadBalancer`.
 
 See `deploy/operator.yaml` for an example.
 
