@@ -12,10 +12,16 @@ To create a namespace named `grafana` run:
 $ kubectl create namespace grafana
 ```
 
+Create the custom resource definitions that the operator uses:
+
+```sh
+$ kubectl create -f deploy/crds
+```
+
 Create the operator roles:
 
 ```sh
-$ kubectl create -f deploy/roles
+$ kubectl create -f deploy/roles -n grafana
 ```
 
 If you want to scan for dashboards in other namespaces you also need the cluster roles:
