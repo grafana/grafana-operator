@@ -21,6 +21,9 @@ spec:
       creationTimestamp: null
       labels:
         app: {{ .PodLabelValue }}
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '3000'
       name: grafana
     spec:
       initContainers:
@@ -66,11 +69,8 @@ spec:
               name: {{ .GrafanaConfigMapName }}
             - mountPath: /var/lib/grafana/plugins
               name: grafana-plugins
-      dnsPolicy: ClusterFirst
-      restartPolicy: Always
-      schedulerName: default-scheduler
       securityContext: {}
-      serviceAccount: {{ .GrafanaServiceAccountName}}
+      serviceAccount: {{ .GrafanaServiceAccountName }}
       serviceAccountName: {{ .GrafanaServiceAccountName }}
       terminationGracePeriodSeconds: 30
       volumes:
