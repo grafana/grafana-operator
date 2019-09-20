@@ -25,6 +25,7 @@ type GrafanaSpec struct {
 	DisableSignoutMenu     bool                    `json:"disableSignoutMenu"`
 	Hostname               string                  `json:"hostname,omitempty"`
 	Ingress                GrafanaIngress          `json:"ingress,omitempty"`
+	InitialReplicas        int                     `json:"initialReplicas,omitempty"`
 	LogLevel               string                  `json:"logLevel"`
 	Secrets                []string                `json:"secrets,omitempty"`
 	Service                GrafanaService          `json:"service,omitempty"`

@@ -50,10 +50,7 @@ type GrafanaParameters struct {
 	PluginsInitContainerImage       string
 	PluginsInitContainerTag         string
 	PodLabelValue                   string
-	BasicAuth                       bool
-	DisableLoginForm                bool
-	DisableSignoutMenu              bool
-	Anonymous                       bool
+	Replicas                        int
 }
 
 // TemplateHelper is the deployment helper object
@@ -126,6 +123,7 @@ func newTemplateHelper(cr *integreatly.Grafana) *TemplateHelper {
 		PluginsInitContainerImage:       controllerConfig.GetConfigString(common.ConfigPluginsInitContainerImage, common.PluginsInitContainerImage),
 		PluginsInitContainerTag:         controllerConfig.GetConfigString(common.ConfigPluginsInitContainerTag, common.PluginsInitContainerTag),
 		PodLabelValue:                   controllerConfig.GetConfigString(common.ConfigPodLabelValue, common.PodLabelDefaultValue),
+		Replicas:                        cr.Spec.InitialReplicas,
 	}
 
 	templatePath := os.Getenv("TEMPLATE_PATH")

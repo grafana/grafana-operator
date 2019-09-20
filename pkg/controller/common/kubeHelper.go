@@ -203,7 +203,7 @@ func (h KubeHelperImpl) DeleteDashboard(d *v1alpha1.GrafanaDashboard) error {
 	return nil
 }
 
-func (h KubeHelperImpl) getGrafanaPod(namespaceName string) (*core.Pod, error) {
+func (h KubeHelperImpl) getGrafanaPods(namespaceName string) ([]core.Pod, error) {
 	podLabel := h.config.GetConfigString(ConfigPodLabelValue, PodLabelDefaultValue)
 
 	opts := metav1.ListOptions{
@@ -222,10 +222,28 @@ func (h KubeHelperImpl) getGrafanaPod(namespaceName string) (*core.Pod, error) {
 		}{Group: "core", Resource: "pod"}, GrafanaDeploymentName)
 	}
 
-	return &pods.Items[0], nil
+	return pods.Items, nil
 }
 
-func (h KubeHelperImpl) UpdateGrafanaDeployment(newEnv string) error {
+// UpdateGrafanaDeployment is responsible for update the config hash on the deployment
+func (h *KubeHelperImpl) UpdateGrafanaDeployment(hash string, wait bool) error {
+	ns := h.config.GetConfigString(ConfigOperatorNamespace, "")
+	deployment, err := h.getGrafanaDeployment()
+	if err != nil {
+		return err
+	}
+	// update the configuration hash
+	deployment.Spec.Template.Spec.Containers[0].Env[0].Value = hash
+
+	if _, err = h.k8client.AppsV1().Deployments(ns).Update(deployment); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateGrafanaInitContainersDeployment updates the initcontainer config environment vars
+func (h KubeHelperImpl) UpdateGrafanaInitContainersDeployment(newEnv string) error {
 	monitoringNamespace := h.config.GetConfigString(ConfigOperatorNamespace, "")
 	deployment, err := h.getGrafanaDeployment()
 
@@ -256,10 +274,10 @@ func (h KubeHelperImpl) UpdateGrafanaDeployment(newEnv string) error {
 	return nil
 }
 
+// RestartGrafana is reponsipble for restarting the pods
 func (h KubeHelperImpl) RestartGrafana() error {
 	monitoringNamespace := h.config.GetConfigString(ConfigOperatorNamespace, "")
-	pod, err := h.getGrafanaPod(monitoringNamespace)
-
+	pods, err := h.getGrafanaPods(monitoringNamespace)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// No need to restart if grafana has not yet been deployed
@@ -269,10 +287,22 @@ func (h KubeHelperImpl) RestartGrafana() error {
 		return err
 	}
 
-	return h.k8client.CoreV1().Pods(monitoringNamespace).Delete(pod.Name, nil)
+	if len(pods) == 1 {
+		return h.k8client.CoreV1().Pods(monitoringNamespace).Delete(pods[0].Name, nil)
+	}
+
+	// @step: iterate and delete the pods
+	for _, pod := range pods {
+		if err := h.k8client.CoreV1().Pods(monitoringNamespace).Delete(pod.Name, nil); err != nil {
+			return err
+		}
+		time.Sleep(time.Second * 30)
+	}
+
+	return nil
 }
 
-// Append a status message to the origin dashboard of a plugin
+// AppendMessage a status message to the origin dashboard of a plugin
 func AppendMessage(message string, dashboard *v1alpha1.GrafanaDashboard) {
 	if dashboard == nil {
 		return

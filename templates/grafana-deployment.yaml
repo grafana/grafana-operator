@@ -6,7 +6,7 @@ metadata:
   name: {{ .GrafanaDeploymentName }}
   namespace: {{ .Namespace }}
 spec:
-  replicas: 1
+  replicas: {{ if .Replicas }}{{ .Replicas }}{{ else }}1{{ end }}
   revisionHistoryLimit: 10
   selector:
     matchLabels:
@@ -40,11 +40,13 @@ spec:
             - mountPath: /opt/plugins
               name: grafana-plugins
       containers:
-        - image: '{{ .GrafanaImage }}:{{ .GrafanaVersion }}'
+        - name: grafana
+          image: '{{ .GrafanaImage }}:{{ .GrafanaVersion }}'
           args:
             - -config=/etc/grafana/grafana.ini
-          imagePullPolicy: IfNotPresent
-          name: grafana
+          env:
+            - name: CONFIG_HASH
+              value: '{{ .GrafanaConfigHash }}'
           ports:
             - containerPort: 3000
               name: grafana-http
