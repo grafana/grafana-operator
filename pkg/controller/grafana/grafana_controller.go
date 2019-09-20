@@ -132,7 +132,7 @@ func (r *ReconcileGrafana) ReconcileGrafana(cr *i8ly.Grafana) (reconcile.Result,
 		}
 
 		// Grafana needs to be restarted after a config change
-		if err := r.helper.UpdateGrafanaDeployment(cr.Status.LastConfig, false); err != nil {
+		if err := r.helper.UpdateGrafanaDeployment(cr.Status.LastConfig); err != nil {
 			return reconcile.Result{}, err
 		}
 		log.Info("grafana updated configuration hash due to config change")
