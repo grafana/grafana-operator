@@ -1,4 +1,4 @@
-ORG=integreatly
+ORG?=integreatly
 NAMESPACE=grafana
 PROJECT=grafana-operator
 REG=quay.io
