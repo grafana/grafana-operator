@@ -226,7 +226,7 @@ func (h KubeHelperImpl) getGrafanaPods(namespaceName string) ([]core.Pod, error)
 }
 
 // UpdateGrafanaDeployment is responsible for update the config hash on the deployment
-func (h *KubeHelperImpl) UpdateGrafanaDeployment(hash string, wait bool) error {
+func (h *KubeHelperImpl) UpdateGrafanaDeployment(hash string) error {
 	ns := h.config.GetConfigString(ConfigOperatorNamespace, "")
 	deployment, err := h.getGrafanaDeployment()
 	if err != nil {

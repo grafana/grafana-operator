@@ -107,12 +107,6 @@ func (i *IniConfig) buildBaseConfig(config *ini.File) error {
 		return err
 	}
 
-	// Append the configuration
-	config.Append("replicas", i.Cr.Spec.InitialReplicas)
-	config.Append("service_type", i.Cr.Spec.Service.Type)
-	config.Append("service_labels", i.Cr.Spec.Service.Labels.MatchLabels)
-	config.Append("service_annotations", i.Cr.Spec.Service.Annotations)
-
 	// Always append the paths section last because we do not
 	// allow to override it
 	return i.appendPathsSection(config)
