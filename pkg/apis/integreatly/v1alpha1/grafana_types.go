@@ -13,21 +13,38 @@ import (
 type GrafanaSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	Hostname               string                  `json:"hostname,omitempty"`
-	Containers             []v1.Container          `json:"containers,omitempty"`
-	Secrets                []string                `json:"secrets,omitempty"`
-	DashboardLabelSelector []*metav1.LabelSelector `json:"dashboardLabelSelector,omitempty"`
-	LogLevel               string                  `json:"logLevel"`
-	AdminUser              string                  `json:"adminUser"`
 	AdminPassword          string                  `json:"adminPassword"`
+	AdminUser              string                  `json:"adminUser"`
+	Anonymous              bool                    `json:"anonymous"`
 	BasicAuth              bool                    `json:"basicAuth"`
+	Config                 GrafanaConfig           `json:"config"`
+	Containers             []v1.Container          `json:"containers,omitempty"`
+	CreateRoute            bool                    `json:"createRoute"`
+	DashboardLabelSelector []*metav1.LabelSelector `json:"dashboardLabelSelector,omitempty"`
 	DisableLoginForm       bool                    `json:"disableLoginForm"`
 	DisableSignoutMenu     bool                    `json:"disableSignoutMenu"`
-	Anonymous              bool                    `json:"anonymous"`
-	Config                 GrafanaConfig           `json:"config"`
-	CreateRoute            bool                    `json:"createRoute"`
+	Hostname               string                  `json:"hostname,omitempty"`
+	Ingress                GrafanaIngress          `json:"ingress,omitempty"`
+	LogLevel               string                  `json:"logLevel"`
+	Secrets                []string                `json:"secrets,omitempty"`
+	Service                GrafanaService          `json:"service,omitempty"`
 }
 
+// GrafanaService provides a means to configure the service
+type GrafanaService struct {
+	Annotations map[string]string    `json:"annotations,omitempty"`
+	Labels      metav1.LabelSelector `json:"labels,omitempty"`
+	Type        string               `json:"type,omitempty"`
+}
+
+// GrafanaIngress provides a means to configure the ingress created
+type GrafanaIngress struct {
+	Annotations map[string]string    `json:"annotations,omitempty"`
+	Labels      metav1.LabelSelector `json:"labels,omitempty"`
+	Path        string               `json:"path,omitempty"`
+}
+
+// GrafanaConfig is the configuration for grafana
 type GrafanaConfig struct {
 	Paths                         GrafanaConfigPaths                         `json:"paths,omitempty" ini:"paths,omitempty"`
 	Server                        GrafanaConfigServer                        `json:"server,omitempty" ini:"server,omitempty"`
