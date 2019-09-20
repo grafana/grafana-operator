@@ -49,6 +49,21 @@ spec:
             - containerPort: 3000
               name: grafana-http
               protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            periodSeconds: 5
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 60
+            timeoutSeconds: 30
+            failureThreshold: 10
           resources: {}
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
