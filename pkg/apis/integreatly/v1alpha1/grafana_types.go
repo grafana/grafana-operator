@@ -33,16 +33,16 @@ type GrafanaSpec struct {
 
 // GrafanaService provides a means to configure the service
 type GrafanaService struct {
-	Annotations map[string]string    `json:"annotations,omitempty"`
-	Labels      metav1.LabelSelector `json:"labels,omitempty"`
-	Type        string               `json:"type,omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty"`
+	Labels      map[string]string `json:"labels,omitempty"`
+	Type        string            `json:"type,omitempty"`
 }
 
 // GrafanaIngress provides a means to configure the ingress created
 type GrafanaIngress struct {
-	Annotations map[string]string    `json:"annotations,omitempty"`
-	Labels      metav1.LabelSelector `json:"labels,omitempty"`
-	Path        string               `json:"path,omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty"`
+	Labels      map[string]string `json:"labels,omitempty"`
+	Path        string            `json:"path,omitempty"`
 }
 
 // GrafanaConfig is the configuration for grafana

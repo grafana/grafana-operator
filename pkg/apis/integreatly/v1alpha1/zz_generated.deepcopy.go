@@ -859,7 +859,13 @@ func (in *GrafanaIngress) DeepCopyInto(out *GrafanaIngress) {
 			(*out)[key] = val
 		}
 	}
-	in.Labels.DeepCopyInto(&out.Labels)
+	if in.Labels != nil {
+		in, out := &in.Labels, &out.Labels
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	return
 }
 
@@ -937,7 +943,13 @@ func (in *GrafanaService) DeepCopyInto(out *GrafanaService) {
 			(*out)[key] = val
 		}
 	}
-	in.Labels.DeepCopyInto(&out.Labels)
+	if in.Labels != nil {
+		in, out := &in.Labels, &out.Labels
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	return
 }
 
