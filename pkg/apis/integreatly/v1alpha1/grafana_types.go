@@ -23,7 +23,6 @@ type GrafanaSpec struct {
 	DashboardLabelSelector []*metav1.LabelSelector `json:"dashboardLabelSelector,omitempty"`
 	DisableLoginForm       bool                    `json:"disableLoginForm"`
 	DisableSignoutMenu     bool                    `json:"disableSignoutMenu"`
-	Hostname               string                  `json:"hostname,omitempty"`
 	Ingress                GrafanaIngress          `json:"ingress,omitempty"`
 	InitialReplicas        int                     `json:"initialReplicas,omitempty"`
 	LogLevel               string                  `json:"logLevel"`
@@ -41,6 +40,7 @@ type GrafanaService struct {
 // GrafanaIngress provides a means to configure the ingress created
 type GrafanaIngress struct {
 	Annotations map[string]string `json:"annotations,omitempty"`
+	Hostname    string            `json:"hostname,omitempty"`
 	Labels      map[string]string `json:"labels,omitempty"`
 	Path        string            `json:"path,omitempty"`
 }

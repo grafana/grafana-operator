@@ -117,7 +117,7 @@ func newTemplateHelper(cr *integreatly.Grafana) *TemplateHelper {
 		GrafanaServiceName:              common.GrafanaServiceName,
 		GrafanaServiceType:              cr.Spec.Service.Type,
 		GrafanaVersion:                  controllerConfig.GetConfigString(common.ConfigGrafanaImageTag, common.GrafanaVersion),
-		Hostname:                        cr.Spec.Hostname,
+		Hostname:                        cr.Spec.Ingress.Hostname,
 		LogLevel:                        getLogLevel(cr.Spec.LogLevel),
 		Namespace:                       cr.Namespace,
 		PluginsInitContainerImage:       controllerConfig.GetConfigString(common.ConfigPluginsInitContainerImage, common.PluginsInitContainerImage),

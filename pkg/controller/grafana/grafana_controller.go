@@ -275,7 +275,7 @@ func (r *ReconcileGrafana) createConfigFiles(cr *i8ly.Grafana) (reconcile.Result
 		common.GrafanaDatasourcesConfigMapName,
 		common.GrafanaServiceName,
 	}
-	if cr.Spec.Hostname != "" {
+	if cr.Spec.Ingress.Hostname != "" {
 		resources = append(resources, ingressType)
 	}
 
