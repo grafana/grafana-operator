@@ -3,7 +3,11 @@ kind: Grafana
 metadata:
   name: example-grafana
 spec:
-  hostname: "grafana.apps.127.0.0.1.nip.io"
+  ingress:
+    enabled: True
+    hostname: "grafana.apps.127.0.0.1.nip.io"
+  service:
+    type: NodePort
   config:
     log:
       mode: "console"

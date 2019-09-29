@@ -43,6 +43,7 @@ type GrafanaIngress struct {
 	Hostname    string            `json:"hostname,omitempty"`
 	Labels      map[string]string `json:"labels,omitempty"`
 	Path        string            `json:"path,omitempty"`
+	Enabled     bool              `json:"enabled,omitempty"`
 }
 
 // GrafanaConfig is the configuration for grafana
