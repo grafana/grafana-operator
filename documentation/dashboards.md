@@ -79,8 +79,7 @@ dashboardLabelSelector:
 
 ## Discovering dashboards in other namespaces
 
-The operator can discover dashboards in other namespaces if the `--scan-all` flag is set. However this requires cluster wide permissions to the `GrafanaDashboard` custom resource. Create the permissions with:
-
+The operator can discover dashboards in other namespaces if either the `--scan-all` flag is set or a list of watch namespaces is provided using the `--namespaces` flag. However this requires cluster wide permissions to the `GrafanaDashboard` custom resource. Create the permissions with:
 ```sh
 $ oc create -f deploy/cluster_roles
 ```

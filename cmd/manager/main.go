@@ -21,6 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
+	"strings"
 )
 
 var log = logf.Log.WithName("cmd")
@@ -29,6 +30,7 @@ var flagImageTag string
 var flagPluginsInitContainerImage string
 var flagPluginsInitContainerTag string
 var flagPodLabelValue string
+var flagNamespaces string
 var scanAll bool
 var openshift bool
 
@@ -46,6 +48,7 @@ func init() {
 	flagset.StringVar(&flagPluginsInitContainerImage, "grafana-plugins-init-container-image", "", "Overrides the default Grafana Plugins Init Container image")
 	flagset.StringVar(&flagPluginsInitContainerTag, "grafana-plugins-init-container-tag", "", "Overrides the default Grafana Plugins Init Container tag")
 	flagset.StringVar(&flagPodLabelValue, "pod-label-value", common.PodLabelDefaultValue, "Overrides the default value of the app label")
+	flagset.StringVar(&flagNamespaces, "namespaces", "", "Namespaces to scope the interaction of the Grafana operator. Mutually exclusive with --scan-all")
 	flagset.BoolVar(&scanAll, "scan-all", false, "Scans all namespaces for dashboards")
 	flagset.BoolVar(&openshift, "openshift", false, "Use Route instead of Ingress")
 	flagset.Parse(os.Args[1:])
@@ -77,6 +80,22 @@ func startDashboardController(ns string, cfg *rest.Config, signalHandler <-chan 
 	}()
 }
 
+// Get the trimmed and sanitized list of namespaces (if --namespaces was provided)
+func getSanitizedNamespaceList() []string {
+	provided := strings.Split(flagNamespaces, ",")
+	var selected []string
+
+	for _, v := range provided {
+		v = strings.TrimSpace(v)
+
+		if v != "" {
+			selected = append(selected, v)
+		}
+	}
+
+	return selected
+}
+
 func main() {
 	// The logger instantiated here can be changed to any logger
 	// implementing the logr.Logger interface. This logger will
@@ -89,6 +108,11 @@ func main() {
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
 		log.Error(err, "failed to get watch namespace")
+		os.Exit(1)
+	}
+
+	if scanAll && flagNamespaces != "" {
+		fmt.Fprint(os.Stderr, "--scan-all and --namespaces both set. Please provide only one")
 		os.Exit(1)
 	}
 
@@ -106,10 +130,19 @@ func main() {
 	// Get the namespaces to scan for dashboards
 	// It's either the same namespace as the controller's or it's all namespaces if the
 	// --scan-all flag has been passed
-	var dashboardNamespace = namespace
+	var dashboardNamespaces = []string{namespace}
 	if scanAll {
-		dashboardNamespace = ""
+		dashboardNamespaces = []string{""}
 		log.Info("Scanning for dashboards in all namespaces")
+	}
+
+	if flagNamespaces != "" {
+		dashboardNamespaces = getSanitizedNamespaceList()
+		if len(dashboardNamespaces) == 0 {
+			fmt.Fprint(os.Stderr, "--namespaces provided but no valid namespaces in list")
+			os.Exit(1)
+		}
+		log.Info(fmt.Sprintf("Scanning for dashboards in the following namespaces: [%s]", strings.Join(dashboardNamespaces, ",")))
 	}
 
 	// Get a config to talk to the apiserver
@@ -154,7 +187,11 @@ func main() {
 	log.Info("Starting the Cmd.")
 
 	signalHandler := signals.SetupSignalHandler()
-	startDashboardController(dashboardNamespace, cfg, signalHandler)
+
+	// Start one dashboard controller per watch namespace
+	for _, ns := range dashboardNamespaces {
+		startDashboardController(ns, cfg, signalHandler)
+	}
 
 	if err := mgr.Start(signalHandler); err != nil {
 		log.Error(err, "manager exited non-zero")

@@ -3,6 +3,7 @@
 * [Installing Grafana](./deploy_grafana.md)
 * [Dashboards](./dashboards.md)
 * [Data Sources](./datasources.md)
+* [Multi namespace support](./multi_namespace_support.md)
 
 ## Examples
 
