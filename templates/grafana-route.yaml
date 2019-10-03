@@ -3,6 +3,14 @@ kind: Route
 metadata:
   name: {{ .GrafanaRouteName }}
   namespace: {{ .Namespace }}
+  annotations:
+    {{- range $k, $v := .GrafanaIngressAnnotations }}
+    {{ $k }}: {{ $v }}
+    {{- end }}
+  labels:
+    {{- range $k, $v := .GrafanaIngressLabels }}
+    {{ $k }}: {{ $v }}
+    {{- end }}
 spec:
   port:
     targetPort: grafana

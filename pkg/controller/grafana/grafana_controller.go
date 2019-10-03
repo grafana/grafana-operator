@@ -3,6 +3,7 @@ package grafana
 import (
 	"context"
 	"fmt"
+
 	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	core "k8s.io/api/core/v1"
@@ -63,8 +64,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to primary resource Grafana
-	err = c.Watch(&source.Kind{Type: &i8ly.Grafana{}}, &handler.EnqueueRequestForObject{})
-	return err
+	return c.Watch(&source.Kind{Type: &i8ly.Grafana{}}, &handler.EnqueueRequestForObject{})
 }
 
 var _ reconcile.Reconciler = &ReconcileGrafana{}
@@ -109,52 +109,47 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 	return reconcile.Result{}, nil
 }
 
-// Constantly reconcile the grafana config and plugins
+// ReconcileGrafana is constantly reconcile the grafana config and plugins
 func (r *ReconcileGrafana) ReconcileGrafana(cr *i8ly.Grafana) (reconcile.Result, error) {
 	// Update the label selector and make it available to the dashboard controller
 	r.config.AddConfigItem(common.ConfigDashboardLabelSelector, cr.Spec.DashboardLabelSelector)
 
 	// Config updated?
 	newConfig := NewIniConfig(cr)
-	err := newConfig.Build()
-
-	if err != nil {
+	if err := newConfig.Build(); err != nil {
 		return reconcile.Result{}, err
 	}
 
 	if newConfig.DiffersFrom(cr.Status.LastConfig) {
-		err := r.helper.UpdateGrafanaConfig(newConfig.Contents, cr)
-		if err != nil {
+		if err := r.helper.UpdateGrafanaConfig(newConfig.Contents, cr); err != nil {
 			return reconcile.Result{}, err
 		}
 
 		// Store the new config hash
 		cr.Status.LastConfig = newConfig.Hash
-		err = r.client.Update(context.TODO(), cr)
-		if err != nil {
+		if err := r.client.Update(context.TODO(), cr); err != nil {
 			return reconcile.Result{}, err
 		}
 
 		// Grafana needs to be restarted after a config change
-		err = r.helper.RestartGrafana()
-		if err != nil {
+		if err := r.helper.UpdateGrafanaDeployment(cr.Status.LastConfig); err != nil {
 			return reconcile.Result{}, err
 		}
-		log.Info("grafana restarted due to config change")
+		log.Info("grafana updated configuration hash due to config change")
 
 		// Skip plugins reconciliation while grafana is restarting
-		return reconcile.Result{RequeueAfter: common.RequeueDelay}, err
+		return reconcile.Result{RequeueAfter: common.RequeueDelay}, nil
 	}
 
 	// Plugins updated?
-	err = r.ReconcileDashboardPlugins(cr)
-	if err != nil {
+	if err := r.ReconcileDashboardPlugins(cr); err != nil {
 		return reconcile.Result{}, err
 	}
 
-	return reconcile.Result{RequeueAfter: common.RequeueDelay}, err
+	return reconcile.Result{RequeueAfter: common.RequeueDelay}, nil
 }
 
+// ReconcileDashboardPlugins is responsible for reconciling the grafana dashboards
 func (r *ReconcileGrafana) ReconcileDashboardPlugins(cr *i8ly.Grafana) error {
 	// Waited long enough for dashboards to be ready?
 	if r.plugins.CanUpdatePlugins() == false {
@@ -209,7 +204,7 @@ func (r *ReconcileGrafana) ReconcilePlugins(cr *i8ly.Grafana, plugins []i8ly.Gra
 	}
 
 	newEnv := r.plugins.BuildEnv(cr)
-	err = r.helper.UpdateGrafanaDeployment(newEnv)
+	err = r.helper.UpdateGrafanaInitContainersDeployment(newEnv)
 	return err
 }
 
@@ -274,23 +269,35 @@ func (r *ReconcileGrafana) createConfigFiles(cr *i8ly.Grafana) (reconcile.Result
 		return reconcile.Result{}, err
 	}
 
-	for _, resourceName := range []string{common.GrafanaDashboardsConfigMapName, common.GrafanaProvidersConfigMapName, common.GrafanaDatasourcesConfigMapName, common.GrafanaServiceName, ingressType} {
+	resources := []string{
+		common.GrafanaDashboardsConfigMapName,
+		common.GrafanaProvidersConfigMapName,
+		common.GrafanaDatasourcesConfigMapName,
+		common.GrafanaServiceName,
+	}
+
+	// Ingress / Route has to be enabled
+	if cr.Spec.Ingress.Enabled {
+		resources = append(resources, ingressType)
+	}
+
+	for _, resourceName := range resources {
+		log.Info(fmt.Sprintf("Creating the %s resource", resourceName))
 		if err := r.createResource(cr, resourceName); err != nil {
 			log.Info(fmt.Sprintf("Error in CreateConfigFiles, resourceName=%s : err=%s", resourceName, err))
 			// Requeue so it can be attempted again
 			return reconcile.Result{}, err
 		}
 	}
-
 	log.Info("Config files created")
+
 	return r.updatePhase(cr, PhaseInstallGrafana)
 }
 
 func (r *ReconcileGrafana) installGrafana(cr *i8ly.Grafana) (reconcile.Result, error) {
 	log.Info("Phase: Install Grafana")
 
-	err := r.createDeployment(cr, common.GrafanaDeploymentName)
-	if err != nil {
+	if err := r.createDeployment(cr, common.GrafanaDeploymentName); err != nil {
 		return reconcile.Result{}, err
 	}
 
@@ -341,8 +348,7 @@ func (r *ReconcileGrafana) createDeployment(cr *i8ly.Grafana, resourceName strin
 		rawResource.access("spec").access("template").access("spec").set("containers", containers)
 	}
 
-	return r.deployResource(cr, resource, resourceName)
-
+	return r.deployResource(cr, resource, common.GrafanaDeploymentName)
 }
 
 func (r *ReconcileGrafana) createServiceAccount(cr *i8ly.Grafana, resourceName string) error {
@@ -397,7 +403,7 @@ func (r *ReconcileGrafana) deployResource(cr *i8ly.Grafana, resource runtime.Obj
 
 	// Resource does not exist or something went wrong
 	if errors.IsNotFound(err) {
-		log.Info(fmt.Sprintf("Creating %s", resourceName))
+		log.Info(fmt.Sprintf("Resource %s does not exist, creating now", resourceName))
 	} else {
 		return err
 	}
@@ -409,11 +415,7 @@ func (r *ReconcileGrafana) deployResource(cr *i8ly.Grafana, resource runtime.Obj
 		return err
 	}
 
-	err = r.client.Create(context.TODO(), resource)
-	if err != nil {
-		return err
-	}
-	return nil
+	return r.client.Create(context.TODO(), resource)
 }
 
 func (r *ReconcileGrafana) updatePhase(cr *i8ly.Grafana, phase int) (reconcile.Result, error) {

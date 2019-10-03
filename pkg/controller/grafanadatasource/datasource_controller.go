@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
+
 	"github.com/ghodss/yaml"
 	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
@@ -155,6 +156,7 @@ func (r *ReconcileGrafanaDataSource) reconcileDatasource(cr *i8ly.GrafanaDataSou
 	}
 
 	log.Info(fmt.Sprintf("datasource '%s' updated", cr.Spec.Name))
+
 	return r.updatePhase(cr, common.StatusResourceCreated)
 }
 

@@ -3,7 +3,10 @@ kind: Grafana
 metadata:
   name: example-grafana
 spec:
-  createRoute: True
+  ingress:
+    enabled: True
+  service:
+    type: NodePort
   config:
     log:
       mode: "console"

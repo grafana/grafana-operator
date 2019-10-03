@@ -65,16 +65,17 @@ Create a custom resource of type `Grafana`, or use the one in `deploy/examples/G
 
 The resource accepts the following properties in it's `spec`:
 
-* *hostname*:  The host to be used for the [ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/). Ignored when `--openshift` is set.
 * *dashboardLabelSelector*: A list of either `matchLabels` or `matchExpressions` to filter the dashboards before importing them.
 * *containers*: Extra containers to be added to the Grafana deployment. Can be used for example to add auth proxy side cars.
 * *secrets*: A list of secrets that are added as volumes to the deployment. Mostly useful in combination with extra `containers`.
 * *config*: The properties used to generate `grafana.ini`. All properties defined in the [official documentation](https://grafana.com/docs/installation/configuration/) are supported although some of them are not allowed to be overridden (path configuration). See `deploy/examples/Grafana.yaml` for an example.  
 * *createRoute*: Force the operator to create a Route instead of an Ingress even if the `--openshift` flag is not set.
+* *ingress*: Allows configuring the Ingress / Route resource (see [here](#configuring-the-ingress-or-route)).
+* *service*: Allows configuring the Service resource (see [here](#configuring-the-service)).
 
 The other accepted properties are `logLevel`, `adminUser`, `adminPassword`, `basicAuth`, `disableLoginForm`, `disableSignoutMenu` and `anonymous`. They are supported for legacy reasons, but new instances should use the `config` field. If a value is set in `config` then it will override the legacy field. 
 
-*NOTE*: setting `hostname` on Ingresses is not permitted on OpenShift. We recommend using the `--openshift` flag which will use a `Route` with an automatically assigned host instead. You can still use `Ingress` on OpenShift if you don't provide a `hostname` in the `Grafana` resource.
+*NOTE*: by default no Ingress or Route is created. It can be enabled with `spec.ingress.enabled`.
 
 To create a new Grafana instance in the `grafana` namespace, run:
 
@@ -95,3 +96,39 @@ grafana-ingress   grafana.apps.127.0.0.1.nip.io             80        28s
 When the config object in the `Grafana` CR is modified, then `grafana.ini` will be automatically updated and Grafana will be restarted.
 
 *NOTE*: there is a known issue when removing whole sections from the config object. The operator might not detect the update in such cases. As a workaround we recommend to leave the section header in place and only removing all the sections properties.
+
+## Configuring the Ingress or Route
+
+Various properties of the Ingress or Route can be configured:
+
+```yaml
+spec:
+  ingress:
+    enabled:  <Boolean>   # Create an Ingress (or Route if --openshift is set)
+    hostname: <String>    # Sets the hostname. Some caveats apply, see the note
+    labels:               # Additional labels for the Ingress or Route
+      app: grafana
+      ...
+    annotations:          # Additional annotations for the Ingress or Route
+      app: grafana
+      ...
+    path:                 # Sets the path of the Ingress. Ignored for Routes
+```
+
+*NOTE*: setting `hostname` on Ingresses is not permitted on OpenShift 3. We recommend using the `--openshift` flag which will use a `Route` with an automatically assigned host instead. You can still use `Ingress` on OpenShift if you don't provide a `hostname` in the `Grafana` resource.
+
+## Configuring the Service
+
+Various properties of the Service can be configured:
+
+```yaml
+spec:
+  service:
+    labels:               # Additional labels for the Ingress or Route
+      app: grafana
+      ...
+    annotations:          # Additional annotations for the Ingress or Route
+      app: grafana
+      ...
+    type: NodePort        # Set Service type, either NodePort, ClusterIP or LoadBalancer
+```
