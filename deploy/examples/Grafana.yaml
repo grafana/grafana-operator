@@ -3,10 +3,8 @@ kind: Grafana
 metadata:
   name: example-grafana
 spec:
-  secrets:
-    - mysecret
-  configMaps:
-    - game-config
+  ingress:
+    enabled: True
   config:
     log:
       mode: "console"

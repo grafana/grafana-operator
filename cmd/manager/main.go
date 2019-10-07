@@ -32,7 +32,6 @@ var flagPluginsInitContainerTag string
 var flagPodLabelValue string
 var flagNamespaces string
 var scanAll bool
-var openshift bool
 
 func printVersion() {
 	log.Info(fmt.Sprintf("Go Version: %s", runtime.Version()))
@@ -50,7 +49,6 @@ func init() {
 	flagset.StringVar(&flagPodLabelValue, "pod-label-value", common.PodLabelDefaultValue, "Overrides the default value of the app label")
 	flagset.StringVar(&flagNamespaces, "namespaces", "", "Namespaces to scope the interaction of the Grafana operator. Mutually exclusive with --scan-all")
 	flagset.BoolVar(&scanAll, "scan-all", false, "Scans all namespaces for dashboards")
-	flagset.BoolVar(&openshift, "openshift", false, "Use Route instead of Ingress")
 	flagset.Parse(os.Args[1:])
 }
 
@@ -125,7 +123,6 @@ func main() {
 	controllerConfig.AddConfigItem(common.ConfigPodLabelValue, flagPodLabelValue)
 	controllerConfig.AddConfigItem(common.ConfigOperatorNamespace, namespace)
 	controllerConfig.AddConfigItem(common.ConfigDashboardLabelSelector, "")
-	controllerConfig.AddConfigItem(common.ConfigOpenshift, openshift)
 
 	// Get the namespaces to scan for dashboards
 	// It's either the same namespace as the controller's or it's all namespaces if the
@@ -185,6 +182,15 @@ func main() {
 	}
 
 	log.Info("Starting the Cmd.")
+
+	// Starting the resource auto-detection for the grafana controller
+	autodetect, err := common.NewAutoDetect(mgr)
+	if err != nil {
+		log.Error(err, "failed to start the background process to auto-detect the operator capabilities")
+	} else {
+		autodetect.Start()
+		defer autodetect.Stop()
+	}
 
 	signalHandler := signals.SetupSignalHandler()
 

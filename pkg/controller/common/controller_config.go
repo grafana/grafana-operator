@@ -17,7 +17,6 @@ const (
 	ConfigOperatorNamespace         = "grafana.operator.namespace"
 	ConfigDashboardLabelSelector    = "grafana.dashboard.selector"
 	ConfigGrafanaPluginsUpdated     = "grafana.plugins.updated"
-	ConfigServiceType               = "grafana.service.type"
 	ConfigOpenshift                 = "mode.openshift"
 	GrafanaImage                    = "quay.io/openshift/origin-grafana"
 	GrafanaVersion                  = "4.2"

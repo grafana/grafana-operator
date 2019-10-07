@@ -53,9 +53,7 @@ The operator accepts a number of flags that can be passed in the `args` section 
 * *--grafana-plugins-init-container-image*: overrides the Grafana Plugins Init Container image, defaults to `quay.io/integreatly/grafana_plugins_init`.
 * *--grafana-plugins-init-container-tag*: overrides the Grafana Plugins Init Container tag, defaults to `0.0.2`.
 * *--scan-all*: watch for dashboards in all namespaces. This requires the the operator service account to have cluster wide permissions to `get`, `list`, `update` and `watch` dashboards. See `deploy/cluster_roles`.
-* *--openshift*: force the operator to use a [route](https://docs.openshift.com/container-platform/3.11/architecture/networking/routes.html) instead of an [ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/). Note that routes are only supported on OpenShift.
 * *--pod-label-value*: override the value of the `app` label that gets attached to pods and other resources.
-* *--service-type*: override the type of the grafana service. Defaults to `ClusterIP`. Must be either `ClusterIP`, `NodePort` or `LoadBalancer`.
 
 See `deploy/operator.yaml` for an example.
 
@@ -70,7 +68,6 @@ The resource accepts the following properties in it's `spec`:
 * *secrets*: A list of secrets that are added as volumes to the deployment. Useful in combination with extra `containers` or when extra configuraton files are required.
 * *configMaps*: A list of config maps that are added as volumes to the deployment. Useful in combination with extra `containers` or when extra configuraton files are required.
 * *config*: The properties used to generate `grafana.ini`. All properties defined in the [official documentation](https://grafana.com/docs/installation/configuration/) are supported although some of them are not allowed to be overridden (path configuration). See `deploy/examples/Grafana.yaml` for an example.  
-* *createRoute*: Force the operator to create a Route instead of an Ingress even if the `--openshift` flag is not set.
 * *ingress*: Allows configuring the Ingress / Route resource (see [here](#configuring-the-ingress-or-route)).
 * *service*: Allows configuring the Service resource (see [here](#configuring-the-service)).
 
@@ -105,7 +102,7 @@ Various properties of the Ingress or Route can be configured:
 ```yaml
 spec:
   ingress:
-    enabled:  <Boolean>   # Create an Ingress (or Route if --openshift is set)
+    enabled:  <Boolean>   # Create an Ingress (or Route if on OpenShift)
     hostname: <String>    # Sets the hostname. Some caveats apply, see the note
     labels:               # Additional labels for the Ingress or Route
       app: grafana
@@ -125,10 +122,10 @@ Various properties of the Service can be configured:
 ```yaml
 spec:
   service:
-    labels:               # Additional labels for the Ingress or Route
+    labels:               # Additional labels for the Service
       app: grafana
       ...
-    annotations:          # Additional annotations for the Ingress or Route
+    annotations:          # Additional annotations for the Service
       app: grafana
       ...
     type: NodePort        # Set Service type, either NodePort, ClusterIP or LoadBalancer

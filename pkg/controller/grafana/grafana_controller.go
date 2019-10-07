@@ -256,8 +256,7 @@ func (r *ReconcileGrafana) createConfigFiles(cr *i8ly.Grafana) (reconcile.Result
 	log.Info("Phase: Create Config Files")
 
 	ingressType := common.GrafanaIngressName
-	if cr.Spec.CreateRoute ||
-		common.GetControllerConfig().GetConfigBool(common.ConfigOpenshift, false) == true {
+	if common.GetControllerConfig().GetConfigBool(common.ConfigOpenshift, false) == true {
 		ingressType = common.GrafanaRouteName
 	}
 
