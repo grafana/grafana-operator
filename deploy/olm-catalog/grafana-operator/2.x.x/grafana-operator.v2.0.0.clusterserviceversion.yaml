@@ -20,7 +20,6 @@ metadata:
         },
         "spec": {
           "ingress": {
-          "ingress": {
             "enabled": true
           },
           "config": {
