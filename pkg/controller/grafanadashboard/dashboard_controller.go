@@ -203,7 +203,7 @@ func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (r
 	if d.Spec.Url != "" {
 		remoteJson, err := r.loadDashboardFromURL(d)
 		if err != nil {
-			log.Error(err, "failed to load dashboard from url")
+			log.Info(fmt.Sprintf("cannot load dashboard from %s, falling back to embedded json", d.Spec.Url))
 		} else {
 			dashboardJson = remoteJson
 		}

@@ -87,6 +87,8 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
+			// Stop the dashboard controller from reconciling when grafana is not installed
+			r.config.RemoveConfigItem(common.ConfigDashboardLabelSelector)
 			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{}, err
@@ -254,8 +256,7 @@ func (r *ReconcileGrafana) createConfigFiles(cr *i8ly.Grafana) (reconcile.Result
 	log.Info("Phase: Create Config Files")
 
 	ingressType := common.GrafanaIngressName
-	if cr.Spec.CreateRoute ||
-		common.GetControllerConfig().GetConfigBool(common.ConfigOpenshift, false) == true {
+	if common.GetControllerConfig().GetConfigBool(common.ConfigOpenshift, false) == true {
 		ingressType = common.GrafanaRouteName
 	}
 
@@ -314,6 +315,7 @@ func (r *ReconcileGrafana) createDeployment(cr *i8ly.Grafana, resourceName strin
 	}
 
 	rawResource := newUnstructuredResourceMap(resource.(*unstructured.Unstructured))
+	var extraVolumeMounts []interface{}
 
 	// Extra secrets to be added as volumes?
 	if len(cr.Spec.Secrets) > 0 {
@@ -329,6 +331,38 @@ func (r *ReconcileGrafana) createDeployment(cr *i8ly.Grafana, resourceName strin
 						SecretName: secret,
 					},
 				},
+			})
+			extraVolumeMounts = append(extraVolumeMounts, map[string]interface{}{
+				"name":      volumeName,
+				"readOnly":  true,
+				"mountPath": common.SecretsMountDir + secret,
+			})
+		}
+
+		rawResource.access("spec").access("template").access("spec").set("volumes", volumes)
+	}
+
+	// Extra config maps to be added as volumes?
+	if len(cr.Spec.ConfigMaps) > 0 {
+		volumes := rawResource.access("spec").access("template").access("spec").get("volumes").([]interface{})
+
+		for _, configmap := range cr.Spec.ConfigMaps {
+			volumeName := fmt.Sprintf("configmap-%s", configmap)
+			log.Info(fmt.Sprintf("adding volume for configmap '%s' as '%s'", configmap, volumeName))
+			volumes = append(volumes, core.Volume{
+				Name: volumeName,
+				VolumeSource: core.VolumeSource{
+					ConfigMap: &core.ConfigMapVolumeSource{
+						LocalObjectReference: core.LocalObjectReference{
+							Name: configmap,
+						},
+					},
+				},
+			})
+			extraVolumeMounts = append(extraVolumeMounts, map[string]interface{}{
+				"name":      volumeName,
+				"readOnly":  true,
+				"mountPath": common.ConfigMapsMountDir + configmap,
 			})
 		}
 
@@ -348,7 +382,19 @@ func (r *ReconcileGrafana) createDeployment(cr *i8ly.Grafana, resourceName strin
 		rawResource.access("spec").access("template").access("spec").set("containers", containers)
 	}
 
-	return r.deployResource(cr, resource, common.GrafanaDeploymentName)
+	// Append extra volume mounts to all containers
+	if len(extraVolumeMounts) > 0 {
+		containers := rawResource.access("spec").access("template").access("spec").get("containers").([]interface{})
+
+		for _, container := range containers {
+			volumeMounts := container.(map[string]interface{})["volumeMounts"].([]interface{})
+			volumeMounts = append(volumeMounts, extraVolumeMounts...)
+			container.(map[string]interface{})["volumeMounts"] = volumeMounts
+		}
+	}
+
+	return r.deployResource(cr, resource, resourceName)
+
 }
 
 func (r *ReconcileGrafana) createServiceAccount(cr *i8ly.Grafana, resourceName string) error {

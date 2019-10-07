@@ -19,7 +19,6 @@ type GrafanaSpec struct {
 	BasicAuth              bool                    `json:"basicAuth"`
 	Config                 GrafanaConfig           `json:"config"`
 	Containers             []v1.Container          `json:"containers,omitempty"`
-	CreateRoute            bool                    `json:"createRoute"`
 	DashboardLabelSelector []*metav1.LabelSelector `json:"dashboardLabelSelector,omitempty"`
 	DisableLoginForm       bool                    `json:"disableLoginForm"`
 	DisableSignoutMenu     bool                    `json:"disableSignoutMenu"`
@@ -27,6 +26,7 @@ type GrafanaSpec struct {
 	InitialReplicas        int                     `json:"initialReplicas,omitempty"`
 	LogLevel               string                  `json:"logLevel"`
 	Secrets                []string                `json:"secrets,omitempty"`
+	ConfigMaps             []string                `json:"configMaps,omitempty"`
 	Service                GrafanaService          `json:"service,omitempty"`
 }
 

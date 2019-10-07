@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	v1 "k8s.io/api/core/v1"
 	"os"
 	"strings"
 	"text/template"
@@ -66,6 +67,19 @@ func option(val, defaultVal string) string {
 	return val
 }
 
+func getServiceType(serviceType string) string {
+	switch v1.ServiceType(strings.TrimSpace(serviceType)) {
+	case v1.ServiceTypeClusterIP:
+		return serviceType
+	case v1.ServiceTypeNodePort:
+		return serviceType
+	case v1.ServiceTypeLoadBalancer:
+		return serviceType
+	default:
+		return common.DefaultServiceType
+	}
+}
+
 func getLogLevel(userLogLevel string) string {
 	level := strings.TrimSpace(userLogLevel)
 	level = strings.ToLower(level)
@@ -82,7 +96,7 @@ func getLogLevel(userLogLevel string) string {
 	case "critical":
 		return level
 	default:
-		return DefaultLogLevel
+		return common.DefaultLogLevel
 	}
 }
 

@@ -6,8 +6,6 @@ spec:
   ingress:
     enabled: True
     hostname: "grafana.apps.127.0.0.1.nip.io"
-  service:
-    type: NodePort
   config:
     log:
       mode: "console"
