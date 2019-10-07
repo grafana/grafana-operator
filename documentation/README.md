@@ -12,8 +12,8 @@ The following example CRs are provided:
 
 ### Grafana deployments
 
-* [Grafana.yaml](../deploy/examples/Grafana.yaml): Installs Grafana using the default configuration and an Ingress if the `--openshift` flag is not provided. Suitable for Kubernetes and OpenShift.
-* [GrafanaWithIngressHost.yaml](../deploy/examples/GrafanaWithIngressHost.yaml): Installs Grafana using the default configuration and an Ingress where the host is set for outside access. Only suitable for Kubernetes, setting the host on Ingresses is not permitted on OpenShift. 
+* [Grafana.yaml](../deploy/examples/Grafana.yaml): Installs Grafana using the default configuration and an Ingress or Route.
+* [GrafanaWithIngressHost.yaml](../deploy/examples/GrafanaWithIngressHost.yaml): Installs Grafana using the default configuration and an Ingress where the host is set for external access. 
 * [ldap/Grafana.yaml](../deploy/examples/ldap/Grafana.yaml): Installs Grafana and sets up LDAP authentication. LDAP configuration is mounted from the configmap [ldap/ldap-config.yaml](../deploy/examples/ldap/ldap-config.yaml)
 
 ### Dashboards

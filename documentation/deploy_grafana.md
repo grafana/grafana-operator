@@ -103,7 +103,7 @@ Various properties of the Ingress or Route can be configured:
 spec:
   ingress:
     enabled:  <Boolean>   # Create an Ingress (or Route if on OpenShift)
-    hostname: <String>    # Sets the hostname. Some caveats apply, see the note
+    hostname: <String>    # Sets the hostname. Automatically set for Routes on OpenShift.
     labels:               # Additional labels for the Ingress or Route
       app: grafana
       ...
@@ -112,8 +112,6 @@ spec:
       ...
     path:                 # Sets the path of the Ingress. Ignored for Routes
 ```
-
-*NOTE*: setting `hostname` on Ingresses is not permitted on OpenShift 3. We recommend using the `--openshift` flag which will use a `Route` with an automatically assigned host instead. You can still use `Ingress` on OpenShift if you don't provide a `hostname` in the `Grafana` resource.
 
 ## Configuring the Service
 
