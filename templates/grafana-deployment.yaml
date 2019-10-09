@@ -6,7 +6,7 @@ metadata:
   name: {{ .GrafanaDeploymentName }}
   namespace: {{ .Namespace }}
 spec:
-  replicas: {{ if .Replicas }}{{ .Replicas }}{{ else }}1{{ end }}
+  replicas: {{ or .Replicas 1 }}
   revisionHistoryLimit: 10
   selector:
     matchLabels:
