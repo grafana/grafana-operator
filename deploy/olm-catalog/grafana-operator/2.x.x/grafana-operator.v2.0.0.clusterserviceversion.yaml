@@ -170,7 +170,7 @@ spec:
                             fieldPath: metadata.name
                       - name: OPERATOR_NAME
                         value: grafana-operator
-                    image: quay.io/integreatly/grafana-operator:latest
+                    image: quay.io/integreatly/grafana-operator:v2.0.0
                     imagePullPolicy: Always
                     name: grafana-operator
                     ports:
