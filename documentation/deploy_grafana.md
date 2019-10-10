@@ -70,6 +70,7 @@ The resource accepts the following properties in it's `spec`:
 * *config*: The properties used to generate `grafana.ini`. All properties defined in the [official documentation](https://grafana.com/docs/installation/configuration/) are supported although some of them are not allowed to be overridden (path configuration). See `deploy/examples/Grafana.yaml` for an example.  
 * *ingress*: Allows configuring the Ingress / Route resource (see [here](#configuring-the-ingress-or-route)).
 * *service*: Allows configuring the Service resource (see [here](#configuring-the-service)).
+* *initialReplicas*: Allows scaling the number of Grafana pods to the specified replicas.
 
 The other accepted properties are `logLevel`, `adminUser`, `adminPassword`, `basicAuth`, `disableLoginForm`, `disableSignoutMenu` and `anonymous`. They are supported for legacy reasons, but new instances should use the `config` field. If a value is set in `config` then it will override the legacy field. 
 
@@ -97,7 +98,7 @@ When the config object in the `Grafana` CR is modified, then `grafana.ini` will 
 
 ## Configuring the Ingress or Route
 
-Various properties of the Ingress or Route can be configured:
+By default the operator will not create an Ingress or Route. This can be enabled via `spec.ingress` in the `Grafana` CR. Various other properties can also be configured:
 
 ```yaml
 spec:
