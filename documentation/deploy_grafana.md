@@ -54,6 +54,7 @@ The operator accepts a number of flags that can be passed in the `args` section 
 * *--grafana-plugins-init-container-tag*: overrides the Grafana Plugins Init Container tag, defaults to `0.0.2`.
 * *--scan-all*: watch for dashboards in all namespaces. This requires the the operator service account to have cluster wide permissions to `get`, `list`, `update` and `watch` dashboards. See `deploy/cluster_roles`.
 * *--pod-label-value*: override the value of the `app` label that gets attached to pods and other resources.
+* *--namespaces*: watch for dashboards in a list of namespaces. Mutually exclusive with `--scan-all`.
 
 See `deploy/operator.yaml` for an example.
 
