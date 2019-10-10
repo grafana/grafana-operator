@@ -14,4 +14,4 @@ Set the `--scan-all` flag to watch for dashboards in all namespaces. Cluster wid
 You can provide a comma separated list of watch namespaces using the `--namespaces` flag. The format is `--namespaces=<NS_1,NS_2,...,NS_N>`, for example: `--namespaces=grafana,dashboards,example_namespace`.
 The same cluster wide permissions as for watching all namespaces are required.
 
-*NOTE*: `--scan-all` and `--namespaces` are mutually exclusive. You can only use one of them.
+*NOTE*: `--scan-all` and `--namespaces` are mutually exclusive. You can only use one at a time.
