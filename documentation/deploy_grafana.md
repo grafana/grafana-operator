@@ -98,7 +98,8 @@ When the config object in the `Grafana` CR is modified, then `grafana.ini` will 
 
 ## Configuring the Ingress or Route
 
-By default the operator will not create an Ingress or Route. This can be enabled via `spec.ingress` in the `Grafana` CR. Various other properties can also be configured:
+By default the operator will not create an Ingress or Route. This can be enabled via `spec.ingress` in the `Grafana` CR. 
+The operator will create a Route when running on OpenShift, otherwise an Ingress. Various other properties can also be configured:
 
 ```yaml
 spec:
