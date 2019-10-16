@@ -24,6 +24,7 @@ type GrafanaDashboardStatus struct {
 	Messages   []GrafanaDashboardStatusMessage `json:"messages,omitempty"`
 	Phase      int                             `json:"phase"`
 	LastConfig string                          `json:"lastConfig,omitempty"`
+	ConfigMap  string                          `json:"configMap"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

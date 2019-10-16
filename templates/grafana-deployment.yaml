@@ -76,8 +76,11 @@ spec:
               name: {{ .GrafanaDatasourcesConfigMapName }}
             - mountPath: /etc/grafana/provisioning/notifiers
               name: grafana-notifiers-provisioning
-            - mountPath: /etc/grafana-dashboards
-              name: {{ .GrafanaDashboardsConfigMapName }}
+            {{ $basename := .GrafanaDashboardsConfigMapName }}
+            {{ range $i, $_ := N .NumberOfDashboardCMs }}
+            - mountPath: /etc/grafana-dashboards-{{ $i }}
+              name: {{ $basename }}-{{ $i }}
+            {{ end }}
             - mountPath: /var/lib/grafana
               name: grafana-data
             - mountPath: /var/log/grafana
@@ -97,9 +100,12 @@ spec:
         - configMap:
             name: {{ .GrafanaDatasourcesConfigMapName }}
           name: {{ .GrafanaDatasourcesConfigMapName }}
+        {{ $basename := .GrafanaDashboardsConfigMapName }}
+        {{ range $i, $_ := N .NumberOfDashboardCMs }}
         - configMap:
-            name: {{ .GrafanaDashboardsConfigMapName }}
-          name: {{ .GrafanaDashboardsConfigMapName }}
+            name: {{ $basename }}-{{ $i }}
+          name: {{ $basename }}-{{ $i }}
+        {{ end }}
         - configMap:
             name: {{ .GrafanaConfigMapName }}
           name: {{ .GrafanaConfigMapName }}

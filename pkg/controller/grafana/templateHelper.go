@@ -48,6 +48,7 @@ type GrafanaParameters struct {
 	Hostname                        string
 	LogLevel                        string
 	Namespace                       string
+	NumberOfDashboardCMs            int
 	PluginsInitContainerImage       string
 	PluginsInitContainerTag         string
 	PodLabelValue                   string
@@ -138,6 +139,7 @@ func newTemplateHelper(cr *integreatly.Grafana) *TemplateHelper {
 		PluginsInitContainerTag:         controllerConfig.GetConfigString(common.ConfigPluginsInitContainerTag, common.PluginsInitContainerTag),
 		PodLabelValue:                   controllerConfig.GetConfigString(common.ConfigPodLabelValue, common.PodLabelDefaultValue),
 		Replicas:                        cr.Spec.InitialReplicas,
+		NumberOfDashboardCMs:            controllerConfig.GetConfigInt(common.ConfigNumberOfDashboardsCMs, common.NumOfDashboardCMsDefaultValue),
 	}
 
 	templatePath := os.Getenv("TEMPLATE_PATH")
@@ -151,6 +153,17 @@ func newTemplateHelper(cr *integreatly.Grafana) *TemplateHelper {
 	}
 }
 
+func N(number int) (stream chan int) {
+	stream = make(chan int)
+	go func() {
+		for i := 0; i < number; i++ {
+			stream <- i
+		}
+		close(stream)
+	}()
+	return
+}
+
 // load a templates from a given resource name. The templates must be located
 // under ./templates and the filename must be <resource-name>.yaml
 func (h *TemplateHelper) loadTemplate(name string) ([]byte, error) {
@@ -160,7 +173,7 @@ func (h *TemplateHelper) loadTemplate(name string) ([]byte, error) {
 		return nil, err
 	}
 
-	parsed, err := template.New("grafana").Parse(string(tpl))
+	parsed, err := template.New("grafana").Funcs(template.FuncMap{"N": N}).Parse(string(tpl))
 	if err != nil {
 		return nil, err
 	}

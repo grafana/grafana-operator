@@ -3,13 +3,15 @@ data:
   provider.yaml: |-
     apiVersion: 1
     providers:
-    - name: 'default'
+    {{ range $i, $_ := N .NumberOfDashboardCMs }}
+    - name: 'default-{{ $i }}'
       orgId: 1
       folder: ''
       type: file
       updateIntervalSeconds: 10
       options:
-        path: /etc/grafana-dashboards
+        path: /etc/grafana-dashboards-{{ $i }}
+    {{ end }}
 kind: ConfigMap
 metadata:
   name: {{ .GrafanaProvidersConfigMapName }}

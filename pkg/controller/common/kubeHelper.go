@@ -3,6 +3,8 @@ package common
 import (
 	stdErrors "errors"
 	"fmt"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -66,25 +68,45 @@ func (h KubeHelperImpl) UpdateGrafanaConfig(config string, cr *v1alpha1.Grafana)
 }
 
 func (h KubeHelperImpl) UpdateDashboard(d *v1alpha1.GrafanaDashboard, json string) (bool, error) {
-	configMap, err := h.getConfigMap(GrafanaDashboardsConfigMapName)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return false, nil
+	previousCM := d.Status.ConfigMap
+	index := extractConfigMapNumber(previousCM)
+
+	for success := false; !success; {
+		name := GrafanaDashboardsConfigMapName + "-" + strconv.Itoa(index)
+		configMap, err := h.getConfigMap(name)
+		if err != nil {
+			if errors.IsNotFound(err) {
+				return false, nil
+			}
+			return false, err
 		}
-		return false, err
-	}
 
-	// Prefix the dashboard filename with the namespace to allow multiple namespaces
-	// to import the same dashboard
-	dashboardName := h.getConfigMapKey(d.Namespace, d.Spec.Name)
-	if configMap.Data == nil {
-		configMap.Data = make(map[string]string)
-	}
+		// Prefix the dashboard filename with the namespace to allow multiple namespaces
+		// to import the same dashboard
+		dashboardName := h.getConfigMapKey(d.Namespace, d.Spec.Name)
+		if configMap.Data == nil {
+			configMap.Data = make(map[string]string)
+		}
 
-	configMap.Data[dashboardName] = json
-	err = h.updateConfigMap(configMap)
-	if err != nil {
-		return false, err
+		configMap.Data[dashboardName] = json
+		err = h.updateConfigMap(configMap)
+		if errors.ReasonForError(err) == "Invalid" && strings.Contains(err.Error(), "Too long") {
+			if previousCM == "" {
+				index++
+			} else {
+				index = 0
+				delete(configMap.Data, dashboardName)
+				err = h.updateConfigMap(configMap)
+				if err != nil {
+					return false, err
+				}
+			}
+		} else if err != nil {
+			return false, err
+		} else {
+			success = true
+			d.Status.ConfigMap = name
+		}
 	}
 
 	return true, nil
@@ -93,9 +115,6 @@ func (h KubeHelperImpl) UpdateDashboard(d *v1alpha1.GrafanaDashboard, json strin
 func (h KubeHelperImpl) isKnown(config, namespace, name string) (bool, error) {
 	configMap, err := h.getConfigMap(config)
 	if err != nil {
-		if errors.IsNotFound(err) {
-			return false, nil
-		}
 		return false, err
 	}
 
@@ -112,10 +131,19 @@ func (h KubeHelperImpl) IsKnown(kind string, o runtime.Object) (bool, error) {
 	switch kind {
 	case v1alpha1.GrafanaDashboardKind:
 		d := o.(*v1alpha1.GrafanaDashboard)
-		return h.isKnown(GrafanaDashboardsConfigMapName, d.Namespace, d.Spec.Name)
+		name := d.Status.ConfigMap
+		found, _ := h.isKnown(name, d.Namespace, d.Spec.Name)
+		if found {
+			return true, nil
+		}
+		return false, nil
 	case v1alpha1.GrafanaDataSourceKind:
 		d := o.(*v1alpha1.GrafanaDataSource)
-		return h.isKnown(GrafanaDatasourcesConfigMapName, d.Namespace, d.Spec.Name)
+		found, err := h.isKnown(GrafanaDatasourcesConfigMapName, d.Namespace, d.Spec.Name)
+		if errors.IsNotFound(err) {
+			return false, nil
+		}
+		return found, err
 	default:
 		return false, stdErrors.New(fmt.Sprintf("unknown kind '%v'", kind))
 	}
@@ -175,7 +203,9 @@ func (h KubeHelperImpl) DeleteDataSources(name, namespace string) error {
 }
 
 func (h KubeHelperImpl) DeleteDashboard(d *v1alpha1.GrafanaDashboard) error {
-	configMap, err := h.getConfigMap(GrafanaDashboardsConfigMapName)
+	name := d.Status.ConfigMap
+
+	configMap, err := h.getConfigMap(name)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Grafana may already be uninstalled
@@ -302,7 +332,17 @@ func (h KubeHelperImpl) RestartGrafana() error {
 	return nil
 }
 
-// AppendMessage a status message to the origin dashboard of a plugin
+const NumberRegex = "[0-9]+$"
+
+func extractConfigMapNumber(name string) int {
+	i, err := strconv.Atoi(regexp.MustCompile(NumberRegex).FindString(name))
+	if err != nil {
+		i = 0
+	}
+	return i
+}
+
+// Append a status message to the origin dashboard of a plugin
 func AppendMessage(message string, dashboard *v1alpha1.GrafanaDashboard) {
 	if dashboard == nil {
 		return

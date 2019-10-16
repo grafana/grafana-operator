@@ -16,6 +16,7 @@ const (
 	ConfigPodLabelValue             = "grafana.pod.label"
 	ConfigOperatorNamespace         = "grafana.operator.namespace"
 	ConfigDashboardLabelSelector    = "grafana.dashboard.selector"
+	ConfigNumberOfDashboardsCMs     = "grafana.dashboard.numberofcm"
 	ConfigGrafanaPluginsUpdated     = "grafana.plugins.updated"
 	ConfigOpenshift                 = "mode.openshift"
 	GrafanaImage                    = "quay.io/openshift/origin-grafana"
@@ -47,6 +48,7 @@ const (
 	DefaultLogLevel                 = "info"
 	SecretsMountDir                 = "/etc/grafana-secrets/"
 	ConfigMapsMountDir              = "/etc/grafana-configmaps/"
+	NumOfDashboardCMsDefaultValue   = 1
 )
 
 type ControllerConfig struct {
@@ -119,6 +121,13 @@ func (c *ControllerConfig) GetConfigString(key, defaultValue string) string {
 func (c *ControllerConfig) GetConfigBool(key string, defaultValue bool) bool {
 	if c.HasConfigItem(key) {
 		return c.Values[key].(bool)
+	}
+	return defaultValue
+}
+
+func (c *ControllerConfig) GetConfigInt(key string, defaultValue int) int {
+	if c.HasConfigItem(key) {
+		return c.Values[key].(int)
 	}
 	return defaultValue
 }

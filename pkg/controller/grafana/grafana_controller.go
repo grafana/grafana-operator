@@ -3,12 +3,13 @@ package grafana
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -271,7 +272,6 @@ func (r *ReconcileGrafana) createConfigFiles(cr *i8ly.Grafana) (reconcile.Result
 	}
 
 	resources := []string{
-		common.GrafanaDashboardsConfigMapName,
 		common.GrafanaProvidersConfigMapName,
 		common.GrafanaDatasourcesConfigMapName,
 		common.GrafanaServiceName,
@@ -282,8 +282,12 @@ func (r *ReconcileGrafana) createConfigFiles(cr *i8ly.Grafana) (reconcile.Result
 		resources = append(resources, ingressType)
 	}
 
-	for _, resourceName := range resources {
-		log.Info(fmt.Sprintf("Creating the %s resource", resourceName))
+	err = r.createDashBoardConfigMaps(cr)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	for _, resourceName := range []string{common.GrafanaProvidersConfigMapName, common.GrafanaDatasourcesConfigMapName, common.GrafanaServiceName, ingressType} {
 		if err := r.createResource(cr, resourceName); err != nil {
 			log.Info(fmt.Sprintf("Error in CreateConfigFiles, resourceName=%s : err=%s", resourceName, err))
 			// Requeue so it can be attempted again
@@ -419,6 +423,30 @@ func (r *ReconcileGrafana) createServiceAccount(cr *i8ly.Grafana, resourceName s
 	rawResource.access("metadata").set("annotations", annotations)
 
 	return r.deployResource(cr, resource, resourceName)
+}
+
+// create the requested amount of dashboard config maps
+func (r *ReconcileGrafana) createDashBoardConfigMaps(cr *i8ly.Grafana) error {
+	resourceHelper := newResourceHelper(cr)
+
+	controllerConfig := common.GetControllerConfig()
+	numOfDashboards := controllerConfig.GetConfigInt(common.ConfigNumberOfDashboardsCMs, common.NumOfDashboardCMsDefaultValue)
+	for i := 0; i < numOfDashboards; i++ {
+		resource, err := resourceHelper.createResource(common.GrafanaDashboardsConfigMapName)
+		if err != nil {
+			return err
+		}
+
+		name := common.GrafanaDashboardsConfigMapName + "-" + strconv.Itoa(i)
+		o := resource.(v1.Object)
+		o.SetName(name)
+		err = r.deployResource(cr, resource, name)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // Creates a generic kubernetes resource from a template
