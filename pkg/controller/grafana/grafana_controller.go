@@ -3,15 +3,18 @@ package grafana
 import (
 	"context"
 	"fmt"
+
 	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	core "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	pkgclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -109,6 +112,33 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 	return reconcile.Result{}, nil
 }
 
+func (r *ReconcileGrafana) checkServiceAccountAnnotationsExist(sa string, ns string, key string, route string) error {
+	instance := &corev1.ServiceAccount{}
+	err := r.client.Get(context.TODO(), pkgclient.ObjectKey{Name: sa, Namespace: ns}, instance)
+	if err != nil {
+		log.Info(fmt.Sprintf("Error retrieving serviceaccount: %s", sa))
+		return err
+	}
+
+	if val, found := instance.Annotations[key]; found {
+		log.Info(fmt.Sprintf("Service account: %s exists, annotations: %v", sa, instance.Annotations))
+		log.Info(fmt.Sprintf("Key: %s exists. Val: %s Do nothing.", key, val))
+	} else {
+		log.Info(fmt.Sprintf("Service account: %s exists, annotations: %v", sa, instance.Annotations))
+		log.Info(fmt.Sprintf("Key: %s does not exists. We need to add it.", key))
+		if len(instance.Annotations) == 0 {
+			instance.Annotations = map[string]string{}
+		}
+		instance.Annotations[key] = fmt.Sprintf("'{\"kind\":\"OAuthRedirectReference\",\"apiVersion\":\"v1\",\"reference\":{\"kind\":\"Route\",\"name\":\"%s\"}}'", route)
+
+		err = r.client.Update(context.TODO(), instance)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Constantly reconcile the grafana config and plugins
 func (r *ReconcileGrafana) ReconcileGrafana(cr *i8ly.Grafana) (reconcile.Result, error) {
 	// Update the label selector and make it available to the dashboard controller
@@ -148,6 +178,14 @@ func (r *ReconcileGrafana) ReconcileGrafana(cr *i8ly.Grafana) (reconcile.Result,
 
 	// Plugins updated?
 	err = r.ReconcileDashboardPlugins(cr)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	key := "serviceaccounts.openshift.io/oauth-redirectreference.primary"
+	namespace := cr.GetNamespace()
+
+	err = r.checkServiceAccountAnnotationsExist(common.GrafanaServiceAccountName, namespace, key, common.GrafanaRouteName)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
