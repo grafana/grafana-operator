@@ -8,10 +8,9 @@ import (
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -137,7 +136,7 @@ func (r *ReconcileGrafana) ReconcileGrafana(cr *i8ly.Grafana) (reconcile.Result,
 		if err := r.helper.UpdateGrafanaDeployment(cr.Status.LastConfig); err != nil {
 			return reconcile.Result{}, err
 		}
-		log.Info("grafana updated configuration hash due to config change")
+		log.Info("grafana restarted due to config change")
 
 		// Skip plugins reconciliation while grafana is restarting
 		return reconcile.Result{RequeueAfter: common.RequeueDelay}, nil
@@ -145,6 +144,12 @@ func (r *ReconcileGrafana) ReconcileGrafana(cr *i8ly.Grafana) (reconcile.Result,
 
 	// Plugins updated?
 	if err := r.ReconcileDashboardPlugins(cr); err != nil {
+		return reconcile.Result{}, err
+	}
+
+	// Keep the service account updated to make sure the oauth redirect annotation
+	// does not get removed
+	if err := r.createServiceAccount(cr, common.GrafanaServiceAccountName); err != nil {
 		return reconcile.Result{}, err
 	}
 
@@ -283,7 +288,6 @@ func (r *ReconcileGrafana) createConfigFiles(cr *i8ly.Grafana) (reconcile.Result
 	}
 
 	for _, resourceName := range resources {
-		log.Info(fmt.Sprintf("Creating the %s resource", resourceName))
 		if err := r.createResource(cr, resourceName); err != nil {
 			log.Info(fmt.Sprintf("Error in CreateConfigFiles, resourceName=%s : err=%s", resourceName, err))
 			// Requeue so it can be attempted again
@@ -407,7 +411,7 @@ func (r *ReconcileGrafana) createServiceAccount(cr *i8ly.Grafana, resourceName s
 
 	// Deploy the unmodified resource if not on OpenShift
 	if common.GetControllerConfig().GetConfigBool(common.ConfigOpenshift, false) == false {
-		return r.deployResource(cr, resource, resourceName)
+		return r.deployResource(cr, resource, common.GrafanaServiceAccountName)
 	}
 
 	// Otherwise add an annotation that allows using the OAuthProxy (and will have no
@@ -417,8 +421,7 @@ func (r *ReconcileGrafana) createServiceAccount(cr *i8ly.Grafana, resourceName s
 
 	rawResource := newUnstructuredResourceMap(resource.(*unstructured.Unstructured))
 	rawResource.access("metadata").set("annotations", annotations)
-
-	return r.deployResource(cr, resource, resourceName)
+	return r.deployResource(cr, resource, common.GrafanaServiceAccountName)
 }
 
 // Creates a generic kubernetes resource from a template
@@ -435,33 +438,22 @@ func (r *ReconcileGrafana) createResource(cr *i8ly.Grafana, resourceName string)
 
 // Deploys a resource given by a runtime object
 func (r *ReconcileGrafana) deployResource(cr *i8ly.Grafana, resource runtime.Object, resourceName string) error {
-	// Try to find the resource, it may already exist
-	selector := types.NamespacedName{
-		Namespace: cr.Namespace,
-		Name:      resourceName,
-	}
-	err := r.client.Get(context.TODO(), selector, resource)
-
-	// The resource exists, do nothing
-	if err == nil {
-		return nil
-	}
-
-	// Resource does not exist or something went wrong
-	if errors.IsNotFound(err) {
-		log.Info(fmt.Sprintf("Resource %s does not exist, creating now", resourceName))
-	} else {
-		return err
-	}
-
 	// Set the CR as the owner of this resource so that when
 	// the CR is deleted this resource also gets removed
-	err = controllerutil.SetControllerReference(cr, resource.(v1.Object), r.scheme)
+	err := controllerutil.SetControllerReference(cr, resource.(v1.Object), r.scheme)
 	if err != nil {
 		return err
 	}
 
-	return r.client.Create(context.TODO(), resource)
+	err = r.client.Create(context.TODO(), resource)
+	if err != nil {
+		if errors.IsAlreadyExists(err) {
+			return r.client.Update(context.TODO(), resource)
+		}
+	}
+
+	log.Info(fmt.Sprintf("creating new %s", resourceName))
+	return err
 }
 
 func (r *ReconcileGrafana) updatePhase(cr *i8ly.Grafana, phase int) (reconcile.Result, error) {
