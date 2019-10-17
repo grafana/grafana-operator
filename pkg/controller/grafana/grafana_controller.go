@@ -129,7 +129,7 @@ func (r *ReconcileGrafana) checkServiceAccountAnnotationsExist(sa string, ns str
 		if len(instance.Annotations) == 0 {
 			instance.Annotations = map[string]string{}
 		}
-		instance.Annotations[key] = fmt.Sprintf("'{\"kind\":\"OAuthRedirectReference\",\"apiVersion\":\"v1\",\"reference\":{\"kind\":\"Route\",\"name\":\"%s\"}}'", route)
+		instance.Annotations[key] = fmt.Sprintf("{\"kind\":\"OAuthRedirectReference\",\"apiVersion\":\"v1\",\"reference\":{\"kind\":\"Route\",\"name\":\"%s\"}}", route)
 
 		err = r.client.Update(context.TODO(), instance)
 		if err != nil {
