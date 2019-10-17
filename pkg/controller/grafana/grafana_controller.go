@@ -411,7 +411,7 @@ func (r *ReconcileGrafana) createServiceAccount(cr *i8ly.Grafana, resourceName s
 
 	// Deploy the unmodified resource if not on OpenShift
 	if common.GetControllerConfig().GetConfigBool(common.ConfigOpenshift, false) == false {
-		return r.deployResource(cr, resource, common.GrafanaServiceAccountName)
+		return r.deployResource(cr, resource, resourceName)
 	}
 
 	// Otherwise add an annotation that allows using the OAuthProxy (and will have no
@@ -421,7 +421,7 @@ func (r *ReconcileGrafana) createServiceAccount(cr *i8ly.Grafana, resourceName s
 
 	rawResource := newUnstructuredResourceMap(resource.(*unstructured.Unstructured))
 	rawResource.access("metadata").set("annotations", annotations)
-	return r.deployResource(cr, resource, common.GrafanaServiceAccountName)
+	return r.deployResource(cr, resource, resourceName)
 }
 
 // Creates a generic kubernetes resource from a template
