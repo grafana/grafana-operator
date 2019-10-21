@@ -37,6 +37,8 @@ type GrafanaParameters struct {
 	GrafanaIngressLabels            map[string]string
 	GrafanaIngressName              string
 	GrafanaIngressPath              string
+	GrafanaIngressTLSEnabled        bool
+	GrafanaIngressTLSSecretName     string
 	GrafanaProvidersConfigMapName   string
 	GrafanaRouteName                string
 	GrafanaServiceAccountName       string
@@ -123,6 +125,8 @@ func newTemplateHelper(cr *integreatly.Grafana) *TemplateHelper {
 		GrafanaIngressLabels:            cr.Spec.Ingress.Labels,
 		GrafanaIngressName:              common.GrafanaIngressName,
 		GrafanaIngressPath:              cr.Spec.Ingress.Path,
+		GrafanaIngressTLSEnabled:        cr.Spec.Ingress.TLSEnabled,
+		GrafanaIngressTLSSecretName:     cr.Spec.Ingress.TLSSecretName,
 		GrafanaProvidersConfigMapName:   common.GrafanaProvidersConfigMapName,
 		GrafanaRouteName:                common.GrafanaRouteName,
 		GrafanaServiceAccountName:       common.GrafanaServiceAccountName,

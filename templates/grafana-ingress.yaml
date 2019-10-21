@@ -23,3 +23,9 @@ spec:
             {{- if .GrafanaIngressPath }}
             path: {{ .GrafanaServiceName }}
             {{- end }}
+{{- if .GrafanaIngressTLSEnabled }}
+  tls:
+  - hosts:
+    - {{ .Hostname }}
+    secretName: {{ .GrafanaIngressTLSSecretName }}
+{{- end }}

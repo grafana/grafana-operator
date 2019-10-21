@@ -1,7 +1,7 @@
 ORG?=integreatly
 NAMESPACE=grafana
 PROJECT=grafana-operator
-REG=quay.io
+REG?=quay.io
 SHELL=/bin/bash
 TAG?=latest
 PKG=github.com/integr8ly/grafana-operator
