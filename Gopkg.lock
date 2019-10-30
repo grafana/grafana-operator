@@ -194,6 +194,22 @@
   version = "v0.2.0"
 
 [[projects]]
+  digest = "1:ea6117d3e85ff04a287ca379c894075ea97b1211b76539dba518140006fdff14"
+  name = "github.com/gosimple/slug"
+  packages = ["."]
+  pruneopts = "NT"
+  revision = "6c8aaf60a6bfd60c80cbe3f4ec5a2e24bcad884e"
+  version = "v1.9.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:54e5e095542189cd3eb117318e77f8de93c1df45f253fb05b501ca2fae502a40"
+  name = "github.com/grafana-tools/sdk"
+  packages = ["."]
+  pruneopts = "NT"
+  revision = "511d76aa5998e82dbb8a3457bb1182686b07ace1"
+
+[[projects]]
   branch = "master"
   digest = "1:97972f03fbf34ec4247ddc78ddb681389c468c020492aa32b109744a54fc0c14"
   name = "github.com/gregjones/httpcache"
@@ -311,6 +327,14 @@
   pruneopts = "NT"
   revision = "5f041e8faa004a95c88a202771f4cc3e991971e6"
   version = "v2.0.1"
+
+[[projects]]
+  branch = "master"
+  digest = "1:16e2136a67ec44aa2d1d6b0fd65394b3c4a8b2a1b6730c77967f7b7b06b179b2"
+  name = "github.com/rainycape/unidecode"
+  packages = ["."]
+  pruneopts = "NT"
+  revision = "cb7f23ec59bec0d61b19c56cd88cee3d0cc1870c"
 
 [[projects]]
   digest = "1:9d8420bbf131d1618bde6530af37c3799340d3762cc47210c1d9532a4c3a2779"
@@ -763,6 +787,7 @@
     "github.com/ghodss/yaml",
     "github.com/go-ini/ini",
     "github.com/go-openapi/spec",
+    "github.com/grafana-tools/sdk",
     "github.com/openshift/api/route/v1",
     "github.com/operator-framework/operator-sdk/pkg/k8sutil",
     "github.com/operator-framework/operator-sdk/pkg/leader",
@@ -776,9 +801,11 @@
     "k8s.io/apimachinery/pkg/labels",
     "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/runtime/schema",
+    "k8s.io/apimachinery/pkg/runtime/serializer",
     "k8s.io/apimachinery/pkg/types",
     "k8s.io/client-go/discovery",
     "k8s.io/client-go/kubernetes",
+    "k8s.io/client-go/kubernetes/scheme",
     "k8s.io/client-go/plugin/pkg/client/auth/gcp",
     "k8s.io/client-go/rest",
     "k8s.io/code-generator/cmd/client-gen",
