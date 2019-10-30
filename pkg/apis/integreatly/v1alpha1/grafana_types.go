@@ -353,8 +353,8 @@ type GrafanaStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	Phase            int        `json:"phase"`
-	InstalledPlugins PluginList `json:"installedPlugins"`
-	FailedPlugins    PluginList `json:"failedPlugins"`
+	InstalledPlugins PluginList `json:"installedPlugins,omitempty"`
+	FailedPlugins    PluginList `json:"failedPlugins,omitempty"`
 	LastConfig       string     `json:"lastConfig"`
 }
 

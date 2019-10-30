@@ -32,6 +32,7 @@ var flagPluginsInitContainerTag string
 var flagPodLabelValue string
 var flagNamespaces string
 var scanAll bool
+var flagGrafanaApi bool
 
 func printVersion() {
 	log.Info(fmt.Sprintf("Go Version: %s", runtime.Version()))
@@ -49,6 +50,7 @@ func init() {
 	flagset.StringVar(&flagPodLabelValue, "pod-label-value", common.PodLabelDefaultValue, "Overrides the default value of the app label")
 	flagset.StringVar(&flagNamespaces, "namespaces", "", "Namespaces to scope the interaction of the Grafana operator. Mutually exclusive with --scan-all")
 	flagset.BoolVar(&scanAll, "scan-all", false, "Scans all namespaces for dashboards")
+	flagset.BoolVar(&flagGrafanaApi, "grafana-api", false, "Should operator use grafana API for loading dashboards")
 	flagset.Parse(os.Args[1:])
 }
 
@@ -123,6 +125,7 @@ func main() {
 	controllerConfig.AddConfigItem(common.ConfigPodLabelValue, flagPodLabelValue)
 	controllerConfig.AddConfigItem(common.ConfigOperatorNamespace, namespace)
 	controllerConfig.AddConfigItem(common.ConfigDashboardLabelSelector, "")
+	controllerConfig.AddConfigItem(common.ConfigGrafanaApi, flagGrafanaApi)
 
 	// Get the namespaces to scan for dashboards
 	// It's either the same namespace as the controller's or it's all namespaces if the

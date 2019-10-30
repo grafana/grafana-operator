@@ -39,11 +39,13 @@ func Add(mgr manager.Manager) error {
 
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
+	helper := common.NewKubeHelper()
 	return &ReconcileGrafanaDashboard{
-		client: mgr.GetClient(),
-		scheme: mgr.GetScheme(),
-		config: common.GetControllerConfig(),
-		helper: common.NewKubeHelper(),
+		client:        mgr.GetClient(),
+		scheme:        mgr.GetScheme(),
+		config:        common.GetControllerConfig(),
+		helper:        helper,
+		grafanaHelper: common.NewGrafana(helper),
 	}
 }
 
@@ -70,10 +72,11 @@ var _ reconcile.Reconciler = &ReconcileGrafanaDashboard{}
 type ReconcileGrafanaDashboard struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client client.Client
-	scheme *runtime.Scheme
-	config *common.ControllerConfig
-	helper *common.KubeHelperImpl
+	client        client.Client
+	scheme        *runtime.Scheme
+	config        *common.ControllerConfig
+	helper        *common.KubeHelperImpl
+	grafanaHelper common.Grafana
 }
 
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
@@ -137,11 +140,11 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 }
 
 func (r *ReconcileGrafanaDashboard) hasDashboardChanged(d *i8ly.GrafanaDashboard) bool {
-	hash := fmt.Sprintf("%x", md5.Sum([]byte(d.Spec.Json+d.Spec.Url)))
+	hash := fmt.Sprintf("%x", md5.Sum([]byte(d.Spec.Dashboard.Json+d.Spec.Dashboard.Url)))
 	changed := hash != d.Status.LastConfig
 
 	if !changed {
-		known, err := r.helper.IsKnown(i8ly.GrafanaDashboardKind, d)
+		known, err := r.grafanaHelper.DashboardIsKnown(context.TODO(), d)
 		if err != nil {
 			log.Error(err, "error checking dashboard status")
 			return false
@@ -187,6 +190,8 @@ func (r *ReconcileGrafanaDashboard) isJsonValid(d *i8ly.GrafanaDashboard, dashbo
 }
 
 func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (reconcile.Result, error) {
+	var err error
+	fmt.Printf("updating dashboard")
 	operatorNamespace := r.config.GetConfigString(common.ConfigOperatorNamespace, "")
 	if operatorNamespace == "" {
 		return reconcile.Result{}, defaultErrors.New("operator namespace not yet known")
@@ -197,13 +202,13 @@ func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (r
 		return reconcile.Result{Requeue: false}, nil
 	}
 
-	dashboardJson := d.Spec.Json
+	dashboardJson := d.Spec.Dashboard.Json
 
 	// If a URL is provided, try to fetch the dashboard json from there
-	if d.Spec.Url != "" {
+	if d.Spec.Dashboard.Url != "" {
 		remoteJson, err := r.loadDashboardFromURL(d)
 		if err != nil {
-			log.Info(fmt.Sprintf("cannot load dashboard from %s, falling back to embedded json", d.Spec.Url))
+			log.Info(fmt.Sprintf("cannot load dashboard from %s, falling back to embedded json", d.Spec.Dashboard.Url))
 		} else {
 			dashboardJson = remoteJson
 		}
@@ -214,22 +219,23 @@ func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (r
 		return reconcile.Result{Requeue: false}, nil
 	}
 
-	updated, err := r.helper.UpdateDashboard(d, dashboardJson)
+	resp, err := r.grafanaHelper.UpdateDashboard(context.TODO(), d)
 	if err != nil {
+		log.Error(err, "Failed to update dashboard")
 		return reconcile.Result{}, err
 	}
 
-	if !updated {
+	if !resp.Succeeded {
 		return reconcile.Result{RequeueAfter: common.RequeueDelay}, err
 	}
 
 	// Reconcile dashboard plugins
 	r.config.SetPluginsFor(d)
 
-	msg := fmt.Sprintf("dashboard '%s/%s' imported", d.Namespace, d.Spec.Name)
+	msg := fmt.Sprintf("dashboard '%s/%s' imported", d.Namespace, d.Spec.Dashboard.Name)
 	common.AppendMessage(msg, d)
 
-	// Update the dashboard to persist the new hash and the satus message
+	// Update the dashboard to persist the new hash and the status message
 	err = r.client.Update(context.TODO(), d)
 	if err == nil {
 		log.Info(msg)
@@ -240,12 +246,12 @@ func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (r
 
 // Try to load remote dashboard json from an url
 func (r *ReconcileGrafanaDashboard) loadDashboardFromURL(d *i8ly.GrafanaDashboard) (string, error) {
-	_, err := url.ParseRequestURI(d.Spec.Url)
+	_, err := url.ParseRequestURI(d.Spec.Dashboard.Url)
 	if err != nil {
 		return "", defaultErrors.New("dashboard url specified is not valid")
 	}
 
-	resp, err := http.Get(d.Spec.Url)
+	resp, err := http.Get(d.Spec.Dashboard.Url)
 	if err != nil {
 		return "", defaultErrors.New("request to import dashboard failed")
 	}
@@ -266,10 +272,9 @@ func (r *ReconcileGrafanaDashboard) deleteDashboard(d *i8ly.GrafanaDashboard) (r
 	if operatorNamespace == "" {
 		return reconcile.Result{}, defaultErrors.New("no monitoring namespace set")
 	}
-
-	err := r.helper.DeleteDashboard(d)
+	_, err := r.grafanaHelper.DeleteDashboard(context.TODO(), d)
 	if err == nil {
-		log.Info(fmt.Sprintf("dashboard '%s/%s' deleted", d.Namespace, d.Spec.Name))
+		log.Info(fmt.Sprintf("dashboard '%s/%s' deleted", d.Namespace, d.Spec.Dashboard.Name))
 	}
 
 	r.config.RemovePluginsFor(d)

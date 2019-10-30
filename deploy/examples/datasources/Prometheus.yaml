@@ -3,15 +3,15 @@ kind: GrafanaDataSource
 metadata:
   name: example-grafanadatasource
 spec:
-  name: middleware.yaml
-  datasources:
-    - name: Prometheus
-      type: prometheus
-      access: proxy
-      url: http://prometheus-service:9090
-      isDefault: true
-      version: 1
-      editable: true
-      jsonData:
-        tlsSkipVerify: true
-        timeInterval: "5s"
+  grafanaRef: grafana
+  datasource:
+    name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus-service:9090
+    isDefault: true
+    version: 1
+    editable: true
+    jsonData:
+      tlsSkipVerify: true
+      timeInterval: "5s"

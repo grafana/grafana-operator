@@ -3,14 +3,14 @@ kind: GrafanaDataSource
 metadata:
   name: example-json-datasource
 spec:
-  name: middleware.yaml
-  datasources:
-    - name: SimpleJson
-      type: grafana-simple-json-datasource
-      access: proxy
-      url: http://localhost:9492
-      isDefault: true
-      version: 1
-      editable: true
-      jsonData:
-        tlsSkipVerify: true
+  grafanaRef: example-grafana
+  datasource:
+    name: SimpleJson
+    type: grafana-simple-json-datasource
+    access: proxy
+    url: http://localhost:9492
+    isDefault: true
+    version: 1
+    editable: true
+    jsonData:
+      tlsSkipVerify: true

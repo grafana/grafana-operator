@@ -10,6 +10,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/runtime/scheme"
 )
 
+const (
+	GroupName    = "integreatly.org"
+	GroupVersion = "v1alpha1"
+)
+
 var (
 	// SchemeGroupVersion is group version used to register these objects
 	SchemeGroupVersion = schema.GroupVersion{Group: "integreatly.org", Version: "v1alpha1"}

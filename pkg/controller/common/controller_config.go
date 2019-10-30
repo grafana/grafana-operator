@@ -18,6 +18,7 @@ const (
 	ConfigDashboardLabelSelector    = "grafana.dashboard.selector"
 	ConfigGrafanaPluginsUpdated     = "grafana.plugins.updated"
 	ConfigOpenshift                 = "mode.openshift"
+	ConfigGrafanaApi                = "mode.grafana-api"
 	GrafanaImage                    = "quay.io/openshift/origin-grafana"
 	GrafanaVersion                  = "4.2"
 	GrafanaConfigMapName            = "grafana-config"
@@ -68,7 +69,7 @@ func GetControllerConfig() *ControllerConfig {
 }
 
 func (c *ControllerConfig) GetDashboardId(dashboard *v1alpha1.GrafanaDashboard) string {
-	return fmt.Sprintf("%v/%v", dashboard.Namespace, dashboard.Spec.Name)
+	return fmt.Sprintf("%v/%v", dashboard.Namespace, dashboard.Spec.Dashboard.Name)
 }
 
 func (c *ControllerConfig) GetPluginsFor(dashboard *v1alpha1.GrafanaDashboard) v1alpha1.PluginList {
@@ -77,7 +78,7 @@ func (c *ControllerConfig) GetPluginsFor(dashboard *v1alpha1.GrafanaDashboard) v
 
 func (c *ControllerConfig) SetPluginsFor(dashboard *v1alpha1.GrafanaDashboard) {
 	id := c.GetDashboardId(dashboard)
-	c.Plugins[id] = dashboard.Spec.Plugins
+	c.Plugins[id] = dashboard.Spec.Dashboard.Plugins
 	c.Plugins[id].SetOrigin(dashboard)
 	c.AddConfigItem(ConfigGrafanaPluginsUpdated, time.Now())
 }

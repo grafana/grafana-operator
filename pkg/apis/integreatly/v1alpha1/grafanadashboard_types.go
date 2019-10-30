@@ -13,6 +13,14 @@ const GrafanaDashboardKind = "GrafanaDashboard"
 type GrafanaDashboardSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
+	GrafanaRef string                     `json:"grafanaRef,omitempty"`
+	Dashboard  GrafanaDashboardSpecFields `json:"dashboard"`
+}
+
+// GrafanaDashboardSpec defines the desired state of GrafanaDashboard
+type GrafanaDashboardSpecFields struct {
+	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	Json    string     `json:"json"`
 	Name    string     `json:"name"`
 	Plugins PluginList `json:"plugins,omitempty"`
@@ -24,6 +32,7 @@ type GrafanaDashboardStatus struct {
 	Messages   []GrafanaDashboardStatusMessage `json:"messages,omitempty"`
 	Phase      int                             `json:"phase"`
 	LastConfig string                          `json:"lastConfig,omitempty"`
+	Slug       string                          `json:"slug,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

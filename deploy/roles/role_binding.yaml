@@ -5,6 +5,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: grafana-operator
+
 roleRef:
   kind: Role
   name: grafana-operator

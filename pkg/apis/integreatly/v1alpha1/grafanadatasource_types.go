@@ -1,28 +1,23 @@
 package v1alpha1
 
 import (
+	"github.com/ghodss/yaml"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const GrafanaDataSourceKind = "GrafanaDataSource"
+const (
+	GrafanaDataSourceKind = "GrafanaDataSource"
+	DatasourcesApiVersion = 1
+)
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
-// GrafanaDataSourceSpec defines the desired state of GrafanaDataSource
-// +k8s:openapi-gen=true
-type GrafanaDataSourceSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
-	Datasources []GrafanaDataSourceFields `json:"datasources"`
-	Name        string                    `json:"name"`
-}
 
 // GrafanaDataSourceStatus defines the observed state of GrafanaDataSource
 // +k8s:openapi-gen=true
 type GrafanaDataSourceStatus struct {
 	Phase      int    `json:"phase"`
+	ID         uint   `json:"id"`
 	LastConfig string `json:"lastConfig"`
 }
 
@@ -47,7 +42,12 @@ type GrafanaDataSourceList struct {
 	Items           []GrafanaDataSource `json:"items"`
 }
 
-type GrafanaDataSourceFields struct {
+type GrafanaDataSourceSpec struct {
+	GrafanaRef string                      `json:"grafanaRef"`
+	DataSource GrafanaDataSourceSpecFields `json:"datasource"`
+}
+
+type GrafanaDataSourceSpecFields struct {
 	Name              string                          `json:"name"`
 	Type              string                          `json:"type"`
 	Access            string                          `json:"access"`
@@ -109,4 +109,21 @@ type GrafanaDataSourceSecureJsonData struct {
 
 func init() {
 	SchemeBuilder.Register(&GrafanaDataSource{}, &GrafanaDataSourceList{})
+}
+
+func ParseDataSource(cr *GrafanaDataSource) (string, error) {
+	datasources := struct {
+		ApiVersion int                           `json:"apiVersion"`
+		Spec       []GrafanaDataSourceSpecFields `json:"datasources"`
+	}{
+		ApiVersion: DatasourcesApiVersion,
+		Spec:       []GrafanaDataSourceSpecFields{cr.Spec.DataSource},
+	}
+
+	bytes, err := yaml.Marshal(datasources)
+	if err != nil {
+		return "", err
+	}
+
+	return string(bytes), nil
 }
