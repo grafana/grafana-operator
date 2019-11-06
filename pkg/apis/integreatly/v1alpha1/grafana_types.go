@@ -25,6 +25,7 @@ type GrafanaSpec struct {
 	Ingress                GrafanaIngress          `json:"ingress,omitempty"`
 	InitialReplicas        int                     `json:"initialReplicas,omitempty"`
 	LogLevel               string                  `json:"logLevel"`
+	Resources              v1.ResourceRequirements `json:"resources,omitempty"`
 	Secrets                []string                `json:"secrets,omitempty"`
 	ConfigMaps             []string                `json:"configMaps,omitempty"`
 	Service                GrafanaService          `json:"service,omitempty"`

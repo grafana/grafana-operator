@@ -369,10 +369,16 @@ func (r *ReconcileGrafana) createDeployment(cr *i8ly.Grafana, resourceName strin
 		rawResource.access("spec").access("template").access("spec").set("volumes", volumes)
 	}
 
+	containers := rawResource.access("spec").access("template").access("spec").get("containers").([]interface{})
+
+	if len(containers) != 1 {
+		log.Info(fmt.Sprintf("unexpected container count %v when applying resources", len(containers)))
+	}
+	containers[0].(*core.Container).Resources = cr.Spec.Resources
+
 	// Extra containers to add to the deployment?
 	if len(cr.Spec.Containers) > 0 {
 		// Otherwise append extra containers before submitting the resource
-		containers := rawResource.access("spec").access("template").access("spec").get("containers").([]interface{})
 
 		for _, container := range cr.Spec.Containers {
 			containers = append(containers, container)
