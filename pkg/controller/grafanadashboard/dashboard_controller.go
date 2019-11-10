@@ -2,11 +2,14 @@ package grafanadashboard
 
 import (
 	"context"
-	"crypto/md5"
 	"encoding/json"
 	defaultErrors "errors"
 	"fmt"
+	"github.com/grafana-tools/sdk"
+	"github.com/integr8ly/grafana-operator/pkg/controller/config"
 	"io/ioutil"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/tools/record"
 	"net/http"
 	"net/url"
 
@@ -24,7 +27,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-var log = logf.Log.WithName("controller_grafanadashboard")
+const (
+	ControllerName = "controller_grafanadashboard"
+)
+
+var log = logf.Log.WithName(ControllerName)
 
 /**
 * USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
@@ -33,17 +40,26 @@ var log = logf.Log.WithName("controller_grafanadashboard")
 
 // Add creates a new GrafanaDashboard Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager) error {
+func Add(mgr manager.Manager, autodetectChannel chan schema.GroupVersionKind) error {
 	return add(mgr, newReconciler(mgr))
 }
 
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+
+	board := sdk.NewBoard("")
+	log.Info(fmt.Sprintf("%v", board))
+
 	return &ReconcileGrafanaDashboard{
-		client: mgr.GetClient(),
-		scheme: mgr.GetScheme(),
-		config: common.GetControllerConfig(),
-		helper: common.NewKubeHelper(),
+		client:   mgr.GetClient(),
+		scheme:   mgr.GetScheme(),
+		config:   config.GetControllerConfig(),
+		helper:   common.NewKubeHelper(),
+		context:  ctx,
+		cancel:   cancel,
+		recorder: mgr.GetEventRecorderFor(ControllerName),
 	}
 }
 
@@ -70,23 +86,26 @@ var _ reconcile.Reconciler = &ReconcileGrafanaDashboard{}
 type ReconcileGrafanaDashboard struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client client.Client
-	scheme *runtime.Scheme
-	config *common.ControllerConfig
-	helper *common.KubeHelperImpl
+	client   client.Client
+	scheme   *runtime.Scheme
+	config   *config.ControllerConfig
+	helper   *common.KubeHelperImpl
+	context  context.Context
+	cancel   context.CancelFunc
+	recorder record.EventRecorder
 }
 
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	dashboardLabelSelectors := r.config.GetConfigItem(common.ConfigDashboardLabelSelector, nil)
+	dashboardLabelSelectors := r.config.GetConfigItem(config.ConfigDashboardLabelSelector, nil)
 	if dashboardLabelSelectors == nil {
-		return reconcile.Result{RequeueAfter: common.RequeueDelay}, nil
+		return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
 	}
 
 	// Fetch the GrafanaDashboard instance
 	instance := &i8ly.GrafanaDashboard{}
-	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
+	err := r.client.Get(r.context, request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -111,131 +130,23 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 		return r.deleteDashboard(cr)
 	}
 
-	switch cr.Status.Phase {
-	case common.StatusResourceUninitialized:
-		// New resource
-		return r.updatePhase(cr, common.StatusResourceSetFinalizer)
-	case common.StatusResourceSetFinalizer:
-		// Set finalizer first
-		if len(cr.Finalizers) > 0 {
-			return r.updatePhase(cr, common.StatusResourceCreated)
-		} else {
-			return r.setFinalizer(cr)
-		}
-	case common.StatusResourceCreated:
-		// Import / update dashboard
-		res, err := r.importDashboard(cr)
-
-		// Requeue periodically to find dashboards that have not been updated
-		// but are not yet imported (can happen if Grafana is uninstalled and
-		// then reinstalled without an Operator restart
-		res.RequeueAfter = common.RequeueDelay
-		return res, err
-	default:
-		return reconcile.Result{}, nil
-	}
+	return r.importDashboard(cr)
 }
 
-func (r *ReconcileGrafanaDashboard) hasDashboardChanged(d *i8ly.GrafanaDashboard) bool {
-	hash := fmt.Sprintf("%x", md5.Sum([]byte(d.Spec.Json+d.Spec.Url)))
-	changed := hash != d.Status.LastConfig
-
-	if !changed {
-		known, err := r.helper.IsKnown(i8ly.GrafanaDashboardKind, d)
-		if err != nil {
-			log.Error(err, "error checking dashboard status")
-			return false
-		}
-
-		// If the dashboard is known and unchanged we don't have to
-		// import it again
-		if known {
-			log.Info("dashboard reconciled but no changes")
-			return false
-		}
-	}
-	d.Status.LastConfig = hash
-
-	return true
-}
-
-func (r *ReconcileGrafanaDashboard) isJsonValid(d *i8ly.GrafanaDashboard, dashboardJson string) bool {
+func (r *ReconcileGrafanaDashboard) isValidDashboard(d *i8ly.GrafanaDashboard, dashboardJson string) bool {
 	var js map[string]interface{}
 	err := json.Unmarshal([]byte(dashboardJson), &js)
-
-	if err == nil {
-		return true
-	}
-
-	// Don't append the same error twice
-	msg := fmt.Sprintf("invalid JSON, error: %s", err)
-	for _, statusMessage := range d.Status.Messages {
-		if statusMessage.Message == msg {
-			log.Info("dashboard reconciled but json still invalid")
-			return false
-		}
-	}
-
-	common.AppendMessage(msg, d)
-	err = r.client.Update(context.TODO(), d)
-	if err != nil {
-		log.Error(err, "update dashboard messages failed")
-	}
-
-	log.Info("dashboard reconciled but json invalid")
-	return false
+	return err == nil
 }
 
 func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (reconcile.Result, error) {
-	operatorNamespace := r.config.GetConfigString(common.ConfigOperatorNamespace, "")
-	if operatorNamespace == "" {
-		return reconcile.Result{}, defaultErrors.New("operator namespace not yet known")
-	}
-
-	changed := r.hasDashboardChanged(d)
-	if !changed {
-		return reconcile.Result{Requeue: false}, nil
-	}
-
-	dashboardJson := d.Spec.Json
-
-	// If a URL is provided, try to fetch the dashboard json from there
-	if d.Spec.Url != "" {
-		remoteJson, err := r.loadDashboardFromURL(d)
-		if err != nil {
-			log.Info(fmt.Sprintf("cannot load dashboard from %s, falling back to embedded json", d.Spec.Url))
-		} else {
-			dashboardJson = remoteJson
-		}
-	}
-
-	valid := r.isJsonValid(d, dashboardJson)
-	if !valid {
-		return reconcile.Result{Requeue: false}, nil
-	}
-
-	updated, err := r.helper.UpdateDashboard(d, dashboardJson)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-
-	if !updated {
-		return reconcile.Result{RequeueAfter: common.RequeueDelay}, err
-	}
-
-	// Reconcile dashboard plugins
 	r.config.SetPluginsFor(d)
+	return reconcile.Result{}, nil
+}
 
-	msg := fmt.Sprintf("dashboard '%s/%s' imported", d.Namespace, d.Spec.Name)
-	common.AppendMessage(msg, d)
-
-	// Update the dashboard to persist the new hash and the satus message
-	err = r.client.Update(context.TODO(), d)
-	if err == nil {
-		log.Info(msg)
-	}
-
-	return reconcile.Result{}, err
+func (r *ReconcileGrafanaDashboard) deleteDashboard(d *i8ly.GrafanaDashboard) (reconcile.Result, error) {
+	r.config.RemovePluginsFor(d)
+	return reconcile.Result{}, nil
 }
 
 // Try to load remote dashboard json from an url
@@ -261,37 +172,26 @@ func (r *ReconcileGrafanaDashboard) loadDashboardFromURL(d *i8ly.GrafanaDashboar
 	return response, nil
 }
 
-func (r *ReconcileGrafanaDashboard) deleteDashboard(d *i8ly.GrafanaDashboard) (reconcile.Result, error) {
-	operatorNamespace := r.config.GetConfigString(common.ConfigOperatorNamespace, "")
-	if operatorNamespace == "" {
-		return reconcile.Result{}, defaultErrors.New("no monitoring namespace set")
+func (r *ReconcileGrafanaDashboard) manageError(cr *i8ly.Grafana, issue error) (reconcile.Result, error) {
+	r.recorder.Event(cr, "Warning", "ProcessingError", issue.Error())
+
+	cr.Status.Phase = i8ly.PhaseFailing
+
+	err := r.client.Update(r.context, cr)
+	if err != nil {
+		return reconcile.Result{}, err
 	}
 
-	err := r.helper.DeleteDashboard(d)
-	if err == nil {
-		log.Info(fmt.Sprintf("dashboard '%s/%s' deleted", d.Namespace, d.Spec.Name))
+	return reconcile.Result{Requeue: false}, nil
+}
+
+func (r *ReconcileGrafanaDashboard) manageSuccess(cr *i8ly.Grafana) (reconcile.Result, error) {
+	cr.Status.Phase = i8ly.PhaseReconciling
+	err := r.client.Update(r.context, cr)
+	if err != nil {
+		return r.manageError(cr, err)
 	}
 
-	r.config.RemovePluginsFor(d)
-	return r.removeFinalizer(d)
-}
-
-func (r *ReconcileGrafanaDashboard) removeFinalizer(cr *i8ly.GrafanaDashboard) (reconcile.Result, error) {
-	cr.Finalizers = nil
-	err := r.client.Update(context.TODO(), cr)
-	return reconcile.Result{}, err
-}
-
-func (r *ReconcileGrafanaDashboard) setFinalizer(cr *i8ly.GrafanaDashboard) (reconcile.Result, error) {
-	if len(cr.Finalizers) == 0 {
-		cr.Finalizers = append(cr.Finalizers, common.ResourceFinalizerName)
-	}
-	err := r.client.Update(context.TODO(), cr)
-	return reconcile.Result{}, err
-}
-
-func (r *ReconcileGrafanaDashboard) updatePhase(cr *i8ly.GrafanaDashboard, phase int) (reconcile.Result, error) {
-	cr.Status.Phase = phase
-	err := r.client.Update(context.TODO(), cr)
-	return reconcile.Result{}, err
+	log.Info("desired cluster state met")
+	return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
 }

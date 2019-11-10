@@ -70,10 +70,3 @@ func (l PluginList) VersionsOf(plugin *GrafanaPlugin) int {
 	}
 	return i
 }
-
-// Set the originating dashboard for every plugin in the list
-func (l PluginList) SetOrigin(dashboard *GrafanaDashboard) {
-	for i := range l {
-		l[i].Origin = dashboard
-	}
-}

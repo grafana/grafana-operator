@@ -22,8 +22,7 @@ type GrafanaDataSourceSpec struct {
 // GrafanaDataSourceStatus defines the observed state of GrafanaDataSource
 // +k8s:openapi-gen=true
 type GrafanaDataSourceStatus struct {
-	Phase      int    `json:"phase"`
-	LastConfig string `json:"lastConfig"`
+	Phase int `json:"phase"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
