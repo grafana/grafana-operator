@@ -7,12 +7,15 @@ import (
 	"github.com/integr8ly/grafana-operator/pkg/apis"
 	"github.com/integr8ly/grafana-operator/pkg/controller"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
+	config2 "github.com/integr8ly/grafana-operator/pkg/controller/config"
 	"github.com/integr8ly/grafana-operator/pkg/controller/grafanadashboard"
 	"github.com/integr8ly/grafana-operator/version"
+	routev1 "github.com/openshift/api/route/v1"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/ready"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/rest"
 	"os"
@@ -29,7 +32,6 @@ var flagImage string
 var flagImageTag string
 var flagPluginsInitContainerImage string
 var flagPluginsInitContainerTag string
-var flagPodLabelValue string
 var flagNamespaces string
 var scanAll bool
 
@@ -46,16 +48,18 @@ func init() {
 	flagset.StringVar(&flagImageTag, "grafana-image-tag", "", "Overrides the default Grafana image tag")
 	flagset.StringVar(&flagPluginsInitContainerImage, "grafana-plugins-init-container-image", "", "Overrides the default Grafana Plugins Init Container image")
 	flagset.StringVar(&flagPluginsInitContainerTag, "grafana-plugins-init-container-tag", "", "Overrides the default Grafana Plugins Init Container tag")
-	flagset.StringVar(&flagPodLabelValue, "pod-label-value", common.PodLabelDefaultValue, "Overrides the default value of the app label")
 	flagset.StringVar(&flagNamespaces, "namespaces", "", "Namespaces to scope the interaction of the Grafana operator. Mutually exclusive with --scan-all")
 	flagset.BoolVar(&scanAll, "scan-all", false, "Scans all namespaces for dashboards")
 	flagset.Parse(os.Args[1:])
 }
 
 // Starts a separate controller for the dashboard reconciliation in the background
-func startDashboardController(ns string, cfg *rest.Config, signalHandler <-chan struct{}) {
+func startDashboardController(ns string, cfg *rest.Config, signalHandler <-chan struct{}, autodetectChannel chan schema.GroupVersionKind) {
 	// Create a new Cmd to provide shared dependencies and start components
-	dashboardMgr, err := manager.New(cfg, manager.Options{Namespace: ns})
+	dashboardMgr, err := manager.New(cfg, manager.Options{
+		MetricsBindAddress: "0",
+		Namespace:          ns,
+	})
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
@@ -68,7 +72,7 @@ func startDashboardController(ns string, cfg *rest.Config, signalHandler <-chan 
 	}
 
 	// Use a separate manager for the dashboard controller
-	grafanadashboard.Add(dashboardMgr)
+	grafanadashboard.Add(dashboardMgr, autodetectChannel)
 
 	go func() {
 		if err := dashboardMgr.Start(signalHandler); err != nil {
@@ -115,14 +119,13 @@ func main() {
 	}
 
 	// Controller configuration
-	controllerConfig := common.GetControllerConfig()
-	controllerConfig.AddConfigItem(common.ConfigGrafanaImage, flagImage)
-	controllerConfig.AddConfigItem(common.ConfigGrafanaImageTag, flagImageTag)
-	controllerConfig.AddConfigItem(common.ConfigPluginsInitContainerImage, flagPluginsInitContainerImage)
-	controllerConfig.AddConfigItem(common.ConfigPluginsInitContainerTag, flagPluginsInitContainerTag)
-	controllerConfig.AddConfigItem(common.ConfigPodLabelValue, flagPodLabelValue)
-	controllerConfig.AddConfigItem(common.ConfigOperatorNamespace, namespace)
-	controllerConfig.AddConfigItem(common.ConfigDashboardLabelSelector, "")
+	controllerConfig := config2.GetControllerConfig()
+	controllerConfig.AddConfigItem(config2.ConfigGrafanaImage, flagImage)
+	controllerConfig.AddConfigItem(config2.ConfigGrafanaImageTag, flagImageTag)
+	controllerConfig.AddConfigItem(config2.ConfigPluginsInitContainerImage, flagPluginsInitContainerImage)
+	controllerConfig.AddConfigItem(config2.ConfigPluginsInitContainerTag, flagPluginsInitContainerTag)
+	controllerConfig.AddConfigItem(config2.ConfigOperatorNamespace, namespace)
+	controllerConfig.AddConfigItem(config2.ConfigDashboardLabelSelector, "")
 
 	// Get the namespaces to scan for dashboards
 	// It's either the same namespace as the controller's or it's all namespaces if the
@@ -169,20 +172,6 @@ func main() {
 
 	log.Info("Registering Components.")
 
-	// Setup Scheme for all resources
-	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
-		log.Error(err, "")
-		os.Exit(1)
-	}
-
-	// Setup all Controllers
-	if err := controller.AddToManager(mgr); err != nil {
-		log.Error(err, "")
-		os.Exit(1)
-	}
-
-	log.Info("Starting the Cmd.")
-
 	// Starting the resource auto-detection for the grafana controller
 	autodetect, err := common.NewAutoDetect(mgr)
 	if err != nil {
@@ -192,11 +181,31 @@ func main() {
 		defer autodetect.Stop()
 	}
 
+	// Setup Scheme for all resources
+	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
+	// Setup Scheme for OpenShift routes
+	if err := routev1.AddToScheme(mgr.GetScheme()); err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
+	// Setup all Controllers
+	if err := controller.AddToManager(mgr, autodetect.SubscriptionChannel); err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
+	log.Info("Starting the Cmd.")
+
 	signalHandler := signals.SetupSignalHandler()
 
 	// Start one dashboard controller per watch namespace
 	for _, ns := range dashboardNamespaces {
-		startDashboardController(ns, cfg, signalHandler)
+		startDashboardController(ns, cfg, signalHandler, autodetect.SubscriptionChannel)
 	}
 
 	if err := mgr.Start(signalHandler); err != nil {

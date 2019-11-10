@@ -1,6 +1,7 @@
 package common
 
 import (
+	config2 "github.com/integr8ly/grafana-operator/pkg/controller/config"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"time"
@@ -68,8 +69,8 @@ func (b *Background) autoDetectCapabilities() {
 func (b *Background) detectRoute() {
 	resourceExists, _ := k8sutil.ResourceExists(b.dc, routev1.SchemeGroupVersion.String(), RouteKind)
 	if resourceExists {
-		config := GetControllerConfig()
-		config.AddConfigItem(ConfigOpenshift, true)
+		config := config2.GetControllerConfig()
+		config.AddConfigItem(config2.ConfigOpenshift, true)
 
 		b.SubscriptionChannel <- routev1.SchemeGroupVersion.WithKind(RouteKind)
 	}

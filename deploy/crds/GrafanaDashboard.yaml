@@ -10,17 +10,12 @@ spec:
     plural: grafanadashboards
     singular: grafanadashboard
   scope: Namespaced
+  subresources:
+    status: {}
   version: v1alpha1
   validation:
     openAPIV3Schema:
       properties:
-        status:
-          properties:
-            messages:
-              type: array
-              items:
-                description: Dashboard Status Message
-                type: object
         spec:
           properties:
             name:

@@ -3,6 +3,7 @@ package common
 import (
 	stdErrors "errors"
 	"fmt"
+	config2 "github.com/integr8ly/grafana-operator/pkg/controller/config"
 	"strings"
 	"time"
 
@@ -22,7 +23,7 @@ var log = logf.Log.WithName("kube_helper")
 
 type KubeHelperImpl struct {
 	k8client *kubernetes.Clientset
-	config   *ControllerConfig
+	config   *config2.ControllerConfig
 }
 
 func NewKubeHelper() *KubeHelperImpl {
@@ -32,7 +33,7 @@ func NewKubeHelper() *KubeHelperImpl {
 
 	helper := new(KubeHelperImpl)
 	helper.k8client = k8client
-	helper.config = GetControllerConfig()
+	helper.config = config2.GetControllerConfig()
 	return helper
 }
 
@@ -41,32 +42,32 @@ func (h KubeHelperImpl) getConfigMapKey(namespace, name string) string {
 }
 
 func (h KubeHelperImpl) getConfigMap(name string) (*v1.ConfigMap, error) {
-	namespace := h.config.GetConfigString(ConfigOperatorNamespace, "")
+	namespace := h.config.GetConfigString(config2.ConfigOperatorNamespace, "")
 	return h.k8client.CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
 }
 
 func (h KubeHelperImpl) updateConfigMap(c *v1.ConfigMap) error {
-	namespace := h.config.GetConfigString(ConfigOperatorNamespace, "")
+	namespace := h.config.GetConfigString(config2.ConfigOperatorNamespace, "")
 	_, err := h.k8client.CoreV1().ConfigMaps(namespace).Update(c)
 	return err
 }
 
 func (h KubeHelperImpl) getGrafanaDeployment() (*apps.Deployment, error) {
-	namespace := h.config.GetConfigString(ConfigOperatorNamespace, "")
-	return h.k8client.AppsV1().Deployments(namespace).Get(GrafanaDeploymentName, metav1.GetOptions{})
+	namespace := h.config.GetConfigString(config2.ConfigOperatorNamespace, "")
+	return h.k8client.AppsV1().Deployments(namespace).Get(config2.GrafanaDeploymentName, metav1.GetOptions{})
 }
 
 func (h KubeHelperImpl) UpdateGrafanaConfig(config string, cr *v1alpha1.Grafana) error {
-	configMap, err := h.getConfigMap(GrafanaConfigMapName)
+	configMap, err := h.getConfigMap(config2.GrafanaConfigMapName)
 	if err != nil {
 		return err
 	}
-	configMap.Data[GrafanaConfigFileName] = config
+	configMap.Data[config2.GrafanaConfigFileName] = config
 	return h.updateConfigMap(configMap)
 }
 
 func (h KubeHelperImpl) UpdateDashboard(d *v1alpha1.GrafanaDashboard, json string) (bool, error) {
-	configMap, err := h.getConfigMap(GrafanaDashboardsConfigMapName)
+	configMap, err := h.getConfigMap(config2.GrafanaDashboardsConfigMapName)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return false, nil
@@ -112,17 +113,17 @@ func (h KubeHelperImpl) IsKnown(kind string, o runtime.Object) (bool, error) {
 	switch kind {
 	case v1alpha1.GrafanaDashboardKind:
 		d := o.(*v1alpha1.GrafanaDashboard)
-		return h.isKnown(GrafanaDashboardsConfigMapName, d.Namespace, d.Spec.Name)
+		return h.isKnown(config2.GrafanaDashboardsConfigMapName, d.Namespace, d.Spec.Name)
 	case v1alpha1.GrafanaDataSourceKind:
 		d := o.(*v1alpha1.GrafanaDataSource)
-		return h.isKnown(GrafanaDatasourcesConfigMapName, d.Namespace, d.Spec.Name)
+		return h.isKnown(config2.GrafanaDatasourcesConfigMapName, d.Namespace, d.Spec.Name)
 	default:
 		return false, stdErrors.New(fmt.Sprintf("unknown kind '%v'", kind))
 	}
 }
 
 func (h KubeHelperImpl) UpdateDataSources(name, namespace, ds string) (bool, error) {
-	configMap, err := h.getConfigMap(GrafanaDatasourcesConfigMapName)
+	configMap, err := h.getConfigMap(config2.GrafanaDatasourcesConfigMapName)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return false, nil
@@ -147,7 +148,7 @@ func (h KubeHelperImpl) UpdateDataSources(name, namespace, ds string) (bool, err
 }
 
 func (h KubeHelperImpl) DeleteDataSources(name, namespace string) error {
-	configMap, err := h.getConfigMap(GrafanaDatasourcesConfigMapName)
+	configMap, err := h.getConfigMap(config2.GrafanaDatasourcesConfigMapName)
 	if err != nil {
 		// Grafana may already be uninstalled
 		if errors.IsNotFound(err) {
@@ -175,7 +176,7 @@ func (h KubeHelperImpl) DeleteDataSources(name, namespace string) error {
 }
 
 func (h KubeHelperImpl) DeleteDashboard(d *v1alpha1.GrafanaDashboard) error {
-	configMap, err := h.getConfigMap(GrafanaDashboardsConfigMapName)
+	configMap, err := h.getConfigMap(config2.GrafanaDashboardsConfigMapName)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Grafana may already be uninstalled
@@ -204,7 +205,7 @@ func (h KubeHelperImpl) DeleteDashboard(d *v1alpha1.GrafanaDashboard) error {
 }
 
 func (h KubeHelperImpl) getGrafanaPods(namespaceName string) ([]core.Pod, error) {
-	podLabel := h.config.GetConfigString(ConfigPodLabelValue, PodLabelDefaultValue)
+	podLabel := h.config.GetConfigString(config2.ConfigPodLabelValue, config2.PodLabelDefaultValue)
 
 	opts := metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("app=%s", podLabel),
@@ -219,7 +220,7 @@ func (h KubeHelperImpl) getGrafanaPods(namespaceName string) ([]core.Pod, error)
 		return nil, errors.NewNotFound(struct {
 			Group    string
 			Resource string
-		}{Group: "core", Resource: "pod"}, GrafanaDeploymentName)
+		}{Group: "core", Resource: "pod"}, config2.GrafanaDeploymentName)
 	}
 
 	return pods.Items, nil
@@ -227,7 +228,7 @@ func (h KubeHelperImpl) getGrafanaPods(namespaceName string) ([]core.Pod, error)
 
 // UpdateGrafanaDeployment is responsible for update the config hash on the deployment
 func (h *KubeHelperImpl) UpdateGrafanaDeployment(hash string) error {
-	ns := h.config.GetConfigString(ConfigOperatorNamespace, "")
+	ns := h.config.GetConfigString(config2.ConfigOperatorNamespace, "")
 	deployment, err := h.getGrafanaDeployment()
 	if err != nil {
 		return err
@@ -244,7 +245,7 @@ func (h *KubeHelperImpl) UpdateGrafanaDeployment(hash string) error {
 
 // UpdateGrafanaInitContainersDeployment updates the initcontainer config environment vars
 func (h KubeHelperImpl) UpdateGrafanaInitContainersDeployment(newEnv string) error {
-	monitoringNamespace := h.config.GetConfigString(ConfigOperatorNamespace, "")
+	monitoringNamespace := h.config.GetConfigString(config2.ConfigOperatorNamespace, "")
 	deployment, err := h.getGrafanaDeployment()
 
 	if err != nil {
@@ -255,9 +256,9 @@ func (h KubeHelperImpl) UpdateGrafanaInitContainersDeployment(newEnv string) err
 
 	// find and update the init container env var
 	for i, container := range deployment.Spec.Template.Spec.InitContainers {
-		if container.Name == InitContainerName {
+		if container.Name == config2.InitContainerName {
 			for j, env := range deployment.Spec.Template.Spec.InitContainers[i].Env {
-				if env.Name == PluginsEnvVar {
+				if env.Name == config2.PluginsEnvVar {
 					deployment.Spec.Template.Spec.InitContainers[i].Env[j].Value = newEnv
 					updated = true
 					break
@@ -276,7 +277,7 @@ func (h KubeHelperImpl) UpdateGrafanaInitContainersDeployment(newEnv string) err
 
 // RestartGrafana is reponsipble for restarting the pods
 func (h KubeHelperImpl) RestartGrafana() error {
-	monitoringNamespace := h.config.GetConfigString(ConfigOperatorNamespace, "")
+	monitoringNamespace := h.config.GetConfigString(config2.ConfigOperatorNamespace, "")
 	pods, err := h.getGrafanaPods(monitoringNamespace)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -300,18 +301,4 @@ func (h KubeHelperImpl) RestartGrafana() error {
 	}
 
 	return nil
-}
-
-// AppendMessage a status message to the origin dashboard of a plugin
-func AppendMessage(message string, dashboard *v1alpha1.GrafanaDashboard) {
-	if dashboard == nil {
-		return
-	}
-
-	status := v1alpha1.GrafanaDashboardStatusMessage{
-		Message:   message,
-		Timestamp: time.Now().Format(time.RFC850),
-	}
-
-	dashboard.Status.Messages = append(dashboard.Status.Messages, status)
 }
