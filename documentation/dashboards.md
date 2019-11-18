@@ -10,6 +10,7 @@ The following properties are accepted in the `spec`:
 
 * *name*: The filename of the dashboard that gets mounted into a volume in the grafana instance. Not to be confused with `metadata.name`.
 * *json*: Raw json string with the dashboard contents. Check the [official documentation](https://grafana.com/docs/reference/dashboard/#dashboard-json).
+* *url*: Url address to download a json string with the dashboard contents. This will take priority over the json field in case the download is successful
 * *plugins*: A list of plugins required by the dashboard. They will be installed by the operator if not already present.
 
 ## Creating a new dashboard
@@ -78,8 +79,7 @@ dashboardLabelSelector:
 
 ## Discovering dashboards in other namespaces
 
-The operator can discover dashboards in other namespaces if the `--scan-all` flag is set. However this requires cluster wide permissions to the `GrafanaDashboard` custom resource. Create the permissions with:
-
+The operator can discover dashboards in other namespaces if either the `--scan-all` flag is set or a list of watch namespaces is provided using the `--namespaces` flag. However this requires cluster wide permissions to the `GrafanaDashboard` custom resource. Create the permissions with:
 ```sh
 $ oc create -f deploy/cluster_roles
 ```

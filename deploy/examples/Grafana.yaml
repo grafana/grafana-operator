@@ -3,6 +3,8 @@ kind: Grafana
 metadata:
   name: example-grafana
 spec:
+  ingress:
+    enabled: True
   config:
     log:
       mode: "console"

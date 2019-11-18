@@ -3,21 +3,15 @@ kind: Grafana
 metadata:
   name: example-grafana
 spec:
-  createRoute: True
+  configMaps:
+    - ldap-config
   config:
     log:
       mode: "console"
       level: "warn"
-    security:
-      admin_user: "root"
-      admin_password: "secret"
-    auth:
-      disable_login_form: False
-      disable_signout_menu: True
-    auth.basic:
-      enabled: False
-    auth.anonymous:
-      enabled: True
+    auth.ldap:
+      enabled: true
+      config_file: /etc/grafana-configmaps/ldap-config/ldap.toml
   dashboardLabelSelector:
     - matchExpressions:
         - {key: app, operator: In, values: [grafana]}

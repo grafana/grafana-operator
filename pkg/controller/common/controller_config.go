@@ -13,6 +13,7 @@ const (
 	ConfigGrafanaImageTag           = "grafana.image.tag"
 	ConfigPluginsInitContainerImage = "grafana.plugins.init.container.image.url"
 	ConfigPluginsInitContainerTag   = "grafana.plugins.init.container.image.tag"
+	ConfigPodLabelValue             = "grafana.pod.label"
 	ConfigOperatorNamespace         = "grafana.operator.namespace"
 	ConfigDashboardLabelSelector    = "grafana.dashboard.selector"
 	ConfigGrafanaPluginsUpdated     = "grafana.plugins.updated"
@@ -40,7 +41,12 @@ const (
 	PluginsMinAge                   = 5
 	InitContainerName               = "grafana-plugins-init"
 	ResourceFinalizerName           = "grafana.cleanup"
-	RequeueDelaySeconds             = 10
+	RequeueDelay                    = time.Second * 15
+	PodLabelDefaultValue            = "grafana"
+	DefaultServiceType              = "ClusterIP"
+	DefaultLogLevel                 = "info"
+	SecretsMountDir                 = "/etc/grafana-secrets/"
+	ConfigMapsMountDir              = "/etc/grafana-configmaps/"
 )
 
 type ControllerConfig struct {
@@ -87,6 +93,12 @@ func (c *ControllerConfig) RemovePluginsFor(dashboard *v1alpha1.GrafanaDashboard
 func (c *ControllerConfig) AddConfigItem(key string, value interface{}) {
 	if key != "" && value != nil && value != "" {
 		c.Values[key] = value
+	}
+}
+
+func (c *ControllerConfig) RemoveConfigItem(key string) {
+	if _, ok := c.Values[key]; ok {
+		delete(c.Values, key)
 	}
 }
 

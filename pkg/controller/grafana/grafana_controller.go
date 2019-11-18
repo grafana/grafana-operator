@@ -3,19 +3,18 @@ package grafana
 import (
 	"context"
 	"fmt"
-	"github.com/integr8ly/grafana-operator/pkg/controller/common"
-	core "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"time"
 
 	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/pkg/controller/common"
+	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -32,7 +31,6 @@ const (
 	PhaseReconcile
 )
 
-const ReconcilePauseSeconds = 5
 const OpenShiftOAuthRedirect = "serviceaccounts.openshift.io/oauth-redirectreference.primary"
 
 /**
@@ -66,8 +64,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to primary resource Grafana
-	err = c.Watch(&source.Kind{Type: &i8ly.Grafana{}}, &handler.EnqueueRequestForObject{})
-	return err
+	return c.Watch(&source.Kind{Type: &i8ly.Grafana{}}, &handler.EnqueueRequestForObject{})
 }
 
 var _ reconcile.Reconciler = &ReconcileGrafana{}
@@ -90,6 +87,8 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
+			// Stop the dashboard controller from reconciling when grafana is not installed
+			r.config.RemoveConfigItem(common.ConfigDashboardLabelSelector)
 			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{}, err
@@ -112,52 +111,47 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 	return reconcile.Result{}, nil
 }
 
-// Constantly reconcile the grafana config and plugins
+// ReconcileGrafana is constantly reconcile the grafana config and plugins
 func (r *ReconcileGrafana) ReconcileGrafana(cr *i8ly.Grafana) (reconcile.Result, error) {
 	// Update the label selector and make it available to the dashboard controller
 	r.config.AddConfigItem(common.ConfigDashboardLabelSelector, cr.Spec.DashboardLabelSelector)
 
 	// Config updated?
 	newConfig := NewIniConfig(cr)
-	err := newConfig.Build()
-
-	if err != nil {
+	if err := newConfig.Build(); err != nil {
 		return reconcile.Result{}, err
 	}
 
 	if newConfig.DiffersFrom(cr.Status.LastConfig) {
-		err := r.helper.UpdateGrafanaConfig(newConfig.Contents, cr)
-		if err != nil {
+		if err := r.helper.UpdateGrafanaConfig(newConfig.Contents, cr); err != nil {
 			return reconcile.Result{}, err
 		}
 
 		// Store the new config hash
 		cr.Status.LastConfig = newConfig.Hash
-		err = r.client.Update(context.TODO(), cr)
-		if err != nil {
+		if err := r.client.Update(context.TODO(), cr); err != nil {
 			return reconcile.Result{}, err
 		}
 
 		// Grafana needs to be restarted after a config change
-		err = r.helper.RestartGrafana(cr.Namespace)
-		if err != nil {
+		if err := r.helper.UpdateGrafanaDeployment(cr.Status.LastConfig); err != nil {
 			return reconcile.Result{}, err
 		}
-		log.Info("grafana restarted due to config change")
+		log.Info("grafana updated configuration hash due to config change")
 
 		// Skip plugins reconciliation while grafana is restarting
-		return reconcile.Result{RequeueAfter: time.Second * ReconcilePauseSeconds}, err
+		return reconcile.Result{RequeueAfter: common.RequeueDelay}, nil
 	}
 
 	// Plugins updated?
-	err = r.ReconcileDashboardPlugins(cr)
-	if err != nil {
+	if err := r.ReconcileDashboardPlugins(cr); err != nil {
 		return reconcile.Result{}, err
 	}
 
-	return reconcile.Result{RequeueAfter: time.Second * ReconcilePauseSeconds}, err
+	return reconcile.Result{RequeueAfter: common.RequeueDelay}, nil
 }
 
+// ReconcileDashboardPlugins is responsible for reconciling the grafana dashboards
 func (r *ReconcileGrafana) ReconcileDashboardPlugins(cr *i8ly.Grafana) error {
 	// Waited long enough for dashboards to be ready?
 	if r.plugins.CanUpdatePlugins() == false {
@@ -179,7 +173,7 @@ func (r *ReconcileGrafana) ReconcileDashboardPlugins(cr *i8ly.Grafana) error {
 
 		// Update the dashboards that had their plugins modified
 		// to let the owners know about the status
-		err := r.UpdateDashboardMessages(filteredPlugins)
+		err := r.updateDashboardMessages(filteredPlugins)
 		if err != nil {
 			return err
 		}
@@ -212,11 +206,11 @@ func (r *ReconcileGrafana) ReconcilePlugins(cr *i8ly.Grafana, plugins []i8ly.Gra
 	}
 
 	newEnv := r.plugins.BuildEnv(cr)
-	err = r.helper.UpdateGrafanaDeployment(cr.Namespace, newEnv)
+	err = r.helper.UpdateGrafanaInitContainersDeployment(newEnv)
 	return err
 }
 
-func (r *ReconcileGrafana) UpdateDashboardMessages(plugins i8ly.PluginList) error {
+func (r *ReconcileGrafana) updateDashboardMessages(plugins i8ly.PluginList) error {
 	for _, plugin := range plugins {
 		err := r.client.Update(context.TODO(), plugin.Origin)
 		if err != nil {
@@ -262,8 +256,7 @@ func (r *ReconcileGrafana) createConfigFiles(cr *i8ly.Grafana) (reconcile.Result
 	log.Info("Phase: Create Config Files")
 
 	ingressType := common.GrafanaIngressName
-	if cr.Spec.CreateRoute ||
-		common.GetControllerConfig().GetConfigBool(common.ConfigOpenshift, false) == true {
+	if common.GetControllerConfig().GetConfigBool(common.ConfigOpenshift, false) == true {
 		ingressType = common.GrafanaRouteName
 	}
 
@@ -277,23 +270,35 @@ func (r *ReconcileGrafana) createConfigFiles(cr *i8ly.Grafana) (reconcile.Result
 		return reconcile.Result{}, err
 	}
 
-	for _, resourceName := range []string{common.GrafanaDashboardsConfigMapName, common.GrafanaProvidersConfigMapName, common.GrafanaDatasourcesConfigMapName, common.GrafanaServiceName, ingressType} {
+	resources := []string{
+		common.GrafanaDashboardsConfigMapName,
+		common.GrafanaProvidersConfigMapName,
+		common.GrafanaDatasourcesConfigMapName,
+		common.GrafanaServiceName,
+	}
+
+	// Ingress / Route has to be enabled
+	if cr.Spec.Ingress.Enabled {
+		resources = append(resources, ingressType)
+	}
+
+	for _, resourceName := range resources {
+		log.Info(fmt.Sprintf("Creating the %s resource", resourceName))
 		if err := r.createResource(cr, resourceName); err != nil {
 			log.Info(fmt.Sprintf("Error in CreateConfigFiles, resourceName=%s : err=%s", resourceName, err))
 			// Requeue so it can be attempted again
 			return reconcile.Result{}, err
 		}
 	}
-
 	log.Info("Config files created")
+
 	return r.updatePhase(cr, PhaseInstallGrafana)
 }
 
 func (r *ReconcileGrafana) installGrafana(cr *i8ly.Grafana) (reconcile.Result, error) {
 	log.Info("Phase: Install Grafana")
 
-	err := r.createDeployment(cr, common.GrafanaDeploymentName)
-	if err != nil {
+	if err := r.createDeployment(cr, common.GrafanaDeploymentName); err != nil {
 		return reconcile.Result{}, err
 	}
 
@@ -310,6 +315,7 @@ func (r *ReconcileGrafana) createDeployment(cr *i8ly.Grafana, resourceName strin
 	}
 
 	rawResource := newUnstructuredResourceMap(resource.(*unstructured.Unstructured))
+	var extraVolumeMounts []interface{}
 
 	// Extra secrets to be added as volumes?
 	if len(cr.Spec.Secrets) > 0 {
@@ -325,6 +331,38 @@ func (r *ReconcileGrafana) createDeployment(cr *i8ly.Grafana, resourceName strin
 						SecretName: secret,
 					},
 				},
+			})
+			extraVolumeMounts = append(extraVolumeMounts, map[string]interface{}{
+				"name":      volumeName,
+				"readOnly":  true,
+				"mountPath": common.SecretsMountDir + secret,
+			})
+		}
+
+		rawResource.access("spec").access("template").access("spec").set("volumes", volumes)
+	}
+
+	// Extra config maps to be added as volumes?
+	if len(cr.Spec.ConfigMaps) > 0 {
+		volumes := rawResource.access("spec").access("template").access("spec").get("volumes").([]interface{})
+
+		for _, configmap := range cr.Spec.ConfigMaps {
+			volumeName := fmt.Sprintf("configmap-%s", configmap)
+			log.Info(fmt.Sprintf("adding volume for configmap '%s' as '%s'", configmap, volumeName))
+			volumes = append(volumes, core.Volume{
+				Name: volumeName,
+				VolumeSource: core.VolumeSource{
+					ConfigMap: &core.ConfigMapVolumeSource{
+						LocalObjectReference: core.LocalObjectReference{
+							Name: configmap,
+						},
+					},
+				},
+			})
+			extraVolumeMounts = append(extraVolumeMounts, map[string]interface{}{
+				"name":      volumeName,
+				"readOnly":  true,
+				"mountPath": common.ConfigMapsMountDir + configmap,
 			})
 		}
 
@@ -342,6 +380,17 @@ func (r *ReconcileGrafana) createDeployment(cr *i8ly.Grafana, resourceName strin
 		}
 
 		rawResource.access("spec").access("template").access("spec").set("containers", containers)
+	}
+
+	// Append extra volume mounts to all containers
+	if len(extraVolumeMounts) > 0 {
+		containers := rawResource.access("spec").access("template").access("spec").get("containers").([]interface{})
+
+		for _, container := range containers {
+			volumeMounts := container.(map[string]interface{})["volumeMounts"].([]interface{})
+			volumeMounts = append(volumeMounts, extraVolumeMounts...)
+			container.(map[string]interface{})["volumeMounts"] = volumeMounts
+		}
 	}
 
 	return r.deployResource(cr, resource, resourceName)
@@ -400,7 +449,7 @@ func (r *ReconcileGrafana) deployResource(cr *i8ly.Grafana, resource runtime.Obj
 
 	// Resource does not exist or something went wrong
 	if errors.IsNotFound(err) {
-		log.Info(fmt.Sprintf("Creating %s", resourceName))
+		log.Info(fmt.Sprintf("Resource %s does not exist, creating now", resourceName))
 	} else {
 		return err
 	}
@@ -412,11 +461,7 @@ func (r *ReconcileGrafana) deployResource(cr *i8ly.Grafana, resource runtime.Obj
 		return err
 	}
 
-	err = r.client.Create(context.TODO(), resource)
-	if err != nil {
-		return err
-	}
-	return nil
+	return r.client.Create(context.TODO(), resource)
 }
 
 func (r *ReconcileGrafana) updatePhase(cr *i8ly.Grafana, phase int) (reconcile.Result, error) {

@@ -3,46 +3,62 @@ package grafana
 import (
 	"bytes"
 	"fmt"
-	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	"io/ioutil"
+	v1 "k8s.io/api/core/v1"
 	"os"
 	"strings"
 	"text/template"
+
+	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 
 	integreatly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 )
 
 const (
+	// DefaultLogLevel is the default logging level
 	DefaultLogLevel = "info"
 )
 
-type GrafanaParamaeters struct {
-	GrafanaImage                    string
-	GrafanaVersion                  string
-	Namespace                       string
-	GrafanaConfigMapName            string
-	GrafanaProvidersConfigMapName   string
-	GrafanaDatasourcesConfigMapName string
-	GrafanaDashboardsConfigMapName  string
-	GrafanaServiceAccountName       string
-	GrafanaDeploymentName           string
-	LogLevel                        string
-	GrafanaRouteName                string
-	GrafanaServiceName              string
-	PluginsInitContainerImage       string
-	PluginsInitContainerTag         string
-	GrafanaIngressName              string
-	Hostname                        string
-	AdminUser                       string
+// GrafanaParameters provides the context for the template
+type GrafanaParameters struct {
 	AdminPassword                   string
+	AdminUser                       string
+	Anonymous                       bool
 	BasicAuth                       bool
 	DisableLoginForm                bool
 	DisableSignoutMenu              bool
-	Anonymous                       bool
+	GrafanaConfigHash               string
+	GrafanaConfigMapName            string
+	GrafanaDashboardsConfigMapName  string
+	GrafanaDatasourcesConfigMapName string
+	GrafanaDeploymentName           string
+	GrafanaImage                    string
+	GrafanaIngressAnnotations       map[string]string
+	GrafanaIngressLabels            map[string]string
+	GrafanaIngressName              string
+	GrafanaIngressPath              string
+	GrafanaIngressTLSEnabled        bool
+	GrafanaIngressTLSSecretName     string
+	GrafanaProvidersConfigMapName   string
+	GrafanaRouteName                string
+	GrafanaServiceAccountName       string
+	GrafanaServiceAnnotations       map[string]string
+	GrafanaServiceLabels            map[string]string
+	GrafanaServiceName              string
+	GrafanaServiceType              string
+	GrafanaVersion                  string
+	Hostname                        string
+	LogLevel                        string
+	Namespace                       string
+	PluginsInitContainerImage       string
+	PluginsInitContainerTag         string
+	PodLabelValue                   string
+	Replicas                        int
 }
 
+// TemplateHelper is the deployment helper object
 type TemplateHelper struct {
-	Parameters   GrafanaParamaeters
+	Parameters   GrafanaParameters
 	TemplatePath string
 }
 
@@ -51,6 +67,19 @@ func option(val, defaultVal string) string {
 		return defaultVal
 	}
 	return val
+}
+
+func getServiceType(serviceType string) string {
+	switch v1.ServiceType(strings.TrimSpace(serviceType)) {
+	case v1.ServiceTypeClusterIP:
+		return serviceType
+	case v1.ServiceTypeNodePort:
+		return serviceType
+	case v1.ServiceTypeLoadBalancer:
+		return serviceType
+	default:
+		return common.DefaultServiceType
+	}
 }
 
 func getLogLevel(userLogLevel string) string {
@@ -69,7 +98,7 @@ func getLogLevel(userLogLevel string) string {
 	case "critical":
 		return level
 	default:
-		return DefaultLogLevel
+		return common.DefaultLogLevel
 	}
 }
 
@@ -79,29 +108,40 @@ func getLogLevel(userLogLevel string) string {
 func newTemplateHelper(cr *integreatly.Grafana) *TemplateHelper {
 	controllerConfig := common.GetControllerConfig()
 
-	param := GrafanaParamaeters{
-		GrafanaImage:                    controllerConfig.GetConfigString(common.ConfigGrafanaImage, common.GrafanaImage),
-		GrafanaVersion:                  controllerConfig.GetConfigString(common.ConfigGrafanaImageTag, common.GrafanaVersion),
-		Namespace:                       cr.Namespace,
-		GrafanaConfigMapName:            common.GrafanaConfigMapName,
-		GrafanaProvidersConfigMapName:   common.GrafanaProvidersConfigMapName,
-		GrafanaDatasourcesConfigMapName: common.GrafanaDatasourcesConfigMapName,
-		GrafanaDashboardsConfigMapName:  common.GrafanaDashboardsConfigMapName,
-		GrafanaServiceAccountName:       common.GrafanaServiceAccountName,
-		GrafanaDeploymentName:           common.GrafanaDeploymentName,
-		LogLevel:                        getLogLevel(cr.Spec.LogLevel),
-		GrafanaRouteName:                common.GrafanaRouteName,
-		GrafanaServiceName:              common.GrafanaServiceName,
-		PluginsInitContainerImage:       controllerConfig.GetConfigString(common.ConfigPluginsInitContainerImage, common.PluginsInitContainerImage),
-		PluginsInitContainerTag:         controllerConfig.GetConfigString(common.ConfigPluginsInitContainerTag, common.PluginsInitContainerTag),
-		GrafanaIngressName:              common.GrafanaIngressName,
-		Hostname:                        cr.Spec.Hostname,
-		AdminUser:                       option(cr.Spec.AdminUser, "root"),
+	param := GrafanaParameters{
 		AdminPassword:                   option(cr.Spec.AdminPassword, "secret"),
+		AdminUser:                       option(cr.Spec.AdminUser, "root"),
+		Anonymous:                       cr.Spec.Anonymous,
 		BasicAuth:                       cr.Spec.BasicAuth,
 		DisableLoginForm:                cr.Spec.DisableLoginForm,
 		DisableSignoutMenu:              cr.Spec.DisableSignoutMenu,
-		Anonymous:                       cr.Spec.Anonymous,
+		GrafanaConfigHash:               cr.Status.LastConfig,
+		GrafanaConfigMapName:            common.GrafanaConfigMapName,
+		GrafanaDashboardsConfigMapName:  common.GrafanaDashboardsConfigMapName,
+		GrafanaDatasourcesConfigMapName: common.GrafanaDatasourcesConfigMapName,
+		GrafanaDeploymentName:           common.GrafanaDeploymentName,
+		GrafanaImage:                    controllerConfig.GetConfigString(common.ConfigGrafanaImage, common.GrafanaImage),
+		GrafanaIngressAnnotations:       cr.Spec.Ingress.Annotations,
+		GrafanaIngressLabels:            cr.Spec.Ingress.Labels,
+		GrafanaIngressName:              common.GrafanaIngressName,
+		GrafanaIngressPath:              cr.Spec.Ingress.Path,
+		GrafanaIngressTLSEnabled:        cr.Spec.Ingress.TLSEnabled,
+		GrafanaIngressTLSSecretName:     cr.Spec.Ingress.TLSSecretName,
+		GrafanaProvidersConfigMapName:   common.GrafanaProvidersConfigMapName,
+		GrafanaRouteName:                common.GrafanaRouteName,
+		GrafanaServiceAccountName:       common.GrafanaServiceAccountName,
+		GrafanaServiceAnnotations:       cr.Spec.Service.Annotations,
+		GrafanaServiceLabels:            cr.Spec.Service.Labels,
+		GrafanaServiceName:              common.GrafanaServiceName,
+		GrafanaServiceType:              cr.Spec.Service.Type,
+		GrafanaVersion:                  controllerConfig.GetConfigString(common.ConfigGrafanaImageTag, common.GrafanaVersion),
+		Hostname:                        cr.Spec.Ingress.Hostname,
+		LogLevel:                        getLogLevel(cr.Spec.LogLevel),
+		Namespace:                       cr.Namespace,
+		PluginsInitContainerImage:       controllerConfig.GetConfigString(common.ConfigPluginsInitContainerImage, common.PluginsInitContainerImage),
+		PluginsInitContainerTag:         controllerConfig.GetConfigString(common.ConfigPluginsInitContainerTag, common.PluginsInitContainerTag),
+		PodLabelValue:                   controllerConfig.GetConfigString(common.ConfigPodLabelValue, common.PodLabelDefaultValue),
+		Replicas:                        cr.Spec.InitialReplicas,
 	}
 
 	templatePath := os.Getenv("TEMPLATE_PATH")

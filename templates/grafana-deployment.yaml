@@ -2,15 +2,15 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: grafana
+    app: {{ .PodLabelValue }}
   name: {{ .GrafanaDeploymentName }}
   namespace: {{ .Namespace }}
 spec:
-  replicas: 1
+  replicas: {{ or .Replicas 1 }}
   revisionHistoryLimit: 10
   selector:
     matchLabels:
-      app: grafana
+      app: {{ .PodLabelValue }}
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -20,7 +20,10 @@ spec:
     metadata:
       creationTimestamp: null
       labels:
-        app: grafana
+        app: {{ .PodLabelValue }}
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '3000'
       name: grafana
     spec:
       initContainers:
@@ -37,15 +40,32 @@ spec:
             - mountPath: /opt/plugins
               name: grafana-plugins
       containers:
-        - image: '{{ .GrafanaImage }}:{{ .GrafanaVersion }}'
+        - name: grafana
+          image: '{{ .GrafanaImage }}:{{ .GrafanaVersion }}'
           args:
             - -config=/etc/grafana/grafana.ini
-          imagePullPolicy: IfNotPresent
-          name: grafana
+          env:
+            - name: CONFIG_HASH
+              value: '{{ .GrafanaConfigHash }}'
           ports:
             - containerPort: 3000
               name: grafana-http
               protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            periodSeconds: 5
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 60
+            timeoutSeconds: 30
+            failureThreshold: 10
           resources: {}
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
@@ -66,11 +86,8 @@ spec:
               name: {{ .GrafanaConfigMapName }}
             - mountPath: /var/lib/grafana/plugins
               name: grafana-plugins
-      dnsPolicy: ClusterFirst
-      restartPolicy: Always
-      schedulerName: default-scheduler
       securityContext: {}
-      serviceAccount: {{ .GrafanaServiceAccountName}}
+      serviceAccount: {{ .GrafanaServiceAccountName }}
       serviceAccountName: {{ .GrafanaServiceAccountName }}
       terminationGracePeriodSeconds: 30
       volumes:

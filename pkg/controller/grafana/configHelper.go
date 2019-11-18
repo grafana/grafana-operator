@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/md5"
 	"fmt"
+
 	"github.com/go-ini/ini"
 	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
@@ -102,19 +103,13 @@ func (i *IniConfig) buildBaseConfig(config *ini.File) error {
 	}
 
 	// Import all properties from the CR
-	err = config.ReflectFrom(&i.Cr.Spec.Config)
-	if err != nil {
+	if err := config.ReflectFrom(&i.Cr.Spec.Config); err != nil {
 		return err
 	}
 
 	// Always append the paths section last because we do not
 	// allow to override it
-	err = i.appendPathsSection(config)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return i.appendPathsSection(config)
 }
 
 // Creates the ini config from the CR

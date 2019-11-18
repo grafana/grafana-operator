@@ -17,9 +17,6 @@ spec:
       properties:
         spec:
           properties:
-            hostname:
-              type: string
-              description: Hostname for the ingress. Optional when --openshift is set
             containers:
               type: array
               items:
@@ -30,6 +27,11 @@ spec:
               items:
                 type: string
                 description: Secret to be mounted as volume into the grafana deployment
+            configMaps:
+              type: array
+              items:
+                type: string
+                description: Config map to be mounted as volume into the grafana deployment
             logLevel:
               type: string
               description: Log level of the grafana instance, defaults to info
@@ -54,9 +56,36 @@ spec:
             config:
               type: object
               description: Grafana config
-            createRoute:
-              type: boolean
-              description: Create an OpenShift Route instead of Ingress
+            ingress:
+              type: object
+              properties:
+                enabled:
+                  type: boolean
+                  description: Create an ingress / route
+                path:
+                  type: string
+                  description: Ingress path
+                hostname:
+                  type: string
+                  description: The hostname of the ingress / route
+                annotations:
+                  type: object
+                  description: Additional annotations for the ingress / route
+                labels:
+                  type: object
+                  description: Additional labels for the ingress / route
+            service:
+              type: object
+              properties:
+                annotations:
+                  type: object
+                  description: Additional annotations for the service
+                labels:
+                  type: object
+                  description: Additional labels for the service
+                type:
+                  type: string
+                  description: Service type (NodePort, ClusterIP or LoadBalancer)
             dashboardLabelSelectors:
               type: array
               items:
