@@ -12,6 +12,7 @@ require (
 	github.com/go-openapi/swag v0.18.0 // indirect
 	github.com/google/uuid v1.1.0 // indirect
 	github.com/grafana-tools/sdk v0.0.0-20191103185352-c717bbeb00ed
+	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/openshift/api v3.9.1-0.20190424152011-77b8897ec79a+incompatible
 	github.com/operator-framework/operator-sdk v0.12.0
 	github.com/prometheus/client_golang v1.1.0 // indirect
@@ -20,6 +21,7 @@ require (
 	github.com/prometheus/procfs v0.0.7 // indirect
 	golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898 // indirect
 	gopkg.in/ini.v1 v1.51.0 // indirect
+	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	k8s.io/api v0.0.0
 	k8s.io/apimachinery v0.0.0
 	k8s.io/client-go v11.0.0+incompatible
