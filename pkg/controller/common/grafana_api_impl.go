@@ -55,11 +55,14 @@ func (h GrafanaApiData) UpdateDashboard(ctx context.Context, dashboard *v1alpha1
 func (h GrafanaApiData) DashboardIsKnown(ctx context.Context, dashboard *v1alpha1.GrafanaDashboard) (bool, error) {
 	client, err := h.getClient(dashboard.Spec.GrafanaRef)
 	if err != nil {
+		grafanalog.Error(err, "Failed to get client")
+
 		return false, err
 	}
 	_, _, err = client.GetDashboard(dashboard.Status.Slug)
 	if err != nil {
-		return false, err
+		grafanalog.Error(err, "Dashboard does not exist")
+		return false, nil
 	}
 	return true, nil
 }
