@@ -29,7 +29,6 @@ func (i *GrafanaReconciler) Reconcile(state *common.ClusterState, cr *v1alpha1.G
 	desired = desired.AddAction(i.getGrafanaServiceAccountDesiredState(state, cr))
 	desired = desired.AddAction(i.getGrafanaConfigDesiredState(state, cr))
 	desired = desired.AddAction(i.getGrafanaExternalAccessDesiredState(state, cr))
-	//desired = desired.AddActions(i.getGrafanaReadiness(state))
 
 	// Consolidate plugins
 	// No action, will update init container env var
@@ -40,7 +39,7 @@ func (i *GrafanaReconciler) Reconcile(state *common.ClusterState, cr *v1alpha1.G
 	desired = desired.AddAction(i.getGrafanaDeploymentDesiredState(state, cr))
 
 	// Check Deployment and Route readiness
-	//desired = desired.AddActions(i.getGrafanaReadiness(state))
+	desired = desired.AddActions(i.getGrafanaReadiness(state))
 
 	return desired
 }

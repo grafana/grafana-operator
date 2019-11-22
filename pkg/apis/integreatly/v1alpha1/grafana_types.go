@@ -354,12 +354,13 @@ type GrafanaConfigPlugins struct {
 // GrafanaStatus defines the observed state of Grafana
 // +k8s:openapi-gen=true
 type GrafanaStatus struct {
-	Phase            StatusPhase `json:"phase"`
-	Message          string      `json:"message"`
-	InstalledPlugins PluginList  `json:"installedPlugins"`
-	FailedPlugins    PluginList  `json:"failedPlugins"`
-	AdminUser        string      `json:"adminUser"`
-	AdminPassword    string      `json:"adminPassword"`
+	Phase               StatusPhase                      `json:"phase"`
+	Message             string                           `json:"message"`
+	InstalledDashboards map[string][]GrafanaDashboardRef `json:"dashboards"`
+	InstalledPlugins    PluginList                       `json:"installedPlugins"`
+	FailedPlugins       PluginList                       `json:"failedPlugins"`
+	AdminUser           string                           `json:"adminUser"`
+	AdminPassword       string                           `json:"adminPassword"`
 }
 
 // GrafanaPlugin contains information about a single plugin
