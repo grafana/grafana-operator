@@ -165,7 +165,7 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 		return r.manageError(cr, err)
 	}
 
-	return r.manageSuccess(cr)
+	return r.manageSuccess(cr, currentState)
 }
 
 func (r *ReconcileGrafana) manageError(cr *i8ly.Grafana, issue error) (reconcile.Result, error) {
@@ -190,10 +190,23 @@ func (r *ReconcileGrafana) manageError(cr *i8ly.Grafana, issue error) (reconcile
 	return reconcile.Result{Requeue: false}, nil
 }
 
-func (r *ReconcileGrafana) manageSuccess(cr *i8ly.Grafana) (reconcile.Result, error) {
+func (r *ReconcileGrafana) manageSuccess(cr *i8ly.Grafana, state *common.ClusterState) (reconcile.Result, error) {
 	cr.Status.Phase = i8ly.PhaseReconciling
 	cr.Status.AdminUser = cr.Spec.Config.Security.AdminUser
 	cr.Status.AdminPassword = cr.Spec.Config.Security.AdminPassword
+	cr.Status.InstalledDashboards = r.config.Dashboards
+
+	// Make basic auth credentials available to other controllers
+	r.config.AddConfigItem(config.ConfigGrafanaAdminUsername, cr.Status.AdminUser)
+	r.config.AddConfigItem(config.ConfigGrafanaAdminPassword, cr.Status.AdminPassword)
+
+	if state.GrafanaRoute != nil {
+		r.config.AddConfigItem(config.ConfigGrafanaAdminRoute,
+			fmt.Sprintf("https://%v", state.GrafanaRoute.Spec.Host))
+	} else {
+		r.config.AddConfigItem(config.ConfigGrafanaAdminRoute,
+			fmt.Sprintf("http://%v:3000", state.GrafanaService.Name))
+	}
 
 	err := r.client.Status().Update(r.context, cr)
 	if err != nil {

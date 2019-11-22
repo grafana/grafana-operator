@@ -48,12 +48,16 @@ const (
 	SecretsMountDir                 = "/etc/grafana-secrets/"
 	ConfigMapsMountDir              = "/etc/grafana-configmaps/"
 	ConfigRouteWatch                = "watch.routes"
+	ConfigGrafanaAdminUsername      = "grafana.admin.username"
+	ConfigGrafanaAdminPassword      = "grafana.admin.password"
+	ConfigGrafanaAdminRoute         = "grafana.route"
 )
 
 type ControllerConfig struct {
 	*sync.Mutex
-	Values  map[string]interface{}
-	Plugins map[string]v1alpha1.PluginList
+	Values     map[string]interface{}
+	Plugins    map[string]v1alpha1.PluginList
+	Dashboards map[string][]v1alpha1.GrafanaDashboardRef
 }
 
 var instance *ControllerConfig
@@ -62,36 +66,69 @@ var once sync.Once
 func GetControllerConfig() *ControllerConfig {
 	once.Do(func() {
 		instance = &ControllerConfig{
-			Mutex:   &sync.Mutex{},
-			Values:  map[string]interface{}{},
-			Plugins: map[string]v1alpha1.PluginList{},
+			Mutex:      &sync.Mutex{},
+			Values:     map[string]interface{}{},
+			Plugins:    map[string]v1alpha1.PluginList{},
+			Dashboards: map[string][]v1alpha1.GrafanaDashboardRef{},
 		}
 	})
 	return instance
 }
 
-func (c *ControllerConfig) GetDashboardId(dashboard *v1alpha1.GrafanaDashboard) string {
-	return fmt.Sprintf("%v/%v", dashboard.Namespace, dashboard.Spec.Name)
+func (c *ControllerConfig) GetDashboardId(namespace, name string) string {
+	return fmt.Sprintf("%v/%v", namespace, name)
 }
 
 func (c *ControllerConfig) GetPluginsFor(dashboard *v1alpha1.GrafanaDashboard) v1alpha1.PluginList {
 	c.Lock()
 	defer c.Unlock()
-	return c.Plugins[c.GetDashboardId(dashboard)]
+	return c.Plugins[c.GetDashboardId(dashboard.Namespace, dashboard.Name)]
 }
 
 func (c *ControllerConfig) SetPluginsFor(dashboard *v1alpha1.GrafanaDashboard) {
-	id := c.GetDashboardId(dashboard)
+	id := c.GetDashboardId(dashboard.Namespace, dashboard.Name)
 	c.Plugins[id] = dashboard.Spec.Plugins
 	c.AddConfigItem(ConfigGrafanaPluginsUpdated, time.Now())
 }
 
-func (c *ControllerConfig) RemovePluginsFor(dashboard *v1alpha1.GrafanaDashboard) {
-	id := c.GetDashboardId(dashboard)
+func (c *ControllerConfig) RemovePluginsFor(namespace, name string) {
+	id := c.GetDashboardId(namespace, name)
 	if _, ok := c.Plugins[id]; ok {
 		delete(c.Plugins, id)
 		c.AddConfigItem(ConfigGrafanaPluginsUpdated, time.Now())
 	}
+}
+
+func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard) {
+	ns := dashboard.Namespace
+	if _, exists := c.HasDashboard(ns, dashboard.Name); !exists {
+		c.Lock()
+		defer c.Unlock()
+		c.Dashboards[ns] = append(c.Dashboards[ns], v1alpha1.GrafanaDashboardRef{
+			Name: dashboard.Name,
+			UID:  dashboard.Status.UID,
+		})
+	}
+}
+
+func (c *ControllerConfig) RemoveDashboard(namespace, name string) {
+	if i, exists := c.HasDashboard(namespace, name); exists {
+		c.Lock()
+		defer c.Unlock()
+		list := c.Dashboards[namespace]
+		list[i] = list[len(list)-1]
+		list = list[:len(list)-1]
+		c.Dashboards[namespace] = list
+	}
+}
+
+func (c *ControllerConfig) GetDashboards(namespace string) []v1alpha1.GrafanaDashboardRef {
+	c.Lock()
+	defer c.Unlock()
+	if dashboards, ok := c.Dashboards[namespace]; ok {
+		return dashboards
+	}
+	return []v1alpha1.GrafanaDashboardRef{}
 }
 
 func (c *ControllerConfig) AddConfigItem(key string, value interface{}) {
@@ -143,4 +180,15 @@ func (c *ControllerConfig) HasConfigItem(key string) bool {
 	defer c.Unlock()
 	_, ok := c.Values[key]
 	return ok
+}
+
+func (c *ControllerConfig) HasDashboard(namespace, name string) (int, bool) {
+	if dashboards, ok := c.Dashboards[namespace]; ok {
+		for i, dashboard := range dashboards {
+			if dashboard.Name == name {
+				return i, true
+			}
+		}
+	}
+	return -1, false
 }

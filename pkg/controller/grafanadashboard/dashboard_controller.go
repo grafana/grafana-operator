@@ -2,22 +2,15 @@ package grafanadashboard
 
 import (
 	"context"
-	"encoding/json"
 	defaultErrors "errors"
 	"fmt"
 	"github.com/grafana-tools/sdk"
-	"github.com/integr8ly/grafana-operator/pkg/controller/config"
-	"io/ioutil"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/tools/record"
-	"net/http"
-	"net/url"
-
 	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/pkg/controller/common"
+	"github.com/integr8ly/grafana-operator/pkg/controller/config"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -49,14 +42,9 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 
-	board := sdk.NewBoard("")
-	log.Info(fmt.Sprintf("%v", board))
-
 	return &ReconcileGrafanaDashboard{
 		client:   mgr.GetClient(),
-		scheme:   mgr.GetScheme(),
 		config:   config.GetControllerConfig(),
-		helper:   common.NewKubeHelper(),
 		context:  ctx,
 		cancel:   cancel,
 		recorder: mgr.GetEventRecorderFor(ControllerName),
@@ -87,9 +75,7 @@ type ReconcileGrafanaDashboard struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
 	client   client.Client
-	scheme   *runtime.Scheme
 	config   *config.ControllerConfig
-	helper   *common.KubeHelperImpl
 	context  context.Context
 	cancel   context.CancelFunc
 	recorder record.EventRecorder
@@ -103,15 +89,18 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 		return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
 	}
 
+	client, err := r.getClient()
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
 	// Fetch the GrafanaDashboard instance
 	instance := &i8ly.GrafanaDashboard{}
-	err := r.client.Get(r.context, request.NamespacedName, instance)
+	err = r.client.Get(r.context, request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			// Request object not found, could have been deleted after reconcile request.
-			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
-			// Return and don't requeue
-			return reconcile.Result{}, nil
+			log.Info(fmt.Sprintf("deleting dashboard %v/%v", request.Namespace, request.Name))
+			return r.reconcileDashboards(request, client)
 		}
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
@@ -125,73 +114,122 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 		return reconcile.Result{}, nil
 	}
 
-	// Resource deleted?
-	if cr.DeletionTimestamp != nil {
-		return r.deleteDashboard(cr)
-	}
-
-	return r.importDashboard(cr)
+	return r.reconcileDashboards(request, client)
 }
 
-func (r *ReconcileGrafanaDashboard) isValidDashboard(d *i8ly.GrafanaDashboard, dashboardJson string) bool {
-	var js map[string]interface{}
-	err := json.Unmarshal([]byte(dashboardJson), &js)
-	return err == nil
-}
-
-func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (reconcile.Result, error) {
-	r.config.SetPluginsFor(d)
-	return reconcile.Result{}, nil
-}
-
-func (r *ReconcileGrafanaDashboard) deleteDashboard(d *i8ly.GrafanaDashboard) (reconcile.Result, error) {
-	r.config.RemovePluginsFor(d)
-	return reconcile.Result{}, nil
-}
-
-// Try to load remote dashboard json from an url
-func (r *ReconcileGrafanaDashboard) loadDashboardFromURL(d *i8ly.GrafanaDashboard) (string, error) {
-	_, err := url.ParseRequestURI(d.Spec.Url)
-	if err != nil {
-		return "", defaultErrors.New("dashboard url specified is not valid")
-	}
-
-	resp, err := http.Get(d.Spec.Url)
-	if err != nil {
-		return "", defaultErrors.New("request to import dashboard failed")
-	}
-	defer resp.Body.Close()
-
-	body, _ := ioutil.ReadAll(resp.Body)
-	response := string(body)
-
-	if resp.StatusCode != 200 {
-		return "", defaultErrors.New(fmt.Sprintf("request to import dashboard returned with status %v", resp.StatusCode))
-	}
-
-	return response, nil
-}
-
-func (r *ReconcileGrafanaDashboard) manageError(cr *i8ly.Grafana, issue error) (reconcile.Result, error) {
-	r.recorder.Event(cr, "Warning", "ProcessingError", issue.Error())
-
-	cr.Status.Phase = i8ly.PhaseFailing
-
-	err := r.client.Update(r.context, cr)
+func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Request, grafanaClient GrafanaClient) (reconcile.Result, error) {
+	// Collect known and namespace dashboards
+	knownDashboards := r.config.GetDashboards(request.Namespace)
+	namespaceDashboards := &i8ly.GrafanaDashboardList{}
+	err := r.client.List(r.context, namespaceDashboards)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
-	return reconcile.Result{Requeue: false}, nil
-}
-
-func (r *ReconcileGrafanaDashboard) manageSuccess(cr *i8ly.Grafana) (reconcile.Result, error) {
-	cr.Status.Phase = i8ly.PhaseReconciling
-	err := r.client.Update(r.context, cr)
-	if err != nil {
-		return r.manageError(cr, err)
+	// Prepare lists
+	dashboardsToDelete := []i8ly.GrafanaDashboardRef{}
+	inNamespace := func(item string) bool {
+		for _, dashboard := range namespaceDashboards.Items {
+			if dashboard.Name == item {
+				return true
+			}
+		}
+		return false
 	}
 
-	log.Info("desired cluster state met")
+	// Dashboards to delete: dashboards that are known but not found
+	// any longer in the namespace
+	for _, dashboard := range knownDashboards {
+		if !inNamespace(dashboard.Name) {
+			dashboardsToDelete = append(dashboardsToDelete, dashboard)
+		}
+	}
+
+	// Process new/updated dashboards
+	for _, dashboard := range namespaceDashboards.Items {
+		pipeline := NewDashboardPipeline(&dashboard)
+		processed, err := pipeline.ProcessDashboard()
+		if err != nil {
+			r.manageError(&dashboard, err)
+			continue
+		}
+
+		status, err := grafanaClient.CreateOrUpdateDashboard(*processed)
+		if err != nil {
+			r.manageError(&dashboard, err)
+			continue
+		}
+
+		err = r.manageSuccess(&dashboard, status)
+		if err != nil {
+			r.manageError(&dashboard, err)
+		}
+	}
+
+	for _, dashboard := range dashboardsToDelete {
+		status, err := grafanaClient.DeleteDashboardByUID(dashboard.UID)
+		if err != nil {
+			log.Error(err, fmt.Sprintf("error deleting dashboard %v/, status was %v/%v",
+				dashboard.UID,
+				status.Status,
+				status.Message))
+			continue
+		}
+
+		log.Info(fmt.Sprintf("delete result was %v", *status.Message))
+
+		r.config.RemovePluginsFor(request.Namespace, request.Name)
+		r.config.RemoveDashboard(request.Namespace, request.Name)
+	}
+
 	return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
+}
+
+// Handle success case: update dashboard metadata (id, uid) and update the list
+// of plugins
+func (r *ReconcileGrafanaDashboard) manageSuccess(dashboard *i8ly.GrafanaDashboard, status sdk.StatusMessage) error {
+	log.Info(fmt.Sprintf("dashboard %v/%v successfully submitted",
+		dashboard.Namespace,
+		dashboard.Name))
+
+	dashboard.Status.UID = *status.UID
+	dashboard.Status.ID = *status.ID
+	dashboard.Status.Slug = *status.Slug
+	dashboard.Status.Phase = i8ly.PhaseReconciling
+
+	r.config.AddDashboard(dashboard)
+	r.config.SetPluginsFor(dashboard)
+
+	return r.client.Status().Update(r.context, dashboard)
+}
+
+// Handle error case: update dashboard with error message and status
+func (r *ReconcileGrafanaDashboard) manageError(dashboard *i8ly.GrafanaDashboard, issue error) {
+	r.recorder.Event(dashboard, "Warning", "ProcessingError", issue.Error())
+	dashboard.Status.Phase = i8ly.PhaseFailing
+	dashboard.Status.Message = issue.Error()
+	err := r.client.Status().Update(r.context, dashboard)
+	if err != nil {
+		log.Error(err, "error updating dashboard status")
+	}
+}
+
+// Get an authenticated grafana API client
+func (r *ReconcileGrafanaDashboard) getClient() (GrafanaClient, error) {
+	url := r.config.GetConfigString(config.ConfigGrafanaAdminRoute, "")
+	if url == "" {
+		return nil, defaultErrors.New("cannot get grafana admin url")
+	}
+
+	username := r.config.GetConfigString(config.ConfigGrafanaAdminUsername, "")
+	if username == "" {
+		return nil, defaultErrors.New("invalid credentials (username)")
+	}
+
+	password := r.config.GetConfigString(config.ConfigGrafanaAdminPassword, "")
+	if password == "" {
+		return nil, defaultErrors.New("invalid credentials (password)")
+	}
+
+	return NewGrafanaClient(url, username, password), nil
 }
