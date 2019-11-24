@@ -72,7 +72,7 @@ func startDashboardController(ns string, cfg *rest.Config, signalHandler <-chan 
 	}
 
 	// Use a separate manager for the dashboard controller
-	grafanadashboard.Add(dashboardMgr, autodetectChannel)
+	grafanadashboard.Add(dashboardMgr, ns)
 
 	go func() {
 		if err := dashboardMgr.Start(signalHandler); err != nil {

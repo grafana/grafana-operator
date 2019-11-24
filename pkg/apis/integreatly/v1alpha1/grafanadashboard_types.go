@@ -26,6 +26,7 @@ type GrafanaDashboardStatus struct {
 	ID      uint        `json:"id"`
 	Slug    string      `json:"slug"`
 	Message string      `json:"message"`
+	Hash    string      `json:"hash"`
 }
 
 // Used to keep a dashboard reference without having access to the dashboard

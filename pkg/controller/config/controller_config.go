@@ -51,6 +51,7 @@ const (
 	ConfigGrafanaAdminUsername      = "grafana.admin.username"
 	ConfigGrafanaAdminPassword      = "grafana.admin.password"
 	ConfigGrafanaAdminRoute         = "grafana.route"
+	ConfigGrafanaDashboardsSynced   = "grafana.dashboards.synced"
 )
 
 type ControllerConfig struct {

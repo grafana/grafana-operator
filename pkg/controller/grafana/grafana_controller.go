@@ -6,6 +6,7 @@ import (
 	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/pkg/controller/config"
+	"github.com/integr8ly/grafana-operator/pkg/controller/model"
 	routev1 "github.com/openshift/api/route/v1"
 	"k8s.io/api/apps/v1beta1"
 	v1 "k8s.io/api/core/v1"
@@ -194,18 +195,13 @@ func (r *ReconcileGrafana) manageSuccess(cr *i8ly.Grafana, state *common.Cluster
 	cr.Status.Phase = i8ly.PhaseReconciling
 	cr.Status.AdminUser = cr.Spec.Config.Security.AdminUser
 	cr.Status.AdminPassword = cr.Spec.Config.Security.AdminPassword
-	cr.Status.InstalledDashboards = r.config.Dashboards
 
-	// Make basic auth credentials available to other controllers
-	r.config.AddConfigItem(config.ConfigGrafanaAdminUsername, cr.Status.AdminUser)
-	r.config.AddConfigItem(config.ConfigGrafanaAdminPassword, cr.Status.AdminPassword)
-
-	if state.GrafanaRoute != nil {
-		r.config.AddConfigItem(config.ConfigGrafanaAdminRoute,
-			fmt.Sprintf("https://%v", state.GrafanaRoute.Spec.Host))
+	// Only update the status if the dashboard controller had a chance to sync the cluster
+	// dashboards first. Otherwise reuse the existing dashboard config from the CR.
+	if r.config.GetConfigBool(config.ConfigGrafanaDashboardsSynced, false) {
+		cr.Status.InstalledDashboards = r.config.Dashboards
 	} else {
-		r.config.AddConfigItem(config.ConfigGrafanaAdminRoute,
-			fmt.Sprintf("http://%v:3000", state.GrafanaService.Name))
+		r.config.Dashboards = cr.Status.InstalledDashboards
 	}
 
 	err := r.client.Status().Update(r.context, cr)
@@ -213,9 +209,26 @@ func (r *ReconcileGrafana) manageSuccess(cr *i8ly.Grafana, state *common.Cluster
 		return r.manageError(cr, err)
 	}
 
-	// Allow the dashboard controller to reconcile once Grafana
-	// is successfully installed
-	r.config.AddConfigItem(config.ConfigDashboardLabelSelector, cr.Spec.DashboardLabelSelector)
+	// Make the Grafana API URL available to the dashboard controller
+	var grafanaRoute string
+	if state.GrafanaRoute != nil {
+		grafanaRoute = fmt.Sprintf("https://%v", state.GrafanaRoute.Spec.Host)
+	} else {
+
+		grafanaRoute = fmt.Sprintf("http://%v:%d",
+			state.GrafanaService.Name,
+			model.GetGrafanaPort(cr),
+		)
+	}
+
+	// Publish controller state
+	controllerState := common.ControllerState{
+		DashboardSelectors: cr.Spec.DashboardLabelSelector,
+		AdminUsername:      cr.Status.AdminUser,
+		AdminPassword:      cr.Status.AdminPassword,
+		AdminUrl:           grafanaRoute,
+	}
+	common.ControllerEvents <- controllerState
 
 	log.Info("desired cluster state met")
 
