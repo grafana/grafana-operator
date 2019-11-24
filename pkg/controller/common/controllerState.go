@@ -9,4 +9,5 @@ type ControllerState struct {
 	AdminUsername      string
 	AdminPassword      string
 	AdminUrl           string
+	GrafanaReady       bool
 }

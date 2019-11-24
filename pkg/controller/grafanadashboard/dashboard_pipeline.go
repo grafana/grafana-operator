@@ -15,7 +15,7 @@ import (
 )
 
 type DashboardPipeline interface {
-	ProcessDashboard() (*sdk.Board, error)
+	ProcessDashboard(knownHash string) (*sdk.Board, error)
 }
 
 type DashboardPipelineImpl struct {
@@ -23,7 +23,6 @@ type DashboardPipelineImpl struct {
 	JSON      string
 	Board     sdk.Board
 	Logger    logr.Logger
-	Hash      string
 }
 
 func NewDashboardPipeline(dashboard *v1alpha1.GrafanaDashboard) DashboardPipeline {
@@ -34,20 +33,18 @@ func NewDashboardPipeline(dashboard *v1alpha1.GrafanaDashboard) DashboardPipelin
 	}
 }
 
-func (r *DashboardPipelineImpl) ProcessDashboard() (*sdk.Board, error) {
+func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) (*sdk.Board, error) {
 	err := r.obtainJson()
 	if err != nil {
 		return nil, err
 	}
 
 	// Dashboard unchanged?
-	r.generateHash()
-	if r.Dashboard.Status.Hash == r.Hash {
+	hash := r.generateHash()
+	if hash == knownHash {
 		return nil, nil
 	}
-
-	// Update hash if it actually changed
-	r.Dashboard.Status.Hash = r.Hash
+	r.Dashboard.Status.Hash = hash
 
 	// Dashboard valid?
 	err = r.validateJson()
@@ -104,9 +101,9 @@ func (r *DashboardPipelineImpl) obtainJson() error {
 // Create a hash of the dashboard to detect if there are actually changes to the json
 // If there are no changes we should avoid sending update requests as this will create
 // a new dashboard version in Grafana
-func (r *DashboardPipelineImpl) generateHash() {
+func (r *DashboardPipelineImpl) generateHash() string {
 	r.Logger.Info("generating dashboard hash")
-	r.Hash = fmt.Sprintf("%x", md5.Sum([]byte(r.Dashboard.Spec.Json+r.Dashboard.Spec.Url)))
+	return fmt.Sprintf("%x", md5.Sum([]byte(r.Dashboard.Spec.Json+r.Dashboard.Spec.Url)))
 }
 
 // Try to obtain the dashboard json from a provided url

@@ -113,6 +113,12 @@ type ReconcileGrafanaDashboard struct {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	// If Grafana is not running there is no need to continue
+	if r.state.GrafanaReady == false {
+		log.Info("no grafana instance available")
+		return reconcile.Result{Requeue: false}, nil
+	}
+
 	client, err := r.getClient()
 	if err != nil {
 		return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
@@ -175,6 +181,16 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 		return false
 	}
 
+	// Returns the hash of a dashboard if it is known
+	findHash := func(item *i8ly.GrafanaDashboard) string {
+		for _, d := range knownDashboards {
+			if item.Name == d.Name {
+				return d.Hash
+			}
+		}
+		return ""
+	}
+
 	// Dashboards to delete: dashboards that are known but not found
 	// any longer in the namespace
 	for _, dashboard := range knownDashboards {
@@ -190,9 +206,11 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 			continue
 		}
 
-		// Process the dashboard
+		// Process the dashboard. Use the known hash of an existing dashboard
+		// to determine if an update is required
+		knownHash := findHash(&dashboard)
 		pipeline := NewDashboardPipeline(&dashboard)
-		processed, err := pipeline.ProcessDashboard()
+		processed, err := pipeline.ProcessDashboard(knownHash)
 		if err != nil {
 			r.manageError(&dashboard, err)
 			continue

@@ -96,8 +96,16 @@ func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard) {
 		c.Dashboards[ns] = append(c.Dashboards[ns], v1alpha1.GrafanaDashboardRef{
 			Name: dashboard.Name,
 			UID:  dashboard.Status.UID,
+			Hash: dashboard.Status.Hash,
 		})
 	}
+}
+
+func (c *ControllerConfig) Cleanup() {
+	c.Lock()
+	defer c.Unlock()
+	c.Dashboards = map[string][]v1alpha1.GrafanaDashboardRef{}
+	c.Plugins = map[string]v1alpha1.PluginList{}
 }
 
 func (c *ControllerConfig) RemoveDashboard(namespace, name string) {
