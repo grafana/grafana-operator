@@ -141,6 +141,12 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 		if errors.IsNotFound(err) {
 			// Stop the dashboard controller from reconciling when grafana is not installed
 			r.config.RemoveConfigItem(config.ConfigDashboardLabelSelector)
+			r.config.Cleanup()
+
+			common.ControllerEvents <- common.ControllerState{
+				GrafanaReady: false,
+			}
+
 			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{}, err
@@ -187,8 +193,11 @@ func (r *ReconcileGrafana) manageError(cr *i8ly.Grafana, issue error) (reconcile
 	// Stop reconciling dashboards when there are problems with the
 	// Grafana instance
 	r.config.RemoveConfigItem(config.ConfigDashboardLabelSelector)
+	common.ControllerEvents <- common.ControllerState{
+		GrafanaReady: false,
+	}
 
-	return reconcile.Result{Requeue: false}, nil
+	return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
 }
 
 func (r *ReconcileGrafana) manageSuccess(cr *i8ly.Grafana, state *common.ClusterState) (reconcile.Result, error) {
@@ -230,6 +239,7 @@ func (r *ReconcileGrafana) manageSuccess(cr *i8ly.Grafana, state *common.Cluster
 		AdminUsername:      cr.Status.AdminUser,
 		AdminPassword:      cr.Status.AdminPassword,
 		AdminUrl:           grafanaRoute,
+		GrafanaReady:       true,
 	}
 	common.ControllerEvents <- controllerState
 

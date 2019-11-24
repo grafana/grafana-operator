@@ -40,5 +40,6 @@ func IsDeploymentReady(deployment *v12.Deployment) (bool, error) {
 			return false, nil
 		}
 	}
-	return true, nil
+
+	return deployment.Status.ReadyReplicas == deployment.Status.Replicas, nil
 }

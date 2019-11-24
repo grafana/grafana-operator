@@ -34,6 +34,7 @@ type GrafanaDashboardStatus struct {
 type GrafanaDashboardRef struct {
 	Name string `json:"name"`
 	UID  string `json:"uid"`
+	Hash string `json:"hash"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

@@ -123,7 +123,7 @@ func (i *ClusterActionRunner) deploymentReady(obj runtime.Object) error {
 	}
 
 	if !ready {
-		return stdErr.New("route not ready")
+		return stdErr.New("deployment not ready")
 	}
 	return nil
 }
