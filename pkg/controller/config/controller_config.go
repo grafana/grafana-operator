@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 const (
@@ -34,13 +35,15 @@ const (
 	PluginsUrl                      = "https://grafana.com/api/plugins/%s/versions/%s"
 	PluginsMinAge                   = 5
 	InitContainerName               = "grafana-plugins-init"
-	RequeueDelay                    = time.Second * 15
+	RequeueDelay                    = time.Second * 5
 	PodLabelDefaultValue            = "grafana"
 	SecretsMountDir                 = "/etc/grafana-secrets/"
 	ConfigMapsMountDir              = "/etc/grafana-configmaps/"
 	ConfigRouteWatch                = "watch.routes"
 	ConfigGrafanaDashboardsSynced   = "grafana.dashboards.synced"
 )
+
+var log = logf.Log.WithName("controller_config")
 
 type ControllerConfig struct {
 	*sync.Mutex
@@ -90,7 +93,7 @@ func (c *ControllerConfig) RemovePluginsFor(namespace, name string) {
 
 func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard) {
 	ns := dashboard.Namespace
-	if _, exists := c.HasDashboard(ns, dashboard.Name); !exists {
+	if i, exists := c.HasDashboard(ns, dashboard.Name); !exists {
 		c.Lock()
 		defer c.Unlock()
 		c.Dashboards[ns] = append(c.Dashboards[ns], v1alpha1.GrafanaDashboardRef{
@@ -98,14 +101,22 @@ func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard) {
 			UID:  dashboard.Status.UID,
 			Hash: dashboard.Status.Hash,
 		})
+		log.Info("====== new dashboard added")
+	} else {
+		c.Lock()
+		defer c.Unlock()
+		c.Dashboards[ns][i].UID = dashboard.Status.UID
+		c.Dashboards[ns][i].Hash = dashboard.Status.Hash
+		log.Info("====== existing dashboard updated")
 	}
 }
 
-func (c *ControllerConfig) Cleanup() {
-	c.Lock()
-	defer c.Unlock()
-	c.Dashboards = map[string][]v1alpha1.GrafanaDashboardRef{}
-	c.Plugins = map[string]v1alpha1.PluginList{}
+func (c *ControllerConfig) InvalidateDashboards() {
+	for _, v := range c.Dashboards {
+		for _, d := range v {
+			d.Hash = ""
+		}
+	}
 }
 
 func (c *ControllerConfig) RemoveDashboard(namespace, name string) {
@@ -188,4 +199,14 @@ func (c *ControllerConfig) HasDashboard(namespace, name string) (int, bool) {
 		}
 	}
 	return -1, false
+}
+
+func (c *ControllerConfig) Cleanup(plugins bool) {
+	c.Lock()
+	defer c.Unlock()
+	c.Dashboards = map[string][]v1alpha1.GrafanaDashboardRef{}
+
+	if plugins {
+		c.Plugins = map[string]v1alpha1.PluginList{}
+	}
 }

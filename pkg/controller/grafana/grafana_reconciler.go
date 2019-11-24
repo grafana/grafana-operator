@@ -212,6 +212,12 @@ func (i *GrafanaReconciler) getGrafanaPluginsDesiredState(cr *v1alpha1.Grafana) 
 
 		// Build the new list of plugins for the init container to consume
 		i.PluginsEnv = i.Plugins.BuildEnv(cr)
+
+		// Reset the list of known dashboards to force the dashboard controller
+		// to reimport them
+		cfg := config.GetControllerConfig()
+		cfg.InvalidateDashboards()
+
 		return common.LogAction{
 			Msg: fmt.Sprintf("plugins updated to %s", i.PluginsEnv),
 		}
