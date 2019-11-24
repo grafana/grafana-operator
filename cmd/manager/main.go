@@ -13,9 +13,12 @@ import (
 	routev1 "github.com/openshift/api/route/v1"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
+	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	"github.com/operator-framework/operator-sdk/pkg/ready"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/rest"
 	"os"
@@ -34,6 +37,11 @@ var flagPluginsInitContainerImage string
 var flagPluginsInitContainerTag string
 var flagNamespaces string
 var scanAll bool
+
+var (
+	metricsHost       = "0.0.0.0"
+	metricsPort int32 = 8080
+)
 
 func printVersion() {
 	log.Info(fmt.Sprintf("Go Version: %s", runtime.Version()))
@@ -164,7 +172,10 @@ func main() {
 	defer r.Unset()
 
 	// Create a new Cmd to provide shared dependencies and start components
-	mgr, err := manager.New(cfg, manager.Options{Namespace: namespace})
+	mgr, err := manager.New(cfg, manager.Options{
+		Namespace:          namespace,
+		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
+	})
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
@@ -197,6 +208,19 @@ func main() {
 	if err := controller.AddToManager(mgr, autodetect.SubscriptionChannel); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
+	}
+
+	servicePorts := []v1.ServicePort{
+		{
+			Name:       metrics.OperatorPortName,
+			Protocol:   v1.ProtocolTCP,
+			Port:       metricsPort,
+			TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort},
+		},
+	}
+	_, err = metrics.CreateMetricsService(context.TODO(), cfg, servicePorts)
+	if err != nil {
+		log.Error(err, "error starting metrics service")
 	}
 
 	log.Info("Starting the Cmd.")
