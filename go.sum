@@ -87,6 +87,7 @@ github.com/coreos/go-systemd v0.0.0-20181031085051-9002847aa142/go.mod h1:F5haX7
 github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e/go.mod h1:F5haX7vjVVG0kc13fIWeqUViNPyEJxv/OmvnBo0Yme4=
 github.com/coreos/pkg v0.0.0-20180108230652-97fdf19511ea/go.mod h1:E3G3o1h8I7cfcXa63jLwjI0eiQQMgzzUDFVpN/nH/eA=
 github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f/go.mod h1:E3G3o1h8I7cfcXa63jLwjI0eiQQMgzzUDFVpN/nH/eA=
+github.com/coreos/prometheus-operator v0.29.0 h1:Moi4klbr1xUVaofWzlaM12mxwCL294GiLW2Qj8ku0sY=
 github.com/coreos/prometheus-operator v0.29.0/go.mod h1:SO+r5yZUacDFPKHfPoUjI3hMsH+ZUdiuNNhuSq3WoSg=
 github.com/coreos/rkt v1.30.0/go.mod h1:O634mlH6U7qk87poQifK6M2rsFNt+FyUTWNMnP1hF1U=
 github.com/cpuguy83/go-md2man v1.0.4/go.mod h1:N6JayAiVKtlHSnuTCeuLSQVs75hb8q+dYQLjr7cDsKY=
