@@ -185,6 +185,7 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 	findHash := func(item *i8ly.GrafanaDashboard) string {
 		for _, d := range knownDashboards {
 			if item.Name == d.Name {
+				log.Info(fmt.Sprintf("====== found hash: %v", d.Hash))
 				return d.Hash
 			}
 		}
@@ -227,7 +228,7 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 			continue
 		}
 
-		err = r.manageSuccess(&dashboard, status)
+		err = r.manageSuccess(&dashboard, status, pipeline.NewHash())
 		if err != nil {
 			r.manageError(&dashboard, err)
 		}
@@ -255,7 +256,7 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 
 // Handle success case: update dashboard metadata (id, uid) and update the list
 // of plugins
-func (r *ReconcileGrafanaDashboard) manageSuccess(dashboard *i8ly.GrafanaDashboard, status sdk.StatusMessage) error {
+func (r *ReconcileGrafanaDashboard) manageSuccess(dashboard *i8ly.GrafanaDashboard, status sdk.StatusMessage, hash string) error {
 	log.Info(fmt.Sprintf("dashboard %v/%v successfully submitted",
 		dashboard.Namespace,
 		dashboard.Name))
@@ -264,6 +265,7 @@ func (r *ReconcileGrafanaDashboard) manageSuccess(dashboard *i8ly.GrafanaDashboa
 	dashboard.Status.ID = *status.ID
 	dashboard.Status.Slug = *status.Slug
 	dashboard.Status.Phase = i8ly.PhaseReconciling
+	dashboard.Status.Hash = hash
 
 	r.config.AddDashboard(dashboard)
 	r.config.SetPluginsFor(dashboard)

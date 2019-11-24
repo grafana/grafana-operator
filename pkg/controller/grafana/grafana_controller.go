@@ -141,7 +141,7 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 		if errors.IsNotFound(err) {
 			// Stop the dashboard controller from reconciling when grafana is not installed
 			r.config.RemoveConfigItem(config.ConfigDashboardLabelSelector)
-			r.config.Cleanup()
+			r.config.Cleanup(true)
 
 			common.ControllerEvents <- common.ControllerState{
 				GrafanaReady: false,
@@ -214,6 +214,7 @@ func (r *ReconcileGrafana) manageSuccess(cr *i8ly.Grafana, state *common.Cluster
 		if r.config.Dashboards == nil {
 			r.config.Dashboards = make(map[string][]i8ly.GrafanaDashboardRef)
 		}
+		log.Info(fmt.Sprintf("====== dashboards updated to: %v", r.config.Dashboards))
 	}
 
 	err := r.client.Status().Update(r.context, cr)

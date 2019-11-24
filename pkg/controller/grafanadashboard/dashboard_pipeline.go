@@ -16,6 +16,7 @@ import (
 
 type DashboardPipeline interface {
 	ProcessDashboard(knownHash string) (*sdk.Board, error)
+	NewHash() string
 }
 
 type DashboardPipelineImpl struct {
@@ -23,6 +24,7 @@ type DashboardPipelineImpl struct {
 	JSON      string
 	Board     sdk.Board
 	Logger    logr.Logger
+	Hash      string
 }
 
 func NewDashboardPipeline(dashboard *v1alpha1.GrafanaDashboard) DashboardPipeline {
@@ -42,9 +44,10 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) (*sdk.Board, 
 	// Dashboard unchanged?
 	hash := r.generateHash()
 	if hash == knownHash {
+		r.Hash = knownHash
 		return nil, nil
 	}
-	r.Dashboard.Status.Hash = hash
+	r.Hash = hash
 
 	// Dashboard valid?
 	err = r.validateJson()
@@ -128,4 +131,8 @@ func (r *DashboardPipelineImpl) loadDashboardFromURL() error {
 	}
 
 	return nil
+}
+
+func (r *DashboardPipelineImpl) NewHash() string {
+	return r.Hash
 }
