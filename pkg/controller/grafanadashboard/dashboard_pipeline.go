@@ -1,6 +1,7 @@
 package grafanadashboard
 
 import (
+	"crypto/md5"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -22,6 +23,7 @@ type DashboardPipelineImpl struct {
 	JSON      string
 	Board     sdk.Board
 	Logger    logr.Logger
+	Hash      string
 }
 
 func NewDashboardPipeline(dashboard *v1alpha1.GrafanaDashboard) DashboardPipeline {
@@ -38,6 +40,16 @@ func (r *DashboardPipelineImpl) ProcessDashboard() (*sdk.Board, error) {
 		return nil, err
 	}
 
+	// Dashboard unchanged?
+	r.generateHash()
+	if r.Dashboard.Status.Hash == r.Hash {
+		return nil, nil
+	}
+
+	// Update hash if it actually changed
+	r.Dashboard.Status.Hash = r.Hash
+
+	// Dashboard valid?
 	err = r.validateJson()
 	if err != nil {
 		return nil, err
@@ -56,6 +68,7 @@ func (r *DashboardPipelineImpl) ProcessDashboard() (*sdk.Board, error) {
 
 // Make sure the dashboard contains valid JSON
 func (r *DashboardPipelineImpl) validateJson() error {
+	log.Info("validating dashboard contents")
 	var dashboard sdk.Board
 	err := json.Unmarshal([]byte(r.JSON), &dashboard)
 	if err != nil {
@@ -88,7 +101,17 @@ func (r *DashboardPipelineImpl) obtainJson() error {
 	return errors.New("dashboard does not contain json")
 }
 
+// Create a hash of the dashboard to detect if there are actually changes to the json
+// If there are no changes we should avoid sending update requests as this will create
+// a new dashboard version in Grafana
+func (r *DashboardPipelineImpl) generateHash() {
+	r.Logger.Info("generating dashboard hash")
+	r.Hash = fmt.Sprintf("%x", md5.Sum([]byte(r.Dashboard.Spec.Json+r.Dashboard.Spec.Url)))
+}
+
+// Try to obtain the dashboard json from a provided url
 func (r *DashboardPipelineImpl) loadDashboardFromURL() error {
+	r.Logger.Info("loading dashboard from url")
 	_, err := url.ParseRequestURI(r.Dashboard.Spec.Url)
 	if err != nil {
 		return errors.New(fmt.Sprintf("invalid url %v", r.Dashboard.Spec.Url))

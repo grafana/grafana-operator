@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"github.com/grafana-tools/sdk"
 	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/pkg/controller/config"
 	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -18,6 +18,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+	"time"
 )
 
 const (
@@ -33,8 +34,8 @@ var log = logf.Log.WithName(ControllerName)
 
 // Add creates a new GrafanaDashboard Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager, autodetectChannel chan schema.GroupVersionKind) error {
-	return add(mgr, newReconciler(mgr))
+func Add(mgr manager.Manager, namespace string) error {
+	return add(mgr, newReconciler(mgr), namespace)
 }
 
 // newReconciler returns a new reconcile.Reconciler
@@ -48,11 +49,12 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 		context:  ctx,
 		cancel:   cancel,
 		recorder: mgr.GetEventRecorderFor(ControllerName),
+		state:    common.ControllerState{},
 	}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
-func add(mgr manager.Manager, r reconcile.Reconciler) error {
+func add(mgr manager.Manager, r reconcile.Reconciler, namespace string) error {
 	// Create a new controller
 	c, err := controller.New("grafanadashboard-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
@@ -64,6 +66,32 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	if err == nil {
 		log.Info("Starting dashboard controller")
 	}
+
+	ref := r.(*ReconcileGrafanaDashboard)
+	ticker := time.NewTicker(config.RequeueDelay)
+	sendEmptyRequest := func() {
+		request := reconcile.Request{
+			NamespacedName: types.NamespacedName{
+				Namespace: namespace,
+				Name:      "",
+			},
+		}
+		r.Reconcile(request)
+	}
+
+	go func() {
+		for range ticker.C {
+			log.Info("running periodic dashboard resync")
+			sendEmptyRequest()
+		}
+	}()
+
+	go func() {
+		for stateChange := range common.ControllerEvents {
+			// Controller state updated
+			ref.state = stateChange
+		}
+	}()
 
 	return err
 }
@@ -79,19 +107,26 @@ type ReconcileGrafanaDashboard struct {
 	context  context.Context
 	cancel   context.CancelFunc
 	recorder record.EventRecorder
+	state    common.ControllerState
 }
 
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	dashboardLabelSelectors := r.config.GetConfigItem(config.ConfigDashboardLabelSelector, nil)
-	if dashboardLabelSelectors == nil {
+	client, err := r.getClient()
+	if err != nil {
 		return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
 	}
 
-	client, err := r.getClient()
-	if err != nil {
-		return reconcile.Result{}, err
+	// Initial request?
+	if request.Name == "" {
+		return r.reconcileDashboards(request, client)
+	}
+
+	// Check if the label selectors are available yet. If not then the grafana controller
+	// has not finished initializing and we can't continue. Reschedule for later.
+	if r.state.DashboardSelectors == nil {
+		return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
 	}
 
 	// Fetch the GrafanaDashboard instance
@@ -99,6 +134,7 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 	err = r.client.Get(r.context, request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
+			// If some dashboard has been deleted, then always re sync the world
 			log.Info(fmt.Sprintf("deleting dashboard %v/%v", request.Namespace, request.Name))
 			return r.reconcileDashboards(request, client)
 		}
@@ -106,14 +142,13 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 		return reconcile.Result{}, err
 	}
 
+	// If the dashboard does not match the label selectors then we ignore it
 	cr := instance.DeepCopy()
-	if match, err := cr.MatchesSelectors(dashboardLabelSelectors.([]*v1.LabelSelector)); err != nil {
-		return reconcile.Result{}, err
-	} else if !match {
-		log.Info(fmt.Sprintf("found dashboard '%s/%s' but labels do not match", cr.Namespace, cr.Name))
+	if !r.isMatch(cr) {
 		return reconcile.Result{}, nil
 	}
 
+	// Otherwise always re sync all dashboards in the namespace
 	return r.reconcileDashboards(request, client)
 }
 
@@ -128,6 +163,9 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 
 	// Prepare lists
 	dashboardsToDelete := []i8ly.GrafanaDashboardRef{}
+
+	// Check if a given dashboard (by name) is present in the list of
+	// dashboards in the namespace
 	inNamespace := func(item string) bool {
 		for _, dashboard := range namespaceDashboards.Items {
 			if dashboard.Name == item {
@@ -147,10 +185,21 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 
 	// Process new/updated dashboards
 	for _, dashboard := range namespaceDashboards.Items {
+		// Is this a dashboard we care about (matches the label selectors)?
+		if !r.isMatch(&dashboard) {
+			continue
+		}
+
+		// Process the dashboard
 		pipeline := NewDashboardPipeline(&dashboard)
 		processed, err := pipeline.ProcessDashboard()
 		if err != nil {
 			r.manageError(&dashboard, err)
+			continue
+		}
+
+		if processed == nil {
+			log.Info(fmt.Sprintf("dashboard %v unchanged", dashboard.Name))
 			continue
 		}
 
@@ -175,14 +224,15 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 				status.Message))
 			continue
 		}
-
 		log.Info(fmt.Sprintf("delete result was %v", *status.Message))
-
-		r.config.RemovePluginsFor(request.Namespace, request.Name)
-		r.config.RemoveDashboard(request.Namespace, request.Name)
+		r.config.RemovePluginsFor(request.Namespace, dashboard.Name)
+		r.config.RemoveDashboard(request.Namespace, dashboard.Name)
 	}
 
-	return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
+	// Mark the dashboards as synced so that the current state can be written
+	// to the Grafana CR by the grafana controller
+	r.config.AddConfigItem(config.ConfigGrafanaDashboardsSynced, true)
+	return reconcile.Result{Requeue: false}, nil
 }
 
 // Handle success case: update dashboard metadata (id, uid) and update the list
@@ -216,20 +266,36 @@ func (r *ReconcileGrafanaDashboard) manageError(dashboard *i8ly.GrafanaDashboard
 
 // Get an authenticated grafana API client
 func (r *ReconcileGrafanaDashboard) getClient() (GrafanaClient, error) {
-	url := r.config.GetConfigString(config.ConfigGrafanaAdminRoute, "")
+	url := r.state.AdminUrl
 	if url == "" {
 		return nil, defaultErrors.New("cannot get grafana admin url")
 	}
 
-	username := r.config.GetConfigString(config.ConfigGrafanaAdminUsername, "")
+	username := r.state.AdminUsername
 	if username == "" {
 		return nil, defaultErrors.New("invalid credentials (username)")
 	}
 
-	password := r.config.GetConfigString(config.ConfigGrafanaAdminPassword, "")
+	password := r.state.AdminPassword
 	if password == "" {
 		return nil, defaultErrors.New("invalid credentials (password)")
 	}
 
 	return NewGrafanaClient(url, username, password), nil
+}
+
+// Test if a given dashboard matches an array of label selectors
+func (r *ReconcileGrafanaDashboard) isMatch(item *i8ly.GrafanaDashboard) bool {
+	if r.state.DashboardSelectors == nil {
+		return false
+	}
+
+	match, err := item.MatchesSelectors(r.state.DashboardSelectors)
+	if err != nil {
+		log.Error(err, fmt.Sprintf("error matching selectors against %v/%v",
+			item.Namespace,
+			item.Name))
+		return false
+	}
+	return match
 }
