@@ -202,6 +202,9 @@ func (r *ReconcileGrafana) manageSuccess(cr *i8ly.Grafana, state *common.Cluster
 		cr.Status.InstalledDashboards = r.config.Dashboards
 	} else {
 		r.config.Dashboards = cr.Status.InstalledDashboards
+		if r.config.Dashboards == nil {
+			r.config.Dashboards = make(map[string][]i8ly.GrafanaDashboardRef)
+		}
 	}
 
 	err := r.client.Status().Update(r.context, cr)

@@ -2,7 +2,6 @@ package model
 
 import (
 	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
-	config2 "github.com/integr8ly/grafana-operator/pkg/controller/config"
 	v1 "k8s.io/api/core/v1"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -42,9 +41,6 @@ func getServicePorts(cr *v1alpha1.Grafana) []v1.ServicePort {
 }
 
 func GrafanaService(cr *v1alpha1.Grafana) *v1.Service {
-	config := config2.GetControllerConfig()
-	label := config.GetConfigString(config2.ConfigPodLabelValue, config2.PodLabelDefaultValue)
-
 	return &v1.Service{
 		ObjectMeta: v12.ObjectMeta{
 			Name:        GrafanaServiceName,
@@ -55,7 +51,7 @@ func GrafanaService(cr *v1alpha1.Grafana) *v1.Service {
 		Spec: v1.ServiceSpec{
 			Ports: getServicePorts(cr),
 			Selector: map[string]string{
-				"app": label,
+				"app": GrafanaPodLabel,
 			},
 			ClusterIP: "",
 			Type:      getServiceType(cr),
