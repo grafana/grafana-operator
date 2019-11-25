@@ -191,17 +191,6 @@ func (i *GrafanaReconciler) getGrafanaDeploymentDesiredState(state *common.Clust
 }
 
 func (i *GrafanaReconciler) getGrafanaPluginsDesiredState(cr *v1alpha1.Grafana) common.ClusterAction {
-	// Waited long enough for dashboards to be ready?
-	if !i.Plugins.CanUpdatePlugins() {
-		// If not, still set the plugins to their last known state
-		// because otherwise this could trigger a restart if plugins
-		// were installed
-		i.PluginsEnv = i.Plugins.BuildEnv(cr)
-		return common.LogAction{
-			Msg: "waiting for dashboards",
-		}
-	}
-
 	// Fetch all plugins of all dashboards
 	var requestedPlugins v1alpha1.PluginList
 	for _, v := range config.GetControllerConfig().Plugins {
