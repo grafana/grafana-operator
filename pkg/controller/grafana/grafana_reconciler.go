@@ -193,6 +193,10 @@ func (i *GrafanaReconciler) getGrafanaDeploymentDesiredState(state *common.Clust
 func (i *GrafanaReconciler) getGrafanaPluginsDesiredState(cr *v1alpha1.Grafana) common.ClusterAction {
 	// Waited long enough for dashboards to be ready?
 	if !i.Plugins.CanUpdatePlugins() {
+		// If not, still set the plugins to their last known state
+		// because otherwise this could trigger a restart if plugins
+		// were installed
+		i.PluginsEnv = i.Plugins.BuildEnv(cr)
 		return common.LogAction{
 			Msg: "waiting for dashboards",
 		}
@@ -216,7 +220,6 @@ func (i *GrafanaReconciler) getGrafanaPluginsDesiredState(cr *v1alpha1.Grafana) 
 		// Reset the list of known dashboards to force the dashboard controller
 		// to reimport them
 		cfg := config.GetControllerConfig()
-		cfg.AddConfigItem(config.ConfigGrafanaDashboardsSynced, false)
 		cfg.InvalidateDashboards()
 
 		return common.LogAction{
@@ -225,7 +228,6 @@ func (i *GrafanaReconciler) getGrafanaPluginsDesiredState(cr *v1alpha1.Grafana) 
 	} else {
 		// Rebuild the env var from the installed plugins
 		i.PluginsEnv = i.Plugins.BuildEnv(cr)
-
 		return common.LogAction{
 			Msg: "plugins unchanged",
 		}

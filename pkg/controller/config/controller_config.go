@@ -47,7 +47,7 @@ type ControllerConfig struct {
 	*sync.Mutex
 	Values     map[string]interface{}
 	Plugins    map[string]v1alpha1.PluginList
-	Dashboards map[string][]v1alpha1.GrafanaDashboardRef
+	Dashboards map[string][]*v1alpha1.GrafanaDashboardRef
 }
 
 var instance *ControllerConfig
@@ -61,7 +61,7 @@ func GetControllerConfig() *ControllerConfig {
 			Mutex:      &sync.Mutex{},
 			Values:     map[string]interface{}{},
 			Plugins:    map[string]v1alpha1.PluginList{},
-			Dashboards: map[string][]v1alpha1.GrafanaDashboardRef{},
+			Dashboards: map[string][]*v1alpha1.GrafanaDashboardRef{},
 		}
 	})
 	return instance
@@ -96,7 +96,7 @@ func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard) {
 	if i, exists := c.HasDashboard(ns, dashboard.Name); !exists {
 		c.Lock()
 		defer c.Unlock()
-		c.Dashboards[ns] = append(c.Dashboards[ns], v1alpha1.GrafanaDashboardRef{
+		c.Dashboards[ns] = append(c.Dashboards[ns], &v1alpha1.GrafanaDashboardRef{
 			Name: dashboard.Name,
 			UID:  dashboard.Status.UID,
 			Hash: dashboard.Status.Hash,
@@ -114,19 +114,16 @@ func (c *ControllerConfig) InvalidateDashboards() {
 	defer c.Unlock()
 	for _, v := range c.Dashboards {
 		for _, d := range v {
-			d.Hash = "xxx"
+			d.Hash = ""
 		}
 	}
-	log.Info(fmt.Sprintf("=== dashboards invalidated: %v", c.Dashboards))
 }
 
-func (c *ControllerConfig) SetDashboards(dashboards map[string][]v1alpha1.GrafanaDashboardRef) {
+func (c *ControllerConfig) SetDashboards(dashboards map[string][]*v1alpha1.GrafanaDashboardRef) {
 	c.Lock()
 	defer c.Unlock()
 	c.Dashboards = dashboards
-	log.Info(fmt.Sprintf("=== dashboards set to: %v", c.Dashboards))
 }
-
 
 func (c *ControllerConfig) RemoveDashboard(namespace, name string) {
 	if i, exists := c.HasDashboard(namespace, name); exists {
@@ -139,13 +136,13 @@ func (c *ControllerConfig) RemoveDashboard(namespace, name string) {
 	}
 }
 
-func (c *ControllerConfig) GetDashboards(namespace string) []v1alpha1.GrafanaDashboardRef {
+func (c *ControllerConfig) GetDashboards(namespace string) []*v1alpha1.GrafanaDashboardRef {
 	c.Lock()
 	defer c.Unlock()
 	if dashboards, ok := c.Dashboards[namespace]; ok {
 		return dashboards
 	}
-	return []v1alpha1.GrafanaDashboardRef{}
+	return []*v1alpha1.GrafanaDashboardRef{}
 }
 
 func (c *ControllerConfig) AddConfigItem(key string, value interface{}) {
@@ -213,7 +210,7 @@ func (c *ControllerConfig) HasDashboard(namespace, name string) (int, bool) {
 func (c *ControllerConfig) Cleanup(plugins bool) {
 	c.Lock()
 	defer c.Unlock()
-	c.Dashboards = map[string][]v1alpha1.GrafanaDashboardRef{}
+	c.Dashboards = map[string][]*v1alpha1.GrafanaDashboardRef{}
 
 	if plugins {
 		c.Plugins = map[string]v1alpha1.PluginList{}
