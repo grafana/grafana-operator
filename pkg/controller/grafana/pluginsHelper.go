@@ -7,7 +7,6 @@ import (
 	"github.com/integr8ly/grafana-operator/pkg/controller/config"
 	"net/http"
 	"strings"
-	"time"
 )
 
 type PluginsHelperImpl struct {
@@ -74,12 +73,6 @@ func (h *PluginsHelperImpl) pickLatestVersions(requested integreatly.PluginList)
 		latestVersions = append(latestVersions, plugin)
 	}
 	return latestVersions, nil
-}
-
-func (h *PluginsHelperImpl) CanUpdatePlugins() bool {
-	lastUpdate := config.GetControllerConfig().GetConfigTimestamp(config.ConfigGrafanaPluginsUpdated, time.Now())
-	difference := time.Now().Sub(lastUpdate)
-	return difference.Seconds() >= config.PluginsMinAge
 }
 
 // Creates the list of plugins that can be added or updated

@@ -17,7 +17,6 @@ const (
 	ConfigPodLabelValue             = "grafana.pod.label"
 	ConfigOperatorNamespace         = "grafana.operator.namespace"
 	ConfigDashboardLabelSelector    = "grafana.dashboard.selector"
-	ConfigGrafanaPluginsUpdated     = "grafana.plugins.updated"
 	ConfigOpenshift                 = "mode.openshift"
 	GrafanaImage                    = "grafana/grafana"
 	GrafanaVersion                  = "6.4.4"
@@ -80,14 +79,12 @@ func (c *ControllerConfig) GetPluginsFor(dashboard *v1alpha1.GrafanaDashboard) v
 func (c *ControllerConfig) SetPluginsFor(dashboard *v1alpha1.GrafanaDashboard) {
 	id := c.GetDashboardId(dashboard.Namespace, dashboard.Name)
 	c.Plugins[id] = dashboard.Spec.Plugins
-	c.AddConfigItem(ConfigGrafanaPluginsUpdated, time.Now())
 }
 
 func (c *ControllerConfig) RemovePluginsFor(namespace, name string) {
 	id := c.GetDashboardId(namespace, name)
 	if _, ok := c.Plugins[id]; ok {
 		delete(c.Plugins, id)
-		c.AddConfigItem(ConfigGrafanaPluginsUpdated, time.Now())
 	}
 }
 
