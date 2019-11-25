@@ -279,8 +279,9 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, configHash, plugins string) v1.Depl
 func GrafanaDeployment(cr *v1alpha1.Grafana) *v1.Deployment {
 	return &v1.Deployment{
 		ObjectMeta: v12.ObjectMeta{
-			Name:      GrafanaDeploymentName,
-			Namespace: cr.Namespace, Labels: cr.Spec.Deployment.Labels,
+			Name:        GrafanaDeploymentName,
+			Namespace:   cr.Namespace,
+			Labels:      cr.Spec.Deployment.Labels,
 			Annotations: cr.Spec.Deployment.Annotations,
 		},
 		Spec: getDeploymentSpec(cr, "", ""),

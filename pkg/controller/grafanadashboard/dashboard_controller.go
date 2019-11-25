@@ -185,7 +185,6 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 	findHash := func(item *i8ly.GrafanaDashboard) string {
 		for _, d := range knownDashboards {
 			if item.Name == d.Name {
-				log.Info(fmt.Sprintf("====== found hash: %v", d.Hash))
 				return d.Hash
 			}
 		}
