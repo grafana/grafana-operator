@@ -136,7 +136,7 @@ func (i *ClusterState) readGrafanaIngress(ctx context.Context, cr *v1alpha1.Graf
 }
 
 func (i *ClusterState) readGrafanaDeployment(ctx context.Context, cr *v1alpha1.Grafana, client client.Client) error {
-	currentState := model.GrafanaDeployment(cr)
+	currentState := model.GrafanaDeployment(cr, "")
 	selector := model.GrafanaDeploymentSelector(cr)
 	err := client.Get(ctx, selector, currentState)
 	if err != nil {
