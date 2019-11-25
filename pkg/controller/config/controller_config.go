@@ -43,8 +43,6 @@ const (
 	ConfigGrafanaDashboardsSynced   = "grafana.dashboards.synced"
 )
 
-var log = logf.Log.WithName("controller_config")
-
 type ControllerConfig struct {
 	*sync.Mutex
 	Values     map[string]interface{}
@@ -54,6 +52,8 @@ type ControllerConfig struct {
 
 var instance *ControllerConfig
 var once sync.Once
+
+var log = logf.Log.WithName("controller_config")
 
 func GetControllerConfig() *ControllerConfig {
 	once.Do(func() {
@@ -101,23 +101,32 @@ func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard) {
 			UID:  dashboard.Status.UID,
 			Hash: dashboard.Status.Hash,
 		})
-		log.Info("====== new dashboard added")
 	} else {
 		c.Lock()
 		defer c.Unlock()
 		c.Dashboards[ns][i].UID = dashboard.Status.UID
 		c.Dashboards[ns][i].Hash = dashboard.Status.Hash
-		log.Info("====== existing dashboard updated")
 	}
 }
 
 func (c *ControllerConfig) InvalidateDashboards() {
+	c.Lock()
+	defer c.Unlock()
 	for _, v := range c.Dashboards {
 		for _, d := range v {
-			d.Hash = ""
+			d.Hash = "xxx"
 		}
 	}
+	log.Info(fmt.Sprintf("=== dashboards invalidated: %v", c.Dashboards))
 }
+
+func (c *ControllerConfig) SetDashboards(dashboards map[string][]v1alpha1.GrafanaDashboardRef) {
+	c.Lock()
+	defer c.Unlock()
+	c.Dashboards = dashboards
+	log.Info(fmt.Sprintf("=== dashboards set to: %v", c.Dashboards))
+}
+
 
 func (c *ControllerConfig) RemoveDashboard(namespace, name string) {
 	if i, exists := c.HasDashboard(namespace, name); exists {

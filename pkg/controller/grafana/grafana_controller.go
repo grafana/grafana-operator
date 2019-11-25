@@ -210,11 +210,10 @@ func (r *ReconcileGrafana) manageSuccess(cr *i8ly.Grafana, state *common.Cluster
 	if r.config.GetConfigBool(config.ConfigGrafanaDashboardsSynced, false) {
 		cr.Status.InstalledDashboards = r.config.Dashboards
 	} else {
-		r.config.Dashboards = cr.Status.InstalledDashboards
+		r.config.SetDashboards(cr.Status.InstalledDashboards)
 		if r.config.Dashboards == nil {
-			r.config.Dashboards = make(map[string][]i8ly.GrafanaDashboardRef)
+			r.config.SetDashboards(make(map[string][]i8ly.GrafanaDashboardRef))
 		}
-		log.Info(fmt.Sprintf("====== dashboards updated to: %v", r.config.Dashboards))
 	}
 
 	err := r.client.Status().Update(r.context, cr)
