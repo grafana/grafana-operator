@@ -1051,15 +1051,21 @@ func (in *GrafanaStatus) DeepCopyInto(out *GrafanaStatus) {
 	*out = *in
 	if in.InstalledDashboards != nil {
 		in, out := &in.InstalledDashboards, &out.InstalledDashboards
-		*out = make(map[string][]GrafanaDashboardRef, len(*in))
+		*out = make(map[string][]*GrafanaDashboardRef, len(*in))
 		for key, val := range *in {
-			var outVal []GrafanaDashboardRef
+			var outVal []*GrafanaDashboardRef
 			if val == nil {
 				(*out)[key] = nil
 			} else {
 				in, out := &val, &outVal
-				*out = make([]GrafanaDashboardRef, len(*in))
-				copy(*out, *in)
+				*out = make([]*GrafanaDashboardRef, len(*in))
+				for i := range *in {
+					if (*in)[i] != nil {
+						in, out := &(*in)[i], &(*out)[i]
+						*out = new(GrafanaDashboardRef)
+						**out = **in
+					}
+				}
 			}
 			(*out)[key] = outVal
 		}

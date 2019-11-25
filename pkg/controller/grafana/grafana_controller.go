@@ -193,6 +193,7 @@ func (r *ReconcileGrafana) manageError(cr *i8ly.Grafana, issue error) (reconcile
 	// Stop reconciling dashboards when there are problems with the
 	// Grafana instance
 	r.config.RemoveConfigItem(config.ConfigDashboardLabelSelector)
+
 	common.ControllerEvents <- common.ControllerState{
 		GrafanaReady: false,
 	}
@@ -212,7 +213,7 @@ func (r *ReconcileGrafana) manageSuccess(cr *i8ly.Grafana, state *common.Cluster
 	} else {
 		r.config.SetDashboards(cr.Status.InstalledDashboards)
 		if r.config.Dashboards == nil {
-			r.config.SetDashboards(make(map[string][]i8ly.GrafanaDashboardRef))
+			r.config.SetDashboards(make(map[string][]*i8ly.GrafanaDashboardRef))
 		}
 	}
 

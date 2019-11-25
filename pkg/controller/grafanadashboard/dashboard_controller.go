@@ -168,7 +168,7 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 	}
 
 	// Prepare lists
-	dashboardsToDelete := []i8ly.GrafanaDashboardRef{}
+	dashboardsToDelete := []*i8ly.GrafanaDashboardRef{}
 
 	// Check if a given dashboard (by name) is present in the list of
 	// dashboards in the namespace
@@ -218,6 +218,7 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 
 		if processed == nil {
 			log.Info(fmt.Sprintf("dashboard %v unchanged", dashboard.Name))
+			r.config.SetPluginsFor(&dashboard)
 			continue
 		}
 
@@ -240,7 +241,6 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 				dashboard.UID,
 				status.Status,
 				status.Message))
-			continue
 		}
 		log.Info(fmt.Sprintf("delete result was %v", *status.Message))
 		r.config.RemovePluginsFor(request.Namespace, dashboard.Name)
