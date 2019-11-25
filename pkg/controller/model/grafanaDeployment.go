@@ -215,6 +215,12 @@ func getContainers(cr *v1alpha1.Grafana, configHash string) []v13.Container {
 		ImagePullPolicy:          "IfNotPresent",
 	})
 
+	// Add extra containers
+	for _, container := range cr.Spec.Containers {
+		container.VolumeMounts = getVolumeMounts(cr)
+		containers = append(containers, container)
+	}
+
 	return containers
 }
 
@@ -276,7 +282,7 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, configHash, plugins string) v1.Depl
 	}
 }
 
-func GrafanaDeployment(cr *v1alpha1.Grafana) *v1.Deployment {
+func GrafanaDeployment(cr *v1alpha1.Grafana, configHash string) *v1.Deployment {
 	return &v1.Deployment{
 		ObjectMeta: v12.ObjectMeta{
 			Name:        GrafanaDeploymentName,
@@ -284,7 +290,7 @@ func GrafanaDeployment(cr *v1alpha1.Grafana) *v1.Deployment {
 			Labels:      cr.Spec.Deployment.Labels,
 			Annotations: cr.Spec.Deployment.Annotations,
 		},
-		Spec: getDeploymentSpec(cr, "", ""),
+		Spec: getDeploymentSpec(cr, configHash, ""),
 	}
 }
 

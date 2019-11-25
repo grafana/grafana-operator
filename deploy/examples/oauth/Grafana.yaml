@@ -31,7 +31,7 @@ spec:
         - '-openshift-ca=/etc/pki/tls/cert.pem'
         - '-openshift-ca=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
         - '-skip-auth-regex=^/metrics'
-      image: '{{ .ImageOAuthProxy }}:{{ .ImageTagOAuthProxy }}'
+      image: 'quay.io/openshift/origin-oauth-proxy:4.2'
       name: grafana-proxy
       ports:
         - containerPort: 9091
@@ -47,6 +47,9 @@ spec:
   secrets:
     - grafana-k8s-tls
     - grafana-k8s-proxy
+  service:
+    annotations:
+      service.alpha.openshift.io/serving-cert-secret-name: grafana-k8s-tls
   dashboardLabelSelector:
     - matchExpressions:
-        - { key: "monitoring-key", operator: In, values: ['grafana'] }
+        - { key: "app", operator: In, values: ['grafana'] }
