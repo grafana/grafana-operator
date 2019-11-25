@@ -27,7 +27,7 @@ func (i *GrafanaReconciler) Reconcile(state *common.ClusterState, cr *v1alpha1.G
 
 	desired = desired.AddAction(i.getGrafanaServiceDesiredState(state, cr))
 	desired = desired.AddAction(i.getGrafanaServiceAccountDesiredState(state, cr))
-	desired = desired.AddAction(i.getGrafanaConfigDesiredState(state, cr))
+	desired = desired.AddActions(i.getGrafanaConfigDesiredState(state, cr))
 	desired = desired.AddAction(i.getGrafanaExternalAccessDesiredState(state, cr))
 
 	// Consolidate plugins
@@ -39,16 +39,16 @@ func (i *GrafanaReconciler) Reconcile(state *common.ClusterState, cr *v1alpha1.G
 	desired = desired.AddAction(i.getGrafanaDeploymentDesiredState(state, cr))
 
 	// Check Deployment and Route readiness
-	desired = desired.AddActions(i.getGrafanaReadiness(state))
+	desired = desired.AddActions(i.getGrafanaReadiness(state, cr))
 
 	return desired
 }
 
-func (i *GrafanaReconciler) getGrafanaReadiness(state *common.ClusterState) []common.ClusterAction {
+func (i *GrafanaReconciler) getGrafanaReadiness(state *common.ClusterState, cr *v1alpha1.Grafana) []common.ClusterAction {
 	var actions []common.ClusterAction
 	cfg := config.GetControllerConfig()
 	openshift := cfg.GetConfigBool(config.ConfigOpenshift, false)
-	if openshift {
+	if openshift && cr.Spec.Ingress.Enabled {
 		actions = append(actions, common.RouteReadyAction{
 			Ref: state.GrafanaRoute,
 			Msg: "check route readiness",
@@ -89,8 +89,12 @@ func (i *GrafanaReconciler) getGrafanaServiceAccountDesiredState(state *common.C
 	}
 }
 
-func (i *GrafanaReconciler) getGrafanaConfigDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
+func (i *GrafanaReconciler) getGrafanaConfigDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) []common.ClusterAction {
+	actions := []common.ClusterAction{}
+
 	if state.GrafanaConfig == nil {
+		hasAdminUser := model.HasAdminUser(cr)
+
 		config, err := model.GrafanaConfig(cr)
 		if err != nil {
 			log.Error(err, "error creating grafana config")
@@ -101,9 +105,16 @@ func (i *GrafanaReconciler) getGrafanaConfigDesiredState(state *common.ClusterSt
 		// later usage in the deployment
 		i.ConfigHash = config.Annotations[model.LastConfigAnnotation]
 
-		return common.GenericCreateAction{
+		actions = append(actions, common.GenericCreateAction{
 			Ref: config,
 			Msg: "create grafana config",
+		})
+
+		if !hasAdminUser {
+			actions = append(actions, common.UpdateCrAction{
+				Ref: cr,
+				Msg: fmt.Sprintf("add admin user to %v", cr.Name),
+			})
 		}
 	} else {
 		config, err := model.GrafanaConfigReconciled(cr, state.GrafanaConfig)
@@ -114,12 +125,12 @@ func (i *GrafanaReconciler) getGrafanaConfigDesiredState(state *common.ClusterSt
 
 		i.ConfigHash = config.Annotations[model.LastConfigAnnotation]
 
-		return common.GenericUpdateAction{
+		actions = append(actions, common.GenericUpdateAction{
 			Ref: config,
 			Msg: "update grafana config",
-		}
-
+		})
 	}
+	return actions
 }
 
 func (i *GrafanaReconciler) getGrafanaExternalAccessDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
