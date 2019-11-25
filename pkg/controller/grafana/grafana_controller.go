@@ -190,9 +190,7 @@ func (r *ReconcileGrafana) manageError(cr *i8ly.Grafana, issue error) (reconcile
 		return reconcile.Result{}, err
 	}
 
-	// Stop reconciling dashboards when there are problems with the
-	// Grafana instance
-	r.config.RemoveConfigItem(config.ConfigDashboardLabelSelector)
+	r.config.InvalidateDashboards()
 
 	common.ControllerEvents <- common.ControllerState{
 		GrafanaReady: false,
