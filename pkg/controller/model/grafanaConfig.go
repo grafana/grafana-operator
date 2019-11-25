@@ -18,6 +18,13 @@ func ensureAdminUser(cr *v1alpha1.Grafana) {
 	}
 }
 
+func HasAdminUser(cr *v1alpha1.Grafana) bool {
+	if cr.Spec.Config.Security.AdminUser == "" || cr.Spec.Config.Security.AdminPassword == "" {
+		return true
+	}
+	return false
+}
+
 func GrafanaConfig(cr *v1alpha1.Grafana) (*v1.ConfigMap, error) {
 	// Make sure the admin user has known credentials because it is
 	// used to access the Grafana API

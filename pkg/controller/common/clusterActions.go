@@ -20,6 +20,7 @@ type ActionRunner interface {
 	create(obj runtime.Object) error
 	update(obj runtime.Object) error
 	delete(obj runtime.Object) error
+	updateCr(obj runtime.Object) error
 	routeReady(obj runtime.Object) error
 	deploymentReady(obj runtime.Object) error
 }
@@ -104,6 +105,19 @@ func (i *ClusterActionRunner) update(obj runtime.Object) error {
 	return nil
 }
 
+func (i *ClusterActionRunner) updateCr(obj runtime.Object) error {
+	err := i.client.Update(i.ctx, obj)
+	if err != nil {
+		// Update conflicts can happen frequently when kubernetes updates the resource
+		// in the background
+		if errors.IsConflict(err) {
+			return nil
+		}
+		return err
+	}
+	return nil
+}
+
 func (i *ClusterActionRunner) delete(obj runtime.Object) error {
 	return i.client.Delete(i.ctx, obj)
 }
@@ -161,6 +175,11 @@ type DeploymentReadyAction struct {
 	Msg string
 }
 
+type UpdateCrAction struct {
+	Ref runtime.Object
+	Msg string
+}
+
 // An action to delete generic kubernetes resources
 // (resources that don't require special treatment)
 type GenericDeleteAction struct {
@@ -190,4 +209,8 @@ func (i RouteReadyAction) Run(runner ActionRunner) (string, error) {
 
 func (i DeploymentReadyAction) Run(runner ActionRunner) (string, error) {
 	return i.Msg, runner.deploymentReady(i.Ref)
+}
+
+func (i UpdateCrAction) Run(runner ActionRunner) (string, error) {
+	return i.Msg, runner.updateCr(i.Ref)
 }
