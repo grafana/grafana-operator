@@ -1,0 +1,52 @@
+apiVersion: integreatly.org/v1alpha1
+kind: Grafana
+metadata:
+  name: grafana-oauth
+spec:
+  config:
+    log:
+      mode: "console"
+      level: "warn"
+    auth:
+      disable_login_form: False
+      disable_signout_menu: True
+    auth.basic:
+      enabled: False
+    auth.anonymous:
+      enabled: True
+  containers:
+    - args:
+        - '-provider=openshift'
+        - '-https-address=:9091'
+        - '-http-address='
+        - '-email-domain=*'
+        - '-upstream=http://localhost:3000'
+        - '-openshift-sar={"resource": "namespaces", "verb": "get"}'
+        - '-openshift-delegate-urls={"/": {"resource": "namespaces", "verb": "get"}}'
+        - '-tls-cert=/etc/tls/private/tls.crt'
+        - '-tls-key=/etc/tls/private/tls.key'
+        - '-client-secret-file=/var/run/secrets/kubernetes.io/serviceaccount/token'
+        - '-cookie-secret-file=/etc/proxy/secrets/session_secret'
+        - '-openshift-service-account=grafana-serviceaccount'
+        - '-openshift-ca=/etc/pki/tls/cert.pem'
+        - '-openshift-ca=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
+        - '-skip-auth-regex=^/metrics'
+      image: '{{ .ImageOAuthProxy }}:{{ .ImageTagOAuthProxy }}'
+      name: grafana-proxy
+      ports:
+        - containerPort: 9091
+          name: grafana-proxy
+      resources: {}
+      volumeMounts:
+        - mountPath: /etc/tls/private
+          name: secret-grafana-k8s-tls
+          readOnly: false
+        - mountPath: /etc/proxy/secrets
+          name: secret-grafana-k8s-proxy
+          readOnly: false
+  secrets:
+    - grafana-k8s-tls
+    - grafana-k8s-proxy
+  dashboardLabelSelector:
+    - matchExpressions:
+        - { key: "monitoring-key", operator: In, values: ['grafana'] }
