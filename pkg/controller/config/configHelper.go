@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	PathsSectionName    = "paths"
+	PathsSectionName = "paths"
 )
 
 type IniConfig struct {
