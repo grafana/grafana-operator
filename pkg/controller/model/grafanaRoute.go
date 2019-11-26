@@ -8,9 +8,37 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+func GetHost(cr *v1alpha1.Grafana) string {
+	if cr.Spec.Ingress == nil {
+		return ""
+	}
+	return cr.Spec.Ingress.Hostname
+}
+
+func GetPath(cr *v1alpha1.Grafana) string {
+	if cr.Spec.Ingress == nil {
+		return "/"
+	}
+	return cr.Spec.Ingress.Path
+}
+
+func GetIngressLabels(cr *v1alpha1.Grafana) map[string]string {
+	if cr.Spec.Ingress == nil {
+		return nil
+	}
+	return cr.Spec.Ingress.Labels
+}
+
+func GetIngressAnnotations(cr *v1alpha1.Grafana) map[string]string {
+	if cr.Spec.Ingress == nil {
+		return nil
+	}
+	return cr.Spec.Ingress.Annotations
+}
+
 func getRouteSpec(cr *v1alpha1.Grafana) v1.RouteSpec {
 	return v1.RouteSpec{
-		Path: cr.Spec.Ingress.Path,
+		Path: GetPath(cr),
 		To: v1.RouteTargetReference{
 			Kind: "Service",
 			Name: GrafanaServiceName,
@@ -31,8 +59,8 @@ func GrafanaRoute(cr *v1alpha1.Grafana) *v1.Route {
 		ObjectMeta: v12.ObjectMeta{
 			Name:        GrafanaRouteName,
 			Namespace:   cr.Namespace,
-			Labels:      cr.Spec.Ingress.Labels,
-			Annotations: cr.Spec.Ingress.Annotations,
+			Labels:      GetIngressLabels(cr),
+			Annotations: GetIngressAnnotations(cr),
 		},
 		Spec: getRouteSpec(cr),
 	}
@@ -47,8 +75,8 @@ func GrafanaRouteSelector(cr *v1alpha1.Grafana) client.ObjectKey {
 
 func GrafanaRouteReconciled(cr *v1alpha1.Grafana, currentState *v1.Route) *v1.Route {
 	reconciled := currentState.DeepCopy()
-	reconciled.Labels = cr.Spec.Ingress.Labels
-	reconciled.Annotations = cr.Spec.Ingress.Annotations
+	reconciled.Labels = GetIngressLabels(cr)
+	reconciled.Annotations = GetIngressAnnotations(cr)
 	reconciled.Spec = getRouteSpec(cr)
 	return reconciled
 }

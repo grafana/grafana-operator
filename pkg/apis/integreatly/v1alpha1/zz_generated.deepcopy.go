@@ -1019,7 +1019,11 @@ func (in *GrafanaSpec) DeepCopyInto(out *GrafanaSpec) {
 			}
 		}
 	}
-	in.Ingress.DeepCopyInto(&out.Ingress)
+	if in.Ingress != nil {
+		in, out := &in.Ingress, &out.Ingress
+		*out = new(GrafanaIngress)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.Secrets != nil {
 		in, out := &in.Secrets, &out.Secrets
 		*out = make([]string, len(*in))
@@ -1030,9 +1034,21 @@ func (in *GrafanaSpec) DeepCopyInto(out *GrafanaSpec) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
-	in.Service.DeepCopyInto(&out.Service)
-	in.Deployment.DeepCopyInto(&out.Deployment)
-	in.Resources.DeepCopyInto(&out.Resources)
+	if in.Service != nil {
+		in, out := &in.Service, &out.Service
+		*out = new(GrafanaService)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.Deployment != nil {
+		in, out := &in.Deployment, &out.Deployment
+		*out = new(GrafanaDeployment)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.Resources != nil {
+		in, out := &in.Resources, &out.Resources
+		*out = new(v1.ResourceRequirements)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 

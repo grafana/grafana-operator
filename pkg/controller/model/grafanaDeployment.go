@@ -6,13 +6,40 @@ import (
 	"github.com/integr8ly/grafana-operator/pkg/controller/config"
 	v1 "k8s.io/api/apps/v1"
 	v13 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const (
+	MemoryRequest = "256Mi"
+	CpuRequest    = "100m"
+	MemoryLimit   = "1024Mi"
+	CpuLimit      = "500m"
+)
+
+func getResources(cr *v1alpha1.Grafana) v13.ResourceRequirements {
+	if cr.Spec.Resources != nil {
+		return *cr.Spec.Resources
+	}
+	return v13.ResourceRequirements{
+		Requests: v13.ResourceList{
+			v13.ResourceMemory: resource.MustParse(MemoryRequest),
+			v13.ResourceCPU:    resource.MustParse(CpuRequest),
+		},
+		Limits: v13.ResourceList{
+			v13.ResourceMemory: resource.MustParse(MemoryLimit),
+			v13.ResourceCPU:    resource.MustParse(CpuLimit),
+		},
+	}
+}
+
 func getReplicas(cr *v1alpha1.Grafana) *int32 {
 	var replicas int32 = 1
+	if cr.Spec.Deployment == nil {
+		return &replicas
+	}
 	if cr.Spec.Deployment.Replicas <= 0 {
 		return &replicas
 	} else {
@@ -21,20 +48,18 @@ func getReplicas(cr *v1alpha1.Grafana) *int32 {
 }
 
 func getRollingUpdateStrategy() *v1.RollingUpdateDeployment {
-	var maxUnaval intstr.IntOrString = intstr.FromInt(1)
-	var maxSurge intstr.IntOrString = intstr.FromInt(1)
+	var maxUnaval intstr.IntOrString = intstr.FromInt(25)
+	var maxSurge intstr.IntOrString = intstr.FromInt(25)
 	return &v1.RollingUpdateDeployment{
 		MaxUnavailable: &maxUnaval,
 		MaxSurge:       &maxSurge,
 	}
 }
 
-// By default enable Prometheus scraping
 func getPodAnnotations(cr *v1alpha1.Grafana) map[string]string {
-	// Preserve annotations added by Kubernetes
-	var annotations map[string]string = cr.Spec.Deployment.Annotations
-	if annotations == nil {
-		annotations = make(map[string]string)
+	var annotations = map[string]string{}
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Annotations != nil {
+		annotations = cr.Spec.Deployment.Annotations
 	}
 
 	// Add fixed annotations
@@ -43,13 +68,11 @@ func getPodAnnotations(cr *v1alpha1.Grafana) map[string]string {
 	return annotations
 }
 
-// By default enable Prometheus scraping
 func getPodLabels(cr *v1alpha1.Grafana) map[string]string {
-	var labels map[string]string
-	if labels = cr.Spec.Deployment.Labels; labels == nil {
-		labels = make(map[string]string)
+	var labels = map[string]string{}
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Labels != nil {
+		labels = cr.Spec.Deployment.Labels
 	}
-
 	labels["app"] = GrafanaPodLabel
 	return labels
 }
@@ -206,7 +229,7 @@ func getContainers(cr *v1alpha1.Grafana, configHash string) []v13.Container {
 				Value: configHash,
 			},
 		},
-		Resources:                cr.Spec.Resources,
+		Resources:                getResources(cr),
 		VolumeMounts:             getVolumeMounts(cr),
 		LivenessProbe:            getProbe(cr, 60, 30, 10),
 		ReadinessProbe:           getProbe(cr, 5, 3, 1),
@@ -285,10 +308,8 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, configHash, plugins string) v1.Depl
 func GrafanaDeployment(cr *v1alpha1.Grafana, configHash string) *v1.Deployment {
 	return &v1.Deployment{
 		ObjectMeta: v12.ObjectMeta{
-			Name:        GrafanaDeploymentName,
-			Namespace:   cr.Namespace,
-			Labels:      cr.Spec.Deployment.Labels,
-			Annotations: cr.Spec.Deployment.Annotations,
+			Name:      GrafanaDeploymentName,
+			Namespace: cr.Namespace,
 		},
 		Spec: getDeploymentSpec(cr, configHash, ""),
 	}

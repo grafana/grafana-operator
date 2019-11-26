@@ -9,6 +9,10 @@ import (
 )
 
 func getIngressTLS(cr *v1alpha1.Grafana) []v1beta1.IngressTLS {
+	if cr.Spec.Ingress == nil {
+		return nil
+	}
+
 	if cr.Spec.Ingress.TLSEnabled {
 		return []v1beta1.IngressTLS{
 			{
@@ -20,52 +24,17 @@ func getIngressTLS(cr *v1alpha1.Grafana) []v1beta1.IngressTLS {
 	return nil
 }
 
-func GrafanaIngress(cr *v1alpha1.Grafana) *v1beta1.Ingress {
-	return &v1beta1.Ingress{
-		ObjectMeta: v1.ObjectMeta{
-			Name:        GrafanaIngressName,
-			Namespace:   cr.Namespace,
-			Labels:      cr.Spec.Ingress.Labels,
-			Annotations: cr.Spec.Ingress.Annotations,
-		},
-		Spec: v1beta1.IngressSpec{
-			TLS: getIngressTLS(cr),
-			Rules: []v1beta1.IngressRule{
-				{
-					Host: cr.Spec.Ingress.Hostname,
-					IngressRuleValue: v1beta1.IngressRuleValue{
-						HTTP: &v1beta1.HTTPIngressRuleValue{
-							Paths: []v1beta1.HTTPIngressPath{
-								{
-									Path: cr.Spec.Ingress.Path,
-									Backend: v1beta1.IngressBackend{
-										ServiceName: GrafanaServiceName,
-										ServicePort: intstr.FromInt(int(GetGrafanaPort(cr))),
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
-func GrafanaIngressReconciled(cr *v1alpha1.Grafana, currentState *v1beta1.Ingress) *v1beta1.Ingress {
-	reconciled := currentState.DeepCopy()
-	reconciled.Labels = cr.Spec.Ingress.Labels
-	reconciled.Annotations = cr.Spec.Ingress.Annotations
-	reconciled.Spec = v1beta1.IngressSpec{
+func getIngressSpec(cr *v1alpha1.Grafana) v1beta1.IngressSpec {
+	return v1beta1.IngressSpec{
 		TLS: getIngressTLS(cr),
 		Rules: []v1beta1.IngressRule{
 			{
-				Host: cr.Spec.Ingress.Hostname,
+				Host: GetHost(cr),
 				IngressRuleValue: v1beta1.IngressRuleValue{
 					HTTP: &v1beta1.HTTPIngressRuleValue{
 						Paths: []v1beta1.HTTPIngressPath{
 							{
-								Path: cr.Spec.Ingress.Path,
+								Path: GetPath(cr),
 								Backend: v1beta1.IngressBackend{
 									ServiceName: GrafanaServiceName,
 									ServicePort: intstr.FromInt(int(GetGrafanaPort(cr))),
@@ -77,6 +46,25 @@ func GrafanaIngressReconciled(cr *v1alpha1.Grafana, currentState *v1beta1.Ingres
 			},
 		},
 	}
+}
+
+func GrafanaIngress(cr *v1alpha1.Grafana) *v1beta1.Ingress {
+	return &v1beta1.Ingress{
+		ObjectMeta: v1.ObjectMeta{
+			Name:        GrafanaIngressName,
+			Namespace:   cr.Namespace,
+			Labels:      GetIngressLabels(cr),
+			Annotations: GetIngressAnnotations(cr),
+		},
+		Spec: getIngressSpec(cr),
+	}
+}
+
+func GrafanaIngressReconciled(cr *v1alpha1.Grafana, currentState *v1beta1.Ingress) *v1beta1.Ingress {
+	reconciled := currentState.DeepCopy()
+	reconciled.Labels = GetIngressLabels(cr)
+	reconciled.Annotations = GetIngressAnnotations(cr)
+	reconciled.Spec = getIngressSpec(cr)
 	return reconciled
 }
 

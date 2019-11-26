@@ -9,7 +9,24 @@ import (
 	"strconv"
 )
 
+func getServiceLabels(cr *v1alpha1.Grafana) map[string]string {
+	if cr.Spec.Service == nil {
+		return nil
+	}
+	return cr.Spec.Service.Labels
+}
+
+func getServiceAnnotations(cr *v1alpha1.Grafana) map[string]string {
+	if cr.Spec.Service == nil {
+		return nil
+	}
+	return cr.Spec.Service.Annotations
+}
+
 func getServiceType(cr *v1alpha1.Grafana) v1.ServiceType {
+	if cr.Spec.Service == nil {
+		return v1.ServiceTypeClusterIP
+	}
 	if cr.Spec.Service.Type == "" {
 		return v1.ServiceTypeClusterIP
 	}
@@ -45,8 +62,8 @@ func GrafanaService(cr *v1alpha1.Grafana) *v1.Service {
 		ObjectMeta: v12.ObjectMeta{
 			Name:        GrafanaServiceName,
 			Namespace:   cr.Namespace,
-			Labels:      cr.Spec.Service.Labels,
-			Annotations: cr.Spec.Service.Annotations,
+			Labels:      getServiceLabels(cr),
+			Annotations: getServiceAnnotations(cr),
 		},
 		Spec: v1.ServiceSpec{
 			Ports: getServicePorts(cr),
@@ -61,8 +78,8 @@ func GrafanaService(cr *v1alpha1.Grafana) *v1.Service {
 
 func GrafanaServiceReconciled(cr *v1alpha1.Grafana, currentState *v1.Service) *v1.Service {
 	reconciled := currentState.DeepCopy()
-	reconciled.Labels = cr.Spec.Service.Labels
-	reconciled.Annotations = cr.Spec.Service.Annotations
+	reconciled.Labels = getServiceLabels(cr)
+	reconciled.Annotations = getServiceAnnotations(cr)
 	reconciled.Spec.Ports = getServicePorts(cr)
 	reconciled.Spec.Type = getServiceType(cr)
 	return reconciled

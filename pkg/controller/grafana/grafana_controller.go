@@ -169,6 +169,7 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 	actionRunner := common.NewClusterActionRunner(r.context, r.client, r.scheme, cr)
 	err = actionRunner.RunAll(desiredState)
 	if err != nil {
+		log.Error(err, "error reconciling")
 		return r.manageError(cr, err)
 	}
 
