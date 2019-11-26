@@ -228,6 +228,28 @@ func getContainers(cr *v1alpha1.Grafana, configHash string) []v13.Container {
 				Name:  LastConfigEnvVar,
 				Value: configHash,
 			},
+			{
+				Name: GrafanaAdminUserEnvVar,
+				ValueFrom: &v13.EnvVarSource{
+					SecretKeyRef: &v13.SecretKeySelector{
+						LocalObjectReference: v13.LocalObjectReference{
+							Name: GrafanaAdminSecretName,
+						},
+						Key: GrafanaAdminUserEnvVar,
+					},
+				},
+			},
+			{
+				Name: GrafanaAdminPasswordEnvVar,
+				ValueFrom: &v13.EnvVarSource{
+					SecretKeyRef: &v13.SecretKeySelector{
+						LocalObjectReference: v13.LocalObjectReference{
+							Name: GrafanaAdminSecretName,
+						},
+						Key: GrafanaAdminPasswordEnvVar,
+					},
+				},
+			},
 		},
 		Resources:                getResources(cr),
 		VolumeMounts:             getVolumeMounts(cr),

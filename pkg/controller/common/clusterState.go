@@ -20,6 +20,7 @@ type ClusterState struct {
 	GrafanaRoute          *v12.Route
 	GrafanaIngress        *v1beta1.Ingress
 	GrafanaDeployment     *v13.Deployment
+	AdminSecret           *v1.Secret
 }
 
 func NewClusterState() *ClusterState {
@@ -46,6 +47,11 @@ func (i *ClusterState) Read(ctx context.Context, cr *v1alpha1.Grafana, client cl
 	}
 
 	err = i.readGrafanaDeployment(ctx, cr, client)
+	if err != nil {
+		return err
+	}
+
+	err = i.readGrafanaAdminUserSecret(ctx, cr, client)
 	if err != nil {
 		return err
 	}
@@ -146,5 +152,21 @@ func (i *ClusterState) readGrafanaDeployment(ctx context.Context, cr *v1alpha1.G
 	} else {
 		i.GrafanaDeployment = currentState.DeepCopy()
 	}
+	return nil
+}
+
+func (i *ClusterState) readGrafanaAdminUserSecret(ctx context.Context, cr *v1alpha1.Grafana, client client.Client) error {
+	currentState := model.AdminSecret(cr)
+	selector := model.AdminSecretSelector(cr)
+	err := client.Get(ctx, selector, currentState)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			i.AdminSecret = nil
+			return nil
+		}
+		return err
+	}
+
+	i.AdminSecret = currentState.DeepCopy()
 	return nil
 }
