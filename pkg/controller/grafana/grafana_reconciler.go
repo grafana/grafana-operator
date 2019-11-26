@@ -48,7 +48,7 @@ func (i *GrafanaReconciler) getGrafanaReadiness(state *common.ClusterState, cr *
 	var actions []common.ClusterAction
 	cfg := config.GetControllerConfig()
 	openshift := cfg.GetConfigBool(config.ConfigOpenshift, false)
-	if openshift && cr.Spec.Ingress.Enabled {
+	if openshift && cr.Spec.Ingress != nil && cr.Spec.Ingress.Enabled {
 		actions = append(actions, common.RouteReadyAction{
 			Ref: state.GrafanaRoute,
 			Msg: "check route readiness",
@@ -137,7 +137,7 @@ func (i *GrafanaReconciler) getGrafanaExternalAccessDesiredState(state *common.C
 	cfg := config.GetControllerConfig()
 	isOpenshift := cfg.GetConfigBool(config.ConfigOpenshift, false)
 
-	if !cr.Spec.Ingress.Enabled {
+	if cr.Spec.Ingress == nil || !cr.Spec.Ingress.Enabled {
 		// external access not enabled: remote the route/ingress if it exists or
 		// do nothing
 		if isOpenshift && state.GrafanaRoute != nil {
