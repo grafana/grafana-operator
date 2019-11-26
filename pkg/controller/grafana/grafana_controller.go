@@ -169,7 +169,6 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 	actionRunner := common.NewClusterActionRunner(r.context, r.client, r.scheme, cr)
 	err = actionRunner.RunAll(desiredState)
 	if err != nil {
-		log.Error(err, "error reconciling")
 		return r.manageError(cr, err)
 	}
 
@@ -202,8 +201,6 @@ func (r *ReconcileGrafana) manageError(cr *i8ly.Grafana, issue error) (reconcile
 
 func (r *ReconcileGrafana) manageSuccess(cr *i8ly.Grafana, state *common.ClusterState) (reconcile.Result, error) {
 	cr.Status.Phase = i8ly.PhaseReconciling
-	cr.Status.AdminUser = cr.Spec.Config.Security.AdminUser
-	cr.Status.AdminPassword = cr.Spec.Config.Security.AdminPassword
 
 	// Only update the status if the dashboard controller had a chance to sync the cluster
 	// dashboards first. Otherwise reuse the existing dashboard config from the CR.
@@ -236,8 +233,8 @@ func (r *ReconcileGrafana) manageSuccess(cr *i8ly.Grafana, state *common.Cluster
 	// Publish controller state
 	controllerState := common.ControllerState{
 		DashboardSelectors: cr.Spec.DashboardLabelSelector,
-		AdminUsername:      cr.Status.AdminUser,
-		AdminPassword:      cr.Status.AdminPassword,
+		AdminUsername:      string(state.AdminSecret.Data[model.GrafanaAdminUserEnvVar]),
+		AdminPassword:      string(state.AdminSecret.Data[model.GrafanaAdminPasswordEnvVar]),
 		AdminUrl:           grafanaRoute,
 		GrafanaReady:       true,
 	}

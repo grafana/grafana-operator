@@ -8,28 +8,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func ensureAdminUser(cr *v1alpha1.Grafana) {
-	if cr.Spec.Config.Security.AdminUser == "" {
-		cr.Spec.Config.Security.AdminUser = DefaultAdminUser
-	}
-
-	if cr.Spec.Config.Security.AdminPassword == "" {
-		cr.Spec.Config.Security.AdminPassword = RandStringRunes(10)
-	}
-}
-
-func HasAdminUser(cr *v1alpha1.Grafana) bool {
-	if cr.Spec.Config.Security.AdminUser == "" || cr.Spec.Config.Security.AdminPassword == "" {
-		return true
-	}
-	return false
-}
-
 func GrafanaConfig(cr *v1alpha1.Grafana) (*v1.ConfigMap, error) {
-	// Make sure the admin user has known credentials because it is
-	// used to access the Grafana API
-	ensureAdminUser(cr)
-
 	grafanaIni := config.NewIniConfig(cr)
 	err := grafanaIni.Build()
 	if err != nil {

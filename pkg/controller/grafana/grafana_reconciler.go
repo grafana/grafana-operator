@@ -25,6 +25,7 @@ func NewGrafanaReconciler() *GrafanaReconciler {
 func (i *GrafanaReconciler) Reconcile(state *common.ClusterState, cr *v1alpha1.Grafana) common.DesiredClusterState {
 	desired := common.DesiredClusterState{}
 
+	desired = desired.AddAction(i.getGrafanaAdminUserSecretDesiredState(state, cr))
 	desired = desired.AddAction(i.getGrafanaServiceDesiredState(state, cr))
 	desired = desired.AddAction(i.getGrafanaServiceAccountDesiredState(state, cr))
 	desired = desired.AddActions(i.getGrafanaConfigDesiredState(state, cr))
@@ -93,8 +94,6 @@ func (i *GrafanaReconciler) getGrafanaConfigDesiredState(state *common.ClusterSt
 	actions := []common.ClusterAction{}
 
 	if state.GrafanaConfig == nil {
-		hasAdminUser := model.HasAdminUser(cr)
-
 		config, err := model.GrafanaConfig(cr)
 		if err != nil {
 			log.Error(err, "error creating grafana config")
@@ -109,13 +108,6 @@ func (i *GrafanaReconciler) getGrafanaConfigDesiredState(state *common.ClusterSt
 			Ref: config,
 			Msg: "create grafana config",
 		})
-
-		if !hasAdminUser {
-			actions = append(actions, common.UpdateCrAction{
-				Ref: cr,
-				Msg: fmt.Sprintf("add admin user to %v", cr.Name),
-			})
-		}
 	} else {
 		config, err := model.GrafanaConfigReconciled(cr, state.GrafanaConfig)
 		if err != nil {
@@ -158,6 +150,19 @@ func (i *GrafanaReconciler) getGrafanaExternalAccessDesiredState(state *common.C
 			return i.getGrafanaRouteDesiredState(state, cr)
 		}
 		return i.getGrafanaIngressDesiredState(state, cr)
+	}
+}
+
+func (i *GrafanaReconciler) getGrafanaAdminUserSecretDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
+	if state.AdminSecret == nil {
+		return common.GenericCreateAction{
+			Ref: model.AdminSecret(cr),
+			Msg: "create admin credentials secret",
+		}
+	}
+	return common.GenericUpdateAction{
+		Ref: model.AdminSecretReconciled(cr, state.AdminSecret),
+		Msg: "update admin credentials secret",
 	}
 }
 
