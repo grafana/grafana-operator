@@ -1,9 +1,7 @@
 package model
 
 import (
-	"fmt"
 	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/pkg/controller/config"
 	v1 "k8s.io/api/core/v1"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -11,24 +9,29 @@ import (
 
 const OpenShiftOAuthRedirect = "serviceaccounts.openshift.io/oauth-redirectreference.primary"
 
-func applyAnnotations(sa *v1.ServiceAccount) *v1.ServiceAccount {
-	cfg := config.GetControllerConfig()
-	openshift := cfg.GetConfigBool(config.ConfigOpenshift, false)
-	if openshift {
-		sa.Annotations = map[string]string{
-			OpenShiftOAuthRedirect: fmt.Sprintf(`{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"%s"}}`, GrafanaRouteName),
-		}
+func getServiceAccountLabels(cr *v1alpha1.Grafana) map[string]string {
+	if cr.Spec.ServiceAccount == nil {
+		return nil
 	}
-	return sa
+	return cr.Spec.ServiceAccount.Labels
+}
+
+func getServiceAccountAnnotations(cr *v1alpha1.Grafana) map[string]string {
+	if cr.Spec.ServiceAccount == nil {
+		return nil
+	}
+	return cr.Spec.ServiceAccount.Annotations
 }
 
 func GrafanaServiceAccount(cr *v1alpha1.Grafana) *v1.ServiceAccount {
-	return applyAnnotations(&v1.ServiceAccount{
+	return &v1.ServiceAccount{
 		ObjectMeta: v12.ObjectMeta{
 			Name:      GrafanaServiceAccountName,
 			Namespace: cr.Namespace,
+			Labels: getServiceAccountLabels(cr),
+			Annotations: getServiceAccountAnnotations(cr),
 		},
-	})
+	}
 }
 
 func GrafanaServiceAccountSelector(cr *v1alpha1.Grafana) client.ObjectKey {
@@ -39,5 +42,8 @@ func GrafanaServiceAccountSelector(cr *v1alpha1.Grafana) client.ObjectKey {
 }
 
 func GrafanaServiceAccountReconciled(cr *v1alpha1.Grafana, currentState *v1.ServiceAccount) *v1.ServiceAccount {
-	return applyAnnotations(currentState.DeepCopy())
+	reconciled := currentState.DeepCopy()
+	reconciled.Labels = getServiceAccountLabels(cr)
+	reconciled.Annotations = getServiceAccountAnnotations(cr) 
+	return reconciled
 }
