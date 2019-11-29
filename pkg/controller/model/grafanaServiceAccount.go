@@ -26,9 +26,9 @@ func getServiceAccountAnnotations(cr *v1alpha1.Grafana) map[string]string {
 func GrafanaServiceAccount(cr *v1alpha1.Grafana) *v1.ServiceAccount {
 	return &v1.ServiceAccount{
 		ObjectMeta: v12.ObjectMeta{
-			Name:      GrafanaServiceAccountName,
-			Namespace: cr.Namespace,
-			Labels: getServiceAccountLabels(cr),
+			Name:        GrafanaServiceAccountName,
+			Namespace:   cr.Namespace,
+			Labels:      getServiceAccountLabels(cr),
 			Annotations: getServiceAccountAnnotations(cr),
 		},
 	}
@@ -44,6 +44,6 @@ func GrafanaServiceAccountSelector(cr *v1alpha1.Grafana) client.ObjectKey {
 func GrafanaServiceAccountReconciled(cr *v1alpha1.Grafana, currentState *v1.ServiceAccount) *v1.ServiceAccount {
 	reconciled := currentState.DeepCopy()
 	reconciled.Labels = getServiceAccountLabels(cr)
-	reconciled.Annotations = getServiceAccountAnnotations(cr) 
+	reconciled.Annotations = getServiceAccountAnnotations(cr)
 	return reconciled
 }
