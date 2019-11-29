@@ -1,5 +1,7 @@
 package model
 
+import "github.com/integr8ly/grafana-operator/pkg/controller/config"
+
 const (
 	GrafanaServiceAccountName      = "grafana-serviceaccount"
 	GrafanaServiceName             = "grafana-service"
@@ -12,6 +14,7 @@ const (
 	GrafanaInitContainerName       = "grafana-plugins-init"
 	GrafanaLogsVolumeName          = "grafana-logs"
 	GrafanaDataVolumeName          = "grafana-data"
+	GrafanaDataSourcesVolumeName   = config.GrafanaDatasourcesConfigMapName
 	GrafanaHealthEndpoint          = "/api/health"
 	GrafanaPodLabel                = "grafana"
 	LastConfigAnnotation           = "last-config"
