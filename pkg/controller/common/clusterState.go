@@ -119,12 +119,9 @@ func (i *ClusterState) readGrafanaConfig(ctx context.Context, cr *v1alpha1.Grafa
 }
 
 func (i *ClusterState) readGrafanaDatasourceConfig(ctx context.Context, cr *v1alpha1.Grafana, client client.Client) error {
-	currentState, err := model.GrafanaDatasourcesConfig(cr)
-	if err != nil {
-		return err
-	}
+	currentState := model.GrafanaDatasourcesConfig(cr)
 	selector := model.GrafanaDatasourceConfigSelector(cr)
-	err = client.Get(ctx, selector, currentState)
+	err := client.Get(ctx, selector, currentState)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return err

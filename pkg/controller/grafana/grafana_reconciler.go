@@ -130,22 +130,15 @@ func (i *GrafanaReconciler) getGrafanaDatasourceConfigDesiredState(state *common
 	actions := []common.ClusterAction{}
 
 	if state.GrafanaDataSourceConfig == nil {
-		dsconfig, err := model.GrafanaDatasourcesConfig(cr)
-		if err != nil {
-			log.Error(err, "error creating grafanadatasource config")
-			return nil
-		}
+		dsconfig := model.GrafanaDatasourcesConfig(cr)
 
 		actions = append(actions, common.GenericCreateAction{
 			Ref: dsconfig,
-			Msg: "create grafana config",
+			Msg: "create grafanadatasource config",
 		})
+
 	} else {
-		dsconfig, err := model.GrafanaDatasourcesConfigReconciled(cr, state.GrafanaConfig)
-		if err != nil {
-			log.Error(err, "error updating grafana config")
-			return nil
-		}
+		dsconfig := model.GrafanaDatasourcesConfigReconciled(cr, state.GrafanaConfig)
 
 		actions = append(actions, common.GenericUpdateAction{
 			Ref: dsconfig,

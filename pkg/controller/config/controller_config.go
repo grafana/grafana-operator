@@ -28,6 +28,7 @@ const (
 	GrafanaDataPath                 = "/var/lib/grafana"
 	GrafanaLogsPath                 = "/var/log/grafana"
 	GrafanaPluginsPath              = "/var/lib/grafana/plugins"
+	GrafanaProvisioningPath			= "/etc/grafana/provisioning/"
 	PluginsInitContainerImage       = "quay.io/integreatly/grafana_plugins_init"
 	PluginsInitContainerTag         = "0.0.2"
 	PluginsEnvVar                   = "GRAFANA_PLUGINS"
