@@ -8,7 +8,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func GrafanaDatasourcesConfig(cr *v1alpha1.Grafana) (*v1.ConfigMap) {
+func GrafanaDatasourcesConfig(cr *v1alpha1.Grafana) *v1.ConfigMap {
 	configMap := &v1.ConfigMap{}
 	configMap.ObjectMeta = v12.ObjectMeta{
 		Name:      config.GrafanaDatasourcesConfigMapName,
@@ -18,7 +18,7 @@ func GrafanaDatasourcesConfig(cr *v1alpha1.Grafana) (*v1.ConfigMap) {
 	return configMap
 }
 
-func GrafanaDatasourcesConfigReconciled(cr *v1alpha1.Grafana, currentState *v1.ConfigMap) (*v1.ConfigMap) {
+func GrafanaDatasourcesConfigReconciled(cr *v1alpha1.Grafana, currentState *v1.ConfigMap) *v1.ConfigMap {
 	reconciled := currentState.DeepCopy()
 
 	return reconciled
