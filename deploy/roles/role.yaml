@@ -48,6 +48,7 @@ rules:
 - apiGroups:
   - integreatly.org
   resources:
+  - grafanas/status
   - grafanas
   - grafanadashboards
   - grafanadatasources
