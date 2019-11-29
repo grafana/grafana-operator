@@ -157,6 +157,7 @@ func (h KubeHelperImpl) DeleteDataSources(key string) error {
 		return err
 	}
 
+	fmt.Printf("key: %s", key)
 	if configMap.Data == nil {
 		return nil
 	}

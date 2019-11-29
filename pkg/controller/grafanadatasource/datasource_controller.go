@@ -9,7 +9,6 @@ import (
 	"github.com/integr8ly/grafana-operator/pkg/controller/config"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/record"
@@ -94,25 +93,14 @@ type ReconcileGrafanaDataSource struct {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileGrafanaDataSource) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	cm := &v1.ConfigMap{
-		ObjectMeta: v12.ObjectMeta{
-			Name:      config.GrafanaDatasourcesConfigMapName,
-			Namespace: request.Namespace,
-		},
-	}
-	cerr := r.client.Get(context.TODO(), request.NamespacedName, cm)
-	if cerr != nil && errors.IsAlreadyExists(cerr) {
-		if errors.IsNotFound(cerr) {
-			cerr := r.client.Create(context.TODO(), cm)
-			if cerr != nil {
-				log.Error(cerr, "failed to create datasource configmap")
-				return reconcile.Result{}, nil
-			}
-		}
+	_, err := r.checkForDeletedDataSources(request)
+	if err != nil{
+		log.Info("error deleting")
+		return reconcile.Result{}, err
 	}
 
 	instance := &i8ly.GrafanaDataSource{}
-	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
+	err = r.client.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -126,12 +114,6 @@ func (r *ReconcileGrafanaDataSource) Reconcile(request reconcile.Request) (recon
 
 	cr := instance.DeepCopy()
 	res, err := r.reconcileDatasource(cr)
-
-	err := r.client.List(context.TODO(), &i8ly.GrafanaDataSource{}, )
-
-	if cr.DeletionTimestamp != nil {
-		return r.DeleteDatasource(cr)
-	}
 
 	// Requeue periodically to find datasources that have not been updated
 	// but are not yet imported (can happen if Grafana is uninstalled and
@@ -157,12 +139,10 @@ func (r *ReconcileGrafanaDataSource) getKnownDatasources(request reconcile.Reque
 
 func (r *ReconcileGrafanaDataSource) checkForDeletedDataSources(request reconcile.Request) (reconcile.Result, error) {
 	datasources := &i8ly.GrafanaDataSourceList{}
-
 	opts := client.ListOptions{
 		Namespace: request.Namespace,
 	}
 	err := r.client.List(r.context, datasources, &opts)
-
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -174,7 +154,7 @@ func (r *ReconcileGrafanaDataSource) checkForDeletedDataSources(request reconcil
 
 	hasCr := func (key string) bool {
 		for _, datasource := range datasources.Items {
-			dsKey := fmt.Sprintf("%v_%v", datasource.Namespace, datasource.Name)
+			dsKey := fmt.Sprintf("%v_%v", datasource.Namespace, datasource.Spec.Name)
 			if key == dsKey {
 				return true
 			}
@@ -204,37 +184,13 @@ func (r *ReconcileGrafanaDataSource) reconcileDatasource(cr *i8ly.GrafanaDataSou
 
 	_, uerr := r.helper.UpdateDataSources(cr.Spec.Name, cr.Namespace, ds)
 	if uerr != nil {
-		fmt.Printf("update error %s", uerr)
 		return reconcile.Result{}, uerr
 	}
 
 	log.Info("updated datasource")
-
-	//err = r.helper.RestartGrafana()
-	//if err != nil {
-	//	log.Error(err, "error restarting grafana")
-	//}
-
-	log.Info(fmt.Sprintf("datasource '%s' updated", cr.Spec.Name))
-
 	return reconcile.Result{}, err
 }
 
-func (r *ReconcileGrafanaDataSource) DeleteDatasource(cr *i8ly.GrafanaDataSource) (reconcile.Result, error) {
-	err := r.helper.DeleteDataSources(cr.Spec.Name, cr.Namespace)
-	if err != nil {
-		log.Error(err, "error deleting datasource")
-		return reconcile.Result{}, err
-	}
-
-	err = r.helper.RestartGrafana()
-	if err != nil {
-		log.Error(err, "error restarting grafana")
-	}
-
-	log.Info(fmt.Sprintf("datasource '%s' deleted", cr.Spec.Name))
-	return reconcile.Result{}, err
-}
 
 func (r *ReconcileGrafanaDataSource) parseDataSource(cr *i8ly.GrafanaDataSource) (string, error) {
 	datasources := struct {

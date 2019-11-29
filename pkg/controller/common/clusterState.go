@@ -14,13 +14,14 @@ import (
 )
 
 type ClusterState struct {
-	GrafanaService        *v1.Service
-	GrafanaServiceAccount *v1.ServiceAccount
-	GrafanaConfig         *v1.ConfigMap
-	GrafanaRoute          *v12.Route
-	GrafanaIngress        *v1beta1.Ingress
-	GrafanaDeployment     *v13.Deployment
-	AdminSecret           *v1.Secret
+	GrafanaService          *v1.Service
+	GrafanaServiceAccount   *v1.ServiceAccount
+	GrafanaConfig           *v1.ConfigMap
+	GrafanaRoute            *v12.Route
+	GrafanaIngress          *v1beta1.Ingress
+	GrafanaDeployment       *v13.Deployment
+	GrafanaDataSourceConfig *v1.ConfigMap
+	AdminSecret             *v1.Secret
 }
 
 func NewClusterState() *ClusterState {
@@ -42,6 +43,11 @@ func (i *ClusterState) Read(ctx context.Context, cr *v1alpha1.Grafana, client cl
 	}
 
 	err = i.readGrafanaConfig(ctx, cr, client)
+	if err != nil {
+		return err
+	}
+
+	err = i.readGrafanaDatasourceConfig(ctx, cr, client)
 	if err != nil {
 		return err
 	}
@@ -108,6 +114,23 @@ func (i *ClusterState) readGrafanaConfig(ctx context.Context, cr *v1alpha1.Grafa
 		}
 	} else {
 		i.GrafanaConfig = currentState.DeepCopy()
+	}
+	return nil
+}
+
+func (i *ClusterState) readGrafanaDatasourceConfig(ctx context.Context, cr *v1alpha1.Grafana, client client.Client) error {
+	currentState, err := model.GrafanaDatasourcesConfig(cr)
+	if err != nil {
+		return err
+	}
+	selector := model.GrafanaDatasourceConfigSelector(cr)
+	err = client.Get(ctx, selector, currentState)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			return err
+		}
+	} else {
+		i.GrafanaDataSourceConfig = currentState.DeepCopy()
 	}
 	return nil
 }
