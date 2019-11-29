@@ -36,7 +36,7 @@ type GrafanaService struct {
 }
 
 type GrafanaServiceAccount struct {
-	Annotations map[string]string `json:"annotations.omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty"`
 	Labels 		map[string]string `json:"labels,omitempty"`
 }
 
