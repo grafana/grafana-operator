@@ -94,7 +94,7 @@ type ReconcileGrafanaDataSource struct {
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileGrafanaDataSource) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	_, err := r.checkForDeletedDataSources(request)
-	if err != nil{
+	if err != nil {
 		log.Info("error deleting")
 		return reconcile.Result{}, err
 	}
@@ -152,7 +152,7 @@ func (r *ReconcileGrafanaDataSource) checkForDeletedDataSources(request reconcil
 		return reconcile.Result{}, err
 	}
 
-	hasCr := func (key string) bool {
+	hasCr := func(key string) bool {
 		for _, datasource := range datasources.Items {
 			dsKey := fmt.Sprintf("%v_%v", datasource.Namespace, datasource.Spec.Name)
 			if key == dsKey {
@@ -190,7 +190,6 @@ func (r *ReconcileGrafanaDataSource) reconcileDatasource(cr *i8ly.GrafanaDataSou
 	log.Info("updated datasource")
 	return reconcile.Result{}, err
 }
-
 
 func (r *ReconcileGrafanaDataSource) parseDataSource(cr *i8ly.GrafanaDataSource) (string, error) {
 	datasources := struct {
