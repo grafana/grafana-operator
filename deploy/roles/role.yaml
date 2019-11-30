@@ -50,10 +50,10 @@ rules:
   resources:
   - grafanas/status
   - grafanas
+  - grafanas/status
   - grafanadashboards
+  - grafanadashboards/status
   - grafanadatasources
-  - grafanas/finalizers
-  - grafanadashboards/finalizers
-  - grafanadatasources/finalizers
+  - grafanadatasources/status
   verbs:
   - '*'
