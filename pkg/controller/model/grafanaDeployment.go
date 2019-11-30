@@ -131,6 +131,18 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume {
 		})
 	}
 
+	// Volume to store the datasources
+	volumes = append(volumes, v13.Volume{
+		Name: config.GrafanaDatasourcesConfigMapName,
+		VolumeSource: v13.VolumeSource{
+			ConfigMap: &v13.ConfigMapVolumeSource{
+				LocalObjectReference: v13.LocalObjectReference{
+					Name: config.GrafanaDatasourcesConfigMapName,
+				},
+			},
+		},
+	})
+
 	// Extra volumes for config maps
 	for _, configmap := range cr.Spec.ConfigMaps {
 		volumeName := fmt.Sprintf("secret-%s", configmap)
@@ -169,6 +181,11 @@ func getVolumeMounts(cr *v1alpha1.Grafana) []v13.VolumeMount {
 	mounts = append(mounts, v13.VolumeMount{
 		Name:      GrafanaLogsVolumeName,
 		MountPath: "/var/log/grafana",
+	})
+
+	mounts = append(mounts, v13.VolumeMount{
+		Name:      config.GrafanaDatasourcesConfigMapName,
+		MountPath: "/etc/grafana/provisioning/datasources",
 	})
 
 	for _, secret := range cr.Spec.Secrets {

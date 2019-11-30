@@ -147,7 +147,7 @@ func (h KubeHelperImpl) UpdateDataSources(name, namespace, ds string) (bool, err
 	return true, nil
 }
 
-func (h KubeHelperImpl) DeleteDataSources(name, namespace string) error {
+func (h KubeHelperImpl) DeleteDataSources(key string) error {
 	configMap, err := h.getConfigMap(config2.GrafanaDatasourcesConfigMapName)
 	if err != nil {
 		// Grafana may already be uninstalled
@@ -157,10 +157,7 @@ func (h KubeHelperImpl) DeleteDataSources(name, namespace string) error {
 		return err
 	}
 
-	// Prefix the dashboard filename with the namespace to allow multiple namespaces
-	// to import the same dashboard
-	key := h.getConfigMapKey(namespace, name)
-
+	fmt.Printf("key: %s", key)
 	if configMap.Data == nil {
 		return nil
 	}
