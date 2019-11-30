@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 const (
@@ -36,6 +37,7 @@ func NewGrafanaClient(url, user, password string) GrafanaClient {
 
 	client := &http.Client{
 		Transport: &transport,
+		Timeout:   time.Second * 2,
 	}
 
 	return &GrafanaClientImpl{

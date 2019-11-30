@@ -2,13 +2,14 @@ package grafana
 
 import (
 	"context"
+	stdErr "errors"
 	"fmt"
 	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/pkg/controller/config"
 	"github.com/integr8ly/grafana-operator/pkg/controller/model"
 	routev1 "github.com/openshift/api/route/v1"
-	"k8s.io/api/apps/v1beta1"
+	v12 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	v1beta12 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -65,7 +66,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler, autodetectChannel chan sch
 		return err
 	}
 
-	if err = watchSecondaryResource(c, &v1beta1.Deployment{}); err != nil {
+	if err = watchSecondaryResource(c, &v12.Deployment{}); err != nil {
 		return err
 	}
 
@@ -199,6 +200,36 @@ func (r *ReconcileGrafana) manageError(cr *i8ly.Grafana, issue error) (reconcile
 	return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
 }
 
+// Try to find a suitable url to grafana
+func (r *ReconcileGrafana) getGrafanaAdminUrl(cr *i8ly.Grafana, state *common.ClusterState) (string, error) {
+	// First try to use the route if it exists. Prefer the route because it also works
+	// when running the operator outside of the cluster
+	if state.GrafanaRoute != nil {
+		return fmt.Sprintf("https://%v", state.GrafanaRoute.Spec.Host), nil
+	}
+
+	// Try the ingress first if on vanilla Kubernetes
+	if state.GrafanaIngress != nil {
+		for _, ingress := range state.GrafanaIngress.Status.LoadBalancer.Ingress {
+			if ingress.Hostname != "" {
+				return fmt.Sprintf("https://%v", ingress.Hostname), nil
+			}
+			return fmt.Sprintf("https://%v", ingress.IP), nil
+		}
+	}
+
+	// Otherwise rely on the service
+	if state.GrafanaService != nil && state.GrafanaService.Spec.ClusterIP != "" {
+		return fmt.Sprintf("http://%v:%d", state.GrafanaService.Spec.ClusterIP,
+			model.GetGrafanaPort(cr)), nil
+	} else if state.GrafanaService != nil {
+		return fmt.Sprintf("http://%v:%d", state.GrafanaService.Name,
+			model.GetGrafanaPort(cr)), nil
+	}
+
+	return "", stdErr.New("failed to find admin url")
+}
+
 func (r *ReconcileGrafana) manageSuccess(cr *i8ly.Grafana, state *common.ClusterState) (reconcile.Result, error) {
 	cr.Status.Phase = i8ly.PhaseReconciling
 
@@ -219,15 +250,9 @@ func (r *ReconcileGrafana) manageSuccess(cr *i8ly.Grafana, state *common.Cluster
 	}
 
 	// Make the Grafana API URL available to the dashboard controller
-	var grafanaRoute string
-	if state.GrafanaRoute != nil {
-		grafanaRoute = fmt.Sprintf("https://%v", state.GrafanaRoute.Spec.Host)
-	} else {
-
-		grafanaRoute = fmt.Sprintf("http://%v:%d",
-			state.GrafanaService.Name,
-			model.GetGrafanaPort(cr),
-		)
+	url, err := r.getGrafanaAdminUrl(cr, state)
+	if err != nil {
+		return r.manageError(cr, err)
 	}
 
 	// Publish controller state
@@ -235,7 +260,7 @@ func (r *ReconcileGrafana) manageSuccess(cr *i8ly.Grafana, state *common.Cluster
 		DashboardSelectors: cr.Spec.DashboardLabelSelector,
 		AdminUsername:      string(state.AdminSecret.Data[model.GrafanaAdminUserEnvVar]),
 		AdminPassword:      string(state.AdminSecret.Data[model.GrafanaAdminPasswordEnvVar]),
-		AdminUrl:           grafanaRoute,
+		AdminUrl:           url,
 		GrafanaReady:       true,
 	}
 	common.ControllerEvents <- controllerState

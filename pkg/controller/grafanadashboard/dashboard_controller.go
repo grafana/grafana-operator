@@ -211,6 +211,7 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 		knownHash := findHash(&dashboard)
 		pipeline := NewDashboardPipeline(&dashboard)
 		processed, err := pipeline.ProcessDashboard(knownHash)
+
 		if err != nil {
 			r.manageError(&dashboard, err)
 			continue

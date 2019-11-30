@@ -7,6 +7,7 @@ import (
 	"github.com/go-logr/logr"
 	v13 "github.com/openshift/api/route/v1"
 	v12 "k8s.io/api/apps/v1"
+	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -21,6 +22,7 @@ type ActionRunner interface {
 	update(obj runtime.Object) error
 	delete(obj runtime.Object) error
 	routeReady(obj runtime.Object) error
+	ingressReady(obj runtime.Object) error
 	deploymentReady(obj runtime.Object) error
 }
 
@@ -116,6 +118,14 @@ func (i *ClusterActionRunner) routeReady(obj runtime.Object) error {
 	return nil
 }
 
+func (i *ClusterActionRunner) ingressReady(obj runtime.Object) error {
+	ready := IsIngressReady(obj.(*v1beta1.Ingress))
+	if !ready {
+		return stdErr.New("ingress not ready")
+	}
+	return nil
+}
+
 func (i *ClusterActionRunner) deploymentReady(obj runtime.Object) error {
 	ready, err := IsDeploymentReady(obj.(*v12.Deployment))
 	if err != nil {
@@ -156,6 +166,11 @@ type RouteReadyAction struct {
 	Msg string
 }
 
+type IngressReadyAction struct {
+	Ref runtime.Object
+	Msg string
+}
+
 type DeploymentReadyAction struct {
 	Ref runtime.Object
 	Msg string
@@ -186,6 +201,10 @@ func (i LogAction) Run(runner ActionRunner) (string, error) {
 
 func (i RouteReadyAction) Run(runner ActionRunner) (string, error) {
 	return i.Msg, runner.routeReady(i.Ref)
+}
+
+func (i IngressReadyAction) Run(runner ActionRunner) (string, error) {
+	return i.Msg, runner.ingressReady(i.Ref)
 }
 
 func (i DeploymentReadyAction) Run(runner ActionRunner) (string, error) {
