@@ -25,6 +25,7 @@ type GrafanaSpec struct {
 	Service                *GrafanaService          `json:"service,omitempty"`
 	Deployment             *GrafanaDeployment       `json:"deployment,omitempty"`
 	Resources              *v1.ResourceRequirements `json:"resources,omitempty"`
+	ServiceAccount         *GrafanaServiceAccount   `json:"serviceAccount,omitempty"`
 }
 
 // GrafanaService provides a means to configure the service
@@ -32,6 +33,11 @@ type GrafanaService struct {
 	Annotations map[string]string `json:"annotations,omitempty"`
 	Labels      map[string]string `json:"labels,omitempty"`
 	Type        v1.ServiceType    `json:"type,omitempty"`
+}
+
+type GrafanaServiceAccount struct {
+	Annotations map[string]string `json:"annotations,omitempty"`
+	Labels      map[string]string `json:"labels,omitempty"`
 }
 
 // GrafanaDeployment provides a means to configure the deployment
