@@ -5,6 +5,7 @@ import (
 	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/pkg/controller/model"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -19,6 +20,11 @@ func NewDataSourcesState() *DataSourcesState {
 
 func (i *DataSourcesState) Read(ctx context.Context, client client.Client, ns string) error {
 	err := i.readClusterDataSources(ctx, client, ns)
+	if err != nil {
+		return err
+	}
+
+	err = i.readKnownDataSources(ctx, client, ns)
 	if err != nil {
 		return err
 	}
@@ -51,6 +57,9 @@ func (i *DataSourcesState) readKnownDataSources(ctx context.Context, c client.Cl
 
 	err := c.Get(ctx, selector, dataSources)
 	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
 		return err
 	}
 

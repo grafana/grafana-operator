@@ -78,7 +78,7 @@ func getPodLabels(cr *v1alpha1.Grafana) map[string]string {
 }
 
 func getVolumes(cr *v1alpha1.Grafana) []v13.Volume {
-	volumes := []v13.Volume{}
+	var volumes []v13.Volume
 	var volumeOptional bool = true
 
 	// Volume to mount the config file from a config map
@@ -161,7 +161,7 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume {
 }
 
 func getVolumeMounts(cr *v1alpha1.Grafana) []v13.VolumeMount {
-	mounts := []v13.VolumeMount{}
+	var mounts []v13.VolumeMount
 
 	mounts = append(mounts, v13.VolumeMount{
 		Name:      GrafanaConfigName,
@@ -222,7 +222,7 @@ func getProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.Probe {
 }
 
 func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Container {
-	containers := []v13.Container{}
+	var containers []v13.Container
 
 	cfg := config.GetControllerConfig()
 	image := cfg.GetConfigString(config.ConfigGrafanaImage, config.GrafanaImage)

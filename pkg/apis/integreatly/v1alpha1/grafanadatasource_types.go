@@ -1,7 +1,9 @@
 package v1alpha1
 
 import (
+	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"strings"
 )
 
 const GrafanaDataSourceKind = "GrafanaDataSource"
@@ -109,4 +111,9 @@ type GrafanaDataSourceSecureJsonData struct {
 
 func init() {
 	SchemeBuilder.Register(&GrafanaDataSource{}, &GrafanaDataSourceList{})
+}
+
+// return a unique per namespaec key of the datasource
+func (ds *GrafanaDataSource) Filename() string {
+	return fmt.Sprintf("%v_%v.yaml", ds.Namespace, strings.ToLower(ds.Name))
 }
