@@ -11,7 +11,7 @@ spec:
       disable_login_form: False
       disable_signout_menu: True
     auth.basic:
-      enabled: False
+      enabled: True
     auth.anonymous:
       enabled: True
   containers:
@@ -54,12 +54,18 @@ spec:
         port: 9091
         protocol: TCP
         targetPort: grafana-proxy
+      - name: grafana-api
+        port: 3000
+        protocol: TCP
+        targetPort: grafana-http
     annotations:
       service.alpha.openshift.io/serving-cert-secret-name: grafana-k8s-tls
   ingress:
     enabled: True
     targetPort: grafana
     termination: reencrypt
+  client:
+    preferService: True
   serviceAccount:
     annotations:
       serviceaccounts.openshift.io/oauth-redirectreference.primary: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"grafana-route"}}'

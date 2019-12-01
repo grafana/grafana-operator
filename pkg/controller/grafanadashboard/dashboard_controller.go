@@ -220,8 +220,6 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 
 		status, err := grafanaClient.CreateOrUpdateDashboard(*processed)
 		if err != nil {
-			log.Error(err, "error submitting dashboard")
-			log.Info(fmt.Sprintf("%v", status))
 			r.manageError(&dashboard, err)
 			continue
 		}
@@ -254,9 +252,12 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 // Handle success case: update dashboard metadata (id, uid) and update the list
 // of plugins
 func (r *ReconcileGrafanaDashboard) manageSuccess(dashboard *i8ly.GrafanaDashboard, status sdk.StatusMessage, hash string) error {
-	log.Info(fmt.Sprintf("dashboard %v/%v successfully submitted",
+	msg := fmt.Sprintf("dashboard %v/%v successfully submitted",
 		dashboard.Namespace,
-		dashboard.Name))
+		dashboard.Name)
+
+	r.recorder.Event(dashboard, "Normal", "Success", msg)
+	log.Info(msg)
 
 	dashboard.Status.UID = *status.UID
 	dashboard.Status.ID = *status.ID

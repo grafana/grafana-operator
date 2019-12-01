@@ -60,7 +60,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler, namespace string) error {
 	// Create a new controller
 	c, err := controller.New("grafanadatasource-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
-		log.Info("failed to instantiate datasource manager")
 		return err
 	}
 
@@ -71,7 +70,10 @@ func add(mgr manager.Manager, r reconcile.Reconciler, namespace string) error {
 	}
 
 	ref := r.(*ReconcileGrafanaDataSource)
-	ticker := time.NewTicker(config.RequeueDelay)
+
+	// The datasources should not change very often, only revisit them
+	// half as often as the dashboards
+	ticker := time.NewTicker(config.RequeueDelay * 2)
 	sendEmptyRequest := func() {
 		request := reconcile.Request{
 			NamespacedName: types.NamespacedName{
@@ -177,6 +179,7 @@ func (r *ReconcileGrafanaDataSource) reconcileDataSources(state *common.DataSour
 	}
 
 	// apply dataSourcesToAddOrUpdate
+	updated := []i8ly.GrafanaDataSource{}
 	for _, ds := range dataSourcesToAddOrUpdate {
 		pipeline := NewDatasourcePipeline(&ds)
 		err := pipeline.ProcessDatasource(state.KnownDataSources)
@@ -184,7 +187,7 @@ func (r *ReconcileGrafanaDataSource) reconcileDataSources(state *common.DataSour
 			r.manageError(&ds, err)
 			continue
 		}
-		r.manageSuccess(&ds)
+		updated = append(updated, ds)
 	}
 
 	// update the hash of the newly reconciled datasources
@@ -204,9 +207,13 @@ func (r *ReconcileGrafanaDataSource) reconcileDataSources(state *common.DataSour
 		state.KnownDataSources.Annotations[model.LastConfigAnnotation] = hash
 
 		// finally, update the configmap
-		return r.client.Update(r.context, state.KnownDataSources)
+		err = r.client.Update(r.context, state.KnownDataSources)
+		if err != nil {
+			r.recorder.Event(state.KnownDataSources, "Warning", "UpdateError", err.Error())
+		} else {
+			r.manageSuccess(updated)
+		}
 	}
-
 	return nil
 }
 
@@ -262,13 +269,18 @@ func (r *ReconcileGrafanaDataSource) manageError(datasource *i8ly.GrafanaDataSou
 
 // manage success case: datasource has been imported successfully and the configmap
 // is updated
-func (r *ReconcileGrafanaDataSource) manageSuccess(datasource *i8ly.GrafanaDataSource) error {
-	log.Info(fmt.Sprintf("datasource %v/%v successfully imported",
-		datasource.Namespace,
-		datasource.Name))
+func (r *ReconcileGrafanaDataSource) manageSuccess(datasources []i8ly.GrafanaDataSource) {
+	for _, datasource := range datasources {
+		log.Info(fmt.Sprintf("datasource %v/%v successfully imported",
+			datasource.Namespace,
+			datasource.Name))
 
-	datasource.Status.Phase = i8ly.PhaseReconciling
-	datasource.Status.Message = "success"
+		datasource.Status.Phase = i8ly.PhaseReconciling
+		datasource.Status.Message = "success"
 
-	return r.client.Status().Update(r.context, datasource)
+		err := r.client.Status().Update(r.context, &datasource)
+		if err != nil {
+			r.recorder.Event(&datasource, "Warning", "UpdateError", err.Error())
+		}
+	}
 }
