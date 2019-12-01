@@ -33,6 +33,7 @@ type GrafanaService struct {
 	Annotations map[string]string `json:"annotations,omitempty"`
 	Labels      map[string]string `json:"labels,omitempty"`
 	Type        v1.ServiceType    `json:"type,omitempty"`
+	Ports       []v1.ServicePort  `json:"ports,omitempty"`
 }
 
 type GrafanaServiceAccount struct {
@@ -56,6 +57,7 @@ type GrafanaIngress struct {
 	Enabled       bool              `json:"enabled,omitempty"`
 	TLSEnabled    bool              `json:"tlsEnabled,omitempty"`
 	TLSSecretName string            `json:"tlsSecretName,omitempty"`
+	TargetPort    string            `json:"targetPort,omitempty"`
 }
 
 // GrafanaConfig is the configuration for grafana
@@ -179,7 +181,7 @@ type GrafanaConfigAuth struct {
 }
 
 type GrafanaConfigAuthBasic struct {
-	Enabled bool `json:"enabled,omitempty" ini:"enabled,omitempty"`
+	Enabled bool `json:"enabled" ini:"enabled"`
 }
 
 type GrafanaConfigAuthAnonymous struct {

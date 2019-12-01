@@ -48,8 +48,19 @@ spec:
     - grafana-k8s-tls
     - grafana-k8s-proxy
   service:
+    ports:
+      - name: grafana
+        port: 9091
+        protocol: TCP
+        targetPort: grafana-proxy
     annotations:
       service.alpha.openshift.io/serving-cert-secret-name: grafana-k8s-tls
+  ingress:
+    enabled: True
+    targetPort: grafana
+  serviceAccount:
+    annotations:
+      serviceaccounts.openshift.io/oauth-redirectreference.primary: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"grafana-route"}}'
   dashboardLabelSelector:
     - matchExpressions:
         - { key: "app", operator: In, values: ['grafana'] }

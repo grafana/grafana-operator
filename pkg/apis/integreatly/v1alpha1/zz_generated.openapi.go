@@ -11,13 +11,13 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.Grafana":                 schema_pkg_apis_integreatly_v1alpha1_Grafana(ref),
-		"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDashboard":        schema_pkg_apis_integreatly_v1alpha1_GrafanaDashboard(ref),
-		"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDataSource":       schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSource(ref),
-		"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDataSourceSpec":   schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSourceSpec(ref),
-		"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDataSourceStatus": schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSourceStatus(ref),
-		"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaSpec":             schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref),
-		"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaStatus":           schema_pkg_apis_integreatly_v1alpha1_GrafanaStatus(ref),
+		"./pkg/apis/integreatly/v1alpha1.Grafana":                 schema_pkg_apis_integreatly_v1alpha1_Grafana(ref),
+		"./pkg/apis/integreatly/v1alpha1.GrafanaDashboard":        schema_pkg_apis_integreatly_v1alpha1_GrafanaDashboard(ref),
+		"./pkg/apis/integreatly/v1alpha1.GrafanaDataSource":       schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSource(ref),
+		"./pkg/apis/integreatly/v1alpha1.GrafanaDataSourceSpec":   schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSourceSpec(ref),
+		"./pkg/apis/integreatly/v1alpha1.GrafanaDataSourceStatus": schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSourceStatus(ref),
+		"./pkg/apis/integreatly/v1alpha1.GrafanaSpec":             schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref),
+		"./pkg/apis/integreatly/v1alpha1.GrafanaStatus":           schema_pkg_apis_integreatly_v1alpha1_GrafanaStatus(ref),
 	}
 }
 
@@ -26,6 +26,7 @@ func schema_pkg_apis_integreatly_v1alpha1_Grafana(ref common.ReferenceCallback) 
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Description: "Grafana is the Schema for the grafanas API",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
@@ -48,19 +49,19 @@ func schema_pkg_apis_integreatly_v1alpha1_Grafana(ref common.ReferenceCallback) 
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaSpec"),
+							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaStatus"),
+							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaSpec", "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"./pkg/apis/integreatly/v1alpha1.GrafanaSpec", "./pkg/apis/integreatly/v1alpha1.GrafanaStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -69,6 +70,7 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaDashboard(ref common.ReferenceC
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Description: "GrafanaDashboard is the Schema for the grafanadashboards API",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
@@ -91,19 +93,19 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaDashboard(ref common.ReferenceC
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDashboardSpec"),
+							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaDashboardSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDashboardStatus"),
+							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaDashboardStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDashboardSpec", "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDashboardStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"./pkg/apis/integreatly/v1alpha1.GrafanaDashboardSpec", "./pkg/apis/integreatly/v1alpha1.GrafanaDashboardStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -112,6 +114,7 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSource(ref common.Reference
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Description: "GrafanaDataSource is the Schema for the grafanadatasources API",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
@@ -134,19 +137,19 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSource(ref common.Reference
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDataSourceSpec"),
+							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaDataSourceSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDataSourceStatus"),
+							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaDataSourceStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDataSourceSpec", "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDataSourceStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"./pkg/apis/integreatly/v1alpha1.GrafanaDataSourceSpec", "./pkg/apis/integreatly/v1alpha1.GrafanaDataSourceStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -155,6 +158,7 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSourceSpec(ref common.Refer
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Description: "GrafanaDataSourceSpec defines the desired state of GrafanaDataSource",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"datasources": {
 						SchemaProps: spec.SchemaProps{
@@ -163,7 +167,7 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSourceSpec(ref common.Refer
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDataSourceFields"),
+										Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaDataSourceFields"),
 									},
 								},
 							},
@@ -180,7 +184,7 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSourceSpec(ref common.Refer
 			},
 		},
 		Dependencies: []string{
-			"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDataSourceFields"},
+			"./pkg/apis/integreatly/v1alpha1.GrafanaDataSourceFields"},
 	}
 }
 
@@ -189,18 +193,24 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSourceStatus(ref common.Ref
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Description: "GrafanaDataSourceStatus defines the observed state of GrafanaDataSource",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"phase": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int32",
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 				},
-				Required: []string{"phase"},
+				Required: []string{"phase", "message"},
 			},
 		},
-		Dependencies: []string{},
 	}
 }
 
@@ -209,10 +219,11 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref common.ReferenceCallba
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Description: "GrafanaSpec defines the desired state of Grafana",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"config": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaConfig"),
+							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaConfig"),
 						},
 					},
 					"containers": {
@@ -241,7 +252,7 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref common.ReferenceCallba
 					},
 					"ingress": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaIngress"),
+							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaIngress"),
 						},
 					},
 					"secrets": {
@@ -272,12 +283,12 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref common.ReferenceCallba
 					},
 					"service": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaService"),
+							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaService"),
 						},
 					},
 					"deployment": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDeployment"),
+							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaDeployment"),
 						},
 					},
 					"resources": {
@@ -285,12 +296,17 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref common.ReferenceCallba
 							Ref: ref("k8s.io/api/core/v1.ResourceRequirements"),
 						},
 					},
+					"serviceAccount": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaServiceAccount"),
+						},
+					},
 				},
 				Required: []string{"config"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaConfig", "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDeployment", "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaIngress", "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaService", "k8s.io/api/core/v1.Container", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector"},
+			"./pkg/apis/integreatly/v1alpha1.GrafanaConfig", "./pkg/apis/integreatly/v1alpha1.GrafanaDeployment", "./pkg/apis/integreatly/v1alpha1.GrafanaIngress", "./pkg/apis/integreatly/v1alpha1.GrafanaService", "./pkg/apis/integreatly/v1alpha1.GrafanaServiceAccount", "k8s.io/api/core/v1.Container", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector"},
 	}
 }
 
@@ -299,11 +315,38 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaStatus(ref common.ReferenceCall
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Description: "GrafanaStatus defines the observed state of Grafana",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"phase": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
+						},
+					},
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"dashboards": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaDashboardRef"),
+												},
+											},
+										},
+									},
+								},
+							},
 						},
 					},
 					"installedPlugins": {
@@ -312,7 +355,7 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaStatus(ref common.ReferenceCall
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaPlugin"),
+										Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaPlugin"),
 									},
 								},
 							},
@@ -324,7 +367,7 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaStatus(ref common.ReferenceCall
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaPlugin"),
+										Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaPlugin"),
 									},
 								},
 							},
@@ -343,10 +386,10 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaStatus(ref common.ReferenceCall
 						},
 					},
 				},
-				Required: []string{"phase", "installedPlugins", "failedPlugins", "adminUser", "adminPassword"},
+				Required: []string{"phase", "message", "dashboards", "installedPlugins", "failedPlugins", "adminUser", "adminPassword"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaPlugin"},
+			"./pkg/apis/integreatly/v1alpha1.GrafanaDashboardRef", "./pkg/apis/integreatly/v1alpha1.GrafanaPlugin"},
 	}
 }

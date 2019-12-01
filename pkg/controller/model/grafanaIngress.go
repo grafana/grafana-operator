@@ -4,7 +4,6 @@ import (
 	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"k8s.io/api/extensions/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -37,7 +36,7 @@ func getIngressSpec(cr *v1alpha1.Grafana) v1beta1.IngressSpec {
 								Path: GetPath(cr),
 								Backend: v1beta1.IngressBackend{
 									ServiceName: GrafanaServiceName,
-									ServicePort: intstr.FromInt(int(GetGrafanaPort(cr))),
+									ServicePort: GetIngressTargetPort(cr),
 								},
 							},
 						},

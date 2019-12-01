@@ -47,7 +47,7 @@ func GetGrafanaPort(cr *v1alpha1.Grafana) int {
 }
 
 func getServicePorts(cr *v1alpha1.Grafana) []v1.ServicePort {
-	return []v1.ServicePort{
+	defaultPorts := []v1.ServicePort{
 		{
 			Name:       "grafana",
 			Protocol:   "TCP",
@@ -55,6 +55,16 @@ func getServicePorts(cr *v1alpha1.Grafana) []v1.ServicePort {
 			TargetPort: intstr.FromString("grafana-http"),
 		},
 	}
+
+	if cr.Spec.Service == nil {
+		return defaultPorts
+	}
+
+	if cr.Spec.Service.Ports == nil {
+		return defaultPorts
+	}
+
+	return cr.Spec.Service.Ports
 }
 
 func GrafanaService(cr *v1alpha1.Grafana) *v1.Service {

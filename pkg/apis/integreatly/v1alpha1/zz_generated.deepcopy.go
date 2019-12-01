@@ -984,6 +984,11 @@ func (in *GrafanaService) DeepCopyInto(out *GrafanaService) {
 			(*out)[key] = val
 		}
 	}
+	if in.Ports != nil {
+		in, out := &in.Ports, &out.Ports
+		*out = make([]v1.ServicePort, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 

@@ -36,6 +36,20 @@ func GetIngressAnnotations(cr *v1alpha1.Grafana) map[string]string {
 	return cr.Spec.Ingress.Annotations
 }
 
+func GetIngressTargetPort(cr *v1alpha1.Grafana) intstr.IntOrString {
+	defaultPort := intstr.FromInt(GetGrafanaPort(cr))
+
+	if cr.Spec.Ingress == nil {
+		return defaultPort
+	}
+
+	if cr.Spec.Ingress.TargetPort == "" {
+		return defaultPort
+	}
+
+	return intstr.FromString(cr.Spec.Ingress.TargetPort)
+}
+
 func getRouteSpec(cr *v1alpha1.Grafana) v1.RouteSpec {
 	return v1.RouteSpec{
 		Path: GetPath(cr),
@@ -45,10 +59,10 @@ func getRouteSpec(cr *v1alpha1.Grafana) v1.RouteSpec {
 		},
 		AlternateBackends: nil,
 		Port: &v1.RoutePort{
-			TargetPort: intstr.FromInt(GrafanaHttpPort),
+			TargetPort: GetIngressTargetPort(cr),
 		},
 		TLS: &v1.TLSConfig{
-			Termination: "edge",
+			Termination: v1.TLSTerminationReencrypt,
 		},
 		WildcardPolicy: "None",
 	}

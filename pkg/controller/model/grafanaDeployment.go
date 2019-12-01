@@ -160,6 +160,37 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume {
 	return volumes
 }
 
+// Don't add grafana specific volume mounts to extra containers and preserve
+// pre existing ones
+func getExtraContainerVolumeMounts(cr *v1alpha1.Grafana, mounts []v13.VolumeMount) []v13.VolumeMount {
+	appendIfEmpty := func(mounts []v13.VolumeMount, mount v13.VolumeMount) []v13.VolumeMount {
+		for _, existing := range mounts {
+			if existing.Name == mount.Name || existing.MountPath == mount.MountPath {
+				return mounts
+			}
+		}
+		return append(mounts, mount)
+	}
+
+	for _, secret := range cr.Spec.Secrets {
+		mountName := fmt.Sprintf("secret-%s", secret)
+		mounts = appendIfEmpty(mounts, v13.VolumeMount{
+			Name:      mountName,
+			MountPath: config.SecretsMountDir + secret,
+		})
+	}
+
+	for _, configmap := range cr.Spec.ConfigMaps {
+		mountName := fmt.Sprintf("configmap-%s", configmap)
+		mounts = appendIfEmpty(mounts, v13.VolumeMount{
+			Name:      mountName,
+			MountPath: config.ConfigMapsMountDir + configmap,
+		})
+	}
+
+	return mounts
+}
+
 func getVolumeMounts(cr *v1alpha1.Grafana) []v13.VolumeMount {
 	var mounts []v13.VolumeMount
 
@@ -283,7 +314,7 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 
 	// Add extra containers
 	for _, container := range cr.Spec.Containers {
-		container.VolumeMounts = getVolumeMounts(cr)
+		container.VolumeMounts = getExtraContainerVolumeMounts(cr, container.VolumeMounts)
 		containers = append(containers, container)
 	}
 

@@ -76,9 +76,18 @@ spec:
                 labels:
                   type: object
                   description: Additional labels for the ingress / route
+                targetPort:
+                  type: string
+                  description: Override port to target in the grafana service
             service:
               type: object
               properties:
+                ports:
+                  type: array
+                  description: Override default ports
+                  items:
+                    type: object
+                    descripton: A port to add to the grafana service
                 annotations:
                   type: object
                   description: Additional annotations for the service
@@ -97,6 +106,15 @@ spec:
                 labels:
                   type: object
                   description: Additional labels for the service
+            serviceAccount:
+              type: object
+              properties:
+                annotations:
+                  type: object
+                  description: Additional annotations for the serviceaccount
+                labels:
+                  type: object
+                  description: Additional labels for the serviceaccount
             dashboardLabelSelectors:
               type: array
               items:
