@@ -27,11 +27,6 @@ const (
 
 var log = logf.Log.WithName(ControllerName)
 
-/**
-* USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
-* business logic.  Delete these comments after modifying this file.*
- */
-
 // Add creates a new GrafanaDashboard Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager, namespace string) error {
@@ -278,8 +273,13 @@ func (r *ReconcileGrafanaDashboard) manageError(dashboard *i8ly.GrafanaDashboard
 	r.recorder.Event(dashboard, "Warning", "ProcessingError", issue.Error())
 	dashboard.Status.Phase = i8ly.PhaseFailing
 	dashboard.Status.Message = issue.Error()
+
 	err := r.client.Status().Update(r.context, dashboard)
 	if err != nil {
+		// Ignore conclicts. Resource might just be outdated.
+		if errors.IsConflict(err) {
+			return
+		}
 		log.Error(err, "error updating dashboard status")
 	}
 }

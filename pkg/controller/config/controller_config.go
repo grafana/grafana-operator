@@ -22,7 +22,6 @@ const (
 	GrafanaVersion                  = "6.4.4"
 	GrafanaConfigMapName            = "grafana-config"
 	GrafanaConfigFileName           = "grafana.ini"
-	GrafanaDatasourcesConfigMapName = "grafana-datasources"
 	GrafanaDashboardsConfigMapName  = "grafana-dashboards"
 	GrafanaDeploymentName           = "grafana-deployment"
 	GrafanaDataPath                 = "/var/lib/grafana"

@@ -7,10 +7,10 @@ import (
 	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/pkg/controller/config"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -19,6 +19,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+	"strings"
+	"time"
 )
 
 const (
@@ -28,15 +30,10 @@ const (
 
 var log = logf.Log.WithName(ControllerName)
 
-/**
-* USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
-* business logic.  Delete these comments after modifying this file.*
- */
-
 // Add creates a new GrafanaDataSource Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager, autodetectChannel chan schema.GroupVersionKind) error {
-	return add(mgr, newReconciler(mgr))
+func Add(mgr manager.Manager, _ chan schema.GroupVersionKind, namespace string) error {
+	return add(mgr, newReconciler(mgr), namespace)
 }
 
 // newReconciler returns a new reconcile.Reconciler
@@ -56,7 +53,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
-func add(mgr manager.Manager, r reconcile.Reconciler) error {
+func add(mgr manager.Manager, r reconcile.Reconciler, namespace string) error {
 	// Create a new controller
 	c, err := controller.New("grafanadatasource-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
@@ -70,7 +67,32 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	log.Info("Starting datasource controller")
+	ref := r.(*ReconcileGrafanaDataSource)
+	ticker := time.NewTicker(config.RequeueDelay)
+	sendEmptyRequest := func() {
+		request := reconcile.Request{
+			NamespacedName: types.NamespacedName{
+				Namespace: namespace,
+				Name:      "",
+			},
+		}
+		r.Reconcile(request)
+	}
+
+	go func() {
+		for range ticker.C {
+			log.Info("running periodic datasource resync")
+			sendEmptyRequest()
+		}
+	}()
+
+	// Listen for config change events
+	go func() {
+		for stateChange := range common.ControllerEvents {
+			// Controller state updated
+			ref.state = stateChange
+		}
+	}()
 
 	return nil
 }
@@ -93,102 +115,86 @@ type ReconcileGrafanaDataSource struct {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileGrafanaDataSource) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	_, err := r.checkForDeletedDataSources(request)
+	// If Grafana is not running there is no need to continue
+	if r.state.GrafanaReady == false {
+		log.Info("no grafana instance available")
+		return reconcile.Result{Requeue: false}, nil
+	}
+
+	// Read the current state of known and cluster datasources
+	currentState := common.NewDataSourcesState()
+	err := currentState.Read(r.context, r.client, request.Namespace)
 	if err != nil {
-		log.Info("error deleting")
 		return reconcile.Result{}, err
 	}
 
-	instance := &i8ly.GrafanaDataSource{}
-	err = r.client.Get(context.TODO(), request.NamespacedName, instance)
+	err = r.reconcileDataSources(currentState)
 	if err != nil {
-		if errors.IsNotFound(err) {
-			// Request object not found, could have been deleted after reconcile request.
-			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
-			// Return and don't requeue
-			return reconcile.Result{}, nil
-		}
-		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	}
 
-	cr := instance.DeepCopy()
-	res, err := r.reconcileDatasource(cr)
-
-	// Requeue periodically to find datasources that have not been updated
-	// but are not yet imported (can happen if Grafana is uninstalled and
-	// then reinstalled without an Operator restart
-	res.RequeueAfter = config.RequeueDelay
-	return res, err
+	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileGrafanaDataSource) getKnownDatasources(request reconcile.Request) (*v1.ConfigMap, error) {
-	configMap := &v1.ConfigMap{}
-	selector := client.ObjectKey{
-		Namespace: request.Namespace,
-		Name:      config.GrafanaDatasourcesConfigMapName,
+func (r *ReconcileGrafanaDataSource) reconcileDataSources(state *common.DataSourcesState) error {
+	var dataSourcesToAddOrUpdate []i8ly.GrafanaDataSource
+	var dataSourcesToDelete []string
+
+	// datasources in the configmap are identified by their namespace and name
+	// concatenated
+	getKey := func(ds *i8ly.GrafanaDataSource) string {
+		return fmt.Sprintf("%s_%s", ds.Namespace, strings.ToLower(ds.Name))
 	}
 
-	err := r.client.Get(r.context, selector, configMap)
-	if err != nil {
-		return nil, err
-	}
-
-	return configMap, nil
-}
-
-func (r *ReconcileGrafanaDataSource) checkForDeletedDataSources(request reconcile.Request) (reconcile.Result, error) {
-	datasources := &i8ly.GrafanaDataSourceList{}
-	opts := client.ListOptions{
-		Namespace: request.Namespace,
-	}
-	err := r.client.List(r.context, datasources, &opts)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-
-	known, err := r.getKnownDatasources(request)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-
-	hasCr := func(key string) bool {
-		for _, datasource := range datasources.Items {
-			dsKey := fmt.Sprintf("%v_%v", datasource.Namespace, datasource.Spec.Name)
-			if key == dsKey {
+	// check if a given datasource (by its key) is found on the cluster
+	foundOnCluster := func(key string) bool {
+		for _, ds := range state.ClusterDataSources.Items {
+			if key == getKey(&ds) {
 				return true
 			}
 		}
 		return false
 	}
 
-	for key, _ := range known.Data {
-		if hasCr(key) {
+	// Data sources to add or update: we always update the config map and let
+	// Kubernetes figure out if any changes have to be applied
+	for _, ds := range state.ClusterDataSources.Items {
+		dataSourcesToAddOrUpdate = append(dataSourcesToAddOrUpdate, ds)
+	}
+
+	// Data sources to delete: if a datasourcedashboard is in the configmap but cannot
+	// be found on the cluster then we assume it has been deleted and remove
+	// it from the configmap
+	for ds, _ := range state.KnownDataSources.Data {
+		if !foundOnCluster(ds) {
+			dataSourcesToDelete = append(dataSourcesToDelete, ds)
+		}
+	}
+
+	// Apply dataSourcesToDelete
+	for _, ds := range dataSourcesToDelete {
+		log.Info(fmt.Sprintf("deleting datasource %v", ds))
+		delete(state.KnownDataSources.Data, ds)
+	}
+
+	// Apply dataSourcesToAddOrUpdate
+	for _, ds := range dataSourcesToAddOrUpdate {
+		key := getKey(&ds)
+		val, err := r.parseDataSource(&ds)
+		if err != nil {
+			log.Error(err, "error parsing datasource")
+			r.manageError(&ds, err)
 			continue
 		}
-		err = r.helper.DeleteDataSources(key)
-		if err != nil {
-			log.Info(fmt.Sprintf("failed to delete datasource %v", key))
-		}
+
+		log.Info(fmt.Sprintf("importing datasource %v", key))
+		state.KnownDataSources.Data[key] = val
 	}
 
-	return reconcile.Result{}, nil
-}
+	// Update the configmap
+	r.client.Update(r.context, state.KnownDataSources)
 
-func (r *ReconcileGrafanaDataSource) reconcileDatasource(cr *i8ly.GrafanaDataSource) (reconcile.Result, error) {
-	ds, err := r.parseDataSource(cr)
-	if err != nil {
-		log.Error(err, "error parsing datasource")
-		return reconcile.Result{}, err
-	}
-
-	_, uerr := r.helper.UpdateDataSources(cr.Spec.Name, cr.Namespace, ds)
-	if uerr != nil {
-		return reconcile.Result{}, uerr
-	}
-
-	log.Info("updated datasource")
-	return reconcile.Result{}, err
+	return nil
 }
 
 func (r *ReconcileGrafanaDataSource) parseDataSource(cr *i8ly.GrafanaDataSource) (string, error) {
@@ -206,4 +212,33 @@ func (r *ReconcileGrafanaDataSource) parseDataSource(cr *i8ly.GrafanaDataSource)
 	}
 
 	return string(bytes), nil
+}
+
+// Handle error case: update datasource with error message and status
+func (r *ReconcileGrafanaDataSource) manageError(datasource *i8ly.GrafanaDataSource, issue error) {
+	r.recorder.Event(datasource, "Warning", "ProcessingError", issue.Error())
+	datasource.Status.Phase = i8ly.PhaseFailing
+	datasource.Status.Message = issue.Error()
+
+	err := r.client.Status().Update(r.context, datasource)
+	if err != nil {
+		// Ignore conclicts. Resource might just be outdated.
+		if errors.IsConflict(err) {
+			return
+		}
+		log.Error(err, "error updating datasource status")
+	}
+
+}
+
+// manage success case: datasource has been imported successfully and the configmap
+// is updated
+func (r *ReconcileGrafanaDataSource) manageSuccess(datasource *i8ly.GrafanaDataSource) error {
+	log.Info(fmt.Sprintf("datasource %v/%v successfully submitted",
+		datasource.Namespace,
+		datasource.Name))
+
+	datasource.Status.Phase = i8ly.PhaseReconciling
+
+	return r.client.Status().Update(r.context, datasource)
 }

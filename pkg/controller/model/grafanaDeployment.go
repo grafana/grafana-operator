@@ -133,11 +133,11 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume {
 
 	// Volume to store the datasources
 	volumes = append(volumes, v13.Volume{
-		Name: config.GrafanaDatasourcesConfigMapName,
+		Name: GrafanaDatasourcesConfigMapName,
 		VolumeSource: v13.VolumeSource{
 			ConfigMap: &v13.ConfigMapVolumeSource{
 				LocalObjectReference: v13.LocalObjectReference{
-					Name: config.GrafanaDatasourcesConfigMapName,
+					Name: GrafanaDatasourcesConfigMapName,
 				},
 			},
 		},
@@ -184,7 +184,7 @@ func getVolumeMounts(cr *v1alpha1.Grafana) []v13.VolumeMount {
 	})
 
 	mounts = append(mounts, v13.VolumeMount{
-		Name:      config.GrafanaDatasourcesConfigMapName,
+		Name:      GrafanaDatasourcesConfigMapName,
 		MountPath: "/etc/grafana/provisioning/datasources",
 	})
 

@@ -31,7 +31,7 @@ var log = logf.Log.WithName(ControllerName)
 
 // Add creates a new Grafana Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager, autodetectChannel chan schema.GroupVersionKind) error {
+func Add(mgr manager.Manager, autodetectChannel chan schema.GroupVersionKind, _ string) error {
 	return add(mgr, newReconciler(mgr), autodetectChannel)
 }
 
@@ -183,8 +183,7 @@ func (r *ReconcileGrafana) manageError(cr *i8ly.Grafana, issue error) (reconcile
 
 	err := r.client.Status().Update(r.context, cr)
 	if err != nil {
-		// Ignore conflicts here to prevent cycling between success
-		// and error
+		// Ignore conflicts, resource might just be outdated.
 		if errors.IsConflict(err) {
 			err = nil
 		}

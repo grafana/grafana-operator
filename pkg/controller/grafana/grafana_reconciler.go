@@ -30,7 +30,7 @@ func (i *GrafanaReconciler) Reconcile(state *common.ClusterState, cr *v1alpha1.G
 	desired = desired.AddAction(i.getGrafanaServiceAccountDesiredState(state, cr))
 	desired = desired.AddActions(i.getGrafanaConfigDesiredState(state, cr))
 	desired = desired.AddAction(i.getGrafanaExternalAccessDesiredState(state, cr))
-	desired = desired.AddActions(i.getGrafanaDatasourceConfigDesiredState(state, cr))
+	desired = desired.AddAction(i.getGrafanaDatasourceConfigDesiredState(state, cr))
 
 	// Consolidate plugins
 	// No action, will update init container env var
@@ -133,26 +133,18 @@ func (i *GrafanaReconciler) getGrafanaConfigDesiredState(state *common.ClusterSt
 	return actions
 }
 
-func (i *GrafanaReconciler) getGrafanaDatasourceConfigDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) []common.ClusterAction {
-	actions := []common.ClusterAction{}
-
+func (i *GrafanaReconciler) getGrafanaDatasourceConfigDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
 	if state.GrafanaDataSourceConfig == nil {
-		dsconfig := model.GrafanaDatasourcesConfig(cr)
-
-		actions = append(actions, common.GenericCreateAction{
-			Ref: dsconfig,
+		return common.GenericCreateAction{
+			Ref: model.GrafanaDatasourcesConfig(cr),
 			Msg: "create grafanadatasource config",
-		})
-
+		}
 	} else {
-		dsconfig := model.GrafanaDatasourcesConfigReconciled(cr, state.GrafanaConfig)
-
-		actions = append(actions, common.GenericUpdateAction{
-			Ref: dsconfig,
+		return common.GenericUpdateAction{
+			Ref: model.GrafanaDatasourcesConfigReconciled(cr, state.GrafanaDataSourceConfig),
 			Msg: "update grafanadatasource config",
-		})
+		}
 	}
-	return actions
 }
 
 func (i *GrafanaReconciler) getGrafanaExternalAccessDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {

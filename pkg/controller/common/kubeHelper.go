@@ -1,7 +1,6 @@
 package common
 
 import (
-	stdErrors "errors"
 	"fmt"
 	config2 "github.com/integr8ly/grafana-operator/pkg/controller/config"
 	"strings"
@@ -13,7 +12,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -109,68 +107,6 @@ func (h KubeHelperImpl) isKnown(config, namespace, name string) (bool, error) {
 	return found, nil
 }
 
-func (h KubeHelperImpl) IsKnown(kind string, o runtime.Object) (bool, error) {
-	switch kind {
-	case v1alpha1.GrafanaDashboardKind:
-		d := o.(*v1alpha1.GrafanaDashboard)
-		return h.isKnown(config2.GrafanaDashboardsConfigMapName, d.Namespace, d.Spec.Name)
-	case v1alpha1.GrafanaDataSourceKind:
-		d := o.(*v1alpha1.GrafanaDataSource)
-		return h.isKnown(config2.GrafanaDatasourcesConfigMapName, d.Namespace, d.Spec.Name)
-	default:
-		return false, stdErrors.New(fmt.Sprintf("unknown kind '%v'", kind))
-	}
-}
-
-func (h KubeHelperImpl) UpdateDataSources(name, namespace, ds string) (bool, error) {
-	configMap, err := h.getConfigMap(config2.GrafanaDatasourcesConfigMapName)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return false, nil
-		}
-		return false, err
-	}
-
-	// Prefix the data source filename with the namespace to allow multiple namespaces
-	// to import the same dashboard
-	key := h.getConfigMapKey(namespace, name)
-
-	if configMap.Data == nil {
-		configMap.Data = make(map[string]string)
-	}
-
-	configMap.Data[key] = ds
-	err = h.updateConfigMap(configMap)
-	if err != nil {
-		return false, err
-	}
-	return true, nil
-}
-
-func (h KubeHelperImpl) DeleteDataSources(key string) error {
-	configMap, err := h.getConfigMap(config2.GrafanaDatasourcesConfigMapName)
-	if err != nil {
-		// Grafana may already be uninstalled
-		if errors.IsNotFound(err) {
-			return nil
-		}
-		return err
-	}
-
-	fmt.Printf("key: %s", key)
-	if configMap.Data == nil {
-		return nil
-	}
-
-	if _, ok := configMap.Data[key]; !ok {
-		// Resource deleted but no such key in the configmap
-		return nil
-	}
-
-	delete(configMap.Data, key)
-	err = h.updateConfigMap(configMap)
-	return err
-}
 
 func (h KubeHelperImpl) DeleteDashboard(d *v1alpha1.GrafanaDashboard) error {
 	configMap, err := h.getConfigMap(config2.GrafanaDashboardsConfigMapName)

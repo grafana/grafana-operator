@@ -6,12 +6,12 @@ import (
 )
 
 // AddToManagerFuncs is a list of functions to add all Controllers to the Manager
-var AddToManagerFuncs []func(manager.Manager, chan schema.GroupVersionKind) error
+var AddToManagerFuncs []func(manager.Manager, chan schema.GroupVersionKind, string) error
 
 // AddToManager adds all Controllers to the Manager
-func AddToManager(m manager.Manager, autodetect chan schema.GroupVersionKind) error {
+func AddToManager(m manager.Manager, autodetect chan schema.GroupVersionKind, ns string) error {
 	for _, f := range AddToManagerFuncs {
-		if err := f(m, autodetect); err != nil {
+		if err := f(m, autodetect, ns); err != nil {
 			return err
 		}
 	}
