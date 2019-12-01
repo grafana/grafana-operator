@@ -47,7 +47,6 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &ReconcileGrafanaDataSource{
 		client:   mgr.GetClient(),
 		scheme:   mgr.GetScheme(),
-		helper:   common.NewKubeHelper(),
 		context:  ctx,
 		cancel:   cancel,
 		recorder: mgr.GetEventRecorderFor(ControllerName),
@@ -110,7 +109,6 @@ type ReconcileGrafanaDataSource struct {
 	// that reads objects from the cache and writes to the apiserver
 	client   client.Client
 	scheme   *runtime.Scheme
-	helper   *common.KubeHelperImpl
 	context  context.Context
 	cancel   context.CancelFunc
 	recorder record.EventRecorder

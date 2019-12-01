@@ -44,7 +44,6 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &ReconcileGrafana{
 		client:   mgr.GetClient(),
 		scheme:   mgr.GetScheme(),
-		helper:   common.NewKubeHelper(),
 		plugins:  newPluginsHelper(),
 		context:  ctx,
 		cancel:   cancel,
@@ -119,7 +118,6 @@ type ReconcileGrafana struct {
 	// that reads objects from the cache and writes to the apiserver
 	client   client.Client
 	scheme   *runtime.Scheme
-	helper   *common.KubeHelperImpl
 	plugins  *PluginsHelperImpl
 	context  context.Context
 	cancel   context.CancelFunc
