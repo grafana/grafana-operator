@@ -9,11 +9,8 @@ import (
 )
 
 func GrafanaConfig(cr *v1alpha1.Grafana) (*v1.ConfigMap, error) {
-	grafanaIni := config.NewIniConfig(cr)
-	err := grafanaIni.Build()
-	if err != nil {
-		return nil, err
-	}
+	ini := config.NewGrafanaIni(&cr.Spec.Config)
+	config, hash := ini.Write()
 
 	configMap := &v1.ConfigMap{}
 	configMap.ObjectMeta = v12.ObjectMeta{
@@ -24,28 +21,25 @@ func GrafanaConfig(cr *v1alpha1.Grafana) (*v1.ConfigMap, error) {
 	// Store the hash of the current configuration for later
 	// comparisons
 	configMap.Annotations = map[string]string{
-		"lastConfig": grafanaIni.Hash,
+		"lastConfig": hash,
 	}
 
 	configMap.Data = map[string]string{}
-	configMap.Data[GrafanaConfigFileName] = grafanaIni.Contents
+	configMap.Data[GrafanaConfigFileName] = config
 	return configMap, nil
 }
 
 func GrafanaConfigReconciled(cr *v1alpha1.Grafana, currentState *v1.ConfigMap) (*v1.ConfigMap, error) {
 	reconciled := currentState.DeepCopy()
 
-	grafanaIni := config.NewIniConfig(cr)
-	err := grafanaIni.Build()
-	if err != nil {
-		return nil, err
-	}
+	ini := config.NewGrafanaIni(&cr.Spec.Config)
+	config, hash := ini.Write()
 
 	reconciled.Annotations = map[string]string{
-		LastConfigAnnotation: grafanaIni.Hash,
+		LastConfigAnnotation: hash,
 	}
 
-	reconciled.Data[GrafanaConfigFileName] = grafanaIni.Contents
+	reconciled.Data[GrafanaConfigFileName] = config
 	return reconciled, nil
 }
 

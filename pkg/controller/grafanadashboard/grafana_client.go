@@ -77,6 +77,7 @@ func (r *GrafanaClientImpl) DeleteDashboardByUID(UID string) (sdk.StatusMessage,
 	reply := sdk.StatusMessage{}
 	data, err := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
+
 	if err != nil {
 		return sdk.StatusMessage{}, err
 	}

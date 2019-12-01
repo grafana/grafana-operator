@@ -220,6 +220,8 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 
 		status, err := grafanaClient.CreateOrUpdateDashboard(*processed)
 		if err != nil {
+			log.Error(err, "error submitting dashboard")
+			log.Info(fmt.Sprintf("%v", status))
 			r.manageError(&dashboard, err)
 			continue
 		}

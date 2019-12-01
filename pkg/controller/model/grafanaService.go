@@ -34,6 +34,10 @@ func getServiceType(cr *v1alpha1.Grafana) v1.ServiceType {
 }
 
 func GetGrafanaPort(cr *v1alpha1.Grafana) int {
+	if cr.Spec.Config.Server == nil {
+		return GrafanaHttpPort
+	}
+
 	if cr.Spec.Config.Server.HttpPort == "" {
 		return GrafanaHttpPort
 	}

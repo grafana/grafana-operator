@@ -44,6 +44,8 @@ func (i *IniConfig) setDefaults(config *ini.File) error {
 		return err
 	}
 
+
+
 	_, err = config.Section("auth.proxy").NewKey("auto_sign_up", "true")
 	if err != nil {
 		return err
@@ -93,8 +95,11 @@ func (i *IniConfig) buildBaseConfig(config *ini.File) error {
 }
 
 // Creates the ini config from the CR
-func (i *IniConfig) Build() error {
+func (i *IniConfig) _Build() error {
 	config := ini.Empty()
+	config.ValueMapper = func (string) string {
+		return ""
+	}
 
 	// Prepopulate default values
 	err := i.setDefaults(config)
@@ -118,11 +123,11 @@ func (i *IniConfig) Build() error {
 	return nil
 }
 
-func (i *IniConfig) DiffersFrom(lastConfigHash string) bool {
+func (i *IniConfig) _DiffersFrom(lastConfigHash string) bool {
 	return i.Hash != lastConfigHash
 }
 
-func NewIniConfig(cr *v1alpha1.Grafana) *IniConfig {
+func _NewIniConfig(cr *v1alpha1.Grafana) *IniConfig {
 	return &IniConfig{
 		Cr:       cr,
 		Contents: "",

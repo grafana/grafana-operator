@@ -8,7 +8,7 @@ import (
 )
 
 func getAdminUser(cr *v1alpha1.Grafana, current *v12.Secret) []byte {
-	if cr.Spec.Config.Security.AdminUser == "" {
+	if cr.Spec.Config.Security == nil || cr.Spec.Config.Security.AdminUser == "" {
 		// If a user is already set, don't change it
 		if current != nil && current.Data[GrafanaAdminUserEnvVar] != nil {
 			return current.Data[GrafanaAdminUserEnvVar]
@@ -19,7 +19,7 @@ func getAdminUser(cr *v1alpha1.Grafana, current *v12.Secret) []byte {
 }
 
 func getAdminPassword(cr *v1alpha1.Grafana, current *v12.Secret) []byte {
-	if cr.Spec.Config.Security.AdminPassword == "" {
+	if cr.Spec.Config.Security == nil || cr.Spec.Config.Security.AdminPassword == "" {
 		// If a password is already set, don't change it
 		if current != nil && current.Data[GrafanaAdminPasswordEnvVar] != nil {
 			return current.Data[GrafanaAdminPasswordEnvVar]
