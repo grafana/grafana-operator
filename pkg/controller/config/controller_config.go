@@ -30,7 +30,6 @@ const (
 	PluginsInitContainerTag         = "0.0.2"
 	PluginsEnvVar                   = "GRAFANA_PLUGINS"
 	PluginsUrl                      = "https://grafana.com/api/plugins/%s/versions/%s"
-	PluginsMinAge                   = 5
 	InitContainerName               = "grafana-plugins-init"
 	RequeueDelay                    = time.Second * 5
 	PodLabelDefaultValue            = "grafana"

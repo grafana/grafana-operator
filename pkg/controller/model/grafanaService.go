@@ -9,6 +9,10 @@ import (
 	"strconv"
 )
 
+const (
+	defaultPortName = "grafana"
+)
+
 func getServiceLabels(cr *v1alpha1.Grafana) map[string]string {
 	if cr.Spec.Service == nil {
 		return nil
@@ -51,11 +55,13 @@ func GetGrafanaPort(cr *v1alpha1.Grafana) int {
 }
 
 func getServicePorts(cr *v1alpha1.Grafana) []v1.ServicePort {
+	intPort := int32(GetGrafanaPort(cr))
+
 	defaultPorts := []v1.ServicePort{
 		{
-			Name:       "grafana",
+			Name:       defaultPortName,
 			Protocol:   "TCP",
-			Port:       int32(GetGrafanaPort(cr)),
+			Port:       intPort,
 			TargetPort: intstr.FromString("grafana-http"),
 		},
 	}
@@ -66,6 +72,15 @@ func getServicePorts(cr *v1alpha1.Grafana) []v1.ServicePort {
 
 	if cr.Spec.Service.Ports == nil {
 		return defaultPorts
+	}
+
+	// Don't allow overriding the default port but allow adding
+	// additional ports
+	for _, port := range cr.Spec.Service.Ports {
+		if port.Name == defaultPortName || port.Port == intPort {
+			continue
+		}
+		defaultPorts = append(defaultPorts, port)
 	}
 
 	return cr.Spec.Service.Ports

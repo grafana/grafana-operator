@@ -123,6 +123,20 @@ func (i *GrafanaIni) Write() (string, string) {
 		config["security"] = items
 	}
 
+	if i.cfg.Users != nil {
+		var items []string
+		items = appendBool(items, "allow_sign_up", i.cfg.Users.AllowSignUp)
+		items = appendBool(items, "allow_org_create", i.cfg.Users.AllowOrgCreate)
+		items = appendBool(items, "auto_assign_org", i.cfg.Users.AutoAssignOrg)
+		items = appendStr(items, "auto_assign_org_id", i.cfg.Users.AutoAssignOrgId)
+		items = appendStr(items, "auto_assign_org_role", i.cfg.Users.AutoAssignOrgRole)
+		items = appendBool(items, "viewers_can_edit", i.cfg.Users.ViewersCanEdit)
+		items = appendBool(items, "editors_can_admin", i.cfg.Users.EditorsCanAdmin)
+		items = appendStr(items, "login_hint", i.cfg.Users.LoginHint)
+		items = appendStr(items, "password_hint", i.cfg.Users.PasswordHint)
+		config["users"] = items
+	}
+
 	if i.cfg.AuthBasic != nil {
 		var items []string
 		items = appendBool(items, "enabled", i.cfg.AuthBasic.Enabled)
@@ -158,10 +172,202 @@ func (i *GrafanaIni) Write() (string, string) {
 		config["log"] = items
 	}
 
+	if i.cfg.AuthGoogle != nil {
+		var items []string
+		items = appendBool(items, "enabled", i.cfg.AuthGoogle.Enabled)
+		items = appendStr(items, "client_id", i.cfg.AuthGoogle.ClientId)
+		items = appendStr(items, "client_secret", i.cfg.AuthGoogle.ClientSecret)
+		items = appendStr(items, "scopes", i.cfg.AuthGoogle.Scopes)
+		items = appendStr(items, "auth_url", i.cfg.AuthGoogle.AuthUrl)
+		items = appendStr(items, "token_url", i.cfg.AuthGoogle.TokenUrl)
+		items = appendStr(items, "allowed_domains", i.cfg.AuthGoogle.AllowedDomains)
+		items = appendBool(items, "allow_sign_up", i.cfg.AuthGoogle.AllowSignUp)
+		config["auth.google"] = items
+	}
+
+	if i.cfg.AuthGithub != nil {
+		var items []string
+		items = appendBool(items, "enabled", i.cfg.AuthGithub.Enabled)
+		items = appendBool(items, "allow_sign_up", i.cfg.AuthGithub.AllowSignUp)
+		items = appendStr(items, "client_id", i.cfg.AuthGithub.ClientId)
+		items = appendStr(items, "client_secret", i.cfg.AuthGithub.ClientSecret)
+		items = appendStr(items, "scopes", i.cfg.AuthGithub.Scopes)
+		items = appendStr(items, "auth_url", i.cfg.AuthGithub.AuthUrl)
+		items = appendStr(items, "token_url", i.cfg.AuthGithub.TokenUrl)
+		items = appendStr(items, "api_url", i.cfg.AuthGithub.ApiUrl)
+		items = appendStr(items, "team_ids", i.cfg.AuthGithub.TeamIds)
+		items = appendStr(items, "allowed_organizations", i.cfg.AuthGithub.AllowedOrganizations)
+		config["auth.github"] = items
+	}
+
+	if i.cfg.AuthGenericOauth != nil {
+		var items []string
+		items = appendBool(items, "enabled", i.cfg.AuthGenericOauth.Enabled)
+		items = appendBool(items, "allow_sign_up", i.cfg.AuthGenericOauth.AllowSignUp)
+		items = appendStr(items, "client_id", i.cfg.AuthGenericOauth.ClientId)
+		items = appendStr(items, "client_secret", i.cfg.AuthGenericOauth.ClientSecret)
+		items = appendStr(items, "scopes", i.cfg.AuthGenericOauth.Scopes)
+		items = appendStr(items, "auth_url", i.cfg.AuthGenericOauth.AuthUrl)
+		items = appendStr(items, "token_url", i.cfg.AuthGenericOauth.TokenUrl)
+		items = appendStr(items, "api_url", i.cfg.AuthGenericOauth.ApiUrl)
+		items = appendStr(items, "allowed_domains", i.cfg.AuthGenericOauth.AllowedDomains)
+		config["auth.generic_oauth"] = items
+	}
+
+	if i.cfg.AuthLdap != nil {
+		var items []string
+		items = appendBool(items, "enabled", i.cfg.AuthLdap.Enabled)
+		items = appendBool(items, "allow_sign_up", i.cfg.AuthLdap.AllowSignUp)
+		items = appendStr(items, "config_file", i.cfg.AuthLdap.ConfigFile)
+		config["auth.ldap"] = items
+	}
+
+	if i.cfg.AuthProxy != nil {
+		var items []string
+		items = appendBool(items, "enabled", i.cfg.AuthProxy.Enabled)
+		items = appendStr(items, "header_name", i.cfg.AuthProxy.HeaderName)
+		items = appendStr(items, "header_property", i.cfg.AuthProxy.HeaderProperty)
+		items = appendBool(items, "auto_sign_up", i.cfg.AuthProxy.AutoSignUp)
+		items = appendStr(items, "ldap_sync_ttl", i.cfg.AuthProxy.LdapSyncTtl)
+		items = appendStr(items, "whitelist", i.cfg.AuthProxy.Whitelist)
+		items = appendStr(items, "headers", i.cfg.AuthProxy.Headers)
+		items = appendBool(items, "enable_login_token", i.cfg.AuthProxy.EnableLoginToken)
+		config["auth.proxy"] = items
+	}
+
+	if i.cfg.DataProxy != nil {
+		var items []string
+		items = appendBool(items, "logging", i.cfg.DataProxy.Logging)
+		items = appendInt(items, "timeout", i.cfg.DataProxy.Timeout)
+		items = appendBool(items, "send_user_header", i.cfg.DataProxy.SendUserHeader)
+		config["dataproxy"] = items
+	}
+
+	if i.cfg.Analytics != nil {
+		var items []string
+		items = appendBool(items, "reporting_enabled", i.cfg.Analytics.ReportingEnabled)
+		items = appendStr(items, "google_analytics_ua_id", i.cfg.Analytics.GoogleAnalyticsUaId)
+		items = appendBool(items, "check_for_updates", i.cfg.Analytics.CheckForUpdates)
+		config["analytics"] = items
+	}
+
+	if i.cfg.Dashboards != nil {
+		var items []string
+		items = appendInt(items, "versions_to_keep", i.cfg.Dashboards.VersionsToKeep)
+		config["dashboards"] = items
+	}
+
+	if i.cfg.Smtp != nil {
+		var items []string
+		items = appendBool(items, "enabled", i.cfg.Smtp.Enabled)
+		items = appendStr(items, "host", i.cfg.Smtp.Host)
+		items = appendStr(items, "user", i.cfg.Smtp.User)
+		items = appendStr(items, "password", i.cfg.Smtp.Password)
+		items = appendStr(items, "cert_file", i.cfg.Smtp.CertFile)
+		items = appendStr(items, "key_file", i.cfg.Smtp.KeyFile)
+		items = appendBool(items, "skip_verify", i.cfg.Smtp.SkipVerify)
+		items = appendStr(items, "from_address", i.cfg.Smtp.FromAddress)
+		items = appendStr(items, "from_name", i.cfg.Smtp.FromName)
+		items = appendStr(items, "ehlo_identity", i.cfg.Smtp.EhloIdentity)
+		config["smtp"] = items
+	}
+
+	if i.cfg.Metrics != nil {
+		var items []string
+		items = appendBool(items, "enabled", i.cfg.Metrics.Enabled)
+		items = appendStr(items, "basic_auth_username", i.cfg.Metrics.BasicAuthUsername)
+		items = appendStr(items, "basic_auth_password", i.cfg.Metrics.BasicAuthPassword)
+		items = appendInt(items, "interval_seconds", i.cfg.Metrics.IntervalSeconds)
+		config["metrics"] = items
+	}
+
+	if i.cfg.Snapshots != nil {
+		var items []string
+		items = appendBool(items, "external_enabled", i.cfg.Snapshots.ExternalEnabled)
+		items = appendStr(items, "external_snapshot_url", i.cfg.Snapshots.ExternalSnapshotUrl)
+		items = appendStr(items, "external_snapshot_name", i.cfg.Snapshots.ExternalSnapshotName)
+		items = appendBool(items, "snapshot_remove_expired", i.cfg.Snapshots.SnapshotRemoveExpired)
+		config["snapshots"] = items
+	}
+
+	if i.cfg.MetricsGraphite != nil {
+		var items []string
+		items = appendStr(items, "address", i.cfg.MetricsGraphite.Address)
+		items = appendStr(items, "prefix", i.cfg.MetricsGraphite.Prefix)
+		config["metrics.graphite"] = items
+	}
+
+	if i.cfg.ExternalImageStorage != nil {
+		var items []string
+		items = appendStr(items, "provider", i.cfg.ExternalImageStorage.Provider)
+		config["external_image_storage"] = items
+	}
+
+	if i.cfg.ExternalImageStorageS3 != nil {
+		var items []string
+		items = appendStr(items, "bucket", i.cfg.ExternalImageStorageS3.Bucket)
+		items = appendStr(items, "region", i.cfg.ExternalImageStorageS3.Region)
+		items = appendStr(items, "path", i.cfg.ExternalImageStorageS3.Path)
+		items = appendStr(items, "bucket_url", i.cfg.ExternalImageStorageS3.BucketUrl)
+		items = appendStr(items, "access_key", i.cfg.ExternalImageStorageS3.AccessKey)
+		items = appendStr(items, "secret_key", i.cfg.ExternalImageStorageS3.SecretKey)
+		config["external_image_storage.s3"] = items
+	}
+
+	if i.cfg.ExternalImageStorageWebdav != nil {
+		var items []string
+		items = appendStr(items, "url", i.cfg.ExternalImageStorageWebdav.Url)
+		items = appendStr(items, "public_url", i.cfg.ExternalImageStorageWebdav.PublicUrl)
+		items = appendStr(items, "username", i.cfg.ExternalImageStorageWebdav.Username)
+		items = appendStr(items, "password", i.cfg.ExternalImageStorageWebdav.Password)
+		config["external_image_storage.webdav"] = items
+	}
+
+	if i.cfg.ExternalImageStorageGcs != nil {
+		var items []string
+		items = appendStr(items, "key_file", i.cfg.ExternalImageStorageGcs.KeyFile)
+		items = appendStr(items, "bucket", i.cfg.ExternalImageStorageGcs.Bucket)
+		items = appendStr(items, "path", i.cfg.ExternalImageStorageGcs.Path)
+		config["external_image_storage.gcs"] = items
+	}
+
+	if i.cfg.ExternalImageStorageAzureBlob != nil {
+		var items []string
+		items = appendStr(items, "account_name", i.cfg.ExternalImageStorageAzureBlob.AccountName)
+		items = appendStr(items, "account_key", i.cfg.ExternalImageStorageAzureBlob.AccountKey)
+		items = appendStr(items, "container_name", i.cfg.ExternalImageStorageAzureBlob.ContainerName)
+		config["external_image_storage.azure_blob"] = items
+	}
+
+	if i.cfg.Alerting != nil {
+		var items []string
+		items = appendBool(items, "enabled", i.cfg.Alerting.Enabled)
+		items = appendBool(items, "execute_alerts", i.cfg.Alerting.ExecuteAlerts)
+		items = appendStr(items, "error_or_timeout", i.cfg.Alerting.ErrorOrTimeout)
+		items = appendStr(items, "nodata_or_nullvalues", i.cfg.Alerting.NodataOrNullvalues)
+		items = appendInt(items, "concurrent_render_limit", i.cfg.Alerting.ConcurrentRenderLimit)
+		items = appendInt(items, "evaluation_timeout_seconds", i.cfg.Alerting.EvaluationTimeoutSeconds)
+		items = appendInt(items, "notification_timeout_seconds", i.cfg.Alerting.NotificationTimeoutSeconds)
+		items = appendInt(items, "max_attempts", i.cfg.Alerting.MaxAttempts)
+		config["alerting"] = items
+	}
+
+	if i.cfg.Panels != nil {
+		var items []string
+		items = appendBool(items, "disable_sanitize_html", i.cfg.Panels.DisableSanitizeHtml)
+		config["panels"] = items
+	}
+
+	if i.cfg.Plugins != nil {
+		var items []string
+		items = appendBool(items, "enable_alpha", i.cfg.Plugins.EnableAlpha)
+		config["plugins"] = items
+	}
+
 	sb := strings.Builder{}
 
 	var keys []string
-	for key, _ := range config {
+	for key := range config {
 		keys = append(keys, key)
 	}
 	sort.Strings(keys)
