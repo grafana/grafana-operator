@@ -117,6 +117,18 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume {
 		},
 	})
 
+	// Volume to store the datasources
+	volumes = append(volumes, v13.Volume{
+		Name: GrafanaDatasourcesConfigMapName,
+		VolumeSource: v13.VolumeSource{
+			ConfigMap: &v13.ConfigMapVolumeSource{
+				LocalObjectReference: v13.LocalObjectReference{
+					Name: GrafanaDatasourcesConfigMapName,
+				},
+			},
+		},
+	})
+
 	// Extra volumes for secrets
 	for _, secret := range cr.Spec.Secrets {
 		volumeName := fmt.Sprintf("secret-%s", secret)
@@ -130,18 +142,6 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume {
 			},
 		})
 	}
-
-	// Volume to store the datasources
-	volumes = append(volumes, v13.Volume{
-		Name: GrafanaDatasourcesConfigMapName,
-		VolumeSource: v13.VolumeSource{
-			ConfigMap: &v13.ConfigMapVolumeSource{
-				LocalObjectReference: v13.LocalObjectReference{
-					Name: GrafanaDatasourcesConfigMapName,
-				},
-			},
-		},
-	})
 
 	// Extra volumes for config maps
 	for _, configmap := range cr.Spec.ConfigMaps {
@@ -256,8 +256,8 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 	var containers []v13.Container
 
 	cfg := config.GetControllerConfig()
-	image := cfg.GetConfigString(config.ConfigGrafanaImage, config.GrafanaImage)
-	tag := cfg.GetConfigString(config.ConfigGrafanaImageTag, config.GrafanaVersion)
+	image := cfg.GetConfigString(config.ConfigGrafanaImage, GrafanaImage)
+	tag := cfg.GetConfigString(config.ConfigGrafanaImageTag, GrafanaVersion)
 
 	containers = append(containers, v13.Container{
 		Name:       "grafana",

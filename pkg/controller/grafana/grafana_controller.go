@@ -159,6 +159,7 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 	currentState := common.NewClusterState()
 	err = currentState.Read(r.context, cr, r.client)
 	if err != nil {
+		log.Error(err, "error reading state")
 		return r.manageError(cr, err)
 	}
 

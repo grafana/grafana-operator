@@ -18,8 +18,6 @@ const (
 	ConfigOperatorNamespace         = "grafana.operator.namespace"
 	ConfigDashboardLabelSelector    = "grafana.dashboard.selector"
 	ConfigOpenshift                 = "mode.openshift"
-	GrafanaImage                    = "grafana/grafana"
-	GrafanaVersion                  = "6.4.4"
 	GrafanaConfigMapName            = "grafana-config"
 	GrafanaConfigFileName           = "grafana.ini"
 	GrafanaDashboardsConfigMapName  = "grafana-dashboards"

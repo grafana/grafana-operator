@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/go-ini/ini"
 	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -33,6 +34,53 @@ func (i *IniConfig) appendPathsSection(config *ini.File) error {
 	return nil
 }
 
+// We need to set default values for all boolean properties because otherwise
+// they would automatically get assigned a default value of false
+func (i *IniConfig) setDefaults(config *ini.File) error {
+	// Default values for all boolean settings, taken from:
+	// https://grafana.com/docs/installation/configuration/
+	_, err := config.Section("auth.basic").NewKey("enabled", "true")
+	if err != nil {
+		return err
+	}
+
+	_, err = config.Section("auth.proxy").NewKey("auto_sign_up", "true")
+	if err != nil {
+		return err
+	}
+
+	_, err = config.Section("analytics").NewKey("reporting_enabled", "true")
+	if err != nil {
+		return err
+	}
+
+	_, err = config.Section("analytics").NewKey("check_for_updates", "true")
+	if err != nil {
+		return err
+	}
+
+	_, err = config.Section("metrics").NewKey("enabled", "true")
+	if err != nil {
+		return err
+	}
+
+	_, err = config.Section("snapshots").NewKey("external_enabled", "true")
+	if err != nil {
+		return err
+	}
+
+	_, err = config.Section("alerting").NewKey("enabled", "true")
+	if err != nil {
+		return err
+	}
+
+	_, err = config.Section("alerting").NewKey("execute_alerts", "true")
+	if err != nil {
+		return err
+	}
+	return err
+}
+
 func (i *IniConfig) buildBaseConfig(config *ini.File) error {
 	// Import all properties from the CR
 	if err := config.ReflectFrom(&i.Cr.Spec.Config); err != nil {
@@ -47,15 +95,22 @@ func (i *IniConfig) buildBaseConfig(config *ini.File) error {
 // Creates the ini config from the CR
 func (i *IniConfig) Build() error {
 	config := ini.Empty()
-	err := i.buildBaseConfig(config)
+
+	// Prepopulate default values
+	err := i.setDefaults(config)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "error setting default values")
+	}
+
+	err = i.buildBaseConfig(config)
+	if err != nil {
+		return errors.Wrap(err, "error reading configuration")
 	}
 
 	s := bytes.NewBufferString("")
 	_, err = config.WriteTo(s)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "error writing configuration")
 	}
 
 	i.Contents = s.String()
