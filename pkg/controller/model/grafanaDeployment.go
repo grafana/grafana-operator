@@ -221,7 +221,7 @@ func getProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.Probe {
 	}
 }
 
-func getContainers(cr *v1alpha1.Grafana, configHash string) []v13.Container {
+func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Container {
 	containers := []v13.Container{}
 
 	cfg := config.GetControllerConfig()
@@ -244,6 +244,10 @@ func getContainers(cr *v1alpha1.Grafana, configHash string) []v13.Container {
 			{
 				Name:  LastConfigEnvVar,
 				Value: configHash,
+			},
+			{
+				Name:  LastDatasourcesConfigEnvVar,
+				Value: dsHash,
 			},
 			{
 				Name: GrafanaAdminUserEnvVar,
@@ -316,7 +320,7 @@ func getInitContainers(plugins string) []v13.Container {
 	}
 }
 
-func getDeploymentSpec(cr *v1alpha1.Grafana, configHash, plugins string) v1.DeploymentSpec {
+func getDeploymentSpec(cr *v1alpha1.Grafana, configHash, plugins, dsHash string) v1.DeploymentSpec {
 	return v1.DeploymentSpec{
 		Replicas: getReplicas(cr),
 		Selector: &v12.LabelSelector{
@@ -333,7 +337,7 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, configHash, plugins string) v1.Depl
 			Spec: v13.PodSpec{
 				Volumes:            getVolumes(cr),
 				InitContainers:     getInitContainers(plugins),
-				Containers:         getContainers(cr, configHash),
+				Containers:         getContainers(cr, configHash, dsHash),
 				ServiceAccountName: GrafanaServiceAccountName,
 			},
 		},
@@ -344,13 +348,13 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, configHash, plugins string) v1.Depl
 	}
 }
 
-func GrafanaDeployment(cr *v1alpha1.Grafana, configHash string) *v1.Deployment {
+func GrafanaDeployment(cr *v1alpha1.Grafana, configHash, dsHash string) *v1.Deployment {
 	return &v1.Deployment{
 		ObjectMeta: v12.ObjectMeta{
 			Name:      GrafanaDeploymentName,
 			Namespace: cr.Namespace,
 		},
-		Spec: getDeploymentSpec(cr, configHash, ""),
+		Spec: getDeploymentSpec(cr, configHash, "", dsHash),
 	}
 }
 
@@ -361,8 +365,8 @@ func GrafanaDeploymentSelector(cr *v1alpha1.Grafana) client.ObjectKey {
 	}
 }
 
-func GrafanaDeploymentReconciled(cr *v1alpha1.Grafana, currentState *v1.Deployment, configHash, plugins string) *v1.Deployment {
+func GrafanaDeploymentReconciled(cr *v1alpha1.Grafana, currentState *v1.Deployment, configHash, plugins, dshash string) *v1.Deployment {
 	reconciled := currentState.DeepCopy()
-	reconciled.Spec = getDeploymentSpec(cr, configHash, plugins)
+	reconciled.Spec = getDeploymentSpec(cr, configHash, plugins, dshash)
 	return reconciled
 }

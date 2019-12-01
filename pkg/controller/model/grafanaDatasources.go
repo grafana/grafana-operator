@@ -12,12 +12,11 @@ func GrafanaDatasourcesConfig(cr *v1alpha1.Grafana) *v1.ConfigMap {
 		ObjectMeta: v12.ObjectMeta{
 			Name:      GrafanaDatasourcesConfigMapName,
 			Namespace: cr.Namespace,
+			Annotations: map[string]string{
+				LastConfigAnnotation: "",
+			},
 		},
 	}
-}
-
-func GrafanaDatasourcesConfigReconciled(_ *v1alpha1.Grafana, currentState *v1.ConfigMap) *v1.ConfigMap {
-	return currentState.DeepCopy()
 }
 
 func GrafanaDatasourceConfigSelector(cr *v1alpha1.Grafana) client.ObjectKey {

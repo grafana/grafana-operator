@@ -17,6 +17,7 @@ const (
 	GrafanaPodLabel                     = "grafana"
 	LastConfigAnnotation                = "last-config"
 	LastConfigEnvVar                    = "LAST_CONFIG"
+	LastDatasourcesConfigEnvVar         = "LAST_DATASOURCES"
 	GrafanaAdminSecretName              = "admin-credentials"
 	DefaultAdminUser                    = "admin"
 	GrafanaAdminUserEnvVar              = "GF_SECURITY_ADMIN_USER"

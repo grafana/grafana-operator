@@ -2,11 +2,14 @@ package grafanadatasource
 
 import (
 	"context"
+	"crypto/md5"
 	"fmt"
 	"github.com/ghodss/yaml"
 	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/pkg/controller/config"
+	"github.com/integr8ly/grafana-operator/pkg/controller/model"
+	"io"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -189,12 +192,31 @@ func (r *ReconcileGrafanaDataSource) reconcileDataSources(state *common.DataSour
 
 		log.Info(fmt.Sprintf("importing datasource %v", key))
 		state.KnownDataSources.Data[key] = val
+		err = r.manageSuccess(&ds)
+		if err != nil {
+			r.manageError(&ds, err)
+		}
 	}
 
 	// Update the configmap
+	r.updateHash(state)
 	r.client.Update(r.context, state.KnownDataSources)
 
 	return nil
+}
+
+func (r *ReconcileGrafanaDataSource) updateHash(state *common.DataSourcesState) {
+	hash := md5.New()
+	for k, v := range state.KnownDataSources.Data {
+		io.WriteString(hash, k)
+		io.WriteString(hash, v)
+	}
+
+	if state.KnownDataSources.Annotations == nil {
+		state.KnownDataSources.Annotations = make(map[string]string)
+	}
+
+	state.KnownDataSources.Annotations[model.LastConfigAnnotation] = fmt.Sprintf("%x", hash.Sum(nil))
 }
 
 func (r *ReconcileGrafanaDataSource) parseDataSource(cr *i8ly.GrafanaDataSource) (string, error) {
@@ -239,6 +261,7 @@ func (r *ReconcileGrafanaDataSource) manageSuccess(datasource *i8ly.GrafanaDataS
 		datasource.Name))
 
 	datasource.Status.Phase = i8ly.PhaseReconciling
+	datasource.Status.Message = "success"
 
 	return r.client.Status().Update(r.context, datasource)
 }

@@ -261,6 +261,7 @@ func (r *ReconcileGrafanaDashboard) manageSuccess(dashboard *i8ly.GrafanaDashboa
 	dashboard.Status.Slug = *status.Slug
 	dashboard.Status.Phase = i8ly.PhaseReconciling
 	dashboard.Status.Hash = hash
+	dashboard.Status.Message = "success"
 
 	r.config.AddDashboard(dashboard)
 	r.config.SetPluginsFor(dashboard)

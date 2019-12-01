@@ -231,6 +231,7 @@ func (r *ReconcileGrafana) getGrafanaAdminUrl(cr *i8ly.Grafana, state *common.Cl
 
 func (r *ReconcileGrafana) manageSuccess(cr *i8ly.Grafana, state *common.ClusterState) (reconcile.Result, error) {
 	cr.Status.Phase = i8ly.PhaseReconciling
+	cr.Status.Message = "success"
 
 	// Only update the status if the dashboard controller had a chance to sync the cluster
 	// dashboards first. Otherwise reuse the existing dashboard config from the CR.

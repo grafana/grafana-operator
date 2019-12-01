@@ -77,12 +77,10 @@ func (i *ClusterState) readGrafanaService(ctx context.Context, cr *v1alpha1.Graf
 	err := client.Get(ctx, selector, currentState)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			i.GrafanaService = nil
 			return nil
 		}
 		return err
 	}
-
 	i.GrafanaService = currentState.DeepCopy()
 	return nil
 }
@@ -92,12 +90,12 @@ func (i *ClusterState) readGrafanaServiceAccount(ctx context.Context, cr *v1alph
 	selector := model.GrafanaServiceAccountSelector(cr)
 	err := client.Get(ctx, selector, currentState)
 	if err != nil {
-		if !errors.IsNotFound(err) {
-			return err
+		if errors.IsNotFound(err) {
+			return nil
 		}
-	} else {
-		i.GrafanaServiceAccount = currentState.DeepCopy()
+		return err
 	}
+	i.GrafanaServiceAccount = currentState.DeepCopy()
 	return nil
 }
 
@@ -109,12 +107,12 @@ func (i *ClusterState) readGrafanaConfig(ctx context.Context, cr *v1alpha1.Grafa
 	selector := model.GrafanaConfigSelector(cr)
 	err = client.Get(ctx, selector, currentState)
 	if err != nil {
-		if !errors.IsNotFound(err) {
-			return err
+		if errors.IsNotFound(err) {
+			return nil
 		}
-	} else {
-		i.GrafanaConfig = currentState.DeepCopy()
+		return err
 	}
+	i.GrafanaConfig = currentState.DeepCopy()
 	return nil
 }
 
@@ -123,27 +121,26 @@ func (i *ClusterState) readGrafanaDatasourceConfig(ctx context.Context, cr *v1al
 	selector := model.GrafanaDatasourceConfigSelector(cr)
 	err := client.Get(ctx, selector, currentState)
 	if err != nil {
-		if !errors.IsNotFound(err) {
-			return err
+		if errors.IsNotFound(err) {
+			return nil
 		}
-	} else {
-		i.GrafanaDataSourceConfig = currentState.DeepCopy()
+		return err
 	}
+	i.GrafanaDataSourceConfig = currentState.DeepCopy()
 	return nil
 }
 
 func (i *ClusterState) readGrafanaRoute(ctx context.Context, cr *v1alpha1.Grafana, client client.Client) error {
 	currentState := model.GrafanaRoute(cr)
 	selector := model.GrafanaRouteSelector(cr)
-
 	err := client.Get(ctx, selector, currentState)
 	if err != nil {
-		if !errors.IsNotFound(err) {
-			return err
+		if errors.IsNotFound(err) {
+			return nil
 		}
-	} else {
-		i.GrafanaRoute = currentState.DeepCopy()
+		return err
 	}
+	i.GrafanaRoute = currentState.DeepCopy()
 	return nil
 }
 
@@ -152,26 +149,26 @@ func (i *ClusterState) readGrafanaIngress(ctx context.Context, cr *v1alpha1.Graf
 	selector := model.GrafanaIngressSelector(cr)
 	err := client.Get(ctx, selector, currentState)
 	if err != nil {
-		if !errors.IsNotFound(err) {
-			return err
+		if errors.IsNotFound(err) {
+			return nil
 		}
-	} else {
-		i.GrafanaIngress = currentState.DeepCopy()
+		return err
 	}
+	i.GrafanaIngress = currentState.DeepCopy()
 	return nil
 }
 
 func (i *ClusterState) readGrafanaDeployment(ctx context.Context, cr *v1alpha1.Grafana, client client.Client) error {
-	currentState := model.GrafanaDeployment(cr, "")
+	currentState := model.GrafanaDeployment(cr, "", "")
 	selector := model.GrafanaDeploymentSelector(cr)
 	err := client.Get(ctx, selector, currentState)
 	if err != nil {
-		if !errors.IsNotFound(err) {
-			return err
+		if errors.IsNotFound(err) {
+			return nil
 		}
-	} else {
-		i.GrafanaDeployment = currentState.DeepCopy()
+		return err
 	}
+	i.GrafanaDeployment = currentState.DeepCopy()
 	return nil
 }
 
@@ -181,12 +178,10 @@ func (i *ClusterState) readGrafanaAdminUserSecret(ctx context.Context, cr *v1alp
 	err := client.Get(ctx, selector, currentState)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			i.AdminSecret = nil
 			return nil
 		}
 		return err
 	}
-
 	i.AdminSecret = currentState.DeepCopy()
 	return nil
 }

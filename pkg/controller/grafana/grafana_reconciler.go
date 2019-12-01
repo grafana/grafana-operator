@@ -9,6 +9,7 @@ import (
 )
 
 type GrafanaReconciler struct {
+	DsHash     string
 	ConfigHash string
 	PluginsEnv string
 	Plugins    *PluginsHelperImpl
@@ -16,6 +17,7 @@ type GrafanaReconciler struct {
 
 func NewGrafanaReconciler() *GrafanaReconciler {
 	return &GrafanaReconciler{
+		DsHash:     "",
 		ConfigHash: "",
 		PluginsEnv: "",
 		Plugins:    newPluginsHelper(),
@@ -29,8 +31,8 @@ func (i *GrafanaReconciler) Reconcile(state *common.ClusterState, cr *v1alpha1.G
 	desired = desired.AddAction(i.getGrafanaServiceDesiredState(state, cr))
 	desired = desired.AddAction(i.getGrafanaServiceAccountDesiredState(state, cr))
 	desired = desired.AddActions(i.getGrafanaConfigDesiredState(state, cr))
-	desired = desired.AddAction(i.getGrafanaExternalAccessDesiredState(state, cr))
 	desired = desired.AddAction(i.getGrafanaDatasourceConfigDesiredState(state, cr))
+	desired = desired.AddAction(i.getGrafanaExternalAccessDesiredState(state, cr))
 
 	// Consolidate plugins
 	// No action, will update init container env var
@@ -134,17 +136,19 @@ func (i *GrafanaReconciler) getGrafanaConfigDesiredState(state *common.ClusterSt
 }
 
 func (i *GrafanaReconciler) getGrafanaDatasourceConfigDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
+	// Only create the datasources configmap if it doesn't exist. Updates
+	// are handled by the datasources controller
 	if state.GrafanaDataSourceConfig == nil {
 		return common.GenericCreateAction{
 			Ref: model.GrafanaDatasourcesConfig(cr),
 			Msg: "create grafanadatasource config",
 		}
 	} else {
-		return common.GenericUpdateAction{
-			Ref: model.GrafanaDatasourcesConfigReconciled(cr, state.GrafanaDataSourceConfig),
-			Msg: "update grafanadatasource config",
+		if state.GrafanaDataSourceConfig.Annotations != nil {
+			i.DsHash = state.GrafanaDataSourceConfig.Annotations[model.LastConfigAnnotation]
 		}
 	}
+	return nil
 }
 
 func (i *GrafanaReconciler) getGrafanaExternalAccessDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
@@ -217,13 +221,14 @@ func (i *GrafanaReconciler) getGrafanaRouteDesiredState(state *common.ClusterSta
 func (i *GrafanaReconciler) getGrafanaDeploymentDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
 	if state.GrafanaDeployment == nil {
 		return common.GenericCreateAction{
-			Ref: model.GrafanaDeployment(cr, i.ConfigHash),
+			Ref: model.GrafanaDeployment(cr, i.ConfigHash, i.DsHash),
 			Msg: "create grafana deployment",
 		}
 	}
 
 	return common.GenericUpdateAction{
-		Ref: model.GrafanaDeploymentReconciled(cr, state.GrafanaDeployment, i.ConfigHash, i.PluginsEnv),
+		Ref: model.GrafanaDeploymentReconciled(cr, state.GrafanaDeployment,
+			i.ConfigHash, i.PluginsEnv, i.DsHash),
 		Msg: "update grafana deployment",
 	}
 }
