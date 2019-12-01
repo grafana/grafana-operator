@@ -50,19 +50,15 @@ spec:
     - grafana-k8s-proxy
   service:
     ports:
-      - name: grafana
+      - name: grafana-proxy
         port: 9091
         protocol: TCP
         targetPort: grafana-proxy
-      - name: grafana-api
-        port: 3000
-        protocol: TCP
-        targetPort: grafana-http
     annotations:
       service.alpha.openshift.io/serving-cert-secret-name: grafana-k8s-tls
   ingress:
     enabled: True
-    targetPort: grafana
+    targetPort: grafana-proxy
     termination: reencrypt
   client:
     preferService: True
