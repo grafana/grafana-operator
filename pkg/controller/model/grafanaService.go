@@ -83,7 +83,7 @@ func getServicePorts(cr *v1alpha1.Grafana) []v1.ServicePort {
 		defaultPorts = append(defaultPorts, port)
 	}
 
-	return cr.Spec.Service.Ports
+	return defaultPorts
 }
 
 func GrafanaService(cr *v1alpha1.Grafana) *v1.Service {
