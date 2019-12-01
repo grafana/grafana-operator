@@ -26,6 +26,7 @@ import (
 )
 
 const ControllerName = "grafana-controller"
+const DefaultClientTimeoutSeconds = 5
 
 var log = logf.Log.WithName(ControllerName)
 
@@ -202,14 +203,21 @@ func (r *ReconcileGrafana) manageError(cr *i8ly.Grafana, issue error) (reconcile
 
 // Try to find a suitable url to grafana
 func (r *ReconcileGrafana) getGrafanaAdminUrl(cr *i8ly.Grafana, state *common.ClusterState) (string, error) {
+	// If preferService is true, we skip the routes and try to access grafana
+	// by using the serivce.
+	preferService := false
+	if cr.Spec.Client != nil {
+		preferService = cr.Spec.Client.PreferService
+	}
+
 	// First try to use the route if it exists. Prefer the route because it also works
 	// when running the operator outside of the cluster
-	if state.GrafanaRoute != nil {
+	if state.GrafanaRoute != nil && !preferService {
 		return fmt.Sprintf("https://%v", state.GrafanaRoute.Spec.Host), nil
 	}
 
 	// Try the ingress first if on vanilla Kubernetes
-	if state.GrafanaIngress != nil {
+	if state.GrafanaIngress != nil && !preferService {
 		for _, ingress := range state.GrafanaIngress.Status.LoadBalancer.Ingress {
 			if ingress.Hostname != "" {
 				return fmt.Sprintf("https://%v", ingress.Hostname), nil
@@ -263,7 +271,17 @@ func (r *ReconcileGrafana) manageSuccess(cr *i8ly.Grafana, state *common.Cluster
 		AdminPassword:      string(state.AdminSecret.Data[model.GrafanaAdminPasswordEnvVar]),
 		AdminUrl:           url,
 		GrafanaReady:       true,
+		ClientTimeout:      DefaultClientTimeoutSeconds,
 	}
+
+	if cr.Spec.Client != nil && cr.Spec.Client.TimeoutSeconds != nil {
+		seconds := DefaultClientTimeoutSeconds
+		if seconds < 0 {
+			seconds = DefaultClientTimeoutSeconds
+		}
+		controllerState.ClientTimeout = seconds
+	}
+
 	common.ControllerEvents <- controllerState
 
 	log.Info("desired cluster state met")

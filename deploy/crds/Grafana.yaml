@@ -115,6 +115,9 @@ spec:
                 labels:
                   type: object
                   description: Additional labels for the serviceaccount
+            client:
+              type: object
+              description: Grafana client settings
             dashboardLabelSelectors:
               type: array
               items:

@@ -28,7 +28,7 @@ type GrafanaClientImpl struct {
 	grafanaClient *sdk.Client
 }
 
-func NewGrafanaClient(url, user, password string) GrafanaClient {
+func NewGrafanaClient(url, user, password string, timeoutSeconds time.Duration) GrafanaClient {
 	transport := http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
@@ -37,7 +37,7 @@ func NewGrafanaClient(url, user, password string) GrafanaClient {
 
 	client := &http.Client{
 		Transport: &transport,
-		Timeout:   time.Second * 2,
+		Timeout:   time.Second * timeoutSeconds,
 	}
 
 	return &GrafanaClientImpl{

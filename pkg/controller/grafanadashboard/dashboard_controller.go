@@ -163,7 +163,7 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 	}
 
 	// Prepare lists
-	dashboardsToDelete := []*i8ly.GrafanaDashboardRef{}
+	var dashboardsToDelete []*i8ly.GrafanaDashboardRef
 
 	// Check if a given dashboard (by name) is present in the list of
 	// dashboards in the namespace
@@ -304,7 +304,8 @@ func (r *ReconcileGrafanaDashboard) getClient() (GrafanaClient, error) {
 		return nil, defaultErrors.New("invalid credentials (password)")
 	}
 
-	return NewGrafanaClient(url, username, password), nil
+	duration := time.Duration(r.state.ClientTimeout)
+	return NewGrafanaClient(url, username, password, duration), nil
 }
 
 // Test if a given dashboard matches an array of label selectors

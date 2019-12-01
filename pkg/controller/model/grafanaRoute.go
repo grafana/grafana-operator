@@ -50,6 +50,23 @@ func GetIngressTargetPort(cr *v1alpha1.Grafana) intstr.IntOrString {
 	return intstr.FromString(cr.Spec.Ingress.TargetPort)
 }
 
+func getTermination(cr *v1alpha1.Grafana) v1.TLSTerminationType {
+	if cr.Spec.Ingress == nil {
+		return v1.TLSTerminationEdge
+	}
+
+	switch cr.Spec.Ingress.Termination {
+	case v1.TLSTerminationEdge:
+		return v1.TLSTerminationEdge
+	case v1.TLSTerminationReencrypt:
+		return v1.TLSTerminationReencrypt
+	case v1.TLSTerminationPassthrough:
+		return v1.TLSTerminationPassthrough
+	default:
+		return v1.TLSTerminationEdge
+	}
+}
+
 func getRouteSpec(cr *v1alpha1.Grafana) v1.RouteSpec {
 	return v1.RouteSpec{
 		Path: GetPath(cr),
@@ -62,7 +79,7 @@ func getRouteSpec(cr *v1alpha1.Grafana) v1.RouteSpec {
 			TargetPort: GetIngressTargetPort(cr),
 		},
 		TLS: &v1.TLSConfig{
-			Termination: v1.TLSTerminationReencrypt,
+			Termination: getTermination(cr),
 		},
 		WildcardPolicy: "None",
 	}

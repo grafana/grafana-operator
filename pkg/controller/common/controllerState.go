@@ -10,4 +10,5 @@ type ControllerState struct {
 	AdminPassword      string
 	AdminUrl           string
 	GrafanaReady       bool
+	ClientTimeout      int
 }

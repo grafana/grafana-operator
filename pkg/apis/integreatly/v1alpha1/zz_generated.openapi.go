@@ -301,12 +301,17 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref common.ReferenceCallba
 							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaServiceAccount"),
 						},
 					},
+					"client": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaClient"),
+						},
+					},
 				},
 				Required: []string{"config"},
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/integreatly/v1alpha1.GrafanaConfig", "./pkg/apis/integreatly/v1alpha1.GrafanaDeployment", "./pkg/apis/integreatly/v1alpha1.GrafanaIngress", "./pkg/apis/integreatly/v1alpha1.GrafanaService", "./pkg/apis/integreatly/v1alpha1.GrafanaServiceAccount", "k8s.io/api/core/v1.Container", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector"},
+			"./pkg/apis/integreatly/v1alpha1.GrafanaClient", "./pkg/apis/integreatly/v1alpha1.GrafanaConfig", "./pkg/apis/integreatly/v1alpha1.GrafanaDeployment", "./pkg/apis/integreatly/v1alpha1.GrafanaIngress", "./pkg/apis/integreatly/v1alpha1.GrafanaService", "./pkg/apis/integreatly/v1alpha1.GrafanaServiceAccount", "k8s.io/api/core/v1.Container", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector"},
 	}
 }
 

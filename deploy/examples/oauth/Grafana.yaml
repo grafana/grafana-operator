@@ -17,6 +17,7 @@ spec:
   containers:
     - args:
         - '-provider=openshift'
+        - '-pass-basic-auth=false'
         - '-https-address=:9091'
         - '-http-address='
         - '-email-domain=*'
@@ -58,6 +59,7 @@ spec:
   ingress:
     enabled: True
     targetPort: grafana
+    termination: reencrypt
   serviceAccount:
     annotations:
       serviceaccounts.openshift.io/oauth-redirectreference.primary: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"grafana-route"}}'
