@@ -20,18 +20,20 @@ type DashboardPipeline interface {
 }
 
 type DashboardPipelineImpl struct {
-	Dashboard *v1alpha1.GrafanaDashboard
-	JSON      string
-	Board     sdk.Board
-	Logger    logr.Logger
-	Hash      string
+	Dashboard      *v1alpha1.GrafanaDashboard
+	JSON           string
+	Board          sdk.Board
+	Logger         logr.Logger
+	Hash           string
+	FixAnnotations bool
 }
 
-func NewDashboardPipeline(dashboard *v1alpha1.GrafanaDashboard) DashboardPipeline {
+func NewDashboardPipeline(dashboard *v1alpha1.GrafanaDashboard, fixAnnotations bool) DashboardPipeline {
 	return &DashboardPipelineImpl{
-		Dashboard: dashboard,
-		JSON:      "",
-		Logger:    logf.Log.WithName(fmt.Sprintf("dashboard-%v", dashboard.Name)),
+		Dashboard:      dashboard,
+		JSON:           "",
+		Logger:         logf.Log.WithName(fmt.Sprintf("dashboard-%v", dashboard.Name)),
+		FixAnnotations: fixAnnotations,
 	}
 }
 
@@ -55,6 +57,10 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) (*sdk.Board, 
 		return nil, err
 	}
 
+	// Dashboards are never expected to come with an ID, it is
+	// always assigned by Grafana. If there is one, we ignore it
+	r.Board.ID = 0
+
 	// This dashboard has previously been imported
 	// To make sure its updated we have to set the metadata
 	if r.Dashboard.Status.Phase == v1alpha1.PhaseReconciling {
@@ -68,9 +74,14 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) (*sdk.Board, 
 
 // Make sure the dashboard contains valid JSON
 func (r *DashboardPipelineImpl) validateJson() error {
-	log.Info("validating dashboard contents")
+	dashboardBytes := []byte(r.JSON)
+	dashboardBytes, err := r.fixAnnotations(dashboardBytes)
+	if err != nil {
+		return err
+	}
+
 	var dashboard sdk.Board
-	err := json.Unmarshal([]byte(r.JSON), &dashboard)
+	err = json.Unmarshal(dashboardBytes, &dashboard)
 	if err != nil {
 		return err
 	}
@@ -82,8 +93,6 @@ func (r *DashboardPipelineImpl) validateJson() error {
 // Try to get the dashboard json definition either from a provided URL or from the
 // raw json in the dashboard resource
 func (r *DashboardPipelineImpl) obtainJson() error {
-	r.Logger.Info("obtaining dashboard json")
-
 	if r.Dashboard.Spec.Url != "" {
 		err := r.loadDashboardFromURL()
 		if err != nil {
@@ -105,13 +114,11 @@ func (r *DashboardPipelineImpl) obtainJson() error {
 // If there are no changes we should avoid sending update requests as this will create
 // a new dashboard version in Grafana
 func (r *DashboardPipelineImpl) generateHash() string {
-	r.Logger.Info("generating dashboard hash")
 	return fmt.Sprintf("%x", md5.Sum([]byte(r.Dashboard.Spec.Json+r.Dashboard.Spec.Url)))
 }
 
 // Try to obtain the dashboard json from a provided url
 func (r *DashboardPipelineImpl) loadDashboardFromURL() error {
-	r.Logger.Info("loading dashboard from url")
 	_, err := url.ParseRequestURI(r.Dashboard.Spec.Url)
 	if err != nil {
 		return errors.New(fmt.Sprintf("invalid url %v", r.Dashboard.Spec.Url))
@@ -135,4 +142,40 @@ func (r *DashboardPipelineImpl) loadDashboardFromURL() error {
 
 func (r *DashboardPipelineImpl) NewHash() string {
 	return r.Hash
+}
+
+// Some older dashboards provide the tags list of an annotation as an array
+// instead of a string
+func (r *DashboardPipelineImpl) fixAnnotations(dashboardBytes []byte) ([]byte, error) {
+	if !r.FixAnnotations {
+		return dashboardBytes, nil
+	}
+
+	raw := map[string]interface{}{}
+	err := json.Unmarshal(dashboardBytes, &raw)
+	if err != nil {
+		return nil, err
+	}
+
+	if raw != nil && raw["annotations"] != nil {
+		annotations := raw["annotations"].(map[string]interface{})
+		if annotations != nil && annotations["list"] != nil {
+			annotationsList := annotations["list"].([]interface{})
+			for _, annotation := range annotationsList {
+				rawAnnotation := annotation.(map[string]interface{})
+				if rawAnnotation["tags"] != nil {
+					// Don't attempty to convert the tags, just replace them
+					// with something that is compatible
+					rawAnnotation["tags"] = ""
+				}
+			}
+		}
+	}
+
+	dashboardBytes, err = json.Marshal(raw)
+	if err != nil {
+		return nil, err
+	}
+
+	return dashboardBytes, nil
 }

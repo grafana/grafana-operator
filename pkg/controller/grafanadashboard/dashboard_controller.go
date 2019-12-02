@@ -146,6 +146,8 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 	// If the dashboard does not match the label selectors then we ignore it
 	cr := instance.DeepCopy()
 	if !r.isMatch(cr) {
+		log.Info(fmt.Sprintf("dashboard %v/%v found but selectors do not match",
+			cr.Namespace, cr.Name))
 		return reconcile.Result{}, nil
 	}
 
@@ -198,28 +200,31 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 	for _, dashboard := range namespaceDashboards.Items {
 		// Is this a dashboard we care about (matches the label selectors)?
 		if !r.isMatch(&dashboard) {
+			log.Info(fmt.Sprintf("dashboard %v/%v found but selectors do not match",
+				dashboard.Namespace, dashboard.Name))
 			continue
 		}
 
 		// Process the dashboard. Use the known hash of an existing dashboard
 		// to determine if an update is required
 		knownHash := findHash(&dashboard)
-		pipeline := NewDashboardPipeline(&dashboard)
+		pipeline := NewDashboardPipeline(&dashboard, r.state.FixAnnotations)
 		processed, err := pipeline.ProcessDashboard(knownHash)
 
 		if err != nil {
+			log.Info(fmt.Sprintf("cannot process dashboard %v/%v", dashboard.Namespace, dashboard.Name))
 			r.manageError(&dashboard, err)
 			continue
 		}
 
 		if processed == nil {
-			log.Info(fmt.Sprintf("dashboard %v unchanged", dashboard.Name))
 			r.config.SetPluginsFor(&dashboard)
 			continue
 		}
 
 		status, err := grafanaClient.CreateOrUpdateDashboard(*processed)
 		if err != nil {
+			log.Info(fmt.Sprintf("cannot submit dashboard %v/%v", dashboard.Namespace, dashboard.Name))
 			r.manageError(&dashboard, err)
 			continue
 		}

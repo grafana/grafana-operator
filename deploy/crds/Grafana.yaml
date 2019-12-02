@@ -118,6 +118,9 @@ spec:
             client:
               type: object
               description: Grafana client settings
+            compat:
+              type: object
+              description: Backwards compatibility switches
             dashboardLabelSelectors:
               type: array
               items:

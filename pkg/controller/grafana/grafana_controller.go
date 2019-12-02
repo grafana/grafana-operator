@@ -251,6 +251,10 @@ func (r *ReconcileGrafana) manageSuccess(cr *i8ly.Grafana, state *common.Cluster
 		}
 	}
 
+	if state.AdminSecret == nil || state.AdminSecret.Data == nil {
+		return r.manageError(cr, stdErr.New("admin secret not found or invalud"))
+	}
+
 	err := r.client.Status().Update(r.context, cr)
 	if err != nil {
 		return r.manageError(cr, err)
@@ -262,6 +266,12 @@ func (r *ReconcileGrafana) manageSuccess(cr *i8ly.Grafana, state *common.Cluster
 		return r.manageError(cr, err)
 	}
 
+	// Try to fix annotations on older dashboards?
+	fixAnnotations := false
+	if cr.Spec.Compat != nil && cr.Spec.Compat.FixAnnotations {
+		fixAnnotations = true
+	}
+
 	// Publish controller state
 	controllerState := common.ControllerState{
 		DashboardSelectors: cr.Spec.DashboardLabelSelector,
@@ -270,6 +280,7 @@ func (r *ReconcileGrafana) manageSuccess(cr *i8ly.Grafana, state *common.Cluster
 		AdminUrl:           url,
 		GrafanaReady:       true,
 		ClientTimeout:      DefaultClientTimeoutSeconds,
+		FixAnnotations:     fixAnnotations,
 	}
 
 	if cr.Spec.Client != nil && cr.Spec.Client.TimeoutSeconds != nil {

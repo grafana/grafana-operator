@@ -28,8 +28,15 @@ type GrafanaSpec struct {
 	Resources              *v1.ResourceRequirements `json:"resources,omitempty"`
 	ServiceAccount         *GrafanaServiceAccount   `json:"serviceAccount,omitempty"`
 	Client                 *GrafanaClient           `json:"client,omitempty"`
+	Compat                 *GrafanaCompat           `json:"compat"`
 }
 
+// Backwards compatibility switches
+type GrafanaCompat struct {
+	FixAnnotations bool `json:"fixAnnotations"`
+}
+
+// Grafana API client settings
 type GrafanaClient struct {
 	TimeoutSeconds *int `json:"timeout"`
 	PreferService  bool `json:"preferService"`
