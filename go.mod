@@ -6,7 +6,6 @@ require (
 	cloud.google.com/go v0.35.1 // indirect
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/ghodss/yaml v1.0.1-0.20180820084758-c7ce16629ff4
-	github.com/go-ini/ini v1.42.0
 	github.com/go-logr/logr v0.1.0
 	github.com/go-openapi/spec v0.19.0
 	github.com/go-openapi/swag v0.18.0 // indirect
@@ -20,7 +19,6 @@ require (
 	github.com/prometheus/common v0.7.0 // indirect
 	github.com/prometheus/procfs v0.0.7 // indirect
 	golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898 // indirect
-	gopkg.in/ini.v1 v1.51.0 // indirect
 	k8s.io/api v0.0.0
 	k8s.io/apimachinery v0.0.0
 	k8s.io/client-go v11.0.0+incompatible
