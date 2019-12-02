@@ -32,9 +32,10 @@ type GrafanaDashboardStatus struct {
 // Used to keep a dashboard reference without having access to the dashboard
 // struct itself
 type GrafanaDashboardRef struct {
-	Name string `json:"name"`
-	UID  string `json:"uid"`
-	Hash string `json:"hash"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+	UID       string `json:"uid"`
+	Hash      string `json:"hash"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

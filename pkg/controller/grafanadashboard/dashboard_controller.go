@@ -244,8 +244,8 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 				status.Message))
 		}
 		log.Info(fmt.Sprintf("delete result was %v", *status.Message))
-		r.config.RemovePluginsFor(request.Namespace, dashboard.Name)
-		r.config.RemoveDashboard(request.Namespace, dashboard.Name)
+		r.config.RemovePluginsFor(dashboard.Namespace, dashboard.Name)
+		r.config.RemoveDashboard(dashboard.Namespace, dashboard.Name)
 	}
 
 	// Mark the dashboards as synced so that the current state can be written

@@ -83,13 +83,15 @@ func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard) {
 		c.Lock()
 		defer c.Unlock()
 		c.Dashboards[ns] = append(c.Dashboards[ns], &v1alpha1.GrafanaDashboardRef{
-			Name: dashboard.Name,
-			UID:  dashboard.Status.UID,
-			Hash: dashboard.Status.Hash,
+			Name:      dashboard.Name,
+			Namespace: ns,
+			UID:       dashboard.Status.UID,
+			Hash:      dashboard.Status.Hash,
 		})
 	} else {
 		c.Lock()
 		defer c.Unlock()
+		c.Dashboards[ns][i].Namespace = ns
 		c.Dashboards[ns][i].UID = dashboard.Status.UID
 		c.Dashboards[ns][i].Hash = dashboard.Status.Hash
 	}
@@ -125,6 +127,15 @@ func (c *ControllerConfig) RemoveDashboard(namespace, name string) {
 func (c *ControllerConfig) GetDashboards(namespace string) []*v1alpha1.GrafanaDashboardRef {
 	c.Lock()
 	defer c.Unlock()
+	// Cluster level?
+	if namespace == "" {
+		var dashboards []*v1alpha1.GrafanaDashboardRef
+		for _, v := range c.Dashboards {
+			dashboards = append(dashboards, v...)
+		}
+		return dashboards
+	}
+
 	if dashboards, ok := c.Dashboards[namespace]; ok {
 		return dashboards
 	}
