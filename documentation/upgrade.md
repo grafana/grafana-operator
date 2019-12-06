@@ -2,6 +2,7 @@
 
 This version includes the following changes:
 
+* Installs Grafana 6.5.1 by default
 * Dashboards are no longer stored in a ConfigMap. Instead they are now directly imported using the Grafana API.
 * Dashboard and Datasource custom resources no longer need finalizers. This means they can be deleted at any time, even when the operator itself is no longer running.
 * Updated reconciliation strategy that keeps all resources up to date at all times and allows for better configuration through the Grafana CR.
