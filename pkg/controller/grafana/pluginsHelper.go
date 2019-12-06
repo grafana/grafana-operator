@@ -4,10 +4,9 @@ import (
 	"crypto/tls"
 	"fmt"
 	integreatly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/pkg/controller/common"
+	"github.com/integr8ly/grafana-operator/pkg/controller/config"
 	"net/http"
 	"strings"
-	"time"
 )
 
 type PluginsHelperImpl struct {
@@ -21,7 +20,7 @@ func newPluginsHelper() *PluginsHelperImpl {
 	}
 
 	helper := new(PluginsHelperImpl)
-	helper.BaseUrl = common.PluginsUrl
+	helper.BaseUrl = config.PluginsUrl
 	helper.HttpClient = &http.Client{Transport: insecureTransport}
 
 	return helper
@@ -56,7 +55,7 @@ func (h *PluginsHelperImpl) BuildEnv(cr *integreatly.Grafana) string {
 }
 
 // Append a status message to the origin dashboard of a plugin
-func (h *PluginsHelperImpl) PickLatestVersions(requested integreatly.PluginList) (integreatly.PluginList, error) {
+func (h *PluginsHelperImpl) pickLatestVersions(requested integreatly.PluginList) (integreatly.PluginList, error) {
 	var latestVersions integreatly.PluginList
 	for _, plugin := range requested {
 		result, err := requested.HasNewerVersionOf(&plugin)
@@ -76,12 +75,6 @@ func (h *PluginsHelperImpl) PickLatestVersions(requested integreatly.PluginList)
 	return latestVersions, nil
 }
 
-func (h *PluginsHelperImpl) CanUpdatePlugins() bool {
-	lastUpdate := common.GetControllerConfig().GetConfigTimestamp(common.ConfigGrafanaPluginsUpdated, time.Now())
-	difference := time.Now().Sub(lastUpdate)
-	return difference.Seconds() >= common.PluginsMinAge
-}
-
 // Creates the list of plugins that can be added or updated
 // Does not directly deal with removing plugins: if a plugin is not in the list and the env var is updated, it will
 // automatically be removed
@@ -90,7 +83,7 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *integreatly.Grafana, requested int
 	pluginsUpdated := false
 
 	// Try to pick the latest versions of all plugins
-	requested, err := h.PickLatestVersions(requested)
+	requested, err := h.pickLatestVersions(requested)
 	if err != nil {
 		log.Error(err, "unable to pick latest plugin versions")
 	}
@@ -104,8 +97,7 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *integreatly.Grafana, requested int
 		// Don't allow to install multiple versions of the same plugin
 		if filteredPlugins.HasSomeVersionOf(&plugin) == true {
 			installedVersion := filteredPlugins.GetInstalledVersionOf(&plugin)
-			msg := fmt.Sprintf("not installing version %s of %s because %s is already installed", plugin.Version, plugin.Name, installedVersion.Version)
-			common.AppendMessage(msg, plugin.Origin)
+			log.Info(fmt.Sprintf("not installing version %s of %s because %s is already installed", plugin.Version, plugin.Name, installedVersion.Version))
 			continue
 		}
 
@@ -123,8 +115,7 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *integreatly.Grafana, requested int
 		// New plugin
 		if cr.Status.InstalledPlugins.HasSomeVersionOf(&plugin) == false {
 			filteredPlugins = append(filteredPlugins, plugin)
-			msg := fmt.Sprintf("installing plugin %s@%s", plugin.Name, plugin.Version)
-			common.AppendMessage(msg, plugin.Origin)
+			log.Info(fmt.Sprintf("installing plugin %s@%s", plugin.Name, plugin.Version))
 			pluginsUpdated = true
 			continue
 		}
@@ -139,8 +130,7 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *integreatly.Grafana, requested int
 			requested.VersionsOf(&plugin) == 1 {
 			installedVersion := cr.Status.InstalledPlugins.GetInstalledVersionOf(&plugin)
 			filteredPlugins = append(filteredPlugins, plugin)
-			msg := fmt.Sprintf("changing version of plugin %s form %s to %s", plugin.Name, installedVersion.Version, plugin.Version)
-			common.AppendMessage(msg, plugin.Origin)
+			log.Info(fmt.Sprintf("changing version of plugin %s form %s to %s", plugin.Name, installedVersion.Version, plugin.Version))
 			pluginsUpdated = true
 			continue
 		}

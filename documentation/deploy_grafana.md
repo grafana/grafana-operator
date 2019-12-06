@@ -53,7 +53,6 @@ The operator accepts a number of flags that can be passed in the `args` section 
 * *--grafana-plugins-init-container-image*: overrides the Grafana Plugins Init Container image, defaults to `quay.io/integreatly/grafana_plugins_init`.
 * *--grafana-plugins-init-container-tag*: overrides the Grafana Plugins Init Container tag, defaults to `0.0.2`.
 * *--scan-all*: watch for dashboards in all namespaces. This requires the the operator service account to have cluster wide permissions to `get`, `list`, `update` and `watch` dashboards. See `deploy/cluster_roles`.
-* *--pod-label-value*: override the value of the `app` label that gets attached to pods and other resources.
 * *--namespaces*: watch for dashboards in a list of namespaces. Mutually exclusive with `--scan-all`.
 
 See `deploy/operator.yaml` for an example.
@@ -71,9 +70,11 @@ The resource accepts the following properties in it's `spec`:
 * *config*: The properties used to generate `grafana.ini`. All properties defined in the [official documentation](https://grafana.com/docs/installation/configuration/) are supported although some of them are not allowed to be overridden (path configuration). See `deploy/examples/Grafana.yaml` for an example.  
 * *ingress*: Allows configuring the Ingress / Route resource (see [here](#configuring-the-ingress-or-route)).
 * *service*: Allows configuring the Service resource (see [here](#configuring-the-service)).
-* *initialReplicas*: Allows scaling the number of Grafana pods to the specified replicas.
-
-The other accepted properties are `logLevel`, `adminUser`, `adminPassword`, `basicAuth`, `disableLoginForm`, `disableSignoutMenu` and `anonymous`. They are supported for legacy reasons, but new instances should use the `config` field. If a value is set in `config` then it will override the legacy field. 
+* *serviceAccount*: Allows adding extra labels and annotations to the Grafana service account.
+* *deployment*: Allows configuring the deployment (see [here](#configuring-the-deployment)).
+* *resources*: Allows configuring the requests and limits for the Grafana pod (see [here](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#resourcerequirements-v1-core)).
+* *client*: Grafana client options (see [here](#configuring-grafana-api-access)).
+* *compat*: Compatibility options with older dashboard formats (see [here]()).
 
 *NOTE*: by default no Ingress or Route is created. It can be enabled with `spec.ingress.enabled`.
 
@@ -105,15 +106,19 @@ The operator will create a Route when running on OpenShift, otherwise an Ingress
 ```yaml
 spec:
   ingress:
-    enabled:  <Boolean>   # Create an Ingress (or Route if on OpenShift)
-    hostname: <String>    # Sets the hostname. Automatically set for Routes on OpenShift.
-    labels:               # Additional labels for the Ingress or Route
+    enabled:  <Boolean>     # Create an Ingress (or Route if on OpenShift)
+    hostname: <String>      # Sets the hostname. Automatically set for Routes on OpenShift.
+    tlsEnabled: <Boolean>   # Enable TLS on Ingress
+    tlsSecretName: <String> # TLS secret name in the same namespace
+    targetPort: <String>    # Which port to target on the service
+    termination: <String>   # TLS termination type (defaults to edge, other options are reencrypt or passthrough)
+    labels:                 # Additional labels for the Ingress or Route
       app: grafana
       ...
-    annotations:          # Additional annotations for the Ingress or Route
+    annotations:            # Additional annotations for the Ingress or Route
       app: grafana
       ...
-    path:                 # Sets the path of the Ingress. Ignored for Routes
+    path:                   # Sets the path of the Ingress. Ignored for Routes
 ```
 
 ## Configuring the Service
@@ -123,11 +128,54 @@ Various properties of the Service can be configured:
 ```yaml
 spec:
   service:
-    labels:               # Additional labels for the Service
+    labels:                 # Additional labels for the Service
       app: grafana
       ...
-    annotations:          # Additional annotations for the Service
+    annotations:            # Additional annotations for the Service
       app: grafana
       ...
-    type: NodePort        # Set Service type, either NodePort, ClusterIP or LoadBalancer
+    type: NodePort          # Set Service type, either NodePort, ClusterIP or LoadBalancer
+    ports:                  # Additional ports to add to the service
+      - name: grafana-proxy
+        port: 9091
+        protocol: TCP
+        targetPort: ...
+        
+```
+
+## Configuring the Deployment
+
+Various properties of the Deployment can be configured:
+
+```yaml
+spec:
+  deployment:
+    labels:                 # Additional labels for the Deployment
+      app: grafana
+      ...
+    annotations:            # Additional annotations for the Deployment
+      app: grafana
+      ...
+    replicas: <Number>      # Number of replicas. If more than one is selected, a shared database should be configured.
+```
+
+## Configuring Grafana API access
+
+Grafana dashboards are imported using the Grafana API. The following options are available to configure the API access:
+
+```yaml
+spec:
+  client:
+    timeout: <Number>         # Timeout in seconds for API requests (defaults to 5 seconds).
+    preferService: <Boolean>  # If an Ingress or Route is available, the operator will attempt to use those for API access. This flag forces it to use the Service instead.
+```
+
+## Compatibility with older dashboard formats
+
+This section contains flag that allow the operator to modify older dashboards in a way that allow importing to newer Grafana versions.
+
+```yaml
+spec:
+  compat:
+    fixAnnotations: <Boolean>   # Allows importing dashboards that specify annotation tags as arrays instead of strings.
 ```

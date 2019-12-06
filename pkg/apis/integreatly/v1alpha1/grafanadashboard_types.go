@@ -21,9 +21,21 @@ type GrafanaDashboardSpec struct {
 
 // GrafanaDashboardStatus defines the observed state of GrafanaDashboard
 type GrafanaDashboardStatus struct {
-	Messages   []GrafanaDashboardStatusMessage `json:"messages,omitempty"`
-	Phase      int                             `json:"phase"`
-	LastConfig string                          `json:"lastConfig,omitempty"`
+	Phase   StatusPhase `json:"phase"`
+	UID     string      `json:"uid"`
+	ID      uint        `json:"id"`
+	Slug    string      `json:"slug"`
+	Message string      `json:"message"`
+	Hash    string      `json:"hash"`
+}
+
+// Used to keep a dashboard reference without having access to the dashboard
+// struct itself
+type GrafanaDashboardRef struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+	UID       string `json:"uid"`
+	Hash      string `json:"hash"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

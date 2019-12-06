@@ -4,55 +4,57 @@ metadata:
   creationTimestamp: null
   name: grafana-operator
 rules:
-- apiGroups:
-  - ""
-  resources:
-  - pods
-  - services
-  - endpoints
-  - persistentvolumeclaims
-  - events
-  - configmaps
-  - secrets
-  - serviceaccounts
-  verbs:
-  - '*'
-- apiGroups:
-  - apps
-  resources:
-  - deployments
-  - daemonsets
-  - replicasets
-  - statefulsets
-  verbs:
-  - '*'
-- apiGroups:
-  - route.openshift.io
-  resources:
-  - routes
-  verbs:
-  - '*'
-- apiGroups:
-  - monitoring.coreos.com
-  resources:
-  - servicemonitors
-  verbs:
-  - get
-  - create
-- apiGroups:
-    - extensions
-  resources:
-    - ingresses
-  verbs:
-    - '*'
-- apiGroups:
-  - integreatly.org
-  resources:
-  - grafanas
-  - grafanadashboards
-  - grafanadatasources
-  - grafanas/finalizers
-  - grafanadashboards/finalizers
-  - grafanadatasources/finalizers
-  verbs:
-  - '*'
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - services
+      - endpoints
+      - persistentvolumeclaims
+      - events
+      - configmaps
+      - secrets
+      - serviceaccounts
+    verbs:
+      - '*'
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+      - deployments/finalizers
+      - daemonsets
+      - replicasets
+      - statefulsets
+    verbs:
+      - '*'
+  - apiGroups:
+      - route.openshift.io
+    resources:
+      - routes
+    verbs:
+      - '*'
+  - apiGroups:
+      - monitoring.coreos.com
+    resources:
+      - servicemonitors
+    verbs:
+      - get
+      - create
+  - apiGroups:
+      - extensions
+    resources:
+      - ingresses
+    verbs:
+      - '*'
+  - apiGroups:
+      - integreatly.org
+    resources:
+      - grafanas
+      - grafanas/status
+      - grafanas/finalizers
+      - grafanadashboards
+      - grafanadashboards/status
+      - grafanadatasources
+      - grafanadatasources/status
+    verbs:
+      - '*'

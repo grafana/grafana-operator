@@ -10,6 +10,8 @@ spec:
     plural: grafanadatasources
     singular: grafanadatasource
   scope: Namespaced
+  subresources:
+    status: {}
   version: v1alpha1
   validation:
     openAPIV3Schema:
@@ -31,5 +33,3 @@ spec:
               items:
                 description: Grafana Datasource Object
                 type: object
-        status:
-          type: object

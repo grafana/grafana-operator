@@ -10,6 +10,8 @@ spec:
     plural: grafanas
     singular: grafana
   scope: Namespaced
+  subresources:
+    status: {}
   version: v1alpha1
   validation:
     openAPIV3Schema:
@@ -74,9 +76,18 @@ spec:
                 labels:
                   type: object
                   description: Additional labels for the ingress / route
+                targetPort:
+                  type: string
+                  description: Override port to target in the grafana service
             service:
               type: object
               properties:
+                ports:
+                  type: array
+                  description: Override default ports
+                  items:
+                    type: object
+                    descripton: A port to add to the grafana service
                 annotations:
                   type: object
                   description: Additional annotations for the service
@@ -86,6 +97,30 @@ spec:
                 type:
                   type: string
                   description: Service type (NodePort, ClusterIP or LoadBalancer)
+            deployment:
+              type: object
+              properties:
+                annotations:
+                  type: object
+                  description: Additional annotations for the service
+                labels:
+                  type: object
+                  description: Additional labels for the service
+            serviceAccount:
+              type: object
+              properties:
+                annotations:
+                  type: object
+                  description: Additional annotations for the serviceaccount
+                labels:
+                  type: object
+                  description: Additional labels for the serviceaccount
+            client:
+              type: object
+              description: Grafana client settings
+            compat:
+              type: object
+              description: Backwards compatibility switches
             dashboardLabelSelectors:
               type: array
               items:
