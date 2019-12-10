@@ -1,0 +1,60 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+      name: postgres
+  selector:
+    app: postgres
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:11.5
+          imagePullPolicy: "IfNotPresent"
+          livenessProbe:
+            timeoutSeconds: 1
+            initialDelaySeconds: 5
+            tcpSocket:
+              port: 5432
+          readinessProbe:
+            timeoutSeconds: 1
+            initialDelaySeconds: 5
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - psql -h 127.0.0.1 -U $POSTGRES_USER -q -d $POSTGRES_DB -c 'SELECT 1'
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: grafana
+            - name: POSTGRES_PASSWORD
+              value: grafana
+            - name: POSTGRES_DB
+              value: grafana
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: postgredb
+      volumes:
+        - name: postgredb
+          emptyDir: {}

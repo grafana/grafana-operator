@@ -99,7 +99,7 @@ func (i *GrafanaIni) Write() (string, string) {
 	if i.cfg.RemoteCache != nil {
 		var items []string
 		items = appendStr(items, "type", i.cfg.RemoteCache.Type)
-		items = appendStr(items, "type", i.cfg.RemoteCache.ConnStr)
+		items = appendStr(items, "connstr", i.cfg.RemoteCache.ConnStr)
 		config["remote_cache"] = items
 	}
 
