@@ -145,7 +145,7 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume {
 
 	// Extra volumes for config maps
 	for _, configmap := range cr.Spec.ConfigMaps {
-		volumeName := fmt.Sprintf("secret-%s", configmap)
+		volumeName := fmt.Sprintf("configmap-%s", configmap)
 		volumes = append(volumes, v13.Volume{
 			Name: volumeName,
 			VolumeSource: v13.VolumeSource{
