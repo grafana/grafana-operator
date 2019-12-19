@@ -128,7 +128,14 @@ func (r *DashboardPipelineImpl) obtainJson() error {
 // If there are no changes we should avoid sending update requests as this will create
 // a new dashboard version in Grafana
 func (r *DashboardPipelineImpl) generateHash() string {
-	return fmt.Sprintf("%x", md5.Sum([]byte(r.Dashboard.Spec.Json+r.Dashboard.Spec.Url)))
+	var datasources strings.Builder
+	for _, input := range r.Dashboard.Spec.Datasources {
+		datasources.WriteString(input.DatasourceName)
+		datasources.WriteString(input.InputName)
+	}
+
+	return fmt.Sprintf("%x", md5.Sum([]byte(
+		r.Dashboard.Spec.Json+r.Dashboard.Spec.Url+datasources.String())))
 }
 
 // Try to obtain the dashboard json from a provided url
