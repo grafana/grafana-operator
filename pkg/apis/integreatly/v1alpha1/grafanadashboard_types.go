@@ -13,10 +13,16 @@ const GrafanaDashboardKind = "GrafanaDashboard"
 type GrafanaDashboardSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	Json    string     `json:"json"`
-	Name    string     `json:"name"`
-	Plugins PluginList `json:"plugins,omitempty"`
-	Url     string     `json:"url,omitempty"`
+	Json        string                       `json:"json"`
+	Name        string                       `json:"name"`
+	Plugins     PluginList                   `json:"plugins,omitempty"`
+	Url         string                       `json:"url,omitempty"`
+	Datasources []GrafanaDashboardDatasource `json:"datasources,omitempty"`
+}
+
+type GrafanaDashboardDatasource struct {
+	InputName      string `json:"inputName"`
+	DatasourceName string `json:"datasourceName"`
 }
 
 // GrafanaDashboardStatus defines the observed state of GrafanaDashboard

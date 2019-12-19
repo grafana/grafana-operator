@@ -22,6 +22,14 @@ spec:
               type: string
             json:
               type: string
+            url:
+              type: string
+              description: URL to dashboard json
+            datasources:
+              type: array
+              items:
+                description: Input datasources to resolve before importing
+                type: object
             plugins:
               type: array
               items:
