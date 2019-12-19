@@ -54,6 +54,7 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) (*sdk.Board, 
 	}
 	r.Hash = hash
 
+	// Datasource inputs to resolve?
 	err = r.resolveDatasources()
 	if err != nil {
 		return nil, err
@@ -165,8 +166,9 @@ func (r *DashboardPipelineImpl) resolveDatasources() error {
 	currentJson := r.JSON
 	for _, input := range r.Dashboard.Spec.Datasources {
 		if input.DatasourceName == "" || input.InputName == "" {
-			r.Logger.Info(fmt.Sprintf("ignoring datasource input rule, input or datasource empty"))
-			continue
+			msg := fmt.Sprintf("invalid datasource input rule, input or datasource empty")
+			r.Logger.Info(msg)
+			return errors.New(msg)
 		}
 
 		searchValue := fmt.Sprintf("${%s}", input.InputName)
