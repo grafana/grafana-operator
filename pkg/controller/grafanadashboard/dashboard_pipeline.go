@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	"strings"
 )
 
 type DashboardPipeline interface {
@@ -52,6 +53,11 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) (*sdk.Board, 
 		return nil, nil
 	}
 	r.Hash = hash
+
+	err = r.resolveDatasources()
+	if err != nil {
+		return nil, err
+	}
 
 	// Dashboard valid?
 	err = r.validateJson()
@@ -149,6 +155,27 @@ func (r *DashboardPipelineImpl) loadDashboardFromURL() error {
 
 func (r *DashboardPipelineImpl) NewHash() string {
 	return r.Hash
+}
+
+func (r *DashboardPipelineImpl) resolveDatasources() error {
+	if len(r.Dashboard.Spec.Datasources) == 0 {
+		return nil
+	}
+
+	currentJson := r.JSON
+	for _, input := range r.Dashboard.Spec.Datasources {
+		if input.DatasourceName == "" || input.InputName == "" {
+			r.Logger.Info(fmt.Sprintf("ignoring datasource input rule, input or datasource empty"))
+			continue
+		}
+
+		searchValue := fmt.Sprintf("${%s}", input.InputName)
+		currentJson = strings.ReplaceAll(currentJson, searchValue, input.DatasourceName)
+		r.Logger.Info(fmt.Sprintf("resolving input %s to %s", input.InputName, input.DatasourceName))
+	}
+
+	r.JSON = currentJson
+	return nil
 }
 
 // Some older dashboards provide the tags list of an annotation as an array

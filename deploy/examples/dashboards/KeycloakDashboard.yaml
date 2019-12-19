@@ -1152,3 +1152,6 @@ spec:
       "uid": "keycloak",
       "version": 1
     }
+  datasources:
+    - inputName: "DS_PROMETHEUS"
+      datasourceName: "Prometheus"
