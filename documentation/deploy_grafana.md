@@ -107,7 +107,7 @@ The operator will create a Route when running on OpenShift, otherwise an Ingress
 spec:
   ingress:
     enabled:  <Boolean>     # Create an Ingress (or Route if on OpenShift)
-    hostname: <String>      # Sets the hostname. Automatically set for Routes on OpenShift.
+    hostname: <String>      # Sets the hostname. Assigned automatically on OpenShift if not provided
     tlsEnabled: <Boolean>   # Enable TLS on Ingress
     tlsSecretName: <String> # TLS secret name in the same namespace
     targetPort: <String>    # Which port to target on the service
