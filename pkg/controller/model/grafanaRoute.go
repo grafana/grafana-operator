@@ -69,6 +69,7 @@ func getTermination(cr *v1alpha1.Grafana) v1.TLSTerminationType {
 
 func getRouteSpec(cr *v1alpha1.Grafana) v1.RouteSpec {
 	return v1.RouteSpec{
+		Host: GetHost(cr),
 		Path: GetPath(cr),
 		To: v1.RouteTargetReference{
 			Kind: "Service",
