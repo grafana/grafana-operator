@@ -178,4 +178,5 @@ This section contains flag that allow the operator to modify older dashboards in
 spec:
   compat:
     fixAnnotations: <Boolean>   # Allows importing dashboards that specify annotation tags as arrays instead of strings.
+    fixHeights: <Boolean>       # Allows importing dashboards that have a height property encoded as number
 ```

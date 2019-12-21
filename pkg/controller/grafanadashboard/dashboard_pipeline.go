@@ -26,14 +26,16 @@ type DashboardPipelineImpl struct {
 	Logger         logr.Logger
 	Hash           string
 	FixAnnotations bool
+	FixHeights     bool
 }
 
-func NewDashboardPipeline(dashboard *v1alpha1.GrafanaDashboard, fixAnnotations bool) DashboardPipeline {
+func NewDashboardPipeline(dashboard *v1alpha1.GrafanaDashboard, fixAnnotations bool, fixHeights bool) DashboardPipeline {
 	return &DashboardPipelineImpl{
 		Dashboard:      dashboard,
 		JSON:           "",
 		Logger:         logf.Log.WithName(fmt.Sprintf("dashboard-%v", dashboard.Name)),
 		FixAnnotations: fixAnnotations,
+		FixHeights:     fixHeights,
 	}
 }
 
@@ -76,6 +78,11 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) (*sdk.Board, 
 func (r *DashboardPipelineImpl) validateJson() error {
 	dashboardBytes := []byte(r.JSON)
 	dashboardBytes, err := r.fixAnnotations(dashboardBytes)
+	if err != nil {
+		return err
+	}
+
+	dashboardBytes, err = r.fixHeights(dashboardBytes)
 	if err != nil {
 		return err
 	}
@@ -168,6 +175,36 @@ func (r *DashboardPipelineImpl) fixAnnotations(dashboardBytes []byte) ([]byte, e
 					// with something that is compatible
 					rawAnnotation["tags"] = ""
 				}
+			}
+		}
+	}
+
+	dashboardBytes, err = json.Marshal(raw)
+	if err != nil {
+		return nil, err
+	}
+
+	return dashboardBytes, nil
+}
+
+// Some dashboards have a height property encoded as a number where the SDK expects a string
+func (r *DashboardPipelineImpl) fixHeights(dashboardBytes []byte) ([]byte, error) {
+	if !r.FixHeights {
+		return dashboardBytes, nil
+	}
+
+	raw := map[string]interface{}{}
+	err := json.Unmarshal(dashboardBytes, &raw)
+	if err != nil {
+		return nil, err
+	}
+
+	if raw != nil && raw["panels"] != nil {
+		panels := raw["panels"].([]interface{})
+		for _, panel := range panels {
+			rawPanel := panel.(map[string]interface{})
+			if rawPanel["height"] != nil {
+				rawPanel["height"] = fmt.Sprintf("%v", rawPanel["height"])
 			}
 		}
 	}

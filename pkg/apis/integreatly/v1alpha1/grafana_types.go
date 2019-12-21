@@ -34,6 +34,7 @@ type GrafanaSpec struct {
 // Backwards compatibility switches
 type GrafanaCompat struct {
 	FixAnnotations bool `json:"fixAnnotations"`
+	FixHeights     bool `json:"fixHeights"`
 }
 
 // Grafana API client settings

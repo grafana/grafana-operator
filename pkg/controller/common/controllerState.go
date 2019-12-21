@@ -12,4 +12,5 @@ type ControllerState struct {
 	GrafanaReady       bool
 	ClientTimeout      int
 	FixAnnotations     bool
+	FixHeights         bool
 }
