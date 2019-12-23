@@ -16,8 +16,6 @@ spec:
     auth:
       disable_login_form: False
       disable_signout_menu: True
-    auth.basic:
-      enabled: False
     auth.anonymous:
       enabled: True
   dashboardLabelSelector:
