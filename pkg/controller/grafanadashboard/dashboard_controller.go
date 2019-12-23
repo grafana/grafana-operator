@@ -4,7 +4,6 @@ import (
 	"context"
 	defaultErrors "errors"
 	"fmt"
-	"github.com/grafana-tools/sdk"
 	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/pkg/controller/config"
@@ -222,7 +221,7 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 			continue
 		}
 
-		status, err := grafanaClient.CreateOrUpdateDashboard(*processed)
+		status, err := grafanaClient.CreateOrUpdateDashboard(processed)
 		if err != nil {
 			log.Info(fmt.Sprintf("cannot submit dashboard %v/%v", dashboard.Namespace, dashboard.Name))
 			r.manageError(&dashboard, err)
@@ -238,10 +237,10 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 	for _, dashboard := range dashboardsToDelete {
 		status, err := grafanaClient.DeleteDashboardByUID(dashboard.UID)
 		if err != nil {
-			log.Error(err, fmt.Sprintf("error deleting dashboard %v/, status was %v/%v",
+			log.Error(err, fmt.Sprintf("error deleting dashboard %v, status was %v/%v",
 				dashboard.UID,
-				status.Status,
-				status.Message))
+				*status.Status,
+				*status.Message))
 		}
 		log.Info(fmt.Sprintf("delete result was %v", *status.Message))
 		r.config.RemovePluginsFor(dashboard.Namespace, dashboard.Name)
@@ -256,7 +255,7 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 
 // Handle success case: update dashboard metadata (id, uid) and update the list
 // of plugins
-func (r *ReconcileGrafanaDashboard) manageSuccess(dashboard *i8ly.GrafanaDashboard, status sdk.StatusMessage, hash string) error {
+func (r *ReconcileGrafanaDashboard) manageSuccess(dashboard *i8ly.GrafanaDashboard, status GrafanaResponse, hash string) error {
 	msg := fmt.Sprintf("dashboard %v/%v successfully submitted",
 		dashboard.Namespace,
 		dashboard.Name)
