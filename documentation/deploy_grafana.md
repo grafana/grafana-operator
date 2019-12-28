@@ -6,6 +6,42 @@ This document describes how to get up and running with a new Grafana instance on
 
 The first step is to install the Grafana operator to a namespace in your cluster.
 
+There are two options for this procedure, automated via Ansible, or manually running kubectl/oc commands.
+
+### Automated Procedure
+
+Cluster admin install cluster resources.
+For more details and additional parameters see [grafana-operator-cluster-resources.yaml](../deploy/ansible/README.md#grafana-operator-cluster-resourcesyaml).
+```sh
+ansible-playbook deploy/ansible/grafana-operator-cluster-resources.yaml \
+  -e k8s_host=https://ocp.example.xyz \
+  -e k8s_username=admin1 \
+  -e k8s_password=secret \
+  -e grafana_operator_namespace=grafana
+```
+
+Optional: Cluster admin allow operator to scan all namespaces for dashboards
+For more details and additional parameters see [grafana-operator-cluster-dashboards-scan.yaml](../deploy/ansible/README.md#grafana-operator-cluster-dashboards-scanyaml).
+```sh
+ansible-playbook grafana-operator-cluster-dashboards-scan.yaml \
+  -e k8s_host=https://ocp.example.xyz \
+  -e k8s_username=admin1 \
+  -e k8s_password=secret \
+  -e grafana_operator_namespace=grafana
+```
+
+Self provisioner install operator
+For more details and additional parameters see [grafana-operator-namespace-resources.yaml](../deploy/ansible/README.md#grafana-operator-namespace-resourcesyaml).
+```sh
+ansible-playbook grafana-operator-namespace-resources.yaml \
+  -e k8s_host=https://ocp.example.xyz \
+  -e k8s_username=project_creator \
+  -e k8s_password=secret \
+  -e grafana_operator_namespace=grafana
+```
+
+### Manual Procedure
+
 To create a namespace named `grafana` run:
 
 ```sh
@@ -56,6 +92,8 @@ The operator accepts a number of flags that can be passed in the `args` section 
 * *--namespaces*: watch for dashboards in a list of namespaces. Mutually exclusive with `--scan-all`.
 
 See `deploy/operator.yaml` for an example.
+
+If using the automated Ansible installer see the [grafana-operator-namespace-resources.yaml - Parameters](../deploy/ansible/README.md#parameters-1) for the equivlant parameters.
 
 ## Deploying Grafana
 
