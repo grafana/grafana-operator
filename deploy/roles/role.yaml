@@ -11,41 +11,65 @@ rules:
       - services
       - endpoints
       - persistentvolumeclaims
-      - events
       - configmaps
       - secrets
       - serviceaccounts
     verbs:
-      - '*'
+      - get
+      - list
+      - create
+      - update
+      - delete
+      - deletecollection
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - get
+      - list
+      - watch
   - apiGroups:
       - apps
     resources:
       - deployments
-      - deployments/finalizers
       - daemonsets
       - replicasets
       - statefulsets
     verbs:
-      - '*'
+      - get
+      - list
+      - create
+      - update
+      - delete
+      - deletecollection
+      - watch
   - apiGroups:
       - route.openshift.io
     resources:
       - routes
     verbs:
-      - '*'
-  - apiGroups:
-      - monitoring.coreos.com
-    resources:
-      - servicemonitors
-    verbs:
       - get
+      - list
+      - create
+      - update
+      - delete
+      - deletecollection
+      - watch
       - create
   - apiGroups:
       - extensions
     resources:
       - ingresses
     verbs:
-      - '*'
+      - get
+      - list
+      - create
+      - update
+      - delete
+      - deletecollection
+      - watch
   - apiGroups:
       - integreatly.org
     resources:
@@ -57,4 +81,10 @@ rules:
       - grafanadatasources
       - grafanadatasources/status
     verbs:
-      - '*'
+      - get
+      - list
+      - create
+      - update
+      - delete
+      - deletecollection
+      - watch
