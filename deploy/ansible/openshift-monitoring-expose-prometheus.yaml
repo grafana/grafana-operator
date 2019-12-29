@@ -1,0 +1,99 @@
+---
+- name: OpenShift Monitoring | Expose Prometheus
+  hosts: localhost
+  module_defaults:
+    group/k8s:
+      host: "{{ k8s_host }}"
+      validate_certs: "{{ k8s_validate_certs | default(true) }}"
+  vars:
+    prometheus_namespace: "openshift-monitoring"
+    prometheus_statefulset: "prometheus-k8s"
+  tasks:
+  - name: OpenShift Monitoring | Expose Prometheus | Params validation | k8s auth
+    fail:
+      msg: "Either k8s_api_key or k8s_username and k8s_password must be specified"
+    when: ((k8s_api_key is not defined) and (k8s_username is not defined) and (k8s_password is not defined)) or
+          ((k8s_api_key is defined) and ((k8s_username is defined) or (k8s_password is defined)))
+
+  - name: OpenShift Monitoring | Expose Prometheus | Params defaults
+    set_fact:
+      openshift_monitoring_expose_prometheus: "{{ openshift_monitoring_expose_prometheus | default(true) }}"
+
+  - name: OpenShift Monitoring | Expose Prometheus | Private params
+    set_fact:
+      _k8s_resources_state: "{{ (openshift_monitoring_expose_prometheus | bool) | ternary('present', 'absent') }}"
+      _k8s_resources_task_title: "{{ (openshift_monitoring_expose_prometheus | bool) | ternary('Create', 'Delete') }}"
+
+  - block:
+    - block:
+      - name: OpenShift Monitoring | Expose Prometheus | Get K8s access token
+        k8s_auth:
+          username: "{{ k8s_username }}"
+          password: "{{ k8s_password }}"
+        register: k8s_auth_results
+
+      - name: OpenShift Monitoring | Expose Prometheus | Set k8s_api_key
+        set_fact:
+          k8s_api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+      when: (k8s_api_key is not defined) and ((k8s_username is defined) and (k8s_password is defined))
+
+    - block:
+      - name: "OpenShift Monitoring | Expose Prometheus | Get prometheus StatefulSet info"
+        k8s_info:
+          kind: StatefulSet
+          name: "{{ prometheus_statefulset }}"
+          namespace: "{{ prometheus_namespace }}" 
+          api_key: "{{ k8s_api_key }}"
+        register: prometheus_k8s_info
+
+      - name: "OpenShift Monitoring | Expose Prometheus | Get current prometheus StatefulSet prometheus container args"
+        set_fact:
+          _prometheus_container_args: "{{ prometheus_k8s_info['resources'][0] | json_query(_prometheus_container_args_query) }}"
+        vars:
+          _prometheus_container_args_query: "spec.template.spec.containers[?name=='prometheus'].args[*]"
+      
+      - name: "OpenShift Monitoring | Expose Prometheus | decide new --web.listen-address host value"
+        set_fact:
+          web_listen_address_host_value: "{{ (openshift_monitoring_expose_prometheus | bool) | ternary('', '127.0.0.1') }}"
+
+      - name: "OpenShift Monitoring | Expose Prometheus | Create new prometheus StatefulSet prometheus container args list with updated --web.listen-address argument"
+        set_fact:
+         _updated_prometheus_container_args: "{{ _prometheus_container_args[0] | map('regex_replace', _web_listen_address_param_regex, _new_web_listen_address_arg) | list }}"
+        vars:
+          _web_listen_address_param_regex: '--web\.listen-address=(.*):(.*)'
+          _new_web_listen_address_arg: "--web.listen-address={{ web_listen_address_host_value }}:\\2"
+
+      - name: "OpenShift Monitoring | Expose Prometheus | Patch prometheus StatefulSet"
+        k8s:
+          kind: StatefulSet
+          name: "{{ prometheus_statefulset }}" 
+          namespace: "{{ prometheus_namespace }}" 
+          api_key: "{{ k8s_api_key }}"
+          resource_definition:
+            spec:
+              template:
+                spec:
+                  containers:
+                    - name: prometheus
+                      args: "{{ _updated_prometheus_container_args }}"
+        register: promtehus_k8s_statefulset_patch_result
+
+      - name: "OpenShift Monitoring | Expose Prometheus | wait for all pods in prometheus StatefulSet to be updated"
+        k8s_info:
+          kind: StatefulSet
+          name: "{{ prometheus_statefulset }}"
+          namespace: "{{ prometheus_namespace }}" 
+          api_key: "{{ k8s_api_key }}"
+        when: promtehus_k8s_statefulset_patch_result is changed
+        register: prometheus_k8s_info
+        until: (prometheus_k8s_info['resources'][0] | json_query('status.currentRevision') ) == (prometheus_k8s_info['resources'][0] | json_query('status.updateRevision') )
+        delay: 2
+        retries: 60
+
+    always:
+    - name: OpenShift Monitoring | Expose Prometheus | Revoke K8s access token
+      when: k8s_auth_results.k8s_auth.api_key is defined
+      k8s_auth:
+        state: absent
+        api_key: "{{ k8s_api_key }}"
+      when: ((k8s_username is defined) and (k8s_password is defined))

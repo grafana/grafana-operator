@@ -176,6 +176,26 @@ ansible-playbook grafana-operator-cluster-dashboards-scan.yaml \
   -e grafana_operator_install=false
 ```
 
+## openshift-monitoring-expose-prometheus.yaml
+
+Playbook for exposing openshift-monitoring prometheus data so that an external Grafana can access it.
+
+### Required K8s Permisions 
+These permissions are reuqied by the K8s user who runs this playbook. Typically this would be a cluster administrator.
+
+* edit access to the `openshift-monitoring` project
+
+### Parameters
+
+| Parameter                                 | Choices / **Defaults** | Comments
+|-------------------------------------------|------------------------|---------
+| k8s\_host                                 |                        | K8s API to run this playbook against
+| k8s\_validate\_certs                      | **True** / False       | Whether to validate K8s API certificate
+| k8s\_api\_token                           |                        | K8s API token to authenticate with. Mutually exclusive with `k8s_username` and `k8s_password`.
+| k8s\_username                             |                        | K8s username to authenticate with. Mutually exclusive with `k8s_api_token`.
+| k8s\_password                             |                        | K8s password to authenticate with. Mutually exclusive with `k8s_api_token`.
+| openshift\_monitoring\_expose\_prometheus | **True** / False       | `True` to expose openshift-monitoring prometheus data, `False` to un-expose.
+
 # Tested With
 These are the versions these playbooks have been tested with. This does not mean this wont work with other versions this is simply known working versions.
 
