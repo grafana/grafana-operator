@@ -112,9 +112,6 @@
         grafana_operator_args: "{{ grafana_operator_args + [ '--namespaces='+grafana_operator_args_namespaces ] }}"
       when: grafana_operator_args_namespaces is defined
 
-    # WARNING: not currently idempotent because of the update operator args task that follows this
-    #          This is a trade off of copy paste redefine ../operator.yaml in line in this playbook
-    #          or a jinja2 template
     - name: "Grafana Operator | Namespace Resources | {{ _k8s_resources_task_title }} Operator"
       k8s:
         src: ../operator.yaml
@@ -126,10 +123,6 @@
           type: Available
           status: 'True'
 
-    # WARNING: not currently idempotent because the previous step will unset these args and then
-    #          this step will reset them.
-    #          This is a trade off of copy paste redefine ../operator.yaml in line in this playbook
-    #          or a jinja2 template
     - name: "Grafana Operator | Namespace Resources | {{ _k8s_resources_task_title }} Operator Args"
       k8s:
         kind: Deployment
@@ -148,11 +141,6 @@
         wait_condition:
           type: Available
           status: 'True'
-
-    - name: Grafana Operator | Namespace Resources | WARNING
-      debug:
-        msg: "FOO"
-      when: ((grafana_operator_args_scan_all is defined) and (grafana_operator_args_scan_all)) or ((grafana_operator_args_namespaces is defined) and (grafana_operator_args_namespaces != ""))
 
     always:
     - name: Grafana Operator | Namespace Resources | Revoke K8s access token
