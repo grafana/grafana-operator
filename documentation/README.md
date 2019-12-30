@@ -23,6 +23,7 @@ The following example CRs are provided:
 * [SimpleDashboard.yaml](../deploy/examples/dashboards/SimpleDashboard.yaml): Minimal empty dashboard.
 * [DashboardWithPlugins.yaml](../deploy/examples/dashboards/DashboardWithPlugins.yaml): Minimal empty dashboard with plugin dependencies.
 * [DashboardFromURL.yaml](../deploy/examples/dashboards/DashboardFromURL.yaml): A dashboard that downloads its contents from a URL and falls back to embedded json if the URL cannot be resolved.
+* [KeycloakDashboard.yaml](../deploy/examples/dashboards/KeycloakDashboard.yaml): A dashboard that shows keycloak metrics and demonstrates how to use datasource inputs.
 
 ### Data sources
 

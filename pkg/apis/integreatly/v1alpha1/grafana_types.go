@@ -384,8 +384,6 @@ type GrafanaStatus struct {
 	InstalledDashboards map[string][]*GrafanaDashboardRef `json:"dashboards"`
 	InstalledPlugins    PluginList                        `json:"installedPlugins"`
 	FailedPlugins       PluginList                        `json:"failedPlugins"`
-	AdminUser           string                            `json:"adminUser"`
-	AdminPassword       string                            `json:"adminPassword"`
 }
 
 // GrafanaPlugin contains information about a single plugin

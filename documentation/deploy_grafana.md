@@ -94,9 +94,7 @@ grafana-ingress   grafana.apps.127.0.0.1.nip.io             80        28s
 
 ## Config reconciliation
 
-When the config object in the `Grafana` CR is modified, then `grafana.ini` will be automatically updated and Grafana will be restarted.
-
-*NOTE*: there is a known issue when removing whole sections from the config object. The operator might not detect the update in such cases. As a workaround we recommend to leave the section header in place and only removing all the sections properties.
+When the config object in the `Grafana` CR is modified, the `grafana.ini` will be automatically updated and Grafana will be restarted.
 
 ## Configuring the Ingress or Route
 

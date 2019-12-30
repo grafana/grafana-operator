@@ -1,28 +1,29 @@
 package grafanadashboard
 
 import (
+	"bytes"
 	"crypto/md5"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/go-logr/logr"
-	"github.com/grafana-tools/sdk"
 	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	"strings"
 )
 
 type DashboardPipeline interface {
-	ProcessDashboard(knownHash string) (*sdk.Board, error)
+	ProcessDashboard(knownHash string) ([]byte, error)
 	NewHash() string
 }
 
 type DashboardPipelineImpl struct {
 	Dashboard      *v1alpha1.GrafanaDashboard
 	JSON           string
-	Board          sdk.Board
+	Board          map[string]interface{}
 	Logger         logr.Logger
 	Hash           string
 	FixAnnotations bool
@@ -39,7 +40,7 @@ func NewDashboardPipeline(dashboard *v1alpha1.GrafanaDashboard, fixAnnotations b
 	}
 }
 
-func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) (*sdk.Board, error) {
+func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) ([]byte, error) {
 	err := r.obtainJson()
 	if err != nil {
 		return nil, err
@@ -53,6 +54,12 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) (*sdk.Board, 
 	}
 	r.Hash = hash
 
+	// Datasource inputs to resolve?
+	err = r.resolveDatasources()
+	if err != nil {
+		return nil, err
+	}
+
 	// Dashboard valid?
 	err = r.validateJson()
 	if err != nil {
@@ -61,17 +68,22 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) (*sdk.Board, 
 
 	// Dashboards are never expected to come with an ID, it is
 	// always assigned by Grafana. If there is one, we ignore it
-	r.Board.ID = 0
+	r.Board["id"] = nil
 
 	// This dashboard has previously been imported
 	// To make sure its updated we have to set the metadata
 	if r.Dashboard.Status.Phase == v1alpha1.PhaseReconciling {
-		r.Board.Slug = r.Dashboard.Status.Slug
-		r.Board.UID = r.Dashboard.Status.UID
-		r.Board.ID = r.Dashboard.Status.ID
+		r.Board["slug"] = r.Dashboard.Status.Slug
+		r.Board["uid"] = r.Dashboard.Status.UID
+		r.Board["id"] = r.Dashboard.Status.ID
 	}
 
-	return &r.Board, nil
+	raw, err := json.Marshal(r.Board)
+	if err != nil {
+		return nil, err
+	}
+
+	return bytes.TrimSpace(raw), nil
 }
 
 // Make sure the dashboard contains valid JSON
@@ -87,14 +99,8 @@ func (r *DashboardPipelineImpl) validateJson() error {
 		return err
 	}
 
-	var dashboard sdk.Board
-	err = json.Unmarshal(dashboardBytes, &dashboard)
-	if err != nil {
-		return err
-	}
-
-	r.Board = dashboard
-	return nil
+	r.Board = make(map[string]interface{})
+	return json.Unmarshal(dashboardBytes, &r.Board)
 }
 
 // Try to get the dashboard json definition either from a provided URL or from the
@@ -121,7 +127,14 @@ func (r *DashboardPipelineImpl) obtainJson() error {
 // If there are no changes we should avoid sending update requests as this will create
 // a new dashboard version in Grafana
 func (r *DashboardPipelineImpl) generateHash() string {
-	return fmt.Sprintf("%x", md5.Sum([]byte(r.Dashboard.Spec.Json+r.Dashboard.Spec.Url)))
+	var datasources strings.Builder
+	for _, input := range r.Dashboard.Spec.Datasources {
+		datasources.WriteString(input.DatasourceName)
+		datasources.WriteString(input.InputName)
+	}
+
+	return fmt.Sprintf("%x", md5.Sum([]byte(
+		r.Dashboard.Spec.Json+r.Dashboard.Spec.Url+datasources.String())))
 }
 
 // Try to obtain the dashboard json from a provided url
@@ -149,6 +162,28 @@ func (r *DashboardPipelineImpl) loadDashboardFromURL() error {
 
 func (r *DashboardPipelineImpl) NewHash() string {
 	return r.Hash
+}
+
+func (r *DashboardPipelineImpl) resolveDatasources() error {
+	if len(r.Dashboard.Spec.Datasources) == 0 {
+		return nil
+	}
+
+	currentJson := r.JSON
+	for _, input := range r.Dashboard.Spec.Datasources {
+		if input.DatasourceName == "" || input.InputName == "" {
+			msg := fmt.Sprintf("invalid datasource input rule, input or datasource empty")
+			r.Logger.Info(msg)
+			return errors.New(msg)
+		}
+
+		searchValue := fmt.Sprintf("${%s}", input.InputName)
+		currentJson = strings.ReplaceAll(currentJson, searchValue, input.DatasourceName)
+		r.Logger.Info(fmt.Sprintf("resolving input %s to %s", input.InputName, input.DatasourceName))
+	}
+
+	r.JSON = currentJson
+	return nil
 }
 
 // Some older dashboards provide the tags list of an annotation as an array
