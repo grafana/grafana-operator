@@ -9,10 +9,6 @@ import (
 	"strconv"
 )
 
-const (
-	defaultPortName = "grafana"
-)
-
 func getServiceLabels(cr *v1alpha1.Grafana) map[string]string {
 	if cr.Spec.Service == nil {
 		return nil
@@ -54,12 +50,12 @@ func GetGrafanaPort(cr *v1alpha1.Grafana) int {
 	return port
 }
 
-func getServicePorts(cr *v1alpha1.Grafana) []v1.ServicePort {
+func getServicePorts(cr *v1alpha1.Grafana, currentState *v1.Service) []v1.ServicePort {
 	intPort := int32(GetGrafanaPort(cr))
 
 	defaultPorts := []v1.ServicePort{
 		{
-			Name:       defaultPortName,
+			Name:       GrafanaHttpPortName,
 			Protocol:   "TCP",
 			Port:       intPort,
 			TargetPort: intstr.FromString("grafana-http"),
@@ -70,6 +66,17 @@ func getServicePorts(cr *v1alpha1.Grafana) []v1.ServicePort {
 		return defaultPorts
 	}
 
+	// Re-assign existing node port
+	if cr.Spec.Service != nil &&
+		currentState != nil &&
+		cr.Spec.Service.Type == v1.ServiceTypeNodePort {
+		for _, port := range currentState.Spec.Ports {
+			if port.Name == GrafanaHttpPortName {
+				defaultPorts[0].NodePort = port.NodePort
+			}
+		}
+	}
+
 	if cr.Spec.Service.Ports == nil {
 		return defaultPorts
 	}
@@ -77,7 +84,7 @@ func getServicePorts(cr *v1alpha1.Grafana) []v1.ServicePort {
 	// Don't allow overriding the default port but allow adding
 	// additional ports
 	for _, port := range cr.Spec.Service.Ports {
-		if port.Name == defaultPortName || port.Port == intPort {
+		if port.Name == GrafanaHttpPortName || port.Port == intPort {
 			continue
 		}
 		defaultPorts = append(defaultPorts, port)
@@ -95,7 +102,7 @@ func GrafanaService(cr *v1alpha1.Grafana) *v1.Service {
 			Annotations: getServiceAnnotations(cr),
 		},
 		Spec: v1.ServiceSpec{
-			Ports: getServicePorts(cr),
+			Ports: getServicePorts(cr, nil),
 			Selector: map[string]string{
 				"app": GrafanaPodLabel,
 			},
@@ -109,7 +116,7 @@ func GrafanaServiceReconciled(cr *v1alpha1.Grafana, currentState *v1.Service) *v
 	reconciled := currentState.DeepCopy()
 	reconciled.Labels = getServiceLabels(cr)
 	reconciled.Annotations = getServiceAnnotations(cr)
-	reconciled.Spec.Ports = getServicePorts(cr)
+	reconciled.Spec.Ports = getServicePorts(cr, currentState)
 	reconciled.Spec.Type = getServiceType(cr)
 	return reconciled
 }

@@ -25,4 +25,5 @@ const (
 	GrafanaAdminUserEnvVar              = "GF_SECURITY_ADMIN_USER"
 	GrafanaAdminPasswordEnvVar          = "GF_SECURITY_ADMIN_PASSWORD"
 	GrafanaHttpPort                 int = 3000
+	GrafanaHttpPortName                 = "grafana"
 )
