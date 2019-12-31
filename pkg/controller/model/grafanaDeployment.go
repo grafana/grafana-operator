@@ -366,6 +366,9 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, configHash, plugins, dsHash string)
 				Annotations: getPodAnnotations(cr),
 			},
 			Spec: v13.PodSpec{
+				NodeSelector:       cr.Spec.Deployment.NodeSelector,
+				Tolerations:        cr.Spec.Deployment.Tolerations,
+				Affinity:           cr.Spec.Deployment.Affinity,
 				Volumes:            getVolumes(cr),
 				InitContainers:     getInitContainers(plugins),
 				Containers:         getContainers(cr, configHash, dsHash),
