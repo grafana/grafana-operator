@@ -224,13 +224,15 @@ func (r *ReconcileGrafana) getGrafanaAdminUrl(cr *i8ly.Grafana, state *common.Cl
 		}
 	}
 
+	var servicePort = int32(model.GetGrafanaPort(cr))
+
 	// Otherwise rely on the service
 	if state.GrafanaService != nil && state.GrafanaService.Spec.ClusterIP != "" {
 		return fmt.Sprintf("http://%v:%d", state.GrafanaService.Spec.ClusterIP,
-			model.GetGrafanaPort(cr)), nil
+			servicePort), nil
 	} else if state.GrafanaService != nil {
 		return fmt.Sprintf("http://%v:%d", state.GrafanaService.Name,
-			model.GetGrafanaPort(cr)), nil
+			servicePort), nil
 	}
 
 	return "", stdErr.New("failed to find admin url")
