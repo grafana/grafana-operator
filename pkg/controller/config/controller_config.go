@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha2"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
@@ -34,8 +34,8 @@ const (
 type ControllerConfig struct {
 	*sync.Mutex
 	Values     map[string]interface{}
-	Plugins    map[string]v1alpha1.PluginList
-	Dashboards map[string][]*v1alpha1.GrafanaDashboardRef
+	Plugins    map[string]v1alpha2.PluginList
+	Dashboards map[string][]*v1alpha2.GrafanaDashboardRef
 }
 
 var instance *ControllerConfig
@@ -48,8 +48,8 @@ func GetControllerConfig() *ControllerConfig {
 		instance = &ControllerConfig{
 			Mutex:      &sync.Mutex{},
 			Values:     map[string]interface{}{},
-			Plugins:    map[string]v1alpha1.PluginList{},
-			Dashboards: map[string][]*v1alpha1.GrafanaDashboardRef{},
+			Plugins:    map[string]v1alpha2.PluginList{},
+			Dashboards: map[string][]*v1alpha2.GrafanaDashboardRef{},
 		}
 	})
 	return instance
@@ -59,13 +59,13 @@ func (c *ControllerConfig) GetDashboardId(namespace, name string) string {
 	return fmt.Sprintf("%v/%v", namespace, name)
 }
 
-func (c *ControllerConfig) GetPluginsFor(dashboard *v1alpha1.GrafanaDashboard) v1alpha1.PluginList {
+func (c *ControllerConfig) GetPluginsFor(dashboard *v1alpha2.GrafanaDashboard) v1alpha2.PluginList {
 	c.Lock()
 	defer c.Unlock()
 	return c.Plugins[c.GetDashboardId(dashboard.Namespace, dashboard.Name)]
 }
 
-func (c *ControllerConfig) SetPluginsFor(dashboard *v1alpha1.GrafanaDashboard) {
+func (c *ControllerConfig) SetPluginsFor(dashboard *v1alpha2.GrafanaDashboard) {
 	id := c.GetDashboardId(dashboard.Namespace, dashboard.Name)
 	c.Plugins[id] = dashboard.Spec.Plugins
 }
@@ -77,12 +77,12 @@ func (c *ControllerConfig) RemovePluginsFor(namespace, name string) {
 	}
 }
 
-func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard) {
+func (c *ControllerConfig) AddDashboard(dashboard *v1alpha2.GrafanaDashboard) {
 	ns := dashboard.Namespace
 	if i, exists := c.HasDashboard(ns, dashboard.Name); !exists {
 		c.Lock()
 		defer c.Unlock()
-		c.Dashboards[ns] = append(c.Dashboards[ns], &v1alpha1.GrafanaDashboardRef{
+		c.Dashboards[ns] = append(c.Dashboards[ns], &v1alpha2.GrafanaDashboardRef{
 			Name:      dashboard.Name,
 			Namespace: ns,
 			UID:       dashboard.Status.UID,
@@ -107,7 +107,7 @@ func (c *ControllerConfig) InvalidateDashboards() {
 	}
 }
 
-func (c *ControllerConfig) SetDashboards(dashboards map[string][]*v1alpha1.GrafanaDashboardRef) {
+func (c *ControllerConfig) SetDashboards(dashboards map[string][]*v1alpha2.GrafanaDashboardRef) {
 	c.Lock()
 	defer c.Unlock()
 	c.Dashboards = dashboards
@@ -124,12 +124,12 @@ func (c *ControllerConfig) RemoveDashboard(namespace, name string) {
 	}
 }
 
-func (c *ControllerConfig) GetDashboards(namespace string) []*v1alpha1.GrafanaDashboardRef {
+func (c *ControllerConfig) GetDashboards(namespace string) []*v1alpha2.GrafanaDashboardRef {
 	c.Lock()
 	defer c.Unlock()
 	// Cluster level?
 	if namespace == "" {
-		var dashboards []*v1alpha1.GrafanaDashboardRef
+		var dashboards []*v1alpha2.GrafanaDashboardRef
 		for _, v := range c.Dashboards {
 			dashboards = append(dashboards, v...)
 		}
@@ -139,7 +139,7 @@ func (c *ControllerConfig) GetDashboards(namespace string) []*v1alpha1.GrafanaDa
 	if dashboards, ok := c.Dashboards[namespace]; ok {
 		return dashboards
 	}
-	return []*v1alpha1.GrafanaDashboardRef{}
+	return []*v1alpha2.GrafanaDashboardRef{}
 }
 
 func (c *ControllerConfig) AddConfigItem(key string, value interface{}) {
@@ -207,9 +207,9 @@ func (c *ControllerConfig) HasDashboard(namespace, name string) (int, bool) {
 func (c *ControllerConfig) Cleanup(plugins bool) {
 	c.Lock()
 	defer c.Unlock()
-	c.Dashboards = map[string][]*v1alpha1.GrafanaDashboardRef{}
+	c.Dashboards = map[string][]*v1alpha2.GrafanaDashboardRef{}
 
 	if plugins {
-		c.Plugins = map[string]v1alpha1.PluginList{}
+		c.Plugins = map[string]v1alpha2.PluginList{}
 	}
 }

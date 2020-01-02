@@ -36,7 +36,7 @@ data:
 The goal is to make `ldap.toml` available inside the Pod. Use the `spec.configMaps` property of the Grafana CR to automatically add a `Volume` and a `VolumeMount` to the Grafana Pod:
 
 ```yaml
-apiVersion: integreatly.org/v1alpha1
+apiVersion: integreatly.org/v1alpha2
 kind: Grafana
 metadata:
   name: example-grafana
@@ -54,7 +54,7 @@ It will also create a volume mount with the same name and add it to all containe
 The missing piece for the LDAP example is to tell Grafana about the location of the configuration file. This can be done in the config section of the Grafana CR:
 
 ```yaml
-apiVersion: integreatly.org/v1alpha1
+apiVersion: integreatly.org/v1alpha2
 kind: Grafana
 metadata:
   name: example-grafana

@@ -1,4 +1,4 @@
-apiVersion: integreatly.org/v1alpha1
+apiVersion: integreatly.org/v1alpha2
 kind: GrafanaDataSource
 metadata:
   name: example-grafanadatasource

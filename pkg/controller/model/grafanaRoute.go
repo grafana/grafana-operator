@@ -1,42 +1,42 @@
 package model
 
 import (
-	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha2"
 	v1 "github.com/openshift/api/route/v1"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func GetHost(cr *v1alpha1.Grafana) string {
+func GetHost(cr *v1alpha2.Grafana) string {
 	if cr.Spec.Ingress == nil {
 		return ""
 	}
 	return cr.Spec.Ingress.Hostname
 }
 
-func GetPath(cr *v1alpha1.Grafana) string {
+func GetPath(cr *v1alpha2.Grafana) string {
 	if cr.Spec.Ingress == nil {
 		return "/"
 	}
 	return cr.Spec.Ingress.Path
 }
 
-func GetIngressLabels(cr *v1alpha1.Grafana) map[string]string {
+func GetIngressLabels(cr *v1alpha2.Grafana) map[string]string {
 	if cr.Spec.Ingress == nil {
 		return nil
 	}
 	return cr.Spec.Ingress.Labels
 }
 
-func GetIngressAnnotations(cr *v1alpha1.Grafana) map[string]string {
+func GetIngressAnnotations(cr *v1alpha2.Grafana) map[string]string {
 	if cr.Spec.Ingress == nil {
 		return nil
 	}
 	return cr.Spec.Ingress.Annotations
 }
 
-func GetIngressTargetPort(cr *v1alpha1.Grafana) intstr.IntOrString {
+func GetIngressTargetPort(cr *v1alpha2.Grafana) intstr.IntOrString {
 	defaultPort := intstr.FromInt(GetGrafanaPort(cr))
 
 	if cr.Spec.Ingress == nil {
@@ -50,7 +50,7 @@ func GetIngressTargetPort(cr *v1alpha1.Grafana) intstr.IntOrString {
 	return intstr.FromString(cr.Spec.Ingress.TargetPort)
 }
 
-func getTermination(cr *v1alpha1.Grafana) v1.TLSTerminationType {
+func getTermination(cr *v1alpha2.Grafana) v1.TLSTerminationType {
 	if cr.Spec.Ingress == nil {
 		return v1.TLSTerminationEdge
 	}
@@ -67,7 +67,7 @@ func getTermination(cr *v1alpha1.Grafana) v1.TLSTerminationType {
 	}
 }
 
-func getRouteSpec(cr *v1alpha1.Grafana) v1.RouteSpec {
+func getRouteSpec(cr *v1alpha2.Grafana) v1.RouteSpec {
 	return v1.RouteSpec{
 		Host: GetHost(cr),
 		Path: GetPath(cr),
@@ -86,7 +86,7 @@ func getRouteSpec(cr *v1alpha1.Grafana) v1.RouteSpec {
 	}
 }
 
-func GrafanaRoute(cr *v1alpha1.Grafana) *v1.Route {
+func GrafanaRoute(cr *v1alpha2.Grafana) *v1.Route {
 	return &v1.Route{
 		ObjectMeta: v12.ObjectMeta{
 			Name:        GrafanaRouteName,
@@ -98,14 +98,14 @@ func GrafanaRoute(cr *v1alpha1.Grafana) *v1.Route {
 	}
 }
 
-func GrafanaRouteSelector(cr *v1alpha1.Grafana) client.ObjectKey {
+func GrafanaRouteSelector(cr *v1alpha2.Grafana) client.ObjectKey {
 	return client.ObjectKey{
 		Namespace: cr.Namespace,
 		Name:      GrafanaRouteName,
 	}
 }
 
-func GrafanaRouteReconciled(cr *v1alpha1.Grafana, currentState *v1.Route) *v1.Route {
+func GrafanaRouteReconciled(cr *v1alpha2.Grafana, currentState *v1.Route) *v1.Route {
 	reconciled := currentState.DeepCopy()
 	reconciled.Labels = GetIngressLabels(cr)
 	reconciled.Annotations = GetIngressAnnotations(cr)

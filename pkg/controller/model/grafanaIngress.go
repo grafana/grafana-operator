@@ -1,13 +1,13 @@
 package model
 
 import (
-	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha2"
 	"k8s.io/api/extensions/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func getIngressTLS(cr *v1alpha1.Grafana) []v1beta1.IngressTLS {
+func getIngressTLS(cr *v1alpha2.Grafana) []v1beta1.IngressTLS {
 	if cr.Spec.Ingress == nil {
 		return nil
 	}
@@ -23,7 +23,7 @@ func getIngressTLS(cr *v1alpha1.Grafana) []v1beta1.IngressTLS {
 	return nil
 }
 
-func getIngressSpec(cr *v1alpha1.Grafana) v1beta1.IngressSpec {
+func getIngressSpec(cr *v1alpha2.Grafana) v1beta1.IngressSpec {
 	return v1beta1.IngressSpec{
 		TLS: getIngressTLS(cr),
 		Rules: []v1beta1.IngressRule{
@@ -47,7 +47,7 @@ func getIngressSpec(cr *v1alpha1.Grafana) v1beta1.IngressSpec {
 	}
 }
 
-func GrafanaIngress(cr *v1alpha1.Grafana) *v1beta1.Ingress {
+func GrafanaIngress(cr *v1alpha2.Grafana) *v1beta1.Ingress {
 	return &v1beta1.Ingress{
 		ObjectMeta: v1.ObjectMeta{
 			Name:        GrafanaIngressName,
@@ -59,7 +59,7 @@ func GrafanaIngress(cr *v1alpha1.Grafana) *v1beta1.Ingress {
 	}
 }
 
-func GrafanaIngressReconciled(cr *v1alpha1.Grafana, currentState *v1beta1.Ingress) *v1beta1.Ingress {
+func GrafanaIngressReconciled(cr *v1alpha2.Grafana, currentState *v1beta1.Ingress) *v1beta1.Ingress {
 	reconciled := currentState.DeepCopy()
 	reconciled.Labels = GetIngressLabels(cr)
 	reconciled.Annotations = GetIngressAnnotations(cr)
@@ -67,7 +67,7 @@ func GrafanaIngressReconciled(cr *v1alpha1.Grafana, currentState *v1beta1.Ingres
 	return reconciled
 }
 
-func GrafanaIngressSelector(cr *v1alpha1.Grafana) client.ObjectKey {
+func GrafanaIngressSelector(cr *v1alpha2.Grafana) client.ObjectKey {
 	return client.ObjectKey{
 		Namespace: cr.Namespace,
 		Name:      GrafanaIngressName,

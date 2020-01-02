@@ -1,4 +1,4 @@
-apiVersion: operators.coreos.com/v1alpha1
+apiVersion: operators.coreos.com/v1alpha2
 kind: ClusterServiceVersion
 metadata:
   annotations:
@@ -13,7 +13,7 @@ metadata:
     alm-examples: |-
       [
       {
-        "apiVersion": "integreatly.org/v1alpha1",
+        "apiVersion": "integreatly.org/v1alpha2",
         "kind": "Grafana",
         "metadata": {
           "name": "example-grafana"
@@ -54,7 +54,7 @@ metadata:
         }
       },
       {
-        "apiVersion": "integreatly.org/v1alpha1",
+        "apiVersion": "integreatly.org/v1alpha2",
         "kind": "GrafanaDashboard",
         "metadata": {
           "labels": {
@@ -68,7 +68,7 @@ metadata:
         }
       },
       {
-        "apiVersion": "integreatly.org/v1alpha1",
+        "apiVersion": "integreatly.org/v1alpha2",
         "kind": "GrafanaDataSource",
         "metadata": {
           "name": "example-grafanadatasource"
@@ -100,17 +100,17 @@ spec:
     owned:
       - kind: Grafana
         name: grafanas.integreatly.org
-        version: v1alpha1
+        version: v1alpha2
         description: Represents a Grafana Instance
         displayName: Grafana
       - kind: GrafanaDashboard
         name: grafanadashboards.integreatly.org
-        version: v1alpha1
+        version: v1alpha2
         description: Represents a Grafana Dashboard
         displayName: Grafana Dashboard
       - kind: GrafanaDataSource
         name: grafanadatasources.integreatly.org
-        version: v1alpha1
+        version: v1alpha2
         description: Represents a Grafana Data Source
         displayName: Grafana Data Source
   description: |

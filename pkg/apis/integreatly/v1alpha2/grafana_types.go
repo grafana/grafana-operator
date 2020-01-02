@@ -1,4 +1,4 @@
-package v1alpha1
+package v1alpha2
 
 import (
 	v12 "github.com/openshift/api/route/v1"

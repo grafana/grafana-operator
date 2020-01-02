@@ -2,7 +2,7 @@ package common
 
 import (
 	"context"
-	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha2"
 	"github.com/integr8ly/grafana-operator/pkg/controller/config"
 	"github.com/integr8ly/grafana-operator/pkg/controller/model"
 	v12 "github.com/openshift/api/route/v1"
@@ -28,7 +28,7 @@ func NewClusterState() *ClusterState {
 	return &ClusterState{}
 }
 
-func (i *ClusterState) Read(ctx context.Context, cr *v1alpha1.Grafana, client client.Client) error {
+func (i *ClusterState) Read(ctx context.Context, cr *v1alpha2.Grafana, client client.Client) error {
 	cfg := config.GetControllerConfig()
 	isOpenshift := cfg.GetConfigBool(config.ConfigOpenshift, false)
 
@@ -71,7 +71,7 @@ func (i *ClusterState) Read(ctx context.Context, cr *v1alpha1.Grafana, client cl
 	return err
 }
 
-func (i *ClusterState) readGrafanaService(ctx context.Context, cr *v1alpha1.Grafana, client client.Client) error {
+func (i *ClusterState) readGrafanaService(ctx context.Context, cr *v1alpha2.Grafana, client client.Client) error {
 	currentState := model.GrafanaService(cr)
 	selector := model.GrafanaServiceSelector(cr)
 	err := client.Get(ctx, selector, currentState)
@@ -85,7 +85,7 @@ func (i *ClusterState) readGrafanaService(ctx context.Context, cr *v1alpha1.Graf
 	return nil
 }
 
-func (i *ClusterState) readGrafanaServiceAccount(ctx context.Context, cr *v1alpha1.Grafana, client client.Client) error {
+func (i *ClusterState) readGrafanaServiceAccount(ctx context.Context, cr *v1alpha2.Grafana, client client.Client) error {
 	currentState := model.GrafanaServiceAccount(cr)
 	selector := model.GrafanaServiceAccountSelector(cr)
 	err := client.Get(ctx, selector, currentState)
@@ -99,7 +99,7 @@ func (i *ClusterState) readGrafanaServiceAccount(ctx context.Context, cr *v1alph
 	return nil
 }
 
-func (i *ClusterState) readGrafanaConfig(ctx context.Context, cr *v1alpha1.Grafana, client client.Client) error {
+func (i *ClusterState) readGrafanaConfig(ctx context.Context, cr *v1alpha2.Grafana, client client.Client) error {
 	currentState, err := model.GrafanaConfig(cr)
 	if err != nil {
 		return err
@@ -116,7 +116,7 @@ func (i *ClusterState) readGrafanaConfig(ctx context.Context, cr *v1alpha1.Grafa
 	return nil
 }
 
-func (i *ClusterState) readGrafanaDatasourceConfig(ctx context.Context, cr *v1alpha1.Grafana, client client.Client) error {
+func (i *ClusterState) readGrafanaDatasourceConfig(ctx context.Context, cr *v1alpha2.Grafana, client client.Client) error {
 	currentState := model.GrafanaDatasourcesConfig(cr)
 	selector := model.GrafanaDatasourceConfigSelector(cr)
 	err := client.Get(ctx, selector, currentState)
@@ -130,7 +130,7 @@ func (i *ClusterState) readGrafanaDatasourceConfig(ctx context.Context, cr *v1al
 	return nil
 }
 
-func (i *ClusterState) readGrafanaRoute(ctx context.Context, cr *v1alpha1.Grafana, client client.Client) error {
+func (i *ClusterState) readGrafanaRoute(ctx context.Context, cr *v1alpha2.Grafana, client client.Client) error {
 	currentState := model.GrafanaRoute(cr)
 	selector := model.GrafanaRouteSelector(cr)
 	err := client.Get(ctx, selector, currentState)
@@ -144,7 +144,7 @@ func (i *ClusterState) readGrafanaRoute(ctx context.Context, cr *v1alpha1.Grafan
 	return nil
 }
 
-func (i *ClusterState) readGrafanaIngress(ctx context.Context, cr *v1alpha1.Grafana, client client.Client) error {
+func (i *ClusterState) readGrafanaIngress(ctx context.Context, cr *v1alpha2.Grafana, client client.Client) error {
 	currentState := model.GrafanaIngress(cr)
 	selector := model.GrafanaIngressSelector(cr)
 	err := client.Get(ctx, selector, currentState)
@@ -158,7 +158,7 @@ func (i *ClusterState) readGrafanaIngress(ctx context.Context, cr *v1alpha1.Graf
 	return nil
 }
 
-func (i *ClusterState) readGrafanaDeployment(ctx context.Context, cr *v1alpha1.Grafana, client client.Client) error {
+func (i *ClusterState) readGrafanaDeployment(ctx context.Context, cr *v1alpha2.Grafana, client client.Client) error {
 	currentState := model.GrafanaDeployment(cr, "", "")
 	selector := model.GrafanaDeploymentSelector(cr)
 	err := client.Get(ctx, selector, currentState)
@@ -172,7 +172,7 @@ func (i *ClusterState) readGrafanaDeployment(ctx context.Context, cr *v1alpha1.G
 	return nil
 }
 
-func (i *ClusterState) readGrafanaAdminUserSecret(ctx context.Context, cr *v1alpha1.Grafana, client client.Client) error {
+func (i *ClusterState) readGrafanaAdminUserSecret(ctx context.Context, cr *v1alpha2.Grafana, client client.Client) error {
 	currentState := model.AdminSecret(cr)
 	selector := model.AdminSecretSelector(cr)
 	err := client.Get(ctx, selector, currentState)

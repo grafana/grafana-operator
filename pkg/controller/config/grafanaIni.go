@@ -3,17 +3,17 @@ package config
 import (
 	"crypto/md5"
 	"fmt"
-	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha2"
 	"io"
 	"sort"
 	"strings"
 )
 
 type GrafanaIni struct {
-	cfg *v1alpha1.GrafanaConfig
+	cfg *v1alpha2.GrafanaConfig
 }
 
-func NewGrafanaIni(cfg *v1alpha1.GrafanaConfig) *GrafanaIni {
+func NewGrafanaIni(cfg *v1alpha2.GrafanaConfig) *GrafanaIni {
 	return &GrafanaIni{
 		cfg: cfg,
 	}

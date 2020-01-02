@@ -3,7 +3,7 @@ package grafana
 import (
 	"crypto/tls"
 	"fmt"
-	integreatly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
+	integreatly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha2"
 	"github.com/integr8ly/grafana-operator/pkg/controller/config"
 	"net/http"
 	"strings"

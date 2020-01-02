@@ -27,7 +27,7 @@ The following Grafana resources are supported:
 * GrafanaDashboard
 * GrafanaDatasource
 
-all custom resources use the api group `integreatly.org` and version `v1alpha1`.
+all custom resources use the api group `integreatly.org` and version `v1alpha2`.
 
 ## Grafana
 

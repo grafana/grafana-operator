@@ -2,7 +2,7 @@ package common
 
 import (
 	"context"
-	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha2"
 	"github.com/integr8ly/grafana-operator/pkg/controller/model"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -10,7 +10,7 @@ import (
 )
 
 type DataSourcesState struct {
-	ClusterDataSources *v1alpha1.GrafanaDataSourceList
+	ClusterDataSources *v1alpha2.GrafanaDataSourceList
 	KnownDataSources   *v1.ConfigMap
 }
 
@@ -33,7 +33,7 @@ func (i *DataSourcesState) Read(ctx context.Context, client client.Client, ns st
 }
 
 func (i *DataSourcesState) readClusterDataSources(ctx context.Context, c client.Client, ns string) error {
-	list := &v1alpha1.GrafanaDataSourceList{}
+	list := &v1alpha2.GrafanaDataSourceList{}
 	opts := &client.ListOptions{
 		Namespace: ns,
 	}

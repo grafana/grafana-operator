@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-logr/logr"
-	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha2"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -21,7 +21,7 @@ type DashboardPipeline interface {
 }
 
 type DashboardPipelineImpl struct {
-	Dashboard      *v1alpha1.GrafanaDashboard
+	Dashboard      *v1alpha2.GrafanaDashboard
 	JSON           string
 	Board          map[string]interface{}
 	Logger         logr.Logger
@@ -30,7 +30,7 @@ type DashboardPipelineImpl struct {
 	FixHeights     bool
 }
 
-func NewDashboardPipeline(dashboard *v1alpha1.GrafanaDashboard, fixAnnotations bool, fixHeights bool) DashboardPipeline {
+func NewDashboardPipeline(dashboard *v1alpha2.GrafanaDashboard, fixAnnotations bool, fixHeights bool) DashboardPipeline {
 	return &DashboardPipelineImpl{
 		Dashboard:      dashboard,
 		JSON:           "",
@@ -72,7 +72,7 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) ([]byte, erro
 
 	// This dashboard has previously been imported
 	// To make sure its updated we have to set the metadata
-	if r.Dashboard.Status.Phase == v1alpha1.PhaseReconciling {
+	if r.Dashboard.Status.Phase == v1alpha2.PhaseReconciling {
 		r.Board["slug"] = r.Dashboard.Status.Slug
 		r.Board["uid"] = r.Dashboard.Status.UID
 		r.Board["id"] = r.Dashboard.Status.ID

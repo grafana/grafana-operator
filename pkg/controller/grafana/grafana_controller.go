@@ -4,7 +4,7 @@ import (
 	"context"
 	stdErr "errors"
 	"fmt"
-	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
+	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha2"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/pkg/controller/config"
 	"github.com/integr8ly/grafana-operator/pkg/controller/model"

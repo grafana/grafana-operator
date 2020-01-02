@@ -10,7 +10,7 @@ spec:
     plural: grafanadashboards
     singular: grafanadashboard
   scope: Namespaced
-  version: v1alpha1
+  version: v1alpha2
   validation:
     openAPIV3Schema:
       properties:

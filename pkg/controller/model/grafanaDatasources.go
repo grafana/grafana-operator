@@ -1,13 +1,13 @@
 package model
 
 import (
-	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha2"
 	v1 "k8s.io/api/core/v1"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func GrafanaDatasourcesConfig(cr *v1alpha1.Grafana) *v1.ConfigMap {
+func GrafanaDatasourcesConfig(cr *v1alpha2.Grafana) *v1.ConfigMap {
 	return &v1.ConfigMap{
 		ObjectMeta: v12.ObjectMeta{
 			Name:      GrafanaDatasourcesConfigMapName,
@@ -19,7 +19,7 @@ func GrafanaDatasourcesConfig(cr *v1alpha1.Grafana) *v1.ConfigMap {
 	}
 }
 
-func GrafanaDatasourceConfigSelector(cr *v1alpha1.Grafana) client.ObjectKey {
+func GrafanaDatasourceConfigSelector(cr *v1alpha2.Grafana) client.ObjectKey {
 	return client.ObjectKey{
 		Namespace: cr.Namespace,
 		Name:      GrafanaDatasourcesConfigMapName,

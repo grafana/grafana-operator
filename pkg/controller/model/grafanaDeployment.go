@@ -2,7 +2,7 @@ package model
 
 import (
 	"fmt"
-	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha2"
 	"github.com/integr8ly/grafana-operator/pkg/controller/config"
 	v1 "k8s.io/api/apps/v1"
 	v13 "k8s.io/api/core/v1"
@@ -19,7 +19,7 @@ const (
 	CpuLimit      = "500m"
 )
 
-func getResources(cr *v1alpha1.Grafana) v13.ResourceRequirements {
+func getResources(cr *v1alpha2.Grafana) v13.ResourceRequirements {
 	if cr.Spec.Resources != nil {
 		return *cr.Spec.Resources
 	}
@@ -35,7 +35,7 @@ func getResources(cr *v1alpha1.Grafana) v13.ResourceRequirements {
 	}
 }
 
-func getReplicas(cr *v1alpha1.Grafana) *int32 {
+func getReplicas(cr *v1alpha2.Grafana) *int32 {
 	var replicas int32 = 1
 	if cr.Spec.Deployment == nil {
 		return &replicas
@@ -56,7 +56,7 @@ func getRollingUpdateStrategy() *v1.RollingUpdateDeployment {
 	}
 }
 
-func getPodAnnotations(cr *v1alpha1.Grafana) map[string]string {
+func getPodAnnotations(cr *v1alpha2.Grafana) map[string]string {
 	var annotations = map[string]string{}
 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Annotations != nil {
 		annotations = cr.Spec.Deployment.Annotations
@@ -68,7 +68,7 @@ func getPodAnnotations(cr *v1alpha1.Grafana) map[string]string {
 	return annotations
 }
 
-func getPodLabels(cr *v1alpha1.Grafana) map[string]string {
+func getPodLabels(cr *v1alpha2.Grafana) map[string]string {
 	var labels = map[string]string{}
 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Labels != nil {
 		labels = cr.Spec.Deployment.Labels
@@ -77,7 +77,7 @@ func getPodLabels(cr *v1alpha1.Grafana) map[string]string {
 	return labels
 }
 
-func getVolumes(cr *v1alpha1.Grafana) []v13.Volume {
+func getVolumes(cr *v1alpha2.Grafana) []v13.Volume {
 	var volumes []v13.Volume
 	var volumeOptional bool = true
 
@@ -162,7 +162,7 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume {
 
 // Don't add grafana specific volume mounts to extra containers and preserve
 // pre existing ones
-func getExtraContainerVolumeMounts(cr *v1alpha1.Grafana, mounts []v13.VolumeMount) []v13.VolumeMount {
+func getExtraContainerVolumeMounts(cr *v1alpha2.Grafana, mounts []v13.VolumeMount) []v13.VolumeMount {
 	appendIfEmpty := func(mounts []v13.VolumeMount, mount v13.VolumeMount) []v13.VolumeMount {
 		for _, existing := range mounts {
 			if existing.Name == mount.Name || existing.MountPath == mount.MountPath {
@@ -191,7 +191,7 @@ func getExtraContainerVolumeMounts(cr *v1alpha1.Grafana, mounts []v13.VolumeMoun
 	return mounts
 }
 
-func getVolumeMounts(cr *v1alpha1.Grafana) []v13.VolumeMount {
+func getVolumeMounts(cr *v1alpha2.Grafana) []v13.VolumeMount {
 	var mounts []v13.VolumeMount
 
 	mounts = append(mounts, v13.VolumeMount{
@@ -238,7 +238,7 @@ func getVolumeMounts(cr *v1alpha1.Grafana) []v13.VolumeMount {
 	return mounts
 }
 
-func getProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.Probe {
+func getProbe(cr *v1alpha2.Grafana, delay, timeout, failure int32) *v13.Probe {
 	return &v13.Probe{
 		Handler: v13.Handler{
 			HTTPGet: &v13.HTTPGetAction{
@@ -252,7 +252,7 @@ func getProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.Probe {
 	}
 }
 
-func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Container {
+func getContainers(cr *v1alpha2.Grafana, configHash, dsHash string) []v13.Container {
 	var containers []v13.Container
 
 	cfg := config.GetControllerConfig()
@@ -351,7 +351,7 @@ func getInitContainers(plugins string) []v13.Container {
 	}
 }
 
-func getDeploymentSpec(cr *v1alpha1.Grafana, configHash, plugins, dsHash string) v1.DeploymentSpec {
+func getDeploymentSpec(cr *v1alpha2.Grafana, configHash, plugins, dsHash string) v1.DeploymentSpec {
 	return v1.DeploymentSpec{
 		Replicas: getReplicas(cr),
 		Selector: &v12.LabelSelector{
@@ -379,7 +379,7 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, configHash, plugins, dsHash string)
 	}
 }
 
-func GrafanaDeployment(cr *v1alpha1.Grafana, configHash, dsHash string) *v1.Deployment {
+func GrafanaDeployment(cr *v1alpha2.Grafana, configHash, dsHash string) *v1.Deployment {
 	return &v1.Deployment{
 		ObjectMeta: v12.ObjectMeta{
 			Name:      GrafanaDeploymentName,
@@ -389,14 +389,14 @@ func GrafanaDeployment(cr *v1alpha1.Grafana, configHash, dsHash string) *v1.Depl
 	}
 }
 
-func GrafanaDeploymentSelector(cr *v1alpha1.Grafana) client.ObjectKey {
+func GrafanaDeploymentSelector(cr *v1alpha2.Grafana) client.ObjectKey {
 	return client.ObjectKey{
 		Namespace: cr.Namespace,
 		Name:      GrafanaDeploymentName,
 	}
 }
 
-func GrafanaDeploymentReconciled(cr *v1alpha1.Grafana, currentState *v1.Deployment, configHash, plugins, dshash string) *v1.Deployment {
+func GrafanaDeploymentReconciled(cr *v1alpha2.Grafana, currentState *v1.Deployment, configHash, plugins, dshash string) *v1.Deployment {
 	reconciled := currentState.DeepCopy()
 	reconciled.Spec = getDeploymentSpec(cr, configHash, plugins, dshash)
 	return reconciled
