@@ -3,8 +3,8 @@ package grafana
 import (
 	"crypto/tls"
 	"fmt"
-	integreatly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/pkg/controller/config"
+	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
 	"net/http"
 	"strings"
 )
@@ -28,7 +28,7 @@ func newPluginsHelper() *PluginsHelperImpl {
 
 // Query the Grafana plugin database for the given plugin and version
 // A 200 OK response indicates that the plugin exists and can be downloaded
-func (h *PluginsHelperImpl) PluginExists(plugin integreatly.GrafanaPlugin) bool {
+func (h *PluginsHelperImpl) PluginExists(plugin grafanav1alpha1.GrafanaPlugin) bool {
 	url := fmt.Sprintf(h.BaseUrl, plugin.Name, plugin.Version)
 	resp, err := h.HttpClient.Get(url)
 	if err != nil {
@@ -46,7 +46,7 @@ func (h *PluginsHelperImpl) PluginExists(plugin integreatly.GrafanaPlugin) bool 
 // Turns an array of plugins into a string representation of the form
 // `<name>:<version>,...` that is used as the value for the GRAFANA_PLUGINS
 // environment variable
-func (h *PluginsHelperImpl) BuildEnv(cr *integreatly.Grafana) string {
+func (h *PluginsHelperImpl) BuildEnv(cr *grafanav1alpha1.Grafana) string {
 	var env []string
 	for _, plugin := range cr.Status.InstalledPlugins {
 		env = append(env, fmt.Sprintf("%s:%s", plugin.Name, plugin.Version))
@@ -55,8 +55,8 @@ func (h *PluginsHelperImpl) BuildEnv(cr *integreatly.Grafana) string {
 }
 
 // Append a status message to the origin dashboard of a plugin
-func (h *PluginsHelperImpl) pickLatestVersions(requested integreatly.PluginList) (integreatly.PluginList, error) {
-	var latestVersions integreatly.PluginList
+func (h *PluginsHelperImpl) pickLatestVersions(requested grafanav1alpha1.PluginList) (grafanav1alpha1.PluginList, error) {
+	var latestVersions grafanav1alpha1.PluginList
 	for _, plugin := range requested {
 		result, err := requested.HasNewerVersionOf(&plugin)
 
@@ -78,8 +78,8 @@ func (h *PluginsHelperImpl) pickLatestVersions(requested integreatly.PluginList)
 // Creates the list of plugins that can be added or updated
 // Does not directly deal with removing plugins: if a plugin is not in the list and the env var is updated, it will
 // automatically be removed
-func (h *PluginsHelperImpl) FilterPlugins(cr *integreatly.Grafana, requested integreatly.PluginList) (integreatly.PluginList, bool) {
-	filteredPlugins := integreatly.PluginList{}
+func (h *PluginsHelperImpl) FilterPlugins(cr *grafanav1alpha1.Grafana, requested grafanav1alpha1.PluginList) (grafanav1alpha1.PluginList, bool) {
+	filteredPlugins := grafanav1alpha1.PluginList{}
 	pluginsUpdated := false
 
 	// Try to pick the latest versions of all plugins
