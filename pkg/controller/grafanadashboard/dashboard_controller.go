@@ -4,9 +4,9 @@ import (
 	"context"
 	defaultErrors "errors"
 	"fmt"
-	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/pkg/controller/common"
-	"github.com/integr8ly/grafana-operator/pkg/controller/config"
+	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
+	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
@@ -56,7 +56,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler, namespace string) error {
 	}
 
 	// Watch for changes to primary resource GrafanaDashboard
-	err = c.Watch(&source.Kind{Type: &i8ly.GrafanaDashboard{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &grafanav1alpha1.GrafanaDashboard{}}, &handler.EnqueueRequestForObject{})
 	if err == nil {
 		log.Info("Starting dashboard controller")
 	}
@@ -130,7 +130,7 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 	}
 
 	// Fetch the GrafanaDashboard instance
-	instance := &i8ly.GrafanaDashboard{}
+	instance := &grafanav1alpha1.GrafanaDashboard{}
 	err = r.client.Get(r.context, request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -157,14 +157,14 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Request, grafanaClient GrafanaClient) (reconcile.Result, error) {
 	// Collect known and namespace dashboards
 	knownDashboards := r.config.GetDashboards(request.Namespace)
-	namespaceDashboards := &i8ly.GrafanaDashboardList{}
+	namespaceDashboards := &grafanav1alpha1.GrafanaDashboardList{}
 	err := r.client.List(r.context, namespaceDashboards)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
 	// Prepare lists
-	var dashboardsToDelete []*i8ly.GrafanaDashboardRef
+	var dashboardsToDelete []*grafanav1alpha1.GrafanaDashboardRef
 
 	// Check if a given dashboard (by name) is present in the list of
 	// dashboards in the namespace
@@ -178,7 +178,7 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 	}
 
 	// Returns the hash of a dashboard if it is known
-	findHash := func(item *i8ly.GrafanaDashboard) string {
+	findHash := func(item *grafanav1alpha1.GrafanaDashboard) string {
 		for _, d := range knownDashboards {
 			if item.Name == d.Name {
 				return d.Hash
@@ -255,7 +255,7 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 
 // Handle success case: update dashboard metadata (id, uid) and update the list
 // of plugins
-func (r *ReconcileGrafanaDashboard) manageSuccess(dashboard *i8ly.GrafanaDashboard, status GrafanaResponse, hash string) error {
+func (r *ReconcileGrafanaDashboard) manageSuccess(dashboard *grafanav1alpha1.GrafanaDashboard, status GrafanaResponse, hash string) error {
 	msg := fmt.Sprintf("dashboard %v/%v successfully submitted",
 		dashboard.Namespace,
 		dashboard.Name)
@@ -266,7 +266,7 @@ func (r *ReconcileGrafanaDashboard) manageSuccess(dashboard *i8ly.GrafanaDashboa
 	dashboard.Status.UID = *status.UID
 	dashboard.Status.ID = *status.ID
 	dashboard.Status.Slug = *status.Slug
-	dashboard.Status.Phase = i8ly.PhaseReconciling
+	dashboard.Status.Phase = grafanav1alpha1.PhaseReconciling
 	dashboard.Status.Hash = hash
 	dashboard.Status.Message = "success"
 
@@ -277,9 +277,9 @@ func (r *ReconcileGrafanaDashboard) manageSuccess(dashboard *i8ly.GrafanaDashboa
 }
 
 // Handle error case: update dashboard with error message and status
-func (r *ReconcileGrafanaDashboard) manageError(dashboard *i8ly.GrafanaDashboard, issue error) {
+func (r *ReconcileGrafanaDashboard) manageError(dashboard *grafanav1alpha1.GrafanaDashboard, issue error) {
 	r.recorder.Event(dashboard, "Warning", "ProcessingError", issue.Error())
-	dashboard.Status.Phase = i8ly.PhaseFailing
+	dashboard.Status.Phase = grafanav1alpha1.PhaseFailing
 	dashboard.Status.Message = issue.Error()
 
 	err := r.client.Status().Update(r.context, dashboard)
@@ -314,7 +314,7 @@ func (r *ReconcileGrafanaDashboard) getClient() (GrafanaClient, error) {
 }
 
 // Test if a given dashboard matches an array of label selectors
-func (r *ReconcileGrafanaDashboard) isMatch(item *i8ly.GrafanaDashboard) bool {
+func (r *ReconcileGrafanaDashboard) isMatch(item *grafanav1alpha1.GrafanaDashboard) bool {
 	if r.state.DashboardSelectors == nil {
 		return false
 	}

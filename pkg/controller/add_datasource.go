@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/integr8ly/grafana-operator/pkg/controller/grafanadatasource"
+	"github.com/integr8ly/grafana-operator/v3/pkg/controller/grafanadatasource"
 )
 
 func init() {

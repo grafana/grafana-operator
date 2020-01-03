@@ -4,10 +4,10 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
-	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/pkg/controller/common"
-	"github.com/integr8ly/grafana-operator/pkg/controller/config"
-	"github.com/integr8ly/grafana-operator/pkg/controller/model"
+	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
+	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
+	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
 	"io"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -63,7 +63,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler, namespace string) error {
 	}
 
 	// Watch for changes to primary resource GrafanaDataSource
-	err = c.Watch(&source.Kind{Type: &i8ly.GrafanaDataSource{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &grafanav1alpha1.GrafanaDataSource{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
 	}
@@ -140,7 +140,7 @@ func (r *ReconcileGrafanaDataSource) Reconcile(request reconcile.Request) (recon
 }
 
 func (r *ReconcileGrafanaDataSource) reconcileDataSources(state *common.DataSourcesState) error {
-	var dataSourcesToAddOrUpdate []i8ly.GrafanaDataSource
+	var dataSourcesToAddOrUpdate []grafanav1alpha1.GrafanaDataSource
 	var dataSourcesToDelete []string
 
 	// check if a given datasource (by its key) is found on the cluster
@@ -177,7 +177,7 @@ func (r *ReconcileGrafanaDataSource) reconcileDataSources(state *common.DataSour
 	}
 
 	// apply dataSourcesToAddOrUpdate
-	updated := []i8ly.GrafanaDataSource{}
+	updated := []grafanav1alpha1.GrafanaDataSource{}
 	for _, ds := range dataSourcesToAddOrUpdate {
 		pipeline := NewDatasourcePipeline(&ds)
 		err := pipeline.ProcessDatasource(state.KnownDataSources)
@@ -244,7 +244,7 @@ func (i *ReconcileGrafanaDataSource) updateHash(known *v1.ConfigMap) (string, er
 }
 
 // Handle error case: update datasource with error message and status
-func (r *ReconcileGrafanaDataSource) manageError(datasource *i8ly.GrafanaDataSource, issue error) {
+func (r *ReconcileGrafanaDataSource) manageError(datasource *grafanav1alpha1.GrafanaDataSource, issue error) {
 	r.recorder.Event(datasource, "Warning", "ProcessingError", issue.Error())
 
 	// datasource deleted
@@ -252,7 +252,7 @@ func (r *ReconcileGrafanaDataSource) manageError(datasource *i8ly.GrafanaDataSou
 		return
 	}
 
-	datasource.Status.Phase = i8ly.PhaseFailing
+	datasource.Status.Phase = grafanav1alpha1.PhaseFailing
 	datasource.Status.Message = issue.Error()
 
 	err := r.client.Status().Update(r.context, datasource)
@@ -267,13 +267,13 @@ func (r *ReconcileGrafanaDataSource) manageError(datasource *i8ly.GrafanaDataSou
 
 // manage success case: datasource has been imported successfully and the configmap
 // is updated
-func (r *ReconcileGrafanaDataSource) manageSuccess(datasources []i8ly.GrafanaDataSource) {
+func (r *ReconcileGrafanaDataSource) manageSuccess(datasources []grafanav1alpha1.GrafanaDataSource) {
 	for _, datasource := range datasources {
 		log.Info(fmt.Sprintf("datasource %v/%v successfully imported",
 			datasource.Namespace,
 			datasource.Name))
 
-		datasource.Status.Phase = i8ly.PhaseReconciling
+		datasource.Status.Phase = grafanav1alpha1.PhaseReconciling
 		datasource.Status.Message = "success"
 
 		err := r.client.Status().Update(r.context, &datasource)
