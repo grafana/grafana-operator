@@ -155,6 +155,14 @@ spec:
       app: grafana
       ...
     replicas: <Number>      # Number of replicas. If more than one is selected, a shared database should be configured.
+    nodeSelector: 
+      app: grafana          # Assign grafana pods to a run on specific nodes.
+     ...
+    tolerations:            # Run grafana pods on tainted nodes.
+     ...
+    affinity:               # Affinity parameters shall support node, pod affinity and anti-affinity usecases.
+    ...
+    securityContext:        # Run grafana pods with security context
 ```
 
 ## Configuring Grafana API access
