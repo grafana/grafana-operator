@@ -87,7 +87,7 @@ spec:
                   description: Override default ports
                   items:
                     type: object
-                    descripton: A port to add to the grafana service
+                    description: A port to add to the grafana service
                 annotations:
                   type: object
                   description: Additional annotations for the service
