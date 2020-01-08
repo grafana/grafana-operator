@@ -1,0 +1,28 @@
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1 
+metadata:
+  name: aggregate-grafana-admin-edit 
+  labels:
+    rbac.authorization.k8s.io/aggregate-to-admin: "true" 
+    rbac.authorization.k8s.io/aggregate-to-edit: "true" 
+rules:
+- apiGroups:
+  - "integreatly.org"
+  resources:
+  - grafanas
+  - grafanas/status
+  - grafanas/finalizers
+  - grafanadashboards
+  - grafanadashboards/status
+  - grafanadatasources
+  - grafanadatasources/status
+  verbs:
+  - "get"
+  - "list"
+  - "watch"
+  - "create"
+  - "update"
+  - "patch"
+  - "delete"
+  - "deletecollection"
