@@ -12,6 +12,7 @@ The following properties are accepted in the `spec`:
 * *json*: Raw json string with the dashboard contents. Check the [official documentation](https://grafana.com/docs/reference/dashboard/#dashboard-json).
 * *url*: Url address to download a json string with the dashboard contents. This will take priority over the json field in case the download is successful
 * *plugins*: A list of plugins required by the dashboard. They will be installed by the operator if not already present.
+* *datasources*: A list of datasources to be used as inputs. See [datasource inputs](#datasource-inputs).
 
 ## Creating a new dashboard
 
@@ -27,7 +28,7 @@ $ kubectl create -f deploy/examples/dashboards/SimpleDashboard.yaml -n grafana
 
 ## Dashboard error handling
 
-If the dashboard contains invalid JSON a message with the parser error will be appended to the status field of the dashboard resource.
+If the dashboard contains invalid JSON a message with the parser error will be added to the status field of the dashboard resource.
 
 ## Plugins
 
@@ -84,4 +85,38 @@ The operator can discover dashboards in other namespaces if either the `--scan-a
 $ oc create -f deploy/cluster_roles
 ```
 
-*NOTE*: when installing the operator from [operatorhub](https://operatorhub.io/) it will only have permissions to the namespace it's installed in. To discover dashboards in other namespaces you need to apply the cluster roles after installing the operator and add the `--scan-all` flag to the operator container. 
+*NOTE*: when installing the operator from [operatorhub](https://operatorhub.io/) it will only have permissions to the namespace it's installed in. To discover dashboards in other namespaces you need to apply the cluster roles after installing the operator and add the `--scan-all` flag to the operator container.
+
+## Datasource inputs
+
+Dashboards may rely on certain datasources to be present. When a dashboard is exported, Grafana will populate an `__inputs` array with required datasources. When importing such a dashboard, the required datasources have to be mapped to datasources existing in the Grafana instance. For example, consider the following dashboard:
+
+```json
+{
+"__inputs": [
+  {
+    "name": "DS_PROMETHEUS",
+    "label": "Prometheus",
+    "description": "",
+    "type": "datasource",
+    "pluginId": "prometheus",
+    "pluginName": "Prometheus"
+  }
+],
+"title": ...
+"panels": ...
+}
+```
+
+A Prometheus datasource is expected and will be referred to as `DS_PROMETHEUS` in the dashboard. To map this to an existing datasource with the name `Prometheus`, add the following `datasources` section to the dashboard:
+
+```yaml
+...
+spec:
+  datasources:
+    - inputName: "DS_PROMETHEUS"
+      datasourceName: "Prometheus"
+...
+```
+
+This will allow the operator to replace all occurrences of the datasource variable `DS_PROMETHEUS` with the actual name of the datasource. An example for this is `dashboards/KeycloakDashboard.yaml`. 

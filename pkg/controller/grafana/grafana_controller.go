@@ -2,19 +2,22 @@ package grafana
 
 import (
 	"context"
+	stdErr "errors"
 	"fmt"
-
-	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/pkg/controller/common"
-	core "k8s.io/api/core/v1"
+	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
+	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
+	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
+	routev1 "github.com/openshift/api/route/v1"
+	v12 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
+	v1beta12 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -22,41 +25,35 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-var log = logf.Log.WithName("controller_grafana")
+const ControllerName = "grafana-controller"
+const DefaultClientTimeoutSeconds = 5
 
-const (
-	PhaseConfigFiles int = iota
-	PhaseInstallGrafana
-	PhaseDone
-	PhaseReconcile
-)
-
-const OpenShiftOAuthRedirect = "serviceaccounts.openshift.io/oauth-redirectreference.primary"
-
-/**
-* USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
-* business logic.  Delete these comments after modifying this file.*
- */
+var log = logf.Log.WithName(ControllerName)
 
 // Add creates a new Grafana Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager) error {
-	return add(mgr, newReconciler(mgr))
+func Add(mgr manager.Manager, autodetectChannel chan schema.GroupVersionKind, _ string) error {
+	return add(mgr, newReconciler(mgr), autodetectChannel)
 }
 
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+
 	return &ReconcileGrafana{
-		client:  mgr.GetClient(),
-		scheme:  mgr.GetScheme(),
-		helper:  common.NewKubeHelper(),
-		plugins: newPluginsHelper(),
-		config:  common.GetControllerConfig(),
+		client:   mgr.GetClient(),
+		scheme:   mgr.GetScheme(),
+		plugins:  newPluginsHelper(),
+		context:  ctx,
+		cancel:   cancel,
+		config:   config.GetControllerConfig(),
+		recorder: mgr.GetEventRecorderFor(ControllerName),
 	}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
-func add(mgr manager.Manager, r reconcile.Reconciler) error {
+func add(mgr manager.Manager, r reconcile.Reconciler, autodetectChannel chan schema.GroupVersionKind) error {
 	// Create a new controller
 	c, err := controller.New("grafana-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
@@ -64,7 +61,53 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to primary resource Grafana
-	return c.Watch(&source.Kind{Type: &i8ly.Grafana{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &grafanav1alpha1.Grafana{}}, &handler.EnqueueRequestForObject{})
+	if err != nil {
+		return err
+	}
+
+	if err = watchSecondaryResource(c, &v12.Deployment{}); err != nil {
+		return err
+	}
+
+	if err = watchSecondaryResource(c, &v1beta12.Ingress{}); err != nil {
+		return err
+	}
+
+	if err = watchSecondaryResource(c, &v1.ConfigMap{}); err != nil {
+		return err
+	}
+
+	if err = watchSecondaryResource(c, &v1.Service{}); err != nil {
+		return err
+	}
+
+	if err = watchSecondaryResource(c, &v1.ServiceAccount{}); err != nil {
+		return err
+	}
+
+	go func() {
+		for gvk := range autodetectChannel {
+			cfg := config.GetControllerConfig()
+
+			// Route already watched?
+			if cfg.GetConfigBool(config.ConfigRouteWatch, false) == true {
+				return
+			}
+
+			// Watch routes if they exist on the cluster
+			if gvk.String() == routev1.SchemeGroupVersion.WithKind(common.RouteKind).String() {
+				if err = watchSecondaryResource(c, &routev1.Route{}); err != nil {
+					log.Error(err, fmt.Sprintf("error adding secondary watch for %v", common.RouteKind))
+				} else {
+					cfg.AddConfigItem(config.ConfigRouteWatch, true)
+					log.Info(fmt.Sprintf("added secondary watch for %v", common.RouteKind))
+				}
+			}
+		}
+	}()
+
+	return nil
 }
 
 var _ reconcile.Reconciler = &ReconcileGrafana{}
@@ -73,22 +116,37 @@ var _ reconcile.Reconciler = &ReconcileGrafana{}
 type ReconcileGrafana struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client  client.Client
-	scheme  *runtime.Scheme
-	helper  *common.KubeHelperImpl
-	plugins *PluginsHelperImpl
-	config  *common.ControllerConfig
+	client   client.Client
+	scheme   *runtime.Scheme
+	plugins  *PluginsHelperImpl
+	context  context.Context
+	cancel   context.CancelFunc
+	config   *config.ControllerConfig
+	recorder record.EventRecorder
+}
+
+func watchSecondaryResource(c controller.Controller, resource runtime.Object) error {
+	return c.Watch(&source.Kind{Type: resource}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &grafanav1alpha1.Grafana{},
+	})
 }
 
 // Reconcile reads that state of the cluster for a Grafana object and makes changes based on the state read
 // and what is in the Grafana.Spec
 func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	instance := &i8ly.Grafana{}
-	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
+	instance := &grafanav1alpha1.Grafana{}
+	err := r.client.Get(r.context, request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Stop the dashboard controller from reconciling when grafana is not installed
-			r.config.RemoveConfigItem(common.ConfigDashboardLabelSelector)
+			r.config.RemoveConfigItem(config.ConfigDashboardLabelSelector)
+			r.config.Cleanup(true)
+
+			common.ControllerEvents <- common.ControllerState{
+				GrafanaReady: false,
+			}
+
 			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{}, err
@@ -96,376 +154,155 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 
 	cr := instance.DeepCopy()
 
-	switch cr.Status.Phase {
-	case PhaseConfigFiles:
-		return r.createConfigFiles(cr)
-	case PhaseInstallGrafana:
-		return r.installGrafana(cr)
-	case PhaseDone:
-		log.Info("Grafana installation complete")
-		return r.updatePhase(cr, PhaseReconcile)
-	case PhaseReconcile:
-		return r.ReconcileGrafana(cr)
+	// Read current state
+	currentState := common.NewClusterState()
+	err = currentState.Read(r.context, cr, r.client)
+	if err != nil {
+		log.Error(err, "error reading state")
+		return r.manageError(cr, err)
 	}
 
-	return reconcile.Result{}, nil
+	// Get the actions required to reach the desired state
+	reconciler := NewGrafanaReconciler()
+	desiredState := reconciler.Reconcile(currentState, cr)
+
+	// Run the actions to reach the desired state
+	actionRunner := common.NewClusterActionRunner(r.context, r.client, r.scheme, cr)
+	err = actionRunner.RunAll(desiredState)
+	if err != nil {
+		return r.manageError(cr, err)
+	}
+
+	return r.manageSuccess(cr, currentState)
 }
 
-// ReconcileGrafana is constantly reconcile the grafana config and plugins
-func (r *ReconcileGrafana) ReconcileGrafana(cr *i8ly.Grafana) (reconcile.Result, error) {
-	// Update the label selector and make it available to the dashboard controller
-	r.config.AddConfigItem(common.ConfigDashboardLabelSelector, cr.Spec.DashboardLabelSelector)
+func (r *ReconcileGrafana) manageError(cr *grafanav1alpha1.Grafana, issue error) (reconcile.Result, error) {
+	r.recorder.Event(cr, "Warning", "ProcessingError", issue.Error())
+	cr.Status.Phase = grafanav1alpha1.PhaseFailing
+	cr.Status.Message = issue.Error()
 
-	// Config updated?
-	newConfig := NewIniConfig(cr)
-	if err := newConfig.Build(); err != nil {
+	err := r.client.Status().Update(r.context, cr)
+	if err != nil {
+		// Ignore conflicts, resource might just be outdated.
+		if errors.IsConflict(err) {
+			err = nil
+		}
 		return reconcile.Result{}, err
 	}
 
-	if newConfig.DiffersFrom(cr.Status.LastConfig) {
-		if err := r.helper.UpdateGrafanaConfig(newConfig.Contents, cr); err != nil {
-			return reconcile.Result{}, err
-		}
+	r.config.InvalidateDashboards()
 
-		// Store the new config hash
-		cr.Status.LastConfig = newConfig.Hash
-		if err := r.client.Update(context.TODO(), cr); err != nil {
-			return reconcile.Result{}, err
-		}
-
-		// Grafana needs to be restarted after a config change
-		if err := r.helper.UpdateGrafanaDeployment(cr.Status.LastConfig); err != nil {
-			return reconcile.Result{}, err
-		}
-		log.Info("grafana updated configuration hash due to config change")
-
-		// Skip plugins reconciliation while grafana is restarting
-		return reconcile.Result{RequeueAfter: common.RequeueDelay}, nil
+	common.ControllerEvents <- common.ControllerState{
+		GrafanaReady: false,
 	}
 
-	// Plugins updated?
-	if err := r.ReconcileDashboardPlugins(cr); err != nil {
-		return reconcile.Result{}, err
-	}
-
-	return reconcile.Result{RequeueAfter: common.RequeueDelay}, nil
+	return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
 }
 
-// ReconcileDashboardPlugins is responsible for reconciling the grafana dashboards
-func (r *ReconcileGrafana) ReconcileDashboardPlugins(cr *i8ly.Grafana) error {
-	// Waited long enough for dashboards to be ready?
-	if r.plugins.CanUpdatePlugins() == false {
-		return nil
+// Try to find a suitable url to grafana
+func (r *ReconcileGrafana) getGrafanaAdminUrl(cr *grafanav1alpha1.Grafana, state *common.ClusterState) (string, error) {
+	// If preferService is true, we skip the routes and try to access grafana
+	// by using the serivce.
+	preferService := false
+	if cr.Spec.Client != nil {
+		preferService = cr.Spec.Client.PreferService
 	}
 
-	// Fetch all plugins of all dashboards
-	var requestedPlugins i8ly.PluginList
-	for _, v := range common.GetControllerConfig().Plugins {
-		requestedPlugins = append(requestedPlugins, v...)
+	// First try to use the route if it exists. Prefer the route because it also works
+	// when running the operator outside of the cluster
+	if state.GrafanaRoute != nil && !preferService {
+		return fmt.Sprintf("https://%v", state.GrafanaRoute.Spec.Host), nil
 	}
 
-	// Consolidate plugins and create the new list of plugin requirements
-	// If 'updated' is false then no changes have to be applied
-	filteredPlugins, updated := r.plugins.FilterPlugins(cr, requestedPlugins)
-
-	if updated {
-		r.ReconcilePlugins(cr, filteredPlugins)
-
-		// Update the dashboards that had their plugins modified
-		// to let the owners know about the status
-		err := r.updateDashboardMessages(filteredPlugins)
-		if err != nil {
-			return err
+	// Try the ingress first if on vanilla Kubernetes
+	if state.GrafanaIngress != nil && !preferService {
+		for _, ingress := range state.GrafanaIngress.Status.LoadBalancer.Ingress {
+			if ingress.Hostname != "" {
+				return fmt.Sprintf("https://%v", ingress.Hostname), nil
+			}
+			return fmt.Sprintf("https://%v", ingress.IP), nil
 		}
 	}
 
-	return nil
+	var servicePort = int32(model.GetGrafanaPort(cr))
+
+	// Otherwise rely on the service
+	if state.GrafanaService != nil && state.GrafanaService.Spec.ClusterIP != "" {
+		return fmt.Sprintf("http://%v:%d", state.GrafanaService.Spec.ClusterIP,
+			servicePort), nil
+	} else if state.GrafanaService != nil {
+		return fmt.Sprintf("http://%v:%d", state.GrafanaService.Name,
+			servicePort), nil
+	}
+
+	return "", stdErr.New("failed to find admin url")
 }
 
-func (r *ReconcileGrafana) ReconcilePlugins(cr *i8ly.Grafana, plugins []i8ly.GrafanaPlugin) error {
-	var validPlugins []i8ly.GrafanaPlugin
-	var failedPlugins []i8ly.GrafanaPlugin
+func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *common.ClusterState) (reconcile.Result, error) {
+	cr.Status.Phase = grafanav1alpha1.PhaseReconciling
+	cr.Status.Message = "success"
 
-	for _, plugin := range plugins {
-		if r.plugins.PluginExists(plugin) == false {
-			log.Info(fmt.Sprintf("invalid plugin: %s@%s", plugin.Name, plugin.Version))
-			failedPlugins = append(failedPlugins, plugin)
-			continue
-		}
-
-		log.Info(fmt.Sprintf("installing plugin: %s@%s", plugin.Name, plugin.Version))
-		validPlugins = append(validPlugins, plugin)
-	}
-
-	cr.Status.InstalledPlugins = validPlugins
-	cr.Status.FailedPlugins = failedPlugins
-
-	err := r.client.Update(context.TODO(), cr)
-	if err != nil {
-		return err
-	}
-
-	newEnv := r.plugins.BuildEnv(cr)
-	err = r.helper.UpdateGrafanaInitContainersDeployment(newEnv)
-	return err
-}
-
-func (r *ReconcileGrafana) updateDashboardMessages(plugins i8ly.PluginList) error {
-	for _, plugin := range plugins {
-		err := r.client.Update(context.TODO(), plugin.Origin)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// Initially create the config map that contains grafana.ini
-func (r *ReconcileGrafana) createGrafanaConfig(cr *i8ly.Grafana) error {
-	grafanaIni := NewIniConfig(cr)
-	err := grafanaIni.Build()
-	if err != nil {
-		return err
-	}
-
-	configMap := core.ConfigMap{}
-	configMap.ObjectMeta = v1.ObjectMeta{
-		Name:      common.GrafanaConfigMapName,
-		Namespace: cr.Namespace,
-	}
-	configMap.Data = map[string]string{}
-	configMap.Data[common.GrafanaConfigFileName] = grafanaIni.Contents
-	err = controllerutil.SetControllerReference(cr, &configMap, r.scheme)
-	if err != nil {
-		return err
-	}
-
-	cr.Status.LastConfig = grafanaIni.Hash
-	err = r.client.Create(context.TODO(), &configMap)
-	if err != nil {
-		// This might be called multiple times if creating one of the other config
-		// resources fails
-		if errors.IsAlreadyExists(err) {
-			return nil
-		}
-	}
-	return err
-}
-
-func (r *ReconcileGrafana) createConfigFiles(cr *i8ly.Grafana) (reconcile.Result, error) {
-	log.Info("Phase: Create Config Files")
-
-	ingressType := common.GrafanaIngressName
-	if common.GetControllerConfig().GetConfigBool(common.ConfigOpenshift, false) == true {
-		ingressType = common.GrafanaRouteName
-	}
-
-	err := r.createServiceAccount(cr, common.GrafanaServiceAccountName)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-
-	err = r.createGrafanaConfig(cr)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-
-	resources := []string{
-		common.GrafanaDashboardsConfigMapName,
-		common.GrafanaProvidersConfigMapName,
-		common.GrafanaDatasourcesConfigMapName,
-		common.GrafanaServiceName,
-	}
-
-	// Ingress / Route has to be enabled
-	if cr.Spec.Ingress.Enabled {
-		resources = append(resources, ingressType)
-	}
-
-	for _, resourceName := range resources {
-		log.Info(fmt.Sprintf("Creating the %s resource", resourceName))
-		if err := r.createResource(cr, resourceName); err != nil {
-			log.Info(fmt.Sprintf("Error in CreateConfigFiles, resourceName=%s : err=%s", resourceName, err))
-			// Requeue so it can be attempted again
-			return reconcile.Result{}, err
-		}
-	}
-	log.Info("Config files created")
-
-	return r.updatePhase(cr, PhaseInstallGrafana)
-}
-
-func (r *ReconcileGrafana) installGrafana(cr *i8ly.Grafana) (reconcile.Result, error) {
-	log.Info("Phase: Install Grafana")
-
-	if err := r.createDeployment(cr, common.GrafanaDeploymentName); err != nil {
-		return reconcile.Result{}, err
-	}
-
-	return r.updatePhase(cr, PhaseDone)
-}
-
-// Creates the deployment from the template and injects any specified extra containers before
-// submitting it
-func (r *ReconcileGrafana) createDeployment(cr *i8ly.Grafana, resourceName string) error {
-	resourceHelper := newResourceHelper(cr)
-	resource, err := resourceHelper.createResource(resourceName)
-	if err != nil {
-		return err
-	}
-
-	rawResource := newUnstructuredResourceMap(resource.(*unstructured.Unstructured))
-	var extraVolumeMounts []interface{}
-
-	// Extra secrets to be added as volumes?
-	if len(cr.Spec.Secrets) > 0 {
-		volumes := rawResource.access("spec").access("template").access("spec").get("volumes").([]interface{})
-
-		for _, secret := range cr.Spec.Secrets {
-			volumeName := fmt.Sprintf("secret-%s", secret)
-			log.Info(fmt.Sprintf("adding volume for secret '%s' as '%s'", secret, volumeName))
-			volumes = append(volumes, core.Volume{
-				Name: volumeName,
-				VolumeSource: core.VolumeSource{
-					Secret: &core.SecretVolumeSource{
-						SecretName: secret,
-					},
-				},
-			})
-			extraVolumeMounts = append(extraVolumeMounts, map[string]interface{}{
-				"name":      volumeName,
-				"readOnly":  true,
-				"mountPath": common.SecretsMountDir + secret,
-			})
-		}
-
-		rawResource.access("spec").access("template").access("spec").set("volumes", volumes)
-	}
-
-	// Extra config maps to be added as volumes?
-	if len(cr.Spec.ConfigMaps) > 0 {
-		volumes := rawResource.access("spec").access("template").access("spec").get("volumes").([]interface{})
-
-		for _, configmap := range cr.Spec.ConfigMaps {
-			volumeName := fmt.Sprintf("configmap-%s", configmap)
-			log.Info(fmt.Sprintf("adding volume for configmap '%s' as '%s'", configmap, volumeName))
-			volumes = append(volumes, core.Volume{
-				Name: volumeName,
-				VolumeSource: core.VolumeSource{
-					ConfigMap: &core.ConfigMapVolumeSource{
-						LocalObjectReference: core.LocalObjectReference{
-							Name: configmap,
-						},
-					},
-				},
-			})
-			extraVolumeMounts = append(extraVolumeMounts, map[string]interface{}{
-				"name":      volumeName,
-				"readOnly":  true,
-				"mountPath": common.ConfigMapsMountDir + configmap,
-			})
-		}
-
-		rawResource.access("spec").access("template").access("spec").set("volumes", volumes)
-	}
-
-	// Extra containers to add to the deployment?
-	if len(cr.Spec.Containers) > 0 {
-		// Otherwise append extra containers before submitting the resource
-		containers := rawResource.access("spec").access("template").access("spec").get("containers").([]interface{})
-
-		for _, container := range cr.Spec.Containers {
-			containers = append(containers, container)
-			log.Info(fmt.Sprintf("adding extra container '%v' to '%v'", container.Name, common.GrafanaDeploymentName))
-		}
-
-		rawResource.access("spec").access("template").access("spec").set("containers", containers)
-	}
-
-	// Append extra volume mounts to all containers
-	if len(extraVolumeMounts) > 0 {
-		containers := rawResource.access("spec").access("template").access("spec").get("containers").([]interface{})
-
-		for _, container := range containers {
-			volumeMounts := container.(map[string]interface{})["volumeMounts"].([]interface{})
-			volumeMounts = append(volumeMounts, extraVolumeMounts...)
-			container.(map[string]interface{})["volumeMounts"] = volumeMounts
-		}
-	}
-
-	return r.deployResource(cr, resource, resourceName)
-
-}
-
-func (r *ReconcileGrafana) createServiceAccount(cr *i8ly.Grafana, resourceName string) error {
-	resourceHelper := newResourceHelper(cr)
-	resource, err := resourceHelper.createResource(resourceName)
-
-	if err != nil {
-		return err
-	}
-
-	// Deploy the unmodified resource if not on OpenShift
-	if common.GetControllerConfig().GetConfigBool(common.ConfigOpenshift, false) == false {
-		return r.deployResource(cr, resource, resourceName)
-	}
-
-	// Otherwise add an annotation that allows using the OAuthProxy (and will have no
-	// effect otherwise)
-	annotations := make(map[string]string)
-	annotations[OpenShiftOAuthRedirect] = fmt.Sprintf(`{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"%s"}}`, common.GrafanaRouteName)
-
-	rawResource := newUnstructuredResourceMap(resource.(*unstructured.Unstructured))
-	rawResource.access("metadata").set("annotations", annotations)
-
-	return r.deployResource(cr, resource, resourceName)
-}
-
-// Creates a generic kubernetes resource from a template
-func (r *ReconcileGrafana) createResource(cr *i8ly.Grafana, resourceName string) error {
-	resourceHelper := newResourceHelper(cr)
-	resource, err := resourceHelper.createResource(resourceName)
-
-	if err != nil {
-		return err
-	}
-
-	return r.deployResource(cr, resource, resourceName)
-}
-
-// Deploys a resource given by a runtime object
-func (r *ReconcileGrafana) deployResource(cr *i8ly.Grafana, resource runtime.Object, resourceName string) error {
-	// Try to find the resource, it may already exist
-	selector := types.NamespacedName{
-		Namespace: cr.Namespace,
-		Name:      resourceName,
-	}
-	err := r.client.Get(context.TODO(), selector, resource)
-
-	// The resource exists, do nothing
-	if err == nil {
-		return nil
-	}
-
-	// Resource does not exist or something went wrong
-	if errors.IsNotFound(err) {
-		log.Info(fmt.Sprintf("Resource %s does not exist, creating now", resourceName))
+	// Only update the status if the dashboard controller had a chance to sync the cluster
+	// dashboards first. Otherwise reuse the existing dashboard config from the CR.
+	if r.config.GetConfigBool(config.ConfigGrafanaDashboardsSynced, false) {
+		cr.Status.InstalledDashboards = r.config.Dashboards
 	} else {
-		return err
+		r.config.SetDashboards(cr.Status.InstalledDashboards)
+		if r.config.Dashboards == nil {
+			r.config.SetDashboards(make(map[string][]*grafanav1alpha1.GrafanaDashboardRef))
+		}
 	}
 
-	// Set the CR as the owner of this resource so that when
-	// the CR is deleted this resource also gets removed
-	err = controllerutil.SetControllerReference(cr, resource.(v1.Object), r.scheme)
+	if state.AdminSecret == nil || state.AdminSecret.Data == nil {
+		return r.manageError(cr, stdErr.New("admin secret not found or invalud"))
+	}
+
+	err := r.client.Status().Update(r.context, cr)
 	if err != nil {
-		return err
+		return r.manageError(cr, err)
 	}
 
-	return r.client.Create(context.TODO(), resource)
-}
+	// Make the Grafana API URL available to the dashboard controller
+	url, err := r.getGrafanaAdminUrl(cr, state)
+	if err != nil {
+		return r.manageError(cr, err)
+	}
 
-func (r *ReconcileGrafana) updatePhase(cr *i8ly.Grafana, phase int) (reconcile.Result, error) {
-	cr.Status.Phase = phase
-	err := r.client.Update(context.TODO(), cr)
-	return reconcile.Result{}, err
+	// Try to fix annotations on older dashboards?
+	fixAnnotations := false
+	if cr.Spec.Compat != nil && cr.Spec.Compat.FixAnnotations {
+		fixAnnotations = true
+	}
+
+	// Try to fix heights that are in the wrong format?
+	fixHeights := false
+	if cr.Spec.Compat != nil && cr.Spec.Compat.FixHeights {
+		fixHeights = true
+	}
+
+	// Publish controller state
+	controllerState := common.ControllerState{
+		DashboardSelectors: cr.Spec.DashboardLabelSelector,
+		AdminUsername:      string(state.AdminSecret.Data[model.GrafanaAdminUserEnvVar]),
+		AdminPassword:      string(state.AdminSecret.Data[model.GrafanaAdminPasswordEnvVar]),
+		AdminUrl:           url,
+		GrafanaReady:       true,
+		ClientTimeout:      DefaultClientTimeoutSeconds,
+		FixAnnotations:     fixAnnotations,
+		FixHeights:         fixHeights,
+	}
+
+	if cr.Spec.Client != nil && cr.Spec.Client.TimeoutSeconds != nil {
+		seconds := DefaultClientTimeoutSeconds
+		if seconds < 0 {
+			seconds = DefaultClientTimeoutSeconds
+		}
+		controllerState.ClientTimeout = seconds
+	}
+
+	common.ControllerEvents <- controllerState
+
+	log.Info("desired cluster state met")
+
+	return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
 }
