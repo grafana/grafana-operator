@@ -4,13 +4,16 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	v1 "k8s.io/api/core/v1"
 	"os"
 	"strings"
 	"text/template"
 
+	"gopkg.in/yaml.v2"
+	v1 "k8s.io/api/core/v1"
+
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 
+	"github.com/Masterminds/sprig"
 	integreatly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 )
 
@@ -31,6 +34,11 @@ type GrafanaParameters struct {
 	GrafanaConfigMapName            string
 	GrafanaDashboardsConfigMapName  string
 	GrafanaDatasourcesConfigMapName string
+	GrafanaAuthProxyDeploymentName  string
+	GrafanaAuthProxyIngressName     string
+	GrafanaAuthProxyServiceName     string
+	GrafanaAuthProxyConfigMapName   string
+	GrafanaAuthProxyConfig          integreatly.GrafanaAuthProxy
 	GrafanaDeploymentName           string
 	GrafanaImage                    string
 	GrafanaIngressAnnotations       map[string]string
@@ -54,6 +62,17 @@ type GrafanaParameters struct {
 	PluginsInitContainerTag         string
 	PodLabelValue                   string
 	Replicas                        int
+}
+
+var funcMap = template.FuncMap{
+	"toYaml": toYaml,
+}
+
+func toYaml(i interface{}) string {
+	blob, _ := yaml.Marshal(i)
+	c := string(blob)
+	c = strings.Replace(c, "keystone:", "", 1)
+	return c
 }
 
 // TemplateHelper is the deployment helper object
@@ -120,6 +139,11 @@ func newTemplateHelper(cr *integreatly.Grafana) *TemplateHelper {
 		GrafanaDashboardsConfigMapName:  common.GrafanaDashboardsConfigMapName,
 		GrafanaDatasourcesConfigMapName: common.GrafanaDatasourcesConfigMapName,
 		GrafanaDeploymentName:           common.GrafanaDeploymentName,
+		GrafanaAuthProxyDeploymentName:  common.GrafanaAuthProxyDeploymentName,
+		GrafanaAuthProxyConfigMapName:   common.GrafanaAuthProxyConfigMapName,
+		GrafanaAuthProxyIngressName:     common.GrafanaAuthProxyIngressName,
+		GrafanaAuthProxyServiceName:     common.GrafanaAuthProxyServiceName,
+		GrafanaAuthProxyConfig:          cr.Spec.AuthProxy,
 		GrafanaImage:                    controllerConfig.GetConfigString(common.ConfigGrafanaImage, common.GrafanaImage),
 		GrafanaIngressAnnotations:       cr.Spec.Ingress.Annotations,
 		GrafanaIngressLabels:            cr.Spec.Ingress.Labels,
@@ -164,7 +188,7 @@ func (h *TemplateHelper) loadTemplate(name string) ([]byte, error) {
 		return nil, err
 	}
 
-	parsed, err := template.New("grafana").Parse(string(tpl))
+	parsed, err := template.New("grafana").Funcs(funcMap).Funcs(sprig.TxtFuncMap()).Parse(string(tpl))
 	if err != nil {
 		return nil, err
 	}
@@ -174,6 +198,7 @@ func (h *TemplateHelper) loadTemplate(name string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println(buffer.String())
 
 	return buffer.Bytes(), nil
 }

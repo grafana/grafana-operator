@@ -5,21 +5,31 @@ metadata:
 spec:
   ingress:
     enabled: True
-    hostname: "grafana.apps.127.0.0.1.nip.io"
+    hostname: "test.grafana.scaleout.qa-de-1.cloud.sap"
   config:
+    users:
+      auto_assign_org: False
     log:
       mode: "console"
       level: "warn"
     security:
       admin_user: "root"
       admin_password: "secret"
+    server:
+      root_url: "http://test.grafana.scaleout.qa-de-1.cloud.sap"
     auth:
-      disable_login_form: False
-      disable_signout_menu: True
+      disable_login_form: True
+      disable_signout_menu: False
+    auth.generic_oauth:
+      enabled: True
+      client_id: "grafana"
+      client_secret: "apie4eeX6hiC9ainieli"
+      auth_url: 'http://auth.grafana.scaleout.qa-de-1.cloud.sap/auth'
+      token_url: "http://auth.grafana.scaleout.qa-de-1.cloud.sap/token"
     auth.basic:
       enabled: False
     auth.anonymous:
-      enabled: True
+      enabled: False
   dashboardLabelSelector:
     - matchExpressions:
         - {key: app, operator: In, values: [grafana]}

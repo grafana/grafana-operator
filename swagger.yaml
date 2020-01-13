@@ -1,0 +1,235 @@
+consumes:
+  - application/json
+info:
+  title: Grafana Operator API
+  version: 1.0.0
+produces:
+  - application/json
+swagger: '2.0'
+securityDefinitions:
+  keystone:
+    description: OpenStack Keystone Authentication
+    type: apiKey
+    in: header
+    name: x-auth-token
+security:
+  - keystone: []
+responses:
+  errorResponse:
+    description: Error
+    schema:
+      $ref: '#/definitions/error'
+paths:
+  /info:
+    get:
+      security: []
+      operationId: Info
+      summary: Get info about Grafana as a Service
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/Info'
+  /api:
+    get:
+      security: []
+      operationId: ListAPIVersions
+      summary: List available api versions
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ApiVersions'
+  /api/v1/grafana/{namespace}:
+    get:
+      operationId: ListGrafanas
+      summary: List available Grafanas by Namespace
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Grafana'
+        default:
+          $ref: '#/responses/errorResponse'
+      parameters:
+        - in: path
+          name: namespace
+          type: string
+          required: true
+          description: Name of namespace
+  /api/v1/grafana:
+    post:
+      operationId: CreateGrafana
+      summary: Create a Grafana instance
+      responses:
+        '201':
+          description: OK
+          schema:
+            type: object
+            required:
+              - description
+            properties:
+              hostname:
+                type: string
+              name:
+                type: string
+        default:
+          $ref: '#/responses/errorResponse'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Grafana'
+
+definitions:
+  Info:
+    properties:
+      version:
+        type: string
+  ApiVersions:
+    required:
+      - versions
+    properties:
+      versions:
+        description: versions are the api versions that are available.
+        type: array
+        items:
+          type: string
+  Grafana:
+    type: object
+    properties:
+      name:
+        x-nullable: true
+        description: name of Grafana instance
+        type: string
+        pattern: '^[a-z]([-a-z0-9]*[a-z0-9])?$'
+        maxLength: 20
+      namespace:
+        x-nullable: true
+        description: name of Grafana instance
+        type: string
+        pattern: '^[a-z]([-a-z0-9]*[a-z0-9])?$'
+        maxLength: 20
+      status:
+        $ref: '#/definitions/GrafanaStatus'
+      config:
+        $ref: '#/definitions/GrafanaConfig'
+      authProxy:
+        $ref: '#/definitions/GrafanaAuthProxy'
+  GrafanaConfig:
+    type: object
+    x-nullable: false
+    properties:
+      hostname:
+        x-nullable: false
+        x-omitempty: true
+        x-go-custom-tag: yaml:"hostname"
+        type: string
+      logLevel:
+        type: string
+        x-go-custom-tag: yaml:"logLevel"
+      adminUser:
+        type: string
+        x-go-custom-tag: yaml:"adminUser"
+      adminPassword:
+        type: string
+        x-go-custom-tag: yaml:"adminPassword"
+      basicAuth:
+        type: boolean
+        x-go-custom-tag: yaml:"basicAuth"
+      disableLoginForm:
+        type: boolean
+        x-go-custom-tag: yaml:"disableLoginForm"
+      disableSignoutMenu:
+        type: boolean
+        x-go-custom-tag: yaml:"disableSignoutMenu"
+      anonymous:
+        type: boolean
+        x-go-custom-tag: yaml:"anonymous"
+      autoAssignOrg:
+        type: boolean
+        x-go-custom-tag: yaml:"autoAssignOrg"
+      autoAssignOrgRole:
+        type: string
+        x-go-custom-tag: yaml:"autoAssignOrgRole"
+      grafanaGroupRoleMap:
+        type: string
+        x-go-custom-tag: yaml:"grafanaGroupRoleMap"
+  GrafanaAuthProxy:
+    readOnly: true
+    type: object
+    properties:
+      enabled:
+        type: boolean
+      connectors:
+        type: array
+        items:
+          type: string
+      clientSecret:
+        type: string
+  GrafanaStatus:
+    readOnly: true
+    x-nullable: false
+    type: object
+    properties:
+      phase:
+        type: integer
+      installedPlugins:
+        type: array
+        items:
+          $ref: '#/definitions/GrafanaPlugin'
+  GrafanaPlugin:
+    readOnly: true
+    x-nullable: false
+    type: object
+    properties:
+      name:
+        type: integer
+      version:
+        type: string
+  error:
+      description: >
+        the error model is a model for all the error responses coming from
+        Grafana as a service
+      type: object
+      required:
+        - message
+        - code
+      properties:
+        code:
+          type: integer
+          description: The error code
+          x-nullable: false
+        message:
+          description: The error message
+          type: string
+          x-nullable: false
+  Principal:
+    type: object
+    properties:
+      authUrl:
+        description: Identity Endpoint
+        type: string
+      name:
+        description: username
+        type: string
+      id:
+        description: userid
+        type: string
+      domain:
+        description: user's domain name
+        type: string
+      account:
+        description: account id
+        type: string
+      account_name:
+        description: account name
+        type: string
+      roles:
+        description: list of roles the user has in the given scope
+        type: array
+        items:
+          type: string

@@ -28,6 +28,7 @@ type GrafanaSpec struct {
 	Secrets                []string                `json:"secrets,omitempty"`
 	ConfigMaps             []string                `json:"configMaps,omitempty"`
 	Service                GrafanaService          `json:"service,omitempty"`
+	AuthProxy              GrafanaAuthProxy        `json:"authProxy,omitempty"`
 }
 
 // GrafanaService provides a means to configure the service
@@ -46,6 +47,50 @@ type GrafanaIngress struct {
 	Enabled       bool              `json:"enabled,omitempty"`
 	TLSEnabled    bool              `json:"tlsEnabled,omitempty"`
 	TLSSecretName string            `json:"tlsSecretName,omitempty"`
+}
+
+// GrafanaAuthProxy provides a auth proxy
+type GrafanaAuthProxy struct {
+	Host         string `yaml:"host"`
+	Enabled      bool   `yaml:"enabled,omitempty"`
+	ClientSecret string `yaml:"client_secret"`
+	ClientID     string `yaml:"client_id"`
+	Connectors   string `yaml:"connectors"`
+}
+
+// +k8s:openapi-gen=true
+type Config struct {
+	KeystoneConnectorConfig `yaml:"keystone"`
+}
+
+type GrafanaAuthProxyConnector struct {
+	Type   string `yaml:"type"`
+	ID     string `yaml:"id"`
+	Name   string `yaml:"name"`
+	Config Config `yaml:"config"`
+}
+
+type KeystoneConnectorConfig struct {
+	Cloud                string    `yaml:"cloud"`
+	Domain               string    `yaml:"domain"`
+	Host                 string    `yaml:"host"`
+	AdminUsername        string    `yaml:"adminUsername"`
+	AdminPassword        string    `yaml:"adminPassword"`
+	AdminUserDomainName  string    `yaml:"adminUserDomain"`
+	AdminProject         string    `yaml:"adminProject"`
+	AdminDomain          string    `yaml:"adminDomain"`
+	Prompt               string    `yaml:"prompt"`
+	AuthScope            AuthScope `yaml:"authScope,omitempty"`
+	IncludeRolesInGroups *bool     `yaml:"includeRolesInGroups,omitempty"`
+	RoleNameFormat       string    `yaml:"roleNameFormat,omitempty"`
+	GroupNameFormat      string    `yaml:"groupNameFormat,omitempty"`
+}
+
+type AuthScope struct {
+	ProjectID   string `yaml:"projectID,omitempty"`
+	ProjectName string `yaml:"projectName,omitempty"`
+	DomainID    string `yaml:"domainID,omitempty"`
+	DomainName  string `yaml:"domainName,omitempty"`
 }
 
 // GrafanaConfig is the configuration for grafana
@@ -215,15 +260,17 @@ type GrafanaConfigAuthGitlab struct {
 }
 
 type GrafanaConfigAuthGenericOauth struct {
-	Enabled        bool   `json:"enabled,omitempty" ini:"enabled,omitempty"`
-	AllowSignUp    bool   `json:"allow_sign_up,omitempty" ini:"allow_sign_up,omitempty"`
-	ClientId       string `json:"client_id,omitempty" ini:"client_id,omitempty"`
-	ClientSecret   string `json:"client_secret,omitempty" ini:"client_secret,omitempty"`
-	Scopes         string `json:"scopes,omitempty" ini:"scopes,omitempty"`
-	AuthUrl        string `json:"auth_url,omitempty" ini:"auth_url,omitempty"`
-	TokenUrl       string `json:"token_url,omitempty" ini:"token_url,omitempty"`
-	ApiUrl         string `json:"api_url,omitempty" ini:"api_url,omitempty"`
-	AllowedDomains string `json:"allowed_domains,omitempty" ini:"allowed_domains,omitempty"`
+	Enabled           bool   `json:"enabled,omitempty" ini:"enabled,omitempty"`
+	AllowSignUp       bool   `json:"allow_sign_up,omitempty" ini:"allow_sign_up,omitempty"`
+	ClientId          string `json:"client_id,omitempty" ini:"client_id,omitempty"`
+	ClientSecret      string `json:"client_secret,omitempty" ini:"client_secret,omitempty"`
+	Scopes            string `json:"scopes,omitempty" ini:"scopes,omitempty"`
+	AuthUrl           string `json:"auth_url,omitempty" ini:"auth_url,omitempty"`
+	TokenUrl          string `json:"token_url,omitempty" ini:"token_url,omitempty"`
+	ApiUrl            string `json:"api_url,omitempty" ini:"api_url,omitempty"`
+	AllowedDomains    string `json:"allowed_domains,omitempty" ini:"allowed_domains,omitempty"`
+	RoleAttributePath string `json:"role_attribute_path,omitempty" ini:"role_attribute_path,omitempty"`
+	GroupRoleMap      string `json:"group_role_map,omitempty" ini:"group_role_map,omitempty"`
 }
 
 type GrafanaConfigAuthLdap struct {

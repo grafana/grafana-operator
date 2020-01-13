@@ -1,0 +1,18 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+
+metadata:
+    name: {{ .GrafanaAuthProxyIngressName }}
+    namespace: {{ .Namespace }}
+    labels:
+        app: {{ .GrafanaAuthProxyDeploymentName }}
+
+spec:
+  rules:
+    - host: {{ .GrafanaAuthProxyConfig.Host }}
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: {{ .GrafanaAuthProxyServiceName }}
+              servicePort: 80

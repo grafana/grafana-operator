@@ -78,3 +78,6 @@ tags
 .idea
 operator-sdk-*
 tmp
+
+vendor/
+etc/

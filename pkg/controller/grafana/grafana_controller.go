@@ -8,7 +8,7 @@ import (
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -275,6 +275,9 @@ func (r *ReconcileGrafana) createConfigFiles(cr *i8ly.Grafana) (reconcile.Result
 		common.GrafanaProvidersConfigMapName,
 		common.GrafanaDatasourcesConfigMapName,
 		common.GrafanaServiceName,
+		common.GrafanaAuthProxyConfigMapName,
+		common.GrafanaAuthProxyIngressName,
+		common.GrafanaAuthProxyServiceName,
 	}
 
 	// Ingress / Route has to be enabled
@@ -300,6 +303,11 @@ func (r *ReconcileGrafana) installGrafana(cr *i8ly.Grafana) (reconcile.Result, e
 
 	if err := r.createDeployment(cr, common.GrafanaDeploymentName); err != nil {
 		return reconcile.Result{}, err
+	}
+	if cr.Spec.AuthProxy.Enabled {
+		if err := r.createDeployment(cr, common.GrafanaAuthProxyDeploymentName); err != nil {
+			return reconcile.Result{}, err
+		}
 	}
 
 	return r.updatePhase(cr, PhaseDone)

@@ -1,0 +1,58 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  labels:
+    app: {{ .GrafanaAuthProxyDeploymentName }}
+  name: {{ .GrafanaAuthProxyConfigMapName }}
+  namespace: {{ .Namespace }}
+data:
+  config.yaml: |
+    issuer: http://{{ .GrafanaAuthProxyConfig.Host }}
+    
+    storage:
+      type: kubernetes
+      config:
+        inCluster: true
+    
+    web:
+      http: 0.0.0.0:80
+    
+    frontend:
+      theme: ccloud
+      issuer: "Converged Cloud Grafana"
+    expiry:
+      signingKeys: "1m"
+      idTokens: "2m"
+    
+    logger:
+      level: debug
+    connectors:
+      - type: keystone
+        id: keystone
+        name: Converged Cloud
+        config:
+          host:  https://identity-3.qa-de-1.cloud.sap/v3
+          domain: monsoon3 # taken from user domain
+          adminUsername: admin
+          adminPassword:  GMyFvgEYnBytj39q5PVw
+          adminUserDomain: Default
+          adminProject: admin
+          adminDomain: Default
+          authScope:
+            projectID: e9141fb24eee4b3e9f25ae69cda31132 # taken from user projectid
+          includeRolesInGroups: false
+          roleNameFormat: "os_role:%s"
+      - type: mockCallback
+        id: mock
+        name: Example
+
+    oauth2:
+      skipApprovalScreen: false
+      responseTypes: ["code", "token", "id_token"]
+    
+    staticClients:
+    - id: grafana
+      name: Grafana UI
+      redirectURIs:
+      - http://{{ .Hostname }}/login/generic_oauth
+      secret: {{ .GrafanaAuthProxyConfig.Connector.ClientSecret }}
