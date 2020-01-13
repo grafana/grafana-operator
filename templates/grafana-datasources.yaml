@@ -1,6 +1,0 @@
-apiVersion: v1
-data: {}
-kind: ConfigMap
-metadata:
-  name: {{ .GrafanaDatasourcesConfigMapName }}
-  namespace: {{ .Namespace }}
