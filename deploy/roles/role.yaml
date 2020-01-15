@@ -13,6 +13,7 @@ rules:
       - persistentvolumeclaims
       - configmaps
       - secrets
+      - events
       - serviceaccounts
     verbs:
       - get
