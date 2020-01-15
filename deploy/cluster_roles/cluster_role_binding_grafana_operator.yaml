@@ -3,7 +3,7 @@ kind: ClusterRoleBinding
 metadata:
   name: grafana-operator
 roleRef:
-  name: grafana-operator
+  name: aggregate-grafana-admin-edit 
   kind: ClusterRole
   apiGroup: ""
 subjects:

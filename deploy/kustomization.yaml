@@ -4,11 +4,10 @@ resources:
 - cluster_roles/cluster_role_aggregate_grafana_admin_edit.yaml
 - cluster_roles/cluster_role_aggregate_grafana_view.yaml
 - cluster_roles/cluster_role_binding_grafana_operator.yaml
-- cluster_roles/cluster_role_grafana_operator.yaml
 - crds/Grafana.yaml
 - crds/GrafanaDashboard.yaml
 - crds/GrafanaDataSource.yaml
 - roles/service_account.yaml
-- roles/role.yaml
+- role.yaml
 - roles/role_binding.yaml
 - operator.yaml
