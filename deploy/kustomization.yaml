@@ -9,4 +9,6 @@ resources:
 - crds/GrafanaDashboard.yaml
 - crds/GrafanaDataSource.yaml
 - roles/service_account.yaml
+- roles/role.yaml
+- roles/role_binding.yaml
 - operator.yaml
