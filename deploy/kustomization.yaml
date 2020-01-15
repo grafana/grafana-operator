@@ -8,4 +8,5 @@ resources:
 - crds/Grafana.yaml
 - crds/GrafanaDashboard.yaml
 - crds/GrafanaDataSource.yaml
+- roles/service_account.yaml
 - operator.yaml
