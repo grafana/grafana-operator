@@ -25,7 +25,7 @@ import (
 	flag "github.com/spf13/pflag"
 	"golang.org/x/net/netutil"
 
-	"github.com/integr8ly/grafana-operator/pkg/api/rest/operations"
+	"github.com/integr8ly/grafana-operator/v3/pkg/api/rest/operations"
 )
 
 const (

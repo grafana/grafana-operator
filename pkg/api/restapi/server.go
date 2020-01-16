@@ -25,7 +25,7 @@ import (
 	flags "github.com/jessevdk/go-flags"
 	"golang.org/x/net/netutil"
 
-	"github.com/integr8ly/grafana-operator/pkg/api/restapi/operations"
+	"github.com/integr8ly/grafana-operator/v3/pkg/api/restapi/operations"
 )
 
 const (

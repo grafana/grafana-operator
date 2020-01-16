@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-openapi/runtime"
 
-	models "github.com/integr8ly/grafana-operator/pkg/api/models"
+	models "github.com/integr8ly/grafana-operator/v3/pkg/api/models"
 )
 
 // InfoOKCode is the HTTP code returned for type InfoOK

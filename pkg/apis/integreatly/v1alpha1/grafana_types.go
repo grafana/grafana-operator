@@ -17,24 +17,13 @@ var (
 // GrafanaSpec defines the desired state of Grafana
 // +k8s:openapi-gen=true
 type GrafanaSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	AdminPassword          string                  `json:"adminPassword"`
-	AdminUser              string                  `json:"adminUser"`
-	Anonymous              bool                    `json:"anonymous"`
-	BasicAuth              bool                    `json:"basicAuth"`
-	Config                 GrafanaConfig           `json:"config"`
-	Containers             []v1.Container          `json:"containers,omitempty"`
-	DisableLoginForm       bool                    `json:"disableLoginForm"`
-	DisableSignoutMenu     bool                    `json:"disableSignoutMenu"`
-	Ingress                GrafanaIngress          `json:"ingress,omitempty"`
-	InitialReplicas        int                     `json:"initialReplicas,omitempty"`
-	LogLevel               string                  `json:"logLevel"`
-	Secrets                []string                `json:"secrets,omitempty"`
-	ConfigMaps             []string                `json:"configMaps,omitempty"`
-	Service                GrafanaService          `json:"service,omitempty"`
-	AuthProxy              GrafanaAuthProxy        `json:"authProxy,omitempty"`
+	Config                 GrafanaConfig            `json:"config"`
+	Containers             []v1.Container           `json:"containers,omitempty"`
 	DashboardLabelSelector []*metav1.LabelSelector  `json:"dashboardLabelSelector,omitempty"`
+	Ingress                *GrafanaIngress          `json:"ingress,omitempty"`
+	Secrets                []string                 `json:"secrets,omitempty"`
+	ConfigMaps             []string                 `json:"configMaps,omitempty"`
+	Service                *GrafanaService          `json:"service,omitempty"`
 	Deployment             *GrafanaDeployment       `json:"deployment,omitempty"`
 	Resources              *v1.ResourceRequirements `json:"resources,omitempty"`
 	ServiceAccount         *GrafanaServiceAccount   `json:"serviceAccount,omitempty"`
@@ -85,50 +74,6 @@ type GrafanaIngress struct {
 	TLSSecretName string                 `json:"tlsSecretName,omitempty"`
 	TargetPort    string                 `json:"targetPort,omitempty"`
 	Termination   v12.TLSTerminationType `json:"termination,omitempty"`
-}
-
-// GrafanaAuthProxy provides a auth proxy
-type GrafanaAuthProxy struct {
-	Host         string `yaml:"host"`
-	Enabled      bool   `yaml:"enabled,omitempty"`
-	ClientSecret string `yaml:"client_secret"`
-	ClientID     string `yaml:"client_id"`
-	Connectors   string `yaml:"connectors"`
-}
-
-// +k8s:openapi-gen=true
-type Config struct {
-	KeystoneConnectorConfig `yaml:"keystone"`
-}
-
-type GrafanaAuthProxyConnector struct {
-	Type   string `yaml:"type"`
-	ID     string `yaml:"id"`
-	Name   string `yaml:"name"`
-	Config Config `yaml:"config"`
-}
-
-type KeystoneConnectorConfig struct {
-	Cloud                string    `yaml:"cloud"`
-	Domain               string    `yaml:"domain"`
-	Host                 string    `yaml:"host"`
-	AdminUsername        string    `yaml:"adminUsername"`
-	AdminPassword        string    `yaml:"adminPassword"`
-	AdminUserDomainName  string    `yaml:"adminUserDomain"`
-	AdminProject         string    `yaml:"adminProject"`
-	AdminDomain          string    `yaml:"adminDomain"`
-	Prompt               string    `yaml:"prompt"`
-	AuthScope            AuthScope `yaml:"authScope,omitempty"`
-	IncludeRolesInGroups *bool     `yaml:"includeRolesInGroups,omitempty"`
-	RoleNameFormat       string    `yaml:"roleNameFormat,omitempty"`
-	GroupNameFormat      string    `yaml:"groupNameFormat,omitempty"`
-}
-
-type AuthScope struct {
-	ProjectID   string `yaml:"projectID,omitempty"`
-	ProjectName string `yaml:"projectName,omitempty"`
-	DomainID    string `yaml:"domainID,omitempty"`
-	DomainName  string `yaml:"domainName,omitempty"`
 }
 
 // GrafanaConfig is the configuration for grafana
@@ -298,17 +243,16 @@ type GrafanaConfigAuthGitlab struct {
 }
 
 type GrafanaConfigAuthGenericOauth struct {
-	Enabled           bool   `json:"enabled,omitempty" ini:"enabled,omitempty"`
-	AllowSignUp       bool   `json:"allow_sign_up,omitempty" ini:"allow_sign_up,omitempty"`
-	ClientId          string `json:"client_id,omitempty" ini:"client_id,omitempty"`
-	ClientSecret      string `json:"client_secret,omitempty" ini:"client_secret,omitempty"`
-	Scopes            string `json:"scopes,omitempty" ini:"scopes,omitempty"`
-	AuthUrl           string `json:"auth_url,omitempty" ini:"auth_url,omitempty"`
-	TokenUrl          string `json:"token_url,omitempty" ini:"token_url,omitempty"`
-	ApiUrl            string `json:"api_url,omitempty" ini:"api_url,omitempty"`
-	AllowedDomains    string `json:"allowed_domains,omitempty" ini:"allowed_domains,omitempty"`
-	RoleAttributePath string `json:"role_attribute_path,omitempty" ini:"role_attribute_path,omitempty"`
-	GroupRoleMap      string `json:"group_role_map,omitempty" ini:"group_role_map,omitempty"`
+	Enabled        *bool  `json:"enabled,omitempty" ini:"enabled"`
+	AllowSignUp    *bool  `json:"allow_sign_up,omitempty" ini:"allow_sign_up"`
+	ClientId       string `json:"client_id,omitempty" ini:"client_id,omitempty"`
+	ClientSecret   string `json:"client_secret,omitempty" ini:"client_secret,omitempty"`
+	Scopes         string `json:"scopes,omitempty" ini:"scopes,omitempty"`
+	AuthUrl        string `json:"auth_url,omitempty" ini:"auth_url,omitempty"`
+	TokenUrl       string `json:"token_url,omitempty" ini:"token_url,omitempty"`
+	ApiUrl         string `json:"api_url,omitempty" ini:"api_url,omitempty"`
+	AllowedDomains string `json:"allowed_domains,omitempty" ini:"allowed_domains,omitempty"`
+	GroupRoleMap   string `json:"group_role_map,omitempty" ini:"group_role_map,omitempty"`
 }
 
 type GrafanaConfigAuthLdap struct {

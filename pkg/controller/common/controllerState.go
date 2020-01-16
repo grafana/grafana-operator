@@ -9,7 +9,9 @@ type ControllerState struct {
 	AdminUsername      string
 	AdminPassword      string
 	AdminUrl           string
+	ProxyUrl           string
 	GrafanaReady       bool
+	GrafanaProxyReady  bool
 	ClientTimeout      int
 	FixAnnotations     bool
 	FixHeights         bool

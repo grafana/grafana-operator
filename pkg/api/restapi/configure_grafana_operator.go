@@ -10,7 +10,7 @@ import (
 	runtime "github.com/go-openapi/runtime"
 	middleware "github.com/go-openapi/runtime/middleware"
 
-	"github.com/integr8ly/grafana-operator/pkg/api/restapi/operations"
+	"github.com/integr8ly/grafana-operator/v3/pkg/api/restapi/operations"
 )
 
 //go:generate swagger generate server --target ../../api --name GrafanaOperator --spec ../../../swagger.yaml

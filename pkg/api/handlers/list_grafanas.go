@@ -2,12 +2,11 @@ package handlers
 
 import (
 	"github.com/go-openapi/runtime/middleware"
-	"github.com/integr8ly/grafana-operator/pkg/api"
-	"github.com/integr8ly/grafana-operator/pkg/api/models"
-	"github.com/integr8ly/grafana-operator/pkg/api/rest/operations"
-	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/v3/pkg/api"
+	"github.com/integr8ly/grafana-operator/v3/pkg/api/models"
+	"github.com/integr8ly/grafana-operator/v3/pkg/api/rest/operations"
+	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"k8s.io/apimachinery/pkg/labels"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
@@ -25,7 +24,7 @@ type listGrafanas struct {
 func (d *listGrafanas) Handle(params operations.ListGrafanasParams, principal *models.Principal) middleware.Responder {
 	gl := &v1alpha1.GrafanaList{}
 
-	err := d.Client.List(params.HTTPRequest.Context(), client.InNamespace(params.Namespace), gl)
+	err := d.Client.List(params.HTTPRequest.Context(), gl)
 
 	if err != nil {
 		log.Error(err, err.Error())

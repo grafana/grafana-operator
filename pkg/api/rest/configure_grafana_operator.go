@@ -10,14 +10,14 @@ import (
 	runtime "github.com/go-openapi/runtime"
 	middleware "github.com/go-openapi/runtime/middleware"
 	"github.com/go-openapi/runtime/security"
-	"github.com/integr8ly/grafana-operator/pkg/api/auth"
+	"github.com/integr8ly/grafana-operator/v3/pkg/api/auth"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/integr8ly/grafana-operator/pkg/api/handlers"
-	"github.com/integr8ly/grafana-operator/pkg/api/rest/operations"
+	"github.com/integr8ly/grafana-operator/v3/pkg/api/handlers"
+	"github.com/integr8ly/grafana-operator/v3/pkg/api/rest/operations"
 
-	apipkg "github.com/integr8ly/grafana-operator/pkg/api"
-	models "github.com/integr8ly/grafana-operator/pkg/api/models"
+	apipkg "github.com/integr8ly/grafana-operator/v3/pkg/api"
+	models "github.com/integr8ly/grafana-operator/v3/pkg/api/models"
 )
 
 func ConfigureGrafanaAPI(api *operations.GrafanaOperatorAPI, rt *apipkg.Runtime) error {

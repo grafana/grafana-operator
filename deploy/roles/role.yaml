@@ -4,87 +4,95 @@ metadata:
   creationTimestamp: null
   name: grafana-operator
 rules:
-  - apiGroups:
-      - ""
-    resources:
-      - pods
-      - services
-      - endpoints
-      - persistentvolumeclaims
-      - configmaps
-      - secrets
-      - serviceaccounts
-    verbs:
-      - get
-      - list
-      - create
-      - update
-      - delete
-      - deletecollection
-      - watch
-  - apiGroups:
-      - ""
-    resources:
-      - events
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - apps
-    resources:
-      - deployments
-      - daemonsets
-      - replicasets
-      - statefulsets
-    verbs:
-      - get
-      - list
-      - create
-      - update
-      - delete
-      - deletecollection
-      - watch
-  - apiGroups:
-      - route.openshift.io
-    resources:
-      - routes
-    verbs:
-      - get
-      - list
-      - create
-      - update
-      - delete
-      - deletecollection
-      - watch
-      - create
-  - apiGroups:
-      - extensions
-    resources:
-      - ingresses
-    verbs:
-      - get
-      - list
-      - create
-      - update
-      - delete
-      - deletecollection
-      - watch
-  - apiGroups:
-      - integreatly.org
-    resources:
-      - grafanas
-      - grafanas/status
-      - grafanas/finalizers
-      - grafanadashboards
-      - grafanadashboards/status
-      - grafanadatasources
-      - grafanadatasources/status
-    verbs:
-      - get
-      - list
-      - create
-      - update
-      - delete
-      - deletecollection
-      - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - services
+  - endpoints
+  - persistentvolumeclaims
+  - configmaps
+  - secrets
+  - serviceaccounts
+  verbs:
+  - get
+  - list
+  - create
+  - update
+  - delete
+  - deletecollection
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - daemonsets
+  - replicasets
+  - statefulsets
+  verbs:
+  - get
+  - list
+  - create
+  - update
+  - delete
+  - deletecollection
+  - watch
+- apiGroups:
+  - route.openshift.io
+  resources:
+  - routes
+  verbs:
+  - get
+  - list
+  - create
+  - update
+  - delete
+  - deletecollection
+  - watch
+  - create
+- apiGroups:
+  - extensions
+  resources:
+  - ingresses
+  verbs:
+  - get
+  - list
+  - create
+  - update
+  - delete
+  - deletecollection
+  - watch
+- apiGroups:
+  - integreatly.org
+  resources:
+  - grafanas
+  - grafanas/status
+  - grafanas/finalizers
+  - grafanadashboards
+  - grafanadashboards/status
+  - grafanadatasources
+  - grafanadatasources/status
+  - grafanaproxies
+  verbs:
+  - get
+  - list
+  - create
+  - update
+  - delete
+  - deletecollection
+  - watch
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - '*'
+  - grafanaproxies
+  verbs:
+  - '*'

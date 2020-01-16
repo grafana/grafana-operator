@@ -14,14 +14,19 @@ import (
 )
 
 type ClusterState struct {
-	GrafanaService          *v1.Service
-	GrafanaServiceAccount   *v1.ServiceAccount
-	GrafanaConfig           *v1.ConfigMap
-	GrafanaRoute            *v12.Route
-	GrafanaIngress          *v1beta1.Ingress
-	GrafanaDeployment       *v13.Deployment
-	GrafanaDataSourceConfig *v1.ConfigMap
-	AdminSecret             *v1.Secret
+	GrafanaService             *v1.Service
+	GrafanaProxyService        *v1.Service
+	GrafanaServiceAccount      *v1.ServiceAccount
+	GrafanaProxyServiceAccount *v1.ServiceAccount
+	GrafanaConfig              *v1.ConfigMap
+	GrafanaProxyConfig         *v1.ConfigMap
+	GrafanaRoute               *v12.Route
+	GrafanaIngress             *v1beta1.Ingress
+	GrafanaProxyIngress        *v1beta1.Ingress
+	GrafanaDeployment          *v13.Deployment
+	GrafanaProxyDeployment     *v13.Deployment
+	GrafanaDataSourceConfig    *v1.ConfigMap
+	AdminSecret                *v1.Secret
 }
 
 func NewClusterState() *ClusterState {
@@ -71,6 +76,33 @@ func (i *ClusterState) Read(ctx context.Context, cr *v1alpha1.Grafana, client cl
 	return err
 }
 
+func (i *ClusterState) ReadProxy(ctx context.Context, crp *v1alpha1.GrafanaProxy, client client.Client) (err error) {
+	if err = i.readGrafanaProxyService(ctx, crp, client); err != nil {
+		return
+	}
+
+	if err = i.readGrafanaProxyServiceAccount(ctx, crp, client); err != nil {
+		return
+	}
+
+	if err = i.readGrafanaProxyConfig(ctx, crp, client); err != nil {
+		return
+	}
+
+	if err = i.readGrafanaProxyDeployment(ctx, crp, client); err != nil {
+		return
+	}
+	if err != nil {
+		return
+	}
+
+	if err = i.readGrafanaProxyIngress(ctx, crp, client); err != nil {
+		return err
+	}
+
+	return err
+}
+
 func (i *ClusterState) readGrafanaService(ctx context.Context, cr *v1alpha1.Grafana, client client.Client) error {
 	currentState := model.GrafanaService(cr)
 	selector := model.GrafanaServiceSelector(cr)
@@ -82,6 +114,20 @@ func (i *ClusterState) readGrafanaService(ctx context.Context, cr *v1alpha1.Graf
 		return err
 	}
 	i.GrafanaService = currentState.DeepCopy()
+	return nil
+}
+
+func (i *ClusterState) readGrafanaProxyService(ctx context.Context, cr *v1alpha1.GrafanaProxy, client client.Client) error {
+	currentState := model.GrafanaProxyService(cr)
+	selector := model.GrafanaProxyServiceSelector(cr)
+	err := client.Get(ctx, selector, currentState)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+	i.GrafanaProxyService = currentState.DeepCopy()
 	return nil
 }
 
@@ -99,6 +145,20 @@ func (i *ClusterState) readGrafanaServiceAccount(ctx context.Context, cr *v1alph
 	return nil
 }
 
+func (i *ClusterState) readGrafanaProxyServiceAccount(ctx context.Context, cr *v1alpha1.GrafanaProxy, client client.Client) error {
+	currentState := model.GrafanaProxyServiceAccount(cr)
+	selector := model.GrafanaProxyServiceAccountSelector(cr)
+	err := client.Get(ctx, selector, currentState)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+	i.GrafanaProxyServiceAccount = currentState.DeepCopy()
+	return nil
+}
+
 func (i *ClusterState) readGrafanaConfig(ctx context.Context, cr *v1alpha1.Grafana, client client.Client) error {
 	currentState, err := model.GrafanaConfig(cr)
 	if err != nil {
@@ -113,6 +173,23 @@ func (i *ClusterState) readGrafanaConfig(ctx context.Context, cr *v1alpha1.Grafa
 		return err
 	}
 	i.GrafanaConfig = currentState.DeepCopy()
+	return nil
+}
+
+func (i *ClusterState) readGrafanaProxyConfig(ctx context.Context, cr *v1alpha1.GrafanaProxy, client client.Client) error {
+	currentState, err := model.GrafanaProxyConfig(cr)
+	if err != nil {
+		return err
+	}
+	selector := model.GrafanaProxyConfigSelector(cr)
+	err = client.Get(ctx, selector, currentState)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+	i.GrafanaProxyConfig = currentState.DeepCopy()
 	return nil
 }
 
@@ -158,6 +235,20 @@ func (i *ClusterState) readGrafanaIngress(ctx context.Context, cr *v1alpha1.Graf
 	return nil
 }
 
+func (i *ClusterState) readGrafanaProxyIngress(ctx context.Context, cr *v1alpha1.GrafanaProxy, client client.Client) error {
+	currentState := model.GrafanaProxyIngress(cr)
+	selector := model.GrafanaProxyIngressSelector(cr)
+	err := client.Get(ctx, selector, currentState)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+	i.GrafanaProxyIngress = currentState.DeepCopy()
+	return nil
+}
+
 func (i *ClusterState) readGrafanaDeployment(ctx context.Context, cr *v1alpha1.Grafana, client client.Client) error {
 	currentState := model.GrafanaDeployment(cr, "", "")
 	selector := model.GrafanaDeploymentSelector(cr)
@@ -169,6 +260,20 @@ func (i *ClusterState) readGrafanaDeployment(ctx context.Context, cr *v1alpha1.G
 		return err
 	}
 	i.GrafanaDeployment = currentState.DeepCopy()
+	return nil
+}
+
+func (i *ClusterState) readGrafanaProxyDeployment(ctx context.Context, cr *v1alpha1.GrafanaProxy, client client.Client) error {
+	currentState := model.GrafanaProxyDeployment(cr, "")
+	selector := model.GrafanaProxyDeploymentSelector(cr)
+	err := client.Get(ctx, selector, currentState)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+	i.GrafanaProxyDeployment = currentState.DeepCopy()
 	return nil
 }
 

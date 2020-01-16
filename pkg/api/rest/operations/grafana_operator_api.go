@@ -19,7 +19,7 @@ import (
 	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 
-	models "github.com/integr8ly/grafana-operator/pkg/api/models"
+	models "github.com/integr8ly/grafana-operator/v3/pkg/api/models"
 )
 
 // NewGrafanaOperatorAPI creates a new GrafanaOperator instance

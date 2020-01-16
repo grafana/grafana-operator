@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-openapi/runtime"
 
-	"github.com/integr8ly/grafana-operator/pkg/api/models"
+	"github.com/integr8ly/grafana-operator/v3/pkg/api/models"
 )
 
 type ErrorResponse interface {

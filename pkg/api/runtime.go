@@ -3,7 +3,7 @@ package api
 import (
 	"context"
 
-	"github.com/integr8ly/grafana-operator/pkg/api/config"
+	"github.com/integr8ly/grafana-operator/v3/pkg/api/config"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )

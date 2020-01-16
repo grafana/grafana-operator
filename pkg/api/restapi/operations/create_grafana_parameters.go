@@ -13,7 +13,7 @@ import (
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
 
-	models "github.com/integr8ly/grafana-operator/pkg/api/models"
+	models "github.com/integr8ly/grafana-operator/v3/pkg/api/models"
 )
 
 // NewCreateGrafanaParams creates a new CreateGrafanaParams object

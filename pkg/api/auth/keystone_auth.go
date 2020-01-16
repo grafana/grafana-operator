@@ -8,7 +8,7 @@ import (
 	"github.com/databus23/keystone"
 	"github.com/databus23/keystone/cache/memory"
 	errors "github.com/go-openapi/errors"
-	"github.com/integr8ly/grafana-operator/pkg/api/models"
+	"github.com/integr8ly/grafana-operator/v3/pkg/api/models"
 	flag "github.com/spf13/pflag"
 )
 

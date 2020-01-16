@@ -10,7 +10,7 @@ import (
 
 	middleware "github.com/go-openapi/runtime/middleware"
 
-	models "github.com/integr8ly/grafana-operator/pkg/api/models"
+	models "github.com/integr8ly/grafana-operator/v3/pkg/api/models"
 )
 
 // ListGrafanasHandlerFunc turns a function with the right signature into a list grafanas handler

@@ -4,6 +4,7 @@ package config
 type Options struct {
 	DebugLevel     string
 	MetricPort     int
+	APIPort        int
 	ListenPort     int
 	ConfigFilePath string
 }

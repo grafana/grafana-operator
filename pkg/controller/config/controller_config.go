@@ -12,6 +12,8 @@ import (
 const (
 	ConfigGrafanaImage              = "grafana.image.url"
 	ConfigGrafanaImageTag           = "grafana.image.tag"
+	ConfigGrafanaProxyImage         = "grafana.proxy.image.url"
+	ConfigGrafanaProxyImageTag      = "grafana.proxy.image.tag"
 	ConfigPluginsInitContainerImage = "grafana.plugins.init.container.image.url"
 	ConfigPluginsInitContainerTag   = "grafana.plugins.init.container.image.tag"
 	ConfigOperatorNamespace         = "grafana.operator.namespace"

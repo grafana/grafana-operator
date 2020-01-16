@@ -9,11 +9,11 @@ import (
 	"regexp"
 
 	"github.com/go-openapi/loads"
-	apipkg "github.com/integr8ly/grafana-operator/pkg/api"
-	"github.com/integr8ly/grafana-operator/pkg/api/config"
-	"github.com/integr8ly/grafana-operator/pkg/api/rest"
-	"github.com/integr8ly/grafana-operator/pkg/api/rest/operations"
-	"github.com/integr8ly/grafana-operator/pkg/apis"
+	apipkg "github.com/integr8ly/grafana-operator/v3/pkg/api"
+	"github.com/integr8ly/grafana-operator/v3/pkg/api/config"
+	"github.com/integr8ly/grafana-operator/v3/pkg/api/rest"
+	"github.com/integr8ly/grafana-operator/v3/pkg/api/rest/operations"
+	"github.com/integr8ly/grafana-operator/v3/pkg/apis"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -36,6 +36,7 @@ func init() {
 	flag.StringVar(&DefaultPolicyFile, "policy", "etc/policy.json", "API authorization policy file")
 	flag.StringVar(&namespace, "namespace", "grafana-operator", "k8s Namespace")
 	flag.IntVar(&opts.MetricPort, "metrics-port", 9100, "Lister port for metric exposition")
+	flag.IntVar(&opts.APIPort, "api-port", 8080, "Lister port for api exposition")
 
 	flag.Parse()
 
@@ -110,7 +111,7 @@ func main() {
 			metricsListener.Close()
 		}
 	}
-
+	server.Port = opts.APIPort
 	server.ConfigureAPI()
 
 	if err := server.Serve(); err != nil {

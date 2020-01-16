@@ -38,30 +38,30 @@ type GrafanaParameters struct {
 	GrafanaAuthProxyIngressName     string
 	GrafanaAuthProxyServiceName     string
 	GrafanaAuthProxyConfigMapName   string
-	GrafanaAuthProxyConfig          integreatly.GrafanaAuthProxy
-	GrafanaDeploymentName           string
-	GrafanaImage                    string
-	GrafanaIngressAnnotations       map[string]string
-	GrafanaIngressLabels            map[string]string
-	GrafanaIngressName              string
-	GrafanaIngressPath              string
-	GrafanaIngressTLSEnabled        bool
-	GrafanaIngressTLSSecretName     string
-	GrafanaProvidersConfigMapName   string
-	GrafanaRouteName                string
-	GrafanaServiceAccountName       string
-	GrafanaServiceAnnotations       map[string]string
-	GrafanaServiceLabels            map[string]string
-	GrafanaServiceName              string
-	GrafanaServiceType              string
-	GrafanaVersion                  string
-	Hostname                        string
-	LogLevel                        string
-	Namespace                       string
-	PluginsInitContainerImage       string
-	PluginsInitContainerTag         string
-	PodLabelValue                   string
-	Replicas                        int
+	//GrafanaAuthProxyConfig          v1alpha1.GrafanaAuthProxy
+	GrafanaDeploymentName         string
+	GrafanaImage                  string
+	GrafanaIngressAnnotations     map[string]string
+	GrafanaIngressLabels          map[string]string
+	GrafanaIngressName            string
+	GrafanaIngressPath            string
+	GrafanaIngressTLSEnabled      bool
+	GrafanaIngressTLSSecretName   string
+	GrafanaProvidersConfigMapName string
+	GrafanaRouteName              string
+	GrafanaServiceAccountName     string
+	GrafanaServiceAnnotations     map[string]string
+	GrafanaServiceLabels          map[string]string
+	GrafanaServiceName            string
+	GrafanaServiceType            string
+	GrafanaVersion                string
+	Hostname                      string
+	LogLevel                      string
+	Namespace                     string
+	PluginsInitContainerImage     string
+	PluginsInitContainerTag       string
+	PodLabelValue                 string
+	Replicas                      int
 }
 
 var funcMap = template.FuncMap{
@@ -139,33 +139,33 @@ func newTemplateHelper(cr *integreatly.Grafana) *TemplateHelper {
 		GrafanaDashboardsConfigMapName:  common.GrafanaDashboardsConfigMapName,
 		GrafanaDatasourcesConfigMapName: common.GrafanaDatasourcesConfigMapName,
 		GrafanaDeploymentName:           common.GrafanaDeploymentName,
-		GrafanaAuthProxyDeploymentName:  common.GrafanaAuthProxyDeploymentName,
-		GrafanaAuthProxyConfigMapName:   common.GrafanaAuthProxyConfigMapName,
-		GrafanaAuthProxyIngressName:     common.GrafanaAuthProxyIngressName,
-		GrafanaAuthProxyServiceName:     common.GrafanaAuthProxyServiceName,
-		GrafanaAuthProxyConfig:          cr.Spec.AuthProxy,
-		GrafanaImage:                    controllerConfig.GetConfigString(common.ConfigGrafanaImage, common.GrafanaImage),
-		GrafanaIngressAnnotations:       cr.Spec.Ingress.Annotations,
-		GrafanaIngressLabels:            cr.Spec.Ingress.Labels,
-		GrafanaIngressName:              common.GrafanaIngressName,
-		GrafanaIngressPath:              cr.Spec.Ingress.Path,
-		GrafanaIngressTLSEnabled:        cr.Spec.Ingress.TLSEnabled,
-		GrafanaIngressTLSSecretName:     cr.Spec.Ingress.TLSSecretName,
-		GrafanaProvidersConfigMapName:   common.GrafanaProvidersConfigMapName,
-		GrafanaRouteName:                common.GrafanaRouteName,
-		GrafanaServiceAccountName:       common.GrafanaServiceAccountName,
-		GrafanaServiceAnnotations:       cr.Spec.Service.Annotations,
-		GrafanaServiceLabels:            cr.Spec.Service.Labels,
-		GrafanaServiceName:              common.GrafanaServiceName,
-		GrafanaServiceType:              cr.Spec.Service.Type,
-		GrafanaVersion:                  controllerConfig.GetConfigString(common.ConfigGrafanaImageTag, common.GrafanaVersion),
-		Hostname:                        cr.Spec.Ingress.Hostname,
-		LogLevel:                        getLogLevel(cr.Spec.LogLevel),
-		Namespace:                       cr.Namespace,
-		PluginsInitContainerImage:       controllerConfig.GetConfigString(common.ConfigPluginsInitContainerImage, common.PluginsInitContainerImage),
-		PluginsInitContainerTag:         controllerConfig.GetConfigString(common.ConfigPluginsInitContainerTag, common.PluginsInitContainerTag),
-		PodLabelValue:                   controllerConfig.GetConfigString(common.ConfigPodLabelValue, common.PodLabelDefaultValue),
-		Replicas:                        cr.Spec.InitialReplicas,
+		//GrafanaAuthProxyDeploymentName:  common.GrafanaAuthProxyDeploymentName,
+		//GrafanaAuthProxyConfigMapName:   common.GrafanaAuthProxyConfigMapName,
+		//GrafanaAuthProxyIngressName:     common.GrafanaAuthProxyIngressName,
+		//GrafanaAuthProxyServiceName:     common.GrafanaAuthProxyServiceName,
+		//GrafanaAuthProxyConfig:          cr.Spec.AuthProxy,
+		GrafanaImage:              controllerConfig.GetConfigString(common.ConfigGrafanaImage, common.GrafanaImage),
+		GrafanaIngressAnnotations: cr.Spec.Ingress.Annotations,
+		GrafanaIngressLabels:      cr.Spec.Ingress.Labels,
+		GrafanaIngressName:        common.GrafanaIngressName,
+		GrafanaIngressPath:        cr.Spec.Ingress.Path,
+		//GrafanaIngressTLSEnabled:        cr.Spec.Ingress.TLSEnabled,
+		//GrafanaIngressTLSSecretName:     cr.Spec.Ingress.TLSSecretName,
+		GrafanaProvidersConfigMapName: common.GrafanaProvidersConfigMapName,
+		GrafanaRouteName:              common.GrafanaRouteName,
+		GrafanaServiceAccountName:     common.GrafanaServiceAccountName,
+		GrafanaServiceAnnotations:     cr.Spec.Service.Annotations,
+		GrafanaServiceLabels:          cr.Spec.Service.Labels,
+		GrafanaServiceName:            common.GrafanaServiceName,
+		GrafanaServiceType:            cr.Spec.Service.Type,
+		GrafanaVersion:                controllerConfig.GetConfigString(common.ConfigGrafanaImageTag, common.GrafanaVersion),
+		Hostname:                      cr.Spec.Ingress.Hostname,
+		LogLevel:                      getLogLevel(cr.Spec.LogLevel),
+		Namespace:                     cr.Namespace,
+		PluginsInitContainerImage:     controllerConfig.GetConfigString(common.ConfigPluginsInitContainerImage, common.PluginsInitContainerImage),
+		PluginsInitContainerTag:       controllerConfig.GetConfigString(common.ConfigPluginsInitContainerTag, common.PluginsInitContainerTag),
+		PodLabelValue:                 controllerConfig.GetConfigString(common.ConfigPodLabelValue, common.PodLabelDefaultValue),
+		Replicas:                      cr.Spec.InitialReplicas,
 	}
 
 	templatePath := os.Getenv("TEMPLATE_PATH")

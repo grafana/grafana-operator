@@ -3,13 +3,16 @@ module github.com/integr8ly/grafana-operator/v3
 go 1.13
 
 require (
-	cloud.google.com/go v0.35.1 // indirect
+	cloud.google.com/go v0.34.0
 	github.com/Masterminds/sprig v2.22.0+incompatible
+	github.com/beevik/etree v1.1.0 // indirect
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/databus23/goslo.policy v0.0.0-20170317131957-3ae74dd07ebf
 	github.com/databus23/keystone v0.0.0-20180111110916-350fd0e663cd
+	github.com/dexidp/dex v2.13.0+incompatible
+	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/ghodss/yaml v1.0.1-0.20180820084758-c7ce16629ff4
-	github.com/go-ini/ini v1.51.1
+	github.com/go-logr/logr v0.1.0
 	github.com/go-openapi/errors v0.17.2
 	github.com/go-openapi/loads v0.17.2
 	github.com/go-openapi/runtime v0.17.2
@@ -17,22 +20,23 @@ require (
 	github.com/go-openapi/strfmt v0.18.0
 	github.com/go-openapi/swag v0.18.0
 	github.com/go-openapi/validate v0.18.0
-	github.com/google/uuid v1.1.0 // indirect
-	github.com/gophercloud/gophercloud v0.2.0
+	github.com/googleapis/gax-go v2.0.2+incompatible // indirect
+	github.com/gophercloud/gophercloud v0.7.0
+	github.com/gorilla/handlers v1.4.2 // indirect
 	github.com/integr8ly/grafana-operator v2.0.0+incompatible
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/openshift/api v3.9.1-0.20190424152011-77b8897ec79a+incompatible
 	github.com/operator-framework/operator-sdk v0.12.0
+	github.com/pkg/errors v0.8.1
 	github.com/pmylund/go-cache v2.1.0+incompatible // indirect
 	github.com/prometheus/client_golang v1.1.0
-	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4 // indirect
-	github.com/prometheus/common v0.7.0 // indirect
-	github.com/prometheus/procfs v0.0.7 // indirect
+	github.com/russellhaering/goxmldsig v0.0.0-20180430223755-7acd5e4a6ef7 // indirect
 	github.com/sapcc/kubernikus v1.5.0
 	github.com/spf13/pflag v1.0.3
-	golang.org/x/net v0.0.0-20190812203447-cdfb69ac37fc
-	golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898 // indirect
-	gopkg.in/yaml.v2 v2.2.2
+	go.opencensus.io v0.22.2 // indirect
+	golang.org/x/net v0.0.0-20191126235420-ef20fe5d7933
+	gopkg.in/ldap.v2 v2.5.1 // indirect
+	gopkg.in/yaml.v2 v2.2.7
 	k8s.io/api v0.0.0
 	k8s.io/apimachinery v0.0.0
 	k8s.io/client-go v11.0.0+incompatible
@@ -64,6 +68,6 @@ replace (
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.0.0-20190918201353-5cc279503896
 )
 
-replace github.com/integr8ly/grafana-operator/v3 => github.com/sapcc/grafana-operator v1.1.1
+//replace github.com/integr8ly/grafana-operator/v3 => github.com/sapcc/grafana-operator master
 
 // replace gopkg.in/fsnotify.v1 v1.4.7 => github.com/fsnotify/fsnotify v1.4.7

@@ -13,11 +13,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	v1beta12 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
-<<<<<<< HEAD
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-=======
->>>>>>> 116373657ac71f8800b5050338a417b7d18413aa
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/record"
@@ -159,23 +154,12 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 
 	cr := instance.DeepCopy()
 
-<<<<<<< HEAD
-	resources := []string{
-		common.GrafanaDashboardsConfigMapName,
-		common.GrafanaProvidersConfigMapName,
-		common.GrafanaDatasourcesConfigMapName,
-		common.GrafanaServiceName,
-		common.GrafanaAuthProxyConfigMapName,
-		common.GrafanaAuthProxyIngressName,
-		common.GrafanaAuthProxyServiceName,
-=======
 	// Read current state
 	currentState := common.NewClusterState()
 	err = currentState.Read(r.context, cr, r.client)
 	if err != nil {
 		log.Error(err, "error reading state")
 		return r.manageError(cr, err)
->>>>>>> 116373657ac71f8800b5050338a417b7d18413aa
 	}
 
 	// Get the actions required to reach the desired state
@@ -204,11 +188,6 @@ func (r *ReconcileGrafana) manageError(cr *grafanav1alpha1.Grafana, issue error)
 			err = nil
 		}
 		return reconcile.Result{}, err
-	}
-	if cr.Spec.AuthProxy.Enabled {
-		if err := r.createDeployment(cr, common.GrafanaAuthProxyDeploymentName); err != nil {
-			return reconcile.Result{}, err
-		}
 	}
 
 	r.config.InvalidateDashboards()

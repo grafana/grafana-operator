@@ -44,6 +44,8 @@ type GrafanaDashboardRef struct {
 	Hash      string `json:"hash"`
 }
 
+//type GrafanaDashboardRefs []GrafanaDashboardRef
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // GrafanaDashboard is the Schema for the grafanadashboards API

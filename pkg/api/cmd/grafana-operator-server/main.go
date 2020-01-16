@@ -7,8 +7,8 @@ import (
 	"os"
 
 	loads "github.com/go-openapi/loads"
-	"github.com/integr8ly/grafana-operator/pkg/api/restapi"
-	"github.com/integr8ly/grafana-operator/pkg/api/restapi/operations"
+	"github.com/integr8ly/grafana-operator/v3/pkg/api/restapi"
+	"github.com/integr8ly/grafana-operator/v3/pkg/api/restapi/operations"
 	flags "github.com/jessevdk/go-flags"
 )
 

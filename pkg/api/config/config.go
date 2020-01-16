@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/integr8ly/grafana-operator/pkg/api/models"
+	"github.com/integr8ly/grafana-operator/v3/pkg/api/models"
 	"gopkg.in/yaml.v2"
 )
 
@@ -16,7 +16,7 @@ type (
 		Region    string         `yaml:"region"`
 	}
 	AuthProxy struct {
-		Connectors map[string]interface{} `yaml:"connectors"`
+		Connectors map[string]map[string]string `yaml:"connectors"`
 	}
 )
 

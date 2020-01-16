@@ -13,10 +13,10 @@ import (
 )
 
 const (
-	MemoryRequest = "256Mi"
-	CpuRequest    = "100m"
-	MemoryLimit   = "1024Mi"
-	CpuLimit      = "500m"
+	ProxyMemoryRequest = "256Mi"
+	ProxyCpuRequest    = "100m"
+	ProxyMemoryLimit   = "1024Mi"
+	ProxyCpuLimit      = "500m"
 )
 
 func getResources(cr *v1alpha1.Grafana) v13.ResourceRequirements {
