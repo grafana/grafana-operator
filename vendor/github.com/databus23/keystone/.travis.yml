@@ -1,0 +1,17 @@
+language: go
+sudo: false
+
+addons:
+  postgresql: "9.4"
+
+before_script:
+  - psql -c 'create database travis_ci_test;' -U postgres
+
+env:
+  - DBNAME=travis_ci_test DBUSER=postgres
+go:
+- 1.7
+
+script:
+- go vet ./...
+- go test -v ./...
