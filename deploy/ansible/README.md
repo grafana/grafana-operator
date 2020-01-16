@@ -20,9 +20,9 @@ These permissions are reuqied by the K8s user who runs this playbook. Typically 
 |--------------------------------------------------|------------------------|---------
 | k8s\_host                                        |                        | K8s API to run this playbook against
 | k8s\_validate\_certs                             | **True** / False       | Whether to validate K8s API certificate
-| k8s\_api\_token                                  |                        | K8s API token to authenticate with. Mutually exclusive with `k8s_username` and `k8s_password`.
-| k8s\_username                                    |                        | K8s username to authenticate with. Mutually exclusive with `k8s_api_token`.
-| k8s\_password                                    |                        | K8s password to authenticate with. Mutually exclusive with `k8s_api_token`.
+| k8s\_api\_key                                  |                        | K8s API token to authenticate with. Mutually exclusive with `k8s_username` and `k8s_password`.
+| k8s\_username                                    |                        | K8s username to authenticate with. Mutually exclusive with `k8s_api_key`.
+| k8s\_password                                    |                        | K8s password to authenticate with. Mutually exclusive with `k8s_api_key`.
 | grafana\_operator\_install                       | **True** / False       | `True` to install the resources, `False` to uninstall
 | grafana\_operator\_allow\_project\_admin\_deploy | **True** / False       | `True` to install the aggregated ClusterRoles to allow project admins to be able to deploy Grafana Operator and associated Grafana custom resources. Ignored if `grafana_operator_install` is `False`.
 
@@ -65,9 +65,9 @@ These permissions are reuqied by the K8s user who runs this playbook.
 |-------------------------------------------------------------------|------------------------|---------
 | k8s\_host                                                         |                        | K8s API to run this playbook against
 | k8s\_validate\_certs                                              | **True** / False       | Whether to validate K8s API certificate
-| k8s\_api\_token                                                   |                        | K8s API token to authenticate with. Mutually exclusive with `k8s_username` and `k8s_password`.
-| k8s\_username                                       `             |                        | K8s username to authenticate with. Mutually exclusive with `k8s_api_token`.
-| k8s\_password                                                     |                        | K8s password to authenticate with. Mutually exclusive with `k8s_api_token`.
+| k8s\_api\_key                                                   |                        | K8s API token to authenticate with. Mutually exclusive with `k8s_username` and `k8s_password`.
+| k8s\_username                                       `             |                        | K8s username to authenticate with. Mutually exclusive with `k8s_api_key`.
+| k8s\_password                                                     |                        | K8s password to authenticate with. Mutually exclusive with `k8s_api_key`.
 | grafana\_operator\_install                                        | **True** / False       | `True` to install the resources, `False` to uninstall
 | grafana\_operator\_namespace                                      | **grafana**	     | Namespace to create the Grafana Operator in.
 | grafana\_operator\_delete\_namespace                              | True / **False**       | If `grafana_operator_install` is `False` and this is `True` then the Namespace specified in `grafana_operator_namespace` will be deleted. Else if this is `False` only the Grafana Operator resources in `grafana_operator_namespace` will be deleted. Ignored if `grafana_operator_install` is `True`.
@@ -132,9 +132,9 @@ These permissions are reuqied by the K8s user who runs this playbook. Typically 
 |------------------------------|------------------------|---------
 | k8s\_host                    |                        | K8s API to run this playbook against
 | k8s\_validate\_certs         | **True** / False       | Whether to validate K8s API certificate
-| k8s\_api\_token              |                        | K8s API token to authenticate with. Mutually exclusive with `k8s_username` and `k8s_password`.
-| k8s\_username                |                        | K8s username to authenticate with. Mutually exclusive with `k8s_api_token`.
-| k8s\_password                |                        | K8s password to authenticate with. Mutually exclusive with `k8s_api_token`.
+| k8s\_api\_key              |                        | K8s API token to authenticate with. Mutually exclusive with `k8s_username` and `k8s_password`.
+| k8s\_username                |                        | K8s username to authenticate with. Mutually exclusive with `k8s_api_key`.
+| k8s\_password                |                        | K8s password to authenticate with. Mutually exclusive with `k8s_api_key`.
 | grafana\_operator\_install   | **True** / False       | `True` to grant the permissions. `False` to revoke.
 | grafana\_operator\_namespace | **grafana**            | Namespace the `grafana-operator` ServiceAccount is in to grant cluster wide read to GrafanaDashboad resources.
 
@@ -191,9 +191,9 @@ These permissions are reuqied by the K8s user who runs this playbook. Typically 
 |-------------------------------------------|------------------------|---------
 | k8s\_host                                 |                        | K8s API to run this playbook against
 | k8s\_validate\_certs                      | **True** / False       | Whether to validate K8s API certificate
-| k8s\_api\_token                           |                        | K8s API token to authenticate with. Mutually exclusive with `k8s_username` and `k8s_password`.
-| k8s\_username                             |                        | K8s username to authenticate with. Mutually exclusive with `k8s_api_token`.
-| k8s\_password                             |                        | K8s password to authenticate with. Mutually exclusive with `k8s_api_token`.
+| k8s\_api\_key                           |                        | K8s API token to authenticate with. Mutually exclusive with `k8s_username` and `k8s_password`.
+| k8s\_username                             |                        | K8s username to authenticate with. Mutually exclusive with `k8s_api_key`.
+| k8s\_password                             |                        | K8s password to authenticate with. Mutually exclusive with `k8s_api_key`.
 | openshift\_monitoring\_expose\_prometheus | **True** / False       | `True` to expose openshift-monitoring prometheus data, `False` to un-expose.
 
 # Tested With
