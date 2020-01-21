@@ -58,7 +58,6 @@
 
     always:
     - name: Grafana Operator | Cluster Resources | Revoke K8s access token
-      when: k8s_auth_results.k8s_auth.api_key is defined
       k8s_auth:
         state: absent
         api_key: "{{ k8s_api_key }}"
