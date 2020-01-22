@@ -20,10 +20,10 @@ ansible-playbook deploy/ansible/grafana-operator-cluster-resources.yaml \
   -e grafana_operator_namespace=grafana
 ```
 
-Optional: Cluster admin allow operator to scan all namespaces for dashboards
+Optional: If `grafana_operator_args_scan_all` is set to `true` for the `grafana-operator-namespace-resources.yaml` playbook then Cluster Admin needs to run this playbook to allow operator to scan all namespaces for dashboards
 For more details and additional parameters see [grafana-operator-cluster-dashboards-scan.yaml](../deploy/ansible/README.md#grafana-operator-cluster-dashboards-scanyaml).
 ```sh
-ansible-playbook grafana-operator-cluster-dashboards-scan.yaml \
+ansible-playbook deploy/ansible/grafana-operator-cluster-dashboards-scan.yaml \
   -e k8s_host=https://ocp.example.xyz \
   -e k8s_username=admin1 \
   -e k8s_password=secret \
@@ -33,7 +33,7 @@ ansible-playbook grafana-operator-cluster-dashboards-scan.yaml \
 Self provisioner install operator
 For more details and additional parameters see [grafana-operator-namespace-resources.yaml](../deploy/ansible/README.md#grafana-operator-namespace-resourcesyaml).
 ```sh
-ansible-playbook grafana-operator-namespace-resources.yaml \
+ansible-playbook deploy/ansible/grafana-operator-namespace-resources.yaml \
   -e k8s_host=https://ocp.example.xyz \
   -e k8s_username=project_creator \
   -e k8s_password=secret \
