@@ -85,7 +85,7 @@ func main() {
 
 	api := operations.NewGrafanaOperatorAPI(swaggerSpec)
 	rt := &apipkg.Runtime{
-		Namespace: types.NamespacedName{Namespace: namespace},
+		Namespace: types.NamespacedName{Namespace: namespace, Name: namespace},
 		Client:    cl,
 		Config:    apiCfg,
 	}

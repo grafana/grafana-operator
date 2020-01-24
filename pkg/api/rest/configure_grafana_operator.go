@@ -28,6 +28,7 @@ func ConfigureGrafanaAPI(api *operations.GrafanaOperatorAPI, rt *apipkg.Runtime)
 	api.InfoHandler = handlers.NewInfo(rt)
 	api.ListGrafanasHandler = handlers.NewListGrafanas(rt)
 	api.CreateGrafanaHandler = handlers.NewCreateGrafanas(rt)
+	api.CreateGrafanaProxyHandler = handlers.NewCreateGrafanaProxies(rt)
 	setupGlobalMiddleware(api.Serve(setupMiddlewares))
 	return nil
 }

@@ -19,7 +19,7 @@ const (
 	ConfigGrafanaPluginsUpdated     = "grafana.plugins.updated"
 	ConfigOpenshift                 = "mode.openshift"
 	GrafanaImage                    = "hub.global.cloud.sap/monsoon/grafana"
-	GrafanaVersion                  = "6.5.1"
+	GrafanaVersion                  = "6.5.12"
 	GrafanaConfigMapName            = "grafana-config"
 	GrafanaConfigFileName           = "grafana.ini"
 	GrafanaProvidersConfigMapName   = "grafana-providers"

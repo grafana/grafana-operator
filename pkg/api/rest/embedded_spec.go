@@ -112,6 +112,44 @@ func init() {
         }
       }
     },
+    "/api/v1/grafanaproxy": {
+      "post": {
+        "summary": "Create a Grafana Proxy instance",
+        "operationId": "CreateGrafanaProxy",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GrafanaProxy"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "OK",
+            "schema": {
+              "type": "object",
+              "required": [
+                "description"
+              ],
+              "properties": {
+                "hostname": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/responses/errorResponse"
+          }
+        }
+      }
+    },
     "/info": {
       "get": {
         "security": [],
@@ -146,9 +184,6 @@ func init() {
     "Grafana": {
       "type": "object",
       "properties": {
-        "authProxy": {
-          "$ref": "#/definitions/GrafanaAuthProxy"
-        },
         "config": {
           "$ref": "#/definitions/GrafanaConfig"
         },
@@ -165,29 +200,8 @@ func init() {
           "maxLength": 20,
           "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$",
           "x-nullable": true
-        },
-        "status": {
-          "$ref": "#/definitions/GrafanaStatus"
         }
       }
-    },
-    "GrafanaAuthProxy": {
-      "type": "object",
-      "properties": {
-        "clientSecret": {
-          "type": "string"
-        },
-        "connectors": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "enabled": {
-          "type": "boolean"
-        }
-      },
-      "readOnly": true
     },
     "GrafanaConfig": {
       "type": "object",
@@ -203,6 +217,21 @@ func init() {
         "anonymous": {
           "type": "boolean",
           "x-go-custom-tag": "yaml:\"anonymous\""
+        },
+        "authProxy": {
+          "type": "object",
+          "properties": {
+            "clientSecret": {
+              "type": "string",
+              "x-go-custom-tag": "yaml:\"clientSecret\"",
+              "x-nullable": true
+            },
+            "enabled": {
+              "type": "boolean",
+              "x-go-custom-tag": "yaml:\"enabled\""
+            }
+          },
+          "x-go-custom-tag": "yaml:\"authProxy\""
         },
         "autoAssignOrg": {
           "type": "boolean",
@@ -228,15 +257,18 @@ func init() {
           "type": "string",
           "x-go-custom-tag": "yaml:\"grafanaGroupRoleMap\""
         },
-        "hostname": {
+        "ingressHost": {
           "type": "string",
           "x-go-custom-tag": "yaml:\"hostname\"",
-          "x-nullable": false,
-          "x-omitempty": true
+          "x-nullable": false
         },
         "logLevel": {
           "type": "string",
           "x-go-custom-tag": "yaml:\"logLevel\""
+        },
+        "orgName": {
+          "type": "string",
+          "x-go-custom-tag": "yaml:\"orgName\""
         }
       },
       "x-nullable": false
@@ -253,6 +285,50 @@ func init() {
       },
       "x-nullable": false,
       "readOnly": true
+    },
+    "GrafanaProxy": {
+      "type": "object",
+      "properties": {
+        "config": {
+          "$ref": "#/definitions/GrafanaProxyConfig"
+        },
+        "name": {
+          "description": "name of Grafana instance",
+          "type": "string",
+          "maxLength": 20,
+          "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$",
+          "x-nullable": true
+        },
+        "namespace": {
+          "description": "name of Grafana instance",
+          "type": "string",
+          "maxLength": 20,
+          "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$",
+          "x-nullable": true
+        }
+      }
+    },
+    "GrafanaProxyConfig": {
+      "type": "object",
+      "properties": {
+        "clientSecret": {
+          "type": "string",
+          "x-go-custom-tag": "yaml:\"clientSecret\"",
+          "x-nullable": true
+        },
+        "connectors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ingressHost": {
+          "type": "string",
+          "x-go-custom-tag": "yaml:\"ingressHost\"",
+          "x-nullable": false
+        }
+      },
+      "x-nullable": false
     },
     "GrafanaStatus": {
       "type": "object",
@@ -446,6 +522,36 @@ func init() {
         }
       }
     },
+    "/api/v1/grafanaproxy": {
+      "post": {
+        "summary": "Create a Grafana Proxy instance",
+        "operationId": "CreateGrafanaProxy",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GrafanaProxy"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/createGrafanaProxyCreatedBody"
+            }
+          },
+          "default": {
+            "description": "Error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
     "/info": {
       "get": {
         "security": [],
@@ -480,9 +586,6 @@ func init() {
     "Grafana": {
       "type": "object",
       "properties": {
-        "authProxy": {
-          "$ref": "#/definitions/GrafanaAuthProxy"
-        },
         "config": {
           "$ref": "#/definitions/GrafanaConfig"
         },
@@ -499,29 +602,8 @@ func init() {
           "maxLength": 20,
           "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$",
           "x-nullable": true
-        },
-        "status": {
-          "$ref": "#/definitions/GrafanaStatus"
         }
       }
-    },
-    "GrafanaAuthProxy": {
-      "type": "object",
-      "properties": {
-        "clientSecret": {
-          "type": "string"
-        },
-        "connectors": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "enabled": {
-          "type": "boolean"
-        }
-      },
-      "readOnly": true
     },
     "GrafanaConfig": {
       "type": "object",
@@ -537,6 +619,9 @@ func init() {
         "anonymous": {
           "type": "boolean",
           "x-go-custom-tag": "yaml:\"anonymous\""
+        },
+        "authProxy": {
+          "$ref": "#/definitions/grafanaConfigAuthProxy"
         },
         "autoAssignOrg": {
           "type": "boolean",
@@ -562,15 +647,18 @@ func init() {
           "type": "string",
           "x-go-custom-tag": "yaml:\"grafanaGroupRoleMap\""
         },
-        "hostname": {
+        "ingressHost": {
           "type": "string",
           "x-go-custom-tag": "yaml:\"hostname\"",
-          "x-nullable": false,
-          "x-omitempty": true
+          "x-nullable": false
         },
         "logLevel": {
           "type": "string",
           "x-go-custom-tag": "yaml:\"logLevel\""
+        },
+        "orgName": {
+          "type": "string",
+          "x-go-custom-tag": "yaml:\"orgName\""
         }
       },
       "x-nullable": false
@@ -587,6 +675,50 @@ func init() {
       },
       "x-nullable": false,
       "readOnly": true
+    },
+    "GrafanaProxy": {
+      "type": "object",
+      "properties": {
+        "config": {
+          "$ref": "#/definitions/GrafanaProxyConfig"
+        },
+        "name": {
+          "description": "name of Grafana instance",
+          "type": "string",
+          "maxLength": 20,
+          "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$",
+          "x-nullable": true
+        },
+        "namespace": {
+          "description": "name of Grafana instance",
+          "type": "string",
+          "maxLength": 20,
+          "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$",
+          "x-nullable": true
+        }
+      }
+    },
+    "GrafanaProxyConfig": {
+      "type": "object",
+      "properties": {
+        "clientSecret": {
+          "type": "string",
+          "x-go-custom-tag": "yaml:\"clientSecret\"",
+          "x-nullable": true
+        },
+        "connectors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ingressHost": {
+          "type": "string",
+          "x-go-custom-tag": "yaml:\"ingressHost\"",
+          "x-nullable": false
+        }
+      },
+      "x-nullable": false
     },
     "GrafanaStatus": {
       "type": "object",
@@ -662,6 +794,21 @@ func init() {
       },
       "x-go-gen-location": "operations"
     },
+    "createGrafanaProxyCreatedBody": {
+      "type": "object",
+      "required": [
+        "description"
+      ],
+      "properties": {
+        "hostname": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "x-go-gen-location": "operations"
+    },
     "error": {
       "description": "the error model is a model for all the error responses coming from Grafana as a service\n",
       "type": "object",
@@ -681,6 +828,22 @@ func init() {
           "x-nullable": false
         }
       }
+    },
+    "grafanaConfigAuthProxy": {
+      "type": "object",
+      "properties": {
+        "clientSecret": {
+          "type": "string",
+          "x-go-custom-tag": "yaml:\"clientSecret\"",
+          "x-nullable": true
+        },
+        "enabled": {
+          "type": "boolean",
+          "x-go-custom-tag": "yaml:\"enabled\""
+        }
+      },
+      "x-go-custom-tag": "yaml:\"authProxy\"",
+      "x-go-gen-location": "models"
     }
   },
   "responses": {

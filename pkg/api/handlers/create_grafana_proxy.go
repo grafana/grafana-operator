@@ -1,47 +1,89 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 
+	"github.com/go-openapi/runtime/middleware"
+	"github.com/integr8ly/grafana-operator/v3/pkg/api"
 	"github.com/integr8ly/grafana-operator/v3/pkg/api/models"
 	"github.com/integr8ly/grafana-operator/v3/pkg/api/rest/operations"
 	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func (d *createGrafana) handleProxy(grafana *models.Grafana, params operations.CreateGrafanaParams, principal *models.Principal) (err error) {
-	if !grafana.AuthProxy.Enabled {
-		return
-	}
-	gp, err := d.paramsToGrafanaProxy(grafana, principal)
-	if err != nil {
-		log.Error(err, err.Error())
-		return err
-	}
-	if err = d.Client.Create(params.HTTPRequest.Context(), &gp); err != nil {
-		return
-	}
-	return
+const (
+	grafanaProxyNameFormat = "%s-grafana-proxy"
+)
+
+type createGrafanaProxy struct {
+	*api.Runtime
 }
 
-func (d *createGrafana) paramsToGrafanaProxy(gc *models.Grafana, p *models.Principal) (g v1alpha1.GrafanaProxy, err error) {
-	proxyHost, err := getProxyHost(gc)
-	hostname := fmt.Sprintf(gc.Config.Hostname, *gc.Name)
-	con, err := d.createProxyConnector(gc, p)
+//NewCreateGrafanaProxies creates grafana crd
+func NewCreateGrafanaProxies(rt *api.Runtime) operations.CreateGrafanaProxyHandler {
+	return &createGrafanaProxy{rt}
+}
+
+func (d *createGrafanaProxy) Handle(params operations.CreateGrafanaProxyParams, principal *models.Principal) middleware.Responder {
+	g := params.Body
+	err := d.mergeRequestGrafanaProxyWithConfig(g)
+	if err != nil {
+		log.Error(err, err.Error())
+		return NewErrorResponse(&operations.CreateGrafanaProxyDefault{}, 500, err.Error())
+	}
+	if g.Name == nil {
+		g.Name = &principal.Account
+	}
+	if g.Namespace == nil {
+		g.Namespace = &principal.Account
+	}
+	if err = createNamespaceIfNotExists(d.Client, *g.Namespace); err != nil {
+		log.Error(err, err.Error())
+		return NewErrorResponse(&operations.CreateGrafanaDefault{}, 500, err.Error())
+	}
+
+	gp, err := d.paramsToGrafanaProxy(g, principal)
+	if err != nil {
+		log.Error(err, err.Error())
+		return NewErrorResponse(&operations.CreateGrafanaProxyDefault{}, 500, err.Error())
+	}
+	if err = d.Client.Create(params.HTTPRequest.Context(), &gp); err != nil {
+		return NewErrorResponse(&operations.CreateGrafanaProxyDefault{}, 500, err.Error())
+	}
+	r := &models.CreateGrafanaProxyCreatedBody{
+		Hostname: gp.Spec.Config.Hostname,
+		Name:     gp.ObjectMeta.Name,
+	}
+	return operations.NewCreateGrafanaProxyCreated().WithPayload(r)
+}
+
+func (d *createGrafanaProxy) paramsToGrafanaProxy(g *models.GrafanaProxy, p *models.Principal) (gp v1alpha1.GrafanaProxy, err error) {
+	proxyHost, err := getProxyHost(g.Config.IngressHost, *g.Name)
+	con, err := d.createProxyConnector(g, p)
 	if err != nil {
 		return
 	}
-	m := v1.ObjectMeta{
-		Name:      fmt.Sprintf(grafanaNameFormat, *gc.Name),
-		Namespace: *gc.Namespace,
+	if g.Config.ClientSecret == nil {
+		s, err := createSecret([]byte(d.Config.SecretKey), []byte(p.Account))
+		if err != nil {
+			return gp, err
+		}
+		g.Config.ClientSecret = &s
 	}
-	g = v1alpha1.GrafanaProxy{
+	grafanaHostname := fmt.Sprintf(g.Config.IngressHost, *g.Name)
+
+	m := metav1.ObjectMeta{
+		Name:      fmt.Sprintf(grafanaProxyNameFormat, *g.Name),
+		Namespace: *g.Namespace,
+	}
+	gp = v1alpha1.GrafanaProxy{
 		ObjectMeta: m,
 		Status:     v1alpha1.GrafanaProxyStatus{},
 		Spec: v1alpha1.GrafanaProxySpec{
 			Config: v1alpha1.GrafanaProxyConfig{
-				HostName: hostname,
-				Issuer:   "http://" + proxyHost,
+				Hostname: proxyHost,
+				Issuer:   "https://" + proxyHost,
 				Storage: v1alpha1.Storage{
 					Type: "kubernetes",
 					Config: v1alpha1.StorageConfig{
@@ -72,9 +114,9 @@ func (d *createGrafana) paramsToGrafanaProxy(gc *models.Grafana, p *models.Princ
 						ID:   "grafana",
 						Name: "Grafana UI",
 						RedirectURIs: []string{
-							"http://" + hostname + "/login/generic_oauth",
+							"https://" + grafanaHostname + "/login/generic_oauth",
 						},
-						Secret:       gc.AuthProxy.ClientSecret,
+						Secret:       *g.Config.ClientSecret,
 						TrustedPeers: []string{},
 					},
 				},
@@ -85,31 +127,35 @@ func (d *createGrafana) paramsToGrafanaProxy(gc *models.Grafana, p *models.Princ
 	return
 }
 
-func (d *createGrafana) createProxyConnector(gc *models.Grafana, p *models.Principal) (c []v1alpha1.GrafanaProxyConnector, err error) {
-	for _, cn := range gc.AuthProxy.Connectors {
+func (d *createGrafanaProxy) mergeRequestGrafanaProxyWithConfig(request *models.GrafanaProxy) (err error) {
+	cfgByte, err := json.Marshal(d.Config.Grafana)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(cfgByte, request)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func (d *createGrafanaProxy) createProxyConnector(g *models.GrafanaProxy, p *models.Principal) (kc []v1alpha1.KeystoneConnector, err error) {
+	for _, cn := range g.Config.Connectors {
 		switch cn {
 		case "keystone":
-			fmt.Println(d.Config.AuthProxy.Connectors[cn])
-			/*
-				k := connectors.KeystoneConnectorConfig{}
-				if err = yamlUnmarshalHandler(d.Config.AuthProxy.Connectors[cn], &k); err != nil {
-					return
-				}
-			*/
-			cfg := d.Config.AuthProxy.Connectors[cn]
-			cfg["Domain"] = p.Domain
-			cfg["AuthScope:ProjectID"] = p.Account
-			cfg["RoleNameFormat"] = "%s"
 
-			cn := v1alpha1.GrafanaProxyConnector{
-				Type:   cn,
-				ID:     cn,
-				Name:   "Converged Cloud",
-				Config: d.Config.AuthProxy.Connectors[cn],
+			k := v1alpha1.KeystoneConnector{}
+			if err = yamlUnmarshalHandler(d.Config.AuthProxy.Connectors[cn], &k); err != nil {
+				return
 			}
-			c = append(c, cn)
+			s := v1alpha1.AuthScope{
+				ProjectID: p.Account,
+			}
+			k.Config.Domain = p.Domain
+			k.Config.AuthScope = s
+			k.Config.RoleNameFormat = "%s"
+			kc = append(kc, k)
 		}
 	}
-	fmt.Println(c)
 	return
 }

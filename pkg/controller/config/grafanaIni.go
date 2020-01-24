@@ -211,6 +211,8 @@ func (i *GrafanaIni) Write() (string, string) {
 		items = appendStr(items, "token_url", i.cfg.AuthGenericOauth.TokenUrl)
 		items = appendStr(items, "api_url", i.cfg.AuthGenericOauth.ApiUrl)
 		items = appendStr(items, "allowed_domains", i.cfg.AuthGenericOauth.AllowedDomains)
+		items = appendStr(items, "group_role_map", i.cfg.AuthGenericOauth.GroupRoleMap)
+		items = appendStr(items, "org_name", i.cfg.AuthGenericOauth.OrgName)
 		config["auth.generic_oauth"] = items
 	}
 

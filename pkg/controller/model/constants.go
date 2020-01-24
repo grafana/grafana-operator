@@ -1,8 +1,8 @@
 package model
 
 const (
-	GrafanaImage                        = "grafana/grafana"
-	GrafanaVersion                      = "6.5.1"
+	GrafanaImage                        = "hub.global.cloud.sap/monsoon/grafana"
+	GrafanaVersion                      = "6.5.12"
 	GrafanaProxyImage                   = "hub.global.cloud.sap/monsoon/dex"
 	GrafanaProxyVersion                 = "8373c31b3e2d96ad3a7313227aa1bb8c59ddca39"
 	GrafanaServiceAccountName           = "grafana-serviceaccount"

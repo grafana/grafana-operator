@@ -8,6 +8,7 @@ package models
 import (
 	strfmt "github.com/go-openapi/strfmt"
 
+	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
@@ -23,6 +24,9 @@ type GrafanaConfig struct {
 
 	// anonymous
 	Anonymous bool `json:"anonymous,omitempty" yaml:"anonymous"`
+
+	// auth proxy
+	AuthProxy *GrafanaConfigAuthProxy `json:"authProxy,omitempty"`
 
 	// auto assign org
 	AutoAssignOrg bool `json:"autoAssignOrg,omitempty" yaml:"autoAssignOrg"`
@@ -42,15 +46,45 @@ type GrafanaConfig struct {
 	// grafana group role map
 	GrafanaGroupRoleMap string `json:"grafanaGroupRoleMap,omitempty" yaml:"grafanaGroupRoleMap"`
 
-	// hostname
-	Hostname string `json:"hostname,omitempty" yaml:"hostname"`
+	// ingress host
+	IngressHost string `json:"ingressHost,omitempty" yaml:"hostname"`
 
 	// log level
 	LogLevel string `json:"logLevel,omitempty" yaml:"logLevel"`
+
+	// org name
+	OrgName string `json:"orgName,omitempty" yaml:"orgName"`
 }
 
 // Validate validates this grafana config
 func (m *GrafanaConfig) Validate(formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.validateAuthProxy(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *GrafanaConfig) validateAuthProxy(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.AuthProxy) { // not required
+		return nil
+	}
+
+	if m.AuthProxy != nil {
+		if err := m.AuthProxy.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("authProxy")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 

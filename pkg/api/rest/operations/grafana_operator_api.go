@@ -42,6 +42,9 @@ func NewGrafanaOperatorAPI(spec *loads.Document) *GrafanaOperatorAPI {
 		CreateGrafanaHandler: CreateGrafanaHandlerFunc(func(params CreateGrafanaParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation CreateGrafana has not yet been implemented")
 		}),
+		CreateGrafanaProxyHandler: CreateGrafanaProxyHandlerFunc(func(params CreateGrafanaProxyParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation CreateGrafanaProxy has not yet been implemented")
+		}),
 		InfoHandler: InfoHandlerFunc(func(params InfoParams) middleware.Responder {
 			return middleware.NotImplemented("operation Info has not yet been implemented")
 		}),
@@ -99,6 +102,8 @@ type GrafanaOperatorAPI struct {
 
 	// CreateGrafanaHandler sets the operation handler for the create grafana operation
 	CreateGrafanaHandler CreateGrafanaHandler
+	// CreateGrafanaProxyHandler sets the operation handler for the create grafana proxy operation
+	CreateGrafanaProxyHandler CreateGrafanaProxyHandler
 	// InfoHandler sets the operation handler for the info operation
 	InfoHandler InfoHandler
 	// ListAPIVersionsHandler sets the operation handler for the list API versions operation
@@ -174,6 +179,10 @@ func (o *GrafanaOperatorAPI) Validate() error {
 
 	if o.CreateGrafanaHandler == nil {
 		unregistered = append(unregistered, "CreateGrafanaHandler")
+	}
+
+	if o.CreateGrafanaProxyHandler == nil {
+		unregistered = append(unregistered, "CreateGrafanaProxyHandler")
 	}
 
 	if o.InfoHandler == nil {
@@ -302,6 +311,11 @@ func (o *GrafanaOperatorAPI) initHandlerCache() {
 		o.handlers["POST"] = make(map[string]http.Handler)
 	}
 	o.handlers["POST"]["/api/v1/grafana"] = NewCreateGrafana(o.context, o.CreateGrafanaHandler)
+
+	if o.handlers["POST"] == nil {
+		o.handlers["POST"] = make(map[string]http.Handler)
+	}
+	o.handlers["POST"]["/api/v1/grafanaproxy"] = NewCreateGrafanaProxy(o.context, o.CreateGrafanaProxyHandler)
 
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)

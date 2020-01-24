@@ -56,8 +56,9 @@ func getProxyPodAnnotations(cr *v1alpha1.GrafanaProxy) map[string]string {
 	}
 
 	// Add fixed annotations
-	annotations["prometheus.io/scrape"] = "true"
-	annotations["prometheus.io/port"] = fmt.Sprintf("%v", 80)
+	annotations["vice-president"] = "true"
+	//annotations["prometheus.io/scrape"] = "true"
+	//annotations["prometheus.io/port"] = fmt.Sprintf("%v", 80)
 	return annotations
 }
 

@@ -14,9 +14,10 @@ type (
 		Version   string         `yaml:"version"`
 		AuthProxy AuthProxy      `yaml:"auth_proxy"`
 		Region    string         `yaml:"region"`
+		SecretKey string         `yaml:"secret_key"`
 	}
 	AuthProxy struct {
-		Connectors map[string]map[string]string `yaml:"connectors"`
+		Connectors map[string]interface{} `yaml:"connectors"`
 	}
 )
 

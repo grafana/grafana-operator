@@ -83,6 +83,30 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/Grafana'
+  /api/v1/grafanaproxy:
+    post:
+      operationId: CreateGrafanaProxy
+      summary: Create a Grafana Proxy instance
+      responses:
+        '201':
+          description: OK
+          schema:
+            type: object
+            required:
+              - description
+            properties:
+              hostname:
+                type: string
+              name:
+                type: string
+        default:
+          $ref: '#/responses/errorResponse'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/GrafanaProxy'
 
 definitions:
   Info:
@@ -113,19 +137,47 @@ definitions:
         type: string
         pattern: '^[a-z]([-a-z0-9]*[a-z0-9])?$'
         maxLength: 20
-      status:
-        $ref: '#/definitions/GrafanaStatus'
       config:
         $ref: '#/definitions/GrafanaConfig'
-      authProxy:
-        $ref: '#/definitions/GrafanaAuthProxy'
+  GrafanaProxy:
+    type: object
+    properties:
+      name:
+        x-nullable: true
+        description: name of Grafana instance
+        type: string
+        pattern: '^[a-z]([-a-z0-9]*[a-z0-9])?$'
+        maxLength: 20
+      namespace:
+        x-nullable: true
+        description: name of Grafana instance
+        type: string
+        pattern: '^[a-z]([-a-z0-9]*[a-z0-9])?$'
+        maxLength: 20
+      config:
+        $ref: '#/definitions/GrafanaProxyConfig'
+  GrafanaProxyConfig:
+    type: object
+    x-nullable: false
+    properties:
+      ingressHost:
+        x-nullable: false
+        x-go-custom-tag: yaml:"ingressHost"
+        type: string
+      connectors:
+        type: array
+        items:
+          type: string
+      clientSecret:
+        type: string
+        x-nullable: true
+        x-go-custom-tag: yaml:"clientSecret"
   GrafanaConfig:
     type: object
     x-nullable: false
     properties:
-      hostname:
+      ingressHost:
         x-nullable: false
-        x-omitempty: true
         x-go-custom-tag: yaml:"hostname"
         type: string
       logLevel:
@@ -158,18 +210,20 @@ definitions:
       grafanaGroupRoleMap:
         type: string
         x-go-custom-tag: yaml:"grafanaGroupRoleMap"
-  GrafanaAuthProxy:
-    readOnly: true
-    type: object
-    properties:
-      enabled:
-        type: boolean
-      connectors:
-        type: array
-        items:
-          type: string
-      clientSecret:
+      orgName:
         type: string
+        x-go-custom-tag: yaml:"orgName"
+      authProxy:
+        type: object
+        x-go-custom-tag: yaml:"authProxy"
+        properties:
+          enabled:
+            x-go-custom-tag: yaml:"enabled"
+            type: boolean
+          clientSecret:
+             x-nullable: true
+             x-go-custom-tag: yaml:"clientSecret"
+             type: string
   GrafanaStatus:
     readOnly: true
     x-nullable: false

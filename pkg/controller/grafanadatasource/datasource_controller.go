@@ -4,16 +4,17 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
+	"io"
+	"sort"
+
 	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
-	"io"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -22,8 +23,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"sort"
-	"time"
 )
 
 const (
@@ -35,8 +34,8 @@ var log = logf.Log.WithName(ControllerName)
 
 // Add creates a new GrafanaDataSource Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager, _ chan schema.GroupVersionKind, namespace string) error {
-	return add(mgr, newReconciler(mgr), namespace)
+func Add(mgr manager.Manager, autodetectChannel chan schema.GroupVersionKind, _ string) error {
+	return add(mgr, newReconciler(mgr), autodetectChannel)
 }
 
 // newReconciler returns a new reconcile.Reconciler
@@ -55,7 +54,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
-func add(mgr manager.Manager, r reconcile.Reconciler, namespace string) error {
+func add(mgr manager.Manager, r reconcile.Reconciler, autodetectChannel chan schema.GroupVersionKind) error {
 	// Create a new controller
 	c, err := controller.New("grafanadatasource-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
@@ -68,33 +67,14 @@ func add(mgr manager.Manager, r reconcile.Reconciler, namespace string) error {
 		return err
 	}
 
-	ref := r.(*ReconcileGrafanaDataSource)
-
-	// The datasources should not change very often, only revisit them
-	// half as often as the dashboards
-	ticker := time.NewTicker(config.RequeueDelay * 2)
-	sendEmptyRequest := func() {
-		request := reconcile.Request{
-			NamespacedName: types.NamespacedName{
-				Namespace: namespace,
-				Name:      "",
-			},
-		}
-		r.Reconcile(request)
-	}
-
 	go func() {
-		for range ticker.C {
-			log.Info("running periodic datasource resync")
-			sendEmptyRequest()
-		}
-	}()
-
-	// Listen for config change events
-	go func() {
-		for stateChange := range common.ControllerEvents {
-			// Controller state updated
-			ref.state = stateChange
+		for gvk := range autodetectChannel {
+			cfg := config.GetControllerConfig()
+			fmt.Println(gvk.String(), cfg)
+			// Route already watched?
+			if cfg.GetConfigBool(config.ConfigRouteWatch, false) == true {
+				return
+			}
 		}
 	}()
 
@@ -126,10 +106,11 @@ func (r *ReconcileGrafanaDataSource) Reconcile(request reconcile.Request) (recon
 	}
 
 	if currentState.KnownDataSources == nil {
-		log.Info(fmt.Sprintf("no datasources configmap found"))
-		return reconcile.Result{Requeue: false}, nil
+		log.Info(fmt.Sprintf("no datasources configmap found for ns: %s", request.Namespace))
+		return reconcile.Result{Requeue: request.Namespace != "grafana-operator"}, nil
 	}
 
+	fmt.Println("_________________________DataSource_____________________________________-", currentState)
 	// Reconcile all data sources
 	err = r.reconcileDataSources(currentState)
 	if err != nil {

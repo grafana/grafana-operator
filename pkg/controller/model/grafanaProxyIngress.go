@@ -6,12 +6,14 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"strings"
 )
 
 func getProxyIngressTLS(cr *v1alpha1.GrafanaProxy) []v1beta1.IngressTLS {
 	return []v1beta1.IngressTLS{
 		{
-			Hosts: []string{cr.Spec.Config.HostName},
+			Hosts:      []string{cr.Spec.Config.Hostname},
+			SecretName: "tls-" + strings.ReplaceAll(cr.Spec.Config.Hostname, ".", "-"),
 		},
 	}
 
@@ -22,7 +24,7 @@ func getProxyIngressSpec(cr *v1alpha1.GrafanaProxy) v1beta1.IngressSpec {
 		TLS: getProxyIngressTLS(cr),
 		Rules: []v1beta1.IngressRule{
 			{
-				Host: cr.Spec.Config.HostName,
+				Host: cr.Spec.Config.Hostname,
 				IngressRuleValue: v1beta1.IngressRuleValue{
 					HTTP: &v1beta1.HTTPIngressRuleValue{
 						Paths: []v1beta1.HTTPIngressPath{
@@ -30,7 +32,7 @@ func getProxyIngressSpec(cr *v1alpha1.GrafanaProxy) v1beta1.IngressSpec {
 								Path: "/",
 								Backend: v1beta1.IngressBackend{
 									ServiceName: GrafanaProxyServiceName,
-									ServicePort: intstr.FromString("http"),
+									ServicePort: intstr.FromInt(80),
 								},
 							},
 						},
@@ -56,7 +58,7 @@ func GrafanaProxyIngress(cr *v1alpha1.GrafanaProxy) *v1beta1.Ingress {
 func GrafanaProxyIngressReconciled(cr *v1alpha1.GrafanaProxy, currentState *v1beta1.Ingress) *v1beta1.Ingress {
 	reconciled := currentState.DeepCopy()
 	reconciled.Labels = getProxyPodLabels(cr)
-	reconciled.Annotations = getProxyPodAnnotations(cr)
+	reconciled.Annotations = map[string]string{"vice-president": "true"}
 	reconciled.Spec = getProxyIngressSpec(cr)
 	return reconciled
 }

@@ -13,12 +13,12 @@ import (
 	"github.com/go-openapi/validate"
 )
 
-// Grafana grafana
-// swagger:model Grafana
-type Grafana struct {
+// GrafanaProxy grafana proxy
+// swagger:model GrafanaProxy
+type GrafanaProxy struct {
 
 	// config
-	Config GrafanaConfig `json:"config,omitempty"`
+	Config GrafanaProxyConfig `json:"config,omitempty"`
 
 	// name of Grafana instance
 	// Max Length: 20
@@ -31,8 +31,8 @@ type Grafana struct {
 	Namespace *string `json:"namespace,omitempty"`
 }
 
-// Validate validates this grafana
-func (m *Grafana) Validate(formats strfmt.Registry) error {
+// Validate validates this grafana proxy
+func (m *GrafanaProxy) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateConfig(formats); err != nil {
@@ -53,7 +53,7 @@ func (m *Grafana) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *Grafana) validateConfig(formats strfmt.Registry) error {
+func (m *GrafanaProxy) validateConfig(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.Config) { // not required
 		return nil
@@ -69,7 +69,7 @@ func (m *Grafana) validateConfig(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *Grafana) validateName(formats strfmt.Registry) error {
+func (m *GrafanaProxy) validateName(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.Name) { // not required
 		return nil
@@ -86,7 +86,7 @@ func (m *Grafana) validateName(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *Grafana) validateNamespace(formats strfmt.Registry) error {
+func (m *GrafanaProxy) validateNamespace(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.Namespace) { // not required
 		return nil
@@ -104,7 +104,7 @@ func (m *Grafana) validateNamespace(formats strfmt.Registry) error {
 }
 
 // MarshalBinary interface implementation
-func (m *Grafana) MarshalBinary() ([]byte, error) {
+func (m *GrafanaProxy) MarshalBinary() ([]byte, error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -112,8 +112,8 @@ func (m *Grafana) MarshalBinary() ([]byte, error) {
 }
 
 // UnmarshalBinary interface implementation
-func (m *Grafana) UnmarshalBinary(b []byte) error {
-	var res Grafana
+func (m *GrafanaProxy) UnmarshalBinary(b []byte) error {
+	var res GrafanaProxy
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

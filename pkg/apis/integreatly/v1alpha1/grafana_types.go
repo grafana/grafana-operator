@@ -253,6 +253,7 @@ type GrafanaConfigAuthGenericOauth struct {
 	ApiUrl         string `json:"api_url,omitempty" ini:"api_url,omitempty"`
 	AllowedDomains string `json:"allowed_domains,omitempty" ini:"allowed_domains,omitempty"`
 	GroupRoleMap   string `json:"group_role_map,omitempty" ini:"group_role_map,omitempty"`
+	OrgName        string `json:"org_name,omitempty" ini:"org_name,omitempty"`
 }
 
 type GrafanaConfigAuthLdap struct {

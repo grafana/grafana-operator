@@ -5,21 +5,20 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-/*
 type KeystoneConnectorConfig struct {
-	Cloud               string `json:"cloud"`
-	Domain              string `json:"domain"`
-	Host                string `json:"host"`
-	AdminUsername       string `json:"adminUsername"`
-	AdminPassword       string `json:"adminPassword"`
-	AdminUserDomainName string `json:"adminUserDomain"`
-	AdminProject        string `json:"adminProject"`
-	AdminDomain         string `json:"adminDomain"`
-	Prompt              string `json:"prompt"`
-	//AuthScope            AuthScope `json:"authScope,omitempty"`
-	IncludeRolesInGroups *bool  `json:"includeRolesInGroups,omitempty"`
-	RoleNameFormat       string `json:"roleNameFormat,omitempty"`
-	GroupNameFormat      string `json:"groupNameFormat,omitempty"`
+	Cloud                string    `json:"cloud" yaml:"cloud""`
+	Domain               string    `json:"domain" yaml:"domain"`
+	Host                 string    `json:"host" yaml:"host"`
+	AdminUsername        string    `json:"adminUsername" yaml:"adminUsername"`
+	AdminPassword        string    `json:"adminPassword" yaml:"adminPassword"`
+	AdminUserDomainName  string    `json:"adminUserDomain" yaml:"adminUserDomain"`
+	AdminProject         string    `json:"adminProject" yaml:"adminProject"`
+	AdminDomain          string    `json:"adminDomain" yaml:"adminDomain"`
+	Prompt               string    `json:"prompt"`
+	AuthScope            AuthScope `json:"authScope,omitempty" yaml:"authScope,omitempty"`
+	IncludeRolesInGroups *bool     `json:"includeRolesInGroups,omitempty" yaml:"includeRolesInGroups,omitempty"`
+	RoleNameFormat       string    `json:"roleNameFormat,omitempty" yaml:"roleNameFormat,omitempty"`
+	GroupNameFormat      string    `json:"groupNameFormat,omitempty" yaml:"groupNameFormat,omitempty"`
 }
 
 type AuthScope struct {
@@ -28,13 +27,16 @@ type AuthScope struct {
 	DomainID    string `json:"domainID,omitempty"`
 	DomainName  string `json:"domainName,omitempty"`
 }
-*/
+
+type KeystoneConnector struct {
+	Type   string                  `json:"type" yaml:"type""`
+	ID     string                  `json:"id" yaml:"id""`
+	Name   string                  `json:"name" yaml:"name""`
+	Config KeystoneConnectorConfig `json:"config" yaml:"config""`
+}
 
 type GrafanaProxyConnector struct {
-	Type   string            `json:"type"`
-	ID     string            `json:"id"`
-	Name   string            `json:"name"`
-	Config map[string]string `json:"config"`
+	KeystoneConnector `json:"keystone" yaml:"keystone"`
 }
 
 // Web is the config format for the HTTP server.
@@ -107,20 +109,20 @@ type Client struct {
 
 // GrafanaProxyConfig provides a auth proxy
 type GrafanaProxyConfig struct {
-	HostName         string                  `json:"hostName"`
-	Issuer           string                  `json:"issuer"`
-	Storage          Storage                 `json:"storage"`
-	Web              Web                     `json:"web"`
-	OAuth2           OAuth2                  `json:"oauth2"`
-	Expiry           Expiry                  `json:"expiry"`
-	Logger           Logger                  `json:"logger"`
-	Frontend         WebConfig               `json:"frontend"`
-	Connectors       []GrafanaProxyConnector `json:"connectors"`
-	StaticClients    []Client                `json:"staticClients"`
-	EnablePasswordDB bool                    `json:"enablePasswordDB"`
-	Enabled          bool                    `json:"enabled,omitempty"`
-	ClientSecret     string                  `json:"client_secret"`
-	ClientID         string                  `json:"client_id"`
+	Hostname         string              `json:"hostname"`
+	Issuer           string              `json:"issuer"`
+	Storage          Storage             `json:"storage"`
+	Web              Web                 `json:"web"`
+	OAuth2           OAuth2              `json:"oauth2"`
+	Expiry           Expiry              `json:"expiry"`
+	Logger           Logger              `json:"logger"`
+	Frontend         WebConfig           `json:"frontend"`
+	Connectors       []KeystoneConnector `json:"connectors"`
+	StaticClients    []Client            `json:"staticClients"`
+	EnablePasswordDB bool                `json:"enablePasswordDB"`
+	Enabled          bool                `json:"enabled,omitempty"`
+	ClientSecret     string              `json:"client_secret"`
+	ClientID         string              `json:"client_id"`
 }
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
