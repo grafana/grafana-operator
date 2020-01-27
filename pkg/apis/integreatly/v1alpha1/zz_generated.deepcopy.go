@@ -133,11 +133,6 @@ func (in *GrafanaConfig) DeepCopyInto(out *GrafanaConfig) {
 		*out = new(GrafanaConfigAuthGithub)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.AuthGitlab != nil {
-		in, out := &in.AuthGitlab, &out.AuthGitlab
-		*out = new(GrafanaConfigAuthGitlab)
-		(*in).DeepCopyInto(*out)
-	}
 	if in.AuthGenericOauth != nil {
 		in, out := &in.AuthGenericOauth, &out.AuthGenericOauth
 		*out = new(GrafanaConfigAuthGenericOauth)
