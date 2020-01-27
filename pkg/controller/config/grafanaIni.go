@@ -200,6 +200,21 @@ func (i *GrafanaIni) Write() (string, string) {
 		config["auth.github"] = items
 	}
 
+	if i.cfg.AuthGitlab != nil {
+		var items []string
+		items = appendBool(items, "enabled", i.cfg.AuthGitlab.Enabled)
+		items = appendBool(items, "allow_sign_up", i.cfg.AuthGitlab.AllowSignUp)
+		items = appendStr(items, "client_id", i.cfg.AuthGitlab.ClientId)
+		items = appendStr(items, "client_secret", i.cfg.AuthGitlab.ClientSecret)
+		items = appendStr(items, "scopes", i.cfg.AuthGitlab.Scopes)
+		items = appendStr(items, "auth_url", i.cfg.AuthGitlab.AuthUrl)
+		items = appendStr(items, "token_url", i.cfg.AuthGitlab.TokenUrl)
+		items = appendStr(items, "api_url", i.cfg.AuthGitlab.ApiUrl)
+		items = appendStr(items, "team_ids", i.cfg.AuthGitlab.TeamIds)
+		items = appendStr(items, "allowed_organizations", i.cfg.AuthGitlab.AllowedOrganizations)
+		config["auth.gitlab"] = items
+	}
+
 	if i.cfg.AuthGenericOauth != nil {
 		var items []string
 		items = appendBool(items, "enabled", i.cfg.AuthGenericOauth.Enabled)
