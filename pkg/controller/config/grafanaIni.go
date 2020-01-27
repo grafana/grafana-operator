@@ -3,7 +3,7 @@ package config
 import (
 	"crypto/md5"
 	"fmt"
-	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"io"
 	"sort"
 	"strings"
@@ -211,6 +211,7 @@ func (i *GrafanaIni) Write() (string, string) {
 		items = appendStr(items, "token_url", i.cfg.AuthGenericOauth.TokenUrl)
 		items = appendStr(items, "api_url", i.cfg.AuthGenericOauth.ApiUrl)
 		items = appendStr(items, "allowed_domains", i.cfg.AuthGenericOauth.AllowedDomains)
+		items = appendStr(items, "role_attribute_path", i.cfg.AuthGenericOauth.RoleAttributePath)
 		config["auth.generic_oauth"] = items
 	}
 

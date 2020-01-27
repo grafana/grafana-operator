@@ -4,10 +4,10 @@ import (
 	"context"
 	stdErr "errors"
 	"fmt"
-	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/pkg/controller/common"
-	"github.com/integr8ly/grafana-operator/pkg/controller/config"
-	"github.com/integr8ly/grafana-operator/pkg/controller/model"
+	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
+	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
+	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
 	routev1 "github.com/openshift/api/route/v1"
 	v12 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -61,7 +61,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler, autodetectChannel chan sch
 	}
 
 	// Watch for changes to primary resource Grafana
-	err = c.Watch(&source.Kind{Type: &i8ly.Grafana{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &grafanav1alpha1.Grafana{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
 	}
@@ -128,14 +128,14 @@ type ReconcileGrafana struct {
 func watchSecondaryResource(c controller.Controller, resource runtime.Object) error {
 	return c.Watch(&source.Kind{Type: resource}, &handler.EnqueueRequestForOwner{
 		IsController: true,
-		OwnerType:    &i8ly.Grafana{},
+		OwnerType:    &grafanav1alpha1.Grafana{},
 	})
 }
 
 // Reconcile reads that state of the cluster for a Grafana object and makes changes based on the state read
 // and what is in the Grafana.Spec
 func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	instance := &i8ly.Grafana{}
+	instance := &grafanav1alpha1.Grafana{}
 	err := r.client.Get(r.context, request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -176,9 +176,9 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 	return r.manageSuccess(cr, currentState)
 }
 
-func (r *ReconcileGrafana) manageError(cr *i8ly.Grafana, issue error) (reconcile.Result, error) {
+func (r *ReconcileGrafana) manageError(cr *grafanav1alpha1.Grafana, issue error) (reconcile.Result, error) {
 	r.recorder.Event(cr, "Warning", "ProcessingError", issue.Error())
-	cr.Status.Phase = i8ly.PhaseFailing
+	cr.Status.Phase = grafanav1alpha1.PhaseFailing
 	cr.Status.Message = issue.Error()
 
 	err := r.client.Status().Update(r.context, cr)
@@ -200,7 +200,7 @@ func (r *ReconcileGrafana) manageError(cr *i8ly.Grafana, issue error) (reconcile
 }
 
 // Try to find a suitable url to grafana
-func (r *ReconcileGrafana) getGrafanaAdminUrl(cr *i8ly.Grafana, state *common.ClusterState) (string, error) {
+func (r *ReconcileGrafana) getGrafanaAdminUrl(cr *grafanav1alpha1.Grafana, state *common.ClusterState) (string, error) {
 	// If preferService is true, we skip the routes and try to access grafana
 	// by using the serivce.
 	preferService := false
@@ -224,20 +224,22 @@ func (r *ReconcileGrafana) getGrafanaAdminUrl(cr *i8ly.Grafana, state *common.Cl
 		}
 	}
 
+	var servicePort = int32(model.GetGrafanaPort(cr))
+
 	// Otherwise rely on the service
 	if state.GrafanaService != nil && state.GrafanaService.Spec.ClusterIP != "" {
 		return fmt.Sprintf("http://%v:%d", state.GrafanaService.Spec.ClusterIP,
-			model.GetGrafanaPort(cr)), nil
+			servicePort), nil
 	} else if state.GrafanaService != nil {
 		return fmt.Sprintf("http://%v:%d", state.GrafanaService.Name,
-			model.GetGrafanaPort(cr)), nil
+			servicePort), nil
 	}
 
 	return "", stdErr.New("failed to find admin url")
 }
 
-func (r *ReconcileGrafana) manageSuccess(cr *i8ly.Grafana, state *common.ClusterState) (reconcile.Result, error) {
-	cr.Status.Phase = i8ly.PhaseReconciling
+func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *common.ClusterState) (reconcile.Result, error) {
+	cr.Status.Phase = grafanav1alpha1.PhaseReconciling
 	cr.Status.Message = "success"
 
 	// Only update the status if the dashboard controller had a chance to sync the cluster
@@ -247,7 +249,7 @@ func (r *ReconcileGrafana) manageSuccess(cr *i8ly.Grafana, state *common.Cluster
 	} else {
 		r.config.SetDashboards(cr.Status.InstalledDashboards)
 		if r.config.Dashboards == nil {
-			r.config.SetDashboards(make(map[string][]*i8ly.GrafanaDashboardRef))
+			r.config.SetDashboards(make(map[string][]*grafanav1alpha1.GrafanaDashboardRef))
 		}
 	}
 

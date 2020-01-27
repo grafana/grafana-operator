@@ -1,7 +1,7 @@
 package common
 
 import (
-	config2 "github.com/integr8ly/grafana-operator/pkg/controller/config"
+	config2 "github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"time"
