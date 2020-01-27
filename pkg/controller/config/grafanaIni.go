@@ -210,8 +210,6 @@ func (i *GrafanaIni) Write() (string, string) {
 		items = appendStr(items, "auth_url", i.cfg.AuthGitlab.AuthUrl)
 		items = appendStr(items, "token_url", i.cfg.AuthGitlab.TokenUrl)
 		items = appendStr(items, "api_url", i.cfg.AuthGitlab.ApiUrl)
-		items = appendStr(items, "team_ids", i.cfg.AuthGitlab.TeamIds)
-		items = appendStr(items, "allowed_organizations", i.cfg.AuthGitlab.AllowedOrganizations)
 		config["auth.gitlab"] = items
 	}
 
