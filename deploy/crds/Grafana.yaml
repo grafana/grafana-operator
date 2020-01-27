@@ -113,7 +113,7 @@ spec:
                   type: array
                   description: Additonal labels for running grafana pods in tained nodes.
                 affinity:
-                  type: array
+                  type: object
                   description: Additonal labels for running grafana pods with affinity properties.
             serviceAccount:
               type: object

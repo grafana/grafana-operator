@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+
 	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/pkg/controller/config"
 	v1 "k8s.io/api/apps/v1"
@@ -33,6 +34,21 @@ func getResources(cr *v1alpha1.Grafana) v13.ResourceRequirements {
 			v13.ResourceCPU:    resource.MustParse(CpuLimit),
 		},
 	}
+}
+func getAffinities(cr *v1alpha1.Grafana) *v13.Affinity {
+	var affinity = v13.Affinity{}
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Affinity != nil {
+		affinity = *cr.Spec.Deployment.Affinity
+	}
+	return &affinity
+}
+
+func getSecurityContext(cr *v1alpha1.Grafana) *v13.PodSecurityContext {
+	var securityContext = v13.PodSecurityContext{}
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.SecurityContext != nil {
+		securityContext = *cr.Spec.Deployment.SecurityContext
+	}
+	return &securityContext
 }
 
 func getReplicas(cr *v1alpha1.Grafana) *int32 {
@@ -75,6 +91,27 @@ func getPodLabels(cr *v1alpha1.Grafana) map[string]string {
 	}
 	labels["app"] = GrafanaPodLabel
 	return labels
+}
+
+func getNodeSelectors(cr *v1alpha1.Grafana) map[string]string {
+	var nodeSelector = map[string]string{}
+
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.NodeSelector != nil {
+		nodeSelector = cr.Spec.Deployment.NodeSelector
+	}
+	return nodeSelector
+
+}
+
+func getTolerations(cr *v1alpha1.Grafana) []v13.Toleration {
+	tolerations := []v13.Toleration{}
+
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Tolerations != nil {
+		for _, val := range cr.Spec.Deployment.Tolerations {
+			tolerations = append(tolerations, val)
+		}
+	}
+	return tolerations
 }
 
 func getVolumes(cr *v1alpha1.Grafana) []v13.Volume {
@@ -366,10 +403,10 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, configHash, plugins, dsHash string)
 				Annotations: getPodAnnotations(cr),
 			},
 			Spec: v13.PodSpec{
-				NodeSelector:       cr.Spec.Deployment.NodeSelector,
-				Tolerations:        cr.Spec.Deployment.Tolerations,
-				Affinity:           cr.Spec.Deployment.Affinity,
-				SecurityContext:    cr.Spec.Deployment.SecurityContext,
+				NodeSelector:       getNodeSelectors(cr),
+				Tolerations:        getTolerations(cr),
+				Affinity:           getAffinities(cr),
+				SecurityContext:    getSecurityContext(cr),
 				Volumes:            getVolumes(cr),
 				InitContainers:     getInitContainers(plugins),
 				Containers:         getContainers(cr, configHash, dsHash),
