@@ -41,6 +41,10 @@ ingress:
 
 openstack: {}
 
+grafana: {}
+
+apiserver: {}
+
 resources: {}
 
 nodeSelector: {}
