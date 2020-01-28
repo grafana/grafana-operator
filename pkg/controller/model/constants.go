@@ -15,6 +15,7 @@ const (
 	GrafanaProxyConfigFileName          = "config.yaml"
 	GrafanaIngressName                  = "grafana-ingress"
 	GrafanaProxyIngressName             = "grafana-proxy-ingress"
+	GrafanaProxyRoleBindingName         = "grafana-proxy-rolebinding"
 	GrafanaRouteName                    = "grafana-route"
 	GrafanaDeploymentName               = "grafana-deployment"
 	GrafanaProxyDeploymentName          = "grafana-proxy-deployment"

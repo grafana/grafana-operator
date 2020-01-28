@@ -1,0 +1,12 @@
+FROM golang:1.13.6-alpine3.10 as builder
+WORKDIR /go/src/github.com/integr8ly/grafana-operator/
+RUN apk add --no-cache make git curl bash
+RUN curl -Lf https://github.com/alecthomas/gometalinter/releases/download/v2.0.11/gometalinter-2.0.11-linux-amd64.tar.gz \
+		| tar --strip-components=1 -C /usr/local/bin -zxv \
+		&& gometalinter --version
+COPY . .
+ARG VERSION
+RUN make all
+
+FROM scratch as grafana-operator-binaries
+COPY --from=builder /go/src/github.com/integr8ly/grafana-operator/bin/linux/* /

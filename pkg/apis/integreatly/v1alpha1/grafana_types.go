@@ -58,6 +58,8 @@ type GrafanaServiceAccount struct {
 
 // GrafanaDeployment provides a means to configure the deployment
 type GrafanaDeployment struct {
+	Version     string            `json:"version,omitempty"`
+	Image       string            `json:"image,omitempty"`
 	Annotations map[string]string `json:"annotations,omitempty"`
 	Labels      map[string]string `json:"labels,omitempty"`
 	Replicas    int32             `json:"replicas"`

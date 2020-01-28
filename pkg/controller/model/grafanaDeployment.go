@@ -254,10 +254,18 @@ func getProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.Probe {
 
 func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Container {
 	var containers []v13.Container
+	var image string
+	var tag string
 
 	cfg := config.GetControllerConfig()
-	image := cfg.GetConfigString(config.ConfigGrafanaImage, GrafanaImage)
-	tag := cfg.GetConfigString(config.ConfigGrafanaImageTag, GrafanaVersion)
+	image = cfg.GetConfigString(config.ConfigGrafanaImage, GrafanaImage)
+	tag = cfg.GetConfigString(config.ConfigGrafanaImageTag, GrafanaVersion)
+	if cr.Spec.Deployment.Image != "" {
+		image = cr.Spec.Deployment.Image
+	}
+	if cr.Spec.Deployment.Version != "" {
+		tag = cr.Spec.Deployment.Version
+	}
 
 	containers = append(containers, v13.Container{
 		Name:       "grafana",

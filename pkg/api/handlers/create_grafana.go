@@ -120,6 +120,10 @@ func (d *createGrafana) paramsToGrafana(gc *models.Grafana, p *models.Principal)
 		ObjectMeta: m,
 		Status:     v1alpha1.GrafanaStatus{},
 		Spec: v1alpha1.GrafanaSpec{
+			Deployment: &v1alpha1.GrafanaDeployment{
+				Version: gc.Config.GrafanaVersion,
+				Image:   gc.Config.GrafanaImage,
+			},
 			Ingress: &v1alpha1.GrafanaIngress{
 				Hostname:      hostname,
 				TLSEnabled:    true,

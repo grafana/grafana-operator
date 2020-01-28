@@ -46,6 +46,12 @@ type GrafanaConfig struct {
 	// grafana group role map
 	GrafanaGroupRoleMap string `json:"grafanaGroupRoleMap,omitempty" yaml:"grafanaGroupRoleMap"`
 
+	// grafana image
+	GrafanaImage string `json:"grafanaImage,omitempty" yaml:"grafanaImage"`
+
+	// grafana version
+	GrafanaVersion string `json:"grafanaVersion,omitempty" yaml:"grafanaVersion"`
+
 	// ingress host
 	IngressHost string `json:"ingressHost,omitempty" yaml:"hostname"`
 

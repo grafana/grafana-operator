@@ -257,6 +257,14 @@ func init() {
           "type": "string",
           "x-go-custom-tag": "yaml:\"grafanaGroupRoleMap\""
         },
+        "grafanaImage": {
+          "type": "string",
+          "x-go-custom-tag": "yaml:\"grafanaImage\""
+        },
+        "grafanaVersion": {
+          "type": "string",
+          "x-go-custom-tag": "yaml:\"grafanaVersion\""
+        },
         "ingressHost": {
           "type": "string",
           "x-go-custom-tag": "yaml:\"hostname\"",
@@ -646,6 +654,14 @@ func init() {
         "grafanaGroupRoleMap": {
           "type": "string",
           "x-go-custom-tag": "yaml:\"grafanaGroupRoleMap\""
+        },
+        "grafanaImage": {
+          "type": "string",
+          "x-go-custom-tag": "yaml:\"grafanaImage\""
+        },
+        "grafanaVersion": {
+          "type": "string",
+          "x-go-custom-tag": "yaml:\"grafanaVersion\""
         },
         "ingressHost": {
           "type": "string",

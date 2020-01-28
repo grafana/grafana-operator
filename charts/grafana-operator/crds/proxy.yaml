@@ -1,0 +1,276 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: grafanaproxies.integreatly.org
+spec:
+  group: integreatly.org
+  names:
+    kind: GrafanaProxy
+    listKind: GrafanaProxyList
+    plural: grafanaproxies
+    singular: grafanaproxy
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: GrafanaProxy is the Schema for the grafanaproxies API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: GrafanaProxySpec defines the desired state of GrafanaProxy
+          properties:
+            config:
+              description: GrafanaProxyConfig provides a auth proxy
+              properties:
+                client_id:
+                  type: string
+                client_secret:
+                  type: string
+                connectors:
+                  items:
+                    properties:
+                      config:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      type:
+                        type: string
+                    required:
+                    - config
+                    - id
+                    - name
+                    - type
+                    type: object
+                  type: array
+                enablePasswordDB:
+                  type: boolean
+                enabled:
+                  type: boolean
+                expiry:
+                  description: Expiry holds configuration for the validity period
+                    of components.
+                  properties:
+                    authRequests:
+                      description: AuthRequests defines the duration of time for which
+                        the AuthRequests will be valid.
+                      type: string
+                    idTokens:
+                      description: IdTokens defines the duration of time for which
+                        the IdTokens will be valid.
+                      type: string
+                    signingKeys:
+                      description: SigningKeys defines the duration of time after
+                        which the SigningKeys will be rotated.
+                      type: string
+                  required:
+                  - authRequests
+                  - idTokens
+                  - signingKeys
+                  type: object
+                frontend:
+                  properties:
+                    dir:
+                      type: string
+                    issuer:
+                      type: string
+                    logonUrl:
+                      type: string
+                    theme:
+                      type: string
+                  required:
+                  - dir
+                  - issuer
+                  - logonUrl
+                  - theme
+                  type: object
+                issuer:
+                  type: string
+                logger:
+                  properties:
+                    format:
+                      description: Format specifies the format to be used for logging.
+                      type: string
+                    level:
+                      description: Level sets logging level severity.
+                      type: string
+                  required:
+                  - format
+                  - level
+                  type: object
+                oauth2:
+                  description: OAuth2 describes enabled OAuth2 extensions.
+                  properties:
+                    alwaysShowLoginScreen:
+                      description: If specified, show the connector selection screen
+                        even if there's only one
+                      type: boolean
+                    responseTypes:
+                      items:
+                        type: string
+                      type: array
+                    skipApprovalScreen:
+                      description: If specified, do not prompt the user to approve
+                        client authorization. The act of logging in implies authorization.
+                      type: boolean
+                  required:
+                  - alwaysShowLoginScreen
+                  - responseTypes
+                  - skipApprovalScreen
+                  type: object
+                staticClients:
+                  items:
+                    description: "Client represents an OAuth2 client. \n For further
+                      reading see:   * Trusted peers: https://developers.google.com/identity/protocols/CrossClientAuth
+                      \  * Public clients: https://developers.google.com/api-client-library/python/auth/installed-app"
+                    properties:
+                      id:
+                        type: string
+                      logoURL:
+                        type: string
+                      name:
+                        type: string
+                      public:
+                        type: boolean
+                      redirectURIs:
+                        items:
+                          type: string
+                        type: array
+                      secret:
+                        type: string
+                      trustedPeers:
+                        items:
+                          type: string
+                        type: array
+                    required:
+                    - id
+                    - logoURL
+                    - name
+                    - public
+                    - redirectURIs
+                    - secret
+                    - trustedPeers
+                    type: object
+                  type: array
+                storage:
+                  description: Storage holds app's storage configuration.
+                  properties:
+                    config:
+                      properties:
+                        inCluster:
+                          type: boolean
+                      required:
+                      - inCluster
+                      type: object
+                    type:
+                      type: string
+                  required:
+                  - config
+                  - type
+                  type: object
+                web:
+                  description: Web is the config format for the HTTP server.
+                  properties:
+                    allowedOrigins:
+                      items:
+                        type: string
+                      type: array
+                    http:
+                      type: string
+                    https:
+                      type: string
+                    tlsCert:
+                      type: string
+                    tlsKey:
+                      type: string
+                  required:
+                  - allowedOrigins
+                  - http
+                  - https
+                  - tlsCert
+                  - tlsKey
+                  type: object
+              required:
+              - client_id
+              - client_secret
+              - connectors
+              - enablePasswordDB
+              - expiry
+              - frontend
+              - issuer
+              - logger
+              - oauth2
+              - staticClients
+              - storage
+              - web
+              type: object
+            deployment:
+              description: GrafanaDeployment provides a means to configure the deployment
+              properties:
+                annotations:
+                  additionalProperties:
+                    type: string
+                  type: object
+                labels:
+                  additionalProperties:
+                    type: string
+                  type: object
+                replicas:
+                  format: int32
+                  type: integer
+              required:
+              - replicas
+              type: object
+            resources:
+              description: ResourceRequirements describes the compute resource requirements.
+              properties:
+                limits:
+                  additionalProperties:
+                    type: string
+                  description: 'Limits describes the maximum amount of compute resources
+                    allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                  type: object
+                requests:
+                  additionalProperties:
+                    type: string
+                  description: 'Requests describes the minimum amount of compute resources
+                    required. If Requests is omitted for a container, it defaults
+                    to Limits if that is explicitly specified, otherwise to an implementation-defined
+                    value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                  type: object
+              type: object
+          required:
+          - config
+          type: object
+        status:
+          description: GrafanaProxyStatus defines the observed state of GrafanaProxy
+          properties:
+            message:
+              type: string
+            phase:
+              type: string
+          required:
+          - message
+          - phase
+          type: object
+      type: object
+  version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true

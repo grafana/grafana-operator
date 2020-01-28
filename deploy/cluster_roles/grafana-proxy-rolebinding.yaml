@@ -1,0 +1,13 @@
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  name: grafana-dex
+  namespace: 5c202e58757d486b8151c93cbcf72b02
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: grafana-dex
+subjects:
+- kind: ServiceAccount
+  name: grafana-dex           # Service account assigned to the dex pod, created above
+  namespace: 5c202e58757d486b8151c93cbcf72b02  # The namespace dex is running in

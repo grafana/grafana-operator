@@ -1,0 +1,10 @@
+bin/
+build/
+deploy/
+documentation/
+etc/
+_output
+_scratch
+.git
+_output
+Docker*

@@ -24,6 +24,7 @@ func (i *GrafanaProxyReconciler) Reconcile(state *common.ClusterState, cr *v1alp
 	desired := common.DesiredClusterState{}
 
 	desired = desired.AddActions(i.getGrafanaProxyConfigDesiredState(state, cr))
+	desired = desired.AddAction(i.getGrafanaProxyRoleBindingDesiredState(state, cr))
 	desired = desired.AddAction(i.getGrafanaProxyServiceAccountDesiredState(state, cr))
 	desired = desired.AddAction(i.getGrafanaProxyServiceDesiredState(state, cr))
 	desired = desired.AddAction(i.getGrafanaProxyIngressDesiredState(state, cr))
@@ -122,6 +123,19 @@ func (i *GrafanaProxyReconciler) getGrafanaProxyIngressDesiredState(state *commo
 	return common.GenericUpdateAction{
 		Ref: model.GrafanaProxyIngressReconciled(cr, state.GrafanaProxyIngress),
 		Msg: "update grafana proxy ingress",
+	}
+}
+
+func (i *GrafanaProxyReconciler) getGrafanaProxyRoleBindingDesiredState(state *common.ClusterState, cr *v1alpha1.GrafanaProxy) common.ClusterAction {
+	if state.GrafanaProxyRoleBinding == nil {
+		return common.GenericCreateAction{
+			Ref: model.GrafanaProxyRoleBinding(cr),
+			Msg: "create grafana proxy roleBinding",
+		}
+	}
+	return common.GenericUpdateAction{
+		Ref: model.GrafanaProxyRoleBindingReconciled(cr, state.GrafanaProxyRoleBinding),
+		Msg: "update grafana proxy roleBinding",
 	}
 }
 

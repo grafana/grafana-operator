@@ -210,6 +210,12 @@ definitions:
       grafanaGroupRoleMap:
         type: string
         x-go-custom-tag: yaml:"grafanaGroupRoleMap"
+      grafanaVersion:
+        type: string
+        x-go-custom-tag: yaml:"grafanaVersion"
+      grafanaImage:
+        type: string
+        x-go-custom-tag: yaml:"grafanaImage"
       orgName:
         type: string
         x-go-custom-tag: yaml:"orgName"
