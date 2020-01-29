@@ -53,7 +53,7 @@ func GrafanaIngress(cr *v1alpha1.Grafana) *v1beta1.Ingress {
 			Name:        GrafanaIngressName,
 			Namespace:   cr.Namespace,
 			Labels:      GetIngressLabels(cr),
-			Annotations: GetIngressAnnotations(cr),
+			Annotations: GetIngressAnnotations(cr, nil),
 		},
 		Spec: getIngressSpec(cr),
 	}
@@ -62,7 +62,7 @@ func GrafanaIngress(cr *v1alpha1.Grafana) *v1beta1.Ingress {
 func GrafanaIngressReconciled(cr *v1alpha1.Grafana, currentState *v1beta1.Ingress) *v1beta1.Ingress {
 	reconciled := currentState.DeepCopy()
 	reconciled.Labels = GetIngressLabels(cr)
-	reconciled.Annotations = GetIngressAnnotations(cr)
+	reconciled.Annotations = GetIngressAnnotations(cr, currentState.Annotations)
 	reconciled.Spec = getIngressSpec(cr)
 	return reconciled
 }

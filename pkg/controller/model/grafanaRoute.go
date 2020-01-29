@@ -29,11 +29,11 @@ func GetIngressLabels(cr *v1alpha1.Grafana) map[string]string {
 	return cr.Spec.Ingress.Labels
 }
 
-func GetIngressAnnotations(cr *v1alpha1.Grafana) map[string]string {
+func GetIngressAnnotations(cr *v1alpha1.Grafana, existing map[string]string) map[string]string {
 	if cr.Spec.Ingress == nil {
-		return nil
+		return existing
 	}
-	return cr.Spec.Ingress.Annotations
+	return MergeAnnotations(cr.Spec.Ingress.Annotations, existing)
 }
 
 func GetIngressTargetPort(cr *v1alpha1.Grafana) intstr.IntOrString {
@@ -92,7 +92,7 @@ func GrafanaRoute(cr *v1alpha1.Grafana) *v1.Route {
 			Name:        GrafanaRouteName,
 			Namespace:   cr.Namespace,
 			Labels:      GetIngressLabels(cr),
-			Annotations: GetIngressAnnotations(cr),
+			Annotations: GetIngressAnnotations(cr, nil),
 		},
 		Spec: getRouteSpec(cr),
 	}
@@ -108,7 +108,7 @@ func GrafanaRouteSelector(cr *v1alpha1.Grafana) client.ObjectKey {
 func GrafanaRouteReconciled(cr *v1alpha1.Grafana, currentState *v1.Route) *v1.Route {
 	reconciled := currentState.DeepCopy()
 	reconciled.Labels = GetIngressLabels(cr)
-	reconciled.Annotations = GetIngressAnnotations(cr)
+	reconciled.Annotations = GetIngressAnnotations(cr, currentState.Annotations)
 	reconciled.Spec = getRouteSpec(cr)
 	return reconciled
 }
