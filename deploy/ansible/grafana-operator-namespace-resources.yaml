@@ -1,0 +1,150 @@
+---
+- name: Grafana Operator | Namespace Resources
+  hosts: localhost
+  module_defaults:
+    group/k8s:
+      host: "{{ k8s_host }}"
+      validate_certs: "{{ k8s_validate_certs | default(true) }}"
+  tasks:
+  - name: Grafana Operator | Cluster Resources | Params validation | k8s auth
+    fail:
+      msg: "Either k8s_api_key or k8s_username and k8s_password must be specified"
+    when: ((k8s_api_key is not defined) and (k8s_username is not defined) and (k8s_password is not defined)) or
+          ((k8s_api_key is defined) and ((k8s_username is defined) or (k8s_password is defined)))
+
+  - name: Grafana Operator | Namespace Resources | Params validation | grafana_operator_args_scan_all and grafana_operator_args_namespaces
+    fail:
+      msg: "grafana_operator_args_scan_all and grafana_operator_args_namespaces are mutual exclusive"
+    when: (grafana_operator_args_scan_all is defined) and (grafana_operator_args_namespaces is defined)
+
+  - name: Grafana Operator | Namespace Resources | Params defaults
+    set_fact:
+      grafana_operator_install: "{{ grafana_operator_install | default(true) }}"
+      grafana_operator_delete_namespace: "{{ grafana_operator_delete_namespace | default(false) }}"
+      grafana_operator_namespace: "{{ grafana_operator_namespace | default('grafana') }}"
+
+  - name: Grafana Operator | Cluster Resources | Private params
+    set_fact:
+      _k8s_resources_state: "{{ (grafana_operator_install | bool) | ternary('present', 'absent') }}"
+      _k8s_resources_task_title: "{{ (grafana_operator_install | bool) | ternary('Create', 'Delete') }}"
+      _k8s_namespace_state: "{{ ((grafana_operator_install | bool) or ((not (grafana_operator_install | bool)) and (not (grafana_operator_delete_namespace | bool)))) | ternary('present', 'absent') }}"
+      _k8s_namespace_task_title: "{{ ((grafana_operator_install | bool) or ((not (grafana_operator_install | bool)) and (not (grafana_operator_delete_namespace | bool)))) | ternary('Create', 'Delete') }}"
+
+  - block:
+    - block:
+      - name: Grafana Operator | Cluster Resources | Get K8s access token
+        k8s_auth:
+          username: "{{ k8s_username }}"
+          password: "{{ k8s_password }}"
+        register: k8s_auth_results
+  
+      - name: Grafana Operator | Cluster Resources | Set k8s_api_key
+        set_fact:
+          k8s_api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+      when: (k8s_api_key is not defined) and ((k8s_username is defined) and (k8s_password is defined))
+  
+    - block:
+      - name: "Grafana Operator | Namespace Resources | {{ _k8s_namespace_task_title }} Namespace"
+        k8s:
+          kind: Namespace
+          name: "{{ grafana_operator_namespace }}"
+          state: "{{ _k8s_namespace_state }}"
+          api_key: "{{ k8s_api_key }}"
+      rescue:
+      - name: "Grafana Operator | Namespace Resources | {{ _k8s_namespace_task_title }} Project if couldn't {{ _k8s_namespace_task_title }} Namespace"
+        k8s:
+          kind: Project 
+          name: "{{ grafana_operator_namespace }}"
+          state: "{{ _k8s_namespace_state }}"
+          api_key: "{{ k8s_api_key }}"
+  
+    - name: "Grafana Operator | Namespace Resources | {{ _k8s_resources_task_title }} Service Account"
+      k8s:
+        src: "{{ item }}"
+        state: "{{ _k8s_resources_state }}"
+        namespace: "{{ grafana_operator_namespace }}"
+        api_key: "{{ k8s_api_key }}"
+      loop:
+      - ../roles/service_account.yaml
+
+    - name: "Grafana Operator | Namespace Resources | {{ _k8s_resources_task_title }} Namespace Roles & Role Bindings"
+      k8s:
+        src: "{{ item }}"
+        state: "{{ _k8s_resources_state }}"
+        namespace: "{{ grafana_operator_namespace }}"
+        api_key: "{{ k8s_api_key }}"
+      loop:
+      - ../roles/role.yaml
+      - ../roles/role_binding.yaml
+
+    - name: Grafana Operator | Namespace Resources | Operator Args
+      set_fact:
+        grafana_operator_args: []
+      when: grafana_operator_args is not defined
+      
+    - name: Grafana Operator | Namespace Resources | Operator Args | --grafana-image
+      set_fact:
+        grafana_operator_args: "{{ grafana_operator_args + [ '--grafana-image='+grafana_operator_args_grafana_image ] }}"
+      when: grafana_operator_args_grafana_image is defined
+
+    - name: Grafana Operator | Namespace Resources | Operator Args | --grafana-image-tag
+      set_fact:
+        grafana_operator_args: "{{ grafana_operator_args + [ '--grafana-image-tag='+grafana_operator_args_grafana_image_tag ] }}"
+      when: grafana_operator_args_grafana_image_tag is defined
+
+    - name: Grafana Operator | Namespace Resources | Operator Args | --grafana-plugins-init-container-image
+      set_fact:
+        grafana_operator_args: "{{ grafana_operator_args + [ '--grafana-plugins-init-container-image='+grafana_operator_args_grafana_plugins_init_container_image ] }}"
+      when: grafana_operator_args_grafana_plugins_init_container_image is defined
+
+    - name: Grafana Operator | Namespace Resources | Operator Args | --grafana-plugins-init-container-tag
+      set_fact:
+        grafana_operator_args: "{{ grafana_operator_args + [ '--grafana-plugins-init-container-tag='+grafana_operator_args_grafana_plugins_init_container_tag ] }}"
+      when: grafana_operator_args_grafana_plugins_init_container_tag is defined
+
+    - name: Grafana Operator | Namespace Resources | Operator Args | --scan-all
+      set_fact:
+        grafana_operator_args: "{{ grafana_operator_args + [ '--scan-all' ] }}"
+      when: (grafana_operator_args_scan_all is defined) and (grafana_operator_args_scan_all | bool)
+
+    - name: Grafana Operator | Namespace Resources | Operator Args | --namespaces
+      set_fact:
+        grafana_operator_args: "{{ grafana_operator_args + [ '--namespaces='+grafana_operator_args_namespaces ] }}"
+      when: grafana_operator_args_namespaces is defined
+
+    - name: "Grafana Operator | Namespace Resources | {{ _k8s_resources_task_title }} Operator"
+      k8s:
+        src: ../operator.yaml
+        state: "{{ _k8s_resources_state }}"
+        namespace: "{{ grafana_operator_namespace }}"
+        api_key: "{{ k8s_api_key }}"
+        wait: yes
+        wait_condition:
+          type: Available
+          status: 'True'
+
+    - name: "Grafana Operator | Namespace Resources | {{ _k8s_resources_task_title }} Operator Args"
+      k8s:
+        kind: Deployment
+        name: grafana-operator
+        state: "{{ _k8s_resources_state }}"
+        namespace: "{{ grafana_operator_namespace }}"
+        api_key: "{{ k8s_api_key }}"
+        resource_definition:
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: grafana-operator
+                    args: "{{ grafana_operator_args }}"
+        wait: yes
+        wait_condition:
+          type: Available
+          status: 'True'
+
+    always:
+    - name: Grafana Operator | Namespace Resources | Revoke K8s access token
+      k8s_auth:
+        state: absent
+        api_key: "{{ k8s_api_key }}"
+      when: ((k8s_username is defined) and (k8s_password is defined))

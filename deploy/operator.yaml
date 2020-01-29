@@ -18,7 +18,6 @@ spec:
       containers:
         - name: grafana-operator
           image: quay.io/integreatly/grafana-operator:latest
-          args: []
           ports:
           - containerPort: 60000
             name: metrics
