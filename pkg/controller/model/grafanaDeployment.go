@@ -56,15 +56,16 @@ func getRollingUpdateStrategy() *v1.RollingUpdateDeployment {
 	}
 }
 
-func getPodAnnotations(cr *v1alpha1.Grafana) map[string]string {
+func getPodAnnotations(cr *v1alpha1.Grafana, existing map[string]string) map[string]string {
 	var annotations = map[string]string{}
-	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Annotations != nil {
-		annotations = cr.Spec.Deployment.Annotations
-	}
-
 	// Add fixed annotations
 	annotations["prometheus.io/scrape"] = "true"
 	annotations["prometheus.io/port"] = fmt.Sprintf("%v", GetGrafanaPort(cr))
+	annotations = MergeAnnotations(annotations, existing)
+
+	if cr.Spec.Deployment != nil {
+		annotations = MergeAnnotations(cr.Spec.Deployment.Annotations, annotations)
+	}
 	return annotations
 }
 
@@ -351,7 +352,7 @@ func getInitContainers(plugins string) []v13.Container {
 	}
 }
 
-func getDeploymentSpec(cr *v1alpha1.Grafana, configHash, plugins, dsHash string) v1.DeploymentSpec {
+func getDeploymentSpec(cr *v1alpha1.Grafana, annotations map[string]string, configHash, plugins, dsHash string) v1.DeploymentSpec {
 	return v1.DeploymentSpec{
 		Replicas: getReplicas(cr),
 		Selector: &v12.LabelSelector{
@@ -363,7 +364,7 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, configHash, plugins, dsHash string)
 			ObjectMeta: v12.ObjectMeta{
 				Name:        GrafanaDeploymentName,
 				Labels:      getPodLabels(cr),
-				Annotations: getPodAnnotations(cr),
+				Annotations: getPodAnnotations(cr, annotations),
 			},
 			Spec: v13.PodSpec{
 				Volumes:            getVolumes(cr),
@@ -385,7 +386,7 @@ func GrafanaDeployment(cr *v1alpha1.Grafana, configHash, dsHash string) *v1.Depl
 			Name:      GrafanaDeploymentName,
 			Namespace: cr.Namespace,
 		},
-		Spec: getDeploymentSpec(cr, configHash, "", dsHash),
+		Spec: getDeploymentSpec(cr, nil, configHash, "", dsHash),
 	}
 }
 
@@ -398,6 +399,10 @@ func GrafanaDeploymentSelector(cr *v1alpha1.Grafana) client.ObjectKey {
 
 func GrafanaDeploymentReconciled(cr *v1alpha1.Grafana, currentState *v1.Deployment, configHash, plugins, dshash string) *v1.Deployment {
 	reconciled := currentState.DeepCopy()
-	reconciled.Spec = getDeploymentSpec(cr, configHash, plugins, dshash)
+	reconciled.Spec = getDeploymentSpec(cr,
+		currentState.Spec.Template.Annotations,
+		configHash,
+		plugins,
+		dshash)
 	return reconciled
 }

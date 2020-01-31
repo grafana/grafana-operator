@@ -16,11 +16,12 @@ func getServiceLabels(cr *v1alpha1.Grafana) map[string]string {
 	return cr.Spec.Service.Labels
 }
 
-func getServiceAnnotations(cr *v1alpha1.Grafana) map[string]string {
+func getServiceAnnotations(cr *v1alpha1.Grafana, existing map[string]string) map[string]string {
 	if cr.Spec.Service == nil {
-		return nil
+		return existing
 	}
-	return cr.Spec.Service.Annotations
+
+	return MergeAnnotations(cr.Spec.Service.Annotations, existing)
 }
 
 func getServiceType(cr *v1alpha1.Grafana) v1.ServiceType {
@@ -99,7 +100,7 @@ func GrafanaService(cr *v1alpha1.Grafana) *v1.Service {
 			Name:        GrafanaServiceName,
 			Namespace:   cr.Namespace,
 			Labels:      getServiceLabels(cr),
-			Annotations: getServiceAnnotations(cr),
+			Annotations: getServiceAnnotations(cr, nil),
 		},
 		Spec: v1.ServiceSpec{
 			Ports: getServicePorts(cr, nil),
@@ -115,7 +116,7 @@ func GrafanaService(cr *v1alpha1.Grafana) *v1.Service {
 func GrafanaServiceReconciled(cr *v1alpha1.Grafana, currentState *v1.Service) *v1.Service {
 	reconciled := currentState.DeepCopy()
 	reconciled.Labels = getServiceLabels(cr)
-	reconciled.Annotations = getServiceAnnotations(cr)
+	reconciled.Annotations = getServiceAnnotations(cr, currentState.Annotations)
 	reconciled.Spec.Ports = getServicePorts(cr, currentState)
 	reconciled.Spec.Type = getServiceType(cr)
 	return reconciled
