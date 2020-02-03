@@ -51,9 +51,9 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
         volumes:
-            - name: config
+          - name: config
             configMap:
-                name: apiserver-config
+              name: apiserver-config
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
