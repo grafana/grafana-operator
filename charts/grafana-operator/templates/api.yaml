@@ -50,10 +50,10 @@ spec:
               readOnly: true
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-        volumes:
-          - name: config
-            configMap:
-              name: apiserver-config
+          volumes:
+            - name: config
+              configMap:
+                name: apiserver-config
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
