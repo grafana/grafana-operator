@@ -30,6 +30,10 @@ rules:
       - get
       - list
       - watch
+      - create
+      - delete
+      - update
+      - patch
   - apiGroups:
       - apps
     resources:
