@@ -106,6 +106,15 @@ spec:
                 labels:
                   type: object
                   description: Additional labels for the service
+                nodeSelector: 
+                  type: object
+                  description: Additional labels for the running grafana pods in a labeled node.
+                tolerations:
+                  type: array
+                  description: Additonal labels for running grafana pods in tained nodes.
+                affinity:
+                  type: object
+                  description: Additonal labels for running grafana pods with affinity properties.
             serviceAccount:
               type: object
               properties:

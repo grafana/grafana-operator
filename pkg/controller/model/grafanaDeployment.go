@@ -34,6 +34,21 @@ func getResources(cr *v1alpha1.Grafana) v13.ResourceRequirements {
 		},
 	}
 }
+func getAffinities(cr *v1alpha1.Grafana) *v13.Affinity {
+	var affinity = v13.Affinity{}
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Affinity != nil {
+		affinity = *cr.Spec.Deployment.Affinity
+	}
+	return &affinity
+}
+
+func getSecurityContext(cr *v1alpha1.Grafana) *v13.PodSecurityContext {
+	var securityContext = v13.PodSecurityContext{}
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.SecurityContext != nil {
+		securityContext = *cr.Spec.Deployment.SecurityContext
+	}
+	return &securityContext
+}
 
 func getReplicas(cr *v1alpha1.Grafana) *int32 {
 	var replicas int32 = 1
@@ -76,6 +91,27 @@ func getPodLabels(cr *v1alpha1.Grafana) map[string]string {
 	}
 	labels["app"] = GrafanaPodLabel
 	return labels
+}
+
+func getNodeSelectors(cr *v1alpha1.Grafana) map[string]string {
+	var nodeSelector = map[string]string{}
+
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.NodeSelector != nil {
+		nodeSelector = cr.Spec.Deployment.NodeSelector
+	}
+	return nodeSelector
+
+}
+
+func getTolerations(cr *v1alpha1.Grafana) []v13.Toleration {
+	tolerations := []v13.Toleration{}
+
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Tolerations != nil {
+		for _, val := range cr.Spec.Deployment.Tolerations {
+			tolerations = append(tolerations, val)
+		}
+	}
+	return tolerations
 }
 
 func getVolumes(cr *v1alpha1.Grafana) []v13.Volume {
@@ -367,6 +403,10 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, annotations map[string]string, conf
 				Annotations: getPodAnnotations(cr, annotations),
 			},
 			Spec: v13.PodSpec{
+				NodeSelector:       getNodeSelectors(cr),
+				Tolerations:        getTolerations(cr),
+				Affinity:           getAffinities(cr),
+				SecurityContext:    getSecurityContext(cr),
 				Volumes:            getVolumes(cr),
 				InitContainers:     getInitContainers(plugins),
 				Containers:         getContainers(cr, configHash, dsHash),
