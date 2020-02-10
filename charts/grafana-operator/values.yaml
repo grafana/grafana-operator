@@ -39,6 +39,8 @@ ingress:
   #    hosts:
   #      - chart-example.local
 
+record: {}
+
 openstack: {}
 
 grafana: {}

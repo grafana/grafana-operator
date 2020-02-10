@@ -22,38 +22,38 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
-        - name: api
-          securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command:
-          - apiserver
-          ports:
-            - name: metrics
-              containerPort: 8080
-              protocol: TCP
-          readinessProbe:
-            exec:
-              command:
-                - stat
-                - /tmp/operator-sdk-ready
-            initialDelaySeconds: 4
-            periodSeconds: 10
-            failureThreshold: 1
-          env:
-            - name: CONFIG_FILE
-              value: "/etc/config/config.yaml"
-          volumeMounts:
-            - name: config
-              mountPath: /etc/config
-              readOnly: true
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}
-        volumes:
-            - name: config
-            configMap:
-                name: apiserver-config
+      - name: api
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 12 }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        command:
+        - apiserver
+        ports:
+          - name: metrics
+            containerPort: 8080
+            protocol: TCP
+        readinessProbe:
+          exec:
+            command:
+              - stat
+              - /tmp/operator-sdk-ready
+          initialDelaySeconds: 4
+          periodSeconds: 10
+          failureThreshold: 1
+        env:
+          - name: CONFIG_FILE
+            value: "/etc/config/config.yaml"
+        volumeMounts:
+          - name: config
+            mountPath: /etc/config
+            readOnly: true
+        resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+      - name: config
+        configMap:
+          name: apiserver-config
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
