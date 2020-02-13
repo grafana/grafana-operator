@@ -42,7 +42,7 @@ spec:
           periodSeconds: 10
           failureThreshold: 1
         env:
-          - name: config-file-path
+          - name: CONFIG_FILE
             value: "/etc/config/config.yaml"
         volumeMounts:
           - name: config
