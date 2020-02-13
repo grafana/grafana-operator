@@ -34,13 +34,22 @@ spec:
             containerPort: 8080
             protocol: TCP
         readinessProbe:
-          exec:
-            command:
-              - stat
-              - /tmp/operator-sdk-ready
-          initialDelaySeconds: 4
+          httpGet:
+            path: /info
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 10
           periodSeconds: 10
-          failureThreshold: 1
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /info
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 1
+          failureThreshold: 3
         env:
           - name: CONFIG_FILE
             value: "/etc/config/config.yaml"
