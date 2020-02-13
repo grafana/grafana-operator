@@ -8,12 +8,12 @@ import (
 	"regexp"
 
 	"github.com/go-openapi/loads"
-	"github.com/namsral/flag"
 	apipkg "github.com/integr8ly/grafana-operator/v3/pkg/api"
 	"github.com/integr8ly/grafana-operator/v3/pkg/api/config"
 	"github.com/integr8ly/grafana-operator/v3/pkg/api/rest"
 	"github.com/integr8ly/grafana-operator/v3/pkg/api/rest/operations"
 	"github.com/integr8ly/grafana-operator/v3/pkg/apis"
+	"github.com/namsral/flag"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -39,7 +39,6 @@ func init() {
 	flag.IntVar(&opts.APIPort, "API_PORT", 8080, "Lister port for api exposition")
 
 	flag.Parse()
-	fmt.Println(opts.ConfigFilePath, "----------------", opts.MetricPort)
 	logf.SetLogger(logf.ZapLogger(false))
 }
 
@@ -98,7 +97,7 @@ func main() {
 	defer server.Shutdown()
 
 	//Setup metrics listener
-	metricsHost := "0.0.0.0"
+	metricsHost := ""
 	metricsListener, err := net.Listen("tcp", fmt.Sprintf("%v:%v", metricsHost, opts.MetricPort))
 	log.Info(
 		"msg", "Exposing metrics",
@@ -112,6 +111,7 @@ func main() {
 		}
 	}
 	server.Port = opts.APIPort
+	server.Host = ""
 	server.ConfigureAPI()
 
 	if err := server.Serve(); err != nil {

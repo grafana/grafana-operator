@@ -3,13 +3,11 @@ module github.com/integr8ly/grafana-operator/v3
 go 1.13
 
 require (
-	cloud.google.com/go v0.34.0
-	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/beevik/etree v1.1.0 // indirect
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/databus23/goslo.policy v0.0.0-20170317131957-3ae74dd07ebf
 	github.com/databus23/keystone v0.0.0-20180111110916-350fd0e663cd
-	github.com/dexidp/dex v2.13.0+incompatible
+	github.com/dexidp/dex v2.13.0+incompatible // indirect
 	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/ghodss/yaml v1.0.1-0.20180820084758-c7ce16629ff4
 	github.com/go-logr/logr v0.1.0
@@ -42,9 +40,7 @@ require (
 	k8s.io/apimachinery v0.0.0
 	k8s.io/client-go v11.0.0+incompatible
 	k8s.io/kube-openapi v0.0.0-20190918143330-0270cf2f1c1d
-	k8s.io/kubernetes v1.15.4
 	sigs.k8s.io/controller-runtime v0.3.0
-	sigs.k8s.io/yaml v1.1.0
 )
 
 // Pinned to kubernetes-1.15.4
