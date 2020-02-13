@@ -7,7 +7,7 @@ replicaCount: 1
 image:
   repository: hub.global.cloud.sap/monsoon/grafana-operator
   pullPolicy: IfNotPresent
-  tag: 035bb4e8
+  tag: d575af70
 
 imagePullSecrets: []
 nameOverride: ""
