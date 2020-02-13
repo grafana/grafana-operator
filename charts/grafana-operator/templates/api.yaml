@@ -3,16 +3,16 @@ kind: Deployment
 metadata:
   name: grafana-operator-api
   labels:
-    {{- include "grafana-operator.labels" . | nindent 4 }}
+    {{- include "grafana-operator-api.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "grafana-operator.selectorLabels" . | nindent 6 }}
+      {{- include "grafana-operator-api.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "grafana-operator.selectorLabels" . | nindent 8 }}
+        {{- include "grafana-operator-api.selectorLabels" . | nindent 8 }}
     spec:
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
