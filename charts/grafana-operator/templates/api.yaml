@@ -30,7 +30,7 @@ spec:
         command:
         - apiserver
         ports:
-          - name: metrics
+          - name: http
             containerPort: 8080
             protocol: TCP
         readinessProbe:
