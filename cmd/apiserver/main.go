@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"net"
 	"net/http"
@@ -9,6 +8,7 @@ import (
 	"regexp"
 
 	"github.com/go-openapi/loads"
+	"github.com/namsral/flag"
 	apipkg "github.com/integr8ly/grafana-operator/v3/pkg/api"
 	"github.com/integr8ly/grafana-operator/v3/pkg/api/config"
 	"github.com/integr8ly/grafana-operator/v3/pkg/api/rest"
@@ -32,14 +32,14 @@ var (
 )
 
 func init() {
-	flag.StringVar(&opts.ConfigFilePath, "config-file-path", "./etc/apiserver/config/config.yaml", "To set apiserver config file path")
-	flag.StringVar(&DefaultPolicyFile, "policy", "etc/policy.json", "API authorization policy file")
-	flag.StringVar(&namespace, "namespace", "grafana-operator", "k8s Namespace")
-	flag.IntVar(&opts.MetricPort, "metrics-port", 9100, "Lister port for metric exposition")
-	flag.IntVar(&opts.APIPort, "api-port", 8080, "Lister port for api exposition")
+	flag.StringVar(&opts.ConfigFilePath, "CONFIG_FILE", "./etc/apiserver/config/config.yaml", "To set apiserver config file path")
+	flag.StringVar(&DefaultPolicyFile, "POLICY_FILE", "etc/policy.json", "API authorization policy file")
+	flag.StringVar(&namespace, "NAMESPACE", "grafana-operator", "k8s Namespace")
+	flag.IntVar(&opts.MetricPort, "METRICS_PORT", 9100, "Lister port for metric exposition")
+	flag.IntVar(&opts.APIPort, "API_PORT", 8080, "Lister port for api exposition")
 
 	flag.Parse()
-
+	fmt.Println(opts.ConfigFilePath, "----------------", opts.MetricPort)
 	logf.SetLogger(logf.ZapLogger(false))
 }
 

@@ -25,6 +25,7 @@ require (
 	github.com/gorilla/handlers v1.4.2 // indirect
 	github.com/integr8ly/grafana-operator v2.0.0+incompatible
 	github.com/jessevdk/go-flags v1.4.0
+	github.com/namsral/flag v1.7.4-pre
 	github.com/openshift/api v3.9.1-0.20190424152011-77b8897ec79a+incompatible
 	github.com/operator-framework/operator-sdk v0.12.0
 	github.com/pkg/errors v0.8.1
