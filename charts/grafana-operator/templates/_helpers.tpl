@@ -43,11 +43,28 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
 
+{{- define "grafana-operator-api.labels" -}}
+helm.sh/chart: {{ include "grafana-operator.chart" . }}
+{{ include "grafana-operator-api.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end -}}
+
 {{/*
 Selector labels
 */}}
 {{- define "grafana-operator.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "grafana-operator.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end -}}
+
+{{/*
+Selector API labels
+*/}}
+{{- define "grafana-operator-api.selectorLabels" -}}
+app.kubernetes.io/name: "grafana-operator-api"
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 
