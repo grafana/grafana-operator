@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: grafana-operator-api
+  namespace: {{.Release.Namespace}}
   labels:
     {{- include "grafana-operator-api.labels" . | nindent 4 }}
 spec:

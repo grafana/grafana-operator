@@ -2,6 +2,7 @@ apiVersion: integreatly.org/v1alpha1
 kind: GrafanaDataSource
 metadata:
   name: sapcc-maia-grafanadatasource
+  namespace: {{.Release.Namespace}}
   labels: 
     grafana: templates
 spec:

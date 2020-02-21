@@ -5,6 +5,7 @@ kind: GrafanaDashboard
 
 metadata:
   name: {{ printf "%s" $path | replace "/" "-" }}
+  namespace: {{.Release.Namespace}}
   labels:
     grafana: templates
 
