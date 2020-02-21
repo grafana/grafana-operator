@@ -1,3 +1,4 @@
+$namespace := .Release.Namespace
 {{- range $path, $bytes := .Files.Glob "dashboards/*.json" }}
 ---
 apiVersion: integreatly.org/v1alpha1
@@ -5,7 +6,7 @@ kind: GrafanaDashboard
 
 metadata:
   name: {{ printf "%s" $path | replace "/" "-" }}
-  namespace: "{{.Release.Namespace}}"
+  namespace: {{ printf "%s" $namespace }}
   labels:
     grafana: templates
 
