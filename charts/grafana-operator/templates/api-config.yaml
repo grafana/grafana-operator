@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name:  apiserver-config
-  namespace: {{.Release.namespace}}
+  namespace: {{.Release.Namespace}}
   labels:
     app: grafana-operator
 data:
