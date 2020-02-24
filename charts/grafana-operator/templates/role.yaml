@@ -3,6 +3,7 @@ kind: Role
 metadata:
   creationTimestamp: null
   name: grafana-operator
+  namespace: {{.Release.Namespace}}
 rules:
 - apiGroups:
   - ""

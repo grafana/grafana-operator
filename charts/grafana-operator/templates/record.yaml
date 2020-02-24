@@ -2,6 +2,7 @@ apiVersion: disco.stable.sap.cc/v1
 kind: Record
 metadata:
   name: "{{ .Values.record.name }}"
+  namespace: {{.Release.Namespace}}
 spec:
   type: CNAME
   record: "{{ .Values.record.record }}"

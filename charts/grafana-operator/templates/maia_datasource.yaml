@@ -1,0 +1,17 @@
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDataSource
+metadata:
+  name: sapcc-maia-grafanadatasource
+  namespace: {{.Release.Namespace}}
+  labels: 
+    grafana: templates
+spec:
+  name: sapcc_maia.yaml
+  datasources:
+    - name: maia-prometheus
+      type: prometheus
+      access: proxy
+      version: 1
+      basicAuth: true
+      withCredentials: true
+      url: "https://maia.{{ .Values.global.region }}.cloud.sap"

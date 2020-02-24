@@ -1,0 +1,17 @@
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-operator-api
+  namespace: {{.Release.Namespace}}
+  labels:
+    {{- include "grafana-operator-api.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: 8080
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "grafana-operator-api.selectorLabels" . | nindent 4 }}

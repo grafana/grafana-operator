@@ -2,17 +2,18 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: grafana-operator-api
+  namespace: {{.Release.Namespace}}
   labels:
-    {{- include "grafana-operator.labels" . | nindent 4 }}
+    {{- include "grafana-operator-api.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "grafana-operator.selectorLabels" . | nindent 6 }}
+      {{- include "grafana-operator-api.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "grafana-operator.selectorLabels" . | nindent 8 }}
+        {{- include "grafana-operator-api.selectorLabels" . | nindent 8 }}
     spec:
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -30,17 +31,26 @@ spec:
         command:
         - apiserver
         ports:
-          - name: metrics
+          - name: http
             containerPort: 8080
             protocol: TCP
         readinessProbe:
-          exec:
-            command:
-              - stat
-              - /tmp/operator-sdk-ready
-          initialDelaySeconds: 4
+          httpGet:
+            path: /info
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 10
           periodSeconds: 10
-          failureThreshold: 1
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /info
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 1
+          failureThreshold: 3
         env:
           - name: CONFIG_FILE
             value: "/etc/config/config.yaml"
