@@ -15,6 +15,7 @@ rules:
   - secrets
   - serviceaccounts
   - namespaces
+  - rolebindings
   verbs:
   - get
   - list
