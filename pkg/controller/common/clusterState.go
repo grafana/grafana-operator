@@ -9,7 +9,7 @@ import (
 	v13 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
-	v1a1 "k8s.io/api/rbac/v1alpha1"
+	rbac "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -24,7 +24,7 @@ type ClusterState struct {
 	GrafanaRoute               *v12.Route
 	GrafanaIngress             *v1beta1.Ingress
 	GrafanaProxyIngress        *v1beta1.Ingress
-	GrafanaProxyRoleBinding    *v1a1.RoleBinding
+	GrafanaProxyRoleBinding    *rbac.RoleBinding
 	GrafanaDeployment          *v13.Deployment
 	GrafanaProxyDeployment     *v13.Deployment
 	GrafanaDataSourceConfig    *v1.ConfigMap
