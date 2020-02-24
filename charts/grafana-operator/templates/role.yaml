@@ -83,6 +83,7 @@ rules:
   - grafanadatasources
   - grafanadatasources/status
   - grafanaproxies
+  - grafanaproxies/status
   verbs:
   - get
   - list
