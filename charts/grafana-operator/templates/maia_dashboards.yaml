@@ -9,6 +9,7 @@ metadata:
   namespace: {{ $relns }}
   labels:
     grafana: templates
+    app: grafana
 
 spec:
   name: dashboards-limes-overview.json
