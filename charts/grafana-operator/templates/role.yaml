@@ -8,13 +8,15 @@ rules:
   - rbac.authorization.k8s.io
   resources:
   - rolebindings
+  - roles
   verbs:
-  - get
-  - list
   - create
-  - update
   - delete
   - deletecollection
+  - get
+  - list
+  - patch
+  - update
   - watch
 - apiGroups:
   - ""
