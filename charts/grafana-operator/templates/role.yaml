@@ -5,6 +5,18 @@ metadata:
   name: grafana-operator
 rules:
 - apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - rolebindings
+  verbs:
+  - get
+  - list
+  - create
+  - update
+  - delete
+  - deletecollection
+  - watch
+- apiGroups:
   - ""
   resources:
   - pods
