@@ -11,6 +11,8 @@ metadata:
     grafana: templates
 
 spec:
-{{ printf "%s" $bytes | indent 2 }}
+  name: dashboards-limes-overview.json
+  json: >
+{{ printf "%s" $bytes | indent 4 }}
 
 {{- end }}
