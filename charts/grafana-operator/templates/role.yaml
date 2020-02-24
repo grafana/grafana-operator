@@ -111,5 +111,12 @@ rules:
   resources:
   - '*'
   - grafanaproxies
+  - customresourcedefinitions
+  verbs:
+  - '*'
+- apiGroups:
+  - dex.coreos.com
+  resources:
+  - '*'
   verbs:
   - '*'
