@@ -7,12 +7,12 @@ metadata:
     app: grafana-operator
 data:
   config.yaml: |
-    region: {{ .Values.global.region}}
+    region: {{ .Values.region}}
     secret_key: "{{ .Values.apiserver.secret_key }}"
     cryptNonce: "{{ .Values.apiserver.crypt_nonce }}"
     grafana: 
         config:
-            hostname: "%s.grafana-svc.{{ .Values.global.region}}.cloud.sap"
+            hostname: "%s.grafana-svc.{{ .Values.region }}.cloud.sap"
             logLevel: "{{ .Values.grafana.log_level }}"
             basicAuth: false
             adminPassword: "{{ .Values.grafana.admin_password }}"
