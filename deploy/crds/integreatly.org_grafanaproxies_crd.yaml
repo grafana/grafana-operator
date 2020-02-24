@@ -42,8 +42,52 @@ spec:
                   items:
                     properties:
                       config:
-                        additionalProperties:
-                          type: string
+                        properties:
+                          adminDomain:
+                            type: string
+                          adminPassword:
+                            type: string
+                          adminProject:
+                            type: string
+                          adminUserDomain:
+                            type: string
+                          adminUsername:
+                            type: string
+                          authScope:
+                            properties:
+                              domainID:
+                                type: string
+                              domainName:
+                                type: string
+                              projectID:
+                                type: string
+                              projectName:
+                                type: string
+                            type: object
+                          cloud:
+                            type: string
+                          domain:
+                            type: string
+                          groupNameFormat:
+                            type: string
+                          host:
+                            type: string
+                          includeRolesInGroups:
+                            type: boolean
+                          prompt:
+                            type: string
+                          roleNameFormat:
+                            type: string
+                        required:
+                        - adminDomain
+                        - adminPassword
+                        - adminProject
+                        - adminUserDomain
+                        - adminUsername
+                        - cloud
+                        - domain
+                        - host
+                        - prompt
                         type: object
                       id:
                         type: string
@@ -99,6 +143,8 @@ spec:
                   - logonUrl
                   - theme
                   type: object
+                hostname:
+                  type: string
                 issuer:
                   type: string
                 logger:
@@ -212,6 +258,7 @@ spec:
               - enablePasswordDB
               - expiry
               - frontend
+              - hostname
               - issuer
               - logger
               - oauth2
@@ -226,6 +273,8 @@ spec:
                   additionalProperties:
                     type: string
                   type: object
+                image:
+                  type: string
                 labels:
                   additionalProperties:
                     type: string
@@ -233,6 +282,8 @@ spec:
                 replicas:
                   format: int32
                   type: integer
+                version:
+                  type: string
               required:
               - replicas
               type: object

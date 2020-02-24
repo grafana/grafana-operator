@@ -6,7 +6,7 @@ import (
 )
 
 type KeystoneConnectorConfig struct {
-	Cloud                string    `json:"cloud" yaml:"cloud""`
+	Cloud                string    `json:"cloud" yaml:"cloud"`
 	Domain               string    `json:"domain" yaml:"domain"`
 	Host                 string    `json:"host" yaml:"host"`
 	AdminUsername        string    `json:"adminUsername" yaml:"adminUsername"`
@@ -29,10 +29,10 @@ type AuthScope struct {
 }
 
 type KeystoneConnector struct {
-	Type   string                  `json:"type" yaml:"type""`
-	ID     string                  `json:"id" yaml:"id""`
-	Name   string                  `json:"name" yaml:"name""`
-	Config KeystoneConnectorConfig `json:"config" yaml:"config""`
+	Type   string                  `json:"type" yaml:"type"`
+	ID     string                  `json:"id" yaml:"id"`
+	Name   string                  `json:"name" yaml:"name"`
+	Config KeystoneConnectorConfig `json:"config" yaml:"config"`
 }
 
 type GrafanaProxyConnector struct {
