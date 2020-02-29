@@ -207,11 +207,11 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 		// Process the dashboard. Use the known hash of an existing dashboard
 		// to determine if an update is required
 		knownHash := findHash(&dashboard)
-		pipeline := NewDashboardPipeline(&dashboard, r.state.FixAnnotations, r.state.FixHeights)
+		pipeline := NewDashboardPipeline(&r.client, &dashboard, r.state.FixAnnotations, r.state.FixHeights)
 		processed, err := pipeline.ProcessDashboard(knownHash)
 
 		if err != nil {
-			log.Info(fmt.Sprintf("cannot process dashboard %v/%v", dashboard.Namespace, dashboard.Name))
+			log.Error(err, fmt.Sprintf("cannot process dashboard %v/%v", dashboard.Namespace, dashboard.Name))
 			r.manageError(&dashboard, err)
 			continue
 		}

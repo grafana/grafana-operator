@@ -2,6 +2,7 @@ package grafanadashboard
 
 import (
 	"bytes"
+	"context"
 	"crypto/md5"
 	"encoding/json"
 	"errors"
@@ -9,8 +10,10 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"io/ioutil"
+	corev1 "k8s.io/api/core/v1"
 	"net/http"
 	"net/url"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"strings"
 )
@@ -21,6 +24,7 @@ type DashboardPipeline interface {
 }
 
 type DashboardPipelineImpl struct {
+	Client         *client.Client
 	Dashboard      *v1alpha1.GrafanaDashboard
 	JSON           string
 	Board          map[string]interface{}
@@ -30,8 +34,9 @@ type DashboardPipelineImpl struct {
 	FixHeights     bool
 }
 
-func NewDashboardPipeline(dashboard *v1alpha1.GrafanaDashboard, fixAnnotations bool, fixHeights bool) DashboardPipeline {
+func NewDashboardPipeline(client *client.Client, dashboard *v1alpha1.GrafanaDashboard, fixAnnotations bool, fixHeights bool) DashboardPipeline {
 	return &DashboardPipelineImpl{
+		Client:         client,
 		Dashboard:      dashboard,
 		JSON:           "",
 		Logger:         logf.Log.WithName(fmt.Sprintf("dashboard-%v", dashboard.Name)),
@@ -115,6 +120,15 @@ func (r *DashboardPipelineImpl) obtainJson() error {
 		}
 	}
 
+	if r.Dashboard.Spec.ConfigMapRef != nil {
+		err := r.loadDashboardFromConfigMap()
+		if err != nil {
+			r.Logger.Error(err, "failed to get config map, falling back to raw json")
+		} else {
+			return nil
+		}
+	}
+
 	if r.Dashboard.Spec.Json != "" {
 		r.JSON = r.Dashboard.Spec.Json
 		return nil
@@ -156,6 +170,22 @@ func (r *DashboardPipelineImpl) loadDashboardFromURL() error {
 	if resp.StatusCode != 200 {
 		return errors.New(fmt.Sprintf("request failed with status %v", resp.StatusCode))
 	}
+
+	return nil
+}
+
+// Try to obtain the dashboard json from a config map
+func (r *DashboardPipelineImpl) loadDashboardFromConfigMap() error {
+	ctx := context.Background()
+	objectKey := client.ObjectKey{Name: r.Dashboard.Spec.ConfigMapRef.Name, Namespace: r.Dashboard.Namespace}
+
+	var cm corev1.ConfigMap
+	err := (*r.Client).Get(ctx, objectKey, &cm)
+	if err != nil {
+		return err
+	}
+
+	r.JSON = cm.Data[r.Dashboard.Spec.ConfigMapRef.Key]
 
 	return nil
 }

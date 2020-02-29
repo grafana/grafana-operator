@@ -1163,6 +1163,11 @@ func (in *GrafanaDashboardSpec) DeepCopyInto(out *GrafanaDashboardSpec) {
 		*out = make(PluginList, len(*in))
 		copy(*out, *in)
 	}
+	if in.ConfigMapRef != nil {
+		in, out := &in.ConfigMapRef, &out.ConfigMapRef
+		*out = new(v1.ConfigMapKeySelector)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.Datasources != nil {
 		in, out := &in.Datasources, &out.Datasources
 		*out = make([]GrafanaDashboardDatasource, len(*in))
