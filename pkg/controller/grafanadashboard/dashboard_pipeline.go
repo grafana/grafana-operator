@@ -24,7 +24,7 @@ type DashboardPipeline interface {
 }
 
 type DashboardPipelineImpl struct {
-	Client         *client.Client
+	Client         client.Client
 	Dashboard      *v1alpha1.GrafanaDashboard
 	JSON           string
 	Board          map[string]interface{}
@@ -34,7 +34,7 @@ type DashboardPipelineImpl struct {
 	FixHeights     bool
 }
 
-func NewDashboardPipeline(client *client.Client, dashboard *v1alpha1.GrafanaDashboard, fixAnnotations bool, fixHeights bool) DashboardPipeline {
+func NewDashboardPipeline(client client.Client, dashboard *v1alpha1.GrafanaDashboard, fixAnnotations bool, fixHeights bool) DashboardPipeline {
 	return &DashboardPipelineImpl{
 		Client:         client,
 		Dashboard:      dashboard,
@@ -180,7 +180,7 @@ func (r *DashboardPipelineImpl) loadDashboardFromConfigMap() error {
 	objectKey := client.ObjectKey{Name: r.Dashboard.Spec.ConfigMapRef.Name, Namespace: r.Dashboard.Namespace}
 
 	var cm corev1.ConfigMap
-	err := (*r.Client).Get(ctx, objectKey, &cm)
+	err := r.Client.Get(ctx, objectKey, &cm)
 	if err != nil {
 		return err
 	}
