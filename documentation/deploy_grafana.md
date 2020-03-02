@@ -218,6 +218,8 @@ spec:
 
 This section contains flag that allow the operator to modify older dashboards in a way that allow importing to newer Grafana versions.
 
+NOTE: (*deprecated*) should no longer be used as of v3.0.2.  
+
 ```yaml
 spec:
   compat:
