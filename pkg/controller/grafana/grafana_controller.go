@@ -216,6 +216,12 @@ func (r *ReconcileGrafana) getGrafanaAdminUrl(cr *grafanav1alpha1.Grafana, state
 
 	// Try the ingress first if on vanilla Kubernetes
 	if state.GrafanaIngress != nil && !preferService {
+		// If provided, use the hostname from the CR
+		if cr.Spec.Ingress != nil && cr.Spec.Ingress.Hostname != "" {
+			return fmt.Sprintf("https://%v", cr.Spec.Ingress.Hostname), nil
+		}
+
+		// Otherwise try to find something suitable, hostname or IP
 		for _, ingress := range state.GrafanaIngress.Status.LoadBalancer.Ingress {
 			if ingress.Hostname != "" {
 				return fmt.Sprintf("https://%v", ingress.Hostname), nil
