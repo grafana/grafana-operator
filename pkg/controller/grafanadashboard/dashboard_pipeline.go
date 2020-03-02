@@ -75,7 +75,6 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) ([]byte, erro
 	if r.Dashboard.Status.Phase == v1alpha1.PhaseReconciling {
 		r.Board["slug"] = r.Dashboard.Status.Slug
 		r.Board["uid"] = r.Dashboard.Status.UID
-		r.Board["id"] = r.Dashboard.Status.ID
 	}
 
 	raw, err := json.Marshal(r.Board)
