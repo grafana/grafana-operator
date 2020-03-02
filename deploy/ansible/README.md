@@ -176,6 +176,65 @@ ansible-playbook grafana-operator-cluster-dashboards-scan.yaml \
   -e grafana_operator_install=false
 ```
 
+## openshift-monitoring-update-prometheus-authentication.yaml
+
+Playbook for updateing the authentication for prometehus so as to create accounts for other dashbaords to consume the data prometheus data through the proxy.
+
+### Required K8s Permisions
+These permissions are reuqied by the K8s user who runs this playbook. Typically this would be a cluster administrator.
+
+* edit access to the `openshift-monitoring` project
+
+### Parameters
+
+| Parameter                   | Choices / **Defaults** | Comments
+|-----------------------------|------------------------|---------
+| k8s\_host                   |                        | K8s API to run this playbook against
+| k8s\_validate\_certs        | **True** / False       | Whether to validate K8s API certificate
+| k8s\_api\_key               |                        | K8s API token to authenticate with. Mutually exclusive with `k8s_username` and `k8s_password`.
+| k8s\_username               |                        | K8s username to authenticate with. Mutually exclusive with `k8s_api_key`.
+| k8s\_password               |                        | K8s password to authenticate with. Mutually exclusive with `k8s_api_key`.
+| prometheus\_htpasswd\_users |                        | Array of hashes of user names and passwords to add or remove from the prometheus authentication list. Expected hash keys are `name`, `password`, and optionally `state` with value of `present` or `absent` with a default of `present`.
+
+#### prometheus\_htpasswd\_users
+YAML example
+```yaml
+prometheus_htpasswd_users:
+  - name: custom-monitoring
+    password: secret
+  - name: custom-monitoring-old
+    password: secret
+    state: absent
+```
+
+JSON example
+```json
+'[{"name":"custom-monitoring","password":"secret"},{"name":"custom-monitoring-old","password":"secret","state":"absent"}]'
+```
+
+### Examples
+These are all "one lineer" examples. If following "true" "git-ops" principles recomended you make an inventory file and group\_vars or host\_vars file with the parameters specified there.
+
+### Add new prometheus user
+```
+ansible-playbook deploy/ansible/openshift-monitoring-expose-prometheus.yaml \
+  -i deploy/ansible/localhost.ini \
+  -e k8s_host=https://ocp.example.xyz \
+  -e k8s_username=admin1 \
+  -e k8s_password=secret \
+  -e prometheus_htpasswd_users='[{"name":"custom-monitoring","password":"secret"}]'
+```
+
+### Remove prometheus user
+```
+ansible-playbook deploy/ansible/openshift-monitoring-expose-prometheus.yaml \
+  -i deploy/ansible/localhost.ini \
+  -e k8s_host=https://ocp.example.xyz \
+  -e k8s_username=admin1 \
+  -e k8s_password=secret \
+  -e prometheus_htpasswd_users='[{"name":"custom-monitoring","password":"secret","state":"absent"}]'
+```
+
 # Tested With
 These are the versions these playbooks have been tested with. This does not mean this wont work with other versions this is simply known working versions.
 
