@@ -77,9 +77,11 @@ func (d *createGrafana) Handle(params operations.CreateGrafanaParams, principal 
 	}
 
 	tpl := templates.NewHandler(d.Runtime)
-	if err = tpl.CopyDashboards(g.Namespace); err != nil {
-		log.Error(err, err.Error())
-	}
+	/*
+		if err = tpl.CopyDashboards(g.Namespace); err != nil {
+			log.Error(err, err.Error())
+		}
+	*/
 	if err = tpl.CopyDatasources(g.Namespace, principal); err != nil {
 		log.Error(err, err.Error())
 	}

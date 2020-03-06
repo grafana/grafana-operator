@@ -1,12 +1,13 @@
 package model
 
 import (
+	"strings"
+
 	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"k8s.io/api/extensions/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
 )
 
 func getProxyIngressTLS(cr *v1alpha1.GrafanaProxy) []v1beta1.IngressTLS {

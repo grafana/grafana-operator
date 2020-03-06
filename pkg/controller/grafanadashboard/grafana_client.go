@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	DeleteDashboardByUIDUrl    = "%v/api/dashboards/uid/%v"
-	CreateOrUpdateDashboardUrl = "%v/api/dashboards/db"
+	DeleteDashboardByUIDUrl    = "%vapi/dashboards/uid/%v"
+	CreateOrUpdateDashboardUrl = "%vapi/dashboards/db"
 )
 
 type GrafanaRequest struct {
@@ -99,6 +99,7 @@ func (r *GrafanaClientImpl) CreateOrUpdateDashboard(dashboard []byte) (GrafanaRe
 
 	parsed.User = url.UserPassword(r.user, r.password)
 	req, err := http.NewRequest("POST", parsed.String(), bytes.NewBuffer(raw))
+	fmt.Println(parsed.String())
 	if err != nil {
 		return response, err
 	}

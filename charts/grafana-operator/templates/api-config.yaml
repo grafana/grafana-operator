@@ -27,10 +27,10 @@ data:
                 id: keystone
                 name: Converged Cloud
                 config:
-                  host: "{{ .Values.openstack.auth_url }}"
-                  adminUsername: {{ .Values.openstack.admin_username }}
-                  adminPassword: {{ .Values.openstack.admin_password }}
-                  adminUserDomain: {{ .Values.openstack.admin_user_domainname }}
-                  adminProject: {{ .Values.openstack.admin_project }}
+                  host: "{{ .Values.apiserver.dex.keystone.auth_url }}"
+                  adminUsername: {{ .Values.apiserver.dex.keystone.admin_username }}
+                  adminPassword: {{ .Values.apiserver.dex.keystone.admin_password }}
+                  adminUserDomain: {{ .Values.apiserver.dex.keystone.admin_user_domainname }}
+                  adminProject: {{ .Values.apiserver.dex.keystone.admin_project }}
                   includeRolesInGroups: true
-                  adminDomain: {{ .Values.openstack.admin_domain }}
+                  adminDomain: {{ .Values.apiserver.dex.keystone.admin_domain }}

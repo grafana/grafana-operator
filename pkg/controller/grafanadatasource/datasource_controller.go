@@ -110,7 +110,6 @@ func (r *ReconcileGrafanaDataSource) Reconcile(request reconcile.Request) (recon
 		return reconcile.Result{Requeue: request.Namespace != "grafana-operator"}, nil
 	}
 
-	fmt.Println("_________________________DataSource_____________________________________-", currentState)
 	// Reconcile all data sources
 	err = r.reconcileDataSources(currentState)
 	if err != nil {

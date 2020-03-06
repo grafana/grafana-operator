@@ -2,6 +2,7 @@ package common
 
 import (
 	"context"
+
 	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
@@ -99,6 +100,10 @@ func (i *ClusterState) ReadProxy(ctx context.Context, crp *v1alpha1.GrafanaProxy
 	}
 
 	if err = i.readGrafanaProxyIngress(ctx, crp, client); err != nil {
+		return err
+	}
+
+	if err = i.readGrafanaProxyRoleBinding(ctx, crp, client); err != nil {
 		return err
 	}
 
@@ -290,5 +295,19 @@ func (i *ClusterState) readGrafanaAdminUserSecret(ctx context.Context, cr *v1alp
 		return err
 	}
 	i.AdminSecret = currentState.DeepCopy()
+	return nil
+}
+
+func (i *ClusterState) readGrafanaProxyRoleBinding(ctx context.Context, cr *v1alpha1.GrafanaProxy, client client.Client) error {
+	currentState := model.GrafanaProxyRoleBinding(cr)
+	selector := model.GrafanaProxyRoleBindingSelector(cr)
+	err := client.Get(ctx, selector, currentState)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+	i.GrafanaProxyRoleBinding = currentState.DeepCopy()
 	return nil
 }

@@ -30,6 +30,7 @@ require (
 	github.com/pmylund/go-cache v2.1.0+incompatible // indirect
 	github.com/prometheus/client_golang v1.1.0
 	github.com/russellhaering/goxmldsig v0.0.0-20180430223755-7acd5e4a6ef7 // indirect
+	github.com/sapcc/ipmi_exporter v0.0.0-20200214101158-5ca02e2e04d2 // indirect
 	github.com/sapcc/kubernikus v1.5.0
 	github.com/spf13/pflag v1.0.3
 	go.opencensus.io v0.22.2 // indirect

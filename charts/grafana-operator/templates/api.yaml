@@ -54,6 +54,16 @@ spec:
         env:
           - name: CONFIG_FILE
             value: "/etc/config/config.yaml"
+          - name: OS_AUTH_URL
+            value: "{{ .Values.apiserver.openstack.auth_url }}"
+          - name: OS_USER_ID
+            value: "{{ .Values.apiserver.openstack.user_id }}"
+          - name: OS_USERNAME
+            value: "{{ .Values.apiserver.openstack.user_name }}"            
+          - name: OS_PASSWORD
+            value: "{{ .Values.apiserver.global.grafaxnaAsAServicePassword }}"
+          - name: OS_DOMAIN_NAME
+            value: "{{ .Values.apiserver.openstack.domain_name }}"
         volumeMounts:
           - name: config
             mountPath: /etc/config

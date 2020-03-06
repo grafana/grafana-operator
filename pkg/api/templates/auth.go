@@ -1,6 +1,8 @@
 package templates
 
 import (
+	"os"
+
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/applicationcredentials"
@@ -32,7 +34,8 @@ func getServiceClient(projectName, domainName string) (sc gophercloud.ServiceCli
 	return
 }
 
-func createApplicationCredentials(oc *gophercloud.ServiceClient, userID, domainID string, roles []applicationcredentials.Role) (ac *applicationcredentials.ApplicationCredential, err error) {
+func createApplicationCredentials(oc *gophercloud.ServiceClient, domainID string, roles []applicationcredentials.Role) (ac *applicationcredentials.ApplicationCredential, err error) {
+	userID := os.Getenv("OS_USER_ID")
 	createOpts := applicationcredentials.CreateOpts{
 		Name:  domainID,
 		Roles: roles,
@@ -46,6 +49,8 @@ func createApplicationCredentials(oc *gophercloud.ServiceClient, userID, domainI
 		*/
 		Unrestricted: false,
 	}
+
+	//listOpts := applicationcredentials.ListOpts{Name: domainID}
 
 	ac, err = applicationcredentials.Create(oc, userID, createOpts).Extract()
 	if err != nil {
@@ -64,9 +69,9 @@ func createApplicationCredentials(oc *gophercloud.ServiceClient, userID, domainI
 						return false, nil
 					}
 				}
-				return true, nil
+				return false, nil
 			}); err == nil {
-				return createApplicationCredentials(oc, userID, domainID, roles)
+				return createApplicationCredentials(oc, domainID, roles)
 			}
 			return
 		}

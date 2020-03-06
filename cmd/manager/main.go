@@ -57,7 +57,7 @@ func init() {
 	flagset.StringVar(&flagPluginsInitContainerImage, "grafana-plugins-init-container-image", "", "Overrides the default Grafana Plugins Init Container image")
 	flagset.StringVar(&flagPluginsInitContainerTag, "grafana-plugins-init-container-tag", "", "Overrides the default Grafana Plugins Init Container tag")
 	flagset.StringVar(&flagNamespaces, "namespaces", "", "Namespaces to scope the interaction of the Grafana operator. Mutually exclusive with --scan-all")
-	flagset.BoolVar(&scanAll, "scan-all", false, "Scans all namespaces for dashboards")
+	flagset.BoolVar(&scanAll, "scan-all", true, "Scans all namespaces for dashboards")
 	flagset.Parse(os.Args[1:])
 }
 
@@ -80,7 +80,7 @@ func startDashboardController(ns string, cfg *rest.Config, signalHandler <-chan 
 	}
 
 	// Use a separate manager for the dashboard controller
-	grafanadashboard.Add(dashboardMgr, ns)
+	grafanadashboard.Add(dashboardMgr, autodetectChannel, "")
 
 	go func() {
 		if err := dashboardMgr.Start(signalHandler); err != nil {
@@ -228,9 +228,9 @@ func main() {
 	signalHandler := signals.SetupSignalHandler()
 
 	// Start one dashboard controller per watch namespace
-	for _, ns := range dashboardNamespaces {
-		startDashboardController(ns, cfg, signalHandler, autodetect.SubscriptionChannel)
-	}
+	//for _, ns := range dashboardNamespaces {
+	//startDashboardController(ns, cfg, signalHandler, autodetect.SubscriptionChannel)
+	//}
 
 	if err := mgr.Start(signalHandler); err != nil {
 		log.Error(err, "manager exited non-zero")

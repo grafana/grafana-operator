@@ -4,9 +4,12 @@ import (
 	"context"
 	stdErr "errors"
 	"fmt"
+	"time"
+
 	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
+	"github.com/integr8ly/grafana-operator/v3/pkg/controller/grafanadashboard"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
 	routev1 "github.com/openshift/api/route/v1"
 	v12 "k8s.io/api/apps/v1"
@@ -208,6 +211,9 @@ func (r *ReconcileGrafana) getGrafanaAdminUrl(cr *grafanav1alpha1.Grafana, state
 		preferService = cr.Spec.Client.PreferService
 	}
 
+	if cr.Spec.Config.Server.RootUrl != "" {
+		return cr.Spec.Config.Server.RootUrl, nil
+	}
 	// First try to use the route if it exists. Prefer the route because it also works
 	// when running the operator outside of the cluster
 	if state.GrafanaRoute != nil && !preferService {
@@ -280,6 +286,10 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 		fixHeights = true
 	}
 
+	if err = r.addDefaultDashboards(cr); err != nil {
+		return r.manageError(cr, err)
+	}
+
 	// Publish controller state
 	controllerState := common.ControllerState{
 		DashboardSelectors: cr.Spec.DashboardLabelSelector,
@@ -303,6 +313,56 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 	common.ControllerEvents <- controllerState
 
 	log.Info("desired cluster state met")
-
 	return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
+}
+
+func (r *ReconcileGrafana) addDefaultDashboards(g *grafanav1alpha1.Grafana) (err error) {
+	crl := &grafanav1alpha1.GrafanaDashboardList{}
+	if err = r.client.List(r.context, crl, client.InNamespace("grafana-operator")); err != nil {
+		return
+	}
+	if len(crl.Items) == 0 {
+		return stdErr.New("no default dashboards found")
+	}
+	client, err := r.getClient(g)
+	if err != nil {
+		return
+	}
+	for _, d := range crl.Items {
+		pipeline := grafanadashboard.NewDashboardPipeline(&d, g.Spec.Compat.FixAnnotations, g.Spec.Compat.FixHeights)
+		processed, err := pipeline.ProcessDashboard(d.Status.Hash)
+		if err != nil {
+			return err
+		}
+		if processed == nil {
+			continue
+		}
+		_, err = client.CreateOrUpdateDashboard(processed)
+		if err != nil {
+			return err
+		}
+	}
+
+	return
+}
+
+// Get an authenticated grafana API client
+func (r *ReconcileGrafana) getClient(g *grafanav1alpha1.Grafana) (grafanadashboard.GrafanaClient, error) {
+	url := g.Spec.Config.Server.RootUrl
+	if url == "" {
+		return nil, stdErr.New("cannot get grafana admin url")
+	}
+
+	username := g.Spec.Config.Security.AdminUser
+	if username == "" {
+		return nil, stdErr.New("invalid credentials (username)")
+	}
+
+	password := g.Spec.Config.Security.AdminPassword
+	if password == "" {
+		return nil, stdErr.New("invalid credentials (password)")
+	}
+
+	duration := time.Duration(10 * time.Second)
+	return grafanadashboard.NewGrafanaClient(url, username, password, duration), nil
 }

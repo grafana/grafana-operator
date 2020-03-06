@@ -1,9 +1,9 @@
 apiVersion: disco.stable.sap.cc/v1
 kind: Record
 metadata:
-  name: "grafana.scaleout.qa-de-1.cloud.sap"
+  name: "grafana-svc.qa-de-1.cloud.sap"
 spec:
   type: CNAME
   record: ingress.scaleout.qa-de-1.cloud.sap
   hosts:
-    - "*.grafana.scaleout.qa-de-1.cloud.sap"
+    - "*.grafana-svc.qa-de-1.cloud.sap"

@@ -1,0 +1,19 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    vice-president: "true"
+  name: grafana-api-ingress
+  namespace: {{.Release.Namespace}}
+spec:
+  rules:
+  - host: api.grafana-svc.qa-de-1.cloud.sap
+    http:
+      paths:
+      - backend:
+          serviceName: grafana-operator-api
+          servicePort: 8080
+  tls:
+  - hosts:
+    - api.grafana-svc.qa-de-1.cloud.sap
+    secretName: tls-api-grafana-svc-qa-de-1-cloud-sap

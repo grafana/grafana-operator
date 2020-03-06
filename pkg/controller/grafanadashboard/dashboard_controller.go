@@ -4,11 +4,13 @@ import (
 	"context"
 	defaultErrors "errors"
 	"fmt"
+	"time"
+
 	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -17,7 +19,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"time"
 )
 
 const (
@@ -28,8 +29,8 @@ var log = logf.Log.WithName(ControllerName)
 
 // Add creates a new GrafanaDashboard Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager, namespace string) error {
-	return add(mgr, newReconciler(mgr), namespace)
+func Add(mgr manager.Manager, autodetectChannel chan schema.GroupVersionKind, _ string) error {
+	return add(mgr, newReconciler(mgr), autodetectChannel)
 }
 
 // newReconciler returns a new reconcile.Reconciler
@@ -48,7 +49,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
-func add(mgr manager.Manager, r reconcile.Reconciler, namespace string) error {
+func add(mgr manager.Manager, r reconcile.Reconciler, autodetectChannel chan schema.GroupVersionKind) error {
 	// Create a new controller
 	c, err := controller.New("grafanadashboard-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
@@ -60,32 +61,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler, namespace string) error {
 	if err == nil {
 		log.Info("Starting dashboard controller")
 	}
-
-	ref := r.(*ReconcileGrafanaDashboard)
-	ticker := time.NewTicker(config.RequeueDelay)
-	sendEmptyRequest := func() {
-		request := reconcile.Request{
-			NamespacedName: types.NamespacedName{
-				Namespace: namespace,
-				Name:      "",
-			},
-		}
-		r.Reconcile(request)
-	}
-
-	go func() {
-		for range ticker.C {
-			log.Info("running periodic dashboard resync")
-			sendEmptyRequest()
-		}
-	}()
-
-	go func() {
-		for stateChange := range common.ControllerEvents {
-			// Controller state updated
-			ref.state = stateChange
-		}
-	}()
 
 	return err
 }
@@ -107,13 +82,28 @@ type ReconcileGrafanaDashboard struct {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	// If Grafana is not running there is no need to continue
-	if r.state.GrafanaReady == false {
-		log.Info("no grafana instance available")
+	if request.Namespace == "grafana-operator" {
 		return reconcile.Result{Requeue: false}, nil
 	}
+	gr := &grafanav1alpha1.GrafanaList{}
+	if err := r.client.List(context.Background(), gr, client.InNamespace(request.Namespace)); err != nil {
+		if errors.IsNotFound(err) {
+			log.Info("no grafana instance available")
+			return reconcile.Result{Requeue: true}, nil
+		}
+		return reconcile.Result{Requeue: false}, nil
+	}
+	if len(gr.Items) == 0 {
+		log.Info("no grafana instance available in namespace " + request.Namespace)
+		return reconcile.Result{Requeue: true, RequeueAfter: config.RequeueDelay}, nil
+	}
 
-	client, err := r.getClient()
+	if gr.Items[0].Status.Phase != grafanav1alpha1.PhaseReconciling {
+		log.Info("grafana instance not yet ready")
+		return reconcile.Result{Requeue: true}, nil
+	}
+	// For now only one grafana per namespace
+	client, err := r.getClient(&gr.Items[0])
 	if err != nil {
 		return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
 	}
@@ -121,12 +111,6 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 	// Initial request?
 	if request.Name == "" {
 		return r.reconcileDashboards(request, client)
-	}
-
-	// Check if the label selectors are available yet. If not then the grafana controller
-	// has not finished initializing and we can't continue. Reschedule for later.
-	if r.state.DashboardSelectors == nil {
-		return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
 	}
 
 	// Fetch the GrafanaDashboard instance
@@ -142,14 +126,6 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 		return reconcile.Result{}, err
 	}
 
-	// If the dashboard does not match the label selectors then we ignore it
-	cr := instance.DeepCopy()
-	if !r.isMatch(cr) {
-		log.Info(fmt.Sprintf("dashboard %v/%v found but selectors do not match",
-			cr.Namespace, cr.Name))
-		return reconcile.Result{}, nil
-	}
-
 	// Otherwise always re sync all dashboards in the namespace
 	return r.reconcileDashboards(request, client)
 }
@@ -158,7 +134,7 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 	// Collect known and namespace dashboards
 	knownDashboards := r.config.GetDashboards(request.Namespace)
 	namespaceDashboards := &grafanav1alpha1.GrafanaDashboardList{}
-	err := r.client.List(r.context, namespaceDashboards)
+	err := r.client.List(r.context, namespaceDashboards, client.InNamespace(request.Namespace))
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -197,13 +173,6 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 
 	// Process new/updated dashboards
 	for _, dashboard := range namespaceDashboards.Items {
-		// Is this a dashboard we care about (matches the label selectors)?
-		if !r.isMatch(&dashboard) {
-			log.Info(fmt.Sprintf("dashboard %v/%v found but selectors do not match",
-				dashboard.Namespace, dashboard.Name))
-			continue
-		}
-
 		// Process the dashboard. Use the known hash of an existing dashboard
 		// to determine if an update is required
 		knownHash := findHash(&dashboard)
@@ -293,18 +262,18 @@ func (r *ReconcileGrafanaDashboard) manageError(dashboard *grafanav1alpha1.Grafa
 }
 
 // Get an authenticated grafana API client
-func (r *ReconcileGrafanaDashboard) getClient() (GrafanaClient, error) {
-	url := r.state.AdminUrl
+func (r *ReconcileGrafanaDashboard) getClient(g *grafanav1alpha1.Grafana) (GrafanaClient, error) {
+	url := g.Spec.Config.Server.RootUrl
 	if url == "" {
 		return nil, defaultErrors.New("cannot get grafana admin url")
 	}
 
-	username := r.state.AdminUsername
+	username := g.Spec.Config.Security.AdminUser
 	if username == "" {
 		return nil, defaultErrors.New("invalid credentials (username)")
 	}
 
-	password := r.state.AdminPassword
+	password := g.Spec.Config.Security.AdminPassword
 	if password == "" {
 		return nil, defaultErrors.New("invalid credentials (password)")
 	}

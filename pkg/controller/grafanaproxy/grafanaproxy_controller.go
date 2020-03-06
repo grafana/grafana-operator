@@ -136,9 +136,8 @@ func (r *ReconcileGrafanaProxy) Reconcile(request reconcile.Request) (reconcile.
 	err := r.client.Get(r.context, request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
-
 			common.ControllerEvents <- common.ControllerState{
-				GrafanaReady: false,
+				GrafanaProxyReady: false,
 			}
 
 			return reconcile.Result{}, nil
@@ -185,9 +184,8 @@ func (r *ReconcileGrafanaProxy) manageError(cr *grafanav1alpha1.GrafanaProxy, is
 	}
 
 	common.ControllerEvents <- common.ControllerState{
-		GrafanaReady: false,
+		GrafanaProxyReady: false,
 	}
-
 	return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
 }
 

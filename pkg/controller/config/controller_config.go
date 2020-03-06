@@ -26,7 +26,7 @@ const (
 	PluginsInitContainerImage       = "quay.io/integreatly/grafana_plugins_init"
 	PluginsInitContainerTag         = "0.0.2"
 	PluginsUrl                      = "https://grafana.com/api/plugins/%s/versions/%s"
-	RequeueDelay                    = time.Second * 10
+	RequeueDelay                    = time.Duration(time.Second * 10)
 	SecretsMountDir                 = "/etc/grafana-secrets/"
 	ConfigMapsMountDir              = "/etc/grafana-configmaps/"
 	ConfigRouteWatch                = "watch.routes"
