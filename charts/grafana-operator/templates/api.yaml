@@ -61,7 +61,7 @@ spec:
           - name: OS_USERNAME
             value: "{{ .Values.apiserver.openstack.user_name }}"            
           - name: OS_PASSWORD
-            value: "{{ .Values.apiserver.global.grafaxnaAsAServicePassword }}"
+            value: "{{ .Values.global.grafanaAsAServicePassword }}"
           - name: OS_DOMAIN_NAME
             value: "{{ .Values.apiserver.openstack.domain_name }}"
         volumeMounts:
