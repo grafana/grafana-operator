@@ -136,10 +136,6 @@ func (r *ReconcileGrafanaProxy) Reconcile(request reconcile.Request) (reconcile.
 	err := r.client.Get(r.context, request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			common.ControllerEvents <- common.ControllerState{
-				GrafanaProxyReady: false,
-			}
-
 			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{}, err
@@ -183,10 +179,7 @@ func (r *ReconcileGrafanaProxy) manageError(cr *grafanav1alpha1.GrafanaProxy, is
 		return reconcile.Result{}, err
 	}
 
-	common.ControllerEvents <- common.ControllerState{
-		GrafanaProxyReady: false,
-	}
-	return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
+	return reconcile.Result{RequeueAfter: config.RequeueDelayOnError}, nil
 }
 
 func (r *ReconcileGrafanaProxy) manageSuccess(cr *grafanav1alpha1.GrafanaProxy, state *common.ClusterState) (reconcile.Result, error) {
@@ -204,8 +197,6 @@ func (r *ReconcileGrafanaProxy) manageSuccess(cr *grafanav1alpha1.GrafanaProxy, 
 		GrafanaProxyReady: true,
 		ClientTimeout:     DefaultClientTimeoutSeconds,
 	}
-
-	common.ControllerEvents <- controllerState
 
 	log.Info("desired cluster state met")
 

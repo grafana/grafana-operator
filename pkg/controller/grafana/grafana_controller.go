@@ -149,10 +149,6 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 			// Stop the dashboard controller from reconciling when grafana is not installed
 			r.config.RemoveConfigItem(config.ConfigDashboardLabelSelector)
 			r.config.Cleanup(true)
-
-			common.ControllerEvents <- common.ControllerState{
-				GrafanaReady: false,
-			}
 			return reconcile.Result{}, nil
 		}
 
