@@ -38,6 +38,7 @@ rules:
   - delete
   - deletecollection
   - watch
+  - patch
 - apiGroups:
   - ""
   resources:
@@ -61,6 +62,7 @@ rules:
   - delete
   - deletecollection
   - watch
+  - patch
 - apiGroups:
   - route.openshift.io
   resources:
@@ -86,6 +88,7 @@ rules:
   - delete
   - deletecollection
   - watch
+  - patch
 - apiGroups:
   - integreatly.org
   resources:
@@ -106,6 +109,7 @@ rules:
   - delete
   - deletecollection
   - watch
+  - patch
 - apiGroups:
   - apiextensions.k8s.io
   resources:
