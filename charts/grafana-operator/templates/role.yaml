@@ -46,6 +46,10 @@ rules:
   verbs:
   - get
   - list
+  - create
+  - update
+  - delete
+  - deletecollection
   - watch
   - patch
 - apiGroups:
