@@ -45,7 +45,7 @@ const (
 	PluginsMinAge                   = 5
 	InitContainerName               = "grafana-plugins-init"
 	ResourceFinalizerName           = "grafana.cleanup"
-	RequeueDelay                    = time.Second * 15
+	RequeueDelay                    = time.Second * 60
 	PodLabelDefaultValue            = "grafana"
 	DefaultServiceType              = "ClusterIP"
 	DefaultLogLevel                 = "info"

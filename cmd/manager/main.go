@@ -4,6 +4,11 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"os"
+	"runtime"
+	"strings"
+	"time"
+
 	"github.com/integr8ly/grafana-operator/v3/pkg/apis"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
@@ -11,7 +16,6 @@ import (
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/grafanadashboard"
 	"github.com/integr8ly/grafana-operator/v3/version"
 	routev1 "github.com/openshift/api/route/v1"
-	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	"github.com/operator-framework/operator-sdk/pkg/ready"
@@ -19,15 +23,12 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 	"k8s.io/client-go/rest"
-	"os"
-	"runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
-	"strings"
 )
 
 var log = logf.Log.WithName("cmd")
@@ -37,6 +38,7 @@ var flagPluginsInitContainerImage string
 var flagPluginsInitContainerTag string
 var flagNamespaces string
 var scanAll bool
+var syncPeriod int
 
 var (
 	metricsHost       = "0.0.0.0"
@@ -58,6 +60,7 @@ func init() {
 	flagset.StringVar(&flagPluginsInitContainerTag, "grafana-plugins-init-container-tag", "", "Overrides the default Grafana Plugins Init Container tag")
 	flagset.StringVar(&flagNamespaces, "namespaces", "", "Namespaces to scope the interaction of the Grafana operator. Mutually exclusive with --scan-all")
 	flagset.BoolVar(&scanAll, "scan-all", true, "Scans all namespaces for dashboards")
+	flagset.IntVar(&syncPeriod, "sync-period", 60, "SyncPeriod determines the minimum frequency at which watched resources are reconciled.")
 	flagset.Parse(os.Args[1:])
 }
 
@@ -115,30 +118,19 @@ func main() {
 
 	printVersion()
 
-	namespace, err := k8sutil.GetWatchNamespace()
-	if err != nil {
-		log.Error(err, "failed to get watch namespace")
-		os.Exit(1)
-	}
-
-	if scanAll && flagNamespaces != "" {
-		fmt.Fprint(os.Stderr, "--scan-all and --namespaces both set. Please provide only one")
-		os.Exit(1)
-	}
-
 	// Controller configuration
 	controllerConfig := config2.GetControllerConfig()
 	controllerConfig.AddConfigItem(config2.ConfigGrafanaImage, flagImage)
 	controllerConfig.AddConfigItem(config2.ConfigGrafanaImageTag, flagImageTag)
 	controllerConfig.AddConfigItem(config2.ConfigPluginsInitContainerImage, flagPluginsInitContainerImage)
 	controllerConfig.AddConfigItem(config2.ConfigPluginsInitContainerTag, flagPluginsInitContainerTag)
-	controllerConfig.AddConfigItem(config2.ConfigOperatorNamespace, namespace)
+	controllerConfig.AddConfigItem(config2.ConfigOperatorNamespace, "grafana-operator")
 	controllerConfig.AddConfigItem(config2.ConfigDashboardLabelSelector, "")
 
 	// Get the namespaces to scan for dashboards
 	// It's either the same namespace as the controller's or it's all namespaces if the
 	// --scan-all flag has been passed
-	var dashboardNamespaces = []string{namespace}
+	var dashboardNamespaces = []string{}
 	if scanAll {
 		dashboardNamespaces = []string{""}
 		log.Info("Scanning for dashboards in all namespaces")
@@ -171,9 +163,10 @@ func main() {
 	}
 	defer r.Unset()
 
+	sync := time.Duration(syncPeriod) * time.Second
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{
-		Namespace:          "",
+		SyncPeriod:         &sync,
 		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
 	})
 	if err != nil {
@@ -205,7 +198,7 @@ func main() {
 	}
 
 	// Setup all Controllers
-	if err := controller.AddToManager(mgr, autodetect.SubscriptionChannel, namespace); err != nil {
+	if err := controller.AddToManager(mgr, autodetect.SubscriptionChannel, ""); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}

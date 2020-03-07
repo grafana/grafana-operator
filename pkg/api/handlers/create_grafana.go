@@ -15,6 +15,8 @@ import (
 	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
@@ -41,7 +43,6 @@ func (d *createGrafana) Handle(params operations.CreateGrafanaParams, principal 
 	gr := params.Body
 
 	err := d.mergeRequestGrafanaWithConfig(gr)
-	fmt.Println(gr)
 	if err != nil {
 		log.Error(err, err.Error())
 		return NewErrorResponse(&operations.CreateGrafanaDefault{}, 500, err.Error())
@@ -77,13 +78,20 @@ func (d *createGrafana) Handle(params operations.CreateGrafanaParams, principal 
 	}
 
 	tpl := templates.NewHandler(d.Runtime)
-	/*
-		if err = tpl.CopyDashboards(g.Namespace); err != nil {
-			log.Error(err, err.Error())
-		}
-	*/
 	if err = tpl.CopyDatasources(g.Namespace, principal); err != nil {
 		log.Error(err, err.Error())
+	}
+	cf := wait.ConditionFunc(func() (bool, error) {
+		if err := d.Client.Get(params.HTTPRequest.Context(), types.NamespacedName{Namespace: g.Namespace, Name: g.Name}, &g); err != nil {
+			return false, err
+		}
+		if g.Status.Phase != "reconciling" {
+			return false, nil
+		}
+		return true, nil
+	})
+	if err = wait.Poll(5*time.Second, 100*time.Second, cf); err != nil {
+		return NewErrorResponse(&operations.CreateGrafanaDefault{}, 500, "grafana instance not getting ready")
 	}
 
 	return operations.NewCreateGrafanaCreated().WithPayload(r)
@@ -168,6 +176,9 @@ func (d *createGrafana) paramsToGrafana(gc *models.Grafana, p *models.Principal)
 
 				AuthAnonymous: &v1alpha1.GrafanaConfigAuthAnonymous{
 					Enabled: newFalse(),
+				},
+				Dashboards: &v1alpha1.GrafanaConfigDashboards{
+					DashboardHash: make(map[string]string),
 				},
 			},
 			Compat: &v1alpha1.GrafanaCompat{},

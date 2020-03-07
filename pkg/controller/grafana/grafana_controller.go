@@ -29,7 +29,7 @@ import (
 )
 
 const ControllerName = "grafana-controller"
-const DefaultClientTimeoutSeconds = 5
+const DefaultClientTimeoutSeconds = 10
 
 var log = logf.Log.WithName(ControllerName)
 
@@ -138,6 +138,10 @@ func watchSecondaryResource(c controller.Controller, resource runtime.Object) er
 // Reconcile reads that state of the cluster for a Grafana object and makes changes based on the state read
 // and what is in the Grafana.Spec
 func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	if request.Namespace == "grafana-operator" {
+		return reconcile.Result{Requeue: false}, nil
+	}
+
 	instance := &grafanav1alpha1.Grafana{}
 	err := r.client.Get(r.context, request.NamespacedName, instance)
 	if err != nil {
@@ -149,9 +153,9 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 			common.ControllerEvents <- common.ControllerState{
 				GrafanaReady: false,
 			}
-
 			return reconcile.Result{}, nil
 		}
+
 		return reconcile.Result{}, err
 	}
 
@@ -195,11 +199,7 @@ func (r *ReconcileGrafana) manageError(cr *grafanav1alpha1.Grafana, issue error)
 
 	r.config.InvalidateDashboards()
 
-	common.ControllerEvents <- common.ControllerState{
-		GrafanaReady: false,
-	}
-
-	return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
+	return reconcile.Result{RequeueAfter: config.RequeueDelayOnError}, nil
 }
 
 // Try to find a suitable url to grafana
@@ -310,8 +310,6 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 		controllerState.ClientTimeout = seconds
 	}
 
-	common.ControllerEvents <- controllerState
-
 	log.Info("desired cluster state met")
 	return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
 }
@@ -321,6 +319,7 @@ func (r *ReconcileGrafana) addDefaultDashboards(g *grafanav1alpha1.Grafana) (err
 	if err = r.client.List(r.context, crl, client.InNamespace("grafana-operator")); err != nil {
 		return
 	}
+
 	if len(crl.Items) == 0 {
 		return stdErr.New("no default dashboards found")
 	}
@@ -330,7 +329,11 @@ func (r *ReconcileGrafana) addDefaultDashboards(g *grafanav1alpha1.Grafana) (err
 	}
 	for _, d := range crl.Items {
 		pipeline := grafanadashboard.NewDashboardPipeline(&d, g.Spec.Compat.FixAnnotations, g.Spec.Compat.FixHeights)
-		processed, err := pipeline.ProcessDashboard(d.Status.Hash)
+		knownHash, ok := g.Spec.Config.Dashboards.DashboardHash[d.Name]
+		if !ok {
+			knownHash = ""
+		}
+		processed, err := pipeline.ProcessDashboard(knownHash)
 		if err != nil {
 			return err
 		}
@@ -341,6 +344,11 @@ func (r *ReconcileGrafana) addDefaultDashboards(g *grafanav1alpha1.Grafana) (err
 		if err != nil {
 			return err
 		}
+		if g.Spec.Config.Dashboards.DashboardHash == nil {
+			g.Spec.Config.Dashboards.DashboardHash = make(map[string]string)
+		}
+		g.Spec.Config.Dashboards.DashboardHash[d.Name] = pipeline.NewHash()
+		return r.client.Update(r.context, g)
 	}
 
 	return

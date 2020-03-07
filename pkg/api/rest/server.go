@@ -82,8 +82,8 @@ func init() {
 	flag.IntVar(&port, "port", 0, "the port to listen on for insecure connections, defaults to a random value")
 	flag.IntVar(&listenLimit, "listen-limit", 0, "limit the number of outstanding requests")
 	flag.DurationVar(&keepAlive, "keep-alive", 3*time.Minute, "sets the TCP keep-alive timeouts on accepted connections. It prunes dead TCP connections ( e.g. closing laptop mid-download)")
-	flag.DurationVar(&readTimeout, "read-timeout", 30*time.Second, "maximum duration before timing out read of the request")
-	flag.DurationVar(&writeTimeout, "write-timeout", 30*time.Second, "maximum duration before timing out write of the response")
+	flag.DurationVar(&readTimeout, "read-timeout", 120*time.Second, "maximum duration before timing out read of the request")
+	flag.DurationVar(&writeTimeout, "write-timeout", 120*time.Second, "maximum duration before timing out write of the response")
 
 	flag.StringVar(&tlsHost, "tls-host", "localhost", "the IP to listen on")
 	flag.IntVar(&tlsPort, "tls-port", 0, "the port to listen on for secure connections, defaults to a random value")
@@ -92,8 +92,8 @@ func init() {
 	flag.StringVar(&tlsCACertificate, "tls-ca", "", "the certificate authority certificate file to be used with mutual tls auth")
 	flag.IntVar(&tlsListenLimit, "tls-listen-limit", 0, "limit the number of outstanding requests")
 	flag.DurationVar(&tlsKeepAlive, "tls-keep-alive", 3*time.Minute, "sets the TCP keep-alive timeouts on accepted connections. It prunes dead TCP connections ( e.g. closing laptop mid-download)")
-	flag.DurationVar(&tlsReadTimeout, "tls-read-timeout", 30*time.Second, "maximum duration before timing out read of the request")
-	flag.DurationVar(&tlsWriteTimeout, "tls-write-timeout", 30*time.Second, "maximum duration before timing out write of the response")
+	flag.DurationVar(&tlsReadTimeout, "tls-read-timeout", 120*time.Second, "maximum duration before timing out read of the request")
+	flag.DurationVar(&tlsWriteTimeout, "tls-write-timeout", 120*time.Second, "maximum duration before timing out write of the response")
 }
 
 func stringEnvOverride(orig string, def string, keys ...string) string {

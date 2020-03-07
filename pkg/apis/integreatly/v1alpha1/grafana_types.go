@@ -288,7 +288,8 @@ type GrafanaConfigAnalytics struct {
 }
 
 type GrafanaConfigDashboards struct {
-	VersionsToKeep *int `json:"versions_to_keep,omitempty" ini:"versions_to_keep,omitempty"`
+	DashboardHash  map[string]string `json:"dashboards,omitempty"`
+	VersionsToKeep *int              `json:"versions_to_keep,omitempty" ini:"versions_to_keep,omitempty"`
 }
 
 type GrafanaConfigSmtp struct {

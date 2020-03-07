@@ -6,18 +6,20 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-logr/logr"
-	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"strings"
+
+	"github.com/go-logr/logr"
+	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 type DashboardPipeline interface {
 	ProcessDashboard(knownHash string) ([]byte, error)
 	NewHash() string
+	GenerateHash() string
 }
 
 type DashboardPipelineImpl struct {
@@ -47,7 +49,7 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) ([]byte, erro
 	}
 
 	// Dashboard unchanged?
-	hash := r.generateHash()
+	hash := r.GenerateHash()
 	if hash == knownHash {
 		r.Hash = knownHash
 		return nil, nil
@@ -75,7 +77,7 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) ([]byte, erro
 	if r.Dashboard.Status.Phase == v1alpha1.PhaseReconciling {
 		r.Board["slug"] = r.Dashboard.Status.Slug
 		r.Board["uid"] = r.Dashboard.Status.UID
-		r.Board["id"] = r.Dashboard.Status.ID
+		r.Board["id"] = nil
 	}
 
 	raw, err := json.Marshal(r.Board)
@@ -126,7 +128,7 @@ func (r *DashboardPipelineImpl) obtainJson() error {
 // Create a hash of the dashboard to detect if there are actually changes to the json
 // If there are no changes we should avoid sending update requests as this will create
 // a new dashboard version in Grafana
-func (r *DashboardPipelineImpl) generateHash() string {
+func (r *DashboardPipelineImpl) GenerateHash() string {
 	var datasources strings.Builder
 	for _, input := range r.Dashboard.Spec.Datasources {
 		datasources.WriteString(input.DatasourceName)
