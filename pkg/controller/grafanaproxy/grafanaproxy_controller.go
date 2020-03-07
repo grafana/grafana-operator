@@ -191,13 +191,6 @@ func (r *ReconcileGrafanaProxy) manageSuccess(cr *grafanav1alpha1.GrafanaProxy, 
 		return r.manageError(cr, err)
 	}
 
-	// Publish controller state
-	controllerState := common.ControllerState{
-		ProxyUrl:          cr.Spec.Config.Issuer,
-		GrafanaProxyReady: true,
-		ClientTimeout:     DefaultClientTimeoutSeconds,
-	}
-
 	log.Info("desired cluster state met")
 
 	return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
