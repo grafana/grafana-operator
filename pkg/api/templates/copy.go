@@ -65,7 +65,7 @@ func (d *handler) CopyDatasources(namespace string, principal *models.Principal)
 		applicationcredentials.Role{Name: "monitoring_viewer"},
 	}
 
-	ac, err := createApplicationCredentials(&oc, principal.ID, roles)
+	ac, err := createApplicationCredentials(&oc, principal.Account, roles)
 	if err != nil {
 		return
 	}

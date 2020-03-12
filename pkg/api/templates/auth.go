@@ -34,11 +34,12 @@ func getServiceClient(projectName, domainName string) (sc gophercloud.ServiceCli
 	return
 }
 
-func createApplicationCredentials(oc *gophercloud.ServiceClient, domainID string, roles []applicationcredentials.Role) (ac *applicationcredentials.ApplicationCredential, err error) {
+func createApplicationCredentials(oc *gophercloud.ServiceClient, projectID string, roles []applicationcredentials.Role) (ac *applicationcredentials.ApplicationCredential, err error) {
 	userID := os.Getenv("OS_USER_ID")
 	createOpts := applicationcredentials.CreateOpts{
-		Name:  domainID,
+		Name:  projectID,
 		Roles: roles,
+		//ExpiresAt: time.Now().AddDate(5, 0, 0).UTC().UTC().Format(time.RFC3339),
 		/*
 			AccessRules: []applicationcredentials.AccessRule{
 				{
@@ -50,8 +51,6 @@ func createApplicationCredentials(oc *gophercloud.ServiceClient, domainID string
 		Unrestricted: false,
 	}
 
-	//listOpts := applicationcredentials.ListOpts{Name: domainID}
-
 	ac, err = applicationcredentials.Create(oc, userID, createOpts).Extract()
 	if err != nil {
 		if _, ok := err.(gophercloud.ErrDefault409); ok {
@@ -62,7 +61,7 @@ func createApplicationCredentials(oc *gophercloud.ServiceClient, domainID string
 					return false, err
 				}
 				for _, a := range acs {
-					if a.Name == domainID {
+					if a.Name == projectID {
 						if err = applicationcredentials.Delete(oc, userID, a.ID).ExtractErr(); err != nil {
 							return false, err
 						}
@@ -71,7 +70,7 @@ func createApplicationCredentials(oc *gophercloud.ServiceClient, domainID string
 				}
 				return false, nil
 			}); err == nil {
-				return createApplicationCredentials(oc, domainID, roles)
+				return createApplicationCredentials(oc, projectID, roles)
 			}
 			return
 		}
