@@ -181,6 +181,7 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 
 func (r *ReconcileGrafana) manageError(cr *grafanav1alpha1.Grafana, issue error) (reconcile.Result, error) {
 	r.recorder.Event(cr, "Warning", "ProcessingError", issue.Error())
+	log.Error(issue, "error creating grafana")
 	cr.Status.Phase = grafanav1alpha1.PhaseFailing
 	cr.Status.Message = issue.Error()
 

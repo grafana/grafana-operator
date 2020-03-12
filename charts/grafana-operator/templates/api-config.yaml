@@ -15,10 +15,12 @@ data:
             hostname: "%s.grafana-svc.{{ .Values.region }}.cloud.sap"
             logLevel: "{{ .Values.grafana.log_level }}"
             basicAuth: false
+            orgName: "{{ .Values.grafana.org_name }}"
             adminPassword: "{{ .Values.grafana.admin_password }}"
+            adminUser: "{{ .Values.grafana.admin_user }}"
+            includeRolesInGroups: true
             disableLoginForm: true
             autoAssignOrg: true
-            orgName: "sapcc"
             grafanaGroupRoleMap: "{{ .Values.grafana.group_role_map }}"
     auth_proxy: 
         connectors: 
