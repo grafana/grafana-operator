@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -13,11 +14,12 @@ const GrafanaDashboardKind = "GrafanaDashboard"
 type GrafanaDashboardSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	Json        string                       `json:"json"`
-	Name        string                       `json:"name"`
-	Plugins     PluginList                   `json:"plugins,omitempty"`
-	Url         string                       `json:"url,omitempty"`
-	Datasources []GrafanaDashboardDatasource `json:"datasources,omitempty"`
+	Json         string                       `json:"json"`
+	Name         string                       `json:"name"`
+	Plugins      PluginList                   `json:"plugins,omitempty"`
+	Url          string                       `json:"url,omitempty"`
+	ConfigMapRef *corev1.ConfigMapKeySelector `json:"configMapRef,omitempty"`
+	Datasources  []GrafanaDashboardDatasource `json:"datasources,omitempty"`
 }
 
 type GrafanaDashboardDatasource struct {

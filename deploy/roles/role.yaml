@@ -14,6 +14,7 @@ rules:
       - configmaps
       - secrets
       - serviceaccounts
+      - configmaps
     verbs:
       - get
       - list
