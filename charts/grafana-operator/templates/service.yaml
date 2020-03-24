@@ -5,12 +5,16 @@ metadata:
   namespace: {{.Release.Namespace}}
   labels:
     {{- include "grafana-operator.labels" . | nindent 4 }}
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+    prometheus.io/targets: "infra-frontend"
 spec:
   type: {{ .Values.service.type }}
   ports:
     - port: {{ .Values.service.port }}
-      targetPort: http
+      targetPort: metrics
       protocol: TCP
-      name: http
+      name: metrics
   selector:
     {{- include "grafana-operator.selectorLabels" . | nindent 4 }}
