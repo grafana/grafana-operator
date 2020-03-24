@@ -9,7 +9,7 @@ region: "qa-de-1"
 image:
   repository: hub.global.cloud.sap/monsoon/grafana-operator
   pullPolicy: IfNotPresent
-  tag: "84343360"
+  tag: "8cdd9ec1"
 
 imagePullSecrets: []
 nameOverride: ""
