@@ -12,6 +12,7 @@ import (
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/grafanadashboard"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
 	routev1 "github.com/openshift/api/route/v1"
+	"github.com/prometheus/client_golang/prometheus"
 	v12 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	v1beta12 "k8s.io/api/extensions/v1beta1"
@@ -23,6 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/metrics"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -31,7 +33,21 @@ import (
 const ControllerName = "grafana-controller"
 const DefaultClientTimeoutSeconds = 10
 
-var log = logf.Log.WithName(ControllerName)
+var (
+	log           = logf.Log.WithName(ControllerName)
+	grafanaStatus = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "grafana_status",
+			Help: "Status of Grafana instance",
+		},
+		[]string{"instance"},
+	)
+)
+
+func init() {
+	// Register custom metrics with the global prometheus registry
+	metrics.Registry.MustRegister(grafanaStatus)
+}
 
 // Add creates a new Grafana Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -195,7 +211,7 @@ func (r *ReconcileGrafana) manageError(cr *grafanav1alpha1.Grafana, issue error)
 	}
 
 	r.config.InvalidateDashboards()
-
+	grafanaStatus.WithLabelValues(cr.GetName()).Set(0)
 	return reconcile.Result{RequeueAfter: config.RequeueDelayOnError}, nil
 }
 
@@ -308,6 +324,7 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 	}
 
 	log.Info("desired cluster state met")
+	grafanaStatus.WithLabelValues(cr.GetName()).Set(1)
 	return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
 }
 
