@@ -289,6 +289,15 @@ func getProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.Probe {
 	}
 }
 
+func getTerminationGracePeriod(cr *v1alpha1.Grafana) *int64 {
+
+	if cr.Spec.Deployment.TerminationGracePeriodSeconds == 0 {
+		cr.Spec.Deployment.TerminationGracePeriodSeconds = 30
+	}
+
+	return &cr.Spec.Deployment.TerminationGracePeriodSeconds
+}
+
 func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Container {
 	var containers []v13.Container
 
@@ -344,6 +353,7 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 		VolumeMounts:             getVolumeMounts(cr),
 		LivenessProbe:            getProbe(cr, 60, 30, 10),
 		ReadinessProbe:           getProbe(cr, 5, 3, 1),
+		TerminationGracePeriodSeconds: getTerminationGracePeriod(cr),
 		TerminationMessagePath:   "/dev/termination-log",
 		TerminationMessagePolicy: "File",
 		ImagePullPolicy:          "IfNotPresent",
