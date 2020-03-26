@@ -113,10 +113,6 @@ func getTerminationGracePeriod(cr *v1alpha1.Grafana) *int64 {
 
 }
 
-func Int64Pointer(i int64) *int64 {
-	return &i
-}
-
 func getTolerations(cr *v1alpha1.Grafana) []v13.Toleration {
 	tolerations := []v13.Toleration{}
 
