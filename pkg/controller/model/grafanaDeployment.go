@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+
 	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
 	v1 "k8s.io/api/apps/v1"
@@ -101,6 +102,19 @@ func getNodeSelectors(cr *v1alpha1.Grafana) map[string]string {
 	}
 	return nodeSelector
 
+}
+
+func getTerminationGracePeriod(cr *v1alpha1.Grafana) *int64 {
+	var tcp int64 = 30
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.TerminationGracePeriodSeconds != 0 {
+		tcp = cr.Spec.Deployment.TerminationGracePeriodSeconds
+	}
+	return &tcp
+
+}
+
+func Int64Pointer(i int64) *int64 {
+	return &i
 }
 
 func getTolerations(cr *v1alpha1.Grafana) []v13.Toleration {
@@ -287,15 +301,6 @@ func getProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.Probe {
 		TimeoutSeconds:      timeout,
 		FailureThreshold:    failure,
 	}
-}
-
-func getTerminationGracePeriod(cr *v1alpha1.Grafana) *int64 {
-
-	if cr.Spec.Deployment.TerminationGracePeriodSeconds == 0 {
-		cr.Spec.Deployment.TerminationGracePeriodSeconds = 30
-	}
-
-	return &cr.Spec.Deployment.TerminationGracePeriodSeconds
 }
 
 func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Container {
