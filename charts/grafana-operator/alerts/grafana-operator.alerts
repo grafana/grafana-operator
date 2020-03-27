@@ -1,0 +1,29 @@
+groups:
+- name: grafana-operator.alerts
+  rules:
+  - alert: GrafanaOperatorInstanceDown
+    expr: count(grafana_status{service="grafana-operator"} == 0) by (instance)
+    for: 15m
+    labels:
+      severity: warning
+      tier: monitoring
+      service: grafana-operator
+      context:  "{{ $labels.instance }}"
+      meta: "grafana-operator: instance  "{{ $labels.instance }}" not ready"
+      playbook: docs/devops/alert/monitoring
+    annotations:
+      description: "grafana-operator: instance not ready"
+      summary: "grafana-operator: instance not ready"
+  - alert: GrafanaOperatorProxyDown
+    expr: count(grafana_proxy_status{service="grafana-operator"} == 0) by (instance)
+    for: 15m
+    labels:
+      severity: warning
+      tier: monitoring
+      service: grafana-operator
+      context:  "{{ $labels.instance }}"
+      meta: "grafana-operator: instance  "{{ $labels.instance }}" not ready"
+      playbook: docs/devops/alert/monitoring
+    annotations:
+      description: "grafana-operator: instance not ready"
+      summary: "grafana-operator: instance not ready"
