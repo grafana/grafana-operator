@@ -22,9 +22,11 @@ import (
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -74,13 +76,24 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
 func add(mgr manager.Manager, r reconcile.Reconciler, autodetectChannel chan schema.GroupVersionKind) error {
 	// Create a new controller
-	c, err := controller.New("grafana-controller", mgr, controller.Options{Reconciler: r})
+	c, err := controller.New("grafana-controller", mgr, controller.Options{Reconciler: r, MaxConcurrentReconciles: 10})
 	if err != nil {
 		return err
 	}
 
+	pred := predicate.Funcs{
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			log.Info(fmt.Sprintf("instance %s deleted", e.Meta.GetName()))
+			grafanaStatus.DeleteLabelValues(e.Meta.GetName())
+			return true
+		},
+		CreateFunc: func(e event.CreateEvent) bool {
+			log.Info(fmt.Sprintf("instance %s created", e.Meta.GetName()))
+			return true
+		},
+	}
 	// Watch for changes to primary resource Grafana
-	err = c.Watch(&source.Kind{Type: &grafanav1alpha1.Grafana{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &grafanav1alpha1.Grafana{}}, &handler.EnqueueRequestForObject{}, pred)
 	if err != nil {
 		return err
 	}

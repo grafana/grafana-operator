@@ -24,13 +24,12 @@ func Keystone() func(token string) (*models.Principal, error) {
 	}
 
 	keystone.Log = func(format string, a ...interface{}) {
-		log.Info("library", "keystone", "msg", fmt.Sprintf(format, a...))
+		log.Info(fmt.Sprintf(format, a...))
 	}
 	auth := keystone.New(authURL)
 	auth.TokenCache = memory.New(10 * time.Minute)
 
 	return func(token string) (*models.Principal, error) {
-		//return &models.Principal{AccountName: "project123"}, nil
 		t, err := auth.Validate(token)
 		if err != nil {
 			return nil, errors.New(401, fmt.Sprintf("Authentication failed: %s", err))
