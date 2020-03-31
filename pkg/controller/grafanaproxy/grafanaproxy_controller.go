@@ -18,9 +18,11 @@ import (
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -69,13 +71,26 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
 func add(mgr manager.Manager, r reconcile.Reconciler, autodetectChannel chan schema.GroupVersionKind) error {
 	// Create a new controller
-	c, err := controller.New("grafana-proxy-controller", mgr, controller.Options{Reconciler: r})
+	c, err := controller.New("grafana-proxy-controller", mgr, controller.Options{Reconciler: r, MaxConcurrentReconciles: 10})
 	if err != nil {
 		return err
 	}
 
-	// Watch for changes to primary resource Grafana
-	err = c.Watch(&source.Kind{Type: &grafanav1alpha1.GrafanaProxy{}}, &handler.EnqueueRequestForObject{})
+	pred := predicate.Funcs{
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			log.Info(fmt.Sprintf("proxy instance %s deleted", e.Meta.GetName()))
+			grafanaProxyStatus.DeleteLabelValues(e.Meta.GetName())
+			return true
+		},
+		CreateFunc: func(e event.CreateEvent) bool {
+			log.Info(fmt.Sprintf("proxy instance %s created", e.Meta.GetName()))
+			grafanaProxyStatus.WithLabelValues(e.Meta.GetName()).Set(0)
+			return true
+		},
+	}
+
+	// Watch for changes to primary resource Grafana proxy
+	err = c.Watch(&source.Kind{Type: &grafanav1alpha1.GrafanaProxy{}}, &handler.EnqueueRequestForObject{}, pred)
 	if err != nil {
 		return err
 	}
@@ -209,5 +224,5 @@ func (r *ReconcileGrafanaProxy) manageSuccess(cr *grafanav1alpha1.GrafanaProxy, 
 
 	log.Info("desired cluster state met")
 	grafanaProxyStatus.WithLabelValues(cr.GetName()).Set(1)
-	return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
+	return reconcile.Result{}, nil
 }

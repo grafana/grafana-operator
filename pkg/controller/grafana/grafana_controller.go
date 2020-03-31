@@ -4,12 +4,10 @@ import (
 	"context"
 	stdErr "errors"
 	"fmt"
-	"time"
 
 	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
-	"github.com/integr8ly/grafana-operator/v3/pkg/controller/grafanadashboard"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
 	routev1 "github.com/openshift/api/route/v1"
 	"github.com/prometheus/client_golang/prometheus"
@@ -89,6 +87,17 @@ func add(mgr manager.Manager, r reconcile.Reconciler, autodetectChannel chan sch
 		},
 		CreateFunc: func(e event.CreateEvent) bool {
 			log.Info(fmt.Sprintf("instance %s created", e.Meta.GetName()))
+			grafanaStatus.WithLabelValues(e.Meta.GetName()).Set(0)
+			return true
+		},
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			/*
+				oldG, ok := e.ObjectOld.(*grafanav1alpha1.Grafana)
+				if !ok {
+					return false
+				}
+			*/
+			log.Info(fmt.Sprintf("instance %s updated", e.MetaNew.GetName()))
 			return true
 		},
 	}
@@ -312,10 +321,6 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 		fixHeights = true
 	}
 
-	if err = r.addDefaultDashboards(cr); err != nil {
-		return r.manageError(cr, err)
-	}
-
 	// Publish controller state
 	controllerState := common.ControllerState{
 		DashboardSelectors: cr.Spec.DashboardLabelSelector,
@@ -338,66 +343,5 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 
 	log.Info("desired cluster state met")
 	grafanaStatus.WithLabelValues(cr.GetName()).Set(1)
-	return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
-}
-
-func (r *ReconcileGrafana) addDefaultDashboards(g *grafanav1alpha1.Grafana) (err error) {
-	crl := &grafanav1alpha1.GrafanaDashboardList{}
-	if err = r.client.List(r.context, crl, client.InNamespace("grafana-operator")); err != nil {
-		return
-	}
-
-	if len(crl.Items) == 0 {
-		return stdErr.New("no default dashboards found")
-	}
-	client, err := r.getClient(g)
-	if err != nil {
-		return
-	}
-	for _, d := range crl.Items {
-		pipeline := grafanadashboard.NewDashboardPipeline(&d, g.Spec.Compat.FixAnnotations, g.Spec.Compat.FixHeights)
-		knownHash, ok := g.Spec.Config.Dashboards.DashboardHash[d.Name]
-		if !ok {
-			knownHash = ""
-		}
-		processed, err := pipeline.ProcessDashboard(knownHash)
-		if err != nil {
-			return err
-		}
-		if processed == nil {
-			continue
-		}
-		_, err = client.CreateOrUpdateDashboard(processed)
-		if err != nil {
-			return err
-		}
-		if g.Spec.Config.Dashboards.DashboardHash == nil {
-			g.Spec.Config.Dashboards.DashboardHash = make(map[string]string)
-		}
-		g.Spec.Config.Dashboards.DashboardHash[d.Name] = pipeline.NewHash()
-		return r.client.Update(r.context, g)
-	}
-
-	return
-}
-
-// Get an authenticated grafana API client
-func (r *ReconcileGrafana) getClient(g *grafanav1alpha1.Grafana) (grafanadashboard.GrafanaClient, error) {
-	url := g.Spec.Config.Server.RootUrl
-	if url == "" {
-		return nil, stdErr.New("cannot get grafana admin url")
-	}
-
-	username := g.Spec.Config.Security.AdminUser
-	if username == "" {
-		return nil, stdErr.New("invalid credentials (username)")
-	}
-
-	password := g.Spec.Config.Security.AdminPassword
-	if password == "" {
-		return nil, stdErr.New("invalid credentials (password)")
-	}
-
-	duration := time.Duration(10 * time.Second)
-	return grafanadashboard.NewGrafanaClient(url, username, password, duration), nil
+	return reconcile.Result{}, nil
 }

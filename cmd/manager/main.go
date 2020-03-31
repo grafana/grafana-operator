@@ -60,7 +60,7 @@ func init() {
 	flagset.StringVar(&flagPluginsInitContainerTag, "grafana-plugins-init-container-tag", "", "Overrides the default Grafana Plugins Init Container tag")
 	flagset.StringVar(&flagNamespaces, "namespaces", "", "Namespaces to scope the interaction of the Grafana operator. Mutually exclusive with --scan-all")
 	flagset.BoolVar(&scanAll, "scan-all", true, "Scans all namespaces for dashboards")
-	flagset.IntVar(&syncPeriod, "sync-period", 60, "SyncPeriod determines the minimum frequency at which watched resources are reconciled.")
+	flagset.IntVar(&syncPeriod, "sync-period", 10, "SyncPeriod determines the minimum frequency at which watched resources are reconciled.")
 	flagset.Parse(os.Args[1:])
 }
 
@@ -163,7 +163,7 @@ func main() {
 	}
 	defer r.Unset()
 
-	sync := time.Duration(syncPeriod) * time.Second
+	sync := time.Duration(syncPeriod) * time.Hour
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{
 		SyncPeriod:         &sync,
