@@ -13,7 +13,6 @@ type (
 		Grafana   models.Grafana `yaml:"grafana"`
 		Version   string         `yaml:"version"`
 		AuthProxy AuthProxy      `yaml:"auth_proxy"`
-		Region    string         `yaml:"region"`
 		SecretKey string         `yaml:"secret_key"`
 	}
 	AuthProxy struct {
