@@ -7,7 +7,7 @@ metadata:
   namespace: {{.Release.Namespace}}
 spec:
   rules:
-  - host: api.grafana-svc.qa-de-1.cloud.sap
+  - host: api.grafana-svc.{{ .Values.global.region }}.cloud.sap
     http:
       paths:
       - backend:
