@@ -8,17 +8,18 @@ import (
 	"github.com/databus23/keystone"
 	"github.com/databus23/keystone/cache/memory"
 	errors "github.com/go-openapi/errors"
+	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/integr8ly/grafana-operator/v3/pkg/api/models"
-	flag "github.com/spf13/pflag"
 )
 
 var authURL string
 
-func init() {
-	flag.StringVar(&authURL, "auth-url", "https://identity-3.qa-de-1.cloud.sap/v3", "Openstack identity v3 auth url")
-}
-
 func Keystone() func(token string) (*models.Principal, error) {
+	opts, err := openstack.AuthOptionsFromEnv()
+	if err != nil {
+		return nil, err
+	}
+	authURL = opts.IdentityEndpoint
 	if !(strings.HasSuffix(authURL, "/v3") || strings.HasSuffix(authURL, "/v3/")) {
 		authURL = fmt.Sprintf("%s/%s", strings.TrimRight(authURL, "/"), "/v3")
 	}
