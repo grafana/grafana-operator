@@ -15,5 +15,5 @@ spec:
           servicePort: 8080
   tls:
   - hosts:
-    - api.grafana-svc.qa-de-1.cloud.sap
-    secretName: tls-api-grafana-svc-qa-de-1-cloud-sap
+    - api.grafana-svc.{{ .Values.global.region }}.cloud.sap
+    secretName: tls-api-grafana-svc-{{ .Values.global.region }}-cloud-sap
