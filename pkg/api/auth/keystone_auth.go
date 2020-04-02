@@ -2,6 +2,7 @@ package auth
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -14,12 +15,16 @@ import (
 
 var authURL string
 
-func Keystone() func(token string) (*models.Principal, error) {
+func init() {
 	opts, err := openstack.AuthOptionsFromEnv()
 	if err != nil {
-		return nil, err
+		log.Error(err, "cannot load os authurl")
+		os.Exit(1)
 	}
 	authURL = opts.IdentityEndpoint
+}
+
+func Keystone() func(token string) (*models.Principal, error) {
 	if !(strings.HasSuffix(authURL, "/v3") || strings.HasSuffix(authURL, "/v3/")) {
 		authURL = fmt.Sprintf("%s/%s", strings.TrimRight(authURL, "/"), "/v3")
 	}
