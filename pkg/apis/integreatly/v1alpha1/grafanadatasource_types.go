@@ -95,6 +95,15 @@ type GrafanaDataSourceJsonData struct {
 	MaxOpenConns            int    `json:"maxOpenConns,omitempty"`
 	MaxIdleConns            int    `json:"maxIdleConns,omitempty"`
 	ConnMaxLifetime         int    `json:"connMaxLifetime,omitempty"`
+	//  Usefull fields for clickhouse datasource
+	//  See https://github.com/Vertamedia/clickhouse-grafana/tree/master/dist/README.md#configure-the-datasource-with-provisioning
+	//  See https://github.com/Vertamedia/clickhouse-grafana/tree/master/src/datasource.ts#L44
+	AddCorsHeader               bool   `json:"addCorsHeader,omitempty"`
+	DefaultDatabase             string `json:"defaultDatabase,omitempty"`
+	UsePOST                     bool   `json:"usePOST,omitempty"`
+	UseYandexCloudAuthorization bool   `json:"useYandexCloudAuthorization,omitempty"`
+	XHeaderUser                 string `json:"xHeaderUser,omitempty"`
+	XHeaderKey                  string `json:"xHeaderKey,omitempty"`
 }
 
 // The most common secure json options
