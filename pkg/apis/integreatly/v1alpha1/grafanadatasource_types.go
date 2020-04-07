@@ -95,6 +95,26 @@ type GrafanaDataSourceJsonData struct {
 	MaxOpenConns            int    `json:"maxOpenConns,omitempty"`
 	MaxIdleConns            int    `json:"maxIdleConns,omitempty"`
 	ConnMaxLifetime         int    `json:"connMaxLifetime,omitempty"`
+	//  Usefull fields for clickhouse datasource
+	//  See https://github.com/Vertamedia/clickhouse-grafana/tree/master/dist/README.md#configure-the-datasource-with-provisioning
+	//  See https://github.com/Vertamedia/clickhouse-grafana/tree/master/src/datasource.ts#L44
+	AddCorsHeader               bool   `json:"addCorsHeader,omitempty"`
+	DefaultDatabase             string `json:"defaultDatabase,omitempty"`
+	UsePOST                     bool   `json:"usePOST,omitempty"`
+	UseYandexCloudAuthorization bool   `json:"useYandexCloudAuthorization,omitempty"`
+	XHeaderUser                 string `json:"xHeaderUser,omitempty"`
+	XHeaderKey                  string `json:"xHeaderKey,omitempty"`
+	// Custom HTTP headers for datasources
+	// See https://grafana.com/docs/grafana/latest/administration/provisioning/#datasources
+	HTTPHeaderName1 string `json:"httpHeaderName1,omitempty"`
+	HTTPHeaderName2 string `json:"httpHeaderName2,omitempty"`
+	HTTPHeaderName3 string `json:"httpHeaderName3,omitempty"`
+	HTTPHeaderName4 string `json:"httpHeaderName4,omitempty"`
+	HTTPHeaderName5 string `json:"httpHeaderName5,omitempty"`
+	HTTPHeaderName6 string `json:"httpHeaderName6,omitempty"`
+	HTTPHeaderName7 string `json:"httpHeaderName7,omitempty"`
+	HTTPHeaderName8 string `json:"httpHeaderName8,omitempty"`
+	HTTPHeaderName9 string `json:"httpHeaderName9,omitempty"`
 }
 
 // The most common secure json options
@@ -107,6 +127,17 @@ type GrafanaDataSourceSecureJsonData struct {
 	BasicAuthPassword string `json:"basicAuthPassword,omitempty"`
 	AccessKey         string `json:"accessKey,omitempty"`
 	SecretKey         string `json:"secretKey,omitempty"`
+	// Custom HTTP headers for datasources
+	// See https://grafana.com/docs/grafana/latest/administration/provisioning/#datasources
+	HTTPHeaderValue1 string `json:"httpHeaderValue1,omitempty"`
+	HTTPHeaderValue2 string `json:"httpHeaderValue2,omitempty"`
+	HTTPHeaderValue3 string `json:"httpHeaderValue3,omitempty"`
+	HTTPHeaderValue4 string `json:"httpHeaderValue4,omitempty"`
+	HTTPHeaderValue5 string `json:"httpHeaderValue5,omitempty"`
+	HTTPHeaderValue6 string `json:"httpHeaderValue6,omitempty"`
+	HTTPHeaderValue7 string `json:"httpHeaderValue7,omitempty"`
+	HTTPHeaderValue8 string `json:"httpHeaderValue8,omitempty"`
+	HTTPHeaderValue9 string `json:"httpHeaderValue9,omitempty"`
 }
 
 func init() {
