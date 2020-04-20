@@ -56,3 +56,7 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+# send alerts to prometheus
+alerts:
+  prometheus: openstack
