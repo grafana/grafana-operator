@@ -5,7 +5,7 @@ groups:
     expr: count(grafana_status{service="grafana-operator"} == 0) by (instance)
     for: 15m
     labels:
-      severity: warning
+      severity: info
       tier: monitoring
       service: grafana-operator
       context:  "{{ $labels.instance }}"
@@ -18,7 +18,7 @@ groups:
     expr: count(grafana_proxy_status{service="grafana-operator"} == 0) by (instance)
     for: 15m
     labels:
-      severity: warning
+      severity: info
       tier: monitoring
       service: grafana-operator
       context:  "{{ $labels.instance }}"
