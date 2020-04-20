@@ -59,4 +59,4 @@ affinity: {}
 
 # send alerts to prometheus
 alerts:
-  prometheus: openstack
+  prometheus: infra-frontend
