@@ -197,6 +197,16 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume {
 	return volumes
 }
 
+func getEnvFrom(cr *v1alpha1.Grafana) []v13.EnvFromSource {
+	var envFrom []v13.EnvFromSource
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.EnvFrom != nil {
+		for _, v := range cr.Spec.Deployment.EnvFrom {
+			envFrom = append(envFrom, *v.DeepCopy())
+		}
+	}
+	return envFrom
+}
+
 // Don't add grafana specific volume mounts to extra containers and preserve
 // pre existing ones
 func getExtraContainerVolumeMounts(cr *v1alpha1.Grafana, mounts []v13.VolumeMount) []v13.VolumeMount {
@@ -340,6 +350,7 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 				},
 			},
 		},
+		EnvFrom:                  getEnvFrom(cr),
 		Resources:                getResources(cr),
 		VolumeMounts:             getVolumeMounts(cr),
 		LivenessProbe:            getProbe(cr, 60, 30, 10),

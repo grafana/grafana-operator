@@ -201,6 +201,8 @@ spec:
     affinity:               # Affinity parameters shall support node, pod affinity and anti-affinity usecases.
     ...
     securityContext:        # Run grafana pods with security context
+    ...
+    envFrom:                # Environment variables from Secret or ConfigMap. The key of data becomes the env name.
 ```
 
 ## Configuring Grafana API access
