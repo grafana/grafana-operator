@@ -258,6 +258,7 @@ type GrafanaConfigAuthGenericOauth struct {
 	ApiUrl            string `json:"api_url,omitempty" ini:"api_url,omitempty"`
 	AllowedDomains    string `json:"allowed_domains,omitempty" ini:"allowed_domains,omitempty"`
 	RoleAttributePath string `json:"role_attribute_path,omitempty" ini:"role_attribute_path,omitempty"`
+	EmailAttributePath string `json:"email_attribute_path,omitempty" ini:"email_attribute_path,omitempty"`
 }
 
 type GrafanaConfigAuthLdap struct {
