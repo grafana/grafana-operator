@@ -67,6 +67,8 @@ func (c *ControllerConfig) GetPluginsFor(dashboard *v1alpha1.GrafanaDashboard) v
 
 func (c *ControllerConfig) SetPluginsFor(dashboard *v1alpha1.GrafanaDashboard) {
 	id := c.GetDashboardId(dashboard.Namespace, dashboard.Name)
+	c.Lock()
+	defer c.Unlock()
 	c.Plugins[id] = dashboard.Spec.Plugins
 }
 
