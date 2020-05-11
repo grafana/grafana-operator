@@ -80,7 +80,7 @@ These permissions are reuqied by the K8s user who runs this playbook.
 
 ### Examples
 
-#### Install namepsace resources
+#### Install namespace resources
 ```
 ansible-playbook grafana-operator-namespace-resources.yaml \
   -e k8s_host=https://ocp.example.xyz \
@@ -88,7 +88,7 @@ ansible-playbook grafana-operator-namespace-resources.yaml \
   -e k8s_password=secret
 ```
 
-#### Install namepsace resources - scan all namespaces for GrafanaDashboards
+#### Install namespace resources - scan all namespaces for GrafanaDashboards
 ```
 ansible-playbook grafana-operator-namespace-resources.yaml \
   -e k8s_host=https://ocp.example.xyz \
@@ -97,7 +97,7 @@ ansible-playbook grafana-operator-namespace-resources.yaml \
   -e grafana_operator_args_scan_all=true
 ```
 
-#### Uninstall namepsace resources - keep namespace
+#### Uninstall namespace resources - keep namespace
 ```
 ansible-playbook grafana-operator-namespace-resources.yaml \
   -e k8s_host=https://ocp.example.xyz \
@@ -106,7 +106,7 @@ ansible-playbook grafana-operator-namespace-resources.yaml \
   -e grafan_operator_install=False
 ```
 
-#### Uninstall namepsace resources - delete namespace
+#### Uninstall namespace resources - delete namespace
 ```
 ansible-playbook grafana-operator-namespace-resources.yaml \
   -e k8s_host=https://ocp.example.xyz \
