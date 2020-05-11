@@ -4,6 +4,7 @@ import (
 	"context"
 	stdErr "errors"
 	"fmt"
+
 	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
@@ -253,7 +254,6 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 	if r.config.GetConfigBool(config.ConfigGrafanaDashboardsSynced, false) {
 		cr.Status.InstalledDashboards = r.config.Dashboards
 	} else {
-		r.config.SetDashboards(cr.Status.InstalledDashboards)
 		if r.config.Dashboards == nil {
 			r.config.SetDashboards(make(map[string][]*grafanav1alpha1.GrafanaDashboardRef))
 		}
