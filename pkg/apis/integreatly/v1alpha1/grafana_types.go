@@ -58,13 +58,14 @@ type GrafanaServiceAccount struct {
 
 // GrafanaDeployment provides a means to configure the deployment
 type GrafanaDeployment struct {
-	Annotations     map[string]string      `json:"annotations,omitempty"`
-	Labels          map[string]string      `json:"labels,omitempty"`
-	Replicas        int32                  `json:"replicas"`
-	NodeSelector    map[string]string      `json:"nodeSelector,omitempty"`
-	Tolerations     []v1.Toleration        `json:"tolerations,omitempty"`
-	Affinity        *v1.Affinity           `json:"affinity,omitempty"`
-	SecurityContext *v1.PodSecurityContext `json:"securityContext,omitempty"`
+	Annotations                   map[string]string      `json:"annotations,omitempty"`
+	Labels                        map[string]string      `json:"labels,omitempty"`
+	Replicas                      int32                  `json:"replicas"`
+	NodeSelector                  map[string]string      `json:"nodeSelector,omitempty"`
+	Tolerations                   []v1.Toleration        `json:"tolerations,omitempty"`
+	Affinity                      *v1.Affinity           `json:"affinity,omitempty"`
+	SecurityContext               *v1.PodSecurityContext `json:"securityContext,omitempty"`
+	TerminationGracePeriodSeconds int64                  `json:"terminationGracePeriodSeconds"`
 }
 
 // GrafanaIngress provides a means to configure the ingress created

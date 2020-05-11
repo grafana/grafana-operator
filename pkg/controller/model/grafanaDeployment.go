@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+
 	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
 	v1 "k8s.io/api/apps/v1"
@@ -100,6 +101,15 @@ func getNodeSelectors(cr *v1alpha1.Grafana) map[string]string {
 		nodeSelector = cr.Spec.Deployment.NodeSelector
 	}
 	return nodeSelector
+
+}
+
+func getTerminationGracePeriod(cr *v1alpha1.Grafana) *int64 {
+	var tcp int64 = 30
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.TerminationGracePeriodSeconds != 0 {
+		tcp = cr.Spec.Deployment.TerminationGracePeriodSeconds
+	}
+	return &tcp
 
 }
 
@@ -403,14 +413,15 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, annotations map[string]string, conf
 				Annotations: getPodAnnotations(cr, annotations),
 			},
 			Spec: v13.PodSpec{
-				NodeSelector:       getNodeSelectors(cr),
-				Tolerations:        getTolerations(cr),
-				Affinity:           getAffinities(cr),
-				SecurityContext:    getSecurityContext(cr),
-				Volumes:            getVolumes(cr),
-				InitContainers:     getInitContainers(plugins),
-				Containers:         getContainers(cr, configHash, dsHash),
-				ServiceAccountName: GrafanaServiceAccountName,
+				NodeSelector:                  getNodeSelectors(cr),
+				Tolerations:                   getTolerations(cr),
+				Affinity:                      getAffinities(cr),
+				SecurityContext:               getSecurityContext(cr),
+				Volumes:                       getVolumes(cr),
+				InitContainers:                getInitContainers(plugins),
+				Containers:                    getContainers(cr, configHash, dsHash),
+				ServiceAccountName:            GrafanaServiceAccountName,
+				TerminationGracePeriodSeconds: getTerminationGracePeriod(cr),
 			},
 		},
 		Strategy: v1.DeploymentStrategy{
