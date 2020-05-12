@@ -2,6 +2,7 @@ package common
 
 import (
 	"context"
+
 	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
@@ -14,14 +15,15 @@ import (
 )
 
 type ClusterState struct {
-	GrafanaService          *v1.Service
-	GrafanaServiceAccount   *v1.ServiceAccount
-	GrafanaConfig           *v1.ConfigMap
-	GrafanaRoute            *v12.Route
-	GrafanaIngress          *v1beta1.Ingress
-	GrafanaDeployment       *v13.Deployment
-	GrafanaDataSourceConfig *v1.ConfigMap
-	AdminSecret             *v1.Secret
+	GrafanaService                   *v1.Service
+	GrafanaDataPersistentVolumeClaim *v1.PersistentVolumeClaim
+	GrafanaServiceAccount            *v1.ServiceAccount
+	GrafanaConfig                    *v1.ConfigMap
+	GrafanaRoute                     *v12.Route
+	GrafanaIngress                   *v1beta1.Ingress
+	GrafanaDeployment                *v13.Deployment
+	GrafanaDataSourceConfig          *v1.ConfigMap
+	AdminSecret                      *v1.Secret
 }
 
 func NewClusterState() *ClusterState {
@@ -35,6 +37,13 @@ func (i *ClusterState) Read(ctx context.Context, cr *v1alpha1.Grafana, client cl
 	err := i.readGrafanaService(ctx, cr, client)
 	if err != nil {
 		return err
+	}
+
+	if cr.UsedPersistentVolume() {
+		err = i.readGrafanaDataPVC(ctx, cr, client)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = i.readGrafanaServiceAccount(ctx, cr, client)
@@ -82,6 +91,20 @@ func (i *ClusterState) readGrafanaService(ctx context.Context, cr *v1alpha1.Graf
 		return err
 	}
 	i.GrafanaService = currentState.DeepCopy()
+	return nil
+}
+
+func (i *ClusterState) readGrafanaDataPVC(ctx context.Context, cr *v1alpha1.Grafana, client client.Client) error {
+	currentState := model.GrafanaDataPVC(cr)
+	selector := model.GrafanaDataStorageSelector(cr)
+	err := client.Get(ctx, selector, currentState)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+	i.GrafanaDataPersistentVolumeClaim = currentState.DeepCopy()
 	return nil
 }
 

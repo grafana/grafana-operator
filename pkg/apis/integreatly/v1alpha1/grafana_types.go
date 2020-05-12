@@ -3,6 +3,7 @@ package v1alpha1
 import (
 	v12 "github.com/openshift/api/route/v1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -24,6 +25,7 @@ type GrafanaSpec struct {
 	Secrets                []string                 `json:"secrets,omitempty"`
 	ConfigMaps             []string                 `json:"configMaps,omitempty"`
 	Service                *GrafanaService          `json:"service,omitempty"`
+	DataStorage            *GrafanaDataStorage      `json:"dataStorage,omitempty"`
 	Deployment             *GrafanaDeployment       `json:"deployment,omitempty"`
 	Resources              *v1.ResourceRequirements `json:"resources,omitempty"`
 	ServiceAccount         *GrafanaServiceAccount   `json:"serviceAccount,omitempty"`
@@ -49,6 +51,15 @@ type GrafanaService struct {
 	Labels      map[string]string `json:"labels,omitempty"`
 	Type        v1.ServiceType    `json:"type,omitempty"`
 	Ports       []v1.ServicePort  `json:"ports,omitempty"`
+}
+
+// GrafanaDataStorage provides a means to configure the grafana data storage
+type GrafanaDataStorage struct {
+	Annotations map[string]string               `json:"annotations,omitempty"`
+	Labels      map[string]string               `json:"labels,omitempty"`
+	AccessModes []v1.PersistentVolumeAccessMode `json:"accessModes,omitempty"`
+	Size        resource.Quantity               `json:"size"`
+	Class       string                          `json:"class"`
 }
 
 type GrafanaServiceAccount struct {
