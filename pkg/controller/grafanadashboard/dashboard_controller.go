@@ -7,7 +7,10 @@ import (
 	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -113,6 +116,19 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 		return reconcile.Result{Requeue: false}, nil
 	}
 
+	if r.state.DashboardNamespaceSelector != nil {
+
+		matchesNamespaceLabels, err := r.checkNamespaceLabels(request)
+		if matchesNamespaceLabels == false {
+			log.Info("Dashboard skipped as labels do not match", matchesNamespaceLabels)
+			return reconcile.Result{Requeue: false}, nil
+		}
+		if err != nil {
+			return reconcile.Result{Requeue: false}, err
+
+		}
+	}
+
 	client, err := r.getClient()
 	if err != nil {
 		return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
@@ -152,6 +168,22 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 
 	// Otherwise always re sync all dashboards in the namespace
 	return r.reconcileDashboards(request, client)
+}
+
+func (r *ReconcileGrafanaDashboard) checkNamespaceLabels(request reconcile.Request) (bool, error) {
+	key := client.ObjectKey{
+		Name: request.Namespace,
+	}
+	ns := &v1.Namespace{}
+	err := r.client.Get(r.context, key, ns)
+	if err != nil {
+		return false, err
+	}
+	selector, err := metav1.LabelSelectorAsSelector(r.state.DashboardNamespaceSelector)
+	if err != nil {
+		return false, err
+	}
+	return selector.Empty() || selector.Matches(labels.Set(ns.Labels)), nil
 }
 
 func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Request, grafanaClient GrafanaClient) (reconcile.Result, error) {
