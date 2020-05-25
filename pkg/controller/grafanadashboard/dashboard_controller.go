@@ -119,16 +119,18 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 	if r.state.DashboardNamespaceSelector != nil {
 
 		matchesNamespaceLabels, err := r.checkNamespaceLabels(request)
-		if matchesNamespaceLabels == false {
-			log.Info("Dashboard skipped as labels do not match", matchesNamespaceLabels)
-			return reconcile.Result{Requeue: false}, nil
-		}
+
 		if err != nil {
 			return reconcile.Result{Requeue: false}, err
 
 		}
-	}
+		if matchesNamespaceLabels == false {
+			log.Info("Dashboard skipped as labels do not match:", request.Namespace, request.Name)
+			return reconcile.Result{Requeue: false}, nil
+		}
 
+	}
+	
 	client, err := r.getClient()
 	if err != nil {
 		return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
