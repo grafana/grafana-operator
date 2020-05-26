@@ -116,8 +116,6 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 		return reconcile.Result{Requeue: false}, nil
 	}
 
-	//return reconcile.Result{Requeue: false},nil
-
 	client, err := r.getClient()
 	if err != nil {
 		return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
@@ -242,7 +240,7 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 			r.config.SetPluginsFor(&dashboard)
 			continue
 		}
-
+		// Check labels only when DashboardNamespaceSelector isnt empty
 		if r.state.DashboardNamespaceSelector != nil {
 			matchesNamespaceLabels, err := r.checkNamespaceLabels(&dashboard)
 			if err != nil {
