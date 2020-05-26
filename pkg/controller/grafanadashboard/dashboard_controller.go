@@ -116,25 +116,7 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 		return reconcile.Result{Requeue: false}, nil
 	}
 
-	if r.state.DashboardNamespaceSelector != nil {
-		 
-		log.Info("hello world Test")
-		matchesNamespaceLabels, err := r.checkNamespaceLabels(request)
-		// r.checkNamespaceLabels(request)
-		if err != nil {
-			log.Info("test error")
-			// log.Info(err.Error())
-			return reconcile.Result{Requeue: false}, err
-
-		}
-		if matchesNamespaceLabels == false {
-			log.Info("Dashboard skipped as labels do not match:", request.Namespace, request.Name)
-			return reconcile.Result{Requeue: false}, nil
-		}
-
-	}
 	//return reconcile.Result{Requeue: false},nil
-	
 
 	client, err := r.getClient()
 	if err != nil {
@@ -177,19 +159,18 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 	return r.reconcileDashboards(request, client)
 }
 
-func (r *ReconcileGrafanaDashboard) checkNamespaceLabels(request reconcile.Request) (bool, error) {
+// check if the labels on a namespace match a given label selector
+func (r *ReconcileGrafanaDashboard) checkNamespaceLabels(dashboard *grafanav1alpha1.GrafanaDashboard) (bool, error) {
 	key := client.ObjectKey{
-		Name: request.Namespace,
+		Name: dashboard.Namespace,
 	}
 	ns := &v1.Namespace{}
 	err := r.client.Get(r.context, key, ns)
 	if err != nil {
-		log.Info("check test",err.Error())
 		return false, err
 	}
 	selector, err := metav1.LabelSelectorAsSelector(r.state.DashboardNamespaceSelector)
 	if err != nil {
-		// log.Info("check selector", err.Error())
 		return false, err
 	}
 	return selector.Empty() || selector.Matches(labels.Set(ns.Labels)), nil
@@ -260,6 +241,19 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 		if processed == nil {
 			r.config.SetPluginsFor(&dashboard)
 			continue
+		}
+
+		if r.state.DashboardNamespaceSelector != nil {
+			matchesNamespaceLabels, err := r.checkNamespaceLabels(&dashboard)
+			if err != nil {
+				r.manageError(&dashboard, err)
+				continue
+			}
+
+			if matchesNamespaceLabels == false {
+				log.Info(fmt.Sprintf("dashboard %v skipped because the namespace labels do not match", dashboard.Name))
+				continue
+			}
 		}
 
 		status, err := grafanaClient.CreateOrUpdateDashboard(processed)
