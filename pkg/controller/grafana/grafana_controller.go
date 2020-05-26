@@ -288,14 +288,15 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 
 	// Publish controller state
 	controllerState := common.ControllerState{
-		DashboardSelectors: cr.Spec.DashboardLabelSelector,
-		AdminUsername:      string(state.AdminSecret.Data[model.GrafanaAdminUserEnvVar]),
-		AdminPassword:      string(state.AdminSecret.Data[model.GrafanaAdminPasswordEnvVar]),
-		AdminUrl:           url,
-		GrafanaReady:       true,
-		ClientTimeout:      DefaultClientTimeoutSeconds,
-		FixAnnotations:     fixAnnotations,
-		FixHeights:         fixHeights,
+		DashboardSelectors:         cr.Spec.DashboardLabelSelector,
+		DashboardNamespaceSelector: cr.Spec.DashboardNamespaceSelector,
+		AdminUsername:              string(state.AdminSecret.Data[model.GrafanaAdminUserEnvVar]),
+		AdminPassword:              string(state.AdminSecret.Data[model.GrafanaAdminPasswordEnvVar]),
+		AdminUrl:                   url,
+		GrafanaReady:               true,
+		ClientTimeout:              DefaultClientTimeoutSeconds,
+		FixAnnotations:             fixAnnotations,
+		FixHeights:                 fixHeights,
 	}
 
 	if cr.Spec.Client != nil && cr.Spec.Client.TimeoutSeconds != nil {

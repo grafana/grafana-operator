@@ -117,10 +117,13 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 	}
 
 	if r.state.DashboardNamespaceSelector != nil {
-
+		 
+		log.Info("hello world Test")
 		matchesNamespaceLabels, err := r.checkNamespaceLabels(request)
-
+		// r.checkNamespaceLabels(request)
 		if err != nil {
+			log.Info("test error")
+			// log.Info(err.Error())
 			return reconcile.Result{Requeue: false}, err
 
 		}
@@ -130,7 +133,9 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 		}
 
 	}
+	//return reconcile.Result{Requeue: false},nil
 	
+
 	client, err := r.getClient()
 	if err != nil {
 		return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
@@ -179,10 +184,12 @@ func (r *ReconcileGrafanaDashboard) checkNamespaceLabels(request reconcile.Reque
 	ns := &v1.Namespace{}
 	err := r.client.Get(r.context, key, ns)
 	if err != nil {
+		log.Info("check test",err.Error())
 		return false, err
 	}
 	selector, err := metav1.LabelSelectorAsSelector(r.state.DashboardNamespaceSelector)
 	if err != nil {
+		// log.Info("check selector", err.Error())
 		return false, err
 	}
 	return selector.Empty() || selector.Matches(labels.Set(ns.Labels)), nil
