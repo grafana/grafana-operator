@@ -135,6 +135,3 @@ spec:
               items:
                 type: object
                 description: Label selector or match expressions
-             dashboardNamespaceSelector:
-              type: object
-              

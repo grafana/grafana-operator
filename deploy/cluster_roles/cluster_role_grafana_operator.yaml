@@ -9,3 +9,9 @@ rules:
       - grafanadashboards
       - grafanadashboards/status
     verbs: ['get', 'list', 'update', 'watch']
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+    verbs: ['get', 'list', 'watch']
+
