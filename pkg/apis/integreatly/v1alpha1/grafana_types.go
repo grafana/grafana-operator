@@ -17,18 +17,19 @@ var (
 // GrafanaSpec defines the desired state of Grafana
 // +k8s:openapi-gen=true
 type GrafanaSpec struct {
-	Config                 GrafanaConfig            `json:"config"`
-	Containers             []v1.Container           `json:"containers,omitempty"`
-	DashboardLabelSelector []*metav1.LabelSelector  `json:"dashboardLabelSelector,omitempty"`
-	Ingress                *GrafanaIngress          `json:"ingress,omitempty"`
-	Secrets                []string                 `json:"secrets,omitempty"`
-	ConfigMaps             []string                 `json:"configMaps,omitempty"`
-	Service                *GrafanaService          `json:"service,omitempty"`
-	Deployment             *GrafanaDeployment       `json:"deployment,omitempty"`
-	Resources              *v1.ResourceRequirements `json:"resources,omitempty"`
-	ServiceAccount         *GrafanaServiceAccount   `json:"serviceAccount,omitempty"`
-	Client                 *GrafanaClient           `json:"client,omitempty"`
-	Compat                 *GrafanaCompat           `json:"compat"`
+	Config                     GrafanaConfig            `json:"config"`
+	Containers                 []v1.Container           `json:"containers,omitempty"`
+	DashboardLabelSelector     []*metav1.LabelSelector  `json:"dashboardLabelSelector,omitempty"`
+	Ingress                    *GrafanaIngress          `json:"ingress,omitempty"`
+	Secrets                    []string                 `json:"secrets,omitempty"`
+	ConfigMaps                 []string                 `json:"configMaps,omitempty"`
+	Service                    *GrafanaService          `json:"service,omitempty"`
+	Deployment                 *GrafanaDeployment       `json:"deployment,omitempty"`
+	Resources                  *v1.ResourceRequirements `json:"resources,omitempty"`
+	ServiceAccount             *GrafanaServiceAccount   `json:"serviceAccount,omitempty"`
+	Client                     *GrafanaClient           `json:"client,omitempty"`
+	Compat                     *GrafanaCompat           `json:"compat"`
+	DashboardNamespaceSelector *metav1.LabelSelector    `json:"dashboardNamespaceSelector,omitempty"`
 }
 
 // Backwards compatibility switches

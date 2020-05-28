@@ -7,7 +7,10 @@ import (
 	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -154,6 +157,23 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 	return r.reconcileDashboards(request, client)
 }
 
+// check if the labels on a namespace match a given label selector
+func (r *ReconcileGrafanaDashboard) checkNamespaceLabels(dashboard *grafanav1alpha1.GrafanaDashboard) (bool, error) {
+	key := client.ObjectKey{
+		Name: dashboard.Namespace,
+	}
+	ns := &v1.Namespace{}
+	err := r.client.Get(r.context, key, ns)
+	if err != nil {
+		return false, err
+	}
+	selector, err := metav1.LabelSelectorAsSelector(r.state.DashboardNamespaceSelector)
+	if err != nil {
+		return false, err
+	}
+	return selector.Empty() || selector.Matches(labels.Set(ns.Labels)), nil
+}
+
 func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Request, grafanaClient GrafanaClient) (reconcile.Result, error) {
 	// Collect known and namespace dashboards
 	knownDashboards := r.config.GetDashboards(request.Namespace)
@@ -219,6 +239,19 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 		if processed == nil {
 			r.config.SetPluginsFor(&dashboard)
 			continue
+		}
+		// Check labels only when DashboardNamespaceSelector isnt empty
+		if r.state.DashboardNamespaceSelector != nil {
+			matchesNamespaceLabels, err := r.checkNamespaceLabels(&dashboard)
+			if err != nil {
+				r.manageError(&dashboard, err)
+				continue
+			}
+
+			if matchesNamespaceLabels == false {
+				log.Info(fmt.Sprintf("dashboard %v skipped because the namespace labels do not match", dashboard.Name))
+				continue
+			}
 		}
 
 		status, err := grafanaClient.CreateOrUpdateDashboard(processed)

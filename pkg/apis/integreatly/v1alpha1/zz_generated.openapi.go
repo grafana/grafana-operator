@@ -30,14 +30,14 @@ func schema_pkg_apis_integreatly_v1alpha1_Grafana(ref common.ReferenceCallback) 
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds",
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"apiVersion": {
 						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -74,14 +74,14 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaDashboard(ref common.ReferenceC
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds",
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"apiVersion": {
 						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -118,14 +118,14 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSource(ref common.Reference
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds",
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"apiVersion": {
 						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -306,12 +306,22 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref common.ReferenceCallba
 							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaClient"),
 						},
 					},
+					"compat": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaCompat"),
+						},
+					},
+					"dashboardNamespaceSelector": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector"),
+						},
+					},
 				},
-				Required: []string{"config"},
+				Required: []string{"config", "compat"},
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/integreatly/v1alpha1.GrafanaClient", "./pkg/apis/integreatly/v1alpha1.GrafanaConfig", "./pkg/apis/integreatly/v1alpha1.GrafanaDeployment", "./pkg/apis/integreatly/v1alpha1.GrafanaIngress", "./pkg/apis/integreatly/v1alpha1.GrafanaService", "./pkg/apis/integreatly/v1alpha1.GrafanaServiceAccount", "k8s.io/api/core/v1.Container", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector"},
+			"./pkg/apis/integreatly/v1alpha1.GrafanaClient", "./pkg/apis/integreatly/v1alpha1.GrafanaCompat", "./pkg/apis/integreatly/v1alpha1.GrafanaConfig", "./pkg/apis/integreatly/v1alpha1.GrafanaDeployment", "./pkg/apis/integreatly/v1alpha1.GrafanaIngress", "./pkg/apis/integreatly/v1alpha1.GrafanaService", "./pkg/apis/integreatly/v1alpha1.GrafanaServiceAccount", "k8s.io/api/core/v1.Container", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector"},
 	}
 }
 
@@ -378,20 +388,8 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaStatus(ref common.ReferenceCall
 							},
 						},
 					},
-					"adminUser": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"adminPassword": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
 				},
-				Required: []string{"phase", "message", "dashboards", "installedPlugins", "failedPlugins", "adminUser", "adminPassword"},
+				Required: []string{"phase", "message", "dashboards", "installedPlugins", "failedPlugins"},
 			},
 		},
 		Dependencies: []string{
