@@ -8,4 +8,6 @@ rules:
     resources:
       - grafanadashboards
       - grafanadashboards/status
+      - grafananotificationchannels
+      - grafananotificationchannels/status
     verbs: ['get', 'list', 'update', 'watch']

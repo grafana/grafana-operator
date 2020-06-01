@@ -214,6 +214,72 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSourceStatus(ref common.Ref
 	}
 }
 
+func schema_pkg_apis_integreatly_v1alpha1_GrafanaNotificationChannel(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "GrafanaNotificationChannel is the Schema for the grafananotificationchannels API",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaNotificationChannelSpec"),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaNotificationChannelStatus"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaNotificationChannelSpec", "github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaNotificationChannelStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_integreatly_v1alpha1_GrafanaNotificationChannelSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "GrafanaNotificationChannelSpec defines the desired state of GrafanaNotificationChannel",
+				Type:        []string{"object"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_integreatly_v1alpha1_GrafanaNotificationChannelStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "GrafanaNotificationChannelStatus defines the observed state of GrafanaNotificationChannel",
+				Type:        []string{"object"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -306,8 +372,13 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref common.ReferenceCallba
 							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaClient"),
 						},
 					},
+					"compat": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaCompat"),
+						},
+					},
 				},
-				Required: []string{"config"},
+				Required: []string{"config", "compat"},
 			},
 		},
 		Dependencies: []string{

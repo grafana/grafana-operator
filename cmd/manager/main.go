@@ -4,11 +4,16 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"os"
+	"runtime"
+	"strings"
+
 	"github.com/integr8ly/grafana-operator/v3/pkg/apis"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
 	config2 "github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/grafanadashboard"
+	"github.com/integr8ly/grafana-operator/v3/pkg/controller/grafananotificationchannel"
 	"github.com/integr8ly/grafana-operator/v3/version"
 	routev1 "github.com/openshift/api/route/v1"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
@@ -21,13 +26,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/rest"
-	"os"
-	"runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
-	"strings"
 )
 
 var log = logf.Log.WithName("cmd")
@@ -85,6 +87,35 @@ func startDashboardController(ns string, cfg *rest.Config, signalHandler <-chan 
 	go func() {
 		if err := dashboardMgr.Start(signalHandler); err != nil {
 			log.Error(err, "dashboard manager exited non-zero")
+			os.Exit(1)
+		}
+	}()
+}
+
+// Starts a separate controller for the notification channels reconciliation in the background
+func startNotificationChannelController(ns string, cfg *rest.Config, signalHandler <-chan struct{}, autodetectChannel chan schema.GroupVersionKind) {
+	// Create a new Cmd to provide shared dependencies and start components
+	channelMgr, err := manager.New(cfg, manager.Options{
+		MetricsBindAddress: "0",
+		Namespace:          ns,
+	})
+	if err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
+	// Setup Scheme for the notification channel resource
+	if err := apis.AddToScheme(channelMgr.GetScheme()); err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
+	// Use a separate manager for the dashboard controller
+	grafananotificationchannel.Add(channelMgr, ns)
+
+	go func() {
+		if err := channelMgr.Start(signalHandler); err != nil {
+			log.Error(err, "notification channel manager exited non-zero")
 			os.Exit(1)
 		}
 	}()
@@ -227,9 +258,10 @@ func main() {
 
 	signalHandler := signals.SetupSignalHandler()
 
-	// Start one dashboard controller per watch namespace
+	// Start one dashboard/notification channel controller per watch namespace
 	for _, ns := range dashboardNamespaces {
 		startDashboardController(ns, cfg, signalHandler, autodetect.SubscriptionChannel)
+		startNotificationChannelController(ns, cfg, signalHandler, autodetect.SubscriptionChannel)
 	}
 
 	if err := mgr.Start(signalHandler); err != nil {
