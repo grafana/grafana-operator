@@ -214,6 +214,25 @@ spec:
     preferService: <Boolean>  # If an Ingress or Route is available, the operator will attempt to use those for API access. This flag forces it to use the Service instead.
 ```
 
+## Configuring data storage
+
+When not using an external database, Grafana creates a SQLite database. By default, the location of this database is ephemeral but can be configured:
+
+```yaml
+spec:
+  dataStorage:
+    labels:                 # Additional labels for the PVC
+      app: grafana
+      ...
+    annotations:            # Additional annotations for the PVC
+      app: grafana
+      ...
+    accessModes:            # An array of access modes, e.g. `ReadWriteOnce`
+      ...
+    size: <Quantity>        # Requested size, e.g. `10Gi` 
+    class: <String>         # Storage class name
+```
+
 ## Compatibility with older dashboard formats
 
 This section contains flag that allow the operator to modify older dashboards in a way that allow importing to newer Grafana versions.

@@ -17,6 +17,7 @@ The following example CRs are provided:
 * [ldap/Grafana.yaml](../deploy/examples/ldap/Grafana.yaml): Installs Grafana and sets up LDAP authentication. LDAP configuration is mounted from the configmap [ldap/ldap-config.yaml](../deploy/examples/ldap/ldap-config.yaml)
 * [oauth/Grafana.yaml](../deploy/examples/oauth/Grafana.yaml): Installs Grafana and enable OAuth authentication using the OpenShift OAuthProxy. 
 * [ha/Grafana.yaml](../deploy/examples/oauth/Grafana.yaml): Installs Grafana in high availability mode with Postgres as a database. 
+* [persistentvolume/Grafana.yaml](../deploy/examples/persistentvolume/Grafana.yaml): Installs Grafana but provides a dedicated PVC for the database.
 
 ### Dashboards
 
