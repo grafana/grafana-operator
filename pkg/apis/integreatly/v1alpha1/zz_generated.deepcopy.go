@@ -1631,6 +1631,11 @@ func (in *GrafanaSpec) DeepCopyInto(out *GrafanaSpec) {
 		*out = new(GrafanaCompat)
 		**out = **in
 	}
+	if in.DashboardNamespaceSelector != nil {
+		in, out := &in.DashboardNamespaceSelector, &out.DashboardNamespaceSelector
+		*out = new(metav1.LabelSelector)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 
