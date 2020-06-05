@@ -3,6 +3,7 @@ package v1alpha1
 import (
 	v12 "github.com/openshift/api/route/v1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -30,6 +31,7 @@ type GrafanaSpec struct {
 	Client                     *GrafanaClient           `json:"client,omitempty"`
 	Compat                     *GrafanaCompat           `json:"compat"`
 	DashboardNamespaceSelector *metav1.LabelSelector    `json:"dashboardNamespaceSelector,omitempty"`
+	DataStorage                *GrafanaDataStorage      `json:"dataStorage,omitempty"`
 }
 
 // Backwards compatibility switches
@@ -50,6 +52,15 @@ type GrafanaService struct {
 	Labels      map[string]string `json:"labels,omitempty"`
 	Type        v1.ServiceType    `json:"type,omitempty"`
 	Ports       []v1.ServicePort  `json:"ports,omitempty"`
+}
+
+// GrafanaDataStorage provides a means to configure the grafana data storage
+type GrafanaDataStorage struct {
+	Annotations map[string]string               `json:"annotations,omitempty"`
+	Labels      map[string]string               `json:"labels,omitempty"`
+	AccessModes []v1.PersistentVolumeAccessMode `json:"accessModes,omitempty"`
+	Size        resource.Quantity               `json:"size"`
+	Class       string                          `json:"class"`
 }
 
 type GrafanaServiceAccount struct {

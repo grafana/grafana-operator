@@ -2,6 +2,7 @@ package grafana
 
 import (
 	"fmt"
+
 	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
@@ -29,6 +30,11 @@ func (i *GrafanaReconciler) Reconcile(state *common.ClusterState, cr *v1alpha1.G
 
 	desired = desired.AddAction(i.getGrafanaAdminUserSecretDesiredState(state, cr))
 	desired = desired.AddAction(i.getGrafanaServiceDesiredState(state, cr))
+
+	if cr.UsedPersistentVolume() {
+		desired = desired.AddAction(i.getGrafanaDataPvcDesiredState(state, cr))
+	}
+
 	desired = desired.AddAction(i.getGrafanaServiceAccountDesiredState(state, cr))
 	desired = desired.AddActions(i.getGrafanaConfigDesiredState(state, cr))
 	desired = desired.AddAction(i.getGrafanaDatasourceConfigDesiredState(state, cr))
@@ -83,6 +89,20 @@ func (i *GrafanaReconciler) getGrafanaServiceDesiredState(state *common.ClusterS
 	return common.GenericUpdateAction{
 		Ref: model.GrafanaServiceReconciled(cr, state.GrafanaService),
 		Msg: "update grafana service",
+	}
+}
+
+func (i *GrafanaReconciler) getGrafanaDataPvcDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
+	if state.GrafanaDataPersistentVolumeClaim == nil {
+		return common.GenericCreateAction{
+			Ref: model.GrafanaDataPVC(cr),
+			Msg: "create grafana data persistentVolumeClaim",
+		}
+	}
+
+	return common.GenericUpdateAction{
+		Ref: model.GrafanaPVCReconciled(cr, state.GrafanaDataPersistentVolumeClaim),
+		Msg: "update grafana data persistentVolumeClaim",
 	}
 }
 

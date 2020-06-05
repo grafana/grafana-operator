@@ -149,12 +149,23 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume {
 	})
 
 	// Data volume
-	volumes = append(volumes, v13.Volume{
-		Name: GrafanaDataVolumeName,
-		VolumeSource: v13.VolumeSource{
-			EmptyDir: &v13.EmptyDirVolumeSource{},
-		},
-	})
+	if cr.UsedPersistentVolume() {
+		volumes = append(volumes, v13.Volume{
+			Name: GrafanaDataVolumeName,
+			VolumeSource: v13.VolumeSource{
+				PersistentVolumeClaim: &v13.PersistentVolumeClaimVolumeSource{
+					ClaimName: GrafanaDataStorageName,
+				},
+			},
+		})
+	} else {
+		volumes = append(volumes, v13.Volume{
+			Name: GrafanaDataVolumeName,
+			VolumeSource: v13.VolumeSource{
+				EmptyDir: &v13.EmptyDirVolumeSource{},
+			},
+		})
+	}
 
 	// Volume to store the plugins
 	volumes = append(volumes, v13.Volume{

@@ -5,6 +5,7 @@ const (
 	GrafanaVersion                      = "6.5.1"
 	GrafanaServiceAccountName           = "grafana-serviceaccount"
 	GrafanaServiceName                  = "grafana-service"
+	GrafanaDataStorageName              = "grafana-pvc"
 	GrafanaConfigName                   = "grafana-config"
 	GrafanaConfigFileName               = "grafana.ini"
 	GrafanaIngressName                  = "grafana-ingress"
