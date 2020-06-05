@@ -11,7 +11,6 @@ spec:
     singular: grafanadashboard
   scope: Namespaced
   subresources:
-    status: {}
   version: v1alpha1
   validation:
     openAPIV3Schema:

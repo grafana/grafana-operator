@@ -72,7 +72,7 @@ To deploy the operator to that namespace you can use `deploy/operator.yaml`:
 $ kubectl create -f deploy/operator.yaml -n grafana
 ```
 
-Check the status of the operator pod:
+Check the grafanaResp of the operator pod:
 
 ```sh
 $ kubectl get pods -n grafana

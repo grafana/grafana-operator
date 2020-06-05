@@ -28,7 +28,7 @@ $ kubectl create -f deploy/examples/dashboards/SimpleDashboard.yaml -n grafana
 
 ## Dashboard error handling
 
-If the dashboard contains invalid JSON a message with the parser error will be added to the status field of the dashboard resource.
+If the dashboard contains invalid JSON a message with the parser error will be added to the grafanaResp field of the dashboard resource.
 
 ## Plugins
 

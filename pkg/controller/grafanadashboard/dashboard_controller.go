@@ -221,28 +221,28 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 			continue
 		}
 
-		status, err := grafanaClient.CreateOrUpdateDashboard(processed)
+		resp, err := grafanaClient.CreateOrUpdateDashboard(processed)
 		if err != nil {
 			log.Info(fmt.Sprintf("cannot submit dashboard %v/%v", dashboard.Namespace, dashboard.Name))
 			r.manageError(&dashboard, err)
 			continue
 		}
 
-		err = r.manageSuccess(&dashboard, status, pipeline.NewHash())
+		err = r.manageSuccess(&dashboard, resp, pipeline.NewHash())
 		if err != nil {
 			r.manageError(&dashboard, err)
 		}
 	}
 
 	for _, dashboard := range dashboardsToDelete {
-		status, err := grafanaClient.DeleteDashboardByUID(dashboard.UID)
+		resp, err := grafanaClient.DeleteDashboardByUID(dashboard.UID)
 		if err != nil {
-			log.Error(err, fmt.Sprintf("error deleting dashboard %v, status was %v/%v",
+			log.Error(err, fmt.Sprintf("error deleting dashboard %v, resp was %v/%v",
 				dashboard.UID,
-				*status.Status,
-				*status.Message))
+				*resp.Status,
+				*resp.Message))
 		}
-		log.Info(fmt.Sprintf("delete result was %v", *status.Message))
+		log.Info(fmt.Sprintf("delete result was %v", *resp.Message))
 		r.config.RemovePluginsFor(dashboard.Namespace, dashboard.Name)
 		r.config.RemoveDashboard(dashboard.Namespace, dashboard.Name)
 	}
@@ -255,20 +255,13 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 
 // Handle success case: update dashboard metadata (id, uid) and update the list
 // of plugins
-func (r *ReconcileGrafanaDashboard) manageSuccess(dashboard *grafanav1alpha1.GrafanaDashboard, status GrafanaResponse, hash string) error {
+func (r *ReconcileGrafanaDashboard) manageSuccess(dashboard *grafanav1alpha1.GrafanaDashboard, grafanaResp GrafanaResponse, hash string) error {
 	msg := fmt.Sprintf("dashboard %v/%v successfully submitted",
 		dashboard.Namespace,
 		dashboard.Name)
 
 	r.recorder.Event(dashboard, "Normal", "Success", msg)
 	log.Info(msg)
-
-	dashboard.Status.UID = *status.UID
-	dashboard.Status.ID = *status.ID
-	dashboard.Status.Slug = *status.Slug
-	dashboard.Status.Phase = grafanav1alpha1.PhaseReconciling
-	dashboard.Status.Hash = hash
-	dashboard.Status.Message = "success"
 
 	r.config.AddDashboard(dashboard)
 	r.config.SetPluginsFor(dashboard)
@@ -279,8 +272,6 @@ func (r *ReconcileGrafanaDashboard) manageSuccess(dashboard *grafanav1alpha1.Gra
 // Handle error case: update dashboard with error message and status
 func (r *ReconcileGrafanaDashboard) manageError(dashboard *grafanav1alpha1.GrafanaDashboard, issue error) {
 	r.recorder.Event(dashboard, "Warning", "ProcessingError", issue.Error())
-	dashboard.Status.Phase = grafanav1alpha1.PhaseFailing
-	dashboard.Status.Message = issue.Error()
 
 	err := r.client.Status().Update(r.context, dashboard)
 	if err != nil {

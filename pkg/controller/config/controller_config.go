@@ -1,6 +1,7 @@
 package config
 
 import (
+	"crypto/md5"
 	"fmt"
 	"sync"
 	"time"
@@ -85,17 +86,13 @@ func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard) {
 		c.Lock()
 		defer c.Unlock()
 		c.Dashboards[ns] = append(c.Dashboards[ns], &v1alpha1.GrafanaDashboardRef{
-			Name:      dashboard.Name,
-			Namespace: ns,
-			UID:       dashboard.Status.UID,
-			Hash:      dashboard.Status.Hash,
+			UID:       fmt.Sprintf("%x", md5.Sum([]byte(dashboard.Namespace + dashboard.Name))),
 		})
 	} else {
 		c.Lock()
 		defer c.Unlock()
 		c.Dashboards[ns][i].Namespace = ns
-		c.Dashboards[ns][i].UID = dashboard.Status.UID
-		c.Dashboards[ns][i].Hash = dashboard.Status.Hash
+		c.Dashboards[ns][i].UID = fmt.Sprintf("%x", md5.Sum([]byte(dashboard.Namespace + dashboard.Name)))
 	}
 }
 
