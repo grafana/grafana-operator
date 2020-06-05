@@ -5,6 +5,11 @@ metadata:
 spec:
   ingress:
     enabled: True
+  dataStorage:
+    accessModes:
+    - ReadWriteOnce
+    class: {Replace with your StorageClass}
+    size: 10Gi
   config:
     log:
       mode: "console"
