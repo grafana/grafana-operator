@@ -51,6 +51,14 @@ func getSecurityContext(cr *v1alpha1.Grafana) *v13.PodSecurityContext {
 	return &securityContext
 }
 
+func getContainerSecurityContext(cr *v1alpha1.Grafana) *v13.SecurityContext {
+	var containerSecurityContext = v13.SecurityContext{}
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.ContainerSecurityContext != nil {
+		containerSecurityContext = *cr.Spec.Deployment.ContainerSecurityContext
+	}
+	return &containerSecurityContext
+}
+
 func getReplicas(cr *v1alpha1.Grafana) *int32 {
 	var replicas int32 = 1
 	if cr.Spec.Deployment == nil {
@@ -368,6 +376,7 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 		TerminationMessagePath:   "/dev/termination-log",
 		TerminationMessagePolicy: "File",
 		ImagePullPolicy:          "IfNotPresent",
+		SecurityContext:          getContainerSecurityContext(cr),
 	})
 
 	// Add extra containers

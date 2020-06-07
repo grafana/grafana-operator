@@ -77,6 +77,7 @@ type GrafanaDeployment struct {
 	Tolerations                   []v1.Toleration        `json:"tolerations,omitempty"`
 	Affinity                      *v1.Affinity           `json:"affinity,omitempty"`
 	SecurityContext               *v1.PodSecurityContext `json:"securityContext,omitempty"`
+	ContainerSecurityContext      *v1.SecurityContext    `json:"containerSecurityContext,omitempty"`
 	TerminationGracePeriodSeconds int64                  `json:"terminationGracePeriodSeconds"`
 }
 
