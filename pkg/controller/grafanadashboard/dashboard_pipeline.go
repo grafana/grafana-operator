@@ -75,8 +75,7 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) ([]byte, erro
 	// always assigned by Grafana. If there is one, we ignore it
 	r.Board["uid"] = r.generateUID()
 
-
-// substitute input in things such as deleteDashboardFromUID to use the UID provided by grafana and not the one provided by dashboard cr
+	// substitute input in things such as deleteDashboardFromUID to use the UID provided by grafana and not the one provided by dashboard cr
 	raw, err := json.Marshal(r.Board)
 	if err != nil {
 		return nil, err
@@ -146,7 +145,7 @@ func (r *DashboardPipelineImpl) generateHash() string {
 }
 
 func (r *DashboardPipelineImpl) generateUID() string {
-	return fmt.Sprintf("%x", md5.Sum([]byte(r.Dashboard.Namespace + r.Dashboard.Name)))
+	return fmt.Sprintf("%x", md5.Sum([]byte(r.Dashboard.Namespace+r.Dashboard.Name)))
 }
 
 // Try to obtain the dashboard json from a provided url

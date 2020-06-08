@@ -86,13 +86,13 @@ func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard) {
 		c.Lock()
 		defer c.Unlock()
 		c.Dashboards[ns] = append(c.Dashboards[ns], &v1alpha1.GrafanaDashboardRef{
-			UID:       fmt.Sprintf("%x", md5.Sum([]byte(dashboard.Namespace + dashboard.Name))),
+			UID: fmt.Sprintf("%x", md5.Sum([]byte(dashboard.Namespace+dashboard.Name))),
 		})
 	} else {
 		c.Lock()
 		defer c.Unlock()
 		c.Dashboards[ns][i].Namespace = ns
-		c.Dashboards[ns][i].UID = fmt.Sprintf("%x", md5.Sum([]byte(dashboard.Namespace + dashboard.Name)))
+		c.Dashboards[ns][i].UID = fmt.Sprintf("%x", md5.Sum([]byte(dashboard.Namespace+dashboard.Name)))
 	}
 }
 

@@ -221,14 +221,14 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 			continue
 		}
 
-		resp, err := grafanaClient.CreateOrUpdateDashboard(processed)
+		_, err = grafanaClient.CreateOrUpdateDashboard(processed)
 		if err != nil {
 			log.Info(fmt.Sprintf("cannot submit dashboard %v/%v", dashboard.Namespace, dashboard.Name))
 			r.manageError(&dashboard, err)
 			continue
 		}
 
-		err = r.manageSuccess(&dashboard, resp, pipeline.NewHash())
+		err = r.manageSuccess(&dashboard)
 		if err != nil {
 			r.manageError(&dashboard, err)
 		}
@@ -255,7 +255,7 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 
 // Handle success case: update dashboard metadata (id, uid) and update the list
 // of plugins
-func (r *ReconcileGrafanaDashboard) manageSuccess(dashboard *grafanav1alpha1.GrafanaDashboard, grafanaResp GrafanaResponse, hash string) error {
+func (r *ReconcileGrafanaDashboard) manageSuccess(dashboard *grafanav1alpha1.GrafanaDashboard) error {
 	msg := fmt.Sprintf("dashboard %v/%v successfully submitted",
 		dashboard.Namespace,
 		dashboard.Name)

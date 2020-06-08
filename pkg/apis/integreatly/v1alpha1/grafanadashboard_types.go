@@ -27,8 +27,6 @@ type GrafanaDashboardDatasource struct {
 	DatasourceName string `json:"datasourceName"`
 }
 
-
-
 // Used to keep a dashboard reference without having access to the dashboard
 // struct itself
 type GrafanaDashboardRef struct {
@@ -46,7 +44,7 @@ type GrafanaDashboard struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   GrafanaDashboardSpec   `json:"spec,omitempty"`
+	Spec GrafanaDashboardSpec `json:"spec,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
