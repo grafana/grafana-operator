@@ -286,7 +286,6 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 		fixHeights = true
 	}
 
-
 	// Publish controller state
 	controllerState := common.ControllerState{
 		DashboardSelectors: cr.Spec.DashboardLabelSelector,
