@@ -260,7 +260,7 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 	}
 
 	if state.AdminSecret == nil || state.AdminSecret.Data == nil {
-		return r.manageError(cr, stdErr.New("admin secret not found or invalud"))
+		return r.manageError(cr, stdErr.New("admin secret not found or invalid"))
 	}
 
 	err := r.client.Status().Update(r.context, cr)
@@ -285,6 +285,7 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 	if cr.Spec.Compat != nil && cr.Spec.Compat.FixHeights {
 		fixHeights = true
 	}
+
 
 	// Publish controller state
 	controllerState := common.ControllerState{

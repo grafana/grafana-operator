@@ -11,6 +11,7 @@ import (
 	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"io/ioutil"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"net/http"
 	"net/url"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -58,24 +59,21 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) ([]byte, erro
 		return nil, nil
 	}
 	r.Hash = hash
-
 	// Datasource inputs to resolve?
 	err = r.resolveDatasources()
 	if err != nil {
 		return nil, err
 	}
-
 	// Dashboard valid?
 	err = r.validateJson()
 	if err != nil {
 		return nil, err
 	}
 
-	// Dashboards are never expected to come with an UID, it is
-	// always assigned by Grafana. If there is one, we ignore it
-	r.Board["uid"] = r.generateUID()
+	r.Dashboard.UID = types.UID(fmt.Sprintf("%x", md5.Sum([]byte(r.Dashboard.Namespace+r.Dashboard.Name))))
+	r.Board["id"] = nil
+	r.Board["uid"] = fmt.Sprintf("%x", md5.Sum([]byte(r.Dashboard.Namespace+r.Dashboard.Name)))
 
-	// substitute input in things such as deleteDashboardFromUID to use the UID provided by grafana and not the one provided by dashboard cr
 	raw, err := json.Marshal(r.Board)
 	if err != nil {
 		return nil, err
@@ -142,10 +140,6 @@ func (r *DashboardPipelineImpl) generateHash() string {
 
 	return fmt.Sprintf("%x", md5.Sum([]byte(
 		r.Dashboard.Spec.Json+r.Dashboard.Spec.Url+datasources.String())))
-}
-
-func (r *DashboardPipelineImpl) generateUID() string {
-	return fmt.Sprintf("%x", md5.Sum([]byte(r.Dashboard.Namespace+r.Dashboard.Name)))
 }
 
 // Try to obtain the dashboard json from a provided url

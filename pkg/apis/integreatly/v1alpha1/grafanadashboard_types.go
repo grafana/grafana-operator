@@ -32,7 +32,7 @@ type GrafanaDashboardDatasource struct {
 type GrafanaDashboardRef struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
-	UID       string `json:"uid"`
+	UID       string `json:"uid,omitempty"`
 	Hash      string `json:"hash"`
 }
 
