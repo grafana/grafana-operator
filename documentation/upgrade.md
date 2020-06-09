@@ -11,7 +11,7 @@ This version includes the following changes:
 
 ## Upgrade from 1.x.x or 2.x.x
 
-There is no direct upgrade path from previous versions to 3.0.0. This is due to a change in the resource grafanaResp fields: grafanaResp is now a subresource and the format has changed.
+There is no direct upgrade path from previous versions to 3.0.0. This is due to a change in the resource status fields: status is now a subresource and the format has changed.
 
 To upgrade, the following steps need to be performed:
 
@@ -37,9 +37,9 @@ $ kubectl get grafanadashboards --all-namespaces --selector='<label selector>' -
 
 Repeat those steps for `grafanadatasources` and `grafanas`.
 
-### 2. Remove finalizers and grafanaResp
+### 2. Remove finalizers and status
 
-Edit the backed up resources and remove the finalizers from dashboards and datasources as well as the grafanaResp from all resources.
+Edit the backed up resources and remove the finalizers from dashboards and datasources as well as the status from all resources.
 
 ### 3. Uninstall Grafana and all resources
 

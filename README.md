@@ -2,7 +2,7 @@
 
 A Kubernetes Operator based on the Operator SDK for creating and managing Grafana instances.
 
-# Current grafanaResp
+# Current Status
 
 The Operator is available on [Operator Hub](https://operatorhub.io/operator/grafana-operator).
 
