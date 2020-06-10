@@ -295,14 +295,6 @@ func (r *ReconcileGrafanaDashboard) manageSuccess(dashboard *grafanav1alpha1.Gra
 
 	r.recorder.Event(dashboard, "Normal", "Success", msg)
 	log.Info(msg)
-
-	dashboard.Status.UID = *status.UID
-	dashboard.Status.ID = *status.ID
-	dashboard.Status.Slug = *status.Slug
-	dashboard.Status.Phase = grafanav1alpha1.PhaseReconciling
-	dashboard.Status.Hash = hash
-	dashboard.Status.Message = "success"
-
 	r.config.AddDashboard(dashboard)
 	r.config.SetPluginsFor(dashboard)
 
@@ -312,8 +304,6 @@ func (r *ReconcileGrafanaDashboard) manageSuccess(dashboard *grafanav1alpha1.Gra
 // Handle error case: update dashboard with error message and status
 func (r *ReconcileGrafanaDashboard) manageError(dashboard *grafanav1alpha1.GrafanaDashboard, issue error) {
 	r.recorder.Event(dashboard, "Warning", "ProcessingError", issue.Error())
-	dashboard.Status.Phase = grafanav1alpha1.PhaseFailing
-	dashboard.Status.Message = issue.Error()
 
 	err := r.client.Status().Update(r.context, dashboard)
 	if err != nil {

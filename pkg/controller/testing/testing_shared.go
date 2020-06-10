@@ -43,10 +43,6 @@ var Mockpluginc100 = v1alpha1.GrafanaPlugin{
 
 var MockPluginList = v1alpha1.PluginList{Mockplugina100, Mockplugina101, Mockpluginb100}
 
-var MockDashboard = v1alpha1.GrafanaDashboard{
-	Status: v1alpha1.GrafanaDashboardStatus{},
-}
-
 var MockGrafana = v1alpha1.Grafana{
 	Status: v1alpha1.GrafanaStatus{
 		Phase:            v1alpha1.PhaseReconciling,

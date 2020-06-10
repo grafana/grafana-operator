@@ -74,13 +74,8 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) ([]byte, erro
 	// Dashboards are never expected to come with an ID, it is
 	// always assigned by Grafana. If there is one, we ignore it
 	r.Board["id"] = nil
-
-	// This dashboard has previously been imported
-	// To make sure its updated we have to set the metadata
-	if r.Dashboard.Status.Phase == v1alpha1.PhaseReconciling {
-		r.Board["slug"] = r.Dashboard.Status.Slug
-		r.Board["uid"] = r.Dashboard.Status.UID
-	}
+	// Overwrite in case any user provided uid exists
+	r.Board["uid"] = nil
 
 	raw, err := json.Marshal(r.Board)
 	if err != nil {
