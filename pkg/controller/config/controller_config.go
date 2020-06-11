@@ -154,7 +154,20 @@ func (c *ControllerConfig) GetDashboards(namespace string) []*v1alpha1.GrafanaDa
 	}
 	return []*v1alpha1.GrafanaDashboardRef{}
 }
-
+func (c *ControllerConfig) GetDashboardsFromAllNamespaces() (dashboardMap map[string][]*v1alpha1.GrafanaDashboardRef) {
+	dashboardMap = make(map[string][]*v1alpha1.GrafanaDashboardRef)
+	// Don't specify namespace for cluster wide dashboard search
+	allDashboards := c.GetDashboards("")
+	for _, dashboard := range allDashboards {
+		for _, i := range dashboard.Namespace {
+			dashboardMap[string(i)] = append(dashboardMap[string(i)], dashboard)
+		}
+	}
+	if dashboardMap != nil{
+		return dashboardMap
+	}
+	return map[string][]*v1alpha1.GrafanaDashboardRef{}
+}
 func (c *ControllerConfig) AddConfigItem(key string, value interface{}) {
 	c.Lock()
 	defer c.Unlock()

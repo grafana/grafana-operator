@@ -255,16 +255,11 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 		cr.Status.InstalledDashboards = r.config.Dashboards
 	} else {
 		if r.config.Dashboards == nil {
-			dashboardMap := make(map[string][]*grafanav1alpha1.GrafanaDashboardRef)
-			// Don't specify namespace for cluster wide dashboard search
-			dashboards := r.config.GetDashboards("")
-			for _, dashboard := range dashboards {
-				for _, i := range dashboard.Namespace {
-					dashboardMap[string(i)] = append(dashboardMap[string(i)], dashboard)
-				}
-			}
-			r.config.SetDashboards(dashboardMap)
-			cr.Status.InstalledDashboards = dashboardMap
+			// Add all present dashboards from all namespaces
+			dashboards := r.config.GetDashboardsFromAllNamespaces()
+			r.config.SetDashboards(dashboards)
+			// Update CR Status
+			cr.Status.InstalledDashboards = dashboards
 		}
 	}
 
