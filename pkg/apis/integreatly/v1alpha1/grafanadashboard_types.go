@@ -15,6 +15,7 @@ type GrafanaDashboardSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	Json         string                       `json:"json"`
+	Jsonnet      string                       `json:"jsonnet"`
 	Name         string                       `json:"name"`
 	Plugins      PluginList                   `json:"plugins,omitempty"`
 	Url          string                       `json:"url,omitempty"`
