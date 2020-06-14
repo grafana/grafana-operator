@@ -19,6 +19,7 @@ const (
 	ConfigOperatorNamespace         = "grafana.operator.namespace"
 	ConfigDashboardLabelSelector    = "grafana.dashboard.selector"
 	ConfigOpenshift                 = "mode.openshift"
+	ConfigGrafonnetLocation         = "grafonnet.location"
 	GrafanaDataPath                 = "/var/lib/grafana"
 	GrafanaLogsPath                 = "/var/log/grafana"
 	GrafanaPluginsPath              = "/var/lib/grafana/plugins"
@@ -31,6 +32,7 @@ const (
 	ConfigMapsMountDir              = "/etc/grafana-configmaps/"
 	ConfigRouteWatch                = "watch.routes"
 	ConfigGrafanaDashboardsSynced   = "grafana.dashboards.synced"
+	GrafonnetLocation               = "/opt/grafonnet-lib"
 )
 
 type ControllerConfig struct {
