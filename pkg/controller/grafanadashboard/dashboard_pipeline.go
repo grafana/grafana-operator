@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-logr/logr"
+	"github.com/google/go-jsonnet"
 	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"io/ioutil"
 	corev1 "k8s.io/api/core/v1"
@@ -57,6 +58,7 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) ([]byte, erro
 		r.Hash = knownHash
 		return nil, nil
 	}
+
 	r.Hash = hash
 
 	// Datasource inputs to resolve?
@@ -70,6 +72,9 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) ([]byte, erro
 	if err != nil {
 		return nil, err
 	}
+
+	vm := jsonnet.MakeVM()
+	vm.StringOutput = true
 
 	// Dashboards are never expected to come with an ID, it is
 	// always assigned by Grafana. If there is one, we ignore it
