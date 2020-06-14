@@ -183,14 +183,6 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume {
 		},
 	})
 
-	// Volume for grafonnet-lib
-	volumes = append(volumes, v13.Volume{
-		Name: GrafonnetVolumeName,
-		VolumeSource: v13.VolumeSource{
-			EmptyDir: &v13.EmptyDirVolumeSource{},
-		},
-	})
-
 	// Volume to store the datasources
 	volumes = append(volumes, v13.Volume{
 		Name: GrafanaDatasourcesConfigMapName,
@@ -281,11 +273,6 @@ func getVolumeMounts(cr *v1alpha1.Grafana) []v13.VolumeMount {
 	mounts = append(mounts, v13.VolumeMount{
 		Name:      GrafanaPluginsVolumeName,
 		MountPath: "/var/lib/grafana/plugins",
-	})
-
-	mounts = append(mounts, v13.VolumeMount{
-		Name:      GrafonnetVolumeName,
-		MountPath: GrafonnetLocation,
 	})
 
 	mounts = append(mounts, v13.VolumeMount{
@@ -422,22 +409,6 @@ func getInitContainers(plugins string) []v13.Container {
 					Name:      GrafanaPluginsVolumeName,
 					ReadOnly:  false,
 					MountPath: "/opt/plugins",
-				},
-			},
-			TerminationMessagePath:   "/dev/termination-log",
-			TerminationMessagePolicy: "File",
-			ImagePullPolicy:          "IfNotPresent",
-		},
-		{
-			Name:      GrafonnetInitContainerName,
-			Image:     fmt.Sprintf("%s:%s", "alpine/git", "latest"),
-			Command:   []string{"git", "clone", GrafonnetRepository, GrafonnetLocation},
-			Resources: v13.ResourceRequirements{},
-			VolumeMounts: []v13.VolumeMount{
-				{
-					Name:      GrafonnetVolumeName,
-					ReadOnly:  false,
-					MountPath: GrafonnetLocation,
 				},
 			},
 			TerminationMessagePath:   "/dev/termination-log",

@@ -1,0 +1,11 @@
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDashboard
+metadata:
+  name: grafonnet-dashboard
+  labels:
+    app: grafana
+spec:
+  name: simple-dashboard.json
+  jsonnet: >
+    local grafana = import 'grafonnet/grafana.libsonnet';
+    grafana.dashboard.new('Empty Dashboard from grafonnet')
