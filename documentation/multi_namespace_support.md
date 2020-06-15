@@ -1,6 +1,6 @@
 # Support for multiple namespaces
 
-The operator can import dashboards from either one, some or all namespaces. By default it will only look for dashboards in its own namespace.
+The operator can import dashboards from either one, some or all namespaces. By default it will look for dashboards in all namespaces.
 By setting the `--scan-all` or `--namespaces` flags the operator can watch for dashboards in other namespaces.
 
 The `Grafana` and `GrafanaDataSource` resources do not support multiple namespaces and are only reconciled if created in the operators namespace.
