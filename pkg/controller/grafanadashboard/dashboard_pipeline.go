@@ -119,7 +119,11 @@ func (r *DashboardPipelineImpl) validateJson() error {
 }
 
 // Try to get the dashboard json definition either from a provided URL or from the
-// raw json in the dashboard resource
+// raw json in the dashboard resource. The priority is as follows:
+// 1) try to fetch from url if provided
+// 2) url fails or not provided: try to fetch from configmap ref
+// 3) no configmap specified: try to use embedded json
+// 4) no json specified: try to use embedded jsonnet
 func (r *DashboardPipelineImpl) obtainJson() error {
 	if r.Dashboard.Spec.Url != "" {
 		err := r.loadDashboardFromURL()
@@ -154,9 +158,11 @@ func (r *DashboardPipelineImpl) obtainJson() error {
 		}
 	}
 
-	return errors.New("dashboard does not contain json")
+	return errors.New("unable to obtain dashboard contents")
 }
 
+// Compiles jsonnet to json and makes the grafonnet library available to
+// the template
 func (r *DashboardPipelineImpl) loadJsonnet(source string) (string, error) {
 	cfg := config.GetControllerConfig()
 	grafonnetLocation := cfg.GetConfigString(config.ConfigGrafonnetLocation, config.GrafonnetLocation)

@@ -88,6 +88,7 @@ The operator accepts a number of flags that can be passed in the `args` section 
 * *--grafana-image-tag*: overrides the Grafana tag. See `controller_config.go` for default.
 * *--grafana-plugins-init-container-image*: overrides the Grafana Plugins Init Container image, defaults to `quay.io/integreatly/grafana_plugins_init`.
 * *--grafana-plugins-init-container-tag*: overrides the Grafana Plugins Init Container tag, defaults to `0.0.2`.
+* *--grafonnet-location*: overrides the location of the grafonnet library. Defaults to `/opt/grafonnet-lib`. Only useful when running the operator locally.
 * *--scan-all*: watch for dashboards in all namespaces. This requires the the operator service account to have cluster wide permissions to `get`, `list`, `update` and `watch` dashboards. See `deploy/cluster_roles`.
 * *--namespaces*: watch for dashboards in a list of namespaces. Mutually exclusive with `--scan-all`.
 

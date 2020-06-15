@@ -35,11 +35,25 @@ Represents a Grafana instance. See [the documentation](./documentation/deploy_gr
 
 ## GrafanaDashboard
 
-Represents a Grafana dashboard and allows to specify required plugins. See [the documentation](./documentation/dashboards.md) for a description of properties supported in the spec.
+Represents a Grafana dashboard and allows specifying required plugins. See [the documentation](./documentation/dashboards.md) for a description of properties supported in the spec.
 
 ## GrafanaDatasource
 
 Represents a Grafana datasource. See [the documentation](./documentation/datasources.md) for a description of properties supported in the spec.
+
+# Building the operator image
+
+Init the submodules first to obtain grafonnet:
+
+```sh
+$ git submodule update --init
+```
+
+Then build the image using the operatpr-sdk:
+
+```sh
+$ operator-sdk build <registry>/<user>/grafana-operator:<tag>
+```
 
 # Running locally
 
@@ -52,7 +66,7 @@ Prerequisites:
 * make sure to deploy the custom resource definition using the command ```kubectl create -f deploy/crds```
 
 ```sh
-$ operator-sdk up local --namespace=<namespace> --operator-flags="<flags to pass>"
+$ operator-sdk run local --namespace=<namespace> --operator-flags="<flags to pass>"
 ```
 
 # Grafana features not yet supported in the operator
