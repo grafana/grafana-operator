@@ -57,7 +57,7 @@ func init() {
 	flagset.StringVar(&flagPluginsInitContainerImage, "grafana-plugins-init-container-image", "", "Overrides the default Grafana Plugins Init Container image")
 	flagset.StringVar(&flagPluginsInitContainerTag, "grafana-plugins-init-container-tag", "", "Overrides the default Grafana Plugins Init Container tag")
 	flagset.StringVar(&flagNamespaces, "namespaces", "", "Namespaces to scope the interaction of the Grafana operator. Mutually exclusive with --scan-all")
-	flagset.BoolVar(&scanAll, "scan-all", false, "Scans all namespaces for dashboards")
+	flagset.BoolVar(&scanAll, "scan-all", true, "Scans all namespaces for dashboards")
 	flagset.Parse(os.Args[1:])
 }
 

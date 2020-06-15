@@ -175,8 +175,8 @@ func (r *ReconcileGrafanaDashboard) checkNamespaceLabels(dashboard *grafanav1alp
 }
 
 func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Request, grafanaClient GrafanaClient) (reconcile.Result, error) {
-	// Collect known and namespace dashboards
-	knownDashboards := r.config.GetDashboards(request.Namespace)
+	// Collect known and namespace dashboards, cluster wide search with ""
+	knownDashboards := r.config.GetDashboards("")
 	namespaceDashboards := &grafanav1alpha1.GrafanaDashboardList{}
 	err := r.client.List(r.context, namespaceDashboards)
 	if err != nil {

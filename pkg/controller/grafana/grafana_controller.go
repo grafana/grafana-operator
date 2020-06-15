@@ -255,11 +255,7 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 		cr.Status.InstalledDashboards = r.config.Dashboards
 	} else {
 		if r.config.Dashboards == nil {
-			// Add all present dashboards from all namespaces
-			dashboards := r.config.GetDashboardsFromAllNamespaces()
-			r.config.SetDashboards(dashboards)
-			// Update CR Status
-			cr.Status.InstalledDashboards = dashboards
+			r.config.SetDashboards(make(map[string][]*grafanav1alpha1.GrafanaDashboardRef))
 		}
 	}
 
