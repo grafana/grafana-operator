@@ -10,7 +10,8 @@ The following properties are accepted in the `spec`:
 
 * *name*: The filename of the dashboard that gets mounted into a volume in the grafana instance. Not to be confused with `metadata.name`.
 * *json*: Raw json string with the dashboard contents. Check the [official documentation](https://grafana.com/docs/reference/dashboard/#dashboard-json).
-* *url*: Url address to download a json string with the dashboard contents. This will take priority over the json field in case the download is successful
+* *jsonnet*: Jsonnet source. The [Grafonnet](https://grafana.github.io/grafonnet-lib/) library is made available automatically and can be imported.
+* *url*: Url address to download a json or jsonnet string with the dashboard contents. This will take priority over the json field in case the download is successful.
 * *plugins*: A list of plugins required by the dashboard. They will be installed by the operator if not already present.
 * *datasources*: A list of datasources to be used as inputs. See [datasource inputs](#datasource-inputs).
 
