@@ -1,0 +1,11 @@
+---
+kind: pipeline
+type: docker
+name: default
+
+steps:
+- name: test
+  image: golang
+  commands:
+  - go mod download
+  - go test -cover -race -vet all -mod readonly ./...

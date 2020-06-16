@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	grafanaapi "github.com/nytm/go-grafana-api"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -19,7 +20,7 @@ const (
 
 type GrafanaRequest struct {
 	Dashboard json.RawMessage `json:"dashboard"`
-	FolderId  int             `json:"folderId"`
+	FolderId  int64           `json:"folderId"`
 	Overwrite bool            `json:"overwrite"`
 }
 
@@ -35,8 +36,9 @@ type GrafanaResponse struct {
 }
 
 type GrafanaClient interface {
-	CreateOrUpdateDashboard(dashboard []byte) (GrafanaResponse, error)
+	CreateOrUpdateDashboard(dashboard []byte, folderID int64) (GrafanaResponse, error)
 	DeleteDashboardByUID(UID string) (GrafanaResponse, error)
+	GetOrCreateNamespaceFolder(namespace string) (int64, error)
 }
 
 type GrafanaClientImpl struct {
@@ -72,8 +74,32 @@ func NewGrafanaClient(url, user, password string, timeoutSeconds time.Duration) 
 	}
 }
 
+func (r *GrafanaClientImpl) GetOrCreateNamespaceFolder(namespace string) (folderID int64, err error) {
+	gapiClient, err := grafanaapi.New("", r.url) // get the Auth from somewhere?
+	if err != nil {
+		return 0, err
+	}
+	folders, err := gapiClient.Folders()
+	if err != nil {
+		return 0, err
+
+	}
+	for _, folder := range folders {
+		if folder.Title == namespace {
+			return folder.Id, nil
+		}
+		continue
+	}
+	// Create new folder using the passed namespace and return it's ID
+	newFolder, err := gapiClient.NewFolder(namespace)
+	if err != nil {
+		return 0, err
+	}
+	return newFolder.Id, nil
+}
+
 // Submit dashboard json to grafana
-func (r *GrafanaClientImpl) CreateOrUpdateDashboard(dashboard []byte) (GrafanaResponse, error) {
+func (r *GrafanaClientImpl) CreateOrUpdateDashboard(dashboard []byte, folderID int64) (GrafanaResponse, error) {
 	rawUrl := fmt.Sprintf(CreateOrUpdateDashboardUrl, r.url)
 	response := newResponse()
 
@@ -86,8 +112,7 @@ func (r *GrafanaClientImpl) CreateOrUpdateDashboard(dashboard []byte) (GrafanaRe
 	raw, err := json.Marshal(GrafanaRequest{
 		Dashboard: dashboard,
 
-		// This can be used to implement folder support in the future
-		FolderId: 0,
+		FolderId: folderID,
 
 		// We always want to set `overwrite` because the uids in the CRs map
 		// directly to dashboards in grafana

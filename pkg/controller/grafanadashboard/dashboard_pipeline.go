@@ -76,7 +76,6 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) ([]byte, erro
 	r.Board["id"] = nil
 	// Overwrite in case any user provided uid exists
 	r.Board["uid"] = fmt.Sprintf("%x", md5.Sum([]byte(r.Dashboard.Namespace+r.Dashboard.Name)))
-
 	raw, err := json.Marshal(r.Board)
 	if err != nil {
 		return nil, err
