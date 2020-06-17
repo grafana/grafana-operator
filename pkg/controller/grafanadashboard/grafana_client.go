@@ -36,9 +36,9 @@ type GrafanaResponse struct {
 }
 
 type GrafanaClient interface {
-	CreateOrUpdateDashboard(dashboard []byte, folderID int64) (GrafanaResponse, error)
+	CreateOrUpdateDashboard(dashboard []byte, folderID *int64) (GrafanaResponse, error)
 	DeleteDashboardByUID(UID string) (GrafanaResponse, error)
-	GetOrCreateNamespaceFolder(namespace string) (int64, error)
+	GetOrCreateNamespaceFolder(namespace string) (*int64, error)
 }
 
 type GrafanaClientImpl struct {
@@ -74,32 +74,43 @@ func NewGrafanaClient(url, user, password string, timeoutSeconds time.Duration) 
 	}
 }
 
-func (r *GrafanaClientImpl) GetOrCreateNamespaceFolder(namespace string) (folderID int64, err error) {
-	gapiClient, err := grafanaapi.New("", r.url) // get the Auth from somewhere?
+func (r *GrafanaClientImpl) GetOrCreateNamespaceFolder(namespace string) (folderID *int64, err error) {
+	auth := fmt.Sprintf("%v:%v", r.user, r.password)
+	gapiClient, err := grafanaapi.New(auth, r.url)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	folders, err := gapiClient.Folders()
-	if err != nil {
-		return 0, err
+	// Check if dashboard is namespaced
+	if namespace != "" {
+		folders, err := gapiClient.Folders()
+		if err != nil {
+			return nil, err
 
-	}
-	for _, folder := range folders {
-		if folder.Title == namespace {
-			return folder.Id, nil
 		}
-		continue
+		for _, folder := range folders {
+			if folder.Title == namespace {
+				return &folder.Id, nil
+			}
+			continue
+		}
+		// Create new folder using the passed namespace and return it's ID
+		newFolder, err := gapiClient.NewFolder(namespace)
+		if err != nil {
+			return nil, err
+		}
+		return &newFolder.Id, nil
+	} else {
+		// Create new non-namespaced folder for dashboards with no namespace
+		newFolder, err := gapiClient.NewFolder("Non-Namespaced")
+		if err != nil {
+			return nil, err
+		}
+		return &newFolder.Id, nil
 	}
-	// Create new folder using the passed namespace and return it's ID
-	newFolder, err := gapiClient.NewFolder(namespace)
-	if err != nil {
-		return 0, err
-	}
-	return newFolder.Id, nil
 }
 
 // Submit dashboard json to grafana
-func (r *GrafanaClientImpl) CreateOrUpdateDashboard(dashboard []byte, folderID int64) (GrafanaResponse, error) {
+func (r *GrafanaClientImpl) CreateOrUpdateDashboard(dashboard []byte, folderID *int64) (GrafanaResponse, error) {
 	rawUrl := fmt.Sprintf(CreateOrUpdateDashboardUrl, r.url)
 	response := newResponse()
 
@@ -112,7 +123,7 @@ func (r *GrafanaClientImpl) CreateOrUpdateDashboard(dashboard []byte, folderID i
 	raw, err := json.Marshal(GrafanaRequest{
 		Dashboard: dashboard,
 
-		FolderId: folderID,
+		FolderId: *folderID,
 
 		// We always want to set `overwrite` because the uids in the CRs map
 		// directly to dashboards in grafana
