@@ -7,7 +7,6 @@ import (
 	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
-	errors2 "github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -254,20 +253,22 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 				continue
 			}
 		}
-		folderID, err := grafanaClient.GetOrCreateNamespaceFolder(dashboard.Namespace)
+
+		folder, err := grafanaClient.GetOrCreateNamespaceFolder(dashboard.Namespace)
 		if err != nil {
 			log.Info(fmt.Sprintf("failed to get or create namespace folder %v/%v with error %v", request.Namespace, request.Name, err))
 			r.manageError(&dashboard, err)
 			continue
 		}
-		if folderID == nil {
-			newErr := errors2.New(fmt.Sprintf("folder ID for requested namespace %v , is nil", dashboard.Namespace))
-			log.Info(fmt.Sprintf("failed to retrieve folder ID for %v, got error : %v", dashboard.Namespace, newErr))
-			// If folderId is nil then set to general folder
-			*folderID = 0
+
+		var folderId int64
+		if folder.ID == nil {
+			folderId = 0
+		} else {
+			folderId = *folder.ID
 		}
 
-		_, err = grafanaClient.CreateOrUpdateDashboard(processed, folderID)
+		_, err = grafanaClient.CreateOrUpdateDashboard(processed, folderId)
 		if err != nil {
 			log.Info(fmt.Sprintf("cannot submit dashboard %v/%v", dashboard.Namespace, dashboard.Name))
 			r.manageError(&dashboard, err)
