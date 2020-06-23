@@ -1,7 +1,7 @@
 # Support for multiple namespaces
 
 The operator can import dashboards from either one, some or all namespaces. By default it will look for dashboards in all namespaces.
-This is done by setting the `--scan-all` flag. The default for `--scan-all` is `True` meaning that dashboards from all namespaces will be reconciled in the Grafana CR, if this isn't desired behaviour for project specific purposes this flag needs to be set to `False` or a namespace/namespaces have to be specified with `--namespaces` for the desired namespaces to be watched for Grafana CRs.
+This is done by setting the `--scan-all` flag. The default for `--scan-all` is `True` meaning that dashboards from all namespaces will be reconciled in the Grafana CR, if this isn't desired behaviour for project specific purposes this flag needs to be set to `False` and a namespace/namespaces have to be specified with `--namespaces` for the desired namespaces to be watched for Dashboard CRs.
 
 The `Grafana` and `GrafanaDataSource` resources do not support multiple namespaces and are only reconciled if created in the operators namespace.
 
