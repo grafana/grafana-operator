@@ -3,6 +3,8 @@
 The operator can import dashboards from either one, some or all namespaces. By default it will only look for dashboards in its own namespace.
 By setting the `--scan-all` or `--namespaces` flags the operator can watch for dashboards in other namespaces.
 
+The `Grafana` and `GrafanaDataSource` resources do not support multiple namespaces and are only reconciled if created in the operators namespace.
+
 ## Watching for dashboards in all namespaces
 
 Set the `--scan-all` flag to watch for dashboards in all namespaces. Cluster wide permissions for the `grafana-operator` service account are required (see `deploy/cluster_roles`).
