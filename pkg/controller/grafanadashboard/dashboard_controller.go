@@ -65,7 +65,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler, namespace string) error {
 	}
 
 	ref := r.(*ReconcileGrafanaDashboard)
-	ticker := time.NewTicker(config.RequeueDelay)
+	ticker := time.NewTicker(config.ReconcileLoopDelay)
 	sendEmptyRequest := func() {
 		request := reconcile.Request{
 			NamespacedName: types.NamespacedName{

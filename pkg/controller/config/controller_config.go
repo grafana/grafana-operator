@@ -24,7 +24,8 @@ const (
 	PluginsInitContainerImage       = "quay.io/integreatly/grafana_plugins_init"
 	PluginsInitContainerTag         = "0.0.2"
 	PluginsUrl                      = "https://grafana.com/api/plugins/%s/versions/%s"
-	RequeueDelay                    = time.Second * 10
+	RequeueDelay                    = time.Second * 10 // Used for timing the delay before invoking specific state managers, eg.ManageSuccess etc.
+	ReconcileLoopDelay              = time.Minute * 60 // Used for timing the periodical reconcile, currently set for 1 hour, separate to requeueDelay as setting that value to 1 hour would lead to massive delays in dashboard reconciles etc.
 	SecretsMountDir                 = "/etc/grafana-secrets/"
 	ConfigMapsMountDir              = "/etc/grafana-configmaps/"
 	ConfigRouteWatch                = "watch.routes"
