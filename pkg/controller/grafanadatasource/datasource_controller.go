@@ -70,9 +70,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler, namespace string) error {
 
 	ref := r.(*ReconcileGrafanaDataSource)
 
-	// The datasources should not change very often, only revisit them
-	// half as often as the dashboards
-	ticker := time.NewTicker(config.RequeueDelay * 2)
+	ticker := time.NewTicker(config.ReconcileLoopDelay)
 	sendEmptyRequest := func() {
 		request := reconcile.Request{
 			NamespacedName: types.NamespacedName{
