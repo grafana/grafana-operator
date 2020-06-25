@@ -388,7 +388,7 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 	return containers
 }
 
-func getInitContainers(plugins string) []v13.Container {
+func getInitContainers(cr *v1alpha1.Grafana, plugins string) []v13.Container {
 	cfg := config.GetControllerConfig()
 	image := cfg.GetConfigString(config.ConfigPluginsInitContainerImage, config.PluginsInitContainerImage)
 	tag := cfg.GetConfigString(config.ConfigPluginsInitContainerTag, config.PluginsInitContainerTag)
@@ -403,7 +403,7 @@ func getInitContainers(plugins string) []v13.Container {
 					Value: plugins,
 				},
 			},
-			Resources: v13.ResourceRequirements{},
+			Resources: getResources(cr),
 			VolumeMounts: []v13.VolumeMount{
 				{
 					Name:      GrafanaPluginsVolumeName,
@@ -438,7 +438,7 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, annotations map[string]string, conf
 				Affinity:                      getAffinities(cr),
 				SecurityContext:               getSecurityContext(cr),
 				Volumes:                       getVolumes(cr),
-				InitContainers:                getInitContainers(plugins),
+				InitContainers:                getInitContainers(cr, plugins),
 				Containers:                    getContainers(cr, configHash, dsHash),
 				ServiceAccountName:            GrafanaServiceAccountName,
 				TerminationGracePeriodSeconds: getTerminationGracePeriod(cr),
