@@ -22,6 +22,7 @@ type GrafanaSpec struct {
 	Containers                 []v1.Container           `json:"containers,omitempty"`
 	DashboardLabelSelector     []*metav1.LabelSelector  `json:"dashboardLabelSelector,omitempty"`
 	Ingress                    *GrafanaIngress          `json:"ingress,omitempty"`
+	InitResources              *v1.ResourceRequirements `json:"initResources,omitempty"`
 	Secrets                    []string                 `json:"secrets,omitempty"`
 	ConfigMaps                 []string                 `json:"configMaps,omitempty"`
 	Service                    *GrafanaService          `json:"service,omitempty"`

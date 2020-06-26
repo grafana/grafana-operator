@@ -14,11 +14,31 @@ import (
 )
 
 const (
-	MemoryRequest = "256Mi"
-	CpuRequest    = "100m"
-	MemoryLimit   = "1024Mi"
-	CpuLimit      = "500m"
+	InitMemoryRequest = "128Mi"
+	InitCpuRequest    = "250m"
+	InitMemoryLimit   = "512Mi"
+	InitCpuLimit      = "1000m"
+	MemoryRequest     = "256Mi"
+	CpuRequest        = "100m"
+	MemoryLimit       = "1024Mi"
+	CpuLimit          = "500m"
 )
+
+func getInitResources(cr *v1alpha1.Grafana) v13.ResourceRequirements {
+	if cr.Spec.InitResources != nil {
+		return *cr.Spec.InitResources
+	}
+	return v13.ResourceRequirements{
+		Requests: v13.ResourceList{
+			v13.ResourceMemory: resource.MustParse(InitMemoryRequest),
+			v13.ResourceCPU:    resource.MustParse(InitCpuRequest),
+		},
+		Limits: v13.ResourceList{
+			v13.ResourceMemory: resource.MustParse(InitMemoryLimit),
+			v13.ResourceCPU:    resource.MustParse(InitCpuLimit),
+		},
+	}
+}
 
 func getResources(cr *v1alpha1.Grafana) v13.ResourceRequirements {
 	if cr.Spec.Resources != nil {
@@ -35,6 +55,7 @@ func getResources(cr *v1alpha1.Grafana) v13.ResourceRequirements {
 		},
 	}
 }
+
 func getAffinities(cr *v1alpha1.Grafana) *v13.Affinity {
 	var affinity = v13.Affinity{}
 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Affinity != nil {
@@ -403,7 +424,7 @@ func getInitContainers(cr *v1alpha1.Grafana, plugins string) []v13.Container {
 					Value: plugins,
 				},
 			},
-			Resources: getResources(cr),
+			Resources: getInitResources(cr),
 			VolumeMounts: []v13.VolumeMount{
 				{
 					Name:      GrafanaPluginsVolumeName,

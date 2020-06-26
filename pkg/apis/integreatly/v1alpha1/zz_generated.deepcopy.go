@@ -1632,6 +1632,11 @@ func (in *GrafanaSpec) DeepCopyInto(out *GrafanaSpec) {
 		*out = new(GrafanaIngress)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.InitResources != nil {
+		in, out := &in.InitResources, &out.InitResources
+		*out = new(v1.ResourceRequirements)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.Secrets != nil {
 		in, out := &in.Secrets, &out.Secrets
 		*out = make([]string, len(*in))
