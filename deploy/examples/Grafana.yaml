@@ -19,4 +19,20 @@ spec:
       enabled: True
   dashboardLabelSelector:
     - matchExpressions:
-        - {key: app, operator: In, values: [grafana]}
+        - { key: app, operator: In, values: [grafana] }
+  # initResources:
+  #   # Optionally specify initResources
+  #   limits:
+  #     cpu: 1000m
+  #     memory: 512Mi
+  #   requests:
+  #     cpu: 250m
+  #     memory: 128Mi
+  resources:
+    # Optionally specify container resources
+    limits:
+      cpu: 2000m
+      memory: 8000Mi
+    requests:
+      cpu: 100m
+      memory: 200Mi
