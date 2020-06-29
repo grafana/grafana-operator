@@ -72,6 +72,8 @@ func add(mgr manager.Manager, r reconcile.Reconciler, namespace string) error {
 
 	ticker := time.NewTicker(config.ReconcileLoopDelay)
 	sendEmptyRequest := func() {
+		time.Sleep(time.Second * 10) //Needed for the initial immediate datasource resync, if the function doesn't sleep then it will be called too fast and won't be able to find the grafana instance(which won't be available right away) and datasources won't be reconciled until the next reconcileLoopDelay has elapsed
+
 		request := reconcile.Request{
 			NamespacedName: types.NamespacedName{
 				Namespace: namespace,
@@ -82,7 +84,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler, namespace string) error {
 	}
 
 	go func() {
-		for range ticker.C {
+		for ; true; <-ticker.C {
 			log.Info("running periodic datasource resync")
 			sendEmptyRequest()
 		}
