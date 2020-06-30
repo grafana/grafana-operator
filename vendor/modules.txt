@@ -84,7 +84,6 @@ github.com/openshift/api/route/v1
 github.com/operator-framework/operator-sdk/pkg/k8sutil
 github.com/operator-framework/operator-sdk/pkg/leader
 github.com/operator-framework/operator-sdk/pkg/metrics
-github.com/operator-framework/operator-sdk/pkg/ready
 github.com/operator-framework/operator-sdk/version
 # github.com/pkg/errors v0.8.1
 github.com/pkg/errors
