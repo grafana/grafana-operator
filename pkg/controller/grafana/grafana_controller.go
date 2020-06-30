@@ -208,9 +208,6 @@ func (r *ReconcileGrafana) getGrafanaAdminUrl(cr *grafanav1alpha1.Grafana, state
 	if cr.Spec.Client != nil {
 		preferService = cr.Spec.Client.PreferService
 	}
-	if preferService != false {
-		cr.Spec.Ingress = nil
-	}
 
 	// First try to use the route if it exists. Prefer the route because it also works
 	// when running the operator outside of the cluster

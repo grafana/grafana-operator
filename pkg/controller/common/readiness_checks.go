@@ -4,7 +4,6 @@ import (
 	"errors"
 	v1 "github.com/openshift/api/route/v1"
 	v12 "k8s.io/api/apps/v1"
-	v1core "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 )
 
@@ -52,11 +51,4 @@ func IsDeploymentReady(deployment *v12.Deployment) (bool, error) {
 	}
 
 	return deployment.Status.ReadyReplicas == deployment.Status.Replicas, nil
-}
-
-func IsServiceReady(service *v1core.Service) bool {
-	if service == nil {
-		return false
-	}
-	return len(service.Status.LoadBalancer.Ingress) > 0
 }

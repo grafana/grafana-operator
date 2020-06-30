@@ -7,7 +7,6 @@ import (
 	"github.com/go-logr/logr"
 	v13 "github.com/openshift/api/route/v1"
 	v12 "k8s.io/api/apps/v1"
-	v1core "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,7 +24,6 @@ type ActionRunner interface {
 	routeReady(obj runtime.Object) error
 	ingressReady(obj runtime.Object) error
 	deploymentReady(obj runtime.Object) error
-	serviceReady(obj runtime.Object) error
 }
 
 type ClusterAction interface {
@@ -140,14 +138,6 @@ func (i *ClusterActionRunner) deploymentReady(obj runtime.Object) error {
 	return nil
 }
 
-func (i *ClusterActionRunner) serviceReady(obj runtime.Object) error {
-	ready := IsServiceReady(obj.(*v1core.Service))
-	if !ready {
-		stdErr.New("service not ready")
-	}
-	return nil
-}
-
 // An action to create generic kubernetes resources
 // (resources that don't require special treatment)
 type GenericCreateAction struct {
@@ -186,11 +176,6 @@ type DeploymentReadyAction struct {
 	Msg string
 }
 
-type ServiceReadyAction struct {
-	Ref runtime.Object
-	Msg string
-}
-
 // An action to delete generic kubernetes resources
 // (resources that don't require special treatment)
 type GenericDeleteAction struct {
@@ -224,8 +209,4 @@ func (i IngressReadyAction) Run(runner ActionRunner) (string, error) {
 
 func (i DeploymentReadyAction) Run(runner ActionRunner) (string, error) {
 	return i.Msg, runner.deploymentReady(i.Ref)
-}
-
-func (i ServiceReadyAction) Run(runner ActionRunner) (string, error) {
-	return i.Msg, runner.serviceReady(i.Ref)
 }

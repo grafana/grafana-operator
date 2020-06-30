@@ -72,14 +72,6 @@ func (i *GrafanaReconciler) getGrafanaReadiness(state *common.ClusterState, cr *
 			Msg: "check ingress readiness",
 		})
 	}
-	if cr.Spec.Client != nil && cr.Spec.Client.PreferService {
-		// Prefer service if prefer service is true and ignore ingress
-		actions = append(actions, common.ServiceReadyAction{
-			Ref: state.GrafanaService,
-			Msg: "check service readiness",
-		})
-	}
-
 	return append(actions, common.DeploymentReadyAction{
 		Ref: state.GrafanaDeployment,
 		Msg: "check deployment readiness",
