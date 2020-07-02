@@ -176,7 +176,7 @@ func (r *ReconcileGrafanaDashboard) checkNamespaceLabels(dashboard *grafanav1alp
 
 func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Request, grafanaClient GrafanaClient) (reconcile.Result, error) {
 	// Collect known and namespace dashboards, cluster wide search with ""
-	knownDashboards := r.config.GetDashboards("")
+	knownDashboards := r.config.GetDashboards(request.Namespace)
 	namespaceDashboards := &grafanav1alpha1.GrafanaDashboardList{}
 	err := r.client.List(r.context, namespaceDashboards)
 	if err != nil {
@@ -274,11 +274,8 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 			r.manageError(&dashboard, err)
 			continue
 		}
+		r.manageSuccess(&dashboard)
 
-		err = r.manageSuccess(&dashboard)
-		if err != nil {
-			r.manageError(&dashboard, err)
-		}
 	}
 
 	for _, dashboard := range dashboardsToDelete {
@@ -302,7 +299,7 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 
 // Handle success case: update dashboard metadata (id, uid) and update the list
 // of plugins
-func (r *ReconcileGrafanaDashboard) manageSuccess(dashboard *grafanav1alpha1.GrafanaDashboard) error {
+func (r *ReconcileGrafanaDashboard) manageSuccess(dashboard *grafanav1alpha1.GrafanaDashboard) {
 	msg := fmt.Sprintf("dashboard %v/%v successfully submitted",
 		dashboard.Namespace,
 		dashboard.Name)
@@ -310,22 +307,17 @@ func (r *ReconcileGrafanaDashboard) manageSuccess(dashboard *grafanav1alpha1.Gra
 	log.Info(msg)
 	r.config.AddDashboard(dashboard)
 	r.config.SetPluginsFor(dashboard)
-
-	return r.client.Status().Update(r.context, dashboard)
 }
 
 // Handle error case: update dashboard with error message and status
 func (r *ReconcileGrafanaDashboard) manageError(dashboard *grafanav1alpha1.GrafanaDashboard, issue error) {
 	r.recorder.Event(dashboard, "Warning", "ProcessingError", issue.Error())
 
-	err := r.client.Status().Update(r.context, dashboard)
-	if err != nil {
-		// Ignore conclicts. Resource might just be outdated.
-		if errors.IsConflict(err) {
-			return
-		}
-		log.Error(err, "error updating dashboard status")
+	// Ignore conclicts. Resource might just be outdated.
+	if errors.IsConflict(issue) {
+		return
 	}
+	log.Error(issue, "error updating dashboard")
 }
 
 // Get an authenticated grafana API client

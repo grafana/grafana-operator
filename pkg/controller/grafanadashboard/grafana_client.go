@@ -171,9 +171,9 @@ func (r *GrafanaClientImpl) GetOrCreateNamespaceFolder(namespace string) (Grafan
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return response, errors.New(fmt.Sprintf(
+		return response, fmt.Errorf(
 			"error creating folder, expected status 200 but got %v",
-			resp.StatusCode))
+			resp.StatusCode)
 	}
 
 	data, err := ioutil.ReadAll(resp.Body)
@@ -224,9 +224,9 @@ func (r *GrafanaClientImpl) CreateOrUpdateDashboard(dashboard []byte, folderId i
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return response, errors.New(fmt.Sprintf(
+		return response, fmt.Errorf(
 			"error creating dashboard, expected status 200 but got %v",
-			resp.StatusCode))
+			resp.StatusCode)
 	}
 
 	data, err := ioutil.ReadAll(resp.Body)
