@@ -203,7 +203,7 @@ func (r *ReconcileGrafana) manageError(cr *grafanav1alpha1.Grafana, issue error)
 // Try to find a suitable url to grafana
 func (r *ReconcileGrafana) getGrafanaAdminUrl(cr *grafanav1alpha1.Grafana, state *common.ClusterState) (string, error) {
 	// If preferService is true, we skip the routes and try to access grafana
-	// by using the serivce.
+	// by using the service.
 	preferService := false
 	if cr.Spec.Client != nil {
 		preferService = cr.Spec.Client.PreferService
