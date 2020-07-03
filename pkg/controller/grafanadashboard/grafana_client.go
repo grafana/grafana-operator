@@ -263,9 +263,9 @@ func (r *GrafanaClientImpl) DeleteDashboardByUID(UID string) (GrafanaResponse, e
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return response, errors.New(fmt.Sprintf(
+		return response, fmt.Errorf(
 			"error deleting dashboard, expected status 200 but got %v",
-			resp.StatusCode))
+			resp.StatusCode)
 	}
 
 	data, err := ioutil.ReadAll(resp.Body)

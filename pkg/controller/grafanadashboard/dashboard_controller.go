@@ -175,7 +175,7 @@ func (r *ReconcileGrafanaDashboard) checkNamespaceLabels(dashboard *grafanav1alp
 }
 
 func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Request, grafanaClient GrafanaClient) (reconcile.Result, error) {
-	// Collect known and namespace dashboards, cluster wide search with ""
+	// Collect known and namespace dashboards
 	knownDashboards := r.config.GetDashboards(request.Namespace)
 	namespaceDashboards := &grafanav1alpha1.GrafanaDashboardList{}
 
@@ -261,7 +261,7 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 
 		folder, err := grafanaClient.GetOrCreateNamespaceFolder(dashboard.Namespace)
 		if err != nil {
-			log.Info(fmt.Sprintf("failed to get or create namespace folder %v/%v with error %v", request.Namespace, request.Name, err))
+			log.Error(err, "failed to get or create namespace folder %v for dashboard %v with error %v", request.Namespace, request.Name)
 			r.manageError(&dashboard, err)
 			continue
 		}
@@ -275,7 +275,7 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 
 		_, err = grafanaClient.CreateOrUpdateDashboard(processed, folderId)
 		if err != nil {
-			log.Info(fmt.Sprintf("cannot submit dashboard %v/%v", dashboard.Namespace, dashboard.Name))
+			log.Error(err, "cannot submit dashboard %v/%v", dashboard.Namespace, dashboard.Name)
 			r.manageError(&dashboard, err)
 			continue
 		}

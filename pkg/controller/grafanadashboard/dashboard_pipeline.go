@@ -161,7 +161,7 @@ func (r *DashboardPipelineImpl) loadDashboardFromURL() error {
 	r.JSON = string(body)
 
 	if resp.StatusCode != 200 {
-		return errors.New(fmt.Sprintf("request failed with status %v", resp.StatusCode))
+		return fmt.Errorf("request failed with status %v", resp.StatusCode)
 	}
 
 	return nil
