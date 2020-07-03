@@ -178,7 +178,12 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 	// Collect known and namespace dashboards, cluster wide search with ""
 	knownDashboards := r.config.GetDashboards(request.Namespace)
 	namespaceDashboards := &grafanav1alpha1.GrafanaDashboardList{}
-	err := r.client.List(r.context, namespaceDashboards)
+
+	opts := &client.ListOptions{
+		Namespace: request.Namespace,
+	}
+
+	err := r.client.List(r.context, namespaceDashboards, opts)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
