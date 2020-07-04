@@ -178,7 +178,12 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 	// Collect known and namespace dashboards
 	knownDashboards := r.config.GetDashboards(request.Namespace)
 	namespaceDashboards := &grafanav1alpha1.GrafanaDashboardList{}
-	err := r.client.List(r.context, namespaceDashboards)
+
+	opts := &client.ListOptions{
+		Namespace: request.Namespace,
+	}
+
+	err := r.client.List(r.context, namespaceDashboards, opts)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -254,17 +259,28 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 			}
 		}
 
-		status, err := grafanaClient.CreateOrUpdateDashboard(processed)
+		folder, err := grafanaClient.GetOrCreateNamespaceFolder(dashboard.Namespace)
 		if err != nil {
-			log.Info(fmt.Sprintf("cannot submit dashboard %v/%v", dashboard.Namespace, dashboard.Name))
+			log.Error(err, "failed to get or create namespace folder %v for dashboard %v with error %v", request.Namespace, request.Name)
 			r.manageError(&dashboard, err)
 			continue
 		}
 
-		err = r.manageSuccess(&dashboard, status, pipeline.NewHash())
-		if err != nil {
-			r.manageError(&dashboard, err)
+		var folderId int64
+		if folder.ID == nil {
+			folderId = 0
+		} else {
+			folderId = *folder.ID
 		}
+
+		_, err = grafanaClient.CreateOrUpdateDashboard(processed, folderId)
+		if err != nil {
+			log.Error(err, "cannot submit dashboard %v/%v", dashboard.Namespace, dashboard.Name)
+			r.manageError(&dashboard, err)
+			continue
+		}
+		r.manageSuccess(&dashboard)
+
 	}
 
 	for _, dashboard := range dashboardsToDelete {
@@ -288,41 +304,25 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 
 // Handle success case: update dashboard metadata (id, uid) and update the list
 // of plugins
-func (r *ReconcileGrafanaDashboard) manageSuccess(dashboard *grafanav1alpha1.GrafanaDashboard, status GrafanaResponse, hash string) error {
+func (r *ReconcileGrafanaDashboard) manageSuccess(dashboard *grafanav1alpha1.GrafanaDashboard) {
 	msg := fmt.Sprintf("dashboard %v/%v successfully submitted",
 		dashboard.Namespace,
 		dashboard.Name)
-
 	r.recorder.Event(dashboard, "Normal", "Success", msg)
 	log.Info(msg)
-
-	dashboard.Status.UID = *status.UID
-	dashboard.Status.ID = *status.ID
-	dashboard.Status.Slug = *status.Slug
-	dashboard.Status.Phase = grafanav1alpha1.PhaseReconciling
-	dashboard.Status.Hash = hash
-	dashboard.Status.Message = "success"
-
 	r.config.AddDashboard(dashboard)
 	r.config.SetPluginsFor(dashboard)
-
-	return r.client.Status().Update(r.context, dashboard)
 }
 
 // Handle error case: update dashboard with error message and status
 func (r *ReconcileGrafanaDashboard) manageError(dashboard *grafanav1alpha1.GrafanaDashboard, issue error) {
 	r.recorder.Event(dashboard, "Warning", "ProcessingError", issue.Error())
-	dashboard.Status.Phase = grafanav1alpha1.PhaseFailing
-	dashboard.Status.Message = issue.Error()
 
-	err := r.client.Status().Update(r.context, dashboard)
-	if err != nil {
-		// Ignore conclicts. Resource might just be outdated.
-		if errors.IsConflict(err) {
-			return
-		}
-		log.Error(err, "error updating dashboard status")
+	// Ignore conclicts. Resource might just be outdated.
+	if errors.IsConflict(issue) {
+		return
 	}
+	log.Error(issue, "error updating dashboard")
 }
 
 // Get an authenticated grafana API client

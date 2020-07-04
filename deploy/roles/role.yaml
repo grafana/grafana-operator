@@ -84,7 +84,6 @@ rules:
       - grafanas/status
       - grafanas/finalizers
       - grafanadashboards
-      - grafanadashboards/status
       - grafanadatasources
       - grafanadatasources/status
     verbs:

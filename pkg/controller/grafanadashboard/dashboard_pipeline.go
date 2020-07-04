@@ -74,14 +74,8 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) ([]byte, erro
 	// Dashboards are never expected to come with an ID, it is
 	// always assigned by Grafana. If there is one, we ignore it
 	r.Board["id"] = nil
-
-	// This dashboard has previously been imported
-	// To make sure its updated we have to set the metadata
-	if r.Dashboard.Status.Phase == v1alpha1.PhaseReconciling {
-		r.Board["slug"] = r.Dashboard.Status.Slug
-		r.Board["uid"] = r.Dashboard.Status.UID
-	}
-
+	// Overwrite in case any user provided uid exists
+	r.Board["uid"] = fmt.Sprintf("%x", md5.Sum([]byte(r.Dashboard.Namespace+r.Dashboard.Name)))
 	raw, err := json.Marshal(r.Board)
 	if err != nil {
 		return nil, err
@@ -167,7 +161,7 @@ func (r *DashboardPipelineImpl) loadDashboardFromURL() error {
 	r.JSON = string(body)
 
 	if resp.StatusCode != 200 {
-		return errors.New(fmt.Sprintf("request failed with status %v", resp.StatusCode))
+		return fmt.Errorf("request failed with status %v", resp.StatusCode)
 	}
 
 	return nil

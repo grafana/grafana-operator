@@ -27,16 +27,6 @@ type GrafanaDashboardDatasource struct {
 	DatasourceName string `json:"datasourceName"`
 }
 
-// GrafanaDashboardStatus defines the observed state of GrafanaDashboard
-type GrafanaDashboardStatus struct {
-	Phase   StatusPhase `json:"phase"`
-	UID     string      `json:"uid"`
-	ID      uint        `json:"id"`
-	Slug    string      `json:"slug"`
-	Message string      `json:"message"`
-	Hash    string      `json:"hash"`
-}
-
 // Used to keep a dashboard reference without having access to the dashboard
 // struct itself
 type GrafanaDashboardRef struct {
@@ -54,8 +44,7 @@ type GrafanaDashboard struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   GrafanaDashboardSpec   `json:"spec,omitempty"`
-	Status GrafanaDashboardStatus `json:"status,omitempty"`
+	Spec GrafanaDashboardSpec `json:"spec,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
