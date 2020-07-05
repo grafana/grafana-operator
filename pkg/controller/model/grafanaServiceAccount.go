@@ -23,11 +23,22 @@ func getServiceAccountAnnotations(cr *v1alpha1.Grafana, existing map[string]stri
 	return MergeAnnotations(cr.Spec.ServiceAccount.Annotations, existing)
 }
 
-func getServiceAccountImagePullSecrets(cr *v1alpha1.Grafana) []v1.LocalObjectReference {
+func mergeImagePullSecrets(requested []v1.LocalObjectReference, existing []v1.LocalObjectReference) []v1.LocalObjectReference {
+	if existing == nil {
+		return requested
+	}
+
+	for k, v := range requested {
+		existing[k] = v
+	}
+	return existing
+}
+
+func getServiceAccountImagePullSecrets(cr *v1alpha1.Grafana, existing []v1.LocalObjectReference) []v1.LocalObjectReference {
 	if cr.Spec.ServiceAccount == nil {
 		return nil
 	}
-	return cr.Spec.ServiceAccount.ImagePullSecrets
+	return mergeImagePullSecrets(cr.Spec.ServiceAccount.ImagePullSecrets, existing)
 }
 
 func GrafanaServiceAccount(cr *v1alpha1.Grafana) *v1.ServiceAccount {
@@ -38,7 +49,7 @@ func GrafanaServiceAccount(cr *v1alpha1.Grafana) *v1.ServiceAccount {
 			Labels:      getServiceAccountLabels(cr),
 			Annotations: getServiceAccountAnnotations(cr, nil),
 		},
-		ImagePullSecrets: getServiceAccountImagePullSecrets(cr),
+		ImagePullSecrets: getServiceAccountImagePullSecrets(cr, nil),
 	}
 }
 
@@ -53,6 +64,6 @@ func GrafanaServiceAccountReconciled(cr *v1alpha1.Grafana, currentState *v1.Serv
 	reconciled := currentState.DeepCopy()
 	reconciled.Labels = getServiceAccountLabels(cr)
 	reconciled.Annotations = getServiceAccountAnnotations(cr, currentState.Annotations)
-	reconciled.ImagePullSecrets = getServiceAccountImagePullSecrets(cr)
+	reconciled.ImagePullSecrets = getServiceAccountImagePullSecrets(cr, currentState.ImagePullSecrets)
 	return reconciled
 }
