@@ -7,5 +7,5 @@ metadata:
 spec:
   name: simple-dashboard.json
   jsonnet: >
-    local grafana = import 'grafonnet/grafana.libsonnet';
-    grafana.dashboard.new('Empty Dashboard from grafonnet')
+    local monitoring = import 'monitoring.jsonnet';
+    monitoring

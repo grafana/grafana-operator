@@ -4,6 +4,8 @@ import (
 	"context"
 	stdErr "errors"
 	"fmt"
+	v13 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"os"
 
 	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
@@ -174,7 +176,52 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 		return r.manageError(cr, err)
 	}
 
+	// Run the config map reconciler to discover jsonnet libraries
+	err = r.reconcileConfigMaps(cr)
+	if err != nil {
+		return r.manageError(cr, err)
+	}
+
 	return r.manageSuccess(cr, currentState)
+}
+
+func (r *ReconcileGrafana) reconcileConfigMaps(cr *grafanav1alpha1.Grafana) error {
+	if cr.Spec.Jsonnet == nil || cr.Spec.Jsonnet.LibraryLabelSelector == nil {
+		return nil
+	}
+
+	selector, err := v13.LabelSelectorAsSelector(cr.Spec.Jsonnet.LibraryLabelSelector)
+	if err != nil {
+		return err
+	}
+
+	configMaps := v1.ConfigMapList{}
+	opts := &client.ListOptions{
+		LabelSelector: selector,
+		Namespace:     cr.Namespace,
+	}
+
+	err = r.client.List(r.context, &configMaps, opts)
+	if err != nil {
+		return err
+	}
+
+
+	jsonnetBasePath := r.config.GetConfigString(config.ConfigJsonnetBasePath, config.JsonnetBasePath)
+
+	for _, configMap := range configMaps.Items {
+		for filename, contents := range configMap.Data {
+			filePath := fmt.Sprintf("%v/%v", jsonnetBasePath, filename)
+			f, err := os.Create(filePath)
+			if err != nil {
+				return err
+			}
+			f.WriteString(contents)
+			f.Close()
+		}
+	}
+
+	return nil
 }
 
 func (r *ReconcileGrafana) manageError(cr *grafanav1alpha1.Grafana, issue error) (reconcile.Result, error) {
