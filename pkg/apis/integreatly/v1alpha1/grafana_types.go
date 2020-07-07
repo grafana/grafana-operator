@@ -33,6 +33,11 @@ type GrafanaSpec struct {
 	Compat                     *GrafanaCompat           `json:"compat"`
 	DashboardNamespaceSelector *metav1.LabelSelector    `json:"dashboardNamespaceSelector,omitempty"`
 	DataStorage                *GrafanaDataStorage      `json:"dataStorage,omitempty"`
+	Jsonnet                    *JsonnetConfig           `json:"jsonnet,omitempty"`
+}
+
+type JsonnetConfig struct {
+	LibraryLabelSelector *metav1.LabelSelector `json:"libraryLabelSelector,omitempty"`
 }
 
 // Backwards compatibility switches

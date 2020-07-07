@@ -6,6 +6,6 @@ RUN mkdir -p /opt/grafonnet-lib
 
 USER nobody
 
-ADD  grafonnet-lib /opt/grafonnet-lib
+ADD grafonnet-lib /opt/grafonnet-lib
 
 ADD build/_output/bin/grafana-operator /usr/local/bin/grafana-operator
