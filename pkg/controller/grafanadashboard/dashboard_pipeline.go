@@ -165,12 +165,12 @@ func (r *DashboardPipelineImpl) obtainJson() error {
 // the template
 func (r *DashboardPipelineImpl) loadJsonnet(source string) (string, error) {
 	cfg := config.GetControllerConfig()
-	grafonnetLocation := cfg.GetConfigString(config.ConfigGrafonnetLocation, config.GrafonnetLocation)
+	jsonnetLocation := cfg.GetConfigString(config.ConfigJsonnetBasePath, config.JsonnetBasePath)
 
 	vm := jsonnet.MakeVM()
 
 	vm.Importer(&jsonnet.FileImporter{
-		JPaths: []string{grafonnetLocation},
+		JPaths: []string{jsonnetLocation},
 	})
 
 	return vm.EvaluateSnippet(r.Dashboard.Name, source)

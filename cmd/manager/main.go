@@ -37,7 +37,7 @@ var flagPluginsInitContainerImage string
 var flagPluginsInitContainerTag string
 var flagNamespaces string
 var scanAll bool
-var flagGrafonnetLocation string
+var flagJsonnetLocation string
 
 var (
 	metricsHost       = "0.0.0.0"
@@ -58,7 +58,7 @@ func init() {
 	flagset.StringVar(&flagPluginsInitContainerImage, "grafana-plugins-init-container-image", "", "Overrides the default Grafana Plugins Init Container image")
 	flagset.StringVar(&flagPluginsInitContainerTag, "grafana-plugins-init-container-tag", "", "Overrides the default Grafana Plugins Init Container tag")
 	flagset.StringVar(&flagNamespaces, "namespaces", "", "Namespaces to scope the interaction of the Grafana operator. Mutually exclusive with --scan-all")
-	flagset.StringVar(&flagGrafonnetLocation, "grafonnet-location", "", "Overrides the location of the grafonnet library")
+	flagset.StringVar(&flagJsonnetLocation, "jsonnet-location", "", "Overrides the base path of the jsonnet libraries")
 	flagset.BoolVar(&scanAll, "scan-all", false, "Scans all namespaces for dashboards")
 	flagset.Parse(os.Args[1:])
 }
@@ -136,7 +136,7 @@ func main() {
 	controllerConfig.AddConfigItem(config2.ConfigPluginsInitContainerTag, flagPluginsInitContainerTag)
 	controllerConfig.AddConfigItem(config2.ConfigOperatorNamespace, namespace)
 	controllerConfig.AddConfigItem(config2.ConfigDashboardLabelSelector, "")
-	controllerConfig.AddConfigItem(config2.ConfigGrafonnetLocation, flagGrafonnetLocation)
+	controllerConfig.AddConfigItem(config2.ConfigJsonnetBasePath, flagJsonnetLocation)
 
 	// Get the namespaces to scan for dashboards
 	// It's either the same namespace as the controller's or it's all namespaces if the
