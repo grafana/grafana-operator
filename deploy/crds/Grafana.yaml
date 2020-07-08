@@ -135,3 +135,6 @@ spec:
               items:
                 type: object
                 description: Label selector or match expressions
+            dbpasswordref:
+              type: object
+              description: Reference to DB password secret
