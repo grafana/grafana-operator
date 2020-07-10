@@ -36,7 +36,7 @@ func mergeImagePullSecrets(requested []v1.LocalObjectReference, existing []v1.Lo
 
 func getServiceAccountImagePullSecrets(cr *v1alpha1.Grafana, existing []v1.LocalObjectReference) []v1.LocalObjectReference {
 	if cr.Spec.ServiceAccount == nil {
-		return nil
+		return existing
 	}
 	return mergeImagePullSecrets(cr.Spec.ServiceAccount.ImagePullSecrets, existing)
 }

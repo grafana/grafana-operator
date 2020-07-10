@@ -19,10 +19,10 @@ spec:
         - name: grafana-operator
           image: quay.io/integreatly/grafana-operator:latest
           ports:
-          - containerPort: 60000
-            name: metrics
+            - containerPort: 60000
+              name: metrics
           command:
-          - grafana-operator
+            - grafana-operator
           imagePullPolicy: Always
           env:
             - name: TEMPLATE_PATH
