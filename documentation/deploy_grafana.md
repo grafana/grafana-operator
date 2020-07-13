@@ -40,6 +40,9 @@ ansible-playbook deploy/ansible/grafana-operator-namespace-resources.yaml \
   -e grafana_operator_namespace=grafana
 ```
 
+### Minikube deployment
+Follow this documentation [Deploying the Grafana operator in minikube](./minikube.md)
+
 ### Manual Procedure
 
 To create a namespace named `grafana` run:
