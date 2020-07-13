@@ -24,13 +24,19 @@ func getServiceAccountAnnotations(cr *v1alpha1.Grafana, existing map[string]stri
 }
 
 func mergeImagePullSecrets(requested []v1.LocalObjectReference, existing []v1.LocalObjectReference) []v1.LocalObjectReference {
-	if existing == nil {
-		return requested
+	appendIfAbsent := func(secrets []v1.LocalObjectReference, secret v1.LocalObjectReference) []v1.LocalObjectReference {
+		for _, s := range secrets {
+			if s.Name == secret.Name {
+				return secrets
+			}
+		}
+		return append(secrets, secret)
 	}
 
-	for k, v := range requested {
-		existing[k] = v
+	for _, s := range requested {
+		existing = appendIfAbsent(existing, s)
 	}
+
 	return existing
 }
 
