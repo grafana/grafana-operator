@@ -53,3 +53,25 @@ image/build/push: image/build image/push
 test/unit:
 	@echo Running tests:
 	go test -v -race -cover ./pkg/...
+
+.PHONY: minikube/prepare/local
+minikube/prepare/local:
+	-kubectl create namespace ${NAMESPACE}
+	kubectl apply -f deploy/crds
+	kubectl apply -f deploy/roles -n ${NAMESPACE}
+	kubectl apply -f deploy/cluster_roles
+	kubectl apply -f deploy/examples/Grafana.yaml -n ${NAMESPACE}
+
+
+.PHONY: minikube/deploy
+minikube/deploy: minikube/prepare/local
+	kubectl apply -f deploy/operator.yaml -n ${NAMESPACE}
+
+.PHONY: minikube/stop
+minikube/stop:
+	-kubectl delete deployment grafana-operator -n ${NAMESPACE}
+
+.PHONY: minikube/cleanup
+minikube/cleanup: minikube/stop
+	minikube stop
+	minikube delete
