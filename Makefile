@@ -67,11 +67,11 @@ minikube/prepare/local:
 minikube/deploy: minikube/prepare/local
 	kubectl apply -f deploy/operator.yaml -n ${NAMESPACE}
 
-.PHONY: minikube/stop
+.PHONY: minikube/operator/stop
 minikube/stop:
 	-kubectl delete deployment grafana-operator -n ${NAMESPACE}
 
 .PHONY: minikube/cleanup
-minikube/cleanup: minikube/stop
+minikube/cleanup:
 	minikube stop
 	minikube delete

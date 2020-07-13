@@ -20,8 +20,9 @@ To stop the operator `ctrl + c` in the terminal with the operator running.
 1. Start the minikube cluster using `minikube start (--vm-driver=<driver>)` the part in the parentheses is optional. for more info read back through the minikube product documentation.
 2. Run the deployment with `make minikube/deploy`, this will deploy the operator on the cluster and will be ready in a few seconds.
 
-to stop the operator run `make minikube/stop`, this will delete the operator deployment from the cluster.
+to stop the operator run `make minikube/operator/stop`, this will delete the operator deployment from the cluster.
 
+to re-deploy the operator run `make minikube/deploy`
 ## Cleanup
 To completely remove the minikube cluster and all associated resources:
 Run `make minikube/cleanup`
