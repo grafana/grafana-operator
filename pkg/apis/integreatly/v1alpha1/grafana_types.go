@@ -65,8 +65,9 @@ type GrafanaDataStorage struct {
 }
 
 type GrafanaServiceAccount struct {
-	Annotations map[string]string `json:"annotations,omitempty"`
-	Labels      map[string]string `json:"labels,omitempty"`
+	Annotations      map[string]string         `json:"annotations,omitempty"`
+	Labels           map[string]string         `json:"labels,omitempty"`
+	ImagePullSecrets []v1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 }
 
 // GrafanaDeployment provides a means to configure the deployment

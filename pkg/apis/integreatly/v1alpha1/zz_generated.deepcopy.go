@@ -1575,6 +1575,11 @@ func (in *GrafanaServiceAccount) DeepCopyInto(out *GrafanaServiceAccount) {
 			(*out)[key] = val
 		}
 	}
+	if in.ImagePullSecrets != nil {
+		in, out := &in.ImagePullSecrets, &out.ImagePullSecrets
+		*out = make([]v1.LocalObjectReference, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 
