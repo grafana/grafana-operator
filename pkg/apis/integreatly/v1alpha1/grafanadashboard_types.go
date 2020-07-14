@@ -20,13 +20,14 @@ const GrafanaDashboardKind = "GrafanaDashboard"
 type GrafanaDashboardSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	Json         string                       `json:"json"`
-	Jsonnet      string                       `json:"jsonnet"`
-	Name         string                       `json:"name"`
-	Plugins      PluginList                   `json:"plugins,omitempty"`
-	Url          string                       `json:"url,omitempty"`
-	ConfigMapRef *corev1.ConfigMapKeySelector `json:"configMapRef,omitempty"`
-	Datasources  []GrafanaDashboardDatasource `json:"datasources,omitempty"`
+	Json             string                       `json:"json"`
+	Jsonnet          string                       `json:"jsonnet"`
+	Name             string                       `json:"name"`
+	Plugins          PluginList                   `json:"plugins,omitempty"`
+	Url              string                       `json:"url,omitempty"`
+	ConfigMapRef     *corev1.ConfigMapKeySelector `json:"configMapRef,omitempty"`
+	Datasources      []GrafanaDashboardDatasource `json:"datasources,omitempty"`
+	CustomFolderName string                       `json:"customFolderName,omitempty"`
 }
 
 type GrafanaDashboardDatasource struct {
@@ -37,10 +38,12 @@ type GrafanaDashboardDatasource struct {
 // Used to keep a dashboard reference without having access to the dashboard
 // struct itself
 type GrafanaDashboardRef struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
-	UID       string `json:"uid"`
-	Hash      string `json:"hash"`
+	Name       string `json:"name"`
+	Namespace  string `json:"namespace"`
+	UID        string `json:"uid"`
+	Hash       string `json:"hash"`
+	FolderId   *int64 `json:"folderId"`
+	FolderName string `json:"folderName"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -84,6 +87,7 @@ func (d *GrafanaDashboard) Hash() string {
 	io.WriteString(hash, d.Spec.Url)
 	io.WriteString(hash, d.Spec.Jsonnet)
 	io.WriteString(hash, d.Namespace)
+	io.WriteString(hash, d.Spec.CustomFolderName)
 
 	if d.Spec.ConfigMapRef != nil {
 		io.WriteString(hash, d.Spec.ConfigMapRef.Name)

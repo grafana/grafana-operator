@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -16,6 +16,10 @@ const (
 	DeleteDashboardByUIDUrl    = "%v/api/dashboards/uid/%v"
 	CreateOrUpdateDashboardUrl = "%v/api/dashboards/db"
 	CreateOrUpdateFolderUrl    = "%v/api/folders"
+	DeleteFolderByUIDUrl       = "%v/api/folders/%v"
+	GetFolderByIDUrl           = "%v/api/folders/id/%v"
+	//TODO is this right? VV
+	SearchURL = "%v/api/search?type=dash-db"
 )
 
 const (
@@ -23,20 +27,23 @@ const (
 )
 
 type GrafanaRequest struct {
-	Dashboard json.RawMessage `json:"dashboard"`
-	FolderId  int64           `json:"folderId"`
-	Overwrite bool            `json:"overwrite"`
+	Dashboard  json.RawMessage `json:"dashboard"`
+	FolderId   int64           `json:"folderId"`
+	FolderName string          `json:"folderName"`
+	Overwrite  bool            `json:"overwrite"`
 }
 
 type GrafanaResponse struct {
-	ID      *uint   `json:"id"`
-	OrgID   *uint   `json:"orgId"`
-	Message *string `json:"message"`
-	Slug    *string `json:"slug"`
-	Version *int    `json:"version"`
-	Status  *string `json:"resp"`
-	UID     *string `json:"uid"`
-	URL     *string `json:"url"`
+	ID         *uint   `json:"id"`
+	OrgID      *uint   `json:"orgId"`
+	Message    *string `json:"message"`
+	Slug       *string `json:"slug"`
+	Version    *int    `json:"version"`
+	Status     *string `json:"resp"`
+	UID        *string `json:"uid"`
+	URL        *string `json:"url"`
+	FolderId   *int64  `json:"folderId"`
+	FolderName string  `json:"folderName"`
 }
 
 type GrafanaFolderRequest struct {
@@ -46,12 +53,14 @@ type GrafanaFolderRequest struct {
 type GrafanaFolderResponse struct {
 	ID    *int64 `json:"id"`
 	Title string `json:"title"`
+	UID   string `json:"uid"`
 }
 
 type GrafanaClient interface {
-	CreateOrUpdateDashboard(dashboard []byte, folderId int64) (GrafanaResponse, error)
+	CreateOrUpdateDashboard(dashboard []byte, folderId int64, folderName string) (GrafanaResponse, error)
 	DeleteDashboardByUID(UID string) (GrafanaResponse, error)
-	GetOrCreateNamespaceFolder(namespace string) (GrafanaFolderResponse, error)
+	CreateOrUpdateFolder(folderName string) (GrafanaFolderResponse, error)
+	DeleteFolder(dashboards []*v1alpha1.GrafanaDashboardRef, folderID *int64) error
 }
 
 type GrafanaClientImpl struct {
@@ -88,14 +97,16 @@ func NewGrafanaClient(url, user, password string, timeoutSeconds time.Duration) 
 }
 
 func (r *GrafanaClientImpl) getAllFolders() ([]GrafanaFolderResponse, error) {
-	rawUrl := fmt.Sprintf(CreateOrUpdateFolderUrl, r.url)
-	parsed, err := url.Parse(rawUrl)
+	rawURL := fmt.Sprintf(CreateOrUpdateFolderUrl, r.url)
+	parsed, err := url.Parse(rawURL)
+
 	if err != nil {
 		return nil, err
 	}
 
 	parsed.User = url.UserPassword(r.user, r.password)
 	req, err := http.NewRequest("GET", parsed.String(), nil)
+
 	if err != nil {
 		return nil, err
 	}
@@ -109,9 +120,9 @@ func (r *GrafanaClientImpl) getAllFolders() ([]GrafanaFolderResponse, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return nil, errors.New(fmt.Sprintf(
+		return nil, fmt.Errorf(
 			"error creating folder, expected status 200 but got %v",
-			resp.StatusCode))
+			resp.StatusCode)
 	}
 
 	data, err := ioutil.ReadAll(resp.Body)
@@ -121,30 +132,32 @@ func (r *GrafanaClientImpl) getAllFolders() ([]GrafanaFolderResponse, error) {
 
 	var folders []GrafanaFolderResponse
 	err = json.Unmarshal(data, &folders)
+
 	return folders, err
 }
 
-func (r *GrafanaClientImpl) GetOrCreateNamespaceFolder(namespace string) (GrafanaFolderResponse, error) {
+func (r *GrafanaClientImpl) CreateOrUpdateFolder(folderInputName string) (GrafanaFolderResponse, error) {
 	response := newFolderResponse()
 
-	folders, err := r.getAllFolders()
+	allfolders, err := r.getAllFolders()
 	if err != nil {
 		return response, err
 	}
 
-	for _, folder := range folders {
-		if folder.Title == namespace {
+	for _, folder := range allfolders {
+		if folder.Title == folderInputName {
 			return folder, nil
 		}
 	}
 
-	rawUrl := fmt.Sprintf(CreateOrUpdateFolderUrl, r.url)
-	parsed, err := url.Parse(rawUrl)
+	rawURL := fmt.Sprintf(CreateOrUpdateFolderUrl, r.url)
+	parsed, err := url.Parse(rawURL)
+
 	if err != nil {
 		return response, err
 	}
 
-	var title = namespace
+	var title = folderInputName
 	if title == "" {
 		title = NonNamespacedFolderName
 	}
@@ -158,6 +171,7 @@ func (r *GrafanaClientImpl) GetOrCreateNamespaceFolder(namespace string) (Grafan
 
 	parsed.User = url.UserPassword(r.user, r.password)
 	req, err := http.NewRequest("POST", parsed.String(), bytes.NewBuffer(raw))
+
 	if err != nil {
 		return response, err
 	}
@@ -182,15 +196,16 @@ func (r *GrafanaClientImpl) GetOrCreateNamespaceFolder(namespace string) (Grafan
 	}
 
 	err = json.Unmarshal(data, &response)
+
 	return response, err
 }
 
 // Submit dashboard json to grafana
-func (r *GrafanaClientImpl) CreateOrUpdateDashboard(dashboard []byte, folderId int64) (GrafanaResponse, error) {
-	rawUrl := fmt.Sprintf(CreateOrUpdateDashboardUrl, r.url)
+func (r *GrafanaClientImpl) CreateOrUpdateDashboard(dashboard []byte, folderID int64, folderName string) (GrafanaResponse, error) {
+	rawURL := fmt.Sprintf(CreateOrUpdateDashboardUrl, r.url)
 	response := newResponse()
 
-	parsed, err := url.Parse(rawUrl)
+	parsed, err := url.Parse(rawURL)
 	if err != nil {
 		return response, err
 	}
@@ -199,7 +214,9 @@ func (r *GrafanaClientImpl) CreateOrUpdateDashboard(dashboard []byte, folderId i
 	raw, err := json.Marshal(GrafanaRequest{
 		Dashboard: dashboard,
 
-		FolderId: folderId,
+		FolderId: folderID,
+
+		FolderName: folderName,
 
 		// We always want to set `overwrite` because the uids in the CRs map
 		// directly to dashboards in grafana
@@ -211,6 +228,7 @@ func (r *GrafanaClientImpl) CreateOrUpdateDashboard(dashboard []byte, folderId i
 
 	parsed.User = url.UserPassword(r.user, r.password)
 	req, err := http.NewRequest("POST", parsed.String(), bytes.NewBuffer(raw))
+
 	if err != nil {
 		return response, err
 	}
@@ -235,21 +253,23 @@ func (r *GrafanaClientImpl) CreateOrUpdateDashboard(dashboard []byte, folderId i
 	}
 
 	err = json.Unmarshal(data, &response)
+
 	return response, err
 }
 
 // Delete a dashboard given by a UID
 func (r *GrafanaClientImpl) DeleteDashboardByUID(UID string) (GrafanaResponse, error) {
-	rawUrl := fmt.Sprintf(DeleteDashboardByUIDUrl, r.url, UID)
+	rawURL := fmt.Sprintf(DeleteDashboardByUIDUrl, r.url, UID)
 	response := newResponse()
 
-	parsed, err := url.Parse(rawUrl)
+	parsed, err := url.Parse(rawURL)
 	if err != nil {
 		return response, err
 	}
 
 	parsed.User = url.UserPassword(r.user, r.password)
 	req, err := http.NewRequest("DELETE", parsed.String(), nil)
+
 	if err != nil {
 		return response, err
 	}
@@ -274,11 +294,13 @@ func (r *GrafanaClientImpl) DeleteDashboardByUID(UID string) (GrafanaResponse, e
 	}
 
 	err = json.Unmarshal(data, &response)
+
 	return response, err
 }
 
 func newFolderResponse() GrafanaFolderResponse {
 	var id int64 = 0
+
 	return GrafanaFolderResponse{
 		ID: &id,
 	}
@@ -286,7 +308,7 @@ func newFolderResponse() GrafanaFolderResponse {
 
 func newResponse() GrafanaResponse {
 	var id uint = 0
-	var orgId uint = 0
+	var orgID uint = 0
 	var version int = 0
 	var status = "(empty)"
 	var message = "(empty)"
@@ -296,7 +318,7 @@ func newResponse() GrafanaResponse {
 
 	return GrafanaResponse{
 		ID:      &id,
-		OrgID:   &orgId,
+		OrgID:   &orgID,
 		Message: &message,
 		Slug:    &slug,
 		Version: &version,
@@ -304,4 +326,106 @@ func newResponse() GrafanaResponse {
 		UID:     &uid,
 		URL:     &url,
 	}
+}
+
+func (r *GrafanaClientImpl) getFolderUID(IDInput *int64) (*string, error) {
+	rawURL := fmt.Sprintf(GetFolderByIDUrl, r.url, *IDInput)
+	response := newFolderResponse()
+
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return nil, err
+	}
+
+	parsed.User = url.UserPassword(r.user, r.password)
+	req, err := http.NewRequest("GET", parsed.String(), nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	setHeaders(req)
+
+	resp, err := r.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf(
+			"error finding folder %v, expected status 200 but got %v", IDInput,
+			resp.StatusCode)
+	}
+
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(data, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response.UID, nil
+}
+
+func (r *GrafanaClientImpl) DeleteFolder(dashboards []*v1alpha1.GrafanaDashboardRef, deleteID *int64) error {
+	if safe := r.safeToDelete(dashboards, deleteID); !safe {
+		return fmt.Errorf("folder cannot be deleted as it's being used by other dashboards")
+	}
+
+	deleteUID, err := r.getFolderUID(deleteID)
+	if err != nil {
+		return err
+	}
+
+	rawURL := fmt.Sprintf(DeleteFolderByUIDUrl, r.url, *deleteUID)
+	response := newResponse()
+
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return err
+	}
+
+	parsed.User = url.UserPassword(r.user, r.password)
+	req, err := http.NewRequest("DELETE", parsed.String(), nil)
+
+	if err != nil {
+		return err
+	}
+
+	setHeaders(req)
+
+	resp, err := r.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf(
+			"error deleting folder, expected status 200 but got %v",
+			resp.StatusCode)
+	}
+
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(data, &response)
+	log.Info(fmt.Sprintf("delete result was %v", *response.Message))
+
+	return err
+}
+
+func (r *GrafanaClientImpl) safeToDelete(dashlist []*v1alpha1.GrafanaDashboardRef, id *int64) bool {
+	for _, dashboard := range dashlist {
+		if *dashboard.FolderId == *id {
+			return false
+		}
+	}
+	return true
 }

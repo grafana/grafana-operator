@@ -28,7 +28,7 @@ const (
 )
 
 type DashboardPipeline interface {
-	ProcessDashboard(knownHash string) ([]byte, error)
+	ProcessDashboard(knownHash string, folderId *int64, folderName string) ([]byte, error)
 	NewHash() string
 }
 
@@ -50,7 +50,7 @@ func NewDashboardPipeline(client client.Client, dashboard *v1alpha1.GrafanaDashb
 	}
 }
 
-func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) ([]byte, error) {
+func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string, folderId *int64, folderName string) ([]byte, error) {
 	err := r.obtainJson()
 	if err != nil {
 		return nil, err
@@ -82,7 +82,10 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) ([]byte, erro
 	r.Board["id"] = nil
 
 	// Overwrite in case any user provided uid exists
+
 	r.Board["uid"] = r.Dashboard.UID()
+	r.Board["folderId"] = folderId
+	r.Board["folderName"] = folderName
 
 	raw, err := json.Marshal(r.Board)
 	if err != nil {
@@ -92,7 +95,7 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) ([]byte, erro
 	return bytes.TrimSpace(raw), nil
 }
 
-// Make sure the dashboard contains valid JSON
+// Make sure the dashboard safeToDelete valid JSON
 func (r *DashboardPipelineImpl) validateJson() error {
 	contents, err := r.Dashboard.Parse(r.JSON)
 	r.Board = contents

@@ -73,7 +73,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler, namespace string) error {
 				Name:      "",
 			},
 		}
-		r.Reconcile(request)
+		_, _ = r.Reconcile(request)
 	}
 
 	go func() {
@@ -107,11 +107,10 @@ type ReconcileGrafanaDashboard struct {
 	state    common.ControllerState
 }
 
-// The Controller will requeue the Request to be processed again if the returned error is non-nil or
-// Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+
 	// If Grafana is not running there is no need to continue
-	if r.state.GrafanaReady == false {
+	if !r.state.GrafanaReady {
 		log.Info("no grafana instance available")
 		return reconcile.Result{Requeue: false}, nil
 	}
@@ -136,6 +135,7 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 	instance := &grafanav1alpha1.GrafanaDashboard{}
 	err = r.client.Get(r.context, request.NamespacedName, instance)
 	if err != nil {
+
 		if errors.IsNotFound(err) {
 			// If some dashboard has been deleted, then always re sync the world
 			log.Info(fmt.Sprintf("deleting dashboard %v/%v", request.Namespace, request.Name))
@@ -168,9 +168,11 @@ func (r *ReconcileGrafanaDashboard) checkNamespaceLabels(dashboard *grafanav1alp
 		return false, err
 	}
 	selector, err := metav1.LabelSelectorAsSelector(r.state.DashboardNamespaceSelector)
+
 	if err != nil {
 		return false, err
 	}
+
 	return selector.Empty() || selector.Matches(labels.Set(ns.Labels)), nil
 }
 
@@ -218,6 +220,7 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 		if !inNamespace(dashboard) {
 			dashboardsToDelete = append(dashboardsToDelete, dashboard)
 		}
+
 	}
 
 	// Process new/updated dashboards
@@ -229,11 +232,32 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 			continue
 		}
 
+		folderName := dashboard.Namespace
+		if dashboard.Spec.CustomFolderName != "" {
+			folderName = dashboard.Spec.CustomFolderName
+		}
+
+		folder, err := grafanaClient.CreateOrUpdateFolder(folderName)
+
+		if err != nil {
+			log.Error(err, "failed to get or create namespace folder %v for dashboard %v with error %v", folderName, request.Name)
+			r.manageError(&dashboard, err)
+			continue
+		}
+
+		var folderId int64
+		if folder.ID == nil {
+			folderId = 0
+		} else {
+			folderId = *folder.ID
+		}
+
 		// Process the dashboard. Use the known hash of an existing dashboard
 		// to determine if an update is required
 		knownHash := findHash(&dashboard)
+
 		pipeline := NewDashboardPipeline(r.client, &dashboard)
-		processed, err := pipeline.ProcessDashboard(knownHash)
+		processed, err := pipeline.ProcessDashboard(knownHash, &folderId, folderName)
 
 		if err != nil {
 			log.Error(err, fmt.Sprintf("cannot process dashboard %v/%v", dashboard.Namespace, dashboard.Name))
@@ -259,57 +283,60 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 			}
 		}
 
-		folder, err := grafanaClient.GetOrCreateNamespaceFolder(dashboard.Namespace)
-		if err != nil {
-			log.Error(err, "failed to get or create namespace folder %v for dashboard %v with error %v", request.Namespace, request.Name)
-			r.manageError(&dashboard, err)
-			continue
-		}
-
-		var folderId int64
-		if folder.ID == nil {
-			folderId = 0
-		} else {
-			folderId = *folder.ID
-		}
-
-		_, err = grafanaClient.CreateOrUpdateDashboard(processed, folderId)
+		_, err = grafanaClient.CreateOrUpdateDashboard(processed, folderId, folderName)
 		if err != nil {
 			log.Error(err, "cannot submit dashboard %v/%v", dashboard.Namespace, dashboard.Name)
 			r.manageError(&dashboard, err)
+
 			continue
 		}
-		r.manageSuccess(&dashboard)
+
+		r.manageSuccess(&dashboard, &folderId, folderName)
 	}
 
-	for _, dashboard := range dashboardsToDelete {
-		status, err := grafanaClient.DeleteDashboardByUID(dashboard.UID)
-		if err != nil {
-			log.Error(err, fmt.Sprintf("error deleting dashboard %v, status was %v/%v",
-				dashboard.UID,
-				*status.Status,
-				*status.Message))
+	if dashboardsToDelete != nil {
+		for _, dashboard := range dashboardsToDelete {
+			status, err := grafanaClient.DeleteDashboardByUID(dashboard.UID)
+			if err != nil {
+				log.Error(err, fmt.Sprintf("error deleting dashboard %v, status was %v/%v",
+					dashboard.UID,
+					*status.Status,
+					*status.Message))
+			}
+
+			log.Info(fmt.Sprintf("delete result was %v", *status.Message))
+
+			r.config.RemovePluginsFor(dashboard.Namespace, dashboard.Name)
+			r.config.RemoveDashboard(dashboard.Namespace, dashboard.Name)
+
+			// Mark the dashboards as synced so that the current state can be written
+			// to the Grafana CR by the grafana controller
+			r.config.AddConfigItem(config.ConfigGrafanaDashboardsSynced, true)
+
+			// Refresh the list of known dashboards after removal
+			knownDashboards = r.config.GetDashboards(request.Namespace)
+
+			// Check for empty managed folders (namespace-named) and delete obsolete ones
+			if dashboard.FolderName == "" {
+				if err = grafanaClient.DeleteFolder(knownDashboards, dashboard.FolderId); err != nil {
+					log.Error(err, fmt.Sprintf("delete folder %v failed", dashboard.FolderId))
+				}
+			}
 		}
-		log.Info(fmt.Sprintf("delete result was %v", *status.Message))
-		r.config.RemovePluginsFor(dashboard.Namespace, dashboard.Name)
-		r.config.RemoveDashboard(dashboard.Namespace, dashboard.Name)
 	}
 
-	// Mark the dashboards as synced so that the current state can be written
-	// to the Grafana CR by the grafana controller
-	r.config.AddConfigItem(config.ConfigGrafanaDashboardsSynced, true)
 	return reconcile.Result{Requeue: false}, nil
 }
 
 // Handle success case: update dashboard metadata (id, uid) and update the list
 // of plugins
-func (r *ReconcileGrafanaDashboard) manageSuccess(dashboard *grafanav1alpha1.GrafanaDashboard) {
+func (r *ReconcileGrafanaDashboard) manageSuccess(dashboard *grafanav1alpha1.GrafanaDashboard, folderId *int64, folderName string) {
 	msg := fmt.Sprintf("dashboard %v/%v successfully submitted",
 		dashboard.Namespace,
 		dashboard.Name)
 	r.recorder.Event(dashboard, "Normal", "Success", msg)
 	log.Info(msg)
-	r.config.AddDashboard(dashboard)
+	r.config.AddDashboard(dashboard, folderId, folderName)
 	r.config.SetPluginsFor(dashboard)
 }
 
@@ -321,6 +348,7 @@ func (r *ReconcileGrafanaDashboard) manageError(dashboard *grafanav1alpha1.Grafa
 	if errors.IsConflict(issue) {
 		return
 	}
+
 	log.Error(issue, "error updating dashboard")
 }
 
@@ -342,6 +370,7 @@ func (r *ReconcileGrafanaDashboard) getClient() (GrafanaClient, error) {
 	}
 
 	duration := time.Duration(r.state.ClientTimeout)
+
 	return NewGrafanaClient(url, username, password, duration), nil
 }
 
