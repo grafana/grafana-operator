@@ -74,8 +74,3 @@ operator/deploy: cluster/prepare/local
 .PHONY: operator/stop
 operator/stop:
 	-kubectl delete deployment grafana-operator -n ${NAMESPACE}
-
-.PHONY: minikube/cleanup
-minikube/cleanup:
-	minikube stop
-	minikube delete

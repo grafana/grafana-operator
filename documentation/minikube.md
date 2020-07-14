@@ -28,7 +28,7 @@ To cleanup the cluster from Grafana resources (only in the grafana namespace):
 Run `make cluster/cleanup`
 
 To completely remove the minikube cluster and all associated resources:
-Run `make minikube/cleanup`
+Run `minikube stop` and `minikube delete` after the minikube cluster has stopped.
 
 
 
