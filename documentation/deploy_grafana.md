@@ -8,6 +8,9 @@ The first step is to install the Grafana operator to a namespace in your cluster
 
 There are two options for this procedure, automated via Ansible, or manually running kubectl/oc commands.
 
+### Deploy an example grafana instance and operator
+Run `make operator/deploy` This uses the default operator.yaml and Grafana.yaml resources found in the `deploy` directories and subdirectories.
+
 ### Automated Procedure
 
 Cluster admin install cluster resources.
@@ -39,6 +42,9 @@ ansible-playbook deploy/ansible/grafana-operator-namespace-resources.yaml \
   -e k8s_password=secret \
   -e grafana_operator_namespace=grafana
 ```
+
+### Minikube deployment
+Follow this documentation [Deploying the Grafana operator in minikube](./minikube.md)
 
 ### Manual Procedure
 
