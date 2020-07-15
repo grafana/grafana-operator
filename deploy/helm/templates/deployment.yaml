@@ -85,5 +85,7 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+            - name: WATCH_NAMESPACE
+              value: ""
             - name: OPERATOR_NAME
               value: {{ include "grafana-operator.fullname" . }}
