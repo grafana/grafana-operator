@@ -8,7 +8,7 @@ spec:
   selector: 
     matchLabels: {{- include "grafana-operator.matchLabels" . | nindent 6 }}
   strategy:
-    type: Recreate
+    type: RollingUpdate
   template:
     metadata:
       labels: {{- include "grafana-operator.labels" . | nindent 8 }}
