@@ -78,14 +78,16 @@ spec:
             - name: TEMPLATE_PATH
               value: /usr/local/bin/templates
             - name: WATCH_NAMESPACE
+          {{- if .Values.watchNamespace }}
+              value: {{ .Values.watchNamespace }}
+          {{- else }}
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+          {{- end }}
             - name: POD_NAME
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
-            - name: WATCH_NAMESPACE
-              value: ""
             - name: OPERATOR_NAME
               value: {{ include "grafana-operator.fullname" . }}
