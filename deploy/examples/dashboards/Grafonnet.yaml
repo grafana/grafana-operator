@@ -7,5 +7,5 @@ metadata:
 spec:
   name: simple-dashboard.json
   jsonnet: >
-    local monitoring = import 'monitoring.jsonnet';
+    local monitoring = import 'monitoring/monitoring.jsonnet';
     monitoring
