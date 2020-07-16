@@ -209,9 +209,9 @@ spec:
     securityContext:        # Run grafana pods with pod security context
     ...
     containerSecurityContext: # Run grafana pods with container security context
+```
 
-
-```NOTE: Some key's are common to both in securityContext and containerSecurityContext, in that case containerSecurityContext has precendence over securityContext.```
+NOTE: Some key's are common to both in securityContext and containerSecurityContext, in that case containerSecurityContext has precendence over securityContext.
 
 ## Configuring Grafana API access
 
