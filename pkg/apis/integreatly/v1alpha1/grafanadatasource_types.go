@@ -115,6 +115,11 @@ type GrafanaDataSourceJsonData struct {
 	HTTPHeaderName7 string `json:"httpHeaderName7,omitempty"`
 	HTTPHeaderName8 string `json:"httpHeaderName8,omitempty"`
 	HTTPHeaderName9 string `json:"httpHeaderName9,omitempty"`
+	// Fields for Stackdriver data sources
+	TokenUri           string `json:"tokenUri,omitempty"`
+	ClientEmail        string `json:"clientEmail,omitempty"`
+	AuthenticationType string `json:"authenticationType,omitempty"`
+	DefaultProject     string `json:"defaultProject,omitempty"`
 }
 
 // The most common secure json options
@@ -138,6 +143,8 @@ type GrafanaDataSourceSecureJsonData struct {
 	HTTPHeaderValue7 string `json:"httpHeaderValue7,omitempty"`
 	HTTPHeaderValue8 string `json:"httpHeaderValue8,omitempty"`
 	HTTPHeaderValue9 string `json:"httpHeaderValue9,omitempty"`
+	// Fields for Stackdriver data sources
+	PrivateKey string `json:"privateKey,omitempty"`
 }
 
 func init() {
