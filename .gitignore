@@ -78,3 +78,5 @@ tags
 .idea
 operator-sdk-*
 tmp
+# container dependencies
+grafonnet-lib
