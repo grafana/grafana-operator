@@ -5,6 +5,7 @@
 * [Data Sources](./datasources.md)
 * [Multi namespace support](./multi_namespace_support.md)
 * [Mounting extra config files](./extra_files.md)
+* [Jsonnet support](./jsonnet.md)
 
 ## Examples
 

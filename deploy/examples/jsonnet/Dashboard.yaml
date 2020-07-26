@@ -5,7 +5,7 @@ metadata:
   labels:
     app: grafana
 spec:
-  name: simple-dashboard.json
+  name: grafonnet-dashboard.json
   jsonnet: |-
     local grafana = import 'grafonnet/grafana.libsonnet';
     local monitoring = import 'monitoring/monitoring.libsonnet';
