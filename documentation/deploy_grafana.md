@@ -120,6 +120,7 @@ The resource accepts the following properties in it's `spec`:
 * *resources*: Allows configuring the requests and limits for the Grafana pod (see [here](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#resourcerequirements-v1-core)).
 * *client*: Grafana client options (see [here](#configuring-grafana-api-access)).
 * *compat*: Compatibility options with older dashboard formats (see [here]()).
+* *jsonnet*: Label selector for jsonnet libraries (see [here](#jsonnet-library-discovery)).
 
 *NOTE*: by default no Ingress or Route is created. It can be enabled with `spec.ingress.enabled`.
 
@@ -242,6 +243,13 @@ spec:
       ...
     size: <Quantity>        # Requested size, e.g. `10Gi` 
     class: <String>         # Storage class name
+```
+## Jsonnet library discovery
+
+```yaml
+spec:
+  jsonnet:
+    libraryLabelSelector: <LabelSelector>   # Selector to discover config maps containing jsonnet libraries
 ```
 
 ## Compatibility with older dashboard formats
