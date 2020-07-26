@@ -40,6 +40,8 @@ code/fix:
 
 .PHONY: image/build
 image/build: code/compile
+	@-rm -rf grafonnet-lib
+	@git clone --branch v0.0.1 https://github.com/grafana/grafonnet-lib.git
 	@operator-sdk build ${REG}/${ORG}/${PROJECT}:${TAG}
 
 .PHONY: image/push

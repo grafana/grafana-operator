@@ -174,6 +174,12 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 		return r.manageError(cr, err)
 	}
 
+	// Run the config map reconciler to discover jsonnet libraries
+	err = reconcileConfigMaps(cr, r)
+	if err != nil {
+		return r.manageError(cr, err)
+	}
+
 	return r.manageSuccess(cr, currentState)
 }
 

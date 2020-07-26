@@ -8,7 +8,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-logr/logr"
+	"github.com/google/go-jsonnet"
 	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
 	"io/ioutil"
 	corev1 "k8s.io/api/core/v1"
 	"net/http"
@@ -16,6 +18,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"strings"
+)
+
+type SourceType int
+
+const (
+	SourceTypeJson    SourceType = 1
+	SourceTypeJsonnet SourceType = 2
+	SourceTypeUnknown SourceType = 3
 )
 
 type DashboardPipeline interface {
@@ -57,6 +67,7 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) ([]byte, erro
 		r.Hash = knownHash
 		return nil, nil
 	}
+
 	r.Hash = hash
 
 	// Datasource inputs to resolve?
@@ -102,7 +113,11 @@ func (r *DashboardPipelineImpl) validateJson() error {
 }
 
 // Try to get the dashboard json definition either from a provided URL or from the
-// raw json in the dashboard resource
+// raw json in the dashboard resource. The priority is as follows:
+// 1) try to fetch from url if provided
+// 2) url fails or not provided: try to fetch from configmap ref
+// 3) no configmap specified: try to use embedded json
+// 4) no json specified: try to use embedded jsonnet
 func (r *DashboardPipelineImpl) obtainJson() error {
 	if r.Dashboard.Spec.Url != "" {
 		err := r.loadDashboardFromURL()
@@ -127,7 +142,32 @@ func (r *DashboardPipelineImpl) obtainJson() error {
 		return nil
 	}
 
-	return errors.New("dashboard does not contain json")
+	if r.Dashboard.Spec.Jsonnet != "" {
+		json, err := r.loadJsonnet(r.Dashboard.Spec.Jsonnet)
+		if err != nil {
+			r.Logger.Error(err, "failed to parse jsonnet")
+		} else {
+			r.JSON = json
+			return nil
+		}
+	}
+
+	return errors.New("unable to obtain dashboard contents")
+}
+
+// Compiles jsonnet to json and makes the grafonnet library available to
+// the template
+func (r *DashboardPipelineImpl) loadJsonnet(source string) (string, error) {
+	cfg := config.GetControllerConfig()
+	jsonnetLocation := cfg.GetConfigString(config.ConfigJsonnetBasePath, config.JsonnetBasePath)
+
+	vm := jsonnet.MakeVM()
+
+	vm.Importer(&jsonnet.FileImporter{
+		JPaths: []string{jsonnetLocation},
+	})
+
+	return vm.EvaluateSnippet(r.Dashboard.Name, source)
 }
 
 // Create a hash of the dashboard to detect if there are actually changes to the json
@@ -146,7 +186,7 @@ func (r *DashboardPipelineImpl) generateHash() string {
 
 // Try to obtain the dashboard json from a provided url
 func (r *DashboardPipelineImpl) loadDashboardFromURL() error {
-	_, err := url.ParseRequestURI(r.Dashboard.Spec.Url)
+	url, err := url.ParseRequestURI(r.Dashboard.Spec.Url)
 	if err != nil {
 		return errors.New(fmt.Sprintf("invalid url %v", r.Dashboard.Spec.Url))
 	}
@@ -157,14 +197,47 @@ func (r *DashboardPipelineImpl) loadDashboardFromURL() error {
 	}
 	defer resp.Body.Close()
 
-	body, _ := ioutil.ReadAll(resp.Body)
-	r.JSON = string(body)
-
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("request failed with status %v", resp.StatusCode)
 	}
 
+	body, _ := ioutil.ReadAll(resp.Body)
+	sourceType := r.getFileType(url.Path)
+
+	switch sourceType {
+	case SourceTypeJson, SourceTypeUnknown:
+		// If unknown, assume json
+		r.JSON = string(body)
+	case SourceTypeJsonnet:
+		json, err := r.loadJsonnet(string(body))
+		if err != nil {
+			return err
+		}
+		r.JSON = json
+	}
+
 	return nil
+}
+
+// Try to determine the type (json or grafonnet) or a remote file by looking
+// at the filename extension
+func (r *DashboardPipelineImpl) getFileType(path string) SourceType {
+	fragments := strings.Split(path, ".")
+	if len(fragments) == 0 {
+		return SourceTypeUnknown
+	}
+
+	extension := strings.TrimSpace(fragments[len(fragments)-1])
+	switch strings.ToLower(extension) {
+	case "json":
+		return SourceTypeJson
+	case "grafonnet":
+		return SourceTypeJsonnet
+	case "jsonnet":
+		return SourceTypeJsonnet
+	default:
+		return SourceTypeUnknown
+	}
 }
 
 // Try to obtain the dashboard json from a config map

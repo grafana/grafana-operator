@@ -19,18 +19,20 @@ const (
 	ConfigOperatorNamespace         = "grafana.operator.namespace"
 	ConfigDashboardLabelSelector    = "grafana.dashboard.selector"
 	ConfigOpenshift                 = "mode.openshift"
+	ConfigJsonnetBasePath           = "grafonnet.location"
 	GrafanaDataPath                 = "/var/lib/grafana"
 	GrafanaLogsPath                 = "/var/log/grafana"
 	GrafanaPluginsPath              = "/var/lib/grafana/plugins"
 	GrafanaProvisioningPath         = "/etc/grafana/provisioning/"
 	PluginsInitContainerImage       = "quay.io/integreatly/grafana_plugins_init"
-	PluginsInitContainerTag         = "0.0.2"
+	PluginsInitContainerTag         = "0.0.3"
 	PluginsUrl                      = "https://grafana.com/api/plugins/%s/versions/%s"
 	RequeueDelay                    = time.Second * 10
 	SecretsMountDir                 = "/etc/grafana-secrets/"
 	ConfigMapsMountDir              = "/etc/grafana-configmaps/"
 	ConfigRouteWatch                = "watch.routes"
 	ConfigGrafanaDashboardsSynced   = "grafana.dashboards.synced"
+	JsonnetBasePath                 = "/opt/jsonnet"
 )
 
 type ControllerConfig struct {
