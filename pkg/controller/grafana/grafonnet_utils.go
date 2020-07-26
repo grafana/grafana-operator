@@ -12,7 +12,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const JSONNETEXTENSION = ".jsonnet"
+const (
+	JsonnetExtension  = ".libsonnet"
+	JsonnetAnnotation = "jsonnet/library"
+)
 
 func reconcileConfigMaps(cr *grafanav1alpha1.Grafana, r *ReconcileGrafana) error {
 	if cr.Spec.Jsonnet == nil || cr.Spec.Jsonnet.LibraryLabelSelector == nil {
@@ -38,17 +41,23 @@ func reconcileConfigMaps(cr *grafanav1alpha1.Grafana, r *ReconcileGrafana) error
 	jsonnetBasePath := r.config.GetConfigString(config.ConfigJsonnetBasePath, config.JsonnetBasePath)
 
 	for _, configMap := range configMaps.Items {
-		folderPath, err := createFolder(configMap.Name, jsonnetBasePath)
-		if err != nil {
-			r.recorder.Event(cr, "Warning", "Error creating config map folder", folderPath)
+		if configMap.Annotations[JsonnetAnnotation] != "true" {
 			continue
 		}
+
+		folderPath, err := createFolder(configMap.Name, jsonnetBasePath)
+		if err != nil {
+			log.Error(err, fmt.Sprintf("error creating jsonnet library directory for %v", configMap.Name))
+			continue
+		}
+
 		for filename, contents := range configMap.Data {
 			filePath := fmt.Sprintf("%v/%v", folderPath, filename)
 			err = createFile(filePath, contents)
 			if err != nil {
 				return err
 			}
+			log.Info(fmt.Sprintf("imported jsonnet library %v", filePath))
 		}
 	}
 	return nil
@@ -79,8 +88,8 @@ func createFile(filePath, contents string) error {
 func validateFileExtension(filePath string) error {
 	//check for a valid jsonnet extension
 	extension := filepath.Ext(filePath)
-	if extension == "" || extension != JSONNETEXTENSION {
-		return fmt.Errorf("Invalid extension, should be .jsonnet")
+	if extension == "" || extension != JsonnetExtension {
+		return fmt.Errorf("unkown extention, expected %v", JsonnetExtension)
 	}
 	return nil
 }

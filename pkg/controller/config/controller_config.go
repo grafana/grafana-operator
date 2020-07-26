@@ -25,7 +25,7 @@ const (
 	GrafanaPluginsPath              = "/var/lib/grafana/plugins"
 	GrafanaProvisioningPath         = "/etc/grafana/provisioning/"
 	PluginsInitContainerImage       = "quay.io/integreatly/grafana_plugins_init"
-	PluginsInitContainerTag         = "0.0.2"
+	PluginsInitContainerTag         = "0.0.3"
 	PluginsUrl                      = "https://grafana.com/api/plugins/%s/versions/%s"
 	RequeueDelay                    = time.Second * 10
 	SecretsMountDir                 = "/etc/grafana-secrets/"

@@ -8,7 +8,7 @@ spec:
   jsonnet:
     libraryLabelSelector:
       matchLabels:
-        monitoring-key: middleware
+        app: grafana
   config:
     log:
       mode: "console"
