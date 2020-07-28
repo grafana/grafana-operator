@@ -1,7 +1,7 @@
 # Security Policy
 
 If you believe you've found a security vulnerability in this operator then please follow this document, we do our best
-to adress issues ASAP.
+to address issues ASAP.
 
 ## Supported Versions
 
@@ -22,8 +22,8 @@ find vulnerabilities quicker.
 Ideally we want to resolve vulnerability issues as soon as possible, to help us with this please consider doing the 
 following:
 
-If a vulnerability is found, please investigate further so that you can provide as much context as possible when 
-reporting, specifying affected components/libraries etc. this will help a great deal in resolution.
+If a vulnerability has been found, please investigate further so that you can provide as much context as possible when 
+reporting, specifying affected components/libraries/versions etc. this will help a great deal in resolution.
 
 During your investigation if you happen upon a fix, please create a pull request with the proposed solution to that
 vulnerability, detail the problem, your findings and the solution provided. By doing this, we can address the issue
@@ -36,4 +36,4 @@ If there is no clear fix that was found during your investigation then please no
  
 If the security vulnerability exists in Grafana itself then please bring that up with the upstream
 Grafana repository adhering to their doc [here](https://github.com/grafana/grafana/blob/master/SECURITY.md) and notify
-the admin(s) of this operator to update when a patch is released with the specific vulnerability fix.
+the admin(s) of this operator to update when a patch has been released with the specific vulnerability fix.
