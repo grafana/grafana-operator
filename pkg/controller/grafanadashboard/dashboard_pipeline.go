@@ -180,8 +180,8 @@ func (r *DashboardPipelineImpl) generateHash() string {
 		datasources.WriteString(input.InputName)
 	}
 
-	return fmt.Sprintf("%x", md5.Sum([]byte(
-		r.Dashboard.Spec.Json+r.Dashboard.Spec.Url+datasources.String())))
+	return fmt.Sprintf("%x", md5.Sum([]byte(r.Dashboard.Spec.Json+
+		r.Dashboard.Spec.Url+r.Dashboard.Spec.Jsonnet+datasources.String())))
 }
 
 // Try to obtain the dashboard json from a provided url
