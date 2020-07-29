@@ -1,7 +1,7 @@
 package config
 
 import (
-	"crypto/md5"
+	"crypto/sha1"
 	"fmt"
 	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"io"
@@ -405,7 +405,7 @@ func (i *GrafanaIni) Write() (string, string) {
 		sb.WriteByte('\n')
 	}
 
-	hash := md5.New()
+	hash := sha1.New()
 	io.WriteString(hash, sb.String())
 
 	return sb.String(), fmt.Sprintf("%x", hash.Sum(nil))

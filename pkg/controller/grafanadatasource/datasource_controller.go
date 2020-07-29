@@ -2,7 +2,7 @@ package grafanadatasource
 
 import (
 	"context"
-	"crypto/md5"
+	"crypto/sha1"
 	"fmt"
 	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
@@ -227,7 +227,7 @@ func (i *ReconcileGrafanaDataSource) updateHash(known *v1.ConfigMap) (string, er
 	}
 	sort.Strings(keys)
 
-	hash := md5.New()
+	hash := sha1.New()
 	for _, key := range keys {
 		_, err := io.WriteString(hash, key)
 		if err != nil {

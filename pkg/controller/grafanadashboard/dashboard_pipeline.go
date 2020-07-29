@@ -3,7 +3,7 @@ package grafanadashboard
 import (
 	"bytes"
 	"context"
-	"crypto/md5"
+	"crypto/sha1"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -86,7 +86,7 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) ([]byte, erro
 	// always assigned by Grafana. If there is one, we ignore it
 	r.Board["id"] = nil
 	// Overwrite in case any user provided uid exists
-	r.Board["uid"] = fmt.Sprintf("%x", md5.Sum([]byte(r.Dashboard.Namespace+r.Dashboard.Name)))
+	r.Board["uid"] = fmt.Sprintf("%x", sha1.Sum([]byte(r.Dashboard.Namespace+r.Dashboard.Name)))
 	raw, err := json.Marshal(r.Board)
 	if err != nil {
 		return nil, err
@@ -180,7 +180,7 @@ func (r *DashboardPipelineImpl) generateHash() string {
 		datasources.WriteString(input.InputName)
 	}
 
-	return fmt.Sprintf("%x", md5.Sum([]byte(r.Dashboard.Spec.Json+
+	return fmt.Sprintf("%x", sha1.Sum([]byte(r.Dashboard.Spec.Json+
 		r.Dashboard.Spec.Url+r.Dashboard.Spec.Jsonnet+datasources.String())))
 }
 

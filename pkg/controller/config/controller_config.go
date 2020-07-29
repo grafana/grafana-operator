@@ -1,7 +1,7 @@
 package config
 
 import (
-	"crypto/md5"
+	"crypto/sha1"
 	"fmt"
 	"strings"
 	"sync"
@@ -89,7 +89,7 @@ func (c *ControllerConfig) GetDashboardHash(dashboard *v1alpha1.GrafanaDashboard
 		datasources.WriteString(input.InputName)
 	}
 
-	return fmt.Sprintf("%x", md5.Sum([]byte(
+	return fmt.Sprintf("%x", sha1.Sum([]byte(
 		dashboard.Spec.Json+dashboard.Spec.Url+datasources.String())))
 }
 func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard) {
@@ -100,14 +100,14 @@ func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard) {
 		c.Dashboards[ns] = append(c.Dashboards[ns], &v1alpha1.GrafanaDashboardRef{
 			Name:      dashboard.Name,
 			Namespace: ns,
-			UID:       fmt.Sprintf("%x", md5.Sum([]byte(dashboard.Namespace+dashboard.Name))),
+			UID:       fmt.Sprintf("%x", sha1.Sum([]byte(dashboard.Namespace+dashboard.Name))),
 			Hash:      c.GetDashboardHash(dashboard),
 		})
 	} else {
 		c.Lock()
 		defer c.Unlock()
 		c.Dashboards[ns][i].Namespace = ns
-		c.Dashboards[ns][i].UID = fmt.Sprintf("%x", md5.Sum([]byte(dashboard.Namespace+dashboard.Name)))
+		c.Dashboards[ns][i].UID = fmt.Sprintf("%x", sha1.Sum([]byte(dashboard.Namespace+dashboard.Name)))
 		c.Dashboards[ns][i].Hash = c.GetDashboardHash(dashboard)
 	}
 }
