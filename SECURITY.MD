@@ -27,7 +27,7 @@ reporting, specifying affected components/libraries/versions etc. this will help
 
 During your investigation if you happen upon a fix, please create a pull request with the proposed solution to that
 vulnerability, detail the problem, your findings and the solution provided. By doing this, we can address the issue
-sooner, having only to review and verify that the solution works as opposed to having investigate this separately and 
+sooner, having only to review and verify that the solution works as opposed to having to investigate this separately and 
 take more time to reach a solution.
 
 If there is no clear fix that was found during your investigation then please notify the repository admin(s) with the
@@ -37,3 +37,11 @@ If there is no clear fix that was found during your investigation then please no
 If the security vulnerability exists in Grafana itself then please bring that up with the upstream
 Grafana repository adhering to their doc [here](https://github.com/grafana/grafana/blob/master/SECURITY.md) and notify
 the admin(s) of this operator to update when a patch has been released with the specific vulnerability fix.
+
+
+## Contact
+Please contact the following people with information regarding found vulnerabilities:
+
+@pb82 - pbraun@redhat.com
+
+@david-martin - davmarti@redhat.com
