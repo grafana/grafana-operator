@@ -7,18 +7,18 @@ metadata:
 spec:
   name: grafana-dashboard-from-config-map.json
   configMapRef:
-    name: simple-dashboard
+    name: simple-dashboard-from-cm
     key: foo
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: simple-dashboard
+  name: simple-dashboard-from-cm
 data:
   foo: |-
     {
       "id": null,
-      "title": "Simple Dashboard",
+      "title": "Simple Dashboard from Config Map",
       "tags": [],
       "style": "dark",
       "timezone": "browser",

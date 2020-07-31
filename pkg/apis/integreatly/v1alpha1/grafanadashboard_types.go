@@ -1,8 +1,13 @@
 package v1alpha1
 
 import (
+	"crypto/sha1"
+	"crypto/sha256"
+	"fmt"
+	"io"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"strings"
 )
 
 const GrafanaDashboardKind = "GrafanaDashboard"
@@ -64,4 +69,30 @@ type GrafanaDashboardStatusMessage struct {
 
 func init() {
 	SchemeBuilder.Register(&GrafanaDashboard{}, &GrafanaDashboardList{})
+}
+
+func (d *GrafanaDashboard) Hash() string {
+	var datasources strings.Builder
+	for _, input := range d.Spec.Datasources {
+		datasources.WriteString(input.DatasourceName)
+		datasources.WriteString(input.InputName)
+	}
+
+	hash := sha256.New()
+	io.WriteString(hash, d.Spec.Json)
+	io.WriteString(hash, d.Spec.Url)
+	io.WriteString(hash, d.Spec.Jsonnet)
+
+	if d.Spec.ConfigMapRef != nil {
+		io.WriteString(hash, d.Spec.ConfigMapRef.Name)
+		io.WriteString(hash, d.Spec.ConfigMapRef.Key)
+	}
+
+	return fmt.Sprintf("%x", hash.Sum(nil))
+}
+
+func (d *GrafanaDashboard) UID() string {
+	// Use md5 here because Grafana UIDs can only have a maximum length of
+	// 40 characters.
+	return fmt.Sprintf("%x", sha1.Sum([]byte(d.Namespace+d.Name)))
 }

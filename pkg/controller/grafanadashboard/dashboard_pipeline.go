@@ -3,7 +3,6 @@ package grafanadashboard
 import (
 	"bytes"
 	"context"
-	"crypto/md5"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -62,7 +61,7 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) ([]byte, erro
 	}
 
 	// Dashboard unchanged?
-	hash := r.generateHash()
+	hash := r.Dashboard.Hash()
 	if hash == knownHash {
 		r.Hash = knownHash
 		return nil, nil
@@ -85,8 +84,12 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) ([]byte, erro
 	// Dashboards are never expected to come with an ID, it is
 	// always assigned by Grafana. If there is one, we ignore it
 	r.Board["id"] = nil
+
 	// Overwrite in case any user provided uid exists
-	r.Board["uid"] = fmt.Sprintf("%x", md5.Sum([]byte(r.Dashboard.Namespace+r.Dashboard.Name)))
+	if r.Board["uid"] == nil || r.Board["uid"] == "" {
+		r.Board["uid"] = r.Dashboard.UID()
+	}
+
 	raw, err := json.Marshal(r.Board)
 	if err != nil {
 		return nil, err
@@ -168,20 +171,6 @@ func (r *DashboardPipelineImpl) loadJsonnet(source string) (string, error) {
 	})
 
 	return vm.EvaluateSnippet(r.Dashboard.Name, source)
-}
-
-// Create a hash of the dashboard to detect if there are actually changes to the json
-// If there are no changes we should avoid sending update requests as this will create
-// a new dashboard version in Grafana
-func (r *DashboardPipelineImpl) generateHash() string {
-	var datasources strings.Builder
-	for _, input := range r.Dashboard.Spec.Datasources {
-		datasources.WriteString(input.DatasourceName)
-		datasources.WriteString(input.InputName)
-	}
-
-	return fmt.Sprintf("%x", md5.Sum([]byte(r.Dashboard.Spec.Json+
-		r.Dashboard.Spec.Url+r.Dashboard.Spec.Jsonnet+datasources.String())))
 }
 
 // Try to obtain the dashboard json from a provided url
