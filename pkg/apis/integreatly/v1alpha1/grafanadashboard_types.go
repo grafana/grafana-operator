@@ -3,6 +3,7 @@ package v1alpha1
 import (
 	"crypto/sha1"
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"io"
 	corev1 "k8s.io/api/core/v1"
@@ -91,8 +92,20 @@ func (d *GrafanaDashboard) Hash() string {
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 
+func (d *GrafanaDashboard) Parse() (map[string]interface{}, error) {
+	dashboardBytes := []byte(d.Spec.Json)
+	var parsed = make(map[string]interface{})
+	err := json.Unmarshal(dashboardBytes, &parsed)
+	return parsed, err
+}
+
 func (d *GrafanaDashboard) UID() string {
-	// Use md5 here because Grafana UIDs can only have a maximum length of
-	// 40 characters.
+	content, err := d.Parse()
+	if err == nil {
+		if content["uid"] != nil && content["uid"] != "" {
+			return content["uid"].(string)
+		}
+	}
+
 	return fmt.Sprintf("%x", sha1.Sum([]byte(d.Namespace+d.Name)))
 }

@@ -34,6 +34,5 @@ spec:
       "refresh": "5s",
       "schemaVersion": 17,
       "version": 0,
-      "uid": "myuid",
       "links": []
     }
