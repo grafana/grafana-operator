@@ -30,7 +30,6 @@ type GrafanaSpec struct {
 	Resources                  *v1.ResourceRequirements `json:"resources,omitempty"`
 	ServiceAccount             *GrafanaServiceAccount   `json:"serviceAccount,omitempty"`
 	Client                     *GrafanaClient           `json:"client,omitempty"`
-	Compat                     *GrafanaCompat           `json:"compat"`
 	DashboardNamespaceSelector *metav1.LabelSelector    `json:"dashboardNamespaceSelector,omitempty"`
 	DataStorage                *GrafanaDataStorage      `json:"dataStorage,omitempty"`
 	Jsonnet                    *JsonnetConfig           `json:"jsonnet,omitempty"`
@@ -38,12 +37,6 @@ type GrafanaSpec struct {
 
 type JsonnetConfig struct {
 	LibraryLabelSelector *metav1.LabelSelector `json:"libraryLabelSelector,omitempty"`
-}
-
-// Backwards compatibility switches
-type GrafanaCompat struct {
-	FixAnnotations bool `json:"fixAnnotations"`
-	FixHeights     bool `json:"fixHeights"`
 }
 
 // Grafana API client settings

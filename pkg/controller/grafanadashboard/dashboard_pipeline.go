@@ -33,24 +33,20 @@ type DashboardPipeline interface {
 }
 
 type DashboardPipelineImpl struct {
-	Client         client.Client
-	Dashboard      *v1alpha1.GrafanaDashboard
-	JSON           string
-	Board          map[string]interface{}
-	Logger         logr.Logger
-	Hash           string
-	FixAnnotations bool
-	FixHeights     bool
+	Client    client.Client
+	Dashboard *v1alpha1.GrafanaDashboard
+	JSON      string
+	Board     map[string]interface{}
+	Logger    logr.Logger
+	Hash      string
 }
 
-func NewDashboardPipeline(client client.Client, dashboard *v1alpha1.GrafanaDashboard, fixAnnotations bool, fixHeights bool) DashboardPipeline {
+func NewDashboardPipeline(client client.Client, dashboard *v1alpha1.GrafanaDashboard) DashboardPipeline {
 	return &DashboardPipelineImpl{
-		Client:         client,
-		Dashboard:      dashboard,
-		JSON:           "",
-		Logger:         logf.Log.WithName(fmt.Sprintf("dashboard-%v", dashboard.Name)),
-		FixAnnotations: fixAnnotations,
-		FixHeights:     fixHeights,
+		Client:    client,
+		Dashboard: dashboard,
+		JSON:      "",
+		Logger:    logf.Log.WithName(fmt.Sprintf("dashboard-%v", dashboard.Name)),
 	}
 }
 
@@ -98,7 +94,7 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) ([]byte, erro
 
 // Make sure the dashboard contains valid JSON
 func (r *DashboardPipelineImpl) validateJson() error {
-	contents, err := r.Dashboard.Parse()
+	contents, err := r.Dashboard.Parse(r.JSON)
 	r.Board = contents
 	return err
 }

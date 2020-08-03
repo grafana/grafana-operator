@@ -280,18 +280,6 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 		return r.manageError(cr, err)
 	}
 
-	// Try to fix annotations on older dashboards?
-	fixAnnotations := false
-	if cr.Spec.Compat != nil && cr.Spec.Compat.FixAnnotations {
-		fixAnnotations = true
-	}
-
-	// Try to fix heights that are in the wrong format?
-	fixHeights := false
-	if cr.Spec.Compat != nil && cr.Spec.Compat.FixHeights {
-		fixHeights = true
-	}
-
 	// Publish controller state
 	controllerState := common.ControllerState{
 		DashboardSelectors:         cr.Spec.DashboardLabelSelector,
@@ -301,8 +289,6 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 		AdminUrl:                   url,
 		GrafanaReady:               true,
 		ClientTimeout:              DefaultClientTimeoutSeconds,
-		FixAnnotations:             fixAnnotations,
-		FixHeights:                 fixHeights,
 	}
 
 	if cr.Spec.Client != nil && cr.Spec.Client.TimeoutSeconds != nil {

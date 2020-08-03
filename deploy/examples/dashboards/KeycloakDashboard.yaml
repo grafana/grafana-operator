@@ -1149,7 +1149,6 @@ spec:
       },
       "timezone": "",
       "title": "Keycloak Metrics",
-      "uid": "keycloak",
       "version": 1
     }
   datasources:

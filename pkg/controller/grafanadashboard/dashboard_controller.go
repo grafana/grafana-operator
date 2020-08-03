@@ -193,9 +193,9 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 
 	// Check if a given dashboard (by name) is present in the list of
 	// dashboards in the namespace
-	inNamespace := func(item string) bool {
-		for _, dashboard := range namespaceDashboards.Items {
-			if dashboard.Name == item {
+	inNamespace := func(item *grafanav1alpha1.GrafanaDashboardRef) bool {
+		for _, d := range namespaceDashboards.Items {
+			if d.Name == item.Name && d.Namespace == item.Namespace {
 				return true
 			}
 		}
@@ -205,7 +205,7 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 	// Returns the hash of a dashboard if it is known
 	findHash := func(item *grafanav1alpha1.GrafanaDashboard) string {
 		for _, d := range knownDashboards {
-			if item.Name == d.Name {
+			if item.Name == d.Name && item.Namespace == d.Namespace {
 				return d.Hash
 			}
 		}
@@ -215,7 +215,7 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 	// Dashboards to delete: dashboards that are known but not found
 	// any longer in the namespace
 	for _, dashboard := range knownDashboards {
-		if !inNamespace(dashboard.Name) {
+		if !inNamespace(dashboard) {
 			dashboardsToDelete = append(dashboardsToDelete, dashboard)
 		}
 	}
@@ -232,7 +232,7 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 		// Process the dashboard. Use the known hash of an existing dashboard
 		// to determine if an update is required
 		knownHash := findHash(&dashboard)
-		pipeline := NewDashboardPipeline(r.client, &dashboard, r.state.FixAnnotations, r.state.FixHeights)
+		pipeline := NewDashboardPipeline(r.client, &dashboard)
 		processed, err := pipeline.ProcessDashboard(knownHash)
 
 		if err != nil {
@@ -280,7 +280,6 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 			continue
 		}
 		r.manageSuccess(&dashboard)
-
 	}
 
 	for _, dashboard := range dashboardsToDelete {

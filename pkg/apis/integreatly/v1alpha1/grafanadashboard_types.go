@@ -83,6 +83,7 @@ func (d *GrafanaDashboard) Hash() string {
 	io.WriteString(hash, d.Spec.Json)
 	io.WriteString(hash, d.Spec.Url)
 	io.WriteString(hash, d.Spec.Jsonnet)
+	io.WriteString(hash, d.Namespace)
 
 	if d.Spec.ConfigMapRef != nil {
 		io.WriteString(hash, d.Spec.ConfigMapRef.Name)
@@ -92,20 +93,28 @@ func (d *GrafanaDashboard) Hash() string {
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 
-func (d *GrafanaDashboard) Parse() (map[string]interface{}, error) {
-	dashboardBytes := []byte(d.Spec.Json)
+func (d *GrafanaDashboard) Parse(optional string) (map[string]interface{}, error) {
+	var dashboardBytes = []byte(d.Spec.Json)
+	if optional != "" {
+		dashboardBytes = []byte(optional)
+	}
+
 	var parsed = make(map[string]interface{})
 	err := json.Unmarshal(dashboardBytes, &parsed)
 	return parsed, err
 }
 
 func (d *GrafanaDashboard) UID() string {
-	content, err := d.Parse()
+	content, err := d.Parse("")
 	if err == nil {
+		// Check if the user has defined an uid and if that's the
+		// case, use that
 		if content["uid"] != nil && content["uid"] != "" {
 			return content["uid"].(string)
 		}
 	}
 
+	// Use sha1 to keep the hash limit at 40 bytes which is what
+	// Grafana allows for UIDs
 	return fmt.Sprintf("%x", sha1.Sum([]byte(d.Namespace+d.Name)))
 }
