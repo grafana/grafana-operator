@@ -3,7 +3,6 @@ package grafanadashboard
 import (
 	"bytes"
 	"context"
-	"crypto/md5"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -34,24 +33,20 @@ type DashboardPipeline interface {
 }
 
 type DashboardPipelineImpl struct {
-	Client         client.Client
-	Dashboard      *v1alpha1.GrafanaDashboard
-	JSON           string
-	Board          map[string]interface{}
-	Logger         logr.Logger
-	Hash           string
-	FixAnnotations bool
-	FixHeights     bool
+	Client    client.Client
+	Dashboard *v1alpha1.GrafanaDashboard
+	JSON      string
+	Board     map[string]interface{}
+	Logger    logr.Logger
+	Hash      string
 }
 
-func NewDashboardPipeline(client client.Client, dashboard *v1alpha1.GrafanaDashboard, fixAnnotations bool, fixHeights bool) DashboardPipeline {
+func NewDashboardPipeline(client client.Client, dashboard *v1alpha1.GrafanaDashboard) DashboardPipeline {
 	return &DashboardPipelineImpl{
-		Client:         client,
-		Dashboard:      dashboard,
-		JSON:           "",
-		Logger:         logf.Log.WithName(fmt.Sprintf("dashboard-%v", dashboard.Name)),
-		FixAnnotations: fixAnnotations,
-		FixHeights:     fixHeights,
+		Client:    client,
+		Dashboard: dashboard,
+		JSON:      "",
+		Logger:    logf.Log.WithName(fmt.Sprintf("dashboard-%v", dashboard.Name)),
 	}
 }
 
@@ -62,7 +57,7 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) ([]byte, erro
 	}
 
 	// Dashboard unchanged?
-	hash := r.generateHash()
+	hash := r.Dashboard.Hash()
 	if hash == knownHash {
 		r.Hash = knownHash
 		return nil, nil
@@ -85,8 +80,10 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) ([]byte, erro
 	// Dashboards are never expected to come with an ID, it is
 	// always assigned by Grafana. If there is one, we ignore it
 	r.Board["id"] = nil
+
 	// Overwrite in case any user provided uid exists
-	r.Board["uid"] = fmt.Sprintf("%x", md5.Sum([]byte(r.Dashboard.Namespace+r.Dashboard.Name)))
+	r.Board["uid"] = r.Dashboard.UID()
+
 	raw, err := json.Marshal(r.Board)
 	if err != nil {
 		return nil, err
@@ -97,19 +94,9 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) ([]byte, erro
 
 // Make sure the dashboard contains valid JSON
 func (r *DashboardPipelineImpl) validateJson() error {
-	dashboardBytes := []byte(r.JSON)
-	dashboardBytes, err := r.fixAnnotations(dashboardBytes)
-	if err != nil {
-		return err
-	}
-
-	dashboardBytes, err = r.fixHeights(dashboardBytes)
-	if err != nil {
-		return err
-	}
-
-	r.Board = make(map[string]interface{})
-	return json.Unmarshal(dashboardBytes, &r.Board)
+	contents, err := r.Dashboard.Parse(r.JSON)
+	r.Board = contents
+	return err
 }
 
 // Try to get the dashboard json definition either from a provided URL or from the
@@ -168,20 +155,6 @@ func (r *DashboardPipelineImpl) loadJsonnet(source string) (string, error) {
 	})
 
 	return vm.EvaluateSnippet(r.Dashboard.Name, source)
-}
-
-// Create a hash of the dashboard to detect if there are actually changes to the json
-// If there are no changes we should avoid sending update requests as this will create
-// a new dashboard version in Grafana
-func (r *DashboardPipelineImpl) generateHash() string {
-	var datasources strings.Builder
-	for _, input := range r.Dashboard.Spec.Datasources {
-		datasources.WriteString(input.DatasourceName)
-		datasources.WriteString(input.InputName)
-	}
-
-	return fmt.Sprintf("%x", md5.Sum([]byte(r.Dashboard.Spec.Json+
-		r.Dashboard.Spec.Url+r.Dashboard.Spec.Jsonnet+datasources.String())))
 }
 
 // Try to obtain the dashboard json from a provided url
@@ -280,70 +253,4 @@ func (r *DashboardPipelineImpl) resolveDatasources() error {
 
 	r.JSON = currentJson
 	return nil
-}
-
-// Some older dashboards provide the tags list of an annotation as an array
-// instead of a string
-func (r *DashboardPipelineImpl) fixAnnotations(dashboardBytes []byte) ([]byte, error) {
-	if !r.FixAnnotations {
-		return dashboardBytes, nil
-	}
-
-	raw := map[string]interface{}{}
-	err := json.Unmarshal(dashboardBytes, &raw)
-	if err != nil {
-		return nil, err
-	}
-
-	if raw != nil && raw["annotations"] != nil {
-		annotations := raw["annotations"].(map[string]interface{})
-		if annotations != nil && annotations["list"] != nil {
-			annotationsList := annotations["list"].([]interface{})
-			for _, annotation := range annotationsList {
-				rawAnnotation := annotation.(map[string]interface{})
-				if rawAnnotation["tags"] != nil {
-					// Don't attempty to convert the tags, just replace them
-					// with something that is compatible
-					rawAnnotation["tags"] = ""
-				}
-			}
-		}
-	}
-
-	dashboardBytes, err = json.Marshal(raw)
-	if err != nil {
-		return nil, err
-	}
-
-	return dashboardBytes, nil
-}
-
-// Some dashboards have a height property encoded as a number where the SDK expects a string
-func (r *DashboardPipelineImpl) fixHeights(dashboardBytes []byte) ([]byte, error) {
-	if !r.FixHeights {
-		return dashboardBytes, nil
-	}
-
-	raw := map[string]interface{}{}
-	err := json.Unmarshal(dashboardBytes, &raw)
-	if err != nil {
-		return nil, err
-	}
-
-	if raw != nil && raw["panels"] != nil {
-		panels := raw["panels"].([]interface{})
-		for _, panel := range panels {
-			rawPanel := panel.(map[string]interface{})
-			if rawPanel["height"] != nil {
-				rawPanel["height"] = fmt.Sprintf("%v", rawPanel["height"])
-			}
-		}
-	}
-
-	dashboardBytes, err = json.Marshal(raw)
-	if err != nil {
-		return nil, err
-	}
-
-	return dashboardBytes, nil
 }

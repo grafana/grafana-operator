@@ -14,10 +14,11 @@ The following properties are accepted in the `spec`:
 * *url*: Url address to download a json or jsonnet string with the dashboard contents. This will take priority over the json field in case the download is successful.
 * *plugins*: A list of plugins required by the dashboard. They will be installed by the operator if not already present.
 * *datasources*: A list of datasources to be used as inputs. See [datasource inputs](#datasource-inputs).
+* *configMapRef*: Import dashboards from config maps. See [config map refreences](#config-map-references).    
 
 ## Creating a new dashboard
 
-By default the operator only watches for dashboards in it's own namespace. To watch for dashboards in other namespaces, the `--scan-all` flag must be passed.
+By default, the operator only watches for dashboards in it's own namespace. To watch for dashboards in other namespaces, the `--scan-all` flag must be passed.
 
 To create a dashboard in the `grafana` namespace run:
 
@@ -25,7 +26,9 @@ To create a dashboard in the `grafana` namespace run:
 $ kubectl create -f deploy/examples/dashboards/SimpleDashboard.yaml -n grafana
 ```
 
-*NOTE*: it can take up to a minute until new dashboards are discovered by Grafana.
+## Dashboard UIDs
+
+Grafana allows users to define the UIDs of dashboards. If an uid is present on a dashbaord, the operator will use it and not assign a generated one. This is often used to guarantee predictable dashboard URLs for interlinking.
 
 ## Dashboard error handling
 
@@ -121,3 +124,17 @@ spec:
 ```
 
 This will allow the operator to replace all occurrences of the datasource variable `DS_PROMETHEUS` with the actual name of the datasource. An example for this is `dashboards/KeycloakDashboard.yaml`. 
+
+## Config map references
+
+The json contents of a dashboard can be defined in a config map with the dashboard CR pointing to that config map.
+
+```yaml
+...
+spec:
+  name: grafana-dashboard-from-config-map.json
+  configMapRef:
+    name: <config map name>
+    key: <key of the entry containing the json contents>
+...
+```

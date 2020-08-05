@@ -119,7 +119,6 @@ The resource accepts the following properties in it's `spec`:
 * *deployment*: Allows configuring the deployment (see [here](#configuring-the-deployment)).
 * *resources*: Allows configuring the requests and limits for the Grafana pod (see [here](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#resourcerequirements-v1-core)).
 * *client*: Grafana client options (see [here](#configuring-grafana-api-access)).
-* *compat*: Compatibility options with older dashboard formats (see [here]()).
 * *jsonnet*: Label selector for jsonnet libraries (see [here](#jsonnet-library-discovery)).
 
 *NOTE*: by default no Ingress or Route is created. It can be enabled with `spec.ingress.enabled`.
@@ -246,21 +245,10 @@ spec:
 ```
 ## Jsonnet library discovery
 
+Jsonnet specific configuration options.
+
 ```yaml
 spec:
   jsonnet:
     libraryLabelSelector: <LabelSelector>   # Selector to discover config maps containing jsonnet libraries
-```
-
-## Compatibility with older dashboard formats
-
-This section contains flag that allow the operator to modify older dashboards in a way that allow importing to newer Grafana versions.
-
-NOTE: (*deprecated*) should no longer be used as of v3.0.2.  
-
-```yaml
-spec:
-  compat:
-    fixAnnotations: <Boolean>   # Allows importing dashboards that specify annotation tags as arrays instead of strings.
-    fixHeights: <Boolean>       # Allows importing dashboards that have a height property encoded as number
 ```
