@@ -9,7 +9,7 @@ require (
 	github.com/go-openapi/spec v0.19.4
 	github.com/google/go-jsonnet v0.16.0
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
-	github.com/operator-framework/operator-sdk v0.18.2
+	github.com/operator-framework/operator-sdk v0.19.2
 	github.com/pkg/errors v0.9.1
 	k8s.io/api v0.18.2
 	k8s.io/apimachinery v0.18.2
