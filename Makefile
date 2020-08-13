@@ -1,5 +1,5 @@
 ORG?=integreatly
-NAMESPACE=grafana
+NAMESPACE?=grafana
 PROJECT=grafana-operator
 REG?=quay.io
 SHELL=/bin/bash
@@ -56,8 +56,12 @@ test/unit:
 	@echo Running tests:
 	go test -v -race -cover ./pkg/...
 
+.PHONY: cluster/prepare/local/file
+cluster/prepare/local/file:
+	@sed -i "s/__NAMESPACE__/${NAMESPACE}/g" deploy/cluster_roles/cluster_role_binding_grafana_operator.yaml
+
 .PHONY: cluster/prepare/local
-cluster/prepare/local:
+cluster/prepare/local: cluster/prepare/local/file
 	-kubectl create namespace ${NAMESPACE}
 	kubectl apply -f deploy/crds
 	kubectl apply -f deploy/roles -n ${NAMESPACE}
@@ -72,6 +76,7 @@ cluster/cleanup: operator/stop
 .PHONY: operator/deploy
 operator/deploy: cluster/prepare/local
 	kubectl apply -f deploy/operator.yaml -n ${NAMESPACE}
+	@git checkout -- .
 
 .PHONY: operator/stop
 operator/stop:
