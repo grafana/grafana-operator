@@ -341,14 +341,20 @@ func getProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.Probe {
 
 func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Container {
 	var containers []v13.Container
+	var image string
 
-	cfg := config.GetControllerConfig()
-	image := cfg.GetConfigString(config.ConfigGrafanaImage, GrafanaImage)
-	tag := cfg.GetConfigString(config.ConfigGrafanaImageTag, GrafanaVersion)
+	if cr.Spec.BaseImage != "" {
+		image = cr.Spec.BaseImage
+	} else {
+		cfg := config.GetControllerConfig()
+		img := cfg.GetConfigString(config.ConfigGrafanaImage, GrafanaImage)
+		tag := cfg.GetConfigString(config.ConfigGrafanaImageTag, GrafanaVersion)
+		image = fmt.Sprintf("%s:%s", img, tag)
+	}
 
 	containers = append(containers, v13.Container{
 		Name:       "grafana",
-		Image:      fmt.Sprintf("%s:%s", image, tag),
+		Image:      image,
 		Args:       []string{"-config=/etc/grafana/grafana.ini"},
 		WorkingDir: "",
 		Ports: []v13.ContainerPort{
