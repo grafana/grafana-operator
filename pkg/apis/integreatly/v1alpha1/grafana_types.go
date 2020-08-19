@@ -51,6 +51,7 @@ type GrafanaService struct {
 	Labels      map[string]string `json:"labels,omitempty"`
 	Type        v1.ServiceType    `json:"type,omitempty"`
 	Ports       []v1.ServicePort  `json:"ports,omitempty"`
+	ClusterIP   string            `json:"clusterIP,omitempty"`
 }
 
 // GrafanaDataStorage provides a means to configure the grafana data storage

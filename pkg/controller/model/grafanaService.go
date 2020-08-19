@@ -1,12 +1,13 @@
 package model
 
 import (
+	"strconv"
+
 	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strconv"
 )
 
 func getServiceLabels(cr *v1alpha1.Grafana) map[string]string {
@@ -107,7 +108,7 @@ func GrafanaService(cr *v1alpha1.Grafana) *v1.Service {
 			Selector: map[string]string{
 				"app": GrafanaPodLabel,
 			},
-			ClusterIP: "",
+			ClusterIP: cr.Spec.Service.ClusterIP,
 			Type:      getServiceType(cr),
 		},
 	}
