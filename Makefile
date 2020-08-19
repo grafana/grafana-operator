@@ -56,6 +56,10 @@ test/unit:
 	@echo Running tests:
 	go test -v -race -cover ./pkg/...
 
+.PHONY: test/e2e
+test/e2e:
+	@operator-sdk --verbose test local ./test/e2e --watch-namespace="$(NAMESPACE)" --operator-namespace="$(NAMESPACE)" --debug --up-local
+
 .PHONY: cluster/prepare/local/file
 cluster/prepare/local/file:
 	@sed -i "s/__NAMESPACE__/${NAMESPACE}/g" deploy/cluster_roles/cluster_role_binding_grafana_operator.yaml
