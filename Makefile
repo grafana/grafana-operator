@@ -54,7 +54,7 @@ image/build/push: image/build image/push
 .PHONY: test/unit
 test/unit:
 	@echo Running tests:
-	go test -v -race -cover ./pkg/...
+	go test -v -race -cover ./api/... ./controllers/...
 
 .PHONY: cluster/prepare/local/file
 cluster/prepare/local/file:
