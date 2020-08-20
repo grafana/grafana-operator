@@ -232,24 +232,17 @@ func (r *ReconcileGrafanaNotificationChannel) reconcileNotificationChannels(requ
 		}
 
 		var status GrafanaResponse
-		// if knownHash is empty channel wasn't added before
-		// if channel is not in knownNotificationChannels, but already presents in Grafana (in case if operator was restarted) corner case
-		// API creating call will return response code 500.
-		// Try to check if channel already present then create/updated existing channel
-		if knownHash == "" {
-			rawJson := GrafanaChannel{}
-			if err := json.Unmarshal(processed, &rawJson); err != nil {
-				return reconcile.Result{}, err
-			}
-			if _, err := grafanaClient.GetNotificationChannel(*rawJson.UID); err != nil {
-				status, err = grafanaClient.CreateNotificationChannel(processed)
-			} else {
-				status, err = grafanaClient.UpdateNotificationChannel(processed, notificationchannel.Status.UID)
-			}
-		} else {
-			status, err = grafanaClient.UpdateNotificationChannel(processed, notificationchannel.Status.UID)
+		// Create or Update notification channel
+		rawJson := GrafanaChannel{}
+		if err := json.Unmarshal(processed, &rawJson); err != nil {
+			return reconcile.Result{}, err
 		}
 
+		if _, err = grafanaClient.GetNotificationChannel(*rawJson.UID); err != nil {
+			status, err = grafanaClient.CreateNotificationChannel(processed)
+		} else {
+			status, err = grafanaClient.UpdateNotificationChannel(processed, *rawJson.UID)
+		}
 		if err != nil {
 			log.Info(fmt.Sprintf("cannot submit notificationchannel %v/%v", notificationchannel.Namespace, notificationchannel.Name))
 			r.manageError(&notificationchannel, err)
