@@ -1,29 +1,37 @@
+/*
+
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package grafana
 
 import (
 	"context"
-	stdErr "errors"
 	"fmt"
 
-	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
-	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
-	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
-	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
-	routev1 "github.com/openshift/api/route/v1"
-	v12 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
-	v1beta12 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/record"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
-	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	integreatlyv1alpha1 "github.com/integr8ly/grafana-operator/api/v1alpha1"
+	"github.com/integr8ly/grafana-operator/v3/controllers/common"
+	"github.com/integr8ly/grafana-operator/v3/controllers/config"
+	"github.com/integr8ly/grafana-operator/v3/controllers/model"
 )
 
 const ControllerName = "grafana-controller"
@@ -31,90 +39,8 @@ const DefaultClientTimeoutSeconds = 5
 
 var log = logf.Log.WithName(ControllerName)
 
-// Add creates a new Grafana Controller and adds it to the Manager. The Manager will set fields on the Controller
-// and Start it when the Manager is Started.
-func Add(mgr manager.Manager, autodetectChannel chan schema.GroupVersionKind, _ string) error {
-	return add(mgr, newReconciler(mgr), autodetectChannel)
-}
-
-// newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
-
-	return &ReconcileGrafana{
-		client:   mgr.GetClient(),
-		scheme:   mgr.GetScheme(),
-		plugins:  newPluginsHelper(),
-		context:  ctx,
-		cancel:   cancel,
-		config:   config.GetControllerConfig(),
-		recorder: mgr.GetEventRecorderFor(ControllerName),
-	}
-}
-
-// add adds a new Controller to mgr with r as the reconcile.Reconciler
-func add(mgr manager.Manager, r reconcile.Reconciler, autodetectChannel chan schema.GroupVersionKind) error {
-	// Create a new controller
-	c, err := controller.New("grafana-controller", mgr, controller.Options{Reconciler: r})
-	if err != nil {
-		return err
-	}
-
-	// Watch for changes to primary resource Grafana
-	err = c.Watch(&source.Kind{Type: &grafanav1alpha1.Grafana{}}, &handler.EnqueueRequestForObject{})
-	if err != nil {
-		return err
-	}
-
-	if err = watchSecondaryResource(c, &v12.Deployment{}); err != nil {
-		return err
-	}
-
-	if err = watchSecondaryResource(c, &v1beta12.Ingress{}); err != nil {
-		return err
-	}
-
-	if err = watchSecondaryResource(c, &v1.ConfigMap{}); err != nil {
-		return err
-	}
-
-	if err = watchSecondaryResource(c, &v1.Service{}); err != nil {
-		return err
-	}
-
-	if err = watchSecondaryResource(c, &v1.ServiceAccount{}); err != nil {
-		return err
-	}
-
-	go func() {
-		for gvk := range autodetectChannel {
-			cfg := config.GetControllerConfig()
-
-			// Route already watched?
-			if cfg.GetConfigBool(config.ConfigRouteWatch, false) == true {
-				return
-			}
-
-			// Watch routes if they exist on the cluster
-			if gvk.String() == routev1.SchemeGroupVersion.WithKind(common.RouteKind).String() {
-				if err = watchSecondaryResource(c, &routev1.Route{}); err != nil {
-					log.Error(err, fmt.Sprintf("error adding secondary watch for %v", common.RouteKind))
-				} else {
-					cfg.AddConfigItem(config.ConfigRouteWatch, true)
-					log.Info(fmt.Sprintf("added secondary watch for %v", common.RouteKind))
-				}
-			}
-		}
-	}()
-
-	return nil
-}
-
-var _ reconcile.Reconciler = &ReconcileGrafana{}
-
-// ReconcileGrafana reconciles a Grafana object
-type ReconcileGrafana struct {
+// GrafanaReconciler reconciles a Grafana object
+type GrafanaReconciler struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
 	client   client.Client
@@ -126,16 +52,14 @@ type ReconcileGrafana struct {
 	recorder record.EventRecorder
 }
 
-func watchSecondaryResource(c controller.Controller, resource runtime.Object) error {
-	return c.Watch(&source.Kind{Type: resource}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &grafanav1alpha1.Grafana{},
-	})
-}
-
 // Reconcile reads that state of the cluster for a Grafana object and makes changes based on the state read
 // and what is in the Grafana.Spec
-func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+// +kubebuilder:rbac:groups=integreatly.integreatly.org,resources=grafanas,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=integreatly.integreatly.org,resources=grafanas/status,verbs=get;update;patch
+func (r *GrafanaReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
+	_ = context.Background()
+	_ = r.Log.WithValues("grafana", req.NamespacedName)
+
 	instance := &grafanav1alpha1.Grafana{}
 	err := r.client.Get(r.context, request.NamespacedName, instance)
 	if err != nil {
@@ -164,7 +88,7 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 	}
 
 	// Get the actions required to reach the desired state
-	reconciler := NewGrafanaReconciler()
+	reconciler := NewGrafanaReconcile()
 	desiredState := reconciler.Reconcile(currentState, cr)
 
 	// Run the actions to reach the desired state
@@ -304,4 +228,36 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 	log.Info("desired cluster state met")
 
 	return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
+}
+
+func (r *GrafanaReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	go func() {
+		for gvk := range autodetectChannel {
+			cfg := config.GetControllerConfig()
+
+			// Route already watched?
+			if cfg.GetConfigBool(config.ConfigRouteWatch, false) == true {
+				return
+			}
+
+			// Watch routes if they exist on the cluster
+			if gvk.String() == routev1.SchemeGroupVersion.WithKind(common.RouteKind).String() {
+				if err = watchSecondaryResource(c, &routev1.Route{}); err != nil {
+					log.Error(err, fmt.Sprintf("error adding secondary watch for %v", common.RouteKind))
+				} else {
+					cfg.AddConfigItem(config.ConfigRouteWatch, true)
+					log.Info(fmt.Sprintf("added secondary watch for %v", common.RouteKind))
+				}
+			}
+		}
+	}()
+
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&integreatlyv1alpha1.Grafana{}).
+		Owns(&v12.Deployment{}).
+		Owns(&v1beta12.Ingress{}).
+		Owns(&v1.ConfigMap{}).
+		Owns(&v1.Service{}).
+		Owns(&v1.ServiceAccount{}).
+		Complete(r)
 }

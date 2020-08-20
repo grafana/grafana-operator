@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
-	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
-	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
+	"github.com/integr8ly/grafana-operator/v3/controllers/config"
+	"github.com/integr8ly/grafana-operator/v3/controllers/model"
 	v12 "github.com/openshift/api/route/v1"
 	v13 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"

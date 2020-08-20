@@ -1,7 +1,7 @@
 package grafana
 
 import (
-	testing2 "github.com/integr8ly/grafana-operator/v3/pkg/controller/testing"
+	testing2 "github.com/integr8ly/grafana-operator/v3/controllers/testing"
 	"testing"
 )
 

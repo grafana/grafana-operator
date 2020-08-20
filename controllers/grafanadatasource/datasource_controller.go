@@ -1,29 +1,42 @@
+/*
+
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package grafanadatasource
 
 import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
-	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
-	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
-	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
 	"io"
+	"sort"
+	"time"
+
+	"github.com/go-logr/logr"
+	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/apis/v1alpha1"
+	"github.com/integr8ly/grafana-operator/v3/controllers/common"
+	"github.com/integr8ly/grafana-operator/v3/controllers/config"
+	"github.com/integr8ly/grafana-operator/v3/controllers/model"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
-	"sigs.k8s.io/controller-runtime/pkg/source"
-	"sort"
-	"time"
 )
 
 const (
@@ -33,41 +46,47 @@ const (
 
 var log = logf.Log.WithName(ControllerName)
 
-// Add creates a new GrafanaDataSource Controller and adds it to the Manager. The Manager will set fields on the Controller
-// and Start it when the Manager is Started.
-func Add(mgr manager.Manager, _ chan schema.GroupVersionKind, namespace string) error {
-	return add(mgr, newReconciler(mgr), namespace)
+// GrafanaDataSourceReconciler reconciles a GrafanaDataSource object
+type GrafanaDataSourceReconciler struct {
+	client.Client
+	Log      logr.Logger
+	scheme   *runtime.Scheme
+	context  context.Context
+	cancel   context.CancelFunc
+	recorder record.EventRecorder
+	state    common.ControllerState
 }
 
-// newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
+// The Controller will requeue the Request to be processed again if the returned error is non-nil or
+// Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
+// +kubebuilder:rbac:groups=integreatly.integreatly.org,resources=grafanadatasources,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=integreatly.integreatly.org,resources=grafanadatasources/status,verbs=get;update;patch
+func (r *GrafanaDataSourceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
+	_ = context.Background()
+	_ = r.Log.WithValues("grafanadatasource", req.NamespacedName)
 
-	return &ReconcileGrafanaDataSource{
-		client:   mgr.GetClient(),
-		scheme:   mgr.GetScheme(),
-		context:  ctx,
-		cancel:   cancel,
-		recorder: mgr.GetEventRecorderFor(ControllerName),
-		state:    common.ControllerState{},
+	// Read the current state of known and cluster datasources
+	currentState := common.NewDataSourcesState()
+	err := currentState.Read(r.context, r.client, request.Namespace)
+	if err != nil {
+		return reconcile.Result{}, err
 	}
+
+	if currentState.KnownDataSources == nil {
+		log.Info(fmt.Sprintf("no datasources configmap found"))
+		return reconcile.Result{Requeue: false}, nil
+	}
+
+	// Reconcile all data sources
+	err = r.reconcileDataSources(currentState)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	return reconcile.Result{Requeue: false}, nil
 }
 
-// add adds a new Controller to mgr with r as the reconcile.Reconciler
-func add(mgr manager.Manager, r reconcile.Reconciler, namespace string) error {
-	// Create a new controller
-	c, err := controller.New("grafanadatasource-controller", mgr, controller.Options{Reconciler: r})
-	if err != nil {
-		return err
-	}
-
-	// Watch for changes to primary resource GrafanaDataSource
-	err = c.Watch(&source.Kind{Type: &grafanav1alpha1.GrafanaDataSource{}}, &handler.EnqueueRequestForObject{})
-	if err != nil {
-		return err
-	}
-
+func (r *GrafanaDataSourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	ref := r.(*ReconcileGrafanaDataSource)
 
 	// The datasources should not change very often, only revisit them
@@ -98,45 +117,9 @@ func add(mgr manager.Manager, r reconcile.Reconciler, namespace string) error {
 		}
 	}()
 
-	return nil
-}
-
-var _ reconcile.Reconciler = &ReconcileGrafanaDataSource{}
-
-// ReconcileGrafanaDataSource reconciles a GrafanaDataSource object
-type ReconcileGrafanaDataSource struct {
-	// This client, initialized using mgr.Client() above, is a split client
-	// that reads objects from the cache and writes to the apiserver
-	client   client.Client
-	scheme   *runtime.Scheme
-	context  context.Context
-	cancel   context.CancelFunc
-	recorder record.EventRecorder
-	state    common.ControllerState
-}
-
-// The Controller will requeue the Request to be processed again if the returned error is non-nil or
-// Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
-func (r *ReconcileGrafanaDataSource) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	// Read the current state of known and cluster datasources
-	currentState := common.NewDataSourcesState()
-	err := currentState.Read(r.context, r.client, request.Namespace)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-
-	if currentState.KnownDataSources == nil {
-		log.Info(fmt.Sprintf("no datasources configmap found"))
-		return reconcile.Result{Requeue: false}, nil
-	}
-
-	// Reconcile all data sources
-	err = r.reconcileDataSources(currentState)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-
-	return reconcile.Result{Requeue: false}, nil
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&integreatlyv1alpha1.GrafanaDataSource{}).
+		Complete(r)
 }
 
 func (r *ReconcileGrafanaDataSource) reconcileDataSources(state *common.DataSourcesState) error {

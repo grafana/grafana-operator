@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
-	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
-	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
-	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
+	"github.com/integr8ly/grafana-operator/v3/controllers/common"
+	"github.com/integr8ly/grafana-operator/v3/controllers/config"
+	"github.com/integr8ly/grafana-operator/v3/controllers/model"
 )
 
 type GrafanaReconciler struct {
