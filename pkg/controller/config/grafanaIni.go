@@ -3,7 +3,7 @@ package config
 import (
 	"crypto/sha256"
 	"fmt"
-	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
 	"io"
 	"sort"
 	"strings"

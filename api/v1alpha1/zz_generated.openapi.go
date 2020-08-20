@@ -11,13 +11,13 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"./pkg/apis/integreatly/v1alpha1.Grafana":                 schema_pkg_apis_integreatly_v1alpha1_Grafana(ref),
-		"./pkg/apis/integreatly/v1alpha1.GrafanaDashboard":        schema_pkg_apis_integreatly_v1alpha1_GrafanaDashboard(ref),
-		"./pkg/apis/integreatly/v1alpha1.GrafanaDataSource":       schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSource(ref),
-		"./pkg/apis/integreatly/v1alpha1.GrafanaDataSourceSpec":   schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSourceSpec(ref),
-		"./pkg/apis/integreatly/v1alpha1.GrafanaDataSourceStatus": schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSourceStatus(ref),
-		"./pkg/apis/integreatly/v1alpha1.GrafanaSpec":             schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref),
-		"./pkg/apis/integreatly/v1alpha1.GrafanaStatus":           schema_pkg_apis_integreatly_v1alpha1_GrafanaStatus(ref),
+		"./api/v1alpha1.Grafana":                 schema_pkg_apis_integreatly_v1alpha1_Grafana(ref),
+		"./api/v1alpha1.GrafanaDashboard":        schema_pkg_apis_integreatly_v1alpha1_GrafanaDashboard(ref),
+		"./api/v1alpha1.GrafanaDataSource":       schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSource(ref),
+		"./api/v1alpha1.GrafanaDataSourceSpec":   schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSourceSpec(ref),
+		"./api/v1alpha1.GrafanaDataSourceStatus": schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSourceStatus(ref),
+		"./api/v1alpha1.GrafanaSpec":             schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref),
+		"./api/v1alpha1.GrafanaStatus":           schema_pkg_apis_integreatly_v1alpha1_GrafanaStatus(ref),
 	}
 }
 
@@ -49,19 +49,19 @@ func schema_pkg_apis_integreatly_v1alpha1_Grafana(ref common.ReferenceCallback) 
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaSpec"),
+							Ref: ref("./api/v1alpha1.GrafanaSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaStatus"),
+							Ref: ref("./api/v1alpha1.GrafanaStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/integreatly/v1alpha1.GrafanaSpec", "./pkg/apis/integreatly/v1alpha1.GrafanaStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"./api/v1alpha1.GrafanaSpec", "./api/v1alpha1.GrafanaStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -93,19 +93,19 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaDashboard(ref common.ReferenceC
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaDashboardSpec"),
+							Ref: ref("./api/v1alpha1.GrafanaDashboardSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaDashboardStatus"),
+							Ref: ref("./api/v1alpha1.GrafanaDashboardStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/integreatly/v1alpha1.GrafanaDashboardSpec", "./pkg/apis/integreatly/v1alpha1.GrafanaDashboardStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"./api/v1alpha1.GrafanaDashboardSpec", "./api/v1alpha1.GrafanaDashboardStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -137,19 +137,19 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSource(ref common.Reference
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaDataSourceSpec"),
+							Ref: ref("./api/v1alpha1.GrafanaDataSourceSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaDataSourceStatus"),
+							Ref: ref("./api/v1alpha1.GrafanaDataSourceStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/integreatly/v1alpha1.GrafanaDataSourceSpec", "./pkg/apis/integreatly/v1alpha1.GrafanaDataSourceStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"./api/v1alpha1.GrafanaDataSourceSpec", "./api/v1alpha1.GrafanaDataSourceStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -167,7 +167,7 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSourceSpec(ref common.Refer
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaDataSourceFields"),
+										Ref: ref("./api/v1alpha1.GrafanaDataSourceFields"),
 									},
 								},
 							},
@@ -184,7 +184,7 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSourceSpec(ref common.Refer
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/integreatly/v1alpha1.GrafanaDataSourceFields"},
+			"./api/v1alpha1.GrafanaDataSourceFields"},
 	}
 }
 
@@ -223,7 +223,7 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref common.ReferenceCallba
 				Properties: map[string]spec.Schema{
 					"config": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaConfig"),
+							Ref: ref("./api/v1alpha1.GrafanaConfig"),
 						},
 					},
 					"containers": {
@@ -252,7 +252,7 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref common.ReferenceCallba
 					},
 					"ingress": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaIngress"),
+							Ref: ref("./api/v1alpha1.GrafanaIngress"),
 						},
 					},
 					"secrets": {
@@ -283,12 +283,12 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref common.ReferenceCallba
 					},
 					"service": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaService"),
+							Ref: ref("./api/v1alpha1.GrafanaService"),
 						},
 					},
 					"deployment": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaDeployment"),
+							Ref: ref("./api/v1alpha1.GrafanaDeployment"),
 						},
 					},
 					"resources": {
@@ -298,17 +298,17 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref common.ReferenceCallba
 					},
 					"serviceAccount": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaServiceAccount"),
+							Ref: ref("./api/v1alpha1.GrafanaServiceAccount"),
 						},
 					},
 					"client": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaClient"),
+							Ref: ref("./api/v1alpha1.GrafanaClient"),
 						},
 					},
 					"compat": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaCompat"),
+							Ref: ref("./api/v1alpha1.GrafanaCompat"),
 						},
 					},
 					"dashboardNamespaceSelector": {
@@ -318,7 +318,7 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref common.ReferenceCallba
 					},
 					"dataStorage": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaDataStorage"),
+							Ref: ref("./api/v1alpha1.GrafanaDataStorage"),
 						},
 					},
 				},
@@ -326,7 +326,7 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/integreatly/v1alpha1.GrafanaClient", "./pkg/apis/integreatly/v1alpha1.GrafanaCompat", "./pkg/apis/integreatly/v1alpha1.GrafanaConfig", "./pkg/apis/integreatly/v1alpha1.GrafanaDataStorage", "./pkg/apis/integreatly/v1alpha1.GrafanaDeployment", "./pkg/apis/integreatly/v1alpha1.GrafanaIngress", "./pkg/apis/integreatly/v1alpha1.GrafanaService", "./pkg/apis/integreatly/v1alpha1.GrafanaServiceAccount", "k8s.io/api/core/v1.Container", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector"},
+			"./api/v1alpha1.GrafanaClient", "./api/v1alpha1.GrafanaCompat", "./api/v1alpha1.GrafanaConfig", "./api/v1alpha1.GrafanaDataStorage", "./api/v1alpha1.GrafanaDeployment", "./api/v1alpha1.GrafanaIngress", "./api/v1alpha1.GrafanaService", "./api/v1alpha1.GrafanaServiceAccount", "k8s.io/api/core/v1.Container", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector"},
 	}
 }
 
@@ -360,7 +360,7 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaStatus(ref common.ReferenceCall
 										Items: &spec.SchemaOrArray{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
-													Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaDashboardRef"),
+													Ref: ref("./api/v1alpha1.GrafanaDashboardRef"),
 												},
 											},
 										},
@@ -375,7 +375,7 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaStatus(ref common.ReferenceCall
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaPlugin"),
+										Ref: ref("./api/v1alpha1.GrafanaPlugin"),
 									},
 								},
 							},
@@ -387,7 +387,7 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaStatus(ref common.ReferenceCall
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaPlugin"),
+										Ref: ref("./api/v1alpha1.GrafanaPlugin"),
 									},
 								},
 							},
@@ -398,6 +398,6 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaStatus(ref common.ReferenceCall
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/integreatly/v1alpha1.GrafanaDashboardRef", "./pkg/apis/integreatly/v1alpha1.GrafanaPlugin"},
+			"./api/v1alpha1.GrafanaDashboardRef", "./api/v1alpha1.GrafanaPlugin"},
 	}
 }

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"github.com/go-logr/logr"
 	"github.com/google/go-jsonnet"
-	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
 	"io/ioutil"
 	corev1 "k8s.io/api/core/v1"
