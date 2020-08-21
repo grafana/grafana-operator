@@ -8,6 +8,11 @@ import (
 	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
+	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	goctx "context"
 )
 
 const (
@@ -29,15 +34,45 @@ func TestGrafana(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to initialize cluster resources: %v", err)
 	}
-	t.Log("Initialized cluster resources")
+
+	// get namespace
+	namespaceName, err := ctx.GetOperatorNamespace()
 	if err != nil {
 		t.Fatal(err)
 	}
 	// get global framework variables
 	f := framework.Global
 
-	// run subtests
-	t.Run("grafana", func(t *testing.T) {
-		t.Log(f.KubeConfig.BearerToken)
-	})
+	namespace := &v1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: namespaceName,
+		},
+	}
+	err = f.Client.Create(goctx.TODO(), namespace, &framework.CleanupOptions{TestContext: ctx, Timeout: time.Second * 30, RetryInterval: time.Second * 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// create grafana custom resource
+	exampleGrafana := &grafanav1alpha1.Grafana{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "example-grafana",
+			Namespace: namespaceName,
+		},
+		Spec: grafanav1alpha1.GrafanaSpec{
+			Ingress: &grafanav1alpha1.GrafanaIngress{
+				Enabled: true,
+			},
+		},
+	}
+	err = f.Client.Create(goctx.TODO(), exampleGrafana, &framework.CleanupOptions{TestContext: ctx, Timeout: time.Second * 30, RetryInterval: time.Second * 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// wait for example-grafana to reach 1 replicas
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespaceName, "grafana-deployment", 1, time.Second*5, time.Second*60)
+	if err != nil {
+		t.Fatal(err)
+	}
 }

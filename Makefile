@@ -58,7 +58,7 @@ test/unit:
 
 .PHONY: test/e2e
 test/e2e:
-	@operator-sdk --verbose test local ./test/e2e --watch-namespace="$(NAMESPACE)" --operator-namespace="$(NAMESPACE)" --debug --up-local
+	@operator-sdk --verbose test local ./test/e2e --watch-namespace="grafana-test-e2e" --operator-namespace="grafana-test-e2e" --debug --up-local
 
 .PHONY: cluster/prepare/local/file
 cluster/prepare/local/file:
