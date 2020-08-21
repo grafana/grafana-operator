@@ -1,15 +1,18 @@
 package e2e
 
 import (
-	"net/http"
-	"os"
-	"path"
 	"testing"
+	"time"
 
-	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/apis"
+	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
+)
+
+const (
+	cleanupRetryInterval = time.Second * 1
+	cleanupTimeout       = time.Second * 5
 )
 
 func TestGrafana(t *testing.T) {
