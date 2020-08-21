@@ -92,7 +92,7 @@ or `baseImage` CR spec fields.
 
 This chart shows how the operator prioritises which image will be used for the deployment, and the versions that it's known to support.
 Only the grafana image specified in code [here](https://github.com/integr8ly/grafana-operator/blob/master/pkg/controller/model/constants.go#L5) will be supported
-in unit/e2e tests, and as part of the operator, any other specified grafana image through these options can't be guaranteed to work and won't be addressed in issues.
+in unit/e2e tests and as part of the operator, any other specified grafana image through these options may not work as expected.
 
 ![grafana-image-support-chart.svg](./resources/grafana-image-support-chart.svg)
 
