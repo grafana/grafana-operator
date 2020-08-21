@@ -86,17 +86,28 @@ NAME                                READY     STATUS    RESTARTS   AGE
 grafana-operator-78cfcbf8db-ssrgq   1/1       Running   0          17s
 ```
 
+## Grafana image Support Chart
+Please take note of this chart when wanting to deploy custom grafana images through either `--grafana-image` operator flags,
+or `baseImage` CR spec fields.
+![grafana-image-support-chart.png](./resources/grafana-image-support-chart.png)
+
 ## Operator flags
 
 The operator accepts a number of flags that can be passed in the `args` section of the container in the deployment:
 
-* *--grafana-image*: overrides the Grafana image, defaults to `quay.io/openshift/origin-grafana`.
-* *--grafana-image-tag*: overrides the Grafana tag. See `controller_config.go` for default.
-* *--grafana-plugins-init-container-image*: overrides the Grafana Plugins Init Container image, defaults to `quay.io/integreatly/grafana_plugins_init`.
-* *--grafana-plugins-init-container-tag*: overrides the Grafana Plugins Init Container tag, defaults to `0.0.3`.
-* *--grafonnet-location*: overrides the location of the grafonnet library. Defaults to `/opt/grafonnet-lib`. Only useful when running the operator locally.
-* *--scan-all*: watch for dashboards in all namespaces. This requires the the operator service account to have cluster wide permissions to `get`, `list`, `update` and `watch` dashboards. See `deploy/cluster_roles`.
-* *--namespaces*: watch for dashboards in a list of namespaces. Mutually exclusive with `--scan-all`.
+* `--grafana-image`: overrides the Grafana image, defaults to `quay.io/openshift/origin-grafana`.
+
+* `--grafana-image-tag`: overrides the Grafana tag. See `controller_config.go` for default.
+
+* `--grafana-plugins-init-container-image`: overrides the Grafana Plugins Init Container image, defaults to `quay.io/integreatly/grafana_plugins_init`.
+
+* `--grafana-plugins-init-container-tag`: overrides the Grafana Plugins Init Container tag, defaults to `0.0.3`.
+
+* `--grafonnet-location`: overrides the location of the grafonnet library. Defaults to `/opt/grafonnet-lib`. Only useful when running the operator locally.
+
+* `--scan-all`: watch for dashboards in all namespaces. This requires the the operator service account to have cluster wide permissions to `get`, `list`, `update` and `watch` dashboards. See `deploy/cluster_roles`.
+
+* `--namespaces`: watch for dashboards in a list of namespaces. Mutually exclusive with `--scan-all`.
 
 See `deploy/operator.yaml` for an example.
 
@@ -108,18 +119,32 @@ Create a custom resource of type `Grafana`, or use the one in `deploy/examples/G
 
 The resource accepts the following properties in it's `spec`:
 
-* *dashboardLabelSelector*: A list of either `matchLabels` or `matchExpressions` to filter the dashboards before importing them.
-* *containers*: Extra containers to be added to the Grafana deployment. Can be used for example to add auth proxy side cars.
-* *secrets*: A list of secrets that are added as volumes to the deployment. Useful in combination with extra `containers` or when extra configuraton files are required.
-* *configMaps*: A list of config maps that are added as volumes to the deployment. Useful in combination with extra `containers` or when extra configuraton files are required.
-* *config*: The properties used to generate `grafana.ini`. All properties defined in the [official documentation](https://grafana.com/docs/installation/configuration/) are supported although some of them are not allowed to be overridden (path configuration). See `deploy/examples/Grafana.yaml` for an example.  
-* *ingress*: Allows configuring the Ingress / Route resource (see [here](#configuring-the-ingress-or-route)).
-* *service*: Allows configuring the Service resource (see [here](#configuring-the-service)).
-* *serviceAccount*: Allows adding extra labels and annotations to the Grafana service account.
-* *deployment*: Allows configuring the deployment (see [here](#configuring-the-deployment)).
-* *resources*: Allows configuring the requests and limits for the Grafana pod (see [here](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#resourcerequirements-v1-core)).
-* *client*: Grafana client options (see [here](#configuring-grafana-api-access)).
-* *jsonnet*: Label selector for jsonnet libraries (see [here](#jsonnet-library-discovery)).
+* ***baseImage***: Specifies a custom grafana image for this deployment.
+    - ***Warning!*** this overwrites the `--grafana-image` Operator flag, please refer to the grafana image support chart. 
+
+* ***dashboardLabelSelector***: A list of either `matchLabels` or `matchExpressions` to filter the dashboards before importing them.
+
+* ***containers***: Extra containers to be added to the Grafana deployment. Can be used for example to add auth proxy side cars.
+
+* ***secrets***: A list of secrets that are added as volumes to the deployment. Useful in combination with extra `containers` or when extra configuraton files are required.
+
+* ***configMaps***: A list of config maps that are added as volumes to the deployment. Useful in combination with extra `containers` or when extra configuraton files are required.
+
+* ***config***: The properties used to generate `grafana.ini`. All properties defined in the [official documentation](https://grafana.com/docs/installation/configuration/) are supported although some of them are not allowed to be overridden (path configuration). See `deploy/examples/Grafana.yaml` for an example.  
+
+* ***ingress***: Allows configuring the Ingress / Route resource (see [here](#configuring-the-ingress-or-route)).
+
+* ***service***: Allows configuring the Service resource (see [here](#configuring-the-service)).
+
+* ***serviceAccount***: Allows adding extra labels and annotations to the Grafana service account.
+
+* ***deployment***: Allows configuring the deployment (see [here](#configuring-the-deployment)).
+
+* ***resources***: Allows configuring the requests and limits for the Grafana pod (see [here](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#resourcerequirements-v1-core)).
+
+* ***client***: Grafana client options (see [here](#configuring-grafana-api-access)).
+
+* ***jsonnet***: Label selector for jsonnet libraries (see [here](#jsonnet-library-discovery)).
 
 *NOTE*: by default no Ingress or Route is created. It can be enabled with `spec.ingress.enabled`.
 
