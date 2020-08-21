@@ -89,7 +89,7 @@ grafana-operator-78cfcbf8db-ssrgq   1/1       Running   0          17s
 ## Grafana image Support Chart
 Please take note of this chart when wanting to deploy custom grafana images through either `--grafana-image` operator flags,
 or `baseImage` CR spec fields.
-![grafana-image-support-chart.png](./resources/grafana-image-support-chart.png)
+![grafana-image-support-chart.svg](./resources/grafana-image-support-chart.svg)
 
 ## Operator flags
 
