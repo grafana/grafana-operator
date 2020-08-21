@@ -33,6 +33,7 @@ type GrafanaSpec struct {
 	DashboardNamespaceSelector *metav1.LabelSelector    `json:"dashboardNamespaceSelector,omitempty"`
 	DataStorage                *GrafanaDataStorage      `json:"dataStorage,omitempty"`
 	Jsonnet                    *JsonnetConfig           `json:"jsonnet,omitempty"`
+	BaseImage                  string                   `json:"baseImage,omitempty"`
 }
 
 type JsonnetConfig struct {
