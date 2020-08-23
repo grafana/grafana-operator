@@ -100,7 +100,7 @@ in unit/e2e tests and as part of the operator, any other specified grafana image
 
 The operator accepts a number of flags that can be passed in the `args` section of the container in the deployment:
 
-* `--grafana-image`: overrides the Grafana image, defaults to `quay.io/openshift/origin-grafana`.
+* `--grafana-image`: overrides the Grafana image, defaults to `grafana/grafana` on grafanas official dockerhub.
 
 * `--grafana-image-tag`: overrides the Grafana tag. See `controller_config.go` for default.
 
