@@ -36,7 +36,7 @@ If the dashboard contains invalid JSON a message with the parser error will be a
 
 ## Plugins
 
-Dashboards can specify plugins (panels) they depend on. The operator will automatically install them.
+Dashboards can specify plugins they depend on. The operator will automatically install them.
 
 You need to provide a name and a version for every plugin, e.g.:
 

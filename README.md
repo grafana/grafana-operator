@@ -2,6 +2,24 @@
 
 A Kubernetes Operator based on the Operator SDK for creating and managing Grafana instances.
 
+## Grafana Operator on the Kubernetes community Slack
+We have set up a channel dedicated to this operator on the Kubernetes community Slack, this is an easier way to address 
+more immediate issues and facilitate discussion around development/bugs etc. as well as providing support for questions
+about the operator.
+    
+1: Join the Kubernetes Slack (if you have not done so already) [Kubernetes Slack](https://slack.k8s.io/).
+    
+2: You will receive an email with an invitation link, follow that link and enter your desired username and password for the workspace(it might be easier if you use your Github username for our channel).
+    
+3: Once registered and able to see the Kubernetes community Slack workspace and channels follow this link to the [grafana-operator channel](https://kubernetes.slack.com/messages/grafana-operator/ ).
+    
+Alternatively:
+If you're already a member of that workspace then just follow this link to the [grafana-operator channel](https://kubernetes.slack.com/messages/grafana-operator/ ) or search for "grafana-operator" in the browse channels option .
+
+![image](https://user-images.githubusercontent.com/35736504/90978105-0b195300-e543-11ea-86ee-1825da0e3b75.png)
+    
+
+
 # Current status
 
 The Operator is available on [Operator Hub](https://operatorhub.io/operator/grafana-operator).
