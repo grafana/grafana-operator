@@ -70,8 +70,7 @@ func getServicePorts(cr *v1alpha1.Grafana, currentState *v1.Service) []v1.Servic
 
 	// Re-assign existing node port
 	if cr.Spec.Service != nil &&
-		currentState != nil &&
-		cr.Spec.Service.Type == v1.ServiceTypeNodePort {
+		currentState != nil {
 		for _, port := range currentState.Spec.Ports {
 			if port.Name == GrafanaHttpPortName {
 				defaultPorts[0].NodePort = port.NodePort
