@@ -35,6 +35,13 @@ func getServiceType(cr *v1alpha1.Grafana) v1.ServiceType {
 	return cr.Spec.Service.Type
 }
 
+func getClusterIP(cr *v1alpha1.Grafana) string {
+	if cr.Spec.Service == nil {
+		return ""
+	}
+	return cr.Spec.Service.ClusterIP
+}
+
 func GetGrafanaPort(cr *v1alpha1.Grafana) int {
 	if cr.Spec.Config.Server == nil {
 		return GrafanaHttpPort
@@ -107,7 +114,7 @@ func GrafanaService(cr *v1alpha1.Grafana) *v1.Service {
 			Selector: map[string]string{
 				"app": GrafanaPodLabel,
 			},
-			ClusterIP: cr.Spec.Service.ClusterIP,
+			ClusterIP: getClusterIP(cr),
 			Type:      getServiceType(cr),
 		},
 	}
