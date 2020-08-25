@@ -240,7 +240,7 @@ func (r *ReconcileGrafana) getGrafanaAdminUrl(cr *grafanav1alpha1.Grafana, state
 	var servicePort = int32(model.GetGrafanaPort(cr))
 
 	// Otherwise rely on the service
-	if state.GrafanaService != nil && state.GrafanaService.Spec.ClusterIP != "" {
+	if state.GrafanaService != nil && state.GrafanaService.Spec.ClusterIP != "" && state.GrafanaService.Spec.ClusterIP != "None" {
 		return fmt.Sprintf("http://%v:%d", state.GrafanaService.Spec.ClusterIP,
 			servicePort), nil
 	} else if state.GrafanaService != nil {
