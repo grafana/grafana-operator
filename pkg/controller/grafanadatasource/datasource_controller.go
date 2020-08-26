@@ -3,12 +3,18 @@ package grafanadatasource
 import (
 	"context"
 	"crypto/md5"
+	defaultErrors "errors"
 	"fmt"
+	"io"
+	"sort"
+	"time"
+
 	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
-	"io"
+	"gopkg.in/yaml.v2"
+
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -22,8 +28,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"sort"
-	"time"
 )
 
 const (
@@ -32,6 +36,13 @@ const (
 )
 
 var log = logf.Log.WithName(ControllerName)
+
+// Data sources name list from CM.
+type cmDataSourceList struct {
+	Datasources []struct {
+		Name string `yaml:"name"`
+	} `yaml:"datasources"`
+}
 
 // Add creates a new GrafanaDataSource Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -118,9 +129,10 @@ type ReconcileGrafanaDataSource struct {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileGrafanaDataSource) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	client, err := r.getClient()
 	// Read the current state of known and cluster datasources
 	currentState := common.NewDataSourcesState()
-	err := currentState.Read(r.context, r.client, request.Namespace)
+	err = currentState.Read(r.context, r.client, request.Namespace)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -131,7 +143,7 @@ func (r *ReconcileGrafanaDataSource) Reconcile(request reconcile.Request) (recon
 	}
 
 	// Reconcile all data sources
-	err = r.reconcileDataSources(currentState)
+	err = r.reconcileDataSources(currentState, client)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -139,7 +151,7 @@ func (r *ReconcileGrafanaDataSource) Reconcile(request reconcile.Request) (recon
 	return reconcile.Result{Requeue: false}, nil
 }
 
-func (r *ReconcileGrafanaDataSource) reconcileDataSources(state *common.DataSourcesState) error {
+func (r *ReconcileGrafanaDataSource) reconcileDataSources(state *common.DataSourcesState, grafanaClient GrafanaClient) error {
 	var dataSourcesToAddOrUpdate []grafanav1alpha1.GrafanaDataSource
 	var dataSourcesToDelete []string
 
@@ -168,10 +180,22 @@ func (r *ReconcileGrafanaDataSource) reconcileDataSources(state *common.DataSour
 		}
 	}
 
-	// apply dataSourcesToDelete
+	// apply dataSources config maps to delete. Can be multiple data sources in CM
 	for _, ds := range dataSourcesToDelete {
-		log.Info(fmt.Sprintf("deleting datasource %v", ds))
+		log.Info(fmt.Sprintf("deleting datasource config map %v", ds))
 		if state.KnownDataSources.Data != nil {
+			dsList, err := r.fetchDataSourceNames(state.KnownDataSources, ds)
+			if err != nil {
+				log.Error(err, fmt.Sprintf("error fetching datasources name from CM %v %v", ds, err))
+				return err
+			}
+			for _, dsName := range dsList {
+				resp, err := grafanaClient.DeleteDataSourceByName(dsName)
+				if err != nil {
+					return defaultErrors.New(fmt.Sprintf(" %v error deleting datasource %v, ID %d message: %v",
+						err, dsName, resp.ID, resp.Message))
+				}
+			}
 			delete(state.KnownDataSources.Data, ds)
 		}
 	}
@@ -281,4 +305,41 @@ func (r *ReconcileGrafanaDataSource) manageSuccess(datasources []grafanav1alpha1
 			r.recorder.Event(&datasource, "Warning", "UpdateError", err.Error())
 		}
 	}
+}
+
+// Get an authenticated grafana API client
+func (r *ReconcileGrafanaDataSource) getClient() (GrafanaClient, error) {
+	url := r.state.AdminUrl
+	if url == "" {
+		return nil, defaultErrors.New("cannot get grafana admin url")
+	}
+
+	username := r.state.AdminUsername
+	if username == "" {
+		return nil, defaultErrors.New("invalid credentials (username)")
+	}
+
+	password := r.state.AdminPassword
+	if password == "" {
+		return nil, defaultErrors.New("invalid credentials (password)")
+	}
+
+	duration := time.Duration(r.state.ClientTimeout)
+	return NewGrafanaClient(url, username, password, duration), nil
+}
+
+func (r *ReconcileGrafanaDataSource) fetchDataSourceNames(dsCM *v1.ConfigMap, dsKey string) ([]string, error) {
+	dsNameList := make([]string, 0)
+	tmpCMList := cmDataSourceList{}
+
+	if dsYAML, ok := dsCM.Data[dsKey]; ok {
+		if err := yaml.Unmarshal([]byte(dsYAML), &tmpCMList); err != nil {
+			return dsNameList, err
+		}
+		for _, ds := range tmpCMList.Datasources {
+			dsNameList = append(dsNameList, ds.Name)
+		}
+	}
+
+	return dsNameList, nil
 }
