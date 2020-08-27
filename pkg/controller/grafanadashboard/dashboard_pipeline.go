@@ -95,7 +95,7 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string, folderId *int
 	return bytes.TrimSpace(raw), nil
 }
 
-// Make sure the dashboard safeToDelete valid JSON
+// Make sure the dashboard contains valid JSON
 func (r *DashboardPipelineImpl) validateJson() error {
 	contents, err := r.Dashboard.Parse(r.JSON)
 	r.Board = contents

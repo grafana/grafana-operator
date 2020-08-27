@@ -60,7 +60,8 @@ type GrafanaClient interface {
 	CreateOrUpdateDashboard(dashboard []byte, folderId int64, folderName string) (GrafanaResponse, error)
 	DeleteDashboardByUID(UID string) (GrafanaResponse, error)
 	CreateOrUpdateFolder(folderName string) (GrafanaFolderResponse, error)
-	DeleteFolder(dashboards []*v1alpha1.GrafanaDashboardRef, folderID *int64) error
+	DeleteFolder(folderID *int64) error
+	SafeToDelete(dashboards []*v1alpha1.GrafanaDashboardRef, folderID *int64) bool
 }
 
 type GrafanaClientImpl struct {
@@ -371,10 +372,7 @@ func (r *GrafanaClientImpl) getFolderUID(IDInput *int64) (*string, error) {
 	return &response.UID, nil
 }
 
-func (r *GrafanaClientImpl) DeleteFolder(dashboards []*v1alpha1.GrafanaDashboardRef, deleteID *int64) error {
-	if safe := r.safeToDelete(dashboards, deleteID); !safe {
-		return fmt.Errorf("folder cannot be deleted as it's being used by other dashboards")
-	}
+func (r *GrafanaClientImpl) DeleteFolder(deleteID *int64) error {
 
 	deleteUID, err := r.getFolderUID(deleteID)
 	if err != nil {
@@ -421,7 +419,7 @@ func (r *GrafanaClientImpl) DeleteFolder(dashboards []*v1alpha1.GrafanaDashboard
 	return err
 }
 
-func (r *GrafanaClientImpl) safeToDelete(dashlist []*v1alpha1.GrafanaDashboardRef, id *int64) bool {
+func (r *GrafanaClientImpl) SafeToDelete(dashlist []*v1alpha1.GrafanaDashboardRef, id *int64) bool {
 	for _, dashboard := range dashlist {
 		if *dashboard.FolderId == *id {
 			return false

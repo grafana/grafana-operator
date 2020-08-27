@@ -313,13 +313,17 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 			// to the Grafana CR by the grafana controller
 			r.config.AddConfigItem(config.ConfigGrafanaDashboardsSynced, true)
 
-			// Refresh the list of known dashboards after removal
+			// Refresh the list of known dashboards after the dashboard has been removed
 			knownDashboards = r.config.GetDashboards(request.Namespace)
 
 			// Check for empty managed folders (namespace-named) and delete obsolete ones
-			if dashboard.FolderName == "" {
-				if err = grafanaClient.DeleteFolder(knownDashboards, dashboard.FolderId); err != nil {
-					log.Error(err, fmt.Sprintf("delete folder %v failed", dashboard.FolderId))
+			if dashboard.FolderName == "" || dashboard.FolderName == dashboard.Namespace {
+				if safe := grafanaClient.SafeToDelete(knownDashboards, dashboard.FolderId); !safe {
+					log.Info("folder cannot be deleted as it's being used by other dashboards")
+					break
+				}
+				if err = grafanaClient.DeleteFolder(dashboard.FolderId); err != nil {
+					log.Error(err, fmt.Sprintf("delete folder %v failed", *dashboard.FolderId))
 				}
 			}
 		}
