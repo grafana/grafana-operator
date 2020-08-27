@@ -81,16 +81,19 @@ func (c *ControllerConfig) RemovePluginsFor(namespace, name string) {
 	}
 }
 
-func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard) {
+func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard, folderId *int64, folderName string) {
+
 	ns := dashboard.Namespace
 	if i, exists := c.HasDashboard(ns, dashboard.Name); !exists {
 		c.Lock()
 		defer c.Unlock()
 		c.Dashboards[ns] = append(c.Dashboards[ns], &v1alpha1.GrafanaDashboardRef{
-			Name:      dashboard.Name,
-			Namespace: ns,
-			UID:       dashboard.UID(),
-			Hash:      dashboard.Hash(),
+			Name:       dashboard.Name,
+			Namespace:  ns,
+			UID:        dashboard.UID(),
+			Hash:       dashboard.Hash(),
+			FolderId:   folderId,
+			FolderName: dashboard.Spec.CustomFolderName,
 		})
 	} else {
 		c.Lock()
@@ -98,6 +101,9 @@ func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard) {
 		c.Dashboards[ns][i].Namespace = ns
 		c.Dashboards[ns][i].UID = dashboard.UID()
 		c.Dashboards[ns][i].Hash = dashboard.Hash()
+		c.Dashboards[ns][i].FolderId = folderId
+		c.Dashboards[ns][i].FolderName = folderName
+
 	}
 }
 
