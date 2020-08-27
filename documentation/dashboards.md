@@ -14,7 +14,9 @@ The following properties are accepted in the `spec`:
 * *url*: Url address to download a json or jsonnet string with the dashboard contents. This will take priority over the json field in case the download is successful.
 * *plugins*: A list of plugins required by the dashboard. They will be installed by the operator if not already present.
 * *datasources*: A list of datasources to be used as inputs. See [datasource inputs](#datasource-inputs).
-* *configMapRef*: Import dashboards from config maps. See [config map refreences](#config-map-references).    
+* *configMapRef*: Import dashboards from config maps. See [config map refreences](#config-map-references).
+* *CustomFolderName*: Assign this dashboard to a custom folder, if no folder with this name exists on the instance, then a new one will be created. 
+  * _Note_: Folders with custom names are not managed by the operator, by purposeful design they won't be deleted when empty, deletion for these requires manual intervention.
 
 ## Creating a new dashboard
 
@@ -138,3 +140,25 @@ spec:
     key: <key of the entry containing the json contents>
 ...
 ```
+## Dashboard Folder Support
+Due to the fact that the operator now supports the discovery of cluster-wide dashboards. 
+
+
+### Managed folders
+By default if no `CustomFolderName` Spec field value is defined in the yaml of the dashboard (or if the CustomFolderName field is an empty string `""`) then the dashboard will be assigned 
+to the namespaced-named folder matching the namespace into which the dashboard was deployed, i.e if deployed to `test-ns` then a new folder (if one with that name doesn't exist already) will be created and named `test-ns` and
+the dashboard assigned to it.
+
+Default assignment of the dashboards to namespace-named folders is consider as a _managed folder_, this means that when a managed folder has no dashboards assigned to it, it will be deleted to clean up the UI.
+
+### Unmanaged folders
+When defining `customFolderName` in a dashboard, the resulting folder will be named as the string in this field specifies, this is considered as an _unmanaged folder_ and won't be deleted even if empty and will remain
+on the UI. 
+Custom folders can have multiple dashboards assigned to them.
+
+_Note_ : Deletion of unmanaged folders requires manual intervention.
+
+![dashboard-folder-assignment.svg](./resources/dashboard-folder-assignment.svg)
+
+
+ 
