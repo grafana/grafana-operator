@@ -67,7 +67,7 @@ func getServicePorts(cr *v1alpha1.Grafana, currentState *v1.Service) []v1.Servic
 			Name:       GrafanaHttpPortName,
 			Protocol:   "TCP",
 			Port:       intPort,
-			TargetPort: intstr.FromString("grafana-http"),
+			TargetPort: intstr.FromInt(GetGrafanaPort(cr)),
 		},
 	}
 
