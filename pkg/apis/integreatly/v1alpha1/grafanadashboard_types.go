@@ -20,6 +20,7 @@ type GrafanaDashboardSpec struct {
 	Url          string                       `json:"url,omitempty"`
 	ConfigMapRef *corev1.ConfigMapKeySelector `json:"configMapRef,omitempty"`
 	Datasources  []GrafanaDashboardDatasource `json:"datasources,omitempty"`
+	Environment  string                       `json:"environment,omitempty"`
 }
 
 type GrafanaDashboardDatasource struct {

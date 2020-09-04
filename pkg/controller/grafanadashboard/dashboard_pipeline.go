@@ -7,15 +7,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-logr/logr"
-	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"io/ioutil"
-	corev1 "k8s.io/api/core/v1"
 	"net/http"
 	"net/url"
+	"strings"
+
+	"github.com/go-logr/logr"
+	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
-	"strings"
 )
 
 type DashboardPipeline interface {
@@ -94,6 +95,16 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string) ([]byte, erro
 func (r *DashboardPipelineImpl) validateJson() error {
 	dashboardBytes := []byte(r.JSON)
 	dashboardBytes, err := r.fixAnnotations(dashboardBytes)
+	if err != nil {
+		return err
+	}
+
+	dashboardBytes, err = r.addEnvToMessage(dashboardBytes)
+	if err != nil {
+		return err
+	}
+
+	dashboardBytes, err = r.addEnvToDedupkey(dashboardBytes)
 	if err != nil {
 		return err
 	}
@@ -269,6 +280,83 @@ func (r *DashboardPipelineImpl) fixHeights(dashboardBytes []byte) ([]byte, error
 			rawPanel := panel.(map[string]interface{})
 			if rawPanel["height"] != nil {
 				rawPanel["height"] = fmt.Sprintf("%v", rawPanel["height"])
+			}
+		}
+	}
+
+	dashboardBytes, err = json.Marshal(raw)
+	if err != nil {
+		return nil, err
+	}
+
+	return dashboardBytes, nil
+}
+
+// add cluster env to alert message
+func (r *DashboardPipelineImpl) addEnvToMessage(dashboardBytes []byte) ([]byte, error) {
+	if r.Dashboard.Spec.Environment == "" {
+		return dashboardBytes, nil
+	}
+
+	raw := map[string]interface{}{}
+	err := json.Unmarshal(dashboardBytes, &raw)
+	if err != nil {
+		return nil, err
+	}
+
+	if raw != nil && raw["panels"] != nil {
+		panelList, ok := raw["panels"].([]interface{})
+		if panelList != nil && ok{
+			for _, p := range panelList {
+				panel, ok := p.(map[string]interface{})
+				if panel != nil && panel["alert"] != nil && ok{
+					alert, ok := panel["alert"].(map[string]interface{})
+					if alert != nil && alert["message"] != nil && ok {
+						message := alert["message"].(string)
+						alert["message"] = r.Dashboard.Spec.Environment + " " + message
+						r.Logger.Info(fmt.Sprintf("updating alert message %v", alert["message"]))
+					}
+				}
+			}
+		}
+	}
+
+	dashboardBytes, err = json.Marshal(raw)
+	if err != nil {
+		return nil, err
+	}
+
+	return dashboardBytes, nil
+}
+
+// add cluster env to PD dedupkey
+func (r *DashboardPipelineImpl) addEnvToDedupkey(dashboardBytes []byte) ([]byte, error) {
+	if r.Dashboard.Spec.Environment == "" {
+		return dashboardBytes, nil
+	}
+
+	raw := map[string]interface{}{}
+	err := json.Unmarshal(dashboardBytes, &raw)
+	if err != nil {
+		return nil, err
+	}
+
+	if raw != nil && raw["panels"] != nil {
+		panelList, ok := raw["panels"].([]interface{})
+		if panelList != nil && ok{
+			for _, p := range panelList {
+				panel, ok := p.(map[string]interface{})
+				if panel != nil && panel["alert"] != nil && ok{
+					alert, ok := panel["alert"].(map[string]interface{})
+					if alert != nil && alert["alertRuleTags"] != nil && ok{
+						tags, ok := alert["alertRuleTags"].(map[string]interface{})
+						if tags != nil && tags["dedup_key"] != nil && ok {
+							dedupKey := tags["dedup_key"].(string)
+							tags["dedup_key"] = r.Dashboard.Spec.Environment + "-" + dedupKey
+							r.Logger.Info(fmt.Sprintf("updating dedup key %v", tags["dedup_key"]))
+						}
+					}
+				}
 			}
 		}
 	}

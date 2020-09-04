@@ -11,13 +11,14 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"./pkg/apis/integreatly/v1alpha1.Grafana":                 schema_pkg_apis_integreatly_v1alpha1_Grafana(ref),
-		"./pkg/apis/integreatly/v1alpha1.GrafanaDashboard":        schema_pkg_apis_integreatly_v1alpha1_GrafanaDashboard(ref),
-		"./pkg/apis/integreatly/v1alpha1.GrafanaDataSource":       schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSource(ref),
-		"./pkg/apis/integreatly/v1alpha1.GrafanaDataSourceSpec":   schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSourceSpec(ref),
-		"./pkg/apis/integreatly/v1alpha1.GrafanaDataSourceStatus": schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSourceStatus(ref),
-		"./pkg/apis/integreatly/v1alpha1.GrafanaSpec":             schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref),
-		"./pkg/apis/integreatly/v1alpha1.GrafanaStatus":           schema_pkg_apis_integreatly_v1alpha1_GrafanaStatus(ref),
+		"github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.Grafana":                    schema_pkg_apis_integreatly_v1alpha1_Grafana(ref),
+		"github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDashboard":           schema_pkg_apis_integreatly_v1alpha1_GrafanaDashboard(ref),
+		"github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDataSource":          schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSource(ref),
+		"github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDataSourceSpec":      schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSourceSpec(ref),
+		"github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDataSourceStatus":    schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSourceStatus(ref),
+		"github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaNotificationChannel": schema_pkg_apis_integreatly_v1alpha1_GrafanaNotificationChannel(ref),
+		"github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaSpec":                schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref),
+		"github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaStatus":              schema_pkg_apis_integreatly_v1alpha1_GrafanaStatus(ref),
 	}
 }
 
@@ -30,14 +31,14 @@ func schema_pkg_apis_integreatly_v1alpha1_Grafana(ref common.ReferenceCallback) 
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds",
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"apiVersion": {
 						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -49,19 +50,19 @@ func schema_pkg_apis_integreatly_v1alpha1_Grafana(ref common.ReferenceCallback) 
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaSpec"),
+							Ref: ref("github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaStatus"),
+							Ref: ref("github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/integreatly/v1alpha1.GrafanaSpec", "./pkg/apis/integreatly/v1alpha1.GrafanaStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaSpec", "github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -74,14 +75,14 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaDashboard(ref common.ReferenceC
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds",
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"apiVersion": {
 						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -93,19 +94,19 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaDashboard(ref common.ReferenceC
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaDashboardSpec"),
+							Ref: ref("github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDashboardSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaDashboardStatus"),
+							Ref: ref("github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDashboardStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/integreatly/v1alpha1.GrafanaDashboardSpec", "./pkg/apis/integreatly/v1alpha1.GrafanaDashboardStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDashboardSpec", "github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDashboardStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -118,14 +119,14 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSource(ref common.Reference
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds",
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"apiVersion": {
 						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -137,19 +138,19 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSource(ref common.Reference
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaDataSourceSpec"),
+							Ref: ref("github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDataSourceSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaDataSourceStatus"),
+							Ref: ref("github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDataSourceStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/integreatly/v1alpha1.GrafanaDataSourceSpec", "./pkg/apis/integreatly/v1alpha1.GrafanaDataSourceStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDataSourceSpec", "github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDataSourceStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -167,7 +168,7 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSourceSpec(ref common.Refer
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaDataSourceFields"),
+										Ref: ref("github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDataSourceFields"),
 									},
 								},
 							},
@@ -184,7 +185,7 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaDataSourceSpec(ref common.Refer
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/integreatly/v1alpha1.GrafanaDataSourceFields"},
+			"github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDataSourceFields"},
 	}
 }
 
@@ -218,7 +219,7 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaNotificationChannel(ref common.
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "GrafanaNotificationChannel is the Schema for the grafananotificationchannels API",
+				Description: "GrafanaNotificationChannel is the Schema for the GrafanaNotificationChannels API",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
@@ -258,28 +259,6 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaNotificationChannel(ref common.
 	}
 }
 
-func schema_pkg_apis_integreatly_v1alpha1_GrafanaNotificationChannelSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "GrafanaNotificationChannelSpec defines the desired state of GrafanaNotificationChannel",
-				Type:        []string{"object"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_integreatly_v1alpha1_GrafanaNotificationChannelStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "GrafanaNotificationChannelStatus defines the observed state of GrafanaNotificationChannel",
-				Type:        []string{"object"},
-			},
-		},
-	}
-}
-
 func schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -289,7 +268,7 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref common.ReferenceCallba
 				Properties: map[string]spec.Schema{
 					"config": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaConfig"),
+							Ref: ref("github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaConfig"),
 						},
 					},
 					"containers": {
@@ -318,7 +297,7 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref common.ReferenceCallba
 					},
 					"ingress": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaIngress"),
+							Ref: ref("github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaIngress"),
 						},
 					},
 					"secrets": {
@@ -349,12 +328,12 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref common.ReferenceCallba
 					},
 					"service": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaService"),
+							Ref: ref("github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaService"),
 						},
 					},
 					"deployment": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaDeployment"),
+							Ref: ref("github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDeployment"),
 						},
 					},
 					"resources": {
@@ -364,12 +343,12 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref common.ReferenceCallba
 					},
 					"serviceAccount": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaServiceAccount"),
+							Ref: ref("github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaServiceAccount"),
 						},
 					},
 					"client": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaClient"),
+							Ref: ref("github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaClient"),
 						},
 					},
 					"compat": {
@@ -377,12 +356,17 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref common.ReferenceCallba
 							Ref: ref("github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaCompat"),
 						},
 					},
+					"dbpasswordref": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/api/core/v1.SecretKeySelector"),
+						},
+					},
 				},
 				Required: []string{"config", "compat"},
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/integreatly/v1alpha1.GrafanaClient", "./pkg/apis/integreatly/v1alpha1.GrafanaConfig", "./pkg/apis/integreatly/v1alpha1.GrafanaDeployment", "./pkg/apis/integreatly/v1alpha1.GrafanaIngress", "./pkg/apis/integreatly/v1alpha1.GrafanaService", "./pkg/apis/integreatly/v1alpha1.GrafanaServiceAccount", "k8s.io/api/core/v1.Container", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector"},
+			"github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaClient", "github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaCompat", "github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaConfig", "github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDeployment", "github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaIngress", "github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaService", "github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaServiceAccount", "k8s.io/api/core/v1.Container", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.SecretKeySelector", "k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector"},
 	}
 }
 
@@ -416,7 +400,7 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaStatus(ref common.ReferenceCall
 										Items: &spec.SchemaOrArray{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
-													Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaDashboardRef"),
+													Ref: ref("github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDashboardRef"),
 												},
 											},
 										},
@@ -431,7 +415,7 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaStatus(ref common.ReferenceCall
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaPlugin"),
+										Ref: ref("github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaPlugin"),
 									},
 								},
 							},
@@ -443,7 +427,7 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaStatus(ref common.ReferenceCall
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("./pkg/apis/integreatly/v1alpha1.GrafanaPlugin"),
+										Ref: ref("github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaPlugin"),
 									},
 								},
 							},
@@ -466,6 +450,6 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaStatus(ref common.ReferenceCall
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/integreatly/v1alpha1.GrafanaDashboardRef", "./pkg/apis/integreatly/v1alpha1.GrafanaPlugin"},
+			"github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaDashboardRef", "github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaPlugin"},
 	}
 }

@@ -6,6 +6,7 @@ metadata:
     app: grafana
 spec:
   name: simple-dashboard.json
+  environment: sample-environment
   json: >
     {
       "id": null,

@@ -30,6 +30,8 @@ spec:
               items:
                 description: Input datasources to resolve before importing
                 type: object
+            environment:
+              type: string
             plugins:
               type: array
               items:
