@@ -158,7 +158,7 @@ func (r *DashboardPipelineImpl) generateHash() string {
 	}
 
 	return fmt.Sprintf("%x", md5.Sum([]byte(
-		r.Dashboard.Spec.Json+r.Dashboard.Spec.Url+datasources.String())))
+		r.Dashboard.Spec.Json+r.Dashboard.Spec.Url+datasources.String()+r.Dashboard.Spec.Environment)))
 }
 
 // Try to obtain the dashboard json from a provided url
@@ -306,10 +306,10 @@ func (r *DashboardPipelineImpl) addEnvToMessage(dashboardBytes []byte) ([]byte, 
 
 	if raw != nil && raw["panels"] != nil {
 		panelList, ok := raw["panels"].([]interface{})
-		if panelList != nil && ok{
+		if panelList != nil && ok {
 			for _, p := range panelList {
 				panel, ok := p.(map[string]interface{})
-				if panel != nil && panel["alert"] != nil && ok{
+				if panel != nil && panel["alert"] != nil && ok {
 					alert, ok := panel["alert"].(map[string]interface{})
 					if alert != nil && alert["message"] != nil && ok {
 						message := alert["message"].(string)
@@ -343,12 +343,12 @@ func (r *DashboardPipelineImpl) addEnvToDedupkey(dashboardBytes []byte) ([]byte,
 
 	if raw != nil && raw["panels"] != nil {
 		panelList, ok := raw["panels"].([]interface{})
-		if panelList != nil && ok{
+		if panelList != nil && ok {
 			for _, p := range panelList {
 				panel, ok := p.(map[string]interface{})
-				if panel != nil && panel["alert"] != nil && ok{
+				if panel != nil && panel["alert"] != nil && ok {
 					alert, ok := panel["alert"].(map[string]interface{})
-					if alert != nil && alert["alertRuleTags"] != nil && ok{
+					if alert != nil && alert["alertRuleTags"] != nil && ok {
 						tags, ok := alert["alertRuleTags"].(map[string]interface{})
 						if tags != nil && tags["dedup_key"] != nil && ok {
 							dedupKey := tags["dedup_key"].(string)
