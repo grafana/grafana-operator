@@ -2,7 +2,7 @@ FROM alpine:3.8
 
 RUN apk upgrade --update --no-cache
 
-RUN mkdir -p /opt/jsonnet/grafonnet-lib
+RUN mkdir -p /opt/jsonnet && chown nobody /opt/jsonnet
 
 USER nobody
 
