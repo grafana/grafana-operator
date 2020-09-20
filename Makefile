@@ -7,12 +7,6 @@ TAG?=latest
 PKG=github.com/integr8ly/grafana-operator
 COMPILE_TARGET=./tmp/_output/bin/$(PROJECT)
 
-.PHONY: setup/dep
-setup/dep:
-	@echo Installing dep
-	curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-	@echo setup complete
-
 .PHONY: setup/travis
 setup/travis:
 	@echo Installing Operator SDK
@@ -40,8 +34,6 @@ code/fix:
 
 .PHONY: image/build
 image/build: code/compile
-	@-rm -rf grafonnet-lib
-	@git clone --branch v0.0.1 https://github.com/grafana/grafonnet-lib.git
 	@operator-sdk build ${REG}/${ORG}/${PROJECT}:${TAG}
 
 .PHONY: image/push
@@ -72,7 +64,7 @@ cluster/prepare/local: cluster/prepare/local/file
 	kubectl apply -f deploy/cluster_roles
 	kubectl apply -f deploy/examples/Grafana.yaml -n ${NAMESPACE}
 
-.PHONY: cluster/cleanup	
+.PHONY: cluster/cleanup
 cluster/cleanup: operator/stop
 	-kubectl delete deployment grafana-deployment -n ${NAMESPACE}
 	-kubectl delete namespace ${NAMESPACE}
