@@ -28,8 +28,29 @@ It can deploy and manage a Grafana instance on Kubernetes and OpenShift. The fol
 
 * Install Grafana to a namespace
 * Import Grafana dashboards from the same or other namespaces
+* Assign Grafana dashboards to custom or namespace-named grafana folders
 * Import Grafana datasources from the same namespace
 * Install Plugins (panels) defined as dependencies of dashboards 
+
+# Summary of benefits
+A list of benefits of using the operator over a single grafana deployment.
+
+[The benefits of using an operator over standalone products as outlined by the people that created them](https://operatorframework.io/) 
+
+Grafana-operator specific benefits over standalone Grafana:
+
+* The ability to configure and manage grafana deployments using kubernetes resources such as CRDs,configMaps etc
+* Incoming changes to allow for multi-namespace support for the operator, meaning that just one instance of the operator can manage every instance of grafana on the cluster!
+* Reducing the need for manual steps, allowing for quicker setups for things such as (and not limited to):
+    * Ingresses
+    * Grafana product versions
+    * Grafana dashboard plugins
+    * many others!
+* Manage dashboards more efficiently through jsonnet, plugins and folder assignment, which can all be done through .yamls!
+* Periodical reconciliation of resources, ensuring that the desired state is maintained, so nothing will be broken for too long
+
+
+
 
 # Operator flags
 
