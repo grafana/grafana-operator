@@ -14,6 +14,7 @@
 - [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
 
 ## Checklist
+<!-- Tick options that apply, in-code tests are not required but please provide test cases and list steps in "verification steps" with the steps you used to verify this -->
 - [ ] This change requires a documentation update 
 - [ ] I have added tests that prove my fix is effective or that my feature works
 - [ ] I have added a test case that will be used to verify my changes 
