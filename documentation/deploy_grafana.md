@@ -9,7 +9,12 @@ The first step is to install the Grafana operator to a namespace in your cluster
 There are two options for this procedure, automated via Ansible, or manually running kubectl/oc commands.
 
 ### Deploy an example grafana instance and operator
-Run `make operator/deploy` This uses the default operator.yaml and Grafana.yaml resources found in the `deploy` directories and subdirectories.
+
+Run `make operator/deploy` To deploy the latest released image of the operator, This uses the default operator.yaml and Grafana.yaml resources found in the `deploy` directories and subdirectories.
+
+***Warning:*** The following make recipe uses the latest master Image. It should only be used for testing, for production please use the tagged releases.
+
+Run `make operator/deploy/master` to deploy the image from the master branch of the operator.
 
 ### Automated Procedure
 
