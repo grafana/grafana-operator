@@ -77,10 +77,17 @@ cluster/cleanup: operator/stop
 	-kubectl delete deployment grafana-deployment -n ${NAMESPACE}
 	-kubectl delete namespace ${NAMESPACE}
 
+## Deploy the latest tagged release
 .PHONY: operator/deploy
 operator/deploy: cluster/prepare/local
 	kubectl apply -f deploy/operator.yaml -n ${NAMESPACE}
-	@git checkout -- .
+	@git checkout -- deploy/cluster_roles/cluster_role_binding_grafana_operator.yaml
+
+## Deploy the latest master image
+.PHONY: operator/deploy/master
+operator/deploy/master: cluster/prepare/local
+	kubectl apply -f deploy/operatorMasterImage.yaml -n ${NAMESPACE}
+	@git checkout -- deploy/cluster_roles/cluster_role_binding_grafana_operator.yaml
 
 .PHONY: operator/stop
 operator/stop:
