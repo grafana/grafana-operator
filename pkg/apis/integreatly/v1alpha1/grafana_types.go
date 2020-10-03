@@ -81,6 +81,8 @@ type GrafanaDeployment struct {
 	SecurityContext               *v1.PodSecurityContext `json:"securityContext,omitempty"`
 	ContainerSecurityContext      *v1.SecurityContext    `json:"containerSecurityContext,omitempty"`
 	TerminationGracePeriodSeconds int64                  `json:"terminationGracePeriodSeconds"`
+	EnvFrom                       []v1.EnvFromSource     `json:"envFrom,omitempty"`
+	SkipCreateAdminAccount        *bool                  `json:"skipCreateAdminAccount,omitempty"`
 }
 
 // GrafanaIngress provides a means to configure the ingress created

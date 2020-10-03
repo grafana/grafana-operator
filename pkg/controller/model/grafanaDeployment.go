@@ -24,6 +24,14 @@ const (
 	CpuLimit          = "500m"
 )
 
+func getSkipCreateAdminAccount(cr *v1alpha1.Grafana) bool {
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.SkipCreateAdminAccount != nil {
+		return *cr.Spec.Deployment.SkipCreateAdminAccount
+	}
+
+	return false
+}
+
 func getInitResources(cr *v1alpha1.Grafana) v13.ResourceRequirements {
 	if cr.Spec.InitResources != nil {
 		return *cr.Spec.InitResources
@@ -247,6 +255,16 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume {
 	return volumes
 }
 
+func getEnvFrom(cr *v1alpha1.Grafana) []v13.EnvFromSource {
+	var envFrom []v13.EnvFromSource
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.EnvFrom != nil {
+		for _, v := range cr.Spec.Deployment.EnvFrom {
+			envFrom = append(envFrom, *v.DeepCopy())
+		}
+	}
+	return envFrom
+}
+
 // Don't add grafana specific volume mounts to extra containers and preserve
 // pre existing ones
 func getExtraContainerVolumeMounts(cr *v1alpha1.Grafana, mounts []v13.VolumeMount) []v13.VolumeMount {
@@ -373,29 +391,8 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 				Name:  LastDatasourcesConfigEnvVar,
 				Value: dsHash,
 			},
-			{
-				Name: GrafanaAdminUserEnvVar,
-				ValueFrom: &v13.EnvVarSource{
-					SecretKeyRef: &v13.SecretKeySelector{
-						LocalObjectReference: v13.LocalObjectReference{
-							Name: GrafanaAdminSecretName,
-						},
-						Key: GrafanaAdminUserEnvVar,
-					},
-				},
-			},
-			{
-				Name: GrafanaAdminPasswordEnvVar,
-				ValueFrom: &v13.EnvVarSource{
-					SecretKeyRef: &v13.SecretKeySelector{
-						LocalObjectReference: v13.LocalObjectReference{
-							Name: GrafanaAdminSecretName,
-						},
-						Key: GrafanaAdminPasswordEnvVar,
-					},
-				},
-			},
 		},
+		EnvFrom:                  getEnvFrom(cr),
 		Resources:                getResources(cr),
 		VolumeMounts:             getVolumeMounts(cr),
 		LivenessProbe:            getProbe(cr, 60, 30, 10),
@@ -405,6 +402,33 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 		ImagePullPolicy:          "IfNotPresent",
 		SecurityContext:          getContainerSecurityContext(cr),
 	})
+
+	// Use auto generated admin account?
+	if getSkipCreateAdminAccount(cr) == false {
+		for i := 0; i < len(containers); i++ {
+			containers[i].Env = append(containers[i].Env, v13.EnvVar{
+				Name: GrafanaAdminUserEnvVar,
+				ValueFrom: &v13.EnvVarSource{
+					SecretKeyRef: &v13.SecretKeySelector{
+						LocalObjectReference: v13.LocalObjectReference{
+							Name: GrafanaAdminSecretName,
+						},
+						Key: GrafanaAdminUserEnvVar,
+					},
+				},
+			})
+			containers[i].Env = append(containers[i].Env, v13.EnvVar{
+				Name: GrafanaAdminPasswordEnvVar,
+				ValueFrom: &v13.EnvVarSource{
+					SecretKeyRef: &v13.SecretKeySelector{
+						LocalObjectReference: v13.LocalObjectReference{
+							Name: GrafanaAdminSecretName,
+						},
+						Key: GrafanaAdminPasswordEnvVar,
+					},
+				}})
+		}
+	}
 
 	// Add extra containers
 	for _, container := range cr.Spec.Containers {

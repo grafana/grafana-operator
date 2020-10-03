@@ -115,6 +115,12 @@ spec:
                 affinity:
                   type: object
                   description: Additonal labels for running grafana pods with affinity properties.
+                envFrom:
+                  type: array
+                  description: Environment variables from Secret or ConfigMap.
+                skipCreateAdminAccount:
+                  type: boolean
+                  description: Disable creating a random admin user
             serviceAccount:
               type: object
               properties:
