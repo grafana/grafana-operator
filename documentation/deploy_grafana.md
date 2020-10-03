@@ -228,25 +228,27 @@ Various properties of the Deployment can be configured:
 ```yaml
 spec:
   deployment:
-    labels:                   # Additional labels for the Deployment
+    labels:                         # Additional labels for the Deployment
       app: grafana
       ...
-    annotations:              # Additional annotations for the Deployment
+    annotations:                    # Additional annotations for the Deployment
       app: grafana
       ...
-    replicas: <Number>        # Number of replicas. If more than one is selected, a shared database should be configured.
+    replicas: <Number>              # Number of replicas. If more than one is selected, a shared database should be configured.
     nodeSelector: 
-      app: grafana            # Assign grafana pods to a run on specific nodes.
+      app: grafana                  # Assign grafana pods to a run on specific nodes.
       ...
-    tolerations:              # Run grafana pods on tainted nodes.
+    tolerations:                    # Run grafana pods on tainted nodes.
     ...
-    affinity:                 # Affinity parameters shall support node, pod affinity and anti-affinity usecases.
+    affinity:                       # Affinity parameters shall support node, pod affinity and anti-affinity usecases.
     ...
-    securityContext:          # Run grafana pods with pod security context
+    securityContext:                # Run grafana pods with pod security context
     ...
-    containerSecurityContext: # Run grafana pods with container security context
+    containerSecurityContext:       # Run grafana pods with container security context
     ...
-    envFrom:                  # Environment variables from Secret or ConfigMap. The key of data becomes the env name.
+    envFrom:                        # Environment variables from Secret or ConfigMap. The key of data becomes the env name.
+    ...
+    skipCreateAdminAccount: <bool>  # Skip creating the admin account when providing custom credentials from a secret
 ```
 
 NOTE: Some key's are common to both in securityContext and containerSecurityContext, in that case containerSecurityContext has precendence over securityContext.

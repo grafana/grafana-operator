@@ -19,6 +19,7 @@ The following example CRs are provided:
 * [oauth/Grafana.yaml](../deploy/examples/oauth/Grafana.yaml): Installs Grafana and enable OAuth authentication using the OpenShift OAuthProxy. 
 * [ha/Grafana.yaml](../deploy/examples/oauth/Grafana.yaml): Installs Grafana in high availability mode with Postgres as a database. 
 * [persistentvolume/Grafana.yaml](../deploy/examples/persistentvolume/Grafana.yaml): Installs Grafana but provides a dedicated PVC for the database.
+* [env/Grafana.yaml](../deploy/examples/env/Grafana.yaml): Shows how to provide env vars including admin credentials from a secret.
 
 ### Dashboards
 
