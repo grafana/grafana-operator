@@ -200,6 +200,10 @@ func (i *GrafanaReconciler) getGrafanaExternalAccessDesiredState(state *common.C
 }
 
 func (i *GrafanaReconciler) getGrafanaAdminUserSecretDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.SkipCreateAdminAccount != nil && *cr.Spec.Deployment.SkipCreateAdminAccount {
+		return nil
+	}
+
 	if state.AdminSecret == nil {
 		return common.GenericCreateAction{
 			Ref: model.AdminSecret(cr),

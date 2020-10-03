@@ -1427,6 +1427,11 @@ func (in *GrafanaDeployment) DeepCopyInto(out *GrafanaDeployment) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.SkipCreateAdminAccount != nil {
+		in, out := &in.SkipCreateAdminAccount, &out.SkipCreateAdminAccount
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 

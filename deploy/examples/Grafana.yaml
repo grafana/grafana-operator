@@ -9,9 +9,6 @@ spec:
     log:
       mode: "console"
       level: "warn"
-    security:
-      admin_user: "root"
-      admin_password: "secret"
     auth:
       disable_login_form: False
       disable_signout_menu: True
