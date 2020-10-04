@@ -47,6 +47,7 @@ func (i *GrafanaReconciler) Reconcile(state *common.ClusterState, cr *v1alpha1.G
 	// Reconcile the deployment last because it depends on the configuration
 	// and plugins list computed in previous steps
 	desired = desired.AddAction(i.getGrafanaDeploymentDesiredState(state, cr))
+	desired = desired.AddActions(i.getEnvVarsDesiredState(state, cr))
 
 	// Check Deployment and Route readiness
 	desired = desired.AddActions(i.getGrafanaReadiness(state, cr))
@@ -255,6 +256,42 @@ func (i *GrafanaReconciler) getGrafanaDeploymentDesiredState(state *common.Clust
 			i.ConfigHash, i.PluginsEnv, i.DsHash),
 		Msg: "update grafana deployment",
 	}
+}
+
+func (i *GrafanaReconciler) getEnvVarsDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) []common.ClusterAction {
+	if state.GrafanaDeployment == nil {
+		return nil
+	}
+
+	// Don't look for external admin credentials if the operator created an account
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.SkipCreateAdminAccount != nil && *cr.Spec.Deployment.SkipCreateAdminAccount == false {
+		return nil
+	}
+
+	var actions []common.ClusterAction
+
+	for _, container := range state.GrafanaDeployment.Spec.Template.Spec.Containers {
+		if container.Name != "grafana" {
+			continue
+		}
+		for _, source := range container.EnvFrom {
+			if source.ConfigMapRef != nil && source.ConfigMapRef.Name != "" {
+				actions = append(actions, common.ExposeConfigMapEnvVarAction{
+					Ref:       source.ConfigMapRef,
+					Namespace: cr.Namespace,
+					Msg:       fmt.Sprintf("looking for admin credentials in config map %s", source.ConfigMapRef.Name),
+				})
+			} else if source.SecretRef != nil && source.SecretRef.Name != "" {
+				actions = append(actions, common.ExposeSecretEnvVarAction{
+					Ref:       source.SecretRef,
+					Namespace: cr.Namespace,
+					Msg:       fmt.Sprintf("looking for admin credentials in secret %s", source.SecretRef.Name),
+				})
+			}
+		}
+	}
+
+	return actions
 }
 
 func (i *GrafanaReconciler) getGrafanaPluginsDesiredState(cr *v1alpha1.Grafana) common.ClusterAction {
