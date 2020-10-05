@@ -5,12 +5,15 @@ import (
 	stdErr "errors"
 	"fmt"
 	"github.com/go-logr/logr"
+	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
 	v13 "github.com/openshift/api/route/v1"
 	v12 "k8s.io/api/apps/v1"
+	v14 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -21,6 +24,8 @@ type ActionRunner interface {
 	create(obj runtime.Object) error
 	update(obj runtime.Object) error
 	delete(obj runtime.Object) error
+	exposeSecret(ns string, ref *v14.SecretEnvSource, vars []string) error
+	exposeConfigMap(ns string, ref *v14.ConfigMapEnvSource, vars []string) error
 	routeReady(obj runtime.Object) error
 	ingressReady(obj runtime.Object) error
 	deploymentReady(obj runtime.Object) error
@@ -76,6 +81,52 @@ func (i *ClusterActionRunner) RunAll(desiredState DesiredClusterState) error {
 		i.log.Info(fmt.Sprintf("(%5d) %10s %s", index, "SUCCESS", msg))
 	}
 
+	return nil
+}
+
+func (i *ClusterActionRunner) exposeSecret(ns string, ref *v14.SecretEnvSource, vars []string) error {
+	secret := v14.Secret{}
+	key := client.ObjectKey{
+		Namespace: ns,
+		Name:      ref.Name,
+	}
+
+	err := i.client.Get(i.ctx, key, &secret)
+	if err != nil {
+		return err
+	}
+
+	for _, exposedVar := range vars {
+		for secretKey, secretValue := range secret.Data {
+			if exposedVar == secretKey {
+				os.Setenv(secretKey, string(secretValue))
+				i.log.Info(fmt.Sprintf("found value for %s in secret %s", exposedVar, ref.Name))
+			}
+		}
+	}
+	return nil
+}
+
+func (i *ClusterActionRunner) exposeConfigMap(ns string, ref *v14.ConfigMapEnvSource, vars []string) error {
+	configMap := v14.ConfigMap{}
+	key := client.ObjectKey{
+		Namespace: ns,
+		Name:      ref.Name,
+	}
+
+	err := i.client.Get(i.ctx, key, &configMap)
+	if err != nil {
+		return err
+	}
+
+	for _, exposedVar := range vars {
+		for configMapKey, configMapValue := range configMap.Data {
+			if exposedVar == configMapKey {
+				os.Setenv(configMapKey, string(configMapValue))
+				i.log.Info(fmt.Sprintf("found value for %s in config map %s", exposedVar, ref.Name))
+			}
+		}
+	}
 	return nil
 }
 
@@ -183,6 +234,20 @@ type GenericDeleteAction struct {
 	Msg string
 }
 
+// Expose credentials from a secret as an env var to the operator container
+type ExposeSecretEnvVarAction struct {
+	Ref       *v14.SecretEnvSource
+	Msg       string
+	Namespace string
+}
+
+// Expose credentials from a secret as an env var to the operator container
+type ExposeConfigMapEnvVarAction struct {
+	Ref       *v14.ConfigMapEnvSource
+	Msg       string
+	Namespace string
+}
+
 func (i GenericCreateAction) Run(runner ActionRunner) (string, error) {
 	return i.Msg, runner.create(i.Ref)
 }
@@ -209,4 +274,12 @@ func (i IngressReadyAction) Run(runner ActionRunner) (string, error) {
 
 func (i DeploymentReadyAction) Run(runner ActionRunner) (string, error) {
 	return i.Msg, runner.deploymentReady(i.Ref)
+}
+
+func (i ExposeConfigMapEnvVarAction) Run(runner ActionRunner) (string, error) {
+	return i.Msg, runner.exposeConfigMap(i.Namespace, i.Ref, []string{model.GrafanaAdminUserEnvVar, model.GrafanaAdminPasswordEnvVar})
+}
+
+func (i ExposeSecretEnvVarAction) Run(runner ActionRunner) (string, error) {
+	return i.Msg, runner.exposeSecret(i.Namespace, i.Ref, []string{model.GrafanaAdminUserEnvVar, model.GrafanaAdminPasswordEnvVar})
 }

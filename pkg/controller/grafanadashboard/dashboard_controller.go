@@ -7,12 +7,14 @@ import (
 	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
+	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
+	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -363,12 +365,12 @@ func (r *ReconcileGrafanaDashboard) getClient() (GrafanaClient, error) {
 		return nil, defaultErrors.New("cannot get grafana admin url")
 	}
 
-	username := r.state.AdminUsername
+	username := os.Getenv(model.GrafanaAdminUserEnvVar)
 	if username == "" {
 		return nil, defaultErrors.New("invalid credentials (username)")
 	}
 
-	password := r.state.AdminPassword
+	password := os.Getenv(model.GrafanaAdminPasswordEnvVar)
 	if password == "" {
 		return nil, defaultErrors.New("invalid credentials (password)")
 	}

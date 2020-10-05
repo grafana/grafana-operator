@@ -4,6 +4,7 @@ import (
 	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	v12 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -30,10 +31,17 @@ func getAdminPassword(cr *v1alpha1.Grafana, current *v12.Secret) []byte {
 }
 
 func getData(cr *v1alpha1.Grafana, current *v12.Secret) map[string][]byte {
-	return map[string][]byte{
+	credentials := map[string][]byte{
 		GrafanaAdminUserEnvVar:     getAdminUser(cr, current),
 		GrafanaAdminPasswordEnvVar: getAdminPassword(cr, current),
 	}
+
+	// Make the credentials available to the environment when running the operator
+	// outside of the cluster
+	os.Setenv(GrafanaAdminUserEnvVar, string(credentials[GrafanaAdminUserEnvVar]))
+	os.Setenv(GrafanaAdminPasswordEnvVar, string(credentials[GrafanaAdminPasswordEnvVar]))
+
+	return credentials
 }
 
 func AdminSecret(cr *v1alpha1.Grafana) *v12.Secret {

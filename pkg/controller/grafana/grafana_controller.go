@@ -265,10 +265,6 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 		}
 	}
 
-	if state.AdminSecret == nil || state.AdminSecret.Data == nil {
-		return r.manageError(cr, stdErr.New("admin secret not found or invalid"))
-	}
-
 	err := r.client.Status().Update(r.context, cr)
 	if err != nil {
 		return r.manageError(cr, err)
@@ -284,8 +280,6 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 	controllerState := common.ControllerState{
 		DashboardSelectors:         cr.Spec.DashboardLabelSelector,
 		DashboardNamespaceSelector: cr.Spec.DashboardNamespaceSelector,
-		AdminUsername:              string(state.AdminSecret.Data[model.GrafanaAdminUserEnvVar]),
-		AdminPassword:              string(state.AdminSecret.Data[model.GrafanaAdminPasswordEnvVar]),
 		AdminUrl:                   url,
 		GrafanaReady:               true,
 		ClientTimeout:              DefaultClientTimeoutSeconds,
