@@ -39,14 +39,16 @@ type DashboardPipelineImpl struct {
 	Board     map[string]interface{}
 	Logger    logr.Logger
 	Hash      string
+	Context   context.Context
 }
 
-func NewDashboardPipeline(client client.Client, dashboard *v1alpha1.GrafanaDashboard) DashboardPipeline {
+func NewDashboardPipeline(client client.Client, dashboard *v1alpha1.GrafanaDashboard, ctx context.Context) DashboardPipeline {
 	return &DashboardPipelineImpl{
 		Client:    client,
 		Dashboard: dashboard,
 		JSON:      "",
 		Logger:    logf.Log.WithName(fmt.Sprintf("dashboard-%v", dashboard.Name)),
+		Context:   ctx,
 	}
 }
 
@@ -109,7 +111,7 @@ func (r *DashboardPipelineImpl) validateJson() error {
 // 3) no configmap specified: try to use embedded json
 // 4) no json specified: try to use embedded jsonnet
 func (r *DashboardPipelineImpl) obtainJson() error {
-	if r.Dashboard.Spec.Url != "" {
+	if r.Dashboard.Spec.Url != "" && len(r.Dashboard.Spec.Json) == 0 {
 		err := r.loadDashboardFromURL()
 		if err != nil {
 			r.Logger.Error(err, "failed to request dashboard url, falling back to raw json")
@@ -190,6 +192,12 @@ func (r *DashboardPipelineImpl) loadDashboardFromURL() error {
 			return err
 		}
 		r.JSON = json
+	}
+
+	// Update dashboard spec so that URL would not be refetched
+	if r.JSON != r.Dashboard.Spec.Json {
+		r.Dashboard.Spec.Json = r.JSON
+		r.Client.Update(r.Context, r.Dashboard)
 	}
 
 	return nil

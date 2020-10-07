@@ -258,7 +258,7 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 		// to determine if an update is required
 		knownHash := findHash(&dashboard)
 
-		pipeline := NewDashboardPipeline(r.client, &dashboard)
+		pipeline := NewDashboardPipeline(r.client, &dashboard, r.context)
 		processed, err := pipeline.ProcessDashboard(knownHash, &folderId, folderName)
 
 		if err != nil {
