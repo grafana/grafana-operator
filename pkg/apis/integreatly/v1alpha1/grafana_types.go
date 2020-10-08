@@ -83,6 +83,7 @@ type GrafanaDeployment struct {
 	TerminationGracePeriodSeconds int64                  `json:"terminationGracePeriodSeconds"`
 	EnvFrom                       []v1.EnvFromSource     `json:"envFrom,omitempty"`
 	SkipCreateAdminAccount        *bool                  `json:"skipCreateAdminAccount,omitempty"`
+	PriorityClassName             string                 `json:"priorityClassName,omitempty"`
 }
 
 // GrafanaIngress provides a means to configure the ingress created
