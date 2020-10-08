@@ -121,6 +121,9 @@ spec:
                 skipCreateAdminAccount:
                   type: boolean
                   description: Disable creating a random admin user
+                priorityClassName:
+                  type: string
+                  description: Pod priority class name
             serviceAccount:
               type: object
               properties:

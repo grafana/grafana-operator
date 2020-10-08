@@ -150,6 +150,13 @@ func getTerminationGracePeriod(cr *v1alpha1.Grafana) *int64 {
 
 }
 
+func getPodPriorityClassName(cr *v1alpha1.Grafana) string {
+	if cr.Spec.Deployment != nil {
+		return cr.Spec.Deployment.PriorityClassName
+	}
+	return ""
+}
+
 func getTolerations(cr *v1alpha1.Grafana) []v13.Toleration {
 	tolerations := []v13.Toleration{}
 
@@ -493,6 +500,7 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, annotations map[string]string, conf
 				Containers:                    getContainers(cr, configHash, dsHash),
 				ServiceAccountName:            GrafanaServiceAccountName,
 				TerminationGracePeriodSeconds: getTerminationGracePeriod(cr),
+				PriorityClassName:             getPodPriorityClassName(cr),
 			},
 		},
 		Strategy: v1.DeploymentStrategy{
