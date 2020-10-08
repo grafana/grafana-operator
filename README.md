@@ -88,7 +88,7 @@ Init the submodules first to obtain grafonnet:
 $ git submodule update --init
 ```
 
-Then build the image using the operatpr-sdk:
+Then build the image using the operator-sdk:
 
 ```sh
 $ operator-sdk build <registry>/<user>/grafana-operator:<tag>
