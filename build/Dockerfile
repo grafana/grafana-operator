@@ -1,4 +1,4 @@
-FROM alpine:3.8
+FROM ubi:8
 
 RUN apk upgrade --update --no-cache
 
