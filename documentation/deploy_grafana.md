@@ -250,7 +250,7 @@ spec:
     ...
     skipCreateAdminAccount: <bool>  # Skip creating the admin account when providing custom credentials from a secret.
     ...
-    priorityClassName: <string?     # Assign a priorityClass name to the grafana pod. Empty by default.
+    priorityClassName: <string>     # Assign a priorityClass name to the grafana pod. Empty by default.
 ```
 
 NOTE: Some key's are common to both in securityContext and containerSecurityContext, in that case containerSecurityContext has precendence over securityContext.
