@@ -1,5 +1,5 @@
 FROM registry.svc.ci.openshift.org/openshift/release:golang-1.13
-LABEL maintainer="you@redhat.com"
+LABEL maintainer="pbraun@redhat.com"
 
 ENV OPERATOR_SDK_VERSION=v0.18.2 \
     GOFLAGS=""
