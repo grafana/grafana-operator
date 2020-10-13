@@ -19,7 +19,7 @@ docker run --rm --entrypoint=/bin/sh ${IMAGE_NAME} -c 'rsync --version'
 docker run --rm -u $UID -v "${WORK_DIR}/../..:/grafana-operator:z" --entrypoint=/bin/sh ${IMAGE_NAME} -c "cd /grafana-operator && make code/check"
 docker run --rm -u $UID -v "${WORK_DIR}/../..:/grafana-operator:z" --entrypoint=/bin/sh ${IMAGE_NAME} -c "cd /grafana-operator && make code/compile"
 docker run --rm -u $UID -v "${WORK_DIR}/../..:/grafana-operator:z" --entrypoint=/bin/sh ${IMAGE_NAME} -c "cd /grafana-operator && make test/unit"
-docker run --rm -u $UID -v "${WORK_DIR}/../..:/grafana-operator:z" --entrypoint=/bin/sh ${IMAGE_NAME} -c "cd /grafana-operator && make test/e2e""
+docker run --rm -u $UID -v "${WORK_DIR}/../..:/grafana-operator:z" --entrypoint=/bin/sh ${IMAGE_NAME} -c "cd /grafana-operator && make test/e2e"
 
 #Requires you to be oc logged in to any cluster on your host machine
 GRAFANA_OPERATOR_IMAGE="registry.svc.ci.openshift.org/integr8ly/grafana-operator"
