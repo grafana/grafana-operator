@@ -3,10 +3,11 @@ package config
 import (
 	"crypto/sha256"
 	"fmt"
-	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"io"
 	"sort"
 	"strings"
+
+	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 )
 
 type GrafanaIni struct {
@@ -226,6 +227,10 @@ func (i *GrafanaIni) Write() (string, string) {
 		items = appendStr(items, "allowed_domains", i.cfg.AuthGenericOauth.AllowedDomains)
 		items = appendStr(items, "role_attribute_path", i.cfg.AuthGenericOauth.RoleAttributePath)
 		items = appendStr(items, "email_attribute_path", i.cfg.AuthGenericOauth.EmailAttributePath)
+		items = appendBool(items, "tls_skip_verify_insecure", i.cfg.AuthGenericOauth.TLSSkipVerifyInsecure)
+		items = appendStr(items, "tls_client_cert", i.cfg.AuthGenericOauth.TLSClientCert)
+		items = appendStr(items, "tls_client_key", i.cfg.AuthGenericOauth.TLSClientKey)
+		items = appendStr(items, "tls_client_ca", i.cfg.AuthGenericOauth.TLSClientCa)
 		config["auth.generic_oauth"] = items
 	}
 
