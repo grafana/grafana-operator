@@ -9,12 +9,7 @@ WORK_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 docker run --rm --entrypoint=/bin/sh ${IMAGE_NAME} -c 'operator-sdk version'
 docker run --rm --entrypoint=/bin/sh ${IMAGE_NAME} -c 'go version'
-docker run --rm --entrypoint=/bin/sh ${IMAGE_NAME} -c 'jq --version'
-docker run --rm --entrypoint=/bin/sh ${IMAGE_NAME} -c 'yq --version'
-docker run --rm --entrypoint=/bin/sh ${IMAGE_NAME} -c 'node --version'
-docker run --rm --entrypoint=/bin/sh ${IMAGE_NAME} -c 'delorean --help'
-docker run --rm --entrypoint=/bin/sh ${IMAGE_NAME} -c 'skopeo --version'
-docker run --rm --entrypoint=/bin/sh ${IMAGE_NAME} -c 'rsync --version'
+
 
 docker run --rm -u $UID -v "${WORK_DIR}/../..:/grafana-operator:z" --entrypoint=/bin/sh ${IMAGE_NAME} -c "cd /grafana-operator && make code/check"
 docker run --rm -u $UID -v "${WORK_DIR}/../..:/grafana-operator:z" --entrypoint=/bin/sh ${IMAGE_NAME} -c "cd /grafana-operator && make code/compile"

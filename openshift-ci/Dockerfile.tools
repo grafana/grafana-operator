@@ -1,45 +1,9 @@
 FROM registry.svc.ci.openshift.org/openshift/release:golang-1.13
+LABEL maintainer="pbraun@redhat.com"
 
 ENV OPERATOR_SDK_VERSION=v0.18.2 \
-    DELOREAN_VERSION=master \
     GOFLAGS=""
-
-RUN set -o pipefail && \
-    INSTALL_PKGS="skopeo rsync" && \
-    yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS
-
-# install delorean (from git with no history and only the tag)
-# Note: Change to using pre-built binary when it's available https://issues.redhat.com/browse/DEL-288
-RUN mkdir -p $GOPATH/src/github.com/delorean \
-    && cd $GOPATH/src/github.com/delorean \
-    && git clone --depth 1 -b $DELOREAN_VERSION https://github.com/integr8ly/delorean \
-    && cd delorean \
-    && make build/cli \
-    && cp delorean /usr/local/bin
-
-# install operator-sdk (from git with no history and only the tag)
-RUN mkdir -p $GOPATH/src/github.com/operator-framework \
-    && cd $GOPATH/src/github.com/operator-framework \
-    && git clone --depth 1 -b $OPERATOR_SDK_VERSION https://github.com/operator-framework/operator-sdk \
-    && cd operator-sdk \
-    && go mod vendor \
-    && make tidy \
-    && make install \
-    && chmod -R 0777 $GOPATH \
-    && rm -rf $GOPATH/.cache
-
-# install jq and yq
-RUN wget -O jq https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 \
-    && chmod +x ./jq \
-    && cp jq /usr/bin \
-    && curl -Lo /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/3.1.2/yq_linux_amd64 \
-    && chmod +x /usr/local/bin/yq
-
-# install nodejs
-ENV NODE_VERSION=12.16.3 \
-    NPM_CONFIG_CACHE=/tmp/.npm
-
-RUN curl -fsSLO --compressed "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.xz" \
-    && tar -xJf "node-v$NODE_VERSION-linux-x64.tar.xz" -C /usr/local --strip-components=1 --no-same-owner \
-    && rm "node-v$NODE_VERSION-linux-x64.tar.xz" \
-    && ln -s /usr/local/bin/node /usr/local/bin/nodejs
+# install operator-sdk
+RUN curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}/operator-sdk-${OPERATOR_SDK_VERSION}-x86_64-linux-gnu && \
+    mv operator-sdk-${OPERATOR_SDK_VERSION}-x86_64-linux-gnu /usr/bin/operator-sdk && \
+    chmod +x /usr/bin/operator-sdk
