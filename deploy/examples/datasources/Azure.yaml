@@ -1,10 +1,11 @@
 apiVersion: integreatly.org/v1alpha1
 kind: GrafanaDataSource
 metadata:
-  name: stackdriver-data-source
+  name: azure-data-source
 spec:
   datasources:
-    type: grafana-azure-monitor-datasource
+    - name: Azure
+      type: grafana-azure-monitor-datasource
       access: proxy
       jsonData:
         appInsightsAppId: <app-insights-app-id>
