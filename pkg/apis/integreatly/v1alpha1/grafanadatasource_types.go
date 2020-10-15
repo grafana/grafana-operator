@@ -127,8 +127,8 @@ type GrafanaDataSourceJsonData struct {
 	CloudName                    string `json:"cloudName,omitempty"`
 	LogAnalyticsDefaultWorkspace string `json:"logAnalyticsDefaultWorkspace,omitempty"`
 	LogAnalyticsClientId         string `json:"logAnalyticsClientId,omitempty"`
-	logAnalyticsSubscriptionId   string `json:"logAnalyticsSubscriptionId,omitempty"`
-	logAnalyticsTenantId         string `json:"logAnalyticsTenantId,omitempty"`
+	LogAnalyticsSubscriptionId   string `json:"logAnalyticsSubscriptionId,omitempty"`
+	LogAnalyticsTenantId         string `json:"logAnalyticsTenantId,omitempty"`
 	SubscriptionId               string `json:"subscriptionI,omitempty"`
 	TenantId                     string `json:"tenantId,omitempty"`
 }
@@ -158,8 +158,8 @@ type GrafanaDataSourceSecureJsonData struct {
 	PrivateKey string `json:"privateKey,omitempty"`
 	// Fields for Azure data sources
 	ClientSecret             string `json:"clientSecret,omitempty"`
-	appInsightsApiKey        string `json:"appInsightsApiKey,omitempty"`
-	logAnalyticsClientSecret string `json:"logAnalyticsClientSecret,omitempty"`
+	AppInsightsApiKey        string `json:"appInsightsApiKey,omitempty"`
+	LogAnalyticsClientSecret string `json:"logAnalyticsClientSecret,omitempty"`
 }
 
 func init() {
