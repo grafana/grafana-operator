@@ -95,7 +95,7 @@ type GrafanaDataSourceJsonData struct {
 	MaxOpenConns            int    `json:"maxOpenConns,omitempty"`
 	MaxIdleConns            int    `json:"maxIdleConns,omitempty"`
 	ConnMaxLifetime         int    `json:"connMaxLifetime,omitempty"`
-	//  Usefull fields for clickhouse datasource
+	//  Useful fields for clickhouse datasource
 	//  See https://github.com/Vertamedia/clickhouse-grafana/tree/master/dist/README.md#configure-the-datasource-with-provisioning
 	//  See https://github.com/Vertamedia/clickhouse-grafana/tree/master/src/datasource.ts#L44
 	AddCorsHeader               bool   `json:"addCorsHeader,omitempty"`
@@ -120,6 +120,17 @@ type GrafanaDataSourceJsonData struct {
 	ClientEmail        string `json:"clientEmail,omitempty"`
 	AuthenticationType string `json:"authenticationType,omitempty"`
 	DefaultProject     string `json:"defaultProject,omitempty"`
+	// Fields for Azure data sources
+	AppInsightsAppId             string `json:"appInsightsAppId,omitempty"`
+	AzureLogAnalyticsSameAs      string `json:"azureLogAnalyticsSameAs,omitempty"`
+	ClientId                     string `json:"clientId,omitempty"`
+	CloudName                    string `json:"cloudName,omitempty"`
+	LogAnalyticsDefaultWorkspace string `json:"logAnalyticsDefaultWorkspace,omitempty"`
+	LogAnalyticsClientId         string `json:"logAnalyticsClientId,omitempty"`
+	logAnalyticsSubscriptionId   string `json:"logAnalyticsSubscriptionId,omitempty"`
+	logAnalyticsTenantId         string `json:"logAnalyticsTenantId,omitempty"`
+	SubscriptionId               string `json:"subscriptionI,omitempty"`
+	TenantId                     string `json:"tenantId,omitempty"`
 }
 
 // The most common secure json options
@@ -145,6 +156,10 @@ type GrafanaDataSourceSecureJsonData struct {
 	HTTPHeaderValue9 string `json:"httpHeaderValue9,omitempty"`
 	// Fields for Stackdriver data sources
 	PrivateKey string `json:"privateKey,omitempty"`
+	// Fields for Azure data sources
+	ClientSecret             string `json:"clientSecret,omitempty"`
+	appInsightsApiKey        string `json:"appInsightsApiKey,omitempty"`
+	logAnalyticsClientSecret string `json:"logAnalyticsClientSecret,omitempty"`
 }
 
 func init() {
