@@ -26,7 +26,6 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
@@ -205,10 +204,6 @@ func (r *ReconcileGrafana) manageError(cr *grafanav1alpha1.Grafana, issue error,
 	instance := &grafanav1alpha1.Grafana{}
 	err := r.Client.Get(r.Context, request.NamespacedName, instance)
 	if err != nil {
-		// Ignore conflicts, resource might just be outdated.
-		if errors.IsConflict(err) {
-			err = nil
-		}
 		return reconcile.Result{}, err
 	}
 
@@ -281,11 +276,20 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 
 	// Only update the status if the dashboard controller had a chance to sync the cluster
 	// dashboards first. Otherwise reuse the existing dashboard config from the CR.
+<<<<<<< HEAD:controllers/grafana/grafana_controller.go
 	if r.Config.GetConfigBool(config.ConfigGrafanaDashboardsSynced, false) {
 		cr.Status.InstalledDashboards = r.Config.Dashboards
 	} else {
 		if r.Config.Dashboards == nil {
 			r.Config.SetDashboards([]*grafanav1alpha1.GrafanaDashboardRef{})
+=======
+	if r.config.GetConfigBool(config.ConfigGrafanaDashboardsSynced, false) {
+		cr.Status.KnownDashboards = r.config.DashboardRefList()
+	} else {
+		r.config.SetDashboards(cr.Status.KnownDashboards)
+		if r.config.Dashboards == nil {
+			r.config.ResetDashboards()
+>>>>>>> 4c34d4c1 (remove unsupported map in Grafana status):pkg/controller/grafana/grafana_controller.go
 		}
 	}
 

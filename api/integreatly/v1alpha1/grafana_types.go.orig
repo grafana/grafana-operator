@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	v12 "github.com/openshift/api/route/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,7 +17,7 @@ var (
 )
 
 // GrafanaSpec defines the desired state of Grafana
-// +k8s:openapi-gen=true
+
 type GrafanaSpec struct {
 	Config                     GrafanaConfig            `json:"config"`
 	Containers                 []v1.Container           `json:"containers,omitempty"`
@@ -84,6 +85,7 @@ type GrafanaDataStorage struct {
 }
 
 type GrafanaServiceAccount struct {
+	Skip             *bool                     `json:"skip,omitempty"`
 	Annotations      map[string]string         `json:"annotations,omitempty"`
 	Labels           map[string]string         `json:"labels,omitempty"`
 	ImagePullSecrets []v1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
@@ -119,15 +121,17 @@ type GrafanaHttpProxy struct {
 
 // GrafanaIngress provides a means to configure the ingress created
 type GrafanaIngress struct {
-	Annotations   map[string]string      `json:"annotations,omitempty"`
-	Hostname      string                 `json:"hostname,omitempty"`
-	Labels        map[string]string      `json:"labels,omitempty"`
-	Path          string                 `json:"path,omitempty"`
-	Enabled       bool                   `json:"enabled,omitempty"`
-	TLSEnabled    bool                   `json:"tlsEnabled,omitempty"`
-	TLSSecretName string                 `json:"tlsSecretName,omitempty"`
-	TargetPort    string                 `json:"targetPort,omitempty"`
-	Termination   v12.TLSTerminationType `json:"termination,omitempty"`
+	Annotations      map[string]string      `json:"annotations,omitempty"`
+	Hostname         string                 `json:"hostname,omitempty"`
+	Labels           map[string]string      `json:"labels,omitempty"`
+	Path             string                 `json:"path,omitempty"`
+	Enabled          bool                   `json:"enabled,omitempty"`
+	TLSEnabled       bool                   `json:"tlsEnabled,omitempty"`
+	TLSSecretName    string                 `json:"tlsSecretName,omitempty"`
+	TargetPort       string                 `json:"targetPort,omitempty"`
+	Termination      v12.TLSTerminationType `json:"termination,omitempty"`
+	IngressClassName string                 `json:"ingressClassName,omitempty"`
+	PathType         string                 `json:"pathType,omitempty"`
 }
 
 // GrafanaConfig is the configuration for grafana
@@ -509,14 +513,21 @@ type GrafanaConfigRendering struct {
 }
 
 // GrafanaStatus defines the observed state of Grafana
-// +k8s:openapi-gen=true
 type GrafanaStatus struct {
+<<<<<<< HEAD:api/integreatly/v1alpha1/grafana_types.go
 	Phase               StatusPhase            `json:"phase,omitempty"`
 	PreviousServiceName string                 `json:"previousServiceName,omitempty"`
 	Message             string                 `json:"message,omitempty"`
 	InstalledDashboards []*GrafanaDashboardRef `json:"dashboards,omitempty"`
 	InstalledPlugins    PluginList             `json:"installedPlugins,omitempty"`
 	FailedPlugins       PluginList             `json:"failedPlugins,omitempty"`
+=======
+	Phase            StatusPhase            `json:"phase"`
+	Message          string                 `json:"message"`
+	KnownDashboards  []*GrafanaDashboardRef `json:"knownDashboards"`
+	InstalledPlugins PluginList             `json:"installedPlugins"`
+	FailedPlugins    PluginList             `json:"failedPlugins"`
+>>>>>>> 4c34d4c1 (remove unsupported map in Grafana status):pkg/apis/integreatly/v1alpha1/grafana_types.go
 }
 
 // GrafanaPlugin contains information about a single plugin
@@ -528,8 +539,6 @@ type GrafanaPlugin struct {
 	Version string `json:"version"`
 }
 
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
 // Grafana is the Schema for the grafanas API
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
@@ -540,8 +549,6 @@ type Grafana struct {
 	Spec   GrafanaSpec   `json:"spec,omitempty"`
 	Status GrafanaStatus `json:"status,omitempty"`
 }
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // GrafanaList contains a list of Grafana
 // +kubebuilder:object:root=true

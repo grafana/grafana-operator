@@ -5,8 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
 )
 
 const (
@@ -42,8 +41,6 @@ type ControllerConfig struct {
 
 var instance *ControllerConfig
 var once sync.Once
-
-var log = logf.Log.WithName("controller_config")
 
 func GetControllerConfig() *ControllerConfig {
 	once.Do(func() {
@@ -99,7 +96,6 @@ func (c *ControllerConfig) RemovePluginsFor(namespace, name string) {
 }
 
 func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard, folderId *int64, folderName string) {
-
 	ns := dashboard.Namespace
 	if i, exists := c.HasDashboard(dashboard.UID()); !exists {
 		c.Lock()
@@ -143,10 +139,20 @@ func (c *ControllerConfig) InvalidateDashboards() {
 	}
 }
 
+<<<<<<< HEAD:controllers/config/controller_config.go
+=======
+func (c *ControllerConfig) ResetDashboards() {
+	c.Dashboards = make(map[string][]*v1alpha1.GrafanaDashboardRef)
+}
+
+>>>>>>> 4c34d4c1 (remove unsupported map in Grafana status):pkg/controller/config/controller_config.go
 func (c *ControllerConfig) SetDashboards(dashboards []*v1alpha1.GrafanaDashboardRef) {
 	c.Lock()
 	defer c.Unlock()
-	c.Dashboards = dashboards
+
+	for _, d := range dashboards {
+		c.Dashboards[d.Namespace] = append(c.Dashboards[d.Namespace], d)
+	}
 }
 
 func (c *ControllerConfig) RemoveDashboard(hash string) {
@@ -224,17 +230,6 @@ func (c *ControllerConfig) HasConfigItem(key string) bool {
 	defer c.Unlock()
 	_, ok := c.Values[key]
 	return ok
-}
-
-func (c *ControllerConfig) HasDashboard(namespace, name string) (int, bool) {
-	if dashboards, ok := c.Dashboards[namespace]; ok {
-		for i, dashboard := range dashboards {
-			if dashboard.Name == name {
-				return i, true
-			}
-		}
-	}
-	return -1, false
 }
 
 func (c *ControllerConfig) Cleanup(plugins bool) {
