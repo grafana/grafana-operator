@@ -85,7 +85,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler, namespace string) error {
 
 	go func() {
 		for range ticker.C {
-			log.Info("running periodic datasource resync")
+			log.V(1).Info("running periodic datasource resync")
 			sendEmptyRequest()
 		}
 	}()

@@ -80,7 +80,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler, namespace string) error {
 
 	go func() {
 		for range ticker.C {
-			log.Info("running periodic dashboard resync")
+			log.V(1).Info("running periodic dashboard resync")
 			sendEmptyRequest()
 		}
 	}()
@@ -113,7 +113,7 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 
 	// If Grafana is not running there is no need to continue
 	if !r.state.GrafanaReady {
-		log.Info("no grafana instance available")
+		log.Error(fmt.Errorf("no grafana instance available"),"")
 		return reconcile.Result{Requeue: false}, nil
 	}
 
@@ -341,7 +341,7 @@ func (r *ReconcileGrafanaDashboard) manageSuccess(dashboard *grafanav1alpha1.Gra
 		dashboard.Namespace,
 		dashboard.Name)
 	r.recorder.Event(dashboard, "Normal", "Success", msg)
-	log.Info(msg)
+	log.V(1).Info(msg)
 	r.config.AddDashboard(dashboard, folderId, folderName)
 	r.config.SetPluginsFor(dashboard)
 }
