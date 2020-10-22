@@ -20,7 +20,10 @@ const (
 	CreateOrUpdateFolderUrl    = "%v/api/folders"
 	DeleteFolderByUIDUrl       = "%v/api/folders/%v"
 	GetFolderByIDUrl           = "%v/api/folders/id/%v"
+<<<<<<< HEAD:controllers/grafanadashboard/grafana_client.go
+=======
 
+>>>>>>> eafa3871 (initial loki classes and code):pkg/controller/grafanadashboard/grafana_client.go
 )
 
 const (
@@ -377,7 +380,6 @@ func (r *GrafanaClientImpl) getFolderUID(IDInput *int64) (*string, error) {
 }
 
 func (r *GrafanaClientImpl) DeleteFolder(deleteID *int64) error {
-
 	deleteUID, err := r.getFolderUID(deleteID)
 	if err != nil {
 		return err
@@ -418,7 +420,7 @@ func (r *GrafanaClientImpl) DeleteFolder(deleteID *int64) error {
 	}
 
 	err = json.Unmarshal(data, &response)
-	log.V(1).Info(fmt.Sprintf("delete result was %v", *response.Message))
+	log.Log.Info(fmt.Sprintf("delete result was %v", *response.Message))
 
 	return err
 }

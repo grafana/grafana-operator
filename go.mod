@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/blang/semver v3.5.1+incompatible
+	github.com/docker/docker v1.4.2-0.20200203170920-46ec8731fbce
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v0.4.0
 	github.com/google/go-jsonnet v0.17.0
