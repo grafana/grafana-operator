@@ -116,7 +116,6 @@ func main() {
 	// be propagated through the whole operator, generating
 	// uniform and structured logs.
 
-
 	logf.SetLogger(zap.Logger())
 
 	printVersion()

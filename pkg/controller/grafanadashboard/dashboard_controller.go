@@ -113,7 +113,7 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 
 	// If Grafana is not running there is no need to continue
 	if !r.state.GrafanaReady {
-		log.Error(fmt.Errorf("no grafana instance available"),"")
+		log.Error(fmt.Errorf("no grafana instance available"), "")
 		return reconcile.Result{Requeue: false}, nil
 	}
 
