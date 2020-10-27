@@ -138,10 +138,14 @@ cluster/prepare/local/file:
 .PHONY: cluster/prepare/local
 cluster/prepare/local: cluster/prepare/local/file
 	-kubectl create namespace ${NAMESPACE}
-	kubectl apply -f deploy/crds
 	kubectl apply -f deploy/roles -n ${NAMESPACE}
 	kubectl apply -f deploy/cluster_roles
 	kubectl apply -f deploy/examples/Grafana.yaml -n ${NAMESPACE}
+<<<<<<< HEAD
+=======
+
+.PHONY: cluster/prepare/local/loki
+cluster/prepare/local/loki:
 
 .PHONY: cluster/cleanup
 cluster/cleanup: operator/stop
@@ -163,3 +167,4 @@ operator/deploy/master: cluster/prepare/local
 .PHONY: operator/stop
 operator/stop:
 	-kubectl delete deployment grafana-operator -n ${NAMESPACE}
+>>>>>>> 253f83a9 (add loki to the controller manager)

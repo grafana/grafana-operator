@@ -5,7 +5,6 @@ import (
 	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
@@ -20,21 +19,16 @@ import (
 )
 
 const (
-	ControllerName = "controller_Loki"
+	ControllerName = "loki-controller"
 )
-
 
 var log = logf.Log.WithName(ControllerName)
 
-
-
-// Add creates a new Grafana Controller and adds it to the Manager. The Manager will set fields on the Controller
+// Add creates a new GrafanaDataSource Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager, autodetectChannel chan schema.GroupVersionKind, _ string) error {
-	//TODO fix this
-	return add(mgr, newReconciler(mgr), autodetectChannel)
+func Add(mgr manager.Manager, _ chan schema.GroupVersionKind, namespace string) error {
+	return add(mgr, newReconciler(mgr), namespace)
 }
-
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
 func add(mgr manager.Manager, r reconcile.Reconciler, namespace string) error {
@@ -45,9 +39,9 @@ func add(mgr manager.Manager, r reconcile.Reconciler, namespace string) error {
 	}
 
 	// Watch for changes to primary resource GrafanaDashboard
-	err = c.Watch(&source.Kind{Type: &grafanav1alpha1.GrafanaDashboard{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &grafanav1alpha1.Loki{}}, &handler.EnqueueRequestForObject{})
 	if err == nil {
-		log.Info("Starting dashboard controller")
+		log.Info("Starting loki controller")
 	}
 
 	ref := r.(*ReconcileLoki)
@@ -64,7 +58,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler, namespace string) error {
 
 	go func() {
 		for range ticker.C {
-			log.V(1).Info("running periodic loki resync")
+			log.Info("running periodic loki resync")
 			sendEmptyRequest()
 		}
 	}()
@@ -78,6 +72,8 @@ func add(mgr manager.Manager, r reconcile.Reconciler, namespace string) error {
 
 	return err
 }
+
+var _ reconcile.Reconciler = &ReconcileLoki{}
 
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
@@ -94,6 +90,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	}
 }
 
+var _ reconcile.Reconciler = &ReconcileLoki{}
 
 type ReconcileLoki struct {
 	// This client, initialized using mgr.Client() above, is a split client
@@ -107,5 +104,6 @@ type ReconcileLoki struct {
 }
 
 func (r ReconcileLoki) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	panic("implement me")
+	log.Info("Testing the loki reconciler")
+	return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
 }

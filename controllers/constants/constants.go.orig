@@ -1,7 +1,12 @@
 package constants
 
 const (
+<<<<<<< HEAD:controllers/constants/constants.go
 	GrafanaImage                        = "docker.io/grafana/grafana"
+=======
+	//Grafana
+	GrafanaImage                        = "grafana/grafana"
+>>>>>>> 253f83a9 (add loki to the controller manager):pkg/controller/model/constants.go
 	GrafanaVersion                      = "7.1.1"
 	GrafanaServiceAccountName           = "grafana-serviceaccount"
 	GrafanaServiceName                  = "grafana-service"
