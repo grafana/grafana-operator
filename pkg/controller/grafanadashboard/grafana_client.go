@@ -62,6 +62,7 @@ type GrafanaClient interface {
 	CreateOrUpdateFolder(folderName string) (GrafanaFolderResponse, error)
 	DeleteFolder(folderID *int64) error
 	SafeToDelete(dashboards []*v1alpha1.GrafanaDashboardRef, folderID *int64) bool
+	Shutdown()
 }
 
 type GrafanaClientImpl struct {
@@ -426,4 +427,8 @@ func (r *GrafanaClientImpl) SafeToDelete(dashlist []*v1alpha1.GrafanaDashboardRe
 		}
 	}
 	return true
+}
+
+func (r *GrafanaClientImpl) Shutdown() {
+	r.client.CloseIdleConnections()
 }
