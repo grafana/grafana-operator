@@ -4,21 +4,18 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // PromtailSpec defines the desired state of Promtail
 type PromtailSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
+	HostPaths                      []string              `json:"hostPaths,omitempty"`
+	PodAggregatorLabelSelector     *metav1.LabelSelector `json:"podAggregatorLabelSelector,omitempty"`
+	PodAggregatorNamespaceSelector *metav1.LabelSelector `json:"podAggregatorNamespaceSelector,omitempty"`
+	InstanceSelector               *metav1.LabelSelector `json:"instanceSelector,omitempty"`
 }
 
 // PromtailStatus defines the observed state of Promtail
 type PromtailStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
+	Phase   StatusPhase `json:"phase"`
+	Message string      `json:"message"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
