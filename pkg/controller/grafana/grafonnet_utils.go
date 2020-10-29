@@ -57,7 +57,7 @@ func reconcileConfigMaps(cr *grafanav1alpha1.Grafana, r *ReconcileGrafana) error
 			if err != nil {
 				return err
 			}
-			log.Info(fmt.Sprintf("imported jsonnet library %v", filePath))
+			log.V(1).Info(fmt.Sprintf("imported jsonnet library %v", filePath))
 		}
 	}
 	return nil

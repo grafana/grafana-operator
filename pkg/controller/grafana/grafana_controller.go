@@ -102,7 +102,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler, autodetectChannel chan sch
 					log.Error(err, fmt.Sprintf("error adding secondary watch for %v", common.RouteKind))
 				} else {
 					cfg.AddConfigItem(config.ConfigRouteWatch, true)
-					log.Info(fmt.Sprintf("added secondary watch for %v", common.RouteKind))
+					log.V(1).Info("added secondary watch for %v", common.RouteKind)
 				}
 			}
 		}
@@ -295,7 +295,7 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 
 	common.ControllerEvents <- controllerState
 
-	log.Info("desired cluster state met")
+	log.V(1).Info("desired cluster state met")
 
 	return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
 }

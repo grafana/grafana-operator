@@ -415,7 +415,7 @@ func (r *GrafanaClientImpl) DeleteFolder(deleteID *int64) error {
 	}
 
 	err = json.Unmarshal(data, &response)
-	log.Info(fmt.Sprintf("delete result was %v", *response.Message))
+	log.V(1).Info(fmt.Sprintf("delete result was %v", *response.Message))
 
 	return err
 }

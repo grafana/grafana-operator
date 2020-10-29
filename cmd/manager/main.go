@@ -2,8 +2,9 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
+	"github.com/operator-framework/operator-sdk/pkg/log/zap"
+	"github.com/spf13/pflag"
 	"os"
 	"runtime"
 	"strings"
@@ -52,7 +53,7 @@ func printVersion() {
 }
 
 func init() {
-	flagset := flag.CommandLine
+	flagset := pflag.CommandLine
 	flagset.StringVar(&flagImage, "grafana-image", "", "Overrides the default Grafana image")
 	flagset.StringVar(&flagImageTag, "grafana-image-tag", "", "Overrides the default Grafana image tag")
 	flagset.StringVar(&flagPluginsInitContainerImage, "grafana-plugins-init-container-image", "", "Overrides the default Grafana Plugins Init Container image")
@@ -60,6 +61,7 @@ func init() {
 	flagset.StringVar(&flagNamespaces, "namespaces", "", "Namespaces to scope the interaction of the Grafana operator. Mutually exclusive with --scan-all")
 	flagset.StringVar(&flagJsonnetLocation, "jsonnet-location", "", "Overrides the base path of the jsonnet libraries")
 	flagset.BoolVar(&scanAll, "scan-all", false, "Scans all namespaces for dashboards")
+	flagset.AddFlagSet(zap.FlagSet())
 	flagset.Parse(os.Args[1:])
 }
 
@@ -113,7 +115,8 @@ func main() {
 	// implementing the logr.Logger interface. This logger will
 	// be propagated through the whole operator, generating
 	// uniform and structured logs.
-	logf.SetLogger(logf.ZapLogger(false))
+
+	logf.SetLogger(zap.Logger())
 
 	printVersion()
 
@@ -144,7 +147,7 @@ func main() {
 	var dashboardNamespaces = []string{namespace}
 	if scanAll {
 		dashboardNamespaces = []string{""}
-		log.Info("Scanning for dashboards in all namespaces")
+		log.V(1).Info("Scanning for dashboards in all namespaces")
 	}
 
 	if flagNamespaces != "" {
@@ -153,7 +156,7 @@ func main() {
 			fmt.Fprint(os.Stderr, "--namespaces provided but no valid namespaces in list")
 			os.Exit(1)
 		}
-		log.Info(fmt.Sprintf("Scanning for dashboards in the following namespaces: [%s]", strings.Join(dashboardNamespaces, ",")))
+		log.V(1).Info(fmt.Sprintf("Scanning for dashboards in the following namespaces: [%s]", strings.Join(dashboardNamespaces, ",")))
 	}
 
 	// Get a config to talk to the apiserver
@@ -176,7 +179,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	log.Info("Registering Components.")
+	log.V(1).Info("Registering Components.")
 
 	// Starting the resource auto-detection for the grafana controller
 	autodetect, err := common.NewAutoDetect(mgr)
@@ -214,11 +217,12 @@ func main() {
 		},
 	}
 	_, err = metrics.CreateMetricsService(context.TODO(), cfg, servicePorts)
+
 	if err != nil {
 		log.Error(err, "error starting metrics service")
 	}
 
-	log.Info("Starting the Cmd.")
+	log.V(1).Info("Starting the Cmd.")
 
 	signalHandler := signals.SetupSignalHandler()
 

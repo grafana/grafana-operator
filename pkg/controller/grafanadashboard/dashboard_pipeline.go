@@ -253,13 +253,13 @@ func (r *DashboardPipelineImpl) resolveDatasources() error {
 	for _, input := range r.Dashboard.Spec.Datasources {
 		if input.DatasourceName == "" || input.InputName == "" {
 			msg := fmt.Sprintf("invalid datasource input rule, input or datasource empty")
-			r.Logger.Info(msg)
+			r.Logger.V(1).Info(msg)
 			return errors.New(msg)
 		}
 
 		searchValue := fmt.Sprintf("${%s}", input.InputName)
 		currentJson = strings.ReplaceAll(currentJson, searchValue, input.DatasourceName)
-		r.Logger.Info(fmt.Sprintf("resolving input %s to %s", input.InputName, input.DatasourceName))
+		r.Logger.V(1).Info(fmt.Sprintf("resolving input %s to %s", input.InputName, input.DatasourceName))
 	}
 
 	r.JSON = currentJson

@@ -115,13 +115,16 @@ The operator accepts a number of flags that can be passed in the `args` section 
 
 * `--grafonnet-location`: overrides the location of the grafonnet library. Defaults to `/opt/grafonnet-lib`. Only useful when running the operator locally.
 
-* `--scan-all`: watch for dashboards in all namespaces. This requires the the operator service account to have cluster wide permissions to `get`, `list`, `update` and `watch` dashboards. See `deploy/cluster_roles`.
+* `--scan-all`: watch for dashboards in all namespaces. This requires the operator service account to have cluster wide permissions to `get`, `list`, `update` and `watch` dashboards. See `deploy/cluster_roles`.
 
 * `--namespaces`: watch for dashboards in a list of namespaces. Mutually exclusive with `--scan-all`.
 
+* `--zap-level=n`: set the logging level for the operator, leaving out this flag will only log Errors and error related info, current options are:
+    - `--zap-level=1`: show all Info level logs
+
 See `deploy/operator.yaml` for an example.
 
-If using the automated Ansible installer see the [grafana-operator-namespace-resources.yaml - Parameters](../deploy/ansible/README.md#parameters-1) for the equivlant parameters.
+If using the automated Ansible installer see the [grafana-operator-namespace-resources.yaml - Parameters](../deploy/ansible/README.md#parameters-1) for the equivalent parameters.
 
 ## Deploying Grafana
 

@@ -63,7 +63,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler, namespace string) error {
 	// Watch for changes to primary resource GrafanaDashboard
 	err = c.Watch(&source.Kind{Type: &grafanav1alpha1.GrafanaDashboard{}}, &handler.EnqueueRequestForObject{})
 	if err == nil {
-		log.Info("Starting dashboard controller")
+		log.V(1).Info("Starting dashboard controller")
 	}
 
 	ref := r.(*ReconcileGrafanaDashboard)
@@ -80,7 +80,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler, namespace string) error {
 
 	go func() {
 		for range ticker.C {
-			log.Info("running periodic dashboard resync")
+			log.V(1).Info("running periodic dashboard resync")
 			sendEmptyRequest()
 		}
 	}()
@@ -113,7 +113,7 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 
 	// If Grafana is not running there is no need to continue
 	if !r.state.GrafanaReady {
-		log.Info("no grafana instance available")
+		log.V(1).Info("no grafana instance available")
 		return reconcile.Result{Requeue: false}, nil
 	}
 
@@ -141,7 +141,7 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 
 		if errors.IsNotFound(err) {
 			// If some dashboard has been deleted, then always re sync the world
-			log.Info(fmt.Sprintf("deleting dashboard %v/%v", request.Namespace, request.Name))
+			log.V(1).Info(fmt.Sprintf("deleting dashboard %v/%v", request.Namespace, request.Name))
 			return r.reconcileDashboards(request, client)
 		}
 		// Error reading the object - requeue the request.
@@ -151,7 +151,7 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 	// If the dashboard does not match the label selectors then we ignore it
 	cr := instance.DeepCopy()
 	if !r.isMatch(cr) {
-		log.Info(fmt.Sprintf("dashboard %v/%v found but selectors do not match",
+		log.V(1).Info(fmt.Sprintf("dashboard %v/%v found but selectors do not match",
 			cr.Namespace, cr.Name))
 		return reconcile.Result{}, nil
 	}
@@ -223,14 +223,13 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 		if !inNamespace(dashboard) {
 			dashboardsToDelete = append(dashboardsToDelete, dashboard)
 		}
-
 	}
 
 	// Process new/updated dashboards
 	for _, dashboard := range namespaceDashboards.Items {
 		// Is this a dashboard we care about (matches the label selectors)?
 		if !r.isMatch(&dashboard) {
-			log.Info(fmt.Sprintf("dashboard %v/%v found but selectors do not match",
+			log.V(1).Info(fmt.Sprintf("dashboard %v/%v found but selectors do not match",
 				dashboard.Namespace, dashboard.Name))
 			continue
 		}
@@ -281,7 +280,7 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 			}
 
 			if matchesNamespaceLabels == false {
-				log.Info(fmt.Sprintf("dashboard %v skipped because the namespace labels do not match", dashboard.Name))
+				log.V(1).Info(fmt.Sprintf("dashboard %v skipped because the namespace labels do not match", dashboard.Name))
 				continue
 			}
 		}
@@ -307,7 +306,7 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 					*status.Message))
 			}
 
-			log.Info(fmt.Sprintf("delete result was %v", *status.Message))
+			log.V(1).Info(fmt.Sprintf("delete result was %v", *status.Message))
 
 			r.config.RemovePluginsFor(dashboard.Namespace, dashboard.Name)
 			r.config.RemoveDashboard(dashboard.Namespace, dashboard.Name)
@@ -322,7 +321,7 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 			// Check for empty managed folders (namespace-named) and delete obsolete ones
 			if dashboard.FolderName == "" || dashboard.FolderName == dashboard.Namespace {
 				if safe := grafanaClient.SafeToDelete(knownDashboards, dashboard.FolderId); !safe {
-					log.Info("folder cannot be deleted as it's being used by other dashboards")
+					log.V(1).Info("folder cannot be deleted as it's being used by other dashboards")
 					break
 				}
 				if err = grafanaClient.DeleteFolder(dashboard.FolderId); err != nil {
@@ -342,7 +341,7 @@ func (r *ReconcileGrafanaDashboard) manageSuccess(dashboard *grafanav1alpha1.Gra
 		dashboard.Namespace,
 		dashboard.Name)
 	r.recorder.Event(dashboard, "Normal", "Success", msg)
-	log.Info(msg)
+	log.V(1).Info(msg)
 	r.config.AddDashboard(dashboard, folderId, folderName)
 	r.config.SetPluginsFor(dashboard)
 }
