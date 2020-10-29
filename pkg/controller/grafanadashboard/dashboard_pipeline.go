@@ -52,7 +52,6 @@ func NewDashboardPipeline(client client.Client, dashboard *v1alpha1.GrafanaDashb
 	}
 }
 
-
 func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string, folderId *int64, folderName string) ([]byte, error) {
 	err := r.obtainJson()
 	if err != nil {
