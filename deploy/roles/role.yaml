@@ -96,3 +96,14 @@ rules:
   - delete
   - deletecollection
   - watch
+- apiGroups:
+    - rbac.authorization.k8s.io
+  resources:
+    - role
+    - rolebinding
+  verbs:
+    - get
+    - list
+    - create
+    - update
+    - delete
