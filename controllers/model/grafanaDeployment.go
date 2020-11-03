@@ -162,7 +162,7 @@ func getTerminationGracePeriod(cr *v1alpha1.Grafana) *int64 {
 }
 
 func getPodPriorityClassName(cr *v1alpha1.Grafana) string {
-	if cr.Spec.Deployment != nil {
+	if cr.Spec.Deployment != nil{
 		return cr.Spec.Deployment.PriorityClassName
 	}
 	return ""

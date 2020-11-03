@@ -28,8 +28,10 @@ const (
 	GrafanaHttpPort                 int = 3000
 	GrafanaHttpPortName                 = "grafana"
 	//Loki
-	LokiImage            = "grafana/loki"
-	LokiVersion          = "2.0.0"
-	LokiHttpPort     int = 3100
-	LokiHttpPortName     = "loki"
+	LokiImage              = "grafana/loki"
+	LokiVersion            = "2.0.0"
+	LokiHttpPort       int = 3100
+	LokiHttpPortName       = "loki"
+	LokiPodLabel           = "loki"
+	LokiDeploymentName     = "loki-deployment"
 )
