@@ -1407,6 +1407,11 @@ func (in *GrafanaDeployment) DeepCopyInto(out *GrafanaDeployment) {
 		*out = new(v1.PodSecurityContext)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.ContainerSecurityContext != nil {
+		in, out := &in.ContainerSecurityContext, &out.ContainerSecurityContext
+		*out = new(v1.SecurityContext)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 
@@ -1738,6 +1743,11 @@ func (in *GrafanaSpec) DeepCopyInto(out *GrafanaSpec) {
 	}
 	if in.Resources != nil {
 		in, out := &in.Resources, &out.Resources
+		*out = new(v1.ResourceRequirements)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.InitResources != nil {
+		in, out := &in.InitResources, &out.InitResources
 		*out = new(v1.ResourceRequirements)
 		(*in).DeepCopyInto(*out)
 	}

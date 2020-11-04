@@ -341,6 +341,11 @@ func schema_pkg_apis_integreatly_v1alpha1_GrafanaSpec(ref common.ReferenceCallba
 							Ref: ref("k8s.io/api/core/v1.ResourceRequirements"),
 						},
 					},
+					"initResources": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/api/core/v1.ResourceRequirements"),
+						},
+					},
 					"serviceAccount": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref("github.com/infobloxopen/grafana-operator/pkg/apis/integreatly/v1alpha1.GrafanaServiceAccount"),

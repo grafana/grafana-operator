@@ -140,7 +140,7 @@ func (r *GrafanaClientImpl) doRequest(op string, channel []byte, UID string) (Gr
 	if err != nil {
 		return response, err
 	}
-	log.Info(fmt.Sprintf("request %v", req))
+
 	setHeaders(req)
 
 	resp, err := r.client.Do(req)

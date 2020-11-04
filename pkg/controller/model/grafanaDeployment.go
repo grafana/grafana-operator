@@ -3,21 +3,26 @@ package model
 import (
 	"fmt"
 
-	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
 	v1 "k8s.io/api/apps/v1"
 	v13 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
 )
 
 const (
-	MemoryRequest = "256Mi"
-	CpuRequest    = "100m"
-	MemoryLimit   = "1024Mi"
-	CpuLimit      = "500m"
+	MemoryRequest     = "256Mi"
+	CpuRequest        = "100m"
+	MemoryLimit       = "1024Mi"
+	CpuLimit          = "500m"
+	InitMemoryRequest = "100Mi"
+	InitCpuRequest    = "50m"
+	InitMemoryLimit   = "600Mi"
+	InitCpuLimit      = "300m"
 )
 
 func getResources(cr *v1alpha1.Grafana) v13.ResourceRequirements {
@@ -35,6 +40,23 @@ func getResources(cr *v1alpha1.Grafana) v13.ResourceRequirements {
 		},
 	}
 }
+
+func getInitResources(cr *v1alpha1.Grafana) v13.ResourceRequirements {
+	if cr.Spec.InitResources != nil {
+		return *cr.Spec.InitResources
+	}
+	return v13.ResourceRequirements{
+		Requests: v13.ResourceList{
+			v13.ResourceMemory: resource.MustParse(InitMemoryRequest),
+			v13.ResourceCPU:    resource.MustParse(InitCpuRequest),
+		},
+		Limits: v13.ResourceList{
+			v13.ResourceMemory: resource.MustParse(InitMemoryLimit),
+			v13.ResourceCPU:    resource.MustParse(InitCpuLimit),
+		},
+	}
+}
+
 func getAffinities(cr *v1alpha1.Grafana) *v13.Affinity {
 	var affinity = v13.Affinity{}
 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Affinity != nil {
@@ -48,6 +70,15 @@ func getSecurityContext(cr *v1alpha1.Grafana) *v13.PodSecurityContext {
 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.SecurityContext != nil {
 		securityContext = *cr.Spec.Deployment.SecurityContext
 	}
+	return &securityContext
+}
+
+func getContainerSecurityContext(cr *v1alpha1.Grafana) *v13.SecurityContext {
+	var securityContext = v13.SecurityContext{}
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.ContainerSecurityContext != nil {
+		securityContext = *cr.Spec.Deployment.ContainerSecurityContext
+	}
+
 	return &securityContext
 }
 
@@ -343,11 +374,11 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 		},
 		Resources:                getResources(cr),
 		VolumeMounts:             getVolumeMounts(cr),
-		LivenessProbe:            getProbe(cr, 60, 30, 10),
 		ReadinessProbe:           getProbe(cr, 5, 3, 1),
 		TerminationMessagePath:   "/dev/termination-log",
 		TerminationMessagePolicy: "File",
-		ImagePullPolicy:          "IfNotPresent",
+		ImagePullPolicy:          "Always",
+		SecurityContext:          getContainerSecurityContext(cr),
 	}
 
 	if cr.Spec.DBPasswordRef != nil {
@@ -369,7 +400,7 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 	return containers
 }
 
-func getInitContainers(plugins string) []v13.Container {
+func getInitContainers(cr *v1alpha1.Grafana, plugins string) []v13.Container {
 	cfg := config.GetControllerConfig()
 	image := cfg.GetConfigString(config.ConfigPluginsInitContainerImage, config.PluginsInitContainerImage)
 	tag := cfg.GetConfigString(config.ConfigPluginsInitContainerTag, config.PluginsInitContainerTag)
@@ -384,7 +415,7 @@ func getInitContainers(plugins string) []v13.Container {
 					Value: plugins,
 				},
 			},
-			Resources: v13.ResourceRequirements{},
+			Resources: getInitResources(cr),
 			VolumeMounts: []v13.VolumeMount{
 				{
 					Name:      GrafanaPluginsVolumeName,
@@ -394,7 +425,8 @@ func getInitContainers(plugins string) []v13.Container {
 			},
 			TerminationMessagePath:   "/dev/termination-log",
 			TerminationMessagePolicy: "File",
-			ImagePullPolicy:          "IfNotPresent",
+			ImagePullPolicy:          "Always",
+			SecurityContext:          getContainerSecurityContext(cr),
 		},
 	}
 }
@@ -419,7 +451,7 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, annotations map[string]string, conf
 				Affinity:           getAffinities(cr),
 				SecurityContext:    getSecurityContext(cr),
 				Volumes:            getVolumes(cr),
-				InitContainers:     getInitContainers(plugins),
+				InitContainers:     getInitContainers(cr, plugins),
 				Containers:         getContainers(cr, configHash, dsHash),
 				ServiceAccountName: GrafanaServiceAccountName,
 			},
