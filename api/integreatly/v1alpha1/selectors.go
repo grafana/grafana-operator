@@ -29,3 +29,29 @@ func (d *GrafanaDashboard) MatchesSelectors(s []*metav1.LabelSelector) (bool, er
 
 	return result, nil
 }
+
+
+func (l *Loki) matchesSelector(s *metav1.LabelSelector) (bool, error) {
+	selector, err := metav1.LabelSelectorAsSelector(s)
+	if err != nil {
+		return false, err
+	}
+
+	return selector.Empty() || selector.Matches(labels.Set(l.Labels)), nil
+}
+
+// Check if loki matches at least one of the selectors
+func (l *Loki) MatchesSelectors(s []*metav1.LabelSelector) (bool, error) {
+	result := false
+
+	for _, selector := range s {
+		match, err := l.matchesSelector(selector)
+		if err != nil {
+			return false, err
+		}
+
+		result = result || match
+	}
+
+	return result, nil
+}

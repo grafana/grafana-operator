@@ -21,7 +21,7 @@ func getExternal(cr *v1alpha1.Loki) *v1alpha1.LokiExternal {
 
 
 
-
+//
 func getLokiDeploymentSpec(cr *v1alpha1.Loki) v1.DeploymentSpec {
 	return v1.DeploymentSpec{
 		Selector: &v12.LabelSelector{

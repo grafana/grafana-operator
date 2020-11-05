@@ -37,6 +37,13 @@ type Loki struct {
 	Status LokiStatus `json:"status,omitempty"`
 }
 
+type LokiRef struct {
+	Name       string `json:"name"`
+	Namespace  string `json:"namespace"`
+	UID        string `json:"uid"`
+	LokiURL		string `json:"lokiurl"`
+}
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // LokiList contains a list of Loki

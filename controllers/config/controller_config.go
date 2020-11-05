@@ -143,6 +143,10 @@ func (c *ControllerConfig) InvalidateDashboards() {
 	}
 }
 
+func (c *ControllerConfig) ResetDashboards() {
+	c.Dashboards = make(map[string][]*v1alpha1.GrafanaDashboardRef)
+}
+
 func (c *ControllerConfig) SetDashboards(dashboards []*v1alpha1.GrafanaDashboardRef) {
 	c.Lock()
 	defer c.Unlock()
@@ -244,5 +248,95 @@ func (c *ControllerConfig) Cleanup(plugins bool) {
 
 	if plugins {
 		c.Plugins = map[string]v1alpha1.PluginList{}
+	}
+}
+
+
+func (c *ControllerConfig) GetLokis(namespace string) []*v1alpha1.LokiRef {
+	c.Lock()
+	defer c.Unlock()
+	// Cluster level?
+	if namespace == "" {
+		var lokis []*v1alpha1.LokiRef
+		for _, v := range c.Lokis {
+			lokis = append(lokis, v...)
+		}
+		return lokis
+	}
+
+	if lokis, ok := c.Lokis[namespace]; ok {
+		return lokis
+	}
+	return []*v1alpha1.LokiRef{}
+}
+
+
+func (c *ControllerConfig) HasLoki(namespace, name string) (int, bool) {
+	if lokis, ok := c.Lokis[namespace]; ok {
+		for i, loki := range lokis {
+			if loki.Name == name {
+				return i, true
+			}
+		}
+	}
+	return -1, false
+}
+
+
+
+func (c *ControllerConfig) AddLoki(loki *v1alpha1.Loki) {
+
+	ns := loki.Namespace
+	if i, exists := c.HasLoki(ns, loki.Name); !exists {
+		c.Lock()
+		defer c.Unlock()
+		c.Lokis[ns] = append(c.Lokis[ns], &v1alpha1.LokiRef{
+			Name:     loki.Name,
+			Namespace: loki.Namespace,
+			UID:       string(loki.UID),
+			LokiURL:   string(loki.Spec.External.Url),
+		})
+	} else {
+		c.Lock()
+		defer c.Unlock()
+		c.Lokis[ns][i].Name = loki.Name
+		c.Lokis[ns][i].Namespace = ns
+		c.Lokis[ns][i].UID = string(loki.UID)
+		c.Lokis[ns][i].LokiURL = string(loki.Spec.External.Url)
+
+	}
+}
+//
+//func (c *ControllerConfig) InvalidateLokis() {
+//	c.Lock()
+//	defer c.Unlock()
+//	for _, v := range c.Lokis {
+//		for _, d := range v {
+//			d.Hash = ""
+//		}
+//	}
+//}
+
+func (c *ControllerConfig) ResetLokis() {
+	c.Lokis = make(map[string][]*v1alpha1.LokiRef)
+}
+
+func (c *ControllerConfig) SetLokis(lokis []*v1alpha1.LokiRef) {
+	c.Lock()
+	defer c.Unlock()
+
+	for _, l := range lokis {
+		c.Lokis[l.Namespace] = append(c.Lokis[l.Namespace], l)
+	}
+}
+
+func (c *ControllerConfig) RemoveLoki(namespace, name string) {
+	if i, exists := c.HasLoki(namespace, name); exists {
+		c.Lock()
+		defer c.Unlock()
+		list := c.Dashboards[namespace]
+		list[i] = list[len(list)-1]
+		list = list[:len(list)-1]
+		c.Dashboards[namespace] = list
 	}
 }

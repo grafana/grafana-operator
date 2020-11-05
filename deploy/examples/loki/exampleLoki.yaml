@@ -1,0 +1,108 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: loki-deployment
+  namespace: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lokiapp
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: lokiapp
+    spec:
+      volumes:
+        - name: config
+          configMap:
+            name: lokiapp-config
+        - name: chunks
+          emptyDir: { }
+        - name: index
+          emptyDir: { }
+      containers:
+        - name: loki
+          image: 'docker.io/grafana/loki:latest'
+          volumeMounts:
+            - name: config
+              mountPath: /opt/config
+            - name: chunks
+              mountPath: /loki/chunks
+            - name: index
+              mountPath: /loki/index
+          ports:
+            - containerPort: 3100
+              protocol: TCP
+          resources: { }
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: Always
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: { }
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+---
+apiVersion: v1
+data:
+  loki.yaml: |
+    target: "all"
+kind: ConfigMap
+metadata:
+  name: lokiapp-config
+  namespace: grafana
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: lokiapp-service
+  namespace: grafana
+spec:
+  ports:
+    - protocol: TCP
+      port: 3100
+      targetPort: 3100
+  selector:
+    app: lokiapp
+  type: ClusterIP
+  sessionAffinity: None
+---
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: loki-route
+  namespace: grafana
+spec:
+  to:
+    kind: Service
+    name: <name>
+    weight: 100
+  port:
+    targetPort: 3100
+  wildcardPolicy: None
+---
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDataSource
+metadata:
+  name: loki-datasource
+  namespace: grafana
+spec:
+  datasources:
+    - access: proxy
+      editable: true
+      isDefault: false
+      name: Loki
+      type: loki
+      url: 'http://loki-datasource.grafana.svc.cluster.local:3100'
+      version: 1
+  name: kafka.yaml

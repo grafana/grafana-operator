@@ -7,6 +7,8 @@ var ControllerEvents = make(chan ControllerState, 1)
 type ControllerState struct {
 	DashboardSelectors         []*v1.LabelSelector
 	DashboardNamespaceSelector *v1.LabelSelector
+	LokiSelector               []*v1.LabelSelector
+	LokiNamespaceSelector      *v1.LabelSelector
 	AdminUrl                   string
 	GrafanaReady               bool
 	ClientTimeout              int
