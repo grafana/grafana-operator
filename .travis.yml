@@ -3,7 +3,7 @@ language: go
 sudo: required
 
 go:
-  - 1.13.x
+  - 1.14.x
 
 env:
   global:
@@ -13,21 +13,20 @@ stages:
   - test
   - compile
   - name: push
-    if: fork = false
+    if: branch = master AND type != pull_request
 
 jobs:
   include:
     - stage: test
       script:
+        - set -e
         - make setup/travis code/check test/unit
     - stage: compile
       script:
-        - make setup/travis image/build TAG=$(git rev-parse --short ${TRAVIS_COMMIT})
+        - set -e
+        - make setup/travis image/build
     - stage: push
       script:
-        - export BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
-        - export TAG=$(git rev-parse --short ${TRAVIS_COMMIT})
-        - docker login --password "$QUAY_PASSWORD" --username "$QUAY_USERNAME" quay.io
-        - make setup/travis image/build/push TAG=$TAG
-        - docker tag quay.io/integreatly/$OPERATOR_NAME:$TAG quay.io/integreatly/$OPERATOR_NAME:$BRANCH
-        - docker push quay.io/integreatly/$OPERATOR_NAME:$BRANCH
+        - set -e
+        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+        - make setup/travis image/build/push
