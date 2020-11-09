@@ -73,7 +73,10 @@ func getAffinities(cr *v1alpha1.Grafana) *v13.Affinity {
 }
 
 func getSecurityContext(cr *v1alpha1.Grafana) *v13.PodSecurityContext {
-	var securityContext = v13.PodSecurityContext{}
+	var fsGroup int64 = 472 //grafana GID in docker image
+	var securityContext = v13.PodSecurityContext{
+		FSGroup: &fsGroup,
+	}
 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.SecurityContext != nil {
 		securityContext = *cr.Spec.Deployment.SecurityContext
 	}
