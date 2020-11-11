@@ -29,6 +29,13 @@ spec:
               items:
                 type: string
                 description: Secret to be mounted as volume into the grafana deployment
+            dataStorage:
+              accessModes:
+                type: string
+                description: Access mode for this volume
+              size:
+                type: string
+                description: Size of this volume in Gi's
             configMaps:
               type: array
               items:
