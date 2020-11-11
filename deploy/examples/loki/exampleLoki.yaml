@@ -77,19 +77,19 @@ spec:
   type: ClusterIP
   sessionAffinity: None
 ---
-kind: Route
-apiVersion: route.openshift.io/v1
-metadata:
-  name: loki-route
-  namespace: grafana
-spec:
-  to:
-    kind: Service
-    name: <name>
-    weight: 100
-  port:
-    targetPort: 3100
-  wildcardPolicy: None
+#kind: Route
+#apiVersion: route.openshift.io/v1
+#metadata:
+#  name: loki-route
+#  namespace: grafana
+#spec:
+#  to:
+#    kind: Service
+#    name: <name>
+#    weight: 100
+#  port:
+#    targetPort: 3100
+#  wildcardPolicy: None
 ---
 apiVersion: integreatly.org/v1alpha1
 kind: GrafanaDataSource

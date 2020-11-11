@@ -1,0 +1,9 @@
+apiVersion: integreatly.org/v1alpha1
+kind: Loki
+metadata:
+  name: example-loki
+  namespace: grafana
+  labels:
+    app: lokiapp
+spec:
+ externalURL: 'http://loki-datasource.grafana.svc.cluster.local:3100'

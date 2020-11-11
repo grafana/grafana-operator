@@ -36,3 +36,8 @@ spec:
       "version": 0,
       "links": []
     }
+  jsonnet: |-
+    local grafana = import 'grafonnet/grafana.libsonnet';
+    local monitoring = import 'monitoring/monitoring.libsonnet';
+    local dashboard = grafana.dashboard.new('Monitoring', tags=['RHMI']);
+    monitoring.addCommonPanels(dashboard)

@@ -63,7 +63,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler, namespace string) error {
 
 	go func() {
 		for range ticker.C {
-			log.Info("running periodic loki resync")
+			log.V(1).Info("running periodic loki resync")
 			sendEmptyRequest()
 		}
 	}()
@@ -109,7 +109,7 @@ type ReconcileLoki struct {
 }
 
 func (r ReconcileLoki) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	log.Info("running loki controller")
+	log.V(1).Info("running loki controller")
 
 	// Initial request?
 	if request.Name == "" {
@@ -139,7 +139,7 @@ func (r ReconcileLoki) Reconcile(request reconcile.Request) (reconcile.Result, e
 	// If the dashboard does not match the label selectors then we ignore it
 	cr := instance.DeepCopy()
 	if !r.isMatch(cr) {
-		log.Info(fmt.Sprintf("Loki %v/%v found but selectors do not match",
+		log.V(1).Info(fmt.Sprintf("loki %v/%v found but selectors do not match",
 			cr.Namespace, cr.Name))
 		return reconcile.Result{}, nil
 	}
@@ -190,7 +190,7 @@ func (r *ReconcileLoki) reconcileLoki(request reconcile.Request) (reconcile.Resu
 	for _, loki := range namespaceLokis.Items {
 		// Is this a dashboard we care about (matches the label selectors)?
 		if !r.isMatch(&loki) {
-			log.Info(fmt.Sprintf("dashboard %v/%v found but selectors do not match",
+			log.V(1).Info(fmt.Sprintf("loki %v/%v found but selectors do not match",
 				loki.Namespace, loki.Name))
 			continue
 		}
