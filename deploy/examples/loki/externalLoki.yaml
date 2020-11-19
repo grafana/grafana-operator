@@ -6,4 +6,5 @@ metadata:
   labels:
     app: lokiapp
 spec:
- externalURL: 'http://loki-datasource.grafana.svc.cluster.local:3100'
+  external:
+    url: 'http://loki-datasource.grafana.svc.cluster.local:3100'
