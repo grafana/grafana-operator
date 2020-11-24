@@ -1,7 +1,5 @@
 package model
 
-
-
 import (
 	"strconv"
 
@@ -44,7 +42,7 @@ func getLokiClusterIP(cr *v1alpha1.Loki) string {
 	return cr.Spec.Service.ClusterIP
 }
 
-func getLokiPort(cr *v1alpha1.Loki) int {
+func GetLokiPort(cr *v1alpha1.Loki) int {
 	if cr.Spec.Config.Server == nil {
 		return LokiHttpPort
 	}
@@ -73,7 +71,7 @@ func getLokiPrefix(cr *v1alpha1.Loki) string {
 }
 
 func getLokiServicePorts(cr *v1alpha1.Loki, currentState *v1.Service) []v1.ServicePort {
-	intPort := int32(getLokiPort(cr))
+	intPort := int32(GetLokiPort(cr))
 
 	defaultPorts := []v1.ServicePort{
 		{

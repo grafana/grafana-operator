@@ -29,12 +29,15 @@ const (
 	GrafanaHttpPortName                 = "grafana"
 
 	//Loki
-	LokiServiceName        = "loki-service"
-	LokiImage              = "grafana/loki"
-	LokiVersion            = "2.0.0"
-	LokiHttpPort       int = 3100
-	LokiHttpPrefix         = "/api/prom"
-	LokiHttpPortName       = "loki"
-	LokiPodLabel           = "loki"
-	LokiDeploymentName     = "loki-deployment"
+	LokiServiceAccountName     = "loki-serviceaccount"
+	LokiIngressName            = "loki-ingress"
+	LokiRouteName              = "loki-route"
+	LokiServiceName            = "loki-service"
+	LokiImage                  = "grafana/loki"
+	LokiVersion                = "2.0.0"
+	LokiHttpPort           int = 3100
+	LokiHttpPrefix             = "/api/prom"
+	LokiHttpPortName           = "loki"
+	LokiPodLabel               = "loki"
+	LokiDeploymentName         = "loki-deployment"
 )

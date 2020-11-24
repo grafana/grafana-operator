@@ -18,9 +18,6 @@ func getExternal(cr *v1alpha1.Loki) *v1alpha1.LokiExternal {
 	return nil
 }
 
-
-
-
 //
 func getLokiDeploymentSpec(cr *v1alpha1.Loki) v1.DeploymentSpec {
 	return v1.DeploymentSpec{
@@ -31,10 +28,9 @@ func getLokiDeploymentSpec(cr *v1alpha1.Loki) v1.DeploymentSpec {
 		},
 		Template: v13.PodTemplateSpec{
 			ObjectMeta: v12.ObjectMeta{
-				Name:        LokiDeploymentName,
+				Name: LokiDeploymentName,
 			},
-			Spec: v13.PodSpec{
-			},
+			Spec: v13.PodSpec{},
 		},
 		Strategy: v1.DeploymentStrategy{
 			Type:          "RollingUpdate",

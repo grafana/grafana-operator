@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	v12 "github.com/openshift/api/route/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -14,17 +15,17 @@ type LokiSpec struct {
 	// When set, refer to unmamnaged Loki instance and do not create a managed one
 	External *LokiExternal `json:"external,omitempty"`
 	Service  *LokiService  `json:"service,omitempty"`
+	Ingress  *LokiIngress  `json:"ingress,omitempty"`
+	Route    *LokiRoute    `json:"route,omitempty"`
 }
 
 type LokiConfig struct {
 	Server *LokiConfigServer `json:"server,omitempty" ini:"server,omitempty"`
-
 }
 type LokiConfigServer struct {
-	HttpAddr string `json:"http_addr,omitempty" ini:"http_addr,omitempty"`
-	HttpPort string `json:"http_port,omitempty" ini:"http_port,omitempty"`
+	HttpAddr   string `json:"http_addr,omitempty" ini:"http_addr,omitempty"`
+	HttpPort   string `json:"http_port,omitempty" ini:"http_port,omitempty"`
 	HttpPrefix string `json:"http_prefix,omitempty" ini:"http_prefix"`
-
 }
 
 type LokiService struct {
@@ -33,6 +34,21 @@ type LokiService struct {
 	Type        v1.ServiceType    `json:"type,omitempty"`
 	Ports       []v1.ServicePort  `json:"ports,omitempty"`
 	ClusterIP   string            `json:"clusterIP,omitempty"`
+}
+
+type LokiIngress struct {
+	Annotations   map[string]string      `json:"annotations,omitempty"`
+	Hostname      string                 `json:"hostname,omitempty"`
+	Labels        map[string]string      `json:"Labels,omitempty"`
+	Path          string                 `json:"labels,omitempty"`
+	Enabled       bool                   `json:"enabled,omitempty"`
+	TLSEnabled    bool                   `json:"tlsEnabled,omitempty"`
+	TLSSecretName string                 `json:"tlsSecretName,omitempty"`
+	TargetPort    string                 `json:"targetPort,omitempty"`
+	Termination   v12.TLSTerminationType `json:"termination,omitempty"`
+}
+
+type LokiRoute struct {
 }
 
 type LokiExternal struct {

@@ -251,7 +251,6 @@ func (c *ControllerConfig) Cleanup(plugins bool) {
 	}
 }
 
-
 func (c *ControllerConfig) GetLokis(namespace string) []*v1alpha1.LokiRef {
 	c.Lock()
 	defer c.Unlock()
@@ -270,7 +269,6 @@ func (c *ControllerConfig) GetLokis(namespace string) []*v1alpha1.LokiRef {
 	return []*v1alpha1.LokiRef{}
 }
 
-
 func (c *ControllerConfig) HasLoki(namespace, name string) (int, bool) {
 	if lokis, ok := c.Lokis[namespace]; ok {
 		for i, loki := range lokis {
@@ -282,8 +280,6 @@ func (c *ControllerConfig) HasLoki(namespace, name string) (int, bool) {
 	return -1, false
 }
 
-
-
 func (c *ControllerConfig) AddLoki(loki *v1alpha1.Loki) {
 
 	ns := loki.Namespace
@@ -291,7 +287,7 @@ func (c *ControllerConfig) AddLoki(loki *v1alpha1.Loki) {
 		c.Lock()
 		defer c.Unlock()
 		c.Lokis[ns] = append(c.Lokis[ns], &v1alpha1.LokiRef{
-			Name:     loki.Name,
+			Name:      loki.Name,
 			Namespace: loki.Namespace,
 			UID:       string(loki.UID),
 			LokiURL:   string(loki.Spec.External.Url),
@@ -306,6 +302,7 @@ func (c *ControllerConfig) AddLoki(loki *v1alpha1.Loki) {
 
 	}
 }
+
 //
 //func (c *ControllerConfig) InvalidateLokis() {
 //	c.Lock()

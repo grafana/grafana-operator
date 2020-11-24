@@ -30,7 +30,6 @@ func (d *GrafanaDashboard) MatchesSelectors(s []*metav1.LabelSelector) (bool, er
 	return result, nil
 }
 
-
 func (l *Loki) matchesSelector(s *metav1.LabelSelector) (bool, error) {
 	selector, err := metav1.LabelSelectorAsSelector(s)
 	if err != nil {

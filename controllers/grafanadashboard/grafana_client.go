@@ -20,7 +20,6 @@ const (
 	CreateOrUpdateFolderUrl    = "%v/api/folders"
 	DeleteFolderByUIDUrl       = "%v/api/folders/%v"
 	GetFolderByIDUrl           = "%v/api/folders/id/%v"
-
 )
 
 const (
