@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -9,8 +10,29 @@ import (
 
 // LokiSpec defines the desired state of Loki
 type LokiSpec struct {
+	Config LokiConfig `json:"config"`
 	// When set, refer to unmamnaged Loki instance and do not create a managed one
 	External *LokiExternal `json:"external,omitempty"`
+	Service  *LokiService  `json:"service,omitempty"`
+}
+
+type LokiConfig struct {
+	Server *LokiConfigServer `json:"server,omitempty" ini:"server,omitempty"`
+
+}
+type LokiConfigServer struct {
+	HttpAddr string `json:"http_addr,omitempty" ini:"http_addr,omitempty"`
+	HttpPort string `json:"http_port,omitempty" ini:"http_port,omitempty"`
+	HttpPrefix string `json:"http_prefix,omitempty" ini:"http_prefix"`
+
+}
+
+type LokiService struct {
+	Annotations map[string]string `json:"annotations,omitempty"`
+	Labels      map[string]string `json:"labels,omitempty"`
+	Type        v1.ServiceType    `json:"type,omitempty"`
+	Ports       []v1.ServicePort  `json:"ports,omitempty"`
+	ClusterIP   string            `json:"clusterIP,omitempty"`
 }
 
 type LokiExternal struct {
@@ -38,10 +60,10 @@ type Loki struct {
 }
 
 type LokiRef struct {
-	Name       string `json:"name"`
-	Namespace  string `json:"namespace"`
-	UID        string `json:"uid"`
-	LokiURL		string `json:"lokiurl"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+	UID       string `json:"uid"`
+	LokiURL   string `json:"lokiurl"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
