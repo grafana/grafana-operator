@@ -28,11 +28,15 @@ const (
 	GrafanaHttpPort                 int = 3000
 	GrafanaHttpPortName                 = "grafana"
 
-	//Loki
+	// Loki
 	LokiServiceAccountName     = "loki-serviceaccount"
 	LokiIngressName            = "loki-ingress"
 	LokiRouteName              = "loki-route"
 	LokiServiceName            = "loki-service"
+	LokiDataVolumeName         = "loki-data"
+	LokiDataStorageName        = "loki-pvc"
+	LokiLogsVolumeName         = "loki-logs"
+	LokiConfigName             = "loki-config"
 	LokiImage                  = "grafana/loki"
 	LokiVersion                = "2.0.0"
 	LokiHttpPort           int = 3100

@@ -3,6 +3,7 @@ package v1alpha1
 import (
 	v12 "github.com/openshift/api/route/v1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -11,12 +12,28 @@ import (
 
 // LokiSpec defines the desired state of Loki
 type LokiSpec struct {
-	Config LokiConfig `json:"config"`
+	Config       LokiConfig        `json:"config"`
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+	Deployment   *LokiDeployment   `json"deployment,omitempty"`
+	DataStorage  *LokiDataStorage  `json"dataStorage,omitempty"`
 	// When set, refer to unmamnaged Loki instance and do not create a managed one
-	External *LokiExternal `json:"external,omitempty"`
-	Service  *LokiService  `json:"service,omitempty"`
-	Ingress  *LokiIngress  `json:"ingress,omitempty"`
-	Route    *LokiRoute    `json:"route,omitempty"`
+	External  *LokiExternal `json:"external,omitempty"`
+	Service   *LokiService  `json:"service,omitempty"`
+	Ingress   *LokiIngress  `json:"ingress,omitempty"`
+	Route     *LokiRoute    `json:"route,omitempty"`
+	BaseImage string        `json:"baseImage,omitempty"`
+}
+
+type LokiDeployment struct {
+	Annotations                   map[string]string      `json:"annotations,omitempty"`
+	Labels                        map[string]string      `json:"labels,omitempty"`
+	Replicas                      int32                  `json:"replicas"`
+	NodeSelector                  map[string]string      `json:"nodeSelector,omitempty"`
+	Tolerations                   []v1.Toleration        `json:"tolerations,omitempty"`
+	Affinity                      *v1.Affinity           `json:"affinity,omitempty"`
+	SecurityContext               *v1.PodSecurityContext `json:"securityContext,omitempty"`
+	ContainerSecurityContext      *v1.SecurityContext    `json:"containerSecurityContext,omitempty"`
+	TerminationGracePeriodSeconds int64                  `json:"terminationGracePeriodSeconds"`
 }
 
 type LokiConfig struct {
@@ -46,6 +63,15 @@ type LokiIngress struct {
 	TLSSecretName string                 `json:"tlsSecretName,omitempty"`
 	TargetPort    string                 `json:"targetPort,omitempty"`
 	Termination   v12.TLSTerminationType `json:"termination,omitempty"`
+}
+
+// LokiDataStorage provides a means to configure the grafana data storage
+type LokiDataStorage struct {
+	Annotations map[string]string               `json:"annotations,omitempty"`
+	Labels      map[string]string               `json:"labels,omitempty"`
+	AccessModes []v1.PersistentVolumeAccessMode `json:"accessModes,omitempty"`
+	Size        resource.Quantity               `json:"size"`
+	Class       string                          `json:"class"`
 }
 
 type LokiRoute struct {
