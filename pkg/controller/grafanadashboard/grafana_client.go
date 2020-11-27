@@ -2,7 +2,6 @@ package grafanadashboard
 
 import (
 	"bytes"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -78,15 +77,9 @@ func setHeaders(req *http.Request) {
 	req.Header.Set("User-Agent", "grafana-operator")
 }
 
-func NewGrafanaClient(url, user, password string, timeoutSeconds time.Duration) GrafanaClient {
-	transport := http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		},
-	}
-
+func NewGrafanaClient(url, user, password string, transport *http.Transport, timeoutSeconds time.Duration) GrafanaClient {
 	client := &http.Client{
-		Transport: &transport,
+		Transport: transport,
 		Timeout:   time.Second * timeoutSeconds,
 	}
 
