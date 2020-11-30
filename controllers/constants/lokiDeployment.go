@@ -20,7 +20,7 @@ func getExternal(cr *v1alpha1.Loki) *v1alpha1.LokiExternal {
 	return nil
 }
 
-func getLokiDeploymentSpec(cr *v1alpha1.Loki,configHash,dsHash string) v1.DeploymentSpec {
+func getLokiDeploymentSpec(cr *v1alpha1.Loki, configHash string) v1.DeploymentSpec {
 	return v1.DeploymentSpec{
 		Selector: &v12.LabelSelector{
 			MatchLabels: map[string]string{
@@ -31,16 +31,13 @@ func getLokiDeploymentSpec(cr *v1alpha1.Loki,configHash,dsHash string) v1.Deploy
 			ObjectMeta: v12.ObjectMeta{
 				Name: LokiDeploymentName,
 			},
-			//TODO ASK PETER ABOUT THIS
 			Spec: v13.PodSpec{
 				NodeSelector:                  getLokiNodeSelectors(cr),
 				Tolerations:                   getLokiTolerations(cr),
 				Affinity:                      getLokiAffinities(cr),
 				SecurityContext:               getLokiSecurityContext(cr),
 				Volumes:                       getLokiVolumes(cr),
-				//TODO Probably not applicable |V|
-				//InitContainers:                getLokiInitContainers(cr),
-				Containers:                    getLokiContainers(cr, configHash, dsHash),
+				Containers:                    getLokiContainers(cr, configHash),
 				ServiceAccountName:            LokiServiceAccountName,
 				TerminationGracePeriodSeconds: getLokiTerminationGracePeriod(cr),
 			},
@@ -56,7 +53,6 @@ func getLokiContainers(cr *v1alpha1.Loki, configHash string) []v13.Container {
 	var containers []v13.Container
 	var image string
 
-
 	if cr.Spec.BaseImage != "" {
 		image = cr.Spec.BaseImage
 	} else {
@@ -66,11 +62,10 @@ func getLokiContainers(cr *v1alpha1.Loki, configHash string) []v13.Container {
 		image = fmt.Sprintf("%s:%s", img, tag)
 	}
 
-
 	containers = append(containers, v13.Container{
 		Name:       "Loki",
 		Image:      image,
-		Args:       []string{"-config=/etc/grafana/grafana.ini"},
+		Args:       []string{"-config=/etc/loki/loki.ini"},
 		WorkingDir: "",
 		Ports: []v13.ContainerPort{
 			{
@@ -97,9 +92,36 @@ func getLokiContainers(cr *v1alpha1.Loki, configHash string) []v13.Container {
 	return containers
 }
 
+func getLokiVolumeMounts(cr *v1alpha1.Loki) []v13.VolumeMount {
+	var mounts []v13.VolumeMount
 
+	mounts = append(mounts, v13.VolumeMount{
+		Name:      LokiConfigName,
+		MountPath: "/var/loki/",
+	})
 
+	mounts = append(mounts, v13.VolumeMount{
+		Name:      LokiDataVolumeName,
+		MountPath: "/var/lib/loki",
+	})
 
+	mounts = append(mounts, v13.VolumeMount{
+		Name:      LokiLogsVolumeName,
+		MountPath: "/var/log/loki",
+	})
+
+	return mounts
+
+}
+
+func getLokiContainerSecurityContext(cr *v1alpha1.Loki) *v13.SecurityContext {
+	var containerSecurityContext = v13.SecurityContext{}
+
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.ContainerSecurityContext != nil {
+		containerSecurityContext = *cr.Spec.Deployment.ContainerSecurityContext
+	}
+	return &containerSecurityContext
+}
 
 func getLokiVolumes(cr *v1alpha1.Loki) []v13.Volume {
 	var volumes []v13.Volume
@@ -179,13 +201,22 @@ func getLokiNodeSelectors(cr *v1alpha1.Loki) map[string]string {
 	return nodeSelector
 }
 
-func LokiDeployment(cr *v1alpha1.Loki) *v1.Deployment {
+func getLokiTerminationGracePeriod(cr *v1alpha1.Loki) *int64 {
+	var tcp int64 = 30
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.TerminationGracePeriodSeconds != 0 {
+		tcp = cr.Spec.Deployment.TerminationGracePeriodSeconds
+	}
+	return &tcp
+
+}
+
+func LokiDeployment(cr *v1alpha1.Loki, configHash string) *v1.Deployment {
 	return &v1.Deployment{
 		ObjectMeta: v12.ObjectMeta{
 			Name:      LokiDeploymentName,
 			Namespace: cr.Namespace,
 		},
-		Spec: getLokiDeploymentSpec(cr),
+		Spec: getLokiDeploymentSpec(cr,configHash),
 	}
 }
 
@@ -196,8 +227,8 @@ func LokiDeploymentSelector(cr *v1alpha1.Grafana) client.ObjectKey {
 	}
 }
 
-func LokiDeploymentReconciled(cr *v1alpha1.Loki, currentState *v1.Deployment) *v1.Deployment {
+func LokiDeploymentReconciled(cr *v1alpha1.Loki, currentState *v1.Deployment, configHash string) *v1.Deployment {
 	reconciled := currentState.DeepCopy()
-	reconciled.Spec = getLokiDeploymentSpec(cr)
+	reconciled.Spec = getLokiDeploymentSpec(cr, configHash)
 	return reconciled
 }
