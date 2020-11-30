@@ -122,7 +122,6 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 	if err != nil {
 		return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
 	}
-	defer client.Shutdown()
 
 	// Initial request?
 	if request.Name == "" {

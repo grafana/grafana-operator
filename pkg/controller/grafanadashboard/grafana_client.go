@@ -5,11 +5,12 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 )
 
 const (
@@ -62,7 +63,6 @@ type GrafanaClient interface {
 	CreateOrUpdateFolder(folderName string) (GrafanaFolderResponse, error)
 	DeleteFolder(folderID *int64) error
 	SafeToDelete(dashboards []*v1alpha1.GrafanaDashboardRef, folderID *int64) bool
-	Shutdown()
 }
 
 type GrafanaClientImpl struct {
@@ -427,8 +427,4 @@ func (r *GrafanaClientImpl) SafeToDelete(dashlist []*v1alpha1.GrafanaDashboardRe
 		}
 	}
 	return true
-}
-
-func (r *GrafanaClientImpl) Shutdown() {
-	r.client.CloseIdleConnections()
 }
