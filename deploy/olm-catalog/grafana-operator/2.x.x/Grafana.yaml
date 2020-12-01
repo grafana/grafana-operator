@@ -13,7 +13,7 @@ spec:
   version: v1alpha1
   validation:
     openAPIV3Schema:
-      required: ["spec"]
+      required: [ "spec" ]
       properties:
         spec:
           properties:
