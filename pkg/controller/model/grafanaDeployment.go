@@ -350,7 +350,55 @@ func getVolumeMounts(cr *v1alpha1.Grafana) []v13.VolumeMount {
 	return mounts
 }
 
-func getProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.Probe {
+func getLivenessProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.Probe {
+
+	if cr.Spec.LivenessProbeSpec != nil {
+		return &v13.Probe{
+			Handler: v13.Handler{
+				HTTPGet: &v13.HTTPGetAction{
+					Path: GrafanaHealthEndpoint,
+					Port: intstr.FromInt(GetGrafanaPort(cr)),
+				},
+			},
+			InitialDelaySeconds: cr.Spec.LivenessProbeSpec.InitialDelaySeconds,
+			TimeoutSeconds:      cr.Spec.LivenessProbeSpec.TimeOutSeconds,
+			PeriodSeconds:       cr.Spec.LivenessProbeSpec.PeriodSeconds,
+			SuccessThreshold:    cr.Spec.LivenessProbeSpec.SuccessThreshold,
+			FailureThreshold:    cr.Spec.LivenessProbeSpec.FailureThreshold,
+		}
+	}
+
+	return &v13.Probe{
+		Handler: v13.Handler{
+			HTTPGet: &v13.HTTPGetAction{
+				Path: GrafanaHealthEndpoint,
+				Port: intstr.FromInt(GetGrafanaPort(cr)),
+			},
+		},
+		InitialDelaySeconds: delay,
+		TimeoutSeconds:      timeout,
+		FailureThreshold:    failure,
+	}
+}
+
+func getReadinessProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.Probe {
+
+	if cr.Spec.ReadinessProbeSpec != nil {
+		return &v13.Probe{
+			Handler: v13.Handler{
+				HTTPGet: &v13.HTTPGetAction{
+					Path: GrafanaHealthEndpoint,
+					Port: intstr.FromInt(GetGrafanaPort(cr)),
+				},
+			},
+			InitialDelaySeconds: cr.Spec.ReadinessProbeSpec.InitialDelaySeconds,
+			TimeoutSeconds:      cr.Spec.ReadinessProbeSpec.TimeOutSeconds,
+			PeriodSeconds:       cr.Spec.ReadinessProbeSpec.PeriodSeconds,
+			SuccessThreshold:    cr.Spec.ReadinessProbeSpec.SuccessThreshold,
+			FailureThreshold:    cr.Spec.ReadinessProbeSpec.FailureThreshold,
+		}
+	}
+
 	return &v13.Probe{
 		Handler: v13.Handler{
 			HTTPGet: &v13.HTTPGetAction{
@@ -402,8 +450,8 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 		EnvFrom:                  getEnvFrom(cr),
 		Resources:                getResources(cr),
 		VolumeMounts:             getVolumeMounts(cr),
-		LivenessProbe:            getProbe(cr, 60, 30, 10),
-		ReadinessProbe:           getProbe(cr, 5, 3, 1),
+		LivenessProbe:            getLivenessProbe(cr, 60, 30, 10),
+		ReadinessProbe:           getReadinessProbe(cr, 5, 3, 1),
 		TerminationMessagePath:   "/dev/termination-log",
 		TerminationMessagePolicy: "File",
 		ImagePullPolicy:          "IfNotPresent",

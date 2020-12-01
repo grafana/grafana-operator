@@ -34,6 +34,23 @@ type GrafanaSpec struct {
 	DataStorage                *GrafanaDataStorage      `json:"dataStorage,omitempty"`
 	Jsonnet                    *JsonnetConfig           `json:"jsonnet,omitempty"`
 	BaseImage                  string                   `json:"baseImage,omitempty"`
+	LivenessProbeSpec          *LivenessProbeSpec       `json:"livenessProbeSpec,omitempty"`
+	ReadinessProbeSpec         *ReadinessProbeSpec      `json:"readinessProbeSpec,omitempty"`
+}
+
+type ReadinessProbeSpec struct {
+	InitialDelaySeconds int32 `json:"initialDelaySeconds,omitempty"`
+	TimeOutSeconds      int32 `json:"timeoutSeconds,omitempty"`
+	PeriodSeconds       int32 `json:"periodSeconds,omitempty"`
+	SuccessThreshold    int32 `json:"successThreshold,omitempty"`
+	FailureThreshold    int32 `json:"failureThreshold,omitempty"`
+}
+type LivenessProbeSpec struct {
+	InitialDelaySeconds int32 `json:"initialDelaySeconds,omitempty"`
+	TimeOutSeconds      int32 `json:"timeoutSeconds,omitempty"`
+	PeriodSeconds       int32 `json:"periodSeconds,omitempty"`
+	SuccessThreshold    int32 `json:"successThreshold,omitempty"`
+	FailureThreshold    int32 `json:"failureThreshold,omitempty"`
 }
 
 type JsonnetConfig struct {
