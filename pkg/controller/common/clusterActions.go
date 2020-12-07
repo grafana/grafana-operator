@@ -4,6 +4,8 @@ import (
 	"context"
 	stdErr "errors"
 	"fmt"
+	"os"
+
 	"github.com/go-logr/logr"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
 	v13 "github.com/openshift/api/route/v1"
@@ -13,7 +15,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
