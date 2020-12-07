@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"strings"
 )
 
 const GrafanaDashboardKind = "GrafanaDashboard"
@@ -76,13 +76,13 @@ func init() {
 }
 
 func (d *GrafanaDashboard) Hash() string {
-	var datasources strings.Builder
+	hash := sha256.New()
+
 	for _, input := range d.Spec.Datasources {
-		datasources.WriteString(input.DatasourceName)
-		datasources.WriteString(input.InputName)
+		io.WriteString(hash, input.DatasourceName)
+		io.WriteString(hash, input.InputName)
 	}
 
-	hash := sha256.New()
 	io.WriteString(hash, d.Spec.Json)
 	io.WriteString(hash, d.Spec.Url)
 	io.WriteString(hash, d.Spec.Jsonnet)
