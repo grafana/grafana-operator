@@ -4,6 +4,9 @@ import (
 	"context"
 	defaultErrors "errors"
 	"fmt"
+	"os"
+	"time"
+
 	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
@@ -14,7 +17,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
-	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -22,7 +24,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"time"
 )
 
 const (
@@ -242,7 +243,7 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 		folder, err := grafanaClient.CreateOrUpdateFolder(folderName)
 
 		if err != nil {
-			log.Error(err, "failed to get or create namespace folder %v for dashboard %v with error %v", folderName, request.Name)
+			log.Error(err, fmt.Sprintf("failed to get or create namespace folder %v for dashboard %v", folderName, request.Name))
 			r.manageError(&dashboard, err)
 			continue
 		}
@@ -287,7 +288,7 @@ func (r *ReconcileGrafanaDashboard) reconcileDashboards(request reconcile.Reques
 
 		_, err = grafanaClient.CreateOrUpdateDashboard(processed, folderId, folderName)
 		if err != nil {
-			log.Error(err, "cannot submit dashboard %v/%v", dashboard.Namespace, dashboard.Name)
+			log.Error(err, fmt.Sprintf("cannot submit dashboard %v/%v", dashboard.Namespace, dashboard.Name))
 			r.manageError(&dashboard, err)
 
 			continue
