@@ -100,7 +100,7 @@ func (i *ClusterActionRunner) exposeSecret(ns string, ref *v14.SecretEnvSource, 
 		for secretKey, secretValue := range secret.Data {
 			if exposedVar == secretKey {
 				os.Setenv(secretKey, string(secretValue))
-				i.log.V(1).Info("found value for %s in secret %s", exposedVar, ref.Name)
+				i.log.V(1).Info(fmt.Sprintf("found value for %s in secret %s", exposedVar, ref.Name))
 			}
 		}
 	}
@@ -124,7 +124,7 @@ func (i *ClusterActionRunner) exposeConfigMap(ns string, ref *v14.ConfigMapEnvSo
 		for configMapKey, configMapValue := range configMap.Data {
 			if exposedVar == configMapKey {
 				os.Setenv(configMapKey, string(configMapValue))
-				i.log.V(1).Info("found value for %s in config map %s", exposedVar, ref.Name)
+				i.log.V(1).Info(fmt.Sprintf("found value for %s in config map %s", exposedVar, ref.Name))
 			}
 		}
 	}
