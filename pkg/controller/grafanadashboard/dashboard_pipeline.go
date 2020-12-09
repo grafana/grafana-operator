@@ -99,7 +99,7 @@ func (r *DashboardPipelineImpl) validateJson() error {
 		return err
 	}
 
-	dashboardBytes, err = r.addEnvToMessage(dashboardBytes)
+	dashboardBytes, err = r.addEnvToAlert(dashboardBytes)
 	if err != nil {
 		return err
 	}
@@ -293,7 +293,7 @@ func (r *DashboardPipelineImpl) fixHeights(dashboardBytes []byte) ([]byte, error
 }
 
 // add cluster env to alert message
-func (r *DashboardPipelineImpl) addEnvToMessage(dashboardBytes []byte) ([]byte, error) {
+func (r *DashboardPipelineImpl) addEnvToAlert(dashboardBytes []byte) ([]byte, error) {
 	if r.Dashboard.Spec.Environment == "" {
 		return dashboardBytes, nil
 	}
@@ -311,10 +311,17 @@ func (r *DashboardPipelineImpl) addEnvToMessage(dashboardBytes []byte) ([]byte, 
 				panel, ok := p.(map[string]interface{})
 				if panel != nil && panel["alert"] != nil && ok {
 					alert, ok := panel["alert"].(map[string]interface{})
-					if alert != nil && alert["message"] != nil && ok {
-						message := alert["message"].(string)
-						alert["message"] = r.Dashboard.Spec.Environment + " " + message
-						r.Logger.Info(fmt.Sprintf("updating alert message %v", alert["message"]))
+					if alert != nil && ok {
+						if alert["message"] != nil {
+							message := alert["message"].(string)
+							alert["message"] = r.Dashboard.Spec.Environment + " " + message
+							r.Logger.Info(fmt.Sprintf("updating alert message %v", alert["message"]))
+						}
+						if alert["name"] != nil {
+							name := alert["name"].(string)
+							alert["name"] = r.Dashboard.Spec.Environment + " " + name
+							r.Logger.Info(fmt.Sprintf("updating alert name %v", alert["name"]))
+						}
 					}
 				}
 			}
