@@ -286,7 +286,7 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 	}
 
 	if cr.Spec.Client != nil && cr.Spec.Client.TimeoutSeconds != nil {
-		seconds := DefaultClientTimeoutSeconds
+		seconds := *cr.Spec.Client.TimeoutSeconds
 		if seconds < 0 {
 			seconds = DefaultClientTimeoutSeconds
 		}

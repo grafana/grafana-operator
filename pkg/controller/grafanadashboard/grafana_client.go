@@ -2,14 +2,14 @@ package grafanadashboard
 
 import (
 	"bytes"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 )
 
 const (
@@ -62,7 +62,6 @@ type GrafanaClient interface {
 	CreateOrUpdateFolder(folderName string) (GrafanaFolderResponse, error)
 	DeleteFolder(folderID *int64) error
 	SafeToDelete(dashboards []*v1alpha1.GrafanaDashboardRef, folderID *int64) bool
-	Shutdown()
 }
 
 type GrafanaClientImpl struct {
@@ -78,15 +77,9 @@ func setHeaders(req *http.Request) {
 	req.Header.Set("User-Agent", "grafana-operator")
 }
 
-func NewGrafanaClient(url, user, password string, timeoutSeconds time.Duration) GrafanaClient {
-	transport := http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		},
-	}
-
+func NewGrafanaClient(url, user, password string, transport *http.Transport, timeoutSeconds time.Duration) GrafanaClient {
 	client := &http.Client{
-		Transport: &transport,
+		Transport: transport,
 		Timeout:   time.Second * timeoutSeconds,
 	}
 
@@ -427,8 +420,4 @@ func (r *GrafanaClientImpl) SafeToDelete(dashlist []*v1alpha1.GrafanaDashboardRe
 		}
 	}
 	return true
-}
-
-func (r *GrafanaClientImpl) Shutdown() {
-	r.client.CloseIdleConnections()
 }
