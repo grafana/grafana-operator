@@ -2,6 +2,7 @@ package grafana
 
 import (
 	"fmt"
+
 	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
@@ -29,6 +30,11 @@ func (i *GrafanaReconciler) Reconcile(state *common.ClusterState, cr *v1alpha1.G
 
 	desired = desired.AddAction(i.getGrafanaAdminUserSecretDesiredState(state, cr))
 	desired = desired.AddAction(i.getGrafanaServiceDesiredState(state, cr))
+
+	if cr.UsedPersistentVolume() {
+		desired = desired.AddAction(i.getGrafanaDataPvcDesiredState(state, cr))
+	}
+
 	desired = desired.AddAction(i.getGrafanaServiceAccountDesiredState(state, cr))
 	desired = desired.AddActions(i.getGrafanaConfigDesiredState(state, cr))
 	desired = desired.AddAction(i.getGrafanaDatasourceConfigDesiredState(state, cr))
@@ -41,6 +47,7 @@ func (i *GrafanaReconciler) Reconcile(state *common.ClusterState, cr *v1alpha1.G
 	// Reconcile the deployment last because it depends on the configuration
 	// and plugins list computed in previous steps
 	desired = desired.AddAction(i.getGrafanaDeploymentDesiredState(state, cr))
+	desired = desired.AddActions(i.getEnvVarsDesiredState(state, cr))
 
 	// Check Deployment and Route readiness
 	desired = desired.AddActions(i.getGrafanaReadiness(state, cr))
@@ -52,20 +59,20 @@ func (i *GrafanaReconciler) getGrafanaReadiness(state *common.ClusterState, cr *
 	var actions []common.ClusterAction
 	cfg := config.GetControllerConfig()
 	openshift := cfg.GetConfigBool(config.ConfigOpenshift, false)
-	if openshift && cr.Spec.Ingress != nil && cr.Spec.Ingress.Enabled {
-		// On OpenShift, check the route
+	if openshift && cr.Spec.Ingress != nil && cr.Spec.Ingress.Enabled && (cr.Spec.Client == nil || !cr.Spec.Client.PreferService) {
+		// On OpenShift, check the route, only if preferService is false
 		actions = append(actions, common.RouteReadyAction{
 			Ref: state.GrafanaRoute,
 			Msg: "check route readiness",
 		})
-	} else if !openshift && cr.Spec.Ingress != nil && cr.Spec.Ingress.Enabled {
-		// On vanilla Kubernetes, check the ingress
+	}
+	if !openshift && cr.Spec.Ingress != nil && cr.Spec.Ingress.Enabled && (cr.Spec.Client == nil || !cr.Spec.Client.PreferService) {
+		// On vanilla Kubernetes, check the ingress,only if preferService is false
 		actions = append(actions, common.IngressReadyAction{
 			Ref: state.GrafanaIngress,
 			Msg: "check ingress readiness",
 		})
 	}
-
 	return append(actions, common.DeploymentReadyAction{
 		Ref: state.GrafanaDeployment,
 		Msg: "check deployment readiness",
@@ -83,6 +90,20 @@ func (i *GrafanaReconciler) getGrafanaServiceDesiredState(state *common.ClusterS
 	return common.GenericUpdateAction{
 		Ref: model.GrafanaServiceReconciled(cr, state.GrafanaService),
 		Msg: "update grafana service",
+	}
+}
+
+func (i *GrafanaReconciler) getGrafanaDataPvcDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
+	if state.GrafanaDataPersistentVolumeClaim == nil {
+		return common.GenericCreateAction{
+			Ref: model.GrafanaDataPVC(cr),
+			Msg: "create grafana data persistentVolumeClaim",
+		}
+	}
+
+	return common.GenericUpdateAction{
+		Ref: model.GrafanaPVCReconciled(cr, state.GrafanaDataPersistentVolumeClaim),
+		Msg: "update grafana data persistentVolumeClaim",
 	}
 }
 
@@ -180,6 +201,10 @@ func (i *GrafanaReconciler) getGrafanaExternalAccessDesiredState(state *common.C
 }
 
 func (i *GrafanaReconciler) getGrafanaAdminUserSecretDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.SkipCreateAdminAccount != nil && *cr.Spec.Deployment.SkipCreateAdminAccount {
+		return nil
+	}
+
 	if state.AdminSecret == nil {
 		return common.GenericCreateAction{
 			Ref: model.AdminSecret(cr),
@@ -233,6 +258,42 @@ func (i *GrafanaReconciler) getGrafanaDeploymentDesiredState(state *common.Clust
 	}
 }
 
+func (i *GrafanaReconciler) getEnvVarsDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) []common.ClusterAction {
+	if state.GrafanaDeployment == nil {
+		return nil
+	}
+
+	// Don't look for external admin credentials if the operator created an account
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.SkipCreateAdminAccount != nil && *cr.Spec.Deployment.SkipCreateAdminAccount == false {
+		return nil
+	}
+
+	var actions []common.ClusterAction
+
+	for _, container := range state.GrafanaDeployment.Spec.Template.Spec.Containers {
+		if container.Name != "grafana" {
+			continue
+		}
+		for _, source := range container.EnvFrom {
+			if source.ConfigMapRef != nil && source.ConfigMapRef.Name != "" {
+				actions = append(actions, common.ExposeConfigMapEnvVarAction{
+					Ref:       source.ConfigMapRef,
+					Namespace: cr.Namespace,
+					Msg:       fmt.Sprintf("looking for admin credentials in config map %s", source.ConfigMapRef.Name),
+				})
+			} else if source.SecretRef != nil && source.SecretRef.Name != "" {
+				actions = append(actions, common.ExposeSecretEnvVarAction{
+					Ref:       source.SecretRef,
+					Namespace: cr.Namespace,
+					Msg:       fmt.Sprintf("looking for admin credentials in secret %s", source.SecretRef.Name),
+				})
+			}
+		}
+	}
+
+	return actions
+}
+
 func (i *GrafanaReconciler) getGrafanaPluginsDesiredState(cr *v1alpha1.Grafana) common.ClusterAction {
 	// Fetch all plugins of all dashboards
 	var requestedPlugins v1alpha1.PluginList
@@ -272,12 +333,12 @@ func (i *GrafanaReconciler) reconcilePlugins(cr *v1alpha1.Grafana, plugins v1alp
 
 	for _, plugin := range plugins {
 		if i.Plugins.PluginExists(plugin) == false {
-			log.Info(fmt.Sprintf("invalid plugin: %s@%s", plugin.Name, plugin.Version))
+			log.V(1).Info(fmt.Sprintf("invalid plugin: %s@%s", plugin.Name, plugin.Version))
 			failedPlugins = append(failedPlugins, plugin)
 			continue
 		}
 
-		log.Info(fmt.Sprintf("installing plugin: %s@%s", plugin.Name, plugin.Version))
+		log.V(1).Info(fmt.Sprintf("installing plugin: %s@%s", plugin.Name, plugin.Version))
 		validPlugins = append(validPlugins, plugin)
 	}
 

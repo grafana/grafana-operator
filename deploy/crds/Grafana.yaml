@@ -2623,7 +2623,7 @@ spec:
                 type:
                   description: Service Type string describes ingress methods for a
                     service
-                  type: string
+                      : string
               type: object
             serviceAccount:
               properties:

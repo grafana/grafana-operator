@@ -1,12 +1,13 @@
 package model
 
 import (
+	"strconv"
+
 	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strconv"
 )
 
 func getServiceLabels(cr *v1alpha1.Grafana) map[string]string {
@@ -32,6 +33,13 @@ func getServiceType(cr *v1alpha1.Grafana) v1.ServiceType {
 		return v1.ServiceTypeClusterIP
 	}
 	return cr.Spec.Service.Type
+}
+
+func getClusterIP(cr *v1alpha1.Grafana) string {
+	if cr.Spec.Service == nil {
+		return ""
+	}
+	return cr.Spec.Service.ClusterIP
 }
 
 func GetGrafanaPort(cr *v1alpha1.Grafana) int {
@@ -69,8 +77,7 @@ func getServicePorts(cr *v1alpha1.Grafana, currentState *v1.Service) []v1.Servic
 
 	// Re-assign existing node port
 	if cr.Spec.Service != nil &&
-		currentState != nil &&
-		cr.Spec.Service.Type == v1.ServiceTypeNodePort {
+		currentState != nil {
 		for _, port := range currentState.Spec.Ports {
 			if port.Name == GrafanaHttpPortName {
 				defaultPorts[0].NodePort = port.NodePort
@@ -107,7 +114,7 @@ func GrafanaService(cr *v1alpha1.Grafana) *v1.Service {
 			Selector: map[string]string{
 				"app": GrafanaPodLabel,
 			},
-			ClusterIP: "",
+			ClusterIP: getClusterIP(cr),
 			Type:      getServiceType(cr),
 		},
 	}

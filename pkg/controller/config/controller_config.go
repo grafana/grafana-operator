@@ -10,26 +10,28 @@ import (
 )
 
 const (
-	ConfigGrafanaImage                      = "grafana.image.url"
-	ConfigGrafanaImageTag                   = "grafana.image.tag"
-	ConfigPluginsInitContainerImage         = "grafana.plugins.init.container.image.url"
-	ConfigPluginsInitContainerTag           = "grafana.plugins.init.container.image.tag"
-	ConfigOperatorNamespace                 = "grafana.operator.namespace"
-	ConfigDashboardLabelSelector            = "grafana.dashboard.selector"
-	ConfigOpenshift                         = "mode.openshift"
-	GrafanaDataPath                         = "/var/lib/grafana"
-	GrafanaLogsPath                         = "/var/log/grafana"
-	GrafanaPluginsPath                      = "/var/lib/grafana/plugins"
-	GrafanaProvisioningPath                 = "/etc/grafana/provisioning/"
-	PluginsInitContainerImage               = "quay.io/integreatly/grafana_plugins_init"
-	PluginsInitContainerTag                 = "0.0.2"
-	PluginsUrl                              = "https://grafana.com/api/plugins/%s/versions/%s"
-	RequeueDelay                            = time.Second * 10
-	SecretsMountDir                         = "/etc/grafana-secrets/"
-	ConfigMapsMountDir                      = "/etc/grafana-configmaps/"
-	ConfigRouteWatch                        = "watch.routes"
-	ConfigGrafanaDashboardsSynced           = "grafana.dashboards.synced"
+	ConfigGrafanaImage              = "grafana.image.url"
+	ConfigGrafanaImageTag           = "grafana.image.tag"
+	ConfigPluginsInitContainerImage = "grafana.plugins.init.container.image.url"
+	ConfigPluginsInitContainerTag   = "grafana.plugins.init.container.image.tag"
+	ConfigOperatorNamespace         = "grafana.operator.namespace"
+	ConfigDashboardLabelSelector    = "grafana.dashboard.selector"
+	ConfigOpenshift                 = "mode.openshift"
+	ConfigJsonnetBasePath           = "grafonnet.location"
+	GrafanaDataPath                 = "/var/lib/grafana"
+	GrafanaLogsPath                 = "/var/log/grafana"
+	GrafanaPluginsPath              = "/var/lib/grafana/plugins"
+	GrafanaProvisioningPath         = "/etc/grafana/provisioning/"
+	PluginsInitContainerImage       = "quay.io/integreatly/grafana_plugins_init"
+	PluginsInitContainerTag         = "0.0.3"
+	PluginsUrl                      = "https://grafana.com/api/plugins/%s/versions/%s"
+	RequeueDelay                    = time.Second * 10
+	SecretsMountDir                 = "/etc/grafana-secrets/"
+	ConfigMapsMountDir              = "/etc/grafana-configmaps/"
+	ConfigRouteWatch                = "watch.routes"
+	ConfigGrafanaDashboardsSynced   = "grafana.dashboards.synced"
 	ConfigGrafanaNotificationChannelsSynced = "grafana.notificationchannels.synced"
+	JsonnetBasePath                 = "/opt/jsonnet"
 )
 
 type ControllerConfig struct {
@@ -68,6 +70,8 @@ func (c *ControllerConfig) GetPluginsFor(dashboard *v1alpha1.GrafanaDashboard) v
 
 func (c *ControllerConfig) SetPluginsFor(dashboard *v1alpha1.GrafanaDashboard) {
 	id := c.GetDashboardId(dashboard.Namespace, dashboard.Name)
+	c.Lock()
+	defer c.Unlock()
 	c.Plugins[id] = dashboard.Spec.Plugins
 }
 
@@ -78,23 +82,29 @@ func (c *ControllerConfig) RemovePluginsFor(namespace, name string) {
 	}
 }
 
-func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard) {
+func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard, folderId *int64, folderName string) {
+
 	ns := dashboard.Namespace
 	if i, exists := c.HasDashboard(ns, dashboard.Name); !exists {
 		c.Lock()
 		defer c.Unlock()
 		c.Dashboards[ns] = append(c.Dashboards[ns], &v1alpha1.GrafanaDashboardRef{
-			Name:      dashboard.Name,
-			Namespace: ns,
-			UID:       dashboard.Status.UID,
-			Hash:      dashboard.Status.Hash,
+			Name:       dashboard.Name,
+			Namespace:  ns,
+			UID:        dashboard.UID(),
+			Hash:       dashboard.Hash(),
+			FolderId:   folderId,
+			FolderName: dashboard.Spec.CustomFolderName,
 		})
 	} else {
 		c.Lock()
 		defer c.Unlock()
 		c.Dashboards[ns][i].Namespace = ns
-		c.Dashboards[ns][i].UID = dashboard.Status.UID
-		c.Dashboards[ns][i].Hash = dashboard.Status.Hash
+		c.Dashboards[ns][i].UID = dashboard.UID()
+		c.Dashboards[ns][i].Hash = dashboard.Hash()
+		c.Dashboards[ns][i].FolderId = folderId
+		c.Dashboards[ns][i].FolderName = folderName
+
 	}
 }
 

@@ -31,6 +31,7 @@ spec:
         - '-openshift-service-account=grafana-serviceaccount'
         - '-openshift-ca=/etc/pki/tls/cert.pem'
         - '-openshift-ca=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
+        - '-openshift-ca=/etc/grafana-configmaps/ocp-injected-certs/ca-bundle.crt'
         - '-skip-auth-regex=^/metrics'
       image: 'quay.io/openshift/origin-oauth-proxy:4.2'
       name: grafana-proxy
@@ -48,6 +49,8 @@ spec:
   secrets:
     - grafana-k8s-tls
     - grafana-k8s-proxy
+  configMaps:
+    - ocp-injected-certs
   service:
     ports:
       - name: grafana-proxy

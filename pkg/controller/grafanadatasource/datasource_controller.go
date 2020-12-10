@@ -2,8 +2,7 @@ package grafanadatasource
 
 import (
 	"context"
-	"crypto/md5"
-	defaultErrors "errors"
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"sort"
@@ -96,7 +95,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler, namespace string) error {
 
 	go func() {
 		for range ticker.C {
-			log.Info("running periodic datasource resync")
+			log.V(1).Info("running periodic datasource resync")
 			sendEmptyRequest()
 		}
 	}()
@@ -138,7 +137,7 @@ func (r *ReconcileGrafanaDataSource) Reconcile(request reconcile.Request) (recon
 	}
 
 	if currentState.KnownDataSources == nil {
-		log.Info(fmt.Sprintf("no datasources configmap found"))
+		log.V(1).Info(fmt.Sprintf("no datasources configmap found"))
 		return reconcile.Result{Requeue: false}, nil
 	}
 
@@ -182,7 +181,7 @@ func (r *ReconcileGrafanaDataSource) reconcileDataSources(state *common.DataSour
 
 	// apply dataSources config maps to delete. Can be multiple data sources in CM
 	for _, ds := range dataSourcesToDelete {
-		log.Info(fmt.Sprintf("deleting datasource config map %v", ds))
+		log.V(1).Info(fmt.Sprintf("deleting datasource %v", ds))
 		if state.KnownDataSources.Data != nil {
 			dsList, err := r.fetchDataSourceNames(state.KnownDataSources, ds)
 			if err != nil {
@@ -251,7 +250,7 @@ func (i *ReconcileGrafanaDataSource) updateHash(known *v1.ConfigMap) (string, er
 	}
 	sort.Strings(keys)
 
-	hash := md5.New()
+	hash := sha256.New()
 	for _, key := range keys {
 		_, err := io.WriteString(hash, key)
 		if err != nil {
@@ -293,7 +292,7 @@ func (r *ReconcileGrafanaDataSource) manageError(datasource *grafanav1alpha1.Gra
 // is updated
 func (r *ReconcileGrafanaDataSource) manageSuccess(datasources []grafanav1alpha1.GrafanaDataSource) {
 	for _, datasource := range datasources {
-		log.Info(fmt.Sprintf("datasource %v/%v successfully imported",
+		log.V(1).Info(fmt.Sprintf("datasource %v/%v successfully imported",
 			datasource.Namespace,
 			datasource.Name))
 

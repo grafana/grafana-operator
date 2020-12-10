@@ -17,21 +17,13 @@ spec:
       serviceAccountName: grafana-operator
       containers:
         - name: grafana-operator
-          image: quay.io/integreatly/grafana-operator:latest
+          image: quay.io/integreatly/grafana-operator:v3.6.0
           ports:
-          - containerPort: 60000
-            name: metrics
+            - containerPort: 60000
+              name: metrics
           command:
-          - grafana-operator
+            - grafana-operator
           imagePullPolicy: Always
-          readinessProbe:
-            exec:
-              command:
-                - stat
-                - /tmp/operator-sdk-ready
-            initialDelaySeconds: 4
-            periodSeconds: 10
-            failureThreshold: 1
           env:
             - name: TEMPLATE_PATH
               value: /usr/local/bin/templates

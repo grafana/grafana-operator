@@ -1,0 +1,13 @@
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDashboard
+metadata:
+  name: grafonnet-dashboard
+  labels:
+    app: grafana
+spec:
+  name: grafonnet-dashboard.json
+  jsonnet: |-
+    local grafana = import 'grafonnet/grafana.libsonnet';
+    local monitoring = import 'monitoring/monitoring.libsonnet';
+    local dashboard = grafana.dashboard.new('Monitoring', tags=['RHMI']);
+    monitoring.addCommonPanels(dashboard)

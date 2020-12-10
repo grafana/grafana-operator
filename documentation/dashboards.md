@@ -1,3 +1,5 @@
+
+
 # Working with dashboards
 
 This document describes how to create dashboards and manage plugins (panels).
@@ -10,13 +12,18 @@ The following properties are accepted in the `spec`:
 
 * *name*: The filename of the dashboard that gets mounted into a volume in the grafana instance. Not to be confused with `metadata.name`.
 * *json*: Raw json string with the dashboard contents. Check the [official documentation](https://grafana.com/docs/reference/dashboard/#dashboard-json).
-* *url*: Url address to download a json string with the dashboard contents. This will take priority over the json field in case the download is successful
+* *jsonnet*: Jsonnet source. The [Grafonnet](https://grafana.github.io/grafonnet-lib/) library is made available automatically and can be imported.
+* *url*: Url address to download a json or jsonnet string with the dashboard contents. 
+   * ***Warning***: Ensure that the json field is empty if setting the URL, if both url and json are specified then the json field won't be updated with fetched.
 * *plugins*: A list of plugins required by the dashboard. They will be installed by the operator if not already present.
 * *datasources*: A list of datasources to be used as inputs. See [datasource inputs](#datasource-inputs).
+* *configMapRef*: Import dashboards from config maps. See [config map refreences](#config-map-references).
+* *CustomFolderName*: Assign this dashboard to a custom folder, if no folder with this name exists on the instance, then a new one will be created. 
+  * _Note_: Folders with custom names are not managed by the operator, by purposeful design they won't be deleted when empty, deletion for these requires manual intervention.
 
 ## Creating a new dashboard
 
-By default the operator only watches for dashboards in it's own namespace. To watch for dashboards in other namespaces, the `--scan-all` flag must be passed.
+By default, the operator only watches for dashboards in it's own namespace. To watch for dashboards in other namespaces, the `--scan-all` flag must be passed.
 
 To create a dashboard in the `grafana` namespace run:
 
@@ -24,7 +31,9 @@ To create a dashboard in the `grafana` namespace run:
 $ kubectl create -f deploy/examples/dashboards/SimpleDashboard.yaml -n grafana
 ```
 
-*NOTE*: it can take up to a minute until new dashboards are discovered by Grafana.
+## Dashboard UIDs
+
+Grafana allows users to define the UIDs of dashboards. If an uid is present on a dashbaord, the operator will use it and not assign a generated one. This is often used to guarantee predictable dashboard URLs for interlinking.
 
 ## Dashboard error handling
 
@@ -32,7 +41,7 @@ If the dashboard contains invalid JSON a message with the parser error will be a
 
 ## Plugins
 
-Dashboards can specify plugins (panels) they depend on. The operator will automatically install them.
+Dashboards can specify plugins they depend on. The operator will automatically install them.
 
 You need to provide a name and a version for every plugin, e.g.:
 
@@ -120,3 +129,42 @@ spec:
 ```
 
 This will allow the operator to replace all occurrences of the datasource variable `DS_PROMETHEUS` with the actual name of the datasource. An example for this is `dashboards/KeycloakDashboard.yaml`. 
+
+## Config map references
+
+The json contents of a dashboard can be defined in a config map with the dashboard CR pointing to that config map.
+
+```yaml
+...
+spec:
+  name: grafana-dashboard-from-config-map.json
+  configMapRef:
+    name: <config map name>
+    key: <key of the entry containing the json contents>
+...
+```
+## Dashboard Folder Support
+Due to the fact that the operator now supports the discovery of cluster-wide dashboards. 
+
+
+### Managed folders
+By default if no `CustomFolderName` Spec field value is defined in the yaml of the dashboard (or if the CustomFolderName field is an empty string `""`) then the dashboard will be assigned 
+to the namespaced-named folder matching the namespace into which the dashboard was deployed, i.e if deployed to `test-ns` then a new folder (if one with that name doesn't exist already) will be created and named `test-ns` and
+the dashboard assigned to it.
+
+Default assignment of the dashboards to namespace-named folders is consider as a _managed folder_, this means that when a managed folder has no dashboards assigned to it, it will be deleted to clean up the UI.
+
+### Unmanaged folders
+When defining `customFolderName` in a dashboard, the resulting folder will be named as the string in this field specifies, this is considered as an _unmanaged folder_ and won't be deleted even if empty and will remain
+on the UI. 
+Custom folders can have multiple dashboards assigned to them.
+
+_Note_ : Deletion of unmanaged folders requires manual intervention.
+
+![dashboard-folder-assignment.svg](./resources/dashboard-folder-assignment.svg)
+
+
+### Moving dashboards between managed & unmanaged folders
+To move a dashboard between managed and unmanaged folders, simply remove or add the `CustomFolderName` field value from the dashboard spec,
+this will update the hash of the dashboard on the next reconcile loop, and re-add the dashboard to the desired folder.
+ 
