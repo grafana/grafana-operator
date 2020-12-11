@@ -17,7 +17,7 @@ spec:
       serviceAccountName: grafana-operator
       containers:
         - name: grafana-operator
-          image: infoblox/grafana-operator:v3.7.0-13-g02d4c9ef
+          image: infoblox/grafana-operator:v3.7.0-16-ga9d63825
           ports:
             - containerPort: 60000
               name: metrics
@@ -37,3 +37,11 @@ spec:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: "grafana-operator"
+          readinessProbe:
+            exec:
+              command:
+                - stat
+                - /tmp/operator-sdk-ready
+            failureThreshold: 1
+            initialDelaySeconds: 4
+            periodSeconds: 10

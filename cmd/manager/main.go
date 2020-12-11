@@ -19,6 +19,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
+	"github.com/operator-framework/operator-sdk/pkg/ready"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	"github.com/spf13/pflag"
 	v1 "k8s.io/api/core/v1"
@@ -198,6 +199,14 @@ func main() {
 
 	// Become the leader before proceeding
 	leader.Become(context.TODO(), "grafana-operator-lock")
+
+	r := ready.NewFileReady()
+	err = r.Set()
+	if err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+	defer r.Unset()
 
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{

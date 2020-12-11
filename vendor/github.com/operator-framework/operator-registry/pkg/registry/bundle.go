@@ -16,10 +16,9 @@ import (
 
 const (
 	v1beta1CRDVersion = "v1beta1"
-	v1CRDVersion      = "v1"
-	CRDKind           = "CustomResourceDefinition"
+	v1CRDVersion = "v1"
+	CRDKind = "CustomResourceDefinition"
 )
-
 // Scheme is the default instance of runtime.Scheme to which types in the Kubernetes API are already registered.
 var Scheme = runtime.NewScheme()
 
