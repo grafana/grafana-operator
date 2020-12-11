@@ -36,7 +36,6 @@ type GrafanaSpec struct {
 	BaseImage                  string                   `json:"baseImage,omitempty"`
 	LivenessProbeSpec          *LivenessProbeSpec       `json:"livenessProbeSpec,omitempty"`
 	ReadinessProbeSpec         *ReadinessProbeSpec      `json:"readinessProbeSpec,omitempty"`
-	DBPasswordRef              *v1.SecretKeySelector    `json:"dbpasswordref,omitempty"`
 }
 
 type ReadinessProbeSpec struct {

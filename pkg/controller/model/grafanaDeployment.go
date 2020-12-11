@@ -486,16 +486,6 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 		}
 	}
 
-/*	if cr.Spec.DBPasswordRef != nil {
-		envRef := v13.EnvVar{
-			Name: GrafanaDBPasswordEnvVar,
-			ValueFrom: &v13.EnvVarSource{
-				SecretKeyRef: cr.Spec.DBPasswordRef,
-			},
-		}
-		containers.Env = append(containers.Env, envRef)
-	}
-	containers = append(containers, container)*/
 	// Add extra containers
 	for _, container := range cr.Spec.Containers {
 		container.VolumeMounts = getExtraContainerVolumeMounts(cr, container.VolumeMounts)
