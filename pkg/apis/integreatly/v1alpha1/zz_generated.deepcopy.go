@@ -1818,6 +1818,11 @@ func (in *GrafanaSpec) DeepCopyInto(out *GrafanaSpec) {
 		*out = new(ReadinessProbeSpec)
 		**out = **in
 	}
+	if in.DBPasswordRef != nil {
+		in, out := &in.DBPasswordRef, &out.DBPasswordRef
+		*out = new(v1.SecretKeySelector)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 

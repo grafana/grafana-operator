@@ -426,7 +426,7 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 		image = fmt.Sprintf("%s:%s", img, tag)
 	}
 
-	containers = append(containers, v13.Container{
+	container := v13.Container{
 		Name:       "grafana",
 		Image:      image,
 		Args:       []string{"-config=/etc/grafana/grafana.ini"},
@@ -457,7 +457,18 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 		TerminationMessagePolicy: "File",
 		ImagePullPolicy:          "IfNotPresent",
 		SecurityContext:          getContainerSecurityContext(cr),
-	})
+	}
+
+	if cr.Spec.DBPasswordRef != nil {
+		envRef := v13.EnvVar{
+			Name: GrafanaDBPasswordEnvVar,
+			ValueFrom: &v13.EnvVarSource{
+				SecretKeyRef: cr.Spec.DBPasswordRef,
+			},
+		}
+		container.Env = append(container.Env, envRef)
+	}
+	containers = append(containers, container)
 
 	// Use auto generated admin account?
 	if getSkipCreateAdminAccount(cr) == false {
