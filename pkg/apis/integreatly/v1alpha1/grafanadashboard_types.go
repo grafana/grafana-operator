@@ -28,7 +28,7 @@ type GrafanaDashboardSpec struct {
 	ConfigMapRef     *corev1.ConfigMapKeySelector `json:"configMapRef,omitempty"`
 	Datasources      []GrafanaDashboardDatasource `json:"datasources,omitempty"`
 	CustomFolderName string                       `json:"customFolderName,omitempty"`
-	Environment  string                       `json:"environment,omitempty"`
+	Environment      string                       `json:"environment,omitempty"`
 }
 
 type GrafanaDashboardDatasource struct {

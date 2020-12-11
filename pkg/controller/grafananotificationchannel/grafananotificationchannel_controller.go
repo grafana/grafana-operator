@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	defaultErrors "errors"
 	"fmt"
+	"os"
 	"time"
+
+	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
 
 	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
@@ -317,12 +320,12 @@ func (r *ReconcileGrafanaNotificationChannel) getClient() (GrafanaClient, error)
 		return nil, defaultErrors.New("cannot get grafana admin url")
 	}
 
-	username := r.state.AdminUsername
+	username := os.Getenv(model.GrafanaAdminUserEnvVar)
 	if username == "" {
 		return nil, defaultErrors.New("invalid credentials (username)")
 	}
 
-	password := r.state.AdminPassword
+	password := os.Getenv(model.GrafanaAdminPasswordEnvVar)
 	if password == "" {
 		return nil, defaultErrors.New("invalid credentials (password)")
 	}

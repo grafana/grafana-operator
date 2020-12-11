@@ -3,17 +3,14 @@ package grafanadatasource
 import (
 	"context"
 	"crypto/sha256"
+	defaultErrors "errors"
 	"fmt"
 	"io"
+	"os"
 	"sort"
 	"time"
 
-	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
-	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
-	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
 	"gopkg.in/yaml.v2"
-
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -27,6 +24,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
+	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
+	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
 )
 
 const (
@@ -313,12 +315,12 @@ func (r *ReconcileGrafanaDataSource) getClient() (GrafanaClient, error) {
 		return nil, defaultErrors.New("cannot get grafana admin url")
 	}
 
-	username := r.state.AdminUsername
+	username := os.Getenv(model.GrafanaAdminUserEnvVar)
 	if username == "" {
 		return nil, defaultErrors.New("invalid credentials (username)")
 	}
 
-	password := r.state.AdminPassword
+	password := os.Getenv(model.GrafanaAdminPasswordEnvVar)
 	if password == "" {
 		return nil, defaultErrors.New("invalid credentials (password)")
 	}

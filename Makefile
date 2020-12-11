@@ -10,11 +10,11 @@ COMPILE_TARGET=./tmp/_output/bin/$(PROJECT)
 .PHONY: setup/travis
 setup/travis:
 	@echo Installing Operator SDK
-	@curl -Lo operator-sdk https://github.com/operator-framework/operator-sdk/releases/download/v0.12.0/operator-sdk-v0.12.0-x86_64-linux-gnu && chmod +x operator-sdk && sudo mv operator-sdk /usr/local/bin/
+	@curl -Lo operator-sdk https://github.com/operator-framework/operator-sdk/releases/download/v0.18.2/operator-sdk-v0.18.2-x86_64-linux-gnu && chmod +x operator-sdk && sudo mv operator-sdk /usr/local/bin/
 
 .PHONY: code/run
 code/run:
-	@operator-sdk run local --namespace=${NAMESPACE}
+	@operator-sdk run local
 
 .PHONY: code/compile
 code/compile:
@@ -50,6 +50,39 @@ test/unit:
 
 clean/image:
 	@docker rmi -f $(shell docker images -q $(SERVER_IMAGE)) || true
+
+.PHONY: test/e2e
+test/e2e:
+	@operator-sdk --verbose test local ./test/e2e --watch-namespace="grafana-test-e2e" --operator-namespace="grafana-test-e2e" --debug --up-local
+
+.PHONY: cluster/prepare/local/file
+cluster/prepare/local/file:
+	@sed -i "s/__NAMESPACE__/${NAMESPACE}/g" deploy/cluster_roles/cluster_role_binding_grafana_operator.yaml
+
+.PHONY: cluster/prepare/local
+cluster/prepare/local: cluster/prepare/local/file
+	-kubectl create namespace ${NAMESPACE}
+	kubectl apply -f deploy/crds
+	kubectl apply -f deploy/roles -n ${NAMESPACE}
+	kubectl apply -f deploy/cluster_roles
+	kubectl apply -f deploy/examples/Grafana.yaml -n ${NAMESPACE}
+
+.PHONY: cluster/cleanup
+cluster/cleanup: operator/stop
+	-kubectl delete deployment grafana-deployment -n ${NAMESPACE}
+	-kubectl delete namespace ${NAMESPACE}
+
+## Deploy the latest tagged release
+.PHONY: operator/deploy
+operator/deploy: cluster/prepare/local
+	kubectl apply -f deploy/operator.yaml -n ${NAMESPACE}
+	@git checkout -- deploy/cluster_roles/cluster_role_binding_grafana_operator.yaml
+
+## Deploy the latest master image
+.PHONY: operator/deploy/master
+operator/deploy/master: cluster/prepare/local
+	kubectl apply -f deploy/operatorMasterImage.yaml -n ${NAMESPACE}
+	@git checkout -- deploy/cluster_roles/cluster_role_binding_grafana_operator.yaml
 
 .PHONY: operator/stop
 operator/stop:

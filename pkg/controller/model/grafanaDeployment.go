@@ -81,6 +81,7 @@ func getSecurityContext(cr *v1alpha1.Grafana) *v13.PodSecurityContext {
 	return &securityContext
 }
 
+func getContainerSecurityContext(cr *v1alpha1.Grafana) *v13.SecurityContext {
 	var containerSecurityContext = v13.SecurityContext{}
 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.ContainerSecurityContext != nil {
 		containerSecurityContext = *cr.Spec.Deployment.ContainerSecurityContext
@@ -425,7 +426,7 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 		image = fmt.Sprintf("%s:%s", img, tag)
 	}
 
-	container := v13.Container{
+	containers = append(containers, v13.Container{
 		Name:       "grafana",
 		Image:      image,
 		Args:       []string{"-config=/etc/grafana/grafana.ini"},
@@ -454,7 +455,7 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 		ReadinessProbe:           getReadinessProbe(cr, 5, 3, 1),
 		TerminationMessagePath:   "/dev/termination-log",
 		TerminationMessagePolicy: "File",
-		ImagePullPolicy:          "Always",
+		ImagePullPolicy:          "IfNotPresent",
 		SecurityContext:          getContainerSecurityContext(cr),
 	})
 
@@ -485,16 +486,16 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 		}
 	}
 
-	if cr.Spec.DBPasswordRef != nil {
+/*	if cr.Spec.DBPasswordRef != nil {
 		envRef := v13.EnvVar{
 			Name: GrafanaDBPasswordEnvVar,
 			ValueFrom: &v13.EnvVarSource{
 				SecretKeyRef: cr.Spec.DBPasswordRef,
 			},
 		}
-		container.Env = append(container.Env, envRef)
+		containers.Env = append(containers.Env, envRef)
 	}
-	containers = append(containers, container)
+	containers = append(containers, container)*/
 	// Add extra containers
 	for _, container := range cr.Spec.Containers {
 		container.VolumeMounts = getExtraContainerVolumeMounts(cr, container.VolumeMounts)
