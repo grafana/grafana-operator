@@ -4,7 +4,7 @@ metadata:
   name: example-grafana
 spec:
   ingress:
-    enabled: True
+    enabled: False
   config:
     log:
       mode: "console"
@@ -13,7 +13,10 @@ spec:
       disable_login_form: False
       disable_signout_menu: True
     auth.anonymous:
-      enabled: True
+      enabled: False
+    security:
+      admin_user: admin
+      admin_password: admin
   dashboardLabelSelector:
     - matchExpressions:
         - { key: app, operator: In, values: [grafana] }

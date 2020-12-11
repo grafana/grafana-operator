@@ -116,7 +116,7 @@ func (r *GrafanaClientImpl) getAllFolders() ([]GrafanaFolderResponse, error) {
 
 	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf(
-			"error creating folder, expected status 200 but got %v",
+			"error getting folder, expected status 200 but got %v",
 			resp.StatusCode)
 	}
 
