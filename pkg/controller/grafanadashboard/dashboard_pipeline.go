@@ -104,7 +104,7 @@ func (r *DashboardPipelineImpl) validateJson() error {
 	if err != nil {
 		return err
 	}
-	
+
 	contents, err = r.addEnvToAlert(contents)
 	if err != nil {
 		return err

@@ -2,9 +2,11 @@ package grafananotificationchannel
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	defaultErrors "errors"
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
@@ -53,7 +55,12 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	ctx, cancel := context.WithCancel(ctx)
 
 	return &ReconcileGrafanaNotificationChannel{
-		client:   mgr.GetClient(),
+		client: mgr.GetClient(),
+		transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
 		config:   config.GetNotificationControllerConfig(),
 		context:  ctx,
 		cancel:   cancel,
@@ -111,12 +118,13 @@ var _ reconcile.Reconciler = &ReconcileGrafanaNotificationChannel{}
 type ReconcileGrafanaNotificationChannel struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client   client.Client
-	config   *config.NotificationControllerConfig
-	context  context.Context
-	cancel   context.CancelFunc
-	recorder record.EventRecorder
-	state    common.ControllerState
+	client    client.Client
+	transport *http.Transport
+	config    *config.NotificationControllerConfig
+	context   context.Context
+	cancel    context.CancelFunc
+	recorder  record.EventRecorder
+	state     common.ControllerState
 }
 
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
@@ -331,7 +339,8 @@ func (r *ReconcileGrafanaNotificationChannel) getClient() (GrafanaClient, error)
 	}
 
 	duration := time.Duration(r.state.ClientTimeout)
-	return NewGrafanaClient(url, username, password, duration), nil
+
+	return NewGrafanaClient(url, username, password, r.transport, duration), nil
 }
 
 // Test if a given notificationchannel matches an array of label selectors

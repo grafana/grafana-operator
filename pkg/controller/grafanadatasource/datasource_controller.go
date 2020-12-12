@@ -3,9 +3,11 @@ package grafanadatasource
 import (
 	"context"
 	"crypto/sha256"
+	"crypto/tls"
 	defaultErrors "errors"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"sort"
 	"time"
@@ -57,7 +59,12 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	ctx, cancel := context.WithCancel(ctx)
 
 	return &ReconcileGrafanaDataSource{
-		client:   mgr.GetClient(),
+		client: mgr.GetClient(),
+		transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
 		scheme:   mgr.GetScheme(),
 		context:  ctx,
 		cancel:   cancel,
@@ -119,12 +126,13 @@ var _ reconcile.Reconciler = &ReconcileGrafanaDataSource{}
 type ReconcileGrafanaDataSource struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client   client.Client
-	scheme   *runtime.Scheme
-	context  context.Context
-	cancel   context.CancelFunc
-	recorder record.EventRecorder
-	state    common.ControllerState
+	client    client.Client
+	transport *http.Transport
+	scheme    *runtime.Scheme
+	context   context.Context
+	cancel    context.CancelFunc
+	recorder  record.EventRecorder
+	state     common.ControllerState
 }
 
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
@@ -326,7 +334,7 @@ func (r *ReconcileGrafanaDataSource) getClient() (GrafanaClient, error) {
 	}
 
 	duration := time.Duration(r.state.ClientTimeout)
-	return NewGrafanaClient(url, username, password, duration), nil
+	return NewGrafanaClient(url, username, password, r.transport, duration), nil
 }
 
 func (r *ReconcileGrafanaDataSource) fetchDataSourceNames(dsCM *v1.ConfigMap, dsKey string) ([]string, error) {
