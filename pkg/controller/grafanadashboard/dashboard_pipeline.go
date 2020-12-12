@@ -101,7 +101,22 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string, folderId *int
 // Make sure the dashboard contains valid JSON
 func (r *DashboardPipelineImpl) validateJson() error {
 	contents, err := r.Dashboard.Parse(r.JSON)
+	if err != nil {
+		return err
+	}
+	
+	contents, err = r.addEnvToAlert(contents)
+	if err != nil {
+		return err
+	}
+
+	contents, err = r.addEnvToDedupkey(contents)
+	if err != nil {
+		return err
+	}
+
 	r.Board = contents
+
 	return err
 }
 
@@ -267,20 +282,14 @@ func (r *DashboardPipelineImpl) resolveDatasources() error {
 	return nil
 }
 
-// add cluster env to alert message
-func (r *DashboardPipelineImpl) addEnvToAlert(dashboardBytes []byte) ([]byte, error) {
+// add cluster env to alert message and name
+func (r *DashboardPipelineImpl) addEnvToAlert(dashboardMap map[string]interface{}) (map[string]interface{}, error) {
 	if r.Dashboard.Spec.Environment == "" {
-		return dashboardBytes, nil
+		return dashboardMap, nil
 	}
 
-	raw := map[string]interface{}{}
-	err := json.Unmarshal(dashboardBytes, &raw)
-	if err != nil {
-		return nil, err
-	}
-
-	if raw != nil && raw["panels"] != nil {
-		panelList, ok := raw["panels"].([]interface{})
+	if dashboardMap != nil && dashboardMap["panels"] != nil {
+		panelList, ok := dashboardMap["panels"].([]interface{})
 		if panelList != nil && ok {
 			for _, p := range panelList {
 				panel, ok := p.(map[string]interface{})
@@ -303,28 +312,17 @@ func (r *DashboardPipelineImpl) addEnvToAlert(dashboardBytes []byte) ([]byte, er
 		}
 	}
 
-	dashboardBytes, err = json.Marshal(raw)
-	if err != nil {
-		return nil, err
-	}
-
-	return dashboardBytes, nil
+	return dashboardMap, nil
 }
 
 // add cluster env to PD dedupkey
-func (r *DashboardPipelineImpl) addEnvToDedupkey(dashboardBytes []byte) ([]byte, error) {
+func (r *DashboardPipelineImpl) addEnvToDedupkey(dashboardMap map[string]interface{}) (map[string]interface{}, error) {
 	if r.Dashboard.Spec.Environment == "" {
-		return dashboardBytes, nil
+		return dashboardMap, nil
 	}
 
-	raw := map[string]interface{}{}
-	err := json.Unmarshal(dashboardBytes, &raw)
-	if err != nil {
-		return nil, err
-	}
-
-	if raw != nil && raw["panels"] != nil {
-		panelList, ok := raw["panels"].([]interface{})
+	if dashboardMap != nil && dashboardMap["panels"] != nil {
+		panelList, ok := dashboardMap["panels"].([]interface{})
 		if panelList != nil && ok {
 			for _, p := range panelList {
 				panel, ok := p.(map[string]interface{})
@@ -343,10 +341,5 @@ func (r *DashboardPipelineImpl) addEnvToDedupkey(dashboardBytes []byte) ([]byte,
 		}
 	}
 
-	dashboardBytes, err = json.Marshal(raw)
-	if err != nil {
-		return nil, err
-	}
-
-	return dashboardBytes, nil
+	return dashboardMap, nil
 }

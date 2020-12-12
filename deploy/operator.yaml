@@ -17,7 +17,7 @@ spec:
       serviceAccountName: grafana-operator
       containers:
         - name: grafana-operator
-          image: infoblox/grafana-operator:v3.7.0-16-ga9d63825
+          image: infoblox/grafana-operator:v3.7.0-16-gd5a70ddc
           ports:
             - containerPort: 60000
               name: metrics

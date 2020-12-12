@@ -106,6 +106,7 @@ func (d *GrafanaDashboard) Parse(optional string) (map[string]interface{}, error
 
 	var parsed = make(map[string]interface{})
 	err := json.Unmarshal(dashboardBytes, &parsed)
+
 	return parsed, err
 }
 

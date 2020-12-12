@@ -455,7 +455,7 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 		ReadinessProbe:           getReadinessProbe(cr, 5, 3, 1),
 		TerminationMessagePath:   "/dev/termination-log",
 		TerminationMessagePolicy: "File",
-		ImagePullPolicy:          "IfNotPresent",
+		ImagePullPolicy:          "Always",
 		SecurityContext:          getContainerSecurityContext(cr),
 	}
 
