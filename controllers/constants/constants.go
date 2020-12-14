@@ -40,8 +40,10 @@ const (
 	LokiImage                  = "grafana/loki"
 	LokiVersion                = "2.0.0"
 	LokiHttpPort           int = 3100
-	LokiHttpPrefix             = "/api/prom"
-	LokiHttpPortName           = "loki"
-	LokiPodLabel               = "loki"
-	LokiDeploymentName         = "loki-deployment"
+	//TODO check if "/loki/api/v1/*" can be used here instead vVv
+	LokiHealthEndpoint = "/ready"
+	LokiHttpPrefix     = "/api/prom"
+	LokiHttpPortName   = "loki"
+	LokiPodLabel       = "loki"
+	LokiDeploymentName = "loki-deployment"
 )

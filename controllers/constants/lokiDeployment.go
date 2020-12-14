@@ -5,6 +5,7 @@ import (
 	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
 	v13 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 import (
@@ -81,8 +82,8 @@ func getLokiContainers(cr *v1alpha1.Loki, configHash string) []v13.Container {
 			},
 		},
 		VolumeMounts:             getLokiVolumeMounts(cr),
-		LivenessProbe:            getLokiProbe(cr, 60, 30, 10),
-		ReadinessProbe:           getLokiProbe(cr, 5, 3, 1),
+		LivenessProbe:            getLokiLivenessProbe(cr, 60, 30, 10),
+		ReadinessProbe:           getLokiReadinessProbe(cr, 5, 3, 1),
 		TerminationMessagePath:   "/dev/termination-log",
 		TerminationMessagePolicy: "File",
 		ImagePullPolicy:          "IfNotPresent",
@@ -90,6 +91,67 @@ func getLokiContainers(cr *v1alpha1.Loki, configHash string) []v13.Container {
 	})
 
 	return containers
+}
+func getLokiLivenessProbe(cr *v1alpha1.Loki, delay, timeout, failure int32) *v13.Probe {
+
+	if cr.Spec.LivenessProbeSpec != nil {
+		return &v13.Probe{
+			Handler: v13.Handler{
+				HTTPGet: &v13.HTTPGetAction{
+					Path: LokiHealthEndpoint,
+					Port: intstr.FromInt(GetLokiPort(cr)),
+				},
+			},
+			InitialDelaySeconds: cr.Spec.LivenessProbeSpec.InitialDelaySeconds,
+			TimeoutSeconds:      cr.Spec.LivenessProbeSpec.TimeOutSeconds,
+			PeriodSeconds:       cr.Spec.LivenessProbeSpec.PeriodSeconds,
+			SuccessThreshold:    cr.Spec.LivenessProbeSpec.SuccessThreshold,
+			FailureThreshold:    cr.Spec.LivenessProbeSpec.FailureThreshold,
+		}
+	}
+
+	return &v13.Probe{
+		Handler: v13.Handler{
+			HTTPGet: &v13.HTTPGetAction{
+				Path: LokiHealthEndpoint,
+				Port: intstr.FromInt(GetLokiPort(cr)),
+			},
+		},
+		InitialDelaySeconds: delay,
+		TimeoutSeconds:      timeout,
+		FailureThreshold:    failure,
+	}
+}
+
+func getLokiReadinessProbe(cr *v1alpha1.Loki, delay, timeout, failure int32) *v13.Probe {
+
+	if cr.Spec.ReadinessProbeSpec != nil {
+		return &v13.Probe{
+			Handler: v13.Handler{
+				HTTPGet: &v13.HTTPGetAction{
+					Path: GrafanaHealthEndpoint,
+					Port: intstr.FromInt(GetLokiPort(cr)),
+				},
+			},
+			InitialDelaySeconds: cr.Spec.ReadinessProbeSpec.InitialDelaySeconds,
+			TimeoutSeconds:      cr.Spec.ReadinessProbeSpec.TimeOutSeconds,
+			PeriodSeconds:       cr.Spec.ReadinessProbeSpec.PeriodSeconds,
+			SuccessThreshold:    cr.Spec.ReadinessProbeSpec.SuccessThreshold,
+			FailureThreshold:    cr.Spec.ReadinessProbeSpec.FailureThreshold,
+		}
+	}
+
+	return &v13.Probe{
+		Handler: v13.Handler{
+			HTTPGet: &v13.HTTPGetAction{
+				Path: LokiHealthEndpoint,
+				Port: intstr.FromInt(GetLokiPort(cr)),
+			},
+		},
+		InitialDelaySeconds: delay,
+		TimeoutSeconds:      timeout,
+		FailureThreshold:    failure,
+	}
 }
 
 func getLokiVolumeMounts(cr *v1alpha1.Loki) []v13.VolumeMount {
@@ -216,7 +278,7 @@ func LokiDeployment(cr *v1alpha1.Loki, configHash string) *v1.Deployment {
 			Name:      LokiDeploymentName,
 			Namespace: cr.Namespace,
 		},
-		Spec: getLokiDeploymentSpec(cr,configHash),
+		Spec: getLokiDeploymentSpec(cr, configHash),
 	}
 }
 

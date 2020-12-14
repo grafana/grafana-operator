@@ -17,11 +17,28 @@ type LokiSpec struct {
 	Deployment   *LokiDeployment   `json"deployment,omitempty"`
 	DataStorage  *LokiDataStorage  `json"dataStorage,omitempty"`
 	// When set, refer to unmamnaged Loki instance and do not create a managed one
-	External  *LokiExternal `json:"external,omitempty"`
-	Service   *LokiService  `json:"service,omitempty"`
-	Ingress   *LokiIngress  `json:"ingress,omitempty"`
-	Route     *LokiRoute    `json:"route,omitempty"`
-	BaseImage string        `json:"baseImage,omitempty"`
+	External           *LokiExternal           `json:"external,omitempty"`
+	Service            *LokiService            `json:"service,omitempty"`
+	Ingress            *LokiIngress            `json:"ingress,omitempty"`
+	Route              *LokiRoute              `json:"route,omitempty"`
+	BaseImage          string                  `json:"baseImage,omitempty"`
+	LivenessProbeSpec  *LokiLivenessProbeSpec  `json:"lokiLivenessProbeSpec,omitempty"`
+	ReadinessProbeSpec *LokiReadinessProbeSpec `json:"lokiReadinessProbeSpec,omitempty"`
+}
+
+type LokiReadinessProbeSpec struct {
+	InitialDelaySeconds int32 `json:"initialDelaySeconds,omitempty"`
+	TimeOutSeconds      int32 `json:"timeoutSeconds,omitempty"`
+	PeriodSeconds       int32 `json:"periodSeconds,omitempty"`
+	SuccessThreshold    int32 `json:"successThreshold,omitempty"`
+	FailureThreshold    int32 `json:"failureThreshold,omitempty"`
+}
+type LokiLivenessProbeSpec struct {
+	InitialDelaySeconds int32 `json:"initialDelaySeconds,omitempty"`
+	TimeOutSeconds      int32 `json:"timeoutSeconds,omitempty"`
+	PeriodSeconds       int32 `json:"periodSeconds,omitempty"`
+	SuccessThreshold    int32 `json:"successThreshold,omitempty"`
+	FailureThreshold    int32 `json:"failureThreshold,omitempty"`
 }
 
 type LokiDeployment struct {
@@ -105,7 +122,7 @@ type LokiRef struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
 	UID       string `json:"uid"`
-	LokiURL   string `json:"lokiurl"`
+	LokiURL   string `json:"lokiUrl"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
