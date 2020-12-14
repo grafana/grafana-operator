@@ -4,19 +4,35 @@ metadata:
   name: example-grafana
 spec:
   ingress:
-    enabled: True
+    enabled: False
   config:
     log:
       mode: "console"
       level: "warn"
-    security:
-      admin_user: "root"
-      admin_password: "secret"
     auth:
       disable_login_form: False
       disable_signout_menu: True
     auth.anonymous:
-      enabled: True
+      enabled: False
+    security:
+      admin_user: admin
+      admin_password: admin
   dashboardLabelSelector:
     - matchExpressions:
-        - {key: app, operator: In, values: [grafana]}
+        - { key: app, operator: In, values: [grafana] }
+  # initResources:
+  #   # Optionally specify initResources
+  #   limits:
+  #     cpu: 1000m
+  #     memory: 512Mi
+  #   requests:
+  #     cpu: 250m
+  #     memory: 128Mi
+  resources:
+    # Optionally specify container resources
+    limits:
+      cpu: 2000m
+      memory: 8000Mi
+    requests:
+      cpu: 100m
+      memory: 200Mi

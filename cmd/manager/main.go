@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"os"
 	"runtime"
@@ -18,9 +17,11 @@ import (
 	routev1 "github.com/openshift/api/route/v1"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
+	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	"github.com/operator-framework/operator-sdk/pkg/ready"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
+	"github.com/spf13/pflag"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -39,6 +40,7 @@ var flagPluginsInitContainerImage string
 var flagPluginsInitContainerTag string
 var flagNamespaces string
 var scanAll bool
+var flagJsonnetLocation string
 
 var (
 	metricsHost       = "0.0.0.0"
@@ -53,13 +55,15 @@ func printVersion() {
 }
 
 func init() {
-	flagset := flag.CommandLine
+	flagset := pflag.CommandLine
 	flagset.StringVar(&flagImage, "grafana-image", "", "Overrides the default Grafana image")
 	flagset.StringVar(&flagImageTag, "grafana-image-tag", "", "Overrides the default Grafana image tag")
 	flagset.StringVar(&flagPluginsInitContainerImage, "grafana-plugins-init-container-image", "", "Overrides the default Grafana Plugins Init Container image")
 	flagset.StringVar(&flagPluginsInitContainerTag, "grafana-plugins-init-container-tag", "", "Overrides the default Grafana Plugins Init Container tag")
 	flagset.StringVar(&flagNamespaces, "namespaces", "", "Namespaces to scope the interaction of the Grafana operator. Mutually exclusive with --scan-all")
+	flagset.StringVar(&flagJsonnetLocation, "jsonnet-location", "", "Overrides the base path of the jsonnet libraries")
 	flagset.BoolVar(&scanAll, "scan-all", false, "Scans all namespaces for dashboards")
+	flagset.AddFlagSet(zap.FlagSet())
 	flagset.Parse(os.Args[1:])
 }
 
@@ -142,7 +146,8 @@ func main() {
 	// implementing the logr.Logger interface. This logger will
 	// be propagated through the whole operator, generating
 	// uniform and structured logs.
-	logf.SetLogger(logf.ZapLogger(false))
+
+	logf.SetLogger(zap.Logger())
 
 	printVersion()
 
@@ -165,6 +170,7 @@ func main() {
 	controllerConfig.AddConfigItem(config2.ConfigPluginsInitContainerTag, flagPluginsInitContainerTag)
 	controllerConfig.AddConfigItem(config2.ConfigOperatorNamespace, namespace)
 	controllerConfig.AddConfigItem(config2.ConfigDashboardLabelSelector, "")
+	controllerConfig.AddConfigItem(config2.ConfigJsonnetBasePath, flagJsonnetLocation)
 
 	// Get the namespaces to scan for dashboards
 	// It's either the same namespace as the controller's or it's all namespaces if the
@@ -172,7 +178,7 @@ func main() {
 	var dashboardNamespaces = []string{namespace}
 	if scanAll {
 		dashboardNamespaces = []string{""}
-		log.Info("Scanning for dashboards in all namespaces")
+		log.V(1).Info("Scanning for dashboards in all namespaces")
 	}
 
 	if flagNamespaces != "" {
@@ -181,7 +187,7 @@ func main() {
 			fmt.Fprint(os.Stderr, "--namespaces provided but no valid namespaces in list")
 			os.Exit(1)
 		}
-		log.Info(fmt.Sprintf("Scanning for dashboards in the following namespaces: [%s]", strings.Join(dashboardNamespaces, ",")))
+		log.V(1).Info(fmt.Sprintf("Scanning for dashboards in the following namespaces: [%s]", strings.Join(dashboardNamespaces, ",")))
 	}
 
 	// Get a config to talk to the apiserver
@@ -212,7 +218,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	log.Info("Registering Components.")
+	log.V(1).Info("Registering Components.")
 
 	// Starting the resource auto-detection for the grafana controller
 	autodetect, err := common.NewAutoDetect(mgr)
@@ -250,11 +256,12 @@ func main() {
 		},
 	}
 	_, err = metrics.CreateMetricsService(context.TODO(), cfg, servicePorts)
+
 	if err != nil {
 		log.Error(err, "error starting metrics service")
 	}
 
-	log.Info("Starting the Cmd.")
+	log.V(1).Info("Starting the Cmd.")
 
 	signalHandler := signals.SetupSignalHandler()
 

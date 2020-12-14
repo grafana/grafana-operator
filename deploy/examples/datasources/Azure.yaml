@@ -1,0 +1,25 @@
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDataSource
+metadata:
+  name: azure-data-source
+spec:
+  datasources:
+    - name: Azure
+      type: grafana-azure-monitor-datasource
+      access: proxy
+      jsonData:
+        appInsightsAppId: <app-insights-app-id>
+        clientId: <client-id>
+        cloudName: azuremonitor
+        subscriptionId: <subscription-id>
+        tenantId: <tenant-id>
+        logAnalyticsClientId: <log-analytics-client-id>
+        logAnalyticsDefaultWorkspace: <log-analytics-default-workspace>
+        logAnalyticsSubscriptionId: <log-analytics-subscription-id>
+        logAnalyticsTenantId: <log-analytics-tenant-id>
+      secureJsonData:
+        clientSecret: <client-secret>
+        appInsightsApiKey: <app-insights-api-key>
+        logAnalyticsClientSecret: <log-analytics-client-secret>
+      version: 1
+  name: azure-data-source.yaml

@@ -4,6 +4,7 @@ import (
 	"context"
 	stdErr "errors"
 	"fmt"
+
 	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
@@ -101,7 +102,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler, autodetectChannel chan sch
 					log.Error(err, fmt.Sprintf("error adding secondary watch for %v", common.RouteKind))
 				} else {
 					cfg.AddConfigItem(config.ConfigRouteWatch, true)
-					log.Info(fmt.Sprintf("added secondary watch for %v", common.RouteKind))
+					log.V(1).Info(fmt.Sprintf("added secondary watch for %v", common.RouteKind))
 				}
 			}
 		}
@@ -173,6 +174,12 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 		return r.manageError(cr, err)
 	}
 
+	// Run the config map reconciler to discover jsonnet libraries
+	err = reconcileConfigMaps(cr, r)
+	if err != nil {
+		return r.manageError(cr, err)
+	}
+
 	return r.manageSuccess(cr, currentState)
 }
 
@@ -202,7 +209,7 @@ func (r *ReconcileGrafana) manageError(cr *grafanav1alpha1.Grafana, issue error)
 // Try to find a suitable url to grafana
 func (r *ReconcileGrafana) getGrafanaAdminUrl(cr *grafanav1alpha1.Grafana, state *common.ClusterState) (string, error) {
 	// If preferService is true, we skip the routes and try to access grafana
-	// by using the serivce.
+	// by using the service.
 	preferService := false
 	if cr.Spec.Client != nil {
 		preferService = cr.Spec.Client.PreferService
@@ -233,7 +240,7 @@ func (r *ReconcileGrafana) getGrafanaAdminUrl(cr *grafanav1alpha1.Grafana, state
 	var servicePort = int32(model.GetGrafanaPort(cr))
 
 	// Otherwise rely on the service
-	if state.GrafanaService != nil && state.GrafanaService.Spec.ClusterIP != "" {
+	if state.GrafanaService != nil && state.GrafanaService.Spec.ClusterIP != "" && state.GrafanaService.Spec.ClusterIP != "None" {
 		return fmt.Sprintf("http://%v:%d", state.GrafanaService.Spec.ClusterIP,
 			servicePort), nil
 	} else if state.GrafanaService != nil {
@@ -253,14 +260,9 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 	if r.config.GetConfigBool(config.ConfigGrafanaDashboardsSynced, false) {
 		cr.Status.InstalledDashboards = r.config.Dashboards
 	} else {
-		r.config.SetDashboards(cr.Status.InstalledDashboards)
 		if r.config.Dashboards == nil {
 			r.config.SetDashboards(make(map[string][]*grafanav1alpha1.GrafanaDashboardRef))
 		}
-	}
-
-	if state.AdminSecret == nil || state.AdminSecret.Data == nil {
-		return r.manageError(cr, stdErr.New("admin secret not found or invalud"))
 	}
 
 	err := r.client.Status().Update(r.context, cr)
@@ -274,32 +276,17 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 		return r.manageError(cr, err)
 	}
 
-	// Try to fix annotations on older dashboards?
-	fixAnnotations := false
-	if cr.Spec.Compat != nil && cr.Spec.Compat.FixAnnotations {
-		fixAnnotations = true
-	}
-
-	// Try to fix heights that are in the wrong format?
-	fixHeights := false
-	if cr.Spec.Compat != nil && cr.Spec.Compat.FixHeights {
-		fixHeights = true
-	}
-
 	// Publish controller state
 	controllerState := common.ControllerState{
-		DashboardSelectors: cr.Spec.DashboardLabelSelector,
-		AdminUsername:      string(state.AdminSecret.Data[model.GrafanaAdminUserEnvVar]),
-		AdminPassword:      string(state.AdminSecret.Data[model.GrafanaAdminPasswordEnvVar]),
-		AdminUrl:           url,
-		GrafanaReady:       true,
-		ClientTimeout:      DefaultClientTimeoutSeconds,
-		FixAnnotations:     fixAnnotations,
-		FixHeights:         fixHeights,
+		DashboardSelectors:         cr.Spec.DashboardLabelSelector,
+		DashboardNamespaceSelector: cr.Spec.DashboardNamespaceSelector,
+		AdminUrl:                   url,
+		GrafanaReady:               true,
+		ClientTimeout:              DefaultClientTimeoutSeconds,
 	}
 
 	if cr.Spec.Client != nil && cr.Spec.Client.TimeoutSeconds != nil {
-		seconds := DefaultClientTimeoutSeconds
+		seconds := *cr.Spec.Client.TimeoutSeconds
 		if seconds < 0 {
 			seconds = DefaultClientTimeoutSeconds
 		}
@@ -308,7 +295,7 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 
 	common.ControllerEvents <- controllerState
 
-	log.Info("desired cluster state met")
+	log.V(1).Info("desired cluster state met")
 
 	return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
 }

@@ -97,7 +97,7 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *grafanav1alpha1.Grafana, requested
 		// Don't allow to install multiple versions of the same plugin
 		if filteredPlugins.HasSomeVersionOf(&plugin) == true {
 			installedVersion := filteredPlugins.GetInstalledVersionOf(&plugin)
-			log.Info(fmt.Sprintf("not installing version %s of %s because %s is already installed", plugin.Version, plugin.Name, installedVersion.Version))
+			log.V(1).Info(fmt.Sprintf("not installing version %s of %s because %s is already installed", plugin.Version, plugin.Name, installedVersion.Version))
 			continue
 		}
 
@@ -115,7 +115,7 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *grafanav1alpha1.Grafana, requested
 		// New plugin
 		if cr.Status.InstalledPlugins.HasSomeVersionOf(&plugin) == false {
 			filteredPlugins = append(filteredPlugins, plugin)
-			log.Info(fmt.Sprintf("installing plugin %s@%s", plugin.Name, plugin.Version))
+			log.V(1).Info(fmt.Sprintf("installing plugin %s@%s", plugin.Name, plugin.Version))
 			pluginsUpdated = true
 			continue
 		}
@@ -130,7 +130,7 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *grafanav1alpha1.Grafana, requested
 			requested.VersionsOf(&plugin) == 1 {
 			installedVersion := cr.Status.InstalledPlugins.GetInstalledVersionOf(&plugin)
 			filteredPlugins = append(filteredPlugins, plugin)
-			log.Info(fmt.Sprintf("changing version of plugin %s form %s to %s", plugin.Name, installedVersion.Version, plugin.Version))
+			log.V(1).Info(fmt.Sprintf("changing version of plugin %s form %s to %s", plugin.Name, installedVersion.Version, plugin.Version))
 			pluginsUpdated = true
 			continue
 		}

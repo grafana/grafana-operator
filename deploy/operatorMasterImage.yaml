@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: grafana-operator
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        name: grafana-operator
+    spec:
+      serviceAccountName: grafana-operator
+      containers:
+        - name: grafana-operator
+          image: quay.io/integreatly/grafana-operator:master
+          ports:
+            - containerPort: 60000
+              name: metrics
+          command:
+            - grafana-operator
+          imagePullPolicy: Always
+          env:
+            - name: TEMPLATE_PATH
+              value: /usr/local/bin/templates
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "grafana-operator"

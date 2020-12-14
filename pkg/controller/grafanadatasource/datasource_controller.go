@@ -2,19 +2,17 @@ package grafanadatasource
 
 import (
 	"context"
-	"crypto/md5"
+	"crypto/sha256"
+	"crypto/tls"
 	defaultErrors "errors"
 	"fmt"
 	"io"
+	"net/http"
+	"os"
 	"sort"
 	"time"
 
-	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
-	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
-	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
 	"gopkg.in/yaml.v2"
-
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -28,6 +26,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
+	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
+	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
 )
 
 const (
@@ -56,7 +59,12 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	ctx, cancel := context.WithCancel(ctx)
 
 	return &ReconcileGrafanaDataSource{
-		client:   mgr.GetClient(),
+		client: mgr.GetClient(),
+		transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
 		scheme:   mgr.GetScheme(),
 		context:  ctx,
 		cancel:   cancel,
@@ -96,7 +104,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler, namespace string) error {
 
 	go func() {
 		for range ticker.C {
-			log.Info("running periodic datasource resync")
+			log.V(1).Info("running periodic datasource resync")
 			sendEmptyRequest()
 		}
 	}()
@@ -118,12 +126,13 @@ var _ reconcile.Reconciler = &ReconcileGrafanaDataSource{}
 type ReconcileGrafanaDataSource struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client   client.Client
-	scheme   *runtime.Scheme
-	context  context.Context
-	cancel   context.CancelFunc
-	recorder record.EventRecorder
-	state    common.ControllerState
+	client    client.Client
+	transport *http.Transport
+	scheme    *runtime.Scheme
+	context   context.Context
+	cancel    context.CancelFunc
+	recorder  record.EventRecorder
+	state     common.ControllerState
 }
 
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
@@ -138,7 +147,7 @@ func (r *ReconcileGrafanaDataSource) Reconcile(request reconcile.Request) (recon
 	}
 
 	if currentState.KnownDataSources == nil {
-		log.Info(fmt.Sprintf("no datasources configmap found"))
+		log.V(1).Info(fmt.Sprintf("no datasources configmap found"))
 		return reconcile.Result{Requeue: false}, nil
 	}
 
@@ -182,7 +191,7 @@ func (r *ReconcileGrafanaDataSource) reconcileDataSources(state *common.DataSour
 
 	// apply dataSources config maps to delete. Can be multiple data sources in CM
 	for _, ds := range dataSourcesToDelete {
-		log.Info(fmt.Sprintf("deleting datasource config map %v", ds))
+		log.V(1).Info(fmt.Sprintf("deleting datasource %v", ds))
 		if state.KnownDataSources.Data != nil {
 			dsList, err := r.fetchDataSourceNames(state.KnownDataSources, ds)
 			if err != nil {
@@ -251,7 +260,7 @@ func (i *ReconcileGrafanaDataSource) updateHash(known *v1.ConfigMap) (string, er
 	}
 	sort.Strings(keys)
 
-	hash := md5.New()
+	hash := sha256.New()
 	for _, key := range keys {
 		_, err := io.WriteString(hash, key)
 		if err != nil {
@@ -293,7 +302,7 @@ func (r *ReconcileGrafanaDataSource) manageError(datasource *grafanav1alpha1.Gra
 // is updated
 func (r *ReconcileGrafanaDataSource) manageSuccess(datasources []grafanav1alpha1.GrafanaDataSource) {
 	for _, datasource := range datasources {
-		log.Info(fmt.Sprintf("datasource %v/%v successfully imported",
+		log.V(1).Info(fmt.Sprintf("datasource %v/%v successfully imported",
 			datasource.Namespace,
 			datasource.Name))
 
@@ -314,18 +323,18 @@ func (r *ReconcileGrafanaDataSource) getClient() (GrafanaClient, error) {
 		return nil, defaultErrors.New("cannot get grafana admin url")
 	}
 
-	username := r.state.AdminUsername
+	username := os.Getenv(model.GrafanaAdminUserEnvVar)
 	if username == "" {
 		return nil, defaultErrors.New("invalid credentials (username)")
 	}
 
-	password := r.state.AdminPassword
+	password := os.Getenv(model.GrafanaAdminPasswordEnvVar)
 	if password == "" {
 		return nil, defaultErrors.New("invalid credentials (password)")
 	}
 
 	duration := time.Duration(r.state.ClientTimeout)
-	return NewGrafanaClient(url, username, password, duration), nil
+	return NewGrafanaClient(url, username, password, r.transport, duration), nil
 }
 
 func (r *ReconcileGrafanaDataSource) fetchDataSourceNames(dsCM *v1.ConfigMap, dsKey string) ([]string, error) {

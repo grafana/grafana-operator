@@ -25,20 +25,12 @@ const (
 	InitCpuLimit      = "300m"
 )
 
-func getResources(cr *v1alpha1.Grafana) v13.ResourceRequirements {
-	if cr.Spec.Resources != nil {
-		return *cr.Spec.Resources
+func getSkipCreateAdminAccount(cr *v1alpha1.Grafana) bool {
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.SkipCreateAdminAccount != nil {
+		return *cr.Spec.Deployment.SkipCreateAdminAccount
 	}
-	return v13.ResourceRequirements{
-		Requests: v13.ResourceList{
-			v13.ResourceMemory: resource.MustParse(MemoryRequest),
-			v13.ResourceCPU:    resource.MustParse(CpuRequest),
-		},
-		Limits: v13.ResourceList{
-			v13.ResourceMemory: resource.MustParse(MemoryLimit),
-			v13.ResourceCPU:    resource.MustParse(CpuLimit),
-		},
-	}
+
+	return false
 }
 
 func getInitResources(cr *v1alpha1.Grafana) v13.ResourceRequirements {
@@ -53,6 +45,22 @@ func getInitResources(cr *v1alpha1.Grafana) v13.ResourceRequirements {
 		Limits: v13.ResourceList{
 			v13.ResourceMemory: resource.MustParse(InitMemoryLimit),
 			v13.ResourceCPU:    resource.MustParse(InitCpuLimit),
+		},
+	}
+}
+
+func getResources(cr *v1alpha1.Grafana) v13.ResourceRequirements {
+	if cr.Spec.Resources != nil {
+		return *cr.Spec.Resources
+	}
+	return v13.ResourceRequirements{
+		Requests: v13.ResourceList{
+			v13.ResourceMemory: resource.MustParse(MemoryRequest),
+			v13.ResourceCPU:    resource.MustParse(CpuRequest),
+		},
+		Limits: v13.ResourceList{
+			v13.ResourceMemory: resource.MustParse(MemoryLimit),
+			v13.ResourceCPU:    resource.MustParse(CpuLimit),
 		},
 	}
 }
@@ -74,12 +82,11 @@ func getSecurityContext(cr *v1alpha1.Grafana) *v13.PodSecurityContext {
 }
 
 func getContainerSecurityContext(cr *v1alpha1.Grafana) *v13.SecurityContext {
-	var securityContext = v13.SecurityContext{}
+	var containerSecurityContext = v13.SecurityContext{}
 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.ContainerSecurityContext != nil {
-		securityContext = *cr.Spec.Deployment.ContainerSecurityContext
+		containerSecurityContext = *cr.Spec.Deployment.ContainerSecurityContext
 	}
-
-	return &securityContext
+	return &containerSecurityContext
 }
 
 func getReplicas(cr *v1alpha1.Grafana) *int32 {
@@ -135,6 +142,22 @@ func getNodeSelectors(cr *v1alpha1.Grafana) map[string]string {
 
 }
 
+func getTerminationGracePeriod(cr *v1alpha1.Grafana) *int64 {
+	var tcp int64 = 30
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.TerminationGracePeriodSeconds != 0 {
+		tcp = cr.Spec.Deployment.TerminationGracePeriodSeconds
+	}
+	return &tcp
+
+}
+
+func getPodPriorityClassName(cr *v1alpha1.Grafana) string {
+	if cr.Spec.Deployment != nil {
+		return cr.Spec.Deployment.PriorityClassName
+	}
+	return ""
+}
+
 func getTolerations(cr *v1alpha1.Grafana) []v13.Toleration {
 	tolerations := []v13.Toleration{}
 
@@ -171,12 +194,23 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume {
 	})
 
 	// Data volume
-	volumes = append(volumes, v13.Volume{
-		Name: GrafanaDataVolumeName,
-		VolumeSource: v13.VolumeSource{
-			EmptyDir: &v13.EmptyDirVolumeSource{},
-		},
-	})
+	if cr.UsedPersistentVolume() {
+		volumes = append(volumes, v13.Volume{
+			Name: GrafanaDataVolumeName,
+			VolumeSource: v13.VolumeSource{
+				PersistentVolumeClaim: &v13.PersistentVolumeClaimVolumeSource{
+					ClaimName: GrafanaDataStorageName,
+				},
+			},
+		})
+	} else {
+		volumes = append(volumes, v13.Volume{
+			Name: GrafanaDataVolumeName,
+			VolumeSource: v13.VolumeSource{
+				EmptyDir: &v13.EmptyDirVolumeSource{},
+			},
+		})
+	}
 
 	// Volume to store the plugins
 	volumes = append(volumes, v13.Volume{
@@ -227,6 +261,16 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume {
 		})
 	}
 	return volumes
+}
+
+func getEnvFrom(cr *v1alpha1.Grafana) []v13.EnvFromSource {
+	var envFrom []v13.EnvFromSource
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.EnvFrom != nil {
+		for _, v := range cr.Spec.Deployment.EnvFrom {
+			envFrom = append(envFrom, *v.DeepCopy())
+		}
+	}
+	return envFrom
 }
 
 // Don't add grafana specific volume mounts to extra containers and preserve
@@ -307,7 +351,55 @@ func getVolumeMounts(cr *v1alpha1.Grafana) []v13.VolumeMount {
 	return mounts
 }
 
-func getProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.Probe {
+func getLivenessProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.Probe {
+
+	if cr.Spec.LivenessProbeSpec != nil {
+		return &v13.Probe{
+			Handler: v13.Handler{
+				HTTPGet: &v13.HTTPGetAction{
+					Path: GrafanaHealthEndpoint,
+					Port: intstr.FromInt(GetGrafanaPort(cr)),
+				},
+			},
+			InitialDelaySeconds: cr.Spec.LivenessProbeSpec.InitialDelaySeconds,
+			TimeoutSeconds:      cr.Spec.LivenessProbeSpec.TimeOutSeconds,
+			PeriodSeconds:       cr.Spec.LivenessProbeSpec.PeriodSeconds,
+			SuccessThreshold:    cr.Spec.LivenessProbeSpec.SuccessThreshold,
+			FailureThreshold:    cr.Spec.LivenessProbeSpec.FailureThreshold,
+		}
+	}
+
+	return &v13.Probe{
+		Handler: v13.Handler{
+			HTTPGet: &v13.HTTPGetAction{
+				Path: GrafanaHealthEndpoint,
+				Port: intstr.FromInt(GetGrafanaPort(cr)),
+			},
+		},
+		InitialDelaySeconds: delay,
+		TimeoutSeconds:      timeout,
+		FailureThreshold:    failure,
+	}
+}
+
+func getReadinessProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.Probe {
+
+	if cr.Spec.ReadinessProbeSpec != nil {
+		return &v13.Probe{
+			Handler: v13.Handler{
+				HTTPGet: &v13.HTTPGetAction{
+					Path: GrafanaHealthEndpoint,
+					Port: intstr.FromInt(GetGrafanaPort(cr)),
+				},
+			},
+			InitialDelaySeconds: cr.Spec.ReadinessProbeSpec.InitialDelaySeconds,
+			TimeoutSeconds:      cr.Spec.ReadinessProbeSpec.TimeOutSeconds,
+			PeriodSeconds:       cr.Spec.ReadinessProbeSpec.PeriodSeconds,
+			SuccessThreshold:    cr.Spec.ReadinessProbeSpec.SuccessThreshold,
+			FailureThreshold:    cr.Spec.ReadinessProbeSpec.FailureThreshold,
+		}
+	}
+
 	return &v13.Probe{
 		Handler: v13.Handler{
 			HTTPGet: &v13.HTTPGetAction{
@@ -323,14 +415,20 @@ func getProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.Probe {
 
 func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Container {
 	var containers []v13.Container
+	var image string
 
-	cfg := config.GetControllerConfig()
-	image := cfg.GetConfigString(config.ConfigGrafanaImage, GrafanaImage)
-	tag := cfg.GetConfigString(config.ConfigGrafanaImageTag, GrafanaVersion)
+	if cr.Spec.BaseImage != "" {
+		image = cr.Spec.BaseImage
+	} else {
+		cfg := config.GetControllerConfig()
+		img := cfg.GetConfigString(config.ConfigGrafanaImage, GrafanaImage)
+		tag := cfg.GetConfigString(config.ConfigGrafanaImageTag, GrafanaVersion)
+		image = fmt.Sprintf("%s:%s", img, tag)
+	}
 
 	container := v13.Container{
 		Name:       "grafana",
-		Image:      fmt.Sprintf("%s:%s", image, tag),
+		Image:      image,
 		Args:       []string{"-config=/etc/grafana/grafana.ini"},
 		WorkingDir: "",
 		Ports: []v13.ContainerPort{
@@ -349,32 +447,12 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 				Name:  LastDatasourcesConfigEnvVar,
 				Value: dsHash,
 			},
-			{
-				Name: GrafanaAdminUserEnvVar,
-				ValueFrom: &v13.EnvVarSource{
-					SecretKeyRef: &v13.SecretKeySelector{
-						LocalObjectReference: v13.LocalObjectReference{
-							Name: GrafanaAdminSecretName,
-						},
-						Key: GrafanaAdminUserEnvVar,
-					},
-				},
-			},
-			{
-				Name: GrafanaAdminPasswordEnvVar,
-				ValueFrom: &v13.EnvVarSource{
-					SecretKeyRef: &v13.SecretKeySelector{
-						LocalObjectReference: v13.LocalObjectReference{
-							Name: GrafanaAdminSecretName,
-						},
-						Key: GrafanaAdminPasswordEnvVar,
-					},
-				},
-			},
 		},
+		EnvFrom:                  getEnvFrom(cr),
 		Resources:                getResources(cr),
 		VolumeMounts:             getVolumeMounts(cr),
-		ReadinessProbe:           getProbe(cr, 5, 3, 1),
+		LivenessProbe:            getLivenessProbe(cr, 60, 30, 10),
+		ReadinessProbe:           getReadinessProbe(cr, 5, 3, 1),
 		TerminationMessagePath:   "/dev/termination-log",
 		TerminationMessagePolicy: "File",
 		ImagePullPolicy:          "Always",
@@ -391,6 +469,34 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 		container.Env = append(container.Env, envRef)
 	}
 	containers = append(containers, container)
+
+	// Use auto generated admin account?
+	if getSkipCreateAdminAccount(cr) == false {
+		for i := 0; i < len(containers); i++ {
+			containers[i].Env = append(containers[i].Env, v13.EnvVar{
+				Name: GrafanaAdminUserEnvVar,
+				ValueFrom: &v13.EnvVarSource{
+					SecretKeyRef: &v13.SecretKeySelector{
+						LocalObjectReference: v13.LocalObjectReference{
+							Name: GrafanaAdminSecretName,
+						},
+						Key: GrafanaAdminUserEnvVar,
+					},
+				},
+			})
+			containers[i].Env = append(containers[i].Env, v13.EnvVar{
+				Name: GrafanaAdminPasswordEnvVar,
+				ValueFrom: &v13.EnvVarSource{
+					SecretKeyRef: &v13.SecretKeySelector{
+						LocalObjectReference: v13.LocalObjectReference{
+							Name: GrafanaAdminSecretName,
+						},
+						Key: GrafanaAdminPasswordEnvVar,
+					},
+				}})
+		}
+	}
+
 	// Add extra containers
 	for _, container := range cr.Spec.Containers {
 		container.VolumeMounts = getExtraContainerVolumeMounts(cr, container.VolumeMounts)
@@ -446,14 +552,16 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, annotations map[string]string, conf
 				Annotations: getPodAnnotations(cr, annotations),
 			},
 			Spec: v13.PodSpec{
-				NodeSelector:       getNodeSelectors(cr),
-				Tolerations:        getTolerations(cr),
-				Affinity:           getAffinities(cr),
-				SecurityContext:    getSecurityContext(cr),
-				Volumes:            getVolumes(cr),
-				InitContainers:     getInitContainers(cr, plugins),
-				Containers:         getContainers(cr, configHash, dsHash),
-				ServiceAccountName: GrafanaServiceAccountName,
+				NodeSelector:                  getNodeSelectors(cr),
+				Tolerations:                   getTolerations(cr),
+				Affinity:                      getAffinities(cr),
+				SecurityContext:               getSecurityContext(cr),
+				Volumes:                       getVolumes(cr),
+				InitContainers:                getInitContainers(cr, plugins),
+				Containers:                    getContainers(cr, configHash, dsHash),
+				ServiceAccountName:            GrafanaServiceAccountName,
+				TerminationGracePeriodSeconds: getTerminationGracePeriod(cr),
+				PriorityClassName:             getPodPriorityClassName(cr),
 			},
 		},
 		Strategy: v1.DeploymentStrategy{
