@@ -127,6 +127,7 @@ type GrafanaConfig struct {
 	Auth                          *GrafanaConfigAuth                          `json:"auth,omitempty" ini:"auth,omitempty"`
 	AuthBasic                     *GrafanaConfigAuthBasic                     `json:"auth.basic,omitempty" ini:"auth.basic,omitempty"`
 	AuthAnonymous                 *GrafanaConfigAuthAnonymous                 `json:"auth.anonymous,omitempty" ini:"auth.anonymous,omitempty"`
+	AuthAzureAD                   *GrafanaConfigAuthAzureAD                   `json:"auth.azuread,omitempty" ini:"auth.azuread,omitempty"`
 	AuthGoogle                    *GrafanaConfigAuthGoogle                    `json:"auth.google,omitempty" ini:"auth.google,omitempty"`
 	AuthGithub                    *GrafanaConfigAuthGithub                    `json:"auth.github,omitempty" ini:"auth.github,omitempty"`
 	AuthGitlab                    *GrafanaConfigAuthGitlab                    `json:"auth.gitlab,omitempty" ini:"auth.gitlab,omitempty"`
@@ -245,6 +246,18 @@ type GrafanaConfigAuthAnonymous struct {
 	Enabled *bool  `json:"enabled,omitempty" ini:"enabled"`
 	OrgName string `json:"org_name,omitempty" ini:"org_name,omitempty"`
 	OrgRole string `json:"org_role,omitempty" ini:"org_role,omitempty"`
+}
+
+type GrafanaConfigAuthAzureAD struct {
+	Enabled        *bool  `json:"enabled,omitempty" ini:"enabled"`
+	AllowSignUp    *bool  `json:"allow_sign_up,omitempty" ini:"allow_sign_up"`
+	ClientId       string `json:"client_id,omitempty" ini:"client_id,omitempty"`
+	ClientSecret   string `json:"client_secret,omitempty" ini:"client_secret,omitempty"`
+	Scopes         string `json:"scopes,omitempty" ini:"scopes,omitempty"`
+	AuthUrl        string `json:"auth_url,omitempty" ini:"auth_url,omitempty"`
+	TokenUrl       string `json:"token_url,omitempty" ini:"token_url,omitempty"`
+	AllowedDomains string `json:"allowed_domains,omitempty" ini:"allowed_domains,omitempty"`
+	AllowedGroups  string `json:"allowed_groups,omitempty" ini:"allowed_groups,omitempty"`
 }
 
 type GrafanaConfigAuthGoogle struct {

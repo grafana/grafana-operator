@@ -173,6 +173,20 @@ func (i *GrafanaIni) Write() (string, string) {
 		config["log"] = items
 	}
 
+	if i.cfg.AuthAzureAD != nil {
+		var items []string
+		items = appendBool(items, "enabled", i.cfg.AuthAzureAD.Enabled)
+		items = appendStr(items, "client_id", i.cfg.AuthAzureAD.ClientId)
+		items = appendStr(items, "client_secret", i.cfg.AuthAzureAD.ClientSecret)
+		items = appendStr(items, "scopes", i.cfg.AuthAzureAD.Scopes)
+		items = appendStr(items, "auth_url", i.cfg.AuthAzureAD.AuthUrl)
+		items = appendStr(items, "token_url", i.cfg.AuthAzureAD.TokenUrl)
+		items = appendStr(items, "allowed_domains", i.cfg.AuthAzureAD.AllowedDomains)
+		items = appendStr(items, "allowed_groups", i.cfg.AuthAzureAD.AllowedGroups)
+		items = appendBool(items, "allow_sign_up", i.cfg.AuthAzureAD.AllowSignUp)
+		config["auth.azuread"] = items
+	}
+
 	if i.cfg.AuthGoogle != nil {
 		var items []string
 		items = appendBool(items, "enabled", i.cfg.AuthGoogle.Enabled)
