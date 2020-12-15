@@ -226,7 +226,7 @@ func getLokiSecurityContext(cr *v1alpha1.Loki) *v13.PodSecurityContext {
 	securityContext := v13.PodSecurityContext{}
 
 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.SecurityContext != nil {
-		securityContext = * cr.Spec.Deployment.SecurityContext
+		securityContext = *cr.Spec.Deployment.SecurityContext
 	}
 
 	return &securityContext

@@ -6,6 +6,7 @@ import (
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/record"
 	"reflect"
@@ -70,6 +71,7 @@ type ReconcileLoki struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
 	client   client.Client
+	scheme   *runtime.Scheme
 	config   *config.ControllerConfig
 	context  context.Context
 	cancel   context.CancelFunc
@@ -80,7 +82,7 @@ type ReconcileLoki struct {
 func (r ReconcileLoki) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	log.V(1).Info("running loki controller")
 
-	// Fetch the GrafanaDashboard instance
+	// Fetch the Loki instance
 	instance := &grafanav1alpha1.Loki{}
 	err := r.client.Get(r.context, request.NamespacedName, instance)
 	if err != nil {
@@ -94,9 +96,29 @@ func (r ReconcileLoki) Reconcile(request reconcile.Request) (reconcile.Result, e
 func (r *ReconcileLoki) reconcileLoki(loki *grafanav1alpha1.Loki) (reconcile.Result, error) {
 	if loki.Spec.External != nil {
 		loki.Status.Url = loki.Spec.External.Url
-		return r.manageSuccess(loki, grafanav1alpha1.PhaseReconciling, "")
+		return r.manageSuccess(loki, grafanav1alpha1.PhaseReconciling, "External Loki reconciled")
 	} else {
-		// TODO
+
+		cr := loki.DeepCopy()
+
+		// Read current state
+		currentState := common.NewLokiState()
+		err := currentState.Read(r.context, loki, r.client)
+		if err != nil {
+			log.Error(err, "error reading state")
+			return r.manageError(loki, err)
+		}
+
+		// Get the actions required to reach the desired state
+		reconciler := NewLokiReconciler()
+		desiredState := reconciler.Reconcile(currentState, cr)
+
+		// Run the actions to reach the desired state
+		actionRunner := common.NewClusterActionRunner(r.context, r.client, r.scheme, cr)
+		err = actionRunner.RunAll(desiredState)
+		if err != nil {
+			return r.manageError(cr, err)
+		}
 	}
 
 	return reconcile.Result{}, nil
@@ -119,14 +141,19 @@ func (r *ReconcileLoki) manageSuccess(loki *grafanav1alpha1.Loki, phase grafanav
 	return reconcile.Result{}, nil
 }
 
-// Handle error case: update dashboard with error message and status
-func (r *ReconcileLoki) manageError(loki *grafanav1alpha1.Loki, issue error) {
-	r.recorder.Event(loki, "Warning", "ProcessingError", issue.Error())
+func (r *ReconcileLoki) manageError(cr *grafanav1alpha1.Loki, issue error) (reconcile.Result, error) {
+	r.recorder.Event(cr, "Warning", "ProcessingError", issue.Error())
+	cr.Status.Phase = grafanav1alpha1.PhaseFailing
+	cr.Status.Message = issue.Error()
 
-	// Ignore conclicts. Resource might just be outdated.
-	if errors.IsConflict(issue) {
-		return
+	err := r.client.Status().Update(r.context, cr)
+	if err != nil {
+		// Ignore conflicts, resource might just be outdated.
+		if errors.IsConflict(err) {
+			err = nil
+		}
+		return reconcile.Result{}, err
 	}
 
-	log.Error(issue, "error updating loki")
+	return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
 }

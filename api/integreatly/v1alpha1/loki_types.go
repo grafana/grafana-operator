@@ -19,11 +19,18 @@ type LokiSpec struct {
 	// When set, refer to unmamnaged Loki instance and do not create a managed one
 	External           *LokiExternal           `json:"external,omitempty"`
 	Service            *LokiService            `json:"service,omitempty"`
+	ServiceAccount     *LokiServiceAccount     `json:"serviceAccount,omitempty"`
 	Ingress            *LokiIngress            `json:"ingress,omitempty"`
 	Route              *LokiRoute              `json:"route,omitempty"`
 	BaseImage          string                  `json:"baseImage,omitempty"`
 	LivenessProbeSpec  *LokiLivenessProbeSpec  `json:"lokiLivenessProbeSpec,omitempty"`
 	ReadinessProbeSpec *LokiReadinessProbeSpec `json:"lokiReadinessProbeSpec,omitempty"`
+}
+
+type LokiServiceAccount struct {
+	Annotations      map[string]string         `json:"annotations,omitempty"`
+	Labels           map[string]string         `json:"labels,omitempty"`
+	ImagePullSecrets []v1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 }
 
 type LokiReadinessProbeSpec struct {
@@ -54,7 +61,11 @@ type LokiDeployment struct {
 }
 
 type LokiConfig struct {
+	Paths  *LokiConfigPaths  `json:"paths,omitempty" ini:"paths,omitempty"`
 	Server *LokiConfigServer `json:"server,omitempty" ini:"server,omitempty"`
+}
+type LokiConfigPaths struct {
+	TempDataLifetime string `json:"temp_data_lifetime,omitempty" ini:"temp_data_lifetime,omitempty"`
 }
 type LokiConfigServer struct {
 	HttpAddr   string `json:"http_addr,omitempty" ini:"http_addr,omitempty"`

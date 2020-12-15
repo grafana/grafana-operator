@@ -24,6 +24,9 @@ const (
 	GrafanaLogsPath                 = "/var/log/grafana"
 	GrafanaPluginsPath              = "/var/lib/grafana/plugins"
 	GrafanaProvisioningPath         = "/etc/grafana/provisioning/"
+	LokiDataPath                    = "/var/lib/loki"
+	LokiLogsPath                    = "/var/log/loki"
+	LokiProvisioningPath            = "/etc/loki/provisioning/"
 	PluginsInitContainerImage       = "quay.io/integreatly/grafana_plugins_init"
 	PluginsInitContainerTag         = "0.0.3"
 	PluginsUrl                      = "https://grafana.com/api/plugins/%s/versions/%s"
@@ -292,7 +295,7 @@ func (c *ControllerConfig) AddLoki(loki *v1alpha1.Loki) {
 			Name:      loki.Name,
 			Namespace: loki.Namespace,
 			UID:       string(loki.UID),
-			LokiURL:   string(loki.Spec.External.Url),
+			LokiURL:   loki.Spec.External.Url,
 		})
 	} else {
 		c.Lock()
@@ -300,7 +303,7 @@ func (c *ControllerConfig) AddLoki(loki *v1alpha1.Loki) {
 		c.Lokis[ns][i].Name = loki.Name
 		c.Lokis[ns][i].Namespace = ns
 		c.Lokis[ns][i].UID = string(loki.UID)
-		c.Lokis[ns][i].LokiURL = string(loki.Spec.External.Url)
+		c.Lokis[ns][i].LokiURL = loki.Spec.External.Url
 
 	}
 }
