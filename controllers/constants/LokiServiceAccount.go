@@ -14,7 +14,6 @@ func LokiServiceAccountSelector(cr *v1alpha1.Loki) client.ObjectKey {
 	}
 }
 
-
 func getLokiServiceAccountLabels(cr *v1alpha1.Loki) map[string]string {
 	if cr.Spec.ServiceAccount == nil {
 		return nil
@@ -39,7 +38,6 @@ func LokiServiceAccount(cr *v1alpha1.Loki) *v1.ServiceAccount {
 		},
 	}
 }
-
 
 func LokiServiceAccountReconciled(cr *v1alpha1.Loki, currentState *v1.ServiceAccount) *v1.ServiceAccount {
 	reconciled := currentState.DeepCopy()

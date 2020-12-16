@@ -1,7 +1,6 @@
 package loki
 
 import (
-
 	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
@@ -27,7 +26,6 @@ func (i *LokiReconciler) Reconcile(state *common.LokiState, cr *v1alpha1.Loki) c
 
 	desired = desired.AddAction(i.getLokiServiceAccountDesiredState(state, cr))
 	desired = desired.AddActions(i.getLokiConfigDesiredState(state, cr))
-
 
 	// Reconcile the deployment last because it depends on the configuration
 	// and plugins list computed in previous steps
@@ -125,7 +123,6 @@ func (i *LokiReconciler) getLokiConfigDesiredState(state *common.LokiState, cr *
 	}
 	return actions
 }
-
 
 func (i *LokiReconciler) getLokiExternalAccessDesiredState(state *common.LokiState, cr *v1alpha1.Loki) common.ClusterAction {
 	cfg := config.GetControllerConfig()

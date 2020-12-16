@@ -14,8 +14,8 @@ import (
 type LokiSpec struct {
 	Config       LokiConfig        `json:"config"`
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
-	Deployment   *LokiDeployment   `json"deployment,omitempty"`
-	DataStorage  *LokiDataStorage  `json"dataStorage,omitempty"`
+	Deployment   *LokiDeployment   `json:"deployment,omitempty"`
+	DataStorage  *LokiDataStorage  `json:"dataStorage,omitempty"`
 	// When set, refer to unmamnaged Loki instance and do not create a managed one
 	External           *LokiExternal           `json:"external,omitempty"`
 	Service            *LokiService            `json:"service,omitempty"`
