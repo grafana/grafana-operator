@@ -56,17 +56,26 @@ spec:
                       description: The most common json options See https://grafana.com/docs/administration/provisioning/#datasources
                       properties:
                         addCorsHeader:
-                          description: ' Usefull fields for clickhouse datasource  See
+                          description: ' Useful fields for clickhouse datasource  See
                             https://github.com/Vertamedia/clickhouse-grafana/tree/master/dist/README.md#configure-the-datasource-with-provisioning  See
                             https://github.com/Vertamedia/clickhouse-grafana/tree/master/src/datasource.ts#L44'
                           type: boolean
+                        appInsightsAppId:
+                          description: Fields for Azure data sources
+                          type: string
                         assumeRoleArn:
                           type: string
                         authType:
                           type: string
                         authenticationType:
                           type: string
+                        azureLogAnalyticsSameAs:
+                          type: string
                         clientEmail:
+                          type: string
+                        clientId:
+                          type: string
+                        cloudName:
                           type: string
                         connMaxLifetime:
                           type: integer
@@ -105,6 +114,14 @@ spec:
                           type: string
                         interval:
                           type: string
+                        logAnalyticsClientId:
+                          type: string
+                        logAnalyticsDefaultWorkspace:
+                          type: string
+                        logAnalyticsSubscriptionId:
+                          type: string
+                        logAnalyticsTenantId:
+                          type: string
                         logLevelField:
                           type: string
                         logMessageField:
@@ -116,6 +133,10 @@ spec:
                         postgresVersion:
                           type: integer
                         sslmode:
+                          type: string
+                        subscriptionI:
+                          type: string
+                        tenantId:
                           type: string
                         timeField:
                           type: string
@@ -156,7 +177,12 @@ spec:
                       properties:
                         accessKey:
                           type: string
+                        appInsightsApiKey:
+                          type: string
                         basicAuthPassword:
+                          type: string
+                        clientSecret:
+                          description: Fields for Azure data sources
                           type: string
                         httpHeaderValue1:
                           description: Custom HTTP headers for datasources See https://grafana.com/docs/grafana/latest/administration/provisioning/#datasources
@@ -176,6 +202,8 @@ spec:
                         httpHeaderValue8:
                           type: string
                         httpHeaderValue9:
+                          type: string
+                        logAnalyticsClientSecret:
                           type: string
                         password:
                           type: string
