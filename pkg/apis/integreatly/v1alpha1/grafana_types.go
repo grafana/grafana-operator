@@ -251,7 +251,7 @@ type GrafanaConfigAuthAnonymous struct {
 
 type GrafanaConfigAuthSaml struct {
 	Enabled                  *bool  `json:"enabled,omitempty" ini:"enabled"`
-	SignleLogout             *bool  `json:"single_logout,omitempty" ini:"single_logout,omitempty"`
+	SingleLogout             *bool  `json:"single_logout,omitempty" ini:"single_logout,omitempty"`
 	AllowIdpInitiated        *bool  `json:"allow_idp_initiated,omitempty" ini:"allow_idp_initiated,omitempty"`
 	CertificatePath          string `json:"certificate_path,omitempty" ini:"certificate_path"`
 	KeyPath                  string `json:"private_key_path,omitempty" ini:"private_key_path"`

@@ -176,7 +176,7 @@ func (i *GrafanaIni) Write() (string, string) {
 	if i.cfg.AuthSaml != nil {
 		var items []string
 		items = appendBool(items, "enabled", i.cfg.AuthSaml.Enabled)
-		items = appendBool(items, "single_logout", i.cfg.AuthSaml.SignleLogout)
+		items = appendBool(items, "single_logout", i.cfg.AuthSaml.SingleLogout)
 		items = appendBool(items, "allow_idp_initiated", i.cfg.AuthSaml.AllowIdpInitiated)
 		items = appendStr(items, "certificate_path", i.cfg.AuthSaml.CertificatePath)
 		items = appendStr(items, "private_key_path", i.cfg.AuthSaml.KeyPath)
