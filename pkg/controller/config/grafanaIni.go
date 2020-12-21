@@ -173,6 +173,31 @@ func (i *GrafanaIni) Write() (string, string) {
 		config["log"] = items
 	}
 
+	if i.cfg.AuthSaml != nil {
+		var items []string
+		items = appendBool(items, "enabled", i.cfg.AuthSaml.Enabled)
+		items = appendBool(items, "single_logout", i.cfg.AuthSaml.SignleLogout)
+		items = appendBool(items, "allow_idp_initiated", i.cfg.AuthSaml.AllowIdpInitiated)
+		items = appendStr(items, "certificate_path", i.cfg.AuthSaml.CertificatePath)
+		items = appendStr(items, "private_key_path", i.cfg.AuthSaml.KeyPath)
+		items = appendStr(items, "signature_algorithm", i.cfg.AuthSaml.SignatureAlgorithm)
+		items = appendStr(items, "idp_metadata_url", i.cfg.AuthSaml.IdpUrl)
+		items = appendStr(items, "max_issue_delay", i.cfg.AuthSaml.MaxIssueDelay)
+		items = appendStr(items, "metadata_valid_duration", i.cfg.AuthSaml.MetadataValidDuration)
+		items = appendStr(items, "relay_state", i.cfg.AuthSaml.RelayState)
+		items = appendStr(items, "assertion_attribute_name", i.cfg.AuthSaml.AssertionAttributeName)
+		items = appendStr(items, "assertion_attribute_login", i.cfg.AuthSaml.AssertionAttributeLogin)
+		items = appendStr(items, "assertion_attribute_email", i.cfg.AuthSaml.AssertionAttributeEmail)
+		items = appendStr(items, "assertion_attribute_groups", i.cfg.AuthSaml.AssertionAttributeGroups)
+		items = appendStr(items, "assertion_attribute_role", i.cfg.AuthSaml.AssertionAttributeRole)
+		items = appendStr(items, "assertion_attribute_org", i.cfg.AuthSaml.AssertionAttributeOrg)
+		items = appendStr(items, "allowed_organizations", i.cfg.AuthSaml.AllowedOrganizations)
+		items = appendStr(items, "org_mapping", i.cfg.AuthSaml.OrgMapping)
+		items = appendStr(items, "role_values_editor", i.cfg.AuthSaml.RoleValuesEditor)
+		items = appendStr(items, "role_values_admin", i.cfg.AuthSaml.RoleValuesAdmin)
+		items = appendStr(items, "role_values_grafana_admin", i.cfg.AuthSaml.RoleValuesGrafanaAdmin)
+		config["auth.saml"] = items
+	}
 	if i.cfg.AuthAzureAD != nil {
 		var items []string
 		items = appendBool(items, "enabled", i.cfg.AuthAzureAD.Enabled)
