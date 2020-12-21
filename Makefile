@@ -26,11 +26,11 @@ code/gen:
 
 .PHONY: code/check
 code/check:
-	@diff -u <(echo -n) <(gofmt -d .)
+	@diff -u <(echo -n) <(gofmt -d `find . -type f -name '*.go' -not -path "./vendor/*"`)
 
 .PHONY: code/fix
 code/fix:
-	@gofmt -w .
+	@gofmt -w `find . -type f -name '*.go' -not -path "./vendor/*"`
 
 .PHONY: image/build
 image/build: code/compile
