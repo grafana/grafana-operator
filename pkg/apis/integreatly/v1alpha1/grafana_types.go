@@ -65,6 +65,7 @@ type GrafanaClient struct {
 
 // GrafanaService provides a means to configure the service
 type GrafanaService struct {
+	Name        string            `json:"name,omitempty"`
 	Annotations map[string]string `json:"annotations,omitempty"`
 	Labels      map[string]string `json:"labels,omitempty"`
 	Type        v1.ServiceType    `json:"type,omitempty"`

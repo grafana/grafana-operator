@@ -24,6 +24,12 @@ func getIngressTLS(cr *v1alpha1.Grafana) []v1beta1.IngressTLS {
 }
 
 func getIngressSpec(cr *v1alpha1.Grafana) v1beta1.IngressSpec {
+	serviceName := func(cr *v1alpha1.Grafana) string {
+		if cr.Spec.Service != nil && cr.Spec.Service.Name != "" {
+			return cr.Spec.Service.Name
+		}
+		return GrafanaServiceName
+	}
 	return v1beta1.IngressSpec{
 		TLS: getIngressTLS(cr),
 		Rules: []v1beta1.IngressRule{
@@ -35,7 +41,7 @@ func getIngressSpec(cr *v1alpha1.Grafana) v1beta1.IngressSpec {
 							{
 								Path: GetPath(cr),
 								Backend: v1beta1.IngressBackend{
-									ServiceName: GrafanaServiceName,
+									ServiceName: serviceName(cr),
 									ServicePort: GetIngressTargetPort(cr),
 								},
 							},

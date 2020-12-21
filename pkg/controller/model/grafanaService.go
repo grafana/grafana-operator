@@ -10,6 +10,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+func getServiceName(cr *v1alpha1.Grafana) string {
+	if cr.Spec.Service != nil && cr.Spec.Service.Name != "" {
+		return cr.Spec.Service.Name
+	}
+	return GrafanaServiceName
+}
+
 func getServiceLabels(cr *v1alpha1.Grafana) map[string]string {
 	if cr.Spec.Service == nil {
 		return nil
@@ -104,7 +111,7 @@ func getServicePorts(cr *v1alpha1.Grafana, currentState *v1.Service) []v1.Servic
 func GrafanaService(cr *v1alpha1.Grafana) *v1.Service {
 	return &v1.Service{
 		ObjectMeta: v12.ObjectMeta{
-			Name:        GrafanaServiceName,
+			Name:        getServiceName(cr),
 			Namespace:   cr.Namespace,
 			Labels:      getServiceLabels(cr),
 			Annotations: getServiceAnnotations(cr, nil),
@@ -132,6 +139,6 @@ func GrafanaServiceReconciled(cr *v1alpha1.Grafana, currentState *v1.Service) *v
 func GrafanaServiceSelector(cr *v1alpha1.Grafana) client.ObjectKey {
 	return client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      GrafanaServiceName,
+		Name:      getServiceName(cr),
 	}
 }
