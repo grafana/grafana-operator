@@ -134,6 +134,7 @@ type GrafanaConfig struct {
 	AuthGenericOauth              *GrafanaConfigAuthGenericOauth              `json:"auth.generic_oauth,omitempty" ini:"auth.generic_oauth,omitempty"`
 	AuthLdap                      *GrafanaConfigAuthLdap                      `json:"auth.ldap,omitempty" ini:"auth.ldap,omitempty"`
 	AuthProxy                     *GrafanaConfigAuthProxy                     `json:"auth.proxy,omitempty" ini:"auth.proxy,omitempty"`
+	AuthSaml                      *GrafanaConfigAuthSaml                      `json:"auth.saml,omitempty" ini:"auth.saml,omitempty"`
 	DataProxy                     *GrafanaConfigDataProxy                     `json:"dataproxy,omitempty" ini:"dataproxy,omitempty"`
 	Analytics                     *GrafanaConfigAnalytics                     `json:"analytics,omitempty" ini:"analytics,omitempty"`
 	Dashboards                    *GrafanaConfigDashboards                    `json:"dashboards,omitempty" ini:"dashboards,omitempty"`
@@ -246,6 +247,30 @@ type GrafanaConfigAuthAnonymous struct {
 	Enabled *bool  `json:"enabled,omitempty" ini:"enabled"`
 	OrgName string `json:"org_name,omitempty" ini:"org_name,omitempty"`
 	OrgRole string `json:"org_role,omitempty" ini:"org_role,omitempty"`
+}
+
+type GrafanaConfigAuthSaml struct {
+	Enabled                  *bool  `json:"enabled,omitempty" ini:"enabled"`
+	SingleLogout             *bool  `json:"single_logout,omitempty" ini:"single_logout,omitempty"`
+	AllowIdpInitiated        *bool  `json:"allow_idp_initiated,omitempty" ini:"allow_idp_initiated,omitempty"`
+	CertificatePath          string `json:"certificate_path,omitempty" ini:"certificate_path"`
+	KeyPath                  string `json:"private_key_path,omitempty" ini:"private_key_path"`
+	SignatureAlgorithm       string `json:"signature_algorithm,omitempty" ini:"signature_algorithm,omitempty"`
+	IdpUrl                   string `json:"idp_metadata_url,omitempty" ini:"idp_metadata_url"`
+	MaxIssueDelay            string `json:"max_issue_delay,omitempty" ini:"max_issue_delay,omitempty"`
+	MetadataValidDuration    string `json:"metadata_valid_duration,omitempty" ini:"metadata_valid_duration,omitempty"`
+	RelayState               string `json:"relay_state,omitempty" ini:"relay_state,omitempty"`
+	AssertionAttributeName   string `json:"assertion_attribute_name,omitempty" ini:"assertion_attribute_name,omitempty"`
+	AssertionAttributeLogin  string `json:"assertion_attribute_login,omitempty" ini:"assertion_attribute_login,omitempty"`
+	AssertionAttributeEmail  string `json:"assertion_attribute_email,omitempty" ini:"assertion_attribute_email,omitempty"`
+	AssertionAttributeGroups string `json:"assertion_attribute_groups,omitempty" ini:"assertion_attribute_groups,omitempty"`
+	AssertionAttributeRole   string `json:"assertion_attribute_role,omitempty" ini:"assertion_attribute_role,omitempty"`
+	AssertionAttributeOrg    string `json:"assertion_attribute_org,omitempty" ini:"assertion_attribute_org,omitempty"`
+	AllowedOrganizations     string `json:"allowed_organizations,omitempty" ini:"allowed_organizations,omitempty"`
+	OrgMapping               string `json:"org_mapping,omitempty" ini:"org_mapping,omitempty"`
+	RoleValuesEditor         string `json:"role_values_editor,omitempty" ini:"role_values_editor,omitempty"`
+	RoleValuesAdmin          string `json:"role_values_admin,omitempty" ini:"role_values_admin,omitempty"`
+	RoleValuesGrafanaAdmin   string `json:"role_values_grafana_admin,omitempty" ini:"role_values_grafana_admin,omitempty"`
 }
 
 type GrafanaConfigAuthAzureAD struct {
