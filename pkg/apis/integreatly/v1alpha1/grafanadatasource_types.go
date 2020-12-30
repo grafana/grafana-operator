@@ -131,6 +131,11 @@ type GrafanaDataSourceJsonData struct {
 	LogAnalyticsTenantId         string `json:"logAnalyticsTenantId,omitempty"`
 	SubscriptionId               string `json:"subscriptionI,omitempty"`
 	TenantId                     string `json:"tenantId,omitempty"`
+	// Fields for InfluxDB data sources
+	HTTPMode      string `json:"httpMode,omitempty"`
+	Version       string `json:"version,omitempty"`
+	Organization  string `json:"organization,omitempty"`
+	DefaultBucket string `json:"defaultBucket,omitempty"`
 }
 
 // The most common secure json options
@@ -160,6 +165,8 @@ type GrafanaDataSourceSecureJsonData struct {
 	ClientSecret             string `json:"clientSecret,omitempty"`
 	AppInsightsApiKey        string `json:"appInsightsApiKey,omitempty"`
 	LogAnalyticsClientSecret string `json:"logAnalyticsClientSecret,omitempty"`
+	// Fields for InfluxDB data sources
+	Token string `json:"token,omitempty"`
 }
 
 func init() {
