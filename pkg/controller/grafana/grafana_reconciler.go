@@ -10,8 +10,6 @@ import (
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var previousNameReference = ""
-
 type GrafanaReconciler struct {
 	DsHash     string
 	ConfigHash string
@@ -86,12 +84,12 @@ func (i *GrafanaReconciler) getGrafanaServiceDesiredState(state *common.ClusterS
 
 	if state.GrafanaService == nil {
 		// If no previously known service exists
-		if previousNameReference != "" {
-			// if the previously known service is not the current service delete the previous service
-			if previousNameReference != cr.Spec.Service.Name {
-				serviceName := previousNameReference
-				// reset var for next loop
-				previousNameReference = ""
+		if cr.Status.PreviousServiceName != "" {
+			// if the previously known service is not the current service then delete the previous service
+			if cr.Status.PreviousServiceName != cr.Spec.Service.Name {
+				serviceName := cr.Status.PreviousServiceName
+				// reset the staus before next loop
+				cr.Status.PreviousServiceName = ""
 				return common.GenericDeleteAction{
 					Ref: &v1.Service{
 						ObjectMeta: v12.ObjectMeta{
@@ -104,13 +102,14 @@ func (i *GrafanaReconciler) getGrafanaServiceDesiredState(state *common.ClusterS
 			}
 		}
 		// set known previously known service as the current service
-		previousNameReference = cr.Spec.Service.Name
+		cr.Status.PreviousServiceName = cr.Spec.Service.Name
 		return common.GenericCreateAction{
 			Ref: model.GrafanaService(cr),
 			Msg: "create grafana service",
 		}
 	}
 
+	cr.Status.PreviousServiceName = cr.Spec.Service.Name
 	return common.GenericUpdateAction{
 		Ref: model.GrafanaServiceReconciled(cr, state.GrafanaService),
 		Msg: "update grafana service",

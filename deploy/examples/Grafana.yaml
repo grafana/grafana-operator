@@ -21,7 +21,7 @@ spec:
       type: "grafana-service"
   dashboardLabelSelector:
     - matchExpressions:
-        - { key: app, operator: In, values: [grafana] }
+        - { key: app, operator: In, values: [ grafana ] }
   # initResources:
   #   # Optionally specify initResources
   #   limits:

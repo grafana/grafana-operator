@@ -466,6 +466,7 @@ type GrafanaConfigPlugins struct {
 // +k8s:openapi-gen=true
 type GrafanaStatus struct {
 	Phase               StatusPhase                       `json:"phase"`
+	PreviousServiceName string                            `json:"previousServiceName"`
 	Message             string                            `json:"message"`
 	InstalledDashboards map[string][]*GrafanaDashboardRef `json:"dashboards"`
 	InstalledPlugins    PluginList                        `json:"installedPlugins"`
