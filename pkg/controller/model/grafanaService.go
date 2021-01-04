@@ -129,6 +129,7 @@ func GrafanaService(cr *v1alpha1.Grafana) *v1.Service {
 
 func GrafanaServiceReconciled(cr *v1alpha1.Grafana, currentState *v1.Service) *v1.Service {
 	reconciled := currentState.DeepCopy()
+	reconciled.Name = getServiceName(cr)
 	reconciled.Labels = getServiceLabels(cr)
 	reconciled.Annotations = getServiceAnnotations(cr, currentState.Annotations)
 	reconciled.Spec.Ports = getServicePorts(cr, currentState)

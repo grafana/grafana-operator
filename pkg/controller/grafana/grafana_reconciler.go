@@ -2,12 +2,15 @@ package grafana
 
 import (
 	"fmt"
-
 	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
+	v1 "k8s.io/api/core/v1"
+	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+var previousNameReference = ""
 
 type GrafanaReconciler struct {
 	DsHash     string
@@ -80,7 +83,28 @@ func (i *GrafanaReconciler) getGrafanaReadiness(state *common.ClusterState, cr *
 }
 
 func (i *GrafanaReconciler) getGrafanaServiceDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
+
 	if state.GrafanaService == nil {
+		// If no previously known service exists
+		if previousNameReference != "" {
+			// if the previously known service is not the current service delete the previous service
+			if previousNameReference != cr.Spec.Service.Name {
+				serviceName := previousNameReference
+				// reset var for next loop
+				previousNameReference = ""
+				return common.GenericDeleteAction{
+					Ref: &v1.Service{
+						ObjectMeta: v12.ObjectMeta{
+							Name:      serviceName,
+							Namespace: cr.Namespace,
+						},
+					},
+					Msg: "delete obsolete grafana service",
+				}
+			}
+		}
+		// set known previously known service as the current service
+		previousNameReference = cr.Spec.Service.Name
 		return common.GenericCreateAction{
 			Ref: model.GrafanaService(cr),
 			Msg: "create grafana service",

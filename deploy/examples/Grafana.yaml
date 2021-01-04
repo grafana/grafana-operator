@@ -14,6 +14,11 @@ spec:
       disable_signout_menu: True
     auth.anonymous:
       enabled: True
+  service:
+    name: "grafana-service"
+    labels:
+      app: "grafana"
+      type: "grafana-service"
   dashboardLabelSelector:
     - matchExpressions:
         - { key: app, operator: In, values: [grafana] }
