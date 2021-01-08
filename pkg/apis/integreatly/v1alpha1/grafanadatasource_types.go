@@ -137,7 +137,15 @@ type GrafanaDataSourceJsonData struct {
 	Organization  string `json:"organization,omitempty"`
 	DefaultBucket string `json:"defaultBucket,omitempty"`
 	// Fields for Loki data sources
-	MaxLines int `json:"maxLines,omitempty"`
+	MaxLines      int                                `json:"maxLines,omitempty"`
+	DerivedFields GrafanaDataSourceJsonDerivedFields `json:"derivedFields,omitempty"`
+}
+
+type GrafanaDataSourceJsonDerivedFields struct {
+	DatasourceUid string `json:"datasourceUid,omitempty"`
+	MatcherRegex  string `json:"matcherRegex,omitempty"`
+	Name          string `json:"name,omitempty"`
+	Url           string `jsonL:"url,omitempty"`
 }
 
 // The most common secure json options
