@@ -145,7 +145,7 @@ type GrafanaDataSourceJsonDerivedFields struct {
 	DatasourceUid string `json:"datasourceUid,omitempty"`
 	MatcherRegex  string `json:"matcherRegex,omitempty"`
 	Name          string `json:"name,omitempty"`
-	Url           string `jsonL:"url,omitempty"`
+	Url           string `json:"url,omitempty"`
 }
 
 // The most common secure json options
