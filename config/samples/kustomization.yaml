@@ -1,0 +1,6 @@
+## Append samples you want in your CSV to this file as resources ##
+resources:
+- integreatly.org_v1alpha1_grafana.yaml
+- integreatly.org_v1alpha1_grafanadashboard.yaml
+- integreatly.org_v1alpha1_grafanadatasource.yaml
+# +kubebuilder:scaffold:manifestskustomizesamples
