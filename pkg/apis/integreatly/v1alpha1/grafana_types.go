@@ -392,6 +392,11 @@ type GrafanaConfigLog struct {
 	Filters string `json:"filters,omitempty" ini:"filters,omitempty"`
 }
 
+type GrafanaConfigLogConsole struct {
+	Level   string `json:"level,omitempty" ini:"level,omitempty"`
+	Format  string `json:"format,omitempty" ini:"format,omitempty"`
+}
+
 type GrafanaConfigMetrics struct {
 	Enabled           *bool  `json:"enabled,omitempty" ini:"enabled"`
 	BasicAuthUsername string `json:"basic_auth_username,omitempty" ini:"basic_auth_username,omitempty"`
