@@ -140,6 +140,7 @@ type GrafanaConfig struct {
 	Dashboards                    *GrafanaConfigDashboards                    `json:"dashboards,omitempty" ini:"dashboards,omitempty"`
 	Smtp                          *GrafanaConfigSmtp                          `json:"smtp,omitempty" ini:"smtp,omitempty"`
 	Log                           *GrafanaConfigLog                           `json:"log,omitempty" ini:"log,omitempty"`
+	LogConsole                    *GrafanaConfigLogConsole                    `json:"log.console,omitempty" ini:"log.console,omitempty"`	
 	Metrics                       *GrafanaConfigMetrics                       `json:"metrics,omitempty" ini:"metrics,omitempty"`
 	MetricsGraphite               *GrafanaConfigMetricsGraphite               `json:"metrics.graphite,omitempty" ini:"metrics.graphite,omitempty"`
 	Snapshots                     *GrafanaConfigSnapshots                     `json:"snapshots,omitempty" ini:"snapshots,omitempty"`
