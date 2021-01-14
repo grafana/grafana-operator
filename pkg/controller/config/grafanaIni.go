@@ -172,7 +172,7 @@ func (i *GrafanaIni) Write() (string, string) {
 		items = appendStr(items, "filters", i.cfg.Log.Filters)
 		config["log"] = items
 	}
-	
+
 	if i.cfg.LogConsole != nil {
 		var items []string
 		items = appendStr(items, "level", i.cfg.LogConsole.Level)
