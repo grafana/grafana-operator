@@ -8,6 +8,7 @@ import (
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
 	v1 "k8s.io/api/core/v1"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"regexp"
 )
 
 type GrafanaReconciler struct {
@@ -86,7 +87,8 @@ func (i *GrafanaReconciler) getGrafanaServiceDesiredState(state *common.ClusterS
 		// If no previously known service exists
 		if cr.Status.PreviousServiceName != "" && cr.Spec.Service.Name != "" {
 			// if the previously known service is not the current service then delete the previous service
-			if cr.Status.PreviousServiceName != cr.Spec.Service.Name {
+			// validate the service
+			if (cr.Status.PreviousServiceName != cr.Spec.Service.Name) && i.validateServiceName(cr.Spec.Service.Name) {
 				serviceName := cr.Status.PreviousServiceName
 				// reset the staus before next loop
 				cr.Status.PreviousServiceName = ""
@@ -101,6 +103,7 @@ func (i *GrafanaReconciler) getGrafanaServiceDesiredState(state *common.ClusterS
 				}
 			}
 		}
+
 		// set known previously known service as the current service
 		if state.GrafanaService != nil {
 			cr.Status.PreviousServiceName = state.GrafanaService.Name
@@ -371,4 +374,16 @@ func (i *GrafanaReconciler) reconcilePlugins(cr *v1alpha1.Grafana, plugins v1alp
 
 	cr.Status.InstalledPlugins = validPlugins
 	cr.Status.FailedPlugins = failedPlugins
+}
+
+func (i *GrafanaReconciler) validateServiceName(string string) bool {
+	// a DNS-1035 label must consist of lower case alphanumeric
+	//    characters or '-', start with an alphabetic character, and end with an
+	//    alphanumeric character (e.g. 'my-name',  or 'abc-123', regex used for
+	//    validation is '[a-z]([-a-z0-9]*[a-z0-9])?
+	b, err := regexp.MatchString("[a-z]([-a-z0-9]*[a-z0-9])?", string)
+	if err != nil {
+		return false
+	}
+	return b
 }
