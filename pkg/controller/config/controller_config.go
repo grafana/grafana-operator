@@ -61,6 +61,17 @@ func (c *ControllerConfig) GetDashboardId(namespace, name string) string {
 	return fmt.Sprintf("%v/%v", namespace, name)
 }
 
+func (c *ControllerConfig) GetAllPlugins() v1alpha1.PluginList {
+	c.Lock()
+	defer c.Unlock()
+
+	var plugins v1alpha1.PluginList
+	for _, v := range GetControllerConfig().Plugins {
+		plugins = append(plugins, v...)
+	}
+	return plugins
+}
+
 func (c *ControllerConfig) GetPluginsFor(dashboard *v1alpha1.GrafanaDashboard) v1alpha1.PluginList {
 	c.Lock()
 	defer c.Unlock()
