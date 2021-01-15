@@ -84,38 +84,32 @@ func (i *GrafanaReconciler) getGrafanaReadiness(state *common.ClusterState, cr *
 func (i *GrafanaReconciler) getGrafanaServiceDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
 
 	if state.GrafanaService == nil {
-		// If no previously known service exists
-		if cr.Status.PreviousServiceName != "" && cr.Spec.Service.Name != "" {
-			// if the previously known service is not the current service then delete the previous service
-			// validate the service
-			if (cr.Status.PreviousServiceName != cr.Spec.Service.Name) && i.validateServiceName(cr.Spec.Service.Name) {
-				serviceName := cr.Status.PreviousServiceName
-				// reset the staus before next loop
-				cr.Status.PreviousServiceName = ""
-				return common.GenericDeleteAction{
-					Ref: &v1.Service{
-						ObjectMeta: v12.ObjectMeta{
-							Name:      serviceName,
-							Namespace: cr.Namespace,
-						},
-					},
-					Msg: "delete obsolete grafana service",
-				}
-			}
-		}
-
-		// set known previously known service as the current service
-		if state.GrafanaService != nil {
-			cr.Status.PreviousServiceName = state.GrafanaService.Name
-		}
 		return common.GenericCreateAction{
 			Ref: model.GrafanaService(cr),
 			Msg: "create grafana service",
 		}
 	}
+	if cr.Status.PreviousServiceName != "" && cr.Spec.Service.Name != "" {
+		// if the previously known service is not the current service then delete the previous service
+		// validate the service
+		if cr.Status.PreviousServiceName != cr.Spec.Service.Name && i.validateServiceName(cr.Spec.Service.Name) {
+			serviceName := cr.Status.PreviousServiceName
+			// reset the status before next loop
+			cr.Status.PreviousServiceName = ""
+			return common.GenericDeleteAction{
+				Ref: &v1.Service{
+					ObjectMeta: v12.ObjectMeta{
+						Name:      serviceName,
+						Namespace: cr.Namespace,
+					},
+				},
+				Msg: "delete obsolete grafana service",
+			}
+		}
 
-	if state.GrafanaService != nil {
-		cr.Status.PreviousServiceName = state.GrafanaService.Name
+	}
+	if cr.Status.PreviousServiceName == "" {
+		cr.Status.PreviousServiceName = cr.Spec.Service.Name
 	}
 	return common.GenericUpdateAction{
 		Ref: model.GrafanaServiceReconciled(cr, state.GrafanaService),
