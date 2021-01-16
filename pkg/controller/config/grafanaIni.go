@@ -173,6 +173,13 @@ func (i *GrafanaIni) Write() (string, string) {
 		config["log"] = items
 	}
 
+	if i.cfg.LogConsole != nil {
+		var items []string
+		items = appendStr(items, "level", i.cfg.LogConsole.Level)
+		items = appendStr(items, "format", i.cfg.LogConsole.Format)
+		config["log.console"] = items
+	}
+
 	if i.cfg.AuthSaml != nil {
 		var items []string
 		items = appendBool(items, "enabled", i.cfg.AuthSaml.Enabled)
