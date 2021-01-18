@@ -136,6 +136,16 @@ type GrafanaDataSourceJsonData struct {
 	Version       string `json:"version,omitempty"`
 	Organization  string `json:"organization,omitempty"`
 	DefaultBucket string `json:"defaultBucket,omitempty"`
+	// Fields for Loki data sources
+	MaxLines      int                                `json:"maxLines,omitempty"`
+	DerivedFields GrafanaDataSourceJsonDerivedFields `json:"derivedFields,omitempty"`
+}
+
+type GrafanaDataSourceJsonDerivedFields struct {
+	DatasourceUid string `json:"datasourceUid,omitempty"`
+	MatcherRegex  string `json:"matcherRegex,omitempty"`
+	Name          string `json:"name,omitempty"`
+	Url           string `json:"url,omitempty"`
 }
 
 // The most common secure json options
@@ -173,7 +183,7 @@ func init() {
 	SchemeBuilder.Register(&GrafanaDataSource{}, &GrafanaDataSourceList{})
 }
 
-// return a unique per namespaec key of the datasource
+// return a unique per namespace key of the datasource
 func (ds *GrafanaDataSource) Filename() string {
 	return fmt.Sprintf("%v_%v.yaml", ds.Namespace, strings.ToLower(ds.Name))
 }

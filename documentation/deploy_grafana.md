@@ -243,6 +243,7 @@ Various properties of the Service can be configured:
 ```yaml
 spec:
   service:
+    name: # Configurable name for the grafana-service
     labels: # Additional labels for the Service
       app: grafana
       ...
@@ -257,6 +258,12 @@ spec:
         targetPort: ...
 
 ```
+NOTE: Service name must adhere to a DNS-1035 label which must consist of lower case alphanumeric
+characters or '-', start with an alphabetic character, and end with an
+alphanumeric character (e.g. 'my-name',  or 'abc-123', regex used for validation is `'[a-z]([-a-z0-9]*[a-z0-9])?`.
+If the name doesn't match this RegEx, the operator will fail to create the new service, however, the old service will still
+remain available until a new one is created.
+
 
 ## Configuring the Deployment
 
@@ -352,7 +359,7 @@ spec:
     failureThreshold: <Int32>
 ```
 
-Both LivenessProbeSpec and ReadinessProbeSpec share the same fields which server the same purpose.
+Both LivenessProbeSpec and ReadinessProbeSpec share the same fields which serve the same purpose.
 
 * ***initialDelaySeconds:*** Number of seconds after the container has started before liveness probes are
   initiated. [More info](

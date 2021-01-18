@@ -2,11 +2,13 @@ package grafana
 
 import (
 	"fmt"
-
 	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
+	v1 "k8s.io/api/core/v1"
+	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"regexp"
 )
 
 type GrafanaReconciler struct {
@@ -80,13 +82,35 @@ func (i *GrafanaReconciler) getGrafanaReadiness(state *common.ClusterState, cr *
 }
 
 func (i *GrafanaReconciler) getGrafanaServiceDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
+
 	if state.GrafanaService == nil {
 		return common.GenericCreateAction{
 			Ref: model.GrafanaService(cr),
 			Msg: "create grafana service",
 		}
 	}
+	if cr.Status.PreviousServiceName != "" && cr.Spec.Service.Name != "" {
+		// if the previously known service is not the current service then delete the previous service
+		// validate the service
+		if cr.Status.PreviousServiceName != cr.Spec.Service.Name && i.validateServiceName(cr.Spec.Service.Name) {
+			serviceName := cr.Status.PreviousServiceName
+			// reset the status before next loop
+			cr.Status.PreviousServiceName = ""
+			return common.GenericDeleteAction{
+				Ref: &v1.Service{
+					ObjectMeta: v12.ObjectMeta{
+						Name:      serviceName,
+						Namespace: cr.Namespace,
+					},
+				},
+				Msg: "delete obsolete grafana service",
+			}
+		}
 
+	}
+	if cr.Status.PreviousServiceName == "" {
+		cr.Status.PreviousServiceName = cr.Spec.Service.Name
+	}
 	return common.GenericUpdateAction{
 		Ref: model.GrafanaServiceReconciled(cr, state.GrafanaService),
 		Msg: "update grafana service",
@@ -341,4 +365,16 @@ func (i *GrafanaReconciler) reconcilePlugins(cr *v1alpha1.Grafana, plugins v1alp
 
 	cr.Status.InstalledPlugins = validPlugins
 	cr.Status.FailedPlugins = failedPlugins
+}
+
+func (i *GrafanaReconciler) validateServiceName(string string) bool {
+	// a DNS-1035 label must consist of lower case alphanumeric
+	//    characters or '-', start with an alphabetic character, and end with an
+	//    alphanumeric character (e.g. 'my-name',  or 'abc-123', regex used for
+	//    validation is '[a-z]([-a-z0-9]*[a-z0-9])?
+	b, err := regexp.MatchString("[a-z]([-a-z0-9]*[a-z0-9])?", string)
+	if err != nil {
+		return false
+	}
+	return b
 }
