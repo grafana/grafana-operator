@@ -32,8 +32,7 @@ func NewGrafanaState() *GrafanaState {
 	}
 }
 
-
-func (i *GrafanaState) getGrafanaDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.DesiredClusterState {
+func (i *GrafanaState) getReconcileActions(state *common.ClusterState, cr *v1alpha1.Grafana) common.DesiredClusterState {
 	desired := common.DesiredClusterState{}
 
 	desired = desired.AddAction(i.getGrafanaAdminUserSecretDesiredState(state, cr))

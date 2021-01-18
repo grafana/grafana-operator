@@ -20,9 +20,10 @@ import (
 	"context"
 	stdErr "errors"
 	"fmt"
-	grafanav1alpha1 "github.com/integr8ly/grafana-operator/api/v1alpha1"
+	"github.com/go-logr/logr"
 	integreatlyorgv1alpha1 "github.com/integr8ly/grafana-operator/api/v1alpha1"
-	"github.com/integr8ly/grafana-operator/controllers/common"
+	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -40,13 +41,14 @@ const DefaultClientTimeoutSeconds = 5
 
 // GrafanaReconciler reconciles a Grafana object
 type GrafanaReconciler struct {
-	client   client.Client
-	scheme   *runtime.Scheme
-	plugins  *PluginsHelperImpl
-	context  context.Context
-	cancel   context.CancelFunc
-	config   *config.ControllerConfig
-	recorder record.EventRecorder
+	Client   client.Client
+	Scheme   *runtime.Scheme
+	Plugins  *PluginsHelperImpl
+	Log      logr.Logger
+	Context  context.Context
+	Cancel   context.CancelFunc
+	Config   *config.ControllerConfig
+	Recorder record.EventRecorder
 }
 
 // +kubebuilder:rbac:groups=integreatly.org.integreatly.org,resources=grafanas,verbs=get;list;watch;create;update;patch;delete
@@ -64,30 +66,30 @@ type GrafanaReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.0/pkg/reconcile
 func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	instance := &grafanav1alpha1.Grafana{}
-	err := r.client.Get(r.context, req.NamespacedName, instance)
+	err := r.Client.Get(r.Context, req.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Stop the dashboard controller from reconciling when grafana is not installed
-			r.config.RemoveConfigItem(config.ConfigDashboardLabelSelector)
-			r.config.Cleanup(true)
+			r.Config.RemoveConfigItem(config.ConfigDashboardLabelSelector)
+			r.Config.Cleanup(true)
 
 			common.ControllerEvents <- common.ControllerState{
 				GrafanaReady: false,
 			}
 
-			return reconcile.Result{}, nil
+			return ctrl.Result{}, nil
 		}
-		return reconcile.Result{}, err
+		return ctrl.Result{}, err
 	}
 
 	cr := instance.DeepCopy()
 
 	// Read current state
 	currentState := common.NewClusterState()
-	err = currentState.Read(r.context, cr, r.client)
+	err = currentState.Read(r.Context, cr, r.Client)
 	if err != nil {
 		log.Log.Error(err, "error reading state")
-		return r.manageError(cr, err, req), nil
+		return r.manageError(cr, err, req)
 	}
 
 	// Get the actions required to reach the desired state
@@ -97,12 +99,16 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	desiredState := reconciler.Reconcile(currentState, cr)
 =======
 	grafanaState := NewGrafanaState()
+<<<<<<< HEAD
 	desiredState := grafanaState.getGrafanaDesiredState(currentState, cr)
 >>>>>>> 3cb2e6f6... restructure project and begin moving grafana_controller:controllers/grafana/grafana_controller.go
+=======
+	actions := grafanaState.getReconcileActions(currentState, cr)
+>>>>>>> 625e8f51... add grafana controller/reconciler classes and misc files
 
 	// Run the actions to reach the desired state
-	actionRunner := common.NewClusterActionRunner(r.context, r.client, r.scheme, cr)
-	err = actionRunner.RunAll(desiredState)
+	actionRunner := common.NewClusterActionRunner(r.Context, r.Client, r.Scheme, cr)
+	err = actionRunner.RunAll(actions)
 	if err != nil {
 		return r.manageError(cr, err, req)
 	}
@@ -116,29 +122,29 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	return r.manageSuccess(cr, currentState, req)
 }
 
-func (r *GrafanaReconciler) manageError(cr *grafanav1alpha1.Grafana, issue error, request reconcile.Request) (reconcile.Result, error) {
-	r.recorder.Event(cr, "Warning", "ProcessingError", issue.Error())
+func (r *GrafanaReconciler) manageError(cr *grafanav1alpha1.Grafana, issue error, request reconcile.Request) (ctrl.Result, error) {
+	r.Recorder.Event(cr, "Warning", "ProcessingError", issue.Error())
 	cr.Status.Phase = grafanav1alpha1.PhaseFailing
 	cr.Status.Message = issue.Error()
 
 	instance := &grafanav1alpha1.Grafana{}
-	err := r.client.Get(r.context, request.NamespacedName, instance)
+	err := r.Client.Get(r.Context, request.NamespacedName, instance)
 	if err != nil {
-		return reconcile.Result{}, err
+		return ctrl.Result{}, err
 	}
 
 	if !reflect.DeepEqual(cr.Status, instance.Status) {
-		err := r.client.Status().Update(r.context, cr)
+		err := r.Client.Status().Update(r.Context, cr)
 		if err != nil {
 			// Ignore conflicts, resource might just be outdated.
 			if errors.IsConflict(err) {
 				err = nil
 			}
-			return reconcile.Result{}, err
+			return ctrl.Result{}, err
 		}
 	}
 
-	r.config.InvalidateDashboards()
+	r.Config.InvalidateDashboards()
 
 	common.ControllerEvents <- common.ControllerState{
 		GrafanaReady: false,
@@ -195,22 +201,22 @@ func (r *GrafanaReconciler) manageSuccess(cr *grafanav1alpha1.Grafana, state *co
 
 	// Only update the status if the dashboard controller had a chance to sync the cluster
 	// dashboards first. Otherwise reuse the existing dashboard config from the CR.
-	if r.config.GetConfigBool(config.ConfigGrafanaDashboardsSynced, false) {
-		cr.Status.InstalledDashboards = r.config.Dashboards
+	if r.Config.GetConfigBool(config.ConfigGrafanaDashboardsSynced, false) {
+		cr.Status.InstalledDashboards = r.Config.Dashboards
 	} else {
-		if r.config.Dashboards == nil {
-			r.config.SetDashboards(make(map[string][]*grafanav1alpha1.GrafanaDashboardRef))
+		if r.Config.Dashboards == nil {
+			r.Config.SetDashboards(make(map[string][]*grafanav1alpha1.GrafanaDashboardRef))
 		}
 	}
 
 	instance := &grafanav1alpha1.Grafana{}
-	err := r.client.Get(r.context, request.NamespacedName, instance)
+	err := r.Client.Get(r.Context, request.NamespacedName, instance)
 	if err != nil {
 		return r.manageError(cr, err, request)
 	}
 
 	if !reflect.DeepEqual(cr.Status, instance.Status) {
-		err := r.client.Status().Update(r.context, cr)
+		err := r.Client.Status().Update(r.Context, cr)
 		if err != nil {
 			return r.manageError(cr, err, request)
 		}
