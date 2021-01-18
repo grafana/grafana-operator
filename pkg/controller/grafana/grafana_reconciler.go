@@ -296,10 +296,7 @@ func (i *GrafanaReconciler) getEnvVarsDesiredState(state *common.ClusterState, c
 
 func (i *GrafanaReconciler) getGrafanaPluginsDesiredState(cr *v1alpha1.Grafana) common.ClusterAction {
 	// Fetch all plugins of all dashboards
-	var requestedPlugins v1alpha1.PluginList
-	for _, v := range config.GetControllerConfig().Plugins {
-		requestedPlugins = append(requestedPlugins, v...)
-	}
+	requestedPlugins := config.GetControllerConfig().GetAllPlugins()
 
 	// Consolidate plugins and create the new list of plugin requirements
 	// If 'updated' is false then no changes have to be applied
