@@ -25,5 +25,6 @@ jobs:
         with:
           version: latest
           args: release --rm-dist
+          workdir: ./cmd/manager/ # <-- path to the directory containing the main() function
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
