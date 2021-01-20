@@ -1,0 +1,22 @@
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDataSource
+metadata:
+  name: example-json-datasource-with-derived-fields
+spec:
+  name: examples.yaml
+  datasources:
+    - name: simpleJsonWithDerivedFields
+      type: grafana-simple-json-datasource-with-derived-fields
+      access: proxy
+      url: http://localhost:9492
+      uid: "someuid"
+      isDefault: false
+      version: 1
+      editable: true
+      jsonData:
+        tlsSkipVerify: true
+        derivedFields:
+          - datasourceUid: "someuid"
+            matcherRegex: "/^[A-Za-z]+$/"
+            name: "test"
+            url: "https://github.com/integr8ly"

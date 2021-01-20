@@ -89,10 +89,10 @@ func (i *GrafanaReconciler) getGrafanaServiceDesiredState(state *common.ClusterS
 			Msg: "create grafana service",
 		}
 	}
-	if cr.Status.PreviousServiceName != "" && cr.Spec.Service.Name != "" {
+	if cr.Status.PreviousServiceName != "" && state.GrafanaService.Name != "" {
 		// if the previously known service is not the current service then delete the previous service
 		// validate the service
-		if cr.Status.PreviousServiceName != cr.Spec.Service.Name && i.validateServiceName(cr.Spec.Service.Name) {
+		if cr.Status.PreviousServiceName != state.GrafanaService.Name && i.validateServiceName(cr.Spec.Service.Name) {
 			serviceName := cr.Status.PreviousServiceName
 			// reset the status before next loop
 			cr.Status.PreviousServiceName = ""
@@ -109,7 +109,7 @@ func (i *GrafanaReconciler) getGrafanaServiceDesiredState(state *common.ClusterS
 
 	}
 	if cr.Status.PreviousServiceName == "" {
-		cr.Status.PreviousServiceName = cr.Spec.Service.Name
+		cr.Status.PreviousServiceName = state.GrafanaService.Name
 	}
 	return common.GenericUpdateAction{
 		Ref: model.GrafanaServiceReconciled(cr, state.GrafanaService),

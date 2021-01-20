@@ -82,6 +82,9 @@ spec:
             service:
               type: object
               properties:
+                name:
+                  type: string
+                  description: Override default service name
                 ports:
                   type: array
                   description: Override default ports
