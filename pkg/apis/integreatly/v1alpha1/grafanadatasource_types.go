@@ -52,6 +52,7 @@ type GrafanaDataSourceList struct {
 type GrafanaDataSourceFields struct {
 	Name              string                          `json:"name"`
 	Type              string                          `json:"type"`
+	Uid               string                          `json:"uid,omitempty"`
 	Access            string                          `json:"access"`
 	OrgId             int                             `json:"orgId,omitempty"`
 	Url               string                          `json:"url"`
@@ -137,8 +138,8 @@ type GrafanaDataSourceJsonData struct {
 	Organization  string `json:"organization,omitempty"`
 	DefaultBucket string `json:"defaultBucket,omitempty"`
 	// Fields for Loki data sources
-	MaxLines      int                                `json:"maxLines,omitempty"`
-	DerivedFields GrafanaDataSourceJsonDerivedFields `json:"derivedFields,omitempty"`
+	MaxLines      int                                  `json:"maxLines,omitempty"`
+	DerivedFields []GrafanaDataSourceJsonDerivedFields `json:"derivedFields,omitempty"`
 }
 
 type GrafanaDataSourceJsonDerivedFields struct {
