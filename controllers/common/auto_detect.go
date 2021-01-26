@@ -1,8 +1,16 @@
 package common
 
 import (
-	"github.com/integr8ly/grafana-operator/internal/k8sutil"
+	config2 "github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"time"
+
+	routev1 "github.com/openshift/api/route/v1"
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	"k8s.io/client-go/discovery"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
 // Route kind is not provided by the openshift api

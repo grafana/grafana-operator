@@ -23,6 +23,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// StatusPhase is the current status of the reconciler
 type StatusPhase string
 
 var (

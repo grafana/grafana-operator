@@ -19,6 +19,8 @@ package main
 import (
 	"flag"
 	"github.com/integr8ly/grafana-operator/controllers/grafana"
+	"github.com/integr8ly/grafana-operator/controllers/grafanadashboard"
+	"github.com/integr8ly/grafana-operator/controllers/grafanadatasource"
 	"os"
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -32,7 +34,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	integreatlyorgv1alpha1 "github.com/integr8ly/grafana-operator/api/v1alpha1"
-	"github.com/integr8ly/grafana-operator/controllers"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -86,7 +87,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Grafana")
 		os.Exit(1)
 	}
-	if err = (&controllers.GrafanaDashboardReconciler{
+	if err = (&grafanadashboard.GrafanaDashboardReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("GrafanaDashboard"),
 		Scheme: mgr.GetScheme(),
@@ -94,7 +95,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDashboard")
 		os.Exit(1)
 	}
-	if err = (&controllers.GrafanaDatasourceReconciler{
+	if err = (&grafanadatasource.GrafanaDatasourceReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("GrafanaDatasource"),
 		Scheme: mgr.GetScheme(),
