@@ -321,10 +321,10 @@ func (r *GrafanaDashboardReconciler) reconcileDashboards(request reconcile.Reque
 		for _, dashboard := range dashboardsToDelete {
 			status, err := grafanaClient.DeleteDashboardByUID(dashboard.UID)
 			if err != nil {
-				log.Log.Error(err, "error deleting dashboard %v, status was %v/%v",
+				log.Log.Error(err, "error deleting dashboard, status was",
 					"dashboardUID", dashboard.UID,
-					"dashboardStatus", *status.Status,
-					"dashboardMessage", *status.Message)
+					"status.Status", *status.Status,
+					"status.Message", *status.Message)
 			}
 
 			log.Log.Info(fmt.Sprintf("delete result was %v", *status.Message))
@@ -346,7 +346,7 @@ func (r *GrafanaDashboardReconciler) reconcileDashboards(request reconcile.Reque
 					break
 				}
 				if err = grafanaClient.DeleteFolder(dashboard.FolderId); err != nil {
-					log.Log.Error(err, "delete dashboard folder failed", "folderId", *dashboard.FolderId)
+					log.Log.Error(err, "delete dashboard folder failed", "dashboard.folderId", *dashboard.FolderId)
 				}
 			}
 		}
@@ -386,8 +386,8 @@ func (r *GrafanaDashboardReconciler) isMatch(item *grafanav1alpha1.GrafanaDashbo
 	match, err := item.MatchesSelectors(r.state.DashboardSelectors)
 	if err != nil {
 		log.Log.Error(err, "error matching selectors",
-			"Namespace", item.Namespace,
-			"Name", item.Name)
+			"item.Namespace", item.Namespace,
+			"item.Name", item.Name)
 		return false
 	}
 	return match
@@ -419,7 +419,7 @@ func (r *GrafanaDashboardReconciler) manageSuccess(dashboard *grafanav1alpha1.Gr
 		dashboard.Namespace,
 		dashboard.Name)
 	r.recorder.Event(dashboard, "Normal", "Success", msg)
-	log.Log.Info("dashboard %v/%v successfully submitted", "name", dashboard.Name, "namespace", dashboard.Namespace)
+	log.Log.Info("dashboard successfully submitted", "name", dashboard.Name, "namespace", dashboard.Namespace)
 	r.config.AddDashboard(dashboard, folderId, folderName)
 	r.config.SetPluginsFor(dashboard)
 }

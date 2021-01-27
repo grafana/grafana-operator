@@ -152,7 +152,7 @@ func (r *GrafanaDatasourceReconciler) reconcileDataSources(state *common.DataSou
 	}
 
 	// apply dataSourcesToAddOrUpdate
-	updated := []grafanav1alpha1.GrafanaDataSource{}
+	var updated []grafanav1alpha1.GrafanaDataSource
 	for _, ds := range dataSourcesToAddOrUpdate {
 		pipeline := NewDatasourcePipeline(&ds)
 		err := pipeline.ProcessDatasource(state.KnownDataSources)
@@ -244,9 +244,9 @@ func (r *GrafanaDatasourceReconciler) manageError(datasource *grafanav1alpha1.Gr
 // is updated
 func (r *GrafanaDatasourceReconciler) manageSuccess(datasources []grafanav1alpha1.GrafanaDataSource) {
 	for _, datasource := range datasources {
-		log.V(1).Info(fmt.Sprintf("datasource %v/%v successfully imported",
-			datasource.Namespace,
-			datasource.Name))
+		log.Info("datasource successfully imported",
+			"datasource.Namespace", datasource.Namespace,
+			"datasource.Name", datasource.Name)
 
 		datasource.Status.Phase = grafanav1alpha1.PhaseReconciling
 		datasource.Status.Message = "success"

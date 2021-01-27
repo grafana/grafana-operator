@@ -372,12 +372,12 @@ func (i *GrafanaState) reconcilePlugins(cr *v1alpha1.Grafana, plugins v1alpha1.P
 
 	for _, plugin := range plugins {
 		if i.Plugins.PluginExists(plugin) == false {
-			log.Log.V(1).Info(fmt.Sprintf("invalid plugin: %s@%s", plugin.Name, plugin.Version))
+			log.Log.Info("invalid plugin", "plugin.Name", plugin.Name, "plugin.Version", plugin.Version)
 			failedPlugins = append(failedPlugins, plugin)
 			continue
 		}
 
-		log.Log.V(1).Info(fmt.Sprintf("installing plugin: %s@%s", plugin.Name, plugin.Version))
+		log.Log.Info("installing plugin", "plugin.Name", plugin.Name, "plugin.Version", plugin.Version)
 		validPlugins = append(validPlugins, plugin)
 	}
 
