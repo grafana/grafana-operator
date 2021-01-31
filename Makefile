@@ -7,12 +7,6 @@ TAG?=latest
 PKG=github.com/integr8ly/grafana-operator
 COMPILE_TARGET=./tmp/_output/bin/$(PROJECT)
 
-GOOS?=$(go env GOOS)
-GOARCH?=$(go env GOARCH)
-
-# list for multi-arch image publishing
-TARGET_ARCHS ?= amd64 arm64
-
 .PHONY: setup/travis
 setup/travis:
 	@echo Installing Operator SDK
@@ -24,13 +18,7 @@ code/run:
 
 .PHONY: code/compile
 code/compile:
-	@GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=0 go build -o=$(COMPILE_TARGET)-$(GOARCH) ./cmd/manager
-
-.PHONY: code/compilex
-code/compilex:
-	@for arch in $(TARGET_ARCHS); do \
-		GOOS=linux GOARCH=$${arch} $(MAKE) code/compile; \
-	done
+	@GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o=$(COMPILE_TARGET) ./cmd/manager
 
 .PHONY: code/gen
 code/gen:
