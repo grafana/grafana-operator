@@ -6,6 +6,8 @@ A Kubernetes Operator based on the Operator SDK for creating and managing Grafan
 ## Grafana Operator is utilised by the following:
 
 
+
+<table class="tg">
 <style type="text/css">
 .tg  {border-collapse:collapse;border-color:#ccc;border-spacing:0;}
 .tg td{background-color:#fff;border-color:#ccc;border-style:solid;border-width:1px;color:#333;
@@ -14,7 +16,6 @@ A Kubernetes Operator based on the Operator SDK for creating and managing Grafan
   font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
 .tg .tg-0lax{text-align:left;vertical-align:top}
 </style>
-<table class="tg">
 <tbody>
   <tr>
     <td class="tg-0lax"> 
