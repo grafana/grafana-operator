@@ -3,8 +3,8 @@ package grafana
 import (
 	"crypto/tls"
 	"fmt"
-	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
+	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
+	"github.com/integr8ly/grafana-operator/v3/controllers/config"
 	"net/http"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"strings"

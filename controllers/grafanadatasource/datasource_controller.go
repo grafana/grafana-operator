@@ -21,9 +21,9 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"github.com/go-logr/logr"
-	"github.com/integr8ly/grafana-operator/controllers/common"
-	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
+	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
+	"github.com/integr8ly/grafana-operator/v3/controllers/common"
+	"github.com/integr8ly/grafana-operator/v3/controllers/model"
 	"io"
 	v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -37,7 +37,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	integreatlyorgv1alpha1 "github.com/integr8ly/grafana-operator/api/v1alpha1"
+	integreatlyorgv1alpha1 "github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
 )
 
 // GrafanaDatasourceReconciler reconciles a GrafanaDatasource object

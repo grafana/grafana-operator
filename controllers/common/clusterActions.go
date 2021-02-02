@@ -4,8 +4,6 @@ import (
 	"context"
 	stdErr "errors"
 	"fmt"
-	"os"
-
 	"github.com/go-logr/logr"
 	"github.com/integr8ly/grafana-operator/v3/controllers/model"
 	v13 "github.com/openshift/api/route/v1"
@@ -15,9 +13,10 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"os"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 type ActionRunner interface {
@@ -66,7 +65,7 @@ func NewClusterActionRunner(ctx context.Context, client client.Client, scheme *r
 	return &ClusterActionRunner{
 		scheme: scheme,
 		client: client,
-		log:    logf.Log.WithName("action-runner"),
+		log:    ctrl.Log.WithName("action-runner"),
 		ctx:    ctx,
 		cr:     cr,
 	}

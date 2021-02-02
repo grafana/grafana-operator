@@ -2,11 +2,10 @@ package config
 
 import (
 	"fmt"
+	"github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sync"
 	"time"
-
-	"github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 const (
@@ -43,7 +42,7 @@ type ControllerConfig struct {
 var instance *ControllerConfig
 var once sync.Once
 
-var log = logf.Log.WithName("controller_config")
+var log = ctrl.Log.WithName("controller_config")
 
 func GetControllerConfig() *ControllerConfig {
 	once.Do(func() {

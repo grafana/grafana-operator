@@ -18,9 +18,9 @@ package main
 
 import (
 	"flag"
-	"github.com/integr8ly/grafana-operator/controllers/grafana"
-	"github.com/integr8ly/grafana-operator/controllers/grafanadashboard"
-	"github.com/integr8ly/grafana-operator/controllers/grafanadatasource"
+	"github.com/integr8ly/grafana-operator/v3/controllers/grafana"
+	"github.com/integr8ly/grafana-operator/v3/controllers/grafanadashboard"
+	"github.com/integr8ly/grafana-operator/v3/controllers/grafanadatasource"
 	"os"
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -33,7 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	integreatlyorgv1alpha1 "github.com/integr8ly/grafana-operator/api/v1alpha1"
+	integreatlyorgv1alpha1 "github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
 	// +kubebuilder:scaffold:imports
 )
 
