@@ -3,40 +3,52 @@
 A Kubernetes Operator based on the Operator SDK for creating and managing Grafana instances.
 
 
-## Grafana Operator is utilised by the following:
-
+## Companies and teams that trust and use the Grafana operator:
 
 
 <table class="tg">
-<style type="text/css">
-.tg  {border-collapse:collapse;border-color:#ccc;border-spacing:0;}
-.tg td{background-color:#fff;border-color:#ccc;border-style:solid;border-width:1px;color:#333;
-  font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg th{background-color:#f0f0f0;border-color:#ccc;border-style:solid;border-width:1px;color:#333;
-  font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg .tg-0lax{text-align:left;vertical-align:top}
-</style>
 <tbody>
   <tr>
-    <td class="tg-0lax"> 
+  <td class="tg-0lax"> 
         <div class="card" css=>
-  <img src="media/users/integreatly.png" alt="Avatar" style="margin: auto; width:100%; height: box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  <img src="media/users/redhat.png" alt="Avatar" style= width=250 height=100;box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
   transition: 0.3s;">
   <div class="container" style="text-align: center; margin: auto; padding: 2px 16px;">
-    <h4><b>Integreatly</b></h4>
-    <p>Red Hat</p>
+    <h4><b></b></h4>
+    <p><a href="https://www.redhat.com/">Red Hat</a></p>
+  </div>
+</div> 
+</td> 
+    <td class="tg-0lax"> 
+        <div class="card" css=>
+  <img src="media/users/integreatly.png" alt="Avatar" style=margin: auto;width="250" height="100" box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  transition: 0.3s;">
+  <div class="container" style="text-align: center; padding: 2px 16px;">
+    <h4><b><a href ="https://github.com/integr8ly/integreatly-operator">Integreatly</a></b></h4>
+    <p><a href="https://www.redhat.com/en/products/integration">Red Hat</a></p>
   </div>
 </div> 
 </td>
     <td class="tg-0lax"> <div class="card" css=>
-  <img src="media/users/continental.png" alt="Avatar" style="margin: auto; width:20% box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  <img src="media/users/continental.png" alt="Avatar" style="margin: auto;width="250" height="100" box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
   transition: 0.3s;">
   <div class="container" style="text-align: center; margin: auto; padding: 2px 16px;">
     <h4><b>Digital Services France</b></h4>
-    <p>Continental</p>
+    <p><a href="https://www.continental.com/">Continental</a></p>
   </div>
 </div> 
 </td>
+<td class="tg-0lax"> 
+        <div class="card" css=>
+  <img src="media/users/handelsbanken.svg" alt="Avatar" style=margin:auto; width=250; height=150; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  transition: 0.3s;">
+  <div class="container" style="text-align: center; margin: auto; padding: 2px 16px;">
+    <h4><b><a href="https://www.handelsbanken.se/en/">handelsbanken</a></b></h4>
+    <p></p>
+  </div>
+</div> 
+</td>
+
 <!-- PLACE ME HERE -->
   </tr>
 </tbody>
