@@ -11,9 +11,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	discovery "k8s.io/client-go/discovery"
+	 "k8s.io/client-go/discovery"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 // ForceRunModeEnv indicates if the operator should be forced to run in either local
@@ -27,7 +27,7 @@ const (
 	ClusterRunMode RunModeType = "cluster"
 )
 
-var log = logf.log.Log.WithName("k8sutil")
+var log = ctrl.Log.WithName("k8sutil")
 
 // GetWatchNamespace returns the namespace the operator should be watching for changes
 func GetWatchNamespace() (string, error) {

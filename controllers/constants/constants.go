@@ -1,4 +1,4 @@
-package model
+package constants
 
 const (
 	GrafanaImage                        = "grafana/grafana"

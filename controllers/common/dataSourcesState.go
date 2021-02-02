@@ -3,7 +3,7 @@ package common
 import (
 	"context"
 	"github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
-	"github.com/integr8ly/grafana-operator/v3/controllers/model"
+	"github.com/integr8ly/grafana-operator/v3/controllers/constants"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -52,7 +52,7 @@ func (i *DataSourcesState) readKnownDataSources(ctx context.Context, c client.Cl
 	dataSources := &v1.ConfigMap{}
 	selector := client.ObjectKey{
 		Namespace: ns,
-		Name:      model.GrafanaDatasourcesConfigMapName,
+		Name:      constants.GrafanaDatasourcesConfigMapName,
 	}
 
 	err := c.Get(ctx, selector, dataSources)

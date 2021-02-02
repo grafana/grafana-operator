@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"github.com/integr8ly/grafana-operator/v3/controllers/constants"
 
 	"github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/controllers/config"
@@ -127,7 +128,7 @@ func getPodLabels(cr *v1alpha1.Grafana) map[string]string {
 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Labels != nil {
 		labels = cr.Spec.Deployment.Labels
 	}
-	labels["app"] = GrafanaPodLabel
+	labels["app"] = constants.GrafanaPodLabel
 	return labels
 }
 
@@ -174,11 +175,11 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume {
 
 	// Volume to mount the config file from a config map
 	volumes = append(volumes, v13.Volume{
-		Name: GrafanaConfigName,
+		Name: constants.GrafanaConfigName,
 		VolumeSource: v13.VolumeSource{
 			ConfigMap: &v13.ConfigMapVolumeSource{
 				LocalObjectReference: v13.LocalObjectReference{
-					Name: GrafanaConfigName,
+					Name: constants.GrafanaConfigName,
 				},
 			},
 		},
@@ -186,7 +187,7 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume {
 
 	// Volume to store the logs
 	volumes = append(volumes, v13.Volume{
-		Name: GrafanaLogsVolumeName,
+		Name: constants.GrafanaLogsVolumeName,
 		VolumeSource: v13.VolumeSource{
 			EmptyDir: &v13.EmptyDirVolumeSource{},
 		},
@@ -195,16 +196,16 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume {
 	// Data volume
 	if cr.UsedPersistentVolume() {
 		volumes = append(volumes, v13.Volume{
-			Name: GrafanaDataVolumeName,
+			Name: constants.GrafanaDataVolumeName,
 			VolumeSource: v13.VolumeSource{
 				PersistentVolumeClaim: &v13.PersistentVolumeClaimVolumeSource{
-					ClaimName: GrafanaDataStorageName,
+					ClaimName: constants.GrafanaDataStorageName,
 				},
 			},
 		})
 	} else {
 		volumes = append(volumes, v13.Volume{
-			Name: GrafanaDataVolumeName,
+			Name: constants.GrafanaDataVolumeName,
 			VolumeSource: v13.VolumeSource{
 				EmptyDir: &v13.EmptyDirVolumeSource{},
 			},
@@ -213,7 +214,7 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume {
 
 	// Volume to store the plugins
 	volumes = append(volumes, v13.Volume{
-		Name: GrafanaPluginsVolumeName,
+		Name: constants.GrafanaPluginsVolumeName,
 		VolumeSource: v13.VolumeSource{
 			EmptyDir: &v13.EmptyDirVolumeSource{},
 		},
@@ -221,11 +222,11 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume {
 
 	// Volume to store the datasources
 	volumes = append(volumes, v13.Volume{
-		Name: GrafanaDatasourcesConfigMapName,
+		Name: constants.GrafanaDatasourcesConfigMapName,
 		VolumeSource: v13.VolumeSource{
 			ConfigMap: &v13.ConfigMapVolumeSource{
 				LocalObjectReference: v13.LocalObjectReference{
-					Name: GrafanaDatasourcesConfigMapName,
+					Name: constants.GrafanaDatasourcesConfigMapName,
 				},
 			},
 		},
@@ -307,27 +308,27 @@ func getVolumeMounts(cr *v1alpha1.Grafana) []v13.VolumeMount {
 	var mounts []v13.VolumeMount
 
 	mounts = append(mounts, v13.VolumeMount{
-		Name:      GrafanaConfigName,
+		Name:      constants.GrafanaConfigName,
 		MountPath: "/etc/grafana/",
 	})
 
 	mounts = append(mounts, v13.VolumeMount{
-		Name:      GrafanaDataVolumeName,
+		Name:      constants.GrafanaDataVolumeName,
 		MountPath: "/var/lib/grafana",
 	})
 
 	mounts = append(mounts, v13.VolumeMount{
-		Name:      GrafanaPluginsVolumeName,
+		Name:      constants.GrafanaPluginsVolumeName,
 		MountPath: "/var/lib/grafana/plugins",
 	})
 
 	mounts = append(mounts, v13.VolumeMount{
-		Name:      GrafanaLogsVolumeName,
+		Name:      constants.GrafanaLogsVolumeName,
 		MountPath: "/var/log/grafana",
 	})
 
 	mounts = append(mounts, v13.VolumeMount{
-		Name:      GrafanaDatasourcesConfigMapName,
+		Name:      constants.GrafanaDatasourcesConfigMapName,
 		MountPath: "/etc/grafana/provisioning/datasources",
 	})
 
@@ -356,7 +357,7 @@ func getLivenessProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.
 		return &v13.Probe{
 			Handler: v13.Handler{
 				HTTPGet: &v13.HTTPGetAction{
-					Path: GrafanaHealthEndpoint,
+					Path: constants.GrafanaHealthEndpoint,
 					Port: intstr.FromInt(GetGrafanaPort(cr)),
 				},
 			},
@@ -371,7 +372,7 @@ func getLivenessProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.
 	return &v13.Probe{
 		Handler: v13.Handler{
 			HTTPGet: &v13.HTTPGetAction{
-				Path: GrafanaHealthEndpoint,
+				Path: constants.GrafanaHealthEndpoint,
 				Port: intstr.FromInt(GetGrafanaPort(cr)),
 			},
 		},
@@ -387,7 +388,7 @@ func getReadinessProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13
 		return &v13.Probe{
 			Handler: v13.Handler{
 				HTTPGet: &v13.HTTPGetAction{
-					Path: GrafanaHealthEndpoint,
+					Path: constants.GrafanaHealthEndpoint,
 					Port: intstr.FromInt(GetGrafanaPort(cr)),
 				},
 			},
@@ -402,7 +403,7 @@ func getReadinessProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13
 	return &v13.Probe{
 		Handler: v13.Handler{
 			HTTPGet: &v13.HTTPGetAction{
-				Path: GrafanaHealthEndpoint,
+				Path: constants.GrafanaHealthEndpoint,
 				Port: intstr.FromInt(GetGrafanaPort(cr)),
 			},
 		},
@@ -420,8 +421,8 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 		image = cr.Spec.BaseImage
 	} else {
 		cfg := config.GetControllerConfig()
-		img := cfg.GetConfigString(config.ConfigGrafanaImage, GrafanaImage)
-		tag := cfg.GetConfigString(config.ConfigGrafanaImageTag, GrafanaVersion)
+		img := cfg.GetConfigString(config.ConfigGrafanaImage, constants.GrafanaImage)
+		tag := cfg.GetConfigString(config.ConfigGrafanaImageTag, constants.GrafanaVersion)
 		image = fmt.Sprintf("%s:%s", img, tag)
 	}
 
@@ -439,11 +440,11 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 		},
 		Env: []v13.EnvVar{
 			{
-				Name:  LastConfigEnvVar,
+				Name:  constants.LastConfigEnvVar,
 				Value: configHash,
 			},
 			{
-				Name:  LastDatasourcesConfigEnvVar,
+				Name:  constants.LastDatasourcesConfigEnvVar,
 				Value: dsHash,
 			},
 		},
@@ -462,24 +463,24 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 	if getSkipCreateAdminAccount(cr) == false {
 		for i := 0; i < len(containers); i++ {
 			containers[i].Env = append(containers[i].Env, v13.EnvVar{
-				Name: GrafanaAdminUserEnvVar,
+				Name: constants.GrafanaAdminUserEnvVar,
 				ValueFrom: &v13.EnvVarSource{
 					SecretKeyRef: &v13.SecretKeySelector{
 						LocalObjectReference: v13.LocalObjectReference{
-							Name: GrafanaAdminSecretName,
+							Name: constants.GrafanaAdminSecretName,
 						},
-						Key: GrafanaAdminUserEnvVar,
+						Key: constants.GrafanaAdminUserEnvVar,
 					},
 				},
 			})
 			containers[i].Env = append(containers[i].Env, v13.EnvVar{
-				Name: GrafanaAdminPasswordEnvVar,
+				Name: constants.GrafanaAdminPasswordEnvVar,
 				ValueFrom: &v13.EnvVarSource{
 					SecretKeyRef: &v13.SecretKeySelector{
 						LocalObjectReference: v13.LocalObjectReference{
-							Name: GrafanaAdminSecretName,
+							Name: constants.GrafanaAdminSecretName,
 						},
-						Key: GrafanaAdminPasswordEnvVar,
+						Key: constants.GrafanaAdminPasswordEnvVar,
 					},
 				}})
 		}
@@ -501,7 +502,7 @@ func getInitContainers(cr *v1alpha1.Grafana, plugins string) []v13.Container {
 
 	return []v13.Container{
 		{
-			Name:  GrafanaInitContainerName,
+			Name:  constants.GrafanaInitContainerName,
 			Image: fmt.Sprintf("%s:%s", image, tag),
 			Env: []v13.EnvVar{
 				{
@@ -512,7 +513,7 @@ func getInitContainers(cr *v1alpha1.Grafana, plugins string) []v13.Container {
 			Resources: getInitResources(cr),
 			VolumeMounts: []v13.VolumeMount{
 				{
-					Name:      GrafanaPluginsVolumeName,
+					Name:      constants.GrafanaPluginsVolumeName,
 					ReadOnly:  false,
 					MountPath: "/opt/plugins",
 				},
@@ -529,12 +530,12 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, annotations map[string]string, conf
 		Replicas: getReplicas(cr),
 		Selector: &v12.LabelSelector{
 			MatchLabels: map[string]string{
-				"app": GrafanaPodLabel,
+				"app": constants.GrafanaPodLabel,
 			},
 		},
 		Template: v13.PodTemplateSpec{
 			ObjectMeta: v12.ObjectMeta{
-				Name:        GrafanaDeploymentName,
+				Name:        constants.GrafanaDeploymentName,
 				Labels:      getPodLabels(cr),
 				Annotations: getPodAnnotations(cr, annotations),
 			},
@@ -546,7 +547,7 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, annotations map[string]string, conf
 				Volumes:                       getVolumes(cr),
 				InitContainers:                getInitContainers(cr, plugins),
 				Containers:                    getContainers(cr, configHash, dsHash),
-				ServiceAccountName:            GrafanaServiceAccountName,
+				ServiceAccountName:            constants.GrafanaServiceAccountName,
 				TerminationGracePeriodSeconds: getTerminationGracePeriod(cr),
 				PriorityClassName:             getPodPriorityClassName(cr),
 			},
@@ -561,7 +562,7 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, annotations map[string]string, conf
 func GrafanaDeployment(cr *v1alpha1.Grafana, configHash, dsHash string) *v1.Deployment {
 	return &v1.Deployment{
 		ObjectMeta: v12.ObjectMeta{
-			Name:      GrafanaDeploymentName,
+			Name:      constants.GrafanaDeploymentName,
 			Namespace: cr.Namespace,
 		},
 		Spec: getDeploymentSpec(cr, nil, configHash, "", dsHash),
@@ -571,7 +572,7 @@ func GrafanaDeployment(cr *v1alpha1.Grafana, configHash, dsHash string) *v1.Depl
 func GrafanaDeploymentSelector(cr *v1alpha1.Grafana) client.ObjectKey {
 	return client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      GrafanaDeploymentName,
+		Name:      constants.GrafanaDeploymentName,
 	}
 }
 

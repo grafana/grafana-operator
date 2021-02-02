@@ -2,6 +2,9 @@ package grafana
 
 import (
 	"fmt"
+	"github.com/integr8ly/grafana-operator/v3/controllers/constants"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+
 	"github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/controllers/common"
 	"github.com/integr8ly/grafana-operator/v3/controllers/config"
@@ -154,7 +157,7 @@ func (i *GrafanaState) getGrafanaConfigDesiredState(state *common.ClusterState, 
 
 		// Store the last config hash for the duration of this reconciliation for
 		// later usage in the deployment
-		i.ConfigHash = config.Annotations[model.LastConfigAnnotation]
+		i.ConfigHash = config.Annotations[constants.LastConfigAnnotation]
 
 		actions = append(actions, common.GenericCreateAction{
 			Ref: config,
@@ -167,7 +170,7 @@ func (i *GrafanaState) getGrafanaConfigDesiredState(state *common.ClusterState, 
 			return nil
 		}
 
-		i.ConfigHash = config.Annotations[model.LastConfigAnnotation]
+		i.ConfigHash = config.Annotations[constants.LastConfigAnnotation]
 
 		actions = append(actions, common.GenericUpdateAction{
 			Ref: config,
@@ -187,7 +190,7 @@ func (i *GrafanaState) getGrafanaDatasourceConfigDesiredState(state *common.Clus
 		}
 	} else {
 		if state.GrafanaDataSourceConfig.Annotations != nil {
-			i.DsHash = state.GrafanaDataSourceConfig.Annotations[model.LastConfigAnnotation]
+			i.DsHash = state.GrafanaDataSourceConfig.Annotations[constants.LastConfigAnnotation]
 		}
 	}
 	return nil

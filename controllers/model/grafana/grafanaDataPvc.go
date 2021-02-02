@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/integr8ly/grafana-operator/v3/controllers/constants"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -38,7 +39,7 @@ func getPVCSpec(cr *v1alpha1.Grafana) corev1.PersistentVolumeClaimSpec {
 func GrafanaDataPVC(cr *v1alpha1.Grafana) *corev1.PersistentVolumeClaim {
 	return &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        GrafanaDataStorageName,
+			Name:        constants.GrafanaDataStorageName,
 			Namespace:   cr.Namespace,
 			Labels:      getPVCLabels(cr),
 			Annotations: getPVCAnnotations(cr, nil),
@@ -57,6 +58,6 @@ func GrafanaPVCReconciled(cr *v1alpha1.Grafana, currentState *corev1.PersistentV
 func GrafanaDataStorageSelector(cr *v1alpha1.Grafana) client.ObjectKey {
 	return client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      GrafanaDataStorageName,
+		Name:      constants.GrafanaDataStorageName,
 	}
 }

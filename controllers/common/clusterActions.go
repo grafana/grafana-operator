@@ -5,7 +5,7 @@ import (
 	stdErr "errors"
 	"fmt"
 	"github.com/go-logr/logr"
-	"github.com/integr8ly/grafana-operator/v3/controllers/model"
+	"github.com/integr8ly/grafana-operator/v3/controllers/constants"
 	v13 "github.com/openshift/api/route/v1"
 	v12 "k8s.io/api/apps/v1"
 	v14 "k8s.io/api/core/v1"
@@ -278,9 +278,9 @@ func (i DeploymentReadyAction) Run(runner ActionRunner) (string, error) {
 }
 
 func (i ExposeConfigMapEnvVarAction) Run(runner ActionRunner) (string, error) {
-	return i.Msg, runner.exposeConfigMap(i.Namespace, i.Ref, []string{model.GrafanaAdminUserEnvVar, model.GrafanaAdminPasswordEnvVar})
+	return i.Msg, runner.exposeConfigMap(i.Namespace, i.Ref, []string{constants.GrafanaAdminUserEnvVar, constants.GrafanaAdminPasswordEnvVar})
 }
 
 func (i ExposeSecretEnvVarAction) Run(runner ActionRunner) (string, error) {
-	return i.Msg, runner.exposeSecret(i.Namespace, i.Ref, []string{model.GrafanaAdminUserEnvVar, model.GrafanaAdminPasswordEnvVar})
+	return i.Msg, runner.exposeSecret(i.Namespace, i.Ref, []string{constants.GrafanaAdminUserEnvVar, constants.GrafanaAdminPasswordEnvVar})
 }

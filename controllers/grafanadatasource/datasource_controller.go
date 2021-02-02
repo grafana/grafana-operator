@@ -23,7 +23,7 @@ import (
 	"github.com/go-logr/logr"
 	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/controllers/common"
-	"github.com/integr8ly/grafana-operator/v3/controllers/model"
+	"github.com/integr8ly/grafana-operator/v3/controllers/constants"
 	"io"
 	v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -175,9 +175,9 @@ func (r *GrafanaDatasourceReconciler) reconcileDataSources(state *common.DataSou
 	}
 
 	// Compare the last hash to the previous one, update if changed
-	lastHash := state.KnownDataSources.Annotations[model.LastConfigAnnotation]
+	lastHash := state.KnownDataSources.Annotations[constants.LastConfigAnnotation]
 	if lastHash != hash {
-		state.KnownDataSources.Annotations[model.LastConfigAnnotation] = hash
+		state.KnownDataSources.Annotations[constants.LastConfigAnnotation] = hash
 
 		// finally, update the configmap
 		err = r.client.Update(r.context, state.KnownDataSources)

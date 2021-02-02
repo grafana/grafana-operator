@@ -2,6 +2,7 @@ package model
 
 import (
 	"github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
+	"github.com/integr8ly/grafana-operator/v3/controllers/constants"
 	v1 "k8s.io/api/core/v1"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -50,7 +51,7 @@ func getServiceAccountImagePullSecrets(cr *v1alpha1.Grafana, existing []v1.Local
 func GrafanaServiceAccount(cr *v1alpha1.Grafana) *v1.ServiceAccount {
 	return &v1.ServiceAccount{
 		ObjectMeta: v12.ObjectMeta{
-			Name:        GrafanaServiceAccountName,
+			Name:        constants.GrafanaServiceAccountName,
 			Namespace:   cr.Namespace,
 			Labels:      getServiceAccountLabels(cr),
 			Annotations: getServiceAccountAnnotations(cr, nil),
@@ -62,7 +63,7 @@ func GrafanaServiceAccount(cr *v1alpha1.Grafana) *v1.ServiceAccount {
 func GrafanaServiceAccountSelector(cr *v1alpha1.Grafana) client.ObjectKey {
 	return client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      GrafanaServiceAccountName,
+		Name:      constants.GrafanaServiceAccountName,
 	}
 }
 

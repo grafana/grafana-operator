@@ -1,6 +1,6 @@
 module github.com/integr8ly/grafana-operator/v3
 
-go 1.13
+go 1.15
 
 require (
 	github.com/blang/semver v3.5.1+incompatible
@@ -19,7 +19,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	k8s.io/api v0.19.4
 	k8s.io/apimachinery v0.19.4
-	k8s.io/client-go v12.0.0+incompatible
+	k8s.io/client-go v20.0.0+incompatible
 	k8s.io/kube-state-metrics v1.7.2 // indirect
 	sigs.k8s.io/controller-runtime v0.7.0
 	sigs.k8s.io/kubebuilder v1.0.9-0.20200513134826-f07a0146a40b // indirect
