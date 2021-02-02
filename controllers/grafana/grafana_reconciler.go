@@ -2,18 +2,10 @@ package grafana
 
 import (
 	"fmt"
-<<<<<<< HEAD:pkg/controller/grafana/grafana_reconciler.go
-=======
-	"sigs.k8s.io/controller-runtime/pkg/log"
-
->>>>>>> 3cb2e6f6... restructure project and begin moving grafana_controller:controllers/grafana/grafana_reconciler.go
-	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
-	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
-	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
-	v1 "k8s.io/api/core/v1"
-	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"regexp"
+	"github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
+	"github.com/integr8ly/grafana-operator/v3/controllers/common"
+	"github.com/integr8ly/grafana-operator/v3/controllers/config"
+	"github.com/integr8ly/grafana-operator/v3/controllers/model"
 )
 
 type GrafanaState struct {
@@ -86,12 +78,7 @@ func (i *GrafanaState) getGrafanaReadiness(state *common.ClusterState, cr *v1alp
 	})
 }
 
-<<<<<<< HEAD:pkg/controller/grafana/grafana_reconciler.go
-func (i *GrafanaReconciler) getGrafanaServiceDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
-
-=======
 func (i *GrafanaState) getGrafanaServiceDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
->>>>>>> 3cb2e6f6... restructure project and begin moving grafana_controller:controllers/grafana/grafana_reconciler.go
 	if state.GrafanaService == nil {
 		return common.GenericCreateAction{
 			Ref: model.GrafanaService(cr),
@@ -140,15 +127,7 @@ func (i *GrafanaState) getGrafanaDataPvcDesiredState(state *common.ClusterState,
 	}
 }
 
-<<<<<<< HEAD:pkg/controller/grafana/grafana_reconciler.go
-func (i *GrafanaReconciler) getGrafanaServiceAccountDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
-
-	if cr.Spec.ServiceAccount != nil && cr.Spec.ServiceAccount.Skip != nil && *cr.Spec.ServiceAccount.Skip == true {
-		return nil
-	}
-=======
 func (i *GrafanaState) getGrafanaServiceAccountDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
->>>>>>> 3cb2e6f6... restructure project and begin moving grafana_controller:controllers/grafana/grafana_reconciler.go
 	if state.GrafanaServiceAccount == nil {
 		return common.GenericCreateAction{
 			Ref: model.GrafanaServiceAccount(cr),

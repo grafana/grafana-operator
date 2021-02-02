@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/go-logr/logr"
-	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
+	"github.com/integr8ly/grafana-operator/v3/controllers/model"
 	v13 "github.com/openshift/api/route/v1"
 	v12 "k8s.io/api/apps/v1"
 	v14 "k8s.io/api/core/v1"

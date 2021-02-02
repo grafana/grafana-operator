@@ -30,7 +30,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	integreatlyorgv1alpha1 "github.com/integr8ly/grafana-operator/api/v1alpha1"
+	integreatlyorgv1alpha1 "github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
 	// +kubebuilder:scaffold:imports
 )
 

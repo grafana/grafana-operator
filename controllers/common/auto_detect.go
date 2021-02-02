@@ -1,13 +1,13 @@
 package common
 
 import (
-	config2 "github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
+	config2 "github.com/integr8ly/grafana-operator/v3/controllers/config"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"time"
 
+	"github.com/integr8ly/grafana-operator/v3/internal/k8sutil"
 	routev1 "github.com/openshift/api/route/v1"
-	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"

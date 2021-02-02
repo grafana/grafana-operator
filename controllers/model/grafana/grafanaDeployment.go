@@ -3,8 +3,8 @@ package model
 import (
 	"fmt"
 
-	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
+	"github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
+	"github.com/integr8ly/grafana-operator/v3/controllers/config"
 	v1 "k8s.io/api/apps/v1"
 	v13 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
