@@ -2,8 +2,9 @@ package v1alpha1
 
 import (
 	"fmt"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"strings"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const GrafanaDataSourceKind = "GrafanaDataSource"
@@ -73,6 +74,7 @@ type GrafanaDataSourceFields struct {
 // The most common json options
 // See https://grafana.com/docs/administration/provisioning/#datasources
 type GrafanaDataSourceJsonData struct {
+	OauthPassThru           bool   `json:"oauthPassThru,omitempty"`
 	TlsAuth                 bool   `json:"tlsAuth,omitempty"`
 	TlsAuthWithCACert       bool   `json:"tlsAuthWithCACert,omitempty"`
 	TlsSkipVerify           bool   `json:"tlsSkipVerify,omitempty"`
