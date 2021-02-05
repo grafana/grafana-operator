@@ -5,7 +5,6 @@ metadata:
   labels:
     app: grafana
 spec:
-  name: simple-dashboard.json
   json: >
     {
       "id": null,
