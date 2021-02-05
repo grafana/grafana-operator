@@ -21,11 +21,11 @@ import (
 	stdErr "errors"
 	"fmt"
 	"github.com/go-logr/logr"
-	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
-	integreatlyorgv1alpha1 "github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
-	"github.com/integr8ly/grafana-operator/v3/controllers/common"
-	"github.com/integr8ly/grafana-operator/v3/controllers/config"
-	"github.com/integr8ly/grafana-operator/v3/controllers/model"
+	grafanav1alpha1 "github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
+	integreatlyorgv1alpha1 "github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/controllers/common"
+	"github.com/integr8ly/grafana-operator/controllers/config"
+	"github.com/integr8ly/grafana-operator/controllers/model"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -184,7 +184,7 @@ func (r *GrafanaReconciler) getGrafanaAdminUrl(cr *grafanav1alpha1.Grafana, stat
 		}
 	}
 
-	var servicePort = int32(model.GetGrafanaPort(cr))
+	var servicePort = model.GetGrafanaPort(cr)
 
 	// Otherwise rely on the service
 	if state.GrafanaService != nil {

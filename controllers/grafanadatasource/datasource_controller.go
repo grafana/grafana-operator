@@ -21,9 +21,9 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"github.com/go-logr/logr"
-	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
-	"github.com/integr8ly/grafana-operator/v3/controllers/common"
-	"github.com/integr8ly/grafana-operator/v3/controllers/constants"
+	grafanav1alpha1 "github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/controllers/common"
+	"github.com/integr8ly/grafana-operator/controllers/constants"
 	"io"
 	v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -37,15 +37,15 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	integreatlyorgv1alpha1 "github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
+	integreatlyorgv1alpha1 "github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
 )
 
 // GrafanaDatasourceReconciler reconciles a GrafanaDatasource object
 type GrafanaDatasourceReconciler struct {
-	// This client, initialized using mgr.Client() above, is a split client
+	// This Client, initialized using mgr.Client() above, is a split Client
 	// that reads objects from the cache and writes to the apiserver
-	client   client.Client
-	scheme   *runtime.Scheme
+	Client   client.Client
+	Scheme   *runtime.Scheme
 	context  context.Context
 	cancel   context.CancelFunc
 	recorder record.EventRecorder
@@ -66,8 +66,8 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	ctx, cancel := context.WithCancel(ctx)
 
 	return &GrafanaDatasourceReconciler{
-		client:   mgr.GetClient(),
-		scheme:   mgr.GetScheme(),
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
 		context:  ctx,
 		cancel:   cancel,
 		recorder: mgr.GetEventRecorderFor(ControllerName),
@@ -94,7 +94,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, request ctr
 	log = r.Logger.WithValues("grafanadatasource", request.NamespacedName)
 	// Read the current state of known and cluster datasources
 	currentState := common.NewDataSourcesState()
-	err := currentState.Read(r.context, r.client, request.Namespace)
+	err := currentState.Read(r.context, r.Client, request.Namespace)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -180,7 +180,7 @@ func (r *GrafanaDatasourceReconciler) reconcileDataSources(state *common.DataSou
 		state.KnownDataSources.Annotations[constants.LastConfigAnnotation] = hash
 
 		// finally, update the configmap
-		err = r.client.Update(r.context, state.KnownDataSources)
+		err = r.Client.Update(r.context, state.KnownDataSources)
 		if err != nil {
 			r.recorder.Event(state.KnownDataSources, "Warning", "UpdateError", err.Error())
 		} else {
@@ -230,7 +230,7 @@ func (r *GrafanaDatasourceReconciler) manageError(datasource *grafanav1alpha1.Gr
 	datasource.Status.Phase = grafanav1alpha1.PhaseFailing
 	datasource.Status.Message = issue.Error()
 
-	err := r.client.Status().Update(r.context, datasource)
+	err := r.Client.Status().Update(r.context, datasource)
 	if err != nil {
 		// Ignore conclicts. Resource might just be outdated.
 		if k8serrors.IsConflict(err) {
@@ -251,7 +251,7 @@ func (r *GrafanaDatasourceReconciler) manageSuccess(datasources []grafanav1alpha
 		datasource.Status.Phase = grafanav1alpha1.PhaseReconciling
 		datasource.Status.Message = "success"
 
-		err := r.client.Status().Update(r.context, &datasource)
+		err := r.Client.Status().Update(r.context, &datasource)
 		if err != nil {
 			r.recorder.Event(&datasource, "Warning", "UpdateError", err.Error())
 		}

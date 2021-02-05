@@ -10,7 +10,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"time"
 
-	"github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
+	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
 )
 
 const (

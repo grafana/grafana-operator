@@ -5,7 +5,7 @@ import (
 	stdErr "errors"
 	"fmt"
 	"github.com/go-logr/logr"
-	"github.com/integr8ly/grafana-operator/v3/controllers/constants"
+	"github.com/integr8ly/grafana-operator/controllers/constants"
 	v13 "github.com/openshift/api/route/v1"
 	v12 "k8s.io/api/apps/v1"
 	v14 "k8s.io/api/core/v1"

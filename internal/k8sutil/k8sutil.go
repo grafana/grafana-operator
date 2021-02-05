@@ -1,39 +1,26 @@
 package k8sutil
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
 
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	 "k8s.io/client-go/discovery"
-	crclient "sigs.k8s.io/controller-runtime/pkg/client"
-	ctrl "sigs.k8s.io/controller-runtime"
+	"k8s.io/client-go/discovery"
 )
 
-// ForceRunModeEnv indicates if the operator should be forced to run in either local
-// or cluster mode (currently only used for local mode)
-var ForceRunModeEnv = "OSDK_FORCE_RUN_MODE"
-
-type RunModeType string
-
-const (
-	LocalRunMode   RunModeType = "local"
-	ClusterRunMode RunModeType = "cluster"
-)
-
-var log = ctrl.Log.WithName("k8sutil")
-
-// GetWatchNamespace returns the namespace the operator should be watching for changes
+// GetWatchNamespace returns the Namespace the operator should be watching for changes
 func GetWatchNamespace() (string, error) {
-	ns, found := os.LookupEnv(WatchNamespaceEnvVar)
+	// WatchNamespaceEnvVar is the constant for env variable WATCH_NAMESPACE
+	// which specifies the Namespace to watch.
+	// An empty value means the operator is running with cluster scope.
+	var watchNamespaceEnvVar = "WATCH_NAMESPACE"
+
+	ns, found := os.LookupEnv(watchNamespaceEnvVar)
 	if !found {
-		return "", fmt.Errorf("%s must be set", WatchNamespaceEnvVar)
+		return "", fmt.Errorf("%s must be set", watchNamespaceEnvVar)
 	}
 	return ns, nil
 }
@@ -59,72 +46,7 @@ func GetOperatorNamespace() (string, error) {
 		return "", err
 	}
 	ns := strings.TrimSpace(string(nsBytes))
-	log.V(1).Info("Found namespace", "Namespace", ns)
 	return ns, nil
-}
-
-// GetOperatorName return the operator name
-func GetOperatorName() (string, error) {
-	operatorName, found := os.LookupEnv(OperatorNameEnvVar)
-	if !found {
-		return "", fmt.Errorf("%s must be set", OperatorNameEnvVar)
-	}
-	if len(operatorName) == 0 {
-		return "", fmt.Errorf("%s must not be empty", OperatorNameEnvVar)
-	}
-	return operatorName, nil
-}
-
-// ResourceExists returns true if the given resource kind exists
-// in the given api groupversion
-func ResourceExists(dc discovery.DiscoveryInterface, apiGroupVersion, kind string) (bool, error) {
-
-	_, apiLists, err := dc.ServerGroupsAndResources()
-	if err != nil {
-		return false, err
-	}
-	for _, apiList := range apiLists {
-		if apiList.GroupVersion == apiGroupVersion {
-			for _, r := range apiList.APIResources {
-				if r.Kind == kind {
-					return true, nil
-				}
-			}
-		}
-	}
-	return false, nil
-}
-
-// GetPod returns a Pod object that corresponds to the pod in which the code
-// is currently running.
-// It expects the environment variable POD_NAME to be set by the downwards API.
-func GetPod(ctx context.Context, client crclient.Client, ns string) (*corev1.Pod, error) {
-	if isRunModeLocal() {
-		return nil, ErrRunLocal
-	}
-	podName := os.Getenv(PodNameEnvVar)
-	if podName == "" {
-		return nil, fmt.Errorf("required env %s not set, please configure downward API", PodNameEnvVar)
-	}
-
-	log.V(1).Info("Found podname", "Pod.Name", podName)
-
-	pod := &corev1.Pod{}
-	key := crclient.ObjectKey{Namespace: ns, Name: podName}
-	err := client.Get(ctx, key, pod)
-	if err != nil {
-		log.Error(err, "Failed to get Pod", "Pod.Namespace", ns, "Pod.Name", podName)
-		return nil, err
-	}
-
-	// .Get() clears the APIVersion and Kind,
-	// so we need to set them before returning the object.
-	pod.TypeMeta.APIVersion = "v1"
-	pod.TypeMeta.Kind = "Pod"
-
-	log.V(1).Info("Found Pod", "Pod.Namespace", ns, "Pod.Name", pod.Name)
-
-	return pod, nil
 }
 
 // GetGVKsFromAddToScheme takes in the runtime scheme and filters out all generic apimachinery meta types.
@@ -144,6 +66,20 @@ func GetGVKsFromAddToScheme(addToSchemeFunc func(*runtime.Scheme) error) ([]sche
 	}
 
 	return ownGVKs, nil
+}
+
+func isRunModeLocal() bool {
+	return !isRunModeCluster()
+}
+
+// IsRunInCluster checks if the operator is run in cluster
+func isRunModeCluster() bool {
+	_, err := os.Stat("/var/run/secrets/kubernetes.io/serviceaccount")
+	if err == nil {
+		return true
+	}
+
+	return !os.IsNotExist(err)
 }
 
 func isKubeMetaKind(kind string) bool {
@@ -167,52 +103,22 @@ func isKubeMetaKind(kind string) bool {
 	return false
 }
 
-func isRunModeLocal() bool {
-	return os.Getenv(ForceRunModeEnv) == string(LocalRunMode)
-}
+// ResourceExists returns true if the given resource kind exists
+// in the given api groupversion
+func ResourceExists(dc discovery.DiscoveryInterface, apiGroupVersion, kind string) (bool, error) {
 
-// SupportsOwnerReference checks whether a given dependent supports owner references, based on the owner.
-// This function performs following checks:
-//  -- True: Owner is cluster-scoped.
-//  -- True: Both Owner and dependent are Namespaced with in same namespace.
-//  -- False: Owner is Namespaced and dependent is Cluster-scoped.
-//  -- False: Both Owner and dependent are Namespaced with different namespaces.
-func SupportsOwnerReference(restMapper meta.RESTMapper, owner, dependent runtime.Object) (bool, error) {
-	ownerGVK := owner.GetObjectKind().GroupVersionKind()
-	ownerMapping, err := restMapper.RESTMapping(ownerGVK.GroupKind(), ownerGVK.Version)
+	_, apiLists, err := dc.ServerGroupsAndResources()
 	if err != nil {
 		return false, err
 	}
-	mOwner, err := meta.Accessor(owner)
-	if err != nil {
-		return false, err
+	for _, apiList := range apiLists {
+		if apiList.GroupVersion == apiGroupVersion {
+			for _, r := range apiList.APIResources {
+				if r.Kind == kind {
+					return true, nil
+				}
+			}
+		}
 	}
-
-	depGVK := dependent.GetObjectKind().GroupVersionKind()
-	depMapping, err := restMapper.RESTMapping(depGVK.GroupKind(), depGVK.Version)
-	if err != nil {
-		return false, err
-	}
-	mDep, err := meta.Accessor(dependent)
-	if err != nil {
-		return false, err
-	}
-	ownerClusterScoped := ownerMapping.Scope.Name() == meta.RESTScopeNameRoot
-	ownerNamespace := mOwner.GetNamespace()
-	depClusterScoped := depMapping.Scope.Name() == meta.RESTScopeNameRoot
-	depNamespace := mDep.GetNamespace()
-
-	if ownerClusterScoped {
-		return true, nil
-	}
-
-	if depClusterScoped {
-		return false, nil
-	}
-
-	if ownerNamespace != depNamespace {
-		return false, nil
-	}
-	// Both owner and dependent are namespace-scoped and in the same namespace.
-	return true, nil
+	return false, nil
 }

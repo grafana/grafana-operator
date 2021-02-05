@@ -22,14 +22,15 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-logr/logr"
-	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
-	integreatlyorgv1alpha1 "github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
-	"github.com/integr8ly/grafana-operator/v3/controllers/common"
-	"github.com/integr8ly/grafana-operator/v3/controllers/config"
-	"github.com/integr8ly/grafana-operator/v3/controllers/constants"
+	grafanav1alpha1 "github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
+	integreatlyorgv1alpha1 "github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/controllers/common"
+	"github.com/integr8ly/grafana-operator/controllers/config"
+	"github.com/integr8ly/grafana-operator/controllers/constants"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"net/http"
@@ -56,7 +57,8 @@ type GrafanaDashboardReconciler struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
 
-	client    client.Client
+	Client    client.Client
+	Scheme    *runtime.Scheme
 	transport *http.Transport
 	config    *config.ControllerConfig
 	context   context.Context
@@ -106,7 +108,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, request ctrl
 
 	// Fetch the GrafanaDashboard instance
 	instance := &grafanav1alpha1.GrafanaDashboard{}
-	err = r.client.Get(r.context, request.NamespacedName, instance)
+	err = r.Client.Get(r.context, request.NamespacedName, instance)
 	if err != nil {
 
 		if k8serrors.IsNotFound(err) {
@@ -141,7 +143,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	ctx, cancel := context.WithCancel(ctx)
 
 	return &GrafanaDashboardReconciler{
-		client: mgr.GetClient(),
+		Client: mgr.GetClient(),
 		transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: true,
@@ -209,7 +211,7 @@ func (r *GrafanaDashboardReconciler) reconcileDashboards(request reconcile.Reque
 		Namespace: request.Namespace,
 	}
 
-	err := r.client.List(r.context, namespaceDashboards, opts)
+	err := r.Client.List(r.context, namespaceDashboards, opts)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -279,7 +281,7 @@ func (r *GrafanaDashboardReconciler) reconcileDashboards(request reconcile.Reque
 		// to determine if an update is required
 		knownHash := findHash(&dashboard)
 
-		pipeline := NewDashboardPipeline(r.client, &dashboard, r.context)
+		pipeline := NewDashboardPipeline(r.Client, &dashboard, r.context)
 		processed, err := pipeline.ProcessDashboard(knownHash, &folderId, folderName)
 
 		if err != nil {
@@ -399,7 +401,7 @@ func (r *GrafanaDashboardReconciler) checkNamespaceLabels(dashboard *grafanav1al
 		Name: dashboard.Namespace,
 	}
 	ns := &v1.Namespace{}
-	err := r.client.Get(r.context, key, ns)
+	err := r.Client.Get(r.context, key, ns)
 	if err != nil {
 		return false, err
 	}
@@ -432,4 +434,10 @@ func (r *GrafanaDashboardReconciler) manageError(dashboard *grafanav1alpha1.Graf
 		return
 	}
 	log.Log.Error(issue, "error updating dashboard")
+}
+
+func (r *GrafanaDashboardReconciler) SetupWithManager(mgr manager.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&integreatlyorgv1alpha1.GrafanaDashboard{}).
+		Complete(r)
 }

@@ -2,7 +2,7 @@ package grafanadatasource
 
 import (
 	"github.com/ghodss/yaml"
-	"github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
+	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 )

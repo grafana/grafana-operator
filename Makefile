@@ -117,3 +117,8 @@ bundle: manifests kustomize
 .PHONY: bundle-build
 bundle-build:
 	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+
+
+.PHONY: code/check
+code/check: fmt vet
+	golint ./...

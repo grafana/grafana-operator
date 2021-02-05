@@ -1,9 +1,8 @@
 package model
 
 import (
-	"github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
-	"github.com/integr8ly/grafana-operator/v3/controllers/constants"
-	"github.com/integr8ly/grafana-operator/v3/controllers/model/grafana"
+	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/controllers/constants"
 	v12 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
@@ -27,7 +26,7 @@ func getAdminPassword(cr *v1alpha1.Grafana, current *v12.Secret) []byte {
 		if current != nil && current.Data[constants.GrafanaAdminPasswordEnvVar] != nil {
 			return current.Data[constants.GrafanaAdminPasswordEnvVar]
 		}
-		return []byte(model.RandStringRunes(10))
+		return []byte(RandStringRunes(10))
 	}
 	return []byte(cr.Spec.Config.Security.AdminPassword)
 }

@@ -2,8 +2,8 @@ package grafana
 
 import (
 	"fmt"
-	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
-	"github.com/integr8ly/grafana-operator/v3/controllers/config"
+	grafanav1alpha1 "github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/controllers/config"
 	v1 "k8s.io/api/core/v1"
 	v13 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"

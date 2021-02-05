@@ -2,7 +2,7 @@ package config
 
 import (
 	"fmt"
-	"github.com/integr8ly/grafana-operator/v3/api/v1alpha1"
+	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sync"
 	"time"
