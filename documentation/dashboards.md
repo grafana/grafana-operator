@@ -10,7 +10,6 @@ Dashboards are represented by the `GrafanaDashboard` custom resource. Examples c
 
 The following properties are accepted in the `spec`:
 
-* *name*: The filename of the dashboard that gets mounted into a volume in the grafana instance. Not to be confused with `metadata.name`.
 * *json*: Raw json string with the dashboard contents. Check the [official documentation](https://grafana.com/docs/reference/dashboard/#dashboard-json).
 * *jsonnet*: Jsonnet source. The [Grafonnet](https://grafana.github.io/grafonnet-lib/) library is made available automatically and can be imported.
 * *url*: Url address to download a json or jsonnet string with the dashboard contents. 
