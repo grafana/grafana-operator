@@ -156,7 +156,9 @@ func (i *GrafanaIni) Write() (string, string) {
 		var items []string
 		items = appendStr(items, "login_cookie_name", i.cfg.Auth.LoginCookieName)
 		items = appendInt(items, "login_maximum_inactive_lifetime_days", i.cfg.Auth.LoginMaximumInactiveLifetimeDays)
+		items = appendStr(items, "login_maximum_inactive_lifetime_duration", i.cfg.Auth.LoginMaximumInactiveLifetimeDuration)
 		items = appendInt(items, "login_maximum_lifetime_days", i.cfg.Auth.LoginMaximumLifetimeDays)
+		items = appendStr(items, "login_maximum_lifetime_duration", i.cfg.Auth.LoginMaximumLifetimeDuration)
 		items = appendInt(items, "token_rotation_interval_minutes", i.cfg.Auth.TokenRotationIntervalMinutes)
 		items = appendBool(items, "disable_login_form", i.cfg.Auth.DisableLoginForm)
 		items = appendBool(items, "disable_signout_menu", i.cfg.Auth.DisableSignoutMenu)
