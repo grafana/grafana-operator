@@ -1769,6 +1769,11 @@ func (in *GrafanaSpec) DeepCopyInto(out *GrafanaSpec) {
 		*out = new(v1.ResourceRequirements)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.SkipCreateServiceAccount != nil {
+		in, out := &in.SkipCreateServiceAccount, &out.SkipCreateServiceAccount
+		*out = new(bool)
+		**out = **in
+	}
 	if in.ServiceAccount != nil {
 		in, out := &in.ServiceAccount, &out.ServiceAccount
 		*out = new(GrafanaServiceAccount)
