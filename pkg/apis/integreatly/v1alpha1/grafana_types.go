@@ -28,6 +28,7 @@ type GrafanaSpec struct {
 	Service                    *GrafanaService          `json:"service,omitempty"`
 	Deployment                 *GrafanaDeployment       `json:"deployment,omitempty"`
 	Resources                  *v1.ResourceRequirements `json:"resources,omitempty"`
+	SkipCreateServiceAccount   *bool                    `json:"skipCreateServiceAccount,omitempty"`
 	ServiceAccount             *GrafanaServiceAccount   `json:"serviceAccount,omitempty"`
 	Client                     *GrafanaClient           `json:"client,omitempty"`
 	DashboardNamespaceSelector *metav1.LabelSelector    `json:"dashboardNamespaceSelector,omitempty"`

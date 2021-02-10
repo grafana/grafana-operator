@@ -127,6 +127,9 @@ spec:
                 priorityClassName:
                   type: string
                   description: Pod priority class name
+            skipCreateServiceAccount:
+              type: boolean
+              description: Disable ServiceAccount creation for grafana
             serviceAccount:
               type: object
               properties:
