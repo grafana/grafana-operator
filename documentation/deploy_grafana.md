@@ -190,6 +190,9 @@ The resource accepts the following properties in it's `spec`:
   configuration  ( see [here](#configuring-readinessliveness-probes))
 * ***readinessProbeSpec***: Defines the time, in seconds, to be used for each field in the readiness probe
   configuration ( see [here](#configuring-readinessliveness-probes))
+  
+* ***skipCreateServiceAccount***: Boolean, setting this to `True` will stop the operator from reconciling the `grafana-serviceaccount` serviceaccount,
+Leaving this field empty is equivalent to setting it to`False`, **Note:* the operator will still reconcile the `grafana-operator` serviceaccount*.
 
 *NOTE*: by default no Ingress or Route is created. It can be enabled with `spec.ingress.enabled`.
 
