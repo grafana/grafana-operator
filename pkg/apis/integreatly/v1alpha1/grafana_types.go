@@ -78,8 +78,8 @@ type GrafanaDataStorage struct {
 	Annotations map[string]string               `json:"annotations,omitempty"`
 	Labels      map[string]string               `json:"labels,omitempty"`
 	AccessModes []v1.PersistentVolumeAccessMode `json:"accessModes,omitempty"`
-	Size        resource.Quantity               `json:"size"`
-	Class       string                          `json:"class"`
+	Size        resource.Quantity               `json:"size,omitempty"`
+	Class       string                          `json:"class,omitempty"`
 }
 
 type GrafanaServiceAccount struct {
