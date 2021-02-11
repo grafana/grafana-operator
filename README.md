@@ -54,6 +54,8 @@ A Kubernetes Operator based on the Operator SDK for creating and managing Grafan
 </tbody>
 </table>
 
+***If you find this operator useful in your product/deployment, feel free to send a pull request to add your company/team to be displayed here!***
+
 <!-- COPY ME -->
   <!-- <td class="tg-0lax"> 
         <div class="card" css=>
