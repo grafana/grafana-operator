@@ -132,7 +132,8 @@ func (i *GrafanaReconciler) getGrafanaDataPvcDesiredState(state *common.ClusterS
 }
 
 func (i *GrafanaReconciler) getGrafanaServiceAccountDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
-	if cr.Spec.SkipCreateServiceAccount != nil && *cr.Spec.SkipCreateServiceAccount == true {
+
+	if cr.Spec.ServiceAccount != nil && cr.Spec.ServiceAccount.Skip != nil && *cr.Spec.ServiceAccount.Skip == true {
 		return nil
 	}
 	if state.GrafanaServiceAccount == nil {

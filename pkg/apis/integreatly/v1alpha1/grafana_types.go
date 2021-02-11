@@ -28,7 +28,6 @@ type GrafanaSpec struct {
 	Service                    *GrafanaService          `json:"service,omitempty"`
 	Deployment                 *GrafanaDeployment       `json:"deployment,omitempty"`
 	Resources                  *v1.ResourceRequirements `json:"resources,omitempty"`
-	SkipCreateServiceAccount   *bool                    `json:"skipCreateServiceAccount,omitempty"`
 	ServiceAccount             *GrafanaServiceAccount   `json:"serviceAccount,omitempty"`
 	Client                     *GrafanaClient           `json:"client,omitempty"`
 	DashboardNamespaceSelector *metav1.LabelSelector    `json:"dashboardNamespaceSelector,omitempty"`
@@ -84,6 +83,7 @@ type GrafanaDataStorage struct {
 }
 
 type GrafanaServiceAccount struct {
+	Skip             *bool                     `json:"skip,omitempty"`
 	Annotations      map[string]string         `json:"annotations,omitempty"`
 	Labels           map[string]string         `json:"labels,omitempty"`
 	ImagePullSecrets []v1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
