@@ -132,6 +132,10 @@ func (i *GrafanaReconciler) getGrafanaDataPvcDesiredState(state *common.ClusterS
 }
 
 func (i *GrafanaReconciler) getGrafanaServiceAccountDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
+
+	if cr.Spec.ServiceAccount != nil && cr.Spec.ServiceAccount.Skip != nil && *cr.Spec.ServiceAccount.Skip == true {
+		return nil
+	}
 	if state.GrafanaServiceAccount == nil {
 		return common.GenericCreateAction{
 			Ref: model.GrafanaServiceAccount(cr),
@@ -143,6 +147,7 @@ func (i *GrafanaReconciler) getGrafanaServiceAccountDesiredState(state *common.C
 		Ref: model.GrafanaServiceAccountReconciled(cr, state.GrafanaServiceAccount),
 		Msg: "update grafana service account",
 	}
+
 }
 
 func (i *GrafanaReconciler) getGrafanaConfigDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) []common.ClusterAction {

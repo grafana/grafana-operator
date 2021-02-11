@@ -176,7 +176,7 @@ The resource accepts the following properties in it's `spec`:
 
 * ***service***: Allows configuring the Service resource (see [here](#configuring-the-service)).
 
-* ***serviceAccount***: Allows adding extra labels and annotations to the Grafana service account.
+* ***serviceAccount***: Allows configuring the Service account (see [here](#configuring-the-serviceaccount)).
 
 * ***deployment***: Allows configuring the deployment (see [here](#configuring-the-deployment)).
 
@@ -190,6 +190,7 @@ The resource accepts the following properties in it's `spec`:
   configuration  ( see [here](#configuring-readinessliveness-probes))
 * ***readinessProbeSpec***: Defines the time, in seconds, to be used for each field in the readiness probe
   configuration ( see [here](#configuring-readinessliveness-probes))
+
 
 *NOTE*: by default no Ingress or Route is created. It can be enabled with `spec.ingress.enabled`.
 
@@ -236,6 +237,26 @@ spec:
     path:                   # Sets the path of the Ingress. Ignored for Routes
 ```
 
+## Configuring the ServiceAccount
+
+```yaml
+spec:
+  serviceAccount:
+    type: object
+    properties:
+      skip:
+        type: boolean
+        description: setting this to `True` will stop the operator from reconciling the `grafana-serviceaccount`
+                    serviceaccount, Leaving this field empty is equivalent to setting it to`False`
+      annotations:
+        type: object
+        description: Additional annotations for the serviceaccount
+      labels:
+        type: object
+        description: Additional labels for the serviceaccount
+``` 
+**Note:* the operator will still
+reconcile the `grafana-operator` `serviceaccount when spec.ServiceAccount.skip == True`*.
 ## Configuring the Service
 
 Various properties of the Service can be configured:
@@ -258,12 +279,11 @@ spec:
         targetPort: ...
 
 ```
-NOTE: Service name must adhere to a DNS-1035 label which must consist of lower case alphanumeric
-characters or '-', start with an alphabetic character, and end with an
-alphanumeric character (e.g. 'my-name',  or 'abc-123', regex used for validation is `'[a-z]([-a-z0-9]*[a-z0-9])?`.
-If the name doesn't match this RegEx, the operator will fail to create the new service, however, the old service will still
-remain available until a new one is created.
 
+NOTE: Service name must adhere to a DNS-1035 label which must consist of lower case alphanumeric characters or '-',
+start with an alphabetic character, and end with an alphanumeric character (e.g. 'my-name', or 'abc-123', regex used for
+validation is `'[a-z]([-a-z0-9]*[a-z0-9])?`. If the name doesn't match this RegEx, the operator will fail to create the
+new service, however, the old service will still remain available until a new one is created.
 
 ## Configuring the Deployment
 

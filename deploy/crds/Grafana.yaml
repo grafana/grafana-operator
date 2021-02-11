@@ -127,9 +127,13 @@ spec:
                 priorityClassName:
                   type: string
                   description: Pod priority class name
+
             serviceAccount:
               type: object
               properties:
+                skip:
+                  type: boolean
+                  description: Disable ServiceAccount creation for grafana
                 annotations:
                   type: object
                   description: Additional annotations for the serviceaccount
