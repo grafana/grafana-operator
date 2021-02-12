@@ -156,6 +156,10 @@ The resource accepts the following properties in it's `spec`:
     - ***Warning!*** this overwrites the `--grafana-image` Operator flag, please refer to the grafana image support
       chart.
 
+* ***initImage***: Specifies a custom grafana plugins init image for this deployment.
+    - ***Warning!*** this overwrites the `--grafana-plugins-init-container-image` Operator flag, please refer to the grafana image support
+      chart.
+
 * ***dashboardLabelSelector***: A list of either `matchLabels` or `matchExpressions` to filter the dashboards before
   importing them.
 
