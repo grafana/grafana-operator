@@ -254,9 +254,7 @@ spec:
       labels:
         type: object
         description: Additional labels for the serviceaccount
-``` 
-**Note:* the operator will still
-reconcile the `grafana-operator` `serviceaccount when spec.ServiceAccount.skip == True`*.
+```
 ## Configuring the Service
 
 Various properties of the Service can be configured:
