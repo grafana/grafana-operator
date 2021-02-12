@@ -5,4 +5,8 @@ metadata:
   labels: 
     app: grafana
 spec: 
+<<<<<<< HEAD
+=======
+  name: grafana-dashboard-from-url.json
+>>>>>>> a9520e6e... add deploy
   url: https://raw.githubusercontent.com/integr8ly/grafana-operator/master/deploy/examples/remote/grafana-dashboard.json

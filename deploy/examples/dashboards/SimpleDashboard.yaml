@@ -5,6 +5,10 @@ metadata:
   labels:
     app: grafana
 spec:
+<<<<<<< HEAD
+=======
+  name: simple-dashboard.json
+>>>>>>> a9520e6e... add deploy
   json: >
     {
       "id": null,

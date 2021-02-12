@@ -17,8 +17,8 @@ var (
 
 // GrafanaSpec defines the desired state of Grafana
 
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:object:root=true
-// +kubebuilder:subresource:status
 type GrafanaSpec struct {
 	Config                     GrafanaConfig            `json:"config"`
 	Containers                 []v1.Container           `json:"containers,omitempty"`
@@ -500,12 +500,12 @@ type GrafanaConfigPlugins struct {
 // GrafanaStatus defines the observed state of Grafana
 // // +kubebuilder:object:root=true
 type GrafanaStatus struct {
-	Phase               StatusPhase                       `json:"phase"`
-	PreviousServiceName string                            `json:"previousServiceName"`
-	Message             string                            `json:"message"`
-	InstalledDashboards map[string][]*GrafanaDashboardRef `json:"dashboards"`
-	InstalledPlugins    PluginList                        `json:"installedPlugins"`
-	FailedPlugins       PluginList                        `json:"failedPlugins"`
+	Phase               StatusPhase                      `json:"phase"`
+	PreviousServiceName string                           `json:"previousServiceName"`
+	Message             string                           `json:"message"`
+	InstalledDashboards map[string][]GrafanaDashboardRef `json:"dashboards"`
+	InstalledPlugins    PluginList                       `json:"installedPlugins"`
+	FailedPlugins       PluginList                       `json:"failedPlugins"`
 }
 
 // GrafanaPlugin contains information about a single plugin
@@ -517,7 +517,7 @@ type GrafanaPlugin struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // Grafana is the Schema for the grafanas API
-// // +kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 type Grafana struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

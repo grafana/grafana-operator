@@ -1,0 +1,23 @@
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDataSource
+metadata:
+  name: stackdriver-data-source
+spec:
+  datasources:
+    - name: Stackdriver
+      type: stackdriver
+      access: proxy
+      editable: false
+      isDefault: false
+      jsonData:
+        tokenUri: https://oauth2.googleapis.com/token
+        clientEmail: grafana@my-project.iam.gserviceaccount.com
+        authenticationType: jwt
+        defaultProject: my-project
+      secureJsonData:
+        privateKey: |
+          -----BEGIN PRIVATE KEY-----
+          .....
+          -----END PRIVATE KEY-----
+      version: 1
+  name: stackdriver-data-source.yaml

@@ -5,6 +5,10 @@ metadata:
   labels:
     app: grafana
 spec:
+<<<<<<< HEAD
+=======
+  name: dashboard-with-custom-folder.json
+>>>>>>> a9520e6e... add deploy
   customFolderName: "newCustomFolder"
   json: >
     {

@@ -1,0 +1,143 @@
+---
+- name: OpenShift Monitoring | Update Prometheus Authentication
+  hosts: all
+  module_defaults:
+    group/k8s:
+      host: "{{ k8s_host }}"
+      validate_certs: "{{ k8s_validate_certs | default(true) }}"
+  vars:
+    prometheus_namespace: "openshift-monitoring"
+    prometheus_statefulset: "prometheus-k8s"
+    prometheus_htpasswd_secret: "prometheus-k8s-htpasswd"
+  tasks:
+  - name: OpenShift Monitoring | Update Prometheus Authentication | Params validation | k8s auth
+    fail:
+      msg: "Either k8s_api_key or k8s_username and k8s_password must be specified"
+    when: ((k8s_api_key is not defined) and (k8s_username is not defined) and (k8s_password is not defined)) or
+          ((k8s_api_key is defined) and ((k8s_username is defined) or (k8s_password is defined)))
+
+  - name: OpenShift Monitoring | Update Prometheus Authentication | Params defaults
+    set_fact:
+      openshift_monitoring_expose_prometheus: "{{ openshift_monitoring_expose_prometheus | default(true) }}"
+
+  - name: OpenShift Monitoring | Update Prometheus Authentication | Private params
+    set_fact:
+      _k8s_resources_state: "{{ (openshift_monitoring_expose_prometheus | bool) | ternary('present', 'absent') }}"
+      _k8s_resources_task_title: "{{ (openshift_monitoring_expose_prometheus | bool) | ternary('Create', 'Delete') }}"
+
+  - block:
+    - block:
+      - name: OpenShift Monitoring | Update Prometheus Authentication | Get K8s access token
+        k8s_auth:
+          username: "{{ k8s_username }}"
+          password: "{{ k8s_password }}"
+        register: k8s_auth_results
+
+      - name: OpenShift Monitoring | Update Prometheus Authentication | Set k8s_api_key
+        set_fact:
+          k8s_api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+      when: (k8s_api_key is not defined) and ((k8s_username is defined) and (k8s_password is defined))
+
+    - block:
+      - name: OpenShift Monitoring | Update Prometheus Authentication | Get prometheus StatefulSet info
+        k8s_info:
+          kind: StatefulSet
+          name: "{{ prometheus_statefulset }}"
+          namespace: "{{ prometheus_namespace }}"
+          api_key: "{{ k8s_api_key }}"
+        register: prometheus_k8s_info
+
+      - name: OpenShift Monitoring | Update Prometheus Authentication | Get existing prometheus-k8s-htpasswd secret
+        k8s_facts:
+          kind: Secret
+          api_version: v1
+          name: prometheus-k8s-htpasswd
+          namespace: openshift-monitoring
+        register: prometheus_k8s_htpasswd_data
+
+      - name: OpenShift Monitoring | Update Prometheus Authentication | Get existing prometheus-k8s-htpasswd auth value
+        set_fact:
+          prometheus_k8s_htpasswd_data_auth: "{{ prometheus_k8s_htpasswd_data.resources[0]['data']['auth'] | b64decode }}"
+
+      - name: OpenShift Monitoring | Update Prometheus Authentication | Create temparary htpasswd file
+        tempfile:
+          state: file
+          suffix: prometheus-k8s-htpasswd
+        changed_when: False
+        register: prometheus_k8s_htpasswd_tempfile
+
+      - name: OpenShift Monitoring | Update Prometheus Authentication | Copy prometheus_k8s_htpasswd_data into temparary htpasswd file
+        copy:
+          content: "{{ prometheus_k8s_htpasswd_data_auth }}"
+          dest: "{{ prometheus_k8s_htpasswd_tempfile.path }}"
+        changed_when: False
+
+      # TODO: loop var
+      - name: OpenShift Monitoring | Update Prometheus Authentication | Add usernames and passwords to temp htpasswd file
+        htpasswd:
+          path: "{{ prometheus_k8s_htpasswd_tempfile.path }}"
+          state: "{{ item.state | default('present') }}"
+          name: "{{ item.name }}"
+          password: "{{ item.password }}"
+          crypt_scheme: ldap_sha1
+        no_log: true
+        register: htpasswd_result
+        loop: "{{ prometheus_htpasswd_users }}"
+
+      - block:
+        - name: OpenShift Monitoring | Update Prometheus Authentication | Get updated htpasswd file contents
+          slurp:
+            src: "{{ prometheus_k8s_htpasswd_tempfile.path }}"
+          register: prometheus_k8s_htpasswd_new
+
+        - name: OpenShift Monitoring | Update Prometheus Authentication | Update prometheus-k8s-htpasswd secret
+          k8s:
+            kind: Secret
+            name: "{{ prometheus_htpasswd_secret }}"
+            namespace: "{{ prometheus_namespace }}"
+            resource_definition:
+              data:
+                auth: "{{ prometheus_k8s_htpasswd_new.content }}"
+
+        # NOTE: this is a super hack to force a rolling update since there is no k8s_rollout module (https://github.com/ansible/ansible/issues/52046)
+        - name: OpenShift Monitoring | Update Prometheus Authentication | Patch prometheus StatefulSet to force rolling update
+          k8s:
+            kind: StatefulSet
+            name: "{{ prometheus_statefulset }}"
+            namespace: "{{ prometheus_namespace }}"
+            api_key: "{{ k8s_api_key }}"
+            resource_definition:
+              spec:
+                template:
+                  spec:
+                    containers:
+                      - name: prometheus
+                        env:
+                        - name: LAST_UPDATE_OF_PROMETHEUS_K8S_HTPASSWD_SECRET_BY_ANSBILE
+                          value: "{{ ansible_date_time.iso8601 }}"
+
+        - name: OpenShift Monitoring | Update Prometheus Authentication | wait for all pods in prometheus StatefulSet to be updated
+          k8s_info:
+            kind: StatefulSet
+            name: "{{ prometheus_statefulset }}"
+            namespace: "{{ prometheus_namespace }}"
+            api_key: "{{ k8s_api_key }}"
+          register: prometheus_k8s_info
+          until: (prometheus_k8s_info['resources'][0] | json_query('status.currentRevision') ) == (prometheus_k8s_info['resources'][0] | json_query('status.updateRevision') )
+          delay: 2
+          retries: 60
+        when: htpasswd_result is changed
+
+    always:
+    - name: OpenShift Monitoring | Update Prometheus Authentication | Revoke K8s access token
+      k8s_auth:
+        state: absent
+        api_key: "{{ k8s_api_key }}"
+      when: ((k8s_username is defined) and (k8s_password is defined))
+
+    - name: OpenShift Monitoring | Update Prometheus Authentication | remove temporary htpasswd file
+      file:
+        path: "{{ prometheus_k8s_htpasswd_tempfile.path }}"
+        state: absent
+      changed_when: False
+      when: prometheus_k8s_htpasswd_tempfile.path is defined

@@ -15,8 +15,12 @@ rules:
       - namespaces
       - configmaps
     verbs: ['get', 'list', 'watch']
+<<<<<<< HEAD
   - apiGroups:
       - ""
     resources:
       - events
     verbs: ['create', 'patch']
+=======
+
+>>>>>>> a9520e6e... add deploy

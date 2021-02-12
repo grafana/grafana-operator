@@ -1,0 +1,64 @@
+---
+- name: Grafana Operator | Cluster Resources
+  hosts: localhost
+  module_defaults:
+    group/k8s:
+      host: "{{ k8s_host }}"
+      validate_certs: "{{ k8s_validate_certs | default(true) }}"
+  tasks:
+  - name: Grafana Operator | Cluster Resources | Params validation | k8s auth
+    fail:
+      msg: "Either k8s_api_key or k8s_username and k8s_password must be specified"
+    when: ((k8s_api_key is not defined) and (k8s_username is not defined) and (k8s_password is not defined)) or
+          ((k8s_api_key is defined) and ((k8s_username is defined) or (k8s_password is defined)))
+
+  - name: Grafana Operator | Cluster Resources | Params defaults
+    set_fact:
+      grafana_operator_install: "{{ grafana_operator_install | default(true) }}"
+      grafana_operator_allow_project_admin_deploy: "{{ grafana_operator_allow_project_admin_deploy | default(true) }}"
+
+  - name: Grafana Operator | Cluster Resources | Private params
+    set_fact:
+      _k8s_resources_state: "{{ (grafana_operator_install | bool) | ternary('present', 'absent') }}"
+      _k8s_resources_task_title: "{{ (grafana_operator_install | bool) | ternary('Create', 'Delete') }}"
+
+  - block:
+    - block:
+      - name: Grafana Operator | Cluster Resources | Get K8s access token
+        k8s_auth:
+          username: "{{ k8s_username }}"
+          password: "{{ k8s_password }}"
+        register: k8s_auth_results
+
+      - name: Grafana Operator | Cluster Resources | Set k8s_api_key
+        set_fact:
+          k8s_api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+      when: (k8s_api_key is not defined) and ((k8s_username is defined) and (k8s_password is defined))
+
+    - name: "Grafana Operator | Cluster Resources | {{ _k8s_resources_task_title }} CRDs"
+      k8s:
+        src: "{{ item }}"
+        state: "{{ _k8s_resources_state }}"
+        api_key: "{{ k8s_api_key }}"
+      loop:
+      - ../crds/Grafana.yaml
+      - ../crds/GrafanaDataSource.yaml
+      - ../crds/GrafanaDashboard.yaml
+
+    - name: "Grafana Operator | Cluster Resources | {{ _k8s_resources_task_title }} Aggregated Grafana CRDs ClusterRoles"
+      k8s:
+        src: "{{ item }}"
+        state: "{{ _k8s_resources_state }}"
+        api_key: "{{ k8s_api_key }}"
+      when: (grafana_operator_allow_project_admin_deploy | bool) or
+            (not (grafana_operator_install | bool))
+      loop:
+      - ../cluster_roles/cluster_role_aggregate_grafana_admin_edit.yaml
+      - ../cluster_roles/cluster_role_aggregate_grafana_view.yaml
+
+    always:
+    - name: Grafana Operator | Cluster Resources | Revoke K8s access token
+      k8s_auth:
+        state: absent
+        api_key: "{{ k8s_api_key }}"
+      when: ((k8s_username is defined) and (k8s_password is defined))

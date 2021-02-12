@@ -1,0 +1,66 @@
+---
+- name: Grafana Operator | Cluster Dashboards Scan
+  hosts: localhost
+  module_defaults:
+    group/k8s:
+      host: "{{ k8s_host }}"
+      validate_certs: "{{ k8s_validate_certs | default(true) }}"
+  tasks:
+  - name: Grafana Operator | Cluster Resources | Params validation | k8s auth
+    fail:
+      msg: "Either k8s_api_key or k8s_username and k8s_password must be specified"
+    when: ((k8s_api_key is not defined) and (k8s_username is not defined) and (k8s_password is not defined)) or
+          ((k8s_api_key is defined) and ((k8s_username is defined) or (k8s_password is defined)))
+
+  - name: Grafana Operator | Cluster Dashboards Scan | Params defaults
+    set_fact:
+      grafana_operator_install: "{{ grafana_operator_install | default(true) }}"
+      grafana_operator_namespace: "{{ grafana_operator_namespace | default('grafana') }}"
+
+  - name: Grafana Operator | Cluster Dashboards Scan | Private params
+    set_fact:
+      _k8s_resources_state: "{{ (grafana_operator_install | bool) | ternary('present', 'absent') }}"
+      _k8s_resources_task_title: "{{ (grafana_operator_install | bool) | ternary('Create', 'Delete') }}"
+
+  - block:
+    - block:
+      - name: Grafana Operator | Cluster Resources | Get K8s access token
+        k8s_auth:
+          username: "{{ k8s_username }}"
+          password: "{{ k8s_password }}"
+        register: k8s_auth_results
+
+      - name: Grafana Operator | Cluster Resources | Set k8s_api_key
+        set_fact:
+          k8s_api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+      when: (k8s_api_key is not defined) and ((k8s_username is defined) and (k8s_password is defined))
+
+    - name: "Grafana Operator | Cluster Dashboards Scan | {{ _k8s_resources_task_title }} Cluster Role - grafana-operator"
+      k8s:
+        src: "../cluster_roles/cluster_role_grafana_operator.yaml"
+        state: "{{ _k8s_resources_state }}"
+        api_key: "{{ k8s_api_key }}"
+
+    - name: "Grafana Operator | Cluster Dashboards Scan | {{ _k8s_resources_task_title }} Cluster Role Binding - grafana-operator"
+      k8s:
+        state: "{{ _k8s_resources_state }}"
+        api_key: "{{ k8s_api_key }}"
+        resource_definition:
+          kind: ClusterRoleBinding
+          apiVersion: rbac.authorization.k8s.io/v1
+          metadata:
+            name: "grafana-operator-{{grafana_operator_namespace}}"
+          roleRef:
+            name: grafana-operator
+            kind: ClusterRole
+            apiGroup: ""
+          subjects:
+            - kind: ServiceAccount
+              name: grafana-operator
+              namespace: "{{ grafana_operator_namespace }}"
+    always:
+    - name: Grafana Operator | Cluster Dashboards Scan | Revoke K8s access token
+      k8s_auth:
+        state: absent
+        api_key: "{{ k8s_api_key }}"
+      when: ((k8s_username is defined) and (k8s_password is defined))

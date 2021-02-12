@@ -14,9 +14,10 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"os"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type ActionRunner interface {
@@ -65,7 +66,7 @@ func NewClusterActionRunner(ctx context.Context, client client.Client, scheme *r
 	return &ClusterActionRunner{
 		scheme: scheme,
 		client: client,
-		log:    ctrl.Log.WithName("action-runner"),
+		log:    log.Log.WithName("action-runner"),
 		ctx:    ctx,
 		cr:     cr,
 	}
