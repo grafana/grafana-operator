@@ -142,6 +142,8 @@ type GrafanaDataSourceJsonData struct {
 	// Fields for Loki data sources
 	MaxLines      int                                  `json:"maxLines,omitempty"`
 	DerivedFields []GrafanaDataSourceJsonDerivedFields `json:"derivedFields,omitempty"`
+	// Fields for Prometheus data sources
+	CustomQueryParameters string `json:"customQueryParameters,omitempty"`
 }
 
 type GrafanaDataSourceJsonDerivedFields struct {
