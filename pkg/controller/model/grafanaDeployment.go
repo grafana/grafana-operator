@@ -506,12 +506,6 @@ func getInitContainers(cr *v1alpha1.Grafana, plugins string) []v13.Container {
 		tag = cfg.GetConfigString(config.ConfigPluginsInitContainerTag, config.PluginsInitContainerTag)
 	}
 
-	if cr.Spec.InitImage != "" {
-		image = cr.Spec.InitImage
-	} else {
-		image := cfg.GetConfigString(config.ConfigPluginsInitContainerImage, config.PluginsInitContainerImage)
-		tag := cfg.GetConfigString(config.ConfigPluginsInitContainerTag, config.PluginsInitContainerTag)
-	}
 
 	return []v13.Container{
 		{
