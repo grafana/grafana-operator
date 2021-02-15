@@ -34,6 +34,7 @@ type GrafanaSpec struct {
 	DataStorage                *GrafanaDataStorage      `json:"dataStorage,omitempty"`
 	Jsonnet                    *JsonnetConfig           `json:"jsonnet,omitempty"`
 	BaseImage                  string                   `json:"baseImage,omitempty"`
+	InitImage                  string                   `json:"initImage,omitempty"`
 	LivenessProbeSpec          *LivenessProbeSpec       `json:"livenessProbeSpec,omitempty"`
 	ReadinessProbeSpec         *ReadinessProbeSpec      `json:"readinessProbeSpec,omitempty"`
 }

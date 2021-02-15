@@ -496,13 +496,22 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 
 func getInitContainers(cr *v1alpha1.Grafana, plugins string) []v13.Container {
 	cfg := config.GetControllerConfig()
-	image := cfg.GetConfigString(config.ConfigPluginsInitContainerImage, config.PluginsInitContainerImage)
-	tag := cfg.GetConfigString(config.ConfigPluginsInitContainerTag, config.PluginsInitContainerTag)
+	var image string
+	var tag string
+	var repo string
+
+	if cr.Spec.InitImage != "" {
+		image = cr.Spec.InitImage
+	} else {
+		repo = cfg.GetConfigString(config.ConfigPluginsInitContainerImage, config.PluginsInitContainerImage)
+		tag = cfg.GetConfigString(config.ConfigPluginsInitContainerTag, config.PluginsInitContainerTag)
+		image = fmt.Sprintf("%s:%s", repo, tag)
+	}
 
 	return []v13.Container{
 		{
 			Name:  GrafanaInitContainerName,
-			Image: fmt.Sprintf("%s:%s", image, tag),
+			Image: image,
 			Env: []v13.EnvVar{
 				{
 					Name:  "GRAFANA_PLUGINS",
