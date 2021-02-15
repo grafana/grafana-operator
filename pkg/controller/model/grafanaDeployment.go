@@ -508,7 +508,6 @@ func getInitContainers(cr *v1alpha1.Grafana, plugins string) []v13.Container {
 		image = fmt.Sprintf("%s:%s", repo, tag)
 	}
 
-
 	return []v13.Container{
 		{
 			Name:  GrafanaInitContainerName,
