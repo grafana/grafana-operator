@@ -345,6 +345,11 @@ func (in *GrafanaConfigAuth) DeepCopyInto(out *GrafanaConfigAuth) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.SigV4AuthEnabled != nil {
+		in, out := &in.SigV4AuthEnabled, &out.SigV4AuthEnabled
+		*out = new(bool)
+		**out = **in
+	}
 	if in.OauthAutoLogin != nil {
 		in, out := &in.OauthAutoLogin, &out.OauthAutoLogin
 		*out = new(bool)
