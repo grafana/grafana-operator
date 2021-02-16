@@ -93,18 +93,12 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	// Get the actions required to reach the desired state
-<<<<<<< HEAD:pkg/controller/grafana/grafana_controller.go
-
 	reconciler := NewGrafanaReconciler()
 	desiredState := reconciler.Reconcile(currentState, cr)
-=======
 	grafanaState := NewGrafanaState()
-<<<<<<< HEAD
 	desiredState := grafanaState.getGrafanaDesiredState(currentState, cr)
->>>>>>> 3cb2e6f6... restructure project and begin moving grafana_controller:controllers/grafana/grafana_controller.go
-=======
+
 	actions := grafanaState.getReconcileActions(currentState, cr)
->>>>>>> 625e8f51... add grafana controller/reconciler classes and misc files
 
 	// Run the actions to reach the desired state
 	actionRunner := common.NewClusterActionRunner(r.Context, r.Client, r.Scheme, cr)

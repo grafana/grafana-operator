@@ -1,7 +1,9 @@
 package model
 
 import (
-	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/controllers/constants"
+	"github.com/integr8ly/grafana-operator/controllers/model"
 	v1 "github.com/openshift/api/route/v1"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -33,7 +35,7 @@ func GetIngressAnnotations(cr *v1alpha1.Grafana, existing map[string]string) map
 	if cr.Spec.Ingress == nil {
 		return existing
 	}
-	return MergeAnnotations(cr.Spec.Ingress.Annotations, existing)
+	return model.MergeAnnotations(cr.Spec.Ingress.Annotations, existing)
 }
 
 func GetIngressTargetPort(cr *v1alpha1.Grafana) intstr.IntOrString {
@@ -72,7 +74,7 @@ func getRouteSpec(cr *v1alpha1.Grafana) v1.RouteSpec {
 		if cr.Spec.Service != nil && cr.Spec.Service.Name != "" {
 			return cr.Spec.Service.Name
 		}
-		return GrafanaServiceName
+		return constants.GrafanaServiceName
 	}
 	return v1.RouteSpec{
 		Host: GetHost(cr),
@@ -95,7 +97,7 @@ func getRouteSpec(cr *v1alpha1.Grafana) v1.RouteSpec {
 func GrafanaRoute(cr *v1alpha1.Grafana) *v1.Route {
 	return &v1.Route{
 		ObjectMeta: v12.ObjectMeta{
-			Name:        GrafanaRouteName,
+			Name:        constants.GrafanaRouteName,
 			Namespace:   cr.Namespace,
 			Labels:      GetIngressLabels(cr),
 			Annotations: GetIngressAnnotations(cr, nil),
@@ -107,7 +109,7 @@ func GrafanaRoute(cr *v1alpha1.Grafana) *v1.Route {
 func GrafanaRouteSelector(cr *v1alpha1.Grafana) client.ObjectKey {
 	return client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      GrafanaRouteName,
+		Name:      constants.GrafanaRouteName,
 	}
 }
 

@@ -38,27 +38,6 @@ spec:
     mediatype: image/svg+xml
   install:
     spec:
-      clusterPermissions:
-      - rules:
-        - apiGroups:
-          - integreatly.org
-          resources:
-          - grafanadashboards
-          - grafanadashboards/status
-          verbs:
-          - get
-          - list
-          - update
-          - watch
-        - apiGroups:
-          - ""
-          resources:
-          - namespaces
-          verbs:
-          - get
-          - list
-          - watch
-        serviceAccountName: grafana-operator
       deployments:
       - name: grafana-operator
         spec:
@@ -89,7 +68,7 @@ spec:
                       fieldPath: metadata.name
                 - name: OPERATOR_NAME
                   value: grafana-operator
-                image: quay.io/integreatly/grafana-operator:v3.8.1
+                image: quay.io/integreatly/grafana-operator:v3.9.0
                 imagePullPolicy: Always
                 name: grafana-operator
                 ports:

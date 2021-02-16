@@ -1,9 +1,11 @@
 package model
 
 import (
+	"github.com/integr8ly/grafana-operator/controllers/constants"
+	"github.com/integr8ly/grafana-operator/controllers/model"
 	"strconv"
 
-	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -14,7 +16,7 @@ func getServiceName(cr *v1alpha1.Grafana) string {
 	if cr.Spec.Service != nil && cr.Spec.Service.Name != "" {
 		return cr.Spec.Service.Name
 	}
-	return GrafanaServiceName
+	return constants.GrafanaServiceName
 }
 
 func getServiceLabels(cr *v1alpha1.Grafana) map[string]string {
@@ -29,7 +31,7 @@ func getServiceAnnotations(cr *v1alpha1.Grafana, existing map[string]string) map
 		return existing
 	}
 
-	return MergeAnnotations(cr.Spec.Service.Annotations, existing)
+	return model.MergeAnnotations(cr.Spec.Service.Annotations, existing)
 }
 
 func getServiceType(cr *v1alpha1.Grafana) v1.ServiceType {
@@ -51,16 +53,16 @@ func getClusterIP(cr *v1alpha1.Grafana) string {
 
 func GetGrafanaPort(cr *v1alpha1.Grafana) int {
 	if cr.Spec.Config.Server == nil {
-		return GrafanaHttpPort
+		return constants.GrafanaHttpPort
 	}
 
 	if cr.Spec.Config.Server.HttpPort == "" {
-		return GrafanaHttpPort
+		return constants.GrafanaHttpPort
 	}
 
 	port, err := strconv.Atoi(cr.Spec.Config.Server.HttpPort)
 	if err != nil {
-		return GrafanaHttpPort
+		return constants.GrafanaHttpPort
 	}
 
 	return port
@@ -71,7 +73,7 @@ func getServicePorts(cr *v1alpha1.Grafana, currentState *v1.Service) []v1.Servic
 
 	defaultPorts := []v1.ServicePort{
 		{
-			Name:       GrafanaHttpPortName,
+			Name:       constants.GrafanaHttpPortName,
 			Protocol:   "TCP",
 			Port:       intPort,
 			TargetPort: intstr.FromString("grafana-http"),
@@ -86,7 +88,7 @@ func getServicePorts(cr *v1alpha1.Grafana, currentState *v1.Service) []v1.Servic
 	if cr.Spec.Service != nil &&
 		currentState != nil {
 		for _, port := range currentState.Spec.Ports {
-			if port.Name == GrafanaHttpPortName {
+			if port.Name == constants.GrafanaHttpPortName {
 				defaultPorts[0].NodePort = port.NodePort
 			}
 		}
@@ -99,7 +101,7 @@ func getServicePorts(cr *v1alpha1.Grafana, currentState *v1.Service) []v1.Servic
 	// Don't allow overriding the default port but allow adding
 	// additional ports
 	for _, port := range cr.Spec.Service.Ports {
-		if port.Name == GrafanaHttpPortName || port.Port == intPort {
+		if port.Name == constants.GrafanaHttpPortName || port.Port == intPort {
 			continue
 		}
 		defaultPorts = append(defaultPorts, port)
@@ -119,7 +121,7 @@ func GrafanaService(cr *v1alpha1.Grafana) *v1.Service {
 		Spec: v1.ServiceSpec{
 			Ports: getServicePorts(cr, nil),
 			Selector: map[string]string{
-				"app": GrafanaPodLabel,
+				"app": constants.GrafanaPodLabel,
 			},
 			ClusterIP: getClusterIP(cr),
 			Type:      getServiceType(cr),

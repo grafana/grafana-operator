@@ -514,8 +514,6 @@ type GrafanaPlugin struct {
 	Version string `json:"version"`
 }
 
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
 // Grafana is the Schema for the grafanas API
 // +kubebuilder:object:root=true
 type Grafana struct {
@@ -525,8 +523,6 @@ type Grafana struct {
 	Spec   GrafanaSpec   `json:"spec,omitempty"`
 	Status GrafanaStatus `json:"status,omitempty"`
 }
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // GrafanaList contains a list of Grafana
 // +kubebuilder:object:root=true

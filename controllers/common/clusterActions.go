@@ -4,8 +4,11 @@ import (
 	"context"
 	stdErr "errors"
 	"fmt"
-	"github.com/go-logr/logr"
 	"github.com/integr8ly/grafana-operator/controllers/constants"
+	"os"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/go-logr/logr"
 	v13 "github.com/openshift/api/route/v1"
 	v12 "k8s.io/api/apps/v1"
 	v14 "k8s.io/api/core/v1"
@@ -13,11 +16,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type ActionRunner interface {
@@ -66,7 +66,7 @@ func NewClusterActionRunner(ctx context.Context, client client.Client, scheme *r
 	return &ClusterActionRunner{
 		scheme: scheme,
 		client: client,
-		log:    log.Log.WithName("action-runner"),
+		log:    logf.Log.WithName("action-runner"),
 		ctx:    ctx,
 		cr:     cr,
 	}
@@ -161,7 +161,7 @@ func (i *ClusterActionRunner) update(obj runtime.Object) error {
 
 func (i *ClusterActionRunner) delete(obj runtime.Object) error {
 	return i.client.Delete(i.ctx, obj)
-}
+}q
 
 func (i *ClusterActionRunner) routeReady(obj runtime.Object) error {
 	ready := IsRouteReady(obj.(*v13.Route))

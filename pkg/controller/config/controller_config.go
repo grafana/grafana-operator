@@ -2,11 +2,11 @@ package config
 
 import (
 	"fmt"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sync"
 	"time"
 
-	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
 )
 
 const (
