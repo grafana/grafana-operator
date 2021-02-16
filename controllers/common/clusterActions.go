@@ -4,11 +4,11 @@ import (
 	"context"
 	stdErr "errors"
 	"fmt"
+	"github.com/go-logr/logr"
 	"github.com/integr8ly/grafana-operator/controllers/constants"
 	"os"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/go-logr/logr"
 	v13 "github.com/openshift/api/route/v1"
 	v12 "k8s.io/api/apps/v1"
 	v14 "k8s.io/api/core/v1"
@@ -22,14 +22,14 @@ import (
 
 type ActionRunner interface {
 	RunAll(desiredState DesiredClusterState) error
-	create(obj runtime.Object) error
-	update(obj runtime.Object) error
-	delete(obj runtime.Object) error
+	create(obj client.Object) error
+	update(obj client.Object) error
+	delete(obj client.Object) error
 	exposeSecret(ns string, ref *v14.SecretEnvSource, vars []string) error
 	exposeConfigMap(ns string, ref *v14.ConfigMapEnvSource, vars []string) error
-	routeReady(obj runtime.Object) error
-	ingressReady(obj runtime.Object) error
-	deploymentReady(obj runtime.Object) error
+	routeReady(obj client.Object) error
+	ingressReady(obj client.Object) error
+	deploymentReady(obj client.Object) error
 }
 
 type ClusterAction interface {
@@ -59,10 +59,10 @@ type ClusterActionRunner struct {
 	client client.Client
 	ctx    context.Context
 	log    logr.Logger
-	cr     runtime.Object
+	cr     client.Object
 }
 
-func NewClusterActionRunner(ctx context.Context, client client.Client, scheme *runtime.Scheme, cr runtime.Object) ActionRunner {
+func NewClusterActionRunner(ctx context.Context, client client.Client, scheme *runtime.Scheme, cr client.Object) ActionRunner {
 	return &ClusterActionRunner{
 		scheme: scheme,
 		client: client,
@@ -132,7 +132,7 @@ func (i *ClusterActionRunner) exposeConfigMap(ns string, ref *v14.ConfigMapEnvSo
 	return nil
 }
 
-func (i *ClusterActionRunner) create(obj runtime.Object) error {
+func (i *ClusterActionRunner) create(obj client.Object) error {
 	err := controllerutil.SetControllerReference(i.cr.(v1.Object), obj.(v1.Object), i.scheme)
 	if err != nil {
 		return err
@@ -141,7 +141,7 @@ func (i *ClusterActionRunner) create(obj runtime.Object) error {
 	return i.client.Create(i.ctx, obj)
 }
 
-func (i *ClusterActionRunner) update(obj runtime.Object) error {
+func (i *ClusterActionRunner) update(obj client.Object) error {
 	err := controllerutil.SetControllerReference(i.cr.(v1.Object), obj.(v1.Object), i.scheme)
 	if err != nil {
 		return err
@@ -159,11 +159,11 @@ func (i *ClusterActionRunner) update(obj runtime.Object) error {
 	return nil
 }
 
-func (i *ClusterActionRunner) delete(obj runtime.Object) error {
+func (i *ClusterActionRunner) delete(obj client.Object) error {
 	return i.client.Delete(i.ctx, obj)
-}q
+}
 
-func (i *ClusterActionRunner) routeReady(obj runtime.Object) error {
+func (i *ClusterActionRunner) routeReady(obj client.Object) error {
 	ready := IsRouteReady(obj.(*v13.Route))
 	if !ready {
 		return stdErr.New("route not ready")
@@ -171,7 +171,7 @@ func (i *ClusterActionRunner) routeReady(obj runtime.Object) error {
 	return nil
 }
 
-func (i *ClusterActionRunner) ingressReady(obj runtime.Object) error {
+func (i *ClusterActionRunner) ingressReady(obj client.Object) error {
 	ready := IsIngressReady(obj.(*v1beta1.Ingress))
 	if !ready {
 		return stdErr.New("ingress not ready")
@@ -179,7 +179,7 @@ func (i *ClusterActionRunner) ingressReady(obj runtime.Object) error {
 	return nil
 }
 
-func (i *ClusterActionRunner) deploymentReady(obj runtime.Object) error {
+func (i *ClusterActionRunner) deploymentReady(obj client.Object) error {
 	ready, err := IsDeploymentReady(obj.(*v12.Deployment))
 	if err != nil {
 		return err
@@ -194,19 +194,19 @@ func (i *ClusterActionRunner) deploymentReady(obj runtime.Object) error {
 // An action to create generic kubernetes resources
 // (resources that don't require special treatment)
 type GenericCreateAction struct {
-	Ref runtime.Object
+	Ref client.Object
 	Msg string
 }
 
 // An action to update generic kubernetes resources
 // (resources that don't require special treatment)
 type GenericUpdateAction struct {
-	Ref runtime.Object
+	Ref client.Object
 	Msg string
 }
 
 type WaitForRouteAction struct {
-	Ref runtime.Object
+	Ref client.Object
 	Msg string
 }
 
@@ -215,24 +215,24 @@ type LogAction struct {
 }
 
 type RouteReadyAction struct {
-	Ref runtime.Object
+	Ref client.Object
 	Msg string
 }
 
 type IngressReadyAction struct {
-	Ref runtime.Object
+	Ref client.Object
 	Msg string
 }
 
 type DeploymentReadyAction struct {
-	Ref runtime.Object
+	Ref client.Object
 	Msg string
 }
 
 // An action to delete generic kubernetes resources
 // (resources that don't require special treatment)
 type GenericDeleteAction struct {
-	Ref runtime.Object
+	Ref client.Object
 	Msg string
 }
 

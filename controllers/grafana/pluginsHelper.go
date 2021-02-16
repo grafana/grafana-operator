@@ -6,7 +6,6 @@ import (
 	grafanav1alpha1 "github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/controllers/config"
 	"net/http"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"strings"
 )
 
@@ -86,7 +85,7 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *grafanav1alpha1.Grafana, requested
 	// Try to pick the latest versions of all plugins
 	requested, err := h.pickLatestVersions(requested)
 	if err != nil {
-		log.Log.Error(err, "unable to pick latest plugin versions")
+		log.Error(err, "unable to pick latest plugin versions")
 	}
 
 	// Remove all plugins
@@ -98,7 +97,7 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *grafanav1alpha1.Grafana, requested
 		// Don't allow to install multiple versions of the same plugin
 		if filteredPlugins.HasSomeVersionOf(&plugin) == true {
 			installedVersion := filteredPlugins.GetInstalledVersionOf(&plugin)
-			log.Log.V(1).Info(fmt.Sprintf("not installing version %s of %s because %s is already installed", plugin.Version, plugin.Name, installedVersion.Version))
+			log.V(1).Info(fmt.Sprintf("not installing version %s of %s because %s is already installed", plugin.Version, plugin.Name, installedVersion.Version))
 			continue
 		}
 
@@ -116,7 +115,7 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *grafanav1alpha1.Grafana, requested
 		// New plugin
 		if cr.Status.InstalledPlugins.HasSomeVersionOf(&plugin) == false {
 			filteredPlugins = append(filteredPlugins, plugin)
-			log.Log.V(1).Info(fmt.Sprintf("installing plugin %s@%s", plugin.Name, plugin.Version))
+			log.V(1).Info(fmt.Sprintf("installing plugin %s@%s", plugin.Name, plugin.Version))
 			pluginsUpdated = true
 			continue
 		}
@@ -131,7 +130,7 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *grafanav1alpha1.Grafana, requested
 			requested.VersionsOf(&plugin) == 1 {
 			installedVersion := cr.Status.InstalledPlugins.GetInstalledVersionOf(&plugin)
 			filteredPlugins = append(filteredPlugins, plugin)
-			log.Log.V(1).Info(fmt.Sprintf("changing version of plugin %s form %s to %s", plugin.Name, installedVersion.Version, plugin.Version))
+			log.V(1).Info(fmt.Sprintf("changing version of plugin %s form %s to %s", plugin.Name, installedVersion.Version, plugin.Version))
 			pluginsUpdated = true
 			continue
 		}

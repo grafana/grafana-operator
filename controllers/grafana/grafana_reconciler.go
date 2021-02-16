@@ -2,24 +2,25 @@ package grafana
 
 import (
 	"fmt"
-	"github.com/integr8ly/grafana-operator/controllers/constants"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-
 	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/controllers/common"
 	"github.com/integr8ly/grafana-operator/controllers/config"
+	"github.com/integr8ly/grafana-operator/controllers/constants"
 	"github.com/integr8ly/grafana-operator/controllers/model"
+	v1 "k8s.io/api/core/v1"
+	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"regexp"
 )
 
-type GrafanaState struct {
+type GrafanaReconciler struct {
 	DsHash     string
 	ConfigHash string
 	PluginsEnv string
 	Plugins    *PluginsHelperImpl
 }
 
-func NewGrafanaState() *GrafanaState {
-	return &GrafanaState{
+func NewGrafanaReconciler() *GrafanaReconciler {
+	return &GrafanaReconciler{
 		DsHash:     "",
 		ConfigHash: "",
 		PluginsEnv: "",
@@ -27,7 +28,7 @@ func NewGrafanaState() *GrafanaState {
 	}
 }
 
-func (i *GrafanaState) getReconcileActions(state *common.ClusterState, cr *v1alpha1.Grafana) common.DesiredClusterState {
+func (i *GrafanaReconciler) Reconcile(state *common.ClusterState, cr *v1alpha1.Grafana) common.DesiredClusterState {
 	desired := common.DesiredClusterState{}
 
 	desired = desired.AddAction(i.getGrafanaAdminUserSecretDesiredState(state, cr))
@@ -57,7 +58,7 @@ func (i *GrafanaState) getReconcileActions(state *common.ClusterState, cr *v1alp
 	return desired
 }
 
-func (i *GrafanaState) getGrafanaReadiness(state *common.ClusterState, cr *v1alpha1.Grafana) []common.ClusterAction {
+func (i *GrafanaReconciler) getGrafanaReadiness(state *common.ClusterState, cr *v1alpha1.Grafana) []common.ClusterAction {
 	var actions []common.ClusterAction
 	cfg := config.GetControllerConfig()
 	openshift := cfg.GetConfigBool(config.ConfigOpenshift, false)
@@ -81,7 +82,8 @@ func (i *GrafanaState) getGrafanaReadiness(state *common.ClusterState, cr *v1alp
 	})
 }
 
-func (i *GrafanaState) getGrafanaServiceDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
+func (i *GrafanaReconciler) getGrafanaServiceDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
+
 	if state.GrafanaService == nil {
 		return common.GenericCreateAction{
 			Ref: model.GrafanaService(cr),
@@ -116,7 +118,7 @@ func (i *GrafanaState) getGrafanaServiceDesiredState(state *common.ClusterState,
 	}
 }
 
-func (i *GrafanaState) getGrafanaDataPvcDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
+func (i *GrafanaReconciler) getGrafanaDataPvcDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
 	if state.GrafanaDataPersistentVolumeClaim == nil {
 		return common.GenericCreateAction{
 			Ref: model.GrafanaDataPVC(cr),
@@ -130,7 +132,11 @@ func (i *GrafanaState) getGrafanaDataPvcDesiredState(state *common.ClusterState,
 	}
 }
 
-func (i *GrafanaState) getGrafanaServiceAccountDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
+func (i *GrafanaReconciler) getGrafanaServiceAccountDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
+
+	if cr.Spec.ServiceAccount != nil && cr.Spec.ServiceAccount.Skip != nil && *cr.Spec.ServiceAccount.Skip == true {
+		return nil
+	}
 	if state.GrafanaServiceAccount == nil {
 		return common.GenericCreateAction{
 			Ref: model.GrafanaServiceAccount(cr),
@@ -145,13 +151,13 @@ func (i *GrafanaState) getGrafanaServiceAccountDesiredState(state *common.Cluste
 
 }
 
-func (i *GrafanaState) getGrafanaConfigDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) []common.ClusterAction {
-	var actions []common.ClusterAction
+func (i *GrafanaReconciler) getGrafanaConfigDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) []common.ClusterAction {
+	actions := []common.ClusterAction{}
 
 	if state.GrafanaConfig == nil {
 		config, err := model.GrafanaConfig(cr)
 		if err != nil {
-			log.Log.Error(err, "error creating grafana config")
+			log.Error(err, "error creating grafana config")
 			return nil
 		}
 
@@ -166,7 +172,7 @@ func (i *GrafanaState) getGrafanaConfigDesiredState(state *common.ClusterState, 
 	} else {
 		config, err := model.GrafanaConfigReconciled(cr, state.GrafanaConfig)
 		if err != nil {
-			log.Log.Error(err, "error updating grafana config")
+			log.Error(err, "error updating grafana config")
 			return nil
 		}
 
@@ -180,7 +186,7 @@ func (i *GrafanaState) getGrafanaConfigDesiredState(state *common.ClusterState, 
 	return actions
 }
 
-func (i *GrafanaState) getGrafanaDatasourceConfigDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
+func (i *GrafanaReconciler) getGrafanaDatasourceConfigDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
 	// Only create the datasources configmap if it doesn't exist. Updates
 	// are handled by the datasources controller
 	if state.GrafanaDataSourceConfig == nil {
@@ -196,7 +202,7 @@ func (i *GrafanaState) getGrafanaDatasourceConfigDesiredState(state *common.Clus
 	return nil
 }
 
-func (i *GrafanaState) getGrafanaExternalAccessDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
+func (i *GrafanaReconciler) getGrafanaExternalAccessDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
 	cfg := config.GetControllerConfig()
 	isOpenshift := cfg.GetConfigBool(config.ConfigOpenshift, false)
 
@@ -224,7 +230,7 @@ func (i *GrafanaState) getGrafanaExternalAccessDesiredState(state *common.Cluste
 	}
 }
 
-func (i *GrafanaState) getGrafanaAdminUserSecretDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
+func (i *GrafanaReconciler) getGrafanaAdminUserSecretDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.SkipCreateAdminAccount != nil && *cr.Spec.Deployment.SkipCreateAdminAccount {
 		return nil
 	}
@@ -241,7 +247,7 @@ func (i *GrafanaState) getGrafanaAdminUserSecretDesiredState(state *common.Clust
 	}
 }
 
-func (i *GrafanaState) getGrafanaIngressDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
+func (i *GrafanaReconciler) getGrafanaIngressDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
 	if state.GrafanaIngress == nil {
 		return common.GenericCreateAction{
 			Ref: model.GrafanaIngress(cr),
@@ -254,7 +260,7 @@ func (i *GrafanaState) getGrafanaIngressDesiredState(state *common.ClusterState,
 	}
 }
 
-func (i *GrafanaState) getGrafanaRouteDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
+func (i *GrafanaReconciler) getGrafanaRouteDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
 	if state.GrafanaRoute == nil {
 		return common.GenericCreateAction{
 			Ref: model.GrafanaRoute(cr),
@@ -267,7 +273,7 @@ func (i *GrafanaState) getGrafanaRouteDesiredState(state *common.ClusterState, c
 	}
 }
 
-func (i *GrafanaState) getGrafanaDeploymentDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
+func (i *GrafanaReconciler) getGrafanaDeploymentDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
 	if state.GrafanaDeployment == nil {
 		return common.GenericCreateAction{
 			Ref: model.GrafanaDeployment(cr, i.ConfigHash, i.DsHash),
@@ -282,7 +288,7 @@ func (i *GrafanaState) getGrafanaDeploymentDesiredState(state *common.ClusterSta
 	}
 }
 
-func (i *GrafanaState) getEnvVarsDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) []common.ClusterAction {
+func (i *GrafanaReconciler) getEnvVarsDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) []common.ClusterAction {
 	if state.GrafanaDeployment == nil {
 		return nil
 	}
@@ -318,7 +324,7 @@ func (i *GrafanaState) getEnvVarsDesiredState(state *common.ClusterState, cr *v1
 	return actions
 }
 
-func (i *GrafanaState) getGrafanaPluginsDesiredState(cr *v1alpha1.Grafana) common.ClusterAction {
+func (i *GrafanaReconciler) getGrafanaPluginsDesiredState(cr *v1alpha1.Grafana) common.ClusterAction {
 	// Fetch all plugins of all dashboards
 	requestedPlugins := config.GetControllerConfig().GetAllPlugins()
 
@@ -348,18 +354,18 @@ func (i *GrafanaState) getGrafanaPluginsDesiredState(cr *v1alpha1.Grafana) commo
 	}
 }
 
-func (i *GrafanaState) reconcilePlugins(cr *v1alpha1.Grafana, plugins v1alpha1.PluginList) {
+func (i *GrafanaReconciler) reconcilePlugins(cr *v1alpha1.Grafana, plugins v1alpha1.PluginList) {
 	var validPlugins []v1alpha1.GrafanaPlugin
 	var failedPlugins []v1alpha1.GrafanaPlugin
 
 	for _, plugin := range plugins {
 		if i.Plugins.PluginExists(plugin) == false {
-			log.Log.Info("invalid plugin", "plugin.Name", plugin.Name, "plugin.Version", plugin.Version)
+			log.V(1).Info(fmt.Sprintf("invalid plugin: %s@%s", plugin.Name, plugin.Version))
 			failedPlugins = append(failedPlugins, plugin)
 			continue
 		}
 
-		log.Log.Info("installing plugin", "plugin.Name", plugin.Name, "plugin.Version", plugin.Version)
+		log.V(1).Info(fmt.Sprintf("installing plugin: %s@%s", plugin.Name, plugin.Version))
 		validPlugins = append(validPlugins, plugin)
 	}
 

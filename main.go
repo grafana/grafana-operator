@@ -79,7 +79,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&grafana.GrafanaReconciler{
+	if err = (&grafana.ReconcileGrafana{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Grafana"),
 		Scheme: mgr.GetScheme(),

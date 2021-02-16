@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const (
@@ -17,7 +16,7 @@ const (
 	JsonnetAnnotation = "jsonnet/library"
 )
 
-func reconcileConfigMaps(cr *grafanav1alpha1.Grafana, r *GrafanaReconciler) error {
+func reconcileConfigMaps(cr *grafanav1alpha1.Grafana, r *ReconcileGrafana) error {
 	if cr.Spec.Jsonnet == nil || cr.Spec.Jsonnet.LibraryLabelSelector == nil {
 		return nil
 	}
@@ -47,7 +46,7 @@ func reconcileConfigMaps(cr *grafanav1alpha1.Grafana, r *GrafanaReconciler) erro
 
 		folderPath, err := createFolder(configMap.Name, jsonnetBasePath)
 		if err != nil {
-			log.Log.Error(err, fmt.Sprintf("error creating jsonnet library directory for %v", configMap.Name))
+			log.Error(err, fmt.Sprintf("error creating jsonnet library directory for %v", configMap.Name))
 			continue
 		}
 
@@ -57,7 +56,7 @@ func reconcileConfigMaps(cr *grafanav1alpha1.Grafana, r *GrafanaReconciler) erro
 			if err != nil {
 				return err
 			}
-			log.Log.V(1).Info(fmt.Sprintf("imported jsonnet library %v", filePath))
+			log.V(1).Info(fmt.Sprintf("imported jsonnet library %v", filePath))
 		}
 	}
 	return nil
