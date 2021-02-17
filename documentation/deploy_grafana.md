@@ -227,6 +227,7 @@ configured:
 spec:
   ingress:
     enabled: <Boolean>     # Create an Ingress (or Route if on OpenShift)
+    ingressClassName: <String> # Sets ingress ingressClassName
     hostname: <String>      # Sets the hostname. Assigned automatically on OpenShift if not provided
     tlsEnabled: <Boolean>   # Enable TLS on Ingress
     tlsSecretName: <String> # TLS secret name in the same namespace
@@ -239,6 +240,7 @@ spec:
       app: grafana
       ...
     path:                   # Sets the path of the Ingress. Ignored for Routes
+    pathType: <String>      # Sets pathType: ImplementationSpecific, Exact, Prefix (defaults to ImplementationSpecific)
 ```
 
 ## Configuring the ServiceAccount

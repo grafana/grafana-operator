@@ -64,9 +64,15 @@ spec:
                 enabled:
                   type: boolean
                   description: Create an ingress / route
+                ingressClassName:
+                  type: string
+                  description: Ingress class name
                 path:
                   type: string
                   description: Ingress path
+                pathType:
+                  type: string
+                  description: pathType specifies how ingress paths should be matched
                 hostname:
                   type: string
                   description: The hostname of the ingress / route
