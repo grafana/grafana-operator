@@ -18,6 +18,10 @@ func GetIngressPathType(cr *v1alpha1.Grafana) *v1beta1.PathType {
 }
 
 func GetIngressClassName(cr *v1alpha1.Grafana) *string {
+	if cr.Spec.Ingress.IngressClassName == "" {
+		return nil
+	}
+
 	return &cr.Spec.Ingress.IngressClassName
 }
 
