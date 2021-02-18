@@ -108,15 +108,17 @@ type GrafanaDeployment struct {
 
 // GrafanaIngress provides a means to configure the ingress created
 type GrafanaIngress struct {
-	Annotations   map[string]string      `json:"annotations,omitempty"`
-	Hostname      string                 `json:"hostname,omitempty"`
-	Labels        map[string]string      `json:"labels,omitempty"`
-	Path          string                 `json:"path,omitempty"`
-	Enabled       bool                   `json:"enabled,omitempty"`
-	TLSEnabled    bool                   `json:"tlsEnabled,omitempty"`
-	TLSSecretName string                 `json:"tlsSecretName,omitempty"`
-	TargetPort    string                 `json:"targetPort,omitempty"`
-	Termination   v12.TLSTerminationType `json:"termination,omitempty"`
+	Annotations      map[string]string      `json:"annotations,omitempty"`
+	Hostname         string                 `json:"hostname,omitempty"`
+	Labels           map[string]string      `json:"labels,omitempty"`
+	Path             string                 `json:"path,omitempty"`
+	Enabled          bool                   `json:"enabled,omitempty"`
+	TLSEnabled       bool                   `json:"tlsEnabled,omitempty"`
+	TLSSecretName    string                 `json:"tlsSecretName,omitempty"`
+	TargetPort       string                 `json:"targetPort,omitempty"`
+	Termination      v12.TLSTerminationType `json:"termination,omitempty"`
+	IngressClassName string                 `json:"ingressClassName,omitempty"`
+	PathType         string                 `json:"pathType,omitempty"`
 }
 
 // GrafanaConfig is the configuration for grafana
