@@ -17,7 +17,7 @@ The following properties are accepted in the `spec`:
 * *plugins*: A list of plugins required by the dashboard. They will be installed by the operator if not already present.
 * *datasources*: A list of datasources to be used as inputs. See [datasource inputs](#datasource-inputs).
 * *configMapRef*: Import dashboards from config maps. See [config map refreences](#config-map-references).
-* *CustomFolderName*: Assign this dashboard to a custom folder, if no folder with this name exists on the instance, then a new one will be created. 
+* *customFolderName*: Assign this dashboard to a custom folder, if no folder with this name exists on the instance, then a new one will be created. 
   * _Note_: Folders with custom names are not managed by the operator, by purposeful design they won't be deleted when empty, deletion for these requires manual intervention.
 
 ## Creating a new dashboard
