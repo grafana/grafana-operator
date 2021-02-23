@@ -7,7 +7,7 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - integreatly.org.integreatly.org
+  - integreatly.org
   resources:
   - grafanadashboards
   verbs:
@@ -19,13 +19,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - integreatly.org.integreatly.org
+  - integreatly.org
   resources:
   - grafanadashboards/finalizers
   verbs:
   - update
 - apiGroups:
-  - integreatly.org.integreatly.org
+  - integreatly.org
   resources:
   - grafanadashboards/status
   verbs:
@@ -33,7 +33,7 @@ rules:
   - patch
   - update
 - apiGroups:
-  - integreatly.org.integreatly.org
+  - integreatly.org
   resources:
   - grafanadatasources
   verbs:
@@ -45,13 +45,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - integreatly.org.integreatly.org
+  - integreatly.org
   resources:
   - grafanadatasources/finalizers
   verbs:
   - update
 - apiGroups:
-  - integreatly.org.integreatly.org
+  - integreatly.org
   resources:
   - grafanadatasources/status
   verbs:

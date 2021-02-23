@@ -77,9 +77,9 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 
 var _ reconcile.Reconciler = &GrafanaDatasourceReconciler{}
 
-// +kubebuilder:rbac:groups=integreatly.org.integreatly.org,resources=grafanadatasources,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=integreatly.org.integreatly.org,resources=grafanadatasources/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=integreatly.org.integreatly.org,resources=grafanadatasources/finalizers,verbs=update
+// +kubebuilder:rbac:groups=integreatly.org,resources=grafanadatasources,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=integreatly.org,resources=grafanadatasources/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=integreatly.org,resources=grafanadatasources/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.

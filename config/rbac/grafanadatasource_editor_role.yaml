@@ -5,7 +5,7 @@ metadata:
   name: grafanadatasource-editor-role
 rules:
 - apiGroups:
-  - integreatly.org.integreatly.org
+  - integreatly.org
   resources:
   - grafanadatasources
   verbs:
@@ -17,7 +17,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - integreatly.org.integreatly.org
+  - integreatly.org
   resources:
   - grafanadatasources/status
   verbs:

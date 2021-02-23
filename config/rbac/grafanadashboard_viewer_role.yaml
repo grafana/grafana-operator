@@ -5,7 +5,7 @@ metadata:
   name: grafanadashboard-viewer-role
 rules:
 - apiGroups:
-  - integreatly.org.integreatly.org
+  - integreatly.org
   resources:
   - grafanadashboards
   verbs:
@@ -13,7 +13,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - integreatly.org.integreatly.org
+  - integreatly.org
   resources:
   - grafanadashboards/status
   verbs:

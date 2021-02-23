@@ -515,6 +515,7 @@ type GrafanaPlugin struct {
 
 // Grafana is the Schema for the grafanas API
 // +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 type Grafana struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

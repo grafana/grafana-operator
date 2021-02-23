@@ -5,7 +5,7 @@ metadata:
   name: grafana-viewer-role
 rules:
 - apiGroups:
-  - integreatly.org.integreatly.org
+  - integreatly.org
   resources:
   - grafanas
   verbs:
@@ -13,7 +13,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - integreatly.org.integreatly.org
+  - integreatly.org
   resources:
   - grafanas/status
   verbs:
