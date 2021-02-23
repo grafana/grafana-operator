@@ -90,6 +90,19 @@ spec:
                           type: string
                         defaultRegion:
                           type: string
+                        derivedFields:
+                          items:
+                            properties:
+                              datasourceUid:
+                                type: string
+                              matcherRegex:
+                                type: string
+                              name:
+                                type: string
+                              url:
+                                type: string
+                            type: object
+                          type: array
                         encrypt:
                           type: string
                         esVersion:
@@ -134,8 +147,13 @@ spec:
                           type: string
                         maxIdleConns:
                           type: integer
+                        maxLines:
+                          description: Fields for Loki data sources
+                          type: integer
                         maxOpenConns:
                           type: integer
+                        oauthPassThru:
+                          type: boolean
                         organization:
                           type: string
                         postgresVersion:
@@ -233,6 +251,8 @@ spec:
                           type: string
                       type: object
                     type:
+                      type: string
+                    uid:
                       type: string
                     url:
                       type: string

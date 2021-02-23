@@ -498,14 +498,13 @@ type GrafanaConfigPlugins struct {
 }
 
 // GrafanaStatus defines the observed state of Grafana
-// // +kubebuilder:object:root=true
 type GrafanaStatus struct {
-	Phase               StatusPhase                       `json:"phase"`
-	PreviousServiceName string                            `json:"previousServiceName"`
-	Message             string                            `json:"message"`
-	InstalledDashboards map[string][]*GrafanaDashboardRef `json:"dashboards"`
-	InstalledPlugins    PluginList                        `json:"installedPlugins"`
-	FailedPlugins       PluginList                        `json:"failedPlugins"`
+	Phase               StatusPhase            `json:"phase"`
+	PreviousServiceName string                 `json:"previousServiceName"`
+	Message             string                 `json:"message"`
+	InstalledDashboards []*GrafanaDashboardRef `json:"dashboards"`
+	InstalledPlugins    PluginList             `json:"installedPlugins"`
+	FailedPlugins       PluginList             `json:"failedPlugins"`
 }
 
 // GrafanaPlugin contains information about a single plugin

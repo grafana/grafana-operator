@@ -278,7 +278,7 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 		cr.Status.InstalledDashboards = r.Config.Dashboards
 	} else {
 		if r.Config.Dashboards == nil {
-			r.Config.SetDashboards(make(map[string][]*grafanav1alpha1.GrafanaDashboardRef))
+			r.Config.SetDashboards([]*grafanav1alpha1.GrafanaDashboardRef{})
 		}
 	}
 

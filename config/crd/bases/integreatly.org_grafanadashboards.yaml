@@ -73,8 +73,6 @@ spec:
                 type: string
               jsonnet:
                 type: string
-              name:
-                type: string
               plugins:
                 items:
                   description: GrafanaPlugin contains information about a single plugin
@@ -93,7 +91,6 @@ spec:
             required:
             - json
             - jsonnet
-            - name
             type: object
         type: object
     served: true

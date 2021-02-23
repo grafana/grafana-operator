@@ -36,7 +36,7 @@ type ControllerConfig struct {
 	*sync.Mutex
 	Values     map[string]interface{}
 	Plugins    map[string]v1alpha1.PluginList
-	Dashboards map[string][]*v1alpha1.GrafanaDashboardRef
+	Dashboards []*v1alpha1.GrafanaDashboardRef
 }
 
 var instance *ControllerConfig
@@ -50,7 +50,7 @@ func GetControllerConfig() *ControllerConfig {
 			Mutex:      &sync.Mutex{},
 			Values:     map[string]interface{}{},
 			Plugins:    map[string]v1alpha1.PluginList{},
-			Dashboards: map[string][]*v1alpha1.GrafanaDashboardRef{},
+			Dashboards: []*v1alpha1.GrafanaDashboardRef{},
 		}
 	})
 	return instance
@@ -94,10 +94,10 @@ func (c *ControllerConfig) RemovePluginsFor(namespace, name string) {
 func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard, folderId *int64, folderName string) {
 
 	ns := dashboard.Namespace
-	if i, exists := c.HasDashboard(ns, dashboard.Name); !exists {
+	if i, exists := c.HasDashboard(dashboard.UID()); !exists {
 		c.Lock()
 		defer c.Unlock()
-		c.Dashboards[ns] = append(c.Dashboards[ns], &v1alpha1.GrafanaDashboardRef{
+		c.Dashboards = append(c.Dashboards, &v1alpha1.GrafanaDashboardRef{
 			Name:       dashboard.Name,
 			Namespace:  ns,
 			UID:        dashboard.UID(),
@@ -108,39 +108,49 @@ func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard, fo
 	} else {
 		c.Lock()
 		defer c.Unlock()
-		c.Dashboards[ns][i].Namespace = ns
-		c.Dashboards[ns][i].UID = dashboard.UID()
-		c.Dashboards[ns][i].Hash = dashboard.Hash()
-		c.Dashboards[ns][i].FolderId = folderId
-		c.Dashboards[ns][i].FolderName = folderName
+		c.Dashboards[i] = &v1alpha1.GrafanaDashboardRef{
+			Name:       dashboard.Name,
+			Namespace:  ns,
+			UID:        dashboard.UID(),
+			Hash:       dashboard.Hash(),
+			FolderId:   folderId,
+			FolderName: folderName,
+		}
 
 	}
+}
+
+func (c *ControllerConfig) HasDashboard(str string) (int, bool) {
+	for i, v := range c.Dashboards {
+		if v.UID == str {
+			return i, true
+		}
+	}
+	return -1, false
 }
 
 func (c *ControllerConfig) InvalidateDashboards() {
 	c.Lock()
 	defer c.Unlock()
 	for _, v := range c.Dashboards {
-		for _, d := range v {
-			d.Hash = ""
-		}
+		v.Hash = ""
 	}
 }
 
-func (c *ControllerConfig) SetDashboards(dashboards map[string][]*v1alpha1.GrafanaDashboardRef) {
+func (c *ControllerConfig) SetDashboards(dashboards []*v1alpha1.GrafanaDashboardRef) {
 	c.Lock()
 	defer c.Unlock()
 	c.Dashboards = dashboards
 }
 
-func (c *ControllerConfig) RemoveDashboard(namespace, name string) {
-	if i, exists := c.HasDashboard(namespace, name); exists {
+func (c *ControllerConfig) RemoveDashboard(hash string) {
+	if i, exists := c.HasDashboard(hash); exists {
 		c.Lock()
 		defer c.Unlock()
-		list := c.Dashboards[namespace]
+		list := c.Dashboards
 		list[i] = list[len(list)-1]
 		list = list[:len(list)-1]
-		c.Dashboards[namespace] = list
+		c.Dashboards = list
 	}
 }
 
@@ -151,13 +161,13 @@ func (c *ControllerConfig) GetDashboards(namespace string) []*v1alpha1.GrafanaDa
 	if namespace == "" {
 		var dashboards []*v1alpha1.GrafanaDashboardRef
 		for _, v := range c.Dashboards {
-			dashboards = append(dashboards, v...)
+			dashboards = append(dashboards, v)
 		}
 		return dashboards
 	}
 
-	if dashboards, ok := c.Dashboards[namespace]; ok {
-		return dashboards
+	if c.Dashboards != nil {
+		return c.Dashboards
 	}
 	return []*v1alpha1.GrafanaDashboardRef{}
 }
@@ -213,21 +223,10 @@ func (c *ControllerConfig) HasConfigItem(key string) bool {
 	return ok
 }
 
-func (c *ControllerConfig) HasDashboard(namespace, name string) (int, bool) {
-	if dashboards, ok := c.Dashboards[namespace]; ok {
-		for i, dashboard := range dashboards {
-			if dashboard.Name == name {
-				return i, true
-			}
-		}
-	}
-	return -1, false
-}
-
 func (c *ControllerConfig) Cleanup(plugins bool) {
 	c.Lock()
 	defer c.Unlock()
-	c.Dashboards = map[string][]*v1alpha1.GrafanaDashboardRef{}
+	c.Dashboards = []*v1alpha1.GrafanaDashboardRef{}
 
 	if plugins {
 		c.Plugins = map[string]v1alpha1.PluginList{}
