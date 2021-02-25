@@ -3144,13 +3144,6 @@ spec:
                 type: string
               previousServiceName:
                 type: string
-            required:
-            - dashboards
-            - failedPlugins
-            - installedPlugins
-            - message
-            - phase
-            - previousServiceName
             type: object
         type: object
     served: true

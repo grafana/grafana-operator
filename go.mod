@@ -1,4 +1,4 @@
- module github.com/integr8ly/grafana-operator
+module github.com/integr8ly/grafana-operator
 
 go 1.15
 
@@ -9,6 +9,8 @@ require (
 	github.com/google/go-jsonnet v0.17.0
 	github.com/openshift/api v3.9.0+incompatible
 	github.com/pkg/errors v0.9.1
+	github.com/spf13/pflag v1.0.5
+	go.uber.org/zap v1.15.0
 	k8s.io/api v0.20.2
 	k8s.io/apimachinery v0.20.2
 	k8s.io/client-go v12.0.0+incompatible

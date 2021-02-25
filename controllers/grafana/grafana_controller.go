@@ -44,22 +44,22 @@ func (r *ReconcileGrafana) SetupWithManager(mgr ctrl.Manager) error {
 // Add creates a new Grafana Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager, autodetectChannel chan schema.GroupVersionKind, _ string) error {
-	return add(mgr, newReconciler(mgr), autodetectChannel)
+	return add(mgr, NewReconciler(mgr), autodetectChannel)
 }
 
-// newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
+// NewReconciler returns a new reconcile.Reconciler
+func NewReconciler(mgr manager.Manager) reconcile.Reconciler {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 
 	return &ReconcileGrafana{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		plugins:  NewPluginsHelper(),
+		Plugins:  NewPluginsHelper(),
 		Context:  ctx,
-		cancel:   cancel,
+		Cancel:   cancel,
 		Config:   config.GetControllerConfig(),
-		recorder: mgr.GetEventRecorderFor(ControllerName),
+		Recorder: mgr.GetEventRecorderFor(ControllerName),
 	}
 }
 
@@ -129,12 +129,12 @@ type ReconcileGrafana struct {
 	// that reads objects from the cache and writes to the apiserver
 	Client   client.Client
 	Scheme   *runtime.Scheme
-	plugins  *PluginsHelperImpl
+	Plugins  *PluginsHelperImpl
 	Context  context.Context
 	Log      logr.Logger
-	cancel   context.CancelFunc
+	Cancel   context.CancelFunc
 	Config   *config.ControllerConfig
-	recorder record.EventRecorder
+	Recorder record.EventRecorder
 }
 
 func watchSecondaryResource(c controller.Controller, resource client.Object) error {
@@ -168,7 +168,7 @@ func (r *ReconcileGrafana) Reconcile(ctx context.Context, request reconcile.Requ
 
 	// Read current state
 	currentState := common.NewClusterState()
-	err = currentState.Read(r.Context, cr, r.Client)
+	err = currentState.Read(ctx, cr, r.Client)
 	if err != nil {
 		log.Error(err, "error reading state")
 		return r.manageError(cr, err, request)
@@ -180,7 +180,7 @@ func (r *ReconcileGrafana) Reconcile(ctx context.Context, request reconcile.Requ
 	desiredState := reconciler.Reconcile(currentState, cr)
 
 	// Run the actions to reach the desired state
-	actionRunner := common.NewClusterActionRunner(r.Context, r.Client, r.Scheme, cr)
+	actionRunner := common.NewClusterActionRunner(ctx, r.Client, r.Scheme, cr)
 	err = actionRunner.RunAll(desiredState)
 	if err != nil {
 		return r.manageError(cr, err, request)
@@ -196,7 +196,7 @@ func (r *ReconcileGrafana) Reconcile(ctx context.Context, request reconcile.Requ
 }
 
 func (r *ReconcileGrafana) manageError(cr *grafanav1alpha1.Grafana, issue error, request reconcile.Request) (reconcile.Result, error) {
-	r.recorder.Event(cr, "Warning", "ProcessingError", issue.Error())
+	//r.recorder.Event(cr, "Warning", "ProcessingError", issue.Error())
 	cr.Status.Phase = grafanav1alpha1.PhaseFailing
 	cr.Status.Message = issue.Error()
 

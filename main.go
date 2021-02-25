@@ -17,7 +17,9 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
+	"github.com/integr8ly/grafana-operator/controllers/config"
 	"github.com/integr8ly/grafana-operator/controllers/grafana"
 	"github.com/integr8ly/grafana-operator/controllers/grafanadashboard"
 	"github.com/integr8ly/grafana-operator/controllers/grafanadatasource"
@@ -78,11 +80,16 @@ func main() {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
-
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
 	if err = (&grafana.ReconcileGrafana{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("Grafana"),
-		Scheme: mgr.GetScheme(),
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Plugins:  grafana.NewPluginsHelper(),
+		Context:  ctx,
+		Cancel:   cancel,
+		Config:   config.GetControllerConfig(),
+		Recorder: mgr.GetEventRecorderFor("GrafanaDashboard"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Grafana")
 		os.Exit(1)
