@@ -3,18 +3,19 @@ package model
 import (
 	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/controllers/constants"
-	"k8s.io/api/extensions/v1beta1"
+	netv1 "k8s.io/api/networking/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func getIngressTLS(cr *v1alpha1.Grafana) []v1beta1.IngressTLS {
+func getIngressTLS(cr *v1alpha1.Grafana) []netv1.IngressTLS {
 	if cr.Spec.Ingress == nil {
 		return nil
 	}
 
 	if cr.Spec.Ingress.TLSEnabled {
-		return []v1beta1.IngressTLS{
+		return []netv1.IngressTLS{
 			{
 				Hosts:      []string{cr.Spec.Ingress.Hostname},
 				SecretName: cr.Spec.Ingress.TLSSecretName,
@@ -24,26 +25,62 @@ func getIngressTLS(cr *v1alpha1.Grafana) []v1beta1.IngressTLS {
 	return nil
 }
 
-func getIngressSpec(cr *v1alpha1.Grafana) v1beta1.IngressSpec {
+func getIngressSpec(cr *v1alpha1.Grafana) netv1.IngressSpec {
 	serviceName := func(cr *v1alpha1.Grafana) string {
 		if cr.Spec.Service != nil && cr.Spec.Service.Name != "" {
 			return cr.Spec.Service.Name
 		}
 		return constants.GrafanaServiceName
 	}
-	return v1beta1.IngressSpec{
+	port := GetIngressTargetPort(cr)
+	portTypeKind := reflect.TypeOf(reflect.TypeOf(port)).Kind()
+
+	if portTypeKind == reflect.Int32 {
+		return netv1.IngressSpec{
+			TLS: getIngressTLS(cr),
+			Rules: []netv1.IngressRule{
+				{
+					Host: GetHost(cr),
+					IngressRuleValue: netv1.IngressRuleValue{
+						HTTP: &netv1.HTTPIngressRuleValue{
+							Paths: []netv1.HTTPIngressPath{
+								{
+									Path: GetPath(cr),
+									Backend: netv1.IngressBackend{
+										Service: &netv1.IngressServiceBackend{
+											Name: serviceName(cr),
+											Port: netv1.ServiceBackendPort{
+												Number: port.IntVal,
+											},
+										},
+										Resource: nil,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+	}
+	return netv1.IngressSpec{
 		TLS: getIngressTLS(cr),
-		Rules: []v1beta1.IngressRule{
+		Rules: []netv1.IngressRule{
 			{
 				Host: GetHost(cr),
-				IngressRuleValue: v1beta1.IngressRuleValue{
-					HTTP: &v1beta1.HTTPIngressRuleValue{
-						Paths: []v1beta1.HTTPIngressPath{
+				IngressRuleValue: netv1.IngressRuleValue{
+					HTTP: &netv1.HTTPIngressRuleValue{
+						Paths: []netv1.HTTPIngressPath{
 							{
 								Path: GetPath(cr),
-								Backend: v1beta1.IngressBackend{
-									ServiceName: serviceName(cr),
-									ServicePort: GetIngressTargetPort(cr),
+								Backend: netv1.IngressBackend{
+									Service: &netv1.IngressServiceBackend{
+										Name: serviceName(cr),
+										Port: netv1.ServiceBackendPort{
+											Name: port.StrVal,
+										},
+									},
+									Resource: nil,
 								},
 							},
 						},
@@ -54,8 +91,8 @@ func getIngressSpec(cr *v1alpha1.Grafana) v1beta1.IngressSpec {
 	}
 }
 
-func GrafanaIngress(cr *v1alpha1.Grafana) *v1beta1.Ingress {
-	return &v1beta1.Ingress{
+func GrafanaIngress(cr *v1alpha1.Grafana) *netv1.Ingress {
+	return &netv1.Ingress{
 		ObjectMeta: v1.ObjectMeta{
 			Name:        constants.GrafanaIngressName,
 			Namespace:   cr.Namespace,
@@ -66,7 +103,7 @@ func GrafanaIngress(cr *v1alpha1.Grafana) *v1beta1.Ingress {
 	}
 }
 
-func GrafanaIngressReconciled(cr *v1alpha1.Grafana, currentState *v1beta1.Ingress) *v1beta1.Ingress {
+func GrafanaIngressReconciled(cr *v1alpha1.Grafana, currentState *netv1.Ingress) *netv1.Ingress {
 	reconciled := currentState.DeepCopy()
 	reconciled.Labels = GetIngressLabels(cr)
 	reconciled.Annotations = GetIngressAnnotations(cr, currentState.Annotations)

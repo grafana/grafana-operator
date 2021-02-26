@@ -10,7 +10,7 @@ import (
 	v13 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/api/extensions/v1beta1"
+	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -21,7 +21,7 @@ type ClusterState struct {
 	GrafanaServiceAccount            *v1.ServiceAccount
 	GrafanaConfig                    *v1.ConfigMap
 	GrafanaRoute                     *v12.Route
-	GrafanaIngress                   *v1beta1.Ingress
+	GrafanaIngress                   *netv1.Ingress
 	GrafanaDeployment                *v13.Deployment
 	GrafanaDataSourceConfig          *v1.ConfigMap
 	AdminSecret                      *v1.Secret
@@ -169,7 +169,7 @@ func (i *ClusterState) readGrafanaRoute(ctx context.Context, cr *v1alpha1.Grafan
 }
 
 func (i *ClusterState) readGrafanaIngress(ctx context.Context, cr *v1alpha1.Grafana, client client.Client) error {
-	currentState := &v1beta1.Ingress{}
+	currentState := &netv1.Ingress{}
 	selector := model.GrafanaIngressSelector(cr)
 	err := client.Get(ctx, selector, currentState)
 	if err != nil {

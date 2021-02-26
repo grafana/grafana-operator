@@ -4,7 +4,7 @@ import (
 	"errors"
 	v1 "github.com/openshift/api/route/v1"
 	v12 "k8s.io/api/apps/v1"
-	"k8s.io/api/extensions/v1beta1"
+	netv1 "k8s.io/api/networking/v1"
 )
 
 const (
@@ -27,7 +27,7 @@ func IsRouteReady(route *v1.Route) bool {
 	return true
 }
 
-func IsIngressReady(ingress *v1beta1.Ingress) bool {
+func IsIngressReady(ingress *netv1.Ingress) bool {
 	if ingress == nil {
 		return false
 	}

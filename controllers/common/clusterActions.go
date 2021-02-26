@@ -12,7 +12,7 @@ import (
 	v13 "github.com/openshift/api/route/v1"
 	v12 "k8s.io/api/apps/v1"
 	v14 "k8s.io/api/core/v1"
-	"k8s.io/api/extensions/v1beta1"
+	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -172,7 +172,7 @@ func (i *ClusterActionRunner) routeReady(obj client.Object) error {
 }
 
 func (i *ClusterActionRunner) ingressReady(obj client.Object) error {
-	ready := IsIngressReady(obj.(*v1beta1.Ingress))
+	ready := IsIngressReady(obj.(*netv1.Ingress))
 	if !ready {
 		return stdErr.New("ingress not ready")
 	}
