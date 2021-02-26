@@ -1,0 +1,24 @@
+#!/bin/bash -e
+#
+# Test the Dockerfile.tools image.
+#
+# IMAGE_NAME specifies the name of the candidate image used for testing.
+# The image has to be available before this script is executed.
+#
+WORK_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+docker run --rm --entrypoint=/bin/sh ${IMAGE_NAME} -c 'operator-sdk version'
+docker run --rm --entrypoint=/bin/sh ${IMAGE_NAME} -c 'go version'
+
+
+docker run --rm -u $UID -v "${WORK_DIR}/../..:/grafana-operator:z" --entrypoint=/bin/sh ${IMAGE_NAME} -c "cd /grafana-operator && make code/check"
+docker run --rm -u $UID -v "${WORK_DIR}/../..:/grafana-operator:z" --entrypoint=/bin/sh ${IMAGE_NAME} -c "cd /grafana-operator && make code/compile"
+docker run --rm -u $UID -v "${WORK_DIR}/../..:/grafana-operator:z" --entrypoint=/bin/sh ${IMAGE_NAME} -c "cd /grafana-operator && make test/unit"
+docker run --rm -u $UID -v "${WORK_DIR}/../..:/grafana-operator:z" --entrypoint=/bin/sh ${IMAGE_NAME} -c "cd /grafana-operator && make test/e2e"
+
+#Requires you to be oc logged in to any cluster on your host machine
+GRAFANA_OPERATOR_IMAGE="registry.svc.ci.openshift.org/integr8ly/grafana-operator"
+E2E_CMD="operator-sdk --verbose test local ./openshift-ci/test/e2e --namespace=test --go-test-flags \"-timeout=60m\" --debug --image=${GRAFANA_OPERATOR_IMAGE}"
+docker run --rm -e KUBECONFIG=/kube.config -v "${HOME}/.kube/config":/kube.config:z -u $UID -v "${WORK_DIR}/../..:/grafana-operator:z" --entrypoint=/bin/sh "${IMAGE_NAME}" -c "cd /grafana-operator && ${E2E_CMD}"
+
+echo "SUCCESS!"

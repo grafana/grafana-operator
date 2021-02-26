@@ -15,13 +15,19 @@ COPY api/ api/
 COPY controllers/ controllers/
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager main.go
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.3
 
-# Use distroless as minimal base image to package the manager binary
-# Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager main.go
+RUN mkdir -p /opt/jsonnet && chown nobody /opt/jsonnet
+
+USER nobody
+
+ADD grafonnet-lib/grafonnet/ /opt/jsonnet/grafonnet
+ADD build/_output/bin/grafana-operator /usr/local/bin/grafana-operator
+
 WORKDIR /
 COPY --from=builder /workspace/manager .
-USER 65532:65532
+
+
 
 ENTRYPOINT ["/manager"]
