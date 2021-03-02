@@ -90,7 +90,6 @@ spec:
                 type: string
             required:
             - json
-            - jsonnet
             type: object
         type: object
     served: true

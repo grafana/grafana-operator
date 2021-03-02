@@ -149,6 +149,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 				InsecureSkipVerify: true,
 			},
 		},
+		Log:      mgr.GetLogger(),
 		config:   config.GetControllerConfig(),
 		context:  ctx,
 		cancel:   cancel,
