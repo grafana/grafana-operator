@@ -5,7 +5,6 @@ import (
 	"github.com/integr8ly/grafana-operator/controllers/constants"
 	netv1 "k8s.io/api/networking/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -25,6 +24,24 @@ func getIngressTLS(cr *v1alpha1.Grafana) []netv1.IngressTLS {
 	return nil
 }
 
+func GetIngressPathType(cr *v1alpha1.Grafana) *netv1.PathType {
+	t := netv1.PathType(cr.Spec.Ingress.PathType)
+	switch t {
+	case netv1.PathTypeExact, netv1.PathTypePrefix:
+		return &t
+	}
+	t = netv1.PathTypeImplementationSpecific
+	return &t
+}
+
+func GetIngressClassName(cr *v1alpha1.Grafana) *string {
+	if cr.Spec.Ingress.IngressClassName == "" {
+		return nil
+	}
+
+	return &cr.Spec.Ingress.IngressClassName
+}
+
 func getIngressSpec(cr *v1alpha1.Grafana) netv1.IngressSpec {
 	serviceName := func(cr *v1alpha1.Grafana) string {
 		if cr.Spec.Service != nil && cr.Spec.Service.Name != "" {
@@ -33,11 +50,11 @@ func getIngressSpec(cr *v1alpha1.Grafana) netv1.IngressSpec {
 		return constants.GrafanaServiceName
 	}
 	port := GetIngressTargetPort(cr)
-	portTypeKind := reflect.TypeOf(reflect.TypeOf(port)).Kind()
 
-	if portTypeKind == reflect.Int32 {
+	if &port.IntVal != nil {
 		return netv1.IngressSpec{
-			TLS: getIngressTLS(cr),
+			TLS:              getIngressTLS(cr),
+			IngressClassName: GetIngressClassName(cr),
 			Rules: []netv1.IngressRule{
 				{
 					Host: GetHost(cr),
@@ -45,7 +62,8 @@ func getIngressSpec(cr *v1alpha1.Grafana) netv1.IngressSpec {
 						HTTP: &netv1.HTTPIngressRuleValue{
 							Paths: []netv1.HTTPIngressPath{
 								{
-									Path: GetPath(cr),
+									Path:     GetPath(cr),
+									PathType: GetIngressPathType(cr),
 									Backend: netv1.IngressBackend{
 										Service: &netv1.IngressServiceBackend{
 											Name: serviceName(cr),
@@ -64,7 +82,8 @@ func getIngressSpec(cr *v1alpha1.Grafana) netv1.IngressSpec {
 		}
 	}
 	return netv1.IngressSpec{
-		TLS: getIngressTLS(cr),
+		TLS:              getIngressTLS(cr),
+		IngressClassName: GetIngressClassName(cr),
 		Rules: []netv1.IngressRule{
 			{
 				Host: GetHost(cr),
@@ -72,7 +91,8 @@ func getIngressSpec(cr *v1alpha1.Grafana) netv1.IngressSpec {
 					HTTP: &netv1.HTTPIngressRuleValue{
 						Paths: []netv1.HTTPIngressPath{
 							{
-								Path: GetPath(cr),
+								Path:     GetPath(cr),
+								PathType: GetIngressPathType(cr),
 								Backend: netv1.IngressBackend{
 									Service: &netv1.IngressServiceBackend{
 										Name: serviceName(cr),

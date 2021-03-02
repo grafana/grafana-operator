@@ -82,6 +82,9 @@ spec:
                           type: integer
                         customMetricsNamespaces:
                           type: string
+                        customQueryParameters:
+                          description: Fields for Prometheus data sources
+                          type: string
                         defaultBucket:
                           type: string
                         defaultDatabase:

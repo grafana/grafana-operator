@@ -99,6 +99,8 @@ spec:
                         type: boolean
                       signout_redirect_url:
                         type: string
+                      sigv4_auth_enabled:
+                        type: boolean
                       token_rotation_interval_minutes:
                         type: integer
                     type: object
@@ -2819,11 +2821,15 @@ spec:
                     type: boolean
                   hostname:
                     type: string
+                  ingressClassName:
+                    type: string
                   labels:
                     additionalProperties:
                       type: string
                     type: object
                   path:
+                    type: string
+                  pathType:
                     type: string
                   targetPort:
                     type: string
@@ -2836,6 +2842,8 @@ spec:
                   tlsSecretName:
                     type: string
                 type: object
+              initImage:
+                type: string
               initResources:
                 description: ResourceRequirements describes the compute resource requirements.
                 properties:
