@@ -29,7 +29,6 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/tools/record"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sort"
 
@@ -46,8 +45,8 @@ type GrafanaDatasourceReconciler struct {
 	// that reads objects from the cache and writes to the apiserver
 	Client   client.Client
 	Scheme   *runtime.Scheme
-	context  context.Context
-	cancel   context.CancelFunc
+	Context  context.Context
+	Cancel   context.CancelFunc
 	recorder record.EventRecorder
 	state    common.ControllerState
 	Logger   logr.Logger
@@ -60,41 +59,19 @@ const (
 
 var log = logf.Log.WithName(ControllerName)
 
-// newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
-
-	return &GrafanaDatasourceReconciler{
-		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
-		context:  ctx,
-		cancel:   cancel,
-		recorder: mgr.GetEventRecorderFor(ControllerName),
-		state:    common.ControllerState{},
-	}
-}
-
 var _ reconcile.Reconciler = &GrafanaDatasourceReconciler{}
 
 // +kubebuilder:rbac:groups=integreatly.org,resources=grafanadatasources,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=integreatly.org,resources=grafanadatasources/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=integreatly.org,resources=grafanadatasources/finalizers,verbs=update
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the GrafanaDatasource object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.0/pkg/reconcile
 func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	log = r.Logger.WithValues("grafanadatasource", request.NamespacedName)
 	// Read the current state of known and cluster datasources
 	currentState := common.NewDataSourcesState()
-	err := currentState.Read(r.context, r.Client, request.Namespace)
+	err := currentState.Read(ctx, r.Client, request.Namespace)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -180,7 +157,7 @@ func (r *GrafanaDatasourceReconciler) reconcileDataSources(state *common.DataSou
 		state.KnownDataSources.Annotations[constants.LastConfigAnnotation] = hash
 
 		// finally, update the configmap
-		err = r.Client.Update(r.context, state.KnownDataSources)
+		err = r.Client.Update(r.Context, state.KnownDataSources)
 		if err != nil {
 			r.recorder.Event(state.KnownDataSources, "Warning", "UpdateError", err.Error())
 		} else {
@@ -230,7 +207,7 @@ func (r *GrafanaDatasourceReconciler) manageError(datasource *grafanav1alpha1.Gr
 	datasource.Status.Phase = grafanav1alpha1.PhaseFailing
 	datasource.Status.Message = issue.Error()
 
-	err := r.Client.Status().Update(r.context, datasource)
+	err := r.Client.Status().Update(r.Context, datasource)
 	if err != nil {
 		// Ignore conclicts. Resource might just be outdated.
 		if k8serrors.IsConflict(err) {
@@ -251,7 +228,7 @@ func (r *GrafanaDatasourceReconciler) manageSuccess(datasources []grafanav1alpha
 		datasource.Status.Phase = grafanav1alpha1.PhaseReconciling
 		datasource.Status.Message = "success"
 
-		err := r.Client.Status().Update(r.context, &datasource)
+		err := r.Client.Status().Update(r.Context, &datasource)
 		if err != nil {
 			r.recorder.Event(&datasource, "Warning", "UpdateError", err.Error())
 		}
