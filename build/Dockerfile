@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/ubi:8.0
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.3
 
 RUN yum -y install net-tools
 

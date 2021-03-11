@@ -5,7 +5,6 @@ metadata:
   labels:
     app: grafana
 spec:
-  name: dashboard-with-plugins.json
   json: >
     {
       "id": null,

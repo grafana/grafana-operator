@@ -5,7 +5,6 @@ metadata:
   labels:
     app: grafana
 spec:
-  name: keycloak-dashboard.json
   plugins:
     - name: grafana-piechart-panel
       version: 1.3.9
