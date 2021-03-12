@@ -1,4 +1,5 @@
 # Build the manager binary
+# Build the manager binary
 FROM golang:1.15 as builder
 
 WORKDIR /workspace
@@ -15,19 +16,19 @@ COPY api/ api/
 COPY controllers/ controllers/
 
 # Build
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.3
-
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager main.go
+
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.3
+WORKDIR /
+COPY --from=builder /workspace/manager .
+USER 65532:65532
+
 RUN mkdir -p /opt/jsonnet && chown nobody /opt/jsonnet
 
 USER nobody
 
 ADD grafonnet-lib/grafonnet/ /opt/jsonnet/grafonnet
+
 ADD build/_output/bin/grafana-operator /usr/local/bin/grafana-operator
-
-WORKDIR /
-COPY --from=builder /workspace/manager .
-
-
 
 ENTRYPOINT ["/manager"]

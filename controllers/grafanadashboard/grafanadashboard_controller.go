@@ -311,7 +311,7 @@ func (r *GrafanaDashboardReconciler) reconcileDashboards(request reconcile.Reque
 
 		_, err = grafanaClient.CreateOrUpdateDashboard(processed, folderId, folderName)
 		if err != nil {
-			log.Log.Error(err, "cannot submit dashboard %v/%v", "namespace", dashboard.Namespace, "name", dashboard.Name)
+			//log.Log.Error(err, "cannot submit dashboard %v/%v", "namespace", dashboard.Namespace, "name", dashboard.Name)
 			r.manageError(&dashboard, err)
 
 			continue
@@ -430,8 +430,8 @@ func (r *GrafanaDashboardReconciler) manageSuccess(dashboard *grafanav1alpha1.Gr
 // Handle error case: update dashboard with error message and status
 func (r *GrafanaDashboardReconciler) manageError(dashboard *grafanav1alpha1.GrafanaDashboard, issue error) {
 	r.recorder.Event(dashboard, "Warning", "ProcessingError", issue.Error())
-	// Ignore conflicts. Resource might just be outdated.
-	if k8serrors.IsConflict(issue) {
+	// Ignore conflicts. Resource might just be outdated, also ignore if grafana isn't available.
+	if k8serrors.IsConflict(issue) || k8serrors.IsServiceUnavailable(issue) {
 		return
 	}
 	log.Log.Error(issue, "error updating dashboard")
