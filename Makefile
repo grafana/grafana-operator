@@ -122,3 +122,15 @@ bundle-build:
 .PHONY: code/check
 code/check: fmt vet
 	golint ./...
+
+
+.PHONY: cluster/prepare/local/file
+cluster/prepare/local/file:
+	@sed -i "s/__NAMESPACE__/${NAMESPACE}/g" deploy/cluster_roles/cluster_role_binding_grafana_operator.yaml
+
+.PHONY: cluster/prepare/local
+cluster/prepare/local: cluster/prepare/local/file
+	-kubectl create namespace ${NAMESPACE}
+	kubectl apply -f deploy/roles -n ${NAMESPACE}
+	kubectl apply -f deploy/cluster_roles
+	kubectl apply -f deploy/examples/Grafana.yaml -n ${NAMESPACE}
