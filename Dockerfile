@@ -14,6 +14,8 @@ RUN go mod download
 COPY main.go main.go
 COPY api/ api/
 COPY controllers/ controllers/
+COPY internal/ internal/
+COPY version/ version/
 
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager main.go
@@ -21,14 +23,13 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.3
 WORKDIR /
 COPY --from=builder /workspace/manager .
-USER 65532:65532
 
 RUN mkdir -p /opt/jsonnet && chown nobody /opt/jsonnet
 
-USER nobody
+USER 65532:65532
 
 ADD grafonnet-lib/grafonnet/ /opt/jsonnet/grafonnet
 
-ADD build/_output/bin/grafana-operator /usr/local/bin/grafana-operator
+ADD bin/manager /usr/local/bin/grafana-operator
 
 ENTRYPOINT ["/manager"]
