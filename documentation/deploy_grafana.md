@@ -323,6 +323,7 @@ spec:
 
 NOTE: Some key's are common to both in securityContext and containerSecurityContext, in that case
 containerSecurityContext has precendence over securityContext.
+ContainerSecurityContext defined in deployment will also apply to the init-container.
 
 ## Configuring Grafana API access
 
@@ -351,7 +352,7 @@ spec:
       ...
     accessModes: # An array of access modes, e.g. `ReadWriteOnce`
       ...
-    size: <Quantity>        # Requested size, e.g. `10Gi` 
+    size: <Quantity>        # Requested size, e.g. `10Gi`
     class: <String>         # Storage class name
 ```
 

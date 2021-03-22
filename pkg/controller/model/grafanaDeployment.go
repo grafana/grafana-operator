@@ -529,6 +529,7 @@ func getInitContainers(cr *v1alpha1.Grafana, plugins string) []v13.Container {
 			TerminationMessagePath:   "/dev/termination-log",
 			TerminationMessagePolicy: "File",
 			ImagePullPolicy:          "IfNotPresent",
+			SecurityContext:          getContainerSecurityContext(cr),
 		},
 	}
 }
