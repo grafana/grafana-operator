@@ -2,11 +2,13 @@ package grafana
 
 import (
 	"fmt"
-
 	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/model"
+	v1 "k8s.io/api/core/v1"
+	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"regexp"
 )
 
 type GrafanaReconciler struct {
@@ -80,13 +82,35 @@ func (i *GrafanaReconciler) getGrafanaReadiness(state *common.ClusterState, cr *
 }
 
 func (i *GrafanaReconciler) getGrafanaServiceDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
+
 	if state.GrafanaService == nil {
 		return common.GenericCreateAction{
 			Ref: model.GrafanaService(cr),
 			Msg: "create grafana service",
 		}
 	}
+	if cr.Status.PreviousServiceName != "" && state.GrafanaService.Name != "" {
+		// if the previously known service is not the current service then delete the previous service
+		// validate the service
+		if cr.Status.PreviousServiceName != state.GrafanaService.Name && i.validateServiceName(cr.Spec.Service.Name) {
+			serviceName := cr.Status.PreviousServiceName
+			// reset the status before next loop
+			cr.Status.PreviousServiceName = ""
+			return common.GenericDeleteAction{
+				Ref: &v1.Service{
+					ObjectMeta: v12.ObjectMeta{
+						Name:      serviceName,
+						Namespace: cr.Namespace,
+					},
+				},
+				Msg: "delete obsolete grafana service",
+			}
+		}
 
+	}
+	if cr.Status.PreviousServiceName == "" {
+		cr.Status.PreviousServiceName = state.GrafanaService.Name
+	}
 	return common.GenericUpdateAction{
 		Ref: model.GrafanaServiceReconciled(cr, state.GrafanaService),
 		Msg: "update grafana service",
@@ -108,6 +132,10 @@ func (i *GrafanaReconciler) getGrafanaDataPvcDesiredState(state *common.ClusterS
 }
 
 func (i *GrafanaReconciler) getGrafanaServiceAccountDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
+
+	if cr.Spec.ServiceAccount != nil && cr.Spec.ServiceAccount.Skip != nil && *cr.Spec.ServiceAccount.Skip == true {
+		return nil
+	}
 	if state.GrafanaServiceAccount == nil {
 		return common.GenericCreateAction{
 			Ref: model.GrafanaServiceAccount(cr),
@@ -119,6 +147,7 @@ func (i *GrafanaReconciler) getGrafanaServiceAccountDesiredState(state *common.C
 		Ref: model.GrafanaServiceAccountReconciled(cr, state.GrafanaServiceAccount),
 		Msg: "update grafana service account",
 	}
+
 }
 
 func (i *GrafanaReconciler) getGrafanaConfigDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) []common.ClusterAction {
@@ -296,10 +325,7 @@ func (i *GrafanaReconciler) getEnvVarsDesiredState(state *common.ClusterState, c
 
 func (i *GrafanaReconciler) getGrafanaPluginsDesiredState(cr *v1alpha1.Grafana) common.ClusterAction {
 	// Fetch all plugins of all dashboards
-	var requestedPlugins v1alpha1.PluginList
-	for _, v := range config.GetControllerConfig().Plugins {
-		requestedPlugins = append(requestedPlugins, v...)
-	}
+	requestedPlugins := config.GetControllerConfig().GetAllPlugins()
 
 	// Consolidate plugins and create the new list of plugin requirements
 	// If 'updated' is false then no changes have to be applied
@@ -344,4 +370,16 @@ func (i *GrafanaReconciler) reconcilePlugins(cr *v1alpha1.Grafana, plugins v1alp
 
 	cr.Status.InstalledPlugins = validPlugins
 	cr.Status.FailedPlugins = failedPlugins
+}
+
+func (i *GrafanaReconciler) validateServiceName(string string) bool {
+	// a DNS-1035 label must consist of lower case alphanumeric
+	//    characters or '-', start with an alphabetic character, and end with an
+	//    alphanumeric character (e.g. 'my-name',  or 'abc-123', regex used for
+	//    validation is '[a-z]([-a-z0-9]*[a-z0-9])?
+	b, err := regexp.MatchString("[a-z]([-a-z0-9]*[a-z0-9])?", string)
+	if err != nil {
+		return false
+	}
+	return b
 }

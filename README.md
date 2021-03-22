@@ -2,6 +2,74 @@
 
 A Kubernetes Operator based on the Operator SDK for creating and managing Grafana instances.
 
+
+## Companies and teams that trust and use the Grafana operator:
+
+
+<table class="tg">
+<tbody>
+  <tr>
+  <td class="tg-0lax"> 
+        <div class="card" css=>
+  <img src="media/users/redhat.png" alt="Avatar" style= width=250 height=100;box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  transition: 0.3s;">
+  <div class="container" style="text-align: center; margin: auto; padding: 2px 16px;">
+    <h4><b></b></h4>
+    <p><a href="https://www.redhat.com/">Red Hat</a></p>
+  </div>
+</div> 
+</td> 
+    <td class="tg-0lax"> 
+        <div class="card" css=>
+  <img src="media/users/integreatly.png" alt="Avatar" style=margin: auto;width="250" height="100" box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  transition: 0.3s;">
+  <div class="container" style="text-align: center; padding: 2px 16px;">
+    <h4><b><a href ="https://github.com/integr8ly/integreatly-operator">Integreatly</a></b></h4>
+    <p><a href="https://www.redhat.com/en/products/integration">Red Hat</a></p>
+  </div>
+</div> 
+</td>
+    <td class="tg-0lax"> <div class="card" css=>
+  <img src="media/users/continental.png" alt="Avatar" style="margin: auto;width="250" height="100" box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  transition: 0.3s;">
+  <div class="container" style="text-align: center; margin: auto; padding: 2px 16px;">
+    <h4><b>Digital Services France</b></h4>
+    <p><a href="https://www.continental.com/">Continental</a></p>
+  </div>
+</div> 
+</td>
+<td class="tg-0lax"> 
+        <div class="card" css=>
+  <img src="media/users/handelsbanken.svg" alt="Avatar" style=margin:auto; width=250; height=150; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  transition: 0.3s;">
+  <div class="container" style="text-align: center; margin: auto; padding: 2px 16px;">
+    <h4><b><a href="https://www.handelsbanken.se/en/">handelsbanken</a></b></h4>
+    <p></p>
+  </div>
+</div> 
+</td>
+
+<!-- PLACE ME HERE -->
+  </tr>
+</tbody>
+</table>
+
+***If you find this operator useful in your product/deployment, feel free to send a pull request to add your company/team to be displayed here!***
+
+<!-- COPY ME -->
+  <!-- <td class="tg-0lax"> 
+        <div class="card" css=>
+  <img src="media/users/integreatly.png" alt="Avatar" style="margin: auto; width:100%; height: box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  transition: 0.3s;">
+  <div class="container" style="text-align: center; margin: auto; padding: 2px 16px;">
+    <h4><b>Integreatly</b></h4>
+    <p>Red Hat</p>
+  </div>
+</div> 
+</td> -->
+
+
+
 ## Grafana Operator on the Kubernetes community Slack
 We have set up a channel dedicated to this operator on the Kubernetes community Slack, this is an easier way to address 
 more immediate issues and facilitate discussion around development/bugs etc. as well as providing support for questions

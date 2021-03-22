@@ -4,7 +4,6 @@ import (
 	"context"
 	stdErr "errors"
 	"fmt"
-
 	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/v3/pkg/controller/config"
@@ -17,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/record"
+	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -160,10 +160,11 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 	err = currentState.Read(r.context, cr, r.client)
 	if err != nil {
 		log.Error(err, "error reading state")
-		return r.manageError(cr, err)
+		return r.manageError(cr, err, request)
 	}
 
 	// Get the actions required to reach the desired state
+
 	reconciler := NewGrafanaReconciler()
 	desiredState := reconciler.Reconcile(currentState, cr)
 
@@ -171,30 +172,38 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 	actionRunner := common.NewClusterActionRunner(r.context, r.client, r.scheme, cr)
 	err = actionRunner.RunAll(desiredState)
 	if err != nil {
-		return r.manageError(cr, err)
+		return r.manageError(cr, err, request)
 	}
 
 	// Run the config map reconciler to discover jsonnet libraries
 	err = reconcileConfigMaps(cr, r)
 	if err != nil {
-		return r.manageError(cr, err)
+		return r.manageError(cr, err, request)
 	}
 
-	return r.manageSuccess(cr, currentState)
+	return r.manageSuccess(cr, currentState, request)
 }
 
-func (r *ReconcileGrafana) manageError(cr *grafanav1alpha1.Grafana, issue error) (reconcile.Result, error) {
+func (r *ReconcileGrafana) manageError(cr *grafanav1alpha1.Grafana, issue error, request reconcile.Request) (reconcile.Result, error) {
 	r.recorder.Event(cr, "Warning", "ProcessingError", issue.Error())
 	cr.Status.Phase = grafanav1alpha1.PhaseFailing
 	cr.Status.Message = issue.Error()
 
-	err := r.client.Status().Update(r.context, cr)
+	instance := &grafanav1alpha1.Grafana{}
+	err := r.client.Get(r.context, request.NamespacedName, instance)
 	if err != nil {
-		// Ignore conflicts, resource might just be outdated.
-		if errors.IsConflict(err) {
-			err = nil
-		}
 		return reconcile.Result{}, err
+	}
+
+	if !reflect.DeepEqual(cr.Status, instance.Status) {
+		err := r.client.Status().Update(r.context, cr)
+		if err != nil {
+			// Ignore conflicts, resource might just be outdated.
+			if errors.IsConflict(err) {
+				err = nil
+			}
+			return reconcile.Result{}, err
+		}
 	}
 
 	r.config.InvalidateDashboards()
@@ -251,7 +260,7 @@ func (r *ReconcileGrafana) getGrafanaAdminUrl(cr *grafanav1alpha1.Grafana, state
 	return "", stdErr.New("failed to find admin url")
 }
 
-func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *common.ClusterState) (reconcile.Result, error) {
+func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *common.ClusterState, request reconcile.Request) (reconcile.Result, error) {
 	cr.Status.Phase = grafanav1alpha1.PhaseReconciling
 	cr.Status.Message = "success"
 
@@ -265,15 +274,22 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 		}
 	}
 
-	err := r.client.Status().Update(r.context, cr)
+	instance := &grafanav1alpha1.Grafana{}
+	err := r.client.Get(r.context, request.NamespacedName, instance)
 	if err != nil {
-		return r.manageError(cr, err)
+		return r.manageError(cr, err, request)
 	}
 
+	if !reflect.DeepEqual(cr.Status, instance.Status) {
+		err := r.client.Status().Update(r.context, cr)
+		if err != nil {
+			return r.manageError(cr, err, request)
+		}
+	}
 	// Make the Grafana API URL available to the dashboard controller
 	url, err := r.getGrafanaAdminUrl(cr, state)
 	if err != nil {
-		return r.manageError(cr, err)
+		return r.manageError(cr, err, request)
 	}
 
 	// Publish controller state

@@ -17,9 +17,14 @@ spec:
     security:
       admin_user: admin
       admin_password: admin
+  service:
+    name: "grafana-service"
+    labels:
+      app: "grafana"
+      type: "grafana-service"
   dashboardLabelSelector:
     - matchExpressions:
-        - { key: app, operator: In, values: [grafana] }
+        - { key: app, operator: In, values: [ grafana ] }
   # initResources:
   #   # Optionally specify initResources
   #   limits:
