@@ -1553,6 +1553,11 @@ func (in *GrafanaDeployment) DeepCopyInto(out *GrafanaDeployment) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.HostNetwork != nil {
+		in, out := &in.HostNetwork, &out.HostNetwork
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 

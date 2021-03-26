@@ -104,6 +104,7 @@ type GrafanaDeployment struct {
 	EnvFrom                       []v1.EnvFromSource     `json:"envFrom,omitempty"`
 	SkipCreateAdminAccount        *bool                  `json:"skipCreateAdminAccount,omitempty"`
 	PriorityClassName             string                 `json:"priorityClassName,omitempty"`
+	HostNetwork                   *bool                  `json:"hostNetwork,omitempty"`
 }
 
 // GrafanaIngress provides a means to configure the ingress created
