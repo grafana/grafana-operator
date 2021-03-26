@@ -1,4 +1,5 @@
-# Grafana Operator
+# Grafana Operator v3
+***Note:*** This branch will only accept bug fixes for 3.x.x deployments, all new functionality will be introduced on the main/master branch with release 4.x.x
 
 A Kubernetes Operator based on the Operator SDK for creating and managing Grafana instances.
 
