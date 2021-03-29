@@ -32,6 +32,21 @@ func getSkipCreateAdminAccount(cr *v1alpha1.Grafana) bool {
 	return false
 }
 
+func getHostNetwork(cr *v1alpha1.Grafana) bool {
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.HostNetwork != nil {
+		return *cr.Spec.Deployment.HostNetwork
+	}
+
+	return false
+}
+
+func getDNSPolicy(cr *v1alpha1.Grafana) v13.DNSPolicy {
+	if getHostNetwork(cr) == true {
+		return "ClusterFirstWithHostNet"
+	}
+	return "ClusterFirst"
+}
+
 func getInitResources(cr *v1alpha1.Grafana) v13.ResourceRequirements {
 	if cr.Spec.InitResources != nil {
 		return *cr.Spec.InitResources
@@ -553,6 +568,8 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, annotations map[string]string, conf
 				Tolerations:                   getTolerations(cr),
 				Affinity:                      getAffinities(cr),
 				SecurityContext:               getSecurityContext(cr),
+				HostNetwork:                   getHostNetwork(cr),
+				DNSPolicy:                     getDNSPolicy(cr),
 				Volumes:                       getVolumes(cr),
 				InitContainers:                getInitContainers(cr, plugins),
 				Containers:                    getContainers(cr, configHash, dsHash),
