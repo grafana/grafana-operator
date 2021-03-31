@@ -149,8 +149,8 @@ func getDeploymentAnnotations(cr *v1alpha1.Grafana, existing map[string]string) 
 }
 
 func getRollingUpdateStrategy() *v1.RollingUpdateDeployment {
-	var maxUnaval intstr.IntOrString = intstr.FromInt(25)
-	var maxSurge intstr.IntOrString = intstr.FromInt(25)
+	var maxUnaval intstr.IntOrString = intstr.FromString("25%")
+	var maxSurge intstr.IntOrString = intstr.FromString("25%")
 	return &v1.RollingUpdateDeployment{
 		MaxUnavailable: &maxUnaval,
 		MaxSurge:       &maxSurge,
