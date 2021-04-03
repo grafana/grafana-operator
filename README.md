@@ -9,7 +9,7 @@ A Kubernetes Operator based on the Operator SDK for creating and managing Grafan
 <table class="tg">
 <tbody>
   <tr>
-  <td class="tg-0lax"> 
+  <td class="tg-0lax">
         <div class="card" css=>
   <img src="media/users/redhat.png" alt="Avatar" style= width=250 height=100;box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
   transition: 0.3s;">
@@ -17,9 +17,9 @@ A Kubernetes Operator based on the Operator SDK for creating and managing Grafan
     <h4><b></b></h4>
     <p><a href="https://www.redhat.com/">Red Hat</a></p>
   </div>
-</div> 
-</td> 
-    <td class="tg-0lax"> 
+</div>
+</td>
+    <td class="tg-0lax">
         <div class="card" css=>
   <img src="media/users/integreatly.png" alt="Avatar" style=margin: auto;width="250" height="100" box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
   transition: 0.3s;">
@@ -27,7 +27,7 @@ A Kubernetes Operator based on the Operator SDK for creating and managing Grafan
     <h4><b><a href ="https://github.com/integr8ly/integreatly-operator">Integreatly</a></b></h4>
     <p><a href="https://www.redhat.com/en/products/integration">Red Hat</a></p>
   </div>
-</div> 
+</div>
 </td>
     <td class="tg-0lax"> <div class="card" css=>
   <img src="media/users/continental.png" alt="Avatar" style="margin: auto;width="250" height="100" box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
@@ -36,9 +36,9 @@ A Kubernetes Operator based on the Operator SDK for creating and managing Grafan
     <h4><b>Digital Services France</b></h4>
     <p><a href="https://www.continental.com/">Continental</a></p>
   </div>
-</div> 
+</div>
 </td>
-<td class="tg-0lax"> 
+<td class="tg-0lax">
         <div class="card" css=>
   <img src="media/users/handelsbanken.svg" alt="Avatar" style=margin:auto; width=250; height=150; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
   transition: 0.3s;">
@@ -46,7 +46,17 @@ A Kubernetes Operator based on the Operator SDK for creating and managing Grafan
     <h4><b><a href="https://www.handelsbanken.se/en/">handelsbanken</a></b></h4>
     <p></p>
   </div>
-</div> 
+</div>
+</td>
+<td class="tg-0lax">
+        <div class="card" css=>
+  <img src="media/users/xenit.png" alt="Avatar" style=margin:auto; width=250; max-height=150; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  transition: 0.3s;">
+  <div class="container" style="text-align: center; margin: auto; padding: 2px 16px;">
+    <h4><b><a href="https://xenit.se/contact/">xenit</a></b></h4>
+    <p></p>
+  </div>
+</div>
 </td>
 
 <!-- PLACE ME HERE -->
@@ -57,7 +67,7 @@ A Kubernetes Operator based on the Operator SDK for creating and managing Grafan
 ***If you find this operator useful in your product/deployment, feel free to send a pull request to add your company/team to be displayed here!***
 
 <!-- COPY ME -->
-  <!-- <td class="tg-0lax"> 
+  <!-- <td class="tg-0lax">
         <div class="card" css=>
   <img src="media/users/integreatly.png" alt="Avatar" style="margin: auto; width:100%; height: box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
   transition: 0.3s;">
@@ -65,27 +75,27 @@ A Kubernetes Operator based on the Operator SDK for creating and managing Grafan
     <h4><b>Integreatly</b></h4>
     <p>Red Hat</p>
   </div>
-</div> 
+</div>
 </td> -->
 
 
 
 ## Grafana Operator on the Kubernetes community Slack
-We have set up a channel dedicated to this operator on the Kubernetes community Slack, this is an easier way to address 
+We have set up a channel dedicated to this operator on the Kubernetes community Slack, this is an easier way to address
 more immediate issues and facilitate discussion around development/bugs etc. as well as providing support for questions
 about the operator.
-    
+
 1: Join the Kubernetes Slack (if you have not done so already) [Kubernetes Slack](https://slack.k8s.io/).
-    
+
 2: You will receive an email with an invitation link, follow that link and enter your desired username and password for the workspace(it might be easier if you use your Github username for our channel).
-    
+
 3: Once registered and able to see the Kubernetes community Slack workspace and channels follow this link to the [grafana-operator channel](https://kubernetes.slack.com/messages/grafana-operator/ ).
-    
+
 Alternatively:
 If you're already a member of that workspace then just follow this link to the [grafana-operator channel](https://kubernetes.slack.com/messages/grafana-operator/ ) or search for "grafana-operator" in the browse channels option .
 
 ![image](https://user-images.githubusercontent.com/35736504/90978105-0b195300-e543-11ea-86ee-1825da0e3b75.png)
-    
+
 
 
 # Current status
@@ -98,12 +108,12 @@ It can deploy and manage a Grafana instance on Kubernetes and OpenShift. The fol
 * Import Grafana dashboards from the same or other namespaces
 * Assign Grafana dashboards to custom or namespace-named grafana folders
 * Import Grafana datasources from the same namespace
-* Install Plugins (panels) defined as dependencies of dashboards 
+* Install Plugins (panels) defined as dependencies of dashboards
 
 # Summary of benefits
 A list of benefits of using the operator over a single grafana deployment.
 
-[The benefits of using an operator over standalone products as outlined by the people that created them](https://operatorframework.io/) 
+[The benefits of using an operator over standalone products as outlined by the people that created them](https://operatorframework.io/)
 
 Grafana-operator specific benefits over standalone Grafana:
 
@@ -180,4 +190,4 @@ $ operator-sdk run local --namespace=<namespace> --operator-flags="<flags to pas
 
 ## Notifier provisioning
 
-Grafana has provisioning support for multiple channels (notifiers) of alerts. The operator does currently not support this type of provisioning. An empty directory is mounted at the expected location to prevent a warning in the grafana log. This feature might be supported in the future. 
+Grafana has provisioning support for multiple channels (notifiers) of alerts. The operator does currently not support this type of provisioning. An empty directory is mounted at the expected location to prevent a warning in the grafana log. This feature might be supported in the future.
