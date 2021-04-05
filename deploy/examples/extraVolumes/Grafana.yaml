@@ -5,11 +5,11 @@ metadata:
 spec:
   deployment:
     extraVolumesMounts:
-      - mountPath: /test-path
-        name: test-volume
+      - name: test-volume
+        mountPath: "/cache/"
     extraVolumes:
       - name: test-volume
-        emptydir: {}
+        emptydir: { }
   ingress:
     enabled: True
   config:
