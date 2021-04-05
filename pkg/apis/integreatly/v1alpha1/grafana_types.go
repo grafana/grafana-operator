@@ -105,6 +105,8 @@ type GrafanaDeployment struct {
 	SkipCreateAdminAccount        *bool                  `json:"skipCreateAdminAccount,omitempty"`
 	PriorityClassName             string                 `json:"priorityClassName,omitempty"`
 	HostNetwork                   *bool                  `json:"hostNetwork,omitempty"`
+	ExtraVolumes                  []v1.Volume            `json:"extraVolumes,omitempty"`
+	ExtraVolumeMounts             []v1.VolumeMount       `json:"extraVolumeMounts,omitempty"`
 }
 
 // GrafanaIngress provides a means to configure the ingress created

@@ -274,6 +274,14 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume {
 			},
 		})
 	}
+
+	// Append user provided extra volumes
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.ExtraVolumes != nil {
+		for _, extraVolume := range cr.Spec.Deployment.ExtraVolumes {
+			volumes = append(volumes, extraVolume)
+		}
+	}
+
 	return volumes
 }
 
@@ -360,6 +368,12 @@ func getVolumeMounts(cr *v1alpha1.Grafana) []v13.VolumeMount {
 			Name:      mountName,
 			MountPath: config.ConfigMapsMountDir + configmap,
 		})
+	}
+
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.ExtraVolumeMounts != nil {
+		for _, extraMount := range cr.Spec.Deployment.ExtraVolumeMounts {
+			mounts = append(mounts, extraMount)
+		}
 	}
 
 	return mounts
