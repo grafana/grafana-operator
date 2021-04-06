@@ -325,7 +325,7 @@ func getExtraContainerVolumeMounts(cr *v1alpha1.Grafana, mounts []v13.VolumeMoun
 
 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.ExtraVolumeMounts != nil {
 		for _, extraMount := range cr.Spec.Deployment.ExtraVolumeMounts {
-			mounts = append(mounts, extraMount)
+			mounts = appendIfEmpty(mounts, extraMount)
 		}
 	}
 

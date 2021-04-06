@@ -5,11 +5,12 @@ metadata:
 spec:
   deployment:
     extraVolumesMounts:
-      - name: test-volume
-        mountPath: "/cache/"
+      - name: test-pv
+        mountPath: /data/test
     extraVolumes:
-      - name: test-volume
-        emptydir: { }
+      - name: test-pv
+        persistentVolumeClaim:
+          claimName: test-pvc
   ingress:
     enabled: True
   config:
@@ -45,3 +46,34 @@ spec:
     requests:
       cpu: 100m
       memory: 200Mi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: test-pvc
+  namespace: grafana
+spec:
+  storageClassName: "manual" # Empty string must be explicitly set otherwise default StorageClass will be set
+  volumeName: test-pv
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: test-pv
+spec:
+  hostPath:
+    path: "/data/test"
+  volumeMode: Filesystem
+  storageClassName: "manual"
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 1Gi
+  claimRef:
+    name: test-pvc
+    namespace: grafana
