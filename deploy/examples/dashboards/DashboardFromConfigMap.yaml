@@ -5,6 +5,8 @@ metadata:
   labels:
     app: grafana
 spec:
+  json:
+    ""
   configMapRef:
     name: simple-dashboard-from-cm
     key: foo
