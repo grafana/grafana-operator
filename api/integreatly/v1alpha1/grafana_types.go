@@ -506,8 +506,11 @@ type GrafanaStatus struct {
 }
 
 // GrafanaPlugin contains information about a single plugin
+// +k8s:openapi-gen=true
 type GrafanaPlugin struct {
-	Name    string `json:"name"`
+	// +kubebuilder:validation:Required
+	Name string `json:"name"`
+	// +kubebuilder:validation:Required
 	Version string `json:"version"`
 }
 
