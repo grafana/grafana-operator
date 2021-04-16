@@ -2,7 +2,7 @@ package model
 
 const (
 	GrafanaImage                        = "grafana/grafana"
-	GrafanaVersion                      = "7.3.1"
+	GrafanaVersion                      = "7.3.10"
 	GrafanaServiceAccountName           = "grafana-serviceaccount"
 	GrafanaServiceName                  = "grafana-service"
 	GrafanaDataStorageName              = "grafana-pvc"
