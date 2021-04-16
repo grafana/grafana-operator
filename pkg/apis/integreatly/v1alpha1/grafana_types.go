@@ -234,6 +234,7 @@ type GrafanaConfigUsers struct {
 	EditorsCanAdmin   *bool  `json:"editors_can_admin,omitempty" ini:"editors_can_admin"`
 	LoginHint         string `json:"login_hint,omitempty" ini:"login_hint,omitempty"`
 	PasswordHint      string `json:"password_hint,omitempty" ini:"password_hint,omitempty"`
+	DefaultTheme      string `json:"default_theme,omitempty" ini:"default_theme,omitempty"`
 }
 
 type GrafanaConfigAuth struct {

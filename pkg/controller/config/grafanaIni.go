@@ -135,6 +135,7 @@ func (i *GrafanaIni) Write() (string, string) {
 		items = appendBool(items, "editors_can_admin", i.cfg.Users.EditorsCanAdmin)
 		items = appendStr(items, "login_hint", i.cfg.Users.LoginHint)
 		items = appendStr(items, "password_hint", i.cfg.Users.PasswordHint)
+		items = appendStr(items, "default_theme", i.cfg.Users.DefaultTheme)
 		config["users"] = items
 	}
 
