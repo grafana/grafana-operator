@@ -23,6 +23,7 @@ The following example CRs are provided:
 * [persistentvolume/Grafana-Kubernetes.yaml](../deploy/examples/persistentvolume/Grafana-Kubernetes.yaml): Installs Grafana but provides a dedicated PVC for the database.
 * [persistentvolume/Grafana-OpenShift.yaml](../deploy/examples/persistentvolume/Grafana-OpenShift.yaml): Installs Grafana but provides a dedicated PVC for the database. OpenShift specific example without assigning an `fsGroup`.
 * [env/Grafana.yaml](../deploy/examples/env/Grafana.yaml): Shows how to provide env vars including admin credentials from a secret.
+* [datasource-env-vars/Grafana.yaml](../deploy/examples/datasource-env-vars/Grafana.yaml): Shows how to provide env vars and use them in a data source to provide credentials.
 
 ### Dashboards
 
