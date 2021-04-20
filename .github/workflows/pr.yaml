@@ -1,0 +1,51 @@
+name: PR
+on: pull_request
+jobs:
+  build:
+    name: build and deploy in kind
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -ex -o pipefail {0}
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          submodules: true
+      - name: Cache Go modules
+        uses: actions/cache@v2.1.4
+        with:
+          path: |
+            ~/go/pkg/mod
+            ${{ github.workspace }}/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Build image
+        run: |
+          make setup/travis image/build
+      - uses: helm/kind-action@v1.1.0
+        timeout-minutes: 5
+        with:
+          cluster_name: kind
+      - name: Load image
+        run: |
+          kind load docker-image $(make --silent image/show)
+      - timeout-minutes: 2
+        run: |
+          make operator/deploy
+          for d in grafana-operator grafana-deployment
+          do
+            kubectl wait --timeout=1m --for=condition=available deploy -n grafana $d
+          done
+      - name: Print failure
+        if: ${{ failure() }}
+        run: |
+          git diff
+          helm list
+          kubectl describe po,ing -A
+          kubectl get po,rs,svc,ep,ingress,secrets,configmap -A
+          kubectl logs -n grafana deployment/grafana-operator || true
+          kubectl logs -n grafana deployment/grafana-deployment || true

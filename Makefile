@@ -43,6 +43,10 @@ image/push:
 .PHONY: image/build/push
 image/build/push: image/build image/push
 
+.PHONY: image/show
+image/show:
+	@echo ${ORG}/${PROJECT}:${TAG}
+
 .PHONY: test/unit
 test/unit:
 	@echo Running tests:
@@ -57,6 +61,8 @@ test/e2e:
 
 .PHONY: cluster/prepare/local/file
 cluster/prepare/local/file:
+	sed -i "s#image: .*#image: ${ORG}/${PROJECT}:${TAG}#g" deploy/operator.yaml
+	sed -i "s/imagePullPolicy: .*/imagePullPolicy: IfNotPresent/g" deploy/operator.yaml
 	@sed -i "s/__NAMESPACE__/${NAMESPACE}/g" deploy/cluster_roles/cluster_role_binding_grafana_operator.yaml
 
 .PHONY: cluster/prepare/local
