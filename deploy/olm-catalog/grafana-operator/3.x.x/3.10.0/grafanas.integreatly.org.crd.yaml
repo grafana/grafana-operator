@@ -133,18 +133,7 @@ spec:
                 priorityClassName:
                   type: string
                   description: Pod priority class name
-                extraVolumeMounts:
-                  type: array
-                  description: Extra volumes mounts to be mounted to the grafana deployment
-                  items:
-                    type: object
-                    description: additional volumeMount 
-                extraVolumes:
-                  type: array
-                  description: Extra volumes to be attached to the grafana deployment
-                  items:
-                    type: object
-                    description: additional volume
+
             serviceAccount:
               type: object
               properties:
