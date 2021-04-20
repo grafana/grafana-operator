@@ -4,6 +4,7 @@
 * [Dashboards](./dashboards.md)
 * [Data Sources](./datasources.md)
 * [Multi namespace support](./multi_namespace_support.md)
+* [Plugins](./plugins.md)  
 * [Mounting extra config files](./extra_files.md)
 * [Jsonnet support](./jsonnet.md)
 * [Env vars](./env_vars.md)
@@ -19,8 +20,10 @@ The following example CRs are provided:
 * [ldap/Grafana.yaml](../deploy/examples/ldap/Grafana.yaml): Installs Grafana and sets up LDAP authentication. LDAP configuration is mounted from the configmap [ldap/ldap-config.yaml](../deploy/examples/ldap/ldap-config.yaml)
 * [oauth/Grafana.yaml](../deploy/examples/oauth/Grafana.yaml): Installs Grafana and enable OAuth authentication using the OpenShift OAuthProxy. 
 * [ha/Grafana.yaml](../deploy/examples/oauth/Grafana.yaml): Installs Grafana in high availability mode with Postgres as a database. 
-* [persistentvolume/Grafana.yaml](../deploy/examples/persistentvolume/Grafana.yaml): Installs Grafana but provides a dedicated PVC for the database.
+* [persistentvolume/Grafana-Kubernetes.yaml](../deploy/examples/persistentvolume/Grafana-Kubernetes.yaml): Installs Grafana but provides a dedicated PVC for the database.
+* [persistentvolume/Grafana-OpenShift.yaml](../deploy/examples/persistentvolume/Grafana-OpenShift.yaml): Installs Grafana but provides a dedicated PVC for the database. OpenShift specific example without assigning an `fsGroup`.
 * [env/Grafana.yaml](../deploy/examples/env/Grafana.yaml): Shows how to provide env vars including admin credentials from a secret.
+* [datasource-env-vars/Grafana.yaml](../deploy/examples/datasource-env-vars/Grafana.yaml): Shows how to provide env vars and use them in a data source to provide credentials.
 
 ### Dashboards
 

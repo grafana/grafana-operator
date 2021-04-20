@@ -7,8 +7,11 @@ spec:
     enabled: True
   dataStorage:
     accessModes:
-    - ReadWriteOnce
+      - ReadWriteOnce
     size: 10Gi
+  deployment:
+    securityContext:
+      fsGroup: 472
   config:
     log:
       mode: "console"
@@ -23,4 +26,4 @@ spec:
       enabled: True
   dashboardLabelSelector:
     - matchExpressions:
-        - {key: app, operator: In, values: [grafana]}
+        - { key: app, operator: In, values: [ grafana ] }

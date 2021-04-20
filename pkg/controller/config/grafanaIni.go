@@ -135,6 +135,7 @@ func (i *GrafanaIni) Write() (string, string) {
 		items = appendBool(items, "editors_can_admin", i.cfg.Users.EditorsCanAdmin)
 		items = appendStr(items, "login_hint", i.cfg.Users.LoginHint)
 		items = appendStr(items, "password_hint", i.cfg.Users.PasswordHint)
+		items = appendStr(items, "default_theme", i.cfg.Users.DefaultTheme)
 		config["users"] = items
 	}
 
@@ -162,6 +163,7 @@ func (i *GrafanaIni) Write() (string, string) {
 		items = appendInt(items, "token_rotation_interval_minutes", i.cfg.Auth.TokenRotationIntervalMinutes)
 		items = appendBool(items, "disable_login_form", i.cfg.Auth.DisableLoginForm)
 		items = appendBool(items, "disable_signout_menu", i.cfg.Auth.DisableSignoutMenu)
+		items = appendBool(items, "sigv4_auth_enabled", i.cfg.Auth.SigV4AuthEnabled)
 		items = appendStr(items, "signout_redirect_url", i.cfg.Auth.SignoutRedirectUrl)
 		items = appendBool(items, "oauth_auto_login", i.cfg.Auth.OauthAutoLogin)
 		config["auth"] = items
@@ -280,6 +282,23 @@ func (i *GrafanaIni) Write() (string, string) {
 		items = appendStr(items, "tls_client_key", i.cfg.AuthGenericOauth.TLSClientKey)
 		items = appendStr(items, "tls_client_ca", i.cfg.AuthGenericOauth.TLSClientCa)
 		config["auth.generic_oauth"] = items
+	}
+
+	if i.cfg.AuthOkta != nil {
+		var items []string
+		items = appendBool(items, "enabled", i.cfg.AuthOkta.Enabled)
+		items = appendStr(items, "name", i.cfg.AuthOkta.Name)
+		items = appendBool(items, "allow_sign_up", i.cfg.AuthOkta.AllowSignUp)
+		items = appendStr(items, "client_id", i.cfg.AuthOkta.ClientId)
+		items = appendStr(items, "client_secret", i.cfg.AuthOkta.ClientSecret)
+		items = appendStr(items, "scopes", i.cfg.AuthOkta.Scopes)
+		items = appendStr(items, "auth_url", i.cfg.AuthOkta.AuthUrl)
+		items = appendStr(items, "token_url", i.cfg.AuthOkta.TokenUrl)
+		items = appendStr(items, "api_url", i.cfg.AuthOkta.ApiUrl)
+		items = appendStr(items, "allowed_domains", i.cfg.AuthOkta.AllowedDomains)
+		items = appendStr(items, "allowed_groups", i.cfg.AuthOkta.AllowedGroups)
+		items = appendStr(items, "role_attribute_path", i.cfg.AuthOkta.RoleAttributePath)
+		config["auth.okta"] = items
 	}
 
 	if i.cfg.AuthLdap != nil {

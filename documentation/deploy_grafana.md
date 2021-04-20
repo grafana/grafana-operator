@@ -156,6 +156,10 @@ The resource accepts the following properties in it's `spec`:
     - ***Warning!*** this overwrites the `--grafana-image` Operator flag, please refer to the grafana image support
       chart.
 
+* ***initImage***: Specifies a custom grafana plugins init image for this deployment.
+    - ***Warning!*** this overwrites the `--grafana-plugins-init-container-image` Operator flag, please refer to the
+      grafana image support chart.
+
 * ***dashboardLabelSelector***: A list of either `matchLabels` or `matchExpressions` to filter the dashboards before
   importing them.
 
@@ -191,7 +195,6 @@ The resource accepts the following properties in it's `spec`:
 * ***readinessProbeSpec***: Defines the time, in seconds, to be used for each field in the readiness probe
   configuration ( see [here](#configuring-readinessliveness-probes))
 
-
 *NOTE*: by default no Ingress or Route is created. It can be enabled with `spec.ingress.enabled`.
 
 To create a new Grafana instance in the `grafana` namespace, run:
@@ -223,6 +226,7 @@ configured:
 spec:
   ingress:
     enabled: <Boolean>     # Create an Ingress (or Route if on OpenShift)
+    ingressClassName: <String> # Sets ingress ingressClassName
     hostname: <String>      # Sets the hostname. Assigned automatically on OpenShift if not provided
     tlsEnabled: <Boolean>   # Enable TLS on Ingress
     tlsSecretName: <String> # TLS secret name in the same namespace
@@ -235,6 +239,7 @@ spec:
       app: grafana
       ...
     path:                   # Sets the path of the Ingress. Ignored for Routes
+    pathType: <String>      # Sets pathType: ImplementationSpecific, Exact, Prefix (defaults to ImplementationSpecific)
 ```
 
 ## Configuring the ServiceAccount
@@ -247,7 +252,7 @@ spec:
       skip:
         type: boolean
         description: setting this to `True` will stop the operator from reconciling the `grafana-serviceaccount`
-                    serviceaccount, Leaving this field empty is equivalent to setting it to`False`
+          serviceaccount, Leaving this field empty is equivalent to setting it to`False`
       annotations:
         type: object
         description: Additional annotations for the serviceaccount
@@ -255,6 +260,7 @@ spec:
         type: object
         description: Additional labels for the serviceaccount
 ```
+
 ## Configuring the Service
 
 Various properties of the Service can be configured:
@@ -310,13 +316,20 @@ spec:
     ...
     envFrom:                        # Environment variables from Secret or ConfigMap. The key of data becomes the env name.
     ...
+    hostNetwork: <bool>             # hostNetwork option, DNSPolicy will be accordingly changed (ClusterFirst by default and ClusterFirstWithHostNet for hostNetwork: true)
+    ...
     skipCreateAdminAccount: <bool>  # Skip creating the admin account when providing custom credentials from a secret.
     ...
     priorityClassName: <string>     # Assign a priorityClass name to the grafana pod. Empty by default.
+    ...
+    extraVolumes: <array>           # Append extra volumes to the Grafana deployment
+    ...
+    extraVolumeMounts: <array>      # Append extra volume mounts
 ```
 
 NOTE: Some key's are common to both in securityContext and containerSecurityContext, in that case
-containerSecurityContext has precendence over securityContext.
+containerSecurityContext has precendence over securityContext. ContainerSecurityContext defined in deployment will also
+apply to the init-container.
 
 ## Configuring Grafana API access
 
@@ -345,7 +358,7 @@ spec:
       ...
     accessModes: # An array of access modes, e.g. `ReadWriteOnce`
       ...
-    size: <Quantity>        # Requested size, e.g. `10Gi` 
+    size: <Quantity>        # Requested size, e.g. `10Gi`
     class: <String>         # Storage class name
 ```
 
