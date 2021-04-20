@@ -7,9 +7,14 @@ spec:
     extraVolumeMounts:
       - mountPath: /data/cache
         name: example-cache
+      - mountPath: /opt/extra/secrets
+        name: example-secret
     extraVolumes:
       - name: example-cache
         emptyDir: { }
+      - name: example-secret
+        secret:
+          secretName: volume-secret
   ingress:
     enabled: True
   config:
