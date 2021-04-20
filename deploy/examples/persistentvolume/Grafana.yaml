@@ -7,7 +7,7 @@ spec:
     enabled: True
   dataStorage:
     accessModes:
-    - ReadWriteOnce
+      - ReadWriteOnce
     size: 10Gi
   config:
     log:
@@ -23,4 +23,4 @@ spec:
       enabled: True
   dashboardLabelSelector:
     - matchExpressions:
-        - {key: app, operator: In, values: [grafana]}
+        - { key: app, operator: In, values: [ grafana ] }

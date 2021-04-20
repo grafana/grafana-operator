@@ -157,8 +157,8 @@ The resource accepts the following properties in it's `spec`:
       chart.
 
 * ***initImage***: Specifies a custom grafana plugins init image for this deployment.
-    - ***Warning!*** this overwrites the `--grafana-plugins-init-container-image` Operator flag, please refer to the grafana image support
-      chart.
+    - ***Warning!*** this overwrites the `--grafana-plugins-init-container-image` Operator flag, please refer to the
+      grafana image support chart.
 
 * ***dashboardLabelSelector***: A list of either `matchLabels` or `matchExpressions` to filter the dashboards before
   importing them.
@@ -194,7 +194,6 @@ The resource accepts the following properties in it's `spec`:
   configuration  ( see [here](#configuring-readinessliveness-probes))
 * ***readinessProbeSpec***: Defines the time, in seconds, to be used for each field in the readiness probe
   configuration ( see [here](#configuring-readinessliveness-probes))
-
 
 *NOTE*: by default no Ingress or Route is created. It can be enabled with `spec.ingress.enabled`.
 
@@ -253,7 +252,7 @@ spec:
       skip:
         type: boolean
         description: setting this to `True` will stop the operator from reconciling the `grafana-serviceaccount`
-                    serviceaccount, Leaving this field empty is equivalent to setting it to`False`
+          serviceaccount, Leaving this field empty is equivalent to setting it to`False`
       annotations:
         type: object
         description: Additional annotations for the serviceaccount
@@ -261,6 +260,7 @@ spec:
         type: object
         description: Additional labels for the serviceaccount
 ```
+
 ## Configuring the Service
 
 Various properties of the Service can be configured:
@@ -321,11 +321,15 @@ spec:
     skipCreateAdminAccount: <bool>  # Skip creating the admin account when providing custom credentials from a secret.
     ...
     priorityClassName: <string>     # Assign a priorityClass name to the grafana pod. Empty by default.
+    ...
+    extraVolumes: <array>           # Append extra volumes to the Grafana deployment
+    ...
+    extraVolumeMounts: <array>      # Append extra volume mounts
 ```
 
 NOTE: Some key's are common to both in securityContext and containerSecurityContext, in that case
-containerSecurityContext has precendence over securityContext.
-ContainerSecurityContext defined in deployment will also apply to the init-container.
+containerSecurityContext has precendence over securityContext. ContainerSecurityContext defined in deployment will also
+apply to the init-container.
 
 ## Configuring Grafana API access
 
