@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path"
 	"runtime"
 	"strings"
 
@@ -141,6 +142,16 @@ func getSanitizedNamespaceList() []string {
 	return selected
 }
 
+func handleReadinessProbe(path string) int {
+	if fileInfo, err := os.Stat(path); err != nil {
+		fmt.Println(err)
+		return 1
+	} else {
+		fmt.Println(fileInfo)
+		return 0
+	}
+}
+
 func main() {
 	// The logger instantiated here can be changed to any logger
 	// implementing the logr.Logger interface. This logger will
@@ -148,6 +159,11 @@ func main() {
 	// uniform and structured logs.
 
 	logf.SetLogger(zap.Logger())
+
+	// handles calls to `stat ready-file` from readiness probe without external dependencies
+	if path.Base(os.Args[0]) == "stat" {
+		os.Exit(handleReadinessProbe(os.Args[1]))
+	}
 
 	printVersion()
 
