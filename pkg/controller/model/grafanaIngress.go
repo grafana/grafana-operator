@@ -7,6 +7,24 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+func GetIngressPathType(cr *v1alpha1.Grafana) *v1beta1.PathType {
+	t := v1beta1.PathType(cr.Spec.Ingress.PathType)
+	switch t {
+	case v1beta1.PathTypeExact, v1beta1.PathTypePrefix:
+		return &t
+	}
+	t = v1beta1.PathTypeImplementationSpecific
+	return &t
+}
+
+func GetIngressClassName(cr *v1alpha1.Grafana) *string {
+	if cr.Spec.Ingress.IngressClassName == "" {
+		return nil
+	}
+
+	return &cr.Spec.Ingress.IngressClassName
+}
+
 func getIngressTLS(cr *v1alpha1.Grafana) []v1beta1.IngressTLS {
 	if cr.Spec.Ingress == nil {
 		return nil
@@ -31,7 +49,8 @@ func getIngressSpec(cr *v1alpha1.Grafana) v1beta1.IngressSpec {
 		return GrafanaServiceName
 	}
 	return v1beta1.IngressSpec{
-		TLS: getIngressTLS(cr),
+		TLS:              getIngressTLS(cr),
+		IngressClassName: GetIngressClassName(cr),
 		Rules: []v1beta1.IngressRule{
 			{
 				Host: GetHost(cr),
@@ -39,7 +58,8 @@ func getIngressSpec(cr *v1alpha1.Grafana) v1beta1.IngressSpec {
 					HTTP: &v1beta1.HTTPIngressRuleValue{
 						Paths: []v1beta1.HTTPIngressPath{
 							{
-								Path: GetPath(cr),
+								Path:     GetPath(cr),
+								PathType: GetIngressPathType(cr),
 								Backend: v1beta1.IngressBackend{
 									ServiceName: serviceName(cr),
 									ServicePort: GetIngressTargetPort(cr),

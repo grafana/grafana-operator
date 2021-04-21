@@ -33,6 +33,21 @@ func getSkipCreateAdminAccount(cr *v1alpha1.Grafana) bool {
 	return false
 }
 
+func getHostNetwork(cr *v1alpha1.Grafana) bool {
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.HostNetwork != nil {
+		return *cr.Spec.Deployment.HostNetwork
+	}
+
+	return false
+}
+
+func getDNSPolicy(cr *v1alpha1.Grafana) v13.DNSPolicy {
+	if getHostNetwork(cr) == true {
+		return "ClusterFirstWithHostNet"
+	}
+	return "ClusterFirst"
+}
+
 func getInitResources(cr *v1alpha1.Grafana) v13.ResourceRequirements {
 	if cr.Spec.InitResources != nil {
 		return *cr.Spec.InitResources
@@ -102,8 +117,8 @@ func getReplicas(cr *v1alpha1.Grafana) *int32 {
 }
 
 func getRollingUpdateStrategy() *v1.RollingUpdateDeployment {
-	var maxUnaval intstr.IntOrString = intstr.FromInt(25)
-	var maxSurge intstr.IntOrString = intstr.FromInt(25)
+	var maxUnaval intstr.IntOrString = intstr.FromString("25%")
+	var maxSurge intstr.IntOrString = intstr.FromString("25%")
 	return &v1.RollingUpdateDeployment{
 		MaxUnavailable: &maxUnaval,
 		MaxSurge:       &maxSurge,
@@ -260,6 +275,14 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume {
 			},
 		})
 	}
+
+	// Append user provided extra volumes
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.ExtraVolumes != nil {
+		for _, extraVolume := range cr.Spec.Deployment.ExtraVolumes {
+			volumes = append(volumes, extraVolume)
+		}
+	}
+
 	return volumes
 }
 
@@ -299,6 +322,12 @@ func getExtraContainerVolumeMounts(cr *v1alpha1.Grafana, mounts []v13.VolumeMoun
 			Name:      mountName,
 			MountPath: config.ConfigMapsMountDir + configmap,
 		})
+	}
+
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.ExtraVolumeMounts != nil {
+		for _, extraMount := range cr.Spec.Deployment.ExtraVolumeMounts {
+			mounts = appendIfEmpty(mounts, extraMount)
+		}
 	}
 
 	return mounts
@@ -348,6 +377,11 @@ func getVolumeMounts(cr *v1alpha1.Grafana) []v13.VolumeMount {
 		})
 	}
 
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.ExtraVolumeMounts != nil {
+		for _, extraMount := range cr.Spec.Deployment.ExtraVolumeMounts {
+			mounts = append(mounts, extraMount)
+		}
+	}
 	return mounts
 }
 
@@ -508,13 +542,22 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 
 func getInitContainers(cr *v1alpha1.Grafana, plugins string) []v13.Container {
 	cfg := config.GetControllerConfig()
-	image := cfg.GetConfigString(config.ConfigPluginsInitContainerImage, config.PluginsInitContainerImage)
-	tag := cfg.GetConfigString(config.ConfigPluginsInitContainerTag, config.PluginsInitContainerTag)
+	var image string
+	var tag string
+	var repo string
+
+	if cr.Spec.InitImage != "" {
+		image = cr.Spec.InitImage
+	} else {
+		repo = cfg.GetConfigString(config.ConfigPluginsInitContainerImage, config.PluginsInitContainerImage)
+		tag = cfg.GetConfigString(config.ConfigPluginsInitContainerTag, config.PluginsInitContainerTag)
+		image = fmt.Sprintf("%s:%s", repo, tag)
+	}
 
 	return []v13.Container{
 		{
 			Name:  GrafanaInitContainerName,
-			Image: fmt.Sprintf("%s:%s", image, tag),
+			Image: image,
 			Env: []v13.EnvVar{
 				{
 					Name:  "GRAFANA_PLUGINS",
@@ -556,6 +599,8 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, annotations map[string]string, conf
 				Tolerations:                   getTolerations(cr),
 				Affinity:                      getAffinities(cr),
 				SecurityContext:               getSecurityContext(cr),
+				HostNetwork:                   getHostNetwork(cr),
+				DNSPolicy:                     getDNSPolicy(cr),
 				Volumes:                       getVolumes(cr),
 				InitContainers:                getInitContainers(cr, plugins),
 				Containers:                    getContainers(cr, configHash, dsHash),
