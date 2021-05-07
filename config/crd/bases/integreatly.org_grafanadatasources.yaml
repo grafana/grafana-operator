@@ -131,6 +131,8 @@ spec:
                           type: string
                         httpHeaderName9:
                           type: string
+                        httpMethod:
+                          type: string
                         httpMode:
                           description: Fields for InfluxDB data sources
                           type: string
@@ -163,7 +165,7 @@ spec:
                           type: integer
                         sslmode:
                           type: string
-                        subscriptionI:
+                        subscriptionId:
                           type: string
                         tenantId:
                           type: string
