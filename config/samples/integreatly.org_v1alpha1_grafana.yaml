@@ -1,0 +1,7 @@
+apiVersion: integreatly.org/v1alpha1
+kind: Grafana
+metadata:
+  name: grafana-sample
+spec:
+  # Add fields here
+  foo: bar
