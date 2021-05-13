@@ -1,7 +1,7 @@
 package model
 
 const (
-	GrafanaImage                        = "grafana/grafana"
+	GrafanaImage                        = "docker.io/grafana/grafana"
 	GrafanaVersion                      = "7.3.10"
 	GrafanaServiceAccountName           = "grafana-serviceaccount"
 	GrafanaServiceName                  = "grafana-service"

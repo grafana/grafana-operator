@@ -117,7 +117,7 @@ work as expected.
 
 The operator accepts a number of flags that can be passed in the `args` section of the container in the deployment:
 
-* `--grafana-image`: overrides the Grafana image, defaults to `grafana/grafana` on grafanas official dockerhub, the
+* `--grafana-image`: overrides the Grafana image, defaults to `docker.io/grafana/grafana` on grafanas official dockerhub, the
   version of which can be
   found [here](https://github.com/integr8ly/grafana-operator/blob/master/pkg/controller/model/constants.go#L4-L5).
 
