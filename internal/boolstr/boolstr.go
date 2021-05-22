@@ -46,18 +46,10 @@ func Parse(val string) BoolOrString {
 }
 
 // UnmarshalJSON implements the json.Unmarshaller interface.
-// Booleans will be marshalled to a BoolOrString object of
-// Type Bool, as will strings equal to "true" or "false".
-// All other values will attempt to be unmarshalled to a
-// BoolOrString object of Type String.
 func (boolstr *BoolOrString) UnmarshalJSON(value []byte) error {
 	if value[0] == '"' {
-		var strVal string
-		if err := json.Unmarshal(value, &strVal); err != nil {
-			return err
-		}
-		*boolstr = Parse(strVal)
-		return nil
+		boolstr.Type = String
+		return json.Unmarshal(value, &boolstr.StrVal)
 	}
 	boolstr.Type = Bool
 	return json.Unmarshal(value, &boolstr.BoolVal)
@@ -102,3 +94,13 @@ func (boolstr *BoolOrString) BoolValue() bool {
 	}
 	return boolstr.BoolVal
 }
+
+// OpenAPISchemaType is used by the kube-openapi generator when constructing
+// the OpenAPI spec of this type.
+//
+// See: https://github.com/kubernetes/kube-openapi/tree/master/pkg/generators
+func (BoolOrString) OpenAPISchemaType() []string { return []string{"string"} }
+
+// OpenAPISchemaFormat is used by the kube-openapi generator when constructing
+// the OpenAPI spec of this type.
+func (BoolOrString) OpenAPISchemaFormat() string { return "bool-or-string" }
