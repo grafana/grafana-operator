@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	v12 "github.com/openshift/api/route/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -92,21 +93,22 @@ type GrafanaServiceAccount struct {
 
 // GrafanaDeployment provides a means to configure the deployment
 type GrafanaDeployment struct {
-	Annotations                   map[string]string      `json:"annotations,omitempty"`
-	Labels                        map[string]string      `json:"labels,omitempty"`
-	Replicas                      int32                  `json:"replicas"`
-	NodeSelector                  map[string]string      `json:"nodeSelector,omitempty"`
-	Tolerations                   []v1.Toleration        `json:"tolerations,omitempty"`
-	Affinity                      *v1.Affinity           `json:"affinity,omitempty"`
-	SecurityContext               *v1.PodSecurityContext `json:"securityContext,omitempty"`
-	ContainerSecurityContext      *v1.SecurityContext    `json:"containerSecurityContext,omitempty"`
-	TerminationGracePeriodSeconds int64                  `json:"terminationGracePeriodSeconds"`
-	EnvFrom                       []v1.EnvFromSource     `json:"envFrom,omitempty"`
-	SkipCreateAdminAccount        *bool                  `json:"skipCreateAdminAccount,omitempty"`
-	PriorityClassName             string                 `json:"priorityClassName,omitempty"`
-	HostNetwork                   *bool                  `json:"hostNetwork,omitempty"`
-	ExtraVolumes                  []v1.Volume            `json:"extraVolumes,omitempty"`
-	ExtraVolumeMounts             []v1.VolumeMount       `json:"extraVolumeMounts,omitempty"`
+	Annotations                   map[string]string          `json:"annotations,omitempty"`
+	Labels                        map[string]string          `json:"labels,omitempty"`
+	Replicas                      int32                      `json:"replicas"`
+	NodeSelector                  map[string]string          `json:"nodeSelector,omitempty"`
+	Tolerations                   []v1.Toleration            `json:"tolerations,omitempty"`
+	Affinity                      *v1.Affinity               `json:"affinity,omitempty"`
+	SecurityContext               *v1.PodSecurityContext     `json:"securityContext,omitempty"`
+	ContainerSecurityContext      *v1.SecurityContext        `json:"containerSecurityContext,omitempty"`
+	TerminationGracePeriodSeconds int64                      `json:"terminationGracePeriodSeconds"`
+	EnvFrom                       []v1.EnvFromSource         `json:"envFrom,omitempty"`
+	SkipCreateAdminAccount        *bool                      `json:"skipCreateAdminAccount,omitempty"`
+	PriorityClassName             string                     `json:"priorityClassName,omitempty"`
+	HostNetwork                   *bool                      `json:"hostNetwork,omitempty"`
+	ExtraVolumes                  []v1.Volume                `json:"extraVolumes,omitempty"`
+	ExtraVolumeMounts             []v1.VolumeMount           `json:"extraVolumeMounts,omitempty"`
+	Strategy                      *appsv1.DeploymentStrategy `json:"strategy,omitempty"`
 }
 
 // GrafanaIngress provides a means to configure the ingress created

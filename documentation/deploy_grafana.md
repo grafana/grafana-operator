@@ -325,6 +325,9 @@ spec:
     extraVolumes: <array>           # Append extra volumes to the Grafana deployment
     ...
     extraVolumeMounts: <array>      # Append extra volume mounts
+    ...
+    strategy:                       # Optional. The DeploymentStrategy to set for the Grafana deployment. Defaults to 25%/25% RollingUpdate if unset.
+    ...
 ```
 
 NOTE: Some key's are common to both in securityContext and containerSecurityContext, in that case
