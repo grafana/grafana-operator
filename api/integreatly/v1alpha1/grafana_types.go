@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"github.com/integr8ly/grafana-operator/internal/boolstr"
 	v12 "github.com/openshift/api/route/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -240,17 +241,17 @@ type GrafanaConfigUsers struct {
 }
 
 type GrafanaConfigAuth struct {
-	LoginCookieName                      string `json:"login_cookie_name,omitempty" ini:"login_cookie_name,omitempty"`
-	LoginMaximumInactiveLifetimeDays     *int   `json:"login_maximum_inactive_lifetime_days,omitempty" ini:"login_maximum_inactive_lifetime_days,omitempty"`
-	LoginMaximumInactiveLifetimeDuration string `json:"login_maximum_inactive_lifetime_duration,omitempty" ini:"login_maximum_inactive_lifetime_duration,omitempty"`
-	LoginMaximumLifetimeDays             *int   `json:"login_maximum_lifetime_days,omitempty" ini:"login_maximum_lifetime_days,omitempty"`
-	LoginMaximumLifetimeDuration         string `json:"login_maximum_lifetime_duration,omitempty" ini:"login_maximum_lifetime_duration,omitempty"`
-	TokenRotationIntervalMinutes         *int   `json:"token_rotation_interval_minutes,omitempty" ini:"token_rotation_interval_minutes,omitempty"`
-	DisableLoginForm                     *bool  `json:"disable_login_form,omitempty" ini:"disable_login_form"`
-	DisableSignoutMenu                   *bool  `json:"disable_signout_menu,omitempty" ini:"disable_signout_menu"`
-	SigV4AuthEnabled                     *bool  `json:"sigv4_auth_enabled,omitempty" ini:"sigv4_auth_enabled"`
-	SignoutRedirectUrl                   string `json:"signout_redirect_url,omitempty" ini:"signout_redirect_url,omitempty"`
-	OauthAutoLogin                       *bool  `json:"oauth_auto_login,omitempty" ini:"oauth_auto_login"`
+	LoginCookieName                      string                `json:"login_cookie_name,omitempty" ini:"login_cookie_name,omitempty"`
+	LoginMaximumInactiveLifetimeDays     *int                  `json:"login_maximum_inactive_lifetime_days,omitempty" ini:"login_maximum_inactive_lifetime_days,omitempty"`
+	LoginMaximumInactiveLifetimeDuration string                `json:"login_maximum_inactive_lifetime_duration,omitempty" ini:"login_maximum_inactive_lifetime_duration,omitempty"`
+	LoginMaximumLifetimeDays             *int                  `json:"login_maximum_lifetime_days,omitempty" ini:"login_maximum_lifetime_days,omitempty"`
+	LoginMaximumLifetimeDuration         string                `json:"login_maximum_lifetime_duration,omitempty" ini:"login_maximum_lifetime_duration,omitempty"`
+	TokenRotationIntervalMinutes         *int                  `json:"token_rotation_interval_minutes,omitempty" ini:"token_rotation_interval_minutes,omitempty"`
+	DisableLoginForm                     *bool                 `json:"disable_login_form,omitempty" ini:"disable_login_form"`
+	DisableSignoutMenu                   *bool                 `json:"disable_signout_menu,omitempty" ini:"disable_signout_menu"`
+	SigV4AuthEnabled                     *bool                 `json:"sigv4_auth_enabled,omitempty" ini:"sigv4_auth_enabled"`
+	SignoutRedirectUrl                   string                `json:"signout_redirect_url,omitempty" ini:"signout_redirect_url,omitempty"`
+	OauthAutoLogin                       *boolstr.BoolOrString `json:"oauth_auto_login,omitempty" ini:"oauth_auto_login"`
 }
 
 type GrafanaConfigAuthBasic struct {
