@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/internal/boolstr"
 )
 
 type GrafanaIni struct {
@@ -42,6 +43,18 @@ func (i *GrafanaIni) Write() (string, string) {
 			return append(l, fmt.Sprintf("%v = %v", key, *value))
 		}
 		return l
+	}
+
+	// TODO(DeanBrunt): Consider adding validation at a higher level to
+	// ensure we only have values that coerce to bools here.
+	appendBoolOrString := func(l []string, key string, value *boolstr.BoolOrString) []string {
+		b, err := boolstr.GetCoercedBoolValueFromBoolOrString(value)
+		if err != nil {
+			// TODO(DeanBrunt): Consider adding validation at a higher level to
+			// ensure we only have values that coerce to bools here.
+			return l
+		}
+		return appendBool(l, key, &b)
 	}
 
 	config["paths"] = []string{
@@ -161,7 +174,7 @@ func (i *GrafanaIni) Write() (string, string) {
 		items = appendBool(items, "disable_login_form", i.cfg.Auth.DisableLoginForm)
 		items = appendBool(items, "disable_signout_menu", i.cfg.Auth.DisableSignoutMenu)
 		items = appendStr(items, "signout_redirect_url", i.cfg.Auth.SignoutRedirectUrl)
-		items = appendBool(items, "oauth_auto_login", i.cfg.Auth.OauthAutoLogin)
+		items = appendBoolOrString(items, "oauth_auto_login", i.cfg.Auth.OauthAutoLogin)
 		config["auth"] = items
 	}
 
