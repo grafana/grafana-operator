@@ -2,6 +2,7 @@ package boolstr
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 )
@@ -63,7 +64,7 @@ func (boolstr BoolOrString) MarshalJSON() ([]byte, error) {
 	case String:
 		return json.Marshal(boolstr.StrVal)
 	default:
-		return []byte{}, fmt.Errorf("impossible BoolOrString.Type")
+		return []byte{}, errors.New("impossible BoolOrString.Type")
 	}
 }
 
@@ -104,3 +105,28 @@ func (BoolOrString) OpenAPISchemaType() []string { return []string{"string"} }
 // OpenAPISchemaFormat is used by the kube-openapi generator when constructing
 // the OpenAPI spec of this type.
 func (BoolOrString) OpenAPISchemaFormat() string { return "bool-or-string" }
+
+// GetCoercedBoolValueFromBoolOrString attempts to retrieve a boolean value
+// from a BoolOrString through a limited attempt at coercion.
+// If the BoolOrString is of Type Bool, or of Type String with value "true"
+// or "false", the corresponding boolean value is returned with no error.
+// If BoolOrString is nil, or is of Type String and the string value is not
+// "true" or "false", an error is returned.
+func GetCoercedBoolValueFromBoolOrString(boolOrString *BoolOrString) (bool, error) {
+	if boolOrString == nil {
+		return false, errors.New("nil value for BoolOrString")
+	}
+
+	switch boolOrString.Type {
+	case Bool:
+		return boolOrString.BoolVal, nil
+	case String:
+		b, err := strconv.ParseBool(boolOrString.StrVal)
+		if err != nil {
+			return false, fmt.Errorf("invalid value for BoolOrString: %w", err)
+		}
+		return b, nil
+	default:
+		return false, errors.New("impossible BoolOrString.Type")
+	}
+}
