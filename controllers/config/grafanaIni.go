@@ -77,14 +77,14 @@ func (i *GrafanaIni) Write() (string, string) {
 		items = appendStr(items, "protocol", i.cfg.Server.Protocol)
 		items = appendStr(items, "socket", i.cfg.Server.Socket)
 		items = appendStr(items, "domain", i.cfg.Server.Domain)
-		items = appendBool(items, "enforce_domain", i.cfg.Server.EnforceDomain)
+		items = appendBoolOrString(items, "enforce_domain", i.cfg.Server.EnforceDomain)
 		items = appendStr(items, "root_url", i.cfg.Server.RootUrl)
-		items = appendBool(items, "serve_from_sub_path", i.cfg.Server.ServeFromSubPath)
+		items = appendBoolOrString(items, "serve_from_sub_path", i.cfg.Server.ServeFromSubPath)
 		items = appendStr(items, "static_root_path", i.cfg.Server.StaticRootPath)
-		items = appendBool(items, "enable_gzip", i.cfg.Server.EnableGzip)
+		items = appendBoolOrString(items, "enable_gzip", i.cfg.Server.EnableGzip)
 		items = appendStr(items, "cert_file", i.cfg.Server.CertFile)
 		items = appendStr(items, "cert_key", i.cfg.Server.CertKey)
-		items = appendBool(items, "router_logging", i.cfg.Server.RouterLogging)
+		items = appendBoolOrString(items, "router_logging", i.cfg.Server.RouterLogging)
 		config["server"] = items
 	}
 
@@ -105,7 +105,7 @@ func (i *GrafanaIni) Write() (string, string) {
 		items = appendInt(items, "max_idle_conn", i.cfg.Database.MaxIdleConn)
 		items = appendInt(items, "max_open_conn", i.cfg.Database.MaxOpenConn)
 		items = appendInt(items, "conn_max_lifetime", i.cfg.Database.ConnMaxLifetime)
-		items = appendBool(items, "log_queries", i.cfg.Database.LogQueries)
+		items = appendBoolOrString(items, "log_queries", i.cfg.Database.LogQueries)
 		items = appendStr(items, "cache_mode", i.cfg.Database.CacheMode)
 		config["database"] = items
 	}
@@ -123,29 +123,29 @@ func (i *GrafanaIni) Write() (string, string) {
 		items = appendStr(items, "admin_password", i.cfg.Security.AdminPassword)
 		items = appendInt(items, "login_remember_days", i.cfg.Security.LoginRememberDays)
 		items = appendStr(items, "secret_key", i.cfg.Security.SecretKey)
-		items = appendBool(items, "disable_gravatar", i.cfg.Security.DisableGravatar)
+		items = appendBoolOrString(items, "disable_gravatar", i.cfg.Security.DisableGravatar)
 		items = appendStr(items, "data_source_proxy_whitelist", i.cfg.Security.DataSourceProxyWhitelist)
-		items = appendBool(items, "cookie_secure", i.cfg.Security.CookieSecure)
+		items = appendBoolOrString(items, "cookie_secure", i.cfg.Security.CookieSecure)
 		items = appendStr(items, "cookie_samesite", i.cfg.Security.CookieSamesite)
-		items = appendBool(items, "allow_embedding", i.cfg.Security.AllowEmbedding)
-		items = appendBool(items, "strict_transport_security", i.cfg.Security.StrictTransportSecurity)
+		items = appendBoolOrString(items, "allow_embedding", i.cfg.Security.AllowEmbedding)
+		items = appendBoolOrString(items, "strict_transport_security", i.cfg.Security.StrictTransportSecurity)
 		items = appendInt(items, "strict_transport_security_max_age_seconds", i.cfg.Security.StrictTransportSecurityMaxAgeSeconds)
-		items = appendBool(items, "strict_transport_security_preload", i.cfg.Security.StrictTransportSecurityPreload)
-		items = appendBool(items, "strict_transport_security_subdomains", i.cfg.Security.StrictTransportSecuritySubdomains)
-		items = appendBool(items, "x_content_type_options", i.cfg.Security.XContentTypeOptions)
-		items = appendBool(items, "x_xss_protection", i.cfg.Security.XXssProtection)
+		items = appendBoolOrString(items, "strict_transport_security_preload", i.cfg.Security.StrictTransportSecurityPreload)
+		items = appendBoolOrString(items, "strict_transport_security_subdomains", i.cfg.Security.StrictTransportSecuritySubdomains)
+		items = appendBoolOrString(items, "x_content_type_options", i.cfg.Security.XContentTypeOptions)
+		items = appendBoolOrString(items, "x_xss_protection", i.cfg.Security.XXssProtection)
 		config["security"] = items
 	}
 
 	if i.cfg.Users != nil {
 		var items []string
-		items = appendBool(items, "allow_sign_up", i.cfg.Users.AllowSignUp)
-		items = appendBool(items, "allow_org_create", i.cfg.Users.AllowOrgCreate)
-		items = appendBool(items, "auto_assign_org", i.cfg.Users.AutoAssignOrg)
+		items = appendBoolOrString(items, "allow_sign_up", i.cfg.Users.AllowSignUp)
+		items = appendBoolOrString(items, "allow_org_create", i.cfg.Users.AllowOrgCreate)
+		items = appendBoolOrString(items, "auto_assign_org", i.cfg.Users.AutoAssignOrg)
 		items = appendStr(items, "auto_assign_org_id", i.cfg.Users.AutoAssignOrgId)
 		items = appendStr(items, "auto_assign_org_role", i.cfg.Users.AutoAssignOrgRole)
-		items = appendBool(items, "viewers_can_edit", i.cfg.Users.ViewersCanEdit)
-		items = appendBool(items, "editors_can_admin", i.cfg.Users.EditorsCanAdmin)
+		items = appendBoolOrString(items, "viewers_can_edit", i.cfg.Users.ViewersCanEdit)
+		items = appendBoolOrString(items, "editors_can_admin", i.cfg.Users.EditorsCanAdmin)
 		items = appendStr(items, "login_hint", i.cfg.Users.LoginHint)
 		items = appendStr(items, "password_hint", i.cfg.Users.PasswordHint)
 		config["users"] = items
@@ -153,13 +153,13 @@ func (i *GrafanaIni) Write() (string, string) {
 
 	if i.cfg.AuthBasic != nil {
 		var items []string
-		items = appendBool(items, "enabled", i.cfg.AuthBasic.Enabled)
+		items = appendBoolOrString(items, "enabled", i.cfg.AuthBasic.Enabled)
 		config["auth.basic"] = items
 	}
 
 	if i.cfg.AuthAnonymous != nil {
 		var items []string
-		items = appendBool(items, "enabled", i.cfg.AuthAnonymous.Enabled)
+		items = appendBoolOrString(items, "enabled", i.cfg.AuthAnonymous.Enabled)
 		items = appendStr(items, "org_name", i.cfg.AuthAnonymous.OrgName)
 		items = appendStr(items, "org_role", i.cfg.AuthAnonymous.OrgRole)
 		config["auth.anonymous"] = items
@@ -171,8 +171,8 @@ func (i *GrafanaIni) Write() (string, string) {
 		items = appendInt(items, "login_maximum_inactive_lifetime_days", i.cfg.Auth.LoginMaximumInactiveLifetimeDays)
 		items = appendInt(items, "login_maximum_lifetime_days", i.cfg.Auth.LoginMaximumLifetimeDays)
 		items = appendInt(items, "token_rotation_interval_minutes", i.cfg.Auth.TokenRotationIntervalMinutes)
-		items = appendBool(items, "disable_login_form", i.cfg.Auth.DisableLoginForm)
-		items = appendBool(items, "disable_signout_menu", i.cfg.Auth.DisableSignoutMenu)
+		items = appendBoolOrString(items, "disable_login_form", i.cfg.Auth.DisableLoginForm)
+		items = appendBoolOrString(items, "disable_signout_menu", i.cfg.Auth.DisableSignoutMenu)
 		items = appendStr(items, "signout_redirect_url", i.cfg.Auth.SignoutRedirectUrl)
 		items = appendBoolOrString(items, "oauth_auto_login", i.cfg.Auth.OauthAutoLogin)
 		config["auth"] = items
@@ -195,9 +195,9 @@ func (i *GrafanaIni) Write() (string, string) {
 
 	if i.cfg.AuthSaml != nil {
 		var items []string
-		items = appendBool(items, "enabled", i.cfg.AuthSaml.Enabled)
-		items = appendBool(items, "single_logout", i.cfg.AuthSaml.SingleLogout)
-		items = appendBool(items, "allow_idp_initiated", i.cfg.AuthSaml.AllowIdpInitiated)
+		items = appendBoolOrString(items, "enabled", i.cfg.AuthSaml.Enabled)
+		items = appendBoolOrString(items, "single_logout", i.cfg.AuthSaml.SingleLogout)
+		items = appendBoolOrString(items, "allow_idp_initiated", i.cfg.AuthSaml.AllowIdpInitiated)
 		items = appendStr(items, "certificate_path", i.cfg.AuthSaml.CertificatePath)
 		items = appendStr(items, "private_key_path", i.cfg.AuthSaml.KeyPath)
 		items = appendStr(items, "signature_algorithm", i.cfg.AuthSaml.SignatureAlgorithm)
@@ -220,7 +220,7 @@ func (i *GrafanaIni) Write() (string, string) {
 	}
 	if i.cfg.AuthAzureAD != nil {
 		var items []string
-		items = appendBool(items, "enabled", i.cfg.AuthAzureAD.Enabled)
+		items = appendBoolOrString(items, "enabled", i.cfg.AuthAzureAD.Enabled)
 		items = appendStr(items, "client_id", i.cfg.AuthAzureAD.ClientId)
 		items = appendStr(items, "client_secret", i.cfg.AuthAzureAD.ClientSecret)
 		items = appendStr(items, "scopes", i.cfg.AuthAzureAD.Scopes)
@@ -228,27 +228,27 @@ func (i *GrafanaIni) Write() (string, string) {
 		items = appendStr(items, "token_url", i.cfg.AuthAzureAD.TokenUrl)
 		items = appendStr(items, "allowed_domains", i.cfg.AuthAzureAD.AllowedDomains)
 		items = appendStr(items, "allowed_groups", i.cfg.AuthAzureAD.AllowedGroups)
-		items = appendBool(items, "allow_sign_up", i.cfg.AuthAzureAD.AllowSignUp)
+		items = appendBoolOrString(items, "allow_sign_up", i.cfg.AuthAzureAD.AllowSignUp)
 		config["auth.azuread"] = items
 	}
 
 	if i.cfg.AuthGoogle != nil {
 		var items []string
-		items = appendBool(items, "enabled", i.cfg.AuthGoogle.Enabled)
+		items = appendBoolOrString(items, "enabled", i.cfg.AuthGoogle.Enabled)
 		items = appendStr(items, "client_id", i.cfg.AuthGoogle.ClientId)
 		items = appendStr(items, "client_secret", i.cfg.AuthGoogle.ClientSecret)
 		items = appendStr(items, "scopes", i.cfg.AuthGoogle.Scopes)
 		items = appendStr(items, "auth_url", i.cfg.AuthGoogle.AuthUrl)
 		items = appendStr(items, "token_url", i.cfg.AuthGoogle.TokenUrl)
 		items = appendStr(items, "allowed_domains", i.cfg.AuthGoogle.AllowedDomains)
-		items = appendBool(items, "allow_sign_up", i.cfg.AuthGoogle.AllowSignUp)
+		items = appendBoolOrString(items, "allow_sign_up", i.cfg.AuthGoogle.AllowSignUp)
 		config["auth.google"] = items
 	}
 
 	if i.cfg.AuthGithub != nil {
 		var items []string
-		items = appendBool(items, "enabled", i.cfg.AuthGithub.Enabled)
-		items = appendBool(items, "allow_sign_up", i.cfg.AuthGithub.AllowSignUp)
+		items = appendBoolOrString(items, "enabled", i.cfg.AuthGithub.Enabled)
+		items = appendBoolOrString(items, "allow_sign_up", i.cfg.AuthGithub.AllowSignUp)
 		items = appendStr(items, "client_id", i.cfg.AuthGithub.ClientId)
 		items = appendStr(items, "client_secret", i.cfg.AuthGithub.ClientSecret)
 		items = appendStr(items, "scopes", i.cfg.AuthGithub.Scopes)
@@ -262,8 +262,8 @@ func (i *GrafanaIni) Write() (string, string) {
 
 	if i.cfg.AuthGitlab != nil {
 		var items []string
-		items = appendBool(items, "enabled", i.cfg.AuthGitlab.Enabled)
-		items = appendBool(items, "allow_sign_up", i.cfg.AuthGitlab.AllowSignUp)
+		items = appendBoolOrString(items, "enabled", i.cfg.AuthGitlab.Enabled)
+		items = appendBoolOrString(items, "allow_sign_up", i.cfg.AuthGitlab.AllowSignUp)
 		items = appendStr(items, "client_id", i.cfg.AuthGitlab.ClientId)
 		items = appendStr(items, "client_secret", i.cfg.AuthGitlab.ClientSecret)
 		items = appendStr(items, "scopes", i.cfg.AuthGitlab.Scopes)
@@ -275,8 +275,8 @@ func (i *GrafanaIni) Write() (string, string) {
 
 	if i.cfg.AuthGenericOauth != nil {
 		var items []string
-		items = appendBool(items, "enabled", i.cfg.AuthGenericOauth.Enabled)
-		items = appendBool(items, "allow_sign_up", i.cfg.AuthGenericOauth.AllowSignUp)
+		items = appendBoolOrString(items, "enabled", i.cfg.AuthGenericOauth.Enabled)
+		items = appendBoolOrString(items, "allow_sign_up", i.cfg.AuthGenericOauth.AllowSignUp)
 		items = appendStr(items, "client_id", i.cfg.AuthGenericOauth.ClientId)
 		items = appendStr(items, "client_secret", i.cfg.AuthGenericOauth.ClientSecret)
 		items = appendStr(items, "scopes", i.cfg.AuthGenericOauth.Scopes)
@@ -286,7 +286,7 @@ func (i *GrafanaIni) Write() (string, string) {
 		items = appendStr(items, "allowed_domains", i.cfg.AuthGenericOauth.AllowedDomains)
 		items = appendStr(items, "role_attribute_path", i.cfg.AuthGenericOauth.RoleAttributePath)
 		items = appendStr(items, "email_attribute_path", i.cfg.AuthGenericOauth.EmailAttributePath)
-		items = appendBool(items, "tls_skip_verify_insecure", i.cfg.AuthGenericOauth.TLSSkipVerifyInsecure)
+		items = appendBoolOrString(items, "tls_skip_verify_insecure", i.cfg.AuthGenericOauth.TLSSkipVerifyInsecure)
 		items = appendStr(items, "tls_client_cert", i.cfg.AuthGenericOauth.TLSClientCert)
 		items = appendStr(items, "tls_client_key", i.cfg.AuthGenericOauth.TLSClientKey)
 		items = appendStr(items, "tls_client_ca", i.cfg.AuthGenericOauth.TLSClientCa)
@@ -295,38 +295,38 @@ func (i *GrafanaIni) Write() (string, string) {
 
 	if i.cfg.AuthLdap != nil {
 		var items []string
-		items = appendBool(items, "enabled", i.cfg.AuthLdap.Enabled)
-		items = appendBool(items, "allow_sign_up", i.cfg.AuthLdap.AllowSignUp)
+		items = appendBoolOrString(items, "enabled", i.cfg.AuthLdap.Enabled)
+		items = appendBoolOrString(items, "allow_sign_up", i.cfg.AuthLdap.AllowSignUp)
 		items = appendStr(items, "config_file", i.cfg.AuthLdap.ConfigFile)
 		config["auth.ldap"] = items
 	}
 
 	if i.cfg.AuthProxy != nil {
 		var items []string
-		items = appendBool(items, "enabled", i.cfg.AuthProxy.Enabled)
+		items = appendBoolOrString(items, "enabled", i.cfg.AuthProxy.Enabled)
 		items = appendStr(items, "header_name", i.cfg.AuthProxy.HeaderName)
 		items = appendStr(items, "header_property", i.cfg.AuthProxy.HeaderProperty)
-		items = appendBool(items, "auto_sign_up", i.cfg.AuthProxy.AutoSignUp)
+		items = appendBoolOrString(items, "auto_sign_up", i.cfg.AuthProxy.AutoSignUp)
 		items = appendStr(items, "ldap_sync_ttl", i.cfg.AuthProxy.LdapSyncTtl)
 		items = appendStr(items, "whitelist", i.cfg.AuthProxy.Whitelist)
 		items = appendStr(items, "headers", i.cfg.AuthProxy.Headers)
-		items = appendBool(items, "enable_login_token", i.cfg.AuthProxy.EnableLoginToken)
+		items = appendBoolOrString(items, "enable_login_token", i.cfg.AuthProxy.EnableLoginToken)
 		config["auth.proxy"] = items
 	}
 
 	if i.cfg.DataProxy != nil {
 		var items []string
-		items = appendBool(items, "logging", i.cfg.DataProxy.Logging)
+		items = appendBoolOrString(items, "logging", i.cfg.DataProxy.Logging)
 		items = appendInt(items, "timeout", i.cfg.DataProxy.Timeout)
-		items = appendBool(items, "send_user_header", i.cfg.DataProxy.SendUserHeader)
+		items = appendBoolOrString(items, "send_user_header", i.cfg.DataProxy.SendUserHeader)
 		config["dataproxy"] = items
 	}
 
 	if i.cfg.Analytics != nil {
 		var items []string
-		items = appendBool(items, "reporting_enabled", i.cfg.Analytics.ReportingEnabled)
+		items = appendBoolOrString(items, "reporting_enabled", i.cfg.Analytics.ReportingEnabled)
 		items = appendStr(items, "google_analytics_ua_id", i.cfg.Analytics.GoogleAnalyticsUaId)
-		items = appendBool(items, "check_for_updates", i.cfg.Analytics.CheckForUpdates)
+		items = appendBoolOrString(items, "check_for_updates", i.cfg.Analytics.CheckForUpdates)
 		config["analytics"] = items
 	}
 
@@ -338,13 +338,13 @@ func (i *GrafanaIni) Write() (string, string) {
 
 	if i.cfg.Smtp != nil {
 		var items []string
-		items = appendBool(items, "enabled", i.cfg.Smtp.Enabled)
+		items = appendBoolOrString(items, "enabled", i.cfg.Smtp.Enabled)
 		items = appendStr(items, "host", i.cfg.Smtp.Host)
 		items = appendStr(items, "user", i.cfg.Smtp.User)
 		items = appendStr(items, "password", i.cfg.Smtp.Password)
 		items = appendStr(items, "cert_file", i.cfg.Smtp.CertFile)
 		items = appendStr(items, "key_file", i.cfg.Smtp.KeyFile)
-		items = appendBool(items, "skip_verify", i.cfg.Smtp.SkipVerify)
+		items = appendBoolOrString(items, "skip_verify", i.cfg.Smtp.SkipVerify)
 		items = appendStr(items, "from_address", i.cfg.Smtp.FromAddress)
 		items = appendStr(items, "from_name", i.cfg.Smtp.FromName)
 		items = appendStr(items, "ehlo_identity", i.cfg.Smtp.EhloIdentity)
@@ -353,7 +353,7 @@ func (i *GrafanaIni) Write() (string, string) {
 
 	if i.cfg.Metrics != nil {
 		var items []string
-		items = appendBool(items, "enabled", i.cfg.Metrics.Enabled)
+		items = appendBoolOrString(items, "enabled", i.cfg.Metrics.Enabled)
 		items = appendStr(items, "basic_auth_username", i.cfg.Metrics.BasicAuthUsername)
 		items = appendStr(items, "basic_auth_password", i.cfg.Metrics.BasicAuthPassword)
 		items = appendInt(items, "interval_seconds", i.cfg.Metrics.IntervalSeconds)
@@ -362,10 +362,10 @@ func (i *GrafanaIni) Write() (string, string) {
 
 	if i.cfg.Snapshots != nil {
 		var items []string
-		items = appendBool(items, "external_enabled", i.cfg.Snapshots.ExternalEnabled)
+		items = appendBoolOrString(items, "external_enabled", i.cfg.Snapshots.ExternalEnabled)
 		items = appendStr(items, "external_snapshot_url", i.cfg.Snapshots.ExternalSnapshotUrl)
 		items = appendStr(items, "external_snapshot_name", i.cfg.Snapshots.ExternalSnapshotName)
-		items = appendBool(items, "snapshot_remove_expired", i.cfg.Snapshots.SnapshotRemoveExpired)
+		items = appendBoolOrString(items, "snapshot_remove_expired", i.cfg.Snapshots.SnapshotRemoveExpired)
 		config["snapshots"] = items
 	}
 
@@ -420,8 +420,8 @@ func (i *GrafanaIni) Write() (string, string) {
 
 	if i.cfg.Alerting != nil {
 		var items []string
-		items = appendBool(items, "enabled", i.cfg.Alerting.Enabled)
-		items = appendBool(items, "execute_alerts", i.cfg.Alerting.ExecuteAlerts)
+		items = appendBoolOrString(items, "enabled", i.cfg.Alerting.Enabled)
+		items = appendBoolOrString(items, "execute_alerts", i.cfg.Alerting.ExecuteAlerts)
 		items = appendStr(items, "error_or_timeout", i.cfg.Alerting.ErrorOrTimeout)
 		items = appendStr(items, "nodata_or_nullvalues", i.cfg.Alerting.NodataOrNullvalues)
 		items = appendInt(items, "concurrent_render_limit", i.cfg.Alerting.ConcurrentRenderLimit)
@@ -433,13 +433,13 @@ func (i *GrafanaIni) Write() (string, string) {
 
 	if i.cfg.Panels != nil {
 		var items []string
-		items = appendBool(items, "disable_sanitize_html", i.cfg.Panels.DisableSanitizeHtml)
+		items = appendBoolOrString(items, "disable_sanitize_html", i.cfg.Panels.DisableSanitizeHtml)
 		config["panels"] = items
 	}
 
 	if i.cfg.Plugins != nil {
 		var items []string
-		items = appendBool(items, "enable_alpha", i.cfg.Plugins.EnableAlpha)
+		items = appendBoolOrString(items, "enable_alpha", i.cfg.Plugins.EnableAlpha)
 		config["plugins"] = items
 	}
 
