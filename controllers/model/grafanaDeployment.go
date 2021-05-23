@@ -2,7 +2,9 @@ package model
 
 import (
 	"fmt"
+
 	"github.com/integr8ly/grafana-operator/controllers/constants"
+	"github.com/integr8ly/grafana-operator/internal/boolstr"
 
 	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/controllers/config"
@@ -26,8 +28,10 @@ const (
 )
 
 func getSkipCreateAdminAccount(cr *v1alpha1.Grafana) bool {
-	if cr.Spec.Deployment != nil && cr.Spec.Deployment.SkipCreateAdminAccount != nil {
-		return *cr.Spec.Deployment.SkipCreateAdminAccount
+	if cr.Spec.Deployment != nil {
+		if b := boolstr.GetCoercedPointerBoolValue(cr.Spec.Deployment.SkipCreateAdminAccount); b != nil {
+			return *b
+		}
 	}
 
 	return false

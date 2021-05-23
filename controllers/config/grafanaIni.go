@@ -48,13 +48,7 @@ func (i *GrafanaIni) Write() (string, string) {
 	// TODO(DeanBrunt): Consider adding validation at a higher level to
 	// ensure we only have values that coerce to bools here.
 	appendBoolOrString := func(l []string, key string, value *boolstr.BoolOrString) []string {
-		b, err := boolstr.GetCoercedBoolValueFromBoolOrString(value)
-		if err != nil {
-			// TODO(DeanBrunt): Consider adding validation at a higher level to
-			// ensure we only have values that coerce to bools here.
-			return l
-		}
-		return appendBool(l, key, &b)
+		return appendBool(l, key, boolstr.GetCoercedPointerBoolValue(value))
 	}
 
 	config["paths"] = []string{

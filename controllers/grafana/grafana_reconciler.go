@@ -2,14 +2,16 @@ package grafana
 
 import (
 	"fmt"
+	"regexp"
+
 	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/controllers/common"
 	"github.com/integr8ly/grafana-operator/controllers/config"
 	"github.com/integr8ly/grafana-operator/controllers/constants"
 	"github.com/integr8ly/grafana-operator/controllers/model"
+	"github.com/integr8ly/grafana-operator/internal/boolstr"
 	v1 "k8s.io/api/core/v1"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"regexp"
 )
 
 type GrafanaReconciler struct {
@@ -134,8 +136,10 @@ func (i *GrafanaReconciler) getGrafanaDataPvcDesiredState(state *common.ClusterS
 
 func (i *GrafanaReconciler) getGrafanaServiceAccountDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
 
-	if cr.Spec.ServiceAccount != nil && cr.Spec.ServiceAccount.Skip != nil && *cr.Spec.ServiceAccount.Skip == true {
-		return nil
+	if cr.Spec.ServiceAccount != nil {
+		if b := boolstr.GetCoercedPointerBoolValue(cr.Spec.ServiceAccount.Skip); b != nil && *b {
+			return nil
+		}
 	}
 	if state.GrafanaServiceAccount == nil {
 		return common.GenericCreateAction{
@@ -231,8 +235,10 @@ func (i *GrafanaReconciler) getGrafanaExternalAccessDesiredState(state *common.C
 }
 
 func (i *GrafanaReconciler) getGrafanaAdminUserSecretDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
-	if cr.Spec.Deployment != nil && cr.Spec.Deployment.SkipCreateAdminAccount != nil && *cr.Spec.Deployment.SkipCreateAdminAccount {
-		return nil
+	if cr.Spec.Deployment != nil {
+		if b := boolstr.GetCoercedPointerBoolValue(cr.Spec.Deployment.SkipCreateAdminAccount); b != nil && *b {
+			return nil
+		}
 	}
 
 	if state.AdminSecret == nil {
@@ -294,8 +300,10 @@ func (i *GrafanaReconciler) getEnvVarsDesiredState(state *common.ClusterState, c
 	}
 
 	// Don't look for external admin credentials if the operator created an account
-	if cr.Spec.Deployment != nil && cr.Spec.Deployment.SkipCreateAdminAccount != nil && *cr.Spec.Deployment.SkipCreateAdminAccount == false {
-		return nil
+	if cr.Spec.Deployment != nil {
+		if b := boolstr.GetCoercedPointerBoolValue(cr.Spec.Deployment.SkipCreateAdminAccount); b != nil && !*b {
+			return nil
+		}
 	}
 
 	var actions []common.ClusterAction
