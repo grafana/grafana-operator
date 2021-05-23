@@ -21,6 +21,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"github.com/integr8ly/grafana-operator/internal/boolstr"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
@@ -268,12 +269,12 @@ func (in *GrafanaConfigAlerting) DeepCopyInto(out *GrafanaConfigAlerting) {
 	*out = *in
 	if in.Enabled != nil {
 		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.ExecuteAlerts != nil {
 		in, out := &in.ExecuteAlerts, &out.ExecuteAlerts
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.ConcurrentRenderLimit != nil {
@@ -313,12 +314,12 @@ func (in *GrafanaConfigAnalytics) DeepCopyInto(out *GrafanaConfigAnalytics) {
 	*out = *in
 	if in.ReportingEnabled != nil {
 		in, out := &in.ReportingEnabled, &out.ReportingEnabled
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.CheckForUpdates != nil {
 		in, out := &in.CheckForUpdates, &out.CheckForUpdates
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 }
@@ -353,22 +354,22 @@ func (in *GrafanaConfigAuth) DeepCopyInto(out *GrafanaConfigAuth) {
 	}
 	if in.DisableLoginForm != nil {
 		in, out := &in.DisableLoginForm, &out.DisableLoginForm
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.DisableSignoutMenu != nil {
 		in, out := &in.DisableSignoutMenu, &out.DisableSignoutMenu
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.SigV4AuthEnabled != nil {
 		in, out := &in.SigV4AuthEnabled, &out.SigV4AuthEnabled
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.OauthAutoLogin != nil {
 		in, out := &in.OauthAutoLogin, &out.OauthAutoLogin
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 }
@@ -388,7 +389,7 @@ func (in *GrafanaConfigAuthAnonymous) DeepCopyInto(out *GrafanaConfigAuthAnonymo
 	*out = *in
 	if in.Enabled != nil {
 		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 }
@@ -408,12 +409,12 @@ func (in *GrafanaConfigAuthAzureAD) DeepCopyInto(out *GrafanaConfigAuthAzureAD) 
 	*out = *in
 	if in.Enabled != nil {
 		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.AllowSignUp != nil {
 		in, out := &in.AllowSignUp, &out.AllowSignUp
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 }
@@ -433,7 +434,7 @@ func (in *GrafanaConfigAuthBasic) DeepCopyInto(out *GrafanaConfigAuthBasic) {
 	*out = *in
 	if in.Enabled != nil {
 		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 }
@@ -453,17 +454,17 @@ func (in *GrafanaConfigAuthGenericOauth) DeepCopyInto(out *GrafanaConfigAuthGene
 	*out = *in
 	if in.Enabled != nil {
 		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.AllowSignUp != nil {
 		in, out := &in.AllowSignUp, &out.AllowSignUp
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.TLSSkipVerifyInsecure != nil {
 		in, out := &in.TLSSkipVerifyInsecure, &out.TLSSkipVerifyInsecure
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 }
@@ -483,12 +484,12 @@ func (in *GrafanaConfigAuthGithub) DeepCopyInto(out *GrafanaConfigAuthGithub) {
 	*out = *in
 	if in.Enabled != nil {
 		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.AllowSignUp != nil {
 		in, out := &in.AllowSignUp, &out.AllowSignUp
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 }
@@ -508,12 +509,12 @@ func (in *GrafanaConfigAuthGitlab) DeepCopyInto(out *GrafanaConfigAuthGitlab) {
 	*out = *in
 	if in.Enabled != nil {
 		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.AllowSignUp != nil {
 		in, out := &in.AllowSignUp, &out.AllowSignUp
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 }
@@ -533,12 +534,12 @@ func (in *GrafanaConfigAuthGoogle) DeepCopyInto(out *GrafanaConfigAuthGoogle) {
 	*out = *in
 	if in.Enabled != nil {
 		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.AllowSignUp != nil {
 		in, out := &in.AllowSignUp, &out.AllowSignUp
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 }
@@ -558,12 +559,12 @@ func (in *GrafanaConfigAuthLdap) DeepCopyInto(out *GrafanaConfigAuthLdap) {
 	*out = *in
 	if in.Enabled != nil {
 		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.AllowSignUp != nil {
 		in, out := &in.AllowSignUp, &out.AllowSignUp
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 }
@@ -583,12 +584,12 @@ func (in *GrafanaConfigAuthOkta) DeepCopyInto(out *GrafanaConfigAuthOkta) {
 	*out = *in
 	if in.Enabled != nil {
 		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.AllowSignUp != nil {
 		in, out := &in.AllowSignUp, &out.AllowSignUp
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 }
@@ -608,17 +609,17 @@ func (in *GrafanaConfigAuthProxy) DeepCopyInto(out *GrafanaConfigAuthProxy) {
 	*out = *in
 	if in.Enabled != nil {
 		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.AutoSignUp != nil {
 		in, out := &in.AutoSignUp, &out.AutoSignUp
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.EnableLoginToken != nil {
 		in, out := &in.EnableLoginToken, &out.EnableLoginToken
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 }
@@ -638,17 +639,17 @@ func (in *GrafanaConfigAuthSaml) DeepCopyInto(out *GrafanaConfigAuthSaml) {
 	*out = *in
 	if in.Enabled != nil {
 		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.SingleLogout != nil {
 		in, out := &in.SingleLogout, &out.SingleLogout
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.AllowIdpInitiated != nil {
 		in, out := &in.AllowIdpInitiated, &out.AllowIdpInitiated
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 }
@@ -688,7 +689,7 @@ func (in *GrafanaConfigDataProxy) DeepCopyInto(out *GrafanaConfigDataProxy) {
 	*out = *in
 	if in.Logging != nil {
 		in, out := &in.Logging, &out.Logging
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.Timeout != nil {
@@ -698,7 +699,7 @@ func (in *GrafanaConfigDataProxy) DeepCopyInto(out *GrafanaConfigDataProxy) {
 	}
 	if in.SendUserHeader != nil {
 		in, out := &in.SendUserHeader, &out.SendUserHeader
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 }
@@ -733,7 +734,7 @@ func (in *GrafanaConfigDatabase) DeepCopyInto(out *GrafanaConfigDatabase) {
 	}
 	if in.LogQueries != nil {
 		in, out := &in.LogQueries, &out.LogQueries
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 }
@@ -858,7 +859,7 @@ func (in *GrafanaConfigMetrics) DeepCopyInto(out *GrafanaConfigMetrics) {
 	*out = *in
 	if in.Enabled != nil {
 		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.IntervalSeconds != nil {
@@ -898,7 +899,7 @@ func (in *GrafanaConfigPanels) DeepCopyInto(out *GrafanaConfigPanels) {
 	*out = *in
 	if in.DisableSanitizeHtml != nil {
 		in, out := &in.DisableSanitizeHtml, &out.DisableSanitizeHtml
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 }
@@ -933,7 +934,7 @@ func (in *GrafanaConfigPlugins) DeepCopyInto(out *GrafanaConfigPlugins) {
 	*out = *in
 	if in.EnableAlpha != nil {
 		in, out := &in.EnableAlpha, &out.EnableAlpha
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 }
@@ -973,22 +974,22 @@ func (in *GrafanaConfigSecurity) DeepCopyInto(out *GrafanaConfigSecurity) {
 	}
 	if in.DisableGravatar != nil {
 		in, out := &in.DisableGravatar, &out.DisableGravatar
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.CookieSecure != nil {
 		in, out := &in.CookieSecure, &out.CookieSecure
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.AllowEmbedding != nil {
 		in, out := &in.AllowEmbedding, &out.AllowEmbedding
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.StrictTransportSecurity != nil {
 		in, out := &in.StrictTransportSecurity, &out.StrictTransportSecurity
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.StrictTransportSecurityMaxAgeSeconds != nil {
@@ -998,22 +999,22 @@ func (in *GrafanaConfigSecurity) DeepCopyInto(out *GrafanaConfigSecurity) {
 	}
 	if in.StrictTransportSecurityPreload != nil {
 		in, out := &in.StrictTransportSecurityPreload, &out.StrictTransportSecurityPreload
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.StrictTransportSecuritySubdomains != nil {
 		in, out := &in.StrictTransportSecuritySubdomains, &out.StrictTransportSecuritySubdomains
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.XContentTypeOptions != nil {
 		in, out := &in.XContentTypeOptions, &out.XContentTypeOptions
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.XXssProtection != nil {
 		in, out := &in.XXssProtection, &out.XXssProtection
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 }
@@ -1033,22 +1034,22 @@ func (in *GrafanaConfigServer) DeepCopyInto(out *GrafanaConfigServer) {
 	*out = *in
 	if in.EnforceDomain != nil {
 		in, out := &in.EnforceDomain, &out.EnforceDomain
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.ServeFromSubPath != nil {
 		in, out := &in.ServeFromSubPath, &out.ServeFromSubPath
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.EnableGzip != nil {
 		in, out := &in.EnableGzip, &out.EnableGzip
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.RouterLogging != nil {
 		in, out := &in.RouterLogging, &out.RouterLogging
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 }
@@ -1068,12 +1069,12 @@ func (in *GrafanaConfigSmtp) DeepCopyInto(out *GrafanaConfigSmtp) {
 	*out = *in
 	if in.Enabled != nil {
 		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.SkipVerify != nil {
 		in, out := &in.SkipVerify, &out.SkipVerify
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 }
@@ -1093,12 +1094,12 @@ func (in *GrafanaConfigSnapshots) DeepCopyInto(out *GrafanaConfigSnapshots) {
 	*out = *in
 	if in.ExternalEnabled != nil {
 		in, out := &in.ExternalEnabled, &out.ExternalEnabled
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.SnapshotRemoveExpired != nil {
 		in, out := &in.SnapshotRemoveExpired, &out.SnapshotRemoveExpired
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 }
@@ -1118,27 +1119,27 @@ func (in *GrafanaConfigUsers) DeepCopyInto(out *GrafanaConfigUsers) {
 	*out = *in
 	if in.AllowSignUp != nil {
 		in, out := &in.AllowSignUp, &out.AllowSignUp
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.AllowOrgCreate != nil {
 		in, out := &in.AllowOrgCreate, &out.AllowOrgCreate
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.AutoAssignOrg != nil {
 		in, out := &in.AutoAssignOrg, &out.AutoAssignOrg
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.ViewersCanEdit != nil {
 		in, out := &in.ViewersCanEdit, &out.ViewersCanEdit
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.EditorsCanAdmin != nil {
 		in, out := &in.EditorsCanAdmin, &out.EditorsCanAdmin
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 }
@@ -1529,12 +1530,12 @@ func (in *GrafanaDeployment) DeepCopyInto(out *GrafanaDeployment) {
 	}
 	if in.SkipCreateAdminAccount != nil {
 		in, out := &in.SkipCreateAdminAccount, &out.SkipCreateAdminAccount
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.HostNetwork != nil {
 		in, out := &in.HostNetwork, &out.HostNetwork
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.ExtraVolumes != nil {
@@ -1680,7 +1681,7 @@ func (in *GrafanaServiceAccount) DeepCopyInto(out *GrafanaServiceAccount) {
 	*out = *in
 	if in.Skip != nil {
 		in, out := &in.Skip, &out.Skip
-		*out = new(bool)
+		*out = new(boolstr.BoolOrString)
 		**out = **in
 	}
 	if in.Annotations != nil {
