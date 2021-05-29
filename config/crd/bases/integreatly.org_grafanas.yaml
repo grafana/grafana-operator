@@ -491,6 +491,15 @@ spec:
                       type:
                         type: string
                     type: object
+                  rendering:
+                    properties:
+                      callback_url:
+                        type: string
+                      concurrent_render_request_limit:
+                        type: integer
+                      server_url:
+                        type: string
+                    type: object
                   security:
                     properties:
                       admin_password:
