@@ -179,15 +179,17 @@ func (r *GrafanaClientImpl) CreateOrUpdateFolder(folderInputName string) (Grafan
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
-		return response, fmt.Errorf(
-			"error creating folder, expected status 200 but got %v",
-			resp.StatusCode)
-	}
-
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return response, err
+	}
+
+	if resp.StatusCode != 200 {
+		return response, fmt.Errorf(
+			"error creating folder, expected status 200 but got %v: %s",
+			resp.StatusCode,
+			data,
+		)
 	}
 
 	err = json.Unmarshal(data, &response)
@@ -236,15 +238,17 @@ func (r *GrafanaClientImpl) CreateOrUpdateDashboard(dashboard []byte, folderID i
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
-		return response, fmt.Errorf(
-			"error creating dashboard, expected status 200 but got %v",
-			resp.StatusCode)
-	}
-
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return response, err
+	}
+
+	if resp.StatusCode != 200 {
+		return response, fmt.Errorf(
+			"error creating dashboard, expected status 200 but got %v: %s",
+			resp.StatusCode,
+			data,
+		)
 	}
 
 	err = json.Unmarshal(data, &response)
