@@ -21,6 +21,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
@@ -1550,6 +1551,11 @@ func (in *GrafanaDeployment) DeepCopyInto(out *GrafanaDeployment) {
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
+	}
+	if in.Strategy != nil {
+		in, out := &in.Strategy, &out.Strategy
+		*out = new(appsv1.DeploymentStrategy)
+		(*in).DeepCopyInto(*out)
 	}
 }
 
