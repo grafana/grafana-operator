@@ -21,6 +21,9 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"net/http"
+	"os"
+
 	"github.com/go-logr/logr"
 	grafanav1alpha1 "github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
 	integreatlyorgv1alpha1 "github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
@@ -33,9 +36,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
-	"net/http"
-	"os"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+
+	"time"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -45,7 +48,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"time"
 )
 
 const (
@@ -303,7 +305,7 @@ func (r *GrafanaDashboardReconciler) reconcileDashboards(request reconcile.Reque
 				continue
 			}
 
-			if matchesNamespaceLabels == false {
+			if !matchesNamespaceLabels {
 				log.Log.Info("dashboard %v skipped because the namespace labels do not match", "dashboard", dashboard.Name)
 				continue
 			}
@@ -320,37 +322,35 @@ func (r *GrafanaDashboardReconciler) reconcileDashboards(request reconcile.Reque
 		r.manageSuccess(&dashboard, &folderId, folderName)
 	}
 
-	if dashboardsToDelete != nil {
-		for _, dashboard := range dashboardsToDelete {
-			status, err := grafanaClient.DeleteDashboardByUID(dashboard.UID)
-			if err != nil {
-				log.Log.Error(err, "error deleting dashboard, status was",
-					"dashboardUID", dashboard.UID,
-					"status.Status", *status.Status,
-					"status.Message", *status.Message)
+	for _, dashboard := range dashboardsToDelete {
+		status, err := grafanaClient.DeleteDashboardByUID(dashboard.UID)
+		if err != nil {
+			log.Log.Error(err, "error deleting dashboard, status was",
+				"dashboardUID", dashboard.UID,
+				"status.Status", *status.Status,
+				"status.Message", *status.Message)
+		}
+
+		log.Log.Info(fmt.Sprintf("delete result was %v", *status.Message))
+
+		r.config.RemovePluginsFor(dashboard.Namespace, dashboard.Name)
+		r.config.RemoveDashboard(dashboard.UID)
+
+		// Mark the dashboards as synced so that the current state can be written
+		// to the Grafana CR by the grafana controller
+		r.config.AddConfigItem(config.ConfigGrafanaDashboardsSynced, true)
+
+		// Refresh the list of known dashboards after the dashboard has been removed
+		knownDashboards = r.config.GetDashboards(request.Namespace)
+
+		// Check for empty managed folders (namespace-named) and delete obsolete ones
+		if dashboard.FolderName == "" || dashboard.FolderName == dashboard.Namespace {
+			if safe := grafanaClient.SafeToDelete(knownDashboards, dashboard.FolderId); !safe {
+				log.Log.Info("folder cannot be deleted as it's being used by other dashboards")
+				break
 			}
-
-			log.Log.Info(fmt.Sprintf("delete result was %v", *status.Message))
-
-			r.config.RemovePluginsFor(dashboard.Namespace, dashboard.Name)
-			r.config.RemoveDashboard(dashboard.UID)
-
-			// Mark the dashboards as synced so that the current state can be written
-			// to the Grafana CR by the grafana controller
-			r.config.AddConfigItem(config.ConfigGrafanaDashboardsSynced, true)
-
-			// Refresh the list of known dashboards after the dashboard has been removed
-			knownDashboards = r.config.GetDashboards(request.Namespace)
-
-			// Check for empty managed folders (namespace-named) and delete obsolete ones
-			if dashboard.FolderName == "" || dashboard.FolderName == dashboard.Namespace {
-				if safe := grafanaClient.SafeToDelete(knownDashboards, dashboard.FolderId); !safe {
-					log.Log.Info("folder cannot be deleted as it's being used by other dashboards")
-					break
-				}
-				if err = grafanaClient.DeleteFolder(dashboard.FolderId); err != nil {
-					log.Log.Error(err, "delete dashboard folder failed", "dashboard.folderId", *dashboard.FolderId)
-				}
+			if err = grafanaClient.DeleteFolder(dashboard.FolderId); err != nil {
+				log.Log.Error(err, "delete dashboard folder failed", "dashboard.folderId", *dashboard.FolderId)
 			}
 		}
 	}

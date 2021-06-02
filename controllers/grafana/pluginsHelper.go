@@ -3,10 +3,11 @@ package grafana
 import (
 	"crypto/tls"
 	"fmt"
-	grafanav1alpha1 "github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/controllers/config"
 	"net/http"
 	"strings"
+
+	grafanav1alpha1 "github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
+	"github.com/integr8ly/grafana-operator/controllers/config"
 )
 
 type PluginsHelperImpl struct {
@@ -36,11 +37,7 @@ func (h *PluginsHelperImpl) PluginExists(plugin grafanav1alpha1.GrafanaPlugin) b
 	}
 
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return false
-	}
-
-	return true
+	return resp.StatusCode == http.StatusOK
 }
 
 // Turns an array of plugins into a string representation of the form
@@ -95,7 +92,7 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *grafanav1alpha1.Grafana, requested
 
 	for _, plugin := range requested {
 		// Don't allow to install multiple versions of the same plugin
-		if filteredPlugins.HasSomeVersionOf(&plugin) == true {
+		if filteredPlugins.HasSomeVersionOf(&plugin) {
 			installedVersion := filteredPlugins.GetInstalledVersionOf(&plugin)
 			log.V(1).Info(fmt.Sprintf("not installing version %s of %s because %s is already installed", plugin.Version, plugin.Name, installedVersion.Version))
 			continue
@@ -113,7 +110,7 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *grafanav1alpha1.Grafana, requested
 		}
 
 		// New plugin
-		if cr.Status.InstalledPlugins.HasSomeVersionOf(&plugin) == false {
+		if !cr.Status.InstalledPlugins.HasSomeVersionOf(&plugin) {
 			filteredPlugins = append(filteredPlugins, plugin)
 			log.V(1).Info(fmt.Sprintf("installing plugin %s@%s", plugin.Name, plugin.Version))
 			pluginsUpdated = true
@@ -125,8 +122,8 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *grafanav1alpha1.Grafana, requested
 		// and there is only one dashboard that requires this plugin
 		// If multiple dashboards request different versions of the same plugin, then we can't upgrade because
 		// there is no way to decide which version is the correct one
-		if cr.Status.InstalledPlugins.HasSomeVersionOf(&plugin) == true &&
-			cr.Status.InstalledPlugins.HasExactVersionOf(&plugin) == false &&
+		if cr.Status.InstalledPlugins.HasSomeVersionOf(&plugin) &&
+			!cr.Status.InstalledPlugins.HasExactVersionOf(&plugin) &&
 			requested.VersionsOf(&plugin) == 1 {
 			installedVersion := cr.Status.InstalledPlugins.GetInstalledVersionOf(&plugin)
 			filteredPlugins = append(filteredPlugins, plugin)
@@ -138,7 +135,7 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *grafanav1alpha1.Grafana, requested
 
 	// Check for removed plugins
 	for _, plugin := range cr.Status.InstalledPlugins {
-		if requested.HasSomeVersionOf(&plugin) == false {
+		if !requested.HasSomeVersionOf(&plugin) {
 			pluginsUpdated = true
 		}
 	}

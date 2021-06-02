@@ -2,10 +2,10 @@ package config
 
 import (
 	"fmt"
-	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sync"
 	"time"
+
+	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
 )
 
 const (
@@ -41,8 +41,6 @@ type ControllerConfig struct {
 
 var instance *ControllerConfig
 var once sync.Once
-
-var log = ctrl.Log.WithName("controller_config")
 
 func GetControllerConfig() *ControllerConfig {
 	once.Do(func() {
@@ -160,9 +158,8 @@ func (c *ControllerConfig) GetDashboards(namespace string) []*v1alpha1.GrafanaDa
 	// Cluster level?
 	if namespace == "" {
 		var dashboards []*v1alpha1.GrafanaDashboardRef
-		for _, v := range c.Dashboards {
-			dashboards = append(dashboards, v)
-		}
+		dashboards = append(dashboards, c.Dashboards...)
+
 		return dashboards
 	}
 

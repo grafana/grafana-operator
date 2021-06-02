@@ -4,6 +4,8 @@ import (
 	"context"
 	stdErr "errors"
 	"fmt"
+	"reflect"
+
 	"github.com/go-logr/logr"
 	grafanav1alpha1 "github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/controllers/common"
@@ -17,7 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/record"
-	"reflect"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -102,7 +103,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler, autodetectChannel chan sch
 			cfg := config.GetControllerConfig()
 
 			// Route already watched?
-			if cfg.GetConfigBool(config.ConfigRouteWatch, false) == true {
+			if cfg.GetConfigBool(config.ConfigRouteWatch, false) {
 				return
 			}
 
