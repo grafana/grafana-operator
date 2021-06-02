@@ -28,8 +28,8 @@ RUN mkdir -p /opt/jsonnet && chown nobody /opt/jsonnet
 
 USER 65532:65532
 
-ADD grafonnet-lib/grafonnet/ /opt/jsonnet/grafonnet
+COPY grafonnet-lib/grafonnet/ /opt/jsonnet/grafonnet
 
-ADD bin/manager /usr/local/bin/grafana-operator
+COPY bin/manager /usr/local/bin/grafana-operator
 
 ENTRYPOINT ["/manager"]
