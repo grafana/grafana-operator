@@ -6,17 +6,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"strings"
+
 	"github.com/go-logr/logr"
 	"github.com/google/go-jsonnet"
 	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/controllers/config"
-	"io/ioutil"
 	corev1 "k8s.io/api/core/v1"
-	"net/http"
-	"net/url"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"strings"
 )
 
 type SourceType int
@@ -166,12 +167,12 @@ func (r *DashboardPipelineImpl) loadJsonnet(source string) (string, error) {
 func (r *DashboardPipelineImpl) loadDashboardFromURL() error {
 	url, err := url.ParseRequestURI(r.Dashboard.Spec.Url)
 	if err != nil {
-		return errors.New(fmt.Sprintf("invalid url %v", r.Dashboard.Spec.Url))
+		return fmt.Errorf("invalid url %v", r.Dashboard.Spec.Url)
 	}
 
 	resp, err := http.Get(r.Dashboard.Spec.Url)
 	if err != nil {
-		return errors.New(fmt.Sprintf("cannot request %v", r.Dashboard.Spec.Url))
+		return fmt.Errorf("cannot request %v", r.Dashboard.Spec.Url)
 	}
 	defer resp.Body.Close()
 
@@ -197,7 +198,10 @@ func (r *DashboardPipelineImpl) loadDashboardFromURL() error {
 	// Update dashboard spec so that URL would not be refetched
 	if r.JSON != r.Dashboard.Spec.Json {
 		r.Dashboard.Spec.Json = r.JSON
-		r.Client.Update(r.Context, r.Dashboard)
+		err := r.Client.Update(r.Context, r.Dashboard)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -252,7 +256,7 @@ func (r *DashboardPipelineImpl) resolveDatasources() error {
 	currentJson := r.JSON
 	for _, input := range r.Dashboard.Spec.Datasources {
 		if input.DatasourceName == "" || input.InputName == "" {
-			msg := fmt.Sprintf("invalid datasource input rule, input or datasource empty")
+			msg := "invalid datasource input rule, input or datasource empty"
 			r.Logger.Info(msg)
 			return errors.New(msg)
 		}

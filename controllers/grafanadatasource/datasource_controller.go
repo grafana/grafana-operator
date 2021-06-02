@@ -20,17 +20,18 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"io"
+	"sort"
+
 	"github.com/go-logr/logr"
 	grafanav1alpha1 "github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/controllers/common"
 	"github.com/integr8ly/grafana-operator/controllers/constants"
-	"io"
 	v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/tools/record"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sort"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -48,7 +49,6 @@ type GrafanaDatasourceReconciler struct {
 	Context  context.Context
 	Cancel   context.CancelFunc
 	recorder record.EventRecorder
-	state    common.ControllerState
 	Logger   logr.Logger
 }
 
@@ -107,14 +107,12 @@ func (r *GrafanaDatasourceReconciler) reconcileDataSources(state *common.DataSou
 
 	// Data sources to add or update: we always update the config map and let
 	// Kubernetes figure out if any changes have to be applied
-	for _, ds := range state.ClusterDataSources.Items {
-		dataSourcesToAddOrUpdate = append(dataSourcesToAddOrUpdate, ds)
-	}
+	dataSourcesToAddOrUpdate = append(dataSourcesToAddOrUpdate, state.ClusterDataSources.Items...)
 
 	// Data sources to delete: if a datasourcedashboard is in the configmap but cannot
 	// be found on the cluster then we assume it has been deleted and remove
 	// it from the configmap
-	for ds, _ := range state.KnownDataSources.Data {
+	for ds := range state.KnownDataSources.Data {
 		if !foundOnCluster(ds) {
 			dataSourcesToDelete = append(dataSourcesToDelete, ds)
 		}
@@ -174,7 +172,7 @@ func (i *GrafanaDatasourceReconciler) updateHash(known *v1.ConfigMap) (string, e
 
 	// Make sure that we always use the same order when creating the hash
 	var keys []string
-	for key, _ := range known.Data {
+	for key := range known.Data {
 		keys = append(keys, key)
 	}
 	sort.Strings(keys)

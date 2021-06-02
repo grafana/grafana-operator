@@ -20,6 +20,10 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"os"
+	"runtime"
+	"strings"
+
 	apis "github.com/integr8ly/grafana-operator/api"
 	"github.com/integr8ly/grafana-operator/controllers/common"
 	grafanaconfig "github.com/integr8ly/grafana-operator/controllers/config"
@@ -32,12 +36,10 @@ import (
 	"github.com/operator-framework/operator-lib/leader"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
-	"os"
-	"runtime"
 	k8sconfig "sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"strings"
+
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -54,10 +56,8 @@ import (
 )
 
 var (
-	scheme                              = k8sruntime.NewScheme()
-	setupLog                            = ctrl.Log.WithName("setup")
-	metricsHost                         = "0.0.0.0"
-	metricsPort                   int32 = 8080
+	scheme                        = k8sruntime.NewScheme()
+	setupLog                      = ctrl.Log.WithName("setup")
 	flagImage                     string
 	flagImageTag                  string
 	flagPluginsInitContainerImage string
@@ -171,7 +171,10 @@ func main() {
 	}
 
 	// Become the leader before proceeding
-	leader.Become(context.TODO(), "grafana-operator-lock")
+	err = leader.Become(context.TODO(), "grafana-operator-lock")
+	if err != nil {
+		log.Log.Error(err, "")
+	}
 
 	log.Log.Info("Registering Components.")
 
@@ -277,7 +280,10 @@ func startDashboardController(ns string, cfg *rest.Config, ctx context.Context, 
 	}
 
 	// Use a separate manager for the dashboard controller
-	grafanadashboard.Add(dashboardMgr, ns)
+	err = grafanadashboard.Add(dashboardMgr, ns)
+	if err != nil {
+		log.Log.Error(err, "")
+	}
 
 	go func() {
 		if err := dashboardMgr.Start(ctx); err != nil {

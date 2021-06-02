@@ -2,6 +2,8 @@ package grafana
 
 import (
 	"fmt"
+	"regexp"
+
 	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/controllers/common"
 	"github.com/integr8ly/grafana-operator/controllers/config"
@@ -9,7 +11,6 @@ import (
 	"github.com/integr8ly/grafana-operator/controllers/model"
 	v1 "k8s.io/api/core/v1"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"regexp"
 )
 
 type GrafanaReconciler struct {
@@ -134,7 +135,7 @@ func (i *GrafanaReconciler) getGrafanaDataPvcDesiredState(state *common.ClusterS
 
 func (i *GrafanaReconciler) getGrafanaServiceAccountDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
 
-	if cr.Spec.ServiceAccount != nil && cr.Spec.ServiceAccount.Skip != nil && *cr.Spec.ServiceAccount.Skip == true {
+	if cr.Spec.ServiceAccount != nil && cr.Spec.ServiceAccount.Skip != nil && *cr.Spec.ServiceAccount.Skip {
 		return nil
 	}
 	if state.GrafanaServiceAccount == nil {
@@ -294,7 +295,7 @@ func (i *GrafanaReconciler) getEnvVarsDesiredState(state *common.ClusterState, c
 	}
 
 	// Don't look for external admin credentials if the operator created an account
-	if cr.Spec.Deployment != nil && cr.Spec.Deployment.SkipCreateAdminAccount != nil && *cr.Spec.Deployment.SkipCreateAdminAccount == false {
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.SkipCreateAdminAccount != nil && !*cr.Spec.Deployment.SkipCreateAdminAccount {
 		return nil
 	}
 
@@ -359,7 +360,7 @@ func (i *GrafanaReconciler) reconcilePlugins(cr *v1alpha1.Grafana, plugins v1alp
 	var failedPlugins []v1alpha1.GrafanaPlugin
 
 	for _, plugin := range plugins {
-		if i.Plugins.PluginExists(plugin) == false {
+		if !i.Plugins.PluginExists(plugin) {
 			log.V(1).Info(fmt.Sprintf("invalid plugin: %s@%s", plugin.Name, plugin.Version))
 			failedPlugins = append(failedPlugins, plugin)
 			continue

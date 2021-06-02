@@ -14,7 +14,6 @@ type DatasourcePipeline interface {
 type DatasourcePipelineImpl struct {
 	datasource *v1alpha1.GrafanaDataSource
 	contents   string
-	hash       string
 }
 
 func NewDatasourcePipeline(ds *v1alpha1.GrafanaDataSource) DatasourcePipeline {

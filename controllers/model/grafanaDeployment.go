@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+
 	"github.com/integr8ly/grafana-operator/controllers/constants"
 
 	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
@@ -173,9 +174,7 @@ func getTolerations(cr *v1alpha1.Grafana) []v13.Toleration {
 	tolerations := []v13.Toleration{}
 
 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Tolerations != nil {
-		for _, val := range cr.Spec.Deployment.Tolerations {
-			tolerations = append(tolerations, val)
-		}
+		tolerations = append(tolerations, cr.Spec.Deployment.Tolerations...)
 	}
 	return tolerations
 }
@@ -471,7 +470,7 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 	})
 
 	// Use auto generated admin account?
-	if getSkipCreateAdminAccount(cr) == false {
+	if !getSkipCreateAdminAccount(cr) {
 		for i := 0; i < len(containers); i++ {
 			containers[i].Env = append(containers[i].Env, v13.EnvVar{
 				Name: constants.GrafanaAdminUserEnvVar,
