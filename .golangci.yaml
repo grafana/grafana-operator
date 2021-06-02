@@ -1,0 +1,144 @@
+run:
+  timeout: 4m
+
+linters:
+  disable-all: false
+  enable:
+    - gocyclo
+    - misspell
+    - nilerr
+    - unparam
+    - gosec
+    - unused
+    - govet
+    - gosimple
+    - errorlint
+    - errcheck
+    - dogsled
+    - cyclop
+    - exhaustive
+    - funlen
+    - nestif
+    - goconst
+    - gofmt
+    - revive
+    - lll
+    - makezero
+    - nakedret
+    - prealloc
+    - nolintlint
+    - staticcheck
+    - thelper
+    - whitespace
+
+linters-settings:
+  gocyclo:
+    min-complexity: 20
+
+  misspell:
+    locale: US
+
+  unused:
+    go: "1.16"
+
+  unparam:
+    check-exported: true
+
+  govet:
+    check-shadowing: false
+
+  gosimple:
+    go: "1.16"
+    checks: [ "all" ]
+
+  errorlint:
+    errorf: true
+    asserts: true
+    comparison: true
+
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+
+  dogsled:
+    max-blank-identifiers: 2
+
+  cyclop:
+    max-complexity: 15
+    package-average: 0.0
+    skip-tests: true
+
+  exhaustive:
+    check-generated: false
+    default-signifies-exhaustive: false
+
+  funlen:
+    lines: 80
+    statements: 50
+
+  nestif:
+    min-complexity: 5
+
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+
+  gofmt:
+    simplify: true
+
+  revive:
+    ignore-generated-header: true
+    severity: warning
+
+  lll:
+    line-length: 140
+    tab-width: 1
+
+  makezero:
+    always: false
+
+  nakedret:
+    max-func-lines: 30
+
+  prealloc:
+    simple: true
+    range-loops: true
+    for-loops: false
+
+  nolintlint:
+    allow-unused: false
+    allow-leading-space: true
+    allow-no-explanation: []
+    require-explanation: true
+    require-specific: true
+
+  staticcheck:
+    go: "1.16"
+    checks: [ "all" ]
+
+  thelper:
+    test:
+      first: true
+      name: true
+      begin: true
+    benchmark:
+      first: true
+      name: true
+      begin: true
+    tb:
+      first: true
+      name: true
+      begin: true
+
+  whitespace:
+    multi-if: false
+    multi-func: false
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - funlen
+        - gocognit
+        - unparam
