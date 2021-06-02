@@ -123,6 +123,9 @@ bundle-build:
 code/check: fmt vet
 	golint ./...
 
+.PHONY: code/golangci-lint
+code/golangci-lint:
+	golangci-lint run ./...
 
 .PHONY: cluster/prepare/local/file
 cluster/prepare/local/file:
