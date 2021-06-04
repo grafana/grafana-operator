@@ -3,6 +3,7 @@ package grafanadashboard
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const (
@@ -24,6 +26,14 @@ const (
 
 const (
 	NonNamespacedFolderName = "Non-Namespaced"
+)
+
+var (
+	// ErrFolderNotFound is an error indicating that the Folder API returned a status code 404.
+	ErrFolderNotFound = errors.New("folder not found")
+
+	// ErrDashboardNotFound is an error indicating that the Dashboard API returned a status code 404.
+	ErrDashboardNotFound = errors.New("dashboard not found")
 )
 
 type GrafanaRequest struct {
@@ -286,6 +296,10 @@ func (r *GrafanaClientImpl) DeleteDashboardByUID(UID string) (GrafanaResponse, e
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusNotFound {
+		return response, ErrDashboardNotFound
+	}
+
 	if resp.StatusCode != 200 {
 		return response, fmt.Errorf(
 			"error deleting dashboard, expected status 200 but got %v",
@@ -403,6 +417,10 @@ func (r *GrafanaClientImpl) DeleteFolder(deleteID *int64) error {
 		return err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return ErrFolderNotFound
+	}
 
 	if resp.StatusCode != 200 {
 		return fmt.Errorf(
