@@ -4714,6 +4714,30 @@ spec:
           status:
             description: GrafanaStatus defines the observed state of Grafana
             properties:
+              adminPassword:
+                description: SecretKeyRef indicates a reference to Secret.
+                properties:
+                  key:
+                    type: string
+                  secretName:
+                    type: string
+                required:
+                - key
+                - secretName
+                type: object
+              adminUrl:
+                type: string
+              adminUser:
+                description: SecretKeyRef indicates a reference to Secret.
+                properties:
+                  key:
+                    type: string
+                  secretName:
+                    type: string
+                required:
+                - key
+                - secretName
+                type: object
               dashboards:
                 items:
                   description: Used to keep a dashboard reference without having access
@@ -4773,6 +4797,8 @@ spec:
                 type: string
               previousServiceName:
                 type: string
+              ready:
+                type: boolean
             type: object
         type: object
     served: true
