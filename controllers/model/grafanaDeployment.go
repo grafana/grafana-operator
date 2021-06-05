@@ -151,7 +151,6 @@ func getNodeSelectors(cr *v1alpha1.Grafana) map[string]string {
 		nodeSelector = cr.Spec.Deployment.NodeSelector
 	}
 	return nodeSelector
-
 }
 
 func getTerminationGracePeriod(cr *v1alpha1.Grafana) *int64 {
@@ -160,7 +159,6 @@ func getTerminationGracePeriod(cr *v1alpha1.Grafana) *int64 {
 		tcp = cr.Spec.Deployment.TerminationGracePeriodSeconds
 	}
 	return &tcp
-
 }
 
 func getPodPriorityClassName(cr *v1alpha1.Grafana) string {
@@ -362,7 +360,6 @@ func getVolumeMounts(cr *v1alpha1.Grafana) []v13.VolumeMount {
 }
 
 func getLivenessProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.Probe {
-
 	if cr.Spec.LivenessProbeSpec != nil {
 		return &v13.Probe{
 			Handler: v13.Handler{
@@ -393,7 +390,6 @@ func getLivenessProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.
 }
 
 func getReadinessProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.Probe {
-
 	if cr.Spec.ReadinessProbeSpec != nil {
 		return &v13.Probe{
 			Handler: v13.Handler{

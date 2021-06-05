@@ -4,9 +4,10 @@ import (
 	"context"
 	stdErr "errors"
 	"fmt"
+	"os"
+
 	"github.com/go-logr/logr"
 	"github.com/integr8ly/grafana-operator/controllers/constants"
-	"os"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	v13 "github.com/openshift/api/route/v1"

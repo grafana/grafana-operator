@@ -22,7 +22,6 @@ linters:
     - goconst
     - gofmt
     - revive
-    - lll
     - makezero
     - nakedret
     - prealloc
@@ -49,7 +48,7 @@ linters-settings:
 
   gosimple:
     go: "1.16"
-    checks: [ "all" ]
+    checks: ["all"]
 
   errorlint:
     errorf: true
@@ -90,10 +89,6 @@ linters-settings:
     ignore-generated-header: true
     severity: warning
 
-  lll:
-    line-length: 140
-    tab-width: 1
-
   makezero:
     always: false
 
@@ -114,7 +109,7 @@ linters-settings:
 
   staticcheck:
     go: "1.16"
-    checks: [ "all" ]
+    checks: ["all"]
 
   thelper:
     test:

@@ -124,12 +124,9 @@ func (i *ClusterState) readGrafanaServiceAccount(ctx context.Context, cr *v1alph
 }
 
 func (i *ClusterState) readGrafanaConfig(ctx context.Context, cr *v1alpha1.Grafana, client client.Client) error {
-	currentState, err := model.GrafanaConfig(cr)
-	if err != nil {
-		return err
-	}
+	currentState := model.GrafanaConfig(cr)
 	selector := model.GrafanaConfigSelector(cr)
-	err = client.Get(ctx, selector, currentState)
+	err := client.Get(ctx, selector, currentState)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil

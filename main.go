@@ -34,7 +34,6 @@ import (
 	"github.com/integr8ly/grafana-operator/version"
 	routev1 "github.com/openshift/api/route/v1"
 	"github.com/operator-framework/operator-lib/leader"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 	k8sconfig "sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -207,7 +206,7 @@ func main() {
 
 	// Start one dashboard controller per watch namespace
 	for _, ns := range dashboardNamespaces {
-		startDashboardController(ns, cfg, context.Background(), autodetect.SubscriptionChannel)
+		startDashboardController(ns, cfg, context.Background())
 	}
 
 	ctx := context.Background()
@@ -258,11 +257,10 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
-
 }
 
 // Starts a separate controller for the dashboard reconciliation in the background
-func startDashboardController(ns string, cfg *rest.Config, ctx context.Context, autodetectChannel chan schema.GroupVersionKind) {
+func startDashboardController(ns string, cfg *rest.Config, ctx context.Context) {
 	// Create a new Cmd to provide shared dependencies and start components
 	dashboardMgr, err := manager.New(cfg, manager.Options{
 		MetricsBindAddress: "0",
@@ -287,7 +285,6 @@ func startDashboardController(ns string, cfg *rest.Config, ctx context.Context, 
 
 	go func() {
 		if err := dashboardMgr.Start(ctx); err != nil {
-
 			log.Log.Error(err, "dashboard manager exited non-zero")
 			os.Exit(1)
 		}

@@ -29,9 +29,11 @@ func GetIngressPathType(cr *v1alpha1.Grafana) *netv1.PathType {
 	switch t {
 	case netv1.PathTypeExact, netv1.PathTypePrefix:
 		return &t
+	case netv1.PathTypeImplementationSpecific:
+		t = netv1.PathTypeImplementationSpecific
+		return &t
 	}
-	t = netv1.PathTypeImplementationSpecific
-	return &t
+	return nil
 }
 
 func GetIngressClassName(cr *v1alpha1.Grafana) *string {

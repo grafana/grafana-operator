@@ -16,6 +16,7 @@ type PluginsHelperImpl struct {
 }
 
 func NewPluginsHelper() *PluginsHelperImpl {
+	/* #nosec G402 */
 	insecureTransport := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
@@ -44,7 +45,8 @@ func (h *PluginsHelperImpl) PluginExists(plugin grafanav1alpha1.GrafanaPlugin) b
 // `<name>:<version>,...` that is used as the value for the GRAFANA_PLUGINS
 // environment variable
 func (h *PluginsHelperImpl) BuildEnv(cr *grafanav1alpha1.Grafana) string {
-	var env []string
+	env := make([]string, 0, len(cr.Status.InstalledPlugins))
+
 	for _, plugin := range cr.Status.InstalledPlugins {
 		env = append(env, fmt.Sprintf("%s:%s", plugin.Name, plugin.Version))
 	}

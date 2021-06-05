@@ -21,10 +21,10 @@ const (
 	LastConfigAnnotation                = "last-config"
 	LastConfigEnvVar                    = "LAST_CONFIG"
 	LastDatasourcesConfigEnvVar         = "LAST_DATASOURCES"
-	GrafanaAdminSecretName              = "grafana-admin-credentials"
+	GrafanaAdminSecretName              = "grafana-admin-credentials" // #nosec G101
 	DefaultAdminUser                    = "admin"
 	GrafanaAdminUserEnvVar              = "GF_SECURITY_ADMIN_USER"
-	GrafanaAdminPasswordEnvVar          = "GF_SECURITY_ADMIN_PASSWORD"
+	GrafanaAdminPasswordEnvVar          = "GF_SECURITY_ADMIN_PASSWORD" // #nosec G101
 	GrafanaHttpPort                 int = 3000
 	GrafanaHttpPortName                 = "grafana"
 )

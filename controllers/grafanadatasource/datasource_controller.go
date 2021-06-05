@@ -88,7 +88,6 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, request ctr
 	}
 
 	return reconcile.Result{Requeue: false}, nil
-
 }
 
 func (r *GrafanaDatasourceReconciler) reconcileDataSources(state *common.DataSourcesState) error {
@@ -171,7 +170,8 @@ func (i *GrafanaDatasourceReconciler) updateHash(known *v1.ConfigMap) (string, e
 	}
 
 	// Make sure that we always use the same order when creating the hash
-	var keys []string
+	keys := make([]string, 0, len(known.Data))
+
 	for key := range known.Data {
 		keys = append(keys, key)
 	}
