@@ -430,6 +430,14 @@ func (i *GrafanaIni) Write() (string, string) {
 		config["plugins"] = items
 	}
 
+	if i.cfg.Rendering != nil {
+		var items []string
+		items = appendStr(items, "server_url", i.cfg.Rendering.ServerURL)
+		items = appendStr(items, "callback_url", i.cfg.Rendering.CallbackURL)
+		items = appendInt(items, "concurrent_render_request_limit", i.cfg.Rendering.ConcurrentRenderRequestLimit)
+		config["rendering"] = items
+	}
+
 	sb := strings.Builder{}
 
 	var keys []string
