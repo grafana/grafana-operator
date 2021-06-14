@@ -2,6 +2,15 @@
 
 A Kubernetes Operator based on the Operator SDK for creating and managing Grafana instances.
 
+## Upcoming Project Migration
+The project will be migrated from its current organisation https://github.com/integr8ly/grafana-operator to a new, solely grafana-operator dedicated organisation here: https://github.com/grafana-operator .
+We believe this is the right move for the operator. It has gained a lot of popularity/users/contributors (Thank you!) over the past two years. It has also long outgrown its parent organisation and company! The operator is used by big and small companies alike, so we feel like it should be more open to those that use it.
+To answer a few questions that you’ll have:
+- Maintainers are staying as they were in Integreatly, we’re not going anywhere, our products still use and will continue to use the grafana-operator for grafana management in our observability stacks.
+- 4.x.x will be released from the new organization in GH and Quay, it will NOT be released from the integreatly repo.
+- 3.x.x Images will still be available from Integreatly’s quay.io repo, although we will strongly encourage users to upgrade when 4.x.x rolls out shortly.
+- We expect most things to stay the same, just under a different org.
+
 
 ## Companies and teams that trust and use the Grafana operator:
 
