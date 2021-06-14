@@ -7,8 +7,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"time"
+
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
 )
@@ -375,7 +376,6 @@ func (r *GrafanaClientImpl) getFolderUID(IDInput *int64) (*string, error) {
 }
 
 func (r *GrafanaClientImpl) DeleteFolder(deleteID *int64) error {
-
 	deleteUID, err := r.getFolderUID(deleteID)
 	if err != nil {
 		return err

@@ -1,14 +1,14 @@
 package config
 
 import (
-	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
 	"time"
+
+	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestControllerConfig_ConcurrentlyReadAndWritePlugins(t *testing.T) {
-
 	go func() {
 		// Continuously read all Plugins
 		for {

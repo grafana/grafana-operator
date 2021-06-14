@@ -106,7 +106,6 @@ func isKubeMetaKind(kind string) bool {
 // ResourceExists returns true if the given resource kind exists
 // in the given api groupversion
 func ResourceExists(dc discovery.DiscoveryInterface, apiGroupVersion, kind string) (bool, error) {
-
 	_, apiLists, err := dc.ServerGroupsAndResources()
 	if err != nil {
 		return false, err

@@ -84,7 +84,6 @@ func (i *GrafanaReconciler) getGrafanaReadiness(state *common.ClusterState, cr *
 }
 
 func (i *GrafanaReconciler) getGrafanaServiceDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
-
 	if state.GrafanaService == nil {
 		return common.GenericCreateAction{
 			Ref: model.GrafanaService(cr),
@@ -108,7 +107,6 @@ func (i *GrafanaReconciler) getGrafanaServiceDesiredState(state *common.ClusterS
 				Msg: "delete obsolete grafana service",
 			}
 		}
-
 	}
 	if cr.Status.PreviousServiceName == "" {
 		cr.Status.PreviousServiceName = state.GrafanaService.Name
@@ -134,7 +132,6 @@ func (i *GrafanaReconciler) getGrafanaDataPvcDesiredState(state *common.ClusterS
 }
 
 func (i *GrafanaReconciler) getGrafanaServiceAccountDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
-
 	if cr.Spec.ServiceAccount != nil && cr.Spec.ServiceAccount.Skip != nil && *cr.Spec.ServiceAccount.Skip {
 		return nil
 	}
@@ -149,18 +146,13 @@ func (i *GrafanaReconciler) getGrafanaServiceAccountDesiredState(state *common.C
 		Ref: model.GrafanaServiceAccountReconciled(cr, state.GrafanaServiceAccount),
 		Msg: "update grafana service account",
 	}
-
 }
 
 func (i *GrafanaReconciler) getGrafanaConfigDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) []common.ClusterAction {
 	actions := []common.ClusterAction{}
 
 	if state.GrafanaConfig == nil {
-		config, err := model.GrafanaConfig(cr)
-		if err != nil {
-			log.Error(err, "error creating grafana config")
-			return nil
-		}
+		config := model.GrafanaConfig(cr)
 
 		// Store the last config hash for the duration of this reconciliation for
 		// later usage in the deployment
@@ -171,11 +163,7 @@ func (i *GrafanaReconciler) getGrafanaConfigDesiredState(state *common.ClusterSt
 			Msg: "create grafana config",
 		})
 	} else {
-		config, err := model.GrafanaConfigReconciled(cr, state.GrafanaConfig)
-		if err != nil {
-			log.Error(err, "error updating grafana config")
-			return nil
-		}
+		config := model.GrafanaConfigReconciled(cr, state.GrafanaConfig)
 
 		i.ConfigHash = config.Annotations[constants.LastConfigAnnotation]
 

@@ -2,12 +2,13 @@ package grafana
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+
 	grafanav1alpha1 "github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/controllers/config"
 	v1 "k8s.io/api/core/v1"
 	v13 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"os"
-	"path/filepath"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -88,7 +89,7 @@ func validateFileExtension(filePath string) error {
 	//check for a valid jsonnet extension
 	extension := filepath.Ext(filePath)
 	if extension != JsonnetExtension {
-		return fmt.Errorf("unkown extention, expected %v", JsonnetExtension)
+		return fmt.Errorf("unknown extension, expected %v", JsonnetExtension)
 	}
 	return nil
 }

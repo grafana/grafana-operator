@@ -112,7 +112,6 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, request ctrl
 	instance := &grafanav1alpha1.GrafanaDashboard{}
 	err = r.Client.Get(r.context, request.NamespacedName, instance)
 	if err != nil {
-
 		if k8serrors.IsNotFound(err) {
 			// If some dashboard has been deleted, then always re sync the world
 			logger.Info("deleting dashboard", "namespace", request.Namespace, "name", request.Name)
@@ -146,6 +145,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 
 	return &GrafanaDashboardReconciler{
 		Client: mgr.GetClient(),
+		/* #nosec G402 */
 		transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: true,
@@ -182,7 +182,10 @@ func SetupWithManager(mgr ctrl.Manager, r reconcile.Reconciler, namespace string
 				Name:      "",
 			},
 		}
-		_, _ = r.Reconcile(ref.context, request)
+		_, err = r.Reconcile(ref.context, request)
+		if err != nil {
+			return
+		}
 	}
 
 	go func() {

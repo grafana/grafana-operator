@@ -9,7 +9,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func GrafanaConfig(cr *v1alpha1.Grafana) (*v1.ConfigMap, error) {
+func GrafanaConfig(cr *v1alpha1.Grafana) *v1.ConfigMap {
 	ini := config.NewGrafanaIni(&cr.Spec.Config)
 	config, hash := ini.Write()
 
@@ -27,10 +27,10 @@ func GrafanaConfig(cr *v1alpha1.Grafana) (*v1.ConfigMap, error) {
 
 	configMap.Data = map[string]string{}
 	configMap.Data[constants.GrafanaConfigFileName] = config
-	return configMap, nil
+	return configMap
 }
 
-func GrafanaConfigReconciled(cr *v1alpha1.Grafana, currentState *v1.ConfigMap) (*v1.ConfigMap, error) {
+func GrafanaConfigReconciled(cr *v1alpha1.Grafana, currentState *v1.ConfigMap) *v1.ConfigMap {
 	reconciled := currentState.DeepCopy()
 
 	ini := config.NewGrafanaIni(&cr.Spec.Config)
@@ -41,7 +41,7 @@ func GrafanaConfigReconciled(cr *v1alpha1.Grafana, currentState *v1.ConfigMap) (
 	}
 
 	reconciled.Data[constants.GrafanaConfigFileName] = config
-	return reconciled, nil
+	return reconciled
 }
 
 func GrafanaConfigSelector(cr *v1alpha1.Grafana) client.ObjectKey {

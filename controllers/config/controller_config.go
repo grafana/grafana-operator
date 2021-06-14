@@ -25,7 +25,7 @@ const (
 	PluginsInitContainerTag         = "0.0.3"
 	PluginsUrl                      = "https://grafana.com/api/plugins/%s/versions/%s"
 	RequeueDelay                    = time.Second * 10
-	SecretsMountDir                 = "/etc/grafana-secrets/"
+	SecretsMountDir                 = "/etc/grafana-secrets/" // #nosec G101
 	ConfigMapsMountDir              = "/etc/grafana-configmaps/"
 	ConfigRouteWatch                = "watch.routes"
 	ConfigGrafanaDashboardsSynced   = "grafana.dashboards.synced"
@@ -90,7 +90,6 @@ func (c *ControllerConfig) RemovePluginsFor(namespace, name string) {
 }
 
 func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard, folderId *int64, folderName string) {
-
 	ns := dashboard.Namespace
 	if i, exists := c.HasDashboard(dashboard.UID()); !exists {
 		c.Lock()
@@ -114,7 +113,6 @@ func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard, fo
 			FolderId:   folderId,
 			FolderName: folderName,
 		}
-
 	}
 }
 
