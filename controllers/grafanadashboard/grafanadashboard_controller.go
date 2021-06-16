@@ -22,12 +22,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 	"sync"
 	"time"
-
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"github.com/go-logr/logr"
 	grafanav1alpha1 "github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
@@ -39,10 +36,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -248,34 +247,10 @@ func (r *GrafanaDashboardReconciler) reconcileDashboards(ctx context.Context, da
 
 	if grafana.Status.InstalledDashboards != nil {
 		for _, d := range grafana.Status.InstalledDashboards {
-			d.
-		}
-	}
-
-	knownDashboards := r.config.GetDashboards(request.Namespace)
-	namespaceDashboards := &grafanav1alpha1.GrafanaDashboardList{}
-
-	opts := &client.ListOptions{
-		Namespace: request.Namespace,
-	}
-
-	err := r.Client.List(r.context, namespaceDashboards, opts)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-
-	// Prepare lists
-	var dashboardsToDelete []*grafanav1alpha1.GrafanaDashboardRef
-
-	// Check if a given dashboard (by name) is present in the list of
-	// dashboards in the namespace
-	inNamespace := func(item *grafanav1alpha1.GrafanaDashboardRef) bool {
-		for _, d := range namespaceDashboards.Items {
-			if d.Name == item.Name && d.Namespace == item.Namespace {
-				return true
+			if d.Namespace == dashboard.Namespace {
+				knownDashboards = append(knownDashboards, d)
 			}
 		}
-		return false
 	}
 
 	// Returns the hash of a dashboard if it is known
@@ -288,128 +263,95 @@ func (r *GrafanaDashboardReconciler) reconcileDashboards(ctx context.Context, da
 		return ""
 	}
 
-	// Dashboards to delete: dashboards that are known but not found
-	// any longer in the namespace
-	for _, dashboard := range knownDashboards {
-		if !inNamespace(dashboard) {
-			dashboardsToDelete = append(dashboardsToDelete, dashboard)
+	if !r.isMatch(&dashboard, &grafana) {
+		log.Log.Info("dashboard found but selectors do not match",
+			"namespace", dashboard.Namespace, "name", dashboard.Name)
+
+		return nil
+	}
+
+	grafanaClient, err := r.getClient(ctx, &grafana)
+	if err != nil {
+		return fmt.Errorf("failed to get Grafana API client: %w", err)
+	}
+
+	folderName := dashboard.Namespace
+	if dashboard.Spec.CustomFolderName != "" {
+		folderName = dashboard.Spec.CustomFolderName
+	}
+
+	folder, err := grafanaClient.CreateOrUpdateFolder(folderName)
+	if err != nil {
+		log.Log.Error(err, fmt.Sprintf("failed to get or create namespace folder %v for dashboard %v", folderName, dashboard.Name))
+		r.manageError(&dashboard, err)
+
+		return fmt.Errorf("failed to get or create namespace folder %s for dashboard %s: %w", folderName, dashboard.Name, err)
+	}
+
+	var folderId int64
+	if folder.ID == nil {
+		folderId = 0
+	} else {
+		folderId = *folder.ID
+	}
+
+	// Process the dashboard. Use the known hash of an existing dashboard
+	// to determine if an update is required
+	knownHash := findHash(&dashboard)
+
+	pipeline := NewDashboardPipeline(r.Client, &dashboard)
+
+	processed, err := pipeline.ProcessDashboard(ctx, knownHash, &folderId, folderName)
+	if err != nil {
+		log.Log.Error(err, "cannot process dashboard", "namespace", dashboard.Namespace, "name", dashboard.Name)
+		r.manageError(&dashboard, err)
+
+		return fmt.Errorf("cannot process dashboard %s/%s: %w", dashboard.Namespace, dashboard.Name, err)
+	}
+
+	if processed == nil {
+		r.config.SetPluginsFor(&dashboard)
+
+		return nil
+	}
+
+	// Check labels only when DashboardNamespaceSelector isnt empty
+	if grafana.Spec.DashboardNamespaceSelector != nil {
+		matchesNamespaceLabels, err := r.checkNamespaceLabels(ctx, &grafana, &dashboard)
+		if err != nil {
+			r.manageError(&dashboard, err)
+
+			return fmt.Errorf("failed to check namespace labels: %w", err)
+		}
+
+		if !matchesNamespaceLabels {
+			log.Log.Info("dashboard %v skipped because the namespace labels do not match", "dashboard", dashboard.Name)
+
+			return nil
 		}
 	}
 
-	// Process new/updated dashboards
-	for _, dashboard := range namespaceDashboards.Items {
-		// Is this a dashboard we care about (matches the label selectors)?
-		if !r.isMatch(&dashboard) {
-			log.Log.Info("dashboard found but selectors do not match",
-				"namespace", dashboard.Namespace, "name", dashboard.Name)
-			continue
-		}
+	_, err = grafanaClient.CreateOrUpdateDashboard(processed, folderId, folderName)
+	if err != nil {
+		r.manageError(&dashboard, err)
 
-		folderName := dashboard.Namespace
-		if dashboard.Spec.CustomFolderName != "" {
-			folderName = dashboard.Spec.CustomFolderName
-		}
-
-		folder, err := grafanaClient.CreateOrUpdateFolder(folderName)
-
-		if err != nil {
-			log.Log.Error(err, "failed to get or create namespace folder for dashboard", "folder", folderName, "dashboard", request.Name)
-			r.manageError(&dashboard, err)
-			continue
-		}
-
-		var folderId int64
-		if folder.ID == nil {
-			folderId = 0
-		} else {
-			folderId = *folder.ID
-		}
-
-		// Process the dashboard. Use the known hash of an existing dashboard
-		// to determine if an update is required
-		knownHash := findHash(&dashboard)
-
-		pipeline := NewDashboardPipeline(r.Client, &dashboard, r.context)
-		processed, err := pipeline.ProcessDashboard(knownHash, &folderId, folderName)
-
-		if err != nil {
-			log.Log.Error(err, "cannot process dashboard", "namespace", dashboard.Namespace, "name", dashboard.Name)
-			r.manageError(&dashboard, err)
-			continue
-		}
-
-		if processed == nil {
-			r.config.SetPluginsFor(&dashboard)
-			continue
-		}
-		// Check labels only when DashboardNamespaceSelector isnt empty
-		if r.state.DashboardNamespaceSelector != nil {
-			matchesNamespaceLabels, err := r.checkNamespaceLabels(&dashboard)
-			if err != nil {
-				r.manageError(&dashboard, err)
-				continue
-			}
-
-			if !matchesNamespaceLabels {
-				log.Log.Info("dashboard %v skipped because the namespace labels do not match", "dashboard", dashboard.Name)
-				continue
-			}
-		}
-
-		_, err = grafanaClient.CreateOrUpdateDashboard(processed, folderId, folderName)
-		if err != nil {
-			//log.Log.Error(err, "cannot submit dashboard %v/%v", "namespace", dashboard.Namespace, "name", dashboard.Name)
-			r.manageError(&dashboard, err)
-
-			continue
-		}
-
-		r.manageSuccess(&dashboard, &folderId, folderName)
+		return fmt.Errorf("cannot submit dashboard %s/%s: %w", dashboard.Namespace, dashboard.Name, err)
 	}
 
-	for _, dashboard := range dashboardsToDelete {
-		status, err := grafanaClient.DeleteDashboardByUID(dashboard.UID)
-		if err != nil {
-			log.Log.Error(err, "error deleting dashboard, status was",
-				"dashboardUID", dashboard.UID,
-				"status.Status", *status.Status,
-				"status.Message", *status.Message)
-		}
+	installedDashboard := r.config.AddDashboard(&dashboard, &grafana, &folderId, folderName)
 
-		log.Log.Info(fmt.Sprintf("delete result was %v", *status.Message))
+	r.manageSuccess(ctx, &dashboard, grafana.DeepCopy(), installedDashboard)
 
-		r.config.RemovePluginsFor(dashboard.Namespace, dashboard.Name)
-		r.config.RemoveDashboard(dashboard.UID)
-
-		// Mark the dashboards as synced so that the current state can be written
-		// to the Grafana CR by the grafana controller
-		r.config.AddConfigItem(config.ConfigGrafanaDashboardsSynced, true)
-
-		// Refresh the list of known dashboards after the dashboard has been removed
-		knownDashboards = r.config.GetDashboards(request.Namespace)
-
-		// Check for empty managed folders (namespace-named) and delete obsolete ones
-		if dashboard.FolderName == "" || dashboard.FolderName == dashboard.Namespace {
-			if safe := grafanaClient.SafeToDelete(knownDashboards, dashboard.FolderId); !safe {
-				log.Log.Info("folder cannot be deleted as it's being used by other dashboards")
-				break
-			}
-			if err = grafanaClient.DeleteFolder(dashboard.FolderId); err != nil {
-				log.Log.Error(err, "delete dashboard folder failed", "dashboard.folderId", *dashboard.FolderId)
-			}
-		}
-	}
-
-	return reconcile.Result{Requeue: false}, nil
+	return nil
 }
 
 func (r *GrafanaDashboardReconciler) reconcileFinalizeDashboards(ctx context.Context, dashboard grafanav1alpha1.GrafanaDashboard, grafana grafanav1alpha1.Grafana) error {
-	i, exists := r.config.HasDashboard(&grafana, dashboard.Namespace, dashboard.Name)
+	i, exists := r.config.HasDashboard(&grafana, dashboard.UID())
 	if !exists {
 		return nil
 	}
 
-	deleteTarget := grafana.Status.InstalledDashboards[dashboard.Namespace][i]
+	deleteTarget := grafana.Status.InstalledDashboards[i]
 
 	grafanaClient, err := r.getClient(ctx, &grafana)
 	if err != nil {
@@ -424,14 +366,14 @@ func (r *GrafanaDashboardReconciler) reconcileFinalizeDashboards(ctx context.Con
 			dashboard.UID(), *status.Status, *status.Message, err)
 	}
 
-	log.V(1).Info(fmt.Sprintf("delete result was %v", *status.Message))
+	log.Log.Info(fmt.Sprintf("delete result was %v", *status.Message))
 
-	installedDashboard := r.config.RemoveDashboard(&grafana, dashboard.Namespace, dashboard.Name)
+	installedDashboard := r.config.RemoveDashboard(&grafana, dashboard.UID())
 
 	// Check for empty managed folders (namespace-named) and delete obsolete ones
 	if deleteTarget.FolderName == "" || deleteTarget.FolderName == dashboard.Namespace {
-		if safe := grafanaClient.SafeToDelete(installedDashboard[dashboard.Namespace], deleteTarget.FolderId); !safe {
-			log.V(1).Info("folder cannot be deleted as it's being used by other dashboards")
+		if safe := grafanaClient.SafeToDelete(installedDashboard, deleteTarget.FolderId); !safe {
+			log.Log.Info("folder cannot be deleted as it's being used by other dashboards")
 
 			return nil
 		}
@@ -447,7 +389,7 @@ func (r *GrafanaDashboardReconciler) reconcileFinalizeDashboards(ctx context.Con
 	grafana2 := grafana.DeepCopy()
 	grafana2.Status.InstalledDashboards = installedDashboard
 
-	if err := r.client.Status().Update(ctx, grafana2); err != nil {
+	if err := r.Client.Status().Update(ctx, grafana2); err != nil {
 		return fmt.Errorf("failed to update Grafana status %s/%s: %w", grafana.Namespace, grafana.Name, err)
 	}
 
@@ -455,54 +397,81 @@ func (r *GrafanaDashboardReconciler) reconcileFinalizeDashboards(ctx context.Con
 }
 
 // Get an authenticated grafana API client
-func (r *GrafanaDashboardReconciler) getClient() (GrafanaClient, error) {
-	url := r.state.AdminUrl
-	if url == "" {
+func (r *GrafanaDashboardReconciler) getClient(ctx context.Context, grafana *grafanav1alpha1.Grafana) (GrafanaClient, error) {
+	if grafana.Status.AdminURL == nil || *grafana.Status.AdminURL == "" {
 		return nil, errors.New("cannot get grafana admin url")
 	}
 
-	username := os.Getenv(constants.GrafanaAdminUserEnvVar)
-	if username == "" {
+	url := *grafana.Status.AdminURL
+
+	if grafana.Status.AdminUser == nil || grafana.Status.AdminPassword == nil {
+		return nil, errors.New("cannot get grafana admin secret")
+	}
+
+	var adminUserSecret corev1.Secret
+	err := r.Client.Get(ctx,
+		types.NamespacedName{Namespace: grafana.Namespace, Name: grafana.Status.AdminUser.SecretName},
+		&adminUserSecret)
+	if err != nil {
+		return nil, err
+	}
+
+	username, ok := adminUserSecret.Data[grafana.Status.AdminUser.Key]
+	if !ok {
 		return nil, errors.New("invalid credentials (username)")
 	}
 
-	password := os.Getenv(constants.GrafanaAdminPasswordEnvVar)
-	if password == "" {
+	var adminPasswordSecret corev1.Secret
+	err = r.Client.Get(ctx,
+		types.NamespacedName{Namespace: grafana.Namespace, Name: grafana.Status.AdminPassword.SecretName},
+		&adminPasswordSecret)
+	if err != nil {
+		return nil, err
+	}
+
+	password, ok := adminUserSecret.Data[grafana.Status.AdminPassword.Key]
+	if !ok {
 		return nil, errors.New("invalid credentials (password)")
 	}
 
-	duration := time.Duration(r.state.ClientTimeout)
+	var seconds int
+	if grafana.Spec.Client != nil && grafana.Spec.Client.TimeoutSeconds != nil {
+		seconds = *grafana.Spec.Client.TimeoutSeconds
+		if seconds <= 0 {
+			seconds = constants.GrafanaDefaultClientTimeoutSeconds
+		}
+	} else {
+		seconds = constants.GrafanaDefaultClientTimeoutSeconds
+	}
 
-	return NewGrafanaClient(url, username, password, r.transport, duration), nil
+	return NewGrafanaClient(url, string(username), string(password), r.transport, time.Duration(seconds)), nil
 }
 
 // Test if a given dashboard matches an array of label selectors
-func (r *GrafanaDashboardReconciler) isMatch(item *grafanav1alpha1.GrafanaDashboard) bool {
-	if r.state.DashboardSelectors == nil {
+func (GrafanaDashboardReconciler) isMatch(item *grafanav1alpha1.GrafanaDashboard, grafana *grafanav1alpha1.Grafana) bool {
+	if grafana.Spec.DashboardLabelSelector == nil {
 		return false
 	}
 
-	match, err := item.MatchesSelectors(r.state.DashboardSelectors)
+	match, err := item.MatchesSelectors(grafana.Spec.DashboardLabelSelector)
 	if err != nil {
-		log.Log.Error(err, "error matching selectors",
-			"item.Namespace", item.Namespace,
-			"item.Name", item.Name)
 		return false
 	}
+
 	return match
 }
 
 // check if the labels on a namespace match a given label selector
-func (r *GrafanaDashboardReconciler) checkNamespaceLabels(dashboard *grafanav1alpha1.GrafanaDashboard) (bool, error) {
+func (r *GrafanaDashboardReconciler) checkNamespaceLabels(ctx context.Context, grafana *grafanav1alpha1.Grafana, dashboard *grafanav1alpha1.GrafanaDashboard) (bool, error) {
 	key := client.ObjectKey{
 		Name: dashboard.Namespace,
 	}
 	ns := &corev1.Namespace{}
-	err := r.Client.Get(r.context, key, ns)
+	err := r.Client.Get(ctx, key, ns)
 	if err != nil {
 		return false, err
 	}
-	selector, err := metav1.LabelSelectorAsSelector(r.state.DashboardNamespaceSelector)
+	selector, err := metav1.LabelSelectorAsSelector(grafana.Spec.DashboardNamespaceSelector)
 
 	if err != nil {
 		return false, err
@@ -513,14 +482,21 @@ func (r *GrafanaDashboardReconciler) checkNamespaceLabels(dashboard *grafanav1al
 
 // Handle success case: update dashboard metadata (id, uid) and update the list
 // of plugins
-func (r *GrafanaDashboardReconciler) manageSuccess(dashboard *grafanav1alpha1.GrafanaDashboard, folderId *int64, folderName string) {
+func (r *GrafanaDashboardReconciler) manageSuccess(ctx context.Context,
+	dashboard *grafanav1alpha1.GrafanaDashboard, grafana *grafanav1alpha1.Grafana, installedDashboards []*grafanav1alpha1.GrafanaDashboardRef) {
 	msg := fmt.Sprintf("dashboard %v/%v successfully submitted",
 		dashboard.Namespace,
 		dashboard.Name)
 	r.recorder.Event(dashboard, "Normal", "Success", msg)
 	log.Log.Info("dashboard successfully submitted", "name", dashboard.Name, "namespace", dashboard.Namespace)
-	r.config.AddDashboard(dashboard, folderId, folderName)
 	r.config.SetPluginsFor(dashboard)
+
+	grafana.Status.InstalledDashboards = installedDashboards
+
+	err := r.Client.Status().Update(ctx, grafana)
+	if err != nil {
+		log.Log.Error(err, fmt.Sprintf("failed to update Grafana status %s/%s", grafana.Namespace, grafana.Name))
+	}
 }
 
 // Handle error case: update dashboard with error message and status
