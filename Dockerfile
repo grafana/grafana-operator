@@ -30,6 +30,6 @@ USER 65532:65532
 
 COPY grafonnet-lib/grafonnet/ /opt/jsonnet/grafonnet
 
-COPY bin/manager /usr/local/bin/grafana-operator
+COPY manager manager
 
-ENTRYPOINT ["/manager"]
+ENTRYPOINT ["./manager"]
