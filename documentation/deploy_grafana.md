@@ -328,6 +328,9 @@ spec:
     ...
     strategy:                       # Optional. The DeploymentStrategy to set for the Grafana deployment. Defaults to 25%/25% RollingUpdate if unset.
     ...
+    httpProxy:
+      Enabled: bool                 # Whether a HTTP(S) proxy should be used for outbound requests from Grafana and when resolving plugins.
+      URL:     string               # The URL of the proxy
 ```
 
 NOTE: Some key's are common to both in securityContext and containerSecurityContext, in that case
