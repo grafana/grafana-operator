@@ -109,6 +109,14 @@ type GrafanaDeployment struct {
 	ExtraVolumes                  []v1.Volume                `json:"extraVolumes,omitempty"`
 	ExtraVolumeMounts             []v1.VolumeMount           `json:"extraVolumeMounts,omitempty"`
 	Strategy                      *appsv1.DeploymentStrategy `json:"strategy,omitempty"`
+	HttpProxy                     *GrafanaHttpProxy          `json:"httpProxy,omitempty"`
+}
+
+// GrafanaHttpProxy provides a means to configure the Grafana deployment
+// to use a HTTP(S) proxy when making requests and resolving plugins.
+type GrafanaHttpProxy struct {
+	Enabled bool   `json:"enabled"`
+	URL     string `json:"url,omitempty"`
 }
 
 // GrafanaIngress provides a means to configure the ingress created

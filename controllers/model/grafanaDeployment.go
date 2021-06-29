@@ -432,6 +432,23 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 		image = fmt.Sprintf("%s:%s", img, tag)
 	}
 
+	envVars := []v13.EnvVar{
+		{
+			Name:  constants.LastConfigEnvVar,
+			Value: configHash,
+		},
+		{
+			Name:  constants.LastDatasourcesConfigEnvVar,
+			Value: dsHash,
+		},
+	}
+	if cr.Spec.Deployment.HttpProxy != nil && cr.Spec.Deployment.HttpProxy.Enabled {
+		envVars = append(envVars, v13.EnvVar{
+			Name:  "HTTP_PROXY",
+			Value: cr.Spec.Deployment.HttpProxy.URL,
+		})
+	}
+
 	containers = append(containers, v13.Container{
 		Name:       "grafana",
 		Image:      image,
@@ -444,16 +461,7 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 				Protocol:      "TCP",
 			},
 		},
-		Env: []v13.EnvVar{
-			{
-				Name:  constants.LastConfigEnvVar,
-				Value: configHash,
-			},
-			{
-				Name:  constants.LastDatasourcesConfigEnvVar,
-				Value: dsHash,
-			},
-		},
+		Env:                      envVars,
 		EnvFrom:                  getEnvFrom(cr),
 		Resources:                getResources(cr),
 		VolumeMounts:             getVolumeMounts(cr),
@@ -505,17 +513,25 @@ func getInitContainers(cr *v1alpha1.Grafana, plugins string) []v13.Container {
 	cfg := config.GetControllerConfig()
 	image := cfg.GetConfigString(config.ConfigPluginsInitContainerImage, config.PluginsInitContainerImage)
 	tag := cfg.GetConfigString(config.ConfigPluginsInitContainerTag, config.PluginsInitContainerTag)
+	envVars := []v13.EnvVar{
+		{
+			Name:  "GRAFANA_PLUGINS",
+			Value: plugins,
+		},
+	}
+
+	if cr.Spec.Deployment.HttpProxy != nil && cr.Spec.Deployment.HttpProxy.Enabled {
+		envVars = append(envVars, v13.EnvVar{
+			Name:  "HTTP_PROXY",
+			Value: cr.Spec.Deployment.HttpProxy.URL,
+		})
+	}
 
 	return []v13.Container{
 		{
-			Name:  constants.GrafanaInitContainerName,
-			Image: fmt.Sprintf("%s:%s", image, tag),
-			Env: []v13.EnvVar{
-				{
-					Name:  "GRAFANA_PLUGINS",
-					Value: plugins,
-				},
-			},
+			Name:      constants.GrafanaInitContainerName,
+			Image:     fmt.Sprintf("%s:%s", image, tag),
+			Env:       envVars,
 			Resources: getInitResources(cr),
 			VolumeMounts: []v13.VolumeMount{
 				{

@@ -19,6 +19,7 @@ func NewPluginsHelper() *PluginsHelperImpl {
 	/* #nosec G402 */
 	insecureTransport := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		Proxy:           http.ProxyFromEnvironment,
 	}
 
 	helper := new(PluginsHelperImpl)

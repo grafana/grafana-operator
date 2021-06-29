@@ -4163,6 +4163,18 @@ spec:
                     type: array
                   hostNetwork:
                     type: boolean
+                  httpProxy:
+                    description: GrafanaHttpProxy provides a means to configure the
+                      Grafana deployment to use a HTTP(S) proxy when making requests
+                      and resolving plugins.
+                    properties:
+                      enabled:
+                        type: boolean
+                      url:
+                        type: string
+                    required:
+                    - enabled
+                    type: object
                   labels:
                     additionalProperties:
                       type: string
