@@ -344,8 +344,8 @@ func (i *GrafanaReconciler) getGrafanaPluginsDesiredState(cr *v1alpha1.Grafana) 
 }
 
 func (i *GrafanaReconciler) reconcilePlugins(cr *v1alpha1.Grafana, plugins v1alpha1.PluginList) {
-	var validPlugins []v1alpha1.GrafanaPlugin
-	var failedPlugins []v1alpha1.GrafanaPlugin
+	var validPlugins []v1alpha1.GrafanaPlugin  // nolint
+	var failedPlugins []v1alpha1.GrafanaPlugin // nolint
 
 	for _, plugin := range plugins {
 		if !i.Plugins.PluginExists(plugin) {

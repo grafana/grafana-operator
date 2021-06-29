@@ -104,8 +104,8 @@ linters-settings:
     allow-unused: false
     allow-leading-space: true
     allow-no-explanation: []
-    require-explanation: true
-    require-specific: true
+    require-explanation: false
+    require-specific: false
 
   staticcheck:
     go: "1.16"

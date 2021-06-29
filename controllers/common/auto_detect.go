@@ -70,8 +70,8 @@ func (b *Background) autoDetectCapabilities() {
 
 //
 func (b *Background) detectRoute() {
-	resourceExists, _ := k8sutil.ResourceExists(b.dc, routev1.SchemeGroupVersion.String(), RouteKind)
-	if resourceExists {
+	resourceExists, err := k8sutil.ResourceExists(b.dc, routev1.SchemeGroupVersion.String(), RouteKind)
+	if resourceExists && err == nil {
 		config := config2.GetControllerConfig()
 		config.AddConfigItem(config2.ConfigOpenshift, true)
 

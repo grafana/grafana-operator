@@ -17,7 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"crypto/sha1"
+	"crypto/sha1" // nolint
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -86,19 +86,19 @@ func (d *GrafanaDashboard) Hash() string {
 	hash := sha256.New()
 
 	for _, input := range d.Spec.Datasources {
-		io.WriteString(hash, input.DatasourceName)
-		io.WriteString(hash, input.InputName)
+		io.WriteString(hash, input.DatasourceName) // nolint
+		io.WriteString(hash, input.InputName)      // nolint
 	}
 
-	io.WriteString(hash, d.Spec.Json)
-	io.WriteString(hash, d.Spec.Url)
-	io.WriteString(hash, d.Spec.Jsonnet)
-	io.WriteString(hash, d.Namespace)
-	io.WriteString(hash, d.Spec.CustomFolderName)
+	io.WriteString(hash, d.Spec.Json)             // nolint
+	io.WriteString(hash, d.Spec.Url)              // nolint
+	io.WriteString(hash, d.Spec.Jsonnet)          // nolint
+	io.WriteString(hash, d.Namespace)             // nolint
+	io.WriteString(hash, d.Spec.CustomFolderName) // nolint
 
 	if d.Spec.ConfigMapRef != nil {
-		io.WriteString(hash, d.Spec.ConfigMapRef.Name)
-		io.WriteString(hash, d.Spec.ConfigMapRef.Key)
+		io.WriteString(hash, d.Spec.ConfigMapRef.Name) // nolint
+		io.WriteString(hash, d.Spec.ConfigMapRef.Key)  // nolint
 	}
 
 	return fmt.Sprintf("%x", hash.Sum(nil))
@@ -127,5 +127,5 @@ func (d *GrafanaDashboard) UID() string {
 
 	// Use sha1 to keep the hash limit at 40 bytes which is what
 	// Grafana allows for UIDs
-	return fmt.Sprintf("%x", sha1.Sum([]byte(d.Namespace+d.Name)))
+	return fmt.Sprintf("%x", sha1.Sum([]byte(d.Namespace+d.Name))) // nolint
 }

@@ -56,8 +56,8 @@ func (h *PluginsHelperImpl) BuildEnv(cr *grafanav1alpha1.Grafana) string {
 // Append a status message to the origin dashboard of a plugin
 func (h *PluginsHelperImpl) pickLatestVersions(requested grafanav1alpha1.PluginList) (grafanav1alpha1.PluginList, error) {
 	var latestVersions grafanav1alpha1.PluginList
-	for _, plugin := range requested {
-		result, err := requested.HasNewerVersionOf(&plugin)
+	for i := range requested {
+		result, err := requested.HasNewerVersionOf(&requested[i])
 
 		// Errors might happen if plugins don't use semver
 		// In that case fall back to whichever comes first
@@ -69,7 +69,7 @@ func (h *PluginsHelperImpl) pickLatestVersions(requested grafanav1alpha1.PluginL
 		if result {
 			continue
 		}
-		latestVersions = append(latestVersions, plugin)
+		latestVersions = append(latestVersions, requested[i])
 	}
 	return latestVersions, nil
 }
@@ -92,29 +92,29 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *grafanav1alpha1.Grafana, requested
 		return filteredPlugins, true
 	}
 
-	for _, plugin := range requested {
+	for i := range requested {
 		// Don't allow to install multiple versions of the same plugin
-		if filteredPlugins.HasSomeVersionOf(&plugin) {
-			installedVersion := filteredPlugins.GetInstalledVersionOf(&plugin)
-			log.V(1).Info(fmt.Sprintf("not installing version %s of %s because %s is already installed", plugin.Version, plugin.Name, installedVersion.Version))
+		if filteredPlugins.HasSomeVersionOf(&requested[i]) {
+			installedVersion := filteredPlugins.GetInstalledVersionOf(&requested[i])
+			log.V(1).Info(fmt.Sprintf("not installing version %s of %s because %s is already installed", requested[i].Version, requested[i].Name, installedVersion.Version))
 			continue
 		}
 
-		if cr.Status.FailedPlugins.HasExactVersionOf(&plugin) {
+		if cr.Status.FailedPlugins.HasExactVersionOf(&requested[i]) {
 			// Don't attempt to install plugins that failed to install previously
 			continue
 		}
 
 		// Already installed: append it to the list to keep it
-		if cr.Status.InstalledPlugins.HasExactVersionOf(&plugin) {
-			filteredPlugins = append(filteredPlugins, plugin)
+		if cr.Status.InstalledPlugins.HasExactVersionOf(&requested[i]) {
+			filteredPlugins = append(filteredPlugins, requested[i])
 			continue
 		}
 
 		// New plugin
-		if !cr.Status.InstalledPlugins.HasSomeVersionOf(&plugin) {
-			filteredPlugins = append(filteredPlugins, plugin)
-			log.V(1).Info(fmt.Sprintf("installing plugin %s@%s", plugin.Name, plugin.Version))
+		if !cr.Status.InstalledPlugins.HasSomeVersionOf(&requested[i]) {
+			filteredPlugins = append(filteredPlugins, requested[i])
+			log.V(1).Info(fmt.Sprintf("installing plugin %s@%s", requested[i].Name, requested[i].Version))
 			pluginsUpdated = true
 			continue
 		}
@@ -124,20 +124,20 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *grafanav1alpha1.Grafana, requested
 		// and there is only one dashboard that requires this plugin
 		// If multiple dashboards request different versions of the same plugin, then we can't upgrade because
 		// there is no way to decide which version is the correct one
-		if cr.Status.InstalledPlugins.HasSomeVersionOf(&plugin) &&
-			!cr.Status.InstalledPlugins.HasExactVersionOf(&plugin) &&
-			requested.VersionsOf(&plugin) == 1 {
-			installedVersion := cr.Status.InstalledPlugins.GetInstalledVersionOf(&plugin)
-			filteredPlugins = append(filteredPlugins, plugin)
-			log.V(1).Info(fmt.Sprintf("changing version of plugin %s form %s to %s", plugin.Name, installedVersion.Version, plugin.Version))
+		if cr.Status.InstalledPlugins.HasSomeVersionOf(&requested[i]) &&
+			!cr.Status.InstalledPlugins.HasExactVersionOf(&requested[i]) &&
+			requested.VersionsOf(&requested[i]) == 1 {
+			installedVersion := cr.Status.InstalledPlugins.GetInstalledVersionOf(&requested[i])
+			filteredPlugins = append(filteredPlugins, requested[i])
+			log.V(1).Info(fmt.Sprintf("changing version of plugin %s form %s to %s", requested[i].Name, installedVersion.Version, requested[i].Version))
 			pluginsUpdated = true
 			continue
 		}
 	}
 
 	// Check for removed plugins
-	for _, plugin := range cr.Status.InstalledPlugins {
-		if !requested.HasSomeVersionOf(&plugin) {
+	for i := range cr.Status.InstalledPlugins {
+		if !requested.HasSomeVersionOf(&cr.Status.InstalledPlugins[i]) {
 			pluginsUpdated = true
 		}
 	}

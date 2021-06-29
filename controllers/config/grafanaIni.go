@@ -72,7 +72,7 @@ func (i *GrafanaIni) Write() (string, string) {
 	}
 
 	hash := sha256.New()
-	io.WriteString(hash, sb.String())
+	io.WriteString(hash, sb.String()) // nolint
 
 	return sb.String(), fmt.Sprintf("%x", hash.Sum(nil))
 }
