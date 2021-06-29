@@ -126,15 +126,15 @@ func (r *GrafanaDatasourceReconciler) reconcileDataSources(state *common.DataSou
 	}
 
 	// apply dataSourcesToAddOrUpdate
-	var updated []grafanav1alpha1.GrafanaDataSource
-	for _, ds := range dataSourcesToAddOrUpdate {
-		pipeline := NewDatasourcePipeline(&ds)
+	var updated []grafanav1alpha1.GrafanaDataSource // nolint
+	for i := range dataSourcesToAddOrUpdate {
+		pipeline := NewDatasourcePipeline(&dataSourcesToAddOrUpdate[i])
 		err := pipeline.ProcessDatasource(state.KnownDataSources)
 		if err != nil {
-			r.manageError(&ds, err)
+			r.manageError(&dataSourcesToAddOrUpdate[i], err)
 			continue
 		}
-		updated = append(updated, ds)
+		updated = append(updated, dataSourcesToAddOrUpdate[i])
 	}
 
 	// update the hash of the newly reconciled datasources
@@ -218,7 +218,7 @@ func (r *GrafanaDatasourceReconciler) manageError(datasource *grafanav1alpha1.Gr
 // manage success case: datasource has been imported successfully and the configmap
 // is updated
 func (r *GrafanaDatasourceReconciler) manageSuccess(datasources []grafanav1alpha1.GrafanaDataSource) {
-	for _, datasource := range datasources {
+	for i, datasource := range datasources {
 		log.Info("datasource successfully imported",
 			"datasource.Namespace", datasource.Namespace,
 			"datasource.Name", datasource.Name)
@@ -226,9 +226,9 @@ func (r *GrafanaDatasourceReconciler) manageSuccess(datasources []grafanav1alpha
 		datasource.Status.Phase = grafanav1alpha1.PhaseReconciling
 		datasource.Status.Message = "success"
 
-		err := r.Client.Status().Update(r.Context, &datasource)
+		err := r.Client.Status().Update(r.Context, &datasources[i])
 		if err != nil {
-			r.recorder.Event(&datasource, "Warning", "UpdateError", err.Error())
+			r.recorder.Event(&datasources[i], "Warning", "UpdateError", err.Error())
 		}
 	}
 }

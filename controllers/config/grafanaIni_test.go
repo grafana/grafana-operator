@@ -10,6 +10,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	Bar = "bar"
+)
+
 var (
 	// Server
 	enableGzip = false
@@ -116,7 +120,7 @@ func TestCfgRendering(t *testing.T) {
 
 func TestAppendBool(t *testing.T) {
 	testList := []string{"foo"}
-	key := "bar"
+	key := Bar
 	value := false
 	compareList := []string{"foo", "bar = false"}
 	newList := appendBool(testList, key, &value)
@@ -126,7 +130,7 @@ func TestAppendBool(t *testing.T) {
 
 func TestAppendStr(t *testing.T) {
 	testList := []string{"foo"}
-	key := "bar"
+	key := Bar
 	value := "baz"
 	compareList := []string{"foo", "bar = baz"}
 	newList := appendStr(testList, key, value)
@@ -136,7 +140,7 @@ func TestAppendStr(t *testing.T) {
 
 func TestAppendInt(t *testing.T) {
 	testList := []string{"foo"}
-	key := "bar"
+	key := Bar
 	value := 10
 	compareList := []string{"foo", "bar = 10"}
 	newList := appendInt(testList, key, &value)

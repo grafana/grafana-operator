@@ -263,7 +263,7 @@ func (i GenericDeleteAction) Run(runner ActionRunner) (string, error) {
 	return i.Msg, runner.delete(i.Ref)
 }
 
-func (i LogAction) Run(runner ActionRunner) (string, error) {
+func (i LogAction) Run(_ ActionRunner) (string, error) { // nolint
 	return i.Msg, nil
 }
 

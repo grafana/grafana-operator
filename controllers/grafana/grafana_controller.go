@@ -250,7 +250,8 @@ func (r *ReconcileGrafana) getGrafanaAdminUrl(cr *grafanav1alpha1.Grafana, state
 		}
 
 		// Otherwise try to find something suitable, hostname or IP
-		for _, ingress := range state.GrafanaIngress.Status.LoadBalancer.Ingress {
+		if len(state.GrafanaIngress.Status.LoadBalancer.Ingress) > 0 {
+			ingress := state.GrafanaIngress.Status.LoadBalancer.Ingress[0]
 			if ingress.Hostname != "" {
 				return fmt.Sprintf("https://%v", ingress.Hostname), nil
 			}

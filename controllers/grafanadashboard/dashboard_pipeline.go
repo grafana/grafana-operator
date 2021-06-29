@@ -160,7 +160,7 @@ func (r *DashboardPipelineImpl) loadJsonnet(source string) (string, error) {
 		JPaths: []string{jsonnetLocation},
 	})
 
-	return vm.EvaluateSnippet(r.Dashboard.Name, source)
+	return vm.EvaluateSnippet(r.Dashboard.Name, source) // nolint
 }
 
 // Try to obtain the dashboard json from a provided url
@@ -180,7 +180,10 @@ func (r *DashboardPipelineImpl) loadDashboardFromURL() error {
 		return fmt.Errorf("request failed with status %v", resp.StatusCode)
 	}
 
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
 	sourceType := r.getFileType(url.Path)
 
 	switch sourceType {

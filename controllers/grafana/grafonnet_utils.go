@@ -81,7 +81,11 @@ func createFile(filePath, contents string) error {
 	if err != nil {
 		return err
 	}
-	file.WriteString(contents)
+	_, err = file.WriteString(contents)
+	if err != nil {
+		return err
+	}
+
 	return file.Close()
 }
 

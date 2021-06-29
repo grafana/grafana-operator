@@ -53,7 +53,7 @@ func getIngressSpec(cr *v1alpha1.Grafana) netv1.IngressSpec {
 	}
 	port := GetIngressTargetPort(cr)
 
-	if &port.IntVal != nil {
+	if port.IntVal != 0 {
 		return netv1.IngressSpec{
 			TLS:              getIngressTLS(cr),
 			IngressClassName: GetIngressClassName(cr),

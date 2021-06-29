@@ -177,9 +177,9 @@ func getTolerations(cr *v1alpha1.Grafana) []v13.Toleration {
 	return tolerations
 }
 
-func getVolumes(cr *v1alpha1.Grafana) []v13.Volume {
-	var volumes []v13.Volume
-	var volumeOptional bool = true
+func getVolumes(cr *v1alpha1.Grafana) []v13.Volume { // nolint
+	var volumes []v13.Volume // nolint
+	var volumeOptional = true
 
 	// Volume to mount the config file from a config map
 	volumes = append(volumes, v13.Volume{
@@ -313,7 +313,7 @@ func getExtraContainerVolumeMounts(cr *v1alpha1.Grafana, mounts []v13.VolumeMoun
 }
 
 func getVolumeMounts(cr *v1alpha1.Grafana) []v13.VolumeMount {
-	var mounts []v13.VolumeMount
+	var mounts []v13.VolumeMount // nolint
 
 	mounts = append(mounts, v13.VolumeMount{
 		Name:      constants.GrafanaConfigName,
@@ -420,7 +420,7 @@ func getReadinessProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13
 }
 
 func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Container {
-	var containers []v13.Container
+	var containers []v13.Container // nolint
 	var image string
 
 	if cr.Spec.BaseImage != "" {

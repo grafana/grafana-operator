@@ -84,9 +84,7 @@ func (c *ControllerConfig) SetPluginsFor(dashboard *v1alpha1.GrafanaDashboard) {
 
 func (c *ControllerConfig) RemovePluginsFor(namespace, name string) {
 	id := c.GetDashboardId(namespace, name)
-	if _, ok := c.Plugins[id]; ok {
-		delete(c.Plugins, id)
-	}
+	delete(c.Plugins, id)
 }
 
 func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard, folderId *int64, folderName string) {
@@ -178,9 +176,7 @@ func (c *ControllerConfig) AddConfigItem(key string, value interface{}) {
 func (c *ControllerConfig) RemoveConfigItem(key string) {
 	c.Lock()
 	defer c.Unlock()
-	if _, ok := c.Values[key]; ok {
-		delete(c.Values, key)
-	}
+	delete(c.Values, key)
 }
 
 func (c *ControllerConfig) GetConfigItem(key string, defaultValue interface{}) interface{} {
