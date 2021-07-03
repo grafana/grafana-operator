@@ -107,6 +107,13 @@ func (d *GrafanaDashboard) Hash() string {
 		io.WriteString(hash, d.Spec.ConfigMapRef.Key)  // nolint
 	}
 
+	if d.Spec.GrafanaCom != nil {
+		io.WriteString(hash, string(d.Spec.GrafanaCom.Id)) // nolint
+		if d.Spec.GrafanaCom.Revision != nil {
+			io.WriteString(hash, string(*d.Spec.GrafanaCom.Revision)) // nolint
+		}
+	}
+
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 

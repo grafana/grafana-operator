@@ -236,13 +236,16 @@ func (r *DashboardPipelineImpl) loadDashboardFromGrafanaCom() error {
 		return fmt.Errorf("failed to get grafana.com dashboard url: %w", err)
 	}
 
-	resp, err := http.Get(url)
+	resp, err := http.Get(url) // nolint:gosec
 	if err != nil {
 		return fmt.Errorf("failed to request dashboard url '%s': %w", url, err)
 	}
 	defer resp.Body.Close()
 
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
 	r.JSON = string(body)
 
 	// Update JSON so dashboard is not refetched
@@ -274,7 +277,7 @@ func (r *DashboardPipelineImpl) getGrafanaComDashboardUrl() (string, error) {
 
 func (r *DashboardPipelineImpl) getLatestRevisionForGrafanaComDashboard() (int, error) {
 	revisionsUrl := fmt.Sprintf(grafanaComDashboardRevisionsUrl, r.Dashboard.Spec.GrafanaCom.Id)
-	resp, err := http.Get(revisionsUrl)
+	resp, err := http.Get(revisionsUrl) // nolint:gosec
 	if err != nil {
 		return 0, fmt.Errorf("failed to make request to %s: %w", revisionsUrl, err)
 	}
@@ -336,7 +339,10 @@ type dashboardRevisionItem struct {
 func (r *DashboardPipelineImpl) unmarshalListDashboardRevisionsResponseBody(
 	body io.Reader,
 ) (*listDashboardRevisionsResponse, error) {
-	bodyBytes, _ := ioutil.ReadAll(body)
+	bodyBytes, err := ioutil.ReadAll(body)
+	if err != nil {
+		return nil, err
+	}
 
 	resp := &listDashboardRevisionsResponse{}
 	if err := json.Unmarshal(bodyBytes, resp); err != nil {
