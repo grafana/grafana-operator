@@ -31,6 +31,11 @@ spec:
         - --leader-elect
         image: controller:latest
         name: manager
+        env:
+          - name: WATCH_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
         securityContext:
           allowPrivilegeEscalation: false
         livenessProbe:
