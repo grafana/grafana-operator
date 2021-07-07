@@ -442,7 +442,7 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 			Value: dsHash,
 		},
 	}
-	if cr.Spec.Deployment.HttpProxy != nil && cr.Spec.Deployment.HttpProxy.Enabled {
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.HttpProxy != nil && cr.Spec.Deployment.HttpProxy.Enabled {
 		envVars = append(envVars, v13.EnvVar{
 			Name:  "HTTP_PROXY",
 			Value: cr.Spec.Deployment.HttpProxy.URL,
@@ -520,7 +520,7 @@ func getInitContainers(cr *v1alpha1.Grafana, plugins string) []v13.Container {
 		},
 	}
 
-	if cr.Spec.Deployment.HttpProxy != nil && cr.Spec.Deployment.HttpProxy.Enabled {
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.HttpProxy != nil && cr.Spec.Deployment.HttpProxy.Enabled {
 		envVars = append(envVars, v13.EnvVar{
 			Name:  "HTTP_PROXY",
 			Value: cr.Spec.Deployment.HttpProxy.URL,
