@@ -63,7 +63,6 @@ var _ reconcile.Reconciler = &GrafanaDatasourceReconciler{}
 
 // +kubebuilder:rbac:groups=integreatly.org,resources=grafanadatasources,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=integreatly.org,resources=grafanadatasources/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=integreatly.org,resources=grafanadatasources/finalizers,verbs=update
 
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.0/pkg/reconcile

@@ -34,6 +34,14 @@ const DefaultClientTimeoutSeconds = 5
 
 var log = logf.Log.WithName(ControllerName)
 
+// +kubebuilder:rbac:groups=integreatly.org,resources=grafanas;grafanas/finalizers,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=integreatly.org,resources=grafanas/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=extensions;apps,resources=deployments;deployments/finalizers,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=events,verbs=get;list;watch;create
+// +kubebuilder:rbac:groups="",resources=configmaps;secrets;serviceaccounts;services;persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=route.openshift.io,resources=routes,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *ReconcileGrafana) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
