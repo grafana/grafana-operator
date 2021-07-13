@@ -419,7 +419,7 @@ func getReadinessProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13
 	}
 }
 
-func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Container {
+func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Container { // nolint
 	var containers []v13.Container // nolint
 	var image string
 
