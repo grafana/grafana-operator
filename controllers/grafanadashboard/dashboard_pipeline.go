@@ -112,7 +112,7 @@ func (r *DashboardPipelineImpl) validateJson() error {
 // 3) no configmap specified: try to use embedded json
 // 4) no json specified: try to use embedded jsonnet
 func (r *DashboardPipelineImpl) obtainJson() error {
-	if r.Dashboard.Spec.Url != "" && len(r.Dashboard.Spec.Json) == 0 {
+	if r.Dashboard.Spec.Url != "" {
 		err := r.loadDashboardFromURL()
 		if err != nil {
 			r.Logger.Error(err, "failed to request dashboard url, falling back to raw json")
