@@ -108,9 +108,9 @@ func (d *GrafanaDashboard) Hash() string {
 	}
 
 	if d.Spec.GrafanaCom != nil {
-		io.WriteString(hash, string(d.Spec.GrafanaCom.Id)) // nolint
+		io.WriteString(hash, fmt.Sprint((d.Spec.GrafanaCom.Id))) // nolint
 		if d.Spec.GrafanaCom.Revision != nil {
-			io.WriteString(hash, string(*d.Spec.GrafanaCom.Revision)) // nolint
+			io.WriteString(hash, fmt.Sprint(*d.Spec.GrafanaCom.Revision)) // nolint
 		}
 	}
 
