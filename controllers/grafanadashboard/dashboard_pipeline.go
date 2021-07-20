@@ -32,7 +32,7 @@ const (
 )
 
 var (
-	grafanaComDashboardApiUrlRoot   string = "https://grafana.com/api/dashboards"
+	grafanaComDashboardApiUrlRoot string = "https://grafana.com/api/dashboards"
 )
 
 type DashboardPipeline interface {
@@ -288,7 +288,7 @@ func (r *DashboardPipelineImpl) getLatestRevisionForGrafanaComDashboard() (int, 
 	}
 
 	u.Path = path.Join(u.Path, strconv.Itoa(r.Dashboard.Spec.GrafanaCom.Id), "revisions")
-	resp, err := http.Get(u.String()) // nolint:gosec
+	resp, err := http.Get(u.String())
 	if err != nil {
 		return 0, fmt.Errorf("failed to make request to %s: %w", u.String(), err)
 	}
