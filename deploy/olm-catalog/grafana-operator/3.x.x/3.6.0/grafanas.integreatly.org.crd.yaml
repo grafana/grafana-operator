@@ -130,7 +130,7 @@ spec:
             compat:
               type: object
               description: Backwards compatibility switches
-            dashboardLabelSelectors:
+            dashboardLabelSelector:
               type: array
               items:
                 type: object
