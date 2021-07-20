@@ -1,10 +1,10 @@
-ORG?=integreatly
+ORG?=grafana-operator
 NAMESPACE?=grafana
 PROJECT=grafana-operator
 REG?=quay.io
 SHELL=/bin/bash
-TAG?=latest
-PKG=github.com/integr8ly/grafana-operator
+TAG?=v3.10.3
+PKG=github.com/grafana-operator/grafana-operator
 COMPILE_TARGET=./tmp/_output/bin/$(PROJECT)
 
 .PHONY: setup/travis
