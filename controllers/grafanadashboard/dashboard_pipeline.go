@@ -10,6 +10,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
+	"strconv"
 	"strings"
 
 	"github.com/go-logr/logr"
@@ -31,8 +33,6 @@ const (
 
 var (
 	grafanaComDashboardApiUrlRoot   string = "https://grafana.com/api/dashboards"
-	grafanaComDashboardRevisionsUrl        = grafanaComDashboardApiUrlRoot + "/%d/revisions"
-	grafanaComDashboardDownloadUrl         = grafanaComDashboardRevisionsUrl + "%d/download"
 )
 
 type DashboardPipeline interface {
@@ -272,14 +272,25 @@ func (r *DashboardPipelineImpl) getGrafanaComDashboardUrl() (string, error) {
 		revision = *grafanaComSource.Revision
 	}
 
-	return fmt.Sprintf(grafanaComDashboardDownloadUrl, grafanaComSource.Id, revision), nil
+	u, err := url.Parse(grafanaComDashboardApiUrlRoot)
+	if err != nil {
+		return "", err
+	}
+
+	u.Path = path.Join(u.Path, strconv.Itoa(grafanaComSource.Id), "revisions", strconv.Itoa(revision), "download")
+	return u.String(), nil
 }
 
 func (r *DashboardPipelineImpl) getLatestRevisionForGrafanaComDashboard() (int, error) {
-	revisionsUrl := fmt.Sprintf(grafanaComDashboardRevisionsUrl, r.Dashboard.Spec.GrafanaCom.Id)
-	resp, err := http.Get(revisionsUrl) // nolint:gosec
+	u, err := url.Parse(grafanaComDashboardApiUrlRoot)
 	if err != nil {
-		return 0, fmt.Errorf("failed to make request to %s: %w", revisionsUrl, err)
+		return 0, err
+	}
+
+	u.Path = path.Join(u.Path, strconv.Itoa(r.Dashboard.Spec.GrafanaCom.Id), "revisions")
+	resp, err := http.Get(u.String()) // nolint:gosec
+	if err != nil {
+		return 0, fmt.Errorf("failed to make request to %s: %w", u.String(), err)
 	}
 	defer resp.Body.Close()
 
