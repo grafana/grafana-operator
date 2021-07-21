@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
@@ -30,6 +31,17 @@ func appendStr(list []string, key, value string) []string {
 func appendInt(list []string, key string, value *int) []string {
 	if value != nil {
 		return append(list, fmt.Sprintf("%v = %v", key, *value))
+	}
+	return list
+}
+
+func appendFloat(list []string, key string, value string) []string {
+	if value != "" {
+		f, err := strconv.ParseFloat(value, 32)
+		if err != nil {
+			return list
+		}
+		return append(list, fmt.Sprintf("%v = %v", key, f))
 	}
 	return list
 }
@@ -139,6 +151,17 @@ func (i *GrafanaIni) parseConfig(config map[string][]string) map[string][]string
 		items = appendStr(items, "level", i.cfg.Log.Level)
 		items = appendStr(items, "filters", i.cfg.Log.Filters)
 		config["log"] = items
+	}
+
+	if i.cfg.LogFrontend != nil {
+		var items []string
+		items = appendBool(items, "enabled", i.cfg.LogFrontend.Enabled)
+		items = appendStr(items, "sentry_dsn", i.cfg.LogFrontend.SentryDsn)
+		items = appendStr(items, "custom_endpoint", i.cfg.LogFrontend.CustomEndpoint)
+		items = appendInt(items, "log_endpoint_burst_limit", i.cfg.LogFrontend.LogEndpointBurstLimit)
+		items = appendInt(items, "log_endpoint_requests_per_second_limit", i.cfg.LogFrontend.LogEndpointRequestsPerSecondLimit)
+		items = appendFloat(items, "sample_rate", i.cfg.LogFrontend.SampleRate)
+		config["log.frontend"] = items
 	}
 
 	if i.cfg.LogConsole != nil {
