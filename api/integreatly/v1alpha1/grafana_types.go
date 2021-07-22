@@ -173,6 +173,7 @@ type GrafanaConfig struct {
 	Panels                        *GrafanaConfigPanels                        `json:"panels,omitempty" ini:"panels,omitempty"`
 	Plugins                       *GrafanaConfigPlugins                       `json:"plugins,omitempty" ini:"plugins,omitempty"`
 	Rendering                     *GrafanaConfigRendering                     `json:"rendering,omitempty" ini:"rendering,omitempty"`
+	FeatureToggles                *GrafanaConfigFeatureToggles                `json:"feature_toggles,omitempty" ini:"feature_toggles,omitempty"`
 }
 
 type GrafanaConfigPaths struct {
@@ -520,6 +521,10 @@ type GrafanaConfigRendering struct {
 	ServerURL                    string `json:"server_url,omitempty" ini:"server_url"`
 	CallbackURL                  string `json:"callback_url,omitempty" ini:"callback_url"`
 	ConcurrentRenderRequestLimit *int   `json:"concurrent_render_request_limit,omitempty" ini:"concurrent_render_request_limit,omitempty"`
+}
+
+type GrafanaConfigFeatureToggles struct {
+	Enable string `json:"enable,omitempty" ini:"enable,omitempty"`
 }
 
 // GrafanaStatus defines the observed state of Grafana

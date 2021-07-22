@@ -277,6 +277,12 @@ func (i *GrafanaIni) parseConfig(config map[string][]string) map[string][]string
 	if i.cfg.Rendering != nil {
 		config = i.cfgRendering(config)
 	}
+
+	if i.cfg.FeatureToggles != nil {
+		var items []string
+		items = appendStr(items, "enable", i.cfg.FeatureToggles.Enable)
+		config["feature_toggles"] = items
+	}
 	return config
 }
 

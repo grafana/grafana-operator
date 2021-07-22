@@ -55,6 +55,9 @@ var testGrafanaConfig = v1alpha1.GrafanaConfig{
 		CallbackURL:                  "callback_url",
 		ConcurrentRenderRequestLimit: &concurrentRenderRequestLimit,
 	},
+	FeatureToggles: &v1alpha1.GrafanaConfigFeatureToggles{
+		Enable: "ngalert",
+	},
 }
 
 var testIni = `[auth.azuread]
@@ -76,6 +79,9 @@ ssl_mode = sslMode
 type = type
 url = Url
 user = user
+
+[feature_toggles]
+enable = ngalert
 
 [paths]
 data = /var/lib/grafana
