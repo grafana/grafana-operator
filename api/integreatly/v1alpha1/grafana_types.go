@@ -160,6 +160,7 @@ type GrafanaConfig struct {
 	Smtp                          *GrafanaConfigSmtp                          `json:"smtp,omitempty" ini:"smtp,omitempty"`
 	Log                           *GrafanaConfigLog                           `json:"log,omitempty" ini:"log,omitempty"`
 	LogConsole                    *GrafanaConfigLogConsole                    `json:"log.console,omitempty" ini:"log.console,omitempty"`
+	LogFrontend                   *GrafanaConfigLogFrontend                   `json:"log.frontend,omitempty" ini:"log.frontend,omitempty"`
 	Metrics                       *GrafanaConfigMetrics                       `json:"metrics,omitempty" ini:"metrics,omitempty"`
 	MetricsGraphite               *GrafanaConfigMetricsGraphite               `json:"metrics.graphite,omitempty" ini:"metrics.graphite,omitempty"`
 	Snapshots                     *GrafanaConfigSnapshots                     `json:"snapshots,omitempty" ini:"snapshots,omitempty"`
@@ -429,6 +430,15 @@ type GrafanaConfigLog struct {
 	Mode    string `json:"mode,omitempty" ini:"mode,omitempty"`
 	Level   string `json:"level,omitempty" ini:"level,omitempty"`
 	Filters string `json:"filters,omitempty" ini:"filters,omitempty"`
+}
+
+type GrafanaConfigLogFrontend struct {
+	Enabled                           *bool  `json:"enabled,omitempty" ini:"enabled,omitempty"`
+	SentryDsn                         string `json:"sentry_dsn,omitempty" ini:"sentry_dsn,omitempty"`
+	CustomEndpoint                    string `json:"custom_endpoint,omitempty" ini:"custom_endpoint,omitempty"`
+	SampleRate                        string `json:"sample_rate,omitempty" ini:"sample_rate,omitempty"`
+	LogEndpointRequestsPerSecondLimit *int   `json:"log_endpoint_requests_per_second_limit,omitempty" ini:"log_endpoint_requests_per_second_limit,omitempty"`
+	LogEndpointBurstLimit             *int   `json:"log_endpoint_burst_limit,omitempty" ini:"log_endpoint_burst_limit,omitempty"`
 }
 
 type GrafanaConfigLogConsole struct {
