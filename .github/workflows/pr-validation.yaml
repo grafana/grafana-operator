@@ -43,6 +43,26 @@ jobs:
             exit 1
           fi
 
+  manifests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v2.3.4
+      - name: Setup go
+        uses: actions/setup-go@v2
+        with:
+          go-version: "1.16"
+      - name: Run manifests
+        run: |
+          make manifests
+      - name: Check if working tree is dirty
+        run: |
+          if [[ $(git status --porcelain) ]]; then
+            git diff
+            echo 'run make manifests and commit changes'
+            exit 1
+          fi
+
   test:
     runs-on: ubuntu-latest
     steps:
