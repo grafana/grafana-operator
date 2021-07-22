@@ -161,6 +161,7 @@ type GrafanaConfig struct {
 	Alerting                      *GrafanaConfigAlerting                      `json:"alerting,omitempty" ini:"alerting,omitempty"`
 	Panels                        *GrafanaConfigPanels                        `json:"panels,omitempty" ini:"panels,omitempty"`
 	Plugins                       *GrafanaConfigPlugins                       `json:"plugins,omitempty" ini:"plugins,omitempty"`
+	FeatureToggles                *GrafanaConfigFeatureToggles                `json:"feature_toggles,omitempty" ini:"feature_toggles,omitempty"`
 }
 
 type GrafanaConfigPaths struct {
@@ -493,6 +494,10 @@ type GrafanaConfigPanels struct {
 
 type GrafanaConfigPlugins struct {
 	EnableAlpha *bool `json:"enable_alpha,omitempty" ini:"enable_alpha"`
+}
+
+type GrafanaConfigFeatureToggles struct {
+	Enable string `json:"enable,omitempty" ini:"enable,omitempty"`
 }
 
 // GrafanaStatus defines the observed state of Grafana
