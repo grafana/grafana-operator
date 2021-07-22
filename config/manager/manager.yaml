@@ -22,8 +22,6 @@ spec:
       labels:
         control-plane: controller-manager
     spec:
-      securityContext:
-        runAsUser: 65532
       containers:
       - command:
         - /manager
@@ -32,6 +30,10 @@ spec:
         image: controller:latest
         name: manager
         env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
           - name: WATCH_NAMESPACE
             valueFrom:
               fieldRef:

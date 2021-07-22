@@ -1,0 +1,54 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[]'
+    capabilities: Basic Install
+  name: grafana-operator.v0.0.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: GrafanaDashboard is the Schema for the grafanadashboards API
+      displayName: Grafana Dashboard
+      kind: GrafanaDashboard
+      name: grafanadashboards.integreatly.org.integreatly.org
+      version: v1alpha1
+    - description: Grafana is the Schema for the grafanas API
+      displayName: Grafana
+      kind: Grafana
+      name: grafanas.integreatly.org.integreatly.org
+      version: v1alpha1
+  description: grafana
+  displayName: Grafana Operator
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      deployments: null
+    strategy: ""
+  installModes:
+  - supported: true
+    type: OwnNamespace
+  - supported: true
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: false
+    type: AllNamespaces
+  keywords:
+  - grafana
+  links:
+  - name: Grafana Operator
+    url: https://grafana-operator.domain
+  maintainers:
+  - email: pbraun@redhat.com
+    name: Peter Braun
+  - email: hstefans@redhat.com
+    name: Hubert Stefanski
+  maturity: alpha
+  provider:
+    name: Red Hat
+  version: 0.0.0

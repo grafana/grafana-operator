@@ -82,8 +82,4 @@ tags
 operator-sdk-*
 tmp
 manager
-
-# OLM
-bundle
-config/manifests
 vendor

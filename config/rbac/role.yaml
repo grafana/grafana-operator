@@ -26,6 +26,7 @@ rules:
   - ""
   resources:
   - events
+  - pods
   verbs:
   - create
   - get

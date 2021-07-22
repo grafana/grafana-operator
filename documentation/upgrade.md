@@ -1,3 +1,8 @@
+# Changes in version 4.0.0
+
+* Operator-sdk updated to v1.3.0
+* Installs Grafana 7.1.1 by default
+
 # Changes in version 3.0.0
 
 This version includes the following changes:
@@ -8,6 +13,10 @@ This version includes the following changes:
 * Updated reconciliation strategy that keeps all resources up to date at all times and allows for better configuration through the Grafana CR.
 * Updated to [operator-sdk v0.12.0](https://github.com/operator-framework/operator-sdk/releases/tag/v0.12.0)
 * Using Go modules instead of dep now 
+
+## Upgrade from 3.x.x to 4.x.x
+
+TODO
 
 ## Upgrade from 1.x.x or 2.x.x
 
