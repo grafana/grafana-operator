@@ -101,7 +101,7 @@ type GrafanaDeployment struct {
 	Affinity                      *v1.Affinity               `json:"affinity,omitempty"`
 	SecurityContext               *v1.PodSecurityContext     `json:"securityContext,omitempty"`
 	ContainerSecurityContext      *v1.SecurityContext        `json:"containerSecurityContext,omitempty"`
-	TerminationGracePeriodSeconds int64                      `json:"terminationGracePeriodSeconds"`
+	TerminationGracePeriodSeconds *int64                     `json:"terminationGracePeriodSeconds,omitempty"`
 	EnvFrom                       []v1.EnvFromSource         `json:"envFrom,omitempty"`
 	SkipCreateAdminAccount        *bool                      `json:"skipCreateAdminAccount,omitempty"`
 	PriorityClassName             string                     `json:"priorityClassName,omitempty"`

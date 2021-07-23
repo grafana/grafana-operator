@@ -161,14 +161,6 @@ func getNodeSelectors(cr *v1alpha1.Grafana) map[string]string {
 	return nodeSelector
 }
 
-func getTerminationGracePeriod(cr *v1alpha1.Grafana) *int64 {
-	var tcp int64 = 30
-	if cr.Spec.Deployment != nil && cr.Spec.Deployment.TerminationGracePeriodSeconds != 0 {
-		tcp = cr.Spec.Deployment.TerminationGracePeriodSeconds
-	}
-	return &tcp
-}
-
 func getPodPriorityClassName(cr *v1alpha1.Grafana) string {
 	if cr.Spec.Deployment != nil {
 		return cr.Spec.Deployment.PriorityClassName
@@ -586,7 +578,7 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, annotations map[string]string, conf
 				InitContainers:                getInitContainers(cr, plugins),
 				Containers:                    getContainers(cr, configHash, dsHash),
 				ServiceAccountName:            constants.GrafanaServiceAccountName,
-				TerminationGracePeriodSeconds: getTerminationGracePeriod(cr),
+				TerminationGracePeriodSeconds: cr.Spec.Deployment.TerminationGracePeriodSeconds,
 				PriorityClassName:             getPodPriorityClassName(cr),
 			},
 		},

@@ -4451,7 +4451,6 @@ spec:
                     type: array
                 required:
                 - replicas
-                - terminationGracePeriodSeconds
                 type: object
               ingress:
                 description: GrafanaIngress provides a means to configure the ingress
