@@ -451,6 +451,21 @@ spec:
                       level:
                         type: string
                     type: object
+                  log.frontend:
+                    properties:
+                      custom_endpoint:
+                        type: string
+                      enabled:
+                        type: boolean
+                      log_endpoint_burst_limit:
+                        type: integer
+                      log_endpoint_requests_per_second_limit:
+                        type: integer
+                      sample_rate:
+                        type: string
+                      sentry_dsn:
+                        type: string
+                    type: object
                   metrics:
                     properties:
                       basic_auth_password:
