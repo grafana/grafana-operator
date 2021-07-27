@@ -5,6 +5,8 @@ metadata:
 spec:
   ingress:
     enabled: True
+    pathType: Prefix
+    path: '/'
   config:
     log:
       mode: "console"
