@@ -113,6 +113,14 @@ func getDeploymentStrategy(cr *v1alpha1.Grafana) v1.DeploymentStrategy {
 	}
 }
 
+func getDeploymentLabels(cr *v1alpha1.Grafana) map[string]string {
+	var labels = map[string]string{}
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Labels != nil {
+		labels = cr.Spec.Deployment.Labels
+	}
+	return labels
+}
+
 func getRollingUpdateStrategy() *v1.RollingUpdateDeployment {
 	var maxUnaval intstr.IntOrString = intstr.FromInt(25)
 	var maxSurge intstr.IntOrString = intstr.FromInt(25)
@@ -591,6 +599,7 @@ func GrafanaDeployment(cr *v1alpha1.Grafana, configHash, dsHash string) *v1.Depl
 		ObjectMeta: v12.ObjectMeta{
 			Name:      constants.GrafanaDeploymentName,
 			Namespace: cr.Namespace,
+			Labels:    getDeploymentLabels(cr),
 		},
 		Spec: getDeploymentSpec(cr, nil, configHash, "", dsHash),
 	}
