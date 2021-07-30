@@ -26,9 +26,16 @@ rules:
   - ""
   resources:
   - events
-  - pods
   verbs:
   - create
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
   - get
   - list
   - watch
