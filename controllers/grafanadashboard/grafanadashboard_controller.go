@@ -228,6 +228,16 @@ func findHash(knownDashboards []*integreatlyorgv1alpha1.GrafanaDashboardRef, ite
 	return ""
 }
 
+// Returns the UID of a dashboard if it is known
+func findUid(knownDashboards []*integreatlyorgv1alpha1.GrafanaDashboardRef, item *grafanav1alpha1.GrafanaDashboard) string {
+	for _, d := range knownDashboards {
+		if item.Name == d.Name && item.Namespace == d.Namespace {
+			return d.UID
+		}
+	}
+	return ""
+}
+
 func (r *GrafanaDashboardReconciler) reconcileDashboards(request reconcile.Request, grafanaClient GrafanaClient) (reconcile.Result, error) { // nolint
 	// Collect known and namespace dashboards
 	knownDashboards := r.config.GetDashboards(request.Namespace)
@@ -285,8 +295,28 @@ func (r *GrafanaDashboardReconciler) reconcileDashboards(request reconcile.Reque
 		// Process the dashboard. Use the known hash of an existing dashboard
 		// to determine if an update is required
 		knownHash := findHash(knownDashboards, &namespaceDashboards.Items[i])
+		knownUid := findUid(knownDashboards, &namespaceDashboards.Items[i])
 		pipeline := NewDashboardPipeline(r.Client, &namespaceDashboards.Items[i], r.context)
-		processed, err := pipeline.ProcessDashboard(knownHash, &folderId, folderName)
+		processed, err := pipeline.ProcessDashboard(knownHash, &folderId, folderName, false)
+
+		// Check known dashboards exist on grafana instance and recreate if not
+		if knownUid != "" {
+			response, err := grafanaClient.GetDashboard(knownUid)
+			if err != nil {
+				log.Log.Error(err, "Failed to search Grafana for dashboard")
+			}
+
+			if *response.Dashboard.ID == uint(0) {
+				log.Log.Info(fmt.Sprintf("Dashboard %v has been deleted via grafana console. Recreating.", namespaceDashboards.Items[i].ObjectMeta.Name))
+				processed, err = pipeline.ProcessDashboard(knownHash, &folderId, folderName, true)
+
+				if err != nil {
+					log.Log.Error(err, "cannot process dashboard", "namespace", dashboard.Namespace, "name", dashboard.Name)
+					r.manageError(&namespaceDashboards.Items[i], err)
+					continue
+				}
+			}
+		}
 
 		if err != nil {
 			log.Log.Error(err, "cannot process dashboard", "namespace", dashboard.Namespace, "name", dashboard.Name)

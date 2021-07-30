@@ -29,7 +29,7 @@ const (
 )
 
 type DashboardPipeline interface {
-	ProcessDashboard(knownHash string, folderId *int64, folderName string) ([]byte, error)
+	ProcessDashboard(knownHash string, folderId *int64, folderName string, forceRecreate bool) ([]byte, error)
 	NewHash() string
 }
 
@@ -53,7 +53,7 @@ func NewDashboardPipeline(client client.Client, dashboard *v1alpha1.GrafanaDashb
 	}
 }
 
-func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string, folderId *int64, folderName string) ([]byte, error) {
+func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string, folderId *int64, folderName string, forceRecreate bool) ([]byte, error) {
 	err := r.obtainJson()
 	if err != nil {
 		return nil, err
@@ -61,7 +61,7 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string, folderId *int
 
 	// Dashboard unchanged?
 	hash := r.Dashboard.Hash()
-	if hash == knownHash {
+	if hash == knownHash && !forceRecreate {
 		r.Hash = knownHash
 		return nil, nil
 	}
