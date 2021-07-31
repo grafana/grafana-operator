@@ -435,6 +435,11 @@ spec:
                       username:
                         type: string
                     type: object
+                  feature_toggles:
+                    properties:
+                      enable:
+                        type: string
+                    type: object
                   log:
                     properties:
                       filters:
