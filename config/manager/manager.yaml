@@ -28,6 +28,7 @@ spec:
         args:
         - --leader-elect
         image: controller:latest
+        imagePullPolicy: Always
         name: manager
         env:
           - name: POD_NAME
@@ -55,8 +56,8 @@ spec:
         resources:
           limits:
             cpu: 100m
-            memory: 30Mi
+            memory: 300Mi
           requests:
             cpu: 100m
-            memory: 20Mi
+            memory: 100Mi
       terminationGracePeriodSeconds: 10
