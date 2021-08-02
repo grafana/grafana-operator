@@ -90,18 +90,6 @@ func getContainerSecurityContext(cr *v1alpha1.Grafana) *v13.SecurityContext {
 	return &containerSecurityContext
 }
 
-func getReplicas(cr *v1alpha1.Grafana) *int32 {
-	var replicas int32 = 1
-	if cr.Spec.Deployment == nil {
-		return &replicas
-	}
-	if cr.Spec.Deployment.Replicas <= 0 {
-		return &replicas
-	} else {
-		return &cr.Spec.Deployment.Replicas
-	}
-}
-
 func getDeploymentStrategy(cr *v1alpha1.Grafana) v1.DeploymentStrategy {
 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Strategy != nil {
 		return *cr.Spec.Deployment.Strategy
@@ -557,7 +545,7 @@ func getInitContainers(cr *v1alpha1.Grafana, plugins string) []v13.Container {
 
 func getDeploymentSpec(cr *v1alpha1.Grafana, annotations map[string]string, configHash, plugins, dsHash string) v1.DeploymentSpec {
 	return v1.DeploymentSpec{
-		Replicas: getReplicas(cr),
+		Replicas: cr.Spec.Deployment.Replicas,
 		Selector: &v12.LabelSelector{
 			MatchLabels: map[string]string{
 				"app": constants.GrafanaPodLabel,

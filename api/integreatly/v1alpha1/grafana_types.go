@@ -95,7 +95,7 @@ type GrafanaServiceAccount struct {
 type GrafanaDeployment struct {
 	Annotations                   map[string]string          `json:"annotations,omitempty"`
 	Labels                        map[string]string          `json:"labels,omitempty"`
-	Replicas                      int32                      `json:"replicas"`
+	Replicas                      *int32                     `json:"replicas"`
 	NodeSelector                  map[string]string          `json:"nodeSelector,omitempty"`
 	Tolerations                   []v1.Toleration            `json:"tolerations,omitempty"`
 	Affinity                      *v1.Affinity               `json:"affinity,omitempty"`
