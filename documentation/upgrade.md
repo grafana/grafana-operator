@@ -16,7 +16,34 @@ This version includes the following changes:
 
 ## Upgrade from 3.x.x to 4.x.x
 
-TODO
+There is no direct upgrade path from previous versions to 4.0.0. This is due to an upgraded operator-sdk version and an update of the CRD definitions from v1beta1 to v1.
+
+To upgrade, we recommend the following steps:
+
+### Uninstall the previous version
+
+To uninstall the Grafana Operator, either remove the deployment with the name `grafana-operator`, or, if installed through OLM, follow the appropriate steps to remove the subscription:
+
+1) On OpenShift 4.x, you can uninstall the Operator via `Operators -> Installed Operators`
+2) On Kubernetes, use kubectl to identify the subscription:
+
+```shell
+$ kubectl get subscriptions -n<operator namespace>
+```
+
+Then delete the subscription:
+
+```shell
+$ kubectl delete subscription <subscription name> -n<operator namespace>
+```
+
+__NOTE__: uninstalling the Grafana Operator will not remove your Grafana instance or your dashboards.
+
+### Install 4.0.0
+
+Install the Grafana Operator v4.0.0 either using OLM or by [deployment](https://github.com/grafana-operator/grafana-operator/blob/v3.10.3/deploy/operator.yaml) or through OLM.
+
+The new Operator should discover the existing Grafana and Dashboard CRs and take over.
 
 ## Upgrade from 1.x.x or 2.x.x
 
