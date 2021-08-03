@@ -451,6 +451,12 @@ func (i *GrafanaIni) Write() (string, string) {
 		config["plugins"] = items
 	}
 
+	if i.cfg.FeatureToggles != nil {
+		var items []string
+		items = appendStr(items, "enable", i.cfg.FeatureToggles.Enable)
+		config["feature_toggles"] = items
+	}
+
 	sb := strings.Builder{}
 
 	var keys []string
