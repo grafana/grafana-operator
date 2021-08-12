@@ -103,6 +103,7 @@ type GrafanaDeployment struct {
 	ContainerSecurityContext      *v1.SecurityContext        `json:"containerSecurityContext,omitempty"`
 	TerminationGracePeriodSeconds *int64                     `json:"terminationGracePeriodSeconds,omitempty"`
 	EnvFrom                       []v1.EnvFromSource         `json:"envFrom,omitempty"`
+	Env                           []v1.EnvVar                `json:"env,omitempty"`
 	SkipCreateAdminAccount        *bool                      `json:"skipCreateAdminAccount,omitempty"`
 	PriorityClassName             string                     `json:"priorityClassName,omitempty"`
 	HostNetwork                   *bool                      `json:"hostNetwork,omitempty"`
