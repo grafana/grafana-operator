@@ -437,6 +437,10 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 		})
 	}
 
+	if cr.Spec.Deployment.Env != nil {
+		envVars = append(envVars, cr.Spec.Deployment.Env...)
+	}
+
 	containers = append(containers, v13.Container{
 		Name:       "grafana",
 		Image:      image,
