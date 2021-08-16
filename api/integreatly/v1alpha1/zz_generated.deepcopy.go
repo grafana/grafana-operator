@@ -477,6 +477,11 @@ func (in *GrafanaConfigAuthGenericOauth) DeepCopyInto(out *GrafanaConfigAuthGene
 		*out = new(bool)
 		**out = **in
 	}
+	if in.RoleAttributeStrict != nil {
+		in, out := &in.RoleAttributeStrict, &out.RoleAttributeStrict
+		*out = new(bool)
+		**out = **in
+	}
 	if in.TLSSkipVerifyInsecure != nil {
 		in, out := &in.TLSSkipVerifyInsecure, &out.TLSSkipVerifyInsecure
 		*out = new(bool)
@@ -604,6 +609,11 @@ func (in *GrafanaConfigAuthOkta) DeepCopyInto(out *GrafanaConfigAuthOkta) {
 	}
 	if in.AllowSignUp != nil {
 		in, out := &in.AllowSignUp, &out.AllowSignUp
+		*out = new(bool)
+		**out = **in
+	}
+	if in.RoleAttributeStrict != nil {
+		in, out := &in.RoleAttributeStrict, &out.RoleAttributeStrict
 		*out = new(bool)
 		**out = **in
 	}

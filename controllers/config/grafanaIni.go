@@ -486,6 +486,7 @@ func (i *GrafanaIni) cfgAuthGenericOauth(config map[string][]string) map[string]
 	items = appendStr(items, "api_url", i.cfg.AuthGenericOauth.ApiUrl)
 	items = appendStr(items, "allowed_domains", i.cfg.AuthGenericOauth.AllowedDomains)
 	items = appendStr(items, "role_attribute_path", i.cfg.AuthGenericOauth.RoleAttributePath)
+	items = appendBool(items, "role_attribute_strict", i.cfg.AuthGenericOauth.RoleAttributeStrict)
 	items = appendStr(items, "email_attribute_path", i.cfg.AuthGenericOauth.EmailAttributePath)
 	items = appendBool(items, "tls_skip_verify_insecure", i.cfg.AuthGenericOauth.TLSSkipVerifyInsecure)
 	items = appendStr(items, "tls_client_cert", i.cfg.AuthGenericOauth.TLSClientCert)

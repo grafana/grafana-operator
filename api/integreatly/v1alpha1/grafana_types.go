@@ -359,6 +359,7 @@ type GrafanaConfigAuthGenericOauth struct {
 	ApiUrl                string `json:"api_url,omitempty" ini:"api_url,omitempty"`
 	AllowedDomains        string `json:"allowed_domains,omitempty" ini:"allowed_domains,omitempty"`
 	RoleAttributePath     string `json:"role_attribute_path,omitempty" ini:"role_attribute_path,omitempty"`
+	RoleAttributeStrict   *bool  `json:"role_attribute_strict,omitempty" ini:"role_attribute_strict,omitempty"`
 	EmailAttributePath    string `json:"email_attribute_path,omitempty" ini:"email_attribute_path,omitempty"`
 	TLSSkipVerifyInsecure *bool  `json:"tls_skip_verify_insecure,omitempty" ini:"tls_skip_verify_insecure,omitempty"`
 	TLSClientCert         string `json:"tls_client_cert,omitempty" ini:"tls_client_cert,omitempty"`
@@ -367,18 +368,19 @@ type GrafanaConfigAuthGenericOauth struct {
 }
 
 type GrafanaConfigAuthOkta struct {
-	Enabled           *bool  `json:"enabled,omitempty" ini:"enabled"`
-	Name              string `json:"name,omitempty" ini:"name,omitempty"`
-	AllowSignUp       *bool  `json:"allow_sign_up,omitempty" ini:"allow_sign_up"`
-	ClientId          string `json:"client_id,omitempty" ini:"client_id,omitempty"`
-	ClientSecret      string `json:"client_secret,omitempty" ini:"client_secret,omitempty"`
-	Scopes            string `json:"scopes,omitempty" ini:"scopes,omitempty"`
-	AuthUrl           string `json:"auth_url,omitempty" ini:"auth_url,omitempty"`
-	TokenUrl          string `json:"token_url,omitempty" ini:"token_url,omitempty"`
-	ApiUrl            string `json:"api_url,omitempty" ini:"api_url,omitempty"`
-	AllowedDomains    string `json:"allowed_domains,omitempty" ini:"allowed_domains,omitempty"`
-	AllowedGroups     string `json:"allowed_groups,omitempty" ini:"allowed_groups,omitempty"`
-	RoleAttributePath string `json:"role_attribute_path,omitempty" ini:"role_attribute_path,omitempty"`
+	Enabled             *bool  `json:"enabled,omitempty" ini:"enabled"`
+	Name                string `json:"name,omitempty" ini:"name,omitempty"`
+	AllowSignUp         *bool  `json:"allow_sign_up,omitempty" ini:"allow_sign_up"`
+	ClientId            string `json:"client_id,omitempty" ini:"client_id,omitempty"`
+	ClientSecret        string `json:"client_secret,omitempty" ini:"client_secret,omitempty"`
+	Scopes              string `json:"scopes,omitempty" ini:"scopes,omitempty"`
+	AuthUrl             string `json:"auth_url,omitempty" ini:"auth_url,omitempty"`
+	TokenUrl            string `json:"token_url,omitempty" ini:"token_url,omitempty"`
+	ApiUrl              string `json:"api_url,omitempty" ini:"api_url,omitempty"`
+	AllowedDomains      string `json:"allowed_domains,omitempty" ini:"allowed_domains,omitempty"`
+	AllowedGroups       string `json:"allowed_groups,omitempty" ini:"allowed_groups,omitempty"`
+	RoleAttributePath   string `json:"role_attribute_path,omitempty" ini:"role_attribute_path,omitempty"`
+	RoleAttributeStrict *bool  `json:"role_attribute_strict,omitempty" ini:"role_attribute_strict,omitempty"`
 }
 
 type GrafanaConfigAuthLdap struct {
