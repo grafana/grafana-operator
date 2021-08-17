@@ -2999,8 +2999,6 @@ spec:
                           type: string
                       type: object
                     type: array
-                required:
-                - replicas
                 type: object
               ingress:
                 description: GrafanaIngress provides a means to configure the ingress created
