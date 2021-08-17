@@ -41,7 +41,7 @@ __NOTE__: uninstalling the Grafana Operator will not remove your Grafana instanc
 
 ### Install 4.0.0
 
-Install the Grafana Operator v4.0.0 either using OLM or by [deployment](https://github.com/grafana-operator/grafana-operator/blob/v3.10.3/deploy/operator.yaml) or through OLM.
+Install the Grafana Operator v4.0.0 either using OLM or by using the [kustomize based installer](./deploy_grafana.md#Kustomize).
 
 The new Operator should discover the existing Grafana and Dashboard CRs and take over.
 
