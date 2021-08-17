@@ -1,0 +1,23 @@
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaNotificationChannel
+metadata:
+  name: pager-duty-channel
+  labels:
+    app: grafana
+spec:
+  name: pager-duty-channel.json
+  json: >
+    {
+      "uid": "pager-duty-alert-notification",
+      "name": "Pager Duty alert notification",
+      "type":  "pagerduty",
+      "isDefault": true,
+      "sendReminder": true,
+      "frequency": "15m",
+      "disableResolveMessage": true,
+      "settings": {
+        "integrationKey": "put key here",
+        "autoResolve": true,
+        "uploadImage": true
+     }
+    }
