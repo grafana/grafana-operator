@@ -34,6 +34,22 @@ func getSkipCreateAdminAccount(cr *v1alpha1.Grafana) bool {
 	return false
 }
 
+func getReplicas(cr *v1alpha1.Grafana) *int32 {
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Replicas != nil {
+		return cr.Spec.Deployment.Replicas
+	}
+
+	return nil
+}
+
+func getTerminationGracePeriod(cr *v1alpha1.Grafana) *int64 {
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.TerminationGracePeriodSeconds != nil {
+		return cr.Spec.Deployment.TerminationGracePeriodSeconds
+	}
+
+	return nil
+}
+
 func getInitResources(cr *v1alpha1.Grafana) v13.ResourceRequirements {
 	if cr.Spec.InitResources != nil {
 		return *cr.Spec.InitResources
@@ -437,7 +453,7 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 		})
 	}
 
-	if cr.Spec.Deployment.Env != nil {
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Env != nil {
 		envVars = append(envVars, cr.Spec.Deployment.Env...)
 	}
 
@@ -549,7 +565,7 @@ func getInitContainers(cr *v1alpha1.Grafana, plugins string) []v13.Container {
 
 func getDeploymentSpec(cr *v1alpha1.Grafana, annotations map[string]string, configHash, plugins, dsHash string) v1.DeploymentSpec {
 	return v1.DeploymentSpec{
-		Replicas: cr.Spec.Deployment.Replicas,
+		Replicas: getReplicas(cr),
 		Selector: &v12.LabelSelector{
 			MatchLabels: map[string]string{
 				"app": constants.GrafanaPodLabel,
@@ -570,7 +586,7 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, annotations map[string]string, conf
 				InitContainers:                getInitContainers(cr, plugins),
 				Containers:                    getContainers(cr, configHash, dsHash),
 				ServiceAccountName:            constants.GrafanaServiceAccountName,
-				TerminationGracePeriodSeconds: cr.Spec.Deployment.TerminationGracePeriodSeconds,
+				TerminationGracePeriodSeconds: getTerminationGracePeriod(cr),
 				PriorityClassName:             getPodPriorityClassName(cr),
 			},
 		},
