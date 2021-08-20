@@ -30,6 +30,22 @@ Or using the kustomize cli.
 kustomize build config/install |kubectl apply -f -
 ```
 
+#### Operator metrics
+
+By default Operator metrics are exposed but protected. Please refer to [this guide](https://book.kubebuilder.io/reference/metrics.html#metrics) for instruction about how to access and scrape them.
+
+If you would like to expose the metrics directly, bypassing `kube-rbac-proxy`, you need to make the following changes:
+
+1. Edit `config/manager/controler_manager_config.yaml` and set the `metrics.bindAddress` to `0.0.0.0:8080`
+2. Disable `- manager_auth_proxy_patch.yaml` in `config/default/kustomization.yaml` by commenting it. This will disable the `kube-rbac-proxy`
+3. Change the port in `config/rbac/auto_proxy_service.yaml` to:
+```
+  ports:
+  - name: metrics
+    port: 8080
+```
+4. Install using `kustomize` as described in the previous chapter
+
 ## Grafana image Support Chart
 
 Please take note of this chart when wanting to deploy custom grafana images through either `--grafana-image` operator
