@@ -2,6 +2,8 @@
 
 * Operator-sdk updated to v1.3.0
 * Installs Grafana 7.1.1 by default
+* Dashboard deleted in the Grafana console will be automatically restored
+* New `kustomize` based installation method, installs the operator in the namespace `grafana-operator-system`
 
 # Changes in version 3.0.0
 
