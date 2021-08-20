@@ -2,24 +2,104 @@ apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
   annotations:
-    alm-examples: '[]'
+    alm-examples: |-
+      [
+      {
+        "apiVersion": "integreatly.org/v1alpha1",
+        "kind": "Grafana",
+        "metadata": {
+          "name": "example-grafana"
+        },
+        "spec": {
+          "ingress": {
+            "enabled": true
+          },
+          "config": {
+            "auth": {
+              "disable_signout_menu": true
+            },
+            "auth.anonymous": {
+              "enabled": true
+            },
+            "log": {
+              "level": "warn",
+              "mode": "console"
+            },
+            "security": {
+              "admin_password": "secret",
+              "admin_user": "root"
+            }
+          },
+          "dashboardLabelSelector": [
+          {
+            "matchExpressions": [
+            {
+              "key": "app",
+              "operator": "In",
+              "values": [
+                "grafana"
+              ]
+            }
+            ]
+          }
+          ]
+        }
+      },
+      {
+        "apiVersion": "integreatly.org/v1alpha1",
+        "kind": "GrafanaDashboard",
+        "metadata": {
+          "labels": {
+            "app": "grafana"
+          },
+          "name": "simple-dashboard"
+        },
+        "spec": {
+          "json": "{\n  \"id\": null,\n  \"title\": \"Simple Dashboard\",\n  \"tags\": [],\n  \"style\": \"dark\",\n  \"timezone\": \"browser\",\n  \"editable\": true,\n  \"hideControls\": false,\n  \"graphTooltip\": 1,\n  \"panels\": [],\n  \"time\": {\n    \"from\": \"now-6h\",\n    \"to\": \"now\"\n  },\n  \"timepicker\": {\n    \"time_options\": [],\n    \"refresh_intervals\": []\n  },\n  \"templating\": {\n    \"list\": []\n  },\n  \"annotations\": {\n    \"list\": []\n  },\n  \"refresh\": \"5s\",\n  \"schemaVersion\": 17,\n  \"version\": 0,\n  \"links\": []\n}\n",
+          "name": "simple-dashboard.json"
+        }
+      },
+      {
+        "apiVersion": "integreatly.org/v1alpha1",
+        "kind": "GrafanaDataSource",
+        "metadata": {
+          "name": "example-grafanadatasource"
+        },
+        "spec": {
+          "datasources": [
+          {
+            "access": "proxy",
+            "editable": true,
+            "isDefault": true,
+            "jsonData": {
+              "timeInterval": "5s"
+            },
+            "name": "Prometheus",
+            "type": "prometheus",
+            "url": "http://prometheus-service:9090",
+            "version": 1
+          }
+          ],
+          "name": "example-datasources.yaml"
+        }
+      }
+      ]
     capabilities: Basic Install
-    operators.operatorframework.io/builder: operator-sdk-v1.3.2
-    operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
-  name: grafana-operator.v4.0.0
+  name: grafana-operator.v0.0.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
-    - kind: GrafanaDashboard
-      name: grafanadashboards.integreatly.org
+    - description: GrafanaDashboard is the Schema for the grafanadashboards API
+      displayName: Grafana Dashboard
+      kind: GrafanaDashboard
+      name: grafanadashboards.integreatly.org.integreatly.org
       version: v1alpha1
-    - kind: GrafanaDataSource
-      name: grafanadatasources.integreatly.org
-      version: v1alpha1
-    - kind: Grafana
-      name: grafanas.integreatly.org
+    - description: Grafana is the Schema for the grafanas API
+      displayName: Grafana
+      kind: Grafana
+      name: grafanas.integreatly.org.integreatly.org
       version: v1alpha1
   description: |
     A Kubernetes Operator based on the Operator SDK for creating and managing Grafana instances.
@@ -41,244 +121,8 @@ spec:
     mediatype: image/svg+xml
   install:
     spec:
-      clusterPermissions:
-      - rules:
-        - apiGroups:
-          - ""
-          resources:
-          - configmaps
-          - persistentvolumeclaims
-          - secrets
-          - serviceaccounts
-          - services
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - ""
-          resources:
-          - events
-          verbs:
-          - create
-          - get
-          - list
-          - watch
-        - apiGroups:
-          - ""
-          resources:
-          - pods
-          verbs:
-          - get
-          - list
-          - watch
-        - apiGroups:
-          - apps
-          - extensions
-          resources:
-          - deployments
-          - deployments/finalizers
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - integreatly.org
-          resources:
-          - grafanadashboards
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - integreatly.org
-          resources:
-          - grafanadashboards/status
-          verbs:
-          - get
-          - patch
-          - update
-        - apiGroups:
-          - integreatly.org
-          resources:
-          - grafanadatasources
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - integreatly.org
-          resources:
-          - grafanadatasources/status
-          verbs:
-          - get
-          - patch
-          - update
-        - apiGroups:
-          - integreatly.org
-          resources:
-          - grafanas
-          - grafanas/finalizers
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - integreatly.org
-          resources:
-          - grafanas/status
-          verbs:
-          - get
-          - patch
-          - update
-        - apiGroups:
-          - networking.k8s.io
-          resources:
-          - ingresses
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - route.openshift.io
-          resources:
-          - routes
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - authentication.k8s.io
-          resources:
-          - tokenreviews
-          verbs:
-          - create
-        - apiGroups:
-          - authorization.k8s.io
-          resources:
-          - subjectaccessreviews
-          verbs:
-          - create
-        serviceAccountName: default
-      deployments:
-      - name: grafana-operator-controller-manager
-        spec:
-          replicas: 1
-          selector:
-            matchLabels:
-              control-plane: controller-manager
-          strategy: {}
-          template:
-            metadata:
-              labels:
-                control-plane: controller-manager
-            spec:
-              containers:
-              - args:
-                - --secure-listen-address=0.0.0.0:8443
-                - --upstream=http://127.0.0.1:8080/
-                - --logtostderr=true
-                - --v=10
-                image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
-                name: kube-rbac-proxy
-                ports:
-                - containerPort: 8443
-                  name: https
-                resources: {}
-              - args:
-                - --health-probe-bind-address=:8081
-                - --metrics-bind-address=127.0.0.1:8080
-                - --leader-elect
-                - --zap-log-level=error
-                command:
-                - /manager
-                env:
-                - name: POD_NAME
-                  valueFrom:
-                    fieldRef:
-                      fieldPath: metadata.name
-                - name: WATCH_NAMESPACE
-                  valueFrom:
-                    fieldRef:
-                      fieldPath: metadata.annotations['olm.targetNamespaces']
-                image: quay.io/grafana-operator/grafana-operator:v4.0.0
-                imagePullPolicy: Always
-                livenessProbe:
-                  httpGet:
-                    path: /healthz
-                    port: 8081
-                  initialDelaySeconds: 15
-                  periodSeconds: 20
-                name: manager
-                readinessProbe:
-                  httpGet:
-                    path: /readyz
-                    port: 8081
-                  initialDelaySeconds: 5
-                  periodSeconds: 10
-                resources:
-                  limits:
-                    cpu: 100m
-                    memory: 300Mi
-                  requests:
-                    cpu: 100m
-                    memory: 100Mi
-                securityContext:
-                  allowPrivilegeEscalation: false
-              terminationGracePeriodSeconds: 10
-      permissions:
-      - rules:
-        - apiGroups:
-          - ""
-          - coordination.k8s.io
-          resources:
-          - configmaps
-          - leases
-          verbs:
-          - get
-          - list
-          - watch
-          - create
-          - update
-          - patch
-          - delete
-        - apiGroups:
-          - ""
-          resources:
-          - events
-          verbs:
-          - create
-          - patch
-        serviceAccountName: default
-    strategy: deployment
+      deployments: null
+    strategy: ""
   installModes:
   - supported: true
     type: OwnNamespace
@@ -301,4 +145,4 @@ spec:
   maturity: alpha
   provider:
     name: Red Hat
-  version: 4.0.0
+  version: 0.0.0

@@ -61,7 +61,7 @@ type JsonnetConfig struct {
 
 // Grafana API client settings
 type GrafanaClient struct {
-	TimeoutSeconds *int `json:"timeout"`
+	TimeoutSeconds *int `json:"timeout,omitempty"`
 	PreferService  bool `json:"preferService"`
 }
 

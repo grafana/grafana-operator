@@ -58,6 +58,10 @@ type GrafanaDashboardRef struct {
 	FolderName string `json:"folderName"`
 }
 
+type GrafanaDashboardStatus struct {
+	// Empty
+}
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
@@ -66,7 +70,8 @@ type GrafanaDashboard struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec GrafanaDashboardSpec `json:"spec,omitempty"`
+	Spec   GrafanaDashboardSpec   `json:"spec,omitempty"`
+	Status GrafanaDashboardStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

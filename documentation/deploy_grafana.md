@@ -6,99 +6,45 @@ This document describes how to get up and running with a new Grafana instance on
 
 The first step is to install the Grafana operator to a namespace in your cluster.
 
-There are two options for this procedure, automated via Ansible, or manually running kubectl/oc commands.
+There are two options for this procedure, through OLM, or manually running kubectl/oc commands using kustomize.
 
-### Deploy an example grafana instance and operator
+### Contribute to the operator
 
-Run `make operator/deploy` To deploy the latest released image of the operator, This uses the default operator.yaml and
-Grafana.yaml resources found in the `deploy` directories and subdirectories.
-
-***Warning:*** The following make recipe uses the latest master Image. It should only be used for testing, for
-production please use the tagged releases.
-
-Run `make operator/deploy/master` to deploy the image from the master branch of the operator.
-
-### Automated Procedure
-
-Cluster admin install cluster resources. For more details and additional parameters
-see [grafana-operator-cluster-resources.yaml](../deploy/ansible/README.md#grafana-operator-cluster-resourcesyaml).
-
-```sh
-ansible-playbook deploy/ansible/grafana-operator-cluster-resources.yaml \
-  -e k8s_host=https://ocp.example.xyz \
-  -e k8s_username=admin1 \
-  -e k8s_password=secret \
-  -e grafana_operator_namespace=grafana
-```
-
-Optional: If `grafana_operator_args_scan_all` is set to `true` for the `grafana-operator-namespace-resources.yaml`
-playbook then Cluster Admin needs to run this playbook to allow operator to scan all namespaces for dashboards For more
-details and additional parameters
-see [grafana-operator-cluster-dashboards-scan.yaml](../deploy/ansible/README.md#grafana-operator-cluster-dashboards-scanyaml)
-.
-
-```sh
-ansible-playbook deploy/ansible/grafana-operator-cluster-dashboards-scan.yaml \
-  -e k8s_host=https://ocp.example.xyz \
-  -e k8s_username=admin1 \
-  -e k8s_password=secret \
-  -e grafana_operator_namespace=grafana
-```
-
-Self provisioner install operator For more details and additional parameters
-see [grafana-operator-namespace-resources.yaml](../deploy/ansible/README.md#grafana-operator-namespace-resourcesyaml).
-
-```sh
-ansible-playbook deploy/ansible/grafana-operator-namespace-resources.yaml \
-  -e k8s_host=https://ocp.example.xyz \
-  -e k8s_username=project_creator \
-  -e k8s_password=secret \
-  -e grafana_operator_namespace=grafana
-```
-
+First of all we would love to have **you** as a contributer.
+If you want to setup a local development environment we have written a [small guide](./develop.md)
 ### Minikube deployment
 
 Follow this documentation [Deploying the Grafana operator in minikube](./minikube.md)
 
-### Manual Procedure
+### Kustomize
 
-To create a namespace named `grafana` run:
+Install using kustomize built in to kubectl.
 
-```sh
-$ kubectl create namespace grafana
+```shell
+kubectl apply -k config/install/
 ```
 
-Create the custom resource definitions that the operator uses:
+Or using the kustomize cli.
 
-```sh
-$ kubectl create -f deploy/crds
+```shell
+kustomize build config/install |kubectl apply -f -
 ```
 
-Create the operator roles:
+#### Operator metrics
 
-```sh
-$ kubectl create -f deploy/roles -n grafana
+By default Operator metrics are exposed but protected. Please refer to [this guide](https://book.kubebuilder.io/reference/metrics.html#metrics) for instruction about how to access and scrape them.
+
+If you would like to expose the metrics directly, bypassing `kube-rbac-proxy`, you need to make the following changes:
+
+1. Edit `config/manager/controler_manager_config.yaml` and set the `metrics.bindAddress` to `0.0.0.0:8080`
+2. Disable `- manager_auth_proxy_patch.yaml` in `config/default/kustomization.yaml` by commenting it. This will disable the `kube-rbac-proxy`
+3. Change the port in `config/rbac/auto_proxy_service.yaml` to:
 ```
-
-If you want to scan for dashboards in other namespaces you also need the cluster roles:
-
-```sh
-$ kubectl create -f deploy/cluster_roles
+  ports:
+  - name: metrics
+    port: 8080
 ```
-
-To deploy the operator to that namespace you can use `deploy/operator.yaml`:
-
-```sh
-$ kubectl create -f deploy/operator.yaml -n grafana
-```
-
-Check the status of the operator pod:
-
-```sh
-$ kubectl get pods -n grafana
-NAME                                READY     STATUS    RESTARTS   AGE
-grafana-operator-78cfcbf8db-ssrgq   1/1       Running   0          17s
-```
+4. Install using `kustomize` as described in the previous chapter
 
 ## Grafana image Support Chart
 
@@ -107,7 +53,7 @@ flags or `baseImage` CR spec fields.
 
 This chart shows how the operator prioritises which image will be used for the deployment, and the versions that it's
 known to support. Only the grafana image specified in
-code [here](https://github.com/integr8ly/grafana-operator/blob/master/pkg/controller/model/constants.go#L5) will be
+code [here](https://github.com/grafana-operator/grafana-operator/blob/530821825c9f7791aa486a94aabdb03efdc6aa6d/controllers/constants/constants.go#L5) will be
 supported in unit/e2e tests and as part of the operator, any other specified grafana image through these options may not
 work as expected.
 
@@ -141,10 +87,6 @@ The operator accepts a number of flags that can be passed in the `args` section 
     - `--zap-level=1`: show all Info level logs
 
 See `deploy/operator.yaml` for an example.
-
-If using the automated Ansible installer see
-the [grafana-operator-namespace-resources.yaml - Parameters](../deploy/ansible/README.md#parameters-1) for the
-equivalent parameters.
 
 ## Deploying Grafana
 
