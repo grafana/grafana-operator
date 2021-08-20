@@ -79,7 +79,7 @@ generate: controller-gen
 
 # Build a single-architecture docker image
 docker-build: test
-	docker build -t ${IMG} .
+	DOCKER_BUILDKIT=1 docker build -t ${IMG} .
 
 # Push the single-architecture docker image
 docker-push:
