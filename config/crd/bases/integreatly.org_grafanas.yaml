@@ -46,7 +46,6 @@ spec:
                     type: integer
                 required:
                 - preferService
-                - timeout
                 type: object
               config:
                 description: GrafanaConfig is the configuration for grafana
