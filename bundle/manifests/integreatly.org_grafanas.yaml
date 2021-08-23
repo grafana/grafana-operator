@@ -32,6 +32,14 @@ spec:
               baseImage:
                 type: string
               client:
+                description: Grafana API client settings
+                properties:
+                  preferService:
+                    type: boolean
+                  timeout:
+                    type: integer
+                required:
+                - preferService
                 type: object
               config:
                 description: GrafanaConfig is the configuration for grafana
@@ -3301,6 +3309,66 @@ spec:
             - config
             type: object
           status:
+            description: GrafanaStatus defines the observed state of Grafana
+            properties:
+              dashboards:
+                items:
+                  description: Used to keep a dashboard reference without having access to the dashboard struct itself
+                  properties:
+                    folderId:
+                      format: int64
+                      type: integer
+                    folderName:
+                      type: string
+                    hash:
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                    uid:
+                      type: string
+                  required:
+                  - folderId
+                  - folderName
+                  - hash
+                  - name
+                  - namespace
+                  - uid
+                  type: object
+                type: array
+              failedPlugins:
+                items:
+                  description: GrafanaPlugin contains information about a single plugin
+                  properties:
+                    name:
+                      type: string
+                    version:
+                      type: string
+                  required:
+                  - name
+                  - version
+                  type: object
+                type: array
+              installedPlugins:
+                items:
+                  description: GrafanaPlugin contains information about a single plugin
+                  properties:
+                    name:
+                      type: string
+                    version:
+                      type: string
+                  required:
+                  - name
+                  - version
+                  type: object
+                type: array
+              message:
+                type: string
+              phase:
+                type: string
+              previousServiceName:
+                type: string
             type: object
         type: object
     served: true

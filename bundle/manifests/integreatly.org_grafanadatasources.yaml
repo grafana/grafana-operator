@@ -273,6 +273,14 @@ spec:
             - name
             type: object
           status:
+            properties:
+              message:
+                type: string
+              phase:
+                type: string
+            required:
+            - message
+            - phase
             type: object
         type: object
     served: true
