@@ -56,5 +56,5 @@ make image/build
 make image/push
 make bundle-build
 make bundle-push
-make index-build
-make index-push
+# make index-build
+# make index-push

@@ -80,7 +80,6 @@ operator-sdk-*
 tmp
 # When switching branches from 4.x
 bin
-bundle
 config
 testbin
 vendor
