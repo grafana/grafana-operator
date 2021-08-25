@@ -84,3 +84,6 @@ bundle
 config
 testbin
 vendor
+
+.docker
+.bin

@@ -1,11 +1,17 @@
-ORG?=grafana-operator
+ORG?=rhoas
 NAMESPACE?=grafana
 PROJECT=grafana-operator
 REG?=quay.io
 SHELL=/bin/bash
 TAG?=v3.10.3
-PKG=github.com/grafana-operator/grafana-operator
+PKG=github.com/rhoas/grafana-operator
 COMPILE_TARGET=./tmp/_output/bin/$(PROJECT)
+
+# Default bundle image tag
+export BUNDLE_IMG ?= quay.io/$(ORG)/grafana-operator-bundle:$(TAG)
+
+# Default index image tag
+export INDEX_IMG ?= quay.io/$(ORG)/grafana-operator-index:$(TAG)
 
 .PHONY: setup/travis
 setup/travis:
@@ -34,7 +40,7 @@ code/fix:
 
 .PHONY: image/build
 image/build: code/compile
-	@operator-sdk build ${REG}/${ORG}/${PROJECT}:${TAG}
+	$(OPERATOR_SDK) build ${REG}/${ORG}/${PROJECT}:${TAG}
 
 .PHONY: image/push
 image/push:
@@ -84,3 +90,25 @@ operator/deploy/master: cluster/prepare/local
 .PHONY: operator/stop
 operator/stop:
 	-kubectl delete deployment grafana-operator -n ${NAMESPACE}
+
+# Build the bundle image.
+.PHONY: bundle-build
+bundle-build:
+	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+
+.PHONY: bundle-push
+bundle-push:
+	docker push $(BUNDLE_IMG)
+
+.PHONY: index-build
+index-build:
+	docker build -t $(INDEX_IMG) -f opm.Dockerfile .
+
+.PHONY: index-push
+index-push:
+	docker push $(INDEX_IMG)
+
+# Login to the registry
+.PHONY: docker-login
+docker-login:
+	echo "$(QUAY_TOKEN)" | docker --config="${DOCKER_CONFIG}" login -u "${QUAY_USER}" quay.io --password-stdin
