@@ -39,7 +39,7 @@ code/fix:
 	@gofmt -w .
 
 .PHONY: image/build
-image/build: code/compile
+image/build:
 	$(OPERATOR_SDK) build --go-build-args="-mod vendor" ${REG}/${ORG}/${PROJECT}:${TAG}
 
 .PHONY: image/push
