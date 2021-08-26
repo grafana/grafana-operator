@@ -40,6 +40,7 @@ code/fix:
 
 .PHONY: image/build
 image/build:
+	git submodule update --init
 	docker build -t ${REG}/${ORG}/${PROJECT}:${TAG} .
 
 .PHONY: image/push
