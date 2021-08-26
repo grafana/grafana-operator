@@ -40,7 +40,7 @@ code/fix:
 
 .PHONY: image/build
 image/build:
-	$(OPERATOR_SDK) build --go-build-args="-mod vendor" ${REG}/${ORG}/${PROJECT}:${TAG}
+	docker build -t ${REG}/${ORG}/${PROJECT}:${TAG} .
 
 .PHONY: image/push
 image/push:
