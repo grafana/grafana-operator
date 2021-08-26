@@ -39,8 +39,9 @@ code/fix:
 	@gofmt -w .
 
 .PHONY: image/build
-image/build: code/compile
-	$(OPERATOR_SDK) build ${REG}/${ORG}/${PROJECT}:${TAG}
+image/build:
+	git submodule update --init
+	docker build -t ${REG}/${ORG}/${PROJECT}:${TAG} .
 
 .PHONY: image/push
 image/push:

@@ -82,7 +82,6 @@ tmp
 bin
 config
 testbin
-vendor
 
 .docker
 .bin
