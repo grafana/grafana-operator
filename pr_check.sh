@@ -18,4 +18,20 @@
 # This script is executed by a Jenkins job for each change request. If it
 # doesn't succeed the change won't be merged.
 
+OPSDK_VERSION=v0.18.2
+OPSDK_DOWNLOAD_URL="https://github.com/operator-framework/operator-sdk/releases/download/v0.18.2/operator-sdk-$OPSDK_VERSION-x86_64-linux-gnu"
+
+mkdir -p ${PWD}/.bin
+
+# Download OPM
+if [ ! -f "${PWD}/.bin/operator-sdk" ]; then
+  curl -Lo "${PWD}/.bin/operator-sdk" -k $OPSDK_DOWNLOAD_URL
+  chmod +x "${PWD}/.bin/operator-sdk"
+fi
+
+export OPERATOR_SDK=${PWD}/.bin/operator-sdk
+
+# Print OPM version
+$OPERATOR_SDK version
+
 make image/build
