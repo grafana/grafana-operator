@@ -40,9 +40,7 @@ code/fix:
 
 .PHONY: image/build
 image/build: code/compile
-	go mod tidy
-	go mod download
-	$(OPERATOR_SDK) build ${REG}/${ORG}/${PROJECT}:${TAG}
+	$(OPERATOR_SDK) build  --go-build-args="-mod vendor" ${REG}/${ORG}/${PROJECT}:${TAG}
 
 .PHONY: image/push
 image/push:

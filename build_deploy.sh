@@ -51,7 +51,7 @@ export OPERATOR_SDK=${PWD}/.bin/operator-sdk
 # Print OPM version
 $OPERATOR_SDK version
 
-make docker-login
+# make docker-login
 make image/build
 make image/push
 make bundle-build
