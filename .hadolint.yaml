@@ -1,0 +1,5 @@
+ignored:
+  # Ignore lint rule against FROM --platform in Dockerfiles. The lint rule
+  # is meant to prevent locking Dockerfiles into a particular platform, but
+  # we use --platform=${BUILDPLATFORM|TARGETPLATFORM}, making it a non-issue.
+  - DL3029
