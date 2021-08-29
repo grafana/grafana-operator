@@ -123,7 +123,7 @@ jobs:
         with:
           platforms: ${{ env.DOCKER_PLATFORMS }}
           push: true
-          tags: localhost:5000/${{ env.NAME }}:${{ steps.prep.outputs.VERSION }}
+          tags: registry:${{ job.services.registry.ports[5000] }}/${{ env.NAME }}:${{ steps.prep.outputs.VERSION }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
       # https://github.com/docker/build-push-action/issues/252
@@ -135,7 +135,7 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: localhost:5000/${{ env.NAME }}:${{ steps.prep.outputs.VERSION }}
+          image-ref: registry:${{ job.services.registry.ports[5000] }}/${{ env.NAME }}:${{ steps.prep.outputs.VERSION }}
           format: "table"
           exit-code: "1"
           ignore-unfixed: true
