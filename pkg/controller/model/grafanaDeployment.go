@@ -115,6 +115,17 @@ func getReplicas(cr *v1alpha1.Grafana) *int32 {
 	}
 }
 
+func getDeploymentStrategy(cr *v1alpha1.Grafana) v1.DeploymentStrategy {
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Strategy != nil {
+		return *cr.Spec.Deployment.Strategy
+	}
+
+	return v1.DeploymentStrategy{
+		Type:          "RollingUpdate",
+		RollingUpdate: getRollingUpdateStrategy(),
+	}
+}
+
 func getRollingUpdateStrategy() *v1.RollingUpdateDeployment {
 	var maxUnaval intstr.IntOrString = intstr.FromString("25%")
 	var maxSurge intstr.IntOrString = intstr.FromString("25%")
@@ -597,10 +608,7 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, annotations map[string]string, conf
 				PriorityClassName:             getPodPriorityClassName(cr),
 			},
 		},
-		Strategy: v1.DeploymentStrategy{
-			Type:          "RollingUpdate",
-			RollingUpdate: getRollingUpdateStrategy(),
-		},
+		Strategy: getDeploymentStrategy(cr),
 	}
 }
 
