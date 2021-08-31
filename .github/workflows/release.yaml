@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DOCKER_REGISTRY: quay.io
-      DOCKER_REPOSITORY: integreatly/grafana-operator
+      DOCKER_REPOSITORY: grafana-operator/grafana-operator
       DOCKER_PLATFORMS: linux/amd64,linux/arm64
     steps:
       - name: Clone repo and checkout submodules
