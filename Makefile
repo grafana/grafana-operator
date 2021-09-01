@@ -77,13 +77,17 @@ vet:
 generate: controller-gen
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
-# Build the docker image
+# Build a single-architecture docker image
 docker-build: test
-	docker build -t ${IMG} .
+	DOCKER_BUILDKIT=1 docker build -t ${IMG} .
 
-# Push the docker image
+# Push the single-architecture docker image
 docker-push:
 	docker push ${IMG}
+
+# Build and push a multi-architecture docker image
+docker-buildx: test
+	docker buildx build --platform linux/amd64,linux/arm64 --push -t ${IMG} .
 
 # Download controller-gen locally if necessary
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
