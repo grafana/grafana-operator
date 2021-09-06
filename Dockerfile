@@ -22,7 +22,7 @@ COPY version/ version/
 # Build
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -a -o manager main.go
 
-FROM --platform=${TARGETPLATFORM} registry.access.redhat.com/ubi8/ubi-minimal:8.4
+FROM --platform=${TARGETPLATFORM} registry.access.redhat.com/ubi8/ubi-micro:8.4
 WORKDIR /
 COPY --from=builder /workspace/manager .
 
