@@ -46,6 +46,11 @@ func (in *GrafanaClient) DeepCopyInto(out *GrafanaClient) {
 		*out = new(int)
 		**out = **in
 	}
+	if in.PreferService != nil {
+		in, out := &in.PreferService, &out.PreferService
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 

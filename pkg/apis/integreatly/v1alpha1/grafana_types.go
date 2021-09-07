@@ -60,8 +60,8 @@ type JsonnetConfig struct {
 
 // Grafana API client settings
 type GrafanaClient struct {
-	TimeoutSeconds *int `json:"timeout"`
-	PreferService  bool `json:"preferService"`
+	TimeoutSeconds *int  `json:"timeout,omitempty"`
+	PreferService  *bool `json:"preferService,omitempty"`
 }
 
 // GrafanaService provides a means to configure the service
@@ -506,9 +506,9 @@ type GrafanaStatus struct {
 	Phase               StatusPhase                       `json:"phase"`
 	PreviousServiceName string                            `json:"previousServiceName"`
 	Message             string                            `json:"message"`
-	InstalledDashboards map[string][]*GrafanaDashboardRef `json:"dashboards"`
-	InstalledPlugins    PluginList                        `json:"installedPlugins"`
-	FailedPlugins       PluginList                        `json:"failedPlugins"`
+	InstalledDashboards map[string][]*GrafanaDashboardRef `json:"dashboards,omitempty"`
+	InstalledPlugins    PluginList                        `json:"installedPlugins,omitempty"`
+	FailedPlugins       PluginList                        `json:"failedPlugins,omitempty"`
 }
 
 // GrafanaPlugin contains information about a single plugin

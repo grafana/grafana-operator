@@ -1,9 +1,9 @@
-ORG?=rhoas
+ORG?=pb82
 NAMESPACE?=grafana
 PROJECT=grafana-operator
 REG?=quay.io
 SHELL=/bin/bash
-TAG?=v3.10.3
+TAG?=v3.10.4
 PKG=github.com/rhoas/grafana-operator
 COMPILE_TARGET=./tmp/_output/bin/$(PROJECT)
 

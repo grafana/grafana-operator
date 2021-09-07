@@ -1,4 +1,4 @@
-apiVersion: apiextensions.k8s.io/v1beta1
+apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   name: grafanadatasources.integreatly.org
@@ -10,26 +10,31 @@ spec:
     plural: grafanadatasources
     singular: grafanadatasource
   scope: Namespaced
-  subresources:
-    status: {}
-  version: v1alpha1
-  validation:
-    openAPIV3Schema:
-      properties:
-        apiVersion:
-          type: string
-        kind:
-          type: string
-        metadata:
+  versions:
+    - name: v1alpha1
+      subresources:
+        status: { }
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
           type: object
-        spec:
-          required: ["datasources", "name"]
           properties:
-            name:
+            apiVersion:
               type: string
-              minimum: 1
-            datasources:
-              type: array
-              items:
-                description: Grafana Datasource Object
-                type: object
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              type: object
+              required: ["datasources", "name"]
+              properties:
+                name:
+                  type: string
+                  minimum: 1
+                datasources:
+                  type: array
+                  items:
+                    description: Grafana Datasource Object
+                    type: object
