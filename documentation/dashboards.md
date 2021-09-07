@@ -15,8 +15,8 @@ The following properties are accepted in the `spec`:
 * *jsonnet*: Jsonnet source. The [Grafonnet](https://grafana.github.io/grafonnet-lib/) library is made available
   automatically and can be imported.
 * *url*: Url address to download a json or jsonnet string with the dashboard contents.
-  * ***Warning***: If both url and json are specified then the json field will be updated with fetched. <br>
-      *The dashboard fetch priority by parameter is: url > configmap > json > jsonnet.*
+  * ***Warning***: If both url and json are specified then the json field will be updated with fetched.
+  * *The dashboard fetch priority by parameter is: url > configmap > json > jsonnet.*
 * *plugins*: A list of plugins required by the dashboard. They will be installed by the operator if not already present.
 * *datasources*: A list of datasources to be used as inputs. See [datasource inputs](#datasource-inputs).
 * *configMapRef*: Import dashboards from config maps. See [config map references](#config-map-references).

@@ -1,16 +1,18 @@
 # Support for multiple namespaces
 
-
 ## Datasources
+
 ### Watching for Datasources in all namespaces
 
 ***Currently the `Grafana` and `GrafanaDataSource` resources do not support multiple namespaces and are only reconciled
 if created in the operators namespace.***
 
 ## Dashboards
+
 The operator can import dashboards from either one, some or all namespaces. By default, it will only look for dashboards
 in its own namespace. By setting the `--scan-all` or `--namespaces` flags the operator can watch for dashboards in other
 namespaces.
+
 ### Watching for dashboards in all namespaces
 
 Set the `--scan-all` flag to watch for dashboards in all namespaces. Cluster wide permissions for the `grafana-operator`
@@ -31,7 +33,7 @@ cluster wide permissions as for watching all namespaces are required.
 You can also watch for dashboards in certain namespaces by using the dashboardNamespaceSelector in the Grafana CR. This
 watches for dashboards only in the Namespaces that have the specified namespace label. The format to specify labels is
 
-```
+```yaml
 dashboardNamespaceSelector:
     matchLabels:
       key: value

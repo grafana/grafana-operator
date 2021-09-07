@@ -29,7 +29,7 @@ needs to be assured:
 *NOTE*: The operator still requires an admin account to interact with Grafana. It will try to obtain the credentials
 from the provided secrets or config maps.
 
-# Using environment variables in data sources
+## Using environment variables in data sources
 
 Sometimes (e.g. when providing credentials) it is desirable to reference environment variables in the data source
 configuration. This is possible using the following syntax:

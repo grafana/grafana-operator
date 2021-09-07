@@ -21,7 +21,7 @@ spec:
 
 The `grafonnet` library is provided by the operator and can be imported using:
 
-```
+```libsonet
 local grafana = import 'grafonnet/grafana.libsonnet';
 ```
 
@@ -58,7 +58,7 @@ spec:
 The libary will be imported as a file with the name `monitoring.libsonnet` into a directory with the same name of the config map.
 It can be imported in a dashboard using the following code:
 
-```
+```libsonet
 local monitoring = import 'monitoring/monitoring.libsonnet';
 ```
 

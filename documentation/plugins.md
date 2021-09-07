@@ -1,13 +1,13 @@
-## Plugins
+# Plugins
 
-### Install plugins as dependencies of datasources or dashboards
+## Install plugins as dependencies of datasources or dashboards
 
 If a datasource or dashboard requires a plugin, it can be defined within a dashboard that it is used in, this will
 install the plugin, the datasource can be parsed regardless of the fact if the plugin exist (yet). Once defined in a
 dashboard, the operator should install the plugin and make it accessible to the datasource.
 If a plugin already exists then the operator will not attempt another installation.
 
-### Install plugins using Grafana env vars via the operator
+## Install plugins using Grafana env vars via the operator
 
 The operator allows you to pass custom env vars to the grafana deployment. This means that you can set
 the `GF_INSTALL_PLUGINS` flag, as described
@@ -22,7 +22,7 @@ spec:
     envFrom:
         - secretRef:
           name: grafana-env
-        
+
 ```
 
 ```yaml

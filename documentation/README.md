@@ -1,4 +1,4 @@
-## Grafana Operator Documentation
+# Grafana Operator Documentation
 
 * [Installing Grafana](./deploy_grafana.md)
 * [Dashboards](./dashboards.md)
