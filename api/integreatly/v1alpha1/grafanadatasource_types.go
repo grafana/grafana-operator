@@ -143,6 +143,7 @@ type GrafanaDataSourceJsonData struct {
 	AppInsightsAppId             string `json:"appInsightsAppId,omitempty"`
 	AzureLogAnalyticsSameAs      string `json:"azureLogAnalyticsSameAs,omitempty"`
 	ClientId                     string `json:"clientId,omitempty"`
+	ClusterURL                   string `json:"clusterUrl,omitempty"`
 	CloudName                    string `json:"cloudName,omitempty"`
 	LogAnalyticsDefaultWorkspace string `json:"logAnalyticsDefaultWorkspace,omitempty"`
 	LogAnalyticsClientId         string `json:"logAnalyticsClientId,omitempty"`
