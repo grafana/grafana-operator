@@ -23,7 +23,7 @@ Typically, this feature is used to provide the credentials for the Grafana admin
 needs to be assured:
 
 1. Admin credentials must be provided via the `GF_SECURITY_ADMIN_USER` and `GF_SECURITY_ADMIN_PASSWORD` environment
-   variables.
+  variables.
 2. Set `skipCreateAdminAccount` to `true` to prevent the operator from creating an admin secret.
 
 *NOTE*: The operator still requires an admin account to interact with Grafana. It will try to obtain the credentials
