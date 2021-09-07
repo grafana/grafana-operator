@@ -571,3 +571,10 @@ type GrafanaList struct {
 func init() {
 	SchemeBuilder.Register(&Grafana{}, &GrafanaList{})
 }
+
+func (cr *Grafana) GetPreferServiceValue() bool {
+	if cr.Spec.Client != nil && cr.Spec.Client.PreferService != nil {
+		return *cr.Spec.Client.PreferService
+	}
+	return false
+}
