@@ -9,6 +9,7 @@
 * [Mounting extra config files](./extra_files.md)
 * [Jsonnet support](./jsonnet.md)
 * [Env vars](./env_vars.md)
+* [API docs](./api.md)
 
 ## Examples
 

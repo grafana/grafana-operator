@@ -9,6 +9,7 @@ in `deploy/examples/datasources`.
 
 A single `GrafanaDataSource` resource can contain a list of data sources.
 
+To get a quick overview of the GrafanaDataSource you can also look at the [API docs](api.md).
 The following properties are accepted in the `spec`:
 
 * *name*: The filename of the data source that gets mounted into a volume in the grafana instance. Not to be confused
@@ -20,4 +21,4 @@ A data source accepts all properties
 listed [here](https://grafana.com/docs/administration/provisioning/#example-datasource-config-file), but does not
 support `apiVersion` and `deleteDatasources`.
 
-To see how to install datasource plugins, see [Plugins](./plugins.md)
+To see how to install datasource plugins, see [Plugins](./plugins.md).

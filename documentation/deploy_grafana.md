@@ -10,8 +10,9 @@ There are two options for this procedure, through OLM, or manually running kubec
 
 ### Contribute to the operator
 
-First of all we would love to have **you** as a contributer.
+First of all we would love to have **you** as a contributor.
 If you want to setup a local development environment we have written a [small guide](./develop.md)
+
 ### Minikube deployment
 
 Follow this documentation [Deploying the Grafana operator in minikube](./minikube.md)
@@ -39,11 +40,13 @@ If you would like to expose the metrics directly, bypassing `kube-rbac-proxy`, y
 1. Edit `config/manager/controler_manager_config.yaml` and set the `metrics.bindAddress` to `0.0.0.0:8080`
 2. Disable `- manager_auth_proxy_patch.yaml` in `config/default/kustomization.yaml` by commenting it. This will disable the `kube-rbac-proxy`
 3. Change the port in `config/rbac/auto_proxy_service.yaml` to:
-```
-  ports:
-  - name: metrics
-    port: 8080
-```
+
+    ```yaml
+    ports:
+    - name: metrics
+      port: 8080
+    ```
+
 4. Install using `kustomize` as described in the previous chapter
 
 ## Grafana image Support Chart
@@ -84,7 +87,7 @@ The operator accepts a number of flags that can be passed in the `args` section 
 
 * `--zap-level=n`: set the logging level for the operator, leaving out this flag will only log Errors and error related
   info, current options are:
-    - `--zap-level=1`: show all Info level logs
+  * `--zap-level=1`: show all Info level logs
 
 See `deploy/operator.yaml` for an example.
 
@@ -92,15 +95,15 @@ See `deploy/operator.yaml` for an example.
 
 Create a custom resource of type `Grafana`, or use the one in `deploy/examples/Grafana.yaml`.
 
+To get a quick overview of the Grafana you can also look at the [API docs](api.md).
 The resource accepts the following properties in it's `spec`:
 
 * ***baseImage***: Specifies a custom grafana image for this deployment.
-    - ***Warning!*** this overwrites the `--grafana-image` Operator flag, please refer to the grafana image support
-      chart.
+  * ***Warning!*** this overwrites the `--grafana-image` Operator flag, please refer to the grafana image support chart.
 
 * ***initImage***: Specifies a custom grafana plugins init image for this deployment.
-    - ***Warning!*** this overwrites the `--grafana-plugins-init-container-image` Operator flag, please refer to the
-      grafana image support chart.
+  * ***Warning!*** this overwrites the `--grafana-plugins-init-container-image` Operator flag, please refer to the
+    grafana image support chart.
 
 * ***dashboardLabelSelector***: A list of either `matchLabels` or `matchExpressions` to filter the dashboards before
   importing them.
@@ -142,13 +145,13 @@ The resource accepts the following properties in it's `spec`:
 To create a new Grafana instance in the `grafana` namespace, run:
 
 ```sh
-$ kubectl create -f deploy/examples/Grafana.yaml -n grafana
+kubectl create -f deploy/examples/Grafana.yaml -n grafana
 ```
 
 Get the URL of the instance and open it in a browser:
 
 ```sh
-$ kubectl get ingress -n grafana
+kubectl get ingress -n grafana
 NAME              HOSTS                           ADDRESS   PORTS     AGE
 grafana-ingress   grafana.apps.127.0.0.1.nip.io             80        28s
 ```
@@ -350,4 +353,3 @@ Both LivenessProbeSpec and ReadinessProbeSpec share the same fields which serve 
 * ***failureThreshold:***: When a probe fails, Kubernetes will try failureThreshold times before giving up. Giving up in
   case of liveness probe means restarting the container. In case of readiness probe the Pod will be marked Unready.
   Defaults to 3. Minimum value is 1.
-
