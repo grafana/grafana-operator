@@ -1,6 +1,7 @@
 # Jsonnet support
 
-The operator supports importing dashboards in [jsonnet](https://jsonnet.org/) format. The [grafonnet](https://grafana.github.io/grafonnet-lib/) library is available out of the box, other libraries can be imported via config maps.
+The operator supports importing dashboards in [jsonnet](https://jsonnet.org/) format.
+The [grafonnet](https://grafana.github.io/grafonnet-lib/) library is available out of the box, other libraries can be imported via config maps.
 
 ## Creating a jsonnet dashboard
 

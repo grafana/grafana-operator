@@ -89,7 +89,8 @@ about the operator.
 3: Once registered and able to see the Kubernetes community Slack workspace and channels follow this link to the [grafana-operator channel](https://kubernetes.slack.com/messages/grafana-operator/ ).
 
 Alternatively:
-If you're already a member of that workspace then just follow this link to the [grafana-operator channel](https://kubernetes.slack.com/messages/grafana-operator/ ) or search for "grafana-operator" in the browse channels option .
+If you're already a member of that workspace then just follow this link to the [grafana-operator channel](https://kubernetes.slack.com/messages/grafana-operator/)
+or search for "grafana-operator" in the browse channels option.
 
 ![image](https://user-images.githubusercontent.com/35736504/90978105-0b195300-e543-11ea-86ee-1825da0e3b75.png)
 
@@ -183,4 +184,7 @@ operator-sdk run local --namespace=<namespace> --operator-flags="<flags to pass>
 
 ### Notifier provisioning
 
-Grafana has provisioning support for multiple channels (notifiers) of alerts. The operator does currently not support this type of provisioning. An empty directory is mounted at the expected location to prevent a warning in the grafana log. This feature might be supported in the future.
+Grafana has provisioning support for multiple channels (notifiers) of alerts.
+The operator does currently not support this type of provisioning.
+An empty directory is mounted at the expected location to prevent a warning in the grafana log.
+This feature might be supported in the future.

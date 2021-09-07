@@ -1,6 +1,7 @@
 # Deploying the Grafana operator in minikube
 
-Grafana operator is a relatively small and non-resource intensive operator, it can be deployed independently on minikube, which makes it very convenient for testing and development purposes, Minikubes can be quickly disposed of and restarted without much downtime. it runs locally and provides almost all the functionality required to run this operator "out of the box"
+Grafana operator is a relatively small and non-resource intensive operator, it can be deployed independently on minikube, which makes it very convenient for testing and development purposes,
+Minikubes can be quickly disposed of and restarted without much downtime. it runs locally and provides almost all the functionality required to run this operator "out of the box"
 
 ## Prerequisites
 

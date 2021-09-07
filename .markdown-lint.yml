@@ -1,6 +1,6 @@
 MD013:
   # Number of characters
-  line_length: 300
+  line_length: 250
 
 # MD033/no-inline-html - Inline HTML
 # This is for ./README.md
