@@ -48,8 +48,10 @@ spec:
 ...
 ```
 
-When mounting Secrets or ConfigMaps in Kubernetes, the keys become the file names and the values the contents of the file. For every config map specified in this way the Grafana operator will create a volume with the name `configmap-<name>` (the prefix will be `secret-` for Secrets) and add it to the Grafana deployment.
-It will also create a volume mount with the same name and add it to all containers in the deployment. This includes the Grafana container and all extra containers specified via the `spec.containers` property. Config maps are mounted inside the containers under `/etc/grafana-configmaps/<configmap name>/`, secrets under `/etc/grafana-secrets/<secret name>/`.
+When mounting Secrets or ConfigMaps in Kubernetes, the keys become the file names and the values the contents of the file.
+For every config map specified in this way the Grafana operator will create a volume with the name `configmap-<name>` (the prefix will be `secret-` for Secrets) and add it to the Grafana deployment.
+It will also create a volume mount with the same name and add it to all containers in the deployment. This includes the Grafana container and all extra containers specified via the `spec.containers` property.
+Config maps are mounted inside the containers under `/etc/grafana-configmaps/<configmap name>/`, secrets under `/etc/grafana-secrets/<secret name>/`.
 
 The missing piece for the LDAP example is to tell Grafana about the location of the configuration file. This can be done in the config section of the Grafana CR:
 

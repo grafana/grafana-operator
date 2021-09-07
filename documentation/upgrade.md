@@ -1,11 +1,13 @@
-# Changes in version 4.0.0
+# Upgrade
+
+## Changes in version 4.0.0
 
 * Operator-sdk updated to v1.3.0
 * Installs Grafana 7.1.1 by default
 * Dashboard deleted in the Grafana console will be automatically restored
 * New `kustomize` based installation method, installs the operator in the namespace `grafana-operator-system`
 
-# Changes in version 3.0.0
+## Changes in version 3.0.0
 
 This version includes the following changes:
 
@@ -14,7 +16,7 @@ This version includes the following changes:
 * Dashboard and Datasource custom resources no longer need finalizers. This means they can be deleted at any time, even when the operator itself is no longer running.
 * Updated reconciliation strategy that keeps all resources up to date at all times and allows for better configuration through the Grafana CR.
 * Updated to [operator-sdk v0.12.0](https://github.com/operator-framework/operator-sdk/releases/tag/v0.12.0)
-* Using Go modules instead of dep now 
+* Using Go modules instead of dep now
 
 ## Upgrade from 3.x.x to 4.x.x
 
@@ -30,13 +32,13 @@ To uninstall the Grafana Operator, either remove the deployment with the name `g
 2) On Kubernetes, use kubectl to identify the subscription:
 
 ```shell
-$ kubectl get subscriptions -n<operator namespace>
+kubectl get subscriptions -n<operator namespace>
 ```
 
 Then delete the subscription:
 
 ```shell
-$ kubectl delete subscription <subscription name> -n<operator namespace>
+kubectl delete subscription <subscription name> -n<operator namespace>
 ```
 
 __NOTE__: uninstalling the Grafana Operator will not remove your Grafana instance or your dashboards.
@@ -58,19 +60,19 @@ To upgrade, the following steps need to be performed:
 Create a directory for your backups:
 
 ```shell script
-$ mkdir grafana-restore
+mkdir grafana-restore
 ```
 
 Create backups of all dashboards:
 
 ```shell script
-$ kubectl get grafanadashboards -n <namespace> --selector='<label selector>' -oyaml > ./grafana-restore/dashboards.yaml 
+kubectl get grafanadashboards -n <namespace> --selector='<label selector>' -oyaml > ./grafana-restore/dashboards.yaml
 ```
 
 Or, if you want to grab all dashboards in all namespaces, use:
 
 ```shell script
-$ kubectl get grafanadashboards --all-namespaces --selector='<label selector>' -oyaml > ./grafana-restore/dashboards.yaml
+kubectl get grafanadashboards --all-namespaces --selector='<label selector>' -oyaml > ./grafana-restore/dashboards.yaml
 ```
 
 Repeat those steps for `grafanadatasources` and `grafanas`.
@@ -84,9 +86,9 @@ Edit the backed up resources and remove the finalizers from dashboards and datas
 Remove the existing CRs:
 
 ```shell script
-$ kubectl delete grafanadashboards --all -n <namespace>
-$ kubectl delete grafanadatasources --all -n <namespace>
-$ kubectl delete grafanas --all -n <namespace>
+kubectl delete grafanadashboards --all -n <namespace>
+kubectl delete grafanadatasources --all -n <namespace>
+kubectl delete grafanas --all -n <namespace>
 ```
 
 ### 4. Update the operator deployment
@@ -98,20 +100,20 @@ You might have to remove the `grafana-operator-lock` configmap if the new operat
 ### 5. Update CRDs and roles
 
 ```shell script
-$ kubectl apply -f deploy/crds
-$ kubectl apply -f deploy/roles -n <namespace>
+kubectl apply -f deploy/crds
+kubectl apply -f deploy/roles -n <namespace>
 ```
 
 If you were using the multi namespace support for dashboards, also reapply the cluster role and role binding:
 
 ```shell script
-$ kubectl apply -f deploy/cluster_roles
+kubectl apply -f deploy/cluster_roles
 ```
 
 ### 6. Reinstall Grafana and all resources
 
 ```shell script
-$ kubectl apply -f -/grafana-resore
+kubectl apply -f -/grafana-resore
 ```
 
 ## Caveats
