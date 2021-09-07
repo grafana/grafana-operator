@@ -7,6 +7,7 @@ This document describes how to create dashboards and manage plugins (panels).
 Dashboards are represented by the `GrafanaDashboard` custom resource. Examples can be found
 in `deploy/examples/dashboards`.
 
+To get a quick overview of the GrafanaDashboard you can also look at the [API docs](api.md).
 The following properties are accepted in the `spec`:
 
 * *json*: Raw json string with the dashboard contents. Check
@@ -14,14 +15,14 @@ The following properties are accepted in the `spec`:
 * *jsonnet*: Jsonnet source. The [Grafonnet](https://grafana.github.io/grafonnet-lib/) library is made available
   automatically and can be imported.
 * *url*: Url address to download a json or jsonnet string with the dashboard contents.
-    * ***Warning***: If both url and json are specified then the json field will be updated with fetched. <br>
+  * ***Warning***: If both url and json are specified then the json field will be updated with fetched. <br>
       *The dashboard fetch priority by parameter is: url > configmap > json > jsonnet.*
 * *plugins*: A list of plugins required by the dashboard. They will be installed by the operator if not already present.
 * *datasources*: A list of datasources to be used as inputs. See [datasource inputs](#datasource-inputs).
 * *configMapRef*: Import dashboards from config maps. See [config map references](#config-map-references).
 * *customFolderName*: Assign this dashboard to a custom folder, if no folder with this name exists on the instance, then
   a new one will be created.
-    * _Note_: Folders with custom names are not managed by the operator, by purposeful design they won't be deleted when
+  * _Note_: Folders with custom names are not managed by the operator, by purposeful design they won't be deleted when
       empty, deletion for these requires manual intervention.
 
 ## Creating a new dashboard
@@ -32,7 +33,7 @@ the `--scan-all` flag must be passed.
 To create a dashboard in the `grafana` namespace run:
 
 ```sh
-$ kubectl create -f deploy/examples/dashboards/SimpleDashboard.yaml -n grafana
+kubectl create -f deploy/examples/dashboards/SimpleDashboard.yaml -n grafana
 ```
 
 ## Dashboard UIDs
@@ -98,7 +99,7 @@ dashboardLabelSelector:
   - matchExpressions:
       - { key: app, operator: In, values: [ grafana ] }
   - matchExpressions:
-      - { key: group, operator: In, values: [ grafana ] }          
+      - { key: group, operator: In, values: [ grafana ] }
 ```
 
 ## Discovering dashboards in other namespaces
@@ -108,7 +109,7 @@ namespaces is provided using the `--namespaces` flag. However this requires clus
 the `GrafanaDashboard` custom resource. Create the permissions with:
 
 ```sh
-$ oc create -f deploy/cluster_roles
+oc create -f deploy/cluster_roles
 ```
 
 *NOTE*: when installing the operator from [operatorhub](https://operatorhub.io/) it will only have permissions to the
@@ -196,4 +197,3 @@ _Note_ : Deletion of unmanaged folders requires manual intervention.
 To move a dashboard between managed and unmanaged folders, simply remove or add the `CustomFolderName` field value from
 the dashboard spec, this will update the hash of the dashboard on the next reconcile loop, and re-add the dashboard to
 the desired folder.
- 

@@ -27,7 +27,7 @@ all: manager
 
 # Run tests
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
-test: generate fmt vet manifests
+test: generate fmt vet manifests api-docs
 	mkdir -p ${ENVTEST_ASSETS_DIR}
 	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.7.0/hack/setup-envtest.sh
 	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
@@ -64,6 +64,15 @@ undeploy:
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+
+# Generate API reference documentation
+api-docs: gen-crd-api-reference-docs kustomize
+	@{ \
+	set -e ;\
+	TMP_DIR=$$(mktemp -d) ; \
+	$(KUSTOMIZE) build config/crd -o $$TMP_DIR/crd-output.yaml ;\
+	$(API_REF_GEN) crdoc --resources $$TMP_DIR/crd-output.yaml --output documentation/api.md ;\
+	}
 
 # Run go fmt against code
 fmt:
@@ -145,3 +154,19 @@ cluster/prepare/local: cluster/prepare/local/file
 	kubectl apply -f deploy/roles -n ${NAMESPACE}
 	kubectl apply -f deploy/cluster_roles
 	kubectl apply -f deploy/examples/Grafana.yaml -n ${NAMESPACE}
+
+# Find or download gen-crd-api-reference-docs
+gen-crd-api-reference-docs:
+ifeq (, $(shell which crdoc))
+	@{ \
+	set -e ;\
+	API_REF_GEN_TMP_DIR=$$(mktemp -d) ;\
+	cd $$API_REF_GEN_TMP_DIR ;\
+	go mod init tmp ;\
+	go get fybrik.io/crdoc@latest ;\
+	rm -rf $$API_REF_GEN_TMP_DIR ;\
+	}
+API_REF_GEN=$(GOBIN)/crdoc
+else
+API_REF_GEN=$(shell which crdoc)
+endif
