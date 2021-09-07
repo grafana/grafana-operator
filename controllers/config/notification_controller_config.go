@@ -124,9 +124,7 @@ func (c *NotificationControllerConfig) AddConfigItem(key string, value interface
 func (c *NotificationControllerConfig) RemoveConfigItem(key string) {
 	c.Lock()
 	defer c.Unlock()
-	if _, ok := c.Values[key]; ok {
-		delete(c.Values, key)
-	}
+	delete(c.Values, key)
 }
 
 func (c *NotificationControllerConfig) GetConfigItem(key string, defaultValue interface{}) interface{} {

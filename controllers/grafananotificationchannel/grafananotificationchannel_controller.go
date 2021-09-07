@@ -149,7 +149,7 @@ type GrafanaNotificationChannelReconciler struct {
 	Log       logr.Logger
 }
 
-// The Controller will requeue the Request to be processed again if the returned error is non-nil or
+// Reconcile , The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *GrafanaNotificationChannelReconciler) Reconcile(context context.Context, request reconcile.Request) (ctrl.Result, error) {
 	logger := r.Log.WithValues(ControllerName, request.NamespacedName)
@@ -162,7 +162,8 @@ func (r *GrafanaNotificationChannelReconciler) Reconcile(context context.Context
 
 	grafanaClient, err := r.getClient()
 	if err != nil {
-		return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
+		// we handle the error by requeing, safe to ignore nilerr return
+		return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil //nolint:nilerr
 	}
 
 	// Initial request?
@@ -202,7 +203,7 @@ func (r *GrafanaNotificationChannelReconciler) Reconcile(context context.Context
 }
 
 //nolint:funlen
-func (r *GrafanaNotificationChannelReconciler) reconcileNotificationChannels(request reconcile.Request, client GrafanaClient) (reconcile.Result, error) {
+func (r *GrafanaNotificationChannelReconciler) reconcileNotificationChannels(request reconcile.Request, client GrafanaClient) (reconcile.Result, error) { //nolint:cyclop
 	// Collect known and namespace notificationchannels
 	knownNotificationChannels := r.config.GetNotificationChannels(request.Namespace)
 	namespaceNotificationChannels := &grafanav1alpha1.GrafanaNotificationChannelList{}
@@ -244,9 +245,9 @@ func (r *GrafanaNotificationChannelReconciler) reconcileNotificationChannels(req
 	}
 
 	// Process new/updated notificationchannels
-	for _, notificationchannel := range namespaceNotificationChannels.Items {
+	for index, notificationchannel := range namespaceNotificationChannels.Items {
 		// Is this a notificationchannel we care about (matches the label selectors)?
-		if !r.isMatch(&notificationchannel) {
+		if !r.isMatch(&namespaceNotificationChannels.Items[index]) {
 			r.Log.Info(fmt.Sprintf("notificationchannel %v/%v found but selectors do not match",
 				notificationchannel.Namespace, notificationchannel.Name))
 			continue
@@ -254,12 +255,12 @@ func (r *GrafanaNotificationChannelReconciler) reconcileNotificationChannels(req
 
 		// Process the notificationchannel. Use the known hash of an existing notificationchannel
 		// to determine if an update is required
-		knownHash := findHash(&notificationchannel)
-		pipeline := NewNotificationChannelPipeline(r.client, &notificationchannel)
+		knownHash := findHash(&namespaceNotificationChannels.Items[index])
+		pipeline := NewNotificationChannelPipeline(r.client, &namespaceNotificationChannels.Items[index])
 		processed, err := pipeline.ProcessNotificationChannel(knownHash)
 		if err != nil {
 			r.Log.Error(err, fmt.Sprintf("cannot process notificationchannel %v/%v", notificationchannel.Namespace, notificationchannel.Name))
-			r.manageError(&notificationchannel, err)
+			r.manageError(&namespaceNotificationChannels.Items[index], err)
 			continue
 		}
 
@@ -281,13 +282,13 @@ func (r *GrafanaNotificationChannelReconciler) reconcileNotificationChannels(req
 		}
 		if err != nil {
 			r.Log.Info(fmt.Sprintf("cannot submit notificationchannel %v/%v", notificationchannel.Namespace, notificationchannel.Name))
-			r.manageError(&notificationchannel, err)
+			r.manageError(&namespaceNotificationChannels.Items[index], err)
 			continue
 		}
 
-		err = r.manageSuccess(&notificationchannel, status, pipeline.NewHash())
+		err = r.manageSuccess(&namespaceNotificationChannels.Items[index], status, pipeline.NewHash())
 		if err != nil {
-			r.manageError(&notificationchannel, err)
+			r.manageError(&namespaceNotificationChannels.Items[index], err)
 		}
 	}
 

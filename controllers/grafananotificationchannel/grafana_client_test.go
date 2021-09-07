@@ -25,6 +25,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	pagerDutyString = `{
+      "uid": "PD-alert-notification",
+      "name": "PD alert notification",
+      "type":  "pagerduty",
+      "isDefault": true,
+      "sendReminder": true,
+      "frequency": "15m",
+	  "disableResolveMessage": true,	
+      "settings": {
+        "integrationKey": "put key here",
+        "autoResolve": true,
+        "uploadImage": true
+     }
+    }`
+	pdAlertNotificationUUID = "PD-alert-notification"
+	pdAlertNotificationName = "PD alert notification"
+	pdAlertNotificationDate = "2020-05-25 00:00"
+	pdAlertStringSuccess    = "success"
+	pdName                  = "pagerduty"
+)
+
 func NewClient() *http.Client {
 	return &http.Client{
 		Timeout: time.Duration(30) * time.Second,
@@ -43,35 +65,22 @@ func TestGrafanaClient_CreateNotificationChannel_Positive(t *testing.T) {
 		channel []byte
 	}
 
-	c := `{
-      "uid": "PD-alert-notification",
-      "name": "PD alert notification",
-      "type":  "pagerduty",
-      "isDefault": true,
-      "sendReminder": true,
-      "frequency": "15m",
-	  "disableResolveMessage": true,	
-      "settings": {
-        "integrationKey": "put key here",
-        "autoResolve": true,
-        "uploadImage": true
-     }
-    }`
+	c := pagerDutyString
 	id := uint(1)
-	uid := "PD-alert-notification"
-	name := "PD alert notification"
-	nType := "pagerduty"
+	uid := pdAlertNotificationUUID
+	name := pdAlertNotificationName
+	nType := pdName
 	isDefault := true
 	sendReminder := true
 	disableResolveMessage := true
-	created := "2020-05-25 00:00"
-	updated := "2020-05-25 00:00"
-	message := "success"
+	created := pdAlertNotificationDate
+	updated := pdAlertNotificationDate
+	message := pdAlertStringSuccess
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/alert-notifications/" {
 			w.Header().Add("Content-Type", "application/json")
-			w.Write([]byte(`{
+			_, err := w.Write([]byte(`{
 								"id": 1,
 								"uid": "PD-alert-notification",
       							"name": "PD alert notification",
@@ -89,6 +98,9 @@ func TestGrafanaClient_CreateNotificationChannel_Positive(t *testing.T) {
 								"updated": "2020-05-25 00:00",
 								"message" : "success"
     							}`))
+			if err != nil {
+				return
+			}
 		}
 	}
 	ts := httptest.NewServer(http.HandlerFunc(handler))
@@ -149,26 +161,16 @@ func TestGrafanaClient_CreateNotificationChannel_Negative(t *testing.T) {
 	type args struct {
 		channel []byte
 	}
-	c := `{
-      "uid": "PD-alert-notification",
-      "name": "PD alert notification",
-      "type":  "pagerduty",
-      "isDefault": true,
-      "sendReminder": true,
-      "frequency": "15m",
-	  "disableResolveMessage": true,	
-      "settings": {
-        "integrationKey": "put key here",
-        "autoResolve": true,
-        "uploadImage": true
-     }
-    }`
+	c := pagerDutyString
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/alert-notifications/" {
 			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"message" : "error creating notificationChannel, expected status 200 but got 500"}`))
+			_, err := w.Write([]byte(`{"message" : "error creating notificationChannel, expected status 200 but got 500"}`))
+			if err != nil {
+				t.Errorf("test failed to write bytes: %v", err)
+			}
 		}
 	}
 	ts := httptest.NewServer(http.HandlerFunc(handler))
@@ -221,52 +223,42 @@ func TestGrafanaClient_UpdateNotificationChannel(t *testing.T) {
 		channel []byte
 	}
 
-	c := `{
-      "uid": "PD-alert-notification",
-      "name": "PD alert notification",
-      "type":  "pagerduty",
-      "isDefault": true,
-      "sendReminder": true,
-      "frequency": "15m",
-	  "disableResolveMessage": true,	
-      "settings": {
-        "integrationKey": "put key here",
-        "autoResolve": true,
-        "uploadImage": true
-     }
-    }`
+	c := pagerDutyString
 	id := uint(1)
-	uid := "PD-alert-notification"
-	name := "PD alert notification"
-	nType := "pagerduty"
+	uid := pdAlertNotificationUUID
+	name := pdAlertNotificationName
+	nType := pdName
 	isDefault := true
 	sendReminder := true
 	disableResolveMessage := true
-	created := "2020-05-25 00:00"
-	updated := "2020-05-25 00:00"
-	message := "success"
+	created := pdAlertNotificationDate
+	updated := pdAlertNotificationDate
+	message := pdAlertStringSuccess
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/alert-notifications/uid/"+uid {
 			w.Header().Add("Content-Type", "application/json")
-			w.Write([]byte(`{
-								"id": 1,
-								"uid": "PD-alert-notification",
-      							"name": "PD alert notification",
-      							"type":  "pagerduty",
-      							"isDefault": true,
-      							"sendReminder": true,
-      							"frequency": "15m",
-								"disableResolveMessage": true, 
-      							"settings": {
-											"integrationKey": "put key here",
-        									"autoResolve": true,
-        									"uploadImage": true
-     										},
-								"created": "2020-05-25 00:00",
-								"updated": "2020-05-25 00:00",
-								"message" : "success"
-    							}`))
+			_, err := w.Write([]byte(`{
+											"id": 1,
+											"uid": "PD-alert-notification",
+			      							"name": "PD alert notification",
+			      							"type":  "pagerduty",
+			      							"isDefault": true,
+			      							"sendReminder": true,
+			      							"frequency": "15m",
+											"disableResolveMessage": true, 
+			      							"settings": {
+														"integrationKey": "put key here",
+			        									"autoResolve": true,
+			        									"uploadImage": true
+			     										},
+											"created": "2020-05-25 00:00",
+											"updated": "2020-05-25 00:00",
+											"message" : "success"
+			    							}`))
+			if err != nil {
+				t.Errorf("test failed to write bytes: %v", err)
+			}
 		}
 	}
 	ts := httptest.NewServer(http.HandlerFunc(handler))
@@ -324,15 +316,18 @@ func TestGrafanaClient_DeleteNotificationChannel(t *testing.T) {
 		password string
 		client   *http.Client
 	}
-	uid := "PD-alert-notification"
+	uid := pdAlertNotificationUUID
 	message := "Notification deleted"
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/alert-notifications/uid/"+uid {
 			w.Header().Add("Content-Type", "application/json")
-			w.Write([]byte(`{
-								"message" : "Notification deleted"
-    							}`))
+			_, err := w.Write([]byte(`{
+											"message" : "Notification deleted"
+			    							}`))
+			if err != nil {
+				t.Errorf("test failed to write bytes: %v", err)
+			}
 		}
 	}
 	ts := httptest.NewServer(http.HandlerFunc(handler))
@@ -380,20 +375,20 @@ func TestGrafanaClient_GetNotificationChannel(t *testing.T) {
 		client   *http.Client
 	}
 	id := uint(1)
-	uid := "PD-alert-notification"
-	name := "PD alert notification"
-	nType := "pagerduty"
+	uid := pdAlertNotificationUUID
+	name := pdAlertNotificationName
+	nType := pdName
 	isDefault := true
 	sendReminder := true
 	disableResolveMessage := true
-	created := "2020-05-25 00:00"
-	updated := "2020-05-25 00:00"
-	message := "success"
+	created := pdAlertNotificationDate
+	updated := pdAlertNotificationDate
+	message := pdAlertStringSuccess
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/alert-notifications/uid/"+uid {
 			w.Header().Add("Content-Type", "application/json")
-			w.Write([]byte(`{
+			_, err := w.Write([]byte(`{
 								"id": 1,
 								"uid": "PD-alert-notification",
       							"name": "PD alert notification",
@@ -411,6 +406,9 @@ func TestGrafanaClient_GetNotificationChannel(t *testing.T) {
 								"updated": "2020-05-25 00:00",
 								"message" : "success"
     							}`))
+			if err != nil {
+				t.Errorf("test failed to write bytes: %v", err)
+			}
 		}
 	}
 	ts := httptest.NewServer(http.HandlerFunc(handler))

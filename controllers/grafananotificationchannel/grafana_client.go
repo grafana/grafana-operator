@@ -19,8 +19,8 @@ package grafananotificationchannel
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"github.com/go-logr/logr"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -67,6 +67,7 @@ type GrafanaClientImpl struct {
 	user     string
 	password string
 	client   *http.Client
+	logger   logr.Logger
 }
 
 func setHeaders(req *http.Request) {
@@ -89,23 +90,23 @@ func NewGrafanaClient(url, user, password string, transport *http.Transport, tim
 	}
 }
 
-// Submit channel json to grafana
+// CreateNotificationChannel Submits channel json to grafana
 func (r *GrafanaClientImpl) CreateNotificationChannel(channel []byte) (GrafanaResponse, error) {
 	return r.doRequest(opCreate, channel, "")
 }
 
-// Update existing channel
+// UpdateNotificationChannel Updates existing channel
 func (r *GrafanaClientImpl) UpdateNotificationChannel(channel []byte, UID string) (GrafanaResponse, error) {
 	return r.doRequest(opUpdate, channel, UID)
 }
 
-// Get channel by UID
+// GetNotificationChannel Gets channel by UID
 func (r *GrafanaClientImpl) GetNotificationChannel(UID string) (GrafanaResponse, error) {
 	emptyChannel := make([]byte, 0)
 	return r.doRequest(opRead, emptyChannel, UID)
 }
 
-// Delete a channel given by a UID
+// DeleteNotificationChannelByUID Deletes a channel given by a UID
 func (r *GrafanaClientImpl) DeleteNotificationChannelByUID(UID string) (GrafanaResponse, error) {
 	emptyChannel := make([]byte, 0)
 	return r.doRequest(opDelete, emptyChannel, UID)
@@ -131,7 +132,7 @@ func (r *GrafanaClientImpl) doRequest(op string, channel []byte, UID string) (Gr
 		method, body = "DELETE", nil
 		rawUrl = fmt.Sprintf(DeleteNotificationChannelByUIDUrl, r.url, UID)
 	default:
-		return response, errors.New(fmt.Sprintf("error unknown operation %v", op))
+		return response, fmt.Errorf("error unknown operation %v", op)
 	}
 
 	parsed, err := url.Parse(rawUrl)
@@ -152,12 +153,18 @@ func (r *GrafanaClientImpl) doRequest(op string, channel []byte, UID string) (Gr
 	if err != nil {
 		return response, err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			r.logger.Error(err, "failed to close body")
+			return
+		}
+	}(resp.Body)
 
 	if resp.StatusCode != 200 {
-		return response, errors.New(fmt.Sprintf(
+		return response, fmt.Errorf(
 			"error %v notificationChannel, expected status 200 but got %v",
-			op, resp.StatusCode))
+			op, resp.StatusCode)
 	}
 
 	data, err := ioutil.ReadAll(resp.Body)

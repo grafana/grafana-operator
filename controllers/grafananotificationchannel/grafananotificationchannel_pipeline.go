@@ -18,7 +18,7 @@ package grafananotificationchannel
 
 import (
 	"bytes"
-	"crypto/md5"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -101,7 +101,7 @@ func (r *NotificatiomChannelPipelineImpl) obtainJson() error {
 // If there are no changes we should avoid sending update requests as this will create
 // a new notificationchannel version in Grafana
 func (r *NotificatiomChannelPipelineImpl) generateHash() string {
-	return fmt.Sprintf("%x", md5.Sum([]byte(
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(
 		r.NotificationChannel.Spec.Json)))
 }
 
