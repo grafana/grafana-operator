@@ -6,7 +6,7 @@ env:
   NAME: "grafana-operator"
 
 jobs:
-  lint:
+  go-lint:
     runs-on: ubuntu-latest
     env:
       GO111MODULE: on
@@ -95,6 +95,26 @@ jobs:
       - name: Run test
         run: |
           make test
+
+  build:
+    name: github super-linter
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: super-linter
+        uses: docker://ghcr.io/github/super-linter:slim-v4
+        env:
+          VALIDATE_ALL_CODEBASE: false
+          DEFAULT_BRANCH: master
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          #VALIDATE_GITHUB_ACTIONS: false
+          VALIDATE_MARKDOWN: true
+          #VALIDATE_YAML: false
 
   build-container:
     runs-on: ubuntu-latest
