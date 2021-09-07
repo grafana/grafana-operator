@@ -112,7 +112,7 @@ jobs:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: master
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          #VALIDATE_GITHUB_ACTIONS: false
+          VALIDATE_GITHUB_ACTIONS: true
           VALIDATE_MARKDOWN: true
           #VALIDATE_YAML: false
 
