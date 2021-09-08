@@ -562,6 +562,13 @@ The most common json options See https://grafana.com/docs/administration/provisi
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>clusterUrl</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>connMaxLifetime</b></td>
         <td>integer</td>
         <td>
