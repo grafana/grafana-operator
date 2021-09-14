@@ -36,6 +36,7 @@ We will go through two sections.
 ### Kind load docker-image
 
 This solution assumes that you are using kind in your development environment.
+
 ```shell
 make generate
 make install
