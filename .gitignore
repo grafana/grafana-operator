@@ -83,3 +83,7 @@ operator-sdk-*
 tmp
 manager
 vendor
+
+# nodejs
+node_modules/
+package*
