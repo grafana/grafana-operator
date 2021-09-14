@@ -109,7 +109,7 @@ jobs:
         with:
           node-version: '16'
       - run: npm install markdownlint-cli
-      - run: node_modules/.bin/markdownlint -c .markdown-lint.yml -i node_modules .
+      - run: make markdownlint
 
   build-container:
     runs-on: ubuntu-latest

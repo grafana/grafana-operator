@@ -155,6 +155,16 @@ cluster/prepare/local: cluster/prepare/local/file
 	kubectl apply -f deploy/cluster_roles
 	kubectl apply -f deploy/examples/Grafana.yaml -n ${NAMESPACE}
 
+# markdownlint-cli
+# Assumes that you have npm installed
+.PHONY: markdownlint-install
+markdownlint-install:
+	npm install markdownlint-cli
+
+.PHONY: markdownlint
+markdownlint:
+	node_modules/.bin/markdownlint -c .markdown-lint.yml -i node_modules/ -i grafonnet-lib/ .
+
 # Find or download gen-crd-api-reference-docs
 gen-crd-api-reference-docs:
 ifeq (, $(shell which crdoc))
