@@ -887,7 +887,7 @@ The most common json options See https://grafana.com/docs/administration/provisi
         <td><b><a href="#grafanadatasourcespecdatasourcesindexjsondatatracestologs">tracesToLogs</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          Fields for tracing data sources<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -996,7 +996,7 @@ The most common json options See https://grafana.com/docs/administration/provisi
 
 
 
-
+Fields for tracing data sources
 
 <table>
     <thead>
