@@ -163,7 +163,7 @@ type GrafanaDataSourceJsonData struct {
 	CustomQueryParameters string `json:"customQueryParameters,omitempty"`
 	HTTPMethod            string `json:"httpMethod,omitempty"`
 	// Fields for tracing data sources
-	TracesToLogs  GrafanaDataSourceJsonTracesToLogs `json:"tracesToLogs,omitempty"`
+	TracesToLogs GrafanaDataSourceJsonTracesToLogs `json:"tracesToLogs,omitempty"`
 }
 
 type GrafanaDataSourceJsonDerivedFields struct {
