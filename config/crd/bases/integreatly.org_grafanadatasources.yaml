@@ -187,6 +187,7 @@ spec:
                           description: Fields for Stackdriver data sources
                           type: string
                         tracesToLogs:
+                          description: Fields for tracing data sources
                           properties:
                             datasourceUid:
                               type: string
