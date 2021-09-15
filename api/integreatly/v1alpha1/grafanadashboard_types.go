@@ -34,17 +34,23 @@ import (
 type GrafanaDashboardSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Json             string                       `json:"json"`
-	Jsonnet          string                       `json:"jsonnet,omitempty"`
-	Plugins          PluginList                   `json:"plugins,omitempty"`
-	Url              string                       `json:"url,omitempty"`
-	ConfigMapRef     *corev1.ConfigMapKeySelector `json:"configMapRef,omitempty"`
-	Datasources      []GrafanaDashboardDatasource `json:"datasources,omitempty"`
-	CustomFolderName string                       `json:"customFolderName,omitempty"`
+	Json             string                            `json:"json"`
+	Jsonnet          string                            `json:"jsonnet,omitempty"`
+	Plugins          PluginList                        `json:"plugins,omitempty"`
+	Url              string                            `json:"url,omitempty"`
+	ConfigMapRef     *corev1.ConfigMapKeySelector      `json:"configMapRef,omitempty"`
+	Datasources      []GrafanaDashboardDatasource      `json:"datasources,omitempty"`
+	CustomFolderName string                            `json:"customFolderName,omitempty"`
+	GrafanaCom       *GrafanaDashboardGrafanaComSource `json:"grafanaCom,omitempty"`
 }
 type GrafanaDashboardDatasource struct {
 	InputName      string `json:"inputName"`
 	DatasourceName string `json:"datasourceName"`
+}
+
+type GrafanaDashboardGrafanaComSource struct {
+	Id       int  `json:"id"`
+	Revision *int `json:"revision,omitempty"`
 }
 
 // Used to keep a dashboard reference without having access to the dashboard
@@ -104,6 +110,13 @@ func (d *GrafanaDashboard) Hash() string {
 	if d.Spec.ConfigMapRef != nil {
 		io.WriteString(hash, d.Spec.ConfigMapRef.Name) // nolint
 		io.WriteString(hash, d.Spec.ConfigMapRef.Key)  // nolint
+	}
+
+	if d.Spec.GrafanaCom != nil {
+		io.WriteString(hash, fmt.Sprint((d.Spec.GrafanaCom.Id))) // nolint
+		if d.Spec.GrafanaCom.Revision != nil {
+			io.WriteString(hash, fmt.Sprint(*d.Spec.GrafanaCom.Revision)) // nolint
+		}
 	}
 
 	return fmt.Sprintf("%x", hash.Sum(nil))

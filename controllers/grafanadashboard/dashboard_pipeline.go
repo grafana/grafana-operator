@@ -6,9 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
+	"strconv"
 	"strings"
 
 	"github.com/go-logr/logr"
@@ -26,6 +29,10 @@ const (
 	SourceTypeJson    SourceType = 1
 	SourceTypeJsonnet SourceType = 2
 	SourceTypeUnknown SourceType = 3
+)
+
+var (
+	grafanaComDashboardApiUrlRoot string = "https://grafana.com/api/dashboards"
 )
 
 type DashboardPipeline interface {
@@ -107,15 +114,28 @@ func (r *DashboardPipelineImpl) validateJson() error {
 
 // Try to get the dashboard json definition either from a provided URL or from the
 // raw json in the dashboard resource. The priority is as follows:
-// 1) try to fetch from url if provided
-// 2) url fails or not provided: try to fetch from configmap ref
+// 1) try to fetch from url or grafanaCom if provided
+// 2) url or grafanaCom fails or not provided: try to fetch from configmap ref
 // 3) no configmap specified: try to use embedded json
 // 4) no json specified: try to use embedded jsonnet
 func (r *DashboardPipelineImpl) obtainJson() error {
+	// TODO(DeanBrunt): Add earlier validation for this
+	if r.Dashboard.Spec.Url != "" && r.Dashboard.Spec.GrafanaCom != nil {
+		return errors.New("both dashboard url and grafana.com source specified")
+	}
+
+	if r.Dashboard.Spec.GrafanaCom != nil {
+		if err := r.loadDashboardFromGrafanaCom(); err != nil {
+			r.Logger.Error(err, "failed to request dashboard from grafana.com, falling back to config map; if specified")
+		} else {
+			return nil
+		}
+	}
+
 	if r.Dashboard.Spec.Url != "" {
 		err := r.loadDashboardFromURL()
 		if err != nil {
-			r.Logger.Error(err, "failed to request dashboard url, falling back to raw json")
+			r.Logger.Error(err, "failed to request dashboard url, falling back to config map; if specified")
 		} else {
 			return nil
 		}
@@ -208,6 +228,139 @@ func (r *DashboardPipelineImpl) loadDashboardFromURL() error {
 	}
 
 	return nil
+}
+
+func (r *DashboardPipelineImpl) loadDashboardFromGrafanaCom() error {
+	url, err := r.getGrafanaComDashboardUrl()
+	if err != nil {
+		return fmt.Errorf("failed to get grafana.com dashboard url: %w", err)
+	}
+
+	resp, err := http.Get(url) // nolint:gosec
+	if err != nil {
+		return fmt.Errorf("failed to request dashboard url '%s': %w", url, err)
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	r.JSON = string(body)
+
+	// Update JSON so dashboard is not refetched
+	if r.JSON != r.Dashboard.Spec.Json {
+		r.Dashboard.Spec.Json = r.JSON
+		if err := r.Client.Update(r.Context, r.Dashboard); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r *DashboardPipelineImpl) getGrafanaComDashboardUrl() (string, error) {
+	grafanaComSource := r.Dashboard.Spec.GrafanaCom
+	var revision int
+	if grafanaComSource.Revision == nil {
+		var err error
+		revision, err = r.getLatestRevisionForGrafanaComDashboard()
+		if err != nil {
+			return "", fmt.Errorf("failed to get latest revision for dashboard id %d: %w", r.Dashboard.Spec.GrafanaCom.Id, err)
+		}
+	} else {
+		revision = *grafanaComSource.Revision
+	}
+
+	u, err := url.Parse(grafanaComDashboardApiUrlRoot)
+	if err != nil {
+		return "", err
+	}
+
+	u.Path = path.Join(u.Path, strconv.Itoa(grafanaComSource.Id), "revisions", strconv.Itoa(revision), "download")
+	return u.String(), nil
+}
+
+func (r *DashboardPipelineImpl) getLatestRevisionForGrafanaComDashboard() (int, error) {
+	u, err := url.Parse(grafanaComDashboardApiUrlRoot)
+	if err != nil {
+		return 0, err
+	}
+
+	u.Path = path.Join(u.Path, strconv.Itoa(r.Dashboard.Spec.GrafanaCom.Id), "revisions")
+	resp, err := http.Get(u.String())
+	if err != nil {
+		return 0, fmt.Errorf("failed to make request to %s: %w", u.String(), err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return 0, fmt.Errorf("request to list available grafana dashboard revisions failed with status code '%d'", resp.StatusCode)
+	}
+
+	listResponse, err := r.unmarshalListDashboardRevisionsResponseBody(resp.Body)
+	if err != nil {
+		return 0, fmt.Errorf("failed to unmarshal list dashboard revisions response: %w", err)
+	}
+
+	if listResponse == nil || len(listResponse.Items) == 0 {
+		return 0, errors.New("List dashboard revisions request succeeded but no revisions returned")
+	}
+
+	return r.getMaximumRevisionFromListDashboardRevisionsResponse(listResponse), nil
+}
+
+// This will attempt to discover the latest revision, initially by using knowledge of the
+// default sort method (ordering by revision), falling back on our own manual discovery of
+// the maximum if the default changes away from revision ordering or using an unhandled
+// direction.
+func (r *DashboardPipelineImpl) getMaximumRevisionFromListDashboardRevisionsResponse(resp *listDashboardRevisionsResponse) int {
+	if resp.OrderBy == "revision" {
+		if resp.Direction == "asc" {
+			return resp.Items[len(resp.Items)-1].Revision
+		}
+
+		if resp.Direction == "desc" {
+			return resp.Items[0].Revision
+		}
+	}
+
+	var maxRevision int
+	for _, item := range resp.Items {
+		if maxRevision < item.Revision {
+			maxRevision = item.Revision
+		}
+	}
+
+	return maxRevision
+}
+
+// This is an incomplete representation of the expected response,
+// including only fields we care about.
+type listDashboardRevisionsResponse struct {
+	Items     []dashboardRevisionItem `json:"items"`
+	OrderBy   string                  `json:"orderBy"`
+	Direction string                  `json:"direction"`
+}
+
+type dashboardRevisionItem struct {
+	Revision int `json:"revision"`
+}
+
+func (r *DashboardPipelineImpl) unmarshalListDashboardRevisionsResponseBody(
+	body io.Reader,
+) (*listDashboardRevisionsResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(body)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &listDashboardRevisionsResponse{}
+	if err := json.Unmarshal(bodyBytes, resp); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal raw json to list dashboard revisions response: %w", err)
+	}
+
+	return resp, nil
 }
 
 // Try to determine the type (json or grafonnet) or a remote file by looking
