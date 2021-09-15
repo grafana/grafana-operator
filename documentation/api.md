@@ -884,6 +884,13 @@ The most common json options See https://grafana.com/docs/administration/provisi
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanadatasourcespecdatasourcesindexjsondatatracestologs">tracesToLogs</a></b></td>
+        <td>object</td>
+        <td>
+          Fields for tracing data sources<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>tsdbResolution</b></td>
         <td>string</td>
         <td>
@@ -976,6 +983,54 @@ The most common json options See https://grafana.com/docs/administration/provisi
       </tr><tr>
         <td><b>url</b></td>
         <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDataSource.spec.datasources[index].jsonData.tracesToLogs
+<sup><sup>[↩ Parent](#grafanadatasourcespecdatasourcesindexjsondata)</sup></sup>
+
+
+
+Fields for tracing data sources
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>datasourceUid</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>spanEndTimeShift</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>spanStartTimeShift</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>tags</b></td>
+        <td>[]string</td>
         <td>
           <br/>
         </td>

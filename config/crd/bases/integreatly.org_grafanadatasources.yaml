@@ -186,6 +186,20 @@ spec:
                         tokenUri:
                           description: Fields for Stackdriver data sources
                           type: string
+                        tracesToLogs:
+                          description: Fields for tracing data sources
+                          properties:
+                            datasourceUid:
+                              type: string
+                            spanEndTimeShift:
+                              type: string
+                            spanStartTimeShift:
+                              type: string
+                            tags:
+                              items:
+                                type: string
+                              type: array
+                          type: object
                         tsdbResolution:
                           type: string
                         tsdbVersion:
