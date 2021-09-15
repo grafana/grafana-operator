@@ -162,6 +162,8 @@ type GrafanaDataSourceJsonData struct {
 	// Fields for Prometheus data sources
 	CustomQueryParameters string `json:"customQueryParameters,omitempty"`
 	HTTPMethod            string `json:"httpMethod,omitempty"`
+	// Fields for tracing data sources
+	TracesToLogs  GrafanaDataSourceJsonTracesToLogs `json:"tracesToLogs,omitempty"`
 }
 
 type GrafanaDataSourceJsonDerivedFields struct {
@@ -169,6 +171,13 @@ type GrafanaDataSourceJsonDerivedFields struct {
 	MatcherRegex  string `json:"matcherRegex,omitempty"`
 	Name          string `json:"name,omitempty"`
 	Url           string `json:"url,omitempty"`
+}
+
+type GrafanaDataSourceJsonTracesToLogs struct {
+	DatasourceUid      string   `json:"datasourceUid,omitempty"`
+	SpanEndTimeShift   string   `json:"spanEndTimeShift,omitempty"`
+	SpanStartTimeShift string   `json:"spanStartTimeShift,omitempty"`
+	Tags               []string `json:"tags,omitempty"`
 }
 
 // The most common secure json options
