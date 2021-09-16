@@ -225,12 +225,26 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume { // nolint
 	}
 
 	// Volume to store the plugins
-	volumes = append(volumes, v13.Volume{
-		Name: constants.GrafanaPluginsVolumeName,
-		VolumeSource: v13.VolumeSource{
-			EmptyDir: &v13.EmptyDirVolumeSource{},
-		},
-	})
+	appendIfContainsPlugin := func(slice []v13.VolumeMount) bool {
+		if cr.Spec.Deployment.ExtraVolumeMounts != nil {
+			for _, item := range slice {
+				if item.MountPath == config.GrafanaPluginsPath {
+					return true
+				}
+			}
+			return false
+		}
+		volumes = append(volumes, cr.Spec.Deployment.ExtraVolumes...)
+		return false
+	}
+	if !appendIfContainsPlugin(cr.Spec.Deployment.ExtraVolumeMounts) {
+		volumes = append(volumes, v13.Volume{
+			Name: constants.GrafanaPluginsVolumeName,
+			VolumeSource: v13.VolumeSource{
+				EmptyDir: &v13.EmptyDirVolumeSource{},
+			},
+		})
+	}
 
 	// Volume to store the datasources
 	volumes = append(volumes, v13.Volume{
@@ -326,17 +340,31 @@ func getVolumeMounts(cr *v1alpha1.Grafana) []v13.VolumeMount {
 
 	mounts = append(mounts, v13.VolumeMount{
 		Name:      constants.GrafanaDataVolumeName,
-		MountPath: "/var/lib/grafana",
+		MountPath: config.GrafanaDataPath,
 	})
 
-	mounts = append(mounts, v13.VolumeMount{
-		Name:      constants.GrafanaPluginsVolumeName,
-		MountPath: "/var/lib/grafana/plugins",
-	})
+	appendIfContainsPlugin := func(slice []v13.VolumeMount) bool {
+		if cr.Spec.Deployment.ExtraVolumeMounts != nil {
+			for _, item := range slice {
+				if item.MountPath == config.GrafanaPluginsPath {
+					return true
+				}
+			}
+			return false
+		}
+		mounts = append(mounts, cr.Spec.Deployment.ExtraVolumeMounts...)
+		return false
+	}
+	if !appendIfContainsPlugin(cr.Spec.Deployment.ExtraVolumeMounts) {
+		mounts = append(mounts, v13.VolumeMount{
+			Name:      constants.GrafanaPluginsVolumeName,
+			MountPath: config.GrafanaPluginsPath,
+		})
+	}
 
 	mounts = append(mounts, v13.VolumeMount{
 		Name:      constants.GrafanaLogsVolumeName,
-		MountPath: "/var/log/grafana",
+		MountPath: config.GrafanaLogsPath,
 	})
 
 	mounts = append(mounts, v13.VolumeMount{
