@@ -82,6 +82,11 @@ spec:
                 type: string
               jsonnet:
                 type: string
+              orgId:
+                description: OrgId is the Grafana OrgId to create the dashboard and
+                  corresponding folder in it.
+                minimum: 0
+                type: integer
               plugins:
                 items:
                   description: GrafanaPlugin contains information about a single plugin

@@ -42,6 +42,11 @@ type GrafanaDashboardSpec struct {
 	Datasources      []GrafanaDashboardDatasource      `json:"datasources,omitempty"`
 	CustomFolderName string                            `json:"customFolderName,omitempty"`
 	GrafanaCom       *GrafanaDashboardGrafanaComSource `json:"grafanaCom,omitempty"`
+
+	// OrgId is the Grafana OrgId to create the dashboard and corresponding folder in it.
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Minimum:=0
+	OrgId int `json:"orgId,omitempty"`
 }
 type GrafanaDashboardDatasource struct {
 	InputName      string `json:"inputName"`

@@ -277,7 +277,7 @@ func (r *GrafanaDashboardReconciler) reconcileDashboards(request reconcile.Reque
 			folderName = dashboard.Spec.CustomFolderName
 		}
 
-		folder, err := grafanaClient.CreateOrUpdateFolder(folderName)
+		folder, err := grafanaClient.CreateOrUpdateFolder(folderName, dashboard.Spec.OrgId)
 
 		if err != nil {
 			log.Log.Error(err, "failed to get or create namespace folder for dashboard", "folder", folderName, "dashboard", request.Name)

@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -77,7 +78,7 @@ type GrafanaFolderResponse struct {
 type GrafanaClient interface {
 	CreateOrUpdateDashboard(dashboard []byte, folderId int64, folderName string) (GrafanaResponse, error)
 	DeleteDashboardByUID(UID string) (GrafanaResponse, error)
-	CreateOrUpdateFolder(folderName string) (GrafanaFolderResponse, error)
+	CreateOrUpdateFolder(folderName string, orgId int) (GrafanaFolderResponse, error)
 	DeleteFolder(folderID *int64) error
 	SafeToDelete(dashboards []*v1alpha1.GrafanaDashboardRef, folderID *int64) bool
 	GetDashboard(UID string) (GrafanaDashboardResponse, error)
@@ -152,12 +153,18 @@ func (r *GrafanaClientImpl) GetDashboard(UID string) (GrafanaDashboardResponse, 
 	return response, err
 }
 
-func (r *GrafanaClientImpl) getAllFolders() ([]GrafanaFolderResponse, error) {
+func (r *GrafanaClientImpl) getAllFolders(orgId int) ([]GrafanaFolderResponse, error) {
 	rawURL := fmt.Sprintf(CreateOrUpdateFolderUrl, r.url)
 	parsed, err := url.Parse(rawURL)
 
 	if err != nil {
 		return nil, err
+	}
+
+	if orgId != 0 {
+		q := parsed.Query()
+		q.Set("orgId", strconv.Itoa(orgId))
+		parsed.RawQuery = q.Encode()
 	}
 
 	parsed.User = url.UserPassword(r.user, r.password)
@@ -197,10 +204,10 @@ func (r *GrafanaClientImpl) getAllFolders() ([]GrafanaFolderResponse, error) {
 	return folders, err
 }
 
-func (r *GrafanaClientImpl) CreateOrUpdateFolder(folderInputName string) (GrafanaFolderResponse, error) {
+func (r *GrafanaClientImpl) CreateOrUpdateFolder(folderInputName string, orgId int) (GrafanaFolderResponse, error) {
 	response := newFolderResponse()
 
-	allfolders, err := r.getAllFolders()
+	allfolders, err := r.getAllFolders(orgId)
 	if err != nil {
 		return response, err
 	}
@@ -216,6 +223,12 @@ func (r *GrafanaClientImpl) CreateOrUpdateFolder(folderInputName string) (Grafan
 
 	if err != nil {
 		return response, err
+	}
+
+	if orgId != 0 {
+		q := parsed.Query()
+		q.Set("orgId", strconv.Itoa(orgId))
+		parsed.RawQuery = q.Encode()
 	}
 
 	var title = folderInputName
