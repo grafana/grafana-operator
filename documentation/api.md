@@ -116,6 +116,13 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanadashboardspecgrafanacom">grafanaCom</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>jsonnet</b></td>
         <td>string</td>
         <td>
@@ -211,6 +218,40 @@ Selects a key from a ConfigMap.
           <br/>
         </td>
         <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.spec.grafanaCom
+<sup><sup>[↩ Parent](#grafanadashboardspec)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>id</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>revision</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -4187,7 +4228,7 @@ Grafana API client settings
         <td>
           <br/>
         </td>
-        <td>true</td>
+        <td>false</td>
       </tr><tr>
         <td><b>timeout</b></td>
         <td>integer</td>
