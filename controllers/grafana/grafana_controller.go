@@ -240,10 +240,7 @@ func (r *ReconcileGrafana) manageError(cr *grafanav1alpha1.Grafana, issue error,
 func (r *ReconcileGrafana) getGrafanaAdminUrl(cr *grafanav1alpha1.Grafana, state *common.ClusterState) (string, error) {
 	// If preferService is true, we skip the routes and try to access grafana
 	// by using the service.
-	preferService := false
-	if cr.Spec.Client != nil {
-		preferService = cr.Spec.Client.PreferService
-	}
+	preferService := cr.GetPreferServiceValue()
 
 	// First try to use the route if it exists. Prefer the route because it also works
 	// when running the operator outside of the cluster

@@ -61,8 +61,8 @@ type JsonnetConfig struct {
 
 // Grafana API client settings
 type GrafanaClient struct {
-	TimeoutSeconds *int `json:"timeout,omitempty"`
-	PreferService  bool `json:"preferService"`
+	TimeoutSeconds *int  `json:"timeout,omitempty"`
+	PreferService  *bool `json:"preferService,omitempty"`
 }
 
 // GrafanaService provides a means to configure the service
@@ -570,4 +570,11 @@ type GrafanaList struct {
 
 func init() {
 	SchemeBuilder.Register(&Grafana{}, &GrafanaList{})
+}
+
+func (cr *Grafana) GetPreferServiceValue() bool {
+	if cr.Spec.Client != nil && cr.Spec.Client.PreferService != nil {
+		return *cr.Spec.Client.PreferService
+	}
+	return false
 }

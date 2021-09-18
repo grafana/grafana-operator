@@ -3,6 +3,8 @@ kind: Grafana
 metadata:
   name: example-grafana
 spec:
+  client:
+    preferService: true
   ingress:
     enabled: True
     pathType: Prefix
