@@ -441,6 +441,13 @@ spec:
                       enable:
                         type: string
                     type: object
+                  live:
+                    properties:
+                      allowed_origins:
+                        type: string
+                      max_connections:
+                        type: integer
+                    type: object
                   log:
                     properties:
                       filters:

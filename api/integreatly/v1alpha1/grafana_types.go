@@ -159,6 +159,7 @@ type GrafanaConfig struct {
 	Analytics                     *GrafanaConfigAnalytics                     `json:"analytics,omitempty" ini:"analytics,omitempty"`
 	Dashboards                    *GrafanaConfigDashboards                    `json:"dashboards,omitempty" ini:"dashboards,omitempty"`
 	Smtp                          *GrafanaConfigSmtp                          `json:"smtp,omitempty" ini:"smtp,omitempty"`
+	Live                          *GrafanaConfigLive                          `json:"live,omitempty" ini:"live,omitempty"`
 	Log                           *GrafanaConfigLog                           `json:"log,omitempty" ini:"log,omitempty"`
 	LogConsole                    *GrafanaConfigLogConsole                    `json:"log.console,omitempty" ini:"log.console,omitempty"`
 	LogFrontend                   *GrafanaConfigLogFrontend                   `json:"log.frontend,omitempty" ini:"log.frontend,omitempty"`
@@ -428,6 +429,11 @@ type GrafanaConfigSmtp struct {
 	FromAddress  string `json:"from_address,omitempty" ini:"from_address,omitempty"`
 	FromName     string `json:"from_name,omitempty" ini:"from_name,omitempty"`
 	EhloIdentity string `json:"ehlo_identity,omitempty" ini:"ehlo_identity,omitempty"`
+}
+
+type GrafanaConfigLive struct {
+	MaxConnections *int   `json:"max_connections,omitempty" ini:"max_connections,omitempty"`
+	AllowedOrigins string `json:"allowed_origins,omitempty" ini:"allowed_origins,omitempty"`
 }
 
 type GrafanaConfigLog struct {
