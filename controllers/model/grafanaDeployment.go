@@ -571,6 +571,13 @@ func getInitContainers(cr *v1alpha1.Grafana, plugins string) []v13.Container {
 		})
 	}
 
+	var volumeName = constants.GrafanaPluginsVolumeName
+	for _, item := range cr.Spec.Deployment.ExtraVolumeMounts {
+		if item.MountPath == config.GrafanaPluginsPath {
+			volumeName = item.Name
+		}
+	}
+
 	return []v13.Container{
 		{
 			Name:      constants.GrafanaInitContainerName,
@@ -579,7 +586,7 @@ func getInitContainers(cr *v1alpha1.Grafana, plugins string) []v13.Container {
 			Resources: getInitResources(cr),
 			VolumeMounts: []v13.VolumeMount{
 				{
-					Name:      constants.GrafanaPluginsVolumeName,
+					Name:      volumeName,
 					ReadOnly:  false,
 					MountPath: "/opt/plugins",
 				},
