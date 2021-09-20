@@ -1665,6 +1665,13 @@ GrafanaConfig is the configuration for grafana
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanaspecconfiglive">live</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecconfiglog">log</a></b></td>
         <td>object</td>
         <td>
@@ -3359,6 +3366,40 @@ GrafanaConfig is the configuration for grafana
     <tbody><tr>
         <td><b>enable</b></td>
         <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.config.live
+<sup><sup>[↩ Parent](#grafanaspecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>allowed_origins</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>max_connections</b></td>
+        <td>integer</td>
         <td>
           <br/>
         </td>
