@@ -11,9 +11,11 @@ Examples can be found in `deploy/examples/notificationchannels`
 Also look at the api documentation found [here](../documentation/api.md)
 
 ### Creating notifiers
+
 *Note:* Thus far this is the only supported method of notifier provisioning.
 
 The recommended procedure for creating notifiers is as follows:
+
 1) Create a Grafana Operator deployment as per docs.
 2) Log in using admin credentials, these can be found in either:
    - The `grafana-admin-credentials` secret.
@@ -23,8 +25,7 @@ The recommended procedure for creating notifiers is as follows:
 5) Create a new `GrafanaNotifgicationChannel` CR and provide the JSON string in `spec.json` as in the example below:
 6) Apply the resource to the cluster
 
-The created notifier should now be provisioned and managed by the operator. 
-
+The created notifier should now be provisioned and managed by the operator.
 
 ```yaml
 apiVersion: integreatly.org/v1alpha1
@@ -51,4 +52,3 @@ spec:
      }
     }
 ```
-
