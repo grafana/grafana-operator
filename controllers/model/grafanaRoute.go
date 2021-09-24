@@ -20,6 +20,11 @@ func GetPath(cr *v1alpha1.Grafana) string {
 	if cr.Spec.Ingress == nil {
 		return "/"
 	}
+
+	if cr.Spec.Ingress.Path == "" {
+		return "/"
+	}
+
 	return cr.Spec.Ingress.Path
 }
 

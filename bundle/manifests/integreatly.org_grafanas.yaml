@@ -32,6 +32,14 @@ spec:
               baseImage:
                 type: string
               client:
+                description: Grafana API client settings
+                properties:
+                  preferService:
+                    nullable: true
+                    type: boolean
+                  timeout:
+                    nullable: true
+                    type: integer
                 type: object
               config:
                 description: GrafanaConfig is the configuration for grafana
@@ -39,59 +47,75 @@ spec:
                   alerting:
                     properties:
                       concurrent_render_limit:
+                        nullable: true
                         type: integer
                       enabled:
+                        nullable: true
                         type: boolean
                       error_or_timeout:
                         type: string
                       evaluation_timeout_seconds:
+                        nullable: true
                         type: integer
                       execute_alerts:
+                        nullable: true
                         type: boolean
                       max_attempts:
+                        nullable: true
                         type: integer
                       nodata_or_nullvalues:
                         type: string
                       notification_timeout_seconds:
+                        nullable: true
                         type: integer
                     type: object
                   analytics:
                     properties:
                       check_for_updates:
+                        nullable: true
                         type: boolean
                       google_analytics_ua_id:
                         type: string
                       reporting_enabled:
+                        nullable: true
                         type: boolean
                     type: object
                   auth:
                     properties:
                       disable_login_form:
+                        nullable: true
                         type: boolean
                       disable_signout_menu:
+                        nullable: true
                         type: boolean
                       login_cookie_name:
                         type: string
                       login_maximum_inactive_lifetime_days:
+                        nullable: true
                         type: integer
                       login_maximum_inactive_lifetime_duration:
                         type: string
                       login_maximum_lifetime_days:
+                        nullable: true
                         type: integer
                       login_maximum_lifetime_duration:
                         type: string
                       oauth_auto_login:
+                        nullable: true
                         type: boolean
                       signout_redirect_url:
                         type: string
                       sigv4_auth_enabled:
+                        nullable: true
                         type: boolean
                       token_rotation_interval_minutes:
+                        nullable: true
                         type: integer
                     type: object
                   auth.anonymous:
                     properties:
                       enabled:
+                        nullable: true
                         type: boolean
                       org_name:
                         type: string
@@ -101,6 +125,7 @@ spec:
                   auth.azuread:
                     properties:
                       allow_sign_up:
+                        nullable: true
                         type: boolean
                       allowed_domains:
                         type: string
@@ -113,6 +138,7 @@ spec:
                       client_secret:
                         type: string
                       enabled:
+                        nullable: true
                         type: boolean
                       scopes:
                         type: string
@@ -122,11 +148,13 @@ spec:
                   auth.basic:
                     properties:
                       enabled:
+                        nullable: true
                         type: boolean
                     type: object
                   auth.generic_oauth:
                     properties:
                       allow_sign_up:
+                        nullable: true
                         type: boolean
                       allowed_domains:
                         type: string
@@ -141,10 +169,12 @@ spec:
                       email_attribute_path:
                         type: string
                       enabled:
+                        nullable: true
                         type: boolean
                       role_attribute_path:
                         type: string
                       role_attribute_strict:
+                        nullable: true
                         type: boolean
                       scopes:
                         type: string
@@ -155,6 +185,7 @@ spec:
                       tls_client_key:
                         type: string
                       tls_skip_verify_insecure:
+                        nullable: true
                         type: boolean
                       token_url:
                         type: string
@@ -162,6 +193,7 @@ spec:
                   auth.github:
                     properties:
                       allow_sign_up:
+                        nullable: true
                         type: boolean
                       allowed_organizations:
                         type: string
@@ -174,6 +206,7 @@ spec:
                       client_secret:
                         type: string
                       enabled:
+                        nullable: true
                         type: boolean
                       scopes:
                         type: string
@@ -185,6 +218,7 @@ spec:
                   auth.gitlab:
                     properties:
                       allow_sign_up:
+                        nullable: true
                         type: boolean
                       allowed_groups:
                         type: string
@@ -197,6 +231,7 @@ spec:
                       client_secret:
                         type: string
                       enabled:
+                        nullable: true
                         type: boolean
                       scopes:
                         type: string
@@ -216,6 +251,7 @@ spec:
                       client_secret:
                         type: string
                       enabled:
+                        nullable: true
                         type: boolean
                       scopes:
                         type: string
@@ -225,15 +261,18 @@ spec:
                   auth.ldap:
                     properties:
                       allow_sign_up:
+                        nullable: true
                         type: boolean
                       config_file:
                         type: string
                       enabled:
+                        nullable: true
                         type: boolean
                     type: object
                   auth.okta:
                     properties:
                       allow_sign_up:
+                        nullable: true
                         type: boolean
                       allowed_domains:
                         type: string
@@ -248,12 +287,14 @@ spec:
                       client_secret:
                         type: string
                       enabled:
+                        nullable: true
                         type: boolean
                       name:
                         type: string
                       role_attribute_path:
                         type: string
                       role_attribute_strict:
+                        nullable: true
                         type: boolean
                       scopes:
                         type: string
@@ -263,10 +304,13 @@ spec:
                   auth.proxy:
                     properties:
                       auto_sign_up:
+                        nullable: true
                         type: boolean
                       enable_login_token:
+                        nullable: true
                         type: boolean
                       enabled:
+                        nullable: true
                         type: boolean
                       header_name:
                         type: string
@@ -282,6 +326,7 @@ spec:
                   auth.saml:
                     properties:
                       allow_idp_initiated:
+                        nullable: true
                         type: boolean
                       allowed_organizations:
                         type: string
@@ -300,6 +345,7 @@ spec:
                       certificate_path:
                         type: string
                       enabled:
+                        nullable: true
                         type: boolean
                       idp_metadata_url:
                         type: string
@@ -322,11 +368,13 @@ spec:
                       signature_algorithm:
                         type: string
                       single_logout:
+                        nullable: true
                         type: boolean
                     type: object
                   dashboards:
                     properties:
                       versions_to_keep:
+                        nullable: true
                         type: integer
                     type: object
                   database:
@@ -340,14 +388,18 @@ spec:
                       client_key_path:
                         type: string
                       conn_max_lifetime:
+                        nullable: true
                         type: integer
                       host:
                         type: string
                       log_queries:
+                        nullable: true
                         type: boolean
                       max_idle_conn:
+                        nullable: true
                         type: integer
                       max_open_conn:
+                        nullable: true
                         type: integer
                       name:
                         type: string
@@ -369,10 +421,13 @@ spec:
                   dataproxy:
                     properties:
                       logging:
+                        nullable: true
                         type: boolean
                       send_user_header:
+                        nullable: true
                         type: boolean
                       timeout:
+                        nullable: true
                         type: integer
                     type: object
                   external_image_storage:
@@ -429,6 +484,14 @@ spec:
                       enable:
                         type: string
                     type: object
+                  live:
+                    properties:
+                      allowed_origins:
+                        type: string
+                      max_connections:
+                        nullable: true
+                        type: integer
+                    type: object
                   log:
                     properties:
                       filters:
@@ -450,10 +513,13 @@ spec:
                       custom_endpoint:
                         type: string
                       enabled:
+                        nullable: true
                         type: boolean
                       log_endpoint_burst_limit:
+                        nullable: true
                         type: integer
                       log_endpoint_requests_per_second_limit:
+                        nullable: true
                         type: integer
                       sample_rate:
                         type: string
@@ -467,8 +533,10 @@ spec:
                       basic_auth_username:
                         type: string
                       enabled:
+                        nullable: true
                         type: boolean
                       interval_seconds:
+                        nullable: true
                         type: integer
                     type: object
                   metrics.graphite:
@@ -481,6 +549,7 @@ spec:
                   panels:
                     properties:
                       disable_sanitize_html:
+                        nullable: true
                         type: boolean
                     type: object
                   paths:
@@ -491,6 +560,7 @@ spec:
                   plugins:
                     properties:
                       enable_alpha:
+                        nullable: true
                         type: boolean
                     type: object
                   remote_cache:
@@ -505,6 +575,7 @@ spec:
                       callback_url:
                         type: string
                       concurrent_render_request_limit:
+                        nullable: true
                         type: integer
                       server_url:
                         type: string
@@ -516,30 +587,40 @@ spec:
                       admin_user:
                         type: string
                       allow_embedding:
+                        nullable: true
                         type: boolean
                       cookie_samesite:
                         type: string
                       cookie_secure:
+                        nullable: true
                         type: boolean
                       data_source_proxy_whitelist:
                         type: string
                       disable_gravatar:
+                        nullable: true
                         type: boolean
                       login_remember_days:
+                        nullable: true
                         type: integer
                       secret_key:
                         type: string
                       strict_transport_security:
+                        nullable: true
                         type: boolean
                       strict_transport_security_max_age_seconds:
+                        nullable: true
                         type: integer
                       strict_transport_security_preload:
+                        nullable: true
                         type: boolean
                       strict_transport_security_subdomains:
+                        nullable: true
                         type: boolean
                       x_content_type_options:
+                        nullable: true
                         type: boolean
                       x_xss_protection:
+                        nullable: true
                         type: boolean
                     type: object
                   server:
@@ -551,8 +632,10 @@ spec:
                       domain:
                         type: string
                       enable_gzip:
+                        nullable: true
                         type: boolean
                       enforce_domain:
+                        nullable: true
                         type: boolean
                       http_addr:
                         type: string
@@ -563,8 +646,10 @@ spec:
                       root_url:
                         type: string
                       router_logging:
+                        nullable: true
                         type: boolean
                       serve_from_sub_path:
+                        nullable: true
                         type: boolean
                       socket:
                         type: string
@@ -578,6 +663,7 @@ spec:
                       ehlo_identity:
                         type: string
                       enabled:
+                        nullable: true
                         type: boolean
                       from_address:
                         type: string
@@ -590,6 +676,7 @@ spec:
                       password:
                         type: string
                       skip_verify:
+                        nullable: true
                         type: boolean
                       user:
                         type: string
@@ -597,21 +684,26 @@ spec:
                   snapshots:
                     properties:
                       external_enabled:
+                        nullable: true
                         type: boolean
                       external_snapshot_name:
                         type: string
                       external_snapshot_url:
                         type: string
                       snapshot_remove_expired:
+                        nullable: true
                         type: boolean
                     type: object
                   users:
                     properties:
                       allow_org_create:
+                        nullable: true
                         type: boolean
                       allow_sign_up:
+                        nullable: true
                         type: boolean
                       auto_assign_org:
+                        nullable: true
                         type: boolean
                       auto_assign_org_id:
                         type: string
@@ -620,12 +712,14 @@ spec:
                       default_theme:
                         type: string
                       editors_can_admin:
+                        nullable: true
                         type: boolean
                       login_hint:
                         type: string
                       password_hint:
                         type: string
                       viewers_can_edit:
+                        nullable: true
                         type: boolean
                     type: object
                 type: object
@@ -2914,6 +3008,7 @@ spec:
                       type: object
                     type: array
                   hostNetwork:
+                    nullable: true
                     type: boolean
                   httpProxy:
                     description: GrafanaHttpProxy provides a means to configure the Grafana deployment to use a HTTP(S) proxy when making requests and resolving plugins.
@@ -2937,6 +3032,7 @@ spec:
                     type: string
                   replicas:
                     format: int32
+                    nullable: true
                     type: integer
                   securityContext:
                     description: PodSecurityContext holds pod-level security attributes and common container settings. Some fields are also present in container.securityContext.  Field values of container.securityContext take precedence over field values of PodSecurityContext.
@@ -3024,6 +3120,7 @@ spec:
                         type: object
                     type: object
                   skipCreateAdminAccount:
+                    nullable: true
                     type: boolean
                   strategy:
                     description: DeploymentStrategy describes how to replace existing pods with new ones.
@@ -3301,6 +3398,69 @@ spec:
             - config
             type: object
           status:
+            description: GrafanaStatus defines the observed state of Grafana
+            properties:
+              dashboards:
+                items:
+                  description: Used to keep a dashboard reference without having access to the dashboard struct itself
+                  properties:
+                    folderId:
+                      format: int64
+                      type: integer
+                    folderName:
+                      type: string
+                    hash:
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                    uid:
+                      type: string
+                  required:
+                  - folderId
+                  - folderName
+                  - hash
+                  - name
+                  - namespace
+                  - uid
+                  type: object
+                nullable: true
+                type: array
+              failedPlugins:
+                items:
+                  description: GrafanaPlugin contains information about a single plugin
+                  properties:
+                    name:
+                      type: string
+                    version:
+                      type: string
+                  required:
+                  - name
+                  - version
+                  type: object
+                nullable: true
+                type: array
+              installedPlugins:
+                items:
+                  description: GrafanaPlugin contains information about a single plugin
+                  properties:
+                    name:
+                      type: string
+                    version:
+                      type: string
+                  required:
+                  - name
+                  - version
+                  type: object
+                nullable: true
+                type: array
+              message:
+                type: string
+              phase:
+                type: string
+              previousServiceName:
+                type: string
             type: object
         type: object
     served: true

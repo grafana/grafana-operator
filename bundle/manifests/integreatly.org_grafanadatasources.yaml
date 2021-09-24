@@ -70,6 +70,8 @@ spec:
                           type: string
                         cloudName:
                           type: string
+                        clusterUrl:
+                          type: string
                         connMaxLifetime:
                           type: integer
                         customMetricsNamespaces:
@@ -176,6 +178,20 @@ spec:
                         tokenUri:
                           description: Fields for Stackdriver data sources
                           type: string
+                        tracesToLogs:
+                          description: Fields for tracing data sources
+                          properties:
+                            datasourceUid:
+                              type: string
+                            spanEndTimeShift:
+                              type: string
+                            spanStartTimeShift:
+                              type: string
+                            tags:
+                              items:
+                                type: string
+                              type: array
+                          type: object
                         tsdbResolution:
                           type: string
                         tsdbVersion:
@@ -273,6 +289,14 @@ spec:
             - name
             type: object
           status:
+            properties:
+              message:
+                type: string
+              phase:
+                type: string
+            required:
+            - message
+            - phase
             type: object
         type: object
     served: true
