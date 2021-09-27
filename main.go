@@ -20,6 +20,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/integr8ly/grafana-operator/controllers/grafananotificationchannel"
 	"os"
 	"runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -209,6 +210,7 @@ func main() { // nolint
 	// Start one dashboard controller per watch namespace
 	for _, ns := range dashboardNamespaces {
 		startDashboardController(ns, cfg, context.Background())
+		startNotificationChannelController(ns, cfg, context.Background())
 	}
 
 	ctx := context.Background()
@@ -288,6 +290,39 @@ func startDashboardController(ns string, cfg *rest.Config, ctx context.Context) 
 	go func() {
 		if err := dashboardMgr.Start(ctx); err != nil {
 			log.Log.Error(err, "dashboard manager exited non-zero")
+			os.Exit(1)
+		}
+	}()
+}
+
+// Starts a separate controller for the notification channels reconciliation in the background
+func startNotificationChannelController(ns string, cfg *rest.Config, ctx context.Context) {
+	// Create a new Cmd to provide shared dependencies and start components
+	channelMgr, err := manager.New(cfg, manager.Options{
+		MetricsBindAddress: "0",
+		Namespace:          ns,
+	})
+	if err != nil {
+		log.Log.Error(err, "")
+		os.Exit(1)
+	}
+
+	// Setup Scheme for the notification channel resource
+	if err := apis.AddToScheme(channelMgr.GetScheme()); err != nil {
+		log.Log.Error(err, "")
+		os.Exit(1)
+	}
+
+	// Use a separate manager for the dashboard controller
+	err = grafananotificationchannel.Add(channelMgr, ns)
+	if err != nil {
+		log.Log.Error(err, "")
+		os.Exit(1)
+	}
+
+	go func() {
+		if err := channelMgr.Start(ctx); err != nil {
+			log.Log.Error(err, "notification channel manager exited non-zero")
 			os.Exit(1)
 		}
 	}()

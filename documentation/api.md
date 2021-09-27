@@ -12,6 +12,8 @@ Resource Types:
 
 - [GrafanaDataSource](#grafanadatasource)
 
+- [GrafanaNotificationChannel](#grafananotificationchannel)
+
 - [Grafana](#grafana)
 
 
@@ -1272,6 +1274,148 @@ The most common secure json options See https://grafana.com/docs/administration/
         <td>true</td>
       </tr><tr>
         <td><b>phase</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+## GrafanaNotificationChannel
+<sup><sup>[↩ Parent](#integreatlyorgv1alpha1 )</sup></sup>
+
+
+
+
+
+
+GrafanaNotificationChannel is the Schema for the GrafanaNotificationChannels API
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+      <td><b>apiVersion</b></td>
+      <td>string</td>
+      <td>integreatly.org/v1alpha1</td>
+      <td>true</td>
+      </tr>
+      <tr>
+      <td><b>kind</b></td>
+      <td>string</td>
+      <td>GrafanaNotificationChannel</td>
+      <td>true</td>
+      </tr>
+      <tr>
+      <td><b><a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#objectmeta-v1-meta">metadata</a></b></td>
+      <td>object</td>
+      <td>Refer to the Kubernetes API documentation for the fields of the `metadata` field.</td>
+      <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafananotificationchannelspec">spec</a></b></td>
+        <td>object</td>
+        <td>
+          GrafanaNotificationChannelSpec defines the desired state of GrafanaNotificationChannel<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafananotificationchannelstatus">status</a></b></td>
+        <td>object</td>
+        <td>
+          GrafanaNotificationChannelStatus defines the observed state of GrafanaNotificationChannel<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaNotificationChannel.spec
+<sup><sup>[↩ Parent](#grafananotificationchannel)</sup></sup>
+
+
+
+GrafanaNotificationChannelSpec defines the desired state of GrafanaNotificationChannel
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>json</b></td>
+        <td>string</td>
+        <td>
+          INSERT ADDITIONAL SPEC FIELDS - desired state of cluster Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaNotificationChannel.status
+<sup><sup>[↩ Parent](#grafananotificationchannel)</sup></sup>
+
+
+
+GrafanaNotificationChannelStatus defines the observed state of GrafanaNotificationChannel
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>hash</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>id</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>message</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>phase</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>uid</b></td>
         <td>string</td>
         <td>
           <br/>
