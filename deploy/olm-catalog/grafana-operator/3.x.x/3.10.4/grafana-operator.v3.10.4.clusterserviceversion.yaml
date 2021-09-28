@@ -36,7 +36,7 @@ metadata:
     capabilities: Basic Install
     categories: Monitoring
     certified: 'False'
-    containerImage: quay.io/rhoas/grafana-operator:v3.10.3
+    containerImage: quay.io/grafana-operator/grafana-operator:v3.10.4
     createdAt: 2020-07-31 00:00:00
     description: An Operator for managing Grafana instances, dashboards and data sources
     repository: https://github.com/grafana-operator/grafana-operator
