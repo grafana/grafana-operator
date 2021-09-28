@@ -5,7 +5,6 @@
 package v1alpha1
 
 import (
-	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
@@ -45,6 +44,11 @@ func (in *GrafanaClient) DeepCopyInto(out *GrafanaClient) {
 	if in.TimeoutSeconds != nil {
 		in, out := &in.TimeoutSeconds, &out.TimeoutSeconds
 		*out = new(int)
+		**out = **in
+	}
+	if in.PreferService != nil {
+		in, out := &in.PreferService, &out.PreferService
+		*out = new(bool)
 		**out = **in
 	}
 	return
@@ -1624,11 +1628,6 @@ func (in *GrafanaDeployment) DeepCopyInto(out *GrafanaDeployment) {
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
-	}
-	if in.Strategy != nil {
-		in, out := &in.Strategy, &out.Strategy
-		*out = new(appsv1.DeploymentStrategy)
-		(*in).DeepCopyInto(*out)
 	}
 	return
 }
