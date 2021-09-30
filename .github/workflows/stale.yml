@@ -7,7 +7,7 @@ name: Mark stale issues and pull requests
 
 on:
   schedule:
-  - cron: '41 10 * * *'
+  - cron: '1 * * * *'
 
 jobs:
   stale:
@@ -18,7 +18,7 @@ jobs:
       pull-requests: write
 
     steps:
-    - uses: actions/stale@v3
+    - uses: actions/stale@v4
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         stale-issue-message: "This issue hasn't been updated for a while, marking as stale, please respond within the next 7 days to remove this label"
@@ -26,7 +26,7 @@ jobs:
         stale-issue-label: 'stale'
         stale-pr-label: 'stale'
         # mark issues and PR's as stale after this many days
-        days-before-stale: 60
+        days-before-stale: 30
         # close issues and PR's that are marked as stale after this many days
         days-before-close: 7
         # don't mark triaged issues as stale
