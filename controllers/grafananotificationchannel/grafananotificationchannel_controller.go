@@ -50,8 +50,6 @@ const (
 	ControllerName = "controller_grafananotificationchannel"
 )
 
-// +kubebuilder:rbac:groups=integreatly.org,resources=grafananotificationchannels,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=integreatly.org,resources=grafananotificationchannels/status,verbs=get;update;patch
 type GrafanaChannel struct {
 	ID                    *uint   `json:"id"`
 	UID                   *string `json:"uid"`
@@ -89,6 +87,10 @@ func Add(mgr manager.Manager, namespace string) error {
 	return SetupWithManager(mgr, NewReconciler(mgr), namespace)
 }
 
+// +kubebuilder:rbac:groups=integreatly.org,resources=grafananotificationchannels,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=integreatly.org,resources=grafananotificationchannels/status,verbs=get;update;patch
+
+// SetupWithManager sets up the controller with the Manager.
 func SetupWithManager(mgr ctrl.Manager, r reconcile.Reconciler, namespace string) error {
 	c, err := controller.New("grafananotificationchannel-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
