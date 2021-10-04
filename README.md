@@ -157,38 +157,16 @@ Represents a Grafana datasource. See [the documentation](./documentation/datasou
 Init the submodules first to obtain grafonnet:
 
 ```sh
-git submodule update --init
+make submodule
 ```
 
 Then build the image using the operator-sdk:
 
 ```sh
-operator-sdk build <registry>/<user>/grafana-operator:<tag>
+make docker-build IMG=<registry>/<user>/grafana-operator:<tag>
 ```
 
 ## Running locally
 
 ### Using the Makefile
 If you want to further develop the operator, here are some instructions how to set up your dev-environment: [follow me](./documentation/develop.md)
-
-### Using operator-sdk (not supported anymore by operator-sdk)
-You can run the Operator locally against a remote namespace using the operator-sdk:
-
-Prerequisites:
-
-* [operator-sdk](https://github.com/operator-framework/operator-sdk) installed
-* kubectl pointing to the local context. [minikube](https://github.com/kubernetes/minikube) automatically sets the context to the local VM. If not you can use `kubectl config use <context>` or (if using the OpenShift CLI) `oc login -u <user> <url>`
-* make sure to deploy the custom resource definition using the command ```kubectl create -f deploy/crds```
-
-```sh
-operator-sdk run local --namespace=<namespace> --operator-flags="<flags to pass>"
-```
-
-## Grafana features not yet supported in the operator
-
-### Notifier provisioning
-
-Grafana has provisioning support for multiple channels (notifiers) of alerts.
-The operator does currently not support this type of provisioning.
-An empty directory is mounted at the expected location to prevent a warning in the grafana log.
-This feature might be supported in the future.
