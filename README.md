@@ -168,6 +168,10 @@ operator-sdk build <registry>/<user>/grafana-operator:<tag>
 
 ## Running locally
 
+### Using the Makefile
+If you want to further develop the operator, here are some instructions how to set up your dev-environment: [follow me](./documentation/develop.md)
+
+### Using operator-sdk (not supported anymore by operator-sdk)
 You can run the Operator locally against a remote namespace using the operator-sdk:
 
 Prerequisites:
