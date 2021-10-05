@@ -57,18 +57,25 @@ func (i *GrafanaReconciler) Reconcile(state *common.ClusterState, cr *v1alpha1.G
 	return desired
 }
 
+func getPerferService(cr *v1alpha1.Grafana) bool {
+	if cr.Spec.Client == nil || cr.Spec.Client.PreferService == nil {
+		return false
+	}
+	return *cr.Spec.Client.PreferService
+}
+
 func (i *GrafanaReconciler) getGrafanaReadiness(state *common.ClusterState, cr *v1alpha1.Grafana) []common.ClusterAction {
 	var actions []common.ClusterAction
 	cfg := config.GetControllerConfig()
 	openshift := cfg.GetConfigBool(config.ConfigOpenshift, false)
-	if openshift && cr.Spec.Ingress != nil && cr.Spec.Ingress.Enabled && (cr.Spec.Client == nil || !cr.Spec.Client.PreferService) {
+	if openshift && cr.Spec.Ingress != nil && cr.Spec.Ingress.Enabled && !getPerferService(cr) {
 		// On OpenShift, check the route, only if preferService is false
 		actions = append(actions, common.RouteReadyAction{
 			Ref: state.GrafanaRoute,
 			Msg: "check route readiness",
 		})
 	}
-	if !openshift && cr.Spec.Ingress != nil && cr.Spec.Ingress.Enabled && (cr.Spec.Client == nil || !cr.Spec.Client.PreferService) {
+	if !openshift && cr.Spec.Ingress != nil && cr.Spec.Ingress.Enabled && !getPerferService(cr) {
 		// On vanilla Kubernetes, check the ingress,only if preferService is false
 		actions = append(actions, common.IngressReadyAction{
 			Ref: state.GrafanaIngress,
