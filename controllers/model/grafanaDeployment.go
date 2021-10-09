@@ -226,16 +226,17 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume { // nolint
 
 	// Volume to store the plugins
 	appendIfContainsPlugin := func(slice []v13.VolumeMount) bool {
+		var foundGrafanaPluginsPath bool
 		if cr.Spec.Deployment.ExtraVolumeMounts != nil {
 			for _, item := range slice {
 				if item.MountPath == config.GrafanaPluginsPath {
-					return true
+					foundGrafanaPluginsPath = true
+					break
 				}
 			}
-			return false
 		}
 		volumes = append(volumes, cr.Spec.Deployment.ExtraVolumes...)
-		return false
+		return foundGrafanaPluginsPath
 	}
 	if !appendIfContainsPlugin(cr.Spec.Deployment.ExtraVolumeMounts) {
 		volumes = append(volumes, v13.Volume{
@@ -344,16 +345,17 @@ func getVolumeMounts(cr *v1alpha1.Grafana) []v13.VolumeMount {
 	})
 
 	appendIfContainsPlugin := func(slice []v13.VolumeMount) bool {
+		var foundGrafanaPluginsPath bool
 		if cr.Spec.Deployment.ExtraVolumeMounts != nil {
 			for _, item := range slice {
 				if item.MountPath == config.GrafanaPluginsPath {
-					return true
+					foundGrafanaPluginsPath = true
+					break
 				}
 			}
-			return false
 		}
 		mounts = append(mounts, cr.Spec.Deployment.ExtraVolumeMounts...)
-		return false
+		return foundGrafanaPluginsPath
 	}
 	if !appendIfContainsPlugin(cr.Spec.Deployment.ExtraVolumeMounts) {
 		mounts = append(mounts, v13.VolumeMount{
