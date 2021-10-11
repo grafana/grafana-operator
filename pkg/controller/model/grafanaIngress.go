@@ -64,7 +64,6 @@ func getIngressSpec(cr *v1alpha1.Grafana) v12.IngressSpec {
 									Service: &v12.IngressServiceBackend{
 										Name: serviceName(cr),
 										Port: v12.ServiceBackendPort{
-											Name:   "http",
 											Number: GetIngressTargetPort(cr).IntVal,
 										},
 									},
