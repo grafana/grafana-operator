@@ -2,6 +2,7 @@ apiVersion: integreatly.org/v1alpha1
 kind: GrafanaDashboard
 metadata:
   name: simple-dashboard
+  namespace: grafana
   labels:
     app: grafana
 spec:

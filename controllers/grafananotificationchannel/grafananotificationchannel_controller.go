@@ -23,9 +23,9 @@ import (
 	defaultErrors "errors"
 	"fmt"
 
+	"github.com/go-logr/logr"
 	grafanav1alpha1 "github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/controllers/constants"
-	"github.com/go-logr/logr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 

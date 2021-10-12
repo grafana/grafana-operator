@@ -21,6 +21,8 @@ spec:
           ports:
             - containerPort: 60000
               name: metrics
+          args:
+            - --scan-all
           imagePullPolicy: Always
           env:
             - name: TEMPLATE_PATH

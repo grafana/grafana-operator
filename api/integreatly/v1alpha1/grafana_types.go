@@ -602,12 +602,11 @@ type GrafanaConfigAlerting struct {
 
 type GrafanaConfigUnifiedAlerting struct {
 	// +nullable
-	Enabled *bool `json:"enabled,omitempty" ini:"enabled"`
-	ExecuteAlerts      *bool  `json:"execute_alerts,omitempty" ini:"execute_alerts"`
+	Enabled           *bool  `json:"enabled,omitempty" ini:"enabled"`
+	ExecuteAlerts     *bool  `json:"execute_alerts,omitempty" ini:"execute_alerts"`
 	EvaluationTimeout string `json:"evaluation_timeout,omitempty" ini:"evaluation_timeout,omitempty"`
-	MaxAttempts *int `json:"max_attempts,omitempty" ini:"max_attempts,omitempty"`
-	MinInterval string `json:"min_interval,omitempty" ini:"min_interval,omitempty"`
-
+	MaxAttempts       *int   `json:"max_attempts,omitempty" ini:"max_attempts,omitempty"`
+	MinInterval       string `json:"min_interval,omitempty" ini:"min_interval,omitempty"`
 }
 
 type GrafanaConfigPanels struct {
