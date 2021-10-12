@@ -10,6 +10,9 @@ assignees: ''
 **Describe the bug**
 A clear and concise description of what the bug is.
 
+**Version**
+Full semver version of the operator being used e.g. v3.10.1, v4.0.0
+
 **To Reproduce**
 Steps to reproduce the behavior:
 1. Go to '...'
