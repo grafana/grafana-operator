@@ -139,6 +139,10 @@ type ReconcileGrafanaDataSource struct {
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileGrafanaDataSource) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	client, err := r.getClient()
+	if err != nil {
+		log.V(1).Info("%v", err)
+		return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
+	}
 	// Read the current state of known and cluster datasources
 	currentState := common.NewDataSourcesState()
 	err = currentState.Read(r.context, r.client, request.Namespace)
