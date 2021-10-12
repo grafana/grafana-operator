@@ -31,11 +31,12 @@ Please provide this if you know where this bug might occur otherwise leave as `u
 If applicable, add screenshots to help explain your problem.
 
 **Runtime (please complete the following information):**
- - OS: [e.g. Linux,Fedora,Mac]
- - Grafana Operator Version [e.g. v3.4.0]
- - Environment: [e.g Openshift,Kubernetes,minikube etc. please specify versions]
- - Deployment type: [e.g running the operator locally, or deployed]
- - Other: [Other variables/things that might be relevant to this bug, versions of other services e.g. operator-sdk]
+
+- OS: [e.g. Linux,Fedora,Mac]
+- Grafana Operator Version [e.g. v3.4.0]
+- Environment: [e.g Openshift,Kubernetes,minikube etc. please specify versions]
+- Deployment type: [e.g running the operator locally, or deployed]
+- Other: [Other variables/things that might be relevant to this bug, versions of other services e.g. operator-sdk]
 
 **Additional context**
 Add any other context about the problem here.
