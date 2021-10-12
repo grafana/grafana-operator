@@ -1,7 +1,12 @@
 # Current Operator version
 VERSION ?= 4.0.0
+
+# IMAGE_TAG_BASE defines the namespace and part of the image name for remote images.
+# running 'make bundle-build bundle-push catalog-build catalog-push' will build and push both
+# quay.io/grafana-operator/controller-bundle:$VERSION and quay.io/grafana-operator/controller-catalog:$VERSION.
+IMAGE_TAG_BASE ?= quay.io/grafana-operator/controller
 # Default bundle image tag
-BUNDLE_IMG ?= quay.io/grafana-operator/controller-bundle:v$(VERSION)
+BUNDLE_IMG ?= ?= $(IMAGE_TAG_BASE)-bundle:v$(VERSION)
 # Options for 'bundle-build'
 ifneq ($(origin CHANNELS), undefined)
 BUNDLE_CHANNELS := --channels=$(CHANNELS)
@@ -176,3 +181,31 @@ API_REF_GEN=$(GOBIN)/crdoc
 else
 API_REF_GEN=$(shell which crdoc)
 endif
+
+.PHONY: opm
+OPM = ./bin/opm
+opm:
+ifeq (,$(wildcard $(OPM)))
+ifeq (,$(shell which opm 2>/dev/null))
+	@{ \
+	set -e ;\
+	mkdir -p $(dir $(OPM)) ;\
+	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
+	curl -sSLo $(OPM) https://github.com/operator-framework/operator-registry/releases/download/v1.15.1/$(OS)-$(ARCH)-opm ;\
+	chmod +x $(OPM) ;\
+	}
+else
+OPM = $(shell which opm)
+endif
+endif
+
+BUNDLE_IMGS ?= $(BUNDLE_IMG)
+CATALOG_IMG ?= $(IMAGE_TAG_BASE)-catalog:v$(VERSION) ifneq ($(origin CATALOG_BASE_IMG), undefined) FROM_INDEX_OPT := --from-index $(CATALOG_BASE_IMG) endif
+
+.PHONY: catalog-build
+catalog-build: opm
+	$(OPM) index add --container-tool docker --mode semver --tag $(CATALOG_IMG) --bundles $(BUNDLE_IMGS) $(FROM_INDEX_OPT)
+
+.PHONY: catalog-push
+catalog-push: ## Push the catalog image.
+	$(MAKE) docker-push IMG=$(CATALOG_IMG)
