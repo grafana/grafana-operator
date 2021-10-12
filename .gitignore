@@ -83,3 +83,4 @@ operator-sdk-*
 tmp
 manager
 vendor
+bundle.yaml

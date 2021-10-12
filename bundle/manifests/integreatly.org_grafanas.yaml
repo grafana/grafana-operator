@@ -69,6 +69,22 @@ spec:
                         nullable: true
                         type: integer
                     type: object
+                  unified_alerting:
+                    properties:
+                      enabled:
+                        nullable: true
+                        type: boolean
+                      execute_alerts:
+                        nullable: true
+                        type: boolean
+                      evaluation_timeout:
+                        type: string
+                      max_attempts:
+                        nullable: true
+                        type: integer
+                      min_interval:
+                        type: string
+                    type: object
                   analytics:
                     properties:
                       check_for_updates:

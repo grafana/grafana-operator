@@ -1914,6 +1914,13 @@ GrafanaConfig is the configuration for grafana
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanaspecconfigunified_alerting">unified_alerting</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecconfigusers">users</a></b></td>
         <td>object</td>
         <td>
@@ -4293,6 +4300,61 @@ GrafanaConfig is the configuration for grafana
       </tr><tr>
         <td><b>snapshot_remove_expired</b></td>
         <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.config.unified_alerting
+<sup><sup>[↩ Parent](#grafanaspecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>enabled</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>evaluation_timeout</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>execute_alerts</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>max_attempts</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>min_interval</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
