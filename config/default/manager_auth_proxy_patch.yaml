@@ -19,6 +19,7 @@ spec:
         ports:
         - containerPort: 8443
           name: https
+          protocol: TCP
       - name: manager
         args:
         - "--health-probe-bind-address=:8081"
