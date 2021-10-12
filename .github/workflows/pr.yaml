@@ -26,7 +26,7 @@ jobs:
       - name: Build image
         run: |
           make setup/travis image/build
-      - uses: helm/kind-action@v1.1.0
+      - uses: helm/kind-action@v1.2.0
         timeout-minutes: 5
         with:
           cluster_name: kind
