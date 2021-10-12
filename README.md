@@ -56,6 +56,16 @@ A Kubernetes Operator based on the Operator SDK for creating and managing Grafan
   </div>
 </div>
 </td>
+<td class="tg-0lax">
+        <div class="card" css=>
+  <img src="media/users/torqata.jpg" alt="Avatar" style=margin:auto; width=250; max-height=150; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  transition: 0.3s;">
+  <div class="container" style="text-align: center; margin: auto; padding: 2px 16px;">
+    <h4><b><a href="https://torqata.com">Torqata</a></b></h4>
+    <p></p>
+  </div>
+</div>
+</td>
 
 <!-- PLACE ME HERE -->
   </tr>
