@@ -705,13 +705,11 @@ spec:
                       enabled:
                         nullable: true
                         type: boolean
-                      execute_alerts:
-                        nullable: true
-                        type: boolean
                       evaluation_timeout:
                         type: string
+                      execute_alerts:
+                        type: boolean
                       max_attempts:
-                        nullable: true
                         type: integer
                       min_interval:
                         type: string

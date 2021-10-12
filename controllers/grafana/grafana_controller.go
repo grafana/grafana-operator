@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/go-logr/logr"
 	grafanav1alpha1 "github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/controllers/common"
 	"github.com/integr8ly/grafana-operator/controllers/config"
 	"github.com/integr8ly/grafana-operator/controllers/model"
-	"github.com/go-logr/logr"
 	routev1 "github.com/openshift/api/route/v1"
 	v12 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
