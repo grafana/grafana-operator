@@ -10,13 +10,13 @@ rules:
       - grafanadashboards/status
       - grafananotificationchannels
       - grafananotificationchannels/status
-      - configmaps
     verbs: ["get", "list", "update", "watch"]
   - apiGroups:
       - ""
     resources:
       - namespaces
-    verbs: ["get", "list", "watch"]
+      - configmaps
+    verbs: ['get', 'list', 'watch']
   - apiGroups:
       - ""
     resources:

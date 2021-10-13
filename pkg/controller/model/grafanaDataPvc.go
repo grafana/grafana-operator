@@ -23,6 +23,14 @@ func getPVCAnnotations(cr *v1alpha1.Grafana, existing map[string]string) map[str
 	return MergeAnnotations(cr.Spec.DataStorage.Annotations, existing)
 }
 
+func getStorageClass(cr *v1alpha1.Grafana) *string {
+	if cr.Spec.DataStorage.Class == "" {
+		return nil
+	}
+
+	return &cr.Spec.DataStorage.Class
+}
+
 func getPVCSpec(cr *v1alpha1.Grafana) corev1.PersistentVolumeClaimSpec {
 	return corev1.PersistentVolumeClaimSpec{
 		AccessModes: cr.Spec.DataStorage.AccessModes,
@@ -31,7 +39,7 @@ func getPVCSpec(cr *v1alpha1.Grafana) corev1.PersistentVolumeClaimSpec {
 				corev1.ResourceStorage: cr.Spec.DataStorage.Size,
 			},
 		},
-		StorageClassName: &cr.Spec.DataStorage.Class,
+		StorageClassName: getStorageClass(cr),
 	}
 }
 
