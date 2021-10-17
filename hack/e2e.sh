@@ -56,10 +56,6 @@ sleep 20
 # Takes some time for the operator to create the deployment
 kubectl rollout status -w --timeout=60s deployment grafana-deployment -n $NAMESPACE
 
-# port-forward
-kubectl port-forward -n $NAMESPACE deployment/grafana-deployment 3000:3000 &
-FPID=$!
-
 # Get the admin password
 PASSWORD=$(kubectl -n $NAMESPACE get secrets grafana-admin-credentials --template={{.data.GF_SECURITY_ADMIN_PASSWORD}} | base64 -d)
 
@@ -69,6 +65,10 @@ kubectl apply -f deploy/examples/datasources/Prometheus.yaml -n $NAMESPACE
 
 # Verify that the grafana dashboard exist
 sleep 15
+
+# port-forward
+kubectl port-forward -n $NAMESPACE deployment/grafana-deployment 3000:3000 &
+FPID=$!
 
 curl localhost:3000/api/health
 DASHBOARDOUTPUT=$(curl $HEADER "http://admin:$PASSWORD@localhost:3000/api/search?folderIds=0&query=&starred=false")
