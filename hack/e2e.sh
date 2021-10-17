@@ -14,7 +14,7 @@ NAMESPACE="grafana-operator-system"
 PATH=$PATH:$PWD/bin
 HEADER='-H Accept:application/json -H Content-Type:application/json'
 
-IMG=quay.io/integreatly/grafana-operator:latest
+IMG=quay.io/grafana-operator/grafana-operator:v4.0.0
 if [[ $1 != "" ]]; then
   IMG=$1
 fi
@@ -64,16 +64,21 @@ kubectl apply -f deploy/examples/dashboards/SimpleDashboard.yaml -n $NAMESPACE
 kubectl apply -f deploy/examples/datasources/Prometheus.yaml -n $NAMESPACE
 
 # Verify that the grafana dashboard exist
-sleep 15
+sleep 30
 
 # port-forward
 kubectl port-forward -n $NAMESPACE service/grafana-service 3000:3000 &
 FPID=$!
 
+sleep 5
 curl localhost:3000/api/health
+sleep 5
 DASHBOARDOUTPUT=$(curl $HEADER "http://admin:$PASSWORD@localhost:3000/api/search?folderIds=0&query=&starred=false")
+sleep 1
 GRAFANAUID=$(echo $DASHBOARDOUTPUT |jq -r '.[0].uid')
+sleep 1
 GRAFANA_DASHBOARD=$(curl $HEADER "http://admin:$PASSWORD@localhost:3000/api/dashboards/uid/$GRAFANAUID")
+sleep 1
 FOLDER_ID=$(echo $GRAFANA_DASHBOARD |jq -r .meta.folderId)
 if [[ $FOLDER_ID != 0 ]]; then
   echo "Unable to get grafana dashboard"
@@ -82,4 +87,5 @@ fi
 
 # Clean up
 # Delete the port-forward pid
+set -x
 kill $FPID
