@@ -67,7 +67,7 @@ kubectl apply -f deploy/examples/datasources/Prometheus.yaml -n $NAMESPACE
 sleep 15
 
 # port-forward
-kubectl port-forward -n $NAMESPACE deployment/grafana-deployment 3000:3000 &
+kubectl port-forward -n $NAMESPACE service/grafana-service 3000:3000 &
 FPID=$!
 
 curl localhost:3000/api/health
