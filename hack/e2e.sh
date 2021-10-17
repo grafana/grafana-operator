@@ -13,8 +13,9 @@ INSTALL_PATH="config/manager"
 NAMESPACE="grafana-operator-system"
 PATH=$PATH:$PWD/bin
 HEADER='-H Accept:application/json -H Content-Type:application/json'
+DEBUG_FILE="/tmp/grafana_e2e_debug.txt"
 
-IMG=quay.io/grafana-operator/grafana-operator:v4.0.0
+IMG=quay.io/grafana-operator/grafana-operator:latest
 if [[ $1 != "" ]]; then
   IMG=$1
 fi
@@ -23,7 +24,6 @@ echo $IMG
 # Get kustomize
 which kustomize
 if [[ $? != 0 ]]; then
-  echo "fuu"
   make kustomize
 fi
 
@@ -31,6 +31,11 @@ fi
 cd $INSTALL_PATH && kustomize edit set image controller=$IMG
 cd -
 
+set +ex
+
+# Check if imagePullPolicy is set
+cat $INSTALL_PATH/kustomization.yaml |grep "/spec/template/spec/containers/0/imagePullPolicy"
+if [[ $? != 0 ]]; then
 cat <<EOF >> $INSTALL_PATH/kustomization.yaml
 
 patchesJson6902:
@@ -43,13 +48,18 @@ patchesJson6902:
         path: /spec/template/spec/containers/0/imagePullPolicy
         value: Never
 EOF
+fi
+
+set -ex
+
+# For loop for debugging
+for i in {1..80}; do kubectl get all -n $NAMESPACE >> $DEBUG_FILE; echo "Output: $i "$(date) >> $DEBUG_FILE; sleep 1; done &
+FORPID=$!
 
 # Deploy the operator
 kubectl apply -k config/default
 sleep 5
 kubectl rollout status -w --timeout=60s deployment grafana-operator-controller-manager -n $NAMESPACE
-
-# Edit out the enabeling of ingress in the grafana example
 
 kubectl apply -f deploy/examples/Grafana.yaml -n $NAMESPACE
 sleep 20
@@ -64,6 +74,7 @@ kubectl apply -f deploy/examples/dashboards/SimpleDashboard.yaml -n $NAMESPACE
 kubectl apply -f deploy/examples/datasources/Prometheus.yaml -n $NAMESPACE
 
 # Verify that the grafana dashboard exist
+# This sleep is needed for the operator to apply the dashboards and the datasource
 sleep 30
 
 # port-forward
@@ -87,5 +98,10 @@ fi
 
 # Clean up
 # Delete the port-forward pid
-set -x
+set +ex
 kill $FPID
+kill $FORPID
+
+# Don't care if the FPID don't get killed, happy with the exit anyway.
+# The set +ex handels that logic.
+exit 0

@@ -2,12 +2,13 @@ name: KinD End-to-End
 
 on:
   pull_request:
-    branches: [ master ]
+    branches: [master]
   push:
-    branches: [ master ]
+    branches: [master]
 
 env:
-  NAME: "grafana-operator"
+  NAME: grafana-operator
+  NAMESPACE: grafana-operator-system
 
 jobs:
   end-to-end:
@@ -64,9 +65,10 @@ jobs:
         if: failure()
         run: |
           kubectl version
-          kubectl -n grafana-operator-system get all
-          kubectl -n grafana-operator-system get grafana
+          kubectl -n $NAMESPACE get all
+          kubectl -n $NAMESPACE get grafana
           kubectl get crd
-          POD=$(kubectl get pods -n grafana-operator-system -l control-plane=controller-manager --output=jsonpath={.items..metadata.name})
-          kubectl logs -n grafana-operator-system $POD -c manager
+          POD=$(kubectl get pods -n $NAMESPACE -l control-plane=controller-manager --output=jsonpath={.items..metadata.name})
+          kubectl logs -n $NAMESPACE $POD -c manager
+          cat /tmp/grafana_e2e_debug.txt
           ps -ef |grep port-forward
