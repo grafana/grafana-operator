@@ -237,11 +237,12 @@ func main() { // nolint
 		os.Exit(1)
 	}
 	if err = (&grafanadatasource.GrafanaDatasourceReconciler{
-		Client:  mgr.GetClient(),
-		Context: ctx,
-		Cancel:  cancel,
-		Logger:  ctrl.Log.WithName("controllers").WithName("GrafanaDatasource"),
-		Scheme:  mgr.GetScheme(),
+		Client:   mgr.GetClient(),
+		Context:  ctx,
+		Cancel:   cancel,
+		Logger:   ctrl.Log.WithName("controllers").WithName("GrafanaDatasource"),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("GrafanaDatasource"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDatasource")
 		os.Exit(1)
