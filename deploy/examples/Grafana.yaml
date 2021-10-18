@@ -8,7 +8,7 @@ spec:
   ingress:
     enabled: True
     pathType: Prefix
-    path: '/'
+    path: "/"
   config:
     log:
       mode: "console"
@@ -27,12 +27,12 @@ spec:
       type: "grafana-service"
   dashboardLabelSelector:
     - matchExpressions:
-        - { key: app, operator: In, values: [ grafana ] }
+        - { key: app, operator: In, values: [grafana] }
   resources:
     # Optionally specify container resources
     limits:
-      cpu: 2000m
-      memory: 8000Mi
+      cpu: 200m
+      memory: 200Mi
     requests:
       cpu: 100m
-      memory: 200Mi
+      memory: 100Mi
