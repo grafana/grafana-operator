@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	v12 "github.com/openshift/api/route/v1"
+	v13 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -61,8 +62,8 @@ type JsonnetConfig struct {
 
 // Grafana API client settings
 type GrafanaClient struct {
-	TimeoutSeconds *int `json:"timeout"`
-	PreferService  bool `json:"preferService"`
+	TimeoutSeconds *int  `json:"timeout,omitempty"`
+	PreferService  *bool `json:"preferService,omitempty"`
 }
 
 // GrafanaService provides a means to configure the service
@@ -93,21 +94,22 @@ type GrafanaServiceAccount struct {
 
 // GrafanaDeployment provides a means to configure the deployment
 type GrafanaDeployment struct {
-	Annotations                   map[string]string      `json:"annotations,omitempty"`
-	Labels                        map[string]string      `json:"labels,omitempty"`
-	Replicas                      int32                  `json:"replicas"`
-	NodeSelector                  map[string]string      `json:"nodeSelector,omitempty"`
-	Tolerations                   []v1.Toleration        `json:"tolerations,omitempty"`
-	Affinity                      *v1.Affinity           `json:"affinity,omitempty"`
-	SecurityContext               *v1.PodSecurityContext `json:"securityContext,omitempty"`
-	ContainerSecurityContext      *v1.SecurityContext    `json:"containerSecurityContext,omitempty"`
-	TerminationGracePeriodSeconds int64                  `json:"terminationGracePeriodSeconds"`
-	EnvFrom                       []v1.EnvFromSource     `json:"envFrom,omitempty"`
-	SkipCreateAdminAccount        *bool                  `json:"skipCreateAdminAccount,omitempty"`
-	PriorityClassName             string                 `json:"priorityClassName,omitempty"`
-	HostNetwork                   *bool                  `json:"hostNetwork,omitempty"`
-	ExtraVolumes                  []v1.Volume            `json:"extraVolumes,omitempty"`
-	ExtraVolumeMounts             []v1.VolumeMount       `json:"extraVolumeMounts,omitempty"`
+	Annotations                   map[string]string       `json:"annotations,omitempty"`
+	Labels                        map[string]string       `json:"labels,omitempty"`
+	Replicas                      int32                   `json:"replicas"`
+	NodeSelector                  map[string]string       `json:"nodeSelector,omitempty"`
+	Tolerations                   []v1.Toleration         `json:"tolerations,omitempty"`
+	Affinity                      *v1.Affinity            `json:"affinity,omitempty"`
+	SecurityContext               *v1.PodSecurityContext  `json:"securityContext,omitempty"`
+	ContainerSecurityContext      *v1.SecurityContext     `json:"containerSecurityContext,omitempty"`
+	TerminationGracePeriodSeconds int64                   `json:"terminationGracePeriodSeconds"`
+	EnvFrom                       []v1.EnvFromSource      `json:"envFrom,omitempty"`
+	SkipCreateAdminAccount        *bool                   `json:"skipCreateAdminAccount,omitempty"`
+	PriorityClassName             string                  `json:"priorityClassName,omitempty"`
+	HostNetwork                   *bool                   `json:"hostNetwork,omitempty"`
+	ExtraVolumes                  []v1.Volume             `json:"extraVolumes,omitempty"`
+	ExtraVolumeMounts             []v1.VolumeMount        `json:"extraVolumeMounts,omitempty"`
+	Strategy                      *v13.DeploymentStrategy `json:"strategy,omitempty"`
 }
 
 // GrafanaIngress provides a means to configure the ingress created
@@ -162,6 +164,7 @@ type GrafanaConfig struct {
 	Alerting                      *GrafanaConfigAlerting                      `json:"alerting,omitempty" ini:"alerting,omitempty"`
 	Panels                        *GrafanaConfigPanels                        `json:"panels,omitempty" ini:"panels,omitempty"`
 	Plugins                       *GrafanaConfigPlugins                       `json:"plugins,omitempty" ini:"plugins,omitempty"`
+	FeatureToggles                *GrafanaConfigFeatureToggles                `json:"feature_toggles,omitempty" ini:"feature_toggles,omitempty"`
 }
 
 type GrafanaConfigPaths struct {
@@ -496,15 +499,19 @@ type GrafanaConfigPlugins struct {
 	EnableAlpha *bool `json:"enable_alpha,omitempty" ini:"enable_alpha"`
 }
 
+type GrafanaConfigFeatureToggles struct {
+	Enable string `json:"enable,omitempty" ini:"enable,omitempty"`
+}
+
 // GrafanaStatus defines the observed state of Grafana
 // +k8s:openapi-gen=true
 type GrafanaStatus struct {
 	Phase               StatusPhase                       `json:"phase"`
 	PreviousServiceName string                            `json:"previousServiceName"`
 	Message             string                            `json:"message"`
-	InstalledDashboards map[string][]*GrafanaDashboardRef `json:"dashboards"`
-	InstalledPlugins    PluginList                        `json:"installedPlugins"`
-	FailedPlugins       PluginList                        `json:"failedPlugins"`
+	InstalledDashboards map[string][]*GrafanaDashboardRef `json:"dashboards,omitempty"`
+	InstalledPlugins    PluginList                        `json:"installedPlugins,omitempty"`
+	FailedPlugins       PluginList                        `json:"failedPlugins,omitempty"`
 }
 
 // GrafanaPlugin contains information about a single plugin
