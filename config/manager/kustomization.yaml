@@ -13,4 +13,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: quay.io/grafana-operator/grafana-operator
-  newTag: v4.0.0
+  newTag: v4.0.1

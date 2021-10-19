@@ -70,9 +70,9 @@ type GrafanaDataSourceFields struct {
 	Name              string                          `json:"name"`
 	Type              string                          `json:"type"`
 	Uid               string                          `json:"uid,omitempty"`
-	Access            string                          `json:"access"`
+	Access            string                          `json:"access,omitempty"`
 	OrgId             int                             `json:"orgId,omitempty"`
-	Url               string                          `json:"url"`
+	Url               string                          `json:"url,omitempty"`
 	Password          string                          `json:"password,omitempty"`
 	User              string                          `json:"user,omitempty"`
 	Database          string                          `json:"database,omitempty"`

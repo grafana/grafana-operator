@@ -48,7 +48,7 @@ type GrafanaDatasourceReconciler struct {
 	Scheme   *runtime.Scheme
 	Context  context.Context
 	Cancel   context.CancelFunc
-	recorder record.EventRecorder
+	Recorder record.EventRecorder
 	Logger   logr.Logger
 }
 
@@ -155,7 +155,7 @@ func (r *GrafanaDatasourceReconciler) reconcileDataSources(state *common.DataSou
 		// finally, update the configmap
 		err = r.Client.Update(r.Context, state.KnownDataSources)
 		if err != nil {
-			r.recorder.Event(state.KnownDataSources, "Warning", "UpdateError", err.Error())
+			r.Recorder.Event(state.KnownDataSources, "Warning", "UpdateError", err.Error())
 		} else {
 			r.manageSuccess(updated)
 		}
@@ -194,7 +194,7 @@ func (i *GrafanaDatasourceReconciler) updateHash(known *v1.ConfigMap) (string, e
 
 // Handle error case: update datasource with error message and status
 func (r *GrafanaDatasourceReconciler) manageError(datasource *grafanav1alpha1.GrafanaDataSource, issue error) {
-	r.recorder.Event(datasource, "Warning", "ProcessingError", issue.Error())
+	r.Recorder.Event(datasource, "Warning", "ProcessingError", issue.Error())
 
 	// datasource deleted
 	if datasource == nil {
@@ -227,7 +227,7 @@ func (r *GrafanaDatasourceReconciler) manageSuccess(datasources []grafanav1alpha
 
 		err := r.Client.Status().Update(r.Context, &datasources[i])
 		if err != nil {
-			r.recorder.Event(&datasources[i], "Warning", "UpdateError", err.Error())
+			r.Recorder.Event(&datasources[i], "Warning", "UpdateError", err.Error())
 		}
 	}
 }
