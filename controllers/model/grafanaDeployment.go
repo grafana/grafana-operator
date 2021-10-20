@@ -184,6 +184,27 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume { // nolint
 	var volumes []v13.Volume // nolint
 	var volumeOptional = true
 
+	volumes = append(volumes, v13.Volume{
+		Name: constants.GrafanaProvisionPluginVolumeName,
+		VolumeSource: v13.VolumeSource{
+			EmptyDir: &v13.EmptyDirVolumeSource{},
+		},
+	})
+
+	volumes = append(volumes, v13.Volume{
+		Name: constants.GrafanaProvisionDashboardVolumeName,
+		VolumeSource: v13.VolumeSource{
+			EmptyDir: &v13.EmptyDirVolumeSource{},
+		},
+	})
+
+	volumes = append(volumes, v13.Volume{
+		Name: constants.GrafanaProvisionNotifierVolumeName,
+		VolumeSource: v13.VolumeSource{
+			EmptyDir: &v13.EmptyDirVolumeSource{},
+		},
+	})
+
 	// Volume to mount the config file from a config map
 	volumes = append(volumes, v13.Volume{
 		Name: constants.GrafanaConfigName,
@@ -368,6 +389,21 @@ func getVolumeMounts(cr *v1alpha1.Grafana) []v13.VolumeMount {
 			MountPath: config.GrafanaPluginsPath,
 		})
 	}
+
+	mounts = append(mounts, v13.VolumeMount{
+		Name:      constants.GrafanaProvisionPluginVolumeName,
+		MountPath: config.GrafanaProvisioningPluginsPath,
+	})
+
+	mounts = append(mounts, v13.VolumeMount{
+		Name:      constants.GrafanaProvisionDashboardVolumeName,
+		MountPath: config.GrafanaProvisioningDashboardsPath,
+	})
+
+	mounts = append(mounts, v13.VolumeMount{
+		Name:      constants.GrafanaProvisionNotifierVolumeName,
+		MountPath: config.GrafanaProvisioningNotifiersPath,
+	})
 
 	mounts = append(mounts, v13.VolumeMount{
 		Name:      constants.GrafanaLogsVolumeName,
