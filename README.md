@@ -57,7 +57,9 @@ This is the current main branch of the project, all future development will take
 
 Please use the following link to access documentation at any given release of the operator:
 
-https://github.com/grafana-operator/grafana-operator/tree/`<version>`/documentation
+```txt
+https://github.com/grafana-operator/grafana-operator/tree/<version>/documentation
+```
 
 ## Summary of benefits
 
