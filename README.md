@@ -5,14 +5,11 @@ An operator to provision and manage Grafana Instances, Dashboards, Datasources a
 ## Companies and teams that trust and use the Grafana operator
 
 
-| Syntax      | Description |
-| :---        |    :----:   |
-| [Red Hat](https://www.redhat.com/)|![](./media/users/redhat.png =250x250) |
-| [Integreatly](https://www.redhat.com/en/products/integration)|![image info](./media/users/integreatly.png =250x250)|
-| [Continental](https://www.continental.com/)|![](./media/users/continental.png =250x250)|
-| [Handelsbanken]("https://www.handelsbanken.se/en/")|![](./media/users/redhat.png =250x250)|
-| [Xenit](https://xenit.se/contact/)|![](./media/users/xenit.png =250x250)|
-| [Torqata](https://torqata.com)|![](./media/users/torqata.jpg =250x250)|
+| Company  | Logo | Company | Logo
+| :---     |    :----:   | :---        |    :----:   |
+| [Red Hat](https://www.redhat.com)| <img src= "./media/users/redhat.png" width=100 height=100 > | [Integreatly](https://www.redhat.com/en/products/integration)|<img src= "./media/users/integreatly.png" width=100 height=100> |
+ [Continental](https://www.continental.com/)|<img src= "./media/users/continental.png" width=100 height=100 > | [Handelsbanken]("https://www.handelsbanken.se/en/")|<img src= "./media/users/handelsbanken.svg" width=100 height=100 >|
+| [Xenit](https://xenit.se/contact/)|<img src= "./media/users/xenit.png" width=150 height=50 >| [Torqata](https://torqata.com)|<img src= "./media/users/torqata.jpg" width=150 height=50 > |
 
 ***If you find this operator useful in your product/deployment, feel free to send a pull request to add your company/team to be displayed here!***
 
