@@ -3,10 +3,9 @@ package model
 import (
 	"fmt"
 
-	"github.com/integr8ly/grafana-operator/controllers/constants"
-
-	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/controllers/config"
+	"github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/config"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/constants"
 	v1 "k8s.io/api/apps/v1"
 	v13 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -185,6 +184,27 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume { // nolint
 	var volumes []v13.Volume // nolint
 	var volumeOptional = true
 
+	volumes = append(volumes, v13.Volume{
+		Name: constants.GrafanaProvisionPluginVolumeName,
+		VolumeSource: v13.VolumeSource{
+			EmptyDir: &v13.EmptyDirVolumeSource{},
+		},
+	})
+
+	volumes = append(volumes, v13.Volume{
+		Name: constants.GrafanaProvisionDashboardVolumeName,
+		VolumeSource: v13.VolumeSource{
+			EmptyDir: &v13.EmptyDirVolumeSource{},
+		},
+	})
+
+	volumes = append(volumes, v13.Volume{
+		Name: constants.GrafanaProvisionNotifierVolumeName,
+		VolumeSource: v13.VolumeSource{
+			EmptyDir: &v13.EmptyDirVolumeSource{},
+		},
+	})
+
 	// Volume to mount the config file from a config map
 	volumes = append(volumes, v13.Volume{
 		Name: constants.GrafanaConfigName,
@@ -225,20 +245,23 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume { // nolint
 	}
 
 	// Volume to store the plugins
-	appendIfContainsPlugin := func(slice []v13.VolumeMount) bool {
+	appendIfContainsPlugin := func() bool {
 		var foundGrafanaPluginsPath bool
-		if cr.Spec.Deployment.ExtraVolumeMounts != nil {
-			for _, item := range slice {
+		if cr.Spec.Deployment != nil {
+			for _, item := range cr.Spec.Deployment.ExtraVolumeMounts {
 				if item.MountPath == config.GrafanaPluginsPath {
 					foundGrafanaPluginsPath = true
 					break
 				}
 			}
 		}
-		volumes = append(volumes, cr.Spec.Deployment.ExtraVolumes...)
+
+		if cr.Spec.Deployment != nil {
+			volumes = append(volumes, cr.Spec.Deployment.ExtraVolumes...)
+		}
 		return foundGrafanaPluginsPath
 	}
-	if !appendIfContainsPlugin(cr.Spec.Deployment.ExtraVolumeMounts) {
+	if !appendIfContainsPlugin() {
 		volumes = append(volumes, v13.Volume{
 			Name: constants.GrafanaPluginsVolumeName,
 			VolumeSource: v13.VolumeSource{
@@ -344,25 +367,43 @@ func getVolumeMounts(cr *v1alpha1.Grafana) []v13.VolumeMount {
 		MountPath: config.GrafanaDataPath,
 	})
 
-	appendIfContainsPlugin := func(slice []v13.VolumeMount) bool {
+	appendIfContainsPlugin := func() bool {
 		var foundGrafanaPluginsPath bool
-		if cr.Spec.Deployment.ExtraVolumeMounts != nil {
-			for _, item := range slice {
+		if cr.Spec.Deployment != nil {
+			for _, item := range cr.Spec.Deployment.ExtraVolumeMounts {
 				if item.MountPath == config.GrafanaPluginsPath {
 					foundGrafanaPluginsPath = true
 					break
 				}
 			}
 		}
-		mounts = append(mounts, cr.Spec.Deployment.ExtraVolumeMounts...)
+
+		if cr.Spec.Deployment != nil {
+			mounts = append(mounts, cr.Spec.Deployment.ExtraVolumeMounts...)
+		}
 		return foundGrafanaPluginsPath
 	}
-	if !appendIfContainsPlugin(cr.Spec.Deployment.ExtraVolumeMounts) {
+	if !appendIfContainsPlugin() {
 		mounts = append(mounts, v13.VolumeMount{
 			Name:      constants.GrafanaPluginsVolumeName,
 			MountPath: config.GrafanaPluginsPath,
 		})
 	}
+
+	mounts = append(mounts, v13.VolumeMount{
+		Name:      constants.GrafanaProvisionPluginVolumeName,
+		MountPath: config.GrafanaProvisioningPluginsPath,
+	})
+
+	mounts = append(mounts, v13.VolumeMount{
+		Name:      constants.GrafanaProvisionDashboardVolumeName,
+		MountPath: config.GrafanaProvisioningDashboardsPath,
+	})
+
+	mounts = append(mounts, v13.VolumeMount{
+		Name:      constants.GrafanaProvisionNotifierVolumeName,
+		MountPath: config.GrafanaProvisioningNotifiersPath,
+	})
 
 	mounts = append(mounts, v13.VolumeMount{
 		Name:      constants.GrafanaLogsVolumeName,
@@ -574,9 +615,12 @@ func getInitContainers(cr *v1alpha1.Grafana, plugins string) []v13.Container {
 	}
 
 	var volumeName = constants.GrafanaPluginsVolumeName
-	for _, item := range cr.Spec.Deployment.ExtraVolumeMounts {
-		if item.MountPath == config.GrafanaPluginsPath {
-			volumeName = item.Name
+
+	if cr.Spec.Deployment != nil {
+		for _, item := range cr.Spec.Deployment.ExtraVolumeMounts {
+			if item.MountPath == config.GrafanaPluginsPath {
+				volumeName = item.Name
+			}
 		}
 	}
 

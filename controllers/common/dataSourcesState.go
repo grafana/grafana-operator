@@ -2,8 +2,9 @@ package common
 
 import (
 	"context"
-	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/controllers/constants"
+
+	"github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/constants"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"

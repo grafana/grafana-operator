@@ -22,10 +22,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/go-logr/logr"
-	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
+	"github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

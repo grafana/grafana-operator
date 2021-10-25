@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/controllers/common"
-	"github.com/integr8ly/grafana-operator/controllers/config"
-	"github.com/integr8ly/grafana-operator/controllers/constants"
-	"github.com/integr8ly/grafana-operator/controllers/model"
+	"github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/common"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/config"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/constants"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/model"
 	v1 "k8s.io/api/core/v1"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

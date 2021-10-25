@@ -276,10 +276,8 @@ spec:
                     withCredentials:
                       type: boolean
                   required:
-                  - access
                   - name
                   - type
-                  - url
                   type: object
                 type: array
               name:

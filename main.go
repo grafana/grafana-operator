@@ -20,20 +20,21 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/integr8ly/grafana-operator/controllers/grafananotificationchannel"
 	"os"
 	"runtime"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"strings"
 
-	apis "github.com/integr8ly/grafana-operator/api"
-	"github.com/integr8ly/grafana-operator/controllers/common"
-	grafanaconfig "github.com/integr8ly/grafana-operator/controllers/config"
-	"github.com/integr8ly/grafana-operator/controllers/grafana"
-	"github.com/integr8ly/grafana-operator/controllers/grafanadashboard"
-	"github.com/integr8ly/grafana-operator/controllers/grafanadatasource"
-	"github.com/integr8ly/grafana-operator/internal/k8sutil"
-	"github.com/integr8ly/grafana-operator/version"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/grafananotificationchannel"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	apis "github.com/grafana-operator/grafana-operator/v4/api"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/common"
+	grafanaconfig "github.com/grafana-operator/grafana-operator/v4/controllers/config"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/grafana"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/grafanadashboard"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/grafanadatasource"
+	"github.com/grafana-operator/grafana-operator/v4/internal/k8sutil"
+	"github.com/grafana-operator/grafana-operator/v4/version"
 	routev1 "github.com/openshift/api/route/v1"
 	"github.com/operator-framework/operator-lib/leader"
 	"k8s.io/client-go/rest"
@@ -45,7 +46,7 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
-	integreatlyorgv1alpha1 "github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
+	integreatlyorgv1alpha1 "github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -236,11 +237,12 @@ func main() { // nolint
 		os.Exit(1)
 	}
 	if err = (&grafanadatasource.GrafanaDatasourceReconciler{
-		Client:  mgr.GetClient(),
-		Context: ctx,
-		Cancel:  cancel,
-		Logger:  ctrl.Log.WithName("controllers").WithName("GrafanaDatasource"),
-		Scheme:  mgr.GetScheme(),
+		Client:   mgr.GetClient(),
+		Context:  ctx,
+		Cancel:   cancel,
+		Logger:   ctrl.Log.WithName("controllers").WithName("GrafanaDatasource"),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("GrafanaDatasource"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDatasource")
 		os.Exit(1)
