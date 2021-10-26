@@ -112,7 +112,7 @@ docker-push:
 
 # Build and push a multi-architecture docker image
 docker-buildx: test
-	docker buildx build --platform linux/amd64,linux/arm64 --push -t ${IMG} .
+	docker buildx build --platform linux/amd64,linux/arm64,linux/s390x --push -t ${IMG} .
 
 # Download controller-gen locally if necessary
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
