@@ -112,6 +112,9 @@ spec:
                           type: string
                         esVersion:
                           type: integer
+                        githubUrl:
+                          description: Fields for Github data sources
+                          type: string
                         graphiteVersion:
                           type: string
                         httpHeaderName1:
@@ -225,6 +228,9 @@ spec:
                       description: The most common secure json options See https://grafana.com/docs/administration/provisioning/#datasources
                       properties:
                         accessKey:
+                          type: string
+                        accessToken:
+                          description: Fields for Github data sources
                           type: string
                         appInsightsApiKey:
                           type: string
