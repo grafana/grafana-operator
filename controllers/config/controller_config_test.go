@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
+	"github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

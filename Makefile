@@ -1,5 +1,5 @@
 # Current Operator version
-VERSION ?= 4.0.0
+VERSION ?= 4.0.1
 # Default bundle image tag
 BUNDLE_IMG ?= quay.io/grafana-operator/controller-bundle:v$(VERSION)
 # Options for 'bundle-build'

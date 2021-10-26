@@ -6,7 +6,7 @@ metadata:
     capabilities: Basic Install
     operators.operatorframework.io/builder: operator-sdk-v1.3.2
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
-  name: grafana-operator.v4.0.0
+  name: grafana-operator.v4.0.1
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -17,6 +17,9 @@ spec:
       version: v1alpha1
     - kind: GrafanaDataSource
       name: grafanadatasources.integreatly.org
+      version: v1alpha1
+    - kind: GrafanaNotificationChannel
+      name: grafananotificationchannels.integreatly.org
       version: v1alpha1
     - kind: Grafana
       name: grafanas.integreatly.org
@@ -133,6 +136,26 @@ spec:
         - apiGroups:
           - integreatly.org
           resources:
+          - grafananotificationchannels
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - integreatly.org
+          resources:
+          - grafananotificationchannels/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - integreatly.org
+          resources:
           - grafanas
           - grafanas/finalizers
           verbs:
@@ -229,7 +252,7 @@ spec:
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.annotations['olm.targetNamespaces']
-                image: quay.io/grafana-operator/grafana-operator:v4.0.0
+                image: quay.io/grafana-operator/grafana-operator:v4.0.1
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
@@ -301,4 +324,5 @@ spec:
   maturity: alpha
   provider:
     name: Red Hat
-  version: 4.0.0
+  replaces: grafana-operator.v4.0.0
+  version: 4.0.1

@@ -90,3 +90,26 @@ make docker-build IMG=quay.io/$QUAY_USER/grafana-operator:latest
 make docker-push IMG=quay.io/$QUAY_USER/grafana-operator:latest
 make deploy IMG=quay.io/$QUAY_USER/grafana-operator:latest
 ```
+
+## e2e script
+
+Running the e2e script locally assumes that you have made the container image available to your cluster.
+For example if you are using kind it should be pre-loaded.
+
+It assume that you are not running any other grafana operator instance for example through go.
+
+To run it:
+
+```hack/e2e.sh
+sh hack/e2e.sh
+```
+
+If you want to clean-up a few of the resources that hack/e2e.sh creates use clean_e2e.sh.
+It will remove the grafana instances and operator but it won't delete the port-forward.
+It will also remove the debug output file /tmp/grafana_e2e_debug.txt after reading the file.
+
+```hack/clean_e2e.sh
+sh hack/clean_e2e.sh
+# To kill the potentially remaining port-forward to the grafana service:
+kill $(lsof -t -i:3000)
+```

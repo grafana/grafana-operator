@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
+	"github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
 )
 
 const (
@@ -21,6 +21,9 @@ const (
 	GrafanaLogsPath                         = "/var/log/grafana"
 	GrafanaPluginsPath                      = "/var/lib/grafana/plugins"
 	GrafanaProvisioningPath                 = "/etc/grafana/provisioning/"
+	GrafanaProvisioningPluginsPath          = "/etc/grafana/provisioning/plugins"
+	GrafanaProvisioningDashboardsPath       = "/etc/grafana/provisioning/dashboards"
+	GrafanaProvisioningNotifiersPath        = "/etc/grafana/provisioning/notifiers"
 	PluginsInitContainerImage               = "quay.io/integreatly/grafana_plugins_init"
 	PluginsInitContainerTag                 = "0.0.3"
 	PluginsUrl                              = "https://grafana.com/api/plugins/%s/versions/%s"

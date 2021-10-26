@@ -396,13 +396,6 @@ GrafanaDataSourceSpec defines the desired state of GrafanaDataSource
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>access</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
@@ -417,12 +410,12 @@ GrafanaDataSourceSpec defines the desired state of GrafanaDataSource
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b>url</b></td>
+        <td><b>access</b></td>
         <td>string</td>
         <td>
           <br/>
         </td>
-        <td>true</td>
+        <td>false</td>
       </tr><tr>
         <td><b>basicAuth</b></td>
         <td>boolean</td>
@@ -495,6 +488,13 @@ GrafanaDataSourceSpec defines the desired state of GrafanaDataSource
         <td>false</td>
       </tr><tr>
         <td><b>uid</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>url</b></td>
         <td>string</td>
         <td>
           <br/>
