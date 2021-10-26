@@ -24,8 +24,8 @@ const (
 	GrafanaProvisioningPluginsPath          = "/etc/grafana/provisioning/plugins"
 	GrafanaProvisioningDashboardsPath       = "/etc/grafana/provisioning/dashboards"
 	GrafanaProvisioningNotifiersPath        = "/etc/grafana/provisioning/notifiers"
-	PluginsInitContainerImage               = "quay.io/integreatly/grafana_plugins_init"
-	PluginsInitContainerTag                 = "0.0.3"
+	PluginsInitContainerImage               = "quay.io/grafana-operator/grafana_plugins_init"
+	PluginsInitContainerTag                 = "0.0.5"
 	PluginsUrl                              = "https://grafana.com/api/plugins/%s/versions/%s"
 	RequeueDelay                            = time.Second * 10
 	SecretsMountDir                         = "/etc/grafana-secrets/" // #nosec G101
