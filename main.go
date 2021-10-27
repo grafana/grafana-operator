@@ -89,9 +89,9 @@ func assignOpts() {
 	flag.StringVar(&flagImageTag, "grafana-image-tag", "", "Overrides the default Grafana image tag")
 	flag.StringVar(&flagPluginsInitContainerImage, "grafana-plugins-init-container-image", "", "Overrides the default Grafana Plugins Init Container image")
 	flag.StringVar(&flagPluginsInitContainerTag, "grafana-plugins-init-container-tag", "", "Overrides the default Grafana Plugins Init Container tag")
-	flag.StringVar(&flagNamespaces, "namespaces", "", "Namespaces to scope the interaction of the Grafana operator. Mutually exclusive with --scan-all")
+	flag.StringVar(&flagNamespaces, "namespaces", LookupEnvOrString("DASHBOARD_NAMESPACES", ""), "Namespaces to scope the interaction of the Grafana operator. Mutually exclusive with --scan-all")
 	flag.StringVar(&flagJsonnetLocation, "jsonnet-location", "", "Overrides the base path of the jsonnet libraries")
-	flag.BoolVar(&scanAll, "scan-all", false, "Scans all namespaces for dashboards")
+	flag.BoolVar(&scanAll, "scan-all", LookupEnvOrBool("DASHBOARD_NAMESPACES_ALL", false), "Scans all namespaces for dashboards")
 
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -258,7 +258,10 @@ func main() { // nolint
 		os.Exit(1)
 	}
 
-	setupLog.Info("starting manager")
+	setupLog.Info("starting manager with options",
+		"watchNamespace", namespace,
+		"dashboardNamespaces", flagNamespaces,
+		"scanAll", scanAll)
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
@@ -344,4 +347,18 @@ func getSanitizedNamespaceList() []string {
 	}
 
 	return selected
+}
+
+func LookupEnvOrString(key string, defaultVal string) string {
+	if val, ok := os.LookupEnv(key); ok {
+		return val
+	}
+	return defaultVal
+}
+
+func LookupEnvOrBool(key string, defaultVal bool) bool {
+	if val, ok := os.LookupEnv(key); ok {
+		return val == "true"
+	}
+	return defaultVal
 }
