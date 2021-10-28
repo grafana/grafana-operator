@@ -43,11 +43,11 @@ All releases of the operator can be found on [Operator Hub](https://operatorhub.
 
 ***This version has known vulnerabilities present, rooted in the version of the operator-sdk that was used, please upgrade to v4(operator-sdk v1.3.0) to mitigate the risk***
 
-This version of the operator will be deprecated in the near future, we reccomend new users to install v4 and existing users to upgrade as soon as possible using the [upgrade guide](./documentation/upgrade.md).
+This version of the operator will be deprecated in the near future, we recommend new users to install v4 and existing users to upgrade as soon as possible using the [upgrade guide](./documentation/upgrade.md).
 
 We won't be accepting any new features for v3, the only releases made under this version will be either bug-fixes or security patches.
 
-The operator-sdk is an exception to the security patch rule, it cannot be updated without introducing breaking changes, hence the reccomendation to upgrade to v4, which mitigates these CVEs.
+The operator-sdk is an exception to the security patch rule, it cannot be updated without introducing breaking changes, hence the recommendation to upgrade to v4, which mitigates these CVEs.
 
 The documentation for this version can be found here: [https://github.com/grafana-operator/grafana-operator/tree/v3/documentation](https://github.com/grafana-operator/grafana-operator/tree/v3/documentation).
 
