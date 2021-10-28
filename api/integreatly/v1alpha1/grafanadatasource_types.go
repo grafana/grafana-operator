@@ -164,6 +164,8 @@ type GrafanaDataSourceJsonData struct {
 	HTTPMethod            string `json:"httpMethod,omitempty"`
 	// Fields for tracing data sources
 	TracesToLogs GrafanaDataSourceJsonTracesToLogs `json:"tracesToLogs,omitempty"`
+	// Fields for Github data sources
+	GithubUrl string `json:"githubUrl,omitempty"`
 }
 
 type GrafanaDataSourceJsonDerivedFields struct {
@@ -209,6 +211,8 @@ type GrafanaDataSourceSecureJsonData struct {
 	LogAnalyticsClientSecret string `json:"logAnalyticsClientSecret,omitempty"`
 	// Fields for InfluxDB data sources
 	Token string `json:"token,omitempty"`
+	// Fields for Github data sources
+	AccessToken string `json:"accessToken,omitempty"`
 }
 
 func init() {

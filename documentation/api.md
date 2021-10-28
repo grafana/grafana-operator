@@ -682,6 +682,13 @@ The most common json options See https://grafana.com/docs/administration/provisi
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>githubUrl</b></td>
+        <td>string</td>
+        <td>
+          Fields for Github data sources<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>graphiteVersion</b></td>
         <td>string</td>
         <td>
@@ -1103,6 +1110,13 @@ The most common secure json options See https://grafana.com/docs/administration/
         <td>string</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>accessToken</b></td>
+        <td>string</td>
+        <td>
+          Fields for Github data sources<br/>
         </td>
         <td>false</td>
       </tr><tr>
