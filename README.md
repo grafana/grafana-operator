@@ -101,6 +101,7 @@ The following Grafana resources are supported:
 * GrafanaNotificationChannel
 
 all custom resources use the api group `integreatly.org` and version `v1alpha1`.
+To get a overview of the available grafana-operator CRD see api.md.
 
 ### Grafanas
 
@@ -118,22 +119,8 @@ Represents a Grafana datasource. See [the documentation](./documentation/datasou
 
 Represents a Grafana datasource. See [the documentation](./documentation/notifiers.md) for a description of properties supported in the spec.
 
-## Building the operator image
-
-Init the submodules first to obtain grafonnet:
-
-```sh
-make submodule
-```
-
-Then build the image using:
-
-```sh
-make docker-build IMG=<registry>/<user>/grafana-operator:<tag>
-```
-
 ## Developement and Local Deployment
 
 ### Using the Makefile
 
-If you want to further develop the operator, here are some instructions how to set up your dev-environment: [follow me](./documentation/develop.md)
+If you want to develop/build/test the operator, here are some instructions how to set up your dev-environment: [follow me](./documentation/develop.md)
