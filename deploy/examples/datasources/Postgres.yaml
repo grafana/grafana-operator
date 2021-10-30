@@ -7,7 +7,7 @@ spec:
   datasources:
   - name: Postgres
     type: postgres
-    database: postgresdb # name of your database
+    database: dvdrental # name of your database
     editable: false
     jsonData:
       connMaxLifetime: 14400
