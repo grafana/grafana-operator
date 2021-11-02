@@ -16,7 +16,7 @@ pipeline {
                 branch 'master'
             }
             steps {
-                sh "docker push us.gcr.io/${PROJECT}/grafana-operator:4.0.0
+                sh "docker push us.gcr.io/${PROJECT}/grafana-operator:4.0.0"
             }
         }
     }
