@@ -145,6 +145,8 @@ type GrafanaDataSourceJsonData struct {
 	// Fields for Prometheus data sources
 	CustomQueryParameters string `json:"customQueryParameters,omitempty"`
 	HTTPMethod            string `json:"httpMethod,omitempty"`
+	// Fields for Alertmanager data sources
+	Implementation string `json:"implementation,omitempty"`
 }
 
 type GrafanaDataSourceJsonDerivedFields struct {

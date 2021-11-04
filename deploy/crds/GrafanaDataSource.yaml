@@ -189,6 +189,9 @@ spec:
                             type: string
                           xHeaderUser:
                             type: string
+                          implementation:
+                            description: Fields for Alertmanager data sources
+                            type: string
                         type: object
                       name:
                         type: string
