@@ -71,6 +71,7 @@ PASSWORD=$(kubectl -n $NAMESPACE get secrets grafana-admin-credentials --templat
 
 # Create some base dashboard & datasource
 kubectl apply -f deploy/examples/dashboards/SimpleDashboard.yaml -n $NAMESPACE
+kubectl apply -f deploy/examples/dashboards/DashboardFromGrafana.yaml -n $NAMESPACE
 kubectl apply -f deploy/examples/datasources/Prometheus.yaml -n $NAMESPACE
 
 # Verify that the grafana dashboard exist
@@ -84,11 +85,25 @@ FPID=$!
 sleep 5
 curl localhost:3000/api/health
 sleep 5
-DASHBOARDOUTPUT=$(curl $HEADER "http://admin:$PASSWORD@localhost:3000/api/search?folderIds=0&query=&starred=false")
+
+# get top-level folders
+DASHBOARDOUTPUT=$(curl $HEADER "http://admin:$PASSWORD@localhost:3000/api/search?folderIds=0")
 sleep 1
-GRAFANAUID=$(echo $DASHBOARDOUTPUT |jq -r '.[0].uid')
+echo "DASHBOARDOUTPUT: $(echo ${DASHBOARDOUTPUT} | jq)"
+
+# get folder ID
+GRAFANA_TOP_FOLDER_ID=$(echo $DASHBOARDOUTPUT |jq -r '.[0].id')
 sleep 1
-GRAFANA_DASHBOARD=$(curl $HEADER "http://admin:$PASSWORD@localhost:3000/api/dashboards/uid/$GRAFANAUID")
+
+GRAFANA_DASHBOARDS=$(curl $HEADER "http://admin:$PASSWORD@localhost:3000/api/search?folderIds=$GRAFANA_TOP_FOLDER_ID")
+NUM_DASHBOARDS=$(echo $GRAFANA_DASHBOARDS | jq -r length)
+if [[ $NUM_DASHBOARDS != 2 ]]; then
+  echo "NUM_DASHBOARDS: want 2, got $NUM_DASHBOARDS"
+  echo "Available dashboards: ${GRAFANA_DASHBOARDS}" >> $DEBUG_FILE
+  exit 1
+fi
+
+GRAFANA_DASHBOARDS=$(curl $HEADER "http://admin:$PASSWORD@localhost:3000/api/dashboards/uid/$GRAFANA_TOP_FOLDER_ID")
 sleep 1
 FOLDER_ID=$(echo $GRAFANA_DASHBOARD |jq -r .meta.folderId)
 if [[ $FOLDER_ID != 0 ]]; then
