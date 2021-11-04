@@ -7,7 +7,7 @@ pipeline {
     stages {
         stage('build') {
             steps {
-                withEnv(["GOPATH=${env.WORKSPACE}/workspace","PATH=$GOPATH/bin;$PATH"]){
+                withEnv(["GOPATH=${env.WORKSPACE}/workspace","PATH=$GOPATH/bin:$PATH"]){
                     sh "mkdir -p ${env.WORKSPACE}/workspace"
                     sh "make submodule"
                     sh "make docker-build IMG=us.gcr.io/${PROJECT}/grafana-operator:4.0.0"
