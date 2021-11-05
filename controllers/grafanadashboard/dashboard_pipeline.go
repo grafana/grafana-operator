@@ -50,18 +50,17 @@ type DashboardPipelineImpl struct {
 	Context   context.Context
 }
 
-func NewDashboardPipeline(client client.Client, dashboard *v1alpha1.GrafanaDashboard, ctx context.Context) DashboardPipeline {
+func NewDashboardPipeline(client client.Client, dashboard *v1alpha1.GrafanaDashboard) *DashboardPipelineImpl {
 	return &DashboardPipelineImpl{
 		Client:    client,
 		Dashboard: dashboard,
 		JSON:      "",
 		Logger:    log.Log.WithName(fmt.Sprintf("dashboard-%v", dashboard.Name)),
-		Context:   ctx,
 	}
 }
 
-func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string, folderId *int64, folderName string, forceRecreate bool) ([]byte, error) {
-	err := r.obtainJson()
+func (r *DashboardPipelineImpl) ProcessDashboard(ctx context.Context, knownHash string, folderId *int64, folderName string) ([]byte, error) {
+	err := r.obtainJson(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +117,7 @@ func (r *DashboardPipelineImpl) validateJson() error {
 // 2) url or grafanaCom fails or not provided: try to fetch from configmap ref
 // 3) no configmap specified: try to use embedded json
 // 4) no json specified: try to use embedded jsonnet
-func (r *DashboardPipelineImpl) obtainJson() error {
+func (r *DashboardPipelineImpl) obtainJson(ctx context.Context) error {
 	// TODO(DeanBrunt): Add earlier validation for this
 	if r.Dashboard.Spec.Url != "" && r.Dashboard.Spec.GrafanaCom != nil {
 		return errors.New("both dashboard url and grafana.com source specified")
@@ -133,7 +132,7 @@ func (r *DashboardPipelineImpl) obtainJson() error {
 	}
 
 	if r.Dashboard.Spec.Url != "" {
-		err := r.loadDashboardFromURL()
+		err := r.loadDashboardFromURL(ctx)
 		if err != nil {
 			r.Logger.Error(err, "failed to request dashboard url, falling back to config map; if specified")
 		} else {
@@ -184,7 +183,7 @@ func (r *DashboardPipelineImpl) loadJsonnet(source string) (string, error) {
 }
 
 // Try to obtain the dashboard json from a provided url
-func (r *DashboardPipelineImpl) loadDashboardFromURL() error {
+func (r *DashboardPipelineImpl) loadDashboardFromURL(ctx context.Context) error {
 	url, err := url.ParseRequestURI(r.Dashboard.Spec.Url)
 	if err != nil {
 		return fmt.Errorf("invalid url %v", r.Dashboard.Spec.Url)
@@ -221,7 +220,7 @@ func (r *DashboardPipelineImpl) loadDashboardFromURL() error {
 	// Update dashboard spec so that URL would not be refetched
 	if r.JSON != r.Dashboard.Spec.Json {
 		r.Dashboard.Spec.Json = r.JSON
-		err := r.Client.Update(r.Context, r.Dashboard)
+		err := r.Client.Update(ctx, r.Dashboard)
 		if err != nil {
 			return err
 		}

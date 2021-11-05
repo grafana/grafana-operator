@@ -91,12 +91,16 @@ func (c *ControllerConfig) RemovePluginsFor(namespace, name string) {
 	delete(c.Plugins, id)
 }
 
-func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard, folderId *int64, folderName string) {
+func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard, grafana *v1alpha1.Grafana, folderId *int64, folderName string) []*v1alpha1.GrafanaDashboardRef {
+	var dashboardRefs []*v1alpha1.GrafanaDashboardRef
 	ns := dashboard.Namespace
-	if i, exists := c.HasDashboard(dashboard.UID()); !exists {
-		c.Lock()
-		defer c.Unlock()
-		c.Dashboards = append(c.Dashboards, &v1alpha1.GrafanaDashboardRef{
+
+	if grafana.Status.InstalledDashboards != nil {
+		copy(dashboardRefs, grafana.Status.InstalledDashboards)
+	}
+
+	if _, exists := c.HasDashboard(grafana, dashboard.UID()); !exists {
+		dashboardRefs = append(dashboardRefs, &v1alpha1.GrafanaDashboardRef{
 			Name:       dashboard.Name,
 			Namespace:  ns,
 			UID:        dashboard.UID(),
@@ -105,25 +109,26 @@ func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard, fo
 			FolderName: dashboard.Spec.CustomFolderName,
 		})
 	} else {
-		c.Lock()
-		defer c.Unlock()
-		c.Dashboards[i] = &v1alpha1.GrafanaDashboardRef{
+		dashboardRefs = append(dashboardRefs, &v1alpha1.GrafanaDashboardRef{
 			Name:       dashboard.Name,
 			Namespace:  ns,
 			UID:        dashboard.UID(),
 			Hash:       dashboard.Hash(),
 			FolderId:   folderId,
 			FolderName: folderName,
-		}
+		})
 	}
+
+	return dashboardRefs
 }
 
-func (c *ControllerConfig) HasDashboard(str string) (int, bool) {
-	for i, v := range c.Dashboards {
-		if v.UID == str {
+func (c *ControllerConfig) HasDashboard(grafana *v1alpha1.Grafana, uid string) (int, bool) {
+	for i, d := range grafana.Status.InstalledDashboards {
+		if d.UID == uid {
 			return i, true
 		}
 	}
+
 	return -1, false
 }
 
@@ -141,15 +146,18 @@ func (c *ControllerConfig) SetDashboards(dashboards []*v1alpha1.GrafanaDashboard
 	c.Dashboards = dashboards
 }
 
-func (c *ControllerConfig) RemoveDashboard(hash string) {
-	if i, exists := c.HasDashboard(hash); exists {
-		c.Lock()
-		defer c.Unlock()
-		list := c.Dashboards
-		list[i] = list[len(list)-1]
-		list = list[:len(list)-1]
-		c.Dashboards = list
+func (c *ControllerConfig) RemoveDashboard(grafana *v1alpha1.Grafana, uid string) []*v1alpha1.GrafanaDashboardRef {
+	var dashboardRefs []*v1alpha1.GrafanaDashboardRef
+
+	if grafana.Status.InstalledDashboards != nil {
+		copy(dashboardRefs, grafana.Status.InstalledDashboards)
 	}
+
+	if i, exists := c.HasDashboard(grafana, uid); exists {
+		dashboardRefs = append(dashboardRefs[:i], dashboardRefs[i+1:]...)
+	}
+
+	return dashboardRefs
 }
 
 func (c *ControllerConfig) GetDashboards(namespace string) []*v1alpha1.GrafanaDashboardRef {

@@ -30,7 +30,7 @@ func (d *GrafanaDashboard) matchesSelector(s *metav1.LabelSelector) (bool, error
 	return selector.Empty() || selector.Matches(labels.Set(d.Labels)), nil
 }
 
-// Check if the dashboard matches at least one of the selectors
+// MatchesSelectors check if the dashboard matches at least one of the selectors.
 func (d *GrafanaDashboard) MatchesSelectors(s []*metav1.LabelSelector) (bool, error) {
 	result := false
 
