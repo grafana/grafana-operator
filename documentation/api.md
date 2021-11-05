@@ -396,13 +396,6 @@ GrafanaDataSourceSpec defines the desired state of GrafanaDataSource
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>access</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
@@ -417,12 +410,12 @@ GrafanaDataSourceSpec defines the desired state of GrafanaDataSource
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b>url</b></td>
+        <td><b>access</b></td>
         <td>string</td>
         <td>
           <br/>
         </td>
-        <td>true</td>
+        <td>false</td>
       </tr><tr>
         <td><b>basicAuth</b></td>
         <td>boolean</td>
@@ -495,6 +488,13 @@ GrafanaDataSourceSpec defines the desired state of GrafanaDataSource
         <td>false</td>
       </tr><tr>
         <td><b>uid</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>url</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -679,6 +679,13 @@ The most common json options See https://grafana.com/docs/administration/provisi
         <td>integer</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>githubUrl</b></td>
+        <td>string</td>
+        <td>
+          Fields for Github data sources<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1103,6 +1110,13 @@ The most common secure json options See https://grafana.com/docs/administration/
         <td>string</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>accessToken</b></td>
+        <td>string</td>
+        <td>
+          Fields for Github data sources<br/>
         </td>
         <td>false</td>
       </tr><tr>

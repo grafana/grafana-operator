@@ -6,7 +6,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
+	"github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
 	"github.com/stretchr/testify/require"
 )
 

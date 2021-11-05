@@ -16,7 +16,7 @@ Minikubes can be quickly disposed of and restarted without much downtime. it run
 1. Start the minikube cluster using `minikube start (--vm-driver=<driver>)` the part in the parentheses is optional. for more info read back through the minikube product documentation.
 2. To prepare the local instance of grafana run `make cluster/prepare/local`, this will create a new instance of grafana in the grafana namespace (to edit this edit the NAMESPACE field in the makefile).
 3. Run the operator with `make code/run` or `operator-sdk run local --namespace=grafana"
-4. The ingress readiness probe will most likely fail, after a few seconds, from a new terminal window run `minikube addonsenable ingress`
+4. The ingress readiness probe will most likely fail, after a few seconds, from a new terminal window run `minikube addons enable ingress`
 5. The operator should now see the ingress and proceed with deployment. Optionally to confirm that the ingress is reachable `kubectl get ingress -n grafana` and ensure that the address is not empty.
 
 To stop the operator `ctrl + c` in the terminal with the operator running.

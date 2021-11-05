@@ -112,6 +112,9 @@ spec:
                           type: string
                         esVersion:
                           type: integer
+                        githubUrl:
+                          description: Fields for Github data sources
+                          type: string
                         graphiteVersion:
                           type: string
                         httpHeaderName1:
@@ -226,6 +229,9 @@ spec:
                       properties:
                         accessKey:
                           type: string
+                        accessToken:
+                          description: Fields for Github data sources
+                          type: string
                         appInsightsApiKey:
                           type: string
                         basicAuthPassword:
@@ -284,10 +290,8 @@ spec:
                     withCredentials:
                       type: boolean
                   required:
-                  - access
                   - name
                   - type
-                  - url
                   type: object
                 type: array
               name:
