@@ -6,6 +6,7 @@ labels: bug, needs triage
 assignees: ''
 
 ---
+<!-- Before creating a issue please read though [documentation/debug.md](documentation/debug.md) -->
 
 **Describe the bug**
 A clear and concise description of what the bug is.
