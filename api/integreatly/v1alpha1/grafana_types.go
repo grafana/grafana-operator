@@ -59,7 +59,7 @@ type JsonnetConfig struct {
 	LibraryLabelSelector *metav1.LabelSelector `json:"libraryLabelSelector,omitempty"`
 }
 
-// Grafana API client settings
+// GrafanaClient contains the Grafana API client settings
 type GrafanaClient struct {
 	// +nullable
 	TimeoutSeconds *int `json:"timeout,omitempty"`
@@ -119,7 +119,7 @@ type GrafanaDeployment struct {
 }
 
 // GrafanaHttpProxy provides a means to configure the Grafana deployment
-// to use a HTTP(S) proxy when making requests and resolving plugins.
+// to use an HTTP(S) proxy when making requests and resolving plugins.
 type GrafanaHttpProxy struct {
 	Enabled bool   `json:"enabled"`
 	URL     string `json:"url,omitempty"`
