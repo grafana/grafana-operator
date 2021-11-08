@@ -7,8 +7,10 @@ pipeline {
     stages {
         stage('build') {
             steps {
-                sh "make submodule"
-                sh "make docker-build IMG=us.gcr.io/${PROJECT}/grafana-operator:4.0.0"
+                withEnv(["PATH=/usr/local/go/bin:$PATH"]){
+                    sh "make submodule"
+                    sh "make docker-build IMG=us.gcr.io/${PROJECT}/grafana-operator:4.0.0"
+                }
             }
         }
         stage('push') {
@@ -16,7 +18,7 @@ pipeline {
                 branch 'master'
             }
             steps {
-                sh "docker push us.gcr.io/${PROJECT}/grafana-operator:4.0.0
+                sh "docker push us.gcr.io/${PROJECT}/grafana-operator:4.0.0"
             }
         }
     }
