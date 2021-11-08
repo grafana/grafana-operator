@@ -4,7 +4,6 @@ An operator to provision and manage Grafana Instances, Dashboards, Datasources a
 
 ## Companies and teams that trust and use the Grafana operator
 
-
 | Company  | Logo | Company | Logo
 | :---     |    :----:   | :---        |    :----:   |
 | [Red Hat](https://www.redhat.com)| <img src= "./media/users/redhat.png" width=100 height=100 > | [Integreatly](https://www.redhat.com/en/products/integration)|<img src= "./media/users/integreatly.png" width=100 height=100> |
@@ -124,3 +123,7 @@ Represents a Grafana datasource. See [the documentation](./documentation/notifie
 ### Using the Makefile
 
 If you want to develop/build/test the operator, here are some instructions how to set up your dev-environment: [follow me](./documentation/develop.md)
+
+## Debug
+
+We have documented a few steps to help you debug the [grafana-operator](documentation/debug.md).
