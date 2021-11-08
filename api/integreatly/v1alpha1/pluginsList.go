@@ -6,7 +6,7 @@ import (
 
 type PluginList []GrafanaPlugin
 
-// Returns true if the list contains the same plugin in the exact or a different version
+// HasSomeVersionOf returns true if the list contains the same plugin in the exact or a different version
 func (l PluginList) HasSomeVersionOf(plugin *GrafanaPlugin) bool {
 	for _, listedPlugin := range l {
 		if listedPlugin.Name == plugin.Name {
@@ -16,7 +16,7 @@ func (l PluginList) HasSomeVersionOf(plugin *GrafanaPlugin) bool {
 	return false
 }
 
-// Get the plugin from the list regardless of the version
+// GetInstalledVersionOf gets the plugin from the list regardless of the version
 func (l PluginList) GetInstalledVersionOf(plugin *GrafanaPlugin) *GrafanaPlugin {
 	for _, listedPlugin := range l {
 		if listedPlugin.Name == plugin.Name {
@@ -26,7 +26,7 @@ func (l PluginList) GetInstalledVersionOf(plugin *GrafanaPlugin) *GrafanaPlugin 
 	return nil
 }
 
-// Returns true if the list contains the same plugin in the same version
+// HasExactVersionOf returns true if the list contains the same plugin in the same version
 func (l PluginList) HasExactVersionOf(plugin *GrafanaPlugin) bool {
 	for _, listedPlugin := range l {
 		if listedPlugin.Name == plugin.Name && listedPlugin.Version == plugin.Version {
@@ -36,7 +36,7 @@ func (l PluginList) HasExactVersionOf(plugin *GrafanaPlugin) bool {
 	return false
 }
 
-// Returns true if the list contains the same plugin but in a newer version
+// HasNewerVersionOf returns true if the list contains the same plugin but in a newer version
 func (l PluginList) HasNewerVersionOf(plugin *GrafanaPlugin) (bool, error) {
 	for _, listedPlugin := range l {
 		if listedPlugin.Name != plugin.Name {
@@ -60,7 +60,7 @@ func (l PluginList) HasNewerVersionOf(plugin *GrafanaPlugin) (bool, error) {
 	return false, nil
 }
 
-// Returns the number of different versions of a given plugin in the list
+// VersionsOf returns the number of different versions of a given plugin in the list
 func (l PluginList) VersionsOf(plugin *GrafanaPlugin) int {
 	i := 0
 	for _, listedPlugin := range l {

@@ -87,7 +87,7 @@ type GrafanaDataSourceFields struct {
 	Editable          bool                            `json:"editable,omitempty"`
 }
 
-// The most common json options
+// GrafanaDataSourceJsonData contains the most common json options
 // See https://grafana.com/docs/administration/provisioning/#datasources
 type GrafanaDataSourceJsonData struct {
 	OauthPassThru           bool   `json:"oauthPassThru,omitempty"`
@@ -182,7 +182,7 @@ type GrafanaDataSourceJsonTracesToLogs struct {
 	Tags               []string `json:"tags,omitempty"`
 }
 
-// The most common secure json options
+// GrafanaDataSourceSecureJsonData contains the most common secure json options
 // See https://grafana.com/docs/administration/provisioning/#datasources
 type GrafanaDataSourceSecureJsonData struct {
 	TlsCaCert         string `json:"tlsCACert,omitempty"`
@@ -219,7 +219,7 @@ func init() {
 	SchemeBuilder.Register(&GrafanaDataSource{}, &GrafanaDataSourceList{})
 }
 
-// return a unique per namespace key of the datasource
+// Filename returns a unique per namespace key of the datasource
 func (ds *GrafanaDataSource) Filename() string {
 	return fmt.Sprintf("%v_%v.yaml", ds.Namespace, strings.ToLower(ds.Name))
 }

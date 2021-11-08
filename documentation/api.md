@@ -462,7 +462,7 @@ GrafanaDataSourceSpec defines the desired state of GrafanaDataSource
         <td><b><a href="#grafanadatasourcespecdatasourcesindexjsondata">jsonData</a></b></td>
         <td>object</td>
         <td>
-          The most common json options See https://grafana.com/docs/administration/provisioning/#datasources<br/>
+          GrafanaDataSourceJsonData contains the most common json options See https://grafana.com/docs/administration/provisioning/#datasources<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -483,7 +483,7 @@ GrafanaDataSourceSpec defines the desired state of GrafanaDataSource
         <td><b><a href="#grafanadatasourcespecdatasourcesindexsecurejsondata">secureJsonData</a></b></td>
         <td>object</td>
         <td>
-          The most common secure json options See https://grafana.com/docs/administration/provisioning/#datasources<br/>
+          GrafanaDataSourceSecureJsonData contains the most common secure json options See https://grafana.com/docs/administration/provisioning/#datasources<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -530,7 +530,7 @@ GrafanaDataSourceSpec defines the desired state of GrafanaDataSource
 
 
 
-The most common json options See https://grafana.com/docs/administration/provisioning/#datasources
+GrafanaDataSourceJsonData contains the most common json options See https://grafana.com/docs/administration/provisioning/#datasources
 
 <table>
     <thead>
@@ -1094,7 +1094,7 @@ Fields for tracing data sources
 
 
 
-The most common secure json options See https://grafana.com/docs/administration/provisioning/#datasources
+GrafanaDataSourceSecureJsonData contains the most common secure json options See https://grafana.com/docs/administration/provisioning/#datasources
 
 <table>
     <thead>
@@ -1526,7 +1526,7 @@ Grafana is the Schema for the grafanas API
         <td><b><a href="#grafanaspecclient">client</a></b></td>
         <td>object</td>
         <td>
-          Grafana API client settings<br/>
+          GrafanaClient contains the Grafana API client settings<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -4410,7 +4410,7 @@ GrafanaConfig is the configuration for grafana
 
 
 
-Grafana API client settings
+GrafanaClient contains the Grafana API client settings
 
 <table>
     <thead>
@@ -6823,7 +6823,7 @@ GrafanaDeployment provides a means to configure the deployment
         <td><b><a href="#grafanaspecdeploymenthttpproxy">httpProxy</a></b></td>
         <td>object</td>
         <td>
-          GrafanaHttpProxy provides a means to configure the Grafana deployment to use a HTTP(S) proxy when making requests and resolving plugins.<br/>
+          GrafanaHttpProxy provides a means to configure the Grafana deployment to use an HTTP(S) proxy when making requests and resolving plugins.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11337,7 +11337,7 @@ VsphereVolume represents a vSphere volume attached and mounted on kubelets host 
 
 
 
-GrafanaHttpProxy provides a means to configure the Grafana deployment to use a HTTP(S) proxy when making requests and resolving plugins.
+GrafanaHttpProxy provides a means to configure the Grafana deployment to use an HTTP(S) proxy when making requests and resolving plugins.
 
 <table>
     <thead>
@@ -12416,7 +12416,7 @@ GrafanaStatus defines the observed state of Grafana
 
 
 
-Used to keep a dashboard reference without having access to the dashboard struct itself
+GrafanaDashboardRef is used to keep a dashboard reference without having access to the dashboard struct itself
 
 <table>
     <thead>
