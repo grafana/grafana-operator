@@ -380,7 +380,6 @@ spec:
                   dashboards:
                     properties:
                       default_home_dashboard_path:
-                        nullable: true
                         type: string
                       versions_to_keep:
                         nullable: true
