@@ -166,6 +166,8 @@ type GrafanaDataSourceJsonData struct {
 	TracesToLogs GrafanaDataSourceJsonTracesToLogs `json:"tracesToLogs,omitempty"`
 	// Fields for Github data sources
 	GithubUrl string `json:"githubUrl,omitempty"`
+	// Fields for Alertmanager data sources
+	Implementation string `json:"implementation,omitempty"`
 }
 
 type GrafanaDataSourceJsonDerivedFields struct {
