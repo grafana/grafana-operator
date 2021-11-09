@@ -1,0 +1,23 @@
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDataSource
+metadata:
+  name: example-postgres-datasource
+spec:
+  name: example-postgres
+  datasources:
+  - name: Postgres
+    type: postgres
+    database: dvdrental # name of your database
+    editable: false
+    jsonData:
+      connMaxLifetime: 14400
+      maxIdleConns: 2
+      maxOpenConns: 0
+      postgresVersion: 1400
+      sslmode: disable
+      timescaledb: false
+    secureJsonData:
+      password: admin123 # password of your user
+    url: postgres.default.svc.cluster.local:5432 #change to url of your postgres instance
+    user: postgresadmin # user to access your database
+    
