@@ -14,3 +14,4 @@ spec:
       editable: true
       jsonData:
         implementation: prometheus # this uses either cortex or prometheus
+ 
