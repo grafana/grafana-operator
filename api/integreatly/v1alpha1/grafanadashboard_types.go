@@ -53,7 +53,7 @@ type GrafanaDashboardGrafanaComSource struct {
 	Revision *int `json:"revision,omitempty"`
 }
 
-// Used to keep a dashboard reference without having access to the dashboard
+// GrafanaDashboardRef is used to keep a dashboard reference without having access to the dashboard
 // struct itself
 type GrafanaDashboardRef struct {
 	Name       string `json:"name"`
@@ -68,10 +68,10 @@ type GrafanaDashboardStatus struct {
 	// Empty
 }
 
+// GrafanaDashboard is the Schema for the grafanadashboards API
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// GrafanaDashboard is the Schema for the grafanadashboards API
 type GrafanaDashboard struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -80,8 +80,8 @@ type GrafanaDashboard struct {
 	Status GrafanaDashboardStatus `json:"status,omitempty"`
 }
 
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // GrafanaDashboardList contains a list of GrafanaDashboard
+//+k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:object:root=true
 type GrafanaDashboardList struct {
 	metav1.TypeMeta `json:",inline"`
