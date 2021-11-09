@@ -142,6 +142,9 @@ spec:
                         httpMode:
                           description: Fields for InfluxDB data sources
                           type: string
+                        implementation:
+                          description: Fields for Alertmanager data sources
+                          type: string
                         interval:
                           type: string
                         logAnalyticsClientId:
