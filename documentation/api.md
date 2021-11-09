@@ -773,6 +773,13 @@ GrafanaDataSourceJsonData contains the most common json options See https://graf
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>implementation</b></td>
+        <td>string</td>
+        <td>
+          Fields for Alertmanager data sources<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>interval</b></td>
         <td>string</td>
         <td>
