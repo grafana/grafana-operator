@@ -103,7 +103,10 @@ if [[ $NUM_DASHBOARDS != 2 ]]; then
   exit 1
 fi
 
-GRAFANA_DASHBOARDS=$(curl $HEADER "http://admin:$PASSWORD@localhost:3000/api/dashboards/uid/$GRAFANA_TOP_FOLDER_ID")
+# get dashboard UID
+GRAFANA_TOP_DASHBOARD_UID=$(echo $DASHBOARDOUTPUT |jq -r '.[0].uid')
+
+GRAFANA_DASHBOARD=$(curl $HEADER "http://admin:$PASSWORD@localhost:3000/api/dashboards/uid/$GRAFANA_TOP_DASHBOARD_UID")
 sleep 1
 FOLDER_ID=$(echo $GRAFANA_DASHBOARD |jq -r .meta.folderId)
 if [[ $FOLDER_ID != 0 ]]; then
