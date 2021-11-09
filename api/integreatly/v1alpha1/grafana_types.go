@@ -481,6 +481,8 @@ type GrafanaConfigAnalytics struct {
 type GrafanaConfigDashboards struct {
 	// +nullable
 	VersionsToKeep *int `json:"versions_to_keep,omitempty" ini:"versions_to_keep,omitempty"`
+	// +nullable
+	DefaultHomeDashboardPath string `json:"default_home_dashboard_path,omitempty" ini:"default_home_dashboard_path,omitempty"`
 }
 
 type GrafanaConfigSmtp struct {
