@@ -16,4 +16,5 @@ bases:
 - ../crd
 - ../rbac
 - ../manager
+- namespace.yaml
 

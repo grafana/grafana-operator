@@ -1,0 +1,6 @@
+namespace: grafana-operator-system
+namePrefix: grafana-operator-
+
+resources:
+  - v4.0.1
+  - namespace.yaml
