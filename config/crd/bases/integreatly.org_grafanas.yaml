@@ -379,6 +379,8 @@ spec:
                     type: object
                   dashboards:
                     properties:
+                      default_home_dashboard_path:
+                        type: string
                       versions_to_keep:
                         nullable: true
                         type: integer

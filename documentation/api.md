@@ -3096,6 +3096,13 @@ GrafanaConfig is the configuration for grafana
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>default_home_dashboard_path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>versions_to_keep</b></td>
         <td>integer</td>
         <td>
