@@ -7923,17 +7923,6 @@ SecurityContext holds security configuration that will be applied to a container
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>fsGroup</b></td>
-        <td>integer</td>
-        <td>
-          A special supplemental group that applies to all containers in a pod. Some volume types allow the Kubelet to change the ownership of that volume to be owned by the pod: 
- 1. The owning GID will be the FSGroup 2. The setgid bit is set (new files created in the volume will be owned by FSGroup) 3. The permission bits are OR'd with rw-rw---- 
- If unset, the Kubelet will not modify the ownership and permissions of any volume.<br/>
-          <br/>
-            <i>Format</i>: int64<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>privileged</b></td>
         <td>boolean</td>
         <td>

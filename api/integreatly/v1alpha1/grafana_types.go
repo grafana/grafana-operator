@@ -251,6 +251,8 @@ type GrafanaConfigSecurity struct {
 	// +nullable
 	AllowEmbedding *bool `json:"allow_embedding,omitempty" ini:"allow_embedding"`
 	// +nullable
+	DisableInitialAdminCreation *bool `json:"disable_initial_admin_creation,omitempty" ini:"disable_initial_admin_creation"`
+	// +nullable
 	StrictTransportSecurity *bool `json:"strict_transport_security,omitempty" ini:"strict_transport_security"`
 	// +nullable
 	StrictTransportSecurityMaxAgeSeconds *int `json:"strict_transport_security_max_age_seconds,omitempty" ini:"strict_transport_security_max_age_seconds,omitempty"`
