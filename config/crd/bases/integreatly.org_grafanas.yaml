@@ -607,6 +607,9 @@ spec:
                       disable_gravatar:
                         nullable: true
                         type: boolean
+                      disable_initial_admin_creation:
+                        nullable: true
+                        type: boolean
                       login_remember_days:
                         nullable: true
                         type: integer
@@ -622,9 +625,6 @@ spec:
                         nullable: true
                         type: boolean
                       strict_transport_security_subdomains:
-                        nullable: true
-                        type: boolean
-                      disable_initial_admin_creation:
                         nullable: true
                         type: boolean
                       x_content_type_options:
