@@ -4021,6 +4021,13 @@ GrafanaConfig is the configuration for grafana
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>disable_initial_admin_creation</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>login_remember_days</b></td>
         <td>integer</td>
         <td>
@@ -7913,6 +7920,17 @@ SecurityContext holds security configuration that will be applied to a container
         <td>object</td>
         <td>
           The capabilities to add/drop when running containers. Defaults to the default set of capabilities granted by the container runtime.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>fsGroup</b></td>
+        <td>integer</td>
+        <td>
+          A special supplemental group that applies to all containers in a pod. Some volume types allow the Kubelet to change the ownership of that volume to be owned by the pod: 
+ 1. The owning GID will be the FSGroup 2. The setgid bit is set (new files created in the volume will be owned by FSGroup) 3. The permission bits are OR'd with rw-rw---- 
+ If unset, the Kubelet will not modify the ownership and permissions of any volume.<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
         </td>
         <td>false</td>
       </tr><tr>
