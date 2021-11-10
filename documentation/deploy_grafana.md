@@ -13,10 +13,6 @@ There are two options for this procedure, through OLM, or manually running kubec
 First of all we would love to have **you** as a contributor.
 If you want to setup a local development environment we have written a [small guide](./develop.md)
 
-### Minikube deployment
-
-Follow this documentation [Deploying the Grafana operator in minikube](./minikube.md)
-
 ### Kustomize
 
 Install using kustomize built in to kubectl.
