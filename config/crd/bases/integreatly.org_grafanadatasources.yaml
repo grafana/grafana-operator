@@ -172,6 +172,19 @@ spec:
                           type: string
                         postgresVersion:
                           type: integer
+                        sigV4AssumeRoleArn:
+                          type: string
+                        sigV4Auth:
+                          description: Fields for AWS Prometheus data sources
+                          type: string
+                        sigV4AuthType:
+                          type: string
+                        sigV4ExternalId:
+                          type: string
+                        sigV4Profile:
+                          type: string
+                        sigV4Region:
+                          type: string
                         sslmode:
                           type: string
                         subscriptionId:

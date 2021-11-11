@@ -168,6 +168,13 @@ type GrafanaDataSourceJsonData struct {
 	GithubUrl string `json:"githubUrl,omitempty"`
 	// Fields for Alertmanager data sources
 	Implementation string `json:"implementation,omitempty"`
+	// Fields for AWS Prometheus data sources
+	SigV4Auth          string `json:"sigV4Auth,omitempty"`
+	SigV4AuthType      string `json:"sigV4AuthType,omitempty"`
+	SigV4ExternalId    string `json:"sigV4ExternalId,omitempty"`
+	SigV4AssumeRoleArn string `json:"sigV4AssumeRoleArn,omitempty"`
+	SigV4Region        string `json:"sigV4Region,omitempty"`
+	SigV4Profile       string `json:"sigV4Profile,omitempty"`
 }
 
 type GrafanaDataSourceJsonDerivedFields struct {
