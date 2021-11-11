@@ -176,7 +176,7 @@ spec:
                           type: string
                         sigV4Auth:
                           description: Fields for AWS Prometheus data sources
-                          type: string
+                          type: boolean
                         sigV4AuthType:
                           type: string
                         sigV4ExternalId:
