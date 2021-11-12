@@ -879,7 +879,7 @@ GrafanaDataSourceJsonData contains the most common json options See https://graf
         <td>false</td>
       </tr><tr>
         <td><b>sigV4Auth</b></td>
-        <td>string</td>
+        <td>boolean</td>
         <td>
           Fields for AWS Prometheus data sources<br/>
         </td>
