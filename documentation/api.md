@@ -4021,13 +4021,6 @@ GrafanaConfig is the configuration for grafana
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>disable_initial_admin_creation</b></td>
-        <td>boolean</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>login_remember_days</b></td>
         <td>integer</td>
         <td>

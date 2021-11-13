@@ -607,9 +607,6 @@ spec:
                       disable_gravatar:
                         nullable: true
                         type: boolean
-                      disable_initial_admin_creation:
-                        nullable: true
-                        type: boolean
                       login_remember_days:
                         nullable: true
                         type: integer
