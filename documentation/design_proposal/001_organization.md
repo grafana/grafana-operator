@@ -28,16 +28,16 @@ Manage organizations, teams and users using CRD:s
 
 ## Proposal
 
-### New CRD prod
+### Pros
 
 - Users can be added to the organization in the CR.
 - Rename of a organization is doable
-- IF the organization gets new functionality it could be added easier.
+- Easier to use since it's clear that a team/user is under a specific organiaztion.
 
-### New CRD CONS
+### Cons
 
 - Needs to be applied after the deployment is done.
-- API-url needs to be provided to the CR.
+- API-url needs to be provided to the CR together with username & secret.
 
 ### CRD
 
@@ -45,9 +45,22 @@ Manage organizations, teams and users using CRD:s
 apiVersion: integreatly.org/v1alpha1
 kind: Organization
 metadata:
-  name: grafana1
+  name: organization-example
 spec:
   - name: organiaztionX
+      grafana:
+        - url: http://grafana/
+          username: admin # default value
+          password:
+            secretName: mysecret
+              key: password
+        - url: https://external-grafana/
+          username: admin # default value
+          password:
+            secretName: admin-secret2
+              key: password
+          tls:
+            secretName: external-https-cert
       users:
         - login: user1
           email: user1@github.com
@@ -57,7 +70,7 @@ spec:
           isGrafanaAdmin: true
           isDisabled: true
           password:
-            secretName: mysecret
+            secretName: usersecret
             key: password
         - login: user2
           email: noreply@grafana.com
@@ -73,6 +86,13 @@ spec:
             - user2
 ```
 
+### Options
+
+The organaiztion CRD could also use a label selector just like we do for dashboardSelectors but the other way around.
+Instead of the grafana instance finding which organizations to add the organaization will find which grafana instances to apply to.
+
+This way we woulden't need to define organiaztion.spec.grafana.
+
 ## Context
 
 We need to consider the [multi-namespace support](https://github.com/grafana-operator/grafana-operator/pull/599) that is currently getting worked on.
@@ -85,9 +105,7 @@ When creating the new controller we should use [CreateOrUpdate](https://github.c
 
 ## Alternatives
 
-### Multiple CR:s
-
-Instead of having a single CR to manage organiaztions, teams and users we could have multiple ones.
+Instead of having a single CRD to manage organiaztions, teams and users we could have multiple ones.
 
 If teams, users or orgs get more "abilities" they are separated and can be changed independently.
 I just feel it might assist in organizing all parts of the user/right management.
@@ -97,38 +115,57 @@ assuming that they are not to hard coupled.
 
 We could also reuse the same team/user definition in multiple organizations.
 
-#### Multiple CRD:s
+Thanks to all the extra config that is needed it will be easier to do an error.
+
+### Thoughts
+
+Should we assume that the oeprator owns the organiaztion? If not we will have to define the grafana-url & username & secret
+in the team and user CRD as well. Unless the grafana instances find organiaztion, team, users.
+
+How should we find the organiaztion where we should create the user/team? Just define a name or use a selector?
+
+In the example below organiaztion is part of spec.teams.organiaztion. Another option could be to put organiaztion under spec.organiaztion.
+This way a team definition can only be used in one organiaztion. It would most likley lower the amount of miss configuration.
+We need to decide if we should support multiple organiaztions in one team CRD, same thing with user.
+
+### Multiple CRD
 
 ```org.yaml
 apiVersion: integreatly.org/v1alpha1
-kind: Organization
+kind: GrafanaOrganization
 metadata:
   name: org1
 spec:
   - name: organiaztionX
+      grafana:
+        - url: http://grafana/
+          username: admin # default value
+          password:
+            secretName: mysecret
+              key: password
 ```
 
 ```team.yaml
 apiVersion: integreatly.org/v1alpha1
-kind: Organization
+kind: GrafanaTeam
 metadata:
   name: team1
 spec:
     teams:
-        - name: MyTestTeam
-          email: email@test.com
-          theme: dark
-          homeDashboardId: 39
-          timezone: utc
-          memebers:
-            - user1
-            - user2
-
+    - name: MyTestTeam
+        email: email@test.com
+        theme: dark
+        homeDashboardId: 39
+        timezone: utc
+        organization: organiaztionX
+        memebers:
+          - user1
+          - user2
 ```
 
 ```user.yaml
 apiVersion: integreatly.org/v1alpha1
-kind: Organization
+kind: GrafanaUser
 metadata:
   name: user1
 spec:
@@ -150,19 +187,6 @@ spec:
         organization: organiaztionX
 ```
 
-### Adding org to Grafana CR
-
-#### Adding org to Grafana PROS
-
-- Orgs are part of a single Grafana instance. Therefore they should be added to the Grafana CR.
-- One less CRD that needs to be maintained and if users need to be added to an Org this could be done in another CRD i.e. GrafanaUser.
-- No issue regarding "timing", since the orgs could be applied instantly after the deployment is ready.
-- URL for API-calls is already present
-
-#### Adding org to Grafana CONS
-
-- If there is a name change of an Org, it can not be updated, but pre-change-Org must be deleted and new one added afterwards.
-
 ## Work Plan
 
 Implement the new CR one at the time.
@@ -178,6 +202,12 @@ Need to find out if i can have the same username in different organiaztions.
 I assume a user that is managed through ldap or similar can be a part of a team.
 If logged in through LDAP my guess is that a local user gets created when the user logins in for the first time. Need to verify this.
 
+### Default organaiztion
+
+Does the default organaiztion have a name? The id is 1.
+Is there any config in grafana.ini that might create issues with default organiaztion vs not?
+For example we probably need to test a bit how [auto_assign_org](https://grafana.com/docs/grafana/latest/administration/configuration/#auto_assign_org) works.
+
 ## Related issues
 
 - [408 Manage organizations](https://github.com/grafana-operator/grafana-operator/issues/408)
@@ -190,3 +220,4 @@ If logged in through LDAP my guess is that a local user gets created when the us
 - [Grafana organiaztion API](https://grafana.com/docs/grafana/latest/http_api/org/)
 - [Grafana team API](https://grafana.com/docs/grafana/latest/http_api/team/)
 - [Grafana user API](https://grafana.com/docs/grafana/latest/http_api/user/)
+- [Grafana config auto_assign_org](https://grafana.com/docs/grafana/latest/administration/configuration/#auto_assign_org)
