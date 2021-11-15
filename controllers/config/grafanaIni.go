@@ -526,7 +526,7 @@ func (i *GrafanaIni) cfgAuthOkta(config map[string][]string) map[string][]string
 	items = appendStr(items, "allowed_domains", i.cfg.AuthOkta.AllowedDomains)
 	items = appendStr(items, "allowed_groups", i.cfg.AuthOkta.AllowedGroups)
 	items = appendStr(items, "role_attribute_path", i.cfg.AuthOkta.RoleAttributePath)
-	items = appendBool(items, "role_attribute_strict", i.cfg.RoleAttributeStrict)
+	items = appendBool(items, "role_attribute_strict", i.cfg.AuthOkta.RoleAttributeStrict)
 	config["auth.okta"] = items
 
 	return config
