@@ -32,9 +32,7 @@ import (
 
 // GrafanaDashboardSpec defines the desired state of GrafanaDashboard
 type GrafanaDashboardSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-	Json             string                            `json:"json"`
+	Json             string                            `json:"json,omitempty"`
 	Jsonnet          string                            `json:"jsonnet,omitempty"`
 	Plugins          PluginList                        `json:"plugins,omitempty"`
 	Url              string                            `json:"url,omitempty"`
