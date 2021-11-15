@@ -198,6 +198,10 @@ func (i *GrafanaIni) parseConfig(config map[string][]string) map[string][]string
 		config = i.cfgAuthLdap(config)
 	}
 
+	if i.cfg.AuthOkta != nil {
+		config = i.cfgAuthOkta(config)
+	}
+
 	if i.cfg.AuthProxy != nil {
 		config = i.cfgAuthProxy(config)
 	}
@@ -504,6 +508,26 @@ func (i *GrafanaIni) cfgAuthLdap(config map[string][]string) map[string][]string
 	items = appendBool(items, "allow_sign_up", i.cfg.AuthLdap.AllowSignUp)
 	items = appendStr(items, "config_file", i.cfg.AuthLdap.ConfigFile)
 	config["auth.ldap"] = items
+
+	return config
+}
+
+func (i *GrafanaIni) cfgAuthOkta(config map[string][]string) map[string][]string {
+	var items []string
+	items = appendBool(items, "enabled", i.cfg.AuthOkta.Enabled)
+	items = appendStr(items, "name", i.cfg.AuthOkta.Name)
+	items = appendBool(items, "allow_sign_up", i.cfg.AuthOkta.AllowSignUp)
+	items = appendStr(items, "client_id", i.cfg.AuthOkta.ClientId)
+	items = appendStr(items, "client_secret", i.cfg.AuthOkta.ClientSecret)
+	items = appendStr(items, "scopes", i.cfg.AuthOkta.Scopes)
+	items = appendStr(items, "auth_url", i.cfg.AuthOkta.AuthUrl)
+	items = appendStr(items, "token_url", i.cfg.AuthOkta.TokenUrl)
+	items = appendStr(items, "api_url", i.cfg.AuthOkta.ApiUrl)
+	items = appendStr(items, "allowed_domains", i.cfg.AuthOkta.AllowedDomains)
+	items = appendStr(items, "allowed_groups", i.cfg.AuthOkta.AllowedGroups)
+	items = appendStr(items, "role_attribute_path", i.cfg.AuthOkta.RoleAttributePath)
+	items = appendBool(items, "role_attribute_strict", i.cfg.RoleAttributeStrict)
+	config["auth.okta"] = items
 
 	return config
 }
