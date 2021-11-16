@@ -101,6 +101,16 @@ spec:
       kind: Grafana
       name: grafanas.integreatly.org.integreatly.org
       version: v1alpha1
+    - description: GrafanaDashboard is the Schema for the grafanadashboards API
+      displayName: Grafana Dashboard
+      kind: GrafanaDashboard
+      name: grafanadashboards.integreatly.org
+      version: v1alpha1
+    - description: Grafana is the Schema for the grafanas API
+      displayName: Grafana
+      kind: Grafana
+      name: grafanas.integreatly.org
+      version: v1alpha1
   description: |
     A Kubernetes Operator based on the Operator SDK for creating and managing Grafana instances.
 
