@@ -222,6 +222,9 @@ type GrafanaDataSourceSecureJsonData struct {
 	Token string `json:"token,omitempty"`
 	// Fields for Github data sources
 	AccessToken string `json:"accessToken,omitempty"`
+	// Fields for AWS data sources
+	SigV4AccessKey string `json:"sigV4AccessKey,omitempty"`
+	SigV4SecretKey string `json:"sigV4SecretKey,omitempty"`
 }
 
 func init() {

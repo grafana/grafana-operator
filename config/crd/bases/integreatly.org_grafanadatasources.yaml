@@ -285,6 +285,11 @@ spec:
                           type: string
                         secretKey:
                           type: string
+                        sigV4AccessKey:
+                          description: Fields for AWS data sources
+                          type: string
+                        sigV4SecretKey:
+                          type: string
                         tlsCACert:
                           type: string
                         tlsClientCert:

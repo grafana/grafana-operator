@@ -1281,6 +1281,20 @@ GrafanaDataSourceSecureJsonData contains the most common secure json options See
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>sigV4AccessKey</b></td>
+        <td>string</td>
+        <td>
+          Fields for AWS data sources<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sigV4SecretKey</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>tlsCACert</b></td>
         <td>string</td>
         <td>
