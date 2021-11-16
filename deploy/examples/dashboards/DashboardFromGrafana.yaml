@@ -6,5 +6,6 @@ metadata:
     app: grafana
 spec:
   grafanaCom:
-    id: 10441
-    revision: 1
+    id: 1860
+    revision: 23
+  json: ""

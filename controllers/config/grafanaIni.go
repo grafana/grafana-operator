@@ -217,6 +217,7 @@ func (i *GrafanaIni) parseConfig(config map[string][]string) map[string][]string
 	if i.cfg.Dashboards != nil {
 		var items []string
 		items = appendInt(items, "versions_to_keep", i.cfg.Dashboards.VersionsToKeep)
+		items = appendStr(items, "default_home_dashboard_path", i.cfg.Dashboards.DefaultHomeDashboardPath)
 		config["dashboards"] = items
 	}
 
