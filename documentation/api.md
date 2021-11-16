@@ -90,13 +90,6 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>json</b></td>
-        <td>string</td>
-        <td>
-          INSERT ADDITIONAL SPEC FIELDS - desired state of cluster Important: Run "make" to regenerate code after modifying this file<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
         <td><b><a href="#grafanadashboardspecconfigmapref">configMapRef</a></b></td>
         <td>object</td>
         <td>
@@ -120,6 +113,13 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
       </tr><tr>
         <td><b><a href="#grafanadashboardspecgrafanacom">grafanaCom</a></b></td>
         <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>json</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -1433,7 +1433,7 @@ GrafanaNotificationChannelSpec defines the desired state of GrafanaNotificationC
         <td><b>json</b></td>
         <td>string</td>
         <td>
-          INSERT ADDITIONAL SPEC FIELDS - desired state of cluster Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>

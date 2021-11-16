@@ -28,9 +28,6 @@ import (
 
 // GrafanaDataSourceSpec defines the desired state of GrafanaDataSource
 type GrafanaDataSourceSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
 	Datasources []GrafanaDataSourceFields `json:"datasources"`
 	Name        string                    `json:"name"`
 }

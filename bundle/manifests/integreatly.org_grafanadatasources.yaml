@@ -20,10 +20,14 @@ spec:
         description: GrafanaDataSource is the Schema for the grafanadatasources API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
@@ -48,10 +52,13 @@ spec:
                     isDefault:
                       type: boolean
                     jsonData:
-                      description: The most common json options See https://grafana.com/docs/administration/provisioning/#datasources
+                      description: GrafanaDataSourceJsonData contains the most common
+                        json options See https://grafana.com/docs/administration/provisioning/#datasources
                       properties:
                         addCorsHeader:
-                          description: ' Useful fields for clickhouse datasource  See https://github.com/Vertamedia/clickhouse-grafana/tree/master/dist/README.md#configure-the-datasource-with-provisioning  See https://github.com/Vertamedia/clickhouse-grafana/tree/master/src/datasource.ts#L44'
+                          description: ' Useful fields for clickhouse datasource  See
+                            https://github.com/Vertamedia/clickhouse-grafana/tree/master/dist/README.md#configure-the-datasource-with-provisioning  See
+                            https://github.com/Vertamedia/clickhouse-grafana/tree/master/src/datasource.ts#L44'
                           type: boolean
                         appInsightsAppId:
                           description: Fields for Azure data sources
@@ -104,6 +111,9 @@ spec:
                           type: string
                         esVersion:
                           type: integer
+                        githubUrl:
+                          description: Fields for Github data sources
+                          type: string
                         graphiteVersion:
                           type: string
                         httpHeaderName1:
@@ -129,6 +139,9 @@ spec:
                           type: string
                         httpMode:
                           description: Fields for InfluxDB data sources
+                          type: string
+                        implementation:
+                          description: Fields for Alertmanager data sources
                           type: string
                         interval:
                           type: string
@@ -214,9 +227,13 @@ spec:
                     password:
                       type: string
                     secureJsonData:
-                      description: The most common secure json options See https://grafana.com/docs/administration/provisioning/#datasources
+                      description: GrafanaDataSourceSecureJsonData contains the most
+                        common secure json options See https://grafana.com/docs/administration/provisioning/#datasources
                       properties:
                         accessKey:
+                          type: string
+                        accessToken:
+                          description: Fields for Github data sources
                           type: string
                         appInsightsApiKey:
                           type: string
