@@ -15,14 +15,18 @@ import (
 )
 
 const (
-	InitMemoryRequest = "128Mi"
-	InitCpuRequest    = "250m"
-	InitMemoryLimit   = "512Mi"
-	InitCpuLimit      = "1000m"
-	MemoryRequest     = "256Mi"
-	CpuRequest        = "100m"
-	MemoryLimit       = "1024Mi"
-	CpuLimit          = "500m"
+	InitMemoryRequest           = "128Mi"
+	InitCpuRequest              = "250m"
+	InitMemoryLimit             = "512Mi"
+	InitCpuLimit                = "1000m"
+	MemoryRequest               = "256Mi"
+	CpuRequest                  = "100m"
+	MemoryLimit                 = "1024Mi"
+	CpuLimit                    = "500m"
+	InitEphemeralStorageRequest = "1Gi"
+	InitEphemeralStorageLimit   = "2Gi"
+	EphemeralStorageRequest     = "100Mi"
+	EphemeralStorageLimit       = "120Mi"
 )
 
 func getSkipCreateAdminAccount(cr *v1alpha1.Grafana) bool {
@@ -55,12 +59,14 @@ func getInitResources(cr *v1alpha1.Grafana) v13.ResourceRequirements {
 	}
 	return v13.ResourceRequirements{
 		Requests: v13.ResourceList{
-			v13.ResourceMemory: resource.MustParse(InitMemoryRequest),
-			v13.ResourceCPU:    resource.MustParse(InitCpuRequest),
+			v13.ResourceMemory:           resource.MustParse(InitMemoryRequest),
+			v13.ResourceCPU:              resource.MustParse(InitCpuRequest),
+			v13.ResourceEphemeralStorage: resource.MustParse(InitEphemeralStorageRequest),
 		},
 		Limits: v13.ResourceList{
-			v13.ResourceMemory: resource.MustParse(InitMemoryLimit),
-			v13.ResourceCPU:    resource.MustParse(InitCpuLimit),
+			v13.ResourceMemory:           resource.MustParse(InitMemoryLimit),
+			v13.ResourceCPU:              resource.MustParse(InitCpuLimit),
+			v13.ResourceEphemeralStorage: resource.MustParse(InitEphemeralStorageLimit),
 		},
 	}
 }
@@ -71,12 +77,14 @@ func getResources(cr *v1alpha1.Grafana) v13.ResourceRequirements {
 	}
 	return v13.ResourceRequirements{
 		Requests: v13.ResourceList{
-			v13.ResourceMemory: resource.MustParse(MemoryRequest),
-			v13.ResourceCPU:    resource.MustParse(CpuRequest),
+			v13.ResourceMemory:           resource.MustParse(MemoryRequest),
+			v13.ResourceCPU:              resource.MustParse(CpuRequest),
+			v13.ResourceEphemeralStorage: resource.MustParse(EphemeralStorageRequest),
 		},
 		Limits: v13.ResourceList{
-			v13.ResourceMemory: resource.MustParse(MemoryLimit),
-			v13.ResourceCPU:    resource.MustParse(CpuLimit),
+			v13.ResourceMemory:           resource.MustParse(MemoryLimit),
+			v13.ResourceCPU:              resource.MustParse(CpuLimit),
+			v13.ResourceEphemeralStorage: resource.MustParse(EphemeralStorageLimit),
 		},
 	}
 }
