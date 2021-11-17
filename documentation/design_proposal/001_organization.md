@@ -192,7 +192,7 @@ spec:
 Implement the new CR one at the time.
 
 ## Open questions
-
+- How do we manage each of these new CRs? would it be through a higher level operator that manages organization related resources? or would it be a controller per resource?
 ### Same username
 
 Need to find out if i can have the same username in different organiaztions.
