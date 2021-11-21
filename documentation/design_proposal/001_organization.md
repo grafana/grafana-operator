@@ -36,14 +36,13 @@ Manage organizations, teams and users using CRD:s
 
 ### Cons
 
-- Needs to be applied after the deployment is done.
-- API-url needs to be provided to the CR together with username & secret.
+- Can't reuse users/teams in multiple organiaztions with a simple labelSelector.
 
 ### CRD
 
 ```.yaml
 apiVersion: integreatly.org/v1alpha1
-kind: Organization # Not a good name, need a better one.
+kind: GrafanaOrganization # Not a good name, need a better one.
 metadata:
   name: organization-example
 spec:
@@ -109,6 +108,15 @@ We haven't had any discussion about this but that might also be off the table co
 
 When creating the new controller we should use [CreateOrUpdate](https://github.com/grafana-operator/grafana-operator/issues/362) from the begining.
 
+We woulden't consider multiple replicas of the grafana instance, to be sure that the grafana CRD does what it should the users will have to use something like postgres
+to store state to be able to have multiple grafana instances. For example this is the same way when it comes to LDAP.
+We need to document the assumptions that we are making.
+
+We would have to add retry logic to readd organiaztion/teams/users, just like we did recently in the [dashboard controller](https://github.com/grafana-operator/grafana-operator/pull/488).
+Another way could be to use [status.condition](https://github.com/grafana-operator/grafana-operator/issues/571) and see if the grafana instance got a status.condition saying that the organiaztion exists.
+The bad thing with just relying on that would be that it woulden't recreate if someone deleted the organiaztion manually inside grafana.
+The status.condition would still be usefull to implement as well.
+
 ## Alternatives
 
 Instead of having a single CRD to manage organiaztions, teams and users we could have multiple ones.
@@ -134,13 +142,9 @@ kind: GrafanaOrganization
 metadata:
   name: org1
 spec:
+  grafanaLabelSelector:
+  dashboardNamespaceSelector:
   - name: organiaztionX
-      grafanaLabelSelector:
-      dashboardNamespaceSelector:
-      usersLabelSelector:
-      dashboardNamespaceSelector:
-      teamLabelSelector:
-      teamNamespaceSelector:
 ```
 
 ```team.yaml
@@ -149,16 +153,19 @@ kind: GrafanaTeam
 metadata:
   name: team1
 spec:
-    teams:
+  orgName: "Main Org."
+  grafanaLabelSelector:
+  dashboardNamespaceSelector:
+  teams:
     - name: MyTestTeam
-        email: email@test.com
-        theme: dark
-        homeDashboardId: 39
-        timezone: utc
-        organization: organiaztionX
-        memebers: # Could use labelSelectors here instead.
-          - user1
-          - user2
+      email: email@test.com
+      theme: dark
+      homeDashboardId: 39
+      timezone: utc
+      organization: organiaztionX
+      memebers: # Could use labelSelectors here instead.
+        - user1
+        - user2
 ```
 
 ```user.yaml
@@ -167,28 +174,31 @@ kind: GrafanaUser
 metadata:
   name: user1
 spec:
-    - login: user1
-      email: user1@github.com
-      role: admin
-      name: user1
-      theme: light
-      isGrafanaAdmin: true
-      isDisabled: false
-      password:
-        secretName: usersecret
-        key: password
-    - login: user2
-      email: noreply2@grafana.com
-      role: Viewer
-      password:
-        secretName: user2secret
-        key: password
-    - login: user3
-      email: noreply3@grafana.com
-      role: Viewer
-      password:
-        secretName: user3secret
-        key: password
+  orgName: "Main Org."
+  grafanaLabelSelector:
+  dashboardNamespaceSelector:
+  - login: user1
+    email: user1@github.com
+    role: admin
+    name: user1
+    theme: light
+    isGrafanaAdmin: true
+    isDisabled: false
+    password:
+      secretName: usersecret
+      key: password
+  - login: user2
+    email: noreply2@grafana.com
+    role: Viewer
+    password:
+      secretName: user2secret
+      key: password
+  - login: user3
+    email: noreply3@grafana.com
+    role: Viewer
+    password:
+      secretName: user3secret
+      key: password
 ```
 
 ## Work Plan
@@ -201,7 +211,7 @@ Implement the new CR, add each API one by one.
 
 ## Open questions
 
-- We need to come up with a better name for kind: Organization.
+- We need to come up with a better name for kind: GrafanaOrganization.
 - The default organiaztion is called `Main Org.` I think most of our users will use this organiaztion. How should we help them use it,
   it's a rather strange name and in the current design they will have to define that name to use it.
 - Should we define the user under a organiaztion if it's already defined as it's default organiaztion when creating the user?
@@ -213,6 +223,8 @@ Implement the new CR, add each API one by one.
 - [525 Support for orgId in GrafanaDashboard](https://github.com/grafana-operator/grafana-operator/issues/525)
 - [174 Cannot create multiple Grafana in the same namespace](https://github.com/grafana-operator/grafana-operator/issues/174)
 - [362 Refactor controllers to use controllerruntime CreateOrUpdate](https://github.com/grafana-operator/grafana-operator/issues/362)
+- [571 Add status.condition to grafandashboards and grafanadatsources](https://github.com/grafana-operator/grafana-operator/issues/571)
+- [432 Grafanadashboards aren't recreated if deleted through the Grafana UI](https://github.com/grafana-operator/grafana-operator/issues/432)
 
 ## References
 
