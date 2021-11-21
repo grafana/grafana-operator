@@ -43,37 +43,18 @@ Manage organizations, teams and users using CRD:s
 
 ```.yaml
 apiVersion: integreatly.org/v1alpha1
-kind: Organization
+kind: Organization # Not a good name, need a better one.
 metadata:
   name: organization-example
 spec:
-  - name: organiaztionX
-      grafana:
-        - url: http://grafana/
-          username: admin # default value
-          password:
-            secretName: mysecret
-              key: password
-        - url: https://external-grafana/
-          username: admin # default value
-          password:
-            secretName: admin-secret2
-              key: password
-          tls:
-            secretName: external-https-cert
+  orgniaztions:
+    - name: "Main Org."
+      grafanaLabelSelector: # Requiered
+      dashboardNamespaceSelector: # Will assume same ns unless specefied
       users:
-        - login: user1
-          email: user1@github.com
-          role: admin
-          name: user1
-          theme: light
-          isGrafanaAdmin: true
-          isDisabled: true
-          password:
-            secretName: usersecret
-            key: password
-        - login: user2
-          email: noreply@grafana.com
+        - loginOrEmail: user1 # I don't think we need to define user1 in this org since it's users1 default org, should it even be allowed
+          role: admin # If the user is defined it have to match the same setting that is defined in user1.
+        - loginOrEmail: user2
           role: Viewer
       teams:
         - name: MyTestTeam
@@ -84,14 +65,39 @@ spec:
           memebers:
             - user1
             - user2
+    - name: "MegaOrg"
+      grafanaLabelSelector:
+      dashboardNamespaceSelector:
+      users:
+        - loginOrEmail: user3
+          role: Viewer
+  users:
+    - login: user1 # Requiered
+      email: user1@github.com
+      role: admin # Requiered
+      name: user1
+      theme: light
+      isGrafanaAdmin: true
+      isDisabled: false
+      orgName: "Main Org." # Requiered or we will assume that it's Main Org. by default
+      password: # Requiered
+        secretName: usersecret
+        key: password
+    - login: user2
+      email: noreply2@grafana.com
+      role: Viewer
+      orgName: "Main Org."
+      password:
+        secretName: user2secret
+        key: password
+    - login: user3
+      email: noreply3@grafana.com
+      role: Viewer
+      orgName: "Main Org."
+      password:
+        secretName: user3secret
+        key: password
 ```
-
-### Options
-
-The organaiztion CRD could also use a label selector just like we do for dashboardSelectors but the other way around.
-Instead of the grafana instance finding which organizations to add the organaization will find which grafana instances to apply to.
-
-This way we woulden't need to define organiaztion.spec.grafana.
 
 ## Context
 
@@ -108,7 +114,6 @@ When creating the new controller we should use [CreateOrUpdate](https://github.c
 Instead of having a single CRD to manage organiaztions, teams and users we could have multiple ones.
 
 If teams, users or orgs get more "abilities" they are separated and can be changed independently.
-I just feel it might assist in organizing all parts of the user/right management.
 
 Also if upstream grafana decides to do a breaking change around one the CR:s we only need to bump one of the API versions,
 assuming that they are not to hard coupled.
@@ -119,14 +124,7 @@ Thanks to all the extra config that is needed it will be easier to do an error.
 
 ### Thoughts
 
-Should we assume that the oeprator owns the organiaztion? If not we will have to define the grafana-url & username & secret
-in the team and user CRD as well. Unless the grafana instances find organiaztion, team, users.
-
 How should we find the organiaztion where we should create the user/team? Just define a name or use a selector?
-
-In the example below organiaztion is part of spec.teams.organiaztion. Another option could be to put organiaztion under spec.organiaztion.
-This way a team definition can only be used in one organiaztion. It would most likley lower the amount of miss configuration.
-We need to decide if we should support multiple organiaztions in one team CRD, same thing with user.
 
 ### Multiple CRD
 
@@ -137,12 +135,12 @@ metadata:
   name: org1
 spec:
   - name: organiaztionX
-      grafana:
-        - url: http://grafana/
-          username: admin # default value
-          password:
-            secretName: mysecret
-              key: password
+      grafanaLabelSelector:
+      dashboardNamespaceSelector:
+      usersLabelSelector:
+      dashboardNamespaceSelector:
+      teamLabelSelector:
+      teamNamespaceSelector:
 ```
 
 ```team.yaml
@@ -158,7 +156,7 @@ spec:
         homeDashboardId: 39
         timezone: utc
         organization: organiaztionX
-        memebers:
+        memebers: # Could use labelSelectors here instead.
           - user1
           - user2
 ```
@@ -169,44 +167,45 @@ kind: GrafanaUser
 metadata:
   name: user1
 spec:
-    users:
     - login: user1
-        email: user1@github.com
-        role: admin
-        name: user1
-        theme: light
-        isGrafanaAdmin: true
-        isDisabled: true
-        password:
-        secretName: mysecret
+      email: user1@github.com
+      role: admin
+      name: user1
+      theme: light
+      isGrafanaAdmin: true
+      isDisabled: false
+      password:
+        secretName: usersecret
         key: password
-        organization: organiaztionX
     - login: user2
-        email: noreply@grafana.com
-        role: Viewer
-        organization: organiaztionX
+      email: noreply2@grafana.com
+      role: Viewer
+      password:
+        secretName: user2secret
+        key: password
+    - login: user3
+      email: noreply3@grafana.com
+      role: Viewer
+      password:
+        secretName: user3secret
+        key: password
 ```
 
 ## Work Plan
 
-Implement the new CR one at the time.
+Implement the new CR, add each API one by one.
+
+- Organiaztion
+- User
+- Team
 
 ## Open questions
+
+- We need to come up with a better name for kind: Organization.
+- The default organiaztion is called `Main Org.` I think most of our users will use this organiaztion. How should we help them use it,
+  it's a rather strange name and in the current design they will have to define that name to use it.
+- Should we define the user under a organiaztion if it's already defined as it's default organiaztion when creating the user?
 - How do we manage each of these new CRs? would it be through a higher level operator that manages organization related resources? or would it be a controller per resource?
-### Same username
-
-Need to find out if i can have the same username in different organiaztions.
-
-### Ldap/openid users
-
-I assume a user that is managed through ldap or similar can be a part of a team.
-If logged in through LDAP my guess is that a local user gets created when the user logins in for the first time. Need to verify this.
-
-### Default organaiztion
-
-Does the default organaiztion have a name? The id is 1.
-Is there any config in grafana.ini that might create issues with default organiaztion vs not?
-For example we probably need to test a bit how [auto_assign_org](https://grafana.com/docs/grafana/latest/administration/configuration/#auto_assign_org) works.
 
 ## Related issues
 
