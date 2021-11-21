@@ -1,0 +1,19 @@
+# See https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-onboard-query-grafana-7.3.html
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDataSource
+metadata:
+  name: aws-prometheus-proxy
+spec:
+  datasources:
+  - access: proxy
+    editable: true
+    isDefault: true
+    jsonData:
+      sigV4Auth: true
+      sigV4Region: <region>
+      timeInterval: 5s
+      tlsSkipVerify: true
+    name: prometheus
+    type: prometheus
+    url: https://aps-workspaces.<region>.amazonaws.com/workspaces/<workspace-id>
+  name: aws-prometheus-proxy.yaml

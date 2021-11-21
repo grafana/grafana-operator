@@ -6,13 +6,19 @@ metadata:
     capabilities: Basic Install
     operators.operatorframework.io/builder: operator-sdk-v1.13.1
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+  labels:
+    operatorframework.io/arch.amd64: supported
+    operatorframework.io/arch.arm64: supported
+    operatorframework.io/arch.s390x: supported
   name: grafana-operator.v4.0.1
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
-    - kind: GrafanaDashboard
+    - description: GrafanaDashboard is the Schema for the grafanadashboards API
+      displayName: Grafana Dashboard
+      kind: GrafanaDashboard
       name: grafanadashboards.integreatly.org
       version: v1alpha1
     - kind: GrafanaDataSource
@@ -21,7 +27,9 @@ spec:
     - kind: GrafanaNotificationChannel
       name: grafananotificationchannels.integreatly.org
       version: v1alpha1
-    - kind: Grafana
+    - description: Grafana is the Schema for the grafanas API
+      displayName: Grafana
+      kind: Grafana
       name: grafanas.integreatly.org
       version: v1alpha1
   description: |
@@ -210,7 +218,7 @@ spec:
           - subjectaccessreviews
           verbs:
           - create
-        serviceAccountName: default
+        serviceAccountName: grafana-operator-controller-manager
       deployments:
       - name: grafana-operator-controller-manager
         spec:
@@ -235,6 +243,7 @@ spec:
                 ports:
                 - containerPort: 8443
                   name: https
+                  protocol: TCP
                 resources: {}
               - args:
                 - --health-probe-bind-address=:8081
@@ -269,21 +278,32 @@ spec:
                   periodSeconds: 10
                 resources:
                   limits:
-                    cpu: 100m
+                    cpu: 200m
                     memory: 300Mi
                   requests:
                     cpu: 100m
                     memory: 100Mi
                 securityContext:
                   allowPrivilegeEscalation: false
+              serviceAccountName: grafana-operator-controller-manager
               terminationGracePeriodSeconds: 10
       permissions:
       - rules:
         - apiGroups:
           - ""
-          - coordination.k8s.io
           resources:
           - configmaps
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - coordination.k8s.io
+          resources:
           - leases
           verbs:
           - get
@@ -300,7 +320,7 @@ spec:
           verbs:
           - create
           - patch
-        serviceAccountName: default
+        serviceAccountName: grafana-operator-controller-manager
     strategy: deployment
   installModes:
   - supported: true

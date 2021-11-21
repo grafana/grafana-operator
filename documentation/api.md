@@ -90,13 +90,6 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>json</b></td>
-        <td>string</td>
-        <td>
-          INSERT ADDITIONAL SPEC FIELDS - desired state of cluster Important: Run "make" to regenerate code after modifying this file<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
         <td><b><a href="#grafanadashboardspecconfigmapref">configMapRef</a></b></td>
         <td>object</td>
         <td>
@@ -120,6 +113,13 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
       </tr><tr>
         <td><b><a href="#grafanadashboardspecgrafanacom">grafanaCom</a></b></td>
         <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>json</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -871,6 +871,48 @@ GrafanaDataSourceJsonData contains the most common json options See https://graf
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>sigV4AssumeRoleArn</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sigV4Auth</b></td>
+        <td>boolean</td>
+        <td>
+          Fields for AWS Prometheus data sources<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sigV4AuthType</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sigV4ExternalId</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sigV4Profile</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sigV4Region</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>sslmode</b></td>
         <td>string</td>
         <td>
@@ -1239,6 +1281,20 @@ GrafanaDataSourceSecureJsonData contains the most common secure json options See
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>sigV4AccessKey</b></td>
+        <td>string</td>
+        <td>
+          Fields for AWS data sources<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sigV4SecretKey</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>tlsCACert</b></td>
         <td>string</td>
         <td>
@@ -1377,7 +1433,7 @@ GrafanaNotificationChannelSpec defines the desired state of GrafanaNotificationC
         <td><b>json</b></td>
         <td>string</td>
         <td>
-          INSERT ADDITIONAL SPEC FIELDS - desired state of cluster Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
