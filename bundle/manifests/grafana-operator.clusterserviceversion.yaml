@@ -4,7 +4,7 @@ metadata:
   annotations:
     alm-examples: '[]'
     capabilities: Basic Install
-    operators.operatorframework.io/builder: operator-sdk-v1.13.0+git
+    operators.operatorframework.io/builder: operator-sdk-v1.13.1
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
   labels:
     operatorframework.io/arch.amd64: supported
