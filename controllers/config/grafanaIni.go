@@ -383,6 +383,7 @@ func (i *GrafanaIni) cfgAuth(config map[string][]string) map[string][]string {
 	items = appendBool(items, "disable_signout_menu", i.cfg.Auth.DisableSignoutMenu)
 	items = appendStr(items, "signout_redirect_url", i.cfg.Auth.SignoutRedirectUrl)
 	items = appendBool(items, "oauth_auto_login", i.cfg.Auth.OauthAutoLogin)
+	items = appendBool(items, "sigv4_auth_enabled", i.cfg.Auth.SigV4AuthEnabled)
 	config["auth"] = items
 
 	return config
