@@ -10,7 +10,7 @@ metadata:
     operatorframework.io/arch.amd64: supported
     operatorframework.io/arch.arm64: supported
     operatorframework.io/arch.s390x: supported
-  name: grafana-operator.v4.0.1
+  name: grafana-operator.v4.0.2
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -261,7 +261,7 @@ spec:
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.annotations['olm.targetNamespaces']
-                image: quay.io/grafana-operator/grafana-operator:v4.0.1
+                image: quay.io/grafana-operator/grafana-operator:v4.0.2
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
@@ -345,4 +345,4 @@ spec:
   provider:
     name: Red Hat
   replaces: grafana-operator.v4.0.0
-  version: 4.0.1
+  version: 4.0.2
