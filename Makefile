@@ -15,6 +15,8 @@ ifneq ($(origin DEFAULT_CHANNEL), undefined)
 BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
 endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
+# Default value for kustomization bundle
+KUSTOMIZE_TAG := $(if $(KUSTOMIZE_TAG),$(KUSTOMIZE_TAG),latest)
 
 # Image URL to use all building/pushing image targets8
 IMG ?= quay.io/grafana-operator/grafana-operator:v$(VERSION)
@@ -154,7 +156,7 @@ bundle-build:
 # Build kustomization files.
 .PHONY: bundle-kustomization
 bundle-kustomization:
-	bash hack/release.sh
+	bash hack/release.sh $(KUSTOMIZE_TAG)
 
 .PHONY: code/check
 code/check: fmt vet

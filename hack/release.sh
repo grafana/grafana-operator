@@ -17,7 +17,7 @@ if [[ $? != 0 ]]; then
   make kustomize
 fi
 
-BASE_PATH=./deploy/manifests/$TAG/
+BASE_PATH=./deploy/manifests/$TAG
 
 if [[ -f $BASE_PATH/kustomization.yaml ]]; then
     rm $BASE_PATH/kustomization.yaml
