@@ -18,7 +18,10 @@ fi
 
 BASE_PATH=./deploy/manifests/$TAG/
 
-rm $BASE_PATH/kustomization.yaml
+if [[ -f $BASE_PATH/kustomization.yaml ]]; then
+    rm $BASE_PATH/kustomization.yaml
+fi
+
 
 mkdir -p $BASE_PATH
 kustomize build ./config/crd > $BASE_PATH/crds.yaml
