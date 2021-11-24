@@ -75,8 +75,6 @@ spec:
                 - id
                 type: object
               json:
-                description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-                  Important: Run "make" to regenerate code after modifying this file'
                 type: string
               jsonnet:
                 type: string
@@ -95,8 +93,6 @@ spec:
                 type: array
               url:
                 type: string
-            required:
-            - json
             type: object
           status:
             type: object
@@ -254,6 +250,9 @@ spec:
                         httpMode:
                           description: Fields for InfluxDB data sources
                           type: string
+                        implementation:
+                          description: Fields for Alertmanager data sources
+                          type: string
                         interval:
                           type: string
                         logAnalyticsClientId:
@@ -281,6 +280,19 @@ spec:
                           type: string
                         postgresVersion:
                           type: integer
+                        sigV4AssumeRoleArn:
+                          type: string
+                        sigV4Auth:
+                          description: Fields for AWS Prometheus data sources
+                          type: boolean
+                        sigV4AuthType:
+                          type: string
+                        sigV4ExternalId:
+                          type: string
+                        sigV4Profile:
+                          type: string
+                        sigV4Region:
+                          type: string
                         sslmode:
                           type: string
                         subscriptionId:
@@ -381,6 +393,11 @@ spec:
                           type: string
                         secretKey:
                           type: string
+                        sigV4AccessKey:
+                          description: Fields for AWS data sources
+                          type: string
+                        sigV4SecretKey:
+                          type: string
                         tlsCACert:
                           type: string
                         tlsClientCert:
@@ -475,9 +492,6 @@ spec:
               of GrafanaNotificationChannel
             properties:
               json:
-                description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-                  Important: Run "operator-sdk generate k8s" to regenerate code after
-                  modifying this file'
                 type: string
               name:
                 type: string
@@ -897,6 +911,8 @@ spec:
                     type: object
                   dashboards:
                     properties:
+                      default_home_dashboard_path:
+                        type: string
                       versions_to_keep:
                         nullable: true
                         type: integer
@@ -1217,6 +1233,20 @@ spec:
                       snapshot_remove_expired:
                         nullable: true
                         type: boolean
+                    type: object
+                  unified_alerting:
+                    properties:
+                      enabled:
+                        nullable: true
+                        type: boolean
+                      evaluation_timeout:
+                        type: string
+                      execute_alerts:
+                        type: boolean
+                      max_attempts:
+                        type: integer
+                      min_interval:
+                        type: string
                     type: object
                   users:
                     properties:

@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
 - crds.yaml
 - deployment.yaml
+- rbac.yaml
