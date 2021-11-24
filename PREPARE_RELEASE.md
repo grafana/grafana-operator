@@ -18,7 +18,7 @@ There are allot of information on what is needed to manage OLM [compatible opera
       # 2021-11-22T10:34:12Z is enough
 - Run `make bundle`
 - Create a PR and get it merged
-- Create a new release with the new tag
+- Create a new release with the new tag, make sure to compile release notes (github has an option to do this for you)
 
 To update the OLM channels you will need to create a PR in the following repos:
 You will need to sign your commits, and make sure they are squashed before submitting the PR, be aware that these repos also require you to sign certain open-source agreement documents as part of the CI-checks.
