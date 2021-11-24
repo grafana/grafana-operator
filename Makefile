@@ -151,6 +151,10 @@ bundle: manifests kustomize
 bundle-build:
 	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
 
+# Build kustomization files.
+.PHONY: bundle-kustomization
+bundle-kustomization:
+	sh hack/release.sh
 
 .PHONY: code/check
 code/check: fmt vet
