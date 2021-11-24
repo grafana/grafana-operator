@@ -4,7 +4,7 @@ In this repo you will need to perfrom the following tasks manually
 
 There are allot of information on what is needed to manage OLM [compatible operators](https://redhat-connect.gitbook.io/certified-operator-guide/ocp-deployment/operator-metadata/creating-the-csv).
 
-- Update `version/version.go`
+- Update `version/version.go` bumping the minor or patch version. Major versions shouldn't be released without discussion and approval of the maintainers!
 - Update the `Makefile`
 - Update `replaces` field in `config/manifests/bases/grafana-operator.clusterserviceversion.yaml`
 - Update `CreatedAt` field in `config/manifests/bases/grafana-operator.clusterserviceversion.yaml`
