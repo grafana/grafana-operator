@@ -21,7 +21,7 @@ There are allot of information on what is needed to manage OLM [compatible opera
 - Create a new release with the new tag
 
 To update the OLM channels you will need to create a PR in the following repos:
-
+You will need to sign your commits, and make sure they are squashed before submitting the PR, be aware that these repos also require you to sign certain open-source agreement documents as part of the CI-checks.
 - [community operators](https://github.com/k8s-operatorhub/community-operators)
 - [RedHat operators](https://github.com/redhat-openshift-ecosystem/community-operators-prod/tree/main/operators)
 
