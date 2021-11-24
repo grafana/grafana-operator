@@ -154,7 +154,7 @@ bundle-build:
 # Build kustomization files.
 .PHONY: bundle-kustomization
 bundle-kustomization:
-	sh hack/release.sh
+	bash hack/release.sh
 
 .PHONY: code/check
 code/check: fmt vet

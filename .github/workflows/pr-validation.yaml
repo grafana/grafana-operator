@@ -93,6 +93,7 @@ jobs:
         with:
           go-version: "1.16"
       - name: Run test
+        shell: bash
         run: |
           make test
       - name: Check if working tree is dirty
