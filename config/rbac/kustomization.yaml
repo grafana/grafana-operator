@@ -1,3 +1,4 @@
+namespace: grafana-operator-system
 resources:
 - role.yaml
 - role_binding.yaml

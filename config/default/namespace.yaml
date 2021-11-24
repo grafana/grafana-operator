@@ -3,4 +3,4 @@ kind: Namespace
 metadata:
   labels:
     control-plane: controller-manager
-  name: system
+  name: grafana-operator-system

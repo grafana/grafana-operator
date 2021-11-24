@@ -18,9 +18,12 @@ fi
 
 BASE_PATH=./deploy/manifests/$TAG/
 
+rm $BASE_PATH/kustomization.yaml
+
 mkdir -p $BASE_PATH
 kustomize build ./config/crd > $BASE_PATH/crds.yaml
 kustomize build ./config/manager > $BASE_PATH/deployment.yaml
+kustomize build ./config/rbac > $BASE_PATH/rbac.yaml
 
 cd $BASE_PATH
 kustomize create --autodetect

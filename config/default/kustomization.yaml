@@ -17,4 +17,3 @@ bases:
 - ../rbac
 - ../manager
 - namespace.yaml
-
