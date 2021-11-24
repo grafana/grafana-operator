@@ -15,7 +15,6 @@ data:
 kind: ConfigMap
 metadata:
   name: manager-config
-  namespace: grafana-operator-system
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -23,7 +22,7 @@ metadata:
   labels:
     control-plane: controller-manager
   name: controller-manager
-  namespace: grafana-operator-system
+  namespace: system
 spec:
   replicas: 1
   selector:
