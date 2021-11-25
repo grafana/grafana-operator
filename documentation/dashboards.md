@@ -36,6 +36,9 @@ To create a dashboard in the `grafana` namespace run:
 kubectl create -f deploy/examples/dashboards/SimpleDashboard.yaml -n grafana
 ```
 
+For more information about the RBAC config needed to
+be able to run `--scan-all` read [deploy/cluster_roles/README.md](deploy/cluster_roles/README.md).
+
 ## Dashboard UIDs
 
 Grafana allows users to define the UIDs of dashboards. If an uid is present on a dashbaord, the operator will use it and

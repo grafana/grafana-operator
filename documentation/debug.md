@@ -43,11 +43,12 @@ When that is done add small config changes to start build the config you want.
 
 ## Grafana Dashboards
 
-There are generally two reasons why you can't find your grafana dashboard.
+There are generally three reasons why you can't find your grafana dashboard.
 
 1. You are creating a grafanadashboard in another namespace then the grafana-operator
   but you haven't defined --scan-all in the [operator](deploy_grafana.md).
-2. Or you haven't defined the correct labelSelector that matches the operator on your dashboard.
+2. Or you haven't confgiured cluster wide RBAC [config](deploy/cluster_roles/README.md).
+3. Or you haven't defined the correct labelSelector that matches the operator on your dashboard.
 
 In your grafana CR you have deinfed somehing like:
 
