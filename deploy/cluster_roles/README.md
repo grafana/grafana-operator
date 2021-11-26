@@ -2,10 +2,10 @@
 
 ## Grant Grafana instance RBAC to GrafanaDashboard definitions in other projects/namespaces
 
-By default, a Grafana instance deployed by the Grafana Operator will only read GrafanaDashboard custom resources 
+By default, a Grafana instance deployed by the Grafana Operator will only read GrafanaDashboard custom resources
 from the namespace/project that the Grafana instance is deployed in.
 
-If specifying the `--scan-all`, `--namespaces`, `DASHBOARD_NAMESPACES_ALL="true"`  flags or if you're using 
+If specifying the `--scan-all`, `--namespaces`, `DASHBOARD_NAMESPACES_ALL="true"`  flags or if you're using
 `dashboardNamespaceSelector`,
 then the ServiceAccount that Grafana is running as needs view access to the GrafanaDashboard resources in other namespaces.
 To grant those permissions the following ClusterRole and ClusterRoleBinding need to be deployed.
