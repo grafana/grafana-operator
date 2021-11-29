@@ -127,3 +127,14 @@ If you want to develop/build/test the operator, here are some instructions how t
 ## Debug
 
 We have documented a few steps to help you debug the [grafana-operator](documentation/debug.md).
+
+## FAQ
+
+Q: Why does grafana-operator cluster role have access to nodes?
+
+A: This is a way for the operator-sdk to check if the node where the operator is running is feeling okay.
+   If it's not okay it can give away the lease to another pod faster.
+
+Q: Why can't the operator controle multiple grafana instances?
+
+A: We are currently working on multi-Namespace support.

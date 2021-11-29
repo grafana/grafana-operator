@@ -42,6 +42,7 @@ var log = logf.Log.WithName(ControllerName)
 // +kubebuilder:rbac:groups="",resources=configmaps;secrets;serviceaccounts;services;persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=route.openshift.io,resources=routes,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=nodes,verbs=get;
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ReconcileGrafana) SetupWithManager(mgr ctrl.Manager) error {
