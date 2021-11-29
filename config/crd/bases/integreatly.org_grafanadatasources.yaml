@@ -112,7 +112,7 @@ spec:
                         encrypt:
                           type: string
                         esVersion:
-                          type: integer
+                          type: string
                         githubUrl:
                           description: Fields for Github data sources
                           type: string
