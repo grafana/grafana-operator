@@ -10,13 +10,19 @@ if created in the operators namespace.***
 ## Dashboards
 
 The operator can import dashboards from either one, some or all namespaces. By default, it will only look for dashboards
-in its own namespace. By setting the `--scan-all` or `--namespaces` flags the operator can watch for dashboards in other
-namespaces.
+in its own namespace. By setting the `--scan-all`,`--namespaces` flags or  `DASHBOARD_NAMESPACES_ALL="true"` env var,
+the operator can watch for dashboards in other namespaces.
 
 ### Watching for dashboards in all namespaces
 
-Set the `--scan-all` flag to watch for dashboards in all namespaces. Cluster wide permissions for the `grafana-operator`
+Set the `--scan-all` flag or `DASHBOARD_NAMESPACES_ALL="true"` env var to watch for dashboards in all namespaces.
+Cluster wide permissions for the
+`grafana-operator`
 service account are required (see `deploy/cluster_roles`).
+
+*Note: to run the allow the operator to watch all namespaces when deploying through OLM, you need to provide the
+`DASHBOARD_NAMESPACES_ALL="true"` env var to the deployment, `--scan-all` isn't supported in this deployment type due to
+a limitation in the operator lifecycle manager*
 
 ### Watching for dashboards in some namespaces
 
@@ -35,8 +41,8 @@ watches for dashboards only in the Namespaces that have the specified namespace 
 
 ```yaml
 dashboardNamespaceSelector:
-    matchLabels:
-      key: value
+  matchLabels:
+    key: value
 ```
 
 ***NOTE***: `--namespaces` and the `dashboardNamespaceSelector` are mutually exclusive and shoudlnt be used together

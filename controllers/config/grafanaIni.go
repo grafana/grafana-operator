@@ -267,6 +267,10 @@ func (i *GrafanaIni) parseConfig(config map[string][]string) map[string][]string
 		config = i.cfgAlerting(config)
 	}
 
+	if i.cfg.UnifiedAlerting != nil {
+		config = i.cfgUnifiedAlerting(config)
+	}
+
 	if i.cfg.Panels != nil {
 		var items []string
 		items = appendBool(items, "disable_sanitize_html", i.cfg.Panels.DisableSanitizeHtml)
@@ -661,6 +665,18 @@ func (i *GrafanaIni) cfgAlerting(config map[string][]string) map[string][]string
 	items = appendInt(items, "notification_timeout_seconds", i.cfg.Alerting.NotificationTimeoutSeconds)
 	items = appendInt(items, "max_attempts", i.cfg.Alerting.MaxAttempts)
 	config["alerting"] = items
+
+	return config
+}
+
+func (i *GrafanaIni) cfgUnifiedAlerting(config map[string][]string) map[string][]string {
+	var items []string
+	items = appendBool(items, "enabled", i.cfg.UnifiedAlerting.Enabled)
+	items = appendBool(items, "execute_alerts", i.cfg.UnifiedAlerting.ExecuteAlerts)
+	items = appendStr(items, "evaluation_timeout", i.cfg.UnifiedAlerting.EvaluationTimeout)
+	items = appendInt(items, "max_attempts", i.cfg.Alerting.MaxAttempts)
+	items = appendStr(items, "min_interval", i.cfg.UnifiedAlerting.MinInterval)
+	config["unified_alerting"] = items
 
 	return config
 }
