@@ -13,7 +13,7 @@ To grant those permissions the following ClusterRole and ClusterRoleBinding need
 Create the `ClusterRole`
 
 ```shell
-kubectl create -f cluster_role_grafana_operator.yaml
+kubectl create -f deploy/cluster_roles/cluster_role_grafana_operator.yaml
 ```
 
 Create the `ClusterRoleBinding` for the `ServiceAccount/grafana-operator` in the given namespace
@@ -29,5 +29,6 @@ For a cluster administrator to allow other users to be able to deploy Grafana op
 
 ```shell
 kubectl create -f cluster_role_aggregate_grafana_admin_edit.yaml
-kubectl create -f cluster_role_aggregate_grafana_view.yaml
+kubectl create -f deploy/cluster_roles/cluster_role_aggregate_grafana_admin_edit.yaml
+kubectl create -f deploy/cluster_roles/cluster_role_aggregate_grafana_view.yaml
 ```
