@@ -6,8 +6,8 @@ metadata:
     capabilities: Basic Install
     categories: Monitoring
     certified: "False"
-    containerImage: quay.io/grafana-operator/grafana-operator:v4.0.2
-    createdAt: "2021-11-22T10:34:12Z"
+    containerImage: quay.io/grafana-operator/grafana-operator:v4.1.0
+    createdAt: "2021-12-01T10:34:12Z"
     description: A Kubernetes Operator based on the Operator SDK for creating and
       managing Grafana instances
     operators.operatorframework.io/builder: operator-sdk-v1.13.1
@@ -18,7 +18,7 @@ metadata:
     operatorframework.io/arch.amd64: supported
     operatorframework.io/arch.arm64: supported
     operatorframework.io/arch.s390x: supported
-  name: grafana-operator.v4.0.2
+  name: grafana-operator.v4.1.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -86,6 +86,7 @@ spec:
           - create
           - get
           - list
+          - patch
           - watch
         - apiGroups:
           - ""
@@ -234,7 +235,8 @@ spec:
           selector:
             matchLabels:
               control-plane: controller-manager
-          strategy: {}
+          strategy:
+            type: Recreate
           template:
             metadata:
               labels:
@@ -256,7 +258,6 @@ spec:
               - args:
                 - --health-probe-bind-address=:8081
                 - --metrics-bind-address=127.0.0.1:8080
-                - --leader-elect
                 - --zap-log-level=error
                 command:
                 - /manager
@@ -269,7 +270,7 @@ spec:
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.annotations['olm.targetNamespaces']
-                image: quay.io/grafana-operator/grafana-operator:v4.0.2
+                image: quay.io/grafana-operator/grafana-operator:v4.1.0
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
@@ -352,5 +353,5 @@ spec:
   maturity: alpha
   provider:
     name: Red Hat
-  replaces: grafana-operator.v4.0.1
-  version: 4.0.2
+  replaces: grafana-operator.v4.1.0
+  version: 4.1.0
