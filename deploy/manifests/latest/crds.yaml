@@ -3,6 +3,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
   name: grafanadashboards.integreatly.org
 spec:
   group: integreatly.org
@@ -113,6 +114,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
   name: grafanadatasources.integreatly.org
 spec:
   group: integreatly.org
@@ -537,6 +539,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
   name: grafanas.integreatly.org
 spec:
   group: integreatly.org
@@ -5325,6 +5328,10 @@ spec:
                   periodSeconds:
                     format: int32
                     type: integer
+                  scheme:
+                    description: URIScheme identifies the scheme used for connection
+                      to a host for Get actions
+                    type: string
                   successThreshold:
                     format: int32
                     type: integer
@@ -5343,6 +5350,10 @@ spec:
                   periodSeconds:
                     format: int32
                     type: integer
+                  scheme:
+                    description: URIScheme identifies the scheme used for connection
+                      to a host for Get actions
+                    type: string
                   successThreshold:
                     format: int32
                     type: integer
