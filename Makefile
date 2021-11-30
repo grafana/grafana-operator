@@ -15,6 +15,8 @@ ifneq ($(origin DEFAULT_CHANNEL), undefined)
 BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
 endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
+# Default value for kustomization bundle
+KUSTOMIZE_TAG := $(if $(KUSTOMIZE_TAG),$(KUSTOMIZE_TAG),latest)
 
 # Image URL to use all building/pushing image targets8
 IMG ?= quay.io/grafana-operator/grafana-operator:v$(VERSION)
@@ -41,7 +43,7 @@ all: manager
 
 # Run tests
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
-test: generate fmt vet envtest manifests api-docs
+test: generate fmt vet envtest manifests api-docs bundle-kustomization
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out
 
 ENVTEST = $(shell pwd)/bin/setup-envtest
@@ -151,6 +153,10 @@ bundle: manifests kustomize
 bundle-build:
 	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
 
+# Build kustomization files.
+.PHONY: bundle-kustomization
+bundle-kustomization:
+	bash hack/release.sh $(KUSTOMIZE_TAG)
 
 .PHONY: code/check
 code/check: fmt vet

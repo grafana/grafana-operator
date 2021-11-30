@@ -8,8 +8,7 @@ set -ex
 # sh hack/e2e.sh <img-name>
 # I cleanup the port-forward in the end of the script but if it errors out before it will still remain, don't forget to delete it.
 
-# TMP, should use config/install in the future
-INSTALL_PATH="config/manager"
+INSTALL_PATH="deploy/manifests"
 NAMESPACE="grafana-operator-system"
 PATH=$PATH:$PWD/bin
 HEADER='-H Accept:application/json -H Content-Type:application/json'
@@ -34,7 +33,7 @@ cd -
 set +ex
 
 # Check if imagePullPolicy is set
-cat $INSTALL_PATH/kustomization.yaml |grep "/spec/template/spec/containers/0/imagePullPolicy"
+cat $INSTALL_PATH/kustomization.yaml |grep "/spec/template/spec/containers/1/imagePullPolicy"
 if [[ $? != 0 ]]; then
 cat <<EOF >> $INSTALL_PATH/kustomization.yaml
 
@@ -45,7 +44,7 @@ patchesJson6902:
       name: controller-manager
     patch: |-
       - op: add
-        path: /spec/template/spec/containers/0/imagePullPolicy
+        path: /spec/template/spec/containers/1/imagePullPolicy
         value: Never
 EOF
 fi
