@@ -93,7 +93,7 @@ type GrafanaDataSourceJsonData struct {
 	TlsSkipVerify           bool   `json:"tlsSkipVerify,omitempty"`
 	GraphiteVersion         string `json:"graphiteVersion,omitempty"`
 	TimeInterval            string `json:"timeInterval,omitempty"`
-	EsVersion               int    `json:"esVersion,omitempty"`
+	EsVersion               string `json:"esVersion,omitempty"`
 	TimeField               string `json:"timeField,omitempty"`
 	Interval                string `json:"interval,omitempty"`
 	LogMessageField         string `json:"logMessageField,omitempty"`
