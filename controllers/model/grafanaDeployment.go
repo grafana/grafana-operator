@@ -435,61 +435,91 @@ func getVolumeMounts(cr *v1alpha1.Grafana) []v13.VolumeMount {
 }
 
 func getLivenessProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.Probe {
-	if cr.Spec.LivenessProbeSpec != nil {
-		return &v13.Probe{
-			Handler: v13.Handler{
-				HTTPGet: &v13.HTTPGetAction{
-					Path: constants.GrafanaHealthEndpoint,
-					Port: intstr.FromInt(GetGrafanaPort(cr)),
-				},
-			},
-			InitialDelaySeconds: cr.Spec.LivenessProbeSpec.InitialDelaySeconds,
-			TimeoutSeconds:      cr.Spec.LivenessProbeSpec.TimeOutSeconds,
-			PeriodSeconds:       cr.Spec.LivenessProbeSpec.PeriodSeconds,
-			SuccessThreshold:    cr.Spec.LivenessProbeSpec.SuccessThreshold,
-			FailureThreshold:    cr.Spec.LivenessProbeSpec.FailureThreshold,
-		}
+	var period int32 = 10
+	var success int32 = 1
+	var scheme = v13.URISchemeHTTP
+
+	if cr.Spec.LivenessProbeSpec != nil && cr.Spec.LivenessProbeSpec.InitialDelaySeconds != nil {
+		delay = *cr.Spec.LivenessProbeSpec.InitialDelaySeconds
+	}
+
+	if cr.Spec.LivenessProbeSpec != nil && cr.Spec.LivenessProbeSpec.TimeOutSeconds != nil {
+		timeout = *cr.Spec.LivenessProbeSpec.TimeOutSeconds
+	}
+
+	if cr.Spec.LivenessProbeSpec != nil && cr.Spec.LivenessProbeSpec.FailureThreshold != nil {
+		failure = *cr.Spec.LivenessProbeSpec.FailureThreshold
+	}
+
+	if cr.Spec.LivenessProbeSpec != nil && cr.Spec.LivenessProbeSpec.PeriodSeconds != nil {
+		period = *cr.Spec.LivenessProbeSpec.PeriodSeconds
+	}
+
+	if cr.Spec.LivenessProbeSpec != nil && cr.Spec.LivenessProbeSpec.SuccessThreshold != nil {
+		period = *cr.Spec.LivenessProbeSpec.SuccessThreshold
+	}
+
+	if cr.Spec.LivenessProbeSpec != nil && cr.Spec.LivenessProbeSpec.Scheme != "" {
+		scheme = cr.Spec.LivenessProbeSpec.Scheme
 	}
 
 	return &v13.Probe{
 		Handler: v13.Handler{
 			HTTPGet: &v13.HTTPGetAction{
-				Path: constants.GrafanaHealthEndpoint,
-				Port: intstr.FromInt(GetGrafanaPort(cr)),
+				Path:   constants.GrafanaHealthEndpoint,
+				Port:   intstr.FromInt(GetGrafanaPort(cr)),
+				Scheme: scheme,
 			},
 		},
 		InitialDelaySeconds: delay,
 		TimeoutSeconds:      timeout,
+		PeriodSeconds:       period,
+		SuccessThreshold:    success,
 		FailureThreshold:    failure,
 	}
 }
 
 func getReadinessProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.Probe {
-	if cr.Spec.ReadinessProbeSpec != nil {
-		return &v13.Probe{
-			Handler: v13.Handler{
-				HTTPGet: &v13.HTTPGetAction{
-					Path: constants.GrafanaHealthEndpoint,
-					Port: intstr.FromInt(GetGrafanaPort(cr)),
-				},
-			},
-			InitialDelaySeconds: cr.Spec.ReadinessProbeSpec.InitialDelaySeconds,
-			TimeoutSeconds:      cr.Spec.ReadinessProbeSpec.TimeOutSeconds,
-			PeriodSeconds:       cr.Spec.ReadinessProbeSpec.PeriodSeconds,
-			SuccessThreshold:    cr.Spec.ReadinessProbeSpec.SuccessThreshold,
-			FailureThreshold:    cr.Spec.ReadinessProbeSpec.FailureThreshold,
-		}
+	var period int32 = 10
+	var success int32 = 1
+	var scheme = v13.URISchemeHTTP
+
+	if cr.Spec.ReadinessProbeSpec != nil && cr.Spec.ReadinessProbeSpec.InitialDelaySeconds != nil {
+		delay = *cr.Spec.ReadinessProbeSpec.InitialDelaySeconds
+	}
+
+	if cr.Spec.ReadinessProbeSpec != nil && cr.Spec.ReadinessProbeSpec.TimeOutSeconds != nil {
+		timeout = *cr.Spec.ReadinessProbeSpec.TimeOutSeconds
+	}
+
+	if cr.Spec.ReadinessProbeSpec != nil && cr.Spec.ReadinessProbeSpec.FailureThreshold != nil {
+		failure = *cr.Spec.ReadinessProbeSpec.FailureThreshold
+	}
+
+	if cr.Spec.ReadinessProbeSpec != nil && cr.Spec.ReadinessProbeSpec.PeriodSeconds != nil {
+		period = *cr.Spec.ReadinessProbeSpec.PeriodSeconds
+	}
+
+	if cr.Spec.ReadinessProbeSpec != nil && cr.Spec.ReadinessProbeSpec.SuccessThreshold != nil {
+		period = *cr.Spec.ReadinessProbeSpec.SuccessThreshold
+	}
+
+	if cr.Spec.ReadinessProbeSpec != nil && cr.Spec.ReadinessProbeSpec.Scheme != "" {
+		scheme = cr.Spec.ReadinessProbeSpec.Scheme
 	}
 
 	return &v13.Probe{
 		Handler: v13.Handler{
 			HTTPGet: &v13.HTTPGetAction{
-				Path: constants.GrafanaHealthEndpoint,
-				Port: intstr.FromInt(GetGrafanaPort(cr)),
+				Path:   constants.GrafanaHealthEndpoint,
+				Port:   intstr.FromInt(GetGrafanaPort(cr)),
+				Scheme: scheme,
 			},
 		},
 		InitialDelaySeconds: delay,
 		TimeoutSeconds:      timeout,
+		PeriodSeconds:       period,
+		SuccessThreshold:    success,
 		FailureThreshold:    failure,
 	}
 }

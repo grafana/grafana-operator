@@ -41,18 +41,20 @@ type GrafanaSpec struct {
 }
 
 type ReadinessProbeSpec struct {
-	InitialDelaySeconds int32 `json:"initialDelaySeconds,omitempty"`
-	TimeOutSeconds      int32 `json:"timeoutSeconds,omitempty"`
-	PeriodSeconds       int32 `json:"periodSeconds,omitempty"`
-	SuccessThreshold    int32 `json:"successThreshold,omitempty"`
-	FailureThreshold    int32 `json:"failureThreshold,omitempty"`
+	InitialDelaySeconds *int32       `json:"initialDelaySeconds,omitempty"`
+	TimeOutSeconds      *int32       `json:"timeoutSeconds,omitempty"`
+	PeriodSeconds       *int32       `json:"periodSeconds,omitempty"`
+	SuccessThreshold    *int32       `json:"successThreshold,omitempty"`
+	FailureThreshold    *int32       `json:"failureThreshold,omitempty"`
+	Scheme              v1.URIScheme `json:"scheme,omitempty"`
 }
 type LivenessProbeSpec struct {
-	InitialDelaySeconds int32 `json:"initialDelaySeconds,omitempty"`
-	TimeOutSeconds      int32 `json:"timeoutSeconds,omitempty"`
-	PeriodSeconds       int32 `json:"periodSeconds,omitempty"`
-	SuccessThreshold    int32 `json:"successThreshold,omitempty"`
-	FailureThreshold    int32 `json:"failureThreshold,omitempty"`
+	InitialDelaySeconds *int32       `json:"initialDelaySeconds,omitempty"`
+	TimeOutSeconds      *int32       `json:"timeoutSeconds,omitempty"`
+	PeriodSeconds       *int32       `json:"periodSeconds,omitempty"`
+	SuccessThreshold    *int32       `json:"successThreshold,omitempty"`
+	FailureThreshold    *int32       `json:"failureThreshold,omitempty"`
+	Scheme              v1.URIScheme `json:"scheme,omitempty"`
 }
 
 type JsonnetConfig struct {
