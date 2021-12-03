@@ -59,7 +59,8 @@ func NewDashboardPipeline(client client.Client, dashboard *v1alpha1.GrafanaDashb
 	}
 }
 
-func (r *DashboardPipelineImpl) ProcessDashboard(ctx context.Context, knownHash string, folderId *int64, folderName string) ([]byte, error) {
+func (r *DashboardPipelineImpl) ProcessDashboard(ctx context.Context, knownHash string, folderId *int64,
+	folderName string, forceRecreate bool) ([]byte, error) {
 	err := r.obtainJson(ctx)
 	if err != nil {
 		return nil, err
@@ -184,9 +185,9 @@ func (r *DashboardPipelineImpl) loadJsonnet(source string) (string, error) {
 
 // Try to obtain the dashboard json from a provided url
 func (r *DashboardPipelineImpl) loadDashboardFromURL(ctx context.Context) error {
-	url, err := url.ParseRequestURI(r.Dashboard.Spec.Url)
+	loadUrl, err := url.ParseRequestURI(r.Dashboard.Spec.Url)
 	if err != nil {
-		return fmt.Errorf("invalid url %v", r.Dashboard.Spec.Url)
+		return fmt.Errorf("invalid loadUrl %v", r.Dashboard.Spec.Url)
 	}
 
 	resp, err := http.Get(r.Dashboard.Spec.Url)
@@ -203,7 +204,7 @@ func (r *DashboardPipelineImpl) loadDashboardFromURL(ctx context.Context) error 
 	if err != nil {
 		return err
 	}
-	sourceType := r.getFileType(url.Path)
+	sourceType := r.getFileType(loadUrl.Path)
 
 	switch sourceType {
 	case SourceTypeJson, SourceTypeUnknown:

@@ -27,10 +27,9 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	grafanav1alpha1 "github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
-	integreatlyorgv1alpha1 "github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/controllers/config"
-	"github.com/integr8ly/grafana-operator/controllers/constants"
+	grafanav1alpha1 "github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/config"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/constants"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -127,7 +126,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, request ctrl
 		}
 
 		var wg sync.WaitGroup
-		var errors []error
+		var errs []error
 
 		for _, grafana := range readyGrafanas {
 			grafana := grafana
@@ -142,23 +141,23 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, request ctrl
 						"dashboard", fmt.Sprintf("%s/%s", dashboard.Namespace, dashboard.Name),
 						"grafana", fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name))
 
-					errors = append(errors, err)
+					errs = append(errs, err)
 				}
 			}()
 		}
 
 		wg.Wait()
 
-		if len(errors) != 0 {
+		if len(errs) != 0 {
 			// If error is returned, controller-runtime will requeue to the workqueue.
-			return reconcile.Result{}, buildError(errors)
+			return reconcile.Result{}, buildError(errs)
 		}
 	}
 
 	logger.Info(fmt.Sprintf("start finalizing GrafanaDashboard %s/%s", request.Namespace, request.Name))
 
 	var wg sync.WaitGroup
-	var errors []error
+	var errs []error
 
 	for _, grafana := range readyGrafanas {
 		grafana := grafana
@@ -178,9 +177,9 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, request ctrl
 
 	wg.Wait()
 
-	if len(errors) != 0 {
+	if len(errs) != 0 {
 		// If error is returned, controller-runtime will requeue to the workqueue.
-		return reconcile.Result{}, buildError(errors)
+		return reconcile.Result{}, buildError(errs)
 	}
 
 	newDashboard := dashboard.DeepCopy()
@@ -235,11 +234,42 @@ func SetupWithManager(mgr ctrl.Manager, r reconcile.Reconciler, namespace string
 	log.Log.Info("Starting dashboard controller")
 
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&integreatlyorgv1alpha1.GrafanaDashboard{}).
+		For(&grafanav1alpha1.GrafanaDashboard{}).
 		Complete(r)
 }
 
 var _ reconcile.Reconciler = &GrafanaDashboardReconciler{}
+
+// Check if a given dashboard (by name) is present in the list of
+// dashboards in the namespace
+func inNamespace(namespaceDashboards *grafanav1alpha1.GrafanaDashboardList, item *grafanav1alpha1.GrafanaDashboardRef) bool {
+	for _, d := range namespaceDashboards.Items {
+		if d.Name == item.Name && d.Namespace == item.Namespace {
+			return true
+		}
+	}
+	return false
+}
+
+// Returns the hash of a dashboard if it is known
+func findHash(knownDashboards []*grafanav1alpha1.GrafanaDashboardRef, item *grafanav1alpha1.GrafanaDashboard) string {
+	for _, d := range knownDashboards {
+		if item.Name == d.Name && item.Namespace == d.Namespace {
+			return d.Hash
+		}
+	}
+	return ""
+}
+
+// Returns the UID of a dashboard if it is known
+func findUid(knownDashboards []*grafanav1alpha1.GrafanaDashboardRef, item *grafanav1alpha1.GrafanaDashboard) string {
+	for _, d := range knownDashboards {
+		if item.Name == d.Name && item.Namespace == d.Namespace {
+			return d.UID
+		}
+	}
+	return ""
+}
 
 func (r *GrafanaDashboardReconciler) reconcileDashboards(ctx context.Context, dashboard grafanav1alpha1.GrafanaDashboard, grafana grafanav1alpha1.Grafana) error {
 	// Collect known and namespace dashboards
@@ -251,16 +281,6 @@ func (r *GrafanaDashboardReconciler) reconcileDashboards(ctx context.Context, da
 				knownDashboards = append(knownDashboards, d)
 			}
 		}
-	}
-
-	// Returns the hash of a dashboard if it is known
-	findHash := func(item *grafanav1alpha1.GrafanaDashboard) string {
-		for _, d := range knownDashboards {
-			if item.Name == d.Name && item.Namespace == d.Namespace {
-				return d.Hash
-			}
-		}
-		return ""
 	}
 
 	if !r.isMatch(&dashboard, &grafana) {
@@ -297,11 +317,11 @@ func (r *GrafanaDashboardReconciler) reconcileDashboards(ctx context.Context, da
 
 	// Process the dashboard. Use the known hash of an existing dashboard
 	// to determine if an update is required
-	knownHash := findHash(&dashboard)
+	knownHash := findHash(knownDashboards, &dashboard)
 
 	pipeline := NewDashboardPipeline(r.Client, &dashboard)
 
-	processed, err := pipeline.ProcessDashboard(ctx, knownHash, &folderId, folderName)
+	processed, err := pipeline.ProcessDashboard(ctx, knownHash, &folderId, folderName, true)
 	if err != nil {
 		log.Log.Error(err, "cannot process dashboard", "namespace", dashboard.Namespace, "name", dashboard.Name)
 		r.manageError(&dashboard, err)
@@ -511,7 +531,7 @@ func (r *GrafanaDashboardReconciler) manageError(dashboard *grafanav1alpha1.Graf
 
 func (r *GrafanaDashboardReconciler) SetupWithManager(mgr manager.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&integreatlyorgv1alpha1.GrafanaDashboard{}).
+		For(&grafanav1alpha1.GrafanaDashboard{}).
 		Complete(r)
 }
 
