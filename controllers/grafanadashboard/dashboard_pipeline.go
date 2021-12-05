@@ -304,7 +304,7 @@ func (r *DashboardPipelineImpl) getLatestRevisionForGrafanaComDashboard() (int, 
 	}
 
 	if listResponse == nil || len(listResponse.Items) == 0 {
-		return 0, errors.New("List dashboard revisions request succeeded but no revisions returned")
+		return 0, errors.New("list dashboard revisions request succeeded but no revisions returned")
 	}
 
 	return r.getMaximumRevisionFromListDashboardRevisionsResponse(listResponse), nil
