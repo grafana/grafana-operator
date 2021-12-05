@@ -25,6 +25,11 @@ var (
 	azureAdEnabled = true
 	allowSignUp    = false
 
+	// GrafanaConfigUnifiedAlerting
+	enableGrafanaConfigUnifiedAlerting = true
+	executeAlerts                      = true
+	maxAttempts                        = 2
+
 	// Rendering
 	concurrentRenderRequestLimit = 10
 )
@@ -64,6 +69,13 @@ var testGrafanaConfig = v1alpha1.GrafanaConfig{
 		TokenUrl:       "https://TokenURL.com",
 		AllowedDomains: "azure.com",
 		AllowSignUp:    &allowSignUp,
+	},
+	UnifiedAlerting: &v1alpha1.GrafanaConfigUnifiedAlerting{
+		Enabled:           &enableGrafanaConfigUnifiedAlerting,
+		ExecuteAlerts:     &executeAlerts,
+		EvaluationTimeout: "3s",
+		MaxAttempts:       &maxAttempts,
+		MinInterval:       "1m",
 	},
 	Rendering: &v1alpha1.GrafanaConfigRendering{
 		ServerURL:                    "server_url",
@@ -124,8 +136,22 @@ serve_from_sub_path = false
 socket = socket
 static_root_path = /
 
+[unified_alerting]
+enabled = true
+evaluation_timeout = 3s
+execute_alerts = true
+max_attempts = 2
+min_interval = 1m
+
 `
 
+/*
+	Enabled:           &enableGrafanaConfigUnifiedAlerting,
+	ExecuteAlerts:     &ExecuteAlerts,
+	EvaluationTimeout: "3s",
+	MaxAttempts:       &MaxAttempts,
+	MinInterval:       "1m",
+*/
 func TestWrite(t *testing.T) {
 	i := NewGrafanaIni(&testGrafanaConfig)
 	sb, sha := i.Write()
@@ -135,6 +161,22 @@ func TestWrite(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, sb, testIni)
 	require.Equal(t, sha, fmt.Sprintf("%x", hash.Sum(nil)))
+}
+
+func TestCfgUnifiedAlerting(t *testing.T) {
+	i := NewGrafanaIni(&testGrafanaConfig)
+	config := map[string][]string{}
+	config = i.cfgUnifiedAlerting(config)
+	testConfig := map[string][]string{
+		"unified_alerting": {
+			"enabled = true",
+			"execute_alerts = true",
+			"evaluation_timeout = 3s",
+			"max_attempts = 2",
+			"min_interval = 1m",
+		},
+	}
+	require.Equal(t, config, testConfig)
 }
 
 func TestCfgServer(t *testing.T) {
