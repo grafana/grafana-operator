@@ -16,7 +16,10 @@ const (
 
 var (
 	// Server
-	enableGzip = false
+	enableGzip       = false
+	enforceDomain    = false
+	ServeFromSubPath = false
+	RouterLogging    = false
 
 	// AuthAzureAd
 	azureAdEnabled = true
@@ -28,7 +31,19 @@ var (
 
 var testGrafanaConfig = v1alpha1.GrafanaConfig{
 	Server: &v1alpha1.GrafanaConfigServer{
-		EnableGzip: &enableGzip,
+		HttpAddr:         "http://grafana",
+		HttpPort:         "3000",
+		Protocol:         "http",
+		Socket:           "socket",
+		Domain:           "example.com",
+		EnforceDomain:    &enforceDomain,
+		RootUrl:          "root_url",
+		ServeFromSubPath: &ServeFromSubPath,
+		StaticRootPath:   "/",
+		EnableGzip:       &enableGzip,
+		CertFile:         "/mnt/cert.crt",
+		CertKey:          "/mnt/cert.key",
+		RouterLogging:    &RouterLogging,
 	},
 	Database: &v1alpha1.GrafanaConfigDatabase{
 		Url:      "Url",
@@ -95,7 +110,19 @@ concurrent_render_request_limit = 10
 server_url = server_url
 
 [server]
+cert_file = /mnt/cert.crt
+cert_key = /mnt/cert.key
+domain = example.com
 enable_gzip = false
+enforce_domain = false
+http_addr = http://grafana
+http_port = 3000
+protocol = http
+root_url = root_url
+router_logging = false
+serve_from_sub_path = false
+socket = socket
+static_root_path = /
 
 `
 
@@ -106,8 +133,70 @@ func TestWrite(t *testing.T) {
 	hash := sha256.New()
 	_, err := io.WriteString(hash, testIni)
 	require.NoError(t, err)
-	require.Equal(t, sha, fmt.Sprintf("%x", hash.Sum(nil)))
 	require.Equal(t, sb, testIni)
+	require.Equal(t, sha, fmt.Sprintf("%x", hash.Sum(nil)))
+}
+
+func TestCfgServer(t *testing.T) {
+	i := NewGrafanaIni(&testGrafanaConfig)
+	config := map[string][]string{}
+	config = i.cfgServer(config)
+	testConfig := map[string][]string{
+		"server": {
+			"http_addr = http://grafana",
+			"http_port = 3000",
+			"protocol = http",
+			"socket = socket",
+			"domain = example.com",
+			"enforce_domain = false",
+			"root_url = root_url",
+			"serve_from_sub_path = false",
+			"static_root_path = /",
+			"enable_gzip = false",
+			"cert_file = /mnt/cert.crt",
+			"cert_key = /mnt/cert.key",
+			"router_logging = false",
+		},
+	}
+	require.Equal(t, config, testConfig)
+}
+
+func TestCfgAuthAzureAD(t *testing.T) {
+	i := NewGrafanaIni(&testGrafanaConfig)
+	config := map[string][]string{}
+	config = i.cfgAuthAzureAD(config)
+	testConfig := map[string][]string{
+		"auth.azuread": {
+			"enabled = true",
+			"client_id = Client",
+			"client_secret = ClientSecret",
+			"scopes = Scopes",
+			"auth_url = https://AuthURL.com",
+			"token_url = https://TokenURL.com",
+			"allowed_domains = azure.com",
+			"allow_sign_up = false",
+		},
+	}
+	require.Equal(t, config, testConfig)
+}
+
+func TestCfgDatabase(t *testing.T) {
+	i := NewGrafanaIni(&testGrafanaConfig)
+	config := map[string][]string{}
+	config = i.cfgDatabase(config)
+	testConfig := map[string][]string{
+		"database": {
+			"url = Url",
+			"type = type",
+			"path = path",
+			"host = host",
+			"name = name",
+			"user = user",
+			"password = password",
+			"ssl_mode = sslMode",
+		},
+	}
+	require.Equal(t, config, testConfig)
 }
 
 func TestCfgRendering(t *testing.T) {
