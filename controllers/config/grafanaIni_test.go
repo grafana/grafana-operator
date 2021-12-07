@@ -145,13 +145,6 @@ min_interval = 1m
 
 `
 
-/*
-	Enabled:           &enableGrafanaConfigUnifiedAlerting,
-	ExecuteAlerts:     &ExecuteAlerts,
-	EvaluationTimeout: "3s",
-	MaxAttempts:       &MaxAttempts,
-	MinInterval:       "1m",
-*/
 func TestWrite(t *testing.T) {
 	i := NewGrafanaIni(&testGrafanaConfig)
 	sb, sha := i.Write()
