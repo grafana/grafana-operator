@@ -8,7 +8,6 @@ import (
 	"github.com/grafana-operator/grafana-operator/v4/controllers/model"
 	v12 "github.com/openshift/api/route/v1"
 	v13 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -96,7 +95,7 @@ func (i *ClusterState) readGrafanaService(ctx context.Context, cr *v1alpha1.Graf
 }
 
 func (i *ClusterState) readGrafanaDataPVC(ctx context.Context, cr *v1alpha1.Grafana, client client.Client) error {
-	currentState := &corev1.PersistentVolumeClaim{}
+	currentState := &v1.PersistentVolumeClaim{}
 	selector := model.GrafanaDataStorageSelector(cr)
 	err := client.Get(ctx, selector, currentState)
 	if err != nil {
@@ -194,7 +193,7 @@ func (i *ClusterState) readGrafanaDeployment(ctx context.Context, cr *v1alpha1.G
 }
 
 func (i *ClusterState) readGrafanaAdminUserSecret(ctx context.Context, cr *v1alpha1.Grafana, client client.Client) error {
-	currentState := &corev1.Secret{}
+	currentState := &v1.Secret{}
 	selector := model.AdminSecretSelector(cr)
 	err := client.Get(ctx, selector, currentState)
 	if err != nil {
