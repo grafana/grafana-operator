@@ -5,31 +5,35 @@ import (
 	"sync"
 	"time"
 
-	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
+	"github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
 )
 
 const (
-	ConfigGrafanaImage              = "grafana.image.url"
-	ConfigGrafanaImageTag           = "grafana.image.tag"
-	ConfigPluginsInitContainerImage = "grafana.plugins.init.container.image.url"
-	ConfigPluginsInitContainerTag   = "grafana.plugins.init.container.image.tag"
-	ConfigOperatorNamespace         = "grafana.operator.namespace"
-	ConfigDashboardLabelSelector    = "grafana.dashboard.selector"
-	ConfigOpenshift                 = "mode.openshift"
-	ConfigJsonnetBasePath           = "grafonnet.location"
-	GrafanaDataPath                 = "/var/lib/grafana"
-	GrafanaLogsPath                 = "/var/log/grafana"
-	GrafanaPluginsPath              = "/var/lib/grafana/plugins"
-	GrafanaProvisioningPath         = "/etc/grafana/provisioning/"
-	PluginsInitContainerImage       = "quay.io/integreatly/grafana_plugins_init"
-	PluginsInitContainerTag         = "0.0.3"
-	PluginsUrl                      = "https://grafana.com/api/plugins/%s/versions/%s"
-	RequeueDelay                    = time.Second * 10
-	SecretsMountDir                 = "/etc/grafana-secrets/" // #nosec G101
-	ConfigMapsMountDir              = "/etc/grafana-configmaps/"
-	ConfigRouteWatch                = "watch.routes"
-	ConfigGrafanaDashboardsSynced   = "grafana.dashboards.synced"
-	JsonnetBasePath                 = "/opt/jsonnet"
+	ConfigGrafanaImage                      = "grafana.image.url"
+	ConfigGrafanaImageTag                   = "grafana.image.tag"
+	ConfigPluginsInitContainerImage         = "grafana.plugins.init.container.image.url"
+	ConfigPluginsInitContainerTag           = "grafana.plugins.init.container.image.tag"
+	ConfigOperatorNamespace                 = "grafana.operator.namespace"
+	ConfigDashboardLabelSelector            = "grafana.dashboard.selector"
+	ConfigOpenshift                         = "mode.openshift"
+	ConfigJsonnetBasePath                   = "grafonnet.location"
+	GrafanaDataPath                         = "/var/lib/grafana"
+	GrafanaLogsPath                         = "/var/log/grafana"
+	GrafanaPluginsPath                      = "/var/lib/grafana/plugins"
+	GrafanaProvisioningPath                 = "/etc/grafana/provisioning/"
+	GrafanaProvisioningPluginsPath          = "/etc/grafana/provisioning/plugins"
+	GrafanaProvisioningDashboardsPath       = "/etc/grafana/provisioning/dashboards"
+	GrafanaProvisioningNotifiersPath        = "/etc/grafana/provisioning/notifiers"
+	PluginsInitContainerImage               = "quay.io/grafana-operator/grafana_plugins_init"
+	PluginsInitContainerTag                 = "0.0.5"
+	PluginsUrl                              = "https://grafana.com/api/plugins/%s/versions/%s"
+	RequeueDelay                            = time.Second * 10
+	SecretsMountDir                         = "/etc/grafana-secrets/" // #nosec G101
+	ConfigMapsMountDir                      = "/etc/grafana-configmaps/"
+	ConfigRouteWatch                        = "watch.routes"
+	ConfigGrafanaDashboardsSynced           = "grafana.dashboards.synced"
+	ConfigGrafanaNotificationChannelsSynced = "grafana.notificationchannels.synced"
+	JsonnetBasePath                         = "/opt/jsonnet"
 )
 
 type ControllerConfig struct {
@@ -84,9 +88,7 @@ func (c *ControllerConfig) SetPluginsFor(dashboard *v1alpha1.GrafanaDashboard) {
 
 func (c *ControllerConfig) RemovePluginsFor(namespace, name string) {
 	id := c.GetDashboardId(namespace, name)
-	if _, ok := c.Plugins[id]; ok {
-		delete(c.Plugins, id)
-	}
+	delete(c.Plugins, id)
 }
 
 func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard, folderId *int64, folderName string) {
@@ -153,7 +155,7 @@ func (c *ControllerConfig) RemoveDashboard(hash string) {
 func (c *ControllerConfig) GetDashboards(namespace string) []*v1alpha1.GrafanaDashboardRef {
 	c.Lock()
 	defer c.Unlock()
-	// Cluster level?
+	// Checking for dashboards at the cluster level? across namespaces?
 	if namespace == "" {
 		var dashboards []*v1alpha1.GrafanaDashboardRef
 		dashboards = append(dashboards, c.Dashboards...)
@@ -178,9 +180,7 @@ func (c *ControllerConfig) AddConfigItem(key string, value interface{}) {
 func (c *ControllerConfig) RemoveConfigItem(key string) {
 	c.Lock()
 	defer c.Unlock()
-	if _, ok := c.Values[key]; ok {
-		delete(c.Values, key)
-	}
+	delete(c.Values, key)
 }
 
 func (c *ControllerConfig) GetConfigItem(key string, defaultValue interface{}) interface{} {

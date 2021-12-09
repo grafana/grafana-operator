@@ -2,12 +2,16 @@
 # since it depends on service name and namespace that are out of this kustomize package.
 # It should be run by config/default
 resources:
-- bases/integreatly.org_grafanas.yaml
-- bases/integreatly.org_grafanadashboards.yaml
-- bases/integreatly.org_grafanadatasources.yaml
+  - bases/integreatly.org_grafanas.yaml
+  - bases/integreatly.org_grafanadashboards.yaml
+  - bases/integreatly.org_grafanadatasources.yaml
+  - bases/integreatly.org_grafananotificationchannels.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
+  - patches/ufinjection_in_grafanas.yaml
+  - patches/ufinjection_in_grafanadashboards.yaml
+  - patches/ufinjection_in_grafanadatasources.yaml
 # [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix.
 # patches here are for enabling the conversion webhook for each CRD
 #- patches/webhook_in_grafanas.yaml

@@ -1,10 +1,10 @@
 package common
 
 import (
-	"github.com/integr8ly/grafana-operator/internal/k8sutil"
+	"github.com/grafana-operator/grafana-operator/v4/internal/k8sutil"
 	routev1 "github.com/openshift/api/route/v1"
 
-	config2 "github.com/integr8ly/grafana-operator/controllers/config"
+	config2 "github.com/grafana-operator/grafana-operator/v4/controllers/config"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"time"
@@ -70,8 +70,8 @@ func (b *Background) autoDetectCapabilities() {
 
 //
 func (b *Background) detectRoute() {
-	resourceExists, _ := k8sutil.ResourceExists(b.dc, routev1.SchemeGroupVersion.String(), RouteKind)
-	if resourceExists {
+	resourceExists, err := k8sutil.ResourceExists(b.dc, routev1.SchemeGroupVersion.String(), RouteKind)
+	if resourceExists && err == nil {
 		config := config2.GetControllerConfig()
 		config.AddConfigItem(config2.ConfigOpenshift, true)
 

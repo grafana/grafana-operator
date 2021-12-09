@@ -7,10 +7,10 @@ import (
 	"reflect"
 
 	"github.com/go-logr/logr"
-	grafanav1alpha1 "github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/controllers/common"
-	"github.com/integr8ly/grafana-operator/controllers/config"
-	"github.com/integr8ly/grafana-operator/controllers/model"
+	grafanav1alpha1 "github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/common"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/config"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/model"
 	routev1 "github.com/openshift/api/route/v1"
 	v12 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -33,6 +33,15 @@ const ControllerName = "grafana-controller"
 const DefaultClientTimeoutSeconds = 5
 
 var log = logf.Log.WithName(ControllerName)
+
+// +kubebuilder:rbac:groups=integreatly.org,resources=grafanas;grafanas/finalizers,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=integreatly.org,resources=grafanas/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=extensions;apps,resources=deployments;deployments/finalizers,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=events,verbs=get;list;watch;create;patch
+// +kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch
+// +kubebuilder:rbac:groups="",resources=configmaps;secrets;serviceaccounts;services;persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=route.openshift.io,resources=routes;routes/custom-host,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ReconcileGrafana) SetupWithManager(mgr ctrl.Manager) error {
@@ -231,10 +240,7 @@ func (r *ReconcileGrafana) manageError(cr *grafanav1alpha1.Grafana, issue error,
 func (r *ReconcileGrafana) getGrafanaAdminUrl(cr *grafanav1alpha1.Grafana, state *common.ClusterState) (string, error) {
 	// If preferService is true, we skip the routes and try to access grafana
 	// by using the service.
-	preferService := false
-	if cr.Spec.Client != nil {
-		preferService = cr.Spec.Client.PreferService
-	}
+	preferService := cr.GetPreferServiceValue()
 
 	// First try to use the route if it exists. Prefer the route because it also works
 	// when running the operator outside of the cluster
@@ -250,7 +256,8 @@ func (r *ReconcileGrafana) getGrafanaAdminUrl(cr *grafanav1alpha1.Grafana, state
 		}
 
 		// Otherwise try to find something suitable, hostname or IP
-		for _, ingress := range state.GrafanaIngress.Status.LoadBalancer.Ingress {
+		if len(state.GrafanaIngress.Status.LoadBalancer.Ingress) > 0 {
+			ingress := state.GrafanaIngress.Status.LoadBalancer.Ingress[0]
 			if ingress.Hostname != "" {
 				return fmt.Sprintf("https://%v", ingress.Hostname), nil
 			}
@@ -262,7 +269,7 @@ func (r *ReconcileGrafana) getGrafanaAdminUrl(cr *grafanav1alpha1.Grafana, state
 
 	// Otherwise rely on the service
 	if state.GrafanaService != nil {
-		return fmt.Sprintf("http://%v:%d", state.GrafanaService.Name,
+		return fmt.Sprintf("http://%v.%v.svc.cluster.local:%d", state.GrafanaService.Name, cr.Namespace,
 			servicePort), nil
 	}
 

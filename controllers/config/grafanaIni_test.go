@@ -6,8 +6,12 @@ import (
 	"io"
 	"testing"
 
-	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
+	"github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
 	"github.com/stretchr/testify/require"
+)
+
+const (
+	Bar = "bar"
 )
 
 var (
@@ -51,6 +55,9 @@ var testGrafanaConfig = v1alpha1.GrafanaConfig{
 		CallbackURL:                  "callback_url",
 		ConcurrentRenderRequestLimit: &concurrentRenderRequestLimit,
 	},
+	FeatureToggles: &v1alpha1.GrafanaConfigFeatureToggles{
+		Enable: "ngalert",
+	},
 }
 
 var testIni = `[auth.azuread]
@@ -72,6 +79,9 @@ ssl_mode = sslMode
 type = type
 url = Url
 user = user
+
+[feature_toggles]
+enable = ngalert
 
 [paths]
 data = /var/lib/grafana
@@ -116,7 +126,7 @@ func TestCfgRendering(t *testing.T) {
 
 func TestAppendBool(t *testing.T) {
 	testList := []string{"foo"}
-	key := "bar"
+	key := Bar
 	value := false
 	compareList := []string{"foo", "bar = false"}
 	newList := appendBool(testList, key, &value)
@@ -126,7 +136,7 @@ func TestAppendBool(t *testing.T) {
 
 func TestAppendStr(t *testing.T) {
 	testList := []string{"foo"}
-	key := "bar"
+	key := Bar
 	value := "baz"
 	compareList := []string{"foo", "bar = baz"}
 	newList := appendStr(testList, key, value)
@@ -136,7 +146,7 @@ func TestAppendStr(t *testing.T) {
 
 func TestAppendInt(t *testing.T) {
 	testList := []string{"foo"}
-	key := "bar"
+	key := Bar
 	value := 10
 	compareList := []string{"foo", "bar = 10"}
 	newList := appendInt(testList, key, &value)

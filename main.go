@@ -24,14 +24,17 @@ import (
 	"runtime"
 	"strings"
 
-	apis "github.com/integr8ly/grafana-operator/api"
-	"github.com/integr8ly/grafana-operator/controllers/common"
-	grafanaconfig "github.com/integr8ly/grafana-operator/controllers/config"
-	"github.com/integr8ly/grafana-operator/controllers/grafana"
-	"github.com/integr8ly/grafana-operator/controllers/grafanadashboard"
-	"github.com/integr8ly/grafana-operator/controllers/grafanadatasource"
-	"github.com/integr8ly/grafana-operator/internal/k8sutil"
-	"github.com/integr8ly/grafana-operator/version"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/grafananotificationchannel"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	apis "github.com/grafana-operator/grafana-operator/v4/api"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/common"
+	grafanaconfig "github.com/grafana-operator/grafana-operator/v4/controllers/config"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/grafana"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/grafanadashboard"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/grafanadatasource"
+	"github.com/grafana-operator/grafana-operator/v4/internal/k8sutil"
+	"github.com/grafana-operator/grafana-operator/v4/version"
 	routev1 "github.com/openshift/api/route/v1"
 	"github.com/operator-framework/operator-lib/leader"
 	"k8s.io/client-go/rest"
@@ -43,14 +46,12 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	integreatlyorgv1alpha1 "github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	integreatlyorgv1alpha1 "github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -64,6 +65,9 @@ var (
 	flagNamespaces                string
 	scanAll                       bool
 	flagJsonnetLocation           string
+	metricsAddr                   string
+	enableLeaderElection          bool
+	probeAddr                     string
 )
 
 func init() {
@@ -80,20 +84,14 @@ func printVersion() {
 	log.Log.Info(fmt.Sprintf("operator Version: %v", version.Version))
 }
 
-func main() {
-
-	printVersion()
-
-	var metricsAddr string
-	var enableLeaderElection bool
-	var probeAddr string
+func assignOpts() {
 	flag.StringVar(&flagImage, "grafana-image", "", "Overrides the default Grafana image")
 	flag.StringVar(&flagImageTag, "grafana-image-tag", "", "Overrides the default Grafana image tag")
 	flag.StringVar(&flagPluginsInitContainerImage, "grafana-plugins-init-container-image", "", "Overrides the default Grafana Plugins Init Container image")
 	flag.StringVar(&flagPluginsInitContainerTag, "grafana-plugins-init-container-tag", "", "Overrides the default Grafana Plugins Init Container tag")
-	flag.StringVar(&flagNamespaces, "namespaces", "", "Namespaces to scope the interaction of the Grafana operator. Mutually exclusive with --scan-all")
+	flag.StringVar(&flagNamespaces, "namespaces", LookupEnvOrString("DASHBOARD_NAMESPACES", ""), "Namespaces to scope the interaction of the Grafana operator. Mutually exclusive with --scan-all")
 	flag.StringVar(&flagJsonnetLocation, "jsonnet-location", "", "Overrides the base path of the jsonnet libraries")
-	flag.BoolVar(&scanAll, "scan-all", false, "Scans all namespaces for dashboards")
+	flag.BoolVar(&scanAll, "scan-all", LookupEnvOrBool("DASHBOARD_NAMESPACES_ALL", false), "Scans all namespaces for dashboards")
 
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -108,6 +106,12 @@ func main() {
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+}
+
+func main() { // nolint
+
+	printVersion()
+	assignOpts()
 
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
@@ -207,6 +211,7 @@ func main() {
 	// Start one dashboard controller per watch namespace
 	for _, ns := range dashboardNamespaces {
 		startDashboardController(ns, cfg, context.Background())
+		startNotificationChannelController(ns, cfg, context.Background())
 	}
 
 	ctx := context.Background()
@@ -232,11 +237,12 @@ func main() {
 		os.Exit(1)
 	}
 	if err = (&grafanadatasource.GrafanaDatasourceReconciler{
-		Client:  mgr.GetClient(),
-		Context: ctx,
-		Cancel:  cancel,
-		Logger:  ctrl.Log.WithName("controllers").WithName("GrafanaDatasource"),
-		Scheme:  mgr.GetScheme(),
+		Client:   mgr.GetClient(),
+		Context:  ctx,
+		Cancel:   cancel,
+		Logger:   ctrl.Log.WithName("controllers").WithName("GrafanaDatasource"),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("GrafanaDatasource"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDatasource")
 		os.Exit(1)
@@ -252,7 +258,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	setupLog.Info("starting manager")
+	setupLog.Info("starting manager with options",
+		"watchNamespace", namespace,
+		"dashboardNamespaces", flagNamespaces,
+		"scanAll", scanAll)
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
@@ -291,6 +300,39 @@ func startDashboardController(ns string, cfg *rest.Config, ctx context.Context) 
 	}()
 }
 
+// Starts a separate controller for the notification channels reconciliation in the background
+func startNotificationChannelController(ns string, cfg *rest.Config, ctx context.Context) {
+	// Create a new Cmd to provide shared dependencies and start components
+	channelMgr, err := manager.New(cfg, manager.Options{
+		MetricsBindAddress: "0",
+		Namespace:          ns,
+	})
+	if err != nil {
+		log.Log.Error(err, "")
+		os.Exit(1)
+	}
+
+	// Setup Scheme for the notification channel resource
+	if err := apis.AddToScheme(channelMgr.GetScheme()); err != nil {
+		log.Log.Error(err, "")
+		os.Exit(1)
+	}
+
+	// Use a separate manager for the dashboard controller
+	err = grafananotificationchannel.Add(channelMgr, ns)
+	if err != nil {
+		log.Log.Error(err, "")
+		os.Exit(1)
+	}
+
+	go func() {
+		if err := channelMgr.Start(ctx); err != nil {
+			log.Log.Error(err, "notification channel manager exited non-zero")
+			os.Exit(1)
+		}
+	}()
+}
+
 // Get the trimmed and sanitized list of namespaces (if --namespaces was provided)
 func getSanitizedNamespaceList() []string {
 	provided := strings.Split(flagNamespaces, ",")
@@ -305,4 +347,18 @@ func getSanitizedNamespaceList() []string {
 	}
 
 	return selected
+}
+
+func LookupEnvOrString(key string, defaultVal string) string {
+	if val, ok := os.LookupEnv(key); ok {
+		return val
+	}
+	return defaultVal
+}
+
+func LookupEnvOrBool(key string, defaultVal bool) bool {
+	if val, ok := os.LookupEnv(key); ok {
+		return val == "true"
+	}
+	return defaultVal
 }

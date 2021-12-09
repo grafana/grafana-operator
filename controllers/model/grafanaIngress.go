@@ -1,8 +1,8 @@
 package model
 
 import (
-	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/controllers/constants"
+	"github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/constants"
 	netv1 "k8s.io/api/networking/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -53,7 +53,7 @@ func getIngressSpec(cr *v1alpha1.Grafana) netv1.IngressSpec {
 	}
 	port := GetIngressTargetPort(cr)
 
-	if &port.IntVal != nil {
+	if port.IntVal != 0 {
 		return netv1.IngressSpec{
 			TLS:              getIngressTLS(cr),
 			IngressClassName: GetIngressClassName(cr),

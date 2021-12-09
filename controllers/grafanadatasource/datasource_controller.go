@@ -24,9 +24,9 @@ import (
 	"sort"
 
 	"github.com/go-logr/logr"
-	grafanav1alpha1 "github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/controllers/common"
-	"github.com/integr8ly/grafana-operator/controllers/constants"
+	grafanav1alpha1 "github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/common"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/constants"
 	v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/tools/record"
@@ -37,7 +37,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	integreatlyorgv1alpha1 "github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
+	integreatlyorgv1alpha1 "github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
 )
 
 // GrafanaDatasourceReconciler reconciles a GrafanaDatasource object
@@ -48,7 +48,7 @@ type GrafanaDatasourceReconciler struct {
 	Scheme   *runtime.Scheme
 	Context  context.Context
 	Cancel   context.CancelFunc
-	recorder record.EventRecorder
+	Recorder record.EventRecorder
 	Logger   logr.Logger
 }
 
@@ -63,7 +63,6 @@ var _ reconcile.Reconciler = &GrafanaDatasourceReconciler{}
 
 // +kubebuilder:rbac:groups=integreatly.org,resources=grafanadatasources,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=integreatly.org,resources=grafanadatasources/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=integreatly.org,resources=grafanadatasources/finalizers,verbs=update
 
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.0/pkg/reconcile
@@ -126,15 +125,15 @@ func (r *GrafanaDatasourceReconciler) reconcileDataSources(state *common.DataSou
 	}
 
 	// apply dataSourcesToAddOrUpdate
-	var updated []grafanav1alpha1.GrafanaDataSource
-	for _, ds := range dataSourcesToAddOrUpdate {
-		pipeline := NewDatasourcePipeline(&ds)
+	var updated []grafanav1alpha1.GrafanaDataSource // nolint
+	for i := range dataSourcesToAddOrUpdate {
+		pipeline := NewDatasourcePipeline(&dataSourcesToAddOrUpdate[i])
 		err := pipeline.ProcessDatasource(state.KnownDataSources)
 		if err != nil {
-			r.manageError(&ds, err)
+			r.manageError(&dataSourcesToAddOrUpdate[i], err)
 			continue
 		}
-		updated = append(updated, ds)
+		updated = append(updated, dataSourcesToAddOrUpdate[i])
 	}
 
 	// update the hash of the newly reconciled datasources
@@ -156,7 +155,7 @@ func (r *GrafanaDatasourceReconciler) reconcileDataSources(state *common.DataSou
 		// finally, update the configmap
 		err = r.Client.Update(r.Context, state.KnownDataSources)
 		if err != nil {
-			r.recorder.Event(state.KnownDataSources, "Warning", "UpdateError", err.Error())
+			r.Recorder.Event(state.KnownDataSources, "Warning", "UpdateError", err.Error())
 		} else {
 			r.manageSuccess(updated)
 		}
@@ -195,7 +194,7 @@ func (i *GrafanaDatasourceReconciler) updateHash(known *v1.ConfigMap) (string, e
 
 // Handle error case: update datasource with error message and status
 func (r *GrafanaDatasourceReconciler) manageError(datasource *grafanav1alpha1.GrafanaDataSource, issue error) {
-	r.recorder.Event(datasource, "Warning", "ProcessingError", issue.Error())
+	r.Recorder.Event(datasource, "Warning", "ProcessingError", issue.Error())
 
 	// datasource deleted
 	if datasource == nil {
@@ -218,7 +217,7 @@ func (r *GrafanaDatasourceReconciler) manageError(datasource *grafanav1alpha1.Gr
 // manage success case: datasource has been imported successfully and the configmap
 // is updated
 func (r *GrafanaDatasourceReconciler) manageSuccess(datasources []grafanav1alpha1.GrafanaDataSource) {
-	for _, datasource := range datasources {
+	for i, datasource := range datasources {
 		log.Info("datasource successfully imported",
 			"datasource.Namespace", datasource.Namespace,
 			"datasource.Name", datasource.Name)
@@ -226,9 +225,9 @@ func (r *GrafanaDatasourceReconciler) manageSuccess(datasources []grafanav1alpha
 		datasource.Status.Phase = grafanav1alpha1.PhaseReconciling
 		datasource.Status.Message = "success"
 
-		err := r.Client.Status().Update(r.Context, &datasource)
+		err := r.Client.Status().Update(r.Context, &datasources[i])
 		if err != nil {
-			r.recorder.Event(&datasource, "Warning", "UpdateError", err.Error())
+			r.Recorder.Event(&datasources[i], "Warning", "UpdateError", err.Error())
 		}
 	}
 }

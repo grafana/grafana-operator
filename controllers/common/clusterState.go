@@ -3,9 +3,9 @@ package common
 import (
 	"context"
 
-	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/controllers/config"
-	"github.com/integr8ly/grafana-operator/controllers/model"
+	"github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/config"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/model"
 	v12 "github.com/openshift/api/route/v1"
 	v13 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"

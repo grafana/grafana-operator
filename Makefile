@@ -1,7 +1,12 @@
 # Current Operator version
-VERSION ?= latest
+VERSION ?= 4.1.0
+
+# IMAGE_TAG_BASE defines the namespace and part of the image name for remote images.
+# running 'make bundle-build bundle-push catalog-build catalog-push' will build and push both
+# quay.io/grafana-operator/controller-bundle:$VERSION and quay.io/grafana-operator/controller-catalog:$VERSION.
+IMAGE_TAG_BASE ?= quay.io/grafana-operator/controller
 # Default bundle image tag
-BUNDLE_IMG ?= controller-bundle:$(VERSION)
+BUNDLE_IMG ?= ?= $(IMAGE_TAG_BASE)-bundle:v$(VERSION)
 # Options for 'bundle-build'
 ifneq ($(origin CHANNELS), undefined)
 BUNDLE_CHANNELS := --channels=$(CHANNELS)
@@ -10,9 +15,11 @@ ifneq ($(origin DEFAULT_CHANNEL), undefined)
 BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
 endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
+# Default value for kustomization bundle
+KUSTOMIZE_TAG := $(if $(KUSTOMIZE_TAG),$(KUSTOMIZE_TAG),latest)
 
 # Image URL to use all building/pushing image targets8
-IMG ?= quay.io/integreatly/grafana-operator:$(VERSION)
+IMG ?= quay.io/grafana-operator/grafana-operator:v$(VERSION)
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 
@@ -23,18 +30,33 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
+# Setting SHELL to bash allows bash commands to be executed by recipes.
+# This is a requirement for 'setup-envtest.sh' in the test target.
+# Options are set to exit when a recipe line exits non-zero or a piped command fails.
+SHELL = /usr/bin/env bash -o pipefail
+.SHELLFLAGS = -ec
+
+# ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
+ENVTEST_K8S_VERSION = 1.21
+
 all: manager
 
 # Run tests
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
-test: generate fmt vet manifests
-	mkdir -p ${ENVTEST_ASSETS_DIR}
-	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.7.0/hack/setup-envtest.sh
-	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
+test: generate fmt vet envtest manifests api-docs bundle-kustomization
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out
+
+ENVTEST = $(shell pwd)/bin/setup-envtest
+envtest: ## Download envtest-setup locally if necessary.
+	$(call go-get-tool,$(ENVTEST),sigs.k8s.io/controller-runtime/tools/setup-envtest@latest)
 
 # Build manager binary
 manager: generate fmt vet
 	go build -o bin/manager main.go
+
+# Get submodules
+submodule:
+	git submodule update --init --recursive
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet manifests
@@ -61,6 +83,15 @@ undeploy:
 manifests: controller-gen
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
+# Generate API reference documentation
+api-docs: gen-crd-api-reference-docs kustomize
+	@{ \
+	set -e ;\
+	TMP_DIR=$$(mktemp -d) ; \
+	$(KUSTOMIZE) build config/crd -o $$TMP_DIR/crd-output.yaml ;\
+	$(API_REF_GEN) crdoc --resources $$TMP_DIR/crd-output.yaml --output documentation/api.md ;\
+	}
+
 # Run go fmt against code
 fmt:
 	go fmt ./...
@@ -73,13 +104,17 @@ vet:
 generate: controller-gen
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
-# Build the docker image
+# Build a single-architecture docker image
 docker-build: test
-	docker build -t ${IMG} .
+	DOCKER_BUILDKIT=1 docker build -t ${IMG} .
 
-# Push the docker image
+# Push the single-architecture docker image
 docker-push:
 	docker push ${IMG}
+
+# Build and push a multi-architecture docker image
+docker-buildx: test
+	docker buildx build --platform linux/amd64,linux/arm64,linux/s390x --push -t ${IMG} .
 
 # Download controller-gen locally if necessary
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
@@ -118,6 +153,10 @@ bundle: manifests kustomize
 bundle-build:
 	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
 
+# Build kustomization files.
+.PHONY: bundle-kustomization
+bundle-kustomization:
+	bash hack/release.sh $(KUSTOMIZE_TAG)
 
 .PHONY: code/check
 code/check: fmt vet
@@ -127,13 +166,46 @@ code/check: fmt vet
 code/golangci-lint:
 	golangci-lint run ./...
 
-.PHONY: cluster/prepare/local/file
-cluster/prepare/local/file:
-	@sed -i "s/__NAMESPACE__/${NAMESPACE}/g" deploy/cluster_roles/cluster_role_binding_grafana_operator.yaml
+# Find or download gen-crd-api-reference-docs
+gen-crd-api-reference-docs:
+ifeq (, $(shell which crdoc))
+	@{ \
+	set -e ;\
+	API_REF_GEN_TMP_DIR=$$(mktemp -d) ;\
+	cd $$API_REF_GEN_TMP_DIR ;\
+	go mod init tmp ;\
+	go get fybrik.io/crdoc@v0.5.2 ;\
+	rm -rf $$API_REF_GEN_TMP_DIR ;\
+	}
+API_REF_GEN=$(GOBIN)/crdoc
+else
+API_REF_GEN=$(shell which crdoc)
+endif
 
-.PHONY: cluster/prepare/local
-cluster/prepare/local: cluster/prepare/local/file
-	-kubectl create namespace ${NAMESPACE}
-	kubectl apply -f deploy/roles -n ${NAMESPACE}
-	kubectl apply -f deploy/cluster_roles
-	kubectl apply -f deploy/examples/Grafana.yaml -n ${NAMESPACE}
+.PHONY: opm
+OPM = ./bin/opm
+opm:
+ifeq (,$(wildcard $(OPM)))
+ifeq (,$(shell which opm 2>/dev/null))
+	@{ \
+	set -e ;\
+	mkdir -p $(dir $(OPM)) ;\
+	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
+	curl -sSLo $(OPM) https://github.com/operator-framework/operator-registry/releases/download/v1.15.1/$(OS)-$(ARCH)-opm ;\
+	chmod +x $(OPM) ;\
+	}
+else
+OPM = $(shell which opm)
+endif
+endif
+
+BUNDLE_IMGS ?= $(BUNDLE_IMG)
+CATALOG_IMG ?= $(IMAGE_TAG_BASE)-catalog:v$(VERSION) ifneq ($(origin CATALOG_BASE_IMG), undefined) FROM_INDEX_OPT := --from-index $(CATALOG_BASE_IMG) endif
+
+.PHONY: catalog-build
+catalog-build: opm
+	$(OPM) index add --container-tool docker --mode semver --tag $(CATALOG_IMG) --bundles $(BUNDLE_IMGS) $(FROM_INDEX_OPT)
+
+.PHONY: catalog-push
+catalog-push: ## Push the catalog image.
+	$(MAKE) docker-push IMG=$(CATALOG_IMG)

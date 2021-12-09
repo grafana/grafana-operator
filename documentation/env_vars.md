@@ -23,13 +23,13 @@ Typically, this feature is used to provide the credentials for the Grafana admin
 needs to be assured:
 
 1. Admin credentials must be provided via the `GF_SECURITY_ADMIN_USER` and `GF_SECURITY_ADMIN_PASSWORD` environment
-   variables.
+  variables.
 2. Set `skipCreateAdminAccount` to `true` to prevent the operator from creating an admin secret.
 
 *NOTE*: The operator still requires an admin account to interact with Grafana. It will try to obtain the credentials
 from the provided secrets or config maps.
 
-# Using environment variables in data sources
+## Using environment variables in data sources
 
 Sometimes (e.g. when providing credentials) it is desirable to reference environment variables in the data source
 configuration. This is possible using the following syntax:

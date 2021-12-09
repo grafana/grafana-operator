@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/controllers/common"
-	"github.com/integr8ly/grafana-operator/controllers/config"
-	"github.com/integr8ly/grafana-operator/controllers/constants"
-	"github.com/integr8ly/grafana-operator/controllers/model"
+	"github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/common"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/config"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/constants"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/model"
 	v1 "k8s.io/api/core/v1"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -63,14 +63,14 @@ func (i *GrafanaReconciler) getGrafanaReadiness(state *common.ClusterState, cr *
 	var actions []common.ClusterAction
 	cfg := config.GetControllerConfig()
 	openshift := cfg.GetConfigBool(config.ConfigOpenshift, false)
-	if openshift && cr.Spec.Ingress != nil && cr.Spec.Ingress.Enabled && (cr.Spec.Client == nil || !cr.Spec.Client.PreferService) {
+	if openshift && cr.Spec.Ingress != nil && cr.Spec.Ingress.Enabled && !cr.GetPreferServiceValue() {
 		// On OpenShift, check the route, only if preferService is false
 		actions = append(actions, common.RouteReadyAction{
 			Ref: state.GrafanaRoute,
 			Msg: "check route readiness",
 		})
 	}
-	if !openshift && cr.Spec.Ingress != nil && cr.Spec.Ingress.Enabled && (cr.Spec.Client == nil || !cr.Spec.Client.PreferService) {
+	if !openshift && cr.Spec.Ingress != nil && cr.Spec.Ingress.Enabled && !cr.GetPreferServiceValue() {
 		// On vanilla Kubernetes, check the ingress,only if preferService is false
 		actions = append(actions, common.IngressReadyAction{
 			Ref: state.GrafanaIngress,
@@ -344,8 +344,8 @@ func (i *GrafanaReconciler) getGrafanaPluginsDesiredState(cr *v1alpha1.Grafana) 
 }
 
 func (i *GrafanaReconciler) reconcilePlugins(cr *v1alpha1.Grafana, plugins v1alpha1.PluginList) {
-	var validPlugins []v1alpha1.GrafanaPlugin
-	var failedPlugins []v1alpha1.GrafanaPlugin
+	var validPlugins []v1alpha1.GrafanaPlugin  // nolint
+	var failedPlugins []v1alpha1.GrafanaPlugin // nolint
 
 	for _, plugin := range plugins {
 		if !i.Plugins.PluginExists(plugin) {

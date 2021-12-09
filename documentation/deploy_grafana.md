@@ -6,99 +6,47 @@ This document describes how to get up and running with a new Grafana instance on
 
 The first step is to install the Grafana operator to a namespace in your cluster.
 
-There are two options for this procedure, automated via Ansible, or manually running kubectl/oc commands.
+There are two options for this procedure, through OLM, or manually running kubectl/oc commands using kustomize.
 
-### Deploy an example grafana instance and operator
+### Contribute to the operator
 
-Run `make operator/deploy` To deploy the latest released image of the operator, This uses the default operator.yaml and
-Grafana.yaml resources found in the `deploy` directories and subdirectories.
+First of all we would love to have **you** as a contributor.
+If you want to setup a local development environment we have written a [small guide](./develop.md)
 
-***Warning:*** The following make recipe uses the latest master Image. It should only be used for testing, for
-production please use the tagged releases.
+### Kustomize
 
-Run `make operator/deploy/master` to deploy the image from the master branch of the operator.
+The default kustomization file allways points on latest. You can easily create your own version and point it to a tagged version.
+This is what we suggest for production, latests will follow the master branch and all changes that happens in it.
 
-### Automated Procedure
+Install using kustomize built in to kubectl.
 
-Cluster admin install cluster resources. For more details and additional parameters
-see [grafana-operator-cluster-resources.yaml](../deploy/ansible/README.md#grafana-operator-cluster-resourcesyaml).
-
-```sh
-ansible-playbook deploy/ansible/grafana-operator-cluster-resources.yaml \
-  -e k8s_host=https://ocp.example.xyz \
-  -e k8s_username=admin1 \
-  -e k8s_password=secret \
-  -e grafana_operator_namespace=grafana
+```shell
+kubectl apply -k deploy/manifests/
 ```
 
-Optional: If `grafana_operator_args_scan_all` is set to `true` for the `grafana-operator-namespace-resources.yaml`
-playbook then Cluster Admin needs to run this playbook to allow operator to scan all namespaces for dashboards For more
-details and additional parameters
-see [grafana-operator-cluster-dashboards-scan.yaml](../deploy/ansible/README.md#grafana-operator-cluster-dashboards-scanyaml)
-.
+Or using the kustomize cli.
 
-```sh
-ansible-playbook deploy/ansible/grafana-operator-cluster-dashboards-scan.yaml \
-  -e k8s_host=https://ocp.example.xyz \
-  -e k8s_username=admin1 \
-  -e k8s_password=secret \
-  -e grafana_operator_namespace=grafana
+```shell
+kustomize build deploy/manifests |kubectl apply -f -
 ```
 
-Self provisioner install operator For more details and additional parameters
-see [grafana-operator-namespace-resources.yaml](../deploy/ansible/README.md#grafana-operator-namespace-resourcesyaml).
+#### Operator metrics
 
-```sh
-ansible-playbook deploy/ansible/grafana-operator-namespace-resources.yaml \
-  -e k8s_host=https://ocp.example.xyz \
-  -e k8s_username=project_creator \
-  -e k8s_password=secret \
-  -e grafana_operator_namespace=grafana
-```
+By default Operator metrics are exposed but protected. Please refer to [this guide](https://book.kubebuilder.io/reference/metrics.html#metrics) for instruction about how to access and scrape them.
 
-### Minikube deployment
+If you would like to expose the metrics directly, bypassing `kube-rbac-proxy`, you need to make the following changes:
 
-Follow this documentation [Deploying the Grafana operator in minikube](./minikube.md)
+1. Edit `config/manager/controler_manager_config.yaml` and set the `metrics.bindAddress` to `0.0.0.0:8080`
+2. Disable `- manager_auth_proxy_patch.yaml` in `config/default/kustomization.yaml` by commenting it. This will disable the `kube-rbac-proxy`
+3. Change the port in `config/rbac/auto_proxy_service.yaml` to:
 
-### Manual Procedure
+    ```yaml
+    ports:
+    - name: metrics
+      port: 8080
+    ```
 
-To create a namespace named `grafana` run:
-
-```sh
-$ kubectl create namespace grafana
-```
-
-Create the custom resource definitions that the operator uses:
-
-```sh
-$ kubectl create -f deploy/crds
-```
-
-Create the operator roles:
-
-```sh
-$ kubectl create -f deploy/roles -n grafana
-```
-
-If you want to scan for dashboards in other namespaces you also need the cluster roles:
-
-```sh
-$ kubectl create -f deploy/cluster_roles
-```
-
-To deploy the operator to that namespace you can use `deploy/operator.yaml`:
-
-```sh
-$ kubectl create -f deploy/operator.yaml -n grafana
-```
-
-Check the status of the operator pod:
-
-```sh
-$ kubectl get pods -n grafana
-NAME                                READY     STATUS    RESTARTS   AGE
-grafana-operator-78cfcbf8db-ssrgq   1/1       Running   0          17s
-```
+4. Install using `kustomize` as described in the previous chapter
 
 ## Grafana image Support Chart
 
@@ -107,7 +55,7 @@ flags or `baseImage` CR spec fields.
 
 This chart shows how the operator prioritises which image will be used for the deployment, and the versions that it's
 known to support. Only the grafana image specified in
-code [here](https://github.com/integr8ly/grafana-operator/blob/master/pkg/controller/model/constants.go#L5) will be
+code [here](https://github.com/grafana-operator/grafana-operator/blob/530821825c9f7791aa486a94aabdb03efdc6aa6d/controllers/constants/constants.go#L5) will be
 supported in unit/e2e tests and as part of the operator, any other specified grafana image through these options may not
 work as expected.
 
@@ -138,27 +86,23 @@ The operator accepts a number of flags that can be passed in the `args` section 
 
 * `--zap-level=n`: set the logging level for the operator, leaving out this flag will only log Errors and error related
   info, current options are:
-    - `--zap-level=1`: show all Info level logs
+  * `--zap-level=1`: show all Info level logs
 
 See `deploy/operator.yaml` for an example.
-
-If using the automated Ansible installer see
-the [grafana-operator-namespace-resources.yaml - Parameters](../deploy/ansible/README.md#parameters-1) for the
-equivalent parameters.
 
 ## Deploying Grafana
 
 Create a custom resource of type `Grafana`, or use the one in `deploy/examples/Grafana.yaml`.
 
+To get a quick overview of the Grafana you can also look at the [API docs](api.md).
 The resource accepts the following properties in it's `spec`:
 
 * ***baseImage***: Specifies a custom grafana image for this deployment.
-    - ***Warning!*** this overwrites the `--grafana-image` Operator flag, please refer to the grafana image support
-      chart.
+  * ***Warning!*** this overwrites the `--grafana-image` Operator flag, please refer to the grafana image support chart.
 
 * ***initImage***: Specifies a custom grafana plugins init image for this deployment.
-    - ***Warning!*** this overwrites the `--grafana-plugins-init-container-image` Operator flag, please refer to the
-      grafana image support chart.
+  * ***Warning!*** this overwrites the `--grafana-plugins-init-container-image` Operator flag, please refer to the
+    grafana image support chart.
 
 * ***dashboardLabelSelector***: A list of either `matchLabels` or `matchExpressions` to filter the dashboards before
   importing them.
@@ -200,13 +144,13 @@ The resource accepts the following properties in it's `spec`:
 To create a new Grafana instance in the `grafana` namespace, run:
 
 ```sh
-$ kubectl create -f deploy/examples/Grafana.yaml -n grafana
+kubectl create -f deploy/examples/Grafana.yaml -n grafana
 ```
 
 Get the URL of the instance and open it in a browser:
 
 ```sh
-$ kubectl get ingress -n grafana
+kubectl get ingress -n grafana
 NAME              HOSTS                           ADDRESS   PORTS     AGE
 grafana-ingress   grafana.apps.127.0.0.1.nip.io             80        28s
 ```
@@ -328,6 +272,9 @@ spec:
     ...
     strategy:                       # Optional. The DeploymentStrategy to set for the Grafana deployment. Defaults to 25%/25% RollingUpdate if unset.
     ...
+    httpProxy:
+      Enabled: bool                 # Whether a HTTP(S) proxy should be used for outbound requests from Grafana and when resolving plugins.
+      URL:     string               # The URL of the proxy
 ```
 
 NOTE: Some key's are common to both in securityContext and containerSecurityContext, in that case
@@ -405,4 +352,3 @@ Both LivenessProbeSpec and ReadinessProbeSpec share the same fields which serve 
 * ***failureThreshold:***: When a probe fails, Kubernetes will try failureThreshold times before giving up. Giving up in
   case of liveness probe means restarting the container. In case of readiness probe the Pod will be marked Unready.
   Defaults to 3. Minimum value is 1.
-

@@ -81,3 +81,5 @@ tags
 .idea
 operator-sdk-*
 tmp
+./bin/manager
+vendor

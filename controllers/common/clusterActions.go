@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/go-logr/logr"
-	"github.com/integr8ly/grafana-operator/controllers/constants"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/constants"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	v13 "github.com/openshift/api/route/v1"
@@ -263,7 +263,7 @@ func (i GenericDeleteAction) Run(runner ActionRunner) (string, error) {
 	return i.Msg, runner.delete(i.Ref)
 }
 
-func (i LogAction) Run(runner ActionRunner) (string, error) {
+func (i LogAction) Run(_ ActionRunner) (string, error) { // nolint
 	return i.Msg, nil
 }
 

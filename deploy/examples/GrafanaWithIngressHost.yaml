@@ -6,6 +6,8 @@ spec:
   ingress:
     enabled: True
     hostname: "grafana.apps.127.0.0.1.nip.io"
+    path: /
+    pathType: Prefix
   config:
     log:
       mode: "console"

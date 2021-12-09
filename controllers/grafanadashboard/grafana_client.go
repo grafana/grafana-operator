@@ -11,7 +11,7 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
+	"github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
 )
 
 const (
@@ -50,6 +50,24 @@ type GrafanaFolderRequest struct {
 	Title string `json:"title"`
 }
 
+type GrafanaDashboardResponse struct {
+	Meta      *GrafanaDashboardMeta `json:"meta,omitempty"`
+	Dashboard *GrafanaDashboard     `json:"dashboard,omitempty"`
+}
+
+type GrafanaDashboard struct {
+	ID      *uint   `json:"id"`
+	UID     *string `json:"uid"`
+	Title   *string `json:"title"`
+	Version *uint   `json:"version"`
+}
+
+type GrafanaDashboardMeta struct {
+	FolderID    *uint   `json:"folderId"`
+	FolderTitle *string `json:"folderTitle"`
+	Version     *uint   `json:"version"`
+}
+
 type GrafanaFolderResponse struct {
 	ID    *int64 `json:"id"`
 	Title string `json:"title"`
@@ -62,6 +80,7 @@ type GrafanaClient interface {
 	CreateOrUpdateFolder(folderName string) (GrafanaFolderResponse, error)
 	DeleteFolder(folderID *int64) error
 	SafeToDelete(dashboards []*v1alpha1.GrafanaDashboardRef, folderID *int64) bool
+	GetDashboard(UID string) (GrafanaDashboardResponse, error)
 }
 
 type GrafanaClientImpl struct {
@@ -89,6 +108,48 @@ func NewGrafanaClient(url, user, password string, transport *http.Transport, tim
 		password: password,
 		client:   client,
 	}
+}
+
+func (r *GrafanaClientImpl) GetDashboard(UID string) (GrafanaDashboardResponse, error) {
+	rawURL := fmt.Sprintf(DeleteDashboardByUIDUrl, r.url, UID)
+	response := newDashboardResponse()
+
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return response, err
+	}
+
+	parsed.User = url.UserPassword(r.user, r.password)
+	req, err := http.NewRequest("GET", parsed.String(), nil)
+
+	if err != nil {
+		return response, err
+	}
+
+	setHeaders(req)
+
+	resp, err := r.client.Do(req)
+	if err != nil {
+		return response, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 404 {
+		return response, err
+	} else if resp.StatusCode != 200 {
+		return response, fmt.Errorf(
+			"error searching for dashboard, expected status 200 but got %v",
+			resp.StatusCode)
+	}
+
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return response, err
+	}
+
+	err = json.Unmarshal(data, &response)
+
+	return response, err
 }
 
 func (r *GrafanaClientImpl) getAllFolders() ([]GrafanaFolderResponse, error) {
@@ -329,6 +390,24 @@ func newResponse() GrafanaResponse {
 		Status:  &status,
 		UID:     &uid,
 		URL:     &url,
+	}
+}
+
+func newDashboardResponse() GrafanaDashboardResponse {
+	var id uint = 0
+	var version uint = 0
+	var uid string
+	var title string
+
+	dashboard := GrafanaDashboard{
+		ID:      &id,
+		UID:     &uid,
+		Version: &version,
+		Title:   &title,
+	}
+
+	return GrafanaDashboardResponse{
+		Dashboard: &dashboard,
 	}
 }
 

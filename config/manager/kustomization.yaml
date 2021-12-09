@@ -12,5 +12,11 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
 - name: controller
-  newName: quay.io/integreatly/grafana-operator
-  newTag: latest
+  newName: quay.io/grafana-operator/grafana-operator
+  newTag: v4.1.0
+
+# Protect the /metrics endpoint by putting it behind auth.
+# If you want your controller-manager to expose the /metrics
+# endpoint w/o any authn/z, please comment the following line.
+patchesStrategicMerge:
+- manager_auth_proxy_patch.yaml

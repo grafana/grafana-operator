@@ -67,9 +67,16 @@ spec:
                   - inputName
                   type: object
                 type: array
+              grafanaCom:
+                properties:
+                  id:
+                    type: integer
+                  revision:
+                    type: integer
+                required:
+                - id
+                type: object
               json:
-                description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-                  Important: Run "make" to regenerate code after modifying this file'
                 type: string
               jsonnet:
                 type: string
@@ -88,8 +95,8 @@ spec:
                 type: array
               url:
                 type: string
-            required:
-            - json
+            type: object
+          status:
             type: object
         type: object
     served: true

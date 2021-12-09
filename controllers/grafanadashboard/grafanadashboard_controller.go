@@ -25,11 +25,11 @@ import (
 	"os"
 
 	"github.com/go-logr/logr"
-	grafanav1alpha1 "github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
-	integreatlyorgv1alpha1 "github.com/integr8ly/grafana-operator/api/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/controllers/common"
-	"github.com/integr8ly/grafana-operator/controllers/config"
-	"github.com/integr8ly/grafana-operator/controllers/constants"
+	grafanav1alpha1 "github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
+	integreatlyorgv1alpha1 "github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/common"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/config"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/constants"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -72,7 +72,6 @@ type GrafanaDashboardReconciler struct {
 
 // +kubebuilder:rbac:groups=integreatly.org,resources=grafanadashboards,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=integreatly.org,resources=grafanadashboards/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=integreatly.org,resources=grafanadashboards/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -94,7 +93,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, request ctrl
 
 	getClient, err := r.getClient()
 	if err != nil {
-		return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
+		return reconcile.Result{RequeueAfter: config.RequeueDelay}, err
 	}
 
 	// Initial request?
@@ -173,7 +172,7 @@ func SetupWithManager(mgr ctrl.Manager, r reconcile.Reconciler, namespace string
 		log.Log.Info("Starting dashboard controller")
 	}
 
-	ref := r.(*GrafanaDashboardReconciler)
+	ref := r.(*GrafanaDashboardReconciler) // nolint
 	ticker := time.NewTicker(config.RequeueDelay)
 	sendEmptyRequest := func() {
 		request := reconcile.Request{
@@ -208,7 +207,38 @@ func SetupWithManager(mgr ctrl.Manager, r reconcile.Reconciler, namespace string
 
 var _ reconcile.Reconciler = &GrafanaDashboardReconciler{}
 
-func (r *GrafanaDashboardReconciler) reconcileDashboards(request reconcile.Request, grafanaClient GrafanaClient) (reconcile.Result, error) {
+// Check if a given dashboard (by name) is present in the list of
+// dashboards in the namespace
+func inNamespace(namespaceDashboards *grafanav1alpha1.GrafanaDashboardList, item *grafanav1alpha1.GrafanaDashboardRef) bool {
+	for _, d := range namespaceDashboards.Items {
+		if d.Name == item.Name && d.Namespace == item.Namespace {
+			return true
+		}
+	}
+	return false
+}
+
+// Returns the hash of a dashboard if it is known
+func findHash(knownDashboards []*integreatlyorgv1alpha1.GrafanaDashboardRef, item *grafanav1alpha1.GrafanaDashboard) string {
+	for _, d := range knownDashboards {
+		if item.Name == d.Name && item.Namespace == d.Namespace {
+			return d.Hash
+		}
+	}
+	return ""
+}
+
+// Returns the UID of a dashboard if it is known
+func findUid(knownDashboards []*integreatlyorgv1alpha1.GrafanaDashboardRef, item *grafanav1alpha1.GrafanaDashboard) string {
+	for _, d := range knownDashboards {
+		if item.Name == d.Name && item.Namespace == d.Namespace {
+			return d.UID
+		}
+	}
+	return ""
+}
+
+func (r *GrafanaDashboardReconciler) reconcileDashboards(request reconcile.Request, grafanaClient GrafanaClient) (reconcile.Result, error) { // nolint
 	// Collect known and namespace dashboards
 	knownDashboards := r.config.GetDashboards(request.Namespace)
 	namespaceDashboards := &grafanav1alpha1.GrafanaDashboardList{}
@@ -225,39 +255,18 @@ func (r *GrafanaDashboardReconciler) reconcileDashboards(request reconcile.Reque
 	// Prepare lists
 	var dashboardsToDelete []*grafanav1alpha1.GrafanaDashboardRef
 
-	// Check if a given dashboard (by name) is present in the list of
-	// dashboards in the namespace
-	inNamespace := func(item *grafanav1alpha1.GrafanaDashboardRef) bool {
-		for _, d := range namespaceDashboards.Items {
-			if d.Name == item.Name && d.Namespace == item.Namespace {
-				return true
-			}
-		}
-		return false
-	}
-
-	// Returns the hash of a dashboard if it is known
-	findHash := func(item *grafanav1alpha1.GrafanaDashboard) string {
-		for _, d := range knownDashboards {
-			if item.Name == d.Name && item.Namespace == d.Namespace {
-				return d.Hash
-			}
-		}
-		return ""
-	}
-
 	// Dashboards to delete: dashboards that are known but not found
 	// any longer in the namespace
 	for _, dashboard := range knownDashboards {
-		if !inNamespace(dashboard) {
+		if !inNamespace(namespaceDashboards, dashboard) {
 			dashboardsToDelete = append(dashboardsToDelete, dashboard)
 		}
 	}
 
 	// Process new/updated dashboards
-	for _, dashboard := range namespaceDashboards.Items {
+	for i, dashboard := range namespaceDashboards.Items {
 		// Is this a dashboard we care about (matches the label selectors)?
-		if !r.isMatch(&dashboard) {
+		if !r.isMatch(&namespaceDashboards.Items[i]) {
 			log.Log.Info("dashboard found but selectors do not match",
 				"namespace", dashboard.Namespace, "name", dashboard.Name)
 			continue
@@ -272,7 +281,7 @@ func (r *GrafanaDashboardReconciler) reconcileDashboards(request reconcile.Reque
 
 		if err != nil {
 			log.Log.Error(err, "failed to get or create namespace folder for dashboard", "folder", folderName, "dashboard", request.Name)
-			r.manageError(&dashboard, err)
+			r.manageError(&namespaceDashboards.Items[i], err)
 			continue
 		}
 
@@ -285,26 +294,45 @@ func (r *GrafanaDashboardReconciler) reconcileDashboards(request reconcile.Reque
 
 		// Process the dashboard. Use the known hash of an existing dashboard
 		// to determine if an update is required
-		knownHash := findHash(&dashboard)
+		knownHash := findHash(knownDashboards, &namespaceDashboards.Items[i])
+		knownUid := findUid(knownDashboards, &namespaceDashboards.Items[i])
+		pipeline := NewDashboardPipeline(r.Client, &namespaceDashboards.Items[i], r.context)
+		processed, err := pipeline.ProcessDashboard(knownHash, &folderId, folderName, false)
 
-		pipeline := NewDashboardPipeline(r.Client, &dashboard, r.context)
-		processed, err := pipeline.ProcessDashboard(knownHash, &folderId, folderName)
+		// Check known dashboards exist on grafana instance and recreate if not
+		if knownUid != "" {
+			response, err := grafanaClient.GetDashboard(knownUid)
+			if err != nil {
+				log.Log.Error(err, "Failed to search Grafana for dashboard")
+			}
+
+			if *response.Dashboard.ID == uint(0) {
+				log.Log.Info(fmt.Sprintf("Dashboard %v has been deleted via grafana console. Recreating.", namespaceDashboards.Items[i].ObjectMeta.Name))
+				processed, err = pipeline.ProcessDashboard(knownHash, &folderId, folderName, true)
+
+				if err != nil {
+					log.Log.Error(err, "cannot process dashboard", "namespace", dashboard.Namespace, "name", dashboard.Name)
+					r.manageError(&namespaceDashboards.Items[i], err)
+					continue
+				}
+			}
+		}
 
 		if err != nil {
 			log.Log.Error(err, "cannot process dashboard", "namespace", dashboard.Namespace, "name", dashboard.Name)
-			r.manageError(&dashboard, err)
+			r.manageError(&namespaceDashboards.Items[i], err)
 			continue
 		}
 
 		if processed == nil {
-			r.config.SetPluginsFor(&dashboard)
+			r.config.SetPluginsFor(&namespaceDashboards.Items[i])
 			continue
 		}
 		// Check labels only when DashboardNamespaceSelector isnt empty
 		if r.state.DashboardNamespaceSelector != nil {
-			matchesNamespaceLabels, err := r.checkNamespaceLabels(&dashboard)
+			matchesNamespaceLabels, err := r.checkNamespaceLabels(&namespaceDashboards.Items[i])
 			if err != nil {
-				r.manageError(&dashboard, err)
+				r.manageError(&namespaceDashboards.Items[i], err)
 				continue
 			}
 
@@ -317,12 +345,12 @@ func (r *GrafanaDashboardReconciler) reconcileDashboards(request reconcile.Reque
 		_, err = grafanaClient.CreateOrUpdateDashboard(processed, folderId, folderName)
 		if err != nil {
 			//log.Log.Error(err, "cannot submit dashboard %v/%v", "namespace", dashboard.Namespace, "name", dashboard.Name)
-			r.manageError(&dashboard, err)
+			r.manageError(&namespaceDashboards.Items[i], err)
 
 			continue
 		}
 
-		r.manageSuccess(&dashboard, &folderId, folderName)
+		r.manageSuccess(&namespaceDashboards.Items[i], &folderId, folderName)
 	}
 
 	for _, dashboard := range dashboardsToDelete {
