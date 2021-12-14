@@ -25,7 +25,7 @@ func getPVCAnnotations(cr *v1alpha1.Grafana, existing map[string]string) map[str
 }
 
 func getStorageClass(cr *v1alpha1.Grafana) *string {
-	if cr.Spec.DataStorage.Class == "" {
+	if cr.Spec.DataStorage == nil || cr.Spec.DataStorage.Class == "" {
 		return nil
 	}
 
