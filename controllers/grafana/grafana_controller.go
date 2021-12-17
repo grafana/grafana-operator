@@ -283,10 +283,10 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 	// Only update the status if the dashboard controller had a chance to sync the cluster
 	// dashboards first. Otherwise reuse the existing dashboard config from the CR.
 	if r.Config.GetConfigBool(config.ConfigGrafanaDashboardsSynced, false) {
-		cr.Status.InstalledDashboards = r.Config.Dashboards
+		cr.Status.InstalledDashboards = r.Config.GetDashboards(request.Namespace)
 	} else {
 		if r.Config.Dashboards == nil {
-			r.Config.SetDashboards([]*grafanav1alpha1.GrafanaDashboardRef{})
+			r.Config.SetDashboards(request.Namespace, []*grafanav1alpha1.GrafanaDashboardRef{})
 		}
 	}
 
