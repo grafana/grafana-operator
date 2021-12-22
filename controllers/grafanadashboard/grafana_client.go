@@ -347,7 +347,7 @@ func (r *GrafanaClientImpl) DeleteDashboardByUID(UID string) (GrafanaResponse, e
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != 200 && resp.StatusCode != 404 {
 		return response, fmt.Errorf(
 			"error deleting dashboard, expected status 200 but got %v",
 			resp.StatusCode)
@@ -483,7 +483,7 @@ func (r *GrafanaClientImpl) DeleteFolder(deleteID *int64) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != 200 && resp.StatusCode != 404 {
 		return fmt.Errorf(
 			"error deleting folder, expected status 200 but got %v",
 			resp.StatusCode)

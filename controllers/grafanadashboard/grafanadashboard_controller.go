@@ -383,6 +383,20 @@ func (r *GrafanaDashboardReconciler) reconcileDashboards(request reconcile.Reque
 				log.Log.Error(err, "delete dashboard folder failed", "dashboard.folderId", *dashboard.FolderId)
 			}
 		}
+
+		emptyFolder := true
+		for _, dashboardFromList := range namespaceDashboards.Items {
+			if dashboardFromList.Spec.CustomFolderName == dashboard.FolderName {
+				emptyFolder = false
+				break
+			}
+		}
+
+		if emptyFolder {
+			if err = grafanaClient.DeleteFolder(dashboard.FolderId); err != nil {
+				log.Log.Error(err, "delete dashboard folder failed", "dashboard.folderId", *dashboard.FolderId)
+			}
+		}
 	}
 
 	return reconcile.Result{Requeue: false}, nil
