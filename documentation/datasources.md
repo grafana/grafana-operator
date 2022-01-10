@@ -15,7 +15,7 @@ The following properties are accepted in the `spec`:
 * *name*: The filename of the data source that gets mounted into a volume in the grafana instance. Not to be confused
   with `metadata.name`.
 * *datasources*: A list of data source definitions. Check
-  the [official documentation](https://grafana.com/docs/features/datasources/).
+  the [official documentation](https://grafana.com/docs/datasources/).
 
 A data source accepts all properties
 listed [here](https://grafana.com/docs/administration/provisioning/#example-datasource-config-file), but does not
