@@ -1,0 +1,10 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana-sample
+spec:
+  config:
+    log:
+      mode: "console"
+    auth:
+      disable_login_form: False
