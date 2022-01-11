@@ -125,12 +125,12 @@ func SetupWithManager(mgr ctrl.Manager, r reconcile.Reconciler, namespace string
 		}
 	}()
 
-	go func() {
-		for stateChange := range common.ControllerEvents {
-			// Controller state updated
-			ref.state = stateChange
-		}
-	}()
+	// go func() {
+	// 	for stateChange := range common.ControllerEvents {
+	// 		// Controller state updated
+	// 		ref.state = stateChange
+	// 	}
+	// }()
 
 	return err
 }

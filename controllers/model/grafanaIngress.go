@@ -116,7 +116,7 @@ func getIngressSpec(cr *v1alpha1.Grafana) netv1.IngressSpec {
 func GrafanaIngress(cr *v1alpha1.Grafana) *netv1.Ingress {
 	return &netv1.Ingress{
 		ObjectMeta: v1.ObjectMeta{
-			Name:        constants.GrafanaIngressName,
+			Name:        cr.ObjectMeta.Name,
 			Namespace:   cr.Namespace,
 			Labels:      GetIngressLabels(cr),
 			Annotations: GetIngressAnnotations(cr, nil),
@@ -136,6 +136,6 @@ func GrafanaIngressReconciled(cr *v1alpha1.Grafana, currentState *netv1.Ingress)
 func GrafanaIngressSelector(cr *v1alpha1.Grafana) client.ObjectKey {
 	return client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      constants.GrafanaIngressName,
+		Name:      cr.ObjectMeta.Name,
 	}
 }

@@ -120,7 +120,7 @@ func GrafanaService(cr *v1alpha1.Grafana) *v1.Service {
 		Spec: v1.ServiceSpec{
 			Ports: getServicePorts(cr, nil),
 			Selector: map[string]string{
-				"app": constants.GrafanaPodLabel,
+				"app": cr.ObjectMeta.Name,
 			},
 			ClusterIP: getClusterIP(cr),
 			Type:      getServiceType(cr),

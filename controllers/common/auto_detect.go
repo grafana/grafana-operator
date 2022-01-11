@@ -25,7 +25,7 @@ type Background struct {
 	client              client.Client
 	dc                  discovery.DiscoveryInterface
 	ticker              *time.Ticker
-	SubscriptionChannel chan schema.GroupVersionKind
+	SubscriptionChannel schema.GroupVersionKind
 }
 
 // New creates a new auto-detect runner
@@ -35,13 +35,7 @@ func NewAutoDetect(mgr manager.Manager) (*Background, error) {
 		return nil, err
 	}
 
-	// Create a new channel that GVK type will be sent down
-	// The subscription channel can be used in the future to
-	// implement actions that are dependant on certain resources
-	// being installed on the cluster
-	subChan := make(chan schema.GroupVersionKind, 1)
-
-	return &Background{dc: dc, client: mgr.GetClient(), SubscriptionChannel: subChan}, nil
+	return &Background{dc: dc, client: mgr.GetClient()}, nil
 }
 
 // Start initializes the auto-detection process that runs in the background
@@ -61,7 +55,6 @@ func (b *Background) Start() {
 // Stop causes the background process to stop auto detecting capabilities
 func (b *Background) Stop() {
 	b.ticker.Stop()
-	close(b.SubscriptionChannel)
 }
 
 func (b *Background) autoDetectCapabilities() {
@@ -75,6 +68,6 @@ func (b *Background) detectRoute() {
 		config := config2.GetControllerConfig()
 		config.AddConfigItem(config2.ConfigOpenshift, true)
 
-		b.SubscriptionChannel <- routev1.SchemeGroupVersion.WithKind(RouteKind)
+		b.SubscriptionChannel = routev1.SchemeGroupVersion.WithKind(RouteKind)
 	}
 }

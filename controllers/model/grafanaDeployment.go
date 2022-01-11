@@ -125,8 +125,8 @@ func getDeploymentLabels(cr *v1alpha1.Grafana) map[string]string {
 }
 
 func getRollingUpdateStrategy() *v1.RollingUpdateDeployment {
-	var maxUnaval intstr.IntOrString = intstr.FromInt(25)
-	var maxSurge intstr.IntOrString = intstr.FromInt(25)
+	var maxUnaval = intstr.FromInt(25)
+	var maxSurge = intstr.FromInt(25)
 	return &v1.RollingUpdateDeployment{
 		MaxUnavailable: &maxUnaval,
 		MaxSurge:       &maxSurge,
@@ -151,7 +151,7 @@ func getPodLabels(cr *v1alpha1.Grafana) map[string]string {
 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Labels != nil {
 		labels = cr.Spec.Deployment.Labels
 	}
-	labels["app"] = constants.GrafanaPodLabel
+	labels["app"] = cr.Name
 	return labels
 }
 
@@ -679,7 +679,7 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, annotations map[string]string, conf
 		Replicas: getReplicas(cr),
 		Selector: &v12.LabelSelector{
 			MatchLabels: map[string]string{
-				"app": constants.GrafanaPodLabel,
+				"app": cr.Name,
 			},
 		},
 		Template: v13.PodTemplateSpec{

@@ -29,10 +29,12 @@ func GetPath(cr *v1alpha1.Grafana) string {
 }
 
 func GetIngressLabels(cr *v1alpha1.Grafana) map[string]string {
-	if cr.Spec.Ingress == nil {
-		return nil
+	var labels = map[string]string{}
+	if cr.Spec.Ingress != nil && cr.Spec.Ingress.Labels != nil {
+		labels = cr.Spec.Ingress.Labels
 	}
-	return cr.Spec.Ingress.Labels
+	labels["app"] = cr.Name
+	return labels
 }
 
 func GetIngressAnnotations(cr *v1alpha1.Grafana, existing map[string]string) map[string]string {
@@ -101,7 +103,7 @@ func getRouteSpec(cr *v1alpha1.Grafana) v1.RouteSpec {
 func GrafanaRoute(cr *v1alpha1.Grafana) *v1.Route {
 	return &v1.Route{
 		ObjectMeta: v12.ObjectMeta{
-			Name:        constants.GrafanaRouteName,
+			Name:        cr.ObjectMeta.Name,
 			Namespace:   cr.Namespace,
 			Labels:      GetIngressLabels(cr),
 			Annotations: GetIngressAnnotations(cr, nil),
@@ -113,7 +115,7 @@ func GrafanaRoute(cr *v1alpha1.Grafana) *v1.Route {
 func GrafanaRouteSelector(cr *v1alpha1.Grafana) client.ObjectKey {
 	return client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      constants.GrafanaRouteName,
+		Name:      cr.ObjectMeta.Name,
 	}
 }
 

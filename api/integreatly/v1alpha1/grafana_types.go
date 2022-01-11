@@ -66,6 +66,7 @@ type GrafanaClient struct {
 	// +nullable
 	TimeoutSeconds *int `json:"timeout,omitempty"`
 	// +nullable
+	// +kubebuilder:default:=true
 	PreferService *bool `json:"preferService,omitempty"`
 }
 

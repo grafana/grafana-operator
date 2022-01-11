@@ -29,3 +29,7 @@ func MergeAnnotations(requested map[string]string, existing map[string]string) m
 	}
 	return existing
 }
+
+func ErrorContainsString(err error, str string) bool {
+	return err.Error() == str
+}

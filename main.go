@@ -18,13 +18,18 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
 	"runtime"
 	"strings"
 
+	"github.com/operator-framework/operator-lib/leader"
+
+	"github.com/grafana-operator/grafana-operator/v4/controllers/constants"
 	"github.com/grafana-operator/grafana-operator/v4/controllers/grafananotificationchannel"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/model"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	apis "github.com/grafana-operator/grafana-operator/v4/api"
@@ -33,10 +38,8 @@ import (
 	"github.com/grafana-operator/grafana-operator/v4/controllers/grafana"
 	"github.com/grafana-operator/grafana-operator/v4/controllers/grafanadashboard"
 	"github.com/grafana-operator/grafana-operator/v4/controllers/grafanadatasource"
-	"github.com/grafana-operator/grafana-operator/v4/internal/k8sutil"
 	"github.com/grafana-operator/grafana-operator/v4/version"
 	routev1 "github.com/openshift/api/route/v1"
-	"github.com/operator-framework/operator-lib/leader"
 	"k8s.io/client-go/rest"
 	k8sconfig "sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -50,6 +53,7 @@ import (
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	// +kubebuilder:scaffold:imports
@@ -62,7 +66,9 @@ var (
 	flagImageTag                  string
 	flagPluginsInitContainerImage string
 	flagPluginsInitContainerTag   string
-	flagNamespaces                string
+	flagDashboardNamespaces       string
+	flagGrafanaNamespaces         string
+	flagOperatorNamespace         string
 	scanAll                       bool
 	flagJsonnetLocation           string
 	metricsAddr                   string
@@ -89,10 +95,13 @@ func assignOpts() {
 	flag.StringVar(&flagImageTag, "grafana-image-tag", "", "Overrides the default Grafana image tag")
 	flag.StringVar(&flagPluginsInitContainerImage, "grafana-plugins-init-container-image", "", "Overrides the default Grafana Plugins Init Container image")
 	flag.StringVar(&flagPluginsInitContainerTag, "grafana-plugins-init-container-tag", "", "Overrides the default Grafana Plugins Init Container tag")
-	flag.StringVar(&flagNamespaces, "namespaces", LookupEnvOrString("DASHBOARD_NAMESPACES", ""), "Namespaces to scope the interaction of the Grafana operator. Mutually exclusive with --scan-all")
+	flag.StringVar(&flagDashboardNamespaces, "dashboard-namespaces", LookupEnvOrString("DASHBOARD_NAMESPACES", ""),
+		"Namespaces to scope the interaction of the Grafana operator. Mutually exclusive with --scan-all")
 	flag.StringVar(&flagJsonnetLocation, "jsonnet-location", "", "Overrides the base path of the jsonnet libraries")
+	flag.StringVar(&flagGrafanaNamespaces, "grafana-namespaces", LookupEnvOrString("GRAFANA_NAMESPACES", ""),
+		"Declares the namespaces in which the operator should look for grafana custom resources")
+	flag.StringVar(&flagOperatorNamespace, "operator-namespace", LookupEnvOrString("OPERATOR_NAMESPACE", "default"), "")
 	flag.BoolVar(&scanAll, "scan-all", LookupEnvOrBool("DASHBOARD_NAMESPACES_ALL", false), "Scans all namespaces for dashboards")
-
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
@@ -113,57 +122,29 @@ func main() { // nolint
 	printVersion()
 	assignOpts()
 
-	namespace, err := k8sutil.GetWatchNamespace()
-	if err != nil {
-		log.Log.Error(err, "failed to get watch namespace")
+	if scanAll && flagGrafanaNamespaces != "" {
+		log.Log.Error(errors.New("flag conflict"), "--scan-all and --grafana-namespaces both set. "+
+			"Please provide only one")
 		os.Exit(1)
 	}
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme,
-		Namespace:              namespace,
-		MetricsBindAddress:     metricsAddr,
-		Port:                   9443,
-		HealthProbeBindAddress: probeAddr,
-		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "2c0156f0.integreatly.org",
-	})
-	if err != nil {
-		setupLog.Error(err, "unable to start manager")
+	if scanAll && flagDashboardNamespaces != "" {
+		log.Log.Error(errors.New("flag conflict"), "--scan-all and --dashboard-namespaces both set. "+
+			"Please provide only one")
 		os.Exit(1)
 	}
 
-	if scanAll && flagNamespaces != "" {
-		fmt.Fprint(os.Stderr, "--scan-all and --namespaces both set. Please provide only one")
-		os.Exit(1)
-	}
+	var grafanaNamespaces []string
 
-	// Controller configuration
-	controllerConfig := grafanaconfig.GetControllerConfig()
-	controllerConfig.AddConfigItem(grafanaconfig.ConfigGrafanaImage, flagImage)
-	controllerConfig.AddConfigItem(grafanaconfig.ConfigGrafanaImageTag, flagImageTag)
-	controllerConfig.AddConfigItem(grafanaconfig.ConfigPluginsInitContainerImage, flagPluginsInitContainerImage)
-	controllerConfig.AddConfigItem(grafanaconfig.ConfigPluginsInitContainerTag, flagPluginsInitContainerTag)
-	controllerConfig.AddConfigItem(grafanaconfig.ConfigOperatorNamespace, namespace)
-	controllerConfig.AddConfigItem(grafanaconfig.ConfigDashboardLabelSelector, "")
-	controllerConfig.AddConfigItem(grafanaconfig.ConfigJsonnetBasePath, flagJsonnetLocation)
-
-	// Get the namespaces to scan for dashboards
-	// It's either the same namespace as the controller's or it's all namespaces if the
-	// --scan-all flag has been passed
-	var dashboardNamespaces = []string{namespace}
-	if scanAll {
-		dashboardNamespaces = []string{""}
-		log.Log.Info("Scanning for dashboards in all namespaces")
-	}
-
-	if flagNamespaces != "" {
-		dashboardNamespaces = getSanitizedNamespaceList()
-		if len(dashboardNamespaces) == 0 {
-			fmt.Fprint(os.Stderr, "--namespaces provided but no valid namespaces in list")
+	if flagGrafanaNamespaces != "" {
+		grafanaNamespaces = getSanitizedNamespaceList(flagGrafanaNamespaces)
+		if len(flagGrafanaNamespaces) == 0 {
+			log.Log.Error(errors.New("invalid namespaces"),
+				"--grafana-namespaces provided but no valid namespaces in list")
 			os.Exit(1)
 		}
-		log.Log.Info(fmt.Sprintf("Scanning for dashboards in the following namespaces: [%s]", strings.Join(dashboardNamespaces, ",")))
+		log.Log.Info(fmt.Sprintf("Scanning for grafanas in the following namespaces: [%s]",
+			strings.Join(grafanaNamespaces, ",")))
 	}
 
 	// Get a config to talk to the apiserver
@@ -173,8 +154,65 @@ func main() { // nolint
 		os.Exit(1)
 	}
 
+	mgr, err := manager.New(cfg, manager.Options{
+		Scheme:                 scheme,
+		Namespace:              flagOperatorNamespace,
+		MetricsBindAddress:     metricsAddr,
+		Port:                   9443,
+		HealthProbeBindAddress: probeAddr,
+		LeaderElection:         enableLeaderElection,
+		LeaderElectionID:       "2c0156f0.integreatly.org",
+	})
+	if err != nil {
+		log.Log.Error(err, "")
+		os.Exit(1)
+	}
+
+	if err != nil {
+		setupLog.Error(err, "unable to start grafana manager")
+		os.Exit(1)
+	}
+
+	startGrafanaController(mgr, flagOperatorNamespace, cfg, context.Background())
+
+	// for _, namespace := range grafanaNamespaces {
+	// 	startGrafanaController(mgr, namespace, cfg, context.Background())
+	// }
+}
+
+//nolint:funlen
+func startGrafanaController(mgr ctrl.Manager, ns string, cfg *rest.Config, ctx context.Context) {
+	// Controller configuration
+	controllerConfig := grafanaconfig.GetControllerConfig()
+	controllerConfig.AddConfigItem(grafanaconfig.ConfigGrafanaImage, flagImage)
+	controllerConfig.AddConfigItem(grafanaconfig.ConfigGrafanaImageTag, flagImageTag)
+	controllerConfig.AddConfigItem(grafanaconfig.ConfigPluginsInitContainerImage, flagPluginsInitContainerImage)
+	controllerConfig.AddConfigItem(grafanaconfig.ConfigPluginsInitContainerTag, flagPluginsInitContainerTag)
+	controllerConfig.AddConfigItem(grafanaconfig.ConfigOperatorNamespace, ns)
+	controllerConfig.AddConfigItem(grafanaconfig.ConfigDashboardLabelSelector, "")
+	controllerConfig.AddConfigItem(grafanaconfig.ConfigJsonnetBasePath, flagJsonnetLocation)
+
+	// Get the namespaces to scan for dashboards
+	// It's either the same namespace as the controller's or it's all namespaces if the
+	// --scan-all flag has been passed
+	var dashboardNamespaces = []string{ns}
+	if scanAll {
+		dashboardNamespaces = []string{""}
+		log.Log.Info("Scanning for dashboards in all namespaces")
+	}
+
+	if flagDashboardNamespaces != "" {
+		dashboardNamespaces = getSanitizedNamespaceList(flagDashboardNamespaces)
+		if len(dashboardNamespaces) == 0 {
+			log.Log.Error(errors.New("invalid namespaces"),
+				"--dashboard-namespaces provided but no valid namespaces in list")
+			os.Exit(1)
+		}
+		log.Log.Info(fmt.Sprintf("Scanning for dashboards in the following namespaces: [%s]", strings.Join(dashboardNamespaces, ",")))
+	}
+
 	// Become the leader before proceeding
-	err = leader.Become(context.TODO(), "grafana-operator-lock")
+	err := leader.Become(context.Background(), "grafana-operator-lock")
 	if err != nil {
 		log.Log.Error(err, "")
 	}
@@ -214,57 +252,61 @@ func main() { // nolint
 		startNotificationChannelController(ns, cfg, context.Background())
 	}
 
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
-	if err = (&grafana.ReconcileGrafana{
-		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
-		Plugins:  grafana.NewPluginsHelper(),
-		Context:  ctx,
-		Cancel:   cancel,
-		Config:   grafanaconfig.GetControllerConfig(),
-		Recorder: mgr.GetEventRecorderFor("GrafanaDashboard"),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Grafana")
-		os.Exit(1)
-	}
-	if err = (&grafanadashboard.GrafanaDashboardReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("GrafanaDashboard"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDashboard")
-		os.Exit(1)
-	}
-	if err = (&grafanadatasource.GrafanaDatasourceReconciler{
-		Client:   mgr.GetClient(),
-		Context:  ctx,
-		Cancel:   cancel,
-		Logger:   ctrl.Log.WithName("controllers").WithName("GrafanaDatasource"),
-		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor("GrafanaDatasource"),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDatasource")
-		os.Exit(1)
-	}
-	// +kubebuilder:scaffold:builder
+	for _, grafanaNs := range flagGrafanaNamespaces {
+		ctx, cancel := context.WithCancel(ctx)
+		if err = (&grafana.ReconcileGrafana{
+			Client:   mgr.GetClient(),
+			Scheme:   mgr.GetScheme(),
+			Plugins:  grafana.NewPluginsHelper(),
+			Context:  ctx,
+			Cancel:   cancel,
+			Config:   grafanaconfig.GetControllerConfig(),
+			Recorder: mgr.GetEventRecorderFor("GrafanaDashboard"),
+		}).SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "Grafana")
+			os.Exit(1)
+		}
+		if err = (&grafanadashboard.GrafanaDashboardReconciler{
+			Client: mgr.GetClient(),
+			Log:    ctrl.Log.WithName("controllers").WithName("GrafanaDashboard"),
+			Scheme: mgr.GetScheme(),
+		}).SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "GrafanaDashboard")
+			os.Exit(1)
+		}
+		if err = (&grafanadatasource.GrafanaDatasourceReconciler{
+			Client:   mgr.GetClient(),
+			Context:  ctx,
+			Cancel:   cancel,
+			Logger:   ctrl.Log.WithName("controllers").WithName("GrafanaDatasource"),
+			Scheme:   mgr.GetScheme(),
+			Recorder: mgr.GetEventRecorderFor("GrafanaDatasource"),
+		}).SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "GrafanaDatasource")
+			os.Exit(1)
+		}
+		// +kubebuilder:scaffold:builder
 
-	if err := mgr.AddHealthzCheck("health", healthz.Ping); err != nil {
-		setupLog.Error(err, "unable to set up health check")
-		os.Exit(1)
-	}
-	if err := mgr.AddReadyzCheck("check", healthz.Ping); err != nil {
-		setupLog.Error(err, "unable to set up ready check")
-		os.Exit(1)
-	}
+		if err := mgr.AddHealthzCheck(string(grafanaNs)+"-healthz", healthz.Ping); err != nil && !model.ErrorContainsString(err, constants.GrafanaUnableToAddHealthzErrorMsg) {
+			setupLog.Error(err, "unable to set up health check")
+			os.Exit(1)
+		}
+		if err := mgr.AddReadyzCheck(string(grafanaNs)+"-readyz", healthz.Ping); err != nil && !model.ErrorContainsString(err, constants.GrafanaUnableToAddReadyzErrorMsg) {
+			setupLog.Error(err, "unable to set up ready check")
+			os.Exit(1)
+		}
 
-	setupLog.Info("starting manager with options",
-		"watchNamespace", namespace,
-		"dashboardNamespaces", flagNamespaces,
-		"scanAll", scanAll)
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-		setupLog.Error(err, "problem running manager")
-		os.Exit(1)
+		setupLog.Info("starting manager with options",
+			"watchNamespace", ns,
+			"dashboardNamespaces", flagDashboardNamespaces,
+			"scanAll", scanAll)
+
+		go func() {
+			if err := mgr.Start(ctx); err != nil {
+				setupLog.Error(err, "problem running manager")
+				os.Exit(1)
+			}
+		}()
 	}
 }
 
@@ -333,9 +375,8 @@ func startNotificationChannelController(ns string, cfg *rest.Config, ctx context
 	}()
 }
 
-// Get the trimmed and sanitized list of namespaces (if --namespaces was provided)
-func getSanitizedNamespaceList() []string {
-	provided := strings.Split(flagNamespaces, ",")
+func getSanitizedNamespaceList(declaredNamespaces string) []string {
+	provided := strings.Split(declaredNamespaces, ",")
 	var selected []string
 
 	for _, v := range provided {

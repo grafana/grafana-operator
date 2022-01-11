@@ -20,7 +20,6 @@ const (
 	GrafanaDataVolumeName                   = "grafana-data"
 	GrafanaDatasourcesConfigMapName         = "grafana-datasources"
 	GrafanaHealthEndpoint                   = "/api/health"
-	GrafanaPodLabel                         = "grafana"
 	LastConfigAnnotation                    = "last-config"
 	LastConfigEnvVar                        = "LAST_CONFIG"
 	LastDatasourcesConfigEnvVar             = "LAST_DATASOURCES"
@@ -32,4 +31,6 @@ const (
 	GrafanaHttpPortName                     = "grafana"
 	GrafanaSuccessMsg                       = "success"
 	GrafanaDefaultClientTimeoutSeconds  int = 5
+	GrafanaUnableToAddHealthzErrorMsg       = "unable to add new checker because healthz endpoint has already been created"
+	GrafanaUnableToAddReadyzErrorMsg        = "unable to add new checker because readyz endpoint has already been created"
 )

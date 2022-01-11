@@ -3,7 +3,7 @@ kind: GrafanaDashboard
 metadata:
   name: simple-dashboard
   labels:
-    app: grafana
+    app: "my-test-grafana"
 spec:
   json: >
     {

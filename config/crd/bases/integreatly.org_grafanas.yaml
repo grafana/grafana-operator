@@ -41,6 +41,7 @@ spec:
                 description: GrafanaClient contains the Grafana API client settings
                 properties:
                   preferService:
+                    default: true
                     nullable: true
                     type: boolean
                   timeout:

@@ -144,7 +144,7 @@ The resource accepts the following properties in it's `spec`:
 To create a new Grafana instance in the `grafana` namespace, run:
 
 ```sh
-kubectl create -f deploy/examples/Grafana.yaml -n grafana
+kubectl create -f deploy/examples/main-grafana.yaml -n grafana
 ```
 
 Get the URL of the instance and open it in a browser:
