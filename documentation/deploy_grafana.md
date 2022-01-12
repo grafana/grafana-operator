@@ -15,7 +15,7 @@ If you want to setup a local development environment we have written a [small gu
 
 ### Kustomize
 
-The default kustomization file allways points on latest. You can easily create your own version and point it to a tagged version.
+The default kustomization file always points on latest. You can easily create your own version and point it to a tagged version.
 This is what we suggest for production, latests will follow the master branch and all changes that happens in it.
 
 Install using kustomize built in to kubectl.
