@@ -30,6 +30,9 @@ import (
 	v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/util/workqueue"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -234,7 +237,41 @@ func (r *GrafanaDatasourceReconciler) manageSuccess(datasources []grafanav1alpha
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *GrafanaDatasourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	cmHandler := func(o client.Object, q workqueue.RateLimitingInterface) {
+		if o.GetName() != constants.GrafanaDatasourcesConfigMapName {
+			return
+		}
+		ns := o.GetNamespace()
+		list := &grafanav1alpha1.GrafanaDataSourceList{}
+		opts := &client.ListOptions{
+			Namespace: ns,
+		}
+		err := c.List(ctx, list, opts)
+		if err != nil {
+			return
+		}
+		for _, ds := range list.Items {
+			q.Add(reconcile.Request{NamespacedName: types.NamespacedName{
+				Namespace: ns,
+				Name:      ds.GetName(),
+			}})
+		}
+	}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&integreatlyorgv1alpha1.GrafanaDataSource{}).
+		Watches(&source.Kind{Type: &v1.ConfigMap{}}, handler.Funcs{
+			CreateFunc: func(ev event.CreateEvent, q workqueue.RateLimitingInterface) {
+				cmHandler(ev.Object, q)
+			},
+			UpdateFunc: func(ev event.UpdateEvent, q workqueue.RateLimitingInterface) {
+				if ev.ObjectNew.GetDeletionTimestamp() != nil {
+					return
+				}
+				cmHandler(ev.ObjectOld, q)
+			},
+			DeleteFunc: func(ev event.DeleteEvent, q workqueue.RateLimitingInterface) {
+				cmHandler(ev.Object, q)
+			},
+		}).
 		Complete(r)
 }
