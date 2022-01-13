@@ -30,3 +30,14 @@ func GetGrafanaAdminSecret(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *
 	controllerutil.SetOwnerReference(cr, secret, scheme)
 	return secret
 }
+
+func GetGrafanaDataPVC(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1.PersistentVolumeClaim {
+	pvc := &v1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-pvc", cr.Name),
+			Namespace: cr.Namespace,
+		},
+	}
+	controllerutil.SetOwnerReference(cr, pvc, scheme)
+	return pvc
+}

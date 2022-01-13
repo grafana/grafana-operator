@@ -31,6 +31,7 @@ type OperatorStageStatus string
 const (
 	OperatorStageGrafanaConfig OperatorStageName = "config"
 	OperatorStageAdminUser     OperatorStageName = "admin user"
+	OperatorStagePvc           OperatorStageName = "pvc"
 )
 
 const (
