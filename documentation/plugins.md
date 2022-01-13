@@ -20,7 +20,7 @@ spec:
   ...
   deployment:
     envFrom:
-        - secretRef:
+      - secretRef:
           name: grafana-env
 
 ```

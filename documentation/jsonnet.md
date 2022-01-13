@@ -1,5 +1,15 @@
 # Jsonnet support
 
+## Grafana-operator-libsonnet
+
+  The community has contributed a jsonnet library to the official `jsonnet-lib` github repository, this allows users to efficiently
+  generate grafana-operator resources, the library can be found here:
+  [https://github.com/jsonnet-libs/grafana-operator-libsonnet](https://github.com/jsonnet-libs/grafana-operator-libsonnet)
+
+  Documentation relating to grafana-operator-libsonnet can be found in the link above under [docs](https://jsonnet-libs.github.io/grafana-operator-libsonnet/)
+
+## Grafonnet
+
 The operator supports importing dashboards in [jsonnet](https://jsonnet.org/) format.
 The [grafonnet](https://grafana.github.io/grafonnet-lib/) library is available out of the box, other libraries can be imported via config maps.
 
