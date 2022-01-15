@@ -311,6 +311,17 @@ spec:
                           type: boolean
                         tlsSkipVerify:
                           type: boolean
+                        url:
+                          description: Fields for Instana data sources
+                          type: string
+                        apiToken:
+                          type: string
+                        useProxy:
+                          type: boolean
+                        showOffline:
+                          type: boolean
+                        allowInfraExplore:
+                          type: boolean
                         tokenUri:
                           description: Fields for Stackdriver data sources
                           type: string

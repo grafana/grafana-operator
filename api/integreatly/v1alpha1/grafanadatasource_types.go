@@ -111,9 +111,9 @@ type GrafanaDataSourceJsonData struct {
 	MaxOpenConns            int    `json:"maxOpenConns,omitempty"`
 	MaxIdleConns            int    `json:"maxIdleConns,omitempty"`
 	ConnMaxLifetime         int    `json:"connMaxLifetime,omitempty"`
-	//  Useful fields for clickhouse datasource
-	//  See https://github.com/Vertamedia/clickhouse-grafana/tree/master/dist/README.md#configure-the-datasource-with-provisioning
-	//  See https://github.com/Vertamedia/clickhouse-grafana/tree/master/src/datasource.ts#L44
+	// Useful fields for clickhouse datasource
+	// See https://github.com/Vertamedia/clickhouse-grafana/tree/master/dist/README.md#configure-the-datasource-with-provisioning
+	// See https://github.com/Vertamedia/clickhouse-grafana/tree/master/src/datasource.ts#L44
 	AddCorsHeader               bool   `json:"addCorsHeader,omitempty"`
 	DefaultDatabase             string `json:"defaultDatabase,omitempty"`
 	UsePOST                     bool   `json:"usePOST,omitempty"`
@@ -172,6 +172,13 @@ type GrafanaDataSourceJsonData struct {
 	SigV4AssumeRoleArn string `json:"sigV4AssumeRoleArn,omitempty"`
 	SigV4Region        string `json:"sigV4Region,omitempty"`
 	SigV4Profile       string `json:"sigV4Profile,omitempty"`
+	// Fields for Instana data sources
+	// See https://github.com/instana/instana-grafana-datasource/blob/main/provisioning/datasources/datasource.yml
+	Url               string `json:"url,omitempty"`
+	ApiToken          string `json:"apiToken,omitempty"`
+	UseProxy          bool   `json:"useProxy,omitempty"`
+	ShowOffline       bool   `json:"showOffline,omitempty"`
+	AllowInfraExplore bool   `json:"allowInfraExplore,omitempty"`
 }
 
 type GrafanaDataSourceJsonDerivedFields struct {
