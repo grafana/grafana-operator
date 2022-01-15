@@ -29,12 +29,12 @@ import (
 	"github.com/grafana-operator/grafana-operator/v4/controllers/constants"
 	v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
-	"k8s.io/client-go/util/workqueue"
-	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -237,41 +237,30 @@ func (r *GrafanaDatasourceReconciler) manageSuccess(datasources []grafanav1alpha
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *GrafanaDatasourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	cmHandler := func(o client.Object, q workqueue.RateLimitingInterface) {
+	cmHandler := func(o client.Object) []reconcile.Request {
 		if o.GetName() != constants.GrafanaDatasourcesConfigMapName {
-			return
+			return nil
 		}
 		ns := o.GetNamespace()
 		list := &grafanav1alpha1.GrafanaDataSourceList{}
 		opts := &client.ListOptions{
 			Namespace: ns,
 		}
-		err := c.List(ctx, list, opts)
+		err := r.Client.List(context.Background(), list, opts)
 		if err != nil {
-			return
+			return nil
 		}
-		for _, ds := range list.Items {
-			q.Add(reconcile.Request{NamespacedName: types.NamespacedName{
+		requests := make([]reconcile.Request, len(list.Items))
+		for i, ds := range list.Items {
+			requests[i] = reconcile.Request{NamespacedName: types.NamespacedName{
 				Namespace: ns,
 				Name:      ds.GetName(),
-			}})
+			}}
 		}
+		return requests
 	}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&integreatlyorgv1alpha1.GrafanaDataSource{}).
-		Watches(&source.Kind{Type: &v1.ConfigMap{}}, handler.Funcs{
-			CreateFunc: func(ev event.CreateEvent, q workqueue.RateLimitingInterface) {
-				cmHandler(ev.Object, q)
-			},
-			UpdateFunc: func(ev event.UpdateEvent, q workqueue.RateLimitingInterface) {
-				if ev.ObjectNew.GetDeletionTimestamp() != nil {
-					return
-				}
-				cmHandler(ev.ObjectOld, q)
-			},
-			DeleteFunc: func(ev event.DeleteEvent, q workqueue.RateLimitingInterface) {
-				cmHandler(ev.Object, q)
-			},
-		}).
+		Watches(&source.Kind{Type: &v1.ConfigMap{}}, handler.EnqueueRequestsFromMapFunc(cmHandler)).
 		Complete(r)
 }
