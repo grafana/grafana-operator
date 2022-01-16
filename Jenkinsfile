@@ -30,13 +30,19 @@ pipeline {
   }
   post {
     success {
-      dir("${PROJECT}") {
-        finalizeBuild(
-          sh(
-            script: 'make image/show',
-            returnStdout: true
-          )
-        )
+      script {
+        if (env.BRANCH_NAME == 'master') {
+          dir("${PROJECT}") {
+            finalizeBuild(
+              sh(
+                script: 'make image/show',
+                returnStdout: true
+              )
+            )
+          }
+        } else {
+          echo "not pushing image built on ${env.BRANCH_NAME}"
+        }
       }
     }
     cleanup {
