@@ -2,18 +2,18 @@ package model
 
 import (
 	"github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
-	"k8s.io/api/extensions/v1beta1"
+	v12 "k8s.io/api/networking/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func GetIngressPathType(cr *v1alpha1.Grafana) *v1beta1.PathType {
-	t := v1beta1.PathType(cr.Spec.Ingress.PathType)
+func GetIngressPathType(cr *v1alpha1.Grafana) *v12.PathType {
+	t := v12.PathType(cr.Spec.Ingress.PathType)
 	switch t {
-	case v1beta1.PathTypeExact, v1beta1.PathTypePrefix:
+	case v12.PathTypeExact, v12.PathTypePrefix:
 		return &t
 	}
-	t = v1beta1.PathTypeImplementationSpecific
+	t = v12.PathTypeImplementationSpecific
 	return &t
 }
 
@@ -25,13 +25,13 @@ func GetIngressClassName(cr *v1alpha1.Grafana) *string {
 	return &cr.Spec.Ingress.IngressClassName
 }
 
-func getIngressTLS(cr *v1alpha1.Grafana) []v1beta1.IngressTLS {
+func getIngressTLS(cr *v1alpha1.Grafana) []v12.IngressTLS {
 	if cr.Spec.Ingress == nil {
 		return nil
 	}
 
 	if cr.Spec.Ingress.TLSEnabled {
-		return []v1beta1.IngressTLS{
+		return []v12.IngressTLS{
 			{
 				Hosts:      []string{cr.Spec.Ingress.Hostname},
 				SecretName: cr.Spec.Ingress.TLSSecretName,
@@ -41,28 +41,32 @@ func getIngressTLS(cr *v1alpha1.Grafana) []v1beta1.IngressTLS {
 	return nil
 }
 
-func getIngressSpec(cr *v1alpha1.Grafana) v1beta1.IngressSpec {
+func getIngressSpec(cr *v1alpha1.Grafana) v12.IngressSpec {
 	serviceName := func(cr *v1alpha1.Grafana) string {
 		if cr.Spec.Service != nil && cr.Spec.Service.Name != "" {
 			return cr.Spec.Service.Name
 		}
 		return GrafanaServiceName
 	}
-	return v1beta1.IngressSpec{
+	return v12.IngressSpec{
 		TLS:              getIngressTLS(cr),
 		IngressClassName: GetIngressClassName(cr),
-		Rules: []v1beta1.IngressRule{
+		Rules: []v12.IngressRule{
 			{
 				Host: GetHost(cr),
-				IngressRuleValue: v1beta1.IngressRuleValue{
-					HTTP: &v1beta1.HTTPIngressRuleValue{
-						Paths: []v1beta1.HTTPIngressPath{
+				IngressRuleValue: v12.IngressRuleValue{
+					HTTP: &v12.HTTPIngressRuleValue{
+						Paths: []v12.HTTPIngressPath{
 							{
 								Path:     GetPath(cr),
 								PathType: GetIngressPathType(cr),
-								Backend: v1beta1.IngressBackend{
-									ServiceName: serviceName(cr),
-									ServicePort: GetIngressTargetPort(cr),
+								Backend: v12.IngressBackend{
+									Service: &v12.IngressServiceBackend{
+										Name: serviceName(cr),
+										Port: v12.ServiceBackendPort{
+											Number: GetIngressTargetPort(cr).IntVal,
+										},
+									},
 								},
 							},
 						},
@@ -73,8 +77,8 @@ func getIngressSpec(cr *v1alpha1.Grafana) v1beta1.IngressSpec {
 	}
 }
 
-func GrafanaIngress(cr *v1alpha1.Grafana) *v1beta1.Ingress {
-	return &v1beta1.Ingress{
+func GrafanaIngress(cr *v1alpha1.Grafana) *v12.Ingress {
+	return &v12.Ingress{
 		ObjectMeta: v1.ObjectMeta{
 			Name:        GrafanaIngressName,
 			Namespace:   cr.Namespace,
@@ -85,7 +89,7 @@ func GrafanaIngress(cr *v1alpha1.Grafana) *v1beta1.Ingress {
 	}
 }
 
-func GrafanaIngressReconciled(cr *v1alpha1.Grafana, currentState *v1beta1.Ingress) *v1beta1.Ingress {
+func GrafanaIngressReconciled(cr *v1alpha1.Grafana, currentState *v12.Ingress) *v12.Ingress {
 	reconciled := currentState.DeepCopy()
 	reconciled.Labels = GetIngressLabels(cr)
 	reconciled.Annotations = GetIngressAnnotations(cr, currentState.Annotations)

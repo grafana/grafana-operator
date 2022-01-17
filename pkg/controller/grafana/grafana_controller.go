@@ -11,7 +11,7 @@ import (
 	routev1 "github.com/openshift/api/route/v1"
 	v12 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
-	v1beta12 "k8s.io/api/extensions/v1beta1"
+	v13 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -71,7 +71,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler, autodetectChannel chan sch
 		return err
 	}
 
-	if err = watchSecondaryResource(c, &v1beta12.Ingress{}); err != nil {
+	if err = watchSecondaryResource(c, &v13.Ingress{}); err != nil {
 		return err
 	}
 
@@ -220,8 +220,8 @@ func (r *ReconcileGrafana) getGrafanaAdminUrl(cr *grafanav1alpha1.Grafana, state
 	// If preferService is true, we skip the routes and try to access grafana
 	// by using the service.
 	preferService := false
-	if cr.Spec.Client != nil {
-		preferService = cr.Spec.Client.PreferService
+	if cr.Spec.Client != nil && cr.Spec.Client.PreferService != nil {
+		preferService = *cr.Spec.Client.PreferService
 	}
 
 	// First try to use the route if it exists. Prefer the route because it also works

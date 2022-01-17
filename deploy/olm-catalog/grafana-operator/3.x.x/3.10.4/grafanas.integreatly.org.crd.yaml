@@ -1518,23 +1518,6 @@ spec:
                       pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                       x-kubernetes-int-or-string: true
                   type: object
-                dbpasswordref:
-                  description: SecretKeySelector selects a key of a Secret.
-                  properties:
-                    key:
-                      description: The key of the secret to select from.  Must be a valid
-                        secret key.
-                      type: string
-                    name:
-                      description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                        TODO: Add other useful fields. apiVersion, kind, uid?'
-                      type: string
-                    optional:
-                      description: Specify whether the Secret or its key must be defined
-                      type: boolean
-                  required:
-                    - key
-                  type: object
                 deployment:
                   description: GrafanaDeployment provides a means to configure the deployment
                   properties:

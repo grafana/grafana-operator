@@ -59,8 +59,6 @@ spec:
                       - inputName
                     type: object
                   type: array
-                environment:
-                  type: string
                 json:
                   description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster Important: Run "make" to regenerate code after modifying this file'
                   type: string

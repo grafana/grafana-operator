@@ -36,12 +36,12 @@ metadata:
     capabilities: Basic Install
     categories: Monitoring
     certified: 'False'
-    containerImage: quay.io/grafana-operator/grafana-operator:v3.10.3
+    containerImage: quay.io/grafana-operator/grafana-operator:v3.10.4
     createdAt: 2020-07-31 00:00:00
     description: An Operator for managing Grafana instances, dashboards and data sources
     repository: https://github.com/grafana-operator/grafana-operator
     support: Red Hat
-  name: grafana-operator.v3.10.3
+  name: grafana-operator.v3.10.4
   namespace: placeholder
 spec:
   apiservicedefinitions: { }
@@ -122,7 +122,7 @@ spec:
                             fieldPath: metadata.name
                       - name: OPERATOR_NAME
                         value: grafana-operator
-                    image: quay.io/grafana-operator/grafana-operator:v3.10.3
+                    image: quay.io/grafana-operator/grafana-operator:v3.10.4
                     imagePullPolicy: Always
                     name: grafana-operator
                     ports:
@@ -170,7 +170,7 @@ spec:
                 - get
                 - create
             - apiGroups:
-                - extensions
+                - networking.k8s.io
               resources:
                 - ingresses
               verbs:
@@ -204,7 +204,7 @@ spec:
     - Monitoring
   links:
     - name: Documentation
-      url: https://github.com/integr8ly/grafana-operator/tree/v3.10.3/documentation
+      url: https://github.com/integr8ly/grafana-operator/tree/v3.10.4/documentation
     - name: Grafana
       url: https://grafana.com
   maintainers:
@@ -213,5 +213,5 @@ spec:
   maturity: alpha
   provider:
     name: Red Hat
-  replaces: grafana-operator.v3.10.2
-  version: 3.10.3
+  replaces: grafana-operator.v3.10.3
+  version: 3.10.4
