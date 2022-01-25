@@ -545,7 +545,21 @@ GrafanaDataSourceJsonData contains the most common json options See https://graf
         <td><b>addCorsHeader</b></td>
         <td>boolean</td>
         <td>
-           Useful fields for clickhouse datasource  See https://github.com/Vertamedia/clickhouse-grafana/tree/master/dist/README.md#configure-the-datasource-with-provisioning  See https://github.com/Vertamedia/clickhouse-grafana/tree/master/src/datasource.ts#L44<br/>
+          Useful fields for clickhouse datasource See https://github.com/Vertamedia/clickhouse-grafana/tree/master/dist/README.md#configure-the-datasource-with-provisioning See https://github.com/Vertamedia/clickhouse-grafana/tree/master/src/datasource.ts#L44<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>allowInfraExplore</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>apiToken</b></td>
+        <td>string</td>
+        <td>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -871,6 +885,13 @@ GrafanaDataSourceJsonData contains the most common json options See https://graf
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>showOffline</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>sigV4AssumeRoleArn</b></td>
         <td>string</td>
         <td>
@@ -1004,7 +1025,21 @@ GrafanaDataSourceJsonData contains the most common json options See https://graf
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>url</b></td>
+        <td>string</td>
+        <td>
+          Fields for Instana data sources See https://github.com/instana/instana-grafana-datasource/blob/main/provisioning/datasources/datasource.yml<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>usePOST</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>useProxy</b></td>
         <td>boolean</td>
         <td>
           <br/>
