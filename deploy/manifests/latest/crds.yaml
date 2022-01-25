@@ -166,10 +166,14 @@ spec:
                         json options See https://grafana.com/docs/administration/provisioning/#datasources
                       properties:
                         addCorsHeader:
-                          description: ' Useful fields for clickhouse datasource  See
-                            https://github.com/Vertamedia/clickhouse-grafana/tree/master/dist/README.md#configure-the-datasource-with-provisioning  See
-                            https://github.com/Vertamedia/clickhouse-grafana/tree/master/src/datasource.ts#L44'
+                          description: Useful fields for clickhouse datasource See
+                            https://github.com/Vertamedia/clickhouse-grafana/tree/master/dist/README.md#configure-the-datasource-with-provisioning
+                            See https://github.com/Vertamedia/clickhouse-grafana/tree/master/src/datasource.ts#L44
                           type: boolean
+                        allowInfraExplore:
+                          type: boolean
+                        apiToken:
+                          type: string
                         appInsightsAppId:
                           description: Fields for Azure data sources
                           type: string
@@ -280,6 +284,8 @@ spec:
                           type: string
                         postgresVersion:
                           type: integer
+                        showOffline:
+                          type: boolean
                         sigV4AssumeRoleArn:
                           type: string
                         sigV4Auth:
@@ -311,17 +317,6 @@ spec:
                           type: boolean
                         tlsSkipVerify:
                           type: boolean
-                        url:
-                          description: Fields for Instana data sources
-                          type: string
-                        apiToken:
-                          type: string
-                        useProxy:
-                          type: boolean
-                        showOffline:
-                          type: boolean
-                        allowInfraExplore:
-                          type: boolean
                         tokenUri:
                           description: Fields for Stackdriver data sources
                           type: string
@@ -343,7 +338,12 @@ spec:
                           type: string
                         tsdbVersion:
                           type: string
+                        url:
+                          description: Fields for Instana data sources See https://github.com/instana/instana-grafana-datasource/blob/main/provisioning/datasources/datasource.yml
+                          type: string
                         usePOST:
+                          type: boolean
+                        useProxy:
                           type: boolean
                         useYandexCloudAuthorization:
                           type: boolean
