@@ -161,6 +161,9 @@ type GrafanaDataSourceJsonData struct {
 	HTTPMethod            string `json:"httpMethod,omitempty"`
 	// Fields for tracing data sources
 	TracesToLogs GrafanaDataSourceJsonTracesToLogs `json:"tracesToLogs,omitempty"`
+	ServiceMap   GrafanaDataSourceJsonServiceMap   `json:"serviceMap,omitempty"`
+	NodeGraph    GrafanaDatasourceJsonNodeGraph    `json:"nodeGraph,omitempty"`
+	Search       GrafanaDataSourceJsonSearch       `json:"search,omitempty"`
 	// Fields for Github data sources
 	GithubUrl string `json:"githubUrl,omitempty"`
 	// Fields for Alertmanager data sources
@@ -193,6 +196,21 @@ type GrafanaDataSourceJsonTracesToLogs struct {
 	SpanEndTimeShift   string   `json:"spanEndTimeShift,omitempty"`
 	SpanStartTimeShift string   `json:"spanStartTimeShift,omitempty"`
 	Tags               []string `json:"tags,omitempty"`
+	FilterBySpanId     bool     `json:"filterBySpanID,omitempty"`
+	FilterByTraceID    bool     `json:"filterByTraceID,omitempty"`
+	LokiSearch         bool     `json:"lokiSearch,omitempty"`
+}
+
+type GrafanaDataSourceJsonServiceMap struct {
+	DatasourceUid string `json:"datasourceUid,omitempty"`
+}
+
+type GrafanaDataSourceJsonSearch struct {
+	Hide bool `json:"hide,omitempty"`
+}
+
+type GrafanaDatasourceJsonNodeGraph struct {
+	Enabled bool `json:"enabled,omitempty"`
 }
 
 // GrafanaDataSourceSecureJsonData contains the most common secure json options
