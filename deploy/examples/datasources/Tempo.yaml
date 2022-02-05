@@ -54,3 +54,4 @@ spec:
       enabled: true
   deployment:
     replicas: 1
+
