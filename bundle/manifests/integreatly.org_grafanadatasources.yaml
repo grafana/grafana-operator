@@ -164,12 +164,27 @@ spec:
                           type: integer
                         maxOpenConns:
                           type: integer
+                        nodeGraph:
+                          properties:
+                            enabled:
+                              type: boolean
+                          type: object
                         oauthPassThru:
                           type: boolean
                         organization:
                           type: string
                         postgresVersion:
                           type: integer
+                        search:
+                          properties:
+                            hide:
+                              type: boolean
+                          type: object
+                        serviceMap:
+                          properties:
+                            datasourceUid:
+                              type: string
+                          type: object
                         sigV4AssumeRoleArn:
                           type: string
                         sigV4Auth:
@@ -209,6 +224,12 @@ spec:
                           properties:
                             datasourceUid:
                               type: string
+                            filterBySpanID:
+                              type: boolean
+                            filterByTraceID:
+                              type: boolean
+                            lokiSearch:
+                              type: boolean
                             spanEndTimeShift:
                               type: string
                             spanStartTimeShift:
