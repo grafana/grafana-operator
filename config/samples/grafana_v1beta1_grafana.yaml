@@ -3,6 +3,9 @@ kind: Grafana
 metadata:
   name: grafana-sample
 spec:
+  serviceAccount:
+    labels:
+      test: asdf
   config:
     log:
       mode: "console"
