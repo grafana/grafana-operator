@@ -110,6 +110,7 @@ func getInstallationStages() []grafanav1beta1.OperatorStageName {
 		grafanav1beta1.OperatorStageAdminUser,
 		grafanav1beta1.OperatorStageGrafanaConfig,
 		grafanav1beta1.OperatorStagePvc,
+		grafanav1beta1.OperatorStageServieAccount,
 	}
 }
 
@@ -121,6 +122,8 @@ func (r *GrafanaReconciler) getReconcilerForStage(stage grafanav1beta1.OperatorS
 		return grafana.NewAdminSecretReconciler(r.Client)
 	case grafanav1beta1.OperatorStagePvc:
 		return grafana.NewPvcReconciler(r.Client)
+	case grafanav1beta1.OperatorStageServieAccount:
+		return grafana.NewServiceAccountReconciler(r.Client)
 	default:
 		return nil
 	}

@@ -5256,8 +5256,6 @@ spec:
           status:
             description: GrafanaStatus defines the observed state of Grafana
             properties:
-              configHash:
-                type: string
               lastMessage:
                 type: string
               stage:

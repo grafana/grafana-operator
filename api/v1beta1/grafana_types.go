@@ -32,6 +32,7 @@ const (
 	OperatorStageGrafanaConfig OperatorStageName = "config"
 	OperatorStageAdminUser     OperatorStageName = "admin user"
 	OperatorStagePvc           OperatorStageName = "pvc"
+	OperatorStageServieAccount OperatorStageName = "service account"
 )
 
 const (
@@ -700,4 +701,8 @@ func (r *Grafana) SkipCreateAdminAccount() bool {
 
 func (r *Grafana) UsePersistentVolume() bool {
 	return r.Spec.DataStorage != nil
+}
+
+func (r *Grafana) SkipCreateServiceAccount() bool {
+	return r.Spec.ServiceAccount != nil && r.Spec.ServiceAccount.Skip != nil && *r.Spec.ServiceAccount.Skip
 }

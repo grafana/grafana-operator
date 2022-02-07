@@ -41,3 +41,12 @@ func GetGrafanaDataPVC(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1.P
 	controllerutil.SetOwnerReference(cr, pvc, scheme)
 	return pvc
 }
+
+func GetGrafanaServiceAccount(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1.ServiceAccount {
+	return &v1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-sa", cr.Name),
+			Namespace: cr.Namespace,
+		},
+	}
+}
