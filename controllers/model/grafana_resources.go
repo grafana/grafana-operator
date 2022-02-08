@@ -3,7 +3,10 @@ package model
 import (
 	"fmt"
 	grafanav1beta1 "github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
+	routev1 "github.com/openshift/api/route/v1"
+	v13 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	v12 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -43,10 +46,49 @@ func GetGrafanaDataPVC(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1.P
 }
 
 func GetGrafanaServiceAccount(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1.ServiceAccount {
-	return &v1.ServiceAccount{
+	sa := &v1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-sa", cr.Name),
 			Namespace: cr.Namespace,
 		},
 	}
+	controllerutil.SetOwnerReference(cr, sa, scheme)
+	return sa
+}
+
+func GetGrafanaService(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1.Service {
+	service := &v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-service", cr.Name),
+			Namespace: cr.Namespace,
+		},
+	}
+	controllerutil.SetOwnerReference(cr, service, scheme)
+	return service
+}
+
+func GetGrafanaIngress(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v12.Ingress {
+	ingress := &v12.Ingress{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-ingress", cr.Name),
+			Namespace: cr.Namespace,
+		},
+	}
+	controllerutil.SetOwnerReference(cr, ingress, scheme)
+	return ingress
+}
+
+func GetGrafanaRoute(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *routev1.Route {
+	return nil
+}
+
+func GetGrafanaDeployment(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v13.Deployment {
+	deployment := &v13.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-deployment"),
+			Namespace: cr.Namespace,
+		},
+	}
+	controllerutil.SetOwnerReference(cr, deployment, scheme)
+	return deployment
 }

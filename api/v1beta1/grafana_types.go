@@ -29,10 +29,14 @@ type OperatorStageName string
 type OperatorStageStatus string
 
 const (
-	OperatorStageGrafanaConfig OperatorStageName = "config"
-	OperatorStageAdminUser     OperatorStageName = "admin user"
-	OperatorStagePvc           OperatorStageName = "pvc"
-	OperatorStageServieAccount OperatorStageName = "service account"
+	OperatorStageGrafanaConfig  OperatorStageName = "config"
+	OperatorStageAdminUser      OperatorStageName = "admin user"
+	OperatorStagePvc            OperatorStageName = "pvc"
+	OperatorStageServiceAccount OperatorStageName = "service account"
+	OperatorStageService        OperatorStageName = "service"
+	OperatorStageIngress        OperatorStageName = "ingress"
+	OperatorStagePlugins        OperatorStageName = "plugins"
+	OperatorStageDeployment     OperatorStageName = "deployment"
 )
 
 const (
@@ -98,7 +102,6 @@ type GrafanaClient struct {
 
 // GrafanaService provides a means to configure the service
 type GrafanaService struct {
-	Name        string            `json:"name,omitempty"`
 	Annotations map[string]string `json:"annotations,omitempty"`
 	Labels      map[string]string `json:"labels,omitempty"`
 	Type        v1.ServiceType    `json:"type,omitempty"`
