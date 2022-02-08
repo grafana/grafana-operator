@@ -34,7 +34,7 @@ type DeploymentReconciler struct {
 }
 
 func NewDeploymentReconciler(client client.Client) reconcilers.OperatorGrafanaReconciler {
-	return &PvcReconciler{
+	return &DeploymentReconciler{
 		client: client,
 	}
 }

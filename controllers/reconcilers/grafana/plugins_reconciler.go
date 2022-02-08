@@ -11,7 +11,7 @@ import (
 type PluginsReconciler struct{}
 
 func NewPluginsReconciler() reconcilers.OperatorGrafanaReconciler {
-	return &PvcReconciler{}
+	return &PluginsReconciler{}
 }
 
 func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
