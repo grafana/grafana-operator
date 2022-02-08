@@ -5,50 +5,40 @@ import (
 	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/model"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/reconcilers"
+	v1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-package grafana
-
-import (
-"context"
-"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
-"github.com/grafana-operator/grafana-operator-experimental/controllers/model"
-"github.com/grafana-operator/grafana-operator-experimental/controllers/reconcilers"
-v1 "k8s.io/api/core/v1"
-"k8s.io/apimachinery/pkg/runtime"
-"sigs.k8s.io/controller-runtime/pkg/client"
-"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-"sigs.k8s.io/controller-runtime/pkg/log"
-)
-
-type IngressAccountReconciler struct {
+type IngressReconciler struct {
 	client client.Client
 }
 
-func IngressAccountReconciler(client client.Client) reconcilers.OperatorGrafanaReconciler {
+func NewIngressReconciler(client client.Client) reconcilers.OperatorGrafanaReconciler {
 	return &ServiceAccountReconciler{
 		client: client,
 	}
 }
 
-func (r *IngressAccountReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
 	logger := log.FromContext(ctx)
 
-	sa := model.GetGrafanaServiceAccount(cr, scheme)
-
-	if cr.SkipCreateAdminAccount() {
-		logger.Info("skip creating grafana service account")
-		return v1beta1.OperatorStageResultSuccess, nil
+	if r.isOpenShift() {
+		logger.Info("platform is OpenShift, creating Route")
+		return r.reconcileRoute()
+	} else {
+		logger.Info("platform is Kubernetes, creating Ingress")
+		return r.reconcileIngress(ctx, cr, status, vars, scheme)
 	}
+}
 
-	_, err := controllerutil.CreateOrUpdate(ctx, r.client, sa, func() error {
-		sa.Labels = getServiceAccountLabels(cr)
-		sa.Annotations = getServiceAccountAnnotations(cr, sa.Annotations)
-		sa.ImagePullSecrets = getServiceAccountImagePullSecrets(cr, sa.ImagePullSecrets)
+func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+	ingress := model.GetGrafanaIngress(cr, scheme)
+
+	_, err := controllerutil.CreateOrUpdate(ctx, r.client, ingress, func() error {
 		return nil
 	})
 
@@ -59,40 +49,144 @@ func (r *IngressAccountReconciler) Reconcile(ctx context.Context, cr *v1beta1.Gr
 	return v1beta1.OperatorStageResultSuccess, nil
 }
 
-func getServiceAccountLabels(cr *v1beta1.Grafana) map[string]string {
-	if cr.Spec.ServiceAccount == nil {
+func (r *IngressReconciler) reconcileRoute() (v1beta1.OperatorStageStatus, error) {
+	return v1beta1.OperatorStageResultSuccess, nil
+}
+
+func (r *IngressReconciler) isOpenShift() bool {
+	return false
+}
+
+func getIngressTLS(cr *v1beta1.Grafana) []v1.IngressTLS {
+	if cr.Spec.Ingress == nil {
 		return nil
 	}
-	return cr.Spec.ServiceAccount.Labels
-}
 
-func getServiceAccountAnnotations(cr *v1beta1.Grafana, existing map[string]string) map[string]string {
-	if cr.Spec.ServiceAccount == nil {
-		return existing
-	}
-	return model.MergeAnnotations(cr.Spec.ServiceAccount.Annotations, existing)
-}
-
-func getServiceAccountImagePullSecrets(cr *v1beta1.Grafana, existing []v1.LocalObjectReference) []v1.LocalObjectReference {
-	if cr.Spec.ServiceAccount == nil {
-		return existing
-	}
-	return mergeImagePullSecrets(cr.Spec.ServiceAccount.ImagePullSecrets, existing)
-}
-
-func mergeImagePullSecrets(requested []v1.LocalObjectReference, existing []v1.LocalObjectReference) []v1.LocalObjectReference {
-	appendIfAbsent := func(secrets []v1.LocalObjectReference, secret v1.LocalObjectReference) []v1.LocalObjectReference {
-		for _, s := range secrets {
-			if s.Name == secret.Name {
-				return secrets
-			}
+	if cr.Spec.Ingress.TLSEnabled {
+		return []v1.IngressTLS{
+			{
+				Hosts:      []string{cr.Spec.Ingress.Hostname},
+				SecretName: cr.Spec.Ingress.TLSSecretName,
+			},
 		}
-		return append(secrets, secret)
+	}
+	return nil
+}
+
+func GetIngressPathType(cr *v1beta1.Grafana) *v1.PathType {
+	t := v1.PathType(cr.Spec.Ingress.PathType)
+	switch t {
+	case v1.PathTypeExact, v1.PathTypePrefix:
+		return &t
+	case v1.PathTypeImplementationSpecific:
+		t = v1.PathTypeImplementationSpecific
+		return &t
+	}
+	return nil
+}
+
+func GetIngressClassName(cr *v1beta1.Grafana) *string {
+	if cr.Spec.Ingress.IngressClassName == "" {
+		return nil
 	}
 
-	for _, s := range requested {
-		existing = appendIfAbsent(existing, s)
+	return &cr.Spec.Ingress.IngressClassName
+}
+
+func GetIngressTargetPort(cr *v1beta1.Grafana) intstr.IntOrString {
+	defaultPort := intstr.FromInt(GetGrafanaPort(cr))
+
+	if cr.Spec.Ingress == nil {
+		return defaultPort
 	}
 
-	return existing
+	if cr.Spec.Ingress.TargetPort == "" {
+		return defaultPort
+	}
+
+	return intstr.FromString(cr.Spec.Ingress.TargetPort)
+}
+
+func GetHost(cr *v1beta1.Grafana) string {
+	if cr.Spec.Ingress == nil {
+		return ""
+	}
+	return cr.Spec.Ingress.Hostname
+}
+
+func GetPath(cr *v1beta1.Grafana) string {
+	if cr.Spec.Ingress == nil {
+		return "/"
+	}
+
+	if cr.Spec.Ingress.Path == "" {
+		return "/"
+	}
+
+	return cr.Spec.Ingress.Path
+}
+
+func getIngressSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) v1.IngressSpec {
+	service := model.GetGrafanaService(cr, scheme)
+
+	port := GetIngressTargetPort(cr)
+
+	if port.IntVal != 0 {
+		return v1.IngressSpec{
+			TLS:              getIngressTLS(cr),
+			IngressClassName: GetIngressClassName(cr),
+			Rules: []v1.IngressRule{
+				{
+					Host: GetHost(cr),
+					IngressRuleValue: v1.IngressRuleValue{
+						HTTP: &v1.HTTPIngressRuleValue{
+							Paths: []v1.HTTPIngressPath{
+								{
+									Path:     GetPath(cr),
+									PathType: GetIngressPathType(cr),
+									Backend: v1.IngressBackend{
+										Service: &v1.IngressServiceBackend{
+											Name: service.Name,
+											Port: v1.ServiceBackendPort{
+												Number: port.IntVal,
+											},
+										},
+										Resource: nil,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+	}
+	return v1.IngressSpec{
+		TLS:              getIngressTLS(cr),
+		IngressClassName: GetIngressClassName(cr),
+		Rules: []v1.IngressRule{
+			{
+				Host: GetHost(cr),
+				IngressRuleValue: v1.IngressRuleValue{
+					HTTP: &v1.HTTPIngressRuleValue{
+						Paths: []v1.HTTPIngressPath{
+							{
+								Path:     GetPath(cr),
+								PathType: GetIngressPathType(cr),
+								Backend: v1.IngressBackend{
+									Service: &v1.IngressServiceBackend{
+										Name: service.Name,
+										Port: v1.ServiceBackendPort{
+											Name: port.StrVal,
+										},
+									},
+									Resource: nil,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 }

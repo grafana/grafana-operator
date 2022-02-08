@@ -110,7 +110,11 @@ func getInstallationStages() []grafanav1beta1.OperatorStageName {
 		grafanav1beta1.OperatorStageAdminUser,
 		grafanav1beta1.OperatorStageGrafanaConfig,
 		grafanav1beta1.OperatorStagePvc,
-		grafanav1beta1.OperatorStageServieAccount,
+		grafanav1beta1.OperatorStageServiceAccount,
+		grafanav1beta1.OperatorStageService,
+		grafanav1beta1.OperatorStageIngress,
+		grafanav1beta1.OperatorStagePlugins,
+		grafanav1beta1.OperatorStageDeployment,
 	}
 }
 
@@ -122,8 +126,16 @@ func (r *GrafanaReconciler) getReconcilerForStage(stage grafanav1beta1.OperatorS
 		return grafana.NewAdminSecretReconciler(r.Client)
 	case grafanav1beta1.OperatorStagePvc:
 		return grafana.NewPvcReconciler(r.Client)
-	case grafanav1beta1.OperatorStageServieAccount:
+	case grafanav1beta1.OperatorStageServiceAccount:
 		return grafana.NewServiceAccountReconciler(r.Client)
+	case grafanav1beta1.OperatorStageService:
+		return grafana.NewServiceReconciler(r.Client)
+	case grafanav1beta1.OperatorStageIngress:
+		return grafana.NewIngressReconciler(r.Client)
+	case grafanav1beta1.OperatorStagePlugins:
+		return grafana.NewPluginsReconciler()
+	case grafanav1beta1.OperatorStageDeployment:
+		return grafana.NewDeploymentReconciler(r.Client)
 	default:
 		return nil
 	}
