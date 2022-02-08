@@ -3,6 +3,9 @@ kind: Grafana
 metadata:
   name: grafana-sample
 spec:
+  ingress:
+    pathType: Prefix
+    path: "/"
   serviceAccount:
     labels:
       test: asdf

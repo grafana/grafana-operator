@@ -85,7 +85,7 @@ func GetGrafanaRoute(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *routev
 func GetGrafanaDeployment(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v13.Deployment {
 	deployment := &v13.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-deployment"),
+			Name:      fmt.Sprintf("%s-deployment", cr.Name),
 			Namespace: cr.Namespace,
 		},
 	}

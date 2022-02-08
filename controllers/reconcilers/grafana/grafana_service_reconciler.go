@@ -20,7 +20,7 @@ type ServiceReconciler struct {
 }
 
 func NewServiceReconciler(client client.Client) reconcilers.OperatorGrafanaReconciler {
-	return &ServiceAccountReconciler{
+	return &ServiceReconciler{
 		client: client,
 	}
 }

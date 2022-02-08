@@ -18,7 +18,7 @@ type IngressReconciler struct {
 }
 
 func NewIngressReconciler(client client.Client) reconcilers.OperatorGrafanaReconciler {
-	return &ServiceAccountReconciler{
+	return &IngressReconciler{
 		client: client,
 	}
 }
@@ -39,6 +39,7 @@ func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Gr
 	ingress := model.GetGrafanaIngress(cr, scheme)
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, ingress, func() error {
+		ingress.Spec = getIngressSpec(cr, scheme)
 		return nil
 	})
 
@@ -74,6 +75,11 @@ func getIngressTLS(cr *v1beta1.Grafana) []v1.IngressTLS {
 }
 
 func GetIngressPathType(cr *v1beta1.Grafana) *v1.PathType {
+
+	if cr.Spec.Ingress == nil {
+		return nil
+	}
+
 	t := v1.PathType(cr.Spec.Ingress.PathType)
 	switch t {
 	case v1.PathTypeExact, v1.PathTypePrefix:
@@ -82,11 +88,13 @@ func GetIngressPathType(cr *v1beta1.Grafana) *v1.PathType {
 		t = v1.PathTypeImplementationSpecific
 		return &t
 	}
-	return nil
+
+	d := v1.PathTypeExact
+	return &d
 }
 
 func GetIngressClassName(cr *v1beta1.Grafana) *string {
-	if cr.Spec.Ingress.IngressClassName == "" {
+	if cr.Spec.Ingress == nil || cr.Spec.Ingress.IngressClassName == "" {
 		return nil
 	}
 

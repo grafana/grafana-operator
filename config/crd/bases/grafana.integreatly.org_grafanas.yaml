@@ -5160,8 +5160,6 @@ spec:
                     additionalProperties:
                       type: string
                     type: object
-                  name:
-                    type: string
                   ports:
                     items:
                       description: ServicePort contains information on service's port.
