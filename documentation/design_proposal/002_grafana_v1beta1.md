@@ -4,6 +4,8 @@
 
 Update the grafana CRD to be easier to use and provide more customization opportunities.
 
+The changes in this document contain allot of breaking changes.
+
 ## Info
 
 status: Draft
