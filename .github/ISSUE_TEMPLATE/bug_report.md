@@ -6,9 +6,13 @@ labels: bug, needs triage
 assignees: ''
 
 ---
+<!-- Before creating a issue please read though [documentation/debug.md](documentation/debug.md) -->
 
 **Describe the bug**
 A clear and concise description of what the bug is.
+
+**Version**
+Full semver version of the operator being used e.g. v3.10.1, v4.0.0
 
 **To Reproduce**
 Steps to reproduce the behavior:
@@ -28,11 +32,12 @@ Please provide this if you know where this bug might occur otherwise leave as `u
 If applicable, add screenshots to help explain your problem.
 
 **Runtime (please complete the following information):**
- - OS: [e.g. Linux,Fedora,Mac]
- - Grafana Operator Version [e.g. v3.4.0]
- - Environment: [e.g Openshift,Kubernetes,minikube etc. please specify versions]
- - Deployment type: [e.g running the operator locally, or deployed]
- - Other: [Other variables/things that might be relevant to this bug, versions of other services e.g. operator-sdk]
+
+- OS: [e.g. Linux,Fedora,Mac]
+- Grafana Operator Version [e.g. v3.4.0]
+- Environment: [e.g Openshift,Kubernetes,minikube etc. please specify versions]
+- Deployment type: [e.g running the operator locally, or deployed]
+- Other: [Other variables/things that might be relevant to this bug, versions of other services e.g. operator-sdk]
 
 **Additional context**
 Add any other context about the problem here.

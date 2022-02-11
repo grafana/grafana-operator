@@ -1,6 +1,17 @@
 # Jsonnet support
 
-The operator supports importing dashboards in [jsonnet](https://jsonnet.org/) format. The [grafonnet](https://grafana.github.io/grafonnet-lib/) library is available out of the box, other libraries can be imported via config maps.
+## Grafana-operator-libsonnet
+
+  The community has contributed a jsonnet library to the official `jsonnet-lib` github repository, this allows users to efficiently
+  generate grafana-operator resources, the library can be found here:
+  [https://github.com/jsonnet-libs/grafana-operator-libsonnet](https://github.com/jsonnet-libs/grafana-operator-libsonnet)
+
+  Documentation relating to grafana-operator-libsonnet can be found in the link above under [docs](https://jsonnet-libs.github.io/grafana-operator-libsonnet/)
+
+## Grafonnet
+
+The operator supports importing dashboards in [jsonnet](https://jsonnet.org/) format.
+The [grafonnet](https://grafana.github.io/grafonnet-lib/) library is available out of the box, other libraries can be imported via config maps.
 
 ## Creating a jsonnet dashboard
 
@@ -21,7 +32,7 @@ spec:
 
 The `grafonnet` library is provided by the operator and can be imported using:
 
-```
+```libsonet
 local grafana = import 'grafonnet/grafana.libsonnet';
 ```
 
@@ -58,7 +69,7 @@ spec:
 The libary will be imported as a file with the name `monitoring.libsonnet` into a directory with the same name of the config map.
 It can be imported in a dashboard using the following code:
 
-```
+```libsonet
 local monitoring = import 'monitoring/monitoring.libsonnet';
 ```
 

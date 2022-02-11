@@ -1,0 +1,57 @@
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDataSource
+metadata:
+  name: tempo
+spec:
+  name: tempo.yaml
+  datasources:
+    - name: Tempo
+      uid: tempo-datasource
+      type: tempo
+      access: proxy
+      url: http://tempo:3100
+      isDefault: false
+      version: 1
+      editable: false
+      jsonData:
+        httpMethod: "GET"
+        nodeGraph:
+          enabled: true
+        search:
+          hide: false
+        serviceMap:
+          datasourceUid: "thanos-datasource"
+        tracesToLogs:
+          datasourceUid: "loki-datasource"
+          filterBySpanID: false
+          filterByTraceID: false
+          lokiSearch: true
+          spanEndTimeShift: "1h"
+          spanStartTimeShift: "1h"
+          tags:
+            - "job"
+            - "instance"
+            - "pod"
+            - "namespace"
+---
+apiVersion: integreatly.org/v1alpha1
+kind: Grafana
+metadata:
+  name: grafana
+spec:
+  config:
+    auth:
+      disable_login_form: false
+      disable_signout_menu: true
+    auth.anonymous:
+      enabled: true
+    feature_toggles:
+      enable: "tempoBackendSearch tempoSearch tempoServiceGraph"
+    log:
+      level: error
+      mode: console
+    log.frontend:
+      enabled: true
+  deployment:
+    replicas: 1
+

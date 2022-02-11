@@ -1,6 +1,9 @@
 # Temporary Build Files
 build/_output
 build/_test
+bin
+bin/*
+testbin
 # Created by https://www.gitignore.io/api/go,vim,emacs,visualstudiocode
 ### Emacs ###
 # -*- mode: gitignore; -*-
@@ -78,9 +81,5 @@ tags
 .idea
 operator-sdk-*
 tmp
-# When switching branches from 4.x
-bin
-bundle
-config
-testbin
+./bin/manager
 vendor
