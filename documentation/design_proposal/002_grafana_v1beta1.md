@@ -62,6 +62,10 @@ type GrafanaSpec struct {
 ## Proposal
 
 In short the proposal is about moving the grafana container specific config from the main GrafanaSpec to GrafanaContainer.
+GrafanaContainer should contain [V1.Container](https://pkg.go.dev/k8s.io/api@v0.20.2/core/v1?utm_source=gopls#Container) but with removal of a number of requiered values like name that will be hard coded to `grafana`.
+
+This way we could provide a shortcut to our users to be able to set all grafana related config inside one part of the crd.
+
 Create specific structs for all the objects that we manage in the operator like deployment, configmaps, serviceaccounts, etc.
 and make them as generic as possible to give our users the opertunity to tweak the deployments in any way they want.
 
@@ -85,20 +89,9 @@ type GrafanaSpec struct {
  Jsonnet                    *JsonnetConfig           `json:"jsonnet,omitempty"`
  GrafanaContainer           *GrafanaContainer        `json:"grafanaContainer,omitempty"`
 }
-
-// GrafanaContainer provides a means to configure the grafana container
-type GrafanaContainer struct {
- BaseImage         string                   `json:"baseImage,omitempty"`
- Resources         *v1.ResourceRequirements `json:"resources,omitempty"`
- ReadinessProbe    *v1.Probe                `json:"readinessProbe,omitempty"`
- LivenessProbeSpec *v1.Probe                `json:"livenessProbe,omitempty"`
-}
 ```
 
-So how would this impact our users?
-For example instead of setting `grafana.spec.baseImage` you would have to do `grafana.spec.grafanaContainer.baseImage`.
-
-Checkout the [grafana_types](002_grafana_types.go) file for a better example. Just overwrite `api/integreatly/v1alpha1/grafana_types.go` with this file.
+For example instead of setting `grafana.spec.baseImage` you would have to do `grafana.spec.grafanaContainer.image`.
 
 ### Change in defaults
 
@@ -154,25 +147,33 @@ These settings will be rather low.
 
 ## Alternatives1
 
-Just like the proposal but instead of having a few specific configs inside GrafanaContainer we could have all the [V1.Container](https://pkg.go.dev/k8s.io/api@v0.20.2/core/v1?utm_source=gopls#Container) objects, but with name hard coded to grafana.
-This way we could provide a shortcut to our users to be able to set all grafana related config inside one part of the crd.
-
-With the main proposal you would define baseImage with `grafana.spec.grafanaContainer.baseImage` but if you want to change the securityContext you would have to change in
-`grafana.spec.deploymentOverrides.DeploymentSpec.templates.containers.grafana.securityContext`. This is rather confusing since they perform changes in the same object.
-
-This would also make it easier from a code point of view, we could just check to see if the user tries to do any changes to the grafana container.
-This would lower the risk of creating any merge issues.
+Just like the proposal but instead of giving out the entire container object we could keep the custom resources that we have today.
 
 ```.go
-if containers.name == grafana {
-	log("You should only define grafana config trough grafana.grafanaContainer")
-	// We could also write something about this in the grafana status field.
+// GrafanaContainer provides a means to configure the grafana container
+type GrafanaContainer struct {
+ BaseImage         string                   `json:"baseImage,omitempty"`
+ Resources         *v1.ResourceRequirements `json:"resources,omitempty"`
+ ReadinessProbe    *v1.Probe                `json:"readinessProbe,omitempty"`
+ LivenessProbeSpec *v1.Probe                `json:"livenessProbe,omitempty"`
 }
 ```
 
+This would make it easier for our current users when migrating to the new version since they would know how it was written in 4.0.
+
+But this would also create confussion how can i configure other grafana container related config?
+
+You would set baseImage with `grafana.spec.grafanaContainer.baseImage` but if you want to change the securityContext you would have to change in
+`grafana.spec.deploymentOverrides.DeploymentSpec.templates.containers.grafana.securityContext`. This is rather confusing since they perform changes in the same object.
+
+This would also make it harder from a code point of view since we would have to write some special merge logic
+instead of just checking if the user tries to do any changes to the grafana container.
+This would increase the risk of creating merge issues
+
 ## Alternatives2
 
-Instead of having a custom object for grafanaContainer we could provide the user with the entire deployment object with some tweaks and have them configure everything from inside the deployment.
+Just like the proposal but instead of having a custom object for grafanaContainer we could provide the user
+with the entire deployment object with some tweaks and have them configure everything from inside the deployment.
 
 This would make it harder to use but probably allot easier from a development point of view since we would have to do less advanced merges between configs.
 
@@ -203,16 +204,11 @@ It will be harder to do basic things like setting baseImages.
 
 Instead of setting `grafana.spec.baseImage` you would have to do `grafana.spec.deploymentOverrides.DeploymentSpec.templates.containers.grafana.image`.
 
-## Work Plan
-
-Provide this PR with `grafana_types.go` containing all the type definitions.
-Create a PR that implements this solution.
-
 ## Open questions
 
 - ~~Should we do a similar solution for the init pluigin container like the proposal is for the grafana container?~~
-  - There are very few people that have asked us for changes in the initContainer in general. It's probably not needed.
-- Banzai clouds operator-tools don't support openshift routes. Don't know how keen they would be to change this upstream. We probably want to keep this config in a repo that we own to make it easier to change if we need to.
+  - There are very few people that have asked us for changes in the initContainer in general. It's probably not needed to have a easy access config for the init container.
+- Banzai clouds operator-tools don't provide openshift routes. Don't know how keen they would be to change this upstream. We probably want to keep this config in a repo that we own to make it easier to change if we need to.
 - What securityContext settings can we use in openshift without any issues?
 
 ## Related issues
