@@ -36,7 +36,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 		service.Spec = v1.ServiceSpec{
 			Ports: getServicePorts(cr, service),
 			Selector: map[string]string{
-				"app": "grafana",
+				"app": cr.Name,
 			},
 			ClusterIP: getClusterIP(cr),
 			Type:      getServiceType(cr),

@@ -75,9 +75,10 @@ func getIngressTLS(cr *v1beta1.Grafana) []v1.IngressTLS {
 }
 
 func GetIngressPathType(cr *v1beta1.Grafana) *v1.PathType {
+	defaultPathType := v1.PathTypeExact
 
 	if cr.Spec.Ingress == nil {
-		return nil
+		return &defaultPathType
 	}
 
 	t := v1.PathType(cr.Spec.Ingress.PathType)
@@ -87,10 +88,9 @@ func GetIngressPathType(cr *v1beta1.Grafana) *v1.PathType {
 	case v1.PathTypeImplementationSpecific:
 		t = v1.PathTypeImplementationSpecific
 		return &t
+	default:
+		return &defaultPathType
 	}
-
-	d := v1.PathTypeExact
-	return &d
 }
 
 func GetIngressClassName(cr *v1beta1.Grafana) *string {
