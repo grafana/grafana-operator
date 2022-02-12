@@ -173,7 +173,7 @@ func getPodLabels(cr *v1beta1.Grafana) map[string]string {
 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Labels != nil {
 		labels = cr.Spec.Deployment.Labels
 	}
-	labels["app"] = "grafana"
+	labels["app"] = cr.Name
 	return labels
 }
 
@@ -436,7 +436,7 @@ func getDeploymentSpec(cr *v1beta1.Grafana, annotations map[string]string, deplo
 		Replicas: getReplicas(cr),
 		Selector: &v13.LabelSelector{
 			MatchLabels: map[string]string{
-				"app": "grafana",
+				"app": cr.Name,
 			},
 		},
 		Template: v1.PodTemplateSpec{

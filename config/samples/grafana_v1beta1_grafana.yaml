@@ -1,14 +1,30 @@
+---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: Grafana
 metadata:
-  name: grafana-sample
+  name: grafana-a
 spec:
   ingress:
+    enabled: True
+    hostname: grafana-a.info
+    path: /
     pathType: Prefix
-    path: "/"
-  serviceAccount:
-    labels:
-      test: asdf
+  config:
+    log:
+      mode: "console"
+    auth:
+      disable_login_form: False
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana-b
+spec:
+  ingress:
+    enabled: True
+    hostname: grafana-b.info
+    path: /
+    pathType: Prefix
   config:
     log:
       mode: "console"
