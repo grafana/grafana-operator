@@ -26,6 +26,12 @@ overwrite a number of default values, especially when it comes to deployment con
 As a part of the v1beta1 release we want to make this better and at the same time
 give our users more power to customize there deployments.
 
+## Out of scope
+
+In the roadmap for 5.0 there are mentiones about moving `dashboardLabelSelector` and `dashboardNamespaceSelector` from the grafana object
+and instead have the grafanadashboard crd to find the grafana it's selected instances.
+This design document don't tale this in to concideration and only focuses on configuration of the grafana instance.
+
 ## Verification
 
 - Create integration tests for the new CRD:s
