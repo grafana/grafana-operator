@@ -75,11 +75,9 @@ This way we could provide a shortcut to our users to be able to set all grafana 
 Create specific structs for all the objects that we manage in the operator like deployment, configmaps, serviceaccounts, etc.
 and make them as generic as possible to give our users the opportunity to tweak the deployments in any way they want.
 
-To miniamize the amount of fields needed to be defined when overwriting custom config we should get rid of required fields for many objects. We could use a similar strategy as [Banzai Cloud](https://github.com/banzaicloud/operator-tools/blob/2189d8efc3856efd4a7c7fbb28b7cba9a977d0bd/pkg/typeoverride/override.go) does.
-This is something that we already do in many cases in our repository, the question is if it would be good to use a third party package to help out with this to minamize the amount of code in our repo.
+To minimize the amount of fields needed to be defined when overwriting custom config we should get rid of required fields for many objects. We could use a similar strategy as [Banzai Cloud](https://github.com/banzaicloud/operator-tools/blob/2189d8efc3856efd4a7c7fbb28b7cba9a977d0bd/pkg/typeoverride/override.go) does.
+This is something that we already do in many cases in our repository, the question is if it would be good to use a third party package to help out with this to minimize the amount of code in our repo.
 The bad thing is of course the lower the amount of control we get over it. But we can always fork repos or setup a similar solution on our own.
-
-The bad thing with this is that we will enable allot of complexity to our users but the good thing is that they can do everything.
 
 ```.go
 type GrafanaSpec struct {
@@ -111,7 +109,7 @@ Set better default security contexts on deployments and containers created by th
 Openshift got a special way of managing security context called [SCC](https://docs.openshift.com/container-platform/4.9/authentication/managing-security-context-constraints.html)
 and we have to add some check to see if we are deploying in a Openshift environment or not.
 
-The securityContext that we should asspire to is something like this:
+The securityContext that we should aspire to is something like this:
 Openshift don't support providing `runAsGroup` and `runAsUser` since it's automatically set per namespace and the numbers provided is random.
 `runAsNonRoot` might work since it gets user and group from Openshift by default.
 
@@ -134,10 +132,10 @@ These settings also forces us to add some default volumes else grafana won't sta
 
 #### Default routes/ingress
 
-Today it's not possible to define none https route for Openshift users. By separating routes and ingress in to seperate configs in the crd we should be able to separate the defaults configs for each object easier. It would also become easier to provide the entire object to the users so they can set any config they want.
+Today it's not possible to define none https route for Openshift users. By separating routes and ingress in to separate configs in the crd we should be able to separate the defaults configs for each object easier. It would also become easier to provide the entire object to the users so they can set any config they want.
 
 In Openshift a good default is TLS enabled by default since it's built in to Openshift.
-While in ingress it's not as easy since we don't know how certificate generation is managed.
+While in ingress it's not as easy since we don't know how certificates is managed.
 
 So what needs to change?
 
@@ -149,7 +147,7 @@ The default ingress should keep on being TLS enabled=false
 
 To minimize the risk of our operator and the grafana deployment to be evicted during high load in your clusters we should provide basic resource requests for both the operator and the grafana deployment/init container.
 
-These settings will be rather low.
+These settings will be rather low by default.
 
 ## Alternatives1
 
@@ -178,8 +176,8 @@ This would increase the risk of creating merge issues
 
 ## Alternatives2
 
-Just like the proposal but instead of having a custom object for grafanaContainer we could provide the user
-with the entire deployment object with some tweaks and have them configure everything from inside the deployment.
+Just like the proposal but instead of having a custom object for grafanaContainer we could have the user
+configure all deployment related settings through the `DeploymentOverrides` object.
 
 This would make it harder to use but probably allot easier from a development point of view since we would have to do less advanced merges between configs.
 
