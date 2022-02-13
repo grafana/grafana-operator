@@ -28,9 +28,9 @@ give our users more power to customize there deployments.
 
 ## Out of scope
 
-In the roadmap for 5.0 there are mentiones about moving `dashboardLabelSelector` and `dashboardNamespaceSelector` from the grafana object
+In the roadmap for 5.0 there are mentions about moving `dashboardLabelSelector` and `dashboardNamespaceSelector` from the grafana object
 and instead have the grafanadashboard crd to find the grafana it's selected instances.
-This design document don't tale this in to concideration and only focuses on configuration of the grafana instance.
+This design document don't tale this in to consideration and only focuses on configuration of the grafana instance.
 
 ## Verification
 
@@ -68,12 +68,12 @@ type GrafanaSpec struct {
 ## Proposal
 
 In short the proposal is about moving the grafana container specific config from the main GrafanaSpec to GrafanaContainer.
-GrafanaContainer should contain [V1.Container](https://pkg.go.dev/k8s.io/api@v0.20.2/core/v1?utm_source=gopls#Container) but with removal of a number of requiered values like name that will be hard coded to `grafana`.
+GrafanaContainer should contain [V1.Container](https://pkg.go.dev/k8s.io/api@v0.20.2/core/v1?utm_source=gopls#Container) but with removal of a number of required values like name that will be hard coded to `grafana`.
 
 This way we could provide a shortcut to our users to be able to set all grafana related config inside one part of the crd.
 
 Create specific structs for all the objects that we manage in the operator like deployment, configmaps, serviceaccounts, etc.
-and make them as generic as possible to give our users the opertunity to tweak the deployments in any way they want.
+and make them as generic as possible to give our users the opportunity to tweak the deployments in any way they want.
 
 To miniamize the amount of fields needed to be defined when overwriting custom config we should get rid of required fields for many objects. We could use a similar strategy as [Banzai Cloud](https://github.com/banzaicloud/operator-tools/blob/2189d8efc3856efd4a7c7fbb28b7cba9a977d0bd/pkg/typeoverride/override.go) does.
 This is something that we already do in many cases in our repository, the question is if it would be good to use a third party package to help out with this to minamize the amount of code in our repo.
@@ -109,11 +109,11 @@ operator it self and the grafana spec to make it as secure as possible out of th
 Set better default security contexts on deployments and containers created by the operator.
 
 Openshift got a special way of managing security context called [SCC](https://docs.openshift.com/container-platform/4.9/authentication/managing-security-context-constraints.html)
-and we have to add some check to see if we are deploying in a openshift environment or not.
+and we have to add some check to see if we are deploying in a Openshift environment or not.
 
 The securityContext that we should asspire to is something like this:
 Openshift don't support providing `runAsGroup` and `runAsUser` since it's automatically set per namespace and the numbers provided is random.
-`runAsNonRoot` might work since it gets user and group from openshift by default.
+`runAsNonRoot` might work since it gets user and group from Openshift by default.
 
 > These settings should also apply to our plugin initContainer.
 
@@ -134,20 +134,20 @@ These settings also forces us to add some default volumes else grafana won't sta
 
 #### Default routes/ingress
 
-Today it's not possible to define none https route for openshift users. By seperating routes and ingress in to seperate configs in the crd we should be able to seperate the defaults configs for each object easier. It would also become easier to provide the entire object to the users so they can set any config they want.
+Today it's not possible to define none https route for Openshift users. By separating routes and ingress in to seperate configs in the crd we should be able to separate the defaults configs for each object easier. It would also become easier to provide the entire object to the users so they can set any config they want.
 
-In openshift a good default is TLS enabled by default since it's built in to openshift.
+In Openshift a good default is TLS enabled by default since it's built in to Openshift.
 While in ingress it's not as easy since we don't know how certificate generation is managed.
 
 So what needs to change?
 
-The default setting for routes should be [edge](https://docs.openshift.com/container-platform/4.9/networking/routes/secured-routes.html) `TLS enabled=true` but enable the possability to run in http mode only.
+The default setting for routes should be [edge](https://docs.openshift.com/container-platform/4.9/networking/routes/secured-routes.html) `TLS enabled=true` but enable the possibility to run in http mode only.
 
 The default ingress should keep on being TLS enabled=false
 
 #### Default resource requests
 
-To miniamize the risk of our operator and the grafana deployment to be evicted during high load in your clusters we should provide basic resource reuqests for both the operator and the grafana deployment/init container.
+To minimize the risk of our operator and the grafana deployment to be evicted during high load in your clusters we should provide basic resource requests for both the operator and the grafana deployment/init container.
 
 These settings will be rather low.
 
@@ -167,7 +167,7 @@ type GrafanaContainer struct {
 
 This would make it easier for our current users when migrating to the new version since they would know how it was written in 4.0.
 
-But this would also create confussion how can i configure other grafana container related config?
+But this would also create confusion how can i configure other grafana container related config?
 
 You would set baseImage with `grafana.spec.grafanaContainer.baseImage` but if you want to change the securityContext you would have to change in
 `grafana.spec.deploymentOverrides.DeploymentSpec.templates.containers.grafana.securityContext`. This is rather confusing since they perform changes in the same object.
@@ -214,8 +214,8 @@ Instead of setting `grafana.spec.baseImage` you would have to do `grafana.spec.d
 
 - ~~Should we do a similar solution for the init pluigin container like the proposal is for the grafana container?~~
   - There are very few people that have asked us for changes in the initContainer in general. It's probably not needed to have a easy access config for the init container.
-- Banzai clouds operator-tools don't provide openshift routes. Don't know how keen they would be to change this upstream. We probably want to keep this config in a repo that we own to make it easier to change if we need to.
-- What securityContext settings can we use in openshift without any issues?
+- Banzai clouds operator-tools don't provide Openshift routes. Don't know how keen they would be to change this upstream. We probably want to keep this config in a repo that we own to make it easier to change if we need to.
+- What securityContext settings can we use in Openshift without any issues?
 
 ## Related issues
 
@@ -225,5 +225,5 @@ Instead of setting `grafana.spec.baseImage` you would have to do `grafana.spec.d
 ## References
 
 - [Banzai Cloud operator-tools](https://github.com/banzaicloud/operator-tools)
-- [openshift scc](https://docs.openshift.com/container-platform/4.9/authentication/managing-security-context-constraints.html)
-- [edge TLS openshift route](https://docs.openshift.com/container-platform/4.9/networking/routes/secured-routes.html)
+- [Openshift scc](https://docs.openshift.com/container-platform/4.9/authentication/managing-security-context-constraints.html)
+- [edge TLS Openshift route](https://docs.openshift.com/container-platform/4.9/networking/routes/secured-routes.html)
