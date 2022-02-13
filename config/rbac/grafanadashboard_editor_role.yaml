@@ -1,0 +1,24 @@
+# permissions for end users to edit grafanadashboards.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: grafanadashboard-editor-role
+rules:
+- apiGroups:
+  - grafana.integreatly.org
+  resources:
+  - grafanadashboards
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - grafana.integreatly.org
+  resources:
+  - grafanadashboards/status
+  verbs:
+  - get

@@ -9,6 +9,32 @@ rules:
 - apiGroups:
   - grafana.integreatly.org
   resources:
+  - grafanadashboards
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - grafana.integreatly.org
+  resources:
+  - grafanadashboards/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - grafana.integreatly.org
+  resources:
+  - grafanadashboards/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - grafana.integreatly.org
+  resources:
   - grafanas
   verbs:
   - create
