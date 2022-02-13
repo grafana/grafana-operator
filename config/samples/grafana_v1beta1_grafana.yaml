@@ -3,6 +3,8 @@ apiVersion: grafana.integreatly.org/v1beta1
 kind: Grafana
 metadata:
   name: grafana-a
+  labels:
+    dashboards: a
 spec:
   ingress:
     enabled: True
@@ -19,6 +21,8 @@ apiVersion: grafana.integreatly.org/v1beta1
 kind: Grafana
 metadata:
   name: grafana-b
+  labels:
+    dashboards: a
 spec:
   ingress:
     enabled: True

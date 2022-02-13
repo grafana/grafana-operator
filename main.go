@@ -18,8 +18,9 @@ package main
 
 import (
 	"flag"
-	routev1 "github.com/openshift/api/route/v1"
 	"os"
+
+	routev1 "github.com/openshift/api/route/v1"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -86,6 +87,13 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Grafana")
+		os.Exit(1)
+	}
+	if err = (&controllers.GrafanaDashboardReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDashboard")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
