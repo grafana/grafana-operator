@@ -3,6 +3,7 @@ module github.com/grafana-operator/grafana-operator-experimental
 go 1.16
 
 require (
+	github.com/blang/semver v3.5.1+incompatible
 	github.com/go-logr/logr v0.4.0
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.15.0

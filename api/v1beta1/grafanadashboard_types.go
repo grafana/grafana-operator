@@ -25,11 +25,14 @@ import (
 
 // GrafanaDashboardSpec defines the desired state of GrafanaDashboard
 type GrafanaDashboardSpec struct {
-	// Dashboard json
+	// dashboard json
 	Json string `json:"json,omitempty"`
 
-	// Selects Grafanas for import
+	// selects Grafanas for import
 	InstanceSelector *metav1.LabelSelector `json:"instanceSelector,omitempty"`
+
+	// plugins
+	Plugins PluginList `json:"plugins,omitempty"`
 }
 
 // GrafanaDashboardStatus defines the observed state of GrafanaDashboard
