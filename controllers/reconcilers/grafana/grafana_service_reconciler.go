@@ -2,6 +2,7 @@ package grafana
 
 import (
 	"context"
+	"fmt"
 	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/config"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/model"
@@ -46,6 +47,12 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 
 	if err != nil {
 		return v1beta1.OperatorStageResultFailed, err
+	}
+
+	// try to assign the admin url
+	if !cr.PreferIngress() {
+		status.AdminUrl = fmt.Sprintf("%v.%v.svc.cluster.local:%d", service.Name, cr.Namespace,
+			int32(GetGrafanaPort(cr)))
 	}
 
 	return v1beta1.OperatorStageResultSuccess, nil
