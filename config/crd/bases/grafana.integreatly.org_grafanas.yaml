@@ -41,7 +41,7 @@ spec:
               client:
                 description: GrafanaClient contains the Grafana API client settings
                 properties:
-                  preferService:
+                  preferIngress:
                     nullable: true
                     type: boolean
                   timeout:
@@ -5254,6 +5254,8 @@ spec:
           status:
             description: GrafanaStatus defines the observed state of Grafana
             properties:
+              adminUrl:
+                type: string
               lastMessage:
                 type: string
               stage:

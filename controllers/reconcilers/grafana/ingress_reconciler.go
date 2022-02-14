@@ -2,6 +2,7 @@ package grafana
 
 import (
 	"context"
+	"fmt"
 	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/model"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/reconcilers"
@@ -45,6 +46,23 @@ func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Gr
 
 	if err != nil {
 		return v1beta1.OperatorStageResultFailed, err
+	}
+
+	// try to assign the admin url
+	if cr.PreferIngress() {
+		// if provided use the hostname
+		if cr.Spec.Ingress != nil && cr.Spec.Ingress.Hostname != "" {
+			status.AdminUrl = fmt.Sprintf("https://%v", cr.Spec.Ingress.Hostname)
+		} else {
+			// Otherwise try to find something suitable, hostname or IP
+			if len(ingress.Status.LoadBalancer.Ingress) > 0 {
+				ingress := ingress.Status.LoadBalancer.Ingress[0]
+				if ingress.Hostname != "" {
+					status.AdminUrl = fmt.Sprintf("https://%v", ingress.Hostname)
+				}
+				status.AdminUrl = fmt.Sprintf("https://%v", ingress.IP)
+			}
+		}
 	}
 
 	return v1beta1.OperatorStageResultSuccess, nil

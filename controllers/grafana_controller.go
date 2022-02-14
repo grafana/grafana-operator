@@ -23,6 +23,8 @@ import (
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/reconcilers/grafana"
 	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"reflect"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -30,6 +32,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	grafanav1beta1 "github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
+)
+
+const (
+	RequeueDelaySuccess = 10 * time.Second
+	RequeueDelayError   = 5 * time.Second
 )
 
 // GrafanaReconciler reconciles a Grafana object
@@ -79,6 +86,8 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		if err != nil {
 			controllerLog.Error(err, "reconciler error in stage", "stage", stage)
 			nextStatus.LastMessage = err.Error()
+		} else {
+			nextStatus.LastMessage = ""
 		}
 
 		nextStatus.StageStatus = status
@@ -94,7 +103,25 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		controllerLog.Info("grafana installation complete")
 	}
 
-	return ctrl.Result{}, nil
+	return r.updateStatus(grafana, nextStatus)
+}
+
+func (r *GrafanaReconciler) updateStatus(cr *grafanav1beta1.Grafana, nextStatus *grafanav1beta1.GrafanaStatus) (ctrl.Result, error) {
+	if !reflect.DeepEqual(&cr.Status, nextStatus) {
+		nextStatus.DeepCopyInto(&cr.Status)
+		err := r.Client.Status().Update(context.Background(), cr)
+		if err != nil {
+			return ctrl.Result{
+				Requeue:      true,
+				RequeueAfter: RequeueDelayError,
+			}, err
+		}
+	}
+
+	return ctrl.Result{
+		Requeue:      true,
+		RequeueAfter: RequeueDelaySuccess,
+	}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

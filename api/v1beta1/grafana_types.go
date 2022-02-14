@@ -45,7 +45,7 @@ const (
 	OperatorStageResultInProgress OperatorStageStatus = "in progress"
 )
 
-// Temporary values passed between reconciler stages
+// temporary values passed between reconciler stages
 type OperatorReconcileVars struct {
 	ConfigHash string
 }
@@ -97,7 +97,7 @@ type GrafanaClient struct {
 	// +nullable
 	TimeoutSeconds *int `json:"timeout,omitempty"`
 	// +nullable
-	PreferService *bool `json:"preferService,omitempty"`
+	PreferIngress *bool `json:"preferIngress,omitempty"`
 }
 
 // GrafanaService provides a means to configure the service
@@ -668,6 +668,7 @@ type GrafanaStatus struct {
 	Stage       OperatorStageName   `json:"stage,omitempty"`
 	StageStatus OperatorStageStatus `json:"stageStatus,omitempty"`
 	LastMessage string              `json:"lastMessage,omitempty"`
+	AdminUrl    string              `json:"adminUrl,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -708,4 +709,8 @@ func (r *Grafana) UsePersistentVolume() bool {
 
 func (r *Grafana) SkipCreateServiceAccount() bool {
 	return r.Spec.ServiceAccount != nil && r.Spec.ServiceAccount.Skip != nil && *r.Spec.ServiceAccount.Skip
+}
+
+func (r *Grafana) PreferIngress() bool {
+	return r.Spec.Client != nil && r.Spec.Client.PreferIngress != nil && *r.Spec.Client.PreferIngress
 }
