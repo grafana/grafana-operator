@@ -157,8 +157,9 @@ type GrafanaDataSourceJsonData struct {
 	MaxLines      int                                  `json:"maxLines,omitempty"`
 	DerivedFields []GrafanaDataSourceJsonDerivedFields `json:"derivedFields,omitempty"`
 	// Fields for Prometheus data sources
-	CustomQueryParameters string `json:"customQueryParameters,omitempty"`
-	HTTPMethod            string `json:"httpMethod,omitempty"`
+	CustomQueryParameters       string                                             `json:"customQueryParameters,omitempty"`
+	HTTPMethod                  string                                             `json:"httpMethod,omitempty"`
+	ExemplarTraceIdDestinations []GrafanaDataSourceJsonExemplarTraceIdDestinations `json:"exemplarTraceIdDestinations,omitempty"`
 	// Fields for tracing data sources
 	TracesToLogs GrafanaDataSourceJsonTracesToLogs `json:"tracesToLogs,omitempty"`
 	ServiceMap   GrafanaDataSourceJsonServiceMap   `json:"serviceMap,omitempty"`
@@ -189,6 +190,13 @@ type GrafanaDataSourceJsonDerivedFields struct {
 	MatcherRegex  string `json:"matcherRegex,omitempty"`
 	Name          string `json:"name,omitempty"`
 	Url           string `json:"url,omitempty"`
+}
+
+type GrafanaDataSourceJsonExemplarTraceIdDestinations struct {
+	DatasourceUid   string `json:"datasourceUid,omitempty"`
+	Name            string `json:"name,omitempty"`
+	Url             string `json:"url,omitempty"`
+	UrlDisplayLabel string `json:"urlDisplayLabel,omitempty"`
 }
 
 type GrafanaDataSourceJsonTracesToLogs struct {
