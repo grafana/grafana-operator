@@ -696,6 +696,13 @@ GrafanaDataSourceJsonData contains the most common json options See https://graf
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanadatasourcespecdatasourcesindexjsondataexemplartraceiddestinationsindex">exemplarTraceIdDestinations</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>githubUrl</b></td>
         <td>string</td>
         <td>
@@ -1137,6 +1144,54 @@ GrafanaDataSourceJsonData contains the most common json options See https://graf
         <td>false</td>
       </tr><tr>
         <td><b>url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDataSource.spec.datasources[index].jsonData.exemplarTraceIdDestinations[index]
+<sup><sup>[↩ Parent](#grafanadatasourcespecdatasourcesindexjsondata)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>datasourceUid</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>urlDisplayLabel</b></td>
         <td>string</td>
         <td>
           <br/>

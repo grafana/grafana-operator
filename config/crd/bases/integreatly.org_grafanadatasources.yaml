@@ -117,6 +117,19 @@ spec:
                           type: string
                         esVersion:
                           type: string
+                        exemplarTraceIdDestinations:
+                          items:
+                            properties:
+                              datasourceUid:
+                                type: string
+                              name:
+                                type: string
+                              url:
+                                type: string
+                              urlDisplayLabel:
+                                type: string
+                            type: object
+                          type: array
                         githubUrl:
                           description: Fields for Github data sources
                           type: string
