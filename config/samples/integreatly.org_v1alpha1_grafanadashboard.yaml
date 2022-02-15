@@ -1,0 +1,7 @@
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDashboard
+metadata:
+  name: grafanadashboard-sample
+spec:
+  # Add fields here
+  foo: bar

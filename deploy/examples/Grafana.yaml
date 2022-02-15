@@ -3,12 +3,18 @@ kind: Grafana
 metadata:
   name: example-grafana
 spec:
+  client:
+    preferService: true
   ingress:
-    enabled: False
+    enabled: True
+    pathType: Prefix
+    path: "/"
   config:
     log:
       mode: "console"
-      level: "warn"
+      level: "error"
+    log.frontend:
+      enabled: true
     auth:
       disable_login_form: False
       disable_signout_menu: True
@@ -24,20 +30,12 @@ spec:
       type: "grafana-service"
   dashboardLabelSelector:
     - matchExpressions:
-        - { key: app, operator: In, values: [ grafana ] }
-  # initResources:
-  #   # Optionally specify initResources
-  #   limits:
-  #     cpu: 1000m
-  #     memory: 512Mi
-  #   requests:
-  #     cpu: 250m
-  #     memory: 128Mi
+        - { key: app, operator: In, values: [grafana] }
   resources:
     # Optionally specify container resources
     limits:
-      cpu: 2000m
-      memory: 8000Mi
+      cpu: 200m
+      memory: 200Mi
     requests:
       cpu: 100m
-      memory: 200Mi
+      memory: 100Mi

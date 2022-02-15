@@ -1,5 +1,5 @@
 
-@Library('jenkins.shared.library') _ 
+@Library('jenkins.shared.library') _
 
 pipeline {
   agent {
@@ -23,7 +23,7 @@ pipeline {
     stage("Build Image") {
       steps {
         dir("${PROJECT}") {
-          sh "make setup/travis image/build"
+          sh "make docker-build"
         }
       }
     }

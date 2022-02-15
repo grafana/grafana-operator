@@ -8,6 +8,6 @@ Grafana uses sqlite database to store user data by default, we can use `Persiste
 
 1. Make sure the operator is running, then create the Grafana:
 
-```shell script
-$ kubectl apply -f deploy/examples/persistentvolume
+```shell
+kubectl apply -f deploy/examples/persistentvolume
 ```

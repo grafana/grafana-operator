@@ -1,0 +1,17 @@
+MD013:
+  # Number of characters
+  line_length: 250
+
+# MD033/no-inline-html - Inline HTML
+# This is for ./README.md
+MD033:
+  allowed_elements:
+    - table
+    - tbody
+    - tr
+    - td
+    - div
+    - h4
+    - p
+    - a
+    - b

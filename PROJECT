@@ -1,0 +1,31 @@
+domain: integreatly.org
+layout:
+- go.kubebuilder.io/v3
+projectName: grafana-operator
+repo: github.com/integr8ly/grafana-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  group: integreatly.org
+  kind: Grafana
+  version: v1alpha1
+  controller: true
+- api:
+    crdVersion: v1
+    namespaced: true
+  group: integreatly.org
+  kind: GrafanaDashboard
+  version: v1alpha1
+  controller: true
+- api:
+    crdVersion: v1
+    namespaced: true
+  group: integreatly.org
+  kind: GrafanaDatasource
+  version: v1alpha1
+  controller: true
+version: "3"
+plugins:
+  manifests.sdk.operatorframework.io/v2: {}
+  scorecard.sdk.operatorframework.io/v2: {}

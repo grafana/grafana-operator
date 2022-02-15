@@ -1,4 +1,0 @@
-packageName: grafana-operator-dev
-channels:
-  - name: alpha
-    currentCSV: grafana-operator.v2.0.0

@@ -1,0 +1,14 @@
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDataSource
+metadata:
+  name: github-grafanadatasource
+spec:
+  name: github-grafanadatasource.yaml
+  datasources:
+    - name: GitHub
+      type: grafana-github-datasource
+      access: proxy
+      jsonData:
+        githubUrl: ""
+      secureJsonData:
+        accessToken: <github-token>

@@ -1,3 +1,4 @@
+# kind-e2e is more extended test
 name: PR
 on: pull_request
 jobs:
