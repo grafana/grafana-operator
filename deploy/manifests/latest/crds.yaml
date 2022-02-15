@@ -4981,6 +4981,8 @@ spec:
                     properties:
                       enabled:
                         type: boolean
+                      secureUrl:
+                        type: string
                       url:
                         type: string
                     required:
