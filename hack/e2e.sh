@@ -60,7 +60,7 @@ cd -
 set -ex
 
 # For loop for debugging
-for i in {1..80}; do kubectl get all -n $NAMESPACE >> $DEBUG_FILE; echo "Output: $i "$(date) >> $DEBUG_FILE; sleep 1; done &
+for i in {1..90}; do kubectl get all -n $NAMESPACE >> $DEBUG_FILE; echo "Output: $i "$(date) >> $DEBUG_FILE; sleep 1; done &
 FORPID=$!
 
 # Deploy the operator
@@ -69,7 +69,7 @@ sleep 5
 kubectl rollout status -w --timeout=120s deployment grafana-operator-controller-manager -n $NAMESPACE
 
 kubectl apply -f deploy/examples/Grafana.yaml -n $NAMESPACE
-sleep 30
+sleep 60
 # Takes some time for the operator to create the deployment
 kubectl rollout status -w --timeout=120s deployment grafana-deployment -n $NAMESPACE
 
