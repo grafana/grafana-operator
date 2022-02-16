@@ -1833,6 +1833,11 @@ spec:
                   - name
                   type: object
                 type: array
+              dashboardContentCacheDuration:
+                description: DashboardContentCacheDuration sets a default for when
+                  a `GrafanaDashboard` resource doesn't specify a `contentCacheDuration`.
+                  If left unset or 0 the default behaviour is to cache indefinitely.
+                type: string
               dashboardLabelSelector:
                 items:
                   description: A label selector is a label query over a set of resources.

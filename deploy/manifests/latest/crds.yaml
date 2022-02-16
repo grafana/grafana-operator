@@ -51,6 +51,14 @@ spec:
                 required:
                 - key
                 type: object
+              contentCacheDuration:
+                description: ContentCacheDuration sets how often the operator should
+                  resync with the external source when using the `grafanaCom.id` or
+                  `url` field to specify the source of the dashboard. The default
+                  value is decided by the `dashboardContentCacheDuration` field in
+                  the `Grafana` resource. The default is 0 which is interpreted as
+                  never refetching.
+                type: string
               customFolderName:
                 type: string
               datasources:
@@ -95,6 +103,26 @@ spec:
                 type: string
             type: object
           status:
+            properties:
+              content:
+                type: string
+              contentTimestamp:
+                format: date-time
+                type: string
+              contentUrl:
+                type: string
+              error:
+                properties:
+                  code:
+                    type: integer
+                  error:
+                    type: string
+                  retries:
+                    type: integer
+                required:
+                - code
+                - error
+                type: object
             type: object
         type: object
     served: true
@@ -2428,6 +2456,11 @@ spec:
                   - name
                   type: object
                 type: array
+              dashboardContentCacheDuration:
+                description: DashboardContentCacheDuration sets a default for when
+                  a `GrafanaDashboard` resource doesn't specify a `contentCacheDuration`.
+                  If left unset or 0 the default behaviour is to cache indefinitely.
+                type: string
               dashboardLabelSelector:
                 items:
                   description: A label selector is a label query over a set of resources.

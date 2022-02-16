@@ -16,6 +16,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/record"
@@ -286,6 +287,10 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 		cr.Status.InstalledDashboards = r.Config.GetDashboards("")
 	}
 
+	if cr.Spec.DashboardContentCacheDuration == nil {
+		cr.Spec.DashboardContentCacheDuration = &metav1.Duration{Duration: 0}
+	}
+
 	instance := &grafanav1alpha1.Grafana{}
 	err := r.Client.Get(r.Context, request.NamespacedName, instance)
 	if err != nil {
@@ -306,11 +311,12 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 
 	// Publish controller state
 	controllerState := common.ControllerState{
-		DashboardSelectors:         cr.Spec.DashboardLabelSelector,
-		DashboardNamespaceSelector: cr.Spec.DashboardNamespaceSelector,
-		AdminUrl:                   url,
-		GrafanaReady:               true,
-		ClientTimeout:              DefaultClientTimeoutSeconds,
+		DashboardSelectors:            cr.Spec.DashboardLabelSelector,
+		DashboardNamespaceSelector:    cr.Spec.DashboardNamespaceSelector,
+		DashboardContentCacheDuration: cr.Spec.DashboardContentCacheDuration,
+		AdminUrl:                      url,
+		GrafanaReady:                  true,
+		ClientTimeout:                 DefaultClientTimeoutSeconds,
 	}
 
 	if cr.Spec.Client != nil && cr.Spec.Client.TimeoutSeconds != nil {
