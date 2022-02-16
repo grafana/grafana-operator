@@ -13,12 +13,14 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/google/go-jsonnet"
 	"github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
 	"github.com/grafana-operator/grafana-operator/v4/controllers/config"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -51,6 +53,9 @@ type DashboardPipelineImpl struct {
 }
 
 func NewDashboardPipeline(client client.Client, dashboard *v1alpha1.GrafanaDashboard, ctx context.Context) DashboardPipeline {
+	if dashboard.Spec.ContentCacheDuration == nil {
+		dashboard.Spec.ContentCacheDuration = &metav1.Duration{Duration: 24 * time.Hour}
+	}
 	return &DashboardPipelineImpl{
 		Client:    client,
 		Dashboard: dashboard,
@@ -122,6 +127,11 @@ func (r *DashboardPipelineImpl) obtainJson() error {
 	// TODO(DeanBrunt): Add earlier validation for this
 	if r.Dashboard.Spec.Url != "" && r.Dashboard.Spec.GrafanaCom != nil {
 		return errors.New("both dashboard url and grafana.com source specified")
+	}
+
+	if r.Dashboard.Status.Content != "" && r.Dashboard.Status.ContentTimestamp.Add(r.Dashboard.Spec.ContentCacheDuration.Duration).After(time.Now()) {
+		r.JSON = r.Dashboard.Status.Content
+		return nil
 	}
 
 	if r.Dashboard.Spec.GrafanaCom != nil {
@@ -196,13 +206,29 @@ func (r *DashboardPipelineImpl) loadDashboardFromURL() error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("request failed with status %v", resp.StatusCode)
-	}
-
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
+	}
+	if resp.StatusCode != 200 {
+		retries := 0
+		if r.Dashboard.Status.Error != nil {
+			retries = r.Dashboard.Status.Error.Retries
+		}
+		r.Dashboard.Status = v1alpha1.GrafanaDashboardStatus{
+			Error: &v1alpha1.GrafanaDashboardError{
+				Message: string(body),
+				Code:    resp.StatusCode,
+				Retries: retries + 1,
+			},
+			ContentTimestamp: &metav1.Time{Time: time.Now()},
+		}
+
+		if err := r.Client.Status().Update(r.Context, r.Dashboard); err != nil {
+			return fmt.Errorf("failed to request dashboard and failed to update status %s: %w", string(body), err)
+		}
+
+		return fmt.Errorf("request failed with status %v", resp.StatusCode)
 	}
 	sourceType := r.getFileType(url.Path)
 
@@ -218,13 +244,14 @@ func (r *DashboardPipelineImpl) loadDashboardFromURL() error {
 		r.JSON = json
 	}
 
-	// Update dashboard spec so that URL would not be refetched
-	if r.JSON != r.Dashboard.Spec.Json {
-		r.Dashboard.Spec.Json = r.JSON
-		err := r.Client.Update(r.Context, r.Dashboard)
-		if err != nil {
-			return err
-		}
+	r.Dashboard.Status = v1alpha1.GrafanaDashboardStatus{
+		Content:          r.JSON,
+		ContentTimestamp: &metav1.Time{Time: time.Now()},
+		ContentUrl:       r.Dashboard.Spec.Url,
+	}
+
+	if err := r.Client.Status().Update(r.Context, r.Dashboard); err != nil {
+		return fmt.Errorf("failed to update status with content for dashboard %s/%s: %w", r.Dashboard.Namespace, r.Dashboard.Name, err)
 	}
 
 	return nil
@@ -246,14 +273,40 @@ func (r *DashboardPipelineImpl) loadDashboardFromGrafanaCom() error {
 	if err != nil {
 		return err
 	}
+
+	if resp.StatusCode != 200 {
+		retries := 0
+		if r.Dashboard.Status.Error != nil {
+			retries = r.Dashboard.Status.Error.Retries
+		}
+		r.Dashboard.Status = v1alpha1.GrafanaDashboardStatus{
+			Error: &v1alpha1.GrafanaDashboardError{
+				Message: string(body),
+				Code:    resp.StatusCode,
+				Retries: retries + 1,
+			},
+			ContentTimestamp: &metav1.Time{Time: time.Now()},
+		}
+
+		if err := r.Client.Status().Update(r.Context, r.Dashboard); err != nil {
+			return fmt.Errorf("failed to request dashboard and failed to update status %s: %w", string(body), err)
+		}
+
+		return fmt.Errorf("failed to request dashboard: %s", string(body))
+	}
+
 	r.JSON = string(body)
 
 	// Update JSON so dashboard is not refetched
-	if r.JSON != r.Dashboard.Spec.Json {
-		r.Dashboard.Spec.Json = r.JSON
-		if err := r.Client.Update(r.Context, r.Dashboard); err != nil {
-			return err
-		}
+
+	r.Dashboard.Status = v1alpha1.GrafanaDashboardStatus{
+		Content:          r.JSON,
+		ContentTimestamp: &metav1.Time{Time: time.Now()},
+		ContentUrl:       url,
+	}
+
+	if err := r.Client.Status().Update(r.Context, r.Dashboard); err != nil {
+		return fmt.Errorf("failed to update status with content for dashboard %s/%s: %w", r.Dashboard.Namespace, r.Dashboard.Name, err)
 	}
 
 	return nil

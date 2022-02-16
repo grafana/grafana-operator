@@ -32,15 +32,17 @@ import (
 
 // GrafanaDashboardSpec defines the desired state of GrafanaDashboard
 type GrafanaDashboardSpec struct {
-	Json             string                            `json:"json,omitempty"`
-	Jsonnet          string                            `json:"jsonnet,omitempty"`
-	Plugins          PluginList                        `json:"plugins,omitempty"`
-	Url              string                            `json:"url,omitempty"`
-	ConfigMapRef     *corev1.ConfigMapKeySelector      `json:"configMapRef,omitempty"`
-	Datasources      []GrafanaDashboardDatasource      `json:"datasources,omitempty"`
-	CustomFolderName string                            `json:"customFolderName,omitempty"`
-	GrafanaCom       *GrafanaDashboardGrafanaComSource `json:"grafanaCom,omitempty"`
+	Json                 string                            `json:"json,omitempty"`
+	Jsonnet              string                            `json:"jsonnet,omitempty"`
+	Plugins              PluginList                        `json:"plugins,omitempty"`
+	Url                  string                            `json:"url,omitempty"`
+	ConfigMapRef         *corev1.ConfigMapKeySelector      `json:"configMapRef,omitempty"`
+	Datasources          []GrafanaDashboardDatasource      `json:"datasources,omitempty"`
+	CustomFolderName     string                            `json:"customFolderName,omitempty"`
+	GrafanaCom           *GrafanaDashboardGrafanaComSource `json:"grafanaCom,omitempty"`
+	ContentCacheDuration *metav1.Duration                  `json:"contentCacheDuration,omitempty"`
 }
+
 type GrafanaDashboardDatasource struct {
 	InputName      string `json:"inputName"`
 	DatasourceName string `json:"datasourceName"`
@@ -63,7 +65,20 @@ type GrafanaDashboardRef struct {
 }
 
 type GrafanaDashboardStatus struct {
-	// Empty
+	// +optional
+	Content string `json:"content"`
+	// +optional
+	ContentTimestamp *metav1.Time `json:"contentTimestamp"`
+	// +optional
+	ContentUrl string `json:"contentUrl"`
+	// +optional
+	Error *GrafanaDashboardError `json:"error"`
+}
+
+type GrafanaDashboardError struct {
+	Code    int    `json:"code"`
+	Message string `json:"error"`
+	Retries int    `json:"retries,omitempty"`
 }
 
 // GrafanaDashboard is the Schema for the grafanadashboards API

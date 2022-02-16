@@ -21,6 +21,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"os"
 
@@ -274,6 +275,15 @@ func (r *GrafanaDashboardReconciler) reconcileDashboards(request reconcile.Reque
 		folderName := dashboard.Namespace
 		if dashboard.Spec.CustomFolderName != "" {
 			folderName = dashboard.Spec.CustomFolderName
+		}
+
+		if dashboard.Status.Error != nil && dashboard.Status.Error.Code == 429 {
+			backoffDuration := 30 * time.Second * time.Duration(math.Pow(2, float64(dashboard.Status.Error.Retries)))
+
+			if dashboard.Status.ContentTimestamp.Add(backoffDuration).After(time.Now()) {
+				log.Log.Info("still awaiting rate limit for dashboard", "folder", folderName, "dashboard", request.Name)
+				continue
+			}
 		}
 
 		folder, err := grafanaClient.CreateOrUpdateFolder(folderName)
