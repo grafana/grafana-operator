@@ -325,10 +325,7 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 		controllerState.ClientTimeout = seconds
 	}
 
-	// send 3 event to
-	for i := 0; i < 3; i++ {
-		common.ControllerEvents <- controllerState
-	}
+	common.ControllerEvents <- controllerState
 
 	log.V(1).Info("desired cluster state met")
 

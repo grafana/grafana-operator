@@ -66,19 +66,11 @@ func (r *GrafanaClientImpl) DeleteDataSourceByName(dsName string) (DataSourceDel
 	}
 
 	setHeaders(req)
-
 	resp, err := r.client.Do(req)
 	if err != nil {
 		return response, err
 	}
 	defer resp.Body.Close()
-
-	// Skip 404 not found because data source can be deleted via UI
-	if resp.StatusCode != 200 && resp.StatusCode != 404 {
-		return response, fmt.Errorf(
-			"error deleting datasource, expected status 200 or 404 but got %v",
-			resp.StatusCode)
-	}
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -86,6 +78,13 @@ func (r *GrafanaClientImpl) DeleteDataSourceByName(dsName string) (DataSourceDel
 	}
 
 	err = json.Unmarshal(data, &response)
+
+	// Skip 404 not found because data source can be deleted via UI,
+	if resp.StatusCode != 200 && resp.StatusCode != 404 {
+		return response, fmt.Errorf(
+			"error deleting datasource, expected status 200 or 404 but got %v",
+			resp.StatusCode)
+	}
 
 	return response, err
 }
