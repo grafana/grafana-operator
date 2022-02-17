@@ -96,13 +96,13 @@ jobs:
         shell: bash
         run: |
           make test
-#      - name: Check if working tree is dirty
-#        run: |
-#          if [[ $(git status --porcelain) ]]; then
-#            git diff
-#            echo 'run make test and commit changes'
-#            exit 1
-#          fi
+      - name: Check if working tree is dirty
+        run: |
+          if [[ $(git status --porcelain) ]]; then
+            git diff
+            echo 'run make test and commit changes'
+            exit 1
+          fi
 
   build:
     name: github super-linter
