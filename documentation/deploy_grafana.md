@@ -90,6 +90,15 @@ The operator accepts a number of flags that can be passed in the `args` section 
 
 See `deploy/operator.yaml` for an example.
 
+The Grafana image URL and tag, and Grafana Plugins Init container image and tag can also be overridden using environment
+variables - to support deployment through OLM:
+
+* `GRAFANA_IMAGE_URL`: overrides the Grafana tag. See `controller_config.go` for default.
+* `GRAFANA_IMAGE_TAG`: overrides the Grafana tag. See `controller_config.go` for default.
+* `GRAFANA_PLUGINS_INIT_CONTAINER_IMAGE_URL`: overrides the Grafana Plugins Init Container image, defaults
+  to `quay.io/integreatly/grafana_plugins_init`.
+* `GRAFANA_PLUGINS_INIT_CONTAINER_IMAGE_TAG`: overrides the Grafana Plugins Init Container tag, defaults to `0.0.3`.
+
 ## Deploying Grafana
 
 Create a custom resource of type `Grafana`, or use the one in `deploy/examples/Grafana.yaml`.
