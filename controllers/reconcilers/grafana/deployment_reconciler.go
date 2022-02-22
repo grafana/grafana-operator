@@ -45,7 +45,7 @@ func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafan
 	deployment := model.GetGrafanaDeployment(cr, scheme)
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, deployment, func() error {
 		deployment.Labels = getDeploymentLabels(cr)
-		deployment.Spec = getDeploymentSpec(cr, deployment.Annotations, deployment.Name, scheme)
+		deployment.Spec = getDeploymentSpec(cr, deployment.Annotations, deployment.Name, scheme, vars)
 		return nil
 	})
 
@@ -360,7 +360,7 @@ func getVolumeMounts(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.VolumeMou
 	return mounts
 }
 
-func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.Container { // nolint
+func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.OperatorReconcileVars) []v1.Container { // nolint
 	var containers []v1.Container // nolint
 	var image string
 
@@ -369,6 +369,30 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.Container {
 	} else {
 		image = fmt.Sprintf("%s:%s", config2.GrafanaImage, config2.GrafanaVersion)
 	}
+
+	plugins := model.GetPluginsConfigMap(cr, scheme)
+
+	// env var to restart containers if plugins change
+	var t bool = true
+	var envVars []v1.EnvVar
+	envVars = append(envVars, v1.EnvVar{
+		Name: "PLUGINS_HASH",
+		ValueFrom: &v1.EnvVarSource{
+			ConfigMapKeyRef: &v1.ConfigMapKeySelector{
+				LocalObjectReference: v1.LocalObjectReference{
+					Name: plugins.Name,
+				},
+				Key:      PLUGINS_HASH_KEY,
+				Optional: &t,
+			},
+		},
+	})
+
+	// env var to restart container if config changes
+	envVars = append(envVars, v1.EnvVar{
+		Name:  "CONFIG_HASH",
+		Value: vars.ConfigHash,
+	})
 
 	containers = append(containers, v1.Container{
 		Name:       "grafana",
@@ -429,7 +453,7 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.Container {
 	return containers
 }
 
-func getDeploymentSpec(cr *v1beta1.Grafana, annotations map[string]string, deploymentName string, scheme *runtime.Scheme) v12.DeploymentSpec {
+func getDeploymentSpec(cr *v1beta1.Grafana, annotations map[string]string, deploymentName string, scheme *runtime.Scheme, vars *v1beta1.OperatorReconcileVars) v12.DeploymentSpec {
 	sa := model.GetGrafanaServiceAccount(cr, scheme)
 
 	return v12.DeploymentSpec{
@@ -451,7 +475,7 @@ func getDeploymentSpec(cr *v1beta1.Grafana, annotations map[string]string, deplo
 				Affinity:                      getAffinities(cr),
 				SecurityContext:               getSecurityContext(cr),
 				Volumes:                       getVolumes(cr, scheme),
-				Containers:                    getContainers(cr, scheme),
+				Containers:                    getContainers(cr, scheme, vars),
 				ServiceAccountName:            sa.Name,
 				TerminationGracePeriodSeconds: getTerminationGracePeriod(cr),
 				PriorityClassName:             getPodPriorityClassName(cr),

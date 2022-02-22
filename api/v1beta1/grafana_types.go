@@ -47,7 +47,11 @@ const (
 
 // temporary values passed between reconciler stages
 type OperatorReconcileVars struct {
+	// used to restart the Grafana container when the config changes
 	ConfigHash string
+
+	// env var value for installed plugins
+	PluginsHash string
 }
 
 // GrafanaSpec defines the desired state of Grafana
