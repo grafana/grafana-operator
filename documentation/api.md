@@ -11701,6 +11701,13 @@ GrafanaHttpProxy provides a means to configure the Grafana deployment to use an 
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>secureUrl</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>url</b></td>
         <td>string</td>
         <td>
