@@ -552,6 +552,12 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 			Name:  "HTTP_PROXY",
 			Value: cr.Spec.Deployment.HttpProxy.URL,
 		})
+		if cr.Spec.Deployment.HttpProxy.SecureURL != "" {
+			envVars = append(envVars, v13.EnvVar{
+				Name:  "HTTPS_PROXY",
+				Value: cr.Spec.Deployment.HttpProxy.SecureURL,
+			})
+		}
 	}
 
 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Env != nil {
@@ -642,6 +648,12 @@ func getInitContainers(cr *v1alpha1.Grafana, plugins string) []v13.Container {
 			Name:  "HTTP_PROXY",
 			Value: cr.Spec.Deployment.HttpProxy.URL,
 		})
+		if cr.Spec.Deployment.HttpProxy.SecureURL != "" {
+			envVars = append(envVars, v13.EnvVar{
+				Name:  "HTTPS_PROXY",
+				Value: cr.Spec.Deployment.HttpProxy.SecureURL,
+			})
+		}
 	}
 
 	var volumeName = constants.GrafanaPluginsVolumeName

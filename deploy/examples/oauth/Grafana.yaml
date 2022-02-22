@@ -7,13 +7,24 @@ spec:
     log:
       mode: "console"
       level: "warn"
+    security:
+      admin_user: "admin"
+      admin_password: "admin"
+    auth.anonymous:
+      enabled: True
     auth:
       disable_login_form: False
       disable_signout_menu: True
     auth.basic:
       enabled: True
-    auth.anonymous:
+    auth.proxy:
       enabled: True
+      enable_login_token: True
+      header_property: username
+      header_name: X-Forwarded-User
+  dashboardLabelSelector:
+    - matchExpressions:
+        - {key: app, operator: In, values: ["<label_to_search>"]}
   containers:
     - args:
         - '-provider=openshift'
@@ -22,8 +33,8 @@ spec:
         - '-http-address='
         - '-email-domain=*'
         - '-upstream=http://localhost:3000'
-        - '-openshift-sar={"resource": "namespaces", "verb": "get","namespace":"example"}'
-        - '-openshift-delegate-urls={"/": {"resource": "namespaces", "verb": "get", "namespace":"example"}}'
+        - '-openshift-sar={"resource": "namespaces", "verb": "get"}'
+        - '-openshift-delegate-urls={"/": {"resource": "namespaces", "verb": "get"}}'
         - '-tls-cert=/etc/tls/private/tls.crt'
         - '-tls-key=/etc/tls/private/tls.key'
         - '-client-secret-file=/var/run/secrets/kubernetes.io/serviceaccount/token'
@@ -33,41 +44,47 @@ spec:
         - '-openshift-ca=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
         - '-openshift-ca=/etc/grafana-configmaps/ocp-injected-certs/ca-bundle.crt'
         - '-skip-auth-regex=^/metrics'
-      image: 'quay.io/openshift/origin-oauth-proxy:4.2'
+      image: 'quay.io/openshift/origin-oauth-proxy'
       name: grafana-proxy
       ports:
         - containerPort: 9091
-          name: grafana-proxy
+          name: https
       resources: {}
       volumeMounts:
         - mountPath: /etc/tls/private
-          name: secret-grafana-k8s-tls
+          name: secret-grafana-tls
           readOnly: false
         - mountPath: /etc/proxy/secrets
-          name: secret-grafana-k8s-proxy
+          name: secret-grafana-proxy
           readOnly: false
   secrets:
-    - grafana-k8s-tls
-    - grafana-k8s-proxy
+    - grafana-tls
+    - grafana-proxy
   configMaps:
     - ocp-injected-certs
   service:
     ports:
-      - name: grafana-proxy
+      - name: https
         port: 9091
         protocol: TCP
-        targetPort: grafana-proxy
+        targetPort: https
     annotations:
-      service.alpha.openshift.io/serving-cert-secret-name: grafana-k8s-tls
+      service.beta.openshift.io/serving-cert-secret-name: grafana-tls
   ingress:
     enabled: True
-    targetPort: grafana-proxy
+    targetPort: https
     termination: reencrypt
+    annotations:
+      service.beta.openshift.io/serving-cert-secret-name: grafana-tls
   client:
     preferService: True
   serviceAccount:
     annotations:
-      serviceaccounts.openshift.io/oauth-redirectreference.primary: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"grafana-route"}}'
-  dashboardLabelSelector:
-    - matchExpressions:
-        - { key: "app", operator: In, values: ['grafana'] }
+      serviceaccounts.openshift.io/oauth-redirectreference.primary: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"grafana-access"}}'
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 8000Mi
+    requests:
+      cpu: 100m
+      memory: 200Mi
