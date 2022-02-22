@@ -148,6 +148,20 @@ func main() { // nolint
 	controllerConfig.AddConfigItem(grafanaconfig.ConfigDashboardLabelSelector, "")
 	controllerConfig.AddConfigItem(grafanaconfig.ConfigJsonnetBasePath, flagJsonnetLocation)
 
+	// Check config is given through env variables - to support OLM installations
+	if flagImage == "" {
+		controllerConfig.AddConfigItem(grafanaconfig.ConfigGrafanaImage, os.Getenv("GRAFANA_IMAGE_URL"))
+	}
+	if flagImageTag == "" {
+		controllerConfig.AddConfigItem(grafanaconfig.ConfigGrafanaImageTag, os.Getenv("GRAFANA_IMAGE_TAG"))
+	}
+	if flagPluginsInitContainerImage == "" {
+		controllerConfig.AddConfigItem(grafanaconfig.ConfigPluginsInitContainerImage, os.Getenv("GRAFANA_PLUGINS_INIT_CONTAINER_IMAGE_URL"))
+	}
+	if flagPluginsInitContainerTag == "" {
+		controllerConfig.AddConfigItem(grafanaconfig.ConfigPluginsInitContainerTag, os.Getenv("GRAFANA_PLUGINS_INIT_CONTAINER_IMAGE_TAG"))
+	}
+
 	// Get the namespaces to scan for dashboards
 	// It's either the same namespace as the controller's or it's all namespaces if the
 	// --scan-all flag has been passed
