@@ -27,7 +27,7 @@ if [[ $? != 0 ]]; then
 fi
 
 # Prepare for kind e2e test
-cd $INSTALL_PATH && kustomize edit set image controller=$IMG
+cd $INSTALL_PATH && kustomize edit set image quay.io/grafana-operator/grafana-operator=$IMG
 cd -
 
 set +ex
@@ -37,17 +37,25 @@ cat $INSTALL_PATH/kustomization.yaml |grep "/spec/template/spec/containers/1/ima
 if [[ $? != 0 ]]; then
 cat <<EOF >> $INSTALL_PATH/kustomization.yaml
 
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
 patchesJson6902:
   - target:
       version: v1
       kind: Deployment
-      name: controller-manager
+      name: grafana-operator-controller-manager
     patch: |-
       - op: add
         path: /spec/template/spec/containers/1/imagePullPolicy
         value: Never
+
 EOF
+sleep 2
 fi
+
+cd $INSTALL_PATH && kustomize build .
+cd -
 
 set -ex
 
@@ -56,7 +64,7 @@ for i in {1..80}; do kubectl get all -n $NAMESPACE >> $DEBUG_FILE; echo "Output:
 FORPID=$!
 
 # Deploy the operator
-kubectl apply -k config/default
+kubectl apply -k $INSTALL_PATH/
 sleep 5
 kubectl rollout status -w --timeout=60s deployment grafana-operator-controller-manager -n $NAMESPACE
 

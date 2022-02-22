@@ -73,22 +73,6 @@ spec:
                         nullable: true
                         type: integer
                     type: object
-                  unified_alerting:
-                    properties:
-                      enabled:
-                        nullable: true
-                        type: boolean
-                      execute_alerts:
-                        nullable: true
-                        type: boolean
-                      evaluation_timeout:
-                        type: string
-                      max_attempts:
-                        nullable: true
-                        type: integer
-                      min_interval:
-                        type: string
-                    type: object
                   analytics:
                     properties:
                       check_for_updates:
@@ -715,6 +699,20 @@ spec:
                       snapshot_remove_expired:
                         nullable: true
                         type: boolean
+                    type: object
+                  unified_alerting:
+                    properties:
+                      enabled:
+                        nullable: true
+                        type: boolean
+                      evaluation_timeout:
+                        type: string
+                      execute_alerts:
+                        type: boolean
+                      max_attempts:
+                        type: integer
+                      min_interval:
+                        type: string
                     type: object
                   users:
                     properties:
@@ -4793,6 +4791,10 @@ spec:
                   periodSeconds:
                     format: int32
                     type: integer
+                  scheme:
+                    description: URIScheme identifies the scheme used for connection
+                      to a host for Get actions
+                    type: string
                   successThreshold:
                     format: int32
                     type: integer
@@ -4811,6 +4813,10 @@ spec:
                   periodSeconds:
                     format: int32
                     type: integer
+                  scheme:
+                    description: URIScheme identifies the scheme used for connection
+                      to a host for Get actions
+                    type: string
                   successThreshold:
                     format: int32
                     type: integer

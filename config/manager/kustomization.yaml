@@ -13,10 +13,10 @@ kind: Kustomization
 images:
 - name: controller
   newName: quay.io/grafana-operator/grafana-operator
-  newTag: v4.0.2
+  newTag: v4.1.1
 
-patchesStrategicMerge:
 # Protect the /metrics endpoint by putting it behind auth.
 # If you want your controller-manager to expose the /metrics
 # endpoint w/o any authn/z, please comment the following line.
+patchesStrategicMerge:
 - manager_auth_proxy_patch.yaml

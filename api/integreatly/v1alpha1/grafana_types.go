@@ -123,8 +123,9 @@ type GrafanaDeployment struct {
 // GrafanaHttpProxy provides a means to configure the Grafana deployment
 // to use an HTTP(S) proxy when making requests and resolving plugins.
 type GrafanaHttpProxy struct {
-	Enabled bool   `json:"enabled"`
-	URL     string `json:"url,omitempty"`
+	Enabled   bool   `json:"enabled"`
+	URL       string `json:"url,omitempty"`
+	SecureURL string `json:"secureUrl,omitempty"`
 }
 
 // GrafanaIngress provides a means to configure the ingress created

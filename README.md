@@ -118,7 +118,7 @@ Represents a Grafana datasource. See [the documentation](./documentation/datasou
 
 Represents a Grafana notifier. See [the documentation](./documentation/notifiers.md) for a description of properties supported in the spec.
 
-## Developement and Local Deployment
+## Development and Local Deployment
 
 ### Using the Makefile
 

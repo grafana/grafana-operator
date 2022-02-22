@@ -674,7 +674,7 @@ func (i *GrafanaIni) cfgUnifiedAlerting(config map[string][]string) map[string][
 	items = appendBool(items, "enabled", i.cfg.UnifiedAlerting.Enabled)
 	items = appendBool(items, "execute_alerts", i.cfg.UnifiedAlerting.ExecuteAlerts)
 	items = appendStr(items, "evaluation_timeout", i.cfg.UnifiedAlerting.EvaluationTimeout)
-	items = appendInt(items, "max_attempts", i.cfg.Alerting.MaxAttempts)
+	items = appendInt(items, "max_attempts", i.cfg.UnifiedAlerting.MaxAttempts)
 	items = appendStr(items, "min_interval", i.cfg.UnifiedAlerting.MinInterval)
 	config["unified_alerting"] = items
 

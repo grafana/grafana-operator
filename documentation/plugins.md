@@ -20,7 +20,7 @@ spec:
   ...
   deployment:
     envFrom:
-        - secretRef:
+      - secretRef:
           name: grafana-env
 
 ```
@@ -36,3 +36,19 @@ stringData:
 ```
 
 If the plugin doesn't install, try restarting the grafana deployment.
+
+## Install plugins through a HTTP(S) Proxy
+
+To install plugins through a HTTP(S) Proxy, you will have to define the `spec.deployment.HttpProxy` section of the Grafana CR. EG:
+
+If you need to use HTTPS, please add your HTTPS proxy URL to the `secureURL` section.
+
+```yaml
+spec:
+  ...
+  deployment:
+    HttpProxy:
+      enabled: true
+      url: <your proxy URL here>
+      secureURL: <your HTTPS proxy URL here>
+```
