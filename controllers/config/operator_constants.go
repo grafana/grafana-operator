@@ -11,10 +11,11 @@ const (
 	GrafanaPluginsPath      = "/var/lib/grafana/plugins"
 	GrafanaProvisioningPath = "/etc/grafana/provisioning/"
 
-	// Admin user
+	// Grafana env vars and admin user
 	DefaultAdminUser           = "admin"
 	GrafanaAdminUserEnvVar     = "GF_SECURITY_ADMIN_USER"
 	GrafanaAdminPasswordEnvVar = "GF_SECURITY_ADMIN_PASSWORD" // #nosec G101
+	GrafanaPluginsEnvVar       = "GF_INSTALL_PLUGINS"
 
 	// Networking
 	GrafanaHttpPort     int = 3000
