@@ -155,19 +155,6 @@ func getDeploymentLabels(cr *v1beta1.Grafana) map[string]string {
 	return labels
 }
 
-func getPodAnnotations(cr *v1beta1.Grafana, existing map[string]string) map[string]string {
-	var annotations = map[string]string{}
-	// Add fixed annotations
-	annotations["prometheus.io/scrape"] = "true"
-	annotations["prometheus.io/port"] = fmt.Sprintf("%v", GetGrafanaPort(cr))
-	annotations = model.MergeAnnotations(annotations, existing)
-
-	if cr.Spec.Deployment != nil {
-		annotations = model.MergeAnnotations(cr.Spec.Deployment.Annotations, annotations)
-	}
-	return annotations
-}
-
 func getPodLabels(cr *v1beta1.Grafana) map[string]string {
 	var labels = map[string]string{}
 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Labels != nil {
@@ -288,37 +275,6 @@ func getEnvFrom(cr *v1beta1.Grafana) []v1.EnvFromSource {
 		}
 	}
 	return envFrom
-}
-
-// Don't add grafana specific volume mounts to extra containers and preserve
-// pre existing ones
-func getExtraContainerVolumeMounts(cr *v1beta1.Grafana, mounts []v1.VolumeMount) []v1.VolumeMount {
-	appendIfEmpty := func(mounts []v1.VolumeMount, mount v1.VolumeMount) []v1.VolumeMount {
-		for _, existing := range mounts {
-			if existing.Name == mount.Name || existing.MountPath == mount.MountPath {
-				return mounts
-			}
-		}
-		return append(mounts, mount)
-	}
-
-	for _, secret := range cr.Spec.Secrets {
-		mountName := fmt.Sprintf("secret-%s", secret)
-		mounts = appendIfEmpty(mounts, v1.VolumeMount{
-			Name:      mountName,
-			MountPath: config2.SecretsMountDir + secret,
-		})
-	}
-
-	for _, configmap := range cr.Spec.ConfigMaps {
-		mountName := fmt.Sprintf("configmap-%s", configmap)
-		mounts = appendIfEmpty(mounts, v1.VolumeMount{
-			Name:      mountName,
-			MountPath: config2.ConfigMapsMountDir + configmap,
-		})
-	}
-
-	return mounts
 }
 
 func getVolumeMounts(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.VolumeMount {
@@ -444,12 +400,6 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 		}
 	}
 
-	// Add extra containers
-	for _, container := range cr.Spec.Containers {
-		container.VolumeMounts = getExtraContainerVolumeMounts(cr, container.VolumeMounts)
-		containers = append(containers, container)
-	}
-
 	return containers
 }
 
@@ -465,9 +415,8 @@ func getDeploymentSpec(cr *v1beta1.Grafana, annotations map[string]string, deplo
 		},
 		Template: v1.PodTemplateSpec{
 			ObjectMeta: v13.ObjectMeta{
-				Name:        deploymentName,
-				Labels:      getPodLabels(cr),
-				Annotations: getPodAnnotations(cr, annotations),
+				Name:   deploymentName,
+				Labels: getPodLabels(cr),
 			},
 			Spec: v1.PodSpec{
 				NodeSelector:                  getNodeSelectors(cr),

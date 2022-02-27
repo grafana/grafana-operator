@@ -23,6 +23,7 @@ import (
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/reconcilers/grafana"
 	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/client-go/discovery"
 	"reflect"
 	"time"
 
@@ -42,8 +43,9 @@ const (
 // GrafanaReconciler reconciles a Grafana object
 type GrafanaReconciler struct {
 	client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
+	Log       logr.Logger
+	Scheme    *runtime.Scheme
+	Discovery discovery.DiscoveryInterface
 }
 
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanas,verbs=get;list;watch;create;update;patch;delete
@@ -158,7 +160,7 @@ func (r *GrafanaReconciler) getReconcilerForStage(stage grafanav1beta1.OperatorS
 	case grafanav1beta1.OperatorStageService:
 		return grafana.NewServiceReconciler(r.Client)
 	case grafanav1beta1.OperatorStageIngress:
-		return grafana.NewIngressReconciler(r.Client)
+		return grafana.NewIngressReconciler(r.Client, r.Discovery)
 	case grafanav1beta1.OperatorStagePlugins:
 		return grafana.NewPluginsReconciler(r.Client)
 	case grafanav1beta1.OperatorStageDeployment:

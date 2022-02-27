@@ -37,7 +37,7 @@ spec:
             description: GrafanaDashboardSpec defines the desired state of GrafanaDashboard
             properties:
               instanceSelector:
-                description: Selects Grafanas for import
+                description: selects Grafanas for import
                 properties:
                   matchExpressions:
                     description: matchExpressions is a list of label selector requirements.
@@ -81,8 +81,21 @@ spec:
                     type: object
                 type: object
               json:
-                description: Dashboard json
+                description: dashboard json
                 type: string
+              plugins:
+                description: plugins
+                items:
+                  properties:
+                    name:
+                      type: string
+                    version:
+                      type: string
+                  required:
+                  - name
+                  - version
+                  type: object
+                type: array
             type: object
           status:
             description: GrafanaDashboardStatus defines the observed state of GrafanaDashboard

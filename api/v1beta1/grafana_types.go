@@ -131,8 +131,7 @@ type GrafanaServiceAccount struct {
 
 // GrafanaDeployment provides a means to configure the deployment
 type GrafanaDeployment struct {
-	Annotations map[string]string `json:"annotations,omitempty"`
-	Labels      map[string]string `json:"labels,omitempty"`
+	Labels map[string]string `json:"labels,omitempty"`
 	// +nullable
 	Replicas                      *int32                 `json:"replicas,omitempty"`
 	NodeSelector                  map[string]string      `json:"nodeSelector,omitempty"`

@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	discovery2 "k8s.io/client-go/discovery"
 	"os"
 
 	routev1 "github.com/openshift/api/route/v1"
@@ -83,8 +84,9 @@ func main() {
 	}
 
 	if err = (&controllers.GrafanaReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:    mgr.GetClient(),
+		Scheme:    mgr.GetScheme(),
+		Discovery: discovery2.NewDiscoveryClientForConfigOrDie(ctrl.GetConfigOrDie()),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Grafana")
 		os.Exit(1)
