@@ -6,30 +6,44 @@ import (
 	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/model"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/reconcilers"
+	routev1 "github.com/openshift/api/route/v1"
 	v1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+const (
+	RouteKind = "Route"
+)
+
 type IngressReconciler struct {
-	client client.Client
+	client    client.Client
+	discovery discovery.DiscoveryInterface
 }
 
-func NewIngressReconciler(client client.Client) reconcilers.OperatorGrafanaReconciler {
+func NewIngressReconciler(client client.Client, discovery discovery.DiscoveryInterface) reconcilers.OperatorGrafanaReconciler {
 	return &IngressReconciler{
-		client: client,
+		client:    client,
+		discovery: discovery,
 	}
 }
 
 func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
 	logger := log.FromContext(ctx)
 
-	if r.isOpenShift() {
+	openshift, err := r.isOpenShift()
+	if err != nil {
+		logger.Error(err, "error determining platform")
+		return v1beta1.OperatorStageResultFailed, err
+	}
+
+	if openshift {
 		logger.Info("platform is OpenShift, creating Route")
-		return r.reconcileRoute()
+		return r.reconcileRoute(ctx, cr, status, vars, scheme)
 	} else {
 		logger.Info("platform is Kubernetes, creating Ingress")
 		return r.reconcileIngress(ctx, cr, status, vars, scheme)
@@ -41,6 +55,8 @@ func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Gr
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, ingress, func() error {
 		ingress.Spec = getIngressSpec(cr, scheme)
+		ingress.Annotations = GetIngressAnnotations(cr, ingress.Annotations)
+		ingress.Labels = GetIngressLabels(cr)
 		return nil
 	})
 
@@ -68,12 +84,36 @@ func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Gr
 	return v1beta1.OperatorStageResultSuccess, nil
 }
 
-func (r *IngressReconciler) reconcileRoute() (v1beta1.OperatorStageStatus, error) {
+func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+	route := model.GetGrafanaRoute(cr, scheme)
+
+	_, err := controllerutil.CreateOrUpdate(ctx, r.client, route, func() error {
+		route.Spec = getRouteSpec(cr, scheme)
+		route.Annotations = GetIngressAnnotations(cr, route.Annotations)
+		route.Labels = GetIngressLabels(cr)
+		return nil
+	})
+
+	if err != nil {
+		return v1beta1.OperatorStageResultFailed, err
+	}
+
 	return v1beta1.OperatorStageResultSuccess, nil
 }
 
-func (r *IngressReconciler) isOpenShift() bool {
-	return false
+func (r *IngressReconciler) isOpenShift() (bool, error) {
+	apiGroupVersion := routev1.SchemeGroupVersion.String()
+
+	apiList, err := r.discovery.ServerResourcesForGroupVersion(apiGroupVersion)
+	if err != nil {
+		return false, err
+	}
+	for _, r := range apiList.APIResources {
+		if r.Kind == RouteKind {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func getIngressTLS(cr *v1beta1.Grafana) []v1.IngressTLS {
@@ -90,6 +130,34 @@ func getIngressTLS(cr *v1beta1.Grafana) []v1.IngressTLS {
 		}
 	}
 	return nil
+}
+
+func getTermination(cr *v1beta1.Grafana) routev1.TLSTerminationType {
+	if cr.Spec.Ingress == nil {
+		return routev1.TLSTerminationEdge
+	}
+
+	switch cr.Spec.Ingress.Termination {
+	case routev1.TLSTerminationEdge:
+		return routev1.TLSTerminationEdge
+	case routev1.TLSTerminationReencrypt:
+		return routev1.TLSTerminationReencrypt
+	case routev1.TLSTerminationPassthrough:
+		return routev1.TLSTerminationPassthrough
+	default:
+		return routev1.TLSTerminationEdge
+	}
+}
+
+func getRouteTLS(cr *v1beta1.Grafana) *routev1.TLSConfig {
+	return &routev1.TLSConfig{
+		Termination:                   getTermination(cr),
+		Certificate:                   "",
+		Key:                           "",
+		CACertificate:                 "",
+		DestinationCACertificate:      "",
+		InsecureEdgeTerminationPolicy: "",
+	}
 }
 
 func GetIngressPathType(cr *v1beta1.Grafana) *v1.PathType {
@@ -150,6 +218,27 @@ func GetPath(cr *v1beta1.Grafana) string {
 	}
 
 	return cr.Spec.Ingress.Path
+}
+
+func getRouteSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) routev1.RouteSpec {
+	service := model.GetGrafanaService(cr, scheme)
+
+	port := GetIngressTargetPort(cr)
+
+	return routev1.RouteSpec{
+		Host: GetHost(cr),
+		Path: GetPath(cr),
+		To: routev1.RouteTargetReference{
+			Kind: "Service",
+			Name: service.Name,
+		},
+		AlternateBackends: nil,
+		Port: &routev1.RoutePort{
+			TargetPort: port,
+		},
+		TLS:            getRouteTLS(cr),
+		WildcardPolicy: "None",
+	}
 }
 
 func getIngressSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) v1.IngressSpec {
@@ -215,4 +304,18 @@ func getIngressSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) v1.IngressSpec 
 			},
 		},
 	}
+}
+
+func GetIngressLabels(cr *v1beta1.Grafana) map[string]string {
+	if cr.Spec.Ingress == nil {
+		return nil
+	}
+	return cr.Spec.Ingress.Labels
+}
+
+func GetIngressAnnotations(cr *v1beta1.Grafana, existing map[string]string) map[string]string {
+	if cr.Spec.Ingress == nil {
+		return existing
+	}
+	return model.MergeAnnotations(cr.Spec.Ingress.Annotations, existing)
 }

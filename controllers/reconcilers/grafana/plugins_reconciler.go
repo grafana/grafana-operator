@@ -48,7 +48,7 @@ func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 		vars.PluginsHash = ""
 
 		return v1beta1.OperatorStageResultSuccess, nil
-	} else {
+	} else if err != nil {
 		logger.Error(err, "error getting plugins config map", "name", plugins.Name, "namespace", plugins.Namespace)
 		return v1beta1.OperatorStageResultFailed, err
 	}

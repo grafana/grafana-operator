@@ -79,7 +79,14 @@ func GetGrafanaIngress(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v12.
 }
 
 func GetGrafanaRoute(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *routev1.Route {
-	return nil
+	route := &routev1.Route{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-route", cr.Name),
+			Namespace: cr.Namespace,
+		},
+	}
+	controllerutil.SetOwnerReference(cr, route, scheme)
+	return route
 }
 
 func GetGrafanaDeployment(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v13.Deployment {
