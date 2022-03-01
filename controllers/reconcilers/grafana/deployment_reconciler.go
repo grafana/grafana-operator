@@ -338,7 +338,7 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 				LocalObjectReference: v1.LocalObjectReference{
 					Name: plugins.Name,
 				},
-				Key:      PLUGINS_HASH_KEY,
+				Key:      "PLUGINS_HASH",
 				Optional: &t,
 			},
 		},
