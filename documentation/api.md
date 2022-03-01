@@ -545,7 +545,21 @@ GrafanaDataSourceJsonData contains the most common json options See https://graf
         <td><b>addCorsHeader</b></td>
         <td>boolean</td>
         <td>
-           Useful fields for clickhouse datasource  See https://github.com/Vertamedia/clickhouse-grafana/tree/master/dist/README.md#configure-the-datasource-with-provisioning  See https://github.com/Vertamedia/clickhouse-grafana/tree/master/src/datasource.ts#L44<br/>
+          Useful fields for clickhouse datasource See https://github.com/Vertamedia/clickhouse-grafana/tree/master/dist/README.md#configure-the-datasource-with-provisioning See https://github.com/Vertamedia/clickhouse-grafana/tree/master/src/datasource.ts#L44<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>allowInfraExplore</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>apiToken</b></td>
+        <td>string</td>
+        <td>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -677,6 +691,13 @@ GrafanaDataSourceJsonData contains the most common json options See https://graf
       </tr><tr>
         <td><b>esVersion</b></td>
         <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanadatasourcespecdatasourcesindexjsondataexemplartraceiddestinationsindex">exemplarTraceIdDestinations</a></b></td>
+        <td>[]object</td>
         <td>
           <br/>
         </td>
@@ -850,6 +871,13 @@ GrafanaDataSourceJsonData contains the most common json options See https://graf
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanadatasourcespecdatasourcesindexjsondatanodegraph">nodeGraph</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>oauthPassThru</b></td>
         <td>boolean</td>
         <td>
@@ -866,6 +894,27 @@ GrafanaDataSourceJsonData contains the most common json options See https://graf
       </tr><tr>
         <td><b>postgresVersion</b></td>
         <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanadatasourcespecdatasourcesindexjsondatasearch">search</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanadatasourcespecdatasourcesindexjsondataservicemap">serviceMap</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>showOffline</b></td>
+        <td>boolean</td>
         <td>
           <br/>
         </td>
@@ -1004,7 +1053,21 @@ GrafanaDataSourceJsonData contains the most common json options See https://graf
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>url</b></td>
+        <td>string</td>
+        <td>
+          Fields for Instana data sources See https://github.com/instana/instana-grafana-datasource/blob/main/provisioning/datasources/datasource.yml<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>usePOST</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>useProxy</b></td>
         <td>boolean</td>
         <td>
           <br/>
@@ -1090,6 +1153,135 @@ GrafanaDataSourceJsonData contains the most common json options See https://graf
 </table>
 
 
+### GrafanaDataSource.spec.datasources[index].jsonData.exemplarTraceIdDestinations[index]
+<sup><sup>[↩ Parent](#grafanadatasourcespecdatasourcesindexjsondata)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>datasourceUid</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>urlDisplayLabel</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDataSource.spec.datasources[index].jsonData.nodeGraph
+<sup><sup>[↩ Parent](#grafanadatasourcespecdatasourcesindexjsondata)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>enabled</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDataSource.spec.datasources[index].jsonData.search
+<sup><sup>[↩ Parent](#grafanadatasourcespecdatasourcesindexjsondata)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>hide</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDataSource.spec.datasources[index].jsonData.serviceMap
+<sup><sup>[↩ Parent](#grafanadatasourcespecdatasourcesindexjsondata)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>datasourceUid</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
 ### GrafanaDataSource.spec.datasources[index].jsonData.tracesToLogs
 <sup><sup>[↩ Parent](#grafanadatasourcespecdatasourcesindexjsondata)</sup></sup>
 
@@ -1109,6 +1301,27 @@ Fields for tracing data sources
     <tbody><tr>
         <td><b>datasourceUid</b></td>
         <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>filterBySpanID</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>filterByTraceID</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>lokiSearch</b></td>
+        <td>boolean</td>
         <td>
           <br/>
         </td>
@@ -11487,6 +11700,13 @@ GrafanaHttpProxy provides a means to configure the Grafana deployment to use an 
           <br/>
         </td>
         <td>true</td>
+      </tr><tr>
+        <td><b>secureUrl</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr><tr>
         <td><b>url</b></td>
         <td>string</td>

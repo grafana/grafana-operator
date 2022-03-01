@@ -1,0 +1,18 @@
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDataSource
+metadata:
+  name: example-instana-datasource
+spec:
+  name: example-instana
+  datasources:
+  - name: Instana
+    type: instana-datasource
+    access: direct
+    editable: false
+    url: INSTANA_UI_BACKEND_URL
+    jsonData:
+      url: INSTANA_UI_BACKEND_URL
+      apiToken: INSTANA_API_TOKEN
+      useProxy: false
+      showOffline: true
+      allowInfraExplore: true
