@@ -88,6 +88,8 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		if err != nil {
 			controllerLog.Error(err, "error reconciling plugins", "dashboard", dashboard.Name, "grafana", grafana.Name)
 		}
+
+		// TODO import dashboard to grafana
 	}
 
 	return ctrl.Result{}, nil

@@ -17,3 +17,22 @@ spec:
       mode: "console"
     auth:
       disable_login_form: False
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana-b
+  labels:
+    dashboards: b
+spec:
+  client:
+    preferIngress: true
+  ingress:
+    enabled: True
+    path: /
+    pathType: Prefix
+  config:
+    log:
+      mode: "console"
+    auth:
+      disable_login_form: False
