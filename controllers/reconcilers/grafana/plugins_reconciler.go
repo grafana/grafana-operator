@@ -2,6 +2,7 @@ package grafana
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/model"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/reconcilers"
@@ -9,10 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-)
-
-const (
-	PLUGINS_HASH_KEY = "PLUGINS_HASH"
 )
 
 type PluginsReconciler struct {
@@ -54,16 +51,50 @@ func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 	}
 
 	// plugins config map found, but may be empty
-	if plugins.Data == nil {
+	if plugins.BinaryData == nil || len(plugins.BinaryData) == 0 {
 		vars.PluginsHash = ""
 		return v1beta1.OperatorStageResultSuccess, nil
 	}
 
-	if val, ok := plugins.Data[PLUGINS_HASH_KEY]; ok {
-		vars.PluginsHash = val
-	} else {
-		vars.PluginsHash = ""
+	var consolidatedPlugins v1beta1.PluginList
+	for dashboard, plugins := range plugins.BinaryData {
+		var dashboardPlugins v1beta1.PluginList
+		err = json.Unmarshal(plugins, &dashboardPlugins)
+		if err != nil {
+			logger.Error(err, "error consolidating plugins", "dashboard", dashboard)
+			return v1beta1.OperatorStageResultFailed, err
+		}
+
+		for _, plugin := range dashboardPlugins {
+			// new plugin
+			if !consolidatedPlugins.HasSomeVersionOf(&plugin) {
+				consolidatedPlugins = append(consolidatedPlugins, plugin)
+				continue
+			}
+
+			// newer version of plugin already installed
+			hasNewer, err := consolidatedPlugins.HasNewerVersionOf(&plugin)
+			if err != nil {
+				logger.Error(err, "error checking existing plugins", "dashboard", dashboard)
+				return v1beta1.OperatorStageResultFailed, err
+			}
+
+			if hasNewer {
+				logger.Info("skipping plugin", "dashboard", dashboard, "plugin",
+					plugin.Name, "version", plugin.Version)
+				continue
+			}
+
+			// duplicate plugin
+			if consolidatedPlugins.HasExactVersionOf(&plugin) {
+				continue
+			}
+
+			// some version is installed, but it is not newer and it is not the same: must be older
+			consolidatedPlugins.Update(&plugin)
+		}
 	}
 
+	vars.PluginsHash = consolidatedPlugins.Hash()
 	return v1beta1.OperatorStageResultSuccess, nil
 }

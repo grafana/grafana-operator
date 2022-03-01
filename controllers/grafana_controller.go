@@ -22,6 +22,7 @@ import (
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/reconcilers"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/reconcilers/grafana"
 	v1 "k8s.io/api/apps/v1"
+	v12 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/discovery"
 	"reflect"
@@ -131,6 +132,7 @@ func (r *GrafanaReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&grafanav1beta1.Grafana{}).
 		Owns(&v1.Deployment{}).
+		Owns(&v12.ConfigMap{}).
 		Complete(r)
 }
 

@@ -17,7 +17,10 @@ limitations under the License.
 package controllers
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"github.com/grafana-operator/grafana-operator-experimental/controllers/model"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -80,7 +83,47 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	controllerLog.Info("found matching Grafana instances", "count", len(instances.Items))
 
+	for _, grafana := range instances.Items {
+		err = r.reconcilePlugins(ctx, &grafana, dashboard)
+		if err != nil {
+			controllerLog.Error(err, "error reconciling plugins", "dashboard", dashboard.Name, "grafana", grafana.Name)
+		}
+	}
+
 	return ctrl.Result{}, nil
+}
+
+func (r *GrafanaDashboardReconciler) reconcilePlugins(ctx context.Context, grafana *grafanav1beta1.Grafana, dashboard *grafanav1beta1.GrafanaDashboard) error {
+	if dashboard.Spec.Plugins == nil || len(dashboard.Spec.Plugins) == 0 {
+		return nil
+	}
+
+	pluginsConfigMap := model.GetPluginsConfigMap(grafana, r.Scheme)
+	selector := client.ObjectKey{
+		Namespace: pluginsConfigMap.Namespace,
+		Name:      pluginsConfigMap.Name,
+	}
+
+	err := r.Client.Get(ctx, selector, pluginsConfigMap)
+	if err != nil {
+		return err
+	}
+
+	val, err := json.Marshal(dashboard.Spec.Plugins.Sanitize())
+	if err != nil {
+		return err
+	}
+
+	if pluginsConfigMap.BinaryData == nil {
+		pluginsConfigMap.BinaryData = make(map[string][]byte)
+	}
+
+	if bytes.Compare(val, pluginsConfigMap.BinaryData[dashboard.Name]) != 0 {
+		pluginsConfigMap.BinaryData[dashboard.Name] = val
+		return r.Client.Update(ctx, pluginsConfigMap)
+	}
+
+	return nil
 }
 
 func (r *GrafanaDashboardReconciler) getMatchingInstances(ctx context.Context, labelSelector *v1.LabelSelector) (grafanav1beta1.GrafanaList, error) {

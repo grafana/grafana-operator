@@ -1,6 +1,12 @@
 package v1beta1
 
-import "github.com/blang/semver"
+import (
+	"crypto/sha256"
+	"fmt"
+	"github.com/blang/semver"
+	"io"
+	"strings"
+)
 
 type GrafanaPlugin struct {
 	Name    string `json:"name"`
@@ -8,6 +14,52 @@ type GrafanaPlugin struct {
 }
 
 type PluginList []GrafanaPlugin
+
+type PluginMap map[string]PluginList
+
+func (l PluginList) Hash() string {
+	sb := strings.Builder{}
+	for _, plugin := range l {
+		sb.WriteString(plugin.Name)
+		sb.WriteString(plugin.Version)
+	}
+	hash := sha256.New()
+	io.WriteString(hash, sb.String()) // nolint
+	return fmt.Sprintf("%x", hash.Sum(nil))
+}
+
+func (l PluginList) String() string {
+	var plugins []string
+	for _, plugin := range l {
+		plugins = append(plugins, fmt.Sprintf("%s %s", plugin.Name, plugin.Version))
+	}
+	return strings.Join(plugins, ",")
+}
+
+// Update update plugin version
+func (l PluginList) Update(plugin *GrafanaPlugin) {
+	for _, installedPlugin := range l {
+		if installedPlugin.Name == plugin.Name {
+			installedPlugin.Version = plugin.Version
+			break
+		}
+	}
+}
+
+// Sanitize remove duplicates and enforce semver
+func (l PluginList) Sanitize() PluginList {
+	var sanitized PluginList
+	for _, plugin := range l {
+		_, err := semver.Parse(plugin.Version)
+		if err != nil {
+			continue
+		}
+		if !sanitized.HasSomeVersionOf(&plugin) {
+			sanitized = append(sanitized, plugin)
+		}
+	}
+	return sanitized
+}
 
 // HasSomeVersionOf returns true if the list contains the same plugin in the exact or a different version
 func (l PluginList) HasSomeVersionOf(plugin *GrafanaPlugin) bool {

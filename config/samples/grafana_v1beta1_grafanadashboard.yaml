@@ -3,6 +3,9 @@ kind: GrafanaDashboard
 metadata:
   name: grafanadashboard-sample
 spec:
+  plugins:
+    - name: grafana-clock-panel
+      version: 1.3.0
   json: ""
   instanceSelector:
     matchLabels:
