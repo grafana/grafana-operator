@@ -137,18 +137,6 @@ func (c *ControllerConfig) InvalidateDashboards() {
 	}
 }
 
-func (c *ControllerConfig) SetDashboards(ns string, dashboards []*v1alpha1.GrafanaDashboardRef) {
-	c.Lock()
-	defer c.Unlock()
-	if ns == "" {
-		for nss := range c.Dashboards {
-			c.Dashboards[nss] = dashboards
-		}
-	} else {
-		c.Dashboards[ns] = dashboards
-	}
-}
-
 func (c *ControllerConfig) RemoveDashboard(hash string) {
 	for ns := range c.Dashboards {
 		if i, exists := c.HasDashboard(ns, hash); exists {
@@ -165,20 +153,24 @@ func (c *ControllerConfig) RemoveDashboard(hash string) {
 func (c *ControllerConfig) GetDashboards(namespace string) []*v1alpha1.GrafanaDashboardRef {
 	c.Lock()
 	defer c.Unlock()
-	// Checking for dashboards at the cluster level? across namespaces?
-	if namespace == "" {
-		var dashboards []*v1alpha1.GrafanaDashboardRef
-		for _, ds := range c.Dashboards {
-			dashboards = append(dashboards, ds...)
-		}
-
-		return dashboards
-	}
 
 	if c.Dashboards[namespace] != nil {
 		return c.Dashboards[namespace]
 	}
+
 	return []*v1alpha1.GrafanaDashboardRef{}
+}
+
+func (c *ControllerConfig) GetAllDashboards() []*v1alpha1.GrafanaDashboardRef {
+	c.Lock()
+	defer c.Unlock()
+
+	var dashboards []*v1alpha1.GrafanaDashboardRef
+	for _, ds := range c.Dashboards {
+		dashboards = append(dashboards, ds...)
+	}
+
+	return dashboards
 }
 
 func (c *ControllerConfig) AddConfigItem(key string, value interface{}) {
