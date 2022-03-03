@@ -418,6 +418,9 @@ spec:
                           type: string
                         httpHeaderValue9:
                           type: string
+                        jwt:
+                          description: Fields for Google Sheets data source
+                          type: string
                         logAnalyticsClientSecret:
                           type: string
                         password:

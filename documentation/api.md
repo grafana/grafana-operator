@@ -1418,6 +1418,13 @@ GrafanaDataSourceSecureJsonData contains the most common secure json options See
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>jwt</b></td>
+        <td>string</td>
+        <td>
+          Fields for Google Sheets data source<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>logAnalyticsClientSecret</b></td>
         <td>string</td>
         <td>

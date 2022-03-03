@@ -247,6 +247,8 @@ type GrafanaDataSourceSecureJsonData struct {
 	// Fields for AWS data sources
 	SigV4AccessKey string `json:"sigV4AccessKey,omitempty"`
 	SigV4SecretKey string `json:"sigV4SecretKey,omitempty"`
+	// Fields for Google Sheets data source
+	Jwt string `json:"jwt,omitempty"`
 }
 
 func init() {
