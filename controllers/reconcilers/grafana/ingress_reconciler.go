@@ -3,6 +3,7 @@ package grafana
 import (
 	"context"
 	"fmt"
+
 	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/model"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/reconcilers"
@@ -105,6 +106,9 @@ func (r *IngressReconciler) isOpenShift() (bool, error) {
 	apiGroupVersion := routev1.SchemeGroupVersion.String()
 
 	apiList, err := r.discovery.ServerResourcesForGroupVersion(apiGroupVersion)
+	if apiList == nil {
+		return false, nil
+	}
 	if err != nil {
 		return false, err
 	}
