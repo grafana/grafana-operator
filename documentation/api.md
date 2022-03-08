@@ -1018,6 +1018,13 @@ GrafanaDataSourceJsonData contains the most common json options See https://graf
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>timezone</b></td>
+        <td>string</td>
+        <td>
+          Extra field for MySQL data source<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>tlsAuth</b></td>
         <td>boolean</td>
         <td>
