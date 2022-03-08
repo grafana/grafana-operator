@@ -39,7 +39,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 			Selector: map[string]string{
 				"app": cr.Name,
 			},
-			ClusterIP: getClusterIP(cr),
+			ClusterIP: getClusterIP(cr, service),
 			Type:      getServiceType(cr),
 		}
 		return nil
@@ -83,7 +83,10 @@ func getServiceType(cr *v1beta1.Grafana) v1.ServiceType {
 	return cr.Spec.Service.Type
 }
 
-func getClusterIP(cr *v1beta1.Grafana) string {
+func getClusterIP(cr *v1beta1.Grafana, existing *v1.Service) string {
+	if existing.Spec.ClusterIP != "" {
+		return existing.Spec.ClusterIP
+	}
 	if cr.Spec.Service == nil {
 		return ""
 	}

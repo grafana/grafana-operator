@@ -51,7 +51,7 @@ type OperatorReconcileVars struct {
 	ConfigHash string
 
 	// env var value for installed plugins
-	PluginsHash string
+	Plugins string
 }
 
 // GrafanaSpec defines the desired state of Grafana
