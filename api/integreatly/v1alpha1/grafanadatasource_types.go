@@ -183,6 +183,10 @@ type GrafanaDataSourceJsonData struct {
 	UseProxy          bool   `json:"useProxy,omitempty"`
 	ShowOffline       bool   `json:"showOffline,omitempty"`
 	AllowInfraExplore bool   `json:"allowInfraExplore,omitempty"`
+	// Fields for Grafana Clickhouse data sources
+	Server   string `json:"server,omitempty"`
+	Port     int    `json:"port,omitempty"`
+	Username string `json:"username,omitempty"`
 }
 
 type GrafanaDataSourceJsonDerivedFields struct {
