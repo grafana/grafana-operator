@@ -300,6 +300,8 @@ spec:
                           type: boolean
                         organization:
                           type: string
+                        port:
+                          type: integer
                         postgresVersion:
                           type: integer
                         search:
@@ -307,6 +309,9 @@ spec:
                             hide:
                               type: boolean
                           type: object
+                        server:
+                          description: Fields for Grafana Clickhouse data sources
+                          type: string
                         serviceMap:
                           properties:
                             datasourceUid:
@@ -381,6 +386,8 @@ spec:
                           type: boolean
                         useYandexCloudAuthorization:
                           type: boolean
+                        username:
+                          type: string
                         version:
                           type: string
                         xHeaderKey:
