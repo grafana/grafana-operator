@@ -21,6 +21,15 @@ var (
 	ServeFromSubPath = false
 	RouterLogging    = false
 
+	// Auth
+	loginMaximumInactiveLifetimeDays = 1
+	loginMaximumLifetimeDays         = 2
+	tokenRotationIntervalMinutes     = 10
+	disableLoginForm                 = true
+	disableSignoutMenu               = true
+	sigV4AuthEnabled                 = true
+	oauthAutoLogin                   = true
+
 	// AuthAzureAd
 	azureAdEnabled = true
 	allowSignUp    = false
@@ -60,6 +69,19 @@ var testGrafanaConfig = v1alpha1.GrafanaConfig{
 		Password: "password",
 		SslMode:  "sslMode",
 	},
+	Auth: &v1alpha1.GrafanaConfigAuth{
+		LoginCookieName:                      "grafana_session",
+		LoginMaximumInactiveLifetimeDays:     &loginMaximumInactiveLifetimeDays,
+		LoginMaximumInactiveLifetimeDuration: "4h",
+		LoginMaximumLifetimeDays:             &loginMaximumLifetimeDays,
+		LoginMaximumLifetimeDuration:         "8h",
+		TokenRotationIntervalMinutes:         &tokenRotationIntervalMinutes,
+		DisableLoginForm:                     &disableLoginForm,
+		DisableSignoutMenu:                   &disableSignoutMenu,
+		SigV4AuthEnabled:                     &sigV4AuthEnabled,
+		SignoutRedirectUrl:                   "https://RedirectURL.com",
+		OauthAutoLogin:                       &oauthAutoLogin,
+	},
 	AuthAzureAD: &v1alpha1.GrafanaConfigAuthAzureAD{
 		Enabled:        &azureAdEnabled,
 		ClientId:       "Client",
@@ -87,7 +109,20 @@ var testGrafanaConfig = v1alpha1.GrafanaConfig{
 	},
 }
 
-var testIni = `[auth.azuread]
+var testIni = `[auth]
+disable_login_form = true
+disable_signout_menu = true
+login_cookie_name = grafana_session
+login_maximum_inactive_lifetime_days = 1
+login_maximum_inactive_lifetime_duration = 4h
+login_maximum_lifetime_days = 2
+login_maximum_lifetime_duration = 8h
+oauth_auto_login = true
+signout_redirect_url = https://RedirectURL.com
+sigv4_auth_enabled = true
+token_rotation_interval_minutes = 10
+
+[auth.azuread]
 allow_sign_up = false
 allowed_domains = azure.com
 auth_url = https://AuthURL.com
@@ -191,6 +226,28 @@ func TestCfgServer(t *testing.T) {
 			"cert_file = /mnt/cert.crt",
 			"cert_key = /mnt/cert.key",
 			"router_logging = false",
+		},
+	}
+	require.Equal(t, config, testConfig)
+}
+
+func TestCfgAuth(t *testing.T) {
+	i := NewGrafanaIni(&testGrafanaConfig)
+	config := map[string][]string{}
+	config = i.cfgAuth(config)
+	testConfig := map[string][]string{
+		"auth": {
+			"login_cookie_name = grafana_session",
+			"login_maximum_inactive_lifetime_days = 1",
+			"login_maximum_inactive_lifetime_duration = 4h",
+			"login_maximum_lifetime_days = 2",
+			"login_maximum_lifetime_duration = 8h",
+			"token_rotation_interval_minutes = 10",
+			"disable_login_form = true",
+			"disable_signout_menu = true",
+			"sigv4_auth_enabled = true",
+			"signout_redirect_url = https://RedirectURL.com",
+			"oauth_auto_login = true",
 		},
 	}
 	require.Equal(t, config, testConfig)
