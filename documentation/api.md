@@ -892,6 +892,13 @@ GrafanaDataSourceJsonData contains the most common json options See https://graf
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>port</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>postgresVersion</b></td>
         <td>integer</td>
         <td>
@@ -903,6 +910,13 @@ GrafanaDataSourceJsonData contains the most common json options See https://graf
         <td>object</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>server</b></td>
+        <td>string</td>
+        <td>
+          Fields for Grafana Clickhouse data sources<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1083,6 +1097,13 @@ GrafanaDataSourceJsonData contains the most common json options See https://graf
       </tr><tr>
         <td><b>useYandexCloudAuthorization</b></td>
         <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>username</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
