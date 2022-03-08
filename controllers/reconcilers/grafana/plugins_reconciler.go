@@ -41,8 +41,8 @@ func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 			return v1beta1.OperatorStageResultFailed, err
 		}
 
-		// no plugins yet, assign plugins hash to empty string
-		vars.PluginsHash = ""
+		// no plugins yet, assign plugins to empty string
+		vars.Plugins = ""
 
 		return v1beta1.OperatorStageResultSuccess, nil
 	} else if err != nil {
@@ -52,7 +52,7 @@ func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 
 	// plugins config map found, but may be empty
 	if plugins.BinaryData == nil || len(plugins.BinaryData) == 0 {
-		vars.PluginsHash = ""
+		vars.Plugins = ""
 		return v1beta1.OperatorStageResultSuccess, nil
 	}
 
@@ -95,6 +95,6 @@ func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 		}
 	}
 
-	vars.PluginsHash = consolidatedPlugins.Hash()
+	vars.Plugins = consolidatedPlugins.String()
 	return v1beta1.OperatorStageResultSuccess, nil
 }

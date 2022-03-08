@@ -350,6 +350,12 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 		Value: vars.ConfigHash,
 	})
 
+	// env var to restart container if plugins change
+	envVars = append(envVars, v1.EnvVar{
+		Name:  "GF_INSTALL_PLUGINS",
+		Value: vars.Plugins,
+	})
+
 	containers = append(containers, v1.Container{
 		Name:       "grafana",
 		Image:      image,
@@ -362,6 +368,7 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 				Protocol:      "TCP",
 			},
 		},
+		Env:                      envVars,
 		EnvFrom:                  getEnvFrom(cr),
 		Resources:                getResources(cr),
 		VolumeMounts:             getVolumeMounts(cr, scheme),
