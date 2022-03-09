@@ -3,15 +3,16 @@ package model
 import (
 	"fmt"
 
-	"github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
-	"github.com/grafana-operator/grafana-operator/v4/controllers/config"
-	"github.com/grafana-operator/grafana-operator/v4/controllers/constants"
 	v1 "k8s.io/api/apps/v1"
 	v13 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/config"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/constants"
 )
 
 const (
@@ -122,6 +123,19 @@ func getDeploymentLabels(cr *v1alpha1.Grafana) map[string]string {
 		labels = cr.Spec.Deployment.Labels
 	}
 	return labels
+}
+
+func getDeploymentAnnotations(cr *v1alpha1.Grafana, existing map[string]string) map[string]string {
+	var annotations = map[string]string{}
+	// Add fixed annotations
+	annotations["prometheus.io/scrape"] = "true"
+	annotations["prometheus.io/port"] = fmt.Sprintf("%v", GetGrafanaPort(cr))
+	annotations = MergeAnnotations(annotations, existing)
+
+	if cr.Spec.Deployment != nil {
+		annotations = MergeAnnotations(cr.Spec.Deployment.Annotations, annotations)
+	}
+	return annotations
 }
 
 func getRollingUpdateStrategy() *v1.RollingUpdateDeployment {
@@ -720,9 +734,10 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, annotations map[string]string, conf
 func GrafanaDeployment(cr *v1alpha1.Grafana, configHash, dsHash string) *v1.Deployment {
 	return &v1.Deployment{
 		ObjectMeta: v12.ObjectMeta{
-			Name:      constants.GrafanaDeploymentName,
-			Namespace: cr.Namespace,
-			Labels:    getDeploymentLabels(cr),
+			Name:        constants.GrafanaDeploymentName,
+			Namespace:   cr.Namespace,
+			Labels:      getDeploymentLabels(cr),
+			Annotations: getDeploymentAnnotations(cr, nil),
 		},
 		Spec: getDeploymentSpec(cr, nil, configHash, "", dsHash),
 	}
