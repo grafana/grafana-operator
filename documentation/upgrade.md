@@ -113,7 +113,7 @@ kubectl apply -f deploy/cluster_roles
 ### 6. Reinstall Grafana and all resources
 
 ```shell script
-kubectl apply -f -/grafana-resore
+kubectl apply -f ./grafana-restore
 ```
 
 ## Caveats
