@@ -20,9 +20,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	client2 "github.com/grafana-operator/grafana-operator-experimental/controllers/client"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/model"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -84,15 +86,42 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	controllerLog.Info("found matching Grafana instances", "count", len(instances.Items))
 
 	for _, grafana := range instances.Items {
+		// an admin url is required to interact with grafana
+		// the instance or route might not yet be ready
+		if grafana.Status.AdminUrl == "" {
+			controllerLog.Info("grafana instance not ready", "grafana", grafana.Name)
+			continue
+		}
+
+		// first reconcile the plugins
+		// append the requested dashboards to a configmap from where the
+		// grafana reconciler will pick them up
 		err = r.reconcilePlugins(ctx, &grafana, dashboard)
 		if err != nil {
 			controllerLog.Error(err, "error reconciling plugins", "dashboard", dashboard.Name, "grafana", grafana.Name)
 		}
 
-		// TODO import dashboard to grafana
+		// then import the dashboard into the matching grafana instances
+		err = r.reconcileDashboard(ctx, &grafana, dashboard)
+		if err != nil {
+			controllerLog.Error(err, "error reconciling dashboard", "dashboard", dashboard.Name, "grafana", grafana.Name)
+		}
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *GrafanaDashboardReconciler) reconcileDashboard(ctx context.Context, grafana *grafanav1beta1.Grafana, dashboard *grafanav1beta1.GrafanaDashboard) error {
+	if strings.TrimSpace(dashboard.Spec.Json) == "" {
+		return nil
+	}
+
+	_, err := client2.NewGrafanaClient(ctx, r.Client, grafana)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *GrafanaDashboardReconciler) reconcilePlugins(ctx context.Context, grafana *grafanav1beta1.Grafana, dashboard *grafanav1beta1.GrafanaDashboard) error {
