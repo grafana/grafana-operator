@@ -183,6 +183,8 @@ type GrafanaDataSourceJsonData struct {
 	UseProxy          bool   `json:"useProxy,omitempty"`
 	ShowOffline       bool   `json:"showOffline,omitempty"`
 	AllowInfraExplore bool   `json:"allowInfraExplore,omitempty"`
+	// Extra field for MySQL data source
+	Timezone string `json:"timezone,omitempty"`
 	// Fields for Grafana Clickhouse data sources
 	Server   string `json:"server,omitempty"`
 	Port     int    `json:"port,omitempty"`

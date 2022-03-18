@@ -236,6 +236,9 @@ spec:
                           type: string
                         timescaledb:
                           type: boolean
+                        timezone:
+                          description: Extra field for MySQL data source
+                          type: string
                         tlsAuth:
                           type: boolean
                         tlsAuthWithCACert:
