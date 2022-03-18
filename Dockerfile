@@ -7,6 +7,8 @@ FROM --platform=${BUILDPLATFORM} ${BUILDER_IMAGE:-golang:1.16} as builder
 
 ARG TARGETARCH
 ARG TARGETOS
+ARG GOPROXY
+ARG GOPRIVATE
 
 WORKDIR /workspace
 # Copy the Go Modules manifests
@@ -14,7 +16,9 @@ COPY go.mod ./
 COPY go.sum ./
 # cache deps before building and copying source so that we don't need to re-download as much
 # and so that source changes don't invalidate our downloaded layer
-RUN go mod download
+RUN GOPROXY=${GOPROXY:-} \
+    GOPRIVATE=${GOPRIVATE:-} \
+    go mod download
 
 # Copy the go source
 COPY main.go ./main.go
@@ -24,7 +28,12 @@ COPY internal/ internal/
 COPY version/ version/
 
 # Build
-RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -a -o manager main.go
+RUN GOPROXY=${GOPROXY:-} \
+    GOPRIVATE=${GOPRIVATE:-} \
+    CGO_ENABLED=0 \
+    GOOS=${TARGETOS} \
+    GOARCH=${TARGETARCH} \
+    go build -a -o manager main.go
 
 FROM --platform=${TARGETPLATFORM} ${UBI_MINIMAL_IMAGE:-registry.access.redhat.com/ubi8/ubi-minimal:8.4} as ubi-minimal
 
