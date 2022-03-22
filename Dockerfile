@@ -3,6 +3,7 @@ ARG UBI_MINIMAL_IMAGE=registry.access.redhat.com/ubi8/ubi-minimal:8.4
 ARG UBI_MICRO_IMAGE=registry.access.redhat.com/ubi8/ubi-micro:8.4
 
 # Build the manager binary
+# hadolint ignore=DL3006
 FROM --platform=${BUILDPLATFORM} ${BUILDER_IMAGE} as builder
 
 ARG TARGETARCH
@@ -35,8 +36,10 @@ RUN GOPROXY=${GOPROXY} \
     GOARCH=${TARGETARCH} \
     go build -a -o manager main.go
 
+# hadolint ignore=DL3006
 FROM --platform=${TARGETPLATFORM} ${UBI_MINIMAL_IMAGE} as ubi-minimal
 
+# hadolint ignore=DL3006
 FROM --platform=${TARGETPLATFORM} ${UBI_MICRO_IMAGE}
 
 # copy Root CA bundle from ubi-minimal
