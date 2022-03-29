@@ -85,11 +85,14 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	controllerLog.Info("found matching Grafana instances", "count", len(instances.Items))
 
+	complete := true
+
 	for _, grafana := range instances.Items {
 		// an admin url is required to interact with grafana
 		// the instance or route might not yet be ready
 		if grafana.Status.AdminUrl == "" {
 			controllerLog.Info("grafana instance not ready", "grafana", grafana.Name)
+			complete = false
 			continue
 		}
 
@@ -98,17 +101,24 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		// grafana reconciler will pick them up
 		err = r.reconcilePlugins(ctx, &grafana, dashboard)
 		if err != nil {
+			complete = false
 			controllerLog.Error(err, "error reconciling plugins", "dashboard", dashboard.Name, "grafana", grafana.Name)
 		}
 
 		// then import the dashboard into the matching grafana instances
 		err = r.reconcileDashboard(ctx, &grafana, dashboard)
 		if err != nil {
+			complete = false
 			controllerLog.Error(err, "error reconciling dashboard", "dashboard", dashboard.Name, "grafana", grafana.Name)
 		}
 	}
 
-	return ctrl.Result{}, nil
+	// another reconcile needed?
+	if complete {
+		return ctrl.Result{}, nil
+	}
+
+	return ctrl.Result{RequeueAfter: RequeueDelayError}, nil
 }
 
 func (r *GrafanaDashboardReconciler) reconcileDashboard(ctx context.Context, grafana *grafanav1beta1.Grafana, dashboard *grafanav1beta1.GrafanaDashboard) error {
