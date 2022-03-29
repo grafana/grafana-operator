@@ -99,6 +99,13 @@ func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Graf
 		return v1beta1.OperatorStageResultFailed, err
 	}
 
+	// try to assign the admin url
+	if cr.PreferIngress() {
+		if route.Spec.Host != "" {
+			status.AdminUrl = fmt.Sprintf("https://%v", route.Spec.Host)
+		}
+	}
+
 	return v1beta1.OperatorStageResultSuccess, nil
 }
 

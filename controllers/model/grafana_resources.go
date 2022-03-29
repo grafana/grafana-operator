@@ -30,7 +30,10 @@ func GetGrafanaAdminSecret(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *
 			Namespace: cr.Namespace,
 		},
 	}
-	controllerutil.SetOwnerReference(cr, secret, scheme)
+
+	if scheme != nil {
+		controllerutil.SetOwnerReference(cr, secret, scheme)
+	}
 	return secret
 }
 

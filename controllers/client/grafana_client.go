@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
+	"github.com/grafana-operator/grafana-operator-experimental/controllers/config"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/model"
 	"net/http"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -72,8 +74,24 @@ func NewGrafanaClient(ctx context.Context, c client.Client, grafana *v1beta1.Gra
 		return nil, err
 	}
 
+	username := ""
+	password := ""
+	if val, ok := credentialSecret.Data[config.GrafanaAdminUserEnvVar]; ok {
+		username = string(val)
+	} else {
+		return nil, errors.New("grafana admin secret does not contain username")
+	}
+
+	if val, ok := credentialSecret.Data[config.GrafanaAdminPasswordEnvVar]; ok {
+		password = string(val)
+	} else {
+		return nil, errors.New("grafana admin secret does not contain password")
+	}
+
 	return &GrafanaClientImpl{
 		url:        grafana.Status.AdminUrl,
+		username:   username,
+		password:   password,
 		kubeClient: c,
 		httpClient: &http.Client{
 			Transport: transport,
