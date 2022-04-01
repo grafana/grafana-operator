@@ -145,6 +145,13 @@ func (i *GrafanaIni) parseConfig(config map[string][]string) map[string][]string
 		config = i.cfgAuth(config)
 	}
 
+	if i.cfg.Live != nil {
+		var items []string
+		items = appendInt(items, "max_connections", i.cfg.Live.MaxConnections)
+		items = appendStr(items, "allowed_origins", i.cfg.Live.AllowedOrigins)
+		config["live"] = items
+	}
+
 	if i.cfg.Log != nil {
 		var items []string
 		items = appendStr(items, "mode", i.cfg.Log.Mode)
