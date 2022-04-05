@@ -3,6 +3,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
   name: grafanadashboards.integreatly.org
 spec:
   group: integreatly.org
@@ -113,6 +114,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
   name: grafanadatasources.integreatly.org
 spec:
   group: integreatly.org
@@ -600,6 +602,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
   name: grafanas.integreatly.org
 spec:
   group: integreatly.org
