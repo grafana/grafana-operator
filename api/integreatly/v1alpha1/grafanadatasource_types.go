@@ -189,6 +189,10 @@ type GrafanaDataSourceJsonData struct {
 	Server   string `json:"server,omitempty"`
 	Port     int    `json:"port,omitempty"`
 	Username string `json:"username,omitempty"`
+	// ManageAlerts turns on alert management from UI
+	ManageAlerts bool `json:"manageAlerts,omitempty"`
+	// AlertManagerUID if null use the internal grafana alertmanager
+	AlertManagerUID string `json:"alertmanagerUid,omitempty"`
 }
 
 type GrafanaDataSourceJsonDerivedFields struct {
