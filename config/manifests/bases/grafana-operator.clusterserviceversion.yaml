@@ -92,7 +92,7 @@ metadata:
     description: A Kubernetes Operator based on the Operator SDK for creating and
       managing Grafana instances
     repository: https://github.com/grafana-operator/grafana-operator
-    support: grafana-operator
+    support: Red Hat
   labels:
     operatorframework.io/arch.amd64: supported
     operatorframework.io/arch.arm64: supported
