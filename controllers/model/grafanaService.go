@@ -67,6 +67,20 @@ func GetGrafanaPort(cr *v1alpha1.Grafana) int {
 	return port
 }
 
+func GetGrafanaAlertManagerPort(cr *v1alpha1.Grafana) int {
+	return constants.GrafanaAlertManagerPort
+}
+
+func unifiedAlertsEnabled(cr *v1alpha1.Grafana) bool {
+	if cr.Spec.Config.UnifiedAlerting == nil {
+		return false
+	}
+	if cr.Spec.Config.UnifiedAlerting.Enabled == nil {
+		return false
+	}
+
+	return *cr.Spec.Config.UnifiedAlerting.Enabled
+}
 func getServicePorts(cr *v1alpha1.Grafana, currentState *v1.Service) []v1.ServicePort {
 	intPort := int32(GetGrafanaPort(cr))
 
@@ -77,6 +91,22 @@ func getServicePorts(cr *v1alpha1.Grafana, currentState *v1.Service) []v1.Servic
 			Port:       intPort,
 			TargetPort: intstr.FromString("grafana-http"),
 		},
+	}
+
+	if unifiedAlertsEnabled(cr) {
+		alertManagerPort := int32(GetGrafanaAlertManagerPort(cr))
+		defaultPorts = append(defaultPorts, v1.ServicePort{
+			Name:       constants.GrafanaAlertManagerTCPPortName,
+			Protocol:   "TCP",
+			Port:       alertManagerPort,
+			TargetPort: intstr.FromString("tcp-alert"),
+		})
+		defaultPorts = append(defaultPorts, v1.ServicePort{
+			Name:       constants.GrafanaAlertManagerUDPPortName,
+			Protocol:   "UDP",
+			Port:       alertManagerPort,
+			TargetPort: intstr.FromString("udp-alert"),
+		})
 	}
 
 	if cr.Spec.Service == nil {

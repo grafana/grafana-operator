@@ -578,18 +578,34 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 		envVars = append(envVars, cr.Spec.Deployment.Env...)
 	}
 
-	containers = append(containers, v13.Container{
-		Name:       "grafana",
-		Image:      image,
-		Args:       []string{"-config=/etc/grafana/grafana.ini"},
-		WorkingDir: "",
-		Ports: []v13.ContainerPort{
-			{
-				Name:          "grafana-http",
-				ContainerPort: int32(GetGrafanaPort(cr)),
+	ports := []v13.ContainerPort{
+		{
+			Name:          "grafana-http",
+			ContainerPort: int32(GetGrafanaPort(cr)),
+			Protocol:      "TCP",
+		},
+	}
+
+	if unifiedAlertsEnabled(cr) {
+		ports = append(ports,
+			v13.ContainerPort{
+				Name:          "tcp-alert",
+				ContainerPort: int32(GetGrafanaAlertManagerPort(cr)),
 				Protocol:      "TCP",
 			},
-		},
+			v13.ContainerPort{
+				Name:          "udp-alert",
+				ContainerPort: int32(GetGrafanaAlertManagerPort(cr)),
+				Protocol:      "UDP",
+			})
+	}
+
+	containers = append(containers, v13.Container{
+		Name:                     "grafana",
+		Image:                    image,
+		Args:                     []string{"-config=/etc/grafana/grafana.ini"},
+		WorkingDir:               "",
+		Ports:                    ports,
 		Env:                      envVars,
 		EnvFrom:                  getEnvFrom(cr),
 		Resources:                getResources(cr),

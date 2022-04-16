@@ -12,12 +12,16 @@ import (
 )
 
 type GrafanaIni struct {
-	cfg *v1alpha1.GrafanaConfig
+	cfg              *v1alpha1.GrafanaConfig
+	serviceName      string
+	alertManagerPort int
 }
 
-func NewGrafanaIni(cfg *v1alpha1.GrafanaConfig) *GrafanaIni {
+func NewGrafanaIni(cfg *v1alpha1.GrafanaConfig, serviceName string, alertManagerPort int) *GrafanaIni {
 	return &GrafanaIni{
-		cfg: cfg,
+		cfg:              cfg,
+		serviceName:      serviceName,
+		alertManagerPort: alertManagerPort,
 	}
 }
 
@@ -268,7 +272,7 @@ func (i *GrafanaIni) parseConfig(config map[string][]string) map[string][]string
 	}
 
 	if i.cfg.UnifiedAlerting != nil {
-		config = i.cfgUnifiedAlerting(config)
+		config = i.cfgUnifiedAlerting(config, fmt.Sprintf("%s:%d", i.serviceName, i.alertManagerPort))
 	}
 
 	if i.cfg.Panels != nil {
@@ -671,13 +675,15 @@ func (i *GrafanaIni) cfgAlerting(config map[string][]string) map[string][]string
 	return config
 }
 
-func (i *GrafanaIni) cfgUnifiedAlerting(config map[string][]string) map[string][]string {
+func (i *GrafanaIni) cfgUnifiedAlerting(config map[string][]string, service string) map[string][]string {
 	var items []string
 	items = appendBool(items, "enabled", i.cfg.UnifiedAlerting.Enabled)
 	items = appendBool(items, "execute_alerts", i.cfg.UnifiedAlerting.ExecuteAlerts)
 	items = appendStr(items, "evaluation_timeout", i.cfg.UnifiedAlerting.EvaluationTimeout)
 	items = appendInt(items, "max_attempts", i.cfg.UnifiedAlerting.MaxAttempts)
 	items = appendStr(items, "min_interval", i.cfg.UnifiedAlerting.MinInterval)
+	items = appendStr(items, "ha_peers", service)
+
 	config["unified_alerting"] = items
 
 	return config

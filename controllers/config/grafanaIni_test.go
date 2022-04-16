@@ -175,13 +175,14 @@ static_root_path = /
 enabled = true
 evaluation_timeout = 3s
 execute_alerts = true
+ha_peers = grafana-service:9094
 max_attempts = 2
 min_interval = 1m
 
 `
 
 func TestWrite(t *testing.T) {
-	i := NewGrafanaIni(&testGrafanaConfig)
+	i := NewGrafanaIni(&testGrafanaConfig, "grafana-service", 9094)
 	sb, sha := i.Write()
 
 	hash := sha256.New()
@@ -192,9 +193,9 @@ func TestWrite(t *testing.T) {
 }
 
 func TestCfgUnifiedAlerting(t *testing.T) {
-	i := NewGrafanaIni(&testGrafanaConfig)
+	i := NewGrafanaIni(&testGrafanaConfig, "grafana-service", 9094)
 	config := map[string][]string{}
-	config = i.cfgUnifiedAlerting(config)
+	config = i.cfgUnifiedAlerting(config, "grafana-service:9094")
 	testConfig := map[string][]string{
 		"unified_alerting": {
 			"enabled = true",
@@ -202,13 +203,14 @@ func TestCfgUnifiedAlerting(t *testing.T) {
 			"evaluation_timeout = 3s",
 			"max_attempts = 2",
 			"min_interval = 1m",
+			"ha_peers = grafana-service:9094",
 		},
 	}
 	require.Equal(t, config, testConfig)
 }
 
 func TestCfgServer(t *testing.T) {
-	i := NewGrafanaIni(&testGrafanaConfig)
+	i := NewGrafanaIni(&testGrafanaConfig, "grafana-service", 9094)
 	config := map[string][]string{}
 	config = i.cfgServer(config)
 	testConfig := map[string][]string{
@@ -232,7 +234,7 @@ func TestCfgServer(t *testing.T) {
 }
 
 func TestCfgAuth(t *testing.T) {
-	i := NewGrafanaIni(&testGrafanaConfig)
+	i := NewGrafanaIni(&testGrafanaConfig, "grafana-service", 9094)
 	config := map[string][]string{}
 	config = i.cfgAuth(config)
 	testConfig := map[string][]string{
@@ -254,7 +256,7 @@ func TestCfgAuth(t *testing.T) {
 }
 
 func TestCfgAuthAzureAD(t *testing.T) {
-	i := NewGrafanaIni(&testGrafanaConfig)
+	i := NewGrafanaIni(&testGrafanaConfig, "grafana-service", 9094)
 	config := map[string][]string{}
 	config = i.cfgAuthAzureAD(config)
 	testConfig := map[string][]string{
@@ -273,7 +275,7 @@ func TestCfgAuthAzureAD(t *testing.T) {
 }
 
 func TestCfgDatabase(t *testing.T) {
-	i := NewGrafanaIni(&testGrafanaConfig)
+	i := NewGrafanaIni(&testGrafanaConfig, "grafana-service", 9094)
 	config := map[string][]string{}
 	config = i.cfgDatabase(config)
 	testConfig := map[string][]string{
@@ -292,7 +294,7 @@ func TestCfgDatabase(t *testing.T) {
 }
 
 func TestCfgRendering(t *testing.T) {
-	i := NewGrafanaIni(&testGrafanaConfig)
+	i := NewGrafanaIni(&testGrafanaConfig, "grafana-service", 9094)
 	config := map[string][]string{}
 	config = i.cfgRendering(config)
 	testConfig := map[string][]string{

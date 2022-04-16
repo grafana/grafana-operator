@@ -10,7 +10,7 @@ import (
 )
 
 func GrafanaConfig(cr *v1alpha1.Grafana) *v1.ConfigMap {
-	ini := config.NewGrafanaIni(&cr.Spec.Config)
+	ini := config.NewGrafanaIni(&cr.Spec.Config, getServiceName(cr), GetGrafanaAlertManagerPort(cr))
 	config, hash := ini.Write()
 
 	configMap := &v1.ConfigMap{}
@@ -33,7 +33,7 @@ func GrafanaConfig(cr *v1alpha1.Grafana) *v1.ConfigMap {
 func GrafanaConfigReconciled(cr *v1alpha1.Grafana, currentState *v1.ConfigMap) *v1.ConfigMap {
 	reconciled := currentState.DeepCopy()
 
-	ini := config.NewGrafanaIni(&cr.Spec.Config)
+	ini := config.NewGrafanaIni(&cr.Spec.Config, getServiceName(cr), GetGrafanaAlertManagerPort(cr))
 	config, hash := ini.Write()
 
 	reconciled.Annotations = map[string]string{

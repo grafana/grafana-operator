@@ -29,6 +29,9 @@ const (
 	GrafanaAdminUserEnvVar                  = "GF_SECURITY_ADMIN_USER"
 	GrafanaAdminPasswordEnvVar              = "GF_SECURITY_ADMIN_PASSWORD" // #nosec G101
 	GrafanaHttpPort                     int = 3000
+	GrafanaAlertManagerPort             int = 9094
 	GrafanaHttpPortName                     = "grafana"
+	GrafanaAlertManagerTCPPortName          = "tcp-grafana-alertmanager"
+	GrafanaAlertManagerUDPPortName          = "udp-grafana-alertmanager"
 	GrafanaSuccessMsg                       = "success"
 )
