@@ -549,6 +549,13 @@ GrafanaDataSourceJsonData contains the most common json options See https://graf
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>alertmanagerUid</b></td>
+        <td>string</td>
+        <td>
+          AlertManagerUID if null use the internal grafana alertmanager<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>allowInfraExplore</b></td>
         <td>boolean</td>
         <td>
@@ -847,6 +854,13 @@ GrafanaDataSourceJsonData contains the most common json options See https://graf
         <td>string</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>manageAlerts</b></td>
+        <td>boolean</td>
+        <td>
+          ManageAlerts turns on alert management from UI<br/>
         </td>
         <td>false</td>
       </tr><tr>
