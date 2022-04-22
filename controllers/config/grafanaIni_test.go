@@ -41,6 +41,9 @@ var (
 
 	// Rendering
 	concurrentRenderRequestLimit = 10
+
+	// Live
+	maxConnections = 10
 )
 
 var testGrafanaConfig = v1alpha1.GrafanaConfig{
@@ -91,6 +94,10 @@ var testGrafanaConfig = v1alpha1.GrafanaConfig{
 		TokenUrl:       "https://TokenURL.com",
 		AllowedDomains: "azure.com",
 		AllowSignUp:    &allowSignUp,
+	},
+	Live: &v1alpha1.GrafanaConfigLive{
+		MaxConnections: &maxConnections,
+		AllowedOrigins: "https://origin.com",
 	},
 	UnifiedAlerting: &v1alpha1.GrafanaConfigUnifiedAlerting{
 		Enabled:           &enableGrafanaConfigUnifiedAlerting,
@@ -144,6 +151,10 @@ user = user
 
 [feature_toggles]
 enable = ngalert
+
+[live]
+allowed_origins = https://origin.com
+max_connections = 10
 
 [paths]
 data = /var/lib/grafana
@@ -248,6 +259,19 @@ func TestCfgAuth(t *testing.T) {
 			"sigv4_auth_enabled = true",
 			"signout_redirect_url = https://RedirectURL.com",
 			"oauth_auto_login = true",
+		},
+	}
+	require.Equal(t, config, testConfig)
+}
+
+func TestCfgLive(t *testing.T) {
+	i := NewGrafanaIni(&testGrafanaConfig)
+	config := map[string][]string{}
+	config = i.cfgLive(config)
+	testConfig := map[string][]string{
+		"live": {
+			"max_connections = 10",
+			"allowed_origins = https://origin.com",
 		},
 	}
 	require.Equal(t, config, testConfig)
