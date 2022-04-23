@@ -50,7 +50,7 @@ COPY --from=builder /workspace/manager .
 
 RUN mkdir -p /opt/jsonnet && chown nobody /opt/jsonnet
 
-USER 65532:65532
+USER nobody
 
 COPY grafonnet-lib/grafonnet/ /opt/jsonnet/grafonnet
 
