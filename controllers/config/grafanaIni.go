@@ -145,6 +145,10 @@ func (i *GrafanaIni) parseConfig(config map[string][]string) map[string][]string
 		config = i.cfgAuth(config)
 	}
 
+	if i.cfg.Live != nil {
+		config = i.cfgLive(config)
+	}
+
 	if i.cfg.Log != nil {
 		var items []string
 		items = appendStr(items, "mode", i.cfg.Log.Mode)
@@ -391,6 +395,15 @@ func (i *GrafanaIni) cfgAuth(config map[string][]string) map[string][]string {
 	items = appendStr(items, "signout_redirect_url", i.cfg.Auth.SignoutRedirectUrl)
 	items = appendBool(items, "oauth_auto_login", i.cfg.Auth.OauthAutoLogin)
 	config["auth"] = items
+
+	return config
+}
+
+func (i *GrafanaIni) cfgLive(config map[string][]string) map[string][]string {
+	var items []string
+	items = appendInt(items, "max_connections", i.cfg.Live.MaxConnections)
+	items = appendStr(items, "allowed_origins", i.cfg.Live.AllowedOrigins)
+	config["live"] = items
 
 	return config
 }
