@@ -88,8 +88,8 @@ func getInitResources(cr *v1beta1.Grafana) v1.ResourceRequirements {
 }
 
 func getResources(cr *v1beta1.Grafana) v1.ResourceRequirements {
-	if cr.Spec.Resources != nil {
-		return *cr.Spec.Resources
+	if cr.Spec.GrafanaContainer != nil && cr.Spec.GrafanaContainer.Resources != nil {
+		return *cr.Spec.GrafanaContainer.Resources
 	}
 	return v1.ResourceRequirements{
 		Requests: v1.ResourceList{
@@ -320,8 +320,8 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 	var containers []v1.Container // nolint
 	var image string
 
-	if cr.Spec.BaseImage != "" {
-		image = cr.Spec.BaseImage
+	if cr.Spec.GrafanaContainer != nil && cr.Spec.GrafanaContainer.BaseImage != "" {
+		image = cr.Spec.GrafanaContainer.BaseImage
 	} else {
 		image = fmt.Sprintf("%s:%s", config2.GrafanaImage, config2.GrafanaVersion)
 	}

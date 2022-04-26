@@ -56,23 +56,27 @@ type OperatorReconcileVars struct {
 
 // GrafanaSpec defines the desired state of Grafana
 type GrafanaSpec struct {
-	Config             GrafanaConfig            `json:"config"`
-	Containers         []v1.Container           `json:"containers,omitempty"`
-	Ingress            *GrafanaIngress          `json:"ingress,omitempty"`
-	InitResources      *v1.ResourceRequirements `json:"initResources,omitempty"`
-	Secrets            []string                 `json:"secrets,omitempty"`
-	ConfigMaps         []string                 `json:"configMaps,omitempty"`
-	Service            *GrafanaService          `json:"service,omitempty"`
-	Deployment         *GrafanaDeployment       `json:"deployment,omitempty"`
-	Resources          *v1.ResourceRequirements `json:"resources,omitempty"`
-	ServiceAccount     *GrafanaServiceAccount   `json:"serviceAccount,omitempty"`
-	Client             *GrafanaClient           `json:"client,omitempty"`
-	DataStorage        *GrafanaDataStorage      `json:"dataStorage,omitempty"`
-	Jsonnet            *JsonnetConfig           `json:"jsonnet,omitempty"`
-	BaseImage          string                   `json:"baseImage,omitempty"`
-	InitImage          string                   `json:"initImage,omitempty"`
-	LivenessProbeSpec  *LivenessProbeSpec       `json:"livenessProbeSpec,omitempty"`
-	ReadinessProbeSpec *ReadinessProbeSpec      `json:"readinessProbeSpec,omitempty"`
+	Config           GrafanaConfig            `json:"config"`
+	Containers       []v1.Container           `json:"containers,omitempty"`
+	Ingress          *GrafanaIngress          `json:"ingress,omitempty"`
+	InitResources    *v1.ResourceRequirements `json:"initResources,omitempty"`
+	Secrets          []string                 `json:"secrets,omitempty"`
+	ConfigMaps       []string                 `json:"configMaps,omitempty"`
+	Service          *GrafanaService          `json:"service,omitempty"`
+	Deployment       *GrafanaDeployment       `json:"deployment,omitempty"`
+	ServiceAccount   *GrafanaServiceAccount   `json:"serviceAccount,omitempty"`
+	Client           *GrafanaClient           `json:"client,omitempty"`
+	DataStorage      *GrafanaDataStorage      `json:"dataStorage,omitempty"`
+	Jsonnet          *JsonnetConfig           `json:"jsonnet,omitempty"`
+	GrafanaContainer *GrafanaContainer        `json:"grafanaContainer,omitempty"`
+}
+
+type GrafanaContainer struct {
+	BaseImage         string                   `json:"baseImage,omitempty"`
+	InitImage         string                   `json:"initImage,omitempty"`
+	Resources         *v1.ResourceRequirements `json:"resources,omitempty"`
+	ReadinessProbe    *v1.Probe                `json:"readinessProbe,omitempty"`
+	LivenessProbeSpec *v1.Probe                `json:"livenessProbe,omitempty"`
 }
 
 type ReadinessProbeSpec struct {
