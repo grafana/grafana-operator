@@ -6,19 +6,20 @@ metadata:
     capabilities: Basic Install
     categories: Monitoring
     certified: "False"
-    containerImage: quay.io/grafana-operator/grafana-operator:v4.2.0
-    createdAt: "2022-02-22T16:00:12Z"
+    containerImage: quay.io/grafana-operator/grafana-operator:v4.3.0
+    createdAt: "2022-04-27T10:00:12Z"
     description: A Kubernetes Operator based on the Operator SDK for creating and
       managing Grafana instances
     operators.operatorframework.io/builder: operator-sdk-v1.13.1
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/grafana-operator/grafana-operator
-    support: grafana-operator
+    support: Red Hat
   labels:
     operatorframework.io/arch.amd64: supported
     operatorframework.io/arch.arm64: supported
+    operatorframework.io/arch.ppc64le: supported
     operatorframework.io/arch.s390x: supported
-  name: grafana-operator.v4.2.0
+  name: grafana-operator.v4.3.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -271,7 +272,7 @@ spec:
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.annotations['olm.targetNamespaces']
-                image: quay.io/grafana-operator/grafana-operator:v4.2.0
+                image: quay.io/grafana-operator/grafana-operator:v4.3.0
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
@@ -355,4 +356,4 @@ spec:
   provider:
     name: Red Hat
   replaces: grafana-operator.v4.1.1
-  version: 4.2.0
+  version: 4.3.0
