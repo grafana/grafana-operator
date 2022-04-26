@@ -355,5 +355,5 @@ spec:
   maturity: alpha
   provider:
     name: Red Hat
-  replaces: grafana-operator.v4.1.1
+  replaces: grafana-operator.v4.2.0
   version: 4.3.0
