@@ -1,6 +1,6 @@
 ARG BUILDER_IMAGE=golang:1.16
-ARG UBI_MINIMAL_IMAGE=registry.access.redhat.com/ubi8/ubi-minimal:8.4
-ARG UBI_MICRO_IMAGE=registry.access.redhat.com/ubi8/ubi-micro:8.4
+ARG UBI_MINIMAL_IMAGE=registry.access.redhat.com/ubi8/ubi-minimal:8.5
+ARG UBI_MICRO_IMAGE=registry.access.redhat.com/ubi8/ubi-micro:8.5
 
 # Build the manager binary
 # hadolint ignore=DL3006
