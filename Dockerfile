@@ -1,6 +1,6 @@
 ARG BUILDER_IMAGE=golang:1.16
-ARG UBI_MINIMAL_IMAGE=registry.access.redhat.com/ubi8/ubi-minimal:8.4
-ARG UBI_MICRO_IMAGE=registry.access.redhat.com/ubi8/ubi-micro:8.4
+ARG UBI_MINIMAL_IMAGE=registry.access.redhat.com/ubi8/ubi-minimal:8.5
+ARG UBI_MICRO_IMAGE=registry.access.redhat.com/ubi8/ubi-micro:8.5
 
 # Build the manager binary
 # hadolint ignore=DL3006
@@ -50,7 +50,7 @@ COPY --from=builder /workspace/manager .
 
 RUN mkdir -p /opt/jsonnet && chown nobody /opt/jsonnet
 
-USER 65532:65532
+USER nobody
 
 COPY grafonnet-lib/grafonnet/ /opt/jsonnet/grafonnet
 
