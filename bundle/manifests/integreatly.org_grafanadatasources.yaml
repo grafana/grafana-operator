@@ -60,6 +60,10 @@ spec:
                             https://github.com/Vertamedia/clickhouse-grafana/tree/master/dist/README.md#configure-the-datasource-with-provisioning
                             See https://github.com/Vertamedia/clickhouse-grafana/tree/master/src/datasource.ts#L44
                           type: boolean
+                        alertmanagerUid:
+                          description: AlertManagerUID if null use the internal grafana
+                            alertmanager
+                          type: string
                         allowInfraExplore:
                           type: boolean
                         apiToken:
@@ -174,6 +178,10 @@ spec:
                           type: string
                         logMessageField:
                           type: string
+                        manageAlerts:
+                          description: ManageAlerts turns on alert management from
+                            UI
+                          type: boolean
                         maxIdleConns:
                           type: integer
                         maxLines:
@@ -190,6 +198,8 @@ spec:
                           type: boolean
                         organization:
                           type: string
+                        port:
+                          type: integer
                         postgresVersion:
                           type: integer
                         search:
@@ -197,6 +207,9 @@ spec:
                             hide:
                               type: boolean
                           type: object
+                        server:
+                          description: Fields for Grafana Clickhouse data sources
+                          type: string
                         serviceMap:
                           properties:
                             datasourceUid:
@@ -229,6 +242,9 @@ spec:
                           type: string
                         timescaledb:
                           type: boolean
+                        timezone:
+                          description: Extra field for MySQL data source
+                          type: string
                         tlsAuth:
                           type: boolean
                         tlsAuthWithCACert:
@@ -271,6 +287,8 @@ spec:
                           type: boolean
                         useYandexCloudAuthorization:
                           type: boolean
+                        username:
+                          type: string
                         version:
                           type: string
                         xHeaderKey:
