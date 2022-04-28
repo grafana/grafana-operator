@@ -236,14 +236,35 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume {
 			},
 		})
 	}
-
+	
 	// Volume to store the plugins
-	volumes = append(volumes, v13.Volume{
-		Name: GrafanaPluginsVolumeName,
-		VolumeSource: v13.VolumeSource{
-			EmptyDir: &v13.EmptyDirVolumeSource{},
-		},
-	})
+	appendIfContainsPlugin := func() bool {
+		var foundGrafanaPluginsPath bool
+		if cr.Spec.Deployment != nil {
+			for _, item := range cr.Spec.Deployment.ExtraVolumeMounts {
+				if item.MountPath == config.GrafanaPluginsPath {
+					foundGrafanaPluginsPath = true
+					break
+				}
+			}
+		}
+
+		if cr.Spec.Deployment != nil {
+			volumes = append(volumes, cr.Spec.Deployment.ExtraVolumes...)
+		}
+		return foundGrafanaPluginsPath
+	}
+
+	if !appendIfContainsPlugin() {
+		volumes = append(volumes, v13.Volume{
+			Name: GrafanaPluginsVolumeName,
+			VolumeSource: v13.VolumeSource{
+				EmptyDir: &v13.EmptyDirVolumeSource{},
+			},
+		})
+	}
+	
+	
 
 	// Volume to store the datasources
 	volumes = append(volumes, v13.Volume{
@@ -356,10 +377,29 @@ func getVolumeMounts(cr *v1alpha1.Grafana) []v13.VolumeMount {
 		MountPath: "/var/lib/grafana",
 	})
 
-	mounts = append(mounts, v13.VolumeMount{
-		Name:      GrafanaPluginsVolumeName,
-		MountPath: "/var/lib/grafana/plugins",
-	})
+	// add plugins volumeMount
+	appendIfContainsPlugin := func() bool {
+		var foundGrafanaPluginsPath bool
+		if cr.Spec.Deployment != nil {
+			for _, item := range cr.Spec.Deployment.ExtraVolumeMounts {
+				if item.MountPath == config.GrafanaPluginsPath {
+					foundGrafanaPluginsPath = true
+					break
+				}
+			}
+		}
+
+		if cr.Spec.Deployment != nil {
+			mounts = append(mounts, cr.Spec.Deployment.ExtraVolumeMounts...)
+		}
+		return foundGrafanaPluginsPath
+	}
+	if !appendIfContainsPlugin() {
+		mounts = append(mounts, v13.VolumeMount{
+			Name:      GrafanaPluginsVolumeName,
+			MountPath: config.GrafanaPluginsPath,
+		})
+	}
 
 	mounts = append(mounts, v13.VolumeMount{
 		Name:      GrafanaLogsVolumeName,
@@ -387,11 +427,11 @@ func getVolumeMounts(cr *v1alpha1.Grafana) []v13.VolumeMount {
 		})
 	}
 	
-	if cr.Spec.Deployment != nil && cr.Spec.Deployment.ExtraVolumeMounts != nil {
-		for _, extraMount := range cr.Spec.Deployment.ExtraVolumeMounts {
-			mounts = append(mounts, extraMount)
-		}
-	}
+// 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.ExtraVolumeMounts != nil {
+// 		for _, extraMount := range cr.Spec.Deployment.ExtraVolumeMounts {
+// 			mounts = append(mounts, extraMount)
+// 		}
+// 	}
 	return mounts
 }
 
@@ -552,6 +592,15 @@ func getInitContainers(cr *v1alpha1.Grafana, plugins string) []v13.Container {
 		tag = cfg.GetConfigString(config.ConfigPluginsInitContainerTag, config.PluginsInitContainerTag)
 		image = fmt.Sprintf("%s:%s", repo, tag)
 	}
+	
+	var volumeName = GrafanaPluginsVolumeName
+	if cr.Spec.Deployment != nil {
+		for _, item := range cr.Spec.Deployment.ExtraVolumeMounts {
+			if item.MountPath == config.GrafanaPluginsPath {
+				volumeName = item.Name
+			}
+		}
+	}
 
 	return []v13.Container{
 		{
@@ -566,7 +615,7 @@ func getInitContainers(cr *v1alpha1.Grafana, plugins string) []v13.Container {
 			Resources: getInitResources(cr),
 			VolumeMounts: []v13.VolumeMount{
 				{
-					Name:      GrafanaPluginsVolumeName,
+					Name:      volumeName,
 					ReadOnly:  false,
 					MountPath: "/opt/plugins",
 				},
