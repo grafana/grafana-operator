@@ -92,7 +92,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, request ctrl
 
 	getClient, err := r.getClient()
 	if err != nil {
-		return reconcile.Result{RequeueAfter: config.RequeueDelay}, err
+		return reconcile.Result{RequeueAfter: config.GetControllerConfig().RequeueDelay}, err
 	}
 
 	// Initial request?
@@ -103,7 +103,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, request ctrl
 	// Check if the label selectors are available yet. If not then the grafana controller
 	// has not finished initializing and we can't continue. Reschedule for later.
 	if r.state.DashboardSelectors == nil {
-		return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
+		return reconcile.Result{RequeueAfter: config.GetControllerConfig().RequeueDelay}, nil
 	}
 
 	// Fetch the GrafanaDashboard instance
@@ -172,7 +172,7 @@ func SetupWithManager(mgr ctrl.Manager, r reconcile.Reconciler, namespace string
 	}
 
 	ref := r.(*GrafanaDashboardReconciler) // nolint
-	ticker := time.NewTicker(config.RequeueDelay)
+	ticker := time.NewTicker(config.GetControllerConfig().RequeueDelay)
 	sendEmptyRequest := func() {
 		request := reconcile.Request{
 			NamespacedName: types.NamespacedName{

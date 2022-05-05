@@ -27,7 +27,6 @@ const (
 	PluginsInitContainerImage               = "quay.io/grafana-operator/grafana_plugins_init"
 	PluginsInitContainerTag                 = "0.0.6"
 	PluginsUrl                              = "https://grafana.com/api/plugins/%s/versions/%s"
-	RequeueDelay                            = time.Second * 10
 	SecretsMountDir                         = "/etc/grafana-secrets/" // #nosec G101
 	ConfigMapsMountDir                      = "/etc/grafana-configmaps/"
 	ConfigRouteWatch                        = "watch.routes"
@@ -38,9 +37,10 @@ const (
 
 type ControllerConfig struct {
 	*sync.Mutex
-	Values     map[string]interface{}
-	Plugins    map[string]v1alpha1.PluginList
-	Dashboards map[string][]*v1alpha1.GrafanaDashboardRef
+	Values       map[string]interface{}
+	Plugins      map[string]v1alpha1.PluginList
+	Dashboards   map[string][]*v1alpha1.GrafanaDashboardRef
+	RequeueDelay time.Duration
 }
 
 var instance *ControllerConfig
@@ -49,10 +49,11 @@ var once sync.Once
 func GetControllerConfig() *ControllerConfig {
 	once.Do(func() {
 		instance = &ControllerConfig{
-			Mutex:      &sync.Mutex{},
-			Values:     map[string]interface{}{},
-			Plugins:    map[string]v1alpha1.PluginList{},
-			Dashboards: map[string][]*v1alpha1.GrafanaDashboardRef{},
+			Mutex:        &sync.Mutex{},
+			Values:       map[string]interface{}{},
+			Plugins:      map[string]v1alpha1.PluginList{},
+			Dashboards:   map[string][]*v1alpha1.GrafanaDashboardRef{},
+			RequeueDelay: time.Second * 10,
 		}
 	})
 	return instance

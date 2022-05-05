@@ -104,7 +104,7 @@ func SetupWithManager(mgr ctrl.Manager, r reconcile.Reconciler, namespace string
 	}
 
 	var ref = r.(*GrafanaNotificationChannelReconciler)
-	ticker := time.NewTicker(config.RequeueDelay)
+	ticker := time.NewTicker(config.GetControllerConfig().RequeueDelay)
 	sendEmptyRequest := func() {
 		request := reconcile.Request{
 			NamespacedName: types.NamespacedName{
@@ -165,7 +165,7 @@ func (r *GrafanaNotificationChannelReconciler) Reconcile(context context.Context
 	grafanaClient, err := r.getClient()
 	if err != nil {
 		// we handle the error by requeing, safe to ignore nilerr return
-		return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil //nolint:nilerr
+		return reconcile.Result{RequeueAfter: config.GetControllerConfig().RequeueDelay}, nil //nolint:nilerr
 	}
 
 	// Initial request?
@@ -176,7 +176,7 @@ func (r *GrafanaNotificationChannelReconciler) Reconcile(context context.Context
 	// Check if the label selectors are available yet. If not then the grafana controller
 	// has not finished initializing and we can't continue. Reschedule for later.
 	if r.state.DashboardSelectors == nil {
-		return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
+		return reconcile.Result{RequeueAfter: config.GetControllerConfig().RequeueDelay}, nil
 	}
 
 	// Fetch the GrafanaNotificationChannel instance

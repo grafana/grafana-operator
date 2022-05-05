@@ -22,7 +22,9 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/grafana-operator/grafana-operator/v4/controllers/grafananotificationchannel"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -64,6 +66,7 @@ var (
 	flagPluginsInitContainerTag   string
 	flagNamespaces                string
 	scanAll                       bool
+	requeueDelay                  int
 	flagJsonnetLocation           string
 	metricsAddr                   string
 	enableLeaderElection          bool
@@ -92,6 +95,7 @@ func assignOpts() {
 	flag.StringVar(&flagNamespaces, "namespaces", LookupEnvOrString("DASHBOARD_NAMESPACES", ""), "Namespaces to scope the interaction of the Grafana operator. Mutually exclusive with --scan-all")
 	flag.StringVar(&flagJsonnetLocation, "jsonnet-location", "", "Overrides the base path of the jsonnet libraries")
 	flag.BoolVar(&scanAll, "scan-all", LookupEnvOrBool("DASHBOARD_NAMESPACES_ALL", false), "Scans all namespaces for dashboards")
+	flag.IntVar(&requeueDelay, "requeue-delay", LookupEnvOrInt("REQUEUE_DELAY", 10), "Number of seconds between a periodic reconciliation")
 
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -147,6 +151,7 @@ func main() { // nolint
 	controllerConfig.AddConfigItem(grafanaconfig.ConfigOperatorNamespace, namespace)
 	controllerConfig.AddConfigItem(grafanaconfig.ConfigDashboardLabelSelector, "")
 	controllerConfig.AddConfigItem(grafanaconfig.ConfigJsonnetBasePath, flagJsonnetLocation)
+	controllerConfig.RequeueDelay = time.Duration(requeueDelay) * time.Second
 
 	// Check config is given through env variables - to support OLM installations
 	if flagImage == "" {
@@ -373,6 +378,17 @@ func LookupEnvOrString(key string, defaultVal string) string {
 func LookupEnvOrBool(key string, defaultVal bool) bool {
 	if val, ok := os.LookupEnv(key); ok {
 		return val == "true"
+	}
+	return defaultVal
+}
+
+func LookupEnvOrInt(key string, defaultVal int) int {
+	if val, ok := os.LookupEnv(key); ok {
+		parsed, err := strconv.Atoi(val)
+		if err != nil {
+			return defaultVal
+		}
+		return parsed
 	}
 	return defaultVal
 }
