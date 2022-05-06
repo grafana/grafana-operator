@@ -6,6 +6,7 @@ There is a lot of information on what is needed to manage OLM [compatible operat
 
 - Update `version/version.go` bumping the minor or patch version. Major versions shouldn't be released without discussion and approval of the maintainers!
 - Update the `Makefile`
+- Update `containerImage` field in `config/manifests/bases/grafana-operator.clusterserviceversion.yaml`
 - Update `replaces` field in `config/manifests/bases/grafana-operator.clusterserviceversion.yaml`
 - Update `CreatedAt` field in `config/manifests/bases/grafana-operator.clusterserviceversion.yaml`
   You will have to asses when it's going to get merged and you will be able to do a release.
