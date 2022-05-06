@@ -233,7 +233,7 @@ func (r *ReconcileGrafana) manageError(cr *grafanav1alpha1.Grafana, issue error,
 		GrafanaReady: false,
 	}
 
-	return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
+	return reconcile.Result{RequeueAfter: r.Config.RequeueDelay}, nil
 }
 
 // Try to find a suitable url to grafana
@@ -325,5 +325,5 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 
 	log.V(1).Info("desired cluster state met")
 
-	return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
+	return reconcile.Result{RequeueAfter: r.Config.RequeueDelay}, nil
 }
