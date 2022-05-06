@@ -158,16 +158,15 @@ func (c *ControllerConfig) GetDashboards(namespace string) []*v1alpha1.GrafanaDa
 		return c.Dashboards[namespace]
 	}
 
-	return []*v1alpha1.GrafanaDashboardRef{}
-}
+	dashboards := []*v1alpha1.GrafanaDashboardRef{}
 
-func (c *ControllerConfig) GetAllDashboards() []*v1alpha1.GrafanaDashboardRef {
-	c.Lock()
-	defer c.Unlock()
-
-	var dashboards []*v1alpha1.GrafanaDashboardRef
-	for _, ds := range c.Dashboards {
-		dashboards = append(dashboards, ds...)
+	// The periodic resync in grafanadashboard.GrafanaDashboardReconciler rely on the convention
+	// that an empty namespace means all of them, so we follow that rule here.
+	if namespace == "" {
+		for _, ds := range c.Dashboards {
+			dashboards = append(dashboards, ds...)
+		}
+		return dashboards
 	}
 
 	return dashboards
