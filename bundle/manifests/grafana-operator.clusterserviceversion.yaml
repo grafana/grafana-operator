@@ -6,7 +6,7 @@ metadata:
     capabilities: Basic Install
     categories: Monitoring
     certified: "False"
-    containerImage: quay.io/grafana-operator/grafana-operator:v4.3.0
+    containerImage: quay.io/grafana-operator/grafana-operator:v4.4.0
     createdAt: "2022-05-06T10:00:12Z"
     description: A Kubernetes Operator based on the Operator SDK for creating and
       managing Grafana instances
