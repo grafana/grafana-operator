@@ -1,5 +1,5 @@
 # Current Operator version
-VERSION ?= 4.4.0
+VERSION ?= 4.4.1
 
 # IMAGE_TAG_BASE defines the namespace and part of the image name for remote images.
 # running 'make bundle-build bundle-push catalog-build catalog-push' will build and push both
