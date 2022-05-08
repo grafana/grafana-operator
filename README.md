@@ -9,7 +9,7 @@ An operator to provision and manage Grafana Instances, Dashboards, Datasources a
 | [Red Hat](https://www.redhat.com)| <img src= "./media/users/redhat.png" width=100 height=100 > | [Integreatly](https://www.redhat.com/en/products/integration)|<img src= "./media/users/integreatly.png" width=100 height=100> |
  [Continental](https://www.continental.com/)|<img src= "./media/users/continental.png" width=100 height=100 > | [Handelsbanken]("https://www.handelsbanken.se/en/")|<img src= "./media/users/handelsbanken.svg" width=100 height=100 >|
 | [Xenit](https://xenit.se/contact/)|<img src= "./media/users/xenit.png" width=150 height=50 >| [Torqata](https://torqata.com)|<img src= "./media/users/torqata.jpg" width=150 height=50 > |
-|[Operate-first](https://www.operate-first.cloud/)|<img src= "./media/users/operate-first.png" width=100 height=100 > | [Your project/company here]()| <img src= "./media/users/you.png" width=100 height=100 > |
+|[Operate-first](https://www.operate-first.cloud/)|<img src= "./media/users/operate-first.png" width=100 height=100 >
 
 ***If you find this operator useful in your product/deployment, feel free to send a pull request to add your company/team to be displayed here!***
 
