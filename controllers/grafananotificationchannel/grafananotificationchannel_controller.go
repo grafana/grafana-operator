@@ -276,7 +276,10 @@ func (r *GrafanaNotificationChannelReconciler) reconcileNotificationChannels(req
 		if err := json.Unmarshal(processed, &rawJson); err != nil {
 			return reconcile.Result{}, err
 		}
-
+		if rawJson.UID == nil {
+			r.Log.Info(fmt.Sprintf("cannot process notificationchannel %v/%v, UID is nil", notificationchannel.Namespace, notificationchannel.Name))
+			return reconcile.Result{}, nil
+		}
 		if _, err = client.GetNotificationChannel(*rawJson.UID); err != nil {
 			status, err = client.CreateNotificationChannel(processed)
 		} else {
