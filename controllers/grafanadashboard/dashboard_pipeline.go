@@ -369,12 +369,13 @@ func (r *DashboardPipelineImpl) getLatestRevisionForGrafanaComDashboard() (int, 
 // direction.
 func (r *DashboardPipelineImpl) getMaximumRevisionFromListDashboardRevisionsResponse(resp *listDashboardRevisionsResponse) int {
 	if resp.OrderBy == "revision" {
-		if resp.Direction == "asc" {
-			return resp.Items[len(resp.Items)-1].Revision
-		}
-
-		if resp.Direction == "desc" {
-			return resp.Items[0].Revision
+		// resp.Direction seems to be inverted in the response (as of 2022-05-09), so let's ignore it and grab the bigger value
+		first := resp.Items[0].Revision
+		last := resp.Items[len(resp.Items)-1].Revision
+		if first > last {
+			return first
+		} else {
+			return last
 		}
 	}
 
