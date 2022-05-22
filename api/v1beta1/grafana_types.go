@@ -58,7 +58,7 @@ type OperatorReconcileVars struct {
 type GrafanaSpec struct {
 	Config           GrafanaConfig            `json:"config"`
 	Containers       []v1.Container           `json:"containers,omitempty"`
-	Ingress          *GrafanaIngress          `json:"ingress,omitempty"`
+	Ingress          *IngressNetworkingV1     `json:"ingress,omitempty"`
 	InitResources    *v1.ResourceRequirements `json:"initResources,omitempty"`
 	Secrets          []string                 `json:"secrets,omitempty"`
 	ConfigMaps       []string                 `json:"configMaps,omitempty"`
