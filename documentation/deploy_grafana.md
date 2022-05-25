@@ -84,9 +84,9 @@ The operator accepts a number of flags that can be passed in the `args` section 
 
 * `--namespaces`: watch for dashboards in a list of namespaces. Mutually exclusive with `--scan-all`.
 
-* `--zap-level=n`: set the logging level for the operator, leaving out this flag will only log Errors and error related
+* `--zap-log-level=n`: set the logging level for the operator, leaving out this flag will only log Errors and error related
   info, current options are:
-  * `--zap-level=1`: show all Info level logs
+  * `--zap-log-level=1`: show all Info level logs
 * `--requeue-delay=n`: set how often the resync of the grafana resources towards the grafana instance should happen in seconds. The default is 10s.
 
 See `deploy/operator.yaml` for an example.
