@@ -142,10 +142,31 @@ func (r *DashboardPipelineImpl) obtainJson() error {
 	}
 
 	if r.Dashboard.Spec.ConfigMapRef != nil {
-		err := r.loadDashboardFromConfigMap()
+		err := r.loadDashboardFromConfigMap(r.Dashboard.Spec.ConfigMapRef, false)
 		if err != nil {
 			r.Logger.Error(err, "failed to get config map, falling back to raw json")
 		} else {
+			return nil
+		}
+	}
+
+	if r.Dashboard.Spec.GzipConfigMapRef != nil {
+		r.Logger.Info("TODO: REMOVE --- gzipConfigMapRef was provided")
+		err := r.loadDashboardFromConfigMap(r.Dashboard.Spec.GzipConfigMapRef, true)
+		if err != nil {
+			r.Logger.Error(err, "failed to get config map, falling back to raw json")
+		} else {
+			return nil
+		}
+	}
+
+	if r.Dashboard.Spec.GzipJson != "" {
+		r.Logger.Info("TODO: REMOVE --- gzipJson was provided")
+		jsonBytes, err := v1alpha1.DecodeBase64Gzip(r.Dashboard.Spec.GzipJson)
+		if err != nil {
+			r.Logger.Error(err, "failed to decode/decompress gzipped json")
+		} else {
+			r.JSON = string(jsonBytes)
 			return nil
 		}
 	}
@@ -385,9 +406,9 @@ func (r *DashboardPipelineImpl) getFileType(path string) SourceType {
 }
 
 // Try to obtain the dashboard json from a config map
-func (r *DashboardPipelineImpl) loadDashboardFromConfigMap() error {
+func (r *DashboardPipelineImpl) loadDashboardFromConfigMap(ref *corev1.ConfigMapKeySelector, binaryCompressed bool) error {
 	ctx := context.Background()
-	objectKey := client.ObjectKey{Name: r.Dashboard.Spec.ConfigMapRef.Name, Namespace: r.Dashboard.Namespace}
+	objectKey := client.ObjectKey{Name: ref.Name, Namespace: r.Dashboard.Namespace}
 
 	var cm corev1.ConfigMap
 	err := r.Client.Get(ctx, objectKey, &cm)
@@ -395,7 +416,15 @@ func (r *DashboardPipelineImpl) loadDashboardFromConfigMap() error {
 		return err
 	}
 
-	r.JSON = cm.Data[r.Dashboard.Spec.ConfigMapRef.Key]
+	if binaryCompressed {
+		jsonBytes, err := v1alpha1.DecodeGzip(cm.BinaryData[ref.Key])
+		if err != nil {
+			return err
+		}
+		r.JSON = string(jsonBytes)
+	} else {
+		r.JSON = cm.Data[ref.Key]
+	}
 
 	return nil
 }
