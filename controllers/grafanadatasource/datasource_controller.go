@@ -83,10 +83,10 @@ type cmDataSourceList struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.0/pkg/reconcile
 func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	log = r.Logger.WithValues("grafanadatasource", request.NamespacedName)
-	// If Grafana is not running there is no need to continue
+	// If Grafana is not running there is no need to continue, but we should retry late
 	if !r.state.GrafanaReady {
 		log.Info("no grafana instance available")
-		return reconcile.Result{Requeue: false}, nil
+		return reconcile.Result{Requeue: true}, nil
 	}
 
 	client, err := r.getClient()
