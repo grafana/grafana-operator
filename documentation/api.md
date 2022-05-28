@@ -129,6 +129,8 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Format</i>: byte<br/>
         </td>
         <td>false</td>
       </tr><tr>

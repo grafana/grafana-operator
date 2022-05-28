@@ -50,30 +50,6 @@ const decodedDashboard = `
 }
 `
 
-func TestDecodeDecompress(t *testing.T) {
-	var expected map[string]interface{}
-	var actual map[string]interface{}
-	decoded, err := DecodeBase64Gzip(encodedCompressedDashboard)
-	if err != nil {
-		t.Log("Failed to decompress/decode", err)
-		t.Fail()
-	}
-	err = json.Unmarshal([]byte(decoded), &actual)
-	if err != nil {
-		t.Log("Failed to parse JSON from decoded", err)
-		t.Fail()
-	}
-	err = json.Unmarshal([]byte(decodedDashboard), &expected)
-	if err != nil {
-		t.Log("Failed to parse JSON from ground truth", err)
-		t.Fail()
-	}
-	if !reflect.DeepEqual(expected, actual) {
-		t.Log("Decoded JSONs were not the same")
-		t.Fail()
-	}
-}
-
 func TestDecompress(t *testing.T) {
 	var expected map[string]interface{}
 	var actual map[string]interface{}
@@ -82,7 +58,7 @@ func TestDecompress(t *testing.T) {
 		t.Log("Failed to decode", err)
 		t.Fail()
 	}
-	decompressed, err := DecodeGzip(decoded)
+	decompressed, err := Gunzip(decoded)
 	if err != nil {
 		t.Log("Failed to decompress", err)
 		t.Fail()

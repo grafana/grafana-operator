@@ -160,9 +160,9 @@ func (r *DashboardPipelineImpl) obtainJson() error {
 		}
 	}
 
-	if r.Dashboard.Spec.GzipJson != "" {
+	if r.Dashboard.Spec.GzipJson != nil {
 		r.Logger.Info("TODO: REMOVE --- gzipJson was provided")
-		jsonBytes, err := v1alpha1.DecodeBase64Gzip(r.Dashboard.Spec.GzipJson)
+		jsonBytes, err := v1alpha1.Gunzip(r.Dashboard.Spec.GzipJson)
 		if err != nil {
 			r.Logger.Error(err, "failed to decode/decompress gzipped json")
 		} else {
@@ -417,7 +417,7 @@ func (r *DashboardPipelineImpl) loadDashboardFromConfigMap(ref *corev1.ConfigMap
 	}
 
 	if binaryCompressed {
-		jsonBytes, err := v1alpha1.DecodeGzip(cm.BinaryData[ref.Key])
+		jsonBytes, err := v1alpha1.Gunzip(cm.BinaryData[ref.Key])
 		if err != nil {
 			return err
 		}

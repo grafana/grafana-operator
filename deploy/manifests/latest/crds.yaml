@@ -92,6 +92,7 @@ spec:
                 - key
                 type: object
               gzipJson:
+                format: byte
                 type: string
               json:
                 type: string

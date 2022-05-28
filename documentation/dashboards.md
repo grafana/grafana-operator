@@ -215,5 +215,11 @@ You can compress a dashboard from the command line like so:
 
 ```bash
 # yq can be obtained from https://github.com/mikefarah/yq
-COMPRESSED_DASHBOARD="$(cat ${dashboard_json_file} | gzip | base64)" yq -i '.spec.gzipJson = strenv(COMPRESSED_DASHBOARD)' ${grafanadashboard_yaml_file}
+COMPRESSED_DASHBOARD="$(cat ${dashboard_json_file} | gzip | base64 -w0)" yq -i '.spec.gzipJson = strenv(COMPRESSED_DASHBOARD)' ${grafanadashboard_yaml_file}
+```
+
+You can similarly compress a dashboard into a ConfigMap like so:
+
+```bash
+COMPRESSED_DASHBOARD="$(cat ${dashboard_json_file} | gzip | base64 -w0)" yq -i ".binaryData.${dashboard_key} = strenv(COMPRESSED_DASHBOARD)" ${configmap_yaml_file}
 ```

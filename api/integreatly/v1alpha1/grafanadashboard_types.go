@@ -20,12 +20,10 @@ import (
 	"bytes"
 	"crypto/sha1" // nolint
 	"crypto/sha256"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"strings"
 
 	"compress/gzip"
 
@@ -39,7 +37,7 @@ import (
 // GrafanaDashboardSpec defines the desired state of GrafanaDashboard
 type GrafanaDashboardSpec struct {
 	Json             string                            `json:"json,omitempty"`
-	GzipJson         string                            `json:"gzipJson,omitempty"`
+	GzipJson         []byte                            `json:"gzipJson,omitempty"`
 	Jsonnet          string                            `json:"jsonnet,omitempty"`
 	Plugins          PluginList                        `json:"plugins,omitempty"`
 	Url              string                            `json:"url,omitempty"`
@@ -108,7 +106,7 @@ func (d *GrafanaDashboard) Hash() string {
 	}
 
 	io.WriteString(hash, d.Spec.Json)             // nolint
-	io.WriteString(hash, d.Spec.GzipJson)         // nolint
+	hash.Write(d.Spec.GzipJson)                   // nolint
 	io.WriteString(hash, d.Spec.Url)              // nolint
 	io.WriteString(hash, d.Spec.Jsonnet)          // nolint
 	io.WriteString(hash, d.Namespace)             // nolint
@@ -135,9 +133,9 @@ func (d *GrafanaDashboard) Hash() string {
 
 func (d *GrafanaDashboard) Parse(optional string) (map[string]interface{}, error) {
 	var dashboardBytes []byte
-	if d.Spec.GzipJson != "" {
+	if d.Spec.GzipJson != nil {
 		var err error
-		dashboardBytes, err = DecodeBase64Gzip(d.Spec.GzipJson)
+		dashboardBytes, err = Gunzip(d.Spec.GzipJson)
 		if err != nil {
 			return nil, err
 		}
@@ -168,15 +166,7 @@ func (d *GrafanaDashboard) UID() string {
 	return fmt.Sprintf("%x", sha1.Sum([]byte(d.Namespace+d.Name))) // nolint
 }
 
-func DecodeBase64Gzip(encoded string) ([]byte, error) {
-	decoder, err := gzip.NewReader(base64.NewDecoder(base64.StdEncoding, strings.NewReader(encoded)))
-	if err != nil {
-		return nil, err
-	}
-	return ioutil.ReadAll(decoder)
-}
-
-func DecodeGzip(compressed []byte) ([]byte, error) {
+func Gunzip(compressed []byte) ([]byte, error) {
 	decoder, err := gzip.NewReader(bytes.NewReader(compressed))
 	if err != nil {
 		return nil, err
