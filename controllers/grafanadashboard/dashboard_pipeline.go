@@ -151,7 +151,6 @@ func (r *DashboardPipelineImpl) obtainJson() error {
 	}
 
 	if r.Dashboard.Spec.GzipConfigMapRef != nil {
-		r.Logger.Info("TODO: REMOVE --- gzipConfigMapRef was provided")
 		err := r.loadDashboardFromConfigMap(r.Dashboard.Spec.GzipConfigMapRef, true)
 		if err != nil {
 			r.Logger.Error(err, "failed to get config map, falling back to raw json")
@@ -161,7 +160,6 @@ func (r *DashboardPipelineImpl) obtainJson() error {
 	}
 
 	if r.Dashboard.Spec.GzipJson != nil {
-		r.Logger.Info("TODO: REMOVE --- gzipJson was provided")
 		jsonBytes, err := v1alpha1.Gunzip(r.Dashboard.Spec.GzipJson)
 		if err != nil {
 			r.Logger.Error(err, "failed to decode/decompress gzipped json")
