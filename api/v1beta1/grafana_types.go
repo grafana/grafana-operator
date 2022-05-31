@@ -17,7 +17,6 @@ limitations under the License.
 package v1beta1
 
 import (
-	routev1 "github.com/openshift/api/route/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -162,21 +161,6 @@ type GrafanaDeployment struct {
 type GrafanaHttpProxy struct {
 	Enabled bool   `json:"enabled"`
 	URL     string `json:"url,omitempty"`
-}
-
-// GrafanaIngress provides a means to configure the ingress created
-type GrafanaIngress struct {
-	Annotations      map[string]string          `json:"annotations,omitempty"`
-	Hostname         string                     `json:"hostname,omitempty"`
-	Labels           map[string]string          `json:"labels,omitempty"`
-	Path             string                     `json:"path,omitempty"`
-	Enabled          bool                       `json:"enabled,omitempty"`
-	TLSEnabled       bool                       `json:"tlsEnabled,omitempty"`
-	TLSSecretName    string                     `json:"tlsSecretName,omitempty"`
-	TargetPort       string                     `json:"targetPort,omitempty"`
-	Termination      routev1.TLSTerminationType `json:"termination,omitempty"`
-	IngressClassName string                     `json:"ingressClassName,omitempty"`
-	PathType         string                     `json:"pathType,omitempty"`
 }
 
 // GrafanaConfig is the configuration for grafana

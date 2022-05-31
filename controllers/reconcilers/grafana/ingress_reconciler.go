@@ -56,7 +56,7 @@ func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Gr
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, ingress, func() error {
 		ingress.Spec = getIngressSpec(cr, scheme)
-		return nil
+		return v1beta1.Merge(ingress, cr.Spec.Ingress)
 	})
 
 	if err != nil {
