@@ -34,6 +34,12 @@ var (
 	azureAdEnabled = true
 	allowSignUp    = false
 
+	// AuthGenericOauth
+	genericOauthEnabled               = true
+	genericOauthAllowSignUp           = true
+	genericOauthRoleAttributeStrict   = true
+	genericOauthTLSSkipVerifyInsecure = true
+
 	// GrafanaConfigUnifiedAlerting
 	enableGrafanaConfigUnifiedAlerting = true
 	executeAlerts                      = true
@@ -95,6 +101,27 @@ var testGrafanaConfig = v1alpha1.GrafanaConfig{
 		AllowedDomains: "azure.com",
 		AllowSignUp:    &allowSignUp,
 	},
+	AuthGenericOauth: &v1alpha1.GrafanaConfigAuthGenericOauth{
+		Enabled:               &genericOauthEnabled,
+		AllowSignUp:           &genericOauthAllowSignUp,
+		ClientId:              "ClientOauth",
+		ClientSecret:          "ClientSecretOauth",
+		Scopes:                "ScopesOauth",
+		AuthUrl:               "https://AuthURLOauth.com",
+		TokenUrl:              "https://TokenURLOauth.com",
+		ApiUrl:                "https://ApiURLOauth.com",
+		TeamsURL:              "https://TeamsURLOauth.com",
+		TeamIds:               "1,2",
+		TeamIdsAttributePath:  "team_ids[*]",
+		AllowedDomains:        "mycompanyOauth.com",
+		RoleAttributePath:     "roles[*]",
+		RoleAttributeStrict:   &genericOauthRoleAttributeStrict,
+		EmailAttributePath:    "email",
+		TLSSkipVerifyInsecure: &genericOauthTLSSkipVerifyInsecure,
+		TLSClientCert:         "/genericOauth/clientCert",
+		TLSClientKey:          "/genericOauth/clientKey",
+		TLSClientCa:           "/genericOauth/clientCa",
+	},
 	Live: &v1alpha1.GrafanaConfigLive{
 		MaxConnections: &maxConnections,
 		AllowedOrigins: "https://origin.com",
@@ -138,6 +165,27 @@ client_secret = ClientSecret
 enabled = true
 scopes = Scopes
 token_url = https://TokenURL.com
+
+[auth.generic_oauth]
+allow_sign_up = true
+allowed_domains = mycompanyOauth.com
+api_url = https://ApiURLOauth.com
+auth_url = https://AuthURLOauth.com
+client_id = ClientOauth
+client_secret = ClientSecretOauth
+email_attribute_path = email
+enabled = true
+role_attribute_path = roles[*]
+role_attribute_strict = true
+scopes = ScopesOauth
+team_ids = 1,2
+team_ids_attribute_path = team_ids[*]
+teams_url = https://TeamsURLOauth.com
+tls_client_ca = /genericOauth/clientCa
+tls_client_cert = /genericOauth/clientCert
+tls_client_key = /genericOauth/clientKey
+tls_skip_verify_insecure = true
+token_url = https://TokenURLOauth.com
 
 [database]
 host = host
