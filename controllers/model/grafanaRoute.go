@@ -21,6 +21,10 @@ func GetPath(cr *v1alpha1.Grafana) string {
 		return "/"
 	}
 
+	if cr.Spec.Ingress.Termination == "passthrough" {
+		return ""
+	}
+
 	if cr.Spec.Ingress.Path == "" {
 		return "/"
 	}
