@@ -36,12 +36,17 @@ import (
 
 // GrafanaDashboardSpec defines the desired state of GrafanaDashboard
 type GrafanaDashboardSpec struct {
-	Json             string                            `json:"json,omitempty"`
-	GzipJson         []byte                            `json:"gzipJson,omitempty"`
-	Jsonnet          string                            `json:"jsonnet,omitempty"`
-	Plugins          PluginList                        `json:"plugins,omitempty"`
-	Url              string                            `json:"url,omitempty"`
-	ConfigMapRef     *corev1.ConfigMapKeySelector      `json:"configMapRef,omitempty"`
+	// Json is the dashboard's JSON
+	Json string `json:"json,omitempty"`
+	// GzipJson the dashboard's JSON compressed with Gzip. Base64-encoded when in YAML.
+	GzipJson []byte     `json:"gzipJson,omitempty"`
+	Jsonnet  string     `json:"jsonnet,omitempty"`
+	Plugins  PluginList `json:"plugins,omitempty"`
+	Url      string     `json:"url,omitempty"`
+	// ConfigMapRef is a reference to a ConfigMap data field containing the dashboard's JSON
+	ConfigMapRef *corev1.ConfigMapKeySelector `json:"configMapRef,omitempty"`
+	// GzipConfigMapRef is a reference to a ConfigMap binaryData field containing
+	// the dashboard's JSON, compressed with Gzip.
 	GzipConfigMapRef *corev1.ConfigMapKeySelector      `json:"gzipConfigMapRef,omitempty"`
 	Datasources      []GrafanaDashboardDatasource      `json:"datasources,omitempty"`
 	CustomFolderName string                            `json:"customFolderName,omitempty"`
