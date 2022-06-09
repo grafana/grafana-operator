@@ -572,6 +572,12 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 				Value: cr.Spec.Deployment.HttpProxy.SecureURL,
 			})
 		}
+		if cr.Spec.Deployment.HttpProxy.NoProxy != "" {
+			envVars = append(envVars, v13.EnvVar{
+				Name:  "NO_PROXY",
+				Value: cr.Spec.Deployment.HttpProxy.NoProxy,
+			})
+		}
 	}
 
 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Env != nil {
