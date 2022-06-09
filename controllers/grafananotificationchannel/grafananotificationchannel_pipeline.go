@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -91,7 +92,7 @@ func (r *NotificatiomChannelPipelineImpl) validateJson() error {
 // Try to get the notificationchannel json definition raw json provided in the notificationchannel resource
 func (r *NotificatiomChannelPipelineImpl) obtainJson() error {
 	if r.NotificationChannel.Spec.Json != "" {
-		r.JSON = r.NotificationChannel.Spec.Json
+		r.JSON = os.ExpandEnv(r.NotificationChannel.Spec.Json)
 		return nil
 	}
 
@@ -103,7 +104,7 @@ func (r *NotificatiomChannelPipelineImpl) obtainJson() error {
 // a new notificationchannel version in Grafana
 func (r *NotificatiomChannelPipelineImpl) generateHash() string {
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(
-		r.NotificationChannel.Spec.Json)))
+		r.JSON)))
 }
 
 func (r *NotificatiomChannelPipelineImpl) NewHash() string {
