@@ -93,7 +93,7 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         <td><b><a href="#grafanadashboardspecconfigmapref">configMapRef</a></b></td>
         <td>object</td>
         <td>
-          Selects a key from a ConfigMap.<br/>
+          ConfigMapRef is a reference to a ConfigMap data field containing the dashboard's JSON<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -121,14 +121,14 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         <td><b><a href="#grafanadashboardspecgzipconfigmapref">gzipConfigMapRef</a></b></td>
         <td>object</td>
         <td>
-          Selects a key from a ConfigMap.<br/>
+          GzipConfigMapRef is a reference to a ConfigMap binaryData field containing the dashboard's JSON, compressed with Gzip.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>gzipJson</b></td>
         <td>string</td>
         <td>
-          <br/>
+          GzipJson the dashboard's JSON compressed with Gzip. Base64-encoded when in YAML.<br/>
           <br/>
             <i>Format</i>: byte<br/>
         </td>
@@ -137,7 +137,7 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         <td><b>json</b></td>
         <td>string</td>
         <td>
-          <br/>
+          Json is the dashboard's JSON<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -170,7 +170,7 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
 
 
 
-Selects a key from a ConfigMap.
+ConfigMapRef is a reference to a ConfigMap data field containing the dashboard's JSON
 
 <table>
     <thead>
@@ -279,7 +279,7 @@ Selects a key from a ConfigMap.
 
 
 
-Selects a key from a ConfigMap.
+GzipConfigMapRef is a reference to a ConfigMap binaryData field containing the dashboard's JSON, compressed with Gzip.
 
 <table>
     <thead>
