@@ -405,15 +405,18 @@ type GrafanaConfigAuthGenericOauth struct {
 	// +nullable
 	Enabled *bool `json:"enabled,omitempty" ini:"enabled"`
 	// +nullable
-	AllowSignUp       *bool  `json:"allow_sign_up,omitempty" ini:"allow_sign_up"`
-	ClientId          string `json:"client_id,omitempty" ini:"client_id,omitempty"`
-	ClientSecret      string `json:"client_secret,omitempty" ini:"client_secret,omitempty"`
-	Scopes            string `json:"scopes,omitempty" ini:"scopes,omitempty"`
-	AuthUrl           string `json:"auth_url,omitempty" ini:"auth_url,omitempty"`
-	TokenUrl          string `json:"token_url,omitempty" ini:"token_url,omitempty"`
-	ApiUrl            string `json:"api_url,omitempty" ini:"api_url,omitempty"`
-	AllowedDomains    string `json:"allowed_domains,omitempty" ini:"allowed_domains,omitempty"`
-	RoleAttributePath string `json:"role_attribute_path,omitempty" ini:"role_attribute_path,omitempty"`
+	AllowSignUp          *bool  `json:"allow_sign_up,omitempty" ini:"allow_sign_up"`
+	ClientId             string `json:"client_id,omitempty" ini:"client_id,omitempty"`
+	ClientSecret         string `json:"client_secret,omitempty" ini:"client_secret,omitempty"`
+	Scopes               string `json:"scopes,omitempty" ini:"scopes,omitempty"`
+	AuthUrl              string `json:"auth_url,omitempty" ini:"auth_url,omitempty"`
+	TokenUrl             string `json:"token_url,omitempty" ini:"token_url,omitempty"`
+	ApiUrl               string `json:"api_url,omitempty" ini:"api_url,omitempty"`
+	TeamsURL             string `json:"teams_url,omitempty" ini:"teams_url,omitempty"`
+	TeamIds              string `json:"team_ids,omitempty" ini:"team_ids,omitempty"`
+	TeamIdsAttributePath string `json:"team_ids_attribute_path,omitempty" ini:"team_ids_attribute_path,omitempty"`
+	AllowedDomains       string `json:"allowed_domains,omitempty" ini:"allowed_domains,omitempty"`
+	RoleAttributePath    string `json:"role_attribute_path,omitempty" ini:"role_attribute_path,omitempty"`
 	// +nullable
 	RoleAttributeStrict *bool  `json:"role_attribute_strict,omitempty" ini:"role_attribute_strict,omitempty"`
 	EmailAttributePath  string `json:"email_attribute_path,omitempty" ini:"email_attribute_path,omitempty"`
