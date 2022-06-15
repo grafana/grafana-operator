@@ -76,7 +76,7 @@ If [the benefits of using an operator over standalone products as outlined by th
   * Grafana notification channel provisioning.
   * Oauth proxy.
   * many others!
-* Efficient dashboard management through jsonnet, plugins, organisations and folder assignment, which can all be done through `.yamls`!
+* Efficient dashboard management through jsonnet, plugins, organizations and folder assignment, which can all be done through `.yamls`!
 * Both Kubernetes and OpenShift supported out of the box.
 * Multi-Arch builds and container images.
 * Operatorhub/OLM support (Allows you to install the operator with a few clicks).
@@ -101,7 +101,7 @@ The following Grafana resources are supported:
 * GrafanaNotificationChannel
 
 all custom resources use the api group `integreatly.org` and version `v1alpha1`.
-To get a overview of the available grafana-operator CRD see api.md.
+To get an overview of the available grafana-operator CRD see api.md.
 
 ### Grafanas
 

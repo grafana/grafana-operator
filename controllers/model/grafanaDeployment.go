@@ -452,6 +452,9 @@ func getLivenessProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.
 	var period int32 = 10
 	var success int32 = 1
 	var scheme = v13.URISchemeHTTP
+	if cr.Spec.Config.Server != nil && cr.Spec.Config.Server.Protocol == "https" {
+		scheme = v13.URISchemeHTTPS
+	}
 
 	if cr.Spec.LivenessProbeSpec != nil && cr.Spec.LivenessProbeSpec.InitialDelaySeconds != nil {
 		delay = *cr.Spec.LivenessProbeSpec.InitialDelaySeconds
@@ -497,6 +500,9 @@ func getReadinessProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13
 	var period int32 = 10
 	var success int32 = 1
 	var scheme = v13.URISchemeHTTP
+	if cr.Spec.Config.Server != nil && cr.Spec.Config.Server.Protocol == "https" {
+		scheme = v13.URISchemeHTTPS
+	}
 
 	if cr.Spec.ReadinessProbeSpec != nil && cr.Spec.ReadinessProbeSpec.InitialDelaySeconds != nil {
 		delay = *cr.Spec.ReadinessProbeSpec.InitialDelaySeconds
