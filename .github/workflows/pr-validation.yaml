@@ -151,7 +151,7 @@ jobs:
           echo ::set-output name=VERSION::${VERSION}
           echo ::set-output name=BUILDARCH::$(go env GOARCH)
       - name: Lint Dockerfile with hadolint
-        uses: hadolint/hadolint@v2.1.0
+        uses: hadolint/hadolint@v2.0.0
         with:
           dockerfile: Dockerfile
       - name: Set up QEMU
