@@ -126,6 +126,11 @@ KUSTOMIZE = $(shell pwd)/bin/kustomize
 kustomize:
 	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v4@v4.5.2)
 
+# Download kustomize locally if necessary
+GOLANGCI = $(shell pwd)/bin/golangci-lint
+golangci:
+	$(call go-get-tool,$(GOLANGCI),github.com/golangci/golangci-lint/cmd/golangci-lint@v1.46.2)
+
 # go-get-tool will 'go install' any package $2 and install it to $1.
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 define go-get-tool
@@ -163,8 +168,8 @@ code/check: fmt vet
 	golint ./...
 
 .PHONY: code/golangci-lint
-code/golangci-lint:
-	golangci-lint run ./...
+code/golangci-lint: golangci
+	$(GOLANGCI) run ./...
 
 # Find or download gen-crd-api-reference-docs
 gen-crd-api-reference-docs:
