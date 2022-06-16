@@ -270,7 +270,20 @@ func (r *ReconcileGrafana) getGrafanaAdminUrl(cr *grafanav1alpha1.Grafana, state
 
 	// Otherwise rely on the service
 	if state.GrafanaService != nil {
-		return fmt.Sprintf("http://%v.%v.svc.cluster.local:%d", state.GrafanaService.Name, cr.Namespace,
+		protocol := "http"
+
+		if cr.Spec.Config.Server != nil {
+			switch cr.Spec.Config.Server.Protocol {
+			case "", "http":
+				protocol = "http"
+			case "https":
+				protocol = "https"
+			default:
+				return "", stdErr.New(fmt.Sprintf("server protocol %v is not supported, please use either http or https", protocol))
+			}
+		}
+
+		return fmt.Sprintf("%v://%v.%v.svc.cluster.local:%d", protocol, state.GrafanaService.Name, cr.Namespace,
 			servicePort), nil
 	}
 

@@ -807,6 +807,12 @@ spec:
                         type: boolean
                       scopes:
                         type: string
+                      team_ids:
+                        type: string
+                      team_ids_attribute_path:
+                        type: string
+                      teams_url:
+                        type: string
                       tls_client_ca:
                         type: string
                       tls_client_cert:
