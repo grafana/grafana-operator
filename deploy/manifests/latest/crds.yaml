@@ -5005,6 +5005,8 @@ spec:
                     properties:
                       enabled:
                         type: boolean
+                      noProxy:
+                        type: string
                       secureUrl:
                         type: string
                       url:

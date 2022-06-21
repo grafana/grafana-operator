@@ -126,6 +126,7 @@ type GrafanaHttpProxy struct {
 	Enabled   bool   `json:"enabled"`
 	URL       string `json:"url,omitempty"`
 	SecureURL string `json:"secureUrl,omitempty"`
+	NoProxy   string `json:"noProxy,omitempty"`
 }
 
 // GrafanaIngress provides a means to configure the ingress created
