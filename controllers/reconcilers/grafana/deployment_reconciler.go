@@ -44,9 +44,8 @@ func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafan
 
 	deployment := model.GetGrafanaDeployment(cr, scheme)
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, deployment, func() error {
-		deployment.Labels = getDeploymentLabels(cr)
-		deployment.Spec = getDeploymentSpec(cr, deployment.Annotations, deployment.Name, scheme, vars)
-		return nil
+		deployment.Spec = getDeploymentSpec(cr, deployment.Name, scheme, vars)
+		return v1beta1.Merge(deployment, cr.Spec.Deployment)
 	})
 
 	if err != nil {
@@ -56,41 +55,7 @@ func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafan
 	return v1beta1.OperatorStageResultSuccess, nil
 }
 
-func getReplicas(cr *v1beta1.Grafana) *int32 {
-	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Replicas != nil {
-		return cr.Spec.Deployment.Replicas
-	}
-
-	return nil
-}
-
-func getTerminationGracePeriod(cr *v1beta1.Grafana) *int64 {
-	if cr.Spec.Deployment != nil && cr.Spec.Deployment.TerminationGracePeriodSeconds != nil {
-		return cr.Spec.Deployment.TerminationGracePeriodSeconds
-	}
-	return nil
-}
-
-func getInitResources(cr *v1beta1.Grafana) v1.ResourceRequirements {
-	if cr.Spec.InitResources != nil {
-		return *cr.Spec.InitResources
-	}
-	return v1.ResourceRequirements{
-		Requests: v1.ResourceList{
-			v1.ResourceMemory: resource.MustParse(InitMemoryRequest),
-			v1.ResourceCPU:    resource.MustParse(InitCpuRequest),
-		},
-		Limits: v1.ResourceList{
-			v1.ResourceMemory: resource.MustParse(InitMemoryLimit),
-			v1.ResourceCPU:    resource.MustParse(InitCpuLimit),
-		},
-	}
-}
-
-func getResources(cr *v1beta1.Grafana) v1.ResourceRequirements {
-	if cr.Spec.GrafanaContainer != nil && cr.Spec.GrafanaContainer.Resources != nil {
-		return *cr.Spec.GrafanaContainer.Resources
-	}
+func getResources() v1.ResourceRequirements {
 	return v1.ResourceRequirements{
 		Requests: v1.ResourceList{
 			v1.ResourceMemory: resource.MustParse(MemoryRequest),
@@ -103,30 +68,6 @@ func getResources(cr *v1beta1.Grafana) v1.ResourceRequirements {
 	}
 }
 
-func getAffinities(cr *v1beta1.Grafana) *v1.Affinity {
-	var affinity = v1.Affinity{}
-	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Affinity != nil {
-		affinity = *cr.Spec.Deployment.Affinity
-	}
-	return &affinity
-}
-
-func getSecurityContext(cr *v1beta1.Grafana) *v1.PodSecurityContext {
-	var securityContext = v1.PodSecurityContext{}
-	if cr.Spec.Deployment != nil && cr.Spec.Deployment.SecurityContext != nil {
-		securityContext = *cr.Spec.Deployment.SecurityContext
-	}
-	return &securityContext
-}
-
-func getContainerSecurityContext(cr *v1beta1.Grafana) *v1.SecurityContext {
-	var containerSecurityContext = v1.SecurityContext{}
-	if cr.Spec.Deployment != nil && cr.Spec.Deployment.ContainerSecurityContext != nil {
-		containerSecurityContext = *cr.Spec.Deployment.ContainerSecurityContext
-	}
-	return &containerSecurityContext
-}
-
 func getRollingUpdateStrategy() *v12.RollingUpdateDeployment {
 	var maxUnaval intstr.IntOrString = intstr.FromInt(25)
 	var maxSurge intstr.IntOrString = intstr.FromInt(25)
@@ -136,62 +77,8 @@ func getRollingUpdateStrategy() *v12.RollingUpdateDeployment {
 	}
 }
 
-func getDeploymentStrategy(cr *v1beta1.Grafana) v12.DeploymentStrategy {
-	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Strategy != nil {
-		return *cr.Spec.Deployment.Strategy
-	}
-
-	return v12.DeploymentStrategy{
-		Type:          "RollingUpdate",
-		RollingUpdate: getRollingUpdateStrategy(),
-	}
-}
-
-func getDeploymentLabels(cr *v1beta1.Grafana) map[string]string {
-	var labels = map[string]string{}
-	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Labels != nil {
-		labels = cr.Spec.Deployment.Labels
-	}
-	return labels
-}
-
-func getPodLabels(cr *v1beta1.Grafana) map[string]string {
-	var labels = map[string]string{}
-	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Labels != nil {
-		labels = cr.Spec.Deployment.Labels
-	}
-	labels["app"] = cr.Name
-	return labels
-}
-
-func getNodeSelectors(cr *v1beta1.Grafana) map[string]string {
-	var nodeSelector = map[string]string{}
-
-	if cr.Spec.Deployment != nil && cr.Spec.Deployment.NodeSelector != nil {
-		nodeSelector = cr.Spec.Deployment.NodeSelector
-	}
-	return nodeSelector
-}
-
-func getPodPriorityClassName(cr *v1beta1.Grafana) string {
-	if cr.Spec.Deployment != nil {
-		return cr.Spec.Deployment.PriorityClassName
-	}
-	return ""
-}
-
-func getTolerations(cr *v1beta1.Grafana) []v1.Toleration {
-	tolerations := []v1.Toleration{}
-
-	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Tolerations != nil {
-		tolerations = append(tolerations, cr.Spec.Deployment.Tolerations...)
-	}
-	return tolerations
-}
-
 func getVolumes(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.Volume { // nolint
 	var volumes []v1.Volume // nolint
-	var volumeOptional = true
 
 	config := model.GetGrafanaConfigMap(cr, scheme)
 
@@ -215,66 +102,14 @@ func getVolumes(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.Volume { // no
 		},
 	})
 
-	// Data volume
-	if cr.UsePersistentVolume() {
-		pvc := model.GetGrafanaDataPVC(cr, scheme)
+	volumes = append(volumes, v1.Volume{
+		Name: config2.GrafanaDataVolumeName,
+		VolumeSource: v1.VolumeSource{
+			EmptyDir: &v1.EmptyDirVolumeSource{},
+		},
+	})
 
-		volumes = append(volumes, v1.Volume{
-			Name: config2.GrafanaDataVolumeName,
-			VolumeSource: v1.VolumeSource{
-				PersistentVolumeClaim: &v1.PersistentVolumeClaimVolumeSource{
-					ClaimName: pvc.Name,
-				},
-			},
-		})
-	} else {
-		volumes = append(volumes, v1.Volume{
-			Name: config2.GrafanaDataVolumeName,
-			VolumeSource: v1.VolumeSource{
-				EmptyDir: &v1.EmptyDirVolumeSource{},
-			},
-		})
-	}
-
-	// Extra volumes for secrets
-	for _, secret := range cr.Spec.Secrets {
-		volumeName := fmt.Sprintf("secret-%s", secret)
-		volumes = append(volumes, v1.Volume{
-			Name: volumeName,
-			VolumeSource: v1.VolumeSource{
-				Secret: &v1.SecretVolumeSource{
-					SecretName: secret,
-					Optional:   &volumeOptional,
-				},
-			},
-		})
-	}
-
-	// Extra volumes for config maps
-	for _, configmap := range cr.Spec.ConfigMaps {
-		volumeName := fmt.Sprintf("configmap-%s", configmap)
-		volumes = append(volumes, v1.Volume{
-			Name: volumeName,
-			VolumeSource: v1.VolumeSource{
-				ConfigMap: &v1.ConfigMapVolumeSource{
-					LocalObjectReference: v1.LocalObjectReference{
-						Name: configmap,
-					},
-				},
-			},
-		})
-	}
 	return volumes
-}
-
-func getEnvFrom(cr *v1beta1.Grafana) []v1.EnvFromSource {
-	var envFrom []v1.EnvFromSource
-	if cr.Spec.Deployment != nil && cr.Spec.Deployment.EnvFrom != nil {
-		for _, v := range cr.Spec.Deployment.EnvFrom {
-			envFrom = append(envFrom, *v.DeepCopy())
-		}
-	}
-	return envFrom
 }
 
 func getVolumeMounts(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.VolumeMount {
@@ -297,22 +132,6 @@ func getVolumeMounts(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.VolumeMou
 		MountPath: config2.GrafanaLogsPath,
 	})
 
-	for _, secret := range cr.Spec.Secrets {
-		mountName := fmt.Sprintf("secret-%s", secret)
-		mounts = append(mounts, v1.VolumeMount{
-			Name:      mountName,
-			MountPath: config2.SecretsMountDir + secret,
-		})
-	}
-
-	for _, configmap := range cr.Spec.ConfigMaps {
-		mountName := fmt.Sprintf("configmap-%s", configmap)
-		mounts = append(mounts, v1.VolumeMount{
-			Name:      mountName,
-			MountPath: config2.ConfigMapsMountDir + configmap,
-		})
-	}
-
 	return mounts
 }
 
@@ -320,16 +139,11 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 	var containers []v1.Container // nolint
 	var image string
 
-	if cr.Spec.GrafanaContainer != nil && cr.Spec.GrafanaContainer.BaseImage != "" {
-		image = cr.Spec.GrafanaContainer.BaseImage
-	} else {
-		image = fmt.Sprintf("%s:%s", config2.GrafanaImage, config2.GrafanaVersion)
-	}
-
+	image = fmt.Sprintf("%s:%s", config2.GrafanaImage, config2.GrafanaVersion)
 	plugins := model.GetPluginsConfigMap(cr, scheme)
 
 	// env var to restart containers if plugins change
-	var t bool = true
+	var t = true
 	var envVars []v1.EnvVar
 	envVars = append(envVars, v1.EnvVar{
 		Name: "PLUGINS_HASH",
@@ -369,52 +183,47 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 			},
 		},
 		Env:                      envVars,
-		EnvFrom:                  getEnvFrom(cr),
-		Resources:                getResources(cr),
+		Resources:                getResources(),
 		VolumeMounts:             getVolumeMounts(cr, scheme),
 		TerminationMessagePath:   "/dev/termination-log",
 		TerminationMessagePolicy: "File",
 		ImagePullPolicy:          "IfNotPresent",
-		SecurityContext:          getContainerSecurityContext(cr),
 	})
 
 	// Use auto generated admin account?
-	if !cr.SkipCreateAdminAccount() {
-		secret := model.GetGrafanaAdminSecret(cr, scheme)
+	secret := model.GetGrafanaAdminSecret(cr, scheme)
 
-		for i := 0; i < len(containers); i++ {
-			containers[i].Env = append(containers[i].Env, v1.EnvVar{
-				Name: config2.GrafanaAdminUserEnvVar,
-				ValueFrom: &v1.EnvVarSource{
-					SecretKeyRef: &v1.SecretKeySelector{
-						LocalObjectReference: v1.LocalObjectReference{
-							Name: secret.Name,
-						},
-						Key: config2.GrafanaAdminUserEnvVar,
+	for i := 0; i < len(containers); i++ {
+		containers[i].Env = append(containers[i].Env, v1.EnvVar{
+			Name: config2.GrafanaAdminUserEnvVar,
+			ValueFrom: &v1.EnvVarSource{
+				SecretKeyRef: &v1.SecretKeySelector{
+					LocalObjectReference: v1.LocalObjectReference{
+						Name: secret.Name,
 					},
+					Key: config2.GrafanaAdminUserEnvVar,
 				},
-			})
-			containers[i].Env = append(containers[i].Env, v1.EnvVar{
-				Name: config2.GrafanaAdminPasswordEnvVar,
-				ValueFrom: &v1.EnvVarSource{
-					SecretKeyRef: &v1.SecretKeySelector{
-						LocalObjectReference: v1.LocalObjectReference{
-							Name: secret.Name,
-						},
-						Key: config2.GrafanaAdminPasswordEnvVar,
+			},
+		})
+		containers[i].Env = append(containers[i].Env, v1.EnvVar{
+			Name: config2.GrafanaAdminPasswordEnvVar,
+			ValueFrom: &v1.EnvVarSource{
+				SecretKeyRef: &v1.SecretKeySelector{
+					LocalObjectReference: v1.LocalObjectReference{
+						Name: secret.Name,
 					},
-				}})
-		}
+					Key: config2.GrafanaAdminPasswordEnvVar,
+				},
+			}})
 	}
 
 	return containers
 }
 
-func getDeploymentSpec(cr *v1beta1.Grafana, annotations map[string]string, deploymentName string, scheme *runtime.Scheme, vars *v1beta1.OperatorReconcileVars) v12.DeploymentSpec {
+func getDeploymentSpec(cr *v1beta1.Grafana, deploymentName string, scheme *runtime.Scheme, vars *v1beta1.OperatorReconcileVars) v12.DeploymentSpec {
 	sa := model.GetGrafanaServiceAccount(cr, scheme)
 
 	return v12.DeploymentSpec{
-		Replicas: getReplicas(cr),
 		Selector: &v13.LabelSelector{
 			MatchLabels: map[string]string{
 				"app": cr.Name,
@@ -422,21 +231,16 @@ func getDeploymentSpec(cr *v1beta1.Grafana, annotations map[string]string, deplo
 		},
 		Template: v1.PodTemplateSpec{
 			ObjectMeta: v13.ObjectMeta{
-				Name:   deploymentName,
-				Labels: getPodLabels(cr),
+				Name: deploymentName,
+				Labels: map[string]string{
+					"app": cr.Name,
+				},
 			},
 			Spec: v1.PodSpec{
-				NodeSelector:                  getNodeSelectors(cr),
-				Tolerations:                   getTolerations(cr),
-				Affinity:                      getAffinities(cr),
-				SecurityContext:               getSecurityContext(cr),
-				Volumes:                       getVolumes(cr, scheme),
-				Containers:                    getContainers(cr, scheme, vars),
-				ServiceAccountName:            sa.Name,
-				TerminationGracePeriodSeconds: getTerminationGracePeriod(cr),
-				PriorityClassName:             getPodPriorityClassName(cr),
+				Volumes:            getVolumes(cr, scheme),
+				Containers:         getContainers(cr, scheme, vars),
+				ServiceAccountName: sa.Name,
 			},
 		},
-		Strategy: getDeploymentStrategy(cr),
 	}
 }
