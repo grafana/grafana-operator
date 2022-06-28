@@ -32,17 +32,14 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 	service := model.GetGrafanaService(cr, scheme)
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, service, func() error {
-		service.Labels = getServiceLabels(cr)
-		service.Annotations = getServiceAnnotations(cr, service.Annotations)
 		service.Spec = v1.ServiceSpec{
-			Ports: getServicePorts(cr, service),
+			Ports: getServicePorts(cr),
 			Selector: map[string]string{
 				"app": cr.Name,
 			},
-			ClusterIP: getClusterIP(cr, service),
-			Type:      getServiceType(cr),
+			Type: v1.ServiceTypeClusterIP,
 		}
-		return nil
+		return v1beta1.Merge(service, cr.Spec.Service)
 	})
 
 	if err != nil {
@@ -56,41 +53,6 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 	}
 
 	return v1beta1.OperatorStageResultSuccess, nil
-}
-
-func getServiceLabels(cr *v1beta1.Grafana) map[string]string {
-	if cr.Spec.Service == nil {
-		return nil
-	}
-	return cr.Spec.Service.Labels
-}
-
-func getServiceAnnotations(cr *v1beta1.Grafana, existing map[string]string) map[string]string {
-	if cr.Spec.Service == nil {
-		return existing
-	}
-
-	return model.MergeAnnotations(cr.Spec.Service.Annotations, existing)
-}
-
-func getServiceType(cr *v1beta1.Grafana) v1.ServiceType {
-	if cr.Spec.Service == nil {
-		return v1.ServiceTypeClusterIP
-	}
-	if cr.Spec.Service.Type == "" {
-		return v1.ServiceTypeClusterIP
-	}
-	return cr.Spec.Service.Type
-}
-
-func getClusterIP(cr *v1beta1.Grafana, existing *v1.Service) string {
-	if existing.Spec.ClusterIP != "" {
-		return existing.Spec.ClusterIP
-	}
-	if cr.Spec.Service == nil {
-		return ""
-	}
-	return cr.Spec.Service.ClusterIP
 }
 
 func GetGrafanaPort(cr *v1beta1.Grafana) int {
@@ -110,7 +72,7 @@ func GetGrafanaPort(cr *v1beta1.Grafana) int {
 	return port
 }
 
-func getServicePorts(cr *v1beta1.Grafana, currentState *v1.Service) []v1.ServicePort {
+func getServicePorts(cr *v1beta1.Grafana) []v1.ServicePort {
 	intPort := int32(GetGrafanaPort(cr))
 
 	defaultPorts := []v1.ServicePort{
@@ -120,33 +82,6 @@ func getServicePorts(cr *v1beta1.Grafana, currentState *v1.Service) []v1.Service
 			Port:       intPort,
 			TargetPort: intstr.FromString("grafana-http"),
 		},
-	}
-
-	if cr.Spec.Service == nil {
-		return defaultPorts
-	}
-
-	// Re-assign existing node port
-	if cr.Spec.Service != nil &&
-		currentState != nil {
-		for _, port := range currentState.Spec.Ports {
-			if port.Name == config.GrafanaHttpPortName {
-				defaultPorts[0].NodePort = port.NodePort
-			}
-		}
-	}
-
-	if cr.Spec.Service.Ports == nil {
-		return defaultPorts
-	}
-
-	// Don't allow overriding the default port but allow adding
-	// additional ports
-	for _, port := range cr.Spec.Service.Ports {
-		if port.Name == config.GrafanaHttpPortName || port.Port == intPort {
-			continue
-		}
-		defaultPorts = append(defaultPorts, port)
 	}
 
 	return defaultPorts

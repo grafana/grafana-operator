@@ -11,7 +11,6 @@ import (
 	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type AdminSecretReconciler struct {
@@ -25,13 +24,6 @@ func NewAdminSecretReconciler(client client.Client) reconcilers.OperatorGrafanaR
 }
 
 func (r *AdminSecretReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
-	logger := log.FromContext(ctx)
-
-	if cr.SkipCreateAdminAccount() {
-		logger.Info("skip creating admin account")
-		return v1beta1.OperatorStageResultSuccess, nil
-	}
-
 	secret := model.GetGrafanaAdminSecret(cr, scheme)
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, secret, func() error {
 		secret.Data = getData(cr, secret)

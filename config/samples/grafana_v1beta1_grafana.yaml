@@ -8,10 +8,6 @@ metadata:
 spec:
   client:
     preferIngress: true
-  ingress:
-    metadata:
-      labels:
-        test: asdf
   config:
     log:
       mode: "console"

@@ -55,44 +55,16 @@ type OperatorReconcileVars struct {
 
 // GrafanaSpec defines the desired state of Grafana
 type GrafanaSpec struct {
-	Config           GrafanaConfig            `json:"config"`
-	Containers       []v1.Container           `json:"containers,omitempty"`
-	Ingress          *IngressNetworkingV1     `json:"ingress,omitempty"`
-	InitResources    *v1.ResourceRequirements `json:"initResources,omitempty"`
-	Secrets          []string                 `json:"secrets,omitempty"`
-	ConfigMaps       []string                 `json:"configMaps,omitempty"`
-	Service          *GrafanaService          `json:"service,omitempty"`
-	Deployment       *GrafanaDeployment       `json:"deployment,omitempty"`
-	ServiceAccount   *GrafanaServiceAccount   `json:"serviceAccount,omitempty"`
-	Client           *GrafanaClient           `json:"client,omitempty"`
-	DataStorage      *GrafanaDataStorage      `json:"dataStorage,omitempty"`
-	Jsonnet          *JsonnetConfig           `json:"jsonnet,omitempty"`
-	GrafanaContainer *GrafanaContainer        `json:"grafanaContainer,omitempty"`
-}
-
-type GrafanaContainer struct {
-	BaseImage         string                   `json:"baseImage,omitempty"`
-	InitImage         string                   `json:"initImage,omitempty"`
-	Resources         *v1.ResourceRequirements `json:"resources,omitempty"`
-	ReadinessProbe    *v1.Probe                `json:"readinessProbe,omitempty"`
-	LivenessProbeSpec *v1.Probe                `json:"livenessProbe,omitempty"`
-}
-
-type ReadinessProbeSpec struct {
-	InitialDelaySeconds *int32       `json:"initialDelaySeconds,omitempty"`
-	TimeOutSeconds      *int32       `json:"timeoutSeconds,omitempty"`
-	PeriodSeconds       *int32       `json:"periodSeconds,omitempty"`
-	SuccessThreshold    *int32       `json:"successThreshold,omitempty"`
-	FailureThreshold    *int32       `json:"failureThreshold,omitempty"`
-	Scheme              v1.URIScheme `json:"scheme,omitempty"`
-}
-type LivenessProbeSpec struct {
-	InitialDelaySeconds *int32       `json:"initialDelaySeconds,omitempty"`
-	TimeOutSeconds      *int32       `json:"timeoutSeconds,omitempty"`
-	PeriodSeconds       *int32       `json:"periodSeconds,omitempty"`
-	SuccessThreshold    *int32       `json:"successThreshold,omitempty"`
-	FailureThreshold    *int32       `json:"failureThreshold,omitempty"`
-	Scheme              v1.URIScheme `json:"scheme,omitempty"`
+	Config                GrafanaConfig            `json:"config"`
+	Containers            []v1.Container           `json:"containers,omitempty"`
+	Ingress               *IngressNetworkingV1     `json:"ingress,omitempty"`
+	Route                 *RouteOpenshiftV1        `json:"route,omitempty"`
+	Service               *ServiceV1               `json:"service,omitempty"`
+	Deployment            *DeploymentV1            `json:"deployment,omitempty"`
+	PersistentVolumeClaim *PersistentVolumeClaimV1 `json:"persistentVolumeClaim,omitempty"`
+	ServiceAccount        *ServiceAccountV1        `json:"serviceAccount,omitempty"`
+	Client                *GrafanaClient           `json:"client,omitempty"`
+	Jsonnet               *JsonnetConfig           `json:"jsonnet,omitempty"`
 }
 
 type JsonnetConfig struct {
@@ -685,21 +657,6 @@ type GrafanaList struct {
 
 func init() {
 	SchemeBuilder.Register(&Grafana{}, &GrafanaList{})
-}
-
-func (r *Grafana) SkipCreateAdminAccount() bool {
-	if r.Spec.Deployment != nil && r.Spec.Deployment.SkipCreateAdminAccount != nil && *r.Spec.Deployment.SkipCreateAdminAccount {
-		return true
-	}
-	return false
-}
-
-func (r *Grafana) UsePersistentVolume() bool {
-	return r.Spec.DataStorage != nil
-}
-
-func (r *Grafana) SkipCreateServiceAccount() bool {
-	return r.Spec.ServiceAccount != nil && r.Spec.ServiceAccount.Skip != nil && *r.Spec.ServiceAccount.Skip
 }
 
 func (r *Grafana) PreferIngress() bool {
