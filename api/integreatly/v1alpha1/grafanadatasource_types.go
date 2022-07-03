@@ -87,6 +87,7 @@ type GrafanaDataSourceFields struct {
 // GrafanaDataSourceJsonData contains the most common json options
 // See https://grafana.com/docs/administration/provisioning/#datasources
 type GrafanaDataSourceJsonData struct {
+	QueryTimeout            string `json:"queryTimeout,omitempty"`
 	OauthPassThru           bool   `json:"oauthPassThru,omitempty"`
 	TlsAuth                 bool   `json:"tlsAuth,omitempty"`
 	TlsAuthWithCACert       bool   `json:"tlsAuthWithCACert,omitempty"`
