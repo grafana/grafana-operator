@@ -17,9 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
-	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -77,62 +75,6 @@ type GrafanaClient struct {
 	TimeoutSeconds *int `json:"timeout,omitempty"`
 	// +nullable
 	PreferIngress *bool `json:"preferIngress,omitempty"`
-}
-
-// GrafanaService provides a means to configure the service
-type GrafanaService struct {
-	Annotations map[string]string `json:"annotations,omitempty"`
-	Labels      map[string]string `json:"labels,omitempty"`
-	Type        v1.ServiceType    `json:"type,omitempty"`
-	Ports       []v1.ServicePort  `json:"ports,omitempty"`
-	ClusterIP   string            `json:"clusterIP,omitempty"`
-}
-
-// GrafanaDataStorage provides a means to configure the grafana data storage
-type GrafanaDataStorage struct {
-	Annotations map[string]string               `json:"annotations,omitempty"`
-	Labels      map[string]string               `json:"labels,omitempty"`
-	AccessModes []v1.PersistentVolumeAccessMode `json:"accessModes,omitempty"`
-	Size        resource.Quantity               `json:"size,omitempty"`
-	Class       string                          `json:"class,omitempty"`
-}
-
-type GrafanaServiceAccount struct {
-	Skip             *bool                     `json:"skip,omitempty"`
-	Annotations      map[string]string         `json:"annotations,omitempty"`
-	Labels           map[string]string         `json:"labels,omitempty"`
-	ImagePullSecrets []v1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
-}
-
-// GrafanaDeployment provides a means to configure the deployment
-type GrafanaDeployment struct {
-	Labels map[string]string `json:"labels,omitempty"`
-	// +nullable
-	Replicas                      *int32                 `json:"replicas,omitempty"`
-	NodeSelector                  map[string]string      `json:"nodeSelector,omitempty"`
-	Tolerations                   []v1.Toleration        `json:"tolerations,omitempty"`
-	Affinity                      *v1.Affinity           `json:"affinity,omitempty"`
-	SecurityContext               *v1.PodSecurityContext `json:"securityContext,omitempty"`
-	ContainerSecurityContext      *v1.SecurityContext    `json:"containerSecurityContext,omitempty"`
-	TerminationGracePeriodSeconds *int64                 `json:"terminationGracePeriodSeconds,omitempty"`
-	EnvFrom                       []v1.EnvFromSource     `json:"envFrom,omitempty"`
-	Env                           []v1.EnvVar            `json:"env,omitempty"`
-	// +nullable
-	SkipCreateAdminAccount *bool  `json:"skipCreateAdminAccount,omitempty"`
-	PriorityClassName      string `json:"priorityClassName,omitempty"`
-	// +nullable
-	HostNetwork       *bool                      `json:"hostNetwork,omitempty"`
-	ExtraVolumes      []v1.Volume                `json:"extraVolumes,omitempty"`
-	ExtraVolumeMounts []v1.VolumeMount           `json:"extraVolumeMounts,omitempty"`
-	Strategy          *appsv1.DeploymentStrategy `json:"strategy,omitempty"`
-	HttpProxy         *GrafanaHttpProxy          `json:"httpProxy,omitempty"`
-}
-
-// GrafanaHttpProxy provides a means to configure the Grafana deployment
-// to use an HTTP(S) proxy when making requests and resolving plugins.
-type GrafanaHttpProxy struct {
-	Enabled bool   `json:"enabled"`
-	URL     string `json:"url,omitempty"`
 }
 
 // GrafanaConfig is the configuration for grafana

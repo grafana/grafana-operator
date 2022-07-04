@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"github.com/go-logr/logr"
+	"github.com/grafana-operator/grafana-operator-experimental/controllers/metrics"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/reconcilers"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/reconcilers/grafana"
 	v1 "k8s.io/api/apps/v1"
@@ -55,6 +56,8 @@ type GrafanaReconciler struct {
 
 func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	controllerLog := log.FromContext(ctx)
+	
+	metrics.GrafanaReconciles.Inc()
 
 	grafana := &grafanav1beta1.Grafana{}
 	err := r.Get(ctx, req.NamespacedName, grafana)
