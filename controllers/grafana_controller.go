@@ -56,8 +56,6 @@ type GrafanaReconciler struct {
 
 func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	controllerLog := log.FromContext(ctx)
-	
-	metrics.GrafanaReconciles.Inc()
 
 	grafana := &grafanav1beta1.Grafana{}
 	err := r.Get(ctx, req.NamespacedName, grafana)
@@ -71,6 +69,8 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		controllerLog.Error(err, "error getting grafana cr")
 		return ctrl.Result{}, err
 	}
+
+	metrics.GrafanaReconciles.WithLabelValues(grafana.Name).Inc()
 
 	var finished = true
 	stages := getInstallationStages()
@@ -92,6 +92,8 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		if err != nil {
 			controllerLog.Error(err, "reconciler error in stage", "stage", stage)
 			nextStatus.LastMessage = err.Error()
+
+			metrics.GrafanaFailedReconciles.WithLabelValues(grafana.Name, string(stage)).Inc()
 		} else {
 			nextStatus.LastMessage = ""
 		}

@@ -56,7 +56,7 @@ func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Gr
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, ingress, func() error {
 		ingress.Spec = getIngressSpec(cr, scheme)
-		return v1beta1.Merge(&ingress, &cr.Spec.Ingress)
+		return v1beta1.Merge(ingress, cr.Spec.Ingress)
 	})
 
 	if err != nil {
@@ -163,6 +163,7 @@ func getIngressSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) v1.IngressSpec 
 		assignedPort.Name = port.StrVal
 	}
 
+	pathType := v1.PathTypePrefix
 	return v1.IngressSpec{
 		Rules: []v1.IngressRule{
 			{
@@ -170,7 +171,8 @@ func getIngressSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) v1.IngressSpec 
 					HTTP: &v1.HTTPIngressRuleValue{
 						Paths: []v1.HTTPIngressPath{
 							{
-								Path: "/",
+								Path:     "/",
+								PathType: &pathType,
 								Backend: v1.IngressBackend{
 									Service: &v1.IngressServiceBackend{
 										Name: service.Name,
