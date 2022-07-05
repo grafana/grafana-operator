@@ -37,6 +37,7 @@ type GrafanaDashboardSpec struct {
 
 // GrafanaDashboardStatus defines the observed state of GrafanaDashboard
 type GrafanaDashboardStatus struct {
+	UIDforInstance map[string]string `json:"UIDforInstance,omitempty"`
 }
 
 //+kubebuilder:object:root=true

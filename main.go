@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	"github.com/go-logr/logr"
 	discovery2 "k8s.io/client-go/discovery"
 	"os"
 
@@ -79,7 +80,7 @@ func main() {
 		LeaderElectionID:       "f75f3bba.integreatly.org",
 	})
 	if err != nil {
-		setupLog.Error(err, "unable to start manager")
+		setupLog.Error(err, "unable to create new manager")
 		os.Exit(1)
 	}
 
@@ -94,6 +95,7 @@ func main() {
 	if err = (&controllers.GrafanaDashboardReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+		Log:    logr.Logger{},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDashboard")
 		os.Exit(1)
