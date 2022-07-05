@@ -3,7 +3,6 @@ package grafana
 import (
 	"context"
 	"fmt"
-
 	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/model"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/reconcilers"
@@ -43,10 +42,10 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 	}
 
 	if openshift {
-		logger.Info("platform is OpenShift, creating Route")
+		logger.Info("reconciling route", "platform", "openshift")
 		return r.reconcileRoute(ctx, cr, status, vars, scheme)
 	} else {
-		logger.Info("platform is Kubernetes, creating Ingress")
+		logger.Info("reconciling ingress", "platform", "kubernetes")
 		return r.reconcileIngress(ctx, cr, status, vars, scheme)
 	}
 }

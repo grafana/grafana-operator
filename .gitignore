@@ -24,3 +24,5 @@ vendor
 *.swp
 *.swo
 *~
+
+.vscode/

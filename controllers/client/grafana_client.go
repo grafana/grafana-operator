@@ -3,50 +3,19 @@ package client
 import (
 	"context"
 	"crypto/tls"
-	"encoding/json"
 	"errors"
+	"net/http"
+	"net/url"
+	"time"
+
 	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/config"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/model"
-	"net/http"
+	grapi "github.com/grafana/grafana-api-golang-client"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"time"
 )
 
-type GrafanaRequest struct {
-	Dashboard  json.RawMessage `json:"dashboard"`
-	FolderId   int64           `json:"folderId"`
-	FolderName string          `json:"folderName"`
-	Overwrite  bool            `json:"overwrite"`
-}
-
-type GrafanaResponse struct {
-	ID         *uint   `json:"id"`
-	OrgID      *uint   `json:"orgId"`
-	Message    *string `json:"message"`
-	Slug       *string `json:"slug"`
-	Version    *int    `json:"version"`
-	Status     *string `json:"resp"`
-	UID        *string `json:"uid"`
-	URL        *string `json:"url"`
-	FolderId   *int64  `json:"folderId"`
-	FolderName string  `json:"folderName"`
-}
-
-type GrafanaClient interface {
-	CreateOrUpdateDashboard(dashboard *v1beta1.GrafanaDashboard) error
-}
-
-type GrafanaClientImpl struct {
-	kubeClient client.Client
-	httpClient *http.Client
-	username   string
-	password   string
-	url        string
-	ctx        context.Context
-}
-
-func NewGrafanaClient(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (GrafanaClient, error) {
+func NewGrafanaClient(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (*grapi.Client, error) {
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
@@ -88,18 +57,26 @@ func NewGrafanaClient(ctx context.Context, c client.Client, grafana *v1beta1.Gra
 		return nil, errors.New("grafana admin secret does not contain password")
 	}
 
-	return &GrafanaClientImpl{
-		url:        grafana.Status.AdminUrl,
-		username:   username,
-		password:   password,
-		kubeClient: c,
-		httpClient: &http.Client{
+	userinfo := url.UserPassword(username, password)
+
+	clientConfig := grapi.Config{
+		APIKey:      "",
+		BasicAuth:   userinfo,
+		HTTPHeaders: nil,
+		Client: &http.Client{
 			Transport: transport,
 			Timeout:   time.Second * timeoutSeconds,
 		},
-	}, nil
-}
+		// TODO populate me
+		OrgID: 0,
+		// TODO populate me
+		NumRetries: 0,
+	}
 
-func (r *GrafanaClientImpl) CreateOrUpdateDashboard(dashboard *v1beta1.GrafanaDashboard) error {
-	return nil
+	grafanaClient, err := grapi.New(grafana.Status.AdminUrl, clientConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return grafanaClient, nil
 }

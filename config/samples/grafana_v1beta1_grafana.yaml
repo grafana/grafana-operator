@@ -4,7 +4,7 @@ kind: Grafana
 metadata:
   name: grafana-a
   labels:
-    dashboards: a
+    dashboards: "grafana-a"
 spec:
   client:
     preferIngress: true

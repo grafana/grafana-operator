@@ -63,6 +63,41 @@ type GrafanaSpec struct {
 	PersistentVolumeClaim *PersistentVolumeClaimV1     `json:"persistentVolumeClaim,omitempty"`
 	ServiceAccount        *ServiceAccountV1            `json:"serviceAccount,omitempty"`
 	Client                *GrafanaClient               `json:"client,omitempty"`
+	InitResources         *v1.ResourceRequirements     `json:"initResources,omitempty"`
+	Secrets               []string                     `json:"secrets,omitempty"`
+	ConfigMaps            []string                     `json:"configMaps,omitempty"`
+	Jsonnet               *JsonnetConfig               `json:"jsonnet,omitempty"`
+	GrafanaContainer      *GrafanaContainer            `json:"grafanaContainer,omitempty"`
+	ManagedNamespaces     []string                     `json:"managedNamespaces,omitempty"`
+}
+
+type GrafanaContainer struct {
+	BaseImage         string                   `json:"baseImage,omitempty"`
+	InitImage         string                   `json:"initImage,omitempty"`
+	Resources         *v1.ResourceRequirements `json:"resources,omitempty"`
+	ReadinessProbe    *v1.Probe                `json:"readinessProbe,omitempty"`
+	LivenessProbeSpec *v1.Probe                `json:"livenessProbe,omitempty"`
+}
+
+type ReadinessProbeSpec struct {
+	InitialDelaySeconds *int32       `json:"initialDelaySeconds,omitempty"`
+	TimeOutSeconds      *int32       `json:"timeoutSeconds,omitempty"`
+	PeriodSeconds       *int32       `json:"periodSeconds,omitempty"`
+	SuccessThreshold    *int32       `json:"successThreshold,omitempty"`
+	FailureThreshold    *int32       `json:"failureThreshold,omitempty"`
+	Scheme              v1.URIScheme `json:"scheme,omitempty"`
+}
+type LivenessProbeSpec struct {
+	InitialDelaySeconds *int32       `json:"initialDelaySeconds,omitempty"`
+	TimeOutSeconds      *int32       `json:"timeoutSeconds,omitempty"`
+	PeriodSeconds       *int32       `json:"periodSeconds,omitempty"`
+	SuccessThreshold    *int32       `json:"successThreshold,omitempty"`
+	FailureThreshold    *int32       `json:"failureThreshold,omitempty"`
+	Scheme              v1.URIScheme `json:"scheme,omitempty"`
+}
+
+type JsonnetConfig struct {
+	LibraryLabelSelector *metav1.LabelSelector `json:"libraryLabelSelector,omitempty"`
 }
 
 // GrafanaClient contains the Grafana API client settings
@@ -88,9 +123,8 @@ type GrafanaStatus struct {
 type Grafana struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec   GrafanaSpec   `json:"spec,omitempty"`
-	Status GrafanaStatus `json:"status,omitempty"`
+	Spec              GrafanaSpec   `json:"spec,omitempty"`
+	Status            GrafanaStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
