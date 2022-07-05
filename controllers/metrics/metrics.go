@@ -6,15 +6,22 @@ import (
 )
 
 var (
-	GrafanaReconciles = prometheus.NewCounter(
-		prometheus.CounterOpts{
-			Name:      "reconciles",
-			Namespace: "grafana_operator",
-			Subsystem: "controller",
-			Help:      "counts the number of reconciles",
-		})
+	GrafanaReconciles = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "grafana_operator",
+		Subsystem: "reconciler",
+		Name:      "reconciles",
+		Help:      "reconciles per Grafana instance",
+	}, []string{"instance_name"})
+
+	GrafanaFailedReconciles = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "grafana_operator",
+		Subsystem: "reconciler",
+		Name:      "failed_reconciles",
+		Help:      "failed reconciles per Grafana instance and stage",
+	}, []string{"instance_name", "stage"})
 )
 
 func init() {
 	metrics.Registry.MustRegister(GrafanaReconciles)
+	metrics.Registry.MustRegister(GrafanaFailedReconciles)
 }
