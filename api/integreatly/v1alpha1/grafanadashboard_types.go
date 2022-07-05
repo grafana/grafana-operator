@@ -134,7 +134,7 @@ func (d *GrafanaDashboard) Hash() string {
 	}
 
 	if d.Status.Content != "" {
-		io.WriteString(hash, d.Status.Content)
+		io.WriteString(hash, d.Status.Content) //nolint
 	}
 
 	return fmt.Sprintf("%x", hash.Sum(nil))

@@ -40,7 +40,7 @@ type GrafanaSpec struct {
 	ReadinessProbeSpec         *ReadinessProbeSpec      `json:"readinessProbeSpec,omitempty"`
 
 	// DashboardContentCacheDuration sets a default for when a `GrafanaDashboard` resource doesn't specify a `contentCacheDuration`.
-	// If left unset or 0 the default behaviour is to cache indefinitely.
+	// If left unset or 0 the default behavior is to cache indefinitely.
 	DashboardContentCacheDuration *metav1.Duration `json:"dashboardContentCacheDuration,omitempty"`
 }
 
@@ -130,6 +130,7 @@ type GrafanaHttpProxy struct {
 	Enabled   bool   `json:"enabled"`
 	URL       string `json:"url,omitempty"`
 	SecureURL string `json:"secureUrl,omitempty"`
+	NoProxy   string `json:"noProxy,omitempty"`
 }
 
 // GrafanaIngress provides a means to configure the ingress created

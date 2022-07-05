@@ -264,7 +264,8 @@ func (r *GrafanaDashboardReconciler) reconcileDashboards(request reconcile.Reque
 	}
 
 	// Process new/updated dashboards
-	for _, dashboard := range namespaceDashboards.Items {
+	for i := range namespaceDashboards.Items {
+		dashboard := namespaceDashboards.Items[i]
 		// Is this a dashboard we care about (matches the label selectors)?
 		if !r.isMatch(&dashboard) {
 			log.Log.Info("dashboard found but selectors do not match",

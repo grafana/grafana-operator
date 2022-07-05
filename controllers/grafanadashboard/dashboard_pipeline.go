@@ -54,6 +54,9 @@ type DashboardPipelineImpl struct {
 }
 
 func NewDashboardPipeline(client client.Client, dashboard *v1alpha1.GrafanaDashboard, ctx context.Context) DashboardPipeline {
+	if dashboard.Spec.ContentCacheDuration == nil {
+		dashboard.Spec.ContentCacheDuration = &metav1.Duration{Duration: 24 * time.Hour}
+	}
 	return &DashboardPipelineImpl{
 		Client:    client,
 		Dashboard: dashboard,
@@ -264,8 +267,11 @@ func (r *DashboardPipelineImpl) loadDashboardFromURL() error {
 	return nil
 }
 
-func (r *DashboardPipelineImpl) refreshDashboard() error {
-	return r.Client.Get(r.Context, types.NamespacedName{Name: r.Dashboard.Name, Namespace: r.Dashboard.Namespace}, r.Dashboard)
+func (r *DashboardPipelineImpl) refreshDashboard() {
+	err := r.Client.Get(r.Context, types.NamespacedName{Name: r.Dashboard.Name, Namespace: r.Dashboard.Namespace}, r.Dashboard)
+	if err != nil {
+		r.Logger.V(1).Error(err, "refreshing dashboard generation failed")
+	}
 }
 
 func (r *DashboardPipelineImpl) loadDashboardFromGrafanaCom() error {

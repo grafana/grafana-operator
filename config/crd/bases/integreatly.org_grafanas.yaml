@@ -1842,7 +1842,7 @@ spec:
               dashboardContentCacheDuration:
                 description: DashboardContentCacheDuration sets a default for when
                   a `GrafanaDashboard` resource doesn't specify a `contentCacheDuration`.
-                  If left unset or 0 the default behaviour is to cache indefinitely.
+                  If left unset or 0 the default behavior is to cache indefinitely.
                 type: string
               dashboardLabelSelector:
                 items:
@@ -4415,6 +4415,8 @@ spec:
                     properties:
                       enabled:
                         type: boolean
+                      noProxy:
+                        type: string
                       secureUrl:
                         type: string
                       url:
