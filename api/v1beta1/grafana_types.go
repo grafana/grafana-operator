@@ -77,495 +77,87 @@ type GrafanaClient struct {
 	PreferIngress *bool `json:"preferIngress,omitempty"`
 }
 
-// GrafanaConfig is the configuration for grafana
 type GrafanaConfig struct {
-	Paths                         *GrafanaConfigPaths                         `json:"paths,omitempty" ini:"paths,omitempty"`
-	Server                        *GrafanaConfigServer                        `json:"server,omitempty" ini:"server,omitempty"`
-	Database                      *GrafanaConfigDatabase                      `json:"database,omitempty" ini:"database,omitempty"`
-	RemoteCache                   *GrafanaConfigRemoteCache                   `json:"remote_cache,omitempty" ini:"remote_cache,omitempty"`
-	Security                      *GrafanaConfigSecurity                      `json:"security,omitempty" ini:"security,omitempty"`
-	Users                         *GrafanaConfigUsers                         `json:"users,omitempty" ini:"users,omitempty"`
-	Auth                          *GrafanaConfigAuth                          `json:"auth,omitempty" ini:"auth,omitempty"`
-	AuthBasic                     *GrafanaConfigAuthBasic                     `json:"auth.basic,omitempty" ini:"auth.basic,omitempty"`
-	AuthAnonymous                 *GrafanaConfigAuthAnonymous                 `json:"auth.anonymous,omitempty" ini:"auth.anonymous,omitempty"`
-	AuthAzureAD                   *GrafanaConfigAuthAzureAD                   `json:"auth.azuread,omitempty" ini:"auth.azuread,omitempty"`
-	AuthGoogle                    *GrafanaConfigAuthGoogle                    `json:"auth.google,omitempty" ini:"auth.google,omitempty"`
-	AuthGithub                    *GrafanaConfigAuthGithub                    `json:"auth.github,omitempty" ini:"auth.github,omitempty"`
-	AuthGitlab                    *GrafanaConfigAuthGitlab                    `json:"auth.gitlab,omitempty" ini:"auth.gitlab,omitempty"`
-	AuthGenericOauth              *GrafanaConfigAuthGenericOauth              `json:"auth.generic_oauth,omitempty" ini:"auth.generic_oauth,omitempty"`
-	AuthOkta                      *GrafanaConfigAuthOkta                      `json:"auth.okta,omitempty" ini:"auth.okta,omitempty"`
-	AuthLdap                      *GrafanaConfigAuthLdap                      `json:"auth.ldap,omitempty" ini:"auth.ldap,omitempty"`
-	AuthProxy                     *GrafanaConfigAuthProxy                     `json:"auth.proxy,omitempty" ini:"auth.proxy,omitempty"`
-	AuthSaml                      *GrafanaConfigAuthSaml                      `json:"auth.saml,omitempty" ini:"auth.saml,omitempty"`
-	DataProxy                     *GrafanaConfigDataProxy                     `json:"dataproxy,omitempty" ini:"dataproxy,omitempty"`
-	Analytics                     *GrafanaConfigAnalytics                     `json:"analytics,omitempty" ini:"analytics,omitempty"`
-	Dashboards                    *GrafanaConfigDashboards                    `json:"dashboards,omitempty" ini:"dashboards,omitempty"`
-	Smtp                          *GrafanaConfigSmtp                          `json:"smtp,omitempty" ini:"smtp,omitempty"`
-	Live                          *GrafanaConfigLive                          `json:"live,omitempty" ini:"live,omitempty"`
-	Log                           *GrafanaConfigLog                           `json:"log,omitempty" ini:"log,omitempty"`
-	LogConsole                    *GrafanaConfigLogConsole                    `json:"log.console,omitempty" ini:"log.console,omitempty"`
-	LogFrontend                   *GrafanaConfigLogFrontend                   `json:"log.frontend,omitempty" ini:"log.frontend,omitempty"`
-	Metrics                       *GrafanaConfigMetrics                       `json:"metrics,omitempty" ini:"metrics,omitempty"`
-	MetricsGraphite               *GrafanaConfigMetricsGraphite               `json:"metrics.graphite,omitempty" ini:"metrics.graphite,omitempty"`
-	Snapshots                     *GrafanaConfigSnapshots                     `json:"snapshots,omitempty" ini:"snapshots,omitempty"`
-	ExternalImageStorage          *GrafanaConfigExternalImageStorage          `json:"external_image_storage,omitempty" ini:"external_image_storage,omitempty"`
-	ExternalImageStorageS3        *GrafanaConfigExternalImageStorageS3        `json:"external_image_storage.s3,omitempty" ini:"external_image_storage.s3,omitempty"`
-	ExternalImageStorageWebdav    *GrafanaConfigExternalImageStorageWebdav    `json:"external_image_storage.webdav,omitempty" ini:"external_image_storage.webdav,omitempty"`
-	ExternalImageStorageGcs       *GrafanaConfigExternalImageStorageGcs       `json:"external_image_storage.gcs,omitempty" ini:"external_image_storage.gcs,omitempty"`
-	ExternalImageStorageAzureBlob *GrafanaConfigExternalImageStorageAzureBlob `json:"external_image_storage.azure_blob,omitempty" ini:"external_image_storage.azure_blob,omitempty"`
-	Alerting                      *GrafanaConfigAlerting                      `json:"alerting,omitempty" ini:"alerting,omitempty"`
-	UnifiedAlerting               *GrafanaConfigUnifiedAlerting               `json:"unified_alerting,omitempty" ini:"unified_alerting,omitempty"`
-	Panels                        *GrafanaConfigPanels                        `json:"panels,omitempty" ini:"panels,omitempty"`
-	Plugins                       *GrafanaConfigPlugins                       `json:"plugins,omitempty" ini:"plugins,omitempty"`
-	Rendering                     *GrafanaConfigRendering                     `json:"rendering,omitempty" ini:"rendering,omitempty"`
-	FeatureToggles                *GrafanaConfigFeatureToggles                `json:"feature_toggles,omitempty" ini:"feature_toggles,omitempty"`
-}
-
-type GrafanaConfigPaths struct {
-	TempDataLifetime string `json:"temp_data_lifetime,omitempty" ini:"temp_data_lifetime,omitempty"`
-}
-
-type GrafanaConfigServer struct {
-	HttpAddr string `json:"http_addr,omitempty" ini:"http_addr,omitempty"`
-	HttpPort string `json:"http_port,omitempty" ini:"http_port,omitempty"`
-	Protocol string `json:"protocol,omitempty" ini:"protocol,omitempty"`
-	Socket   string `json:"socket,omitempty" ini:"socket,omitempty"`
-	Domain   string `json:"domain,omitempty" ini:"domain,omitempty"`
-	// +nullable
-	EnforceDomain *bool  `json:"enforce_domain,omitempty" ini:"enforce_domain"`
-	RootUrl       string `json:"root_url,omitempty" ini:"root_url,omitempty"`
-	// +nullable
-	ServeFromSubPath *bool  `json:"serve_from_sub_path,omitempty" ini:"serve_from_sub_path"`
-	StaticRootPath   string `json:"static_root_path,omitempty" ini:"static_root_path,omitempty"`
-	// +nullable
-	EnableGzip *bool  `json:"enable_gzip,omitempty" ini:"enable_gzip"`
-	CertFile   string `json:"cert_file,omitempty" ini:"cert_file,omitempty"`
-	CertKey    string `json:"cert_key,omitempty" ini:"cert_key,omitempty"`
-	// +nullable
-	RouterLogging *bool `json:"router_logging,omitempty" ini:"router_logging"`
-}
-
-type GrafanaConfigDatabase struct {
-	Url            string `json:"url,omitempty" ini:"url,omitempty"`
-	Type           string `json:"type,omitempty" ini:"type,omitempty"`
-	Path           string `json:"path,omitempty" ini:"path,omitempty"`
-	Host           string `json:"host,omitempty" ini:"host,omitempty"`
-	Name           string `json:"name,omitempty" ini:"name,omitempty"`
-	User           string `json:"user,omitempty" ini:"user,omitempty"`
-	Password       string `json:"password,omitempty" ini:"password,omitempty"`
-	SslMode        string `json:"ssl_mode,omitempty" ini:"ssl_mode,omitempty"`
-	CaCertPath     string `json:"ca_cert_path,omitempty" ini:"ca_cert_path,omitempty"`
-	ClientKeyPath  string `json:"client_key_path,omitempty" ini:"client_key_path,omitempty"`
-	ClientCertPath string `json:"client_cert_path,omitempty" ini:"client_cert_path,omitempty"`
-	ServerCertName string `json:"server_cert_name,omitempty" ini:"server_cert_name,omitempty"`
-	// +nullable
-	MaxIdleConn *int `json:"max_idle_conn,omitempty" ini:"max_idle_conn,omitempty"`
-	// +nullable
-	MaxOpenConn *int `json:"max_open_conn,omitempty" ini:"max_open_conn,omitempty"`
-	// +nullable
-	ConnMaxLifetime *int `json:"conn_max_lifetime,omitempty" ini:"conn_max_lifetime,omitempty"`
-	// +nullable
-	LogQueries *bool  `json:"log_queries,omitempty" ini:"log_queries"`
-	CacheMode  string `json:"cache_mode,omitempty" ini:"cache_mode,omitempty"`
-}
-
-type GrafanaConfigRemoteCache struct {
-	Type    string `json:"type,omitempty" ini:"type,omitempty"`
-	ConnStr string `json:"connstr,omitempty" ini:"connstr,omitempty"`
-}
-
-type GrafanaConfigSecurity struct {
-	AdminUser     string `json:"admin_user,omitempty" ini:"admin_user,omitempty"`
-	AdminPassword string `json:"admin_password,omitempty" ini:"admin_password,omitempty"`
-	// +nullable
-	LoginRememberDays *int   `json:"login_remember_days,omitempty" ini:"login_remember_days,omitempty"`
-	SecretKey         string `json:"secret_key,omitempty" ini:"secret_key,omitempty"`
-	// +nullable
-	DisableGravatar          *bool  `json:"disable_gravatar,omitempty" ini:"disable_gravatar"`
-	DataSourceProxyWhitelist string `json:"data_source_proxy_whitelist,omitempty" ini:"data_source_proxy_whitelist,omitempty"`
-	// +nullable
-	CookieSecure   *bool  `json:"cookie_secure,omitempty" ini:"cookie_secure"`
-	CookieSamesite string `json:"cookie_samesite,omitempty" ini:"cookie_samesite,omitempty"`
-	// +nullable
-	AllowEmbedding *bool `json:"allow_embedding,omitempty" ini:"allow_embedding"`
-	// +nullable
-	StrictTransportSecurity *bool `json:"strict_transport_security,omitempty" ini:"strict_transport_security"`
-	// +nullable
-	StrictTransportSecurityMaxAgeSeconds *int `json:"strict_transport_security_max_age_seconds,omitempty" ini:"strict_transport_security_max_age_seconds,omitempty"`
-	// +nullable
-	StrictTransportSecurityPreload *bool `json:"strict_transport_security_preload,omitempty" ini:"strict_transport_security_preload"`
-	// +nullable
-	StrictTransportSecuritySubdomains *bool `json:"strict_transport_security_subdomains,omitempty" ini:"strict_transport_security_subdomains"`
-	// +nullable
-	XContentTypeOptions *bool `json:"x_content_type_options,omitempty" ini:"x_content_type_options"`
-	// +nullable
-	XXssProtection *bool `json:"x_xss_protection,omitempty" ini:"x_xss_protection"`
-}
-
-type GrafanaConfigUsers struct {
-	// +nullable
-	AllowSignUp *bool `json:"allow_sign_up,omitempty" ini:"allow_sign_up"`
-	// +nullable
-	AllowOrgCreate *bool `json:"allow_org_create,omitempty" ini:"allow_org_create"`
-	// +nullable
-	AutoAssignOrg     *bool  `json:"auto_assign_org,omitempty" ini:"auto_assign_org"`
-	AutoAssignOrgId   string `json:"auto_assign_org_id,omitempty" ini:"auto_assign_org_id,omitempty"`
-	AutoAssignOrgRole string `json:"auto_assign_org_role,omitempty" ini:"auto_assign_org_role,omitempty"`
-	// +nullable
-	ViewersCanEdit *bool `json:"viewers_can_edit,omitempty" ini:"viewers_can_edit"`
-	// +nullable
-	EditorsCanAdmin *bool  `json:"editors_can_admin,omitempty" ini:"editors_can_admin"`
-	LoginHint       string `json:"login_hint,omitempty" ini:"login_hint,omitempty"`
-	PasswordHint    string `json:"password_hint,omitempty" ini:"password_hint,omitempty"`
-	DefaultTheme    string `json:"default_theme,omitempty" ini:"default_theme,omitempty"`
-}
-
-type GrafanaConfigAuth struct {
-	LoginCookieName string `json:"login_cookie_name,omitempty" ini:"login_cookie_name,omitempty"`
-	// +nullable
-	LoginMaximumInactiveLifetimeDays     *int   `json:"login_maximum_inactive_lifetime_days,omitempty" ini:"login_maximum_inactive_lifetime_days,omitempty"`
-	LoginMaximumInactiveLifetimeDuration string `json:"login_maximum_inactive_lifetime_duration,omitempty" ini:"login_maximum_inactive_lifetime_duration,omitempty"`
-	// +nullable
-	LoginMaximumLifetimeDays     *int   `json:"login_maximum_lifetime_days,omitempty" ini:"login_maximum_lifetime_days,omitempty"`
-	LoginMaximumLifetimeDuration string `json:"login_maximum_lifetime_duration,omitempty" ini:"login_maximum_lifetime_duration,omitempty"`
-	// +nullable
-	TokenRotationIntervalMinutes *int `json:"token_rotation_interval_minutes,omitempty" ini:"token_rotation_interval_minutes,omitempty"`
-	// +nullable
-	DisableLoginForm *bool `json:"disable_login_form,omitempty" ini:"disable_login_form"`
-	// +nullable
-	DisableSignoutMenu *bool `json:"disable_signout_menu,omitempty" ini:"disable_signout_menu"`
-	// +nullable
-	SigV4AuthEnabled   *bool  `json:"sigv4_auth_enabled,omitempty" ini:"sigv4_auth_enabled"`
-	SignoutRedirectUrl string `json:"signout_redirect_url,omitempty" ini:"signout_redirect_url,omitempty"`
-	// +nullable
-	OauthAutoLogin *bool `json:"oauth_auto_login,omitempty" ini:"oauth_auto_login"`
-}
-
-type GrafanaConfigAuthBasic struct {
-	// +nullable
-	Enabled *bool `json:"enabled,omitempty" ini:"enabled"`
-}
-
-type GrafanaConfigAuthAnonymous struct {
-	// +nullable
-	Enabled *bool  `json:"enabled,omitempty" ini:"enabled"`
-	OrgName string `json:"org_name,omitempty" ini:"org_name,omitempty"`
-	OrgRole string `json:"org_role,omitempty" ini:"org_role,omitempty"`
-}
-
-type GrafanaConfigAuthSaml struct {
-	// +nullable
-	Enabled *bool `json:"enabled,omitempty" ini:"enabled"`
-	// +nullable
-	SingleLogout *bool `json:"single_logout,omitempty" ini:"single_logout,omitempty"`
-	// +nullable
-	AllowIdpInitiated        *bool  `json:"allow_idp_initiated,omitempty" ini:"allow_idp_initiated,omitempty"`
-	CertificatePath          string `json:"certificate_path,omitempty" ini:"certificate_path"`
-	KeyPath                  string `json:"private_key_path,omitempty" ini:"private_key_path"`
-	SignatureAlgorithm       string `json:"signature_algorithm,omitempty" ini:"signature_algorithm,omitempty"`
-	IdpUrl                   string `json:"idp_metadata_url,omitempty" ini:"idp_metadata_url"`
-	MaxIssueDelay            string `json:"max_issue_delay,omitempty" ini:"max_issue_delay,omitempty"`
-	MetadataValidDuration    string `json:"metadata_valid_duration,omitempty" ini:"metadata_valid_duration,omitempty"`
-	RelayState               string `json:"relay_state,omitempty" ini:"relay_state,omitempty"`
-	AssertionAttributeName   string `json:"assertion_attribute_name,omitempty" ini:"assertion_attribute_name,omitempty"`
-	AssertionAttributeLogin  string `json:"assertion_attribute_login,omitempty" ini:"assertion_attribute_login,omitempty"`
-	AssertionAttributeEmail  string `json:"assertion_attribute_email,omitempty" ini:"assertion_attribute_email,omitempty"`
-	AssertionAttributeGroups string `json:"assertion_attribute_groups,omitempty" ini:"assertion_attribute_groups,omitempty"`
-	AssertionAttributeRole   string `json:"assertion_attribute_role,omitempty" ini:"assertion_attribute_role,omitempty"`
-	AssertionAttributeOrg    string `json:"assertion_attribute_org,omitempty" ini:"assertion_attribute_org,omitempty"`
-	AllowedOrganizations     string `json:"allowed_organizations,omitempty" ini:"allowed_organizations,omitempty"`
-	OrgMapping               string `json:"org_mapping,omitempty" ini:"org_mapping,omitempty"`
-	RoleValuesEditor         string `json:"role_values_editor,omitempty" ini:"role_values_editor,omitempty"`
-	RoleValuesAdmin          string `json:"role_values_admin,omitempty" ini:"role_values_admin,omitempty"`
-	RoleValuesGrafanaAdmin   string `json:"role_values_grafana_admin,omitempty" ini:"role_values_grafana_admin,omitempty"`
-}
-
-type GrafanaConfigAuthAzureAD struct {
-	// +nullable
-	Enabled *bool `json:"enabled,omitempty" ini:"enabled"`
-	// +nullable
-	AllowSignUp    *bool  `json:"allow_sign_up,omitempty" ini:"allow_sign_up"`
-	ClientId       string `json:"client_id,omitempty" ini:"client_id,omitempty"`
-	ClientSecret   string `json:"client_secret,omitempty" ini:"client_secret,omitempty"`
-	Scopes         string `json:"scopes,omitempty" ini:"scopes,omitempty"`
-	AuthUrl        string `json:"auth_url,omitempty" ini:"auth_url,omitempty"`
-	TokenUrl       string `json:"token_url,omitempty" ini:"token_url,omitempty"`
-	AllowedDomains string `json:"allowed_domains,omitempty" ini:"allowed_domains,omitempty"`
-	AllowedGroups  string `json:"allowed_groups,omitempty" ini:"allowed_groups,omitempty"`
-}
-
-type GrafanaConfigAuthGoogle struct {
-	// +nullable
-	Enabled        *bool  `json:"enabled,omitempty" ini:"enabled"`
-	ClientId       string `json:"client_id,omitempty" ini:"client_id,omitempty"`
-	ClientSecret   string `json:"client_secret,omitempty" ini:"client_secret,omitempty"`
-	Scopes         string `json:"scopes,omitempty" ini:"scopes,omitempty"`
-	AuthUrl        string `json:"auth_url,omitempty" ini:"auth_url,omitempty"`
-	TokenUrl       string `json:"token_url,omitempty" ini:"token_url,omitempty"`
-	AllowedDomains string `json:"allowed_domains,omitempty" ini:"allowed_domains,omitempty"`
-	AllowSignUp    *bool  `json:"allow_sign_up,omitempty" ini:"allow_sign_up"`
-}
-
-type GrafanaConfigAuthGithub struct {
-	// +nullable
-	Enabled *bool `json:"enabled,omitempty" ini:"enabled"`
-	// +nullable
-	AllowSignUp          *bool  `json:"allow_sign_up,omitempty" ini:"allow_sign_up"`
-	ClientId             string `json:"client_id,omitempty" ini:"client_id,omitempty"`
-	ClientSecret         string `json:"client_secret,omitempty" ini:"client_secret,omitempty"`
-	Scopes               string `json:"scopes,omitempty" ini:"scopes,omitempty"`
-	AuthUrl              string `json:"auth_url,omitempty" ini:"auth_url,omitempty"`
-	TokenUrl             string `json:"token_url,omitempty" ini:"token_url,omitempty"`
-	ApiUrl               string `json:"api_url,omitempty" ini:"api_url,omitempty"`
-	TeamIds              string `json:"team_ids,omitempty" ini:"team_ids,omitempty"`
-	AllowedOrganizations string `json:"allowed_organizations,omitempty" ini:"allowed_organizations,omitempty"`
-}
-
-type GrafanaConfigAuthGitlab struct {
-	// +nullable
-	Enabled *bool `json:"enabled,omitempty" ini:"enabled"`
-	// +nullable
-	AllowSignUp   *bool  `json:"allow_sign_up,omitempty" ini:"allow_sign_up"`
-	ClientId      string `json:"client_id,omitempty" ini:"client_id,omitempty"`
-	ClientSecret  string `json:"client_secret,omitempty" ini:"client_secret,omitempty"`
-	Scopes        string `json:"scopes,omitempty" ini:"scopes,omitempty"`
-	AuthUrl       string `json:"auth_url,omitempty" ini:"auth_url,omitempty"`
-	TokenUrl      string `json:"token_url,omitempty" ini:"token_url,omitempty"`
-	ApiUrl        string `json:"api_url,omitempty" ini:"api_url,omitempty"`
-	AllowedGroups string `json:"allowed_groups,omitempty" ini:"allowed_groups,omitempty"`
-}
-
-type GrafanaConfigAuthGenericOauth struct {
-	// +nullable
-	Enabled *bool `json:"enabled,omitempty" ini:"enabled"`
-	// +nullable
-	AllowSignUp       *bool  `json:"allow_sign_up,omitempty" ini:"allow_sign_up"`
-	ClientId          string `json:"client_id,omitempty" ini:"client_id,omitempty"`
-	ClientSecret      string `json:"client_secret,omitempty" ini:"client_secret,omitempty"`
-	Scopes            string `json:"scopes,omitempty" ini:"scopes,omitempty"`
-	AuthUrl           string `json:"auth_url,omitempty" ini:"auth_url,omitempty"`
-	TokenUrl          string `json:"token_url,omitempty" ini:"token_url,omitempty"`
-	ApiUrl            string `json:"api_url,omitempty" ini:"api_url,omitempty"`
-	AllowedDomains    string `json:"allowed_domains,omitempty" ini:"allowed_domains,omitempty"`
-	RoleAttributePath string `json:"role_attribute_path,omitempty" ini:"role_attribute_path,omitempty"`
-	// +nullable
-	RoleAttributeStrict *bool  `json:"role_attribute_strict,omitempty" ini:"role_attribute_strict,omitempty"`
-	EmailAttributePath  string `json:"email_attribute_path,omitempty" ini:"email_attribute_path,omitempty"`
-	// +nullable
-	TLSSkipVerifyInsecure *bool  `json:"tls_skip_verify_insecure,omitempty" ini:"tls_skip_verify_insecure,omitempty"`
-	TLSClientCert         string `json:"tls_client_cert,omitempty" ini:"tls_client_cert,omitempty"`
-	TLSClientKey          string `json:"tls_client_key,omitempty" ini:"tls_client_key,omitempty"`
-	TLSClientCa           string `json:"tls_client_ca,omitempty" ini:"tls_auth_ca,omitempty"`
-}
-
-type GrafanaConfigAuthOkta struct {
-	// +nullable
-	Enabled *bool  `json:"enabled,omitempty" ini:"enabled"`
-	Name    string `json:"name,omitempty" ini:"name,omitempty"`
-	// +nullable
-	AllowSignUp       *bool  `json:"allow_sign_up,omitempty" ini:"allow_sign_up"`
-	ClientId          string `json:"client_id,omitempty" ini:"client_id,omitempty"`
-	ClientSecret      string `json:"client_secret,omitempty" ini:"client_secret,omitempty"`
-	Scopes            string `json:"scopes,omitempty" ini:"scopes,omitempty"`
-	AuthUrl           string `json:"auth_url,omitempty" ini:"auth_url,omitempty"`
-	TokenUrl          string `json:"token_url,omitempty" ini:"token_url,omitempty"`
-	ApiUrl            string `json:"api_url,omitempty" ini:"api_url,omitempty"`
-	AllowedDomains    string `json:"allowed_domains,omitempty" ini:"allowed_domains,omitempty"`
-	AllowedGroups     string `json:"allowed_groups,omitempty" ini:"allowed_groups,omitempty"`
-	RoleAttributePath string `json:"role_attribute_path,omitempty" ini:"role_attribute_path,omitempty"`
-	// +nullable
-	RoleAttributeStrict *bool `json:"role_attribute_strict,omitempty" ini:"role_attribute_strict,omitempty"`
-}
-
-type GrafanaConfigAuthLdap struct {
-	// +nullable
-	Enabled *bool `json:"enabled,omitempty" ini:"enabled"`
-	// +nullable
-	AllowSignUp *bool  `json:"allow_sign_up,omitempty" ini:"allow_sign_up"`
-	ConfigFile  string `json:"config_file,omitempty" ini:"config_file,omitempty"`
-}
-
-type GrafanaConfigAuthProxy struct {
-	// +nullable
-	Enabled        *bool  `json:"enabled,omitempty" ini:"enabled"`
-	HeaderName     string `json:"header_name,omitempty" ini:"header_name,omitempty"`
-	HeaderProperty string `json:"header_property,omitempty" ini:"header_property,omitempty"`
-	// +nullable
-	AutoSignUp  *bool  `json:"auto_sign_up,omitempty" ini:"auto_sign_up"`
-	LdapSyncTtl string `json:"ldap_sync_ttl,omitempty" ini:"ldap_sync_ttl,omitempty"`
-	Whitelist   string `json:"whitelist,omitempty" ini:"whitelist,omitempty"`
-	Headers     string `json:"headers,omitempty" ini:"headers,omitempty"`
-	// +nullable
-	EnableLoginToken *bool `json:"enable_login_token,omitempty" ini:"enable_login_token"`
-}
-
-type GrafanaConfigDataProxy struct {
-	// +nullable
-	Logging *bool `json:"logging,omitempty" ini:"logging"`
-	// +nullable
-	Timeout *int `json:"timeout,omitempty" ini:"timeout,omitempty"`
-	// +nullable
-	SendUserHeader *bool `json:"send_user_header,omitempty" ini:"send_user_header,omitempty"`
-}
-
-type GrafanaConfigAnalytics struct {
-	// +nullable
-	ReportingEnabled    *bool  `json:"reporting_enabled,omitempty" ini:"reporting_enabled"`
-	GoogleAnalyticsUaId string `json:"google_analytics_ua_id,omitempty" ini:"google_analytics_ua_id,omitempty"`
-	// +nullable
-	CheckForUpdates *bool `json:"check_for_updates,omitempty" ini:"check_for_updates"`
-}
-
-type GrafanaConfigDashboards struct {
-	// +nullable
-	VersionsToKeep           *int   `json:"versions_to_keep,omitempty" ini:"versions_to_keep,omitempty"`
-	DefaultHomeDashboardPath string `json:"default_home_dashboard_path,omitempty" ini:"default_home_dashboard_path,omitempty"`
-}
-
-type GrafanaConfigSmtp struct {
-	// +nullable
-	Enabled  *bool  `json:"enabled,omitempty" ini:"enabled"`
-	Host     string `json:"host,omitempty" ini:"host,omitempty"`
-	User     string `json:"user,omitempty" ini:"user,omitempty"`
-	Password string `json:"password,omitempty" ini:"password,omitempty"`
-	CertFile string `json:"cert_file,omitempty" ini:"cert_file,omitempty"`
-	KeyFile  string `json:"key_file,omitempty" ini:"key_file,omitempty"`
-	// +nullable
-	SkipVerify   *bool  `json:"skip_verify,omitempty" ini:"skip_verify"`
-	FromAddress  string `json:"from_address,omitempty" ini:"from_address,omitempty"`
-	FromName     string `json:"from_name,omitempty" ini:"from_name,omitempty"`
-	EhloIdentity string `json:"ehlo_identity,omitempty" ini:"ehlo_identity,omitempty"`
-}
-
-type GrafanaConfigLive struct {
-	// +nullable
-	MaxConnections *int   `json:"max_connections,omitempty" ini:"max_connections,omitempty"`
-	AllowedOrigins string `json:"allowed_origins,omitempty" ini:"allowed_origins,omitempty"`
-}
-
-type GrafanaConfigLog struct {
-	Mode    string `json:"mode,omitempty" ini:"mode,omitempty"`
-	Level   string `json:"level,omitempty" ini:"level,omitempty"`
-	Filters string `json:"filters,omitempty" ini:"filters,omitempty"`
-}
-
-type GrafanaConfigLogFrontend struct {
-	// +nullable
-	Enabled        *bool  `json:"enabled,omitempty" ini:"enabled,omitempty"`
-	SentryDsn      string `json:"sentry_dsn,omitempty" ini:"sentry_dsn,omitempty"`
-	CustomEndpoint string `json:"custom_endpoint,omitempty" ini:"custom_endpoint,omitempty"`
-	SampleRate     string `json:"sample_rate,omitempty" ini:"sample_rate,omitempty"`
-	// +nullable
-	LogEndpointRequestsPerSecondLimit *int `json:"log_endpoint_requests_per_second_limit,omitempty" ini:"log_endpoint_requests_per_second_limit,omitempty"`
-	// +nullable
-	LogEndpointBurstLimit *int `json:"log_endpoint_burst_limit,omitempty" ini:"log_endpoint_burst_limit,omitempty"`
-}
-
-type GrafanaConfigLogConsole struct {
-	Level  string `json:"level,omitempty" ini:"level,omitempty"`
-	Format string `json:"format,omitempty" ini:"format,omitempty"`
-}
-
-type GrafanaConfigMetrics struct {
-	// +nullable
-	Enabled           *bool  `json:"enabled,omitempty" ini:"enabled"`
-	BasicAuthUsername string `json:"basic_auth_username,omitempty" ini:"basic_auth_username,omitempty"`
-	BasicAuthPassword string `json:"basic_auth_password,omitempty" ini:"basic_auth_password,omitempty"`
-	// +nullable
-	IntervalSeconds *int `json:"interval_seconds,omitempty" ini:"interval_seconds,omitempty"`
-}
-
-type GrafanaConfigMetricsGraphite struct {
-	Address string `json:"address,omitempty" ini:"address,omitempty"`
-	Prefix  string `json:"prefix,omitempty" ini:"prefix,omitempty"`
-}
-
-type GrafanaConfigSnapshots struct {
-	// +nullable
-	ExternalEnabled      *bool  `json:"external_enabled,omitempty" ini:"external_enabled"`
-	ExternalSnapshotUrl  string `json:"external_snapshot_url,omitempty" ini:"external_snapshot_url,omitempty"`
-	ExternalSnapshotName string `json:"external_snapshot_name,omitempty" ini:"external_snapshot_name,omitempty"`
-	// +nullable
-	SnapshotRemoveExpired *bool `json:"snapshot_remove_expired,omitempty" ini:"snapshot_remove_expired"`
-}
-
-type GrafanaConfigExternalImageStorage struct {
-	Provider string `json:"provider,omitempty" ini:"provider,omitempty"`
-}
-
-type GrafanaConfigExternalImageStorageS3 struct {
-	Bucket    string `json:"bucket,omitempty" ini:"bucket,omitempty"`
-	Region    string `json:"region,omitempty" ini:"region,omitempty"`
-	Path      string `json:"path,omitempty" ini:"path,omitempty"`
-	BucketUrl string `json:"bucket_url,omitempty" ini:"bucket_url,omitempty"`
-	AccessKey string `json:"access_key,omitempty" ini:"access_key,omitempty"`
-	SecretKey string `json:"secret_key,omitempty" ini:"secret_key,omitempty"`
-}
-
-type GrafanaConfigExternalImageStorageWebdav struct {
-	Url       string `json:"url,omitempty" ini:"url,omitempty"`
-	PublicUrl string `json:"public_url,omitempty" ini:"public_url,omitempty"`
-	Username  string `json:"username,omitempty" ini:"username,omitempty"`
-	Password  string `json:"password,omitempty" ini:"password,omitempty"`
-}
-
-type GrafanaConfigExternalImageStorageGcs struct {
-	KeyFile string `json:"key_file,omitempty" ini:"key_file,omitempty"`
-	Bucket  string `json:"bucket,omitempty" ini:"bucket,omitempty"`
-	Path    string `json:"path,omitempty" ini:"path,omitempty"`
-}
-
-type GrafanaConfigExternalImageStorageAzureBlob struct {
-	AccountName   string `json:"account_name,omitempty" ini:"account_name,omitempty"`
-	AccountKey    string `json:"account_key,omitempty" ini:"account_key,omitempty"`
-	ContainerName string `json:"container_name,omitempty" ini:"container_name,omitempty"`
-}
-
-type GrafanaConfigAlerting struct {
-	// +nullable
-	Enabled *bool `json:"enabled,omitempty" ini:"enabled"`
-	// +nullable
-	ExecuteAlerts      *bool  `json:"execute_alerts,omitempty" ini:"execute_alerts"`
-	ErrorOrTimeout     string `json:"error_or_timeout,omitempty" ini:"error_or_timeout,omitempty"`
-	NodataOrNullvalues string `json:"nodata_or_nullvalues,omitempty" ini:"nodata_or_nullvalues,omitempty"`
-	// +nullable
-	ConcurrentRenderLimit *int `json:"concurrent_render_limit,omitempty" ini:"concurrent_render_limit,omitempty"`
-	// +nullable
-	EvaluationTimeoutSeconds *int `json:"evaluation_timeout_seconds,omitempty" ini:"evaluation_timeout_seconds,omitempty"`
-	// +nullable
-	NotificationTimeoutSeconds *int `json:"notification_timeout_seconds,omitempty" ini:"notification_timeout_seconds,omitempty"`
-	// +nullable
-	MaxAttempts *int `json:"max_attempts,omitempty" ini:"max_attempts,omitempty"`
-}
-
-type GrafanaConfigUnifiedAlerting struct {
-	// +nullable
-	Enabled           *bool  `json:"enabled,omitempty" ini:"enabled"`
-	ExecuteAlerts     *bool  `json:"execute_alerts,omitempty" ini:"execute_alerts"`
-	EvaluationTimeout string `json:"evaluation_timeout,omitempty" ini:"evaluation_timeout,omitempty"`
-	MaxAttempts       *int   `json:"max_attempts,omitempty" ini:"max_attempts,omitempty"`
-	MinInterval       string `json:"min_interval,omitempty" ini:"min_interval,omitempty"`
-}
-
-type GrafanaConfigPanels struct {
-	// +nullable
-	DisableSanitizeHtml *bool `json:"disable_sanitize_html,omitempty" ini:"disable_sanitize_html"`
-}
-
-type GrafanaConfigPlugins struct {
-	// +nullable
-	EnableAlpha *bool `json:"enable_alpha,omitempty" ini:"enable_alpha"`
-}
-
-type GrafanaConfigRendering struct {
-	ServerURL   string `json:"server_url,omitempty" ini:"server_url"`
-	CallbackURL string `json:"callback_url,omitempty" ini:"callback_url"`
-	// +nullable
-	ConcurrentRenderRequestLimit *int `json:"concurrent_render_request_limit,omitempty" ini:"concurrent_render_request_limit,omitempty"`
-}
-
-type GrafanaConfigFeatureToggles struct {
-	Enable string `json:"enable,omitempty" ini:"enable,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Paths map[string]string `json:"paths,omitempty" ini:"paths,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Server map[string]string `json:"server,omitempty" ini:"server,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Database map[string]string `json:"database,omitempty" ini:"database,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	RemoteCache map[string]string `json:"remote_cache,omitempty" ini:"remote_cache,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Security map[string]string `json:"security,omitempty" ini:"security,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Users map[string]string `json:"users,omitempty" ini:"users,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Auth map[string]string `json:"auth,omitempty" ini:"auth,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	AuthBasic map[string]string `json:"auth.basic,omitempty" ini:"auth.basic,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	AuthAnonymous map[string]string `json:"auth.anonymous,omitempty" ini:"auth.anonymous,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	AuthAzureAD map[string]string `json:"auth.azuread,omitempty" ini:"auth.azuread,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	AuthGoogle map[string]string `json:"auth.google,omitempty" ini:"auth.google,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	AuthGithub map[string]string `json:"auth.github,omitempty" ini:"auth.github,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	AuthGitlab map[string]string `json:"auth.gitlab,omitempty" ini:"auth.gitlab,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	AuthGenericOauth map[string]string `json:"auth.generic_oauth,omitempty" ini:"auth.generic_oauth,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	AuthOkta map[string]string `json:"auth.okta,omitempty" ini:"auth.okta,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	AuthLdap map[string]string `json:"auth.ldap,omitempty" ini:"auth.ldap,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	AuthProxy map[string]string `json:"auth.proxy,omitempty" ini:"auth.proxy,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	AuthSaml map[string]string `json:"auth.saml,omitempty" ini:"auth.saml,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	DataProxy map[string]string `json:"dataproxy,omitempty" ini:"dataproxy,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Analytics map[string]string `json:"analytics,omitempty" ini:"analytics,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Dashboards map[string]string `json:"dashboards,omitempty" ini:"dashboards,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Smtp map[string]string `json:"smtp,omitempty" ini:"smtp,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Live map[string]string `json:"live,omitempty" ini:"live,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Log map[string]string `json:"log,omitempty" ini:"log,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	LogConsole map[string]string `json:"log.console,omitempty" ini:"log.console,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	LogFrontend map[string]string `json:"log.frontend,omitempty" ini:"log.frontend,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Metrics map[string]string `json:"metrics,omitempty" ini:"metrics,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	MetricsGraphite map[string]string `json:"metrics.graphite,omitempty" ini:"metrics.graphite,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Snapshots map[string]string `json:"snapshots,omitempty" ini:"snapshots,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	ExternalImageStorage map[string]string `json:"external_image_storage,omitempty" ini:"external_image_storage,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	ExternalImageStorageS3 map[string]string `json:"external_image_storage.s3,omitempty" ini:"external_image_storage.s3,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	ExternalImageStorageWebdav map[string]string `json:"external_image_storage.webdav,omitempty" ini:"external_image_storage.webdav,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	ExternalImageStorageGcs map[string]string `json:"external_image_storage.gcs,omitempty" ini:"external_image_storage.gcs,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	ExternalImageStorageAzureBlob map[string]string `json:"external_image_storage.azure_blob,omitempty" ini:"external_image_storage.azure_blob,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Alerting map[string]string `json:"alerting,omitempty" ini:"alerting,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	UnifiedAlerting map[string]string `json:"unified_alerting,omitempty" ini:"unified_alerting,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Panels map[string]string `json:"panels,omitempty" ini:"panels,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Plugins map[string]string `json:"plugins,omitempty" ini:"plugins,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Rendering map[string]string `json:"rendering,omitempty" ini:"rendering,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	FeatureToggles map[string]string `json:"feature_toggles,omitempty" ini:"feature_toggles,omitempty"`
 }
 
 // GrafanaStatus defines the observed state of Grafana

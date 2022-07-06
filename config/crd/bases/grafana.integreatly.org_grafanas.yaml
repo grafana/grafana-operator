@@ -40,699 +40,205 @@ spec:
               config:
                 properties:
                   alerting:
-                    properties:
-                      concurrent_render_limit:
-                        nullable: true
-                        type: integer
-                      enabled:
-                        nullable: true
-                        type: boolean
-                      error_or_timeout:
-                        type: string
-                      evaluation_timeout_seconds:
-                        nullable: true
-                        type: integer
-                      execute_alerts:
-                        nullable: true
-                        type: boolean
-                      max_attempts:
-                        nullable: true
-                        type: integer
-                      nodata_or_nullvalues:
-                        type: string
-                      notification_timeout_seconds:
-                        nullable: true
-                        type: integer
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   analytics:
-                    properties:
-                      check_for_updates:
-                        nullable: true
-                        type: boolean
-                      google_analytics_ua_id:
-                        type: string
-                      reporting_enabled:
-                        nullable: true
-                        type: boolean
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   auth:
-                    properties:
-                      disable_login_form:
-                        nullable: true
-                        type: boolean
-                      disable_signout_menu:
-                        nullable: true
-                        type: boolean
-                      login_cookie_name:
-                        type: string
-                      login_maximum_inactive_lifetime_days:
-                        nullable: true
-                        type: integer
-                      login_maximum_inactive_lifetime_duration:
-                        type: string
-                      login_maximum_lifetime_days:
-                        nullable: true
-                        type: integer
-                      login_maximum_lifetime_duration:
-                        type: string
-                      oauth_auto_login:
-                        nullable: true
-                        type: boolean
-                      signout_redirect_url:
-                        type: string
-                      sigv4_auth_enabled:
-                        nullable: true
-                        type: boolean
-                      token_rotation_interval_minutes:
-                        nullable: true
-                        type: integer
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   auth.anonymous:
-                    properties:
-                      enabled:
-                        nullable: true
-                        type: boolean
-                      org_name:
-                        type: string
-                      org_role:
-                        type: string
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   auth.azuread:
-                    properties:
-                      allow_sign_up:
-                        nullable: true
-                        type: boolean
-                      allowed_domains:
-                        type: string
-                      allowed_groups:
-                        type: string
-                      auth_url:
-                        type: string
-                      client_id:
-                        type: string
-                      client_secret:
-                        type: string
-                      enabled:
-                        nullable: true
-                        type: boolean
-                      scopes:
-                        type: string
-                      token_url:
-                        type: string
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   auth.basic:
-                    properties:
-                      enabled:
-                        nullable: true
-                        type: boolean
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   auth.generic_oauth:
-                    properties:
-                      allow_sign_up:
-                        nullable: true
-                        type: boolean
-                      allowed_domains:
-                        type: string
-                      api_url:
-                        type: string
-                      auth_url:
-                        type: string
-                      client_id:
-                        type: string
-                      client_secret:
-                        type: string
-                      email_attribute_path:
-                        type: string
-                      enabled:
-                        nullable: true
-                        type: boolean
-                      role_attribute_path:
-                        type: string
-                      role_attribute_strict:
-                        nullable: true
-                        type: boolean
-                      scopes:
-                        type: string
-                      tls_client_ca:
-                        type: string
-                      tls_client_cert:
-                        type: string
-                      tls_client_key:
-                        type: string
-                      tls_skip_verify_insecure:
-                        nullable: true
-                        type: boolean
-                      token_url:
-                        type: string
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   auth.github:
-                    properties:
-                      allow_sign_up:
-                        nullable: true
-                        type: boolean
-                      allowed_organizations:
-                        type: string
-                      api_url:
-                        type: string
-                      auth_url:
-                        type: string
-                      client_id:
-                        type: string
-                      client_secret:
-                        type: string
-                      enabled:
-                        nullable: true
-                        type: boolean
-                      scopes:
-                        type: string
-                      team_ids:
-                        type: string
-                      token_url:
-                        type: string
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   auth.gitlab:
-                    properties:
-                      allow_sign_up:
-                        nullable: true
-                        type: boolean
-                      allowed_groups:
-                        type: string
-                      api_url:
-                        type: string
-                      auth_url:
-                        type: string
-                      client_id:
-                        type: string
-                      client_secret:
-                        type: string
-                      enabled:
-                        nullable: true
-                        type: boolean
-                      scopes:
-                        type: string
-                      token_url:
-                        type: string
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   auth.google:
-                    properties:
-                      allow_sign_up:
-                        type: boolean
-                      allowed_domains:
-                        type: string
-                      auth_url:
-                        type: string
-                      client_id:
-                        type: string
-                      client_secret:
-                        type: string
-                      enabled:
-                        nullable: true
-                        type: boolean
-                      scopes:
-                        type: string
-                      token_url:
-                        type: string
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   auth.ldap:
-                    properties:
-                      allow_sign_up:
-                        nullable: true
-                        type: boolean
-                      config_file:
-                        type: string
-                      enabled:
-                        nullable: true
-                        type: boolean
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   auth.okta:
-                    properties:
-                      allow_sign_up:
-                        nullable: true
-                        type: boolean
-                      allowed_domains:
-                        type: string
-                      allowed_groups:
-                        type: string
-                      api_url:
-                        type: string
-                      auth_url:
-                        type: string
-                      client_id:
-                        type: string
-                      client_secret:
-                        type: string
-                      enabled:
-                        nullable: true
-                        type: boolean
-                      name:
-                        type: string
-                      role_attribute_path:
-                        type: string
-                      role_attribute_strict:
-                        nullable: true
-                        type: boolean
-                      scopes:
-                        type: string
-                      token_url:
-                        type: string
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   auth.proxy:
-                    properties:
-                      auto_sign_up:
-                        nullable: true
-                        type: boolean
-                      enable_login_token:
-                        nullable: true
-                        type: boolean
-                      enabled:
-                        nullable: true
-                        type: boolean
-                      header_name:
-                        type: string
-                      header_property:
-                        type: string
-                      headers:
-                        type: string
-                      ldap_sync_ttl:
-                        type: string
-                      whitelist:
-                        type: string
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   auth.saml:
-                    properties:
-                      allow_idp_initiated:
-                        nullable: true
-                        type: boolean
-                      allowed_organizations:
-                        type: string
-                      assertion_attribute_email:
-                        type: string
-                      assertion_attribute_groups:
-                        type: string
-                      assertion_attribute_login:
-                        type: string
-                      assertion_attribute_name:
-                        type: string
-                      assertion_attribute_org:
-                        type: string
-                      assertion_attribute_role:
-                        type: string
-                      certificate_path:
-                        type: string
-                      enabled:
-                        nullable: true
-                        type: boolean
-                      idp_metadata_url:
-                        type: string
-                      max_issue_delay:
-                        type: string
-                      metadata_valid_duration:
-                        type: string
-                      org_mapping:
-                        type: string
-                      private_key_path:
-                        type: string
-                      relay_state:
-                        type: string
-                      role_values_admin:
-                        type: string
-                      role_values_editor:
-                        type: string
-                      role_values_grafana_admin:
-                        type: string
-                      signature_algorithm:
-                        type: string
-                      single_logout:
-                        nullable: true
-                        type: boolean
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   dashboards:
-                    properties:
-                      default_home_dashboard_path:
-                        type: string
-                      versions_to_keep:
-                        nullable: true
-                        type: integer
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   database:
-                    properties:
-                      ca_cert_path:
-                        type: string
-                      cache_mode:
-                        type: string
-                      client_cert_path:
-                        type: string
-                      client_key_path:
-                        type: string
-                      conn_max_lifetime:
-                        nullable: true
-                        type: integer
-                      host:
-                        type: string
-                      log_queries:
-                        nullable: true
-                        type: boolean
-                      max_idle_conn:
-                        nullable: true
-                        type: integer
-                      max_open_conn:
-                        nullable: true
-                        type: integer
-                      name:
-                        type: string
-                      password:
-                        type: string
-                      path:
-                        type: string
-                      server_cert_name:
-                        type: string
-                      ssl_mode:
-                        type: string
-                      type:
-                        type: string
-                      url:
-                        type: string
-                      user:
-                        type: string
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   dataproxy:
-                    properties:
-                      logging:
-                        nullable: true
-                        type: boolean
-                      send_user_header:
-                        nullable: true
-                        type: boolean
-                      timeout:
-                        nullable: true
-                        type: integer
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   external_image_storage:
-                    properties:
-                      provider:
-                        type: string
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   external_image_storage.azure_blob:
-                    properties:
-                      account_key:
-                        type: string
-                      account_name:
-                        type: string
-                      container_name:
-                        type: string
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   external_image_storage.gcs:
-                    properties:
-                      bucket:
-                        type: string
-                      key_file:
-                        type: string
-                      path:
-                        type: string
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   external_image_storage.s3:
-                    properties:
-                      access_key:
-                        type: string
-                      bucket:
-                        type: string
-                      bucket_url:
-                        type: string
-                      path:
-                        type: string
-                      region:
-                        type: string
-                      secret_key:
-                        type: string
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   external_image_storage.webdav:
-                    properties:
-                      password:
-                        type: string
-                      public_url:
-                        type: string
-                      url:
-                        type: string
-                      username:
-                        type: string
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   feature_toggles:
-                    properties:
-                      enable:
-                        type: string
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   live:
-                    properties:
-                      allowed_origins:
-                        type: string
-                      max_connections:
-                        nullable: true
-                        type: integer
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   log:
-                    properties:
-                      filters:
-                        type: string
-                      level:
-                        type: string
-                      mode:
-                        type: string
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   log.console:
-                    properties:
-                      format:
-                        type: string
-                      level:
-                        type: string
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   log.frontend:
-                    properties:
-                      custom_endpoint:
-                        type: string
-                      enabled:
-                        nullable: true
-                        type: boolean
-                      log_endpoint_burst_limit:
-                        nullable: true
-                        type: integer
-                      log_endpoint_requests_per_second_limit:
-                        nullable: true
-                        type: integer
-                      sample_rate:
-                        type: string
-                      sentry_dsn:
-                        type: string
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   metrics:
-                    properties:
-                      basic_auth_password:
-                        type: string
-                      basic_auth_username:
-                        type: string
-                      enabled:
-                        nullable: true
-                        type: boolean
-                      interval_seconds:
-                        nullable: true
-                        type: integer
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   metrics.graphite:
-                    properties:
-                      address:
-                        type: string
-                      prefix:
-                        type: string
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   panels:
-                    properties:
-                      disable_sanitize_html:
-                        nullable: true
-                        type: boolean
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   paths:
-                    properties:
-                      temp_data_lifetime:
-                        type: string
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   plugins:
-                    properties:
-                      enable_alpha:
-                        nullable: true
-                        type: boolean
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   remote_cache:
-                    properties:
-                      connstr:
-                        type: string
-                      type:
-                        type: string
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   rendering:
-                    properties:
-                      callback_url:
-                        type: string
-                      concurrent_render_request_limit:
-                        nullable: true
-                        type: integer
-                      server_url:
-                        type: string
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   security:
-                    properties:
-                      admin_password:
-                        type: string
-                      admin_user:
-                        type: string
-                      allow_embedding:
-                        nullable: true
-                        type: boolean
-                      cookie_samesite:
-                        type: string
-                      cookie_secure:
-                        nullable: true
-                        type: boolean
-                      data_source_proxy_whitelist:
-                        type: string
-                      disable_gravatar:
-                        nullable: true
-                        type: boolean
-                      login_remember_days:
-                        nullable: true
-                        type: integer
-                      secret_key:
-                        type: string
-                      strict_transport_security:
-                        nullable: true
-                        type: boolean
-                      strict_transport_security_max_age_seconds:
-                        nullable: true
-                        type: integer
-                      strict_transport_security_preload:
-                        nullable: true
-                        type: boolean
-                      strict_transport_security_subdomains:
-                        nullable: true
-                        type: boolean
-                      x_content_type_options:
-                        nullable: true
-                        type: boolean
-                      x_xss_protection:
-                        nullable: true
-                        type: boolean
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   server:
-                    properties:
-                      cert_file:
-                        type: string
-                      cert_key:
-                        type: string
-                      domain:
-                        type: string
-                      enable_gzip:
-                        nullable: true
-                        type: boolean
-                      enforce_domain:
-                        nullable: true
-                        type: boolean
-                      http_addr:
-                        type: string
-                      http_port:
-                        type: string
-                      protocol:
-                        type: string
-                      root_url:
-                        type: string
-                      router_logging:
-                        nullable: true
-                        type: boolean
-                      serve_from_sub_path:
-                        nullable: true
-                        type: boolean
-                      socket:
-                        type: string
-                      static_root_path:
-                        type: string
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   smtp:
-                    properties:
-                      cert_file:
-                        type: string
-                      ehlo_identity:
-                        type: string
-                      enabled:
-                        nullable: true
-                        type: boolean
-                      from_address:
-                        type: string
-                      from_name:
-                        type: string
-                      host:
-                        type: string
-                      key_file:
-                        type: string
-                      password:
-                        type: string
-                      skip_verify:
-                        nullable: true
-                        type: boolean
-                      user:
-                        type: string
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   snapshots:
-                    properties:
-                      external_enabled:
-                        nullable: true
-                        type: boolean
-                      external_snapshot_name:
-                        type: string
-                      external_snapshot_url:
-                        type: string
-                      snapshot_remove_expired:
-                        nullable: true
-                        type: boolean
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   unified_alerting:
-                    properties:
-                      enabled:
-                        nullable: true
-                        type: boolean
-                      evaluation_timeout:
-                        type: string
-                      execute_alerts:
-                        type: boolean
-                      max_attempts:
-                        type: integer
-                      min_interval:
-                        type: string
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   users:
-                    properties:
-                      allow_org_create:
-                        nullable: true
-                        type: boolean
-                      allow_sign_up:
-                        nullable: true
-                        type: boolean
-                      auto_assign_org:
-                        nullable: true
-                        type: boolean
-                      auto_assign_org_id:
-                        type: string
-                      auto_assign_org_role:
-                        type: string
-                      default_theme:
-                        type: string
-                      editors_can_admin:
-                        nullable: true
-                        type: boolean
-                      login_hint:
-                        type: string
-                      password_hint:
-                        type: string
-                      viewers_can_edit:
-                        nullable: true
-                        type: boolean
+                    additionalProperties:
+                      type: string
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                 type: object
               containers:
                 items:

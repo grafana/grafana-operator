@@ -148,203 +148,283 @@ func (in *GrafanaConfig) DeepCopyInto(out *GrafanaConfig) {
 	*out = *in
 	if in.Paths != nil {
 		in, out := &in.Paths, &out.Paths
-		*out = new(GrafanaConfigPaths)
-		**out = **in
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.Server != nil {
 		in, out := &in.Server, &out.Server
-		*out = new(GrafanaConfigServer)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.Database != nil {
 		in, out := &in.Database, &out.Database
-		*out = new(GrafanaConfigDatabase)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.RemoteCache != nil {
 		in, out := &in.RemoteCache, &out.RemoteCache
-		*out = new(GrafanaConfigRemoteCache)
-		**out = **in
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.Security != nil {
 		in, out := &in.Security, &out.Security
-		*out = new(GrafanaConfigSecurity)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.Users != nil {
 		in, out := &in.Users, &out.Users
-		*out = new(GrafanaConfigUsers)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.Auth != nil {
 		in, out := &in.Auth, &out.Auth
-		*out = new(GrafanaConfigAuth)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.AuthBasic != nil {
 		in, out := &in.AuthBasic, &out.AuthBasic
-		*out = new(GrafanaConfigAuthBasic)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.AuthAnonymous != nil {
 		in, out := &in.AuthAnonymous, &out.AuthAnonymous
-		*out = new(GrafanaConfigAuthAnonymous)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.AuthAzureAD != nil {
 		in, out := &in.AuthAzureAD, &out.AuthAzureAD
-		*out = new(GrafanaConfigAuthAzureAD)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.AuthGoogle != nil {
 		in, out := &in.AuthGoogle, &out.AuthGoogle
-		*out = new(GrafanaConfigAuthGoogle)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.AuthGithub != nil {
 		in, out := &in.AuthGithub, &out.AuthGithub
-		*out = new(GrafanaConfigAuthGithub)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.AuthGitlab != nil {
 		in, out := &in.AuthGitlab, &out.AuthGitlab
-		*out = new(GrafanaConfigAuthGitlab)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.AuthGenericOauth != nil {
 		in, out := &in.AuthGenericOauth, &out.AuthGenericOauth
-		*out = new(GrafanaConfigAuthGenericOauth)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.AuthOkta != nil {
 		in, out := &in.AuthOkta, &out.AuthOkta
-		*out = new(GrafanaConfigAuthOkta)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.AuthLdap != nil {
 		in, out := &in.AuthLdap, &out.AuthLdap
-		*out = new(GrafanaConfigAuthLdap)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.AuthProxy != nil {
 		in, out := &in.AuthProxy, &out.AuthProxy
-		*out = new(GrafanaConfigAuthProxy)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.AuthSaml != nil {
 		in, out := &in.AuthSaml, &out.AuthSaml
-		*out = new(GrafanaConfigAuthSaml)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.DataProxy != nil {
 		in, out := &in.DataProxy, &out.DataProxy
-		*out = new(GrafanaConfigDataProxy)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.Analytics != nil {
 		in, out := &in.Analytics, &out.Analytics
-		*out = new(GrafanaConfigAnalytics)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.Dashboards != nil {
 		in, out := &in.Dashboards, &out.Dashboards
-		*out = new(GrafanaConfigDashboards)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.Smtp != nil {
 		in, out := &in.Smtp, &out.Smtp
-		*out = new(GrafanaConfigSmtp)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.Live != nil {
 		in, out := &in.Live, &out.Live
-		*out = new(GrafanaConfigLive)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.Log != nil {
 		in, out := &in.Log, &out.Log
-		*out = new(GrafanaConfigLog)
-		**out = **in
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.LogConsole != nil {
 		in, out := &in.LogConsole, &out.LogConsole
-		*out = new(GrafanaConfigLogConsole)
-		**out = **in
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.LogFrontend != nil {
 		in, out := &in.LogFrontend, &out.LogFrontend
-		*out = new(GrafanaConfigLogFrontend)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.Metrics != nil {
 		in, out := &in.Metrics, &out.Metrics
-		*out = new(GrafanaConfigMetrics)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.MetricsGraphite != nil {
 		in, out := &in.MetricsGraphite, &out.MetricsGraphite
-		*out = new(GrafanaConfigMetricsGraphite)
-		**out = **in
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.Snapshots != nil {
 		in, out := &in.Snapshots, &out.Snapshots
-		*out = new(GrafanaConfigSnapshots)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.ExternalImageStorage != nil {
 		in, out := &in.ExternalImageStorage, &out.ExternalImageStorage
-		*out = new(GrafanaConfigExternalImageStorage)
-		**out = **in
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.ExternalImageStorageS3 != nil {
 		in, out := &in.ExternalImageStorageS3, &out.ExternalImageStorageS3
-		*out = new(GrafanaConfigExternalImageStorageS3)
-		**out = **in
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.ExternalImageStorageWebdav != nil {
 		in, out := &in.ExternalImageStorageWebdav, &out.ExternalImageStorageWebdav
-		*out = new(GrafanaConfigExternalImageStorageWebdav)
-		**out = **in
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.ExternalImageStorageGcs != nil {
 		in, out := &in.ExternalImageStorageGcs, &out.ExternalImageStorageGcs
-		*out = new(GrafanaConfigExternalImageStorageGcs)
-		**out = **in
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.ExternalImageStorageAzureBlob != nil {
 		in, out := &in.ExternalImageStorageAzureBlob, &out.ExternalImageStorageAzureBlob
-		*out = new(GrafanaConfigExternalImageStorageAzureBlob)
-		**out = **in
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.Alerting != nil {
 		in, out := &in.Alerting, &out.Alerting
-		*out = new(GrafanaConfigAlerting)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.UnifiedAlerting != nil {
 		in, out := &in.UnifiedAlerting, &out.UnifiedAlerting
-		*out = new(GrafanaConfigUnifiedAlerting)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.Panels != nil {
 		in, out := &in.Panels, &out.Panels
-		*out = new(GrafanaConfigPanels)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.Plugins != nil {
 		in, out := &in.Plugins, &out.Plugins
-		*out = new(GrafanaConfigPlugins)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.Rendering != nil {
 		in, out := &in.Rendering, &out.Rendering
-		*out = new(GrafanaConfigRendering)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.FeatureToggles != nil {
 		in, out := &in.FeatureToggles, &out.FeatureToggles
-		*out = new(GrafanaConfigFeatureToggles)
-		**out = **in
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 }
 
@@ -354,1021 +434,6 @@ func (in *GrafanaConfig) DeepCopy() *GrafanaConfig {
 		return nil
 	}
 	out := new(GrafanaConfig)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigAlerting) DeepCopyInto(out *GrafanaConfigAlerting) {
-	*out = *in
-	if in.Enabled != nil {
-		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
-		**out = **in
-	}
-	if in.ExecuteAlerts != nil {
-		in, out := &in.ExecuteAlerts, &out.ExecuteAlerts
-		*out = new(bool)
-		**out = **in
-	}
-	if in.ConcurrentRenderLimit != nil {
-		in, out := &in.ConcurrentRenderLimit, &out.ConcurrentRenderLimit
-		*out = new(int)
-		**out = **in
-	}
-	if in.EvaluationTimeoutSeconds != nil {
-		in, out := &in.EvaluationTimeoutSeconds, &out.EvaluationTimeoutSeconds
-		*out = new(int)
-		**out = **in
-	}
-	if in.NotificationTimeoutSeconds != nil {
-		in, out := &in.NotificationTimeoutSeconds, &out.NotificationTimeoutSeconds
-		*out = new(int)
-		**out = **in
-	}
-	if in.MaxAttempts != nil {
-		in, out := &in.MaxAttempts, &out.MaxAttempts
-		*out = new(int)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigAlerting.
-func (in *GrafanaConfigAlerting) DeepCopy() *GrafanaConfigAlerting {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigAlerting)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigAnalytics) DeepCopyInto(out *GrafanaConfigAnalytics) {
-	*out = *in
-	if in.ReportingEnabled != nil {
-		in, out := &in.ReportingEnabled, &out.ReportingEnabled
-		*out = new(bool)
-		**out = **in
-	}
-	if in.CheckForUpdates != nil {
-		in, out := &in.CheckForUpdates, &out.CheckForUpdates
-		*out = new(bool)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigAnalytics.
-func (in *GrafanaConfigAnalytics) DeepCopy() *GrafanaConfigAnalytics {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigAnalytics)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigAuth) DeepCopyInto(out *GrafanaConfigAuth) {
-	*out = *in
-	if in.LoginMaximumInactiveLifetimeDays != nil {
-		in, out := &in.LoginMaximumInactiveLifetimeDays, &out.LoginMaximumInactiveLifetimeDays
-		*out = new(int)
-		**out = **in
-	}
-	if in.LoginMaximumLifetimeDays != nil {
-		in, out := &in.LoginMaximumLifetimeDays, &out.LoginMaximumLifetimeDays
-		*out = new(int)
-		**out = **in
-	}
-	if in.TokenRotationIntervalMinutes != nil {
-		in, out := &in.TokenRotationIntervalMinutes, &out.TokenRotationIntervalMinutes
-		*out = new(int)
-		**out = **in
-	}
-	if in.DisableLoginForm != nil {
-		in, out := &in.DisableLoginForm, &out.DisableLoginForm
-		*out = new(bool)
-		**out = **in
-	}
-	if in.DisableSignoutMenu != nil {
-		in, out := &in.DisableSignoutMenu, &out.DisableSignoutMenu
-		*out = new(bool)
-		**out = **in
-	}
-	if in.SigV4AuthEnabled != nil {
-		in, out := &in.SigV4AuthEnabled, &out.SigV4AuthEnabled
-		*out = new(bool)
-		**out = **in
-	}
-	if in.OauthAutoLogin != nil {
-		in, out := &in.OauthAutoLogin, &out.OauthAutoLogin
-		*out = new(bool)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigAuth.
-func (in *GrafanaConfigAuth) DeepCopy() *GrafanaConfigAuth {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigAuth)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigAuthAnonymous) DeepCopyInto(out *GrafanaConfigAuthAnonymous) {
-	*out = *in
-	if in.Enabled != nil {
-		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigAuthAnonymous.
-func (in *GrafanaConfigAuthAnonymous) DeepCopy() *GrafanaConfigAuthAnonymous {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigAuthAnonymous)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigAuthAzureAD) DeepCopyInto(out *GrafanaConfigAuthAzureAD) {
-	*out = *in
-	if in.Enabled != nil {
-		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
-		**out = **in
-	}
-	if in.AllowSignUp != nil {
-		in, out := &in.AllowSignUp, &out.AllowSignUp
-		*out = new(bool)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigAuthAzureAD.
-func (in *GrafanaConfigAuthAzureAD) DeepCopy() *GrafanaConfigAuthAzureAD {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigAuthAzureAD)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigAuthBasic) DeepCopyInto(out *GrafanaConfigAuthBasic) {
-	*out = *in
-	if in.Enabled != nil {
-		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigAuthBasic.
-func (in *GrafanaConfigAuthBasic) DeepCopy() *GrafanaConfigAuthBasic {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigAuthBasic)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigAuthGenericOauth) DeepCopyInto(out *GrafanaConfigAuthGenericOauth) {
-	*out = *in
-	if in.Enabled != nil {
-		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
-		**out = **in
-	}
-	if in.AllowSignUp != nil {
-		in, out := &in.AllowSignUp, &out.AllowSignUp
-		*out = new(bool)
-		**out = **in
-	}
-	if in.RoleAttributeStrict != nil {
-		in, out := &in.RoleAttributeStrict, &out.RoleAttributeStrict
-		*out = new(bool)
-		**out = **in
-	}
-	if in.TLSSkipVerifyInsecure != nil {
-		in, out := &in.TLSSkipVerifyInsecure, &out.TLSSkipVerifyInsecure
-		*out = new(bool)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigAuthGenericOauth.
-func (in *GrafanaConfigAuthGenericOauth) DeepCopy() *GrafanaConfigAuthGenericOauth {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigAuthGenericOauth)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigAuthGithub) DeepCopyInto(out *GrafanaConfigAuthGithub) {
-	*out = *in
-	if in.Enabled != nil {
-		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
-		**out = **in
-	}
-	if in.AllowSignUp != nil {
-		in, out := &in.AllowSignUp, &out.AllowSignUp
-		*out = new(bool)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigAuthGithub.
-func (in *GrafanaConfigAuthGithub) DeepCopy() *GrafanaConfigAuthGithub {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigAuthGithub)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigAuthGitlab) DeepCopyInto(out *GrafanaConfigAuthGitlab) {
-	*out = *in
-	if in.Enabled != nil {
-		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
-		**out = **in
-	}
-	if in.AllowSignUp != nil {
-		in, out := &in.AllowSignUp, &out.AllowSignUp
-		*out = new(bool)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigAuthGitlab.
-func (in *GrafanaConfigAuthGitlab) DeepCopy() *GrafanaConfigAuthGitlab {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigAuthGitlab)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigAuthGoogle) DeepCopyInto(out *GrafanaConfigAuthGoogle) {
-	*out = *in
-	if in.Enabled != nil {
-		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
-		**out = **in
-	}
-	if in.AllowSignUp != nil {
-		in, out := &in.AllowSignUp, &out.AllowSignUp
-		*out = new(bool)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigAuthGoogle.
-func (in *GrafanaConfigAuthGoogle) DeepCopy() *GrafanaConfigAuthGoogle {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigAuthGoogle)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigAuthLdap) DeepCopyInto(out *GrafanaConfigAuthLdap) {
-	*out = *in
-	if in.Enabled != nil {
-		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
-		**out = **in
-	}
-	if in.AllowSignUp != nil {
-		in, out := &in.AllowSignUp, &out.AllowSignUp
-		*out = new(bool)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigAuthLdap.
-func (in *GrafanaConfigAuthLdap) DeepCopy() *GrafanaConfigAuthLdap {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigAuthLdap)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigAuthOkta) DeepCopyInto(out *GrafanaConfigAuthOkta) {
-	*out = *in
-	if in.Enabled != nil {
-		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
-		**out = **in
-	}
-	if in.AllowSignUp != nil {
-		in, out := &in.AllowSignUp, &out.AllowSignUp
-		*out = new(bool)
-		**out = **in
-	}
-	if in.RoleAttributeStrict != nil {
-		in, out := &in.RoleAttributeStrict, &out.RoleAttributeStrict
-		*out = new(bool)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigAuthOkta.
-func (in *GrafanaConfigAuthOkta) DeepCopy() *GrafanaConfigAuthOkta {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigAuthOkta)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigAuthProxy) DeepCopyInto(out *GrafanaConfigAuthProxy) {
-	*out = *in
-	if in.Enabled != nil {
-		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
-		**out = **in
-	}
-	if in.AutoSignUp != nil {
-		in, out := &in.AutoSignUp, &out.AutoSignUp
-		*out = new(bool)
-		**out = **in
-	}
-	if in.EnableLoginToken != nil {
-		in, out := &in.EnableLoginToken, &out.EnableLoginToken
-		*out = new(bool)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigAuthProxy.
-func (in *GrafanaConfigAuthProxy) DeepCopy() *GrafanaConfigAuthProxy {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigAuthProxy)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigAuthSaml) DeepCopyInto(out *GrafanaConfigAuthSaml) {
-	*out = *in
-	if in.Enabled != nil {
-		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
-		**out = **in
-	}
-	if in.SingleLogout != nil {
-		in, out := &in.SingleLogout, &out.SingleLogout
-		*out = new(bool)
-		**out = **in
-	}
-	if in.AllowIdpInitiated != nil {
-		in, out := &in.AllowIdpInitiated, &out.AllowIdpInitiated
-		*out = new(bool)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigAuthSaml.
-func (in *GrafanaConfigAuthSaml) DeepCopy() *GrafanaConfigAuthSaml {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigAuthSaml)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigDashboards) DeepCopyInto(out *GrafanaConfigDashboards) {
-	*out = *in
-	if in.VersionsToKeep != nil {
-		in, out := &in.VersionsToKeep, &out.VersionsToKeep
-		*out = new(int)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigDashboards.
-func (in *GrafanaConfigDashboards) DeepCopy() *GrafanaConfigDashboards {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigDashboards)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigDataProxy) DeepCopyInto(out *GrafanaConfigDataProxy) {
-	*out = *in
-	if in.Logging != nil {
-		in, out := &in.Logging, &out.Logging
-		*out = new(bool)
-		**out = **in
-	}
-	if in.Timeout != nil {
-		in, out := &in.Timeout, &out.Timeout
-		*out = new(int)
-		**out = **in
-	}
-	if in.SendUserHeader != nil {
-		in, out := &in.SendUserHeader, &out.SendUserHeader
-		*out = new(bool)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigDataProxy.
-func (in *GrafanaConfigDataProxy) DeepCopy() *GrafanaConfigDataProxy {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigDataProxy)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigDatabase) DeepCopyInto(out *GrafanaConfigDatabase) {
-	*out = *in
-	if in.MaxIdleConn != nil {
-		in, out := &in.MaxIdleConn, &out.MaxIdleConn
-		*out = new(int)
-		**out = **in
-	}
-	if in.MaxOpenConn != nil {
-		in, out := &in.MaxOpenConn, &out.MaxOpenConn
-		*out = new(int)
-		**out = **in
-	}
-	if in.ConnMaxLifetime != nil {
-		in, out := &in.ConnMaxLifetime, &out.ConnMaxLifetime
-		*out = new(int)
-		**out = **in
-	}
-	if in.LogQueries != nil {
-		in, out := &in.LogQueries, &out.LogQueries
-		*out = new(bool)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigDatabase.
-func (in *GrafanaConfigDatabase) DeepCopy() *GrafanaConfigDatabase {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigDatabase)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigExternalImageStorage) DeepCopyInto(out *GrafanaConfigExternalImageStorage) {
-	*out = *in
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigExternalImageStorage.
-func (in *GrafanaConfigExternalImageStorage) DeepCopy() *GrafanaConfigExternalImageStorage {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigExternalImageStorage)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigExternalImageStorageAzureBlob) DeepCopyInto(out *GrafanaConfigExternalImageStorageAzureBlob) {
-	*out = *in
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigExternalImageStorageAzureBlob.
-func (in *GrafanaConfigExternalImageStorageAzureBlob) DeepCopy() *GrafanaConfigExternalImageStorageAzureBlob {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigExternalImageStorageAzureBlob)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigExternalImageStorageGcs) DeepCopyInto(out *GrafanaConfigExternalImageStorageGcs) {
-	*out = *in
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigExternalImageStorageGcs.
-func (in *GrafanaConfigExternalImageStorageGcs) DeepCopy() *GrafanaConfigExternalImageStorageGcs {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigExternalImageStorageGcs)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigExternalImageStorageS3) DeepCopyInto(out *GrafanaConfigExternalImageStorageS3) {
-	*out = *in
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigExternalImageStorageS3.
-func (in *GrafanaConfigExternalImageStorageS3) DeepCopy() *GrafanaConfigExternalImageStorageS3 {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigExternalImageStorageS3)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigExternalImageStorageWebdav) DeepCopyInto(out *GrafanaConfigExternalImageStorageWebdav) {
-	*out = *in
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigExternalImageStorageWebdav.
-func (in *GrafanaConfigExternalImageStorageWebdav) DeepCopy() *GrafanaConfigExternalImageStorageWebdav {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigExternalImageStorageWebdav)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigFeatureToggles) DeepCopyInto(out *GrafanaConfigFeatureToggles) {
-	*out = *in
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigFeatureToggles.
-func (in *GrafanaConfigFeatureToggles) DeepCopy() *GrafanaConfigFeatureToggles {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigFeatureToggles)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigLive) DeepCopyInto(out *GrafanaConfigLive) {
-	*out = *in
-	if in.MaxConnections != nil {
-		in, out := &in.MaxConnections, &out.MaxConnections
-		*out = new(int)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigLive.
-func (in *GrafanaConfigLive) DeepCopy() *GrafanaConfigLive {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigLive)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigLog) DeepCopyInto(out *GrafanaConfigLog) {
-	*out = *in
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigLog.
-func (in *GrafanaConfigLog) DeepCopy() *GrafanaConfigLog {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigLog)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigLogConsole) DeepCopyInto(out *GrafanaConfigLogConsole) {
-	*out = *in
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigLogConsole.
-func (in *GrafanaConfigLogConsole) DeepCopy() *GrafanaConfigLogConsole {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigLogConsole)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigLogFrontend) DeepCopyInto(out *GrafanaConfigLogFrontend) {
-	*out = *in
-	if in.Enabled != nil {
-		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
-		**out = **in
-	}
-	if in.LogEndpointRequestsPerSecondLimit != nil {
-		in, out := &in.LogEndpointRequestsPerSecondLimit, &out.LogEndpointRequestsPerSecondLimit
-		*out = new(int)
-		**out = **in
-	}
-	if in.LogEndpointBurstLimit != nil {
-		in, out := &in.LogEndpointBurstLimit, &out.LogEndpointBurstLimit
-		*out = new(int)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigLogFrontend.
-func (in *GrafanaConfigLogFrontend) DeepCopy() *GrafanaConfigLogFrontend {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigLogFrontend)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigMetrics) DeepCopyInto(out *GrafanaConfigMetrics) {
-	*out = *in
-	if in.Enabled != nil {
-		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
-		**out = **in
-	}
-	if in.IntervalSeconds != nil {
-		in, out := &in.IntervalSeconds, &out.IntervalSeconds
-		*out = new(int)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigMetrics.
-func (in *GrafanaConfigMetrics) DeepCopy() *GrafanaConfigMetrics {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigMetrics)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigMetricsGraphite) DeepCopyInto(out *GrafanaConfigMetricsGraphite) {
-	*out = *in
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigMetricsGraphite.
-func (in *GrafanaConfigMetricsGraphite) DeepCopy() *GrafanaConfigMetricsGraphite {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigMetricsGraphite)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigPanels) DeepCopyInto(out *GrafanaConfigPanels) {
-	*out = *in
-	if in.DisableSanitizeHtml != nil {
-		in, out := &in.DisableSanitizeHtml, &out.DisableSanitizeHtml
-		*out = new(bool)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigPanels.
-func (in *GrafanaConfigPanels) DeepCopy() *GrafanaConfigPanels {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigPanels)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigPaths) DeepCopyInto(out *GrafanaConfigPaths) {
-	*out = *in
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigPaths.
-func (in *GrafanaConfigPaths) DeepCopy() *GrafanaConfigPaths {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigPaths)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigPlugins) DeepCopyInto(out *GrafanaConfigPlugins) {
-	*out = *in
-	if in.EnableAlpha != nil {
-		in, out := &in.EnableAlpha, &out.EnableAlpha
-		*out = new(bool)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigPlugins.
-func (in *GrafanaConfigPlugins) DeepCopy() *GrafanaConfigPlugins {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigPlugins)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigRemoteCache) DeepCopyInto(out *GrafanaConfigRemoteCache) {
-	*out = *in
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigRemoteCache.
-func (in *GrafanaConfigRemoteCache) DeepCopy() *GrafanaConfigRemoteCache {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigRemoteCache)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigRendering) DeepCopyInto(out *GrafanaConfigRendering) {
-	*out = *in
-	if in.ConcurrentRenderRequestLimit != nil {
-		in, out := &in.ConcurrentRenderRequestLimit, &out.ConcurrentRenderRequestLimit
-		*out = new(int)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigRendering.
-func (in *GrafanaConfigRendering) DeepCopy() *GrafanaConfigRendering {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigRendering)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigSecurity) DeepCopyInto(out *GrafanaConfigSecurity) {
-	*out = *in
-	if in.LoginRememberDays != nil {
-		in, out := &in.LoginRememberDays, &out.LoginRememberDays
-		*out = new(int)
-		**out = **in
-	}
-	if in.DisableGravatar != nil {
-		in, out := &in.DisableGravatar, &out.DisableGravatar
-		*out = new(bool)
-		**out = **in
-	}
-	if in.CookieSecure != nil {
-		in, out := &in.CookieSecure, &out.CookieSecure
-		*out = new(bool)
-		**out = **in
-	}
-	if in.AllowEmbedding != nil {
-		in, out := &in.AllowEmbedding, &out.AllowEmbedding
-		*out = new(bool)
-		**out = **in
-	}
-	if in.StrictTransportSecurity != nil {
-		in, out := &in.StrictTransportSecurity, &out.StrictTransportSecurity
-		*out = new(bool)
-		**out = **in
-	}
-	if in.StrictTransportSecurityMaxAgeSeconds != nil {
-		in, out := &in.StrictTransportSecurityMaxAgeSeconds, &out.StrictTransportSecurityMaxAgeSeconds
-		*out = new(int)
-		**out = **in
-	}
-	if in.StrictTransportSecurityPreload != nil {
-		in, out := &in.StrictTransportSecurityPreload, &out.StrictTransportSecurityPreload
-		*out = new(bool)
-		**out = **in
-	}
-	if in.StrictTransportSecuritySubdomains != nil {
-		in, out := &in.StrictTransportSecuritySubdomains, &out.StrictTransportSecuritySubdomains
-		*out = new(bool)
-		**out = **in
-	}
-	if in.XContentTypeOptions != nil {
-		in, out := &in.XContentTypeOptions, &out.XContentTypeOptions
-		*out = new(bool)
-		**out = **in
-	}
-	if in.XXssProtection != nil {
-		in, out := &in.XXssProtection, &out.XXssProtection
-		*out = new(bool)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigSecurity.
-func (in *GrafanaConfigSecurity) DeepCopy() *GrafanaConfigSecurity {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigSecurity)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigServer) DeepCopyInto(out *GrafanaConfigServer) {
-	*out = *in
-	if in.EnforceDomain != nil {
-		in, out := &in.EnforceDomain, &out.EnforceDomain
-		*out = new(bool)
-		**out = **in
-	}
-	if in.ServeFromSubPath != nil {
-		in, out := &in.ServeFromSubPath, &out.ServeFromSubPath
-		*out = new(bool)
-		**out = **in
-	}
-	if in.EnableGzip != nil {
-		in, out := &in.EnableGzip, &out.EnableGzip
-		*out = new(bool)
-		**out = **in
-	}
-	if in.RouterLogging != nil {
-		in, out := &in.RouterLogging, &out.RouterLogging
-		*out = new(bool)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigServer.
-func (in *GrafanaConfigServer) DeepCopy() *GrafanaConfigServer {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigServer)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigSmtp) DeepCopyInto(out *GrafanaConfigSmtp) {
-	*out = *in
-	if in.Enabled != nil {
-		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
-		**out = **in
-	}
-	if in.SkipVerify != nil {
-		in, out := &in.SkipVerify, &out.SkipVerify
-		*out = new(bool)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigSmtp.
-func (in *GrafanaConfigSmtp) DeepCopy() *GrafanaConfigSmtp {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigSmtp)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigSnapshots) DeepCopyInto(out *GrafanaConfigSnapshots) {
-	*out = *in
-	if in.ExternalEnabled != nil {
-		in, out := &in.ExternalEnabled, &out.ExternalEnabled
-		*out = new(bool)
-		**out = **in
-	}
-	if in.SnapshotRemoveExpired != nil {
-		in, out := &in.SnapshotRemoveExpired, &out.SnapshotRemoveExpired
-		*out = new(bool)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigSnapshots.
-func (in *GrafanaConfigSnapshots) DeepCopy() *GrafanaConfigSnapshots {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigSnapshots)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigUnifiedAlerting) DeepCopyInto(out *GrafanaConfigUnifiedAlerting) {
-	*out = *in
-	if in.Enabled != nil {
-		in, out := &in.Enabled, &out.Enabled
-		*out = new(bool)
-		**out = **in
-	}
-	if in.ExecuteAlerts != nil {
-		in, out := &in.ExecuteAlerts, &out.ExecuteAlerts
-		*out = new(bool)
-		**out = **in
-	}
-	if in.MaxAttempts != nil {
-		in, out := &in.MaxAttempts, &out.MaxAttempts
-		*out = new(int)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigUnifiedAlerting.
-func (in *GrafanaConfigUnifiedAlerting) DeepCopy() *GrafanaConfigUnifiedAlerting {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigUnifiedAlerting)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *GrafanaConfigUsers) DeepCopyInto(out *GrafanaConfigUsers) {
-	*out = *in
-	if in.AllowSignUp != nil {
-		in, out := &in.AllowSignUp, &out.AllowSignUp
-		*out = new(bool)
-		**out = **in
-	}
-	if in.AllowOrgCreate != nil {
-		in, out := &in.AllowOrgCreate, &out.AllowOrgCreate
-		*out = new(bool)
-		**out = **in
-	}
-	if in.AutoAssignOrg != nil {
-		in, out := &in.AutoAssignOrg, &out.AutoAssignOrg
-		*out = new(bool)
-		**out = **in
-	}
-	if in.ViewersCanEdit != nil {
-		in, out := &in.ViewersCanEdit, &out.ViewersCanEdit
-		*out = new(bool)
-		**out = **in
-	}
-	if in.EditorsCanAdmin != nil {
-		in, out := &in.EditorsCanAdmin, &out.EditorsCanAdmin
-		*out = new(bool)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GrafanaConfigUsers.
-func (in *GrafanaConfigUsers) DeepCopy() *GrafanaConfigUsers {
-	if in == nil {
-		return nil
-	}
-	out := new(GrafanaConfigUsers)
 	in.DeepCopyInto(out)
 	return out
 }
