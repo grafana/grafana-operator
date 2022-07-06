@@ -60,11 +60,11 @@ func GetGrafanaPort(cr *v1beta1.Grafana) int {
 		return config.GrafanaHttpPort
 	}
 
-	if cr.Spec.Config.Server.HttpPort == "" {
+	if cr.Spec.Config.Server["http_port"] == "" {
 		return config.GrafanaHttpPort
 	}
 
-	port, err := strconv.Atoi(cr.Spec.Config.Server.HttpPort)
+	port, err := strconv.Atoi(cr.Spec.Config.Server["http_port"])
 	if err != nil {
 		return config.GrafanaHttpPort
 	}

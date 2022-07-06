@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	v13 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -65,15 +64,6 @@ func getResources() v1.ResourceRequirements {
 			v1.ResourceMemory: resource.MustParse(MemoryLimit),
 			v1.ResourceCPU:    resource.MustParse(CpuLimit),
 		},
-	}
-}
-
-func getRollingUpdateStrategy() *v12.RollingUpdateDeployment {
-	var maxUnaval intstr.IntOrString = intstr.FromInt(25)
-	var maxSurge intstr.IntOrString = intstr.FromInt(25)
-	return &v12.RollingUpdateDeployment{
-		MaxUnavailable: &maxUnaval,
-		MaxSurge:       &maxSurge,
 	}
 }
 
