@@ -37,25 +37,25 @@ func (r *AdminSecretReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafa
 }
 
 func getAdminUser(cr *v1beta1.Grafana, current *v1.Secret) []byte {
-	if cr.Spec.Config.Security == nil || cr.Spec.Config.Security.AdminUser == "" {
+	if cr.Spec.Config.Security == nil || cr.Spec.Config.Security["admin_user"] == "" {
 		// If a user is already set, don't change it
 		if current != nil && current.Data[config.GrafanaAdminUserEnvVar] != nil {
 			return current.Data[config.GrafanaAdminUserEnvVar]
 		}
 		return []byte(config.DefaultAdminUser)
 	}
-	return []byte(cr.Spec.Config.Security.AdminUser)
+	return []byte(cr.Spec.Config.Security["admin_user"])
 }
 
 func getAdminPassword(cr *v1beta1.Grafana, current *v1.Secret) []byte {
-	if cr.Spec.Config.Security == nil || cr.Spec.Config.Security.AdminPassword == "" {
+	if cr.Spec.Config.Security == nil || cr.Spec.Config.Security["admin_password"] == "" {
 		// If a password is already set, don't change it
 		if current != nil && current.Data[config.GrafanaAdminPasswordEnvVar] != nil {
 			return current.Data[config.GrafanaAdminPasswordEnvVar]
 		}
 		return []byte(model.RandStringRunes(10))
 	}
-	return []byte(cr.Spec.Config.Security.AdminPassword)
+	return []byte(cr.Spec.Config.Security["admin_password"])
 }
 
 func getData(cr *v1beta1.Grafana, current *v1.Secret) map[string][]byte {
