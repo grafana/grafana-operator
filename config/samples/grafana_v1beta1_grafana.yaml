@@ -9,8 +9,6 @@ spec:
   client:
     preferIngress: true
   config:
-    server:
-      http_port: "3000"
     log:
       mode: "console"
     auth:

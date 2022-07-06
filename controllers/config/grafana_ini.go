@@ -3,37 +3,32 @@ package config
 import (
 	"crypto/sha256"
 	"fmt"
-	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	"io"
 	"sort"
 	"strings"
 )
 
-type GrafanaIni struct {
-	cfg *v1beta1.GrafanaConfig
-}
-
-func NewGrafanaIni(cfg *v1beta1.GrafanaConfig) *GrafanaIni {
-	return &GrafanaIni{
-		cfg: cfg,
-	}
-}
-
-func (i *GrafanaIni) Write() (string, string) {
-	if i.cfg.Paths == nil {
-		i.cfg.Paths = make(map[string]string)
+func WriteIni(cfg map[string]map[string]string) (string, string) {
+	if cfg["paths"] == nil {
+		cfg["paths"] = make(map[string]string)
 	}
 
 	// default paths that can't be overridden
-	i.cfg.Paths["data"] = GrafanaDataPath
-	i.cfg.Paths["logs"] = GrafanaLogsPath
-	i.cfg.Paths["plugins"] = GrafanaPluginsPath
-	i.cfg.Paths["provisioning"] = GrafanaProvisioningPath
+	cfg["paths"]["data"] = GrafanaDataPath
+	cfg["paths"]["logs"] = GrafanaLogsPath
+	cfg["paths"]["plugins"] = GrafanaPluginsPath
+	cfg["paths"]["provisioning"] = GrafanaProvisioningPath
+
+	sections := make([]string, 0, len(cfg))
+	for key := range cfg {
+		sections = append(sections, key)
+	}
+	sort.Strings(sections)
 
 	sb := strings.Builder{}
-	sb.WriteString(i.writeSection("log", i.cfg.Log))
-	sb.WriteString(i.writeSection("paths", i.cfg.Paths))
-	sb.WriteString(i.writeSection("server", i.cfg.Server))
+	for _, section := range sections {
+		sb.WriteString(writeSection(section, cfg[section]))
+	}
 
 	hash := sha256.New()
 	io.WriteString(hash, sb.String()) // nolint
@@ -41,7 +36,7 @@ func (i *GrafanaIni) Write() (string, string) {
 	return sb.String(), fmt.Sprintf("%x", hash.Sum(nil))
 }
 
-func (i *GrafanaIni) writeSection(name string, settings map[string]string) string {
+func writeSection(name string, settings map[string]string) string {
 	if settings == nil || len(settings) == 0 {
 		return ""
 	}
