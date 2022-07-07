@@ -63,11 +63,6 @@ type GrafanaSpec struct {
 	PersistentVolumeClaim *PersistentVolumeClaimV1     `json:"persistentVolumeClaim,omitempty"`
 	ServiceAccount        *ServiceAccountV1            `json:"serviceAccount,omitempty"`
 	Client                *GrafanaClient               `json:"client,omitempty"`
-	Jsonnet               *JsonnetConfig               `json:"jsonnet,omitempty"`
-}
-
-type JsonnetConfig struct {
-	LibraryLabelSelector *metav1.LabelSelector `json:"libraryLabelSelector,omitempty"`
 }
 
 // GrafanaClient contains the Grafana API client settings

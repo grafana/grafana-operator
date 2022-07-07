@@ -9,6 +9,9 @@ spec:
   client:
     preferIngress: true
   config:
+    security:
+      admin_user: root
+      admin_password: start
     log:
       mode: "console"
     auth:

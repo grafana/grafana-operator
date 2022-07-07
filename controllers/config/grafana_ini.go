@@ -24,10 +24,12 @@ func WriteIni(cfg map[string]map[string]string) (string, string) {
 		sections = append(sections, key)
 	}
 	sort.Strings(sections)
-
-	sb := strings.Builder{}
+	sb := &strings.Builder{}
 	for _, section := range sections {
-		sb.WriteString(writeSection(section, cfg[section]))
+		if cfg[section] == nil || len(cfg[section]) == 0 {
+			continue
+		}
+		writeSection(section, cfg[section], sb)
 	}
 
 	hash := sha256.New()
@@ -36,12 +38,7 @@ func WriteIni(cfg map[string]map[string]string) (string, string) {
 	return sb.String(), fmt.Sprintf("%x", hash.Sum(nil))
 }
 
-func writeSection(name string, settings map[string]string) string {
-	if settings == nil || len(settings) == 0 {
-		return ""
-	}
-
-	sb := strings.Builder{}
+func writeSection(name string, settings map[string]string, sb *strings.Builder) {
 	sb.WriteString(fmt.Sprintf("[%s]", name))
 	sb.WriteByte('\n')
 
@@ -56,5 +53,4 @@ func writeSection(name string, settings map[string]string) string {
 		sb.WriteByte('\n')
 	}
 	sb.WriteByte('\n')
-	return sb.String()
 }
