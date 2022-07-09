@@ -1,6 +1,9 @@
 package model
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"fmt"
 	"os"
 
 	"github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
@@ -46,13 +49,33 @@ func getData(cr *v1alpha1.Grafana, current *v12.Secret) map[string][]byte {
 	return credentials
 }
 
+func getAdminCredentialsHash(credentials map[string][]byte) string {
+	var buf [][]byte
+
+	for _, v := range credentials {
+		buf = append(buf, v)
+	}
+
+	h := sha256.New()
+	h.Write(bytes.Join(buf, []byte(":")))
+	hash := fmt.Sprintf("%x", h.Sum(nil))
+
+	return hash
+}
+
 func AdminSecret(cr *v1alpha1.Grafana) *v12.Secret {
+	data := getData(cr, nil)
+	hash := getAdminCredentialsHash(data)
+
 	return &v12.Secret{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      constants.GrafanaAdminSecretName,
 			Namespace: cr.Namespace,
+			Annotations: map[string]string{
+				constants.LastCredentialsAnnotation: hash,
+			},
 		},
-		Data: getData(cr, nil),
+		Data: data,
 		Type: v12.SecretTypeOpaque,
 	}
 }
@@ -60,6 +83,12 @@ func AdminSecret(cr *v1alpha1.Grafana) *v12.Secret {
 func AdminSecretReconciled(cr *v1alpha1.Grafana, currentState *v12.Secret) *v12.Secret {
 	reconciled := currentState.DeepCopy()
 	reconciled.Data = getData(cr, currentState)
+	hash := getAdminCredentialsHash(reconciled.Data)
+
+	reconciled.Annotations = map[string]string{
+		constants.LastCredentialsAnnotation: hash,
+	}
+
 	return reconciled
 }
 

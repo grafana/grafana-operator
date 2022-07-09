@@ -22,6 +22,7 @@ const (
 	GrafanaHealthEndpoint                   = "/api/health"
 	GrafanaPodLabel                         = "grafana"
 	LastConfigAnnotation                    = "last-config"
+	LastCredentialsAnnotation               = "last-credentials"
 	LastConfigEnvVar                        = "LAST_CONFIG"
 	LastDatasourcesConfigEnvVar             = "LAST_DATASOURCES"
 	GrafanaAdminSecretName                  = "grafana-admin-credentials" // #nosec G101
