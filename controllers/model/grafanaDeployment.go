@@ -83,7 +83,7 @@ func getResources(cr *v1alpha1.Grafana) v13.ResourceRequirements {
 }
 
 func getAffinities(cr *v1alpha1.Grafana) *v13.Affinity {
-	var affinity = v13.Affinity{}
+	affinity := v13.Affinity{}
 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Affinity != nil {
 		affinity = *cr.Spec.Deployment.Affinity
 	}
@@ -91,7 +91,7 @@ func getAffinities(cr *v1alpha1.Grafana) *v13.Affinity {
 }
 
 func getSecurityContext(cr *v1alpha1.Grafana) *v13.PodSecurityContext {
-	var securityContext = v13.PodSecurityContext{}
+	securityContext := v13.PodSecurityContext{}
 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.SecurityContext != nil {
 		securityContext = *cr.Spec.Deployment.SecurityContext
 	}
@@ -99,7 +99,7 @@ func getSecurityContext(cr *v1alpha1.Grafana) *v13.PodSecurityContext {
 }
 
 func getContainerSecurityContext(cr *v1alpha1.Grafana) *v13.SecurityContext {
-	var containerSecurityContext = v13.SecurityContext{}
+	containerSecurityContext := v13.SecurityContext{}
 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.ContainerSecurityContext != nil {
 		containerSecurityContext = *cr.Spec.Deployment.ContainerSecurityContext
 	}
@@ -118,7 +118,7 @@ func getDeploymentStrategy(cr *v1alpha1.Grafana) v1.DeploymentStrategy {
 }
 
 func getDeploymentLabels(cr *v1alpha1.Grafana) map[string]string {
-	var labels = map[string]string{}
+	labels := map[string]string{}
 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Labels != nil {
 		labels = cr.Spec.Deployment.Labels
 	}
@@ -126,7 +126,7 @@ func getDeploymentLabels(cr *v1alpha1.Grafana) map[string]string {
 }
 
 func getDeploymentAnnotations(cr *v1alpha1.Grafana, existing map[string]string) map[string]string {
-	var annotations = map[string]string{}
+	annotations := map[string]string{}
 	// Add fixed annotations
 	annotations["prometheus.io/scrape"] = "true"
 	annotations["prometheus.io/port"] = fmt.Sprintf("%v", GetGrafanaPort(cr))
@@ -148,7 +148,7 @@ func getRollingUpdateStrategy() *v1.RollingUpdateDeployment {
 }
 
 func getPodAnnotations(cr *v1alpha1.Grafana, existing map[string]string) map[string]string {
-	var annotations = map[string]string{}
+	annotations := map[string]string{}
 	// Add fixed annotations
 	annotations["prometheus.io/scrape"] = "true"
 	annotations["prometheus.io/port"] = fmt.Sprintf("%v", GetGrafanaPort(cr))
@@ -161,7 +161,7 @@ func getPodAnnotations(cr *v1alpha1.Grafana, existing map[string]string) map[str
 }
 
 func getPodLabels(cr *v1alpha1.Grafana) map[string]string {
-	var labels = map[string]string{}
+	labels := map[string]string{}
 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Labels != nil {
 		labels = cr.Spec.Deployment.Labels
 	}
@@ -170,7 +170,7 @@ func getPodLabels(cr *v1alpha1.Grafana) map[string]string {
 }
 
 func getNodeSelectors(cr *v1alpha1.Grafana) map[string]string {
-	var nodeSelector = map[string]string{}
+	nodeSelector := map[string]string{}
 
 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.NodeSelector != nil {
 		nodeSelector = cr.Spec.Deployment.NodeSelector
@@ -196,7 +196,7 @@ func getTolerations(cr *v1alpha1.Grafana) []v13.Toleration {
 
 func getVolumes(cr *v1alpha1.Grafana) []v13.Volume { // nolint
 	var volumes []v13.Volume // nolint
-	var volumeOptional = true
+	volumeOptional := true
 
 	volumes = append(volumes, v13.Volume{
 		Name: constants.GrafanaProvisionPluginVolumeName,
@@ -451,7 +451,7 @@ func getVolumeMounts(cr *v1alpha1.Grafana) []v13.VolumeMount {
 func getLivenessProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.Probe {
 	var period int32 = 10
 	var success int32 = 1
-	var scheme = v13.URISchemeHTTP
+	scheme := v13.URISchemeHTTP
 	if cr.Spec.Config.Server != nil && cr.Spec.Config.Server.Protocol == "https" {
 		scheme = v13.URISchemeHTTPS
 	}
@@ -499,7 +499,7 @@ func getLivenessProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.
 func getReadinessProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.Probe {
 	var period int32 = 10
 	var success int32 = 1
-	var scheme = v13.URISchemeHTTP
+	scheme := v13.URISchemeHTTP
 	if cr.Spec.Config.Server != nil && cr.Spec.Config.Server.Protocol == "https" {
 		scheme = v13.URISchemeHTTPS
 	}
@@ -544,7 +544,7 @@ func getReadinessProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13
 	}
 }
 
-func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Container { // nolint
+func getContainers(cr *v1alpha1.Grafana, configHash, dsHash, credentialsHash string) []v13.Container { // nolint
 	var containers []v13.Container // nolint
 	var image string
 
@@ -565,6 +565,10 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 		{
 			Name:  constants.LastDatasourcesConfigEnvVar,
 			Value: dsHash,
+		},
+		{
+			Name:  constants.LastCredentialsEnvVar,
+			Value: credentialsHash,
 		},
 	}
 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.HttpProxy != nil && cr.Spec.Deployment.HttpProxy.Enabled {
@@ -637,7 +641,8 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash string) []v13.Contai
 						},
 						Key: constants.GrafanaAdminPasswordEnvVar,
 					},
-				}})
+				},
+			})
 		}
 	}
 
@@ -682,7 +687,7 @@ func getInitContainers(cr *v1alpha1.Grafana, plugins string) []v13.Container {
 		}
 	}
 
-	var volumeName = constants.GrafanaPluginsVolumeName
+	volumeName := constants.GrafanaPluginsVolumeName
 
 	if cr.Spec.Deployment != nil {
 		for _, item := range cr.Spec.Deployment.ExtraVolumeMounts {
@@ -712,7 +717,7 @@ func getInitContainers(cr *v1alpha1.Grafana, plugins string) []v13.Container {
 	}
 }
 
-func getDeploymentSpec(cr *v1alpha1.Grafana, annotations map[string]string, configHash, plugins, dsHash string) v1.DeploymentSpec {
+func getDeploymentSpec(cr *v1alpha1.Grafana, annotations map[string]string, configHash, plugins, dsHash, credentialsHash string) v1.DeploymentSpec {
 	return v1.DeploymentSpec{
 		Replicas: getReplicas(cr),
 		Selector: &v12.LabelSelector{
@@ -733,7 +738,7 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, annotations map[string]string, conf
 				SecurityContext:               getSecurityContext(cr),
 				Volumes:                       getVolumes(cr),
 				InitContainers:                getInitContainers(cr, plugins),
-				Containers:                    getContainers(cr, configHash, dsHash),
+				Containers:                    getContainers(cr, configHash, dsHash, credentialsHash),
 				ServiceAccountName:            constants.GrafanaServiceAccountName,
 				TerminationGracePeriodSeconds: getTerminationGracePeriod(cr),
 				PriorityClassName:             getPodPriorityClassName(cr),
@@ -743,7 +748,7 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, annotations map[string]string, conf
 	}
 }
 
-func GrafanaDeployment(cr *v1alpha1.Grafana, configHash, dsHash string) *v1.Deployment {
+func GrafanaDeployment(cr *v1alpha1.Grafana, configHash, dsHash, credentialsHash string) *v1.Deployment {
 	return &v1.Deployment{
 		ObjectMeta: v12.ObjectMeta{
 			Name:        constants.GrafanaDeploymentName,
@@ -751,7 +756,7 @@ func GrafanaDeployment(cr *v1alpha1.Grafana, configHash, dsHash string) *v1.Depl
 			Labels:      getDeploymentLabels(cr),
 			Annotations: getDeploymentAnnotations(cr, nil),
 		},
-		Spec: getDeploymentSpec(cr, nil, configHash, "", dsHash),
+		Spec: getDeploymentSpec(cr, nil, configHash, "", dsHash, credentialsHash),
 	}
 }
 
@@ -762,12 +767,13 @@ func GrafanaDeploymentSelector(cr *v1alpha1.Grafana) client.ObjectKey {
 	}
 }
 
-func GrafanaDeploymentReconciled(cr *v1alpha1.Grafana, currentState *v1.Deployment, configHash, plugins, dshash string) *v1.Deployment {
+func GrafanaDeploymentReconciled(cr *v1alpha1.Grafana, currentState *v1.Deployment, configHash, plugins, dshash, credentialsHash string) *v1.Deployment {
 	reconciled := currentState.DeepCopy()
 	reconciled.Spec = getDeploymentSpec(cr,
 		currentState.Spec.Template.Annotations,
 		configHash,
 		plugins,
-		dshash)
+		dshash,
+		credentialsHash)
 	return reconciled
 }

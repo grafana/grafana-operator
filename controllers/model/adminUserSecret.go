@@ -35,37 +35,29 @@ func getAdminPassword(cr *v1alpha1.Grafana, current *v12.Secret) []byte {
 	return []byte(cr.Spec.Config.Security.AdminPassword)
 }
 
-func getData(cr *v1alpha1.Grafana, current *v12.Secret) map[string][]byte {
+func getData(cr *v1alpha1.Grafana, current *v12.Secret) (map[string][]byte, string) {
+	user := getAdminUser(cr, current)
+	password := getAdminPassword(cr, current)
+
 	credentials := map[string][]byte{
-		constants.GrafanaAdminUserEnvVar:     getAdminUser(cr, current),
-		constants.GrafanaAdminPasswordEnvVar: getAdminPassword(cr, current),
+		constants.GrafanaAdminUserEnvVar:     user,
+		constants.GrafanaAdminPasswordEnvVar: password,
 	}
+
+	h := sha256.New()
+	h.Write(bytes.Join([][]byte{user, password}, []byte(":")))
+	hash := fmt.Sprintf("%x", h.Sum(nil))
 
 	// Make the credentials available to the environment when running the operator
 	// outside of the cluster
 	os.Setenv(constants.GrafanaAdminUserEnvVar, string(credentials[constants.GrafanaAdminUserEnvVar]))
 	os.Setenv(constants.GrafanaAdminPasswordEnvVar, string(credentials[constants.GrafanaAdminPasswordEnvVar]))
 
-	return credentials
-}
-
-func getAdminCredentialsHash(credentials map[string][]byte) string {
-	var buf [][]byte
-
-	for _, v := range credentials {
-		buf = append(buf, v)
-	}
-
-	h := sha256.New()
-	h.Write(bytes.Join(buf, []byte(":")))
-	hash := fmt.Sprintf("%x", h.Sum(nil))
-
-	return hash
+	return credentials, hash
 }
 
 func AdminSecret(cr *v1alpha1.Grafana) *v12.Secret {
-	data := getData(cr, nil)
-	hash := getAdminCredentialsHash(data)
+	data, hash := getData(cr, nil)
 
 	return &v12.Secret{
 		ObjectMeta: v1.ObjectMeta{
@@ -81,9 +73,10 @@ func AdminSecret(cr *v1alpha1.Grafana) *v12.Secret {
 }
 
 func AdminSecretReconciled(cr *v1alpha1.Grafana, currentState *v12.Secret) *v12.Secret {
+	data, hash := getData(cr, currentState)
+
 	reconciled := currentState.DeepCopy()
-	reconciled.Data = getData(cr, currentState)
-	hash := getAdminCredentialsHash(reconciled.Data)
+	reconciled.Data = data
 
 	reconciled.Annotations = map[string]string{
 		constants.LastCredentialsAnnotation: hash,

@@ -24,6 +24,7 @@ const (
 	LastConfigAnnotation                    = "last-config"
 	LastCredentialsAnnotation               = "last-credentials"
 	LastConfigEnvVar                        = "LAST_CONFIG"
+	LastCredentialsEnvVar                   = "LAST_CREDENTIALS"
 	LastDatasourcesConfigEnvVar             = "LAST_DATASOURCES"
 	GrafanaAdminSecretName                  = "grafana-admin-credentials" // #nosec G101
 	DefaultAdminUser                        = "admin"
