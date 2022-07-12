@@ -126,8 +126,8 @@ func (d *GrafanaDashboard) Hash() string {
 		io.WriteString(hash, input.InputName)      // nolint
 	}
 
-	io.WriteString(hash, d.Spec.Json)             // nolint
-	hash.Write(d.Spec.GzipJson)                   // nolint
+	io.WriteString(hash, d.Spec.Json) // nolint
+	hash.Write(d.Spec.GzipJson)
 	io.WriteString(hash, d.Spec.Url)              // nolint
 	io.WriteString(hash, d.Spec.Jsonnet)          // nolint
 	io.WriteString(hash, d.Namespace)             // nolint
