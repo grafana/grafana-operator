@@ -51,7 +51,14 @@ type GrafanaDashboardSpec struct {
 	Datasources      []GrafanaDashboardDatasource      `json:"datasources,omitempty"`
 	CustomFolderName string                            `json:"customFolderName,omitempty"`
 	GrafanaCom       *GrafanaDashboardGrafanaComSource `json:"grafanaCom,omitempty"`
+
+	// ContentCacheDuration sets how often the operator should resync with the external source when using
+	// the `grafanaCom.id` or `url` field to specify the source of the dashboard. The default value is
+	// decided by the `dashboardContentCacheDuration` field in the `Grafana` resource. The default is 0 which
+	// is interpreted as never refetching.
+	ContentCacheDuration *metav1.Duration `json:"contentCacheDuration,omitempty"`
 }
+
 type GrafanaDashboardDatasource struct {
 	InputName      string `json:"inputName"`
 	DatasourceName string `json:"datasourceName"`
@@ -74,7 +81,16 @@ type GrafanaDashboardRef struct {
 }
 
 type GrafanaDashboardStatus struct {
-	// Empty
+	Content          string                 `json:"content,omitempty"`
+	ContentTimestamp *metav1.Time           `json:"contentTimestamp,omitempty"`
+	ContentUrl       string                 `json:"contentUrl,omitempty"`
+	Error            *GrafanaDashboardError `json:"error,omitempty"`
+}
+
+type GrafanaDashboardError struct {
+	Code    int    `json:"code"`
+	Message string `json:"error"`
+	Retries int    `json:"retries,omitempty"`
 }
 
 // GrafanaDashboard is the Schema for the grafanadashboards API
@@ -131,6 +147,10 @@ func (d *GrafanaDashboard) Hash() string {
 		if d.Spec.GrafanaCom.Revision != nil {
 			io.WriteString(hash, fmt.Sprint(*d.Spec.GrafanaCom.Revision)) // nolint
 		}
+	}
+
+	if d.Status.Content != "" {
+		io.WriteString(hash, d.Status.Content) //nolint
 	}
 
 	return fmt.Sprintf("%x", hash.Sum(nil))

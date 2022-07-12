@@ -38,6 +38,10 @@ type GrafanaSpec struct {
 	InitImage                  string                   `json:"initImage,omitempty"`
 	LivenessProbeSpec          *LivenessProbeSpec       `json:"livenessProbeSpec,omitempty"`
 	ReadinessProbeSpec         *ReadinessProbeSpec      `json:"readinessProbeSpec,omitempty"`
+
+	// DashboardContentCacheDuration sets a default for when a `GrafanaDashboard` resource doesn't specify a `contentCacheDuration`.
+	// If left unset or 0 the default behavior is to cache indefinitely.
+	DashboardContentCacheDuration *metav1.Duration `json:"dashboardContentCacheDuration,omitempty"`
 }
 
 type ReadinessProbeSpec struct {
