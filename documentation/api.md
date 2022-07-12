@@ -63,7 +63,7 @@ GrafanaDashboard is the Schema for the grafanadashboards API
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>status</b></td>
+        <td><b><a href="#grafanadashboardstatus">status</a></b></td>
         <td>object</td>
         <td>
           <br/>
@@ -94,6 +94,13 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         <td>object</td>
         <td>
           Selects a key from a ConfigMap.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>contentCacheDuration</b></td>
+        <td>string</td>
+        <td>
+          ContentCacheDuration sets how often the operator should resync with the external source when using the `grafanaCom.id` or `url` field to specify the source of the dashboard. The default value is decided by the `dashboardContentCacheDuration` field in the `Grafana` resource. The default is 0 which is interpreted as never refetching.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -288,6 +295,97 @@ GrafanaPlugin contains information about a single plugin
           <br/>
         </td>
         <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.status
+<sup><sup>[↩ Parent](#grafanadashboard)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>content</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>contentTimestamp</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>contentUrl</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanadashboardstatuserror">error</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.status.error
+<sup><sup>[↩ Parent](#grafanadashboardstatus)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>code</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>error</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>retries</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -1866,6 +1964,13 @@ Grafana is the Schema for the grafanas API
         <td>[]object</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>dashboardContentCacheDuration</b></td>
+        <td>string</td>
+        <td>
+          DashboardContentCacheDuration sets a default for when a `GrafanaDashboard` resource doesn't specify a `contentCacheDuration`. If left unset or 0 the default behavior is to cache indefinitely.<br/>
         </td>
         <td>false</td>
       </tr><tr>

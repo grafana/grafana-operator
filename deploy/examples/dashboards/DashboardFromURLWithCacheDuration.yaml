@@ -1,0 +1,10 @@
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDashboard
+metadata:
+  name: grafana-dashboard-from-url
+  labels:
+    app: grafana
+spec:
+  url: https://raw.githubusercontent.com/grafana-operator/grafana-operator/master/deploy/examples/remote/grafana-dashboard.json
+  # Only cache this for 15 minutes before checking if the upstream source has changed.
+  contentCacheDuration: 15m

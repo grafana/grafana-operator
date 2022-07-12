@@ -13,12 +13,15 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/google/go-jsonnet"
 	"github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
 	"github.com/grafana-operator/grafana-operator/v4/controllers/config"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -51,6 +54,9 @@ type DashboardPipelineImpl struct {
 }
 
 func NewDashboardPipeline(client client.Client, dashboard *v1alpha1.GrafanaDashboard, ctx context.Context) DashboardPipeline {
+	if dashboard.Spec.ContentCacheDuration == nil {
+		dashboard.Spec.ContentCacheDuration = &metav1.Duration{Duration: 24 * time.Hour}
+	}
 	return &DashboardPipelineImpl{
 		Client:    client,
 		Dashboard: dashboard,
@@ -112,6 +118,13 @@ func (r *DashboardPipelineImpl) validateJson() error {
 	return err
 }
 
+func (r *DashboardPipelineImpl) shouldUseContentCache() bool {
+	cacheDuration := r.Dashboard.Spec.ContentCacheDuration.Duration
+	contentTimeStamp := r.Dashboard.Status.ContentTimestamp
+
+	return cacheDuration > 0 && contentTimeStamp.Add(cacheDuration).After(time.Now())
+}
+
 // Try to get the dashboard json definition either from a provided URL or from the
 // raw json in the dashboard resource. The priority is as follows:
 // 1) try to fetch from url or grafanaCom if provided
@@ -122,6 +135,11 @@ func (r *DashboardPipelineImpl) obtainJson() error {
 	// TODO(DeanBrunt): Add earlier validation for this
 	if r.Dashboard.Spec.Url != "" && r.Dashboard.Spec.GrafanaCom != nil {
 		return errors.New("both dashboard url and grafana.com source specified")
+	}
+
+	if r.Dashboard.Status.Content != "" && r.shouldUseContentCache() {
+		r.JSON = r.Dashboard.Status.Content
+		return nil
 	}
 
 	if r.Dashboard.Spec.GrafanaCom != nil {
@@ -196,13 +214,30 @@ func (r *DashboardPipelineImpl) loadDashboardFromURL() error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("request failed with status %v", resp.StatusCode)
-	}
-
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
+	}
+	if resp.StatusCode != 200 {
+		retries := 0
+		r.refreshDashboard()
+		if r.Dashboard.Status.Error != nil {
+			retries = r.Dashboard.Status.Error.Retries
+		}
+		r.Dashboard.Status = v1alpha1.GrafanaDashboardStatus{
+			Error: &v1alpha1.GrafanaDashboardError{
+				Message: string(body),
+				Code:    resp.StatusCode,
+				Retries: retries + 1,
+			},
+			ContentTimestamp: &metav1.Time{Time: time.Now()},
+		}
+
+		if err := r.Client.Status().Update(r.Context, r.Dashboard); err != nil {
+			return fmt.Errorf("failed to request dashboard: %s\nfailed to update status : %w", string(body), err)
+		}
+
+		return fmt.Errorf("request failed with status %v", resp.StatusCode)
 	}
 	sourceType := r.getFileType(url.Path)
 
@@ -218,16 +253,25 @@ func (r *DashboardPipelineImpl) loadDashboardFromURL() error {
 		r.JSON = json
 	}
 
-	// Update dashboard spec so that URL would not be refetched
-	if r.JSON != r.Dashboard.Spec.Json {
-		r.Dashboard.Spec.Json = r.JSON
-		err := r.Client.Update(r.Context, r.Dashboard)
-		if err != nil {
-			return err
-		}
+	r.refreshDashboard()
+	r.Dashboard.Status = v1alpha1.GrafanaDashboardStatus{
+		Content:          r.JSON,
+		ContentTimestamp: &metav1.Time{Time: time.Now()},
+		ContentUrl:       r.Dashboard.Spec.Url,
+	}
+
+	if err := r.Client.Status().Update(r.Context, r.Dashboard); err != nil {
+		return fmt.Errorf("failed to update status with content for dashboard %s/%s: %w", r.Dashboard.Namespace, r.Dashboard.Name, err)
 	}
 
 	return nil
+}
+
+func (r *DashboardPipelineImpl) refreshDashboard() {
+	err := r.Client.Get(r.Context, types.NamespacedName{Name: r.Dashboard.Name, Namespace: r.Dashboard.Namespace}, r.Dashboard)
+	if err != nil {
+		r.Logger.V(1).Error(err, "refreshing dashboard generation failed")
+	}
 }
 
 func (r *DashboardPipelineImpl) loadDashboardFromGrafanaCom() error {
@@ -246,14 +290,40 @@ func (r *DashboardPipelineImpl) loadDashboardFromGrafanaCom() error {
 	if err != nil {
 		return err
 	}
+
+	if resp.StatusCode != 200 {
+		r.refreshDashboard()
+		retries := 0
+		if r.Dashboard.Status.Error != nil {
+			retries = r.Dashboard.Status.Error.Retries
+		}
+		r.Dashboard.Status = v1alpha1.GrafanaDashboardStatus{
+			Error: &v1alpha1.GrafanaDashboardError{
+				Message: string(body),
+				Code:    resp.StatusCode,
+				Retries: retries + 1,
+			},
+			ContentTimestamp: &metav1.Time{Time: time.Now()},
+		}
+
+		if err := r.Client.Status().Update(r.Context, r.Dashboard); err != nil {
+			return fmt.Errorf("failed to request dashboard and failed to update status %s: %w", string(body), err)
+		}
+
+		return fmt.Errorf("failed to request dashboard: %s", string(body))
+	}
+
 	r.JSON = string(body)
 
-	// Update JSON so dashboard is not refetched
-	if r.JSON != r.Dashboard.Spec.Json {
-		r.Dashboard.Spec.Json = r.JSON
-		if err := r.Client.Update(r.Context, r.Dashboard); err != nil {
-			return err
-		}
+	r.refreshDashboard()
+	r.Dashboard.Status = v1alpha1.GrafanaDashboardStatus{
+		Content:          r.JSON,
+		ContentTimestamp: &metav1.Time{Time: time.Now()},
+		ContentUrl:       url,
+	}
+
+	if err := r.Client.Status().Update(r.Context, r.Dashboard); err != nil {
+		return fmt.Errorf("failed to update status with content for dashboard %s/%s: %w", r.Dashboard.Namespace, r.Dashboard.Name, err)
 	}
 
 	return nil
@@ -316,12 +386,13 @@ func (r *DashboardPipelineImpl) getLatestRevisionForGrafanaComDashboard() (int, 
 // direction.
 func (r *DashboardPipelineImpl) getMaximumRevisionFromListDashboardRevisionsResponse(resp *listDashboardRevisionsResponse) int {
 	if resp.OrderBy == "revision" {
-		if resp.Direction == "asc" {
-			return resp.Items[len(resp.Items)-1].Revision
-		}
-
-		if resp.Direction == "desc" {
-			return resp.Items[0].Revision
+		// resp.Direction seems to be inverted in the response (as of 2022-05-09), so let's ignore it and grab the bigger value
+		first := resp.Items[0].Revision
+		last := resp.Items[len(resp.Items)-1].Revision
+		if first > last {
+			return first
+		} else {
+			return last
 		}
 	}
 
