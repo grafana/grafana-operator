@@ -337,6 +337,8 @@ spec:
                           type: integer
                         postgresVersion:
                           type: integer
+                        queryTimeout:
+                          type: string
                         search:
                           properties:
                             hide:
