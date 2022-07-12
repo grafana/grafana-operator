@@ -22,7 +22,7 @@ func TestGrafanaDeployment_httpProxy(t *testing.T) {
 				},
 			},
 		}
-		deployment := GrafanaDeployment(cr, "", "")
+		deployment := GrafanaDeployment(cr, "", "", "")
 		for _, container := range deployment.Spec.Template.Spec.Containers {
 			if container.Name != "grafana" {
 				continue
@@ -51,7 +51,7 @@ func TestGrafanaDeployment_httpProxy(t *testing.T) {
 				},
 			},
 		}
-		deployment := GrafanaDeployment(cr, "", "")
+		deployment := GrafanaDeployment(cr, "", "", "")
 		for _, container := range deployment.Spec.Template.Spec.Containers {
 			if container.Name != "grafana" {
 				continue
