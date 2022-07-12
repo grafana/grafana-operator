@@ -1018,6 +1018,13 @@ GrafanaDataSourceJsonData contains the most common json options See https://graf
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>queryTimeout</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanadatasourcespecdatasourcesindexjsondatasearch">search</a></b></td>
         <td>object</td>
         <td>
