@@ -93,7 +93,7 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         <td><b><a href="#grafanadashboardspecconfigmapref">configMapRef</a></b></td>
         <td>object</td>
         <td>
-          Selects a key from a ConfigMap.<br/>
+          ConfigMapRef is a reference to a ConfigMap data field containing the dashboard's JSON<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -125,10 +125,26 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanadashboardspecgzipconfigmapref">gzipConfigMapRef</a></b></td>
+        <td>object</td>
+        <td>
+          GzipConfigMapRef is a reference to a ConfigMap binaryData field containing the dashboard's JSON, compressed with Gzip.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>gzipJson</b></td>
+        <td>string</td>
+        <td>
+          GzipJson the dashboard's JSON compressed with Gzip. Base64-encoded when in YAML.<br/>
+          <br/>
+            <i>Format</i>: byte<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>json</b></td>
         <td>string</td>
         <td>
-          <br/>
+          Json is the dashboard's JSON<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -161,7 +177,7 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
 
 
 
-Selects a key from a ConfigMap.
+ConfigMapRef is a reference to a ConfigMap data field containing the dashboard's JSON
 
 <table>
     <thead>
@@ -259,6 +275,47 @@ Selects a key from a ConfigMap.
         <td>integer</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.spec.gzipConfigMapRef
+<sup><sup>[↩ Parent](#grafanadashboardspec)</sup></sup>
+
+
+
+GzipConfigMapRef is a reference to a ConfigMap binaryData field containing the dashboard's JSON, compressed with Gzip.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          The key to select.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>optional</b></td>
+        <td>boolean</td>
+        <td>
+          Specify whether the ConfigMap or its key must be defined<br/>
         </td>
         <td>false</td>
       </tr></tbody>

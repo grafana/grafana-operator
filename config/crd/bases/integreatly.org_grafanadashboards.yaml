@@ -37,7 +37,8 @@ spec:
             description: GrafanaDashboardSpec defines the desired state of GrafanaDashboard
             properties:
               configMapRef:
-                description: Selects a key from a ConfigMap.
+                description: ConfigMapRef is a reference to a ConfigMap data field
+                  containing the dashboard's JSON
                 properties:
                   key:
                     description: The key to select.
@@ -84,7 +85,31 @@ spec:
                 required:
                 - id
                 type: object
+              gzipConfigMapRef:
+                description: GzipConfigMapRef is a reference to a ConfigMap binaryData
+                  field containing the dashboard's JSON, compressed with Gzip.
+                properties:
+                  key:
+                    description: The key to select.
+                    type: string
+                  name:
+                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                      TODO: Add other useful fields. apiVersion, kind, uid?'
+                    type: string
+                  optional:
+                    description: Specify whether the ConfigMap or its key must be
+                      defined
+                    type: boolean
+                required:
+                - key
+                type: object
+              gzipJson:
+                description: GzipJson the dashboard's JSON compressed with Gzip. Base64-encoded
+                  when in YAML.
+                format: byte
+                type: string
               json:
+                description: Json is the dashboard's JSON
                 type: string
               jsonnet:
                 type: string

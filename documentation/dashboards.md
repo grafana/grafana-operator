@@ -12,6 +12,7 @@ The following properties are accepted in the `spec`:
 
 * *json*: Raw json string with the dashboard contents. Check
   the [official documentation](https://grafana.com/docs/reference/dashboard/#dashboard-json).
+* *gzipJson*: Raw json that has been gzipped, and then base64-encoded, similar to a Secret.
 * *jsonnet*: Jsonnet source. The [Grafonnet](https://grafana.github.io/grafonnet-lib/) library is made available
   automatically and can be imported.
 * *url*: Url address to download a json or jsonnet string with the dashboard contents.
@@ -20,9 +21,10 @@ The following properties are accepted in the `spec`:
 * *plugins*: A list of plugins required by the dashboard. They will be installed by the operator if not already present.
 * *datasources*: A list of datasources to be used as inputs. See [datasource inputs](#datasource-inputs).
 * *configMapRef*: Import dashboards from config maps. See [config map references](#config-map-references).
+* *gzipConfigMapRef*: Same as `configMapRef`, but the referenced field is decoded like `gzipJson` is.
 * *customFolderName*: Assign this dashboard to a custom folder, if no folder with this name exists on the instance, then
   a new one will be created.
-  * _Note_: Folders with custom names are not managed by the operator, by purposeful design they won't be deleted when
+  * *Note*: Folders with custom names are not managed by the operator, by purposeful design they won't be deleted when
       empty, deletion for these requires manual intervention.
 
 ## Creating a new dashboard
@@ -182,16 +184,16 @@ field is an empty string `""`) then the dashboard will be assigned to the namesp
 into which the dashboard was deployed, i.e if deployed to `test-ns` then a new folder (if one with that name doesn't
 exist already) will be created and named `test-ns` and the dashboard assigned to it.
 
-Default assignment of the dashboards to namespace-named folders is consider as a _managed folder_, this means that when
+Default assignment of the dashboards to namespace-named folders is consider as a *managed folder*, this means that when
 a managed folder has no dashboards assigned to it, it will be deleted to clean up the UI.
 
 ### Unmanaged folders
 
 When defining `customFolderName` in a dashboard, the resulting folder will be named as the string in this field
-specifies, this is considered as an _unmanaged folder_ and won't be deleted even if empty and will remain on the UI.
+specifies, this is considered as an *unmanaged folder* and won't be deleted even if empty and will remain on the UI.
 Custom folders can have multiple dashboards assigned to them.
 
-_Note_ : Deletion of unmanaged folders requires manual intervention.
+*Note* : Deletion of unmanaged folders requires manual intervention.
 
 ![dashboard-folder-assignment.svg](./resources/dashboard-folder-assignment.svg)
 
@@ -200,3 +202,24 @@ _Note_ : Deletion of unmanaged folders requires manual intervention.
 To move a dashboard between managed and unmanaged folders, simply remove or add the `CustomFolderName` field value from
 the dashboard spec, this will update the hash of the dashboard on the next reconcile loop, and re-add the dashboard to
 the desired folder.
+
+### Compressed Dashboard JSON
+
+Grafana dashboards can get quite large, and Kubernetes has a rather small maximum size of resources, which is made
+all the smaller when including the "kubectl.kubernetes.io/last-applied-configuration" annotation. Because JSON is
+mostly ASCII text, it compresses quite well. To support these situations, the GrafanaDashboard has two fields,
+`GzipJson` and `GzipConfigMapRef` which will first decode the data in question as Base 64, much in the same way
+that a standard Kubernetes Secret does, and then decompress it with Gzip.
+
+You can compress a dashboard from the command line like so:
+
+```bash
+# yq can be obtained from https://github.com/mikefarah/yq
+COMPRESSED_DASHBOARD="$(cat ${dashboard_json_file} | gzip | base64 -w0)" yq -i '.spec.gzipJson = strenv(COMPRESSED_DASHBOARD)' ${grafanadashboard_yaml_file}
+```
+
+You can similarly compress a dashboard into a ConfigMap like so:
+
+```bash
+COMPRESSED_DASHBOARD="$(cat ${dashboard_json_file} | gzip | base64 -w0)" yq -i ".binaryData.${dashboard_key} = strenv(COMPRESSED_DASHBOARD)" ${configmap_yaml_file}
+```

@@ -1,0 +1,9 @@
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDashboard
+metadata:
+  name: compressed-dashboard
+  labels:
+    app: grafana
+spec:
+  gzipJson: |-
+    H4sIAAAAAAAAA3WQwU7DMAyG73uKqmeQ4ABIXMcjIC4ITe7iNtbSOLK9TTDt3UnS0sKBm//Pv/1bvmyapiXXPjfxGMJNUUYWMIN2y2MSVEXXvID6jkFcO1lg0Ox4/6hK7XMacCCH2UAjfnGstBM+K8rUQEcGXbWbHLEyTw63HE04lK09BJ0ag0Dyr8zBKOXGfYUJIoZf6SUqq0uus+qFxxIa+Xz76Gtm8fDM2qyvy1ii/SEftgwXtuNkxHENyFywz3/wO4qGcoI5fV2FYwpgFId1VSC1vy6IkQ1+dv9rm7PKvQ86/Uz3Hkd4Q9E8XP7wVPFpAXdVB4qH+bLr5huze+uv2AEAAA==
