@@ -1,6 +1,9 @@
 package model
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"fmt"
 	"os"
 
 	"github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
@@ -32,34 +35,53 @@ func getAdminPassword(cr *v1alpha1.Grafana, current *v12.Secret) []byte {
 	return []byte(cr.Spec.Config.Security.AdminPassword)
 }
 
-func getData(cr *v1alpha1.Grafana, current *v12.Secret) map[string][]byte {
+func getData(cr *v1alpha1.Grafana, current *v12.Secret) (map[string][]byte, string) {
+	user := getAdminUser(cr, current)
+	password := getAdminPassword(cr, current)
+
 	credentials := map[string][]byte{
-		constants.GrafanaAdminUserEnvVar:     getAdminUser(cr, current),
-		constants.GrafanaAdminPasswordEnvVar: getAdminPassword(cr, current),
+		constants.GrafanaAdminUserEnvVar:     user,
+		constants.GrafanaAdminPasswordEnvVar: password,
 	}
+
+	h := sha256.New()
+	h.Write(bytes.Join([][]byte{user, password}, []byte(":")))
+	hash := fmt.Sprintf("%x", h.Sum(nil))
 
 	// Make the credentials available to the environment when running the operator
 	// outside of the cluster
 	os.Setenv(constants.GrafanaAdminUserEnvVar, string(credentials[constants.GrafanaAdminUserEnvVar]))
 	os.Setenv(constants.GrafanaAdminPasswordEnvVar, string(credentials[constants.GrafanaAdminPasswordEnvVar]))
 
-	return credentials
+	return credentials, hash
 }
 
 func AdminSecret(cr *v1alpha1.Grafana) *v12.Secret {
+	data, hash := getData(cr, nil)
+
 	return &v12.Secret{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      constants.GrafanaAdminSecretName,
 			Namespace: cr.Namespace,
+			Annotations: map[string]string{
+				constants.LastCredentialsAnnotation: hash,
+			},
 		},
-		Data: getData(cr, nil),
+		Data: data,
 		Type: v12.SecretTypeOpaque,
 	}
 }
 
 func AdminSecretReconciled(cr *v1alpha1.Grafana, currentState *v12.Secret) *v12.Secret {
+	data, hash := getData(cr, currentState)
+
 	reconciled := currentState.DeepCopy()
-	reconciled.Data = getData(cr, currentState)
+	reconciled.Data = data
+
+	reconciled.Annotations = map[string]string{
+		constants.LastCredentialsAnnotation: hash,
+	}
+
 	return reconciled
 }
 
