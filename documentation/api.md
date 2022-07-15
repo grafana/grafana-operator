@@ -380,6 +380,15 @@ GrafanaPlugin contains information about a single plugin
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>contentGzip</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: byte<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>contentTimestamp</b></td>
         <td>string</td>
         <td>

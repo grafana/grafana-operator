@@ -81,7 +81,7 @@ type GrafanaDashboardRef struct {
 }
 
 type GrafanaDashboardStatus struct {
-	Content          string                 `json:"content,omitempty"`
+	ContentGzip      []byte                 `json:"contentGzip,omitempty"`
 	ContentTimestamp *metav1.Time           `json:"contentTimestamp,omitempty"`
 	ContentUrl       string                 `json:"contentUrl,omitempty"`
 	Error            *GrafanaDashboardError `json:"error,omitempty"`
@@ -149,8 +149,8 @@ func (d *GrafanaDashboard) Hash() string {
 		}
 	}
 
-	if d.Status.Content != "" {
-		io.WriteString(hash, d.Status.Content) //nolint
+	if d.Status.ContentGzip != nil {
+		hash.Write(d.Status.ContentGzip)
 	}
 
 	return fmt.Sprintf("%x", hash.Sum(nil))
@@ -197,4 +197,15 @@ func Gunzip(compressed []byte) ([]byte, error) {
 		return nil, err
 	}
 	return ioutil.ReadAll(decoder)
+}
+
+func Gzip(content string) ([]byte, error) {
+	buf := bytes.NewBuffer([]byte{})
+	writer := gzip.NewWriter(buf)
+	_, err := writer.Write([]byte(content))
+	if err != nil {
+		return nil, err
+	}
+	writer.Close()
+	return ioutil.ReadAll(buf)
 }

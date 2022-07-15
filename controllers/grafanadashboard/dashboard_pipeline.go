@@ -20,6 +20,7 @@ import (
 	"github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
 	"github.com/grafana-operator/grafana-operator/v4/controllers/config"
 	corev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -119,10 +120,13 @@ func (r *DashboardPipelineImpl) validateJson() error {
 }
 
 func (r *DashboardPipelineImpl) shouldUseContentCache() bool {
-	cacheDuration := r.Dashboard.Spec.ContentCacheDuration.Duration
-	contentTimeStamp := r.Dashboard.Status.ContentTimestamp
+	if r.Dashboard.Status.ContentGzip != nil && r.Dashboard.Spec.ContentCacheDuration != nil && r.Dashboard.Status.ContentTimestamp != nil {
+		cacheDuration := r.Dashboard.Spec.ContentCacheDuration.Duration
+		contentTimeStamp := r.Dashboard.Status.ContentTimestamp
 
-	return cacheDuration > 0 && contentTimeStamp.Add(cacheDuration).After(time.Now())
+		return cacheDuration <= 0 || contentTimeStamp.Add(cacheDuration).After(time.Now())
+	}
+	return false
 }
 
 // Try to get the dashboard json definition either from a provided URL or from the
@@ -137,14 +141,21 @@ func (r *DashboardPipelineImpl) obtainJson() error {
 		return errors.New("both dashboard url and grafana.com source specified")
 	}
 
-	if r.Dashboard.Status.Content != "" && r.shouldUseContentCache() {
-		r.JSON = r.Dashboard.Status.Content
-		return nil
+	var returnErr error
+
+	if r.shouldUseContentCache() {
+		jsonBytes, err := v1alpha1.Gunzip(r.Dashboard.Status.ContentGzip)
+		if err != nil {
+			returnErr = fmt.Errorf("failed to decode/decompress gzipped json: %w", err)
+		} else {
+			r.JSON = string(jsonBytes)
+			return nil
+		}
 	}
 
 	if r.Dashboard.Spec.GrafanaCom != nil {
 		if err := r.loadDashboardFromGrafanaCom(); err != nil {
-			r.Logger.Error(err, "failed to request dashboard from grafana.com, falling back to config map; if specified")
+			returnErr = fmt.Errorf("failed to request dashboard from grafana.com, falling back to config map; if specified: %w", err)
 		} else {
 			return nil
 		}
@@ -153,7 +164,7 @@ func (r *DashboardPipelineImpl) obtainJson() error {
 	if r.Dashboard.Spec.Url != "" {
 		err := r.loadDashboardFromURL()
 		if err != nil {
-			r.Logger.Error(err, "failed to request dashboard url, falling back to config map; if specified")
+			returnErr = fmt.Errorf("failed to request dashboard url, falling back to config map; if specified: %w", err)
 		} else {
 			return nil
 		}
@@ -162,7 +173,7 @@ func (r *DashboardPipelineImpl) obtainJson() error {
 	if r.Dashboard.Spec.ConfigMapRef != nil {
 		err := r.loadDashboardFromConfigMap(r.Dashboard.Spec.ConfigMapRef, false)
 		if err != nil {
-			r.Logger.Error(err, "failed to get config map, falling back to raw json")
+			returnErr = fmt.Errorf("failed to get config map, falling back to raw json: %w", err)
 		} else {
 			return nil
 		}
@@ -171,7 +182,7 @@ func (r *DashboardPipelineImpl) obtainJson() error {
 	if r.Dashboard.Spec.GzipConfigMapRef != nil {
 		err := r.loadDashboardFromConfigMap(r.Dashboard.Spec.GzipConfigMapRef, true)
 		if err != nil {
-			r.Logger.Error(err, "failed to get config map, falling back to raw json")
+			returnErr = fmt.Errorf("failed to get config map, falling back to raw json: %w", err)
 		} else {
 			return nil
 		}
@@ -180,7 +191,7 @@ func (r *DashboardPipelineImpl) obtainJson() error {
 	if r.Dashboard.Spec.GzipJson != nil {
 		jsonBytes, err := v1alpha1.Gunzip(r.Dashboard.Spec.GzipJson)
 		if err != nil {
-			r.Logger.Error(err, "failed to decode/decompress gzipped json")
+			returnErr = fmt.Errorf("failed to decode/decompress gzipped json: %w", err)
 		} else {
 			r.JSON = string(jsonBytes)
 			return nil
@@ -195,14 +206,14 @@ func (r *DashboardPipelineImpl) obtainJson() error {
 	if r.Dashboard.Spec.Jsonnet != "" {
 		json, err := r.loadJsonnet(r.Dashboard.Spec.Jsonnet)
 		if err != nil {
-			r.Logger.Error(err, "failed to parse jsonnet")
+			returnErr = fmt.Errorf("failed to parse jsonnet: %w", err)
 		} else {
 			r.JSON = json
 			return nil
 		}
 	}
 
-	return errors.New("unable to obtain dashboard contents")
+	return returnErr
 }
 
 // Compiles jsonnet to json and makes the grafonnet library available to
@@ -272,15 +283,30 @@ func (r *DashboardPipelineImpl) loadDashboardFromURL() error {
 		r.JSON = json
 	}
 
+	content, err := v1alpha1.Gzip(r.JSON)
+	if err != nil {
+		return err
+	}
+
 	r.refreshDashboard()
+	if r.Dashboard.Spec.Json != "" {
+		r.Dashboard.Spec.Json = ""
+		err = r.Client.Update(r.Context, r.Dashboard)
+		if err != nil {
+			return err
+		}
+	}
+
 	r.Dashboard.Status = v1alpha1.GrafanaDashboardStatus{
-		Content:          r.JSON,
+		ContentGzip:      content,
 		ContentTimestamp: &metav1.Time{Time: time.Now()},
 		ContentUrl:       r.Dashboard.Spec.Url,
 	}
 
 	if err := r.Client.Status().Update(r.Context, r.Dashboard); err != nil {
-		return fmt.Errorf("failed to update status with content for dashboard %s/%s: %w", r.Dashboard.Namespace, r.Dashboard.Name, err)
+		if !k8serrors.IsConflict(err) {
+			return fmt.Errorf("failed to update status with content for dashboard %s/%s: %w", r.Dashboard.Namespace, r.Dashboard.Name, err)
+		}
 	}
 
 	return nil
@@ -334,15 +360,30 @@ func (r *DashboardPipelineImpl) loadDashboardFromGrafanaCom() error {
 
 	r.JSON = string(body)
 
+	content, err := v1alpha1.Gzip(r.JSON)
+	if err != nil {
+		return err
+	}
+
 	r.refreshDashboard()
+	if r.Dashboard.Spec.Json != "" {
+		r.Dashboard.Spec.Json = ""
+		err = r.Client.Update(r.Context, r.Dashboard)
+		if err != nil {
+			return err
+		}
+	}
+
 	r.Dashboard.Status = v1alpha1.GrafanaDashboardStatus{
-		Content:          r.JSON,
+		ContentGzip:      content,
 		ContentTimestamp: &metav1.Time{Time: time.Now()},
 		ContentUrl:       url,
 	}
 
 	if err := r.Client.Status().Update(r.Context, r.Dashboard); err != nil {
-		return fmt.Errorf("failed to update status with content for dashboard %s/%s: %w", r.Dashboard.Namespace, r.Dashboard.Name, err)
+		if !k8serrors.IsConflict(err) {
+			return fmt.Errorf("failed to update status with content for dashboard %s/%s: %w", r.Dashboard.Namespace, r.Dashboard.Name, err)
+		}
 	}
 
 	return nil

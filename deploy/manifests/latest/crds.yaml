@@ -131,6 +131,9 @@ spec:
             properties:
               content:
                 type: string
+              contentGzip:
+                format: byte
+                type: string
               contentTimestamp:
                 format: date-time
                 type: string
