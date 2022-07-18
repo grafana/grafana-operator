@@ -693,3 +693,10 @@ func (cr *Grafana) GetPreferServiceValue() bool {
 	}
 	return false
 }
+
+func (cr *Grafana) GetScheme() v1.URIScheme {
+	if cr.Spec.Config.Server != nil && cr.Spec.Config.Server.Protocol == "https" {
+		return v1.URISchemeHTTPS
+	}
+	return v1.URISchemeHTTP
+}

@@ -24,13 +24,13 @@ const (
 	CpuRequest                              = "100m"
 	MemoryLimit                             = "1024Mi"
 	CpuLimit                                = "500m"
-	LivenessProbeInitialDelaySeconds  int32 = 60
 	LivenessProbeFailureThreshold     int32 = 10
+	LivenessProbeInitialDelaySeconds  int32 = 60
 	LivenessProbePeriodSeconds        int32 = 10
 	LivenessProbeSuccessThreshold     int32 = 1
 	LivenessProbeTimeoutSeconds       int32 = 30
-	ReadinessProbeInitialDelaySeconds int32 = 5
 	ReadinessProbeFailureThreshold    int32 = 1
+	ReadinessProbeInitialDelaySeconds int32 = 5
 	ReadinessProbePeriodSeconds       int32 = 10
 	ReadinessProbeSuccessThreshold    int32 = 1
 	ReadinessProbeTimeoutSeconds      int32 = 3
@@ -459,15 +459,9 @@ func getVolumeMounts(cr *v1alpha1.Grafana) []v13.VolumeMount {
 }
 
 func getLivenessProbe(cr *v1alpha1.Grafana) *v13.Probe {
-	var scheme v13.URIScheme
-
-	switch {
-	case cr.Spec.LivenessProbeSpec != nil && cr.Spec.LivenessProbeSpec.Scheme != "":
-		scheme = cr.Spec.LivenessProbeSpec.Scheme
-	case cr.Spec.Config.Server != nil && cr.Spec.Config.Server.Protocol == "https":
-		scheme = v13.URISchemeHTTPS
-	default:
-		scheme = v13.URISchemeHTTP
+	spec := &v1alpha1.LivenessProbeSpec{}
+	if cr.Spec.LivenessProbeSpec != nil {
+		spec = cr.Spec.LivenessProbeSpec
 	}
 
 	probe := &v13.Probe{
@@ -475,52 +469,23 @@ func getLivenessProbe(cr *v1alpha1.Grafana) *v13.Probe {
 			HTTPGet: &v13.HTTPGetAction{
 				Path:   constants.GrafanaHealthEndpoint,
 				Port:   intstr.FromInt(GetGrafanaPort(cr)),
-				Scheme: scheme,
+				Scheme: cr.GetScheme(),
 			},
 		},
-		InitialDelaySeconds: LivenessProbeInitialDelaySeconds,
-		TimeoutSeconds:      LivenessProbeTimeoutSeconds,
-		PeriodSeconds:       LivenessProbePeriodSeconds,
-		SuccessThreshold:    LivenessProbeSuccessThreshold,
-		FailureThreshold:    LivenessProbeFailureThreshold,
-	}
-
-	spec := cr.Spec.LivenessProbeSpec
-	if spec != nil {
-		if spec.InitialDelaySeconds != nil {
-			probe.InitialDelaySeconds = *spec.InitialDelaySeconds
-		}
-
-		if spec.FailureThreshold != nil {
-			probe.FailureThreshold = *spec.FailureThreshold
-		}
-
-		if spec.PeriodSeconds != nil {
-			probe.PeriodSeconds = *spec.PeriodSeconds
-		}
-
-		if spec.SuccessThreshold != nil {
-			probe.SuccessThreshold = *spec.SuccessThreshold
-		}
-
-		if spec.TimeOutSeconds != nil {
-			probe.TimeoutSeconds = *spec.TimeOutSeconds
-		}
+		InitialDelaySeconds: getDefaultInt32(spec.InitialDelaySeconds, LivenessProbeInitialDelaySeconds),
+		TimeoutSeconds:      getDefaultInt32(spec.TimeOutSeconds, LivenessProbeTimeoutSeconds),
+		PeriodSeconds:       getDefaultInt32(spec.PeriodSeconds, LivenessProbePeriodSeconds),
+		SuccessThreshold:    getDefaultInt32(spec.SuccessThreshold, LivenessProbeSuccessThreshold),
+		FailureThreshold:    getDefaultInt32(spec.FailureThreshold, LivenessProbeFailureThreshold),
 	}
 
 	return probe
 }
 
 func getReadinessProbe(cr *v1alpha1.Grafana) *v13.Probe {
-	var scheme v13.URIScheme
-
-	switch {
-	case cr.Spec.ReadinessProbeSpec != nil && cr.Spec.ReadinessProbeSpec.Scheme != "":
-		scheme = cr.Spec.ReadinessProbeSpec.Scheme
-	case cr.Spec.Config.Server != nil && cr.Spec.Config.Server.Protocol == "https":
-		scheme = v13.URISchemeHTTPS
-	default:
-		scheme = v13.URISchemeHTTP
+	spec := &v1alpha1.ReadinessProbeSpec{}
+	if cr.Spec.ReadinessProbeSpec != nil {
+		spec = cr.Spec.ReadinessProbeSpec
 	}
 
 	probe := &v13.Probe{
@@ -528,37 +493,14 @@ func getReadinessProbe(cr *v1alpha1.Grafana) *v13.Probe {
 			HTTPGet: &v13.HTTPGetAction{
 				Path:   constants.GrafanaHealthEndpoint,
 				Port:   intstr.FromInt(GetGrafanaPort(cr)),
-				Scheme: scheme,
+				Scheme: cr.GetScheme(),
 			},
 		},
-		InitialDelaySeconds: ReadinessProbeInitialDelaySeconds,
-		TimeoutSeconds:      ReadinessProbeTimeoutSeconds,
-		PeriodSeconds:       ReadinessProbePeriodSeconds,
-		SuccessThreshold:    ReadinessProbeSuccessThreshold,
-		FailureThreshold:    ReadinessProbeFailureThreshold,
-	}
-
-	spec := cr.Spec.ReadinessProbeSpec
-	if spec != nil {
-		if spec.InitialDelaySeconds != nil {
-			probe.InitialDelaySeconds = *spec.InitialDelaySeconds
-		}
-
-		if spec.TimeOutSeconds != nil {
-			probe.TimeoutSeconds = *spec.TimeOutSeconds
-		}
-
-		if spec.FailureThreshold != nil {
-			probe.FailureThreshold = *spec.FailureThreshold
-		}
-
-		if spec.PeriodSeconds != nil {
-			probe.PeriodSeconds = *spec.PeriodSeconds
-		}
-
-		if spec.SuccessThreshold != nil {
-			probe.SuccessThreshold = *spec.SuccessThreshold
-		}
+		InitialDelaySeconds: getDefaultInt32(spec.InitialDelaySeconds, ReadinessProbeInitialDelaySeconds),
+		TimeoutSeconds:      getDefaultInt32(spec.TimeOutSeconds, ReadinessProbeTimeoutSeconds),
+		PeriodSeconds:       getDefaultInt32(spec.PeriodSeconds, ReadinessProbePeriodSeconds),
+		SuccessThreshold:    getDefaultInt32(spec.SuccessThreshold, ReadinessProbeSuccessThreshold),
+		FailureThreshold:    getDefaultInt32(spec.FailureThreshold, ReadinessProbeFailureThreshold),
 	}
 
 	return probe

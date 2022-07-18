@@ -29,3 +29,10 @@ func MergeAnnotations(requested map[string]string, existing map[string]string) m
 	}
 	return existing
 }
+
+func getDefaultInt32(val1 *int32, val2 int32) int32 {
+	if val1 != nil {
+		return *val1
+	}
+	return val2
+}
