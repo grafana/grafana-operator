@@ -464,7 +464,7 @@ func getLivenessProbe(cr *v1alpha1.Grafana) *v13.Probe {
 		spec = cr.Spec.LivenessProbeSpec
 	}
 
-	probe := &v13.Probe{
+	return &v13.Probe{
 		Handler: v13.Handler{
 			HTTPGet: &v13.HTTPGetAction{
 				Path:   constants.GrafanaHealthEndpoint,
@@ -478,8 +478,6 @@ func getLivenessProbe(cr *v1alpha1.Grafana) *v13.Probe {
 		SuccessThreshold:    getDefaultInt32(spec.SuccessThreshold, LivenessProbeSuccessThreshold),
 		FailureThreshold:    getDefaultInt32(spec.FailureThreshold, LivenessProbeFailureThreshold),
 	}
-
-	return probe
 }
 
 func getReadinessProbe(cr *v1alpha1.Grafana) *v13.Probe {
@@ -488,7 +486,7 @@ func getReadinessProbe(cr *v1alpha1.Grafana) *v13.Probe {
 		spec = cr.Spec.ReadinessProbeSpec
 	}
 
-	probe := &v13.Probe{
+	return &v13.Probe{
 		Handler: v13.Handler{
 			HTTPGet: &v13.HTTPGetAction{
 				Path:   constants.GrafanaHealthEndpoint,
@@ -502,8 +500,6 @@ func getReadinessProbe(cr *v1alpha1.Grafana) *v13.Probe {
 		SuccessThreshold:    getDefaultInt32(spec.SuccessThreshold, ReadinessProbeSuccessThreshold),
 		FailureThreshold:    getDefaultInt32(spec.FailureThreshold, ReadinessProbeFailureThreshold),
 	}
-
-	return probe
 }
 
 func getContainers(cr *v1alpha1.Grafana, configHash, dsHash, credentialsHash string) []v13.Container { // nolint

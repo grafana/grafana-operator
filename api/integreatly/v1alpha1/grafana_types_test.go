@@ -10,17 +10,17 @@ import (
 func TestCR_GetScheme(t *testing.T) {
 	tests := []struct {
 		name string
-		cr   Grafana
+		cr   *Grafana
 		want v1.URIScheme
 	}{
 		{
 			name: "Nil server spec",
-			cr:   Grafana{},
+			cr:   &Grafana{},
 			want: v1.URISchemeHTTP,
 		},
 		{
 			name: "Empty server spec",
-			cr: Grafana{
+			cr: &Grafana{
 				Spec: GrafanaSpec{
 					Config: GrafanaConfig{
 						Server: &GrafanaConfigServer{},
@@ -31,7 +31,7 @@ func TestCR_GetScheme(t *testing.T) {
 		},
 		{
 			name: "HTTP in server spec",
-			cr: Grafana{
+			cr: &Grafana{
 				Spec: GrafanaSpec{
 					Config: GrafanaConfig{
 						Server: &GrafanaConfigServer{
@@ -44,7 +44,7 @@ func TestCR_GetScheme(t *testing.T) {
 		},
 		{
 			name: "HTTPS in server spec",
-			cr: Grafana{
+			cr: &Grafana{
 				Spec: GrafanaSpec{
 					Config: GrafanaConfig{
 						Server: &GrafanaConfigServer{
