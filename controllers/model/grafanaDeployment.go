@@ -485,25 +485,26 @@ func getLivenessProbe(cr *v1alpha1.Grafana) *v13.Probe {
 		FailureThreshold:    LivenessProbeFailureThreshold,
 	}
 
-	if cr.Spec.LivenessProbeSpec != nil {
-		if cr.Spec.LivenessProbeSpec.InitialDelaySeconds != nil {
-			probe.InitialDelaySeconds = *cr.Spec.LivenessProbeSpec.InitialDelaySeconds
+	spec := cr.Spec.LivenessProbeSpec
+	if spec != nil {
+		if spec.InitialDelaySeconds != nil {
+			probe.InitialDelaySeconds = *spec.InitialDelaySeconds
 		}
 
-		if cr.Spec.LivenessProbeSpec.FailureThreshold != nil {
-			probe.FailureThreshold = *cr.Spec.LivenessProbeSpec.FailureThreshold
+		if spec.FailureThreshold != nil {
+			probe.FailureThreshold = *spec.FailureThreshold
 		}
 
-		if cr.Spec.LivenessProbeSpec.PeriodSeconds != nil {
-			probe.PeriodSeconds = *cr.Spec.LivenessProbeSpec.PeriodSeconds
+		if spec.PeriodSeconds != nil {
+			probe.PeriodSeconds = *spec.PeriodSeconds
 		}
 
-		if cr.Spec.LivenessProbeSpec.SuccessThreshold != nil {
-			probe.SuccessThreshold = *cr.Spec.LivenessProbeSpec.SuccessThreshold
+		if spec.SuccessThreshold != nil {
+			probe.SuccessThreshold = *spec.SuccessThreshold
 		}
 
-		if cr.Spec.LivenessProbeSpec.TimeOutSeconds != nil {
-			probe.TimeoutSeconds = *cr.Spec.LivenessProbeSpec.TimeOutSeconds
+		if spec.TimeOutSeconds != nil {
+			probe.TimeoutSeconds = *spec.TimeOutSeconds
 		}
 	}
 
@@ -537,25 +538,26 @@ func getReadinessProbe(cr *v1alpha1.Grafana) *v13.Probe {
 		FailureThreshold:    ReadinessProbeFailureThreshold,
 	}
 
-	if cr.Spec.ReadinessProbeSpec != nil {
-		if cr.Spec.ReadinessProbeSpec.InitialDelaySeconds != nil {
-			probe.InitialDelaySeconds = *cr.Spec.ReadinessProbeSpec.InitialDelaySeconds
+	spec := cr.Spec.ReadinessProbeSpec
+	if spec != nil {
+		if spec.InitialDelaySeconds != nil {
+			probe.InitialDelaySeconds = *spec.InitialDelaySeconds
 		}
 
-		if cr.Spec.ReadinessProbeSpec.TimeOutSeconds != nil {
-			probe.TimeoutSeconds = *cr.Spec.ReadinessProbeSpec.TimeOutSeconds
+		if spec.TimeOutSeconds != nil {
+			probe.TimeoutSeconds = *spec.TimeOutSeconds
 		}
 
-		if cr.Spec.ReadinessProbeSpec.FailureThreshold != nil {
-			probe.FailureThreshold = *cr.Spec.ReadinessProbeSpec.FailureThreshold
+		if spec.FailureThreshold != nil {
+			probe.FailureThreshold = *spec.FailureThreshold
 		}
 
-		if cr.Spec.ReadinessProbeSpec.PeriodSeconds != nil {
-			probe.PeriodSeconds = *cr.Spec.ReadinessProbeSpec.PeriodSeconds
+		if spec.PeriodSeconds != nil {
+			probe.PeriodSeconds = *spec.PeriodSeconds
 		}
 
-		if cr.Spec.ReadinessProbeSpec.SuccessThreshold != nil {
-			probe.SuccessThreshold = *cr.Spec.ReadinessProbeSpec.SuccessThreshold
+		if spec.SuccessThreshold != nil {
+			probe.SuccessThreshold = *spec.SuccessThreshold
 		}
 	}
 
