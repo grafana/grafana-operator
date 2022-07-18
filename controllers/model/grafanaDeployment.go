@@ -505,10 +505,6 @@ func getLivenessProbe(cr *v1alpha1.Grafana) *v13.Probe {
 		if cr.Spec.LivenessProbeSpec.TimeOutSeconds != nil {
 			probe.TimeoutSeconds = *cr.Spec.LivenessProbeSpec.TimeOutSeconds
 		}
-
-		if cr.Spec.LivenessProbeSpec.Scheme != "" {
-			probe.Handler.HTTPGet.Scheme = cr.Spec.LivenessProbeSpec.Scheme
-		}
 	}
 
 	return probe
@@ -560,10 +556,6 @@ func getReadinessProbe(cr *v1alpha1.Grafana) *v13.Probe {
 
 		if cr.Spec.ReadinessProbeSpec.SuccessThreshold != nil {
 			probe.SuccessThreshold = *cr.Spec.ReadinessProbeSpec.SuccessThreshold
-		}
-
-		if cr.Spec.ReadinessProbeSpec.Scheme != "" {
-			probe.Handler.HTTPGet.Scheme = v13.URISchemeHTTPS
 		}
 	}
 
