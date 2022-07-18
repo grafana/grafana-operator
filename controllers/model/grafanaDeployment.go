@@ -459,12 +459,23 @@ func getVolumeMounts(cr *v1alpha1.Grafana) []v13.VolumeMount {
 }
 
 func getLivenessProbe(cr *v1alpha1.Grafana) *v13.Probe {
+	var scheme v13.URIScheme
+
+	switch {
+	case cr.Spec.LivenessProbeSpec != nil && cr.Spec.LivenessProbeSpec.Scheme != "":
+		scheme = cr.Spec.LivenessProbeSpec.Scheme
+	case cr.Spec.Config.Server != nil && cr.Spec.Config.Server.Protocol == "https":
+		scheme = v13.URISchemeHTTPS
+	default:
+		scheme = v13.URISchemeHTTP
+	}
+
 	probe := &v13.Probe{
 		Handler: v13.Handler{
 			HTTPGet: &v13.HTTPGetAction{
 				Path:   constants.GrafanaHealthEndpoint,
 				Port:   intstr.FromInt(GetGrafanaPort(cr)),
-				Scheme: v13.URISchemeHTTP,
+				Scheme: scheme,
 			},
 		},
 		InitialDelaySeconds: LivenessProbeInitialDelaySeconds,
@@ -472,10 +483,6 @@ func getLivenessProbe(cr *v1alpha1.Grafana) *v13.Probe {
 		PeriodSeconds:       LivenessProbePeriodSeconds,
 		SuccessThreshold:    LivenessProbeSuccessThreshold,
 		FailureThreshold:    LivenessProbeFailureThreshold,
-	}
-
-	if cr.Spec.Config.Server != nil && cr.Spec.Config.Server.Protocol == "https" {
-		probe.Handler.HTTPGet.Scheme = v13.URISchemeHTTPS
 	}
 
 	if cr.Spec.LivenessProbeSpec != nil {
@@ -508,12 +515,23 @@ func getLivenessProbe(cr *v1alpha1.Grafana) *v13.Probe {
 }
 
 func getReadinessProbe(cr *v1alpha1.Grafana) *v13.Probe {
+	var scheme v13.URIScheme
+
+	switch {
+	case cr.Spec.ReadinessProbeSpec != nil && cr.Spec.ReadinessProbeSpec.Scheme != "":
+		scheme = cr.Spec.ReadinessProbeSpec.Scheme
+	case cr.Spec.Config.Server != nil && cr.Spec.Config.Server.Protocol == "https":
+		scheme = v13.URISchemeHTTPS
+	default:
+		scheme = v13.URISchemeHTTP
+	}
+
 	probe := &v13.Probe{
 		Handler: v13.Handler{
 			HTTPGet: &v13.HTTPGetAction{
 				Path:   constants.GrafanaHealthEndpoint,
 				Port:   intstr.FromInt(GetGrafanaPort(cr)),
-				Scheme: v13.URISchemeHTTP,
+				Scheme: scheme,
 			},
 		},
 		InitialDelaySeconds: ReadinessProbeInitialDelaySeconds,
@@ -521,10 +539,6 @@ func getReadinessProbe(cr *v1alpha1.Grafana) *v13.Probe {
 		PeriodSeconds:       ReadinessProbePeriodSeconds,
 		SuccessThreshold:    ReadinessProbeSuccessThreshold,
 		FailureThreshold:    ReadinessProbeFailureThreshold,
-	}
-
-	if cr.Spec.Config.Server != nil && cr.Spec.Config.Server.Protocol == "https" {
-		probe.Handler.HTTPGet.Scheme = v13.URISchemeHTTPS
 	}
 
 	if cr.Spec.ReadinessProbeSpec != nil {
