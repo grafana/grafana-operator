@@ -1861,6 +1861,10 @@ spec:
                                 the container. Number must be in the range 1 to 65535.
                                 Name must be an IANA_SVC_NAME.
                               x-kubernetes-int-or-string: true
+                            scheme:
+                              description: Scheme to use for connecting to the host.
+                                Defaults to HTTP.
+                              type: string
                           required:
                           - port
                           type: object
@@ -2025,6 +2029,10 @@ spec:
                                 the container. Number must be in the range 1 to 65535.
                                 Name must be an IANA_SVC_NAME.
                               x-kubernetes-int-or-string: true
+                            scheme:
+                              description: Scheme to use for connecting to the host.
+                                Defaults to HTTP.
+                              type: string
                           required:
                           - port
                           type: object
@@ -5453,6 +5461,10 @@ spec:
                   periodSeconds:
                     format: int32
                     type: integer
+                  scheme:
+                    description: URIScheme identifies the scheme used for connection
+                      to a host for Get actions. Deprecated in favour of config.server.protocol.
+                    type: string
                   successThreshold:
                     format: int32
                     type: integer
@@ -5471,6 +5483,10 @@ spec:
                   periodSeconds:
                     format: int32
                     type: integer
+                  scheme:
+                    description: URIScheme identifies the scheme used for connection
+                      to a host for Get actions. Deprecated in favour of config.server.protocol.
+                    type: string
                   successThreshold:
                     format: int32
                     type: integer

@@ -4811,6 +4811,10 @@ spec:
                   periodSeconds:
                     format: int32
                     type: integer
+                  scheme:
+                    description: URIScheme identifies the scheme used for connection
+                      to a host for Get actions. Deprecated in favour of config.server.protocol.
+                    type: string
                   successThreshold:
                     format: int32
                     type: integer
@@ -4829,6 +4833,10 @@ spec:
                   periodSeconds:
                     format: int32
                     type: integer
+                  scheme:
+                    description: URIScheme identifies the scheme used for connection
+                      to a host for Get actions. Deprecated in favour of config.server.protocol.
+                    type: string
                   successThreshold:
                     format: int32
                     type: integer

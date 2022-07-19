@@ -50,6 +50,8 @@ type ReadinessProbeSpec struct {
 	PeriodSeconds       *int32 `json:"periodSeconds,omitempty"`
 	SuccessThreshold    *int32 `json:"successThreshold,omitempty"`
 	FailureThreshold    *int32 `json:"failureThreshold,omitempty"`
+	// URIScheme identifies the scheme used for connection to a host for Get actions. Deprecated in favour of config.server.protocol.
+	Scheme v1.URIScheme `json:"scheme,omitempty"`
 }
 type LivenessProbeSpec struct {
 	InitialDelaySeconds *int32 `json:"initialDelaySeconds,omitempty"`
@@ -57,6 +59,8 @@ type LivenessProbeSpec struct {
 	PeriodSeconds       *int32 `json:"periodSeconds,omitempty"`
 	SuccessThreshold    *int32 `json:"successThreshold,omitempty"`
 	FailureThreshold    *int32 `json:"failureThreshold,omitempty"`
+	// URIScheme identifies the scheme used for connection to a host for Get actions. Deprecated in favour of config.server.protocol.
+	Scheme v1.URIScheme `json:"scheme,omitempty"`
 }
 
 type JsonnetConfig struct {
