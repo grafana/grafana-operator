@@ -12615,13 +12615,6 @@ A label selector requirement is a selector that contains values, a key, and an o
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>scheme</b></td>
-        <td>string</td>
-        <td>
-          URIScheme identifies the scheme used for connection to a host for Get actions<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>successThreshold</b></td>
         <td>integer</td>
         <td>
@@ -12684,13 +12677,6 @@ A label selector requirement is a selector that contains values, a key, and an o
           <br/>
           <br/>
             <i>Format</i>: int32<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>scheme</b></td>
-        <td>string</td>
-        <td>
-          URIScheme identifies the scheme used for connection to a host for Get actions<br/>
         </td>
         <td>false</td>
       </tr><tr>
