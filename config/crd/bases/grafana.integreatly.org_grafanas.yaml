@@ -3863,32 +3863,6 @@ spec:
                         x-kubernetes-list-type: atomic
                     type: object
                 type: object
-              jsonnet:
-                properties:
-                  libraryLabelSelector:
-                    properties:
-                      matchExpressions:
-                        items:
-                          properties:
-                            key:
-                              type: string
-                            operator:
-                              type: string
-                            values:
-                              items:
-                                type: string
-                              type: array
-                          required:
-                          - key
-                          - operator
-                          type: object
-                        type: array
-                      matchLabels:
-                        additionalProperties:
-                          type: string
-                        type: object
-                    type: object
-                type: object
               persistentVolumeClaim:
                 properties:
                   metadata:
