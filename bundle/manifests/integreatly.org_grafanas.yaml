@@ -4806,10 +4806,6 @@ spec:
                   periodSeconds:
                     format: int32
                     type: integer
-                  scheme:
-                    description: URIScheme identifies the scheme used for connection
-                      to a host for Get actions
-                    type: string
                   successThreshold:
                     format: int32
                     type: integer
@@ -4828,10 +4824,6 @@ spec:
                   periodSeconds:
                     format: int32
                     type: integer
-                  scheme:
-                    description: URIScheme identifies the scheme used for connection
-                      to a host for Get actions
-                    type: string
                   successThreshold:
                     format: int32
                     type: integer
