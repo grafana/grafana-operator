@@ -1306,6 +1306,9 @@ spec:
                       http_port:
                         type: string
                       protocol:
+                        enum:
+                        - http
+                        - https
                         type: string
                       root_url:
                         type: string

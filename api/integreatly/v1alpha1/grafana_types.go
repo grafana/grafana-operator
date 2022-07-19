@@ -197,6 +197,7 @@ type GrafanaConfigPaths struct {
 type GrafanaConfigServer struct {
 	HttpAddr string `json:"http_addr,omitempty" ini:"http_addr,omitempty"`
 	HttpPort string `json:"http_port,omitempty" ini:"http_port,omitempty"`
+	// +kubebuilder:validation:Enum=http;https
 	Protocol string `json:"protocol,omitempty" ini:"protocol,omitempty"`
 	Socket   string `json:"socket,omitempty" ini:"socket,omitempty"`
 	Domain   string `json:"domain,omitempty" ini:"domain,omitempty"`
