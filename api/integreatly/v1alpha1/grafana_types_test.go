@@ -7,7 +7,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-func TestCR_GetScheme(t *testing.T) {
+func TestGrafana_GetScheme(t *testing.T) {
 	tests := []struct {
 		name string
 		cr   *Grafana
