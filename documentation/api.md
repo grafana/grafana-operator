@@ -12620,7 +12620,7 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>scheme</b></td>
         <td>string</td>
         <td>
-          URIScheme identifies the scheme used for connection to a host for Get actions. Deprecated in favour of config.server.protocol.<br/>
+          URIScheme identifies the scheme used for connection to a host for Get actions. Deprecated in favor of config.server.protocol.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12692,7 +12692,7 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>scheme</b></td>
         <td>string</td>
         <td>
-          URIScheme identifies the scheme used for connection to a host for Get actions. Deprecated in favour of config.server.protocol.<br/>
+          URIScheme identifies the scheme used for connection to a host for Get actions. Deprecated in favor of config.server.protocol.<br/>
         </td>
         <td>false</td>
       </tr><tr>
