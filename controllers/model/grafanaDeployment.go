@@ -481,7 +481,7 @@ func getLivenessProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.
 	}
 
 	return &v13.Probe{
-		Handler: v13.Handler{
+		ProbeHandler: v13.ProbeHandler{
 			HTTPGet: &v13.HTTPGetAction{
 				Path:   constants.GrafanaHealthEndpoint,
 				Port:   intstr.FromInt(GetGrafanaPort(cr)),
@@ -529,7 +529,7 @@ func getReadinessProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13
 	}
 
 	return &v13.Probe{
-		Handler: v13.Handler{
+		ProbeHandler: v13.ProbeHandler{
 			HTTPGet: &v13.HTTPGetAction{
 				Path:   constants.GrafanaHealthEndpoint,
 				Port:   intstr.FromInt(GetGrafanaPort(cr)),
