@@ -22,7 +22,7 @@ The recommended procedure for creating notifiers is as follows:
    - User generated secret, and supplemented in `EnvFrom` in the Grafana CR.
 3) Once logged in, create and test notifiers through the UI
 4) Once tested and created, extract the raw JSON
-5) Create a new `GrafanaNotifgicationChannel` CR and provide the JSON string in `spec.json` as in the example below:
+5) Create a new `GrafanaNotificationChannel` CR and provide the JSON string in `spec.json` as in the example below:
 6) Apply the resource to the cluster
 
 The created notifier should now be provisioned and managed by the operator.
