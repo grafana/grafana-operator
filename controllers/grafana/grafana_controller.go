@@ -275,7 +275,7 @@ func (r *ReconcileGrafana) getGrafanaAdminUrl(cr *grafanav1alpha1.Grafana, state
 		protocol := "http"
 
 		if cr.Spec.Config.Server != nil {
-			switch cr.Spec.Config.Server.Protocol {
+			switch protocol = cr.Spec.Config.Server.Protocol; protocol {
 			case "", "http":
 				protocol = "http"
 			case "https":
