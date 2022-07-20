@@ -45,20 +45,22 @@ type GrafanaSpec struct {
 }
 
 type ReadinessProbeSpec struct {
-	InitialDelaySeconds *int32       `json:"initialDelaySeconds,omitempty"`
-	TimeOutSeconds      *int32       `json:"timeoutSeconds,omitempty"`
-	PeriodSeconds       *int32       `json:"periodSeconds,omitempty"`
-	SuccessThreshold    *int32       `json:"successThreshold,omitempty"`
-	FailureThreshold    *int32       `json:"failureThreshold,omitempty"`
-	Scheme              v1.URIScheme `json:"scheme,omitempty"`
+	InitialDelaySeconds *int32 `json:"initialDelaySeconds,omitempty"`
+	TimeOutSeconds      *int32 `json:"timeoutSeconds,omitempty"`
+	PeriodSeconds       *int32 `json:"periodSeconds,omitempty"`
+	SuccessThreshold    *int32 `json:"successThreshold,omitempty"`
+	FailureThreshold    *int32 `json:"failureThreshold,omitempty"`
+	// URIScheme identifies the scheme used for connection to a host for Get actions. Deprecated in favor of config.server.protocol.
+	Scheme v1.URIScheme `json:"scheme,omitempty"`
 }
 type LivenessProbeSpec struct {
-	InitialDelaySeconds *int32       `json:"initialDelaySeconds,omitempty"`
-	TimeOutSeconds      *int32       `json:"timeoutSeconds,omitempty"`
-	PeriodSeconds       *int32       `json:"periodSeconds,omitempty"`
-	SuccessThreshold    *int32       `json:"successThreshold,omitempty"`
-	FailureThreshold    *int32       `json:"failureThreshold,omitempty"`
-	Scheme              v1.URIScheme `json:"scheme,omitempty"`
+	InitialDelaySeconds *int32 `json:"initialDelaySeconds,omitempty"`
+	TimeOutSeconds      *int32 `json:"timeoutSeconds,omitempty"`
+	PeriodSeconds       *int32 `json:"periodSeconds,omitempty"`
+	SuccessThreshold    *int32 `json:"successThreshold,omitempty"`
+	FailureThreshold    *int32 `json:"failureThreshold,omitempty"`
+	// URIScheme identifies the scheme used for connection to a host for Get actions. Deprecated in favor of config.server.protocol.
+	Scheme v1.URIScheme `json:"scheme,omitempty"`
 }
 
 type JsonnetConfig struct {
@@ -199,6 +201,7 @@ type GrafanaConfigPaths struct {
 type GrafanaConfigServer struct {
 	HttpAddr string `json:"http_addr,omitempty" ini:"http_addr,omitempty"`
 	HttpPort string `json:"http_port,omitempty" ini:"http_port,omitempty"`
+	// +kubebuilder:validation:Enum=http;https
 	Protocol string `json:"protocol,omitempty" ini:"protocol,omitempty"`
 	Socket   string `json:"socket,omitempty" ini:"socket,omitempty"`
 	Domain   string `json:"domain,omitempty" ini:"domain,omitempty"`
@@ -692,4 +695,11 @@ func (cr *Grafana) GetPreferServiceValue() bool {
 		return *cr.Spec.Client.PreferService
 	}
 	return false
+}
+
+func (cr *Grafana) GetScheme() v1.URIScheme {
+	if cr.Spec.Config.Server != nil && cr.Spec.Config.Server.Protocol == "https" {
+		return v1.URISchemeHTTPS
+	}
+	return v1.URISchemeHTTP
 }
