@@ -281,7 +281,7 @@ func (r *ReconcileGrafana) getGrafanaAdminUrl(cr *grafanav1alpha1.Grafana, state
 			case "https":
 				protocol = "https"
 			default:
-				return "", fmt.Errorf("server protocol %v is not supported, please use either http or https", protocol)
+				return "", fmt.Errorf("server protocol %v is not supported, please use either http or https", cr.Spec.Config.Server.Protocol)
 			}
 		}
 
