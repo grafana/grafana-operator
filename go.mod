@@ -84,6 +84,3 @@ require (
 )
 
 replace github.com/gogo/protobuf v1.3.1 => github.com/gogo/protobuf v1.3.2
-
-// Handle CVE-2022-27191
-replace golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0 => golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4
