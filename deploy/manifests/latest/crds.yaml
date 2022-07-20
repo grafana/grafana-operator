@@ -1306,6 +1306,9 @@ spec:
                       http_port:
                         type: string
                       protocol:
+                        enum:
+                        - http
+                        - https
                         type: string
                       root_url:
                         type: string
@@ -5945,7 +5948,7 @@ spec:
                     type: integer
                   scheme:
                     description: URIScheme identifies the scheme used for connection
-                      to a host for Get actions
+                      to a host for Get actions. Deprecated in favor of config.server.protocol.
                     type: string
                   successThreshold:
                     format: int32
@@ -5967,7 +5970,7 @@ spec:
                     type: integer
                   scheme:
                     description: URIScheme identifies the scheme used for connection
-                      to a host for Get actions
+                      to a host for Get actions. Deprecated in favor of config.server.protocol.
                     type: string
                   successThreshold:
                     format: int32
