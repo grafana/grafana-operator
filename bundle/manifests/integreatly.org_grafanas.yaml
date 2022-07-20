@@ -655,6 +655,9 @@ spec:
                         type: string
                       protocol:
                         type: string
+                        enum:
+                         - http
+                         - https
                       root_url:
                         type: string
                       router_logging:
@@ -4808,7 +4811,7 @@ spec:
                     type: integer
                   scheme:
                     description: URIScheme identifies the scheme used for connection
-                      to a host for Get actions
+                      to a host for Get actions. Deprecated in favor of config.server.protocol.
                     type: string
                   successThreshold:
                     format: int32
@@ -4830,7 +4833,7 @@ spec:
                     type: integer
                   scheme:
                     description: URIScheme identifies the scheme used for connection
-                      to a host for Get actions
+                      to a host for Get actions. Deprecated in favor of config.server.protocol.
                     type: string
                   successThreshold:
                     format: int32

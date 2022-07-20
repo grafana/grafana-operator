@@ -16,14 +16,24 @@ import (
 )
 
 const (
-	InitMemoryRequest = "128Mi"
-	InitCpuRequest    = "250m"
-	InitMemoryLimit   = "512Mi"
-	InitCpuLimit      = "1000m"
-	MemoryRequest     = "256Mi"
-	CpuRequest        = "100m"
-	MemoryLimit       = "1024Mi"
-	CpuLimit          = "500m"
+	InitMemoryRequest                       = "128Mi"
+	InitCpuRequest                          = "250m"
+	InitMemoryLimit                         = "512Mi"
+	InitCpuLimit                            = "1000m"
+	MemoryRequest                           = "256Mi"
+	CpuRequest                              = "100m"
+	MemoryLimit                             = "1024Mi"
+	CpuLimit                                = "500m"
+	LivenessProbeFailureThreshold     int32 = 10
+	LivenessProbeInitialDelaySeconds  int32 = 60
+	LivenessProbePeriodSeconds        int32 = 10
+	LivenessProbeSuccessThreshold     int32 = 1
+	LivenessProbeTimeoutSeconds       int32 = 30
+	ReadinessProbeFailureThreshold    int32 = 1
+	ReadinessProbeInitialDelaySeconds int32 = 5
+	ReadinessProbePeriodSeconds       int32 = 10
+	ReadinessProbeSuccessThreshold    int32 = 1
+	ReadinessProbeTimeoutSeconds      int32 = 3
 )
 
 func getSkipCreateAdminAccount(cr *v1alpha1.Grafana) bool {
@@ -448,99 +458,47 @@ func getVolumeMounts(cr *v1alpha1.Grafana) []v13.VolumeMount {
 	return mounts
 }
 
-func getLivenessProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.Probe {
-	var period int32 = 10
-	var success int32 = 1
-	scheme := v13.URISchemeHTTP
-	if cr.Spec.Config.Server != nil && cr.Spec.Config.Server.Protocol == "https" {
-		scheme = v13.URISchemeHTTPS
-	}
-
-	if cr.Spec.LivenessProbeSpec != nil && cr.Spec.LivenessProbeSpec.InitialDelaySeconds != nil {
-		delay = *cr.Spec.LivenessProbeSpec.InitialDelaySeconds
-	}
-
-	if cr.Spec.LivenessProbeSpec != nil && cr.Spec.LivenessProbeSpec.TimeOutSeconds != nil {
-		timeout = *cr.Spec.LivenessProbeSpec.TimeOutSeconds
-	}
-
-	if cr.Spec.LivenessProbeSpec != nil && cr.Spec.LivenessProbeSpec.FailureThreshold != nil {
-		failure = *cr.Spec.LivenessProbeSpec.FailureThreshold
-	}
-
-	if cr.Spec.LivenessProbeSpec != nil && cr.Spec.LivenessProbeSpec.PeriodSeconds != nil {
-		period = *cr.Spec.LivenessProbeSpec.PeriodSeconds
-	}
-
-	if cr.Spec.LivenessProbeSpec != nil && cr.Spec.LivenessProbeSpec.SuccessThreshold != nil {
-		period = *cr.Spec.LivenessProbeSpec.SuccessThreshold
-	}
-
-	if cr.Spec.LivenessProbeSpec != nil && cr.Spec.LivenessProbeSpec.Scheme != "" {
-		scheme = cr.Spec.LivenessProbeSpec.Scheme
+func getLivenessProbe(cr *v1alpha1.Grafana) *v13.Probe {
+	spec := &v1alpha1.LivenessProbeSpec{}
+	if cr.Spec.LivenessProbeSpec != nil {
+		spec = cr.Spec.LivenessProbeSpec
 	}
 
 	return &v13.Probe{
-		Handler: v13.Handler{
+		ProbeHandler: v13.ProbeHandler{
 			HTTPGet: &v13.HTTPGetAction{
 				Path:   constants.GrafanaHealthEndpoint,
 				Port:   intstr.FromInt(GetGrafanaPort(cr)),
-				Scheme: scheme,
+				Scheme: cr.GetScheme(),
 			},
 		},
-		InitialDelaySeconds: delay,
-		TimeoutSeconds:      timeout,
-		PeriodSeconds:       period,
-		SuccessThreshold:    success,
-		FailureThreshold:    failure,
+		InitialDelaySeconds: getDefaultInt32(spec.InitialDelaySeconds, LivenessProbeInitialDelaySeconds),
+		TimeoutSeconds:      getDefaultInt32(spec.TimeOutSeconds, LivenessProbeTimeoutSeconds),
+		PeriodSeconds:       getDefaultInt32(spec.PeriodSeconds, LivenessProbePeriodSeconds),
+		SuccessThreshold:    getDefaultInt32(spec.SuccessThreshold, LivenessProbeSuccessThreshold),
+		FailureThreshold:    getDefaultInt32(spec.FailureThreshold, LivenessProbeFailureThreshold),
 	}
 }
 
-func getReadinessProbe(cr *v1alpha1.Grafana, delay, timeout, failure int32) *v13.Probe {
-	var period int32 = 10
-	var success int32 = 1
-	scheme := v13.URISchemeHTTP
-	if cr.Spec.Config.Server != nil && cr.Spec.Config.Server.Protocol == "https" {
-		scheme = v13.URISchemeHTTPS
-	}
-
-	if cr.Spec.ReadinessProbeSpec != nil && cr.Spec.ReadinessProbeSpec.InitialDelaySeconds != nil {
-		delay = *cr.Spec.ReadinessProbeSpec.InitialDelaySeconds
-	}
-
-	if cr.Spec.ReadinessProbeSpec != nil && cr.Spec.ReadinessProbeSpec.TimeOutSeconds != nil {
-		timeout = *cr.Spec.ReadinessProbeSpec.TimeOutSeconds
-	}
-
-	if cr.Spec.ReadinessProbeSpec != nil && cr.Spec.ReadinessProbeSpec.FailureThreshold != nil {
-		failure = *cr.Spec.ReadinessProbeSpec.FailureThreshold
-	}
-
-	if cr.Spec.ReadinessProbeSpec != nil && cr.Spec.ReadinessProbeSpec.PeriodSeconds != nil {
-		period = *cr.Spec.ReadinessProbeSpec.PeriodSeconds
-	}
-
-	if cr.Spec.ReadinessProbeSpec != nil && cr.Spec.ReadinessProbeSpec.SuccessThreshold != nil {
-		period = *cr.Spec.ReadinessProbeSpec.SuccessThreshold
-	}
-
-	if cr.Spec.ReadinessProbeSpec != nil && cr.Spec.ReadinessProbeSpec.Scheme != "" {
-		scheme = cr.Spec.ReadinessProbeSpec.Scheme
+func getReadinessProbe(cr *v1alpha1.Grafana) *v13.Probe {
+	spec := &v1alpha1.ReadinessProbeSpec{}
+	if cr.Spec.ReadinessProbeSpec != nil {
+		spec = cr.Spec.ReadinessProbeSpec
 	}
 
 	return &v13.Probe{
-		Handler: v13.Handler{
+		ProbeHandler: v13.ProbeHandler{
 			HTTPGet: &v13.HTTPGetAction{
 				Path:   constants.GrafanaHealthEndpoint,
 				Port:   intstr.FromInt(GetGrafanaPort(cr)),
-				Scheme: scheme,
+				Scheme: cr.GetScheme(),
 			},
 		},
-		InitialDelaySeconds: delay,
-		TimeoutSeconds:      timeout,
-		PeriodSeconds:       period,
-		SuccessThreshold:    success,
-		FailureThreshold:    failure,
+		InitialDelaySeconds: getDefaultInt32(spec.InitialDelaySeconds, ReadinessProbeInitialDelaySeconds),
+		TimeoutSeconds:      getDefaultInt32(spec.TimeOutSeconds, ReadinessProbeTimeoutSeconds),
+		PeriodSeconds:       getDefaultInt32(spec.PeriodSeconds, ReadinessProbePeriodSeconds),
+		SuccessThreshold:    getDefaultInt32(spec.SuccessThreshold, ReadinessProbeSuccessThreshold),
+		FailureThreshold:    getDefaultInt32(spec.FailureThreshold, ReadinessProbeFailureThreshold),
 	}
 }
 
@@ -610,8 +568,8 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash, credentialsHash str
 		EnvFrom:                  getEnvFrom(cr),
 		Resources:                getResources(cr),
 		VolumeMounts:             getVolumeMounts(cr),
-		LivenessProbe:            getLivenessProbe(cr, 60, 30, 10),
-		ReadinessProbe:           getReadinessProbe(cr, 5, 3, 1),
+		LivenessProbe:            getLivenessProbe(cr),
+		ReadinessProbe:           getReadinessProbe(cr),
 		TerminationMessagePath:   "/dev/termination-log",
 		TerminationMessagePolicy: "File",
 		ImagePullPolicy:          "IfNotPresent",

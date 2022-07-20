@@ -2,7 +2,7 @@ package constants
 
 const (
 	GrafanaImage                            = "docker.io/grafana/grafana"
-	GrafanaVersion                          = "7.5.15"
+	GrafanaVersion                          = "7.5.16"
 	GrafanaServiceAccountName               = "grafana-serviceaccount"
 	GrafanaServiceName                      = "grafana-service"
 	GrafanaDataStorageName                  = "grafana-pvc"

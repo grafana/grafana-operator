@@ -30,8 +30,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-const ControllerName = "grafana-controller"
-const DefaultClientTimeoutSeconds = 5
+const (
+	ControllerName              = "grafana-controller"
+	DefaultClientTimeoutSeconds = 5
+)
 
 var log = logf.Log.WithName(ControllerName)
 
@@ -266,7 +268,7 @@ func (r *ReconcileGrafana) getGrafanaAdminUrl(cr *grafanav1alpha1.Grafana, state
 		}
 	}
 
-	var servicePort = int32(model.GetGrafanaPort(cr))
+	servicePort := int32(model.GetGrafanaPort(cr))
 
 	// Otherwise rely on the service
 	if state.GrafanaService != nil {
@@ -279,11 +281,11 @@ func (r *ReconcileGrafana) getGrafanaAdminUrl(cr *grafanav1alpha1.Grafana, state
 			case "https":
 				protocol = "https"
 			default:
-				return "", stdErr.New(fmt.Sprintf("server protocol %v is not supported, please use either http or https", protocol))
+				return "", fmt.Errorf("server protocol %v is not supported, please use either http or https", cr.Spec.Config.Server.Protocol)
 			}
 		}
 
-		return fmt.Sprintf("%v://%v.%v.svc.cluster.local:%d", protocol, state.GrafanaService.Name, cr.Namespace,
+		return fmt.Sprintf("%v://%v.%v:%d", protocol, state.GrafanaService.Name, cr.Namespace,
 			servicePort), nil
 	}
 
