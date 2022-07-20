@@ -79,7 +79,7 @@ func Test_getLivenessProbe(t *testing.T) {
 
 		got := getLivenessProbe(cr)
 		want := &v1.Probe{
-			Handler: v1.Handler{
+			ProbeHandler: v1.ProbeHandler{
 				HTTPGet: &v1.HTTPGetAction{
 					Path:   constants.GrafanaHealthEndpoint,
 					Port:   intstr.FromInt(GetGrafanaPort(cr)),
@@ -119,7 +119,7 @@ func Test_getLivenessProbe(t *testing.T) {
 
 		got := getLivenessProbe(cr)
 		want := &v1.Probe{
-			Handler: v1.Handler{
+			ProbeHandler: v1.ProbeHandler{
 				HTTPGet: &v1.HTTPGetAction{
 					Path:   constants.GrafanaHealthEndpoint,
 					Port:   intstr.FromInt(GetGrafanaPort(cr)),
@@ -145,7 +145,7 @@ func Test_getReadinessProbe(t *testing.T) {
 
 		got := getReadinessProbe(cr)
 		want := &v1.Probe{
-			Handler: v1.Handler{
+			ProbeHandler: v1.ProbeHandler{
 				HTTPGet: &v1.HTTPGetAction{
 					Path:   constants.GrafanaHealthEndpoint,
 					Port:   intstr.FromInt(GetGrafanaPort(cr)),
@@ -185,7 +185,7 @@ func Test_getReadinessProbe(t *testing.T) {
 
 		got := getReadinessProbe(cr)
 		want := &v1.Probe{
-			Handler: v1.Handler{
+			ProbeHandler: v1.ProbeHandler{
 				HTTPGet: &v1.HTTPGetAction{
 					Path:   constants.GrafanaHealthEndpoint,
 					Port:   intstr.FromInt(GetGrafanaPort(cr)),
