@@ -136,25 +136,25 @@ func TestReconcileGrafana_getGrafanaAdminUrl(t *testing.T) {
 		{
 			name:     "server spec is nil",
 			server:   nil,
-			want:     "http://grafana.monitoring.svc.cluster.local:3000",
+			want:     "http://grafana.monitoring:3000",
 			wantFail: false,
 		},
 		{
 			name:     "server protocol: not specified",
 			server:   &Srv{Protocol: ""},
-			want:     "http://grafana.monitoring.svc.cluster.local:3000",
+			want:     "http://grafana.monitoring:3000",
 			wantFail: false,
 		},
 		{
 			name:     "server protocol: http",
 			server:   &Srv{Protocol: "http"},
-			want:     "http://grafana.monitoring.svc.cluster.local:3000",
+			want:     "http://grafana.monitoring:3000",
 			wantFail: false,
 		},
 		{
 			name:     "server protocol: https",
 			server:   &Srv{Protocol: "https"},
-			want:     "https://grafana.monitoring.svc.cluster.local:3000",
+			want:     "https://grafana.monitoring:3000",
 			wantFail: false,
 		},
 		{
