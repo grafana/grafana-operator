@@ -81,7 +81,7 @@ type GrafanaDashboardRef struct {
 }
 
 type GrafanaDashboardStatus struct {
-	ContentGzip      []byte                 `json:"contentGzip,omitempty"`
+	ContentCache     []byte                 `json:"contentCache,omitempty"`
 	ContentTimestamp *metav1.Time           `json:"contentTimestamp,omitempty"`
 	ContentUrl       string                 `json:"contentUrl,omitempty"`
 	Error            *GrafanaDashboardError `json:"error,omitempty"`
@@ -149,8 +149,8 @@ func (d *GrafanaDashboard) Hash() string {
 		}
 	}
 
-	if d.Status.ContentGzip != nil {
-		hash.Write(d.Status.ContentGzip)
+	if d.Status.ContentCache != nil {
+		hash.Write(d.Status.ContentCache)
 	}
 
 	return fmt.Sprintf("%x", hash.Sum(nil))

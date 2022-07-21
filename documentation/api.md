@@ -373,7 +373,7 @@ GrafanaPlugin contains information about a single plugin
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>contentGzip</b></td>
+        <td><b>contentCache</b></td>
         <td>string</td>
         <td>
           <br/>
