@@ -81,16 +81,21 @@ type GrafanaDashboardRef struct {
 }
 
 type GrafanaDashboardStatus struct {
-	ContentCache     []byte                 `json:"contentCache,omitempty"`
-	ContentTimestamp *metav1.Time           `json:"contentTimestamp,omitempty"`
-	ContentUrl       string                 `json:"contentUrl,omitempty"`
-	Error            *GrafanaDashboardError `json:"error,omitempty"`
+	RemoteContent *GrafanaDashboardRemoteContent `json:"RemoteContent,omitempty"`
 }
 
-type GrafanaDashboardError struct {
-	Code    int    `json:"code"`
-	Message string `json:"error"`
-	Retries int    `json:"retries,omitempty"`
+type GrafanaDashboardRemoteContent struct {
+	Content   []byte                              `json:"content,omitempty"`
+	Timestamp *metav1.Time                        `json:"timestamp,omitempty"`
+	Url       string                              `json:"url,omitempty"`
+	Error     *GrafanaDashboardRemoteContentError `json:"error,omitempty"`
+}
+
+type GrafanaDashboardRemoteContentError struct {
+	Code      int         `json:"code"`
+	Message   string      `json:"error"`
+	Retries   int         `json:"retries,omitempty"`
+	Timestamp metav1.Time `json:"timestamp"`
 }
 
 // GrafanaDashboard is the Schema for the grafanadashboards API
@@ -149,8 +154,8 @@ func (d *GrafanaDashboard) Hash() string {
 		}
 	}
 
-	if d.Status.ContentCache != nil {
-		hash.Write(d.Status.ContentCache)
+	if d.Status.RemoteContent != nil && d.Status.RemoteContent.Content != nil {
+		hash.Write(d.Status.RemoteContent.Content)
 	}
 
 	return fmt.Sprintf("%x", hash.Sum(nil))

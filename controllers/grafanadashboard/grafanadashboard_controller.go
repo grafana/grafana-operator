@@ -278,9 +278,9 @@ func (r *GrafanaDashboardReconciler) reconcileDashboards(request reconcile.Reque
 			folderName = dashboard.Spec.CustomFolderName
 		}
 
-		if dashboard.Status.Error != nil {
-			backoffDuration := 30 * time.Second * time.Duration(math.Pow(2, float64(dashboard.Status.Error.Retries)))
-			retryTime := dashboard.Status.ContentTimestamp.Add(backoffDuration)
+		if dashboard.Status.RemoteContent.Error != nil {
+			backoffDuration := 30 * time.Second * time.Duration(math.Pow(2, float64(dashboard.Status.RemoteContent.Error.Retries)))
+			retryTime := dashboard.Status.RemoteContent.Error.Timestamp.Add(backoffDuration)
 
 			if retryTime.After(time.Now()) {
 				log.Log.V(1).Info("delaying retry of failing dashboard", "folder", folderName, "dashboard", dashboard.Name, "namespace", dashboard.Namespace, "retryTime", retryTime, "backoffDuration", backoffDuration)

@@ -120,9 +120,9 @@ func (r *DashboardPipelineImpl) validateJson() error {
 }
 
 func (r *DashboardPipelineImpl) shouldUseContentCache() bool {
-	if r.Dashboard.Status.ContentCache != nil && r.Dashboard.Spec.ContentCacheDuration != nil && r.Dashboard.Status.ContentTimestamp != nil {
+	if r.Dashboard.Status.RemoteContent != nil && r.Dashboard.Status.RemoteContent.Content != nil && r.Dashboard.Spec.ContentCacheDuration != nil && r.Dashboard.Status.RemoteContent.Timestamp != nil {
 		cacheDuration := r.Dashboard.Spec.ContentCacheDuration.Duration
-		contentTimeStamp := r.Dashboard.Status.ContentTimestamp
+		contentTimeStamp := r.Dashboard.Status.RemoteContent.Timestamp
 
 		return cacheDuration <= 0 || contentTimeStamp.Add(cacheDuration).After(time.Now())
 	}
@@ -146,7 +146,7 @@ func (r *DashboardPipelineImpl) obtainJson() error {
 	var returnErr error
 
 	if r.shouldUseContentCache() {
-		jsonBytes, err := v1alpha1.Gunzip(r.Dashboard.Status.ContentCache)
+		jsonBytes, err := v1alpha1.Gunzip(r.Dashboard.Status.RemoteContent.Content)
 		if err != nil {
 			returnErr = fmt.Errorf("failed to decode/decompress gzipped json: %w", err)
 		} else {
@@ -161,6 +161,12 @@ func (r *DashboardPipelineImpl) obtainJson() error {
 			return fmt.Errorf("failed to get grafana.com dashboard url: %w", err)
 		}
 		if err := r.loadDashboardFromURL(url); err != nil {
+			if r.Dashboard.Status.RemoteContent != nil && r.Dashboard.Status.RemoteContent.Content != nil {
+				if jsonBytes, err := v1alpha1.Gunzip(r.Dashboard.Status.RemoteContent.Content); err == nil {
+					r.JSON = string(jsonBytes)
+					return nil
+				}
+			}
 			returnErr = fmt.Errorf("failed to request dashboard from grafana.com, falling back to url; if specified: %w", err)
 		} else {
 			return nil
@@ -170,6 +176,12 @@ func (r *DashboardPipelineImpl) obtainJson() error {
 	if r.Dashboard.Spec.Url != "" {
 		err := r.loadDashboardFromURL(r.Dashboard.Spec.Url)
 		if err != nil {
+			if r.Dashboard.Status.RemoteContent != nil && r.Dashboard.Status.RemoteContent.Content != nil {
+				if jsonBytes, err := v1alpha1.Gunzip(r.Dashboard.Status.RemoteContent.Content); err == nil {
+					r.JSON = string(jsonBytes)
+					return nil
+				}
+			}
 			returnErr = fmt.Errorf("failed to request dashboard url, falling back to config map; if specified: %w", err)
 		} else {
 			return nil
@@ -257,16 +269,18 @@ func (r *DashboardPipelineImpl) loadDashboardFromURL(source string) error {
 	if resp.StatusCode != 200 {
 		retries := 0
 		r.refreshDashboard()
-		if r.Dashboard.Status.Error != nil {
-			retries = r.Dashboard.Status.Error.Retries
+		if r.Dashboard.Status.RemoteContent.Error != nil {
+			retries = r.Dashboard.Status.RemoteContent.Error.Retries
 		}
 		r.Dashboard.Status = v1alpha1.GrafanaDashboardStatus{
-			Error: &v1alpha1.GrafanaDashboardError{
-				Message: string(body),
-				Code:    resp.StatusCode,
-				Retries: retries + 1,
+			RemoteContent: &v1alpha1.GrafanaDashboardRemoteContent{
+				Error: &v1alpha1.GrafanaDashboardRemoteContentError{
+					Message:   string(body),
+					Code:      resp.StatusCode,
+					Retries:   retries + 1,
+					Timestamp: metav1.Time{Time: time.Now()},
+				},
 			},
-			ContentTimestamp: &metav1.Time{Time: time.Now()},
 		}
 
 		if err := r.Client.Status().Update(r.Context, r.Dashboard); err != nil {
@@ -305,9 +319,11 @@ func (r *DashboardPipelineImpl) loadDashboardFromURL(source string) error {
 	}
 
 	r.Dashboard.Status = v1alpha1.GrafanaDashboardStatus{
-		ContentCache:     content,
-		ContentTimestamp: &metav1.Time{Time: time.Now()},
-		ContentUrl:       source,
+		RemoteContent: &v1alpha1.GrafanaDashboardRemoteContent{
+			Content:   content,
+			Timestamp: &metav1.Time{Time: time.Now()},
+			Url:       source,
+		},
 	}
 
 	r.refreshDashboard()

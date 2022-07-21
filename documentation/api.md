@@ -373,32 +373,7 @@ GrafanaPlugin contains information about a single plugin
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>contentCache</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-          <br/>
-            <i>Format</i>: byte<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>contentTimestamp</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-          <br/>
-            <i>Format</i>: date-time<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>contentUrl</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#grafanadashboardstatuserror">error</a></b></td>
+        <td><b><a href="#grafanadashboardstatusremotecontent">RemoteContent</a></b></td>
         <td>object</td>
         <td>
           <br/>
@@ -408,8 +383,60 @@ GrafanaPlugin contains information about a single plugin
 </table>
 
 
-### GrafanaDashboard.status.error
+### GrafanaDashboard.status.RemoteContent
 <sup><sup>[↩ Parent](#grafanadashboardstatus)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>content</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: byte<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanadashboardstatusremotecontenterror">error</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>timestamp</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.status.RemoteContent.error
+<sup><sup>[↩ Parent](#grafanadashboardstatusremotecontent)</sup></sup>
 
 
 
@@ -436,6 +463,15 @@ GrafanaPlugin contains information about a single plugin
         <td>string</td>
         <td>
           <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>timestamp</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
         </td>
         <td>true</td>
       </tr><tr>

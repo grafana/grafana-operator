@@ -131,25 +131,32 @@ spec:
             type: object
           status:
             properties:
-              contentCache:
-                format: byte
-                type: string
-              contentTimestamp:
-                format: date-time
-                type: string
-              contentUrl:
-                type: string
-              error:
+              RemoteContent:
                 properties:
-                  code:
-                    type: integer
-                  error:
+                  content:
+                    format: byte
                     type: string
-                  retries:
-                    type: integer
-                required:
-                - code
-                - error
+                  error:
+                    properties:
+                      code:
+                        type: integer
+                      error:
+                        type: string
+                      retries:
+                        type: integer
+                      timestamp:
+                        format: date-time
+                        type: string
+                    required:
+                    - code
+                    - error
+                    - timestamp
+                    type: object
+                  timestamp:
+                    format: date-time
+                    type: string
+                  url:
+                    type: string
                 type: object
             type: object
         type: object
