@@ -373,13 +373,6 @@ GrafanaPlugin contains information about a single plugin
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>content</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>contentGzip</b></td>
         <td>string</td>
         <td>

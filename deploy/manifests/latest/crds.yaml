@@ -129,8 +129,6 @@ spec:
             type: object
           status:
             properties:
-              content:
-                type: string
               contentGzip:
                 format: byte
                 type: string
