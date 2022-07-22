@@ -373,10 +373,12 @@ GrafanaPlugin contains information about a single plugin
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>content</b></td>
+        <td><b>contentCache</b></td>
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Format</i>: byte<br/>
         </td>
         <td>false</td>
       </tr><tr>

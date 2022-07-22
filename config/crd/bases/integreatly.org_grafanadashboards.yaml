@@ -131,7 +131,8 @@ spec:
             type: object
           status:
             properties:
-              content:
+              contentCache:
+                format: byte
                 type: string
               contentTimestamp:
                 format: date-time

@@ -283,7 +283,7 @@ func (r *GrafanaDashboardReconciler) reconcileDashboards(request reconcile.Reque
 			retryTime := dashboard.Status.ContentTimestamp.Add(backoffDuration)
 
 			if retryTime.After(time.Now()) {
-				log.Log.Info("delaying retry of failing dashboard", "folder", folderName, "dashboard", request.Name, "namespace", request.Namespace, "retryTime", retryTime)
+				log.Log.V(1).Info("delaying retry of failing dashboard", "folder", folderName, "dashboard", dashboard.Name, "namespace", dashboard.Namespace, "retryTime", retryTime, "backoffDuration", backoffDuration)
 				continue
 			}
 		}
@@ -322,7 +322,7 @@ func (r *GrafanaDashboardReconciler) reconcileDashboards(request reconcile.Reque
 			}
 
 			if *response.Dashboard.ID == uint(0) {
-				log.Log.Info(fmt.Sprintf("Dashboard %v has been deleted via grafana console. Recreating.", dashboard.ObjectMeta.Name))
+				log.Log.Info(fmt.Sprintf("Dashboard %v (%s) has been deleted via grafana console. Recreating.", dashboard.ObjectMeta.Name, knownUid))
 				processed, err = pipeline.ProcessDashboard(knownHash, &folderId, folderName, true)
 
 				if err != nil {
