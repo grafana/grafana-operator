@@ -631,7 +631,19 @@ type GrafanaConfigPanels struct {
 
 type GrafanaConfigPlugins struct {
 	// +nullable
+	// Set to true if you want to test alpha plugins that are not yet ready for general usage. Default is false.
 	EnableAlpha *bool `json:"enable_alpha,omitempty" ini:"enable_alpha"`
+	// Enter a comma-separated list of plugin identifiers to identify plugins to load even if they are unsigned. Plugins with modified signatures are never loaded.
+	// We do not recommend using this option. For more information, refer to https://grafana.com/docs/grafana/next/administration/plugin-management/#plugin-signatures
+	AllowLoadingUnsignedPlugins string `json:"allow_loading_unsigned_plugins,omitempty" ini:"allow_loading_unsigned_plugins"`
+	// +nullable
+	// Available to Grafana administrators only, enables installing / uninstalling / updating plugins directly from the Grafana UI. Set to true by default. Setting it to false will hide the install / uninstall / update controls.
+	// For more information, refer to https://grafana.com/docs/grafana/next/administration/plugin-management/#plugin-catalog
+	PluginAdminEnabled *bool `json:"plugin_admin_enabled" ini:"plugin_admin_enabled"`
+	// Custom install/learn more URL for enterprise plugins. Defaults to https://grafana.com/grafana/plugins/.
+	PluginCatalogURL string `json:"plugin_catalog_url,omitempty" ini:"plugin_catalog_url"`
+	// Enter a comma-separated list of plugin identifiers to hide in the plugin catalog.
+	PluginCatalogHiddenPlugins string `json:"plugin_catalog_hidden_plugins,omitempty" ini:"plugin_catalog_hidden_plugins"`
 }
 
 type GrafanaConfigRendering struct {
