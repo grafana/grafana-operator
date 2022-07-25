@@ -1,0 +1,13 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestSuite
+startKIND: true
+kindNodeCache: true
+skipClusterDelete: true
+namespace: grafana-operator-system
+kindContainers:
+  - quay.io/grafana-operator/grafana-operator:v4.5.1
+manifestDirs:
+  - ../deploy/manifests/latest/
+testDirs:
+  - ./e2e/
+timeout: 120
