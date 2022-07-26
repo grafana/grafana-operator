@@ -1,10 +1,6 @@
-apiVersion: integreatly.org/v1alpha1
-kind: Grafana
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: example-grafana
+  name: grafana-deployment
 status:
-  dashboards:
-    - folderId: 1
-      folderName: grafana-operator-system
-      name: keycloak-dashboard
-      namespace: grafana-operator-system
+  availableReplicas: 1

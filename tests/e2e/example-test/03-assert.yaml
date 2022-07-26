@@ -1,0 +1,47 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+timeout: 30
+namespaced: true
+commands:
+  - script: |
+      set -ex
+      PASSWORD=$(kubectl -n $NAMESPACE get secrets grafana-admin-credentials --template={{.data.GF_SECURITY_ADMIN_PASSWORD}} | base64 -d)
+      echo $PASSWORD
+
+      # port-forward
+      kubectl port-forward -n grafana-operator-system service/grafana-service 3000:3000 &
+      FPID=$!
+      sleep 1
+      curl localhost:3000/api/health
+
+      # get top-level folders
+      DASHBOARDOUTPUT=$(curl $HEADER "http://admin:$PASSWORD@localhost:3000/api/search?folderIds=0")
+      sleep 1
+      echo "DASHBOARDOUTPUT: $(echo ${DASHBOARDOUTPUT} | jq)"
+
+        # get folder ID
+      GRAFANA_TOP_FOLDER_ID=$(echo $DASHBOARDOUTPUT |jq -r '.[0].id')
+      sleep 1
+
+      GRAFANA_DASHBOARDS=$(curl $HEADER "http://admin:$PASSWORD@localhost:3000/api/search?folderIds=$GRAFANA_TOP_FOLDER_ID")
+      NUM_DASHBOARDS=$(echo $GRAFANA_DASHBOARDS | jq -r length)
+      if [[ $NUM_DASHBOARDS != 1 ]]; then
+        echo "NUM_DASHBOARDS: want 2, got $NUM_DASHBOARDS"
+        echo "Available dashboards: ${GRAFANA_DASHBOARDS}"
+        kill $FPID
+        exit 1
+      fi
+
+      # get dashboard UID
+      GRAFANA_TOP_DASHBOARD_UID=$(echo $DASHBOARDOUTPUT |jq -r '.[0].uid')
+
+      GRAFANA_DASHBOARD=$(curl $HEADER "http://admin:$PASSWORD@localhost:3000/api/dashboards/uid/$GRAFANA_TOP_DASHBOARD_UID")
+      sleep 1
+      FOLDER_ID=$(echo $GRAFANA_DASHBOARD |jq -r .meta.folderId)
+      if [[ $FOLDER_ID != 0 ]]; then
+        echo "Unable to get grafana dashboard"
+        exit 1
+      fi
+
+      # close the port-forward
+      kill $FPID
