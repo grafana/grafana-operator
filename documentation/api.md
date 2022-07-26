@@ -598,14 +598,14 @@ GrafanaDataSourceSpec defines the desired state of GrafanaDataSource
         <td><b>customJsonData</b></td>
         <td>object</td>
         <td>
-          CustomJsonData will be used in place of jsonData, if present, and supports arbitrary JSON, not just those of offical datasources<br/>
+          CustomJsonData will be used in place of jsonData, if present, and supports arbitrary JSON, not just those of official datasources<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>customSecureJsonData</b></td>
         <td>object</td>
         <td>
-          SecureCustomJsonData will be used in place of secureJsonData, if present, and supports arbitrary JSON, not just those of offical datasources<br/>
+          SecureCustomJsonData will be used in place of secureJsonData, if present, and supports arbitrary JSON, not just those of official datasources<br/>
         </td>
         <td>false</td>
       </tr><tr>

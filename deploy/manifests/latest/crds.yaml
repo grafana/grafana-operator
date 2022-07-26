@@ -212,13 +212,13 @@ spec:
                     customJsonData:
                       description: CustomJsonData will be used in place of jsonData,
                         if present, and supports arbitrary JSON, not just those of
-                        offical datasources
+                        official datasources
                       type: object
                       x-kubernetes-preserve-unknown-fields: true
                     customSecureJsonData:
                       description: SecureCustomJsonData will be used in place of secureJsonData,
                         if present, and supports arbitrary JSON, not just those of
-                        offical datasources
+                        official datasources
                       type: object
                       x-kubernetes-preserve-unknown-fields: true
                     database:
