@@ -47,6 +47,36 @@ func (i *DatasourcePipelineImpl) parse() error {
 	if err != nil {
 		return err
 	}
+	unmarshaledDatasources := make(map[string]interface{})
+	if err = yaml.Unmarshal(bytes, &unmarshaledDatasources); err != nil {
+		return err
+	}
+	unmarshaledDatasourceList, ok := unmarshaledDatasources["datasources"].([]interface{})
+	if ok {
+		needsRemarshaling := false
+		for ix, datasource := range i.datasource.Spec.Datasources {
+			unmarshaledDatasource, ok := unmarshaledDatasourceList[ix].(map[string]interface{})
+			if !ok {
+				continue
+			}
+			if datasource.CustomJsonData != nil {
+				needsRemarshaling = true
+				unmarshaledDatasource["jsonData"] = unmarshaledDatasource["customJsonData"]
+				delete(unmarshaledDatasource, "customJsonData")
+			}
+			if datasource.CustomSecureJsonData != nil {
+				needsRemarshaling = true
+				unmarshaledDatasource["secureJsonData"] = unmarshaledDatasource["customSecureJsonData"]
+				delete(unmarshaledDatasource, "customSecureJsonData")
+			}
+		}
+		if needsRemarshaling {
+			bytes, err = yaml.Marshal(unmarshaledDatasources)
+			if err != nil {
+				return err
+			}
+		}
+	}
 	i.contents = string(bytes)
 	return nil
 }

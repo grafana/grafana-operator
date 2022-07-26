@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -82,6 +83,18 @@ type GrafanaDataSourceFields struct {
 	SecureJsonData    GrafanaDataSourceSecureJsonData `json:"secureJsonData,omitempty"`
 	Version           int                             `json:"version,omitempty"`
 	Editable          bool                            `json:"editable,omitempty"`
+	// +kubebuilder:validation:Schemaless
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// +kubebuilder:validation:Type=object
+	// +optional
+	// CustomJsonData will be used in place of jsonData, if present, and supports arbitrary JSON, not just those of official datasources
+	CustomJsonData json.RawMessage `json:"customJsonData,omitempty"`
+	// +kubebuilder:validation:Schemaless
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// +kubebuilder:validation:Type=object
+	// +optional
+	// SecureCustomJsonData will be used in place of secureJsonData, if present, and supports arbitrary JSON, not just those of official datasources
+	CustomSecureJsonData json.RawMessage `json:"customSecureJsonData,omitempty"`
 }
 
 // GrafanaDataSourceJsonData contains the most common json options
