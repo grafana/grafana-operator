@@ -1,7 +1,7 @@
 # Develop
 
 The grafana-operator is currently built on operator-sdk version
-[1.3.0](https://github.com/operator-framework/operator-sdk/releases/tag/v1.3.0).
+[1.13.1](https://github.com/operator-framework/operator-sdk/releases/tag/v1.13.1).
 
 To our knowledge the grafana-operator works on all kubernetes deployments,
 for local development many of us use is [kind](https://kind.sigs.k8s.io/docs/user/quick-start/)
@@ -91,25 +91,28 @@ make docker-push IMG=quay.io/$QUAY_USER/grafana-operator:latest
 make deploy IMG=quay.io/$QUAY_USER/grafana-operator:latest
 ```
 
-## e2e script
+## e2e tests
 
-Running the e2e script locally assumes that you have made the container image available to your cluster.
-For example if you are using kind it should be pre-loaded.
+The e2e tests should be seen from a user point of view. To achieve this we use [kuttl](https://github.com/kudobuilder/kuttl)
+
+Running the e2e script locally assumes that you have made the container image available in your container environment.
+
+```shell
+make docker-build IMG=latest
+```
+
+Kuttl will help out to pre-load the image in to your kind cluster.
+The current  [kuttl-test.yaml](../kuttl-test.yaml) assumes that you already have
+kind cluster up and running. If that is not the case you can always set `startKIND: true` or use `kubectl kuttl test --start-kind false` instead.
 
 It assume that you are not running any other grafana operator instance for example through go.
 
 To run it:
 
-```hack/e2e.sh
-sh hack/e2e.sh
+```shell
+make e2e
 ```
 
 If you want to clean-up a few of the resources that hack/e2e.sh creates use clean_e2e.sh.
 It will remove the grafana instances and operator but it won't delete the port-forward.
 It will also remove the debug output file /tmp/grafana_e2e_debug.txt after reading the file.
-
-```hack/clean_e2e.sh
-sh hack/clean_e2e.sh
-# To kill the potentially remaining port-forward to the grafana service:
-kill $(lsof -t -i:3000)
-```
