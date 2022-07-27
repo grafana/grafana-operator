@@ -9,6 +9,7 @@ on:
 env:
   NAME: grafana-operator
   NAMESPACE: grafana-operator-system
+  INSTALL_PATH: deploy/manifests
 
 jobs:
   end-to-end:
@@ -60,7 +61,10 @@ jobs:
       - name: Run e2e
         shell: bash
         run: |
-          bash hack/e2e.sh ${{ env.NAME }}:${{ steps.prep.outputs.VERSION }}
+          make kustomize
+          cd ${{ env.INSTALL_PATH }} && kustomize  edit set image quay.io/grafana-operator/grafana-operator=${{ env.NAME }}:${{ steps.prep.outputs.VERSION }}
+          cd -
+          make e2e
       - name: Debug failure
         if: failure()
         run: |

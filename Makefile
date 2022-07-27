@@ -214,3 +214,12 @@ catalog-build: opm
 .PHONY: catalog-push
 catalog-push: ## Push the catalog image.
 	$(MAKE) docker-push IMG=$(CATALOG_IMG)
+
+.PHONY: e2e
+e2e: kuttl install deploy ## Run e2e tests using kuttl.
+	$(KUTTL) test
+
+# Download kuttl locally if necessary
+KUTTL = $(shell pwd)/bin/kubectl-kuttl
+kuttl:
+	$(call go-get-tool,$(KUTTL),github.com/kudobuilder/kuttl/cmd/kubectl-kuttl@v0.12.1)
