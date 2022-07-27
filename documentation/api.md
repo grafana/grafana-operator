@@ -4394,10 +4394,38 @@ GrafanaConfig is the configuration for grafana
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>plugin_admin_enabled</b></td>
+        <td>boolean</td>
+        <td>
+          Available to Grafana administrators only, enables installing / uninstalling / updating plugins directly from the Grafana UI. Set to true by default. Setting it to false will hide the install / uninstall / update controls. For more information, refer to https://grafana.com/docs/grafana/next/administration/plugin-management/#plugin-catalog<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>allow_loading_unsigned_plugins</b></td>
+        <td>string</td>
+        <td>
+          Enter a comma-separated list of plugin identifiers to identify plugins to load even if they are unsigned. Plugins with modified signatures are never loaded. We do not recommend using this option. For more information, refer to https://grafana.com/docs/grafana/next/administration/plugin-management/#plugin-signatures<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>enable_alpha</b></td>
         <td>boolean</td>
         <td>
-          <br/>
+          Set to true if you want to test alpha plugins that are not yet ready for general usage. Default is false.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>plugin_catalog_hidden_plugins</b></td>
+        <td>string</td>
+        <td>
+          Enter a comma-separated list of plugin identifiers to hide in the plugin catalog.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>plugin_catalog_url</b></td>
+        <td>string</td>
+        <td>
+          Custom install/learn more URL for enterprise plugins. Defaults to https://grafana.com/grafana/plugins/.<br/>
         </td>
         <td>false</td>
       </tr></tbody>

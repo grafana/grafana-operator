@@ -284,6 +284,10 @@ func (i *GrafanaIni) parseConfig(config map[string][]string) map[string][]string
 	if i.cfg.Plugins != nil {
 		var items []string
 		items = appendBool(items, "enable_alpha", i.cfg.Plugins.EnableAlpha)
+		items = appendStr(items, "allow_loading_unsigned_plugins", i.cfg.Plugins.AllowLoadingUnsignedPlugins)
+		items = appendBool(items, "plugin_admin_enabled", i.cfg.Plugins.PluginAdminEnabled)
+		items = appendStr(items, "plugin_catalog_url", i.cfg.Plugins.PluginCatalogURL)
+		items = appendStr(items, "plugin_catalog_hidden_items", i.cfg.Plugins.PluginCatalogHiddenPlugins)
 		config["plugins"] = items
 	}
 
