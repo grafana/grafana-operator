@@ -10,6 +10,7 @@ env:
   NAME: grafana-operator
   NAMESPACE: grafana-operator-system
   INSTALL_PATH: deploy/manifests
+  KUSTOMIZE_VERSION: "4.5.2"
 
 jobs:
   end-to-end:
@@ -58,11 +59,14 @@ jobs:
         uses: azure/setup-kubectl@v1
         with:
           version: "v1.21.2"
+      - name: Setup Kustomize
+        uses: imranismail/setup-kustomize@v1
+        with:
+          kustomize-version: "{{ env.KUSTOMIZE_VERSION }}"
       - name: Run e2e
         shell: bash
         run: |
-          make kustomize
-          cd ${{ env.INSTALL_PATH }} && kustomize  edit set image quay.io/grafana-operator/grafana-operator=${{ env.NAME }}:${{ steps.prep.outputs.VERSION }}
+          cd ${{ env.INSTALL_PATH }} && kustomize edit set image quay.io/grafana-operator/grafana-operator=${{ env.NAME }}:${{ steps.prep.outputs.VERSION }}
           cd -
           make e2e
       - name: Debug failure
