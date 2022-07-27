@@ -1,0 +1,45 @@
+# This example shows how to create a Grafana that allows alpha and unsigned plugins for testing custom plugins
+apiVersion: integreatly.org/v1alpha1
+kind: Grafana
+metadata:
+  name: example-dev-env-grafana
+spec:
+  client:
+    preferService: true
+  ingress:
+    enabled: True
+    pathType: Prefix
+    path: "/"
+  config:
+    log:
+      mode: "console"
+      level: "error"
+    log.frontend:
+      enabled: true
+    auth:
+      disable_login_form: False
+      disable_signout_menu: True
+    auth.anonymous:
+      enabled: True
+    plugins:
+      enable_alpha: true
+      allow_loading_unsigned_plugins: 'my-internal-plugin1,my-internal-plugin2'
+      plugin_admin_enabled: true
+      plugin_catalog_url: http://my-internal-plugin-repo.example.com
+      plugin_catalog_hidden_plugins: 'hidden-plugin1,hidden-plugin2'
+  service:
+    name: "grafana-service"
+    labels:
+      app: "grafana"
+      type: "grafana-service"
+  dashboardLabelSelector:
+    - matchExpressions:
+        - { key: app, operator: In, values: [grafana] }
+  resources:
+    # Optionally specify container resources
+    limits:
+      cpu: 200m
+      memory: 200Mi
+    requests:
+      cpu: 100m
+      memory: 100Mi
