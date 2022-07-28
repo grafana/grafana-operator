@@ -37,6 +37,13 @@ else
 KUTTL=$(shell pwd)/bin/kubectl-kuttl
 endif
 
+# Checks if kuttl is in your PATH
+ifneq ($(shell which kustomize),)
+KUSTOMIZE=$(shell which kustomize)
+else
+KUSTOMIZE=$(shell pwd)/bin/kustomize
+endif
+
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.21
 
@@ -64,15 +71,15 @@ run: generate fmt vet manifests
 	go run ./main.go
 
 # Install CRDs into a cluster
-install: manifests kustomize
+install: manifests $(KUSTOMIZE)
 	$(KUSTOMIZE) build config/crd | kubectl apply -f -
 
 # Uninstall CRDs from a cluster
-uninstall: manifests kustomize
+uninstall: manifests $(KUSTOMIZE)
 	$(KUSTOMIZE) build config/crd | kubectl delete -f -
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
-deploy: manifests kustomize
+deploy: manifests $(KUSTOMIZE)
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
@@ -85,7 +92,7 @@ manifests: controller-gen
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 # Generate API reference documentation
-api-docs: gen-crd-api-reference-docs kustomize
+api-docs: gen-crd-api-reference-docs $(KUSTOMIZE)
 	@{ \
 	set -e ;\
 	TMP_DIR=$$(mktemp -d) ; \
@@ -123,11 +130,10 @@ controller-gen:
 	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1)
 
 # Download kustomize locally if necessary
-KUSTOMIZE = $(shell pwd)/bin/kustomize
-kustomize:
-	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v4@v4.5.2)
+$(KUSTOMIZE):
+    $(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v4@v4.5.2)
 
-# Download kustomize locally if necessary
+# Download golangci-lint locally if necessary
 GOLANGCI = $(shell pwd)/bin/golangci-lint
 golangci:
 	$(call go-get-tool,$(GOLANGCI),github.com/golangci/golangci-lint/cmd/golangci-lint@v1.46.2)
@@ -148,7 +154,7 @@ endef
 
 # Generate bundle manifests and metadata, then validate generated files.
 .PHONY: bundle
-bundle: manifests kustomize
+bundle: manifests $(KUSTOMIZE)
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
@@ -218,6 +224,7 @@ catalog-push: ## Push the catalog image.
 
 .PHONY: e2e
 e2e: $(KUTTL) install deploy ## Run e2e tests using kuttl.
+	echo $(KUSTOMIZE)
 	echo $(KUTTL)
 	$(KUTTL) test
 
