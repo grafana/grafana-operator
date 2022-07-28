@@ -107,12 +107,11 @@ kind cluster up and running. If that is not the case you can always set `startKI
 
 It assume that you are not running any other grafana operator instance for example through go.
 
-To run it:
+To run it the e2e tests just run:
 
 ```shell
 make e2e
 ```
 
-If you want to clean-up a few of the resources that hack/e2e.sh creates use clean_e2e.sh.
-It will remove the grafana instances and operator but it won't delete the port-forward.
-It will also remove the debug output file /tmp/grafana_e2e_debug.txt after reading the file.
+Kuttl is configured to not remove anything after the test. You can easily enable this by updating kuttl.test.yaml,
+here you can find all config options for [kuttl](https://kuttl.dev/docs/testing/reference.html#testsuite).
