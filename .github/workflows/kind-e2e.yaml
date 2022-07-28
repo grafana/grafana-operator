@@ -10,7 +10,6 @@ env:
   NAME: grafana-operator
   NAMESPACE: grafana-operator-system
   INSTALL_PATH: deploy/manifests
-  KUSTOMIZE_VERSION: "4.5.2"
 
 jobs:
   end-to-end:
@@ -62,7 +61,7 @@ jobs:
       - name: Setup Kustomize
         uses: imranismail/setup-kustomize@v1
         with:
-          kustomize-version: "{{ env.KUSTOMIZE_VERSION }}"
+          kustomize-version: "4.5.2"
       - name: Run e2e
         shell: bash
         run: |
