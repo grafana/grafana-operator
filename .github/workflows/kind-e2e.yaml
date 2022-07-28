@@ -10,6 +10,7 @@ env:
   NAME: grafana-operator
   NAMESPACE: grafana-operator-system
   INSTALL_PATH: deploy/manifests
+  KUTTL_VERSION: "0.12.1"
 
 jobs:
   end-to-end:
@@ -58,6 +59,12 @@ jobs:
         uses: azure/setup-kubectl@v1
         with:
           version: "v1.21.2"
+      - name: Setup kuttl
+        uses: supplypike/setup-bin@v1
+        with:
+          uri: https://github.com/kudobuilder/kuttl/releases/download/v${{ env.KUTTL_VERSION }}/kubectl-kuttl_${{ env.KUTTL_VERSION }}_linux_x86_64
+          name: kubectl-kuttl
+          version: ${{ env.KUTTL_VERSION }}
       - name: Setup Kustomize
         uses: imranismail/setup-kustomize@v1
         with:

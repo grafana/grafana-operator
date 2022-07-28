@@ -30,6 +30,13 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
+# Checks if kuttl is in your PATH
+ifeq (,$(shell which kubectl-kuttl))
+KUTTL=$(shell which kubectl-kuttl)
+else
+KUTTL=$(shell pwd)/bin/kubectl-kuttl
+endif
+
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # This is a requirement for 'setup-envtest.sh' in the test target.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
@@ -216,10 +223,9 @@ catalog-push: ## Push the catalog image.
 	$(MAKE) docker-push IMG=$(CATALOG_IMG)
 
 .PHONY: e2e
-e2e: kuttl install deploy ## Run e2e tests using kuttl.
+e2e: $(KUTTL) install deploy ## Run e2e tests using kuttl.
 	$(KUTTL) test
 
 # Download kuttl locally if necessary
-KUTTL = $(shell pwd)/bin/kubectl-kuttl
-kuttl:
+$(KUTTL):
 	$(call go-get-tool,$(KUTTL),github.com/kudobuilder/kuttl/cmd/kubectl-kuttl@v0.12.1)
