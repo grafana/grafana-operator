@@ -30,6 +30,13 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
+# Checks if kuttl is in your PATH
+ifneq ($(shell which kubectl-kuttl),)
+KUTTL=$(shell which kubectl-kuttl)
+else
+KUTTL=$(shell pwd)/bin/kubectl-kuttl
+endif
+
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.21
 
@@ -211,14 +218,8 @@ catalog-push: ## Push the catalog image.
 
 .PHONY: e2e
 e2e: $(KUTTL) install deploy ## Run e2e tests using kuttl.
+	echo $(KUTTL)
 	$(KUTTL) test
-
-# Checks if kuttl is in your PATH
-ifeq (,$(shell which kubectl-kuttl))
-KUTTL=$(shell which kubectl-kuttl)
-else
-KUTTL=$(shell pwd)/bin/kubectl-kuttl
-endif
 
 # Download kuttl locally if necessary
 $(KUTTL):
