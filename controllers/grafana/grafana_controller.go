@@ -177,8 +177,10 @@ func (r *ReconcileGrafana) Reconcile(ctx context.Context, request reconcile.Requ
 		return reconcile.Result{}, err
 	}
 
+	log.V(1).Info("Found grafana-instance, proceed Reconcile with deepcopy...")
 	cr := instance.DeepCopy()
 
+	log.V(1).Info("determine clusterState...")
 	// Read current state
 	currentState := common.NewClusterState()
 	err = currentState.Read(ctx, cr, r.Client)
@@ -188,10 +190,11 @@ func (r *ReconcileGrafana) Reconcile(ctx context.Context, request reconcile.Requ
 	}
 
 	// Get the actions required to reach the desired state
-
+	log.V(1).Info("Create GrafanaReconciler and determine desiredState...")
 	reconciler := NewGrafanaReconciler()
 	desiredState := reconciler.Reconcile(currentState, cr)
 
+	log.V(1).Info("Determined desiredStates - starting actionRunner")
 	// Run the actions to reach the desired state
 	actionRunner := common.NewClusterActionRunner(ctx, r.Client, r.Scheme, cr)
 	err = actionRunner.RunAll(desiredState)
@@ -199,6 +202,7 @@ func (r *ReconcileGrafana) Reconcile(ctx context.Context, request reconcile.Requ
 		return r.manageError(cr, err, request)
 	}
 
+	log.V(1).Info("Now processing configMaps...")
 	// Run the config map reconciler to discover jsonnet libraries
 	err = reconcileConfigMaps(cr, r)
 	if err != nil {
@@ -212,6 +216,8 @@ func (r *ReconcileGrafana) manageError(cr *grafanav1alpha1.Grafana, issue error,
 	r.Recorder.Event(cr, "Warning", "ProcessingError", issue.Error())
 	cr.Status.Phase = grafanav1alpha1.PhaseFailing
 	cr.Status.Message = issue.Error()
+
+	log.Error(issue, "error processing GrafanaInstance", "name", cr.Name, "namespace", cr.Namespace)
 
 	instance := &grafanav1alpha1.Grafana{}
 	err := r.Client.Get(r.Context, request.NamespacedName, instance)
@@ -296,6 +302,7 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 	cr.Status.Phase = grafanav1alpha1.PhaseReconciling
 	cr.Status.Message = "success"
 
+	log.V(1).Info("ReconcileGrafana success")
 	// Only update the status if the dashboard controller had a chance to sync the cluster
 	// dashboards first. Otherwise reuse the existing dashboard config from the CR.
 	if r.Config.GetConfigBool(config.ConfigGrafanaDashboardsSynced, false) {

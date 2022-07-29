@@ -5,6 +5,7 @@ resources:
   - bases/integreatly.org_grafanas.yaml
   - bases/integreatly.org_grafanadashboards.yaml
   - bases/integreatly.org_grafanadatasources.yaml
+  - bases/integreatly.org_grafanafolders.yaml
   - bases/integreatly.org_grafananotificationchannels.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 

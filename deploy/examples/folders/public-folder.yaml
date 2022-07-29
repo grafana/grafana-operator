@@ -1,0 +1,21 @@
+---
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaFolder
+metadata:
+  name: public-stats-folder
+  namespace: example-namespace
+  labels:
+    app: grafana
+spec:
+  title: public-stats
+  permissions:
+    - permissionLevel: 1
+      permissionTarget: "Viewer"
+      permissionTargetType: "role"
+    - permissionLevel: 2
+      permissionTarget: "Editor"
+      permissionTargetType: "role"
+
+# according to spec (https://grafana.com/docs/grafana/latest/developers/http_api/folder_permissions/): 
+# permissionTarget "admin" must not be specified
+# admin-users have access anyway

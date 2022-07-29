@@ -31,6 +31,7 @@ const (
 	ConfigMapsMountDir                      = "/etc/grafana-configmaps/"
 	ConfigRouteWatch                        = "watch.routes"
 	ConfigGrafanaDashboardsSynced           = "grafana.dashboards.synced"
+	ConfigGrafanaFoldersSynced              = "grafana.dashboard.folders.synced"
 	ConfigGrafanaNotificationChannelsSynced = "grafana.notificationchannels.synced"
 	JsonnetBasePath                         = "/opt/jsonnet"
 )
@@ -40,6 +41,7 @@ type ControllerConfig struct {
 	Values       map[string]interface{}
 	Plugins      map[string]v1alpha1.PluginList
 	Dashboards   map[string][]*v1alpha1.GrafanaDashboardRef
+	Folders      map[string][]*v1alpha1.GrafanaFolderRef
 	RequeueDelay time.Duration
 }
 
@@ -53,6 +55,7 @@ func GetControllerConfig() *ControllerConfig {
 			Values:       map[string]interface{}{},
 			Plugins:      map[string]v1alpha1.PluginList{},
 			Dashboards:   map[string][]*v1alpha1.GrafanaDashboardRef{},
+			Folders:      map[string][]*v1alpha1.GrafanaFolderRef{},
 			RequeueDelay: time.Second * 10,
 		}
 	})
@@ -92,6 +95,25 @@ func (c *ControllerConfig) RemovePluginsFor(dashboard *v1alpha1.GrafanaDashboard
 	delete(c.Plugins, id)
 }
 
+func (c *ControllerConfig) AddFolder(folder *v1alpha1.GrafanaFolder) {
+	namespace := folder.Namespace
+	c.Lock()
+	defer c.Unlock()
+	if i, exists := c.HasFolder(namespace, folder.Spec.FolderName); !exists {
+		c.Folders[namespace] = append(c.Folders[namespace], &v1alpha1.GrafanaFolderRef{
+			Name:      folder.Spec.FolderName,
+			Namespace: namespace,
+			Hash:      folder.Hash(),
+		})
+	} else {
+		c.Folders[namespace][i] = &v1alpha1.GrafanaFolderRef{
+			Name:      folder.Spec.FolderName,
+			Namespace: namespace,
+			Hash:      folder.Hash(),
+		}
+	}
+}
+
 func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard, folderId *int64, folderName string) {
 	ns := dashboard.Namespace
 	if i, exists := c.HasDashboard(ns, dashboard.UID()); !exists {
@@ -117,6 +139,15 @@ func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard, fo
 			FolderName: folderName,
 		}
 	}
+}
+
+func (c *ControllerConfig) HasFolder(namespace, name string) (int, bool) {
+	for i, folder := range c.Folders[namespace] {
+		if folder.Name == name {
+			return i, true
+		}
+	}
+	return -1, false
 }
 
 func (c *ControllerConfig) HasDashboard(ns, uid string) (int, bool) {
@@ -149,6 +180,25 @@ func (c *ControllerConfig) RemoveDashboard(hash string) {
 			c.Dashboards[ns] = list
 		}
 	}
+}
+
+func (c *ControllerConfig) GetFolders(namespace string) []*v1alpha1.GrafanaFolderRef {
+	c.Lock()
+	defer c.Unlock()
+
+	if c.Folders[namespace] != nil {
+		return c.Folders[namespace]
+	}
+
+	folders := []*v1alpha1.GrafanaFolderRef{}
+
+	if namespace == "" {
+		for _, folder := range c.Folders {
+			folders = append(folders, folder...)
+		}
+	}
+
+	return folders
 }
 
 func (c *ControllerConfig) GetDashboards(namespace string) []*v1alpha1.GrafanaDashboardRef {
