@@ -132,7 +132,10 @@ spec:
                         encrypt:
                           type: string
                         esVersion:
-                          type: string
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          x-kubernetes-int-or-string: true
                         exemplarTraceIdDestinations:
                           items:
                             properties:
