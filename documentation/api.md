@@ -854,7 +854,7 @@ GrafanaDataSourceJsonData contains the most common json options See https://graf
         <td>false</td>
       </tr><tr>
         <td><b>esVersion</b></td>
-        <td>string</td>
+        <td>int or string</td>
         <td>
           <br/>
         </td>
