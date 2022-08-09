@@ -89,7 +89,7 @@ The operator accepts a number of flags that can be passed in the `args` section 
   * `--zap-log-level=1`: show all Info level logs
 * `--requeue-delay=n`: set how often the resync of the grafana resources towards the grafana instance should happen in seconds. The default is 10s.
 
-See `deploy/operator.yaml` for an example.
+See `deploy/manifests/latest/deployment.yaml` for an example.
 
 The Grafana image URL and tag, and Grafana Plugins Init container image and tag can also be overridden using environment
 variables - to support deployment through OLM:
