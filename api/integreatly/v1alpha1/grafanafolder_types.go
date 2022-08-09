@@ -45,7 +45,7 @@ type GrafanaFolder struct {
 }
 
 // GrafanaFolderList contains a list of GrafanaFolder
-//+k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:object:root=true
 type GrafanaFolderList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -80,7 +80,7 @@ func (f *GrafanaFolder) Hash() string {
 }
 
 func (f *GrafanaFolder) GetPermissions() []*GrafanaPermissionItem {
-	var permissions []*GrafanaPermissionItem
+	var permissions = make([]*GrafanaPermissionItem, 0, len(f.Spec.FolderPermissions))
 	for _, p := range f.Spec.FolderPermissions {
 		var p2 = p // ensure allocated memory for current item
 		permissions = append(permissions, &p2)

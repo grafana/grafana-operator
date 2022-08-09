@@ -2,7 +2,7 @@ package grafanadashboardfolder
 
 import (
 	"bytes"
-	"crypto/md5"
+	"crypto/md5" // nolint
 	"encoding/json"
 	"fmt"
 	"github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
@@ -188,7 +188,7 @@ func (r *GrafanaClientImpl) FindOrCreateFolder(folderName string) (GrafanaFolder
 
 func buildFolderUidFromName(folderName string) string {
 	// uid must not exceed 40 chars
-	return fmt.Sprintf("%x", md5.Sum([]byte(folderName)))
+	return fmt.Sprintf("%x", md5.Sum([]byte(folderName))) // nolint
 }
 
 func (r *GrafanaClientImpl) ApplyFolderPermissions(folderName string, folderPermissions []*v1alpha1.GrafanaPermissionItem) (GrafanaFolderPermissionsResponse, error) {
