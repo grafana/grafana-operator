@@ -38,7 +38,7 @@ If you would like to expose the metrics directly, bypassing `kube-rbac-proxy`, y
 
 1. Edit `config/manager/controller_manager_config.yaml` and set the `metrics.bindAddress` to `0.0.0.0:8080`
 2. Disable `- manager_auth_proxy_patch.yaml` in `config/manager/kustomization.yaml` by commenting it. This will disable the `kube-rbac-proxy`
-3. Change the port in `config/rbac/auto_proxy_service.yaml` to:
+3. Change the port in `config/rbac/auth_proxy_service.yaml` to:
 
     ```yaml
     ports:
