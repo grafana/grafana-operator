@@ -19,3 +19,14 @@ func GetPluginsConfigMap(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1
 	controllerutil.SetOwnerReference(cr, config, scheme)
 	return config
 }
+
+func GetDashboardsConfigMap(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1.ConfigMap {
+	config := &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-dashboards", cr.Name),
+			Namespace: cr.Namespace,
+		},
+	}
+	controllerutil.SetOwnerReference(cr, config, scheme)
+	return config
+}

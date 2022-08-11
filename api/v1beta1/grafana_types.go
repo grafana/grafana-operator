@@ -34,12 +34,17 @@ const (
 	OperatorStageIngress        OperatorStageName = "ingress"
 	OperatorStagePlugins        OperatorStageName = "plugins"
 	OperatorStageDeployment     OperatorStageName = "deployment"
+	OperatorStageComplete       OperatorStageName = "complete"
 )
 
 const (
 	OperatorStageResultSuccess    OperatorStageStatus = "success"
 	OperatorStageResultFailed     OperatorStageStatus = "failed"
 	OperatorStageResultInProgress OperatorStageStatus = "in progress"
+)
+
+const (
+	AnnotationDashboards = "grafana-operator/managed-dashboards"
 )
 
 // temporary values passed between reconciler stages
@@ -140,6 +145,60 @@ func init() {
 	SchemeBuilder.Register(&Grafana{}, &GrafanaList{})
 }
 
-func (r *Grafana) PreferIngress() bool {
-	return r.Spec.Client != nil && r.Spec.Client.PreferIngress != nil && *r.Spec.Client.PreferIngress
+func (in *Grafana) PreferIngress() bool {
+	return in.Spec.Client != nil && in.Spec.Client.PreferIngress != nil && *in.Spec.Client.PreferIngress
+}
+
+func (in *Grafana) GetDashboards() NamespacedDashboards {
+	dashboards := NamespacedDashboards{}
+	dashboards.Deserialize(in.Annotations[AnnotationDashboards])
+	return dashboards
+}
+
+func (in *Grafana) FindDashboardByNamespaceAndName(namespace string, name string) (bool, string) {
+	managedDashboards := in.GetDashboards()
+	for ns, dashboards := range managedDashboards {
+		if ns == namespace {
+			for _, dashboard := range dashboards {
+				if dashboard.Name == name {
+					return true, dashboard.UID
+				}
+			}
+		}
+	}
+	return false, ""
+}
+
+func (in *Grafana) FindDashboardByUID(uid string) bool {
+	managedDashboards := in.GetDashboards()
+	for _, dashboards := range managedDashboards {
+		for _, dashboard := range dashboards {
+			if dashboard.UID == uid {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (in *Grafana) AddDashboard(namespace string, name string, uid string) error {
+	managedDashboards := in.GetDashboards()
+	newDashboards := managedDashboards.AddDashboard(namespace, name, uid)
+	bytes, err := newDashboards.Serialize()
+	if err != nil {
+		return err
+	}
+	in.Annotations[AnnotationDashboards] = string(bytes)
+	return nil
+}
+
+func (in *Grafana) RemoveDashboard(namespace string, name string) error {
+	managedDashboards := in.GetDashboards()
+	newDashboards := managedDashboards.RemoveDashboard(namespace, name)
+	bytes, err := newDashboards.Serialize()
+	if err != nil {
+		return err
+	}
+	in.Annotations[AnnotationDashboards] = string(bytes)
+	return nil
 }
