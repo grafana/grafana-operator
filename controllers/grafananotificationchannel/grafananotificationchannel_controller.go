@@ -224,18 +224,8 @@ func findHash(knownNotificationChannels []*grafanav1alpha1.GrafanaNotificationCh
 	return ""
 }
 
-// Returns the hash of a notificationchannel if it is known
-func findUid(knownNotificationChannels []*grafanav1alpha1.GrafanaNotificationChannelRef, item *grafanav1alpha1.GrafanaNotificationChannel) string {
-	for _, d := range knownNotificationChannels {
-		if item.Name == d.Name && item.Namespace == d.Namespace {
-			return d.UID
-		}
-	}
-	return ""
-}
-
 //nolint:funlen
-func (r *GrafanaNotificationChannelReconciler) reconcileNotificationChannels(request reconcile.Request, client GrafanaClient) (reconcile.Result, error) { //nolint:cyclop
+func (r *GrafanaNotificationChannelReconciler) reconcileNotificationChannels(request reconcile.Request, grafanaClient GrafanaClient) (reconcile.Result, error) { //nolint:cyclop
 	// Collect known and namespace notificationchannels
 	knownNotificationChannels := r.config.GetNotificationChannels(request.Namespace)
 	namespaceNotificationChannels := &grafanav1alpha1.GrafanaNotificationChannelList{}
@@ -267,9 +257,35 @@ func (r *GrafanaNotificationChannelReconciler) reconcileNotificationChannels(req
 		// Process the notificationchannel. Use the known hash of an existing notificationchannel
 		// to determine if an update is required
 		knownHash := findHash(knownNotificationChannels, &namespaceNotificationChannels.Items[index])
-		// knownUid := findUid(knownNotificationChannels, &namespaceNotificationChannels.Items[index])
 		pipeline := NewNotificationChannelPipeline(r.client, &namespaceNotificationChannels.Items[index])
-		processed, err := pipeline.ProcessNotificationChannel(knownHash)
+
+		// We need to always get the spec in order to extract the uid
+		// TODO: in v5, better to rely on uid of CR and ignore the one passed in json
+		processed, err := pipeline.ProcessNotificationChannel(knownHash, true)
+		if err != nil {
+			r.Log.Error(err, fmt.Sprintf("cannot process notificationchannel %v/%v", notificationchannel.Namespace, notificationchannel.Name))
+			r.manageError(&namespaceNotificationChannels.Items[index], err)
+			continue
+		}
+
+		// Parse spec and make sure uid is defined
+		rawJson := GrafanaChannel{}
+		if err := json.Unmarshal(processed, &rawJson); err != nil {
+			return reconcile.Result{}, err
+		}
+		if rawJson.UID == nil {
+			r.Log.Info(fmt.Sprintf("cannot process notificationchannel %v/%v, UID is nil", notificationchannel.Namespace, notificationchannel.Name))
+			return reconcile.Result{}, nil
+		}
+
+		// TODO: in v5 with an updated client, we should have a detailed check for the status code
+		exists := false
+		if _, err = grafanaClient.GetNotificationChannel(*rawJson.UID); err == nil {
+			exists = true
+		}
+
+		// This time, we should get a non-nil spec only if the notification channel has a different hash or it doesn't exist in grafana (e.g. was deleted via grafana console)
+		processed, err = pipeline.ProcessNotificationChannel(knownHash, !exists)
 		if err != nil {
 			r.Log.Error(err, fmt.Sprintf("cannot process notificationchannel %v/%v", notificationchannel.Namespace, notificationchannel.Name))
 			r.manageError(&namespaceNotificationChannels.Items[index], err)
@@ -280,20 +296,12 @@ func (r *GrafanaNotificationChannelReconciler) reconcileNotificationChannels(req
 			continue
 		}
 
-		var status GrafanaResponse
 		// Create or Update notification channel
-		rawJson := GrafanaChannel{}
-		if err := json.Unmarshal(processed, &rawJson); err != nil {
-			return reconcile.Result{}, err
-		}
-		if rawJson.UID == nil {
-			r.Log.Info(fmt.Sprintf("cannot process notificationchannel %v/%v, UID is nil", notificationchannel.Namespace, notificationchannel.Name))
-			return reconcile.Result{}, nil
-		}
-		if _, err = client.GetNotificationChannel(*rawJson.UID); err != nil {
-			status, err = client.CreateNotificationChannel(processed)
+		var status GrafanaResponse
+		if exists {
+			status, err = grafanaClient.UpdateNotificationChannel(processed, *rawJson.UID)
 		} else {
-			status, err = client.UpdateNotificationChannel(processed, *rawJson.UID)
+			status, err = grafanaClient.CreateNotificationChannel(processed)
 		}
 		if err != nil {
 			r.Log.Info(fmt.Sprintf("cannot submit notificationchannel %v/%v", notificationchannel.Namespace, notificationchannel.Name))
@@ -308,14 +316,14 @@ func (r *GrafanaNotificationChannelReconciler) reconcileNotificationChannels(req
 	}
 
 	for _, notificationchannel := range notificationchannelsToDelete {
-		status, err := client.DeleteNotificationChannelByUID(notificationchannel.UID)
+		status, err := grafanaClient.DeleteNotificationChannelByUID(notificationchannel.UID)
 		if err != nil {
 			r.Log.Error(err, fmt.Sprintf("error deleting notificationchannel %v, status was %v/%v",
 				notificationchannel.UID,
 				*status.Message,
 				*status.UID))
 		}
-		r.Log.Info(fmt.Sprintf("delete result was %v", *status.UID))
+		r.Log.Info(fmt.Sprintf("delete result was %v", *status.Message))
 		r.config.RemoveNotificationChannel(notificationchannel.Namespace, notificationchannel.Name)
 	}
 
