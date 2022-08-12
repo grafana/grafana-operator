@@ -22,16 +22,15 @@ import (
 	"encoding/json"
 	defaultErrors "errors"
 	"fmt"
+	"net/http"
+	"os"
+	"time"
 
 	"github.com/go-logr/logr"
 	grafanav1alpha1 "github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
 	"github.com/grafana-operator/grafana-operator/v4/controllers/constants"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	"net/http"
-	"os"
-	"time"
 
 	"github.com/grafana-operator/grafana-operator/v4/controllers/common"
 	"github.com/grafana-operator/grafana-operator/v4/controllers/config"
@@ -103,7 +102,7 @@ func SetupWithManager(mgr ctrl.Manager, r reconcile.Reconciler, namespace string
 		log.Log.Info("Starting notificationchannel controller")
 	}
 
-	var ref = r.(*GrafanaNotificationChannelReconciler)
+	ref := r.(*GrafanaNotificationChannelReconciler)
 	ticker := time.NewTicker(config.GetControllerConfig().RequeueDelay)
 	sendEmptyRequest := func() {
 		request := reconcile.Request{
@@ -204,6 +203,37 @@ func (r *GrafanaNotificationChannelReconciler) Reconcile(context context.Context
 	return r.reconcileNotificationChannels(request, grafanaClient)
 }
 
+// Check if a given notificationchannel (by name) is present in the list of
+// notificationchannels in the namespace
+func inNamespace(namespaceNotificationChannels *grafanav1alpha1.GrafanaNotificationChannelList, item *grafanav1alpha1.GrafanaNotificationChannelRef) bool {
+	for _, d := range namespaceNotificationChannels.Items {
+		if item.Name == d.Name && item.Namespace == d.Namespace {
+			return true
+		}
+	}
+	return false
+}
+
+// Returns the hash of a notificationchannel if it is known
+func findHash(knownNotificationChannels []*grafanav1alpha1.GrafanaNotificationChannelRef, item *grafanav1alpha1.GrafanaNotificationChannel) string {
+	for _, d := range knownNotificationChannels {
+		if item.Name == d.Name && item.Namespace == d.Namespace {
+			return d.Hash
+		}
+	}
+	return ""
+}
+
+// Returns the hash of a notificationchannel if it is known
+func findUid(knownNotificationChannels []*grafanav1alpha1.GrafanaNotificationChannelRef, item *grafanav1alpha1.GrafanaNotificationChannel) string {
+	for _, d := range knownNotificationChannels {
+		if item.Name == d.Name && item.Namespace == d.Namespace {
+			return d.UID
+		}
+	}
+	return ""
+}
+
 //nolint:funlen
 func (r *GrafanaNotificationChannelReconciler) reconcileNotificationChannels(request reconcile.Request, client GrafanaClient) (reconcile.Result, error) { //nolint:cyclop
 	// Collect known and namespace notificationchannels
@@ -217,31 +247,10 @@ func (r *GrafanaNotificationChannelReconciler) reconcileNotificationChannels(req
 	// Prepare lists
 	var notificationchannelsToDelete []*grafanav1alpha1.GrafanaNotificationChannelRef
 
-	// Check if a given notificationchannel (by name) is present in the list of
-	// notificationchannels in the namespace
-	inNamespace := func(item string) bool {
-		for _, notificationchannel := range namespaceNotificationChannels.Items {
-			if notificationchannel.Name == item {
-				return true
-			}
-		}
-		return false
-	}
-
-	// Returns the hash of a notificationchannel if it is known
-	findHash := func(item *grafanav1alpha1.GrafanaNotificationChannel) string {
-		for _, d := range knownNotificationChannels {
-			if item.Name == d.Name {
-				return d.Hash
-			}
-		}
-		return ""
-	}
-
 	// NotificationChannels to delete: notificationchannels that are known but not found
 	// any longer in the namespace
 	for _, notificationchannel := range knownNotificationChannels {
-		if !inNamespace(notificationchannel.Name) {
+		if !inNamespace(namespaceNotificationChannels, notificationchannel) {
 			notificationchannelsToDelete = append(notificationchannelsToDelete, notificationchannel)
 		}
 	}
@@ -257,7 +266,8 @@ func (r *GrafanaNotificationChannelReconciler) reconcileNotificationChannels(req
 
 		// Process the notificationchannel. Use the known hash of an existing notificationchannel
 		// to determine if an update is required
-		knownHash := findHash(&namespaceNotificationChannels.Items[index])
+		knownHash := findHash(knownNotificationChannels, &namespaceNotificationChannels.Items[index])
+		// knownUid := findUid(knownNotificationChannels, &namespaceNotificationChannels.Items[index])
 		pipeline := NewNotificationChannelPipeline(r.client, &namespaceNotificationChannels.Items[index])
 		processed, err := pipeline.ProcessNotificationChannel(knownHash)
 		if err != nil {
