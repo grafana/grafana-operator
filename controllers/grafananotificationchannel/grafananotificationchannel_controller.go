@@ -102,7 +102,7 @@ func SetupWithManager(mgr ctrl.Manager, r reconcile.Reconciler, namespace string
 		log.Log.Info("Starting notificationchannel controller")
 	}
 
-	ref := r.(*GrafanaNotificationChannelReconciler)
+	ref := r.(*GrafanaNotificationChannelReconciler) // nolint
 	ticker := time.NewTicker(config.GetControllerConfig().RequeueDelay)
 	sendEmptyRequest := func() {
 		request := reconcile.Request{
