@@ -21,4 +21,6 @@ A data source accepts all properties
 listed [here](https://grafana.com/docs/administration/provisioning/#example-datasource-config-file), but does not
 support `apiVersion` and `deleteDatasources`.
 
+For custom datasources provided by plugins, use the `customJsonData` and `customSecureJsonData` fields instead of `jsonData` and `secureJsonData`.
+
 To see how to install datasource plugins, see [Plugins](./plugins.md).
