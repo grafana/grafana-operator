@@ -131,12 +131,12 @@ func (r *DashboardPipelineImpl) shouldUseContentCache() bool {
 
 // Try to get the dashboard json definition either from a provided URL or from the
 // raw json in the dashboard resource. The priority is as follows:
-// 0) try to use previously fetched content from url or grafanaCom if it is valid
-// 1) try to fetch from url or grafanaCom if provided
-//   1.1) if downloaded content is identical to spec.json, clear spec.json to clean up from fetch behavior pre 4.5.0
-// 2) url or grafanaCom fails or not provided: try to fetch from configmap ref
-// 3) no configmap specified: try to use embedded json
-// 4) no json specified: try to use embedded jsonnet
+//  0. try to use previously fetched content from url or grafanaCom if it is valid
+//  1. try to fetch from url or grafanaCom if provided
+//     1.1) if downloaded content is identical to spec.json, clear spec.json to clean up from fetch behavior pre 4.5.0
+//  2. url or grafanaCom fails or not provided: try to fetch from configmap ref
+//  3. no configmap specified: try to use embedded json
+//  4. no json specified: try to use embedded jsonnet
 func (r *DashboardPipelineImpl) obtainJson() error {
 	// TODO(DeanBrunt): Add earlier validation for this
 	if r.Dashboard.Spec.Url != "" && r.Dashboard.Spec.GrafanaCom != nil {
