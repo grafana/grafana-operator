@@ -1,5 +1,5 @@
 # Current Operator version
-VERSION ?= 4.5.1
+VERSION ?= 4.6.0
 
 # IMAGE_TAG_BASE defines the namespace and part of the image name for remote images.
 # running 'make bundle-build bundle-push catalog-build catalog-push' will build and push both
@@ -119,7 +119,7 @@ docker-buildx: test
 # Download controller-gen locally if necessary
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 controller-gen:
-	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1)
+	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.2)
 
 # Download kustomize locally if necessary
 KUSTOMIZE = $(shell pwd)/bin/kustomize
