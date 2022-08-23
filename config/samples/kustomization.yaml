@@ -2,4 +2,5 @@
 resources:
 - grafana_v1beta1_grafana.yaml
 - grafana_v1beta1_grafanadashboard.yaml
+- grafana_v1beta1_grafanadatasource.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

@@ -25,4 +25,13 @@ resources:
   kind: GrafanaDashboard
   path: github.com/grafana-operator/grafana-operator-experimental/api/v1beta1
   version: v1beta1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: integreatly.org
+  group: grafana
+  kind: GrafanaDatasource
+  path: github.com/grafana-operator/grafana-operator-experimental/api/v1beta1
+  version: v1beta1
 version: "3"

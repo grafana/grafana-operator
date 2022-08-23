@@ -6,20 +6,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
-  name: grafanadashboards.grafana.integreatly.org
+  name: grafanadatasources.grafana.integreatly.org
 spec:
   group: grafana.integreatly.org
   names:
-    kind: GrafanaDashboard
-    listKind: GrafanaDashboardList
-    plural: grafanadashboards
-    singular: grafanadashboard
+    kind: GrafanaDatasource
+    listKind: GrafanaDatasourceList
+    plural: grafanadatasources
+    singular: grafanadatasource
   scope: Namespaced
   versions:
   - name: v1beta1
     schema:
       openAPIV3Schema:
-        description: GrafanaDashboard is the Schema for the grafanadashboards API
+        description: GrafanaDatasource is the Schema for the grafanadatasources API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -34,8 +34,40 @@ spec:
           metadata:
             type: object
           spec:
-            description: GrafanaDashboardSpec defines the desired state of GrafanaDashboard
+            description: GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
             properties:
+              datasource:
+                properties:
+                  access:
+                    type: string
+                  basicAuth:
+                    type: boolean
+                  basicAuthUser:
+                    type: string
+                  database:
+                    type: string
+                  isDefault:
+                    type: boolean
+                  jsonData:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+                  name:
+                    type: string
+                  orgId:
+                    format: int64
+                    type: integer
+                  secureJsonData:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+                  type:
+                    type: string
+                  uid:
+                    type: string
+                  url:
+                    type: string
+                  user:
+                    type: string
+                type: object
               instanceSelector:
                 description: selects Grafanas for import
                 properties:
@@ -80,9 +112,6 @@ spec:
                       are ANDed.
                     type: object
                 type: object
-              json:
-                description: dashboard json
-                type: string
               plugins:
                 description: plugins
                 items:
@@ -98,7 +127,7 @@ spec:
                 type: array
             type: object
           status:
-            description: GrafanaDashboardStatus defines the observed state of GrafanaDashboard
+            description: GrafanaDatasourceStatus defines the observed state of GrafanaDatasource
             properties:
               hash:
                 type: string

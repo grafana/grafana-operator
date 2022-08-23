@@ -2,25 +2,25 @@ package v1beta1
 
 import "encoding/json"
 
-type NamespacedDashboard struct {
+type NamespacedResource struct {
 	Name string `json:"name"`
 	UID  string `json:"uid"`
 }
 
-type NamespacedDashboards map[string][]NamespacedDashboard
+type NamespacedResources map[string][]NamespacedResource
 
-func (in *NamespacedDashboards) Serialize() ([]byte, error) {
+func (in *NamespacedResources) Serialize() ([]byte, error) {
 	return json.Marshal(in)
 }
 
-func (in *NamespacedDashboards) Deserialize(from string) {
+func (in *NamespacedResources) Deserialize(from string) {
 	if from == "" {
 		return
 	}
 	json.Unmarshal([]byte(from), in)
 }
 
-func (in *NamespacedDashboards) Find(namespace string, name string) (bool, string) {
+func (in *NamespacedResources) Find(namespace string, name string) (bool, string) {
 	if val, ok := (*in)[namespace]; ok {
 		for _, dashboard := range val {
 			if dashboard.Name == name {
@@ -31,34 +31,34 @@ func (in *NamespacedDashboards) Find(namespace string, name string) (bool, strin
 	return false, ""
 }
 
-func (in *NamespacedDashboards) ForNamespace(namespace string) []NamespacedDashboard {
+func (in *NamespacedResources) ForNamespace(namespace string) []NamespacedResource {
 	return (*in)[namespace]
 }
 
-func (in *NamespacedDashboards) AddDashboard(namespace string, name string, uid string) NamespacedDashboards {
-	copy := NamespacedDashboards{}
+func (in *NamespacedResources) AddResource(namespace string, name string, uid string) NamespacedResources {
+	copy := NamespacedResources{}
 	for ns, dashboards := range *in {
 		copy[ns] = dashboards
 	}
 	if _, ok := copy[namespace]; !ok {
-		copy[namespace] = []NamespacedDashboard{}
+		copy[namespace] = []NamespacedResource{}
 	}
 	for _, dashboard := range copy[namespace] {
 		if dashboard.UID == uid {
 			return copy
 		}
 	}
-	copy[namespace] = append(copy[namespace], NamespacedDashboard{
+	copy[namespace] = append(copy[namespace], NamespacedResource{
 		Name: name,
 		UID:  uid,
 	})
 	return copy
 }
 
-func (in NamespacedDashboards) RemoveDashboard(namespace string, name string) NamespacedDashboards {
-	copy := NamespacedDashboards{}
+func (in NamespacedResources) RemoveResource(namespace string, name string) NamespacedResources {
+	copy := NamespacedResources{}
 	for ns, dashboards := range in {
-		copy[ns] = []NamespacedDashboard{}
+		copy[ns] = []NamespacedResource{}
 		for _, dashboard := range dashboards {
 			if ns == namespace && dashboard.Name == name {
 				continue

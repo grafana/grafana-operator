@@ -17,17 +17,14 @@ limitations under the License.
 package controllers
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/go-logr/logr"
 	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	client2 "github.com/grafana-operator/grafana-operator-experimental/controllers/client"
-	"github.com/grafana-operator/grafana-operator-experimental/controllers/model"
 	grapi "github.com/grafana/grafana-api-golang-client"
 	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/discovery"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -77,21 +74,21 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	// skip dashboards without an instance selector
 	if dashboard.Spec.InstanceSelector == nil {
-		controllerLog.Info("no instance selector found for dashboard, nothing to do", "name", &dashboard.Name, "namespace", &dashboard.Namespace)
+		controllerLog.Info("no instance selector found for dashboard, nothing to do", "name", dashboard.Name, "namespace", dashboard.Namespace)
 		return ctrl.Result{RequeueAfter: RequeueDelayError}, nil
 	}
 
-	instances, err := r.getMatchingInstances(ctx, dashboard.Spec.InstanceSelector)
+	instances, err := GetMatchingInstances(ctx, r.Client, dashboard.Spec.InstanceSelector)
 	if err != nil {
-		controllerLog.Error(err, "could not find matching instance", "name", &dashboard.Name)
+		controllerLog.Error(err, "could not find matching instance", "name", dashboard.Name)
 		return ctrl.Result{RequeueAfter: RequeueDelayError}, err
 	}
 
 	if len(instances.Items) == 0 {
-		controllerLog.Info("no matching instances found for dashboard", "dashboard", &dashboard.Name, "namespace", &dashboard.Namespace)
+		controllerLog.Info("no matching instances found for dashboard", "dashboard", dashboard.Name, "namespace", dashboard.Namespace)
 	}
 
-	controllerLog.Info("found matching Grafana instances", "count", len(instances.Items))
+	controllerLog.Info("found matching Grafana instances for dashboard", "count", len(instances.Items))
 
 	for _, grafana := range instances.Items {
 		// an admin url is required to interact with grafana
@@ -104,7 +101,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		// first reconcile the plugins
 		// append the requested dashboards to a configmap from where the
 		// grafana reconciler will pick them upi
-		err = r.reconcilePlugins(ctx, &grafana, dashboard)
+		err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, dashboard.Spec.Plugins, fmt.Sprintf("%v-dashboard", dashboard.Name))
 		if err != nil {
 			controllerLog.Error(err, "error reconciling plugins", "dashboard", dashboard.Name, "grafana", grafana.Name)
 		}
@@ -161,27 +158,24 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return nil
 	}
 
-	var dashboardFromJson map[string]interface{}
-	err := json.Unmarshal([]byte(cr.Spec.Json), &dashboardFromJson)
-	if err != nil {
-		return err
-	}
-
 	grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
 		return err
 	}
 
-	// check if dashboard already exists
-	instanceDashboards, err := grafanaClient.Dashboards() // dashboards in Grafana instance
-	for _, instanceDashboard := range instanceDashboards {
-		if instanceDashboard.UID == string(cr.UID) && instanceDashboard.Title == dashboardFromJson["title"] {
-			return nil
-		}
+	// update/create the dashboard if it doesn't exist in the instance or has been changed
+	exists, err := r.Exists(grafanaClient, cr)
+	if exists && cr.Unchanged() {
+		return nil
+	}
+
+	var dashboardFromJson map[string]interface{}
+	err = json.Unmarshal([]byte(cr.Spec.Json), &dashboardFromJson)
+	if err != nil {
+		return err
 	}
 
 	dashboardFromJson["uid"] = string(cr.UID)
-
 	resp, err := grafanaClient.NewDashboard(grapi.Dashboard{
 		Meta: grapi.DashboardMeta{
 			IsStarred: false,
@@ -203,6 +197,11 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return errors.NewBadRequest(fmt.Sprintf("error creating dashboard, status was %v", resp.Status))
 	}
 
+	err = r.UpdateStatus(ctx, cr)
+	if err != nil {
+		return err
+	}
+
 	grafana.AddDashboard(cr.Namespace, cr.Name, resp.UID)
 	if err != nil {
 		return err
@@ -210,47 +209,22 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	return r.Client.Update(ctx, grafana)
 }
 
-func (r *GrafanaDashboardReconciler) reconcilePlugins(ctx context.Context, grafana *v1beta1.Grafana, dashboard *v1beta1.GrafanaDashboard) error {
-	if dashboard.Spec.Plugins == nil || len(dashboard.Spec.Plugins) == 0 {
-		return nil
-	}
-
-	pluginsConfigMap := model.GetPluginsConfigMap(grafana, r.Scheme)
-	selector := client.ObjectKey{
-		Namespace: pluginsConfigMap.Namespace,
-		Name:      pluginsConfigMap.Name,
-	}
-
-	err := r.Client.Get(ctx, selector, pluginsConfigMap)
-	if err != nil {
-		return err
-	}
-
-	val, err := json.Marshal(dashboard.Spec.Plugins.Sanitize())
-	if err != nil {
-		return err
-	}
-
-	if pluginsConfigMap.BinaryData == nil {
-		pluginsConfigMap.BinaryData = make(map[string][]byte)
-	}
-
-	if bytes.Compare(val, pluginsConfigMap.BinaryData[dashboard.Name]) != 0 {
-		pluginsConfigMap.BinaryData[dashboard.Name] = val
-		return r.Client.Update(ctx, pluginsConfigMap)
-	}
-
-	return nil
+func (r *GrafanaDashboardReconciler) UpdateStatus(ctx context.Context, cr *v1beta1.GrafanaDashboard) error {
+	cr.Status.Hash = cr.Hash()
+	return r.Client.Status().Update(ctx, cr)
 }
 
-func (r *GrafanaDashboardReconciler) getMatchingInstances(ctx context.Context, labelSelector *v1.LabelSelector) (v1beta1.GrafanaList, error) {
-	var list v1beta1.GrafanaList
-	opts := []client.ListOption{
-		client.MatchingLabels(labelSelector.MatchLabels),
+func (r *GrafanaDashboardReconciler) Exists(client *grapi.Client, cr *v1beta1.GrafanaDashboard) (bool, error) {
+	dashbaords, err := client.Dashboards()
+	if err != nil {
+		return false, err
 	}
-
-	err := r.Client.List(ctx, &list, opts...)
-	return list, err
+	for _, dashboard := range dashbaords {
+		if dashboard.UID == string(cr.UID) {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

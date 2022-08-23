@@ -17,6 +17,8 @@ limitations under the License.
 package v1beta1
 
 import (
+	"crypto/sha256"
+	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -37,7 +39,7 @@ type GrafanaDashboardSpec struct {
 
 // GrafanaDashboardStatus defines the observed state of GrafanaDashboard
 type GrafanaDashboardStatus struct {
-	UIDforInstance map[string]string `json:"UIDforInstance,omitempty"`
+	Hash string `json:"hash,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -59,6 +61,16 @@ type GrafanaDashboardList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []GrafanaDashboard `json:"items"`
+}
+
+func (in *GrafanaDashboard) Hash() string {
+	hash := sha256.New()
+	hash.Write([]byte(in.Spec.Json))
+	return fmt.Sprintf("%x", hash.Sum(nil))
+}
+
+func (in *GrafanaDashboard) Unchanged() bool {
+	return in.Hash() == in.Status.Hash
 }
 
 func init() {

@@ -44,7 +44,8 @@ const (
 )
 
 const (
-	AnnotationDashboards = "grafana-operator/managed-dashboards"
+	AnnotationDashboards  = "grafana-operator/managed-dashboards"
+	AnnotationDatasources = "grafana-operator/managed-datasources"
 )
 
 // temporary values passed between reconciler stages
@@ -149,8 +150,8 @@ func (in *Grafana) PreferIngress() bool {
 	return in.Spec.Client != nil && in.Spec.Client.PreferIngress != nil && *in.Spec.Client.PreferIngress
 }
 
-func (in *Grafana) GetDashboards() NamespacedDashboards {
-	dashboards := NamespacedDashboards{}
+func (in *Grafana) GetDashboards() NamespacedResources {
+	dashboards := NamespacedResources{}
 	dashboards.Deserialize(in.Annotations[AnnotationDashboards])
 	return dashboards
 }
@@ -183,7 +184,7 @@ func (in *Grafana) FindDashboardByUID(uid string) bool {
 
 func (in *Grafana) AddDashboard(namespace string, name string, uid string) error {
 	managedDashboards := in.GetDashboards()
-	newDashboards := managedDashboards.AddDashboard(namespace, name, uid)
+	newDashboards := managedDashboards.AddResource(namespace, name, uid)
 	bytes, err := newDashboards.Serialize()
 	if err != nil {
 		return err
@@ -194,11 +195,65 @@ func (in *Grafana) AddDashboard(namespace string, name string, uid string) error
 
 func (in *Grafana) RemoveDashboard(namespace string, name string) error {
 	managedDashboards := in.GetDashboards()
-	newDashboards := managedDashboards.RemoveDashboard(namespace, name)
+	newDashboards := managedDashboards.RemoveResource(namespace, name)
 	bytes, err := newDashboards.Serialize()
 	if err != nil {
 		return err
 	}
 	in.Annotations[AnnotationDashboards] = string(bytes)
+	return nil
+}
+
+func (in *Grafana) GetDatasources() NamespacedResources {
+	datasources := NamespacedResources{}
+	datasources.Deserialize(in.Annotations[AnnotationDatasources])
+	return datasources
+}
+
+func (in *Grafana) FindDatasourceByNamespaceAndName(namespace string, name string) (bool, string) {
+	managedDatasources := in.GetDatasources()
+	for ns, datasources := range managedDatasources {
+		if ns == namespace {
+			for _, ds := range datasources {
+				if ds.Name == name {
+					return true, ds.UID
+				}
+			}
+		}
+	}
+	return false, ""
+}
+
+func (in *Grafana) FindDatasourceByUID(uid string) bool {
+	managedDatasources := in.GetDashboards()
+	for _, datasources := range managedDatasources {
+		for _, ds := range datasources {
+			if ds.UID == uid {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (in *Grafana) AddDatasource(namespace string, name string, uid string) error {
+	managedDatasources := in.GetDatasources()
+	newDatasources := managedDatasources.AddResource(namespace, name, uid)
+	bytes, err := newDatasources.Serialize()
+	if err != nil {
+		return err
+	}
+	in.Annotations[AnnotationDatasources] = string(bytes)
+	return nil
+}
+
+func (in *Grafana) RemoveDatasource(namespace string, name string) error {
+	managedDatasources := in.GetDatasources()
+	newDatasources := managedDatasources.RemoveResource(namespace, name)
+	bytes, err := newDatasources.Serialize()
+	if err != nil {
+		return err
+	}
+	in.Annotations[AnnotationDatasources] = string(bytes)
 	return nil
 }
