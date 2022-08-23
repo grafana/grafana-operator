@@ -18,9 +18,10 @@ package main
 
 import (
 	"flag"
+	"os"
+
 	"github.com/go-logr/logr"
 	discovery2 "k8s.io/client-go/discovery"
-	"os"
 
 	routev1 "github.com/openshift/api/route/v1"
 
@@ -98,6 +99,14 @@ func main() {
 		Log:    logr.Logger{},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDashboard")
+		os.Exit(1)
+	}
+	if err = (&controllers.GrafanaDatasourceReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		Log:    logr.Logger{},
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDatasource")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

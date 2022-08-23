@@ -1,0 +1,20 @@
+# permissions for end users to view grafanadatasources.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: grafanadatasource-viewer-role
+rules:
+- apiGroups:
+  - grafana.integreatly.org
+  resources:
+  - grafanadatasources
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - grafana.integreatly.org
+  resources:
+  - grafanadatasources/status
+  verbs:
+  - get

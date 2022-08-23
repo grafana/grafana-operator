@@ -6,14 +6,14 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
-  name: grafanadashboards.grafana.integreatly.org
+  name: grafanadatasources.grafana.integreatly.org
 spec:
   group: grafana.integreatly.org
   names:
-    kind: GrafanaDashboard
-    listKind: GrafanaDashboardList
-    plural: grafanadashboards
-    singular: grafanadashboard
+    kind: GrafanaDatasource
+    listKind: GrafanaDatasourceList
+    plural: grafanadatasources
+    singular: grafanadatasource
   scope: Namespaced
   versions:
   - name: v1beta1
@@ -28,6 +28,38 @@ spec:
             type: object
           spec:
             properties:
+              datasource:
+                properties:
+                  access:
+                    type: string
+                  basicAuth:
+                    type: boolean
+                  basicAuthUser:
+                    type: string
+                  database:
+                    type: string
+                  isDefault:
+                    type: boolean
+                  jsonData:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+                  name:
+                    type: string
+                  orgId:
+                    format: int64
+                    type: integer
+                  secureJsonData:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+                  type:
+                    type: string
+                  uid:
+                    type: string
+                  url:
+                    type: string
+                  user:
+                    type: string
+                type: object
               instanceSelector:
                 properties:
                   matchExpressions:
@@ -51,8 +83,6 @@ spec:
                       type: string
                     type: object
                 type: object
-              json:
-                type: string
               plugins:
                 items:
                   properties:

@@ -35,6 +35,32 @@ rules:
 - apiGroups:
   - grafana.integreatly.org
   resources:
+  - grafanadatasources
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - grafana.integreatly.org
+  resources:
+  - grafanadatasources/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - grafana.integreatly.org
+  resources:
+  - grafanadatasources/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - grafana.integreatly.org
+  resources:
   - grafanas
   verbs:
   - create
