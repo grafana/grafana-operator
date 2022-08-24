@@ -2,11 +2,11 @@ package grafanadashboardfolder
 
 import (
 	"bytes"
-	"crypto/md5" // nolint
+	"crypto/md5" //nolint
 	"encoding/json"
 	"fmt"
 	"github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -105,7 +105,7 @@ func (r *GrafanaClientImpl) getAllFolders() ([]GrafanaFolderResponse, error) {
 		}
 	}
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +176,7 @@ func (r *GrafanaClientImpl) FindOrCreateFolder(folderName string) (GrafanaFolder
 		}
 	}
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return response, err
 	}
@@ -188,7 +188,7 @@ func (r *GrafanaClientImpl) FindOrCreateFolder(folderName string) (GrafanaFolder
 
 func buildFolderUidFromName(folderName string) string {
 	// uid must not exceed 40 chars
-	return fmt.Sprintf("%x", md5.Sum([]byte(folderName))) // nolint
+	return fmt.Sprintf("%x", md5.Sum([]byte(folderName))) //nolint
 }
 
 func (r *GrafanaClientImpl) ApplyFolderPermissions(folderName string, folderPermissions []*v1alpha1.GrafanaPermissionItem) (GrafanaFolderPermissionsResponse, error) {
@@ -227,7 +227,7 @@ func (r *GrafanaClientImpl) ApplyFolderPermissions(folderName string, folderPerm
 		return response, fmt.Errorf("error setting folder-permissions, expected status 200 but got %v", resp.StatusCode)
 	}
 
-	responseBody, err := ioutil.ReadAll(resp.Body)
+	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return response, err
 	}

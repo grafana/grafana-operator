@@ -67,7 +67,7 @@ func SetupWithManager(mgr ctrl.Manager, r reconcile.Reconciler, namespace string
 		log.Log.Info("Starting dashboardfolder controller")
 	}
 
-	ref := r.(*GrafanaDashboardFolderReconciler) // nolint
+	ref := r.(*GrafanaDashboardFolderReconciler) //nolint
 	ticker := time.NewTicker(config.GetControllerConfig().RequeueDelay)
 	sendEmptyRequest := func() {
 		request := reconcile.Request{
