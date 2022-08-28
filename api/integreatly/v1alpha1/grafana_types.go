@@ -92,6 +92,7 @@ type GrafanaDataStorage struct {
 	AccessModes []v1.PersistentVolumeAccessMode `json:"accessModes,omitempty"`
 	Size        resource.Quantity               `json:"size,omitempty"`
 	Class       string                          `json:"class,omitempty"`
+	VolumeName  string                          `json:"volumeName,omitempty"`
 }
 
 type GrafanaServiceAccount struct {
