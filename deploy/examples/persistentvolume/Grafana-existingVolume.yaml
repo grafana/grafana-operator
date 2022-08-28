@@ -5,6 +5,8 @@ metadata:
 spec:
   ingress:
     enabled: True
+    pathType: Prefix
+    path: "/"
   dataStorage:
     accessModes:
     - ReadWriteMany
@@ -26,3 +28,4 @@ spec:
   dashboardLabelSelector:
     - matchExpressions:
         - {key: app, operator: In, values: [grafana]}
+
