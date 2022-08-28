@@ -7532,6 +7532,13 @@ GrafanaDataStorage provides a means to configure the grafana data storage
           <br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>volumeName</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
