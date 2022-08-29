@@ -161,7 +161,7 @@ func (r *GrafanaDashboardFolderReconciler) Reconcile(ctx context.Context, reques
 	return r.reconcileDashboardFolders(request, grafanaClient)
 }
 
-func (r *GrafanaDashboardFolderReconciler) reconcileDashboardFolders(request ctrl.Request, grafanaClient GrafanaClient) (reconcile.Result, error) { // nolint
+func (r *GrafanaDashboardFolderReconciler) reconcileDashboardFolders(request ctrl.Request, grafanaClient GrafanaClient) (reconcile.Result, error) {
 	foldersInNamespace := &grafanav1alpha1.GrafanaFolderList{}
 
 	opts := &client.ListOptions{
