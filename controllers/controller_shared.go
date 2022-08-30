@@ -22,10 +22,6 @@ func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSel
 }
 
 func ReconcilePlugins(ctx context.Context, k8sClient client.Client, scheme *runtime.Scheme, grafana *v1beta1.Grafana, plugins v1beta1.PluginList, resource string) error {
-	if len(plugins) == 0 {
-		return nil
-	}
-
 	pluginsConfigMap := model.GetPluginsConfigMap(grafana, scheme)
 	selector := client.ObjectKey{
 		Namespace: pluginsConfigMap.Namespace,

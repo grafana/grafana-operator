@@ -100,7 +100,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 		// first reconcile the plugins
 		// append the requested dashboards to a configmap from where the
-		// grafana reconciler will pick them upi
+		// grafana reconciler will pick them up
 		err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, dashboard.Spec.Plugins, fmt.Sprintf("%v-dashboard", dashboard.Name))
 		if err != nil {
 			controllerLog.Error(err, "error reconciling plugins", "dashboard", dashboard.Name, "grafana", grafana.Name)
@@ -139,6 +139,11 @@ func (r *GrafanaDashboardReconciler) onDashboardDeleted(ctx context.Context, nam
 			}
 
 			err = grafana.RemoveDashboard(namespace, name)
+			if err != nil {
+				return err
+			}
+
+			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, fmt.Sprintf("%v-dashboard", name))
 			if err != nil {
 				return err
 			}
