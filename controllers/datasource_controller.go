@@ -23,10 +23,12 @@ import (
 	"github.com/go-logr/logr"
 	client2 "github.com/grafana-operator/grafana-operator-experimental/controllers/client"
 	gapi "github.com/grafana/grafana-api-golang-client"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"strings"
 
 	grafanav1beta1 "github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 )
@@ -62,6 +64,13 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}, datasource)
 
 	if err != nil {
+		if errors.IsNotFound(err) {
+			err = r.onDatasourceDeleted(ctx, req.Namespace, req.Name)
+			if err != nil {
+				return ctrl.Result{RequeueAfter: RequeueDelayError}, err
+			}
+			return ctrl.Result{}, nil
+		}
 		controllerLog.Error(err, "error getting grafana dashboard cr")
 		return ctrl.Result{RequeueAfter: RequeueDelayError}, err
 	}
@@ -110,6 +119,53 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 }
 
+func (r *GrafanaDatasourceReconciler) onDatasourceDeleted(ctx context.Context, namespace string, name string) error {
+	list := grafanav1beta1.GrafanaList{}
+	opts := []client.ListOption{}
+	err := r.Client.List(ctx, &list, opts...)
+	if err != nil {
+		return err
+	}
+
+	for _, grafana := range list.Items {
+		if found, uid := grafana.FindDatasourceByNamespaceAndName(namespace, name); found {
+			grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, &grafana)
+			if err != nil {
+				return err
+			}
+
+			datasource, err := grafanaClient.DataSourceByUID(uid)
+			if err != nil {
+				return err
+			}
+
+			err = grafanaClient.DeleteDataSource(datasource.ID)
+			if err != nil {
+				if !strings.Contains(err.Error(), "status: 404") {
+					return err
+				}
+			}
+
+			err = grafana.RemoveDatasource(namespace, name)
+			if err != nil {
+				return err
+			}
+
+			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, fmt.Sprintf("%v-datasource", name))
+			if err != nil {
+				return err
+			}
+
+			err = r.Client.Update(ctx, &grafana)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, grafana *grafanav1beta1.Grafana, cr *grafanav1beta1.GrafanaDatasource) error {
 	if cr.Spec.Datasource == nil {
 		return nil
@@ -134,7 +190,8 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 
 	if id == nil {
 		_, err = grafanaClient.NewDataSourceFromRawData(datasourceBytes)
-		if err != nil {
+		// already exists error?
+		if err != nil && !strings.Contains(err.Error(), "status: 409") {
 			return err
 		}
 	} else if cr.Unchanged() == false {
@@ -152,7 +209,12 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		return err
 	}
 
-	return grafana.AddDatasource(cr.Namespace, cr.Name, string(cr.UID))
+	err = grafana.AddDatasource(cr.Namespace, cr.Name, string(cr.UID))
+	if err != nil {
+		return err
+	}
+
+	return r.Client.Update(ctx, grafana)
 }
 
 func (r *GrafanaDatasourceReconciler) UpdateStatus(ctx context.Context, cr *grafanav1beta1.GrafanaDatasource) error {
