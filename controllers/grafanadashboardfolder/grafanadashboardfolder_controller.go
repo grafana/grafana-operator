@@ -5,11 +5,13 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"os"
+	"time"
+
 	grafanav1alpha1 "github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
 	"github.com/grafana-operator/grafana-operator/v4/controllers/constants"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -17,14 +19,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"time"
+
+	"net/http"
 
 	"github.com/go-logr/logr"
 	"github.com/grafana-operator/grafana-operator/v4/controllers/common"
 	"github.com/grafana-operator/grafana-operator/v4/controllers/config"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
-	"net/http"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -102,8 +104,8 @@ func SetupWithManager(mgr ctrl.Manager, r reconcile.Reconciler, namespace string
 
 var _ reconcile.Reconciler = &GrafanaDashboardFolderReconciler{}
 
-// +kubebuilder:rbac:groups=integreatly.org,resources=grafanadashboards,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=integreatly.org,resources=grafanadashboards/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=integreatly.org,resources=grafanafolders,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=integreatly.org,resources=grafanafolders/status,verbs=get;update;patch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
