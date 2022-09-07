@@ -624,6 +624,9 @@ spec:
           spec:
             properties:
               permissions:
+                description: FolderPermissions shall contain the _complete_ permissions
+                  for the folder. Any permission not listed here, will be removed
+                  from the folder.
                 items:
                   properties:
                     permissionLevel:
@@ -639,6 +642,8 @@ spec:
                   type: object
                 type: array
               title:
+                description: FolderName is the display-name of the folder and must
+                  match CustomFolderName of any GrafanaDashboard you want to put in
                 type: string
             required:
             - title

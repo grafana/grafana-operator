@@ -18,7 +18,7 @@ See [deploy/examples/folders/](../deploy/examples/folders/) for `GrafanaFolder` 
 ## Folder properties
 
 As mentioned in the description for [Dashboards](./dashboards.md), you can create a folder implicitly by specifying a `customFolderName`.
-But in order to set permissions, you have to create a `GrafanaFolder` custom resource as well. 
+But in order to set permissions, you have to create a `GrafanaFolder` custom resource as well.
 (Of course you can also create a folder by just deploying a `GrafanaFolder` without referencing it in a `GrafanaDashboard` right away)
 
 To get a quick overview of the GrafanaFolder you can also look at the [API docs](api.md).
@@ -29,4 +29,3 @@ The following properties are accepted in the `spec`:
   * *permissionLevel*: 1 == View; 2 == Edit; 4 == Admin
   * *permissionTarget*: The target-role (can be "Viewer" or "Editor" - no need for admins as they always have access)
   * *permissionTargetType*: currently only "role" is supported
-
