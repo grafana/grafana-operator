@@ -180,7 +180,6 @@ func (r *GrafanaDashboardFolderReconciler) reconcileDashboardFolders(request ctr
 			log.Log.Info("dashboard found but selectors do not match", "namespace", folder.Namespace, "name", folder.Name)
 			continue
 		}
-		// FIXME: implementation
 		_, err := grafanaClient.ApplyFolderPermissions(folder.Spec.FolderName, folder.GetPermissions())
 		if err != nil {
 			r.manageError(&folder, err)
@@ -241,8 +240,7 @@ func (r *GrafanaDashboardFolderReconciler) getClient() (GrafanaClient, error) {
 	return NewGrafanaClient(url, username, password, r.transport, duration), nil
 }
 
-// Handle success case: update dashboard metadata (id, uid) and update the list
-// of plugins
+// Handle success case: update dashboardfolder metadata (name, hash)
 func (r *GrafanaDashboardFolderReconciler) manageSuccess(folder *grafanav1alpha1.GrafanaFolder) {
 	msg := fmt.Sprintf("folder %v/%v successfully submitted", folder.Namespace, folder.Name)
 	r.recorder.Event(folder, "Normal", "Success", msg)
@@ -250,7 +248,7 @@ func (r *GrafanaDashboardFolderReconciler) manageSuccess(folder *grafanav1alpha1
 	r.config.AddFolder(folder)
 }
 
-// Handle error case: update dashboard with error message and status
+// Handle error case: update dashboardfolder with error message and status
 func (r *GrafanaDashboardFolderReconciler) manageError(folder *grafanav1alpha1.GrafanaFolder, issue error) {
 	r.recorder.Event(folder, "Warning", "ProcessingError", issue.Error())
 	// Ignore conflicts. Resource might just be outdated, also ignore if grafana isn't available.
@@ -260,7 +258,7 @@ func (r *GrafanaDashboardFolderReconciler) manageError(folder *grafanav1alpha1.G
 	log.Log.Error(issue, "error updating folder", "name", folder.Name, "namespace", folder.Namespace)
 }
 
-// Test if a given dashboard matches an array of label selectors
+// Test if a given dashboardfolder matches an array of label selectors
 func (r *GrafanaDashboardFolderReconciler) isMatch(item *grafanav1alpha1.GrafanaFolder) bool {
 	if r.state.DashboardSelectors == nil {
 		return false

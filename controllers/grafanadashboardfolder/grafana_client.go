@@ -70,7 +70,6 @@ func NewGrafanaClient(url, user, password string, transport *http.Transport, tim
 
 var logger = logf.Log.WithName("folder-grafana-client")
 
-// FIXME: client is not controller-specific - refactor and avoid duplications
 func (r *GrafanaClientImpl) getAllFolders() ([]GrafanaFolderResponse, error) {
 	rawURL := fmt.Sprintf(CreateOrUpdateFolderUrl, r.url)
 	parsed, err := url.Parse(rawURL)
