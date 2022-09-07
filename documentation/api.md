@@ -1861,14 +1861,14 @@ GrafanaFolder is the Schema for the grafana folders and folderpermissions API
         <td><b>title</b></td>
         <td>string</td>
         <td>
-          <br/>
+          FolderName is the display-name of the folder and must match CustomFolderName of any GrafanaDashboard you want to put in<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#grafanafolderspecpermissionsindex">permissions</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          FolderPermissions shall contain the _complete_ permissions for the folder. Any permission not listed here, will be removed from the folder.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
