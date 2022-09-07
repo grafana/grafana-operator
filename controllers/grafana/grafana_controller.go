@@ -201,7 +201,7 @@ func (r *ReconcileGrafana) Reconcile(ctx context.Context, request reconcile.Requ
 	if err != nil {
 		return r.manageError(cr, err, request)
 	}
-	
+
 	// Run the config map reconciler to discover jsonnet libraries
 	err = reconcileConfigMaps(cr, r)
 	if err != nil {

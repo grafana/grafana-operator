@@ -32,7 +32,7 @@ type GrafanaPermissionItem struct {
 type GrafanaFolderSpec struct {
 	// FolderName is the display-name of the folder and must match CustomFolderName of any GrafanaDashboard you want to put in
 	FolderName string `json:"title"`
-	
+
 	// FolderPermissions shall contain the _complete_ permissions for the folder.
 	// Any permission not listed here, will be removed from the folder.
 	FolderPermissions []GrafanaPermissionItem `json:"permissions,omitempty"`
