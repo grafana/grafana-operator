@@ -176,6 +176,7 @@ spec:
 ## Dashboard Folder Support
 
 Due to the fact that the operator now supports the discovery of cluster-wide dashboards.
+For folder-permissions see: [folder-permissions](./folder_permissions.md)
 
 ### Managed folders
 

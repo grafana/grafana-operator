@@ -20,6 +20,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/grafana-operator/grafana-operator/v4/controllers/grafanadashboardfolder"
 	"os"
 	"runtime"
 	"strconv"
@@ -114,8 +115,8 @@ func assignOpts() {
 
 func main() { // nolint
 
-	printVersion()
 	assignOpts()
+	printVersion()
 
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
@@ -230,11 +231,16 @@ func main() { // nolint
 	// Start one dashboard controller per watch namespace
 	for _, ns := range dashboardNamespaces {
 		startDashboardController(ns, cfg, context.Background())
+		startDashboardFolderController(ns, cfg, context.Background())
 		startNotificationChannelController(ns, cfg, context.Background())
 	}
 
+	log.Log.Info("Starting background context.")
+
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
+
+	log.Log.Info("SetupWithManager Grafana.")
 	if err = (&grafana.ReconcileGrafana{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
@@ -247,6 +253,8 @@ func main() { // nolint
 		setupLog.Error(err, "unable to create controller", "controller", "Grafana")
 		os.Exit(1)
 	}
+
+	log.Log.Info("SetupWithManager GrafanaDashboard.")
 	if err = (&grafanadashboard.GrafanaDashboardReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("GrafanaDashboard"),
@@ -255,6 +263,18 @@ func main() { // nolint
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDashboard")
 		os.Exit(1)
 	}
+
+	log.Log.Info("SetupWithManager GrafanaFolder.")
+	if err = (&grafanadashboardfolder.GrafanaDashboardFolderReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("GrafanaDashboardFolder"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDashboardFolder")
+		os.Exit(1)
+	}
+
+	log.Log.Info("SetupWithManager GrafanaDatasource.")
 	if err = (&grafanadatasource.GrafanaDatasourceReconciler{
 		Client:   mgr.GetClient(),
 		Context:  ctx,
@@ -314,6 +334,38 @@ func startDashboardController(ns string, cfg *rest.Config, ctx context.Context) 
 	go func() {
 		if err := dashboardMgr.Start(ctx); err != nil {
 			log.Log.Error(err, "dashboard manager exited non-zero")
+			os.Exit(1)
+		}
+	}()
+}
+
+// Starts a separate controller for the dashboardfolder reconciliation in the background
+func startDashboardFolderController(ns string, cfg *rest.Config, ctx context.Context) {
+	// Create a new Cmd to provide shared dependencies and start components
+	dashboardFolderMgr, err := manager.New(cfg, manager.Options{
+		MetricsBindAddress: "0",
+		Namespace:          ns,
+	})
+	if err != nil {
+		log.Log.Error(err, "")
+		os.Exit(1)
+	}
+
+	// Setup Scheme for the dashboard resource
+	if err := apis.AddToScheme(dashboardFolderMgr.GetScheme()); err != nil {
+		log.Log.Error(err, "")
+		os.Exit(1)
+	}
+
+	// Use a separate manager for the dashboardfolder controller
+	err = grafanadashboardfolder.Add(dashboardFolderMgr, ns)
+	if err != nil {
+		log.Log.Error(err, "")
+	}
+
+	go func() {
+		if err := dashboardFolderMgr.Start(ctx); err != nil {
+			log.Log.Error(err, "dashboardfolder manager exited non-zero")
 			os.Exit(1)
 		}
 	}()
