@@ -1,0 +1,16 @@
+---
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaFolder
+metadata:
+  name: default-folder
+  namespace: example-namespace
+  labels:
+    app: grafana
+spec:
+  title: restricted-stats
+  permissions:
+    - permissionLevel: 2
+      permissionTarget: "Editor"
+      permissionTargetType: "role"
+
+# permissions are "removed" by just not specifying them
