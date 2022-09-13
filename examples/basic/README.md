@@ -1,3 +1,3 @@
 # Basic example
 
-A basic Grafana installation.
+A basic deployment of Grafana with a dashboard and a datasource.

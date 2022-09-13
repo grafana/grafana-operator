@@ -1,0 +1,27 @@
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: external-credentials
+stringData:
+  GF_SECURITY_ADMIN_PASSWORD: secret
+  GF_SECURITY_ADMIN_USER: root
+type: Opaque
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana-instance
+  labels:
+    dashboards: "grafana"
+spec:
+  client:
+    preferIngress: true
+  config:
+    security:
+      admin_user: root
+      admin_password: start
+    log:
+      mode: "console"
+    auth:
+      disable_login_form: "false"
