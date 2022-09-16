@@ -15,8 +15,8 @@ limitations under the License.
 */
 
 // Package v1beta1 contains API Schema definitions for the grafana v1beta1 API group
-//+kubebuilder:object:generate=true
-//+groupName=grafana.integreatly.org
+// +kubebuilder:object:generate=true
+// +groupName=grafana.integreatly.org
 package v1beta1
 
 import (

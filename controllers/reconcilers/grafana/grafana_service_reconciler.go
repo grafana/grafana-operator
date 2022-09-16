@@ -3,6 +3,8 @@ package grafana
 import (
 	"context"
 	"fmt"
+	"strconv"
+
 	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/config"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/model"
@@ -13,7 +15,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"strconv"
 )
 
 type ServiceReconciler struct {
@@ -41,7 +42,6 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 		}
 		return v1beta1.Merge(service, cr.Spec.Service)
 	})
-
 	if err != nil {
 		return v1beta1.OperatorStageResultFailed, err
 	}

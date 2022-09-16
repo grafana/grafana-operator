@@ -20,6 +20,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	"github.com/go-logr/logr"
 	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	client2 "github.com/grafana-operator/grafana-operator-experimental/controllers/client"
@@ -30,7 +32,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"strings"
 )
 
 const (
@@ -185,15 +186,14 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		Meta: grapi.DashboardMeta{
 			IsStarred: false,
 			Slug:      cr.Name,
-			//Folder:    ,
-			//URL:       "",
+			// Folder:    ,
+			// URL:       "",
 		},
 		Model: dashboardFromJson,
-		//Folder:    0,
+		// Folder:    0,
 		Overwrite: true,
 		Message:   "",
 	})
-
 	if err != nil {
 		return err
 	}

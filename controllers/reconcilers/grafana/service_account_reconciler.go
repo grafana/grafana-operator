@@ -2,6 +2,7 @@ package grafana
 
 import (
 	"context"
+
 	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/model"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/reconcilers"
@@ -26,7 +27,6 @@ func (r *ServiceAccountReconciler) Reconcile(ctx context.Context, cr *v1beta1.Gr
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, sa, func() error {
 		return v1beta1.Merge(sa, cr.Spec.ServiceAccount)
 	})
-
 	if err != nil {
 		return v1beta1.OperatorStageResultFailed, err
 	}
