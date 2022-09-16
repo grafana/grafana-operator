@@ -18,6 +18,9 @@ package controllers
 
 import (
 	"context"
+	"reflect"
+	"time"
+
 	"github.com/go-logr/logr"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/metrics"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/reconcilers"
@@ -26,8 +29,6 @@ import (
 	v12 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/discovery"
-	"reflect"
-	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -59,7 +60,6 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	grafana := &grafanav1beta1.Grafana{}
 	err := r.Get(ctx, req.NamespacedName, grafana)
-
 	if err != nil {
 		if errors.IsNotFound(err) {
 			controllerLog.Info("grafana cr has been deleted", "name", req.NamespacedName)
@@ -72,7 +72,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	metrics.GrafanaReconciles.WithLabelValues(grafana.Name).Inc()
 
-	var finished = true
+	finished := true
 	stages := getInstallationStages()
 	nextStatus := grafana.Status.DeepCopy()
 	vars := &grafanav1beta1.OperatorReconcileVars{}

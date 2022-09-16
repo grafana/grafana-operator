@@ -3,6 +3,7 @@ package grafana
 import (
 	"context"
 	"fmt"
+
 	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	config2 "github.com/grafana-operator/grafana-operator-experimental/controllers/config"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/model"
@@ -46,7 +47,6 @@ func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafan
 		deployment.Spec = getDeploymentSpec(cr, deployment.Name, scheme, vars)
 		return v1beta1.Merge(deployment, cr.Spec.Deployment)
 	})
-
 	if err != nil {
 		return v1beta1.OperatorStageResultFailed, err
 	}
@@ -133,7 +133,7 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 	plugins := model.GetPluginsConfigMap(cr, scheme)
 
 	// env var to restart containers if plugins change
-	var t = true
+	t := true
 	var envVars []v1.EnvVar
 	envVars = append(envVars, v1.EnvVar{
 		Name: "PLUGINS_HASH",
@@ -204,7 +204,8 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 					},
 					Key: config2.GrafanaAdminPasswordEnvVar,
 				},
-			}})
+			},
+		})
 	}
 
 	return containers

@@ -2,6 +2,7 @@ package grafana
 
 import (
 	"context"
+
 	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/config"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/model"
@@ -36,7 +37,6 @@ func (r *ConfigReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, s
 		configMap.Data["grafana.ini"] = config
 		return nil
 	})
-
 	if err != nil {
 		return v1beta1.OperatorStageResultFailed, err
 	}

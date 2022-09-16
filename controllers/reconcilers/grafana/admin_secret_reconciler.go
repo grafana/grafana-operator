@@ -2,13 +2,14 @@ package grafana
 
 import (
 	"context"
+	"os"
+
 	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/config"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/model"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/reconcilers"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -29,7 +30,6 @@ func (r *AdminSecretReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafa
 		secret.Data = getData(cr, secret)
 		return nil
 	})
-
 	if err != nil {
 		return v1beta1.OperatorStageResultFailed, err
 	}

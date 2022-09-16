@@ -3,9 +3,10 @@ package v1beta1
 import (
 	"crypto/sha256"
 	"fmt"
-	"github.com/blang/semver"
 	"io"
 	"strings"
+
+	"github.com/blang/semver"
 )
 
 type GrafanaPlugin struct {

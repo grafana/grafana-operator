@@ -3,6 +3,7 @@ package grafana
 import (
 	"context"
 	"fmt"
+
 	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/model"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/reconcilers"
@@ -57,7 +58,6 @@ func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Gr
 		ingress.Spec = getIngressSpec(cr, scheme)
 		return v1beta1.Merge(ingress, cr.Spec.Ingress)
 	})
-
 	if err != nil {
 		return v1beta1.OperatorStageResultFailed, err
 	}
@@ -84,7 +84,6 @@ func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Graf
 		err := v1beta1.Merge(route, cr.Spec.Route)
 		return err
 	})
-
 	if err != nil {
 		return v1beta1.OperatorStageResultFailed, err
 	}

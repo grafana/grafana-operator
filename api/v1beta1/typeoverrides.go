@@ -2,6 +2,8 @@ package v1beta1
 
 import (
 	"encoding/json"
+	"reflect"
+
 	v12 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	v13 "k8s.io/api/apps/v1"
@@ -9,7 +11,6 @@ import (
 	v1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
-	"reflect"
 )
 
 // +kubebuilder:object:generate=true

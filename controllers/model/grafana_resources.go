@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+
 	grafanav1beta1 "github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	routev1 "github.com/openshift/api/route/v1"
 	v13 "k8s.io/api/apps/v1"

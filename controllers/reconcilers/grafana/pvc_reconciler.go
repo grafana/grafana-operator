@@ -2,6 +2,7 @@ package grafana
 
 import (
 	"context"
+
 	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/model"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/reconcilers"
@@ -33,7 +34,6 @@ func (r *PvcReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, stat
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, pvc, func() error {
 		return v1beta1.Merge(pvc, cr.Spec.PersistentVolumeClaim)
 	})
-
 	if err != nil {
 		return v1beta1.OperatorStageResultFailed, err
 	}
