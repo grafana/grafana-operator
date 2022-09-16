@@ -109,7 +109,7 @@ func (in *GrafanaDatasource) Hash() string {
 		}
 
 		if in.Spec.Datasource.OrgID != nil {
-			hash.Write([]byte(string(*in.Spec.Datasource.OrgID)))
+			hash.Write([]byte(fmt.Sprint(*in.Spec.Datasource.OrgID)))
 		}
 	}
 
