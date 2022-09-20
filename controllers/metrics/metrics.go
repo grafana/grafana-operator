@@ -19,9 +19,17 @@ var (
 		Name:      "failed_reconciles",
 		Help:      "failed reconciles per Grafana instance and stage",
 	}, []string{"instance_name", "stage"})
+
+	GrafanaApiRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "grafana_operator",
+		Subsystem: "grafana_api",
+		Name:      "requests",
+		Help:      "requests against the grafana api per instance",
+	}, []string{"instance_name", "path", "method", "status"})
 )
 
 func init() {
 	metrics.Registry.MustRegister(GrafanaReconciles)
 	metrics.Registry.MustRegister(GrafanaFailedReconciles)
+	metrics.Registry.MustRegister(GrafanaApiRequests)
 }

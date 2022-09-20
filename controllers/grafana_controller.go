@@ -127,8 +127,7 @@ func (r *GrafanaReconciler) updateStatus(cr *grafanav1beta1.Grafana, nextStatus 
 	}
 
 	return ctrl.Result{
-		Requeue:      false,
-		RequeueAfter: RequeueDelaySuccess,
+		Requeue: false,
 	}, nil
 }
 

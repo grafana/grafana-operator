@@ -87,6 +87,9 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	if len(instances.Items) == 0 {
 		controllerLog.Info("no matching instances found for dashboard", "dashboard", dashboard.Name, "namespace", dashboard.Namespace)
+
+		// TODO when a label selector has been updated to no longer match any Grafana instances, should we delete the dashboard from those instances?
+		return ctrl.Result{Requeue: false}, nil
 	}
 
 	controllerLog.Info("found matching Grafana instances for dashboard", "count", len(instances.Items))
@@ -220,11 +223,11 @@ func (r *GrafanaDashboardReconciler) UpdateStatus(ctx context.Context, cr *v1bet
 }
 
 func (r *GrafanaDashboardReconciler) Exists(client *grapi.Client, cr *v1beta1.GrafanaDashboard) (bool, error) {
-	dashbaords, err := client.Dashboards()
+	dashboards, err := client.Dashboards()
 	if err != nil {
 		return false, err
 	}
-	for _, dashboard := range dashbaords {
+	for _, dashboard := range dashboards {
 		if dashboard.UID == string(cr.UID) {
 			return true, nil
 		}

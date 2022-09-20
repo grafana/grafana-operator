@@ -4,8 +4,10 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"github.com/grafana-operator/grafana-operator-experimental/controllers/metrics"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
@@ -15,21 +17,44 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func NewGrafanaClient(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (*grapi.Client, error) {
+type instrumentedRoundTripper struct {
+	instanceName string
+	wrapped      http.RoundTripper
+}
+
+func newInstrumentedRoundTripper(instanceName string) http.RoundTripper {
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
 		},
 	}
 
-	var timeoutSeconds time.Duration
+	return &instrumentedRoundTripper{
+		instanceName: instanceName,
+		wrapped:      transport,
+	}
+}
+
+func (in *instrumentedRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
+	resp, err := in.wrapped.RoundTrip(r)
+	metrics.GrafanaApiRequests.WithLabelValues(
+		in.instanceName,
+		r.URL.Path,
+		r.Method,
+		strconv.Itoa(resp.StatusCode)).
+		Inc()
+	return resp, err
+}
+
+func NewGrafanaClient(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (*grapi.Client, error) {
+	var timeout time.Duration
 	if grafana.Spec.Client != nil && grafana.Spec.Client.TimeoutSeconds != nil {
-		timeoutSeconds = time.Duration(*grafana.Spec.Client.TimeoutSeconds)
-		if timeoutSeconds < 0 {
-			timeoutSeconds = 0
+		timeout = time.Duration(*grafana.Spec.Client.TimeoutSeconds)
+		if timeout < 0 {
+			timeout = 0
 		}
 	} else {
-		timeoutSeconds = 10
+		timeout = 10
 	}
 
 	credentialSecret := model.GetGrafanaAdminSecret(grafana, nil)
@@ -64,8 +89,8 @@ func NewGrafanaClient(ctx context.Context, c client.Client, grafana *v1beta1.Gra
 		BasicAuth:   userinfo,
 		HTTPHeaders: nil,
 		Client: &http.Client{
-			Transport: transport,
-			Timeout:   time.Second * timeoutSeconds,
+			Transport: newInstrumentedRoundTripper(grafana.Name),
+			Timeout:   time.Second * timeout,
 		},
 		// TODO populate me
 		OrgID: 0,
