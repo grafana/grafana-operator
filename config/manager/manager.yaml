@@ -31,6 +31,7 @@ spec:
         - --leader-elect
         image: controller:latest
         name: manager
+        imagePullPolicy: Always
         securityContext:
           allowPrivilegeEscalation: false
         livenessProbe:
