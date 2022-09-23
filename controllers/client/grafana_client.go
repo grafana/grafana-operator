@@ -4,11 +4,12 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
-	"github.com/grafana-operator/grafana-operator-experimental/controllers/metrics"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/grafana-operator/grafana-operator-experimental/controllers/metrics"
 
 	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/config"
@@ -37,12 +38,14 @@ func newInstrumentedRoundTripper(instanceName string) http.RoundTripper {
 
 func (in *instrumentedRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
 	resp, err := in.wrapped.RoundTrip(r)
-	metrics.GrafanaApiRequests.WithLabelValues(
-		in.instanceName,
-		r.URL.Path,
-		r.Method,
-		strconv.Itoa(resp.StatusCode)).
-		Inc()
+	if resp != nil {
+		metrics.GrafanaApiRequests.WithLabelValues(
+			in.instanceName,
+			r.URL.Path,
+			r.Method,
+			strconv.Itoa(resp.StatusCode)).
+			Inc()
+	}
 	return resp, err
 }
 
