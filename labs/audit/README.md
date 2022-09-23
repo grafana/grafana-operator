@@ -30,7 +30,7 @@ kubectl apply -f config/samples/grafana_v1beta1_grafanadatasource.yaml
 
 NOTE: at the time of writing, kubebuilder lacks full definition for cluster-scope RBAC, you need to take care of that.
 
-Collect stats:
+Collect stats after a few minutes:
 
 ```shell
 ./collect-audit-stats.sh
