@@ -18,8 +18,9 @@ const (
 	GrafanaPluginsEnvVar       = "GF_INSTALL_PLUGINS"
 
 	// Networking
-	GrafanaHttpPort     int = 3000
-	GrafanaHttpPortName     = "grafana"
+	GrafanaHttpPort       int = 3000
+	GrafanaHttpPortName       = "grafana"
+	GrafanaServerProtocol     = "http"
 
 	// Data storage
 	GrafanaProvisionPluginVolumeName    = "grafana-provision-plugins"
