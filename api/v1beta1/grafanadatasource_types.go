@@ -36,6 +36,7 @@ type GrafanaDatasourceInternal struct {
 	IsDefault     *bool  `json:"isDefault,omitempty"`
 	BasicAuth     *bool  `json:"basicAuth,omitempty"`
 	BasicAuthUser string `json:"basicAuthUser,omitempty"`
+	Editable      *bool  `json:"editable,omitempty"`
 
 	// +kubebuilder:validation:Schemaless
 	// +kubebuilder:pruning:PreserveUnknownFields
@@ -111,6 +112,10 @@ func (in *GrafanaDatasource) Hash() string {
 
 		if in.Spec.Datasource.OrgID != nil {
 			hash.Write([]byte(fmt.Sprint(*in.Spec.Datasource.OrgID)))
+		}
+
+		if in.Spec.Datasource.Editable != nil && *in.Spec.Datasource.Editable {
+			hash.Write([]byte("_"))
 		}
 	}
 

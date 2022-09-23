@@ -319,6 +319,11 @@ func (in *GrafanaDatasourceInternal) DeepCopyInto(out *GrafanaDatasourceInternal
 		*out = new(bool)
 		**out = **in
 	}
+	if in.Editable != nil {
+		in, out := &in.Editable, &out.Editable
+		*out = new(bool)
+		**out = **in
+	}
 	if in.JSONData != nil {
 		in, out := &in.JSONData, &out.JSONData
 		*out = make(json.RawMessage, len(*in))

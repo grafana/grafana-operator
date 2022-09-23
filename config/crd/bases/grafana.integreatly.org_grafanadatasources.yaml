@@ -38,6 +38,8 @@ spec:
                     type: string
                   database:
                     type: string
+                  editable:
+                    type: boolean
                   isDefault:
                     type: boolean
                   jsonData:
