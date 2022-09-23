@@ -7,6 +7,7 @@ The goal of the lab is to get stats for interactions with kube-apiserver.
 - bash
 - docker
 - jq
+- kind
 
 ## Instructions
 
