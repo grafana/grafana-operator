@@ -26,6 +26,7 @@ vendor
 *~
 
 .vscode/
-
-labs/audit/kube-apiserver-audit.log
 .DS_Store
+
+# Audit lab
+kube-apiserver-audit.log
