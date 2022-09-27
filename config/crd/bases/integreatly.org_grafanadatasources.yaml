@@ -259,6 +259,10 @@ spec:
                           type: string
                         timeInterval:
                           type: string
+                        timeout:
+                          description: HTTP Request timeout in seconds. Overrides
+                            dataproxy.timeout option
+                          type: integer
                         timescaledb:
                           type: boolean
                         timezone:

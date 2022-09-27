@@ -1205,6 +1205,13 @@ GrafanaDataSourceJsonData contains the most common json options See https://graf
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>timeout</b></td>
+        <td>integer</td>
+        <td>
+          HTTP Request timeout in seconds. Overrides dataproxy.timeout option<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>timescaledb</b></td>
         <td>boolean</td>
         <td>
