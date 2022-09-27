@@ -101,6 +101,8 @@ type GrafanaDataSourceFields struct {
 // GrafanaDataSourceJsonData contains the most common json options
 // See https://grafana.com/docs/administration/provisioning/#datasources
 type GrafanaDataSourceJsonData struct {
+	// HTTP Request timeout in seconds. Overrides dataproxy.timeout option
+	Timeout                 int                `json:"timeout,omitempty"`
 	QueryTimeout            string             `json:"queryTimeout,omitempty"`
 	OauthPassThru           bool               `json:"oauthPassThru,omitempty"`
 	TlsAuth                 bool               `json:"tlsAuth,omitempty"`
