@@ -51,7 +51,6 @@ type GrafanaDashboardReconciler struct {
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadashboards/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadashboards/finalizers,verbs=update
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
 func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	controllerLog := log.FromContext(ctx)
 	r.Log = controllerLog
