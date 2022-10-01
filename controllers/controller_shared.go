@@ -43,7 +43,7 @@ func ReconcilePlugins(ctx context.Context, k8sClient client.Client, scheme *runt
 		pluginsConfigMap.BinaryData = make(map[string][]byte)
 	}
 
-	if bytes.Compare(val, pluginsConfigMap.BinaryData[resource]) != 0 {
+	if !bytes.Equal(val, pluginsConfigMap.BinaryData[resource]) {
 		pluginsConfigMap.BinaryData[resource] = val
 		return k8sClient.Update(ctx, pluginsConfigMap)
 	}

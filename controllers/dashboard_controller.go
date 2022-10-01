@@ -174,6 +174,9 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 
 	// update/create the dashboard if it doesn't exist in the instance or has been changed
 	exists, err := r.Exists(grafanaClient, cr)
+	if err != nil {
+		return err
+	}
 	if exists && cr.Unchanged() {
 		return nil
 	}

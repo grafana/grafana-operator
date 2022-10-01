@@ -127,9 +127,8 @@ func getVolumeMounts(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.VolumeMou
 
 func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.OperatorReconcileVars) []v1.Container { // nolint
 	var containers []v1.Container // nolint
-	var image string
 
-	image = fmt.Sprintf("%s:%s", config2.GrafanaImage, config2.GrafanaVersion)
+	image := fmt.Sprintf("%s:%s", config2.GrafanaImage, config2.GrafanaVersion)
 	plugins := model.GetPluginsConfigMap(cr, scheme)
 
 	// env var to restart containers if plugins change
