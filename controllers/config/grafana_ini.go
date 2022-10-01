@@ -9,6 +9,10 @@ import (
 )
 
 func WriteIni(cfg map[string]map[string]string) (string, string) {
+	if cfg == nil {
+		cfg = make(map[string]map[string]string)
+	}
+
 	if cfg["paths"] == nil {
 		cfg["paths"] = make(map[string]string)
 	}

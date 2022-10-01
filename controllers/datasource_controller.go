@@ -193,7 +193,7 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		if err != nil && !strings.Contains(err.Error(), "status: 409") {
 			return err
 		}
-	} else if cr.Unchanged() == false {
+	} else if !cr.Unchanged() {
 		err := grafanaClient.UpdateDataSourceFromRawData(*id, datasourceBytes)
 		if err != nil {
 			return err
