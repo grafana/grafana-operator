@@ -132,7 +132,7 @@ func (r *GrafanaClientImpl) FindOrCreateFolder(folderName string) (GrafanaFolder
 	}
 
 	for _, folder := range existingFolders {
-		if folder.Title == folderName {
+		if strings.EqualFold(folder.Title, folderName) {
 			return folder, nil
 		}
 	}

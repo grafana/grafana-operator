@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -206,7 +207,7 @@ func (r *GrafanaClientImpl) CreateOrUpdateFolder(folderInputName string) (Grafan
 	}
 
 	for _, folder := range allfolders {
-		if folder.Title == folderInputName {
+		if strings.EqualFold(folder.Title, folderInputName) {
 			return folder, nil
 		}
 	}
