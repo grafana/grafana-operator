@@ -6,8 +6,8 @@ metadata:
     capabilities: Basic Install
     categories: Monitoring
     certified: "False"
-    containerImage: quay.io/grafana-operator/grafana-operator:v4.6.0
-    createdAt: "2022-08-18T12:00:12Z"
+    containerImage: quay.io/grafana-operator/grafana-operator:v4.7.0
+    createdAt: "2022-10-06T10:00:12Z"
     description: A Kubernetes Operator based on the Operator SDK for creating and
       managing Grafana instances
     operators.operatorframework.io/builder: operator-sdk-v1.13.1
@@ -19,7 +19,7 @@ metadata:
     operatorframework.io/arch.arm64: supported
     operatorframework.io/arch.ppc64le: supported
     operatorframework.io/arch.s390x: supported
-  name: grafana-operator.v4.6.0
+  name: grafana-operator.v4.7.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -32,6 +32,9 @@ spec:
       version: v1alpha1
     - kind: GrafanaDataSource
       name: grafanadatasources.integreatly.org
+      version: v1alpha1
+    - kind: GrafanaFolder
+      name: grafanafolders.integreatly.org
       version: v1alpha1
     - kind: GrafanaNotificationChannel
       name: grafananotificationchannels.integreatly.org
@@ -147,6 +150,26 @@ spec:
           - integreatly.org
           resources:
           - grafanadatasources/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - integreatly.org
+          resources:
+          - grafanafolders
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - integreatly.org
+          resources:
+          - grafanafolders/status
           verbs:
           - get
           - patch
@@ -272,7 +295,7 @@ spec:
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.annotations['olm.targetNamespaces']
-                image: quay.io/grafana-operator/grafana-operator:v4.6.0
+                image: quay.io/grafana-operator/grafana-operator:v4.7.0
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
@@ -355,5 +378,5 @@ spec:
   maturity: alpha
   provider:
     name: Red Hat
-  replaces: grafana-operator.v4.5.1
-  version: 4.6.0
+  replaces: grafana-operator.v4.6.0
+  version: 4.7.0
