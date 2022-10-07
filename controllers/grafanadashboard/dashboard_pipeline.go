@@ -98,7 +98,7 @@ func (r *DashboardPipelineImpl) ProcessDashboard(knownHash string, folderId *int
 	// always assigned by Grafana. If there is one, we ignore it
 	r.Board["id"] = nil
 
-	// Overwrite in case any user provided uid exists
+	// Generate uid if needed
 
 	r.Board["uid"] = r.Dashboard.UID()
 	r.Board["folderId"] = folderId
@@ -142,6 +142,16 @@ func (r *DashboardPipelineImpl) obtainJson() error {
 	if r.Dashboard.Spec.Url != "" && r.Dashboard.Spec.GrafanaCom != nil {
 		return errors.New("both dashboard url and grafana.com source specified")
 	}
+
+	// If a dashboard comes not from .Spec.Json, we'll fail to detect hardcoded uids through GrafanaDashboard.UID().
+	// To workaround that, we should sync r.Dashboard.Spec.Json with r.JSON in case the former is empty.
+	syncJSON := func() {
+		if r.Dashboard.Spec.Json == "" {
+			r.Dashboard.Spec.Json = r.JSON
+		}
+	}
+
+	defer syncJSON()
 
 	var returnErr error
 
