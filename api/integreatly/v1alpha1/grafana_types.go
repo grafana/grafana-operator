@@ -39,23 +39,29 @@ type GrafanaSpec struct {
 	LivenessProbeSpec          *LivenessProbeSpec       `json:"livenessProbeSpec,omitempty"`
 	ReadinessProbeSpec         *ReadinessProbeSpec      `json:"readinessProbeSpec,omitempty"`
 	DBPasswordRef              *v1.SecretKeySelector    `json:"dbpasswordref,omitempty"`
+
+	// DashboardContentCacheDuration sets a default for when a `GrafanaDashboard` resource doesn't specify a `contentCacheDuration`.
+	// If left unset or 0 the default behavior is to cache indefinitely.
+	DashboardContentCacheDuration *metav1.Duration `json:"dashboardContentCacheDuration,omitempty"`
 }
 
 type ReadinessProbeSpec struct {
-	InitialDelaySeconds *int32       `json:"initialDelaySeconds,omitempty"`
-	TimeOutSeconds      *int32       `json:"timeoutSeconds,omitempty"`
-	PeriodSeconds       *int32       `json:"periodSeconds,omitempty"`
-	SuccessThreshold    *int32       `json:"successThreshold,omitempty"`
-	FailureThreshold    *int32       `json:"failureThreshold,omitempty"`
-	Scheme              v1.URIScheme `json:"scheme,omitempty"`
+	InitialDelaySeconds *int32 `json:"initialDelaySeconds,omitempty"`
+	TimeOutSeconds      *int32 `json:"timeoutSeconds,omitempty"`
+	PeriodSeconds       *int32 `json:"periodSeconds,omitempty"`
+	SuccessThreshold    *int32 `json:"successThreshold,omitempty"`
+	FailureThreshold    *int32 `json:"failureThreshold,omitempty"`
+	// URIScheme identifies the scheme used for connection to a host for Get actions. Deprecated in favor of config.server.protocol.
+	Scheme v1.URIScheme `json:"scheme,omitempty"`
 }
 type LivenessProbeSpec struct {
-	InitialDelaySeconds *int32       `json:"initialDelaySeconds,omitempty"`
-	TimeOutSeconds      *int32       `json:"timeoutSeconds,omitempty"`
-	PeriodSeconds       *int32       `json:"periodSeconds,omitempty"`
-	SuccessThreshold    *int32       `json:"successThreshold,omitempty"`
-	FailureThreshold    *int32       `json:"failureThreshold,omitempty"`
-	Scheme              v1.URIScheme `json:"scheme,omitempty"`
+	InitialDelaySeconds *int32 `json:"initialDelaySeconds,omitempty"`
+	TimeOutSeconds      *int32 `json:"timeoutSeconds,omitempty"`
+	PeriodSeconds       *int32 `json:"periodSeconds,omitempty"`
+	SuccessThreshold    *int32 `json:"successThreshold,omitempty"`
+	FailureThreshold    *int32 `json:"failureThreshold,omitempty"`
+	// URIScheme identifies the scheme used for connection to a host for Get actions. Deprecated in favor of config.server.protocol.
+	Scheme v1.URIScheme `json:"scheme,omitempty"`
 }
 
 type JsonnetConfig struct {
@@ -87,6 +93,7 @@ type GrafanaDataStorage struct {
 	AccessModes []v1.PersistentVolumeAccessMode `json:"accessModes,omitempty"`
 	Size        resource.Quantity               `json:"size,omitempty"`
 	Class       string                          `json:"class,omitempty"`
+	VolumeName  string                          `json:"volumeName,omitempty"`
 }
 
 type GrafanaServiceAccount struct {
@@ -124,8 +131,10 @@ type GrafanaDeployment struct {
 // GrafanaHttpProxy provides a means to configure the Grafana deployment
 // to use an HTTP(S) proxy when making requests and resolving plugins.
 type GrafanaHttpProxy struct {
-	Enabled bool   `json:"enabled"`
-	URL     string `json:"url,omitempty"`
+	Enabled   bool   `json:"enabled"`
+	URL       string `json:"url,omitempty"`
+	SecureURL string `json:"secureUrl,omitempty"`
+	NoProxy   string `json:"noProxy,omitempty"`
 }
 
 // GrafanaIngress provides a means to configure the ingress created
@@ -194,6 +203,7 @@ type GrafanaConfigPaths struct {
 type GrafanaConfigServer struct {
 	HttpAddr string `json:"http_addr,omitempty" ini:"http_addr,omitempty"`
 	HttpPort string `json:"http_port,omitempty" ini:"http_port,omitempty"`
+	// +kubebuilder:validation:Enum=http;https
 	Protocol string `json:"protocol,omitempty" ini:"protocol,omitempty"`
 	Socket   string `json:"socket,omitempty" ini:"socket,omitempty"`
 	Domain   string `json:"domain,omitempty" ini:"domain,omitempty"`
@@ -405,15 +415,18 @@ type GrafanaConfigAuthGenericOauth struct {
 	// +nullable
 	Enabled *bool `json:"enabled,omitempty" ini:"enabled"`
 	// +nullable
-	AllowSignUp       *bool  `json:"allow_sign_up,omitempty" ini:"allow_sign_up"`
-	ClientId          string `json:"client_id,omitempty" ini:"client_id,omitempty"`
-	ClientSecret      string `json:"client_secret,omitempty" ini:"client_secret,omitempty"`
-	Scopes            string `json:"scopes,omitempty" ini:"scopes,omitempty"`
-	AuthUrl           string `json:"auth_url,omitempty" ini:"auth_url,omitempty"`
-	TokenUrl          string `json:"token_url,omitempty" ini:"token_url,omitempty"`
-	ApiUrl            string `json:"api_url,omitempty" ini:"api_url,omitempty"`
-	AllowedDomains    string `json:"allowed_domains,omitempty" ini:"allowed_domains,omitempty"`
-	RoleAttributePath string `json:"role_attribute_path,omitempty" ini:"role_attribute_path,omitempty"`
+	AllowSignUp          *bool  `json:"allow_sign_up,omitempty" ini:"allow_sign_up"`
+	ClientId             string `json:"client_id,omitempty" ini:"client_id,omitempty"`
+	ClientSecret         string `json:"client_secret,omitempty" ini:"client_secret,omitempty"`
+	Scopes               string `json:"scopes,omitempty" ini:"scopes,omitempty"`
+	AuthUrl              string `json:"auth_url,omitempty" ini:"auth_url,omitempty"`
+	TokenUrl             string `json:"token_url,omitempty" ini:"token_url,omitempty"`
+	ApiUrl               string `json:"api_url,omitempty" ini:"api_url,omitempty"`
+	TeamsURL             string `json:"teams_url,omitempty" ini:"teams_url,omitempty"`
+	TeamIds              string `json:"team_ids,omitempty" ini:"team_ids,omitempty"`
+	TeamIdsAttributePath string `json:"team_ids_attribute_path,omitempty" ini:"team_ids_attribute_path,omitempty"`
+	AllowedDomains       string `json:"allowed_domains,omitempty" ini:"allowed_domains,omitempty"`
+	RoleAttributePath    string `json:"role_attribute_path,omitempty" ini:"role_attribute_path,omitempty"`
 	// +nullable
 	RoleAttributeStrict *bool  `json:"role_attribute_strict,omitempty" ini:"role_attribute_strict,omitempty"`
 	EmailAttributePath  string `json:"email_attribute_path,omitempty" ini:"email_attribute_path,omitempty"`
@@ -620,7 +633,19 @@ type GrafanaConfigPanels struct {
 
 type GrafanaConfigPlugins struct {
 	// +nullable
+	// Set to true if you want to test alpha plugins that are not yet ready for general usage. Default is false.
 	EnableAlpha *bool `json:"enable_alpha,omitempty" ini:"enable_alpha"`
+	// Enter a comma-separated list of plugin identifiers to identify plugins to load even if they are unsigned. Plugins with modified signatures are never loaded.
+	// We do not recommend using this option. For more information, refer to https://grafana.com/docs/grafana/next/administration/plugin-management/#plugin-signatures
+	AllowLoadingUnsignedPlugins string `json:"allow_loading_unsigned_plugins,omitempty" ini:"allow_loading_unsigned_plugins"`
+	// +nullable
+	// Available to Grafana administrators only, enables installing / uninstalling / updating plugins directly from the Grafana UI. Set to true by default. Setting it to false will hide the install / uninstall / update controls.
+	// For more information, refer to https://grafana.com/docs/grafana/next/administration/plugin-management/#plugin-catalog
+	PluginAdminEnabled *bool `json:"plugin_admin_enabled" ini:"plugin_admin_enabled"`
+	// Custom install/learn more URL for enterprise plugins. Defaults to https://grafana.com/grafana/plugins/.
+	PluginCatalogURL string `json:"plugin_catalog_url,omitempty" ini:"plugin_catalog_url"`
+	// Enter a comma-separated list of plugin identifiers to hide in the plugin catalog.
+	PluginCatalogHiddenPlugins string `json:"plugin_catalog_hidden_plugins,omitempty" ini:"plugin_catalog_hidden_plugins"`
 }
 
 type GrafanaConfigRendering struct {
@@ -684,4 +709,11 @@ func (cr *Grafana) GetPreferServiceValue() bool {
 		return *cr.Spec.Client.PreferService
 	}
 	return false
+}
+
+func (cr *Grafana) GetScheme() v1.URIScheme {
+	if cr.Spec.Config.Server != nil && cr.Spec.Config.Server.Protocol == "https" {
+		return v1.URISchemeHTTPS
+	}
+	return v1.URISchemeHTTP
 }

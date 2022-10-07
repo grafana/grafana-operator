@@ -21,9 +21,24 @@ var (
 	ServeFromSubPath = false
 	RouterLogging    = false
 
+	// Auth
+	loginMaximumInactiveLifetimeDays = 1
+	loginMaximumLifetimeDays         = 2
+	tokenRotationIntervalMinutes     = 10
+	disableLoginForm                 = true
+	disableSignoutMenu               = true
+	sigV4AuthEnabled                 = true
+	oauthAutoLogin                   = true
+
 	// AuthAzureAd
 	azureAdEnabled = true
 	allowSignUp    = false
+
+	// AuthGenericOauth
+	genericOauthEnabled               = true
+	genericOauthAllowSignUp           = true
+	genericOauthRoleAttributeStrict   = true
+	genericOauthTLSSkipVerifyInsecure = true
 
 	// GrafanaConfigUnifiedAlerting
 	enableGrafanaConfigUnifiedAlerting = true
@@ -32,6 +47,9 @@ var (
 
 	// Rendering
 	concurrentRenderRequestLimit = 10
+
+	// Live
+	maxConnections = 10
 )
 
 var testGrafanaConfig = v1alpha1.GrafanaConfig{
@@ -60,6 +78,19 @@ var testGrafanaConfig = v1alpha1.GrafanaConfig{
 		Password: "password",
 		SslMode:  "sslMode",
 	},
+	Auth: &v1alpha1.GrafanaConfigAuth{
+		LoginCookieName:                      "grafana_session",
+		LoginMaximumInactiveLifetimeDays:     &loginMaximumInactiveLifetimeDays,
+		LoginMaximumInactiveLifetimeDuration: "4h",
+		LoginMaximumLifetimeDays:             &loginMaximumLifetimeDays,
+		LoginMaximumLifetimeDuration:         "8h",
+		TokenRotationIntervalMinutes:         &tokenRotationIntervalMinutes,
+		DisableLoginForm:                     &disableLoginForm,
+		DisableSignoutMenu:                   &disableSignoutMenu,
+		SigV4AuthEnabled:                     &sigV4AuthEnabled,
+		SignoutRedirectUrl:                   "https://RedirectURL.com",
+		OauthAutoLogin:                       &oauthAutoLogin,
+	},
 	AuthAzureAD: &v1alpha1.GrafanaConfigAuthAzureAD{
 		Enabled:        &azureAdEnabled,
 		ClientId:       "Client",
@@ -69,6 +100,31 @@ var testGrafanaConfig = v1alpha1.GrafanaConfig{
 		TokenUrl:       "https://TokenURL.com",
 		AllowedDomains: "azure.com",
 		AllowSignUp:    &allowSignUp,
+	},
+	AuthGenericOauth: &v1alpha1.GrafanaConfigAuthGenericOauth{
+		Enabled:               &genericOauthEnabled,
+		AllowSignUp:           &genericOauthAllowSignUp,
+		ClientId:              "ClientOauth",
+		ClientSecret:          "ClientSecretOauth",
+		Scopes:                "ScopesOauth",
+		AuthUrl:               "https://AuthURLOauth.com",
+		TokenUrl:              "https://TokenURLOauth.com",
+		ApiUrl:                "https://ApiURLOauth.com",
+		TeamsURL:              "https://TeamsURLOauth.com",
+		TeamIds:               "1,2",
+		TeamIdsAttributePath:  "team_ids[*]",
+		AllowedDomains:        "mycompanyOauth.com",
+		RoleAttributePath:     "roles[*]",
+		RoleAttributeStrict:   &genericOauthRoleAttributeStrict,
+		EmailAttributePath:    "email",
+		TLSSkipVerifyInsecure: &genericOauthTLSSkipVerifyInsecure,
+		TLSClientCert:         "/genericOauth/clientCert",
+		TLSClientKey:          "/genericOauth/clientKey",
+		TLSClientCa:           "/genericOauth/clientCa",
+	},
+	Live: &v1alpha1.GrafanaConfigLive{
+		MaxConnections: &maxConnections,
+		AllowedOrigins: "https://origin.com",
 	},
 	UnifiedAlerting: &v1alpha1.GrafanaConfigUnifiedAlerting{
 		Enabled:           &enableGrafanaConfigUnifiedAlerting,
@@ -87,7 +143,20 @@ var testGrafanaConfig = v1alpha1.GrafanaConfig{
 	},
 }
 
-var testIni = `[auth.azuread]
+var testIni = `[auth]
+disable_login_form = true
+disable_signout_menu = true
+login_cookie_name = grafana_session
+login_maximum_inactive_lifetime_days = 1
+login_maximum_inactive_lifetime_duration = 4h
+login_maximum_lifetime_days = 2
+login_maximum_lifetime_duration = 8h
+oauth_auto_login = true
+signout_redirect_url = https://RedirectURL.com
+sigv4_auth_enabled = true
+token_rotation_interval_minutes = 10
+
+[auth.azuread]
 allow_sign_up = false
 allowed_domains = azure.com
 auth_url = https://AuthURL.com
@@ -96,6 +165,27 @@ client_secret = ClientSecret
 enabled = true
 scopes = Scopes
 token_url = https://TokenURL.com
+
+[auth.generic_oauth]
+allow_sign_up = true
+allowed_domains = mycompanyOauth.com
+api_url = https://ApiURLOauth.com
+auth_url = https://AuthURLOauth.com
+client_id = ClientOauth
+client_secret = ClientSecretOauth
+email_attribute_path = email
+enabled = true
+role_attribute_path = roles[*]
+role_attribute_strict = true
+scopes = ScopesOauth
+team_ids = 1,2
+team_ids_attribute_path = team_ids[*]
+teams_url = https://TeamsURLOauth.com
+tls_client_ca = /genericOauth/clientCa
+tls_client_cert = /genericOauth/clientCert
+tls_client_key = /genericOauth/clientKey
+tls_skip_verify_insecure = true
+token_url = https://TokenURLOauth.com
 
 [database]
 host = host
@@ -109,6 +199,10 @@ user = user
 
 [feature_toggles]
 enable = ngalert
+
+[live]
+allowed_origins = https://origin.com
+max_connections = 10
 
 [paths]
 data = /var/lib/grafana
@@ -191,6 +285,41 @@ func TestCfgServer(t *testing.T) {
 			"cert_file = /mnt/cert.crt",
 			"cert_key = /mnt/cert.key",
 			"router_logging = false",
+		},
+	}
+	require.Equal(t, config, testConfig)
+}
+
+func TestCfgAuth(t *testing.T) {
+	i := NewGrafanaIni(&testGrafanaConfig)
+	config := map[string][]string{}
+	config = i.cfgAuth(config)
+	testConfig := map[string][]string{
+		"auth": {
+			"login_cookie_name = grafana_session",
+			"login_maximum_inactive_lifetime_days = 1",
+			"login_maximum_inactive_lifetime_duration = 4h",
+			"login_maximum_lifetime_days = 2",
+			"login_maximum_lifetime_duration = 8h",
+			"token_rotation_interval_minutes = 10",
+			"disable_login_form = true",
+			"disable_signout_menu = true",
+			"sigv4_auth_enabled = true",
+			"signout_redirect_url = https://RedirectURL.com",
+			"oauth_auto_login = true",
+		},
+	}
+	require.Equal(t, config, testConfig)
+}
+
+func TestCfgLive(t *testing.T) {
+	i := NewGrafanaIni(&testGrafanaConfig)
+	config := map[string][]string{}
+	config = i.cfgLive(config)
+	testConfig := map[string][]string{
+		"live": {
+			"max_connections = 10",
+			"allowed_origins = https://origin.com",
 		},
 	}
 	require.Equal(t, config, testConfig)

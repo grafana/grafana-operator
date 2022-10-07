@@ -25,22 +25,24 @@ const (
 	GrafanaProvisioningDashboardsPath       = "/etc/grafana/provisioning/dashboards"
 	GrafanaProvisioningNotifiersPath        = "/etc/grafana/provisioning/notifiers"
 	PluginsInitContainerImage               = "quay.io/grafana-operator/grafana_plugins_init"
-	PluginsInitContainerTag                 = "0.0.5"
+	PluginsInitContainerTag                 = "0.0.6"
 	PluginsUrl                              = "https://grafana.com/api/plugins/%s/versions/%s"
-	RequeueDelay                            = time.Second * 10
 	SecretsMountDir                         = "/etc/grafana-secrets/" // #nosec G101
 	ConfigMapsMountDir                      = "/etc/grafana-configmaps/"
 	ConfigRouteWatch                        = "watch.routes"
 	ConfigGrafanaDashboardsSynced           = "grafana.dashboards.synced"
+	ConfigGrafanaFoldersSynced              = "grafana.dashboard.folders.synced"
 	ConfigGrafanaNotificationChannelsSynced = "grafana.notificationchannels.synced"
 	JsonnetBasePath                         = "/opt/jsonnet"
 )
 
 type ControllerConfig struct {
 	*sync.Mutex
-	Values     map[string]interface{}
-	Plugins    map[string]v1alpha1.PluginList
-	Dashboards []*v1alpha1.GrafanaDashboardRef
+	Values       map[string]interface{}
+	Plugins      map[string]v1alpha1.PluginList
+	Dashboards   map[string][]*v1alpha1.GrafanaDashboardRef
+	Folders      map[string][]*v1alpha1.GrafanaFolderRef
+	RequeueDelay time.Duration
 }
 
 var instance *ControllerConfig
@@ -49,10 +51,12 @@ var once sync.Once
 func GetControllerConfig() *ControllerConfig {
 	once.Do(func() {
 		instance = &ControllerConfig{
-			Mutex:      &sync.Mutex{},
-			Values:     map[string]interface{}{},
-			Plugins:    map[string]v1alpha1.PluginList{},
-			Dashboards: []*v1alpha1.GrafanaDashboardRef{},
+			Mutex:        &sync.Mutex{},
+			Values:       map[string]interface{}{},
+			Plugins:      map[string]v1alpha1.PluginList{},
+			Dashboards:   map[string][]*v1alpha1.GrafanaDashboardRef{},
+			Folders:      map[string][]*v1alpha1.GrafanaFolderRef{},
+			RequeueDelay: time.Second * 10,
 		}
 	})
 	return instance
@@ -86,17 +90,36 @@ func (c *ControllerConfig) SetPluginsFor(dashboard *v1alpha1.GrafanaDashboard) {
 	c.Plugins[id] = dashboard.Spec.Plugins
 }
 
-func (c *ControllerConfig) RemovePluginsFor(namespace, name string) {
-	id := c.GetDashboardId(namespace, name)
+func (c *ControllerConfig) RemovePluginsFor(dashboard *v1alpha1.GrafanaDashboardRef) {
+	id := c.GetDashboardId(dashboard.Namespace, dashboard.Name)
 	delete(c.Plugins, id)
+}
+
+func (c *ControllerConfig) AddFolder(folder *v1alpha1.GrafanaFolder) {
+	namespace := folder.Namespace
+	c.Lock()
+	defer c.Unlock()
+	if i, exists := c.HasFolder(namespace, folder.Spec.FolderName); !exists {
+		c.Folders[namespace] = append(c.Folders[namespace], &v1alpha1.GrafanaFolderRef{
+			Name:      folder.Spec.FolderName,
+			Namespace: namespace,
+			Hash:      folder.Hash(),
+		})
+	} else {
+		c.Folders[namespace][i] = &v1alpha1.GrafanaFolderRef{
+			Name:      folder.Spec.FolderName,
+			Namespace: namespace,
+			Hash:      folder.Hash(),
+		}
+	}
 }
 
 func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard, folderId *int64, folderName string) {
 	ns := dashboard.Namespace
-	if i, exists := c.HasDashboard(dashboard.UID()); !exists {
+	if i, exists := c.HasDashboard(ns, dashboard.UID()); !exists {
 		c.Lock()
 		defer c.Unlock()
-		c.Dashboards = append(c.Dashboards, &v1alpha1.GrafanaDashboardRef{
+		c.Dashboards[ns] = append(c.Dashboards[ns], &v1alpha1.GrafanaDashboardRef{
 			Name:       dashboard.Name,
 			Namespace:  ns,
 			UID:        dashboard.UID(),
@@ -107,7 +130,7 @@ func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard, fo
 	} else {
 		c.Lock()
 		defer c.Unlock()
-		c.Dashboards[i] = &v1alpha1.GrafanaDashboardRef{
+		c.Dashboards[ns][i] = &v1alpha1.GrafanaDashboardRef{
 			Name:       dashboard.Name,
 			Namespace:  ns,
 			UID:        dashboard.UID(),
@@ -118,9 +141,18 @@ func (c *ControllerConfig) AddDashboard(dashboard *v1alpha1.GrafanaDashboard, fo
 	}
 }
 
-func (c *ControllerConfig) HasDashboard(str string) (int, bool) {
-	for i, v := range c.Dashboards {
-		if v.UID == str {
+func (c *ControllerConfig) HasFolder(namespace, name string) (int, bool) {
+	for i, folder := range c.Folders[namespace] {
+		if folder.Name == name {
+			return i, true
+		}
+	}
+	return -1, false
+}
+
+func (c *ControllerConfig) HasDashboard(ns, uid string) (int, bool) {
+	for i, v := range c.Dashboards[ns] {
+		if v.UID == uid {
 			return i, true
 		}
 	}
@@ -130,43 +162,65 @@ func (c *ControllerConfig) HasDashboard(str string) (int, bool) {
 func (c *ControllerConfig) InvalidateDashboards() {
 	c.Lock()
 	defer c.Unlock()
-	for _, v := range c.Dashboards {
-		v.Hash = ""
+	for _, ds := range c.Dashboards {
+		for _, v := range ds {
+			v.Hash = ""
+		}
 	}
-}
-
-func (c *ControllerConfig) SetDashboards(dashboards []*v1alpha1.GrafanaDashboardRef) {
-	c.Lock()
-	defer c.Unlock()
-	c.Dashboards = dashboards
 }
 
 func (c *ControllerConfig) RemoveDashboard(hash string) {
-	if i, exists := c.HasDashboard(hash); exists {
-		c.Lock()
-		defer c.Unlock()
-		list := c.Dashboards
-		list[i] = list[len(list)-1]
-		list = list[:len(list)-1]
-		c.Dashboards = list
+	for ns := range c.Dashboards {
+		if i, exists := c.HasDashboard(ns, hash); exists {
+			c.Lock()
+			defer c.Unlock()
+			list := c.Dashboards[ns]
+			list[i] = list[len(list)-1]
+			list = list[:len(list)-1]
+			c.Dashboards[ns] = list
+		}
 	}
+}
+
+func (c *ControllerConfig) GetFolders(namespace string) []*v1alpha1.GrafanaFolderRef {
+	c.Lock()
+	defer c.Unlock()
+
+	if c.Folders[namespace] != nil {
+		return c.Folders[namespace]
+	}
+
+	folders := []*v1alpha1.GrafanaFolderRef{}
+
+	if namespace == "" {
+		for _, folder := range c.Folders {
+			folders = append(folders, folder...)
+		}
+	}
+
+	return folders
 }
 
 func (c *ControllerConfig) GetDashboards(namespace string) []*v1alpha1.GrafanaDashboardRef {
 	c.Lock()
 	defer c.Unlock()
-	// Checking for dashboards at the cluster level? across namespaces?
-	if namespace == "" {
-		var dashboards []*v1alpha1.GrafanaDashboardRef
-		dashboards = append(dashboards, c.Dashboards...)
 
+	if c.Dashboards[namespace] != nil {
+		return c.Dashboards[namespace]
+	}
+
+	dashboards := []*v1alpha1.GrafanaDashboardRef{}
+
+	// The periodic resync in grafanadashboard.GrafanaDashboardReconciler rely on the convention
+	// that an empty namespace means all of them, so we follow that rule here.
+	if namespace == "" {
+		for _, ds := range c.Dashboards {
+			dashboards = append(dashboards, ds...)
+		}
 		return dashboards
 	}
 
-	if c.Dashboards != nil {
-		return c.Dashboards
-	}
-	return []*v1alpha1.GrafanaDashboardRef{}
+	return dashboards
 }
 
 func (c *ControllerConfig) AddConfigItem(key string, value interface{}) {
@@ -221,7 +275,7 @@ func (c *ControllerConfig) HasConfigItem(key string) bool {
 func (c *ControllerConfig) Cleanup(plugins bool) {
 	c.Lock()
 	defer c.Unlock()
-	c.Dashboards = []*v1alpha1.GrafanaDashboardRef{}
+	c.Dashboards = map[string][]*v1alpha1.GrafanaDashboardRef{}
 
 	if plugins {
 		c.Plugins = map[string]v1alpha1.PluginList{}

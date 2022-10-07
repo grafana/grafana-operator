@@ -14,10 +14,11 @@ import (
 )
 
 type GrafanaReconciler struct {
-	DsHash     string
-	ConfigHash string
-	PluginsEnv string
-	Plugins    *PluginsHelperImpl
+	DsHash          string
+	ConfigHash      string
+	CredentialsHash string
+	PluginsEnv      string
+	Plugins         *PluginsHelperImpl
 }
 
 func NewGrafanaReconciler() *GrafanaReconciler {
@@ -225,13 +226,20 @@ func (i *GrafanaReconciler) getGrafanaAdminUserSecretDesiredState(state *common.
 	}
 
 	if state.AdminSecret == nil {
+		secret := model.AdminSecret(cr)
+		i.CredentialsHash = secret.Annotations[constants.LastCredentialsAnnotation]
+
 		return common.GenericCreateAction{
-			Ref: model.AdminSecret(cr),
+			Ref: secret,
 			Msg: "create admin credentials secret",
 		}
 	}
+
+	secret := model.AdminSecretReconciled(cr, state.AdminSecret)
+	i.CredentialsHash = secret.Annotations[constants.LastCredentialsAnnotation]
+
 	return common.GenericUpdateAction{
-		Ref: model.AdminSecretReconciled(cr, state.AdminSecret),
+		Ref: secret,
 		Msg: "update admin credentials secret",
 	}
 }
@@ -265,14 +273,14 @@ func (i *GrafanaReconciler) getGrafanaRouteDesiredState(state *common.ClusterSta
 func (i *GrafanaReconciler) getGrafanaDeploymentDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
 	if state.GrafanaDeployment == nil {
 		return common.GenericCreateAction{
-			Ref: model.GrafanaDeployment(cr, i.ConfigHash, i.DsHash),
+			Ref: model.GrafanaDeployment(cr, i.ConfigHash, i.DsHash, i.CredentialsHash),
 			Msg: "create grafana deployment",
 		}
 	}
 
 	return common.GenericUpdateAction{
 		Ref: model.GrafanaDeploymentReconciled(cr, state.GrafanaDeployment,
-			i.ConfigHash, i.PluginsEnv, i.DsHash),
+			i.ConfigHash, i.PluginsEnv, i.DsHash, i.CredentialsHash),
 		Msg: "update grafana deployment",
 	}
 }

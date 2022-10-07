@@ -24,8 +24,11 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strconv"
 	"strings"
+	"time"
 
+	"github.com/grafana-operator/grafana-operator/v4/controllers/grafanadashboardfolder"
 	"github.com/grafana-operator/grafana-operator/v4/controllers/grafananotificationchannel"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
@@ -66,6 +69,7 @@ var (
 	flagPluginsInitContainerTag   string
 	flagNamespaces                string
 	scanAll                       bool
+	requeueDelay                  int
 	flagJsonnetLocation           string
 	metricsAddr                   string
 	enableLeaderElection          bool
@@ -94,6 +98,7 @@ func assignOpts() {
 	flag.StringVar(&flagNamespaces, "namespaces", LookupEnvOrString("DASHBOARD_NAMESPACES", ""), "Namespaces to scope the interaction of the Grafana operator. Mutually exclusive with --scan-all")
 	flag.StringVar(&flagJsonnetLocation, "jsonnet-location", "", "Overrides the base path of the jsonnet libraries")
 	flag.BoolVar(&scanAll, "scan-all", LookupEnvOrBool("DASHBOARD_NAMESPACES_ALL", false), "Scans all namespaces for dashboards")
+	flag.IntVar(&requeueDelay, "requeue-delay", LookupEnvOrInt("REQUEUE_DELAY", 10), "Number of seconds between a periodic reconciliation")
 
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -112,8 +117,8 @@ func assignOpts() {
 
 func main() { // nolint
 
-	printVersion()
 	assignOpts()
+	printVersion()
 
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
@@ -149,6 +154,21 @@ func main() { // nolint
 	controllerConfig.AddConfigItem(grafanaconfig.ConfigOperatorNamespace, namespace)
 	controllerConfig.AddConfigItem(grafanaconfig.ConfigDashboardLabelSelector, "")
 	controllerConfig.AddConfigItem(grafanaconfig.ConfigJsonnetBasePath, flagJsonnetLocation)
+	controllerConfig.RequeueDelay = time.Duration(requeueDelay) * time.Second
+
+	// Check config is given through env variables - to support OLM installations
+	if flagImage == "" {
+		controllerConfig.AddConfigItem(grafanaconfig.ConfigGrafanaImage, os.Getenv("GRAFANA_IMAGE_URL"))
+	}
+	if flagImageTag == "" {
+		controllerConfig.AddConfigItem(grafanaconfig.ConfigGrafanaImageTag, os.Getenv("GRAFANA_IMAGE_TAG"))
+	}
+	if flagPluginsInitContainerImage == "" {
+		controllerConfig.AddConfigItem(grafanaconfig.ConfigPluginsInitContainerImage, os.Getenv("GRAFANA_PLUGINS_INIT_CONTAINER_IMAGE_URL"))
+	}
+	if flagPluginsInitContainerTag == "" {
+		controllerConfig.AddConfigItem(grafanaconfig.ConfigPluginsInitContainerTag, os.Getenv("GRAFANA_PLUGINS_INIT_CONTAINER_IMAGE_TAG"))
+	}
 
 	// Get the namespaces to scan for dashboards
 	// It's either the same namespace as the controller's or it's all namespaces if the
@@ -213,11 +233,16 @@ func main() { // nolint
 	// Start one dashboard controller per watch namespace
 	for _, ns := range dashboardNamespaces {
 		startDashboardController(ns, cfg, context.Background())
+		startDashboardFolderController(ns, cfg, context.Background())
 		startNotificationChannelController(ns, cfg, context.Background())
 	}
 
+	log.Log.Info("Starting background context.")
+
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
+
+	log.Log.Info("SetupWithManager Grafana.")
 	if err = (&grafana.ReconcileGrafana{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
@@ -230,6 +255,8 @@ func main() { // nolint
 		setupLog.Error(err, "unable to create controller", "controller", "Grafana")
 		os.Exit(1)
 	}
+
+	log.Log.Info("SetupWithManager GrafanaDashboard.")
 	if err = (&grafanadashboard.GrafanaDashboardReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("GrafanaDashboard"),
@@ -239,6 +266,17 @@ func main() { // nolint
 		os.Exit(1)
 	}
 
+	log.Log.Info("SetupWithManager GrafanaFolder.")
+	if err = (&grafanadashboardfolder.GrafanaDashboardFolderReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("GrafanaDashboardFolder"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDashboardFolder")
+		os.Exit(1)
+	}
+
+	log.Log.Info("SetupWithManager GrafanaDatasource.")
 	dataSourceReconciler := &grafanadatasource.GrafanaDatasourceReconciler{
 		Client: mgr.GetClient(),
 		Transport: &http.Transport{
@@ -319,6 +357,38 @@ func startDashboardController(ns string, cfg *rest.Config, ctx context.Context) 
 	}()
 }
 
+// Starts a separate controller for the dashboardfolder reconciliation in the background
+func startDashboardFolderController(ns string, cfg *rest.Config, ctx context.Context) {
+	// Create a new Cmd to provide shared dependencies and start components
+	dashboardFolderMgr, err := manager.New(cfg, manager.Options{
+		MetricsBindAddress: "0",
+		Namespace:          ns,
+	})
+	if err != nil {
+		log.Log.Error(err, "")
+		os.Exit(1)
+	}
+
+	// Setup Scheme for the dashboard resource
+	if err := apis.AddToScheme(dashboardFolderMgr.GetScheme()); err != nil {
+		log.Log.Error(err, "")
+		os.Exit(1)
+	}
+
+	// Use a separate manager for the dashboardfolder controller
+	err = grafanadashboardfolder.Add(dashboardFolderMgr, ns)
+	if err != nil {
+		log.Log.Error(err, "")
+	}
+
+	go func() {
+		if err := dashboardFolderMgr.Start(ctx); err != nil {
+			log.Log.Error(err, "dashboardfolder manager exited non-zero")
+			os.Exit(1)
+		}
+	}()
+}
+
 // Starts a separate controller for the notification channels reconciliation in the background
 func startNotificationChannelController(ns string, cfg *rest.Config, ctx context.Context) {
 	// Create a new Cmd to provide shared dependencies and start components
@@ -378,6 +448,17 @@ func LookupEnvOrString(key string, defaultVal string) string {
 func LookupEnvOrBool(key string, defaultVal bool) bool {
 	if val, ok := os.LookupEnv(key); ok {
 		return val == "true"
+	}
+	return defaultVal
+}
+
+func LookupEnvOrInt(key string, defaultVal int) int {
+	if val, ok := os.LookupEnv(key); ok {
+		parsed, err := strconv.Atoi(val)
+		if err != nil {
+			return defaultVal
+		}
+		return parsed
 	}
 	return defaultVal
 }

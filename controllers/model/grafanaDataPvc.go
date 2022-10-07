@@ -32,6 +32,14 @@ func getStorageClass(cr *v1alpha1.Grafana) *string {
 	return &cr.Spec.DataStorage.Class
 }
 
+func getVolumeName(cr *v1alpha1.Grafana) string {
+	if cr.Spec.DataStorage == nil {
+		return ""
+	}
+
+	return cr.Spec.DataStorage.VolumeName
+}
+
 func getPVCSpec(cr *v1alpha1.Grafana) corev1.PersistentVolumeClaimSpec {
 	return corev1.PersistentVolumeClaimSpec{
 		AccessModes: cr.Spec.DataStorage.AccessModes,
@@ -41,6 +49,7 @@ func getPVCSpec(cr *v1alpha1.Grafana) corev1.PersistentVolumeClaimSpec {
 			},
 		},
 		StorageClassName: getStorageClass(cr),
+		VolumeName:       getVolumeName(cr),
 	}
 }
 

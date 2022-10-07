@@ -2,6 +2,7 @@
 
 * [Installing Grafana](./deploy_grafana.md)
 * [Dashboards](./dashboards.md)
+* [Dashboard folder permissions](./folder_permissions.md)
 * [Data Sources](./datasources.md)
 * [Develop](./develop.md)
 * [Multi namespace support](./multi_namespace_support.md)
@@ -33,6 +34,11 @@ The following example CRs are provided:
 * [DashboardWithPlugins.yaml](../deploy/examples/dashboards/DashboardWithPlugins.yaml): Minimal empty dashboard with plugin dependencies.
 * [DashboardFromURL.yaml](../deploy/examples/dashboards/DashboardFromURL.yaml): A dashboard that downloads its contents from a URL and falls back to embedded json if the URL cannot be resolved.
 * [KeycloakDashboard.yaml](../deploy/examples/dashboards/KeycloakDashboard.yaml): A dashboard that shows keycloak metrics and demonstrates how to use datasource inputs.
+
+### Folders
+
+* [public-folder.yaml](../deploy/examples/folders/public-folder.yaml): Folder with access-permissions for users with role "Viewer"
+* [restricted-folder.yaml](../deploy/examples/folders/restricted-folder.yaml): Folder only accessible for Editors
 
 ### Data sources
 

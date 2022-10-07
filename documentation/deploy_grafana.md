@@ -36,9 +36,9 @@ By default Operator metrics are exposed but protected. Please refer to [this gui
 
 If you would like to expose the metrics directly, bypassing `kube-rbac-proxy`, you need to make the following changes:
 
-1. Edit `config/manager/controler_manager_config.yaml` and set the `metrics.bindAddress` to `0.0.0.0:8080`
-2. Disable `- manager_auth_proxy_patch.yaml` in `config/default/kustomization.yaml` by commenting it. This will disable the `kube-rbac-proxy`
-3. Change the port in `config/rbac/auto_proxy_service.yaml` to:
+1. Edit `config/manager/controller_manager_config.yaml` and set the `metrics.bindAddress` to `0.0.0.0:8080`
+2. Disable `- manager_auth_proxy_patch.yaml` in `config/manager/kustomization.yaml` by commenting it. This will disable the `kube-rbac-proxy`
+3. Change the port in `config/rbac/auth_proxy_service.yaml` to:
 
     ```yaml
     ports:
@@ -84,11 +84,21 @@ The operator accepts a number of flags that can be passed in the `args` section 
 
 * `--namespaces`: watch for dashboards in a list of namespaces. Mutually exclusive with `--scan-all`.
 
-* `--zap-level=n`: set the logging level for the operator, leaving out this flag will only log Errors and error related
+* `--zap-log-level=n`: set the logging level for the operator, leaving out this flag will only log Errors and error related
   info, current options are:
-  * `--zap-level=1`: show all Info level logs
+  * `--zap-log-level=1`: show all Info level logs
+* `--requeue-delay=n`: set how often the resync of the grafana resources towards the grafana instance should happen in seconds. The default is 10s.
 
-See `deploy/operator.yaml` for an example.
+See `deploy/manifests/latest/deployment.yaml` for an example.
+
+The Grafana image URL and tag, and Grafana Plugins Init container image and tag can also be overridden using environment
+variables - to support deployment through OLM:
+
+* `GRAFANA_IMAGE_URL`: overrides the Grafana tag. See `controller_config.go` for default.
+* `GRAFANA_IMAGE_TAG`: overrides the Grafana tag. See `controller_config.go` for default.
+* `GRAFANA_PLUGINS_INIT_CONTAINER_IMAGE_URL`: overrides the Grafana Plugins Init Container image, defaults
+  to `quay.io/integreatly/grafana_plugins_init`.
+* `GRAFANA_PLUGINS_INIT_CONTAINER_IMAGE_TAG`: overrides the Grafana Plugins Init Container tag, defaults to `0.0.3`.
 
 ## Deploying Grafana
 

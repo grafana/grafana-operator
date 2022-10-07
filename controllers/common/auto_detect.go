@@ -68,7 +68,6 @@ func (b *Background) autoDetectCapabilities() {
 	b.detectRoute()
 }
 
-//
 func (b *Background) detectRoute() {
 	resourceExists, err := k8sutil.ResourceExists(b.dc, routev1.SchemeGroupVersion.String(), RouteKind)
 	if resourceExists && err == nil {
