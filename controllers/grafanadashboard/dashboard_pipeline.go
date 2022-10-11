@@ -35,9 +35,7 @@ const (
 	SourceTypeUnknown SourceType = 3
 )
 
-var (
-	grafanaComDashboardApiUrlRoot string = "https://grafana.com/api/dashboards"
-)
+var grafanaComDashboardApiUrlRoot string = "https://grafana.com/api/dashboards"
 
 type DashboardPipeline interface {
 	ProcessDashboard(knownHash string, folderId *int64, folderName string, forceRecreate bool) ([]byte, error)
@@ -304,13 +302,13 @@ func (r *DashboardPipelineImpl) loadDashboardFromURL(source string) error {
 		return err
 	}
 
+	r.refreshDashboard()
 	r.Dashboard.Status = v1alpha1.GrafanaDashboardStatus{
 		ContentCache:     content,
 		ContentTimestamp: &metav1.Time{Time: time.Now()},
 		ContentUrl:       source,
 	}
 
-	r.refreshDashboard()
 	if err := r.Client.Status().Update(r.Context, r.Dashboard); err != nil {
 		if !k8serrors.IsConflict(err) {
 			return fmt.Errorf("failed to update status with content for dashboard %s/%s: %w", r.Dashboard.Namespace, r.Dashboard.Name, err)
