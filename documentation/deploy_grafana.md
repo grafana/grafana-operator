@@ -67,7 +67,7 @@ The operator accepts a number of flags that can be passed in the `args` section 
 
 * `--grafana-image`: overrides the Grafana image, defaults to `docker.io/grafana/grafana` on grafanas official dockerhub, the
   version of which can be
-  found [here](https://github.com/integr8ly/grafana-operator/blob/master/pkg/controller/model/constants.go#L4-L5).
+  found [here](https://github.com/grafana-operator/grafana-operator/blob/master/controllers/constants/constants.go#L5).
 
 * `--grafana-image-tag`: overrides the Grafana tag. See `controller_config.go` for default.
 
