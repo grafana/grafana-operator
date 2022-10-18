@@ -55,7 +55,7 @@ flags or `baseImage` CR spec fields.
 
 This chart shows how the operator prioritises which image will be used for the deployment, and the versions that it's
 known to support. Only the grafana image specified in
-code [here](https://github.com/grafana-operator/grafana-operator/blob/530821825c9f7791aa486a94aabdb03efdc6aa6d/controllers/constants/constants.go#L5) will be
+code [here](https://github.com/grafana-operator/grafana-operator/blob/master/controllers/constants/constants.go#L5) will be
 supported in unit/e2e tests and as part of the operator, any other specified grafana image through these options may not
 work as expected.
 
@@ -67,7 +67,7 @@ The operator accepts a number of flags that can be passed in the `args` section 
 
 * `--grafana-image`: overrides the Grafana image, defaults to `docker.io/grafana/grafana` on grafanas official dockerhub, the
   version of which can be
-  found [here](https://github.com/integr8ly/grafana-operator/blob/master/pkg/controller/model/constants.go#L4-L5).
+  found [here](https://github.com/grafana-operator/grafana-operator/blob/master/controllers/constants/constants.go#L5).
 
 * `--grafana-image-tag`: overrides the Grafana tag. See `controller_config.go` for default.
 
