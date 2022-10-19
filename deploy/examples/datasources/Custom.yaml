@@ -1,0 +1,23 @@
+# For use with deploy/examples/GrafanaWithPlugin.yaml
+# Requires https://grafana.com/grafana/plugins/grafadruid-druid-datasource
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDataSource
+metadata:
+  name: example-grafanadatasource
+spec:
+  name: middleware.yaml
+  datasources:
+    - name: Druid
+      type: grafadruid-druid-datasource
+      access: proxy
+      url: http://druid:8888
+      isDefault: false
+      version: 1
+      editable: true
+      customJsonData:
+        'connection.retryableRetryMax': 10
+        'connection.retryableRetryWaitMax': 5000
+        'connection.retryableRetryWaitMin': 750
+        'connection.url': 'http://druid:8888'
+      # for secureJsonData
+      # customSecureJsonData: {}

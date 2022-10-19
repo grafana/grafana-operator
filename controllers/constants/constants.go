@@ -2,7 +2,7 @@ package constants
 
 const (
 	GrafanaImage                            = "docker.io/grafana/grafana"
-	GrafanaVersion                          = "7.5.11"
+	GrafanaVersion                          = "7.5.16"
 	GrafanaServiceAccountName               = "grafana-serviceaccount"
 	GrafanaServiceName                      = "grafana-service"
 	GrafanaDataStorageName                  = "grafana-pvc"
@@ -22,7 +22,9 @@ const (
 	GrafanaHealthEndpoint                   = "/api/health"
 	GrafanaPodLabel                         = "grafana"
 	LastConfigAnnotation                    = "last-config"
+	LastCredentialsAnnotation               = "last-credentials"
 	LastConfigEnvVar                        = "LAST_CONFIG"
+	LastCredentialsEnvVar                   = "LAST_CREDENTIALS"
 	LastDatasourcesConfigEnvVar             = "LAST_DATASOURCES"
 	GrafanaAdminSecretName                  = "grafana-admin-credentials" // #nosec G101
 	DefaultAdminUser                        = "admin"

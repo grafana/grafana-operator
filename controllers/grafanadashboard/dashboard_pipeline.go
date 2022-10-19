@@ -13,12 +13,16 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/google/go-jsonnet"
 	"github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
 	"github.com/grafana-operator/grafana-operator/v4/controllers/config"
 	corev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -51,6 +55,9 @@ type DashboardPipelineImpl struct {
 }
 
 func NewDashboardPipeline(client client.Client, dashboard *v1alpha1.GrafanaDashboard, ctx context.Context) DashboardPipeline {
+	if dashboard.Spec.ContentCacheDuration == nil {
+		dashboard.Spec.ContentCacheDuration = &metav1.Duration{Duration: 24 * time.Hour}
+	}
 	return &DashboardPipelineImpl{
 		Client:    client,
 		Dashboard: dashboard,
@@ -127,40 +134,87 @@ func (r *DashboardPipelineImpl) validateJson() error {
 	return err
 }
 
+func (r *DashboardPipelineImpl) shouldUseContentCache() bool {
+	if r.Dashboard.Status.ContentCache != nil && r.Dashboard.Spec.ContentCacheDuration != nil && r.Dashboard.Status.ContentTimestamp != nil {
+		cacheDuration := r.Dashboard.Spec.ContentCacheDuration.Duration
+		contentTimeStamp := r.Dashboard.Status.ContentTimestamp
+
+		return cacheDuration <= 0 || contentTimeStamp.Add(cacheDuration).After(time.Now())
+	}
+	return false
+}
+
 // Try to get the dashboard json definition either from a provided URL or from the
 // raw json in the dashboard resource. The priority is as follows:
-// 1) try to fetch from url or grafanaCom if provided
-// 2) url or grafanaCom fails or not provided: try to fetch from configmap ref
-// 3) no configmap specified: try to use embedded json
-// 4) no json specified: try to use embedded jsonnet
+//  0. try to use previously fetched content from url or grafanaCom if it is valid
+//  1. try to fetch from url or grafanaCom if provided
+//     1.1) if downloaded content is identical to spec.json, clear spec.json to clean up from fetch behavior pre 4.5.0
+//  2. url or grafanaCom fails or not provided: try to fetch from configmap ref
+//  3. no configmap specified: try to use embedded json
+//  4. no json specified: try to use embedded jsonnet
 func (r *DashboardPipelineImpl) obtainJson() error {
 	// TODO(DeanBrunt): Add earlier validation for this
 	if r.Dashboard.Spec.Url != "" && r.Dashboard.Spec.GrafanaCom != nil {
 		return errors.New("both dashboard url and grafana.com source specified")
 	}
 
+	var returnErr error
+
+	if r.shouldUseContentCache() {
+		jsonBytes, err := v1alpha1.Gunzip(r.Dashboard.Status.ContentCache)
+		if err != nil {
+			returnErr = fmt.Errorf("failed to decode/decompress gzipped json: %w", err)
+		} else {
+			r.JSON = string(jsonBytes)
+			return nil
+		}
+	}
+
 	if r.Dashboard.Spec.GrafanaCom != nil {
-		if err := r.loadDashboardFromGrafanaCom(); err != nil {
-			r.Logger.Error(err, "failed to request dashboard from grafana.com, falling back to config map; if specified")
+		url, err := r.getGrafanaComDashboardUrl()
+		if err != nil {
+			return fmt.Errorf("failed to get grafana.com dashboard url: %w", err)
+		}
+		if err := r.loadDashboardFromURL(url); err != nil {
+			returnErr = fmt.Errorf("failed to request dashboard from grafana.com, falling back to url; if specified: %w", err)
 		} else {
 			return nil
 		}
 	}
 
 	if r.Dashboard.Spec.Url != "" {
-		err := r.loadDashboardFromURL()
+		err := r.loadDashboardFromURL(r.Dashboard.Spec.Url)
 		if err != nil {
-			r.Logger.Error(err, "failed to request dashboard url, falling back to config map; if specified")
+			returnErr = fmt.Errorf("failed to request dashboard url, falling back to config map; if specified: %w", err)
 		} else {
 			return nil
 		}
 	}
 
 	if r.Dashboard.Spec.ConfigMapRef != nil {
-		err := r.loadDashboardFromConfigMap()
+		err := r.loadDashboardFromConfigMap(r.Dashboard.Spec.ConfigMapRef, false)
 		if err != nil {
-			r.Logger.Error(err, "failed to get config map, falling back to raw json")
+			returnErr = fmt.Errorf("failed to get config map, falling back to raw json: %w", err)
 		} else {
+			return nil
+		}
+	}
+
+	if r.Dashboard.Spec.GzipConfigMapRef != nil {
+		err := r.loadDashboardFromConfigMap(r.Dashboard.Spec.GzipConfigMapRef, true)
+		if err != nil {
+			returnErr = fmt.Errorf("failed to get config map, falling back to raw json: %w", err)
+		} else {
+			return nil
+		}
+	}
+
+	if r.Dashboard.Spec.GzipJson != nil {
+		jsonBytes, err := v1alpha1.Gunzip(r.Dashboard.Spec.GzipJson)
+		if err != nil {
+			returnErr = fmt.Errorf("failed to decode/decompress gzipped json: %w", err)
+		} else {
+			r.JSON = string(jsonBytes)
 			return nil
 		}
 	}
@@ -173,14 +227,14 @@ func (r *DashboardPipelineImpl) obtainJson() error {
 	if r.Dashboard.Spec.Jsonnet != "" {
 		json, err := r.loadJsonnet(r.Dashboard.Spec.Jsonnet)
 		if err != nil {
-			r.Logger.Error(err, "failed to parse jsonnet")
+			returnErr = fmt.Errorf("failed to parse jsonnet: %w", err)
 		} else {
 			r.JSON = json
 			return nil
 		}
 	}
 
-	return errors.New("unable to obtain dashboard contents")
+	return returnErr
 }
 
 // Compiles jsonnet to json and makes the grafonnet library available to
@@ -199,25 +253,42 @@ func (r *DashboardPipelineImpl) loadJsonnet(source string) (string, error) {
 }
 
 // Try to obtain the dashboard json from a provided url
-func (r *DashboardPipelineImpl) loadDashboardFromURL() error {
-	url, err := url.ParseRequestURI(r.Dashboard.Spec.Url)
+func (r *DashboardPipelineImpl) loadDashboardFromURL(source string) error {
+	url, err := url.ParseRequestURI(source)
 	if err != nil {
-		return fmt.Errorf("invalid url %v", r.Dashboard.Spec.Url)
+		return fmt.Errorf("invalid url %v", source)
 	}
 
-	resp, err := http.Get(r.Dashboard.Spec.Url)
+	resp, err := http.Get(url.String())
 	if err != nil {
-		return fmt.Errorf("cannot request %v", r.Dashboard.Spec.Url)
+		return fmt.Errorf("cannot request %v", source)
 	}
 	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("request failed with status %v", resp.StatusCode)
-	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
+	}
+	if resp.StatusCode != 200 {
+		retries := 0
+		r.refreshDashboard()
+		if r.Dashboard.Status.Error != nil {
+			retries = r.Dashboard.Status.Error.Retries
+		}
+		r.Dashboard.Status = v1alpha1.GrafanaDashboardStatus{
+			Error: &v1alpha1.GrafanaDashboardError{
+				Message: string(body),
+				Code:    resp.StatusCode,
+				Retries: retries + 1,
+			},
+			ContentTimestamp: &metav1.Time{Time: time.Now()},
+		}
+
+		if err := r.Client.Status().Update(r.Context, r.Dashboard); err != nil {
+			return fmt.Errorf("failed to request dashboard: %s\nfailed to update status : %w", string(body), err)
+		}
+
+		return fmt.Errorf("request failed with status %v", resp.StatusCode)
 	}
 	sourceType := r.getFileType(url.Path)
 
@@ -233,45 +304,42 @@ func (r *DashboardPipelineImpl) loadDashboardFromURL() error {
 		r.JSON = json
 	}
 
-	// Update dashboard spec so that URL would not be refetched
-	if r.JSON != r.Dashboard.Spec.Json {
-		r.Dashboard.Spec.Json = r.JSON
-		err := r.Client.Update(r.Context, r.Dashboard)
+	if r.Dashboard.Spec.Json == r.JSON {
+		// Content downloaded to `json` field pre 4.5.0 can be removed since it is identical to the downloaded content.
+		r.refreshDashboard()
+		r.Dashboard.Spec.Json = ""
+		err = r.Client.Update(r.Context, r.Dashboard)
 		if err != nil {
 			return err
+		}
+	}
+
+	content, err := v1alpha1.Gzip(r.JSON)
+	if err != nil {
+		return err
+	}
+
+	r.Dashboard.Status = v1alpha1.GrafanaDashboardStatus{
+		ContentCache:     content,
+		ContentTimestamp: &metav1.Time{Time: time.Now()},
+		ContentUrl:       source,
+	}
+
+	r.refreshDashboard()
+	if err := r.Client.Status().Update(r.Context, r.Dashboard); err != nil {
+		if !k8serrors.IsConflict(err) {
+			return fmt.Errorf("failed to update status with content for dashboard %s/%s: %w", r.Dashboard.Namespace, r.Dashboard.Name, err)
 		}
 	}
 
 	return nil
 }
 
-func (r *DashboardPipelineImpl) loadDashboardFromGrafanaCom() error {
-	url, err := r.getGrafanaComDashboardUrl()
+func (r *DashboardPipelineImpl) refreshDashboard() {
+	err := r.Client.Get(r.Context, types.NamespacedName{Name: r.Dashboard.Name, Namespace: r.Dashboard.Namespace}, r.Dashboard)
 	if err != nil {
-		return fmt.Errorf("failed to get grafana.com dashboard url: %w", err)
+		r.Logger.V(1).Error(err, "refreshing dashboard generation failed")
 	}
-
-	resp, err := http.Get(url) // nolint:gosec
-	if err != nil {
-		return fmt.Errorf("failed to request dashboard url '%s': %w", url, err)
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	r.JSON = string(body)
-
-	// Update JSON so dashboard is not refetched
-	if r.JSON != r.Dashboard.Spec.Json {
-		r.Dashboard.Spec.Json = r.JSON
-		if err := r.Client.Update(r.Context, r.Dashboard); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 func (r *DashboardPipelineImpl) getGrafanaComDashboardUrl() (string, error) {
@@ -331,12 +399,13 @@ func (r *DashboardPipelineImpl) getLatestRevisionForGrafanaComDashboard() (int, 
 // direction.
 func (r *DashboardPipelineImpl) getMaximumRevisionFromListDashboardRevisionsResponse(resp *listDashboardRevisionsResponse) int {
 	if resp.OrderBy == "revision" {
-		if resp.Direction == "asc" {
-			return resp.Items[len(resp.Items)-1].Revision
-		}
-
-		if resp.Direction == "desc" {
-			return resp.Items[0].Revision
+		// resp.Direction seems to be inverted in the response (as of 2022-05-09), so let's ignore it and grab the bigger value
+		first := resp.Items[0].Revision
+		last := resp.Items[len(resp.Items)-1].Revision
+		if first > last {
+			return first
+		} else {
+			return last
 		}
 	}
 
@@ -400,9 +469,9 @@ func (r *DashboardPipelineImpl) getFileType(path string) SourceType {
 }
 
 // Try to obtain the dashboard json from a config map
-func (r *DashboardPipelineImpl) loadDashboardFromConfigMap() error {
+func (r *DashboardPipelineImpl) loadDashboardFromConfigMap(ref *corev1.ConfigMapKeySelector, binaryCompressed bool) error {
 	ctx := context.Background()
-	objectKey := client.ObjectKey{Name: r.Dashboard.Spec.ConfigMapRef.Name, Namespace: r.Dashboard.Namespace}
+	objectKey := client.ObjectKey{Name: ref.Name, Namespace: r.Dashboard.Namespace}
 
 	var cm corev1.ConfigMap
 	err := r.Client.Get(ctx, objectKey, &cm)
@@ -410,7 +479,15 @@ func (r *DashboardPipelineImpl) loadDashboardFromConfigMap() error {
 		return err
 	}
 
-	r.JSON = cm.Data[r.Dashboard.Spec.ConfigMapRef.Key]
+	if binaryCompressed {
+		jsonBytes, err := v1alpha1.Gunzip(cm.BinaryData[ref.Key])
+		if err != nil {
+			return err
+		}
+		r.JSON = string(jsonBytes)
+	} else {
+		r.JSON = cm.Data[ref.Key]
+	}
 
 	return nil
 }

@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -82,6 +83,18 @@ type GrafanaDataSourceFields struct {
 	SecureJsonData    GrafanaDataSourceSecureJsonData `json:"secureJsonData,omitempty"`
 	Version           int                             `json:"version,omitempty"`
 	Editable          bool                            `json:"editable,omitempty"`
+	// +kubebuilder:validation:Schemaless
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// +kubebuilder:validation:Type=object
+	// +optional
+	// CustomJsonData will be used in place of jsonData, if present, and supports arbitrary JSON, not just those of official datasources
+	CustomJsonData json.RawMessage `json:"customJsonData,omitempty"`
+	// +kubebuilder:validation:Schemaless
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// +kubebuilder:validation:Type=object
+	// +optional
+	// SecureCustomJsonData will be used in place of secureJsonData, if present, and supports arbitrary JSON, not just those of official datasources
+	CustomSecureJsonData json.RawMessage `json:"customSecureJsonData,omitempty"`
 }
 
 // GrafanaDataSourceJsonData contains the most common json options
@@ -157,8 +170,9 @@ type GrafanaDataSourceJsonData struct {
 	MaxLines      int                                  `json:"maxLines,omitempty"`
 	DerivedFields []GrafanaDataSourceJsonDerivedFields `json:"derivedFields,omitempty"`
 	// Fields for Prometheus data sources
-	CustomQueryParameters string `json:"customQueryParameters,omitempty"`
-	HTTPMethod            string `json:"httpMethod,omitempty"`
+	CustomQueryParameters       string                                             `json:"customQueryParameters,omitempty"`
+	HTTPMethod                  string                                             `json:"httpMethod,omitempty"`
+	ExemplarTraceIdDestinations []GrafanaDataSourceJsonExemplarTraceIdDestinations `json:"exemplarTraceIdDestinations,omitempty"`
 	// Fields for tracing data sources
 	TracesToLogs GrafanaDataSourceJsonTracesToLogs `json:"tracesToLogs,omitempty"`
 	ServiceMap   GrafanaDataSourceJsonServiceMap   `json:"serviceMap,omitempty"`
@@ -182,6 +196,16 @@ type GrafanaDataSourceJsonData struct {
 	UseProxy          bool   `json:"useProxy,omitempty"`
 	ShowOffline       bool   `json:"showOffline,omitempty"`
 	AllowInfraExplore bool   `json:"allowInfraExplore,omitempty"`
+	// Extra field for MySQL data source
+	Timezone string `json:"timezone,omitempty"`
+	// Fields for Grafana Clickhouse data sources
+	Server   string `json:"server,omitempty"`
+	Port     int    `json:"port,omitempty"`
+	Username string `json:"username,omitempty"`
+	// ManageAlerts turns on alert management from UI
+	ManageAlerts bool `json:"manageAlerts,omitempty"`
+	// AlertManagerUID if null use the internal grafana alertmanager
+	AlertManagerUID string `json:"alertmanagerUid,omitempty"`
 }
 
 type GrafanaDataSourceJsonDerivedFields struct {
@@ -189,6 +213,13 @@ type GrafanaDataSourceJsonDerivedFields struct {
 	MatcherRegex  string `json:"matcherRegex,omitempty"`
 	Name          string `json:"name,omitempty"`
 	Url           string `json:"url,omitempty"`
+}
+
+type GrafanaDataSourceJsonExemplarTraceIdDestinations struct {
+	DatasourceUid   string `json:"datasourceUid,omitempty"`
+	Name            string `json:"name,omitempty"`
+	Url             string `json:"url,omitempty"`
+	UrlDisplayLabel string `json:"urlDisplayLabel,omitempty"`
 }
 
 type GrafanaDataSourceJsonTracesToLogs struct {

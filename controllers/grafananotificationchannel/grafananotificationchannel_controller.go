@@ -22,16 +22,15 @@ import (
 	"encoding/json"
 	defaultErrors "errors"
 	"fmt"
+	"net/http"
+	"os"
+	"time"
 
 	"github.com/go-logr/logr"
 	grafanav1alpha1 "github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
 	"github.com/grafana-operator/grafana-operator/v4/controllers/constants"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	"net/http"
-	"os"
-	"time"
 
 	"github.com/grafana-operator/grafana-operator/v4/controllers/common"
 	"github.com/grafana-operator/grafana-operator/v4/controllers/config"
@@ -103,8 +102,8 @@ func SetupWithManager(mgr ctrl.Manager, r reconcile.Reconciler, namespace string
 		log.Log.Info("Starting notificationchannel controller")
 	}
 
-	var ref = r.(*GrafanaNotificationChannelReconciler)
-	ticker := time.NewTicker(config.RequeueDelay)
+	ref := r.(*GrafanaNotificationChannelReconciler) //nolint
+	ticker := time.NewTicker(config.GetControllerConfig().RequeueDelay)
 	sendEmptyRequest := func() {
 		request := reconcile.Request{
 			NamespacedName: types.NamespacedName{
@@ -165,7 +164,7 @@ func (r *GrafanaNotificationChannelReconciler) Reconcile(context context.Context
 	grafanaClient, err := r.getClient()
 	if err != nil {
 		// we handle the error by requeing, safe to ignore nilerr return
-		return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil //nolint:nilerr
+		return reconcile.Result{RequeueAfter: config.GetControllerConfig().RequeueDelay}, nil //nolint:nilerr
 	}
 
 	// Initial request?
@@ -176,7 +175,7 @@ func (r *GrafanaNotificationChannelReconciler) Reconcile(context context.Context
 	// Check if the label selectors are available yet. If not then the grafana controller
 	// has not finished initializing and we can't continue. Reschedule for later.
 	if r.state.DashboardSelectors == nil {
-		return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
+		return reconcile.Result{RequeueAfter: config.GetControllerConfig().RequeueDelay}, nil
 	}
 
 	// Fetch the GrafanaNotificationChannel instance
@@ -204,8 +203,29 @@ func (r *GrafanaNotificationChannelReconciler) Reconcile(context context.Context
 	return r.reconcileNotificationChannels(request, grafanaClient)
 }
 
+// Check if a given notificationchannel (by name) is present in the list of
+// notificationchannels in the namespace
+func inNamespace(namespaceNotificationChannels *grafanav1alpha1.GrafanaNotificationChannelList, item *grafanav1alpha1.GrafanaNotificationChannelRef) bool {
+	for _, d := range namespaceNotificationChannels.Items {
+		if item.Name == d.Name && item.Namespace == d.Namespace {
+			return true
+		}
+	}
+	return false
+}
+
+// Returns the hash of a notificationchannel if it is known
+func findHash(knownNotificationChannels []*grafanav1alpha1.GrafanaNotificationChannelRef, item *grafanav1alpha1.GrafanaNotificationChannel) string {
+	for _, d := range knownNotificationChannels {
+		if item.Name == d.Name && item.Namespace == d.Namespace {
+			return d.Hash
+		}
+	}
+	return ""
+}
+
 //nolint:funlen
-func (r *GrafanaNotificationChannelReconciler) reconcileNotificationChannels(request reconcile.Request, client GrafanaClient) (reconcile.Result, error) { //nolint:cyclop
+func (r *GrafanaNotificationChannelReconciler) reconcileNotificationChannels(request reconcile.Request, grafanaClient GrafanaClient) (reconcile.Result, error) { //nolint:cyclop
 	// Collect known and namespace notificationchannels
 	knownNotificationChannels := r.config.GetNotificationChannels(request.Namespace)
 	namespaceNotificationChannels := &grafanav1alpha1.GrafanaNotificationChannelList{}
@@ -217,31 +237,10 @@ func (r *GrafanaNotificationChannelReconciler) reconcileNotificationChannels(req
 	// Prepare lists
 	var notificationchannelsToDelete []*grafanav1alpha1.GrafanaNotificationChannelRef
 
-	// Check if a given notificationchannel (by name) is present in the list of
-	// notificationchannels in the namespace
-	inNamespace := func(item string) bool {
-		for _, notificationchannel := range namespaceNotificationChannels.Items {
-			if notificationchannel.Name == item {
-				return true
-			}
-		}
-		return false
-	}
-
-	// Returns the hash of a notificationchannel if it is known
-	findHash := func(item *grafanav1alpha1.GrafanaNotificationChannel) string {
-		for _, d := range knownNotificationChannels {
-			if item.Name == d.Name {
-				return d.Hash
-			}
-		}
-		return ""
-	}
-
 	// NotificationChannels to delete: notificationchannels that are known but not found
 	// any longer in the namespace
 	for _, notificationchannel := range knownNotificationChannels {
-		if !inNamespace(notificationchannel.Name) {
+		if !inNamespace(namespaceNotificationChannels, notificationchannel) {
 			notificationchannelsToDelete = append(notificationchannelsToDelete, notificationchannel)
 		}
 	}
@@ -257,9 +256,36 @@ func (r *GrafanaNotificationChannelReconciler) reconcileNotificationChannels(req
 
 		// Process the notificationchannel. Use the known hash of an existing notificationchannel
 		// to determine if an update is required
-		knownHash := findHash(&namespaceNotificationChannels.Items[index])
+		knownHash := findHash(knownNotificationChannels, &namespaceNotificationChannels.Items[index])
 		pipeline := NewNotificationChannelPipeline(r.client, &namespaceNotificationChannels.Items[index])
-		processed, err := pipeline.ProcessNotificationChannel(knownHash)
+
+		// We need to always get the spec in order to extract the uid
+		// TODO: in v5, better to rely on uid of CR and ignore the one passed in json
+		processed, err := pipeline.ProcessNotificationChannel(knownHash, true)
+		if err != nil {
+			r.Log.Error(err, fmt.Sprintf("cannot process notificationchannel %v/%v", notificationchannel.Namespace, notificationchannel.Name))
+			r.manageError(&namespaceNotificationChannels.Items[index], err)
+			continue
+		}
+
+		// Parse spec and make sure uid is defined
+		rawJson := GrafanaChannel{}
+		if err := json.Unmarshal(processed, &rawJson); err != nil {
+			return reconcile.Result{}, err
+		}
+		if rawJson.UID == nil {
+			r.Log.Info(fmt.Sprintf("cannot process notificationchannel %v/%v, UID is nil", notificationchannel.Namespace, notificationchannel.Name))
+			return reconcile.Result{}, nil
+		}
+
+		// TODO: in v5 with an updated client, we should have a detailed check for the status code
+		exists := false
+		if _, err = grafanaClient.GetNotificationChannel(*rawJson.UID); err == nil {
+			exists = true
+		}
+
+		// This time, we should get a non-nil spec only if the notification channel has a different hash or it doesn't exist in grafana (e.g. was deleted via grafana console)
+		processed, err = pipeline.ProcessNotificationChannel(knownHash, !exists)
 		if err != nil {
 			r.Log.Error(err, fmt.Sprintf("cannot process notificationchannel %v/%v", notificationchannel.Namespace, notificationchannel.Name))
 			r.manageError(&namespaceNotificationChannels.Items[index], err)
@@ -270,17 +296,12 @@ func (r *GrafanaNotificationChannelReconciler) reconcileNotificationChannels(req
 			continue
 		}
 
-		var status GrafanaResponse
 		// Create or Update notification channel
-		rawJson := GrafanaChannel{}
-		if err := json.Unmarshal(processed, &rawJson); err != nil {
-			return reconcile.Result{}, err
-		}
-
-		if _, err = client.GetNotificationChannel(*rawJson.UID); err != nil {
-			status, err = client.CreateNotificationChannel(processed)
+		var status GrafanaResponse
+		if exists {
+			status, err = grafanaClient.UpdateNotificationChannel(processed, *rawJson.UID)
 		} else {
-			status, err = client.UpdateNotificationChannel(processed, *rawJson.UID)
+			status, err = grafanaClient.CreateNotificationChannel(processed)
 		}
 		if err != nil {
 			r.Log.Info(fmt.Sprintf("cannot submit notificationchannel %v/%v", notificationchannel.Namespace, notificationchannel.Name))
@@ -295,14 +316,14 @@ func (r *GrafanaNotificationChannelReconciler) reconcileNotificationChannels(req
 	}
 
 	for _, notificationchannel := range notificationchannelsToDelete {
-		status, err := client.DeleteNotificationChannelByUID(notificationchannel.UID)
+		status, err := grafanaClient.DeleteNotificationChannelByUID(notificationchannel.UID)
 		if err != nil {
 			r.Log.Error(err, fmt.Sprintf("error deleting notificationchannel %v, status was %v/%v",
 				notificationchannel.UID,
 				*status.Message,
 				*status.UID))
 		}
-		r.Log.Info(fmt.Sprintf("delete result was %v", *status.UID))
+		r.Log.Info(fmt.Sprintf("delete result was %v", *status.Message))
 		r.config.RemoveNotificationChannel(notificationchannel.Namespace, notificationchannel.Name)
 	}
 

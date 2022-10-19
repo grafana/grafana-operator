@@ -32,7 +32,7 @@ import (
 )
 
 type NotificationChannelPipeline interface {
-	ProcessNotificationChannel(knownHash string) ([]byte, error)
+	ProcessNotificationChannel(knownHash string, forceCreate bool) ([]byte, error)
 	NewHash() string
 }
 
@@ -54,7 +54,7 @@ func NewNotificationChannelPipeline(client client.Client, notificationChannel *v
 	}
 }
 
-func (r *NotificatiomChannelPipelineImpl) ProcessNotificationChannel(knownHash string) ([]byte, error) {
+func (r *NotificatiomChannelPipelineImpl) ProcessNotificationChannel(knownHash string, forceCreate bool) ([]byte, error) {
 	err := r.obtainJson()
 	if err != nil {
 		return nil, err
@@ -62,7 +62,7 @@ func (r *NotificatiomChannelPipelineImpl) ProcessNotificationChannel(knownHash s
 
 	// NotificationChannel unchanged?
 	hash := r.generateHash()
-	if hash == knownHash {
+	if hash == knownHash && !forceCreate {
 		r.Hash = knownHash
 		return nil, nil
 	}

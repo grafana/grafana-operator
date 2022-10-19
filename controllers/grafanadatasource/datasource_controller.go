@@ -35,9 +35,12 @@ import (
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -273,15 +276,31 @@ func (r *GrafanaDatasourceReconciler) manageSuccess(datasources []grafanav1alpha
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *GrafanaDatasourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	// run state handler
-	go func() {
-		for stateChange := range common.ControllerEvents {
-			// Controller state updated
-			r.state = stateChange
+	cmHandler := func(o client.Object) []reconcile.Request {
+		if o.GetName() != constants.GrafanaDatasourcesConfigMapName {
+			return nil
 		}
-	}()
+		ns := o.GetNamespace()
+		list := &grafanav1alpha1.GrafanaDataSourceList{}
+		opts := &client.ListOptions{
+			Namespace: ns,
+		}
+		err := r.Client.List(context.Background(), list, opts)
+		if err != nil {
+			return nil
+		}
+		requests := make([]reconcile.Request, len(list.Items))
+		for i, ds := range list.Items {
+			requests[i] = reconcile.Request{NamespacedName: types.NamespacedName{
+				Namespace: ns,
+				Name:      ds.GetName(),
+			}}
+		}
+		return requests
+	}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&integreatlyorgv1alpha1.GrafanaDataSource{}).
+		Watches(&source.Kind{Type: &v1.ConfigMap{}}, handler.EnqueueRequestsFromMapFunc(cmHandler)).
 		Complete(r)
 }
 

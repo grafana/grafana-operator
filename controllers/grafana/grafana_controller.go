@@ -16,6 +16,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/record"
@@ -29,8 +30,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-const ControllerName = "grafana-controller"
-const DefaultClientTimeoutSeconds = 5
+const (
+	ControllerName              = "grafana-controller"
+	DefaultClientTimeoutSeconds = 5
+)
 
 var log = logf.Log.WithName(ControllerName)
 
@@ -174,8 +177,10 @@ func (r *ReconcileGrafana) Reconcile(ctx context.Context, request reconcile.Requ
 		return reconcile.Result{}, err
 	}
 
+	log.V(1).Info("Found grafana-instance, proceed Reconcile with deepcopy...")
 	cr := instance.DeepCopy()
 
+	log.V(1).Info("determine clusterState...")
 	// Read current state
 	currentState := common.NewClusterState()
 	err = currentState.Read(ctx, cr, r.Client)
@@ -185,10 +190,11 @@ func (r *ReconcileGrafana) Reconcile(ctx context.Context, request reconcile.Requ
 	}
 
 	// Get the actions required to reach the desired state
-
+	log.V(1).Info("Create GrafanaReconciler and determine desiredState...")
 	reconciler := NewGrafanaReconciler()
 	desiredState := reconciler.Reconcile(currentState, cr)
 
+	log.V(1).Info("Determined desiredStates - starting actionRunner")
 	// Run the actions to reach the desired state
 	actionRunner := common.NewClusterActionRunner(ctx, r.Client, r.Scheme, cr)
 	err = actionRunner.RunAll(desiredState)
@@ -209,6 +215,8 @@ func (r *ReconcileGrafana) manageError(cr *grafanav1alpha1.Grafana, issue error,
 	r.Recorder.Event(cr, "Warning", "ProcessingError", issue.Error())
 	cr.Status.Phase = grafanav1alpha1.PhaseFailing
 	cr.Status.Message = issue.Error()
+
+	log.Error(issue, "error processing GrafanaInstance", "name", cr.Name, "namespace", cr.Namespace)
 
 	instance := &grafanav1alpha1.Grafana{}
 	err := r.Client.Get(r.Context, request.NamespacedName, instance)
@@ -233,7 +241,7 @@ func (r *ReconcileGrafana) manageError(cr *grafanav1alpha1.Grafana, issue error,
 		GrafanaReady: false,
 	}
 
-	return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
+	return reconcile.Result{RequeueAfter: r.Config.RequeueDelay}, nil
 }
 
 // Try to find a suitable url to grafana
@@ -265,11 +273,24 @@ func (r *ReconcileGrafana) getGrafanaAdminUrl(cr *grafanav1alpha1.Grafana, state
 		}
 	}
 
-	var servicePort = int32(model.GetGrafanaPort(cr))
+	servicePort := int32(model.GetGrafanaPort(cr))
 
 	// Otherwise rely on the service
 	if state.GrafanaService != nil {
-		return fmt.Sprintf("http://%v.%v.svc.cluster.local:%d", state.GrafanaService.Name, cr.Namespace,
+		protocol := "http"
+
+		if cr.Spec.Config.Server != nil {
+			switch cr.Spec.Config.Server.Protocol {
+			case "", "http":
+				protocol = "http"
+			case "https":
+				protocol = "https"
+			default:
+				return "", fmt.Errorf("server protocol %v is not supported, please use either http or https", cr.Spec.Config.Server.Protocol)
+			}
+		}
+
+		return fmt.Sprintf("%v://%v.%v:%d", protocol, state.GrafanaService.Name, cr.Namespace,
 			servicePort), nil
 	}
 
@@ -280,14 +301,15 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 	cr.Status.Phase = grafanav1alpha1.PhaseReconciling
 	cr.Status.Message = "success"
 
+	log.V(1).Info("ReconcileGrafana success")
 	// Only update the status if the dashboard controller had a chance to sync the cluster
 	// dashboards first. Otherwise reuse the existing dashboard config from the CR.
 	if r.Config.GetConfigBool(config.ConfigGrafanaDashboardsSynced, false) {
-		cr.Status.InstalledDashboards = r.Config.Dashboards
-	} else {
-		if r.Config.Dashboards == nil {
-			r.Config.SetDashboards([]*grafanav1alpha1.GrafanaDashboardRef{})
-		}
+		cr.Status.InstalledDashboards = r.Config.GetDashboards("")
+	}
+
+	if cr.Spec.DashboardContentCacheDuration == nil {
+		cr.Spec.DashboardContentCacheDuration = &metav1.Duration{Duration: 0}
 	}
 
 	instance := &grafanav1alpha1.Grafana{}
@@ -310,11 +332,12 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 
 	// Publish controller state
 	controllerState := common.ControllerState{
-		DashboardSelectors:         cr.Spec.DashboardLabelSelector,
-		DashboardNamespaceSelector: cr.Spec.DashboardNamespaceSelector,
-		AdminUrl:                   url,
-		GrafanaReady:               true,
-		ClientTimeout:              DefaultClientTimeoutSeconds,
+		DashboardSelectors:            cr.Spec.DashboardLabelSelector,
+		DashboardNamespaceSelector:    cr.Spec.DashboardNamespaceSelector,
+		DashboardContentCacheDuration: cr.Spec.DashboardContentCacheDuration,
+		AdminUrl:                      url,
+		GrafanaReady:                  true,
+		ClientTimeout:                 DefaultClientTimeoutSeconds,
 	}
 
 	if cr.Spec.Client != nil && cr.Spec.Client.TimeoutSeconds != nil {
@@ -329,5 +352,5 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 
 	log.V(1).Info("desired cluster state met")
 
-	return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
+	return reconcile.Result{RequeueAfter: r.Config.RequeueDelay}, nil
 }

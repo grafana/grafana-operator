@@ -69,13 +69,21 @@ func GetGrafanaPort(cr *v1alpha1.Grafana) int {
 
 func getServicePorts(cr *v1alpha1.Grafana, currentState *v1.Service) []v1.ServicePort {
 	intPort := int32(GetGrafanaPort(cr))
-
+	nodePort := int32(0)
+	if cr.Spec.Service != nil {
+		for _, nPort := range cr.Spec.Service.Ports {
+			if nPort.Port == 3000 {
+				nodePort = nPort.NodePort
+			}
+		}
+	}
 	defaultPorts := []v1.ServicePort{
 		{
 			Name:       constants.GrafanaHttpPortName,
 			Protocol:   "TCP",
 			Port:       intPort,
 			TargetPort: intstr.FromString("grafana-http"),
+			NodePort:   nodePort,
 		},
 	}
 

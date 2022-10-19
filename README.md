@@ -9,6 +9,7 @@ An operator to provision and manage Grafana Instances, Dashboards, Datasources a
 | [Red Hat](https://www.redhat.com)| <img src= "./media/users/redhat.png" width=100 height=100 > | [Integreatly](https://www.redhat.com/en/products/integration)|<img src= "./media/users/integreatly.png" width=100 height=100> |
  [Continental](https://www.continental.com/)|<img src= "./media/users/continental.png" width=100 height=100 > | [Handelsbanken]("https://www.handelsbanken.se/en/")|<img src= "./media/users/handelsbanken.svg" width=100 height=100 >|
 | [Xenit](https://xenit.se/contact/)|<img src= "./media/users/xenit.png" width=150 height=50 >| [Torqata](https://torqata.com)|<img src= "./media/users/torqata.jpg" width=150 height=50 > |
+|[Operate-first](https://www.operate-first.cloud/)|<img src= "./media/users/operate-first.png" width=100 height=100 > | [iFood](https://www.ifood.com.br)|<img src= "./media/users/ifood.svg" width=150 height=50 > |
 
 ***If you find this operator useful in your product/deployment, feel free to send a pull request to add your company/team to be displayed here!***
 
@@ -75,7 +76,7 @@ If [the benefits of using an operator over standalone products as outlined by th
   * Grafana notification channel provisioning.
   * Oauth proxy.
   * many others!
-* Efficient dashboard management through jsonnet, plugins, organisations and folder assignment, which can all be done through `.yamls`!
+* Efficient dashboard management through jsonnet, plugins, organizations and folder assignment, which can all be done through `.yamls`!
 * Both Kubernetes and OpenShift supported out of the box.
 * Multi-Arch builds and container images.
 * Operatorhub/OLM support (Allows you to install the operator with a few clicks).
@@ -100,7 +101,7 @@ The following Grafana resources are supported:
 * GrafanaNotificationChannel
 
 all custom resources use the api group `integreatly.org` and version `v1alpha1`.
-To get a overview of the available grafana-operator CRD see api.md.
+To get an overview of the available grafana-operator CRD see api.md.
 
 ### Grafanas
 
@@ -118,7 +119,7 @@ Represents a Grafana datasource. See [the documentation](./documentation/datasou
 
 Represents a Grafana notifier. See [the documentation](./documentation/notifiers.md) for a description of properties supported in the spec.
 
-## Developement and Local Deployment
+## Development and Local Deployment
 
 ### Using the Makefile
 

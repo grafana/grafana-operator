@@ -6,7 +6,7 @@ pipeline {
     label 'ubuntu_docker_label'
   }
   tools {
-    go "Go 1.16.3"
+    go "Go 1.18"
   }
   environment {
     PROJECT = "src/github.com/integr8ly/grafana-operator"

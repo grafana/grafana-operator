@@ -145,6 +145,10 @@ func (i *GrafanaIni) parseConfig(config map[string][]string) map[string][]string
 		config = i.cfgAuth(config)
 	}
 
+	if i.cfg.Live != nil {
+		config = i.cfgLive(config)
+	}
+
 	if i.cfg.Log != nil {
 		var items []string
 		items = appendStr(items, "mode", i.cfg.Log.Mode)
@@ -280,6 +284,10 @@ func (i *GrafanaIni) parseConfig(config map[string][]string) map[string][]string
 	if i.cfg.Plugins != nil {
 		var items []string
 		items = appendBool(items, "enable_alpha", i.cfg.Plugins.EnableAlpha)
+		items = appendStr(items, "allow_loading_unsigned_plugins", i.cfg.Plugins.AllowLoadingUnsignedPlugins)
+		items = appendBool(items, "plugin_admin_enabled", i.cfg.Plugins.PluginAdminEnabled)
+		items = appendStr(items, "plugin_catalog_url", i.cfg.Plugins.PluginCatalogURL)
+		items = appendStr(items, "plugin_catalog_hidden_items", i.cfg.Plugins.PluginCatalogHiddenPlugins)
 		config["plugins"] = items
 	}
 
@@ -381,14 +389,25 @@ func (i *GrafanaIni) cfgAuth(config map[string][]string) map[string][]string {
 	var items []string
 	items = appendStr(items, "login_cookie_name", i.cfg.Auth.LoginCookieName)
 	items = appendInt(items, "login_maximum_inactive_lifetime_days", i.cfg.Auth.LoginMaximumInactiveLifetimeDays)
+	items = appendStr(items, "login_maximum_inactive_lifetime_duration", i.cfg.Auth.LoginMaximumInactiveLifetimeDuration)
 	items = appendInt(items, "login_maximum_lifetime_days", i.cfg.Auth.LoginMaximumLifetimeDays)
+	items = appendStr(items, "login_maximum_lifetime_duration", i.cfg.Auth.LoginMaximumLifetimeDuration)
 	items = appendInt(items, "token_rotation_interval_minutes", i.cfg.Auth.TokenRotationIntervalMinutes)
 	items = appendBool(items, "disable_login_form", i.cfg.Auth.DisableLoginForm)
 	items = appendBool(items, "disable_signout_menu", i.cfg.Auth.DisableSignoutMenu)
+	items = appendBool(items, "sigv4_auth_enabled", i.cfg.Auth.SigV4AuthEnabled)
 	items = appendStr(items, "signout_redirect_url", i.cfg.Auth.SignoutRedirectUrl)
 	items = appendBool(items, "oauth_auto_login", i.cfg.Auth.OauthAutoLogin)
-	items = appendBool(items, "sigv4_auth_enabled", i.cfg.Auth.SigV4AuthEnabled)
 	config["auth"] = items
+
+	return config
+}
+
+func (i *GrafanaIni) cfgLive(config map[string][]string) map[string][]string {
+	var items []string
+	items = appendInt(items, "max_connections", i.cfg.Live.MaxConnections)
+	items = appendStr(items, "allowed_origins", i.cfg.Live.AllowedOrigins)
+	config["live"] = items
 
 	return config
 }
@@ -494,6 +513,9 @@ func (i *GrafanaIni) cfgAuthGenericOauth(config map[string][]string) map[string]
 	items = appendStr(items, "auth_url", i.cfg.AuthGenericOauth.AuthUrl)
 	items = appendStr(items, "token_url", i.cfg.AuthGenericOauth.TokenUrl)
 	items = appendStr(items, "api_url", i.cfg.AuthGenericOauth.ApiUrl)
+	items = appendStr(items, "teams_url", i.cfg.AuthGenericOauth.TeamsURL)
+	items = appendStr(items, "team_ids", i.cfg.AuthGenericOauth.TeamIds)
+	items = appendStr(items, "team_ids_attribute_path", i.cfg.AuthGenericOauth.TeamIdsAttributePath)
 	items = appendStr(items, "allowed_domains", i.cfg.AuthGenericOauth.AllowedDomains)
 	items = appendStr(items, "role_attribute_path", i.cfg.AuthGenericOauth.RoleAttributePath)
 	items = appendBool(items, "role_attribute_strict", i.cfg.AuthGenericOauth.RoleAttributeStrict)

@@ -1,0 +1,19 @@
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDataSource
+metadata:
+  name: example-grafanadatasource-es
+spec:
+  name: elasticsearch.dev
+  datasources:
+    - name: elasticsearch
+      basicAuth: true
+      basicAuthUser: admin
+      basicAuthPassword: admin123
+      type: elasticsearch
+      url: http://es.dev
+      editable: true
+      jsonData:
+        esVersion: 6
+        logMessageField: message
+        timeField: event_time
+        timeInterval: 10s

@@ -1,5 +1,5 @@
 # Current Operator version
-VERSION ?= 4.1.1
+VERSION ?= 4.7.0
 GIT_COMMIT := $(shell git describe --tags --always || echo pre-commit)
 ORG?=infoblox
 PROJECT=grafana-operator
@@ -119,19 +119,24 @@ docker-push:
 
 # Build and push a multi-architecture docker image
 docker-buildx: test
-	docker buildx build --platform linux/amd64,linux/arm64,linux/s390x --push -t ${IMG} .
+	docker buildx build --platform linux/amd64,linux/arm64,linux/s390x,linux/ppc64le --push -t ${IMG} .
 
 # Download controller-gen locally if necessary
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 controller-gen:
-	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1)
+	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.2)
 
 # Download kustomize locally if necessary
 KUSTOMIZE = $(shell pwd)/bin/kustomize
 kustomize:
-	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
+	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v4@v4.5.2)
 
-# go-get-tool will 'go get' any package $2 and install it to $1.
+# Download kustomize locally if necessary
+GOLANGCI = $(shell pwd)/bin/golangci-lint
+golangci:
+	$(call go-get-tool,$(GOLANGCI),github.com/golangci/golangci-lint/cmd/golangci-lint@v1.46.2)
+
+# go-get-tool will 'go install' any package $2 and install it to $1.
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 define go-get-tool
 @[ -f $(1) ] || { \
@@ -140,7 +145,7 @@ TMP_DIR=$$(mktemp -d) ;\
 cd $$TMP_DIR ;\
 go mod init tmp ;\
 echo "Downloading $(2)" ;\
-GOBIN=$(PROJECT_DIR)/bin go get $(2) ;\
+GOBIN=$(PROJECT_DIR)/bin go install $(2) ;\
 rm -rf $$TMP_DIR ;\
 }
 endef
@@ -168,8 +173,8 @@ code/check: fmt vet
 	golint ./...
 
 .PHONY: code/golangci-lint
-code/golangci-lint:
-	golangci-lint run ./...
+code/golangci-lint: golangci
+	$(GOLANGCI) run ./...
 
 # Find or download gen-crd-api-reference-docs
 gen-crd-api-reference-docs:
@@ -179,7 +184,7 @@ ifeq (, $(shell which crdoc))
 	API_REF_GEN_TMP_DIR=$$(mktemp -d) ;\
 	cd $$API_REF_GEN_TMP_DIR ;\
 	go mod init tmp ;\
-	go get fybrik.io/crdoc@v0.5.2 ;\
+	go install fybrik.io/crdoc@v0.5.2 ;\
 	rm -rf $$API_REF_GEN_TMP_DIR ;\
 	}
 API_REF_GEN=$(GOBIN)/crdoc

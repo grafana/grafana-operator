@@ -6,6 +6,7 @@ There is a lot of information on what is needed to manage OLM [compatible operat
 
 - Update `version/version.go` bumping the minor or patch version. Major versions shouldn't be released without discussion and approval of the maintainers!
 - Update the `Makefile`
+- Update `containerImage` field in `config/manifests/bases/grafana-operator.clusterserviceversion.yaml`
 - Update `replaces` field in `config/manifests/bases/grafana-operator.clusterserviceversion.yaml`
 - Update `CreatedAt` field in `config/manifests/bases/grafana-operator.clusterserviceversion.yaml`
   You will have to asses when it's going to get merged and you will be able to do a release.
@@ -18,6 +19,7 @@ There is a lot of information on what is needed to manage OLM [compatible operat
       # 2021-11-22T10:34:12Z is enough
 - Run `make bundle`
 - Run `make bundle-kustomization KUSTOMIZE_TAG=v4.0.2` the KUSTOMIZE_TAG should match the new tag
+- Update `deploy/manifests/latest/deployment.yaml` so it matches with the new image version
 - Create a PR and get it merged
 - Create a new release with the new tag, make sure to compile release notes (github has an option to do this for you)
 

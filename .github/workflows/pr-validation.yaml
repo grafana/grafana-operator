@@ -8,30 +8,28 @@ env:
 jobs:
   go-lint:
     runs-on: ubuntu-latest
-    env:
-      GO111MODULE: on
     steps:
       - name: Clone repo
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2.4.2
       - name: Setup go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
-          go-version: "1.16"
+          go-version: "1.18"
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2.5.2
         with:
-          version: "v1.40.1"
+          version: "v1.46.2"
           only-new-issues: true
 
   fmt:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repo
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2.4.2
       - name: Setup go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
-          go-version: "1.16"
+          go-version: "1.18"
       - name: Run fmt
         run: |
           make fmt
@@ -47,11 +45,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repo
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2.4.2
       - name: Setup go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
-          go-version: "1.16"
+          go-version: "1.18"
       - name: Run manifests
         run: |
           make manifests
@@ -67,11 +65,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repo
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2.4.2
       - name: Setup go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
-          go-version: "1.16"
+          go-version: "1.18"
       - name: Run api-docs
         run: |
           make api-docs
@@ -87,11 +85,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repo
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2.4.2
       - name: Setup go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
-          go-version: "1.16"
+          go-version: "1.18"
       - name: Run test
         shell: bash
         run: |
@@ -110,7 +108,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2.4.2
         with:
           fetch-depth: 0
 
@@ -127,7 +125,7 @@ jobs:
   build-container:
     runs-on: ubuntu-latest
     env:
-      DOCKER_PLATFORMS: linux/amd64,linux/arm64,linux/s390x
+      DOCKER_PLATFORMS: linux/amd64,linux/arm64,linux/s390x,linux/ppc64le
     services:
       registry:
         image: registry:2
@@ -135,13 +133,13 @@ jobs:
           - 5000:5000
     steps:
       - name: Clone repo and checkout submodules
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2.4.2
         with:
           submodules: recursive
       - name: Setup go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
-          go-version: "1.16"
+          go-version: "1.18"
       - name: Prepare
         id: prep
         run: |
@@ -153,7 +151,7 @@ jobs:
           echo ::set-output name=VERSION::${VERSION}
           echo ::set-output name=BUILDARCH::$(go env GOARCH)
       - name: Lint Dockerfile with hadolint
-        uses: brpaz/hadolint-action@v1.5.0
+        uses: hadolint/hadolint-action@v2.1.0
         with:
           dockerfile: Dockerfile
       - name: Set up QEMU
