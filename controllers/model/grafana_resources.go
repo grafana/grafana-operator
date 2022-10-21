@@ -100,6 +100,8 @@ func GetGrafanaDeployment(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v
 			Namespace: cr.Namespace,
 		},
 	}
-	controllerutil.SetOwnerReference(cr, deployment, scheme)
+	if scheme != nil {
+		controllerutil.SetOwnerReference(cr, deployment, scheme)
+	}
 	return deployment
 }
