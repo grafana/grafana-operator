@@ -136,11 +136,6 @@ func (r *DashboardPipelineImpl) shouldUseContentCache() bool {
 //  3. no configmap specified: try to use embedded json
 //  4. no json specified: try to use embedded jsonnet
 func (r *DashboardPipelineImpl) obtainJson() error {
-	// TODO(DeanBrunt): Add earlier validation for this
-	if r.Dashboard.Spec.Url != "" && r.Dashboard.Spec.GrafanaCom != nil {
-		return errors.New("both dashboard url and grafana.com source specified")
-	}
-
 	var returnErr error
 
 	if r.shouldUseContentCache() {
