@@ -3812,8 +3812,6 @@ spec:
                                   - name
                                   type: object
                                 type: array
-                            required:
-                            - containers
                             type: object
                         type: object
                     type: object

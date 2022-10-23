@@ -1,0 +1,154 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: grafana
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    config.openshift.io/inject-trusted-cabundle: "true"
+  name: ocp-injected-certs
+  namespace: grafana
+---
+apiVersion: v1
+data:
+  session_secret: Y2hhbmdlIG1lCg==
+kind: Secret
+metadata:
+  name: grafana-proxy
+  namespace: grafana
+type: Opaque
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: grafana-proxy
+  namespace: grafana
+rules:
+  - verbs:
+      - create
+    apiGroups:
+      - authentication.k8s.io
+    resources:
+      - tokenreviews
+  - verbs:
+      - create
+    apiGroups:
+      - authorization.k8s.io
+    resources:
+      - subjectaccessreviews
+---
+apiVersion: authorization.openshift.io/v1
+kind: ClusterRoleBinding
+metadata:
+  namespace: grafana
+  name: grafana-proxy
+roleRef:
+  kind: ClusterRole
+  name: grafana-proxy
+subjects:
+  - kind: ServiceAccount
+    name: grafana-instance-sa
+    namespace: grafana
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana-instance
+  namespace: grafana
+  labels:
+    dashboards: "grafana"
+spec:
+  serviceAccount:
+    metadata:
+      annotations:
+        serviceaccounts.openshift.io/oauth-redirectreference.primary: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"grafana-instance-route"}}'
+  route:
+    spec:
+      port:
+        targetPort: https
+      tls:
+        termination: reencrypt
+      to:
+        kind: Service
+        name: grafana-instance-service
+        weight: 100
+      wildcardPolicy: None
+  deployment:
+    spec:
+      template:
+        spec:
+          volumes:
+          - name: grafana-tls
+            secret:
+              secretName: grafana-tls
+          - name: grafana-proxy
+            secret:
+              secretName: grafana-proxy
+          - name: ocp-injected-certs
+            configMap:
+              name: ocp-injected-certs
+          containers:
+            - args:
+                - '-provider=openshift'
+                - '-pass-basic-auth=false'
+                - '-https-address=:9091'
+                - '-http-address='
+                - '-email-domain=*'
+                - '-upstream=http://localhost:3000'
+                - '-openshift-sar={"resource": "namespaces", "verb": "get"}'
+                - '-openshift-delegate-urls={"/": {"resource": "namespaces", "verb": "get"}}'
+                - '-tls-cert=/etc/tls/private/tls.crt'
+                - '-tls-key=/etc/tls/private/tls.key'
+                - '-client-secret-file=/var/run/secrets/kubernetes.io/serviceaccount/token'
+                - '-cookie-secret-file=/etc/proxy/secrets/session_secret'
+                - '-openshift-service-account=grafana-instance-sa'
+                - '-openshift-ca=/etc/pki/tls/cert.pem'
+                - '-openshift-ca=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
+                - '-openshift-ca=/etc/proxy/certs/ca-bundle.crt'
+                - '-skip-auth-regex=^/metrics'
+              image: 'quay.io/openshift/origin-oauth-proxy'
+              name: grafana-proxy
+              ports:
+                - containerPort: 9091
+                  name: https
+              resources: { }
+              volumeMounts:
+                - mountPath: /etc/tls/private
+                  name: grafana-tls
+                  readOnly: false
+                - mountPath: /etc/proxy/secrets
+                  name: grafana-proxy
+                  readOnly: false
+                - mountPath: /etc/proxy/certs
+                  name: ocp-injected-certs
+                  readOnly: false
+  service:
+    metadata:
+      annotations:
+        service.beta.openshift.io/serving-cert-secret-name: grafana-tls
+    spec:
+      ports:
+        - name: https
+          port: 9091
+          protocol: TCP
+          targetPort: https
+  client:
+    preferIngress: false
+  config:
+    log:
+      mode: "console"
+    auth.anonymous:
+      enabled: "True"
+    auth:
+      disable_login_form: "False"
+      disable_signout_menu: "True"
+    auth.basic:
+      enabled: "True"
+    auth.proxy:
+      enabled: "True"
+      enable_login_token: "True"
+      header_property: "username"
+      header_name: "X-Forwarded-User"

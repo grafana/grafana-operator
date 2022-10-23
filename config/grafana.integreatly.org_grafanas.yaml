@@ -1412,8 +1412,6 @@ spec:
                             type: string
                         type: object
                       template:
-                        description: PodTemplateSpec describes the data a pod should
-                          have when created from a template
                         properties:
                           metadata:
                             description: 'Standard object''s metadata. More info:
@@ -9385,8 +9383,6 @@ spec:
                                   - name
                                   type: object
                                 type: array
-                            required:
-                            - containers
                             type: object
                         type: object
                     type: object
