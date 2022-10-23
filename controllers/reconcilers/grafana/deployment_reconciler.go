@@ -45,7 +45,8 @@ func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafan
 	deployment := model.GetGrafanaDeployment(cr, scheme)
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, deployment, func() error {
 		deployment.Spec = getDeploymentSpec(cr, deployment.Name, scheme, vars)
-		return v1beta1.Merge(deployment, cr.Spec.Deployment)
+		err := v1beta1.Merge(deployment, cr.Spec.Deployment)
+		return err
 	})
 	if err != nil {
 		return v1beta1.OperatorStageResultFailed, err

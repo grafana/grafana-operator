@@ -2,20 +2,20 @@
 apiVersion: grafana.integreatly.org/v1beta1
 kind: Grafana
 metadata:
-  name: grafana-instance
+  name: grafana
   labels:
     dashboards: "grafana"
 spec:
   client:
     preferIngress: true
   config:
-    security:
-      admin_user: root
-      admin_password: start
     log:
       mode: "console"
     auth:
       disable_login_form: "false"
+    security:
+      admin_user: root
+      admin_password: secret
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
@@ -55,23 +55,3 @@ spec:
       "version": 0,
       "links": []
     }
----
-apiVersion: grafana.integreatly.org/v1beta1
-kind: GrafanaDatasource
-metadata:
-  name: prometheus-datasource
-spec:
-  instanceSelector:
-    matchLabels:
-      dashboards: "grafana"
-  datasource:
-    name: prometheus
-    type: prometheus
-    access: proxy
-    url: http://prometheus-service:9090
-    isDefault: true
-    version: 1
-    editable: true
-    jsonData:
-      'tlsSkipVerify': true
-      'timeInterval': "5s"
