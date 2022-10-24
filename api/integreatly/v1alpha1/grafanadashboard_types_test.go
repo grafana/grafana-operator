@@ -7,6 +7,10 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Encoded via cat | gzip | base64
@@ -76,5 +80,88 @@ func TestDecompress(t *testing.T) {
 	if !reflect.DeepEqual(expected, actual) {
 		t.Log("Decoded JSONs were not the same")
 		t.Fail()
+	}
+}
+
+func TestGrafanaDashboardStatus_getContentCache(t *testing.T) {
+	timestamp := metav1.Time{Time: time.Now().Add(-1 * time.Hour)}
+	infinite := 0 * time.Second
+	dashboardJSON := `{"dummyField": "dummyData"}`
+
+	cachedDashboard, err := Gzip(dashboardJSON)
+	assert.Nil(t, err)
+
+	url := "http://127.0.0.1:8080/1.json"
+
+	// Correctly populated cache
+	status := GrafanaDashboardStatus{
+		ContentCache:     cachedDashboard,
+		ContentTimestamp: timestamp,
+		ContentUrl:       url,
+	}
+
+	// Corrupted cache
+	statusCorrupted := GrafanaDashboardStatus{
+		ContentCache:     []byte("abc"),
+		ContentTimestamp: timestamp,
+		ContentUrl:       url,
+	}
+
+	tests := []struct {
+		name     string
+		status   GrafanaDashboardStatus
+		url      string
+		duration time.Duration
+		want     string
+	}{
+		{
+			name:     "no cache: fields are not populated",
+			url:      status.ContentUrl,
+			duration: infinite,
+			status:   GrafanaDashboardStatus{},
+			want:     "",
+		},
+		{
+			name:     "no cache: url is different",
+			url:      "http://another-url/2.json",
+			duration: infinite,
+			status:   status,
+			want:     "",
+		},
+		{
+			name:     "no cache: expired",
+			url:      status.ContentUrl,
+			duration: 1 * time.Minute,
+			status:   status,
+			want:     "",
+		},
+		{
+			name:     "no cache: corrupted gzip",
+			url:      statusCorrupted.ContentUrl,
+			duration: infinite,
+			status:   statusCorrupted,
+			want:     "",
+		},
+		{
+			name:     "valid cache: not expired yet",
+			url:      status.ContentUrl,
+			duration: 24 * time.Hour,
+			status:   status,
+			want:     dashboardJSON,
+		},
+		{
+			name:     "valid cache: not expired yet (infinite)",
+			url:      status.ContentUrl,
+			duration: infinite,
+			status:   status,
+			want:     dashboardJSON,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.status.getContentCache(tt.url, tt.duration)
+			assert.Equal(t, tt.want, got)
+		})
 	}
 }
