@@ -26,10 +26,18 @@ var (
 		Name:      "requests",
 		Help:      "requests against the grafana api per instance",
 	}, []string{"instance_name", "path", "method", "status"})
+
+	DashboardUrlRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "grafana_operator",
+		Subsystem: "dashboards",
+		Name:      "requests",
+		Help:      "requests to fetch dashboards from urls",
+	}, []string{"dashboard", "path", "method", "status"})
 )
 
 func init() {
 	metrics.Registry.MustRegister(GrafanaReconciles)
 	metrics.Registry.MustRegister(GrafanaFailedReconciles)
 	metrics.Registry.MustRegister(GrafanaApiRequests)
+	metrics.Registry.MustRegister(DashboardUrlRequests)
 }

@@ -2,14 +2,11 @@ package client
 
 import (
 	"context"
-	"crypto/tls"
+	"github.com/grafana-operator/grafana-operator-experimental/controllers/metrics"
 	v1 "k8s.io/api/core/v1"
 	"net/http"
 	"net/url"
-	"strconv"
 	"time"
-
-	"github.com/grafana-operator/grafana-operator-experimental/controllers/metrics"
 
 	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/config"
@@ -18,40 +15,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type instrumentedRoundTripper struct {
-	instanceName string
-	wrapped      http.RoundTripper
-}
-
 type grafanaAdminCredentials struct {
 	username string
 	password string
-}
-
-func newInstrumentedRoundTripper(instanceName string) http.RoundTripper {
-	transport := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		},
-	}
-
-	return &instrumentedRoundTripper{
-		instanceName: instanceName,
-		wrapped:      transport,
-	}
-}
-
-func (in *instrumentedRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
-	resp, err := in.wrapped.RoundTrip(r)
-	if resp != nil {
-		metrics.GrafanaApiRequests.WithLabelValues(
-			in.instanceName,
-			r.URL.Path,
-			r.Method,
-			strconv.Itoa(resp.StatusCode)).
-			Inc()
-	}
-	return resp, err
 }
 
 func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (*grafanaAdminCredentials, error) {
@@ -152,7 +118,7 @@ func NewGrafanaClient(ctx context.Context, c client.Client, grafana *v1beta1.Gra
 		BasicAuth:   userinfo,
 		HTTPHeaders: nil,
 		Client: &http.Client{
-			Transport: newInstrumentedRoundTripper(grafana.Name),
+			Transport: NewInstrumentedRoundTripper(grafana.Name, metrics.GrafanaApiRequests),
 			Timeout:   time.Second * timeout,
 		},
 		// TODO populate me
