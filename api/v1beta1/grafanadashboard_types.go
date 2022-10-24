@@ -23,18 +23,31 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type DashboardSourceType string
+
+const (
+	DashboardSourceTypeRawJson DashboardSourceType = "json"
+	DashboardSourceTypeUrl     DashboardSourceType = "url"
+)
+
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // GrafanaDashboardSpec defines the desired state of GrafanaDashboard
 type GrafanaDashboardSpec struct {
 	// dashboard json
+	// +optional
 	Json string `json:"json,omitempty"`
+
+	// dashboard url
+	// +optional
+	Url string `json:"url,omitempty"`
 
 	// selects Grafanas for import
 	InstanceSelector *metav1.LabelSelector `json:"instanceSelector,omitempty"`
 
 	// plugins
+	// +optional
 	Plugins PluginList `json:"plugins,omitempty"`
 }
 
@@ -72,6 +85,20 @@ func (in *GrafanaDashboard) Hash() string {
 
 func (in *GrafanaDashboard) Unchanged() bool {
 	return in.Hash() == in.Status.Hash
+}
+
+func (in *GrafanaDashboard) GetSourceTypes() []DashboardSourceType {
+	var sourceTypes []DashboardSourceType
+
+	if in.Spec.Json != "" {
+		sourceTypes = append(sourceTypes, DashboardSourceTypeRawJson)
+	}
+
+	if in.Spec.Url != "" {
+		sourceTypes = append(sourceTypes, DashboardSourceTypeUrl)
+	}
+
+	return sourceTypes
 }
 
 func init() {

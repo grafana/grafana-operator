@@ -20,11 +20,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
-
 	"github.com/go-logr/logr"
 	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	client2 "github.com/grafana-operator/grafana-operator-experimental/controllers/client"
+	"github.com/grafana-operator/grafana-operator-experimental/controllers/fetchers"
 	grapi "github.com/grafana/grafana-api-golang-client"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -32,11 +31,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-)
+	"strings"
 
-const (
-	statusCodeDashboardExistsInFolder = "412"
-	dashboardFinalizer                = "integreatly.org/finalizer"
+	stderr "errors"
 )
 
 // GrafanaDashboardReconciler reconciles a GrafanaDashboard object
@@ -93,11 +90,13 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	controllerLog.Info("found matching Grafana instances for dashboard", "count", len(instances.Items))
 
+	success := true
 	for _, grafana := range instances.Items {
 		// an admin url is required to interact with grafana
 		// the instance or route might not yet be ready
 		if grafana.Status.AdminUrl == "" || grafana.Status.Stage != v1beta1.OperatorStageComplete || grafana.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
 			controllerLog.Info("grafana instance not ready", "grafana", grafana.Name)
+			success = false
 			continue
 		}
 
@@ -107,16 +106,23 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, dashboard.Spec.Plugins, fmt.Sprintf("%v-dashboard", dashboard.Name))
 		if err != nil {
 			controllerLog.Error(err, "error reconciling plugins", "dashboard", dashboard.Name, "grafana", grafana.Name)
+			success = false
 		}
 
 		// then import the dashboard into the matching grafana instances
 		err = r.onDashboardCreated(ctx, &grafana, dashboard)
 		if err != nil {
 			controllerLog.Error(err, "error reconciling dashboard", "dashboard", dashboard.Name, "grafana", grafana.Name)
+			success = false
 		}
 	}
 
-	return ctrl.Result{RequeueAfter: RequeueDelaySuccess}, nil
+	// if the dashboard was successfully synced in all instance, then there is no need to reconcile again
+	if success {
+		return ctrl.Result{Requeue: false}, nil
+	}
+
+	return ctrl.Result{RequeueAfter: RequeueDelayError}, nil
 }
 
 func (r *GrafanaDashboardReconciler) onDashboardDeleted(ctx context.Context, namespace string, name string) error {
@@ -162,8 +168,9 @@ func (r *GrafanaDashboardReconciler) onDashboardDeleted(ctx context.Context, nam
 }
 
 func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDashboard) error {
-	if cr.Spec.Json == "" {
-		return nil
+	dashboardJson, err := r.fetchDashboardJson(cr)
+	if err != nil {
+		return err
 	}
 
 	grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, grafana)
@@ -181,7 +188,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	}
 
 	var dashboardFromJson map[string]interface{}
-	err = json.Unmarshal([]byte(cr.Spec.Json), &dashboardFromJson)
+	err = json.Unmarshal(dashboardJson, &dashboardFromJson)
 	if err != nil {
 		return err
 	}
@@ -217,6 +224,29 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return err
 	}
 	return r.Client.Update(ctx, grafana)
+}
+
+// fetchDashboardJson delegates obtaining the dashboard json definition to one of the known fetchers, for example
+// from embedded raw json or from a url
+func (r *GrafanaDashboardReconciler) fetchDashboardJson(dashboard *v1beta1.GrafanaDashboard) ([]byte, error) {
+	sourceTypes := dashboard.GetSourceTypes()
+
+	if len(sourceTypes) == 0 {
+		return nil, stderr.New(fmt.Sprintf("no source type provided for dashboard %v", dashboard.Name))
+	}
+
+	if len(sourceTypes) > 1 {
+		return nil, stderr.New(fmt.Sprintf("more than one source types found for dashboard %v", dashboard.Name))
+	}
+
+	switch sourceTypes[0] {
+	case v1beta1.DashboardSourceTypeRawJson:
+		return []byte(dashboard.Spec.Json), nil
+	case v1beta1.DashboardSourceTypeUrl:
+		return fetchers.FetchDashboardFromUrl(dashboard)
+	default:
+		return nil, stderr.New(fmt.Sprintf("unknown source type %v found in dashboard %v", sourceTypes[0], dashboard.Name))
+	}
 }
 
 func (r *GrafanaDashboardReconciler) UpdateStatus(ctx context.Context, cr *v1beta1.GrafanaDashboard) error {
