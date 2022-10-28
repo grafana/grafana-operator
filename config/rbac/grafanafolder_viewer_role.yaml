@@ -1,0 +1,20 @@
+# permissions for end users to view grafanafolders.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: grafanafolder-viewer-role
+rules:
+- apiGroups:
+  - grafana.integreatly.org
+  resources:
+  - grafanafolders
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - grafana.integreatly.org
+  resources:
+  - grafanafolders/status
+  verbs:
+  - get
