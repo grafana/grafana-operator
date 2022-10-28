@@ -1,0 +1,7 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: grafanafolder-sample
+spec:
+  # Add fields here
+  foo: bar
