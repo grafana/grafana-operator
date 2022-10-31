@@ -60,6 +60,32 @@ rules:
 - apiGroups:
   - grafana.integreatly.org
   resources:
+  - grafanafolders
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - grafana.integreatly.org
+  resources:
+  - grafanafolders/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - grafana.integreatly.org
+  resources:
+  - grafanafolders/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - grafana.integreatly.org
+  resources:
   - grafanas
   verbs:
   - create
