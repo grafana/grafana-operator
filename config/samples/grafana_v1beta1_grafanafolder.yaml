@@ -3,5 +3,12 @@ kind: GrafanaFolder
 metadata:
   name: grafanafolder-sample
 spec:
-  # Add fields here
-  foo: bar
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana-a"
+  json: >-
+    {
+      "uid": "nErXDvCkzz",
+      "title": "Example Folder"
+    }
+

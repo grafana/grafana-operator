@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/go-logr/logr"
 	client2 "github.com/grafana-operator/grafana-operator-experimental/controllers/client"
@@ -113,6 +114,36 @@ func (r *GrafanaFolderReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
+func (r *GrafanaFolderReconciler) onFolderDeleted(ctx context.Context, namespace string, name string) error {
+
+	list := v1beta1.GrafanaList{}
+	opts := []client.ListOption{}
+	err := r.Client.List(ctx, &list, opts...)
+	if err != nil {
+		return err
+	}
+
+	for _, grafana := range list.Items {
+		if found, uid := grafana.FindFolderByNamespaceAndName(namespace, name); found {
+			grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, &grafana)
+			if err != nil {
+				return err
+			}
+
+			folder, err := grafanaClient.FolderByUID(uid)
+			if err != nil {
+				return err
+			}
+
+			err = grafanaClient.DeleteFolder(fmt.Sprintf("%v", &folder.ID))
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaFolder) error {
 	if cr.Spec.Json == "" {
 		return nil
@@ -131,10 +162,21 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 		return nil
 	}
 
-	folderuid := "1"         //TODO replace me
-	title := "my-new-folder" //TODO replace me
+	var dashboardJson map[string]interface{}
 
-	folderFromClient, err := grafanaClient.NewFolder(title, folderuid)
+	err = json.Unmarshal([]byte(cr.Spec.Json), &dashboardJson)
+	if err != nil {
+		return err
+	}
+
+	uid := fmt.Sprintf("%v", dashboardJson["uid"])
+	title := fmt.Sprintf("%v", dashboardJson["title"])
+
+	if uid == "1" {
+		return errors.NewBadRequest("declared UID will conflict with default 'general' folder")
+	}
+	//TODO add a feature/feature-request upstream to add responses to NewFolder() to adhere to remaining APIs
+	folderFromClient, err := grafanaClient.NewFolder(title, uid)
 	if err != nil {
 		//TODO Check error conditions
 		return err
@@ -147,8 +189,13 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 		return errors.NewBadRequest(fmt.Sprintf("something went wrong trying to create folder %s in grafana %s", cr.Name, grafana.Name))
 	}
 
-	return nil
+	return r.UpdateStatus(ctx, cr)
 
+}
+
+func (r *GrafanaFolderReconciler) UpdateStatus(ctx context.Context, cr *v1beta1.GrafanaFolder) error {
+	cr.Status.Hash = cr.Hash()
+	return r.Client.Status().Update(ctx, cr)
 }
 
 func (r *GrafanaFolderReconciler) Exists(client *grapi.Client, cr *v1beta1.GrafanaFolder) (bool, error) {

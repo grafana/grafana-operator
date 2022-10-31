@@ -33,7 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	grafanav1beta1 "github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
+	v1beta1 "github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 )
 
 // GrafanaDatasourceReconciler reconciles a GrafanaDatasource object
@@ -52,7 +52,7 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 	datasourcesSynced := 0
 
 	// get all grafana instances
-	grafanas := &grafanav1beta1.GrafanaList{}
+	grafanas := &v1beta1.GrafanaList{}
 	var opts []client.ListOption
 	err := r.Client.List(ctx, grafanas, opts...)
 	if err != nil {
@@ -67,7 +67,7 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 	}
 
 	// get all datasources
-	allDatasources := &grafanav1beta1.GrafanaDatasourceList{}
+	allDatasources := &v1beta1.GrafanaDatasourceList{}
 	err = r.Client.List(ctx, allDatasources, opts...)
 	if err != nil {
 		return ctrl.Result{
@@ -76,7 +76,7 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 	}
 
 	// sync datasources, delete dashboards from grafana that do no longer have a cr
-	datasourcesToDelete := map[*grafanav1beta1.Grafana][]grafanav1beta1.NamespacedResource{}
+	datasourcesToDelete := map[*v1beta1.Grafana][]v1beta1.NamespacedResource{}
 	for _, grafana := range grafanas.Items {
 		for _, datasource := range grafana.Status.Datasources {
 			if allDatasources.Find(datasource.Namespace(), datasource.Name()) == nil {
@@ -142,7 +142,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return syncResult, err
 	}
 
-	datasource := &grafanav1beta1.GrafanaDatasource{}
+	datasource := &v1beta1.GrafanaDatasource{}
 	err := r.Client.Get(ctx, client.ObjectKey{
 		Namespace: req.Namespace,
 		Name:      req.Name,
@@ -180,7 +180,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	for _, grafana := range instances.Items {
 		// an admin url is required to interact with grafana
 		// the instance or route might not yet be ready
-		if grafana.Status.AdminUrl == "" || grafana.Status.Stage != grafanav1beta1.OperatorStageComplete || grafana.Status.StageStatus != grafanav1beta1.OperatorStageResultSuccess {
+		if grafana.Status.AdminUrl == "" || grafana.Status.Stage != v1beta1.OperatorStageComplete || grafana.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
 			controllerLog.Info("grafana instance not ready", "grafana", grafana.Name)
 			continue
 		}
@@ -211,7 +211,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 }
 
 func (r *GrafanaDatasourceReconciler) onDatasourceDeleted(ctx context.Context, namespace string, name string) error {
-	list := grafanav1beta1.GrafanaList{}
+	list := v1beta1.GrafanaList{}
 	opts := []client.ListOption{}
 	err := r.Client.List(ctx, &list, opts...)
 	if err != nil {
@@ -250,7 +250,7 @@ func (r *GrafanaDatasourceReconciler) onDatasourceDeleted(ctx context.Context, n
 	return nil
 }
 
-func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, grafana *grafanav1beta1.Grafana, cr *grafanav1beta1.GrafanaDatasource) error {
+func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDatasource) error {
 	if cr.Spec.Datasource == nil {
 		return nil
 	}
@@ -297,12 +297,12 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 	return r.Client.Status().Update(ctx, grafana)
 }
 
-func (r *GrafanaDatasourceReconciler) UpdateStatus(ctx context.Context, cr *grafanav1beta1.GrafanaDatasource) error {
+func (r *GrafanaDatasourceReconciler) UpdateStatus(ctx context.Context, cr *v1beta1.GrafanaDatasource) error {
 	cr.Status.Hash = cr.Hash()
 	return r.Client.Status().Update(ctx, cr)
 }
 
-func (r *GrafanaDatasourceReconciler) ExistingId(client *gapi.Client, cr *grafanav1beta1.GrafanaDatasource) (*int64, error) {
+func (r *GrafanaDatasourceReconciler) ExistingId(client *gapi.Client, cr *v1beta1.GrafanaDatasource) (*int64, error) {
 	datasources, err := client.DataSources()
 	if err != nil {
 		return nil, err
@@ -318,7 +318,7 @@ func (r *GrafanaDatasourceReconciler) ExistingId(client *gapi.Client, cr *grafan
 // SetupWithManager sets up the controller with the Manager.
 func (r *GrafanaDatasourceReconciler) SetupWithManager(mgr ctrl.Manager, stop chan bool) error {
 	err := ctrl.NewControllerManagedBy(mgr).
-		For(&grafanav1beta1.GrafanaDatasource{}).
+		For(&v1beta1.GrafanaDatasource{}).
 		Complete(r)
 
 	if err != nil {
