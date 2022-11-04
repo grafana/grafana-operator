@@ -5,7 +5,7 @@ metadata:
 spec:
   instanceSelector:
     matchLabels:
-      dashboards: "grafana-a"
+      folders: "grafana-a"
   json: >-
     {
       "uid": "nErXDvCkzz",

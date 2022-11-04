@@ -5,6 +5,7 @@ metadata:
   name: grafana-a
   labels:
     dashboards: "grafana-a"
+    folders: "grafana-a"
 spec:
   client:
     preferIngress: true
