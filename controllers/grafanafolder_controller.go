@@ -66,7 +66,9 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}, folder)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			//TODO on folder deleted
+			if err := r.onFolderDeleted(ctx, req.Namespace, req.Name); err != nil {
+				return ctrl.Result{RequeueAfter: RequeueDelayError}, err
+			}
 			return ctrl.Result{}, nil
 		}
 		controllerLog.Error(err, "error getting grafana folder cr")
@@ -74,7 +76,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	if folder.Spec.InstanceSelector == nil {
-		controllerLog.Info("no instance selector found for dashboard, nothing to do", "name", folder.Name, "namespace", folder.Namespace)
+		controllerLog.Info("no instance selector found for folder, nothing to do", "name", folder.Name, "namespace", folder.Namespace)
 		return ctrl.Result{RequeueAfter: RequeueDelayError}, nil
 	}
 
@@ -93,7 +95,8 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	controllerLog.Info("found matching Grafana instances for folder", "count", len(instances.Items))
 
 	for _, grafana := range instances.Items {
-		if grafana.Status.AdminUrl == "" || grafana.Status.Stage != v1beta1.OperatorStageComplete || grafana.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
+		//if grafana.Status.AdminUrl == "" || grafana.Status.Stage != v1beta1.OperatorStageComplete || grafana.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
+		if grafana.Status.Stage != v1beta1.OperatorStageComplete || grafana.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
 			controllerLog.Info("grafana instance not ready", "grafana", grafana.Name)
 			continue
 		}
@@ -117,7 +120,7 @@ func (r *GrafanaFolderReconciler) SetupWithManager(mgr ctrl.Manager) error {
 func (r *GrafanaFolderReconciler) onFolderDeleted(ctx context.Context, namespace string, name string) error {
 
 	list := v1beta1.GrafanaList{}
-	opts := []client.ListOption{}
+	var opts []client.ListOption
 	err := r.Client.List(ctx, &list, opts...)
 	if err != nil {
 		return err
@@ -162,15 +165,15 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 		return nil
 	}
 
-	var dashboardJson map[string]interface{}
+	var folderFromJson map[string]interface{}
 
-	err = json.Unmarshal([]byte(cr.Spec.Json), &dashboardJson)
+	err = json.Unmarshal([]byte(cr.Spec.Json), &folderFromJson)
 	if err != nil {
 		return err
 	}
 
-	uid := fmt.Sprintf("%v", dashboardJson["uid"])
-	title := fmt.Sprintf("%v", dashboardJson["title"])
+	uid := fmt.Sprintf("%v", folderFromJson["uid"])
+	title := fmt.Sprintf("%v", folderFromJson["title"])
 
 	if uid == "1" {
 		return errors.NewBadRequest("declared UID will conflict with default 'general' folder")
