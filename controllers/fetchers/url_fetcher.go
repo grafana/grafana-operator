@@ -22,7 +22,7 @@ func FetchDashboardFromUrl(dashboard *v1beta1.GrafanaDashboard) ([]byte, error) 
 		return nil, err
 	}
 
-	client := client2.NewInstrumentedRoundTripper(dashboard.Name, metrics.DashboardUrlRequests)
+	client := client2.NewInstrumentedRoundTripper(fmt.Sprintf("%v/%v", dashboard.Namespace, dashboard.Name), metrics.DashboardUrlRequests)
 	response, err := client.RoundTrip(request)
 	if err != nil {
 		return nil, err

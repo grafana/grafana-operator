@@ -2,6 +2,8 @@ package client
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/metrics"
 	v1 "k8s.io/api/core/v1"
 	"net/http"
@@ -46,14 +48,14 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 		}
 
 		if secret.Data == nil {
-			return nil, nil
+			return nil, errors.New(fmt.Sprintf("empty credential secret: %v/%v", grafana.Namespace, ref.Name))
 		}
 
 		if val, ok := secret.Data[ref.Key]; ok {
 			return val, nil
 		}
 
-		return nil, nil
+		return nil, errors.New(fmt.Sprintf("admin credentials not found: %v/%v", grafana.Namespace, ref.Name))
 	}
 
 	for _, container := range deployment.Spec.Template.Spec.Containers {
