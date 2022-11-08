@@ -19,6 +19,8 @@ package main
 import (
 	"flag"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/go-logr/logr"
 	discovery2 "k8s.io/client-go/discovery"
@@ -78,6 +80,17 @@ func main() {
 		setupLog.Info("operator restricted to namespace", "namespace", namespace)
 	}
 
+	stop := make(chan bool)
+	sigs := make(chan os.Signal)
+	signal.Notify(sigs, syscall.SIGTERM, syscall.SIGABRT, syscall.SIGINT)
+	go func() {
+		sig := <-sigs
+		switch sig {
+		case syscall.SIGTERM, syscall.SIGABRT, syscall.SIGINT:
+			close(stop)
+		}
+	}()
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Namespace:              namespace,
 		Scheme:                 scheme,
@@ -104,7 +117,7 @@ func main() {
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 		Log:    logr.Logger{},
-	}).SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(mgr, stop); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDashboard")
 		os.Exit(1)
 	}

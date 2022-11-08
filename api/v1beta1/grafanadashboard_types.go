@@ -160,6 +160,15 @@ func Gzip(content []byte) ([]byte, error) {
 	return io.ReadAll(buf)
 }
 
+func (in *GrafanaDashboardList) Find(namespace string, name string) *GrafanaDashboard {
+	for _, dashboard := range in.Items {
+		if dashboard.Namespace == namespace && dashboard.Name == name {
+			return &dashboard
+		}
+	}
+	return nil
+}
+
 func init() {
 	SchemeBuilder.Register(&GrafanaDashboard{}, &GrafanaDashboardList{})
 }
