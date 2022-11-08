@@ -38,6 +38,10 @@ import (
 	stderr "errors"
 )
 
+const (
+	initialSyncDelay = "10s"
+)
+
 // GrafanaDashboardReconciler reconciles a GrafanaDashboard object
 type GrafanaDashboardReconciler struct {
 	Client    client.Client
@@ -337,7 +341,7 @@ func (r *GrafanaDashboardReconciler) SetupWithManager(mgr ctrl.Manager, stop cha
 		Complete(r)
 
 	if err == nil {
-		d, err := time.ParseDuration("10s")
+		d, err := time.ParseDuration(initialSyncDelay)
 		if err != nil {
 			return err
 		}
