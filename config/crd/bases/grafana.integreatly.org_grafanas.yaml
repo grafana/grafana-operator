@@ -3703,6 +3703,14 @@ spec:
             properties:
               adminUrl:
                 type: string
+              dashboards:
+                items:
+                  type: string
+                type: array
+              datasources:
+                items:
+                  type: string
+                type: array
               lastMessage:
                 type: string
               stage:

@@ -118,13 +118,13 @@ func (r *GrafanaDatasourceReconciler) onDatasourceDeleted(ctx context.Context, n
 	}
 
 	for _, grafana := range list.Items {
-		if found, uid := grafana.FindDatasourceByNamespaceAndName(namespace, name); found {
+		if found, uid := grafana.Status.Datasources.Find(namespace, name); found {
 			grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, &grafana)
 			if err != nil {
 				return err
 			}
 
-			datasource, err := grafanaClient.DataSourceByUID(uid)
+			datasource, err := grafanaClient.DataSourceByUID(*uid)
 			if err != nil {
 				return err
 			}
@@ -136,20 +136,13 @@ func (r *GrafanaDatasourceReconciler) onDatasourceDeleted(ctx context.Context, n
 				}
 			}
 
-			err = grafana.RemoveDatasource(namespace, name)
-			if err != nil {
-				return err
-			}
-
 			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, fmt.Sprintf("%v-datasource", name))
 			if err != nil {
 				return err
 			}
 
-			err = r.Client.Update(ctx, &grafana)
-			if err != nil {
-				return err
-			}
+			grafana.Status.Datasources = grafana.Status.Datasources.Remove(namespace, name)
+			return r.Client.Status().Update(ctx, &grafana)
 		}
 	}
 
@@ -199,12 +192,8 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		return err
 	}
 
-	err = grafana.AddDatasource(cr.Namespace, cr.Name, string(cr.UID))
-	if err != nil {
-		return err
-	}
-
-	return r.Client.Update(ctx, grafana)
+	grafana.Status.Datasources = grafana.Status.Datasources.Add(cr.Namespace, cr.Name, string(cr.UID))
+	return r.Client.Status().Update(ctx, grafana)
 }
 
 func (r *GrafanaDatasourceReconciler) UpdateStatus(ctx context.Context, cr *grafanav1beta1.GrafanaDatasource) error {
