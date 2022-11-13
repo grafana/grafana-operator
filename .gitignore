@@ -31,3 +31,4 @@ vendor
 # Audit lab
 kube-apiserver-audit.log
 labs/benchmark/dashboards
+labs/benchmark/datasources

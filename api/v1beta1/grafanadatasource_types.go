@@ -126,6 +126,15 @@ func (in *GrafanaDatasource) Unchanged() bool {
 	return in.Hash() == in.Status.Hash
 }
 
+func (in *GrafanaDatasourceList) Find(namespace string, name string) *GrafanaDatasource {
+	for _, datasource := range in.Items {
+		if datasource.Namespace == namespace && datasource.Name == name {
+			return &datasource
+		}
+	}
+	return nil
+}
+
 func init() {
 	SchemeBuilder.Register(&GrafanaDatasource{}, &GrafanaDatasourceList{})
 }
