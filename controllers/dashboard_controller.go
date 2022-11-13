@@ -26,6 +26,7 @@ import (
 	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	client2 "github.com/grafana-operator/grafana-operator-experimental/controllers/client"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/fetchers"
+	"github.com/grafana-operator/grafana-operator-experimental/controllers/metrics"
 	grapi "github.com/grafana/grafana-api-golang-client"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -55,7 +56,8 @@ type GrafanaDashboardReconciler struct {
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadashboards/finalizers,verbs=update
 
 func (r *GrafanaDashboardReconciler) sync(ctx context.Context) (ctrl.Result, error) {
-	r.Log.Info("running initial dashboard sync")
+	syncLog := log.FromContext(ctx)
+	dashboardsSynced := 0
 
 	// get all grafana instances
 	grafanas := &v1beta1.GrafanaList{}
@@ -99,6 +101,13 @@ func (r *GrafanaDashboardReconciler) sync(ctx context.Context) (ctrl.Result, err
 		}
 
 		for _, dashboard := range dashboards {
+			// avoid bombarding the grafana instance with a large number of requests at once, limit
+			// the sync to ten dashboards per cycle. This means that it will take longer to sync
+			// a large number of deleted dashboard crs, but that should be an edge case.
+			if dashboardsSynced >= 10 {
+				return ctrl.Result{Requeue: true}, nil
+			}
+
 			namespace, name, uid := dashboard.Split()
 			err = grafanaClient.DeleteDashboardByUID(uid)
 			if err != nil {
@@ -106,13 +115,20 @@ func (r *GrafanaDashboardReconciler) sync(ctx context.Context) (ctrl.Result, err
 			}
 
 			grafana.Status.Dashboards = grafana.Status.Dashboards.Remove(namespace, name)
-			err = r.Client.Status().Update(ctx, grafana)
-			if err != nil {
-				return ctrl.Result{Requeue: false}, err
-			}
+			dashboardsSynced += 1
+		}
+
+		// one update per grafana - this will trigger a reconcile of the grafana controller
+		// so we should minimize those updates
+		err = r.Client.Status().Update(ctx, grafana)
+		if err != nil {
+			return ctrl.Result{Requeue: false}, err
 		}
 	}
 
+	if dashboardsSynced > 0 {
+		syncLog.Info("successfully synced dashboards", "dashboards synced", dashboardsSynced)
+	}
 	return ctrl.Result{Requeue: false}, nil
 }
 
@@ -122,7 +138,11 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	// periodic sync reconcile
 	if req.Namespace == "" && req.Name == "" {
-		return r.sync(ctx)
+		start := time.Now()
+		syncResult, err := r.sync(ctx)
+		elapsed := time.Since(start).Milliseconds()
+		metrics.InitialDashboardSyncDuration.Set(float64(elapsed))
+		return syncResult, err
 	}
 
 	dashboard := &v1beta1.GrafanaDashboard{}
@@ -284,13 +304,13 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return errors.NewBadRequest(fmt.Sprintf("error creating dashboard, status was %v", resp.Status))
 	}
 
-	err = r.UpdateStatus(ctx, cr)
+	grafana.Status.Dashboards = grafana.Status.Dashboards.Add(cr.Namespace, cr.Name, resp.UID)
+	err = r.Client.Status().Update(ctx, grafana)
 	if err != nil {
 		return err
 	}
 
-	grafana.Status.Dashboards = grafana.Status.Dashboards.Add(cr.Namespace, cr.Name, resp.UID)
-	return r.Client.Status().Update(ctx, grafana)
+	return r.UpdateStatus(ctx, cr)
 }
 
 // fetchDashboardJson delegates obtaining the dashboard json definition to one of the known fetchers, for example
@@ -353,10 +373,15 @@ func (r *GrafanaDashboardReconciler) SetupWithManager(mgr ctrl.Manager, stop cha
 					return
 				case <-time.After(d):
 					result, err := r.Reconcile(context.Background(), ctrl.Request{})
-					if err != nil || result.Requeue {
-						r.Log.Error(err, "error with initial dashboard sync")
+					if err != nil {
+						r.Log.Error(err, "error synchronizing dashboards")
 						continue
 					}
+					if result.Requeue {
+						r.Log.Info("more dashboards left to synchronize")
+						continue
+					}
+					r.Log.Info("dashboard sync complete")
 					return
 				}
 			}
