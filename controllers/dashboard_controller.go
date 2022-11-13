@@ -55,7 +55,7 @@ type GrafanaDashboardReconciler struct {
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadashboards/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadashboards/finalizers,verbs=update
 
-func (r *GrafanaDashboardReconciler) sync(ctx context.Context) (ctrl.Result, error) {
+func (r *GrafanaDashboardReconciler) syncDashboards(ctx context.Context) (ctrl.Result, error) {
 	syncLog := log.FromContext(ctx)
 	dashboardsSynced := 0
 
@@ -139,7 +139,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	// periodic sync reconcile
 	if req.Namespace == "" && req.Name == "" {
 		start := time.Now()
-		syncResult, err := r.sync(ctx)
+		syncResult, err := r.syncDashboards(ctx)
 		elapsed := time.Since(start).Milliseconds()
 		metrics.InitialDashboardSyncDuration.Set(float64(elapsed))
 		return syncResult, err

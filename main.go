@@ -124,7 +124,7 @@ func main() {
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 		Log:    ctrl.Log,
-	}).SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(mgr, stop); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDatasource")
 		os.Exit(1)
 	}

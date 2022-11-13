@@ -20,7 +20,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/grafana-operator/grafana-operator-experimental/controllers/metrics"
 	"strings"
+	"time"
 
 	"github.com/go-logr/logr"
 	client2 "github.com/grafana-operator/grafana-operator-experimental/controllers/client"
@@ -45,9 +47,100 @@ type GrafanaDatasourceReconciler struct {
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadatasources/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadatasources/finalizers,verbs=update
 
+func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl.Result, error) {
+	syncLog := log.FromContext(ctx)
+	datasourcesSynced := 0
+
+	// get all grafana instances
+	grafanas := &grafanav1beta1.GrafanaList{}
+	var opts []client.ListOption
+	err := r.Client.List(ctx, grafanas, opts...)
+	if err != nil {
+		return ctrl.Result{
+			Requeue: true,
+		}, err
+	}
+
+	// no instances, no need to sync
+	if len(grafanas.Items) == 0 {
+		return ctrl.Result{Requeue: false}, nil
+	}
+
+	// get all datasources
+	allDatasources := &grafanav1beta1.GrafanaDatasourceList{}
+	err = r.Client.List(ctx, allDatasources, opts...)
+	if err != nil {
+		return ctrl.Result{
+			Requeue: true,
+		}, err
+	}
+
+	// sync datasources, delete dashboards from grafana that do no longer have a cr
+	datasourcesToDelete := map[*grafanav1beta1.Grafana][]grafanav1beta1.NamespacedResource{}
+	for _, grafana := range grafanas.Items {
+		for _, datasource := range grafana.Status.Datasources {
+			if allDatasources.Find(datasource.Namespace(), datasource.Name()) == nil {
+				datasourcesToDelete[&grafana] = append(datasourcesToDelete[&grafana], datasource)
+			}
+		}
+	}
+
+	// delete all dashboards that no longer have a cr
+	for grafana, datasources := range datasourcesToDelete {
+		grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, grafana)
+		if err != nil {
+			return ctrl.Result{Requeue: true}, err
+		}
+
+		for _, datasource := range datasources {
+			// avoid bombarding the grafana instance with a large number of requests at once, limit
+			// the sync to ten dashboards per cycle. This means that it will take longer to sync
+			// a large number of deleted dashboard crs, but that should be an edge case.
+			if datasourcesSynced >= 10 {
+				return ctrl.Result{Requeue: true}, nil
+			}
+
+			namespace, name, uid := datasource.Split()
+			instanceDatasource, err := grafanaClient.DataSourceByUID(uid)
+			if err != nil {
+				return ctrl.Result{Requeue: false}, err
+			}
+
+			err = grafanaClient.DeleteDataSource(instanceDatasource.ID)
+			if err != nil {
+				return ctrl.Result{Requeue: false}, err
+			}
+
+			grafana.Status.Datasources = grafana.Status.Datasources.Remove(namespace, name)
+			datasourcesSynced += 1
+		}
+
+		// one update per grafana - this will trigger a reconcile of the grafana controller
+		// so we should minimize those updates
+		err = r.Client.Status().Update(ctx, grafana)
+		if err != nil {
+			return ctrl.Result{Requeue: false}, err
+		}
+	}
+
+	if datasourcesSynced > 0 {
+		syncLog.Info("successfully synced datasources", "dashboards synced", datasourcesSynced)
+	}
+	return ctrl.Result{Requeue: false}, nil
+}
+
 func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	controllerLog := log.FromContext(ctx)
 	r.Log = controllerLog
+
+	// periodic sync reconcile
+	if req.Namespace == "" && req.Name == "" {
+		start := time.Now()
+		syncResult, err := r.syncDatasources(ctx)
+		elapsed := time.Since(start).Milliseconds()
+		metrics.InitialDatasourceSyncDuration.Set(float64(elapsed))
+		return syncResult, err
+	}
 
 	datasource := &grafanav1beta1.GrafanaDatasource{}
 	err := r.Client.Get(ctx, client.ObjectKey{
@@ -215,8 +308,40 @@ func (r *GrafanaDatasourceReconciler) ExistingId(client *gapi.Client, cr *grafan
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *GrafanaDatasourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
+func (r *GrafanaDatasourceReconciler) SetupWithManager(mgr ctrl.Manager, stop chan bool) error {
+	err := ctrl.NewControllerManagedBy(mgr).
 		For(&grafanav1beta1.GrafanaDatasource{}).
 		Complete(r)
+
+	if err != nil {
+		if err == nil {
+			d, err := time.ParseDuration(initialSyncDelay)
+			if err != nil {
+				return err
+			}
+
+			go func() {
+				for {
+					select {
+					case <-stop:
+						return
+					case <-time.After(d):
+						result, err := r.Reconcile(context.Background(), ctrl.Request{})
+						if err != nil {
+							r.Log.Error(err, "error synchronizing dashboards")
+							continue
+						}
+						if result.Requeue {
+							r.Log.Info("more dashboards left to synchronize")
+							continue
+						}
+						r.Log.Info("dashboard sync complete")
+						return
+					}
+				}
+			}()
+		}
+	}
+
+	return err
 }
