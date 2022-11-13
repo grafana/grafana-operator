@@ -33,6 +33,13 @@ var (
 		Name:      "requests",
 		Help:      "requests to fetch dashboards from urls",
 	}, []string{"dashboard", "path", "method", "status"})
+
+	InitialDashboardSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: "grafana_operator",
+		Subsystem: "dashboards",
+		Name:      "initial_sync_duration",
+		Help:      "time in ms to sync dashboards after operator restart",
+	})
 )
 
 func init() {
@@ -40,4 +47,5 @@ func init() {
 	metrics.Registry.MustRegister(GrafanaFailedReconciles)
 	metrics.Registry.MustRegister(GrafanaApiRequests)
 	metrics.Registry.MustRegister(DashboardUrlRequests)
+	metrics.Registry.MustRegister(InitialDashboardSyncDuration)
 }
