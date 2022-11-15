@@ -17,7 +17,7 @@ status: Draft
 
 ## Motivation
 
-Cloud providers such Amazon Web Services (AWS) have started providing managed grafana services such as Amazon Managed Grafana which decouples to responsibilities of managing a grafana instanaces from ops personas and kubernetes environment. Amazon Managed Grafana is a fully managed service based on open-source Grafana that makes it easier for you to visualize and analyze your operational data at scale.
+Cloud providers such Amazon Web Services (AWS) have started providing managed grafana services such as Amazon Managed Grafana which decouples the responsibilities of managing a grafana instanaces from ops personas and kubernetes environment. Amazon Managed Grafana is a fully managed service based on open-source Grafana that makes it easier for you to visualize and analyze your operational data at scale.
 
 Currently Grafana operator has an integration to add Amazon Managed Service for Promethus (AMP) as a data source to a Grafana instances hosted in a kubernetes environment. As more customers starting to use managed grafana services such as Amazon Managed Grafana, expanding the Grafana operator to support remote grafana instances becomes ineviatable. With ability to integrate to managed grafana services such as Amazon Managed Grafana and create dashboards and alerting on a remote Grafana instances offloads responsibilities of managing a grafana instanaces from ops personas which helps them to focus developing the features required for their business. This helps the customer teams to move from self managed Grafana instance on their Kubernetes environments to Pay as you go model of Grafana instances provided by providers.
 
