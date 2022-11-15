@@ -2,7 +2,7 @@
 
 ## Summary
 
-Introduce integration to Amazon Managed Grafana with Grafana Operator
+Introduce integration with Amazon Managed Grafana to Grafana Operator.
 
 This document contains the complete design required for integrating Amazon Managed Grafana with Grafana Operator.
 This includes design elements to support the following with Grafana operator :
