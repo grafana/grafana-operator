@@ -19,7 +19,7 @@ status: Draft
 
 Cloud providers such Amazon Web Services (AWS) have started providing managed grafana services such as Amazon Managed Grafana which decouples the responsibilities of managing a grafana instanaces from ops personas and kubernetes environment. Amazon Managed Grafana is a fully managed service based on open-source Grafana that makes it easier for you to visualize and analyze your operational data at scale.
 
-Currently Grafana operator has an integration to add Amazon Managed Service for Promethus (AMP) as a data source to a Grafana instances hosted in a kubernetes environment. As more customers starting to use managed grafana services such as Amazon Managed Grafana, expanding the Grafana operator to support remote grafana instances becomes ineviatable. With ability to integrate to managed grafana services such as Amazon Managed Grafana and create dashboards and alerting on a remote Grafana instances offloads responsibilities of managing a grafana instanaces from ops personas which helps them to focus developing the features required for their business. This helps the customer teams to move from self managed Grafana instance on their Kubernetes environments to Pay as you go model of Grafana instances provided by providers.
+Currently Grafana operator has an integration to add Amazon Managed Service for Promethus (AMP) as a data source to Grafana instances hosted in a kubernetes environment. As more customers starting to use managed grafana services such as Amazon Managed Grafana, expanding the Grafana operator to support remote Grafana instances becomes inevitable. Adding ability to integrate with managed grafana services such as Amazon Managed Grafana and creating dashboards and alerting on a remote Grafana instances offloads responsibilities of managing a grafana instanaces from ops personas which helps them to focus on developing the features required for their business. This helps the customer teams to move from self managed Grafana instance on their Kubernetes environments to Pay as you go model on Grafana instances provided by providers.
 
 ## Out of scope
 
@@ -40,10 +40,9 @@ Currently the grafana operator supports the following for only self managed Graf
 - Setting up alerting.
 - And Many more.
 
-
 ## Proposal
 
-In short the proposal in this document is about enhancing the Grafana Operator to support the integration of managed grafana services such as Amazon Managed Grafana. We would need to enhance the current version of Grafana Operator to support the following :
+In short the proposal in this document is about enhancing the Grafana Operator to support the integration to managed grafana services such as Amazon Managed Grafana. We would need to enhance the current version of Grafana Operator to support the following :
 
 - Reading keys for accessing Amazon Managed Grafana from AWS Secrets Manager.
 - Adding AWS data sources to Amazon Managed Grafana.
@@ -52,9 +51,11 @@ In short the proposal in this document is about enhancing the Grafana Operator t
 
 ### Reading keys for accessing Amazon Managed Grafana from AWS Secrets Manager
 
-Today Grafana Operator supports Kubernetes role, rolebinding, service account mechanisms to access other kubernetes resources. We need to add a mechanism to allow Grafana Operator to read API keys for remote Grafana Instance from a secret store such as AWS Secrets Manager using [external-secrets](https://github.com/external-secrets/external-secrets). 
+Today Grafana operator supports Kubernetes role, rolebinding, service account mechanisms to access other kubernetes resources. We need to add a mechanism to allow Grafana Operator to read API keys for remote Grafana Instance from a secret store such as AWS Secrets Manager using [external-secrets](https://github.com/external-secrets/external-secrets). 
 
-For a demonstration standpoing, after `external-secrets` helm is installed, step 1 is the create a secret for AWS credentials :
+For a demonstration standpoint, after `external-secrets` helm is installed,
+
+> Step 1 is the create a secret for AWS credentials :
 
 ```.bash
 kubectl create secret generic aws-secret \
@@ -91,7 +92,6 @@ EOF
 > Finally, Grafana operator should be enhanced to read secrets like below :
 
 ```.bash
-
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
@@ -110,10 +110,9 @@ spec:
       key: grafana-api-key # Our secret-name goes here
 ```
 
-
 ### Adding AWS data sources to Amazon Managed Grafana
 
-Today Grafana Operator supports [Amazon Managed Service for Prometheus](https://github.com/grafana-operator/grafana-operator/blob/master/deploy/examples/datasources/AWS-Prometheus.yaml) as a data source. Grafana operator solution should be enhanced to add following AWS data sources (minimally Amazon CloudWatch) :
+Today Grafana operator supports [Amazon Managed Service for Prometheus](https://github.com/grafana-operator/grafana-operator/blob/master/deploy/examples/datasources/AWS-Prometheus.yaml) as a data source. Grafana operator solution should be enhanced to add following AWS data sources (minimally Amazon CloudWatch) :
 - Amazon CloudWatch
 - Amazon OpenSearch Service
 - AWS IoT SiteWise
@@ -129,7 +128,7 @@ In order to accomplish this, "Reading keys for accessing Amazon Managed Grafana 
 
 ### Creating Grafana dashboards on Amazon Managed Grafana.
 
-Today Grafana operator supports the creation of Grafana dashboards on self managed grafana instance in the cluster where Grafana operator is installed. Grafana operator should be enhanced to support creating dashboards on Amazon Managed Grafana. 
+Today Grafana operator supports the creation of Grafana dashboards on self managed grafana instance in the cluster where the Grafana operator is installed. Grafana operator should be enhanced to support creating dashboards on Amazon Managed Grafana. 
 
 In order to accomplish this, "Reading keys for accessing Amazon Managed Grafana from AWS Secrets Manager" feature above becomes a prerequisite. `GrafanaDashboard` CRD should be modified to use `grafana-secret` to create `GrafanaDashboard` on Amazon Managed Grafana. This allows customers to use GitOps approach to create Grafana Dashboards on remote Grafana instances such as Amazon Managed Grafana.
 
