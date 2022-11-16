@@ -57,7 +57,7 @@ metadata:
   namespace: grafana-operator-system
 spec:
   external:
-    url: <type ConfigMapSelector>
+    url: <external grafana url, type string>
     grafana_api_key: <type SecretKeySelector>
 ```
 
