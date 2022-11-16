@@ -42,9 +42,9 @@ In short the proposal in this document is about enhancing the Grafana Operator t
 
 ### Defining external Grafana instance as Grafana source to Grafana operator.
 
-Today Grafana operator supports self managed grafana instance as a Grafana source to Grafana operator. `Grafana` CRD of the grafana operator should be enhanced to integrate with external grafana instance.
+Today Grafana operator supports self managed grafana instance as a Grafana source to Grafana operator. `Grafana` CRD of the grafana operator should be enhanced to integrate with external grafana instance as shown below in three options.
 
-> CRD `Grafana` will look like. In this sample design, `url` should be preloaded in a ConfigMap and `grafana_api_key` should be loaded to a Secret. Choice of using external secrets or loading secrets manually is end user responsibility :
+> Option1 : CRD `Grafana` With `grafana_api_key`. In this design, `grafana_api_key` should be loaded as a Secret. Choice of using external secrets or loading secrets manually is end user responsibility :
 
 ```.yaml
 apiVersion: grafana.integreatly.org/v1beta1
@@ -61,7 +61,44 @@ spec:
     grafana_api_key: <type SecretKeySelector>
 ```
 
-Note: Adding `examples` on using accessing external Grafana instance and also documentation on adding Grafana `url`, `grafana_api_key` would really help the users to get up to speed to use external Grafana instance feature.
+> Option 2 : CRD `Grafana` with `admin_username`, `admin_password`. In this design, `admin_username`, `admin_password` should be loaded as a Secret. Choice of using external secrets or loading secrets manually is end user responsibility :
+
+```.yaml
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  annotations:
+  labels:
+    app: grafana
+  name: grafana
+  namespace: grafana-operator-system
+spec:
+  external:
+    url: <external grafana url, type string>
+    admin_username: <type SecretKeySelector>
+    admin_password: <type SecretKeySelector>
+```
+
+> Option 3 : CRD `Grafana` with both `grafana_api_key` and`admin_username`, `admin_password`. In this design, `grafana_api_key`, `admin_username`, `admin_password` should be loaded as a Secret. In this case `grafana_api_key` takes higher precedence over `admin_username`, `admin_password`. Choice of using external secrets or loading secrets manually is end user responsibility :
+
+```.yaml
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  annotations:
+  labels:
+    app: grafana
+  name: grafana
+  namespace: grafana-operator-system
+spec:
+  external:
+    url: <external grafana url, type string>
+    grafana_api_key: <type SecretKeySelector>
+    admin_username: <type SecretKeySelector>
+    admin_password: <type SecretKeySelector>
+```
+
+Note: Adding `examples` on using accessing external `url`, `grafana_api_key` would really help the users to get up to speed to use external Grafana instance feature.
 
 ## Related issues
 
