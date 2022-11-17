@@ -195,6 +195,13 @@ func getPodPriorityClassName(cr *v1alpha1.Grafana) string {
 	return ""
 }
 
+func getTopologySpreadConstraints(cr *v1alpha1.Grafana) []v13.TopologySpreadConstraint {
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.TopologySpreadConstraints != nil {
+		return cr.Spec.Deployment.TopologySpreadConstraints
+	}
+	return []v13.TopologySpreadConstraint{}
+}
+
 func getTolerations(cr *v1alpha1.Grafana) []v13.Toleration {
 	tolerations := []v13.Toleration{}
 
@@ -700,6 +707,7 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, annotations map[string]string, conf
 				ServiceAccountName:            constants.GrafanaServiceAccountName,
 				TerminationGracePeriodSeconds: getTerminationGracePeriod(cr),
 				PriorityClassName:             getPodPriorityClassName(cr),
+				TopologySpreadConstraints:     getTopologySpreadConstraints(cr),
 			},
 		},
 		Strategy: getDeploymentStrategy(cr),
