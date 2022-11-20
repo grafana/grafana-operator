@@ -25,14 +25,14 @@ var (
 		Subsystem: "grafana_api",
 		Name:      "requests",
 		Help:      "requests against the grafana api per instance",
-	}, []string{"instance_name", "path", "method", "status"})
+	}, []string{"instance_name", "method", "status"})
 
 	DashboardUrlRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "grafana_operator",
 		Subsystem: "dashboards",
 		Name:      "requests",
 		Help:      "requests to fetch dashboards from urls",
-	}, []string{"dashboard", "path", "method", "status"})
+	}, []string{"dashboard", "method", "status"})
 
 	InitialDashboardSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: "grafana_operator",

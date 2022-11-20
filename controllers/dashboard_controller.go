@@ -40,7 +40,8 @@ import (
 )
 
 const (
-	initialSyncDelay = "10s"
+	initialSyncDelay       = "10s"
+	dashboardSyncBatchSize = 100
 )
 
 // GrafanaDashboardReconciler reconciles a GrafanaDashboard object
@@ -102,9 +103,9 @@ func (r *GrafanaDashboardReconciler) syncDashboards(ctx context.Context) (ctrl.R
 
 		for _, dashboard := range dashboards {
 			// avoid bombarding the grafana instance with a large number of requests at once, limit
-			// the sync to ten dashboards per cycle. This means that it will take longer to sync
+			// the sync to a certain number of dashboards per cycle. This means that it will take longer to sync
 			// a large number of deleted dashboard crs, but that should be an edge case.
-			if dashboardsSynced >= 10 {
+			if dashboardsSynced >= dashboardSyncBatchSize {
 				return ctrl.Result{Requeue: true}, nil
 			}
 
@@ -210,9 +211,9 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 	}
 
-	// if the dashboard was successfully synced in all instance, then there is no need to reconcile again
+	// if the dashboard was successfully synced in all instances, wait for its re-sync period
 	if success {
-		return ctrl.Result{Requeue: false}, nil
+		return ctrl.Result{RequeueAfter: dashboard.GetResyncPeriod()}, nil
 	}
 
 	return ctrl.Result{RequeueAfter: RequeueDelayError}, nil
