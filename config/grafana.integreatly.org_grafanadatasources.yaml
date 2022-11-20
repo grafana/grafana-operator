@@ -127,6 +127,10 @@ spec:
                   - version
                   type: object
                 type: array
+              resyncPeriod:
+                description: how often the datasource is refreshed, defaults to 24h
+                  if not set
+                type: string
             type: object
           status:
             description: GrafanaDatasourceStatus defines the observed state of GrafanaDatasource

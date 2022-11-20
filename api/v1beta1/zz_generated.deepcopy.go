@@ -658,7 +658,7 @@ func (in *GrafanaFolderSpec) DeepCopyInto(out *GrafanaFolderSpec) {
 	*out = *in
 	if in.InstanceSelector != nil {
 		in, out := &in.InstanceSelector, &out.InstanceSelector
-		*out = new(metav1.LabelSelector)
+		*out = new(v1.LabelSelector)
 		(*in).DeepCopyInto(*out)
 	}
 }
@@ -822,6 +822,11 @@ func (in *GrafanaStatus) DeepCopyInto(out *GrafanaStatus) {
 	}
 	if in.Datasources != nil {
 		in, out := &in.Datasources, &out.Datasources
+		*out = make(NamespacedResourceList, len(*in))
+		copy(*out, *in)
+	}
+	if in.Folders != nil {
+		in, out := &in.Folders, &out.Folders
 		*out = make(NamespacedResourceList, len(*in))
 		copy(*out, *in)
 	}

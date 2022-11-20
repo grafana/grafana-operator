@@ -131,7 +131,7 @@ func main() {
 	if err = (&controllers.GrafanaFolderReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(mgr, stop); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaFolder")
 		os.Exit(1)
 	}

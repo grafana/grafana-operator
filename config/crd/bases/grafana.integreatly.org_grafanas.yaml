@@ -3711,6 +3711,10 @@ spec:
                 items:
                   type: string
                 type: array
+              folders:
+                items:
+                  type: string
+                type: array
               lastMessage:
                 type: string
               stage:

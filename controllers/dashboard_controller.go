@@ -40,8 +40,8 @@ import (
 )
 
 const (
-	initialSyncDelay       = "10s"
-	dashboardSyncBatchSize = 100
+	initialSyncDelay = "10s"
+	syncBatchSize    = 100
 )
 
 // GrafanaDashboardReconciler reconciles a GrafanaDashboard object
@@ -105,7 +105,7 @@ func (r *GrafanaDashboardReconciler) syncDashboards(ctx context.Context) (ctrl.R
 			// avoid bombarding the grafana instance with a large number of requests at once, limit
 			// the sync to a certain number of dashboards per cycle. This means that it will take longer to sync
 			// a large number of deleted dashboard crs, but that should be an edge case.
-			if dashboardsSynced >= dashboardSyncBatchSize {
+			if dashboardsSynced >= syncBatchSize {
 				return ctrl.Result{Requeue: true}, nil
 			}
 
@@ -128,7 +128,7 @@ func (r *GrafanaDashboardReconciler) syncDashboards(ctx context.Context) (ctrl.R
 	}
 
 	if dashboardsSynced > 0 {
-		syncLog.Info("successfully synced dashboards", "dashboards synced", dashboardsSynced)
+		syncLog.Info("successfully synced dashboards", "dashboards", dashboardsSynced)
 	}
 	return ctrl.Result{Requeue: false}, nil
 }
@@ -248,7 +248,10 @@ func (r *GrafanaDashboardReconciler) onDashboardDeleted(ctx context.Context, nam
 			}
 
 			grafana.Status.Dashboards = grafana.Status.Dashboards.Remove(namespace, name)
-			return r.Client.Status().Update(ctx, &grafana)
+			err = r.Client.Status().Update(ctx, &grafana)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

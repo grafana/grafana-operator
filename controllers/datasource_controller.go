@@ -96,7 +96,7 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 			// avoid bombarding the grafana instance with a large number of requests at once, limit
 			// the sync to ten dashboards per cycle. This means that it will take longer to sync
 			// a large number of deleted dashboard crs, but that should be an edge case.
-			if datasourcesSynced >= 10 {
+			if datasourcesSynced >= syncBatchSize {
 				return ctrl.Result{Requeue: true}, nil
 			}
 
@@ -124,7 +124,7 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 	}
 
 	if datasourcesSynced > 0 {
-		syncLog.Info("successfully synced datasources", "dashboards synced", datasourcesSynced)
+		syncLog.Info("successfully synced datasources", "datasources", datasourcesSynced)
 	}
 	return ctrl.Result{Requeue: false}, nil
 }
@@ -322,34 +322,32 @@ func (r *GrafanaDatasourceReconciler) SetupWithManager(mgr ctrl.Manager, stop ch
 		For(&v1beta1.GrafanaDatasource{}).
 		Complete(r)
 
-	if err != nil {
-		if err == nil {
-			d, err := time.ParseDuration(initialSyncDelay)
-			if err != nil {
-				return err
-			}
-
-			go func() {
-				for {
-					select {
-					case <-stop:
-						return
-					case <-time.After(d):
-						result, err := r.Reconcile(context.Background(), ctrl.Request{})
-						if err != nil {
-							r.Log.Error(err, "error synchronizing datasources")
-							continue
-						}
-						if result.Requeue {
-							r.Log.Info("more datasources left to synchronize")
-							continue
-						}
-						r.Log.Info("datasources sync complete")
-						return
-					}
-				}
-			}()
+	if err == nil {
+		d, err := time.ParseDuration(initialSyncDelay)
+		if err != nil {
+			return err
 		}
+
+		go func() {
+			for {
+				select {
+				case <-stop:
+					return
+				case <-time.After(d):
+					result, err := r.Reconcile(context.Background(), ctrl.Request{})
+					if err != nil {
+						r.Log.Error(err, "error synchronizing datasources")
+						continue
+					}
+					if result.Requeue {
+						r.Log.Info("more datasources left to synchronize")
+						continue
+					}
+					r.Log.Info("datasources sync complete")
+					return
+				}
+			}
+		}()
 	}
 
 	return err

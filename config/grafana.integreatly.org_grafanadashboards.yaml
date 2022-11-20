@@ -100,6 +100,8 @@ spec:
                   type: object
                 type: array
               resyncPeriod:
+                description: how often the dashboard is refreshed, defaults to 24h
+                  if not set
                 type: string
               url:
                 description: dashboard url
