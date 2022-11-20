@@ -65,6 +65,15 @@ func init() {
 	SchemeBuilder.Register(&GrafanaFolder{}, &GrafanaFolderList{})
 }
 
+func (in *GrafanaFolderList) Find(namespace string, name string) *GrafanaFolder {
+	for _, folder := range in.Items {
+		if folder.Namespace == namespace && folder.Name == name {
+			return &folder
+		}
+	}
+	return nil
+}
+
 func (in *GrafanaFolder) Hash() string {
 	hash := sha256.New()
 	hash.Write([]byte(in.Spec.Json))
