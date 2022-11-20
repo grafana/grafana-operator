@@ -32,7 +32,6 @@ func (in *instrumentedRoundTripper) RoundTrip(r *http.Request) (*http.Response, 
 	if resp != nil {
 		in.metric.WithLabelValues(
 			in.relatedResource,
-			r.URL.Path,
 			r.Method,
 			strconv.Itoa(resp.StatusCode)).
 			Inc()

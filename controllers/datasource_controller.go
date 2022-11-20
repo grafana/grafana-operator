@@ -176,6 +176,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	controllerLog.Info("found matching Grafana instances for datasource", "count", len(instances.Items))
 
+	success := true
 	for _, grafana := range instances.Items {
 		// an admin url is required to interact with grafana
 		// the instance or route might not yet be ready
@@ -189,17 +190,24 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		// grafana reconciler will pick them upi
 		err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, datasource.Spec.Plugins, fmt.Sprintf("%v-datasource", datasource.Name))
 		if err != nil {
+			success = false
 			controllerLog.Error(err, "error reconciling plugins", "datasource", datasource.Name, "grafana", grafana.Name)
 		}
 
 		// then import the dashboard into the matching grafana instances
 		err = r.onDatasourceCreated(ctx, &grafana, datasource)
 		if err != nil {
+			success = false
 			controllerLog.Error(err, "error reconciling dashboard", "datasource", datasource.Name, "grafana", grafana.Name)
 		}
 	}
 
-	return ctrl.Result{RequeueAfter: RequeueDelaySuccess}, nil
+	// if the datasource was successfully synced in all instances, wait for its re-sync period
+	if success {
+		return ctrl.Result{RequeueAfter: datasource.GetResyncPeriod()}, nil
+	}
+
+	return ctrl.Result{RequeueAfter: RequeueDelayError}, nil
 }
 
 func (r *GrafanaDatasourceReconciler) onDatasourceDeleted(ctx context.Context, namespace string, name string) error {
@@ -328,14 +336,14 @@ func (r *GrafanaDatasourceReconciler) SetupWithManager(mgr ctrl.Manager, stop ch
 					case <-time.After(d):
 						result, err := r.Reconcile(context.Background(), ctrl.Request{})
 						if err != nil {
-							r.Log.Error(err, "error synchronizing dashboards")
+							r.Log.Error(err, "error synchronizing datasources")
 							continue
 						}
 						if result.Requeue {
-							r.Log.Info("more dashboards left to synchronize")
+							r.Log.Info("more datasources left to synchronize")
 							continue
 						}
-						r.Log.Info("dashboard sync complete")
+						r.Log.Info("datasources sync complete")
 						return
 					}
 				}
