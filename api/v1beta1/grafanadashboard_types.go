@@ -112,8 +112,8 @@ func (in *GrafanaDashboard) GetSourceTypes() []DashboardSourceType {
 	return sourceTypes
 }
 
-func (in *GrafanaDashboard) GetContentCache(url string) []byte {
-	return in.Status.getContentCache(url, in.Spec.ContentCacheDuration.Duration)
+func (in *GrafanaDashboard) GetContentCache() []byte {
+	return in.Status.getContentCache(in.Spec.Url, in.Spec.ContentCacheDuration.Duration)
 }
 
 // getContentCache returns content cache when the following conditions are met: url is the same, data is not expired, gzipped data is not corrupted
