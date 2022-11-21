@@ -16,7 +16,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/record"
@@ -306,10 +305,6 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 	// dashboards first. Otherwise reuse the existing dashboard config from the CR.
 	if r.Config.GetConfigBool(config.ConfigGrafanaDashboardsSynced, false) {
 		cr.Status.InstalledDashboards = r.Config.GetDashboards("")
-	}
-
-	if cr.Spec.DashboardContentCacheDuration == nil {
-		cr.Spec.DashboardContentCacheDuration = &metav1.Duration{Duration: 0}
 	}
 
 	instance := &grafanav1alpha1.Grafana{}

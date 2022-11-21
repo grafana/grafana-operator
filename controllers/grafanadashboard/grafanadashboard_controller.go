@@ -24,6 +24,7 @@ import (
 	"math"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/go-logr/logr"
 	grafanav1alpha1 "github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
@@ -37,8 +38,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-
-	"time"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -289,7 +288,6 @@ func (r *GrafanaDashboardReconciler) reconcileDashboards(request reconcile.Reque
 		}
 
 		folder, err := grafanaClient.CreateOrUpdateFolder(folderName)
-
 		if err != nil {
 			log.Log.Error(err, "failed to get or create namespace folder for dashboard", "folder", folderName, "dashboard", request.Name)
 			r.manageError(&dashboard, err)
@@ -303,8 +301,9 @@ func (r *GrafanaDashboardReconciler) reconcileDashboards(request reconcile.Reque
 			folderId = *folder.ID
 		}
 
+		// If ContentCacheDuration is not defined at a dashboard level, fallback to the instance-level value
 		if dashboard.Spec.ContentCacheDuration == nil {
-			dashboard.Spec.ContentCacheDuration = r.state.DashboardContentCacheDuration
+			dashboard.Spec.ContentCacheDuration = &r.state.DashboardContentCacheDuration
 		}
 
 		// Process the dashboard. Use the known hash of an existing dashboard
@@ -359,7 +358,7 @@ func (r *GrafanaDashboardReconciler) reconcileDashboards(request reconcile.Reque
 
 		_, err = grafanaClient.CreateOrUpdateDashboard(processed, folderId, folderName)
 		if err != nil {
-			//log.Log.Error(err, "cannot submit dashboard %v/%v", "namespace", dashboard.Namespace, "name", dashboard.Name)
+			// log.Log.Error(err, "cannot submit dashboard %v/%v", "namespace", dashboard.Namespace, "name", dashboard.Name)
 			r.manageError(&dashboard, err)
 
 			continue
@@ -453,7 +452,6 @@ func (r *GrafanaDashboardReconciler) checkNamespaceLabels(dashboard *grafanav1al
 		return false, err
 	}
 	selector, err := metav1.LabelSelectorAsSelector(r.state.DashboardNamespaceSelector)
-
 	if err != nil {
 		return false, err
 	}
