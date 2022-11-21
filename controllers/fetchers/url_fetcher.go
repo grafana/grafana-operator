@@ -20,7 +20,7 @@ func FetchDashboardFromUrl(dashboard *v1beta1.GrafanaDashboard) ([]byte, error) 
 		return nil, err
 	}
 
-	cache := dashboard.GetContentCache(dashboard.Spec.Url)
+	cache := dashboard.GetContentCache()
 	if len(cache) > 0 {
 		return cache, nil
 	}
