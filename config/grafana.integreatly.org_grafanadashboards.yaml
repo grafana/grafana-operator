@@ -35,6 +35,9 @@ spec:
           spec:
             description: GrafanaDashboardSpec defines the desired state of GrafanaDashboard
             properties:
+              contentCacheDuration:
+                description: Cache duration for dashboards fetched from URLs
+                type: string
               instanceSelector:
                 description: selects Grafanas for import
                 properties:
@@ -103,6 +106,14 @@ spec:
           status:
             description: GrafanaDashboardStatus defines the observed state of GrafanaDashboard
             properties:
+              contentCache:
+                format: byte
+                type: string
+              contentTimestamp:
+                format: date-time
+                type: string
+              contentUrl:
+                type: string
               hash:
                 type: string
             type: object

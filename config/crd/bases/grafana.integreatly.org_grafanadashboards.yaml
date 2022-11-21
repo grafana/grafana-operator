@@ -27,6 +27,8 @@ spec:
             type: object
           spec:
             properties:
+              contentCacheDuration:
+                type: string
               instanceSelector:
                 properties:
                   matchExpressions:
@@ -70,6 +72,14 @@ spec:
             type: object
           status:
             properties:
+              contentCache:
+                format: byte
+                type: string
+              contentTimestamp:
+                format: date-time
+                type: string
+              contentUrl:
+                type: string
               hash:
                 type: string
             type: object
