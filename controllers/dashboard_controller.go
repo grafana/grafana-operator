@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	stderr "errors"
 	"fmt"
 	"strings"
 
@@ -31,12 +32,12 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/discovery"
+	"net/http"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"strconv"
 	"time"
-
-	stderr "errors"
 )
 
 const (
@@ -235,11 +236,30 @@ func (r *GrafanaDashboardReconciler) onDashboardDeleted(ctx context.Context, nam
 				return err
 			}
 
+			dash, err := grafanaClient.DashboardByUID(*uid)
+			if err != nil {
+				if !strings.Contains(err.Error(), "status: 404") {
+					return err
+				}
+			}
+			folderID := dash.Folder
+
 			err = grafanaClient.DeleteDashboardByUID(*uid)
 			if err != nil {
 				if !strings.Contains(err.Error(), "status: 404") {
 					return err
 				}
+			}
+
+			resp, err := r.DeleteFolderIfEmpty(grafanaClient, folderID)
+			if err != nil {
+				return err
+			}
+			if resp.StatusCode == 200 {
+				r.Log.Info("unused folder successfully removed")
+			}
+			if resp.StatusCode == 432 {
+				r.Log.Info("folder still in use by other dashboards")
 			}
 
 			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, fmt.Sprintf("%v-dashboard", name))
@@ -288,16 +308,20 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return err
 	}
 
+	folderID, err := r.GetOrCreateFolder(grafanaClient, cr)
+	if err != nil {
+		return errors.NewInternalError(err)
+	}
+
 	dashboardFromJson["uid"] = string(cr.UID)
 	resp, err := grafanaClient.NewDashboard(grapi.Dashboard{
 		Meta: grapi.DashboardMeta{
 			IsStarred: false,
 			Slug:      cr.Name,
-			// Folder:    ,
+			Folder:    folderID,
 			// URL:       "",
 		},
-		Model: dashboardFromJson,
-		// Folder:    0,
+		Model:     dashboardFromJson,
 		Overwrite: true,
 		Message:   "",
 	})
@@ -346,7 +370,8 @@ func (r *GrafanaDashboardReconciler) UpdateStatus(ctx context.Context, cr *v1bet
 	return r.Client.Status().Update(ctx, cr)
 }
 
-func (r *GrafanaDashboardReconciler) Exists(client *grapi.Client, cr *v1beta1.GrafanaDashboard) (bool, error) {
+func (r *GrafanaDashboardReconciler) Exists(client *grapi.Client,
+	cr *v1beta1.GrafanaDashboard) (bool, error) {
 	dashboards, err := client.Dashboards()
 	if err != nil {
 		return false, err
@@ -357,6 +382,73 @@ func (r *GrafanaDashboardReconciler) Exists(client *grapi.Client, cr *v1beta1.Gr
 		}
 	}
 	return false, nil
+}
+
+func (r *GrafanaDashboardReconciler) GetOrCreateFolder(client *grapi.Client,
+	cr *v1beta1.GrafanaDashboard) (int64, error) {
+	folderID, err := r.GetFolderID(client, cr)
+	if err != nil {
+		return 0, err
+	}
+	if folderID != 0 {
+		return folderID, nil
+	}
+
+	// Folder wasn't found, let's create it
+	resp, err := client.NewFolder(cr.Spec.FolderTitle)
+	if err != nil {
+		return 0, err
+	}
+	return resp.ID, nil
+}
+
+func (r *GrafanaDashboardReconciler) GetFolderID(client *grapi.Client,
+	cr *v1beta1.GrafanaDashboard) (int64, error) {
+	folders, err := client.Folders()
+	if err != nil {
+		return 0, err
+	}
+
+	for _, folder := range folders {
+		if folder.Title == cr.Spec.FolderTitle {
+			return folder.ID, nil
+		}
+		continue
+	}
+	return 0, nil
+}
+
+func (r *GrafanaDashboardReconciler) DeleteFolderIfEmpty(client *grapi.Client,
+	folderID int64) (http.Response, error) {
+
+	dashboards, err := client.Dashboards()
+	if err != nil {
+		return http.Response{
+			Status:     "internal grafana client error getting dashboards",
+			StatusCode: 500,
+		}, err
+	}
+
+	for _, dashboard := range dashboards {
+		if int64(dashboard.FolderID) == folderID {
+			return http.Response{
+				Status:     "resource is still in use",
+				StatusCode: 423, //Locked return code
+			}, err
+		}
+		continue
+	}
+
+	if err = client.DeleteFolder(strconv.FormatInt(folderID, 10)); err != nil {
+		return http.Response{
+			Status:     "internal grafana client error deleting grafana folder",
+			StatusCode: 500,
+		}, err
+	}
+	return http.Response{
+		Status:     "grafana folder deleted",
+		StatusCode: 200,
+	}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

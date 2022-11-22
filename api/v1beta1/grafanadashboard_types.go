@@ -51,6 +51,10 @@ type GrafanaDashboardSpec struct {
 	// selects Grafanas for import
 	InstanceSelector *metav1.LabelSelector `json:"instanceSelector,omitempty"`
 
+	// folder assignment for dashboard
+	// +optional
+	FolderTitle string `json:"folder,omitempty"`
+
 	// plugins
 	// +optional
 	Plugins PluginList `json:"plugins,omitempty"`
