@@ -41,7 +41,7 @@ type GrafanaSpec struct {
 
 	// DashboardContentCacheDuration sets a default for when a `GrafanaDashboard` resource doesn't specify a `contentCacheDuration`.
 	// If left unset or 0 the default behavior is to cache indefinitely.
-	DashboardContentCacheDuration *metav1.Duration `json:"dashboardContentCacheDuration,omitempty"`
+	DashboardContentCacheDuration metav1.Duration `json:"dashboardContentCacheDuration,omitempty"`
 }
 
 type ReadinessProbeSpec struct {
@@ -107,15 +107,16 @@ type GrafanaDeployment struct {
 	Annotations map[string]string `json:"annotations,omitempty"`
 	Labels      map[string]string `json:"labels,omitempty"`
 	// +nullable
-	Replicas                      *int32                 `json:"replicas,omitempty"`
-	NodeSelector                  map[string]string      `json:"nodeSelector,omitempty"`
-	Tolerations                   []v1.Toleration        `json:"tolerations,omitempty"`
-	Affinity                      *v1.Affinity           `json:"affinity,omitempty"`
-	SecurityContext               *v1.PodSecurityContext `json:"securityContext,omitempty"`
-	ContainerSecurityContext      *v1.SecurityContext    `json:"containerSecurityContext,omitempty"`
-	TerminationGracePeriodSeconds *int64                 `json:"terminationGracePeriodSeconds,omitempty"`
-	EnvFrom                       []v1.EnvFromSource     `json:"envFrom,omitempty"`
-	Env                           []v1.EnvVar            `json:"env,omitempty"`
+	Replicas                      *int32                        `json:"replicas,omitempty"`
+	NodeSelector                  map[string]string             `json:"nodeSelector,omitempty"`
+	Tolerations                   []v1.Toleration               `json:"tolerations,omitempty"`
+	Affinity                      *v1.Affinity                  `json:"affinity,omitempty"`
+	TopologySpreadConstraints     []v1.TopologySpreadConstraint `json:"topologySpreadConstraints,omitempty"`
+	SecurityContext               *v1.PodSecurityContext        `json:"securityContext,omitempty"`
+	ContainerSecurityContext      *v1.SecurityContext           `json:"containerSecurityContext,omitempty"`
+	TerminationGracePeriodSeconds *int64                        `json:"terminationGracePeriodSeconds,omitempty"`
+	EnvFrom                       []v1.EnvFromSource            `json:"envFrom,omitempty"`
+	Env                           []v1.EnvVar                   `json:"env,omitempty"`
 	// +nullable
 	SkipCreateAdminAccount *bool  `json:"skipCreateAdminAccount,omitempty"`
 	PriorityClassName      string `json:"priorityClassName,omitempty"`

@@ -18,14 +18,14 @@ package v1alpha1
 
 import (
 	"bytes"
-	"crypto/sha1" // nolint
+	"compress/gzip"
+	"crypto/sha1" //nolint
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
-
-	"compress/gzip"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -82,7 +82,7 @@ type GrafanaDashboardRef struct {
 
 type GrafanaDashboardStatus struct {
 	ContentCache     []byte                 `json:"contentCache,omitempty"`
-	ContentTimestamp *metav1.Time           `json:"contentTimestamp,omitempty"`
+	ContentTimestamp metav1.Time            `json:"contentTimestamp,omitempty"`
 	ContentUrl       string                 `json:"contentUrl,omitempty"`
 	Error            *GrafanaDashboardError `json:"error,omitempty"`
 }
@@ -171,7 +171,7 @@ func (d *GrafanaDashboard) Parse(optional string) (map[string]interface{}, error
 		dashboardBytes = []byte(optional)
 	}
 
-	var parsed = make(map[string]interface{})
+	parsed := make(map[string]interface{})
 	err := json.Unmarshal(dashboardBytes, &parsed)
 	return parsed, err
 }
@@ -189,6 +189,34 @@ func (d *GrafanaDashboard) UID() string {
 	// Use sha1 to keep the hash limit at 40 bytes which is what
 	// Grafana allows for UIDs
 	return fmt.Sprintf("%x", sha1.Sum([]byte(d.Namespace+d.Name))) // nolint
+}
+
+func (d *GrafanaDashboard) GetContentCache(url string) string {
+	var cacheDuration time.Duration
+	if d.Spec.ContentCacheDuration != nil {
+		cacheDuration = d.Spec.ContentCacheDuration.Duration
+	}
+
+	return d.Status.getContentCache(url, cacheDuration)
+}
+
+// getContentCache returns content cache when the following conditions are met: url is the same, data is not expired, gzipped data is not corrupted
+func (s *GrafanaDashboardStatus) getContentCache(url string, cacheDuration time.Duration) string {
+	if s.ContentUrl != url {
+		return ""
+	}
+
+	notExpired := cacheDuration <= 0 || s.ContentTimestamp.Add(cacheDuration).After(time.Now())
+	if !notExpired {
+		return ""
+	}
+
+	cache, err := Gunzip(s.ContentCache)
+	if err != nil {
+		return ""
+	}
+
+	return string(cache)
 }
 
 func Gunzip(compressed []byte) ([]byte, error) {

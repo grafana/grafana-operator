@@ -202,3 +202,56 @@ func Test_getReadinessProbe(t *testing.T) {
 		assert.Equal(t, want, got)
 	})
 }
+
+func Test_getTopologySpreadConstraints(t *testing.T) {
+	t.Run("Default empty topology constraints", func(t *testing.T) {
+		cr := &v1alpha1.Grafana{
+			Spec: v1alpha1.GrafanaSpec{},
+		}
+
+		got := getTopologySpreadConstraints(cr)
+		want := []v1.TopologySpreadConstraint{}
+
+		assert.Equal(t, want, got)
+	})
+
+	t.Run("Specified empty constraints", func(t *testing.T) {
+		cr := &v1alpha1.Grafana{
+			Spec: v1alpha1.GrafanaSpec{
+				Deployment: &v1alpha1.GrafanaDeployment{
+					TopologySpreadConstraints: []v1.TopologySpreadConstraint{},
+				},
+			},
+		}
+
+		got := getTopologySpreadConstraints(cr)
+		want := []v1.TopologySpreadConstraint{}
+
+		assert.Equal(t, want, got)
+	})
+
+	t.Run("Specified non-empty constraints", func(t *testing.T) {
+		cr := &v1alpha1.Grafana{
+			Spec: v1alpha1.GrafanaSpec{
+				Deployment: &v1alpha1.GrafanaDeployment{
+					TopologySpreadConstraints: []v1.TopologySpreadConstraint{
+						{
+							MaxSkew:     1,
+							TopologyKey: "topology.kubernetes.io/zone",
+						},
+					},
+				},
+			},
+		}
+
+		got := getTopologySpreadConstraints(cr)
+		want := []v1.TopologySpreadConstraint{
+			{
+				MaxSkew:     1,
+				TopologyKey: "topology.kubernetes.io/zone",
+			},
+		}
+
+		assert.Equal(t, want, got)
+	})
+}
