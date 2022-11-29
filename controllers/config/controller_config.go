@@ -25,7 +25,7 @@ const (
 	GrafanaProvisioningDashboardsPath       = "/etc/grafana/provisioning/dashboards"
 	GrafanaProvisioningNotifiersPath        = "/etc/grafana/provisioning/notifiers"
 	PluginsInitContainerImage               = "quay.io/grafana-operator/grafana_plugins_init"
-	PluginsInitContainerTag                 = "0.0.6"
+	PluginsInitContainerTag                 = "0.1.0"
 	PluginsUrl                              = "https://grafana.com/api/plugins/%s/versions/%s"
 	SecretsMountDir                         = "/etc/grafana-secrets/" // #nosec G101
 	ConfigMapsMountDir                      = "/etc/grafana-configmaps/"
