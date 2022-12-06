@@ -79,7 +79,7 @@ func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result,
 	// sync folders, delete folders from grafana that do no longer have a cr
 	foldersToDelete := map[*v1beta1.Grafana][]v1beta1.NamespacedResource{}
 	for _, grafana := range grafanas.Items {
-		for _, folder := range grafana.Status.Dashboards {
+		for _, folder := range grafana.Status.Folders {
 			if allFolders.Find(folder.Namespace(), folder.Name()) == nil {
 				foldersToDelete[&grafana] = append(foldersToDelete[&grafana], folder)
 			}
@@ -104,10 +104,14 @@ func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result,
 			namespace, name, uid := folder.Split()
 			err = grafanaClient.DeleteDashboardByUID(uid)
 			if err != nil {
-				return ctrl.Result{Requeue: false}, err
+				if strings.Contains(err.Error(), "status: 404") {
+					syncLog.Info("folder no longer exists", "namespace", namespace, "name", name)
+				} else {
+					return ctrl.Result{Requeue: false}, err
+				}
 			}
 
-			grafana.Status.Dashboards = grafana.Status.Dashboards.Remove(namespace, name)
+			grafana.Status.Folders = grafana.Status.Folders.Remove(namespace, name)
 			foldersSynced += 1
 		}
 
@@ -237,7 +241,6 @@ func (r *GrafanaFolderReconciler) SetupWithManager(mgr ctrl.Manager, stop chan b
 }
 
 func (r *GrafanaFolderReconciler) onFolderDeleted(ctx context.Context, namespace string, name string) error {
-
 	list := v1beta1.GrafanaList{}
 	var opts []client.ListOption
 	err := r.Client.List(ctx, &list, opts...)

@@ -103,7 +103,11 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 			namespace, name, uid := datasource.Split()
 			instanceDatasource, err := grafanaClient.DataSourceByUID(uid)
 			if err != nil {
-				return ctrl.Result{Requeue: false}, err
+				if strings.Contains(err.Error(), "status: 404") {
+					syncLog.Info("datasource no longer exists", "namespace", namespace, "name", name)
+				} else {
+					return ctrl.Result{Requeue: false}, err
+				}
 			}
 
 			err = grafanaClient.DeleteDataSource(instanceDatasource.ID)
