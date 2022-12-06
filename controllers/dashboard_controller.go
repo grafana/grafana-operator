@@ -113,7 +113,11 @@ func (r *GrafanaDashboardReconciler) syncDashboards(ctx context.Context) (ctrl.R
 			namespace, name, uid := dashboard.Split()
 			err = grafanaClient.DeleteDashboardByUID(uid)
 			if err != nil {
-				return ctrl.Result{Requeue: false}, err
+				if strings.Contains(err.Error(), "status: 404") {
+					syncLog.Info("dashboard no longer exists", "namespace", namespace, "name", name)
+				} else {
+					return ctrl.Result{Requeue: false}, err
+				}
 			}
 
 			grafana.Status.Dashboards = grafana.Status.Dashboards.Remove(namespace, name)
@@ -242,7 +246,6 @@ func (r *GrafanaDashboardReconciler) onDashboardDeleted(ctx context.Context, nam
 					return err
 				}
 			}
-			folderID := dash.Folder
 
 			err = grafanaClient.DeleteDashboardByUID(*uid)
 			if err != nil {
@@ -251,15 +254,17 @@ func (r *GrafanaDashboardReconciler) onDashboardDeleted(ctx context.Context, nam
 				}
 			}
 
-			resp, err := r.DeleteFolderIfEmpty(grafanaClient, folderID)
-			if err != nil {
-				return err
-			}
-			if resp.StatusCode == 200 {
-				r.Log.Info("unused folder successfully removed")
-			}
-			if resp.StatusCode == 432 {
-				r.Log.Info("folder still in use by other dashboards")
+			if dash != nil && dash.Folder > 0 {
+				resp, err := r.DeleteFolderIfEmpty(grafanaClient, dash.Folder)
+				if err != nil {
+					return err
+				}
+				if resp.StatusCode == 200 {
+					r.Log.Info("unused folder successfully removed")
+				}
+				if resp.StatusCode == 432 {
+					r.Log.Info("folder still in use by other dashboards")
+				}
 			}
 
 			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, fmt.Sprintf("%v-dashboard", name))
