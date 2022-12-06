@@ -384,8 +384,11 @@ func (r *GrafanaDashboardReconciler) Exists(client *grapi.Client,
 	return false, nil
 }
 
-func (r *GrafanaDashboardReconciler) GetOrCreateFolder(client *grapi.Client,
-	cr *v1beta1.GrafanaDashboard) (int64, error) {
+func (r *GrafanaDashboardReconciler) GetOrCreateFolder(client *grapi.Client, cr *v1beta1.GrafanaDashboard) (int64, error) {
+	if cr.Spec.FolderTitle == "" {
+		return 0, nil
+	}
+
 	folderID, err := r.GetFolderID(client, cr)
 	if err != nil {
 		return 0, err
