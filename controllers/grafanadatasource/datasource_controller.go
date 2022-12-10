@@ -298,6 +298,12 @@ func (r *GrafanaDatasourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		}
 		return requests
 	}
+	go func() {
+		for stateChange := range common.DatasourceControllerEvents {
+			// Controller state updated
+			r.state = stateChange
+		}
+	}()
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&integreatlyorgv1alpha1.GrafanaDataSource{}).
 		Watches(&source.Kind{Type: &v1.ConfigMap{}}, handler.EnqueueRequestsFromMapFunc(cmHandler)).

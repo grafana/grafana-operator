@@ -277,7 +277,7 @@ func main() { // nolint
 	}
 
 	log.Log.Info("SetupWithManager GrafanaDatasource.")
-	dataSourceReconciler := &grafanadatasource.GrafanaDatasourceReconciler{
+	if err = (&grafanadatasource.GrafanaDatasourceReconciler{
 		Client: mgr.GetClient(),
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
@@ -289,22 +289,23 @@ func main() { // nolint
 		Logger:   ctrl.Log.WithName("controllers").WithName("GrafanaDatasource"),
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("GrafanaDatasource"),
-	}
-	//// run state handler
-	//go func() {
-	//	fmt.Printf("run events handler")
-	//	for stateChange := range common.ControllerEvents {
-	//		// Controller state updated
-	//		fmt.Printf("caught an event %v\n", stateChange)
-	//		dataSourceReconciler.state = stateChange
-	//	}
-	//}()
-
-	if err = dataSourceReconciler.SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDatasource")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder
+
+	// run state handler
+	go func() {
+		fmt.Printf("run events handler")
+		for stateChange := range common.ControllerEvents {
+			// Controller state updated
+			common.DashboardControllerEvents <- stateChange
+			common.DashboardFolderControllerEvents <- stateChange
+			common.DatasourceControllerEvents <- stateChange
+			common.NotificationChannelControllerEvents <- stateChange
+		}
+	}()
 
 	if err := mgr.AddHealthzCheck("health", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")

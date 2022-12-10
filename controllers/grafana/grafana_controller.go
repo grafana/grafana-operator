@@ -319,7 +319,8 @@ func (r *ReconcileGrafana) manageSuccess(cr *grafanav1alpha1.Grafana, state *com
 	}
 
 	if !reflect.DeepEqual(cr.Status, instance.Status) {
-		err := r.Client.Status().Update(r.Context, cr)
+		instance.Status = cr.Status
+		err := r.Client.Status().Update(r.Context, instance)
 		if err != nil {
 			return r.manageError(cr, err, request)
 		}

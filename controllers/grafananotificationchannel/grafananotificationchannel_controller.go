@@ -125,7 +125,7 @@ func SetupWithManager(mgr ctrl.Manager, r reconcile.Reconciler, namespace string
 	}()
 
 	go func() {
-		for stateChange := range common.ControllerEvents {
+		for stateChange := range common.NotificationChannelControllerEvents {
 			// Controller state updated
 			ref.state = stateChange
 		}
