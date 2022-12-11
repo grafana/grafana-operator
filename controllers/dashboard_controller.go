@@ -475,6 +475,8 @@ func (r *GrafanaDashboardReconciler) SetupWithManager(mgr ctrl.Manager, ctx cont
 		go func() {
 			for {
 				select {
+				case <-ctx.Done():
+					return
 				case <-time.After(d):
 					result, err := r.Reconcile(ctx, ctrl.Request{})
 					if err != nil {

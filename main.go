@@ -21,6 +21,7 @@ import (
 	"flag"
 	"os"
 	"os/signal"
+	"syscall"
 
 	discovery2 "k8s.io/client-go/discovery"
 
@@ -79,7 +80,7 @@ func main() {
 		setupLog.Info("operator restricted to namespace", "namespace", namespace)
 	}
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGPIPE)
 	defer stop()
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
