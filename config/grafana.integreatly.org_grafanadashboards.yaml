@@ -38,6 +38,9 @@ spec:
               contentCacheDuration:
                 description: Cache duration for dashboards fetched from URLs
                 type: string
+              folder:
+                description: folder assignment for dashboard
+                type: string
               instanceSelector:
                 description: selects Grafanas for import
                 properties:
