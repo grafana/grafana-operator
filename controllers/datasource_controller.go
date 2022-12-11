@@ -20,9 +20,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/grafana-operator/grafana-operator-experimental/controllers/metrics"
 	"strings"
 	"time"
+
+	"github.com/grafana-operator/grafana-operator-experimental/controllers/metrics"
 
 	"github.com/go-logr/logr"
 	client2 "github.com/grafana-operator/grafana-operator-experimental/controllers/client"
@@ -321,7 +322,7 @@ func (r *GrafanaDatasourceReconciler) ExistingId(client *gapi.Client, cr *v1beta
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *GrafanaDatasourceReconciler) SetupWithManager(mgr ctrl.Manager, stop chan bool) error {
+func (r *GrafanaDatasourceReconciler) SetupWithManager(mgr ctrl.Manager, ctx context.Context) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.GrafanaDatasource{}).
 		Complete(r)
@@ -335,10 +336,8 @@ func (r *GrafanaDatasourceReconciler) SetupWithManager(mgr ctrl.Manager, stop ch
 		go func() {
 			for {
 				select {
-				case <-stop:
-					return
 				case <-time.After(d):
-					result, err := r.Reconcile(context.Background(), ctrl.Request{})
+					result, err := r.Reconcile(ctx, ctrl.Request{})
 					if err != nil {
 						r.Log.Error(err, "error synchronizing datasources")
 						continue

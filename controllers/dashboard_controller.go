@@ -23,6 +23,10 @@ import (
 	"fmt"
 	"strings"
 
+	"net/http"
+	"strconv"
+	"time"
+
 	"github.com/go-logr/logr"
 	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	client2 "github.com/grafana-operator/grafana-operator-experimental/controllers/client"
@@ -32,12 +36,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/discovery"
-	"net/http"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"strconv"
-	"time"
 )
 
 const (
@@ -460,7 +461,7 @@ func (r *GrafanaDashboardReconciler) DeleteFolderIfEmpty(client *grapi.Client,
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *GrafanaDashboardReconciler) SetupWithManager(mgr ctrl.Manager, stop chan bool) error {
+func (r *GrafanaDashboardReconciler) SetupWithManager(mgr ctrl.Manager, ctx context.Context) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.GrafanaDashboard{}).
 		Complete(r)
@@ -474,10 +475,8 @@ func (r *GrafanaDashboardReconciler) SetupWithManager(mgr ctrl.Manager, stop cha
 		go func() {
 			for {
 				select {
-				case <-stop:
-					return
 				case <-time.After(d):
-					result, err := r.Reconcile(context.Background(), ctrl.Request{})
+					result, err := r.Reconcile(ctx, ctrl.Request{})
 					if err != nil {
 						r.Log.Error(err, "error synchronizing dashboards")
 						continue

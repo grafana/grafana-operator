@@ -20,13 +20,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/go-logr/logr"
 	client2 "github.com/grafana-operator/grafana-operator-experimental/controllers/client"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/metrics"
 	grapi "github.com/grafana/grafana-api-golang-client"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"strings"
-	"time"
 
 	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -204,7 +205,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *GrafanaFolderReconciler) SetupWithManager(mgr ctrl.Manager, stop chan bool) error {
+func (r *GrafanaFolderReconciler) SetupWithManager(mgr ctrl.Manager, ctx context.Context) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&grafanav1beta1.GrafanaFolder{}).
 		Complete(r)
@@ -218,10 +219,8 @@ func (r *GrafanaFolderReconciler) SetupWithManager(mgr ctrl.Manager, stop chan b
 		go func() {
 			for {
 				select {
-				case <-stop:
-					return
 				case <-time.After(d):
-					result, err := r.Reconcile(context.Background(), ctrl.Request{})
+					result, err := r.Reconcile(ctx, ctrl.Request{})
 					if err != nil {
 						r.Log.Error(err, "error synchronizing folders")
 						continue
