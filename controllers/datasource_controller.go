@@ -336,6 +336,8 @@ func (r *GrafanaDatasourceReconciler) SetupWithManager(mgr ctrl.Manager, ctx con
 		go func() {
 			for {
 				select {
+				case <-ctx.Done():
+					return
 				case <-time.After(d):
 					result, err := r.Reconcile(ctx, ctrl.Request{})
 					if err != nil {
