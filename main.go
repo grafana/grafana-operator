@@ -143,4 +143,7 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+
+	<-ctx.Done()
+	setupLog.Info("SIGTERM request gotten, shutting down operator")
 }
