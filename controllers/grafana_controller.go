@@ -102,9 +102,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		nextStatus.StageStatus = status
 
 		if status != grafanav1beta1.OperatorStageResultSuccess {
-			controllerLog.Info("stage in progress", "stage", stage)
-			finished = false
-			break
+			return ctrl.Result{RequeueAfter: RequeueDelayError}, nil
 		}
 	}
 
