@@ -64,13 +64,17 @@ func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Gr
 
 	// try to assign the admin url
 	if cr.PreferIngress() {
-		if len(ingress.Status.LoadBalancer.Ingress) > 0 {
-			ingress := ingress.Status.LoadBalancer.Ingress[0]
-			if ingress.Hostname != "" {
-				status.AdminUrl = fmt.Sprintf("https://%v", ingress.Hostname)
-			}
-			status.AdminUrl = fmt.Sprintf("https://%v", ingress.IP)
+		adminURL := r.getIngressAdminURL(ingress)
+
+		if len(ingress.Status.LoadBalancer.Ingress) == 0 {
+			return v1beta1.OperatorStageResultInProgress, fmt.Errorf("ingress is not ready yet")
 		}
+
+		if adminURL == "" {
+			return v1beta1.OperatorStageResultFailed, fmt.Errorf("ingress spec is incomplete")
+		}
+
+		status.AdminUrl = adminURL
 	}
 
 	return v1beta1.OperatorStageResultSuccess, nil
@@ -96,6 +100,42 @@ func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Graf
 	}
 
 	return v1beta1.OperatorStageResultSuccess, nil
+}
+
+// getIngressAdminURL returns the first valid URL (Host field is set) from the ingress spec
+func (r *IngressReconciler) getIngressAdminURL(ingress *v1.Ingress) string {
+	if ingress == nil {
+		return ""
+	}
+
+	protocol := "http"
+	var hostname string
+	var adminURL string
+
+	// An ingress rule might not have the field Host specified, better not to consider such rules
+	for _, rule := range ingress.Spec.Rules {
+		if rule.Host != "" {
+			hostname = rule.Host
+			break
+		}
+	}
+
+	// If we can find the target host in any of the IngressTLS, then we should use https protocol
+	for _, tls := range ingress.Spec.TLS {
+		for _, h := range tls.Hosts {
+			if h == hostname {
+				protocol = "https"
+				break
+			}
+		}
+	}
+
+	// adminUrl should not be empty only in case hostname is found, otherwise we'll have broken URLs like "http://"
+	if hostname != "" {
+		adminURL = fmt.Sprintf("%v://%v", protocol, hostname)
+	}
+
+	return adminURL
 }
 
 func (r *IngressReconciler) isOpenShift() (bool, error) {
