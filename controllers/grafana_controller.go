@@ -39,8 +39,7 @@ import (
 )
 
 const (
-	RequeueDelaySuccess = 10 * time.Second
-	RequeueDelayError   = 10 * time.Second
+	RequeueDelay = 10 * time.Second
 )
 
 // GrafanaReconciler reconciles a Grafana object
@@ -106,7 +105,9 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		nextStatus.StageStatus = status
 
 		if status != grafanav1beta1.OperatorStageResultSuccess {
-			return ctrl.Result{RequeueAfter: RequeueDelayError}, nil
+			controllerLog.Info("stage in progress", "stage", stage)
+			finished = false
+			break
 		}
 	}
 
@@ -124,9 +125,16 @@ func (r *GrafanaReconciler) updateStatus(cr *grafanav1beta1.Grafana, nextStatus 
 		if err != nil {
 			return ctrl.Result{
 				Requeue:      true,
-				RequeueAfter: RequeueDelayError,
+				RequeueAfter: RequeueDelay,
 			}, err
 		}
+	}
+
+	if nextStatus.StageStatus != grafanav1beta1.OperatorStageResultSuccess {
+		return ctrl.Result{
+			Requeue:      true,
+			RequeueAfter: RequeueDelay,
+		}, nil
 	}
 
 	return ctrl.Result{
