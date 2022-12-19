@@ -161,23 +161,23 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if err != nil {
 		if errors.IsNotFound(err) {
 			if err := r.onFolderDeleted(ctx, req.Namespace, req.Name); err != nil {
-				return ctrl.Result{RequeueAfter: RequeueDelayError}, err
+				return ctrl.Result{RequeueAfter: RequeueDelay}, err
 			}
 			return ctrl.Result{}, nil
 		}
 		controllerLog.Error(err, "error getting grafana folder cr")
-		return ctrl.Result{RequeueAfter: RequeueDelayError}, err
+		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
 
 	if folder.Spec.InstanceSelector == nil {
 		controllerLog.Info("no instance selector found for folder, nothing to do", "name", folder.Name, "namespace", folder.Namespace)
-		return ctrl.Result{RequeueAfter: RequeueDelayError}, nil
+		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
 	instances, err := GetMatchingInstances(ctx, r.Client, folder.Spec.InstanceSelector)
 	if err != nil {
 		controllerLog.Error(err, "could not find matching instances", "name", folder.Name)
-		return ctrl.Result{RequeueAfter: RequeueDelayError}, err
+		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
 	// your logic here
 

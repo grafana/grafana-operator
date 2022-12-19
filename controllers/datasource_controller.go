@@ -156,23 +156,23 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		if errors.IsNotFound(err) {
 			err = r.onDatasourceDeleted(ctx, req.Namespace, req.Name)
 			if err != nil {
-				return ctrl.Result{RequeueAfter: RequeueDelayError}, err
+				return ctrl.Result{RequeueAfter: RequeueDelay}, err
 			}
 			return ctrl.Result{}, nil
 		}
 		controllerLog.Error(err, "error getting grafana dashboard cr")
-		return ctrl.Result{RequeueAfter: RequeueDelayError}, err
+		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
 
 	if datasource.Spec.InstanceSelector == nil {
 		controllerLog.Info("no instance selector found for datasource, nothing to do", "name", datasource.Name, "namespace", datasource.Namespace)
-		return ctrl.Result{RequeueAfter: RequeueDelayError}, err
+		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
 
 	instances, err := GetMatchingInstances(ctx, r.Client, datasource.Spec.InstanceSelector)
 	if err != nil {
 		controllerLog.Error(err, "could not find matching instance", "name", datasource.Name)
-		return ctrl.Result{RequeueAfter: RequeueDelayError}, err
+		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
 
 	if len(instances.Items) == 0 {
@@ -213,7 +213,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{RequeueAfter: datasource.GetResyncPeriod()}, nil
 	}
 
-	return ctrl.Result{RequeueAfter: RequeueDelayError}, nil
+	return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 }
 
 func (r *GrafanaDatasourceReconciler) onDatasourceDeleted(ctx context.Context, namespace string, name string) error {
