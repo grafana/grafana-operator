@@ -93,6 +93,8 @@ func (c *ControllerConfig) SetPluginsFor(dashboard *v1alpha1.GrafanaDashboard) {
 }
 
 func (c *ControllerConfig) RemovePluginsFor(dashboard *v1alpha1.GrafanaDashboardRef) {
+	c.Lock()
+	defer c.Unlock()
 	id := c.GetDashboardId(dashboard.Namespace, dashboard.Name)
 	delete(c.Plugins, id)
 }
