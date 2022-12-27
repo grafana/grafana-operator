@@ -38,6 +38,19 @@ spec:
               contentCacheDuration:
                 description: Cache duration for dashboards fetched from URLs
                 type: string
+              datasources:
+                description: maps required data sources to existing ones
+                items:
+                  properties:
+                    datasourceName:
+                      type: string
+                    inputName:
+                      type: string
+                  required:
+                  - datasourceName
+                  - inputName
+                  type: object
+                type: array
               folder:
                 description: folder assignment for dashboard
                 type: string

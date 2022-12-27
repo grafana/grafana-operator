@@ -13,12 +13,16 @@ spec:
       mode: "console"
     auth:
       disable_login_form: "false"
+    security:
+      admin_user: root
+      admin_password: secret
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
   name: grafanadashboard-sample
 spec:
+  resyncPeriod: 30s
   instanceSelector:
     matchLabels:
       dashboards: "grafana"

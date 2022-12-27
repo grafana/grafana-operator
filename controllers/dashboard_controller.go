@@ -17,6 +17,7 @@ limitations under the License.
 package controllers
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	stderr "errors"
@@ -289,6 +290,11 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	if err != nil {
 		return err
 	}
+	
+	dashboardJson, err = r.resolveDatasources(cr, dashboardJson)
+	if err != nil {
+		return err
+	}
 
 	// Dashboards come from different sources, whereas Spec.Json is used to calculate hash
 	// So, we should keep the field updated to make sure changes in dashboards get noticed
@@ -346,6 +352,24 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	}
 
 	return r.UpdateStatus(ctx, cr)
+}
+
+// map data sources that are required in the dashboard to data sources that exist in the instance
+func (r *GrafanaDashboardReconciler) resolveDatasources(dashboard *v1beta1.GrafanaDashboard, dashboardJson []byte) ([]byte, error) {
+	if len(dashboard.Spec.Datasources) == 0 {
+		return dashboardJson, nil
+	}
+
+	for _, input := range dashboard.Spec.Datasources {
+		if input.DatasourceName == "" || input.InputName == "" {
+			return nil, stderr.New(fmt.Sprintf("invalid datasource input rule in dashboard %v/%v, input or datasource empty", dashboard.Namespace, dashboard.Name))
+		}
+
+		searchValue := fmt.Sprintf("${%s}", input.InputName)
+		dashboardJson = bytes.ReplaceAll(dashboardJson, []byte(searchValue), []byte(input.DatasourceName))
+	}
+
+	return dashboardJson, nil
 }
 
 // fetchDashboardJson delegates obtaining the dashboard json definition to one of the known fetchers, for example
