@@ -29,6 +29,18 @@ spec:
             properties:
               contentCacheDuration:
                 type: string
+              datasources:
+                items:
+                  properties:
+                    datasourceName:
+                      type: string
+                    inputName:
+                      type: string
+                  required:
+                  - datasourceName
+                  - inputName
+                  type: object
+                type: array
               folder:
                 type: string
               instanceSelector:

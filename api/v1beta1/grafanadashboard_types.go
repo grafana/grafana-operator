@@ -32,8 +32,13 @@ type DashboardSourceType string
 const (
 	DashboardSourceTypeRawJson DashboardSourceType = "json"
 	DashboardSourceTypeUrl     DashboardSourceType = "url"
-	DefaultResyncPeriod                            = "24h"
+	DefaultResyncPeriod                            = "5m"
 )
+
+type GrafanaDashboardDatasource struct {
+	InputName      string `json:"inputName"`
+	DatasourceName string `json:"datasourceName"`
+}
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -65,6 +70,10 @@ type GrafanaDashboardSpec struct {
 	// how often the dashboard is refreshed, defaults to 24h if not set
 	// +optional
 	ResyncPeriod string `json:"resyncPeriod,omitempty"`
+
+	// maps required data sources to existing ones
+	// +optional
+	Datasources []GrafanaDashboardDatasource `json:"datasources,omitempty"`
 }
 
 // GrafanaDashboardStatus defines the observed state of GrafanaDashboard
