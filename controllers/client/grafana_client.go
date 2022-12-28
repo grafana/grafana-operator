@@ -2,13 +2,13 @@ package client
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"github.com/grafana-operator/grafana-operator-experimental/controllers/metrics"
-	v1 "k8s.io/api/core/v1"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/grafana-operator/grafana-operator-experimental/controllers/metrics"
+	v1 "k8s.io/api/core/v1"
 
 	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/config"
@@ -20,20 +20,10 @@ import (
 type grafanaAdminCredentials struct {
 	username string
 	password string
+	apikey   string
 }
 
 func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (*grafanaAdminCredentials, error) {
-	deployment := model.GetGrafanaDeployment(grafana, nil)
-	selector := client.ObjectKey{
-		Namespace: deployment.Namespace,
-		Name:      deployment.Name,
-	}
-
-	err := c.Get(ctx, selector, deployment)
-	if err != nil {
-		return nil, err
-	}
-
 	credentials := &grafanaAdminCredentials{}
 	getValueFromSecret := func(ref *v1.SecretKeySelector) ([]byte, error) {
 		secret := &v1.Secret{}
@@ -48,14 +38,52 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 		}
 
 		if secret.Data == nil {
-			return nil, errors.New(fmt.Sprintf("empty credential secret: %v/%v", grafana.Namespace, ref.Name))
+			return nil, fmt.Errorf("empty credential secret: %v/%v", grafana.Namespace, ref.Name)
 		}
 
 		if val, ok := secret.Data[ref.Key]; ok {
 			return val, nil
 		}
 
-		return nil, errors.New(fmt.Sprintf("admin credentials not found: %v/%v", grafana.Namespace, ref.Name))
+		return nil, fmt.Errorf("admin credentials not found: %v/%v", grafana.Namespace, ref.Name)
+	}
+
+	if grafana.IsExternal() {
+		// prefer api key if present
+		if grafana.Spec.External.ApiKey != nil {
+			apikey, err := getValueFromSecret(grafana.Spec.External.ApiKey)
+			if err != nil {
+				return nil, err
+			}
+			credentials.apikey = string(apikey)
+			return credentials, nil
+		}
+
+		// rely on username and password otherwise
+		username, err := getValueFromSecret(grafana.Spec.External.AdminUser)
+		if err != nil {
+			return nil, err
+		}
+
+		password, err := getValueFromSecret(grafana.Spec.External.AdminPassword)
+		if err != nil {
+			return nil, err
+		}
+
+		credentials.username = string(username)
+		credentials.password = string(password)
+		return credentials, nil
+	}
+
+	deployment := model.GetGrafanaDeployment(grafana, nil)
+	selector := client.ObjectKey{
+		Namespace: deployment.Namespace,
+		Name:      deployment.Name,
+	}
+
+	err := c.Get(ctx, selector, deployment)
+	if err != nil {
+		return nil, err
 	}
 
 	for _, container := range deployment.Spec.Template.Spec.Containers {
@@ -113,11 +141,7 @@ func NewGrafanaClient(ctx context.Context, c client.Client, grafana *v1beta1.Gra
 		return nil, err
 	}
 
-	userinfo := url.UserPassword(credentials.username, credentials.password)
-
 	clientConfig := grapi.Config{
-		APIKey:      "",
-		BasicAuth:   userinfo,
 		HTTPHeaders: nil,
 		Client: &http.Client{
 			Transport: NewInstrumentedRoundTripper(grafana.Name, metrics.GrafanaApiRequests),
@@ -127,6 +151,14 @@ func NewGrafanaClient(ctx context.Context, c client.Client, grafana *v1beta1.Gra
 		OrgID: 0,
 		// TODO populate me
 		NumRetries: 0,
+	}
+
+	if credentials.apikey != "" {
+		clientConfig.APIKey = credentials.apikey
+	}
+
+	if credentials.username != "" && credentials.password != "" {
+		clientConfig.BasicAuth = url.UserPassword(credentials.username, credentials.password)
 	}
 
 	grafanaClient, err := grapi.New(grafana.Status.AdminUrl, clientConfig)

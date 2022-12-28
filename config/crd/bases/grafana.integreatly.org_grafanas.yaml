@@ -3219,6 +3219,49 @@ spec:
                         type: object
                     type: object
                 type: object
+              external:
+                properties:
+                  adminPassword:
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        type: string
+                      optional:
+                        type: boolean
+                    required:
+                    - key
+                    type: object
+                    x-kubernetes-map-type: atomic
+                  adminUser:
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        type: string
+                      optional:
+                        type: boolean
+                    required:
+                    - key
+                    type: object
+                    x-kubernetes-map-type: atomic
+                  apiKey:
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        type: string
+                      optional:
+                        type: boolean
+                    required:
+                    - key
+                    type: object
+                    x-kubernetes-map-type: atomic
+                  url:
+                    type: string
+                required:
+                - url
+                type: object
               grafanaContainer:
                 properties:
                   baseImage:
@@ -3696,8 +3739,6 @@ spec:
                       x-kubernetes-map-type: atomic
                     type: array
                 type: object
-            required:
-            - config
             type: object
           status:
             properties:

@@ -17,6 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -60,7 +61,7 @@ type OperatorReconcileVars struct {
 // GrafanaSpec defines the desired state of Grafana
 type GrafanaSpec struct {
 	// +kubebuilder:pruning:PreserveUnknownFields
-	Config                map[string]map[string]string `json:"config"`
+	Config                map[string]map[string]string `json:"config,omitempty"`
 	Ingress               *IngressNetworkingV1         `json:"ingress,omitempty"`
 	Route                 *RouteOpenshiftV1            `json:"route,omitempty"`
 	Service               *ServiceV1                   `json:"service,omitempty"`
@@ -70,6 +71,14 @@ type GrafanaSpec struct {
 	Client                *GrafanaClient               `json:"client,omitempty"`
 	Jsonnet               *JsonnetConfig               `json:"jsonnet,omitempty"`
 	GrafanaContainer      *GrafanaContainer            `json:"grafanaContainer,omitempty"`
+	External              *External                    `json:"external,omitempty"`
+}
+
+type External struct {
+	URL           string                `json:"url"`
+	ApiKey        *v1.SecretKeySelector `json:"apiKey,omitempty"`
+	AdminUser     *v1.SecretKeySelector `json:"adminUser,omitempty"`
+	AdminPassword *v1.SecretKeySelector `json:"adminPassword,omitempty"`
 }
 
 type GrafanaContainer struct {
@@ -126,4 +135,12 @@ func init() {
 
 func (in *Grafana) PreferIngress() bool {
 	return in.Spec.Client != nil && in.Spec.Client.PreferIngress != nil && *in.Spec.Client.PreferIngress
+}
+
+func (in *Grafana) IsInternal() bool {
+	return in.Spec.External == nil
+}
+
+func (in *Grafana) IsExternal() bool {
+	return in.Spec.External != nil
 }

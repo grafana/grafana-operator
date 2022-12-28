@@ -1,7 +1,6 @@
 package fetchers
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -38,7 +37,7 @@ func FetchDashboardFromUrl(dashboard *v1beta1.GrafanaDashboard) ([]byte, error) 
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
-		return nil, errors.New(fmt.Sprintf("unexpected status code from dashboard url request, get %v for dashboard %v", response.StatusCode, dashboard.Name))
+		return nil, fmt.Errorf("unexpected status code from dashboard url request, get %v for dashboard %v", response.StatusCode, dashboard.Name)
 	}
 
 	content, err := io.ReadAll(response.Body)

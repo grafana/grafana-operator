@@ -192,13 +192,15 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			continue
 		}
 
-		// first reconcile the plugins
-		// append the requested dashboards to a configmap from where the
-		// grafana reconciler will pick them upi
-		err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, datasource.Spec.Plugins, fmt.Sprintf("%v-datasource", datasource.Name))
-		if err != nil {
-			success = false
-			controllerLog.Error(err, "error reconciling plugins", "datasource", datasource.Name, "grafana", grafana.Name)
+		if grafana.IsInternal() {
+			// first reconcile the plugins
+			// append the requested dashboards to a configmap from where the
+			// grafana reconciler will pick them upi
+			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, datasource.Spec.Plugins, fmt.Sprintf("%v-datasource", datasource.Name))
+			if err != nil {
+				success = false
+				controllerLog.Error(err, "error reconciling plugins", "datasource", datasource.Name, "grafana", grafana.Name)
+			}
 		}
 
 		// then import the dashboard into the matching grafana instances
@@ -244,9 +246,11 @@ func (r *GrafanaDatasourceReconciler) onDatasourceDeleted(ctx context.Context, n
 				}
 			}
 
-			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, fmt.Sprintf("%v-datasource", name))
-			if err != nil {
-				return err
+			if grafana.IsInternal() {
+				err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, fmt.Sprintf("%v-datasource", name))
+				if err != nil {
+					return err
+				}
 			}
 
 			grafana.Status.Datasources = grafana.Status.Datasources.Remove(namespace, name)
@@ -260,6 +264,10 @@ func (r *GrafanaDatasourceReconciler) onDatasourceDeleted(ctx context.Context, n
 func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDatasource) error {
 	if cr.Spec.Datasource == nil {
 		return nil
+	}
+
+	if grafana.IsExternal() && cr.Spec.Plugins != nil {
+		return fmt.Errorf("external grafana instances don't support plugins, please remove spec.plugins from your datasource cr")
 	}
 
 	grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, grafana)

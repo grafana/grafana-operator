@@ -16,15 +16,46 @@ spec:
     security:
       admin_user: root
       admin_password: secret
+  ingress:
+    spec:
+      ingressClassName: nginx
+      rules:
+        - host: test.io
+          http:
+            paths:
+              - backend:
+                  service:
+                    name: grafana-service
+                    port:
+                      number: 3000
+                path: /
+                pathType: Prefix
+---
+# Use the same grafana instance that we just created, notice the ingress config
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: external-grafana
+  labels:
+    dashboards: "external-grafana"
+spec:
+  external:
+    url: http://test.io
+    adminPassword:
+      name: grafana-admin-credentials
+      key: GF_SECURITY_ADMIN_PASSWORD
+    adminUser:
+      name: grafana-admin-credentials
+      key: GF_SECURITY_ADMIN_USER
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
-  name: grafana-dashboard
+  name: external-grafanadashboard-sample
 spec:
   instanceSelector:
     matchLabels:
-      dashboards: "grafana"
+      dashboards: "external-grafana"
   json: >
     {
       "id": null,
@@ -55,20 +86,3 @@ spec:
       "version": 0,
       "links": []
     }
----
-apiVersion: grafana.integreatly.org/v1beta1
-kind: GrafanaDatasource
-metadata:
-  name: example-grafanadatasource
-spec:
-  datasource:
-    access: proxy
-    database: prometheus
-    jsonData:
-      timeInterval: 5s
-      tlsSkipVerify: true
-    name: Prometheus
-    url: http://prometheus-service:9090
-  instanceSelector:
-    matchLabels:
-      dashboards: "grafana"
