@@ -13,38 +13,50 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	v13 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const (
-	InitMemoryRequest = "128Mi"
-	InitCpuRequest    = "250m"
-	InitMemoryLimit   = "512Mi"
-	InitCpuLimit      = "1000m"
-	MemoryRequest     = "256Mi"
-	CpuRequest        = "100m"
-	MemoryLimit       = "1024Mi"
-	CpuLimit          = "500m"
+	InitMemoryRequest                       = "128Mi"
+	InitCpuRequest                          = "250m"
+	InitMemoryLimit                         = "512Mi"
+	InitCpuLimit                            = "1000m"
+	MemoryRequest                           = "256Mi"
+	CpuRequest                              = "100m"
+	MemoryLimit                             = "1024Mi"
+	CpuLimit                                = "500m"
+	GrafanaHealthEndpoint                   = "/api/health"
+	ReadinessProbeFailureThreshold    int32 = 1
+	ReadinessProbeInitialDelaySeconds int32 = 5
+	ReadinessProbePeriodSeconds       int32 = 10
+	ReadinessProbeSuccessThreshold    int32 = 1
+	ReadinessProbeTimeoutSeconds      int32 = 3
 )
 
 type DeploymentReconciler struct {
-	client client.Client
+	client      client.Client
+	isOpenShift bool
 }
 
-func NewDeploymentReconciler(client client.Client) reconcilers.OperatorGrafanaReconciler {
+func NewDeploymentReconciler(client client.Client, isOpenShift bool) reconcilers.OperatorGrafanaReconciler {
 	return &DeploymentReconciler{
-		client: client,
+		client:      client,
+		isOpenShift: isOpenShift,
 	}
 }
 
 func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
-	_ = log.FromContext(ctx)
+	logger := log.FromContext(ctx)
+
+	openshiftPlatform := r.isOpenShift
+	logger.Info("reconciling deployment", "openshift", openshiftPlatform)
 
 	deployment := model.GetGrafanaDeployment(cr, scheme)
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, deployment, func() error {
-		deployment.Spec = getDeploymentSpec(cr, deployment.Name, scheme, vars)
+		deployment.Spec = getDeploymentSpec(cr, deployment.Name, scheme, vars, openshiftPlatform)
 		err := v1beta1.Merge(deployment, cr.Spec.Deployment)
 		return err
 	})
@@ -126,7 +138,7 @@ func getVolumeMounts(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.VolumeMou
 	return mounts
 }
 
-func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.OperatorReconcileVars) []v1.Container { // nolint
+func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.OperatorReconcileVars, openshiftPlatform bool) []v1.Container { // nolint
 	var containers []v1.Container // nolint
 
 	image := fmt.Sprintf("%s:%s", config2.GrafanaImage, config2.GrafanaVersion)
@@ -178,6 +190,8 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 		TerminationMessagePath:   "/dev/termination-log",
 		TerminationMessagePolicy: "File",
 		ImagePullPolicy:          "IfNotPresent",
+		SecurityContext:          getGrafanaContainerSecurityContext(openshiftPlatform),
+		ReadinessProbe:           getReadinessProbe(cr),
 	})
 
 	// Use auto generated admin account?
@@ -211,7 +225,59 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 	return containers
 }
 
-func getDeploymentSpec(cr *v1beta1.Grafana, deploymentName string, scheme *runtime.Scheme, vars *v1beta1.OperatorReconcileVars) v12.DeploymentSpec {
+// getGrafanaContainerSecurityContext provides default securityContext for grafana container
+func getGrafanaContainerSecurityContext(openshiftPlatform bool) *v1.SecurityContext {
+	capability := &v1.Capabilities{
+		Drop: []v1.Capability{
+			"ALL",
+		},
+	}
+	if openshiftPlatform {
+		return &v1.SecurityContext{
+			AllowPrivilegeEscalation: model.BoolPtr(false),
+			ReadOnlyRootFilesystem:   model.BoolPtr(true),
+			Privileged:               model.BoolPtr(false),
+			RunAsNonRoot:             model.BoolPtr(true),
+			Capabilities:             capability,
+		}
+	}
+	return &v1.SecurityContext{
+		AllowPrivilegeEscalation: model.BoolPtr(false),
+		ReadOnlyRootFilesystem:   model.BoolPtr(true),
+		Privileged:               model.BoolPtr(false),
+		RunAsNonRoot:             model.BoolPtr(true),
+		RunAsUser:                model.IntPtr(10001),
+		RunAsGroup:               model.IntPtr(10001),
+		Capabilities:             capability,
+	}
+}
+
+func getReadinessProbe(cr *v1beta1.Grafana) *v1.Probe {
+	return &v1.Probe{
+		ProbeHandler: v1.ProbeHandler{
+			HTTPGet: &v1.HTTPGetAction{
+				Path:   GrafanaHealthEndpoint,
+				Port:   intstr.FromInt(GetGrafanaPort(cr)),
+				Scheme: v1.URISchemeHTTP,
+			},
+		},
+		InitialDelaySeconds: ReadinessProbeInitialDelaySeconds,
+		TimeoutSeconds:      ReadinessProbeTimeoutSeconds,
+		PeriodSeconds:       ReadinessProbePeriodSeconds,
+		SuccessThreshold:    ReadinessProbeSuccessThreshold,
+		FailureThreshold:    ReadinessProbeFailureThreshold,
+	}
+}
+
+func getPodSecurityContext() *v1.PodSecurityContext {
+	return &v1.PodSecurityContext{
+		SeccompProfile: &v1.SeccompProfile{
+			Type: "RuntimeDefault",
+		},
+	}
+}
+
+func getDeploymentSpec(cr *v1beta1.Grafana, deploymentName string, scheme *runtime.Scheme, vars *v1beta1.OperatorReconcileVars, openshiftPlatform bool) v12.DeploymentSpec {
 	sa := model.GetGrafanaServiceAccount(cr, scheme)
 
 	return v12.DeploymentSpec{
@@ -229,7 +295,8 @@ func getDeploymentSpec(cr *v1beta1.Grafana, deploymentName string, scheme *runti
 			},
 			Spec: v1.PodSpec{
 				Volumes:            getVolumes(cr, scheme),
-				Containers:         getContainers(cr, scheme, vars),
+				Containers:         getContainers(cr, scheme, vars, openshiftPlatform),
+				SecurityContext:    getPodSecurityContext(),
 				ServiceAccountName: sa.Name,
 			},
 		},
