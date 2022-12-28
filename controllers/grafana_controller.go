@@ -45,9 +45,10 @@ const (
 // GrafanaReconciler reconciles a Grafana object
 type GrafanaReconciler struct {
 	client.Client
-	Log       logr.Logger
-	Scheme    *runtime.Scheme
-	Discovery discovery.DiscoveryInterface
+	Log         logr.Logger
+	Scheme      *runtime.Scheme
+	Discovery   discovery.DiscoveryInterface
+	IsOpenShift bool
 }
 
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanas,verbs=get;list;watch;create;update;patch;delete
@@ -185,11 +186,11 @@ func (r *GrafanaReconciler) getReconcilerForStage(stage grafanav1beta1.OperatorS
 	case grafanav1beta1.OperatorStageService:
 		return grafana.NewServiceReconciler(r.Client)
 	case grafanav1beta1.OperatorStageIngress:
-		return grafana.NewIngressReconciler(r.Client, r.Discovery)
+		return grafana.NewIngressReconciler(r.Client, r.IsOpenShift)
 	case grafanav1beta1.OperatorStagePlugins:
 		return grafana.NewPluginsReconciler(r.Client)
 	case grafanav1beta1.OperatorStageDeployment:
-		return grafana.NewDeploymentReconciler(r.Client)
+		return grafana.NewDeploymentReconciler(r.Client, r.IsOpenShift)
 	case grafanav1beta1.OperatorStageComplete:
 		return grafana.NewCompleteReconciler()
 	default:

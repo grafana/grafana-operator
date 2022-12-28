@@ -11,7 +11,6 @@ import (
 	v1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -22,27 +21,21 @@ const (
 )
 
 type IngressReconciler struct {
-	client    client.Client
-	discovery discovery.DiscoveryInterface
+	client      client.Client
+	isOpenShift bool
 }
 
-func NewIngressReconciler(client client.Client, discovery discovery.DiscoveryInterface) reconcilers.OperatorGrafanaReconciler {
+func NewIngressReconciler(client client.Client, isOpenShift bool) reconcilers.OperatorGrafanaReconciler {
 	return &IngressReconciler{
-		client:    client,
-		discovery: discovery,
+		client:      client,
+		isOpenShift: isOpenShift,
 	}
 }
 
 func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
 	logger := log.FromContext(ctx)
 
-	openshift, err := r.isOpenShift()
-	if err != nil {
-		logger.Error(err, "error determining platform")
-		return v1beta1.OperatorStageResultFailed, err
-	}
-
-	if openshift {
+	if r.isOpenShift {
 		logger.Info("reconciling route", "platform", "openshift")
 		return r.reconcileRoute(ctx, cr, status, vars, scheme)
 	} else {
@@ -136,24 +129,6 @@ func (r *IngressReconciler) getIngressAdminURL(ingress *v1.Ingress) string {
 	}
 
 	return adminURL
-}
-
-func (r *IngressReconciler) isOpenShift() (bool, error) {
-	apiGroupVersion := routev1.SchemeGroupVersion.String()
-
-	apiList, err := r.discovery.ServerResourcesForGroupVersion(apiGroupVersion)
-	if apiList == nil {
-		return false, nil
-	}
-	if err != nil {
-		return false, err
-	}
-	for _, r := range apiList.APIResources {
-		if r.Kind == RouteKind {
-			return true, nil
-		}
-	}
-	return false, nil
 }
 
 func getRouteTLS(cr *v1beta1.Grafana) *routev1.TLSConfig {

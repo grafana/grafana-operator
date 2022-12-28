@@ -40,6 +40,7 @@ import (
 
 	grafanav1beta1 "github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers"
+	"github.com/grafana-operator/grafana-operator-experimental/controllers/autodetect"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -97,10 +98,23 @@ func main() {
 		os.Exit(1)
 	}
 
+	restConfig := ctrl.GetConfigOrDie()
+	autodetect, err := autodetect.New(restConfig)
+	if err != nil {
+		setupLog.Error(err, "failed to setup auto-detect routine")
+		os.Exit(1)
+	}
+	isOpenShift, err := autodetect.IsOpenshift()
+	if err != nil {
+		setupLog.Error(err, "unable to detect the platform")
+		os.Exit(1)
+	}
+
 	if err = (&controllers.GrafanaReconciler{
-		Client:    mgr.GetClient(),
-		Scheme:    mgr.GetScheme(),
-		Discovery: discovery2.NewDiscoveryClientForConfigOrDie(ctrl.GetConfigOrDie()),
+		Client:      mgr.GetClient(),
+		Scheme:      mgr.GetScheme(),
+		IsOpenShift: isOpenShift,
+		Discovery:   discovery2.NewDiscoveryClientForConfigOrDie(ctrl.GetConfigOrDie()),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Grafana")
 		os.Exit(1)

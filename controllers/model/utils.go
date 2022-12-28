@@ -29,3 +29,7 @@ func MergeAnnotations(requested map[string]string, existing map[string]string) m
 	}
 	return existing
 }
+
+func BoolPtr(b bool) *bool { return &b }
+
+func IntPtr(b int64) *int64 { return &b }
