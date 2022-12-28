@@ -81,6 +81,13 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	nextStatus := grafana.Status.DeepCopy()
 	vars := &grafanav1beta1.OperatorReconcileVars{}
 
+	if grafana.IsExternal() {
+		nextStatus.Stage = grafanav1beta1.OperatorStageComplete
+		nextStatus.StageStatus = grafanav1beta1.OperatorStageResultSuccess
+		nextStatus.AdminUrl = grafana.Spec.External.URL
+		return r.updateStatus(grafana, nextStatus)
+	}
+
 	for _, stage := range stages {
 		controllerLog.Info("running stage", "stage", stage)
 

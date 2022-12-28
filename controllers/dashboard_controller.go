@@ -202,13 +202,15 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			continue
 		}
 
-		// first reconcile the plugins
-		// append the requested dashboards to a configmap from where the
-		// grafana reconciler will pick them up
-		err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, dashboard.Spec.Plugins, fmt.Sprintf("%v-dashboard", dashboard.Name))
-		if err != nil {
-			controllerLog.Error(err, "error reconciling plugins", "dashboard", dashboard.Name, "grafana", grafana.Name)
-			success = false
+		if grafana.IsInternal() {
+			// first reconcile the plugins
+			// append the requested dashboards to a configmap from where the
+			// grafana reconciler will pick them up
+			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, dashboard.Spec.Plugins, fmt.Sprintf("%v-dashboard", dashboard.Name))
+			if err != nil {
+				controllerLog.Error(err, "error reconciling plugins", "dashboard", dashboard.Name, "grafana", grafana.Name)
+				success = false
+			}
 		}
 
 		// then import the dashboard into the matching grafana instances
@@ -269,9 +271,11 @@ func (r *GrafanaDashboardReconciler) onDashboardDeleted(ctx context.Context, nam
 				}
 			}
 
-			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, fmt.Sprintf("%v-dashboard", name))
-			if err != nil {
-				return err
+			if grafana.IsInternal() {
+				err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, fmt.Sprintf("%v-dashboard", name))
+				if err != nil {
+					return err
+				}
 			}
 
 			grafana.Status.Dashboards = grafana.Status.Dashboards.Remove(namespace, name)
@@ -290,10 +294,14 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	if err != nil {
 		return err
 	}
-	
+
 	dashboardJson, err = r.resolveDatasources(cr, dashboardJson)
 	if err != nil {
 		return err
+	}
+
+	if grafana.IsExternal() && cr.Spec.Plugins != nil {
+		return fmt.Errorf("external grafana instances don't support plugins, please remove spec.plugins from your dashboard cr")
 	}
 
 	// Dashboards come from different sources, whereas Spec.Json is used to calculate hash
