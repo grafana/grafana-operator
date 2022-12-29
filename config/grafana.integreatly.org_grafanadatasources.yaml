@@ -70,7 +70,7 @@ spec:
                     type: string
                 type: object
               instanceSelector:
-                description: selects Grafanas for import
+                description: selects Grafana instances for import
                 properties:
                   matchExpressions:
                     description: matchExpressions is a list of label selector requirements.
@@ -131,6 +131,11 @@ spec:
                 description: how often the datasource is refreshed, defaults to 24h
                   if not set
                 type: string
+              secrets:
+                description: secrets used for variable expansion
+                items:
+                  type: string
+                type: array
             type: object
           status:
             description: GrafanaDatasourceStatus defines the observed state of GrafanaDatasource

@@ -56,11 +56,16 @@ type GrafanaDatasourceInternal struct {
 type GrafanaDatasourceSpec struct {
 	Datasource *GrafanaDatasourceInternal `json:"datasource,omitempty"`
 
-	// selects Grafanas for import
+	// selects Grafana instances for import
 	InstanceSelector *metav1.LabelSelector `json:"instanceSelector,omitempty"`
 
 	// plugins
+	// +optional
 	Plugins PluginList `json:"plugins,omitempty"`
+
+	// secrets used for variable expansion
+	// +optional
+	Secrets []string `json:"secrets,omitempty"`
 
 	// how often the datasource is refreshed, defaults to 24h if not set
 	// +optional
