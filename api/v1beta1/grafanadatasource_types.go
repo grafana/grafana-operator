@@ -17,6 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -112,6 +113,10 @@ func (in *GrafanaDatasource) Hash() string {
 		hash.Write([]byte(in.Spec.Datasource.User))
 		hash.Write([]byte(in.Spec.Datasource.URL))
 
+		for _, secret := range in.Spec.Secrets {
+			hash.Write([]byte(secret))
+		}
+
 		if in.Spec.Datasource.BasicAuth != nil && *in.Spec.Datasource.BasicAuth {
 			hash.Write([]byte("_"))
 		}
@@ -149,6 +154,26 @@ func (in *GrafanaDatasource) GetResyncPeriod() time.Duration {
 
 func (in *GrafanaDatasource) Unchanged() bool {
 	return in.Hash() == in.Status.Hash
+}
+
+func (in *GrafanaDatasource) ExpandVariables(variables map[string][]byte) ([]byte, error) {
+	if in.Spec.Datasource == nil {
+		return nil, nil
+	}
+
+	raw, err := json.Marshal(in.Spec.Datasource)
+	if err != nil {
+		return nil, err
+	}
+
+	for key, value := range variables {
+		patterns := []string{fmt.Sprintf("$%v", key), fmt.Sprintf("${%v}", key)}
+		for _, pattern := range patterns {
+			raw = bytes.ReplaceAll(raw, []byte(pattern), value)
+		}
+	}
+
+	return raw, nil
 }
 
 func (in *GrafanaDatasourceList) Find(namespace string, name string) *GrafanaDatasource {

@@ -1,0 +1,51 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana
+  labels:
+    dashboards: "grafana"
+spec:
+  config:
+    log:
+      mode: "console"
+    auth:
+      disable_login_form: "false"
+    security:
+      admin_user: root
+      admin_password: secret
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: credentials
+  namespace: grafana
+stringData:
+  PROMETHEUS_USERNAME: root
+  PROMETHEUS_PASSWORD: secret
+type: Opaque
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: grafanadatasource-sample
+spec:
+  secrets:
+    - credentials
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  datasource:
+    name: prometheus
+    type: prometheus
+    access: proxy
+    basicAuth: true
+    url: http://prometheus-service:9090
+    isDefault: true
+    user: ${PROMETHEUS_USERNAME}
+    jsonData:
+      'tlsSkipVerify': true
+      'timeInterval': "5s"
+    secureJsonData:
+      'password': ${PROMETHEUS_PASSWORD}
+    editable: true

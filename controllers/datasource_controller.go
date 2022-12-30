@@ -18,8 +18,8 @@ package controllers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	v1 "k8s.io/api/core/v1"
 	"strings"
 	"time"
 
@@ -219,6 +219,11 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 }
 
+// expandVariables expands variables in the for of $VAR or ${VAR} in the datasource yaml
+func (r *GrafanaDatasourceReconciler) epxandVariables() {
+
+}
+
 func (r *GrafanaDatasourceReconciler) onDatasourceDeleted(ctx context.Context, namespace string, name string) error {
 	list := v1beta1.GrafanaList{}
 	opts := []client.ListOption{}
@@ -280,9 +285,14 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		return err
 	}
 
+	variables, err := r.CollectVariablesFromSecrets(ctx, cr)
+	if err != nil {
+		return err
+	}
+
 	// always use the same uid for CR and datasource
 	cr.Spec.Datasource.UID = string(cr.UID)
-	datasourceBytes, err := json.Marshal(cr.Spec.Datasource)
+	datasourceBytes, err := cr.ExpandVariables(variables)
 	if err != nil {
 		return err
 	}
@@ -328,6 +338,28 @@ func (r *GrafanaDatasourceReconciler) ExistingId(client *gapi.Client, cr *v1beta
 		}
 	}
 	return nil, nil
+}
+
+func (r *GrafanaDatasourceReconciler) CollectVariablesFromSecrets(ctx context.Context, cr *v1beta1.GrafanaDatasource) (map[string][]byte, error) {
+	result := map[string][]byte{}
+	for _, secret := range cr.Spec.Secrets {
+		// secrets must be in the same namespace as the datasource
+		selector := client.ObjectKey{
+			Namespace: cr.Namespace,
+			Name:      strings.TrimSpace(secret),
+		}
+
+		s := &v1.Secret{}
+		err := r.Client.Get(ctx, selector, s)
+		if err != nil {
+			return nil, err
+		}
+
+		for key, value := range s.Data {
+			result[key] = value
+		}
+	}
+	return result, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
