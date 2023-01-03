@@ -379,7 +379,7 @@ func (r *GrafanaDashboardReconciler) reconcileDashboards(request reconcile.Reque
 		log.Log.Info(fmt.Sprintf("delete result was %v", *status.Message))
 
 		r.config.RemovePluginsFor(dashboard)
-		r.config.RemoveDashboard(dashboard.UID)
+		r.config.RemoveDashboard(dashboard)
 
 		// Refresh the list of known dashboards after the dashboard has been removed
 		knownDashboards = r.config.GetDashboards(request.Namespace)

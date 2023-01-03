@@ -45,8 +45,10 @@ type ControllerConfig struct {
 	RequeueDelay time.Duration
 }
 
-var instance *ControllerConfig
-var once sync.Once
+var (
+	instance *ControllerConfig
+	once     sync.Once
+)
 
 func GetControllerConfig() *ControllerConfig {
 	once.Do(func() {
@@ -91,6 +93,8 @@ func (c *ControllerConfig) SetPluginsFor(dashboard *v1alpha1.GrafanaDashboard) {
 }
 
 func (c *ControllerConfig) RemovePluginsFor(dashboard *v1alpha1.GrafanaDashboardRef) {
+	c.Lock()
+	defer c.Unlock()
 	id := c.GetDashboardId(dashboard.Namespace, dashboard.Name)
 	delete(c.Plugins, id)
 }
@@ -169,16 +173,18 @@ func (c *ControllerConfig) InvalidateDashboards() {
 	}
 }
 
-func (c *ControllerConfig) RemoveDashboard(hash string) {
-	for ns := range c.Dashboards {
-		if i, exists := c.HasDashboard(ns, hash); exists {
-			c.Lock()
-			defer c.Unlock()
-			list := c.Dashboards[ns]
-			list[i] = list[len(list)-1]
-			list = list[:len(list)-1]
-			c.Dashboards[ns] = list
-		}
+func (c *ControllerConfig) RemoveDashboard(dashboard *v1alpha1.GrafanaDashboardRef) {
+	c.Lock()
+	defer c.Unlock()
+
+	ns := dashboard.Namespace
+	uid := dashboard.UID
+
+	if i, exists := c.HasDashboard(ns, uid); exists {
+		list := c.Dashboards[ns]
+		list[i] = list[len(list)-1]
+		list = list[:len(list)-1]
+		c.Dashboards[ns] = list
 	}
 }
 
