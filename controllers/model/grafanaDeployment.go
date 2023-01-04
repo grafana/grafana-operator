@@ -570,6 +570,16 @@ func getContainers(cr *v1alpha1.Grafana, configHash, dsHash, credentialsHash str
 				ContainerPort: int32(GetGrafanaPort(cr)),
 				Protocol:      "TCP",
 			},
+			{
+				Name:          "grafana-alert",
+				ContainerPort: 9094,
+				Protocol:      "TCP",
+			},
+			{
+				Name:          "grafana-alert-u",
+				ContainerPort: 9094,
+				Protocol:      "UDP",
+			},
 		},
 		Env:                      envVars,
 		EnvFrom:                  getEnvFrom(cr),

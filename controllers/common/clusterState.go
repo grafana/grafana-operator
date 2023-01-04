@@ -15,6 +15,7 @@ import (
 )
 
 type ClusterState struct {
+	GrafanaAlertService              *v1.Service
 	GrafanaService                   *v1.Service
 	GrafanaDataPersistentVolumeClaim *v1.PersistentVolumeClaim
 	GrafanaServiceAccount            *v1.ServiceAccount
@@ -34,7 +35,12 @@ func (i *ClusterState) Read(ctx context.Context, cr *v1alpha1.Grafana, client cl
 	cfg := config.GetControllerConfig()
 	isOpenshift := cfg.GetConfigBool(config.ConfigOpenshift, false)
 
-	err := i.readGrafanaService(ctx, cr, client)
+	err := i.readGrafanaAlertService(ctx, cr, client)
+	if err != nil {
+		return err
+	}
+
+	err = i.readGrafanaService(ctx, cr, client)
 	if err != nil {
 		return err
 	}
@@ -91,6 +97,20 @@ func (i *ClusterState) readGrafanaService(ctx context.Context, cr *v1alpha1.Graf
 		return err
 	}
 	i.GrafanaService = currentState.DeepCopy()
+	return nil
+}
+
+func (i *ClusterState) readGrafanaAlertService(ctx context.Context, cr *v1alpha1.Grafana, client client.Client) error {
+	currentState := &v1.Service{}
+	selector := model.GrafanaAlertServiceSelector(cr)
+	err := client.Get(ctx, selector, currentState)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+	i.GrafanaAlertService = currentState.DeepCopy()
 	return nil
 }
 

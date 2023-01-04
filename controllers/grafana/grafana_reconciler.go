@@ -35,6 +35,7 @@ func (i *GrafanaReconciler) Reconcile(state *common.ClusterState, cr *v1alpha1.G
 
 	desired = desired.AddAction(i.getGrafanaAdminUserSecretDesiredState(state, cr))
 	desired = desired.AddAction(i.getGrafanaServiceDesiredState(state, cr))
+	desired = desired.AddAction(i.getGrafanaAlertServiceDesiredState(state, cr))
 
 	if cr.UsedPersistentVolume() {
 		desired = desired.AddAction(i.getGrafanaDataPvcDesiredState(state, cr))
@@ -115,6 +116,19 @@ func (i *GrafanaReconciler) getGrafanaServiceDesiredState(state *common.ClusterS
 	return common.GenericUpdateAction{
 		Ref: model.GrafanaServiceReconciled(cr, state.GrafanaService),
 		Msg: "update grafana service",
+	}
+}
+
+func (i *GrafanaReconciler) getGrafanaAlertServiceDesiredState(state *common.ClusterState, cr *v1alpha1.Grafana) common.ClusterAction {
+	if state.GrafanaAlertService == nil {
+		return common.GenericCreateAction{
+			Ref: model.GrafanaAlertService(cr),
+			Msg: "create grafana alert service",
+		}
+	}
+	return common.GenericUpdateAction{
+		Ref: model.GrafanaAlertServiceReconciled(cr, state.GrafanaAlertService),
+		Msg: "update grafana alert service",
 	}
 }
 

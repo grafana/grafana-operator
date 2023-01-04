@@ -234,6 +234,9 @@ static_root_path = /
 enabled = true
 evaluation_timeout = 3s
 execute_alerts = true
+ha_advertise_address = ${POD_IP}:9094
+ha_listen_address = ${POD_IP}:9094
+ha_peers = grafana-alert:9094
 max_attempts = 2
 min_interval = 1m
 
@@ -261,6 +264,9 @@ func TestCfgUnifiedAlerting(t *testing.T) {
 			"evaluation_timeout = 3s",
 			"max_attempts = 2",
 			"min_interval = 1m",
+			"ha_advertise_address = ${POD_IP}:9094",
+			"ha_listen_address = ${POD_IP}:9094",
+			"ha_peers = grafana-alert:9094",
 		},
 	}
 	require.Equal(t, config, testConfig)
