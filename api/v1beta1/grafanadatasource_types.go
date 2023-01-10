@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -158,7 +159,7 @@ func (in *GrafanaDatasource) Unchanged() bool {
 
 func (in *GrafanaDatasource) ExpandVariables(variables map[string][]byte) ([]byte, error) {
 	if in.Spec.Datasource == nil {
-		return nil, nil
+		return nil, errors.New("data source is empty, can't expand variables")
 	}
 
 	raw, err := json.Marshal(in.Spec.Datasource)
