@@ -40,6 +40,12 @@ var (
 	genericOauthRoleAttributeStrict   = true
 	genericOauthTLSSkipVerifyInsecure = true
 
+	// AuthGitlab
+	gitlabEnabled                 = true
+	gitlabAllowSignUp             = true
+	gitlabRoleAttributeStrict     = true
+	gitlabAllowAssignGrafanaAdmin = true
+
 	// GrafanaConfigUnifiedAlerting
 	enableGrafanaConfigUnifiedAlerting = true
 	executeAlerts                      = true
@@ -122,6 +128,20 @@ var testGrafanaConfig = v1alpha1.GrafanaConfig{
 		TLSClientKey:          "/genericOauth/clientKey",
 		TLSClientCa:           "/genericOauth/clientCa",
 	},
+	AuthGitlab: &v1alpha1.GrafanaConfigAuthGitlab{
+		Enabled:                 &gitlabEnabled,
+		AllowSignUp:             &gitlabAllowSignUp,
+		ClientId:                "GITLAB_APPLICATION_ID",
+		ClientSecret:            "GITLAB_SECRET",
+		Scopes:                  "readAPI",
+		AuthUrl:                 "https://gitlab.com/oauth/authorize",
+		TokenUrl:                "https://gitlab.com/oauth/token",
+		ApiUrl:                  "https://gitlab.com/api/v4",
+		AllowedGroups:           "example, foo/bar",
+		RoleAttributePath:       "is_admin && 'Admin' || 'Viewer'",
+		RoleAttributeStrict:     &gitlabRoleAttributeStrict,
+		AllowAssignGrafanaAdmin: &gitlabAllowAssignGrafanaAdmin,
+	},
 	Live: &v1alpha1.GrafanaConfigLive{
 		MaxConnections: &maxConnections,
 		AllowedOrigins: "https://origin.com",
@@ -186,6 +206,20 @@ tls_client_cert = /genericOauth/clientCert
 tls_client_key = /genericOauth/clientKey
 tls_skip_verify_insecure = true
 token_url = https://TokenURLOauth.com
+
+[auth.gitlab]
+allow_assign_grafana_admin = true
+allow_sign_up = true
+allowed_groups = example, foo/bar
+api_url = https://gitlab.com/api/v4
+auth_url = https://gitlab.com/oauth/authorize
+client_id = GITLAB_APPLICATION_ID
+client_secret = GITLAB_SECRET
+enabled = true
+role_attribute_path = is_admin && 'Admin' || 'Viewer'
+role_attribute_strict = true
+scopes = readAPI
+token_url = https://gitlab.com/oauth/token
 
 [database]
 host = host
