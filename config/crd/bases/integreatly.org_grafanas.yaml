@@ -229,6 +229,9 @@ spec:
                     type: object
                   auth.gitlab:
                     properties:
+                      allow_assign_grafana_admin:
+                        nullable: true
+                        type: boolean
                       allow_sign_up:
                         nullable: true
                         type: boolean
@@ -243,6 +246,11 @@ spec:
                       client_secret:
                         type: string
                       enabled:
+                        nullable: true
+                        type: boolean
+                      role_attribute_path:
+                        type: string
+                      role_attribute_strict:
                         nullable: true
                         type: boolean
                       scopes:
