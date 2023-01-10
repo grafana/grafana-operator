@@ -2,7 +2,6 @@ package v1beta1
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"testing"
 )
@@ -55,8 +54,8 @@ func TestGrafanaDatasources_expandVariables(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if bytes.Compare(b, tc.out) != 0 {
-				t.Fatal(errors.New(fmt.Sprintf("expected %v, but got %v", string(tc.out), string(b))))
+			if !bytes.Equal(b, tc.out) {
+				t.Error(fmt.Errorf("expected %v, but got %v", string(tc.out), string(b)))
 			}
 		})
 	}

@@ -219,11 +219,6 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 }
 
-// expandVariables expands variables in the for of $VAR or ${VAR} in the datasource yaml
-func (r *GrafanaDatasourceReconciler) epxandVariables() {
-
-}
-
 func (r *GrafanaDatasourceReconciler) onDatasourceDeleted(ctx context.Context, namespace string, name string) error {
 	list := v1beta1.GrafanaList{}
 	opts := []client.ListOption{}

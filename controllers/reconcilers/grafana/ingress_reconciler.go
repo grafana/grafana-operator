@@ -123,20 +123,22 @@ func (r *IngressReconciler) getIngressAdminURL(ingress *v1.Ingress) string {
 		}
 	}
 
-	// if all fails, try to get access trough the load balancer
-	var loadBalancerIp = ""
-	for _, lb := range ingress.Status.LoadBalancer.Ingress {
-		if lb.Hostname != "" {
-			hostname = lb.Hostname
-			break
+	// if all fails, try to get access through the load balancer
+	if hostname == "" {
+		var loadBalancerIp = ""
+		for _, lb := range ingress.Status.LoadBalancer.Ingress {
+			if lb.Hostname != "" {
+				hostname = lb.Hostname
+				break
+			}
+			if lb.IP != "" {
+				loadBalancerIp = lb.IP
+			}
 		}
-		if lb.IP != "" {
-			loadBalancerIp = lb.IP
-		}
-	}
 
-	if hostname == "" && loadBalancerIp != "" {
-		hostname = loadBalancerIp
+		if hostname == "" && loadBalancerIp != "" {
+			hostname = loadBalancerIp
+		}
 	}
 
 	// adminUrl should not be empty only in case hostname is found, otherwise we'll have broken URLs like "http://"
