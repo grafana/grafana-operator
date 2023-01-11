@@ -3203,6 +3203,13 @@ GrafanaConfig is the configuration for grafana
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>allow_assign_grafana_admin</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>allow_sign_up</b></td>
         <td>boolean</td>
         <td>
@@ -3246,6 +3253,20 @@ GrafanaConfig is the configuration for grafana
         <td>false</td>
       </tr><tr>
         <td><b>enabled</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>role_attribute_path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>role_attribute_strict</b></td>
         <td>boolean</td>
         <td>
           <br/>

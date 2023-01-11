@@ -498,6 +498,10 @@ func (i *GrafanaIni) cfgAuthGitlab(config map[string][]string) map[string][]stri
 	items = appendStr(items, "auth_url", i.cfg.AuthGitlab.AuthUrl)
 	items = appendStr(items, "token_url", i.cfg.AuthGitlab.TokenUrl)
 	items = appendStr(items, "api_url", i.cfg.AuthGitlab.ApiUrl)
+	items = appendStr(items, "allowed_groups", i.cfg.AuthGitlab.AllowedGroups)
+	items = appendStr(items, "role_attribute_path", i.cfg.AuthGitlab.RoleAttributePath)
+	items = appendBool(items, "role_attribute_strict", i.cfg.AuthGitlab.RoleAttributeStrict)
+	items = appendBool(items, "allow_assign_grafana_admin", i.cfg.AuthGitlab.AllowAssignGrafanaAdmin)
 	config["auth.gitlab"] = items
 
 	return config
