@@ -43,12 +43,6 @@ const (
 	OperatorStageResultInProgress OperatorStageStatus = "in progress"
 )
 
-const (
-	AnnotationDashboards  = "grafana-operator/managed-dashboards"
-	AnnotationDatasources = "grafana-operator/managed-datasources"
-	AnnotationFolders     = "grafana-operator/managed-folders"
-)
-
 // temporary values passed between reconciler stages
 type OperatorReconcileVars struct {
 	// used to restart the Grafana container when the config changes

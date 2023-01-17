@@ -207,16 +207,19 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		err = r.onDatasourceCreated(ctx, &grafana, datasource)
 		if err != nil {
 			success = false
+			datasource.Status.LastMessage = err.Error()
 			controllerLog.Error(err, "error reconciling dashboard", "datasource", datasource.Name, "grafana", grafana.Name)
 		}
 	}
 
 	// if the datasource was successfully synced in all instances, wait for its re-sync period
 	if success {
-		return ctrl.Result{RequeueAfter: datasource.GetResyncPeriod()}, nil
+		datasource.Status.LastMessage = ""
+		return ctrl.Result{RequeueAfter: datasource.GetResyncPeriod()}, r.UpdateStatus(ctx, datasource)
+	} else {
+		// if there was an issue with the datasource, update the status
+		return ctrl.Result{RequeueAfter: RequeueDelay}, r.UpdateStatus(ctx, datasource)
 	}
-
-	return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 }
 
 func (r *GrafanaDatasourceReconciler) onDatasourceDeleted(ctx context.Context, namespace string, name string) error {
