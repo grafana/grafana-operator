@@ -108,6 +108,8 @@ spec:
             properties:
               hash:
                 type: string
+              lastMessage:
+                type: string
             type: object
         type: object
     served: true

@@ -76,7 +76,8 @@ type GrafanaDatasourceSpec struct {
 
 // GrafanaDatasourceStatus defines the observed state of GrafanaDatasource
 type GrafanaDatasourceStatus struct {
-	Hash string `json:"hash,omitempty"`
+	Hash        string `json:"hash,omitempty"`
+	LastMessage string `json:"lastMessage,omitempty"`
 }
 
 //+kubebuilder:object:root=true
