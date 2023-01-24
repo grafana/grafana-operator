@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"sort"
 	"sync"
 	"time"
 
@@ -220,8 +221,13 @@ func (c *ControllerConfig) GetDashboards(namespace string) []*v1alpha1.GrafanaDa
 	// The periodic resync in grafanadashboard.GrafanaDashboardReconciler rely on the convention
 	// that an empty namespace means all of them, so we follow that rule here.
 	if namespace == "" {
-		for _, ds := range c.Dashboards {
-			dashboards = append(dashboards, ds...)
+		var keys []string
+		for k := range c.Dashboards {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			dashboards = append(dashboards, c.Dashboards[k]...)
 		}
 		return dashboards
 	}
