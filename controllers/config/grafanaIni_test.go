@@ -34,6 +34,15 @@ var (
 	azureAdEnabled = true
 	allowSignUp    = false
 
+	// AuthJwt
+	jwtEnabled = true
+	jwtAutoSignUp = true
+	jwtEnableLoginToken = true
+	jwtRoleAttributeStrict =  true
+	jwtUrlLogin = true
+	jwtAllowAssignGrafanaAdmin = true
+	jwtSkipOrgRoleSync = true
+
 	// AuthGenericOauth
 	genericOauthEnabled               = true
 	genericOauthAllowSignUp           = true
@@ -106,6 +115,24 @@ var testGrafanaConfig = v1alpha1.GrafanaConfig{
 		TokenUrl:       "https://TokenURL.com",
 		AllowedDomains: "azure.com",
 		AllowSignUp:    &allowSignUp,
+	},
+	AuthJwt: &v1alpha1.GrafanaConfigAuthJwt{
+		Enabled:                 &jwtEnabled,
+		EnableLoginToken:        &jwtEnableLoginToken,
+		HeaderName:              "X-JWT-Assertion",
+		EmailClaim:              "sub",
+		ExpectClaims:            "{\"iss\": \"https://your-token-issuer\", \"your-custom-claim\": \"foo\"}",
+		UsernameClaim:           "sub",
+		JwkSetUrl:               "https://your-auth-provider.example.com/.well-known/jwks.json",
+		JwkSetFile:              "/path/to/jwks.json",
+		KeyFile:                 "/path/to/key.pem",
+		RoleAttributePath:       "Viewer",
+		RoleAttributeStrict:     &jwtRoleAttributeStrict,
+		AutoSignUp:              &jwtAutoSignUp,
+		CacheTtl:                "60m",
+		UrlLogin:                &jwtUrlLogin,
+		AllowAssignGrafanaAdmin: &jwtAllowAssignGrafanaAdmin,
+		SkipOrgRoleSync:         &jwtSkipOrgRoleSync,
 	},
 	AuthGenericOauth: &v1alpha1.GrafanaConfigAuthGenericOauth{
 		Enabled:               &genericOauthEnabled,
@@ -220,6 +247,24 @@ role_attribute_path = is_admin && 'Admin' || 'Viewer'
 role_attribute_strict = true
 scopes = readAPI
 token_url = https://gitlab.com/oauth/token
+
+[auth.jwt]
+allow_assign_grafana_admin = true
+auto_sign_up = true
+cache_ttl = 60m
+email_claim = sub
+enable_login_token = true
+enabled = true
+expect_claims = {"iss": "https://your-token-issuer", "your-custom-claim": "foo"}
+header_name = X-JWT-Assertion
+jwk_set_file = /path/to/jwks.json
+jwk_set_url = https://your-auth-provider.example.com/.well-known/jwks.json
+key_file = /path/to/key.pem
+role_attribute_path = Viewer
+role_attribute_strict = true
+skip_org_role_sync = true
+url_login = true
+username_claim = sub
 
 [database]
 host = host
@@ -373,6 +418,32 @@ func TestCfgAuthAzureAD(t *testing.T) {
 			"token_url = https://TokenURL.com",
 			"allowed_domains = azure.com",
 			"allow_sign_up = false",
+		},
+	}
+	require.Equal(t, config, testConfig)
+}
+func TestCfgAuthJwt(t *testing.T) {
+	i := NewGrafanaIni(&testGrafanaConfig)
+	config := map[string][]string{}
+	config = i.cfgAuthJwt(config)
+	testConfig := map[string][]string{
+		"auth.jwt": {
+			"enabled = true",
+			"enable_login_token = true",
+			"header_name = X-JWT-Assertion",
+			"email_claim = sub",
+			"expect_claims = {\"iss\": \"https://your-token-issuer\", \"your-custom-claim\": \"foo\"}",
+			"username_claim = sub",
+			"jwk_set_url = https://your-auth-provider.example.com/.well-known/jwks.json",
+			"jwk_set_file = /path/to/jwks.json",
+			"key_file = /path/to/key.pem",
+			"role_attribute_path = Viewer",
+			"cache_ttl = 60m",
+			"role_attribute_strict = true",
+			"auto_sign_up = true",
+			"url_login = true",
+			"allow_assign_grafana_admin = true",
+			"skip_org_role_sync = true",
 		},
 	}
 	require.Equal(t, config, testConfig)
