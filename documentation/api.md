@@ -3791,7 +3791,16 @@ GrafanaConfig is the configuration for grafana
           <br/>
         </td>
         <td>false</td>
-      </tr></tbody>
+      </tr>
+       <tr>
+        <td><b>min_refresh_interval</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr>
+    </tbody>
 </table>
 
 
