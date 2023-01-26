@@ -398,6 +398,9 @@ spec:
                       versions_to_keep:
                         nullable: true
                         type: integer
+                      min_refresh_interval:
+                        nullable: true
+                        type: boolean
                     type: object
                   database:
                     properties:
