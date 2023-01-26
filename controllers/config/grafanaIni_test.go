@@ -46,6 +46,20 @@ var (
 	gitlabRoleAttributeStrict     = true
 	gitlabAllowAssignGrafanaAdmin = true
 
+	//Dataproxy
+	dataProxyDialTimeout                  = 10
+	dataProxyExpectContinueTimeoutSeconds = 1
+	dataProxyIdleConnTimeoutSeconds       = 90
+	dataProxyKeepAliveSeconds             = 30
+	dataProxyLogging                      = false
+	dataProxyMaxConnsPerHost              = 0
+	dataProxyMaxIdleConnections           = 100
+	dataProxyResponseLimit                = 0
+	dataProxyRowLimit                     = 1000000
+	dataProxySendUserHeader               = false
+	dataProxyTimeout                      = 30
+	dataProxyTlsHandshakeTimeoutSeconds   = 10
+
 	// GrafanaConfigUnifiedAlerting
 	enableGrafanaConfigUnifiedAlerting = true
 	executeAlerts                      = true
@@ -73,6 +87,20 @@ var testGrafanaConfig = v1alpha1.GrafanaConfig{
 		CertFile:         "/mnt/cert.crt",
 		CertKey:          "/mnt/cert.key",
 		RouterLogging:    &RouterLogging,
+	},
+	DataProxy: &v1alpha1.GrafanaConfigDataProxy{
+		DialTimeout:                  &dataProxyDialTimeout,
+		ExpectContinueTimeoutSeconds: &dataProxyExpectContinueTimeoutSeconds,
+		IdleConnTimeoutSeconds:       &dataProxyIdleConnTimeoutSeconds,
+		KeepAliveSeconds:             &dataProxyKeepAliveSeconds,
+		Logging:                      &dataProxyLogging,
+		MaxIdleConnections:           &dataProxyMaxIdleConnections,
+		ResponseLimit:                &dataProxyResponseLimit,
+		RowLimit:                     &dataProxyRowLimit,
+		MaxConnsPerHost:              &dataProxyMaxConnsPerHost,
+		SendUserHeader:               &dataProxySendUserHeader,
+		Timeout:                      &dataProxyTimeout,
+		TlsHandshakeTimeoutSeconds:   &dataProxyTlsHandshakeTimeoutSeconds,
 	},
 	Database: &v1alpha1.GrafanaConfigDatabase{
 		Url:      "Url",
@@ -231,6 +259,20 @@ type = type
 url = Url
 user = user
 
+[dataproxy]
+dialTimeout = 10
+expect_continue_timeout_seconds = 1
+idle_conn_timeout_seconds = 90
+keep_alive_seconds = 30
+logging = false
+max_conns_per_host = 0
+max_idle_connections = 100
+response_limit = 0
+row_limit = 1000000
+send_user_header = false
+timeout = 30
+tls_handshake_timeout_seconds = 10
+
 [feature_toggles]
 enable = ngalert
 
@@ -319,6 +361,29 @@ func TestCfgServer(t *testing.T) {
 			"cert_file = /mnt/cert.crt",
 			"cert_key = /mnt/cert.key",
 			"router_logging = false",
+		},
+	}
+	require.Equal(t, config, testConfig)
+}
+
+func TestDataProxy(t *testing.T) {
+	i := NewGrafanaIni(&testGrafanaConfig)
+	config := map[string][]string{}
+	config = i.cfgDataProxy(config)
+	testConfig := map[string][]string{
+		"dataproxy": {
+			"dialTimeout = 10",
+			"expect_continue_timeout_seconds = 1",
+			"idle_conn_timeout_seconds = 90",
+			"keep_alive_seconds = 30",
+			"logging = false",
+			"max_conns_per_host = 0",
+			"max_idle_connections = 100",
+			"response_limit = 0",
+			"row_limit = 1000000",
+			"send_user_header = false",
+			"timeout = 30",
+			"tls_handshake_timeout_seconds = 10",
 		},
 	}
 	require.Equal(t, config, testConfig)
