@@ -3785,22 +3785,20 @@ GrafanaConfig is the configuration for grafana
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>versions_to_keep</b></td>
-        <td>integer</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr>
-       <tr>
         <td><b>min_refresh_interval</b></td>
         <td>string</td>
         <td>
           <br/>
         </td>
         <td>false</td>
-      </tr>
-    </tbody>
+      </tr><tr>
+        <td><b>versions_to_keep</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
 </table>
 
 

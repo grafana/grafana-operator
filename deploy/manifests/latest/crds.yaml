@@ -1136,6 +1136,8 @@ spec:
                     properties:
                       default_home_dashboard_path:
                         type: string
+                      min_refresh_interval:
+                        type: string
                       versions_to_keep:
                         nullable: true
                         type: integer
