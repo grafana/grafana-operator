@@ -504,7 +504,8 @@ type GrafanaConfigDashboards struct {
 	// +nullable
 	VersionsToKeep           *int   `json:"versions_to_keep,omitempty" ini:"versions_to_keep,omitempty"`
 	DefaultHomeDashboardPath string `json:"default_home_dashboard_path,omitempty" ini:"default_home_dashboard_path,omitempty"`
-	MinRefreshInterval       string `json:"min_refresh_interval,omitempty" ini:"min_refresh_interval,omitempty"`
+	// Prevents users from setting the dashboard refresh interval to a lower value than a given interval value
+	MinRefreshInterval string `json:"min_refresh_interval,omitempty" ini:"min_refresh_interval,omitempty"`
 }
 
 type GrafanaConfigSmtp struct {
