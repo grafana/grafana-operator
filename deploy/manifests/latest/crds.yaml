@@ -1136,6 +1136,10 @@ spec:
                     properties:
                       default_home_dashboard_path:
                         type: string
+                      min_refresh_interval:
+                        description: Prevents users from setting the dashboard refresh
+                          interval to a lower value than a given interval value
+                        type: string
                       versions_to_keep:
                         nullable: true
                         type: integer
