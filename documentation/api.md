@@ -3788,7 +3788,7 @@ GrafanaConfig is the configuration for grafana
         <td><b>min_refresh_interval</b></td>
         <td>string</td>
         <td>
-          <br/>
+          Prevents users from setting the dashboard refresh interval to a lower value than a given interval value<br/>
         </td>
         <td>false</td>
       </tr><tr>
