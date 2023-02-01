@@ -446,14 +446,32 @@ spec:
                     type: object
                   dataproxy:
                     properties:
+                      dialTimeout:
+                        type: integer
+                      expect_continue_timeout_seconds:
+                        type: integer
+                      idle_conn_timeout_seconds:
+                        type: integer
+                      keep_alive_seconds:
+                        type: integer
                       logging:
                         nullable: true
                         type: boolean
+                      max_conns_per_host:
+                        type: integer
+                      max_idle_connections:
+                        type: integer
+                      response_limit:
+                        type: integer
+                      row_limit:
+                        type: integer
                       send_user_header:
                         nullable: true
                         type: boolean
                       timeout:
                         nullable: true
+                        type: integer
+                      tls_handshake_timeout_seconds:
                         type: integer
                     type: object
                   external_image_storage:
