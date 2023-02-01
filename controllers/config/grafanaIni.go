@@ -230,6 +230,7 @@ func (i *GrafanaIni) parseConfig(config map[string][]string) map[string][]string
 		var items []string
 		items = appendInt(items, "versions_to_keep", i.cfg.Dashboards.VersionsToKeep)
 		items = appendStr(items, "default_home_dashboard_path", i.cfg.Dashboards.DefaultHomeDashboardPath)
+		items = appendStr(items, "min_refresh_interval", i.cfg.Dashboards.MinRefreshInterval)
 		config["dashboards"] = items
 	}
 
