@@ -138,6 +138,7 @@ var testGrafanaConfig = v1alpha1.GrafanaConfig{
 	},
 	AuthGenericOauth: &v1alpha1.GrafanaConfigAuthGenericOauth{
 		Enabled:               &genericOauthEnabled,
+		Name:                  "Name",
 		AllowSignUp:           &genericOauthAllowSignUp,
 		ClientId:              "ClientOauth",
 		ClientSecret:          "ClientSecretOauth",
@@ -225,6 +226,7 @@ client_id = ClientOauth
 client_secret = ClientSecretOauth
 email_attribute_path = email
 enabled = true
+name = Name
 role_attribute_path = roles[*]
 role_attribute_strict = true
 scopes = ScopesOauth

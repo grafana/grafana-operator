@@ -511,6 +511,7 @@ func (i *GrafanaIni) cfgAuthGitlab(config map[string][]string) map[string][]stri
 func (i *GrafanaIni) cfgAuthGenericOauth(config map[string][]string) map[string][]string {
 	var items []string
 	items = appendBool(items, "enabled", i.cfg.AuthGenericOauth.Enabled)
+	items = appendStr(items, "name", i.cfg.AuthGenericOauth.Name)
 	items = appendBool(items, "allow_sign_up", i.cfg.AuthGenericOauth.AllowSignUp)
 	items = appendStr(items, "client_id", i.cfg.AuthGenericOauth.ClientId)
 	items = appendStr(items, "client_secret", i.cfg.AuthGenericOauth.ClientSecret)

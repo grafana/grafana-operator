@@ -177,6 +177,8 @@ spec:
                       enabled:
                         nullable: true
                         type: boolean
+                      name:
+                        type: string
                       role_attribute_path:
                         type: string
                       role_attribute_strict:
