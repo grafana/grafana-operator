@@ -12,3 +12,7 @@ updates:
     pull-request-branch-name:
       # Use hyphen to ensure valid tag for container image
       separator: "-"
+  - package-ecosystem: "gitsubmodule"
+    directory: "/"
+    schedule:
+      interval: "daily"

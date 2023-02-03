@@ -112,10 +112,13 @@ generate: controller-gen
 # Build a single-architecture docker image
 docker-build: test
 	DOCKER_BUILDKIT=1 docker build -t ${IMG} .
+	#TODO: Remove once upstream auto-builds with updated images
+	DOCKER_BUILDKIT=1 docker build -t ${ORG}/grafana-plugins-init:${TAG} ./grafana_plugins_init
 
 # Push the single-architecture docker image
 docker-push:
 	docker push ${IMG}
+	docker push ${ORG}/grafana-plugins-init:${TAG}
 
 # Build and push a multi-architecture docker image
 docker-buildx: test

@@ -2,3 +2,6 @@
 	path = grafonnet-lib
 	url = https://github.com/grafana/grafonnet-lib
 	ignore = dirty
+[submodule "grafana_plugins_init"]
+	path = grafana_plugins_init
+	url = https://github.com/infobloxopen/grafana_plugins_init.git
