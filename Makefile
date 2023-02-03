@@ -225,4 +225,4 @@ catalog-push: ## Push the catalog image.
 
 .PHONY: image/show
 image/show:
-	@echo ${IMG}
+	@echo ${IMG} ${ORG}/grafana-plugins-init:${TAG}
