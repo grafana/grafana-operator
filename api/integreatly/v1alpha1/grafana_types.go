@@ -484,12 +484,21 @@ type GrafanaConfigAuthProxy struct {
 }
 
 type GrafanaConfigDataProxy struct {
+	DialTimeout                  *int `json:"dialTimeout,omitempty" ini:"dialTimeout,omitempty"`
+	ExpectContinueTimeoutSeconds *int `json:"expect_continue_timeout_seconds,omitempty" ini:"expect_continue_timeout_seconds,omitempty"`
+	IdleConnTimeoutSeconds       *int `json:"idle_conn_timeout_seconds,omitempty" ini:"idle_conn_timeout_seconds,omitempty"`
+	KeepAliveSeconds             *int `json:"keep_alive_seconds,omitempty" ini:"keep_alive_seconds,omitempty"`
 	// +nullable
-	Logging *bool `json:"logging,omitempty" ini:"logging"`
-	// +nullable
-	Timeout *int `json:"timeout,omitempty" ini:"timeout,omitempty"`
+	Logging            *bool `json:"logging,omitempty" ini:"logging"`
+	MaxIdleConnections *int  `json:"max_idle_connections,omitempty" ini:"max_idle_connections,omitempty"`
+	MaxConnsPerHost    *int  `json:"max_conns_per_host,omitempty" ini:"max_conns_per_host,omitempty"`
+	ResponseLimit      *int  `json:"response_limit,omitempty" ini:"response_limit,omitempty"`
+	RowLimit           *int  `json:"row_limit,omitempty" ini:"row_limit,omitempty"`
 	// +nullable
 	SendUserHeader *bool `json:"send_user_header,omitempty" ini:"send_user_header,omitempty"`
+	// +nullable
+	Timeout                    *int `json:"timeout,omitempty" ini:"timeout,omitempty"`
+	TlsHandshakeTimeoutSeconds *int `json:"tls_handshake_timeout_seconds,omitempty" ini:"tls_handshake_timeout_seconds,omitempty"`
 }
 
 type GrafanaConfigAnalytics struct {
@@ -504,6 +513,8 @@ type GrafanaConfigDashboards struct {
 	// +nullable
 	VersionsToKeep           *int   `json:"versions_to_keep,omitempty" ini:"versions_to_keep,omitempty"`
 	DefaultHomeDashboardPath string `json:"default_home_dashboard_path,omitempty" ini:"default_home_dashboard_path,omitempty"`
+	// Prevents users from setting the dashboard refresh interval to a lower value than a given interval value
+	MinRefreshInterval string `json:"min_refresh_interval,omitempty" ini:"min_refresh_interval,omitempty"`
 }
 
 type GrafanaConfigSmtp struct {

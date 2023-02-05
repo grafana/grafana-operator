@@ -78,9 +78,10 @@ func AdminSecretReconciled(cr *v1alpha1.Grafana, currentState *v12.Secret) *v12.
 	reconciled := currentState.DeepCopy()
 	reconciled.Data = data
 
-	reconciled.Annotations = map[string]string{
-		constants.LastCredentialsAnnotation: hash,
+	if reconciled.Annotations == nil {
+		reconciled.Annotations = map[string]string{}
 	}
+	reconciled.Annotations[constants.LastCredentialsAnnotation] = hash
 
 	return reconciled
 }
