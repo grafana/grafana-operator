@@ -3092,6 +3092,13 @@ GrafanaConfig is the configuration for grafana
           <br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>use_pkce</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 

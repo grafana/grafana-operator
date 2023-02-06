@@ -942,6 +942,8 @@ spec:
                         type: boolean
                       token_url:
                         type: string
+                      use_pkce:
+                        type: boolean
                     type: object
                   auth.github:
                     properties:
