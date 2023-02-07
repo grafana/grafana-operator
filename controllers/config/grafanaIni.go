@@ -226,6 +226,7 @@ func (i *GrafanaIni) parseConfig(config map[string][]string) map[string][]string
 		var items []string
 		items = appendInt(items, "versions_to_keep", i.cfg.Dashboards.VersionsToKeep)
 		items = appendStr(items, "default_home_dashboard_path", i.cfg.Dashboards.DefaultHomeDashboardPath)
+		items = appendStr(items, "min_refresh_interval", i.cfg.Dashboards.MinRefreshInterval)
 		config["dashboards"] = items
 	}
 
@@ -513,6 +514,7 @@ func (i *GrafanaIni) cfgAuthGenericOauth(config map[string][]string) map[string]
 	items = appendBool(items, "allow_sign_up", i.cfg.AuthGenericOauth.AllowSignUp)
 	items = appendStr(items, "client_id", i.cfg.AuthGenericOauth.ClientId)
 	items = appendStr(items, "client_secret", i.cfg.AuthGenericOauth.ClientSecret)
+	items = appendBool(items, "use_pkce", i.cfg.AuthGenericOauth.UsePkce)
 	items = appendStr(items, "scopes", i.cfg.AuthGenericOauth.Scopes)
 	items = appendStr(items, "auth_url", i.cfg.AuthGenericOauth.AuthUrl)
 	items = appendStr(items, "token_url", i.cfg.AuthGenericOauth.TokenUrl)
@@ -580,9 +582,18 @@ func (i *GrafanaIni) cfgAuthProxy(config map[string][]string) map[string][]strin
 
 func (i *GrafanaIni) cfgDataProxy(config map[string][]string) map[string][]string {
 	var items []string
+	items = appendInt(items, "dialTimeout", i.cfg.DataProxy.DialTimeout)
+	items = appendInt(items, "expect_continue_timeout_seconds", i.cfg.DataProxy.ExpectContinueTimeoutSeconds)
+	items = appendInt(items, "idle_conn_timeout_seconds", i.cfg.DataProxy.IdleConnTimeoutSeconds)
+	items = appendInt(items, "keep_alive_seconds", i.cfg.DataProxy.KeepAliveSeconds)
 	items = appendBool(items, "logging", i.cfg.DataProxy.Logging)
-	items = appendInt(items, "timeout", i.cfg.DataProxy.Timeout)
+	items = appendInt(items, "max_conns_per_host", i.cfg.DataProxy.MaxConnsPerHost)
+	items = appendInt(items, "max_idle_connections", i.cfg.DataProxy.MaxIdleConnections)
+	items = appendInt(items, "response_limit", i.cfg.DataProxy.ResponseLimit)
+	items = appendInt(items, "row_limit", i.cfg.DataProxy.RowLimit)
 	items = appendBool(items, "send_user_header", i.cfg.DataProxy.SendUserHeader)
+	items = appendInt(items, "timeout", i.cfg.DataProxy.Timeout)
+	items = appendInt(items, "tls_handshake_timeout_seconds", i.cfg.DataProxy.TlsHandshakeTimeoutSeconds)
 	config["dataproxy"] = items
 
 	return config
