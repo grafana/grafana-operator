@@ -31,6 +31,10 @@ type GrafanaFolderSpec struct {
 
 	// selects Grafanas for import
 	InstanceSelector *metav1.LabelSelector `json:"instanceSelector,omitempty"`
+
+	// allow to import this resources from an operator in a different namespace
+	// +optional
+	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
 }
 
 // GrafanaFolderStatus defines the observed state of GrafanaFolder
@@ -82,4 +86,11 @@ func (in *GrafanaFolder) Hash() string {
 
 func (in *GrafanaFolder) Unchanged() bool {
 	return in.Hash() == in.Status.Hash
+}
+
+func (in *GrafanaFolder) IsAllowCrossNamespaceImport() bool {
+	if in.Spec.AllowCrossNamespaceImport != nil {
+		return *in.Spec.AllowCrossNamespaceImport
+	}
+	return false
 }
