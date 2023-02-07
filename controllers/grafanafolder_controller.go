@@ -189,6 +189,11 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	controllerLog.Info("found matching Grafana instances for folder", "count", len(instances.Items))
 
 	for _, grafana := range instances.Items {
+		// check if this is a cross namespace import
+		if grafana.Namespace != folder.Namespace && !folder.IsAllowCrossNamespaceImport() {
+			continue
+		}
+
 		//if grafana.Status.AdminUrl == "" || grafana.Status.Stage != v1beta1.OperatorStageComplete || grafana.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
 		if grafana.Status.Stage != v1beta1.OperatorStageComplete || grafana.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
 			controllerLog.Info("grafana instance not ready", "grafana", grafana.Name)

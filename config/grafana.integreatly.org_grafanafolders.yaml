@@ -35,6 +35,10 @@ spec:
           spec:
             description: GrafanaFolderSpec defines the desired state of GrafanaFolder
             properties:
+              allowCrossNamespaceImport:
+                description: allow to import this resources from an operator in a
+                  different namespace
+                type: boolean
               instanceSelector:
                 description: selects Grafanas for import
                 properties:

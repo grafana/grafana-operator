@@ -72,6 +72,10 @@ type GrafanaDatasourceSpec struct {
 	// how often the datasource is refreshed, defaults to 24h if not set
 	// +optional
 	ResyncPeriod string `json:"resyncPeriod,omitempty"`
+
+	// allow to import this resources from an operator in a different namespace
+	// +optional
+	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
 }
 
 // GrafanaDatasourceStatus defines the observed state of GrafanaDatasource
@@ -176,6 +180,13 @@ func (in *GrafanaDatasource) ExpandVariables(variables map[string][]byte) ([]byt
 	}
 
 	return raw, nil
+}
+
+func (in *GrafanaDatasource) IsAllowCrossNamespaceImport() bool {
+	if in.Spec.AllowCrossNamespaceImport != nil {
+		return *in.Spec.AllowCrossNamespaceImport
+	}
+	return false
 }
 
 func (in *GrafanaDatasourceList) Find(namespace string, name string) *GrafanaDatasource {

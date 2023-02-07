@@ -35,6 +35,10 @@ spec:
           spec:
             description: GrafanaDashboardSpec defines the desired state of GrafanaDashboard
             properties:
+              allowCrossNamespaceImport:
+                description: allow to import this resources from an operator in a
+                  different namespace
+                type: boolean
               contentCacheDuration:
                 description: Cache duration for dashboards fetched from URLs
                 type: string

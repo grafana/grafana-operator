@@ -27,6 +27,8 @@ spec:
             type: object
           spec:
             properties:
+              allowCrossNamespaceImport:
+                type: boolean
               contentCacheDuration:
                 type: string
               datasources:

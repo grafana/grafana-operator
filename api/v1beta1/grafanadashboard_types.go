@@ -74,6 +74,10 @@ type GrafanaDashboardSpec struct {
 	// maps required data sources to existing ones
 	// +optional
 	Datasources []GrafanaDashboardDatasource `json:"datasources,omitempty"`
+
+	// allow to import this resources from an operator in a different namespace
+	// +optional
+	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
 }
 
 // GrafanaDashboardStatus defines the observed state of GrafanaDashboard
@@ -165,6 +169,13 @@ func (in *GrafanaDashboardStatus) getContentCache(url string, cacheDuration time
 	}
 
 	return cache
+}
+
+func (in *GrafanaDashboard) IsAllowCrossNamespaceImport() bool {
+	if in.Spec.AllowCrossNamespaceImport != nil {
+		return *in.Spec.AllowCrossNamespaceImport
+	}
+	return false
 }
 
 func Gunzip(compressed []byte) ([]byte, error) {

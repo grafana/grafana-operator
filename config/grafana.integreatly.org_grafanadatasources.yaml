@@ -35,6 +35,10 @@ spec:
           spec:
             description: GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
             properties:
+              allowCrossNamespaceImport:
+                description: allow to import this resources from an operator in a
+                  different namespace
+                type: boolean
               datasource:
                 properties:
                   access:
