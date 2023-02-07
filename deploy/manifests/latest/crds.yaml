@@ -3,6 +3,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.2
+  creationTimestamp: null
   name: grafanadashboards.integreatly.org
 spec:
   group: integreatly.org
@@ -167,6 +168,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.2
+  creationTimestamp: null
   name: grafanadatasources.integreatly.org
 spec:
   group: integreatly.org
@@ -746,6 +748,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.2
+  creationTimestamp: null
   name: grafanas.integreatly.org
 spec:
   group: integreatly.org
@@ -901,7 +904,6 @@ spec:
                   auth.generic_oauth:
                     properties:
                       allow_sign_up:
-                        nullable: true
                         type: boolean
                       allowed_domains:
                         type: string
@@ -919,6 +921,7 @@ spec:
                         nullable: true
                         type: boolean
                       name:
+                        nullable: true
                         type: string
                       role_attribute_path:
                         type: string
