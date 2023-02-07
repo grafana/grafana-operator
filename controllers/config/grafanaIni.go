@@ -514,6 +514,7 @@ func (i *GrafanaIni) cfgAuthGenericOauth(config map[string][]string) map[string]
 	items = appendBool(items, "allow_sign_up", i.cfg.AuthGenericOauth.AllowSignUp)
 	items = appendStr(items, "client_id", i.cfg.AuthGenericOauth.ClientId)
 	items = appendStr(items, "client_secret", i.cfg.AuthGenericOauth.ClientSecret)
+	items = appendBool(items, "use_pkce", i.cfg.AuthGenericOauth.UsePkce)
 	items = appendStr(items, "scopes", i.cfg.AuthGenericOauth.Scopes)
 	items = appendStr(items, "auth_url", i.cfg.AuthGenericOauth.AuthUrl)
 	items = appendStr(items, "token_url", i.cfg.AuthGenericOauth.TokenUrl)

@@ -39,6 +39,7 @@ var (
 	genericOauthAllowSignUp           = true
 	genericOauthRoleAttributeStrict   = true
 	genericOauthTLSSkipVerifyInsecure = true
+	genericOauthUsePkce               = true
 
 	// AuthGitlab
 	gitlabEnabled                 = true
@@ -143,6 +144,7 @@ var testGrafanaConfig = v1alpha1.GrafanaConfig{
 		Scopes:                "ScopesOauth",
 		AuthUrl:               "https://AuthURLOauth.com",
 		TokenUrl:              "https://TokenURLOauth.com",
+		UsePkce:               &genericOauthUsePkce,
 		ApiUrl:                "https://ApiURLOauth.com",
 		TeamsURL:              "https://TeamsURLOauth.com",
 		TeamIds:               "1,2",
@@ -234,6 +236,7 @@ tls_client_cert = /genericOauth/clientCert
 tls_client_key = /genericOauth/clientKey
 tls_skip_verify_insecure = true
 token_url = https://TokenURLOauth.com
+use_pkce = true
 
 [auth.gitlab]
 allow_assign_grafana_admin = true

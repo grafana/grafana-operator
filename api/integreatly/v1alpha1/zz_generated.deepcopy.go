@@ -494,6 +494,11 @@ func (in *GrafanaConfigAuthGenericOauth) DeepCopyInto(out *GrafanaConfigAuthGene
 		*out = new(bool)
 		**out = **in
 	}
+	if in.UsePkce != nil {
+		in, out := &in.UsePkce, &out.UsePkce
+		*out = new(bool)
+		**out = **in
+	}
 	if in.RoleAttributeStrict != nil {
 		in, out := &in.RoleAttributeStrict, &out.RoleAttributeStrict
 		*out = new(bool)
