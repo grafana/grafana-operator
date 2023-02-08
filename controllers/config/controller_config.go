@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"sort"
 	"sync"
 	"time"
 
@@ -73,8 +74,14 @@ func (c *ControllerConfig) GetAllPlugins() v1alpha1.PluginList {
 	defer c.Unlock()
 
 	var plugins v1alpha1.PluginList
-	for _, v := range GetControllerConfig().Plugins {
-		plugins = append(plugins, v...)
+	pluginLists := GetControllerConfig().Plugins
+	keys := make([]string, 0, len(pluginLists))
+	for k := range pluginLists {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		plugins = append(plugins, pluginLists[k]...)
 	}
 	return plugins
 }
@@ -220,8 +227,13 @@ func (c *ControllerConfig) GetDashboards(namespace string) []*v1alpha1.GrafanaDa
 	// The periodic resync in grafanadashboard.GrafanaDashboardReconciler rely on the convention
 	// that an empty namespace means all of them, so we follow that rule here.
 	if namespace == "" {
-		for _, ds := range c.Dashboards {
-			dashboards = append(dashboards, ds...)
+		keys := make([]string, 0, len(c.Dashboards))
+		for k := range c.Dashboards {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			dashboards = append(dashboards, c.Dashboards[k]...)
 		}
 		return dashboards
 	}
