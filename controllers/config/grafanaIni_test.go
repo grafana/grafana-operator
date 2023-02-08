@@ -35,13 +35,13 @@ var (
 	allowSignUp    = false
 
 	// AuthJwt
-	jwtEnabled = true
-	jwtAutoSignUp = true
-	jwtEnableLoginToken = true
-	jwtRoleAttributeStrict =  true
-	jwtUrlLogin = true
+	jwtEnabled                 = true
+	jwtAutoSignUp              = true
+	jwtEnableLoginToken        = true
+	jwtRoleAttributeStrict     = true
+	jwtUrlLogin                = true
 	jwtAllowAssignGrafanaAdmin = true
-	jwtSkipOrgRoleSync = true
+	jwtSkipOrgRoleSync         = true
 
 	// AuthGenericOauth
 	genericOauthEnabled               = true
