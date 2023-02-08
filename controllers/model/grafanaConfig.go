@@ -21,9 +21,10 @@ func GrafanaConfig(cr *v1alpha1.Grafana) *v1.ConfigMap {
 
 	// Store the hash of the current configuration for later
 	// comparisons
-	configMap.Annotations = map[string]string{
-		"lastConfig": hash,
+	if configMap.Annotations == nil {
+		configMap.Annotations = map[string]string{}
 	}
+	configMap.Annotations["lastConfig"] = hash
 
 	configMap.Data = map[string]string{}
 	configMap.Data[constants.GrafanaConfigFileName] = config
@@ -36,9 +37,10 @@ func GrafanaConfigReconciled(cr *v1alpha1.Grafana, currentState *v1.ConfigMap) *
 	ini := config.NewGrafanaIni(&cr.Spec.Config)
 	config, hash := ini.Write()
 
-	reconciled.Annotations = map[string]string{
-		constants.LastConfigAnnotation: hash,
+	if reconciled.Annotations == nil {
+		reconciled.Annotations = map[string]string{}
 	}
+	reconciled.Annotations[constants.LastConfigAnnotation] = hash
 
 	reconciled.Data[constants.GrafanaConfigFileName] = config
 	return reconciled

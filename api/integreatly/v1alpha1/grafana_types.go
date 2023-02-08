@@ -426,6 +426,7 @@ type GrafanaConfigAuthGenericOauth struct {
 	Scopes               string `json:"scopes,omitempty" ini:"scopes,omitempty"`
 	AuthUrl              string `json:"auth_url,omitempty" ini:"auth_url,omitempty"`
 	TokenUrl             string `json:"token_url,omitempty" ini:"token_url,omitempty"`
+	UsePkce              *bool  `json:"use_pkce,omitempty" ini:"use_pkce,omitempty"`
 	ApiUrl               string `json:"api_url,omitempty" ini:"api_url,omitempty"`
 	TeamsURL             string `json:"teams_url,omitempty" ini:"teams_url,omitempty"`
 	TeamIds              string `json:"team_ids,omitempty" ini:"team_ids,omitempty"`
