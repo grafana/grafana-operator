@@ -74,8 +74,13 @@ func (c *ControllerConfig) GetAllPlugins() v1alpha1.PluginList {
 	defer c.Unlock()
 
 	var plugins v1alpha1.PluginList
-	for _, v := range GetControllerConfig().Plugins {
-		plugins = append(plugins, v...)
+	var keys []string
+	for k := range GetControllerConfig().Plugins {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		plugins = append(plugins, GetControllerConfig().Plugins[k]...)
 	}
 	return plugins
 }
