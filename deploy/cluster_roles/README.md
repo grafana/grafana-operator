@@ -28,7 +28,6 @@ sed "s/namespace: grafana/namespace: ${GRAFANA_NAMESPACE}/g" cluster_role_bindin
 For a cluster administrator to allow other users to be able to deploy Grafana operators and the associated Custom Resources namespace/project admins/editors need edit access to the Grafana Custom Resources.
 
 ```shell
-kubectl create -f cluster_role_aggregate_grafana_admin_edit.yaml
 kubectl create -f deploy/cluster_roles/cluster_role_aggregate_grafana_admin_edit.yaml
 kubectl create -f deploy/cluster_roles/cluster_role_aggregate_grafana_view.yaml
 ```

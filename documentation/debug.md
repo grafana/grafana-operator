@@ -37,7 +37,7 @@ spec:
 ```
 
 In general if you are having issues setting up your grafana instance simply your grafana CR.
-First try [deploy/examples/Grafana.yaml](deploy/examples/Grafana.yaml) and get that
+First try [deploy/examples/Grafana.yaml](../deploy/examples/Grafana.yaml) and get that
 grafana instance up and running.
 When that is done add small config changes to start build the config you want.
 
@@ -47,7 +47,7 @@ There are generally three reasons why you can't find your grafana dashboard.
 
 1. You are creating a grafanadashboard in another namespace then the grafana-operator
   but you haven't defined --scan-all in the [operator](deploy_grafana.md).
-2. Or you haven't confgiured cluster wide RBAC [config](deploy/cluster_roles/README.md).
+2. Or you haven't confgiured cluster wide RBAC [config](../deploy/cluster_roles/README.md).
 3. Or you haven't defined the correct labelSelector that matches the operator on your dashboard.
 
 In your grafana CR you have deinfed somehing like:
@@ -58,7 +58,7 @@ In your grafana CR you have deinfed somehing like:
         - { key: app, operator: In, values: [grafana] }
 ```
 
-Just like in [deploy/examples/dashboards/SimpleDashboard.yaml](deploy/examples/dashboards/SimpleDashboard.yaml)
+Just like in [deploy/examples/dashboards/SimpleDashboard.yaml](../deploy/examples/dashboards/SimpleDashboard.yaml)
 you need to define the correct labels that matches the grafana CR.
 
 ```.yaml

@@ -3023,6 +3023,13 @@ GrafanaConfig is the configuration for grafana
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>role_attribute_path</b></td>
         <td>string</td>
         <td>
@@ -3095,6 +3102,13 @@ GrafanaConfig is the configuration for grafana
       </tr><tr>
         <td><b>token_url</b></td>
         <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>use_pkce</b></td>
+        <td>boolean</td>
         <td>
           <br/>
         </td>
@@ -4097,8 +4111,64 @@ GrafanaConfig is the configuration for grafana
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>dialTimeout</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>expect_continue_timeout_seconds</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>idle_conn_timeout_seconds</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>keep_alive_seconds</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>logging</b></td>
         <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>max_conns_per_host</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>max_idle_connections</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>response_limit</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>row_limit</b></td>
+        <td>integer</td>
         <td>
           <br/>
         </td>
@@ -4112,6 +4182,13 @@ GrafanaConfig is the configuration for grafana
         <td>false</td>
       </tr><tr>
         <td><b>timeout</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>tls_handshake_timeout_seconds</b></td>
         <td>integer</td>
         <td>
           <br/>
