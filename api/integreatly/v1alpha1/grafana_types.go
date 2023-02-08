@@ -420,6 +420,7 @@ type GrafanaConfigAuthGenericOauth struct {
 	// +nullable
 	Enabled *bool `json:"enabled,omitempty" ini:"enabled"`
 	// +nullable
+	Name                 string `json:"name,omitempty" ini:"name,omitempty"`
 	AllowSignUp          *bool  `json:"allow_sign_up,omitempty" ini:"allow_sign_up"`
 	ClientId             string `json:"client_id,omitempty" ini:"client_id,omitempty"`
 	ClientSecret         string `json:"client_secret,omitempty" ini:"client_secret,omitempty"`

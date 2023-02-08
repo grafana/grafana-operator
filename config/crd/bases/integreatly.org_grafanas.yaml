@@ -160,7 +160,6 @@ spec:
                   auth.generic_oauth:
                     properties:
                       allow_sign_up:
-                        nullable: true
                         type: boolean
                       allowed_domains:
                         type: string
@@ -177,6 +176,9 @@ spec:
                       enabled:
                         nullable: true
                         type: boolean
+                      name:
+                        nullable: true
+                        type: string
                       role_attribute_path:
                         type: string
                       role_attribute_strict:
