@@ -113,7 +113,7 @@ generate: controller-gen
 docker-build: test
 	DOCKER_BUILDKIT=1 docker build -t ${IMG} .
 	#TODO: Remove once upstream auto-builds with updated images
-	DOCKER_BUILDKIT=1 docker build -t ${ORG}/grafana-plugins-init:${TAG} ./grafana_plugins_init
+	DOCKER_BUILDKIT=1 docker build -t ${ORG}/grafana_plugins_init:${TAG} ./grafana_plugins_init
 
 # Push the single-architecture docker image
 docker-push:
@@ -225,4 +225,4 @@ catalog-push: ## Push the catalog image.
 
 .PHONY: image/show
 image/show:
-	@echo ${IMG} ${ORG}/grafana-plugins-init:${TAG}
+	@echo ${IMG} ${ORG}/grafana_plugins_init:${TAG}
