@@ -596,7 +596,6 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.2
-  creationTimestamp: null
   name: grafanafolders.integreatly.org
 spec:
   group: integreatly.org
@@ -667,7 +666,6 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.2
-  creationTimestamp: null
   name: grafananotificationchannels.integreatly.org
 spec:
   group: integreatly.org
