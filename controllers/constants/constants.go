@@ -33,4 +33,5 @@ const (
 	GrafanaHttpPort                     int = 3000
 	GrafanaHttpPortName                     = "grafana"
 	GrafanaSuccessMsg                       = "success"
+	GrafanaHttpPortAppProtocol              = "http"
 )
