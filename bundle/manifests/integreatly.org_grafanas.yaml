@@ -158,7 +158,6 @@ spec:
                   auth.generic_oauth:
                     properties:
                       allow_sign_up:
-                        nullable: true
                         type: boolean
                       allowed_domains:
                         type: string
@@ -175,6 +174,9 @@ spec:
                       enabled:
                         nullable: true
                         type: boolean
+                      name:
+                        nullable: true
+                        type: string
                       role_attribute_path:
                         type: string
                       role_attribute_strict:
@@ -200,7 +202,6 @@ spec:
                       token_url:
                         type: string
                       use_pkce:
-                        nullable: true
                         type: boolean
                     type: object
                   auth.github:
@@ -230,6 +231,9 @@ spec:
                     type: object
                   auth.gitlab:
                     properties:
+                      allow_assign_grafana_admin:
+                        nullable: true
+                        type: boolean
                       allow_sign_up:
                         nullable: true
                         type: boolean
@@ -244,6 +248,11 @@ spec:
                       client_secret:
                         type: string
                       enabled:
+                        nullable: true
+                        type: boolean
+                      role_attribute_path:
+                        type: string
+                      role_attribute_strict:
                         nullable: true
                         type: boolean
                       scopes:
@@ -269,6 +278,41 @@ spec:
                       scopes:
                         type: string
                       token_url:
+                        type: string
+                    type: object
+                  auth.jwt:
+                    properties:
+                      allow_assign_grafana_admin:
+                        type: boolean
+                      auto_sign_up:
+                        type: boolean
+                      cache_ttl:
+                        type: string
+                      email_claim:
+                        type: string
+                      enable_login_token:
+                        type: boolean
+                      enabled:
+                        type: boolean
+                      expect_claims:
+                        type: string
+                      header_name:
+                        type: string
+                      jwk_set_file:
+                        type: string
+                      jwk_set_url:
+                        type: string
+                      key_file:
+                        type: string
+                      role_attribute_path:
+                        type: string
+                      role_attribute_strict:
+                        type: boolean
+                      skip_org_role_sync:
+                        type: boolean
+                      url_login:
+                        type: boolean
+                      username_claim:
                         type: string
                     type: object
                   auth.ldap:
@@ -388,6 +432,10 @@ spec:
                     properties:
                       default_home_dashboard_path:
                         type: string
+                      min_refresh_interval:
+                        description: Prevents users from setting the dashboard refresh
+                          interval to a lower value than a given interval value
+                        type: string
                       versions_to_keep:
                         nullable: true
                         type: integer
@@ -435,14 +483,32 @@ spec:
                     type: object
                   dataproxy:
                     properties:
+                      dialTimeout:
+                        type: integer
+                      expect_continue_timeout_seconds:
+                        type: integer
+                      idle_conn_timeout_seconds:
+                        type: integer
+                      keep_alive_seconds:
+                        type: integer
                       logging:
                         nullable: true
                         type: boolean
+                      max_conns_per_host:
+                        type: integer
+                      max_idle_connections:
+                        type: integer
+                      response_limit:
+                        type: integer
+                      row_limit:
+                        type: integer
                       send_user_header:
                         nullable: true
                         type: boolean
                       timeout:
                         nullable: true
+                        type: integer
+                      tls_handshake_timeout_seconds:
                         type: integer
                     type: object
                   external_image_storage:
