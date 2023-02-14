@@ -67,11 +67,18 @@ func GetGrafanaPort(cr *v1alpha1.Grafana) int {
 	return port
 }
 
+func getServiceAppProtocol(cr *v1alpha1.Grafana) string {
+	if cr.Spec.Service == nil {
+		return ""
+	}
+	return cr.Spec.Service.AppProtocol
+}
+
 func getServicePorts(cr *v1alpha1.Grafana, currentState *v1.Service) []v1.ServicePort {
 	intPort := int32(GetGrafanaPort(cr))
 	nodePort := int32(0)
+	appProtocol := getServiceAppProtocol(cr)
 	namePort := constants.GrafanaHttpPortName
-	appProtcol := constants.GrafanaHttpPortAppProtocol
 	if cr.Spec.Service != nil {
 		for _, nPort := range cr.Spec.Service.Ports {
 			if nPort.Port == 3000 {
@@ -80,15 +87,18 @@ func getServicePorts(cr *v1alpha1.Grafana, currentState *v1.Service) []v1.Servic
 			}
 		}
 	}
+
 	defaultPorts := []v1.ServicePort{
 		{
-			Name:        namePort,
-			Protocol:    "TCP",
-			Port:        intPort,
-			TargetPort:  intstr.FromString("grafana-http"),
-			NodePort:    nodePort,
-			AppProtocol: &appProtcol,
+			Name:       namePort,
+			Protocol:   "TCP",
+			Port:       intPort,
+			TargetPort: intstr.FromString("grafana-http"),
+			NodePort:   nodePort,
 		},
+	}
+	if appProtocol != "" {
+		defaultPorts[0].AppProtocol = &appProtocol
 	}
 
 	if cr.Spec.Service == nil {

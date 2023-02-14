@@ -13926,6 +13926,13 @@ GrafanaService provides a means to configure the service
           Service Type string describes ingress methods for a service<br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>appProtocol</b></td>
+        <td>string</td>
+        <td>
+          The application protocol for the default port. This field follows standard Kubernetes label syntax. Un-prefixed names are reserved for IANA standard service names (as per RFC-6335 and https://www.iana.org/assignments/service-names). Non-standard protocols should use prefixed names such as mycompany.com/my-custom-protocol.<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
