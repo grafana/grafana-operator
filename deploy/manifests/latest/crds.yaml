@@ -3,6 +3,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.2
+  creationTimestamp: null
   name: grafanadashboards.integreatly.org
 spec:
   group: integreatly.org
@@ -167,6 +168,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.2
+  creationTimestamp: null
   name: grafanadatasources.integreatly.org
 spec:
   group: integreatly.org
@@ -746,6 +748,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.2
+  creationTimestamp: null
   name: grafanas.integreatly.org
 spec:
   group: integreatly.org
@@ -901,7 +904,6 @@ spec:
                   auth.generic_oauth:
                     properties:
                       allow_sign_up:
-                        nullable: true
                         type: boolean
                       allowed_domains:
                         type: string
@@ -918,6 +920,9 @@ spec:
                       enabled:
                         nullable: true
                         type: boolean
+                      name:
+                        nullable: true
+                        type: string
                       role_attribute_path:
                         type: string
                       role_attribute_strict:
@@ -1019,6 +1024,41 @@ spec:
                       scopes:
                         type: string
                       token_url:
+                        type: string
+                    type: object
+                  auth.jwt:
+                    properties:
+                      allow_assign_grafana_admin:
+                        type: boolean
+                      auto_sign_up:
+                        type: boolean
+                      cache_ttl:
+                        type: string
+                      email_claim:
+                        type: string
+                      enable_login_token:
+                        type: boolean
+                      enabled:
+                        type: boolean
+                      expect_claims:
+                        type: string
+                      header_name:
+                        type: string
+                      jwk_set_file:
+                        type: string
+                      jwk_set_url:
+                        type: string
+                      key_file:
+                        type: string
+                      role_attribute_path:
+                        type: string
+                      role_attribute_strict:
+                        type: boolean
+                      skip_org_role_sync:
+                        type: boolean
+                      url_login:
+                        type: boolean
+                      username_claim:
                         type: string
                     type: object
                   auth.ldap:

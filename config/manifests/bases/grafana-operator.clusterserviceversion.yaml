@@ -87,8 +87,8 @@ metadata:
     capabilities: Basic Install
     categories: Monitoring
     certified: "False"
-    containerImage: quay.io/grafana-operator/grafana-operator:v4.8.0
-    createdAt: "2022-12-01T10:00:12Z"
+    containerImage: quay.io/grafana-operator/grafana-operator:v4.9.0
+    createdAt: "2023-02-10T10:00:12Z"
     description: A Kubernetes Operator based on the Operator SDK for creating and
       managing Grafana instances
     repository: https://github.com/grafana-operator/grafana-operator
@@ -168,5 +168,5 @@ spec:
   maturity: alpha
   provider:
     name: Red Hat
-  replaces: grafana-operator.v4.7.1
+  replaces: grafana-operator.v4.8.0
   version: 0.0.0

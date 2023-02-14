@@ -210,6 +210,10 @@ func (i *GrafanaIni) parseConfig(config map[string][]string) map[string][]string
 		config = i.cfgAuthProxy(config)
 	}
 
+	if i.cfg.AuthJwt != nil {
+		config = i.cfgAuthJwt(config)
+	}
+
 	if i.cfg.DataProxy != nil {
 		config = i.cfgDataProxy(config)
 	}
@@ -511,6 +515,7 @@ func (i *GrafanaIni) cfgAuthGitlab(config map[string][]string) map[string][]stri
 func (i *GrafanaIni) cfgAuthGenericOauth(config map[string][]string) map[string][]string {
 	var items []string
 	items = appendBool(items, "enabled", i.cfg.AuthGenericOauth.Enabled)
+	items = appendStr(items, "name", i.cfg.AuthGenericOauth.Name)
 	items = appendBool(items, "allow_sign_up", i.cfg.AuthGenericOauth.AllowSignUp)
 	items = appendStr(items, "client_id", i.cfg.AuthGenericOauth.ClientId)
 	items = appendStr(items, "client_secret", i.cfg.AuthGenericOauth.ClientSecret)
@@ -576,6 +581,29 @@ func (i *GrafanaIni) cfgAuthProxy(config map[string][]string) map[string][]strin
 	items = appendStr(items, "headers", i.cfg.AuthProxy.Headers)
 	items = appendBool(items, "enable_login_token", i.cfg.AuthProxy.EnableLoginToken)
 	config["auth.proxy"] = items
+
+	return config
+}
+
+func (i *GrafanaIni) cfgAuthJwt(config map[string][]string) map[string][]string {
+	var items []string
+	items = appendBool(items, "enabled", i.cfg.AuthJwt.Enabled)
+	items = appendBool(items, "enable_login_token", i.cfg.AuthJwt.EnableLoginToken)
+	items = appendStr(items, "header_name", i.cfg.AuthJwt.HeaderName)
+	items = appendStr(items, "email_claim", i.cfg.AuthJwt.EmailClaim)
+	items = appendStr(items, "expect_claims", i.cfg.AuthJwt.ExpectClaims)
+	items = appendStr(items, "username_claim", i.cfg.AuthJwt.UsernameClaim)
+	items = appendStr(items, "jwk_set_url", i.cfg.AuthJwt.JwkSetUrl)
+	items = appendStr(items, "jwk_set_file", i.cfg.AuthJwt.JwkSetFile)
+	items = appendStr(items, "key_file", i.cfg.AuthJwt.KeyFile)
+	items = appendStr(items, "role_attribute_path", i.cfg.AuthJwt.RoleAttributePath)
+	items = appendStr(items, "cache_ttl", i.cfg.AuthJwt.CacheTtl)
+	items = appendBool(items, "role_attribute_strict", i.cfg.AuthJwt.RoleAttributeStrict)
+	items = appendBool(items, "auto_sign_up", i.cfg.AuthJwt.AutoSignUp)
+	items = appendBool(items, "url_login", i.cfg.AuthJwt.UrlLogin)
+	items = appendBool(items, "allow_assign_grafana_admin", i.cfg.AuthJwt.AllowAssignGrafanaAdmin)
+	items = appendBool(items, "skip_org_role_sync", i.cfg.AuthJwt.SkipOrgRoleSync)
+	config["auth.jwt"] = items
 
 	return config
 }

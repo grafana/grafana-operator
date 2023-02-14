@@ -168,6 +168,7 @@ type GrafanaConfig struct {
 	AuthGithub                    *GrafanaConfigAuthGithub                    `json:"auth.github,omitempty" ini:"auth.github,omitempty"`
 	AuthGitlab                    *GrafanaConfigAuthGitlab                    `json:"auth.gitlab,omitempty" ini:"auth.gitlab,omitempty"`
 	AuthGenericOauth              *GrafanaConfigAuthGenericOauth              `json:"auth.generic_oauth,omitempty" ini:"auth.generic_oauth,omitempty"`
+	AuthJwt                       *GrafanaConfigAuthJwt                       `json:"auth.jwt,omitempty" ini:"auth.jwt,omitempty"`
 	AuthOkta                      *GrafanaConfigAuthOkta                      `json:"auth.okta,omitempty" ini:"auth.okta,omitempty"`
 	AuthLdap                      *GrafanaConfigAuthLdap                      `json:"auth.ldap,omitempty" ini:"auth.ldap,omitempty"`
 	AuthProxy                     *GrafanaConfigAuthProxy                     `json:"auth.proxy,omitempty" ini:"auth.proxy,omitempty"`
@@ -420,6 +421,7 @@ type GrafanaConfigAuthGenericOauth struct {
 	// +nullable
 	Enabled *bool `json:"enabled,omitempty" ini:"enabled"`
 	// +nullable
+	Name                 string `json:"name,omitempty" ini:"name,omitempty"`
 	AllowSignUp          *bool  `json:"allow_sign_up,omitempty" ini:"allow_sign_up"`
 	ClientId             string `json:"client_id,omitempty" ini:"client_id,omitempty"`
 	ClientSecret         string `json:"client_secret,omitempty" ini:"client_secret,omitempty"`
@@ -441,6 +443,25 @@ type GrafanaConfigAuthGenericOauth struct {
 	TLSClientCert         string `json:"tls_client_cert,omitempty" ini:"tls_client_cert,omitempty"`
 	TLSClientKey          string `json:"tls_client_key,omitempty" ini:"tls_client_key,omitempty"`
 	TLSClientCa           string `json:"tls_client_ca,omitempty" ini:"tls_auth_ca,omitempty"`
+}
+
+type GrafanaConfigAuthJwt struct {
+	Enabled                 *bool  `json:"enabled,omitempty" ini:"enabled"`
+	EnableLoginToken        *bool  `json:"enable_login_token,omitempty" ini:"enable_login_token"`
+	HeaderName              string `json:"header_name,omitempty" ini:"header_name,omitempty"`
+	EmailClaim              string `json:"email_claim,omitempty" ini:"email_claim,omitempty"`
+	ExpectClaims            string `json:"expect_claims,omitempty" ini:"expect_claims,omitempty"`
+	UsernameClaim           string `json:"username_claim,omitempty" ini:"username_claim,omitempty"`
+	JwkSetUrl               string `json:"jwk_set_url,omitempty" ini:"jwk_set_url,omitempty"`
+	JwkSetFile              string `json:"jwk_set_file,omitempty" ini:"jwk_set_file,omitempty"`
+	KeyFile                 string `json:"key_file,omitempty" ini:"key_file,omitempty"`
+	RoleAttributePath       string `json:"role_attribute_path,omitempty" ini:"role_attribute_path,omitempty"`
+	RoleAttributeStrict     *bool  `json:"role_attribute_strict,omitempty" ini:"role_attribute_strict,omitempty"`
+	AutoSignUp              *bool  `json:"auto_sign_up,omitempty" ini:"auto_sign_up,omitempty"`
+	CacheTtl                string `json:"cache_ttl,omitempty" ini:"cache_ttl,omitempty"`
+	UrlLogin                *bool  `json:"url_login,omitempty" ini:"url_login,omitempty"`
+	AllowAssignGrafanaAdmin *bool  `json:"allow_assign_grafana_admin,omitempty" ini:"allow_assign_grafana_admin,omitempty"`
+	SkipOrgRoleSync         *bool  `json:"skip_org_role_sync,omitempty" ini:"skip_org_role_sync,omitempty"`
 }
 
 type GrafanaConfigAuthOkta struct {
