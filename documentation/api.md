@@ -13892,6 +13892,13 @@ GrafanaService provides a means to configure the service
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>appProtocol</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>clusterIP</b></td>
         <td>string</td>
         <td>

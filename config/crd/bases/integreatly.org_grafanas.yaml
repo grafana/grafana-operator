@@ -5600,6 +5600,8 @@ spec:
                     additionalProperties:
                       type: string
                     type: object
+                  appProtocol:
+                    type: string
                   clusterIP:
                     type: string
                   labels:

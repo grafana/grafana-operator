@@ -81,6 +81,7 @@ type GrafanaService struct {
 	Annotations map[string]string `json:"annotations,omitempty"`
 	Labels      map[string]string `json:"labels,omitempty"`
 	Type        v1.ServiceType    `json:"type,omitempty"`
+	AppProtocol string            `json:"appProtocol,omitempty"`
 	Ports       []v1.ServicePort  `json:"ports,omitempty"`
 	ClusterIP   string            `json:"clusterIP,omitempty"`
 }
