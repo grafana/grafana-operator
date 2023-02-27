@@ -1,0 +1,49 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana-internal
+  labels:
+    dashboards: "grafana-internal"
+spec:
+  client:
+    preferIngress: false
+  config:
+    log:
+      mode: "console"
+    auth:
+      disable_login_form: "false"
+    security:
+      admin_user: root
+      admin_password: secret
+  ingress:
+    spec:
+      ingressClassName: nginx
+      rules:
+        - host: test.io
+          http:
+            paths:
+              - backend:
+                  service:
+                    name: grafana-internal-service
+                    port:
+                      number: 3000
+                path: /
+                pathType: Prefix
+---
+# Use the same grafana instance that we just created, notice the ingress config
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: external-grafana
+  labels:
+    dashboards: "external-grafana"
+spec:
+  external:
+    url: http://grafana-internal-service
+    adminPassword:
+      name: grafana-internal-admin-credentials
+      key: GF_SECURITY_ADMIN_PASSWORD
+    adminUser:
+      name: grafana-internal-admin-credentials
+      key: GF_SECURITY_ADMIN_USER
