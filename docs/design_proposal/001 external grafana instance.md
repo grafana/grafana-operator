@@ -16,7 +16,7 @@ status: Draft
 
 ## Motivation
 
-Cloud providers have started providing managed remote grafana services which decouples the responsibilities of managing a grafana instanaces from ops personas and kubernetes environment. 
+Cloud providers have started providing managed remote grafana services which decouples the responsibilities of managing a grafana instanaces from ops personas and kubernetes environment.
 
 Currently Grafana operator has an integration to add external data sources as a data source to Grafana instances hosted in a kubernetes environment. As more customers starting to use external grafana services, expanding the Grafana operator to support remote Grafana instances becomes inevitable. Adding ability to integrate with external grafana services, adding data sources, creating dashboards and alerting on a remote Grafana instances offloads responsibilities of managing a grafana instanaces from ops personas which helps them to focus on developing the features required for their business. This helps the customer teams to move from self managed Grafana instance on their Kubernetes environments to Pay as you go model on Grafana instances provided by providers.
 
