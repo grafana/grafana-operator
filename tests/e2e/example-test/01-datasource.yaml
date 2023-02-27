@@ -1,0 +1,21 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: grafanadatasource-sample
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  plugins:
+    - name: grafana-clock-panel
+      version: 1.3.0
+  datasource:
+    name: prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus-service:9090
+    isDefault: true
+    jsonData:
+      'tlsSkipVerify': true
+      'timeInterval': "5s"
+    editable: false

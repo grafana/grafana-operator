@@ -1,0 +1,17 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana
+status:
+  adminUrl: http://grafana-service.grafana-operator-system.svc.cluster.local:3000
+  stage: complete
+  stageStatus: success
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: external-grafana
+status:
+  adminUrl: http://grafana-internal-service
+  stage: complete
+  stageStatus: success

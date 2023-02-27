@@ -40,8 +40,8 @@ Example:
 
 ```shell
 ./collect-audit-stats.sh
-   3 "get - /api/v1/namespaces/grafana-operator-experimental-system/configmaps/f75f3bba.integreatly.org"
-   6 "get - /apis/coordination.k8s.io/v1/namespaces/grafana-operator-experimental-system/leases/f75f3bba.integreatly.org"
-   3 "update - /api/v1/namespaces/grafana-operator-experimental-system/configmaps/f75f3bba.integreatly.org"
-   3 "update - /apis/coordination.k8s.io/v1/namespaces/grafana-operator-experimental-system/leases/f75f3bba.integreatly.org"
+   3 "get - /api/v1/namespaces/grafana-operator-system/configmaps/f75f3bba.integreatly.org"
+   6 "get - /apis/coordination.k8s.io/v1/namespaces/grafana-operator-system/leases/f75f3bba.integreatly.org"
+   3 "update - /api/v1/namespaces/grafana-operator-system/configmaps/f75f3bba.integreatly.org"
+   3 "update - /apis/coordination.k8s.io/v1/namespaces/grafana-operator-system/leases/f75f3bba.integreatly.org"
 ```

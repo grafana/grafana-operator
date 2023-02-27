@@ -1,9 +1,11 @@
 ###
 # NOTE: this section almost matches outputs out kubebuilder v3.7.0
 ###
+# Current Operator version
+VERSION ?= v5.0.0
 
 # Image URL to use all building/pushing image targets
-IMG ?= controller:latest
+IMG ?= quay.io/grafana-operator/grafana-operator:$(VERSION)
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.25.0
 
@@ -12,6 +14,13 @@ ifeq (,$(shell go env GOBIN))
 GOBIN=$(shell go env GOPATH)/bin
 else
 GOBIN=$(shell go env GOBIN)
+endif
+
+# Checks if kuttl is in your PATH
+ifneq ($(shell which kubectl-kuttl),)
+KUTTL=$(shell which kubectl-kuttl)
+else
+KUTTL=$(shell pwd)/bin/kubectl-kuttl
 endif
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
@@ -118,6 +127,10 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
+.PHONY: deploy-kuttl
+deploy-kuttl: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+	$(KUSTOMIZE) build config/kuttl-overlay | kubectl apply -f -
+
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
@@ -157,13 +170,6 @@ $(ENVTEST): $(LOCALBIN)
 ###
 # END OF kubebuilder SECTION
 ###
-
-# VERSION defines the project version for the bundle.
-# Update this value when you upgrade the version of your project.
-# To re-generate a bundle for another specific version without changing the standard setup, you can:
-# - use the VERSION as arg of the bundle target (e.g make bundle VERSION=0.0.2)
-# - use environment variables to overwrite this value (e.g export VERSION=0.0.2)
-VERSION ?= 5.0.0
 
 # CHANNELS define the bundle channels used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g CHANNELS = "candidate,fast,stable")
@@ -250,3 +256,25 @@ catalog-build: opm ## Build a catalog image.
 .PHONY: catalog-push
 catalog-push: ## Push a catalog image.
 	$(MAKE) docker-push IMG=$(CATALOG_IMG)
+
+# e2e
+
+.PHONY: e2e
+e2e: kuttl install deploy-kuttl ## Run e2e tests using kuttl.
+	$(KUTTL) test
+
+# Find or download gen-crd-api-reference-docs
+kuttl:
+ifeq (, $(shell which kubectl-kuttl))
+	@{ \
+	set -e ;\
+	KUTTL_TMP_DIR=$$(mktemp -d) ;\
+	cd $$KUTTL_TMP_DIR ;\
+	go mod init tmp ;\
+	go install github.com/kudobuilder/kuttl/cmd/kubectl-kuttl@v0.12.1 ;\
+	rm -rf $$KUTTL_TMP_DIR ;\
+	}
+KUTTL=$(GOBIN)/kuttl
+else
+KUTTL=$(shell which kubectl-kuttl)
+endif
