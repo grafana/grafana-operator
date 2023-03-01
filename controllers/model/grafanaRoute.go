@@ -9,6 +9,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+func getRouteName(cr *v1alpha1.Grafana) string {
+	if cr.Spec.Ingress != nil && cr.Spec.Ingress.Name != "" {
+		return cr.Spec.Ingress.Name
+	}
+	return constants.GrafanaRouteName
+}
+
 func GetHost(cr *v1alpha1.Grafana) string {
 	if cr.Spec.Ingress == nil {
 		return ""
@@ -117,7 +124,7 @@ func GrafanaRoute(cr *v1alpha1.Grafana) *v1.Route {
 func GrafanaRouteSelector(cr *v1alpha1.Grafana) client.ObjectKey {
 	return client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      constants.GrafanaRouteName,
+		Name:      getRouteName(cr),
 	}
 }
 

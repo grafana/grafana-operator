@@ -9,13 +9,20 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+func getConfigName(cr *v1alpha1.Grafana) string {
+	if cr.Spec.ConfigName != "" {
+		return cr.Spec.ConfigName
+	}
+	return constants.GrafanaConfigName
+}
+
 func GrafanaConfig(cr *v1alpha1.Grafana) *v1.ConfigMap {
 	ini := config.NewGrafanaIni(&cr.Spec.Config)
 	config, hash := ini.Write()
 
 	configMap := &v1.ConfigMap{}
 	configMap.ObjectMeta = v12.ObjectMeta{
-		Name:      constants.GrafanaConfigName,
+		Name:      getConfigName(cr),
 		Namespace: cr.Namespace,
 	}
 
@@ -49,6 +56,6 @@ func GrafanaConfigReconciled(cr *v1alpha1.Grafana, currentState *v1.ConfigMap) *
 func GrafanaConfigSelector(cr *v1alpha1.Grafana) client.ObjectKey {
 	return client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      constants.GrafanaConfigName,
+		Name:      getConfigName(cr),
 	}
 }

@@ -10,6 +10,13 @@ import (
 
 const OpenShiftOAuthRedirect = "serviceaccounts.openshift.io/oauth-redirectreference.primary"
 
+func getServiceAccountName(cr *v1alpha1.Grafana) string {
+	if cr.Spec.ServiceAccount != nil && cr.Spec.ServiceAccount.Name != "" {
+		return cr.Spec.ServiceAccount.Name
+	}
+	return constants.GrafanaServiceAccountName
+}
+
 func getServiceAccountLabels(cr *v1alpha1.Grafana) map[string]string {
 	if cr.Spec.ServiceAccount == nil {
 		return nil
@@ -62,7 +69,7 @@ func GrafanaServiceAccount(cr *v1alpha1.Grafana) *v1.ServiceAccount {
 
 func GrafanaServiceAccountSelector(cr *v1alpha1.Grafana) client.ObjectKey {
 	return client.ObjectKey{
-		Namespace: cr.Namespace,
+		Namespace: getServiceAccountName(cr),
 		Name:      constants.GrafanaServiceAccountName,
 	}
 }

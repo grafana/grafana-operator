@@ -1373,6 +1373,8 @@ spec:
                       prefix:
                         type: string
                     type: object
+                  name:
+                    type: string
                   panels:
                     properties:
                       disable_sanitize_html:
@@ -1436,6 +1438,8 @@ spec:
                   security:
                     properties:
                       admin_password:
+                        type: string
+                      admin_secret:
                         type: string
                       admin_user:
                         type: string
@@ -1597,6 +1601,8 @@ spec:
                 items:
                   type: string
                 type: array
+              configName:
+                type: string
               containers:
                 items:
                   description: A single application container that you want to run
@@ -2939,6 +2945,11 @@ spec:
                     pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                     x-kubernetes-int-or-string: true
                   volumeName:
+                    type: string
+                type: object
+              datasourceConfig:
+                properties:
+                  name:
                     type: string
                 type: object
               deployment:
@@ -5734,6 +5745,8 @@ spec:
                     additionalProperties:
                       type: string
                     type: object
+                  name:
+                    type: string
                   nodeSelector:
                     additionalProperties:
                       type: string
@@ -6170,6 +6183,8 @@ spec:
                     additionalProperties:
                       type: string
                     type: object
+                  name:
+                    type: string
                   path:
                     type: string
                   pathType:
@@ -6439,6 +6454,8 @@ spec:
                     additionalProperties:
                       type: string
                     type: object
+                  name:
+                    type: string
                   skip:
                     type: boolean
                 type: object

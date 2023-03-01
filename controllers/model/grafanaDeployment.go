@@ -36,6 +36,13 @@ const (
 	ReadinessProbeTimeoutSeconds      int32 = 3
 )
 
+func getDeploymentName(cr *v1alpha1.Grafana) string {
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Name != "" {
+		return cr.Spec.Deployment.Name
+	}
+	return constants.GrafanaDeploymentName
+}
+
 func getSkipCreateAdminAccount(cr *v1alpha1.Grafana) bool {
 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.SkipCreateAdminAccount != nil {
 		return *cr.Spec.Deployment.SkipCreateAdminAccount
@@ -175,7 +182,7 @@ func getPodLabels(cr *v1alpha1.Grafana) map[string]string {
 	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Labels != nil {
 		labels = cr.Spec.Deployment.Labels
 	}
-	labels["app"] = constants.GrafanaPodLabel
+	labels["app"] = getDeploymentName(cr)
 	return labels
 }
 
@@ -238,11 +245,11 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume { // nolint
 
 	// Volume to mount the config file from a config map
 	volumes = append(volumes, v13.Volume{
-		Name: constants.GrafanaConfigName,
+		Name: getConfigName(cr),
 		VolumeSource: v13.VolumeSource{
 			ConfigMap: &v13.ConfigMapVolumeSource{
 				LocalObjectReference: v13.LocalObjectReference{
-					Name: constants.GrafanaConfigName,
+					Name: getConfigName(cr),
 				},
 			},
 		},
@@ -262,7 +269,7 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume { // nolint
 			Name: constants.GrafanaDataVolumeName,
 			VolumeSource: v13.VolumeSource{
 				PersistentVolumeClaim: &v13.PersistentVolumeClaimVolumeSource{
-					ClaimName: constants.GrafanaDataStorageName,
+					ClaimName: getVolumeName(cr),
 				},
 			},
 		})
@@ -303,11 +310,11 @@ func getVolumes(cr *v1alpha1.Grafana) []v13.Volume { // nolint
 
 	// Volume to store the datasources
 	volumes = append(volumes, v13.Volume{
-		Name: constants.GrafanaDatasourcesConfigMapName,
+		Name: getDatasourcesConfigName(cr),
 		VolumeSource: v13.VolumeSource{
 			ConfigMap: &v13.ConfigMapVolumeSource{
 				LocalObjectReference: v13.LocalObjectReference{
-					Name: constants.GrafanaDatasourcesConfigMapName,
+					Name: getDatasourcesConfigName(cr),
 				},
 			},
 		},
@@ -389,7 +396,7 @@ func getVolumeMounts(cr *v1alpha1.Grafana) []v13.VolumeMount {
 	var mounts []v13.VolumeMount // nolint
 
 	mounts = append(mounts, v13.VolumeMount{
-		Name:      constants.GrafanaConfigName,
+		Name:      getConfigName(cr),
 		MountPath: "/etc/grafana/",
 	})
 
@@ -442,7 +449,7 @@ func getVolumeMounts(cr *v1alpha1.Grafana) []v13.VolumeMount {
 	})
 
 	mounts = append(mounts, v13.VolumeMount{
-		Name:      constants.GrafanaDatasourcesConfigMapName,
+		Name:      getDatasourcesConfigName(cr),
 		MountPath: "/etc/grafana/provisioning/datasources",
 	})
 
@@ -688,12 +695,12 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, annotations map[string]string, conf
 		Replicas: getReplicas(cr),
 		Selector: &v12.LabelSelector{
 			MatchLabels: map[string]string{
-				"app": constants.GrafanaPodLabel,
+				"app": getDeploymentName(cr),
 			},
 		},
 		Template: v13.PodTemplateSpec{
 			ObjectMeta: v12.ObjectMeta{
-				Name:        constants.GrafanaDeploymentName,
+				Name:        getDeploymentName(cr),
 				Labels:      getPodLabels(cr),
 				Annotations: getPodAnnotations(cr, annotations),
 			},
@@ -705,7 +712,7 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, annotations map[string]string, conf
 				Volumes:                       getVolumes(cr),
 				InitContainers:                getInitContainers(cr, plugins),
 				Containers:                    getContainers(cr, configHash, dsHash, credentialsHash),
-				ServiceAccountName:            constants.GrafanaServiceAccountName,
+				ServiceAccountName:            getServiceAccountName(cr),
 				TerminationGracePeriodSeconds: getTerminationGracePeriod(cr),
 				PriorityClassName:             getPodPriorityClassName(cr),
 				TopologySpreadConstraints:     getTopologySpreadConstraints(cr),
@@ -718,7 +725,7 @@ func getDeploymentSpec(cr *v1alpha1.Grafana, annotations map[string]string, conf
 func GrafanaDeployment(cr *v1alpha1.Grafana, configHash, dsHash, credentialsHash string) *v1.Deployment {
 	return &v1.Deployment{
 		ObjectMeta: v12.ObjectMeta{
-			Name:        constants.GrafanaDeploymentName,
+			Name:        getDeploymentName(cr),
 			Namespace:   cr.Namespace,
 			Labels:      getDeploymentLabels(cr),
 			Annotations: getDeploymentAnnotations(cr, nil),
@@ -730,7 +737,7 @@ func GrafanaDeployment(cr *v1alpha1.Grafana, configHash, dsHash, credentialsHash
 func GrafanaDeploymentSelector(cr *v1alpha1.Grafana) client.ObjectKey {
 	return client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      constants.GrafanaDeploymentName,
+		Name:      getDeploymentName(cr),
 	}
 }
 

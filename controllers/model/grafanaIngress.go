@@ -8,6 +8,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+func getIngressName(cr *v1alpha1.Grafana) string {
+	if cr.Spec.Ingress != nil && cr.Spec.Ingress.Name != "" {
+		return cr.Spec.Ingress.Name
+	}
+	return constants.GrafanaRouteName
+}
+
 func getIngressTLS(cr *v1alpha1.Grafana) []netv1.IngressTLS {
 	if cr.Spec.Ingress == nil {
 		return nil
@@ -116,7 +123,7 @@ func getIngressSpec(cr *v1alpha1.Grafana) netv1.IngressSpec {
 func GrafanaIngress(cr *v1alpha1.Grafana) *netv1.Ingress {
 	return &netv1.Ingress{
 		ObjectMeta: v1.ObjectMeta{
-			Name:        constants.GrafanaIngressName,
+			Name:        getIngressName(cr),
 			Namespace:   cr.Namespace,
 			Labels:      GetIngressLabels(cr),
 			Annotations: GetIngressAnnotations(cr, nil),

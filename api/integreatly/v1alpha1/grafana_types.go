@@ -36,8 +36,10 @@ type GrafanaSpec struct {
 	Jsonnet                    *JsonnetConfig           `json:"jsonnet,omitempty"`
 	BaseImage                  string                   `json:"baseImage,omitempty"`
 	InitImage                  string                   `json:"initImage,omitempty"`
+	ConfigName                 string                   `json:"configName,omitempty"`
 	LivenessProbeSpec          *LivenessProbeSpec       `json:"livenessProbeSpec,omitempty"`
 	ReadinessProbeSpec         *ReadinessProbeSpec      `json:"readinessProbeSpec,omitempty"`
+	DatasourceConfig           *DatasourceConfig        `json:"datasourceConfig,omitempty"`
 
 	// DashboardContentCacheDuration sets a default for when a `GrafanaDashboard` resource doesn't specify a `contentCacheDuration`.
 	// If left unset or 0 the default behavior is to cache indefinitely.
@@ -65,6 +67,10 @@ type LivenessProbeSpec struct {
 
 type JsonnetConfig struct {
 	LibraryLabelSelector *metav1.LabelSelector `json:"libraryLabelSelector,omitempty"`
+}
+
+type DatasourceConfig struct {
+	Name string `json:"name,omitempty"`
 }
 
 // GrafanaClient contains the Grafana API client settings
@@ -97,6 +103,7 @@ type GrafanaDataStorage struct {
 }
 
 type GrafanaServiceAccount struct {
+	Name             string                    `json:"name,omitempty"`
 	Skip             *bool                     `json:"skip,omitempty"`
 	Annotations      map[string]string         `json:"annotations,omitempty"`
 	Labels           map[string]string         `json:"labels,omitempty"`
@@ -105,6 +112,7 @@ type GrafanaServiceAccount struct {
 
 // GrafanaDeployment provides a means to configure the deployment
 type GrafanaDeployment struct {
+	Name        string            `json:"name,omitempty"`
 	Annotations map[string]string `json:"annotations,omitempty"`
 	Labels      map[string]string `json:"labels,omitempty"`
 	// +nullable
@@ -151,10 +159,12 @@ type GrafanaIngress struct {
 	Termination      v12.TLSTerminationType `json:"termination,omitempty"`
 	IngressClassName string                 `json:"ingressClassName,omitempty"`
 	PathType         string                 `json:"pathType,omitempty"`
+	Name             string                 `json:"name,omitempty"`
 }
 
 // GrafanaConfig is the configuration for grafana
 type GrafanaConfig struct {
+	Name                          string                                      `json:"name,omitempty"`
 	Paths                         *GrafanaConfigPaths                         `json:"paths,omitempty" ini:"paths,omitempty"`
 	Server                        *GrafanaConfigServer                        `json:"server,omitempty" ini:"server,omitempty"`
 	Database                      *GrafanaConfigDatabase                      `json:"database,omitempty" ini:"database,omitempty"`
@@ -255,6 +265,7 @@ type GrafanaConfigRemoteCache struct {
 type GrafanaConfigSecurity struct {
 	AdminUser     string `json:"admin_user,omitempty" ini:"admin_user,omitempty"`
 	AdminPassword string `json:"admin_password,omitempty" ini:"admin_password,omitempty"`
+	AdminSecret   string `json:"admin_secret,omitempty" ini:"admin_password,omitempty"`
 	// +nullable
 	LoginRememberDays *int   `json:"login_remember_days,omitempty" ini:"login_remember_days,omitempty"`
 	SecretKey         string `json:"secret_key,omitempty" ini:"secret_key,omitempty"`

@@ -8,10 +8,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+func getDatasourcesConfigName(cr *v1alpha1.Grafana) string {
+	if cr.Spec.DatasourceConfig != nil && cr.Spec.DatasourceConfig.Name != "" {
+		return cr.Spec.DatasourceConfig.Name
+	}
+	return constants.GrafanaDatasourcesConfigMapName
+}
+
 func GrafanaDatasourcesConfig(cr *v1alpha1.Grafana) *v1.ConfigMap {
 	return &v1.ConfigMap{
 		ObjectMeta: v12.ObjectMeta{
-			Name:      constants.GrafanaDatasourcesConfigMapName,
+			Name:      getDatasourcesConfigName(cr),
 			Namespace: cr.Namespace,
 			Annotations: map[string]string{
 				constants.LastConfigAnnotation: "",
@@ -23,6 +30,6 @@ func GrafanaDatasourcesConfig(cr *v1alpha1.Grafana) *v1.ConfigMap {
 func GrafanaDatasourceConfigSelector(cr *v1alpha1.Grafana) client.ObjectKey {
 	return client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      constants.GrafanaDatasourcesConfigMapName,
+		Name:      getDatasourcesConfigName(cr),
 	}
 }

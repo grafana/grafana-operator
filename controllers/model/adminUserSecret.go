@@ -13,6 +13,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+func getAdminSecretName(cr *v1alpha1.Grafana) string {
+	if cr.Spec.Config.Security == nil || cr.Spec.Config.Security.AdminSecret != "" {
+		return cr.Spec.Config.Security.AdminSecret
+	}
+	return constants.GrafanaAdminSecretName
+}
+
 func getAdminUser(cr *v1alpha1.Grafana, current *v12.Secret) []byte {
 	if cr.Spec.Config.Security == nil || cr.Spec.Config.Security.AdminUser == "" {
 		// If a user is already set, don't change it
@@ -61,7 +68,7 @@ func AdminSecret(cr *v1alpha1.Grafana) *v12.Secret {
 
 	return &v12.Secret{
 		ObjectMeta: v1.ObjectMeta{
-			Name:      constants.GrafanaAdminSecretName,
+			Name:      getAdminSecretName(cr),
 			Namespace: cr.Namespace,
 			Annotations: map[string]string{
 				constants.LastCredentialsAnnotation: hash,
@@ -89,6 +96,6 @@ func AdminSecretReconciled(cr *v1alpha1.Grafana, currentState *v12.Secret) *v12.
 func AdminSecretSelector(cr *v1alpha1.Grafana) client.ObjectKey {
 	return client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      constants.GrafanaAdminSecretName,
+		Name:      getAdminSecretName(cr),
 	}
 }

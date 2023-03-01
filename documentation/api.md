@@ -2163,6 +2163,13 @@ Grafana is the Schema for the grafanas API
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>configName</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspeccontainersindex">containers</a></b></td>
         <td>[]object</td>
         <td>
@@ -2195,6 +2202,13 @@ Grafana is the Schema for the grafanas API
         <td>object</td>
         <td>
           GrafanaDataStorage provides a means to configure the grafana data storage<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanaspecdatasourceconfig">datasourceConfig</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2500,6 +2514,13 @@ GrafanaConfig is the configuration for grafana
       </tr><tr>
         <td><b><a href="#grafanaspecconfigmetricsgraphite">metrics.graphite</a></b></td>
         <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -4899,6 +4920,13 @@ GrafanaConfig is the configuration for grafana
     </thead>
     <tbody><tr>
         <td><b>admin_password</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>admin_secret</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -7917,6 +7945,33 @@ GrafanaDataStorage provides a means to configure the grafana data storage
 </table>
 
 
+### Grafana.spec.datasourceConfig
+<sup><sup>[↩ Parent](#grafanaspec)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
 ### Grafana.spec.deployment
 <sup><sup>[↩ Parent](#grafanaspec)</sup></sup>
 
@@ -7999,6 +8054,13 @@ GrafanaDeployment provides a means to configure the deployment
       </tr><tr>
         <td><b>labels</b></td>
         <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -13509,6 +13571,13 @@ GrafanaIngress provides a means to configure the ingress created
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>path</b></td>
         <td>string</td>
         <td>
@@ -14038,6 +14107,13 @@ ServicePort contains information on service's port.
       </tr><tr>
         <td><b>labels</b></td>
         <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
