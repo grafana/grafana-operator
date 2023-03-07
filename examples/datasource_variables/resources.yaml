@@ -6,8 +6,6 @@ metadata:
   labels:
     dashboards: "grafana"
 spec:
-  client:
-    preferIngress: true
   config:
     log:
       mode: "console"
@@ -46,8 +44,8 @@ spec:
     isDefault: true
     user: ${PROMETHEUS_USERNAME}
     jsonData:
-      'tlsSkipVerify': true
-      'timeInterval': "5s"
+      "tlsSkipVerify": true
+      "timeInterval": "5s"
     secureJsonData:
-      'password': ${PROMETHEUS_PASSWORD}
+      "password": ${PROMETHEUS_PASSWORD}
     editable: true

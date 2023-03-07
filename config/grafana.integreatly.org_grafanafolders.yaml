@@ -86,10 +86,16 @@ spec:
                 x-kubernetes-map-type: atomic
               json:
                 type: string
+            required:
+            - instanceSelector
             type: object
           status:
             description: GrafanaFolderStatus defines the observed state of GrafanaFolder
             properties:
+              NoMatchingInstances:
+                description: The folder instanceSelector can't find matching grafana
+                  instances
+                type: boolean
               hash:
                 description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
                   of cluster Important: Run "make" to regenerate code after modifying

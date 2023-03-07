@@ -6,8 +6,6 @@ metadata:
   labels:
     dashboards: "grafana"
 spec:
-  client:
-    preferIngress: true
   config:
     log:
       mode: "console"
@@ -20,17 +18,17 @@ spec:
     spec:
       ingressClassName: nginx
       rules:
-      - host: example.com
-        http:
-          paths:
-          - backend:
-              service:
-                name: grafana-service
-                port:
-                  number: 3000
-            path: /
-            pathType: Prefix
+        - host: example.com
+          http:
+            paths:
+              - backend:
+                  service:
+                    name: grafana-service
+                    port:
+                      number: 3000
+                path: /
+                pathType: Prefix
       tls:
-      - hosts:
-        - example.com
-        secretName: core-cert
+        - hosts:
+            - example.com
+          secretName: core-cert

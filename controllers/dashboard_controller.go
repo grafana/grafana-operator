@@ -170,23 +170,10 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
 
-	// skip dashboards without an instance selector
-	if dashboard.Spec.InstanceSelector == nil {
-		controllerLog.Info("no instance selector found for dashboard, nothing to do", "name", dashboard.Name, "namespace", dashboard.Namespace)
-		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
-	}
-
-	instances, err := GetMatchingInstances(ctx, r.Client, dashboard.Spec.InstanceSelector)
+	instances, err := r.GetMatchingDashboardInstances(ctx, dashboard, r.Client)
 	if err != nil {
-		controllerLog.Error(err, "could not find matching instance", "name", dashboard.Name)
+		controllerLog.Error(err, "could not find matching instances", "name", dashboard.Name, "namespace", dashboard.Namespace)
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
-	}
-
-	if len(instances.Items) == 0 {
-		controllerLog.Info("no matching instances found for dashboard", "dashboard", dashboard.Name, "namespace", dashboard.Namespace)
-
-		// TODO when a label selector has been updated to no longer match any Grafana instances, should we delete the dashboard from those instances?
-		return ctrl.Result{Requeue: false}, nil
 	}
 
 	controllerLog.Info("found matching Grafana instances for dashboard", "count", len(instances.Items))
@@ -532,4 +519,21 @@ func (r *GrafanaDashboardReconciler) SetupWithManager(mgr ctrl.Manager, ctx cont
 	}
 
 	return err
+}
+
+func (r *GrafanaDashboardReconciler) GetMatchingDashboardInstances(ctx context.Context, dashboard *v1beta1.GrafanaDashboard, k8sClient client.Client) (v1beta1.GrafanaList, error) {
+	instances, err := GetMatchingInstances(ctx, k8sClient, dashboard.Spec.InstanceSelector)
+	if err != nil || len(instances.Items) == 0 {
+		dashboard.Status.NoMatchingInstances = true
+		if err := r.Client.Status().Update(ctx, dashboard); err != nil {
+			r.Log.Info("unable to update the status of %v, in %v", dashboard.Name, dashboard.Namespace)
+		}
+		return v1beta1.GrafanaList{}, err
+	}
+	dashboard.Status.NoMatchingInstances = false
+	if err := r.Client.Status().Update(ctx, dashboard); err != nil {
+		r.Log.Info("unable to update the status of %v, in %v", dashboard.Name, dashboard.Namespace)
+	}
+
+	return instances, err
 }

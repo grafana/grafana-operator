@@ -16,8 +16,6 @@ metadata:
   labels:
     dashboards: "grafana"
 spec:
-  client:
-    preferIngress: true
   deployment:
     spec:
       template:
