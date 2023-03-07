@@ -741,6 +741,10 @@ func (i *GrafanaIni) cfgUnifiedAlerting(config map[string][]string) map[string][
 	items = appendStr(items, "evaluation_timeout", i.cfg.UnifiedAlerting.EvaluationTimeout)
 	items = appendInt(items, "max_attempts", i.cfg.UnifiedAlerting.MaxAttempts)
 	items = appendStr(items, "min_interval", i.cfg.UnifiedAlerting.MinInterval)
+
+	items = appendStr(items, "ha_advertise_address", "${POD_IP}:9094")
+	items = appendStr(items, "ha_listen_address", "${POD_IP}:9094")
+	items = appendStr(items, "ha_peers", "grafana-alert:9094")
 	config["unified_alerting"] = items
 
 	return config
