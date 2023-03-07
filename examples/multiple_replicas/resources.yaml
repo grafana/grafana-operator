@@ -72,8 +72,6 @@ spec:
   deployment:
     spec:
       replicas: 2
-  client:
-    preferIngress: true
   config:
     log:
       mode: "console"

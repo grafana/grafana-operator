@@ -59,7 +59,7 @@ type GrafanaDatasourceSpec struct {
 	Datasource *GrafanaDatasourceInternal `json:"datasource,omitempty"`
 
 	// selects Grafana instances for import
-	InstanceSelector *metav1.LabelSelector `json:"instanceSelector,omitempty"`
+	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`
 
 	// plugins
 	// +optional
@@ -82,6 +82,8 @@ type GrafanaDatasourceSpec struct {
 type GrafanaDatasourceStatus struct {
 	Hash        string `json:"hash,omitempty"`
 	LastMessage string `json:"lastMessage,omitempty"`
+	// The datasource instanceSelector can't find matching grafana instances
+	NoMatchingInstances bool `json:"NoMatchingInstances,omitempty"`
 }
 
 //+kubebuilder:object:root=true

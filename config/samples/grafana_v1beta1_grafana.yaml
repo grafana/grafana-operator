@@ -7,8 +7,6 @@ metadata:
     dashboards: "grafana-a"
     folders: "grafana-a"
 spec:
-  client:
-    preferIngress: true
   config:
     security:
       admin_user: root

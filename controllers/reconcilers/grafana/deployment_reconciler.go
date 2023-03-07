@@ -20,10 +20,6 @@ import (
 )
 
 const (
-	InitMemoryRequest                       = "128Mi"
-	InitCpuRequest                          = "250m"
-	InitMemoryLimit                         = "512Mi"
-	InitCpuLimit                            = "1000m"
 	MemoryRequest                           = "256Mi"
 	CpuRequest                              = "100m"
 	MemoryLimit                             = "1024Mi"

@@ -55,9 +55,13 @@ spec:
                 x-kubernetes-map-type: atomic
               json:
                 type: string
+            required:
+            - instanceSelector
             type: object
           status:
             properties:
+              NoMatchingInstances:
+                type: boolean
               hash:
                 type: string
             type: object

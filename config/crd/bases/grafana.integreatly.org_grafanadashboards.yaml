@@ -87,9 +87,13 @@ spec:
                 type: string
               url:
                 type: string
+            required:
+            - instanceSelector
             type: object
           status:
             properties:
+              NoMatchingInstances:
+                type: boolean
               contentCache:
                 format: byte
                 type: string

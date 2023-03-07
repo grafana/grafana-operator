@@ -23,8 +23,9 @@ import (
 	"fmt"
 	"io"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type DashboardSourceType string
@@ -54,7 +55,7 @@ type GrafanaDashboardSpec struct {
 	Url string `json:"url,omitempty"`
 
 	// selects Grafanas for import
-	InstanceSelector *metav1.LabelSelector `json:"instanceSelector,omitempty"`
+	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`
 
 	// folder assignment for dashboard
 	// +optional
@@ -86,6 +87,8 @@ type GrafanaDashboardStatus struct {
 	ContentTimestamp metav1.Time `json:"contentTimestamp,omitempty"`
 	ContentUrl       string      `json:"contentUrl,omitempty"`
 	Hash             string      `json:"hash,omitempty"`
+	// The dashboard instanceSelector can't find matching grafana instances
+	NoMatchingInstances bool `json:"NoMatchingInstances,omitempty"`
 }
 
 //+kubebuilder:object:root=true

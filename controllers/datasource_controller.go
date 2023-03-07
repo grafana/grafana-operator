@@ -19,9 +19,10 @@ package controllers
 import (
 	"context"
 	"fmt"
-	v1 "k8s.io/api/core/v1"
 	"strings"
 	"time"
+
+	v1 "k8s.io/api/core/v1"
 
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/metrics"
 
@@ -163,20 +164,10 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		controllerLog.Error(err, "error getting grafana dashboard cr")
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
-
-	if datasource.Spec.InstanceSelector == nil {
-		controllerLog.Info("no instance selector found for datasource, nothing to do", "name", datasource.Name, "namespace", datasource.Namespace)
-		return ctrl.Result{RequeueAfter: RequeueDelay}, err
-	}
-
-	instances, err := GetMatchingInstances(ctx, r.Client, datasource.Spec.InstanceSelector)
+	instances, err := r.GetMatchingDatasourceInstances(ctx, datasource, r.Client)
 	if err != nil {
-		controllerLog.Error(err, "could not find matching instance", "name", datasource.Name)
+		controllerLog.Error(err, "could not find matching instances", "name", datasource.Name, "namespace", datasource.Namespace)
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
-	}
-
-	if len(instances.Items) == 0 {
-		controllerLog.Info("no matching instances found for datasource", "datasource", datasource.Name, "namespace", datasource.Namespace)
 	}
 
 	controllerLog.Info("found matching Grafana instances for datasource", "count", len(instances.Items))
@@ -400,4 +391,21 @@ func (r *GrafanaDatasourceReconciler) SetupWithManager(mgr ctrl.Manager, ctx con
 	}
 
 	return err
+}
+
+func (r *GrafanaDatasourceReconciler) GetMatchingDatasourceInstances(ctx context.Context, datasource *v1beta1.GrafanaDatasource, k8sClient client.Client) (v1beta1.GrafanaList, error) {
+	instances, err := GetMatchingInstances(ctx, k8sClient, datasource.Spec.InstanceSelector)
+	if err != nil || len(instances.Items) == 0 {
+		datasource.Status.NoMatchingInstances = true
+		if err := r.Client.Status().Update(ctx, datasource); err != nil {
+			r.Log.Info("unable to update the status of %v, in %v", datasource.Name, datasource.Namespace)
+		}
+		return v1beta1.GrafanaList{}, err
+	}
+	datasource.Status.NoMatchingInstances = false
+	if err := r.Client.Status().Update(ctx, datasource); err != nil {
+		r.Log.Info("unable to update the status of %v, in %v", datasource.Name, datasource.Namespace)
+	}
+
+	return instances, err
 }
