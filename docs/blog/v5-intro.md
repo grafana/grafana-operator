@@ -1,7 +1,7 @@
 # Version 5 RC
 
 If you are reading this it means that we have finally got our first RC of version 5 out of the gates.
-The maintainers is extremely happy to finally being able to do so.
+The maintainers are extremely happy to finally being able to do so.
 
 As a part of this we have merged version 5 in to the master branch and we will continue to support version 4 through the v4 branch. Any changes that needs to be done towards version 4 should be directed to that branch.
 
