@@ -307,7 +307,7 @@ This is due to how [Helm](https://helm.sh/docs/chart_best_practices/custom_resou
 So hopefully you have learned how to setup grafana-operator version 5 using helm.
 Learned about the new concepts that we have introduced with the operator and hopefully enjoying the new functionality.
 
-If you find any issues feel free to create one after reading through the existing once in [milestone](https://github.com/grafana-operator/grafana-operator/milestone/1).
+If you find any issues feel free to create one after reading through the existing once in v5 [labels](https://github.com/grafana-operator/grafana-operator/labels/v5) to see all open issues.
 
 To give feedback you can also join us in the [Kubernetes Slack](https://slack.k8s.io/) in the [grafana-operator channel](https://kubernetes.slack.com/messages/grafana-operator/).
 
