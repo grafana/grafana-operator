@@ -114,7 +114,8 @@ And this is how the GrafanaDashboard, looks like.
 Sadly there is no good webhook solution or similar in grafana so we have to continuously poll the grafana API and see if there have been any changes made to the dashboard.
 This is the same way we did it in version 4.
 
-We also need to set the instanceSelector to find the grafana instance that this dashboard should be applied to.
+> **NOTE**
+> We also need to set the instanceSelector to find the grafana instance that this dashboard should be applied to.
 
 ```.yaml
 apiVersion: grafana.integreatly.org/v1beta1
@@ -310,4 +311,4 @@ If you find any issues feel free to create one after reading through the existin
 
 To give feedback you can also join us in the [Kubernetes Slack](https://slack.k8s.io/) in the [grafana-operator channel](https://kubernetes.slack.com/messages/grafana-operator/).
 
-And of course we are happy to receiwe PR:s.
+And of course we are happy to receive PR:s.
