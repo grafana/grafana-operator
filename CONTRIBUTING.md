@@ -65,7 +65,6 @@ metadata:
 spec:
   client:
     preferIngress: true
-spec:
   config:
     log:
       mode: "console"

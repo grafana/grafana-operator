@@ -23,9 +23,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	discovery2 "k8s.io/client-go/discovery"
-
 	routev1 "github.com/openshift/api/route/v1"
+	discovery2 "k8s.io/client-go/discovery"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -95,7 +94,7 @@ func main() {
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to create new manager")
-		os.Exit(1)
+		os.Exit(1) //nolint
 	}
 
 	restConfig := ctrl.GetConfigOrDie()

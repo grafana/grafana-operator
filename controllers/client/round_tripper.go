@@ -2,9 +2,10 @@ package client
 
 import (
 	"crypto/tls"
-	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
 	"strconv"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type instrumentedRoundTripper struct {
@@ -16,7 +17,7 @@ type instrumentedRoundTripper struct {
 func NewInstrumentedRoundTripper(relatedResource string, metric *prometheus.CounterVec) http.RoundTripper {
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
+			InsecureSkipVerify: true, //nolint
 		},
 	}
 

@@ -1,0 +1,127 @@
+run:
+  timeout: 4m
+
+linters:
+  disable-all: false
+  enable:
+    - gocyclo
+    - misspell
+    - nilerr
+    - unparam
+    - gosec
+    - unused
+    - govet
+    - gosimple
+    - errorlint
+    - gofumpt
+    - errcheck
+    - dogsled
+    - exhaustive
+    - nestif
+    - goconst
+    - gocritic
+    - revive
+    - makezero
+    - nakedret
+    - prealloc
+    - nolintlint
+    - staticcheck
+    - thelper
+    - whitespace
+
+linters-settings:
+  gocyclo:
+    min-complexity: 25
+
+  misspell:
+    locale: US
+
+  unused:
+    go: "1.19"
+
+  unparam:
+    check-exported: true
+
+  govet:
+    check-shadowing: false
+
+  gosimple:
+    go: "1.19"
+    checks: ["all"]
+
+  errorlint:
+    errorf: true
+    asserts: true
+    comparison: true
+
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+
+  dogsled:
+    max-blank-identifiers: 2
+
+  exhaustive:
+    check-generated: false
+    default-signifies-exhaustive: false
+
+  nestif:
+    min-complexity: 20
+
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+
+  revive:
+    ignore-generated-header: true
+    severity: warning
+
+  makezero:
+    always: false
+
+  nakedret:
+    max-func-lines: 30
+
+  prealloc:
+    simple: true
+    range-loops: true
+    for-loops: false
+
+  nolintlint:
+    allow-unused: false
+    allow-leading-space: true
+    allow-no-explanation: []
+    require-explanation: false
+    require-specific: false
+
+  staticcheck:
+    go: "1.19"
+    checks: ["all"]
+
+  thelper:
+    test:
+      first: true
+      name: true
+      begin: true
+    benchmark:
+      first: true
+      name: true
+      begin: true
+    tb:
+      first: true
+      name: true
+      begin: true
+
+  whitespace:
+    multi-if: false
+    multi-func: false
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - funlen
+        - gocognit
+        - unparam
+        - unused

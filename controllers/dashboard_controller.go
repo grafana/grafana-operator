@@ -20,12 +20,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	stderr "errors"
 	"fmt"
-	"strings"
-
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -87,15 +85,7 @@ func (r *GrafanaDashboardReconciler) syncDashboards(ctx context.Context) (ctrl.R
 		}, err
 	}
 
-	// sync dashboards, delete dashboards from grafana that do no longer have a cr
-	dashboardsToDelete := map[*v1beta1.Grafana][]v1beta1.NamespacedResource{}
-	for _, grafana := range grafanas.Items {
-		for _, dashboard := range grafana.Status.Dashboards {
-			if allDashboards.Find(dashboard.Namespace(), dashboard.Name()) == nil {
-				dashboardsToDelete[&grafana] = append(dashboardsToDelete[&grafana], dashboard)
-			}
-		}
-	}
+	dashboardsToDelete := getDashboardsToDelete(allDashboards, grafanas.Items)
 
 	// delete all dashboards that no longer have a cr
 	for grafana, dashboards := range dashboardsToDelete {
@@ -138,6 +128,20 @@ func (r *GrafanaDashboardReconciler) syncDashboards(ctx context.Context) (ctrl.R
 		syncLog.Info("successfully synced dashboards", "dashboards", dashboardsSynced)
 	}
 	return ctrl.Result{Requeue: false}, nil
+}
+
+// sync dashboards, delete dashboards from grafana that do no longer have a cr
+func getDashboardsToDelete(allDashboards *v1beta1.GrafanaDashboardList, grafanas []v1beta1.Grafana) map[*v1beta1.Grafana][]v1beta1.NamespacedResource {
+	dashboardsToDelete := map[*v1beta1.Grafana][]v1beta1.NamespacedResource{}
+	for _, grafana := range grafanas {
+		grafana := grafana
+		for _, dashboard := range grafana.Status.Dashboards {
+			if allDashboards.Find(dashboard.Namespace(), dashboard.Name()) == nil {
+				dashboardsToDelete[&grafana] = append(dashboardsToDelete[&grafana], dashboard)
+			}
+		}
+	}
+	return dashboardsToDelete
 }
 
 func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -185,9 +189,9 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			continue
 		}
 
+		grafana := grafana
 		// an admin url is required to interact with grafana
 		// the instance or route might not yet be ready
-		//if grafana.Status.AdminUrl == "" || grafana.Status.Stage != v1beta1.OperatorStageComplete || grafana.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
 		if grafana.Status.Stage != v1beta1.OperatorStageComplete || grafana.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
 			controllerLog.Info("grafana instance not ready", "grafana", grafana.Name)
 			success = false
@@ -231,6 +235,7 @@ func (r *GrafanaDashboardReconciler) onDashboardDeleted(ctx context.Context, nam
 
 	for _, grafana := range list.Items {
 		if found, uid := grafana.Status.Dashboards.Find(namespace, name); found {
+			grafana := grafana
 			grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, &grafana)
 			if err != nil {
 				return err
@@ -362,7 +367,7 @@ func (r *GrafanaDashboardReconciler) resolveDatasources(dashboard *v1beta1.Grafa
 
 	for _, input := range dashboard.Spec.Datasources {
 		if input.DatasourceName == "" || input.InputName == "" {
-			return nil, stderr.New(fmt.Sprintf("invalid datasource input rule in dashboard %v/%v, input or datasource empty", dashboard.Namespace, dashboard.Name))
+			return nil, fmt.Errorf("invalid datasource input rule in dashboard %v/%v, input or datasource empty", dashboard.Namespace, dashboard.Name)
 		}
 
 		searchValue := fmt.Sprintf("${%s}", input.InputName)
@@ -378,11 +383,11 @@ func (r *GrafanaDashboardReconciler) fetchDashboardJson(dashboard *v1beta1.Grafa
 	sourceTypes := dashboard.GetSourceTypes()
 
 	if len(sourceTypes) == 0 {
-		return nil, stderr.New(fmt.Sprintf("no source type provided for dashboard %v", dashboard.Name))
+		return nil, fmt.Errorf("no source type provided for dashboard %v", dashboard.Name)
 	}
 
 	if len(sourceTypes) > 1 {
-		return nil, stderr.New(fmt.Sprintf("more than one source types found for dashboard %v", dashboard.Name))
+		return nil, fmt.Errorf("more than one source types found for dashboard %v", dashboard.Name)
 	}
 
 	switch sourceTypes[0] {
@@ -391,7 +396,7 @@ func (r *GrafanaDashboardReconciler) fetchDashboardJson(dashboard *v1beta1.Grafa
 	case v1beta1.DashboardSourceTypeUrl:
 		return fetchers.FetchDashboardFromUrl(dashboard)
 	default:
-		return nil, stderr.New(fmt.Sprintf("unknown source type %v found in dashboard %v", sourceTypes[0], dashboard.Name))
+		return nil, fmt.Errorf("unknown source type %v found in dashboard %v", sourceTypes[0], dashboard.Name)
 	}
 }
 
@@ -400,8 +405,7 @@ func (r *GrafanaDashboardReconciler) UpdateStatus(ctx context.Context, cr *v1bet
 	return r.Client.Status().Update(ctx, cr)
 }
 
-func (r *GrafanaDashboardReconciler) Exists(client *grapi.Client,
-	cr *v1beta1.GrafanaDashboard) (bool, error) {
+func (r *GrafanaDashboardReconciler) Exists(client *grapi.Client, cr *v1beta1.GrafanaDashboard) (bool, error) {
 	dashboards, err := client.Dashboards()
 	if err != nil {
 		return false, err
@@ -436,7 +440,8 @@ func (r *GrafanaDashboardReconciler) GetOrCreateFolder(client *grapi.Client, cr 
 }
 
 func (r *GrafanaDashboardReconciler) GetFolderID(client *grapi.Client,
-	cr *v1beta1.GrafanaDashboard) (int64, error) {
+	cr *v1beta1.GrafanaDashboard,
+) (int64, error) {
 	folders, err := client.Folders()
 	if err != nil {
 		return 0, err
@@ -451,9 +456,7 @@ func (r *GrafanaDashboardReconciler) GetFolderID(client *grapi.Client,
 	return 0, nil
 }
 
-func (r *GrafanaDashboardReconciler) DeleteFolderIfEmpty(client *grapi.Client,
-	folderID int64) (http.Response, error) {
-
+func (r *GrafanaDashboardReconciler) DeleteFolderIfEmpty(client *grapi.Client, folderID int64) (http.Response, error) {
 	dashboards, err := client.Dashboards()
 	if err != nil {
 		return http.Response{
@@ -466,7 +469,7 @@ func (r *GrafanaDashboardReconciler) DeleteFolderIfEmpty(client *grapi.Client,
 		if int64(dashboard.FolderID) == folderID {
 			return http.Response{
 				Status:     "resource is still in use",
-				StatusCode: 423, //Locked return code
+				StatusCode: 423, // Locked return code
 			}, err
 		}
 		continue
