@@ -88,7 +88,7 @@ spec:
 
 ## New Features
 
-This is probably the part of the blog that you are most exited about, it goes through a number of the new features that we support.
+This is probably the part of the blog that you are most excited about, it goes through a number of the new features that we support.
 
 ### Multi grafana instances support
 
