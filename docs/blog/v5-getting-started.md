@@ -114,7 +114,7 @@ And this is how the GrafanaDashboard, looks like.
 Sadly there is no good webhook solution or similar in grafana so we have to continuously poll the grafana API and see if there have been any changes made to the dashboard.
 This is the same way we did it in version 4.
 
-> **NOTE**
+> **Note**
 > We also need to set the instanceSelector to find the grafana instance that this dashboard should be applied to.
 
 ```.yaml
