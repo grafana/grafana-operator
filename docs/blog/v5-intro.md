@@ -3,6 +3,8 @@
 If you are reading this it means that we have finally got our first RC of version 5 out of the gates.
 The maintainers is extremely happy to finally being able to do so.
 
+As a part of this we have merged version 5 in to the master branch and we will continue to support version 4 through the v4 branch. Any changes that needs to be done towards version 4 should be directed to that branch.
+
 In this blog we will try to explain the changes that we have made and the future of the operator.
 In [v5 getting started](v5-getting-started.md), you will be able to read how to try out the operator.
 
@@ -15,7 +17,8 @@ Just a reminder this is an RC and not production ready, we will probably do a fe
 
 ## Architectural changes
 
-The main change is that instead of grafana "finding" the dashboards, data sources CR they now find the grafana instance.
+The main change is that instead of the grafana Custom Resource(CR) having an instance selector looking for a specific label in the dashboards CR and data sources CR it's the other way around and the grafanadashboard CR now selects the grafana instance.
+
 This way we can have the controller managing the grafana client which makes the code easier to maintain.
 
 In this basic example you will see the grafana instance with a label.
@@ -112,6 +115,52 @@ The bad thing here is of course that we won't hide any of the logic that made th
 So if you want to configure an ingress for your grafana instance you will have to define it just like any other ingress resources.
 But it makes it extremely extensible and hopefully this will make the operator support any setup you want.
 
+In the example below you can see how we define a ingress and overwrite settings in the deployment.
+
+```.yaml
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana
+  labels:
+    dashboards: "grafana"
+spec:
+  config:
+    log:
+      mode: "console"
+    auth:
+      disable_login_form: "false"
+    security:
+      admin_user: root
+      admin_password: secret
+  deployment:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: grafana
+              securityContext:
+                readOnlyRootFilesystem: false
+  ingress:
+    spec:
+      ingressClassName: nginx
+      rules:
+        - host: example.com
+          http:
+            paths:
+              - backend:
+                  service:
+                    name: grafana-service
+                    port:
+                      number: 3000
+                path: /
+                pathType: Prefix
+      tls:
+        - hosts:
+            - example.com
+          secretName: core-cert
+```
+
 ### Grafana ini
 
 Just like deployment config the same thing goes for grafana config, instead of having a CRD that contains all the grafana ini values we have instead made it possible to write any value as you want.
@@ -129,6 +178,7 @@ In v5 you will be able to look at your grafana dashboard CR and see that it got 
 
 As you might know we have had a python container that have been an [sidecar](https://github.com/grafana-operator/grafana_plugins_init) to the operator that have been in charge of installing the plugins to grafana.
 The sidecar have been badly maintained and to be honest it's just not needed. Instead we use an environment variable to install plugins during startup.
+So when version 4 is out of support we will archive the grafana plugins init repo.
 
 ### Helm chart
 
@@ -138,10 +188,10 @@ We still see a big place for the [community Helm chart](https://bitnami.com/stac
 
 ### Namespace mode
 
-Another issues that we have gotten lots of feedback on is [Excessive rbac access](https://github.com/grafana-operator/grafana-operator/issues/604)
+Another issue that we have gotten lots of feedback on is [Excessive rbac access](https://github.com/grafana-operator/grafana-operator/issues/604)
 This wasn't something that we could easily fix in v4 but in v5 we have really tried to accommodate this by introducing namespace mode.
 
-In namespace mode you can run the operator to only look for grafana resources in the same namespace that you are in or you can define it to look for a number of specific namespace. By default it will use cluster wide access.
+In namespace mode you can run the operator to only look for grafana resources in the same namespace that you are in or you can define it to watch a number of specific namespaces. By default it will use cluster wide access.
 
 If you install through Helm or Kustomize you will be able to define if you should create cluster roles or only roles.
 Sadly for our Openshift users this won't be possible due to the limitations of OLM, even if you run the operator in namespace mode, which you can. OLM will still use the cluster wide rbac settings.
@@ -164,4 +214,4 @@ We probably won't support all the features that we did in v4, due to maintenance
 
 An extra note about the **do you like it?**, getting feedback is one of the hardest things in open-source.
 Even if "all" you did was to follow the new v5 [installation guide](v5-getting-started.md) we want to know about it, you might feel that you don't have specific insights or thoughts and that is fine.
-But writing one row on slack and saying "hey I installed version v5 and it worked as I expected". Helps us allot since we get to know that people are trying it.
+But writing one row on slack and saying "hey I installed version v5 and it worked as I expected". Helps us a lot since we get to know that people are trying it.
