@@ -201,7 +201,7 @@ Sadly for our Openshift users this won't be possible due to the limitations of O
 So there is still lots to do before version 5 will be released.
 
 There are still a number of features that is missing and we have tried to create issues around this.
-Please have a look in our v5 [milestone](https://github.com/grafana-operator/grafana-operator/milestone/1) to see all open issues.
+Please have a look in our v5 [milestone](https://github.com/grafana-operator/grafana-operator/milestone/3) or the v5 [labels](https://github.com/grafana-operator/grafana-operator/labels/v5) see all open issues.
 
 But we need **your** help, first of all try out version 5.
 
