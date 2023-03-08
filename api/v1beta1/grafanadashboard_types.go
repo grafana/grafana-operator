@@ -22,7 +22,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
-
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

@@ -80,6 +80,7 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 	// sync datasources, delete dashboards from grafana that do no longer have a cr
 	datasourcesToDelete := map[*v1beta1.Grafana][]v1beta1.NamespacedResource{}
 	for _, grafana := range grafanas.Items {
+		grafana := grafana
 		for _, datasource := range grafana.Status.Datasources {
 			if allDatasources.Find(datasource.Namespace(), datasource.Name()) == nil {
 				datasourcesToDelete[&grafana] = append(datasourcesToDelete[&grafana], datasource)
@@ -89,6 +90,7 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 
 	// delete all dashboards that no longer have a cr
 	for grafana, datasources := range datasourcesToDelete {
+		grafana := grafana
 		grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, grafana)
 		if err != nil {
 			return ctrl.Result{Requeue: true}, err
@@ -179,9 +181,9 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			continue
 		}
 
+		grafana := grafana
 		// an admin url is required to interact with grafana
 		// the instance or route might not yet be ready
-		//if grafana.Status.AdminUrl == "" || grafana.Status.Stage != v1beta1.OperatorStageComplete || grafana.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
 		if grafana.Status.Stage != v1beta1.OperatorStageComplete || grafana.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
 			controllerLog.Info("grafana instance not ready", "grafana", grafana.Name)
 			success = false
@@ -227,6 +229,7 @@ func (r *GrafanaDatasourceReconciler) onDatasourceDeleted(ctx context.Context, n
 	}
 
 	for _, grafana := range list.Items {
+		grafana := grafana
 		if found, uid := grafana.Status.Datasources.Find(namespace, name); found {
 			grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, &grafana)
 			if err != nil {
@@ -291,18 +294,18 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		return err
 	}
 
-	if id == nil {
+	switch {
+	case id == nil:
 		_, err = grafanaClient.NewDataSourceFromRawData(datasourceBytes)
-		// already exists error?
 		if err != nil && !strings.Contains(err.Error(), "status: 409") {
 			return err
 		}
-	} else if !cr.Unchanged() {
+	case !cr.Unchanged():
 		err := grafanaClient.UpdateDataSourceFromRawData(*id, datasourceBytes)
 		if err != nil {
 			return err
 		}
-	} else {
+	default:
 		// datasource exists and is unchanged, nothing to do
 		return nil
 	}

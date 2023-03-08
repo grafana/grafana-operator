@@ -80,6 +80,7 @@ func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result,
 	// sync folders, delete folders from grafana that do no longer have a cr
 	foldersToDelete := map[*v1beta1.Grafana][]v1beta1.NamespacedResource{}
 	for _, grafana := range grafanas.Items {
+		grafana := grafana
 		for _, folder := range grafana.Status.Folders {
 			if allFolders.Find(folder.Namespace(), folder.Name()) == nil {
 				foldersToDelete[&grafana] = append(foldersToDelete[&grafana], folder)
@@ -183,7 +184,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			continue
 		}
 
-		//if grafana.Status.AdminUrl == "" || grafana.Status.Stage != v1beta1.OperatorStageComplete || grafana.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
+		grafana := grafana
 		if grafana.Status.Stage != v1beta1.OperatorStageComplete || grafana.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
 			controllerLog.Info("grafana instance not ready", "grafana", grafana.Name)
 			continue
@@ -244,6 +245,7 @@ func (r *GrafanaFolderReconciler) onFolderDeleted(ctx context.Context, namespace
 	}
 
 	for _, grafana := range list.Items {
+		grafana := grafana
 		if found, uid := grafana.Status.Folders.Find(namespace, name); found {
 			grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, &grafana)
 			if err != nil {
@@ -315,10 +317,10 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 		return err
 	}
 
-	//FIXME our current version of the client doesn't return response codes, or any response for
-	//FIXME that matter, this needs an issue/feature request upstream
-	//FIXME for now, use the returned URL as an indicator that the folder was created instead
-	if folderFromClient.URL == "" && len(folderFromClient.URL) <= 0 {
+	// FIXME our current version of the client doesn't return response codes, or any response for
+	// FIXME that matter, this needs an issue/feature request upstream
+	// FIXME for now, use the returned URL as an indicator that the folder was created instead
+	if folderFromClient.URL == "" && len(folderFromClient.URL) == 0 {
 		return errors.NewBadRequest(fmt.Sprintf("something went wrong trying to create folder %s in grafana %s", cr.Name, grafana.Name))
 	}
 

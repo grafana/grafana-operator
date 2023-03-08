@@ -76,8 +76,8 @@ func getResources() v1.ResourceRequirements {
 	}
 }
 
-func getVolumes(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.Volume { // nolint
-	var volumes []v1.Volume // nolint
+func getVolumes(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.Volume {
+	var volumes []v1.Volume
 
 	config := model.GetGrafanaConfigMap(cr, scheme)
 
@@ -112,7 +112,7 @@ func getVolumes(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.Volume { // no
 }
 
 func getVolumeMounts(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.VolumeMount {
-	var mounts []v1.VolumeMount // nolint
+	var mounts []v1.VolumeMount
 
 	config := model.GetGrafanaConfigMap(cr, scheme)
 
@@ -134,8 +134,8 @@ func getVolumeMounts(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.VolumeMou
 	return mounts
 }
 
-func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.OperatorReconcileVars, openshiftPlatform bool) []v1.Container { // nolint
-	var containers []v1.Container // nolint
+func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.OperatorReconcileVars, openshiftPlatform bool) []v1.Container {
+	var containers []v1.Container
 
 	image := fmt.Sprintf("%s:%s", config2.GrafanaImage, config2.GrafanaVersion)
 	plugins := model.GetPluginsConfigMap(cr, scheme)

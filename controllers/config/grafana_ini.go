@@ -37,7 +37,7 @@ func WriteIni(cfg map[string]map[string]string) (string, string) {
 	}
 
 	hash := sha256.New()
-	io.WriteString(hash, sb.String()) // nolint
+	io.WriteString(hash, sb.String()) //nolint
 
 	return sb.String(), fmt.Sprintf("%x", hash.Sum(nil))
 }

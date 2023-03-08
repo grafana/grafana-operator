@@ -1,0 +1,62 @@
+permissions:
+  contents: read
+
+name: PR Validation
+
+on: pull_request
+
+jobs:
+  file-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone the code
+        uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b #v3.2.0
+
+      - name: trailing space
+        uses: chainguard-dev/actions/trailing-space@main
+
+      - name: eof-check
+        uses: chainguard-dev/actions/eof-newline@main
+
+  go-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b #v3.2.0
+        with:
+          submodules: recursive
+
+      - name: Setup go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: "go.mod"
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3.4.0
+        with:
+          version: "v1.51.2"
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b #v3.2.0
+        with:
+          submodules: recursive
+
+      - name: Setup go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: "go.mod"
+
+      - name: Run test
+        run: |
+          make test
+
+      - name: Check if working tree is dirty
+        run: |
+          if [[ $(git status --porcelain) ]]; then
+            git diff
+            echo 'run make test and commit changes'
+            exit 1
+          fi

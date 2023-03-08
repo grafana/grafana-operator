@@ -32,7 +32,6 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 			Namespace: grafana.Namespace,
 		}
 		err := c.Get(ctx, selector, secret)
-
 		if err != nil {
 			return nil, err
 		}

@@ -25,12 +25,12 @@ func (l PluginList) Hash() string {
 		sb.WriteString(plugin.Version)
 	}
 	hash := sha256.New()
-	io.WriteString(hash, sb.String()) // nolint
+	io.WriteString(hash, sb.String()) //nolint
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 
 func (l PluginList) String() string {
-	var plugins []string
+	plugins := make([]string, 0, len(l))
 	for _, plugin := range l {
 		plugins = append(plugins, fmt.Sprintf("%s %s", plugin.Name, plugin.Version))
 	}
@@ -51,6 +51,7 @@ func (l PluginList) Update(plugin *GrafanaPlugin) {
 func (l PluginList) Sanitize() PluginList {
 	var sanitized PluginList
 	for _, plugin := range l {
+		plugin := plugin
 		_, err := semver.Parse(plugin.Version)
 		if err != nil {
 			continue
@@ -121,7 +122,7 @@ func (l PluginList) VersionsOf(plugin *GrafanaPlugin) int {
 	i := 0
 	for _, listedPlugin := range l {
 		if listedPlugin.Name == plugin.Name {
-			i = i + 1
+			i++
 		}
 	}
 	return i

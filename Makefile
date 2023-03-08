@@ -263,18 +263,29 @@ catalog-push: ## Push a catalog image.
 e2e: kuttl install deploy-kuttl ## Run e2e tests using kuttl.
 	$(KUTTL) test
 
-# Find or download gen-crd-api-reference-docs
+# Find or download kuttl
 kuttl:
 ifeq (, $(shell which kubectl-kuttl))
 	@{ \
 	set -e ;\
-	KUTTL_TMP_DIR=$$(mktemp -d) ;\
-	cd $$KUTTL_TMP_DIR ;\
-	go mod init tmp ;\
 	go install github.com/kudobuilder/kuttl/cmd/kubectl-kuttl@v0.12.1 ;\
-	rm -rf $$KUTTL_TMP_DIR ;\
 	}
 KUTTL=$(GOBIN)/kuttl
 else
 KUTTL=$(shell which kubectl-kuttl)
 endif
+
+golangci:
+ifeq (, $(shell which golangci-lint))
+	@{ \
+	set -e ;\
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.51.2 ;\
+	}
+GOLANGCI=$(GOBIN)/golangci-lint
+else
+GOLANGCI=$(shell which golangci-lint)
+endif
+
+.PHONY: code/golangci-lint
+code/golangci-lint: golangci
+	$(GOLANGCI) run ./...

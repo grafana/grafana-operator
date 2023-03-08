@@ -44,7 +44,7 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 	}
 }
 
-func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, _ *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
 	ingress := model.GetGrafanaIngress(cr, scheme)
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, ingress, func() error {
@@ -73,7 +73,7 @@ func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Gr
 	return v1beta1.OperatorStageResultSuccess, nil
 }
 
-func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, _ *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
 	route := model.GetGrafanaRoute(cr, scheme)
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, route, func() error {
@@ -125,7 +125,7 @@ func (r *IngressReconciler) getIngressAdminURL(ingress *v1.Ingress) string {
 
 	// if all fails, try to get access through the load balancer
 	if hostname == "" {
-		var loadBalancerIp = ""
+		loadBalancerIp := ""
 		for _, lb := range ingress.Status.LoadBalancer.Ingress {
 			if lb.Hostname != "" {
 				hostname = lb.Hostname
@@ -149,7 +149,7 @@ func (r *IngressReconciler) getIngressAdminURL(ingress *v1.Ingress) string {
 	return adminURL
 }
 
-func getRouteTLS(cr *v1beta1.Grafana) *routev1.TLSConfig {
+func getRouteTLS() *routev1.TLSConfig {
 	return &routev1.TLSConfig{
 		Certificate:                   "",
 		Key:                           "",
@@ -177,7 +177,7 @@ func getRouteSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) routev1.RouteSpec
 		Port: &routev1.RoutePort{
 			TargetPort: port,
 		},
-		TLS:            getRouteTLS(cr),
+		TLS:            getRouteTLS(),
 		WildcardPolicy: "None",
 	}
 }

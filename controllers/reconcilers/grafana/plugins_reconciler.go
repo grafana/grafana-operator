@@ -68,6 +68,7 @@ func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 
 		for _, plugin := range dashboardPlugins {
 			// new plugin
+			plugin := plugin
 			if !consolidatedPlugins.HasSomeVersionOf(&plugin) {
 				consolidatedPlugins = append(consolidatedPlugins, plugin)
 				continue
