@@ -209,6 +209,7 @@ But we need **your** help, first of all try out version 5.
 - Is everything working as you expected?
 - Is there any features missing?
 - Is there an open issue for that feature? Please search for it and if it's not please create an issue.
+- Help out with PR:s, to get started look at the [CONTRIBUTING.md](CONTRIBUTING.md) file.
 
 We probably won't support all the features that we did in v4, due to maintenance burden, but if a missing feature get lots of up votes we might give it a second review.
 
