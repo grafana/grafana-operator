@@ -71,6 +71,8 @@ spec:
                 x-kubernetes-map-type: atomic
               json:
                 type: string
+              jsonnet:
+                type: string
               plugins:
                 items:
                   properties:

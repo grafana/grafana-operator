@@ -106,6 +106,9 @@ spec:
               json:
                 description: dashboard json
                 type: string
+              jsonnet:
+                description: Jsonnet
+                type: string
               plugins:
                 description: plugins
                 items:

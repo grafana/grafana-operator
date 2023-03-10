@@ -1,0 +1,93 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana
+  labels:
+    dashboards: "grafana"
+spec:
+  client:
+    preferIngress: true
+  config:
+    log:
+      mode: "console"
+    auth:
+      disable_login_form: "false"
+    security:
+      admin_user: root
+      admin_password: secret
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: grafanadashboard-jsonnet
+spec:
+  resyncPeriod: 30s
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  jsonnet: |
+   local grafana = import 'grafonnet/grafana.libsonnet';
+   local dashboard = grafana.dashboard;
+   local row = grafana.row;
+   local singlestat = grafana.singlestat;
+   local prometheus = grafana.prometheus;
+   local template = grafana.template;
+
+   dashboard.new(
+     'JVM',
+     tags=['java'],
+   )
+   .addTemplate(
+     grafana.template.datasource(
+       'PROMETHEUS_DS',
+       'prometheus',
+       'Prometheus',
+       hide='label',
+     )
+   )
+   .addTemplate(
+     template.new(
+       'env',
+       '$PROMETHEUS_DS',
+       'label_values(jvm_threads_current, env)',
+       label='Environment',
+       refresh='time',
+     )
+   )
+   .addTemplate(
+     template.new(
+       'job',
+       '$PROMETHEUS_DS',
+       'label_values(jvm_threads_current{env="$env"}, job)',
+       label='Job',
+       refresh='time',
+     )
+   )
+   .addTemplate(
+     template.new(
+       'instance',
+       '$PROMETHEUS_DS',
+       'label_values(jvm_threads_current{env="$env",job="$job"}, instance)',
+       label='Instance',
+       refresh='time',
+     )
+   )
+   .addRow(
+     row.new()
+     .addPanel(
+       singlestat.new(
+         'uptime',
+         format='s',
+         datasource='Prometheus',
+         span=2,
+         valueName='current',
+       )
+       .addTarget(
+         prometheus.target(
+           'time() - process_start_time_seconds{env="$env", job="$job", instance="$instance"}',
+         )
+       )
+     )
+   )
+
