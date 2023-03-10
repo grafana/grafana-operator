@@ -22,7 +22,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -257,7 +256,7 @@ func (r *GrafanaDashboardReconciler) onDashboardDeleted(ctx context.Context, nam
 				}
 			}
 
-			if dash != nil && dash.Folder > 0 {
+			if dash != nil && dash.Meta.Folder > 0 {
 				resp, err := r.DeleteFolderIfEmpty(grafanaClient, dash.Folder)
 				if err != nil {
 					return err
@@ -338,9 +337,9 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 			IsStarred: false,
 			Slug:      cr.Name,
 			Folder:    folderID,
-			// URL:       "",
 		},
 		Model:     dashboardFromJson,
+		Folder:    folderID,
 		Overwrite: true,
 		Message:   "",
 	})
@@ -479,7 +478,15 @@ func (r *GrafanaDashboardReconciler) DeleteFolderIfEmpty(client *grapi.Client, f
 		continue
 	}
 
-	if err = client.DeleteFolder(strconv.FormatInt(folderID, 10)); err != nil {
+	folder, err := client.Folder(folderID)
+	if err != nil {
+		return http.Response{
+			Status:     "internal grafana client error getting folder UID for folder",
+			StatusCode: 500,
+		}, err
+	}
+
+	if err = client.DeleteFolder(folder.UID); err != nil {
 		return http.Response{
 			Status:     "internal grafana client error deleting grafana folder",
 			StatusCode: 500,
