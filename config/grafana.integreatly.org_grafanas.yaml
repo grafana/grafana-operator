@@ -8175,13 +8175,6 @@ spec:
                 required:
                 - url
                 type: object
-              grafanaContainer:
-                properties:
-                  baseImage:
-                    type: string
-                  initImage:
-                    type: string
-                type: object
               ingress:
                 properties:
                   metadata:
