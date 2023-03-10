@@ -26,6 +26,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana-operator/grafana-operator-experimental/embeds"
+
 	"github.com/go-logr/logr"
 	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	client2 "github.com/grafana-operator/grafana-operator-experimental/controllers/client"
@@ -395,6 +397,8 @@ func (r *GrafanaDashboardReconciler) fetchDashboardJson(dashboard *v1beta1.Grafa
 		return []byte(dashboard.Spec.Json), nil
 	case v1beta1.DashboardSourceTypeUrl:
 		return fetchers.FetchDashboardFromUrl(dashboard)
+	case v1beta1.DashboardSourceTypeJsonnet:
+		return fetchers.FetchJsonnet(dashboard, embeds.GrafonnetEmbed)
 	default:
 		return nil, fmt.Errorf("unknown source type %v found in dashboard %v", sourceTypes[0], dashboard.Name)
 	}

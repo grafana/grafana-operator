@@ -32,3 +32,8 @@ vendor
 kube-apiserver-audit.log
 labs/benchmark/dashboards
 labs/benchmark/datasources
+
+# Grafonnet embeds
+/embeds/grafonnet-lib/*
+!/embeds/grafonnet-lib/grafonnet
+!/embeds/grafonnet-lib/grafonnet-7.0

@@ -32,6 +32,7 @@ type DashboardSourceType string
 const (
 	DashboardSourceTypeRawJson DashboardSourceType = "json"
 	DashboardSourceTypeUrl     DashboardSourceType = "url"
+	DashboardSourceTypeJsonnet DashboardSourceType = "jsonnet"
 	DefaultResyncPeriod                            = "5m"
 )
 
@@ -52,6 +53,10 @@ type GrafanaDashboardSpec struct {
 	// dashboard url
 	// +optional
 	Url string `json:"url,omitempty"`
+
+	// Jsonnet
+	// +optional
+	Jsonnet string `json:"jsonnet,omitempty"`
 
 	// selects Grafanas for import
 	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`
@@ -145,6 +150,10 @@ func (in *GrafanaDashboard) GetSourceTypes() []DashboardSourceType {
 
 	if in.Spec.Url != "" {
 		sourceTypes = append(sourceTypes, DashboardSourceTypeUrl)
+	}
+
+	if in.Spec.Jsonnet != "" {
+		sourceTypes = append(sourceTypes, DashboardSourceTypeJsonnet)
 	}
 
 	return sourceTypes

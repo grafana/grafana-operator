@@ -10,6 +10,7 @@ import (
 	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
 	client2 "github.com/grafana-operator/grafana-operator-experimental/controllers/client"
 	"github.com/grafana-operator/grafana-operator-experimental/controllers/metrics"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
