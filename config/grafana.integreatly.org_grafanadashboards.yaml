@@ -58,6 +58,11 @@ spec:
               folder:
                 description: folder assignment for dashboard
                 type: string
+              gzipJson:
+                description: GzipJson the dashboard's JSON compressed with Gzip. Base64-encoded
+                  when in YAML.
+                format: byte
+                type: string
               instanceSelector:
                 description: selects Grafanas for import
                 properties:
