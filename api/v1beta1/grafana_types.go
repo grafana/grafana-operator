@@ -64,7 +64,6 @@ type GrafanaSpec struct {
 	ServiceAccount        *ServiceAccountV1            `json:"serviceAccount,omitempty"`
 	Client                *GrafanaClient               `json:"client,omitempty"`
 	Jsonnet               *JsonnetConfig               `json:"jsonnet,omitempty"`
-	GrafanaContainer      *GrafanaContainer            `json:"grafanaContainer,omitempty"`
 	External              *External                    `json:"external,omitempty"`
 }
 
@@ -73,11 +72,6 @@ type External struct {
 	ApiKey        *v1.SecretKeySelector `json:"apiKey,omitempty"`
 	AdminUser     *v1.SecretKeySelector `json:"adminUser,omitempty"`
 	AdminPassword *v1.SecretKeySelector `json:"adminPassword,omitempty"`
-}
-
-type GrafanaContainer struct {
-	BaseImage string `json:"baseImage,omitempty"`
-	InitImage string `json:"initImage,omitempty"`
 }
 
 type JsonnetConfig struct {
