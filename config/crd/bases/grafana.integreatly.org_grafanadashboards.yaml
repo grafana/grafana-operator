@@ -45,6 +45,9 @@ spec:
                 type: array
               folder:
                 type: string
+              gzipJson:
+                format: byte
+                type: string
               instanceSelector:
                 properties:
                   matchExpressions:

@@ -394,6 +394,8 @@ func (r *GrafanaDashboardReconciler) fetchDashboardJson(dashboard *v1beta1.Grafa
 	switch sourceTypes[0] {
 	case v1beta1.DashboardSourceTypeRawJson:
 		return []byte(dashboard.Spec.Json), nil
+	case v1beta1.DashboardSourceTypeGzipJson:
+		return v1beta1.Gunzip([]byte(dashboard.Spec.GzipJson))
 	case v1beta1.DashboardSourceTypeUrl:
 		return fetchers.FetchDashboardFromUrl(dashboard)
 	case v1beta1.DashboardSourceTypeJsonnet:

@@ -30,10 +30,11 @@ import (
 type DashboardSourceType string
 
 const (
-	DashboardSourceTypeRawJson DashboardSourceType = "json"
-	DashboardSourceTypeUrl     DashboardSourceType = "url"
-	DashboardSourceTypeJsonnet DashboardSourceType = "jsonnet"
-	DefaultResyncPeriod                            = "5m"
+	DashboardSourceTypeRawJson  DashboardSourceType = "json"
+	DashboardSourceTypeGzipJson DashboardSourceType = "gzipJson"
+	DashboardSourceTypeUrl      DashboardSourceType = "url"
+	DashboardSourceTypeJsonnet  DashboardSourceType = "jsonnet"
+	DefaultResyncPeriod                             = "5m"
 )
 
 type GrafanaDashboardDatasource struct {
@@ -49,6 +50,10 @@ type GrafanaDashboardSpec struct {
 	// dashboard json
 	// +optional
 	Json string `json:"json,omitempty"`
+
+	// GzipJson the dashboard's JSON compressed with Gzip. Base64-encoded when in YAML.
+	// +optional
+	GzipJson []byte `json:"gzipJson,omitempty"`
 
 	// dashboard url
 	// +optional
@@ -146,6 +151,10 @@ func (in *GrafanaDashboard) GetSourceTypes() []DashboardSourceType {
 
 	if in.Spec.Json != "" {
 		sourceTypes = append(sourceTypes, DashboardSourceTypeRawJson)
+	}
+
+	if in.Spec.GzipJson != nil {
+		sourceTypes = append(sourceTypes, DashboardSourceTypeGzipJson)
 	}
 
 	if in.Spec.Url != "" {

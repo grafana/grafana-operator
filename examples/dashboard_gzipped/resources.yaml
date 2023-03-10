@@ -1,0 +1,27 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana
+  labels:
+    dashboards: "grafana"
+spec:
+  config:
+    log:
+      mode: "console"
+    auth:
+      disable_login_form: "false"
+    security:
+      admin_user: root
+      admin_password: secret
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: grafanadashboard-gzipped
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  gzipJson: |-
+    H4sIAMpJC2QA/3VSzU7jMBC+8xSWzyCxFbASVzhwRNoVlwpVbj1NrDoey3YbAuqzLAcecB+hM+M0LQdyiPT9zOfJ53xcKKWd1fcqbL2/ZFRc8UCE/uO66EE9mtwu0SSrq2yaTOr8VVAuQzVbkzajwXXwjkHYZcI+Q6oCWFfMUuwlbUG41ll4wFASek5dG5+r0CQT27+IvrhIwi8howkgvjkhpXh5fvQKvTcxA3/HFCFKk5x9Rh45mvnQY+CIe8KzmzPijYjrMzwwHuF+ypbaZhM8LSfVCDd1+YS9HdT/f1+f0kUVhygadaSF29O71sodTjvrdcKOjQH7q7t2DNAFR46HZSsZi261ocanYeYWGIvDcL6cTrBOkNuFCwXSjkoT8RQFdPmmuNCcorzL5bvLhICFXDX7R9t4Fu97m+vPkFctdOYFUqZhvo/fQu8mQvqnrLAZN9sfANr/fFmsAgAA
