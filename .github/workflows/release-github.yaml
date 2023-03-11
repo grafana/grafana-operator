@@ -45,7 +45,7 @@ jobs:
 
       - uses: actions/setup-go@v3
         with:
-          go-version-file: 'go.mod'
+          go-version-file: "go.mod"
           cache: true
 
       - uses: ko-build/setup-ko@v0.6
@@ -70,4 +70,3 @@ jobs:
             --image-label org.opencontainers.image.revision=${{ github.sha }} \
             --image-label org.opencontainers.image.version=${{ github.ref_name }} \
             --image-label org.opencontainers.image.created=${{ env.BUILD_DATE }} \
-            --insecure-registry
