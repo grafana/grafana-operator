@@ -25,7 +25,7 @@ By default Kind uses docker to spin up a cluster but any container runtime shoul
 
 Create a Kind cluster with [ingress support](https://kind.sigs.k8s.io/docs/user/ingress/).
 
-```shel
+```shell
 cat <<EOF | kind create cluster --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
@@ -92,7 +92,7 @@ kubectl apply -f https://raw.githubusercontent.com/grafana-operator/grafana-oper
 
 Notice the label on the grafana resource, this is the one that GrafanaDashboard will use to find this instance.
 
-```.yaml
+```yaml
 apiVersion: grafana.integreatly.org/v1beta1
 kind: Grafana
 metadata:
@@ -117,7 +117,7 @@ This is the same way we did it in version 4.
 > **Note**
 > We also need to set the instanceSelector to find the grafana instance that this dashboard should be applied to.
 
-```.yaml
+```yaml
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
@@ -162,7 +162,7 @@ spec:
 For simplicity lets port-forward to the grafana-deployment that we have created.
 
 ```shell
-kubectl port-forward deployment/grafana-deployment 3000
+kubectl port-forward svc/grafana-service 3000
 ```
 
 You should now be able to go to localhost:3000 in your browser and login with `username: root` and `password: secret`.
@@ -172,13 +172,11 @@ Yes we did, so in the next session lets use it.
 
 ### Ingress example
 
-TODO write a few rows how to fix DNS.
-
-Now lets use the ingress example instead, you can find the [example](examples/ingress_http/resources.yaml).
+Now lets use the ingress example instead, you can find the [example](../../examples/ingress_http/resources.yaml).
 But this time we will do some modifications to it.
 
 Same settings but updating the label and the name to show case that we can run multiple instances of grafana without any issues.
-You will need to adapt your hostname to the domain of your picking.
+You will need to adapt your hostname to the domain of your picking. Or you can use [nip.io](https://nip.io/) which will steer traffic to your local deployment through a DNS response (e.g. `nslookup grafana.127.0.0.1.nip.io` will respond with `127.0.0.1`).
 
 ```shell
 kubectl apply -f - <<EOF
@@ -201,12 +199,12 @@ spec:
     spec:
       ingressClassName: nginx
       rules:
-        - host: test.io
+        - host: grafana.127.0.0.1.nip.io
           http:
             paths:
               - backend:
                   service:
-                    name: grafana-service
+                    name: grafana-ingress-service
                     port:
                       number: 3000
                 path: /
@@ -267,12 +265,12 @@ Status messages is something that we have been working hard on to make the grafa
 For example looking at the grafana-ingress status
 
 ```shell
-kubectl get grafana grafana-ingress -o yaml |grep status -A 10
+kubectl get grafana grafana-ingress -o yaml | grep status -A 10
 ```
 
 Should show you something like this
 
-```.yaml
+```yaml
 status:
   adminUrl: http://grafana-ingress-service.default.svc.cluster.local:3000
   dashboards:
@@ -294,11 +292,13 @@ kubectl delete grafanadashboards grafanadashboard-sample-ingress
 kubectl delete grafana grafana-ingress
 # Uninstall grafana-operator
 helm uninstall grafana-operator . -n grafana-operator
+# Remove kind
+kind delete cluster
 ```
 
 ## Helm CRD Caveats
 
-If you are using helm to install the operator and in the future want to upgrade the operator, make sure that the CRD:s get upgraded manually.
+If you are using helm to install the operator and in the future want to upgrade the operator, make sure that the CRDs get upgraded manually.
 
 This is due to how [Helm](https://helm.sh/docs/chart_best_practices/custom_resource_definitions/#method-1-let-helm-do-it-for-you) works. But it's important to remember this since we most likely will do lots of CRD changes in the near future and we want you to follow along with the CRD changes.
 
@@ -311,4 +311,4 @@ If you find any issues feel free to create one after reading through the existin
 
 To give feedback you can also join us in the [Kubernetes Slack](https://slack.k8s.io/) in the [grafana-operator channel](https://kubernetes.slack.com/messages/grafana-operator/).
 
-And of course we are happy to receive PR:s.
+And of course we are happy to receive PRs.
