@@ -53,6 +53,7 @@ help: ## Display this help.
 .PHONY: manifests
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." crd:maxDescLen=0,generateEmbeddedObjectMeta=false output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." crd:maxDescLen=0,generateEmbeddedObjectMeta=false output:crd:artifacts:config=helm/grafana-operator/crds
 
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -75,6 +76,10 @@ test: manifests generate fmt vet envtest ## Run tests.
 .PHONY: build
 build: generate fmt vet ## Build manager binary.
 	go build -o bin/manager main.go
+
+# Get submodules
+submodule:
+	git submodule update --init --recursive
 
 .PHONY: run
 run: manifests generate fmt vet ## Run a controller from your host.
@@ -289,3 +294,18 @@ endif
 .PHONY: code/golangci-lint
 code/golangci-lint: golangci
 	$(GOLANGCI) run ./...
+
+helm-docs:
+ifeq (, $(shell which helm-docs))
+	@{ \
+	set -e ;\
+	go install github.com/norwoodj/helm-docs/cmd/helm-docs@v1.11.0 ;\
+	}
+HELM_DOCS=$(GOBIN)/helm-docs
+else
+HELM_DOCS=$(shell which helm-docs)
+endif
+
+.PHONY: helm/docs
+helm/docs: helm-docs
+	$(HELM_DOCS)

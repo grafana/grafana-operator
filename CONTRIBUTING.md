@@ -6,6 +6,9 @@ Thank you for investing your time in contributing to our project.
 
 The operator uses unit tests and [Kuttl](https://kuttl.dev/) for e2e tests to make sure that the operator is working as intended, we use make to generate a number of docs and scripts for us.
 
+The operator use a submodule for [grafonnet-lib](https://github.com/grafana/grafonnet-lib),
+one of the first things you have to do is to run `make submodule`.
+
 ### Local development using make run
 
 Some of us use kind some use crc, below you can find an example on how to integrate with a kind cluster.

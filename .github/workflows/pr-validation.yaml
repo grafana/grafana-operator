@@ -60,3 +60,28 @@ jobs:
             echo 'run make test and commit changes'
             exit 1
           fi
+
+  helm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b #v3.2.0
+        with:
+          submodules: recursive
+
+      - name: Setup go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: "go.mod"
+
+      - name: Run helm-docs
+        run: |
+          make helm/docs
+
+      - name: Check if working tree is dirty
+        run: |
+          if [[ $(git status --porcelain) ]]; then
+            git diff
+            echo 'run make helm/docs and commit changes'
+            exit 1
+          fi

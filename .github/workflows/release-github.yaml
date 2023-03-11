@@ -1,0 +1,73 @@
+name: release
+
+on:
+  push:
+    tags:
+      - v5.*
+
+jobs:
+  helm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v3
+
+      - name: Prepare
+        run: |
+          # OCI standard enforces lower-case paths
+          GHCR_REPO=$(echo "gchr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          HELM_REPO=$(echo "oci://ghcr.io/${{ github.repository_owner }}/helm-charts" | tr '[:upper:]' '[:lower:]')
+          echo "GHCR_REPO=$GHCR_REPO" >> $GITHUB_ENV
+          echo "HELM_REPO=$HELM_REPO" >> $GITHUB_ENV
+
+      - name: Publish Helm charts
+        run: |
+          cd helm
+          yq -i '.image.repository = "${{ env.GHCR_REPO }}"' grafana-operator/values.yaml
+          helm registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
+          helm package --app-version ${{ github.ref_name }} --version ${{ github.ref_name }} grafana-operator
+          helm push grafana-operator-${{ github.ref_name }}.tgz ${{ env.HELM_REPO }}
+
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - uses: ko-build/setup-ko@v0.6
+        with:
+          version: v0.13.0
+
+      - name: Prepare
+        run: |
+          # OCI standard enforces lower-case paths
+          GHCR_REPO=$(echo "gchr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "GHCR_REPO=$GHCR_REPO" >> $GITHUB_ENV
+          echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
+
+      - name: Build and push
+        env:
+          KO_DOCKER_REPO: ${{ env.GHCR_REPO }}
+        run: |
+          ko build --sbom=none --bare --platform linux/arm64,linux/arm/v7,linux/amd64 -t ${{ github.ref_name }} \
+            --image-label org.opencontainers.image.title=grafana-operator \
+            --image-label org.opencontainers.image.description="An operator for Grafana that installs and manages Grafana instances & Dashboards & Datasources through Kubernetes/OpenShift CRs" \
+            --image-label org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }} \
+            --image-label org.opencontainers.image.revision=${{ github.sha }} \
+            --image-label org.opencontainers.image.version=${{ github.ref_name }} \
+            --image-label org.opencontainers.image.created=${{ env.BUILD_DATE }} \
+            --insecure-registry
