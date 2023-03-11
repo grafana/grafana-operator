@@ -10,6 +10,6 @@ patches:
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
-  - name: quay.io/grafana-operator/grafana-operator:v5.0.0
-    newName: quay.io/grafana-operator/grafana-operator
+  - name: quay.io/grafana-operator/grafana-operator
+    newName: ko.local/grafana-operator/grafana-operator
     newTag: latest
