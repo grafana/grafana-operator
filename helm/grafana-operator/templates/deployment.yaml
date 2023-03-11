@@ -44,8 +44,6 @@ spec:
             {{- if .Values.leaderElect }}
             - --leader-elect
             {{- end }}
-          command:
-            - /manager
           livenessProbe:
             httpGet:
               path: /healthz
