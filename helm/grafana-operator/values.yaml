@@ -1,0 +1,82 @@
+# -- If the operator should run in namespace-scope or not,
+# if true the operator will only be able to manage instances in the same namespace
+namespaceScope: false
+
+# -- If you want to run multiple replicas of the grafana-operator, this is not recommended.
+leaderElect: false
+
+# -- Set any env variables you want to add to the operator.
+# Normally none is needed but for example WATCH_NAMESPACES is useful if you want,
+# to set which namespaces the operator should be listening for.
+env: {}
+# env:
+#   - name: WATCH_NAMESPACES
+#     value: "default, grafana-opreator"
+
+image:
+  repository: ghcr.io/grafana-operator/grafana-operator
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # -- Specifies whether a service account should be created
+  create: true
+  # -- Annotations to add to the service account
+  annotations: {}
+  # -- The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  {}
+  # fsGroup: 2000
+
+securityContext:
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+
+resources:
+  {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+kubeRbacProxy:
+  # -- The image to use in kubeRbacProxy container
+  image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  imagePullPolicy: IfNotPresent
+  args:
+    - --secure-listen-address=0.0.0.0:8443
+    - --upstream=http://127.0.0.1:8080/
+    - --logtostderr=true
+    - --v=10
+  service:
+    type: ClusterIP
+    port: 8443
+  resources: {}
+
+# -- podPriorityClass
+priorityClassName: ""
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

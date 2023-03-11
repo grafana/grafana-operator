@@ -1,0 +1,39 @@
+{{ template "chart.header" . }}
+
+[grafana-operator](https://github.com/grafana-operator/grafana-operator) Grafana operator for Kubernetes to manage Grafana instances and grafana resources.
+
+{{ template "chart.versionBadge" . }}{{ template "chart.typeBadge" . }}{{ template "chart.appVersionBadge" . }}
+
+## Installation
+
+This is a OCI helm chart, helm started support OCI in version 3.8.0.
+
+```shell
+helm upgrade -i grafana-operator oci://ghcr.io/grafana-operator/helm-charts/grafana-operator --version v5.0.0
+```
+
+Sadly helm OCI charts currently don't support searching for available versions of a helm [oci registry](https://github.com/helm/helm/issues/11000).
+
+## Development
+
+The grafana-operator helm chart is currently manually created.
+When CRD:s is upgraded the helm chart will also get an update.
+
+But if you generate new RBAC rules or create new deployment options for the operator you will need to add them manually.
+
+Chart.yaml `appVersion` follows the grafana-operator version but the helm chart is versioned separately.
+
+If you add update the chart don't forget to run `make helm-docs`.
+
+## Out of scope
+
+The chart won't support any configuration of grafana instances or similar. It's only meant to be used to install the grafana-operator.
+Deployments of grafana instances using the CRs is supposed to be done outside of the chart.
+
+Currently the plan is not to support networkpolicy. The operators support os diverse configuration that you have to support all options.
+It's easier to just manage this configuration outside of the operator.
+
+{{ template "chart.requirementsSection" . }}
+
+
+{{ template "chart.valuesSection" . }}
