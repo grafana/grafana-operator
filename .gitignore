@@ -37,3 +37,6 @@ labs/benchmark/datasources
 /embeds/grafonnet-lib/*
 !/embeds/grafonnet-lib/grafonnet
 !/embeds/grafonnet-lib/grafonnet-7.0
+
+# kind artifacts
+kubeconfig

@@ -275,7 +275,7 @@ ifeq (, $(shell which kubectl-kuttl))
 	set -e ;\
 	go install github.com/kudobuilder/kuttl/cmd/kubectl-kuttl@v0.12.1 ;\
 	}
-KUTTL=$(GOBIN)/kuttl
+KUTTL=$(GOBIN)/kubectl-kuttl
 else
 KUTTL=$(shell which kubectl-kuttl)
 endif
