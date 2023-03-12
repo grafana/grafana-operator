@@ -31,16 +31,12 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          {{- with .Values.env }}
           env:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
+            - name: WATCH_NAMESPACES
+              value: {{ .Values.watchNamespaces }}
           args:
             - --health-probe-bind-address=:8081
             - --metrics-bind-address=127.0.0.1:8080
-            {{- if .Values.namespaceScope }}
-            - --namespace
-            {{- end }}
             {{- if .Values.leaderElect }}
             - --leader-elect
             {{- end }}

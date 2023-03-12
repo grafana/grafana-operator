@@ -9,6 +9,24 @@ The operator uses unit tests and [Kuttl](https://kuttl.dev/) for e2e tests to ma
 The operator use a submodule for [grafonnet-lib](https://github.com/grafana/grafonnet-lib),
 one of the first things you have to do is to run `make submodule`.
 
+### Code standards
+
+We use a number of code standards in the project that we apply using a number of different tools.
+As a part of the CI solution these settings will be validated, but all of them can be tested using the Makefile before pushing.
+
+- [golanci-lint](https://golangci-lint.run/)
+- [gofumpt](https://github.com/mvdan/gofumpt)
+
+Before pushing any code we recommend that you run the following make commands.
+
+```shell
+make submodule
+make test
+make code/golangci-lint
+```
+
+Depending on what you have changed these commands will update a number of different files.
+
 ### Local development using make run
 
 Some of us use kind some use crc, below you can find an example on how to integrate with a kind cluster.
@@ -44,19 +62,12 @@ When the kind cluster is up and running setup your ingress.
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
 ```
 
-Get your kind IP.
-In this example lets assume that you are using test.io as your ingress endpoint.
-
-```shell
-KIND_IP=$(docker container inspect kind-control-plane \
-  --format '{{ .NetworkSettings.Networks.kind.IPAddress }}')
-sudo sh -c "echo $KIND_IP test.io >> /etc/hosts"
-```
-
 To get the operator to create a dashboard through the ingress object we have added a feature in the operator.
 
 Notice the `spec.client.preferIngress: true`
 This should only be used during development.
+
+In this example we are using [nip.io](https://nip.io/) which will steer traffic to your local deployment through a DNS response (e.g. `nslookup grafana.127.0.0.1.nip.io` will respond with `127.0.0.1`).
 
 ```.yaml
 apiVersion: grafana.integreatly.org/v1beta1
@@ -80,7 +91,7 @@ spec:
     spec:
       ingressClassName: nginx
       rules:
-        - host: test.io
+        - host: grafana.127.0.0.1.nip.io
           http:
             paths:
               - backend:
@@ -119,3 +130,16 @@ kubectl create ns grafana-operator-system
 # Run the Kuttl tests
 VERSION=latest make e2e
 ```
+
+### Helm
+
+We support helm as a deployment solution and it can be found under [deploy/helm](deploy/helm/grafana-operator/README.md).
+
+The grafana-operator helm chart is currently manually created.
+When CRD:s is upgraded the helm chart will also get an update.
+
+But if you generate new RBAC rules or create new deployment options for the operator you will need to add them manually.
+
+Chart.yaml `appVersion` follows the grafana-operator version but the helm chart is versioned separately.
+
+If you add update the chart don't forget to run `make helm-docs`, which will update the helm specific README file.
