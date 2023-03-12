@@ -5,13 +5,10 @@ namespaceScope: false
 # -- If you want to run multiple replicas of the grafana-operator, this is not recommended.
 leaderElect: false
 
-# -- Set any env variables you want to add to the operator.
-# Normally none is needed but for example WATCH_NAMESPACES is useful if you want,
-# to set which namespaces the operator should be listening for.
-env: {}
-# env:
-#   - name: WATCH_NAMESPACES
-#     value: "default, grafana-opreator"
+# -- Sets the WATCH_NAMESPACES environment variable,
+# it defines which namespaces the operator should be listening for.
+# By default it's all namespaces, if you only want to listen for the same namespace as the operator is deployed to look at namespaceScope.
+watchNamespaces: ""
 
 image:
   repository: ghcr.io/grafana-operator/grafana-operator

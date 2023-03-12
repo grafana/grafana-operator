@@ -55,28 +55,24 @@ help: ## Display this help.
 .PHONY: manifests
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." crd:maxDescLen=0,generateEmbeddedObjectMeta=false output:crd:artifacts:config=config/crd/bases
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." crd:maxDescLen=0,generateEmbeddedObjectMeta=false output:crd:artifacts:config=helm/grafana-operator/crds
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." crd:maxDescLen=0,generateEmbeddedObjectMeta=false output:crd:artifacts:config=deploy/helm/grafana-operator/crds
 
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
-
-.PHONY: fmt
-fmt: ## Run go fmt against code.
-	go fmt ./...
 
 .PHONY: vet
 vet: ## Run go vet against code.
 	go vet ./...
 
 .PHONY: test
-test: manifests generate fmt vet envtest ## Run tests.
+test: manifests generate code/gofumpt vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile cover.out
 
 ##@ Build
 
 .PHONY: build
-build: generate fmt vet ## Build manager binary.
+build: generate code/gofumpt vet ## Build manager binary.
 	go build -o bin/manager main.go
 
 # Get submodules
@@ -84,7 +80,7 @@ submodule:
 	git submodule update --init --recursive
 
 .PHONY: run
-run: manifests generate fmt vet ## Run a controller from your host.
+run: manifests generate code/gofumpt vet ## Run a controller from your host.
 	go run ./main.go
 
 # If you wish built the manager image targeting other platforms you can use the --platform flag.
@@ -296,6 +292,21 @@ endif
 .PHONY: code/golangci-lint
 code/golangci-lint: golangci
 	$(GOLANGCI) run ./...
+
+gofumpt:
+ifeq (, $(shell which gofumpt))
+	@{ \
+	set -e ;\
+	go install mvdan.cc/gofumpt@v0.4.0 ;\
+	}
+GOFUMPT=$(GOBIN)/gofumpt
+else
+GOFUMPT=$(shell which gofumpt)
+endif
+
+.PHONY: code/gofumpt
+code/gofumpt: gofumpt
+	$(GOFUMPT) -l -w .
 
 helm-docs:
 ifeq (, $(shell which helm-docs))

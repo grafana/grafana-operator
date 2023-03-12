@@ -13,6 +13,7 @@ linters:
     - govet
     - gosimple
     - errorlint
+    - gofumpt
     - errcheck
     - dogsled
     - exhaustive

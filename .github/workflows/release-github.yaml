@@ -22,7 +22,7 @@ jobs:
 
       - name: Publish Helm charts
         run: |
-          cd helm
+          cd deploy/helm
           yq -i '.image.repository = "${{ env.GHCR_REPO }}"' grafana-operator/values.yaml
           helm registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
           helm package --app-version ${{ github.ref_name }} --version ${{ github.ref_name }} grafana-operator

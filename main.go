@@ -22,9 +22,10 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"strings"
 	"syscall"
+
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 
 	routev1 "github.com/openshift/api/route/v1"
 	discovery2 "k8s.io/client-go/discovery"
@@ -64,11 +65,11 @@ func getWatchNamespace() (string, error) {
 	// WatchNamespaceEnvVar is the constant for env variable WATCH_NAMESPACE
 	// which specifies the Namespace to watch.
 	// An empty value means the operator is running with cluster scope.
-	var watchNamespaceEnvVar = "WATCH_NAMESPACE"
+	watchNamespaceEnvVar := "WATCH_NAMESPACE"
 
 	ns, found := os.LookupEnv(watchNamespaceEnvVar)
 	if !found {
-		return "", fmt.Errorf("%s must be set", watchNamespaceEnvVar)
+		return "", fmt.Errorf("%s isn't set", watchNamespaceEnvVar)
 	}
 	return ns, nil
 }

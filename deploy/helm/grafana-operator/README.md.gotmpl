@@ -16,14 +16,7 @@ Sadly helm OCI charts currently don't support searching for available versions o
 
 ## Development
 
-The grafana-operator helm chart is currently manually created.
-When CRD:s is upgraded the helm chart will also get an update.
-
-But if you generate new RBAC rules or create new deployment options for the operator you will need to add them manually.
-
-Chart.yaml `appVersion` follows the grafana-operator version but the helm chart is versioned separately.
-
-If you add update the chart don't forget to run `make helm-docs`.
+For general and helm specific development instructions please read the [CONTRIBUTING.md](../../../CONTRIBUTING.md)
 
 ## Out of scope
 
