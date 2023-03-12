@@ -1,0 +1,7 @@
+bases:
+  - ../../base
+
+namespace: grafana
+
+resources:
+  - rbac.yaml

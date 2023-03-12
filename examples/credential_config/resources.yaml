@@ -61,7 +61,7 @@ metadata:
 spec:
   datasource:
     access: proxy
-    database: prometheus
+    type: prometheus
     jsonData:
       timeInterval: 5s
       tlsSkipVerify: true

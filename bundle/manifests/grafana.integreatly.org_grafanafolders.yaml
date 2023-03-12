@@ -4,14 +4,14 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.10.0
   creationTimestamp: null
-  name: grafanadatasources.grafana.integreatly.org
+  name: grafanafolders.grafana.integreatly.org
 spec:
   group: grafana.integreatly.org
   names:
-    kind: GrafanaDatasource
-    listKind: GrafanaDatasourceList
-    plural: grafanadatasources
-    singular: grafanadatasource
+    kind: GrafanaFolder
+    listKind: GrafanaFolderList
+    plural: grafanafolders
+    singular: grafanafolder
   scope: Namespaced
   versions:
   - name: v1beta1
@@ -28,40 +28,6 @@ spec:
             properties:
               allowCrossNamespaceImport:
                 type: boolean
-              datasource:
-                properties:
-                  access:
-                    type: string
-                  basicAuth:
-                    type: boolean
-                  basicAuthUser:
-                    type: string
-                  database:
-                    type: string
-                  editable:
-                    type: boolean
-                  isDefault:
-                    type: boolean
-                  jsonData:
-                    type: object
-                    x-kubernetes-preserve-unknown-fields: true
-                  name:
-                    type: string
-                  orgId:
-                    format: int64
-                    type: integer
-                  secureJsonData:
-                    type: object
-                    x-kubernetes-preserve-unknown-fields: true
-                  type:
-                    type: string
-                  uid:
-                    type: string
-                  url:
-                    type: string
-                  user:
-                    type: string
-                type: object
               instanceSelector:
                 properties:
                   matchExpressions:
@@ -86,24 +52,8 @@ spec:
                     type: object
                 type: object
                 x-kubernetes-map-type: atomic
-              plugins:
-                items:
-                  properties:
-                    name:
-                      type: string
-                    version:
-                      type: string
-                  required:
-                  - name
-                  - version
-                  type: object
-                type: array
-              resyncPeriod:
+              json:
                 type: string
-              secrets:
-                items:
-                  type: string
-                type: array
             required:
             - instanceSelector
             type: object
@@ -112,8 +62,6 @@ spec:
               NoMatchingInstances:
                 type: boolean
               hash:
-                type: string
-              lastMessage:
                 type: string
             type: object
         type: object
