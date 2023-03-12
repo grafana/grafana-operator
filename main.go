@@ -19,8 +19,11 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"strings"
 	"syscall"
 
 	routev1 "github.com/openshift/api/route/v1"
@@ -57,14 +60,25 @@ func init() {
 	//+kubebuilder:scaffold:scheme
 }
 
+func getWatchNamespace() (string, error) {
+	// WatchNamespaceEnvVar is the constant for env variable WATCH_NAMESPACE
+	// which specifies the Namespace to watch.
+	// An empty value means the operator is running with cluster scope.
+	var watchNamespaceEnvVar = "WATCH_NAMESPACE"
+
+	ns, found := os.LookupEnv(watchNamespaceEnvVar)
+	if !found {
+		return "", fmt.Errorf("%s must be set", watchNamespaceEnvVar)
+	}
+	return ns, nil
+}
+
 func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
-	var namespace string
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.StringVar(&namespace, "namespace", "", "The namespace to restrict the operator to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
@@ -76,22 +90,39 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	if namespace != "" {
-		setupLog.Info("operator restricted to namespace", "namespace", namespace)
+	watchNamespace, err := getWatchNamespace()
+	if err != nil {
+		setupLog.Error(err, "unable to get watch namespace, operator running in cluster scoped mode")
 	}
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGPIPE)
-	defer stop()
-
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Namespace:              namespace,
+	controllerOptions := ctrl.Options{
+		Namespace:              watchNamespace,
 		Scheme:                 scheme,
 		MetricsBindAddress:     metricsAddr,
 		Port:                   9443,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "f75f3bba.integreatly.org",
-	})
+	}
+
+	switch {
+	case strings.Contains(watchNamespace, ","):
+		// multi namespace scoped
+		setupLog.Info("manager set up with multiple namespaces", "namespaces", watchNamespace)
+		controllerOptions.Namespace = ""
+		controllerOptions.NewCache = cache.MultiNamespacedCacheBuilder(strings.Split(watchNamespace, ","))
+	case watchNamespace != "":
+		// namespace scoped
+		setupLog.Info("operator running in namespace scoped mode", "namespace", watchNamespace)
+	case watchNamespace == "":
+		// cluster scoped
+		setupLog.Info("operator running in cluster scoped mode")
+	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGPIPE)
+	defer stop()
+
+	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), controllerOptions)
 	if err != nil {
 		setupLog.Error(err, "unable to create new manager")
 		os.Exit(1) //nolint

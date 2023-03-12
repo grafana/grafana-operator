@@ -26,6 +26,24 @@ spec:
             type: object
           spec:
             properties:
+              allowCrossNamespaceImport:
+                type: boolean
+              contentCacheDuration:
+                type: string
+              datasources:
+                items:
+                  properties:
+                    datasourceName:
+                      type: string
+                    inputName:
+                      type: string
+                  required:
+                  - datasourceName
+                  - inputName
+                  type: object
+                type: array
+              folder:
+                type: string
               instanceSelector:
                 properties:
                   matchExpressions:
@@ -52,6 +70,8 @@ spec:
                 x-kubernetes-map-type: atomic
               json:
                 type: string
+              jsonnet:
+                type: string
               plugins:
                 items:
                   properties:
@@ -64,9 +84,25 @@ spec:
                   - version
                   type: object
                 type: array
+              resyncPeriod:
+                type: string
+              url:
+                type: string
+            required:
+            - instanceSelector
             type: object
           status:
             properties:
+              NoMatchingInstances:
+                type: boolean
+              contentCache:
+                format: byte
+                type: string
+              contentTimestamp:
+                format: date-time
+                type: string
+              contentUrl:
+                type: string
               hash:
                 type: string
             type: object

@@ -1,0 +1,15 @@
+bases:
+  - ../../base
+
+namespace: grafana
+
+resources:
+  - rbac.yaml
+
+patches:
+  - path: deployment.yaml
+    target:
+      kind: Deployment
+      version: v1
+      group: apps
+      name: grafana-operator-controller-manager

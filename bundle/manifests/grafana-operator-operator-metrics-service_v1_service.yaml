@@ -4,7 +4,7 @@ metadata:
   creationTimestamp: null
   labels:
     control-plane: controller-manager
-  name: grafana-operator-experimental-controller-manager-metrics-service
+  name: grafana-operator-operator-metrics-service
 spec:
   ports:
   - name: https

@@ -20,6 +20,11 @@ spec:
       kind: GrafanaDatasource
       name: grafanadatasources.grafana.integreatly.org
       version: v1beta1
+    - description: GrafanaFolder is the Schema for the grafanafolders API
+      displayName: Grafana Folder
+      kind: GrafanaFolder
+      name: grafanafolders.grafana.integreatly.org
+      version: v1beta1
     - description: Grafana is the Schema for the grafanas API
       displayName: Grafana
       kind: Grafana
@@ -35,11 +40,11 @@ spec:
       deployments: null
     strategy: ""
   installModes:
-  - supported: false
+  - supported: true
     type: OwnNamespace
-  - supported: false
+  - supported: true
     type: SingleNamespace
-  - supported: false
+  - supported: true
     type: MultiNamespace
   - supported: true
     type: AllNamespaces

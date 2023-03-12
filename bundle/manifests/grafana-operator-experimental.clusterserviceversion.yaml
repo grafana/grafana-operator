@@ -9,14 +9,12 @@ metadata:
           "kind": "Grafana",
           "metadata": {
             "labels": {
-              "dashboards": "grafana-a"
+              "dashboards": "grafana-a",
+              "folders": "grafana-a"
             },
             "name": "grafana-a"
           },
           "spec": {
-            "client": {
-              "preferIngress": true
-            },
             "config": {
               "auth": {
                 "disable_login_form": "false"
@@ -35,7 +33,7 @@ metadata:
           "apiVersion": "grafana.integreatly.org/v1beta1",
           "kind": "GrafanaDashboard",
           "metadata": {
-            "name": "grafanadashboard-sample-3"
+            "name": "grafanadashboard-sample"
           },
           "spec": {
             "instanceSelector": {
@@ -77,6 +75,21 @@ metadata:
               }
             ]
           }
+        },
+        {
+          "apiVersion": "grafana.integreatly.org/v1beta1",
+          "kind": "GrafanaFolder",
+          "metadata": {
+            "name": "grafanafolder-sample"
+          },
+          "spec": {
+            "instanceSelector": {
+              "matchLabels": {
+                "dashboards": "grafana-a"
+              }
+            },
+            "json": "{\n\n  \"uid\": \"nErXDvCkzz\",\n  \"title\": \"Example Folder\"\n}"
+          }
         }
       ]
     capabilities: Basic Install
@@ -98,6 +111,11 @@ spec:
       kind: GrafanaDatasource
       name: grafanadatasources.grafana.integreatly.org
       version: v1beta1
+    - description: GrafanaFolder is the Schema for the grafanafolders API
+      displayName: Grafana Folder
+      kind: GrafanaFolder
+      name: grafanafolders.grafana.integreatly.org
+      version: v1beta1
     - description: Grafana is the Schema for the grafanas API
       displayName: Grafana
       kind: Grafana
@@ -112,6 +130,44 @@ spec:
     spec:
       clusterPermissions:
       - rules:
+        - apiGroups:
+          - ""
+          resources:
+          - configmaps
+          - persistentvolumeclaims
+          - secrets
+          - serviceaccounts
+          - services
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - ""
+          resources:
+          - events
+          verbs:
+          - create
+          - get
+          - list
+          - patch
+          - watch
+        - apiGroups:
+          - apps
+          resources:
+          - deployments
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
         - apiGroups:
           - grafana.integreatly.org
           resources:
@@ -167,6 +223,32 @@ spec:
         - apiGroups:
           - grafana.integreatly.org
           resources:
+          - grafanafolders
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - grafana.integreatly.org
+          resources:
+          - grafanafolders/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - grafana.integreatly.org
+          resources:
+          - grafanafolders/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - grafana.integreatly.org
+          resources:
           - grafanas
           verbs:
           - create
@@ -190,6 +272,18 @@ spec:
           - get
           - patch
           - update
+        - apiGroups:
+          - networking.k8s.io
+          resources:
+          - ingresses
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
         - apiGroups:
           - route.openshift.io
           resources:
@@ -231,22 +325,13 @@ spec:
             spec:
               containers:
               - args:
-                - --secure-listen-address=0.0.0.0:8443
-                - --upstream=http://127.0.0.1:8080/
-                - --logtostderr=true
-                - --v=10
-                image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
-                name: kube-rbac-proxy
-                ports:
-                - containerPort: 8443
-                  name: https
-                  protocol: TCP
-                resources: {}
-              - args:
-                - --health-probe-bind-address=:8081
-                - --metrics-bind-address=127.0.0.1:8080
                 - --leader-elect
-                image: controller:latest
+                env:
+                - name: WATCH_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.annotations['olm.targetNamespaces']
+                image: quay.io/grafana-operator/grafana-operator:v5.0.0
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
@@ -310,11 +395,11 @@ spec:
         serviceAccountName: grafana-operator-controller-manager
     strategy: deployment
   installModes:
-  - supported: false
+  - supported: true
     type: OwnNamespace
-  - supported: false
+  - supported: true
     type: SingleNamespace
-  - supported: false
+  - supported: true
     type: MultiNamespace
   - supported: true
     type: AllNamespaces
