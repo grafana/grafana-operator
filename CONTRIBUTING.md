@@ -124,7 +124,7 @@ The `make e2e` command will
 # Build the container
 VERSION=latest make docker-build
 # Using kind load the locally built image to the kind cluster
-kind load docker-image quay.io/grafana-operator/grafana-operator:v5.0.0
+kind load docker-image ghcr.io/grafana-operator/grafana-operator:v5.0.0
 # Create grafana-operator-system namespace
 kubectl create ns grafana-operator-system
 # Run the Kuttl tests

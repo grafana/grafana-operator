@@ -1,15 +1,15 @@
 resources:
-- ../default
+  - ../default
 
 patches:
-- path: deployment-patch.yaml
-  target:
-    group: apps
-    kind: Deployment
-    version: v1
+  - path: deployment-patch.yaml
+    target:
+      group: apps
+      kind: Deployment
+      version: v1
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
-  - name: quay.io/grafana-operator/grafana-operator
+  - name: ghcr.io/grafana-operator/grafana-operator
     newName: ko.local/grafana-operator/grafana-operator
     newTag: latest

@@ -331,7 +331,7 @@ spec:
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.annotations['olm.targetNamespaces']
-                image: quay.io/grafana-operator/grafana-operator:v5.0.0
+                image: ghcr.io/grafana-operator/grafana-operator:v5.0.0
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
