@@ -5,7 +5,7 @@
 VERSION ?= 5.0.0
 
 # Image URL to use all building/pushing image targets
-REGISTRY ?= quay.io
+REGISTRY ?= ghcr.io
 REPO ?= grafana-operator
 IMG ?= $(REGISTRY)/$(REPO)/grafana-operator:v$(VERSION)
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
