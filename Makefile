@@ -129,7 +129,7 @@ kustomize:
 # Download kustomize locally if necessary
 GOLANGCI = $(shell pwd)/bin/golangci-lint
 golangci:
-	$(call go-get-tool,$(GOLANGCI),github.com/golangci/golangci-lint/cmd/golangci-lint@v1.46.2)
+	$(call go-get-tool,$(GOLANGCI),github.com/golangci/golangci-lint/cmd/golangci-lint@v1.51.2)
 
 # go-get-tool will 'go install' any package $2 and install it to $1.
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
