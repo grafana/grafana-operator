@@ -1,5 +1,7 @@
-# External Grafana instance
-
+---
+title: "External grafana"
+linkTitle: "External grafana"
+---
 A basic example configuring an external grafana instance.
 
 In this case we create a grafana instance through the operator just to showcase that it can be done.
@@ -23,3 +25,5 @@ status:
 ## FYI
 
 If you want run the same test locally on your computer remember to ether update the ingres host to match your settings or change `client.preferIngress` to false assuming that you run the operator within the cluster.
+
+{{< readfile file="resources.yaml" code="true" lang="yaml" >}}

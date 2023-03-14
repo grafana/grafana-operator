@@ -1,4 +1,7 @@
-# Design proposal 001 External Grafana Instance Integration
+---
+title: "External Grafana Instance Integration"
+linkTitle: "External Grafana Instance Integration"
+---
 
 ## Summary
 
@@ -6,13 +9,14 @@ Introduce integration to External Grafana Instances with Grafana Operator.
 
 This document contains the complete design required for integrating external Grafana instances with Grafana Operator.
 This includes design elements to support the following with Grafana operator :
+
 - Ability to define an external Grafana instance as Grafana source to Grafana operator
 - Ability to create Grafana dashboards on a remote Grafana Instance.
 - Ability to add external cloud data sources to an external Grafana instance.
 
 ## Info
 
-status: Draft
+status: Implemented
 
 ## Motivation
 
