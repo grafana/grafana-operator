@@ -6,8 +6,6 @@ suppress:
 kindNodeCache: true
 skipClusterDelete: true
 namespace: grafana-operator-system
-kindContainers:
-  - ghcr.io/grafana-operator/grafana-operator:latest
 timeout: 120
 testDirs:
   - ./tests/e2e/
