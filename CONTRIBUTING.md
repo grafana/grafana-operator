@@ -27,6 +27,12 @@ make code/golangci-lint
 
 Depending on what you have changed these commands will update a number of different files.
 
+### KO
+
+To speed up multi-arch image builds and avoid burden of maintaining a Dockerfile, we are using [ko](https://ko.build/).
+
+For more information on how to push the container image to your remote repository take a look at the [official docs](https://ko.build/get-started/).
+
 ### Local development using make run
 
 Some of us use kind some use crc, below you can find an example on how to integrate with a kind cluster.
@@ -122,9 +128,7 @@ The `make e2e` command will
 
 ```shell
 # Build the container
-VERSION=latest make docker-build
-# Using kind load the locally built image to the kind cluster
-kind load docker-image ghcr.io/grafana-operator/grafana-operator:v5.0.0
+make ko-build-kind
 # Create grafana-operator-system namespace
 kubectl create ns grafana-operator-system
 # Run the Kuttl tests
