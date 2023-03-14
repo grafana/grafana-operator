@@ -1,4 +1,4 @@
-module github.com/NissesSenap/grafana-operator-experimental/hugo
+module github.com/grafana-operator/grafana-operator/hugo
 
 go 1.19
 

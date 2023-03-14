@@ -93,7 +93,7 @@ For example, `kubectl explain grafanadashboard.spec` will give you insights on h
 Lets start with the basic example, this isn't something that you should use in production due to how we define the admin password but it's a simple way of getting started.
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/grafana-operator/grafana-operator-experimental/master/examples/basic/resources.yaml
+kubectl apply -f https://raw.githubusercontent.com/grafana-operator/grafana-operator/master/examples/basic/resources.yaml
 ```
 
 Notice the label on the grafana resource, this is the one that GrafanaDashboard will use to find this instance.
@@ -292,7 +292,7 @@ But the more important part is that we can see that `stage: complete` and we can
 
 ```shell
 # Delete the basic grafana example
-kubectl delete -f https://raw.githubusercontent.com/grafana-operator/grafana-operator-experimental/master/examples/basic/resources.yaml
+kubectl delete -f https://raw.githubusercontent.com/grafana-operator/grafana-operator/master/examples/basic/resources.yaml
 # Delete the ingress example
 kubectl delete grafanadashboards grafanadashboard-sample-ingress
 kubectl delete grafana grafana-ingress
