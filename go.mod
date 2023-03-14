@@ -20,11 +20,6 @@ require (
 )
 
 require (
-	github.com/google/docsy v0.6.0 // indirect
-	github.com/google/docsy/dependencies v0.6.0 // indirect
-)
-
-require (
 	cloud.google.com/go v0.97.0 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest v0.11.27 // indirect
