@@ -3,7 +3,7 @@ name: Release container
 on:
   push:
     tags:
-      - "*"
+      - "v4.*"
 
 jobs:
   container-images:
