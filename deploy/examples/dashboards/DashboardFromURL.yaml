@@ -1,8 +1,0 @@
-apiVersion: integreatly.org/v1alpha1
-kind: GrafanaDashboard
-metadata: 
-  name: grafana-dashboard-from-url
-  labels: 
-    app: grafana
-spec:
-  url: https://raw.githubusercontent.com/integr8ly/grafana-operator/master/deploy/examples/remote/grafana-dashboard.json
