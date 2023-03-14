@@ -1,4 +1,10 @@
-# Version 5 getting started
+---
+author: "Edvin 'NissesSenap' Norling"
+date: 2023-03-14
+title: "Version 5 getting started"
+linkTitle: "Version 5 getting started"
+description: "How to get started with version 5 of the operator?"
+---
 
 This blog is initially written for version 5-rc0, we will try to continuously update it to match any changes that we do before releasing version 5.0.0.
 

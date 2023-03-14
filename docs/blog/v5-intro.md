@@ -1,4 +1,10 @@
-# Version 5 RC
+---
+author: "Edvin 'NissesSenap' Norling"
+date: 2023-03-14
+title: "Version 5 RC introduction"
+linkTitle: "Version 5 RC introduction"
+description: "Grafana-operator version 5 RC is now out, lets find out what has changed."
+---
 
 If you are reading this it means that we have finally got our first RC of version 5 out of the gates.
 The maintainers are extremely happy to finally being able to do so.

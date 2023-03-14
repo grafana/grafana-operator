@@ -57,6 +57,15 @@ manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and Cust
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." crd:maxDescLen=0,generateEmbeddedObjectMeta=false output:crd:artifacts:config=config/crd/bases
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." crd:maxDescLen=0,generateEmbeddedObjectMeta=false output:crd:artifacts:config=deploy/helm/grafana-operator/crds
 
+# Generate API reference documentation
+api-docs: gen-crd-api-reference-docs kustomize
+	@{ \
+	set -e ;\
+	TMP_DIR=$$(mktemp -d) ; \
+	$(KUSTOMIZE) build config/crd -o $$TMP_DIR/crd-output.yaml ;\
+	$(API_REF_GEN) crdoc --resources $$TMP_DIR/crd-output.yaml --output docs/docs/api.md --template frontmatter.tmpl;\
+	}
+
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
@@ -66,7 +75,7 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 .PHONY: test
-test: manifests generate code/gofumpt vet envtest ## Run tests.
+test: manifests generate code/gofumpt api-docs vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile cover.out
 
 ##@ Build
@@ -322,3 +331,19 @@ endif
 .PHONY: helm/docs
 helm/docs: helm-docs
 	$(HELM_DOCS)
+
+# Find or download gen-crd-api-reference-docs
+gen-crd-api-reference-docs:
+ifeq (, $(shell which crdoc))
+	@{ \
+	set -e ;\
+	API_REF_GEN_TMP_DIR=$$(mktemp -d) ;\
+	cd $$API_REF_GEN_TMP_DIR ;\
+	go mod init tmp ;\
+	go install fybrik.io/crdoc@v0.6.2 ;\
+	rm -rf $$API_REF_GEN_TMP_DIR ;\
+	}
+API_REF_GEN=$(GOBIN)/crdoc
+else
+API_REF_GEN=$(shell which crdoc)
+endif
