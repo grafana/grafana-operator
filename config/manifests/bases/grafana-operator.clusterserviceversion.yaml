@@ -4,7 +4,7 @@ metadata:
   annotations:
     alm-examples: '[]'
     capabilities: Basic Install
-  name: grafana-operator-experimental.v0.0.0
+  name: grafana-operator.v0.0.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -53,8 +53,8 @@ spec:
   - Metrics
   - Observability
   links:
-  - name: Grafana Operator Experimental
-    url: https://grafana-operator-experimental.domain
+  - name: Grafana Operator
+    url: https://grafana-operator.domain
   maturity: alpha
   provider:
     name: Red Hat

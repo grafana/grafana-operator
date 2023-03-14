@@ -3,8 +3,8 @@ package grafana
 import (
 	"testing"
 
-	"github.com/grafana-operator/grafana-operator-experimental/api/v1beta1"
-	"github.com/grafana-operator/grafana-operator-experimental/controllers/config"
+	"github.com/grafana-operator/grafana-operator/api/v1beta1"
+	"github.com/grafana-operator/grafana-operator/controllers/config"
 	"github.com/stretchr/testify/assert"
 )
 
