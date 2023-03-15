@@ -11,12 +11,16 @@ leaderElect: false
 watchNamespaces: ""
 
 image:
+  # -- grafana operator image repository
   repository: ghcr.io/grafana-operator/grafana-operator
+  # -- The image pull policy to use in grafana operator container
   pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
+  # -- Overrides the image tag whose default is the chart appVersion.
   tag: ""
 
+# -- image pull secrets
 imagePullSecrets: []
+
 nameOverride: ""
 fullnameOverride: ""
 
@@ -29,12 +33,14 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
+# -- pod annotations
 podAnnotations: {}
 
-podSecurityContext:
-  {}
+# -- pod security context
+podSecurityContext: {}
   # fsGroup: 2000
 
+# -- grafana operator container security context
 securityContext:
   capabilities:
     drop:
@@ -42,8 +48,8 @@ securityContext:
   readOnlyRootFilesystem: true
   runAsNonRoot: true
 
-resources:
-  {}
+# -- grafana operator container resources
+resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
@@ -56,24 +62,50 @@ resources:
   #   memory: 128Mi
 
 kubeRbacProxy:
-  # -- The image to use in kubeRbacProxy container
-  image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
-  imagePullPolicy: IfNotPresent
+  image:
+    # -- Overrides the image tag whose default is the chart appVersion.
+    tag: v0.8.0
+    # -- The image repository to use in kubeRbacProxy container
+    repository: gcr.io/kubebuilder/kube-rbac-proxy
+    # -- The image pull policy to use in kubeRbacProxy container
+    pullPolicy: IfNotPresent
+
+  # -- kubeRbacProxy container args
   args:
     - --secure-listen-address=0.0.0.0:8443
     - --upstream=http://127.0.0.1:8080/
     - --logtostderr=true
     - --v=10
   service:
+    # -- kubeRbacProxy service type
     type: ClusterIP
+    # -- kubeRbacProxy service port
     port: 8443
+
+  # -- kubeRbacProxy resources
   resources: {}
 
-# -- podPriorityClass
+  # -- kubeRbacProxy liveness probe
+  livenessProbe: {}
+  # -- kubeRbacProxy readyness probe
+  readinessProbe: {}
+
+  # -- kubeRbacProxy securityContext
+  securityContext:
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+
+# -- pod priority class name
 priorityClassName: ""
 
+# -- pod node selector
 nodeSelector: {}
 
+# -- pod tolerations
 tolerations: []
 
+# -- pod affinity
 affinity: {}
