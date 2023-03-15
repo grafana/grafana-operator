@@ -85,3 +85,20 @@ jobs:
             echo 'run make helm/docs and commit changes'
             exit 1
           fi
+
+  trivy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b #v3.2.0
+        with:
+          submodules: recursive
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "table"
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: "CRITICAL,HIGH"
