@@ -77,7 +77,7 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 		}, err
 	}
 
-	// sync datasources, delete dashboards from grafana that do no longer have a cr
+	// sync datasources, delete datasources from grafana that do no longer have a cr
 	datasourcesToDelete := map[*v1beta1.Grafana][]v1beta1.NamespacedResource{}
 	for _, grafana := range grafanas.Items {
 		grafana := grafana
@@ -88,7 +88,7 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 		}
 	}
 
-	// delete all dashboards that no longer have a cr
+	// delete all datasources that no longer have a cr
 	for grafana, datasources := range datasourcesToDelete {
 		grafana := grafana
 		grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, grafana)
@@ -98,8 +98,8 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 
 		for _, datasource := range datasources {
 			// avoid bombarding the grafana instance with a large number of requests at once, limit
-			// the sync to ten dashboards per cycle. This means that it will take longer to sync
-			// a large number of deleted dashboard crs, but that should be an edge case.
+			// the sync to ten datasources per cycle. This means that it will take longer to sync
+			// a large number of deleted datasource crs, but that should be an edge case.
 			if datasourcesSynced >= syncBatchSize {
 				return ctrl.Result{Requeue: true}, nil
 			}
@@ -163,7 +163,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			}
 			return ctrl.Result{}, nil
 		}
-		controllerLog.Error(err, "error getting grafana dashboard cr")
+		controllerLog.Error(err, "error getting grafana datasource cr")
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
 	instances, err := r.GetMatchingDatasourceInstances(ctx, datasource, r.Client)
@@ -192,7 +192,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 		if grafana.IsInternal() {
 			// first reconcile the plugins
-			// append the requested dashboards to a configmap from where the
+			// append the requested datasources to a configmap from where the
 			// grafana reconciler will pick them upi
 			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, datasource.Spec.Plugins, fmt.Sprintf("%v-datasource", datasource.Name))
 			if err != nil {
@@ -201,12 +201,12 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			}
 		}
 
-		// then import the dashboard into the matching grafana instances
+		// then import the datasource into the matching grafana instances
 		err = r.onDatasourceCreated(ctx, &grafana, datasource)
 		if err != nil {
 			success = false
 			datasource.Status.LastMessage = err.Error()
-			controllerLog.Error(err, "error reconciling dashboard", "datasource", datasource.Name, "grafana", grafana.Name)
+			controllerLog.Error(err, "error reconciling datasource", "datasource", datasource.Name, "grafana", grafana.Name)
 		}
 	}
 
