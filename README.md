@@ -2,6 +2,10 @@
 
 An operator to provision and manage Grafana Instances, Dashboards, Datasources and notification channels. Based on the [Operator-SDK](https://sdk.operatorframework.io/)
 
+Version 5 of the operator is now located in the master branch of the operator.
+Version 4 is located in the v4 branch. For more information on how version 4 is supported,
+please look at the [official documentation](https://grafana-operator.github.io/grafana-operator/).
+
 ## Companies and teams that trust and use the Grafana operator
 
 | Company  | Logo | Company | Logo

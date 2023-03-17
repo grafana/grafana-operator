@@ -2,9 +2,9 @@ name: KinD End-to-End
 
 on:
   pull_request:
-    branches: [master]
+    branches: [v4]
   push:
-    branches: [master]
+    branches: [v4]
 
 env:
   NAME: grafana-operator
