@@ -51,7 +51,7 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
         - name: kube-rbac-proxy
-          image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+          image: {{ .Values.kubeRbacProxy.image }}
           imagePullPolicy: IfNotPresent
           {{- with .Values.kubeRbacProxy.args }}
           args:
