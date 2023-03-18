@@ -32,7 +32,8 @@ jobs:
           git check-attr --stdin linguist-generated | grep -Ev ': (set|true)$' | cut -d: -f1 |
           git check-attr --stdin linguist-vendored | grep -Ev ': (set|true)$' | cut -d: -f1 |
           git check-attr --stdin ignore-lint | grep -Ev ': (set|true)$' | cut -d: -f1 |
-          grep -Ev '^(vendor/|third_party/|LICENSES/|.git|api.md|bundle/)' |
+          grep -Ev '^(vendor/|third_party/|LICENSES/|.git|bundle/)' |
+          grep -v api.md |
           xargs grep -nE " +$" |
           reviewdog -efm="%f:%l:%m" \
                 -name="trailing whitespace" \
