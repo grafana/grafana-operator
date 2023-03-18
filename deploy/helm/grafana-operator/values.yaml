@@ -51,6 +51,8 @@ securityContext:
 resources: {}
 
 kubeRbacProxy:
+  # -- enable kuberRbacProxy
+  enabled: true
   image:
     # -- The image tag to use in kubeRbacProxy container
     tag: v0.8.0

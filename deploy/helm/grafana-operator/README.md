@@ -42,6 +42,7 @@ It's easier to just manage this configuration outside of the operator.
 | image.tag | string | `""` | Overrides the image tag whose default is the chart appVersion. |
 | imagePullSecrets | list | `[]` | image pull secrets |
 | kubeRbacProxy.args | list | `["--secure-listen-address=0.0.0.0:8443","--upstream=http://127.0.0.1:8080/","--logtostderr=true","--v=10"]` | kubeRbacProxy container args |
+| kubeRbacProxy.enabled | bool | `true` | enable kuberRbacProxy |
 | kubeRbacProxy.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy to use in kubeRbacProxy container |
 | kubeRbacProxy.image.repository | string | `"gcr.io/kubebuilder/kube-rbac-proxy"` | The image repository to use in kubeRbacProxy container |
 | kubeRbacProxy.image.tag | string | `"v0.8.0"` | The image tag to use in kubeRbacProxy container |
