@@ -36,7 +36,7 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
-            - name: WATCH_NAMESPACES
+            - name: WATCH_NAMESPACE
               value: {{ .Values.watchNamespaces }}
           args:
             - --health-probe-bind-address=:8081
