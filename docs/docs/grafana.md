@@ -15,6 +15,30 @@ The operator do not make any extra validation of your configuration so just like
 
 To find all possible configuration options look at the [official documentation](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/).
 
+## Where should the operator look for Grafana resources?
+
+The operator needs lots of access to be able to manage Grafana instances.
+Depending on your needs you might want to limit the Grafana operator to only watch specific namespaces.
+
+Due to this we have given the operator 3 deployment modes.
+
+- cluster wide
+- single namespace
+- multiple namespaces
+
+To enter these specific modes you need to define the `WATCH_NAMESPACE` environment variable in the Grafana operator.
+How you do this will differ between the different deployment methods.
+
+`WATCH_NAMESPACE: ""`
+Will make the operator work cluster wide.
+
+`WATCH_NAMESPACE: "grafana"`
+Will make the operator only watch the grafana namespace, using this mode, makes it possible to use a role instead of a cluster role to give access to the operator.
+Depending on which deployment solution you use how to do this will differ.
+
+`WATCH_NAMESPACE: "grafana, monitor, foo, bar"`
+Will make the operator watch the following namespaces grafana, monitor, foo, bar. This will force you to still use the cluster wide rbac settings to enable the Grafana operator to monitor all of those namespaces.
+
 ## External Grafana instances
 
 With the operator you can manage external Grafana instances.
