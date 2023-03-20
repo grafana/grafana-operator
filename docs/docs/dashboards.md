@@ -20,7 +20,7 @@ You can configure dashboards as code many different ways.
 
 A pure json reprisentation of your Grafana dashboard.
 Normally you would create your dashboard manually within Grafana, when you have come up with how you want the dashboard to look like you export it as json,
-grab the json and put inside the GrafanaDashboard CR.
+grab the json using the export function in grafana and put inside the GrafanaDashboard CR.
 
 ```yaml
 apiVersion: grafana.integreatly.org/v1beta1
@@ -66,10 +66,10 @@ spec:
 
 ### gzipJson
 
-It's just like json but instead of adding pure json to the dashboard CR you add a gziped representation.
+It's just like json but instead of adding pure json to the dashboard CR you add a gzipped representation.
 This to be able to do really **big** dashboards that allows you to workaround etcd maximum request size of 1,5 MiB.
 
-To create a gziped representation of your dashboards assuming that you have saved it to disk can be done through.
+To create a gzipped representation of your dashboards assuming that you have saved it to disk can be done through.
 
 ```shell
 cat dashboard.json | gzip | base64 -w0
@@ -90,6 +90,8 @@ spec:
   gzipJson: |-
     H4sIAAAAAAAAA4WQQU/DMAyF7/0VVc9MggMgcYV/AOKC0OQubmM1jSPH28Sm/XfSNJ1WcaA3f+/l+dXnqk5fQ6Z5qf3eubt5VlKHCTXvNAaH9RtE2zKI2fQnCgFNsxihj8n39V3mqD/zQwMyXE004ol95q3wMaIsEhpSaPMTlT0WasngK3sVdlN6By4uUi8Q7AezUwpJeig4gEe3ajItTfM5T5l0wuNUwfNx82RLg9nLhTeZXW4iAu2GVHcVNPEtByX2tyuzJtgJRrslrygHKJ3WsZhuCkq+X8c6ivrXDd6zwrLrX3vZP/3PY1yuHHcWR/hEiSlmutpzEQ5XdF+IIz+Uzpeq+gWtMMT1HwIAAA==
 ```
+
+[Example documentation](../examples/dashboard_gzipped/readme).
 
 ### URL
 
