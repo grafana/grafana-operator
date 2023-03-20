@@ -124,6 +124,8 @@ spec:
   url: "https://grafana.com/api/dashboards/1860/revisions/30/download"
 ```
 
+[Example documentation](../examples/dashboard_from_url/readme).
+
 ### Jsonnet
 
 TODO
@@ -167,3 +169,26 @@ spec:
 ```
 
 Look here for more examples on how to install [plugins](../examples/plugins/readme)
+
+## Dashboard UID management
+
+TODO
+
+## Custom folders
+
+If you want to add a dashboard to a specific folder you can do that through.
+
+```yaml
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: grafanadashboard-with-custom-folder
+spec:
+  folder: "Custom Folder"
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  url: "https://raw.githubusercontent.com/grafana-operator/grafana-operator/master/examples/dashboard_from_url/dashboard.json"
+```
+
+[Example documentation](../examples/dashboard_with_custom_folder/readme).
