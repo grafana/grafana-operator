@@ -62,7 +62,7 @@ api-docs: gen-crd-api-reference-docs kustomize
 	@{ \
 	set -e ;\
 	TMP_DIR=$$(mktemp -d) ; \
-	$(KUSTOMIZE) build config/crd -o $$TMP_DIR/crd-output.yaml ;\
+	$(KUSTOMIZE) build config/ -o $$TMP_DIR/crd-output.yaml ;\
 	$(API_REF_GEN) crdoc --resources $$TMP_DIR/crd-output.yaml --output docs/docs/api.md --template frontmatter.tmpl;\
 	}
 

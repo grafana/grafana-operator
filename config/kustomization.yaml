@@ -1,0 +1,9 @@
+# This kustomization.yaml is not intended to be run by itself,
+# It's only mean for documentation generation.
+# If you want to install the operator CRD us `make install` and it will use the files under crd/base
+resources:
+  - grafana.integreatly.org_grafanas.yaml
+  - grafana.integreatly.org_grafanadashboards.yaml
+  - grafana.integreatly.org_grafanadatasources.yaml
+  - grafana.integreatly.org_grafanafolders.yaml
+#+kubebuilder:scaffold:crdkustomizeresource
