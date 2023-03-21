@@ -5,18 +5,22 @@ namespaceScope: false
 # -- If you want to run multiple replicas of the grafana-operator, this is not recommended.
 leaderElect: false
 
-# -- Sets the WATCH_NAMESPACES environment variable,
+# -- Sets the WATCH_NAMESPACE environment variable,
 # it defines which namespaces the operator should be listening for.
 # By default it's all namespaces, if you only want to listen for the same namespace as the operator is deployed to look at namespaceScope.
 watchNamespaces: ""
 
 image:
+  # -- grafana operator image repository
   repository: ghcr.io/grafana-operator/grafana-operator
+  # -- The image pull policy to use in grafana operator container
   pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
+  # -- Overrides the image tag whose default is the chart appVersion.
   tag: ""
 
+# -- image pull secrets
 imagePullSecrets: []
+
 nameOverride: ""
 fullnameOverride: ""
 
@@ -29,12 +33,13 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
+# -- pod annotations
 podAnnotations: {}
 
-podSecurityContext:
-  {}
-  # fsGroup: 2000
+# -- pod security context
+podSecurityContext: {}
 
+# -- grafana operator container security context
 securityContext:
   capabilities:
     drop:
@@ -42,38 +47,56 @@ securityContext:
   readOnlyRootFilesystem: true
   runAsNonRoot: true
 
-resources:
-  {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+# -- grafana operator container resources
+resources: {}
 
 kubeRbacProxy:
-  # -- The image to use in kubeRbacProxy container
-  image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
-  imagePullPolicy: IfNotPresent
+  # -- enable kuberRbacProxy
+  enabled: true
+  image:
+    # -- The image tag to use in kubeRbacProxy container
+    tag: v0.8.0
+    # -- The image repository to use in kubeRbacProxy container
+    repository: gcr.io/kubebuilder/kube-rbac-proxy
+    # -- The image pull policy to use in kubeRbacProxy container
+    pullPolicy: IfNotPresent
+
+  # -- kubeRbacProxy container args
   args:
     - --secure-listen-address=0.0.0.0:8443
     - --upstream=http://127.0.0.1:8080/
     - --logtostderr=true
     - --v=10
   service:
+    # -- kubeRbacProxy service type
     type: ClusterIP
+    # -- kubeRbacProxy service port
     port: 8443
+
+  # -- kubeRbacProxy resources
   resources: {}
 
-# -- podPriorityClass
+  # -- kubeRbacProxy liveness probe
+  livenessProbe: {}
+  # -- kubeRbacProxy readyness probe
+  readinessProbe: {}
+
+  # -- kubeRbacProxy securityContext
+  securityContext:
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+
+# -- pod priority class name
 priorityClassName: ""
 
+# -- pod node selector
 nodeSelector: {}
 
+# -- pod tolerations
 tolerations: []
 
+# -- pod affinity
 affinity: {}

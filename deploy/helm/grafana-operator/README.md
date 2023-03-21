@@ -35,34 +35,34 @@ It's easier to just manage this configuration outside of the operator.
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| affinity | object | `{}` |  |
+| affinity | object | `{}` | pod affinity |
 | fullnameOverride | string | `""` |  |
-| image.pullPolicy | string | `"IfNotPresent"` |  |
-| image.repository | string | `"ghcr.io/grafana-operator/grafana-operator"` |  |
-| image.tag | string | `""` |  |
-| imagePullSecrets | list | `[]` |  |
-| kubeRbacProxy.args[0] | string | `"--secure-listen-address=0.0.0.0:8443"` |  |
-| kubeRbacProxy.args[1] | string | `"--upstream=http://127.0.0.1:8080/"` |  |
-| kubeRbacProxy.args[2] | string | `"--logtostderr=true"` |  |
-| kubeRbacProxy.args[3] | string | `"--v=10"` |  |
-| kubeRbacProxy.image | string | `"gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0"` | The image to use in kubeRbacProxy container |
-| kubeRbacProxy.imagePullPolicy | string | `"IfNotPresent"` |  |
-| kubeRbacProxy.resources | object | `{}` |  |
-| kubeRbacProxy.service.port | int | `8443` |  |
-| kubeRbacProxy.service.type | string | `"ClusterIP"` |  |
+| image.pullPolicy | string | `"IfNotPresent"` | The image pull policy to use in grafana operator container |
+| image.repository | string | `"ghcr.io/grafana-operator/grafana-operator"` | grafana operator image repository |
+| image.tag | string | `""` | Overrides the image tag whose default is the chart appVersion. |
+| imagePullSecrets | list | `[]` | image pull secrets |
+| kubeRbacProxy.args | list | `["--secure-listen-address=0.0.0.0:8443","--upstream=http://127.0.0.1:8080/","--logtostderr=true","--v=10"]` | kubeRbacProxy container args |
+| kubeRbacProxy.enabled | bool | `true` | enable kuberRbacProxy |
+| kubeRbacProxy.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy to use in kubeRbacProxy container |
+| kubeRbacProxy.image.repository | string | `"gcr.io/kubebuilder/kube-rbac-proxy"` | The image repository to use in kubeRbacProxy container |
+| kubeRbacProxy.image.tag | string | `"v0.8.0"` | The image tag to use in kubeRbacProxy container |
+| kubeRbacProxy.livenessProbe | object | `{}` | kubeRbacProxy liveness probe |
+| kubeRbacProxy.readinessProbe | object | `{}` | kubeRbacProxy readyness probe |
+| kubeRbacProxy.resources | object | `{}` | kubeRbacProxy resources |
+| kubeRbacProxy.securityContext | object | `{"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true,"runAsNonRoot":true}` | kubeRbacProxy securityContext |
+| kubeRbacProxy.service.port | int | `8443` | kubeRbacProxy service port |
+| kubeRbacProxy.service.type | string | `"ClusterIP"` | kubeRbacProxy service type |
 | leaderElect | bool | `false` | If you want to run multiple replicas of the grafana-operator, this is not recommended. |
 | nameOverride | string | `""` |  |
 | namespaceScope | bool | `false` | If the operator should run in namespace-scope or not, if true the operator will only be able to manage instances in the same namespace |
-| nodeSelector | object | `{}` |  |
-| podAnnotations | object | `{}` |  |
-| podSecurityContext | object | `{}` |  |
-| priorityClassName | string | `""` | podPriorityClass |
-| resources | object | `{}` |  |
-| securityContext.capabilities.drop[0] | string | `"ALL"` |  |
-| securityContext.readOnlyRootFilesystem | bool | `true` |  |
-| securityContext.runAsNonRoot | bool | `true` |  |
+| nodeSelector | object | `{}` | pod node selector |
+| podAnnotations | object | `{}` | pod annotations |
+| podSecurityContext | object | `{}` | pod security context |
+| priorityClassName | string | `""` | pod priority class name |
+| resources | object | `{}` | grafana operator container resources |
+| securityContext | object | `{"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true,"runAsNonRoot":true}` | grafana operator container security context |
 | serviceAccount.annotations | object | `{}` | Annotations to add to the service account |
 | serviceAccount.create | bool | `true` | Specifies whether a service account should be created |
 | serviceAccount.name | string | `""` | The name of the service account to use. If not set and create is true, a name is generated using the fullname template |
-| tolerations | list | `[]` |  |
-| watchNamespaces | string | `""` | Sets the WATCH_NAMESPACES environment variable, it defines which namespaces the operator should be listening for. By default it's all namespaces, if you only want to listen for the same namespace as the operator is deployed to look at namespaceScope. |
+| tolerations | list | `[]` | pod tolerations |
+| watchNamespaces | string | `""` | Sets the WATCH_NAMESPACE environment variable, it defines which namespaces the operator should be listening for. By default it's all namespaces, if you only want to listen for the same namespace as the operator is deployed to look at namespaceScope. |
