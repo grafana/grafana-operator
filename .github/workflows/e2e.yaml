@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@v3.3.0
       - id: files
         name: Get changed files
-        uses: tj-actions/changed-files@0626c3f94002c0a9d7491dd7fed7055bbdff6f92 #v35.1.0
+        uses: tj-actions/changed-files@9328bab880abf4acc377d77718d28c6ac167f154 #v35.7.2
         with:
           files_ignore: |
             **.md

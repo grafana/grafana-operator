@@ -5,7 +5,7 @@ namespaceScope: false
 # -- If you want to run multiple replicas of the grafana-operator, this is not recommended.
 leaderElect: false
 
-# -- Sets the WATCH_NAMESPACES environment variable,
+# -- Sets the WATCH_NAMESPACE environment variable,
 # it defines which namespaces the operator should be listening for.
 # By default it's all namespaces, if you only want to listen for the same namespace as the operator is deployed to look at namespaceScope.
 watchNamespaces: ""
@@ -51,6 +51,8 @@ securityContext:
 resources: {}
 
 kubeRbacProxy:
+  # -- enable kuberRbacProxy
+  enabled: true
   image:
     # -- The image tag to use in kubeRbacProxy container
     tag: v0.8.0
