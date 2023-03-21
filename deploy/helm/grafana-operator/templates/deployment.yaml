@@ -36,7 +36,7 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
-            - name: WATCH_NAMESPACES
+            - name: WATCH_NAMESPACE
               value: {{ .Values.watchNamespaces }}
           args:
             - --health-probe-bind-address=:8081
@@ -56,6 +56,7 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+        {{- if .Values.kubeRbacProxy.enabled }}
         - name: kube-rbac-proxy
           {{- with .Values.kubeRbacProxy.securityContext }}
           securityContext:
@@ -83,6 +84,7 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

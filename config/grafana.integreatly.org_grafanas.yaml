@@ -36,9 +36,13 @@ spec:
             description: GrafanaSpec defines the desired state of Grafana
             properties:
               client:
-                description: GrafanaClient contains the Grafana API client settings
+                description: Client defines how the grafana-operator talks to the
+                  grafana instance.
                 properties:
                   preferIngress:
+                    description: If the operator should send it's request through
+                      the grafana instances ingress object instead of through the
+                      service.
                     nullable: true
                     type: boolean
                   timeout:
@@ -50,9 +54,13 @@ spec:
                   additionalProperties:
                     type: string
                   type: object
+                description: Config defines how your grafana ini file should looks
+                  like.
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
               deployment:
+                description: Deployment sets how the deployment object should look
+                  like with your grafana instance, contains a number of defaults.
                 properties:
                   metadata:
                     description: ObjectMeta contains only a [subset of the fields
@@ -8112,9 +8120,12 @@ spec:
                     type: object
                 type: object
               external:
+                description: External enables you to configure external grafana instances
+                  that is not managed by the operator.
                 properties:
                   adminPassword:
-                    description: SecretKeySelector selects a key of a Secret.
+                    description: AdminPassword key to talk to the external grafana
+                      instance.
                     properties:
                       key:
                         description: The key of the secret to select from.  Must be
@@ -8133,7 +8144,7 @@ spec:
                     type: object
                     x-kubernetes-map-type: atomic
                   adminUser:
-                    description: SecretKeySelector selects a key of a Secret.
+                    description: AdminUser key to talk to the external grafana instance.
                     properties:
                       key:
                         description: The key of the secret to select from.  Must be
@@ -8152,7 +8163,8 @@ spec:
                     type: object
                     x-kubernetes-map-type: atomic
                   apiKey:
-                    description: SecretKeySelector selects a key of a Secret.
+                    description: The API key to talk to the external grafana instance,
+                      you need to define ether apiKey or adminUser/adminPassword.
                     properties:
                       key:
                         description: The key of the secret to select from.  Must be
@@ -8171,11 +8183,15 @@ spec:
                     type: object
                     x-kubernetes-map-type: atomic
                   url:
+                    description: URL of the external grafana instance you want to
+                      manage.
                     type: string
                 required:
                 - url
                 type: object
               ingress:
+                description: Ingress sets how the ingress object should look like
+                  with your grafana instance.
                 properties:
                   metadata:
                     description: ObjectMeta contains only a [subset of the fields
@@ -8524,6 +8540,8 @@ spec:
                     x-kubernetes-map-type: atomic
                 type: object
               persistentVolumeClaim:
+                description: PersistentVolumeClaim creates a PVC if you need to attach
+                  one to your grafana instance.
                 properties:
                   metadata:
                     description: ObjectMeta contains only a [subset of the fields
@@ -8678,6 +8696,8 @@ spec:
                     type: object
                 type: object
               route:
+                description: Route sets how the ingress object should look like with
+                  your grafana instance, this only works in Openshift.
                 properties:
                   metadata:
                     description: ObjectMeta contains only a [subset of the fields
@@ -8814,6 +8834,8 @@ spec:
                     type: object
                 type: object
               service:
+                description: Service sets how the service object should look like
+                  with your grafana instance, contains a number of defaults.
                 properties:
                   metadata:
                     description: ObjectMeta contains only a [subset of the fields
@@ -9163,6 +9185,8 @@ spec:
                     type: object
                 type: object
               serviceAccount:
+                description: ServiceAccount sets how the ServiceAccount object should
+                  look like with your grafana instance, contains a number of defaults.
                 properties:
                   automountServiceAccountToken:
                     type: boolean
