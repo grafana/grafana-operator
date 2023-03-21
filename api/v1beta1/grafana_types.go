@@ -55,22 +55,35 @@ type OperatorReconcileVars struct {
 // GrafanaSpec defines the desired state of Grafana
 type GrafanaSpec struct {
 	// +kubebuilder:pruning:PreserveUnknownFields
-	Config                map[string]map[string]string `json:"config,omitempty"`
-	Ingress               *IngressNetworkingV1         `json:"ingress,omitempty"`
-	Route                 *RouteOpenshiftV1            `json:"route,omitempty"`
-	Service               *ServiceV1                   `json:"service,omitempty"`
-	Deployment            *DeploymentV1                `json:"deployment,omitempty"`
-	PersistentVolumeClaim *PersistentVolumeClaimV1     `json:"persistentVolumeClaim,omitempty"`
-	ServiceAccount        *ServiceAccountV1            `json:"serviceAccount,omitempty"`
-	Client                *GrafanaClient               `json:"client,omitempty"`
-	Jsonnet               *JsonnetConfig               `json:"jsonnet,omitempty"`
-	External              *External                    `json:"external,omitempty"`
+	// Config defines how your grafana ini file should looks like.
+	Config map[string]map[string]string `json:"config,omitempty"`
+	// Ingress sets how the ingress object should look like with your grafana instance.
+	Ingress *IngressNetworkingV1 `json:"ingress,omitempty"`
+	// Route sets how the ingress object should look like with your grafana instance, this only works in Openshift.
+	Route *RouteOpenshiftV1 `json:"route,omitempty"`
+	// Service sets how the service object should look like with your grafana instance, contains a number of defaults.
+	Service *ServiceV1 `json:"service,omitempty"`
+	// Deployment sets how the deployment object should look like with your grafana instance, contains a number of defaults.
+	Deployment *DeploymentV1 `json:"deployment,omitempty"`
+	// PersistentVolumeClaim creates a PVC if you need to attach one to your grafana instance.
+	PersistentVolumeClaim *PersistentVolumeClaimV1 `json:"persistentVolumeClaim,omitempty"`
+	// ServiceAccount sets how the ServiceAccount object should look like with your grafana instance, contains a number of defaults.
+	ServiceAccount *ServiceAccountV1 `json:"serviceAccount,omitempty"`
+	// Client defines how the grafana-operator talks to the grafana instance.
+	Client  *GrafanaClient `json:"client,omitempty"`
+	Jsonnet *JsonnetConfig `json:"jsonnet,omitempty"`
+	// External enables you to configure external grafana instances that is not managed by the operator.
+	External *External `json:"external,omitempty"`
 }
 
 type External struct {
-	URL           string                `json:"url"`
-	ApiKey        *v1.SecretKeySelector `json:"apiKey,omitempty"`
-	AdminUser     *v1.SecretKeySelector `json:"adminUser,omitempty"`
+	// URL of the external grafana instance you want to manage.
+	URL string `json:"url"`
+	// The API key to talk to the external grafana instance, you need to define ether apiKey or adminUser/adminPassword.
+	ApiKey *v1.SecretKeySelector `json:"apiKey,omitempty"`
+	// AdminUser key to talk to the external grafana instance.
+	AdminUser *v1.SecretKeySelector `json:"adminUser,omitempty"`
+	// AdminPassword key to talk to the external grafana instance.
 	AdminPassword *v1.SecretKeySelector `json:"adminPassword,omitempty"`
 }
 
@@ -83,6 +96,7 @@ type GrafanaClient struct {
 	// +nullable
 	TimeoutSeconds *int `json:"timeout,omitempty"`
 	// +nullable
+	// If the operator should send it's request through the grafana instances ingress object instead of through the service.
 	PreferIngress *bool `json:"preferIngress,omitempty"`
 }
 
