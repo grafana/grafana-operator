@@ -16,7 +16,7 @@ Just like in v4 we have a number of [examples](examples/) to look at.
 
 ## Content Cache Duration
 
-Grafana don't have any webhook or similar ways of giving information to the operator that a grafana resource like a dashboard have been changed.
+Grafana doesn't have any webhooks or similar ways of giving information to the operator that a grafana resource, like a dashboard, has been changed.
 Due to this the Grafana operator constantly have to check with the Grafana API and see if something have changed in the dashboard.
 
 That is why we introduced `spec.contentCacheDuration`, this is a configuration that makes it possible to tell the operator
