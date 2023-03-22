@@ -5,7 +5,7 @@ weight: 13
 
 [Dashboards](https://grafana.com/docs/grafana/latest/dashboards/) is the core feature of Grafana and of course something that you can manage through the operator.
 
-To view all configuration you can do within dashboards look at our [API documentation](../api/#grafanadashboardspec).
+To view the entire configuration that you can do within dashboards, look at our [API documentation](../api/#grafanadashboardspec).
 
 ## Dashboard managment
 
@@ -18,9 +18,9 @@ You can configure dashboards as code many different ways.
 
 ### Json
 
-A pure json reprisentation of your Grafana dashboard.
-Normally you would create your dashboard manually within Grafana, when you have come up with how you want the dashboard to look like you export it as json,
-grab the json using the export function in grafana and put inside the GrafanaDashboard CR.
+A pure JSON representation of your Grafana dashboard.
+Normally you would create your dashboard manually within Grafana, when you have come up with how you want the dashboard to look like, you export it as JSON,
+grab the JSON using the export function in grafana and put inside the GrafanaDashboard CR.
 
 ```yaml
 apiVersion: grafana.integreatly.org/v1beta1
@@ -66,10 +66,10 @@ spec:
 
 ### gzipJson
 
-It's just like json but instead of adding pure json to the dashboard CR you add a gzipped representation.
-This to be able to do really **big** dashboards that allows you to workaround etcd maximum request size of 1,5 MiB.
+It's just like JSON but instead of adding pure JSON to the dashboard CR you add a gzipped representation.
+This allows you to do really **big** dashboards that which workaround the etcd maximum request size of 1,5 MiB.
 
-To create a gzipped representation of your dashboards assuming that you have saved it to disk can be done through.
+To create a gzipped representation of your dashboards, assuming that you have saved it to disk, can be done through.
 
 ```shell
 cat dashboard.json | gzip | base64 -w0

@@ -3,7 +3,7 @@ title: Datasources
 weight: 12
 ---
 
-[Datasources](https://grafana.com/docs/grafana/latest/datasources/) is a basic part of grafana and of course you can manage your datasources through grafana.
+[Datasources](https://grafana.com/docs/grafana/latest/datasources/) is a basic part of grafana and of course you can manage your datasources through the grafana operator.
 
 To view all configuration you can do within datasources look at our [API documentation](../api/#grafanadatasourcespec).
 

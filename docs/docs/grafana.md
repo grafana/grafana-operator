@@ -11,7 +11,7 @@ In version 4 of the operator we defined all the configuration values that could 
 In version 5 we don't longer do that, instead we supply you with `grafana.config` where you can add any
 grafana configuration values that you want.
 
-The operator do not make any extra validation of your configuration so just like Grafana your Grafana instance might be broken due to configuration error.
+The operator does not make any extra validation of your configuration, so just like a non-operator deployment of Grafana, your Grafana instance might be broken due to configuration error.
 
 To find all possible configuration options look at the [official documentation](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/).
 
@@ -20,7 +20,7 @@ To find all possible configuration options look at the [official documentation](
 The operator needs lots of access to be able to manage Grafana instances.
 Depending on your needs you might want to limit the Grafana operator to only watch specific namespaces.
 
-Due to this we have given the operator 3 deployment modes.
+Due to this, we have given the operator 3 deployment modes.
 
 - cluster wide
 - single namespace
@@ -46,8 +46,8 @@ So even if you don't want to manage Grafana on your own you can still use dashbo
 
 The `grafana.spec.external` config allows you to set an URL and provide authentication to talk to your Grafana instance.
 
-Since the operator do not own the external Grafana instance you are **not** able to send in any configuration values to grafana it self. So for example `grafana.spec.config` will not do anything if you want to manage an external Grafana instances.
-This is due to Grafana only have a ini files that it looks in during start and don't have any API that we can use to configure it.
+Since the operator does not own the external Grafana instance you are **not** able to send in any configuration values to grafana itself. So for example `grafana.spec.config` will not do anything if you want to manage an external Grafana instances.
+This is due to Grafana only having ini files that it looks in during start and doesn't have any API that we can use to configure it.
 
 You are also not able to install any plugins using the operator since they are also installed during startup.
 
