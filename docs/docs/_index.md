@@ -63,7 +63,6 @@ spec: ...
 And for example in the dashboard we define a instanceSelector.
 
 ```yaml
-```yaml
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
