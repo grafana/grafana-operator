@@ -23,7 +23,20 @@ That is why we introduced `spec.contentCacheDuration`, this is a configuration t
 how often it should check with the Grafana instance if the dashboard matches the settings that are defined in the Kubernetes CR.
 
 So, if for example, a dashboard is changed, the operator will come in and overwrite those settings after `24h` by default.
-If you never want the operator to check if the dashboards have changed you need to set this value to `0h`.
+If you never want the operator to check if the dashboards have changed you need to set this value to `0h`:
+
+```yaml
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: grafanadashboard-from-url
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  url: "https://grafana.com/api/dashboards/7651/revisions/44/download"
+  contentCacheDuration: 0h
+```
 
 This can of course be annoying for your dashboard developers. But we recommend that before doing any change to a dashboard in the Grafana UI that you first copy the existing dashboard and work on the copy instead.
 When you are finished with your changes export the changes and update the dashboard CR.
