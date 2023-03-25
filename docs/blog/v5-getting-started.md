@@ -278,7 +278,7 @@ Should show you something like this
 
 ```yaml
 status:
-  adminUrl: http://grafana-ingress-service.default.svc.cluster.local:3000
+  adminUrl: http://grafana-ingress-service.default:3000
   dashboards:
   - default/grafanadashboard-sample-ingress/6eaed1ab-0b0a-4d7f-bc46-0e3c1f58c8a8
   stage: complete
