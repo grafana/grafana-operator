@@ -9,11 +9,7 @@ To view all configuration you can do within datasources look at our [API documen
 
 ## Secret management
 
-Since you don't want to save secrets in your git repository grafana have added a possibility to overwrite secrets using environment variables.
-
-We have enabled this in the operator through `grafanadatasources.spec.secrets` where you define a secret name in the same namespace as the datasource and you can use the secret keys to get the value you need.
-
-For example:
+In case a datasource requires authentication, it is advised not to include credentials directly in `url`. Instead, it's better to rely on value substitution like in the example below.
 
 ```yaml
 kind: Secret
@@ -32,7 +28,7 @@ metadata:
   name: grafanadatasource-sample
 spec:
   secrets:
-    - credentials
+    - credentials # Reference to the secret name
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
@@ -52,6 +48,8 @@ spec:
     editable: true
 ```
 
+**NOTE:** The secret must exist in the same namespace as the datasource.
+
 [Here](../examples/datasource_variables/readme) you can find a bigger example on how to use datasources with environment variables.
 
 ## Plugins
@@ -60,7 +58,6 @@ spec:
 
 Plugins can be installed to grafana instances managed by the operator and be defined in both datasources and dashboards.
 
-They **cannot** be installed using external grafana instances due to how the installation of plugins is done at the start of the instance using environment variables which is a built in feature in grafana.
 
 ```yaml
 apiVersion: grafana.integreatly.org/v1beta1
@@ -83,5 +80,7 @@ spec:
     - name: grafana-clock-panel
       version: 1.3.0
 ```
+
+**NOTE:** To make grafana install a plugin, the operator bootstraps a grafana instance with a custom value passed in `GF_INSTALL_PLUGINS` environment variable ([Install plugins in the Docker container](https://grafana.com/docs/grafana/latest/setup-grafana/installation/docker/#install-official-and-community-grafana-plugins)). Thus, there is no way for the operator to install a plugin in an external grafana instance.
 
 Look here for more examples on how to install [plugins](../examples/plugins/readme)
