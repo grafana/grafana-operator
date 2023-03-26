@@ -3,7 +3,7 @@ kind: Grafana
 metadata:
   name: grafana
 status:
-  adminUrl: http://grafana-service.grafana-operator-system.svc.cluster.local:3000
+  adminUrl: http://grafana-service.grafana-operator-system:3000
   stage: complete
   stageStatus: success
 ---

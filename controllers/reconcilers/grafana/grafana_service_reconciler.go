@@ -48,7 +48,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 
 	// try to assign the admin url
 	if !cr.PreferIngress() {
-		status.AdminUrl = fmt.Sprintf("%v://%v.%v.svc.cluster.local:%d", getGrafanaServerProtocol(cr), service.Name, cr.Namespace,
+		status.AdminUrl = fmt.Sprintf("%v://%v.%v:%d", getGrafanaServerProtocol(cr), service.Name, cr.Namespace,
 			int32(GetGrafanaPort(cr)))
 	}
 

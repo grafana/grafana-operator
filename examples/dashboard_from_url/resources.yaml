@@ -23,4 +23,4 @@ spec:
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
-  url: "https://raw.githubusercontent.com/integr8ly/grafana-operator/master/deploy/examples/remote/grafana-dashboard.json"
+  url: "https://raw.githubusercontent.com/grafana-operator/grafana-operator/master/examples/dashboard_from_url/dashboard.json"
