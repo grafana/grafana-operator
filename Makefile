@@ -52,10 +52,11 @@ help: ## Display this help.
 
 ##@ Development
 
-.PHONY: manifests
+.PHONY: manifests kustomize
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." crd:maxDescLen=0,generateEmbeddedObjectMeta=false output:crd:artifacts:config=config/crd/bases
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." crd:maxDescLen=0,generateEmbeddedObjectMeta=false output:crd:artifacts:config=deploy/helm/grafana-operator/crds
+	$(KUSTOMIZE) build config/ -o deploy/base/crds.yaml
 
 # Generate API reference documentation
 api-docs: gen-crd-api-reference-docs kustomize
