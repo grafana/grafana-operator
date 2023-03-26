@@ -19,16 +19,24 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v3.3.0
-      - id: files
+        with:
+          fetch-depth: 0
+      - id: changed-files
         name: Get changed files
         uses: tj-actions/changed-files@9328bab880abf4acc377d77718d28c6ac167f154 #v35.7.2
         with:
           files_ignore: |
-            **.md
-            **.html
+            **/*.md
+            **/*.html
             hugo/**
+      - id: which_files
+        name: Which files was changed
+        run: |
+          echo "One or more files has changed."
+          echo "List all the files that have changed: ${{ steps.changed-files.outputs.all_changed_files }}"
+          echo "What is any changed ${{ steps.changed-files.outputs.any_changed }}"
       - id: docs_only_check
-        if: steps.files.outputs.any_changed != 'true'
+        if: steps.changed-files.outputs.any_changed != 'true'
         name: Check for docs-only changes
         run: echo "docs_only=true" >> $GITHUB_OUTPUT
 
