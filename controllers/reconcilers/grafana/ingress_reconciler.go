@@ -45,6 +45,10 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 }
 
 func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, _ *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+	if cr.Spec.Ingress == nil || len(cr.Spec.Ingress.Spec.Rules) == 0 {
+		return v1beta1.OperatorStageResultSuccess, nil
+	}
+
 	ingress := model.GetGrafanaIngress(cr, scheme)
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, ingress, func() error {
