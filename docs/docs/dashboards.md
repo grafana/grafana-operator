@@ -229,6 +229,28 @@ spec:
 
 Look here for more examples on how to install [plugins](../examples/plugins/readme)
 
+## Content cache duration
+
+To not constantly perform requests to external URL every time a dashboard reconcile or a resync period expires we save URLs in a cache in the operator.
+This cache is saved in the status field of the dashboard CR.
+
+By default this cache is `24h` long, you can change this value by setting contentCacheDuration manually per dashboard.
+
+```yaml
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: grafanadashboard-from-url
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  url: "https://grafana.com/api/dashboards/7651/revisions/44/download"
+  contentCacheDuration: 48h
+```
+
+Remember, depending on where you get your dashboards you might become rate limited if you have multiple dashboards with relatively short `contentCacheDuration` or if all the requests happens at the same time.
+
 ## Dashboard UID management
 
 TODO
