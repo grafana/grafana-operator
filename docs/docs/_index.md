@@ -14,16 +14,16 @@ Hopefully you will find everything you need in here, if not feel free to open an
 
 Just like in v4 we have a number of [examples](examples/) to look at.
 
-## Content Cache Duration
+## ResyncPeriod
 
 Grafana doesn't have any webhooks or similar ways of giving information to the operator that a grafana resource, like a dashboard, has been changed.
 Due to this the Grafana operator has to constantly check the Grafana API to see if something changed in the dashboard.
 
-That is why we introduced `spec.contentCacheDuration`, this is a configuration that makes it possible to tell the operator
+That is why we introduced `spec.resyncPeriod`, this is a configuration that makes it possible to tell the operator
 how often it should check with the Grafana instance if the dashboard matches the settings that are defined in the Kubernetes CR.
 
-So, if for example, a dashboard is changed, the operator will come in and overwrite those settings after `24h` by default.
-If you never want the operator to check if the dashboards have changed you need to set this value to `0h`:
+So, if for example, a dashboard is changed, the operator will come in and overwrite those settings after `5m` by default.
+If you never want the operator to check if the dashboards have changed you need to set this value to `0m`:
 
 ```yaml
 apiVersion: grafana.integreatly.org/v1beta1
@@ -35,7 +35,7 @@ spec:
     matchLabels:
       dashboards: "grafana"
   url: "https://grafana.com/api/dashboards/7651/revisions/44/download"
-  contentCacheDuration: 0h
+  resyncPeriod: 0m
 ```
 
 This can of course be annoying for your dashboard developers. But we recommend that before doing any change to a dashboard in the Grafana UI that you first copy the existing dashboard and work on the copy instead.
