@@ -8,8 +8,8 @@ spec:
   type: {{ .Values.kubeRbacProxy.service.type }}
   ports:
     - port: {{ .Values.kubeRbacProxy.service.port }}
-      targetPort: http
+      targetPort: metrics
       protocol: TCP
-      name: http
+      name: https
   selector:
     {{- include "grafana-operator.selectorLabels" . | nindent 4 }}

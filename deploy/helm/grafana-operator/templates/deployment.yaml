@@ -70,7 +70,7 @@ spec:
           {{- end }}
           ports:
             - containerPort: {{ .Values.kubeRbacProxy.service.port }}
-              name: https
+              name: metrics
               protocol: TCP
           {{- with .Values.kubeRbacProxy.livenessProbe }}
           livenessProbe:
