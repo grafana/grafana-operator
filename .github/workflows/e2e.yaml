@@ -51,7 +51,7 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: actions/setup-go@v3
+      - uses: actions/setup-go@v4
         with:
           go-version-file: "go.mod"
           cache: true
