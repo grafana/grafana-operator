@@ -331,7 +331,9 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return errors.NewInternalError(err)
 	}
 
-	dashboardFromJson["uid"] = string(cr.UID)
+	if _, ok := dashboardFromJson["uid"]; !ok {
+		dashboardFromJson["uid"] = string(cr.UID)
+	}
 	resp, err := grafanaClient.NewDashboard(grapi.Dashboard{
 		Meta: grapi.DashboardMeta{
 			IsStarred: false,
