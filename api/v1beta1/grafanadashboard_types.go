@@ -66,7 +66,7 @@ type GrafanaDashboardSpec struct {
 
 	// grafana.com/dashboards
 	// +optional
-	GrafanaCom *GrafanaComDashboardReference `json:"grafana,omitempty"`
+	GrafanaCom *GrafanaComDashboardReference `json:"grafanaCom,omitempty"`
 
 	// selects Grafanas for import
 	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`
