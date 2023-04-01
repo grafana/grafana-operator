@@ -9,8 +9,7 @@ The operator uses unit tests and [Kuttl](https://kuttl.dev/) for e2e tests to ma
 The operator use a submodule for [grafonnet-lib](https://github.com/grafana/grafonnet-lib),
 one of the first things you have to do is to run `make submodule`.
 
-When creating a PR our CI will run lots of different tests to try to follow our standards.
-Please run `make all` before creating your PR if it contains any code changes.
+**NOTE:** please, run `make all` before opening a PR to make sure your changes are compliant with our standards and all automatically generated files (like CRDs) are up-to-date.
 
 ### Code standards
 
