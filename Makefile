@@ -31,7 +31,7 @@ SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
 .PHONY: all
-all: build
+all: manifests test kustomize-crd api-docs
 
 ##@ General
 
@@ -56,6 +56,10 @@ help: ## Display this help.
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." crd:maxDescLen=0,generateEmbeddedObjectMeta=false output:crd:artifacts:config=config/crd/bases
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." crd:maxDescLen=0,generateEmbeddedObjectMeta=false output:crd:artifacts:config=deploy/helm/grafana-operator/crds
+
+.PHONY: kustomize-crd
+kustomize-crd: kustomize manifests
+	$(KUSTOMIZE) build config/ -o deploy/kustomize/base/crds.yaml
 
 # Generate API reference documentation
 api-docs: gen-crd-api-reference-docs kustomize
