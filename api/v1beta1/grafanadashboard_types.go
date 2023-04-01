@@ -238,6 +238,7 @@ func (in *GrafanaDashboard) SetReadyCondition(status metav1.ConditionStatus, rea
 		ObservedGeneration: in.Generation,
 		Message:            message,
 	}
+
 	replaced := false
 	for i, cond := range in.Status.Conditions {
 		if cond.Type == "Ready" {
@@ -245,6 +246,7 @@ func (in *GrafanaDashboard) SetReadyCondition(status metav1.ConditionStatus, rea
 			replaced = true
 		}
 	}
+
 	if !replaced {
 		in.Status.Conditions = append(in.Status.Conditions, newCond)
 	}

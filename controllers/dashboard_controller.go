@@ -216,7 +216,6 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		// then import the dashboard into the matching grafana instances
 		err = r.onDashboardCreated(ctx, &grafana, dashboard)
 		if err != nil {
-			dashboard.SetReadyCondition(v1.ConditionFalse, v1beta1.GrafanaApiErrorReason, fmt.Sprintf("failed to create folder"))
 			controllerLog.Error(err, "error reconciling dashboard", "dashboard", dashboard.Name, "grafana", grafana.Name)
 			success = false
 		}
@@ -224,7 +223,6 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	// if the dashboard was successfully synced in all instances, wait for its re-sync period
 	if success {
-		dashboard.SetReadyCondition(v1.ConditionTrue, v1beta1.DashboardSyncedReason, fmt.Sprintf("Dashboard synced"))
 		return ctrl.Result{RequeueAfter: dashboard.GetResyncPeriod()}, nil
 	}
 
@@ -326,7 +324,8 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	}
 
 	shouldCreate := true
-	if instanceStatus, ok := cr.Status.Instances[string(grafana.GetUID())]; ok {
+	instanceStatus, ok := cr.Status.Instances[string(grafana.GetUID())]
+	if ok {
 		existingMatches, err := r.ExistingVersionMatchesStatus(grafanaClient, instanceStatus)
 		if err != nil {
 			r.SetReadyCondition(ctx, cr, v1.ConditionFalse, v1beta1.GrafanaApiErrorReason, fmt.Sprintf("failed check for existing dashboard: %s", err))
@@ -334,39 +333,49 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		}
 		shouldCreate = !existingMatches
 	} else {
-		cr.Status.Instances[string(grafana.GetUID())] = v1beta1.GrafanaDashboardInstanceStatus{
+		if cr.Status.Instances == nil {
+			cr.Status.Instances = make(map[string]v1beta1.GrafanaDashboardInstanceStatus)
+		}
+		instanceStatus = v1beta1.GrafanaDashboardInstanceStatus{
 			UID: manifest["uid"].(string),
 		}
+		cr.Status.Instances[string(grafana.GetUID())] = instanceStatus
+	}
+	if !shouldCreate {
+		return nil // Updating status here will trigger another reconcile which is no bueno, perhaps this logic should happen within .Reconcile()?
 	}
 
-	if shouldCreate {
-		resp, err := grafanaClient.NewDashboard(grapi.Dashboard{
-			Meta: grapi.DashboardMeta{
-				IsStarred: false,
-				Slug:      cr.Name,
-				Folder:    folderId,
-			},
-			Model:     manifest,
+	resp, err := grafanaClient.NewDashboard(grapi.Dashboard{
+		Meta: grapi.DashboardMeta{
+			IsStarred: false,
+			Slug:      cr.Name,
 			Folder:    folderId,
-			Overwrite: true,
-			Message:   "",
-		})
-		if err != nil {
-			return err
-		}
-		if resp.Status != "success" {
-			r.SetReadyCondition(ctx, cr, v1.ConditionFalse, v1beta1.GrafanaApiErrorReason, fmt.Sprintf("failed create dashboard: %s", err))
-			return errors.NewBadRequest(fmt.Sprintf("error creating dashboard, status was %v", resp.Status))
-		}
-
-		grafana.Status.Dashboards = grafana.Status.Dashboards.Add(cr.Namespace, cr.Name, resp.UID)
-		err = r.Client.Status().Update(ctx, grafana)
-		if err != nil {
-			return err
-		}
+		},
+		Model:     manifest,
+		Folder:    folderId,
+		Overwrite: true,
+		Message:   "",
+	})
+	if err != nil {
+		return err
+	}
+	if resp.Status != "success" {
+		r.SetReadyCondition(ctx, cr, v1.ConditionFalse, v1beta1.GrafanaApiErrorReason, fmt.Sprintf("failed create dashboard: %s", err))
+		return errors.NewBadRequest(fmt.Sprintf("error creating dashboard, status was %v", resp.Status))
 	}
 
-	return r.UpdateStatus(ctx, cr)
+	cr.Status.Instances[string(grafana.GetUID())] = v1beta1.GrafanaDashboardInstanceStatus{
+		UID:     resp.UID,
+		Version: resp.Version,
+	}
+
+	grafana.Status.Dashboards = grafana.Status.Dashboards.Add(cr.Namespace, cr.Name, resp.UID)
+	err = r.Client.Status().Update(ctx, grafana)
+	if err != nil {
+		return err
+	}
+
+	return r.SetReadyCondition(ctx, cr, v1.ConditionTrue, v1beta1.DashboardSyncedReason, "Dashboard synced")
 }
 
 // fetchDashboardJson delegates obtaining the dashboard json definition to one of the known fetchers, for example
@@ -398,10 +407,6 @@ func (r *GrafanaDashboardReconciler) fetchDashboardManifest(dashboard *v1beta1.G
 	}
 }
 
-func (r *GrafanaDashboardReconciler) UpdateStatus(ctx context.Context, cr *v1beta1.GrafanaDashboard) error {
-	return r.Client.Status().Update(ctx, cr)
-}
-
 func (r *GrafanaDashboardReconciler) ExistingVersionMatchesStatus(client *grapi.Client, instanceStatus v1beta1.GrafanaDashboardInstanceStatus) (bool, error) {
 	existing, err := client.DashboardByUID(instanceStatus.UID)
 	if err != nil {
@@ -411,7 +416,6 @@ func (r *GrafanaDashboardReconciler) ExistingVersionMatchesStatus(client *grapi.
 		return false, err
 	}
 
-	// XXX: is the float64 required??
 	if float64(instanceStatus.Version) == existing.Model["version"].(float64) {
 		return true, nil
 	}
@@ -541,9 +545,12 @@ func (r *GrafanaDashboardReconciler) GetMatchingDashboardInstances(ctx context.C
 	return instances, err
 }
 
-func (r *GrafanaDashboardReconciler) SetReadyCondition(ctx context.Context, dashboard *v1beta1.GrafanaDashboard, status v1.ConditionStatus, reason string, message string) {
+func (r *GrafanaDashboardReconciler) SetReadyCondition(ctx context.Context, dashboard *v1beta1.GrafanaDashboard, status v1.ConditionStatus, reason string, message string) error {
 	dashboard.SetReadyCondition(status, reason, message)
-	if err := r.UpdateStatus(ctx, dashboard); err != nil {
+	r.Log.Info("updating status", "conditions", dashboard.Status.Conditions, "instances", dashboard.Status.Instances)
+	if err := r.Client.Status().Update(ctx, dashboard); err != nil {
 		r.Log.Info("unable to update the status of %v, in %v", dashboard.Name, dashboard.Namespace)
+		return err
 	}
+	return nil
 }
