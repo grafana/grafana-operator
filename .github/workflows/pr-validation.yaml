@@ -122,7 +122,7 @@ jobs:
         run: |
           if [[ $(git status --porcelain) ]]; then
             git diff
-            echo 'run make test and commit changes'
+            echo '::error::run make test and commit changes'
             exit 1
           fi
 
@@ -147,7 +147,7 @@ jobs:
         run: |
           if [[ $(git status --porcelain) ]]; then
             git diff
-            echo 'run make helm/docs and commit changes'
+            echo '::error::run make helm/docs and commit changes'
             exit 1
           fi
 
@@ -172,7 +172,7 @@ jobs:
         run: |
           if [[ $(git status --porcelain) ]]; then
             git diff
-            echo 'run make kustomize-crd or make all and commit changes'
+            echo '::error::run make kustomize-crd or make all and commit changes'
             exit 1
           fi
 
