@@ -41,9 +41,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	grafanav1beta1 "github.com/grafana-operator/grafana-operator/api/v1beta1"
-	"github.com/grafana-operator/grafana-operator/controllers"
-	"github.com/grafana-operator/grafana-operator/controllers/autodetect"
+	grafanav1beta1 "github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana-operator/grafana-operator/v5/controllers"
+	"github.com/grafana-operator/grafana-operator/v5/controllers/autodetect"
 	//+kubebuilder:scaffold:imports
 )
 

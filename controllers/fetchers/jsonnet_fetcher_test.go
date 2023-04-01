@@ -8,8 +8,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/grafana-operator/grafana-operator/api/v1beta1"
-	"github.com/grafana-operator/grafana-operator/embeds"
+	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana-operator/grafana-operator/v5/embeds"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
