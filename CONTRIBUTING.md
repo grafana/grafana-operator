@@ -152,15 +152,10 @@ If you add update the chart don't forget to run `make helm-docs`, which will upd
 
 ### Kustomize
 
-The operator also supports being installed by Kustomize.
-To minimize CI times we didn't want to add kustomize to all make commands. Instead we have a separate command to generated the CRDs for Kustomize.
-To generate CRD updates for kustomize please run.
+Kustomize, amongst other methods, can be used to install the operator.
 
-```shell
-make kustomize-crd
-# or
-make all
-```
+To make sure its copy of CRDs is up-to-date, please, run `make all`.
+**NOTE:** there's an option to call `make kustomize-crd` directly, though it assumes the CRDs have already been generated from Go code through `make manifests`. `make all` is just a simpler option to run since it doesn't require you to remember all previous steps.
 
 ## Documentation
 
