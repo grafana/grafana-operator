@@ -108,6 +108,13 @@ func getVolumes(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.Volume {
 		},
 	})
 
+	volumes = append(volumes, v1.Volume{
+		Name: "tmp",
+		VolumeSource: v1.VolumeSource{
+			EmptyDir: &v1.EmptyDirVolumeSource{},
+		},
+	})
+
 	return volumes
 }
 
@@ -129,6 +136,11 @@ func getVolumeMounts(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.VolumeMou
 	mounts = append(mounts, v1.VolumeMount{
 		Name:      config2.GrafanaLogsVolumeName,
 		MountPath: config2.GrafanaLogsPath,
+	})
+
+	mounts = append(mounts, v1.VolumeMount{
+		Name:      "tmp",
+		MountPath: "/tmp",
 	})
 
 	return mounts
