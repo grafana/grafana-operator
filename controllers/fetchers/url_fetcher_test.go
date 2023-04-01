@@ -32,7 +32,7 @@ func TestFetchDashboardFromUrl(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, dashboardJSON, fetchedDashboard, "Fetched dashboard doesn't match the original")
 
-	assert.False(t, dashboard.Status.ContentTimestamp.Time.IsZero(), "ContentTimestamp should have been updated")
-	assert.Equal(t, compressedJSON, dashboard.Status.ContentCache, "ContentCache should have been updated")
-	assert.Equal(t, ts.URL, dashboard.Status.ContentUrl, "ContentUrl should have been updated")
+	assert.False(t, dashboard.Status.Content.Timestamp.Time.IsZero(), "ContentTimestamp should have been updated")
+	assert.Equal(t, compressedJSON, dashboard.Status.Content.Cache, "ContentCache should have been updated")
+	assert.Equal(t, ts.URL, dashboard.Status.Content.Url, "ContentUrl should have been updated")
 }

@@ -103,16 +103,34 @@ type GrafanaComDashboardReference struct {
 
 // GrafanaDashboardStatus defines the observed state of GrafanaDashboard
 type GrafanaDashboardStatus struct {
-	ContentCache     []byte      `json:"contentCache,omitempty"`
-	ContentTimestamp metav1.Time `json:"contentTimestamp,omitempty"`
-	ContentUrl       string      `json:"contentUrl,omitempty"`
-	Hash             string      `json:"hash,omitempty"`
-	// The dashboard instanceSelector can't find matching grafana instances
-	NoMatchingInstances bool `json:"NoMatchingInstances,omitempty"`
+	// Content contains information about fetched remote content
+	// +optional
+	Content *GrafanaDashboardStatusContent `json:"content,omitempty"`
+
+	// Instances stores UID, version, and folder info for each instance the dashboard has been created in
+	// +optional
+	Instances map[string]GrafanaDashboardInstanceStatus `json:"instances,omitempty"`
+
+	// +optional
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
+}
+
+type GrafanaDashboardStatusContent struct {
+	Cache     []byte      `json:"contentCache,omitempty"`
+	Timestamp metav1.Time `json:"contentTimestamp,omitempty"`
+	Url       string      `json:"contentUrl,omitempty"`
+}
+
+type GrafanaDashboardInstanceStatus struct {
+	Version  int64  `json:"Version,omitempty"`
+	UID      string `json:"UID,omitempty"`
+	FolderId int64  `json:"folderId,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type==\"Ready\")].status",description=""
+//+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[?(@.type==\"Ready\")].message",description=""
 
 // GrafanaDashboard is the Schema for the grafanadashboards API
 type GrafanaDashboard struct {
@@ -136,10 +154,6 @@ func (in *GrafanaDashboard) Hash() string {
 	hash := sha256.New()
 	hash.Write([]byte(in.Spec.Json))
 	return fmt.Sprintf("%x", hash.Sum(nil))
-}
-
-func (in *GrafanaDashboard) Unchanged() bool {
-	return in.Hash() == in.Status.Hash
 }
 
 func (in *GrafanaDashboard) GetResyncPeriod() time.Duration {
@@ -189,16 +203,19 @@ func (in *GrafanaDashboard) GetContentCache() []byte {
 
 // getContentCache returns content cache when the following conditions are met: url is the same, data is not expired, gzipped data is not corrupted
 func (in *GrafanaDashboardStatus) getContentCache(url string, cacheDuration time.Duration) []byte {
-	if in.ContentUrl != url {
+	if in.Content == nil {
+		return []byte{}
+	}
+	if in.Content.Url != url {
 		return []byte{}
 	}
 
-	notExpired := cacheDuration <= 0 || in.ContentTimestamp.Add(cacheDuration).After(time.Now())
+	notExpired := cacheDuration <= 0 || in.Content.Timestamp.Add(cacheDuration).After(time.Now())
 	if !notExpired {
 		return []byte{}
 	}
 
-	cache, err := Gunzip(in.ContentCache)
+	cache, err := Gunzip(in.Content.Cache)
 	if err != nil {
 		return []byte{}
 	}
@@ -211,6 +228,27 @@ func (in *GrafanaDashboard) IsAllowCrossNamespaceImport() bool {
 		return *in.Spec.AllowCrossNamespaceImport
 	}
 	return false
+}
+
+func (in *GrafanaDashboard) SetReadyCondition(status metav1.ConditionStatus, reason string, message string) {
+	newCond := metav1.Condition{
+		Type:               "Ready",
+		Status:             status,
+		Reason:             reason,
+		LastTransitionTime: metav1.Now(),
+		ObservedGeneration: in.Generation,
+		Message:            message,
+	}
+	replaced := false
+	for i, cond := range in.Status.Conditions {
+		if cond.Type == "Ready" {
+			in.Status.Conditions[i] = newCond
+			replaced = true
+		}
+	}
+	if !replaced {
+		in.Status.Conditions = append(in.Status.Conditions, newCond)
+	}
 }
 
 func Gunzip(compressed []byte) ([]byte, error) {

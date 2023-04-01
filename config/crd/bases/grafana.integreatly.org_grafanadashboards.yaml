@@ -15,7 +15,14 @@ spec:
     singular: grafanadashboard
   scope: Namespaced
   versions:
-  - name: v1beta1
+  - additionalPrinterColumns:
+    - jsonPath: .status.conditions[?(@.type=="Ready")].status
+      name: Ready
+      type: string
+    - jsonPath: .status.conditions[?(@.type=="Ready")].message
+      name: Status
+      type: string
+    name: v1beta1
     schema:
       openAPIV3Schema:
         properties:
@@ -106,18 +113,66 @@ spec:
             type: object
           status:
             properties:
-              NoMatchingInstances:
-                type: boolean
-              contentCache:
-                format: byte
-                type: string
-              contentTimestamp:
-                format: date-time
-                type: string
-              contentUrl:
-                type: string
-              hash:
-                type: string
+              conditions:
+                items:
+                  properties:
+                    lastTransitionTime:
+                      format: date-time
+                      type: string
+                    message:
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              content:
+                properties:
+                  contentCache:
+                    format: byte
+                    type: string
+                  contentTimestamp:
+                    format: date-time
+                    type: string
+                  contentUrl:
+                    type: string
+                type: object
+              instances:
+                additionalProperties:
+                  properties:
+                    UID:
+                      type: string
+                    Version:
+                      format: int64
+                      type: integer
+                    folderId:
+                      format: int64
+                      type: integer
+                  type: object
+                type: object
             type: object
         type: object
     served: true

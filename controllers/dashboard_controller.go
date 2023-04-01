@@ -17,7 +17,6 @@ limitations under the License.
 package controllers
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -34,6 +33,7 @@ import (
 	"github.com/grafana-operator/grafana-operator/v5/controllers/metrics"
 	grapi "github.com/grafana/grafana-api-golang-client"
 	"k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/discovery"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -193,6 +193,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		grafana := grafana
 		// an admin url is required to interact with grafana
 		// the instance or route might not yet be ready
+		// TODO: status.conditions for grafana CRD and implement grafana.Ready()
 		if grafana.Status.Stage != v1beta1.OperatorStageComplete || grafana.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
 			controllerLog.Info("grafana instance not ready", "grafana", grafana.Name)
 			success = false
@@ -208,11 +209,14 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 				controllerLog.Error(err, "error reconciling plugins", "dashboard", dashboard.Name, "grafana", grafana.Name)
 				success = false
 			}
+		} else if dashboard.Spec.Plugins != nil {
+			return ctrl.Result{}, fmt.Errorf("external grafana instances don't support plugins, please remove spec.plugins from your dashboard cr")
 		}
 
 		// then import the dashboard into the matching grafana instances
 		err = r.onDashboardCreated(ctx, &grafana, dashboard)
 		if err != nil {
+			dashboard.SetReadyCondition(v1.ConditionFalse, v1beta1.GrafanaApiErrorReason, fmt.Sprintf("failed to create folder"))
 			controllerLog.Error(err, "error reconciling dashboard", "dashboard", dashboard.Name, "grafana", grafana.Name)
 			success = false
 		}
@@ -220,6 +224,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	// if the dashboard was successfully synced in all instances, wait for its re-sync period
 	if success {
+		dashboard.SetReadyCondition(v1.ConditionTrue, v1beta1.DashboardSyncedReason, fmt.Sprintf("Dashboard synced"))
 		return ctrl.Result{RequeueAfter: dashboard.GetResyncPeriod()}, nil
 	}
 
@@ -288,101 +293,83 @@ func (r *GrafanaDashboardReconciler) onDashboardDeleted(ctx context.Context, nam
 }
 
 func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDashboard) error {
-	dashboardJson, err := r.fetchDashboardJson(cr)
+	manifestBytes, err := r.fetchDashboardManifest(cr)
 	if err != nil {
+		r.SetReadyCondition(ctx, cr, v1.ConditionFalse, v1beta1.ContentUnavailableReason, fmt.Sprintf("failed to get dashboard: %s", err))
+		return err
+	}
+	var manifest map[string]interface{}
+	err = json.Unmarshal(manifestBytes, &manifest)
+	if err != nil {
+		r.SetReadyCondition(ctx, cr, v1.ConditionFalse, v1beta1.ContentUnavailableReason, fmt.Sprintf("failed to unmarshal dashboard: %s", err))
 		return err
 	}
 
-	dashboardJson, err = r.resolveDatasources(cr, dashboardJson)
-	if err != nil {
-		return err
+	if _, ok := manifest["uid"]; !ok {
+		manifest["uid"] = string(cr.UID)
 	}
-
-	if grafana.IsExternal() && cr.Spec.Plugins != nil {
-		return fmt.Errorf("external grafana instances don't support plugins, please remove spec.plugins from your dashboard cr")
-	}
-
-	// Dashboards come from different sources, whereas Spec.Json is used to calculate hash
-	// So, we should keep the field updated to make sure changes in dashboards get noticed
-	cr.Spec.Json = string(dashboardJson)
 
 	grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
+		r.SetReadyCondition(ctx, cr, v1.ConditionFalse, v1beta1.GrafanaApiErrorReason, fmt.Sprintf("failed to create grafana client: %s", err))
 		return err
 	}
 
-	// update/create the dashboard if it doesn't exist in the instance or has been changed
-	exists, err := r.Exists(grafanaClient, cr)
+	folder, err := r.GetOrCreateFolder(grafanaClient, cr)
 	if err != nil {
-		return err
-	}
-	if exists && cr.Unchanged() {
-		return nil
-	}
-
-	var dashboardFromJson map[string]interface{}
-	err = json.Unmarshal(dashboardJson, &dashboardFromJson)
-	if err != nil {
-		return err
-	}
-
-	folderID, err := r.GetOrCreateFolder(grafanaClient, cr)
-	if err != nil {
+		r.SetReadyCondition(ctx, cr, v1.ConditionFalse, v1beta1.GrafanaApiErrorReason, fmt.Sprintf("failed get or create folder: %s", err))
 		return errors.NewInternalError(err)
 	}
 
-	if _, ok := dashboardFromJson["uid"]; !ok {
-		dashboardFromJson["uid"] = string(cr.UID)
-	}
-	resp, err := grafanaClient.NewDashboard(grapi.Dashboard{
-		Meta: grapi.DashboardMeta{
-			IsStarred: false,
-			Slug:      cr.Name,
-			Folder:    folderID,
-		},
-		Model:     dashboardFromJson,
-		Folder:    folderID,
-		Overwrite: true,
-		Message:   "",
-	})
-	if err != nil {
-		return err
+	shouldCreate := true
+	if instanceStatus, ok := cr.Status.Instances[string(grafana.GetUID())]; ok {
+		instanceStatus.FolderId = folder.ID
+		existingMatches, err := r.ExistingVersionMatchesStatus(grafanaClient, instanceStatus)
+		if err != nil {
+			r.SetReadyCondition(ctx, cr, v1.ConditionFalse, v1beta1.GrafanaApiErrorReason, fmt.Sprintf("failed check for existing dashboard: %s", err))
+			return err
+		}
+		shouldCreate = !existingMatches
+	} else {
+		cr.Status.Instances[string(grafana.GetUID())] = v1beta1.GrafanaDashboardInstanceStatus{
+			FolderId: folder.ID,
+			UID:      manifest["uid"].(string),
+		}
 	}
 
-	if resp.Status != "success" {
-		return errors.NewBadRequest(fmt.Sprintf("error creating dashboard, status was %v", resp.Status))
-	}
+	if shouldCreate {
+		resp, err := grafanaClient.NewDashboard(grapi.Dashboard{
+			Meta: grapi.DashboardMeta{
+				IsStarred: false,
+				Slug:      cr.Name,
+				Folder:    folder.ID,
+			},
+			Model:     manifest,
+			Folder:    folder.ID,
+			Overwrite: true,
+			Message:   "",
+		})
+		if err != nil {
+			return err
+		}
+		if resp.Status != "success" {
+			r.SetReadyCondition(ctx, cr, v1.ConditionFalse, v1beta1.GrafanaApiErrorReason, fmt.Sprintf("failed create dashboard: %s", err))
+			return errors.NewBadRequest(fmt.Sprintf("error creating dashboard, status was %v", resp.Status))
+		}
 
-	grafana.Status.Dashboards = grafana.Status.Dashboards.Add(cr.Namespace, cr.Name, resp.UID)
-	err = r.Client.Status().Update(ctx, grafana)
-	if err != nil {
-		return err
+		grafana.Status.Dashboards = grafana.Status.Dashboards.Add(cr.Namespace, cr.Name, resp.UID)
+		err = r.Client.Status().Update(ctx, grafana)
+		if err != nil {
+			return err
+		}
 	}
 
 	return r.UpdateStatus(ctx, cr)
 }
 
-// map data sources that are required in the dashboard to data sources that exist in the instance
-func (r *GrafanaDashboardReconciler) resolveDatasources(dashboard *v1beta1.GrafanaDashboard, dashboardJson []byte) ([]byte, error) {
-	if len(dashboard.Spec.Datasources) == 0 {
-		return dashboardJson, nil
-	}
-
-	for _, input := range dashboard.Spec.Datasources {
-		if input.DatasourceName == "" || input.InputName == "" {
-			return nil, fmt.Errorf("invalid datasource input rule in dashboard %v/%v, input or datasource empty", dashboard.Namespace, dashboard.Name)
-		}
-
-		searchValue := fmt.Sprintf("${%s}", input.InputName)
-		dashboardJson = bytes.ReplaceAll(dashboardJson, []byte(searchValue), []byte(input.DatasourceName))
-	}
-
-	return dashboardJson, nil
-}
-
 // fetchDashboardJson delegates obtaining the dashboard json definition to one of the known fetchers, for example
 // from embedded raw json or from a url
-func (r *GrafanaDashboardReconciler) fetchDashboardJson(dashboard *v1beta1.GrafanaDashboard) ([]byte, error) {
+func (r *GrafanaDashboardReconciler) fetchDashboardManifest(dashboard *v1beta1.GrafanaDashboard) ([]byte, error) {
 	sourceTypes := dashboard.GetSourceTypes()
 
 	if len(sourceTypes) == 0 {
@@ -410,59 +397,60 @@ func (r *GrafanaDashboardReconciler) fetchDashboardJson(dashboard *v1beta1.Grafa
 }
 
 func (r *GrafanaDashboardReconciler) UpdateStatus(ctx context.Context, cr *v1beta1.GrafanaDashboard) error {
-	cr.Status.Hash = cr.Hash()
 	return r.Client.Status().Update(ctx, cr)
 }
 
-func (r *GrafanaDashboardReconciler) Exists(client *grapi.Client, cr *v1beta1.GrafanaDashboard) (bool, error) {
-	dashboards, err := client.Dashboards()
+func (r *GrafanaDashboardReconciler) ExistingVersionMatchesStatus(client *grapi.Client, instanceStatus v1beta1.GrafanaDashboardInstanceStatus) (bool, error) {
+	existing, err := client.DashboardByUID(instanceStatus.UID)
 	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			return false, nil
+		}
 		return false, err
 	}
-	for _, dashboard := range dashboards {
-		if dashboard.UID == string(cr.UID) {
-			return true, nil
-		}
+
+	// XXX: is the float64 required??
+	if float64(instanceStatus.Version) == existing.Model["version"].(float64) {
+		return true, nil
 	}
+
 	return false, nil
 }
 
-func (r *GrafanaDashboardReconciler) GetOrCreateFolder(client *grapi.Client, cr *v1beta1.GrafanaDashboard) (int64, error) {
+func (r *GrafanaDashboardReconciler) GetOrCreateFolder(client *grapi.Client, cr *v1beta1.GrafanaDashboard) (*grapi.Folder, error) {
 	if cr.Spec.FolderTitle == "" {
-		return 0, nil
+		return nil, nil
 	}
 
-	folderID, err := r.GetFolderID(client, cr)
+	folder, err := r.GetFolder(client, cr)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	if folderID != 0 {
-		return folderID, nil
+	if folder != nil {
+		return folder, nil
 	}
 
 	// Folder wasn't found, let's create it
 	resp, err := client.NewFolder(cr.Spec.FolderTitle)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	return resp.ID, nil
+	return &resp, nil
 }
 
-func (r *GrafanaDashboardReconciler) GetFolderID(client *grapi.Client,
-	cr *v1beta1.GrafanaDashboard,
-) (int64, error) {
+func (r *GrafanaDashboardReconciler) GetFolder(client *grapi.Client, cr *v1beta1.GrafanaDashboard) (*grapi.Folder, error) {
 	folders, err := client.Folders()
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
 	for _, folder := range folders {
 		if folder.Title == cr.Spec.FolderTitle {
-			return folder.ID, nil
+			return &folder, nil
 		}
 		continue
 	}
-	return 0, nil
+	return nil, nil
 }
 
 func (r *GrafanaDashboardReconciler) DeleteFolderIfEmpty(client *grapi.Client, folderID int64) (http.Response, error) {
@@ -544,16 +532,16 @@ func (r *GrafanaDashboardReconciler) SetupWithManager(mgr ctrl.Manager, ctx cont
 func (r *GrafanaDashboardReconciler) GetMatchingDashboardInstances(ctx context.Context, dashboard *v1beta1.GrafanaDashboard, k8sClient client.Client) (v1beta1.GrafanaList, error) {
 	instances, err := GetMatchingInstances(ctx, k8sClient, dashboard.Spec.InstanceSelector)
 	if err != nil || len(instances.Items) == 0 {
-		dashboard.Status.NoMatchingInstances = true
-		if err := r.Client.Status().Update(ctx, dashboard); err != nil {
-			r.Log.Info("unable to update the status of %v, in %v", dashboard.Name, dashboard.Namespace)
-		}
+		r.SetReadyCondition(ctx, dashboard, v1.ConditionFalse, v1beta1.NoMatchingInstancesReason, "No instances found matching .spec.instanceSelector")
 		return v1beta1.GrafanaList{}, err
-	}
-	dashboard.Status.NoMatchingInstances = false
-	if err := r.Client.Status().Update(ctx, dashboard); err != nil {
-		r.Log.Info("unable to update the status of %v, in %v", dashboard.Name, dashboard.Namespace)
 	}
 
 	return instances, err
+}
+
+func (r *GrafanaDashboardReconciler) SetReadyCondition(ctx context.Context, dashboard *v1beta1.GrafanaDashboard, status v1.ConditionStatus, reason string, message string) {
+	dashboard.SetReadyCondition(status, reason, message)
+	if err := r.UpdateStatus(ctx, dashboard); err != nil {
+		r.Log.Info("unable to update the status of %v, in %v", dashboard.Name, dashboard.Namespace)
+	}
 }

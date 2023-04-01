@@ -51,9 +51,11 @@ func FetchDashboardFromUrl(dashboard *v1beta1.GrafanaDashboard) ([]byte, error) 
 		return []byte{}, fmt.Errorf("failed to gzip dashboard %v", dashboard.Name)
 	}
 
-	dashboard.Status.ContentCache = gz
-	dashboard.Status.ContentTimestamp = v1.Time{Time: time.Now()}
-	dashboard.Status.ContentUrl = dashboard.Spec.Url
+	dashboard.Status.Content = &v1beta1.GrafanaDashboardStatusContent{
+		Cache:     gz,
+		Timestamp: v1.Time{Time: time.Now()},
+		Url:       dashboard.Spec.Url,
+	}
 
 	return content, nil
 }
