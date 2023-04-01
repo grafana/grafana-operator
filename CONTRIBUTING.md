@@ -9,6 +9,9 @@ The operator uses unit tests and [Kuttl](https://kuttl.dev/) for e2e tests to ma
 The operator use a submodule for [grafonnet-lib](https://github.com/grafana/grafonnet-lib),
 one of the first things you have to do is to run `make submodule`.
 
+When creating a PR our CI will run lots of different tests to try to follow our standards.
+Please run `make all` before creating your PR if it contains any code changes.
+
 ### Code standards
 
 We use a number of code standards in the project that we apply using a number of different tools.
@@ -147,6 +150,18 @@ But if you generate new RBAC rules or create new deployment options for the oper
 Chart.yaml `appVersion` follows the grafana-operator version but the helm chart is versioned separately.
 
 If you add update the chart don't forget to run `make helm-docs`, which will update the helm specific README file.
+
+### Kustomize
+
+The operator also supports being installed by Kustomize.
+To minimize CI times we didn't want to add kustomize to all make commands. Instead we have a separate command to generated the CRDs for Kustomize.
+To generate CRD updates for kustomize please run.
+
+```shell
+make kustomize-crd
+# or
+make all
+```
 
 ## Documentation
 
