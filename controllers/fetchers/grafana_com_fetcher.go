@@ -28,9 +28,13 @@ func FetchDashboardFromGrafanaCom(dashboard *v1beta1.GrafanaDashboard) ([]byte, 
 		source.Revision = &rev
 	}
 
+	// XXX: very hacky but the operator probably shouldn't edit the .spec, right?
+	previousUrl := dashboard.Spec.Url
 	dashboard.Spec.Url = fmt.Sprintf("%s/%d/revisions/%d/download", grafanaComDashboardApiUrlRoot, source.Id, *source.Revision)
+	content, err := FetchDashboardFromUrl(dashboard)
+	dashboard.Spec.Url = previousUrl
 
-	return FetchDashboardFromUrl(dashboard)
+	return content, err
 }
 
 func getLatestGrafanaComRevision(dashboard *v1beta1.GrafanaDashboard) (int, error) {
