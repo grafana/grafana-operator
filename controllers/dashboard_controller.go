@@ -25,13 +25,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana-operator/grafana-operator/embeds"
+	"github.com/grafana-operator/grafana-operator/v5/embeds"
 
 	"github.com/go-logr/logr"
-	"github.com/grafana-operator/grafana-operator/api/v1beta1"
-	client2 "github.com/grafana-operator/grafana-operator/controllers/client"
-	"github.com/grafana-operator/grafana-operator/controllers/fetchers"
-	"github.com/grafana-operator/grafana-operator/controllers/metrics"
+	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
+	client2 "github.com/grafana-operator/grafana-operator/v5/controllers/client"
+	"github.com/grafana-operator/grafana-operator/v5/controllers/fetchers"
+	"github.com/grafana-operator/grafana-operator/v5/controllers/metrics"
 	grapi "github.com/grafana/grafana-api-golang-client"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
