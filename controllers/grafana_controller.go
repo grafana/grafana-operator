@@ -39,7 +39,7 @@ import (
 )
 
 const (
-	RequeueDelay = 10 * time.Second
+	RequeueDelay = 60 * time.Second
 )
 
 // GrafanaReconciler reconciles a Grafana object

@@ -52,8 +52,8 @@ func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Gr
 	ingress := model.GetGrafanaIngress(cr, scheme)
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, ingress, func() error {
-		ingress.Spec = getIngressSpec(cr, scheme)
-		return v1beta1.Merge(ingress, cr.Spec.Ingress)
+		ingress.Spec = mergeIngressSpec(cr, scheme)
+		return v1beta1.Merge(&ingress.ObjectMeta, cr.Spec.Ingress.ObjectMeta)
 	})
 	if err != nil {
 		return v1beta1.OperatorStageResultFailed, err
@@ -186,7 +186,7 @@ func getRouteSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) routev1.RouteSpec
 	}
 }
 
-func getIngressSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) v1.IngressSpec {
+func mergeIngressSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) v1.IngressSpec {
 	service := model.GetGrafanaService(cr, scheme)
 
 	port := GetIngressTargetPort(cr)
@@ -199,27 +199,29 @@ func getIngressSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) v1.IngressSpec 
 	}
 
 	pathType := v1.PathTypePrefix
-	return v1.IngressSpec{
-		Rules: []v1.IngressRule{
-			{
-				IngressRuleValue: v1.IngressRuleValue{
-					HTTP: &v1.HTTPIngressRuleValue{
-						Paths: []v1.HTTPIngressPath{
-							{
-								Path:     "/",
-								PathType: &pathType,
-								Backend: v1.IngressBackend{
-									Service: &v1.IngressServiceBackend{
-										Name: service.Name,
-										Port: assignedPort,
-									},
-									Resource: nil,
-								},
-							},
-						},
-					},
-				},
+	path := v1.HTTPIngressPath{
+		Path:     "/",
+		PathType: &pathType,
+		Backend: v1.IngressBackend{
+			Service: &v1.IngressServiceBackend{
+				Name: service.Name,
+				Port: assignedPort,
 			},
+			Resource: nil,
 		},
 	}
+
+	res := v1.IngressSpec{Rules: []v1.IngressRule{}}
+
+	for _, rule := range cr.Spec.Ingress.Spec.Rules {
+		if rule.HTTP == nil || rule.HTTP.Paths == nil {
+			rule.HTTP = &v1.HTTPIngressRuleValue{
+				Paths: []v1.HTTPIngressPath{},
+			}
+		}
+
+		rule.HTTP.Paths = append(rule.HTTP.Paths, path)
+		res.Rules = append(res.Rules, rule)
+	}
+	return res
 }
