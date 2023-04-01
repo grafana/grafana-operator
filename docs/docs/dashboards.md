@@ -253,7 +253,12 @@ Remember, depending on where you get your dashboards you might become rate limit
 
 ## Dashboard UID management
 
-TODO
+When a dashboard is imported into a Grafana, it gets assigned a random uid unless it's hardcoded in dashboard's code. It creates two challenges from the operator's perspective:
+
+- If uid is not hardcoded, the same dashboard in each Grafana instance will be identified by its own random uid, so the operator needs to keep track of those across many instances;
+- If, at a certain point, uid gets added to an existing `GrafanaDashboard` CR or removed from there, the operator would need to garbage collect the dashboard with the previous uid and recreate it with a new one even if uid was the only change.
+
+To mitigate both scenarios, the operator follows a consistent uid approach. - Whenever a resource is created in Kubernetes, it gets automatically assigned a uid (`metadata.uid`). uid stays the same throughout the whole lifecycle of the resource. - When a CR with `GrafanaDashboard` is created, the operator takes `metadata.uid` and uses it as a dashboard's uid in all Grafana instances. As a consequence, it's not possible to override uid, any value specified in dashboard's spec will be ignored.
 
 ## Custom folders
 
