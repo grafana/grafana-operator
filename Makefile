@@ -52,11 +52,14 @@ help: ## Display this help.
 
 ##@ Development
 
-.PHONY: manifests kustomize
+.PHONY: manifests
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." crd:maxDescLen=0,generateEmbeddedObjectMeta=false output:crd:artifacts:config=config/crd/bases
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." crd:maxDescLen=0,generateEmbeddedObjectMeta=false output:crd:artifacts:config=deploy/helm/grafana-operator/crds
-	$(KUSTOMIZE) build config/ -o deploy/base/crds.yaml
+
+.PHONY: kustomize-crd
+kustomize-crd: kustomize manifests
+	$(KUSTOMIZE) build config/ -o deploy/kustomize/base/crds.yaml
 
 # Generate API reference documentation
 api-docs: gen-crd-api-reference-docs kustomize
@@ -76,7 +79,7 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 .PHONY: test
-test: kustomize manifests generate code/gofumpt api-docs vet envtest ## Run tests.
+test: manifests generate code/gofumpt api-docs vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile cover.out
 
 ##@ Build
