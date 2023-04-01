@@ -28,6 +28,32 @@ jobs:
           helm package --app-version ${{ github.ref_name }} --version ${{ github.ref_name }} grafana-operator
           helm push grafana-operator-${{ github.ref_name }}.tgz ${{ env.HELM_REPO }}
 
+  kustomize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: install flux
+        uses: fluxcd/flux2/action@v0.41.2
+      - name: Clone repo
+        uses: actions/checkout@v3
+
+      - name: Prepare
+        run: |
+          # OCI standard enforces lower-case paths
+          KUSTOMIZE_REPO=$(echo "oci://ghcr.io/${{ github.repository_owner }}/kustomize/grafana-operator" | tr '[:upper:]' '[:lower:]')
+          echo "KUSTOMIZE_REPO=$KUSTOMIZE_REPO" >> $GITHUB_ENV
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish Kustomize OCI artifact to GHCR
+        run: |
+          flux push artifact ${{ env.KUSTOMIZE_REPO }}:${{ github.ref_name }} \
+            --path="./deploy/kustomize" \
+            --source="${{ github.event.repository.html_url }}" \
+            --revision="${GITHUB_REF_NAME}/${GITHUB_SHA}"
+
   image:
     runs-on: ubuntu-latest
     steps:
