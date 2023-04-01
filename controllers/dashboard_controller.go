@@ -257,7 +257,7 @@ func (r *GrafanaDashboardReconciler) onDashboardDeleted(ctx context.Context, nam
 			}
 
 			if dash != nil && dash.Meta.Folder > 0 {
-				resp, err := r.DeleteFolderIfEmpty(grafanaClient, dash.Folder)
+				resp, err := r.DeleteFolderIfEmpty(grafanaClient, dash.FolderID)
 				if err != nil {
 					return err
 				}
@@ -339,7 +339,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 			Folder:    folderID,
 		},
 		Model:     dashboardFromJson,
-		Folder:    folderID,
+		FolderID:  folderID,
 		Overwrite: true,
 		Message:   "",
 	})

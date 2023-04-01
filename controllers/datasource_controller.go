@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -289,19 +290,26 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 
 	// always use the same uid for CR and datasource
 	cr.Spec.Datasource.UID = string(cr.UID)
-	datasourceBytes, err := cr.ExpandVariables(variables)
+	rawDatasourceBytes, err := cr.ExpandVariables(variables)
+	if err != nil {
+		return err
+	}
+
+	var unmarshalledDatasource gapi.DataSource
+
+	err = json.Unmarshal(rawDatasourceBytes, &unmarshalledDatasource)
 	if err != nil {
 		return err
 	}
 
 	switch {
 	case id == nil:
-		_, err = grafanaClient.NewDataSourceFromRawData(datasourceBytes)
+		_, err = grafanaClient.NewDataSource(&unmarshalledDatasource)
 		if err != nil && !strings.Contains(err.Error(), "status: 409") {
 			return err
 		}
 	case !cr.Unchanged():
-		err := grafanaClient.UpdateDataSourceFromRawData(*id, datasourceBytes)
+		err := grafanaClient.UpdateDataSource(&unmarshalledDatasource)
 		if err != nil {
 			return err
 		}
