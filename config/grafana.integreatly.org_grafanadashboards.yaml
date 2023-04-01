@@ -245,9 +245,6 @@ spec:
                     Version:
                       format: int64
                       type: integer
-                    folderId:
-                      format: int64
-                      type: integer
                   type: object
                 description: Instances stores UID, version, and folder info for each
                   instance the dashboard has been created in

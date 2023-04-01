@@ -168,9 +168,6 @@ spec:
                     Version:
                       format: int64
                       type: integer
-                    folderId:
-                      format: int64
-                      type: integer
                   type: object
                 type: object
             type: object

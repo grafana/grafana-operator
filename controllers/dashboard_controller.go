@@ -320,10 +320,13 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		r.SetReadyCondition(ctx, cr, v1.ConditionFalse, v1beta1.GrafanaApiErrorReason, fmt.Sprintf("failed get or create folder: %s", err))
 		return errors.NewInternalError(err)
 	}
+	folderId := int64(0)
+	if folder != nil {
+		folderId = folder.ID
+	}
 
 	shouldCreate := true
 	if instanceStatus, ok := cr.Status.Instances[string(grafana.GetUID())]; ok {
-		instanceStatus.FolderId = folder.ID
 		existingMatches, err := r.ExistingVersionMatchesStatus(grafanaClient, instanceStatus)
 		if err != nil {
 			r.SetReadyCondition(ctx, cr, v1.ConditionFalse, v1beta1.GrafanaApiErrorReason, fmt.Sprintf("failed check for existing dashboard: %s", err))
@@ -332,8 +335,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		shouldCreate = !existingMatches
 	} else {
 		cr.Status.Instances[string(grafana.GetUID())] = v1beta1.GrafanaDashboardInstanceStatus{
-			FolderId: folder.ID,
-			UID:      manifest["uid"].(string),
+			UID: manifest["uid"].(string),
 		}
 	}
 
@@ -342,10 +344,10 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 			Meta: grapi.DashboardMeta{
 				IsStarred: false,
 				Slug:      cr.Name,
-				Folder:    folder.ID,
+				Folder:    folderId,
 			},
 			Model:     manifest,
-			Folder:    folder.ID,
+			Folder:    folderId,
 			Overwrite: true,
 			Message:   "",
 		})

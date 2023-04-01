@@ -122,9 +122,8 @@ type GrafanaDashboardStatusContent struct {
 }
 
 type GrafanaDashboardInstanceStatus struct {
-	Version  int64  `json:"Version,omitempty"`
-	UID      string `json:"UID,omitempty"`
-	FolderId int64  `json:"folderId,omitempty"`
+	Version int64  `json:"Version,omitempty"`
+	UID     string `json:"UID,omitempty"`
 }
 
 //+kubebuilder:object:root=true
