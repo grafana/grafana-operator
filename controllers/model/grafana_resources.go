@@ -21,6 +21,7 @@ func GetGrafanaConfigMap(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1
 		},
 	}
 	if err := controllerutil.SetControllerReference(cr, config, scheme); err != nil {
+		// TODO: Since we dont want to return an error the SetControllerReference really shouldnt be here
 		panic(err)
 	}
 	return config
@@ -33,11 +34,9 @@ func GetGrafanaAdminSecret(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *
 			Namespace: cr.Namespace,
 		},
 	}
-
-	if scheme != nil {
-		if err := controllerutil.SetControllerReference(cr, secret, scheme); err != nil {
-			panic(err)
-		}
+	if err := controllerutil.SetControllerReference(cr, secret, scheme); err != nil {
+		// TODO: Since we dont want to return an error the SetControllerReference really shouldnt be here
+		panic(err)
 	}
 	return secret
 }
@@ -50,6 +49,7 @@ func GetGrafanaDataPVC(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1.P
 		},
 	}
 	if err := controllerutil.SetControllerReference(cr, pvc, scheme); err != nil {
+		// TODO: Since we dont want to return an error the SetControllerReference really shouldnt be here
 		panic(err)
 	}
 	return pvc
@@ -63,6 +63,7 @@ func GetGrafanaServiceAccount(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme
 		},
 	}
 	if err := controllerutil.SetControllerReference(cr, sa, scheme); err != nil {
+		// TODO: Since we dont want to return an error the SetControllerReference really shouldnt be here
 		panic(err)
 	}
 	return sa
@@ -76,6 +77,7 @@ func GetGrafanaService(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1.S
 		},
 	}
 	if err := controllerutil.SetControllerReference(cr, service, scheme); err != nil {
+		// TODO: Since we dont want to return an error the SetControllerReference really shouldnt be here
 		panic(err)
 	}
 	return service
@@ -89,6 +91,7 @@ func GetGrafanaIngress(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v12.
 		},
 	}
 	if err := controllerutil.SetControllerReference(cr, ingress, scheme); err != nil {
+		// TODO: Since we dont want to return an error the SetControllerReference really shouldnt be here
 		panic(err)
 	}
 	return ingress
@@ -102,6 +105,7 @@ func GetGrafanaRoute(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *routev
 		},
 	}
 	if err := controllerutil.SetControllerReference(cr, route, scheme); err != nil {
+		// TODO: Since we dont want to return an error the SetControllerReference really shouldnt be here
 		panic(err)
 	}
 	return route
@@ -114,10 +118,9 @@ func GetGrafanaDeployment(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v
 			Namespace: cr.Namespace,
 		},
 	}
-	if scheme != nil {
-		if err := controllerutil.SetControllerReference(cr, deployment, scheme); err != nil {
-			panic(err)
-		}
+	if err := controllerutil.SetControllerReference(cr, deployment, scheme); err != nil {
+		// TODO: Since we dont want to return an error the SetControllerReference really shouldnt be here
+		panic(err)
 	}
 	return deployment
 }

@@ -44,13 +44,10 @@ spec:
           spec:
             description: GrafanaDashboardSpec defines the desired state of GrafanaDashboard
             properties:
-              allowCrossNamespaceImport:
+              allowCrossNamespaceReferences:
                 description: allow to import this resources from an operator in a
                   different namespace
                 type: boolean
-              contentCacheDuration:
-                description: Cache duration for dashboards fetched from URLs
-                type: string
               datasources:
                 description: maps required data sources to existing ones
                 items:
@@ -66,21 +63,6 @@ spec:
                 type: array
               folder:
                 description: folder assignment for dashboard
-                type: string
-              grafanaCom:
-                description: grafana.com/dashboards
-                properties:
-                  id:
-                    type: integer
-                  revision:
-                    type: integer
-                required:
-                - id
-                type: object
-              gzipJson:
-                description: GzipJson the dashboard's JSON compressed with Gzip. Base64-encoded
-                  when in YAML.
-                format: byte
                 type: string
               instanceSelector:
                 description: selects Grafanas for import
@@ -127,11 +109,9 @@ spec:
                     type: object
                 type: object
                 x-kubernetes-map-type: atomic
-              json:
-                description: dashboard json
-                type: string
-              jsonnet:
-                description: Jsonnet
+              interval:
+                description: how often the dashboard is endured to exist on the selected
+                  instances, defaults to 24h if not set
                 type: string
               plugins:
                 description: plugins
@@ -146,15 +126,72 @@ spec:
                   - version
                   type: object
                 type: array
-              resyncPeriod:
-                description: how often the dashboard is refreshed, defaults to 24h
-                  if not set
-                type: string
-              url:
-                description: dashboard url
-                type: string
+              source:
+                maxProperties: 1
+                minProperties: 1
+                properties:
+                  configMap:
+                    description: Selects a key from a ConfigMap.
+                    properties:
+                      key:
+                        description: The key to select.
+                        type: string
+                      name:
+                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                          TODO: Add other useful fields. apiVersion, kind, uid?'
+                        type: string
+                      optional:
+                        description: Specify whether the ConfigMap or its key must
+                          be defined
+                        type: boolean
+                    required:
+                    - key
+                    type: object
+                    x-kubernetes-map-type: atomic
+                  inline:
+                    maxProperties: 1
+                    minProperties: 1
+                    properties:
+                      gzipJson:
+                        description: GzipJson the dashboard's JSON compressed with
+                          Gzip. Base64-encoded when in YAML.
+                        format: byte
+                        type: string
+                      json:
+                        description: dashboard json
+                        type: string
+                      jsonnet:
+                        description: Jsonnet
+                        type: string
+                    type: object
+                  remote:
+                    maxProperties: 2
+                    minProperties: 2
+                    properties:
+                      contentCacheDuration:
+                        description: Cache duration for dashboards fetched from URLs
+                        type: string
+                      grafanaCom:
+                        description: grafana.com/dashboards
+                        properties:
+                          id:
+                            type: integer
+                          revision:
+                            type: integer
+                        required:
+                        - id
+                        type: object
+                      url:
+                        description: dashboard url
+                        type: string
+                    required:
+                    - contentCacheDuration
+                    type: object
+                type: object
             required:
             - instanceSelector
+            - interval
+            - source
             type: object
           status:
             description: GrafanaDashboardStatus defines the observed state of GrafanaDashboard

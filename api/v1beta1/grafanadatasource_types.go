@@ -18,28 +18,31 @@ package v1beta1
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
+	"github.com/grafana-operator/grafana-operator/v5/api"
+	gapi "github.com/grafana/grafana-api-golang-client"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type GrafanaDatasourceInternal struct {
-	UID           string `json:"uid,omitempty"`
-	Name          string `json:"name,omitempty"`
-	Type          string `json:"type,omitempty"`
-	URL           string `json:"url,omitempty"`
-	Access        string `json:"access,omitempty"`
-	Database      string `json:"database,omitempty"`
-	User          string `json:"user,omitempty"`
-	OrgID         *int64 `json:"orgId,omitempty"`
-	IsDefault     *bool  `json:"isDefault,omitempty"`
-	BasicAuth     *bool  `json:"basicAuth,omitempty"`
+type GrafanaDatasourceDataSource struct {
+	ID     int64  `json:"id,omitempty"`
+	UID    string `json:"uid,omitempty"`
+	Name   string `json:"name"`
+	Type   string `json:"type"`
+	URL    string `json:"url"`
+	Access string `json:"access"`
+
+	Database string `json:"database,omitempty"`
+	User     string `json:"user,omitempty"`
+
+	OrgID     int64 `json:"orgId,omitempty"`
+	IsDefault bool  `json:"isDefault"`
+
+	BasicAuth     bool   `json:"basicAuth"`
 	BasicAuthUser string `json:"basicAuthUser,omitempty"`
-	Editable      *bool  `json:"editable,omitempty"`
 
 	// +kubebuilder:validation:Schemaless
 	// +kubebuilder:pruning:PreserveUnknownFields
@@ -56,9 +59,9 @@ type GrafanaDatasourceInternal struct {
 
 // GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
 type GrafanaDatasourceSpec struct {
-	Datasource *GrafanaDatasourceInternal `json:"datasource,omitempty"`
+	DataSource GrafanaDatasourceDataSource `json:"datasource,omitempty"`
 
-	// selects Grafana instances for import
+	// selects Grafana instances
 	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`
 
 	// plugins
@@ -69,21 +72,26 @@ type GrafanaDatasourceSpec struct {
 	// +optional
 	Secrets []string `json:"secrets,omitempty"`
 
-	// how often the datasource is refreshed, defaults to 24h if not set
-	// +optional
-	ResyncPeriod string `json:"resyncPeriod,omitempty"`
+	// how often the datasource is refreshed
+	Interval metav1.Duration `json:"interval"`
 
 	// allow to import this resources from an operator in a different namespace
 	// +optional
-	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
+	AllowCrossNamespaceReferences *bool `json:"allowCrossNamespaceImport,omitempty"`
 }
 
 // GrafanaDatasourceStatus defines the observed state of GrafanaDatasource
 type GrafanaDatasourceStatus struct {
-	Hash        string `json:"hash,omitempty"`
-	LastMessage string `json:"lastMessage,omitempty"`
-	// The datasource instanceSelector can't find matching grafana instances
-	NoMatchingInstances bool `json:"NoMatchingInstances,omitempty"`
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
+
+	// Instances stores UID, version, and folder info for each instance the datasource has been created in
+	// +optional
+	Instances map[string]GrafanaDatasourceInstanceStatus `json:"instances,omitempty"`
+}
+
+type GrafanaDatasourceInstanceStatus struct {
+	ID  int64  `json:"ID,omitempty"`
+	UID string `json:"UID,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -107,69 +115,12 @@ type GrafanaDatasourceList struct {
 	Items           []GrafanaDatasource `json:"items"`
 }
 
-func (in *GrafanaDatasource) Hash() string {
-	hash := sha256.New()
-
-	if in.Spec.Datasource != nil {
-		hash.Write([]byte(in.Spec.Datasource.Name))
-		hash.Write([]byte(in.Spec.Datasource.Access))
-		hash.Write([]byte(in.Spec.Datasource.BasicAuthUser))
-		hash.Write(in.Spec.Datasource.JSONData)
-		hash.Write(in.Spec.Datasource.SecureJSONData)
-		hash.Write([]byte(in.Spec.Datasource.Database))
-		hash.Write([]byte(in.Spec.Datasource.Type))
-		hash.Write([]byte(in.Spec.Datasource.User))
-		hash.Write([]byte(in.Spec.Datasource.URL))
-
-		for _, secret := range in.Spec.Secrets {
-			hash.Write([]byte(secret))
-		}
-
-		if in.Spec.Datasource.BasicAuth != nil && *in.Spec.Datasource.BasicAuth {
-			hash.Write([]byte("_"))
-		}
-
-		if in.Spec.Datasource.IsDefault != nil && *in.Spec.Datasource.IsDefault {
-			hash.Write([]byte("_"))
-		}
-
-		if in.Spec.Datasource.OrgID != nil {
-			hash.Write([]byte(fmt.Sprint(*in.Spec.Datasource.OrgID)))
-		}
-
-		if in.Spec.Datasource.Editable != nil && *in.Spec.Datasource.Editable {
-			hash.Write([]byte("_"))
-		}
-	}
-
-	return fmt.Sprintf("%x", hash.Sum(nil))
-}
-
 func (in *GrafanaDatasource) GetResyncPeriod() time.Duration {
-	if in.Spec.ResyncPeriod == "" {
-		in.Spec.ResyncPeriod = DefaultResyncPeriod
-		return in.GetResyncPeriod()
-	}
-
-	duration, err := time.ParseDuration(in.Spec.ResyncPeriod)
-	if err != nil {
-		in.Spec.ResyncPeriod = DefaultResyncPeriod
-		return in.GetResyncPeriod()
-	}
-
-	return duration
+	return in.Spec.Interval.Duration
 }
 
-func (in *GrafanaDatasource) Unchanged() bool {
-	return in.Hash() == in.Status.Hash
-}
-
-func (in *GrafanaDatasource) ExpandVariables(variables map[string][]byte) ([]byte, error) {
-	if in.Spec.Datasource == nil {
-		return nil, errors.New("data source is empty, can't expand variables")
-	}
-
-	raw, err := json.Marshal(in.Spec.Datasource)
+func (in *GrafanaDatasource) ExpandVariables(variables map[string][]byte) (*gapi.DataSource, error) {
+	raw, err := json.Marshal(in.Spec.DataSource)
 	if err != nil {
 		return nil, err
 	}
@@ -181,14 +132,36 @@ func (in *GrafanaDatasource) ExpandVariables(variables map[string][]byte) ([]byt
 		}
 	}
 
-	return raw, nil
+	var new gapi.DataSource
+	err = json.Unmarshal(raw, &new)
+	if err != nil {
+		return nil, err
+	}
+
+	return &new, nil
 }
 
 func (in *GrafanaDatasource) IsAllowCrossNamespaceImport() bool {
-	if in.Spec.AllowCrossNamespaceImport != nil {
-		return *in.Spec.AllowCrossNamespaceImport
+	if in.Spec.AllowCrossNamespaceReferences != nil {
+		return *in.Spec.AllowCrossNamespaceReferences
 	}
 	return false
+}
+
+func (in *GrafanaDatasource) GetConditions() []metav1.Condition {
+	return in.Status.Conditions
+}
+
+func (in *GrafanaDatasource) SetConditions(conditions []metav1.Condition) {
+	in.Status.Conditions = conditions
+}
+
+func (in *GrafanaDatasource) GetReadyCondition() *metav1.Condition {
+	return api.GetReadyCondition(in)
+}
+
+func (in *GrafanaDatasource) SetReadyCondition(status metav1.ConditionStatus, reason string, message string) {
+	api.SetReadyCondition(in, status, reason, message)
 }
 
 func (in *GrafanaDatasourceList) Find(namespace string, name string) *GrafanaDatasource {

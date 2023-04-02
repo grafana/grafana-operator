@@ -74,7 +74,7 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 		return credentials, nil
 	}
 
-	deployment := model.GetGrafanaDeployment(grafana, nil)
+	deployment := model.GetGrafanaDeployment(grafana, c.Scheme())
 	selector := client.ObjectKey{
 		Namespace: deployment.Namespace,
 		Name:      deployment.Name,

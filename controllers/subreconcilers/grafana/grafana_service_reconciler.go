@@ -5,34 +5,29 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/go-logr/logr"
 	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana-operator/grafana-operator/v5/controllers/config"
 	"github.com/grafana-operator/grafana-operator/v5/controllers/model"
-	"github.com/grafana-operator/grafana-operator/v5/controllers/reconcilers"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type ServiceReconciler struct {
-	client client.Client
+	client.Client
+	Log    logr.Logger
+	Scheme *runtime.Scheme
 }
 
-func NewServiceReconciler(client client.Client) reconcilers.OperatorGrafanaReconciler {
-	return &ServiceReconciler{
-		client: client,
-	}
-}
+func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana) (*metav1.Condition, error) {
 
-func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
-	_ = log.FromContext(ctx)
+	service := model.GetGrafanaService(cr, r.Scheme) // todo: inline  model
 
-	service := model.GetGrafanaService(cr, scheme)
-
-	_, err := controllerutil.CreateOrUpdate(ctx, r.client, service, func() error {
+	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, service, func() error {
 		service.Spec = v1.ServiceSpec{
 			Ports: getServicePorts(cr),
 			Selector: map[string]string{
@@ -43,16 +38,16 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 		return v1beta1.Merge(service, cr.Spec.Service)
 	})
 	if err != nil {
-		return v1beta1.OperatorStageResultFailed, err
+		return nil, err // toodo: error condition
 	}
 
 	// try to assign the admin url
 	if !cr.PreferIngress() {
-		status.AdminUrl = fmt.Sprintf("%v://%v.%v:%d", getGrafanaServerProtocol(cr), service.Name, cr.Namespace,
+		cr.Status.AdminUrl = fmt.Sprintf("%v://%v.%v:%d", getGrafanaServerProtocol(cr), service.Name, cr.Namespace,
 			int32(GetGrafanaPort(cr)))
 	}
 
-	return v1beta1.OperatorStageResultSuccess, nil
+	return nil, nil // todo; success condition
 }
 
 func getGrafanaServerProtocol(cr *v1beta1.Grafana) string {

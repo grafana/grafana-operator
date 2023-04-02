@@ -17,13 +17,16 @@ limitations under the License.
 package v1beta1
 
 import (
+	"strings"
+
+	"github.com/grafana-operator/grafana-operator/v5/api"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type OperatorStageName string
-
-type OperatorStageStatus string
 
 const (
 	OperatorStageGrafanaConfig  OperatorStageName = "config"
@@ -35,12 +38,6 @@ const (
 	OperatorStagePlugins        OperatorStageName = "plugins"
 	OperatorStageDeployment     OperatorStageName = "deployment"
 	OperatorStageComplete       OperatorStageName = "complete"
-)
-
-const (
-	OperatorStageResultSuccess    OperatorStageStatus = "success"
-	OperatorStageResultFailed     OperatorStageStatus = "failed"
-	OperatorStageResultInProgress OperatorStageStatus = "in progress"
 )
 
 // temporary values passed between reconciler stages
@@ -102,13 +99,8 @@ type GrafanaClient struct {
 
 // GrafanaStatus defines the observed state of Grafana
 type GrafanaStatus struct {
-	Stage       OperatorStageName      `json:"stage,omitempty"`
-	StageStatus OperatorStageStatus    `json:"stageStatus,omitempty"`
-	LastMessage string                 `json:"lastMessage,omitempty"`
-	AdminUrl    string                 `json:"adminUrl,omitempty"`
-	Dashboards  NamespacedResourceList `json:"dashboards,omitempty"`
-	Datasources NamespacedResourceList `json:"datasources,omitempty"`
-	Folders     NamespacedResourceList `json:"folders,omitempty"`
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	AdminUrl   string             `json:"adminUrl,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -148,5 +140,37 @@ func (in *Grafana) IsExternal() bool {
 }
 
 func (in *Grafana) Ready() bool {
-	return in.Status.Stage == OperatorStageComplete && in.Status.StageStatus == OperatorStageResultSuccess
+	return in.GetReadyCondition().Status == metav1.ConditionTrue
+}
+
+func (in *Grafana) GetConditions() []metav1.Condition {
+	return in.Status.Conditions
+}
+
+func (in *Grafana) SetConditions(conditions []metav1.Condition) {
+	in.Status.Conditions = conditions
+}
+
+func (in *Grafana) GetReadyCondition() *metav1.Condition {
+	return api.GetReadyCondition(in)
+}
+
+func (in *Grafana) SetCondition(condition metav1.Condition) bool {
+	return api.SetCondition(in, condition)
+}
+
+func (in *Grafana) SetReadyCondition(status metav1.ConditionStatus, reason string, message string) bool {
+	return api.SetReadyCondition(in, status, reason, message)
+}
+
+func InstanceKeyFor(grafana *Grafana) string {
+	return client.ObjectKeyFromObject(grafana).String()
+}
+
+func NamespacedNameFor(instanceKey string) client.ObjectKey {
+	split := strings.Split("instanceKey", string(types.Separator))
+	return client.ObjectKey{
+		Namespace: split[0],
+		Name:      split[1],
+	}
 }

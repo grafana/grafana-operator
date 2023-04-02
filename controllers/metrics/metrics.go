@@ -34,13 +34,6 @@ var (
 		Help:      "requests to fetch dashboards from urls",
 	}, []string{"dashboard", "method", "status"})
 
-	GrafanaComApiRevisionRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "grafana_operator",
-		Subsystem: "dashboards",
-		Name:      "revision_requests",
-		Help:      "requests to list dashboard revisions on grafana.com/dashboards",
-	}, []string{"dashboard", "method", "status"})
-
 	InitialDashboardSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: "grafana_operator",
 		Subsystem: "dashboards",

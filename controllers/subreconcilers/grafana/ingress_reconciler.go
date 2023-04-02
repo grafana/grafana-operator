@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-logr/logr"
 	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana-operator/grafana-operator/v5/controllers/model"
-	"github.com/grafana-operator/grafana-operator/v5/controllers/reconcilers"
 	routev1 "github.com/openshift/api/route/v1"
 	v1 "k8s.io/api/networking/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -21,42 +22,37 @@ const (
 )
 
 type IngressReconciler struct {
-	client      client.Client
-	isOpenShift bool
+	client.Client
+	Log         logr.Logger
+	Scheme      *runtime.Scheme
+	IsOpenShift bool
 }
 
-func NewIngressReconciler(client client.Client, isOpenShift bool) reconcilers.OperatorGrafanaReconciler {
-	return &IngressReconciler{
-		client:      client,
-		isOpenShift: isOpenShift,
-	}
-}
-
-func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana) (*metav1.Condition, error) {
 	logger := log.FromContext(ctx)
 
-	if r.isOpenShift {
+	if r.IsOpenShift {
 		logger.Info("reconciling route", "platform", "openshift")
-		return r.reconcileRoute(ctx, cr, status, vars, scheme)
+		return r.reconcileRoute(ctx, cr)
 	} else {
 		logger.Info("reconciling ingress", "platform", "kubernetes")
-		return r.reconcileIngress(ctx, cr, status, vars, scheme)
+		return r.reconcileIngress(ctx, cr)
 	}
 }
 
-func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, _ *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Grafana) (*metav1.Condition, error) {
 	if cr.Spec.Ingress == nil || len(cr.Spec.Ingress.Spec.Rules) == 0 {
-		return v1beta1.OperatorStageResultSuccess, nil
+		return nil, nil // todo: success condition
 	}
 
-	ingress := model.GetGrafanaIngress(cr, scheme)
+	ingress := model.GetGrafanaIngress(cr, r.Scheme)
 
-	_, err := controllerutil.CreateOrUpdate(ctx, r.client, ingress, func() error {
-		ingress.Spec = mergeIngressSpec(cr, scheme)
+	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, ingress, func() error {
+		ingress.Spec = mergeIngressSpec(cr, r.Scheme)
 		return v1beta1.Merge(&ingress.ObjectMeta, cr.Spec.Ingress.ObjectMeta)
 	})
 	if err != nil {
-		return v1beta1.OperatorStageResultFailed, err
+		return nil, err // todo: err condition
 	}
 
 	// try to assign the admin url
@@ -64,39 +60,39 @@ func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Gr
 		adminURL := r.getIngressAdminURL(ingress)
 
 		if len(ingress.Status.LoadBalancer.Ingress) == 0 {
-			return v1beta1.OperatorStageResultInProgress, fmt.Errorf("ingress is not ready yet")
+			return nil, fmt.Errorf("ingress is not ready yet") // todo: in progress condition
 		}
 
 		if adminURL == "" {
-			return v1beta1.OperatorStageResultFailed, fmt.Errorf("ingress spec is incomplete")
+			return nil, fmt.Errorf("ingress spec is incomplete") // todo: err condition
 		}
 
-		status.AdminUrl = adminURL
+		cr.Status.AdminUrl = adminURL
 	}
 
-	return v1beta1.OperatorStageResultSuccess, nil
+	return nil, nil // todo: success condition
 }
 
-func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, _ *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
-	route := model.GetGrafanaRoute(cr, scheme)
+func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Grafana) (*metav1.Condition, error) {
+	route := model.GetGrafanaRoute(cr, r.Scheme) // todo inline model
 
-	_, err := controllerutil.CreateOrUpdate(ctx, r.client, route, func() error {
-		route.Spec = getRouteSpec(cr, scheme)
+	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, route, func() error {
+		route.Spec = getRouteSpec(cr, r.Scheme)
 		err := v1beta1.Merge(route, cr.Spec.Route)
 		return err
 	})
 	if err != nil {
-		return v1beta1.OperatorStageResultFailed, err
+		return nil, err // todo: err condition
 	}
 
 	// try to assign the admin url
 	if cr.PreferIngress() {
 		if route.Spec.Host != "" {
-			status.AdminUrl = fmt.Sprintf("https://%v", route.Spec.Host)
+			cr.Status.AdminUrl = fmt.Sprintf("https://%v", route.Spec.Host)
 		}
 	}
 
-	return v1beta1.OperatorStageResultSuccess, nil
+	return nil, nil // todod: success condition
 }
 
 // getIngressAdminURL returns the first valid URL (Host field is set) from the ingress spec
@@ -168,7 +164,7 @@ func GetIngressTargetPort(cr *v1beta1.Grafana) intstr.IntOrString {
 }
 
 func getRouteSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) routev1.RouteSpec {
-	service := model.GetGrafanaService(cr, scheme)
+	service := model.GetGrafanaService(cr, scheme) // todo inline model
 
 	port := GetIngressTargetPort(cr)
 
@@ -187,7 +183,7 @@ func getRouteSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) routev1.RouteSpec
 }
 
 func mergeIngressSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) v1.IngressSpec {
-	service := model.GetGrafanaService(cr, scheme)
+	service := model.GetGrafanaService(cr, scheme) // todo inline modeol
 
 	port := GetIngressTargetPort(cr)
 	var assignedPort v1.ServiceBackendPort

@@ -1,15 +1,14 @@
-package fetchers
+package dashboard
 
 import (
 	"embed"
-	"fmt"
 	"io/fs"
 	"path/filepath"
 	"strings"
 	"sync"
 
 	"github.com/google/go-jsonnet"
-	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana-operator/grafana-operator/v5/embeds"
 )
 
 // EmbedFSImporter "imports" data from an in-memory embedFS.
@@ -84,14 +83,11 @@ func (importer *EmbedFSImporter) Import(importedFrom, importedPath string) (cont
 	return foundContents, s, nil
 }
 
-func FetchJsonnet(dashboard *v1beta1.GrafanaDashboard, libsonnet embed.FS) ([]byte, error) {
-	if dashboard.Spec.Jsonnet == "" {
-		return nil, fmt.Errorf("no jsonnet Content Found, nil or empty string")
-	}
+func FetchJsonnet(snippet string) ([]byte, error) {
 	vm := jsonnet.MakeVM()
 
-	vm.Importer(&EmbedFSImporter{Embed: libsonnet})
+	vm.Importer(&EmbedFSImporter{Embed: embeds.GrafonnetEmbed})
 
-	jsonString, err := vm.EvaluateAnonymousSnippet(dashboard.Name, dashboard.Spec.Jsonnet)
+	jsonString, err := vm.EvaluateAnonymousSnippet("", snippet)
 	return []byte(jsonString), err
 }

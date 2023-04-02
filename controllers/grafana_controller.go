@@ -18,17 +18,17 @@ package controllers
 
 import (
 	"context"
-	"reflect"
 	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/grafana-operator/grafana-operator/v5/controllers/metrics"
-	"github.com/grafana-operator/grafana-operator/v5/controllers/reconcilers"
-	"github.com/grafana-operator/grafana-operator/v5/controllers/reconcilers/grafana"
+	reconcilers "github.com/grafana-operator/grafana-operator/v5/controllers/subreconcilers"
+	"github.com/grafana-operator/grafana-operator/v5/controllers/subreconcilers/grafana"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/discovery"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -50,6 +50,8 @@ type GrafanaReconciler struct {
 	Scheme      *runtime.Scheme
 	Discovery   discovery.DiscoveryInterface
 	IsOpenShift bool
+
+	subreconcilers []reconcilers.GrafanaSubReconciler
 }
 
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanas,verbs=get;list;watch;create;update;patch;delete
@@ -78,79 +80,96 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	metrics.GrafanaReconciles.WithLabelValues(grafana.Name).Inc()
 
-	finished := true
-	stages := getInstallationStages()
-	nextStatus := grafana.Status.DeepCopy()
-	vars := &grafanav1beta1.OperatorReconcileVars{}
-
 	if grafana.IsExternal() {
-		nextStatus.Stage = grafanav1beta1.OperatorStageComplete
-		nextStatus.StageStatus = grafanav1beta1.OperatorStageResultSuccess
-		nextStatus.AdminUrl = grafana.Spec.External.URL
-		return r.updateStatus(grafana, nextStatus)
-	}
-
-	for _, stage := range stages {
-		controllerLog.Info("running stage", "stage", stage)
-
-		nextStatus.Stage = stage
-		reconciler := r.getReconcilerForStage(stage)
-
-		if reconciler == nil {
-			controllerLog.Info("no reconciler known for stage", "stage", stage)
-			continue
+		apiAvailable := true // TODO: check api
+		updateStatus := false
+		if apiAvailable {
+			updateStatus = grafana.SetReadyCondition(metav1.ConditionTrue, grafanav1beta1.GrafanaApiAvailableReason, "Grafana API is available")
 		}
 
-		status, err := reconciler.Reconcile(ctx, grafana, nextStatus, vars, r.Scheme)
+		if grafana.Status.AdminUrl != grafana.Spec.External.URL {
+			updateStatus = true
+			grafana.Status.AdminUrl = grafana.Spec.External.URL
+		}
+
+		if !updateStatus {
+			return ctrl.Result{}, nil
+		}
+
+		return r.updateStatus(grafana)
+	}
+
+	updateStatus := false
+	for i, reconciler := range r.subreconcilers {
+		condition, err := reconciler.Reconcile(ctx, grafana)
 		if err != nil {
-			controllerLog.Error(err, "reconciler error in stage", "stage", stage)
-			nextStatus.LastMessage = err.Error()
+			updateStatus = updateStatus || grafana.SetCondition(*condition)
 
-			metrics.GrafanaFailedReconciles.WithLabelValues(grafana.Name, string(stage)).Inc()
-		} else {
-			nextStatus.LastMessage = ""
+			metrics.GrafanaFailedReconciles.WithLabelValues(grafana.Name, string(i)).Inc()
 		}
-
-		nextStatus.StageStatus = status
-
-		if status != grafanav1beta1.OperatorStageResultSuccess {
-			controllerLog.Info("stage in progress", "stage", stage)
-			finished = false
-			break
+		if condition != nil {
+			updateStatus = updateStatus || grafana.SetCondition(*condition)
 		}
 	}
 
-	if finished {
-		controllerLog.Info("grafana installation complete")
+	if updateStatus {
+		return r.updateStatus(grafana)
 	}
-
-	return r.updateStatus(grafana, nextStatus)
+	return ctrl.Result{}, nil
 }
 
-func (r *GrafanaReconciler) updateStatus(cr *grafanav1beta1.Grafana, nextStatus *grafanav1beta1.GrafanaStatus) (ctrl.Result, error) {
-	if !reflect.DeepEqual(&cr.Status, nextStatus) {
-		nextStatus.DeepCopyInto(&cr.Status)
-		err := r.Client.Status().Update(context.Background(), cr)
-		if err != nil {
-			return ctrl.Result{
-				Requeue:      true,
-				RequeueAfter: RequeueDelay,
-			}, err
-		}
-	}
-
-	if nextStatus.StageStatus != grafanav1beta1.OperatorStageResultSuccess {
+func (r *GrafanaReconciler) updateStatus(cr *grafanav1beta1.Grafana) (ctrl.Result, error) {
+	// TODO: DeepEquals check is not a terrible idea
+	err := r.Client.Status().Update(context.Background(), cr)
+	if err != nil {
 		return ctrl.Result{
 			Requeue:      true,
 			RequeueAfter: RequeueDelay,
-		}, nil
+		}, err
 	}
-
 	return ctrl.Result{}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *GrafanaReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.subreconcilers = []reconcilers.GrafanaSubReconciler{
+		&grafana.ConfigReconciler{
+			Client: mgr.GetClient(),
+			Scheme: mgr.GetScheme(),
+		},
+		&grafana.AdminSecretReconciler{
+			Client: mgr.GetClient(),
+			Scheme: mgr.GetScheme(),
+		},
+		&grafana.PvcReconciler{
+			Client: mgr.GetClient(),
+			Scheme: mgr.GetScheme(),
+		},
+		&grafana.ServiceAccountReconciler{
+			Client: mgr.GetClient(),
+			Scheme: mgr.GetScheme(),
+		},
+		&grafana.ServiceReconciler{
+			Client: mgr.GetClient(),
+			Scheme: mgr.GetScheme(),
+		},
+		&grafana.IngressReconciler{
+			Client:      mgr.GetClient(),
+			Scheme:      mgr.GetScheme(),
+			IsOpenShift: r.IsOpenShift,
+		},
+		&grafana.PluginsReconciler{
+			Client: mgr.GetClient(),
+			Scheme: mgr.GetScheme(),
+		},
+		&grafana.DeploymentReconciler{
+			Client:      mgr.GetClient(),
+			Scheme:      mgr.GetScheme(),
+			IsOpenShift: r.IsOpenShift,
+		},
+		&grafana.CompleteReconciler{},
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&grafanav1beta1.Grafana{}).
 		Owns(&appsv1.Deployment{}).
@@ -161,43 +180,4 @@ func (r *GrafanaReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&v1.PersistentVolumeClaim{}).
 		Owns(&networkingv1.Ingress{}).
 		Complete(r)
-}
-
-func getInstallationStages() []grafanav1beta1.OperatorStageName {
-	return []grafanav1beta1.OperatorStageName{
-		grafanav1beta1.OperatorStageAdminUser,
-		grafanav1beta1.OperatorStageGrafanaConfig,
-		grafanav1beta1.OperatorStagePvc,
-		grafanav1beta1.OperatorStageServiceAccount,
-		grafanav1beta1.OperatorStageService,
-		grafanav1beta1.OperatorStageIngress,
-		grafanav1beta1.OperatorStagePlugins,
-		grafanav1beta1.OperatorStageDeployment,
-		grafanav1beta1.OperatorStageComplete,
-	}
-}
-
-func (r *GrafanaReconciler) getReconcilerForStage(stage grafanav1beta1.OperatorStageName) reconcilers.OperatorGrafanaReconciler {
-	switch stage {
-	case grafanav1beta1.OperatorStageGrafanaConfig:
-		return grafana.NewConfigReconciler(r.Client)
-	case grafanav1beta1.OperatorStageAdminUser:
-		return grafana.NewAdminSecretReconciler(r.Client)
-	case grafanav1beta1.OperatorStagePvc:
-		return grafana.NewPvcReconciler(r.Client)
-	case grafanav1beta1.OperatorStageServiceAccount:
-		return grafana.NewServiceAccountReconciler(r.Client)
-	case grafanav1beta1.OperatorStageService:
-		return grafana.NewServiceReconciler(r.Client)
-	case grafanav1beta1.OperatorStageIngress:
-		return grafana.NewIngressReconciler(r.Client, r.IsOpenShift)
-	case grafanav1beta1.OperatorStagePlugins:
-		return grafana.NewPluginsReconciler(r.Client)
-	case grafanav1beta1.OperatorStageDeployment:
-		return grafana.NewDeploymentReconciler(r.Client, r.IsOpenShift)
-	case grafanav1beta1.OperatorStageComplete:
-		return grafana.NewCompleteReconciler()
-	default:
-		return nil
-	}
 }

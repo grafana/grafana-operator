@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-logr/logr"
 	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
 	config2 "github.com/grafana-operator/grafana-operator/v5/controllers/config"
 	"github.com/grafana-operator/grafana-operator/v5/controllers/model"
-	"github.com/grafana-operator/grafana-operator/v5/controllers/reconcilers"
 	v12 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v13 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -33,34 +34,29 @@ const (
 )
 
 type DeploymentReconciler struct {
-	client      client.Client
-	isOpenShift bool
+	client.Client
+	Log         logr.Logger
+	Scheme      *runtime.Scheme
+	IsOpenShift bool
 }
 
-func NewDeploymentReconciler(client client.Client, isOpenShift bool) reconcilers.OperatorGrafanaReconciler {
-	return &DeploymentReconciler{
-		client:      client,
-		isOpenShift: isOpenShift,
-	}
-}
-
-func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana) (*metav1.Condition, error) {
 	logger := log.FromContext(ctx)
 
-	openshiftPlatform := r.isOpenShift
+	openshiftPlatform := r.IsOpenShift
 	logger.Info("reconciling deployment", "openshift", openshiftPlatform)
 
-	deployment := model.GetGrafanaDeployment(cr, scheme)
-	_, err := controllerutil.CreateOrUpdate(ctx, r.client, deployment, func() error {
-		deployment.Spec = getDeploymentSpec(cr, deployment.Name, scheme, vars, openshiftPlatform)
+	deployment := model.GetGrafanaDeployment(cr, r.Scheme)
+	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, deployment, func() error {
+		deployment.Spec = getDeploymentSpec(cr, deployment.Name, r.Scheme, openshiftPlatform)
 		err := v1beta1.Merge(deployment, cr.Spec.Deployment)
 		return err
 	})
 	if err != nil {
-		return v1beta1.OperatorStageResultFailed, err
+		return nil, err // todo: error condition
 	}
 
-	return v1beta1.OperatorStageResultSuccess, nil
+	return nil, nil // todo: success condition
 }
 
 func getResources() v1.ResourceRequirements {
@@ -146,7 +142,7 @@ func getVolumeMounts(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.VolumeMou
 	return mounts
 }
 
-func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.OperatorReconcileVars, openshiftPlatform bool) []v1.Container {
+func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, openshiftPlatform bool) []v1.Container {
 	var containers []v1.Container
 
 	image := fmt.Sprintf("%s:%s", config2.GrafanaImage, config2.GrafanaVersion)
@@ -170,14 +166,14 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 
 	// env var to restart container if config changes
 	envVars = append(envVars, v1.EnvVar{
-		Name:  "CONFIG_HASH",
-		Value: vars.ConfigHash,
+		Name: "CONFIG_HASH",
+		// Value: vars.ConfigHash, // TODO
 	})
 
 	// env var to restart container if plugins change
 	envVars = append(envVars, v1.EnvVar{
-		Name:  "GF_INSTALL_PLUGINS",
-		Value: vars.Plugins,
+		Name: "GF_INSTALL_PLUGINS",
+		// Value: vars.Plugins, // TODO
 	})
 
 	containers = append(containers, v1.Container{
@@ -285,8 +281,8 @@ func getPodSecurityContext() *v1.PodSecurityContext {
 	}
 }
 
-func getDeploymentSpec(cr *v1beta1.Grafana, deploymentName string, scheme *runtime.Scheme, vars *v1beta1.OperatorReconcileVars, openshiftPlatform bool) v12.DeploymentSpec {
-	sa := model.GetGrafanaServiceAccount(cr, scheme)
+func getDeploymentSpec(cr *v1beta1.Grafana, deploymentName string, scheme *runtime.Scheme, openshiftPlatform bool) v12.DeploymentSpec {
+	sa := model.GetGrafanaServiceAccount(cr, scheme) // todo: inlinemodel
 
 	return v12.DeploymentSpec{
 		Selector: &v13.LabelSelector{
@@ -303,7 +299,7 @@ func getDeploymentSpec(cr *v1beta1.Grafana, deploymentName string, scheme *runti
 			},
 			Spec: v1.PodSpec{
 				Volumes:            getVolumes(cr, scheme),
-				Containers:         getContainers(cr, scheme, vars, openshiftPlatform),
+				Containers:         getContainers(cr, scheme, openshiftPlatform),
 				SecurityContext:    getPodSecurityContext(),
 				ServiceAccountName: sa.Name,
 			},

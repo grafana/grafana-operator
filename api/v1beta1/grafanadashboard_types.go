@@ -19,23 +19,12 @@ package v1beta1
 import (
 	"bytes"
 	"compress/gzip"
-	"crypto/sha256"
-	"fmt"
 	"io"
 	"time"
 
+	"github.com/grafana-operator/grafana-operator/v5/api"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-)
-
-type DashboardSourceType string
-
-const (
-	DashboardSourceTypeRawJson    DashboardSourceType = "json"
-	DashboardSourceTypeGzipJson   DashboardSourceType = "gzipJson"
-	DashboardSourceTypeUrl        DashboardSourceType = "url"
-	DashboardSourceTypeJsonnet    DashboardSourceType = "jsonnet"
-	DashboardSourceTypeGrafanaCom DashboardSourceType = "grafana"
-	DefaultResyncPeriod                               = "5m"
 )
 
 type GrafanaDashboardDatasource struct {
@@ -43,30 +32,9 @@ type GrafanaDashboardDatasource struct {
 	DatasourceName string `json:"datasourceName"`
 }
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // GrafanaDashboardSpec defines the desired state of GrafanaDashboard
 type GrafanaDashboardSpec struct {
-	// dashboard json
-	// +optional
-	Json string `json:"json,omitempty"`
-
-	// GzipJson the dashboard's JSON compressed with Gzip. Base64-encoded when in YAML.
-	// +optional
-	GzipJson []byte `json:"gzipJson,omitempty"`
-
-	// dashboard url
-	// +optional
-	Url string `json:"url,omitempty"`
-
-	// Jsonnet
-	// +optional
-	Jsonnet string `json:"jsonnet,omitempty"`
-
-	// grafana.com/dashboards
-	// +optional
-	GrafanaCom *GrafanaComDashboardReference `json:"grafanaCom,omitempty"`
+	Source GrafanaDashboardSource `json:"source"`
 
 	// selects Grafanas for import
 	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`
@@ -79,12 +47,8 @@ type GrafanaDashboardSpec struct {
 	// +optional
 	Plugins PluginList `json:"plugins,omitempty"`
 
-	// Cache duration for dashboards fetched from URLs
-	// +optional
-	ContentCacheDuration metav1.Duration `json:"contentCacheDuration,omitempty"`
-	// how often the dashboard is refreshed, defaults to 24h if not set
-	// +optional
-	ResyncPeriod string `json:"resyncPeriod,omitempty"`
+	// how often the dashboard is endured to exist on the selected instances, defaults to 24h if not set
+	Interval metav1.Duration `json:"interval"`
 
 	// maps required data sources to existing ones
 	// +optional
@@ -92,12 +56,55 @@ type GrafanaDashboardSpec struct {
 
 	// allow to import this resources from an operator in a different namespace
 	// +optional
-	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
+	AllowCrossNamespaceReferences *bool `json:"allowCrossNamespaceReferences,omitempty"`
+}
+
+// +kubebuilder:validation:MinProperties:=1
+// +kubebuilder:validation:MaxProperties:=1
+type GrafanaDashboardSource struct {
+	Inline *GrafanaDashboardInlineSource `json:"inline,omitempty"`
+
+	Remote *GrafanaDashboardRemoteSource `json:"remote,omitempty"`
+
+	ConfigMap *v1.ConfigMapKeySelector `json:"configMap,omitempty"`
+}
+
+// +kubebuilder:validation:MinProperties:=1
+// +kubebuilder:validation:MaxProperties:=1
+type GrafanaDashboardInlineSource struct {
+	// dashboard json
+	// +optional
+	Json *string `json:"json,omitempty"`
+
+	// GzipJson the dashboard's JSON compressed with Gzip. Base64-encoded when in YAML.
+	// +optional
+	GzipJson []byte `json:"gzipJson,omitempty"`
+
+	// Jsonnet
+	// +optional
+	Jsonnet *string `json:"jsonnet,omitempty"`
+}
+
+// +kubebuilder:validation:MinProperties:=2
+// +kubebuilder:validation:MaxProperties:=2
+type GrafanaDashboardRemoteSource struct {
+	// Cache duration for dashboards fetched from URLs
+	ContentCacheDuration metav1.Duration `json:"contentCacheDuration"`
+
+	// dashboard url
+	// +optional
+	Url *string `json:"url,omitempty"`
+
+	// grafana.com/dashboards
+	// +optional
+	GrafanaCom *GrafanaComDashboardReference `json:"grafanaCom,omitempty"`
 }
 
 // GrafanaComDashbooardReference is a reference to a dashboard on grafana.com/dashboards
 type GrafanaComDashboardReference struct {
-	Id       int  `json:"id"`
+	Id int `json:"id"`
+
+	// +optional
 	Revision *int `json:"revision,omitempty"`
 }
 
@@ -150,116 +157,60 @@ type GrafanaDashboardList struct {
 	Items           []GrafanaDashboard `json:"items"`
 }
 
-func (in *GrafanaDashboard) Hash() string {
-	hash := sha256.New()
-	hash.Write([]byte(in.Spec.Json))
-	return fmt.Sprintf("%x", hash.Sum(nil))
-}
-
 func (in *GrafanaDashboard) GetResyncPeriod() time.Duration {
-	if in.Spec.ResyncPeriod == "" {
-		in.Spec.ResyncPeriod = DefaultResyncPeriod
-		return in.GetResyncPeriod()
+	return in.Spec.Interval.Duration
+}
+
+func (in *GrafanaDashboard) GetContentCache(url string) []byte {
+	if in.Status.Content == nil {
+		return nil
+	}
+	if in.Status.Content.Url != url {
+		in.Status.Content = nil
+		return nil
 	}
 
-	duration, err := time.ParseDuration(in.Spec.ResyncPeriod)
+	// expect that this is only called when a remote source actually exists
+	cacheDuration := in.Spec.Source.Remote.ContentCacheDuration.Duration
+
+	// TODO: is this boolean logic correct?
+	expired := cacheDuration == 0 || in.Status.Content.Timestamp.Add(cacheDuration).After(time.Now())
+	if expired {
+		in.Status.Content = nil
+		return nil
+	}
+
+	cache, err := Gunzip(in.Status.Content.Cache)
 	if err != nil {
-		in.Spec.ResyncPeriod = DefaultResyncPeriod
-		return in.GetResyncPeriod()
-	}
-
-	return duration
-}
-
-func (in *GrafanaDashboard) GetSourceTypes() []DashboardSourceType {
-	var sourceTypes []DashboardSourceType
-
-	if in.Spec.Json != "" {
-		sourceTypes = append(sourceTypes, DashboardSourceTypeRawJson)
-	}
-
-	if in.Spec.GzipJson != nil {
-		sourceTypes = append(sourceTypes, DashboardSourceTypeGzipJson)
-	}
-
-	if in.Spec.Url != "" {
-		sourceTypes = append(sourceTypes, DashboardSourceTypeUrl)
-	}
-
-	if in.Spec.Jsonnet != "" {
-		sourceTypes = append(sourceTypes, DashboardSourceTypeJsonnet)
-	}
-
-	if in.Spec.GrafanaCom != nil {
-		sourceTypes = append(sourceTypes, DashboardSourceTypeGrafanaCom)
-	}
-
-	return sourceTypes
-}
-
-func (in *GrafanaDashboard) GetContentCache() []byte {
-	return in.Status.getContentCache(in.Spec.Url, in.Spec.ContentCacheDuration.Duration)
-}
-
-// getContentCache returns content cache when the following conditions are met: url is the same, data is not expired, gzipped data is not corrupted
-func (in *GrafanaDashboardStatus) getContentCache(url string, cacheDuration time.Duration) []byte {
-	if in.Content == nil {
-		return []byte{}
-	}
-	if in.Content.Url != url {
-		return []byte{}
-	}
-
-	notExpired := cacheDuration <= 0 || in.Content.Timestamp.Add(cacheDuration).After(time.Now())
-	if !notExpired {
-		return []byte{}
-	}
-
-	cache, err := Gunzip(in.Content.Cache)
-	if err != nil {
-		return []byte{}
+		in.Status.Content = nil
+		return nil
 	}
 
 	return cache
+
 }
 
 func (in *GrafanaDashboard) IsAllowCrossNamespaceImport() bool {
-	if in.Spec.AllowCrossNamespaceImport != nil {
-		return *in.Spec.AllowCrossNamespaceImport
+	if in.Spec.AllowCrossNamespaceReferences != nil {
+		return *in.Spec.AllowCrossNamespaceReferences
 	}
 	return false
 }
 
-func (in *GrafanaDashboard) SetReadyCondition(status metav1.ConditionStatus, reason string, message string) {
-	newCond := metav1.Condition{
-		Type:               "Ready",
-		Status:             status,
-		Reason:             reason,
-		LastTransitionTime: metav1.Now(),
-		ObservedGeneration: in.Generation,
-		Message:            message,
-	}
+func (in *GrafanaDashboard) GetConditions() []metav1.Condition {
+	return in.Status.Conditions
+}
 
-	replaced := false
-	for i, cond := range in.Status.Conditions {
-		if cond.Type == "Ready" {
-			in.Status.Conditions[i] = newCond
-			replaced = true
-		}
-	}
-
-	if !replaced {
-		in.Status.Conditions = append(in.Status.Conditions, newCond)
-	}
+func (in *GrafanaDashboard) SetConditions(conditions []metav1.Condition) {
+	in.Status.Conditions = conditions
 }
 
 func (in *GrafanaDashboard) GetReadyCondition() *metav1.Condition {
-	for _, cond := range in.Status.Conditions {
-		if cond.Type == "Ready" {
-			return &cond
-		}
-	}
-	return nil
+	return api.GetReadyCondition(in)
+}
+
+func (in *GrafanaDashboard) SetReadyCondition(status metav1.ConditionStatus, reason string, message string) {
+	api.SetReadyCondition(in, status, reason, message)
 }
 
 func Gunzip(compressed []byte) ([]byte, error) {

@@ -36,10 +36,8 @@ spec:
             type: object
           spec:
             properties:
-              allowCrossNamespaceImport:
+              allowCrossNamespaceReferences:
                 type: boolean
-              contentCacheDuration:
-                type: string
               datasources:
                 items:
                   properties:
@@ -53,18 +51,6 @@ spec:
                   type: object
                 type: array
               folder:
-                type: string
-              grafanaCom:
-                properties:
-                  id:
-                    type: integer
-                  revision:
-                    type: integer
-                required:
-                - id
-                type: object
-              gzipJson:
-                format: byte
                 type: string
               instanceSelector:
                 properties:
@@ -90,9 +76,7 @@ spec:
                     type: object
                 type: object
                 x-kubernetes-map-type: atomic
-              json:
-                type: string
-              jsonnet:
+              interval:
                 type: string
               plugins:
                 items:
@@ -106,12 +90,59 @@ spec:
                   - version
                   type: object
                 type: array
-              resyncPeriod:
-                type: string
-              url:
-                type: string
+              source:
+                maxProperties: 1
+                minProperties: 1
+                properties:
+                  configMap:
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        type: string
+                      optional:
+                        type: boolean
+                    required:
+                    - key
+                    type: object
+                    x-kubernetes-map-type: atomic
+                  inline:
+                    maxProperties: 1
+                    minProperties: 1
+                    properties:
+                      gzipJson:
+                        format: byte
+                        type: string
+                      json:
+                        type: string
+                      jsonnet:
+                        type: string
+                    type: object
+                  remote:
+                    maxProperties: 2
+                    minProperties: 2
+                    properties:
+                      contentCacheDuration:
+                        type: string
+                      grafanaCom:
+                        properties:
+                          id:
+                            type: integer
+                          revision:
+                            type: integer
+                        required:
+                        - id
+                        type: object
+                      url:
+                        type: string
+                    required:
+                    - contentCacheDuration
+                    type: object
+                type: object
             required:
             - instanceSelector
+            - interval
+            - source
             type: object
           status:
             properties:

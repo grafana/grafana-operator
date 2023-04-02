@@ -39,8 +39,9 @@ spec:
                     type: string
                   database:
                     type: string
-                  editable:
-                    type: boolean
+                  id:
+                    format: int64
+                    type: integer
                   isDefault:
                     type: boolean
                   jsonData:
@@ -62,6 +63,13 @@ spec:
                     type: string
                   user:
                     type: string
+                required:
+                - access
+                - basicAuth
+                - isDefault
+                - name
+                - type
+                - url
                 type: object
               instanceSelector:
                 properties:
@@ -87,6 +95,8 @@ spec:
                     type: object
                 type: object
                 x-kubernetes-map-type: atomic
+              interval:
+                type: string
               plugins:
                 items:
                   properties:
@@ -99,23 +109,62 @@ spec:
                   - version
                   type: object
                 type: array
-              resyncPeriod:
-                type: string
               secrets:
                 items:
                   type: string
                 type: array
             required:
             - instanceSelector
+            - interval
             type: object
           status:
             properties:
-              NoMatchingInstances:
-                type: boolean
-              hash:
-                type: string
-              lastMessage:
-                type: string
+              conditions:
+                items:
+                  properties:
+                    lastTransitionTime:
+                      format: date-time
+                      type: string
+                    message:
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              instances:
+                additionalProperties:
+                  properties:
+                    ID:
+                      format: int64
+                      type: integer
+                    UID:
+                      type: string
+                  type: object
+                type: object
             type: object
         type: object
     served: true

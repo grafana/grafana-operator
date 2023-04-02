@@ -17,6 +17,8 @@ func GetPluginsConfigMap(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1
 			Namespace: cr.Namespace,
 		},
 	}
-	controllerutil.SetOwnerReference(cr, config, scheme) //nolint:errcheck
+	if err := controllerutil.SetOwnerReference(cr, config, scheme); err != nil {
+		panic(err)
+	}
 	return config
 }

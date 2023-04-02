@@ -4,36 +4,33 @@ import (
 	"context"
 	"os"
 
+	"github.com/go-logr/logr"
 	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana-operator/grafana-operator/v5/controllers/config"
 	"github.com/grafana-operator/grafana-operator/v5/controllers/model"
-	"github.com/grafana-operator/grafana-operator/v5/controllers/reconcilers"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 type AdminSecretReconciler struct {
-	client client.Client
+	client.Client
+	Log    logr.Logger
+	Scheme *runtime.Scheme
 }
 
-func NewAdminSecretReconciler(client client.Client) reconcilers.OperatorGrafanaReconciler {
-	return &AdminSecretReconciler{
-		client: client,
-	}
-}
-
-func (r *AdminSecretReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
-	secret := model.GetGrafanaAdminSecret(cr, scheme)
-	_, err := controllerutil.CreateOrUpdate(ctx, r.client, secret, func() error {
+func (r *AdminSecretReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana) (*metav1.Condition, error) {
+	secret := model.GetGrafanaAdminSecret(cr, r.Scheme) // TODO: inline model
+	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, secret, func() error {
 		secret.Data = getData(cr, secret)
 		return nil
 	})
 	if err != nil {
-		return v1beta1.OperatorStageResultFailed, err
+		return nil, err // TODO: error condition
 	}
-	return v1beta1.OperatorStageResultSuccess, nil
+	return nil, nil // todo: success condition
 }
 
 func getAdminUser(cr *v1beta1.Grafana, current *v1.Secret) []byte {

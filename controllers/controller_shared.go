@@ -7,18 +7,21 @@ import (
 
 	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana-operator/grafana-operator/v5/controllers/model"
+	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSelector *v1.LabelSelector) (v1beta1.GrafanaList, error) {
-	var list v1beta1.GrafanaList
-	opts := []client.ListOption{
-		client.MatchingLabels(labelSelector.MatchLabels),
+	selector, err := v1.LabelSelectorAsSelector(labelSelector)
+	if err != nil {
+		return v1beta1.GrafanaList{}, err
 	}
+	var list v1beta1.GrafanaList
+	opts := []client.ListOption{client.MatchingLabelsSelector{selector}}
 
-	err := k8sClient.List(ctx, &list, opts...)
+	err = k8sClient.List(ctx, &list, opts...)
 	return list, err
 }
 
@@ -49,4 +52,18 @@ func ReconcilePlugins(ctx context.Context, k8sClient client.Client, scheme *runt
 	}
 
 	return nil
+}
+
+func grafanaOwnedResources(object client.Object) bool {
+	for _, owner := range object.GetOwnerReferences() {
+		if owner.APIVersion == "grafana.integreatly.org/v1beta1" && owner.Kind == "Grafana" {
+			return true
+		}
+	}
+	return false
+}
+
+func deploymentReady(object client.Object) bool {
+	deploy := object.(*appsv1.Deployment)
+	return deploy.Status.ReadyReplicas > 0
 }
