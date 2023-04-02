@@ -25,8 +25,9 @@ import (
 	"github.com/grafana-operator/grafana-operator/v5/controllers/metrics"
 	"github.com/grafana-operator/grafana-operator/v5/controllers/reconcilers"
 	"github.com/grafana-operator/grafana-operator/v5/controllers/reconcilers/grafana"
-	v1 "k8s.io/api/apps/v1"
-	v12 "k8s.io/api/core/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/discovery"
 
@@ -145,17 +146,20 @@ func (r *GrafanaReconciler) updateStatus(cr *grafanav1beta1.Grafana, nextStatus 
 		}, nil
 	}
 
-	return ctrl.Result{
-		RequeueAfter: RequeueDelay,
-	}, nil
+	return ctrl.Result{}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *GrafanaReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&grafanav1beta1.Grafana{}).
-		Owns(&v1.Deployment{}).
-		Owns(&v12.ConfigMap{}).
+		Owns(&appsv1.Deployment{}).
+		Owns(&v1.ConfigMap{}).
+		Owns(&v1.Secret{}).
+		Owns(&v1.Service{}).
+		Owns(&v1.ServiceAccount{}).
+		Owns(&v1.PersistentVolumeClaim{}).
+		Owns(&networkingv1.Ingress{}).
 		Complete(r)
 }
 

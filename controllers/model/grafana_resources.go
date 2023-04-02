@@ -20,7 +20,9 @@ func GetGrafanaConfigMap(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1
 			Namespace: cr.Namespace,
 		},
 	}
-	controllerutil.SetOwnerReference(cr, config, scheme) //nolint:errcheck
+	if err := controllerutil.SetControllerReference(cr, config, scheme); err != nil {
+		panic(err)
+	}
 	return config
 }
 
@@ -33,7 +35,9 @@ func GetGrafanaAdminSecret(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *
 	}
 
 	if scheme != nil {
-		controllerutil.SetOwnerReference(cr, secret, scheme) //nolint:errcheck
+		if err := controllerutil.SetControllerReference(cr, secret, scheme); err != nil {
+			panic(err)
+		}
 	}
 	return secret
 }
@@ -45,7 +49,9 @@ func GetGrafanaDataPVC(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1.P
 			Namespace: cr.Namespace,
 		},
 	}
-	controllerutil.SetOwnerReference(cr, pvc, scheme) //nolint:errcheck
+	if err := controllerutil.SetControllerReference(cr, pvc, scheme); err != nil {
+		panic(err)
+	}
 	return pvc
 }
 
@@ -56,7 +62,9 @@ func GetGrafanaServiceAccount(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme
 			Namespace: cr.Namespace,
 		},
 	}
-	controllerutil.SetOwnerReference(cr, sa, scheme) //nolint:errcheck
+	if err := controllerutil.SetControllerReference(cr, sa, scheme); err != nil {
+		panic(err)
+	}
 	return sa
 }
 
@@ -67,7 +75,9 @@ func GetGrafanaService(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1.S
 			Namespace: cr.Namespace,
 		},
 	}
-	controllerutil.SetOwnerReference(cr, service, scheme) //nolint:errcheck
+	if err := controllerutil.SetControllerReference(cr, service, scheme); err != nil {
+		panic(err)
+	}
 	return service
 }
 
@@ -78,7 +88,9 @@ func GetGrafanaIngress(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v12.
 			Namespace: cr.Namespace,
 		},
 	}
-	controllerutil.SetOwnerReference(cr, ingress, scheme) //nolint:errcheck
+	if err := controllerutil.SetControllerReference(cr, ingress, scheme); err != nil {
+		panic(err)
+	}
 	return ingress
 }
 
@@ -89,7 +101,9 @@ func GetGrafanaRoute(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *routev
 			Namespace: cr.Namespace,
 		},
 	}
-	controllerutil.SetOwnerReference(cr, route, scheme) //nolint:errcheck
+	if err := controllerutil.SetControllerReference(cr, route, scheme); err != nil {
+		panic(err)
+	}
 	return route
 }
 
@@ -101,7 +115,9 @@ func GetGrafanaDeployment(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v
 		},
 	}
 	if scheme != nil {
-		controllerutil.SetOwnerReference(cr, deployment, scheme) //nolint:errcheck
+		if err := controllerutil.SetControllerReference(cr, deployment, scheme); err != nil {
+			panic(err)
+		}
 	}
 	return deployment
 }
