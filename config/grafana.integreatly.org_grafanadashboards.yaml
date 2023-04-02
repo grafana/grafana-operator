@@ -12,6 +12,8 @@ spec:
     kind: GrafanaDashboard
     listKind: GrafanaDashboardList
     plural: grafanadashboards
+    shortNames:
+    - dash
     singular: grafanadashboard
   scope: Namespaced
   versions:

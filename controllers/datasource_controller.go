@@ -22,19 +22,28 @@ import (
 	"strings"
 	"time"
 
+	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/grafana-operator/grafana-operator/v5/controllers/metrics"
+	"github.com/grafana-operator/grafana-operator/v5/controllers/model"
 
 	"github.com/go-logr/logr"
 	client2 "github.com/grafana-operator/grafana-operator/v5/controllers/client"
 	gapi "github.com/grafana/grafana-api-golang-client"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
+	grafanav1beta1 "github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
 	v1beta1 "github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
 )
 
@@ -201,6 +210,14 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			}
 		}
 
+		if grafana.IsInternal() {
+			deploy := model.GetGrafanaDeployment(&grafana, r.Scheme)
+			err := r.Client.Get(ctx, client.ObjectKeyFromObject(deploy), deploy)
+			if err != nil || deploy.Status.ReadyReplicas == 0 {
+				return ctrl.Result{}, nil
+			}
+		}
+
 		// then import the datasource into the matching grafana instances
 		err = r.onDatasourceCreated(ctx, &grafana, datasource)
 		if err != nil {
@@ -363,6 +380,42 @@ func (r *GrafanaDatasourceReconciler) CollectVariablesFromSecrets(ctx context.Co
 func (r *GrafanaDatasourceReconciler) SetupWithManager(mgr ctrl.Manager, ctx context.Context) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.GrafanaDatasource{}).
+		Watches(
+			&source.Kind{Type: &appsv1.Deployment{}},
+			handler.EnqueueRequestsFromMapFunc(func(o client.Object) []reconcile.Request {
+				gafanaRef := types.NamespacedName{Namespace: o.GetNamespace(), Name: strings.TrimSuffix(o.GetName(), "-deployment")}
+				grafana := &grafanav1beta1.Grafana{}
+				err := r.Client.Get(ctx, gafanaRef, grafana)
+				if err != nil {
+					return []reconcile.Request{}
+				}
+
+				reqs := []reconcile.Request{}
+				for _, dash := range grafana.Status.Datasources {
+					reqs = append(reqs, reconcile.Request{
+						NamespacedName: types.NamespacedName{
+							Namespace: dash.Namespace(),
+							Name:      dash.Name(),
+						},
+					})
+				}
+
+				return reqs
+			}),
+			builder.WithPredicates(
+				predicate.NewPredicateFuncs(func(object client.Object) bool {
+					for _, owner := range object.GetOwnerReferences() {
+						if owner.APIVersion == "grafana.integreatly.org/v1beta1" && owner.Kind == "Grafana" {
+							return true
+						}
+					}
+					return false
+				}),
+				predicate.NewPredicateFuncs(func(object client.Object) bool {
+					deploy := object.(*appsv1.Deployment)
+					return deploy.Status.ReadyReplicas > 0
+				})),
+		).
 		Complete(r)
 
 	if err == nil {

@@ -146,3 +146,7 @@ func (in *Grafana) IsInternal() bool {
 func (in *Grafana) IsExternal() bool {
 	return in.Spec.External != nil
 }
+
+func (in *Grafana) Ready() bool {
+	return in.Status.Stage == OperatorStageComplete && in.Status.StageStatus == OperatorStageResultSuccess
+}

@@ -28,17 +28,26 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
+	grafanav1beta1 "github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana-operator/grafana-operator/v5/controllers/client"
 	"github.com/grafana-operator/grafana-operator/v5/controllers/fetchers"
 	"github.com/grafana-operator/grafana-operator/v5/controllers/metrics"
+	"github.com/grafana-operator/grafana-operator/v5/controllers/model"
 	grapi "github.com/grafana/grafana-api-golang-client"
+	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 const (
@@ -194,7 +203,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		// an admin url is required to interact with grafana
 		// the instance or route might not yet be ready
 		// TODO: status.conditions for grafana CRD and implement grafana.Ready()
-		if grafana.Status.Stage != v1beta1.OperatorStageComplete || grafana.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
+		if !grafana.Ready() {
 			controllerLog.Info("grafana instance not ready", "grafana", grafana.Name)
 			success = false
 			continue
@@ -211,6 +220,14 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			}
 		} else if dashboard.Spec.Plugins != nil {
 			return ctrl.Result{}, fmt.Errorf("external grafana instances don't support plugins, please remove spec.plugins from your dashboard cr")
+		}
+
+		if grafana.IsInternal() {
+			deploy := model.GetGrafanaDeployment(&grafana, r.Scheme)
+			err := r.Client.Get(ctx, client.ObjectKeyFromObject(deploy), deploy)
+			if err != nil || deploy.Status.ReadyReplicas == 0 {
+				return ctrl.Result{}, nil
+			}
 		}
 
 		// then import the dashboard into the matching grafana instances
@@ -293,13 +310,13 @@ func (r *GrafanaDashboardReconciler) onDashboardDeleted(ctx context.Context, nam
 func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDashboard) error {
 	manifestBytes, err := r.fetchDashboardManifest(cr)
 	if err != nil {
-		r.SetReadyCondition(ctx, cr, v1.ConditionFalse, v1beta1.ContentUnavailableReason, fmt.Sprintf("failed to get dashboard: %s", err))
+		r.SetReadyCondition(ctx, cr, metav1.ConditionFalse, v1beta1.ContentUnavailableReason, fmt.Sprintf("failed to get dashboard: %s", err))
 		return err
 	}
 	var manifest map[string]interface{}
 	err = json.Unmarshal(manifestBytes, &manifest)
 	if err != nil {
-		r.SetReadyCondition(ctx, cr, v1.ConditionFalse, v1beta1.ContentUnavailableReason, fmt.Sprintf("failed to unmarshal dashboard: %s", err))
+		r.SetReadyCondition(ctx, cr, metav1.ConditionFalse, v1beta1.ContentUnavailableReason, fmt.Sprintf("failed to unmarshal dashboard: %s", err))
 		return err
 	}
 
@@ -309,13 +326,13 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 
 	grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
-		r.SetReadyCondition(ctx, cr, v1.ConditionFalse, v1beta1.GrafanaApiErrorReason, fmt.Sprintf("failed to create grafana client: %s", err))
+		r.SetReadyCondition(ctx, cr, metav1.ConditionFalse, v1beta1.GrafanaApiErrorReason, fmt.Sprintf("failed to create grafana client: %s", err))
 		return err
 	}
 
 	folder, err := r.GetOrCreateFolder(grafanaClient, cr)
 	if err != nil {
-		r.SetReadyCondition(ctx, cr, v1.ConditionFalse, v1beta1.GrafanaApiErrorReason, fmt.Sprintf("failed get or create folder: %s", err))
+		r.SetReadyCondition(ctx, cr, metav1.ConditionFalse, v1beta1.GrafanaApiErrorReason, fmt.Sprintf("failed get or create folder: %s", err))
 		return errors.NewInternalError(err)
 	}
 	folderId := int64(0)
@@ -328,8 +345,8 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	if ok {
 		existingMatches, err := r.ExistingVersionMatchesStatus(grafanaClient, instanceStatus)
 		if err != nil {
-			r.SetReadyCondition(ctx, cr, v1.ConditionFalse, v1beta1.GrafanaApiErrorReason, fmt.Sprintf("failed check for existing dashboard: %s", err))
-			return err
+			r.SetReadyCondition(ctx, cr, metav1.ConditionFalse, v1beta1.GrafanaApiErrorReason, fmt.Sprintf("failed check for existing dashboard: %s", err))
+			return fmt.Errorf("failed to check for existing dashboard: %w", err)
 		}
 		shouldCreate = !existingMatches
 	} else {
@@ -357,10 +374,10 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		Message:   "",
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create new dashboard: %w", err)
 	}
 	if resp.Status != "success" {
-		r.SetReadyCondition(ctx, cr, v1.ConditionFalse, v1beta1.GrafanaApiErrorReason, fmt.Sprintf("failed create dashboard: %s", err))
+		r.SetReadyCondition(ctx, cr, metav1.ConditionFalse, v1beta1.GrafanaApiErrorReason, fmt.Sprintf("failed create dashboard: %s", err))
 		return errors.NewBadRequest(fmt.Sprintf("error creating dashboard, status was %v", resp.Status))
 	}
 
@@ -375,7 +392,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return err
 	}
 
-	return r.SetReadyCondition(ctx, cr, v1.ConditionTrue, v1beta1.DashboardSyncedReason, "Dashboard synced")
+	return r.SetReadyCondition(ctx, cr, metav1.ConditionTrue, v1beta1.DashboardSyncedReason, "Dashboard synced")
 }
 
 // fetchDashboardJson delegates obtaining the dashboard json definition to one of the known fetchers, for example
@@ -502,6 +519,43 @@ func (r *GrafanaDashboardReconciler) DeleteFolderIfEmpty(client *grapi.Client, f
 func (r *GrafanaDashboardReconciler) SetupWithManager(mgr ctrl.Manager, ctx context.Context) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.GrafanaDashboard{}).
+		Watches(
+			&source.Kind{Type: &appsv1.Deployment{}},
+			handler.EnqueueRequestsFromMapFunc(func(o client.Object) []reconcile.Request {
+				gafanaRef := types.NamespacedName{Namespace: o.GetNamespace(), Name: strings.TrimSuffix(o.GetName(), "-deployment")}
+				grafana := &grafanav1beta1.Grafana{}
+				err := r.Client.Get(ctx, gafanaRef, grafana)
+				if err != nil {
+					return []reconcile.Request{}
+				}
+
+				reqs := []reconcile.Request{}
+				for _, dash := range grafana.Status.Dashboards {
+					reqs = append(reqs, reconcile.Request{
+						NamespacedName: types.NamespacedName{
+							Namespace: dash.Namespace(),
+							Name:      dash.Name(),
+						},
+					})
+				}
+
+				return reqs
+			}),
+			builder.WithPredicates(
+				predicate.NewPredicateFuncs(func(object client.Object) bool {
+					for _, owner := range object.GetOwnerReferences() {
+						if owner.APIVersion == "grafana.integreatly.org/v1beta1" && owner.Kind == "Grafana" {
+							return true
+						}
+					}
+					return false
+				}),
+				predicate.NewPredicateFuncs(func(object client.Object) bool {
+					deploy := object.(*appsv1.Deployment)
+					return deploy.Status.ReadyReplicas > 0
+				}),
+			),
+		).
 		Complete(r)
 
 	if err == nil {
@@ -538,16 +592,20 @@ func (r *GrafanaDashboardReconciler) SetupWithManager(mgr ctrl.Manager, ctx cont
 func (r *GrafanaDashboardReconciler) GetMatchingDashboardInstances(ctx context.Context, dashboard *v1beta1.GrafanaDashboard, k8sClient client.Client) (v1beta1.GrafanaList, error) {
 	instances, err := GetMatchingInstances(ctx, k8sClient, dashboard.Spec.InstanceSelector)
 	if err != nil || len(instances.Items) == 0 {
-		r.SetReadyCondition(ctx, dashboard, v1.ConditionFalse, v1beta1.NoMatchingInstancesReason, "No instances found matching .spec.instanceSelector")
+		r.SetReadyCondition(ctx, dashboard, metav1.ConditionFalse, v1beta1.NoMatchingInstancesReason, "No instances found matching .spec.instanceSelector")
 		return v1beta1.GrafanaList{}, err
 	}
 
 	return instances, err
 }
 
-func (r *GrafanaDashboardReconciler) SetReadyCondition(ctx context.Context, dashboard *v1beta1.GrafanaDashboard, status v1.ConditionStatus, reason string, message string) error {
+func (r *GrafanaDashboardReconciler) SetReadyCondition(ctx context.Context, dashboard *v1beta1.GrafanaDashboard, status metav1.ConditionStatus, reason string, message string) error {
+	existingCond := dashboard.GetReadyCondition()
+	if existingCond != nil && existingCond.Status == status && existingCond.Reason == reason && existingCond.Message == message {
+		return nil
+	}
+
 	dashboard.SetReadyCondition(status, reason, message)
-	r.Log.Info("updating status", "conditions", dashboard.Status.Conditions, "instances", dashboard.Status.Instances)
 	if err := r.Client.Status().Update(ctx, dashboard); err != nil {
 		r.Log.Info("unable to update the status of %v, in %v", dashboard.Name, dashboard.Namespace)
 		return err

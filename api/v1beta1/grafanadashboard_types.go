@@ -127,6 +127,7 @@ type GrafanaDashboardInstanceStatus struct {
 }
 
 //+kubebuilder:object:root=true
+//+kubebuilder:resource:shortName=dash
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type==\"Ready\")].status",description=""
 //+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[?(@.type==\"Ready\")].message",description=""
@@ -250,6 +251,15 @@ func (in *GrafanaDashboard) SetReadyCondition(status metav1.ConditionStatus, rea
 	if !replaced {
 		in.Status.Conditions = append(in.Status.Conditions, newCond)
 	}
+}
+
+func (in *GrafanaDashboard) GetReadyCondition() *metav1.Condition {
+	for _, cond := range in.Status.Conditions {
+		if cond.Type == "Ready" {
+			return &cond
+		}
+	}
+	return nil
 }
 
 func Gunzip(compressed []byte) ([]byte, error) {
