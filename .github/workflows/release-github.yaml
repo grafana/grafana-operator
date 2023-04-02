@@ -40,7 +40,16 @@ jobs:
         run: |
           # OCI standard enforces lower-case paths
           KUSTOMIZE_REPO=$(echo "oci://ghcr.io/${{ github.repository_owner }}/kustomize/grafana-operator" | tr '[:upper:]' '[:lower:]')
+          GHCR_REPO=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           echo "KUSTOMIZE_REPO=$KUSTOMIZE_REPO" >> $GITHUB_ENV
+          echo "GHCR_REPO=$GHCR_REPO" >> $GITHUB_ENV
+      - name: update-kustomize-image
+        run: |
+          # Install kustomize
+          make kustomize
+          # Update image to match the new image and tag
+          cd deploy/kustomize/base
+          kustomize edit set image ghcr.io/grafana-operator/grafana-operator=${{ env.GHCR_REPO }}:${{ github.ref_name }}
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
