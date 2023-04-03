@@ -19,7 +19,7 @@ GitOps is a rather well-used term nowadays, but you can summarize it in 4 steps.
 
 To find out more about GitOps look at the CNCF GitOps working groups [documentation](https://opengitops.dev/).
 
-In this case I have decided to use [Flux](https://fluxcd.io/) to deploy grafana-opreator through GitOps, but there are other options.
+In this case I have decided to use [Flux](https://fluxcd.io/) to deploy grafana-operator through GitOps, but there are other options.
 For example [ArgoCD](https://argo-cd.readthedocs.io/) which is also a graduated CNCF project just like Flux.
 
 This blog's focus is to showcase how you can use Kustomize to install the grafana-operator, I will take many shortcuts to keep this blog **simple**, read the official Flux documentation for best practices.
