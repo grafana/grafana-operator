@@ -50,7 +50,7 @@ or you can just copy paste them from the blog.
 
 ## Prerequisite
 
-In this example, I will use Kind as my cluster because I think it's simple, but the walkthrough should work with any Kubernetes solution.
+In this example, I will use [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/) as my cluster because I think it's simple, but the walkthrough should work with any Kubernetes solution.
 I will use GitHub for my GitOps repository but Flux supports multiple source control management (SCM) providers.
 
 So what will you need?
