@@ -144,7 +144,7 @@ Let's setup a Grafana instance and some dashboard trough code.
 
 Since we already setup our kind cluster with ingress-nginx I will use one of our basic HTTP examples.
 
-Let's not make this more complicated than it has to be, you should have your secrets in some KMS/vault/sealed-secrets, SOAP or similar solution, but definitely not checked in to your GitOps repository none encrypted.
+Let's not make this more complicated than it has to be, you should have your secrets in some KMS/vault/sealed-secrets, SOAP or similar solution, but definitely not checked in to your GitOps repository non-encrypted.
 But this is an example, so for this time let's create our admin and password secrets manual.
 
 ```shell
