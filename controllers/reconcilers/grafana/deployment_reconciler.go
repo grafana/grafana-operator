@@ -7,17 +7,15 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
 	config2 "github.com/grafana-operator/grafana-operator/v5/controllers/config"
-	"github.com/grafana-operator/grafana-operator/v5/controllers/model"
-	v12 "k8s.io/api/apps/v1"
+	"github.com/grafana-operator/grafana-operator/v5/controllers/util"
+	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v13 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const (
@@ -40,23 +38,33 @@ type DeploymentReconciler struct {
 	IsOpenShift bool
 }
 
-func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana) (*metav1.Condition, error) {
-	logger := log.FromContext(ctx)
+func GetGrafanaDeploymentMeta(cr *v1beta1.Grafana) *appsv1.Deployment {
+	return &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-grafana", cr.Name),
+			Namespace: cr.Namespace,
+		},
+	}
+}
+
+func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana) error {
 
 	openshiftPlatform := r.IsOpenShift
-	logger.Info("reconciling deployment", "openshift", openshiftPlatform)
 
-	deployment := model.GetGrafanaDeployment(cr, r.Scheme)
+	deployment := GetGrafanaDeploymentMeta(cr)
+	if err := controllerutil.SetControllerReference(cr, deployment, r.Scheme); err != nil {
+		return fmt.Errorf("failed to set controller reference: %w", err)
+	}
 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, deployment, func() error {
-		deployment.Spec = getDeploymentSpec(cr, deployment.Name, r.Scheme, openshiftPlatform)
+		deployment.Spec = getDeploymentSpec(cr, deployment.Name, openshiftPlatform)
 		err := v1beta1.Merge(deployment, cr.Spec.Deployment)
 		return err
 	})
 	if err != nil {
-		return nil, err // todo: error condition
+		return fmt.Errorf("failed to create or update: %w", err)
 	}
 
-	return nil, nil // todo: success condition
+	return nil
 }
 
 func getResources() v1.ResourceRequirements {
@@ -72,10 +80,10 @@ func getResources() v1.ResourceRequirements {
 	}
 }
 
-func getVolumes(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.Volume {
+func getVolumes(cr *v1beta1.Grafana) []v1.Volume {
 	var volumes []v1.Volume
 
-	config := model.GetGrafanaConfigMap(cr, scheme)
+	config := GetGrafanaIniMeta(cr)
 
 	// Volume to mount the config file from a config map
 	volumes = append(volumes, v1.Volume{
@@ -114,10 +122,10 @@ func getVolumes(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.Volume {
 	return volumes
 }
 
-func getVolumeMounts(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.VolumeMount {
+func getVolumeMounts(cr *v1beta1.Grafana) []v1.VolumeMount {
 	var mounts []v1.VolumeMount
 
-	config := model.GetGrafanaConfigMap(cr, scheme)
+	config := GetGrafanaIniMeta(cr)
 
 	mounts = append(mounts, v1.VolumeMount{
 		Name:      config.Name,
@@ -142,11 +150,11 @@ func getVolumeMounts(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.VolumeMou
 	return mounts
 }
 
-func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, openshiftPlatform bool) []v1.Container {
+func getContainers(cr *v1beta1.Grafana, openshiftPlatform bool) []v1.Container {
 	var containers []v1.Container
 
 	image := fmt.Sprintf("%s:%s", config2.GrafanaImage, config2.GrafanaVersion)
-	plugins := model.GetPluginsConfigMap(cr, scheme)
+	plugins := GetPluginsConfigMapMeta(cr)
 
 	// env var to restart containers if plugins change
 	t := true
@@ -190,7 +198,7 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, openshiftPlatfor
 		},
 		Env:                      envVars,
 		Resources:                getResources(),
-		VolumeMounts:             getVolumeMounts(cr, scheme),
+		VolumeMounts:             getVolumeMounts(cr),
 		TerminationMessagePath:   "/dev/termination-log",
 		TerminationMessagePolicy: "File",
 		ImagePullPolicy:          "IfNotPresent",
@@ -199,7 +207,7 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, openshiftPlatfor
 	})
 
 	// Use auto generated admin account?
-	secret := model.GetGrafanaAdminSecret(cr, scheme)
+	secret := GetGrafanaAdminSecretMeta(cr)
 
 	for i := 0; i < len(containers); i++ {
 		containers[i].Env = append(containers[i].Env, v1.EnvVar{
@@ -238,20 +246,20 @@ func getGrafanaContainerSecurityContext(openshiftPlatform bool) *v1.SecurityCont
 	}
 	if openshiftPlatform {
 		return &v1.SecurityContext{
-			AllowPrivilegeEscalation: model.BoolPtr(false),
-			ReadOnlyRootFilesystem:   model.BoolPtr(true),
-			Privileged:               model.BoolPtr(false),
-			RunAsNonRoot:             model.BoolPtr(true),
+			AllowPrivilegeEscalation: util.BoolPtr(false),
+			ReadOnlyRootFilesystem:   util.BoolPtr(true),
+			Privileged:               util.BoolPtr(false),
+			RunAsNonRoot:             util.BoolPtr(true),
 			Capabilities:             capability,
 		}
 	}
 	return &v1.SecurityContext{
-		AllowPrivilegeEscalation: model.BoolPtr(false),
-		ReadOnlyRootFilesystem:   model.BoolPtr(true),
-		Privileged:               model.BoolPtr(false),
-		RunAsNonRoot:             model.BoolPtr(true),
-		RunAsUser:                model.IntPtr(10001),
-		RunAsGroup:               model.IntPtr(10001),
+		AllowPrivilegeEscalation: util.BoolPtr(false),
+		ReadOnlyRootFilesystem:   util.BoolPtr(true),
+		Privileged:               util.BoolPtr(false),
+		RunAsNonRoot:             util.BoolPtr(true),
+		RunAsUser:                util.IntPtr(10001),
+		RunAsGroup:               util.IntPtr(10001),
 		Capabilities:             capability,
 	}
 }
@@ -281,25 +289,25 @@ func getPodSecurityContext() *v1.PodSecurityContext {
 	}
 }
 
-func getDeploymentSpec(cr *v1beta1.Grafana, deploymentName string, scheme *runtime.Scheme, openshiftPlatform bool) v12.DeploymentSpec {
-	sa := model.GetGrafanaServiceAccount(cr, scheme) // todo: inlinemodel
+func getDeploymentSpec(cr *v1beta1.Grafana, deploymentName string, openshiftPlatform bool) appsv1.DeploymentSpec {
+	sa := GetGrafanaServiceAccountMeta(cr) // todo: inlinemodel
 
-	return v12.DeploymentSpec{
-		Selector: &v13.LabelSelector{
+	return appsv1.DeploymentSpec{
+		Selector: &metav1.LabelSelector{
 			MatchLabels: map[string]string{
 				"app": cr.Name,
 			},
 		},
 		Template: v1.PodTemplateSpec{
-			ObjectMeta: v13.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Name: deploymentName,
 				Labels: map[string]string{
 					"app": cr.Name,
 				},
 			},
 			Spec: v1.PodSpec{
-				Volumes:            getVolumes(cr, scheme),
-				Containers:         getContainers(cr, scheme, openshiftPlatform),
+				Volumes:            getVolumes(cr),
+				Containers:         getContainers(cr, openshiftPlatform),
 				SecurityContext:    getPodSecurityContext(),
 				ServiceAccountName: sa.Name,
 			},

@@ -209,8 +209,12 @@ func (in *GrafanaDashboard) GetReadyCondition() *metav1.Condition {
 	return api.GetReadyCondition(in)
 }
 
-func (in *GrafanaDashboard) SetReadyCondition(status metav1.ConditionStatus, reason string, message string) {
-	api.SetReadyCondition(in, status, reason, message)
+func (in *GrafanaDashboard) SetCondition(condition metav1.Condition) bool {
+	return api.SetCondition(in, condition)
+}
+
+func (in *GrafanaDashboard) SetReadyCondition(status metav1.ConditionStatus, reason string, message string) bool {
+	return api.SetReadyCondition(in, status, reason, message)
 }
 
 func Gunzip(compressed []byte) ([]byte, error) {

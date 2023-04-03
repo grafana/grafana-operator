@@ -8,7 +8,6 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana-operator/grafana-operator/v5/controllers/config"
-	"github.com/grafana-operator/grafana-operator/v5/controllers/model"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -23,9 +22,20 @@ type ServiceReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana) (*metav1.Condition, error) {
+func GetGrafanaServiceMeta(cr *v1beta1.Grafana) *v1.Service {
+	return &v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-grafana", cr.Name),
+			Namespace: cr.Namespace,
+		},
+	}
+}
 
-	service := model.GetGrafanaService(cr, r.Scheme) // todo: inline  model
+func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana) error {
+	service := GetGrafanaServiceMeta(cr)
+	if err := controllerutil.SetControllerReference(cr, service, r.Scheme); err != nil {
+		return fmt.Errorf("failed to set controller reference: %w", err)
+	}
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, service, func() error {
 		service.Spec = v1.ServiceSpec{
@@ -38,16 +48,17 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana) 
 		return v1beta1.Merge(service, cr.Spec.Service)
 	})
 	if err != nil {
-		return nil, err // toodo: error condition
+		return fmt.Errorf("failed to create or update: %w", err)
 	}
 
 	// try to assign the admin url
 	if !cr.PreferIngress() {
 		cr.Status.AdminUrl = fmt.Sprintf("%v://%v.%v:%d", getGrafanaServerProtocol(cr), service.Name, cr.Namespace,
 			int32(GetGrafanaPort(cr)))
+		// TODO: update status?
 	}
 
-	return nil, nil // todo; success condition
+	return nil
 }
 
 func getGrafanaServerProtocol(cr *v1beta1.Grafana) string {

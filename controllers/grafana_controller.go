@@ -18,25 +18,28 @@ package controllers
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/grafana-operator/grafana-operator/v5/controllers/metrics"
-	reconcilers "github.com/grafana-operator/grafana-operator/v5/controllers/subreconcilers"
-	"github.com/grafana-operator/grafana-operator/v5/controllers/subreconcilers/grafana"
-	appsv1 "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
-	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/discovery"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	grafanav1beta1 "github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
+	routev1 "github.com/openshift/api/route/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana-operator/grafana-operator/v5/controllers/metrics"
+	"github.com/grafana-operator/grafana-operator/v5/controllers/reconcilers"
+	"github.com/grafana-operator/grafana-operator/v5/controllers/reconcilers/grafana"
 )
 
 const (
@@ -51,7 +54,7 @@ type GrafanaReconciler struct {
 	Discovery   discovery.DiscoveryInterface
 	IsOpenShift bool
 
-	subreconcilers []reconcilers.GrafanaSubReconciler
+	subreconcilers []reconcilers.GrafanaReconciler
 }
 
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanas,verbs=get;list;watch;create;update;patch;delete
@@ -64,61 +67,86 @@ type GrafanaReconciler struct {
 //+kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
 
 func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	controllerLog := log.FromContext(ctx)
+	log := r.Log.WithValues("grafana", req.NamespacedName)
 
-	grafana := &grafanav1beta1.Grafana{}
+	grafana := &v1beta1.Grafana{}
 	err := r.Get(ctx, req.NamespacedName, grafana)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			controllerLog.Info("grafana cr has been deleted", "name", req.NamespacedName)
+			log.Info("grafana cr has been deleted", "name", req.NamespacedName)
 			return ctrl.Result{}, nil
 		}
 
-		controllerLog.Error(err, "error getting grafana cr")
+		log.Error(err, "error getting grafana cr")
 		return ctrl.Result{}, err
 	}
 
 	metrics.GrafanaReconciles.WithLabelValues(grafana.Name).Inc()
 
 	if grafana.IsExternal() {
-		apiAvailable := true // TODO: check api
-		updateStatus := false
-		if apiAvailable {
-			updateStatus = grafana.SetReadyCondition(metav1.ConditionTrue, grafanav1beta1.GrafanaApiAvailableReason, "Grafana API is available")
-		}
+		statusChanged := false
 
 		if grafana.Status.AdminUrl != grafana.Spec.External.URL {
-			updateStatus = true
+			statusChanged = true
 			grafana.Status.AdminUrl = grafana.Spec.External.URL
 		}
 
-		if !updateStatus {
+		statusChanged = statusChanged || r.setApiAvailableCondition(ctx, grafana)
+
+		if !statusChanged {
 			return ctrl.Result{}, nil
 		}
 
 		return r.updateStatus(grafana)
 	}
 
-	updateStatus := false
 	for i, reconciler := range r.subreconcilers {
-		condition, err := reconciler.Reconcile(ctx, grafana)
+		err := reconciler.Reconcile(ctx, grafana)
 		if err != nil {
-			updateStatus = updateStatus || grafana.SetCondition(*condition)
+			statusChanged := grafana.SetCondition(metav1.Condition{
+				Type:               "Ready",
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: grafana.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             v1beta1.CreateResourceFailedReason,
+				Message:            err.Error(),
+			})
 
-			metrics.GrafanaFailedReconciles.WithLabelValues(grafana.Name, string(i)).Inc()
-		}
-		if condition != nil {
-			updateStatus = updateStatus || grafana.SetCondition(*condition)
+			metrics.GrafanaFailedReconciles.WithLabelValues(grafana.Name, fmt.Sprint(i)).Inc()
+
+			if statusChanged {
+				return r.updateStatus(grafana)
+			}
 		}
 	}
 
-	if updateStatus {
+	statusChanged := r.setApiAvailableCondition(ctx, grafana)
+	if statusChanged {
 		return r.updateStatus(grafana)
 	}
+
 	return ctrl.Result{}, nil
 }
 
-func (r *GrafanaReconciler) updateStatus(cr *grafanav1beta1.Grafana) (ctrl.Result, error) {
+func (r *GrafanaReconciler) setApiAvailableCondition(ctx context.Context, grafana *v1beta1.Grafana) bool {
+	apiAvailable := true
+	res, err := http.Get(grafana.Status.AdminUrl)
+	if err != nil {
+		apiAvailable = false
+	}
+	res.Body.Close()
+	if res.StatusCode >= 400 {
+		apiAvailable = false
+	}
+
+	if apiAvailable {
+		return grafana.SetReadyCondition(metav1.ConditionTrue, v1beta1.GrafanaApiAvailableReason, "Grafana API is available")
+	} else {
+		return grafana.SetReadyCondition(metav1.ConditionFalse, v1beta1.GrafanaApiUnavailableReason, "Grafana API is unavailable")
+	}
+}
+
+func (r *GrafanaReconciler) updateStatus(cr *v1beta1.Grafana) (ctrl.Result, error) {
 	// TODO: DeepEquals check is not a terrible idea
 	err := r.Client.Status().Update(context.Background(), cr)
 	if err != nil {
@@ -132,7 +160,7 @@ func (r *GrafanaReconciler) updateStatus(cr *grafanav1beta1.Grafana) (ctrl.Resul
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *GrafanaReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	r.subreconcilers = []reconcilers.GrafanaSubReconciler{
+	r.subreconcilers = []reconcilers.GrafanaReconciler{
 		&grafana.ConfigReconciler{
 			Client: mgr.GetClient(),
 			Scheme: mgr.GetScheme(),
@@ -167,11 +195,10 @@ func (r *GrafanaReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			Scheme:      mgr.GetScheme(),
 			IsOpenShift: r.IsOpenShift,
 		},
-		&grafana.CompleteReconciler{},
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&grafanav1beta1.Grafana{}).
+		For(&v1beta1.Grafana{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&v1.ConfigMap{}).
 		Owns(&v1.Secret{}).
@@ -179,5 +206,6 @@ func (r *GrafanaReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&v1.ServiceAccount{}).
 		Owns(&v1.PersistentVolumeClaim{}).
 		Owns(&networkingv1.Ingress{}).
+		Owns(&routev1.Route{}).
 		Complete(r)
 }

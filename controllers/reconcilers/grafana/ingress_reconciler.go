@@ -6,9 +6,8 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
-	"github.com/grafana-operator/grafana-operator/v5/controllers/model"
 	routev1 "github.com/openshift/api/route/v1"
-	v1 "k8s.io/api/networking/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -28,7 +27,25 @@ type IngressReconciler struct {
 	IsOpenShift bool
 }
 
-func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana) (*metav1.Condition, error) {
+func GetGrafanaIngressMeta(cr *v1beta1.Grafana) *networkingv1.Ingress {
+	return &networkingv1.Ingress{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-grafana", cr.Name),
+			Namespace: cr.Namespace,
+		},
+	}
+}
+
+func GetGrafanaRouteMeta(cr *v1beta1.Grafana) *routev1.Route {
+	return &routev1.Route{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-grafana", cr.Name),
+			Namespace: cr.Namespace,
+		},
+	}
+}
+
+func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana) error {
 	logger := log.FromContext(ctx)
 
 	if r.IsOpenShift {
@@ -40,19 +57,22 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana) 
 	}
 }
 
-func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Grafana) (*metav1.Condition, error) {
+func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Grafana) error {
 	if cr.Spec.Ingress == nil || len(cr.Spec.Ingress.Spec.Rules) == 0 {
-		return nil, nil // todo: success condition
+		return nil
 	}
 
-	ingress := model.GetGrafanaIngress(cr, r.Scheme)
+	ingress := GetGrafanaIngressMeta(cr)
+	if err := controllerutil.SetControllerReference(cr, ingress, r.Scheme); err != nil {
+		return fmt.Errorf("failed to set controller reference: %w", err)
+	}
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, ingress, func() error {
 		ingress.Spec = mergeIngressSpec(cr, r.Scheme)
 		return v1beta1.Merge(&ingress.ObjectMeta, cr.Spec.Ingress.ObjectMeta)
 	})
 	if err != nil {
-		return nil, err // todo: err condition
+		return fmt.Errorf("failed to create or update: %w", err)
 	}
 
 	// try to assign the admin url
@@ -60,21 +80,24 @@ func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Gr
 		adminURL := r.getIngressAdminURL(ingress)
 
 		if len(ingress.Status.LoadBalancer.Ingress) == 0 {
-			return nil, fmt.Errorf("ingress is not ready yet") // todo: in progress condition
+			return fmt.Errorf("ingress is not ready yet")
 		}
 
 		if adminURL == "" {
-			return nil, fmt.Errorf("ingress spec is incomplete") // todo: err condition
+			return fmt.Errorf("ingress spec is incomplete")
 		}
 
 		cr.Status.AdminUrl = adminURL
 	}
 
-	return nil, nil // todo: success condition
+	return nil
 }
 
-func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Grafana) (*metav1.Condition, error) {
-	route := model.GetGrafanaRoute(cr, r.Scheme) // todo inline model
+func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Grafana) error {
+	route := GetGrafanaRouteMeta(cr)
+	if err := controllerutil.SetControllerReference(cr, route, r.Scheme); err != nil {
+		return fmt.Errorf("failed to set controller reference: %w", err)
+	}
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, route, func() error {
 		route.Spec = getRouteSpec(cr, r.Scheme)
@@ -82,21 +105,22 @@ func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Graf
 		return err
 	})
 	if err != nil {
-		return nil, err // todo: err condition
+		return fmt.Errorf("failed to create or update: %w", err)
 	}
 
 	// try to assign the admin url
 	if cr.PreferIngress() {
 		if route.Spec.Host != "" {
 			cr.Status.AdminUrl = fmt.Sprintf("https://%v", route.Spec.Host)
+			// TODO: update status?
 		}
 	}
 
-	return nil, nil // todod: success condition
+	return nil
 }
 
 // getIngressAdminURL returns the first valid URL (Host field is set) from the ingress spec
-func (r *IngressReconciler) getIngressAdminURL(ingress *v1.Ingress) string {
+func (r *IngressReconciler) getIngressAdminURL(ingress *networkingv1.Ingress) string {
 	if ingress == nil {
 		return ""
 	}
@@ -164,7 +188,7 @@ func GetIngressTargetPort(cr *v1beta1.Grafana) intstr.IntOrString {
 }
 
 func getRouteSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) routev1.RouteSpec {
-	service := model.GetGrafanaService(cr, scheme) // todo inline model
+	service := GetGrafanaServiceMeta(cr)
 
 	port := GetIngressTargetPort(cr)
 
@@ -182,11 +206,11 @@ func getRouteSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) routev1.RouteSpec
 	}
 }
 
-func mergeIngressSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) v1.IngressSpec {
-	service := model.GetGrafanaService(cr, scheme) // todo inline modeol
+func mergeIngressSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) networkingv1.IngressSpec {
+	service := GetGrafanaServiceMeta(cr)
 
 	port := GetIngressTargetPort(cr)
-	var assignedPort v1.ServiceBackendPort
+	var assignedPort networkingv1.ServiceBackendPort
 	if port.IntVal > 0 {
 		assignedPort.Number = port.IntVal
 	}
@@ -194,12 +218,12 @@ func mergeIngressSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) v1.IngressSpe
 		assignedPort.Name = port.StrVal
 	}
 
-	pathType := v1.PathTypePrefix
-	path := v1.HTTPIngressPath{
+	pathType := networkingv1.PathTypePrefix
+	path := networkingv1.HTTPIngressPath{
 		Path:     "/",
 		PathType: &pathType,
-		Backend: v1.IngressBackend{
-			Service: &v1.IngressServiceBackend{
+		Backend: networkingv1.IngressBackend{
+			Service: &networkingv1.IngressServiceBackend{
 				Name: service.Name,
 				Port: assignedPort,
 			},
@@ -207,12 +231,12 @@ func mergeIngressSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) v1.IngressSpe
 		},
 	}
 
-	res := v1.IngressSpec{Rules: []v1.IngressRule{}}
+	res := networkingv1.IngressSpec{Rules: []networkingv1.IngressRule{}}
 
 	for _, rule := range cr.Spec.Ingress.Spec.Rules {
 		if rule.HTTP == nil || rule.HTTP.Paths == nil {
-			rule.HTTP = &v1.HTTPIngressRuleValue{
-				Paths: []v1.HTTPIngressPath{},
+			rule.HTTP = &networkingv1.HTTPIngressRuleValue{
+				Paths: []networkingv1.HTTPIngressPath{},
 			}
 		}
 

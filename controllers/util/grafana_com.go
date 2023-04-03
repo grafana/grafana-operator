@@ -1,4 +1,4 @@
-package dashboard
+package util
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 
 const grafanaComDashboardApiUrlRoot = "https://grafana.com/api/dashboards"
 
-func GetDashboardUrl(ref v1beta1.GrafanaComDashboardReference) string {
+func GetGrafanaComDashboardUrl(ref v1beta1.GrafanaComDashboardReference) string {
 	return fmt.Sprintf("%s/%d/revisions/%d/download", grafanaComDashboardApiUrlRoot, ref.Id, ref.Revision)
 }
 

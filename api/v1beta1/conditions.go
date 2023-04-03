@@ -9,7 +9,8 @@ const (
 
 	GrafanaApiUnavailableReason string = "GrafanaApiUnavailableFailed"
 
-	DashboardSyncedReason string = "DashboardSynced"
+	DashboardSyncedReason  string = "DashboardSynced"
+	DatasourceSyncedReason string = "DatasourceSynced"
 
 	CreateResourceFailedReason string = "CreateResourceFailed"
 

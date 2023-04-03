@@ -160,8 +160,12 @@ func (in *GrafanaDatasource) GetReadyCondition() *metav1.Condition {
 	return api.GetReadyCondition(in)
 }
 
-func (in *GrafanaDatasource) SetReadyCondition(status metav1.ConditionStatus, reason string, message string) {
-	api.SetReadyCondition(in, status, reason, message)
+func (in *GrafanaDatasource) SetCondition(condition metav1.Condition) bool {
+	return api.SetCondition(in, condition)
+}
+
+func (in *GrafanaDatasource) SetReadyCondition(status metav1.ConditionStatus, reason string, message string) bool {
+	return api.SetReadyCondition(in, status, reason, message)
 }
 
 func (in *GrafanaDatasourceList) Find(namespace string, name string) *GrafanaDatasource {

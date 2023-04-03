@@ -2,12 +2,13 @@ package grafana
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/go-logr/logr"
 	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana-operator/grafana-operator/v5/controllers/config"
-	"github.com/grafana-operator/grafana-operator/v5/controllers/model"
+	"github.com/grafana-operator/grafana-operator/v5/controllers/util"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -21,16 +22,28 @@ type AdminSecretReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-func (r *AdminSecretReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana) (*metav1.Condition, error) {
-	secret := model.GetGrafanaAdminSecret(cr, r.Scheme) // TODO: inline model
+func GetGrafanaAdminSecretMeta(cr *v1beta1.Grafana) *v1.Secret {
+	return &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-admin-credentials", cr.Name),
+			Namespace: cr.Namespace,
+		},
+	}
+}
+
+func (r *AdminSecretReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana) error {
+	secret := GetGrafanaAdminSecretMeta(cr)
+	if err := controllerutil.SetControllerReference(cr, secret, r.Scheme); err != nil {
+		return fmt.Errorf("failed to set controller reference: %w", err)
+	}
 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, secret, func() error {
 		secret.Data = getData(cr, secret)
 		return nil
 	})
 	if err != nil {
-		return nil, err // TODO: error condition
+		return fmt.Errorf("failed to create or update: %w", err)
 	}
-	return nil, nil // todo: success condition
+	return nil
 }
 
 func getAdminUser(cr *v1beta1.Grafana, current *v1.Secret) []byte {
@@ -50,7 +63,7 @@ func getAdminPassword(cr *v1beta1.Grafana, current *v1.Secret) []byte {
 		if current != nil && current.Data[config.GrafanaAdminPasswordEnvVar] != nil {
 			return current.Data[config.GrafanaAdminPasswordEnvVar]
 		}
-		return []byte(model.RandStringRunes(10))
+		return []byte(util.RandStringRunes(10))
 	}
 	return []byte(cr.Spec.Config["security"]["admin_password"])
 }

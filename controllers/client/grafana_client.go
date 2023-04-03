@@ -7,14 +7,15 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/grafana-operator/grafana-operator/v5/controllers/metrics"
+	grapi "github.com/grafana/grafana-api-golang-client"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana-operator/grafana-operator/v5/controllers/config"
-	"github.com/grafana-operator/grafana-operator/v5/controllers/model"
-	grapi "github.com/grafana/grafana-api-golang-client"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"github.com/grafana-operator/grafana-operator/v5/controllers/metrics"
+	grafanareconcilers "github.com/grafana-operator/grafana-operator/v5/controllers/reconcilers/grafana"
 )
 
 type grafanaAdminCredentials struct {
@@ -74,7 +75,7 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 		return credentials, nil
 	}
 
-	deployment := model.GetGrafanaDeployment(grafana, c.Scheme())
+	deployment := grafanareconcilers.GetGrafanaDeploymentMeta(grafana)
 	selector := client.ObjectKey{
 		Namespace: deployment.Namespace,
 		Name:      deployment.Name,
