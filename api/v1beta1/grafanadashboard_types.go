@@ -98,6 +98,8 @@ type GrafanaDashboardStatus struct {
 	Hash             string      `json:"hash,omitempty"`
 	// The dashboard instanceSelector can't find matching grafana instances
 	NoMatchingInstances bool `json:"NoMatchingInstances,omitempty"`
+	// Last time the dashboard was resynced
+	LastResync metav1.Time `json:"lastResync,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -129,6 +131,11 @@ func (in *GrafanaDashboard) Hash() string {
 
 func (in *GrafanaDashboard) Unchanged() bool {
 	return in.Hash() == in.Status.Hash
+}
+
+func (in *GrafanaDashboard) ResyncPeriodHasElapsed() bool {
+	deadline := in.Status.LastResync.Add(in.GetResyncPeriod())
+	return time.Now().After(deadline)
 }
 
 func (in *GrafanaDashboard) GetResyncPeriod() time.Duration {

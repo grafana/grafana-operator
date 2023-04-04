@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"strings"
 	"time"
@@ -316,7 +317,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	if err != nil {
 		return err
 	}
-	if exists && cr.Unchanged() {
+	if exists && cr.Unchanged() && !cr.ResyncPeriodHasElapsed() {
 		return nil
 	}
 
@@ -407,6 +408,7 @@ func (r *GrafanaDashboardReconciler) fetchDashboardJson(dashboard *v1beta1.Grafa
 
 func (r *GrafanaDashboardReconciler) UpdateStatus(ctx context.Context, cr *v1beta1.GrafanaDashboard) error {
 	cr.Status.Hash = cr.Hash()
+	cr.Status.LastResync = v1.Time{Time: time.Now()}
 	return r.Client.Status().Update(ctx, cr)
 }
 
