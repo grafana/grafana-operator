@@ -30,7 +30,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	grafanav1beta1 "github.com/grafana-operator/grafana-operator/api/v1beta1"
+	grafanav1beta1 "github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
 	//+kubebuilder:scaffold:imports
 )
 

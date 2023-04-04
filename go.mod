@@ -1,4 +1,4 @@
-module github.com/grafana-operator/grafana-operator
+module github.com/grafana-operator/grafana-operator/v5
 
 go 1.19
 

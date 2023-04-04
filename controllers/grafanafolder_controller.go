@@ -24,18 +24,18 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	client2 "github.com/grafana-operator/grafana-operator/controllers/client"
-	"github.com/grafana-operator/grafana-operator/controllers/metrics"
+	client2 "github.com/grafana-operator/grafana-operator/v5/controllers/client"
+	"github.com/grafana-operator/grafana-operator/v5/controllers/metrics"
 	grapi "github.com/grafana/grafana-api-golang-client"
 	"k8s.io/apimachinery/pkg/api/errors"
 
-	"github.com/grafana-operator/grafana-operator/api/v1beta1"
+	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	grafanav1beta1 "github.com/grafana-operator/grafana-operator/api/v1beta1"
+	grafanav1beta1 "github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
 )
 
 // GrafanaFolderReconciler reconciles a GrafanaFolder object

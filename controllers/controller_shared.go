@@ -5,8 +5,8 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/grafana-operator/grafana-operator/api/v1beta1"
-	"github.com/grafana-operator/grafana-operator/controllers/model"
+	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana-operator/grafana-operator/v5/controllers/model"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
