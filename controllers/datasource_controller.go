@@ -130,7 +130,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		}
 
 		if grafana.IsInternal() {
-			err = reconcilePlugins(ctx, r.Client, r.Scheme, grafana, datasource.Spec.Plugins, fmt.Sprintf("%v-datasource", datasource.Name))
+			err = updateGrafanaStatusPlugins(ctx, r.Client, grafana, datasource.Spec.Plugins)
 			if err != nil {
 				return ctrl.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("failed to reconcile plugins: %w", err)
 			}
@@ -178,13 +178,6 @@ func (r *GrafanaDatasourceReconciler) deleteExternalResources(ctx context.Contex
 		err = grafanaClient.DeleteDataSource(datasource.ID)
 		if err != nil {
 			return err
-		}
-
-		if grafana.IsInternal() {
-			err = reconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, fmt.Sprintf("%v-datasource", datasource.Name))
-			if err != nil {
-				return err
-			}
 		}
 	}
 

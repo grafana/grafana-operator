@@ -138,7 +138,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 
 		if grafana.IsInternal() {
-			err = reconcilePlugins(ctx, r.Client, r.Scheme, grafana, dashboard.Spec.Plugins, fmt.Sprintf("%v-dashboard", dashboard.Name))
+			err = updateGrafanaStatusPlugins(ctx, r.Client, grafana, dashboard.Spec.Plugins)
 			if err != nil {
 				return ctrl.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("failed to reconcile plugins: %w", err)
 			}
@@ -182,13 +182,6 @@ func (r *GrafanaDashboardReconciler) deleteExternalResources(ctx context.Context
 		err = grafanaClient.DeleteDashboardByUID(instanceStatus.UID)
 		if err != nil {
 			if !strings.Contains(err.Error(), "status: 404") {
-				return err
-			}
-		}
-
-		if grafana.IsInternal() {
-			err = reconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, fmt.Sprintf("%v-dashboard", dashboard.Name))
-			if err != nil {
 				return err
 			}
 		}
@@ -432,7 +425,7 @@ func (r *GrafanaDashboardReconciler) getFolder(client *grapi.Client, cr *v1beta1
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *GrafanaDashboardReconciler) SetupWithManager(mgr ctrl.Manager, ctx context.Context) error {
+func (r *GrafanaDashboardReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.GrafanaDashboard{}).
 		Watches(

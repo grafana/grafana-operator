@@ -101,6 +101,7 @@ type GrafanaClient struct {
 type GrafanaStatus struct {
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 	AdminUrl   string             `json:"adminUrl,omitempty"`
+	Plugins    PluginList         `json:"plugins,omitempty"`
 }
 
 //+kubebuilder:object:root=true

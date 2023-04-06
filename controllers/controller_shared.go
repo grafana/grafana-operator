@@ -1,16 +1,12 @@
 package controllers
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
-	grafanareconcilers "github.com/grafana-operator/grafana-operator/v5/controllers/reconcilers/grafana"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -34,30 +30,15 @@ func getMatchingInstances(ctx context.Context, k8sClient client.Client, labelSel
 	return list, err
 }
 
-func reconcilePlugins(ctx context.Context, k8sClient client.Client, scheme *runtime.Scheme, grafana *v1beta1.Grafana, plugins v1beta1.PluginList, resource string) error {
-	pluginsConfigMap := grafanareconcilers.GetPluginsConfigMapMeta(grafana)
-	selector := client.ObjectKey{
-		Namespace: pluginsConfigMap.Namespace,
-		Name:      pluginsConfigMap.Name,
-	}
-
-	err := k8sClient.Get(ctx, selector, pluginsConfigMap)
+func updateGrafanaStatusPlugins(ctx context.Context, k8sClient client.Client, grafana *v1beta1.Grafana, plugins v1beta1.PluginList) error {
+	plugins, err := grafana.Status.Plugins.ConsolidatedConcat(plugins)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to extend plugin list with plugins %v: %w", plugins, err)
 	}
 
-	val, err := json.Marshal(plugins.Sanitize())
-	if err != nil {
-		return err
-	}
-
-	if pluginsConfigMap.BinaryData == nil {
-		pluginsConfigMap.BinaryData = make(map[string][]byte)
-	}
-
-	if !bytes.Equal(val, pluginsConfigMap.BinaryData[resource]) {
-		pluginsConfigMap.BinaryData[resource] = val
-		return k8sClient.Update(ctx, pluginsConfigMap)
+	grafana.Status.Plugins = plugins
+	if err := k8sClient.Status().Update(ctx, grafana); err != nil {
+		return fmt.Errorf("failed to update plugin list in grafana status: %w", err)
 	}
 
 	return nil

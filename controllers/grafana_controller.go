@@ -186,10 +186,6 @@ func (r *GrafanaReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			Scheme:      mgr.GetScheme(),
 			IsOpenShift: r.IsOpenShift,
 		},
-		&grafana.PluginsReconciler{
-			Client: mgr.GetClient(),
-			Scheme: mgr.GetScheme(),
-		},
 		&grafana.DeploymentReconciler{
 			Client:      mgr.GetClient(),
 			Scheme:      mgr.GetScheme(),

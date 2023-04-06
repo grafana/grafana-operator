@@ -9355,6 +9355,18 @@ spec:
                   - type
                   type: object
                 type: array
+              plugins:
+                items:
+                  properties:
+                    name:
+                      type: string
+                    version:
+                      type: string
+                  required:
+                  - name
+                  - version
+                  type: object
+                type: array
             type: object
         type: object
     served: true
