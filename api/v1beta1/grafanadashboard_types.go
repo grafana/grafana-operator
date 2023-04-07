@@ -146,26 +146,24 @@ func (in *GrafanaDashboard) GetResyncPeriod() time.Duration {
 	return duration
 }
 
-func (in *GrafanaDashboard) GetSourceTypes() []DashboardSourceType {
-	var sourceTypes []DashboardSourceType
-
+func (in *GrafanaDashboard) GetSourceType() (DashboardSourceType, error) {
 	if in.Spec.Json != "" {
-		sourceTypes = append(sourceTypes, DashboardSourceTypeRawJson)
+		return DashboardSourceTypeRawJson, nil
 	}
 
 	if in.Spec.GzipJson != nil {
-		sourceTypes = append(sourceTypes, DashboardSourceTypeGzipJson)
+		return DashboardSourceTypeGzipJson, nil
 	}
 
 	if in.Spec.Url != "" {
-		sourceTypes = append(sourceTypes, DashboardSourceTypeUrl)
+		return DashboardSourceTypeUrl, nil
 	}
 
 	if in.Spec.Jsonnet != "" {
-		sourceTypes = append(sourceTypes, DashboardSourceTypeJsonnet)
+		return DashboardSourceTypeJsonnet, nil
 	}
 
-	return sourceTypes
+	return "", fmt.Errorf("unable to find any sourceType")
 }
 
 func (in *GrafanaDashboard) GetContentCache() []byte {

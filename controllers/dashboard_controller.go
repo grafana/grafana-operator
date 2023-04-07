@@ -381,17 +381,12 @@ func (r *GrafanaDashboardReconciler) resolveDatasources(dashboard *v1beta1.Grafa
 // fetchDashboardJson delegates obtaining the dashboard json definition to one of the known fetchers, for example
 // from embedded raw json or from a url
 func (r *GrafanaDashboardReconciler) fetchDashboardJson(dashboard *v1beta1.GrafanaDashboard) ([]byte, error) {
-	sourceTypes := dashboard.GetSourceTypes()
-
-	if len(sourceTypes) == 0 {
-		return nil, fmt.Errorf("no source type provided for dashboard %v", dashboard.Name)
+	sourceType, err := dashboard.GetSourceType()
+	if err != nil {
+		return nil, fmt.Errorf("bad source typ %v in dashboard %v, %v", sourceType, dashboard.Name, dashboard.Namespace)
 	}
 
-	if len(sourceTypes) > 1 {
-		return nil, fmt.Errorf("more than one source types found for dashboard %v", dashboard.Name)
-	}
-
-	switch sourceTypes[0] {
+	switch sourceType {
 	case v1beta1.DashboardSourceTypeRawJson:
 		return []byte(dashboard.Spec.Json), nil
 	case v1beta1.DashboardSourceTypeGzipJson:
@@ -401,7 +396,7 @@ func (r *GrafanaDashboardReconciler) fetchDashboardJson(dashboard *v1beta1.Grafa
 	case v1beta1.DashboardSourceTypeJsonnet:
 		return fetchers.FetchJsonnet(dashboard, embeds.GrafonnetEmbed)
 	default:
-		return nil, fmt.Errorf("unknown source type %v found in dashboard %v", sourceTypes[0], dashboard.Name)
+		return nil, fmt.Errorf("unknown source type %v found in dashboard %v", sourceType, dashboard.Name)
 	}
 }
 
