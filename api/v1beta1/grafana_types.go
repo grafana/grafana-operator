@@ -17,6 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/grafana-operator/grafana-operator/v5/api"
@@ -141,7 +142,8 @@ func (in *Grafana) IsExternal() bool {
 }
 
 func (in *Grafana) Ready() bool {
-	return in.GetReadyCondition().Status == metav1.ConditionTrue
+	cond := in.GetReadyCondition()
+	return cond != nil && cond.Status == metav1.ConditionTrue
 }
 
 func (in *Grafana) GetConditions() []metav1.Condition {
@@ -169,7 +171,11 @@ func InstanceKeyFor(grafana *Grafana) string {
 }
 
 func NamespacedNameFor(instanceKey string) client.ObjectKey {
-	split := strings.Split("instanceKey", string(types.Separator))
+	split := strings.Split(instanceKey, string(types.Separator))
+	if len(split) != 2 {
+		panic(fmt.Sprintf("instanceKey %s provided didn't contain exactly 1 %v", instanceKey, types.Separator))
+	}
+
 	return client.ObjectKey{
 		Namespace: split[0],
 		Name:      split[1],

@@ -1,19 +1,19 @@
 package v1beta1
 
 import (
-	"fmt"
-	"reflect"
 	"testing"
 
-	gapi "github.com/grafana/grafana-api-golang-client"
+	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega/gstruct"
+	"github.com/onsi/gomega/types"
 )
 
 func TestGrafanaDatasources_expandVariables(t *testing.T) {
 	type testcase struct {
 		name      string
 		variables map[string][]byte
-		in        GrafanaDatasource
-		out       gapi.DataSource
+		input     GrafanaDatasource
+		match     types.GomegaMatcher
 	}
 
 	testcases := []testcase{
@@ -22,7 +22,7 @@ func TestGrafanaDatasources_expandVariables(t *testing.T) {
 			variables: map[string][]byte{
 				"PROMETHEUS_USERNAME": []byte("root"),
 			},
-			in: GrafanaDatasource{
+			input: GrafanaDatasource{
 				Spec: GrafanaDatasourceSpec{
 					DataSource: GrafanaDatasourceDataSource{
 						Name: "prometheus",
@@ -30,17 +30,17 @@ func TestGrafanaDatasources_expandVariables(t *testing.T) {
 					},
 				},
 			},
-			out: gapi.DataSource{
-				Name: "prometheus",
-				User: "root",
-			},
+			match: MatchFields(IgnoreExtras, Fields{
+				"Name": Equal("prometheus"),
+				"User": Equal("root"),
+			}),
 		},
 		{
 			name: "replacement without curly braces",
 			variables: map[string][]byte{
 				"PROMETHEUS_USERNAME": []byte("root"),
 			},
-			in: GrafanaDatasource{
+			input: GrafanaDatasource{
 				Spec: GrafanaDatasourceSpec{
 					DataSource: GrafanaDatasourceDataSource{
 						Name: "prometheus",
@@ -48,23 +48,20 @@ func TestGrafanaDatasources_expandVariables(t *testing.T) {
 					},
 				},
 			},
-			out: gapi.DataSource{
-				Name: "prometheus",
-				User: "root",
-			},
+			match: MatchFields(IgnoreExtras, Fields{
+				"Name": Equal("prometheus"),
+				"User": Equal("root"),
+			}),
 		},
 	}
 
-	for _, tc := range testcases {
-		t.Run(tc.name, func(t *testing.T) {
-			out, err := tc.in.ExpandVariables(tc.variables)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			if !reflect.DeepEqual(out, tc.out) {
-				t.Error(fmt.Errorf("expected %v, but got %v", tc.out, out))
-			}
+	for _, testcase := range testcases {
+		t.Run(testcase.name, func(t *testing.T) {
+			g := NewGomegaWithT(t)
+			out, err := testcase.input.ExpandVariables(testcase.variables)
+			g.Expect(err).NotTo(HaveOccurred())
+			g.Expect(out).NotTo(BeNil())
+			g.Expect(*out).To(testcase.match)
 		})
 	}
 }

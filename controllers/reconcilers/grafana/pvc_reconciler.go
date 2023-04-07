@@ -40,7 +40,6 @@ func (r *PvcReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana) erro
 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, pvc, func() error {
 		return v1beta1.Merge(pvc, cr.Spec.PersistentVolumeClaim)
 	})
-
 	if err != nil {
 		return fmt.Errorf("failed to create or update: %w", err)
 	}

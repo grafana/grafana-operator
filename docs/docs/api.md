@@ -100,17 +100,24 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b>allowCrossNamespaceImport</b></td>
+        <td><b>interval</b></td>
+        <td>string</td>
+        <td>
+          how often the dashboard is endured to exist on the selected instances, defaults to 24h if not set<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="grafanadashboardspecsource">source</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>allowCrossNamespaceReferences</b></td>
         <td>boolean</td>
         <td>
           allow to import this resources from an operator in a different namespace<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>contentCacheDuration</b></td>
-        <td>string</td>
-        <td>
-          Cache duration for dashboards fetched from URLs<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -128,54 +135,10 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="grafanadashboardspecgrafanacom">grafanaCom</a></b></td>
-        <td>object</td>
-        <td>
-          grafana.com/dashboards<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>gzipJson</b></td>
-        <td>string</td>
-        <td>
-          GzipJson the dashboard's JSON compressed with Gzip. Base64-encoded when in YAML.<br/>
-          <br/>
-            <i>Format</i>: byte<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>json</b></td>
-        <td>string</td>
-        <td>
-          dashboard json<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>jsonnet</b></td>
-        <td>string</td>
-        <td>
-          Jsonnet<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b><a href="grafanadashboardspecpluginsindex">plugins</a></b></td>
         <td>[]object</td>
         <td>
           plugins<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>resyncPeriod</b></td>
-        <td>string</td>
-        <td>
-          how often the dashboard is refreshed, defaults to 24h if not set<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>url</b></td>
-        <td>string</td>
-        <td>
-          dashboard url<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -257,6 +220,206 @@ A label selector requirement is a selector that contains values, a key, and an o
 </table>
 
 
+### GrafanaDashboard.spec.source
+<sup><sup>[↩ Parent](grafanadashboardspec)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="grafanadashboardspecsourceconfigmap">configMap</a></b></td>
+        <td>object</td>
+        <td>
+          Selects a key from a ConfigMap.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="grafanadashboardspecsourceinline">inline</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="grafanadashboardspecsourceremote">remote</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.spec.source.configMap
+<sup><sup>[↩ Parent](grafanadashboardspecsource)</sup></sup>
+
+
+
+Selects a key from a ConfigMap.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          The key to select.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>optional</b></td>
+        <td>boolean</td>
+        <td>
+          Specify whether the ConfigMap or its key must be defined<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.spec.source.inline
+<sup><sup>[↩ Parent](grafanadashboardspecsource)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>gzipJson</b></td>
+        <td>string</td>
+        <td>
+          GzipJson the dashboard's JSON compressed with Gzip. Base64-encoded when in YAML.<br/>
+          <br/>
+            <i>Format</i>: byte<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>json</b></td>
+        <td>string</td>
+        <td>
+          dashboard json<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>jsonnet</b></td>
+        <td>string</td>
+        <td>
+          Jsonnet<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.spec.source.remote
+<sup><sup>[↩ Parent](grafanadashboardspecsource)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>contentCacheDuration</b></td>
+        <td>string</td>
+        <td>
+          Cache duration for dashboards fetched from URLs<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="grafanadashboardspecsourceremotegrafanacom">grafanaCom</a></b></td>
+        <td>object</td>
+        <td>
+          grafana.com/dashboards<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>url</b></td>
+        <td>string</td>
+        <td>
+          dashboard url<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.spec.source.remote.grafanaCom
+<sup><sup>[↩ Parent](grafanadashboardspecsourceremote)</sup></sup>
+
+
+
+grafana.com/dashboards
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>id</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>revision</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
 ### GrafanaDashboard.spec.datasources[index]
 <sup><sup>[↩ Parent](grafanadashboardspec)</sup></sup>
 
@@ -287,40 +450,6 @@ A label selector requirement is a selector that contains values, a key, and an o
           <br/>
         </td>
         <td>true</td>
-      </tr></tbody>
-</table>
-
-
-### GrafanaDashboard.spec.grafanaCom
-<sup><sup>[↩ Parent](grafanadashboardspec)</sup></sup>
-
-
-
-grafana.com/dashboards
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>id</b></td>
-        <td>integer</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>revision</b></td>
-        <td>integer</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -376,13 +505,118 @@ GrafanaDashboardStatus defines the observed state of GrafanaDashboard
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>NoMatchingInstances</b></td>
-        <td>boolean</td>
+        <td><b><a href="grafanadashboardstatusconditionsindex">conditions</a></b></td>
+        <td>[]object</td>
         <td>
-          The dashboard instanceSelector can't find matching grafana instances<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="grafanadashboardstatuscontent">content</a></b></td>
+        <td>object</td>
+        <td>
+          Content contains information about fetched remote content<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="grafanadashboardstatusinstanceskey">instances</a></b></td>
+        <td>map[string]object</td>
+        <td>
+          Instances stores UID, version, and folder info for each instance the dashboard has been created in<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.status.conditions[index]
+<sup><sup>[↩ Parent](grafanadashboardstatus)</sup></sup>
+
+
+
+Condition contains details for one aspect of the current state of this API Resource. --- This struct is intended for direct use as an array at the field path .status.conditions.  For example, 
+ type FooStatus struct{ // Represents the observations of a foo's current state. // Known .status.conditions.type are: "Available", "Progressing", and "Degraded" // +patchMergeKey=type // +patchStrategy=merge // +listType=map // +listMapKey=type Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"` 
+ // other fields }
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>lastTransitionTime</b></td>
+        <td>string</td>
+        <td>
+          lastTransitionTime is the last time the condition transitioned from one status to another. This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.<br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>message</b></td>
+        <td>string</td>
+        <td>
+          message is a human readable message indicating details about the transition. This may be an empty string.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>reason</b></td>
+        <td>string</td>
+        <td>
+          reason contains a programmatic identifier indicating the reason for the condition's last transition. Producers of specific condition types may define expected values and meanings for this field, and whether the values are considered a guaranteed API. The value should be a CamelCase string. This field may not be empty.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>status</b></td>
+        <td>enum</td>
+        <td>
+          status of the condition, one of True, False, Unknown.<br/>
+          <br/>
+            <i>Enum</i>: True, False, Unknown<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          type of condition in CamelCase or in foo.example.com/CamelCase. --- Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be useful (see .node.status.conditions), the ability to deconflict is important. The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>observedGeneration</b></td>
+        <td>integer</td>
+        <td>
+          observedGeneration represents the .metadata.generation that the condition was set based upon. For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date with respect to the current state of the instance.<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+            <i>Minimum</i>: 0<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.status.content
+<sup><sup>[↩ Parent](grafanadashboardstatus)</sup></sup>
+
+
+
+Content contains information about fetched remote content
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
         <td><b>contentCache</b></td>
         <td>string</td>
         <td>
@@ -407,11 +641,40 @@ GrafanaDashboardStatus defines the observed state of GrafanaDashboard
           <br/>
         </td>
         <td>false</td>
-      </tr><tr>
-        <td><b>hash</b></td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.status.instances[key]
+<sup><sup>[↩ Parent](grafanadashboardstatus)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>UID</b></td>
         <td>string</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>Version</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -491,7 +754,14 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         <td><b><a href="grafanadatasourcespecinstanceselector">instanceSelector</a></b></td>
         <td>object</td>
         <td>
-          selects Grafana instances for import<br/>
+          selects Grafana instances<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>interval</b></td>
+        <td>string</td>
+        <td>
+          how often the datasource is refreshed<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -516,13 +786,6 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>resyncPeriod</b></td>
-        <td>string</td>
-        <td>
-          how often the datasource is refreshed, defaults to 24h if not set<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>secrets</b></td>
         <td>[]string</td>
         <td>
@@ -538,7 +801,7 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
 
 
 
-selects Grafana instances for import
+selects Grafana instances
 
 <table>
     <thead>
@@ -630,14 +893,42 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td>
           <br/>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
         <td><b>basicAuth</b></td>
         <td>boolean</td>
         <td>
           <br/>
         </td>
-        <td>false</td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>isDefault</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
       </tr><tr>
         <td><b>basicAuthUser</b></td>
         <td>string</td>
@@ -653,29 +944,17 @@ A label selector requirement is a selector that contains values, a key, and an o
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>editable</b></td>
-        <td>boolean</td>
+        <td><b>id</b></td>
+        <td>integer</td>
         <td>
           <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>isDefault</b></td>
-        <td>boolean</td>
-        <td>
           <br/>
+            <i>Format</i>: int64<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>jsonData</b></td>
         <td>object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>name</b></td>
-        <td>string</td>
         <td>
           <br/>
         </td>
@@ -697,21 +976,7 @@ A label selector requirement is a selector that contains values, a key, and an o
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>type</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>uid</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>url</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -779,21 +1044,121 @@ GrafanaDatasourceStatus defines the observed state of GrafanaDatasource
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>NoMatchingInstances</b></td>
-        <td>boolean</td>
-        <td>
-          The datasource instanceSelector can't find matching grafana instances<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>hash</b></td>
-        <td>string</td>
+        <td><b><a href="grafanadatasourcestatusconditionsindex">conditions</a></b></td>
+        <td>[]object</td>
         <td>
           <br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>lastMessage</b></td>
+        <td><b><a href="grafanadatasourcestatusinstanceskey">instances</a></b></td>
+        <td>map[string]object</td>
+        <td>
+          Instances stores UID, version, and folder info for each instance the datasource has been created in<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDatasource.status.conditions[index]
+<sup><sup>[↩ Parent](grafanadatasourcestatus)</sup></sup>
+
+
+
+Condition contains details for one aspect of the current state of this API Resource. --- This struct is intended for direct use as an array at the field path .status.conditions.  For example, 
+ type FooStatus struct{ // Represents the observations of a foo's current state. // Known .status.conditions.type are: "Available", "Progressing", and "Degraded" // +patchMergeKey=type // +patchStrategy=merge // +listType=map // +listMapKey=type Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"` 
+ // other fields }
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>lastTransitionTime</b></td>
+        <td>string</td>
+        <td>
+          lastTransitionTime is the last time the condition transitioned from one status to another. This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.<br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>message</b></td>
+        <td>string</td>
+        <td>
+          message is a human readable message indicating details about the transition. This may be an empty string.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>reason</b></td>
+        <td>string</td>
+        <td>
+          reason contains a programmatic identifier indicating the reason for the condition's last transition. Producers of specific condition types may define expected values and meanings for this field, and whether the values are considered a guaranteed API. The value should be a CamelCase string. This field may not be empty.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>status</b></td>
+        <td>enum</td>
+        <td>
+          status of the condition, one of True, False, Unknown.<br/>
+          <br/>
+            <i>Enum</i>: True, False, Unknown<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          type of condition in CamelCase or in foo.example.com/CamelCase. --- Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be useful (see .node.status.conditions), the ability to deconflict is important. The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>observedGeneration</b></td>
+        <td>integer</td>
+        <td>
+          observedGeneration represents the .metadata.generation that the condition was set based upon. For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date with respect to the current state of the instance.<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+            <i>Minimum</i>: 0<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDatasource.status.instances[key]
+<sup><sup>[↩ Parent](grafanadatasourcestatus)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>ID</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>UID</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -15430,46 +15795,123 @@ GrafanaStatus defines the observed state of Grafana
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>dashboards</b></td>
-        <td>[]string</td>
+        <td><b><a href="grafanastatusconditionsindex">conditions</a></b></td>
+        <td>[]object</td>
         <td>
           <br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>datasources</b></td>
-        <td>[]string</td>
+        <td><b><a href="grafanastatuspluginsindex">plugins</a></b></td>
+        <td>[]object</td>
         <td>
           <br/>
         </td>
         <td>false</td>
-      </tr><tr>
-        <td><b>folders</b></td>
-        <td>[]string</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.status.conditions[index]
+<sup><sup>[↩ Parent](grafanastatus)</sup></sup>
+
+
+
+Condition contains details for one aspect of the current state of this API Resource. --- This struct is intended for direct use as an array at the field path .status.conditions.  For example, 
+ type FooStatus struct{ // Represents the observations of a foo's current state. // Known .status.conditions.type are: "Available", "Progressing", and "Degraded" // +patchMergeKey=type // +patchStrategy=merge // +listType=map // +listMapKey=type Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"` 
+ // other fields }
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>lastTransitionTime</b></td>
+        <td>string</td>
         <td>
+          lastTransitionTime is the last time the condition transitioned from one status to another. This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.<br/>
           <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>message</b></td>
+        <td>string</td>
+        <td>
+          message is a human readable message indicating details about the transition. This may be an empty string.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>reason</b></td>
+        <td>string</td>
+        <td>
+          reason contains a programmatic identifier indicating the reason for the condition's last transition. Producers of specific condition types may define expected values and meanings for this field, and whether the values are considered a guaranteed API. The value should be a CamelCase string. This field may not be empty.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>status</b></td>
+        <td>enum</td>
+        <td>
+          status of the condition, one of True, False, Unknown.<br/>
+          <br/>
+            <i>Enum</i>: True, False, Unknown<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          type of condition in CamelCase or in foo.example.com/CamelCase. --- Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be useful (see .node.status.conditions), the ability to deconflict is important. The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>observedGeneration</b></td>
+        <td>integer</td>
+        <td>
+          observedGeneration represents the .metadata.generation that the condition was set based upon. For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date with respect to the current state of the instance.<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+            <i>Minimum</i>: 0<br/>
         </td>
         <td>false</td>
-      </tr><tr>
-        <td><b>lastMessage</b></td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.status.plugins[index]
+<sup><sup>[↩ Parent](grafanastatus)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
         <td>string</td>
         <td>
           <br/>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
-        <td><b>stage</b></td>
+        <td><b>version</b></td>
         <td>string</td>
         <td>
           <br/>
         </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>stageStatus</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
+        <td>true</td>
       </tr></tbody>
 </table>

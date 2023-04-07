@@ -163,7 +163,6 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	r.setReadyCondition(ctx, dashboard, metav1.ConditionTrue, v1beta1.DashboardSyncedReason, "Dashboard synced")
 
 	return ctrl.Result{RequeueAfter: dashboard.GetResyncPeriod()}, nil
-
 }
 
 func (r *GrafanaDashboardReconciler) deleteExternalResources(ctx context.Context, dashboard *v1beta1.GrafanaDashboard) error {
@@ -238,7 +237,7 @@ func (r *GrafanaDashboardReconciler) syncDashboardContent(ctx context.Context, g
 		Model:     manifest,
 		Folder:    folderId,
 		Overwrite: true,
-		Message:   "",
+		Message:   fmt.Sprintf("Updated by Grafana Operator. Generation %d, ResourceVersion: %s", dashboard.Generation, dashboard.ResourceVersion),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new dashboard: %w", err)
@@ -254,7 +253,6 @@ func (r *GrafanaDashboardReconciler) syncDashboardContent(ctx context.Context, g
 }
 
 func (r *GrafanaDashboardReconciler) getDashboardManifest(ctx context.Context, dashboard *v1beta1.GrafanaDashboard) (map[string]interface{}, error) {
-
 	var manifestBytes []byte
 	var err error
 	if dashboard.Spec.Source.Inline != nil {
@@ -450,6 +448,7 @@ func (r *GrafanaDashboardReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	return err
 }
+
 func (r *GrafanaDashboardReconciler) setReadyCondition(ctx context.Context, dashboard *v1beta1.GrafanaDashboard, status metav1.ConditionStatus, reason string, message string) error {
 	changed := dashboard.SetReadyCondition(status, reason, message)
 	if !changed {
@@ -512,7 +511,6 @@ func (r *GrafanaDashboardReconciler) findObjectsForGrafanaLabels(ctx context.Con
 	reqs := []reconcile.Request{}
 	for _, dashboard := range dashboards.Items {
 		selector, err := metav1.LabelSelectorAsSelector(dashboard.Spec.InstanceSelector)
-
 		if err != nil {
 			return []reconcile.Request{}
 		}

@@ -187,7 +187,6 @@ func (in *GrafanaDashboard) GetContentCache(url string) []byte {
 	}
 
 	return cache
-
 }
 
 func (in *GrafanaDashboard) IsAllowCrossNamespaceImport() bool {

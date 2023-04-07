@@ -287,7 +287,7 @@ func (r *GrafanaDatasourceReconciler) setReadyCondition(ctx context.Context, dat
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *GrafanaDatasourceReconciler) SetupWithManager(mgr ctrl.Manager, ctx context.Context) error {
+func (r *GrafanaDatasourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.GrafanaDatasource{}).
 		Watches(
@@ -321,7 +321,6 @@ func (r *GrafanaDatasourceReconciler) findObjectsForDeployment(o client.Object) 
 	reqs := []reconcile.Request{}
 	for _, datasource := range datasources.Items {
 		selector, err := metav1.LabelSelectorAsSelector(datasource.Spec.InstanceSelector)
-
 		if err != nil {
 			return []reconcile.Request{}
 		}

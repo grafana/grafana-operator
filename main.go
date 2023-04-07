@@ -144,6 +144,7 @@ func main() {
 	if err = (&controllers.GrafanaReconciler{
 		Client:      mgr.GetClient(),
 		Scheme:      mgr.GetScheme(),
+		Log:         ctrl.Log.WithName("GrafanaReconciler"),
 		IsOpenShift: isOpenShift,
 		Discovery:   discovery2.NewDiscoveryClientForConfigOrDie(ctrl.GetConfigOrDie()),
 	}).SetupWithManager(mgr); err != nil {
@@ -153,16 +154,16 @@ func main() {
 	if err = (&controllers.GrafanaDashboardReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-		Log:    ctrl.Log,
-	}).SetupWithManager(mgr, ctx); err != nil {
+		Log:    ctrl.Log.WithName("DashboardReconciler"),
+	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDashboard")
 		os.Exit(1)
 	}
 	if err = (&controllers.GrafanaDatasourceReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-		Log:    ctrl.Log,
-	}).SetupWithManager(mgr, ctx); err != nil {
+		Log:    ctrl.Log.WithName("DatasourceReconciler"),
+	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDatasource")
 		os.Exit(1)
 	}

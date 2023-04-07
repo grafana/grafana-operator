@@ -129,20 +129,21 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 }
 
 func (r *GrafanaReconciler) setApiAvailableCondition(ctx context.Context, grafana *v1beta1.Grafana) bool {
-	apiAvailable := true
+	var availabilityErr error
 	res, err := http.Get(grafana.Status.AdminUrl)
 	if err != nil {
-		apiAvailable = false
-	}
-	res.Body.Close()
-	if res.StatusCode >= 400 {
-		apiAvailable = false
+		availabilityErr = err
+	} else {
+		res.Body.Close()
+		if res.StatusCode >= 400 {
+			availabilityErr = fmt.Errorf("API request to admin URL returned status code %d", res.StatusCode)
+		}
 	}
 
-	if apiAvailable {
+	if availabilityErr == nil {
 		return grafana.SetReadyCondition(metav1.ConditionTrue, v1beta1.GrafanaApiAvailableReason, "Grafana API is available")
 	} else {
-		return grafana.SetReadyCondition(metav1.ConditionFalse, v1beta1.GrafanaApiUnavailableReason, "Grafana API is unavailable")
+		return grafana.SetReadyCondition(metav1.ConditionFalse, v1beta1.GrafanaApiUnavailableReason, fmt.Sprintf("Grafana API is unavailable: %s", availabilityErr))
 	}
 }
 
@@ -193,7 +194,7 @@ func (r *GrafanaReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		},
 	}
 
-	return ctrl.NewControllerManagedBy(mgr).
+	builder := ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.Grafana{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&v1.ConfigMap{}).
@@ -201,7 +202,11 @@ func (r *GrafanaReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&v1.Service{}).
 		Owns(&v1.ServiceAccount{}).
 		Owns(&v1.PersistentVolumeClaim{}).
-		Owns(&networkingv1.Ingress{}).
-		Owns(&routev1.Route{}).
-		Complete(r)
+		Owns(&networkingv1.Ingress{})
+
+	if r.IsOpenShift {
+		builder = builder.Owns(&routev1.Route{})
+	}
+
+	return builder.Complete(r)
 }

@@ -48,7 +48,6 @@ func GetGrafanaDeploymentMeta(cr *v1beta1.Grafana) *appsv1.Deployment {
 }
 
 func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana) error {
-
 	openshiftPlatform := r.IsOpenShift
 
 	deployment := GetGrafanaDeploymentMeta(cr)

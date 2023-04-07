@@ -22,18 +22,20 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega/gstruct"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
+	grec "github.com/grafana-operator/grafana-operator/v5/controllers/reconcilers/grafana"
 )
 
 var _ = Describe("Grafana controller", func() {
-
 	// Define utility constants for object names and testing timeouts/durations and intervals.
 	const (
 		GrafanaName      = "test-grafana"
@@ -46,7 +48,7 @@ var _ = Describe("Grafana controller", func() {
 	replicas := int32(2)
 
 	Context("When creating Grafana", func() {
-		It("Should create expected resources", func() {
+		It("Should seem to work", func() {
 			By("By creating a new Grafana resource")
 			ctx := context.Background()
 			grafana := &v1beta1.Grafana{
@@ -72,74 +74,66 @@ var _ = Describe("Grafana controller", func() {
 							}},
 						},
 					},
+					Ingress: &v1beta1.IngressNetworkingV1{
+						Spec: &networkingv1.IngressSpec{
+							Rules: []networkingv1.IngressRule{
+								{
+									Host: "example.com",
+								},
+							},
+						},
+					},
 				},
 			}
 			Expect(k8sClient.Create(ctx, grafana)).Should(Succeed())
 			grafanaLookupKey := types.NamespacedName{Name: GrafanaName, Namespace: GrafanaNamespace}
 			createdGrafana := &v1beta1.Grafana{}
 
-			By("By becoming ready")
-			Eventually(func() *metav1.Condition {
-				err := k8sClient.Get(ctx, grafanaLookupKey, createdGrafana)
-				if err != nil {
-					return nil
-				}
-				return createdGrafana.GetReadyCondition()
-			}, timeout, interval).Should(Equal(metav1.Condition{
-				Type:    "Ready",
-				Message: "grafana api availabel",
-				Reason:  v1beta1.GrafanaApiAvailableReason,
-			}))
-
 			By("By checking for the created resources")
-			configLookupKey := types.NamespacedName{Name: fmt.Sprintf("%s-ini", GrafanaName), Namespace: GrafanaNamespace}
+			configLookupKey := client.ObjectKeyFromObject(grec.GetGrafanaIniMeta(grafana))
 			createdConfig := &v1.ConfigMap{}
 
-			secretLookupKey := types.NamespacedName{Name: fmt.Sprintf("%s-admin-credentials", GrafanaName), Namespace: GrafanaNamespace}
+			secretLookupKey := client.ObjectKeyFromObject(grec.GetGrafanaAdminSecretMeta(grafana))
 			createdSecret := &v1.Secret{}
 
-			pvcLookupKey := types.NamespacedName{Name: fmt.Sprintf("%s-pvc", GrafanaName), Namespace: GrafanaNamespace}
+			pvcLookupKey := client.ObjectKeyFromObject(grec.GetGrafanaDataPVCMeta(grafana))
 			createdPvc := &v1.PersistentVolumeClaim{}
 
-			saLookupKey := types.NamespacedName{Name: fmt.Sprintf("%s-sa", GrafanaName), Namespace: GrafanaNamespace}
+			saLookupKey := client.ObjectKeyFromObject(grec.GetGrafanaServiceAccountMeta(grafana))
 			createdSa := &v1.ServiceAccount{}
 
-			serviceLookupKey := types.NamespacedName{Name: fmt.Sprintf("%s-service", GrafanaName), Namespace: GrafanaNamespace}
+			serviceLookupKey := client.ObjectKeyFromObject(grec.GetGrafanaServiceMeta(grafana))
 			createdService := &v1.Service{}
 
-			ingressLookupKey := types.NamespacedName{Name: fmt.Sprintf("%s-ingress", GrafanaName), Namespace: GrafanaNamespace}
+			ingressLookupKey := client.ObjectKeyFromObject(grec.GetGrafanaIngressMeta(grafana))
 			createdIngress := &networkingv1.Ingress{}
 
-			deploymentLookupKey := types.NamespacedName{Name: fmt.Sprintf("%s-deployment", GrafanaName), Namespace: GrafanaNamespace}
+			deploymentLookupKey := client.ObjectKeyFromObject(grec.GetGrafanaDeploymentMeta(grafana))
 			createdDeployment := &appsv1.Deployment{}
 
 			Eventually(func() (bool, error) {
-				err := k8sClient.Get(ctx, configLookupKey, createdConfig)
-				if err != nil {
+				if err := k8sClient.Get(ctx, grafanaLookupKey, createdGrafana); err != nil {
+					return false, fmt.Errorf("failed grafana: %w", err)
+				}
+				if err := k8sClient.Get(ctx, configLookupKey, createdConfig); err != nil {
 					return false, fmt.Errorf("failed config: %w", err)
 				}
-				err = k8sClient.Get(ctx, secretLookupKey, createdSecret)
-				if err != nil {
+				if err := k8sClient.Get(ctx, secretLookupKey, createdSecret); err != nil {
 					return false, fmt.Errorf("failed secret: %w", err)
 				}
-				err = k8sClient.Get(ctx, pvcLookupKey, createdPvc)
-				if err != nil {
+				if err := k8sClient.Get(ctx, pvcLookupKey, createdPvc); err != nil {
 					return false, fmt.Errorf("failed pvc: %w", err)
 				}
-				err = k8sClient.Get(ctx, saLookupKey, createdSa)
-				if err != nil {
+				if err := k8sClient.Get(ctx, saLookupKey, createdSa); err != nil {
 					return false, fmt.Errorf("failed sa: %w", err)
 				}
-				err = k8sClient.Get(ctx, serviceLookupKey, createdService)
-				if err != nil {
+				if err := k8sClient.Get(ctx, serviceLookupKey, createdService); err != nil {
 					return false, fmt.Errorf("failed service: %w", err)
 				}
-				err = k8sClient.Get(ctx, ingressLookupKey, createdIngress)
-				if err != nil {
+				if err := k8sClient.Get(ctx, ingressLookupKey, createdIngress); err != nil {
 					return false, fmt.Errorf("failed ingress: %w", err)
 				}
-				err = k8sClient.Get(ctx, deploymentLookupKey, createdDeployment)
-				if err != nil {
+				if err := k8sClient.Get(ctx, deploymentLookupKey, createdDeployment); err != nil {
 					return false, fmt.Errorf("failed deployment: %w", err)
 				}
 				return true, nil
@@ -170,7 +164,20 @@ var _ = Describe("Grafana controller", func() {
 				}
 				return "", fmt.Errorf("Missing GF_INSTALL_PLUGINS")
 			}, timeout, interval).Should(Equal(createdGrafana.Status.Plugins.String()))
+
+			By("By having a status condition")
+			Eventually(func() *metav1.Condition {
+				err := k8sClient.Get(ctx, grafanaLookupKey, createdGrafana)
+				if err != nil {
+					return nil
+				}
+				return createdGrafana.GetReadyCondition()
+			}, timeout, interval).Should(PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":   Equal("Ready"),
+				"Status": Equal(metav1.ConditionFalse),
+				"Reason": Equal("GrafanaApiUnavailableFailed"),
+			})))
+
 		})
 	})
-
 })

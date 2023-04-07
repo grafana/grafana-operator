@@ -20,12 +20,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/http/httptest"
+	"regexp"
 	"time"
 
 	gapi "github.com/grafana/grafana-api-golang-client"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/ghttp"
+
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -35,7 +37,6 @@ import (
 )
 
 var _ = Describe("GrafanaDashboard controller", func() {
-
 	// Define utility constants for object names and testing timeouts/durations and intervals.
 	var (
 		grafanaName          = "dashboard-test-grafana"
@@ -43,12 +44,15 @@ var _ = Describe("GrafanaDashboard controller", func() {
 		adminCredentialsName = fmt.Sprintf("%s-admin-credentials", grafanaName)
 		dashboardJsonString  = `{"totally": "a dashboard"}`
 
+		folderTitle   = "test-folder"
 		dashboardName = "test-dashboard"
 		dashboardUID  = "test-dashboard-uid"
 
-		timeout  = time.Second
-		duration = metav1.Duration{time.Second}
-		interval = time.Millisecond * 250
+		expectedFolderOutput = gapi.Folder{ID: 13, UID: "folder-uid", Title: folderTitle}
+
+		oneSecondDuration     = time.Second
+		oneSecondMetaDuration = metav1.Duration{Duration: oneSecondDuration}
+		interval              = time.Millisecond * 250
 	)
 
 	var (
@@ -62,11 +66,10 @@ var _ = Describe("GrafanaDashboard controller", func() {
 			"a":   "dashboard",
 		}
 
+		mockFolders          []gapi.Folder
 		mockDashboardStorage map[string]gapi.Dashboard
-		mockAPIRequests      map[string][]interface{}
 
-		handlers       *http.ServeMux
-		mockGrafanaAPI *httptest.Server
+		server *ghttp.Server
 
 		grafana = &v1beta1.Grafana{
 			TypeMeta: metav1.TypeMeta{
@@ -126,44 +129,61 @@ var _ = Describe("GrafanaDashboard controller", func() {
 
 	BeforeEach(func() {
 		mockDashboardStorage = make(map[string]gapi.Dashboard)
-		mockAPIRequests = make(map[string][]interface{})
+		server = ghttp.NewServer()
 
-		handlers = http.NewServeMux()
-		handlers.HandleFunc("/api/folders", func(w http.ResponseWriter, r *http.Request) {
-			if r.Method == "POST" {
-				var folder gapi.Folder
-				json.NewDecoder(r.Body).Decode(&folder)
-				mockAPIRequests["/api/folders"] = append(mockAPIRequests["/api/folders"], folder)
-				json.NewEncoder(w).Encode(&gapi.Folder{
-					ID: 13,
-				})
-			} else {
-				json.NewEncoder(w).Encode(&[]gapi.Folder{{
-					ID: 13,
-				}})
-			}
-		})
-		handlers.HandleFunc("/api/dashboards/db", func(w http.ResponseWriter, r *http.Request) {
-			var dash gapi.Dashboard
-			json.NewDecoder(r.Body).Decode(&dash)
-			mockAPIRequests[r.URL.Path] = append(mockAPIRequests[r.URL.Path], dash)
-			mockDashboardStorage[dashboardUID] = dash
-			json.NewEncoder(w).Encode(&gapi.DashboardSaveResponse{
-				Slug:    "fake-slug",
-				ID:      42,
-				UID:     dashboardUID,
-				Status:  "ok",
-				Version: 3,
-			})
-		})
+		server.RouteToHandler("GET", "/", ghttp.RespondWith(200, nil))
+		server.RouteToHandler("GET", "/api/folders", ghttp.RespondWithJSONEncoded(http.StatusOK, &mockFolders))
+		server.RouteToHandler("POST", "/api/folders", ghttp.CombineHandlers(
+			ghttp.VerifyBasicAuth("admin", "password"),
+			func(w http.ResponseWriter, r *http.Request) {
+				mockFolders = append(mockFolders, expectedFolderOutput)
+			},
+			ghttp.RespondWithJSONEncoded(http.StatusOK, expectedFolderOutput),
+		))
 
-		mockGrafanaAPI = httptest.NewServer(handlers)
+		server.RouteToHandler("GET", regexp.MustCompile("/api/dashboards/.*"), ghttp.CombineHandlers(
+			ghttp.VerifyBasicAuth("admin", "password"),
+			func(w http.ResponseWriter, r *http.Request) {
+				if content, ok := mockDashboardStorage[dashboardUID]; ok {
+					w.WriteHeader(200)
+					json.NewEncoder(w).Encode(content)
+				} else {
+					w.WriteHeader(404)
+				}
+			},
+		))
+		server.RouteToHandler("DELETE", regexp.MustCompile("/api/dashboards/.*"), ghttp.CombineHandlers(
+			ghttp.VerifyBasicAuth("admin", "password"),
+			func(w http.ResponseWriter, r *http.Request) {
+				delete(mockDashboardStorage, dashboardUID)
+			},
+			ghttp.RespondWith(200, nil),
+		))
+		server.RouteToHandler("POST", "/api/dashboards/db",
+			ghttp.CombineHandlers(
+				ghttp.VerifyBasicAuth("admin", "password"),
+				func(w http.ResponseWriter, r *http.Request) {
+					var dash gapi.Dashboard
+					json.NewDecoder(r.Body).Decode(&dash)
+					dash.Model["version"] = 3
+					dash.Model["uid"] = dashboardUID
+					mockDashboardStorage[dashboardUID] = dash
+				},
+				ghttp.RespondWithJSONEncoded(http.StatusOK, gapi.DashboardSaveResponse{
+					Slug:    "fake-slug",
+					ID:      42,
+					UID:     dashboardUID,
+					Status:  "success",
+					Version: 3,
+				}),
+			),
+		)
 
 		adminCredentials.SetResourceVersion("")
 		grafana.SetResourceVersion("")
 		dashboard.SetResourceVersion("")
 
-		grafana.Spec.External.URL = mockGrafanaAPI.URL
+		grafana.Spec.External.URL = server.URL()
 		Expect(k8sClient.Create(ctx, grafana)).Should(Succeed())
 		Expect(k8sClient.Create(ctx, adminCredentials)).Should(Succeed())
 	})
@@ -175,17 +195,11 @@ var _ = Describe("GrafanaDashboard controller", func() {
 		}).ShouldNot(Succeed())
 		Expect(k8sClient.Delete(ctx, grafana)).Should(Succeed())
 		Expect(k8sClient.Delete(ctx, adminCredentials)).Should(Succeed())
-		mockGrafanaAPI.Close()
+		server.Close()
 	})
 
 	Context("When creating GrafanaDashboard", func() {
 		It("Should call the appropriate APIs on the Grafana instance", func() {
-
-			handlers.HandleFunc("/api/dashboards/uid/some-uid", func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(200)
-				json.NewEncoder(w).Encode(mockDashboardStorage[dashboardUID])
-			})
-
 			By("By creating a dashboard resource")
 			dashboard.Spec = v1beta1.GrafanaDashboardSpec{
 				InstanceSelector: &metav1.LabelSelector{MatchLabels: grafana.ObjectMeta.Labels},
@@ -194,22 +208,24 @@ var _ = Describe("GrafanaDashboard controller", func() {
 						Json: &dashboardJsonString,
 					},
 				},
-				Plugins: v1beta1.PluginList{piechartPlugin},
+				FolderTitle: folderTitle,
+				Plugins:     v1beta1.PluginList{piechartPlugin},
 			}
 			Expect(k8sClient.Create(ctx, dashboard)).Should(Succeed())
 
 			Eventually(func() error {
 				return k8sClient.Get(ctx, dashboardLookupKey, createdDashboard)
-			}, timeout, interval).Should(Succeed())
+			}, oneSecondDuration, interval).Should(Succeed())
 
 			By("By ensuring the folder endpoint was called")
-			Eventually(func() []interface{} {
-				return mockAPIRequests["/api/folders"]
-			}).Should(ContainElement(Equal(gapi.Folder{Title: grafana.Namespace})))
+			Eventually(func() []gapi.Folder {
+				return mockFolders
+			}).Should(ContainElement(HaveField("Title", folderTitle)))
+
 			By("By ensuring the dashboard endpoint was called")
-			Eventually(func() []interface{} {
-				return mockAPIRequests["/api/dashboards/db"]
-			}).Should(ContainElement(HaveField("Message", MatchRegexp("Updated by Grafana Operator.*"))))
+			Eventually(func() gapi.Dashboard {
+				return mockDashboardStorage[dashboardUID]
+			}).Should(HaveField("Message", MatchRegexp("Updated by Grafana Operator.*")))
 
 			By("By checking the UID in the dashboard status")
 			Eventually(func() (string, error) {
@@ -220,32 +236,29 @@ var _ = Describe("GrafanaDashboard controller", func() {
 				return createdDashboard.Status.Instances[v1beta1.InstanceKeyFor(grafana)].UID, nil
 			}).Should(Equal(dashboardUID))
 
-			grafanaLookupKey := types.NamespacedName{Name: grafanaName, Namespace: grafanaNamespace}
-			createdGrafana := &v1beta1.Grafana{}
-			By("By checking the value of Grafana.Status.PluginList")
-			Eventually(func() (bool, error) {
-				err := k8sClient.Get(ctx, grafanaLookupKey, createdGrafana)
-				if err != nil {
-					return false, err
-				}
-				return createdGrafana.Status.Plugins.HasSomeVersionOf(&piechartPlugin), nil
-			}, timeout, interval).Should(BeTrue())
+			// TODO: test with incluster grafana
+			// grafanaLookupKey := types.NamespacedName{Name: grafanaName, Namespace: grafanaNamespace}
+			// createdGrafana := &v1beta1.Grafana{}
+			// By("By checking the value of Grafana.Status.PluginList")
+			// Eventually(func() (bool, error) {
+			// 	err := k8sClient.Get(ctx, grafanaLookupKey, createdGrafana)
+			// 	if err != nil {
+			// 		return false, err
+			// 	}
+			// 	return createdGrafana.Status.Plugins.HasSomeVersionOf(&piechartPlugin), nil
+			// }, oneSecondDuration, interval).Should(BeTrue())
 		})
 
 		It("Should download dashboards from remote URLs", func() {
-			handlers.HandleFunc("/other/dashboard.json", func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(200)
-				mockAPIRequests[r.URL.Path] = append(mockAPIRequests[r.URL.Path], "called")
-				json.NewEncoder(w).Encode(mockDashboard)
-			})
+			server.RouteToHandler("GET", "/other/dashboard.json", ghttp.RespondWithJSONEncoded(200, mockDashboard))
 
 			By("By creating a dashboard resource")
-			remoteDashboardURL := mockGrafanaAPI.URL + "/other/dashboard.json"
+			remoteDashboardURL := server.URL() + "/other/dashboard.json"
 			dashboard.Spec = v1beta1.GrafanaDashboardSpec{
 				InstanceSelector: &metav1.LabelSelector{MatchLabels: grafana.ObjectMeta.Labels},
 				Source: v1beta1.GrafanaDashboardSource{
 					Remote: &v1beta1.GrafanaDashboardRemoteSource{
-						ContentCacheDuration: duration,
+						ContentCacheDuration: oneSecondMetaDuration,
 						Url:                  &remoteDashboardURL,
 					},
 				},
@@ -254,23 +267,25 @@ var _ = Describe("GrafanaDashboard controller", func() {
 
 			Eventually(func() error {
 				return k8sClient.Get(ctx, dashboardLookupKey, createdDashboard)
-			}, timeout, interval).Should(Succeed())
+			}, oneSecondDuration, interval).Should(Succeed())
 
 			By("By ensuring the dashboard content was downloaded")
-			Eventually(func() []interface{} {
-				return mockAPIRequests["/other/dashboard.json"]
-			}).Should(ContainElement(Equal("called")))
+			Eventually(func() []*http.Request {
+				return server.ReceivedRequests()
+			}).Should(ContainElement(HaveField("URL", HaveField("Path", "/other/dashboard.json"))))
 
 			By("By ensuring the dashboard endpoint was called")
-			Eventually(func() []interface{} {
-				return mockAPIRequests["/api/dashboards/db"]
-			}).Should(ContainElement(HaveField("Message", MatchRegexp("Updated by Grafana Operator.*"))))
+			Eventually(func() gapi.Dashboard {
+				return mockDashboardStorage[dashboardUID]
+			}).Should(HaveField("Message", MatchRegexp("Updated by Grafana Operator.*")))
 
 			By("By ensuring the uploaded dashboard was the one provided")
 			Eventually(func() interface{} {
 				return mockDashboardStorage[dashboardUID].Model
-			}).Should(BeEquivalentTo(mockDashboard))
+			}).Should(And(
+				HaveKeyWithValue("not", "really"),
+				HaveKeyWithValue("a", "dashboard"),
+			))
 		})
 	})
-
 })
