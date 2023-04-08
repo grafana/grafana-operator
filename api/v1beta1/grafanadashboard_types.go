@@ -127,11 +127,8 @@ func (in *GrafanaDashboard) Hash(dashboardJson []byte) string {
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 
-func (in *GrafanaDashboard) Unchanged(dashboardJson []byte) bool {
-	if dashboardJson == nil {
-		dashboardJson = []byte{}
-	}
-	return in.Hash(dashboardJson) == in.Status.Hash
+func (in *GrafanaDashboard) Unchanged(hash string) bool {
+	return in.Status.Hash == hash
 }
 
 func (in *GrafanaDashboard) GetResyncPeriod() time.Duration {

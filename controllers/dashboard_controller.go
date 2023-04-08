@@ -293,6 +293,10 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return err
 	}
 
+	// NOTE: previously, we had hash calculated directly from CR, though, with growing number of fetchers,
+	//       it's easier to do it here to make sure it's always the right set of data that's used
+	hash := cr.Hash(dashboardJson)
+
 	dashboardJson, err = r.resolveDatasources(cr, dashboardJson)
 	if err != nil {
 		return err
@@ -312,7 +316,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	if err != nil {
 		return err
 	}
-	if exists && cr.Unchanged(dashboardJson) {
+	if exists && cr.Unchanged(hash) {
 		return nil
 	}
 
@@ -353,7 +357,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return err
 	}
 
-	cr.Status.Hash = cr.Hash(dashboardJson)
+	cr.Status.Hash = hash
 
 	return r.Client.Status().Update(ctx, cr)
 }
