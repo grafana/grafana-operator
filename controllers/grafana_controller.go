@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -37,6 +36,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
+	client2 "github.com/grafana-operator/grafana-operator/v5/controllers/client"
 	"github.com/grafana-operator/grafana-operator/v5/controllers/metrics"
 	"github.com/grafana-operator/grafana-operator/v5/controllers/reconcilers"
 	"github.com/grafana-operator/grafana-operator/v5/controllers/reconcilers/grafana"
@@ -130,13 +130,13 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 func (r *GrafanaReconciler) setApiAvailableCondition(ctx context.Context, grafana *v1beta1.Grafana) bool {
 	var availabilityErr error
-	res, err := http.Get(grafana.Status.AdminUrl)
+	grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
 		availabilityErr = err
 	} else {
-		res.Body.Close()
-		if res.StatusCode >= 400 {
-			availabilityErr = fmt.Errorf("API request to admin URL returned status code %d", res.StatusCode)
+		_, err = grafanaClient.Dashboards()
+		if err != nil {
+			availabilityErr = err
 		}
 	}
 
