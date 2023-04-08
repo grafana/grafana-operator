@@ -11,15 +11,17 @@ import (
 )
 
 func getMatchingInstances(ctx context.Context, k8sClient client.Client, labelSelector *v1.LabelSelector) (v1beta1.GrafanaList, error) {
-	selector, err := v1.LabelSelectorAsSelector(labelSelector)
-	if err != nil {
-		return v1beta1.GrafanaList{}, err
+	opts := []client.ListOption{}
+	if labelSelector != nil {
+		selector, err := v1.LabelSelectorAsSelector(labelSelector)
+		if err != nil {
+			return v1beta1.GrafanaList{}, err
+		}
+		opts = append(opts, client.MatchingLabelsSelector{Selector: selector})
 	}
 	var list v1beta1.GrafanaList
-	opts := []client.ListOption{client.MatchingLabelsSelector{Selector: selector}}
 
-	err = k8sClient.List(ctx, &list, opts...)
-	if err != nil {
+	if err := k8sClient.List(ctx, &list, opts...); err != nil {
 		return v1beta1.GrafanaList{}, fmt.Errorf("failed to get grafana instances matching %v: %w", labelSelector, err)
 	}
 
@@ -27,7 +29,7 @@ func getMatchingInstances(ctx context.Context, k8sClient client.Client, labelSel
 		return v1beta1.GrafanaList{}, fmt.Errorf("no matching grafana instances matching: %v", labelSelector)
 	}
 
-	return list, err
+	return list, nil
 }
 
 func updateGrafanaStatusPlugins(ctx context.Context, k8sClient client.Client, grafana *v1beta1.Grafana, plugins v1beta1.PluginList) error {

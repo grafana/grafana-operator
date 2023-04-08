@@ -37,7 +37,8 @@ type GrafanaDashboardSpec struct {
 	Source GrafanaDashboardSource `json:"source"`
 
 	// selects Grafanas for import
-	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`
+	// +optional
+	InstanceSelector *metav1.LabelSelector `json:"instanceSelector,omitempty"`
 
 	// folder assignment for dashboard
 	// +optional

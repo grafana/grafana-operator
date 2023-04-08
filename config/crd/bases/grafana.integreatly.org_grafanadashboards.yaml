@@ -140,7 +140,6 @@ spec:
                     type: object
                 type: object
             required:
-            - instanceSelector
             - interval
             - source
             type: object

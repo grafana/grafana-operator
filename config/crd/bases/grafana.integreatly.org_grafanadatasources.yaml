@@ -114,7 +114,6 @@ spec:
                   type: string
                 type: array
             required:
-            - instanceSelector
             - interval
             type: object
           status:

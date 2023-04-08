@@ -62,7 +62,8 @@ type GrafanaDatasourceSpec struct {
 	DataSource GrafanaDatasourceDataSource `json:"datasource,omitempty"`
 
 	// selects Grafana instances
-	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`
+	// +optional
+	InstanceSelector *metav1.LabelSelector `json:"instanceSelector,omitempty"`
 
 	// plugins
 	// +optional
