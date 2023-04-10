@@ -301,10 +301,9 @@ func (r *GrafanaDashboardReconciler) getDashboardManifest(ctx context.Context, d
 				}
 			} else {
 				dashboard.SetCondition(metav1.Condition{
-					Type:    "StaleContent",
-					Status:  metav1.ConditionFalse,
-					Reason:  v1beta1.ContentUnavailableReason,
-					Message: err.Error(),
+					Type:   "StaleContent",
+					Status: metav1.ConditionFalse,
+					Reason: v1beta1.ContentUnavailableReason,
 				})
 			}
 		} else {

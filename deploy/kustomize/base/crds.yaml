@@ -11,10 +11,19 @@ spec:
     kind: GrafanaDashboard
     listKind: GrafanaDashboardList
     plural: grafanadashboards
+    shortNames:
+    - dash
     singular: grafanadashboard
   scope: Namespaced
   versions:
-  - name: v1beta1
+  - additionalPrinterColumns:
+    - jsonPath: .status.conditions[?(@.type=="Ready")].status
+      name: Ready
+      type: string
+    - jsonPath: .status.conditions[?(@.type=="Ready")].message
+      name: Status
+      type: string
+    name: v1beta1
     schema:
       openAPIV3Schema:
         description: GrafanaDashboard is the Schema for the grafanadashboards API
@@ -34,13 +43,10 @@ spec:
           spec:
             description: GrafanaDashboardSpec defines the desired state of GrafanaDashboard
             properties:
-              allowCrossNamespaceImport:
+              allowCrossNamespaceReferences:
                 description: allow to import this resources from an operator in a
                   different namespace
                 type: boolean
-              contentCacheDuration:
-                description: Cache duration for dashboards fetched from URLs
-                type: string
               datasources:
                 description: maps required data sources to existing ones
                 items:
@@ -56,11 +62,6 @@ spec:
                 type: array
               folder:
                 description: folder assignment for dashboard
-                type: string
-              gzipJson:
-                description: GzipJson the dashboard's JSON compressed with Gzip. Base64-encoded
-                  when in YAML.
-                format: byte
                 type: string
               instanceSelector:
                 description: selects Grafanas for import
@@ -107,11 +108,9 @@ spec:
                     type: object
                 type: object
                 x-kubernetes-map-type: atomic
-              json:
-                description: dashboard json
-                type: string
-              jsonnet:
-                description: Jsonnet
+              interval:
+                description: how often the dashboard is endured to exist on the selected
+                  instances, defaults to 24h if not set
                 type: string
               plugins:
                 description: plugins
@@ -126,33 +125,183 @@ spec:
                   - version
                   type: object
                 type: array
-              resyncPeriod:
-                description: how often the dashboard is refreshed, defaults to 24h
-                  if not set
-                type: string
-              url:
-                description: dashboard url
-                type: string
+              source:
+                maxProperties: 1
+                minProperties: 1
+                properties:
+                  configMap:
+                    description: Selects a key from a ConfigMap.
+                    properties:
+                      key:
+                        description: The key to select.
+                        type: string
+                      name:
+                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                          TODO: Add other useful fields. apiVersion, kind, uid?'
+                        type: string
+                      optional:
+                        description: Specify whether the ConfigMap or its key must
+                          be defined
+                        type: boolean
+                    required:
+                    - key
+                    type: object
+                    x-kubernetes-map-type: atomic
+                  inline:
+                    maxProperties: 1
+                    minProperties: 1
+                    properties:
+                      gzipJson:
+                        description: GzipJson the dashboard's JSON compressed with
+                          Gzip. Base64-encoded when in YAML.
+                        format: byte
+                        type: string
+                      json:
+                        description: dashboard json
+                        type: string
+                      jsonnet:
+                        description: Jsonnet
+                        type: string
+                    type: object
+                  remote:
+                    maxProperties: 2
+                    minProperties: 2
+                    properties:
+                      contentCacheDuration:
+                        description: Cache duration for dashboards fetched from URLs
+                        type: string
+                      grafanaCom:
+                        description: grafana.com/dashboards
+                        properties:
+                          id:
+                            type: integer
+                          revision:
+                            type: integer
+                        required:
+                        - id
+                        type: object
+                      url:
+                        description: dashboard url
+                        type: string
+                    required:
+                    - contentCacheDuration
+                    type: object
+                type: object
             required:
-            - instanceSelector
+            - interval
+            - source
             type: object
           status:
             description: GrafanaDashboardStatus defines the observed state of GrafanaDashboard
             properties:
-              NoMatchingInstances:
-                description: The dashboard instanceSelector can't find matching grafana
-                  instances
-                type: boolean
-              contentCache:
-                format: byte
-                type: string
-              contentTimestamp:
-                format: date-time
-                type: string
-              contentUrl:
-                type: string
-              hash:
-                type: string
+              conditions:
+                items:
+                  description: "Condition contains details for one aspect of the current
+                    state of this API Resource. --- This struct is intended for direct
+                    use as an array at the field path .status.conditions.  For example,
+                    \n type FooStatus struct{ // Represents the observations of a
+                    foo's current state. // Known .status.conditions.type are: \"Available\",
+                    \"Progressing\", and \"Degraded\" // +patchMergeKey=type // +patchStrategy=merge
+                    // +listType=map // +listMapKey=type Conditions []metav1.Condition
+                    `json:\"conditions,omitempty\" patchStrategy:\"merge\" patchMergeKey:\"type\"
+                    protobuf:\"bytes,1,rep,name=conditions\"` \n // other fields }"
+                  properties:
+                    lastTransitionTime:
+                      description: lastTransitionTime is the last time the condition
+                        transitioned from one status to another. This should be when
+                        the underlying condition changed.  If that is not known, then
+                        using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: message is a human readable message indicating
+                        details about the transition. This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: observedGeneration represents the .metadata.generation
+                        that the condition was set based upon. For instance, if .metadata.generation
+                        is currently 12, but the .status.conditions[x].observedGeneration
+                        is 9, the condition is out of date with respect to the current
+                        state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: reason contains a programmatic identifier indicating
+                        the reason for the condition's last transition. Producers
+                        of specific condition types may define expected values and
+                        meanings for this field, and whether the values are considered
+                        a guaranteed API. The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                        --- Many .condition.type values are consistent across resources
+                        like Available, but because arbitrary conditions can be useful
+                        (see .node.status.conditions), the ability to deconflict is
+                        important. The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              content:
+                description: Content contains information about fetched remote content
+                properties:
+                  cache:
+                    format: byte
+                    type: string
+                  cacheTimestamp:
+                    format: date-time
+                    type: string
+                  error:
+                    properties:
+                      attempts:
+                        type: integer
+                      message:
+                        type: string
+                      timestamp:
+                        format: date-time
+                        type: string
+                    required:
+                    - attempts
+                    - message
+                    - timestamp
+                    type: object
+                  url:
+                    type: string
+                required:
+                - url
+                type: object
+              instances:
+                additionalProperties:
+                  properties:
+                    UID:
+                      type: string
+                    Version:
+                      format: int64
+                      type: integer
+                  type: object
+                description: Instances stores UID, version, and folder info for each
+                  instance the dashboard has been created in
+                type: object
             type: object
         type: object
     served: true
@@ -176,7 +325,14 @@ spec:
     singular: grafanadatasource
   scope: Namespaced
   versions:
-  - name: v1beta1
+  - additionalPrinterColumns:
+    - jsonPath: .status.conditions[?(@.type=="Ready")].status
+      name: Ready
+      type: string
+    - jsonPath: .status.conditions[?(@.type=="Ready")].message
+      name: Status
+      type: string
+    name: v1beta1
     schema:
       openAPIV3Schema:
         description: GrafanaDatasource is the Schema for the grafanadatasources API
@@ -210,8 +366,9 @@ spec:
                     type: string
                   database:
                     type: string
-                  editable:
-                    type: boolean
+                  id:
+                    format: int64
+                    type: integer
                   isDefault:
                     type: boolean
                   jsonData:
@@ -233,9 +390,16 @@ spec:
                     type: string
                   user:
                     type: string
+                required:
+                - access
+                - basicAuth
+                - isDefault
+                - name
+                - type
+                - url
                 type: object
               instanceSelector:
-                description: selects Grafana instances for import
+                description: selects Grafana instances
                 properties:
                   matchExpressions:
                     description: matchExpressions is a list of label selector requirements.
@@ -279,6 +443,9 @@ spec:
                     type: object
                 type: object
                 x-kubernetes-map-type: atomic
+              interval:
+                description: how often the datasource is refreshed
+                type: string
               plugins:
                 description: plugins
                 items:
@@ -292,29 +459,97 @@ spec:
                   - version
                   type: object
                 type: array
-              resyncPeriod:
-                description: how often the datasource is refreshed, defaults to 24h
-                  if not set
-                type: string
               secrets:
                 description: secrets used for variable expansion
                 items:
                   type: string
                 type: array
             required:
-            - instanceSelector
+            - interval
             type: object
           status:
             description: GrafanaDatasourceStatus defines the observed state of GrafanaDatasource
             properties:
-              NoMatchingInstances:
-                description: The datasource instanceSelector can't find matching grafana
-                  instances
-                type: boolean
-              hash:
-                type: string
-              lastMessage:
-                type: string
+              conditions:
+                items:
+                  description: "Condition contains details for one aspect of the current
+                    state of this API Resource. --- This struct is intended for direct
+                    use as an array at the field path .status.conditions.  For example,
+                    \n type FooStatus struct{ // Represents the observations of a
+                    foo's current state. // Known .status.conditions.type are: \"Available\",
+                    \"Progressing\", and \"Degraded\" // +patchMergeKey=type // +patchStrategy=merge
+                    // +listType=map // +listMapKey=type Conditions []metav1.Condition
+                    `json:\"conditions,omitempty\" patchStrategy:\"merge\" patchMergeKey:\"type\"
+                    protobuf:\"bytes,1,rep,name=conditions\"` \n // other fields }"
+                  properties:
+                    lastTransitionTime:
+                      description: lastTransitionTime is the last time the condition
+                        transitioned from one status to another. This should be when
+                        the underlying condition changed.  If that is not known, then
+                        using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: message is a human readable message indicating
+                        details about the transition. This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: observedGeneration represents the .metadata.generation
+                        that the condition was set based upon. For instance, if .metadata.generation
+                        is currently 12, but the .status.conditions[x].observedGeneration
+                        is 9, the condition is out of date with respect to the current
+                        state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: reason contains a programmatic identifier indicating
+                        the reason for the condition's last transition. Producers
+                        of specific condition types may define expected values and
+                        meanings for this field, and whether the values are considered
+                        a guaranteed API. The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                        --- Many .condition.type values are consistent across resources
+                        like Available, but because arbitrary conditions can be useful
+                        (see .node.status.conditions), the ability to deconflict is
+                        important. The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              instances:
+                additionalProperties:
+                  properties:
+                    ID:
+                      format: int64
+                      type: integer
+                    UID:
+                      type: string
+                  type: object
+                description: Instances stores UID, version, and folder info for each
+                  instance the datasource has been created in
+                type: object
             type: object
         type: object
     served: true
@@ -447,7 +682,14 @@ spec:
     singular: grafana
   scope: Namespaced
   versions:
-  - name: v1beta1
+  - additionalPrinterColumns:
+    - jsonPath: .status.conditions[?(@.type=="Ready")].status
+      name: Ready
+      type: string
+    - jsonPath: .status.conditions[?(@.type=="Ready")].message
+      name: Status
+      type: string
+    name: v1beta1
     schema:
       openAPIV3Schema:
         description: Grafana is the Schema for the grafanas API
@@ -9719,24 +9961,86 @@ spec:
             properties:
               adminUrl:
                 type: string
-              dashboards:
+              conditions:
                 items:
-                  type: string
+                  description: "Condition contains details for one aspect of the current
+                    state of this API Resource. --- This struct is intended for direct
+                    use as an array at the field path .status.conditions.  For example,
+                    \n type FooStatus struct{ // Represents the observations of a
+                    foo's current state. // Known .status.conditions.type are: \"Available\",
+                    \"Progressing\", and \"Degraded\" // +patchMergeKey=type // +patchStrategy=merge
+                    // +listType=map // +listMapKey=type Conditions []metav1.Condition
+                    `json:\"conditions,omitempty\" patchStrategy:\"merge\" patchMergeKey:\"type\"
+                    protobuf:\"bytes,1,rep,name=conditions\"` \n // other fields }"
+                  properties:
+                    lastTransitionTime:
+                      description: lastTransitionTime is the last time the condition
+                        transitioned from one status to another. This should be when
+                        the underlying condition changed.  If that is not known, then
+                        using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: message is a human readable message indicating
+                        details about the transition. This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: observedGeneration represents the .metadata.generation
+                        that the condition was set based upon. For instance, if .metadata.generation
+                        is currently 12, but the .status.conditions[x].observedGeneration
+                        is 9, the condition is out of date with respect to the current
+                        state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: reason contains a programmatic identifier indicating
+                        the reason for the condition's last transition. Producers
+                        of specific condition types may define expected values and
+                        meanings for this field, and whether the values are considered
+                        a guaranteed API. The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                        --- Many .condition.type values are consistent across resources
+                        like Available, but because arbitrary conditions can be useful
+                        (see .node.status.conditions), the ability to deconflict is
+                        important. The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
                 type: array
-              datasources:
+              plugins:
                 items:
-                  type: string
+                  properties:
+                    name:
+                      type: string
+                    version:
+                      type: string
+                  required:
+                  - name
+                  - version
+                  type: object
                 type: array
-              folders:
-                items:
-                  type: string
-                type: array
-              lastMessage:
-                type: string
-              stage:
-                type: string
-              stageStatus:
-                type: string
             type: object
         type: object
     served: true

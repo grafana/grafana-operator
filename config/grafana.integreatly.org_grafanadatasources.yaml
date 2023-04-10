@@ -15,7 +15,14 @@ spec:
     singular: grafanadatasource
   scope: Namespaced
   versions:
-  - name: v1beta1
+  - additionalPrinterColumns:
+    - jsonPath: .status.conditions[?(@.type=="Ready")].status
+      name: Ready
+      type: string
+    - jsonPath: .status.conditions[?(@.type=="Ready")].message
+      name: Status
+      type: string
+    name: v1beta1
     schema:
       openAPIV3Schema:
         description: GrafanaDatasource is the Schema for the grafanadatasources API
