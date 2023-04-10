@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"reflect"
 	"strings"
 
 	"github.com/go-logr/logr"
@@ -41,7 +40,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	grapi "github.com/grafana/grafana-api-golang-client"
-	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -59,16 +57,22 @@ type GrafanaDashboardReconciler struct {
 	Discovery discovery.DiscoveryInterface
 }
 
+const (
+	dashboardFinalizer      = "dashboard.grafana.integreatly.org/finalizer"
+	dashboardConfigMapField = ".spec.source.configMap.name"
+)
+
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadashboards,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadashboards/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadashboards/finalizers,verbs=update
+//+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch
 
 func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("dashboard", req.NamespacedName)
 
 	dashboard := &v1beta1.GrafanaDashboard{}
 	if err := r.Get(ctx, req.NamespacedName, dashboard); err != nil {
-		log.Error(err, "unable to fetch Dashboard")
+		log.Error(err, "ignoring deleted dashboard")
 		// we'll ignore not-found errors, since they can't be fixed by an immediate
 		// requeue (we'll need to wait for a new notification), and we can get them
 		// on deleted requests.
@@ -80,15 +84,15 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		// The object is not being deleted, so if it does not have our finalizer,
 		// then lets add the finalizer and update the object. This is equivalent
 		// registering our finalizer.
-		if !controllerutil.ContainsFinalizer(dashboard, datasourceFinalizer) {
-			controllerutil.AddFinalizer(dashboard, datasourceFinalizer)
+		if !controllerutil.ContainsFinalizer(dashboard, dashboardFinalizer) {
+			controllerutil.AddFinalizer(dashboard, dashboardFinalizer)
 			if err := r.Update(ctx, dashboard); err != nil {
 				return ctrl.Result{}, err
 			}
 		}
 	} else {
 		// The object is being deleted
-		if controllerutil.ContainsFinalizer(dashboard, datasourceFinalizer) {
+		if controllerutil.ContainsFinalizer(dashboard, dashboardFinalizer) {
 			// our finalizer is present, so lets handle any external dependency
 			if err := r.deleteExternalResources(ctx, dashboard); err != nil {
 				// if fail to delete the external dependency here, return with error
@@ -97,7 +101,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			}
 
 			// remove our finalizer from the list and update it.
-			controllerutil.RemoveFinalizer(dashboard, datasourceFinalizer)
+			controllerutil.RemoveFinalizer(dashboard, dashboardFinalizer)
 			if err := r.Update(ctx, dashboard); err != nil {
 				return ctrl.Result{}, err
 			}
@@ -107,12 +111,34 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, nil
 	}
 
-	// TODO: get content once here subreconcile step 1
+	var staleCondition *metav1.Condition
+	if dashboard.Spec.Source.Remote != nil {
+		staleCondition = &metav1.Condition{
+			Type:    "StaleContent",
+			Status:  metav1.ConditionFalse,
+			Reason:  v1beta1.ContentAvailableReason,
+			Message: "dashboard content is not stale",
+		}
+	}
 
 	manifest, err := r.getDashboardManifest(ctx, dashboard)
 	if err != nil {
-		r.setReadyCondition(ctx, dashboard, metav1.ConditionFalse, v1beta1.ContentUnavailableReason, fmt.Sprintf("failed to get dashboard: %s", err))
-		return ctrl.Result{RequeueAfter: RequeueDelay}, err
+		if dashboard.Spec.Source.Remote != nil && dashboard.Status.Content != nil && dashboard.Status.Content.Cache != nil {
+			staleCondition = &metav1.Condition{
+				Type:    "StaleContent",
+				Status:  metav1.ConditionTrue,
+				Reason:  v1beta1.ContentUnavailableReason,
+				Message: fmt.Sprintf("using stale dashboard content: %s", err),
+			}
+			err = json.Unmarshal(dashboard.Status.Content.Cache, &manifest)
+			if err != nil {
+				return reconcile.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("failed to use stale content: %w", err)
+			}
+
+		} else {
+			r.setReadyCondition(ctx, dashboard, metav1.ConditionFalse, v1beta1.ContentUnavailableReason, fmt.Sprintf("failed to get dashboard: %s", err))
+			return ctrl.Result{RequeueAfter: RequeueDelay}, err
+		}
 	}
 
 	instances, err := getMatchingInstances(ctx, r.Client, dashboard.Spec.InstanceSelector)
@@ -153,11 +179,13 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		newInstanceStatuses[v1beta1.InstanceKeyFor(grafana)] = *instanceStatus
 	}
 
-	if !reflect.DeepEqual(dashboard.Status.Instances, newInstanceStatuses) {
-		dashboard.Status.Instances = newInstanceStatuses
-		if err := r.Client.Status().Update(ctx, dashboard); err != nil {
-			return ctrl.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("failed to update status for dashboard instance: %w", err)
-		}
+	dashboard.Status.Instances = newInstanceStatuses
+	if err := r.Client.Status().Update(ctx, dashboard); err != nil {
+		return ctrl.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("failed to update status for dashboard instance: %w", err)
+	}
+
+	if staleCondition != nil {
+		r.setCondition(ctx, dashboard, *staleCondition)
 	}
 
 	r.setReadyCondition(ctx, dashboard, metav1.ConditionTrue, v1beta1.DashboardSyncedReason, "Dashboard synced")
@@ -331,36 +359,49 @@ func (r *GrafanaDashboardReconciler) getRemoteDashboardManifest(ctx context.Cont
 		return cache, nil
 	}
 
+	if message := dashboard.ContentErrorBackoff(); message != "" {
+		return nil, fmt.Errorf("currently in backoff: %s", message)
+	}
+
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
+		err = fmt.Errorf("failed to create http request: %w ", err)
+		r.setStatusContentError(ctx, dashboard, err)
 		return nil, err
 	}
 
 	client := client2.NewInstrumentedRoundTripper(fmt.Sprintf("%v/%v", dashboard.Namespace, dashboard.Name), metrics.DashboardUrlRequests)
 	response, err := client.RoundTrip(request)
 	if err != nil {
+		err = fmt.Errorf("failed to create http client: %w ", err)
+		r.setStatusContentError(ctx, dashboard, err)
 		return nil, err
 	}
 	defer response.Body.Close()
-
-	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code from dashboard url request, get %v for dashboard %v", response.StatusCode, dashboard.Name)
-	}
-
 	content, err := io.ReadAll(response.Body)
 	if err != nil {
-		return []byte{}, err
+		err = fmt.Errorf("failed to read content: %w", err)
+		r.setStatusContentError(ctx, dashboard, err)
+		return nil, err
+	}
+
+	if response.StatusCode != http.StatusOK {
+		err = fmt.Errorf("http status not ok: http status %d, body: %s ", response.StatusCode, content)
+		r.setStatusContentError(ctx, dashboard, err)
+		return nil, err
 	}
 
 	gz, err := v1beta1.Gzip(content)
 	if err != nil {
-		return []byte{}, fmt.Errorf("failed to gzip dashboard %v", dashboard.Name)
+		err = fmt.Errorf("failed to gzip dashboard: %w ", err)
+		r.setStatusContentError(ctx, dashboard, err)
+		return nil, err
 	}
 
 	dashboard.Status.Content = &v1beta1.GrafanaDashboardStatusContent{
-		Cache:     gz,
-		Timestamp: metav1.Now(),
-		Url:       url,
+		Cache:          gz,
+		CacheTimestamp: metav1.Now(),
+		Url:            url,
 	}
 
 	if err := r.Client.Status().Update(ctx, dashboard); err != nil {
@@ -422,35 +463,17 @@ func (r *GrafanaDashboardReconciler) getFolder(client *grapi.Client, cr *v1beta1
 	return nil, nil
 }
 
-// SetupWithManager sets up the controller with the Manager.
-func (r *GrafanaDashboardReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	err := ctrl.NewControllerManagedBy(mgr).
-		For(&v1beta1.GrafanaDashboard{}).
-		Watches(
-			&source.Kind{Type: &v1beta1.Grafana{}},
-			handler.EnqueueRequestsFromMapFunc(r.findObjectsForGrafana),
-			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
-		).
-		Watches(
-			&source.Kind{Type: &v1.ConfigMap{}},
-			handler.EnqueueRequestsFromMapFunc(r.findObjectsForConfigMap),
-			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
-		).
-		Watches(
-			&source.Kind{Type: &appsv1.Deployment{}},
-			handler.EnqueueRequestsFromMapFunc(r.findObjectsForDeployment),
-			builder.WithPredicates(
-				predicate.NewPredicateFuncs(grafanaOwnedResources),
-				predicate.NewPredicateFuncs(deploymentReady),
-			),
-		).
-		Complete(r)
-
-	return err
+func (r *GrafanaDashboardReconciler) setReadyCondition(ctx context.Context, dashboard *v1beta1.GrafanaDashboard, status metav1.ConditionStatus, reason string, message string) error {
+	return r.setCondition(ctx, dashboard, metav1.Condition{
+		Type:    "Ready",
+		Status:  status,
+		Reason:  reason,
+		Message: message,
+	})
 }
 
-func (r *GrafanaDashboardReconciler) setReadyCondition(ctx context.Context, dashboard *v1beta1.GrafanaDashboard, status metav1.ConditionStatus, reason string, message string) error {
-	changed := dashboard.SetReadyCondition(status, reason, message)
+func (r *GrafanaDashboardReconciler) setCondition(ctx context.Context, dashboard *v1beta1.GrafanaDashboard, condition metav1.Condition) error {
+	changed := dashboard.SetCondition(condition)
 	if !changed {
 		return nil
 	}
@@ -462,10 +485,62 @@ func (r *GrafanaDashboardReconciler) setReadyCondition(ctx context.Context, dash
 	return nil
 }
 
+func (r *GrafanaDashboardReconciler) setStatusContentError(ctx context.Context, dashboard *v1beta1.GrafanaDashboard, err error) error {
+	if dashboard.Status.Content == nil {
+		dashboard.Status.Content = &v1beta1.GrafanaDashboardStatusContent{}
+	}
+	if dashboard.Status.Content.Error == nil || dashboard.Status.Content.Error.Message != err.Error() {
+		dashboard.Status.Content.Error = &v1beta1.GrafanaDashboardStatusContentError{}
+	}
+
+	dashboard.Status.Content.Error = &v1beta1.GrafanaDashboardStatusContentError{
+		Message:   err.Error(),
+		Timestamp: metav1.Now(),
+		Attempts:  dashboard.Status.Content.Error.Attempts + 1,
+	}
+
+	if err := r.Client.Status().Update(ctx, dashboard); err != nil {
+		r.Log.WithValues("dashboard", client.ObjectKeyFromObject(dashboard)).Error(err, "failed to update content error status")
+		return err
+	}
+	return nil
+}
+
+// SetupWithManager sets up the controller with the Manager.
+func (r *GrafanaDashboardReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &v1beta1.GrafanaDashboard{}, dashboardConfigMapField, func(rawObj client.Object) []string {
+		// Extract the ConfigMap name from the ConfigDeployment Spec, if one is provided
+		configDeployment := rawObj.(*v1beta1.GrafanaDashboard)
+		if configDeployment.Spec.Source.ConfigMap == nil || configDeployment.Spec.Source.ConfigMap.Name == "" {
+			return nil
+		}
+		return []string{configDeployment.Spec.Source.ConfigMap.Name}
+	}); err != nil {
+		return err
+	}
+
+	err := ctrl.NewControllerManagedBy(mgr).
+		For(&v1beta1.GrafanaDashboard{}).
+		Watches(
+			&source.Kind{Type: &v1beta1.Grafana{}},
+			handler.EnqueueRequestsFromMapFunc(r.findObjectsForGrafana),
+			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}), // api availability change should trigger dashboard reconcile
+		).
+		Watches(
+			&source.Kind{Type: &v1.ConfigMap{}},
+			handler.EnqueueRequestsFromMapFunc(r.findObjectsForConfigMap),
+			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
+		).
+		WithEventFilter(predicate.GenerationChangedPredicate{}).
+		Complete(r)
+
+	return err
+}
+
 func (r *GrafanaDashboardReconciler) findObjectsForConfigMap(configMap client.Object) []reconcile.Request {
 	configMapDashboards := &v1beta1.GrafanaDashboardList{}
 	listOps := &client.ListOptions{
-		FieldSelector: fields.OneTermEqualSelector(".spec.source.configMap.name", configMap.GetName()),
+		FieldSelector: fields.OneTermEqualSelector(dashboardConfigMapField, configMap.GetName()),
 		Namespace:     configMap.GetNamespace(),
 	}
 	err := r.Client.List(context.TODO(), configMapDashboards, listOps)
@@ -485,23 +560,9 @@ func (r *GrafanaDashboardReconciler) findObjectsForConfigMap(configMap client.Ob
 	return requests
 }
 
-func (r *GrafanaDashboardReconciler) findObjectsForDeployment(o client.Object) []reconcile.Request {
-	owner := getGrafanaOwner(o.GetOwnerReferences())
-	ctx := context.Background()
-	var grafana v1beta1.Grafana
-	err := r.Client.Get(ctx, client.ObjectKey{Namespace: o.GetNamespace(), Name: owner.Name}, &grafana)
-	if err != nil {
-		return []reconcile.Request{}
-	}
-
-	return r.findObjectsForGrafanaLabels(ctx, grafana.GetLabels())
-}
-
 func (r *GrafanaDashboardReconciler) findObjectsForGrafana(o client.Object) []reconcile.Request {
-	return r.findObjectsForGrafanaLabels(context.Background(), o.GetLabels())
-}
-
-func (r *GrafanaDashboardReconciler) findObjectsForGrafanaLabels(ctx context.Context, grafanaLabels map[string]string) []reconcile.Request {
+	grafanaLabels := o.GetLabels()
+	ctx := context.Background()
 	var dashboards v1beta1.GrafanaDashboardList
 	err := r.Client.List(ctx, &dashboards)
 	if err != nil {

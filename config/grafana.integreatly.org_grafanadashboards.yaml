@@ -266,14 +266,30 @@ spec:
               content:
                 description: Content contains information about fetched remote content
                 properties:
-                  contentCache:
+                  cache:
                     format: byte
                     type: string
-                  contentTimestamp:
+                  cacheTimestamp:
                     format: date-time
                     type: string
-                  contentUrl:
+                  error:
+                    properties:
+                      attempts:
+                        type: integer
+                      message:
+                        type: string
+                      timestamp:
+                        format: date-time
+                        type: string
+                    required:
+                    - attempts
+                    - message
+                    - timestamp
+                    type: object
+                  url:
                     type: string
+                required:
+                - url
                 type: object
               instances:
                 additionalProperties:

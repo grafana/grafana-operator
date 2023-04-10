@@ -32,6 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana-operator/grafana-operator/v5/controllers/config"
 	grec "github.com/grafana-operator/grafana-operator/v5/controllers/reconcilers/grafana"
 )
 
@@ -157,12 +158,12 @@ var _ = Describe("Grafana controller", func() {
 
 				for _, container := range createdDeployment.Spec.Template.Spec.Containers {
 					for _, env := range container.Env {
-						if env.Name == "GF_INSTALL_PLUGINS" {
+						if env.Name == config.GrafanaPluginsEnvVar {
 							return env.Value, nil
 						}
 					}
 				}
-				return "", fmt.Errorf("Missing GF_INSTALL_PLUGINS")
+				return "", fmt.Errorf("Missing %s", config.GrafanaPluginsEnvVar)
 			}, timeout, interval).Should(Equal(createdGrafana.Status.Plugins.String()))
 
 			By("By having a status condition")
@@ -177,7 +178,6 @@ var _ = Describe("Grafana controller", func() {
 				"Status": Equal(metav1.ConditionFalse),
 				"Reason": Equal("GrafanaApiUnavailableFailed"),
 			})))
-
 		})
 	})
 })

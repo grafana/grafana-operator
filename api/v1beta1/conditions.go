@@ -4,6 +4,7 @@ const (
 	NoMatchingInstancesReason string = "NoMatchingInstances"
 
 	ContentUnavailableReason string = "ContentUnavailable"
+	ContentAvailableReason   string = "ContentAvailable"
 
 	GrafanaApiErrorReason string = "GrafanaApiErrorFailed"
 

@@ -19,7 +19,9 @@ package v1beta1
 import (
 	"bytes"
 	"compress/gzip"
+	"fmt"
 	"io"
+	"math"
 	"time"
 
 	"github.com/grafana-operator/grafana-operator/v5/api"
@@ -124,9 +126,16 @@ type GrafanaDashboardStatus struct {
 }
 
 type GrafanaDashboardStatusContent struct {
-	Cache     []byte      `json:"contentCache,omitempty"`
-	Timestamp metav1.Time `json:"contentTimestamp,omitempty"`
-	Url       string      `json:"contentUrl,omitempty"`
+	Cache          []byte                              `json:"cache,omitempty"`
+	CacheTimestamp metav1.Time                         `json:"cacheTimestamp,omitempty"`
+	Url            string                              `json:"url"`
+	Error          *GrafanaDashboardStatusContentError `json:"error,omitempty"`
+}
+
+type GrafanaDashboardStatusContentError struct {
+	Message   string      `json:"message"`
+	Timestamp metav1.Time `json:"timestamp"`
+	Attempts  int         `json:"attempts"`
 }
 
 type GrafanaDashboardInstanceStatus struct {
@@ -175,7 +184,7 @@ func (in *GrafanaDashboard) GetContentCache(url string) []byte {
 	cacheDuration := in.Spec.Source.Remote.ContentCacheDuration.Duration
 
 	// TODO: is this boolean logic correct?
-	expired := cacheDuration == 0 || in.Status.Content.Timestamp.Add(cacheDuration).After(time.Now())
+	expired := cacheDuration == 0 || in.Status.Content.CacheTimestamp.Add(cacheDuration).After(time.Now())
 	if expired {
 		in.Status.Content = nil
 		return nil
@@ -188,6 +197,18 @@ func (in *GrafanaDashboard) GetContentCache(url string) []byte {
 	}
 
 	return cache
+}
+
+func (in *GrafanaDashboard) ContentErrorBackoff() string {
+	if in.Status.Content != nil && in.Status.Content.Error != nil {
+		err := in.Status.Content.Error
+		backoffDuration := 30 * time.Second * time.Duration(math.Pow(2, float64(err.Attempts)))
+		retryTime := err.Timestamp.Add(backoffDuration)
+		if retryTime.After(time.Now()) {
+			return fmt.Sprintf("not retrying until %s", retryTime)
+		}
+	}
+	return ""
 }
 
 func (in *GrafanaDashboard) IsAllowCrossNamespaceImport() bool {

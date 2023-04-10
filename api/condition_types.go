@@ -29,6 +29,8 @@ type WithConditions interface {
 func SetCondition(obj WithConditions, newCond metav1.Condition) bool {
 	replaced := false
 	newConds := make([]metav1.Condition, 0, len(obj.GetConditions()))
+	newCond.LastTransitionTime = metav1.Now()
+	newCond.ObservedGeneration = obj.GetGeneration()
 	for _, cond := range obj.GetConditions() {
 		if cond.Type == newCond.Type {
 			if cond.Status == newCond.Status && cond.Reason == newCond.Reason && cond.Message == newCond.Message {

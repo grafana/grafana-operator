@@ -195,18 +195,19 @@ func (r *GrafanaReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 
 	builder := ctrl.NewControllerManagedBy(mgr).
-		For(&v1beta1.Grafana{}).
+		For(&v1beta1.Grafana{})
+
+	if r.IsOpenShift {
+		builder = builder.Owns(&routev1.Route{})
+	}
+
+	return builder.
 		Owns(&appsv1.Deployment{}).
 		Owns(&v1.ConfigMap{}).
 		Owns(&v1.Secret{}).
 		Owns(&v1.Service{}).
 		Owns(&v1.ServiceAccount{}).
 		Owns(&v1.PersistentVolumeClaim{}).
-		Owns(&networkingv1.Ingress{})
-
-	if r.IsOpenShift {
-		builder = builder.Owns(&routev1.Route{})
-	}
-
-	return builder.Complete(r)
+		Owns(&networkingv1.Ingress{}).
+		Complete(r)
 }

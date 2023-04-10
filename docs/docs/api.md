@@ -93,13 +93,6 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="grafanadashboardspecinstanceselector">instanceSelector</a></b></td>
-        <td>object</td>
-        <td>
-          selects Grafanas for import<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
         <td><b>interval</b></td>
         <td>string</td>
         <td>
@@ -135,85 +128,17 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="grafanadashboardspecinstanceselector">instanceSelector</a></b></td>
+        <td>object</td>
+        <td>
+          selects Grafanas for import<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="grafanadashboardspecpluginsindex">plugins</a></b></td>
         <td>[]object</td>
         <td>
           plugins<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### GrafanaDashboard.spec.instanceSelector
-<sup><sup>[↩ Parent](grafanadashboardspec)</sup></sup>
-
-
-
-selects Grafanas for import
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b><a href="grafanadashboardspecinstanceselectormatchexpressionsindex">matchExpressions</a></b></td>
-        <td>[]object</td>
-        <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>matchLabels</b></td>
-        <td>map[string]string</td>
-        <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### GrafanaDashboard.spec.instanceSelector.matchExpressions[index]
-<sup><sup>[↩ Parent](grafanadashboardspecinstanceselector)</sup></sup>
-
-
-
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>key</b></td>
-        <td>string</td>
-        <td>
-          key is the label key that the selector applies to.<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>operator</b></td>
-        <td>string</td>
-        <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>values</b></td>
-        <td>[]string</td>
-        <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -454,6 +379,81 @@ grafana.com/dashboards
 </table>
 
 
+### GrafanaDashboard.spec.instanceSelector
+<sup><sup>[↩ Parent](grafanadashboardspec)</sup></sup>
+
+
+
+selects Grafanas for import
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="grafanadashboardspecinstanceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.spec.instanceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](grafanadashboardspecinstanceselector)</sup></sup>
+
+
+
+A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          key is the label key that the selector applies to.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
 ### GrafanaDashboard.spec.plugins[index]
 <sup><sup>[↩ Parent](grafanadashboardspec)</sup></sup>
 
@@ -617,7 +617,14 @@ Content contains information about fetched remote content
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>contentCache</b></td>
+        <td><b>url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>cache</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -626,7 +633,7 @@ Content contains information about fetched remote content
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>contentTimestamp</b></td>
+        <td><b>cacheTimestamp</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -635,12 +642,55 @@ Content contains information about fetched remote content
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>contentUrl</b></td>
-        <td>string</td>
+        <td><b><a href="grafanadashboardstatuscontenterror">error</a></b></td>
+        <td>object</td>
         <td>
           <br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.status.content.error
+<sup><sup>[↩ Parent](grafanadashboardstatuscontent)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>attempts</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>message</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>timestamp</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -751,13 +801,6 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="grafanadatasourcespecinstanceselector">instanceSelector</a></b></td>
-        <td>object</td>
-        <td>
-          selects Grafana instances<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
         <td><b>interval</b></td>
         <td>string</td>
         <td>
@@ -779,6 +822,13 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="grafanadatasourcespecinstanceselector">instanceSelector</a></b></td>
+        <td>object</td>
+        <td>
+          selects Grafana instances<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="grafanadatasourcespecpluginsindex">plugins</a></b></td>
         <td>[]object</td>
         <td>
@@ -790,81 +840,6 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         <td>[]string</td>
         <td>
           secrets used for variable expansion<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### GrafanaDatasource.spec.instanceSelector
-<sup><sup>[↩ Parent](grafanadatasourcespec)</sup></sup>
-
-
-
-selects Grafana instances
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b><a href="grafanadatasourcespecinstanceselectormatchexpressionsindex">matchExpressions</a></b></td>
-        <td>[]object</td>
-        <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>matchLabels</b></td>
-        <td>map[string]string</td>
-        <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### GrafanaDatasource.spec.instanceSelector.matchExpressions[index]
-<sup><sup>[↩ Parent](grafanadatasourcespecinstanceselector)</sup></sup>
-
-
-
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>key</b></td>
-        <td>string</td>
-        <td>
-          key is the label key that the selector applies to.<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>operator</b></td>
-        <td>string</td>
-        <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>values</b></td>
-        <td>[]string</td>
-        <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -987,6 +962,81 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td>string</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDatasource.spec.instanceSelector
+<sup><sup>[↩ Parent](grafanadatasourcespec)</sup></sup>
+
+
+
+selects Grafana instances
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="grafanadatasourcespecinstanceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDatasource.spec.instanceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](grafanadatasourcespecinstanceselector)</sup></sup>
+
+
+
+A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          key is the label key that the selector applies to.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
         </td>
         <td>false</td>
       </tr></tbody>

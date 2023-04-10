@@ -131,7 +131,7 @@ var _ = Describe("GrafanaDashboard controller", func() {
 		mockDashboardStorage = make(map[string]gapi.Dashboard)
 		server = ghttp.NewServer()
 
-		server.RouteToHandler("GET", "/", ghttp.RespondWith(200, nil))
+		server.RouteToHandler("GET", "/api/search", ghttp.RespondWithJSONEncoded(http.StatusOK, []gapi.FolderDashboardSearchResponse{}))
 		server.RouteToHandler("GET", "/api/folders", ghttp.RespondWithJSONEncoded(http.StatusOK, &mockFolders))
 		server.RouteToHandler("POST", "/api/folders", ghttp.CombineHandlers(
 			ghttp.VerifyBasicAuth("admin", "password"),
@@ -145,10 +145,10 @@ var _ = Describe("GrafanaDashboard controller", func() {
 			ghttp.VerifyBasicAuth("admin", "password"),
 			func(w http.ResponseWriter, r *http.Request) {
 				if content, ok := mockDashboardStorage[dashboardUID]; ok {
-					w.WriteHeader(200)
+					w.WriteHeader(http.StatusOK)
 					json.NewEncoder(w).Encode(content)
 				} else {
-					w.WriteHeader(404)
+					w.WriteHeader(http.StatusNotFound)
 				}
 			},
 		))
@@ -157,7 +157,7 @@ var _ = Describe("GrafanaDashboard controller", func() {
 			func(w http.ResponseWriter, r *http.Request) {
 				delete(mockDashboardStorage, dashboardUID)
 			},
-			ghttp.RespondWith(200, nil),
+			ghttp.RespondWith(http.StatusOK, nil),
 		))
 		server.RouteToHandler("POST", "/api/dashboards/db",
 			ghttp.CombineHandlers(
@@ -250,7 +250,7 @@ var _ = Describe("GrafanaDashboard controller", func() {
 		})
 
 		It("Should download dashboards from remote URLs", func() {
-			server.RouteToHandler("GET", "/other/dashboard.json", ghttp.RespondWithJSONEncoded(200, mockDashboard))
+			server.RouteToHandler("GET", "/other/dashboard.json", ghttp.RespondWithJSONEncoded(http.StatusOK, mockDashboard))
 
 			By("By creating a dashboard resource")
 			remoteDashboardURL := server.URL() + "/other/dashboard.json"

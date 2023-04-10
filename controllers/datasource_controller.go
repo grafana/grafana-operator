@@ -22,13 +22,13 @@ import (
 	"reflect"
 	"strings"
 
-	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/go-logr/logr"
 	client2 "github.com/grafana-operator/grafana-operator/v5/controllers/client"
 	gapi "github.com/grafana/grafana-api-golang-client"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -51,11 +51,15 @@ type GrafanaDatasourceReconciler struct {
 	Log    logr.Logger
 }
 
-const datasourceFinalizer = "datasource.grafana.integreatly.org/finalizer"
+const (
+	datasourceFinalizer    = "datasource.grafana.integreatly.org/finalizer"
+	datasourceSecretsField = ".spec.secrets"
+)
 
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadatasources,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadatasources/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadatasources/finalizers,verbs=update
+//+kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch
 
 func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("datasource", req.NamespacedName)
@@ -288,32 +292,36 @@ func (r *GrafanaDatasourceReconciler) setReadyCondition(ctx context.Context, dat
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *GrafanaDatasourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &v1beta1.GrafanaDatasource{}, datasourceSecretsField, func(rawObj client.Object) []string {
+		datasource := rawObj.(*v1beta1.GrafanaDatasource)
+		return datasource.Spec.Secrets
+	}); err != nil {
+		return err
+	}
+
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.GrafanaDatasource{}).
 		Watches(
-			&source.Kind{Type: &appsv1.Deployment{}},
-			handler.EnqueueRequestsFromMapFunc(r.findObjectsForDeployment),
-			builder.WithPredicates(
-				predicate.NewPredicateFuncs(grafanaOwnedResources),
-				predicate.NewPredicateFuncs(deploymentReady),
-			),
+			&source.Kind{Type: &v1beta1.Grafana{}},
+			handler.EnqueueRequestsFromMapFunc(r.findObjectsForGrafana),
+			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}), // api availability change should trigger dashboard reconcile
 		).
+		Watches(
+			&source.Kind{Type: &v1.Secret{}},
+			handler.EnqueueRequestsFromMapFunc(r.findObjectsForSecret),
+			builder.WithPredicates(predicate.GenerationChangedPredicate{}),
+		).
+		WithEventFilter(predicate.GenerationChangedPredicate{}).
 		Complete(r)
 
 	return err
 }
 
-func (r *GrafanaDatasourceReconciler) findObjectsForDeployment(o client.Object) []reconcile.Request {
+func (r *GrafanaDatasourceReconciler) findObjectsForGrafana(grafana client.Object) []reconcile.Request {
+	grafanaLabels := grafana.GetLabels()
 	ctx := context.Background()
-	gafanaRef := types.NamespacedName{Namespace: o.GetNamespace(), Name: strings.TrimSuffix(o.GetName(), "-grafana")}
-	grafana := &v1beta1.Grafana{}
-	err := r.Client.Get(ctx, gafanaRef, grafana)
-	if err != nil {
-		return []reconcile.Request{}
-	}
-
 	var datasources v1beta1.GrafanaDatasourceList
-	err = r.Client.List(ctx, &datasources)
+	err := r.Client.List(ctx, &datasources)
 	if err != nil {
 		return []reconcile.Request{}
 	}
@@ -325,7 +333,7 @@ func (r *GrafanaDatasourceReconciler) findObjectsForDeployment(o client.Object) 
 			return []reconcile.Request{}
 		}
 
-		if selector.Matches(labels.Set(grafana.ObjectMeta.Labels)) {
+		if selector.Matches(labels.Set(grafanaLabels)) {
 			reqs = append(reqs, reconcile.Request{
 				NamespacedName: client.ObjectKeyFromObject(&datasource),
 			})
@@ -333,4 +341,27 @@ func (r *GrafanaDatasourceReconciler) findObjectsForDeployment(o client.Object) 
 	}
 
 	return reqs
+}
+
+func (r *GrafanaDatasourceReconciler) findObjectsForSecret(secret client.Object) []reconcile.Request {
+	secretDatasources := &v1beta1.GrafanaDatasourceList{}
+	listOps := &client.ListOptions{
+		FieldSelector: fields.OneTermEqualSelector(datasourceSecretsField, secret.GetName()),
+		Namespace:     secret.GetNamespace(),
+	}
+	err := r.Client.List(context.TODO(), secretDatasources, listOps)
+	if err != nil {
+		return []reconcile.Request{}
+	}
+
+	requests := make([]reconcile.Request, len(secretDatasources.Items))
+	for i, item := range secretDatasources.Items {
+		requests[i] = reconcile.Request{
+			NamespacedName: types.NamespacedName{
+				Name:      item.GetName(),
+				Namespace: item.GetNamespace(),
+			},
+		}
+	}
+	return requests
 }
