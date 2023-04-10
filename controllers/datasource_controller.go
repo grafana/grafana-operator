@@ -140,6 +140,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			err = updateGrafanaStatusPlugins(ctx, r.Client, grafana, datasource.Spec.Plugins)
 			if err != nil {
 				err = fmt.Errorf("failed to reconcile plugins: %w", err)
+				nextDatasource.SetReadyCondition(metav1.ConditionFalse, v1beta1.CreateResourceFailedReason, err.Error())
 				return r.reconcileResult(ctx, datasource, nextDatasource, &errorRequeueDelay, err)
 			}
 		} else if datasource.Spec.Plugins != nil {
@@ -149,6 +150,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		instanceStatus, err := r.syncDatasourceContent(ctx, grafana, nextDatasource, content)
 		if err != nil {
 			err = fmt.Errorf("error reconciling datasource: %w", err)
+			nextDatasource.SetReadyCondition(metav1.ConditionFalse, v1beta1.CreateResourceFailedReason, err.Error())
 			return r.reconcileResult(ctx, datasource, nextDatasource, &errorRequeueDelay, err)
 		}
 		nextDatasource.Status.Instances[v1beta1.InstanceKeyFor(grafana)] = *instanceStatus
@@ -264,7 +266,11 @@ func (r *GrafanaDatasourceReconciler) syncDatasourceContent(ctx context.Context,
 
 func (r *GrafanaDatasourceReconciler) getExistingDatasource(client *gapi.Client, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDatasource) (*gapi.DataSource, error) {
 	if instanceStatus, ok := cr.Status.Instances[v1beta1.InstanceKeyFor(grafana)]; ok {
-		return client.DataSourceByUID(instanceStatus.UID)
+		existing, err := client.DataSourceByUID(instanceStatus.UID)
+		if err != nil && !strings.Contains(err.Error(), "404") {
+			return nil, err
+		}
+		return existing, nil
 	}
 	return nil, nil
 }

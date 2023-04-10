@@ -97,6 +97,8 @@ type GrafanaDatasourceInstanceStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type==\"Ready\")].status",description=""
+//+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[?(@.type==\"Ready\")].message",description=""
 
 // GrafanaDatasource is the Schema for the grafanadatasources API
 type GrafanaDatasource struct {
