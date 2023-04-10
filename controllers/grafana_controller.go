@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -42,9 +43,7 @@ import (
 	"github.com/grafana-operator/grafana-operator/v5/controllers/reconcilers/grafana"
 )
 
-const (
-	RequeueDelay = 60 * time.Second
-)
+var errorRequeueDelay = 60 * time.Second
 
 // GrafanaReconciler reconciles a Grafana object
 type GrafanaReconciler struct {
@@ -83,52 +82,29 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	metrics.GrafanaReconciles.WithLabelValues(grafana.Name).Inc()
 
+	nextGrafana := grafana.DeepCopy()
+
 	if grafana.IsExternal() {
-		statusChanged := false
-
 		if grafana.Status.AdminUrl != grafana.Spec.External.URL {
-			statusChanged = true
-			grafana.Status.AdminUrl = grafana.Spec.External.URL
+			nextGrafana.Status.AdminUrl = grafana.Spec.External.URL
 		}
 
-		statusChanged = statusChanged || r.setApiAvailableCondition(ctx, grafana)
-
-		if !statusChanged {
-			return ctrl.Result{}, nil
-		}
-
-		return r.updateStatus(grafana)
+		return r.reconcileResult(ctx, grafana, nextGrafana)
 	}
 
 	for i, reconciler := range r.subreconcilers {
 		err := reconciler.Reconcile(ctx, grafana)
 		if err != nil {
-			statusChanged := grafana.SetCondition(metav1.Condition{
-				Type:               "Ready",
-				Status:             metav1.ConditionFalse,
-				ObservedGeneration: grafana.Generation,
-				LastTransitionTime: metav1.Now(),
-				Reason:             v1beta1.CreateResourceFailedReason,
-				Message:            err.Error(),
-			})
-
+			nextGrafana.SetReadyCondition(metav1.ConditionFalse, v1beta1.CreateResourceFailedReason, err.Error())
 			metrics.GrafanaFailedReconciles.WithLabelValues(grafana.Name, fmt.Sprint(i)).Inc()
-
-			if statusChanged {
-				return r.updateStatus(grafana)
-			}
+			break
 		}
 	}
 
-	statusChanged := r.setApiAvailableCondition(ctx, grafana)
-	if statusChanged {
-		return r.updateStatus(grafana)
-	}
-
-	return ctrl.Result{}, nil
+	return r.reconcileResult(ctx, grafana, nextGrafana)
 }
 
-func (r *GrafanaReconciler) setApiAvailableCondition(ctx context.Context, grafana *v1beta1.Grafana) bool {
+func (r *GrafanaReconciler) updateReadyCondition(ctx context.Context, grafana *v1beta1.Grafana) {
 	var availabilityErr error
 	grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
@@ -141,21 +117,21 @@ func (r *GrafanaReconciler) setApiAvailableCondition(ctx context.Context, grafan
 	}
 
 	if availabilityErr == nil {
-		return grafana.SetReadyCondition(metav1.ConditionTrue, v1beta1.GrafanaApiAvailableReason, "Grafana API is available")
+		grafana.SetReadyCondition(metav1.ConditionTrue, v1beta1.GrafanaApiAvailableReason, "Grafana API is available")
 	} else {
-		return grafana.SetReadyCondition(metav1.ConditionFalse, v1beta1.GrafanaApiUnavailableReason, fmt.Sprintf("Grafana API is unavailable: %s", availabilityErr))
+		grafana.SetReadyCondition(metav1.ConditionFalse, v1beta1.GrafanaApiUnavailableReason, fmt.Sprintf("Grafana API is unavailable: %s", availabilityErr))
 	}
 }
 
-func (r *GrafanaReconciler) updateStatus(cr *v1beta1.Grafana) (ctrl.Result, error) {
-	// TODO: DeepEquals check is not a terrible idea
-	err := r.Client.Status().Update(context.Background(), cr)
-	if err != nil {
-		return ctrl.Result{
-			Requeue:      true,
-			RequeueAfter: RequeueDelay,
-		}, err
+func (r *GrafanaReconciler) reconcileResult(ctx context.Context, grafana *v1beta1.Grafana, nextGrafana *v1beta1.Grafana) (ctrl.Result, error) {
+	r.updateReadyCondition(ctx, nextGrafana)
+	if !reflect.DeepEqual(grafana.Status, nextGrafana.Status) {
+		err := r.Client.Status().Update(context.Background(), nextGrafana)
+		if err != nil {
+			return ctrl.Result{RequeueAfter: errorRequeueDelay}, fmt.Errorf("failed to update status for grafana %s", grafana.Name)
+		}
 	}
+
 	return ctrl.Result{}, nil
 }
 

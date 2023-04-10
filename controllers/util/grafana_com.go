@@ -11,8 +11,15 @@ import (
 
 const grafanaComDashboardApiUrlRoot = "https://grafana.com/api/dashboards"
 
-func GetGrafanaComDashboardUrl(ref v1beta1.GrafanaComDashboardReference) string {
-	return fmt.Sprintf("%s/%d/revisions/%d/download", grafanaComDashboardApiUrlRoot, ref.Id, ref.Revision)
+func GetGrafanaComDashboardUrl(ctx context.Context, ref v1beta1.GrafanaComDashboardReference) (string, error) {
+	if ref.Revision == nil {
+		var err error
+		ref.Revision, err = GetLatestGrafanaComRevision(ctx, ref.Id)
+		if err != nil {
+			return "", err
+		}
+	}
+	return fmt.Sprintf("%s/%d/revisions/%d/download", grafanaComDashboardApiUrlRoot, ref.Id, ref.Revision), nil
 }
 
 func GetLatestGrafanaComRevision(ctx context.Context, id int) (*int, error) {

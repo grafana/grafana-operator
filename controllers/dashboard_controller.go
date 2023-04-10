@@ -22,7 +22,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"reflect"
 	"strings"
+	"time"
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/fields"
@@ -111,44 +113,25 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, nil
 	}
 
-	var staleCondition *metav1.Condition
-	if dashboard.Spec.Source.Remote != nil {
-		staleCondition = &metav1.Condition{
-			Type:    "StaleContent",
-			Status:  metav1.ConditionFalse,
-			Reason:  v1beta1.ContentAvailableReason,
-			Message: "dashboard content is not stale",
-		}
-	}
+	nextDashboard := dashboard.DeepCopy()
 
-	manifest, err := r.getDashboardManifest(ctx, dashboard)
+	manifest, err := r.getDashboardManifest(ctx, nextDashboard)
 	if err != nil {
-		if dashboard.Spec.Source.Remote != nil && dashboard.Status.Content != nil && dashboard.Status.Content.Cache != nil {
-			staleCondition = &metav1.Condition{
-				Type:    "StaleContent",
-				Status:  metav1.ConditionTrue,
-				Reason:  v1beta1.ContentUnavailableReason,
-				Message: fmt.Sprintf("using stale dashboard content: %s", err),
-			}
-			err = json.Unmarshal(dashboard.Status.Content.Cache, &manifest)
-			if err != nil {
-				return reconcile.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("failed to use stale content: %w", err)
-			}
-
-		} else {
-			r.setReadyCondition(ctx, dashboard, metav1.ConditionFalse, v1beta1.ContentUnavailableReason, fmt.Sprintf("failed to get dashboard: %s", err))
-			return ctrl.Result{RequeueAfter: RequeueDelay}, err
-		}
+		err = fmt.Errorf("failed to get dashboard: %w", err)
+		nextDashboard.SetReadyCondition(metav1.ConditionFalse, v1beta1.ContentUnavailableReason, err.Error())
+		return r.reconcileResult(ctx, dashboard, nextDashboard, &errorRequeueDelay, err)
 	}
 
 	instances, err := getMatchingInstances(ctx, r.Client, dashboard.Spec.InstanceSelector)
 	if err != nil {
-		log.Error(err, "could not find matching instances")
-		r.setReadyCondition(ctx, dashboard, metav1.ConditionFalse, v1beta1.NoMatchingInstancesReason, err.Error())
-		return ctrl.Result{}, err
+		nextDashboard.SetReadyCondition(metav1.ConditionFalse, v1beta1.NoMatchingInstancesReason, err.Error())
+		return r.reconcileResult(ctx, dashboard, nextDashboard, nil, err)
 	}
 
-	newInstanceStatuses := map[string]v1beta1.GrafanaDashboardInstanceStatus{}
+	if nextDashboard.Status.Instances == nil {
+		nextDashboard.Status.Instances = map[string]v1beta1.GrafanaDashboardInstanceStatus{}
+	}
+
 	for _, grafana := range instances.Items {
 		grafana := &grafana
 		log := log.WithValues("grafana", client.ObjectKeyFromObject(grafana))
@@ -166,31 +149,40 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		if grafana.IsInternal() {
 			err = updateGrafanaStatusPlugins(ctx, r.Client, grafana, dashboard.Spec.Plugins)
 			if err != nil {
-				return ctrl.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("failed to reconcile plugins: %w", err)
+				err = fmt.Errorf("failed to reconcile plugins: %w", err)
+				return r.reconcileResult(ctx, dashboard, nextDashboard, &errorRequeueDelay, err)
 			}
 		} else if dashboard.Spec.Plugins != nil {
 			log.Error(nil, "plugin availability not ensured for external grafana instance")
 		}
 
-		instanceStatus, err := r.syncDashboardContent(ctx, grafana, dashboard, manifest)
+		instanceStatus, err := r.syncDashboardContent(ctx, grafana, nextDashboard, manifest)
 		if err != nil {
-			return ctrl.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("error reconciling dashboard: %w", err)
+			err = fmt.Errorf("error reconciling dashboard: %w", err)
+			return r.reconcileResult(ctx, dashboard, nextDashboard, &errorRequeueDelay, err)
 		}
-		newInstanceStatuses[v1beta1.InstanceKeyFor(grafana)] = *instanceStatus
+		nextDashboard.Status.Instances[v1beta1.InstanceKeyFor(grafana)] = *instanceStatus
 	}
 
-	dashboard.Status.Instances = newInstanceStatuses
-	if err := r.Client.Status().Update(ctx, dashboard); err != nil {
-		return ctrl.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("failed to update status for dashboard instance: %w", err)
+	nextDashboard.SetReadyCondition(metav1.ConditionTrue, v1beta1.DashboardSyncedReason, "Dashboard synced")
+
+	requeueAfter := dashboard.GetResyncPeriod()
+	return r.reconcileResult(ctx, dashboard, nextDashboard, &requeueAfter, nil)
+}
+
+func (r *GrafanaDashboardReconciler) reconcileResult(ctx context.Context, dashboard *v1beta1.GrafanaDashboard, nextDashboard *v1beta1.GrafanaDashboard, resyncDelay *time.Duration, err error) (reconcile.Result, error) {
+	if !reflect.DeepEqual(dashboard.Status, nextDashboard.Status) {
+		err := r.Client.Status().Update(context.Background(), nextDashboard)
+		if err != nil {
+			return ctrl.Result{RequeueAfter: errorRequeueDelay}, fmt.Errorf("failed to update status for dashboard %s", dashboard.Name)
+		}
 	}
 
-	if staleCondition != nil {
-		r.setCondition(ctx, dashboard, *staleCondition)
+	if resyncDelay == nil {
+		return ctrl.Result{}, err
 	}
 
-	r.setReadyCondition(ctx, dashboard, metav1.ConditionTrue, v1beta1.DashboardSyncedReason, "Dashboard synced")
-
-	return ctrl.Result{RequeueAfter: dashboard.GetResyncPeriod()}, nil
+	return ctrl.Result{RequeueAfter: *resyncDelay}, err
 }
 
 func (r *GrafanaDashboardReconciler) deleteExternalResources(ctx context.Context, dashboard *v1beta1.GrafanaDashboard) error {
@@ -225,7 +217,7 @@ func (r *GrafanaDashboardReconciler) syncDashboardContent(ctx context.Context, g
 		return nil, fmt.Errorf("failed to create grafana client: %w", err)
 	}
 
-	folder, err := r.getOrCreateFolder(grafanaClient, dashboard)
+	folder, err := util.GetOrCreateFolder(grafanaClient, dashboard)
 	if err != nil {
 		return nil, fmt.Errorf("failed get or create folder: %w", err)
 	}
@@ -237,7 +229,7 @@ func (r *GrafanaDashboardReconciler) syncDashboardContent(ctx context.Context, g
 	shouldCreate := true
 	instanceStatus, ok := dashboard.Status.Instances[instanceKey]
 	if ok {
-		existingMatches, err := r.existingVersionMatchesStatus(grafanaClient, instanceStatus)
+		existingMatches, err := util.ExistingDashboardVersionMatches(grafanaClient, instanceStatus)
 		if err != nil {
 			return nil, fmt.Errorf("failed to check for existing dashboard: %w", err)
 		}
@@ -288,7 +280,40 @@ func (r *GrafanaDashboardReconciler) getDashboardManifest(ctx context.Context, d
 	} else if dashboard.Spec.Source.ConfigMap != nil {
 		manifestBytes, err = r.getConfigMapDashboardManifest(ctx, dashboard, dashboard.Spec.Source.ConfigMap)
 	} else if dashboard.Spec.Source.Remote != nil {
+		if message := dashboard.ContentErrorBackoff(); message != "" {
+			dashboard.SetReadyCondition(metav1.ConditionFalse, v1beta1.ErrorBackoffReason, message)
+			return nil, fmt.Errorf("currently in error backoff: %s", message)
+		}
+
 		manifestBytes, err = r.getRemoteDashboardManifest(ctx, dashboard, dashboard.Spec.Source.Remote)
+		dashboard.SetStatusContentError(err)
+		if err != nil {
+			if dashboard.Status.Content != nil && dashboard.Status.Content.Cache != nil {
+				dashboard.SetCondition(metav1.Condition{
+					Type:    "StaleContent",
+					Status:  metav1.ConditionTrue,
+					Reason:  v1beta1.ContentUnavailableReason,
+					Message: err.Error(),
+				})
+				manifestBytes, err = v1beta1.Gunzip(dashboard.Status.Content.Cache)
+				if err != nil {
+					return nil, fmt.Errorf("failed to gunzip dashboard content (stale): %w", err)
+				}
+			} else {
+				dashboard.SetCondition(metav1.Condition{
+					Type:    "StaleContent",
+					Status:  metav1.ConditionFalse,
+					Reason:  v1beta1.ContentUnavailableReason,
+					Message: err.Error(),
+				})
+			}
+		} else {
+			dashboard.SetCondition(metav1.Condition{
+				Type:   "StaleContent",
+				Status: metav1.ConditionFalse,
+				Reason: v1beta1.ContentAvailableReason,
+			})
+		}
 	} else {
 		return nil, fmt.Errorf("missing source for dashboard %s/%s", dashboard.Namespace, dashboard.Name)
 	}
@@ -300,7 +325,8 @@ func (r *GrafanaDashboardReconciler) getDashboardManifest(ctx context.Context, d
 	var manifest map[string]interface{}
 	err = json.Unmarshal(manifestBytes, &manifest)
 	if err != nil {
-		r.setReadyCondition(ctx, dashboard, metav1.ConditionFalse, v1beta1.ContentUnavailableReason, fmt.Sprintf("failed to unmarshal dashboard: %s", err))
+		err = fmt.Errorf("failed to unmarshal dashboard: %s", err)
+		dashboard.SetReadyCondition(metav1.ConditionFalse, v1beta1.ContentUnavailableReason, err.Error())
 		return nil, err
 	}
 
@@ -344,14 +370,11 @@ func (r *GrafanaDashboardReconciler) getRemoteDashboardManifest(ctx context.Cont
 	if source.Url != nil {
 		url = *source.Url
 	} else if source.GrafanaCom != nil {
-		if source.GrafanaCom.Revision == nil {
-			var err error
-			source.GrafanaCom.Revision, err = util.GetLatestGrafanaComRevision(ctx, source.GrafanaCom.Id)
-			if err != nil {
-				return nil, err
-			}
+		var err error
+		url, err = util.GetGrafanaComDashboardUrl(ctx, *source.GrafanaCom)
+		if err != nil {
+			return nil, err
 		}
-		url = util.GetGrafanaComDashboardUrl(*source.GrafanaCom)
 	}
 
 	cache := dashboard.GetContentCache(url)
@@ -359,43 +382,29 @@ func (r *GrafanaDashboardReconciler) getRemoteDashboardManifest(ctx context.Cont
 		return cache, nil
 	}
 
-	if message := dashboard.ContentErrorBackoff(); message != "" {
-		return nil, fmt.Errorf("currently in backoff: %s", message)
-	}
-
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		err = fmt.Errorf("failed to create http request: %w ", err)
-		r.setStatusContentError(ctx, dashboard, err)
-		return nil, err
+		return nil, fmt.Errorf("failed to create http request: %w ", err)
 	}
 
 	client := client2.NewInstrumentedRoundTripper(fmt.Sprintf("%v/%v", dashboard.Namespace, dashboard.Name), metrics.DashboardUrlRequests)
 	response, err := client.RoundTrip(request)
 	if err != nil {
-		err = fmt.Errorf("failed to create http client: %w ", err)
-		r.setStatusContentError(ctx, dashboard, err)
-		return nil, err
+		return nil, fmt.Errorf("failed to create http client: %w ", err)
 	}
 	defer response.Body.Close()
 	content, err := io.ReadAll(response.Body)
 	if err != nil {
-		err = fmt.Errorf("failed to read content: %w", err)
-		r.setStatusContentError(ctx, dashboard, err)
-		return nil, err
+		return nil, fmt.Errorf("failed to read content: %w", err)
 	}
 
 	if response.StatusCode != http.StatusOK {
-		err = fmt.Errorf("http status not ok: http status %d, body: %s ", response.StatusCode, content)
-		r.setStatusContentError(ctx, dashboard, err)
-		return nil, err
+		return nil, fmt.Errorf("http status not ok: http status %d, body: %s ", response.StatusCode, content)
 	}
 
 	gz, err := v1beta1.Gzip(content)
 	if err != nil {
-		err = fmt.Errorf("failed to gzip dashboard: %w ", err)
-		r.setStatusContentError(ctx, dashboard, err)
-		return nil, err
+		return nil, fmt.Errorf("failed to gzip dashboard: %w ", err)
 	}
 
 	dashboard.Status.Content = &v1beta1.GrafanaDashboardStatusContent{
@@ -404,106 +413,7 @@ func (r *GrafanaDashboardReconciler) getRemoteDashboardManifest(ctx context.Cont
 		Url:            url,
 	}
 
-	if err := r.Client.Status().Update(ctx, dashboard); err != nil {
-		r.Log.Error(err, "failed to set content cache", dashboard.Name, dashboard.Namespace)
-	}
-
 	return content, nil
-}
-
-func (r *GrafanaDashboardReconciler) existingVersionMatchesStatus(client *grapi.Client, instanceStatus v1beta1.GrafanaDashboardInstanceStatus) (bool, error) {
-	existing, err := client.DashboardByUID(instanceStatus.UID)
-	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			return false, nil
-		}
-		return false, err
-	}
-
-	if float64(instanceStatus.Version) == existing.Model["version"].(float64) {
-		return true, nil
-	}
-
-	return false, nil
-}
-
-func (r *GrafanaDashboardReconciler) getOrCreateFolder(client *grapi.Client, cr *v1beta1.GrafanaDashboard) (*grapi.Folder, error) {
-	if cr.Spec.FolderTitle == "" {
-		return nil, nil
-	}
-
-	folder, err := r.getFolder(client, cr)
-	if err != nil {
-		return nil, err
-	}
-	if folder != nil {
-		return folder, nil
-	}
-
-	// Folder wasn't found, let's create it
-	resp, err := client.NewFolder(cr.Spec.FolderTitle)
-	if err != nil {
-		return nil, err
-	}
-	return &resp, nil
-}
-
-func (r *GrafanaDashboardReconciler) getFolder(client *grapi.Client, cr *v1beta1.GrafanaDashboard) (*grapi.Folder, error) {
-	folders, err := client.Folders()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, folder := range folders {
-		if folder.Title == cr.Spec.FolderTitle {
-			return &folder, nil
-		}
-		continue
-	}
-	return nil, nil
-}
-
-func (r *GrafanaDashboardReconciler) setReadyCondition(ctx context.Context, dashboard *v1beta1.GrafanaDashboard, status metav1.ConditionStatus, reason string, message string) error {
-	return r.setCondition(ctx, dashboard, metav1.Condition{
-		Type:    "Ready",
-		Status:  status,
-		Reason:  reason,
-		Message: message,
-	})
-}
-
-func (r *GrafanaDashboardReconciler) setCondition(ctx context.Context, dashboard *v1beta1.GrafanaDashboard, condition metav1.Condition) error {
-	changed := dashboard.SetCondition(condition)
-	if !changed {
-		return nil
-	}
-
-	if err := r.Client.Status().Update(ctx, dashboard); err != nil {
-		r.Log.WithValues("dashboard", client.ObjectKeyFromObject(dashboard)).Error(err, "failed to update status")
-		return err
-	}
-	return nil
-}
-
-func (r *GrafanaDashboardReconciler) setStatusContentError(ctx context.Context, dashboard *v1beta1.GrafanaDashboard, err error) error {
-	if dashboard.Status.Content == nil {
-		dashboard.Status.Content = &v1beta1.GrafanaDashboardStatusContent{}
-	}
-	if dashboard.Status.Content.Error == nil || dashboard.Status.Content.Error.Message != err.Error() {
-		dashboard.Status.Content.Error = &v1beta1.GrafanaDashboardStatusContentError{}
-	}
-
-	dashboard.Status.Content.Error = &v1beta1.GrafanaDashboardStatusContentError{
-		Message:   err.Error(),
-		Timestamp: metav1.Now(),
-		Attempts:  dashboard.Status.Content.Error.Attempts + 1,
-	}
-
-	if err := r.Client.Status().Update(ctx, dashboard); err != nil {
-		r.Log.WithValues("dashboard", client.ObjectKeyFromObject(dashboard)).Error(err, "failed to update content error status")
-		return err
-	}
-	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

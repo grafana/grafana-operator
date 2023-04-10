@@ -199,13 +199,32 @@ func (in *GrafanaDashboard) GetContentCache(url string) []byte {
 	return cache
 }
 
+func (in *GrafanaDashboard) SetStatusContentError(err error) {
+	if err == nil {
+		return
+	}
+
+	if in.Status.Content == nil {
+		in.Status.Content = &GrafanaDashboardStatusContent{}
+	}
+	if in.Status.Content.Error == nil || in.Status.Content.Error.Message != err.Error() {
+		in.Status.Content.Error = &GrafanaDashboardStatusContentError{}
+	}
+
+	in.Status.Content.Error = &GrafanaDashboardStatusContentError{
+		Message:   err.Error(),
+		Timestamp: metav1.Now(),
+		Attempts:  in.Status.Content.Error.Attempts + 1,
+	}
+}
+
 func (in *GrafanaDashboard) ContentErrorBackoff() string {
 	if in.Status.Content != nil && in.Status.Content.Error != nil {
 		err := in.Status.Content.Error
-		backoffDuration := 30 * time.Second * time.Duration(math.Pow(2, float64(err.Attempts)))
+		backoffDuration := time.Second * time.Duration(math.Exp(0.5*float64(err.Attempts)))
 		retryTime := err.Timestamp.Add(backoffDuration)
 		if retryTime.After(time.Now()) {
-			return fmt.Sprintf("not retrying until %s", retryTime)
+			return fmt.Sprintf("retrying after %s", retryTime)
 		}
 	}
 	return ""

@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 
 	v1 "k8s.io/api/core/v1"
 
@@ -105,20 +106,22 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, nil
 	}
 
-	content, err := r.getDatasourceContent(ctx, datasource)
+	nextDatasource := datasource.DeepCopy()
+
+	content, err := r.getDatasourceContent(ctx, nextDatasource)
 	if err != nil {
-		r.setReadyCondition(ctx, datasource, metav1.ConditionFalse, v1beta1.ContentUnavailableReason, fmt.Sprintf("failed to get datasource content: %s", err))
-		return ctrl.Result{RequeueAfter: RequeueDelay}, err
+		err = fmt.Errorf("failed to get datasource content: %s", err)
+		nextDatasource.SetReadyCondition(metav1.ConditionFalse, v1beta1.ContentUnavailableReason, err.Error())
+		return r.reconcileResult(ctx, datasource, nextDatasource, &errorRequeueDelay, err)
 	}
 
 	instances, err := getMatchingInstances(ctx, r.Client, datasource.Spec.InstanceSelector)
 	if err != nil {
 		log.Error(err, "could not find matching instances")
-		r.setReadyCondition(ctx, datasource, metav1.ConditionFalse, v1beta1.NoMatchingInstancesReason, err.Error())
-		return ctrl.Result{}, err
+		nextDatasource.SetReadyCondition(metav1.ConditionFalse, v1beta1.NoMatchingInstancesReason, err.Error())
+		return r.reconcileResult(ctx, datasource, nextDatasource, nil, err)
 	}
 
-	newInstanceStatuses := map[string]v1beta1.GrafanaDatasourceInstanceStatus{}
 	for _, grafana := range instances.Items {
 		grafana := &grafana
 		log := log.WithValues("grafana", client.ObjectKeyFromObject(grafana))
@@ -136,29 +139,40 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		if grafana.IsInternal() {
 			err = updateGrafanaStatusPlugins(ctx, r.Client, grafana, datasource.Spec.Plugins)
 			if err != nil {
-				return ctrl.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("failed to reconcile plugins: %w", err)
+				err = fmt.Errorf("failed to reconcile plugins: %w", err)
+				return r.reconcileResult(ctx, datasource, nextDatasource, &errorRequeueDelay, err)
 			}
 		} else if datasource.Spec.Plugins != nil {
 			log.Error(nil, "plugin availability not ensured for external grafana instance")
 		}
 
-		instanceStatus, err := r.syncDatasourceContent(ctx, grafana, datasource, content)
+		instanceStatus, err := r.syncDatasourceContent(ctx, grafana, nextDatasource, content)
 		if err != nil {
-			return ctrl.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("error reconciling datasource: %w", err)
+			err = fmt.Errorf("error reconciling datasource: %w", err)
+			return r.reconcileResult(ctx, datasource, nextDatasource, &errorRequeueDelay, err)
 		}
-		newInstanceStatuses[v1beta1.InstanceKeyFor(grafana)] = *instanceStatus
+		nextDatasource.Status.Instances[v1beta1.InstanceKeyFor(grafana)] = *instanceStatus
 	}
 
-	if !reflect.DeepEqual(datasource.Status.Instances, newInstanceStatuses) {
-		datasource.Status.Instances = newInstanceStatuses
-		if err := r.Client.Status().Update(ctx, datasource); err != nil {
-			return ctrl.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("failed to update status for datasource instance: %w", err)
+	nextDatasource.SetReadyCondition(metav1.ConditionTrue, v1beta1.DatasourceSyncedReason, "Datasource synced")
+
+	requeueDelay := datasource.GetResyncPeriod()
+	return r.reconcileResult(ctx, datasource, nextDatasource, &requeueDelay, nil)
+}
+
+func (r *GrafanaDatasourceReconciler) reconcileResult(ctx context.Context, datasource *v1beta1.GrafanaDatasource, nextDatasource *v1beta1.GrafanaDatasource, resyncDelay *time.Duration, err error) (reconcile.Result, error) {
+	if !reflect.DeepEqual(datasource.Status, nextDatasource.Status) {
+		err := r.Client.Status().Update(context.Background(), nextDatasource)
+		if err != nil {
+			return ctrl.Result{RequeueAfter: errorRequeueDelay}, fmt.Errorf("failed to update status for datasource %s", datasource.Name)
 		}
 	}
 
-	r.setReadyCondition(ctx, datasource, metav1.ConditionTrue, v1beta1.DatasourceSyncedReason, "Datasource synced")
+	if resyncDelay == nil {
+		return ctrl.Result{}, err
+	}
 
-	return ctrl.Result{RequeueAfter: datasource.GetResyncPeriod()}, nil
+	return ctrl.Result{RequeueAfter: *resyncDelay}, err
 }
 
 func (r *GrafanaDatasourceReconciler) deleteExternalResources(ctx context.Context, datasource *v1beta1.GrafanaDatasource) error {
@@ -275,19 +289,6 @@ func (r *GrafanaDatasourceReconciler) collectVariablesFromSecrets(ctx context.Co
 		}
 	}
 	return result, nil
-}
-
-func (r *GrafanaDatasourceReconciler) setReadyCondition(ctx context.Context, datasource *v1beta1.GrafanaDatasource, status metav1.ConditionStatus, reason string, message string) error {
-	changed := datasource.SetReadyCondition(status, reason, message)
-	if !changed {
-		return nil
-	}
-
-	if err := r.Client.Status().Update(ctx, datasource); err != nil {
-		r.Log.WithValues("datasource", client.ObjectKeyFromObject(datasource)).Error(err, "failed to update status")
-		return err
-	}
-	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
