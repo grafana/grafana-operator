@@ -17,18 +17,11 @@ func WriteIni(cfg map[string]map[string]string) (string, string) {
 		cfg["paths"] = make(map[string]string)
 	}
 
-	if cfg["dashboards"] == nil {
-		cfg["dashboards"] = make(map[string]string)
-	}
-
 	// default paths that can't be overridden
 	cfg["paths"]["data"] = GrafanaDataPath
 	cfg["paths"]["logs"] = GrafanaLogsPath
 	cfg["paths"]["plugins"] = GrafanaPluginsPath
 	cfg["paths"]["provisioning"] = GrafanaProvisioningPath
-
-	// default dashboard versions
-	cfg["dashboards"]["versions_to_keep"] = "1"
 
 	sections := make([]string, 0, len(cfg))
 	for key := range cfg {
