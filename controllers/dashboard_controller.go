@@ -290,10 +290,9 @@ func (r *GrafanaDashboardReconciler) getDashboardManifest(ctx context.Context, d
 		if err != nil {
 			if dashboard.Status.Content != nil && dashboard.Status.Content.Cache != nil {
 				dashboard.SetCondition(metav1.Condition{
-					Type:    "StaleContent",
-					Status:  metav1.ConditionTrue,
-					Reason:  v1beta1.ContentUnavailableReason,
-					Message: err.Error(),
+					Type:   "StaleContent",
+					Status: metav1.ConditionTrue,
+					Reason: v1beta1.ContentUnavailableReason,
 				})
 				manifestBytes, err = v1beta1.Gunzip(dashboard.Status.Content.Cache)
 				if err != nil {
@@ -307,11 +306,7 @@ func (r *GrafanaDashboardReconciler) getDashboardManifest(ctx context.Context, d
 				})
 			}
 		} else {
-			dashboard.SetCondition(metav1.Condition{
-				Type:   "StaleContent",
-				Status: metav1.ConditionFalse,
-				Reason: v1beta1.ContentAvailableReason,
-			})
+			dashboard.UnSetCondition("StaleContent")
 		}
 	} else {
 		return nil, fmt.Errorf("missing source for dashboard %s/%s", dashboard.Namespace, dashboard.Name)

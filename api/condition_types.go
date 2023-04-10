@@ -51,6 +51,16 @@ func SetCondition(obj WithConditions, newCond metav1.Condition) bool {
 	return true
 }
 
+func UnSetCondition(obj WithConditions, conditionType string) {
+	newConds := make([]metav1.Condition, 0, len(obj.GetConditions()))
+	for _, cond := range obj.GetConditions() {
+		if cond.Type != conditionType {
+			newConds = append(newConds, cond)
+		}
+	}
+	obj.SetConditions(newConds)
+}
+
 func SetReadyCondition(obj WithConditions, status metav1.ConditionStatus, reason string, message string) bool {
 	return SetCondition(obj, metav1.Condition{
 		Type:               "Ready",

@@ -253,6 +253,10 @@ func (in *GrafanaDashboard) SetCondition(condition metav1.Condition) bool {
 	return api.SetCondition(in, condition)
 }
 
+func (in *GrafanaDashboard) UnSetCondition(conditionType string) {
+	api.UnSetCondition(in, conditionType)
+}
+
 func (in *GrafanaDashboard) SetReadyCondition(status metav1.ConditionStatus, reason string, message string) bool {
 	return api.SetReadyCondition(in, status, reason, message)
 }
