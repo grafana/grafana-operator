@@ -393,7 +393,7 @@ func (r *GrafanaDashboardReconciler) getRemoteDashboardManifest(ctx context.Cont
 	}
 
 	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("http status not ok: http status %d, body: %s ", response.StatusCode, content)
+		return nil, fmt.Errorf("http status %d, body: %s ", response.StatusCode, content)
 	}
 
 	gz, err := v1beta1.Gzip(content)

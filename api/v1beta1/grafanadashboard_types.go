@@ -207,7 +207,7 @@ func (in *GrafanaDashboard) SetStatusContentError(err error) {
 	if in.Status.Content == nil {
 		in.Status.Content = &GrafanaDashboardStatusContent{}
 	}
-	if in.Status.Content.Error == nil || in.Status.Content.Error.Message != err.Error() {
+	if in.Status.Content.Error == nil {
 		in.Status.Content.Error = &GrafanaDashboardStatusContentError{}
 	}
 

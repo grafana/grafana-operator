@@ -287,5 +287,55 @@ var _ = Describe("GrafanaDashboard controller", func() {
 				HaveKeyWithValue("a", "dashboard"),
 			))
 		})
+
+		It("Should backoff when fetching from remote URLs", func() {
+			server.RouteToHandler("GET", "/other/dashboard.json", ghttp.RespondWithJSONEncoded(http.StatusTooManyRequests, map[string]interface{}{
+				"error": "too many requests",
+			}))
+
+			By("By creating a dashboard resource")
+			remoteDashboardURL := server.URL() + "/other/dashboard.json"
+			dashboard.Spec = v1beta1.GrafanaDashboardSpec{
+				InstanceSelector: &metav1.LabelSelector{MatchLabels: grafana.ObjectMeta.Labels},
+				Source: v1beta1.GrafanaDashboardSource{
+					Remote: &v1beta1.GrafanaDashboardRemoteSource{
+						ContentCacheDuration: oneSecondMetaDuration,
+						Url:                  &remoteDashboardURL,
+					},
+				},
+			}
+			Expect(k8sClient.Create(ctx, dashboard)).Should(Succeed())
+
+			Eventually(func() error {
+				return k8sClient.Get(ctx, dashboardLookupKey, createdDashboard)
+			}, oneSecondDuration, interval).Should(Succeed())
+
+			By("By ensuring the dashboard content was downloaded")
+			Eventually(func() []*http.Request {
+				return server.ReceivedRequests()
+			}).Should(ContainElement(HaveField("URL", HaveField("Path", "/other/dashboard.json"))))
+
+			By("By ensuring the error is put into the status")
+			Eventually(func() (string, error) {
+				err := k8sClient.Get(ctx, dashboardLookupKey, createdDashboard)
+				return createdDashboard.Status.Content.Error.Message, err
+			}).Should(ContainSubstring("too many requests"))
+
+			By("By ensuring the attempt count increases")
+			Eventually(func() (int, error) {
+				err := k8sClient.Get(ctx, dashboardLookupKey, createdDashboard)
+				return createdDashboard.Status.Content.Error.Attempts, err
+			}).Should(Equal(1))
+
+			Eventually(func() (int, error) {
+				err := k8sClient.Get(ctx, dashboardLookupKey, createdDashboard)
+				return createdDashboard.Status.Content.Error.Attempts, err
+			}).Should(Equal(2))
+
+			Eventually(func() (int, error) {
+				err := k8sClient.Get(ctx, dashboardLookupKey, createdDashboard)
+				return createdDashboard.Status.Content.Error.Attempts, err
+			}).Should(Equal(3))
+		})
 	})
 })

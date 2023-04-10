@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"reflect"
-	"time"
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -42,8 +41,6 @@ import (
 	"github.com/grafana-operator/grafana-operator/v5/controllers/reconcilers"
 	"github.com/grafana-operator/grafana-operator/v5/controllers/reconcilers/grafana"
 )
-
-var errorRequeueDelay = 60 * time.Second
 
 // GrafanaReconciler reconciles a Grafana object
 type GrafanaReconciler struct {

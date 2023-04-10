@@ -3,12 +3,15 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+var errorRequeueDelay = 60 * time.Second
 
 func getMatchingInstances(ctx context.Context, k8sClient client.Client, labelSelector *v1.LabelSelector) (v1beta1.GrafanaList, error) {
 	opts := []client.ListOption{}
