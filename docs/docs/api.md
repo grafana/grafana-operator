@@ -519,6 +519,13 @@ GrafanaDashboardStatus defines the observed state of GrafanaDashboard
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="grafanadashboardstatuscontenterror">contentError</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="grafanadashboardstatusinstanceskey">instances</a></b></td>
         <td>map[string]object</td>
         <td>
@@ -633,7 +640,7 @@ Content contains information about fetched remote content
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>cacheTimestamp</b></td>
+        <td><b>timestamp</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -641,19 +648,12 @@ Content contains information about fetched remote content
             <i>Format</i>: date-time<br/>
         </td>
         <td>false</td>
-      </tr><tr>
-        <td><b><a href="grafanadashboardstatuscontenterror">error</a></b></td>
-        <td>object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
       </tr></tbody>
 </table>
 
 
-### GrafanaDashboard.status.content.error
-<sup><sup>[↩ Parent](grafanadashboardstatuscontent)</sup></sup>
+### GrafanaDashboard.status.contentError
+<sup><sup>[↩ Parent](grafanadashboardstatus)</sup></sup>
 
 
 

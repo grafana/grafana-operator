@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -37,6 +38,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -45,6 +47,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana-operator/grafana-operator/v5/api"
 	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana-operator/grafana-operator/v5/controllers/client"
 	"github.com/grafana-operator/grafana-operator/v5/controllers/metrics"
@@ -171,12 +174,22 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 }
 
 func (r *GrafanaDashboardReconciler) reconcileResult(ctx context.Context, dashboard *v1beta1.GrafanaDashboard, nextDashboard *v1beta1.GrafanaDashboard, resyncDelay *time.Duration, err error) (reconcile.Result, error) {
+	log := log.FromContext(ctx)
 	if !reflect.DeepEqual(dashboard.Status, nextDashboard.Status) {
+		log.Info("updating status for dashboard", "next", nextDashboard.Status)
 		err := r.Client.Status().Update(context.Background(), nextDashboard)
 		if err != nil {
 			return ctrl.Result{RequeueAfter: errorRequeueDelay}, fmt.Errorf("failed to update status for dashboard %s", dashboard.Name)
 		}
+	} else {
+		log.Info("not updating status because dashboard.Status matches nextDashboard.Status", "current", dashboard.Status, "next", nextDashboard.Status)
 	}
+
+	if err, ok := errors.Unwrap(err).(*api.BackoffError); ok {
+		log.Info("backof error requeueing after", "delay", err.RetryDelay())
+		return ctrl.Result{RequeueAfter: err.RetryDelay()}, nil
+	}
+	log.Info("returning with err", "err", err)
 
 	if resyncDelay == nil {
 		return ctrl.Result{}, err
@@ -280,13 +293,14 @@ func (r *GrafanaDashboardReconciler) getDashboardManifest(ctx context.Context, d
 	} else if dashboard.Spec.Source.ConfigMap != nil {
 		manifestBytes, err = r.getConfigMapDashboardManifest(ctx, dashboard, dashboard.Spec.Source.ConfigMap)
 	} else if dashboard.Spec.Source.Remote != nil {
-		if message := dashboard.ContentErrorBackoff(); message != "" {
-			dashboard.SetReadyCondition(metav1.ConditionFalse, v1beta1.ErrorBackoffReason, message)
-			return nil, fmt.Errorf("currently in error backoff: %s", message)
+		if err := dashboard.ContentErrorBackoff(); err != nil {
+			dashboard.SetReadyCondition(metav1.ConditionFalse, v1beta1.ErrorBackoffReason, err.Error())
+			return nil, err
 		}
 
 		manifestBytes, err = r.getRemoteDashboardManifest(ctx, dashboard, dashboard.Spec.Source.Remote)
 		dashboard.SetStatusContentError(err)
+
 		if err != nil {
 			if dashboard.Status.Content != nil && dashboard.Status.Content.Cache != nil {
 				dashboard.SetCondition(metav1.Condition{
@@ -402,9 +416,9 @@ func (r *GrafanaDashboardReconciler) getRemoteDashboardManifest(ctx context.Cont
 	}
 
 	dashboard.Status.Content = &v1beta1.GrafanaDashboardStatusContent{
-		Cache:          gz,
-		CacheTimestamp: metav1.Now(),
-		Url:            url,
+		Cache:     gz,
+		Timestamp: metav1.Now(),
+		Url:       url,
 	}
 
 	return content, nil

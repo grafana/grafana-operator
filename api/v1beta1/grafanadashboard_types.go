@@ -19,7 +19,6 @@ package v1beta1
 import (
 	"bytes"
 	"compress/gzip"
-	"fmt"
 	"io"
 	"math"
 	"time"
@@ -115,7 +114,8 @@ type GrafanaComDashboardReference struct {
 type GrafanaDashboardStatus struct {
 	// Content contains information about fetched remote content
 	// +optional
-	Content *GrafanaDashboardStatusContent `json:"content,omitempty"`
+	Content      *GrafanaDashboardStatusContent      `json:"content,omitempty"`
+	ContentError *GrafanaDashboardStatusContentError `json:"contentError,omitempty"`
 
 	// Instances stores UID, version, and folder info for each instance the dashboard has been created in
 	// +optional
@@ -126,10 +126,9 @@ type GrafanaDashboardStatus struct {
 }
 
 type GrafanaDashboardStatusContent struct {
-	Cache          []byte                              `json:"cache,omitempty"`
-	CacheTimestamp metav1.Time                         `json:"cacheTimestamp,omitempty"`
-	Url            string                              `json:"url"`
-	Error          *GrafanaDashboardStatusContentError `json:"error,omitempty"`
+	Cache     []byte      `json:"cache,omitempty"`
+	Timestamp metav1.Time `json:"timestamp,omitempty"`
+	Url       string      `json:"url"`
 }
 
 type GrafanaDashboardStatusContentError struct {
@@ -184,9 +183,8 @@ func (in *GrafanaDashboard) GetContentCache(url string) []byte {
 	cacheDuration := in.Spec.Source.Remote.ContentCacheDuration.Duration
 
 	// TODO: is this boolean logic correct?
-	expired := cacheDuration == 0 || in.Status.Content.CacheTimestamp.Add(cacheDuration).After(time.Now())
+	expired := cacheDuration == 0 || in.Status.Content.Timestamp.Add(cacheDuration).After(time.Now())
 	if expired {
-		in.Status.Content = nil
 		return nil
 	}
 
@@ -201,33 +199,34 @@ func (in *GrafanaDashboard) GetContentCache(url string) []byte {
 
 func (in *GrafanaDashboard) SetStatusContentError(err error) {
 	if err == nil {
+		in.Status.ContentError = nil
 		return
 	}
 
 	if in.Status.Content == nil {
 		in.Status.Content = &GrafanaDashboardStatusContent{}
 	}
-	if in.Status.Content.Error == nil {
-		in.Status.Content.Error = &GrafanaDashboardStatusContentError{}
+	if in.Status.ContentError == nil {
+		in.Status.ContentError = &GrafanaDashboardStatusContentError{}
 	}
 
-	in.Status.Content.Error = &GrafanaDashboardStatusContentError{
+	in.Status.ContentError = &GrafanaDashboardStatusContentError{
 		Message:   err.Error(),
 		Timestamp: metav1.Now(),
-		Attempts:  in.Status.Content.Error.Attempts + 1,
+		Attempts:  in.Status.ContentError.Attempts + 1,
 	}
 }
 
-func (in *GrafanaDashboard) ContentErrorBackoff() string {
-	if in.Status.Content != nil && in.Status.Content.Error != nil {
-		err := in.Status.Content.Error
-		backoffDuration := time.Second * time.Duration(math.Exp(0.5*float64(err.Attempts)))
-		retryTime := err.Timestamp.Add(backoffDuration)
+func (in *GrafanaDashboard) ContentErrorBackoff() *api.BackoffError {
+	if in.Status.Content != nil && in.Status.ContentError != nil {
+		e := in.Status.ContentError
+		backoffDuration := time.Second * time.Duration(math.Exp(0.5*float64(e.Attempts)))
+		retryTime := e.Timestamp.Add(backoffDuration)
 		if retryTime.After(time.Now()) {
-			return fmt.Sprintf("retrying after %s", retryTime)
+			return &api.BackoffError{Attempts: e.Attempts, RetryTime: retryTime}
 		}
 	}
-	return ""
+	return nil
 }
 
 func (in *GrafanaDashboard) IsAllowCrossNamespaceImport() bool {

@@ -220,7 +220,7 @@ var _ = Describe("GrafanaDashboard controller", func() {
 			By("By ensuring the folder endpoint was called")
 			Eventually(func() []gapi.Folder {
 				return mockFolders
-			}).Should(ContainElement(HaveField("Title", folderTitle)))
+			}, oneSecondDuration*5, interval).Should(ContainElement(HaveField("Title", folderTitle)))
 
 			By("By ensuring the dashboard endpoint was called")
 			Eventually(func() gapi.Dashboard {
@@ -318,24 +318,20 @@ var _ = Describe("GrafanaDashboard controller", func() {
 			By("By ensuring the error is put into the status")
 			Eventually(func() (string, error) {
 				err := k8sClient.Get(ctx, dashboardLookupKey, createdDashboard)
-				return createdDashboard.Status.Content.Error.Message, err
+				return createdDashboard.Status.ContentError.Message, err
 			}).Should(ContainSubstring("too many requests"))
+			Expect(createdDashboard.Status.ContentError.Attempts).Should(Equal(1))
 
 			By("By ensuring the attempt count increases")
 			Eventually(func() (int, error) {
 				err := k8sClient.Get(ctx, dashboardLookupKey, createdDashboard)
-				return createdDashboard.Status.Content.Error.Attempts, err
-			}).Should(Equal(1))
+				return createdDashboard.Status.ContentError.Attempts, err
+			}, oneSecondDuration*5, interval).Should(Equal(2))
 
 			Eventually(func() (int, error) {
 				err := k8sClient.Get(ctx, dashboardLookupKey, createdDashboard)
-				return createdDashboard.Status.Content.Error.Attempts, err
-			}).Should(Equal(2))
-
-			Eventually(func() (int, error) {
-				err := k8sClient.Get(ctx, dashboardLookupKey, createdDashboard)
-				return createdDashboard.Status.Content.Error.Attempts, err
-			}).Should(Equal(3))
+				return createdDashboard.Status.ContentError.Attempts, err
+			}, oneSecondDuration*5, interval).Should(Equal(3))
 		})
 	})
 })
