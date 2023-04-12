@@ -32,7 +32,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -57,9 +57,9 @@ import (
 // GrafanaDashboardReconciler reconciles a GrafanaDashboard object
 type GrafanaDashboardReconciler struct {
 	client.Client
-	Log       logr.Logger
-	Scheme    *runtime.Scheme
-	Discovery discovery.DiscoveryInterface
+	Log           logr.Logger
+	Scheme        *runtime.Scheme
+	EventRecorder record.EventRecorder
 }
 
 const (
@@ -146,6 +146,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 		if !grafana.Ready() {
 			log.V(1).Info("skipping grafana instance that is not ready")
+			r.EventRecorder.Eventf(dashboard, v1.EventTypeWarning, "DashboardSyncSkipped", "Not syncing with grafana instance %s/%s because it isn't Ready", grafana.Namespace, grafana.Name)
 			continue
 		}
 
@@ -165,6 +166,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			return r.reconcileResult(ctx, dashboard, nextDashboard, &errorRequeueDelay, err)
 		}
 		nextDashboard.Status.Instances[v1beta1.InstanceKeyFor(grafana)] = *instanceStatus
+		r.EventRecorder.Eventf(dashboard, v1.EventTypeNormal, v1beta1.DashboardSyncedReason, "Synced dashboard content with grafana instance %s/%s", grafana.Namespace, grafana.Name)
 	}
 
 	nextDashboard.SetReadyCondition(metav1.ConditionTrue, v1beta1.DashboardSyncedReason, "Dashboard synced")
@@ -312,6 +314,7 @@ func (r *GrafanaDashboardReconciler) getDashboardManifest(ctx context.Context, d
 				if err != nil {
 					return nil, fmt.Errorf("failed to gunzip dashboard content (stale): %w", err)
 				}
+				r.EventRecorder.Eventf(dashboard, v1.EventTypeWarning, "UsingStaleDashboardContent", "Dashboard fetching failed, using existing but possibly stale content.")
 			} else {
 				dashboard.SetCondition(metav1.Condition{
 					Type:   "StaleContent",
@@ -420,6 +423,7 @@ func (r *GrafanaDashboardReconciler) getRemoteDashboardManifest(ctx context.Cont
 		Timestamp: metav1.Now(),
 		Url:       url,
 	}
+	r.EventRecorder.Eventf(dashboard, v1.EventTypeNormal, "DashboardContentCacheUpdated", "%d gz bytes cached for url %s", len(gz), url)
 
 	return content, nil
 }

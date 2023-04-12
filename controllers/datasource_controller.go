@@ -24,6 +24,7 @@ import (
 	"time"
 
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/tools/record"
 
 	"github.com/go-logr/logr"
 	client2 "github.com/grafana-operator/grafana-operator/v5/controllers/client"
@@ -48,8 +49,9 @@ import (
 // GrafanaDatasourceReconciler reconciles a GrafanaDatasource object
 type GrafanaDatasourceReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
-	Log    logr.Logger
+	Scheme        *runtime.Scheme
+	Log           logr.Logger
+	EventRecorder record.EventRecorder
 }
 
 const (
@@ -112,6 +114,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	if err != nil {
 		err = fmt.Errorf("failed to get datasource content: %s", err)
 		nextDatasource.SetReadyCondition(metav1.ConditionFalse, v1beta1.ContentUnavailableReason, err.Error())
+		r.EventRecorder.Event(datasource, v1.EventTypeWarning, "DatasourceSyncFailed", "failed to get datasource content")
 		return r.reconcileResult(ctx, datasource, nextDatasource, &errorRequeueDelay, err)
 	}
 
@@ -154,6 +157,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			return r.reconcileResult(ctx, datasource, nextDatasource, &errorRequeueDelay, err)
 		}
 		nextDatasource.Status.Instances[v1beta1.InstanceKeyFor(grafana)] = *instanceStatus
+		r.EventRecorder.Eventf(datasource, v1.EventTypeNormal, v1beta1.DatasourceSyncedReason, "Synced datasource with grafana instance %s/%s", grafana.Namespace, grafana.Name)
 	}
 
 	nextDatasource.SetReadyCondition(metav1.ConditionTrue, v1beta1.DatasourceSyncedReason, "Datasource synced")
