@@ -128,6 +128,13 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="grafanadashboardspecgrafanacom">grafanaCom</a></b></td>
+        <td>object</td>
+        <td>
+          grafana.com/dashboards<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>gzipJson</b></td>
         <td>string</td>
         <td>
@@ -280,6 +287,40 @@ A label selector requirement is a selector that contains values, a key, and an o
           <br/>
         </td>
         <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.spec.grafanaCom
+<sup><sup>[↩ Parent](grafanadashboardspec)</sup></sup>
+
+
+
+grafana.com/dashboards
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>id</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>revision</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
