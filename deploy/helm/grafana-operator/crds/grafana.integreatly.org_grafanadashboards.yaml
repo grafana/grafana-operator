@@ -45,6 +45,15 @@ spec:
                 type: array
               folder:
                 type: string
+              grafanaCom:
+                properties:
+                  id:
+                    type: integer
+                  revision:
+                    type: integer
+                required:
+                - id
+                type: object
               gzipJson:
                 format: byte
                 type: string

@@ -30,11 +30,12 @@ import (
 type DashboardSourceType string
 
 const (
-	DashboardSourceTypeRawJson  DashboardSourceType = "json"
-	DashboardSourceTypeGzipJson DashboardSourceType = "gzipJson"
-	DashboardSourceTypeUrl      DashboardSourceType = "url"
-	DashboardSourceTypeJsonnet  DashboardSourceType = "jsonnet"
-	DefaultResyncPeriod                             = "5m"
+	DashboardSourceTypeRawJson    DashboardSourceType = "json"
+	DashboardSourceTypeGzipJson   DashboardSourceType = "gzipJson"
+	DashboardSourceTypeUrl        DashboardSourceType = "url"
+	DashboardSourceTypeJsonnet    DashboardSourceType = "jsonnet"
+	DashboardSourceTypeGrafanaCom DashboardSourceType = "grafana"
+	DefaultResyncPeriod                               = "5m"
 )
 
 type GrafanaDashboardDatasource struct {
@@ -63,6 +64,10 @@ type GrafanaDashboardSpec struct {
 	// +optional
 	Jsonnet string `json:"jsonnet,omitempty"`
 
+	// grafana.com/dashboards
+	// +optional
+	GrafanaCom *GrafanaComDashboardReference `json:"grafanaCom,omitempty"`
+
 	// selects Grafanas for import
 	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`
 
@@ -88,6 +93,12 @@ type GrafanaDashboardSpec struct {
 	// allow to import this resources from an operator in a different namespace
 	// +optional
 	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
+}
+
+// GrafanaComDashbooardReference is a reference to a dashboard on grafana.com/dashboards
+type GrafanaComDashboardReference struct {
+	Id       int  `json:"id"`
+	Revision *int `json:"revision,omitempty"`
 }
 
 // GrafanaDashboardStatus defines the observed state of GrafanaDashboard
@@ -163,6 +174,10 @@ func (in *GrafanaDashboard) GetSourceTypes() []DashboardSourceType {
 
 	if in.Spec.Jsonnet != "" {
 		sourceTypes = append(sourceTypes, DashboardSourceTypeJsonnet)
+	}
+
+	if in.Spec.GrafanaCom != nil {
+		sourceTypes = append(sourceTypes, DashboardSourceTypeGrafanaCom)
 	}
 
 	return sourceTypes
