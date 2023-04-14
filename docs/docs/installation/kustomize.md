@@ -6,7 +6,7 @@ description: "How to install grafana-operator using Kustomize"
 
 We are using Flux to package our Kustomize files through OCI, and they are built and released just as our helm solution.
 
-To our knowledge there are no way of downloading manifest files through the [Kustomize CLI](https://kustomize.io/).
+To our knowledge there is no way of downloading manifest files through the [Kustomize CLI](https://kustomize.io/).
 
 So if you want to download the Kustomize manifest you need to install the [Flux cli](https://fluxcd.io/flux/installation/).
 
