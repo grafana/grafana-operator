@@ -116,9 +116,42 @@ spec:
                   - version
                   type: object
                 type: array
-              secrets:
+              valuesFrom:
                 items:
-                  type: string
+                  properties:
+                    targetPath:
+                      type: string
+                    valueFrom:
+                      properties:
+                        configMapKeyRef:
+                          properties:
+                            key:
+                              type: string
+                            name:
+                              type: string
+                            optional:
+                              type: boolean
+                          required:
+                          - key
+                          type: object
+                          x-kubernetes-map-type: atomic
+                        secretKeyRef:
+                          properties:
+                            key:
+                              type: string
+                            name:
+                              type: string
+                            optional:
+                              type: boolean
+                          required:
+                          - key
+                          type: object
+                          x-kubernetes-map-type: atomic
+                      type: object
+                  required:
+                  - targetPath
+                  - valueFrom
+                  type: object
                 type: array
             required:
             - interval

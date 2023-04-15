@@ -17,13 +17,11 @@ limitations under the License.
 package v1beta1
 
 import (
-	"bytes"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/grafana-operator/grafana-operator/v5/api"
-	gapi "github.com/grafana/grafana-api-golang-client"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -69,9 +67,8 @@ type GrafanaDatasourceSpec struct {
 	// +optional
 	Plugins PluginList `json:"plugins,omitempty"`
 
-	// secrets used for variable expansion
 	// +optional
-	Secrets []string `json:"secrets,omitempty"`
+	ValuesFrom []GrafanaDatasourceValueFrom `json:"valuesFrom,omitempty"`
 
 	// how often the datasource is refreshed
 	Interval metav1.Duration `json:"interval"`
@@ -79,6 +76,20 @@ type GrafanaDatasourceSpec struct {
 	// allow to import this resources from an operator in a different namespace
 	// +optional
 	AllowCrossNamespaceReferences *bool `json:"allowCrossNamespaceImport,omitempty"`
+}
+
+type GrafanaDatasourceValueFrom struct {
+	TargetPath string                           `json:"targetPath"`
+	ValueFrom  GrafanaDatasourceValueFromSource `json:"valueFrom"`
+}
+
+type GrafanaDatasourceValueFromSource struct {
+	// Selects a key of a ConfigMap.
+	// +optional
+	ConfigMapKeyRef *v1.ConfigMapKeySelector `json:"configMapKeyRef,omitempty"`
+	// Selects a key of a Secret.
+	// +optional
+	SecretKeyRef *v1.SecretKeySelector `json:"secretKeyRef,omitempty"`
 }
 
 // GrafanaDatasourceStatus defines the observed state of GrafanaDatasource
@@ -120,28 +131,6 @@ type GrafanaDatasourceList struct {
 
 func (in *GrafanaDatasource) GetResyncPeriod() time.Duration {
 	return in.Spec.Interval.Duration
-}
-
-func (in *GrafanaDatasource) ExpandVariables(variables map[string][]byte) (*gapi.DataSource, error) {
-	raw, err := json.Marshal(in.Spec.DataSource)
-	if err != nil {
-		return nil, err
-	}
-
-	for key, value := range variables {
-		patterns := []string{fmt.Sprintf("$%v", key), fmt.Sprintf("${%v}", key)}
-		for _, pattern := range patterns {
-			raw = bytes.ReplaceAll(raw, []byte(pattern), value)
-		}
-	}
-
-	var new gapi.DataSource
-	err = json.Unmarshal(raw, &new)
-	if err != nil {
-		return nil, err
-	}
-
-	return &new, nil
 }
 
 func (in *GrafanaDatasource) IsAllowCrossNamespaceImport() bool {
