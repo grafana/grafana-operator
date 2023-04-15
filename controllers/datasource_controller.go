@@ -58,8 +58,8 @@ type GrafanaDatasourceReconciler struct {
 
 const (
 	datasourceFinalizer              = "datasource.grafana.integreatly.org/finalizer"
-	datasourceSecretsRefIndexField   = ".spec.valuesFrom[].secretKeyRef"
-	datasourceConfigMapRefIndexField = ".spec.valuesFrom[].configMapKeyRef"
+	datasourceSecretsRefIndexField   = ".spec.valuesFrom.secretKeyRef"
+	datasourceConfigMapRefIndexField = ".spec.valuesFrom.configMapKeyRef"
 )
 
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadatasources,verbs=get;list;watch;create;update;patch;delete
@@ -423,7 +423,7 @@ func (r *GrafanaDatasourceReconciler) findObjectsForIndexField(indexField string
 }
 
 func (r *GrafanaDatasourceReconciler) addValueSourceIndexField(mgr ctrl.Manager, indexField string, valueSourceName func(v1beta1.GrafanaDatasourceValueFromSource) string) error {
-	return mgr.GetFieldIndexer().IndexField(context.Background(), &v1beta1.GrafanaDatasource{}, datasourceSecretsRefIndexField, func(rawObj client.Object) []string {
+	return mgr.GetFieldIndexer().IndexField(context.Background(), &v1beta1.GrafanaDatasource{}, indexField, func(rawObj client.Object) []string {
 		datasource := rawObj.(*v1beta1.GrafanaDatasource)
 		var res []string
 		for _, v := range datasource.Spec.ValuesFrom {

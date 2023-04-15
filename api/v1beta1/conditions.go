@@ -15,6 +15,8 @@ const (
 
 	DashboardSyncedReason string = "DashboardSynced"
 
+	DashboardSyncFailedReason string = "DashboardSyncFailed"
+
 	DatasourceSyncedReason string = "DatasourceSynced"
 
 	CreateResourceFailedReason string = "CreateResourceFailed"

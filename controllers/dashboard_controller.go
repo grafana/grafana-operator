@@ -164,11 +164,14 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 		instanceStatus, err := r.syncDashboardContent(ctx, grafana, nextDashboard, manifest)
 		if err != nil {
-			err = fmt.Errorf("error reconciling dashboard: %w", err)
+			err = fmt.Errorf("error syncing dashboard with grafana: %w", err)
+			nextDashboard.SetReadyCondition(metav1.ConditionUnknown, v1beta1.DashboardSyncFailedReason, fmt.Sprintf("For instance %s/%s: %s ", grafana.Namespace, grafana.Name, err.Error()))
+			r.EventRecorder.Eventf(dashboard, v1.EventTypeWarning, v1beta1.DashboardSyncFailedReason, "For instance %s/%s: %s", grafana.Namespace, grafana.Name, err.Error())
 			return r.reconcileResult(ctx, dashboard, nextDashboard, &errorRequeueDelay, err)
+		} else {
+			nextDashboard.Status.Instances[v1beta1.InstanceKeyFor(grafana)] = *instanceStatus
+			r.EventRecorder.Eventf(dashboard, v1.EventTypeNormal, v1beta1.DashboardSyncedReason, "Synced dashboard content with grafana instance %s/%s", grafana.Namespace, grafana.Name)
 		}
-		nextDashboard.Status.Instances[v1beta1.InstanceKeyFor(grafana)] = *instanceStatus
-		r.EventRecorder.Eventf(dashboard, v1.EventTypeNormal, v1beta1.DashboardSyncedReason, "Synced dashboard content with grafana instance %s/%s", grafana.Namespace, grafana.Name)
 	}
 
 	nextDashboard.SetReadyCondition(metav1.ConditionTrue, v1beta1.DashboardSyncedReason, "Dashboard synced")
@@ -180,20 +183,18 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 func (r *GrafanaDashboardReconciler) reconcileResult(ctx context.Context, dashboard *v1beta1.GrafanaDashboard, nextDashboard *v1beta1.GrafanaDashboard, resyncDelay *time.Duration, err error) (reconcile.Result, error) {
 	log := log.FromContext(ctx)
 	if !reflect.DeepEqual(dashboard.Status, nextDashboard.Status) {
-		log.Info("updating status for dashboard", "next", nextDashboard.Status)
 		err := r.Client.Status().Update(context.Background(), nextDashboard)
 		if err != nil {
 			return ctrl.Result{RequeueAfter: errorRequeueDelay}, fmt.Errorf("failed to update status for dashboard %s", dashboard.Name)
 		}
 	} else {
-		log.Info("not updating status because dashboard.Status matches nextDashboard.Status", "current", dashboard.Status, "next", nextDashboard.Status)
+		log.Info("not updating status because dashboard.Status matches nextDashboard.Status")
 	}
 
 	if err, ok := errors.Unwrap(err).(*api.BackoffError); ok {
 		log.Info("backof error requeueing after", "delay", err.RetryDelay())
 		return ctrl.Result{RequeueAfter: err.RetryDelay()}, nil
 	}
-	log.Info("returning with err", "err", err)
 
 	if resyncDelay == nil {
 		return ctrl.Result{}, err
@@ -429,7 +430,7 @@ func (r *GrafanaDashboardReconciler) getRemoteDashboardManifest(ctx context.Cont
 	}
 
 	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("http status %d, body: %s ", response.StatusCode, content)
+		return nil, fmt.Errorf("http status %d for url %s, body: %s ", response.StatusCode, url, content)
 	}
 
 	gz, err := v1beta1.Gzip(content)

@@ -183,7 +183,7 @@ func (in *GrafanaDashboard) GetContentCache(url string) []byte {
 	cacheDuration := in.Spec.Source.Remote.ContentCacheDuration.Duration
 
 	// TODO: is this boolean logic correct?
-	expired := cacheDuration == 0 || in.Status.Content.Timestamp.Add(cacheDuration).After(time.Now())
+	expired := cacheDuration == 0 || time.Now().After(in.Status.Content.Timestamp.Add(cacheDuration))
 	if expired {
 		return nil
 	}

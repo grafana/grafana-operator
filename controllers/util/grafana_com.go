@@ -19,7 +19,7 @@ func GetGrafanaComDashboardUrl(ctx context.Context, ref v1beta1.GrafanaComDashbo
 			return "", err
 		}
 	}
-	return fmt.Sprintf("%s/%d/revisions/%d/download", grafanaComDashboardApiUrlRoot, ref.Id, ref.Revision), nil
+	return fmt.Sprintf("%s/%d/revisions/%d/download", grafanaComDashboardApiUrlRoot, ref.Id, *ref.Revision), nil
 }
 
 func GetLatestGrafanaComRevision(ctx context.Context, id int) (*int, error) {
