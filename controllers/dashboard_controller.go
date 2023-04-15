@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -50,6 +49,9 @@ import (
 	"github.com/grafana-operator/grafana-operator/v5/api"
 	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana-operator/grafana-operator/v5/controllers/client"
+	"github.com/grafana-operator/grafana-operator/v5/controllers/client/github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana-operator/grafana-operator/v5/controllers/client/github.com/grafana/grafana/pkg/services/dashboardimport"
+	"github.com/grafana-operator/grafana-operator/v5/controllers/client/github.com/grafana/grafana/pkg/services/dashboardimport/utils"
 	"github.com/grafana-operator/grafana-operator/v5/controllers/metrics"
 	"github.com/grafana-operator/grafana-operator/v5/controllers/util"
 )
@@ -224,7 +226,7 @@ func (r *GrafanaDashboardReconciler) deleteExternalResources(ctx context.Context
 	return nil
 }
 
-func (r *GrafanaDashboardReconciler) syncDashboardContent(ctx context.Context, grafana *v1beta1.Grafana, dashboard *v1beta1.GrafanaDashboard, manifest map[string]interface{}) (*v1beta1.GrafanaDashboardInstanceStatus, error) {
+func (r *GrafanaDashboardReconciler) syncDashboardContent(ctx context.Context, grafana *v1beta1.Grafana, dashboard *v1beta1.GrafanaDashboard, manifest *simplejson.Json) (*v1beta1.GrafanaDashboardInstanceStatus, error) {
 	instanceKey := v1beta1.InstanceKeyFor(grafana)
 
 	grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, grafana)
@@ -241,26 +243,44 @@ func (r *GrafanaDashboardReconciler) syncDashboardContent(ctx context.Context, g
 		folderId = folder.ID
 	}
 
-	shouldCreate := true
 	instanceStatus, ok := dashboard.Status.Instances[instanceKey]
 	if ok {
 		existingMatches, err := util.ExistingDashboardVersionMatches(grafanaClient, instanceStatus)
 		if err != nil {
 			return nil, fmt.Errorf("failed to check for existing dashboard: %w", err)
 		}
-		shouldCreate = !existingMatches
-	} else {
-		if dashboard.Status.Instances == nil {
-			dashboard.Status.Instances = make(map[string]v1beta1.GrafanaDashboardInstanceStatus)
+		if existingMatches {
+			return &instanceStatus, nil
 		}
-		instanceStatus = v1beta1.GrafanaDashboardInstanceStatus{
-			UID:     manifest["uid"].(string),
-			Version: -1, // todo
-		}
-		dashboard.Status.Instances[instanceKey] = instanceStatus
 	}
-	if !shouldCreate {
-		return &instanceStatus, nil
+
+	if len(dashboard.Spec.Datasources) > 0 {
+		inputs := make([]dashboardimport.ImportDashboardInput, len(dashboard.Spec.Datasources))
+		for _, ds := range dashboard.Spec.Datasources {
+			var datasource v1beta1.GrafanaDatasource
+			ns := ds.DatasourceRef.Namespace
+			if ns == "" {
+				ns = dashboard.Namespace
+			}
+			err := r.Client.Get(ctx, client.ObjectKey{Namespace: ns, Name: ds.DatasourceRef.Name}, &datasource)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get datasource input: %w", err)
+			}
+			instanceStatus, ok := datasource.Status.Instances[v1beta1.InstanceKeyFor(grafana)]
+			if !ok {
+				return nil, fmt.Errorf("datasource %#v is missing for instance %s/%s", ds, grafana.Namespace, grafana.Name)
+			}
+			inputs = append(inputs, dashboardimport.ImportDashboardInput{
+				Type:     "datasource",
+				Name:     ds.InputName, // "DS_PROMETHEUS" or whatever
+				PluginId: datasource.Spec.DataSource.Type,
+				Value:    instanceStatus.UID,
+			})
+		}
+		manifest, err = utils.NewDashTemplateEvaluator(manifest, inputs).Eval()
+		if err != nil {
+			return nil, fmt.Errorf("failed to insert datasource inputs: %w", err)
+		}
 	}
 
 	resp, err := grafanaClient.NewDashboard(grapi.Dashboard{
@@ -269,7 +289,7 @@ func (r *GrafanaDashboardReconciler) syncDashboardContent(ctx context.Context, g
 			Slug:      dashboard.Name,
 			Folder:    folderId,
 		},
-		Model:     manifest,
+		Model:     manifest.MustMap(),
 		Folder:    folderId,
 		Overwrite: true,
 		Message:   fmt.Sprintf("Updated by Grafana Operator. Generation %d, ResourceVersion: %s", dashboard.Generation, dashboard.ResourceVersion),
@@ -287,7 +307,7 @@ func (r *GrafanaDashboardReconciler) syncDashboardContent(ctx context.Context, g
 	}, nil
 }
 
-func (r *GrafanaDashboardReconciler) getDashboardManifest(ctx context.Context, dashboard *v1beta1.GrafanaDashboard) (map[string]interface{}, error) {
+func (r *GrafanaDashboardReconciler) getDashboardManifest(ctx context.Context, dashboard *v1beta1.GrafanaDashboard) (*simplejson.Json, error) {
 	var manifestBytes []byte
 	var err error
 	if dashboard.Spec.Source.Inline != nil {
@@ -333,16 +353,15 @@ func (r *GrafanaDashboardReconciler) getDashboardManifest(ctx context.Context, d
 		return nil, fmt.Errorf("failed to fetch dashboard content: %w", err)
 	}
 
-	var manifest map[string]interface{}
-	err = json.Unmarshal(manifestBytes, &manifest)
+	manifest, err := simplejson.NewJson(manifestBytes)
 	if err != nil {
 		err = fmt.Errorf("failed to unmarshal dashboard: %s", err)
 		dashboard.SetReadyCondition(metav1.ConditionFalse, v1beta1.ContentUnavailableReason, err.Error())
 		return nil, err
 	}
 
-	if _, ok := manifest["uid"]; !ok {
-		manifest["uid"] = string(dashboard.UID)
+	if _, ok := manifest.CheckGet("uid"); !ok {
+		manifest.Set("uid", string(dashboard.UID))
 	}
 
 	return manifest, nil

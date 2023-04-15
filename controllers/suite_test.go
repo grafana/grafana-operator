@@ -102,9 +102,10 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	err = (&GrafanaDashboardReconciler{
-		Client: k8sManager.GetClient(),
-		Scheme: k8sManager.GetScheme(),
-		Log:    ctrl.Log.WithName("DashboardReconciler"),
+		Client:        k8sManager.GetClient(),
+		Scheme:        k8sManager.GetScheme(),
+		Log:           ctrl.Log.WithName("DashboardReconciler"),
+		EventRecorder: k8sManager.GetEventRecorderFor("DashboardReconciler"),
 	}).SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 

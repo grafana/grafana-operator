@@ -29,8 +29,8 @@ import (
 )
 
 type GrafanaDashboardDatasource struct {
-	InputName      string `json:"inputName"`
-	DatasourceName string `json:"datasourceName"`
+	InputName     string             `json:"inputName"`
+	DatasourceRef v1.ObjectReference `json:"datasourceRef"`
 }
 
 // GrafanaDashboardSpec defines the desired state of GrafanaDashboard
