@@ -31,7 +31,7 @@ func GetGrafanaAdminSecretMeta(cr *v1beta1.Grafana) *v1.Secret {
 	}
 }
 
-func (r *AdminSecretReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana) error {
+func (r *AdminSecretReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, next *v1beta1.Grafana) error {
 	secret := GetGrafanaAdminSecretMeta(cr)
 	if err := controllerutil.SetControllerReference(cr, secret, r.Scheme); err != nil {
 		return fmt.Errorf("failed to set controller reference: %w", err)

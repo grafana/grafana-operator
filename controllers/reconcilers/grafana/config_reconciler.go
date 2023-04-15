@@ -3,6 +3,7 @@ package grafana
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/go-logr/logr"
 	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
@@ -22,15 +23,19 @@ type ConfigReconciler struct {
 }
 
 func GetGrafanaIniMeta(cr *v1beta1.Grafana) *v1.ConfigMap {
+	maybeDashGrafana := ""
+	if !strings.HasSuffix(cr.Name, "grafana") {
+		maybeDashGrafana = "-grafana"
+	}
 	return &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-grafana-ini", cr.Name),
+			Name:      fmt.Sprintf("%s%s-ini", maybeDashGrafana, cr.Name),
 			Namespace: cr.Namespace,
 		},
 	}
 }
 
-func (r *ConfigReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana) error {
+func (r *ConfigReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, next *v1beta1.Grafana) error {
 	_ = log.FromContext(ctx)
 
 	config, _ := config.WriteIni(cr.Spec.Config)

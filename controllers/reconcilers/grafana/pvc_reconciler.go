@@ -22,13 +22,13 @@ type PvcReconciler struct {
 func GetGrafanaDataPVCMeta(cr *v1beta1.Grafana) *v1.PersistentVolumeClaim {
 	return &v1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-grafana-data", cr.Name),
+			Name:      fmt.Sprintf("%s-data", cr.Name),
 			Namespace: cr.Namespace,
 		},
 	}
 }
 
-func (r *PvcReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana) error {
+func (r *PvcReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, next *v1beta1.Grafana) error {
 	if cr.Spec.PersistentVolumeClaim == nil {
 		return nil
 	}

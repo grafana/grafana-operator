@@ -7,5 +7,5 @@ import (
 )
 
 type GrafanaReconciler interface {
-	Reconcile(ctx context.Context, cr *v1beta1.Grafana) error
+	Reconcile(ctx context.Context, cr *v1beta1.Grafana, next *v1beta1.Grafana) error
 }

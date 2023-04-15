@@ -30,7 +30,7 @@ type IngressReconciler struct {
 func GetGrafanaIngressMeta(cr *v1beta1.Grafana) *networkingv1.Ingress {
 	return &networkingv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-grafana", cr.Name),
+			Name:      cr.Name,
 			Namespace: cr.Namespace,
 		},
 	}
@@ -39,25 +39,25 @@ func GetGrafanaIngressMeta(cr *v1beta1.Grafana) *networkingv1.Ingress {
 func GetGrafanaRouteMeta(cr *v1beta1.Grafana) *routev1.Route {
 	return &routev1.Route{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-grafana", cr.Name),
+			Name:      cr.Name,
 			Namespace: cr.Namespace,
 		},
 	}
 }
 
-func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana) error {
+func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, next *v1beta1.Grafana) error {
 	logger := log.FromContext(ctx)
 
 	if r.IsOpenShift {
 		logger.Info("reconciling route", "platform", "openshift")
-		return r.reconcileRoute(ctx, cr)
+		return r.reconcileRoute(ctx, cr, next)
 	} else {
 		logger.Info("reconciling ingress", "platform", "kubernetes")
-		return r.reconcileIngress(ctx, cr)
+		return r.reconcileIngress(ctx, cr, next)
 	}
 }
 
-func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Grafana) error {
+func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Grafana, next *v1beta1.Grafana) error {
 	if cr.Spec.Ingress == nil || len(cr.Spec.Ingress.Spec.Rules) == 0 {
 		return nil
 	}
@@ -87,13 +87,13 @@ func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Gr
 			return fmt.Errorf("ingress spec is incomplete")
 		}
 
-		cr.Status.AdminUrl = adminURL
+		next.Status.AdminUrl = adminURL
 	}
 
 	return nil
 }
 
-func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Grafana) error {
+func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Grafana, next *v1beta1.Grafana) error {
 	route := GetGrafanaRouteMeta(cr)
 	if err := controllerutil.SetControllerReference(cr, route, r.Scheme); err != nil {
 		return fmt.Errorf("failed to set controller reference: %w", err)
@@ -111,8 +111,7 @@ func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Graf
 	// try to assign the admin url
 	if cr.PreferIngress() {
 		if route.Spec.Host != "" {
-			cr.Status.AdminUrl = fmt.Sprintf("https://%v", route.Spec.Host)
-			// TODO: update status?
+			next.Status.AdminUrl = fmt.Sprintf("https://%s", route.Spec.Host)
 		}
 	}
 
@@ -167,7 +166,7 @@ func (r *IngressReconciler) getIngressAdminURL(ingress *networkingv1.Ingress) st
 
 	// adminUrl should not be empty only in case hostname is found, otherwise we'll have broken URLs like "http://"
 	if hostname != "" {
-		adminURL = fmt.Sprintf("%v://%v", protocol, hostname)
+		adminURL = fmt.Sprintf("%s://%s", protocol, hostname)
 	}
 
 	return adminURL

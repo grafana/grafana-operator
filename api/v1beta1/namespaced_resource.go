@@ -50,7 +50,7 @@ func (in NamespacedResourceList) ForNamespace(namespace string) NamespacedResour
 }
 
 func (in NamespacedResourceList) Add(namespace string, name string, uid string) NamespacedResourceList {
-	resource := NamespacedResource(fmt.Sprintf("%v/%v/%v", namespace, name, uid))
+	resource := NamespacedResource(fmt.Sprintf("%s/%s/%s", namespace, name, uid))
 	resources := NamespacedResourceList{resource}
 	for _, r := range in {
 		if r == resource {

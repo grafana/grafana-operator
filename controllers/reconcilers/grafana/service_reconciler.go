@@ -25,13 +25,13 @@ type ServiceReconciler struct {
 func GetGrafanaServiceMeta(cr *v1beta1.Grafana) *v1.Service {
 	return &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-grafana", cr.Name),
+			Name:      cr.Name,
 			Namespace: cr.Namespace,
 		},
 	}
 }
 
-func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana) error {
+func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, next *v1beta1.Grafana) error {
 	service := GetGrafanaServiceMeta(cr)
 	if err := controllerutil.SetControllerReference(cr, service, r.Scheme); err != nil {
 		return fmt.Errorf("failed to set controller reference: %w", err)
@@ -53,8 +53,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana) 
 
 	// try to assign the admin url
 	if !cr.PreferIngress() {
-		cr.Status.AdminUrl = fmt.Sprintf("%v://%v.%v:%d", getGrafanaServerProtocol(cr), service.Name, cr.Namespace,
-			int32(GetGrafanaPort(cr)))
+		next.Status.AdminUrl = fmt.Sprintf("%s://%s.%s:%d", getGrafanaServerProtocol(cr), service.Name, cr.Namespace, GetGrafanaPort(cr))
 		// TODO: update status?
 	}
 

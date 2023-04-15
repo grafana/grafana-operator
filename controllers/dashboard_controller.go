@@ -286,9 +286,7 @@ func (r *GrafanaDashboardReconciler) syncDashboardContent(ctx context.Context, g
 
 	resp, err := grafanaClient.NewDashboard(grapi.Dashboard{
 		Meta: grapi.DashboardMeta{
-			IsStarred: false,
-			Slug:      dashboard.Name,
-			Folder:    folderId,
+			Slug: dashboard.Name,
 		},
 		Model:     manifest.MustMap(),
 		Folder:    folderId,
@@ -365,6 +363,7 @@ func (r *GrafanaDashboardReconciler) getDashboardManifest(ctx context.Context, d
 		manifest.Set("uid", string(dashboard.UID))
 	}
 
+	manifest.Del("id")
 	return manifest, nil
 }
 

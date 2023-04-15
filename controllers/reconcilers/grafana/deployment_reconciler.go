@@ -41,13 +41,13 @@ type DeploymentReconciler struct {
 func GetGrafanaDeploymentMeta(cr *v1beta1.Grafana) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-grafana", cr.Name),
+			Name:      cr.Name,
 			Namespace: cr.Namespace,
 		},
 	}
 }
 
-func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana) error {
+func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, next *v1beta1.Grafana) error {
 	openshiftPlatform := r.IsOpenShift
 
 	deployment := GetGrafanaDeploymentMeta(cr)

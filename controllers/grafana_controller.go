@@ -90,7 +90,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	for i, reconciler := range r.subreconcilers {
-		err := reconciler.Reconcile(ctx, grafana)
+		err := reconciler.Reconcile(ctx, grafana, nextGrafana)
 		if err != nil {
 			nextGrafana.SetReadyCondition(metav1.ConditionFalse, v1beta1.CreateResourceFailedReason, err.Error())
 			metrics.GrafanaFailedReconciles.WithLabelValues(grafana.Name, fmt.Sprint(i)).Inc()

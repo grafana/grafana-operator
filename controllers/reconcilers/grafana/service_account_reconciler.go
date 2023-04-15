@@ -22,13 +22,13 @@ type ServiceAccountReconciler struct {
 func GetGrafanaServiceAccountMeta(cr *v1beta1.Grafana) *v1.ServiceAccount {
 	return &v1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-grafana", cr.Name),
+			Name:      cr.Name,
 			Namespace: cr.Namespace,
 		},
 	}
 }
 
-func (r *ServiceAccountReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana) error {
+func (r *ServiceAccountReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, next *v1beta1.Grafana) error {
 	sa := GetGrafanaServiceAccountMeta(cr)
 	if err := controllerutil.SetControllerReference(cr, sa, r.Scheme); err != nil {
 		return fmt.Errorf("failed to set controller reference: %w", err)
