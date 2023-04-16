@@ -57,6 +57,16 @@ spec:
               folder:
                 description: folder assignment for dashboard
                 type: string
+              grafanaCom:
+                description: grafana.com/dashboards
+                properties:
+                  id:
+                    type: integer
+                  revision:
+                    type: integer
+                required:
+                - id
+                type: object
               gzipJson:
                 description: GzipJson the dashboard's JSON compressed with Gzip. Base64-encoded
                   when in YAML.

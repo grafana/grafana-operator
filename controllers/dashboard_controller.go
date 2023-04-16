@@ -402,6 +402,8 @@ func (r *GrafanaDashboardReconciler) fetchDashboardJson(dashboard *v1beta1.Grafa
 		return fetchers.FetchDashboardFromUrl(dashboard)
 	case v1beta1.DashboardSourceTypeJsonnet:
 		return fetchers.FetchJsonnet(dashboard, embeds.GrafonnetEmbed)
+	case v1beta1.DashboardSourceTypeGrafanaCom:
+		return fetchers.FetchDashboardFromGrafanaCom(dashboard)
 	default:
 		return nil, fmt.Errorf("unknown source type %v found in dashboard %v", sourceTypes[0], dashboard.Name)
 	}
