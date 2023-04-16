@@ -125,7 +125,7 @@ func (r *GrafanaReconciler) reconcileResult(ctx context.Context, grafana *v1beta
 	if !reflect.DeepEqual(grafana.Status, nextGrafana.Status) {
 		err := r.Client.Status().Update(context.Background(), nextGrafana)
 		if err != nil {
-			return ctrl.Result{RequeueAfter: errorRequeueDelay}, fmt.Errorf("failed to update status for grafana %s", grafana.Name)
+			return ctrl.Result{RequeueAfter: errorRequeueDelay}, fmt.Errorf("failed to update status for grafana: %w", err)
 		}
 	}
 

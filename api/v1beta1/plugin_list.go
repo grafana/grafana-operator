@@ -129,17 +129,15 @@ func (l PluginList) VersionsOf(plugin *GrafanaPlugin) int {
 }
 
 func (l PluginList) ConsolidatedConcat(others PluginList) (PluginList, error) {
-	var consolidatedPlugins PluginList
-
 	for _, plugin := range others {
 		// new plugin
-		if !consolidatedPlugins.HasSomeVersionOf(&plugin) {
-			consolidatedPlugins = append(consolidatedPlugins, plugin)
+		if !l.HasSomeVersionOf(&plugin) {
+			l = append(l, plugin)
 			continue
 		}
 
 		// newer version of plugin already installed
-		hasNewer, err := consolidatedPlugins.HasNewerVersionOf(&plugin)
+		hasNewer, err := l.HasNewerVersionOf(&plugin)
 		if err != nil {
 			return nil, err
 		}
@@ -149,12 +147,12 @@ func (l PluginList) ConsolidatedConcat(others PluginList) (PluginList, error) {
 		}
 
 		// duplicate plugin
-		if consolidatedPlugins.HasExactVersionOf(&plugin) {
+		if l.HasExactVersionOf(&plugin) {
 			continue
 		}
 
 		// some version is installed, but it is not newer and it is not the same: must be older
-		consolidatedPlugins.Update(&plugin)
+		l.Update(&plugin)
 	}
-	return consolidatedPlugins, nil
+	return l, nil
 }
