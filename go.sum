@@ -236,6 +236,8 @@ github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+
 github.com/googleapis/gax-go/v2 v2.0.4/go.mod h1:0Wqv26UfaUD9n4G6kQubkQ+KchISgw+vpHVxEJEs9eg=
 github.com/googleapis/gax-go/v2 v2.0.5/go.mod h1:DWXyrwAJ9X0FpwwEdw+IPEYBICEFu5mhpdKc/us6bOk=
 github.com/googleapis/gax-go/v2 v2.1.0/go.mod h1:Q3nei7sK6ybPYH7twZdmQpAd1MKb7pfu6SK+H1/DsU0=
+github.com/grafana/grafana-api-golang-client v0.18.4 h1:YpxmbG1OWssE1ko80Ixd/XioSrIqY/ZpwQ4h1D0xJ2E=
+github.com/grafana/grafana-api-golang-client v0.18.4/go.mod h1:24W29gPe9yl0/3A9X624TPkAOR8DpHno490cPwnkv8E=
 github.com/grpc-ecosystem/grpc-gateway v1.16.0/go.mod h1:BDjrQk3hbvj6Nolgz8mAMFbcEtjT1g+wF4CSlocrBnw=
 github.com/hashicorp/go-cleanhttp v0.5.2 h1:035FKYIWjmULyFRBKPs8TBQoi0x6d9G4xc9neXJWAZQ=
 github.com/hashicorp/go-cleanhttp v0.5.2/go.mod h1:kO/YDlP8L1346E6Sodw+PrpBSV4/SoxCXGY6BqNFT48=
@@ -304,8 +306,6 @@ github.com/onsi/gomega v1.27.6 h1:ENqfyGeS5AX/rlXDd/ETokDz93u0YufY1Pgxuy/PvWE=
 github.com/onsi/gomega v1.27.6/go.mod h1:PIQNjfQwkP3aQAH7lf7j87O/5FiNr+ZR8+ipb+qQlhg=
 github.com/openshift/api v0.0.0-20190924102528-32369d4db2ad h1:MiZEukiPd7ll8BQDwBfc3LKBxbqyeXIx+wl4CzVj5EQ=
 github.com/openshift/api v0.0.0-20190924102528-32369d4db2ad/go.mod h1:dh9o4Fs58gpFXGSYfnVxGR9PnV53I8TW84pQaJDdGiY=
-github.com/pb82/grafana-api-golang-client v0.9.4 h1:W0NTTgebYC5I7wCH35s28Nwc0XxbOkn19cWjhm1n1pE=
-github.com/pb82/grafana-api-golang-client v0.9.4/go.mod h1:M3Ow9DiK5nfHfERJUZjKy3dDlLyeIjwiDp00lKhSfyY=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
