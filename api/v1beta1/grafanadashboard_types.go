@@ -132,14 +132,14 @@ type GrafanaDashboardList struct {
 	Items           []GrafanaDashboard `json:"items"`
 }
 
-func (in *GrafanaDashboard) Hash() string {
+func (in *GrafanaDashboard) Hash(dashboardJson []byte) string {
 	hash := sha256.New()
-	hash.Write([]byte(in.Spec.Json))
+	hash.Write(dashboardJson)
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 
-func (in *GrafanaDashboard) Unchanged() bool {
-	return in.Hash() == in.Status.Hash
+func (in *GrafanaDashboard) Unchanged(hash string) bool {
+	return in.Status.Hash == hash
 }
 
 func (in *GrafanaDashboard) GetResyncPeriod() time.Duration {

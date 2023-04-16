@@ -293,6 +293,10 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return err
 	}
 
+	// NOTE: previously, we had hash calculated directly from CR, though, with growing number of fetchers,
+	//       it's easier to do it here to make sure it's always the right set of data that's used
+	hash := cr.Hash(dashboardJson)
+
 	dashboardJson, err = r.resolveDatasources(cr, dashboardJson)
 	if err != nil {
 		return err
@@ -301,10 +305,6 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	if grafana.IsExternal() && cr.Spec.Plugins != nil {
 		return fmt.Errorf("external grafana instances don't support plugins, please remove spec.plugins from your dashboard cr")
 	}
-
-	// Dashboards come from different sources, whereas Spec.Json is used to calculate hash
-	// So, we should keep the field updated to make sure changes in dashboards get noticed
-	cr.Spec.Json = string(dashboardJson)
 
 	grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
@@ -316,7 +316,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	if err != nil {
 		return err
 	}
-	if exists && cr.Unchanged() {
+	if exists && cr.Unchanged(hash) {
 		return nil
 	}
 
@@ -357,7 +357,9 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return err
 	}
 
-	return r.UpdateStatus(ctx, cr)
+	cr.Status.Hash = hash
+
+	return r.Client.Status().Update(ctx, cr)
 }
 
 // map data sources that are required in the dashboard to data sources that exist in the instance
@@ -405,11 +407,6 @@ func (r *GrafanaDashboardReconciler) fetchDashboardJson(dashboard *v1beta1.Grafa
 	default:
 		return nil, fmt.Errorf("unknown source type %v found in dashboard %v", sourceTypes[0], dashboard.Name)
 	}
-}
-
-func (r *GrafanaDashboardReconciler) UpdateStatus(ctx context.Context, cr *v1beta1.GrafanaDashboard) error {
-	cr.Status.Hash = cr.Hash()
-	return r.Client.Status().Update(ctx, cr)
 }
 
 func (r *GrafanaDashboardReconciler) Exists(client *grapi.Client, cr *v1beta1.GrafanaDashboard) (bool, error) {
