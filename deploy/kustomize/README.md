@@ -17,7 +17,7 @@ kubectl create -k deploy/overlays/namespace_scoped
 
 for a namespace scoped installation.
 
-When you want to path the grafana operator instead of using `kubectl apply` you need to use `kubectl replace`.
+When you want to patch the grafana operator instead of using `kubectl apply` you need to use `kubectl replace`.
 Else you will get the following error `invalid: metadata.annotations: Too long: must have at most 262144 bytes`.
 
 For example
