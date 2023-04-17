@@ -6,13 +6,22 @@ Make sure `namespace` is set to the namespace where you want to install the oper
 Then run:
 
 ```shell
-$ kubectl apply -k deploy/overlays/cluster_scoped
+kubectl create -k deploy/overlays/cluster_scoped
 ```
 
 for a cluster scoped installation, or:
 
 ```shell
-$ kubectl apply -k deploy/overlays/namespace_scoped
+kubectl create -k deploy/overlays/namespace_scoped
 ```
 
 for a namespace scoped installation.
+
+When you want to patch the grafana operator instead of using `kubectl apply` you need to use `kubectl replace`.
+Else you will get the following error `invalid: metadata.annotations: Too long: must have at most 262144 bytes`.
+
+For example
+
+```shell
+kubectl replace -k deploy/overlays/cluster_scoped
+```
