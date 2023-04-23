@@ -128,6 +128,10 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return r.reconcileResult(ctx, datasource, nextDatasource, nil, err)
 	}
 
+	if nextDatasource.Status.Instances == nil {
+		nextDatasource.Status.Instances = map[string]v1beta1.GrafanaDatasourceInstanceStatus{}
+	}
+
 	for _, grafana := range instances.Items {
 		grafana := &grafana
 		log := log.WithValues("grafana", client.ObjectKeyFromObject(grafana))
