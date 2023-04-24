@@ -25,6 +25,8 @@ import (
 	"strings"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/grafana-operator/grafana-operator/v5/embeds"
 
 	"github.com/go-logr/logr"
@@ -316,7 +318,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	if err != nil {
 		return err
 	}
-	if exists && cr.Unchanged(hash) {
+	if exists && cr.Unchanged(hash) && !cr.ResyncPeriodHasElapsed() {
 		return nil
 	}
 
@@ -358,6 +360,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	}
 
 	cr.Status.Hash = hash
+	cr.Status.LastResync = metav1.Time{Time: time.Now()}
 
 	return r.Client.Status().Update(ctx, cr)
 }
