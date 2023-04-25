@@ -164,6 +164,10 @@ spec:
                 type: string
               hash:
                 type: string
+              lastResync:
+                description: Last time the dashboard was resynced
+                format: date-time
+                type: string
             type: object
         type: object
     served: true
