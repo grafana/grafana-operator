@@ -414,6 +414,15 @@ GrafanaDashboardStatus defines the observed state of GrafanaDashboard
           <br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>lastResync</b></td>
+        <td>string</td>
+        <td>
+          Last time the dashboard was resynced<br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -1495,7 +1504,7 @@ Rolling update config params. Present only if DeploymentStrategyType = RollingUp
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>metadata</b></td>
+        <td><b><a href="grafanaspecdeploymentspectemplatemetadata">metadata</a></b></td>
         <td>object</td>
         <td>
           Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata<br/>
@@ -1506,6 +1515,40 @@ Rolling update config params. Present only if DeploymentStrategyType = RollingUp
         <td>object</td>
         <td>
           Specification of the desired behavior of the pod. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.deployment.spec.template.metadata
+<sup><sup>[↩ Parent](grafanaspecdeploymentspectemplate)</sup></sup>
+
+
+
+Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>annotations</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>labels</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
