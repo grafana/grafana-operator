@@ -163,6 +163,10 @@ spec:
                 type: string
               hash:
                 type: string
+              lastResync:
+                description: Last time the dashboard was resynced
+                format: date-time
+                type: string
             type: object
         type: object
     served: true
@@ -640,6 +644,15 @@ spec:
                           metadata:
                             description: 'Standard object''s metadata. More info:
                               https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
+                            properties:
+                              annotations:
+                                additionalProperties:
+                                  type: string
+                                type: object
+                              labels:
+                                additionalProperties:
+                                  type: string
+                                type: object
                             type: object
                           spec:
                             description: 'Specification of the desired behavior of
