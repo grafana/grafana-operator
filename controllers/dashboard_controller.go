@@ -185,6 +185,12 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	controllerLog.Info("found matching Grafana instances for dashboard", "count", len(instances.Items))
 
+	dashboardJson, err := r.fetchDashboardJson(dashboard)
+	if err != nil {
+		controllerLog.Error(err, "error fetching dashboard", "dashboard", dashboard.Name)
+		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
+	}
+
 	success := true
 	for _, grafana := range instances.Items {
 		// check if this is a cross namespace import
@@ -213,7 +219,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 
 		// then import the dashboard into the matching grafana instances
-		err = r.onDashboardCreated(ctx, &grafana, dashboard)
+		err = r.onDashboardCreated(ctx, &grafana, dashboard, dashboardJson)
 		if err != nil {
 			controllerLog.Error(err, "error reconciling dashboard", "dashboard", dashboard.Name, "grafana", grafana.Name)
 			success = false
@@ -289,23 +295,14 @@ func (r *GrafanaDashboardReconciler) onDashboardDeleted(ctx context.Context, nam
 	return nil
 }
 
-func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDashboard) error {
-	dashboardJson, err := r.fetchDashboardJson(cr)
-	if err != nil {
-		return err
-	}
-
-	// NOTE: previously, we had hash calculated directly from CR, though, with growing number of fetchers,
-	//       it's easier to do it here to make sure it's always the right set of data that's used
-	hash := cr.Hash(dashboardJson)
-
-	dashboardJson, err = r.resolveDatasources(cr, dashboardJson)
-	if err != nil {
-		return err
-	}
-
+func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDashboard, dashboardJson []byte) error {
 	if grafana.IsExternal() && cr.Spec.Plugins != nil {
 		return fmt.Errorf("external grafana instances don't support plugins, please remove spec.plugins from your dashboard cr")
+	}
+
+	dashboardJson, err := r.resolveDatasources(cr, dashboardJson)
+	if err != nil {
+		return err
 	}
 
 	grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, grafana)
@@ -314,6 +311,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	}
 
 	// update/create the dashboard if it doesn't exist in the instance or has been changed
+	hash := cr.Hash(dashboardJson)
 	exists, err := r.Exists(grafanaClient, cr)
 	if err != nil {
 		return err
