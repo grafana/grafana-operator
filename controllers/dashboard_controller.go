@@ -326,12 +326,18 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return err
 	}
 
+	uid, _ := dashboardFromJson["uid"].(string)
+	if uid == "" {
+		uid = string(cr.UID)
+	}
+
+	dashboardFromJson["uid"] = uid
+
 	folderID, err := r.GetOrCreateFolder(grafanaClient, cr)
 	if err != nil {
 		return errors.NewInternalError(err)
 	}
 
-	dashboardFromJson["uid"] = string(cr.UID)
 	resp, err := grafanaClient.NewDashboard(grapi.Dashboard{
 		Meta: grapi.DashboardMeta{
 			IsStarred: false,
@@ -351,6 +357,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return errors.NewBadRequest(fmt.Sprintf("error creating dashboard, status was %v", resp.Status))
 	}
 
+	// NOTE: When dashboard is uploaded with a new dashboardFromJson["uid"], but with an old name, the old uid is preserved. So, better to rely on the resp.UID here
 	grafana.Status.Dashboards = grafana.Status.Dashboards.Add(cr.Namespace, cr.Name, resp.UID)
 	err = r.Client.Status().Update(ctx, grafana)
 	if err != nil {
