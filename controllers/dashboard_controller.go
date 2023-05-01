@@ -191,6 +191,25 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
+	// Garbage collection for a case where dashboard uid get changed, dashboard creation is expected to happen in a separate reconcilication cycle
+	if dashboard.IsUpdatedUID(dashboardJson) {
+		controllerLog.Info("dashboard uid got updated, deleting dashboards with the old uid")
+		err = r.onDashboardDeleted(ctx, req.Namespace, req.Name)
+		if err != nil {
+			return ctrl.Result{RequeueAfter: RequeueDelay}, err
+		}
+
+		// Clean up uid, so further reconcilications can track changes there
+		dashboard.Status.UID = ""
+		err = r.Client.Status().Update(ctx, dashboard)
+		if err != nil {
+			return ctrl.Result{RequeueAfter: RequeueDelay}, nil
+		}
+
+		// Status update should trigger the next reconciliation right away, no need to requeue for dashboard creation
+		return ctrl.Result{}, nil
+	}
+
 	success := true
 	for _, grafana := range instances.Items {
 		// check if this is a cross namespace import
@@ -366,6 +385,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 
 	cr.Status.Hash = hash
 	cr.Status.LastResync = metav1.Time{Time: time.Now()}
+	cr.Status.UID = resp.UID
 
 	return r.Client.Status().Update(ctx, cr)
 }
