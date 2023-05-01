@@ -203,7 +203,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		dashboard.Status.UID = ""
 		err = r.Client.Status().Update(ctx, dashboard)
 		if err != nil {
-			return ctrl.Result{RequeueAfter: RequeueDelay}, nil
+			return ctrl.Result{RequeueAfter: RequeueDelay}, err
 		}
 
 		// Status update should trigger the next reconciliation right away, no need to requeue for dashboard creation
@@ -345,7 +345,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return err
 	}
 
-	uid, _ := dashboardFromJson["uid"].(string)
+	uid, _ := dashboardFromJson["uid"].(string) //nolint:errcheck
 	if uid == "" {
 		uid = string(cr.UID)
 	}
