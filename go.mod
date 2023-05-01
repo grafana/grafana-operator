@@ -6,7 +6,7 @@ require (
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/go-logr/logr v1.2.4
 	github.com/google/go-jsonnet v0.19.1
-	github.com/grafana/grafana-api-golang-client v0.18.4
+	github.com/grafana/grafana-api-golang-client v0.20.1
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.27.6
 	github.com/openshift/api v3.9.0+incompatible
