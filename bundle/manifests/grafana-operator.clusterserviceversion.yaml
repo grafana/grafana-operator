@@ -41,7 +41,7 @@ metadata:
                 "dashboards": "grafana-a"
               }
             },
-            "json": "{\n\n  \"id\": null,\n  \"title\": \"Simple Dashboard\",\n  \"tags\": [],\n  \"style\": \"dark\",\n  \"timezone\": \"browser\",\n  \"editable\": true,\n  \"hideControls\": false,\n  \"graphTooltip\": 1,\n  \"panels\": [],\n  \"time\": {\n    \"from\": \"now-6h\",\n    \"to\": \"now\"\n  },\n  \"timepicker\": {\n    \"time_options\": [],\n    \"refresh_intervals\": []\n  },\n  \"templating\": {\n    \"list\": []\n  },\n  \"annotations\": {\n    \"list\": []\n  },\n  \"refresh\": \"5s\",\n  \"schemaVersion\": 17,\n  \"version\": 0,\n  \"links\": []\n}\n"
+            "json": "{\n  \"id\": null,\n  \"title\": \"Simple Dashboard\",\n  \"tags\": [],\n  \"style\": \"dark\",\n  \"timezone\": \"browser\",\n  \"editable\": true,\n  \"hideControls\": false,\n  \"graphTooltip\": 1,\n  \"panels\": [],\n  \"time\": {\n    \"from\": \"now-6h\",\n    \"to\": \"now\"\n  },\n  \"timepicker\": {\n    \"time_options\": [],\n    \"refresh_intervals\": []\n  },\n  \"templating\": {\n    \"list\": []\n  },\n  \"annotations\": {\n    \"list\": []\n  },\n  \"refresh\": \"5s\",\n  \"schemaVersion\": 17,\n  \"version\": 0,\n  \"links\": []\n}\n"
           }
         },
         {
@@ -88,7 +88,7 @@ metadata:
                 "dashboards": "grafana-a"
               }
             },
-            "json": "{\n\n  \"uid\": \"nErXDvCkzz\",\n  \"title\": \"Example Folder\"\n}"
+            "json": "{\n  \"uid\": \"nErXDvCkzz\",\n  \"title\": \"Example Folder\"\n}"
           }
         }
       ]
@@ -295,18 +295,6 @@ spec:
           - list
           - update
           - watch
-        - apiGroups:
-          - authentication.k8s.io
-          resources:
-          - tokenreviews
-          verbs:
-          - create
-        - apiGroups:
-          - authorization.k8s.io
-          resources:
-          - subjectaccessreviews
-          verbs:
-          - create
         serviceAccountName: grafana-operator-controller-manager
       deployments:
       - label:
