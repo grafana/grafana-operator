@@ -20,10 +20,14 @@ spec:
       containers:
         - args:
             - --health-probe-bind-address=:8081
-            - --metrics-bind-address=127.0.0.1:8080
+            - --metrics-bind-address=127.0.0.1:9090
             - --leader-elect
           image: ghcr.io/grafana-operator/grafana-operator:v5.0.0
           imagePullPolicy: Always
+          ports:
+            - containerPort: 9090
+              name: metrics
+              protocol: TCP
           livenessProbe:
             httpGet:
               path: /healthz
