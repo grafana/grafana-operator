@@ -50,45 +50,6 @@ securityContext:
 # -- grafana operator container resources
 resources: {}
 
-kubeRbacProxy:
-  # -- enable kuberRbacProxy
-  enabled: true
-  image:
-    # -- The image tag to use in kubeRbacProxy container
-    tag: v0.8.0
-    # -- The image repository to use in kubeRbacProxy container
-    repository: gcr.io/kubebuilder/kube-rbac-proxy
-    # -- The image pull policy to use in kubeRbacProxy container
-    pullPolicy: IfNotPresent
-
-  # -- kubeRbacProxy container args
-  args:
-    - --secure-listen-address=0.0.0.0:8443
-    - --upstream=http://127.0.0.1:8080/
-    - --logtostderr=true
-    - --v=10
-  service:
-    # -- kubeRbacProxy service type
-    type: ClusterIP
-    # -- kubeRbacProxy service port
-    port: 8443
-
-  # -- kubeRbacProxy resources
-  resources: {}
-
-  # -- kubeRbacProxy liveness probe
-  livenessProbe: {}
-  # -- kubeRbacProxy readyness probe
-  readinessProbe: {}
-
-  # -- kubeRbacProxy securityContext
-  securityContext:
-    capabilities:
-      drop:
-        - ALL
-    readOnlyRootFilesystem: true
-    runAsNonRoot: true
-
 # -- pod priority class name
 priorityClassName: ""
 
