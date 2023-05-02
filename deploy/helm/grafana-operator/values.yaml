@@ -33,6 +33,12 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
+metricsService:
+  # -- metrics service type
+  type: ClusterIP
+  # -- metrics service port
+  metricsPort: 9090
+
 # -- pod annotations
 podAnnotations: {}
 

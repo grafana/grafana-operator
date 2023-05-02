@@ -42,6 +42,8 @@ It's easier to just manage this configuration outside of the operator.
 | image.tag | string | `""` | Overrides the image tag whose default is the chart appVersion. |
 | imagePullSecrets | list | `[]` | image pull secrets |
 | leaderElect | bool | `false` | If you want to run multiple replicas of the grafana-operator, this is not recommended. |
+| metricsService.metricsPort | int | `9090` | metrics service port |
+| metricsService.type | string | `"ClusterIP"` | metrics service type |
 | nameOverride | string | `""` |  |
 | namespaceScope | bool | `false` | If the operator should run in namespace-scope or not, if true the operator will only be able to manage instances in the same namespace |
 | nodeSelector | object | `{}` | pod node selector |
