@@ -78,6 +78,10 @@ func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Gr
 }
 
 func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, _ *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+	if cr.Spec.Route == nil || cr.Spec.Route.Spec == nil {
+		return v1beta1.OperatorStageResultSuccess, nil
+	}
+
 	route := model.GetGrafanaRoute(cr, scheme)
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, route, func() error {
