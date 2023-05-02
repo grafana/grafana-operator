@@ -26,12 +26,18 @@ spec:
         runAsNonRoot: true
       containers:
         - args:
+            - --health-probe-bind-address=:8081
+            - --metrics-bind-address=127.0.0.1:9090
             - --leader-elect
           image: controller:latest
           name: manager
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false
+          ports:
+            - containerPort: 9090
+              protocol: TCP
+              name: metrics
           livenessProbe:
             httpGet:
               path: /healthz
