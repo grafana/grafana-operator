@@ -51,7 +51,7 @@ type GrafanaDatasourceReconciler struct {
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadatasources/finalizers,verbs=update
 
 func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl.Result, error) {
-	syncLog := log.FromContext(ctx)
+	syncLog := log.FromContext(ctx).WithName("GrafanaDatasourceReconciler")
 	datasourcesSynced := 0
 
 	// get all grafana instances
@@ -139,7 +139,7 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 }
 
 func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	controllerLog := log.FromContext(ctx)
+	controllerLog := log.FromContext(ctx).WithName("GrafanaDatasourceReconciler")
 	r.Log = controllerLog
 
 	// periodic sync reconcile

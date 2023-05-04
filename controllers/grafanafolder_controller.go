@@ -50,7 +50,7 @@ type GrafanaFolderReconciler struct {
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanafolders/finalizers,verbs=update
 
 func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result, error) {
-	syncLog := log.FromContext(ctx)
+	syncLog := log.FromContext(ctx).WithName("GrafanaFolderReconciler")
 	foldersSynced := 0
 
 	// get all grafana instances
@@ -141,7 +141,7 @@ func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result,
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.9.2/pkg/reconcile
 func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	controllerLog := log.FromContext(ctx)
+	controllerLog := log.FromContext(ctx).WithName("GrafanaFolderReconciler")
 	r.Log = controllerLog
 
 	// periodic sync reconcile
