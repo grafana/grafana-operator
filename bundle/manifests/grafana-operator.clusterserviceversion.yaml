@@ -314,7 +314,7 @@ spec:
               containers:
               - args:
                 - --health-probe-bind-address=:8081
-                - --metrics-bind-address=127.0.0.1:9090
+                - --metrics-bind-address=0.0.0.0:9090
                 - --leader-elect
                 env:
                 - name: WATCH_NAMESPACE
