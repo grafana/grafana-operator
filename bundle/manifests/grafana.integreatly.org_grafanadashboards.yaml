@@ -44,6 +44,15 @@ spec:
                 type: array
               folder:
                 type: string
+              grafanaCom:
+                properties:
+                  id:
+                    type: integer
+                  revision:
+                    type: integer
+                required:
+                - id
+                type: object
               gzipJson:
                 format: byte
                 type: string
@@ -107,6 +116,11 @@ spec:
               contentUrl:
                 type: string
               hash:
+                type: string
+              lastResync:
+                format: date-time
+                type: string
+              uid:
                 type: string
             type: object
         type: object
