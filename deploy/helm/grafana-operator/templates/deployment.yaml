@@ -44,7 +44,7 @@ spec:
               {{- end }}
           args:
             - --health-probe-bind-address=:8081
-            - --metrics-bind-address=127.0.0.1:{{ .Values.metricsService.metricsPort }}
+            - --metrics-bind-address=0.0.0.0:{{ .Values.metricsService.metricsPort }}
             {{- if .Values.leaderElect }}
             - --leader-elect
             {{- end }}
