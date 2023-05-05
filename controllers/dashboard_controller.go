@@ -480,7 +480,7 @@ func (r *GrafanaDashboardReconciler) GetFolderID(client *grapi.Client,
 	}
 
 	for _, folder := range folders {
-		if folder.Title == cr.Spec.FolderTitle {
+		if strings.EqualFold(folder.Title, cr.Spec.FolderTitle) {
 			return folder.ID, nil
 		}
 		continue
