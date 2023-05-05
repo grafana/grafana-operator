@@ -295,18 +295,6 @@ spec:
           - list
           - update
           - watch
-        - apiGroups:
-          - authentication.k8s.io
-          resources:
-          - tokenreviews
-          verbs:
-          - create
-        - apiGroups:
-          - authorization.k8s.io
-          resources:
-          - subjectaccessreviews
-          verbs:
-          - create
         serviceAccountName: grafana-operator-controller-manager
       deployments:
       - label:
@@ -325,6 +313,8 @@ spec:
             spec:
               containers:
               - args:
+                - --health-probe-bind-address=:8081
+                - --metrics-bind-address=0.0.0.0:9090
                 - --leader-elect
                 env:
                 - name: WATCH_NAMESPACE
@@ -340,6 +330,10 @@ spec:
                   initialDelaySeconds: 15
                   periodSeconds: 20
                 name: manager
+                ports:
+                - containerPort: 9090
+                  name: metrics
+                  protocol: TCP
                 readinessProbe:
                   httpGet:
                     path: /readyz

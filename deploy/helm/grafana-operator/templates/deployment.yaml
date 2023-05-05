@@ -44,10 +44,14 @@ spec:
               {{- end }}
           args:
             - --health-probe-bind-address=:8081
-            - --metrics-bind-address=127.0.0.1:8080
+            - --metrics-bind-address=0.0.0.0:{{ .Values.metricsService.metricsPort }}
             {{- if .Values.leaderElect }}
             - --leader-elect
             {{- end }}
+          ports:
+            - containerPort: {{ .Values.metricsService.metricsPort }}
+              name: metrics
+              protocol: TCP
           livenessProbe:
             httpGet:
               path: /healthz
@@ -60,35 +64,6 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-        {{- if .Values.kubeRbacProxy.enabled }}
-        - name: kube-rbac-proxy
-          {{- with .Values.kubeRbacProxy.securityContext }}
-          securityContext:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          image: "{{ .Values.kubeRbacProxy.image.repository }}:{{ .Values.kubeRbacProxy.image.tag }}"
-          imagePullPolicy: {{ .Values.kubeRbacProxy.imagePullPolicy }}
-          {{- with .Values.kubeRbacProxy.args }}
-          args:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          ports:
-            - containerPort: {{ .Values.kubeRbacProxy.service.port }}
-              name: metrics
-              protocol: TCP
-          {{- with .Values.kubeRbacProxy.livenessProbe }}
-          livenessProbe:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.kubeRbacProxy.readinessProbe }}
-          readinessProbe:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.kubeRbacProxy.resources }}
-          resources:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
