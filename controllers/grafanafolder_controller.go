@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -270,10 +269,6 @@ func (r *GrafanaFolderReconciler) onFolderDeleted(ctx context.Context, namespace
 }
 
 func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaFolder) error {
-	if cr.Spec.Json == "" {
-		return nil
-	}
-
 	grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
 		return err
@@ -287,16 +282,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 		return nil
 	}
 
-	var folderFromJson map[string]interface{}
-	err = json.Unmarshal([]byte(cr.Spec.Json), &folderFromJson)
-	if err != nil {
-		return err
-	}
-
-	title := fmt.Sprintf("%v", folderFromJson["title"])
-	if title == "" {
-		title = cr.Name
-	}
+	title := cr.GetTitle()
 
 	// folder exists, update only
 	if exists && !cr.Unchanged() {

@@ -53,7 +53,7 @@ spec:
                     type: object
                 type: object
                 x-kubernetes-map-type: atomic
-              json:
+              title:
                 type: string
             required:
             - instanceSelector
