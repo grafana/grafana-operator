@@ -291,30 +291,28 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 		if err != nil {
 			return err
 		}
-
-		return r.UpdateStatus(ctx, cr)
-	}
-
-	folderFromClient, err := grafanaClient.NewFolder(title, uid)
-	if err != nil {
-		// folder already exists in grafana, do nothing
-		if strings.Contains(err.Error(), "status: 409") {
-			return nil
+	} else {
+		folderFromClient, err := grafanaClient.NewFolder(title, uid)
+		if err != nil {
+			// folder already exists in grafana, do nothing
+			if strings.Contains(err.Error(), "status: 409") {
+				return nil
+			}
+			return err
 		}
-		return err
-	}
 
-	// FIXME our current version of the client doesn't return response codes, or any response for
-	// FIXME that matter, this needs an issue/feature request upstream
-	// FIXME for now, use the returned URL as an indicator that the folder was created instead
-	if folderFromClient.URL == "" && len(folderFromClient.URL) == 0 {
-		return errors.NewBadRequest(fmt.Sprintf("something went wrong trying to create folder %s in grafana %s", cr.Name, grafana.Name))
-	}
+		// FIXME our current version of the client doesn't return response codes, or any response for
+		// FIXME that matter, this needs an issue/feature request upstream
+		// FIXME for now, use the returned URL as an indicator that the folder was created instead
+		if folderFromClient.URL == "" {
+			return errors.NewBadRequest(fmt.Sprintf("something went wrong trying to create folder %s in grafana %s", cr.Name, grafana.Name))
+		}
 
-	grafana.Status.Folders = grafana.Status.Folders.Add(cr.Namespace, cr.Name, folderFromClient.UID)
-	err = r.Client.Status().Update(ctx, grafana)
-	if err != nil {
-		return err
+		grafana.Status.Folders = grafana.Status.Folders.Add(cr.Namespace, cr.Name, folderFromClient.UID)
+		err = r.Client.Status().Update(ctx, grafana)
+		if err != nil {
+			return err
+		}
 	}
 
 	return r.UpdateStatus(ctx, cr)
