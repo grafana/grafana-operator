@@ -283,27 +283,35 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 		return err
 	}
 
-	exists, err := r.Exists(grafanaClient, cr)
+	exists, remoteUID, err := r.Exists(grafanaClient, cr)
 	if err != nil {
 		return err
 	}
 
 	if exists {
-		if cr.Unchanged() {
+		// Add to status to cover cases:
+		// - operator have previously failed to update status
+		// - the folder was created outside of operator
+		if found, _ := grafana.Status.Folders.Find(cr.Namespace, cr.Name); !found {
+			grafana.Status.Folders = grafana.Status.Folders.Add(cr.Namespace, cr.Name, uid)
+			err = r.Client.Status().Update(ctx, grafana)
+			if err != nil {
+				return err
+			}
+		}
+
+		if cr.Unchanged() && uid == remoteUID {
 			return nil
 		}
 
-		err = grafanaClient.UpdateFolder(uid, title)
+		// Update title and replace uid if needed
+		err = grafanaClient.UpdateFolder(remoteUID, title, uid)
 		if err != nil {
 			return err
 		}
 	} else {
 		folderFromClient, err := grafanaClient.NewFolder(title, uid)
 		if err != nil {
-			// folder already exists in grafana, do nothing
-			if strings.Contains(err.Error(), "status: 409") {
-				return nil
-			}
 			return err
 		}
 
@@ -329,17 +337,22 @@ func (r *GrafanaFolderReconciler) UpdateStatus(ctx context.Context, cr *v1beta1.
 	return r.Client.Status().Update(ctx, cr)
 }
 
-func (r *GrafanaFolderReconciler) Exists(client *grapi.Client, cr *v1beta1.GrafanaFolder) (bool, error) {
+func (r *GrafanaFolderReconciler) Exists(client *grapi.Client, cr *v1beta1.GrafanaFolder) (bool, string, error) {
+	title := cr.GetTitle()
+	uid := string(cr.UID)
+
 	folders, err := client.Folders()
 	if err != nil {
-		return false, err
+		return false, "", err
 	}
+
 	for _, folder := range folders {
-		if folder.UID == string(cr.UID) {
-			return true, nil
+		if folder.UID == uid || strings.EqualFold(folder.Title, title) {
+			return true, folder.UID, nil
 		}
 	}
-	return false, nil
+
+	return false, "", nil
 }
 
 func (r *GrafanaFolderReconciler) GetMatchingFolderInstances(ctx context.Context, folder *v1beta1.GrafanaFolder, k8sClient client.Client) (v1beta1.GrafanaList, error) {
