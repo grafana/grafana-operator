@@ -269,6 +269,9 @@ func (r *GrafanaFolderReconciler) onFolderDeleted(ctx context.Context, namespace
 }
 
 func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaFolder) error {
+	title := cr.GetTitle()
+	uid := string(cr.UID)
+
 	grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
 		return err
@@ -278,15 +281,13 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 	if err != nil {
 		return err
 	}
-	if exists && cr.Unchanged() {
-		return nil
-	}
 
-	title := cr.GetTitle()
+	if exists {
+		if cr.Unchanged() {
+			return nil
+		}
 
-	// folder exists, update only
-	if exists && !cr.Unchanged() {
-		err = grafanaClient.UpdateFolder(string(cr.UID), title)
+		err = grafanaClient.UpdateFolder(uid, title)
 		if err != nil {
 			return err
 		}
@@ -294,7 +295,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 		return r.UpdateStatus(ctx, cr)
 	}
 
-	folderFromClient, err := grafanaClient.NewFolder(title, string(cr.UID))
+	folderFromClient, err := grafanaClient.NewFolder(title, uid)
 	if err != nil {
 		// folder already exists in grafana, do nothing
 		if strings.Contains(err.Error(), "status: 409") {
