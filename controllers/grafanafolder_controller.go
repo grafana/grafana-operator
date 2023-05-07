@@ -292,6 +292,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 		// Add to status to cover cases:
 		// - operator have previously failed to update status
 		// - the folder was created outside of operator
+		// - the folder was created through dashboard controller
 		if found, _ := grafana.Status.Folders.Find(cr.Namespace, cr.Name); !found {
 			grafana.Status.Folders = grafana.Status.Folders.Add(cr.Namespace, cr.Name, uid)
 			err = r.Client.Status().Update(ctx, grafana)
