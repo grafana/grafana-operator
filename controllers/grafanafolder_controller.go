@@ -177,6 +177,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	controllerLog.Info("found matching Grafana instances for folder", "count", len(instances.Items))
 
+	success := true
 	for _, grafana := range instances.Items {
 		// check if this is a cross namespace import
 		if grafana.Namespace != folder.Namespace && !folder.IsAllowCrossNamespaceImport() {
@@ -192,7 +193,12 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		err = r.onFolderCreated(ctx, &grafana, folder)
 		if err != nil {
 			controllerLog.Error(err, "error reconciling folder", "folder", folder.Name, "grafana", grafana.Name)
+			success = false
 		}
+	}
+
+	if !success {
+		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
 	return ctrl.Result{}, nil
