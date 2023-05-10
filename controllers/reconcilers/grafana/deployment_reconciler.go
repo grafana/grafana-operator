@@ -168,6 +168,12 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 		Value: vars.Plugins,
 	})
 
+	// env var to set location where temporary files can be written (e.g. plugin downloads)
+	envVars = append(envVars, v1.EnvVar{
+		Name:  "TMPDIR",
+		Value: config2.GrafanaDataPath,
+	})
+
 	containers = append(containers, v1.Container{
 		Name:       "grafana",
 		Image:      image,
