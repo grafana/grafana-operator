@@ -61,7 +61,7 @@ type GrafanaDashboardReconciler struct {
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadashboards/finalizers,verbs=update
 
 func (r *GrafanaDashboardReconciler) syncDashboards(ctx context.Context) (ctrl.Result, error) {
-	syncLog := log.FromContext(ctx)
+	syncLog := log.FromContext(ctx).WithName("GrafanaDashboardReconciler")
 	dashboardsSynced := 0
 
 	// get all grafana instances
@@ -148,7 +148,7 @@ func getDashboardsToDelete(allDashboards *v1beta1.GrafanaDashboardList, grafanas
 }
 
 func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	controllerLog := log.FromContext(ctx)
+	controllerLog := log.FromContext(ctx).WithName("GrafanaDashboardReconciler")
 	r.Log = controllerLog
 
 	// periodic sync reconcile
