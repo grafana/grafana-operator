@@ -329,16 +329,6 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return err
 	}
 
-	// update/create the dashboard if it doesn't exist in the instance or has been changed
-	hash := cr.Hash(dashboardJson)
-	exists, err := r.Exists(grafanaClient, cr)
-	if err != nil {
-		return err
-	}
-	if exists && cr.Unchanged(hash) && !cr.ResyncPeriodHasElapsed() {
-		return nil
-	}
-
 	var dashboardFromJson map[string]interface{}
 	err = json.Unmarshal(dashboardJson, &dashboardFromJson)
 	if err != nil {
@@ -351,6 +341,16 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	}
 
 	dashboardFromJson["uid"] = uid
+
+	// update/create the dashboard if it doesn't exist in the instance or has been changed
+	hash := cr.Hash(dashboardJson)
+	exists, err := r.Exists(grafanaClient, uid)
+	if err != nil {
+		return err
+	}
+	if exists && cr.Unchanged(hash) && !cr.ResyncPeriodHasElapsed() {
+		return nil
+	}
 
 	folderID, err := r.GetOrCreateFolder(grafanaClient, cr)
 	if err != nil {
@@ -437,13 +437,13 @@ func (r *GrafanaDashboardReconciler) fetchDashboardJson(dashboard *v1beta1.Grafa
 	}
 }
 
-func (r *GrafanaDashboardReconciler) Exists(client *grapi.Client, cr *v1beta1.GrafanaDashboard) (bool, error) {
+func (r *GrafanaDashboardReconciler) Exists(client *grapi.Client, uid string) (bool, error) {
 	dashboards, err := client.Dashboards()
 	if err != nil {
 		return false, err
 	}
 	for _, dashboard := range dashboards {
-		if dashboard.UID == string(cr.UID) {
+		if dashboard.UID == uid {
 			return true, nil
 		}
 	}
