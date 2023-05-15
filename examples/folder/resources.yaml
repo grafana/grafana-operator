@@ -1,0 +1,44 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana
+  labels:
+    dashboards: "grafana"
+spec:
+  config:
+    log:
+      mode: "console"
+    auth:
+      disable_login_form: "false"
+    security:
+      admin_user: root
+      admin_password: secret
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: test-folder
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+
+  # If title is not defined, the value will be taken from metadata.name
+  title: custom title
+
+  # When permissions value is empty/absent, a folder is created with default permissions
+  # When empty JSON is passed ("{}"), the access is stripped for everyone except for Admin (default Grafana behaviour)
+  permissions: |
+    {
+      "items": [
+        {
+          "role": "Admin",
+          "permission": 4
+        },
+        {
+          "role": "Editor",
+          "permission": 2
+        }
+      ]
+    }

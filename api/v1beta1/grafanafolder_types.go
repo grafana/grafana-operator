@@ -31,6 +31,10 @@ type GrafanaFolderSpec struct {
 	// +optional
 	Title string `json:"title,omitempty"`
 
+	// raw json with folder permissions
+	// +optional
+	Permissions string `json:"permissions,omitempty"`
+
 	// selects Grafanas for import
 	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`
 
@@ -85,6 +89,7 @@ func (in *GrafanaFolderList) Find(namespace string, name string) *GrafanaFolder 
 func (in *GrafanaFolder) Hash() string {
 	hash := sha256.New()
 	hash.Write([]byte(in.Spec.Title))
+	hash.Write([]byte(in.Spec.Permissions))
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 
