@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -178,6 +177,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	controllerLog.Info("found matching Grafana instances for folder", "count", len(instances.Items))
 
+	success := true
 	for _, grafana := range instances.Items {
 		// check if this is a cross namespace import
 		if grafana.Namespace != folder.Namespace && !folder.IsAllowCrossNamespaceImport() {
@@ -193,7 +193,12 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		err = r.onFolderCreated(ctx, &grafana, folder)
 		if err != nil {
 			controllerLog.Error(err, "error reconciling folder", "folder", folder.Name, "grafana", grafana.Name)
+			success = false
 		}
+	}
+
+	if !success {
+		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
 	return ctrl.Result{}, nil
@@ -270,64 +275,59 @@ func (r *GrafanaFolderReconciler) onFolderDeleted(ctx context.Context, namespace
 }
 
 func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaFolder) error {
-	if cr.Spec.Json == "" {
-		return nil
-	}
+	title := cr.GetTitle()
+	uid := string(cr.UID)
 
 	grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
 		return err
 	}
 
-	exists, err := r.Exists(grafanaClient, cr)
-	if err != nil {
-		return err
-	}
-	if exists && cr.Unchanged() {
-		return nil
-	}
-
-	var folderFromJson map[string]interface{}
-	err = json.Unmarshal([]byte(cr.Spec.Json), &folderFromJson)
+	exists, remoteUID, err := r.Exists(grafanaClient, cr)
 	if err != nil {
 		return err
 	}
 
-	title := fmt.Sprintf("%v", folderFromJson["title"])
-	if title == "" {
-		title = cr.Name
-	}
+	if exists {
+		// Add to status to cover cases:
+		// - operator have previously failed to update status
+		// - the folder was created outside of operator
+		// - the folder was created through dashboard controller
+		if found, _ := grafana.Status.Folders.Find(cr.Namespace, cr.Name); !found {
+			grafana.Status.Folders = grafana.Status.Folders.Add(cr.Namespace, cr.Name, uid)
+			err = r.Client.Status().Update(ctx, grafana)
+			if err != nil {
+				return err
+			}
+		}
 
-	// folder exists, update only
-	if exists && !cr.Unchanged() {
-		err = grafanaClient.UpdateFolder(string(cr.UID), title)
+		if cr.Unchanged() && uid == remoteUID {
+			return nil
+		}
+
+		// Update title and replace uid if needed
+		err = grafanaClient.UpdateFolder(remoteUID, title, uid)
+		if err != nil {
+			return err
+		}
+	} else {
+		folderFromClient, err := grafanaClient.NewFolder(title, uid)
 		if err != nil {
 			return err
 		}
 
-		return r.UpdateStatus(ctx, cr)
-	}
-
-	folderFromClient, err := grafanaClient.NewFolder(title, string(cr.UID))
-	if err != nil {
-		// folder already exists in grafana, do nothing
-		if strings.Contains(err.Error(), "status: 409") {
-			return nil
+		// FIXME our current version of the client doesn't return response codes, or any response for
+		// FIXME that matter, this needs an issue/feature request upstream
+		// FIXME for now, use the returned URL as an indicator that the folder was created instead
+		if folderFromClient.URL == "" {
+			return errors.NewBadRequest(fmt.Sprintf("something went wrong trying to create folder %s in grafana %s", cr.Name, grafana.Name))
 		}
-		return err
-	}
 
-	// FIXME our current version of the client doesn't return response codes, or any response for
-	// FIXME that matter, this needs an issue/feature request upstream
-	// FIXME for now, use the returned URL as an indicator that the folder was created instead
-	if folderFromClient.URL == "" && len(folderFromClient.URL) == 0 {
-		return errors.NewBadRequest(fmt.Sprintf("something went wrong trying to create folder %s in grafana %s", cr.Name, grafana.Name))
-	}
-
-	grafana.Status.Folders = grafana.Status.Folders.Add(cr.Namespace, cr.Name, folderFromClient.UID)
-	err = r.Client.Status().Update(ctx, grafana)
-	if err != nil {
-		return err
+		grafana.Status.Folders = grafana.Status.Folders.Add(cr.Namespace, cr.Name, folderFromClient.UID)
+		err = r.Client.Status().Update(ctx, grafana)
+		if err != nil {
+			return err
+		}
 	}
 
 	return r.UpdateStatus(ctx, cr)
@@ -338,17 +338,22 @@ func (r *GrafanaFolderReconciler) UpdateStatus(ctx context.Context, cr *v1beta1.
 	return r.Client.Status().Update(ctx, cr)
 }
 
-func (r *GrafanaFolderReconciler) Exists(client *grapi.Client, cr *v1beta1.GrafanaFolder) (bool, error) {
+func (r *GrafanaFolderReconciler) Exists(client *grapi.Client, cr *v1beta1.GrafanaFolder) (bool, string, error) {
+	title := cr.GetTitle()
+	uid := string(cr.UID)
+
 	folders, err := client.Folders()
 	if err != nil {
-		return false, err
+		return false, "", err
 	}
+
 	for _, folder := range folders {
-		if folder.UID == string(cr.UID) {
-			return true, nil
+		if folder.UID == uid || strings.EqualFold(folder.Title, title) {
+			return true, folder.UID, nil
 		}
 	}
-	return false, nil
+
+	return false, "", nil
 }
 
 func (r *GrafanaFolderReconciler) GetMatchingFolderInstances(ctx context.Context, folder *v1beta1.GrafanaFolder, k8sClient client.Client) (v1beta1.GrafanaList, error) {

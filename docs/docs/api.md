@@ -903,7 +903,7 @@ GrafanaFolderSpec defines the desired state of GrafanaFolder
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>json</b></td>
+        <td><b>title</b></td>
         <td>string</td>
         <td>
           <br/>
