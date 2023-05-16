@@ -10,10 +10,20 @@ If specifying the `--scan-all`, `--namespaces`, `DASHBOARD_NAMESPACES_ALL="true"
 then the ServiceAccount that Grafana is running as needs view access to the GrafanaDashboard resources in other namespaces.
 To grant those permissions the following ClusterRole and ClusterRoleBinding need to be deployed.
 
-Create the `ClusterRole`
+When using the `dashboardNamespaceSelector` the ServiceAccount also needs to be able to access other namespaces in the cluster
+and you should use the second example below.
+Note that these two examples both create a ClusteRole called `grafana-operator` and only one of them should be used.
+
+Create the `ClusterRole` without access to namesapces
 
 ```shell
 kubectl create -f deploy/cluster_roles/cluster_role_grafana_operator.yaml
+```
+
+Create the `ClusterRole` with access to namespaces
+
+```shell
+kubectl create -f deploy/cluster_roles/cluster_role_grafana_operator_namespace_selector.yaml
 ```
 
 Create the `ClusterRoleBinding` for the `ServiceAccount/grafana-operator` in the given namespace
