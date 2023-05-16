@@ -19,7 +19,10 @@ require (
 	sigs.k8s.io/controller-runtime v0.13.0
 )
 
-require github.com/rogpeppe/go-internal v1.10.0 // indirect
+require (
+	github.com/bitly/go-simplejson v0.5.0 // indirect
+	github.com/rogpeppe/go-internal v1.10.0 // indirect
+)
 
 require (
 	cloud.google.com/go v0.97.0 // indirect

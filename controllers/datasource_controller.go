@@ -20,11 +20,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	v1 "k8s.io/api/core/v1"
 	"strings"
 	"time"
 
-	v1 "k8s.io/api/core/v1"
-
+	simplejson "github.com/bitly/go-simplejson"
 	"github.com/grafana-operator/grafana-operator/v5/controllers/metrics"
 
 	"github.com/go-logr/logr"
@@ -37,6 +37,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1beta1 "github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
+)
+
+const (
+	datasourceSecretsRefIndexField   = ".spec.valuesFrom.secretKeyRef"
+	datasourceConfigMapRefIndexField = ".spec.valuesFrom.configMapKeyRef"
 )
 
 // GrafanaDatasourceReconciler reconciles a GrafanaDatasource object
@@ -283,33 +288,21 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		return err
 	}
 
-	variables, err := r.CollectVariablesFromSecrets(ctx, cr)
-	if err != nil {
-		return err
-	}
-
 	// always use the same uid for CR and datasource
 	cr.Spec.Datasource.UID = string(cr.UID)
-	rawDatasourceBytes, err := cr.ExpandVariables(variables)
-	if err != nil {
-		return err
-	}
-
-	var unmarshalledDatasource gapi.DataSource
-
-	err = json.Unmarshal(rawDatasourceBytes, &unmarshalledDatasource)
+	unmarshalledDatasource, err := r.getDatasourceContent(ctx, cr)
 	if err != nil {
 		return err
 	}
 
 	switch {
 	case id == nil:
-		_, err = grafanaClient.NewDataSource(&unmarshalledDatasource)
+		_, err = grafanaClient.NewDataSource(unmarshalledDatasource)
 		if err != nil && !strings.Contains(err.Error(), "status: 409") {
 			return err
 		}
 	case !cr.Unchanged():
-		err := grafanaClient.UpdateDataSource(&unmarshalledDatasource)
+		err := grafanaClient.UpdateDataSource(unmarshalledDatasource)
 		if err != nil {
 			return err
 		}
@@ -343,28 +336,6 @@ func (r *GrafanaDatasourceReconciler) ExistingId(client *gapi.Client, cr *v1beta
 		}
 	}
 	return nil, nil
-}
-
-func (r *GrafanaDatasourceReconciler) CollectVariablesFromSecrets(ctx context.Context, cr *v1beta1.GrafanaDatasource) (map[string][]byte, error) {
-	result := map[string][]byte{}
-	for _, secret := range cr.Spec.Secrets {
-		// secrets must be in the same namespace as the datasource
-		selector := client.ObjectKey{
-			Namespace: cr.Namespace,
-			Name:      strings.TrimSpace(secret),
-		}
-
-		s := &v1.Secret{}
-		err := r.Client.Get(ctx, selector, s)
-		if err != nil {
-			return nil, err
-		}
-
-		for key, value := range s.Data {
-			result[key] = value
-		}
-	}
-	return result, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -419,4 +390,72 @@ func (r *GrafanaDatasourceReconciler) GetMatchingDatasourceInstances(ctx context
 	}
 
 	return instances, err
+}
+
+func (r *GrafanaDatasourceReconciler) getDatasourceContent(ctx context.Context, cr *v1beta1.GrafanaDatasource) (*gapi.DataSource, error) {
+	initialBytes, err := json.Marshal(cr.Spec.Datasource)
+	if err != nil {
+		return nil, err
+	}
+
+	simpleContent, err := simplejson.NewJson(initialBytes)
+	for _, ref := range cr.Spec.ValuesFrom {
+		val, err := r.getReferencedValue(ctx, cr, &ref.ValueFrom)
+		if err != nil {
+			return nil, err
+		}
+		simpleContent.SetPath(strings.Split(ref.TargetPath, "."), val)
+	}
+
+	newBytes, err := simpleContent.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	var res gapi.DataSource
+
+	err = json.Unmarshal(newBytes, &res)
+	if err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+func (r *GrafanaDatasourceReconciler) getReferencedValue(ctx context.Context, cr *v1beta1.GrafanaDatasource, source *v1beta1.GrafanaDatasourceValueFromSource) (string, error) {
+	if source.SecretKeyRef != nil {
+		s := &v1.Secret{}
+		err := r.Client.Get(ctx, client.ObjectKey{Namespace: cr.Namespace, Name: source.SecretKeyRef.Name}, s)
+		if err != nil {
+			return "", err
+		}
+		if val, ok := s.Data[source.SecretKeyRef.Key]; ok {
+			return string(val), nil
+		} else {
+			return "", fmt.Errorf("missing key %s in secret %s", source.SecretKeyRef.Key, source.ConfigMapKeyRef.Name)
+		}
+	} else {
+		s := &v1.ConfigMap{}
+		err := r.Client.Get(ctx, client.ObjectKey{Namespace: cr.Namespace, Name: source.SecretKeyRef.Name}, s)
+		if err != nil {
+			return "", err
+		}
+		if val, ok := s.Data[source.SecretKeyRef.Key]; ok {
+			return val, nil
+		} else {
+			return "", fmt.Errorf("missing key %s in configmap %s", source.SecretKeyRef.Key, source.ConfigMapKeyRef.Name)
+		}
+	}
+}
+
+func (r *GrafanaDatasourceReconciler) addValueSourceIndexField(mgr ctrl.Manager, indexField string, valueSourceName func(v1beta1.GrafanaDatasourceValueFromSource) string) error {
+	return mgr.GetFieldIndexer().IndexField(context.Background(), &v1beta1.GrafanaDatasource{}, indexField, func(rawObj client.Object) []string {
+		datasource := rawObj.(*v1beta1.GrafanaDatasource)
+		var res []string
+		for _, v := range datasource.Spec.ValuesFrom {
+			if name := valueSourceName(v.ValueFrom); name != "" {
+				res = append(res, name)
+			}
+		}
+		return res
+	})
 }
