@@ -20,9 +20,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	v1 "k8s.io/api/core/v1"
 	"strings"
 	"time"
+
+	v1 "k8s.io/api/core/v1"
 
 	simplejson "github.com/bitly/go-simplejson"
 	"github.com/grafana-operator/grafana-operator/v5/controllers/metrics"
@@ -37,11 +38,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1beta1 "github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
-)
-
-const (
-	datasourceSecretsRefIndexField   = ".spec.valuesFrom.secretKeyRef"
-	datasourceConfigMapRefIndexField = ".spec.valuesFrom.configMapKeyRef"
 )
 
 // GrafanaDatasourceReconciler reconciles a GrafanaDatasource object
@@ -399,6 +395,10 @@ func (r *GrafanaDatasourceReconciler) getDatasourceContent(ctx context.Context, 
 	}
 
 	simpleContent, err := simplejson.NewJson(initialBytes)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, ref := range cr.Spec.ValuesFrom {
 		val, err := r.getReferencedValue(ctx, cr, &ref.ValueFrom)
 		if err != nil {
@@ -445,17 +445,4 @@ func (r *GrafanaDatasourceReconciler) getReferencedValue(ctx context.Context, cr
 			return "", fmt.Errorf("missing key %s in configmap %s", source.SecretKeyRef.Key, source.ConfigMapKeyRef.Name)
 		}
 	}
-}
-
-func (r *GrafanaDatasourceReconciler) addValueSourceIndexField(mgr ctrl.Manager, indexField string, valueSourceName func(v1beta1.GrafanaDatasourceValueFromSource) string) error {
-	return mgr.GetFieldIndexer().IndexField(context.Background(), &v1beta1.GrafanaDatasource{}, indexField, func(rawObj client.Object) []string {
-		datasource := rawObj.(*v1beta1.GrafanaDatasource)
-		var res []string
-		for _, v := range datasource.Spec.ValuesFrom {
-			if name := valueSourceName(v.ValueFrom); name != "" {
-				res = append(res, name)
-			}
-		}
-		return res
-	})
 }
