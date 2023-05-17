@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -301,14 +302,12 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 			}
 		}
 
-		if cr.Unchanged() && uid == remoteUID {
-			return nil
-		}
-
-		// Update title and replace uid if needed
-		err = grafanaClient.UpdateFolder(remoteUID, title, uid)
-		if err != nil {
-			return err
+		if !cr.Unchanged() || uid != remoteUID {
+			// Update title and replace uid if needed
+			err = grafanaClient.UpdateFolder(remoteUID, title, uid)
+			if err != nil {
+				return err
+			}
 		}
 	} else {
 		folderFromClient, err := grafanaClient.NewFolder(title, uid)
@@ -327,6 +326,20 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 		err = r.Client.Status().Update(ctx, grafana)
 		if err != nil {
 			return err
+		}
+	}
+
+	// NOTE: it's up to a user to reset permissions with correct json
+	if !cr.Unchanged() && cr.Spec.Permissions != "" {
+		permissions := grapi.PermissionItems{}
+		err = json.Unmarshal([]byte(cr.Spec.Permissions), &permissions)
+		if err != nil {
+			return fmt.Errorf("failed to unmarshal spec.permissions: %w", err)
+		}
+
+		err = grafanaClient.UpdateFolderPermissions(uid, &permissions)
+		if err != nil {
+			return fmt.Errorf("failed to update folder permissions: %w", err)
 		}
 	}
 
