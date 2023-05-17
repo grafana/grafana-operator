@@ -168,7 +168,7 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         <td><b>resyncPeriod</b></td>
         <td>string</td>
         <td>
-          how often the dashboard is refreshed, defaults to 24h if not set<br/>
+          how often the dashboard is refreshed, defaults to 5m if not set<br/>
         </td>
         <td>false</td>
       </tr><tr>
