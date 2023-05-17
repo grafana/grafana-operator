@@ -910,6 +910,13 @@ GrafanaFolderSpec defines the desired state of GrafanaFolder
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>resyncPeriod</b></td>
+        <td>string</td>
+        <td>
+          how often the folder is synced, defaults to 5m if not set<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>title</b></td>
         <td>string</td>
         <td>

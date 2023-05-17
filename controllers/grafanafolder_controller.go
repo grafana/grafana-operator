@@ -202,7 +202,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
-	return ctrl.Result{}, nil
+	return ctrl.Result{RequeueAfter: folder.GetResyncPeriod()}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
