@@ -132,7 +132,7 @@ spec:
                   type: object
                 type: array
               resyncPeriod:
-                description: how often the datasource is refreshed, defaults to 24h
+                description: how often the datasource is refreshed, defaults to 5m
                   if not set
                 type: string
               secrets:
