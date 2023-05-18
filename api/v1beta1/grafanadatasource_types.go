@@ -90,6 +90,8 @@ type GrafanaDatasourceStatus struct {
 //+kubebuilder:subresource:status
 
 // GrafanaDatasource is the Schema for the grafanadatasources API
+// +kubebuilder:printcolumn:name="No matching instances",type="boolean",JSONPath=".status.NoMatchingInstances",description=""
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""
 type GrafanaDatasource struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

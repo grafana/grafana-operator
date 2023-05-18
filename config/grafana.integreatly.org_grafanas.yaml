@@ -15,7 +15,17 @@ spec:
     singular: grafana
   scope: Namespaced
   versions:
-  - name: v1beta1
+  - additionalPrinterColumns:
+    - jsonPath: .status.stage
+      name: Stage
+      type: string
+    - jsonPath: .status.stageStatus
+      name: Stage status
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1beta1
     schema:
       openAPIV3Schema:
         description: Grafana is the Schema for the grafanas API

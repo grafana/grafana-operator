@@ -14,7 +14,18 @@ spec:
     singular: grafanadashboard
   scope: Namespaced
   versions:
-  - name: v1beta1
+  - additionalPrinterColumns:
+    - jsonPath: .status.NoMatchingInstances
+      name: No matching instances
+      type: boolean
+    - format: date-time
+      jsonPath: .status.lastResync
+      name: Last resync
+      type: date
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1beta1
     schema:
       openAPIV3Schema:
         description: GrafanaDashboard is the Schema for the grafanadashboards API
@@ -192,7 +203,14 @@ spec:
     singular: grafanadatasource
   scope: Namespaced
   versions:
-  - name: v1beta1
+  - additionalPrinterColumns:
+    - jsonPath: .status.NoMatchingInstances
+      name: No matching instances
+      type: boolean
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1beta1
     schema:
       openAPIV3Schema:
         description: GrafanaDatasource is the Schema for the grafanadatasources API
@@ -354,7 +372,14 @@ spec:
     singular: grafanafolder
   scope: Namespaced
   versions:
-  - name: v1beta1
+  - additionalPrinterColumns:
+    - jsonPath: .status.NoMatchingInstances
+      name: No matching instances
+      type: boolean
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1beta1
     schema:
       openAPIV3Schema:
         description: GrafanaFolder is the Schema for the grafanafolders API
@@ -466,7 +491,17 @@ spec:
     singular: grafana
   scope: Namespaced
   versions:
-  - name: v1beta1
+  - additionalPrinterColumns:
+    - jsonPath: .status.stage
+      name: Stage
+      type: string
+    - jsonPath: .status.stageStatus
+      name: Stage status
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1beta1
     schema:
       openAPIV3Schema:
         description: Grafana is the Schema for the grafanas API

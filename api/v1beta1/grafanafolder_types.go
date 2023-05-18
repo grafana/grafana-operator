@@ -56,6 +56,8 @@ type GrafanaFolderStatus struct {
 //+kubebuilder:subresource:status
 
 // GrafanaFolder is the Schema for the grafanafolders API
+// +kubebuilder:printcolumn:name="No matching instances",type="boolean",JSONPath=".status.NoMatchingInstances",description=""
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""
 type GrafanaFolder struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
