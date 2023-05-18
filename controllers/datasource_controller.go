@@ -288,8 +288,14 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		return err
 	}
 
-	// always use the same uid for CR and datasource
-	cr.Spec.Datasource.UID = string(cr.UID)
+	datasourceUID := cr.UID // Default to the UID of the GrafanaDatasource resource
+
+	if cr.Spec.Datasource.UID != "" {
+		datasourceUID = types.UID(cr.Spec.Datasource.UID) // Use the fixed UID string if defined
+	}
+
+	cr.Spec.Datasource.UID = string(datasourceUID)
+	
 	rawDatasourceBytes, err := cr.ExpandVariables(variables)
 	if err != nil {
 		return err
