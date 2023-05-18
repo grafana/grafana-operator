@@ -423,6 +423,13 @@ GrafanaDashboardStatus defines the observed state of GrafanaDashboard
             <i>Format</i>: date-time<br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>uid</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -896,7 +903,14 @@ GrafanaFolderSpec defines the desired state of GrafanaFolder
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>json</b></td>
+        <td><b>permissions</b></td>
+        <td>string</td>
+        <td>
+          raw json with folder permissions<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>title</b></td>
         <td>string</td>
         <td>
           <br/>

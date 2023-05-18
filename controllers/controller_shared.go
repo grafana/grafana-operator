@@ -13,6 +13,10 @@ import (
 )
 
 func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSelector *v1.LabelSelector) (v1beta1.GrafanaList, error) {
+	if labelSelector == nil {
+		return v1beta1.GrafanaList{}, nil
+	}
+
 	var list v1beta1.GrafanaList
 	opts := []client.ListOption{
 		client.MatchingLabels(labelSelector.MatchLabels),

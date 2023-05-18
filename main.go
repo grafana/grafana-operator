@@ -19,7 +19,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"os"
 	"os/signal"
 	"strings"
@@ -47,6 +46,12 @@ import (
 	//+kubebuilder:scaffold:imports
 )
 
+const (
+	// watchNamespaceEnvVar is the constant for env variable WATCH_NAMESPACE which specifies the Namespace to watch.
+	// If empty or undefined, the operator will run in cluster scope.
+	watchNamespaceEnvVar = "WATCH_NAMESPACE"
+)
+
 var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
@@ -59,19 +64,6 @@ func init() {
 
 	utilruntime.Must(routev1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
-}
-
-func getWatchNamespace() (string, error) {
-	// WatchNamespaceEnvVar is the constant for env variable WATCH_NAMESPACE
-	// which specifies the Namespace to watch.
-	// An empty value means the operator is running with cluster scope.
-	watchNamespaceEnvVar := "WATCH_NAMESPACE"
-
-	ns, found := os.LookupEnv(watchNamespaceEnvVar)
-	if !found {
-		return "", fmt.Errorf("%s isn't set", watchNamespaceEnvVar)
-	}
-	return ns, nil
 }
 
 func main() {
@@ -91,10 +83,7 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	watchNamespace, err := getWatchNamespace()
-	if err != nil {
-		setupLog.Error(err, "unable to get watch namespace, operator running in cluster scoped mode")
-	}
+	watchNamespace, _ := os.LookupEnv(watchNamespaceEnvVar)
 
 	controllerOptions := ctrl.Options{
 		Namespace:              watchNamespace,
@@ -153,7 +142,7 @@ func main() {
 	if err = (&controllers.GrafanaDashboardReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-		Log:    ctrl.Log,
+		Log:    ctrl.Log.WithName("DashboardReconciler"),
 	}).SetupWithManager(mgr, ctx); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDashboard")
 		os.Exit(1)
@@ -161,7 +150,7 @@ func main() {
 	if err = (&controllers.GrafanaDatasourceReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-		Log:    ctrl.Log,
+		Log:    ctrl.Log.WithName("DatasourceReconciler"),
 	}).SetupWithManager(mgr, ctx); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDatasource")
 		os.Exit(1)
