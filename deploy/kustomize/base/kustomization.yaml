@@ -2,4 +2,5 @@ resources:
   - crds.yaml
   - namespace.yaml
   - serviceaccount.yaml
+  - service.yaml
   - deployment.yaml

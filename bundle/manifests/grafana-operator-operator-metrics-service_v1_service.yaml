@@ -7,10 +7,10 @@ metadata:
   name: grafana-operator-operator-metrics-service
 spec:
   ports:
-  - name: https
+  - name: metrics
     port: 8443
     protocol: TCP
-    targetPort: https
+    targetPort: metrics
   selector:
     control-plane: controller-manager
 status:

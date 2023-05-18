@@ -28,7 +28,12 @@ import (
 
 // GrafanaFolderSpec defines the desired state of GrafanaFolder
 type GrafanaFolderSpec struct {
-	Json string `json:"json,omitempty"`
+	// +optional
+	Title string `json:"title,omitempty"`
+
+	// raw json with folder permissions
+	// +optional
+	Permissions string `json:"permissions,omitempty"`
 
 	// selects Grafanas for import
 	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`
@@ -83,7 +88,8 @@ func (in *GrafanaFolderList) Find(namespace string, name string) *GrafanaFolder 
 
 func (in *GrafanaFolder) Hash() string {
 	hash := sha256.New()
-	hash.Write([]byte(in.Spec.Json))
+	hash.Write([]byte(in.Spec.Title))
+	hash.Write([]byte(in.Spec.Permissions))
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 
@@ -96,4 +102,12 @@ func (in *GrafanaFolder) IsAllowCrossNamespaceImport() bool {
 		return *in.Spec.AllowCrossNamespaceImport
 	}
 	return false
+}
+
+func (in *GrafanaFolder) GetTitle() string {
+	if in.Spec.Title != "" {
+		return in.Spec.Title
+	}
+
+	return in.Name
 }

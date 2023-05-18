@@ -167,6 +167,8 @@ spec:
                 description: Last time the dashboard was resynced
                 format: date-time
                 type: string
+              uid:
+                type: string
             type: object
         type: object
     served: true
@@ -421,7 +423,10 @@ spec:
                     type: object
                 type: object
                 x-kubernetes-map-type: atomic
-              json:
+              permissions:
+                description: raw json with folder permissions
+                type: string
+              title:
                 type: string
             required:
             - instanceSelector

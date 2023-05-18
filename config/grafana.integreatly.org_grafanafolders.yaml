@@ -84,7 +84,10 @@ spec:
                     type: object
                 type: object
                 x-kubernetes-map-type: atomic
-              json:
+              permissions:
+                description: raw json with folder permissions
+                type: string
+              title:
                 type: string
             required:
             - instanceSelector
