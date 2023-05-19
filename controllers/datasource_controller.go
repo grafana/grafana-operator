@@ -23,6 +23,8 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/apimachinery/pkg/types"
+
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/grafana-operator/grafana-operator/v5/controllers/metrics"
@@ -175,6 +177,25 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	controllerLog.Info("found matching Grafana instances for datasource", "count", len(instances.Items))
 
+	// Garbage collection for a case where datasource uid get changed, datasource creation is expected to happen in a separate reconcilication cycle
+	if datasource.IsUpdatedUID() {
+		controllerLog.Info("datasource uid got updated, deleting datasource with the old uid")
+		err = r.onDatasourceDeleted(ctx, req.Namespace, req.Name)
+		if err != nil {
+			return ctrl.Result{RequeueAfter: RequeueDelay}, err
+		}
+
+		// Clean up uid, so further reconcilications can track changes there
+		datasource.Status.UID = ""
+		err = r.Client.Status().Update(ctx, datasource)
+		if err != nil {
+			return ctrl.Result{RequeueAfter: RequeueDelay}, err
+		}
+
+		// Status update should trigger the next reconciliation right away, no need to requeue for datasource creation
+		return ctrl.Result{}, nil
+	}
+
 	success := true
 	for _, grafana := range instances.Items {
 		// check if this is a cross namespace import
@@ -214,6 +235,9 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	// if the datasource was successfully synced in all instances, wait for its re-sync period
 	if success {
 		datasource.Status.LastMessage = ""
+		// Set the UID field in the GrafanaDatasource's Status
+		fmt.Println("last:", datasource.UID)
+		datasource.Status.UID = string(datasource.UID)
 		return ctrl.Result{RequeueAfter: datasource.GetResyncPeriod()}, r.UpdateStatus(ctx, datasource)
 	} else {
 		// if there was an issue with the datasource, update the status
@@ -279,6 +303,8 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 	}
 
 	id, err := r.ExistingId(grafanaClient, cr)
+	fmt.Println(id)
+
 	if err != nil {
 		return err
 	}
@@ -288,14 +314,15 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		return err
 	}
 
-	datasourceUID := cr.UID // Default to the UID of the GrafanaDatasource resource
+	datasourceUID := cr.UID // default cr.UID
 
 	if cr.Spec.Datasource.UID != "" {
-		datasourceUID = types.UID(cr.Spec.Datasource.UID) // Use the fixed UID string if defined
+		datasourceUID = types.UID(cr.Spec.Datasource.UID)
 	}
 
 	cr.Spec.Datasource.UID = string(datasourceUID)
-	
+	fmt.Println(cr.Spec.Datasource.UID, cr.Status.UID)
+
 	rawDatasourceBytes, err := cr.ExpandVariables(variables)
 	if err != nil {
 		return err
@@ -315,6 +342,7 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 			return err
 		}
 	case !cr.Unchanged():
+		fmt.Println("grafana datasource config changed")
 		err := grafanaClient.UpdateDataSource(&unmarshalledDatasource)
 		if err != nil {
 			return err
@@ -329,25 +357,35 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		return err
 	}
 
-	grafana.Status.Datasources = grafana.Status.Datasources.Add(cr.Namespace, cr.Name, string(cr.UID))
+	grafana.Status.Datasources = grafana.Status.Datasources.Add(cr.Namespace, cr.Name, string(datasourceUID))
 	return r.Client.Status().Update(ctx, grafana)
 }
 
 func (r *GrafanaDatasourceReconciler) UpdateStatus(ctx context.Context, cr *v1beta1.GrafanaDatasource) error {
 	cr.Status.Hash = cr.Hash()
+	fmt.Println("status UID is", cr.Spec.Datasource.UID)
+	cr.Status.UID = cr.Spec.Datasource.UID
 	return r.Client.Status().Update(ctx, cr)
 }
 
 func (r *GrafanaDatasourceReconciler) ExistingId(client *gapi.Client, cr *v1beta1.GrafanaDatasource) (*int64, error) {
+	datasourceUID := cr.UID
+
+	if cr.Spec.Datasource != nil && cr.Spec.Datasource.UID != "" {
+		datasourceUID = types.UID(cr.Spec.Datasource.UID) // Use the defined datasourceUID if available
+	}
+
 	datasources, err := client.DataSources()
 	if err != nil {
 		return nil, err
 	}
+
 	for _, datasource := range datasources {
-		if datasource.UID == string(cr.UID) {
+		if datasource.UID == string(datasourceUID) {
 			return &datasource.ID, nil
 		}
 	}
+
 	return nil, nil
 }
 

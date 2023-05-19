@@ -116,6 +116,8 @@ spec:
                 type: string
               lastMessage:
                 type: string
+              uid:
+                type: string
             type: object
         type: object
     served: true

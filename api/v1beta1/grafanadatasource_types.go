@@ -83,7 +83,8 @@ type GrafanaDatasourceStatus struct {
 	Hash        string `json:"hash,omitempty"`
 	LastMessage string `json:"lastMessage,omitempty"`
 	// The datasource instanceSelector can't find matching grafana instances
-	NoMatchingInstances bool `json:"NoMatchingInstances,omitempty"`
+	NoMatchingInstances bool   `json:"NoMatchingInstances,omitempty"`
+	UID                 string `json:"uid,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -143,6 +144,18 @@ func (in *GrafanaDatasource) Hash() string {
 	}
 
 	return fmt.Sprintf("%x", hash.Sum(nil))
+}
+
+func (in *GrafanaDatasource) IsUpdatedUID() bool {
+	fmt.Println("checking updated", in.Status.UID)
+	fmt.Println("checking updated", in.Spec.Datasource.UID)
+
+	// Datasource has just been created, status is not yet updated
+	if in.Status.UID == "" {
+		return false
+	}
+
+	return in.Status.UID != in.Spec.Datasource.UID
 }
 
 func (in *GrafanaDatasource) GetResyncPeriod() time.Duration {
