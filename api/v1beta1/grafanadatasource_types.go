@@ -24,6 +24,8 @@ import (
 	"fmt"
 	"time"
 
+	v1 "k8s.io/api/core/v1"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -65,9 +67,9 @@ type GrafanaDatasourceSpec struct {
 	// +optional
 	Plugins PluginList `json:"plugins,omitempty"`
 
-	// secrets used for variable expansion
+	// environments variables from secrets or config maps
 	// +optional
-	Secrets []string `json:"secrets,omitempty"`
+	ValuesFrom []GrafanaDatasourceValueFrom `json:"valuesFrom,omitempty"`
 
 	// how often the datasource is refreshed, defaults to 24h if not set
 	// +optional
@@ -76,6 +78,20 @@ type GrafanaDatasourceSpec struct {
 	// allow to import this resources from an operator in a different namespace
 	// +optional
 	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
+}
+
+type GrafanaDatasourceValueFrom struct {
+	TargetPath string                           `json:"targetPath"`
+	ValueFrom  GrafanaDatasourceValueFromSource `json:"valueFrom"`
+}
+
+type GrafanaDatasourceValueFromSource struct {
+	// Selects a key of a ConfigMap.
+	// +optional
+	ConfigMapKeyRef *v1.ConfigMapKeySelector `json:"configMapKeyRef,omitempty"`
+	// Selects a key of a Secret.
+	// +optional
+	SecretKeyRef *v1.SecretKeySelector `json:"secretKeyRef,omitempty"`
 }
 
 // GrafanaDatasourceStatus defines the observed state of GrafanaDatasource
@@ -123,8 +139,16 @@ func (in *GrafanaDatasource) Hash() string {
 		hash.Write([]byte(in.Spec.Datasource.User))
 		hash.Write([]byte(in.Spec.Datasource.URL))
 
-		for _, secret := range in.Spec.Secrets {
-			hash.Write([]byte(secret))
+		for _, valueRef := range in.Spec.ValuesFrom {
+			hash.Write([]byte(valueRef.TargetPath))
+			if valueRef.ValueFrom.ConfigMapKeyRef != nil {
+				hash.Write([]byte(valueRef.ValueFrom.ConfigMapKeyRef.Name))
+				hash.Write([]byte(valueRef.ValueFrom.ConfigMapKeyRef.Key))
+			}
+			if valueRef.ValueFrom.SecretKeyRef != nil {
+				hash.Write([]byte(valueRef.ValueFrom.SecretKeyRef.Name))
+				hash.Write([]byte(valueRef.ValueFrom.SecretKeyRef.Key))
+			}
 		}
 
 		if in.Spec.Datasource.BasicAuth != nil && *in.Spec.Datasource.BasicAuth {
