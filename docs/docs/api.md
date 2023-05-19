@@ -1053,6 +1053,13 @@ GrafanaFolderSpec defines the desired state of GrafanaFolder
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>permissions</b></td>
+        <td>string</td>
+        <td>
+          raw json with folder permissions<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>title</b></td>
         <td>string</td>
         <td>

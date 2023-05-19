@@ -53,6 +53,8 @@ spec:
                     type: object
                 type: object
                 x-kubernetes-map-type: atomic
+              permissions:
+                type: string
               title:
                 type: string
             required:
