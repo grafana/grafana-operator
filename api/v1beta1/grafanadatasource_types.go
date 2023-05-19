@@ -71,7 +71,7 @@ type GrafanaDatasourceSpec struct {
 	// +optional
 	ValuesFrom []GrafanaDatasourceValueFrom `json:"valuesFrom,omitempty"`
 
-	// how often the datasource is refreshed, defaults to 24h if not set
+	// how often the datasource is refreshed, defaults to 5m if not set
 	// +optional
 	ResyncPeriod string `json:"resyncPeriod,omitempty"`
 

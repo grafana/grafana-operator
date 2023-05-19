@@ -137,7 +137,7 @@ spec:
                   type: object
                 type: array
               resyncPeriod:
-                description: how often the dashboard is refreshed, defaults to 24h
+                description: how often the dashboard is refreshed, defaults to 5m
                   if not set
                 type: string
               url:
@@ -309,7 +309,7 @@ spec:
                   type: object
                 type: array
               resyncPeriod:
-                description: how often the datasource is refreshed, defaults to 24h
+                description: how often the datasource is refreshed, defaults to 5m
                   if not set
                 type: string
               valuesFrom:
@@ -471,6 +471,10 @@ spec:
                 x-kubernetes-map-type: atomic
               permissions:
                 description: raw json with folder permissions
+                type: string
+              resyncPeriod:
+                description: how often the folder is synced, defaults to 5m if not
+                  set
                 type: string
               title:
                 type: string
