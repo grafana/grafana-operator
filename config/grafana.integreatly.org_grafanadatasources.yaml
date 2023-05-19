@@ -132,13 +132,59 @@ spec:
                   type: object
                 type: array
               resyncPeriod:
-                description: how often the datasource is refreshed, defaults to 24h
+                description: how often the datasource is refreshed, defaults to 5m
                   if not set
                 type: string
-              secrets:
-                description: secrets used for variable expansion
+              valuesFrom:
+                description: environments variables from secrets or config maps
                 items:
-                  type: string
+                  properties:
+                    targetPath:
+                      type: string
+                    valueFrom:
+                      properties:
+                        configMapKeyRef:
+                          description: Selects a key of a ConfigMap.
+                          properties:
+                            key:
+                              description: The key to select.
+                              type: string
+                            name:
+                              description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                TODO: Add other useful fields. apiVersion, kind, uid?'
+                              type: string
+                            optional:
+                              description: Specify whether the ConfigMap or its key
+                                must be defined
+                              type: boolean
+                          required:
+                          - key
+                          type: object
+                          x-kubernetes-map-type: atomic
+                        secretKeyRef:
+                          description: Selects a key of a Secret.
+                          properties:
+                            key:
+                              description: The key of the secret to select from.  Must
+                                be a valid secret key.
+                              type: string
+                            name:
+                              description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                TODO: Add other useful fields. apiVersion, kind, uid?'
+                              type: string
+                            optional:
+                              description: Specify whether the Secret or its key must
+                                be defined
+                              type: boolean
+                          required:
+                          - key
+                          type: object
+                          x-kubernetes-map-type: atomic
+                      type: object
+                  required:
+                  - targetPath
+                  - valueFrom
+                  type: object
                 type: array
             required:
             - instanceSelector
