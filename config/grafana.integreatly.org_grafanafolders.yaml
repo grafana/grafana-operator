@@ -94,6 +94,10 @@ spec:
               permissions:
                 description: raw json with folder permissions
                 type: string
+              resyncPeriod:
+                description: how often the folder is synced, defaults to 5m if not
+                  set
+                type: string
               title:
                 type: string
             required:

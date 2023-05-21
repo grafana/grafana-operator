@@ -168,7 +168,7 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         <td><b>resyncPeriod</b></td>
         <td>string</td>
         <td>
-          how often the dashboard is refreshed, defaults to 24h if not set<br/>
+          how often the dashboard is refreshed, defaults to 5m if not set<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -535,7 +535,7 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         <td><b>resyncPeriod</b></td>
         <td>string</td>
         <td>
-          how often the datasource is refreshed, defaults to 24h if not set<br/>
+          how often the datasource is refreshed, defaults to 5m if not set<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1057,6 +1057,13 @@ GrafanaFolderSpec defines the desired state of GrafanaFolder
         <td>string</td>
         <td>
           raw json with folder permissions<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>resyncPeriod</b></td>
+        <td>string</td>
+        <td>
+          how often the folder is synced, defaults to 5m if not set<br/>
         </td>
         <td>false</td>
       </tr><tr>

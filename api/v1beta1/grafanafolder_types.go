@@ -19,6 +19,7 @@ package v1beta1
 import (
 	"crypto/sha256"
 	"fmt"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -41,6 +42,10 @@ type GrafanaFolderSpec struct {
 	// allow to import this resources from an operator in a different namespace
 	// +optional
 	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
+
+	// how often the folder is synced, defaults to 5m if not set
+	// +optional
+	ResyncPeriod string `json:"resyncPeriod,omitempty"`
 }
 
 // GrafanaFolderStatus defines the observed state of GrafanaFolder
@@ -112,4 +117,19 @@ func (in *GrafanaFolder) GetTitle() string {
 	}
 
 	return in.Name
+}
+
+func (in *GrafanaFolder) GetResyncPeriod() time.Duration {
+	if in.Spec.ResyncPeriod == "" {
+		in.Spec.ResyncPeriod = DefaultResyncPeriod
+		return in.GetResyncPeriod()
+	}
+
+	duration, err := time.ParseDuration(in.Spec.ResyncPeriod)
+	if err != nil {
+		in.Spec.ResyncPeriod = DefaultResyncPeriod
+		return in.GetResyncPeriod()
+	}
+
+	return duration
 }
