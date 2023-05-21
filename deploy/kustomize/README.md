@@ -6,13 +6,13 @@ Make sure `namespace` is set to the namespace where you want to install the oper
 Then run:
 
 ```shell
-kubectl create -k deploy/overlays/cluster_scoped
+kubectl create -k deploy/kustomize/overlays/cluster_scoped
 ```
 
 for a cluster scoped installation, or:
 
 ```shell
-kubectl create -k deploy/overlays/namespace_scoped
+kubectl create -k deploy/kustomize/overlays/namespace_scoped
 ```
 
 for a namespace scoped installation.
@@ -23,5 +23,5 @@ Else you will get the following error `invalid: metadata.annotations: Too long: 
 For example
 
 ```shell
-kubectl replace -k deploy/overlays/cluster_scoped
+kubectl replace -k deploy/kustomize/overlays/cluster_scoped
 ```

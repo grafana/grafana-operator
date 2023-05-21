@@ -53,7 +53,11 @@ spec:
                     type: object
                 type: object
                 x-kubernetes-map-type: atomic
-              json:
+              permissions:
+                type: string
+              resyncPeriod:
+                type: string
+              title:
                 type: string
             required:
             - instanceSelector

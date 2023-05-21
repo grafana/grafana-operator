@@ -5,11 +5,11 @@ metadata:
   labels:
     {{- include "grafana-operator.labels" . | nindent 4 }}
 spec:
-  type: {{ .Values.kubeRbacProxy.service.type }}
+  type: {{ .Values.metricsService.type }}
   ports:
-    - port: {{ .Values.kubeRbacProxy.service.port }}
+    - port: {{ .Values.metricsService.metricsPort }}
       targetPort: metrics
       protocol: TCP
-      name: https
+      name: metrics
   selector:
     {{- include "grafana-operator.selectorLabels" . | nindent 4 }}

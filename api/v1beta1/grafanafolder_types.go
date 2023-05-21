@@ -19,6 +19,7 @@ package v1beta1
 import (
 	"crypto/sha256"
 	"fmt"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -28,7 +29,12 @@ import (
 
 // GrafanaFolderSpec defines the desired state of GrafanaFolder
 type GrafanaFolderSpec struct {
-	Json string `json:"json,omitempty"`
+	// +optional
+	Title string `json:"title,omitempty"`
+
+	// raw json with folder permissions
+	// +optional
+	Permissions string `json:"permissions,omitempty"`
 
 	// selects Grafanas for import
 	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`
@@ -36,6 +42,10 @@ type GrafanaFolderSpec struct {
 	// allow to import this resources from an operator in a different namespace
 	// +optional
 	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
+
+	// how often the folder is synced, defaults to 5m if not set
+	// +optional
+	ResyncPeriod string `json:"resyncPeriod,omitempty"`
 }
 
 // GrafanaFolderStatus defines the observed state of GrafanaFolder
@@ -83,7 +93,8 @@ func (in *GrafanaFolderList) Find(namespace string, name string) *GrafanaFolder 
 
 func (in *GrafanaFolder) Hash() string {
 	hash := sha256.New()
-	hash.Write([]byte(in.Spec.Json))
+	hash.Write([]byte(in.Spec.Title))
+	hash.Write([]byte(in.Spec.Permissions))
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 
@@ -96,4 +107,27 @@ func (in *GrafanaFolder) IsAllowCrossNamespaceImport() bool {
 		return *in.Spec.AllowCrossNamespaceImport
 	}
 	return false
+}
+
+func (in *GrafanaFolder) GetTitle() string {
+	if in.Spec.Title != "" {
+		return in.Spec.Title
+	}
+
+	return in.Name
+}
+
+func (in *GrafanaFolder) GetResyncPeriod() time.Duration {
+	if in.Spec.ResyncPeriod == "" {
+		in.Spec.ResyncPeriod = DefaultResyncPeriod
+		return in.GetResyncPeriod()
+	}
+
+	duration, err := time.ParseDuration(in.Spec.ResyncPeriod)
+	if err != nil {
+		in.Spec.ResyncPeriod = DefaultResyncPeriod
+		return in.GetResyncPeriod()
+	}
+
+	return duration
 }

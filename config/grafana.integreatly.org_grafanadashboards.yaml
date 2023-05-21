@@ -138,7 +138,7 @@ spec:
                   type: object
                 type: array
               resyncPeriod:
-                description: how often the dashboard is refreshed, defaults to 24h
+                description: how often the dashboard is refreshed, defaults to 5m
                   if not set
                 type: string
               url:
@@ -167,6 +167,8 @@ spec:
               lastResync:
                 description: Last time the dashboard was resynced
                 format: date-time
+                type: string
+              uid:
                 type: string
             type: object
         type: object

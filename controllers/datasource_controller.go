@@ -25,6 +25,7 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 
+	simplejson "github.com/bitly/go-simplejson"
 	"github.com/grafana-operator/grafana-operator/v5/controllers/metrics"
 
 	"github.com/go-logr/logr"
@@ -51,7 +52,7 @@ type GrafanaDatasourceReconciler struct {
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadatasources/finalizers,verbs=update
 
 func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl.Result, error) {
-	syncLog := log.FromContext(ctx)
+	syncLog := log.FromContext(ctx).WithName("GrafanaDatasourceReconciler")
 	datasourcesSynced := 0
 
 	// get all grafana instances
@@ -139,7 +140,7 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 }
 
 func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	controllerLog := log.FromContext(ctx)
+	controllerLog := log.FromContext(ctx).WithName("GrafanaDatasourceReconciler")
 	r.Log = controllerLog
 
 	// periodic sync reconcile
@@ -283,33 +284,21 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		return err
 	}
 
-	variables, err := r.CollectVariablesFromSecrets(ctx, cr)
-	if err != nil {
-		return err
-	}
-
 	// always use the same uid for CR and datasource
 	cr.Spec.Datasource.UID = string(cr.UID)
-	rawDatasourceBytes, err := cr.ExpandVariables(variables)
-	if err != nil {
-		return err
-	}
-
-	var unmarshalledDatasource gapi.DataSource
-
-	err = json.Unmarshal(rawDatasourceBytes, &unmarshalledDatasource)
+	unmarshalledDatasource, err := r.getDatasourceContent(ctx, cr)
 	if err != nil {
 		return err
 	}
 
 	switch {
 	case id == nil:
-		_, err = grafanaClient.NewDataSource(&unmarshalledDatasource)
+		_, err = grafanaClient.NewDataSource(unmarshalledDatasource)
 		if err != nil && !strings.Contains(err.Error(), "status: 409") {
 			return err
 		}
 	case !cr.Unchanged():
-		err := grafanaClient.UpdateDataSource(&unmarshalledDatasource)
+		err := grafanaClient.UpdateDataSource(unmarshalledDatasource)
 		if err != nil {
 			return err
 		}
@@ -343,28 +332,6 @@ func (r *GrafanaDatasourceReconciler) ExistingId(client *gapi.Client, cr *v1beta
 		}
 	}
 	return nil, nil
-}
-
-func (r *GrafanaDatasourceReconciler) CollectVariablesFromSecrets(ctx context.Context, cr *v1beta1.GrafanaDatasource) (map[string][]byte, error) {
-	result := map[string][]byte{}
-	for _, secret := range cr.Spec.Secrets {
-		// secrets must be in the same namespace as the datasource
-		selector := client.ObjectKey{
-			Namespace: cr.Namespace,
-			Name:      strings.TrimSpace(secret),
-		}
-
-		s := &v1.Secret{}
-		err := r.Client.Get(ctx, selector, s)
-		if err != nil {
-			return nil, err
-		}
-
-		for key, value := range s.Data {
-			result[key] = value
-		}
-	}
-	return result, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -419,4 +386,63 @@ func (r *GrafanaDatasourceReconciler) GetMatchingDatasourceInstances(ctx context
 	}
 
 	return instances, err
+}
+
+func (r *GrafanaDatasourceReconciler) getDatasourceContent(ctx context.Context, cr *v1beta1.GrafanaDatasource) (*gapi.DataSource, error) {
+	initialBytes, err := json.Marshal(cr.Spec.Datasource)
+	if err != nil {
+		return nil, err
+	}
+
+	simpleContent, err := simplejson.NewJson(initialBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, ref := range cr.Spec.ValuesFrom {
+		val, err := r.getReferencedValue(ctx, cr, &ref.ValueFrom)
+		if err != nil {
+			return nil, err
+		}
+		simpleContent.SetPath(strings.Split(ref.TargetPath, "."), val)
+	}
+
+	newBytes, err := simpleContent.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	var res gapi.DataSource
+
+	err = json.Unmarshal(newBytes, &res)
+	if err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+func (r *GrafanaDatasourceReconciler) getReferencedValue(ctx context.Context, cr *v1beta1.GrafanaDatasource, source *v1beta1.GrafanaDatasourceValueFromSource) (string, error) {
+	if source.SecretKeyRef != nil {
+		s := &v1.Secret{}
+		err := r.Client.Get(ctx, client.ObjectKey{Namespace: cr.Namespace, Name: source.SecretKeyRef.Name}, s)
+		if err != nil {
+			return "", err
+		}
+		if val, ok := s.Data[source.SecretKeyRef.Key]; ok {
+			return string(val), nil
+		} else {
+			return "", fmt.Errorf("missing key %s in secret %s", source.SecretKeyRef.Key, source.ConfigMapKeyRef.Name)
+		}
+	} else {
+		s := &v1.ConfigMap{}
+		err := r.Client.Get(ctx, client.ObjectKey{Namespace: cr.Namespace, Name: source.SecretKeyRef.Name}, s)
+		if err != nil {
+			return "", err
+		}
+		if val, ok := s.Data[source.SecretKeyRef.Key]; ok {
+			return val, nil
+		} else {
+			return "", fmt.Errorf("missing key %s in configmap %s", source.SecretKeyRef.Key, source.ConfigMapKeyRef.Name)
+		}
+	}
 }

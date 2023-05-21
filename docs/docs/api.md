@@ -168,7 +168,7 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         <td><b>resyncPeriod</b></td>
         <td>string</td>
         <td>
-          how often the dashboard is refreshed, defaults to 24h if not set<br/>
+          how often the dashboard is refreshed, defaults to 5m if not set<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -423,6 +423,13 @@ GrafanaDashboardStatus defines the observed state of GrafanaDashboard
             <i>Format</i>: date-time<br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>uid</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -528,14 +535,14 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         <td><b>resyncPeriod</b></td>
         <td>string</td>
         <td>
-          how often the datasource is refreshed, defaults to 24h if not set<br/>
+          how often the datasource is refreshed, defaults to 5m if not set<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>secrets</b></td>
-        <td>[]string</td>
+        <td><b><a href="grafanadatasourcespecvaluesfromindex">valuesFrom</a></b></td>
+        <td>[]object</td>
         <td>
-          secrets used for variable expansion<br/>
+          environments variables from secrets or config maps<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -771,6 +778,156 @@ A label selector requirement is a selector that contains values, a key, and an o
 </table>
 
 
+### GrafanaDatasource.spec.valuesFrom[index]
+<sup><sup>[↩ Parent](grafanadatasourcespec)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>targetPath</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="grafanadatasourcespecvaluesfromindexvaluefrom">valueFrom</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDatasource.spec.valuesFrom[index].valueFrom
+<sup><sup>[↩ Parent](grafanadatasourcespecvaluesfromindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="grafanadatasourcespecvaluesfromindexvaluefromconfigmapkeyref">configMapKeyRef</a></b></td>
+        <td>object</td>
+        <td>
+          Selects a key of a ConfigMap.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="grafanadatasourcespecvaluesfromindexvaluefromsecretkeyref">secretKeyRef</a></b></td>
+        <td>object</td>
+        <td>
+          Selects a key of a Secret.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDatasource.spec.valuesFrom[index].valueFrom.configMapKeyRef
+<sup><sup>[↩ Parent](grafanadatasourcespecvaluesfromindexvaluefrom)</sup></sup>
+
+
+
+Selects a key of a ConfigMap.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          The key to select.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>optional</b></td>
+        <td>boolean</td>
+        <td>
+          Specify whether the ConfigMap or its key must be defined<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDatasource.spec.valuesFrom[index].valueFrom.secretKeyRef
+<sup><sup>[↩ Parent](grafanadatasourcespecvaluesfromindexvaluefrom)</sup></sup>
+
+
+
+Selects a key of a Secret.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          The key of the secret to select from.  Must be a valid secret key.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>optional</b></td>
+        <td>boolean</td>
+        <td>
+          Specify whether the Secret or its key must be defined<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
 ### GrafanaDatasource.status
 <sup><sup>[↩ Parent](grafanadatasource)</sup></sup>
 
@@ -896,7 +1053,21 @@ GrafanaFolderSpec defines the desired state of GrafanaFolder
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>json</b></td>
+        <td><b>permissions</b></td>
+        <td>string</td>
+        <td>
+          raw json with folder permissions<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>resyncPeriod</b></td>
+        <td>string</td>
+        <td>
+          how often the folder is synced, defaults to 5m if not set<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>title</b></td>
         <td>string</td>
         <td>
           <br/>

@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/go-logr/logr v1.2.4
-	github.com/google/go-jsonnet v0.19.1
+	github.com/google/go-jsonnet v0.20.0
 	github.com/grafana/grafana-api-golang-client v0.20.1
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.27.6
@@ -19,7 +19,10 @@ require (
 	sigs.k8s.io/controller-runtime v0.13.0
 )
 
-require github.com/rogpeppe/go-internal v1.10.0 // indirect
+require (
+	github.com/bitly/go-simplejson v0.5.0 // indirect
+	github.com/rogpeppe/go-internal v1.10.0 // indirect
+)
 
 require (
 	cloud.google.com/go v0.97.0 // indirect

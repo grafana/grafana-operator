@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"io"
 	"time"
@@ -82,7 +83,8 @@ type GrafanaDashboardSpec struct {
 	// Cache duration for dashboards fetched from URLs
 	// +optional
 	ContentCacheDuration metav1.Duration `json:"contentCacheDuration,omitempty"`
-	// how often the dashboard is refreshed, defaults to 24h if not set
+
+	// how often the dashboard is refreshed, defaults to 5m if not set
 	// +optional
 	ResyncPeriod string `json:"resyncPeriod,omitempty"`
 
@@ -111,6 +113,7 @@ type GrafanaDashboardStatus struct {
 	NoMatchingInstances bool `json:"NoMatchingInstances,omitempty"`
 	// Last time the dashboard was resynced
 	LastResync metav1.Time `json:"lastResync,omitempty"`
+	UID        string      `json:"uid,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -218,6 +221,30 @@ func (in *GrafanaDashboard) IsAllowCrossNamespaceImport() bool {
 		return *in.Spec.AllowCrossNamespaceImport
 	}
 	return false
+}
+
+func (in *GrafanaDashboard) IsUpdatedUID(dashboardJson []byte) bool {
+	// Dashboard has just been created, status is not yet updated
+	if in.Status.UID == "" {
+		return false
+	}
+
+	type DashboardUID struct {
+		UID string `json:"uid,omitempty"`
+	}
+
+	dashboardUID := DashboardUID{}
+	err := json.Unmarshal(dashboardJson, &dashboardUID)
+	// here, we don't really care about catching json errors
+	if err != nil {
+		return false
+	}
+
+	if dashboardUID.UID == "" {
+		dashboardUID.UID = string(in.UID)
+	}
+
+	return in.Status.UID != dashboardUID.UID
 }
 
 func Gunzip(compressed []byte) ([]byte, error) {
