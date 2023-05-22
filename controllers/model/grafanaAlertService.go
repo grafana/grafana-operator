@@ -21,11 +21,7 @@ func getAlertServiceLabels(cr *v1alpha1.Grafana) map[string]string {
 }
 
 func getAlertServiceAnnotations(cr *v1alpha1.Grafana, existing map[string]string) map[string]string {
-	if cr.Spec.Service == nil {
-		return existing
-	}
-
-	return MergeAnnotations(cr.Spec.Service.Annotations, existing)
+	return existing
 }
 
 func GrafanaAlertService(cr *v1alpha1.Grafana) *v1.Service {
