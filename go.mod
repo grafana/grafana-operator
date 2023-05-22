@@ -3,6 +3,7 @@ module github.com/grafana-operator/grafana-operator/v5
 go 1.19
 
 require (
+	github.com/bitly/go-simplejson v0.5.0
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/go-logr/logr v1.2.4
 	github.com/google/go-jsonnet v0.20.0
@@ -12,7 +13,7 @@ require (
 	github.com/openshift/api v3.9.0+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.15.0
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.3
 	k8s.io/api v0.25.2
 	k8s.io/apimachinery v0.27.1
 	k8s.io/client-go v0.25.2
@@ -20,7 +21,7 @@ require (
 )
 
 require (
-	github.com/bitly/go-simplejson v0.5.0 // indirect
+	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/rogpeppe/go-internal v1.10.0 // indirect
 )
 
