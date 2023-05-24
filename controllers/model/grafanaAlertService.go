@@ -23,9 +23,9 @@ func getAlertServiceLabels(cr *v1alpha1.Grafana) map[string]string {
 func GrafanaAlertService(cr *v1alpha1.Grafana) *v1.Service {
 	return &v1.Service{
 		ObjectMeta: v12.ObjectMeta{
-			Name:        getAlertServiceName(),
-			Namespace:   cr.Namespace,
-			Labels:      getAlertServiceLabels(cr),
+			Name:      getAlertServiceName(),
+			Namespace: cr.Namespace,
+			Labels:    getAlertServiceLabels(cr),
 		},
 		Spec: v1.ServiceSpec{
 			ClusterIP: "None",
