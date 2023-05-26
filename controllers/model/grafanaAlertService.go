@@ -20,21 +20,12 @@ func getAlertServiceLabels(cr *v1alpha1.Grafana) map[string]string {
 	return cr.Spec.Service.Labels
 }
 
-func getAlertServiceAnnotations(cr *v1alpha1.Grafana, existing map[string]string) map[string]string {
-	if cr.Spec.Service == nil {
-		return existing
-	}
-
-	return MergeAnnotations(cr.Spec.Service.Annotations, existing)
-}
-
 func GrafanaAlertService(cr *v1alpha1.Grafana) *v1.Service {
 	return &v1.Service{
 		ObjectMeta: v12.ObjectMeta{
-			Name:        getAlertServiceName(),
-			Namespace:   cr.Namespace,
-			Labels:      getAlertServiceLabels(cr),
-			Annotations: getAlertServiceAnnotations(cr, nil),
+			Name:      getAlertServiceName(),
+			Namespace: cr.Namespace,
+			Labels:    getAlertServiceLabels(cr),
 		},
 		Spec: v1.ServiceSpec{
 			ClusterIP: "None",
