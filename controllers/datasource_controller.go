@@ -279,13 +279,15 @@ func (r *GrafanaDatasourceReconciler) onDatasourceDeleted(ctx context.Context, n
 
 			datasource, err := grafanaClient.DataSourceByUID(*uid)
 			if err != nil {
-				return err
-			}
-
-			err = grafanaClient.DeleteDataSource(datasource.ID)
-			if err != nil {
 				if !strings.Contains(err.Error(), "status: 404") {
 					return err
+				}
+			} else {
+				err = grafanaClient.DeleteDataSource(datasource.ID)
+				if err != nil {
+					if !strings.Contains(err.Error(), "status: 404") {
+						return err
+					}
 				}
 			}
 
@@ -320,7 +322,7 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		return err
 	}
 
-	exists, err := r.Exists(grafanaClient, uid)
+	exists, id, err := r.Exists(grafanaClient, unmarshalledDatasource.UID, unmarshalledDatasource.Name)
 	if err != nil {
 		return err
 	}
@@ -330,6 +332,7 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 	}
 
 	if exists {
+		unmarshalledDatasource.ID = id
 		err := grafanaClient.UpdateDataSource(unmarshalledDatasource)
 		if err != nil {
 			return err
@@ -345,20 +348,20 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 	return r.Client.Status().Update(ctx, grafana)
 }
 
-func (r *GrafanaDatasourceReconciler) Exists(client *gapi.Client, uid string) (bool, error) {
+func (r *GrafanaDatasourceReconciler) Exists(client *gapi.Client, uid, name string) (bool, int64, error) {
 	datasources, err := client.DataSources()
 	if err != nil {
-		return false, err
+		return false, 0, err
 	}
 
 	for _, datasource := range datasources {
 		// TODO: should we inspect name (case-sensitive) as well?
-		if datasource.UID == uid {
-			return true, nil
+		if datasource.UID == uid || datasource.Name == name {
+			return true, datasource.ID, nil
 		}
 	}
 
-	return false, nil
+	return false, 0, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
