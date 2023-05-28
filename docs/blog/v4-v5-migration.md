@@ -1,26 +1,38 @@
 ---
 author: "Edvin 'NissesSenap' Norling"
 date: 2023-05-27
-title: "v4 to v5 dashboard migration"
-linkTitle: "v4 to v5 dashboard migration"
-description: "How to migrate grafanaDashboard CRD from v4 to v5"
+title: "v4 to v5 migration"
+linkTitle: "v4 to v5 migration"
+description: "How to migrate grafana-operator from v4 to v5"
 ---
 
 We are getting close to release version 5 of grafana-operator.
-We have done a number of breaking changes from v5 + version updates so we thought we would supply a small script for inspiration to migration dashboards from v4 to v5.
+As a part of version 5 we have remade the operator from both with code and API and thus contains a number of breaking changes.
+We recommend that you read through the changes in our [intro blog](v5-intro.md).
+
+The operator supports multiple installation solution like
+
+- Helm
+- Kustomize
+- OCP OLM
+
+Look [here](https://grafana-operator.github.io/grafana-operator/docs/) for documentation.
+Just like earlier we have also created a big [example library](https://grafana-operator.github.io/grafana-operator/) on how to configure the operator.
+
+As part of the migration we thought we would supply a small script for inspiration to migration dashboards from v4 to v5.
 Due to the complexity and the low amount of instance we saw no need to write a migration script for the other resources.
 
 This script isn't meant to solve all potential use-cases but rather an idea on how you can solve it.
-If write a better script feel free to share it with the rest of the community.
+If you write a better script feel free to share it with the rest of the community in our slack or through a PR.
 
-## Migration
+## Dashboard migration
 
 The biggest difference from v4 to v5 is that the label selector isn't on the grafana instance, instead it's on the dashboard.
 In short instead of the grafana instance choosing which dashboards to apply the dashboard chooses which grafana instances to apply to.
 
-So we mush add a `instanceSelector` and update the API version.
+So we mush add a `instanceSelector` and update the API version. We also most updated the `apiVersion` and optionally add the `resyncPerio`.
 
-Below you can see our v4 sample dashboard.
+Below you can see a v4 sample dashboard.
 
 ```yaml
 apiVersion: integreatly.org/v1alpha1
@@ -39,7 +51,7 @@ spec:
     }
 ```
 
-And here you can see a v5 dashboard and what we are aiming for.
+And here is the same dashboard but adapted to v5.
 
 ```yaml
 apiVersion: grafana.integreatly.org/v1beta1
@@ -62,7 +74,10 @@ spec:
 
 ## Script
 
-I'm using [yq](https://github.com/mikefarah/yq) to perform changes on my dashboard files, which is the jq equivalent but for yaml.
+The script uses [yq](https://github.com/mikefarah/yq) to perform changes on my dashboard files, which is the jq equivalent but for yaml.
+In the script you will find comment that explain all the steps that we are taking.
+Some of the changes are needed while others isn't.
+Please adapt the values according to your needs, lets call the script `v4-v5migration.sh`.
 
 ```sh
 #!/bin/sh
