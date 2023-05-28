@@ -314,8 +314,7 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 	}
 
 	grafana.Status.Datasources = grafana.Status.Datasources.Add(cr.Namespace, cr.Name, string(cr.UID))
-	// TODO: do we need to update status at all?
-	return r.Client.Status().Update(ctx, cr)
+	return r.Client.Status().Update(ctx, grafana)
 }
 
 func (r *GrafanaDatasourceReconciler) Exists(client *gapi.Client, cr *v1beta1.GrafanaDatasource) (bool, error) {
