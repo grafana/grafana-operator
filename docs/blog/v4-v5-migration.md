@@ -8,17 +8,17 @@ description: "How to migrate grafana-operator from v4 to v5"
 
 We are getting close to release version 5 of grafana-operator.
 As a part of version 5 we have remade the operator from both with code and API and thus contains a number of breaking changes.
-We recommend that you read through the changes in our [intro blog](v5-intro.md).
+We recommend that you read through the changes in our [intro blog]({{< ref "/blog/v5-intro.md" >}}).
 
 The operator supports multiple installation solution like
 
-- [Helm](../docs/installation/helm.md)
-- [Kustomize](../docs/installation/kustomize.md)
+- [Helm]({{< ref "/docs/installation/helm.md">}})
+- [Kustomize]({{< ref "/docs/installation/kustomize.md">}})
 - OCP OLM
 
-Look [here](../docs/_index.md) for documentation.
-Just like earlier we have also created a big [example library](../docs/examples/_index.md) on how to configure the operator.
-For an extended overview of all possible configuration options look at our [API documentation](../docs/api.md)
+Look [here]({{< ref "/docs/">}}) for documentation.
+Just like earlier we have also created a big [example library]({{< ref "/docs/examples/">}}) on how to configure the operator.
+For an extended overview of all possible configuration options look at our [API documentation]({{< ref "/docs/api.md">}})
 
 As part of the migration we thought we would supply a small script for inspiration to migration dashboards from v4 to v5.
 Due to the complexity and the low amount of instance we saw no need to write a migration script for the other resources.
