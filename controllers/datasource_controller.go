@@ -154,11 +154,11 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return syncResult, err
 	}
 
-	datasource := &v1beta1.GrafanaDatasource{}
+	cr := &v1beta1.GrafanaDatasource{}
 	err := r.Client.Get(ctx, client.ObjectKey{
 		Namespace: req.Namespace,
 		Name:      req.Name,
-	}, datasource)
+	}, cr)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			err = r.onDatasourceDeleted(ctx, req.Namespace, req.Name)
@@ -171,29 +171,29 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
 
-	if datasource.Spec.Datasource == nil {
-		controllerLog.Info("skipped datasource with empty spec", datasource.Name, datasource.Namespace)
+	if cr.Spec.Datasource == nil {
+		controllerLog.Info("skipped datasource with empty spec", cr.Name, cr.Namespace)
 		// TODO: add a custom status around that?
 		return ctrl.Result{}, nil
 	}
 
-	instances, err := r.GetMatchingDatasourceInstances(ctx, datasource, r.Client)
+	instances, err := r.GetMatchingDatasourceInstances(ctx, cr, r.Client)
 	if err != nil {
-		controllerLog.Error(err, "could not find matching instances", "name", datasource.Name, "namespace", datasource.Namespace)
+		controllerLog.Error(err, "could not find matching instances", "name", cr.Name, "namespace", cr.Namespace)
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
 
 	controllerLog.Info("found matching Grafana instances for datasource", "count", len(instances.Items))
 
-	unmarshalledDatasource, hash, err := r.getDatasourceContent(ctx, datasource)
+	unmarshalledDatasource, hash, err := r.getDatasourceContent(ctx, cr)
 	if err != nil {
-		controllerLog.Error(err, "could not retrieve datasource contents", "name", datasource.Name, "namespace", datasource.Namespace)
+		controllerLog.Error(err, "could not retrieve datasource contents", "name", cr.Name, "namespace", cr.Namespace)
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
 
 	uid := unmarshalledDatasource.UID
 
-	if datasource.IsUpdatedUID(uid) {
+	if cr.IsUpdatedUID(uid) {
 		controllerLog.Info("datasource uid got updated, deleting datasources with the old uid")
 		err = r.onDatasourceDeleted(ctx, req.Namespace, req.Name)
 		if err != nil {
@@ -201,8 +201,8 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		}
 
 		// Clean up uid, so further reconcilications can track changes there
-		datasource.Status.UID = ""
-		err = r.Client.Status().Update(ctx, datasource)
+		cr.Status.UID = ""
+		err = r.Client.Status().Update(ctx, cr)
 
 		if err != nil {
 			return ctrl.Result{RequeueAfter: RequeueDelay}, err
@@ -215,7 +215,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	success := true
 	for _, grafana := range instances.Items {
 		// check if this is a cross namespace import
-		if grafana.Namespace != datasource.Namespace && !datasource.IsAllowCrossNamespaceImport() {
+		if grafana.Namespace != cr.Namespace && !cr.IsAllowCrossNamespaceImport() {
 			continue
 		}
 
@@ -232,32 +232,32 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			// first reconcile the plugins
 			// append the requested datasources to a configmap from where the
 			// grafana reconciler will pick them upi
-			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, datasource.Spec.Plugins, fmt.Sprintf("%v-datasource", datasource.Name))
+			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, cr.Spec.Plugins, fmt.Sprintf("%v-datasource", cr.Name))
 			if err != nil {
 				success = false
-				controllerLog.Error(err, "error reconciling plugins", "datasource", datasource.Name, "grafana", grafana.Name)
+				controllerLog.Error(err, "error reconciling plugins", "datasource", cr.Name, "grafana", grafana.Name)
 			}
 		}
 
 		// then import the datasource into the matching grafana instances
-		err = r.onDatasourceCreated(ctx, &grafana, datasource, unmarshalledDatasource, hash)
+		err = r.onDatasourceCreated(ctx, &grafana, cr, unmarshalledDatasource, hash)
 		if err != nil {
 			success = false
-			datasource.Status.LastMessage = err.Error()
-			controllerLog.Error(err, "error reconciling datasource", "datasource", datasource.Name, "grafana", grafana.Name)
+			cr.Status.LastMessage = err.Error()
+			controllerLog.Error(err, "error reconciling datasource", "datasource", cr.Name, "grafana", grafana.Name)
 		}
 	}
 
 	// if the datasource was successfully synced in all instances, wait for its re-sync period
 	if success {
-		datasource.Status.LastMessage = ""
-		datasource.Status.Hash = hash
-		datasource.Status.LastResync = metav1.Time{Time: time.Now()}
-		datasource.Status.UID = uid
-		return ctrl.Result{RequeueAfter: datasource.GetResyncPeriod()}, r.Client.Status().Update(ctx, datasource)
+		cr.Status.LastMessage = ""
+		cr.Status.Hash = hash
+		cr.Status.LastResync = metav1.Time{Time: time.Now()}
+		cr.Status.UID = uid
+		return ctrl.Result{RequeueAfter: cr.GetResyncPeriod()}, r.Client.Status().Update(ctx, cr)
 	} else {
 		// if there was an issue with the datasource, update the status
-		return ctrl.Result{RequeueAfter: RequeueDelay}, r.Client.Status().Update(ctx, datasource)
+		return ctrl.Result{RequeueAfter: RequeueDelay}, r.Client.Status().Update(ctx, cr)
 	}
 }
 
