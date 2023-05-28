@@ -7,6 +7,7 @@ description: "How to migrate grafana-operator from v4 to v5"
 ---
 
 We are getting close to release version 5 of grafana-operator.
+
 As a part of version 5 we have remade the operator from both with code and API and thus contains a number of breaking changes.
 We recommend that you read through the changes in our [intro blog]({{< ref "/blog/v5-intro.md" >}}).
 
@@ -17,23 +18,23 @@ The operator supports multiple installation solution like
 - OCP OLM
 
 Look [here]({{< ref "/docs/">}}) for documentation.
-Just like earlier we have also created a big [example library]({{< ref "/docs/examples/">}}) on how to configure the operator.
-For an extended overview of all possible configuration options look at our [API documentation]({{< ref "/docs/api.md">}})
+Just like earlier, we have also created a big [example library]({{< ref "/docs/examples/">}}) on how to configure the operator.
+For an extended overview of all possible configuration options, look at our [API documentation]({{< ref "/docs/api.md">}})
 
-As part of the migration we thought we would supply a small script for inspiration to migration dashboards from v4 to v5.
-Due to the complexity and the low amount of instance we saw no need to write a migration script for the other resources.
+As part of the migration, we thought we would supply a small script for inspiration to migration dashboards from v4 to v5.
+Due to the complexity and the low amount of instance, we saw no need to write a migration script for the other resources.
 
-This script isn't meant to solve all potential use-cases but rather an idea on how you can solve it.
-If you write a better script feel free to share it with the rest of the community in our slack or through a PR.
+This script isn't meant to solve all potential use-cases, but rather an idea on how you can solve it.
+If you write a better script, feel free to share it with the rest of the community in our slack or through a PR.
 
 ## Dashboard migration
 
-The biggest difference from v4 to v5 is that the label selector isn't on the grafana instance, instead it's on the dashboard.
-In short instead of the grafana instance choosing which dashboards to apply the dashboard chooses which grafana instances to apply to.
+The biggest difference from v4 to v5 is that the label selector isn't on the Grafana instance, instead it's on the dashboard.
+In short, instead of the Grafana instance choosing which dashboards to apply, the dashboard chooses which Grafana instances to apply to.
 
 So we mush add a `instanceSelector` and update the API version. We also most updated the `apiVersion` and optionally add the `resyncPerio`.
 
-Below you can see a v4 sample dashboard.
+Below, you can see a v4 sample dashboard.
 
 ```yaml
 apiVersion: integreatly.org/v1alpha1
@@ -77,8 +78,8 @@ spec:
 
 The script uses [yq](https://github.com/mikefarah/yq) to perform changes on my dashboard files, which is the jq equivalent but for yaml.
 In the script you will find comment that explain all the steps that we are taking.
-Some of the changes are needed while others isn't.
-Please adapt the values according to your needs, lets call the script `v4-v5migration.sh`.
+Some of the changes are needed, while others isn't.
+Please adapt the values according to your needs, let's call the script `v4-v5migration.sh`.
 
 ```sh
 #!/bin/sh
@@ -107,7 +108,7 @@ yq -i '.spec.instanceSelector.matchLabels.dashboards = "grafana"' $filename
 cat $filename | tr -s '\n' '\n' > tmp.yaml && mv tmp.yaml $filename
 ```
 
-So lets run this script over all my dashboard files located in a folder ending with `.yaml`
+So let's run this script over all my dashboard files located in a folder ending with `.yaml`
 Don't forget to take a backup of your files before running the script, they will be changed in place.
 
 ```bash
