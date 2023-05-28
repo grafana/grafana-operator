@@ -306,7 +306,7 @@ func (r *GrafanaDatasourceReconciler) onDatasourceDeleted(ctx context.Context, n
 	return nil
 }
 
-func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDatasource, unmarshalledDatasource *gapi.DataSource, hash string) error {
+func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDatasource, datasource *gapi.DataSource, hash string) error {
 	if grafana.IsExternal() && cr.Spec.Plugins != nil {
 		return fmt.Errorf("external grafana instances don't support plugins, please remove spec.plugins from your datasource cr")
 	}
@@ -315,14 +315,12 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		return nil
 	}
 
-	uid := unmarshalledDatasource.UID
-
 	grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
 		return err
 	}
 
-	exists, id, err := r.Exists(grafanaClient, unmarshalledDatasource.UID, unmarshalledDatasource.Name)
+	exists, id, err := r.Exists(grafanaClient, datasource.UID, datasource.Name)
 	if err != nil {
 		return err
 	}
@@ -332,19 +330,19 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 	}
 
 	if exists {
-		unmarshalledDatasource.ID = id
-		err := grafanaClient.UpdateDataSource(unmarshalledDatasource)
+		datasource.ID = id
+		err := grafanaClient.UpdateDataSource(datasource)
 		if err != nil {
 			return err
 		}
 	} else {
-		_, err = grafanaClient.NewDataSource(unmarshalledDatasource)
+		_, err = grafanaClient.NewDataSource(datasource)
 		if err != nil {
 			return err
 		}
 	}
 
-	grafana.Status.Datasources = grafana.Status.Datasources.Add(cr.Namespace, cr.Name, uid)
+	grafana.Status.Datasources = grafana.Status.Datasources.Add(cr.Namespace, cr.Name, datasource.UID)
 	return r.Client.Status().Update(ctx, grafana)
 }
 
@@ -355,7 +353,6 @@ func (r *GrafanaDatasourceReconciler) Exists(client *gapi.Client, uid, name stri
 	}
 
 	for _, datasource := range datasources {
-		// TODO: should we inspect name (case-sensitive) as well?
 		if datasource.UID == uid || datasource.Name == name {
 			return true, datasource.ID, nil
 		}
