@@ -185,15 +185,13 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	controllerLog.Info("found matching Grafana instances for datasource", "count", len(instances.Items))
 
-	unmarshalledDatasource, hash, err := r.getDatasourceContent(ctx, cr)
+	datasource, hash, err := r.getDatasourceContent(ctx, cr)
 	if err != nil {
 		controllerLog.Error(err, "could not retrieve datasource contents", "name", cr.Name, "namespace", cr.Namespace)
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
 
-	uid := unmarshalledDatasource.UID
-
-	if cr.IsUpdatedUID(uid) {
+	if cr.IsUpdatedUID(datasource.UID) {
 		controllerLog.Info("datasource uid got updated, deleting datasources with the old uid")
 		err = r.onDatasourceDeleted(ctx, req.Namespace, req.Name)
 		if err != nil {
@@ -240,7 +238,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		}
 
 		// then import the datasource into the matching grafana instances
-		err = r.onDatasourceCreated(ctx, &grafana, cr, unmarshalledDatasource, hash)
+		err = r.onDatasourceCreated(ctx, &grafana, cr, datasource, hash)
 		if err != nil {
 			success = false
 			cr.Status.LastMessage = err.Error()
@@ -253,7 +251,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		cr.Status.LastMessage = ""
 		cr.Status.Hash = hash
 		cr.Status.LastResync = metav1.Time{Time: time.Now()}
-		cr.Status.UID = uid
+		cr.Status.UID = datasource.UID
 		return ctrl.Result{RequeueAfter: cr.GetResyncPeriod()}, r.Client.Status().Update(ctx, cr)
 	} else {
 		// if there was an issue with the datasource, update the status
