@@ -12,12 +12,13 @@ We recommend that you read through the changes in our [intro blog](v5-intro.md).
 
 The operator supports multiple installation solution like
 
-- Helm
-- Kustomize
+- [Helm](../docs/installation/helm.md)
+- [Kustomize](../docs/installation/kustomize.md)
 - OCP OLM
 
-Look [here](https://grafana-operator.github.io/grafana-operator/docs/) for documentation.
-Just like earlier we have also created a big [example library](https://grafana-operator.github.io/grafana-operator/) on how to configure the operator.
+Look [here](../docs/_index.md) for documentation.
+Just like earlier we have also created a big [example library](../docs/examples/_index.md) on how to configure the operator.
+For an extended overview of all possible configuration options look at our [API documentation](../docs/api.md)
 
 As part of the migration we thought we would supply a small script for inspiration to migration dashboards from v4 to v5.
 Due to the complexity and the low amount of instance we saw no need to write a migration script for the other resources.
