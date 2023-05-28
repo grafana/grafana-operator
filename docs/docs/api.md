@@ -974,6 +974,13 @@ GrafanaDatasourceStatus defines the observed state of GrafanaDatasource
             <i>Format</i>: date-time<br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>uid</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 

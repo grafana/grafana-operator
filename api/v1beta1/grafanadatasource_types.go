@@ -101,6 +101,7 @@ type GrafanaDatasourceStatus struct {
 	NoMatchingInstances bool `json:"NoMatchingInstances,omitempty"`
 	// Last time the datasource was resynced
 	LastResync metav1.Time `json:"lastResync,omitempty"`
+	UID        string      `json:"uid,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -149,6 +150,15 @@ func (in *GrafanaDatasource) ResyncPeriodHasElapsed() bool {
 
 func (in *GrafanaDatasource) Unchanged(hash string) bool {
 	return in.Status.Hash == hash
+}
+
+func (in *GrafanaDatasource) IsUpdatedUID(uid string) bool {
+	// Datasource has just been created, status is not yet updated
+	if in.Status.UID == "" {
+		return false
+	}
+
+	return in.Status.UID != uid
 }
 
 func (in *GrafanaDatasource) ExpandVariables(variables map[string][]byte) ([]byte, error) {

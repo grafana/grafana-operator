@@ -403,6 +403,8 @@ spec:
                 description: Last time the datasource was resynced
                 format: date-time
                 type: string
+              uid:
+                type: string
             type: object
         type: object
     served: true

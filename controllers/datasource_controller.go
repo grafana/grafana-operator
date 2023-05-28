@@ -170,6 +170,13 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		controllerLog.Error(err, "error getting grafana datasource cr")
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
+
+	if datasource.Spec.Datasource == nil {
+		controllerLog.Info("skipped datasource with empty spec", datasource.Name, datasource.Namespace)
+		// TODO: add a custom status around that?
+		return ctrl.Result{}, nil
+	}
+
 	instances, err := r.GetMatchingDatasourceInstances(ctx, datasource, r.Client)
 	if err != nil {
 		controllerLog.Error(err, "could not find matching instances", "name", datasource.Name, "namespace", datasource.Namespace)
@@ -182,6 +189,27 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	if err != nil {
 		controllerLog.Error(err, "could not retrieve datasource contents", "name", datasource.Name, "namespace", datasource.Namespace)
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
+	}
+
+	uid := unmarshalledDatasource.UID
+
+	if datasource.IsUpdatedUID(uid) {
+		controllerLog.Info("datasource uid got updated, deleting datasources with the old uid")
+		err = r.onDatasourceDeleted(ctx, req.Namespace, req.Name)
+		if err != nil {
+			return ctrl.Result{RequeueAfter: RequeueDelay}, err
+		}
+
+		// Clean up uid, so further reconcilications can track changes there
+		datasource.Status.UID = ""
+		err = r.Client.Status().Update(ctx, datasource)
+
+		if err != nil {
+			return ctrl.Result{RequeueAfter: RequeueDelay}, err
+		}
+
+		// Status update should trigger the next reconciliation right away, no need to requeue for dashboard creation
+		return ctrl.Result{}, nil
 	}
 
 	success := true
@@ -225,6 +253,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		datasource.Status.LastMessage = ""
 		datasource.Status.Hash = hash
 		datasource.Status.LastResync = metav1.Time{Time: time.Now()}
+		datasource.Status.UID = uid
 		return ctrl.Result{RequeueAfter: datasource.GetResyncPeriod()}, r.Client.Status().Update(ctx, datasource)
 	} else {
 		// if there was an issue with the datasource, update the status
@@ -284,15 +313,14 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		return nil
 	}
 
+	uid := unmarshalledDatasource.UID
+
 	grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
 		return err
 	}
 
-	// always use the same uid for CR and datasource
-	cr.Spec.Datasource.UID = string(cr.UID)
-
-	exists, err := r.Exists(grafanaClient, cr)
+	exists, err := r.Exists(grafanaClient, uid)
 	if err != nil {
 		return err
 	}
@@ -313,18 +341,19 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		}
 	}
 
-	grafana.Status.Datasources = grafana.Status.Datasources.Add(cr.Namespace, cr.Name, string(cr.UID))
+	grafana.Status.Datasources = grafana.Status.Datasources.Add(cr.Namespace, cr.Name, uid)
 	return r.Client.Status().Update(ctx, grafana)
 }
 
-func (r *GrafanaDatasourceReconciler) Exists(client *gapi.Client, cr *v1beta1.GrafanaDatasource) (bool, error) {
+func (r *GrafanaDatasourceReconciler) Exists(client *gapi.Client, uid string) (bool, error) {
 	datasources, err := client.DataSources()
 	if err != nil {
 		return false, err
 	}
 
 	for _, datasource := range datasources {
-		if datasource.UID == string(cr.UID) {
+		// TODO: should we inspect name (case-sensitive) as well?
+		if datasource.UID == uid {
 			return true, nil
 		}
 	}
@@ -395,6 +424,11 @@ func (r *GrafanaDatasourceReconciler) getDatasourceContent(ctx context.Context, 
 	simpleContent, err := simplejson.NewJson(initialBytes)
 	if err != nil {
 		return nil, "", err
+	}
+
+	// TODO: test
+	if cr.Spec.Datasource.UID == "" {
+		simpleContent.Set("uid", string(cr.UID))
 	}
 
 	for _, ref := range cr.Spec.ValuesFrom {
