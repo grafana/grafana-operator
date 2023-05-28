@@ -304,7 +304,7 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		}
 	} else {
 		_, err = grafanaClient.NewDataSource(unmarshalledDatasource)
-		if err != nil && !strings.Contains(err.Error(), "status: 409") {
+		if err != nil {
 			return err
 		}
 	}
