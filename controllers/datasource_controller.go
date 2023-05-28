@@ -178,6 +178,12 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	controllerLog.Info("found matching Grafana instances for datasource", "count", len(instances.Items))
 
+	unmarshalledDatasource, hash, err := r.getDatasourceContent(ctx, datasource)
+	if err != nil {
+		controllerLog.Error(err, "could not retrieve datasource contents", "name", datasource.Name, "namespace", datasource.Namespace)
+		return ctrl.Result{RequeueAfter: RequeueDelay}, err
+	}
+
 	success := true
 	for _, grafana := range instances.Items {
 		// check if this is a cross namespace import
@@ -206,7 +212,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		}
 
 		// then import the datasource into the matching grafana instances
-		err = r.onDatasourceCreated(ctx, &grafana, datasource)
+		err = r.onDatasourceCreated(ctx, &grafana, datasource, unmarshalledDatasource, hash)
 		if err != nil {
 			success = false
 			datasource.Status.LastMessage = err.Error()
@@ -217,6 +223,8 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	// if the datasource was successfully synced in all instances, wait for its re-sync period
 	if success {
 		datasource.Status.LastMessage = ""
+		datasource.Status.Hash = hash
+		datasource.Status.LastResync = metav1.Time{Time: time.Now()}
 		return ctrl.Result{RequeueAfter: datasource.GetResyncPeriod()}, r.Client.Status().Update(ctx, datasource)
 	} else {
 		// if there was an issue with the datasource, update the status
@@ -267,13 +275,13 @@ func (r *GrafanaDatasourceReconciler) onDatasourceDeleted(ctx context.Context, n
 	return nil
 }
 
-func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDatasource) error {
-	if cr.Spec.Datasource == nil {
-		return nil
-	}
-
+func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDatasource, unmarshalledDatasource *gapi.DataSource, hash string) error {
 	if grafana.IsExternal() && cr.Spec.Plugins != nil {
 		return fmt.Errorf("external grafana instances don't support plugins, please remove spec.plugins from your datasource cr")
+	}
+
+	if cr.Spec.Datasource == nil {
+		return nil
 	}
 
 	grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, grafana)
@@ -283,10 +291,6 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 
 	// always use the same uid for CR and datasource
 	cr.Spec.Datasource.UID = string(cr.UID)
-	unmarshalledDatasource, hash, err := r.getDatasourceContent(ctx, cr)
-	if err != nil {
-		return err
-	}
 
 	exists, err := r.Exists(grafanaClient, cr)
 	if err != nil {
@@ -310,8 +314,7 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 	}
 
 	grafana.Status.Datasources = grafana.Status.Datasources.Add(cr.Namespace, cr.Name, string(cr.UID))
-	cr.Status.Hash = hash
-	cr.Status.LastResync = metav1.Time{Time: time.Now()}
+	// TODO: do we need to update status at all?
 	return r.Client.Status().Update(ctx, cr)
 }
 
