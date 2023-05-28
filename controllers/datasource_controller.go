@@ -33,6 +33,7 @@ import (
 	client2 "github.com/grafana-operator/grafana-operator/v5/controllers/client"
 	gapi "github.com/grafana/grafana-api-golang-client"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -280,11 +281,6 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		return err
 	}
 
-	id, err := r.ExistingId(grafanaClient, cr)
-	if err != nil {
-		return err
-	}
-
 	// always use the same uid for CR and datasource
 	cr.Spec.Datasource.UID = string(cr.UID)
 	unmarshalledDatasource, hash, err := r.getDatasourceContent(ctx, cr)
@@ -292,38 +288,46 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		return err
 	}
 
-	switch {
-	case id == nil:
-		_, err = grafanaClient.NewDataSource(unmarshalledDatasource)
-		if err != nil && !strings.Contains(err.Error(), "status: 409") {
-			return err
-		}
-	case !cr.Unchanged(hash):
+	exists, err := r.Exists(grafanaClient, cr)
+	if err != nil {
+		return err
+	}
+
+	if exists && cr.Unchanged(hash) && !cr.ResyncPeriodHasElapsed() {
+		return nil
+	}
+
+	if exists {
 		err := grafanaClient.UpdateDataSource(unmarshalledDatasource)
 		if err != nil {
 			return err
 		}
-	default:
-		// datasource exists and is unchanged, nothing to do
-		return nil
+	} else {
+		_, err = grafanaClient.NewDataSource(unmarshalledDatasource)
+		if err != nil && !strings.Contains(err.Error(), "status: 409") {
+			return err
+		}
 	}
 
 	grafana.Status.Datasources = grafana.Status.Datasources.Add(cr.Namespace, cr.Name, string(cr.UID))
 	cr.Status.Hash = hash
+	cr.Status.LastResync = metav1.Time{Time: time.Now()}
 	return r.Client.Status().Update(ctx, cr)
 }
 
-func (r *GrafanaDatasourceReconciler) ExistingId(client *gapi.Client, cr *v1beta1.GrafanaDatasource) (*int64, error) {
+func (r *GrafanaDatasourceReconciler) Exists(client *gapi.Client, cr *v1beta1.GrafanaDatasource) (bool, error) {
 	datasources, err := client.DataSources()
 	if err != nil {
-		return nil, err
+		return false, err
 	}
+
 	for _, datasource := range datasources {
 		if datasource.UID == string(cr.UID) {
-			return &datasource.ID, nil
+			return true, nil
 		}
 	}
-	return nil, nil
+
+	return false, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

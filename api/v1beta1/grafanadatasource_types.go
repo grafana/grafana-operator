@@ -99,6 +99,8 @@ type GrafanaDatasourceStatus struct {
 	LastMessage string `json:"lastMessage,omitempty"`
 	// The datasource instanceSelector can't find matching grafana instances
 	NoMatchingInstances bool `json:"NoMatchingInstances,omitempty"`
+	// Last time the datasource was resynced
+	LastResync metav1.Time `json:"lastResync,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -106,6 +108,7 @@ type GrafanaDatasourceStatus struct {
 
 // GrafanaDatasource is the Schema for the grafanadatasources API
 // +kubebuilder:printcolumn:name="No matching instances",type="boolean",JSONPath=".status.NoMatchingInstances",description=""
+// +kubebuilder:printcolumn:name="Last resync",type="date",format="date-time",JSONPath=".status.lastResync",description=""
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""
 type GrafanaDatasource struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -137,6 +140,11 @@ func (in *GrafanaDatasource) GetResyncPeriod() time.Duration {
 	}
 
 	return duration
+}
+
+func (in *GrafanaDatasource) ResyncPeriodHasElapsed() bool {
+	deadline := in.Status.LastResync.Add(in.GetResyncPeriod())
+	return time.Now().After(deadline)
 }
 
 func (in *GrafanaDatasource) Unchanged(hash string) bool {

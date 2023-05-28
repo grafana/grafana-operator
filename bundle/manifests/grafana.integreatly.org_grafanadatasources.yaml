@@ -18,6 +18,10 @@ spec:
     - jsonPath: .status.NoMatchingInstances
       name: No matching instances
       type: boolean
+    - format: date-time
+      jsonPath: .status.lastResync
+      name: Last resync
+      type: date
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
@@ -154,6 +158,9 @@ spec:
               hash:
                 type: string
               lastMessage:
+                type: string
+              lastResync:
+                format: date-time
                 type: string
             type: object
         type: object
