@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -215,10 +216,10 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	// if the datasource was successfully synced in all instances, wait for its re-sync period
 	if success {
 		datasource.Status.LastMessage = ""
-		return ctrl.Result{RequeueAfter: datasource.GetResyncPeriod()}, r.UpdateStatus(ctx, datasource)
+		return ctrl.Result{RequeueAfter: datasource.GetResyncPeriod()}, r.Client.Status().Update(ctx, datasource)
 	} else {
 		// if there was an issue with the datasource, update the status
-		return ctrl.Result{RequeueAfter: RequeueDelay}, r.UpdateStatus(ctx, datasource)
+		return ctrl.Result{RequeueAfter: RequeueDelay}, r.Client.Status().Update(ctx, datasource)
 	}
 }
 
@@ -286,7 +287,7 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 
 	// always use the same uid for CR and datasource
 	cr.Spec.Datasource.UID = string(cr.UID)
-	unmarshalledDatasource, err := r.getDatasourceContent(ctx, cr)
+	unmarshalledDatasource, hash, err := r.getDatasourceContent(ctx, cr)
 	if err != nil {
 		return err
 	}
@@ -297,7 +298,7 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		if err != nil && !strings.Contains(err.Error(), "status: 409") {
 			return err
 		}
-	case !cr.Unchanged():
+	case !cr.Unchanged(hash):
 		err := grafanaClient.UpdateDataSource(unmarshalledDatasource)
 		if err != nil {
 			return err
@@ -307,17 +308,8 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		return nil
 	}
 
-	err = r.UpdateStatus(ctx, cr)
-	if err != nil {
-		return err
-	}
-
 	grafana.Status.Datasources = grafana.Status.Datasources.Add(cr.Namespace, cr.Name, string(cr.UID))
-	return r.Client.Status().Update(ctx, grafana)
-}
-
-func (r *GrafanaDatasourceReconciler) UpdateStatus(ctx context.Context, cr *v1beta1.GrafanaDatasource) error {
-	cr.Status.Hash = cr.Hash()
+	cr.Status.Hash = hash
 	return r.Client.Status().Update(ctx, cr)
 }
 
@@ -388,37 +380,40 @@ func (r *GrafanaDatasourceReconciler) GetMatchingDatasourceInstances(ctx context
 	return instances, err
 }
 
-func (r *GrafanaDatasourceReconciler) getDatasourceContent(ctx context.Context, cr *v1beta1.GrafanaDatasource) (*gapi.DataSource, error) {
+func (r *GrafanaDatasourceReconciler) getDatasourceContent(ctx context.Context, cr *v1beta1.GrafanaDatasource) (*gapi.DataSource, string, error) {
 	initialBytes, err := json.Marshal(cr.Spec.Datasource)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	simpleContent, err := simplejson.NewJson(initialBytes)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	for _, ref := range cr.Spec.ValuesFrom {
 		val, err := r.getReferencedValue(ctx, cr, &ref.ValueFrom)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 		simpleContent.SetPath(strings.Split(ref.TargetPath, "."), val)
 	}
 
 	newBytes, err := simpleContent.MarshalJSON()
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	var res gapi.DataSource
 
 	err = json.Unmarshal(newBytes, &res)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	return &res, nil
+	hash := sha256.New()
+	hash.Write(newBytes)
+
+	return &res, fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
 
 func (r *GrafanaDatasourceReconciler) getReferencedValue(ctx context.Context, cr *v1beta1.GrafanaDatasource, source *v1beta1.GrafanaDatasourceValueFromSource) (string, error) {
