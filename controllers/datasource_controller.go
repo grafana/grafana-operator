@@ -200,8 +200,8 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 		// Clean up uid, so further reconcilications can track changes there
 		cr.Status.UID = ""
-		err = r.Client.Status().Update(ctx, cr)
 
+		err = r.Client.Status().Update(ctx, cr)
 		if err != nil {
 			return ctrl.Result{RequeueAfter: RequeueDelay}, err
 		}
@@ -424,7 +424,6 @@ func (r *GrafanaDatasourceReconciler) getDatasourceContent(ctx context.Context, 
 		return nil, "", err
 	}
 
-	// TODO: test
 	if cr.Spec.Datasource.UID == "" {
 		simpleContent.Set("uid", string(cr.UID))
 	}
