@@ -192,13 +192,13 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
-	dashboardFromJson, hash, err := r.prepareDashboardModel(cr, dashboardJson)
+	dashboardModel, hash, err := r.getDashboardModel(cr, dashboardJson)
 	if err != nil {
 		controllerLog.Error(err, "failed to prepare dashboard model", "dashboard", cr.Name)
 		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
-	uid := fmt.Sprintf("%s", dashboardFromJson["uid"])
+	uid := fmt.Sprintf("%s", dashboardModel["uid"])
 
 	// Garbage collection for a case where dashboard uid get changed, dashboard creation is expected to happen in a separate reconcilication cycle
 	if cr.IsUpdatedUID(uid) {
@@ -247,7 +247,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 
 		// then import the dashboard into the matching grafana instances
-		err = r.onDashboardCreated(ctx, &grafana, cr, dashboardFromJson, hash)
+		err = r.onDashboardCreated(ctx, &grafana, cr, dashboardModel, hash)
 		if err != nil {
 			controllerLog.Error(err, "error reconciling dashboard", "dashboard", cr.Name, "grafana", grafana.Name)
 			success = false
@@ -326,7 +326,7 @@ func (r *GrafanaDashboardReconciler) onDashboardDeleted(ctx context.Context, nam
 	return nil
 }
 
-func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDashboard, dashboardFromJson map[string]interface{}, hash string) error {
+func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDashboard, dashboardModel map[string]interface{}, hash string) error {
 	if grafana.IsExternal() && cr.Spec.Plugins != nil {
 		return fmt.Errorf("external grafana instances don't support plugins, please remove spec.plugins from your dashboard cr")
 	}
@@ -337,7 +337,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	}
 
 	// update/create the dashboard if it doesn't exist in the instance or has been changed
-	uid := fmt.Sprintf("%s", dashboardFromJson["uid"])
+	uid := fmt.Sprintf("%s", dashboardModel["uid"])
 	exists, err := r.Exists(grafanaClient, uid)
 	if err != nil {
 		return err
@@ -358,7 +358,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 			Slug:      cr.Name,
 			Folder:    folderID,
 		},
-		Model:     dashboardFromJson,
+		Model:     dashboardModel,
 		FolderID:  folderID,
 		Overwrite: true,
 		Message:   "",
@@ -424,8 +424,8 @@ func (r *GrafanaDashboardReconciler) fetchDashboardJson(dashboard *v1beta1.Grafa
 	}
 }
 
-// prepareDashboardModel resolves datasources, updates uid (if needed) and converts raw json to type grafana client accepts
-func (r *GrafanaDashboardReconciler) prepareDashboardModel(cr *v1beta1.GrafanaDashboard, dashboardJson []byte) (map[string]interface{}, string, error) {
+// getDashboardModel resolves datasources, updates uid (if needed) and converts raw json to type grafana client accepts
+func (r *GrafanaDashboardReconciler) getDashboardModel(cr *v1beta1.GrafanaDashboard, dashboardJson []byte) (map[string]interface{}, string, error) {
 	dashboardJson, err := r.resolveDatasources(cr, dashboardJson)
 	if err != nil {
 		return map[string]interface{}{}, "", err
@@ -434,20 +434,20 @@ func (r *GrafanaDashboardReconciler) prepareDashboardModel(cr *v1beta1.GrafanaDa
 	hash := sha256.New()
 	hash.Write(dashboardJson)
 
-	var dashboardFromJson map[string]interface{}
-	err = json.Unmarshal(dashboardJson, &dashboardFromJson)
+	var dashboardModel map[string]interface{}
+	err = json.Unmarshal(dashboardJson, &dashboardModel)
 	if err != nil {
 		return map[string]interface{}{}, "", err
 	}
 
-	uid, _ := dashboardFromJson["uid"].(string) //nolint:errcheck
+	uid, _ := dashboardModel["uid"].(string) //nolint:errcheck
 	if uid == "" {
 		uid = string(cr.UID)
 	}
 
-	dashboardFromJson["uid"] = uid
+	dashboardModel["uid"] = uid
 
-	return dashboardFromJson, fmt.Sprintf("%x", hash.Sum(nil)), nil
+	return dashboardModel, fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
 
 func (r *GrafanaDashboardReconciler) Exists(client *grapi.Client, uid string) (bool, error) {
