@@ -158,6 +158,10 @@ func (in *GrafanaDatasource) IsUpdatedUID(uid string) bool {
 		return false
 	}
 
+	if uid == "" {
+		uid = string(in.UID)
+	}
+
 	return in.Status.UID != uid
 }
 
