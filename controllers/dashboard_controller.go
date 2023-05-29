@@ -336,20 +336,32 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return err
 	}
 
-	// update/create the dashboard if it doesn't exist in the instance or has been changed
+	folderID, err := r.GetOrCreateFolder(grafanaClient, cr)
+	if err != nil {
+		return errors.NewInternalError(err)
+	}
+
 	uid := fmt.Sprintf("%s", dashboardModel["uid"])
-	exists, err := r.Exists(grafanaClient, uid)
+	title := fmt.Sprintf("%s", dashboardModel["title"])
+
+	exists, remoteUID, err := r.Exists(grafanaClient, uid, title, folderID)
 	if err != nil {
 		return err
 	}
 
-	if exists && cr.Unchanged(hash) && !cr.ResyncPeriodHasElapsed() {
-		return nil
+	if exists && remoteUID != uid {
+		// If there's already a dashboard with the same title in the same folder, grafana preserves that dashboard's uid, so we should remove it first
+		r.Log.Info("found dashboard with the same title (in the same folder) but different uid, removing the dashboard before recreating it with a new uid")
+		err = grafanaClient.DeleteDashboardByUID(remoteUID)
+		if err != nil {
+			return err
+		}
+
+		exists = false
 	}
 
-	folderID, err := r.GetOrCreateFolder(grafanaClient, cr)
-	if err != nil {
-		return errors.NewInternalError(err)
+	if exists && cr.Unchanged(hash) && !cr.ResyncPeriodHasElapsed() {
+		return nil
 	}
 
 	resp, err := grafanaClient.NewDashboard(grapi.Dashboard{
@@ -371,9 +383,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return errors.NewBadRequest(fmt.Sprintf("error creating dashboard, status was %v", resp.Status))
 	}
 
-	// TODO: do we need to change anything here?
-	// NOTE: When dashboard is uploaded with a new dashboardFromJson["uid"], but with an old name, the old uid is preserved. So, better to rely on the resp.UID here
-	grafana.Status.Dashboards = grafana.Status.Dashboards.Add(cr.Namespace, cr.Name, resp.UID)
+	grafana.Status.Dashboards = grafana.Status.Dashboards.Add(cr.Namespace, cr.Name, uid)
 	return r.Client.Status().Update(ctx, grafana)
 }
 
@@ -450,17 +460,19 @@ func (r *GrafanaDashboardReconciler) getDashboardModel(cr *v1beta1.GrafanaDashbo
 	return dashboardModel, fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
 
-func (r *GrafanaDashboardReconciler) Exists(client *grapi.Client, uid string) (bool, error) {
+func (r *GrafanaDashboardReconciler) Exists(client *grapi.Client, uid string, title string, folderID int64) (bool, string, error) {
 	dashboards, err := client.Dashboards()
 	if err != nil {
-		return false, err
+		return false, "", err
 	}
+
 	for _, dashboard := range dashboards {
-		if dashboard.UID == uid {
-			return true, nil
+		if dashboard.UID == uid || (dashboard.Title == title && dashboard.FolderID == uint(folderID)) {
+			return true, dashboard.UID, nil
 		}
 	}
-	return false, nil
+
+	return false, "", nil
 }
 
 func (r *GrafanaDashboardReconciler) GetOrCreateFolder(client *grapi.Client, cr *v1beta1.GrafanaDashboard) (int64, error) {
