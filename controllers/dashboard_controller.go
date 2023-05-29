@@ -354,7 +354,9 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		r.Log.Info("found dashboard with the same title (in the same folder) but different uid, removing the dashboard before recreating it with a new uid")
 		err = grafanaClient.DeleteDashboardByUID(remoteUID)
 		if err != nil {
-			return err
+			if !strings.Contains(err.Error(), "status: 404") {
+				return err
+			}
 		}
 
 		exists = false
