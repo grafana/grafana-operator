@@ -245,7 +245,7 @@ KO=$(shell which ko)
 endif
 
 export KO_DOCKER_REPO ?= ko.local/grafana-operator/grafana-operator
-export KIND_CLUSTER_NAME ?= kind
+export KIND_CLUSTER_NAME ?= kind-grafana
 
 # If you want to push ko to your local Docker daemon
 .PHONY: ko-build-local
