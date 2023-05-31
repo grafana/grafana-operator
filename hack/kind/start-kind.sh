@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-KIND_CLUSTER_NAME=${KIND_CLUSTER_NAME:-kind}
+KIND_CLUSTER_NAME=${KIND_CLUSTER_NAME:-kind-grafana}
 KUBECONFIG=${KUBECONFIG:-~/.kube/kind-grafana-operator}
 
 set -eu
