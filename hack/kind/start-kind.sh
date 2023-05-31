@@ -43,6 +43,7 @@ echo ""
 echo "###############################"
 echo "# 3. Install CRDs             #"
 echo "###############################"
+pushd "${SCRIPT_DIR}/../.."
 make install
 sleep 2
 
