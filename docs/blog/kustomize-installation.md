@@ -6,7 +6,7 @@ linkTitle: "Install Grafana-operator using Flux and Kustomize"
 description: "How to install grafana-operator using Flux and Kustomize"
 ---
 
-As a part of grafana-operator v5.0.0-rc1 we introduce Kustomize as a way of installing the operator.
+As a part of grafana-operator v5.0.0-rc3 we introduce Kustomize as a way of installing the operator.
 
 To showcase this new feature, I thought why not use GitOps?
 
@@ -131,7 +131,7 @@ If you want to install the grafana-operator without using GitOps, you can also d
 For example, you can run the following Flux command to download the artifact and unpack it. Then you can run a normal kubectl apply command.
 
 ```shell
-flux pull artifact oci://ghcr.io/grafana-operator/kustomize/grafana-operator:v5.0.0-rc1 --output ./grafana-opreator
+flux pull artifact oci://ghcr.io/grafana-operator/kustomize/grafana-operator:v5.0.0-rc3 -output ./grafana-opreator
 ```
 
 But of course we recommend that you manage your grafana-operator installation through your GitOps solution, no matter if it's Flux or some other solution.
