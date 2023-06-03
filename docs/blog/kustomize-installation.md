@@ -6,7 +6,7 @@ linkTitle: "Install Grafana-operator using Flux and Kustomize"
 description: "How to install grafana-operator using Flux and Kustomize"
 ---
 
-As a part of grafana-operator v5.0.0-rc3 we introduce Kustomize as a way of installing the operator.
+As a part of grafana-operator v5.0.0-rc1 we introduce Kustomize as a way of installing the operator.
 
 To showcase this new feature, I thought why not use GitOps?
 
