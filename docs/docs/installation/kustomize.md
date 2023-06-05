@@ -16,7 +16,7 @@ After you have downloaded Flux you can use `flux pull artifact` to download the 
 
 ```shell
 mkdir grafana-operator
-flux pull artifact oci://ghcr.io/grafana-operator/kustomize/grafana-operator:v5.0.0-rc1 --output ./grafana-operator/
+flux pull artifact oci://ghcr.io/grafana-operator/kustomize/grafana-operator:v5.0.0-rc3 --output ./grafana-operator/
 ```
 
 This will provide you the manifest files unpacked and ready to use.

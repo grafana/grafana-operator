@@ -61,6 +61,8 @@ spec:
                 x-kubernetes-map-type: atomic
               permissions:
                 type: string
+              resyncPeriod:
+                type: string
               title:
                 type: string
             required:
