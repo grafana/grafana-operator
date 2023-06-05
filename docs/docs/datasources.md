@@ -27,8 +27,17 @@ kind: GrafanaDatasource
 metadata:
   name: grafanadatasource-sample
 spec:
-  secrets:
-    - credentials # Reference to the secret name
+  valuesFrom:
+    - targetPath: "user"
+      valueFrom:
+        secretKeyRef:
+          name: "credentials"
+          key: "PROMETHEUS_USERNAME"
+    - targetPath: "secureJsonData.password"
+      valueFrom:
+        secretKeyRef:
+          name: "credentials"
+          key: "PROMETHEUS_PASSWORD"
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
