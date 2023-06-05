@@ -36,14 +36,15 @@ The operator is able to work with external Grafana instances (pretty much any Sa
 The `grafana.spec.external` allows you to set a URL and provide credentials for external Grafana. Example:
 
 ```yaml
+---
 kind: Secret
- apiVersion: v1
- metadata:
-   name: grafana-admin-credentials
- stringData:
-   GF_SECURITY_ADMIN_USER: root # Username
-   GF_SECURITY_ADMIN_PASSWORD: secret # Password
- type: Opaque
+apiVersion: v1
+metadata:
+  name: grafana-admin-credentials
+stringData:
+  GF_SECURITY_ADMIN_USER: root # Username
+  GF_SECURITY_ADMIN_PASSWORD: secret # Password
+type: Opaque
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: Grafana
