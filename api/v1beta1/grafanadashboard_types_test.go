@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 func TestGrafanaDashboardStatus_getContentCache(t *testing.T) {
@@ -100,4 +101,84 @@ func Test_Gzip(t *testing.T) {
 	assert.Nil(t, err, "Failed to decompress a dashboard")
 
 	assert.Equal(t, dashboardJSON, decompressed, "Decompressed dashboard should match the original")
+}
+
+func TestGrafanaDashboardIsUpdatedUID(t *testing.T) {
+	crUID := "crUID"
+	tests := []struct {
+		name         string
+		crUID        string
+		statusUID    string
+		dashboardUID string
+		want         bool
+	}{
+		{
+			name:         "Status.UID and dashboard UID are empty",
+			crUID:        crUID,
+			statusUID:    "",
+			dashboardUID: "newUID",
+			want:         false,
+		},
+		{
+			name:         "Status.UID is empty, dashboard UID is not",
+			crUID:        crUID,
+			statusUID:    "",
+			dashboardUID: "newUID",
+			want:         false,
+		},
+		{
+			name:         "Status.UID is not empty (same as CR uid), new UID is empty",
+			crUID:        crUID,
+			statusUID:    crUID,
+			dashboardUID: "",
+			want:         false,
+		},
+		{
+			name:         "Status.UID is not empty (different from CR uid), new UID is empty",
+			crUID:        crUID,
+			statusUID:    "oldUID",
+			dashboardUID: "",
+			want:         true,
+		},
+		{
+			name:         "Status.UID is not empty, new UID is different",
+			crUID:        crUID,
+			statusUID:    "oldUID",
+			dashboardUID: "newUID",
+			want:         true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cr := getDashboardCR(t, tt.crUID, tt.statusUID)
+			got := cr.IsUpdatedUID(tt.dashboardUID)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func getDashboardCR(t *testing.T, crUID string, statusUID string) GrafanaDashboard {
+	t.Helper()
+
+	cr := GrafanaDashboard{
+		TypeMeta: metav1.TypeMeta{},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "mydashboard",
+			Namespace: "grafana-operator-system",
+			UID:       types.UID(crUID),
+		},
+		Spec: GrafanaDashboardSpec{
+			InstanceSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"dashboard": "grafana",
+				},
+			},
+		},
+		Status: GrafanaDashboardStatus{
+			UID: statusUID,
+		},
+	}
+
+	return cr
 }
