@@ -19,9 +19,6 @@ package v1beta1
 import (
 	"bytes"
 	"compress/gzip"
-	"crypto/sha256"
-	"encoding/json"
-	"fmt"
 	"io"
 	"time"
 
@@ -140,12 +137,6 @@ type GrafanaDashboardList struct {
 	Items           []GrafanaDashboard `json:"items"`
 }
 
-func (in *GrafanaDashboard) Hash(dashboardJson []byte) string {
-	hash := sha256.New()
-	hash.Write(dashboardJson)
-	return fmt.Sprintf("%x", hash.Sum(nil))
-}
-
 func (in *GrafanaDashboard) Unchanged(hash string) bool {
 	return in.Status.Hash == hash
 }
@@ -226,28 +217,17 @@ func (in *GrafanaDashboard) IsAllowCrossNamespaceImport() bool {
 	return false
 }
 
-func (in *GrafanaDashboard) IsUpdatedUID(dashboardJson []byte) bool {
+func (in *GrafanaDashboard) IsUpdatedUID(uid string) bool {
 	// Dashboard has just been created, status is not yet updated
 	if in.Status.UID == "" {
 		return false
 	}
 
-	type DashboardUID struct {
-		UID string `json:"uid,omitempty"`
+	if uid == "" {
+		uid = string(in.UID)
 	}
 
-	dashboardUID := DashboardUID{}
-	err := json.Unmarshal(dashboardJson, &dashboardUID)
-	// here, we don't really care about catching json errors
-	if err != nil {
-		return false
-	}
-
-	if dashboardUID.UID == "" {
-		dashboardUID.UID = string(in.UID)
-	}
-
-	return in.Status.UID != dashboardUID.UID
+	return in.Status.UID != uid
 }
 
 func Gunzip(compressed []byte) ([]byte, error) {
