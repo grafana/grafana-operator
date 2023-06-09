@@ -18,7 +18,6 @@ package v1beta1
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -100,6 +99,9 @@ type GrafanaDatasourceStatus struct {
 	LastMessage string `json:"lastMessage,omitempty"`
 	// The datasource instanceSelector can't find matching grafana instances
 	NoMatchingInstances bool `json:"NoMatchingInstances,omitempty"`
+	// Last time the datasource was resynced
+	LastResync metav1.Time `json:"lastResync,omitempty"`
+	UID        string      `json:"uid,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -107,6 +109,7 @@ type GrafanaDatasourceStatus struct {
 
 // GrafanaDatasource is the Schema for the grafanadatasources API
 // +kubebuilder:printcolumn:name="No matching instances",type="boolean",JSONPath=".status.NoMatchingInstances",description=""
+// +kubebuilder:printcolumn:name="Last resync",type="date",format="date-time",JSONPath=".status.lastResync",description=""
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""
 type GrafanaDatasource struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -125,52 +128,6 @@ type GrafanaDatasourceList struct {
 	Items           []GrafanaDatasource `json:"items"`
 }
 
-func (in *GrafanaDatasource) Hash() string {
-	hash := sha256.New()
-
-	if in.Spec.Datasource != nil {
-		hash.Write([]byte(in.Spec.Datasource.Name))
-		hash.Write([]byte(in.Spec.Datasource.Access))
-		hash.Write([]byte(in.Spec.Datasource.BasicAuthUser))
-		hash.Write(in.Spec.Datasource.JSONData)
-		hash.Write(in.Spec.Datasource.SecureJSONData)
-		hash.Write([]byte(in.Spec.Datasource.Database))
-		hash.Write([]byte(in.Spec.Datasource.Type))
-		hash.Write([]byte(in.Spec.Datasource.User))
-		hash.Write([]byte(in.Spec.Datasource.URL))
-
-		for _, valueRef := range in.Spec.ValuesFrom {
-			hash.Write([]byte(valueRef.TargetPath))
-			if valueRef.ValueFrom.ConfigMapKeyRef != nil {
-				hash.Write([]byte(valueRef.ValueFrom.ConfigMapKeyRef.Name))
-				hash.Write([]byte(valueRef.ValueFrom.ConfigMapKeyRef.Key))
-			}
-			if valueRef.ValueFrom.SecretKeyRef != nil {
-				hash.Write([]byte(valueRef.ValueFrom.SecretKeyRef.Name))
-				hash.Write([]byte(valueRef.ValueFrom.SecretKeyRef.Key))
-			}
-		}
-
-		if in.Spec.Datasource.BasicAuth != nil && *in.Spec.Datasource.BasicAuth {
-			hash.Write([]byte("_"))
-		}
-
-		if in.Spec.Datasource.IsDefault != nil && *in.Spec.Datasource.IsDefault {
-			hash.Write([]byte("_"))
-		}
-
-		if in.Spec.Datasource.OrgID != nil {
-			hash.Write([]byte(fmt.Sprint(*in.Spec.Datasource.OrgID)))
-		}
-
-		if in.Spec.Datasource.Editable != nil && *in.Spec.Datasource.Editable {
-			hash.Write([]byte("_"))
-		}
-	}
-
-	return fmt.Sprintf("%x", hash.Sum(nil))
-}
-
 func (in *GrafanaDatasource) GetResyncPeriod() time.Duration {
 	if in.Spec.ResyncPeriod == "" {
 		in.Spec.ResyncPeriod = DefaultResyncPeriod
@@ -186,8 +143,26 @@ func (in *GrafanaDatasource) GetResyncPeriod() time.Duration {
 	return duration
 }
 
-func (in *GrafanaDatasource) Unchanged() bool {
-	return in.Hash() == in.Status.Hash
+func (in *GrafanaDatasource) ResyncPeriodHasElapsed() bool {
+	deadline := in.Status.LastResync.Add(in.GetResyncPeriod())
+	return time.Now().After(deadline)
+}
+
+func (in *GrafanaDatasource) Unchanged(hash string) bool {
+	return in.Status.Hash == hash
+}
+
+func (in *GrafanaDatasource) IsUpdatedUID(uid string) bool {
+	// Datasource has just been created, status is not yet updated
+	if in.Status.UID == "" {
+		return false
+	}
+
+	if uid == "" {
+		uid = string(in.UID)
+	}
+
+	return in.Status.UID != uid
 }
 
 func (in *GrafanaDatasource) ExpandVariables(variables map[string][]byte) ([]byte, error) {
