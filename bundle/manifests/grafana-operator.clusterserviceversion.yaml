@@ -405,6 +405,7 @@ spec:
   - name: Grafana Operator
     url: https://grafana-operator.domain
   maturity: alpha
+  minKubeVersion: 1.23.0
   provider:
     name: Red Hat
   version: 5.0.0
