@@ -6,8 +6,6 @@ linkTitle: "Version 5 getting started"
 description: "How to get started with version 5 of the operator?"
 ---
 
-This blog is initially written for version 5-rc3, we will try to continuously update it to match any changes that we do before releasing version 5.0.0.
-
 It might be a good idea to read through the [version 5 introduction](v5-intro.md) which goes through a bit more about the new concepts that we have introduced in this version.
 In this blog we will focus on how to install version 5 of the grafana-operator.
 
@@ -78,7 +76,7 @@ We are hosting our Helm chart in an OCI repo so it's a bit different from what y
 notice the `oci://` part of the URL.
 
 ```shell
-helm upgrade -i grafana-operator oci://ghcr.io/grafana-operator/helm-charts/grafana-operator --version v5.0.0-rc3 -n grafana-operator
+helm upgrade -i grafana-operator oci://ghcr.io/grafana-operator/helm-charts/grafana-operator --version {{<param version>}} -n grafana-operator
 ```
 
 ## Use operator
