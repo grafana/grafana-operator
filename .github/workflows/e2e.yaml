@@ -66,7 +66,7 @@ jobs:
           kind create cluster --image=kindest/node:v1.25.3 --config tests/e2e/kind.yaml
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2.5.0
+        uses: docker/setup-buildx-action@v2.6.0
 
       - name: Build and load (current arch)
         env:
