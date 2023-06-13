@@ -8,7 +8,7 @@ metadata:
     containerImage: ghcr.io/grafana-operator/grafana-operator:v5.0.0
     createdAt: "2023-06-09T00:00:00Z"
     repository: https://github.com/grafana-operator/grafana-operator
-    support: Red Hat
+    support: Community
   name: grafana-operator.v0.0.0
   namespace: placeholder
 spec:
