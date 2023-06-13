@@ -93,8 +93,13 @@ metadata:
         }
       ]
     capabilities: Basic Install
+    categories: Monitoring
+    containerImage: ghcr.io/grafana-operator/grafana-operator:v5.0.0
+    createdAt: "2023-06-09T00:00:00Z"
     operators.operatorframework.io/builder: operator-sdk-v1.22.2
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+    repository: https://github.com/grafana-operator/grafana-operator
+    support: Community
   name: grafana-operator.v5.0.0
   namespace: placeholder
 spec:
