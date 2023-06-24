@@ -85,7 +85,7 @@ jobs:
 
       - uses: ko-build/setup-ko@v0.6
         with:
-          version: v0.13.0
+          version: v0.14.1
 
       - name: Prepare
         run: |
@@ -104,5 +104,4 @@ jobs:
             --image-label org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }} \
             --image-label org.opencontainers.image.revision=${{ github.sha }} \
             --image-label org.opencontainers.image.version=${{ github.ref_name }} \
-            --image-label org.opencontainers.image.created=${{ env.BUILD_DATE }} \
-            --insecure-registry
+            --image-label org.opencontainers.image.created=${{ env.BUILD_DATE }}
