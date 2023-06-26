@@ -454,6 +454,10 @@ func (r *GrafanaDashboardReconciler) getDashboardModel(cr *v1beta1.GrafanaDashbo
 		return map[string]interface{}{}, "", err
 	}
 
+	// NOTE: id should never be hardcoded in a dashboard, otherwise grafana will try to update a dashboard by id instead of uid.
+	//       And, in case the id is non-existent, grafana will respond with 404. https://github.com/grafana-operator/grafana-operator/issues/1108
+	dashboardModel["id"] = nil
+
 	uid, _ := dashboardModel["uid"].(string) //nolint:errcheck
 	if uid == "" {
 		uid = string(cr.UID)
