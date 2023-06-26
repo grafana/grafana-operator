@@ -3,7 +3,7 @@ module github.com/grafana-operator/grafana-operator/v5
 go 1.19
 
 require (
-	github.com/bitly/go-simplejson v0.5.0
+	github.com/bitly/go-simplejson v0.5.1
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/go-logr/logr v1.2.4
 	github.com/google/go-jsonnet v0.20.0
@@ -20,10 +20,7 @@ require (
 	sigs.k8s.io/controller-runtime v0.13.0
 )
 
-require (
-	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
-	github.com/rogpeppe/go-internal v1.10.0 // indirect
-)
+require github.com/rogpeppe/go-internal v1.10.0 // indirect
 
 require (
 	cloud.google.com/go v0.97.0 // indirect
