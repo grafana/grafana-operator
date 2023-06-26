@@ -256,8 +256,10 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	// if the dashboard was successfully synced in all instances, wait for its re-sync period
 	if success {
+		if cr.ResyncPeriodHasElapsed() {
+			cr.Status.LastResync = metav1.Time{Time: time.Now()}
+		}
 		cr.Status.Hash = hash
-		cr.Status.LastResync = metav1.Time{Time: time.Now()}
 		cr.Status.UID = uid
 		return ctrl.Result{RequeueAfter: cr.GetResyncPeriod()}, r.Client.Status().Update(ctx, cr)
 	}
@@ -451,6 +453,10 @@ func (r *GrafanaDashboardReconciler) getDashboardModel(cr *v1beta1.GrafanaDashbo
 	if err != nil {
 		return map[string]interface{}{}, "", err
 	}
+
+	// NOTE: id should never be hardcoded in a dashboard, otherwise grafana will try to update a dashboard by id instead of uid.
+	//       And, in case the id is non-existent, grafana will respond with 404. https://github.com/grafana-operator/grafana-operator/issues/1108
+	dashboardModel["id"] = nil
 
 	uid, _ := dashboardModel["uid"].(string) //nolint:errcheck
 	if uid == "" {

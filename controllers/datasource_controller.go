@@ -250,7 +250,9 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	if success {
 		cr.Status.LastMessage = ""
 		cr.Status.Hash = hash
-		cr.Status.LastResync = metav1.Time{Time: time.Now()}
+		if cr.ResyncPeriodHasElapsed() {
+			cr.Status.LastResync = metav1.Time{Time: time.Now()}
+		}
 		cr.Status.UID = datasource.UID
 		return ctrl.Result{RequeueAfter: cr.GetResyncPeriod()}, r.Client.Status().Update(ctx, cr)
 	} else {
