@@ -23,7 +23,8 @@ kind --kubeconfig "${KUBECONFIG}" create cluster \
   --wait 120s \
   --config="${SCRIPT_DIR}/resources/cluster.yaml"
 
-kubectl label ns default grafana=grafana
+kubectl --kubeconfig "${KUBECONFIG}" \
+  label ns default grafana=grafana
 
 # Install ingress-nginx
 echo ""
@@ -44,7 +45,7 @@ echo "###############################"
 echo "# 3. Install CRDs             #"
 echo "###############################"
 pushd "${SCRIPT_DIR}/../.."
-make install
+KUBECONFIG="${KUBECONFIG}" make install
 sleep 2
 
 # Setup a grafana objects in default namespace
@@ -56,8 +57,10 @@ kubectl --kubeconfig="${KUBECONFIG}" \
   apply -k "${SCRIPT_DIR}/resources/default/"
 
 # Create an extra namespace for CRDs
-kubectl create ns "${CRD_NS}"
-kubectl label ns "${CRD_NS}" grafanacrd=grafana --overwrite
+kubectl --kubeconfig "${KUBECONFIG}" \
+  create ns "${CRD_NS}"
+kubectl --kubeconfig "${KUBECONFIG}" \
+  label ns "${CRD_NS}" grafanacrd=grafana --overwrite
 
 # Setup a grafana objects in specific ns
 echo ""
