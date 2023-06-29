@@ -42,82 +42,22 @@ When adding a grafanadashboard to our grafana instances through the operator and
 
 There are multiple ways of doing so but this is one of them using [kind](https://kind.sigs.k8s.io/docs/user/ingress/#create-cluster).
 
-```shell
-cat <<EOF | kind create cluster --config=-
-kind: Cluster
-apiVersion: kind.x-k8s.io/v1alpha4
-nodes:
-- role: control-plane
-  kubeadmConfigPatches:
-  - |
-    kind: InitConfiguration
-    nodeRegistration:
-      kubeletExtraArgs:
-        node-labels: "ingress-ready=true"
-  extraPortMappings:
-  - containerPort: 80
-    hostPort: 80
-    protocol: TCP
-  - containerPort: 443
-    hostPort: 443
-    protocol: TCP
-EOF
-```
+There is a make target `start-kind` which will start a new instance of a
+[kind cluster](https://kind.sigs.k8s.io/docs/user/ingress/#create-cluster)
+with dependencies (currently only ingress-nginx) and install the CRDs.
 
-When the kind cluster is up and running setup your ingress.
+Two namespaces will be used, `default` and `grafana-crds` (name can be customized with CRD_NS environment variable).
+Any resource placed in `hack/kind/resources/[default|crd-ns]/` will be installed in the respective namespace.
+
+Notice the `spec.client.preferIngress: true` in the `hack/kind/resources/default/grafana.yaml`,
+which makes the grafana client in the operator to use the ingress address instead of the service name
+and should only be used during development.
+
+It uses the hostname created using [nip.io](https://nip.io/) which will steer traffic to your local deployment
+through a DNS response (e.g. `nslookup grafana.127.0.0.1.nip.io` will respond with `127.0.0.1`).
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
-```
-
-To get the operator to create a dashboard through the ingress object we have added a feature in the operator.
-
-Notice the `spec.client.preferIngress: true`
-This should only be used during development.
-
-In this example we are using [nip.io](https://nip.io/) which will steer traffic to your local deployment through a DNS response (e.g. `nslookup grafana.127.0.0.1.nip.io` will respond with `127.0.0.1`).
-
-```.yaml
-apiVersion: grafana.integreatly.org/v1beta1
-kind: Grafana
-metadata:
-  name: grafana
-  labels:
-    dashboards: "grafana"
-spec:
-  client:
-    preferIngress: true
-  config:
-    log:
-      mode: "console"
-    auth:
-      disable_login_form: "false"
-    security:
-      admin_user: root
-      admin_password: secret
-  ingress:
-    spec:
-      ingressClassName: nginx
-      rules:
-        - host: grafana.127.0.0.1.nip.io
-          http:
-            paths:
-              - backend:
-                  service:
-                    name: grafana-service
-                    port:
-                      number: 3000
-                path: /
-                pathType: Prefix
-```
-
-This makes the grafana client in the operator to use the ingress address instead of the service name.
-
-```shell
-# Will install the CRD:s
-make install
-# Will run the operator from your console
-make run
+make start-kind
 ```
 
 Now you should be ready to develop the operator.
