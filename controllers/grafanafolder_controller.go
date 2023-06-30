@@ -330,7 +330,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 	}
 
 	// NOTE: it's up to a user to reset permissions with correct json
-	if !cr.Unchanged() && cr.Spec.Permissions != "" {
+	if cr.Spec.Permissions != "" {
 		permissions := grapi.PermissionItems{}
 		err = json.Unmarshal([]byte(cr.Spec.Permissions), &permissions)
 		if err != nil {
