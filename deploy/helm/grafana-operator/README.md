@@ -57,4 +57,6 @@ It's easier to just manage this configuration outside of the operator.
 | serviceAccount.create | bool | `true` | Specifies whether a service account should be created |
 | serviceAccount.name | string | `""` | The name of the service account to use. If not set and create is true, a name is generated using the fullname template |
 | tolerations | list | `[]` | pod tolerations |
+| watchNamespaceCrdLabels | list | `[]` | Sets the WATCH_LABEL_CRD environment variables, it defines which namespaces the operator should be watching for dashboards, dataSources and folders by namespace label. |
+| watchNamespaceLabels | list | `[]` | Sets the WATCH_LABEL environment variables, it defines which namespaces the operator should be watching for by namespace label. |
 | watchNamespaces | string | `""` | Sets the WATCH_NAMESPACE environment variable, it defines which namespaces the operator should be listening for. By default it's all namespaces, if you only want to listen for the same namespace as the operator is deployed to look at namespaceScope. |
