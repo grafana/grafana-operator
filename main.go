@@ -79,7 +79,7 @@ func getWatchNamespaceFromLabelsInEnv(watchLabelEnvVar string) (string, error) {
 
 	ns, err := getNamespacesWithLabel(label)
 	if err != nil {
-		return "", fmt.Errorf("failed to retrieve the namespaces for a label: %s", err)
+		return "", fmt.Errorf("failed to retrieve the namespaces for a label: %w", err)
 	}
 
 	return ns, nil
@@ -220,7 +220,7 @@ func main() {
 	mgrCrd, err := ctrl.NewManager(ctrl.GetConfigOrDie(), controllerOptionsCrd)
 	if err != nil {
 		setupLog.Error(err, "unable to create new CRD manager")
-		os.Exit(1) //nolint
+		os.Exit(1)
 	}
 
 	restConfig := ctrl.GetConfigOrDie()
