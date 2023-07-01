@@ -4,10 +4,3 @@ metadata:
   name: grafana-plugins
 binaryData:
   grafana-dashboard-dashboard: W3sibmFtZSI6ImdyYWZhbmEtcGllY2hhcnQtcGFuZWwiLCJ2ZXJzaW9uIjoiMS4zLjkifV0=
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: grafana-user-envs
-data:
-  CUSTOM_RANGE_ENV: "now-1h"
