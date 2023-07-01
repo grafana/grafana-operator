@@ -10,6 +10,12 @@ leaderElect: false
 # By default it's all namespaces, if you only want to listen for the same namespace as the operator is deployed to look at namespaceScope.
 watchNamespaces: ""
 
+# -- Sets the WATCH_LABEL and WATCH_LABEL_CRD environment variables,
+# it defines which namespaces the operator should be listening for by namespace label.
+# WATCH_LABEL_CRD is used for dashboards, dataSources and folders.
+watchNamespaceLabels: []
+watchNamespaceCrdLabels: []
+
 image:
   # -- grafana operator image repository
   repository: ghcr.io/grafana-operator/grafana-operator
