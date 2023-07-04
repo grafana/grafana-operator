@@ -1,0 +1,26 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: postgresql
+  namespace: grafana
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  datasource:
+    name: postgresql
+    type: postgres
+    database: postgres
+    editable: false
+    jsonData:
+      connMaxLifetime: 14400
+      maxIdleConns: 2
+      maxOpenConns: 0
+      postgresVersion: 1400
+      sslmode: disable
+      timescaledb: false
+    access: proxy
+    secureJsonData:
+      password: postgres
+    url: postgresql.namespace.svc:5432
+    user: postgres
