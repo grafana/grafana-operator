@@ -18,7 +18,7 @@ To perform version 4 specific changes please look at the v4 branch.
 | [Red Hat](https://www.redhat.com)| <img src= "./media/users/redhat.png" width=100 height=100 > | [Integreatly](https://www.redhat.com/en/products/integration)|<img src= "./media/users/integreatly.png" width=100 height=100> |
  [Continental](https://www.continental.com/)|<img src= "./media/users/continental.png" width=100 height=100 > | [Handelsbanken]("https://www.handelsbanken.se/en/")|<img src= "./media/users/handelsbanken.svg" width=100 height=100 >|
 | [Xenit](https://xenit.se/contact/)|<img src= "./media/users/xenit.png" width=150 height=50 >| [Torqata](https://torqata.com)|<img src= "./media/users/torqata.jpg" width=150 height=50 > |
-|[Operate-first](https://www.operate-first.cloud/)|<img src= "./media/users/opf-logo.png" width=100 height=100 > | [iFood](https://www.ifood.com.br)|<img src= "./media/users/ifood.svg" width=150 height=50 > |
+|[Operate-first](https://www.operate-first.cloud/)|<img src= "./media/users/opf-logo.png" height=100 > | [iFood](https://www.ifood.com.br)|<img src= "./media/users/ifood.svg" width=150 height=50 > |
 [Enliven Systems](https://enliven.systems)|<img src= "./media/users/enliven-systems.png" width=100 height=100 > |
 
 ***If you find this operator useful in your product/deployment, feel free to send a pull request to add your company/team to be displayed here!***
