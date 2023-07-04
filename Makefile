@@ -2,7 +2,7 @@
 # NOTE: this section almost matches outputs out kubebuilder v3.7.0
 ###
 # Current Operator version
-VERSION ?= 5.0.0
+VERSION ?= 5.0.2
 
 # Image URL to use all building/pushing image targets
 REGISTRY ?= ghcr.io
@@ -67,7 +67,7 @@ api-docs: gen-crd-api-reference-docs kustomize
 	set -e ;\
 	TMP_DIR=$$(mktemp -d) ; \
 	$(KUSTOMIZE) build config/ -o $$TMP_DIR/crd-output.yaml ;\
-	$(API_REF_GEN) crdoc --resources $$TMP_DIR/crd-output.yaml --output docs/docs/api.md --template frontmatter.tmpl;\
+	$(API_REF_GEN) crdoc --resources $$TMP_DIR/crd-output.yaml --output docs/docs/api.md --template hugo/templates/frontmatter-grafana-operator.tmpl ;\
 	}
 
 .PHONY: generate

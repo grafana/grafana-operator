@@ -2,6 +2,16 @@
 
 In this repo you will need to perform the following tasks manually
 
+## Documentation
+
+Currently our documentation needs to be updated in two spots.
+
+You need to change the version in [hugo/config.toml](hugo/config.toml).
+You also need to change the version for helm in [deploy/helm/grafana-operator/Chart.yaml](deploy/helm/grafana-operator/Chart.yaml).
+After that you need to run `make helm/docs` which will generate the changes to become visible on our homepage.
+
+## OLM
+
 There is a lot of information on what is needed to manage OLM [compatible operators](https://redhat-connect.gitbook.io/certified-operator-guide/ocp-deployment/operator-metadata/creating-the-csv).
 
 - Update the `Makefile`

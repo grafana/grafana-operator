@@ -19,6 +19,7 @@ package controllers
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -160,11 +161,11 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return syncResult, err
 	}
 
-	dashboard := &v1beta1.GrafanaDashboard{}
+	cr := &v1beta1.GrafanaDashboard{}
 	err := r.Client.Get(ctx, client.ObjectKey{
 		Namespace: req.Namespace,
 		Name:      req.Name,
-	}, dashboard)
+	}, cr)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			err = r.onDashboardDeleted(ctx, req.Namespace, req.Name)
@@ -177,22 +178,30 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
 
-	instances, err := r.GetMatchingDashboardInstances(ctx, dashboard, r.Client)
+	instances, err := r.GetMatchingDashboardInstances(ctx, cr, r.Client)
 	if err != nil {
-		controllerLog.Error(err, "could not find matching instances", "name", dashboard.Name, "namespace", dashboard.Namespace)
+		controllerLog.Error(err, "could not find matching instances", "name", cr.Name, "namespace", cr.Namespace)
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
 
 	controllerLog.Info("found matching Grafana instances for dashboard", "count", len(instances.Items))
 
-	dashboardJson, err := r.fetchDashboardJson(dashboard)
+	dashboardJson, err := r.fetchDashboardJson(cr)
 	if err != nil {
-		controllerLog.Error(err, "error fetching dashboard", "dashboard", dashboard.Name)
+		controllerLog.Error(err, "error fetching dashboard", "dashboard", cr.Name)
 		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
+	dashboardModel, hash, err := r.getDashboardModel(cr, dashboardJson)
+	if err != nil {
+		controllerLog.Error(err, "failed to prepare dashboard model", "dashboard", cr.Name)
+		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
+	}
+
+	uid := fmt.Sprintf("%s", dashboardModel["uid"])
+
 	// Garbage collection for a case where dashboard uid get changed, dashboard creation is expected to happen in a separate reconcilication cycle
-	if dashboard.IsUpdatedUID(dashboardJson) {
+	if cr.IsUpdatedUID(uid) {
 		controllerLog.Info("dashboard uid got updated, deleting dashboards with the old uid")
 		err = r.onDashboardDeleted(ctx, req.Namespace, req.Name)
 		if err != nil {
@@ -200,8 +209,8 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 
 		// Clean up uid, so further reconcilications can track changes there
-		dashboard.Status.UID = ""
-		err = r.Client.Status().Update(ctx, dashboard)
+		cr.Status.UID = ""
+		err = r.Client.Status().Update(ctx, cr)
 		if err != nil {
 			return ctrl.Result{RequeueAfter: RequeueDelay}, err
 		}
@@ -213,7 +222,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	success := true
 	for _, grafana := range instances.Items {
 		// check if this is a cross namespace import
-		if grafana.Namespace != dashboard.Namespace && !dashboard.IsAllowCrossNamespaceImport() {
+		if grafana.Namespace != cr.Namespace && !cr.IsAllowCrossNamespaceImport() {
 			continue
 		}
 
@@ -230,24 +239,29 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			// first reconcile the plugins
 			// append the requested dashboards to a configmap from where the
 			// grafana reconciler will pick them up
-			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, dashboard.Spec.Plugins, fmt.Sprintf("%v-dashboard", dashboard.Name))
+			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, cr.Spec.Plugins, fmt.Sprintf("%v-dashboard", cr.Name))
 			if err != nil {
-				controllerLog.Error(err, "error reconciling plugins", "dashboard", dashboard.Name, "grafana", grafana.Name)
+				controllerLog.Error(err, "error reconciling plugins", "dashboard", cr.Name, "grafana", grafana.Name)
 				success = false
 			}
 		}
 
 		// then import the dashboard into the matching grafana instances
-		err = r.onDashboardCreated(ctx, &grafana, dashboard, dashboardJson)
+		err = r.onDashboardCreated(ctx, &grafana, cr, dashboardModel, hash)
 		if err != nil {
-			controllerLog.Error(err, "error reconciling dashboard", "dashboard", dashboard.Name, "grafana", grafana.Name)
+			controllerLog.Error(err, "error reconciling dashboard", "dashboard", cr.Name, "grafana", grafana.Name)
 			success = false
 		}
 	}
 
 	// if the dashboard was successfully synced in all instances, wait for its re-sync period
 	if success {
-		return ctrl.Result{RequeueAfter: dashboard.GetResyncPeriod()}, nil
+		if cr.ResyncPeriodHasElapsed() {
+			cr.Status.LastResync = metav1.Time{Time: time.Now()}
+		}
+		cr.Status.Hash = hash
+		cr.Status.UID = uid
+		return ctrl.Result{RequeueAfter: cr.GetResyncPeriod()}, r.Client.Status().Update(ctx, cr)
 	}
 
 	return ctrl.Result{RequeueAfter: RequeueDelay}, nil
@@ -314,14 +328,9 @@ func (r *GrafanaDashboardReconciler) onDashboardDeleted(ctx context.Context, nam
 	return nil
 }
 
-func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDashboard, dashboardJson []byte) error {
+func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDashboard, dashboardModel map[string]interface{}, hash string) error {
 	if grafana.IsExternal() && cr.Spec.Plugins != nil {
 		return fmt.Errorf("external grafana instances don't support plugins, please remove spec.plugins from your dashboard cr")
-	}
-
-	dashboardJson, err := r.resolveDatasources(cr, dashboardJson)
-	if err != nil {
-		return err
 	}
 
 	grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, grafana)
@@ -329,32 +338,34 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return err
 	}
 
-	var dashboardFromJson map[string]interface{}
-	err = json.Unmarshal(dashboardJson, &dashboardFromJson)
-	if err != nil {
-		return err
-	}
-
-	uid, _ := dashboardFromJson["uid"].(string) //nolint:errcheck
-	if uid == "" {
-		uid = string(cr.UID)
-	}
-
-	dashboardFromJson["uid"] = uid
-
-	// update/create the dashboard if it doesn't exist in the instance or has been changed
-	hash := cr.Hash(dashboardJson)
-	exists, err := r.Exists(grafanaClient, uid)
-	if err != nil {
-		return err
-	}
-	if exists && cr.Unchanged(hash) && !cr.ResyncPeriodHasElapsed() {
-		return nil
-	}
-
 	folderID, err := r.GetOrCreateFolder(grafanaClient, cr)
 	if err != nil {
 		return errors.NewInternalError(err)
+	}
+
+	uid := fmt.Sprintf("%s", dashboardModel["uid"])
+	title := fmt.Sprintf("%s", dashboardModel["title"])
+
+	exists, remoteUID, err := r.Exists(grafanaClient, uid, title, folderID)
+	if err != nil {
+		return err
+	}
+
+	if exists && remoteUID != uid {
+		// If there's already a dashboard with the same title in the same folder, grafana preserves that dashboard's uid, so we should remove it first
+		r.Log.Info("found dashboard with the same title (in the same folder) but different uid, removing the dashboard before recreating it with a new uid")
+		err = grafanaClient.DeleteDashboardByUID(remoteUID)
+		if err != nil {
+			if !strings.Contains(err.Error(), "status: 404") {
+				return err
+			}
+		}
+
+		exists = false
+	}
+
+	if exists && cr.Unchanged(hash) && !cr.ResyncPeriodHasElapsed() {
+		return nil
 	}
 
 	resp, err := grafanaClient.NewDashboard(grapi.Dashboard{
@@ -363,7 +374,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 			Slug:      cr.Name,
 			Folder:    folderID,
 		},
-		Model:     dashboardFromJson,
+		Model:     dashboardModel,
 		FolderID:  folderID,
 		Overwrite: true,
 		Message:   "",
@@ -376,18 +387,8 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return errors.NewBadRequest(fmt.Sprintf("error creating dashboard, status was %v", resp.Status))
 	}
 
-	// NOTE: When dashboard is uploaded with a new dashboardFromJson["uid"], but with an old name, the old uid is preserved. So, better to rely on the resp.UID here
-	grafana.Status.Dashboards = grafana.Status.Dashboards.Add(cr.Namespace, cr.Name, resp.UID)
-	err = r.Client.Status().Update(ctx, grafana)
-	if err != nil {
-		return err
-	}
-
-	cr.Status.Hash = hash
-	cr.Status.LastResync = metav1.Time{Time: time.Now()}
-	cr.Status.UID = resp.UID
-
-	return r.Client.Status().Update(ctx, cr)
+	grafana.Status.Dashboards = grafana.Status.Dashboards.Add(cr.Namespace, cr.Name, uid)
+	return r.Client.Status().Update(ctx, grafana)
 }
 
 // map data sources that are required in the dashboard to data sources that exist in the instance
@@ -437,17 +438,49 @@ func (r *GrafanaDashboardReconciler) fetchDashboardJson(dashboard *v1beta1.Grafa
 	}
 }
 
-func (r *GrafanaDashboardReconciler) Exists(client *grapi.Client, uid string) (bool, error) {
+// getDashboardModel resolves datasources, updates uid (if needed) and converts raw json to type grafana client accepts
+func (r *GrafanaDashboardReconciler) getDashboardModel(cr *v1beta1.GrafanaDashboard, dashboardJson []byte) (map[string]interface{}, string, error) {
+	dashboardJson, err := r.resolveDatasources(cr, dashboardJson)
+	if err != nil {
+		return map[string]interface{}{}, "", err
+	}
+
+	hash := sha256.New()
+	hash.Write(dashboardJson)
+
+	var dashboardModel map[string]interface{}
+	err = json.Unmarshal(dashboardJson, &dashboardModel)
+	if err != nil {
+		return map[string]interface{}{}, "", err
+	}
+
+	// NOTE: id should never be hardcoded in a dashboard, otherwise grafana will try to update a dashboard by id instead of uid.
+	//       And, in case the id is non-existent, grafana will respond with 404. https://github.com/grafana-operator/grafana-operator/issues/1108
+	dashboardModel["id"] = nil
+
+	uid, _ := dashboardModel["uid"].(string) //nolint:errcheck
+	if uid == "" {
+		uid = string(cr.UID)
+	}
+
+	dashboardModel["uid"] = uid
+
+	return dashboardModel, fmt.Sprintf("%x", hash.Sum(nil)), nil
+}
+
+func (r *GrafanaDashboardReconciler) Exists(client *grapi.Client, uid string, title string, folderID int64) (bool, string, error) {
 	dashboards, err := client.Dashboards()
 	if err != nil {
-		return false, err
+		return false, "", err
 	}
+
 	for _, dashboard := range dashboards {
-		if dashboard.UID == uid {
-			return true, nil
+		if dashboard.UID == uid || (dashboard.Title == title && dashboard.FolderID == uint(folderID)) {
+			return true, dashboard.UID, nil
 		}
 	}
-	return false, nil
+
+	return false, "", nil
 }
 
 func (r *GrafanaDashboardReconciler) GetOrCreateFolder(client *grapi.Client, cr *v1beta1.GrafanaDashboard) (int64, error) {
