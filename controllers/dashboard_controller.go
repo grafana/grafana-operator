@@ -437,7 +437,7 @@ func (r *GrafanaDashboardReconciler) fetchDashboardJson(ctx context.Context, das
 			for _, ref := range dashboard.Spec.EnvsFrom {
 				key, val, err := r.getReferencedValue(ctx, dashboard, ref)
 				if err != nil {
-					return nil, fmt.Errorf("something goes wrong during envs processing, error: %w", err)
+					return nil, fmt.Errorf("something went wrong processing envs, error: %w", err)
 				}
 				envs[key] = val
 			}
