@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"io"
+	v1 "k8s.io/api/core/v1"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -65,6 +66,10 @@ type GrafanaDashboardSpec struct {
 	// grafana.com/dashboards
 	// +optional
 	GrafanaCom *GrafanaComDashboardReference `json:"grafanaCom,omitempty"`
+
+	// dashboard from configmap
+	// +optional
+	ConfigMapRef *v1.ConfigMapKeySelector `json:"configMapRef,omitempty"`
 
 	// selects Grafanas for import
 	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`
