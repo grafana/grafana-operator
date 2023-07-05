@@ -20,8 +20,9 @@ import (
 	"bytes"
 	"compress/gzip"
 	"io"
-	v1 "k8s.io/api/core/v1"
 	"time"
+
+	v1 "k8s.io/api/core/v1"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -34,6 +35,7 @@ const (
 	DashboardSourceTypeUrl        DashboardSourceType = "url"
 	DashboardSourceTypeJsonnet    DashboardSourceType = "jsonnet"
 	DashboardSourceTypeGrafanaCom DashboardSourceType = "grafana"
+	DashboardSourceConfigMap      DashboardSourceType = "configmap"
 	DefaultResyncPeriod                               = "5m"
 )
 
@@ -187,6 +189,10 @@ func (in *GrafanaDashboard) GetSourceTypes() []DashboardSourceType {
 
 	if in.Spec.GrafanaCom != nil {
 		sourceTypes = append(sourceTypes, DashboardSourceTypeGrafanaCom)
+	}
+
+	if in.Spec.ConfigMapRef != nil {
+		sourceTypes = append(sourceTypes, DashboardSourceConfigMap)
 	}
 
 	return sourceTypes
