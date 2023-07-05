@@ -111,16 +111,17 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 			namespace, name, uid := datasource.Split()
 			instanceDatasource, err := grafanaClient.DataSourceByUID(uid)
 			if err != nil {
-				if strings.Contains(err.Error(), "status: 404") {
-					syncLog.Info("datasource no longer exists", "namespace", namespace, "name", name)
-				} else {
+				if !strings.Contains(err.Error(), "status: 404") {
 					return ctrl.Result{Requeue: false}, err
 				}
-			}
-
-			err = grafanaClient.DeleteDataSource(instanceDatasource.ID)
-			if err != nil {
-				return ctrl.Result{Requeue: false}, err
+				syncLog.Info("datasource no longer exists", "namespace", namespace, "name", name)
+			} else {
+				err = grafanaClient.DeleteDataSource(instanceDatasource.ID)
+				if err != nil {
+					if !strings.Contains(err.Error(), "status: 404") {
+						return ctrl.Result{Requeue: false}, err
+					}
+				}
 			}
 
 			grafana.Status.Datasources = grafana.Status.Datasources.Remove(namespace, name)
@@ -465,18 +466,18 @@ func (r *GrafanaDatasourceReconciler) getReferencedValue(ctx context.Context, cr
 		if val, ok := s.Data[source.SecretKeyRef.Key]; ok {
 			return string(val), nil
 		} else {
-			return "", fmt.Errorf("missing key %s in secret %s", source.SecretKeyRef.Key, source.ConfigMapKeyRef.Name)
+			return "", fmt.Errorf("missing key %s in secret %s", source.SecretKeyRef.Key, source.SecretKeyRef.Name)
 		}
 	} else {
 		s := &v1.ConfigMap{}
-		err := r.Client.Get(ctx, client.ObjectKey{Namespace: cr.Namespace, Name: source.SecretKeyRef.Name}, s)
+		err := r.Client.Get(ctx, client.ObjectKey{Namespace: cr.Namespace, Name: source.ConfigMapKeyRef.Name}, s)
 		if err != nil {
 			return "", err
 		}
-		if val, ok := s.Data[source.SecretKeyRef.Key]; ok {
+		if val, ok := s.Data[source.ConfigMapKeyRef.Key]; ok {
 			return val, nil
 		} else {
-			return "", fmt.Errorf("missing key %s in configmap %s", source.SecretKeyRef.Key, source.ConfigMapKeyRef.Name)
+			return "", fmt.Errorf("missing key %s in configmap %s", source.ConfigMapKeyRef.Key, source.ConfigMapKeyRef.Name)
 		}
 	}
 }
