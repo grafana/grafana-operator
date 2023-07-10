@@ -4,17 +4,14 @@ In this repo you will need to perform the following tasks manually
 
 ## Documentation
 
-Currently our documentation needs to be updated in two spots.
-
-You need to change the version in [hugo/config.toml](hugo/config.toml).
-You also need to change the version for helm in [deploy/helm/grafana-operator/Chart.yaml](deploy/helm/grafana-operator/Chart.yaml).
-After that you need to run `make helm/docs` which will generate the changes to become visible on our homepage.
+Currently we only need to bump the hugo version and this is done in [hugo/config.toml](hugo/config.toml).
 
 ## OLM
 
 There is a lot of information on what is needed to manage OLM [compatible operators](https://redhat-connect.gitbook.io/certified-operator-guide/ocp-deployment/operator-metadata/creating-the-csv).
 
-- Update the `Makefile`
+- Update the `Makefile` version
+- `make generate`, `make manifests` & `make bundle`)
 - Update `containerImage` field in `config/manifests/bases/grafana-operator.clusterserviceversion.yaml`
 - Update `replaces` field in `config/manifests/bases/grafana-operator.clusterserviceversion.yaml`
 - Update `CreatedAt` field in `config/manifests/bases/grafana-operator.clusterserviceversion.yaml`
@@ -27,9 +24,7 @@ There is a lot of information on what is needed to manage OLM [compatible operat
       "2023-11-22T10:34:12.173861869Z"
       # 2023-11-22T10:34:12Z is enough
 - Run `make bundle`
-- Update the helm [chart version](deploy/helm/grafana-operator/Chart.yaml) and app version (it's fixed in the release but it looks nice).
-  - Look if any rbac rules have been changed in the last release, if so verify that the rbac rules for the helm chart is correct. This should be done in those PRs but it don't hurt take an extra look.
-- Update the [Kustomization](deploy/base/deployment.yaml) `grafana container image`
+- `Helm` look if any rbac rules have been changed in the last release, if so verify that the rbac rules for the helm chart is correct. This should be done in those PRs but it don't hurt take an extra look.
 - Create a PR and get it merged
 - Create a new release with the new tag, make sure to compile release notes (github has an option to do this for you)
 
