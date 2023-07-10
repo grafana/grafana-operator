@@ -100,7 +100,7 @@ metadata:
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/grafana-operator/grafana-operator
     support: Community
-  name: grafana-operator.v5.0.2
+  name: grafana-operator.v5.1.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -326,7 +326,7 @@ spec:
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.annotations['olm.targetNamespaces']
-                image: ghcr.io/grafana-operator/grafana-operator:v5.0.2
+                image: ghcr.io/grafana-operator/grafana-operator:v5.1.0
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
@@ -414,4 +414,4 @@ spec:
   provider:
     name: Red Hat
   replaces: grafana-operator.v5.0.1
-  version: 5.0.2
+  version: 5.1.0
