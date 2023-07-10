@@ -4,14 +4,18 @@ In this repo you will need to perform the following tasks manually
 
 ## Documentation
 
-Currently we only need to bump the hugo version and this is done in [hugo/config.toml](hugo/config.toml).
+Currently our documentation needs to be updated in two spots.
+
+You need to change the version in [hugo/config.toml](hugo/config.toml).
+You also need to change the version for helm in [deploy/helm/grafana-operator/Chart.yaml](deploy/helm/grafana-operator/Chart.yaml).
+After that you need to run `make helm/docs` which will generate the changes to become visible on our homepage.
 
 ## OLM
 
 There is a lot of information on what is needed to manage OLM [compatible operators](https://redhat-connect.gitbook.io/certified-operator-guide/ocp-deployment/operator-metadata/creating-the-csv).
 
 - Update the `Makefile` version
-- `make generate`, `make manifests` & `make bundle`)
+- `make generate`, `make manifests` & `make bundle`
 - Update `containerImage` field in `config/manifests/bases/grafana-operator.clusterserviceversion.yaml`
 - Update `replaces` field in `config/manifests/bases/grafana-operator.clusterserviceversion.yaml`
 - Update `CreatedAt` field in `config/manifests/bases/grafana-operator.clusterserviceversion.yaml`
