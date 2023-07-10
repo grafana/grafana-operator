@@ -42,6 +42,9 @@ metricsService:
 # -- pod annotations
 podAnnotations: {}
 
+# -- pod labels
+podLabels: {}
+
 # -- pod security context
 podSecurityContext: {}
 
