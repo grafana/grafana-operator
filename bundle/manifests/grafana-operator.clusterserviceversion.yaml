@@ -94,8 +94,8 @@ metadata:
       ]
     capabilities: Basic Install
     categories: Monitoring
-    containerImage: ghcr.io/grafana-operator/grafana-operator:v5.0.2
-    createdAt: "2023-06-09T00:00:00Z"
+    containerImage: ghcr.io/grafana-operator/grafana-operator:v5.1.0
+    createdAt: "2023-07-10T10:00:00Z"
     operators.operatorframework.io/builder: operator-sdk-v1.22.2
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/grafana-operator/grafana-operator
@@ -408,10 +408,10 @@ spec:
   - Observability
   links:
   - name: Grafana Operator
-    url: https://grafana-operator.domain
+    url: https://grafana-operator.github.io/grafana-operator
   maturity: alpha
   minKubeVersion: 1.23.0
   provider:
     name: Red Hat
-  replaces: grafana-operator.v5.0.1
+  replaces: grafana-operator.v5.0.2
   version: 5.1.0
