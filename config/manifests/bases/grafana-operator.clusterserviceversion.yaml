@@ -59,7 +59,7 @@ spec:
   - Observability
   links:
   - name: Grafana Operator
-    url: https://grafana-operator.domain
+    url: https://grafana-operator.github.io/grafana-operator
   maturity: alpha
   minKubeVersion: 1.23.0
   provider:
