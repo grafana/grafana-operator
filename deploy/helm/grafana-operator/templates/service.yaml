@@ -4,6 +4,9 @@ metadata:
   name: {{ include "grafana-operator.fullname" . }}-metrics-service
   labels:
     {{- include "grafana-operator.labels" . | nindent 4 }}
+    {{- with .Values.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   type: {{ .Values.metricsService.type }}
   ports:

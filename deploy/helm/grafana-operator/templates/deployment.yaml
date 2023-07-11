@@ -4,6 +4,9 @@ metadata:
   name: {{ include "grafana-operator.fullname" . }}
   labels:
     {{- include "grafana-operator.labels" . | nindent 4 }}
+    {{- with .Values.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   replicas: 1
   selector:
@@ -17,6 +20,9 @@ spec:
       {{- end }}
       labels:
         {{- include "grafana-operator.selectorLabels" . | nindent 8 }}
+        {{- with .Values.additionalLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:

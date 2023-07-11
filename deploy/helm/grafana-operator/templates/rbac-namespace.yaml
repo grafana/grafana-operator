@@ -4,6 +4,10 @@ kind: Role
 metadata:
   namespace: {{ .Release.Namespace }}
   name: grafana-operator-permissions
+  labels:
+    {{- with .Values.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 rules:
   - apiGroups:
       - ""

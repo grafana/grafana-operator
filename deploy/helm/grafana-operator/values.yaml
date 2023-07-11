@@ -39,6 +39,9 @@ metricsService:
   # -- metrics service port
   metricsPort: 9090
 
+# -- additional labels to add to all resources
+additionalLabels: {}
+
 # -- pod annotations
 podAnnotations: {}
 
