@@ -41,6 +41,7 @@ func TestFetchJsonnet(t *testing.T) {
 		dashboard     *v1beta1.GrafanaDashboard
 		libsonnet     embed.FS
 		expected      []byte
+		envs          map[string]string
 		expectedError error
 	}{
 		{
@@ -57,6 +58,7 @@ func TestFetchJsonnet(t *testing.T) {
 			},
 			libsonnet:     embeds.GrafonnetEmbed,
 			expected:      embeds.TestDashboardEmbedExpectedJSON,
+			envs:          map[string]string{},
 			expectedError: nil,
 		},
 		{
@@ -70,13 +72,33 @@ func TestFetchJsonnet(t *testing.T) {
 			},
 			libsonnet:     embeds.GrafonnetEmbed,
 			expected:      nil,
+			envs:          map[string]string{},
 			expectedError: errors.New("no jsonnet Content Found, nil or empty string"),
+		},
+		{
+			name: "Successful Jsonnet Evaluation with non-empty envs",
+			dashboard: &v1beta1.GrafanaDashboard{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "grafanadashboard-jsonnet",
+					Namespace: "grafana",
+				},
+				Spec: v1beta1.GrafanaDashboardSpec{
+					Jsonnet: string(embeds.TestDashboardEmbedWithEnv),
+				},
+				Status: v1beta1.GrafanaDashboardStatus{},
+			},
+			libsonnet: embeds.GrafonnetEmbed,
+			expected:  embeds.TestDashboardEmbedWithEnvExpectedJSON,
+			envs: map[string]string{
+				"TEST_ENV": "123",
+			},
+			expectedError: nil,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result, err := FetchJsonnet(test.dashboard, test.libsonnet)
+			result, err := FetchJsonnet(test.dashboard, test.envs, test.libsonnet)
 
 			if fmt.Sprintf("%v", err) != fmt.Sprintf("%v", test.expectedError) {
 				t.Errorf("expected error %v, but got %v", test.expectedError, err)

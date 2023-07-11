@@ -84,11 +84,14 @@ func (importer *EmbedFSImporter) Import(importedFrom, importedPath string) (cont
 	return foundContents, s, nil
 }
 
-func FetchJsonnet(dashboard *v1beta1.GrafanaDashboard, libsonnet embed.FS) ([]byte, error) {
+func FetchJsonnet(dashboard *v1beta1.GrafanaDashboard, envs map[string]string, libsonnet embed.FS) ([]byte, error) {
 	if dashboard.Spec.Jsonnet == "" {
 		return nil, fmt.Errorf("no jsonnet Content Found, nil or empty string")
 	}
 	vm := jsonnet.MakeVM()
+	for k, v := range envs {
+		vm.ExtVar(k, v)
+	}
 
 	vm.Importer(&EmbedFSImporter{Embed: libsonnet})
 
