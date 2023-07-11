@@ -10,3 +10,9 @@ var TestDashboardEmbed []byte
 
 //go:embed testing/dashboard.json
 var TestDashboardEmbedExpectedJSON []byte
+
+//go:embed testing/dashboard_with_envs.jsonnet
+var TestDashboardEmbedWithEnv []byte
+
+//go:embed testing/dashboard_with_provided_envs.json
+var TestDashboardEmbedWithEnvExpectedJSON []byte
