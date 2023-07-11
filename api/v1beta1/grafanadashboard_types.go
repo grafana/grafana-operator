@@ -35,6 +35,7 @@ const (
 	DashboardSourceTypeUrl        DashboardSourceType = "url"
 	DashboardSourceTypeJsonnet    DashboardSourceType = "jsonnet"
 	DashboardSourceTypeGrafanaCom DashboardSourceType = "grafana"
+	DashboardSourceConfigMap      DashboardSourceType = "configmap"
 	DefaultResyncPeriod                               = "5m"
 )
 
@@ -67,6 +68,10 @@ type GrafanaDashboardSpec struct {
 	// grafana.com/dashboards
 	// +optional
 	GrafanaCom *GrafanaComDashboardReference `json:"grafanaCom,omitempty"`
+
+	// dashboard from configmap
+	// +optional
+	ConfigMapRef *v1.ConfigMapKeySelector `json:"configMapRef,omitempty"`
 
 	// selects Grafanas for import
 	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`
@@ -214,6 +219,10 @@ func (in *GrafanaDashboard) GetSourceTypes() []DashboardSourceType {
 
 	if in.Spec.GrafanaCom != nil {
 		sourceTypes = append(sourceTypes, DashboardSourceTypeGrafanaCom)
+	}
+
+	if in.Spec.ConfigMapRef != nil {
+		sourceTypes = append(sourceTypes, DashboardSourceConfigMap)
 	}
 
 	return sourceTypes
