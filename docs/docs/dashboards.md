@@ -274,4 +274,103 @@ spec:
   url: "https://raw.githubusercontent.com/grafana-operator/grafana-operator/master/examples/dashboard_from_url/dashboard.json"
 ```
 
+## Dashboard customization by providing environment variables
+
+Will be pleasant for scenarios when you would like to extend the behaviour of jsonnet generation by parametrizing it with runtime Env vars:
+
+```yaml
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: grafanadashboard-jsonnet
+spec:
+  resyncPeriod: 30s
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  envs:
+    - name: API_VERSION
+      value: "1.0.0"
+    - name: ENV_FROM_CM -- just example, such cm and secrets are not provided by vendor
+      valueFrom:
+        configMapKeyRef:
+          name: custom-grafana-dashboard-cm
+          key: GRAFANA_URL
+    - name: ENV_FROM_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: custom-grafana-dashboard-secrets
+          key: PROMETHEUS_USERNAME
+  envFrom: -- just example, such cm and secrets are not provided by vendor
+    - configMapRef:
+        name: custom-grafana-dashboard-cm
+    - secretRef:
+        name: custom-grafana-dashboard-secrets
+  jsonnet: |
+   local grafana = import 'grafonnet/grafana.libsonnet';
+   local dashboard = grafana.dashboard;
+   local row = grafana.row;
+   local singlestat = grafana.singlestat;
+   local prometheus = grafana.prometheus;
+   local template = grafana.template;
+   local labelFromEnvs = std.extVar('API_VERSION');
+
+   dashboard.new(
+     'JVM',
+     tags=['java'],
+   )
+   .addTemplate(
+     grafana.template.datasource(
+       'PROMETHEUS_DS',
+       'prometheus',
+       'Prometheus',
+       hide='label',
+     )
+   )
+   .addTemplate(
+     template.new(
+       'env',
+       '$PROMETHEUS_DS',
+       'label_values(jvm_threads_current, env)',
+       label='Environment',
+       refresh='time',
+     )
+   )
+   .addTemplate(
+     template.new(
+       'job',
+       '$PROMETHEUS_DS',
+       'label_values(jvm_threads_current{env="$env"}, job)',
+       label='Job',
+       refresh='time',
+     )
+   )
+   .addTemplate(
+     template.new(
+       'instance',
+       '$PROMETHEUS_DS',
+       'label_values(jvm_threads_current{env="$env",job="$job"}, instance)',
+       label='Instance',
+       refresh='time',
+     )
+   )
+   .addRow(
+     row.new()
+     .addPanel(
+       singlestat.new(
+         'uptime',
+         format='s',
+         datasource='Prometheus',
+         span=2,
+         valueName='current',
+       )
+       .addTarget(
+         prometheus.target(
+           'time() - process_start_time_seconds{env="$env", job="$job", instance="$instance", apiVersion="$labelFromEnvs"}',
+         )
+       )
+     )
+   )
+```
+
 [Example documentation](../examples/dashboard_with_custom_folder/readme).

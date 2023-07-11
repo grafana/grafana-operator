@@ -42,6 +42,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	v1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -186,7 +188,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	controllerLog.Info("found matching Grafana instances for dashboard", "count", len(instances.Items))
 
-	dashboardJson, err := r.fetchDashboardJson(cr)
+	dashboardJson, err := r.fetchDashboardJson(ctx, cr)
 	if err != nil {
 		controllerLog.Error(err, "error fetching dashboard", "dashboard", cr.Name)
 		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
@@ -411,7 +413,7 @@ func (r *GrafanaDashboardReconciler) resolveDatasources(dashboard *v1beta1.Grafa
 
 // fetchDashboardJson delegates obtaining the dashboard json definition to one of the known fetchers, for example
 // from embedded raw json or from a url
-func (r *GrafanaDashboardReconciler) fetchDashboardJson(dashboard *v1beta1.GrafanaDashboard) ([]byte, error) {
+func (r *GrafanaDashboardReconciler) fetchDashboardJson(ctx context.Context, dashboard *v1beta1.GrafanaDashboard) ([]byte, error) {
 	sourceTypes := dashboard.GetSourceTypes()
 
 	if len(sourceTypes) == 0 {
@@ -430,11 +432,52 @@ func (r *GrafanaDashboardReconciler) fetchDashboardJson(dashboard *v1beta1.Grafa
 	case v1beta1.DashboardSourceTypeUrl:
 		return fetchers.FetchDashboardFromUrl(dashboard)
 	case v1beta1.DashboardSourceTypeJsonnet:
-		return fetchers.FetchJsonnet(dashboard, embeds.GrafonnetEmbed)
+		envs := make(map[string]string)
+		if dashboard.Spec.EnvsFrom != nil {
+			for _, ref := range dashboard.Spec.EnvsFrom {
+				key, val, err := r.getReferencedValue(ctx, dashboard, ref)
+				if err != nil {
+					return nil, fmt.Errorf("something went wrong processing envs, error: %w", err)
+				}
+				envs[key] = val
+			}
+		}
+		if dashboard.Spec.Envs != nil {
+			for _, ref := range dashboard.Spec.Envs {
+				envs[ref.Name] = ref.Value
+			}
+		}
+		return fetchers.FetchJsonnet(dashboard, envs, embeds.GrafonnetEmbed)
 	case v1beta1.DashboardSourceTypeGrafanaCom:
 		return fetchers.FetchDashboardFromGrafanaCom(dashboard)
 	default:
 		return nil, fmt.Errorf("unknown source type %v found in dashboard %v", sourceTypes[0], dashboard.Name)
+	}
+}
+
+func (r *GrafanaDashboardReconciler) getReferencedValue(ctx context.Context, cr *v1beta1.GrafanaDashboard, source v1beta1.GrafanaDashboardEnvFromSource) (string, string, error) {
+	if source.SecretKeyRef != nil {
+		s := &v1.Secret{}
+		err := r.Client.Get(ctx, client.ObjectKey{Namespace: cr.Namespace, Name: source.SecretKeyRef.Name}, s)
+		if err != nil {
+			return "", "", err
+		}
+		if val, ok := s.Data[source.SecretKeyRef.Key]; ok {
+			return source.SecretKeyRef.Key, string(val), nil
+		} else {
+			return "", "", fmt.Errorf("missing key %s in secret %s", source.SecretKeyRef.Key, source.ConfigMapKeyRef.Name)
+		}
+	} else {
+		s := &v1.ConfigMap{}
+		err := r.Client.Get(ctx, client.ObjectKey{Namespace: cr.Namespace, Name: source.SecretKeyRef.Name}, s)
+		if err != nil {
+			return "", "", err
+		}
+		if val, ok := s.Data[source.SecretKeyRef.Key]; ok {
+			return source.SecretKeyRef.Key, val, nil
+		} else {
+			return "", "", fmt.Errorf("missing key %s in configmap %s", source.SecretKeyRef.Key, source.ConfigMapKeyRef.Name)
+		}
 	}
 }
 
