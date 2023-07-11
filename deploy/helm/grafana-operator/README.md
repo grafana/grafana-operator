@@ -35,6 +35,7 @@ It's easier to just manage this configuration outside of the operator.
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| additionalLabels | object | `{}` | additional labels to add to all resources |
 | affinity | object | `{}` | pod affinity |
 | fullnameOverride | string | `""` |  |
 | image.pullPolicy | string | `"IfNotPresent"` | The image pull policy to use in grafana operator container |
@@ -48,7 +49,6 @@ It's easier to just manage this configuration outside of the operator.
 | namespaceScope | bool | `false` | If the operator should run in namespace-scope or not, if true the operator will only be able to manage instances in the same namespace |
 | nodeSelector | object | `{}` | pod node selector |
 | podAnnotations | object | `{}` | pod annotations |
-| podLabels | object | `{}` | pod labels |
 | podSecurityContext | object | `{}` | pod security context |
 | priorityClassName | string | `""` | pod priority class name |
 | resources | object | `{}` | grafana operator container resources |
