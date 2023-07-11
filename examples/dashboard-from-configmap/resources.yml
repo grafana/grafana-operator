@@ -119,6 +119,8 @@ spec:
                   value: "1"
                 - name: FOLDER
                   value: /var/lib/grafana/dashboards
+                - name: NAMESPACE
+                  value: ALL
                 - name: RESOURCE
                   value: configmap
               volumeMounts:
