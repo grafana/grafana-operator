@@ -50,7 +50,7 @@ kind: ConfigMap
 metadata:
   name: sample-configmap
   labels:
-    dashboard: "true"
+    grafana_dashboard: "1"
 data:
   dashboard.json: |-
     {
