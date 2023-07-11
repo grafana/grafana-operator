@@ -99,6 +99,36 @@ type GrafanaDashboardSpec struct {
 	// allow to import this resources from an operator in a different namespace
 	// +optional
 	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
+
+	// environments variables as a map
+	// +optional
+	Envs []GrafanaDashboardEnv `json:"envs,omitempty"`
+
+	// environments variables from secrets or config maps
+	// +optional
+	EnvsFrom []GrafanaDashboardEnvFromSource `json:"envFrom,omitempty"`
+}
+
+type GrafanaDashboardEnv struct {
+	Name string `json:"name"`
+	// Inline evn value
+	// +optional
+	Value string `json:"value:omitempty"`
+	// Selects a key of a ConfigMap.
+	// +optional
+	ConfigMapKeyRef *v1.ConfigMapKeySelector `json:"configMapKeyRef,omitempty"`
+	// Selects a key of a Secret.
+	// +optional
+	SecretKeyRef *v1.SecretKeySelector `json:"secretKeyRef,omitempty"`
+}
+
+type GrafanaDashboardEnvFromSource struct {
+	// Selects a key of a ConfigMap.
+	// +optional
+	ConfigMapKeyRef *v1.ConfigMapKeySelector `json:"configMapKeyRef,omitempty"`
+	// Selects a key of a Secret.
+	// +optional
+	SecretKeyRef *v1.SecretKeySelector `json:"secretKeyRef,omitempty"`
 }
 
 // GrafanaComDashbooardReference is a reference to a dashboard on grafana.com/dashboards

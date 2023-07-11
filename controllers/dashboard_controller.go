@@ -42,6 +42,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	v1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -186,7 +188,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	controllerLog.Info("found matching Grafana instances for dashboard", "count", len(instances.Items))
 
-	dashboardJson, err := r.fetchDashboardJson(cr)
+	dashboardJson, err := r.fetchDashboardJson(ctx, cr)
 	if err != nil {
 		controllerLog.Error(err, "error fetching dashboard", "dashboard", cr.Name)
 		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
@@ -411,7 +413,7 @@ func (r *GrafanaDashboardReconciler) resolveDatasources(dashboard *v1beta1.Grafa
 
 // fetchDashboardJson delegates obtaining the dashboard json definition to one of the known fetchers, for example
 // from embedded raw json or from a url
-func (r *GrafanaDashboardReconciler) fetchDashboardJson(dashboard *v1beta1.GrafanaDashboard) ([]byte, error) {
+func (r *GrafanaDashboardReconciler) fetchDashboardJson(ctx context.Context, dashboard *v1beta1.GrafanaDashboard) ([]byte, error) {
 	sourceTypes := dashboard.GetSourceTypes()
 
 	if len(sourceTypes) == 0 {
@@ -430,13 +432,54 @@ func (r *GrafanaDashboardReconciler) fetchDashboardJson(dashboard *v1beta1.Grafa
 	case v1beta1.DashboardSourceTypeUrl:
 		return fetchers.FetchDashboardFromUrl(dashboard)
 	case v1beta1.DashboardSourceTypeJsonnet:
-		return fetchers.FetchJsonnet(dashboard, embeds.GrafonnetEmbed)
+		envs := make(map[string]string)
+		if dashboard.Spec.EnvsFrom != nil {
+			for _, ref := range dashboard.Spec.EnvsFrom {
+				key, val, err := r.getReferencedValue(ctx, dashboard, ref)
+				if err != nil {
+					return nil, fmt.Errorf("something went wrong processing envs, error: %w", err)
+				}
+				envs[key] = val
+			}
+		}
+		if dashboard.Spec.Envs != nil {
+			for _, ref := range dashboard.Spec.Envs {
+				envs[ref.Name] = ref.Value
+			}
+		}
+		return fetchers.FetchJsonnet(dashboard, envs, embeds.GrafonnetEmbed)
 	case v1beta1.DashboardSourceTypeGrafanaCom:
 		return fetchers.FetchDashboardFromGrafanaCom(dashboard)
 	case v1beta1.DashboardSourceConfigMap:
 		return fetchers.FetchDashboardFromConfigMap(dashboard, r.Client)
 	default:
 		return nil, fmt.Errorf("unknown source type %v found in dashboard %v", sourceTypes[0], dashboard.Name)
+	}
+}
+
+func (r *GrafanaDashboardReconciler) getReferencedValue(ctx context.Context, cr *v1beta1.GrafanaDashboard, source v1beta1.GrafanaDashboardEnvFromSource) (string, string, error) {
+	if source.SecretKeyRef != nil {
+		s := &v1.Secret{}
+		err := r.Client.Get(ctx, client.ObjectKey{Namespace: cr.Namespace, Name: source.SecretKeyRef.Name}, s)
+		if err != nil {
+			return "", "", err
+		}
+		if val, ok := s.Data[source.SecretKeyRef.Key]; ok {
+			return source.SecretKeyRef.Key, string(val), nil
+		} else {
+			return "", "", fmt.Errorf("missing key %s in secret %s", source.SecretKeyRef.Key, source.ConfigMapKeyRef.Name)
+		}
+	} else {
+		s := &v1.ConfigMap{}
+		err := r.Client.Get(ctx, client.ObjectKey{Namespace: cr.Namespace, Name: source.SecretKeyRef.Name}, s)
+		if err != nil {
+			return "", "", err
+		}
+		if val, ok := s.Data[source.SecretKeyRef.Key]; ok {
+			return source.SecretKeyRef.Key, val, nil
+		} else {
+			return "", "", fmt.Errorf("missing key %s in configmap %s", source.SecretKeyRef.Key, source.ConfigMapKeyRef.Name)
+		}
 	}
 }
 
@@ -486,41 +529,49 @@ func (r *GrafanaDashboardReconciler) Exists(client *grapi.Client, uid string, ti
 }
 
 func (r *GrafanaDashboardReconciler) GetOrCreateFolder(client *grapi.Client, cr *v1beta1.GrafanaDashboard) (int64, error) {
-	if cr.Spec.FolderTitle == "" {
-		return 0, nil
+	title := cr.Namespace
+	if cr.Spec.FolderTitle != "" {
+		title = cr.Spec.FolderTitle
 	}
 
-	folderID, err := r.GetFolderID(client, cr)
+	exists, folderID, err := r.GetFolderID(client, title)
 	if err != nil {
 		return 0, err
 	}
-	if folderID != 0 {
+
+	if exists {
 		return folderID, nil
 	}
 
 	// Folder wasn't found, let's create it
-	resp, err := client.NewFolder(cr.Spec.FolderTitle)
+	resp, err := client.NewFolder(title)
 	if err != nil {
 		return 0, err
 	}
+
 	return resp.ID, nil
 }
 
 func (r *GrafanaDashboardReconciler) GetFolderID(client *grapi.Client,
-	cr *v1beta1.GrafanaDashboard,
-) (int64, error) {
+	title string,
+) (bool, int64, error) {
+	// Pre-existing folder that is not returned in Folder API
+	if strings.EqualFold(title, "General") {
+		return true, 0, nil
+	}
+
 	folders, err := client.Folders()
 	if err != nil {
-		return 0, err
+		return false, 0, err
 	}
 
 	for _, folder := range folders {
-		if strings.EqualFold(folder.Title, cr.Spec.FolderTitle) {
-			return folder.ID, nil
+		if strings.EqualFold(folder.Title, title) {
+			return true, folder.ID, nil
 		}
-		continue
 	}
-	return 0, nil
+
+	return false, 0, nil
 }
 
 func (r *GrafanaDashboardReconciler) DeleteFolderIfEmpty(client *grapi.Client, folderID int64) (http.Response, error) {

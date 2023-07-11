@@ -4,12 +4,11 @@ The grafana-operator is a Kubernetes operator built to help you manage your Graf
 
 We make it possible for you to manage and share Grafana dashboards, datasources etc. through code between multiple instances in an easy and scalable way.
 
-We have also a minor homepage [https://grafana-operator.github.io/grafana-operator/]([https://grafana-operator.github.io/grafana-operator/]).
+We also have a homepage [https://grafana-operator.github.io/grafana-operator/](https://grafana-operator.github.io/grafana-operator/).
 
-This is our 5th version of the operator, version 5 resides in the master branch.
-Version 4 is currently actively supported with the possibility of adding new **minor** features.
-This will disappear as soon as we release 5.0.0, when this happens we will only accept bug fixes for version 4.
-To perform version 4 specific changes please look at the v4 branch.
+This is our 5th version of the operator, which resides in the [master branch](https://github.com/grafana-operator/grafana-operator/tree/master).
+[Version 5](#version-5) is actively being developed with new features.
+The previous version 4 is only receiving bug fixes on the [v4 branch](https://github.com/grafana-operator/grafana-operator/tree/v4).
 
 ## Companies and teams that trust and use the Grafana operator
 
