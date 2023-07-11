@@ -50,6 +50,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: sample-configmap
+  namespace: default # It could be a configMap in any namespace
   labels:
     grafana_dashboard: "1"
 data:
