@@ -69,3 +69,12 @@ echo "# 5. Install grafana objects in ${CRD_NS}"
 echo "##########################################"
 kubectl -n "${CRD_NS}" --kubeconfig="${KUBECONFIG}" \
   apply -k "${SCRIPT_DIR}/resources/crd-ns/"
+
+echo ""
+echo "##########################################"
+echo "# All done!"
+echo "##########################################"
+echo "To access the cluster instance, configure KUBECONFIG:"
+echo "export KUBECONFIG=${KUBECONFIG}"
+echo ""
+echo "To run the operator locally against the new cluster, use 'make run'"
