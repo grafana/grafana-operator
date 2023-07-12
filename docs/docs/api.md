@@ -1707,7 +1707,7 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td><b><a href="#grafanaspecdeploymentmetadata">metadata</a></b></td>
         <td>object</td>
         <td>
-          ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#objectmeta-v1-meta).<br/>
+          ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1726,7 +1726,7 @@ Deployment sets how the deployment object should look like with your grafana ins
 
 
 
-ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#objectmeta-v1-meta).
+ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).
 
 <table>
     <thead>
@@ -14143,7 +14143,7 @@ Ingress sets how the ingress object should look like with your grafana instance.
         <td><b><a href="#grafanaspecingressmetadata">metadata</a></b></td>
         <td>object</td>
         <td>
-          ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#objectmeta-v1-meta).<br/>
+          ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -14162,7 +14162,7 @@ Ingress sets how the ingress object should look like with your grafana instance.
 
 
 
-ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#objectmeta-v1-meta).
+ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).
 
 <table>
     <thead>
@@ -14788,7 +14788,7 @@ PersistentVolumeClaim creates a PVC if you need to attach one to your grafana in
         <td><b><a href="#grafanaspecpersistentvolumeclaimmetadata">metadata</a></b></td>
         <td>object</td>
         <td>
-          ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#objectmeta-v1-meta).<br/>
+          ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -14807,7 +14807,7 @@ PersistentVolumeClaim creates a PVC if you need to attach one to your grafana in
 
 
 
-ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#objectmeta-v1-meta).
+ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).
 
 <table>
     <thead>
@@ -15123,7 +15123,7 @@ Route sets how the ingress object should look like with your grafana instance, t
         <td><b><a href="#grafanaspecroutemetadata">metadata</a></b></td>
         <td>object</td>
         <td>
-          ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#objectmeta-v1-meta).<br/>
+          ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -15142,7 +15142,7 @@ Route sets how the ingress object should look like with your grafana instance, t
 
 
 
-ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#objectmeta-v1-meta).
+ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).
 
 <table>
     <thead>
@@ -15436,7 +15436,7 @@ Service sets how the service object should look like with your grafana instance,
         <td><b><a href="#grafanaspecservicemetadata">metadata</a></b></td>
         <td>object</td>
         <td>
-          ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#objectmeta-v1-meta).<br/>
+          ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -15455,7 +15455,7 @@ Service sets how the service object should look like with your grafana instance,
 
 
 
-ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#objectmeta-v1-meta).
+ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).
 
 <table>
     <thead>
@@ -15799,7 +15799,7 @@ ServiceAccount sets how the ServiceAccount object should look like with your gra
         <td><b><a href="#grafanaspecserviceaccountmetadata">metadata</a></b></td>
         <td>object</td>
         <td>
-          ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#objectmeta-v1-meta).<br/>
+          ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -15845,7 +15845,7 @@ LocalObjectReference contains enough information to let you locate the reference
 
 
 
-ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#objectmeta-v1-meta).
+ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).
 
 <table>
     <thead>
