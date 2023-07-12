@@ -10,6 +10,7 @@ import (
 	"github.com/grafana-operator/grafana-operator/v5/controllers/reconcilers"
 	v12 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	v14 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	v13 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -63,17 +64,35 @@ func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafan
 	return v1beta1.OperatorStageResultSuccess, nil
 }
 
-func getResources() v1.ResourceRequirements {
+func getResources(cr *v1beta1.Grafana) v1.ResourceRequirements {
+	limits := v1.ResourceList{
+		v1.ResourceMemory: resource.MustParse(MemoryLimit),
+	}
+
+	container := getGrafanaContainer(cr)
+	if (container == nil) || (container != nil && container.Resources.Limits == nil) {
+		limits[v1.ResourceCPU] = resource.MustParse(CpuLimit)
+	}
+
 	return v1.ResourceRequirements{
 		Requests: v1.ResourceList{
 			v1.ResourceMemory: resource.MustParse(MemoryRequest),
 			v1.ResourceCPU:    resource.MustParse(CpuRequest),
 		},
-		Limits: v1.ResourceList{
-			v1.ResourceMemory: resource.MustParse(MemoryLimit),
-			v1.ResourceCPU:    resource.MustParse(CpuLimit),
-		},
+		Limits: limits,
 	}
+}
+
+func getGrafanaContainer(cr *v1beta1.Grafana) *v14.Container {
+	if cr.Spec.Deployment != nil && cr.Spec.Deployment.Spec.Template != nil && cr.Spec.Deployment.Spec.Template.Spec != nil {
+		for _, container := range cr.Spec.Deployment.Spec.Template.Spec.Containers {
+			if container.Name == "grafana" {
+				ret := container
+				return &ret
+			}
+		}
+	}
+	return nil
 }
 
 func getVolumes(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.Volume {
@@ -187,7 +206,7 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 			},
 		},
 		Env:                      envVars,
-		Resources:                getResources(),
+		Resources:                getResources(cr),
 		VolumeMounts:             getVolumeMounts(cr, scheme),
 		TerminationMessagePath:   "/dev/termination-log",
 		TerminationMessagePolicy: "File",
