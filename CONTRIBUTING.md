@@ -66,6 +66,9 @@ You should now be ready to develop the operator.
 make run
 ```
 
+To interact wit the cluster through kubectl you can ether run `kind export kubeconfig -n kind-grafana`
+or follow the instructions in the output from the script.
+
 ### E2e tests using Kuttl
 
 As mentioned above we use Kuttl to run e2e tests for the operator, we normally run Kuttl on [Kind](https://kind.sigs.k8s.io/)
