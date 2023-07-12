@@ -60,7 +60,11 @@ through a DNS response (e.g. `nslookup grafana.127.0.0.1.nip.io` will respond wi
 make start-kind
 ```
 
-Now you should be ready to develop the operator.
+You should now be ready to develop the operator.
+
+```shell
+make run
+```
 
 ### E2e tests using Kuttl
 
