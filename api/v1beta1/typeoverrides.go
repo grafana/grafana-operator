@@ -15,7 +15,7 @@ import (
 
 // +kubebuilder:object:generate=true
 
-// ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#objectmeta-v1-meta).
+// ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).
 type ObjectMeta struct {
 	Annotations map[string]string `json:"annotations,omitempty"`
 	Labels      map[string]string `json:"labels,omitempty"`
