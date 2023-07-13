@@ -74,7 +74,7 @@ spec:
                 properties:
                   metadata:
                     description: ObjectMeta contains only a [subset of the fields
-                      included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#objectmeta-v1-meta).
+                      included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).
                     properties:
                       annotations:
                         additionalProperties:
@@ -8214,7 +8214,7 @@ spec:
                 properties:
                   metadata:
                     description: ObjectMeta contains only a [subset of the fields
-                      included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#objectmeta-v1-meta).
+                      included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).
                     properties:
                       annotations:
                         additionalProperties:
@@ -8564,7 +8564,7 @@ spec:
                 properties:
                   metadata:
                     description: ObjectMeta contains only a [subset of the fields
-                      included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#objectmeta-v1-meta).
+                      included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).
                     properties:
                       annotations:
                         additionalProperties:
@@ -8720,7 +8720,7 @@ spec:
                 properties:
                   metadata:
                     description: ObjectMeta contains only a [subset of the fields
-                      included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#objectmeta-v1-meta).
+                      included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).
                     properties:
                       annotations:
                         additionalProperties:
@@ -8858,7 +8858,7 @@ spec:
                 properties:
                   metadata:
                     description: ObjectMeta contains only a [subset of the fields
-                      included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#objectmeta-v1-meta).
+                      included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).
                     properties:
                       annotations:
                         additionalProperties:
@@ -9223,7 +9223,7 @@ spec:
                     type: array
                   metadata:
                     description: ObjectMeta contains only a [subset of the fields
-                      included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#objectmeta-v1-meta).
+                      included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).
                     properties:
                       annotations:
                         additionalProperties:
