@@ -14,13 +14,11 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.16.0
 	github.com/stretchr/testify v1.8.4
-	k8s.io/api v0.25.2
-	k8s.io/apimachinery v0.27.2
+	k8s.io/api v0.27.3
+	k8s.io/apimachinery v0.27.3
 	k8s.io/client-go v0.25.2
 	sigs.k8s.io/controller-runtime v0.13.0
 )
-
-require github.com/rogpeppe/go-internal v1.10.0 // indirect
 
 require (
 	cloud.google.com/go v0.97.0 // indirect
