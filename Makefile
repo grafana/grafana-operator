@@ -2,7 +2,7 @@
 # NOTE: this section almost matches outputs out kubebuilder v3.7.0
 ###
 # Current Operator version
-VERSION ?= 5.0.2
+VERSION ?= 5.2.0
 
 # Image URL to use all building/pushing image targets
 REGISTRY ?= ghcr.io
@@ -245,6 +245,8 @@ KO=$(shell which ko)
 endif
 
 export KO_DOCKER_REPO ?= ko.local/grafana-operator/grafana-operator
+export KIND_CLUSTER_NAME ?= kind-grafana
+export KUBECONFIG        ?= ${HOME}/.kube/kind-grafana-operator
 
 # If you want to push ko to your local Docker daemon
 .PHONY: ko-build-local
@@ -255,7 +257,7 @@ ko-build-local: ko
 .PHONY: ko-build-kind
 ko-build-kind: ko
 	$(KO) build --sbom=none --bare
-	kind load docker-image $(KO_DOCKER_REPO)
+	kind load docker-image $(KO_DOCKER_REPO) --name $(KIND_CLUSTER_NAME)
 helm-docs:
 ifeq (, $(shell which helm-docs))
 	@{ \
@@ -266,6 +268,9 @@ HELM_DOCS=$(GOBIN)/helm-docs
 else
 HELM_DOCS=$(shell which helm-docs)
 endif
+
+start-kind:
+	@hack/kind/start-kind.sh
 
 .PHONY: helm/docs
 helm/docs: helm-docs

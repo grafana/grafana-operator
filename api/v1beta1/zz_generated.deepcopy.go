@@ -511,6 +511,11 @@ func (in *GrafanaDashboardSpec) DeepCopyInto(out *GrafanaDashboardSpec) {
 		*out = new(GrafanaComDashboardReference)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.ConfigMapRef != nil {
+		in, out := &in.ConfigMapRef, &out.ConfigMapRef
+		*out = new(v1.ConfigMapKeySelector)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.InstanceSelector != nil {
 		in, out := &in.InstanceSelector, &out.InstanceSelector
 		*out = new(metav1.LabelSelector)

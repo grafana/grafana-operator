@@ -450,6 +450,8 @@ func (r *GrafanaDashboardReconciler) fetchDashboardJson(ctx context.Context, das
 		return fetchers.FetchJsonnet(dashboard, envs, embeds.GrafonnetEmbed)
 	case v1beta1.DashboardSourceTypeGrafanaCom:
 		return fetchers.FetchDashboardFromGrafanaCom(dashboard)
+	case v1beta1.DashboardSourceConfigMap:
+		return fetchers.FetchDashboardFromConfigMap(dashboard, r.Client)
 	default:
 		return nil, fmt.Errorf("unknown source type %v found in dashboard %v", sourceTypes[0], dashboard.Name)
 	}
@@ -527,41 +529,49 @@ func (r *GrafanaDashboardReconciler) Exists(client *grapi.Client, uid string, ti
 }
 
 func (r *GrafanaDashboardReconciler) GetOrCreateFolder(client *grapi.Client, cr *v1beta1.GrafanaDashboard) (int64, error) {
-	if cr.Spec.FolderTitle == "" {
-		return 0, nil
+	title := cr.Namespace
+	if cr.Spec.FolderTitle != "" {
+		title = cr.Spec.FolderTitle
 	}
 
-	folderID, err := r.GetFolderID(client, cr)
+	exists, folderID, err := r.GetFolderID(client, title)
 	if err != nil {
 		return 0, err
 	}
-	if folderID != 0 {
+
+	if exists {
 		return folderID, nil
 	}
 
 	// Folder wasn't found, let's create it
-	resp, err := client.NewFolder(cr.Spec.FolderTitle)
+	resp, err := client.NewFolder(title)
 	if err != nil {
 		return 0, err
 	}
+
 	return resp.ID, nil
 }
 
 func (r *GrafanaDashboardReconciler) GetFolderID(client *grapi.Client,
-	cr *v1beta1.GrafanaDashboard,
-) (int64, error) {
+	title string,
+) (bool, int64, error) {
+	// Pre-existing folder that is not returned in Folder API
+	if strings.EqualFold(title, "General") {
+		return true, 0, nil
+	}
+
 	folders, err := client.Folders()
 	if err != nil {
-		return 0, err
+		return false, 0, err
 	}
 
 	for _, folder := range folders {
-		if strings.EqualFold(folder.Title, cr.Spec.FolderTitle) {
-			return folder.ID, nil
+		if strings.EqualFold(folder.Title, title) {
+			return true, folder.ID, nil
 		}
-		continue
 	}
-	return 0, nil
+
+	return false, 0, nil
 }
 
 func (r *GrafanaDashboardReconciler) DeleteFolderIfEmpty(client *grapi.Client, folderID int64) (http.Response, error) {

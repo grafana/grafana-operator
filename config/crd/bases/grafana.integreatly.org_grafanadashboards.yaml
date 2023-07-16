@@ -40,6 +40,18 @@ spec:
             properties:
               allowCrossNamespaceImport:
                 type: boolean
+              configMapRef:
+                properties:
+                  key:
+                    type: string
+                  name:
+                    type: string
+                  optional:
+                    type: boolean
+                required:
+                - key
+                type: object
+                x-kubernetes-map-type: atomic
               contentCacheDuration:
                 type: string
               datasources:
