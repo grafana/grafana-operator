@@ -293,6 +293,11 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 		return err
 	}
 
+	// always update after resync period has elapsed even if cr is unchanged.
+	if exists && cr.Unchanged() && !cr.ResyncPeriodHasElapsed() {
+		return nil
+	}
+
 	if exists {
 		// Add to status to cover cases:
 		// - operator have previously failed to update status
@@ -334,7 +339,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 	}
 
 	// NOTE: it's up to a user to reset permissions with correct json
-	if !cr.Unchanged() && cr.Spec.Permissions != "" {
+	if cr.Spec.Permissions != "" {
 		permissions := grapi.PermissionItems{}
 		err = json.Unmarshal([]byte(cr.Spec.Permissions), &permissions)
 		if err != nil {
