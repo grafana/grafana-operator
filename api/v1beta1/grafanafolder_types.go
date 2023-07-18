@@ -55,6 +55,8 @@ type GrafanaFolderStatus struct {
 	Hash string `json:"hash,omitempty"`
 	// The folder instanceSelector can't find matching grafana instances
 	NoMatchingInstances bool `json:"NoMatchingInstances,omitempty"`
+	// Last time the folder was resynced
+	LastResync metav1.Time `json:"lastResync,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -132,4 +134,9 @@ func (in *GrafanaFolder) GetResyncPeriod() time.Duration {
 	}
 
 	return duration
+}
+
+func (in *GrafanaFolder) ResyncPeriodHasElapsed() bool {
+	deadline := in.Status.LastResync.Add(in.GetResyncPeriod())
+	return time.Now().After(deadline)
 }

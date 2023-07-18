@@ -75,6 +75,9 @@ spec:
                 type: boolean
               hash:
                 type: string
+              lastResync:
+                format: date-time
+                type: string
             type: object
         type: object
     served: true

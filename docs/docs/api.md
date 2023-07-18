@@ -1506,6 +1506,15 @@ GrafanaFolderStatus defines the observed state of GrafanaFolder
           INSERT ADDITIONAL STATUS FIELD - define observed state of cluster Important: Run "make" to regenerate code after modifying this file<br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>lastResync</b></td>
+        <td>string</td>
+        <td>
+          Last time the folder was resynced<br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
