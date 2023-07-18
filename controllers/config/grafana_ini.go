@@ -23,6 +23,14 @@ func WriteIni(cfg map[string]map[string]string) (string, string) {
 	cfg["paths"]["plugins"] = GrafanaPluginsPath
 	cfg["paths"]["provisioning"] = GrafanaProvisioningPath
 
+	if cfg["dashboards"] == nil {
+		cfg["dashboards"] = make(map[string]string)
+	}
+
+	if cfg["dashboards"]["versions_to_keep"] == "" {
+		cfg["dashboards"]["versions_to_keep"] = "20"
+	}
+
 	sections := make([]string, 0, len(cfg))
 	for key := range cfg {
 		sections = append(sections, key)
