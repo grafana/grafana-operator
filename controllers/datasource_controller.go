@@ -21,6 +21,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -468,7 +469,7 @@ func (r *GrafanaDatasourceReconciler) getReferencedValue(ctx context.Context, cr
 		} else {
 			return "", fmt.Errorf("missing key %s in secret %s", source.SecretKeyRef.Key, source.SecretKeyRef.Name)
 		}
-	} else {
+	} else if source.ConfigMapKeyRef != nil {
 		s := &v1.ConfigMap{}
 		err := r.Client.Get(ctx, client.ObjectKey{Namespace: cr.Namespace, Name: source.ConfigMapKeyRef.Name}, s)
 		if err != nil {
@@ -479,5 +480,17 @@ func (r *GrafanaDatasourceReconciler) getReferencedValue(ctx context.Context, cr
 		} else {
 			return "", fmt.Errorf("missing key %s in configmap %s", source.ConfigMapKeyRef.Key, source.ConfigMapKeyRef.Name)
 		}
+	} else if source.EnvironmentVariableRef != nil {
+		if source.EnvironmentVariableRef.Name == "" {
+			return "", fmt.Errorf("environment variable name empty")
+		}
+
+		value := os.Getenv(source.EnvironmentVariableRef.Name)
+		if value == "" {
+			return value, fmt.Errorf("referenced environment variable %v is missing or empty", source.EnvironmentVariableRef)
+		}
+		return value, nil
 	}
+
+	return "", fmt.Errorf("no value reference provided")
 }

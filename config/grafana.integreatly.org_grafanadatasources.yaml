@@ -172,6 +172,14 @@ spec:
                           - key
                           type: object
                           x-kubernetes-map-type: atomic
+                        environmentVariableRef:
+                          description: Selects a key from an environment variable
+                          properties:
+                            name:
+                              type: string
+                          required:
+                          - name
+                          type: object
                         secretKeyRef:
                           description: Selects a key of a Secret.
                           properties:

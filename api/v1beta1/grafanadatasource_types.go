@@ -91,6 +91,13 @@ type GrafanaDatasourceValueFromSource struct {
 	// Selects a key of a Secret.
 	// +optional
 	SecretKeyRef *v1.SecretKeySelector `json:"secretKeyRef,omitempty"`
+	// Selects a key from an environment variable
+	// +optional
+	EnvironmentVariableRef *EnvironmentVariableSelector `json:"environmentVariableRef,omitempty"`
+}
+
+type EnvironmentVariableSelector struct {
+	Name string `json:"name"`
 }
 
 // GrafanaDatasourceStatus defines the observed state of GrafanaDatasource

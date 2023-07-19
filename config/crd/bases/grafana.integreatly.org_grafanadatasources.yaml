@@ -131,6 +131,13 @@ spec:
                           - key
                           type: object
                           x-kubernetes-map-type: atomic
+                        environmentVariableRef:
+                          properties:
+                            name:
+                              type: string
+                          required:
+                          - name
+                          type: object
                         secretKeyRef:
                           properties:
                             key:
