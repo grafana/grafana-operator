@@ -115,6 +115,10 @@ spec:
                   of cluster Important: Run "make" to regenerate code after modifying
                   this file'
                 type: string
+              lastResync:
+                description: Last time the folder was resynced
+                format: date-time
+                type: string
             type: object
         type: object
     served: true
