@@ -23,7 +23,7 @@ jobs:
           fetch-depth: 0
       - id: changed-files
         name: Get changed files
-        uses: tj-actions/changed-files@87e23c4c79a603288642711155953c7da34b11ac #v37.1.0
+        uses: tj-actions/changed-files@2a968ff601949c81b47d9c1fdb789b0d25ddeea2 #v37.1.2
         with:
           files_ignore: |
             **/*.md
@@ -45,6 +45,8 @@ jobs:
     needs:
       - docs_only_check
     if: (needs.docs_only_check.outputs.docs_only != 'true')
+    env:
+      KUBECONFIG: /home/runner/.kube/kind-grafana-operator-e2e
     steps:
       - name: Clone repo and checkout submodules
         uses: actions/checkout@v3.3.0
@@ -63,7 +65,7 @@ jobs:
       - name: Set up KinD
         id: kind
         run: |
-          kind create cluster --image=kindest/node:v1.25.3 --config tests/e2e/kind.yaml
+          kind --kubeconfig="${KUBECONFIG}" create cluster --image=kindest/node:v1.25.3 --config tests/e2e/kind.yaml
 
       - name: Build and load (current arch)
         env:

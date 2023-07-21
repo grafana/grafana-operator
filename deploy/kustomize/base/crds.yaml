@@ -636,6 +636,10 @@ spec:
                   of cluster Important: Run "make" to regenerate code after modifying
                   this file'
                 type: string
+              lastResync:
+                description: Last time the folder was resynced
+                format: date-time
+                type: string
             type: object
         type: object
     served: true
@@ -717,7 +721,7 @@ spec:
                 properties:
                   metadata:
                     description: ObjectMeta contains only a [subset of the fields
-                      included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#objectmeta-v1-meta).
+                      included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).
                     properties:
                       annotations:
                         additionalProperties:
@@ -8857,7 +8861,7 @@ spec:
                 properties:
                   metadata:
                     description: ObjectMeta contains only a [subset of the fields
-                      included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#objectmeta-v1-meta).
+                      included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).
                     properties:
                       annotations:
                         additionalProperties:
@@ -9207,7 +9211,7 @@ spec:
                 properties:
                   metadata:
                     description: ObjectMeta contains only a [subset of the fields
-                      included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#objectmeta-v1-meta).
+                      included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).
                     properties:
                       annotations:
                         additionalProperties:
@@ -9363,7 +9367,7 @@ spec:
                 properties:
                   metadata:
                     description: ObjectMeta contains only a [subset of the fields
-                      included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#objectmeta-v1-meta).
+                      included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).
                     properties:
                       annotations:
                         additionalProperties:
@@ -9501,7 +9505,7 @@ spec:
                 properties:
                   metadata:
                     description: ObjectMeta contains only a [subset of the fields
-                      included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#objectmeta-v1-meta).
+                      included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).
                     properties:
                       annotations:
                         additionalProperties:
@@ -9866,7 +9870,7 @@ spec:
                     type: array
                   metadata:
                     description: ObjectMeta contains only a [subset of the fields
-                      included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#objectmeta-v1-meta).
+                      included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).
                     properties:
                       annotations:
                         additionalProperties:
