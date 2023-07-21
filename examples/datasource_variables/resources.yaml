@@ -21,8 +21,7 @@ metadata:
   name: credentials
   namespace: grafana
 stringData:
-  PROMETHEUS_USERNAME: root
-  PROMETHEUS_PASSWORD: secret
+  PROMETHEUS_TOKEN: secret_token
 type: Opaque
 ---
 apiVersion: grafana.integreatly.org/v1beta1
@@ -31,16 +30,11 @@ metadata:
   name: grafanadatasource-sample
 spec:
   valuesFrom:
-    - targetPath: "user"
+    - targetPath: "secureJsonData.httpHeaderValue1"
       valueFrom:
         secretKeyRef:
           name: "credentials"
-          key: "PROMETHEUS_USERNAME"
-    - targetPath: "secureJsonData.password"
-      valueFrom:
-        secretKeyRef:
-          name: "credentials"
-          key: "PROMETHEUS_PASSWORD"
+          key: "PROMETHEUS_TOKEN"
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
@@ -51,10 +45,10 @@ spec:
     basicAuth: true
     url: http://prometheus-service:9090
     isDefault: true
-    user: ${PROMETHEUS_USERNAME}
     jsonData:
       "tlsSkipVerify": true
       "timeInterval": "5s"
+      httpHeaderName1: 'Authorization'
     secureJsonData:
-      "password": ${PROMETHEUS_PASSWORD}
+      "httpHeaderValue1": "Bearer ${PROMETHEUS_TOKEN}"
     editable: true
