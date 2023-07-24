@@ -2,7 +2,7 @@
 # NOTE: this section almost matches outputs out kubebuilder v3.7.0
 ###
 # Current Operator version
-VERSION ?= 5.1.0
+VERSION ?= 5.2.0
 
 # Image URL to use all building/pushing image targets
 REGISTRY ?= ghcr.io
@@ -137,7 +137,7 @@ ENVTEST ?= $(LOCALBIN)/setup-envtest
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v4.5.7
-CONTROLLER_TOOLS_VERSION ?= v0.10.0
+CONTROLLER_TOOLS_VERSION ?= v0.12.0
 
 KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
 .PHONY: kustomize
