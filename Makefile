@@ -2,7 +2,7 @@
 # NOTE: this section almost matches outputs out kubebuilder v3.7.0
 ###
 # Current Operator version
-VERSION ?= 5.2.0
+VERSION ?= 5.3.0
 
 # Image URL to use all building/pushing image targets
 REGISTRY ?= ghcr.io
