@@ -12,7 +12,7 @@ jobs:
       - name: Clone the code
         uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b #v3.2.0
       - name: reviewdog
-        uses: reviewdog/action-setup@8e48baae926e97848f0863ae248f3b08e089c81f # v1.0.5
+        uses: reviewdog/action-setup@80a06617492b461a66508e2dedf16233f0506804 # v1.0.6
         with:
           reviewdog_version: latest
 
