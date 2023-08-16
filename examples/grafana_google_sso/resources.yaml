@@ -1,0 +1,72 @@
+apiVersion: v1
+data:
+  client-id: c29tZXJlYWxseWxvbmdzZWNyZXRqdXN0dG9jb3ZlcnN0dWZmCg==
+  client-secret: c29tZXJlYWxseWxvbmdzZWNyZXRqdXN0dG9jb3ZlcnN0dWZmCg==
+kind: Secret
+metadata:
+  name: grafana-admin-credentials
+  namespace: monitoring
+type: Opaque
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana
+  labels:
+    dashboards: "grafana"
+spec:
+  config:
+    log:
+      mode: "console"
+    auth:
+      disable_login_form: "false"
+    auth.google:
+      enabled: "true"
+      scopes: https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email
+      auth_url: https://accounts.google.com/o/oauth2/auth
+      token_url: https://accounts.google.com/o/oauth2/token
+      allowed_domains: your-domain.com
+      allow_sign_up: "true"
+    server:
+      root_url: https://grafana.your-domain.com
+  deployment:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: grafana
+              env:
+                - name: GF_AUTH_GOOGLE_CLIENT_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: grafana-admin-credentials
+                      key: client-id
+                - name: GF_AUTH_GOOGLE_CLIENT_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: grafana-admin-credentials
+                      key: client-secret
+              image: grafana/grafana:10.0.3
+  ingress:
+    metadata:
+      annotations:
+        kubernetes.io/ingress.class: nginx
+        external-dns.alpha.kubernetes.io/hostname: grafana.your-domain.com
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+    spec:
+      ingressClassName: nginx
+      rules:
+        - host: grafana.your-domain.com
+          http:
+            paths:
+              - backend:
+                  service:
+                    name: grafana-service
+                    port:
+                      number: 3000
+                path: /
+                pathType: Prefix
+      tls:
+        - hosts:
+            - grafana.your-domain.com
+          secretName: grafana-tls-secret
