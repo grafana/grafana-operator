@@ -168,7 +168,7 @@ spec:
                       - key
                       type: object
                       x-kubernetes-map-type: atomic
-                    value:omitempty:
+                    value:
                       description: Inline evn value
                       type: string
                   required:

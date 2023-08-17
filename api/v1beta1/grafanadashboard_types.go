@@ -113,7 +113,7 @@ type GrafanaDashboardEnv struct {
 	Name string `json:"name"`
 	// Inline evn value
 	// +optional
-	Value string `json:"value:omitempty"`
+	Value string `json:"value,omitempty"`
 	// Selects a key of a ConfigMap.
 	// +optional
 	ConfigMapKeyRef *v1.ConfigMapKeySelector `json:"configMapKeyRef,omitempty"`

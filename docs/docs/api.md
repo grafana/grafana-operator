@@ -507,7 +507,7 @@ Selects a key of a Secret.
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>value:omitempty</b></td>
+        <td><b>value</b></td>
         <td>string</td>
         <td>
           Inline evn value<br/>
