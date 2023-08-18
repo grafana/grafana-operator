@@ -13,4 +13,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: ghcr.io/grafana-operator/grafana-operator
-  newTag: v5.1.0
+  newTag: v5.3.0

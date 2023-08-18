@@ -23,7 +23,6 @@ const (
 	MemoryRequest                           = "256Mi"
 	CpuRequest                              = "100m"
 	MemoryLimit                             = "1024Mi"
-	CpuLimit                                = "500m"
 	GrafanaHealthEndpoint                   = "/api/health"
 	ReadinessProbeFailureThreshold    int32 = 1
 	ReadinessProbeInitialDelaySeconds int32 = 5
@@ -71,7 +70,6 @@ func getResources() v1.ResourceRequirements {
 		},
 		Limits: v1.ResourceList{
 			v1.ResourceMemory: resource.MustParse(MemoryLimit),
-			v1.ResourceCPU:    resource.MustParse(CpuLimit),
 		},
 	}
 }

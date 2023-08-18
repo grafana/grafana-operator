@@ -432,11 +432,20 @@ func (r *GrafanaDatasourceReconciler) getDatasourceContent(ctx context.Context, 
 	}
 
 	for _, ref := range cr.Spec.ValuesFrom {
-		val, err := r.getReferencedValue(ctx, cr, &ref.ValueFrom)
+		val, key, err := r.getReferencedValue(ctx, cr, &ref.ValueFrom)
 		if err != nil {
 			return nil, "", err
 		}
-		simpleContent.SetPath(strings.Split(ref.TargetPath, "."), val)
+
+		patternToReplace := simpleContent.GetPath(strings.Split(ref.TargetPath, ".")...)
+		patternString, err := patternToReplace.String()
+		if err != nil {
+			return nil, "", fmt.Errorf("pattern must be a string")
+		}
+
+		patternString = strings.ReplaceAll(patternString, fmt.Sprintf("${%v}", key), val)
+		patternString = strings.ReplaceAll(patternString, fmt.Sprintf("$%v", key), val)
+		simpleContent.SetPath(strings.Split(ref.TargetPath, "."), patternString)
 	}
 
 	newBytes, err := simpleContent.MarshalJSON()
@@ -456,28 +465,28 @@ func (r *GrafanaDatasourceReconciler) getDatasourceContent(ctx context.Context, 
 	return &res, fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
 
-func (r *GrafanaDatasourceReconciler) getReferencedValue(ctx context.Context, cr *v1beta1.GrafanaDatasource, source *v1beta1.GrafanaDatasourceValueFromSource) (string, error) {
+func (r *GrafanaDatasourceReconciler) getReferencedValue(ctx context.Context, cr *v1beta1.GrafanaDatasource, source *v1beta1.GrafanaDatasourceValueFromSource) (string, string, error) {
 	if source.SecretKeyRef != nil {
 		s := &v1.Secret{}
 		err := r.Client.Get(ctx, client.ObjectKey{Namespace: cr.Namespace, Name: source.SecretKeyRef.Name}, s)
 		if err != nil {
-			return "", err
+			return "", "", err
 		}
 		if val, ok := s.Data[source.SecretKeyRef.Key]; ok {
-			return string(val), nil
+			return string(val), source.SecretKeyRef.Key, nil
 		} else {
-			return "", fmt.Errorf("missing key %s in secret %s", source.SecretKeyRef.Key, source.SecretKeyRef.Name)
+			return "", "", fmt.Errorf("missing key %s in secret %s", source.SecretKeyRef.Key, source.SecretKeyRef.Name)
 		}
 	} else {
 		s := &v1.ConfigMap{}
 		err := r.Client.Get(ctx, client.ObjectKey{Namespace: cr.Namespace, Name: source.ConfigMapKeyRef.Name}, s)
 		if err != nil {
-			return "", err
+			return "", "", err
 		}
 		if val, ok := s.Data[source.ConfigMapKeyRef.Key]; ok {
-			return val, nil
+			return val, source.ConfigMapKeyRef.Key, nil
 		} else {
-			return "", fmt.Errorf("missing key %s in configmap %s", source.ConfigMapKeyRef.Key, source.ConfigMapKeyRef.Name)
+			return "", "", fmt.Errorf("missing key %s in configmap %s", source.ConfigMapKeyRef.Key, source.ConfigMapKeyRef.Name)
 		}
 	}
 }

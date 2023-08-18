@@ -28,6 +28,7 @@ import (
 	"github.com/grafana-operator/grafana-operator/v5/controllers/metrics"
 	grapi "github.com/grafana/grafana-api-golang-client"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -202,7 +203,10 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
-	return ctrl.Result{RequeueAfter: folder.GetResyncPeriod()}, nil
+	if folder.ResyncPeriodHasElapsed() {
+		folder.Status.LastResync = metav1.Time{Time: time.Now()}
+	}
+	return ctrl.Result{RequeueAfter: folder.GetResyncPeriod()}, r.UpdateStatus(ctx, folder)
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -289,6 +293,11 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 		return err
 	}
 
+	// always update after resync period has elapsed even if cr is unchanged.
+	if exists && cr.Unchanged() && !cr.ResyncPeriodHasElapsed() {
+		return nil
+	}
+
 	if exists {
 		// Add to status to cover cases:
 		// - operator have previously failed to update status
@@ -330,7 +339,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 	}
 
 	// NOTE: it's up to a user to reset permissions with correct json
-	if !cr.Unchanged() && cr.Spec.Permissions != "" {
+	if cr.Spec.Permissions != "" {
 		permissions := grapi.PermissionItems{}
 		err = json.Unmarshal([]byte(cr.Spec.Permissions), &permissions)
 		if err != nil {
@@ -343,7 +352,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 		}
 	}
 
-	return r.UpdateStatus(ctx, cr)
+	return nil
 }
 
 func (r *GrafanaFolderReconciler) UpdateStatus(ctx context.Context, cr *v1beta1.GrafanaFolder) error {

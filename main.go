@@ -24,8 +24,6 @@ import (
 	"strings"
 	"syscall"
 
-	"sigs.k8s.io/controller-runtime/pkg/cache"
-
 	routev1 "github.com/openshift/api/route/v1"
 	discovery2 "k8s.io/client-go/discovery"
 
@@ -99,8 +97,7 @@ func main() {
 	case strings.Contains(watchNamespace, ","):
 		// multi namespace scoped
 		setupLog.Info("manager set up with multiple namespaces", "namespaces", watchNamespace)
-		controllerOptions.Namespace = ""
-		controllerOptions.NewCache = cache.MultiNamespacedCacheBuilder(strings.Split(watchNamespace, ","))
+		controllerOptions.Cache.Namespaces = strings.Split(watchNamespace, ",")
 	case watchNamespace != "":
 		// namespace scoped
 		setupLog.Info("operator running in namespace scoped mode", "namespace", watchNamespace)

@@ -1,0 +1,139 @@
+---
+# We need to extend the permissions of the Grafana serviceaccount to watch for configmaps
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: sidecar-role
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "watch", "list"]
+---
+# We bind the new permissions to the grafana-sa
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: sidecar-rolebinding
+roleRef:
+  kind: ClusterRole
+  name: sidecar-role
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+  - kind: ServiceAccount
+    name: grafana-sa
+    namespace: grafana # TODO: replace with the namespace where Grafana is deployed
+---
+# Provisioning config
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: provisioning-config
+  namespace: grafana
+data:
+  provisioning.yaml: |-
+    apiVersion: 1
+    providers:
+      - name: 'configmap-dashboard-provider'
+        orgId: 1
+        folder: ''
+        folderUid: ''
+        type: file
+        disableDeletion: false
+        updateIntervalSeconds: 10
+        allowUiUpdates: false
+        options:
+          path: /var/lib/grafana/dashboards
+          foldersFromFilesStructure: true
+---
+# Example configmap containing a dashboard
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sample-configmap
+  namespace: default # It could be a configMap in any namespace
+  labels:
+    grafana_dashboard: "1"
+data:
+  dashboard.json: |-
+    {
+      "id": null,
+      "title": "Simple Dashboard",
+      "tags": [],
+      "style": "dark",
+      "timezone": "browser",
+      "editable": true,
+      "hideControls": false,
+      "graphTooltip": 1,
+      "panels": [],
+      "time": {
+        "from": "now-6h",
+        "to": "now"
+      },
+      "timepicker": {
+        "time_options": [],
+        "refresh_intervals": []
+      },
+      "templating": {
+        "list": []
+      },
+      "annotations": {
+        "list": []
+      },
+      "refresh": "5s",
+      "schemaVersion": 17,
+      "version": 0,
+      "links": []
+    }
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana
+  namespace: grafana
+  labels:
+    dashboards: "grafana"
+spec:
+  deployment:
+    spec:
+      template:
+        spec:
+          # The volumes for dashboards and provisioning config
+          volumes:
+            - name: dashboards
+              emptyDir: { }
+            - name: provisioning-config
+              configMap:
+                name: provisioning-config
+          containers:
+            - name: grafana
+              volumeMounts:
+                - mountPath: /etc/grafana/provisioning/dashboards
+                  name: provisioning-config
+                - mountPath: /var/lib/grafana/dashboards
+                  name: dashboards
+            # This container watches the namespace for configmaps with the `dashboards` label
+            # and creates files for all their keys under `FOLDER`
+            - image: 'ghcr.io/kiwigrid/k8s-sidecar:1.24.5'
+              name: k8s-sidecar
+              env:
+                - name: LABEL
+                  value: "grafana_dashboard"
+                - name: LABEL_VALUE
+                  value: "1"
+                - name: FOLDER
+                  value: /var/lib/grafana/dashboards
+                - name: NAMESPACE
+                  value: ALL
+                - name: RESOURCE
+                  value: configmap
+              volumeMounts:
+                - mountPath: /var/lib/grafana/dashboards
+                  name: dashboards
+  config:
+    log:
+      mode: "console"
+    auth:
+      disable_login_form: "false"
+    security:
+      admin_user: root
+      admin_password: secret
