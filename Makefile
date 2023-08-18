@@ -335,7 +335,7 @@ ifeq (, $(shell which crdoc))
 	API_REF_GEN_TMP_DIR=$$(mktemp -d) ;\
 	cd $$API_REF_GEN_TMP_DIR ;\
 	go mod init tmp ;\
-	go install fybrik.io/crdoc@v0.6.2 ;\
+	go install fybrik.io/crdoc@ad5ba1e62f8db46cb5a9282dfedfc3d8f3d45065 ;\
 	rm -rf $$API_REF_GEN_TMP_DIR ;\
 	}
 API_REF_GEN=$(GOBIN)/crdoc
