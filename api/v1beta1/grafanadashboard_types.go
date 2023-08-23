@@ -32,6 +32,7 @@ type DashboardSourceType string
 const (
 	DashboardSourceTypeRawJson    DashboardSourceType = "json"
 	DashboardSourceTypeGzipJson   DashboardSourceType = "gzipJson"
+	DashboardSourceJsonnetProject DashboardSourceType = "jsonnetProject"
 	DashboardSourceTypeUrl        DashboardSourceType = "url"
 	DashboardSourceTypeJsonnet    DashboardSourceType = "jsonnet"
 	DashboardSourceTypeGrafanaCom DashboardSourceType = "grafana"
@@ -64,6 +65,9 @@ type GrafanaDashboardSpec struct {
 	// Jsonnet
 	// +optional
 	Jsonnet string `json:"jsonnet,omitempty"`
+
+	// Jsonnet project build
+	JsonnetProjectBuild *JsonnetProjectBuild `json:"jsonnetLib,omitempty"`
 
 	// grafana.com/dashboards
 	// +optional
@@ -113,13 +117,10 @@ type GrafanaDashboardEnv struct {
 	Name string `json:"name"`
 	// Inline evn value
 	// +optional
-	Value string `json:"value:omitempty"`
-	// Selects a key of a ConfigMap.
+	Value string `json:"value,omitempty"`
+	// Reference on value source, might be the reference on a secret or config map
 	// +optional
-	ConfigMapKeyRef *v1.ConfigMapKeySelector `json:"configMapKeyRef,omitempty"`
-	// Selects a key of a Secret.
-	// +optional
-	SecretKeyRef *v1.SecretKeySelector `json:"secretKeyRef,omitempty"`
+	ValueFrom GrafanaDashboardEnvFromSource `json:"valueFrom,omitempty"`
 }
 
 type GrafanaDashboardEnvFromSource struct {
@@ -129,6 +130,12 @@ type GrafanaDashboardEnvFromSource struct {
 	// Selects a key of a Secret.
 	// +optional
 	SecretKeyRef *v1.SecretKeySelector `json:"secretKeyRef,omitempty"`
+}
+
+type JsonnetProjectBuild struct {
+	JPath              []string `json:"jPath,omitempty"`
+	FileName           string   `json:"fileName"`
+	GzipJsonnetProject []byte   `json:"gzipJsonnetProject"`
 }
 
 // GrafanaComDashbooardReference is a reference to a dashboard on grafana.com/dashboards
@@ -223,6 +230,10 @@ func (in *GrafanaDashboard) GetSourceTypes() []DashboardSourceType {
 
 	if in.Spec.ConfigMapRef != nil {
 		sourceTypes = append(sourceTypes, DashboardSourceConfigMap)
+	}
+
+	if in.Spec.JsonnetProjectBuild != nil {
+		sourceTypes = append(sourceTypes, DashboardSourceJsonnetProject)
 	}
 
 	return sourceTypes

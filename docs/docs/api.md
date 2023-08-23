@@ -179,6 +179,13 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanadashboardspecjsonnetlib">jsonnetLib</a></b></td>
+        <td>object</td>
+        <td>
+          Jsonnet project build<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanadashboardspecpluginsindex">plugins</a></b></td>
         <td>[]object</td>
         <td>
@@ -493,32 +500,59 @@ Selects a key of a Secret.
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#grafanadashboardspecenvsindexconfigmapkeyref">configMapKeyRef</a></b></td>
-        <td>object</td>
-        <td>
-          Selects a key of a ConfigMap.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#grafanadashboardspecenvsindexsecretkeyref">secretKeyRef</a></b></td>
-        <td>object</td>
-        <td>
-          Selects a key of a Secret.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>value:omitempty</b></td>
+        <td><b>value</b></td>
         <td>string</td>
         <td>
           Inline evn value<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanadashboardspecenvsindexvaluefrom">valueFrom</a></b></td>
+        <td>object</td>
+        <td>
+          Reference on value source, might be the reference on a secret or config map<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### GrafanaDashboard.spec.envs[index].configMapKeyRef
+### GrafanaDashboard.spec.envs[index].valueFrom
 <sup><sup>[↩ Parent](#grafanadashboardspecenvsindex)</sup></sup>
+
+
+
+Reference on value source, might be the reference on a secret or config map
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanadashboardspecenvsindexvaluefromconfigmapkeyref">configMapKeyRef</a></b></td>
+        <td>object</td>
+        <td>
+          Selects a key of a ConfigMap.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanadashboardspecenvsindexvaluefromsecretkeyref">secretKeyRef</a></b></td>
+        <td>object</td>
+        <td>
+          Selects a key of a Secret.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.spec.envs[index].valueFrom.configMapKeyRef
+<sup><sup>[↩ Parent](#grafanadashboardspecenvsindexvaluefrom)</sup></sup>
 
 
 
@@ -558,8 +592,8 @@ Selects a key of a ConfigMap.
 </table>
 
 
-### GrafanaDashboard.spec.envs[index].secretKeyRef
-<sup><sup>[↩ Parent](#grafanadashboardspecenvsindex)</sup></sup>
+### GrafanaDashboard.spec.envs[index].valueFrom.secretKeyRef
+<sup><sup>[↩ Parent](#grafanadashboardspecenvsindexvaluefrom)</sup></sup>
 
 
 
@@ -625,6 +659,49 @@ grafana.com/dashboards
       </tr><tr>
         <td><b>revision</b></td>
         <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.spec.jsonnetLib
+<sup><sup>[↩ Parent](#grafanadashboardspec)</sup></sup>
+
+
+
+Jsonnet project build
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>fileName</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>gzipJsonnetProject</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: byte<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>jPath</b></td>
+        <td>[]string</td>
         <td>
           <br/>
         </td>

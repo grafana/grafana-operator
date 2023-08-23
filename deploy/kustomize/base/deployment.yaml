@@ -43,13 +43,19 @@ spec:
             periodSeconds: 10
           resources:
             limits:
-              cpu: 200m
-              memory: 100Mi
+              cpu: 1
+              memory: 1024Mi
             requests:
               cpu: 100m
-              memory: 20Mi
+              memory: 100Mi
           securityContext:
             allowPrivilegeEscalation: false
+          volumeMounts:
+            - name: dashboards-dir
+              mountPath: /tmp/dashboards
+      volumes:
+        - name: dashboards-dir
+          emptyDir: {}
       securityContext:
         runAsNonRoot: true
       serviceAccountName: grafana-operator-controller-manager
