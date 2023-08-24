@@ -148,8 +148,7 @@ func getGzipArchiveFileNameWithExtension(fileName string) string {
 }
 
 func getGzipArchiveFilePath(fileName string) string {
-	return fmt.Sprintf("%s/%s", config.GrafanaDashboardsRuntimeBuild,
-		getGzipArchiveFileNameWithExtension(fileName))
+	return filepath.Join(config.GrafanaDashboardsRuntimeBuild, getGzipArchiveFileNameWithExtension(fileName))
 }
 
 func getDecompressedGzipArchiveFilePath(fileName string) string {
@@ -160,11 +159,9 @@ func storeByteArrayGzipOnDisk(gzipFileName string, base64EncodedGzipJsonnetProje
 	gzipFileLocalPath := getGzipArchiveFilePath(gzipFileName)
 
 	if err := os.WriteFile(gzipFileLocalPath, base64EncodedGzipJsonnetProject, os.ModePerm); err != nil {
-		fmt.Println("Error writing compressed data to file:", err)
-		return "", err
+		return "", fmt.Errorf("error writing compressed data to file: %w", err)
 	}
 
-	fmt.Printf("Local file %s created successfully", gzipFileLocalPath)
 	return gzipFileLocalPath, nil
 }
 
@@ -202,7 +199,7 @@ func buildJsonnetProject(buildName string, envs map[string]string, dashboard *v1
 
 	extractTo := getDecompressedGzipArchiveFilePath(buildName)
 
-	err = decompressGzip(gzipFileLocalPath, extractTo)
+	err = untarGzip(gzipFileLocalPath, extractTo)
 	if err != nil {
 		return nil, fmt.Errorf("error extracting gzip archive: %w", err)
 	}
@@ -276,7 +273,7 @@ func validRelPath(p string) bool {
 	return true
 }
 
-func decompressGzip(archivePath, extractPath string) error {
+func untarGzip(archivePath, extractPath string) error {
 	err := os.MkdirAll(extractPath, os.ModePerm)
 	if err != nil {
 		fmt.Println("Error creating directory:", err)
@@ -331,12 +328,13 @@ func decompressGzip(archivePath, extractPath string) error {
 			if err != nil {
 				return err
 			}
+			defer fileToWrite.Close()
 			// copy over contents
 			if _, err := io.Copy(fileToWrite, tr); err != nil {
 				return err
 			}
-
-			fileToWrite.Close()
+		default:
+			fmt.Printf("Unable to untar type : %c in file %s\n", header.Typeflag, target)
 		}
 	}
 
@@ -346,7 +344,6 @@ func decompressGzip(archivePath, extractPath string) error {
 		return err
 	}
 
-	//
 	return nil
 }
 

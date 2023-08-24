@@ -32,7 +32,7 @@ type DashboardSourceType string
 const (
 	DashboardSourceTypeRawJson    DashboardSourceType = "json"
 	DashboardSourceTypeGzipJson   DashboardSourceType = "gzipJson"
-	DashboardSourceJsonnetProject DashboardSourceType = "jsonnetProject"
+	DashboardSourceJsonnetProject DashboardSourceType = "jsonnetProjectWithRuntimeRaw"
 	DashboardSourceTypeUrl        DashboardSourceType = "url"
 	DashboardSourceTypeJsonnet    DashboardSourceType = "jsonnet"
 	DashboardSourceTypeGrafanaCom DashboardSourceType = "grafana"
