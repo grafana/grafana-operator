@@ -543,6 +543,8 @@ Reference on value source, might be the reference on a secret or config map
       </tr><tr>
         <td><b><a href="#grafanadashboardspecenvsindexvaluefromsecretkeyref">secretKeyRef</a></b></td>
         <td>object</td>
+        <td><b>value</b></td>
+        <td>string</td>
         <td>
           Selects a key of a Secret.<br/>
         </td>
@@ -3819,10 +3821,24 @@ A single application container that you want to run within a pod.
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanaspecdeploymentspectemplatespeccontainersindexresizepolicyindex">resizePolicy</a></b></td>
+        <td>[]object</td>
+        <td>
+          Resources resize policy for the container.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecdeploymentspectemplatespeccontainersindexresources">resources</a></b></td>
         <td>object</td>
         <td>
           Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>restartPolicy</b></td>
+        <td>string</td>
+        <td>
+          RestartPolicy defines the restart behavior of individual containers in a pod. This field may only be set for init containers, and the only allowed value is "Always". For non-init containers or when this field is not specified, the restart behavior is defined by the Pod's restart policy and the container type. Setting the RestartPolicy as "Always" for the init container will have the following effect: this init container will be continually restarted on exit until all regular containers have terminated. Once all regular containers have completed, all init containers with restartPolicy "Always" will be shut down. This lifecycle differs from normal init containers and is often referred to as a "sidecar" container. Although this init container still starts in the init container sequence, it does not wait for the container to complete before proceeding to the next init container. Instead, the next init container starts immediately after this init container is started, or after any startupProbe has successfully completed.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -4431,7 +4447,7 @@ HTTPHeader describes a custom header to be used in HTTP probes
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          The header field name<br/>
+          The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -4622,7 +4638,7 @@ HTTPHeader describes a custom header to be used in HTTP probes
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          The header field name<br/>
+          The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -4706,7 +4722,7 @@ Periodic probe of container liveness. Container will be restarted if the probe f
         <td><b><a href="#grafanaspecdeploymentspectemplatespeccontainersindexlivenessprobegrpc">grpc</a></b></td>
         <td>object</td>
         <td>
-          GRPC specifies an action involving a GRPC port. This is a beta field and requires enabling GRPCContainerProbe feature gate.<br/>
+          GRPC specifies an action involving a GRPC port.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -4804,7 +4820,7 @@ Exec specifies the action to take.
 
 
 
-GRPC specifies an action involving a GRPC port. This is a beta field and requires enabling GRPCContainerProbe feature gate.
+GRPC specifies an action involving a GRPC port.
 
 <table>
     <thead>
@@ -4911,7 +4927,7 @@ HTTPHeader describes a custom header to be used in HTTP probes
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          The header field name<br/>
+          The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -5056,7 +5072,7 @@ Periodic probe of container service readiness. Container will be removed from se
         <td><b><a href="#grafanaspecdeploymentspectemplatespeccontainersindexreadinessprobegrpc">grpc</a></b></td>
         <td>object</td>
         <td>
-          GRPC specifies an action involving a GRPC port. This is a beta field and requires enabling GRPCContainerProbe feature gate.<br/>
+          GRPC specifies an action involving a GRPC port.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5154,7 +5170,7 @@ Exec specifies the action to take.
 
 
 
-GRPC specifies an action involving a GRPC port. This is a beta field and requires enabling GRPCContainerProbe feature gate.
+GRPC specifies an action involving a GRPC port.
 
 <table>
     <thead>
@@ -5261,7 +5277,7 @@ HTTPHeader describes a custom header to be used in HTTP probes
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          The header field name<br/>
+          The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -5309,6 +5325,40 @@ TCPSocket specifies an action involving a TCP port.
 </table>
 
 
+### Grafana.spec.deployment.spec.template.spec.containers[index].resizePolicy[index]
+<sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespeccontainersindex)</sup></sup>
+
+
+
+ContainerResizePolicy represents resource resize policy for the container.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>resourceName</b></td>
+        <td>string</td>
+        <td>
+          Name of the resource to which this resource resize policy applies. Supported values: cpu, memory.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>restartPolicy</b></td>
+        <td>string</td>
+        <td>
+          Restart policy to apply when specified resource is resized. If not specified, it defaults to NotRequired.<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
 ### Grafana.spec.deployment.spec.template.spec.containers[index].resources
 <sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespeccontainersindex)</sup></sup>
 
@@ -5326,6 +5376,15 @@ Compute Resources required by this container. Cannot be updated. More info: http
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#grafanaspecdeploymentspectemplatespeccontainersindexresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+ This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+ This field is immutable. It can only be set for containers.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -5336,9 +5395,36 @@ Compute Resources required by this container. Cannot be updated. More info: http
         <td><b>requests</b></td>
         <td>map[string]int or string</td>
         <td>
-          Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+          Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.deployment.spec.template.spec.containers[index].resources.claims[index]
+<sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespeccontainersindexresources)</sup></sup>
+
+
+
+ResourceClaim references one entry in PodSpec.ResourceClaims.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.<br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -5554,7 +5640,7 @@ The seccomp options to use by this container. If seccomp options are provided at
         <td><b>localhostProfile</b></td>
         <td>string</td>
         <td>
-          localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must only be set if type is "Localhost".<br/>
+          localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is "Localhost". Must NOT be set for any other type.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5595,7 +5681,7 @@ The Windows specific settings applied to all containers. If unspecified, the opt
         <td><b>hostProcess</b></td>
         <td>boolean</td>
         <td>
-          HostProcess determines if a container should be run as a 'Host Process' container. This field is alpha-level and will only be honored by components that enable the WindowsHostProcessContainers feature flag. Setting this field without the feature flag will result in errors when validating the Pod. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers).  In addition, if HostProcess is true then HostNetwork must also be set to true.<br/>
+          HostProcess determines if a container should be run as a 'Host Process' container. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers). In addition, if HostProcess is true then HostNetwork must also be set to true.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5645,7 +5731,7 @@ StartupProbe indicates that the Pod has successfully initialized. If specified, 
         <td><b><a href="#grafanaspecdeploymentspectemplatespeccontainersindexstartupprobegrpc">grpc</a></b></td>
         <td>object</td>
         <td>
-          GRPC specifies an action involving a GRPC port. This is a beta field and requires enabling GRPCContainerProbe feature gate.<br/>
+          GRPC specifies an action involving a GRPC port.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5743,7 +5829,7 @@ Exec specifies the action to take.
 
 
 
-GRPC specifies an action involving a GRPC port. This is a beta field and requires enabling GRPCContainerProbe feature gate.
+GRPC specifies an action involving a GRPC port.
 
 <table>
     <thead>
@@ -5850,7 +5936,7 @@ HTTPHeader describes a custom header to be used in HTTP probes
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          The header field name<br/>
+          The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -6164,10 +6250,24 @@ An EphemeralContainer is a temporary container that you may add to an existing P
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanaspecdeploymentspectemplatespecephemeralcontainersindexresizepolicyindex">resizePolicy</a></b></td>
+        <td>[]object</td>
+        <td>
+          Resources resize policy for the container.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecdeploymentspectemplatespecephemeralcontainersindexresources">resources</a></b></td>
         <td>object</td>
         <td>
           Resources are not allowed for ephemeral containers. Ephemeral containers use spare resources already allocated to the pod.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>restartPolicy</b></td>
+        <td>string</td>
+        <td>
+          Restart policy for the container to manage the restart behavior of each container within a pod. This may only be set for init containers. You cannot set this field on ephemeral containers.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -6784,7 +6884,7 @@ HTTPHeader describes a custom header to be used in HTTP probes
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          The header field name<br/>
+          The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -6975,7 +7075,7 @@ HTTPHeader describes a custom header to be used in HTTP probes
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          The header field name<br/>
+          The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -7059,7 +7159,7 @@ Probes are not allowed for ephemeral containers.
         <td><b><a href="#grafanaspecdeploymentspectemplatespecephemeralcontainersindexlivenessprobegrpc">grpc</a></b></td>
         <td>object</td>
         <td>
-          GRPC specifies an action involving a GRPC port. This is a beta field and requires enabling GRPCContainerProbe feature gate.<br/>
+          GRPC specifies an action involving a GRPC port.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -7157,7 +7257,7 @@ Exec specifies the action to take.
 
 
 
-GRPC specifies an action involving a GRPC port. This is a beta field and requires enabling GRPCContainerProbe feature gate.
+GRPC specifies an action involving a GRPC port.
 
 <table>
     <thead>
@@ -7264,7 +7364,7 @@ HTTPHeader describes a custom header to be used in HTTP probes
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          The header field name<br/>
+          The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -7409,7 +7509,7 @@ Probes are not allowed for ephemeral containers.
         <td><b><a href="#grafanaspecdeploymentspectemplatespecephemeralcontainersindexreadinessprobegrpc">grpc</a></b></td>
         <td>object</td>
         <td>
-          GRPC specifies an action involving a GRPC port. This is a beta field and requires enabling GRPCContainerProbe feature gate.<br/>
+          GRPC specifies an action involving a GRPC port.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -7507,7 +7607,7 @@ Exec specifies the action to take.
 
 
 
-GRPC specifies an action involving a GRPC port. This is a beta field and requires enabling GRPCContainerProbe feature gate.
+GRPC specifies an action involving a GRPC port.
 
 <table>
     <thead>
@@ -7614,7 +7714,7 @@ HTTPHeader describes a custom header to be used in HTTP probes
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          The header field name<br/>
+          The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -7662,6 +7762,40 @@ TCPSocket specifies an action involving a TCP port.
 </table>
 
 
+### Grafana.spec.deployment.spec.template.spec.ephemeralContainers[index].resizePolicy[index]
+<sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespecephemeralcontainersindex)</sup></sup>
+
+
+
+ContainerResizePolicy represents resource resize policy for the container.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>resourceName</b></td>
+        <td>string</td>
+        <td>
+          Name of the resource to which this resource resize policy applies. Supported values: cpu, memory.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>restartPolicy</b></td>
+        <td>string</td>
+        <td>
+          Restart policy to apply when specified resource is resized. If not specified, it defaults to NotRequired.<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
 ### Grafana.spec.deployment.spec.template.spec.ephemeralContainers[index].resources
 <sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespecephemeralcontainersindex)</sup></sup>
 
@@ -7679,6 +7813,15 @@ Resources are not allowed for ephemeral containers. Ephemeral containers use spa
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#grafanaspecdeploymentspectemplatespecephemeralcontainersindexresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+ This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+ This field is immutable. It can only be set for containers.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -7689,9 +7832,36 @@ Resources are not allowed for ephemeral containers. Ephemeral containers use spa
         <td><b>requests</b></td>
         <td>map[string]int or string</td>
         <td>
-          Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+          Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.deployment.spec.template.spec.ephemeralContainers[index].resources.claims[index]
+<sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespecephemeralcontainersindexresources)</sup></sup>
+
+
+
+ResourceClaim references one entry in PodSpec.ResourceClaims.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.<br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -7907,7 +8077,7 @@ The seccomp options to use by this container. If seccomp options are provided at
         <td><b>localhostProfile</b></td>
         <td>string</td>
         <td>
-          localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must only be set if type is "Localhost".<br/>
+          localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is "Localhost". Must NOT be set for any other type.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -7948,7 +8118,7 @@ The Windows specific settings applied to all containers. If unspecified, the opt
         <td><b>hostProcess</b></td>
         <td>boolean</td>
         <td>
-          HostProcess determines if a container should be run as a 'Host Process' container. This field is alpha-level and will only be honored by components that enable the WindowsHostProcessContainers feature flag. Setting this field without the feature flag will result in errors when validating the Pod. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers).  In addition, if HostProcess is true then HostNetwork must also be set to true.<br/>
+          HostProcess determines if a container should be run as a 'Host Process' container. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers). In addition, if HostProcess is true then HostNetwork must also be set to true.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -7998,7 +8168,7 @@ Probes are not allowed for ephemeral containers.
         <td><b><a href="#grafanaspecdeploymentspectemplatespecephemeralcontainersindexstartupprobegrpc">grpc</a></b></td>
         <td>object</td>
         <td>
-          GRPC specifies an action involving a GRPC port. This is a beta field and requires enabling GRPCContainerProbe feature gate.<br/>
+          GRPC specifies an action involving a GRPC port.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -8096,7 +8266,7 @@ Exec specifies the action to take.
 
 
 
-GRPC specifies an action involving a GRPC port. This is a beta field and requires enabling GRPCContainerProbe feature gate.
+GRPC specifies an action involving a GRPC port.
 
 <table>
     <thead>
@@ -8203,7 +8373,7 @@ HTTPHeader describes a custom header to be used in HTTP probes
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          The header field name<br/>
+          The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -8502,10 +8672,24 @@ A single application container that you want to run within a pod.
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanaspecdeploymentspectemplatespecinitcontainersindexresizepolicyindex">resizePolicy</a></b></td>
+        <td>[]object</td>
+        <td>
+          Resources resize policy for the container.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecdeploymentspectemplatespecinitcontainersindexresources">resources</a></b></td>
         <td>object</td>
         <td>
           Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>restartPolicy</b></td>
+        <td>string</td>
+        <td>
+          RestartPolicy defines the restart behavior of individual containers in a pod. This field may only be set for init containers, and the only allowed value is "Always". For non-init containers or when this field is not specified, the restart behavior is defined by the Pod's restart policy and the container type. Setting the RestartPolicy as "Always" for the init container will have the following effect: this init container will be continually restarted on exit until all regular containers have terminated. Once all regular containers have completed, all init containers with restartPolicy "Always" will be shut down. This lifecycle differs from normal init containers and is often referred to as a "sidecar" container. Although this init container still starts in the init container sequence, it does not wait for the container to complete before proceeding to the next init container. Instead, the next init container starts immediately after this init container is started, or after any startupProbe has successfully completed.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9114,7 +9298,7 @@ HTTPHeader describes a custom header to be used in HTTP probes
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          The header field name<br/>
+          The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -9305,7 +9489,7 @@ HTTPHeader describes a custom header to be used in HTTP probes
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          The header field name<br/>
+          The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -9389,7 +9573,7 @@ Periodic probe of container liveness. Container will be restarted if the probe f
         <td><b><a href="#grafanaspecdeploymentspectemplatespecinitcontainersindexlivenessprobegrpc">grpc</a></b></td>
         <td>object</td>
         <td>
-          GRPC specifies an action involving a GRPC port. This is a beta field and requires enabling GRPCContainerProbe feature gate.<br/>
+          GRPC specifies an action involving a GRPC port.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9487,7 +9671,7 @@ Exec specifies the action to take.
 
 
 
-GRPC specifies an action involving a GRPC port. This is a beta field and requires enabling GRPCContainerProbe feature gate.
+GRPC specifies an action involving a GRPC port.
 
 <table>
     <thead>
@@ -9594,7 +9778,7 @@ HTTPHeader describes a custom header to be used in HTTP probes
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          The header field name<br/>
+          The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -9739,7 +9923,7 @@ Periodic probe of container service readiness. Container will be removed from se
         <td><b><a href="#grafanaspecdeploymentspectemplatespecinitcontainersindexreadinessprobegrpc">grpc</a></b></td>
         <td>object</td>
         <td>
-          GRPC specifies an action involving a GRPC port. This is a beta field and requires enabling GRPCContainerProbe feature gate.<br/>
+          GRPC specifies an action involving a GRPC port.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9837,7 +10021,7 @@ Exec specifies the action to take.
 
 
 
-GRPC specifies an action involving a GRPC port. This is a beta field and requires enabling GRPCContainerProbe feature gate.
+GRPC specifies an action involving a GRPC port.
 
 <table>
     <thead>
@@ -9944,7 +10128,7 @@ HTTPHeader describes a custom header to be used in HTTP probes
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          The header field name<br/>
+          The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -9992,6 +10176,40 @@ TCPSocket specifies an action involving a TCP port.
 </table>
 
 
+### Grafana.spec.deployment.spec.template.spec.initContainers[index].resizePolicy[index]
+<sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespecinitcontainersindex)</sup></sup>
+
+
+
+ContainerResizePolicy represents resource resize policy for the container.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>resourceName</b></td>
+        <td>string</td>
+        <td>
+          Name of the resource to which this resource resize policy applies. Supported values: cpu, memory.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>restartPolicy</b></td>
+        <td>string</td>
+        <td>
+          Restart policy to apply when specified resource is resized. If not specified, it defaults to NotRequired.<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
 ### Grafana.spec.deployment.spec.template.spec.initContainers[index].resources
 <sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespecinitcontainersindex)</sup></sup>
 
@@ -10009,6 +10227,15 @@ Compute Resources required by this container. Cannot be updated. More info: http
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#grafanaspecdeploymentspectemplatespecinitcontainersindexresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+ This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+ This field is immutable. It can only be set for containers.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -10019,9 +10246,36 @@ Compute Resources required by this container. Cannot be updated. More info: http
         <td><b>requests</b></td>
         <td>map[string]int or string</td>
         <td>
-          Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+          Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.deployment.spec.template.spec.initContainers[index].resources.claims[index]
+<sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespecinitcontainersindexresources)</sup></sup>
+
+
+
+ResourceClaim references one entry in PodSpec.ResourceClaims.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.<br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -10237,7 +10491,7 @@ The seccomp options to use by this container. If seccomp options are provided at
         <td><b>localhostProfile</b></td>
         <td>string</td>
         <td>
-          localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must only be set if type is "Localhost".<br/>
+          localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is "Localhost". Must NOT be set for any other type.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -10278,7 +10532,7 @@ The Windows specific settings applied to all containers. If unspecified, the opt
         <td><b>hostProcess</b></td>
         <td>boolean</td>
         <td>
-          HostProcess determines if a container should be run as a 'Host Process' container. This field is alpha-level and will only be honored by components that enable the WindowsHostProcessContainers feature flag. Setting this field without the feature flag will result in errors when validating the Pod. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers).  In addition, if HostProcess is true then HostNetwork must also be set to true.<br/>
+          HostProcess determines if a container should be run as a 'Host Process' container. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers). In addition, if HostProcess is true then HostNetwork must also be set to true.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -10328,7 +10582,7 @@ StartupProbe indicates that the Pod has successfully initialized. If specified, 
         <td><b><a href="#grafanaspecdeploymentspectemplatespecinitcontainersindexstartupprobegrpc">grpc</a></b></td>
         <td>object</td>
         <td>
-          GRPC specifies an action involving a GRPC port. This is a beta field and requires enabling GRPCContainerProbe feature gate.<br/>
+          GRPC specifies an action involving a GRPC port.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -10426,7 +10680,7 @@ Exec specifies the action to take.
 
 
 
-GRPC specifies an action involving a GRPC port. This is a beta field and requires enabling GRPCContainerProbe feature gate.
+GRPC specifies an action involving a GRPC port.
 
 <table>
     <thead>
@@ -10533,7 +10787,7 @@ HTTPHeader describes a custom header to be used in HTTP probes
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          The header field name<br/>
+          The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -10810,7 +11064,7 @@ SecurityContext holds pod-level security attributes and common container setting
         <td><b>supplementalGroups</b></td>
         <td>[]integer</td>
         <td>
-          A list of groups applied to the first process run in each container, in addition to the container's primary GID.  If unspecified, no groups will be added to any container. Note that this field cannot be set when spec.os.name is windows.<br/>
+          A list of groups applied to the first process run in each container, in addition to the container's primary GID, the fsGroup (if specified), and group memberships defined in the container image for the uid of the container process. If unspecified, no additional groups are added to any container. Note that group memberships defined in the container image for the uid of the container process are still effective, even if they are not included in this list. Note that this field cannot be set when spec.os.name is windows.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -10907,7 +11161,7 @@ The seccomp options to use by the containers in this pod. Note that this field c
         <td><b>localhostProfile</b></td>
         <td>string</td>
         <td>
-          localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must only be set if type is "Localhost".<br/>
+          localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is "Localhost". Must NOT be set for any other type.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -10982,7 +11236,7 @@ The Windows specific settings applied to all containers. If unspecified, the opt
         <td><b>hostProcess</b></td>
         <td>boolean</td>
         <td>
-          HostProcess determines if a container should be run as a 'Host Process' container. This field is alpha-level and will only be honored by components that enable the WindowsHostProcessContainers feature flag. Setting this field without the feature flag will result in errors when validating the Pod. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers).  In addition, if HostProcess is true then HostNetwork must also be set to true.<br/>
+          HostProcess determines if a container should be run as a 'Host Process' container. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers). In addition, if HostProcess is true then HostNetwork must also be set to true.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11103,7 +11357,8 @@ TopologySpreadConstraint specifies how to spread matching pods among the given t
         <td><b>matchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          MatchLabelKeys is a set of pod label keys to select the pods over which spreading will be calculated. The keys are used to lookup values from the incoming pod labels, those key-value labels are ANDed with labelSelector to select the group of existing pods over which spreading will be calculated for the incoming pod. Keys that don't exist in the incoming pod labels will be ignored. A null or empty list means only match against labelSelector.<br/>
+          MatchLabelKeys is a set of pod label keys to select the pods over which spreading will be calculated. The keys are used to lookup values from the incoming pod labels, those key-value labels are ANDed with labelSelector to select the group of existing pods over which spreading will be calculated for the incoming pod. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. MatchLabelKeys cannot be set when LabelSelector isn't set. Keys that don't exist in the incoming pod labels will be ignored. A null or empty list means only match against labelSelector. 
+ This is a beta field and requires the MatchLabelKeysInPodTopologySpread feature gate to be enabled (enabled by default).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11122,7 +11377,7 @@ TopologySpreadConstraint specifies how to spread matching pods among the given t
         <td>string</td>
         <td>
           NodeAffinityPolicy indicates how we will treat Pod's nodeAffinity/nodeSelector when calculating pod topology spread skew. Options are: - Honor: only nodes matching nodeAffinity/nodeSelector are included in the calculations. - Ignore: nodeAffinity/nodeSelector are ignored. All nodes are included in the calculations. 
- If this value is nil, the behavior is equivalent to the Honor policy. This is a alpha-level feature enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.<br/>
+ If this value is nil, the behavior is equivalent to the Honor policy. This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11130,7 +11385,7 @@ TopologySpreadConstraint specifies how to spread matching pods among the given t
         <td>string</td>
         <td>
           NodeTaintsPolicy indicates how we will treat node taints when calculating pod topology spread skew. Options are: - Honor: nodes without taints, along with tainted nodes for which the incoming pod has a toleration, are included. - Ignore: node taints are ignored. All nodes are included. 
- If this value is nil, the behavior is equivalent to the Ignore policy. This is a alpha-level feature enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.<br/>
+ If this value is nil, the behavior is equivalent to the Ignore policy. This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12126,7 +12381,7 @@ emptyDir represents a temporary directory that shares a pod's lifetime. More inf
         <td><b>sizeLimit</b></td>
         <td>int or string</td>
         <td>
-          sizeLimit is the total amount of local storage required for this EmptyDir volume. The size limit is also applicable for memory medium. The maximum usage on memory medium EmptyDir would be the minimum value between the SizeLimit specified here and the sum of memory limits of all containers in a pod. The default is nil which means that the limit is undefined. More info: http://kubernetes.io/docs/user-guide/volumes#emptydir<br/>
+          sizeLimit is the total amount of local storage required for this EmptyDir volume. The size limit is also applicable for memory medium. The maximum usage on memory medium EmptyDir would be the minimum value between the SizeLimit specified here and the sum of memory limits of all containers in a pod. The default is nil which means that the limit is undefined. More info: https://kubernetes.io/docs/concepts/storage/volumes#emptydir<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12231,14 +12486,14 @@ The specification for the PersistentVolumeClaim. The entire content is copied un
         <td><b><a href="#grafanaspecdeploymentspectemplatespecvolumesindexephemeralvolumeclaimtemplatespecdatasource">dataSource</a></b></td>
         <td>object</td>
         <td>
-          dataSource field can be used to specify either: * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot) * An existing PVC (PersistentVolumeClaim) If the provisioner or an external controller can support the specified data source, it will create a new volume based on the contents of the specified data source. If the AnyVolumeDataSource feature gate is enabled, this field will always have the same contents as the DataSourceRef field.<br/>
+          dataSource field can be used to specify either: * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot) * An existing PVC (PersistentVolumeClaim) If the provisioner or an external controller can support the specified data source, it will create a new volume based on the contents of the specified data source. When the AnyVolumeDataSource feature gate is enabled, dataSource contents will be copied to dataSourceRef, and dataSourceRef contents will be copied to dataSource when dataSourceRef.namespace is not specified. If the namespace is specified, then dataSourceRef will not be copied to dataSource.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#grafanaspecdeploymentspectemplatespecvolumesindexephemeralvolumeclaimtemplatespecdatasourceref">dataSourceRef</a></b></td>
         <td>object</td>
         <td>
-          dataSourceRef specifies the object from which to populate the volume with data, if a non-empty volume is desired. This may be any local object from a non-empty API group (non core object) or a PersistentVolumeClaim object. When this field is specified, volume binding will only succeed if the type of the specified object matches some installed volume populator or dynamic provisioner. This field will replace the functionality of the DataSource field and as such if both fields are non-empty, they must have the same value. For backwards compatibility, both fields (DataSource and DataSourceRef) will be set to the same value automatically if one of them is empty and the other is non-empty. There are two important differences between DataSource and DataSourceRef: * While DataSource only allows two specific types of objects, DataSourceRef allows any non-core object, as well as PersistentVolumeClaim objects. * While DataSource ignores disallowed values (dropping them), DataSourceRef preserves all values, and generates an error if a disallowed value is specified. (Beta) Using this field requires the AnyVolumeDataSource feature gate to be enabled.<br/>
+          dataSourceRef specifies the object from which to populate the volume with data, if a non-empty volume is desired. This may be any object from a non-empty API group (non core object) or a PersistentVolumeClaim object. When this field is specified, volume binding will only succeed if the type of the specified object matches some installed volume populator or dynamic provisioner. This field will replace the functionality of the dataSource field and as such if both fields are non-empty, they must have the same value. For backwards compatibility, when namespace isn't specified in dataSourceRef, both fields (dataSource and dataSourceRef) will be set to the same value automatically if one of them is empty and the other is non-empty. When namespace is specified in dataSourceRef, dataSource isn't set to the same value and must be empty. There are three important differences between dataSource and dataSourceRef: * While dataSource only allows two specific types of objects, dataSourceRef allows any non-core object, as well as PersistentVolumeClaim objects. * While dataSource ignores disallowed values (dropping them), dataSourceRef preserves all values, and generates an error if a disallowed value is specified. * While dataSource only allows local objects, dataSourceRef allows objects in any namespaces. (Beta) Using this field requires the AnyVolumeDataSource feature gate to be enabled. (Alpha) Using the namespace field of dataSourceRef requires the CrossNamespaceVolumeDataSource feature gate to be enabled.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12285,7 +12540,7 @@ The specification for the PersistentVolumeClaim. The entire content is copied un
 
 
 
-dataSource field can be used to specify either: * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot) * An existing PVC (PersistentVolumeClaim) If the provisioner or an external controller can support the specified data source, it will create a new volume based on the contents of the specified data source. If the AnyVolumeDataSource feature gate is enabled, this field will always have the same contents as the DataSourceRef field.
+dataSource field can be used to specify either: * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot) * An existing PVC (PersistentVolumeClaim) If the provisioner or an external controller can support the specified data source, it will create a new volume based on the contents of the specified data source. When the AnyVolumeDataSource feature gate is enabled, dataSource contents will be copied to dataSourceRef, and dataSourceRef contents will be copied to dataSource when dataSourceRef.namespace is not specified. If the namespace is specified, then dataSourceRef will not be copied to dataSource.
 
 <table>
     <thead>
@@ -12326,7 +12581,7 @@ dataSource field can be used to specify either: * An existing VolumeSnapshot obj
 
 
 
-dataSourceRef specifies the object from which to populate the volume with data, if a non-empty volume is desired. This may be any local object from a non-empty API group (non core object) or a PersistentVolumeClaim object. When this field is specified, volume binding will only succeed if the type of the specified object matches some installed volume populator or dynamic provisioner. This field will replace the functionality of the DataSource field and as such if both fields are non-empty, they must have the same value. For backwards compatibility, both fields (DataSource and DataSourceRef) will be set to the same value automatically if one of them is empty and the other is non-empty. There are two important differences between DataSource and DataSourceRef: * While DataSource only allows two specific types of objects, DataSourceRef allows any non-core object, as well as PersistentVolumeClaim objects. * While DataSource ignores disallowed values (dropping them), DataSourceRef preserves all values, and generates an error if a disallowed value is specified. (Beta) Using this field requires the AnyVolumeDataSource feature gate to be enabled.
+dataSourceRef specifies the object from which to populate the volume with data, if a non-empty volume is desired. This may be any object from a non-empty API group (non core object) or a PersistentVolumeClaim object. When this field is specified, volume binding will only succeed if the type of the specified object matches some installed volume populator or dynamic provisioner. This field will replace the functionality of the dataSource field and as such if both fields are non-empty, they must have the same value. For backwards compatibility, when namespace isn't specified in dataSourceRef, both fields (dataSource and dataSourceRef) will be set to the same value automatically if one of them is empty and the other is non-empty. When namespace is specified in dataSourceRef, dataSource isn't set to the same value and must be empty. There are three important differences between dataSource and dataSourceRef: * While dataSource only allows two specific types of objects, dataSourceRef allows any non-core object, as well as PersistentVolumeClaim objects. * While dataSource ignores disallowed values (dropping them), dataSourceRef preserves all values, and generates an error if a disallowed value is specified. * While dataSource only allows local objects, dataSourceRef allows objects in any namespaces. (Beta) Using this field requires the AnyVolumeDataSource feature gate to be enabled. (Alpha) Using the namespace field of dataSourceRef requires the CrossNamespaceVolumeDataSource feature gate to be enabled.
 
 <table>
     <thead>
@@ -12358,6 +12613,13 @@ dataSourceRef specifies the object from which to populate the volume with data, 
           APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required.<br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace is the namespace of resource being referenced Note that when a namespace is specified, a gateway.networking.k8s.io/ReferenceGrant object is required in the referent namespace to allow that namespace's owner to accept the reference. See the ReferenceGrant documentation for details. (Alpha) This field requires the CrossNamespaceVolumeDataSource feature gate to be enabled.<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -12379,6 +12641,15 @@ resources represents the minimum resources the volume should have. If RecoverVol
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#grafanaspecdeploymentspectemplatespecvolumesindexephemeralvolumeclaimtemplatespecresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+ This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+ This field is immutable. It can only be set for containers.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -12389,9 +12660,36 @@ resources represents the minimum resources the volume should have. If RecoverVol
         <td><b>requests</b></td>
         <td>map[string]int or string</td>
         <td>
-          Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+          Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.deployment.spec.template.spec.volumes[index].ephemeral.volumeClaimTemplate.spec.resources.claims[index]
+<sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespecvolumesindexephemeralvolumeclaimtemplatespecresources)</sup></sup>
+
+
+
+ResourceClaim references one entry in PodSpec.ResourceClaims.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.<br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -14297,28 +14595,28 @@ IngressSpec describes the Ingress the user wishes to exist.
         <td><b><a href="#grafanaspecingressspecdefaultbackend">defaultBackend</a></b></td>
         <td>object</td>
         <td>
-          DefaultBackend is the backend that should handle requests that don't match any rule. If Rules are not specified, DefaultBackend must be specified. If DefaultBackend is not set, the handling of requests that do not match any of the rules will be up to the Ingress controller.<br/>
+          defaultBackend is the backend that should handle requests that don't match any rule. If Rules are not specified, DefaultBackend must be specified. If DefaultBackend is not set, the handling of requests that do not match any of the rules will be up to the Ingress controller.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>ingressClassName</b></td>
         <td>string</td>
         <td>
-          IngressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.<br/>
+          ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#grafanaspecingressspecrulesindex">rules</a></b></td>
         <td>[]object</td>
         <td>
-          A list of host rules used to configure the Ingress. If unspecified, or no rule matches, all traffic is sent to the default backend.<br/>
+          rules is a list of host rules used to configure the Ingress. If unspecified, or no rule matches, all traffic is sent to the default backend.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#grafanaspecingressspectlsindex">tls</a></b></td>
         <td>[]object</td>
         <td>
-          TLS configuration. Currently the Ingress only supports a single TLS port, 443. If multiple members of this list specify different hosts, they will be multiplexed on the same port according to the hostname specified through the SNI TLS extension, if the ingress controller fulfilling the ingress supports SNI.<br/>
+          tls represents the TLS configuration. Currently the Ingress only supports a single TLS port, 443. If multiple members of this list specify different hosts, they will be multiplexed on the same port according to the hostname specified through the SNI TLS extension, if the ingress controller fulfilling the ingress supports SNI.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -14330,7 +14628,7 @@ IngressSpec describes the Ingress the user wishes to exist.
 
 
 
-DefaultBackend is the backend that should handle requests that don't match any rule. If Rules are not specified, DefaultBackend must be specified. If DefaultBackend is not set, the handling of requests that do not match any of the rules will be up to the Ingress controller.
+defaultBackend is the backend that should handle requests that don't match any rule. If Rules are not specified, DefaultBackend must be specified. If DefaultBackend is not set, the handling of requests that do not match any of the rules will be up to the Ingress controller.
 
 <table>
     <thead>
@@ -14345,14 +14643,14 @@ DefaultBackend is the backend that should handle requests that don't match any r
         <td><b><a href="#grafanaspecingressspecdefaultbackendresource">resource</a></b></td>
         <td>object</td>
         <td>
-          Resource is an ObjectRef to another Kubernetes resource in the namespace of the Ingress object. If resource is specified, a service.Name and service.Port must not be specified. This is a mutually exclusive setting with "Service".<br/>
+          resource is an ObjectRef to another Kubernetes resource in the namespace of the Ingress object. If resource is specified, a service.Name and service.Port must not be specified. This is a mutually exclusive setting with "Service".<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#grafanaspecingressspecdefaultbackendservice">service</a></b></td>
         <td>object</td>
         <td>
-          Service references a Service as a Backend. This is a mutually exclusive setting with "Resource".<br/>
+          service references a service as a backend. This is a mutually exclusive setting with "Resource".<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -14364,7 +14662,7 @@ DefaultBackend is the backend that should handle requests that don't match any r
 
 
 
-Resource is an ObjectRef to another Kubernetes resource in the namespace of the Ingress object. If resource is specified, a service.Name and service.Port must not be specified. This is a mutually exclusive setting with "Service".
+resource is an ObjectRef to another Kubernetes resource in the namespace of the Ingress object. If resource is specified, a service.Name and service.Port must not be specified. This is a mutually exclusive setting with "Service".
 
 <table>
     <thead>
@@ -14405,7 +14703,7 @@ Resource is an ObjectRef to another Kubernetes resource in the namespace of the 
 
 
 
-Service references a Service as a Backend. This is a mutually exclusive setting with "Resource".
+service references a service as a backend. This is a mutually exclusive setting with "Resource".
 
 <table>
     <thead>
@@ -14420,14 +14718,14 @@ Service references a Service as a Backend. This is a mutually exclusive setting 
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          Name is the referenced service. The service must exist in the same namespace as the Ingress object.<br/>
+          name is the referenced service. The service must exist in the same namespace as the Ingress object.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#grafanaspecingressspecdefaultbackendserviceport">port</a></b></td>
         <td>object</td>
         <td>
-          Port of the referenced service. A port name or port number is required for a IngressServiceBackend.<br/>
+          port of the referenced service. A port name or port number is required for a IngressServiceBackend.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -14439,7 +14737,7 @@ Service references a Service as a Backend. This is a mutually exclusive setting 
 
 
 
-Port of the referenced service. A port name or port number is required for a IngressServiceBackend.
+port of the referenced service. A port name or port number is required for a IngressServiceBackend.
 
 <table>
     <thead>
@@ -14454,14 +14752,14 @@ Port of the referenced service. A port name or port number is required for a Ing
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          Name is the name of the port on the Service. This is a mutually exclusive setting with "Number".<br/>
+          name is the name of the port on the Service. This is a mutually exclusive setting with "Number".<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>number</b></td>
         <td>integer</td>
         <td>
-          Number is the numerical port number (e.g. 80) on the Service. This is a mutually exclusive setting with "Name".<br/>
+          number is the numerical port number (e.g. 80) on the Service. This is a mutually exclusive setting with "Name".<br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -14490,8 +14788,8 @@ IngressRule represents the rules mapping the paths under a specified host to the
         <td><b>host</b></td>
         <td>string</td>
         <td>
-          Host is the fully qualified domain name of a network host, as defined by RFC 3986. Note the following deviations from the "host" part of the URI as defined in RFC 3986: 1. IPs are not allowed. Currently an IngressRuleValue can only apply to the IP in the Spec of the parent Ingress. 2. The `:` delimiter is not respected because ports are not allowed. Currently the port of an Ingress is implicitly :80 for http and :443 for https. Both these may change in the future. Incoming requests are matched against the host before the IngressRuleValue. If the host is unspecified, the Ingress routes all traffic based on the specified IngressRuleValue. 
- Host can be "precise" which is a domain name without the terminating dot of a network host (e.g. "foo.bar.com") or "wildcard", which is a domain name prefixed with a single wildcard label (e.g. "*.foo.com"). The wildcard character '*' must appear by itself as the first DNS label and matches only a single label. You cannot have a wildcard label by itself (e.g. Host == "*"). Requests will be matched against the Host field in the following way: 1. If Host is precise, the request matches this rule if the http host header is equal to Host. 2. If Host is a wildcard, then the request matches this rule if the http host header is to equal to the suffix (removing the first label) of the wildcard rule.<br/>
+          host is the fully qualified domain name of a network host, as defined by RFC 3986. Note the following deviations from the "host" part of the URI as defined in RFC 3986: 1. IPs are not allowed. Currently an IngressRuleValue can only apply to the IP in the Spec of the parent Ingress. 2. The `:` delimiter is not respected because ports are not allowed. Currently the port of an Ingress is implicitly :80 for http and :443 for https. Both these may change in the future. Incoming requests are matched against the host before the IngressRuleValue. If the host is unspecified, the Ingress routes all traffic based on the specified IngressRuleValue. 
+ host can be "precise" which is a domain name without the terminating dot of a network host (e.g. "foo.bar.com") or "wildcard", which is a domain name prefixed with a single wildcard label (e.g. "*.foo.com"). The wildcard character '*' must appear by itself as the first DNS label and matches only a single label. You cannot have a wildcard label by itself (e.g. Host == "*"). Requests will be matched against the Host field in the following way: 1. If host is precise, the request matches this rule if the http host header is equal to Host. 2. If host is a wildcard, then the request matches this rule if the http host header is to equal to the suffix (removing the first label) of the wildcard rule.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -14525,7 +14823,7 @@ HTTPIngressRuleValue is a list of http selectors pointing to backends. In the ex
         <td><b><a href="#grafanaspecingressspecrulesindexhttppathsindex">paths</a></b></td>
         <td>[]object</td>
         <td>
-          A collection of paths that map requests to backends.<br/>
+          paths is a collection of paths that map requests to backends.<br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -14552,21 +14850,21 @@ HTTPIngressPath associates a path with a backend. Incoming urls matching the pat
         <td><b><a href="#grafanaspecingressspecrulesindexhttppathsindexbackend">backend</a></b></td>
         <td>object</td>
         <td>
-          Backend defines the referenced service endpoint to which the traffic will be forwarded to.<br/>
+          backend defines the referenced service endpoint to which the traffic will be forwarded to.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>pathType</b></td>
         <td>string</td>
         <td>
-          PathType determines the interpretation of the Path matching. PathType can be one of the following values: * Exact: Matches the URL path exactly. * Prefix: Matches based on a URL path prefix split by '/'. Matching is done on a path element by element basis. A path element refers is the list of labels in the path split by the '/' separator. A request is a match for path p if every p is an element-wise prefix of p of the request path. Note that if the last element of the path is a substring of the last element in request path, it is not a match (e.g. /foo/bar matches /foo/bar/baz, but does not match /foo/barbaz). * ImplementationSpecific: Interpretation of the Path matching is up to the IngressClass. Implementations can treat this as a separate PathType or treat it identically to Prefix or Exact path types. Implementations are required to support all path types.<br/>
+          pathType determines the interpretation of the path matching. PathType can be one of the following values: * Exact: Matches the URL path exactly. * Prefix: Matches based on a URL path prefix split by '/'. Matching is done on a path element by element basis. A path element refers is the list of labels in the path split by the '/' separator. A request is a match for path p if every p is an element-wise prefix of p of the request path. Note that if the last element of the path is a substring of the last element in request path, it is not a match (e.g. /foo/bar matches /foo/bar/baz, but does not match /foo/barbaz). * ImplementationSpecific: Interpretation of the Path matching is up to the IngressClass. Implementations can treat this as a separate PathType or treat it identically to Prefix or Exact path types. Implementations are required to support all path types.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>path</b></td>
         <td>string</td>
         <td>
-          Path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional "path" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value "Exact" or "Prefix".<br/>
+          path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional "path" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value "Exact" or "Prefix".<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -14578,7 +14876,7 @@ HTTPIngressPath associates a path with a backend. Incoming urls matching the pat
 
 
 
-Backend defines the referenced service endpoint to which the traffic will be forwarded to.
+backend defines the referenced service endpoint to which the traffic will be forwarded to.
 
 <table>
     <thead>
@@ -14593,14 +14891,14 @@ Backend defines the referenced service endpoint to which the traffic will be for
         <td><b><a href="#grafanaspecingressspecrulesindexhttppathsindexbackendresource">resource</a></b></td>
         <td>object</td>
         <td>
-          Resource is an ObjectRef to another Kubernetes resource in the namespace of the Ingress object. If resource is specified, a service.Name and service.Port must not be specified. This is a mutually exclusive setting with "Service".<br/>
+          resource is an ObjectRef to another Kubernetes resource in the namespace of the Ingress object. If resource is specified, a service.Name and service.Port must not be specified. This is a mutually exclusive setting with "Service".<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#grafanaspecingressspecrulesindexhttppathsindexbackendservice">service</a></b></td>
         <td>object</td>
         <td>
-          Service references a Service as a Backend. This is a mutually exclusive setting with "Resource".<br/>
+          service references a service as a backend. This is a mutually exclusive setting with "Resource".<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -14612,7 +14910,7 @@ Backend defines the referenced service endpoint to which the traffic will be for
 
 
 
-Resource is an ObjectRef to another Kubernetes resource in the namespace of the Ingress object. If resource is specified, a service.Name and service.Port must not be specified. This is a mutually exclusive setting with "Service".
+resource is an ObjectRef to another Kubernetes resource in the namespace of the Ingress object. If resource is specified, a service.Name and service.Port must not be specified. This is a mutually exclusive setting with "Service".
 
 <table>
     <thead>
@@ -14653,7 +14951,7 @@ Resource is an ObjectRef to another Kubernetes resource in the namespace of the 
 
 
 
-Service references a Service as a Backend. This is a mutually exclusive setting with "Resource".
+service references a service as a backend. This is a mutually exclusive setting with "Resource".
 
 <table>
     <thead>
@@ -14668,14 +14966,14 @@ Service references a Service as a Backend. This is a mutually exclusive setting 
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          Name is the referenced service. The service must exist in the same namespace as the Ingress object.<br/>
+          name is the referenced service. The service must exist in the same namespace as the Ingress object.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#grafanaspecingressspecrulesindexhttppathsindexbackendserviceport">port</a></b></td>
         <td>object</td>
         <td>
-          Port of the referenced service. A port name or port number is required for a IngressServiceBackend.<br/>
+          port of the referenced service. A port name or port number is required for a IngressServiceBackend.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -14687,7 +14985,7 @@ Service references a Service as a Backend. This is a mutually exclusive setting 
 
 
 
-Port of the referenced service. A port name or port number is required for a IngressServiceBackend.
+port of the referenced service. A port name or port number is required for a IngressServiceBackend.
 
 <table>
     <thead>
@@ -14702,14 +15000,14 @@ Port of the referenced service. A port name or port number is required for a Ing
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          Name is the name of the port on the Service. This is a mutually exclusive setting with "Number".<br/>
+          name is the name of the port on the Service. This is a mutually exclusive setting with "Number".<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>number</b></td>
         <td>integer</td>
         <td>
-          Number is the numerical port number (e.g. 80) on the Service. This is a mutually exclusive setting with "Name".<br/>
+          number is the numerical port number (e.g. 80) on the Service. This is a mutually exclusive setting with "Name".<br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -14723,7 +15021,7 @@ Port of the referenced service. A port name or port number is required for a Ing
 
 
 
-IngressTLS describes the transport layer security associated with an Ingress.
+IngressTLS describes the transport layer security associated with an ingress.
 
 <table>
     <thead>
@@ -14738,14 +15036,14 @@ IngressTLS describes the transport layer security associated with an Ingress.
         <td><b>hosts</b></td>
         <td>[]string</td>
         <td>
-          Hosts are a list of hosts included in the TLS certificate. The values in this list must match the name/s used in the tlsSecret. Defaults to the wildcard host setting for the loadbalancer controller fulfilling this Ingress, if left unspecified.<br/>
+          hosts is a list of hosts included in the TLS certificate. The values in this list must match the name/s used in the tlsSecret. Defaults to the wildcard host setting for the loadbalancer controller fulfilling this Ingress, if left unspecified.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>secretName</b></td>
         <td>string</td>
         <td>
-          SecretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the "Host" header field used by an IngressRule, the SNI host is used for termination and value of the Host header is used for routing.<br/>
+          secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the "Host" header field used by an IngressRule, the SNI host is used for termination and value of the "Host" header is used for routing.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -15097,6 +15395,15 @@ ResourceRequirements describes the compute resource requirements.
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#grafanaspecpersistentvolumeclaimspecresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+ This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+ This field is immutable. It can only be set for containers.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -15107,9 +15414,36 @@ ResourceRequirements describes the compute resource requirements.
         <td><b>requests</b></td>
         <td>map[string]int or string</td>
         <td>
-          Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+          Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.persistentVolumeClaim.spec.resources.claims[index]
+<sup><sup>[↩ Parent](#grafanaspecpersistentvolumeclaimspecresources)</sup></sup>
+
+
+
+ResourceClaim references one entry in PodSpec.ResourceClaims.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.<br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -15671,7 +16005,7 @@ ServiceSpec describes the attributes that a user creates on a service.
         <td><b>loadBalancerIP</b></td>
         <td>string</td>
         <td>
-          Only applies to Service Type: LoadBalancer. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature. Deprecated: This field was under-specified and its meaning varies across implementations, and it cannot support dual-stack. As of Kubernetes v1.24, users are encouraged to use implementation-specific annotations when available. This field may be removed in a future API version.<br/>
+          Only applies to Service Type: LoadBalancer. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature. Deprecated: This field was under-specified and its meaning varies across implementations. Using it is non-portable and it may not support dual-stack. Users are encouraged to use implementation-specific annotations when available.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -15756,7 +16090,10 @@ ServicePort contains information on service's port.
         <td><b>appProtocol</b></td>
         <td>string</td>
         <td>
-          The application protocol for this port. This field follows standard Kubernetes label syntax. Un-prefixed names are reserved for IANA standard service names (as per RFC-6335 and https://www.iana.org/assignments/service-names). Non-standard protocols should use prefixed names such as mycompany.com/my-custom-protocol.<br/>
+          The application protocol for this port. This is used as a hint for implementations to offer richer behavior for protocols that they understand. This field follows standard Kubernetes label syntax. Valid values are either: 
+ * Un-prefixed protocol names - reserved for IANA standard service names (as per RFC-6335 and https://www.iana.org/assignments/service-names). 
+ * Kubernetes-defined prefixed names: * 'kubernetes.io/h2c' - HTTP/2 over cleartext as described in https://www.rfc-editor.org/rfc/rfc7540 * 'kubernetes.io/ws'  - WebSocket over cleartext as described in https://www.rfc-editor.org/rfc/rfc6455 * 'kubernetes.io/wss' - WebSocket over TLS as described in https://www.rfc-editor.org/rfc/rfc6455 
+ * Other protocols should use implementation-defined prefixed names such as mycompany.com/my-custom-protocol.<br/>
         </td>
         <td>false</td>
       </tr><tr>

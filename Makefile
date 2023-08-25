@@ -136,7 +136,7 @@ CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 ENVTEST ?= $(LOCALBIN)/setup-envtest
 
 ## Tool Versions
-KUSTOMIZE_VERSION ?= v4.5.7
+KUSTOMIZE_VERSION ?= v5.1.1
 CONTROLLER_TOOLS_VERSION ?= v0.12.0
 
 KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
@@ -335,7 +335,7 @@ ifeq (, $(shell which crdoc))
 	API_REF_GEN_TMP_DIR=$$(mktemp -d) ;\
 	cd $$API_REF_GEN_TMP_DIR ;\
 	go mod init tmp ;\
-	go install fybrik.io/crdoc@v0.6.2 ;\
+	go install fybrik.io/crdoc@ad5ba1e62f8db46cb5a9282dfedfc3d8f3d45065 ;\
 	rm -rf $$API_REF_GEN_TMP_DIR ;\
 	}
 API_REF_GEN=$(GOBIN)/crdoc
