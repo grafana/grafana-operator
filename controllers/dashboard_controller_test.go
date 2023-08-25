@@ -125,30 +125,6 @@ func TestGetDashboardsToDelete(t *testing.T) {
 }
 
 func TestGetDashboardEnvs(t *testing.T) {
-	//TODO
-	//
-	//configMap := v1.ConfigMap{
-	//	TypeMeta: metav1.TypeMeta{},
-	//	ObjectMeta: metav1.ObjectMeta{
-	//		Name:      "test-configmap",
-	//		Namespace: "grafana-operator-system",
-	//	},
-	//	Data: map[string]string{
-	//		"TEST_ENV": "test-env-value",
-	//	},
-	//}
-	//
-	//secret := v1.Secret{
-	//	TypeMeta: metav1.TypeMeta{},
-	//	ObjectMeta: metav1.ObjectMeta{
-	//		Name:      "test-secret",
-	//		Namespace: "grafana-operator-system",
-	//	},
-	//	Data: map[string][]byte{
-	//		"TEST_ENV": []byte("test-env-value"),
-	//	},
-	//}
-
 	dashboard := v1beta1.GrafanaDashboard{
 		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{
@@ -161,18 +137,6 @@ func TestGetDashboardEnvs(t *testing.T) {
 					Name:  "TEST_ENV",
 					Value: "test-env-value",
 				},
-				//{
-				//	Name: "TEST_ENV_CM",
-				//	ValueFrom: v1beta1.GrafanaDashboardEnvFromSource{
-				//		ConfigMapKeyRef: &v1.ConfigMapKeySelector{Key: "test-configmap"},
-				//	},
-				//},
-				//{
-				//	Name: "TEST_ENV_SECRET",
-				//	ValueFrom: v1beta1.GrafanaDashboardEnvFromSource{
-				//		SecretKeyRef: &v1.SecretKeySelector{Key: "test-secret"},
-				//	},
-				//},
 			},
 		},
 	}
@@ -190,5 +154,4 @@ func TestGetDashboardEnvs(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, envs)
 	assert.True(t, len(envs) == 1, "Expected 1 env, got %d", len(envs))
-	// TODO add check on receiving envs from configmap and secret
 }

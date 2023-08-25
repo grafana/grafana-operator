@@ -117,6 +117,8 @@ linters-settings:
     multi-func: false
 
 issues:
+  exclude:
+    - "G305: File traversal when extracting zip/tar archive" # Related to json_fetch.go: target = filepath.Join(extractPath, header.Name)
   exclude-rules:
     - path: _test\.go
       linters:

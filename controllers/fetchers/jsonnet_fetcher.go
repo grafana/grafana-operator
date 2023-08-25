@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"embed"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -297,7 +298,7 @@ func untarGzip(archivePath, extractPath string) error {
 	// uncompress each element
 	for {
 		header, err := tr.Next()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break // End of archive
 		}
 		if err != nil {
@@ -305,7 +306,6 @@ func untarGzip(archivePath, extractPath string) error {
 		}
 		target := header.Name
 
-		// validate name against path traversal
 		if !validRelPath(header.Name) {
 			return fmt.Errorf("tar contained invalid name error %q", target)
 		}
@@ -314,7 +314,6 @@ func untarGzip(archivePath, extractPath string) error {
 
 		// check the type
 		switch header.Typeflag {
-
 		// if it's a dir, and it doesn't exist create it (with 0755 permission)
 		case tar.TypeDir:
 			if _, err := os.Stat(target); err != nil {
@@ -322,16 +321,21 @@ func untarGzip(archivePath, extractPath string) error {
 					return err
 				}
 			}
-		// if it's a file create it (with same permission)
 		case tar.TypeReg:
 			fileToWrite, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
 			if err != nil {
 				return err
 			}
 			defer fileToWrite.Close()
-			// copy over contents
-			if _, err := io.Copy(fileToWrite, tr); err != nil {
-				return err
+
+			for {
+				_, err := io.CopyN(fileToWrite, tr, 4096)
+				if err != nil {
+					if errors.Is(err, io.EOF) {
+						break
+					}
+					return err
+				}
 			}
 		default:
 			fmt.Printf("Unable to untar type : %c in file %s\n", header.Typeflag, target)
@@ -453,7 +457,7 @@ func deleteFilesAndFolders(paths []string) error {
 		fmt.Println("Deleting path: ", path)
 		err := os.RemoveAll(path)
 		if err != nil {
-			return fmt.Errorf("error during path \"%s\" deletion, error: %s", path, err)
+			return fmt.Errorf("error during path \"%s\" deletion, error: %w", path, err)
 		}
 	}
 	return nil

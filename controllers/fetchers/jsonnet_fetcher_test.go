@@ -19,10 +19,12 @@ import (
 )
 
 func setup(t *testing.T) {
+	t.Helper()
 	require.NoError(t, os.Mkdir(config.GrafanaDashboardsRuntimeBuild, os.ModePerm))
 }
 
 func teardown(t *testing.T) {
+	t.Helper()
 	require.NoError(t, os.RemoveAll(config.GrafanaDashboardsRuntimeBuild))
 }
 
