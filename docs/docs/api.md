@@ -543,8 +543,6 @@ Reference on value source, might be the reference on a secret or config map
       </tr><tr>
         <td><b><a href="#grafanadashboardspecenvsindexvaluefromsecretkeyref">secretKeyRef</a></b></td>
         <td>object</td>
-        <td><b>value</b></td>
-        <td>string</td>
         <td>
           Selects a key of a Secret.<br/>
         </td>
