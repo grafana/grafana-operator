@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/grafana-operator/grafana-operator/v5/controllers/config"
-	"github.com/stretchr/testify/require"
 	"os"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/grafana-operator/grafana-operator/v5/controllers/config"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana-operator/grafana-operator/v5/embeds"
@@ -189,7 +190,6 @@ func TestGetGzipArchiveFileNameWithExtension(t *testing.T) {
 }
 
 func TestStoreByteArrayGzipOnDisk(t *testing.T) {
-
 	setup(t)
 	defer teardown(t)
 

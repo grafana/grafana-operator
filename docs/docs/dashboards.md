@@ -373,4 +373,60 @@ spec:
    )
 ```
 
+## Providing runtime to build jsonnet dashboards 
+
+Because of the flexibility, simplicity and extendability of JSONnet it's one of the best choices fitting to the currently modern approach  "something as a code", dashboards as a code in our case.
+In this picture of the world, Grafana operator acts as a bridge between the DaC and Grafana resource that helps developers to absorb the logic of how dashboards deliver to target and helps to separate the responsibility between SEs who must have full ownership of their code and provide observability of it, and Infra, DevOps and SRE teams that empower developers by platforms and a broad variety of tooling to do it.
+
+Extendability is the part that currently was missed and wasn't supported by the operator from the box, because of the lack of ability to provide external or self-developed internal libsonnet libraries that are required for building of desired dashboard inside of operator.
+
+To cover that advanced scenario, we've added the ability to provide your JSONnet project with all runtime-required libs to the operator and build it during runtime inside.
+
+To achieve this, you can use ```jsonnetLib``` section which tried to achieve same semantic as jsonnet build command ```jsonnet -J vendor dashboard.jsonnet```. 
+To do this, there are 3 parameters:
+* ```jPath``` - Jsonnet local libs path, must be the same as in your local jsonnet project. Optional part.
+* ```fileName``` - Jsonnet file name which must be built. Required part.
+* ```gzipJsonnetProject``` - Gzip archived project in a byte array representation. Only .tar.gz files are supported. Required part.
+
+
+```yaml
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: my-favorite-dashboard-with-internal-dependencies
+spec:
+  resyncPeriod: 30s
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  envs:
+    - name: API_VERSION
+      value: "1.0.0"
+    - name: ENV_FROM_CM -- just example, such cm and secrets are not provided by vendor
+      valueFrom:
+        configMapKeyRef:
+          name: custom-grafana-dashboard-cm
+          key: GRAFANA_URL
+    - name: ENV_FROM_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: custom-grafana-dashboard-secrets
+          key: PROMETHEUS_USERNAME
+  envFrom: -- just example, such cm and secrets are not provided by vendor
+    - configMapRef:
+        name: custom-grafana-dashboard-cm
+    - secretRef:
+        name: custom-grafana-dashboard-secrets
+  jsonnetLib:
+    jPath:
+      - "vendor"
+    fileName: "overview.jsonnet"
+    gzipJsonnetProject: |-
+      {{- (.Files.Get "dashboards.tar.gz") | b64enc | nindent 6 }}
+   
+```
+
+
+```yaml
+
 [Example documentation](../examples/dashboard_with_custom_folder/readme).
