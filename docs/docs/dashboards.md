@@ -423,10 +423,7 @@ spec:
     fileName: "overview.jsonnet"
     gzipJsonnetProject: |-
       {{- (.Files.Get "dashboards.tar.gz") | b64enc | nindent 6 }}
-   
 ```
 
-
 ```yaml
-
 [Example documentation](../examples/dashboard_with_custom_folder/readme).
