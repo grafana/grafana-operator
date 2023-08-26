@@ -22,11 +22,12 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"k8s.io/utils/strings/slices"
 	"net/http"
 	"reflect"
 	"strings"
 	"time"
+
+	"k8s.io/utils/strings/slices"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -372,7 +373,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return nil
 	}
 
-	remoteChanged, err := r.HasRemoteChange(grafanaClient, uid, dashboardModel)
+	remoteChanged, err := r.hasRemoteChange(exists, grafanaClient, uid, dashboardModel)
 	if err != nil {
 		return err
 	}
@@ -532,7 +533,6 @@ func (r *GrafanaDashboardReconciler) Exists(client *grapi.Client, uid string, ti
 
 	for _, dashboard := range dashboards {
 		if dashboard.UID == uid || (dashboard.Title == title && dashboard.FolderID == uint(folderID)) {
-
 			return true, dashboard.UID, nil
 		}
 	}
@@ -541,20 +541,29 @@ func (r *GrafanaDashboardReconciler) Exists(client *grapi.Client, uid string, ti
 }
 
 // HasRemoteChange checks if a dashboard in Grafana is different to the model defined in the custom resources
-func (r *GrafanaDashboardReconciler) HasRemoteChange(client *grapi.Client, uid string, model map[string]interface{}) (bool, error) {
+func (r *GrafanaDashboardReconciler) hasRemoteChange(exists bool, client *grapi.Client, uid string, model map[string]interface{}) (bool, error) {
+	if !exists {
+		// if the dashboard doesn't exist, don't even request
+		return true, nil
+	}
+
 	remoteDashboard, err := client.DashboardByUID(uid)
 	if err != nil {
+		if strings.Contains(err.Error(), "status: 404") {
+			return true, nil
+		}
 		return false, err
 	}
 
 	var keys []string
-	for key, _ := range model {
+	for key := range model {
 		keys = append(keys, key)
 	}
 
+	skipKeys := []string{"id", "version"} //nolint
 	for _, key := range keys {
 		// we do not keep track of those keys in the custom resource
-		if slices.Contains([]string{"id", "version"}, key) {
+		if slices.Contains(skipKeys, key) {
 			continue
 		}
 		localModel := model[key]
