@@ -22,7 +22,9 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"k8s.io/utils/strings/slices"
 	"net/http"
+	"reflect"
 	"strings"
 	"time"
 
@@ -210,7 +212,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			return ctrl.Result{RequeueAfter: RequeueDelay}, err
 		}
 
-		// Clean up uid, so further reconcilications can track changes there
+		// Clean up uid, so further reconciliations can track changes there
 		cr.Status.UID = ""
 		err = r.Client.Status().Update(ctx, cr)
 		if err != nil {
@@ -370,6 +372,15 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return nil
 	}
 
+	remoteChanged, err := r.HasRemoteChange(grafanaClient, uid, dashboardModel)
+	if err != nil {
+		return err
+	}
+
+	if !remoteChanged {
+		return nil
+	}
+
 	resp, err := grafanaClient.NewDashboard(grapi.Dashboard{
 		Meta: grapi.DashboardMeta{
 			IsStarred: false,
@@ -521,11 +532,39 @@ func (r *GrafanaDashboardReconciler) Exists(client *grapi.Client, uid string, ti
 
 	for _, dashboard := range dashboards {
 		if dashboard.UID == uid || (dashboard.Title == title && dashboard.FolderID == uint(folderID)) {
+
 			return true, dashboard.UID, nil
 		}
 	}
 
 	return false, "", nil
+}
+
+// HasRemoteChange checks if a dashboard in Grafana is different to the model defined in the custom resources
+func (r *GrafanaDashboardReconciler) HasRemoteChange(client *grapi.Client, uid string, model map[string]interface{}) (bool, error) {
+	remoteDashboard, err := client.DashboardByUID(uid)
+	if err != nil {
+		return false, err
+	}
+
+	var keys []string
+	for key, _ := range model {
+		keys = append(keys, key)
+	}
+
+	for _, key := range keys {
+		// we do not keep track of those keys in the custom resource
+		if slices.Contains([]string{"id", "version"}, key) {
+			continue
+		}
+		localModel := model[key]
+		remoteModel := remoteDashboard.Model[key]
+		if !reflect.DeepEqual(localModel, remoteModel) {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func (r *GrafanaDashboardReconciler) GetOrCreateFolder(client *grapi.Client, cr *v1beta1.GrafanaDashboard) (int64, error) {
