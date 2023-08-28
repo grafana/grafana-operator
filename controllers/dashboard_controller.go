@@ -555,7 +555,7 @@ func (r *GrafanaDashboardReconciler) hasRemoteChange(exists bool, client *grapi.
 		return false, err
 	}
 
-	var keys []string
+	keys := make([]string, 0, len(model))
 	for key := range model {
 		keys = append(keys, key)
 	}

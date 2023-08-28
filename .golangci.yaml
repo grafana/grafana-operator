@@ -24,7 +24,6 @@ linters:
     - makezero
     - nakedret
     - prealloc
-    - nolintlint
     - staticcheck
     - thelper
     - whitespace
