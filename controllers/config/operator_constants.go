@@ -6,10 +6,11 @@ const (
 	GrafanaVersion = "9.1.6"
 
 	// Paths
-	GrafanaDataPath         = "/var/lib/grafana"
-	GrafanaLogsPath         = "/var/log/grafana"
-	GrafanaPluginsPath      = "/var/lib/grafana/plugins"
-	GrafanaProvisioningPath = "/etc/grafana/provisioning/"
+	GrafanaDataPath               = "/var/lib/grafana"
+	GrafanaLogsPath               = "/var/log/grafana"
+	GrafanaPluginsPath            = "/var/lib/grafana/plugins"
+	GrafanaProvisioningPath       = "/etc/grafana/provisioning/"
+	GrafanaDashboardsRuntimeBuild = "/tmp/dashboards"
 
 	// Grafana env vars and admin user
 	DefaultAdminUser           = "admin"

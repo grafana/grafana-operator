@@ -8,3 +8,16 @@ spec:
       containers:
       - name: manager
         imagePullPolicy: Never
+        resources:
+          limits:
+            cpu: 400m
+            memory: 1024Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+        volumeMounts:
+          - name: dashboards-dir
+            mountPath: /tmp/dashboards
+      volumes:
+        - name: dashboards-dir
+          emptyDir: {}

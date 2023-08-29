@@ -50,6 +50,12 @@ spec:
               memory: 20Mi
           securityContext:
             allowPrivilegeEscalation: false
+          volumeMounts:
+            - name: dashboards-dir
+              mountPath: /tmp/dashboards
+      volumes:
+        - name: dashboards-dir
+          emptyDir: {}
       securityContext:
         runAsNonRoot: true
       serviceAccountName: grafana-operator-controller-manager

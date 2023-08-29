@@ -54,6 +54,9 @@ spec:
             {{- if .Values.leaderElect }}
             - --leader-elect
             {{- end }}
+          volumeMounts:
+            - name: dashboards-dir
+              mountPath: /tmp/dashboards
           ports:
             - containerPort: {{ .Values.metricsService.metricsPort }}
               name: metrics
@@ -70,6 +73,9 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+      volumes:
+        - name: dashboards-dir
+          emptyDir: {}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

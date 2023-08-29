@@ -444,22 +444,17 @@ func (r *GrafanaDashboardReconciler) fetchDashboardJson(ctx context.Context, das
 	case v1beta1.DashboardSourceTypeUrl:
 		return fetchers.FetchDashboardFromUrl(dashboard)
 	case v1beta1.DashboardSourceTypeJsonnet:
-		envs := make(map[string]string)
-		if dashboard.Spec.EnvsFrom != nil {
-			for _, ref := range dashboard.Spec.EnvsFrom {
-				key, val, err := r.getReferencedValue(ctx, dashboard, ref)
-				if err != nil {
-					return nil, fmt.Errorf("something went wrong processing envs, error: %w", err)
-				}
-				envs[key] = val
-			}
-		}
-		if dashboard.Spec.Envs != nil {
-			for _, ref := range dashboard.Spec.Envs {
-				envs[ref.Name] = ref.Value
-			}
+		envs, err := r.getDashboardEnvs(ctx, dashboard)
+		if err != nil {
+			return nil, fmt.Errorf("something went wrong while collecting envs, error: %w", err)
 		}
 		return fetchers.FetchJsonnet(dashboard, envs, embeds.GrafonnetEmbed)
+	case v1beta1.DashboardSourceJsonnetProject:
+		envs, err := r.getDashboardEnvs(ctx, dashboard)
+		if err != nil {
+			return nil, fmt.Errorf("something went wrong while collecting envs, error: %w", err)
+		}
+		return fetchers.BuildProjectAndFetchJsonnetFrom(dashboard, envs)
 	case v1beta1.DashboardSourceTypeGrafanaCom:
 		return fetchers.FetchDashboardFromGrafanaCom(dashboard)
 	case v1beta1.DashboardSourceConfigMap:
@@ -467,6 +462,33 @@ func (r *GrafanaDashboardReconciler) fetchDashboardJson(ctx context.Context, das
 	default:
 		return nil, fmt.Errorf("unknown source type %v found in dashboard %v", sourceTypes[0], dashboard.Name)
 	}
+}
+
+func (r *GrafanaDashboardReconciler) getDashboardEnvs(ctx context.Context, dashboard *v1beta1.GrafanaDashboard) (map[string]string, error) {
+	envs := make(map[string]string)
+	if dashboard.Spec.EnvsFrom != nil {
+		for _, ref := range dashboard.Spec.EnvsFrom {
+			key, val, err := r.getReferencedValue(ctx, dashboard, ref)
+			if err != nil {
+				return nil, fmt.Errorf("something went wrong processing envs, error: %w", err)
+			}
+			envs[key] = val
+		}
+	}
+	if dashboard.Spec.Envs != nil {
+		for _, ref := range dashboard.Spec.Envs {
+			if ref.Value != "" {
+				envs[ref.Name] = ref.Value
+			} else {
+				val, key, err := r.getReferencedValue(ctx, dashboard, ref.ValueFrom)
+				if err != nil {
+					return nil, fmt.Errorf("something went wrong processing referenced env %s, error: %w", ref.Name, err)
+				}
+				envs[key] = val
+			}
+		}
+	}
+	return envs, nil
 }
 
 func (r *GrafanaDashboardReconciler) getReferencedValue(ctx context.Context, cr *v1beta1.GrafanaDashboard, source v1beta1.GrafanaDashboardEnvFromSource) (string, string, error) {

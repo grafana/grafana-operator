@@ -97,34 +97,37 @@ spec:
               envs:
                 items:
                   properties:
-                    configMapKeyRef:
-                      properties:
-                        key:
-                          type: string
-                        name:
-                          type: string
-                        optional:
-                          type: boolean
-                      required:
-                      - key
-                      type: object
-                      x-kubernetes-map-type: atomic
                     name:
                       type: string
-                    secretKeyRef:
-                      properties:
-                        key:
-                          type: string
-                        name:
-                          type: string
-                        optional:
-                          type: boolean
-                      required:
-                      - key
-                      type: object
-                      x-kubernetes-map-type: atomic
                     value:
                       type: string
+                    valueFrom:
+                      properties:
+                        configMapKeyRef:
+                          properties:
+                            key:
+                              type: string
+                            name:
+                              type: string
+                            optional:
+                              type: boolean
+                          required:
+                          - key
+                          type: object
+                          x-kubernetes-map-type: atomic
+                        secretKeyRef:
+                          properties:
+                            key:
+                              type: string
+                            name:
+                              type: string
+                            optional:
+                              type: boolean
+                          required:
+                          - key
+                          type: object
+                          x-kubernetes-map-type: atomic
+                      type: object
                   required:
                   - name
                   type: object
@@ -171,6 +174,21 @@ spec:
                 type: string
               jsonnet:
                 type: string
+              jsonnetLib:
+                properties:
+                  fileName:
+                    type: string
+                  gzipJsonnetProject:
+                    format: byte
+                    type: string
+                  jPath:
+                    items:
+                      type: string
+                    type: array
+                required:
+                - fileName
+                - gzipJsonnetProject
+                type: object
               plugins:
                 items:
                   properties:
