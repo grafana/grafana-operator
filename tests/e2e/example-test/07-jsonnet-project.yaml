@@ -1,0 +1,17 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: "grafana-dashboard-jsonnet-project"
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  envs:
+    - name: "ENV"
+      value: "test"
+  jsonnetLib:
+    jPath:
+      - "vendor"
+    fileName: "test.jsonnet"
+    gzipJsonnetProject: |-
+      H4sIADxf5mQAA+2R3QqCMBiGPfYqPrwA3damZES3UEd1amtWYi50OiK690ZJYPR3UES05+B7Ybx8P3uzShaFUONSZoKrwPkECKGIMThpeFZE6FlbAFMaYcqiHsOAMGM4coB9ZJsr6kolpVlF5iITy1O56TO2NH3Qp73joj9C1s1fNqJs1kL77ftbZpj/CCm9nz8mpJs/MT7iAHrL9Cf8ef655EkObdowBNi7YPDqMvdi8FZKbas4CLTW/k7Wqp4Ln8tNoBPFV6NmuJhoqvvT5YxPPPcwcN394dsXWSwWi+UVjj9zQO4ACgAA

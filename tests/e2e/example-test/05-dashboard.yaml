@@ -8,7 +8,7 @@ data:
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
-  name: grafana-dashboard
+  name: grafana-dashboard-cm-envs
 spec:
   instanceSelector:
     matchLabels:
@@ -21,10 +21,9 @@ spec:
       version: 1.3.9
   jsonnet: >
     local myRange = std.extVar('CUSTOM_RANGE_ENV');
-
     {
       id: null,
-      title: "Simple Dashboard",
+      title: "Simple Dashboard wht CM envs",
       tags: [],
       style: "dark",
       timezone: "browser",
@@ -49,6 +48,5 @@ spec:
       refresh: "5s",
       schemaVersion: 17,
       version: 0,
-      links: [],
-      myVariable: myVariable,
+      links: []
     }

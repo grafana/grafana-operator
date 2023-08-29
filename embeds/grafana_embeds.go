@@ -16,3 +16,6 @@ var TestDashboardEmbedWithEnv []byte
 
 //go:embed testing/dashboard_with_provided_envs.json
 var TestDashboardEmbedWithEnvExpectedJSON []byte
+
+//go:embed testing/jsonnetProjectWithRuntimeRaw.tar.gz
+var TestJsonnetProjectBuildFolderGzip []byte

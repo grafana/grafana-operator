@@ -1,0 +1,38 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana
+  labels:
+    dashboards: "grafana"
+spec:
+  config:
+    log:
+      mode: "console"
+    auth:
+      disable_login_form: "false"
+    security:
+      admin_user: root
+      admin_password: secret
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: grafana-dashboard-with-dependencies
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  envs:
+    - name: PROMETHEUS_DS_UID
+      value: "uuid"
+    - name: K8S_NAMESPACE
+      value: "k8s_namespace"
+    - name: DASHBOARD_JSONNET_RECURSIVE
+      value: "true"
+  jsonnetLib:
+    jPath:
+      - "vendor"
+    fileName: "dashboard.jsonnet"
+    gzipJsonnetProject: |-
+      {{- (.Files.Get "dashboards.tar.gz") | b64enc | nindent 6 }}

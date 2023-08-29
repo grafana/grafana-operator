@@ -373,4 +373,51 @@ spec:
    )
 ```
 
+## Providing runtime to build jsonnet dashboards
+This feature provides the ability to pass your jsonnet project with all own or external runtime-required libs/dependencies required in runtime to build your dashboard.
+
+It bridges the signature of the jsonnet generation command ```jsonnet -J path/to/libs target.jsonnet``` and Grafana Operator Dashboard CRD.
+To do this, there are 3 parameters:
+* ```jPath``` - Jsonnet local libs path, must be the same as in your local jsonnet project. Optional part.
+* ```fileName``` - Jsonnet file name which must be built. Required part.
+* ```gzipJsonnetProject``` - Gzip archived project in a byte array representation. Only .tar.gz files are supported. Required part.
+
+
+```yaml
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: my-favorite-dashboard-with-internal-dependencies
+spec:
+  resyncPeriod: 30s
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  envs:
+    - name: API_VERSION
+      value: "1.0.0"
+    - name: ENV_FROM_CM -- just example, such cm and secrets are not provided by vendor
+      valueFrom:
+        configMapKeyRef:
+          name: custom-grafana-dashboard-cm
+          key: GRAFANA_URL
+    - name: ENV_FROM_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: custom-grafana-dashboard-secrets
+          key: PROMETHEUS_USERNAME
+  envFrom: -- just example, such cm and secrets are not provided by vendor
+    - configMapRef:
+        name: custom-grafana-dashboard-cm
+    - secretRef:
+        name: custom-grafana-dashboard-secrets
+  jsonnetLib:
+    jPath:
+      - "vendor"
+    fileName: "overview.jsonnet"
+    gzipJsonnetProject: |-
+      {{- (.Files.Get "dashboards.tar.gz") | b64enc | nindent 6 }}
+```
+
+```yaml
 [Example documentation](../examples/dashboard_with_custom_folder/readme).
