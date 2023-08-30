@@ -24,6 +24,13 @@ import (
 	"strings"
 	"syscall"
 
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
+
+	"sigs.k8s.io/controller-runtime/pkg/cache"
+
 	routev1 "github.com/openshift/api/route/v1"
 	discovery2 "k8s.io/client-go/discovery"
 
@@ -31,16 +38,16 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	grafanav1beta1 "github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana-operator/grafana-operator/v5/controllers"
+	"github.com/grafana-operator/grafana-operator/v5/controllers/autodetect"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	grafanav1beta1 "github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
-	"github.com/grafana-operator/grafana-operator/v5/controllers"
-	"github.com/grafana-operator/grafana-operator/v5/controllers/autodetect"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -84,10 +91,13 @@ func main() {
 	watchNamespace, _ := os.LookupEnv(watchNamespaceEnvVar)
 
 	controllerOptions := ctrl.Options{
-		Namespace:              watchNamespace,
-		Scheme:                 scheme,
-		MetricsBindAddress:     metricsAddr,
-		Port:                   9443,
+		Scheme: scheme,
+		Metrics: metricsserver.Options{
+			BindAddress: metricsAddr,
+		},
+		WebhookServer: webhook.NewServer(webhook.Options{
+			Port: 9443,
+		}),
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "f75f3bba.integreatly.org",
@@ -96,8 +106,24 @@ func main() {
 	switch {
 	case strings.Contains(watchNamespace, ","):
 		// multi namespace scoped
+		getNamespaceConfig := func(namespaces string) map[string]cache.Config {
+			defaultNamespaces := map[string]cache.Config{}
+			for _, v := range strings.Split(namespaces, ",") {
+				// Generate a mapping of namespaces to label/field selectors, set to Everything() to enable matching all
+				// instances in all namespaces from watchNamespace to be controlled by the operator
+				// this is the default behavior of the operator on v5, if you require finer grained control over this
+				// please file an issue in the grafana-operator/grafana-operator GH project
+				defaultNamespaces[v] = cache.Config{
+					LabelSelector:         labels.Everything(), // Match any labels
+					FieldSelector:         fields.Everything(), // Match any fields
+					Transform:             nil,
+					UnsafeDisableDeepCopy: nil,
+				}
+			}
+			return defaultNamespaces
+		}
+		controllerOptions.Cache.DefaultNamespaces = getNamespaceConfig(watchNamespace)
 		setupLog.Info("manager set up with multiple namespaces", "namespaces", watchNamespace)
-		controllerOptions.Cache.Namespaces = strings.Split(watchNamespace, ",")
 	case watchNamespace != "":
 		// namespace scoped
 		setupLog.Info("operator running in namespace scoped mode", "namespace", watchNamespace)
