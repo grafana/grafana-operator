@@ -94,13 +94,13 @@ metadata:
       ]
     capabilities: Basic Install
     categories: Monitoring
-    containerImage: ghcr.io/grafana-operator/grafana-operator:v5.3.0
-    createdAt: "2023-07-24T10:00:00Z"
+    containerImage: ghcr.io/grafana-operator/grafana-operator:v5.4.0
+    createdAt: "2023-09-05T14:00:00Z"
     operators.operatorframework.io/builder: operator-sdk-v1.22.2
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/grafana-operator/grafana-operator
     support: Community
-  name: grafana-operator.v5.3.0
+  name: grafana-operator.v5.4.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -293,6 +293,7 @@ spec:
           - route.openshift.io
           resources:
           - routes
+          - routes/custom-host
           verbs:
           - create
           - delete
@@ -326,7 +327,7 @@ spec:
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.annotations['olm.targetNamespaces']
-                image: ghcr.io/grafana-operator/grafana-operator:v5.3.0
+                image: ghcr.io/grafana-operator/grafana-operator:v5.4.0
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
@@ -413,5 +414,5 @@ spec:
   minKubeVersion: 1.23.0
   provider:
     name: Community
-  replaces: grafana-operator.v5.2.0
-  version: 5.3.0
+  replaces: grafana-operator.v5.3.0
+  version: 5.4.0
