@@ -23,8 +23,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"reflect"
 	"strings"
 	"time"
+
+	"k8s.io/utils/strings/slices"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -210,7 +213,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			return ctrl.Result{RequeueAfter: RequeueDelay}, err
 		}
 
-		// Clean up uid, so further reconcilications can track changes there
+		// Clean up uid, so further reconciliations can track changes there
 		cr.Status.UID = ""
 		err = r.Client.Status().Update(ctx, cr)
 		if err != nil {
@@ -367,6 +370,15 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	}
 
 	if exists && cr.Unchanged(hash) && !cr.ResyncPeriodHasElapsed() {
+		return nil
+	}
+
+	remoteChanged, err := r.hasRemoteChange(exists, grafanaClient, uid, dashboardModel)
+	if err != nil {
+		return err
+	}
+
+	if !remoteChanged {
 		return nil
 	}
 
@@ -548,6 +560,42 @@ func (r *GrafanaDashboardReconciler) Exists(client *grapi.Client, uid string, ti
 	}
 
 	return false, "", nil
+}
+
+// HasRemoteChange checks if a dashboard in Grafana is different to the model defined in the custom resources
+func (r *GrafanaDashboardReconciler) hasRemoteChange(exists bool, client *grapi.Client, uid string, model map[string]interface{}) (bool, error) {
+	if !exists {
+		// if the dashboard doesn't exist, don't even request
+		return true, nil
+	}
+
+	remoteDashboard, err := client.DashboardByUID(uid)
+	if err != nil {
+		if strings.Contains(err.Error(), "status: 404") {
+			return true, nil
+		}
+		return false, err
+	}
+
+	keys := make([]string, 0, len(model))
+	for key := range model {
+		keys = append(keys, key)
+	}
+
+	skipKeys := []string{"id", "version"} //nolint
+	for _, key := range keys {
+		// we do not keep track of those keys in the custom resource
+		if slices.Contains(skipKeys, key) {
+			continue
+		}
+		localModel := model[key]
+		remoteModel := remoteDashboard.Model[key]
+		if !reflect.DeepEqual(localModel, remoteModel) {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func (r *GrafanaDashboardReconciler) GetOrCreateFolder(client *grapi.Client, cr *v1beta1.GrafanaDashboard) (int64, error) {
