@@ -26,6 +26,10 @@ image:
 # -- image pull secrets
 imagePullSecrets: []
 
+env:
+  # -- grafana image, e.g. docker.io/grafana/grafana:9.1.6
+  grafanaImage: ""
+
 nameOverride: ""
 fullnameOverride: ""
 

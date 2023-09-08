@@ -15,18 +15,17 @@ After that you need to run `make helm/docs` which will generate the changes to b
 There is a lot of information on what is needed to manage OLM [compatible operators](https://redhat-connect.gitbook.io/certified-operator-guide/ocp-deployment/operator-metadata/creating-the-csv).
 
 - Update the `Makefile` version
-- `make generate`, `make manifests` & `make bundle`
-- Update `containerImage` field in `config/manifests/bases/grafana-operator.clusterserviceversion.yaml`
-- Update `replaces` field in `config/manifests/bases/grafana-operator.clusterserviceversion.yaml`
-- Update `CreatedAt` field in `config/manifests/bases/grafana-operator.clusterserviceversion.yaml`
-  You will have to asses when it's going to get merged and you will be able to do a release.
-  You should make sure it's the same date. If not you will have to change it
-  manually when creating PR:s to OLM.
-
-      # This is how the time syntax should look.
-      $ docker inspect ghcr.io/grafana-operator/grafana-operator:v5.0.0 |jq '.[0].Created'
-      "2023-11-22T10:34:12.173861869Z"
-      # 2023-11-22T10:34:12Z is enough
+- Run `make generate` & `make manifests`
+- Update the following fields under `metadata.annotations` in `config/manifests/bases/grafana-operator.clusterserviceversion.yaml`:
+  - `containerImage`
+  - `replaces`
+  - `createdAt`: You will have to asses when it's going to get merged and you will be able to do a release. You should make sure it's the same date. If not you will have to change it manually when creating PR:s to OLM.
+    ```
+    # This is how the time syntax should look.
+    $ docker inspect ghcr.io/grafana-operator/grafana-operator:v5.0.0 |jq '.[0].Created'
+    "2023-11-22T10:34:12.173861869Z"
+    # 2023-11-22T10:34:12Z is enough
+    ```
 - Run `make bundle`
 - `Helm` look if any rbac rules have been changed in the last release, if so verify that the rbac rules for the helm chart is correct. This should be done in those PRs but it don't hurt take an extra look.
 - Create a PR and get it merged
@@ -49,6 +48,8 @@ Copy the content of `bundle/manifests/` in the grafana-operator repo from the ta
 Update `operators/grafana-operator/grafana-operator.package.yaml` with the new tag.
 
 ## RedHat operators
+
+- Run `make bundle/redhat`
 
 Create a new version of the operator under
 [https://github.com/redhat-openshift-ecosystem/community-operators-prod/tree/main/operators/grafana-operator](https://github.com/redhat-openshift-ecosystem/community-operators-prod/tree/main/operators/grafana-operator)

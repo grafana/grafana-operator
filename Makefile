@@ -4,6 +4,20 @@
 # Current Operator version
 VERSION ?= 5.4.2
 
+# BUNDLE_GEN_FLAGS are the flags passed to the operator-sdk generate bundle command
+BUNDLE_GEN_FLAGS ?= -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
+
+# USE_IMAGE_DIGESTS defines if images are resolved via tags or digests
+# You can enable this value if you would like to use SHA Based Digests
+# To enable set flag to true
+USE_IMAGE_DIGESTS ?= false
+ifeq ($(USE_IMAGE_DIGESTS), true)
+	BUNDLE_GEN_FLAGS += --use-image-digests
+endif
+
+# Set the Operator SDK version to use. By default, what is installed on the system is used.
+# This is useful for CI or a project to utilize a specific version of the operator-sdk toolkit.
+OPERATOR_SDK_VERSION ?= v1.31.0
 # Image URL to use all building/pushing image targets
 REGISTRY ?= ghcr.io
 REPO ?= grafana-operator
@@ -151,6 +165,23 @@ envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.
 $(ENVTEST): $(LOCALBIN)
 	test -s $(LOCALBIN)/setup-envtest || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
 
+.PHONY: operator-sdk
+OPERATOR_SDK ?= $(LOCALBIN)/operator-sdk
+operator-sdk: ## Download operator-sdk locally if necessary.
+ifeq (,$(wildcard $(OPERATOR_SDK)))
+ifeq (, $(shell which operator-sdk 2>/dev/null))
+	@{ \
+	set -e ;\
+	mkdir -p $(dir $(OPERATOR_SDK)) ;\
+	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
+	curl -sSLo $(OPERATOR_SDK) https://github.com/operator-framework/operator-sdk/releases/download/$(OPERATOR_SDK_VERSION)/operator-sdk_$${OS}_$${ARCH} ;\
+	chmod +x $(OPERATOR_SDK) ;\
+	}
+else
+OPERATOR_SDK = $(shell which operator-sdk)
+endif
+endif
+
 ###
 # END OF kubebuilder SECTION
 ###
@@ -175,14 +206,19 @@ endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
 .PHONY: bundle
-bundle: manifests kustomize ## Generate bundle manifests and metadata, then validate generated files.
-	operator-sdk generate kustomize manifests -q
+bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
+	$(OPERATOR_SDK) generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
-	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
-	operator-sdk bundle validate ./bundle
+	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS)
+	$(OPERATOR_SDK) bundle validate ./bundle
+
+.PHONY: bundle/redhat
+bundle/redhat: BUNDLE_GEN_FLAGS += --use-image-digests
+bundle/redhat: 
+	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS)
+	$(OPERATOR_SDK) bundle validate ./bundle
 
 # e2e
-
 .PHONY: e2e
 e2e: kuttl install deploy-kuttl ## Run e2e tests using kuttl.
 	$(KUTTL) test
@@ -291,7 +327,7 @@ ifeq (,$(shell which opm 2>/dev/null))
 	set -e ;\
 	mkdir -p $(dir $(OPM)) ;\
 	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(OPM) https://github.com/operator-framework/operator-registry/releases/download/v1.15.1/$${OS}-$${ARCH}-opm ;\
+	curl -sSLo $(OPM) https://github.com/operator-framework/operator-registry/releases/download/v1.23.2/$${OS}-$${ARCH}-opm ;\
 	chmod +x $(OPM) ;\
 	}
 else

@@ -323,6 +323,8 @@ spec:
                 - --metrics-bind-address=0.0.0.0:9090
                 - --leader-elect
                 env:
+                - name: RELATED_IMAGE_GRAFANA
+                  value: docker.io/grafana/grafana:9.1.6
                 - name: WATCH_NAMESPACE
                   valueFrom:
                     fieldRef:
