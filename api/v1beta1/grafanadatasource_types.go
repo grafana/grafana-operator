@@ -30,10 +30,10 @@ import (
 
 type GrafanaDatasourceInternal struct {
 	UID           string `json:"uid,omitempty"`
-	Name          string `json:"name,omitempty"`
-	Type          string `json:"type,omitempty"`
-	URL           string `json:"url,omitempty"`
-	Access        string `json:"access,omitempty"`
+	Name          string `json:"name"`
+	Type          string `json:"type"`
+	URL           string `json:"url"`
+	Access        string `json:"access"`
 	Database      string `json:"database,omitempty"`
 	User          string `json:"user,omitempty"`
 	OrgID         *int64 `json:"orgId,omitempty"`
@@ -57,7 +57,7 @@ type GrafanaDatasourceInternal struct {
 
 // GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
 type GrafanaDatasourceSpec struct {
-	Datasource *GrafanaDatasourceInternal `json:"datasource,omitempty"`
+	Datasource *GrafanaDatasourceInternal `json:"datasource"`
 
 	// selects Grafana instances for import
 	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`

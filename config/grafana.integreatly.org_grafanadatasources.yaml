@@ -82,6 +82,11 @@ spec:
                     type: string
                   user:
                     type: string
+                required:
+                - access
+                - name
+                - type
+                - url
                 type: object
               instanceSelector:
                 description: selects Grafana instances for import
@@ -197,6 +202,7 @@ spec:
                   type: object
                 type: array
             required:
+            - datasource
             - instanceSelector
             type: object
           status:
