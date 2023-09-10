@@ -274,6 +274,8 @@ spec:
   url: "https://raw.githubusercontent.com/grafana-operator/grafana-operator/master/examples/dashboard_from_url/dashboard.json"
 ```
 
+[Example documentation](../examples/dashboard_with_custom_folder/readme).
+
 ## Dashboard customization by providing environment variables
 
 Will be pleasant for scenarios when you would like to extend the behaviour of jsonnet generation by parametrizing it with runtime Env vars:
@@ -418,6 +420,3 @@ spec:
     gzipJsonnetProject: |-
       {{- (.Files.Get "dashboards.tar.gz") | b64enc | nindent 6 }}
 ```
-
-```yaml
-[Example documentation](../examples/dashboard_with_custom_folder/readme).
