@@ -21,7 +21,7 @@ Sadly helm OCI charts currently don't support searching for available versions o
 
 ## Development
 
-For general and helm specific development instructions please read the [CONTRIBUTING.md](../../../CONTRIBUTING.md)
+For general and helm specific development instructions please read the [CONTRIBUTING.md]({{< ref "/docs/CONTRIBUTING.md" >}})
 
 ## Out of scope
 
