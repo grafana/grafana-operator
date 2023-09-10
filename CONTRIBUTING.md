@@ -1,4 +1,8 @@
-# Contributing to grafana-operator
+---
+title: Contributing
+description: Contributing to grafana-operator
+weight: 2
+---
 
 Thank you for investing your time in contributing to our project.
 
