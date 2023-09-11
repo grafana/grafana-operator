@@ -109,26 +109,4 @@ To make sure its copy of CRDs is up-to-date, please, run `make all`.
 All documentation is stored under docs, for our homepage we are using hugo and the [docsy theme](https://github.com/google/docsy).
 
 If you don't feel the needs to preview the changes that you have done to the docs all you need to do is to edit them.
-But if you want to see how your changes will look you need to install hugo locally.
-
-### Hugo
-
-When installing hugo install the `extended` edition, you can easily find it on there github page.
-We are currently using [0.111.2](https://github.com/gohugoio/hugo/releases/tag/v0.111.2) but it probably works with other versions as well.
-
-To develop locally you need to also follow the docsy [pre-req](https://github.com/google/docsy#prerequisites).
-But in most cases it should work to just run
-
-```shell
-cd hugo
-# Install npm dependencies
-npm ci
-# Download hugo module
-hugo mod get
-```
-
-To look at your changes with hot reload.
-
-```shell
-hugo serve
-```
+But if you want to see how your changes will look you need to install hugo locally, see [Hugo ](./hugo/README.md)

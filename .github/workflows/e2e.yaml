@@ -18,12 +18,12 @@ jobs:
       docs_only: ${{ steps.docs_only_check.outputs.docs_only }}
     steps:
       - name: Check out code
-        uses: actions/checkout@v3.3.0
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - id: changed-files
         name: Get changed files
-        uses: tj-actions/changed-files@2f7246cb26e8bb6709b6cbfc1fec7febfe82e96a #v38.2.1
+        uses: tj-actions/changed-files@246636f5fa148b5ad8e65ca4c57b18af3123e5f6 #v39.0.1
         with:
           files_ignore: |
             **/*.md
@@ -49,7 +49,7 @@ jobs:
       KUBECONFIG: /home/runner/.kube/kind-grafana-operator-e2e
     steps:
       - name: Clone repo and checkout submodules
-        uses: actions/checkout@v3.3.0
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 

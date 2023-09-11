@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone the code
-        uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b #v3.2.0
+        uses: actions/checkout@v4 #v3.2.0
       - name: reviewdog
         uses: reviewdog/action-setup@80a06617492b461a66508e2dedf16233f0506804 # v1.0.6
         with:
@@ -87,7 +87,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repo
-        uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b #v3.2.0
+        uses: actions/checkout@v4 #v3.2.0
         with:
           submodules: recursive
 
@@ -105,7 +105,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repo
-        uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b #v3.2.0
+        uses: actions/checkout@v4 #v3.2.0
         with:
           submodules: recursive
 
@@ -130,7 +130,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repo
-        uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b #v3.2.0
+        uses: actions/checkout@v4 #v3.2.0
         with:
           submodules: recursive
 
@@ -155,7 +155,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repo
-        uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b #v3.2.0
+        uses: actions/checkout@v4 #v3.2.0
         with:
           submodules: recursive
 
@@ -180,7 +180,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repo
-        uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b #v3.2.0
+        uses: actions/checkout@v4 #v3.2.0
         with:
           submodules: recursive
       - name: Run Trivy vulnerability scanner
