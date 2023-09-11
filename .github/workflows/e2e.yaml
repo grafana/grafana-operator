@@ -18,7 +18,7 @@ jobs:
       docs_only: ${{ steps.docs_only_check.outputs.docs_only }}
     steps:
       - name: Check out code
-        uses: actions/checkout@v3.3.0
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - id: changed-files
@@ -49,7 +49,7 @@ jobs:
       KUBECONFIG: /home/runner/.kube/kind-grafana-operator-e2e
     steps:
       - name: Clone repo and checkout submodules
-        uses: actions/checkout@v3.3.0
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
