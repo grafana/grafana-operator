@@ -57,3 +57,14 @@ spec:
 ```
 
 **NOTE:** When an empty JSON is passed (`permissions: "{}"`), the access is stripped for everyone except for Admin (default Grafana behaviour).
+
+## Updating folder configuration
+
+When updating a folder's configuration, please do so via the `GrafanaFolder` CR. Any changes made directly to the folder in Grafana will be overwritten by the Grafana operator as per the configuration defined in the CR.
+
+### Fixing conflicts
+Avoid changing the name of the folder directly in Grafana as this may result in conflicts as the operator attempts to reconcile it (see [issues/1171](https://github.com/grafana-operator/grafana-operator/issues/1171)). When this occurs, any subsequent updates will not occur, resulting in the rest of the folder configuration to not be updated to the correct state (i.e. permissions).
+
+To resolve this, delete the folder in Grafana that matches the `uid` specified in the `GrafanaFolder` CR. This should allow the Grafana operator to update the remaining folder with the correct UID and permissions on the next reconcile.
+
+> **IMPORTANT NOTE**: Before deleting the folder, please take care of moving any manually created dashboards out of it as the operator will not be able to recreate them.
