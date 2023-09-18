@@ -51,7 +51,7 @@ jobs:
           cd deploy/kustomize/base
           kustomize edit set image ghcr.io/grafana-operator/grafana-operator=${{ env.GHCR_REPO }}:${{ github.ref_name }}
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -72,7 +72,7 @@ jobs:
           submodules: recursive
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
