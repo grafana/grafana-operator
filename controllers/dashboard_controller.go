@@ -194,7 +194,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	dashboardJson, err := r.fetchDashboardJson(ctx, cr)
 	if err != nil {
 		controllerLog.Error(err, "error fetching dashboard", "dashboard", cr.Name)
-		return ctrl.Result{Requeue: false}, nil
+		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
 	dashboardModel, hash, err := r.getDashboardModel(cr, dashboardJson)
