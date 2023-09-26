@@ -13,6 +13,7 @@ You need to change the version in [hugo/config.toml](hugo/config.toml).
 You also need to change the version for helm in [deploy/helm/grafana-operator/Chart.yaml](deploy/helm/grafana-operator/Chart.yaml).
 After that you need to run `make helm/docs` which will generate the changes to become visible on our homepage.
 
+- Update the `Makefile` version
 - `Helm` look if any rbac rules have been changed in the last release, if so verify that the rbac rules for the helm chart is correct. This should be done in those PRs but it don't hurt take an extra look.
 - Create a PR and get it merged
 - Create a new release with the new tag, make sure to compile release notes (github has an option to do this for you)
@@ -22,16 +23,15 @@ After that you need to run `make helm/docs` which will generate the changes to b
 After version v5.4.1, we no longer update the image version in this repo, but only upstream in the OLM repos.
 This to support disconnected mode, for more information see [PR 1234](https://github.com/grafana-operator/grafana-operator/pull/1234).
 
-After you have cut a new release according to the instructions above
+After cutting a new release according to the instructions above, run the below instructions in this repo and create a PR to the different upstream repos, there is no need to create a PR to this repo.
 
 There is a lot of information on what is needed to manage OLM [compatible operators](https://redhat-connect.gitbook.io/certified-operator-guide/ocp-deployment/operator-metadata/creating-the-csv).
 
-- Update the `Makefile` version
 - Run `make generate` & `make manifests`
 - Update the following fields under `metadata.annotations` in `config/manifests/bases/grafana-operator.clusterserviceversion.yaml`:
   - `containerImage`
   - `replaces`
-  - `createdAt`: You will have to asses when it's going to get merged and you will be able to do a release. You should make sure it's the same date. If not you will have to change it manually when creating PR:s to OLM.
+  - `createdAt`: Make sure that createdAt matches when the image was published. If not you will have to change it manually when creating PR:s to OLM.
     ```
     # This is how the time syntax should look.
     $ docker inspect ghcr.io/grafana-operator/grafana-operator:v5.0.0 |jq '.[0].Created'
@@ -47,6 +47,8 @@ You will need to sign your commits, and make sure they are squashed before submi
 - [RedHat operators](https://github.com/redhat-openshift-ecosystem/community-operators-prod/tree/main/operators)
 
 ### Community operators
+
+- Run `make bundle/redhat`
 
 Create a new version of the operator under
 [https://github.com/k8s-operatorhub/community-operators/tree/main/operators/grafana-operator](https://github.com/k8s-operatorhub/community-operators/tree/main/operators/grafana-operator)
