@@ -214,7 +214,7 @@ bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metada
 
 .PHONY: bundle/redhat
 bundle/redhat: BUNDLE_GEN_FLAGS += --use-image-digests
-bundle/redhat: 
+bundle/redhat:
 	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS)
 	$(OPERATOR_SDK) bundle validate ./bundle
 
