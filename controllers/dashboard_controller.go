@@ -200,7 +200,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	dashboardModel, hash, err := r.getDashboardModel(cr, dashboardJson)
 	if err != nil {
 		controllerLog.Error(err, "failed to prepare dashboard model", "dashboard", cr.Name)
-		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
+		return ctrl.Result{Requeue: false}, nil
 	}
 
 	uid := fmt.Sprintf("%s", dashboardModel["uid"])
