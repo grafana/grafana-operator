@@ -103,30 +103,32 @@ func main() {
 		LeaderElectionID:       "f75f3bba.integreatly.org",
 	}
 
+	getNamespaceConfig := func(namespaces string) map[string]cache.Config {
+		defaultNamespaces := map[string]cache.Config{}
+		for _, v := range strings.Split(namespaces, ",") {
+			// Generate a mapping of namespaces to label/field selectors, set to Everything() to enable matching all
+			// instances in all namespaces from watchNamespace to be controlled by the operator
+			// this is the default behavior of the operator on v5, if you require finer grained control over this
+			// please file an issue in the grafana-operator/grafana-operator GH project
+			defaultNamespaces[v] = cache.Config{
+				LabelSelector:         labels.Everything(), // Match any labels
+				FieldSelector:         fields.Everything(), // Match any fields
+				Transform:             nil,
+				UnsafeDisableDeepCopy: nil,
+			}
+		}
+		return defaultNamespaces
+	}
 	switch {
 	case strings.Contains(watchNamespace, ","):
 		// multi namespace scoped
-		getNamespaceConfig := func(namespaces string) map[string]cache.Config {
-			defaultNamespaces := map[string]cache.Config{}
-			for _, v := range strings.Split(namespaces, ",") {
-				// Generate a mapping of namespaces to label/field selectors, set to Everything() to enable matching all
-				// instances in all namespaces from watchNamespace to be controlled by the operator
-				// this is the default behavior of the operator on v5, if you require finer grained control over this
-				// please file an issue in the grafana-operator/grafana-operator GH project
-				defaultNamespaces[v] = cache.Config{
-					LabelSelector:         labels.Everything(), // Match any labels
-					FieldSelector:         fields.Everything(), // Match any fields
-					Transform:             nil,
-					UnsafeDisableDeepCopy: nil,
-				}
-			}
-			return defaultNamespaces
-		}
 		controllerOptions.Cache.DefaultNamespaces = getNamespaceConfig(watchNamespace)
 		setupLog.Info("manager set up with multiple namespaces", "namespaces", watchNamespace)
 	case watchNamespace != "":
 		// namespace scoped
+		controllerOptions.Cache.DefaultNamespaces = getNamespaceConfig(watchNamespace)
 		setupLog.Info("operator running in namespace scoped mode", "namespace", watchNamespace)
+
 	case watchNamespace == "":
 		// cluster scoped
 		setupLog.Info("operator running in cluster scoped mode")
