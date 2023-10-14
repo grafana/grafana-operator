@@ -38,7 +38,7 @@ There is a lot of information on what is needed to manage OLM [compatible operat
     "2023-11-22T10:34:12.173861869Z"
     # 2023-11-22T10:34:12Z is enough
     ```
-- Run `make bundle`
+- Run `make bundle/redhat`
 
 To update the OLM channels you will need to create a PR in the following repos:
 You will need to sign your commits, and make sure they are squashed before submitting the PR, be aware that these repos also require you to sign certain open-source agreement documents as part of the CI-checks.
@@ -48,7 +48,6 @@ You will need to sign your commits, and make sure they are squashed before submi
 
 ### Community operators
 
-- Run `make bundle/redhat`
 
 Create a new version of the operator under
 [https://github.com/k8s-operatorhub/community-operators/tree/main/operators/grafana-operator](https://github.com/k8s-operatorhub/community-operators/tree/main/operators/grafana-operator)
@@ -59,8 +58,6 @@ Copy the content of `bundle/manifests/` in the grafana-operator repo from the ta
 Update `operators/grafana-operator/grafana-operator.package.yaml` with the new tag.
 
 ### RedHat operators
-
-- Run `make bundle/redhat`
 
 Create a new version of the operator under
 [https://github.com/redhat-openshift-ecosystem/community-operators-prod/tree/main/operators/grafana-operator](https://github.com/redhat-openshift-ecosystem/community-operators-prod/tree/main/operators/grafana-operator)
