@@ -11,7 +11,7 @@ kind: {{ if not $namespaceScoped }}Cluster{{ end }}Role
 metadata:
   namespace: {{ . }}
   name: {{ include "grafana-operator.fullname" $ }}-role
-  {{- with $.Values.additionalLabels }}
+  {{- with (merge $.Values.additionalLabels (include "grafana-operator.labels" $ | fromYaml)) }}
   labels:
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -231,6 +231,10 @@ kind: {{ if not $namespaceScoped }}Cluster{{ end }}RoleBinding
 metadata:
   name: {{ include "grafana-operator.fullname" $ }}-rolebinding
   namespace: {{ . }}
+  {{- with (merge $.Values.additionalLabels (include "grafana-operator.labels" $ | fromYaml)) }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 subjects:
   - kind: ServiceAccount
     name: {{ include "grafana-operator.serviceAccountName" $ }}
