@@ -161,7 +161,7 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 	})
 
 	// env var to restart container if plugins change
-	if len(vars.Plugins) > 0 {
+	if vars.Plugins != "" {
 		envVars = append(envVars, v1.EnvVar{
 			Name:  "GF_INSTALL_PLUGINS",
 			Value: vars.Plugins,
