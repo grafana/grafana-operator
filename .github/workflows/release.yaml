@@ -114,8 +114,12 @@ jobs:
             --image-label org.opencontainers.image.revision=${{ github.sha }} \
             --image-label org.opencontainers.image.version=${{ github.ref_name }} \
             --image-label org.opencontainers.image.created=${{ env.BUILD_DATE }}
-            
+
       - name: Mirror to Quay.io
+        env:
+          GHCR_REPO_IMAGE: "${{ env.GHCR_REPO }}:${{ github.ref_name}}"
+          QUAY_REPO_IMAGE: "${{ emv.QUAY_REPO }}:${{ github.ref_name }}"
         run: |
-          docker tag $GHCR_REPO:${{ github.ref_name}} $QUAY_REPO:${{ github.ref_name }}
-          docker push $QUAY_REPO:${{ github.ref_name }}
+          docker pull "$GHCR_REPO_IMAGE"
+          docker tag "$GHCR_REPO_IMAGE" "$QUAY_REPO_IMAGE"
+          docker push "$QUAY_REPO_IMAGE"
