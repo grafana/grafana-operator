@@ -78,6 +78,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Login to Quay.io
+        uses: docker/login-action@v3
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_PASSWORD }}
+
       - uses: actions/setup-go@v4
         with:
           go-version-file: "go.mod"
@@ -89,19 +96,21 @@ jobs:
 
       - name: Prepare
         run: |
-          # OCI standard enforces lower-case paths
-          GHCR_REPO=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          echo "GHCR_REPO=$GHCR_REPO" >> $GITHUB_ENV
           echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
 
       - name: Build and push
-        env:
-          KO_DOCKER_REPO: ${{ env.GHCR_REPO }}
         run: |
-          ko build --sbom=none --bare --platform linux/arm64,linux/arm/v7,linux/amd64 -t ${{ github.ref_name }} \
+          declare -a arr=("quay.io" "ghcr.io" )
+          
+          for i in "${arr[@]}"
+          do
+            export KO_DOCKER_REPO=${i}/grafana-operator/grafana-operator
+            ko build --sbom=none --bare --platform linux/arm64,linux/arm/v7,linux/amd64 -t ${{ github.ref_name }} \
             --image-label org.opencontainers.image.title=grafana-operator \
             --image-label org.opencontainers.image.description="An operator for Grafana that installs and manages Grafana instances & Dashboards & Datasources through Kubernetes/OpenShift CRs" \
             --image-label org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }} \
             --image-label org.opencontainers.image.revision=${{ github.sha }} \
             --image-label org.opencontainers.image.version=${{ github.ref_name }} \
             --image-label org.opencontainers.image.created=${{ env.BUILD_DATE }}
+          done
+                 
