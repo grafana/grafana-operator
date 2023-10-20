@@ -17,7 +17,7 @@ endif
 
 # Set the Operator SDK version to use. By default, what is installed on the system is used.
 # This is useful for CI or a project to utilize a specific version of the operator-sdk toolkit.
-OPERATOR_SDK_VERSION ?= v1.31.0
+OPERATOR_SDK_VERSION ?= v1.32.0
 
 OPM_VERSION ?= v1.23.2
 YQ_VERSION ?= v4.35.2
@@ -240,9 +240,7 @@ bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metada
 
 .PHONY: bundle/redhat
 bundle/redhat: BUNDLE_GEN_FLAGS += --use-image-digests
-bundle/redhat:
-	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS)
-	$(OPERATOR_SDK) bundle validate ./bundle
+bundle/redhat: bundle
 
 # e2e
 .PHONY: e2e
