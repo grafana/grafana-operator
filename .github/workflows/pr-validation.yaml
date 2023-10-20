@@ -88,8 +88,6 @@ jobs:
     steps:
       - name: Clone repo
         uses: actions/checkout@v4 #v3.2.0
-        with:
-          submodules: recursive
 
       - name: Setup go
         uses: actions/setup-go@v4
@@ -106,8 +104,6 @@ jobs:
     steps:
       - name: Clone repo
         uses: actions/checkout@v4 #v3.2.0
-        with:
-          submodules: recursive
 
       - name: Setup go
         uses: actions/setup-go@v4
@@ -131,8 +127,6 @@ jobs:
     steps:
       - name: Clone repo
         uses: actions/checkout@v4 #v3.2.0
-        with:
-          submodules: recursive
 
       - name: Setup go
         uses: actions/setup-go@v4
@@ -156,8 +150,6 @@ jobs:
     steps:
       - name: Clone repo
         uses: actions/checkout@v4 #v3.2.0
-        with:
-          submodules: recursive
 
       - name: Setup go
         uses: actions/setup-go@v4
@@ -181,8 +173,7 @@ jobs:
     steps:
       - name: Clone repo
         uses: actions/checkout@v4 #v3.2.0
-        with:
-          submodules: recursive
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:

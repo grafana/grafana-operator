@@ -48,10 +48,8 @@ jobs:
     env:
       KUBECONFIG: /home/runner/.kube/kind-grafana-operator-e2e
     steps:
-      - name: Clone repo and checkout submodules
+      - name: Clone repo and checkout
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - uses: actions/setup-go@v4
         with:
