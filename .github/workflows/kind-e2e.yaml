@@ -30,8 +30,8 @@ jobs:
           if [[ $GITHUB_REF == refs/tags/* ]]; then
             VERSION=${GITHUB_REF/refs\/tags\//}
           fi
-          echo ::set-output name=BUILD_DATE::$(date -u +'%Y-%m-%dT%H:%M:%SZ')
-          echo ::set-output name=VERSION::${VERSION}
+          echo "name=BUILD_DATE::$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+          echo "name=VERSION::${VERSION}" >> $GITHUB_OUTPUT
       - name: Cache container layers
         uses: actions/cache@v2.1.6
         with:
