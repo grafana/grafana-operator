@@ -32,7 +32,7 @@ jobs:
           git check-attr --stdin linguist-generated | grep -Ev ': (set|true)$' | cut -d: -f1 |
           git check-attr --stdin linguist-vendored | grep -Ev ': (set|true)$' | cut -d: -f1 |
           git check-attr --stdin ignore-lint | grep -Ev ': (set|true)$' | cut -d: -f1 |
-          grep -Ev '^(vendor/|third_party/|LICENSES/|.git|bundle/)' |
+          grep -Ev '^(vendor/|third_party/|LICENSES/|.git|bundle/|embeds/grafonnet-lib/)' |
           grep -v api.md |
           xargs grep -nE " +$" |
           reviewdog -efm="%f:%l:%m" \
@@ -63,7 +63,7 @@ jobs:
           git check-attr --stdin linguist-generated | grep -Ev ': (set|true)$' | cut -d: -f1 |
           git check-attr --stdin linguist-vendored | grep -Ev ': (set|true)$' | cut -d: -f1 |
           git check-attr --stdin ignore-lint | grep -Ev ': (set|true)$' | cut -d: -f1 |
-          grep -Ev '^(vendor/|third_party/|LICENSES/|.git)' |
+          grep -Ev '^(vendor/|third_party/|LICENSES/|.git|embeds/grafonnet-lib/)' |
           grep -v '\.ai$' |
           grep -v '\.svg$')
           for x in $LINT_FILES; do
