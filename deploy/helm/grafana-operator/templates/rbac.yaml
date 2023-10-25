@@ -1,13 +1,20 @@
-{{- if .Values.namespaceScope }}
+{{- $watchNamespaces := coalesce .Values.watchNamespaces .Release.Namespace }}
+{{- $namespaceScoped := false }}
+{{- if or (.Values.namespaceScope) (.Values.watchNamespaces) }}
+{{- $namespaceScoped = true }}
+{{- end }}
+{{- $operatorNamespace := .Release.Namespace }}
+{{- range ( split "," $watchNamespaces ) }}
+---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: {{ if not $namespaceScoped }}Cluster{{ end }}Role
 metadata:
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ . }}
   name: grafana-operator-permissions
+  {{- with (merge $.Values.additionalLabels (include "grafana-operator.labels" $ | fromYaml)) }}
   labels:
-    {{- with .Values.additionalLabels }}
     {{- toYaml . | nindent 4 }}
-    {{- end }}
+  {{- end }}
 rules:
   - apiGroups:
       - ""
@@ -220,16 +227,20 @@ rules:
       - create
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
+kind: {{ if not $namespaceScoped }}Cluster{{ end }}RoleBinding
 metadata:
   name: grafana-operator-permissions
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ . }}
+  {{- with (merge $.Values.additionalLabels (include "grafana-operator.labels" $ | fromYaml)) }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 subjects:
   - kind: ServiceAccount
-    name:  {{ include "grafana-operator.serviceAccountName" . }}
-    namespace: {{ .Release.Namespace }}
+    name: {{ include "grafana-operator.serviceAccountName" $ }}
+    namespace: {{ $operatorNamespace }}
 roleRef:
-  kind: Role
+  kind: {{ if not $namespaceScoped }}Cluster{{ end }}Role
   name: grafana-operator-permissions
   apiGroup: rbac.authorization.k8s.io
 {{- end }}
