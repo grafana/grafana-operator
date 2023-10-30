@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/bitly/go-simplejson v0.5.1
 	github.com/blang/semver v3.5.1+incompatible
-	github.com/go-logr/logr v1.2.4
+	github.com/go-logr/logr v1.3.0
 	github.com/google/go-jsonnet v0.20.0
 	github.com/grafana/grafana-api-golang-client v0.23.0
 	github.com/onsi/ginkgo v1.16.5
