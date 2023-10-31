@@ -84,3 +84,8 @@ To solve this we introduced `spec.allowCrossNamespaceImport` option to, dashboar
 This setting makes it so a grafana instance in another namespace don't get the grafana resources applied to it even if the label matches.
 
 This is because especially the data sources contain secret information and we don't want another team to be able to use your datasource unless defined to do so in both CR:s.
+
+## Using a proxy server
+
+The Operator can use a proxy server when making requests to Grafana.
+The proxy settings can be controlled through environment variables as documented [here](https://pkg.go.dev/golang.org/x/net/http/httpproxy#FromEnvironment).
