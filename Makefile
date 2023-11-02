@@ -88,10 +88,6 @@ test: manifests generate code/gofumpt api-docs vet envtest ## Run tests.
 build: generate code/gofumpt vet ## Build manager binary.
 	go build -o bin/manager main.go
 
-# Get submodules
-submodule:
-	git submodule update --init --recursive
-
 .PHONY: run
 run: manifests generate code/gofumpt vet ## Run a controller from your host.
 	go run ./main.go

@@ -1,3 +1,0 @@
-[submodule "embeds/grafonnet-lib"]
-	path = embeds/grafonnet-lib
-	url = https://github.com/grafana/grafonnet-lib.git
