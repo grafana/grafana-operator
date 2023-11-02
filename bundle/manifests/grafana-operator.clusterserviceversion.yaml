@@ -96,7 +96,7 @@ metadata:
     categories: Monitoring
     containerImage: ghcr.io/grafana-operator/grafana-operator:v5.4.2
     createdAt: "2023-09-12T08:09:00.92Z"
-    operators.operatorframework.io/builder: operator-sdk-v1.22.2
+    operators.operatorframework.io/builder: operator-sdk-v1.31.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/grafana-operator/grafana-operator
     support: Community
