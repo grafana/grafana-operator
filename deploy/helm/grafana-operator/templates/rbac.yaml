@@ -11,10 +11,11 @@ kind: {{ if not $namespaceScoped }}Cluster{{ end }}Role
 metadata:
   namespace: {{ . }}
   name: grafana-operator-permissions
-  {{- with (merge $.Values.additionalLabels (include "grafana-operator.labels" $ | fromYaml)) }}
-  labels:
+  labels: 
+    {{- include "grafana-operator.labels" . | nindent 4 }}
+    {{- with .Values.additionalLabels }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- end }}
 rules:
   - apiGroups:
       - ""
@@ -231,10 +232,11 @@ kind: {{ if not $namespaceScoped }}Cluster{{ end }}RoleBinding
 metadata:
   name: grafana-operator-permissions
   namespace: {{ . }}
-  {{- with (merge $.Values.additionalLabels (include "grafana-operator.labels" $ | fromYaml)) }}
   labels:
+    {{- include "grafana-operator.labels" . | nindent 4 }}
+    {{- with .Values.additionalLabels }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- end }}
 subjects:
   - kind: ServiceAccount
     name: {{ include "grafana-operator.serviceAccountName" $ }}
