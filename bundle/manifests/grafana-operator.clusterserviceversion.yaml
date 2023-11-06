@@ -94,9 +94,8 @@ metadata:
       ]
     capabilities: Basic Install
     categories: Monitoring
-    containerImage: ghcr.io/grafana-operator/grafana-operator:v5.4.2
-    createdAt: "2023-09-12T08:09:00.92Z"
-    operators.operatorframework.io/builder: operator-sdk-v1.31.0
+    createdAt: "2023-11-06T20:49:26Z"
+    operators.operatorframework.io/builder: operator-sdk-v1.32.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/grafana-operator/grafana-operator
     support: Community
@@ -311,45 +310,52 @@ spec:
             selector:
               matchLabels:
                 control-plane: controller-manager
-            spec:
-              containers:
-              - args:
-                - --health-probe-bind-address=:8081
-                - --metrics-bind-address=0.0.0.0:9090
-                - --leader-elect
-                env:
-                - name: RELATED_IMAGE_GRAFANA
-                  value: docker.io/grafana/grafana:9.1.6
-                - name: WATCH_NAMESPACE
-                  valueFrom:
-                    fieldRef:
-                      fieldPath: metadata.annotations['olm.targetNamespaces']
-                image: ghcr.io/grafana-operator/grafana-operator:v5.4.2
-                imagePullPolicy: Always
-                livenessProbe:
-                  httpGet:
-                    path: /healthz
-                    port: 8081
-                  initialDelaySeconds: 15
-                  periodSeconds: 20
-                name: manager
-                ports:
-                - containerPort: 9090
-                  name: metrics
-                  protocol: TCP
-                readinessProbe:
-                  httpGet:
-                    path: /readyz
-                    port: 8081
-                  initialDelaySeconds: 5
-                  periodSeconds: 10
-                resources:
-                  limits:
-                    cpu: 200m
-                    memory: 550Mi
-                  requests:
-                    cpu: 100m
-                    memory: 20Mi
+            strategy: {}
+            template:
+              metadata:
+                labels:
+                  control-plane: controller-manager
+              spec:
+                containers:
+                  - args:
+                      - --health-probe-bind-address=:8081
+                      - --metrics-bind-address=0.0.0.0:9090
+                      - --leader-elect
+                    env:
+                      - name: RELATED_IMAGE_GRAFANA
+                        value: docker.io/grafana/grafana@sha256:ff68ed4324e471ffa269aa5308cdcf12276ef2d5a660daea95db9d629a32a7d8
+                      - name: WATCH_NAMESPACE
+                        valueFrom:
+                          fieldRef:
+                            fieldPath: metadata.annotations['olm.targetNamespaces']
+                    image: ghcr.io/grafana-operator/grafana-operator@sha256:bd4faa4e8b721fbbc8e7bde096347e4b123e85a01ab437c021664120ac3c00c6
+                    imagePullPolicy: Always
+                    livenessProbe:
+                      httpGet:
+                        path: /healthz
+                        port: 8081
+                      initialDelaySeconds: 15
+                      periodSeconds: 20
+                    name: manager
+                    ports:
+                      - containerPort: 9090
+                        name: metrics
+                        protocol: TCP
+                    readinessProbe:
+                      httpGet:
+                        path: /readyz
+                        port: 8081
+                      initialDelaySeconds: 5
+                      periodSeconds: 10
+                    resources:
+                      limits:
+                        cpu: 200m
+                        memory: 550Mi
+                      requests:
+                        cpu: 100m
+                        memory: 20Mi
+                    securityContext:
+                      allowPrivilegeEscalation: false
                 securityContext:
                   runAsNonRoot: true
                 serviceAccountName: grafana-operator-controller-manager
@@ -409,5 +415,10 @@ spec:
   minKubeVersion: 1.23.0
   provider:
     name: Community
+  relatedImages:
+    - image: docker.io/grafana/grafana@sha256:ff68ed4324e471ffa269aa5308cdcf12276ef2d5a660daea95db9d629a32a7d8
+      name: grafana
+    - image: ghcr.io/grafana-operator/grafana-operator@sha256:bd4faa4e8b721fbbc8e7bde096347e4b123e85a01ab437c021664120ac3c00c6
+      name: manager
   replaces: grafana-operator.v5.4.1
   version: 5.4.2
