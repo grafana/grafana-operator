@@ -13,8 +13,14 @@ type instrumentedRoundTripper struct {
 	metric          *prometheus.CounterVec
 }
 
-func NewInstrumentedRoundTripper(relatedResource string, metric *prometheus.CounterVec) http.RoundTripper {
-	transport := http.DefaultTransport.(*http.Transport).Clone()
+func NewInstrumentedRoundTripper(relatedResource string, metric *prometheus.CounterVec, useProxy bool) http.RoundTripper {
+	transport := &http.Transport{}
+
+	// Default transport respects proxy settings
+	if useProxy {
+		transport = http.DefaultTransport.(*http.Transport).Clone()
+	}
+
 	transport.DisableKeepAlives = true
 	transport.MaxIdleConnsPerHost = -1
 	transport.TLSClientConfig.InsecureSkipVerify = true //nolint
