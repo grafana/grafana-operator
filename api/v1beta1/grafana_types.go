@@ -74,6 +74,8 @@ type GrafanaSpec struct {
 	Jsonnet *JsonnetConfig `json:"jsonnet,omitempty"`
 	// External enables you to configure external grafana instances that is not managed by the operator.
 	External *External `json:"external,omitempty"`
+	// Preferences holds the Grafana Preferences settings
+	Preferences *GrafanaPreferences `json:"preferences,omitempty"`
 }
 
 type External struct {
@@ -98,6 +100,11 @@ type GrafanaClient struct {
 	// +nullable
 	// If the operator should send it's request through the grafana instances ingress object instead of through the service.
 	PreferIngress *bool `json:"preferIngress,omitempty"`
+}
+
+// GrafanaPreferences holds Grafana preferences settings
+type GrafanaPreferences struct {
+	HomeDashboardUID string `json:"homeDashboardUid,omitempty"`
 }
 
 // GrafanaStatus defines the observed state of Grafana

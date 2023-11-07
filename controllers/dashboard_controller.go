@@ -257,6 +257,17 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			controllerLog.Error(err, "error reconciling dashboard", "dashboard", cr.Name, "grafana", grafana.Name)
 			success = false
 		}
+
+		if uid == grafana.Spec.Preferences.HomeDashboardUID {
+			grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, &grafana)
+			if err != nil {
+				return ctrl.Result{RequeueAfter: RequeueDelay}, err
+			}
+			err = r.UpdateHomeDashboard(grafanaClient, uid, cr)
+			if err != nil {
+				return ctrl.Result{RequeueAfter: RequeueDelay}, err
+			}
+		}
 	}
 
 	// if the dashboard was successfully synced in all instances, wait for its re-sync period
@@ -735,4 +746,20 @@ func (r *GrafanaDashboardReconciler) GetMatchingDashboardInstances(ctx context.C
 	}
 
 	return instances, err
+}
+
+func (r *GrafanaDashboardReconciler) UpdateHomeDashboard(client *grapi.Client, uid string, dashboard *v1beta1.GrafanaDashboard) error {
+	if uid != "" {
+		_, err := client.UpdateOrgPreferences(grapi.Preferences{
+			HomeDashboardUID: uid,
+		})
+		if err != nil {
+			r.Log.Error(err, "cannot set home dashboard", "namespace", dashboard.Namespace, "name", dashboard.Name)
+			return err
+		}
+
+		r.Log.Info("home dashboard configured", "namespace", dashboard.Namespace, "name", dashboard.Name)
+	}
+
+	return nil
 }
