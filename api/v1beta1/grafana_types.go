@@ -104,6 +104,7 @@ type GrafanaClient struct {
 
 // GrafanaPreferences holds Grafana preferences settings
 type GrafanaPreferences struct {
+	Theme            string `json:"theme"`
 	HomeDashboardUID string `json:"homeDashboardUid,omitempty"`
 }
 

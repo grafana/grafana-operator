@@ -258,12 +258,8 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			success = false
 		}
 
-		if uid == grafana.Spec.Preferences.HomeDashboardUID {
-			grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, &grafana)
-			if err != nil {
-				return ctrl.Result{RequeueAfter: RequeueDelay}, err
-			}
-			err = r.UpdateHomeDashboard(grafanaClient, uid, cr)
+		if grafana.Spec.Preferences != nil && grafana.Spec.Preferences.HomeDashboardUID != "" && uid == grafana.Spec.Preferences.HomeDashboardUID {
+			err = r.UpdateHomeDashboard(ctx, grafana, uid, cr)
 			if err != nil {
 				return ctrl.Result{RequeueAfter: RequeueDelay}, err
 			}
@@ -748,18 +744,21 @@ func (r *GrafanaDashboardReconciler) GetMatchingDashboardInstances(ctx context.C
 	return instances, err
 }
 
-func (r *GrafanaDashboardReconciler) UpdateHomeDashboard(client *grapi.Client, uid string, dashboard *v1beta1.GrafanaDashboard) error {
-	if uid != "" {
-		_, err := client.UpdateOrgPreferences(grapi.Preferences{
-			HomeDashboardUID: uid,
-		})
-		if err != nil {
-			r.Log.Error(err, "cannot set home dashboard", "namespace", dashboard.Namespace, "name", dashboard.Name)
-			return err
-		}
-
-		r.Log.Info("home dashboard configured", "namespace", dashboard.Namespace, "name", dashboard.Name)
+func (r *GrafanaDashboardReconciler) UpdateHomeDashboard(ctx context.Context, grafana v1beta1.Grafana, uid string, dashboard *v1beta1.GrafanaDashboard) error {
+	grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, &grafana)
+	if err != nil {
+		return err
 	}
 
+	_, err = grafanaClient.UpdateOrgPreferences(grapi.Preferences{
+		Theme:            grafana.Spec.Preferences.Theme,
+		HomeDashboardUID: uid,
+	})
+	if err != nil {
+		r.Log.Error(err, "unable to update the home dashboard", "namespace", dashboard.Namespace, "name", dashboard.Name)
+		return err
+	}
+
+	r.Log.Info("home dashboard configured", "namespace", dashboard.Namespace, "name", dashboard.Name)
 	return nil
 }
