@@ -87,5 +87,5 @@ This is because especially the data sources contain secret information and we do
 
 ## Using a proxy server
 
-The Operator can use a proxy server when making requests to Grafana.
+The Operator can use a proxy server when fetching URL-based / Grafana.com dashboards or making requests to external Grafana instances.
 The proxy settings can be controlled through environment variables as documented [here](https://pkg.go.dev/golang.org/x/net/http/httpproxy#FromEnvironment).
