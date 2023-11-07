@@ -15545,13 +15545,6 @@ Preferences holds the Grafana Preferences settings
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>theme</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
         <td><b>homeDashboardUid</b></td>
         <td>string</td>
         <td>

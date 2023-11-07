@@ -258,7 +258,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			success = false
 		}
 
-		if grafana.Spec.Preferences != nil && grafana.Spec.Preferences.HomeDashboardUID != "" && uid == grafana.Spec.Preferences.HomeDashboardUID {
+		if grafana.Spec.Preferences != nil && uid == grafana.Spec.Preferences.HomeDashboardUID {
 			err = r.UpdateHomeDashboard(ctx, grafana, uid, cr)
 			if err != nil {
 				return ctrl.Result{RequeueAfter: RequeueDelay}, err
@@ -750,10 +750,14 @@ func (r *GrafanaDashboardReconciler) UpdateHomeDashboard(ctx context.Context, gr
 		return err
 	}
 
-	_, err = grafanaClient.UpdateOrgPreferences(grapi.Preferences{
-		Theme:            grafana.Spec.Preferences.Theme,
-		HomeDashboardUID: uid,
-	})
+	p, err := grafanaClient.OrgPreferences()
+	if err != nil {
+		r.Log.Error(err, "unable to fetch org preferences", "namespace", dashboard.Namespace, "name", dashboard.Name)
+		return err
+	}
+
+	p.HomeDashboardUID = uid
+	_, err = grafanaClient.UpdateAllOrgPreferences(p)
 	if err != nil {
 		r.Log.Error(err, "unable to update the home dashboard", "namespace", dashboard.Namespace, "name", dashboard.Name)
 		return err

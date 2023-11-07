@@ -102,9 +102,8 @@ type GrafanaClient struct {
 	PreferIngress *bool `json:"preferIngress,omitempty"`
 }
 
-// GrafanaPreferences holds Grafana preferences settings
+// GrafanaPreferences holds Grafana preferences API settings
 type GrafanaPreferences struct {
-	Theme            string `json:"theme"`
 	HomeDashboardUID string `json:"homeDashboardUid,omitempty"`
 }
 

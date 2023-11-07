@@ -9033,10 +9033,6 @@ spec:
                 properties:
                   homeDashboardUid:
                     type: string
-                  theme:
-                    type: string
-                required:
-                - theme
                 type: object
               route:
                 description: Route sets how the ingress object should look like with

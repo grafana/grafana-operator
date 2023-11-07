@@ -3633,10 +3633,6 @@ spec:
                 properties:
                   homeDashboardUid:
                     type: string
-                  theme:
-                    type: string
-                required:
-                - theme
                 type: object
               route:
                 properties:
