@@ -11,7 +11,7 @@ kind: {{ if not $namespaceScoped }}Cluster{{ end }}Role
 metadata:
   namespace: {{ . }}
   name: grafana-operator-permissions
-  labels: 
+  labels:
     {{- include "grafana-operator.labels" . | nindent 4 }}
     {{- with .Values.additionalLabels }}
     {{- toYaml . | nindent 4 }}
