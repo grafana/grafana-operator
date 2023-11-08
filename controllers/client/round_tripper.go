@@ -14,16 +14,15 @@ type instrumentedRoundTripper struct {
 }
 
 func NewInstrumentedRoundTripper(relatedResource string, metric *prometheus.CounterVec, useProxy bool) http.RoundTripper {
-	transport := &http.Transport{}
-
-	// Default transport respects proxy settings
-	if useProxy {
-		transport = http.DefaultTransport.(*http.Transport).Clone()
-	}
+	transport := http.DefaultTransport.(*http.Transport).Clone()
 
 	transport.DisableKeepAlives = true
 	transport.MaxIdleConnsPerHost = -1
 	transport.TLSClientConfig.InsecureSkipVerify = true //nolint
+
+	if !useProxy {
+		transport.Proxy = nil
+	}
 
 	return &instrumentedRoundTripper{
 		relatedResource: relatedResource,
