@@ -1,6 +1,7 @@
 package client
 
 import (
+	"crypto/tls"
 	"net/http"
 	"strconv"
 
@@ -14,7 +15,7 @@ type instrumentedRoundTripper struct {
 }
 
 func NewInstrumentedRoundTripper(relatedResource string, metric *prometheus.CounterVec, useProxy bool) http.RoundTripper {
-	transport := &http.Transport{}
+	transport := &http.Transport{TLSClientConfig: &tls.Config{}}
 
 	// Default transport respects proxy settings
 	if useProxy {
