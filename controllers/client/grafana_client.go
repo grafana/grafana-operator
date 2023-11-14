@@ -143,7 +143,7 @@ func NewGrafanaClient(ctx context.Context, c client.Client, grafana *v1beta1.Gra
 	clientConfig := grapi.Config{
 		HTTPHeaders: nil,
 		Client: &http.Client{
-			Transport: NewInstrumentedRoundTripper(grafana.Name, metrics.GrafanaApiRequests),
+			Transport: NewInstrumentedRoundTripper(grafana.Name, metrics.GrafanaApiRequests, grafana.IsExternal()),
 			Timeout:   time.Second * timeout,
 		},
 		// TODO populate me
