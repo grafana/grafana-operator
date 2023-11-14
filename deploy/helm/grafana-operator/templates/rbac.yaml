@@ -12,8 +12,8 @@ metadata:
   namespace: {{ . }}
   name: grafana-operator-permissions
   labels:
-    {{- include "grafana-operator.labels" . | nindent 4 }}
-    {{- with .Values.additionalLabels }}
+    {{- include "grafana-operator.labels" $ | nindent 4 }}
+    {{- with $.Values.additionalLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 rules:
