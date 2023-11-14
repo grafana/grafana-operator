@@ -1,7 +1,6 @@
 package client
 
 import (
-	"crypto/tls"
 	"net/http"
 	"strconv"
 
@@ -14,13 +13,15 @@ type instrumentedRoundTripper struct {
 	metric          *prometheus.CounterVec
 }
 
-func NewInstrumentedRoundTripper(relatedResource string, metric *prometheus.CounterVec) http.RoundTripper {
-	transport := &http.Transport{
-		DisableKeepAlives:   true,
-		MaxIdleConnsPerHost: -1,
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true, //nolint
-		},
+func NewInstrumentedRoundTripper(relatedResource string, metric *prometheus.CounterVec, useProxy bool) http.RoundTripper {
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+
+	transport.DisableKeepAlives = true
+	transport.MaxIdleConnsPerHost = -1
+	transport.TLSClientConfig.InsecureSkipVerify = true //nolint
+
+	if !useProxy {
+		transport.Proxy = nil
 	}
 
 	return &instrumentedRoundTripper{

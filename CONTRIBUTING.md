@@ -6,8 +6,7 @@ Thank you for investing your time in contributing to our project.
 
 The operator uses unit tests and [Kuttl](https://kuttl.dev/) for e2e tests to make sure that the operator is working as intended, we use make to generate a number of docs and scripts for us.
 
-The operator use a submodule for [grafonnet-lib](https://github.com/grafana/grafonnet-lib),
-one of the first things you have to do is to run `make submodule`.
+The operator embeds [grafonnet-lib](https://github.com/grafana/grafonnet-lib) inside `embeds/grafonnet-lib`. It used to be a git submodule, however, as that folder was only filled when the git submodule was initiated, the grafana-operator couldn't be imported externally.
 
 **NOTE:** please, run `make all` before opening a PR to make sure your changes are compliant with our standards and all automatically generated files (like CRDs) are up-to-date.
 
@@ -22,7 +21,6 @@ As a part of the CI solution these settings will be validated, but all of them c
 Before pushing any code we recommend that you run the following make commands.
 
 ```shell
-make submodule
 make test
 make code/golangci-lint
 ```

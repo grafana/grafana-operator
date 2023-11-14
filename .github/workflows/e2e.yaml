@@ -23,7 +23,7 @@ jobs:
           fetch-depth: 0
       - id: changed-files
         name: Get changed files
-        uses: tj-actions/changed-files@8238a4103220c636f2dad328ead8a7c8dbe316a3 #v39.2.0
+        uses: tj-actions/changed-files@25ef3926d147cd02fc7e931c1ef50772bbb0d25d #v40.1.1
         with:
           files_ignore: |
             **/*.md
@@ -48,10 +48,8 @@ jobs:
     env:
       KUBECONFIG: /home/runner/.kube/kind-grafana-operator-e2e
     steps:
-      - name: Clone repo and checkout submodules
+      - name: Clone repo and checkout
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - uses: actions/setup-go@v4
         with:

@@ -2,7 +2,7 @@
 # NOTE: this section almost matches outputs out kubebuilder v3.7.0
 ###
 # Current Operator version
-VERSION ?= 5.4.1
+VERSION ?= 5.4.2
 
 # Image URL to use all building/pushing image targets
 REGISTRY ?= ghcr.io
@@ -87,10 +87,6 @@ test: manifests generate code/gofumpt api-docs vet envtest ## Run tests.
 .PHONY: build
 build: generate code/gofumpt vet ## Build manager binary.
 	go build -o bin/manager main.go
-
-# Get submodules
-submodule:
-	git submodule update --init --recursive
 
 .PHONY: run
 run: manifests generate code/gofumpt vet ## Run a controller from your host.

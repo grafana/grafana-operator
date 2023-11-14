@@ -5,7 +5,7 @@ metadata:
     alm-examples: '[]'
     capabilities: Basic Install
     categories: Monitoring
-    containerImage: ghcr.io/grafana-operator/grafana-operator:v5.4.1
+    containerImage: ghcr.io/grafana-operator/grafana-operator:v5.4.2
     createdAt: "2023-09-12T08:09:00.92Z"
     repository: https://github.com/grafana-operator/grafana-operator
     support: Community
@@ -64,5 +64,5 @@ spec:
   minKubeVersion: 1.23.0
   provider:
     name: Community
-  replaces: grafana-operator.v5.4.0
+  replaces: grafana-operator.v5.4.1
   version: 0.0.0
