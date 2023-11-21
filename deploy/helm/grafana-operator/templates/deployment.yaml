@@ -42,6 +42,10 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
+            {{- if .Values.env.grafanaImage }}
+            - name: RELATED_IMAGE_GRAFANA
+              value: {{ .Values.env.grafanaImage }}
+            {{- end }}
             - name: WATCH_NAMESPACE
               {{- if and .Values.namespaceScope (eq .Values.watchNamespaces "") }}
               value: {{ .Release.Namespace }}
