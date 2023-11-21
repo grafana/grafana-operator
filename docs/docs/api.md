@@ -1715,6 +1715,13 @@ GrafanaSpec defines the desired state of Grafana
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanaspecpreferences">preferences</a></b></td>
+        <td>object</td>
+        <td>
+          Preferences holds the Grafana Preferences settings<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecroute">route</a></b></td>
         <td>object</td>
         <td>
@@ -15515,6 +15522,33 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td>[]string</td>
         <td>
           values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.preferences
+<sup><sup>[↩ Parent](#grafanaspec)</sup></sup>
+
+
+
+Preferences holds the Grafana Preferences settings
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>homeDashboardUid</b></td>
+        <td>string</td>
+        <td>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>

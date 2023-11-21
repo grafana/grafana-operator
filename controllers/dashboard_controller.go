@@ -257,6 +257,13 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			controllerLog.Error(err, "error reconciling dashboard", "dashboard", cr.Name, "grafana", grafana.Name)
 			success = false
 		}
+
+		if grafana.Spec.Preferences != nil && uid == grafana.Spec.Preferences.HomeDashboardUID {
+			err = r.UpdateHomeDashboard(ctx, grafana, uid, cr)
+			if err != nil {
+				return ctrl.Result{RequeueAfter: RequeueDelay}, err
+			}
+		}
 	}
 
 	// if the dashboard was successfully synced in all instances, wait for its re-sync period
@@ -735,4 +742,27 @@ func (r *GrafanaDashboardReconciler) GetMatchingDashboardInstances(ctx context.C
 	}
 
 	return instances, err
+}
+
+func (r *GrafanaDashboardReconciler) UpdateHomeDashboard(ctx context.Context, grafana v1beta1.Grafana, uid string, dashboard *v1beta1.GrafanaDashboard) error {
+	grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, &grafana)
+	if err != nil {
+		return err
+	}
+
+	p, err := grafanaClient.OrgPreferences()
+	if err != nil {
+		r.Log.Error(err, "unable to fetch org preferences", "namespace", dashboard.Namespace, "name", dashboard.Name)
+		return err
+	}
+
+	p.HomeDashboardUID = uid
+	_, err = grafanaClient.UpdateAllOrgPreferences(p)
+	if err != nil {
+		r.Log.Error(err, "unable to update the home dashboard", "namespace", dashboard.Namespace, "name", dashboard.Name)
+		return err
+	}
+
+	r.Log.Info("home dashboard configured", "namespace", dashboard.Namespace, "name", dashboard.Name)
+	return nil
 }
