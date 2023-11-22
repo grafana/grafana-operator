@@ -5,6 +5,7 @@ metadata:
     alm-examples: '[]'
     capabilities: Basic Install
     categories: Monitoring
+    containerImage: ghcr.io/grafana-operator/grafana-operator:v5.5.0
     createdAt: "2023-09-12T08:09:00.92Z"
     repository: https://github.com/grafana-operator/grafana-operator
     support: Community
