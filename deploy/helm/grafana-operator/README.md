@@ -38,7 +38,6 @@ It's easier to just manage this configuration outside of the operator.
 | additionalLabels | object | `{}` | additional labels to add to all resources |
 | affinity | object | `{}` | pod affinity |
 | env | list | `[]` | Additional environment variables |
-| env.grafanaImage | string | `""` | grafana image, e.g. docker.io/grafana/grafana:9.1.6, overwrites the default grafana image defined in the operator |
 | fullnameOverride | string | `""` |  |
 | image.pullPolicy | string | `"IfNotPresent"` | The image pull policy to use in grafana operator container |
 | image.repository | string | `"ghcr.io/grafana-operator/grafana-operator"` | grafana operator image repository |
