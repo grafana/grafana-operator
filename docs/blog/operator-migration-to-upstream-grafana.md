@@ -1,5 +1,5 @@
 ---
-author: "Hubert Stefańksi"
+author: "Hubert Stefański"
 date: 2023-11-21
 title: "Moving Upstream"
 linkTitle: "Grafana-Operator Moving Upstream"
