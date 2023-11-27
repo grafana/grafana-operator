@@ -133,6 +133,13 @@ jobs:
         with:
           go-version-file: "go.mod"
 
+      - name: Run helm-template
+        run: |
+          helm template deploy/helm/grafana-operator/
+
+      - name: Run helm-lint
+        run: |
+          helm lint deploy/helm/grafana-operator/
       - name: Run helm-docs
         run: |
           make helm/docs
