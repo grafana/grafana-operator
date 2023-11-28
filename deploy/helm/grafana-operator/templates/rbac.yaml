@@ -11,8 +11,6 @@ kind: {{ if not $namespaceScoped }}Cluster{{ end }}Role
 metadata:
   {{- if $namespaceScoped }}
   namespace: {{ $operatorNamespace }}
-  {{- else }}
-  namespace: {{ . }}
   {{- end }}
   name: grafana-operator-permissions
   labels:
@@ -237,8 +235,6 @@ metadata:
   name: grafana-operator-permissions
   {{- if $namespaceScoped }}
   namespace: {{ $operatorNamespace }}
-  {{- else }}
-  namespace: {{ . }}
   {{- end }}
   labels:
     {{- include "grafana-operator.labels" $ | nindent 4 }}
