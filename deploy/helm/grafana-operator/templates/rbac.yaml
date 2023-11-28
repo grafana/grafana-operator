@@ -9,7 +9,11 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: {{ if not $namespaceScoped }}Cluster{{ end }}Role
 metadata:
+  {{- if $namespaceScoped }}
+  namespace: {{ $operatorNamespace }}
+  {{- else }}
   namespace: {{ . }}
+  {{- end }}
   name: grafana-operator-permissions
   labels:
     {{- include "grafana-operator.labels" $ | nindent 4 }}
@@ -231,7 +235,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: {{ if not $namespaceScoped }}Cluster{{ end }}RoleBinding
 metadata:
   name: grafana-operator-permissions
+  {{- if $namespaceScoped }}
+  namespace: {{ $operatorNamespace }}
+  {{- else }}
   namespace: {{ . }}
+  {{- end }}
   labels:
     {{- include "grafana-operator.labels" $ | nindent 4 }}
     {{- with $.Values.additionalLabels }}
