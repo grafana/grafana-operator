@@ -136,7 +136,7 @@ func getVolumeMounts(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.VolumeMou
 func setGrafanaImage() string {
 	grafanaImg := os.Getenv("RELATED_IMAGE_GRAFANA")
 	if grafanaImg == "" {
-		grafanaImg = fmt.Sprintf("%s@%s", config2.GrafanaImage, config2.GrafanaVersion)
+		grafanaImg = fmt.Sprintf("%s:%s", config2.GrafanaImage, config2.GrafanaVersion)
 	}
 	return grafanaImg
 }
