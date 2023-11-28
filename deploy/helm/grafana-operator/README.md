@@ -14,7 +14,7 @@ linkTitle: "Helm installation"
 This is a OCI helm chart, helm started support OCI in version 3.8.0.
 
 ```shell
-helm upgrade -i grafana-operator oci://ghcr.io/grafana-operator/helm-charts/grafana-operator --version v5.5.1
+helm upgrade -i grafana-operator oci://ghcr.io/grafana-operator/helm-charts/grafana-operator --version v5.5.2
 ```
 
 Sadly helm OCI charts currently don't support searching for available versions of a helm [oci registry](https://github.com/helm/helm/issues/11000).
