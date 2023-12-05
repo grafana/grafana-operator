@@ -9703,6 +9703,12 @@ spec:
                         type: string
                     type: object
                 type: object
+              preferences:
+                description: Preferences holds the Grafana Preferences settings
+                properties:
+                  homeDashboardUid:
+                    type: string
+                type: object
               route:
                 description: Route sets how the ingress object should look like with
                   your grafana instance, this only works in Openshift.

@@ -12,6 +12,9 @@ watchNamespaces: ""
 
 # -- Additional environment variables
 env: []
+  # -- grafana image, e.g. docker.io/grafana/grafana:9.1.6, overwrites the default grafana image defined in the operator
+  # - name: RELATED_IMAGE_GRAFANA
+  #   value: "docker.io/grafana/grafana:9.1.6"
   # - name: MY_VAR
   #   value: "myvalue"
 

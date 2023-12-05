@@ -12,7 +12,7 @@ namePrefix: grafana-operator-
 #commonLabels:
 #  someName: someValue
 
-bases:
+resources:
 - ../crd
 - ../rbac
 - ../manager
@@ -23,10 +23,8 @@ bases:
 #- ../certmanager
 # [PROMETHEUS] To enable prometheus monitor, uncomment all sections with 'PROMETHEUS'.
 #- ../prometheus
-
-resources:
 # Add metrics service
-  - metrics_service.yaml
+- metrics_service.yaml
 
 patchesStrategicMerge:
 # Protect the /metrics endpoint by putting it behind auth.

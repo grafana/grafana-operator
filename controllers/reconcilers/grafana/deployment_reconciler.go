@@ -3,6 +3,7 @@ package grafana
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
 	config2 "github.com/grafana-operator/grafana-operator/v5/controllers/config"
@@ -132,10 +133,18 @@ func getVolumeMounts(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.VolumeMou
 	return mounts
 }
 
+func getGrafanaImage() string {
+	grafanaImg := os.Getenv("RELATED_IMAGE_GRAFANA")
+	if grafanaImg == "" {
+		grafanaImg = fmt.Sprintf("%s:%s", config2.GrafanaImage, config2.GrafanaVersion)
+	}
+	return grafanaImg
+}
+
 func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.OperatorReconcileVars, openshiftPlatform bool) []v1.Container {
 	var containers []v1.Container
 
-	image := fmt.Sprintf("%s:%s", config2.GrafanaImage, config2.GrafanaVersion)
+	image := getGrafanaImage()
 	plugins := model.GetPluginsConfigMap(cr, scheme)
 
 	// env var to restart containers if plugins change
