@@ -1,5 +1,11 @@
 # Grafana Operator
 
+[![Grafana](https://img.shields.io/badge/grafana-%23F46800.svg?&logo=grafana&logoColor=white)](https://grafana.com)
+[![Grafana Operator](https://img.shields.io/badge/Grafana%20Operator-orange)](https://grafana.github.io/grafana-operator/)
+[![GitHub tag](https://img.shields.io/github/tag/grafana/grafana-operator.svg)](https://github.com/grafana/grafana-operator/tags)
+[![GitHub Last Commit](https://img.shields.io/github/last-commit/grafana/grafana-operator)](https://github.com/grafana/grafana-operator/tags)
+[![GitHub Contributors](https://img.shields.io/github/contributors/grafana/grafana-operator)](https://github.com/grafana/grafana-operator/tags)
+
 The Grafana Operator is a Kubernetes operator built to help you manage your Grafana instances in and outside of
 Kubernetes.
 
@@ -8,17 +14,6 @@ easy and scalable way.
 
 Find out more on our official website:
 ***[grafana.github.io/grafana-operator](https://grafana-operator.github.io/grafana-operator/).***
-
-## Meet our users!
-
-<a href="https://www.redhat.com"><img src= "./media/users/redhat.png" align='middle' width=100 height=100 ></a>
-<a href="https://www.operate-first.cloud/"><img src= "./media/users/opf-logo.png"  align='middle' height=100 ></a>
-<a href="https://www.continental.com/"><img src= "./media/users/continental.png"  align='middle' height=100 ></a>
-<a href="https://www.handelsbanken.se/en/"><img src= "./media/users/handelsbanken.svg" align='middle'  width=100 height=100 >
-<a href="./media/users/xenit.png"><img src= "./media/users/xenit.png"  align='middle' width=300 height=100 ></a>
-<a href="https://torqata.com"><img src= "./media/users/torqata.jpg"  align='middle' width=200 height=50 ></a>
-<a href="https://www.ifood.com.br"><img src="./media/users/ifood.svg" align='middle' width=100 height=100></a>
-<a href="https://enliven.systems"><img src= "./media/users/enliven-systems.png" align='middle'  width=100 height=100 ></a>
 
 ***Send a Pull Request, and show off your company to the world!***
 
