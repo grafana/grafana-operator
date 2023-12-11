@@ -76,7 +76,7 @@ We are hosting our Helm chart in an OCI repo so it's a bit different from what y
 notice the `oci://` part of the URL.
 
 ```shell
-helm upgrade -i grafana-operator oci://ghcr.io/grafana-operator/helm-charts/grafana-operator --version {{<param version>}} -n grafana-operator
+helm upgrade -i grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-operator --version {{<param version>}} -n grafana-operator
 ```
 
 ## Use operator

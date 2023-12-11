@@ -28,8 +28,8 @@ GRAFANA_VERSION := $(shell grep 'GrafanaVersion' controllers/config/operator_con
 
 # Image URL to use all building/pushing image targets
 REGISTRY ?= ghcr.io
-REPO ?= grafana-operator
-IMG ?= $(REGISTRY)/$(REPO)/grafana-operator:v$(VERSION)
+ORG ?= grafana
+IMG ?= $(REGISTRY)/$(ORG)/grafana-operator:v$(VERSION)
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.25.0
 
@@ -95,7 +95,7 @@ endif
 manifests: yq controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." crd:maxDescLen=0,generateEmbeddedObjectMeta=false output:crd:artifacts:config=config/crd/bases
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." crd:maxDescLen=0,generateEmbeddedObjectMeta=false output:crd:artifacts:config=deploy/helm/grafana-operator/crds
-	yq -i '(select(.kind == "Deployment") | .spec.template.spec.containers[0].env[] |= select(.name == "RELATED_IMAGE_GRAFANA").value = "$(GRAFANA_IMAGE):$(GRAFANA_VERSION)"), (select(.kind == "Namespace"))' config/manager/manager.yaml
+	yq -i '(select(.kind == "Deployment") | .spec.template.spec.containers[0].env[] | select (.name == "RELATED_IMAGE_GRAFANA")).value="$(GRAFANA_IMAGE):$(GRAFANA_VERSION)"' config/manager/manager.yaml
 
 .PHONY: kustomize-crd
 kustomize-crd: kustomize manifests
@@ -217,6 +217,7 @@ endif
 # To re-generate a bundle for other specific channels without changing the standard setup, you can:
 # - use the CHANNELS as arg of the bundle target (e.g make bundle CHANNELS=candidate,fast,stable)
 # - use environment variables to overwrite this value (e.g export CHANNELS="candidate,fast,stable")
+CHANNELS=v5
 ifneq ($(origin CHANNELS), undefined)
 BUNDLE_CHANNELS := --channels=$(CHANNELS)
 endif
@@ -226,6 +227,7 @@ endif
 # To re-generate a bundle for any other default channel without changing the default setup, you can:
 # - use the DEFAULT_CHANNEL as arg of the bundle target (e.g make bundle DEFAULT_CHANNEL=stable)
 # - use environment variables to overwrite this value (e.g export DEFAULT_CHANNEL="stable")
+DEFAULT_CHANNEL="v5"
 ifneq ($(origin DEFAULT_CHANNEL), undefined)
 BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
 endif
@@ -300,7 +302,7 @@ else
 KO=$(shell which ko)
 endif
 
-export KO_DOCKER_REPO ?= ko.local/grafana-operator/grafana-operator
+export KO_DOCKER_REPO ?= ko.local/grafana/grafana-operator
 export KIND_CLUSTER_NAME ?= kind-grafana
 export KUBECONFIG        ?= ${HOME}/.kube/kind-grafana-operator
 
@@ -332,7 +334,7 @@ start-kind:
 helm/docs: helm-docs
 	$(HELM_DOCS)
 
-BUNDLE_IMG ?= $(REGISTRY)/$(REPO)/grafana-operator-bundle:v$(VERSION)
+BUNDLE_IMG ?= $(REGISTRY)/$(ORG)/grafana-operator-bundle:v$(VERSION)
 
 .PHONY: bundle-build
 bundle-build: ## Build the bundle image.
