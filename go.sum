@@ -67,8 +67,8 @@ github.com/google/gofuzz v1.2.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/
 github.com/google/pprof v0.0.0-20210720184732-4bb14d4b1be1 h1:K6RDEckDVWvDI9JAJYCmNdQXq6neHJOYx3V6jnqNEec=
 github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=
 github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/grafana/grafana-api-golang-client v0.26.0 h1:Eu2YsfUezYngy8ifvmLybgluIcn/2IS9u1xkzuYstEM=
-github.com/grafana/grafana-api-golang-client v0.26.0/go.mod h1:uNLZEmgKtTjHBtCQMwNn3qsx2mpMb8zU+7T4Xv3NR9Y=
+github.com/grafana/grafana-api-golang-client v0.27.0 h1:zIwMXcbCB4n588i3O2N6HfNcQogCNTd/vPkEXTr7zX8=
+github.com/grafana/grafana-api-golang-client v0.27.0/go.mod h1:uNLZEmgKtTjHBtCQMwNn3qsx2mpMb8zU+7T4Xv3NR9Y=
 github.com/hashicorp/go-cleanhttp v0.5.2 h1:035FKYIWjmULyFRBKPs8TBQoi0x6d9G4xc9neXJWAZQ=
 github.com/hashicorp/go-cleanhttp v0.5.2/go.mod h1:kO/YDlP8L1346E6Sodw+PrpBSV4/SoxCXGY6BqNFT48=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
