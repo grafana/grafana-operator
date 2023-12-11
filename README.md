@@ -7,7 +7,7 @@ We make it possible for you to manage and share your grafana resources through c
 easy and scalable way.
 
 Find out more on our official website:
-***[grafana-operator.github.io/grafana-operator](https://grafana-operator.github.io/grafana-operator/).***
+***[grafana.github.io/grafana-operator](https://grafana.github.io/grafana-operator/).***
 
 ## Meet our users!
 
