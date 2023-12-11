@@ -21,7 +21,7 @@ After that you need to run `make helm/docs` which will generate the changes to b
 ## OLM
 
 After version v5.4.1, we no longer update the image version in this repo, but only upstream in the OLM repos.
-This to support disconnected mode, for more information see [PR 1234](https://github.com/grafana-operator/grafana-operator/pull/1234).
+This to support disconnected mode, for more information see [PR 1234](https://github.com/grafana/grafana-operator/pull/1234).
 
 After cutting a new release according to the instructions above, run the below instructions in this repo and create a PR to the different upstream repos, there is no need to create a PR to this repo.
 

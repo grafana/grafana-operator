@@ -7,13 +7,13 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/grafana-operator/grafana-operator/v5/controllers/metrics"
+	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 	v1 "k8s.io/api/core/v1"
 
-	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
-	"github.com/grafana-operator/grafana-operator/v5/controllers/config"
-	"github.com/grafana-operator/grafana-operator/v5/controllers/model"
 	grapi "github.com/grafana/grafana-api-golang-client"
+	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/controllers/config"
+	"github.com/grafana/grafana-operator/v5/controllers/model"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

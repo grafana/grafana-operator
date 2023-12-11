@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
-	"github.com/grafana-operator/grafana-operator/v5/controllers/model"
-	"github.com/grafana-operator/grafana-operator/v5/controllers/reconcilers"
+	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/controllers/model"
+	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
 	routev1 "github.com/openshift/api/route/v1"
 	v1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/runtime"

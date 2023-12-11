@@ -106,4 +106,4 @@ Note: Adding `examples` on using accessing external `url`, `grafana_api_key` wou
 
 ## Related issues
 
-- [Issue 402](https://github.com/grafana-operator/grafana-operator/issues/402)
+- [Issue 402](https://github.com/grafana/grafana-operator/issues/402)

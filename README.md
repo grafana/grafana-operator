@@ -7,7 +7,7 @@ We make it possible for you to manage and share your grafana resources through c
 easy and scalable way.
 
 Find out more on our official website:
-***[grafana-operator.github.io/grafana-operator](https://grafana-operator.github.io/grafana-operator/).***
+***[grafana.github.io/grafana-operator](https://grafana-operator.github.io/grafana-operator/).***
 
 ## Meet our users!
 
@@ -44,7 +44,7 @@ and our current high-profile users aren't enough to convince you, here's some mo
 ## Get In Touch!
 
 The best way to reach us is to file an issue on
-***[Issues Tab](https://github.com/grafana-operator/grafana-operator/issues)***
+***[Issues Tab](https://github.com/grafana/grafana-operator/issues)***
 or click on the ***[Slack Icon](https://kubernetes.slack.com/archives/C019A1KTYKC)*** below
 
 We're happy to help out in all grafana-operator issues, and if you're not sure, we'll point you in the right direction!
@@ -67,11 +67,11 @@ For more information on how to contribute to the operator look at [CONTRIBUTING.
 
 ## Version Support and Development Mindset
 
-V4 is available on the [v4 branch](https://github.com/grafana-operator/grafana-operator/tree/v4), however, this version
+V4 is available on the [v4 branch](https://github.com/grafana/grafana-operator/tree/v4), however, this version
 will only receive bug fixes and security updates.
 
 V5 is the current, actively developed and maintained version of the operator, which you can find on the
-***[Master Branch](https://github.com/grafana-operator/grafana-operator/tree/master)***.
+***[Master Branch](https://github.com/grafana/grafana-operator/tree/master)***.
 
 A more in-depth overview of v5 is available in the [intro blog](docs/blog/v5-intro.md)
 

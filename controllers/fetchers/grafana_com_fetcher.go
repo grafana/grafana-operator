@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
-	client2 "github.com/grafana-operator/grafana-operator/v5/controllers/client"
-	"github.com/grafana-operator/grafana-operator/v5/controllers/metrics"
+	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
+	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 )
 
 const grafanaComDashboardApiUrlRoot = "https://grafana.com/api/dashboards"

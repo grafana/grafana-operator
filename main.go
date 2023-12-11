@@ -38,9 +38,9 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
-	grafanav1beta1 "github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
-	"github.com/grafana-operator/grafana-operator/v5/controllers"
-	"github.com/grafana-operator/grafana-operator/v5/controllers/autodetect"
+	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/controllers"
+	"github.com/grafana/grafana-operator/v5/controllers/autodetect"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"

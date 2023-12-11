@@ -97,7 +97,7 @@ metadata:
     createdAt: "2023-11-06T20:49:26Z"
     operators.operatorframework.io/builder: operator-sdk-v1.32.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
-    repository: https://github.com/grafana-operator/grafana-operator
+    repository: https://github.com/grafana/grafana-operator
     support: Community
   name: grafana-operator.v5.4.2
   namespace: placeholder
