@@ -22,9 +22,9 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/grafana-operator/grafana-operator/v5/controllers/metrics"
-	"github.com/grafana-operator/grafana-operator/v5/controllers/reconcilers"
-	"github.com/grafana-operator/grafana-operator/v5/controllers/reconcilers/grafana"
+	"github.com/grafana/grafana-operator/v5/controllers/metrics"
+	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
+	"github.com/grafana/grafana-operator/v5/controllers/reconcilers/grafana"
 	v1 "k8s.io/api/apps/v1"
 	v12 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -35,7 +35,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	grafanav1beta1 "github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
+	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 )
 
 const (

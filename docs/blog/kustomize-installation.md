@@ -45,7 +45,7 @@ Assuming that you follow the instructions of this blog, your Flux fleet-infra re
 │       └── grafana.yaml
 ```
 
-You can find all the files available to copy in the grafana-operator [repository](https://github.com/grafana-operator/grafana-operator/tree/master/docs/blog/flux-gitops),
+You can find all the files available to copy in the grafana-operator [repository](https://github.com/grafana/grafana-operator/tree/master/docs/blog/flux-gitops),
 or you can just copy paste them from the blog.
 
 ## Prerequisite

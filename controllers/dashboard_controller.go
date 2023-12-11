@@ -31,14 +31,14 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/grafana-operator/grafana-operator/v5/embeds"
+	"github.com/grafana/grafana-operator/v5/embeds"
 
 	"github.com/go-logr/logr"
-	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
-	client2 "github.com/grafana-operator/grafana-operator/v5/controllers/client"
-	"github.com/grafana-operator/grafana-operator/v5/controllers/fetchers"
-	"github.com/grafana-operator/grafana-operator/v5/controllers/metrics"
 	grapi "github.com/grafana/grafana-api-golang-client"
+	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
+	"github.com/grafana/grafana-operator/v5/controllers/fetchers"
+	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/discovery"
@@ -541,7 +541,7 @@ func (r *GrafanaDashboardReconciler) getDashboardModel(cr *v1beta1.GrafanaDashbo
 	}
 
 	// NOTE: id should never be hardcoded in a dashboard, otherwise grafana will try to update a dashboard by id instead of uid.
-	//       And, in case the id is non-existent, grafana will respond with 404. https://github.com/grafana-operator/grafana-operator/issues/1108
+	//       And, in case the id is non-existent, grafana will respond with 404. https://github.com/grafana/grafana-operator/issues/1108
 	dashboardModel["id"] = nil
 
 	uid, _ := dashboardModel["uid"].(string) //nolint:errcheck

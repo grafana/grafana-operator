@@ -17,10 +17,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana-operator/grafana-operator/v5/controllers/config"
+	"github.com/grafana/grafana-operator/v5/controllers/config"
 
 	"github.com/google/go-jsonnet"
-	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 )
 
 // EmbedFSImporter "imports" data from an in-memory embedFS.

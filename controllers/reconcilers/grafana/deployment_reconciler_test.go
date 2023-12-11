@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	config2 "github.com/grafana-operator/grafana-operator/v5/controllers/config"
+	config2 "github.com/grafana/grafana-operator/v5/controllers/config"
 
 	"github.com/stretchr/testify/assert"
 )

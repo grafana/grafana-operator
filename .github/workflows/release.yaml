@@ -49,7 +49,7 @@ jobs:
           make kustomize
           # Update image to match the new image and tag
           cd deploy/kustomize/base
-          kustomize edit set image ghcr.io/grafana-operator/grafana-operator=${{ env.GHCR_REPO }}:${{ github.ref_name }}
+          kustomize edit set image ghcr.io/${{ github.repository }}=${{ env.GHCR_REPO }}:${{ github.ref_name }}
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -98,11 +98,11 @@ jobs:
 
       - name: Build and push
         run: |
-          declare -a arr=("quay.io" "ghcr.io" )
+          declare -a arr=("quay.io/grafana-operator/grafana-operator" "ghcr.io/${{ github.repository }}" )
           
           for i in "${arr[@]}"
           do
-            export KO_DOCKER_REPO=${i}/grafana-operator/grafana-operator
+            export KO_DOCKER_REPO=${i}
             ko build --sbom=none --bare --platform linux/arm64,linux/arm/v7,linux/amd64 -t ${{ github.ref_name }} \
             --image-label org.opencontainers.image.title=grafana-operator \
             --image-label org.opencontainers.image.description="An operator for Grafana that installs and manages Grafana instances & Dashboards & Datasources through Kubernetes/OpenShift CRs" \

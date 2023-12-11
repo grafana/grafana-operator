@@ -66,7 +66,7 @@ version = "v5.5.2"
 url_latest_version = "https://example.com"
 
 # Repository configuration (URLs for in-page links to opening issues and suggesting changes)
-github_repo = "https://github.com/grafana-operator/grafana-operator"
+github_repo = "https://github.com/grafana/grafana-operator"
 
 # Specify a value here if your content directory is not in your repo's root directory
 github_subdir = "hugo"

@@ -3,7 +3,7 @@ package reconcilers
 import (
 	"context"
 
-	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 

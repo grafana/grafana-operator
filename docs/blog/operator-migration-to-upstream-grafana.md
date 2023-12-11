@@ -64,7 +64,7 @@ operator (i.e ownership, repository addresses, maintenance contacts etc)
 In general, house-keeping stuff that doesn't really affect users.
 
 The primary change will be the repo address on Github, we'll migrate
-the https://github.com/grafana-operator/grafana-operator to https://github.com/grafana.
+the https://github.com/grafana/grafana-operator to https://github.com/grafana.
 Github automatically redirects migrated addresses, so there's nothing to be concerned about on that end.
 Future OCI URI's will reflect this change, while existing artifacts will still have the same URI, they will be copied
 over to our new home with the caveat, that digests will change.

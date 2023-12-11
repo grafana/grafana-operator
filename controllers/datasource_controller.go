@@ -27,11 +27,11 @@ import (
 	v1 "k8s.io/api/core/v1"
 
 	simplejson "github.com/bitly/go-simplejson"
-	"github.com/grafana-operator/grafana-operator/v5/controllers/metrics"
+	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 
 	"github.com/go-logr/logr"
-	client2 "github.com/grafana-operator/grafana-operator/v5/controllers/client"
 	gapi "github.com/grafana/grafana-api-golang-client"
+	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -39,7 +39,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	v1beta1 "github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
+	v1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 )
 
 // GrafanaDatasourceReconciler reconciles a GrafanaDatasource object

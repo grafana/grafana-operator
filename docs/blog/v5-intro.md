@@ -98,7 +98,7 @@ This is probably the part of the blog that you are most excited about, it goes t
 
 ### Multi grafana instances support
 
-This is one of our most requested and [oldest issues](https://github.com/grafana-operator/grafana-operator/issues/174) in the grafana-operator and we have finally been able to provide it.
+This is one of our most requested and [oldest issues](https://github.com/grafana/grafana-operator/issues/174) in the grafana-operator and we have finally been able to provide it.
 
 In v5 you can now run multiple instances of grafana in the same namespace and externally.
 
@@ -182,7 +182,7 @@ In v5 you will be able to look at your grafana dashboard CR and see that it got 
 
 ### No more plugin sidecar
 
-As you might know we have had a python container that have been an [sidecar](https://github.com/grafana-operator/grafana_plugins_init) to the operator that have been in charge of installing the plugins to grafana.
+As you might know we have had a python container that have been an [sidecar](https://github.com/grafana/grafana_plugins_init) to the operator that have been in charge of installing the plugins to grafana.
 The sidecar have been badly maintained and to be honest it's just not needed. Instead we use an environment variable to install plugins during startup.
 So when version 4 is out of support we will archive the grafana plugins init repo.
 
@@ -194,7 +194,7 @@ We still see a big place for the [community Helm chart](https://bitnami.com/stac
 
 ### Namespace mode
 
-Another issue that we have gotten lots of feedback on is [Excessive rbac access](https://github.com/grafana-operator/grafana-operator/issues/604)
+Another issue that we have gotten lots of feedback on is [Excessive rbac access](https://github.com/grafana/grafana-operator/issues/604)
 This wasn't something that we could easily fix in v4 but in v5 we have really tried to accommodate this by introducing namespace mode.
 
 In namespace mode you can run the operator to only look for grafana resources in the same namespace that you are in or you can define it to watch a number of specific namespaces. By default it will use cluster wide access.
@@ -207,7 +207,7 @@ Sadly for our Openshift users this won't be possible due to the limitations of O
 So there is still lots to do before version 5 will be released.
 
 There are still a number of features that is missing and we have tried to create issues around this.
-Please have a look in our v5 [milestone](https://github.com/grafana-operator/grafana-operator/milestone/3) or the v5 [labels](https://github.com/grafana-operator/grafana-operator/labels/v5) see all open issues.
+Please have a look in our v5 [milestone](https://github.com/grafana/grafana-operator/milestone/3) or the v5 [labels](https://github.com/grafana/grafana-operator/labels/v5) see all open issues.
 
 But we need **your** help, first of all try out version 5.
 

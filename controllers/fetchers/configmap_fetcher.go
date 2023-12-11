@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )

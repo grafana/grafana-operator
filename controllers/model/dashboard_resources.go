@@ -3,7 +3,7 @@ package model
 import (
 	"fmt"
 
-	grafanav1beta1 "github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
+	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
