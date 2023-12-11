@@ -130,7 +130,11 @@ func generateRandomString(length int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return base64.URLEncoding.EncodeToString(randomBytes)[:length], nil
+
+	s := base64.URLEncoding.EncodeToString(randomBytes)[:length]
+	s = strings.ReplaceAll(s, "-", "a")
+
+	return s, nil
 }
 
 func getJsonProjectBuildRoundName(dashboardName string) (string, error) {
