@@ -63,6 +63,7 @@ spec:
   maturity: stable
   minKubeVersion: 1.23.0
   provider:
-    name: Community
+    name: Grafana Labs
+    url: https://grafana.com
   replaces: grafana-operator.v5.5.2
   version: 0.0.0
