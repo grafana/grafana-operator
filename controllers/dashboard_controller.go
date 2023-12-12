@@ -750,14 +750,7 @@ func (r *GrafanaDashboardReconciler) UpdateHomeDashboard(ctx context.Context, gr
 		return err
 	}
 
-	p, err := grafanaClient.OrgPreferences()
-	if err != nil {
-		r.Log.Error(err, "unable to fetch org preferences", "namespace", dashboard.Namespace, "name", dashboard.Name)
-		return err
-	}
-
-	p.HomeDashboardUID = uid
-	_, err = grafanaClient.UpdateAllOrgPreferences(p)
+	_, err = grafanaClient.UpdateOrgPreferences(grapi.Preferences{HomeDashboardUID: uid})
 	if err != nil {
 		r.Log.Error(err, "unable to update the home dashboard", "namespace", dashboard.Namespace, "name", dashboard.Name)
 		return err
