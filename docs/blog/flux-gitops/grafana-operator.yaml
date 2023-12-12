@@ -5,7 +5,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 10m
-  url: oci://ghcr.io/grafana-operator/kustomize/grafana-operator
+  url: oci://ghcr.io/grafana/kustomize/grafana-operator
   ref:
     tag: v5.0.0-rc3
 ---
@@ -18,7 +18,7 @@ spec:
   interval: 10m
   targetNamespace: grafana
   images:
-    - name: ghcr.io/grafana-operator/grafana-operator
+    - name: ghcr.io/grafana/grafana-operator
       newTag: v5.0.0-rc3
   prune: true
   sourceRef:

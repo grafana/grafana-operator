@@ -20,7 +20,7 @@ env: []
 
 image:
   # -- grafana operator image repository
-  repository: ghcr.io/grafana-operator/grafana-operator
+  repository: ghcr.io/grafana/grafana-operator
   # -- The image pull policy to use in grafana operator container
   pullPolicy: IfNotPresent
   # -- Overrides the image tag whose default is the chart appVersion.
