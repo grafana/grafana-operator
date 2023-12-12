@@ -60,7 +60,7 @@ For more information on how to contribute to the operator look at [CONTRIBUTING.
 
 ## Version Support and Development Mindset
 
-> [!CAUTION]  
+> [!CAUTION]
 > v4 will stop receiving bug fixes and security updates as of the 22nd of December 2023.
 > We recommend you migrate to v5 if you haven't yet! Please follow our [v4 -> v5 Migration Guide](https://grafana.github.io/grafana-operator/blog/2023/05/27/v4-to-v5-migration/) to mitigate any potential future risks.
 
