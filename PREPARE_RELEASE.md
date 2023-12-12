@@ -34,7 +34,7 @@ There is a lot of information on what is needed to manage OLM [compatible operat
   - `createdAt`: Make sure that createdAt matches when the image was published. If not you will have to change it manually when creating PR:s to OLM.
     ```
     # This is how the time syntax should look.
-    $ docker inspect ghcr.io/grafana-operator/grafana-operator:v5.0.0 |jq '.[0].Created'
+    $ docker inspect ghcr.io/grafana/grafana-operator:v5.0.0 |jq '.[0].Created'
     "2023-11-22T10:34:12.173861869Z"
     # 2023-11-22T10:34:12Z is enough
     ```
