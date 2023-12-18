@@ -432,6 +432,7 @@ func (r *GrafanaDatasourceReconciler) getDatasourceContent(ctx context.Context, 
 	}
 
 	for _, ref := range cr.Spec.ValuesFrom {
+		ref := ref
 		val, key, err := r.getReferencedValue(ctx, cr, &ref.ValueFrom)
 		if err != nil {
 			return nil, "", err
