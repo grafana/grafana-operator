@@ -15,8 +15,6 @@ easy and scalable way.
 Find out more on our official website:
 ***[grafana.github.io/grafana-operator](https://grafana-operator.github.io/grafana-operator/).***
 
-***Send a Pull Request, and show off your company to the world!***
-
 ## Some Convincing Benefits
 
 Why go with the Grafana-operator over a standard standalone Grafana deployment for your monitoring stack?
@@ -62,8 +60,10 @@ For more information on how to contribute to the operator look at [CONTRIBUTING.
 
 ## Version Support and Development Mindset
 
-V4 is available on the [v4 branch](https://github.com/grafana/grafana-operator/tree/v4), however, this version
-will only receive bug fixes and security updates.
+> [!CAUTION]
+> v4 will stop receiving bug fixes and security updates as of the 22nd of December 2023.
+> We recommend you migrate to v5 if you haven't yet! Please follow our [v4 -> v5 Migration Guide](https://grafana.github.io/grafana-operator/blog/2023/05/27/v4-to-v5-migration/) to mitigate any potential future risks.
+
 
 V5 is the current, actively developed and maintained version of the operator, which you can find on the
 ***[Master Branch](https://github.com/grafana/grafana-operator/tree/master)***.

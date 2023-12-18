@@ -5,10 +5,10 @@ metadata:
     alm-examples: '[]'
     capabilities: Basic Install
     categories: Monitoring
-    containerImage: ghcr.io/grafana-operator/grafana-operator:v5.5.0
-    createdAt: "2023-09-12T08:09:00.92Z"
+    containerImage: ghcr.io/grafana/grafana-operator:v5.6.0
+    createdAt: "2023-12-11T09:21:22Z"
     repository: https://github.com/grafana/grafana-operator
-    support: Community
+    support: Grafana Labs
   name: grafana-operator.v0.0.0
   namespace: placeholder
 spec:
@@ -59,10 +59,11 @@ spec:
   - Observability
   links:
   - name: Grafana Operator
-    url: https://grafana-operator.github.io/grafana-operator
-  maturity: alpha
+    url: https://grafana.github.io/grafana-operator
+  maturity: stable
   minKubeVersion: 1.23.0
   provider:
-    name: Community
-  replaces: grafana-operator.v5.4.1
+    name: Grafana Labs
+    url: https://grafana.com
+  replaces: grafana-operator.v5.5.2
   version: 0.0.0

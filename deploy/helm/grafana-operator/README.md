@@ -14,7 +14,7 @@ linkTitle: "Helm installation"
 This is a OCI helm chart, helm started support OCI in version 3.8.0.
 
 ```shell
-helm upgrade -i grafana-operator oci://ghcr.io/grafana-operator/helm-charts/grafana-operator --version v5.6.0
+helm upgrade -i grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-operator --version v5.6.0
 ```
 
 Sadly helm OCI charts currently don't support searching for available versions of a helm [oci registry](https://github.com/helm/helm/issues/11000).
@@ -40,7 +40,7 @@ It's easier to just manage this configuration outside of the operator.
 | env | list | `[]` | Additional environment variables |
 | fullnameOverride | string | `""` | Overrides the fully qualified app name. |
 | image.pullPolicy | string | `"IfNotPresent"` | The image pull policy to use in grafana operator container |
-| image.repository | string | `"ghcr.io/grafana-operator/grafana-operator"` | grafana operator image repository |
+| image.repository | string | `"ghcr.io/grafana/grafana-operator"` | grafana operator image repository |
 | image.tag | string | `""` | Overrides the image tag whose default is the chart appVersion. |
 | imagePullSecrets | list | `[]` | image pull secrets |
 | leaderElect | bool | `false` | If you want to run multiple replicas of the grafana-operator, this is not recommended. |

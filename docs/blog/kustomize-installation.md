@@ -131,7 +131,7 @@ If you want to install the grafana-operator without using GitOps, you can also d
 For example, you can run the following Flux command to download the artifact and unpack it. Then you can run a normal kubectl apply command.
 
 ```shell
-flux pull artifact oci://ghcr.io/grafana-operator/kustomize/grafana-operator:{{<param version>}} -output ./grafana-opreator
+flux pull artifact oci://ghcr.io/grafana/kustomize/grafana-operator:{{<param version>}} -output ./grafana-opreator
 ```
 
 But of course we recommend that you manage your grafana-operator installation through your GitOps solution, no matter if it's Flux or some other solution.

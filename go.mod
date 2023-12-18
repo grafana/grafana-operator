@@ -1,13 +1,15 @@
 module github.com/grafana/grafana-operator/v5
 
-go 1.20
+go 1.21
+
+toolchain go1.21.3
 
 require (
 	github.com/bitly/go-simplejson v0.5.1
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/go-logr/logr v1.3.0
 	github.com/google/go-jsonnet v0.20.0
-	github.com/grafana/grafana-api-golang-client v0.26.0
+	github.com/grafana/grafana-api-golang-client v0.27.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.30.0
 	github.com/openshift/api v3.9.0+incompatible

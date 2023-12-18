@@ -67,7 +67,7 @@ jobs:
 
       - name: Build and load (current arch)
         env:
-          KO_DOCKER_REPO: ko.local/grafana-operator/grafana-operator
+          KO_DOCKER_REPO: ko.local/grafana/grafana-operator
         run: |
           ko build --sbom=none --bare
           kind load docker-image "$KO_DOCKER_REPO"
