@@ -88,14 +88,14 @@ metadata:
                 "dashboards": "grafana-a"
               }
             },
-            "json": "{\n\n  \"uid\": \"nErXDvCkzz\",\n  \"title\": \"Example Folder\"\n}"
+            "title": "Example Folder"
           }
         }
       ]
     capabilities: Basic Install
     categories: Monitoring
     containerImage: ghcr.io/grafana/grafana-operator@sha256:97561cef949b58f55ec67d133c02ac205e2ec3fb77388aeb868dacfcebad0752
-    createdAt: "2023-12-12T08:04:09Z"
+    createdAt: "2023-12-20T15:40:51Z"
     operators.operatorframework.io/builder: operator-sdk-v1.32.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/grafana/grafana-operator
