@@ -6,9 +6,4 @@ spec:
   instanceSelector:
     matchLabels:
       dashboards: "grafana-a"
-  json: >-
-    {
-      "uid": "nErXDvCkzz",
-      "title": "Example Folder"
-    }
-
+  title: "Example Folder"
