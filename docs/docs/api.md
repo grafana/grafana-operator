@@ -2897,7 +2897,21 @@ Required. A pod affinity term, associated with the corresponding weight.
         <td><b><a href="#grafanaspecdeploymentspectemplatespecaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector">labelSelector</a></b></td>
         <td>object</td>
         <td>
-          A label query over a set of resources, in this case pods.<br/>
+          A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mismatchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2923,7 +2937,7 @@ Required. A pod affinity term, associated with the corresponding weight.
 
 
 
-A label query over a set of resources, in this case pods.
+A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.
 
 <table>
     <thead>
@@ -3095,7 +3109,21 @@ Defines a set of pods (namely those matching the labelSelector relative to the g
         <td><b><a href="#grafanaspecdeploymentspectemplatespecaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector">labelSelector</a></b></td>
         <td>object</td>
         <td>
-          A label query over a set of resources, in this case pods.<br/>
+          A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mismatchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3121,7 +3149,7 @@ Defines a set of pods (namely those matching the labelSelector relative to the g
 
 
 
-A label query over a set of resources, in this case pods.
+A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.
 
 <table>
     <thead>
@@ -3363,7 +3391,21 @@ Required. A pod affinity term, associated with the corresponding weight.
         <td><b><a href="#grafanaspecdeploymentspectemplatespecaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector">labelSelector</a></b></td>
         <td>object</td>
         <td>
-          A label query over a set of resources, in this case pods.<br/>
+          A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mismatchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3389,7 +3431,7 @@ Required. A pod affinity term, associated with the corresponding weight.
 
 
 
-A label query over a set of resources, in this case pods.
+A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.
 
 <table>
     <thead>
@@ -3561,7 +3603,21 @@ Defines a set of pods (namely those matching the labelSelector relative to the g
         <td><b><a href="#grafanaspecdeploymentspectemplatespecaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector">labelSelector</a></b></td>
         <td>object</td>
         <td>
-          A label query over a set of resources, in this case pods.<br/>
+          A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mismatchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3587,7 +3643,7 @@ Defines a set of pods (namely those matching the labelSelector relative to the g
 
 
 
-A label query over a set of resources, in this case pods.
+A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.
 
 <table>
     <thead>
@@ -4340,6 +4396,13 @@ PostStart is called immediately after a container is created. If the handler fai
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanaspecdeploymentspectemplatespeccontainersindexlifecyclepoststartsleep">sleep</a></b></td>
+        <td>object</td>
+        <td>
+          Sleep represents the duration that the container should sleep before being terminated.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecdeploymentspectemplatespeccontainersindexlifecyclepoststarttcpsocket">tcpSocket</a></b></td>
         <td>object</td>
         <td>
@@ -4466,6 +4529,35 @@ HTTPHeader describes a custom header to be used in HTTP probes
 </table>
 
 
+### Grafana.spec.deployment.spec.template.spec.containers[index].lifecycle.postStart.sleep
+<sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespeccontainersindexlifecyclepoststart)</sup></sup>
+
+
+
+Sleep represents the duration that the container should sleep before being terminated.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>seconds</b></td>
+        <td>integer</td>
+        <td>
+          Seconds is the number of seconds to sleep.<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
 ### Grafana.spec.deployment.spec.template.spec.containers[index].lifecycle.postStart.tcpSocket
 <sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespeccontainersindexlifecyclepoststart)</sup></sup>
 
@@ -4528,6 +4620,13 @@ PreStop is called immediately before a container is terminated due to an API req
         <td>object</td>
         <td>
           HTTPGet specifies the http request to perform.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanaspecdeploymentspectemplatespeccontainersindexlifecycleprestopsleep">sleep</a></b></td>
+        <td>object</td>
+        <td>
+          Sleep represents the duration that the container should sleep before being terminated.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -4651,6 +4750,35 @@ HTTPHeader describes a custom header to be used in HTTP probes
         <td>string</td>
         <td>
           The header field value<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.deployment.spec.template.spec.containers[index].lifecycle.preStop.sleep
+<sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespeccontainersindexlifecycleprestop)</sup></sup>
+
+
+
+Sleep represents the duration that the container should sleep before being terminated.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>seconds</b></td>
+        <td>integer</td>
+        <td>
+          Seconds is the number of seconds to sleep.<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -6777,6 +6905,13 @@ PostStart is called immediately after a container is created. If the handler fai
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanaspecdeploymentspectemplatespecephemeralcontainersindexlifecyclepoststartsleep">sleep</a></b></td>
+        <td>object</td>
+        <td>
+          Sleep represents the duration that the container should sleep before being terminated.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecdeploymentspectemplatespecephemeralcontainersindexlifecyclepoststarttcpsocket">tcpSocket</a></b></td>
         <td>object</td>
         <td>
@@ -6903,6 +7038,35 @@ HTTPHeader describes a custom header to be used in HTTP probes
 </table>
 
 
+### Grafana.spec.deployment.spec.template.spec.ephemeralContainers[index].lifecycle.postStart.sleep
+<sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespecephemeralcontainersindexlifecyclepoststart)</sup></sup>
+
+
+
+Sleep represents the duration that the container should sleep before being terminated.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>seconds</b></td>
+        <td>integer</td>
+        <td>
+          Seconds is the number of seconds to sleep.<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
 ### Grafana.spec.deployment.spec.template.spec.ephemeralContainers[index].lifecycle.postStart.tcpSocket
 <sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespecephemeralcontainersindexlifecyclepoststart)</sup></sup>
 
@@ -6965,6 +7129,13 @@ PreStop is called immediately before a container is terminated due to an API req
         <td>object</td>
         <td>
           HTTPGet specifies the http request to perform.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanaspecdeploymentspectemplatespecephemeralcontainersindexlifecycleprestopsleep">sleep</a></b></td>
+        <td>object</td>
+        <td>
+          Sleep represents the duration that the container should sleep before being terminated.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -7088,6 +7259,35 @@ HTTPHeader describes a custom header to be used in HTTP probes
         <td>string</td>
         <td>
           The header field value<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.deployment.spec.template.spec.ephemeralContainers[index].lifecycle.preStop.sleep
+<sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespecephemeralcontainersindexlifecycleprestop)</sup></sup>
+
+
+
+Sleep represents the duration that the container should sleep before being terminated.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>seconds</b></td>
+        <td>integer</td>
+        <td>
+          Seconds is the number of seconds to sleep.<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -9191,6 +9391,13 @@ PostStart is called immediately after a container is created. If the handler fai
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanaspecdeploymentspectemplatespecinitcontainersindexlifecyclepoststartsleep">sleep</a></b></td>
+        <td>object</td>
+        <td>
+          Sleep represents the duration that the container should sleep before being terminated.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecdeploymentspectemplatespecinitcontainersindexlifecyclepoststarttcpsocket">tcpSocket</a></b></td>
         <td>object</td>
         <td>
@@ -9317,6 +9524,35 @@ HTTPHeader describes a custom header to be used in HTTP probes
 </table>
 
 
+### Grafana.spec.deployment.spec.template.spec.initContainers[index].lifecycle.postStart.sleep
+<sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespecinitcontainersindexlifecyclepoststart)</sup></sup>
+
+
+
+Sleep represents the duration that the container should sleep before being terminated.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>seconds</b></td>
+        <td>integer</td>
+        <td>
+          Seconds is the number of seconds to sleep.<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
 ### Grafana.spec.deployment.spec.template.spec.initContainers[index].lifecycle.postStart.tcpSocket
 <sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespecinitcontainersindexlifecyclepoststart)</sup></sup>
 
@@ -9379,6 +9615,13 @@ PreStop is called immediately before a container is terminated due to an API req
         <td>object</td>
         <td>
           HTTPGet specifies the http request to perform.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanaspecdeploymentspectemplatespecinitcontainersindexlifecycleprestopsleep">sleep</a></b></td>
+        <td>object</td>
+        <td>
+          Sleep represents the duration that the container should sleep before being terminated.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9502,6 +9745,35 @@ HTTPHeader describes a custom header to be used in HTTP probes
         <td>string</td>
         <td>
           The header field value<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.deployment.spec.template.spec.initContainers[index].lifecycle.preStop.sleep
+<sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespecinitcontainersindexlifecycleprestop)</sup></sup>
+
+
+
+Sleep represents the duration that the container should sleep before being terminated.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>seconds</b></td>
+        <td>integer</td>
+        <td>
+          Seconds is the number of seconds to sleep.<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -12523,6 +12795,13 @@ The specification for the PersistentVolumeClaim. The entire content is copied un
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>volumeAttributesClassName</b></td>
+        <td>string</td>
+        <td>
+          volumeAttributesClassName may be used to set the VolumeAttributesClass used by this claim. If specified, the CSI driver will create or update the volume with the attributes defined in the corresponding VolumeAttributesClass. This has a different purpose than storageClassName, it can be changed after the claim is created. An empty string value means that no VolumeAttributesClass will be applied to the claim but it's not allowed to reset this field to empty string once it is set. If unspecified and the PersistentVolumeClaim is unbound, the default VolumeAttributesClass will be set by the persistentvolume controller if it exists. If the resource referred to by volumeAttributesClass does not exist, this PersistentVolumeClaim will be set to a Pending state, as reflected by the modifyVolumeStatus field, until such as a resource exists. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#volumeattributesclass (Alpha) Using this field requires the VolumeAttributesClass feature gate to be enabled.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>volumeMode</b></td>
         <td>string</td>
         <td>
@@ -12646,15 +12925,6 @@ resources represents the minimum resources the volume should have. If RecoverVol
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#grafanaspecdeploymentspectemplatespecvolumesindexephemeralvolumeclaimtemplatespecresourcesclaimsindex">claims</a></b></td>
-        <td>[]object</td>
-        <td>
-          Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
- This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
- This field is immutable. It can only be set for containers.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -12668,33 +12938,6 @@ resources represents the minimum resources the volume should have. If RecoverVol
           Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
         </td>
         <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### Grafana.spec.deployment.spec.template.spec.volumes[index].ephemeral.volumeClaimTemplate.spec.resources.claims[index]
-<sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespecvolumesindexephemeralvolumeclaimtemplatespecresources)</sup></sup>
-
-
-
-ResourceClaim references one entry in PodSpec.ResourceClaims.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>name</b></td>
-        <td>string</td>
-        <td>
-          Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.<br/>
-        </td>
-        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -13442,6 +13685,16 @@ Projection that may be projected along with other supported volume types
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#grafanaspecdeploymentspectemplatespecvolumesindexprojectedsourcesindexclustertrustbundle">clusterTrustBundle</a></b></td>
+        <td>object</td>
+        <td>
+          ClusterTrustBundle allows a pod to access the `.spec.trustBundle` field of ClusterTrustBundle objects in an auto-updating file. 
+ Alpha, gated by the ClusterTrustBundleProjection feature gate. 
+ ClusterTrustBundle objects can either be selected by name, or by the combination of signer name and a label selector. 
+ Kubelet performs aggressive normalization of the PEM contents written into the pod filesystem.  Esoteric PEM features such as inter-block comments and block headers are stripped.  Certificates are deduplicated. The ordering of certificates within the file is arbitrary, and Kubelet may change the order over time.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecdeploymentspectemplatespecvolumesindexprojectedsourcesindexconfigmap">configMap</a></b></td>
         <td>object</td>
         <td>
@@ -13467,6 +13720,139 @@ Projection that may be projected along with other supported volume types
         <td>object</td>
         <td>
           serviceAccountToken is information about the serviceAccountToken data to project<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.deployment.spec.template.spec.volumes[index].projected.sources[index].clusterTrustBundle
+<sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespecvolumesindexprojectedsourcesindex)</sup></sup>
+
+
+
+ClusterTrustBundle allows a pod to access the `.spec.trustBundle` field of ClusterTrustBundle objects in an auto-updating file. 
+ Alpha, gated by the ClusterTrustBundleProjection feature gate. 
+ ClusterTrustBundle objects can either be selected by name, or by the combination of signer name and a label selector. 
+ Kubelet performs aggressive normalization of the PEM contents written into the pod filesystem.  Esoteric PEM features such as inter-block comments and block headers are stripped.  Certificates are deduplicated. The ordering of certificates within the file is arbitrary, and Kubelet may change the order over time.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          Relative path from the volume root to write the bundle.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanaspecdeploymentspectemplatespecvolumesindexprojectedsourcesindexclustertrustbundlelabelselector">labelSelector</a></b></td>
+        <td>object</td>
+        <td>
+          Select all ClusterTrustBundles that match this label selector.  Only has effect if signerName is set.  Mutually-exclusive with name.  If unset, interpreted as "match nothing".  If set but empty, interpreted as "match everything".<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Select a single ClusterTrustBundle by object name.  Mutually-exclusive with signerName and labelSelector.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>optional</b></td>
+        <td>boolean</td>
+        <td>
+          If true, don't block pod startup if the referenced ClusterTrustBundle(s) aren't available.  If using name, then the named ClusterTrustBundle is allowed not to exist.  If using signerName, then the combination of signerName and labelSelector is allowed to match zero ClusterTrustBundles.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>signerName</b></td>
+        <td>string</td>
+        <td>
+          Select all ClusterTrustBundles that match this signer name. Mutually-exclusive with name.  The contents of all selected ClusterTrustBundles will be unified and deduplicated.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.deployment.spec.template.spec.volumes[index].projected.sources[index].clusterTrustBundle.labelSelector
+<sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespecvolumesindexprojectedsourcesindexclustertrustbundle)</sup></sup>
+
+
+
+Select all ClusterTrustBundles that match this label selector.  Only has effect if signerName is set.  Mutually-exclusive with name.  If unset, interpreted as "match nothing".  If set but empty, interpreted as "match everything".
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanaspecdeploymentspectemplatespecvolumesindexprojectedsourcesindexclustertrustbundlelabelselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.deployment.spec.template.spec.volumes[index].projected.sources[index].clusterTrustBundle.labelSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespecvolumesindexprojectedsourcesindexclustertrustbundlelabelselector)</sup></sup>
+
+
+
+A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          key is the label key that the selector applies to.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -16124,7 +16510,7 @@ ServicePort contains information on service's port.
         <td>
           The application protocol for this port. This is used as a hint for implementations to offer richer behavior for protocols that they understand. This field follows standard Kubernetes label syntax. Valid values are either: 
  * Un-prefixed protocol names - reserved for IANA standard service names (as per RFC-6335 and https://www.iana.org/assignments/service-names). 
- * Kubernetes-defined prefixed names: * 'kubernetes.io/h2c' - HTTP/2 over cleartext as described in https://www.rfc-editor.org/rfc/rfc7540 * 'kubernetes.io/ws'  - WebSocket over cleartext as described in https://www.rfc-editor.org/rfc/rfc6455 * 'kubernetes.io/wss' - WebSocket over TLS as described in https://www.rfc-editor.org/rfc/rfc6455 
+ * Kubernetes-defined prefixed names: * 'kubernetes.io/h2c' - HTTP/2 prior knowledge over cleartext as described in https://www.rfc-editor.org/rfc/rfc9113.html#name-starting-http-2-with-prior- * 'kubernetes.io/ws'  - WebSocket over cleartext as described in https://www.rfc-editor.org/rfc/rfc6455 * 'kubernetes.io/wss' - WebSocket over TLS as described in https://www.rfc-editor.org/rfc/rfc6455 
  * Other protocols should use implementation-defined prefixed names such as mycompany.com/my-custom-protocol.<br/>
         </td>
         <td>false</td>
