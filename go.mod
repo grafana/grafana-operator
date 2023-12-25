@@ -7,7 +7,7 @@ toolchain go1.21.5
 require (
 	github.com/bitly/go-simplejson v0.5.1
 	github.com/blang/semver v3.5.1+incompatible
-	github.com/go-logr/logr v1.3.0
+	github.com/go-logr/logr v1.4.1
 	github.com/google/go-jsonnet v0.20.0
 	github.com/grafana/grafana-api-golang-client v0.27.0
 	github.com/onsi/ginkgo v1.16.5
