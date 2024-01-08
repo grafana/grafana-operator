@@ -956,28 +956,7 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         <td>
           <br/>
         </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>name</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>type</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>url</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
+        <td>false</td>
       </tr><tr>
         <td><b>basicAuth</b></td>
         <td>boolean</td>
@@ -1021,6 +1000,13 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>orgId</b></td>
         <td>integer</td>
         <td>
@@ -1037,7 +1023,21 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>uid</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>url</b></td>
         <td>string</td>
         <td>
           <br/>

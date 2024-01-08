@@ -30,10 +30,10 @@ import (
 
 type GrafanaDatasourceInternal struct {
 	UID           string `json:"uid,omitempty"`
-	Name          string `json:"name"`
-	Type          string `json:"type"`
-	URL           string `json:"url"`
-	Access        string `json:"access"`
+	Name          string `json:"name,omitempty"`
+	Type          string `json:"type,omitempty"`
+	URL           string `json:"url,omitempty"`
+	Access        string `json:"access,omitempty"`
 	Database      string `json:"database,omitempty"`
 	User          string `json:"user,omitempty"`
 	OrgID         *int64 `json:"orgId,omitempty"`
