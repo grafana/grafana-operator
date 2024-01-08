@@ -28,7 +28,7 @@ func TestGrafanaDatasources_expandVariables(t *testing.T) {
 					},
 				},
 			},
-			out: []byte("{\"name\":\"prometheus\",\"type\":\"\",\"url\":\"\",\"access\":\"\",\"user\":\"root\"}"),
+			out: []byte("{\"name\":\"prometheus\",\"user\":\"root\"}"),
 		},
 		{
 			name: "replacement without curly braces",
@@ -43,7 +43,7 @@ func TestGrafanaDatasources_expandVariables(t *testing.T) {
 					},
 				},
 			},
-			out: []byte("{\"name\":\"prometheus\",\"type\":\"\",\"url\":\"\",\"access\":\"\",\"user\":\"root\"}"),
+			out: []byte("{\"name\":\"prometheus\",\"user\":\"root\"}"),
 		},
 	}
 
