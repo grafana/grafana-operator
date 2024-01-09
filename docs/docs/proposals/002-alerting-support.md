@@ -11,7 +11,8 @@ This document contains the complete design required to support configuring Alert
 
 ## Info
 
-status: Draft
+status: Decided
+
 
 ## Motivation
 
@@ -196,7 +197,7 @@ spec:
     matchLabels:
       dashboards: "grafana"
   title: custom title
-  alertGroups: 
+  alertGroups:
     group_one:
       interval: 5m
       rules:
@@ -209,8 +210,11 @@ spec:
 
 Merging both approaches where appropriate is also an option. Further details need to be discussed for this to be viable.
 
+## Decision Outcome
 
+The maintianrs have decided to use _Option 1_ to keep Alerting separated from other resources and keep the existing APIs as simple as possible. Implementation will be tracked in upcoming PRs and issues and linked in this document.
 ## Related discussions
 
 - [Issue 911](https://github.com/grafana/grafana-operator/issues/911)
 - [PR 1144](https://github.com/grafana/grafana-operator/pull/1144)
+
