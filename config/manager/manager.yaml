@@ -12,15 +12,33 @@ metadata:
   namespace: system
   labels:
     control-plane: controller-manager
+    app.kubernetes.io/name: grafana-operator-controller-manager
+    app.kubernetes.io/instance: grafana-operator-controller-manager
+    app.kubernetes.io/version: v5.6.0
+    app.kubernetes.io/component: controller-manager
+    app.kubernetes.io/part-of: grafana-operator
+    app.kubernetes.io/managed-by: olm
 spec:
   selector:
     matchLabels:
       control-plane: controller-manager
+      app.kubernetes.io/name: grafana-operator-controller-manager
+      app.kubernetes.io/instance: grafana-operator-controller-manager
+      app.kubernetes.io/version: v5.6.0
+      app.kubernetes.io/component: controller-manager
+      app.kubernetes.io/part-of: grafana-operator
+      app.kubernetes.io/managed-by: olm
   replicas: 1
   template:
     metadata:
       labels:
         control-plane: controller-manager
+        app.kubernetes.io/name: grafana-operator-controller-manager
+        app.kubernetes.io/instance: grafana-operator-controller-manager
+        app.kubernetes.io/version: v5.6.0
+        app.kubernetes.io/component: controller-manager
+        app.kubernetes.io/part-of: grafana-operator
+        app.kubernetes.io/managed-by: olm
     spec:
       securityContext:
         runAsNonRoot: true
