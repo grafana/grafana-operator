@@ -72,11 +72,6 @@ spec:
                     type: string
                   user:
                     type: string
-                required:
-                - access
-                - name
-                - type
-                - url
                 type: object
               instanceSelector:
                 properties:

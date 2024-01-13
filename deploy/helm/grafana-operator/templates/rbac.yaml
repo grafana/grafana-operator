@@ -1,8 +1,13 @@
 {{- $watchNamespaces := coalesce .Values.watchNamespaces .Values.namespaceOverride .Release.Namespace  }}
 {{- $namespaceScoped := false }}
+{{- $isOpenShift := false }}
 {{- if or (.Values.namespaceScope) (.Values.watchNamespaces) }}
 {{- $namespaceScoped = true }}
 {{- end }}
+{{- if (.Values.isOpenShift) }}
+  {{- $isOpenShift = true }}
+{{- end }}
+{{- $operatorNamespace := .Release.Namespace }}
 {{- range ( split "," $watchNamespaces ) }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -203,6 +208,7 @@ rules:
       - patch
       - update
       - watch
+  {{- if $isOpenShift }}
   - apiGroups:
       - route.openshift.io
     resources:
@@ -215,6 +221,7 @@ rules:
       - list
       - update
       - watch
+  {{- end }}
   - apiGroups:
       - authentication.k8s.io
     resources:

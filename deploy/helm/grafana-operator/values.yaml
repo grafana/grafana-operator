@@ -10,6 +10,9 @@ leaderElect: false
 # By default it's all namespaces, if you only want to listen for the same namespace as the operator is deployed to look at namespaceScope.
 watchNamespaces: ""
 
+# -- Determines if the target cluster is OpenShift. Additional rbac permissions for routes will be added on OpenShift
+isOpenShift: false
+
 # -- Additional environment variables
 env: []
   # -- grafana image, e.g. docker.io/grafana/grafana:9.1.6, overwrites the default grafana image defined in the operator
