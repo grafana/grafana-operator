@@ -94,3 +94,4 @@ patches:
           argocd.argoproj.io/sync-options: Replace=true
         name: grafanas.grafana.integreatly.org
 ```
+
