@@ -38,11 +38,6 @@ jobs:
         uses: fluxcd/flux2/action@v2.2.2
       - name: Clone repo
         uses: actions/checkout@v4
-      - name: Create Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release create --draft --generate-notes "${{ github.ref_name }}"
       - name: Prepare
         run: |
           # OCI standard enforces lower-case paths
@@ -73,11 +68,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          kustomize build deploy/kustomize/base > kustomize-base.yaml
           for d in deploy/kustomize/overlays/*/ ; do
                kustomize build "$d" > kustomize-$(basename "$d").yaml
           done
-          gh release upload "${{ github.ref_name }}" kustomize-*.yaml
+          gh release upload "${{ github.ref_name }}" kustomize-*.yaml deploy/kustomize/base/crds.yaml
 
   image:
     runs-on: ubuntu-latest
