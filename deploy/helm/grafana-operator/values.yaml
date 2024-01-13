@@ -32,8 +32,14 @@ image:
 # -- image pull secrets
 imagePullSecrets: []
 
+# -- Overrides the name of the chart.
 nameOverride: ""
+
+# -- Overrides the fully qualified app name.
 fullnameOverride: ""
+
+# -- Overrides the namespace name.
+namespaceOverride: ""
 
 serviceAccount:
   # -- Specifies whether a service account should be created

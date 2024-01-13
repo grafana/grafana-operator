@@ -7,7 +7,7 @@ linkTitle: "Helm installation"
 
 [grafana-operator](https://github.com/grafana/grafana-operator) for Kubernetes to manage Grafana instances and grafana resources.
 
-![Version: 0.1.2](https://img.shields.io/badge/Version-0.1.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v5.6.0](https://img.shields.io/badge/AppVersion-v5.6.0-informational?style=flat-square)
+![Version: 0.1.3](https://img.shields.io/badge/Version-0.1.3-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v5.6.0](https://img.shields.io/badge/AppVersion-v5.6.0-informational?style=flat-square)
 
 ## Installation
 
@@ -38,7 +38,7 @@ It's easier to just manage this configuration outside of the operator.
 | additionalLabels | object | `{}` | additional labels to add to all resources |
 | affinity | object | `{}` | pod affinity |
 | env | list | `[]` | Additional environment variables |
-| fullnameOverride | string | `""` |  |
+| fullnameOverride | string | `""` | Overrides the fully qualified app name. |
 | image.pullPolicy | string | `"IfNotPresent"` | The image pull policy to use in grafana operator container |
 | image.repository | string | `"ghcr.io/grafana/grafana-operator"` | grafana operator image repository |
 | image.tag | string | `""` | Overrides the image tag whose default is the chart appVersion. |
@@ -47,7 +47,8 @@ It's easier to just manage this configuration outside of the operator.
 | leaderElect | bool | `false` | If you want to run multiple replicas of the grafana-operator, this is not recommended. |
 | metricsService.metricsPort | int | `9090` | metrics service port |
 | metricsService.type | string | `"ClusterIP"` | metrics service type |
-| nameOverride | string | `""` |  |
+| nameOverride | string | `""` | Overrides the name of the chart. |
+| namespaceOverride | string | `""` | Overrides the namespace name. |
 | namespaceScope | bool | `false` | If the operator should run in namespace-scope or not, if true the operator will only be able to manage instances in the same namespace |
 | nodeSelector | object | `{}` | pod node selector |
 | podAnnotations | object | `{}` | pod annotations |

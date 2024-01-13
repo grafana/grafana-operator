@@ -1,4 +1,4 @@
-{{- $watchNamespaces := coalesce .Values.watchNamespaces .Release.Namespace }}
+{{- $watchNamespaces := coalesce .Values.watchNamespaces .Values.namespaceOverride .Release.Namespace  }}
 {{- $namespaceScoped := false }}
 {{- $isOpenShift := false }}
 {{- if or (.Values.namespaceScope) (.Values.watchNamespaces) }}
@@ -14,9 +14,9 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: {{ if not $namespaceScoped }}Cluster{{ end }}Role
 metadata:
   {{- if $namespaceScoped }}
-  namespace: {{ $operatorNamespace }}
+  namespace: {{ . }}
   {{- end }}
-  name: grafana-operator-permissions
+  name: {{ include "grafana-operator.fullname" $ }}
   labels:
     {{- include "grafana-operator.labels" $ | nindent 4 }}
     {{- with $.Values.additionalLabels }}
@@ -238,9 +238,9 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: {{ if not $namespaceScoped }}Cluster{{ end }}RoleBinding
 metadata:
-  name: grafana-operator-permissions
+  name: {{ include "grafana-operator.fullname" $ }}
   {{- if $namespaceScoped }}
-  namespace: {{ $operatorNamespace }}
+  namespace: {{ . }}
   {{- end }}
   labels:
     {{- include "grafana-operator.labels" $ | nindent 4 }}
@@ -250,9 +250,9 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: {{ include "grafana-operator.serviceAccountName" $ }}
-    namespace: {{ $operatorNamespace }}
+    namespace: {{ include "grafana-operator.namespace" $ }}
 roleRef:
   kind: {{ if not $namespaceScoped }}Cluster{{ end }}Role
-  name: grafana-operator-permissions
+  name: {{ include "grafana-operator.fullname" $ }}
   apiGroup: rbac.authorization.k8s.io
 {{- end }}
