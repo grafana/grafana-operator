@@ -82,7 +82,7 @@ resources:
 
 ### ArgoCD
 
-If you are using ArgoCD you need to add the following patch to errors during apply of the CRD.
+If you are using ArgoCD you need to add the following patch to fix the errors during apply of the CRD.
 
 ```yaml
 patches:
