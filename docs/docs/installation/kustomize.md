@@ -4,9 +4,9 @@ linkTitle: "Kustomize installation"
 description: "How to install grafana-operator using Kustomize"
 ---
 
-We are using Flux to package our Kustomize files through OCI, and they are built and released just as our helm solution.
+# Flux
 
-There is no way of downloading manifest files through the [Kustomize CLI](https://kustomize.io/), but hopefully something that will be supported in the [future](https://github.com/kubernetes-sigs/kustomize/issues/5134).
+We are using Flux to package our Kustomize files through OCI, and they are built and released just as our helm solution.
 
 So if you want to download the Kustomize manifest you need to install the [Flux cli](https://fluxcd.io/flux/installation/).
 
@@ -21,6 +21,10 @@ flux pull artifact oci://ghcr.io/grafana/kustomize/grafana-operator:{{<param ver
 
 This will provide you the manifest files unpacked and ready to use.
 
+# Kustomize / Kubectl
+
+You can find the yaml for the `cluster_scoped` and `namespace_scoped` release on the [release page](https://github.com/grafana/grafana-operator/releases/latest)
+
 ## Install
 
 Two overlays are provided, for namespace scoped and cluster scoped installation.
@@ -29,13 +33,13 @@ For more information look at our [documentation](https://grafana-operator.github
 This will install the operator in the grafana namespace.
 
 ```shell
-kubectl create -k deploy/overlays/cluster_scoped
+kubectl create -f https://github.com/grafana/grafana-operator/releases/latest/download/kustomize-cluster_scoped.yaml
 ```
 
 for a namespace scoped installation
 
 ```shell
-kubectl create -k deploy/overlays/namespace_scoped
+kubectl create -f https://github.com/grafana/grafana-operator/releases/latest/download/kustomize-namespace_scoped.yaml
 ```
 
 ### Patching grafana-operator
@@ -46,7 +50,32 @@ Else you will get the following error `invalid: metadata.annotations: Too long: 
 For example
 
 ```shell
-kubectl replace -k deploy/overlays/cluster_scoped
+kubectl replace -f https://github.com/grafana/grafana-operator/releases/latest/download/kustomize-namespace_scoped.yaml
 ```
 
 For more information how `kubectl replace` works we recommend reading this [blog](https://blog.atomist.com/kubernetes-apply-replace-patch/).
+
+## Kustomize
+
+latest:
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# this will automatically pull the latest release when `kustomize build` is executed
+resources:
+  - https://github.com/grafana/grafana-operator/releases/latest/download/kustomize-cluster_scoped.yaml
+```
+
+pinned to release:
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# update the version to the release you need
+resources:
+  - https://github.com/grafana/grafana-operator/releases/download/v5.0.10/kustomize-cluster_scoped.yaml
+
+```
