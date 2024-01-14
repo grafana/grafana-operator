@@ -5,6 +5,9 @@ on:
     tags:
       - v5.*
 
+permissions:
+  contents: write
+
 jobs:
   helm:
     runs-on: ubuntu-latest
@@ -35,7 +38,6 @@ jobs:
         uses: fluxcd/flux2/action@v2.2.2
       - name: Clone repo
         uses: actions/checkout@v4
-
       - name: Prepare
         run: |
           # OCI standard enforces lower-case paths
@@ -62,6 +64,14 @@ jobs:
             --path="./deploy/kustomize" \
             --source="${{ github.event.repository.html_url }}" \
             --revision="${GITHUB_REF_NAME}/${GITHUB_SHA}"
+      - name: update-kustomize-assert
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for d in deploy/kustomize/overlays/*/ ; do
+               kustomize build "$d" > kustomize-$(basename "$d").yaml
+          done
+          gh release upload "${{ github.ref_name }}" kustomize-*.yaml deploy/kustomize/base/crds.yaml
 
   image:
     runs-on: ubuntu-latest
@@ -99,7 +109,7 @@ jobs:
       - name: Build and push
         run: |
           declare -a arr=("quay.io/grafana-operator/grafana-operator" "ghcr.io/${{ github.repository }}" )
-          
+
           for i in "${arr[@]}"
           do
             export KO_DOCKER_REPO=${i}
@@ -111,4 +121,3 @@ jobs:
             --image-label org.opencontainers.image.version=${{ github.ref_name }} \
             --image-label org.opencontainers.image.created=${{ env.BUILD_DATE }}
           done
-                 
