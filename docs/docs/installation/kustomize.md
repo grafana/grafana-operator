@@ -4,7 +4,7 @@ linkTitle: "Kustomize installation"
 description: "How to install grafana-operator using Kustomize"
 ---
 
-# Flux
+## Flux
 
 We are using Flux to package our Kustomize files through OCI, and they are built and released just as our helm solution.
 
@@ -21,9 +21,9 @@ flux pull artifact oci://ghcr.io/grafana/kustomize/grafana-operator:{{<param ver
 
 This will provide you the manifest files unpacked and ready to use.
 
-# Kustomize / Kubectl
+## Kustomize / Kubectl
 
-You can find the yaml for the `cluster_scoped` and `namespace_scoped` release on the [release page](https://github.com/grafana/grafana-operator/releases/latest)
+You can also find the yaml for the `cluster_scoped` and `namespace_scoped` release on the [release page](https://github.com/grafana/grafana-operator/releases/latest)
 
 ## Install
 
@@ -55,7 +55,7 @@ kubectl replace -f https://github.com/grafana/grafana-operator/releases/latest/d
 
 For more information how `kubectl replace` works we recommend reading this [blog](https://blog.atomist.com/kubernetes-apply-replace-patch/).
 
-## Kustomize
+### Kustomize
 
 latest:
 
@@ -80,9 +80,9 @@ resources:
 
 ```
 
-### ArgoCD
+#### ArgoCD
 
-If you are using ArgoCD you need to add the following patch to fix the errors during apply of the CRD.
+If you are using ArgoCD you need to add this patch to fix the errors during apply of the CRD.
 
 ```yaml
 patches:
@@ -95,3 +95,15 @@ patches:
         name: grafanas.grafana.integreatly.org
 ```
 
+or
+
+```yaml
+patches:
+  - patch: |-
+      apiVersion: apiextensions.k8s.io/v1
+      kind: CustomResourceDefinition
+      metadata:
+        annotations:
+          argocd.argoproj.io/sync-options: ServerSideApply=true
+        name: grafanas.grafana.integreatly.org
+```

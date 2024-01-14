@@ -121,4 +121,3 @@ jobs:
             --image-label org.opencontainers.image.version=${{ github.ref_name }} \
             --image-label org.opencontainers.image.created=${{ env.BUILD_DATE }}
           done
-
