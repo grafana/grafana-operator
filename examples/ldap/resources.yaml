@@ -1,0 +1,64 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ldap-config
+data:
+  ldap.toml: |
+    verbose_logging = true
+    [[servers]]
+    host = "ldap.grafana.org"
+    port = 389
+    use_ssl = true
+    start_tls = false
+    ssl_skip_verify = true
+    bind_dn = "user@grafana.org"
+    bind_password = 'user_password123'
+    search_filter = "(sAMAccountName=%s)"
+    search_base_dns = ["DC=grafana,DC=org"]
+    [servers.attributes]
+    name = "givenName"
+    surname = "sn"
+    username = "sAMAccountName"
+    member_of = "memberOf"
+    email =  "mail"
+    [[servers.group_mappings]]
+    group_dn = "cn=superadmins,dc=grafana,dc=org"
+    org_role = "Admin"
+    grafana_admin = true
+    [[servers.group_mappings]]
+    group_dn = "cn=users,dc=grafana,dc=org"
+    org_role = "Editor"
+    [[servers.group_mappings]]
+    group_dn = "*"
+    org_role = "Viewer"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana
+  labels:
+    dashboards: "grafana"
+spec:
+  config:
+    log:
+      mode: "console"
+    auth:
+      disable_login_form: "false"
+    auth.ldap:
+      enabled: "true"
+      config_file: /etc/grafana-configmaps/ldap.toml
+  deployment:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: grafana
+              volumeMounts:
+                - mountPath: /etc/grafana-configmaps
+                  name: grafana-configmaps
+                  readOnly: false
+          volumes:
+            - name: grafana-configmaps
+              configMap:
+                name: ldap-config
