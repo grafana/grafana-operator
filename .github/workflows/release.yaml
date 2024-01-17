@@ -130,5 +130,5 @@ jobs:
         run: |
           for i in ${{ env.REPOS }}
           do
-            cosign sign -d -y $(cat ./image-digest-${i})
+            cosign sign -d -y $(cat ./image-digest-${i%.*})
           done
