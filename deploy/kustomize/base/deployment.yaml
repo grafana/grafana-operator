@@ -5,17 +5,17 @@ metadata:
   name: grafana-operator-controller-manager
   namespace: default
   labels:
-    app: grafana-operator-controller-manager
+    app.kubernetes.io/name: grafana-operator
 spec:
   replicas: 1
   selector:
     matchLabels:
-      control-plane: grafana-operator-controller-manager
+      app.kubernetes.io/name: grafana-operator
   strategy: {}
   template:
     metadata:
       labels:
-        control-plane: grafana-operator-controller-manager
+        app.kubernetes.io/name: grafana-operator
     spec:
       containers:
         - args:
