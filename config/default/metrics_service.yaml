@@ -2,7 +2,8 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    control-plane: controller-manager
+    app.kubernetes.io/name: grafana-operator
+    app.kubernetes.io/managed-by: olm
   name: operator-metrics-service
   namespace: system
 spec:
@@ -12,4 +13,5 @@ spec:
       protocol: TCP
       targetPort: metrics
   selector:
-    control-plane: controller-manager
+    app.kubernetes.io/name: grafana-operator
+    app.kubernetes.io/managed-by: olm

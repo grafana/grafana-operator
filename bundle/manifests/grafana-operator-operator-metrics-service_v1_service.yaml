@@ -3,7 +3,8 @@ kind: Service
 metadata:
   creationTimestamp: null
   labels:
-    control-plane: controller-manager
+    app.kubernetes.io/managed-by: olm
+    app.kubernetes.io/name: grafana-operator
   name: grafana-operator-operator-metrics-service
 spec:
   ports:
@@ -12,6 +13,7 @@ spec:
     protocol: TCP
     targetPort: metrics
   selector:
-    control-plane: controller-manager
+    app.kubernetes.io/managed-by: olm
+    app.kubernetes.io/name: grafana-operator
 status:
   loadBalancer: {}
