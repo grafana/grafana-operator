@@ -3,6 +3,3 @@ namespace: grafana
 resources:
   - ../../base
   - rbac.yaml
-
-commonLabels:
-  app.kubernetes.io/managed-by: kustomize

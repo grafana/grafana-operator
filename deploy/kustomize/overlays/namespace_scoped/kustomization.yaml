@@ -11,6 +11,3 @@ patches:
       version: v1
       group: apps
       name: grafana-operator-controller-manager
-
-commonLabels:
-  app.kubernetes.io/managed-by: kustomize
