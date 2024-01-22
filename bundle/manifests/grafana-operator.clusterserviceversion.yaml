@@ -95,7 +95,7 @@ metadata:
     capabilities: Basic Install
     categories: Monitoring
     containerImage: ghcr.io/grafana/grafana-operator@sha256:97561cef949b58f55ec67d133c02ac205e2ec3fb77388aeb868dacfcebad0752
-    createdAt: "2023-12-20T15:40:51Z"
+    createdAt: "2024-01-22T07:16:13Z"
     operators.operatorframework.io/builder: operator-sdk-v1.32.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/grafana/grafana-operator
@@ -304,18 +304,21 @@ spec:
           serviceAccountName: grafana-operator-controller-manager
       deployments:
         - label:
-            control-plane: controller-manager
+            app.kubernetes.io/managed-by: olm
+            app.kubernetes.io/name: grafana-operator
           name: grafana-operator-controller-manager
           spec:
             replicas: 1
             selector:
               matchLabels:
-                control-plane: controller-manager
+                app.kubernetes.io/managed-by: olm
+                app.kubernetes.io/name: grafana-operator
             strategy: {}
             template:
               metadata:
                 labels:
-                  control-plane: controller-manager
+                  app.kubernetes.io/managed-by: olm
+                  app.kubernetes.io/name: grafana-operator
               spec:
                 containers:
                   - args:
