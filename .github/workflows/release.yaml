@@ -5,6 +5,9 @@ on:
     tags:
       - v5.*
 
+permissions:
+  contents: write
+
 jobs:
   helm:
     runs-on: ubuntu-latest
@@ -35,7 +38,6 @@ jobs:
         uses: fluxcd/flux2/action@v2.2.2
       - name: Clone repo
         uses: actions/checkout@v4
-
       - name: Prepare
         run: |
           # OCI standard enforces lower-case paths
@@ -62,6 +64,14 @@ jobs:
             --path="./deploy/kustomize" \
             --source="${{ github.event.repository.html_url }}" \
             --revision="${GITHUB_REF_NAME}/${GITHUB_SHA}"
+      - name: update-kustomize-assert
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for d in deploy/kustomize/overlays/*/ ; do
+               kustomize build "$d" > kustomize-$(basename "$d").yaml
+          done
+          gh release upload "${{ github.ref_name }}" kustomize-*.yaml deploy/kustomize/base/crds.yaml
 
   image:
     runs-on: ubuntu-latest
@@ -90,20 +100,24 @@ jobs:
 
       - uses: ko-build/setup-ko@v0.6
         with:
-          version: v0.14.1
+          version: v0.15.1
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3.2.0
+        with:
+          cosign-release: "v2.2.2"
 
       - name: Prepare
         run: |
           echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
+          echo "REPOS"="quay.io/grafana-operator/grafana-operator" "ghcr.io/${{ github.repository }}" >> $GITHUB_ENV
 
       - name: Build and push
         run: |
-          declare -a arr=("quay.io/grafana-operator/grafana-operator" "ghcr.io/${{ github.repository }}" )
-          
-          for i in "${arr[@]}"
+          for i in ${{ env.REPOS }}
           do
             export KO_DOCKER_REPO=${i}
-            ko build --sbom=none --bare --platform linux/arm64,linux/arm/v7,linux/amd64 -t ${{ github.ref_name }} \
+            ko build --sbom=spdx --image-refs ./image-digest-${i%.*} --bare --platform linux/arm64,linux/arm/v7,linux/amd64 -t ${{ github.ref_name }} \
             --image-label org.opencontainers.image.title=grafana-operator \
             --image-label org.opencontainers.image.description="An operator for Grafana that installs and manages Grafana instances & Dashboards & Datasources through Kubernetes/OpenShift CRs" \
             --image-label org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }} \
@@ -111,4 +125,10 @@ jobs:
             --image-label org.opencontainers.image.version=${{ github.ref_name }} \
             --image-label org.opencontainers.image.created=${{ env.BUILD_DATE }}
           done
-                 
+
+      - name: Sign Image
+        run: |
+          for i in ${{ env.REPOS }}
+          do
+            cosign sign -d -y $(cat ./image-digest-${i%.*})
+          done
