@@ -61,6 +61,15 @@ spec:
   links:
   - name: Grafana Operator
     url: https://grafana.github.io/grafana-operator
+  maintainers:
+  - email: pbraun@redhat.com
+    name: Peter Braun
+  - email: hstefans@redhat.com
+    name: Hubert Stefanski
+  - email: edvin.norling@gmail.com
+    name: Edvin Norling
+  - email: demtis.register@gmail.com
+    name: Igor Beliakov
   maturity: stable
   minKubeVersion: 1.23.0
   provider:
