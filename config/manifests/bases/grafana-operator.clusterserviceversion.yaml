@@ -7,6 +7,7 @@ metadata:
     categories: Monitoring
     containerImage: ghcr.io/grafana/grafana-operator:v5.6.0
     createdAt: "2023-12-11T09:21:22Z"
+    description: Deploys and manages Grafana instances, dashboards and data sources
     repository: https://github.com/grafana/grafana-operator
     support: Grafana Labs
   name: grafana-operator.v0.0.0

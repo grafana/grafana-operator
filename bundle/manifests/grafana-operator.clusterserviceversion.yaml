@@ -95,7 +95,8 @@ metadata:
     capabilities: Basic Install
     categories: Monitoring
     containerImage: ghcr.io/grafana/grafana-operator@sha256:97561cef949b58f55ec67d133c02ac205e2ec3fb77388aeb868dacfcebad0752
-    createdAt: "2024-01-22T12:06:14Z"
+    createdAt: "2024-01-22T12:08:11Z"
+    description: Deploys and manages Grafana instances, dashboards and data sources
     operators.operatorframework.io/builder: operator-sdk-v1.32.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/grafana/grafana-operator
@@ -421,11 +422,11 @@ spec:
     name: Grafana Labs
     url: https://grafana.com
   relatedImages:
+    - image: docker.io/grafana/grafana@sha256:ff68ed4324e471ffa269aa5308cdcf12276ef2d5a660daea95db9d629a32a7d8
+      name: grafana
     - image: ghcr.io/grafana/grafana-operator@sha256:49ed7bdbae0b9a43e31df2e8ad2baad07042cf098d3c5944c4ce96e20a296695
       name: manager
     - image: ghcr.io/grafana/grafana-operator@sha256:97561cef949b58f55ec67d133c02ac205e2ec3fb77388aeb868dacfcebad0752
       name: grafana-operator-97561cef949b58f55ec67d133c02ac205e2ec3fb77388aeb868dacfcebad0752-annotation
-    - image: docker.io/grafana/grafana@sha256:ff68ed4324e471ffa269aa5308cdcf12276ef2d5a660daea95db9d629a32a7d8
-      name: grafana
   replaces: grafana-operator.v5.5.2
   version: 5.6.1
