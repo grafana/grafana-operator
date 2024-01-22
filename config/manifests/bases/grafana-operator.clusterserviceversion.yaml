@@ -9,6 +9,7 @@ metadata:
     createdAt: "2023-12-11T09:21:22Z"
     repository: https://github.com/grafana/grafana-operator
     support: Grafana Labs
+    olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "v4.60"}]'
   name: grafana-operator.v0.0.0
   namespace: placeholder
 spec:
