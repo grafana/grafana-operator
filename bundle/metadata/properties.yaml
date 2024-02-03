@@ -1,4 +1,0 @@
-properties:
-  - type: olm.maxOpenShiftVersion
-    value:
-      version: "4.60"
