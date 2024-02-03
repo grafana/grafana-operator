@@ -69,5 +69,5 @@ spec:
   provider:
     name: Grafana Labs
     url: https://grafana.com
-  replaces: grafana-operator.v5.5.2
+  replaces: grafana-operator.v5.6.0
   version: 0.0.0
