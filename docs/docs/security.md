@@ -35,11 +35,11 @@ You can find them as artifacts in our supported repositories.
 To download the sbom you can run
 
 ```shell
-cosign download sbom --platform linux/amd64 ghcr.io/ghcr.io/grafama/grafana-operator/grafana-operator:<version>
+cosign download sbom --platform linux/amd64 ghcr.io/grafana/grafana-operator:<version>
 ```
 
 example:
 
 ```shell
-cosign download sbom --platform linux/amd64 ghcr.io/ghcr.io/grafama/grafana-operator/grafana-operator:v5.6.1
+cosign download sbom --platform linux/amd64 ghcr.io/grafana/grafana-operator:v5.6.1
 ```
