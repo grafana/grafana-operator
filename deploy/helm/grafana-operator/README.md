@@ -59,5 +59,14 @@ It's easier to just manage this configuration outside of the operator.
 | serviceAccount.annotations | object | `{}` | Annotations to add to the service account |
 | serviceAccount.create | bool | `true` | Specifies whether a service account should be created |
 | serviceAccount.name | string | `""` | The name of the service account to use. If not set and create is true, a name is generated using the fullname template |
+| serviceMonitor | object | `{"additionalLabels":{},"enabled":false,"interval":"1m","metricRelabelings":[],"relabelings":[],"scrapeTimeout":"10s","targetLabels":[],"telemetryPath":"/metrics"}` | Enable this to use with Prometheus Operator |
+| serviceMonitor.additionalLabels | object | `{}` | Set of labels to transfer from the Kubernetes Service onto the target |
+| serviceMonitor.enabled | bool | `false` | When set true then use a ServiceMonitor to configure scraping |
+| serviceMonitor.interval | string | `"1m"` | Set how frequently Prometheus should scrape |
+| serviceMonitor.metricRelabelings | list | `[]` | MetricRelabelConfigs to apply to samples before ingestion |
+| serviceMonitor.relabelings | list | `[]` | Set relabel_configs as per https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config |
+| serviceMonitor.scrapeTimeout | string | `"10s"` | Set timeout for scrape |
+| serviceMonitor.targetLabels | list | `[]` | Set of labels to transfer from the Kubernetes Service onto the target |
+| serviceMonitor.telemetryPath | string | `"/metrics"` | Set path to metrics path |
 | tolerations | list | `[]` | pod tolerations |
 | watchNamespaces | string | `""` | Sets the WATCH_NAMESPACE environment variable, it defines which namespaces the operator should be listening for. By default it's all namespaces, if you only want to listen for the same namespace as the operator is deployed to look at namespaceScope. |
