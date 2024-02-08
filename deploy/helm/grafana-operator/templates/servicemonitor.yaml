@@ -3,6 +3,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: {{ include "grafana-operator.fullname" . }}
+  namespace: {{ include "grafana-operator.namespace" . }}
   labels:
     {{- include "grafana-operator.labels" . | nindent 4 }}
     {{- with .Values.additionalLabels }}
