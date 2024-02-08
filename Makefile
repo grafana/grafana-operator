@@ -40,11 +40,11 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-# Checks if kuttl is in your PATH
-ifneq ($(shell which kubectl-kuttl),)
-KUTTL=$(shell which kubectl-kuttl)
+# Checks if chainsaw is in your PATH
+ifneq ($(shell which chainsaw),)
+CHAINSAW=$(shell which chainsaw)
 else
-KUTTL=$(shell pwd)/bin/kubectl-kuttl
+CHAINSAW=$(shell pwd)/bin/chainsaw
 endif
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
@@ -151,9 +151,9 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
-.PHONY: deploy-kuttl
-deploy-kuttl: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/kuttl-overlay | kubectl apply -f -
+.PHONY: deploy-chainsaw
+deploy-chainsaw: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+	$(KUSTOMIZE) build config/chainsaw-overlay | kubectl apply -f -
 
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
@@ -247,19 +247,19 @@ bundle/redhat: bundle
 
 # e2e
 .PHONY: e2e
-e2e: kuttl install deploy-kuttl ## Run e2e tests using kuttl.
-	$(KUTTL) test
+e2e: chainsaw install deploy-chainsaw ## Run e2e tests using chainsaw.
+	$(CHAINSAW) test --test-dir ./tests/e2e
 
-# Find or download kuttl
-kuttl:
-ifeq (, $(shell which kubectl-kuttl))
+# Find or download chainsaw
+chainsaw:
+ifeq (, $(shell which chainsaw))
 	@{ \
 	set -e ;\
-	go install github.com/kudobuilder/kuttl/cmd/kubectl-kuttl@v0.12.1 ;\
+	go install github.com/kyverno/chainsaw@v0.1.3 ;\
 	}
-KUTTL=$(GOBIN)/kubectl-kuttl
+CHAINSAW=$(GOBIN)/chainsaw
 else
-KUTTL=$(shell which kubectl-kuttl)
+CHAINSAW=$(shell which chainsaw)
 endif
 
 golangci:

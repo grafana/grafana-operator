@@ -4,7 +4,7 @@ Thank you for investing your time in contributing to our project.
 
 ## Development
 
-The operator uses unit tests and [Kuttl](https://kuttl.dev/) for e2e tests to make sure that the operator is working as intended, we use make to generate a number of docs and scripts for us.
+The operator uses unit tests and [chainsaw](https://kyverno.github.io/chainsaw/) for e2e tests to make sure that the operator is working as intended, we use make to generate a number of docs and scripts for us.
 
 The operator embeds [grafonnet-lib](https://github.com/grafana/grafonnet-lib) inside `embeds/grafonnet-lib`. It used to be a git submodule, however, as that folder was only filled when the git submodule was initiated, the grafana-operator couldn't be imported externally.
 
@@ -67,9 +67,9 @@ make run
 To interact wit the cluster through kubectl you can ether run `kind export kubeconfig -n kind-grafana`
 or follow the instructions in the output from the script.
 
-### E2e tests using Kuttl
+### E2e tests using chainsaw
 
-As mentioned above we use Kuttl to run e2e tests for the operator, we normally run Kuttl on [Kind](https://kind.sigs.k8s.io/)
+As mentioned above we use chainsaw to run e2e tests for the operator, we normally run chainsaw on [Kind](https://kind.sigs.k8s.io/)
 
 The `make e2e` command will
 
@@ -78,7 +78,7 @@ The `make e2e` command will
 make ko-build-kind
 # Create grafana-operator-system namespace
 kubectl create ns grafana-operator-system
-# Run the Kuttl tests
+# Run the chainsaw tests
 VERSION=latest make e2e
 ```
 
