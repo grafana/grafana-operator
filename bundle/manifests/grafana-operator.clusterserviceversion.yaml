@@ -431,5 +431,7 @@ spec:
       name: manager
     - image: ghcr.io/grafana/grafana-operator@sha256:97561cef949b58f55ec67d133c02ac205e2ec3fb77388aeb868dacfcebad0752
       name: grafana-operator-97561cef949b58f55ec67d133c02ac205e2ec3fb77388aeb868dacfcebad0752-annotation
-  replaces: grafana-operator.v5.6.0
-  version: 5.6.1
+  replaces: grafana-operator.v5.6.2
+  skips:
+    - grafana-operator.v5.6.1
+  version: 5.6.3
