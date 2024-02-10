@@ -87,3 +87,22 @@ tolerations: []
 
 # -- pod affinity
 affinity: {}
+
+# -- Enable this to use with Prometheus Operator
+serviceMonitor:
+  # -- When set true then use a ServiceMonitor to configure scraping
+  enabled: false
+  # -- Set of labels to transfer from the Kubernetes Service onto the target
+  additionalLabels: {}
+  # -- Set how frequently Prometheus should scrape
+  interval: 1m
+  # -- Set timeout for scrape
+  scrapeTimeout: 10s
+  # -- Set path to metrics path
+  telemetryPath: /metrics
+  # -- Set of labels to transfer from the Kubernetes Service onto the target
+  targetLabels: []
+  # -- MetricRelabelConfigs to apply to samples before ingestion
+  metricRelabelings: []
+  # -- Set relabel_configs as per https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config
+  relabelings: []
