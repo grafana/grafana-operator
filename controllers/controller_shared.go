@@ -4,12 +4,21 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/model"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+const grafanaFinalizer = "operator.grafana.com/finalizer"
+
+const (
+	conditionNoMatchingInstance = "NoMatchingInstance"
 )
 
 func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSelector *v1.LabelSelector) (v1beta1.GrafanaList, error) {
@@ -53,4 +62,21 @@ func ReconcilePlugins(ctx context.Context, k8sClient client.Client, scheme *runt
 	}
 
 	return nil
+}
+
+func setNoMatchingInstance(conditions *[]metav1.Condition, generation int64, reason, message string) {
+	meta.SetStatusCondition(conditions, metav1.Condition{
+		Type:               conditionNoMatchingInstance,
+		Status:             "True",
+		ObservedGeneration: generation,
+		LastTransitionTime: metav1.Time{
+			Time: time.Now(),
+		},
+		Reason:  reason,
+		Message: message,
+	})
+}
+
+func removeNoMatchingInstance(conditions *[]metav1.Condition) {
+	meta.RemoveStatusCondition(conditions, conditionNoMatchingInstance)
 }
