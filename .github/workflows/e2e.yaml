@@ -75,8 +75,8 @@ jobs:
       - name: Run e2e
         shell: bash
         run: |
-          # install kuttl
-          make kuttl
+          # install chainsaw
+          make chainsaw
           # Run e2e
           VERSION=latest make e2e
 
