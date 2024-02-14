@@ -87,5 +87,5 @@ jobs:
           kubectl -n $NAMESPACE get all
           kubectl -n $NAMESPACE get grafana
           kubectl get crd
-          POD=$(kubectl get pods -n $NAMESPACE -l control-plane=controller-manager --output=jsonpath={.items..metadata.name})
+          POD=$(kubectl get pods -n $NAMESPACE -l control-plane=controller-manager --output=jsonpath={.items.metadata.name})
           kubectl logs -n $NAMESPACE $POD -c manager
