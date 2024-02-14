@@ -4,7 +4,6 @@ kind: Configuration
 metadata:
   name: configuration
 spec:
-  namespace: grafana-operator-system
   timeouts:
     assert: 2m0s
     cleanup: 2m0s
