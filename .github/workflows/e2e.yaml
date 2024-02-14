@@ -50,36 +50,35 @@ jobs:
     steps:
       - name: Clone repo and checkout
         uses: actions/checkout@v4
-
-      - uses: actions/setup-go@v5
+      - name: Install go
+        uses: actions/setup-go@v5
         with:
           go-version-file: "go.mod"
           cache: true
-
-      - uses: ko-build/setup-ko@v0.6
+      - name: Install ko
+        uses: ko-build/setup-ko@v0.6
         with:
           version: v0.13.0
-
-      - name: Set up KinD
+      - name: Install chainsaw
+        uses: kyverno/action-install-chainsaw@07b6c986572f2abaf6647c85d37cbecfddc4a6ab # v0.1.3
+      - name: Create KinD cluster
         id: kind
         run: |
           kind --kubeconfig="${KUBECONFIG}" create cluster --image=kindest/node:v1.25.3 --config tests/e2e/kind.yaml
-
-      - name: Build and load (current arch)
+      - name: Build and load images
         env:
           KO_DOCKER_REPO: ko.local/grafana/grafana-operator
         run: |
+          set -e
           ko build --sbom=none --bare
           kind load docker-image "$KO_DOCKER_REPO"
-
-      - name: Run e2e
+      - name: Run e2e tests
         shell: bash
         run: |
           # install chainsaw
           make chainsaw
           # Run e2e
           VERSION=latest make e2e
-
       - name: Debug failure
         if: failure()
         run: |
