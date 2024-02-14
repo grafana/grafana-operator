@@ -89,4 +89,7 @@ jobs:
           kubectl -n $NAMESPACE get grafana
           kubectl get crd
           POD=$(kubectl get pods -n $NAMESPACE -l app.kubernetes.io/name=grafana-operator --output='jsonpath={.items[].metadata.name}')
+          echo "pod logs"
           kubectl logs -n $NAMESPACE $POD -c manager
+          echo "previous pod logs (if any)"
+          kubectl logs -p -n $NAMESPACE $POD -c manager || true
