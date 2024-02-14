@@ -82,9 +82,13 @@ jobs:
       - name: Debug failure
         if: failure()
         run: |
+          set -e
           kubectl version
           kubectl -n $NAMESPACE get all
           kubectl -n $NAMESPACE get grafana
           kubectl get crd
-          POD=$(kubectl get pods -n $NAMESPACE -l control-plane=controller-manager --output=jsonpath={.items..metadata.name})
+          POD=$(kubectl get pods -n $NAMESPACE -l app.kubernetes.io/name=grafana-operator --output='jsonpath={.items[].metadata.name}')
+          echo "pod logs"
           kubectl logs -n $NAMESPACE $POD -c manager
+          echo "previous pod logs (if any)"
+          kubectl logs -p -n $NAMESPACE $POD -c manager || true
