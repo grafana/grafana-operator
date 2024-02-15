@@ -40,7 +40,7 @@ I suggest that its done in the same way as dashboards and datasources are using 
 
 ### Defining Grafana Service Account to Grafana operator.
 
-Today the Grafana Service Account is only held in memory if not using persistent, so when a pod is restarted or redeployed the grafana service account is removed. The grafana service accounts are also only possible to create using the Grafana GUI or with the HTTP-API and cannot be pre-defined before deploy or kept as IAC.
+Today the Grafana Service Account is only held in memory if not using persistent, so when a pod is restarted or redeployed the grafana service account is removed. The grafana service accounts are also only possible to create using the Grafana GUI or with the HTTP-API and cannot be pre-defined before deploy or kept as IAC. But with the token kept as a k8s-secret in the same namespace as the GSA CR and the grafana instance it would be possible for other applications to use that token even when its rotated or recreated by the operator. RBAC rules are often more restrictive in the view scope so having the k8s-secret with the token in the same namespace as the grafana instance and other running applications would be beneficial.
 
 > Proposed CRD for GrafanaServiceAccounts
 
@@ -58,10 +58,10 @@ spec:
   serviceaccount:
     id: grafana-sa
     roles: [Viewer/Editor/Admin]
-  tokens:
+  tokens: #This is a list of the tokens that belongs to this GSA and that the operator should create k8s-secrets with tokens for with the names specified. If not specified it would default to creating a token in a k8s-secret with a default name if spec.create.generateTokenSecret is true.
     - Name: grafana-sa-token-<name-of-GSA>
       expires: <Absolute date for expiration, defaults to Never>
-  permissions:
+  permissions:    #This is to try and match what values can be set when creating GSA in the GUI where you can set different permissions for users and groups.
     - user: <users in the cluster/root user etc>
       permission: [Edit/Admin]
   instanceSelector:
