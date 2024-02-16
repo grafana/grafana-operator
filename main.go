@@ -190,7 +190,7 @@ func main() {
 	if err = (&controllers.GrafanaAlertRuleGroupReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr, ctx); err != nil {
+	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaAlertRuleGroup")
 		os.Exit(1)
 	}

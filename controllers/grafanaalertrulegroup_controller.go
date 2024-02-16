@@ -105,7 +105,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 
 	instances, err := r.GetMatchingInstances(ctx, group.Spec.InstanceSelector, r.Client)
 	if err != nil {
-		setNoMatchingInstance(&group.Status.Conditions, group.Generation, "ErrFetchingInstances", fmt.Sprintf("error occured during fetching of instances: %s", err.Error()))
+		setNoMatchingInstance(&group.Status.Conditions, group.Generation, "ErrFetchingInstances", fmt.Sprintf("error occurred during fetching of instances: %s", err.Error()))
 		r.Log.Error(err, "could not find matching instances")
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
@@ -129,7 +129,6 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
-
 	}
 	condition := metav1.Condition{
 		Type:               "AlertGroupSynchronized",
@@ -142,7 +141,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 	if len(applyErrors) == 0 {
 		condition.Status = "True"
 		condition.Reason = "ApplySuccesfull"
-		condition.Message = fmt.Sprintf("Alert Rule Group was succesfully applied to %d instances", len(instances.Items))
+		condition.Message = fmt.Sprintf("Alert Rule Group was successfully applied to %d instances", len(instances.Items))
 	} else {
 		condition.Status = "False"
 		condition.Reason = "ApplyFailed"
@@ -160,7 +159,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *GrafanaAlertRuleGroupReconciler) SetupWithManager(mgr ctrl.Manager, ctx context.Context) error {
+func (r *GrafanaAlertRuleGroupReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&grafanav1beta1.GrafanaAlertRuleGroup{}).
 		Complete(r)
@@ -187,6 +186,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 	}
 
 	for _, rule := range group.Spec.Rules {
+		rule := rule
 		apiRule := &models.ProvisionedAlertRule{
 			Annotations:  rule.Annotations,
 			Condition:    &rule.Condition,
@@ -216,7 +216,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 				WithBody(apiRule).
 				WithXDisableProvenance(&strue).
 				WithUID(rule.UID)
-			_, err = cl.Provisioning.PutAlertRule(params)
+			_, err := cl.Provisioning.PutAlertRule(params)
 			if err != nil {
 				return fmt.Errorf("updating rule: %w", err)
 			}
@@ -292,6 +292,7 @@ func (r *GrafanaAlertRuleGroupReconciler) removeFromInstance(ctx context.Context
 		return fmt.Errorf("fetching alert rule group from instance %s: %w", instance.Status.AdminUrl, err)
 	}
 	for _, rule := range remote.Payload.Rules {
+		rule := rule
 		params := provisioning.NewDeleteAlertRuleParams().WithUID(rule.UID)
 		_, err := cl.Provisioning.DeleteAlertRule(params)
 		if err != nil {
