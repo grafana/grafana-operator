@@ -8,11 +8,10 @@ require (
 	github.com/bitly/go-simplejson v0.5.1
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/go-logr/logr v1.4.1
-	github.com/go-openapi/runtime v0.27.1
 	github.com/go-openapi/strfmt v0.22.0
 	github.com/google/go-jsonnet v0.20.0
 	github.com/grafana/grafana-api-golang-client v0.27.0
-	github.com/grafana/grafana-openapi-client-go v0.0.0-20240205122950-d8758043064f
+	github.com/grafana/grafana-openapi-client-go v0.0.0-20240215164046-eb0e60d27cb7
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.31.1
 	github.com/openshift/api v3.9.0+incompatible
@@ -31,6 +30,7 @@ require (
 	github.com/go-openapi/analysis v0.22.2 // indirect
 	github.com/go-openapi/errors v0.21.0 // indirect
 	github.com/go-openapi/loads v0.21.5 // indirect
+	github.com/go-openapi/runtime v0.27.1 // indirect
 	github.com/go-openapi/spec v0.20.14 // indirect
 	github.com/go-openapi/validate v0.23.0 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect

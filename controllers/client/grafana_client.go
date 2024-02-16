@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 	v1 "k8s.io/api/core/v1"
 
-	httptransport "github.com/go-openapi/runtime/client"
 	grapi "github.com/grafana/grafana-api-golang-client"
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -178,7 +177,7 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1
 			timeout = 0
 		}
 	} else {
-		timeout = 10
+		timeout = time.Second * 10
 	}
 
 	credentials, err := getAdminCredentials(ctx, c, grafana)
@@ -191,6 +190,15 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1
 		return nil, fmt.Errorf("parsing url for client: %w", err)
 	}
 
+	client := &http.Client{
+		Transport: &instrumentedRoundTripper{
+			relatedResource: grafana.Name,
+			wrapped:         http.DefaultTransport.(*http.Transport).Clone(),
+			metric:          metrics.GrafanaApiRequests,
+		},
+		Timeout: timeout,
+	}
+
 	cfg := &genapi.TransportConfig{
 		Schemes:  []string{gURL.Scheme},
 		BasePath: "/api",
@@ -199,19 +207,12 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1
 		APIKey: credentials.apikey,
 		// NumRetries contains the optional number of attempted retries
 		NumRetries: 0,
+		Client:     client,
 	}
 	if credentials.username != "" {
 		cfg.BasicAuth = url.UserPassword(credentials.username, credentials.password)
 	}
 	cl := genapi.NewHTTPClientWithConfig(nil, cfg)
-	transport := cl.Transport.(*httptransport.Runtime)
-	wrapped := transport.Transport
-	transport.Transport = &instrumentedRoundTripper{
-		wrapped:         wrapped,
-		metric:          metrics.GrafanaApiRequests,
-		relatedResource: grafana.Name,
-	}
-	cl.SetTransport(transport)
 
 	return cl, nil
 }
