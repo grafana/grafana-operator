@@ -283,7 +283,7 @@ gofumpt:
 ifeq (, $(shell which gofumpt))
 	@{ \
 	set -e ;\
-	go install mvdan.cc/gofumpt@v0.4.0 ;\
+	go install mvdan.cc/gofumpt@v0.6.0 ;\
 	}
 GOFUMPT=$(GOBIN)/gofumpt
 else
