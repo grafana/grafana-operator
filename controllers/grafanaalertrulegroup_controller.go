@@ -216,7 +216,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 				WithBody(apiRule).
 				WithXDisableProvenance(&strue).
 				WithUID(rule.UID)
-			_, err := cl.Provisioning.PutAlertRule(params)
+			_, err := cl.Provisioning.PutAlertRule(params) //nolint:errcheck
 			if err != nil {
 				return fmt.Errorf("updating rule: %w", err)
 			}
@@ -224,7 +224,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 			params := provisioning.NewPostAlertRuleParams().
 				WithBody(apiRule).
 				WithXDisableProvenance(&strue)
-			_, err = cl.Provisioning.PostAlertRule(params)
+			_, err = cl.Provisioning.PostAlertRule(params) //nolint:errcheck
 			if err != nil {
 				return fmt.Errorf("creating rule: %w", err)
 			}
@@ -238,7 +238,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 			params := provisioning.NewDeleteAlertRuleParams().
 				WithUID(uid).
 				WithXDisableProvenance(&strue)
-			_, err := cl.Provisioning.DeleteAlertRule(params)
+			_, err := cl.Provisioning.DeleteAlertRule(params) //nolint:errcheck
 			if err != nil {
 				return fmt.Errorf("deleting old alert rule %s: %w", uid, err)
 			}
@@ -256,7 +256,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 		WithGroup(group.Name).
 		WithFolderUID(group.Spec.FolderUID).
 		WithXDisableProvenance(&strue)
-	_, err = cl.Provisioning.PutAlertRuleGroup(params)
+	_, err = cl.Provisioning.PutAlertRuleGroup(params) //nolint:errcheck
 	if err != nil {
 		return fmt.Errorf("updating group: %s", err.Error())
 	}
@@ -294,7 +294,7 @@ func (r *GrafanaAlertRuleGroupReconciler) removeFromInstance(ctx context.Context
 	for _, rule := range remote.Payload.Rules {
 		rule := rule
 		params := provisioning.NewDeleteAlertRuleParams().WithUID(rule.UID)
-		_, err := cl.Provisioning.DeleteAlertRule(params)
+		_, err := cl.Provisioning.DeleteAlertRule(params) //nolint:errcheck
 		if err != nil {
 			return fmt.Errorf("deleting alert rule %s: %w", rule.UID, err)
 		}
