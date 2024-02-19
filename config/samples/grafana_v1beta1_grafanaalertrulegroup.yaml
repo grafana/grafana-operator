@@ -11,7 +11,8 @@ metadata:
 spec:
   folderUID: f9b0a98d-2ed3-45a6-9521-18679c74d4f1
   instanceSelector:
-    dashboards: "grafana"
+    matchLabels:
+      dashboards: "grafana"
   interval: 5m
   rules:
     - condition: B
