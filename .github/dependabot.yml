@@ -5,8 +5,18 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      gha:
+        update-types:
+          - minor
+          - patch
 
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      gomod:
+        update-types:
+          - minor
+          - patch
