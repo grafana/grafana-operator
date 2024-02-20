@@ -13,6 +13,8 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 const grafanaFinalizer = "operator.grafana.com/finalizer"
@@ -79,4 +81,13 @@ func setNoMatchingInstance(conditions *[]metav1.Condition, generation int64, rea
 
 func removeNoMatchingInstance(conditions *[]metav1.Condition) {
 	meta.RemoveStatusCondition(conditions, conditionNoMatchingInstance)
+}
+
+func ignoreStatusUpdates() predicate.Predicate {
+	return predicate.Funcs{
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			// Ignore updates to CR status in which case metadata.Generation does not change
+			return e.ObjectOld.GetGeneration() != e.ObjectNew.GetGeneration()
+		},
+	}
 }

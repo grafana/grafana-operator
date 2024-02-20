@@ -162,6 +162,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 func (r *GrafanaAlertRuleGroupReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&grafanav1beta1.GrafanaAlertRuleGroup{}).
+		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
 }
 
