@@ -13,7 +13,7 @@ spec:
       resources:
         requests:
           storage: 10Gi
-      storageClassName: <storage-class-name>
+      # storageClassName: "" # Customize storage class if needed
   config:
     log:
       mode: "console"
@@ -34,7 +34,7 @@ spec:
                 readOnlyRootFilesystem: false
               readinessProbe:
                 failureThreshold: 3
-        volumes:
-          - name: grafana-data
-            persistentVolumeClaim:
-              claimName: grafana-pvc
+          volumes:
+            - name: grafana-data
+              persistentVolumeClaim:
+                claimName: grafana-pvc
