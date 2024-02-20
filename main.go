@@ -24,11 +24,14 @@ import (
 	"strings"
 	"syscall"
 
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 
 	routev1 "github.com/openshift/api/route/v1"
@@ -55,6 +58,10 @@ const (
 	// watchNamespaceEnvVar is the constant for env variable WATCH_NAMESPACE which specifies the Namespace to watch.
 	// If empty or undefined, the operator will run in cluster scope.
 	watchNamespaceEnvVar = "WATCH_NAMESPACE"
+	// watchNamespaceEnvSelector is the constant for env variable WATCH_NAMESPACE_SELECTOR which specifies the Namespace label and key to watch.
+	// eg: "environment: dev"
+	// If empty or undefined, the operator will run in cluster scope.
+	watchNamespaceEnvSelector = "WATCH_NAMESPACE_SELECTOR"
 )
 
 var (
@@ -89,6 +96,7 @@ func main() {
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	watchNamespace, _ := os.LookupEnv(watchNamespaceEnvVar)
+	watchNamespaceSelector, _ := os.LookupEnv(watchNamespaceEnvSelector)
 
 	controllerOptions := ctrl.Options{
 		Scheme: scheme,
@@ -119,6 +127,34 @@ func main() {
 		}
 		return defaultNamespaces
 	}
+	getNamespaceConfigSelector := func(selector string) map[string]cache.Config {
+		cl, err := client.New(config.GetConfigOrDie(), client.Options{})
+		if err != nil {
+			setupLog.Error(err, "Failed to get watch namespaces")
+		}
+		nsList := &corev1.NamespaceList{}
+		listOpts := []client.ListOption{
+			client.MatchingLabels(map[string]string{strings.Split(selector, ":")[0]: strings.Split(selector, ":")[1]}),
+		}
+		err = cl.List(context.Background(), nsList, listOpts...)
+		if err != nil {
+			setupLog.Error(err, "Failed to get watch namespaces")
+		}
+		defaultNamespaces := map[string]cache.Config{}
+		for _, v := range nsList.Items {
+			// Generate a mapping of namespaces to label/field selectors, set to Everything() to enable matching all
+			// instances in all namespaces from watchNamespace to be controlled by the operator
+			// this is the default behavior of the operator on v5, if you require finer grained control over this
+			// please file an issue in the grafana-operator/grafana-operator GH project
+			defaultNamespaces[v.Name] = cache.Config{
+				LabelSelector:         labels.Everything(), // Match any labels
+				FieldSelector:         fields.Everything(), // Match any fields
+				Transform:             nil,
+				UnsafeDisableDeepCopy: nil,
+			}
+		}
+		return defaultNamespaces
+	}
 	switch {
 	case strings.Contains(watchNamespace, ","):
 		// multi namespace scoped
@@ -128,8 +164,12 @@ func main() {
 		// namespace scoped
 		controllerOptions.Cache.DefaultNamespaces = getNamespaceConfig(watchNamespace)
 		setupLog.Info("operator running in namespace scoped mode", "namespace", watchNamespace)
+	case strings.Contains(watchNamespaceSelector, ":"):
+		// namespace scoped
+		controllerOptions.Cache.DefaultNamespaces = getNamespaceConfigSelector(watchNamespaceSelector)
+		setupLog.Info("operator running in namespace scoped mode using namespace selector", "namespace", watchNamespace)
 
-	case watchNamespace == "":
+	case watchNamespace == "" && watchNamespaceSelector == "":
 		// cluster scoped
 		setupLog.Info("operator running in cluster scoped mode")
 	}
