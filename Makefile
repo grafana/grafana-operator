@@ -40,6 +40,8 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
+CHAINSAW_VERSION ?= v0.1.6
+
 # Checks if chainsaw is in your PATH
 ifneq ($(shell which chainsaw),)
 CHAINSAW=$(shell which chainsaw)
@@ -255,7 +257,7 @@ chainsaw:
 ifeq (, $(shell which chainsaw))
 	@{ \
 	set -e ;\
-	go install github.com/kyverno/chainsaw@v0.1.3 ;\
+	go install github.com/kyverno/chainsaw@$(CHAINSAW_VERSION) ;\
 	}
 CHAINSAW=$(GOBIN)/chainsaw
 else
