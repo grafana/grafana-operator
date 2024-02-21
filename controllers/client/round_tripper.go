@@ -23,7 +23,7 @@ func NewInstrumentedRoundTripper(relatedResource string, metric *prometheus.Coun
 		transport.TLSClientConfig.InsecureSkipVerify = true //nolint
 	} else {
 		transport.TLSClientConfig = &tls.Config{
-			InsecureSkipVerify: true,
+			InsecureSkipVerify: true, //nolint
 		}
 	}
 
