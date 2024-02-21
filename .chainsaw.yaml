@@ -6,7 +6,7 @@ metadata:
 spec:
   timeouts:
     assert: 2m0s
-    cleanup: 2m0s
+    cleanup: 3m0s
     delete: 2m0s
     error: 2m0s
     exec: 2m0s
