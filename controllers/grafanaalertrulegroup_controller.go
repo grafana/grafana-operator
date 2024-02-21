@@ -272,7 +272,8 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 func (r *GrafanaAlertRuleGroupReconciler) finalize(ctx context.Context, group *grafanav1beta1.GrafanaAlertRuleGroup) error {
 	folderUID := r.GetFolderUID(ctx, group)
 	if folderUID == "" {
-		return fmt.Errorf("failed to fetch folder uid")
+		r.Log.Info("ignoring finalization logic as folder no longer exists")
+		return nil
 	}
 	instances, err := r.GetMatchingInstances(ctx, group.Spec.InstanceSelector, r.Client)
 	if err != nil {
