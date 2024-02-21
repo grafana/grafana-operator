@@ -21,6 +21,7 @@ const grafanaFinalizer = "operator.grafana.com/finalizer"
 
 const (
 	conditionNoMatchingInstance = "NoMatchingInstance"
+	conditionNoMatchingFolder   = "NoMatchingFolder"
 )
 
 func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSelector *v1.LabelSelector) (v1beta1.GrafanaList, error) {
@@ -69,6 +70,19 @@ func ReconcilePlugins(ctx context.Context, k8sClient client.Client, scheme *runt
 func setNoMatchingInstance(conditions *[]metav1.Condition, generation int64, reason, message string) {
 	meta.SetStatusCondition(conditions, metav1.Condition{
 		Type:               conditionNoMatchingInstance,
+		Status:             "True",
+		ObservedGeneration: generation,
+		LastTransitionTime: metav1.Time{
+			Time: time.Now(),
+		},
+		Reason:  reason,
+		Message: message,
+	})
+}
+
+func setNoMatchingFolder(conditions *[]metav1.Condition, generation int64, reason, message string) {
+	meta.SetStatusCondition(conditions, metav1.Condition{
+		Type:               conditionNoMatchingFolder,
 		Status:             "True",
 		ObservedGeneration: generation,
 		LastTransitionTime: metav1.Time{

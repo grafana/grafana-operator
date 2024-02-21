@@ -115,6 +115,11 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 	}
 
 	removeNoMatchingInstance(&group.Status.Conditions)
+	folderUID := r.GetFolderUID(ctx, group)
+	if folderUID == "" {
+		// error is already set in conditions
+		return ctrl.Result{}, nil
+	}
 
 	applyErrors := make(map[string]string)
 	for _, grafana := range instances.Items {
@@ -125,7 +130,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 			continue
 		}
 
-		err := r.reconcileWithInstance(ctx, &grafana, group)
+		err := r.reconcileWithInstance(ctx, &grafana, group, folderUID)
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
@@ -166,14 +171,14 @@ func (r *GrafanaAlertRuleGroupReconciler) SetupWithManager(mgr ctrl.Manager) err
 		Complete(r)
 }
 
-func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Context, instance *grafanav1beta1.Grafana, group *grafanav1beta1.GrafanaAlertRuleGroup) error {
+func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Context, instance *grafanav1beta1.Grafana, group *grafanav1beta1.GrafanaAlertRuleGroup, folderUID string) error {
 	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
 	}
 	strue := "true"
 
-	applied, err := cl.Provisioning.GetAlertRuleGroup(group.Name, group.Spec.FolderUID)
+	applied, err := cl.Provisioning.GetAlertRuleGroup(group.Name, folderUID)
 	var ruleNotFound *provisioning.GetAlertRuleGroupNotFound
 	if err != nil && !errors.As(err, &ruleNotFound) {
 		return fmt.Errorf("fetching existing alert rule group: %w", err)
@@ -193,7 +198,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 			Condition:    &rule.Condition,
 			Data:         make([]*models.AlertQuery, len(rule.Data)),
 			ExecErrState: &rule.ExecErrState,
-			FolderUID:    &group.Spec.FolderUID,
+			FolderUID:    &folderUID,
 			For:          (*strfmt.Duration)(&rule.For.Duration),
 			IsPaused:     rule.IsPaused,
 			Labels:       rule.Labels,
@@ -247,7 +252,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 	}
 
 	mGroup := &models.AlertRuleGroup{
-		FolderUID: group.Spec.FolderUID,
+		FolderUID: folderUID,
 		Interval:  int64(group.Spec.Interval.Seconds()),
 		Rules:     []*models.ProvisionedAlertRule{},
 		Title:     "",
@@ -255,7 +260,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 	params := provisioning.NewPutAlertRuleGroupParams().
 		WithBody(mGroup).
 		WithGroup(group.Name).
-		WithFolderUID(group.Spec.FolderUID).
+		WithFolderUID(folderUID).
 		WithXDisableProvenance(&strue)
 	_, err = cl.Provisioning.PutAlertRuleGroup(params) //nolint:errcheck
 	if err != nil {
@@ -265,25 +270,29 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 }
 
 func (r *GrafanaAlertRuleGroupReconciler) finalize(ctx context.Context, group *grafanav1beta1.GrafanaAlertRuleGroup) error {
+	folderUID := r.GetFolderUID(ctx, group)
+	if folderUID == "" {
+		return fmt.Errorf("failed to fetch folder uid")
+	}
 	instances, err := r.GetMatchingInstances(ctx, group.Spec.InstanceSelector, r.Client)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
 	for _, i := range instances.Items {
 		instance := i
-		if err := r.removeFromInstance(ctx, &instance, group); err != nil {
+		if err := r.removeFromInstance(ctx, &instance, group, folderUID); err != nil {
 			return fmt.Errorf("removing from instance")
 		}
 	}
 	return nil
 }
 
-func (r *GrafanaAlertRuleGroupReconciler) removeFromInstance(ctx context.Context, instance *grafanav1beta1.Grafana, group *grafanav1beta1.GrafanaAlertRuleGroup) error {
+func (r *GrafanaAlertRuleGroupReconciler) removeFromInstance(ctx context.Context, instance *grafanav1beta1.Grafana, group *grafanav1beta1.GrafanaAlertRuleGroup, folderUID string) error {
 	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
 	}
-	remote, err := cl.Provisioning.GetAlertRuleGroup(group.Name, group.Spec.FolderUID)
+	remote, err := cl.Provisioning.GetAlertRuleGroup(group.Name, folderUID)
 	if err != nil {
 		var notFound *provisioning.GetAlertRuleGroupNotFound
 		if errors.As(err, &notFound) {
@@ -309,4 +318,33 @@ func (r *GrafanaAlertRuleGroupReconciler) GetMatchingInstances(ctx context.Conte
 		return grafanav1beta1.GrafanaList{}, err
 	}
 	return instances, err
+}
+
+func (r *GrafanaAlertRuleGroupReconciler) GetMatchingFolders(ctx context.Context, selector *metav1.LabelSelector) (grafanav1beta1.GrafanaFolderList, error) {
+	var list grafanav1beta1.GrafanaFolderList
+	opts := []client.ListOption{
+		client.MatchingLabels(selector.MatchLabels),
+	}
+	err := r.Client.List(ctx, &list, opts...)
+	return list, err
+}
+
+func (r *GrafanaAlertRuleGroupReconciler) GetFolderUID(ctx context.Context, group *grafanav1beta1.GrafanaAlertRuleGroup) string {
+	if group.Spec.FolderUID != "" {
+		return group.Spec.FolderUID
+	}
+	folders, err := r.GetMatchingFolders(ctx, group.Spec.FolderSelector)
+	if err != nil {
+		setNoMatchingFolder(&group.Status.Conditions, group.Generation, "ErrFetchingFolders", fmt.Sprintf("Failed to fetch folders: %s", err.Error()))
+		return ""
+	}
+	if len(folders.Items) < 1 {
+		setNoMatchingFolder(&group.Status.Conditions, group.Generation, "NoMatches", "Folder selector did not match any folders")
+		return ""
+	}
+	if len(folders.Items) > 1 {
+		setNoMatchingFolder(&group.Status.Conditions, group.Generation, "MultipleMatches", fmt.Sprintf("Folder selector matched %d folders. Only one folder can be matched", len(folders.Items)))
+		return ""
+	}
+	return string(folders.Items[0].UID)
 }

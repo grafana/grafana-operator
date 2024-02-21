@@ -35,7 +35,11 @@ type GrafanaAlertRuleGroupSpec struct {
 	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`
 
 	// UID of the folder containing this rule group
-	FolderUID string `json:"folderUID"`
+	// Overrides the FolderSelector
+	FolderUID string `json:"folderUID,omitempty"`
+
+	// Match GrafanaFolders CRs to infer the uid
+	FolderSelector *metav1.LabelSelector `json:"folderSelector"`
 
 	Rules []AlertRule `json:"rules"`
 
