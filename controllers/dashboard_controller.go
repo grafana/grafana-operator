@@ -473,6 +473,9 @@ func (r *GrafanaDashboardReconciler) fetchDashboardJson(ctx context.Context, das
 
 func (r *GrafanaDashboardReconciler) getDashboardEnvs(ctx context.Context, dashboard *v1beta1.GrafanaDashboard) (map[string]string, error) {
 	envs := make(map[string]string)
+	if dashboard.Spec.EnvsFrom == nil && dashboard.Spec.Envs == nil {
+		return nil, fmt.Errorf("dashboard.Spec.Envs or dashboard.Spec.EnvFrom nil, can't get envs for dashboard: %s", dashboard.Name)
+	}
 	if dashboard.Spec.EnvsFrom != nil {
 		for _, ref := range dashboard.Spec.EnvsFrom {
 			key, val, err := r.getReferencedValue(ctx, dashboard, ref)
@@ -508,20 +511,22 @@ func (r *GrafanaDashboardReconciler) getReferencedValue(ctx context.Context, cr 
 		if val, ok := s.Data[source.SecretKeyRef.Key]; ok {
 			return source.SecretKeyRef.Key, string(val), nil
 		} else {
-			return "", "", fmt.Errorf("missing key %s in secret %s", source.SecretKeyRef.Key, source.ConfigMapKeyRef.Name)
+			return "", "", fmt.Errorf("missing key %s in secret %s", source.SecretKeyRef.Key, source.SecretKeyRef.Name)
 		}
-	} else {
+	}
+	if source.ConfigMapKeyRef != nil {
 		s := &v1.ConfigMap{}
-		err := r.Client.Get(ctx, client.ObjectKey{Namespace: cr.Namespace, Name: source.SecretKeyRef.Name}, s)
+		err := r.Client.Get(ctx, client.ObjectKey{Namespace: cr.Namespace, Name: source.ConfigMapKeyRef.Name}, s)
 		if err != nil {
 			return "", "", err
 		}
-		if val, ok := s.Data[source.SecretKeyRef.Key]; ok {
-			return source.SecretKeyRef.Key, val, nil
+		if val, ok := s.Data[source.ConfigMapKeyRef.Key]; ok {
+			return source.ConfigMapKeyRef.Key, val, nil
 		} else {
-			return "", "", fmt.Errorf("missing key %s in configmap %s", source.SecretKeyRef.Key, source.ConfigMapKeyRef.Name)
+			return "", "", fmt.Errorf("missing key %s in configmap %s", source.ConfigMapKeyRef.Key, source.ConfigMapKeyRef.Name)
 		}
 	}
+	return "", "", fmt.Errorf("source couldn't be parsed source: %s", source)
 }
 
 // getDashboardModel resolves datasources, updates uid (if needed) and converts raw json to type grafana client accepts
