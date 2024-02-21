@@ -190,13 +190,11 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1
 		return nil, fmt.Errorf("parsing url for client: %w", err)
 	}
 
+	transport := NewInstrumentedRoundTripper(grafana.Name, metrics.GrafanaApiRequests, grafana.IsExternal())
+
 	client := &http.Client{
-		Transport: &instrumentedRoundTripper{
-			relatedResource: grafana.Name,
-			wrapped:         http.DefaultTransport.(*http.Transport).Clone(),
-			metric:          metrics.GrafanaApiRequests,
-		},
-		Timeout: timeout,
+		Transport: transport,
+		Timeout:   timeout,
 	}
 
 	cfg := &genapi.TransportConfig{
