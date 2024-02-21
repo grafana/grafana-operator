@@ -60,7 +60,7 @@ jobs:
         with:
           version: v0.13.0
       - name: Install chainsaw
-        uses: kyverno/action-install-chainsaw@8307cf9038333ce168dd4339ae24f9ab16ab7a00 # v0.1.4
+        uses: kyverno/action-install-chainsaw@v0.1.6
       - name: Create KinD cluster
         id: kind
         run: |
