@@ -30,6 +30,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/grafana/grafana-openapi-client-go/client/folders"
 	"github.com/grafana/grafana-openapi-client-go/client/provisioning"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -177,6 +178,15 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 		return fmt.Errorf("building grafana client: %w", err)
 	}
 	strue := "true"
+
+	_, err = cl.Folders.GetFolderByUID(folderUID) //nolint:errcheck
+	if err != nil {
+		var folderNotFound *folders.GetFolderByUIDNotFound
+		if errors.As(err, &folderNotFound) {
+			return fmt.Errorf("folder with uid %s not found", folderUID)
+		}
+		return fmt.Errorf("fetching folder: %w", err)
+	}
 
 	applied, err := cl.Provisioning.GetAlertRuleGroup(group.Name, folderUID)
 	var ruleNotFound *provisioning.GetAlertRuleGroupNotFound
