@@ -225,11 +225,14 @@ spec:
                   type: object
                 type: array
             required:
-            - folderSelector
             - instanceSelector
             - interval
             - rules
             type: object
+            x-kubernetes-validations:
+            - message: Only one of FolderUID or FolderSelector can be set
+              rule: (has(self.folderUID) && !(has(self.folderSelector))) || (has(self.folderSelector)
+                && !(has(self.folderUID)))
           status:
             description: GrafanaAlertRuleGroupStatus defines the observed state of
               GrafanaAlertRuleGroup

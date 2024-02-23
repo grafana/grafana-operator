@@ -23,6 +23,7 @@ import (
 )
 
 // GrafanaAlertRuleGroupSpec defines the desired state of GrafanaAlertRuleGroup
+// +kubebuilder:validation:XValidation:rule="(has(self.folderUID) && !(has(self.folderSelector))) || (has(self.folderSelector) && !(has(self.folderUID)))", message="Only one of FolderUID or FolderSelector can be set"
 type GrafanaAlertRuleGroupSpec struct {
 	// +optional
 	// +kubebuilder:validation:Type=string
@@ -39,7 +40,7 @@ type GrafanaAlertRuleGroupSpec struct {
 	FolderUID string `json:"folderUID,omitempty"`
 
 	// Match GrafanaFolders CRs to infer the uid
-	FolderSelector *metav1.LabelSelector `json:"folderSelector"`
+	FolderSelector *metav1.LabelSelector `json:"folderSelector,omitempty"`
 
 	Rules []AlertRule `json:"rules"`
 
