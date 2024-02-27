@@ -89,3 +89,16 @@ This is because especially the data sources contain secret information and we do
 
 The Operator can use a proxy server when fetching URL-based / Grafana.com dashboards or making requests to external Grafana instances.
 The proxy settings can be controlled through environment variables as documented [here](https://pkg.go.dev/golang.org/x/net/http/httpproxy#FromEnvironment).
+
+## Deleting resources with a finalizer
+
+The operator marks some resources with [finalizers](https://kubernetes.io/docs/concepts/overview/working-with-objects/finalizers/) to clean up resources on deletion.
+If the operator is not running, marked resources are unable to be deleted. This is intended.
+However, this behavior can cause issues if, for example, you uninstalled the operator and now can't remove resources.
+To manually remove the finalizer, use the following command:
+
+```bash
+kubectl patch GrafanaAlertRuleGroup <rule-group-name> -p '{"metadata":{"finalizers":null}}' --type=merge
+```
+
+After running this, the resource can be deleted as usual.
