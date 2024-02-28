@@ -104,13 +104,13 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 		}
 	}()
 
-	instances, err := r.GetMatchingInstances(ctx, group.Spec.InstanceSelector, r.Client)
+	instances, err := r.GetMatchingInstances(ctx, group, r.Client)
 	if err != nil {
 		setNoMatchingInstance(&group.Status.Conditions, group.Generation, "ErrFetchingInstances", fmt.Sprintf("error occurred during fetching of instances: %s", err.Error()))
 		r.Log.Error(err, "could not find matching instances")
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
-	if len(instances.Items) == 0 {
+	if len(instances) == 0 {
 		setNoMatchingInstance(&group.Status.Conditions, group.Generation, "EmptyAPIReply", "Instances could not be fetched, reconciliation will be retried")
 		return ctrl.Result{}, nil
 	}
@@ -123,7 +123,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 	}
 
 	applyErrors := make(map[string]string)
-	for _, grafana := range instances.Items {
+	for _, grafana := range instances {
 		// can be removed in go 1.22+
 		grafana := grafana
 		if grafana.Status.Stage != grafanav1beta1.OperatorStageComplete || grafana.Status.StageStatus != grafanav1beta1.OperatorStageResultSuccess {
@@ -147,7 +147,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 	if len(applyErrors) == 0 {
 		condition.Status = "True"
 		condition.Reason = "ApplySuccesfull"
-		condition.Message = fmt.Sprintf("Alert Rule Group was successfully applied to %d instances", len(instances.Items))
+		condition.Message = fmt.Sprintf("Alert Rule Group was successfully applied to %d instances", len(instances))
 	} else {
 		condition.Status = "False"
 		condition.Reason = "ApplyFailed"
@@ -157,7 +157,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 			sb.WriteString(fmt.Sprintf("\n- %s: %s", i, err))
 		}
 
-		condition.Message = fmt.Sprintf("Alert Rule Group failed to be applied for %d out of %d instances. Errors:%s", len(applyErrors), len(instances.Items), sb.String())
+		condition.Message = fmt.Sprintf("Alert Rule Group failed to be applied for %d out of %d instances. Errors:%s", len(applyErrors), len(instances), sb.String())
 	}
 	meta.SetStatusCondition(&group.Status.Conditions, condition)
 
@@ -285,11 +285,11 @@ func (r *GrafanaAlertRuleGroupReconciler) finalize(ctx context.Context, group *g
 		r.Log.Info("ignoring finalization logic as folder no longer exists")
 		return nil
 	}
-	instances, err := r.GetMatchingInstances(ctx, group.Spec.InstanceSelector, r.Client)
+	instances, err := r.GetMatchingInstances(ctx, group, r.Client)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
-	for _, i := range instances.Items {
+	for _, i := range instances {
 		instance := i
 		if err := r.removeFromInstance(ctx, &instance, group, folderUID); err != nil {
 			return fmt.Errorf("removing from instance")
@@ -323,12 +323,22 @@ func (r *GrafanaAlertRuleGroupReconciler) removeFromInstance(ctx context.Context
 	return nil
 }
 
-func (r *GrafanaAlertRuleGroupReconciler) GetMatchingInstances(ctx context.Context, selector *metav1.LabelSelector, k8sClient client.Client) (grafanav1beta1.GrafanaList, error) {
-	instances, err := GetMatchingInstances(ctx, k8sClient, selector)
+func (r *GrafanaAlertRuleGroupReconciler) GetMatchingInstances(ctx context.Context, group *grafanav1beta1.GrafanaAlertRuleGroup, k8sClient client.Client) ([]grafanav1beta1.Grafana, error) {
+	instances, err := GetMatchingInstances(ctx, k8sClient, group.Spec.InstanceSelector)
 	if err != nil || len(instances.Items) == 0 {
-		return grafanav1beta1.GrafanaList{}, err
+		return nil, err
 	}
-	return instances, err
+	if group.Spec.AllowCrossNamespaceImport != nil && *group.Spec.AllowCrossNamespaceImport {
+		return instances.Items, nil
+	}
+	items := []grafanav1beta1.Grafana{}
+	for _, i := range instances.Items {
+		if i.Namespace == group.Namespace {
+			items = append(items, i)
+		}
+	}
+
+	return items, err
 }
 
 func (r *GrafanaAlertRuleGroupReconciler) GetMatchingFolders(ctx context.Context, selector *metav1.LabelSelector) (grafanav1beta1.GrafanaFolderList, error) {

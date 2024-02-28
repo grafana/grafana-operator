@@ -49,6 +49,9 @@ type GrafanaAlertRuleGroupSpec struct {
 	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
 	// +kubebuilder:validation:Required
 	Interval metav1.Duration `json:"interval"`
+
+	// +optional
+	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
 }
 
 // AlertRule defines a specific rule to be evaluated. It is based on the upstream model with some k8s specific type mappings

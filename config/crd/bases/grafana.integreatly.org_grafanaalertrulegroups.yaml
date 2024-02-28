@@ -26,6 +26,8 @@ spec:
             type: object
           spec:
             properties:
+              allowCrossNamespaceImport:
+                type: boolean
               folderRef:
                 type: string
               folderUID:

@@ -35,6 +35,8 @@ spec:
           spec:
             description: GrafanaAlertRuleGroupSpec defines the desired state of GrafanaAlertRuleGroup
             properties:
+              allowCrossNamespaceImport:
+                type: boolean
               folderRef:
                 description: Match GrafanaFolders CRs to infer the uid
                 type: string
