@@ -26,30 +26,8 @@ spec:
             type: object
           spec:
             properties:
-              folderSelector:
-                properties:
-                  matchExpressions:
-                    items:
-                      properties:
-                        key:
-                          type: string
-                        operator:
-                          type: string
-                        values:
-                          items:
-                            type: string
-                          type: array
-                      required:
-                      - key
-                      - operator
-                      type: object
-                    type: array
-                  matchLabels:
-                    additionalProperties:
-                      type: string
-                    type: object
-                type: object
-                x-kubernetes-map-type: atomic
+              folderRef:
+                type: string
               folderUID:
                 type: string
               instanceSelector:
@@ -162,8 +140,8 @@ spec:
             - rules
             type: object
             x-kubernetes-validations:
-            - message: Only one of FolderUID or FolderSelector can be set
-              rule: (has(self.folderUID) && !(has(self.folderSelector))) || (has(self.folderSelector)
+            - message: Only one of FolderUID or FolderRef can be set
+              rule: (has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef)
                 && !(has(self.folderUID)))
           status:
             properties:

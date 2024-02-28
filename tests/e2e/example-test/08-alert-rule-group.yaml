@@ -14,9 +14,7 @@ kind: GrafanaAlertRuleGroup
 metadata:
   name: test
 spec:
-  folderSelector:
-    matchLabels:
-      folder: "test-folder"
+  folderRef: "test-folder-from-operator"
   instanceSelector:
     matchLabels:
       dashboards: "grafana"

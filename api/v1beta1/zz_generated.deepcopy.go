@@ -474,11 +474,6 @@ func (in *GrafanaAlertRuleGroupSpec) DeepCopyInto(out *GrafanaAlertRuleGroupSpec
 		*out = new(metav1.LabelSelector)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.FolderSelector != nil {
-		in, out := &in.FolderSelector, &out.FolderSelector
-		*out = new(metav1.LabelSelector)
-		(*in).DeepCopyInto(*out)
-	}
 	if in.Rules != nil {
 		in, out := &in.Rules, &out.Rules
 		*out = make([]AlertRule, len(*in))

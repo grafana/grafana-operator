@@ -344,18 +344,18 @@ func (r *GrafanaAlertRuleGroupReconciler) GetFolderUID(ctx context.Context, grou
 	if group.Spec.FolderUID != "" {
 		return group.Spec.FolderUID
 	}
-	folders, err := r.GetMatchingFolders(ctx, group.Spec.FolderSelector)
+	var folder grafanav1beta1.GrafanaFolder
+	err := r.Client.Get(ctx, client.ObjectKey{
+		Namespace: group.Namespace,
+		Name:      group.Spec.FolderRef,
+	}, &folder)
 	if err != nil {
-		setNoMatchingFolder(&group.Status.Conditions, group.Generation, "ErrFetchingFolders", fmt.Sprintf("Failed to fetch folders: %s", err.Error()))
+		if kuberr.IsNotFound(err) {
+			setNoMatchingFolder(&group.Status.Conditions, group.Generation, "NotFound", fmt.Sprintf("Folder with name %s not found in namespace %s", group.Spec.FolderRef, group.Namespace))
+			return ""
+		}
+		setNoMatchingFolder(&group.Status.Conditions, group.Generation, "ErrFetchingFolder", fmt.Sprintf("Failed to fetch folder: %s", err.Error()))
 		return ""
 	}
-	if len(folders.Items) < 1 {
-		setNoMatchingFolder(&group.Status.Conditions, group.Generation, "NoMatches", "Folder selector did not match any folders")
-		return ""
-	}
-	if len(folders.Items) > 1 {
-		setNoMatchingFolder(&group.Status.Conditions, group.Generation, "MultipleMatches", fmt.Sprintf("Folder selector matched %d folders. Only one folder can be matched", len(folders.Items)))
-		return ""
-	}
-	return string(folders.Items[0].UID)
+	return string(folder.UID)
 }
