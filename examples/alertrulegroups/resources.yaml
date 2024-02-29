@@ -19,8 +19,6 @@ apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaFolder
 metadata:
   name: test-folder
-  labels:
-    folder: test-folder
 spec:
   instanceSelector:
     matchLabels:
@@ -31,9 +29,7 @@ kind: GrafanaAlertRuleGroup
 metadata:
   name: grafanaalertrulegroup-sample
 spec:
-  folderSelector:
-    matchLabels:
-      folder: test-folder
+  folderRef: test-folder
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
