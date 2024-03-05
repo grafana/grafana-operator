@@ -2,13 +2,6 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  labels:
-    app.kubernetes.io/name: clusterrole
-    app.kubernetes.io/instance: grafanaalertrulegroup-editor-role
-    app.kubernetes.io/component: rbac
-    app.kubernetes.io/created-by: grafana-operator
-    app.kubernetes.io/part-of: grafana-operator
-    app.kubernetes.io/managed-by: kustomize
   name: grafanaalertrulegroup-editor-role
 rules:
 - apiGroups:
