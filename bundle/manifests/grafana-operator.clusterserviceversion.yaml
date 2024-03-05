@@ -31,6 +31,103 @@ metadata:
         },
         {
           "apiVersion": "grafana.integreatly.org/v1beta1",
+          "kind": "GrafanaAlertRuleGroup",
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/created-by": "grafana-operator",
+              "app.kubernetes.io/instance": "grafanaalertrulegroup-sample",
+              "app.kubernetes.io/managed-by": "kustomize",
+              "app.kubernetes.io/name": "grafanaalertrulegroup",
+              "app.kubernetes.io/part-of": "grafana-operator"
+            },
+            "name": "grafanaalertrulegroup-sample"
+          },
+          "spec": {
+            "folderRef": "test-folder-from-operator",
+            "instanceSelector": {
+              "matchLabels": {
+                "dashboards": "grafana"
+              }
+            },
+            "interval": "5m",
+            "rules": [
+              {
+                "condition": "B",
+                "data": [
+                  {
+                    "datasourceUid": "grafanacloud-demoinfra-prom",
+                    "model": {
+                      "datasource": {
+                        "type": "prometheus",
+                        "uid": "grafanacloud-demoinfra-prom"
+                      },
+                      "editorMode": "code",
+                      "expr": "weather_temp_c{}",
+                      "instant": true,
+                      "intervalMs": 1000,
+                      "legendFormat": "__auto",
+                      "maxDataPoints": 43200,
+                      "range": false,
+                      "refId": "A"
+                    },
+                    "refId": "A",
+                    "relativeTimeRange": {
+                      "from": 600
+                    }
+                  },
+                  {
+                    "datasourceUid": "__expr__",
+                    "model": {
+                      "conditions": [
+                        {
+                          "evaluator": {
+                            "params": [
+                              0
+                            ],
+                            "type": "gt"
+                          },
+                          "operator": {
+                            "type": "and"
+                          },
+                          "query": {
+                            "params": [
+                              "C"
+                            ]
+                          },
+                          "reducer": {
+                            "params": [],
+                            "type": "last"
+                          },
+                          "type": "query"
+                        }
+                      ],
+                      "datasource": {
+                        "type": "__expr__",
+                        "uid": "__expr__"
+                      },
+                      "expression": "A",
+                      "intervalMs": 1000,
+                      "maxDataPoints": 43200,
+                      "refId": "B",
+                      "type": "threshold"
+                    },
+                    "refId": "B",
+                    "relativeTimeRange": {
+                      "from": 600
+                    }
+                  }
+                ],
+                "execErrState": "Error",
+                "for": "5m0s",
+                "noDataState": "NoData",
+                "title": "Temperature below freezing",
+                "uid": "4843de5c-4f8a-4af0-9509-23526a04faf8"
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "grafana.integreatly.org/v1beta1",
           "kind": "GrafanaDashboard",
           "metadata": {
             "name": "grafanadashboard-sample"
@@ -95,7 +192,7 @@ metadata:
     capabilities: Basic Install
     categories: Monitoring
     containerImage: ghcr.io/grafana/grafana-operator@sha256:97561cef949b58f55ec67d133c02ac205e2ec3fb77388aeb868dacfcebad0752
-    createdAt: "2024-02-11T09:40:22Z"
+    createdAt: "2024-03-05T15:09:12Z"
     description: Deploys and manages Grafana instances, dashboards and data sources
     operators.operatorframework.io/builder: operator-sdk-v1.32.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
@@ -107,6 +204,11 @@ spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
+      - description: GrafanaAlertRuleGroup is the Schema for the grafanaalertrulegroups API
+        displayName: Grafana Alert Rule Group
+        kind: GrafanaAlertRuleGroup
+        name: grafanaalertrulegroups.grafana.integreatly.org
+        version: v1beta1
       - description: GrafanaDashboard is the Schema for the grafanadashboards API
         displayName: Grafana Dashboard
         kind: GrafanaDashboard
@@ -174,6 +276,32 @@ spec:
                 - patch
                 - update
                 - watch
+            - apiGroups:
+                - grafana.integreatly.org
+              resources:
+                - grafanaalertrulegroups
+              verbs:
+                - create
+                - delete
+                - get
+                - list
+                - patch
+                - update
+                - watch
+            - apiGroups:
+                - grafana.integreatly.org
+              resources:
+                - grafanaalertrulegroups/finalizers
+              verbs:
+                - update
+            - apiGroups:
+                - grafana.integreatly.org
+              resources:
+                - grafanaalertrulegroups/status
+              verbs:
+                - get
+                - patch
+                - update
             - apiGroups:
                 - grafana.integreatly.org
               resources:
