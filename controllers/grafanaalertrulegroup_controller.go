@@ -341,15 +341,6 @@ func (r *GrafanaAlertRuleGroupReconciler) GetMatchingInstances(ctx context.Conte
 	return items, err
 }
 
-func (r *GrafanaAlertRuleGroupReconciler) GetMatchingFolders(ctx context.Context, selector *metav1.LabelSelector) (grafanav1beta1.GrafanaFolderList, error) {
-	var list grafanav1beta1.GrafanaFolderList
-	opts := []client.ListOption{
-		client.MatchingLabels(selector.MatchLabels),
-	}
-	err := r.Client.List(ctx, &list, opts...)
-	return list, err
-}
-
 func (r *GrafanaAlertRuleGroupReconciler) GetFolderUID(ctx context.Context, group *grafanav1beta1.GrafanaAlertRuleGroup) string {
 	if group.Spec.FolderUID != "" {
 		return group.Spec.FolderUID
