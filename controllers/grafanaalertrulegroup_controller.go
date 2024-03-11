@@ -42,6 +42,10 @@ import (
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 )
 
+const (
+	conditionAlertGroupSynchronized = "AlertGroupSynchronized"
+)
+
 // GrafanaAlertRuleGroupReconciler reconciles a GrafanaAlertRuleGroup object
 type GrafanaAlertRuleGroupReconciler struct {
 	client.Client
@@ -90,27 +94,31 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 		}
 		return ctrl.Result{}, nil
 	}
-	if !controllerutil.ContainsFinalizer(group, grafanaFinalizer) {
-		controllerutil.AddFinalizer(group, grafanaFinalizer)
-		if err := r.Update(ctx, group); err != nil {
-			r.Log.Error(err, "failed to set finalizer")
-			return ctrl.Result{RequeueAfter: RequeueDelay}, err
-		}
-	}
 
 	defer func() {
 		if err := r.Client.Status().Update(ctx, group); err != nil {
 			r.Log.Error(err, "updating status")
+		}
+		if meta.IsStatusConditionTrue(group.Status.Conditions, conditionNoMatchingInstance) {
+			controllerutil.RemoveFinalizer(group, grafanaFinalizer)
+		} else {
+			controllerutil.AddFinalizer(group, grafanaFinalizer)
+		}
+		if err := r.Update(ctx, group); err != nil {
+			r.Log.Error(err, "failed to set finalizer")
 		}
 	}()
 
 	instances, err := r.GetMatchingInstances(ctx, group, r.Client)
 	if err != nil {
 		setNoMatchingInstance(&group.Status.Conditions, group.Generation, "ErrFetchingInstances", fmt.Sprintf("error occurred during fetching of instances: %s", err.Error()))
+		meta.RemoveStatusCondition(&group.Status.Conditions, conditionAlertGroupSynchronized)
 		r.Log.Error(err, "could not find matching instances")
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
+
 	if len(instances) == 0 {
+		meta.RemoveStatusCondition(&group.Status.Conditions, conditionAlertGroupSynchronized)
 		setNoMatchingInstance(&group.Status.Conditions, group.Generation, "EmptyAPIReply", "Instances could not be fetched, reconciliation will be retried")
 		return ctrl.Result{}, nil
 	}
@@ -137,7 +145,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 		}
 	}
 	condition := metav1.Condition{
-		Type:               "AlertGroupSynchronized",
+		Type:               conditionAlertGroupSynchronized,
 		ObservedGeneration: group.Generation,
 		LastTransitionTime: metav1.Time{
 			Time: time.Now(),
