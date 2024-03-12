@@ -49,11 +49,11 @@ spec:
               {{ else }}
               value: {{ .Values.watchNamespaces }}
               {{- end }}
-            - name: WATCH_NAMESPACE_SELECTOR 
+            - name: WATCH_NAMESPACE_SELECTOR
               {{- if and .Values.namespaceScope (eq .Values.watchNamespaceSelector "") }}
               value: ""
               {{ else }}
-              value: {{ .Values.watchNamespaceSelector }}
+              value: {{quote .Values.watchNamespaceSelector }}
               {{- end }}
             {{- with .Values.env }}
               {{- toYaml . | nindent 12 }}
