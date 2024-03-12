@@ -69,4 +69,5 @@ It's easier to just manage this configuration outside of the operator.
 | serviceMonitor.targetLabels | list | `[]` | Set of labels to transfer from the Kubernetes Service onto the target |
 | serviceMonitor.telemetryPath | string | `"/metrics"` | Set path to metrics path |
 | tolerations | list | `[]` | pod tolerations |
+| watchNamespaceSelector | string | `""` | Sets the WATCH_NAMESPACE_SELECTOR environment variable, it defines which namespaces the operator should be listening for based on label and key value pair added on namespace kind. By default it's all namespaces. |
 | watchNamespaces | string | `""` | Sets the WATCH_NAMESPACE environment variable, it defines which namespaces the operator should be listening for. By default it's all namespaces, if you only want to listen for the same namespace as the operator is deployed to look at namespaceScope. |
