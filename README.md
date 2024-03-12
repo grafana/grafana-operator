@@ -35,7 +35,7 @@ Prefer Kustomize, Openshift OLM, or Kubernetes directly? Find detailed instructi
 
 For even more detailed setups, see our [documentation](docs/README.md).
 
-#### Example: Deploying Grafana & A Dashboard
+### Example: Deploying Grafana & A Dashboard
 
 Here's a simple example of deploying Grafana and a Grafana Dashboard using the custom resources (CRs) defined by the Grafana Operator:
 
