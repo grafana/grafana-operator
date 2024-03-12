@@ -1,4 +1,4 @@
-<center>
+<div align="center">
 
 # Grafana Operator
 
@@ -10,7 +10,7 @@
 
 **[Official Documentation](https://grafana-operator.github.io/grafana-operator/)** | **[Quickstart](#getting-started)** | **[Installation](#installation)** | **[Tutorials](https://grafana.com/docs/grafana-cloud/developer-resources/infrastructure-as-code/grafana-operator/)**
 
-</center>
+</div>
 
 The Grafana Operator is a Kubernetes operator built to help you manage your Grafana instances and its resources in and outside of
 Kubernetes.
