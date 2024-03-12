@@ -1,0 +1,24 @@
+# permissions for end users to edit grafanaalertrulegroups.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: grafanaalertrulegroup-editor-role
+rules:
+- apiGroups:
+  - grafana.integreatly.org
+  resources:
+  - grafanaalertrulegroups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - grafana.integreatly.org
+  resources:
+  - grafanaalertrulegroups/status
+  verbs:
+  - get

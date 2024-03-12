@@ -53,3 +53,9 @@ spec:
         file: 07-jsonnet-project.yaml
     - assert:
         file: 07-assert.yaml
+  - name: step-08
+    try:
+    - apply:
+        file: 08-alert-rule-group.yaml
+    - assert:
+        file: 08-assert.yaml

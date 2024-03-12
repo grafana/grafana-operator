@@ -268,7 +268,7 @@ golangci:
 ifeq (, $(shell which golangci-lint))
 	@{ \
 	set -e ;\
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.2 ;\
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.56.2 ;\
 	}
 GOLANGCI=$(GOBIN)/golangci-lint
 else
@@ -283,7 +283,7 @@ gofumpt:
 ifeq (, $(shell which gofumpt))
 	@{ \
 	set -e ;\
-	go install mvdan.cc/gofumpt@v0.4.0 ;\
+	go install mvdan.cc/gofumpt@v0.6.0 ;\
 	}
 GOFUMPT=$(GOBIN)/gofumpt
 else
