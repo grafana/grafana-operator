@@ -84,3 +84,5 @@ require (
 )
 
 replace github.com/openshift/api => github.com/openshift/api v0.0.0-20190924102528-32369d4db2ad
+
+replace github.com/grafana/grafana-api-golang-client => github.com/boris-smidt-klarrio/grafana-api-golang-client v0.28.0

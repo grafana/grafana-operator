@@ -391,9 +391,10 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 
 	resp, err := grafanaClient.NewDashboard(grapi.Dashboard{
 		Meta: grapi.DashboardMeta{
-			IsStarred: false,
-			Slug:      cr.Name,
-			Folder:    folderID,
+			IsStarred:   false,
+			Slug:        cr.Name,
+			Folder:      folderID,
+			Provisioned: true,
 		},
 		Model:     dashboardModel,
 		FolderID:  folderID,
