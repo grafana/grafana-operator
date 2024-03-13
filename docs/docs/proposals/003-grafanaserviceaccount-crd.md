@@ -51,7 +51,7 @@ metadata:
   name: grafana-sa
   namespace: grafana-namespace
 spec:
-  serviceaccounts: #Not sure if this is the right place to place it but thats easily fixed when implementing.
+  grafanaServiceAccounts: #Not sure if this is the right place to place it but thats easily fixed when implementing.
     createServiceAccount:
         generateTokenSecret: [true/false] #Will create the k8s-secret with a default name if true. Defaults to true.
     accounts: #Since its possible today to have multiple service accounts it should be a list of accounts. Open to other placement or renaming of spec.serviceaccounts if its 
