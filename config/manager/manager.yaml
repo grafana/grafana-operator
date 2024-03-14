@@ -63,7 +63,7 @@ spec:
               memory: 20Mi
           env:
             - name: RELATED_IMAGE_GRAFANA
-              value: "docker.io/grafana/grafana:9.1.6"
+              value: "docker.io/grafana/grafana:9.5.17"
             - name: WATCH_NAMESPACE
               valueFrom:
                 fieldRef:

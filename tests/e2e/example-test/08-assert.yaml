@@ -1,0 +1,8 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaAlertRuleGroup
+metadata:
+  name: test
+status:
+  conditions:
+  - type: AlertGroupSynchronized
+    status: "True"

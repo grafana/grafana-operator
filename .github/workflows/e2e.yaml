@@ -23,7 +23,7 @@ jobs:
           fetch-depth: 0
       - id: changed-files
         name: Get changed files
-        uses: tj-actions/changed-files@90a06d6ba9543371ab4df8eeca0be07ca6054959 #v42.0.2
+        uses: tj-actions/changed-files@aa08304bd477b800d468db44fe10f6c61f7f7b11 #v42.1.0
         with:
           files_ignore: |
             **/*.md
@@ -50,42 +50,45 @@ jobs:
     steps:
       - name: Clone repo and checkout
         uses: actions/checkout@v4
-
-      - uses: actions/setup-go@v5
+      - name: Install go
+        uses: actions/setup-go@v5
         with:
           go-version-file: "go.mod"
           cache: true
-
-      - uses: ko-build/setup-ko@v0.6
+      - name: Install ko
+        uses: ko-build/setup-ko@v0.6
         with:
           version: v0.13.0
-
-      - name: Set up KinD
+      - name: Install chainsaw
+        uses: kyverno/action-install-chainsaw@v0.1.8
+      - name: Create KinD cluster
         id: kind
         run: |
           kind --kubeconfig="${KUBECONFIG}" create cluster --image=kindest/node:v1.25.3 --config tests/e2e/kind.yaml
-
-      - name: Build and load (current arch)
+      - name: Build and load images
         env:
           KO_DOCKER_REPO: ko.local/grafana/grafana-operator
         run: |
+          set -e
           ko build --sbom=none --bare
           kind load docker-image "$KO_DOCKER_REPO"
-
-      - name: Run e2e
+      - name: Run e2e tests
         shell: bash
         run: |
-          # install kuttl
-          make kuttl
+          # install chainsaw
+          make chainsaw
           # Run e2e
           VERSION=latest make e2e
-
       - name: Debug failure
         if: failure()
         run: |
+          set -e
           kubectl version
           kubectl -n $NAMESPACE get all
           kubectl -n $NAMESPACE get grafana
           kubectl get crd
-          POD=$(kubectl get pods -n $NAMESPACE -l control-plane=controller-manager --output=jsonpath={.items..metadata.name})
+          POD=$(kubectl get pods -n $NAMESPACE -l app.kubernetes.io/name=grafana-operator --output='jsonpath={.items[].metadata.name}')
+          echo "pod logs"
           kubectl logs -n $NAMESPACE $POD -c manager
+          echo "previous pod logs (if any)"
+          kubectl logs -p -n $NAMESPACE $POD -c manager || true

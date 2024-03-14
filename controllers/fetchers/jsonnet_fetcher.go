@@ -247,7 +247,6 @@ func postJsonnetProjectBuild(buildName string) error {
 	fmt.Println("Listing dashboards dir after deletion")
 
 	err = listDirectoryContents(config.GrafanaDashboardsRuntimeBuild)
-
 	if err != nil {
 		fmt.Println("Error listing directory contents:", err)
 		return err

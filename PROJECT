@@ -42,4 +42,13 @@ resources:
   kind: GrafanaFolder
   path: github.com/grafana/grafana-operator/api/v1beta1
   version: v1beta1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: integreatly.org
+  group: grafana
+  kind: GrafanaAlertRuleGroup
+  path: github.com/grafana/grafana-operator/api/v1beta1
+  version: v1beta1
 version: "3"

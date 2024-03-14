@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana-deployment
+  ownerReferences:
+  - apiVersion: grafana.integreatly.org/v1beta1
+    kind: Grafana
+    name: grafana
+spec: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-service
+  ownerReferences:
+  - apiVersion: grafana.integreatly.org/v1beta1
+    kind: Grafana
+    name: grafana
+spec: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-ini
+  ownerReferences:
+  - apiVersion: grafana.integreatly.org/v1beta1
+    kind: Grafana
+    name: grafana
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-plugins
+  ownerReferences:
+  - apiVersion: grafana.integreatly.org/v1beta1
+    kind: Grafana
+    name: grafana
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: example-grafanadatasource
+  namespace: (join('-', ['cross', $namespace]))
+status:
+  (lastMessage != null): true

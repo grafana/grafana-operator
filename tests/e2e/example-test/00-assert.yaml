@@ -3,7 +3,7 @@ kind: Grafana
 metadata:
   name: grafana
 status:
-  adminUrl: http://grafana-service.grafana-operator-system:3000
+  (wildcard('http://grafana-service.*:3000', adminUrl || '')): true
   stage: complete
   stageStatus: success
 ---

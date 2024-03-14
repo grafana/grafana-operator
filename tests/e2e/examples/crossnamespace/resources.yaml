@@ -1,3 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: (join('-', ['cross', $namespace]))
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: Grafana
@@ -6,14 +10,6 @@ metadata:
   labels:
     dashboards: "grafana"
 spec:
-  persistentVolumeClaim:
-    spec:
-      accessModes:
-        - ReadWriteOnce
-      resources:
-        requests:
-          storage: 10Gi
-      # storageClassName: "" # Customize storage class if needed
   config:
     log:
       mode: "console"
@@ -28,13 +24,27 @@ spec:
         spec:
           containers:
             - name: grafana
-              image: grafana/grafana:9.4.3
               securityContext:
                 allowPrivilegeEscalation: true
                 readOnlyRootFilesystem: false
               readinessProbe:
                 failureThreshold: 3
-          volumes:
-            - name: grafana-data
-              persistentVolumeClaim:
-                claimName: grafana-pvc
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: example-grafanadatasource
+  namespace: (join('-', ['cross', $namespace]))
+spec:
+  allowCrossNamespaceImport: true
+  datasource:
+    access: proxy
+    database: prometheus
+    jsonData:
+      timeInterval: 5s
+      tlsSkipVerify: true
+    name: Prometheus
+    url: http://prometheus-service:9090
+  instanceSelector:
+    matchLabels:
+      dashboards: grafana

@@ -16,6 +16,12 @@ spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
+    - description: GrafanaAlertRuleGroup is the Schema for the grafanaalertrulegroups
+        API
+      displayName: Grafana Alert Rule Group
+      kind: GrafanaAlertRuleGroup
+      name: grafanaalertrulegroups.grafana.integreatly.org
+      version: v1beta1
     - description: GrafanaDashboard is the Schema for the grafanadashboards API
       displayName: Grafana Dashboard
       kind: GrafanaDashboard

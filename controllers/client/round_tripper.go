@@ -1,6 +1,7 @@
 package client
 
 import (
+	"crypto/tls"
 	"net/http"
 	"strconv"
 
@@ -18,7 +19,13 @@ func NewInstrumentedRoundTripper(relatedResource string, metric *prometheus.Coun
 
 	transport.DisableKeepAlives = true
 	transport.MaxIdleConnsPerHost = -1
-	transport.TLSClientConfig.InsecureSkipVerify = true //nolint
+	if transport.TLSClientConfig != nil {
+		transport.TLSClientConfig.InsecureSkipVerify = true //nolint
+	} else {
+		transport.TLSClientConfig = &tls.Config{
+			InsecureSkipVerify: true, //nolint
+		}
+	}
 
 	if !useProxy {
 		transport.Proxy = nil

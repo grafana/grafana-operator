@@ -2,7 +2,7 @@
 # NOTE: this section almost matches outputs out kubebuilder v3.7.0
 ###
 # Current Operator version
-VERSION ?= 5.6.3
+VERSION ?= 5.7.0
 
 # BUNDLE_GEN_FLAGS are the flags passed to the operator-sdk generate bundle command
 BUNDLE_GEN_FLAGS ?= -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
@@ -40,11 +40,13 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-# Checks if kuttl is in your PATH
-ifneq ($(shell which kubectl-kuttl),)
-KUTTL=$(shell which kubectl-kuttl)
+CHAINSAW_VERSION ?= v0.1.6
+
+# Checks if chainsaw is in your PATH
+ifneq ($(shell which chainsaw),)
+CHAINSAW=$(shell which chainsaw)
 else
-KUTTL=$(shell pwd)/bin/kubectl-kuttl
+CHAINSAW=$(shell pwd)/bin/chainsaw
 endif
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
@@ -151,9 +153,9 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
-.PHONY: deploy-kuttl
-deploy-kuttl: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/kuttl-overlay | kubectl apply -f -
+.PHONY: deploy-chainsaw
+deploy-chainsaw: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+	$(KUSTOMIZE) build config/chainsaw-overlay | kubectl apply -f -
 
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
@@ -247,26 +249,26 @@ bundle/redhat: bundle
 
 # e2e
 .PHONY: e2e
-e2e: kuttl install deploy-kuttl ## Run e2e tests using kuttl.
-	$(KUTTL) test
+e2e: chainsaw install deploy-chainsaw ## Run e2e tests using chainsaw.
+	$(CHAINSAW) test --test-dir ./tests/e2e
 
-# Find or download kuttl
-kuttl:
-ifeq (, $(shell which kubectl-kuttl))
+# Find or download chainsaw
+chainsaw:
+ifeq (, $(shell which chainsaw))
 	@{ \
 	set -e ;\
-	go install github.com/kudobuilder/kuttl/cmd/kubectl-kuttl@v0.12.1 ;\
+	go install github.com/kyverno/chainsaw@$(CHAINSAW_VERSION) ;\
 	}
-KUTTL=$(GOBIN)/kubectl-kuttl
+CHAINSAW=$(GOBIN)/chainsaw
 else
-KUTTL=$(shell which kubectl-kuttl)
+CHAINSAW=$(shell which chainsaw)
 endif
 
 golangci:
 ifeq (, $(shell which golangci-lint))
 	@{ \
 	set -e ;\
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.2 ;\
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.56.2 ;\
 	}
 GOLANGCI=$(GOBIN)/golangci-lint
 else
@@ -281,7 +283,7 @@ gofumpt:
 ifeq (, $(shell which gofumpt))
 	@{ \
 	set -e ;\
-	go install mvdan.cc/gofumpt@v0.4.0 ;\
+	go install mvdan.cc/gofumpt@v0.6.0 ;\
 	}
 GOFUMPT=$(GOBIN)/gofumpt
 else
