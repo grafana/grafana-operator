@@ -26,7 +26,7 @@ To support that, we offer 3 operational modes (you can switch between those thro
 - single namespace (`WATCH_NAMESPACE: "grafana"`):
   - With this mode, it's possible to use `Role` + `RoleBinding` to grant the operator the required access.
 - mutliple namespaces using label selector (`WATCH_NAMESPACE_SELECTOR: "environment: dev"`):
-  - With this mode, it is possible detect and load all namespaces that match the label selector automatically. 
+  - With this mode, it is possible detect and load all namespaces that match the label selector automatically.
     New namespaces won't be automatically included until the Grafana operator is restarted.
   - Cluster-wide permissions are still required;
 
