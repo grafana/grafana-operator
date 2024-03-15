@@ -10,6 +10,11 @@ leaderElect: false
 # By default it's all namespaces, if you only want to listen for the same namespace as the operator is deployed to look at namespaceScope.
 watchNamespaces: ""
 
+# -- Sets the WATCH_NAMESPACE_SELECTOR environment variable,
+# it defines which namespaces the operator should be listening for based on label and key value pair added on namespace kind.
+# By default it's all namespaces.
+watchNamespaceSelector: ""
+
 # -- Determines if the target cluster is OpenShift. Additional rbac permissions for routes will be added on OpenShift
 isOpenShift: false
 
