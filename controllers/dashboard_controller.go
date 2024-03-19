@@ -360,7 +360,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return err
 	}
 
-	folderID, err := r.GetOrCreateFolder(grafanaClient, cr)
+	folderUID, err := r.GetOrCreateFolder(grafanaClient, cr)
 	if err != nil {
 		return kuberr.NewInternalError(err)
 	}
@@ -368,7 +368,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	uid := fmt.Sprintf("%s", dashboardModel["uid"])
 	title := fmt.Sprintf("%s", dashboardModel["title"])
 
-	exists, remoteUID, err := r.Exists(grafanaClient, uid, title, folderID)
+	exists, remoteUID, err := r.Exists(grafanaClient, uid, title, folderUID)
 	if err != nil {
 		return err
 	}
@@ -402,7 +402,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 
 	resp, err := grafanaClient.Dashboards.PostDashboard(&models.SaveDashboardCommand{
 		Dashboard: dashboardModel,
-		FolderID:  folderID,
+		FolderUID: folderUID,
 		Overwrite: true,
 	})
 	if err != nil {
@@ -566,7 +566,7 @@ func (r *GrafanaDashboardReconciler) getDashboardModel(cr *v1beta1.GrafanaDashbo
 	return dashboardModel, fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
 
-func (r *GrafanaDashboardReconciler) Exists(client *genapi.GrafanaHTTPAPI, uid string, title string, folderID int64) (bool, string, error) {
+func (r *GrafanaDashboardReconciler) Exists(client *genapi.GrafanaHTTPAPI, uid string, title string, folderUID string) (bool, string, error) {
 	tvar := "dash-db"
 
 	page := int64(1)
@@ -580,7 +580,7 @@ func (r *GrafanaDashboardReconciler) Exists(client *genapi.GrafanaHTTPAPI, uid s
 		results := resp.GetPayload()
 
 		for _, dashboard := range results {
-			if dashboard.UID == uid || (dashboard.Title == title && dashboard.FolderID == folderID) {
+			if dashboard.UID == uid || (dashboard.Title == title && dashboard.FolderUID == folderUID) {
 				return true, dashboard.UID, nil
 			}
 		}
@@ -634,19 +634,19 @@ func (r *GrafanaDashboardReconciler) hasRemoteChange(exists bool, client *genapi
 	return false, nil
 }
 
-func (r *GrafanaDashboardReconciler) GetOrCreateFolder(client *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaDashboard) (int64, error) {
+func (r *GrafanaDashboardReconciler) GetOrCreateFolder(client *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaDashboard) (string, error) {
 	title := cr.Namespace
 	if cr.Spec.FolderTitle != "" {
 		title = cr.Spec.FolderTitle
 	}
 
-	exists, folderID, err := r.GetFolderID(client, title)
+	exists, folderUID, err := r.GetFolderUID(client, title)
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 
 	if exists {
-		return folderID, nil
+		return folderUID, nil
 	}
 
 	// Folder wasn't found, let's create it
@@ -655,19 +655,23 @@ func (r *GrafanaDashboardReconciler) GetOrCreateFolder(client *genapi.GrafanaHTT
 	}
 	resp, err := client.Folders.CreateFolder(body)
 	if err != nil {
-		return 0, err
+		return "", err
+	}
+	folder := resp.GetPayload()
+	if folder == nil {
+		return "", fmt.Errorf("invalid payload returned")
 	}
 
-	return resp.GetPayload().ID, nil
+	return folder.UID, nil
 }
 
-func (r *GrafanaDashboardReconciler) GetFolderID(
+func (r *GrafanaDashboardReconciler) GetFolderUID(
 	client *genapi.GrafanaHTTPAPI,
 	title string,
-) (bool, int64, error) {
+) (bool, string, error) {
 	// Pre-existing folder that is not returned in Folder API
 	if strings.EqualFold(title, "General") {
-		return true, 0, nil
+		return true, "", nil
 	}
 	page := int64(1)
 	limit := int64(1000)
@@ -675,13 +679,13 @@ func (r *GrafanaDashboardReconciler) GetFolderID(
 		params := folders.NewGetFoldersParams().WithPage(&page).WithLimit(&limit)
 		resp, err := client.Folders.GetFolders(params)
 		if err != nil {
-			return false, 0, err
+			return false, "", err
 		}
 		folders := resp.GetPayload()
 
 		for _, folder := range folders {
 			if strings.EqualFold(folder.Title, title) {
-				return true, folder.ID, nil
+				return true, folder.UID, nil
 			}
 		}
 		if len(folders) < int(limit) {
@@ -690,7 +694,7 @@ func (r *GrafanaDashboardReconciler) GetFolderID(
 		page++
 	}
 
-	return false, 0, nil
+	return false, "", nil
 }
 
 func (r *GrafanaDashboardReconciler) DeleteFolderIfEmpty(client *genapi.GrafanaHTTPAPI, folderUID string) (http.Response, error) {
