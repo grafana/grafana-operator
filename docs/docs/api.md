@@ -11,6 +11,8 @@ Packages:
 
 Resource Types:
 
+- [GrafanaAlertRuleGroup](#grafanaalertrulegroup)
+
 - [GrafanaDashboard](#grafanadashboard)
 
 - [GrafanaDatasource](#grafanadatasource)
@@ -21,6 +23,497 @@ Resource Types:
 
 
 
+
+## GrafanaAlertRuleGroup
+<sup><sup>[↩ Parent](#grafanaintegreatlyorgv1beta1 )</sup></sup>
+
+
+
+
+
+
+GrafanaAlertRuleGroup is the Schema for the grafanaalertrulegroups API
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+      <td><b>apiVersion</b></td>
+      <td>string</td>
+      <td>grafana.integreatly.org/v1beta1</td>
+      <td>true</td>
+      </tr>
+      <tr>
+      <td><b>kind</b></td>
+      <td>string</td>
+      <td>GrafanaAlertRuleGroup</td>
+      <td>true</td>
+      </tr>
+      <tr>
+      <td><b><a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta">metadata</a></b></td>
+      <td>object</td>
+      <td>Refer to the Kubernetes API documentation for the fields of the `metadata` field.</td>
+      <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanaalertrulegroupspec">spec</a></b></td>
+        <td>object</td>
+        <td>
+          GrafanaAlertRuleGroupSpec defines the desired state of GrafanaAlertRuleGroup<br/>
+          <br/>
+            <i>Validations</i>:<li>(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID))): Only one of FolderUID or FolderRef can be set</li>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanaalertrulegroupstatus">status</a></b></td>
+        <td>object</td>
+        <td>
+          GrafanaAlertRuleGroupStatus defines the observed state of GrafanaAlertRuleGroup<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaAlertRuleGroup.spec
+<sup><sup>[↩ Parent](#grafanaalertrulegroup)</sup></sup>
+
+
+
+GrafanaAlertRuleGroupSpec defines the desired state of GrafanaAlertRuleGroup
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanaalertrulegroupspecinstanceselector">instanceSelector</a></b></td>
+        <td>object</td>
+        <td>
+          selects Grafanas for import<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>interval</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: duration<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanaalertrulegroupspecrulesindex">rules</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>allowCrossNamespaceImport</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>folderRef</b></td>
+        <td>string</td>
+        <td>
+          Match GrafanaFolders CRs to infer the uid<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>folderUID</b></td>
+        <td>string</td>
+        <td>
+          UID of the folder containing this rule group Overrides the FolderSelector<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>resyncPeriod</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: duration<br/>
+            <i>Default</i>: 10m<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaAlertRuleGroup.spec.instanceSelector
+<sup><sup>[↩ Parent](#grafanaalertrulegroupspec)</sup></sup>
+
+
+
+selects Grafanas for import
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanaalertrulegroupspecinstanceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaAlertRuleGroup.spec.instanceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#grafanaalertrulegroupspecinstanceselector)</sup></sup>
+
+
+
+A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          key is the label key that the selector applies to.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaAlertRuleGroup.spec.rules[index]
+<sup><sup>[↩ Parent](#grafanaalertrulegroupspec)</sup></sup>
+
+
+
+AlertRule defines a specific rule to be evaluated. It is based on the upstream model with some k8s specific type mappings
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>condition</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanaalertrulegroupspecrulesindexdataindex">data</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>execErrState</b></td>
+        <td>enum</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Enum</i>: OK, Alerting, Error<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>for</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: duration<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>noDataState</b></td>
+        <td>enum</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Enum</i>: Alerting, NoData, OK<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>title</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>uid</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>annotations</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>isPaused</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>labels</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaAlertRuleGroup.spec.rules[index].data[index]
+<sup><sup>[↩ Parent](#grafanaalertrulegroupspecrulesindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>datasourceUid</b></td>
+        <td>string</td>
+        <td>
+          Grafana data source unique identifier; it should be '__expr__' for a Server Side Expression operation.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>model</b></td>
+        <td>JSON</td>
+        <td>
+          JSON is the raw JSON query and includes the above properties as well as custom properties.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>queryType</b></td>
+        <td>string</td>
+        <td>
+          QueryType is an optional identifier for the type of query. It can be used to distinguish different types of queries.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>refId</b></td>
+        <td>string</td>
+        <td>
+          RefID is the unique identifier of the query, set by the frontend call.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanaalertrulegroupspecrulesindexdataindexrelativetimerange">relativeTimeRange</a></b></td>
+        <td>object</td>
+        <td>
+          relative time range<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaAlertRuleGroup.spec.rules[index].data[index].relativeTimeRange
+<sup><sup>[↩ Parent](#grafanaalertrulegroupspecrulesindexdataindex)</sup></sup>
+
+
+
+relative time range
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>from</b></td>
+        <td>integer</td>
+        <td>
+          from<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>to</b></td>
+        <td>integer</td>
+        <td>
+          to<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaAlertRuleGroup.status
+<sup><sup>[↩ Parent](#grafanaalertrulegroup)</sup></sup>
+
+
+
+GrafanaAlertRuleGroupStatus defines the observed state of GrafanaAlertRuleGroup
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanaalertrulegroupstatusconditionsindex">conditions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaAlertRuleGroup.status.conditions[index]
+<sup><sup>[↩ Parent](#grafanaalertrulegroupstatus)</sup></sup>
+
+
+
+Condition contains details for one aspect of the current state of this API Resource. --- This struct is intended for direct use as an array at the field path .status.conditions.  For example, 
+ type FooStatus struct{ // Represents the observations of a foo's current state. // Known .status.conditions.type are: "Available", "Progressing", and "Degraded" // +patchMergeKey=type // +patchStrategy=merge // +listType=map // +listMapKey=type Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"` 
+ // other fields }
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>lastTransitionTime</b></td>
+        <td>string</td>
+        <td>
+          lastTransitionTime is the last time the condition transitioned from one status to another. This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.<br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>message</b></td>
+        <td>string</td>
+        <td>
+          message is a human readable message indicating details about the transition. This may be an empty string.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>reason</b></td>
+        <td>string</td>
+        <td>
+          reason contains a programmatic identifier indicating the reason for the condition's last transition. Producers of specific condition types may define expected values and meanings for this field, and whether the values are considered a guaranteed API. The value should be a CamelCase string. This field may not be empty.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>status</b></td>
+        <td>enum</td>
+        <td>
+          status of the condition, one of True, False, Unknown.<br/>
+          <br/>
+            <i>Enum</i>: True, False, Unknown<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          type of condition in CamelCase or in foo.example.com/CamelCase. --- Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be useful (see .node.status.conditions), the ability to deconflict is important. The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>observedGeneration</b></td>
+        <td>integer</td>
+        <td>
+          observedGeneration represents the .metadata.generation that the condition was set based upon. For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date with respect to the current state of the instance.<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+            <i>Minimum</i>: 0<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
 
 ## GrafanaDashboard
 <sup><sup>[↩ Parent](#grafanaintegreatlyorgv1beta1 )</sup></sup>

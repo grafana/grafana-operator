@@ -6,4 +6,5 @@ resources:
   - grafana.integreatly.org_grafanadashboards.yaml
   - grafana.integreatly.org_grafanadatasources.yaml
   - grafana.integreatly.org_grafanafolders.yaml
+  - grafana.integreatly.org_grafanaalertrulegroups.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
