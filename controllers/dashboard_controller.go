@@ -21,6 +21,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"reflect"
@@ -34,12 +35,17 @@ import (
 	"github.com/grafana/grafana-operator/v5/embeds"
 
 	"github.com/go-logr/logr"
-	grapi "github.com/grafana/grafana-api-golang-client"
+	genapi "github.com/grafana/grafana-openapi-client-go/client"
+	"github.com/grafana/grafana-openapi-client-go/client/dashboards"
+	"github.com/grafana/grafana-openapi-client-go/client/folders"
+	"github.com/grafana/grafana-openapi-client-go/client/search"
+	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/controllers/fetchers"
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
-	"k8s.io/apimachinery/pkg/api/errors"
+	kuberr "k8s.io/apimachinery/pkg/api/errors"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/discovery"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -97,13 +103,13 @@ func (r *GrafanaDashboardReconciler) syncDashboards(ctx context.Context) (ctrl.R
 	dashboardsToDelete := getDashboardsToDelete(allDashboards, grafanas.Items)
 
 	// delete all dashboards that no longer have a cr
-	for grafana, dashboards := range dashboardsToDelete {
-		grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, grafana)
+	for grafana, oldDashboards := range dashboardsToDelete {
+		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 		if err != nil {
 			return ctrl.Result{Requeue: true}, err
 		}
 
-		for _, dashboard := range dashboards {
+		for _, dashboard := range oldDashboards {
 			// avoid bombarding the grafana instance with a large number of requests at once, limit
 			// the sync to a certain number of dashboards per cycle. This means that it will take longer to sync
 			// a large number of deleted dashboard crs, but that should be an edge case.
@@ -112,9 +118,10 @@ func (r *GrafanaDashboardReconciler) syncDashboards(ctx context.Context) (ctrl.R
 			}
 
 			namespace, name, uid := dashboard.Split()
-			err = grafanaClient.DeleteDashboardByUID(uid)
+			_, err = grafanaClient.Dashboards.DeleteDashboardByUID(uid) //nolint:errcheck
 			if err != nil {
-				if strings.Contains(err.Error(), "status: 404") {
+				var notFound *dashboards.DeleteDashboardByUIDNotFound
+				if errors.As(err, &notFound) {
 					syncLog.Info("dashboard no longer exists", "namespace", namespace, "name", name)
 				} else {
 					return ctrl.Result{Requeue: false}, err
@@ -172,7 +179,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		Name:      req.Name,
 	}, cr)
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if kuberr.IsNotFound(err) {
 			err = r.onDashboardDeleted(ctx, req.Namespace, req.Name)
 			if err != nil {
 				return ctrl.Result{RequeueAfter: RequeueDelay}, err
@@ -290,27 +297,30 @@ func (r *GrafanaDashboardReconciler) onDashboardDeleted(ctx context.Context, nam
 	for _, grafana := range list.Items {
 		if found, uid := grafana.Status.Dashboards.Find(namespace, name); found {
 			grafana := grafana
-			grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, &grafana)
+			grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 			if err != nil {
 				return err
 			}
 
-			dash, err := grafanaClient.DashboardByUID(*uid)
+			resp, err := grafanaClient.Dashboards.GetDashboardByUID(*uid)
 			if err != nil {
-				if !strings.Contains(err.Error(), "status: 404") {
+				var notFound *dashboards.GetDashboardByUIDNotFound
+				if !errors.As(err, &notFound) {
+					return err
+				}
+			}
+			dash := resp.GetPayload()
+
+			_, err = grafanaClient.Dashboards.DeleteDashboardByUID(*uid) //nolint:errcheck
+			if err != nil {
+				var notFound *dashboards.DeleteDashboardByUIDNotFound
+				if !errors.As(err, &notFound) {
 					return err
 				}
 			}
 
-			err = grafanaClient.DeleteDashboardByUID(*uid)
-			if err != nil {
-				if !strings.Contains(err.Error(), "status: 404") {
-					return err
-				}
-			}
-
-			if dash != nil && dash.Meta.Folder > 0 {
-				resp, err := r.DeleteFolderIfEmpty(grafanaClient, dash.FolderID)
+			if dash != nil && dash.Meta.FolderUID != "" {
+				resp, err := r.DeleteFolderIfEmpty(grafanaClient, dash.Meta.FolderUID)
 				if err != nil {
 					return err
 				}
@@ -345,20 +355,20 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return fmt.Errorf("external grafana instances don't support plugins, please remove spec.plugins from your dashboard cr")
 	}
 
-	grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, grafana)
+	grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
 		return err
 	}
 
-	folderID, err := r.GetOrCreateFolder(grafanaClient, cr)
+	folderUID, err := r.GetOrCreateFolder(grafanaClient, cr)
 	if err != nil {
-		return errors.NewInternalError(err)
+		return kuberr.NewInternalError(err)
 	}
 
 	uid := fmt.Sprintf("%s", dashboardModel["uid"])
 	title := fmt.Sprintf("%s", dashboardModel["title"])
 
-	exists, remoteUID, err := r.Exists(grafanaClient, uid, title, folderID)
+	exists, remoteUID, err := r.Exists(grafanaClient, uid, title, folderUID)
 	if err != nil {
 		return err
 	}
@@ -366,9 +376,10 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	if exists && remoteUID != uid {
 		// If there's already a dashboard with the same title in the same folder, grafana preserves that dashboard's uid, so we should remove it first
 		r.Log.Info("found dashboard with the same title (in the same folder) but different uid, removing the dashboard before recreating it with a new uid")
-		err = grafanaClient.DeleteDashboardByUID(remoteUID)
+		_, err = grafanaClient.Dashboards.DeleteDashboardByUID(remoteUID) //nolint:errcheck
 		if err != nil {
-			if !strings.Contains(err.Error(), "status: 404") {
+			var notFound *dashboards.DeleteDashboardByUIDNotFound
+			if !errors.As(err, &notFound) {
 				return err
 			}
 		}
@@ -389,23 +400,19 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return nil
 	}
 
-	resp, err := grafanaClient.NewDashboard(grapi.Dashboard{
-		Meta: grapi.DashboardMeta{
-			IsStarred: false,
-			Slug:      cr.Name,
-			Folder:    folderID,
-		},
-		Model:     dashboardModel,
-		FolderID:  folderID,
+	resp, err := grafanaClient.Dashboards.PostDashboard(&models.SaveDashboardCommand{
+		Dashboard: dashboardModel,
+		FolderUID: folderUID,
 		Overwrite: true,
-		Message:   "",
 	})
 	if err != nil {
 		return err
 	}
 
-	if resp.Status != "success" {
-		return errors.NewBadRequest(fmt.Sprintf("error creating dashboard, status was %v", resp.Status))
+	payload := resp.GetPayload()
+
+	if payload.Status == nil || *payload.Status != "success" {
+		return kuberr.NewBadRequest(fmt.Sprintf("error creating dashboard, status was %v", payload.Status))
 	}
 
 	grafana.Status.Dashboards = grafana.Status.Dashboards.Add(cr.Namespace, cr.Name, uid)
@@ -559,31 +566,43 @@ func (r *GrafanaDashboardReconciler) getDashboardModel(cr *v1beta1.GrafanaDashbo
 	return dashboardModel, fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
 
-func (r *GrafanaDashboardReconciler) Exists(client *grapi.Client, uid string, title string, folderID int64) (bool, string, error) {
-	dashboards, err := client.Dashboards()
-	if err != nil {
-		return false, "", err
-	}
+func (r *GrafanaDashboardReconciler) Exists(client *genapi.GrafanaHTTPAPI, uid string, title string, folderUID string) (bool, string, error) {
+	tvar := "dash-db"
 
-	for _, dashboard := range dashboards {
-		if dashboard.UID == uid || (dashboard.Title == title && dashboard.FolderID == uint(folderID)) {
-			return true, dashboard.UID, nil
+	page := int64(1)
+	limit := int64(1000)
+	for {
+		params := search.NewSearchParams().WithType(&tvar).WithLimit(&limit).WithPage(&page)
+		resp, err := client.Search.Search(params)
+		if err != nil {
+			return false, "", err
 		}
-	}
+		results := resp.GetPayload()
 
+		for _, dashboard := range results {
+			if dashboard.UID == uid || (dashboard.Title == title && dashboard.FolderUID == folderUID) {
+				return true, dashboard.UID, nil
+			}
+		}
+		if len(results) < int(limit) {
+			break
+		}
+		page++
+	}
 	return false, "", nil
 }
 
 // HasRemoteChange checks if a dashboard in Grafana is different to the model defined in the custom resources
-func (r *GrafanaDashboardReconciler) hasRemoteChange(exists bool, client *grapi.Client, uid string, model map[string]interface{}) (bool, error) {
+func (r *GrafanaDashboardReconciler) hasRemoteChange(exists bool, client *genapi.GrafanaHTTPAPI, uid string, model map[string]interface{}) (bool, error) {
 	if !exists {
 		// if the dashboard doesn't exist, don't even request
 		return true, nil
 	}
 
-	remoteDashboard, err := client.DashboardByUID(uid)
+	remoteDashboard, err := client.Dashboards.GetDashboardByUID(uid)
 	if err != nil {
-		if strings.Contains(err.Error(), "status: 404") {
+		var notFound *dashboards.GetDashboardByUIDNotFound
+		if !errors.As(err, &notFound) {
 			return true, nil
 		}
 		return false, err
@@ -594,15 +613,20 @@ func (r *GrafanaDashboardReconciler) hasRemoteChange(exists bool, client *grapi.
 		keys = append(keys, key)
 	}
 
+	remoteModel, ok := (remoteDashboard.GetPayload().Dashboard).(map[string]interface{})
+	if !ok {
+		return false, fmt.Errorf("remote dashboard is not an object")
+	}
+
 	skipKeys := []string{"id", "version"} //nolint
 	for _, key := range keys {
 		// we do not keep track of those keys in the custom resource
 		if slices.Contains(skipKeys, key) {
 			continue
 		}
-		localModel := model[key]
-		remoteModel := remoteDashboard.Model[key]
-		if !reflect.DeepEqual(localModel, remoteModel) {
+		localValue := model[key]
+		remoteValue := remoteModel[key]
+		if !reflect.DeepEqual(localValue, remoteValue) {
 			return true, nil
 		}
 	}
@@ -610,84 +634,94 @@ func (r *GrafanaDashboardReconciler) hasRemoteChange(exists bool, client *grapi.
 	return false, nil
 }
 
-func (r *GrafanaDashboardReconciler) GetOrCreateFolder(client *grapi.Client, cr *v1beta1.GrafanaDashboard) (int64, error) {
+func (r *GrafanaDashboardReconciler) GetOrCreateFolder(client *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaDashboard) (string, error) {
 	title := cr.Namespace
 	if cr.Spec.FolderTitle != "" {
 		title = cr.Spec.FolderTitle
 	}
 
-	exists, folderID, err := r.GetFolderID(client, title)
+	exists, folderUID, err := r.GetFolderUID(client, title)
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 
 	if exists {
-		return folderID, nil
+		return folderUID, nil
 	}
 
 	// Folder wasn't found, let's create it
-	resp, err := client.NewFolder(title)
+	body := &models.CreateFolderCommand{
+		Title: title,
+	}
+	resp, err := client.Folders.CreateFolder(body)
 	if err != nil {
-		return 0, err
+		return "", err
+	}
+	folder := resp.GetPayload()
+	if folder == nil {
+		return "", fmt.Errorf("invalid payload returned")
 	}
 
-	return resp.ID, nil
+	return folder.UID, nil
 }
 
-func (r *GrafanaDashboardReconciler) GetFolderID(client *grapi.Client,
+func (r *GrafanaDashboardReconciler) GetFolderUID(
+	client *genapi.GrafanaHTTPAPI,
 	title string,
-) (bool, int64, error) {
+) (bool, string, error) {
 	// Pre-existing folder that is not returned in Folder API
 	if strings.EqualFold(title, "General") {
-		return true, 0, nil
+		return true, "", nil
 	}
-
-	folders, err := client.Folders()
-	if err != nil {
-		return false, 0, err
-	}
-
-	for _, folder := range folders {
-		if strings.EqualFold(folder.Title, title) {
-			return true, folder.ID, nil
+	page := int64(1)
+	limit := int64(1000)
+	for {
+		params := folders.NewGetFoldersParams().WithPage(&page).WithLimit(&limit)
+		resp, err := client.Folders.GetFolders(params)
+		if err != nil {
+			return false, "", err
 		}
+		folders := resp.GetPayload()
+
+		for _, folder := range folders {
+			if strings.EqualFold(folder.Title, title) {
+				return true, folder.UID, nil
+			}
+		}
+		if len(folders) < int(limit) {
+			break
+		}
+		page++
 	}
 
-	return false, 0, nil
+	return false, "", nil
 }
 
-func (r *GrafanaDashboardReconciler) DeleteFolderIfEmpty(client *grapi.Client, folderID int64) (http.Response, error) {
-	dashboards, err := client.Dashboards()
+func (r *GrafanaDashboardReconciler) DeleteFolderIfEmpty(client *genapi.GrafanaHTTPAPI, folderUID string) (http.Response, error) {
+	params := search.NewSearchParams().WithFolderUIDs([]string{folderUID})
+	results, err := client.Search.Search(params)
 	if err != nil {
 		return http.Response{
 			Status:     "internal grafana client error getting dashboards",
 			StatusCode: 500,
 		}, err
 	}
+	if len(results.GetPayload()) > 0 {
+		return http.Response{
+			Status:     "resource is still in use",
+			StatusCode: http.StatusLocked,
+		}, err
+	}
 
-	for _, dashboard := range dashboards {
-		if int64(dashboard.FolderID) == folderID {
+	deleteParams := folders.NewDeleteFolderParams().WithFolderUID(folderUID)
+	if _, err = client.Folders.DeleteFolder(deleteParams); err != nil { //nolint:errcheck
+		var notFound *folders.DeleteFolderNotFound
+		if !errors.As(err, &notFound) {
 			return http.Response{
-				Status:     "resource is still in use",
-				StatusCode: 423, // Locked return code
+				Status:     "internal grafana client error deleting grafana folder",
+				StatusCode: 500,
 			}, err
 		}
-		continue
-	}
-
-	folder, err := client.Folder(folderID)
-	if err != nil {
-		return http.Response{
-			Status:     "internal grafana client error getting folder UID for folder",
-			StatusCode: 500,
-		}, err
-	}
-
-	if err = client.DeleteFolder(folder.UID); err != nil {
-		return http.Response{
-			Status:     "internal grafana client error deleting grafana folder",
-			StatusCode: 500,
-		}, err
 	}
 	return http.Response{
 		Status:     "grafana folder deleted",
@@ -750,12 +784,14 @@ func (r *GrafanaDashboardReconciler) GetMatchingDashboardInstances(ctx context.C
 }
 
 func (r *GrafanaDashboardReconciler) UpdateHomeDashboard(ctx context.Context, grafana v1beta1.Grafana, uid string, dashboard *v1beta1.GrafanaDashboard) error {
-	grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, &grafana)
+	grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 	if err != nil {
 		return err
 	}
 
-	_, err = grafanaClient.UpdateOrgPreferences(grapi.Preferences{HomeDashboardUID: uid})
+	_, err = grafanaClient.OrgPreferences.UpdateOrgPreferences(&models.UpdatePrefsCmd{ //nolint:errcheck
+		HomeDashboardUID: uid,
+	})
 	if err != nil {
 		r.Log.Error(err, "unable to update the home dashboard", "namespace", dashboard.Namespace, "name", dashboard.Name)
 		return err
