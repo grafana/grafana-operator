@@ -10,8 +10,9 @@ Add GrafanaServiceAccounts to the Grafana CRD so the operator can create Grafana
 Today its required to manually set them up in a running grafana instance using the Grafana GUI or the HTTP-API. This document introduces the suggestion of having them as separate objects that can be setup by the operator on deploy.
 
 The suggested new features are:
-* Let the operator create a grafana service account during deploy of grafana using the GrafanaServiceAccount parts of the grafana CRD.
-* Let the operator store the token as a k8s-secret
+
+- Let the operator create a grafana service account during deploy of grafana using the GrafanaServiceAccount parts of the grafana CRD.
+- Let the operator store the token as a k8s-secret
 
 ## Info
 
@@ -36,6 +37,7 @@ Currently you are only able to create these grafana service accounts using the g
 My proposal is to handle grafana service account as part of the Grafana CRD that can be specified by the user even before setup and that can be included in a CICD pipeline. It will enable so that the operator can create predefined service accounts on deploy and store the token in a k8s-secret readable by other applications without any manual steps.
 
 ### Defining what Grafana Service Account belongs to what grafana.
+
 When placing them inside the Grafana CRD this is not an issue.
 
 ### Defining Grafana Service Account to Grafana operator.
@@ -72,9 +74,8 @@ My suggestions is that "Last used" value for the token would be kept in memory a
 As for the creation time for both the service account and the token should be possible to fetch from the objects themselves. Kubernetes objects have a creationTimestamp in their metadata.
 
 ### The handling of TTL of tokens
-This suggestion would still allow for the operator to handle TTL by just replacing the secret with a new token that then can be picked up by applications in the cluster.
-    
 
+This suggestion would still allow for the operator to handle TTL by just replacing the secret with a new token that then can be picked up by applications in the cluster.
 
 ## Related issues
 
