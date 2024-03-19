@@ -5,7 +5,7 @@ linkTitle: "GrafanaServiceAccount CRD"
 
 ## Summary
 
-Add GrafanaServiceAccounts to the Grafana CRD so the operator can create Grafana Service Accounts automatically when deploying grafana instances. 
+Add GrafanaServiceAccounts to the Grafana CRD so the operator can create Grafana Service Accounts automatically when deploying grafana instances.
 
 Today its required to manually set them up in a running grafana instance using the Grafana GUI or the HTTP-API. This document introduces the suggestion of having them as separate objects that can be setup by the operator on deploy.
 
@@ -54,7 +54,7 @@ spec:
   grafanaServiceAccounts: #Not sure if this is the right place to place it but thats easily fixed when implementing.
     createServiceAccount:
         generateTokenSecret: [true/false] #Will create the k8s-secret with a default name if true. Defaults to true.
-    accounts: #Since its possible today to have multiple service accounts it should be a list of accounts. Open to other placement or renaming of spec.serviceaccounts if its 
+    accounts: #Since its possible today to have multiple service accounts it should be a list of accounts.
         - id: grafana-sa
           name: grafana-service-account
           roles: [Viewer/Editor/Admin]
