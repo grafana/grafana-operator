@@ -960,6 +960,9 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
+    - jsonPath: .status.version
+      name: Version
+      type: string
     - jsonPath: .status.stage
       name: Stage
       type: string
@@ -10982,6 +10985,11 @@ spec:
                       x-kubernetes-map-type: atomic
                     type: array
                 type: object
+              version:
+                description: Version specifies the version of Grafana to use for this
+                  deployment. It follows the same format as the docker.io/grafana/grafana
+                  tags
+                type: string
             type: object
           status:
             description: GrafanaStatus defines the observed state of Grafana
@@ -11005,6 +11013,8 @@ spec:
               stage:
                 type: string
               stageStatus:
+                type: string
+              version:
                 type: string
             type: object
         type: object

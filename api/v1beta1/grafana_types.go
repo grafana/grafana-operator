@@ -63,6 +63,8 @@ type GrafanaSpec struct {
 	Route *RouteOpenshiftV1 `json:"route,omitempty"`
 	// Service sets how the service object should look like with your grafana instance, contains a number of defaults.
 	Service *ServiceV1 `json:"service,omitempty"`
+	// Version specifies the version of Grafana to use for this deployment. It follows the same format as the docker.io/grafana/grafana tags
+	Version string `json:"version,omitempty"`
 	// Deployment sets how the deployment object should look like with your grafana instance, contains a number of defaults.
 	Deployment *DeploymentV1 `json:"deployment,omitempty"`
 	// PersistentVolumeClaim creates a PVC if you need to attach one to your grafana instance.
@@ -116,12 +118,14 @@ type GrafanaStatus struct {
 	Dashboards  NamespacedResourceList `json:"dashboards,omitempty"`
 	Datasources NamespacedResourceList `json:"datasources,omitempty"`
 	Folders     NamespacedResourceList `json:"folders,omitempty"`
+	Version     string                 `json:"version,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
 // Grafana is the Schema for the grafanas API
+// +kubebuilder:printcolumn:name="Version",type="string",JSONPath=".status.version",description=""
 // +kubebuilder:printcolumn:name="Stage",type="string",JSONPath=".status.stage",description=""
 // +kubebuilder:printcolumn:name="Stage status",type="string",JSONPath=".status.stageStatus",description=""
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""

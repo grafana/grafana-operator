@@ -18,10 +18,13 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"reflect"
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/grafana/grafana-operator/v5/controllers/config"
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers/grafana"
@@ -36,6 +39,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
+	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 )
 
 const (
@@ -86,7 +90,19 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		nextStatus.Stage = grafanav1beta1.OperatorStageComplete
 		nextStatus.StageStatus = grafanav1beta1.OperatorStageResultSuccess
 		nextStatus.AdminUrl = grafana.Spec.External.URL
+		v, err := r.getVersion(grafana)
+		if err != nil {
+			controllerLog.Error(err, "failed to get version from external instance")
+		}
+		nextStatus.Version = v
 		return r.updateStatus(grafana, nextStatus)
+	}
+
+	if grafana.Spec.Version == "" {
+		grafana.Spec.Version = config.GrafanaVersion
+		if err := r.Client.Update(ctx, grafana); err != nil {
+			return ctrl.Result{}, fmt.Errorf("updating grafana version in spec: %w", err)
+		}
 	}
 
 	for _, stage := range stages {
@@ -120,10 +136,34 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	if finished {
+		v, err := r.getVersion(grafana)
+		if err != nil {
+			controllerLog.Error(err, "failed to get version from instance")
+		}
+		nextStatus.Version = v
 		controllerLog.Info("grafana installation complete")
 	}
 
 	return r.updateStatus(grafana, nextStatus)
+}
+
+func (r *GrafanaReconciler) getVersion(cr *grafanav1beta1.Grafana) (string, error) {
+	cl := client2.NewHTTPClient(cr)
+
+	resp, err := cl.Get(cr.Status.AdminUrl + grafana.GrafanaHealthEndpoint)
+	if err != nil {
+		return "", fmt.Errorf("fetching version: %w", err)
+	}
+	data := struct {
+		Version string `json:"version"`
+	}{}
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		return "", fmt.Errorf("parsing health endpoint data: %w", err)
+	}
+	if data.Version == "" {
+		return "", fmt.Errorf("empty version received from server")
+	}
+	return data.Version, nil
 }
 
 func (r *GrafanaReconciler) updateStatus(cr *grafanav1beta1.Grafana, nextStatus *grafanav1beta1.GrafanaStatus) (ctrl.Result, error) {
@@ -139,6 +179,13 @@ func (r *GrafanaReconciler) updateStatus(cr *grafanav1beta1.Grafana, nextStatus 
 	}
 
 	if nextStatus.StageStatus != grafanav1beta1.OperatorStageResultSuccess {
+		return ctrl.Result{
+			Requeue:      true,
+			RequeueAfter: RequeueDelay,
+		}, nil
+	}
+	if cr.Status.Version == "" {
+		r.Log.Info("version not yet found, requeuing")
 		return ctrl.Result{
 			Requeue:      true,
 			RequeueAfter: RequeueDelay,
