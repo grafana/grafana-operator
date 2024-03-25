@@ -3976,6 +3976,8 @@ spec:
                       x-kubernetes-map-type: atomic
                     type: array
                 type: object
+              version:
+                type: string
             type: object
           status:
             properties:
@@ -3998,6 +4000,8 @@ spec:
               stage:
                 type: string
               stageStatus:
+                type: string
+              version:
                 type: string
             type: object
         type: object
