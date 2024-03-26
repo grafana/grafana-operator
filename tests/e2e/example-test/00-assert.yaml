@@ -2,10 +2,13 @@ apiVersion: grafana.integreatly.org/v1beta1
 kind: Grafana
 metadata:
   name: grafana
+spec:
+  version: 9.5.17
 status:
   (wildcard('http://grafana-service.*:3000', adminUrl || '')): true
   stage: complete
   stageStatus: success
+  version: 9.5.17
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: Grafana
@@ -15,3 +18,13 @@ status:
   adminUrl: http://grafana-internal-service
   stage: complete
   stageStatus: success
+  version: 9.5.17
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana-ten
+status:
+  stage: complete
+  stageStatus: success
+  version: 10.3.5

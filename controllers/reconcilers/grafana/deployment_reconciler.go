@@ -133,7 +133,10 @@ func getVolumeMounts(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.VolumeMou
 	return mounts
 }
 
-func getGrafanaImage() string {
+func getGrafanaImage(cr *v1beta1.Grafana) string {
+	if cr.Spec.Version != "" {
+		return fmt.Sprintf("%s:%s", config2.GrafanaImage, cr.Spec.Version)
+	}
 	grafanaImg := os.Getenv("RELATED_IMAGE_GRAFANA")
 	if grafanaImg == "" {
 		grafanaImg = fmt.Sprintf("%s:%s", config2.GrafanaImage, config2.GrafanaVersion)
@@ -144,7 +147,7 @@ func getGrafanaImage() string {
 func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.OperatorReconcileVars, openshiftPlatform bool) []v1.Container {
 	var containers []v1.Container
 
-	image := getGrafanaImage()
+	image := getGrafanaImage(cr)
 	plugins := model.GetPluginsConfigMap(cr, scheme)
 
 	// env var to restart containers if plugins change
