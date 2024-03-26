@@ -19,15 +19,19 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
-	grapi "github.com/grafana/grafana-api-golang-client"
+	genapi "github.com/grafana/grafana-openapi-client-go/client"
+	"github.com/grafana/grafana-openapi-client-go/client/dashboards"
+	"github.com/grafana/grafana-openapi-client-go/client/folders"
+	"github.com/grafana/grafana-openapi-client-go/models"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
-	"k8s.io/apimachinery/pkg/api/errors"
+	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -90,7 +94,7 @@ func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result,
 
 	// delete all dashboards that no longer have a cr
 	for grafana, folders := range foldersToDelete {
-		grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, grafana)
+		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 		if err != nil {
 			return ctrl.Result{Requeue: true}, err
 		}
@@ -104,9 +108,10 @@ func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result,
 			}
 
 			namespace, name, uid := folder.Split()
-			err = grafanaClient.DeleteDashboardByUID(uid)
+			_, err = grafanaClient.Dashboards.DeleteDashboardByUID(uid) //nolint
 			if err != nil {
-				if strings.Contains(err.Error(), "status: 404") {
+				var notFound *dashboards.DeleteDashboardByUIDNotFound
+				if errors.As(err, &notFound) {
 					syncLog.Info("folder no longer exists", "namespace", namespace, "name", name)
 				} else {
 					return ctrl.Result{Requeue: false}, err
@@ -160,7 +165,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		Name:      req.Name,
 	}, folder)
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if kuberr.IsNotFound(err) {
 			if err := r.onFolderDeleted(ctx, req.Namespace, req.Name); err != nil {
 				return ctrl.Result{RequeueAfter: RequeueDelay}, err
 			}
@@ -256,14 +261,15 @@ func (r *GrafanaFolderReconciler) onFolderDeleted(ctx context.Context, namespace
 	for _, grafana := range list.Items {
 		grafana := grafana
 		if found, uid := grafana.Status.Folders.Find(namespace, name); found {
-			grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, &grafana)
+			grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 			if err != nil {
 				return err
 			}
-
-			err = grafanaClient.DeleteFolder(*uid)
+			params := folders.NewDeleteFolderParams().WithFolderUID(*uid)
+			_, err = grafanaClient.Folders.DeleteFolder(params) //nolint
 			if err != nil {
-				if !strings.Contains(err.Error(), "status: 404") {
+				var notFound *folders.DeleteFolderNotFound
+				if errors.As(err, &notFound) {
 					return err
 				}
 			}
@@ -282,7 +288,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 	title := cr.GetTitle()
 	uid := string(cr.UID)
 
-	grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, grafana)
+	grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
 		return err
 	}
@@ -310,27 +316,25 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 			}
 		}
 
-		if !cr.Unchanged() || uid != remoteUID {
-			// Update title and replace uid if needed
-			err = grafanaClient.UpdateFolder(remoteUID, title, uid)
+		if !cr.Unchanged() {
+			_, err = grafanaClient.Folders.UpdateFolder(remoteUID, &models.UpdateFolderCommand{ //nolint
+				Overwrite: true,
+				Title:     title,
+			})
 			if err != nil {
 				return err
 			}
 		}
 	} else {
-		folderFromClient, err := grafanaClient.NewFolder(title, uid)
+		folderResp, err := grafanaClient.Folders.CreateFolder(&models.CreateFolderCommand{
+			Title: title,
+			UID:   uid,
+		})
 		if err != nil {
 			return err
 		}
 
-		// FIXME our current version of the client doesn't return response codes, or any response for
-		// FIXME that matter, this needs an issue/feature request upstream
-		// FIXME for now, use the returned URL as an indicator that the folder was created instead
-		if folderFromClient.URL == "" {
-			return errors.NewBadRequest(fmt.Sprintf("something went wrong trying to create folder %s in grafana %s", cr.Name, grafana.Name))
-		}
-
-		grafana.Status.Folders = grafana.Status.Folders.Add(cr.Namespace, cr.Name, folderFromClient.UID)
+		grafana.Status.Folders = grafana.Status.Folders.Add(cr.Namespace, cr.Name, folderResp.Payload.UID)
 		err = r.Client.Status().Update(ctx, grafana)
 		if err != nil {
 			return err
@@ -339,13 +343,13 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 
 	// NOTE: it's up to a user to reset permissions with correct json
 	if cr.Spec.Permissions != "" {
-		permissions := grapi.PermissionItems{}
+		permissions := models.UpdateDashboardACLCommand{}
 		err = json.Unmarshal([]byte(cr.Spec.Permissions), &permissions)
 		if err != nil {
 			return fmt.Errorf("failed to unmarshal spec.permissions: %w", err)
 		}
 
-		err = grafanaClient.UpdateFolderPermissions(uid, &permissions)
+		_, err = grafanaClient.FolderPermissions.UpdateFolderPermissions(uid, &permissions) //nolint
 		if err != nil {
 			return fmt.Errorf("failed to update folder permissions: %w", err)
 		}
@@ -359,22 +363,28 @@ func (r *GrafanaFolderReconciler) UpdateStatus(ctx context.Context, cr *grafanav
 	return r.Client.Status().Update(ctx, cr)
 }
 
-func (r *GrafanaFolderReconciler) Exists(client *grapi.Client, cr *grafanav1beta1.GrafanaFolder) (bool, string, error) {
+func (r *GrafanaFolderReconciler) Exists(client *genapi.GrafanaHTTPAPI, cr *grafanav1beta1.GrafanaFolder) (bool, string, error) {
 	title := cr.GetTitle()
 	uid := string(cr.UID)
 
-	folders, err := client.Folders()
-	if err != nil {
-		return false, "", err
-	}
-
-	for _, folder := range folders {
-		if folder.UID == uid || strings.EqualFold(folder.Title, title) {
-			return true, folder.UID, nil
+	page := int64(1)
+	limit := int64(10000)
+	for {
+		params := folders.NewGetFoldersParams().WithPage(&page).WithLimit(&limit)
+		foldersResp, err := client.Folders.GetFolders(params)
+		if err != nil {
+			return false, "", err
 		}
+		for _, folder := range foldersResp.Payload {
+			if folder.UID == uid || strings.EqualFold(folder.Title, title) {
+				return true, folder.UID, nil
+			}
+		}
+		if len(foldersResp.Payload) < int(limit) {
+			return false, "", nil
+		}
+		page++
 	}
-
-	return false, "", nil
 }
 
 func (r *GrafanaFolderReconciler) GetMatchingFolderInstances(ctx context.Context, folder *grafanav1beta1.GrafanaFolder, k8sClient client.Client) (grafanav1beta1.GrafanaList, error) {
