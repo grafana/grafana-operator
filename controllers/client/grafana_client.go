@@ -177,7 +177,7 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1
 			timeout = 0
 		}
 	} else {
-		timeout = time.Second * 10
+		timeout = 10
 	}
 
 	credentials, err := getAdminCredentials(ctx, c, grafana)
@@ -194,7 +194,7 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1
 
 	client := &http.Client{
 		Transport: transport,
-		Timeout:   timeout,
+		Timeout:   timeout * time.Second,
 	}
 
 	cfg := &genapi.TransportConfig{
