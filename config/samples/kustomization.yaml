@@ -5,4 +5,5 @@ resources:
 - grafana_v1beta1_grafanadatasource.yaml
 - grafana_v1beta1_grafanafolder.yaml
 - grafana_v1beta1_grafanaalertrulegroup.yaml
+- grafana_v1beta1_grafanacontactpoint.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

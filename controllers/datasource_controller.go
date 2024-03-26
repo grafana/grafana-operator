@@ -20,6 +20,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -27,12 +28,15 @@ import (
 	v1 "k8s.io/api/core/v1"
 
 	simplejson "github.com/bitly/go-simplejson"
+	"github.com/grafana/grafana-openapi-client-go/client/datasources"
+	"github.com/grafana/grafana-openapi-client-go/models"
+
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 
 	"github.com/go-logr/logr"
-	gapi "github.com/grafana/grafana-api-golang-client"
+	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
-	"k8s.io/apimachinery/pkg/api/errors"
+	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -93,14 +97,14 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 	}
 
 	// delete all datasources that no longer have a cr
-	for grafana, datasources := range datasourcesToDelete {
+	for grafana, existingDatasources := range datasourcesToDelete {
 		grafana := grafana
-		grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, grafana)
+		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 		if err != nil {
 			return ctrl.Result{Requeue: true}, err
 		}
 
-		for _, datasource := range datasources {
+		for _, datasource := range existingDatasources {
 			// avoid bombarding the grafana instance with a large number of requests at once, limit
 			// the sync to ten datasources per cycle. This means that it will take longer to sync
 			// a large number of deleted datasource crs, but that should be an edge case.
@@ -109,16 +113,18 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 			}
 
 			namespace, name, uid := datasource.Split()
-			instanceDatasource, err := grafanaClient.DataSourceByUID(uid)
+			instanceDatasource, err := grafanaClient.Datasources.GetDataSourceByUID(uid)
 			if err != nil {
-				if !strings.Contains(err.Error(), "status: 404") {
+				var notFound *datasources.GetDataSourceByUIDNotFound
+				if errors.As(err, &notFound) {
 					return ctrl.Result{Requeue: false}, err
 				}
 				syncLog.Info("datasource no longer exists", "namespace", namespace, "name", name)
 			} else {
-				err = grafanaClient.DeleteDataSource(instanceDatasource.ID)
+				_, err = grafanaClient.Datasources.DeleteDataSourceByUID(instanceDatasource.Payload.UID) //nolint
 				if err != nil {
-					if !strings.Contains(err.Error(), "status: 404") {
+					var notFound *datasources.DeleteDataSourceByUIDNotFound
+					if errors.As(err, &notFound) {
 						return ctrl.Result{Requeue: false}, err
 					}
 				}
@@ -161,7 +167,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		Name:      req.Name,
 	}, cr)
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if kuberr.IsNotFound(err) {
 			err = r.onDatasourceDeleted(ctx, req.Namespace, req.Name)
 			if err != nil {
 				return ctrl.Result{RequeueAfter: RequeueDelay}, err
@@ -273,20 +279,22 @@ func (r *GrafanaDatasourceReconciler) onDatasourceDeleted(ctx context.Context, n
 	for _, grafana := range list.Items {
 		grafana := grafana
 		if found, uid := grafana.Status.Datasources.Find(namespace, name); found {
-			grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, &grafana)
+			grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 			if err != nil {
 				return err
 			}
 
-			datasource, err := grafanaClient.DataSourceByUID(*uid)
+			datasource, err := grafanaClient.Datasources.GetDataSourceByUID(*uid)
 			if err != nil {
-				if !strings.Contains(err.Error(), "status: 404") {
+				var notFound *datasources.GetDataSourceByUIDNotFound
+				if errors.As(err, &notFound) {
 					return err
 				}
 			} else {
-				err = grafanaClient.DeleteDataSource(datasource.ID)
+				_, err = grafanaClient.Datasources.DeleteDataSourceByUID(datasource.Payload.UID) //nolint
 				if err != nil {
-					if !strings.Contains(err.Error(), "status: 404") {
+					var notFound *datasources.DeleteDataSourceByUIDNotFound
+					if errors.As(err, &notFound) {
 						return err
 					}
 				}
@@ -307,7 +315,7 @@ func (r *GrafanaDatasourceReconciler) onDatasourceDeleted(ctx context.Context, n
 	return nil
 }
 
-func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDatasource, datasource *gapi.DataSource, hash string) error {
+func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDatasource, datasource *models.DataSource, hash string) error {
 	if grafana.IsExternal() && cr.Spec.Plugins != nil {
 		return fmt.Errorf("external grafana instances don't support plugins, please remove spec.plugins from your datasource cr")
 	}
@@ -316,12 +324,12 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		return nil
 	}
 
-	grafanaClient, err := client2.NewGrafanaClient(ctx, r.Client, grafana)
+	grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
 		return err
 	}
 
-	exists, id, err := r.Exists(grafanaClient, datasource.UID, datasource.Name)
+	exists, uid, err := r.Exists(grafanaClient, datasource.UID, datasource.Name)
 	if err != nil {
 		return err
 	}
@@ -330,14 +338,26 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		return nil
 	}
 
+	encoded, err := json.Marshal(datasource)
+	if err != nil {
+		return fmt.Errorf("representing datasource as JSON: %w", err)
+	}
 	if exists {
-		datasource.ID = id
-		err := grafanaClient.UpdateDataSource(datasource)
+		var body models.UpdateDataSourceCommand
+		if err := json.Unmarshal(encoded, &body); err != nil {
+			return fmt.Errorf("representing data source as update command: %w", err)
+		}
+		datasource.UID = uid
+		_, err := grafanaClient.Datasources.UpdateDataSourceByUID(datasource.UID, &body) //nolint
 		if err != nil {
 			return err
 		}
 	} else {
-		_, err = grafanaClient.NewDataSource(datasource)
+		var body models.AddDataSourceCommand
+		if err := json.Unmarshal(encoded, &body); err != nil {
+			return fmt.Errorf("representing data source as create command: %w", err)
+		}
+		_, err = grafanaClient.Datasources.AddDataSource(&body) //nolint
 		if err != nil {
 			return err
 		}
@@ -347,19 +367,19 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 	return r.Client.Status().Update(ctx, grafana)
 }
 
-func (r *GrafanaDatasourceReconciler) Exists(client *gapi.Client, uid, name string) (bool, int64, error) {
-	datasources, err := client.DataSources()
+func (r *GrafanaDatasourceReconciler) Exists(client *genapi.GrafanaHTTPAPI, uid, name string) (bool, string, error) {
+	datasources, err := client.Datasources.GetDataSources()
 	if err != nil {
-		return false, 0, err
+		return false, "", fmt.Errorf("fetching data sources: %w", err)
 	}
 
-	for _, datasource := range datasources {
+	for _, datasource := range datasources.Payload {
 		if datasource.UID == uid || datasource.Name == name {
-			return true, datasource.ID, nil
+			return true, datasource.UID, nil
 		}
 	}
 
-	return false, 0, nil
+	return false, "", nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -416,7 +436,7 @@ func (r *GrafanaDatasourceReconciler) GetMatchingDatasourceInstances(ctx context
 	return instances, err
 }
 
-func (r *GrafanaDatasourceReconciler) getDatasourceContent(ctx context.Context, cr *v1beta1.GrafanaDatasource) (*gapi.DataSource, string, error) {
+func (r *GrafanaDatasourceReconciler) getDatasourceContent(ctx context.Context, cr *v1beta1.GrafanaDatasource) (*models.DataSource, string, error) {
 	initialBytes, err := json.Marshal(cr.Spec.Datasource)
 	if err != nil {
 		return nil, "", err
@@ -453,7 +473,7 @@ func (r *GrafanaDatasourceReconciler) getDatasourceContent(ctx context.Context, 
 	if err != nil {
 		return nil, "", err
 	}
-	var res gapi.DataSource
+	var res models.DataSource
 
 	err = json.Unmarshal(newBytes, &res)
 	if err != nil {
