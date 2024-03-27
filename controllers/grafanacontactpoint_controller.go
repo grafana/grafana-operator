@@ -172,7 +172,9 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 		return fmt.Errorf("building grafana client: %w", err)
 	}
 
-	applied, err := r.getContactPointFromUID(ctx, instance, contactPoint)
+	var applied models.EmbeddedContactPoint
+
+	applied, err = r.getContactPointFromUID(ctx, instance, contactPoint)
 	if err != nil {
 		return fmt.Errorf("getting contact point by UID: %w", err)
 	}
@@ -184,13 +186,12 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 			Name:                  contactPoint.Spec.Name,
 			Type:                  &contactPoint.Spec.Type,
 			Settings:              contactPoint.Spec.Settings,
+			UID:                   string(contactPoint.UID),
 		}
-		result, err := cl.Provisioning.PostContactpoints(provisioning.NewPostContactpointsParams().WithBody(cp))
+		_, err := cl.Provisioning.PostContactpoints(provisioning.NewPostContactpointsParams().WithBody(cp)) //nolint:errcheck
 		if err != nil {
 			return fmt.Errorf("creating contact point: %w", err)
 		}
-
-		contactPoint.Status.ContactPointUID = result.Payload.UID
 	} else {
 		// update
 		var updatedCP models.EmbeddedContactPoint
@@ -211,13 +212,13 @@ func (r *GrafanaContactPointReconciler) getContactPointFromUID(ctx context.Conte
 		return models.EmbeddedContactPoint{}, fmt.Errorf("building grafana client: %w", err)
 	}
 
-	params := provisioning.NewGetContactpointsParams().WithName(&contactPoint.Spec.Name)
+	params := provisioning.NewGetContactpointsParams()
 	remote, err := cl.Provisioning.GetContactpoints(params)
 	if err != nil {
 		return models.EmbeddedContactPoint{}, fmt.Errorf("getting contact points: %w", err)
 	}
 	for _, cp := range remote.Payload {
-		if cp.UID == contactPoint.Status.ContactPointUID {
+		if cp.UID == string(contactPoint.UID) {
 			return *cp, nil
 		}
 	}
@@ -251,7 +252,7 @@ func (r *GrafanaContactPointReconciler) removeFromInstance(ctx context.Context, 
 	if err != nil {
 		return fmt.Errorf("getting contact point by UID: %w", err)
 	}
-	_, err = cl.Provisioning.DeleteContactpoints(contactPoint.Status.ContactPointUID) //nolint:errcheck
+	_, err = cl.Provisioning.DeleteContactpoints(string(contactPoint.UID)) //nolint:errcheck
 	if err != nil {
 		return fmt.Errorf("deleting contact point: %w", err)
 	}
