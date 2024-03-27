@@ -191,8 +191,7 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 		}
 
 		contactPoint.Status.ContactPointUID = result.Payload.UID
-	}
-	if applied.UID != "" {
+	} else {
 		// update
 		var updatedCP models.EmbeddedContactPoint
 		updatedCP.Name = contactPoint.Spec.Name
