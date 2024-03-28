@@ -1,0 +1,12 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaContactPoint
+metadata:
+  name: test
+spec:
+  name: test
+  type: "email"
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  settings:
+    addresses: "email@email.com"

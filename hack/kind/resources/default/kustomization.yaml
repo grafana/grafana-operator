@@ -2,3 +2,4 @@ resources:
   - grafana.yaml
   - grafana-dashboard.yaml
   - grafana-datasource.yaml
+  - grafana-contactpoint.yaml
