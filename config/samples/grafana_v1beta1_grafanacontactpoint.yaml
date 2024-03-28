@@ -15,4 +15,4 @@ spec:
     matchLabels:
       dashboards: "grafana-a"
   settings:
-    email: 
+    email:
