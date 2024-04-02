@@ -10,7 +10,6 @@ require (
 	github.com/go-logr/logr v1.4.1
 	github.com/go-openapi/strfmt v0.23.0
 	github.com/google/go-jsonnet v0.20.0
-	github.com/grafana/grafana-api-golang-client v0.27.0
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20240215164046-eb0e60d27cb7
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.32.0
@@ -62,7 +61,6 @@ require (
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
