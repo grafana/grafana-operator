@@ -59,3 +59,9 @@ spec:
         file: 08-alert-rule-group.yaml
     - assert:
         file: 08-assert.yaml
+  - name: step-09
+    try:
+    - apply:
+        file: 09-contactpoint.yaml
+    - assert:
+        file: 09-assert.yaml

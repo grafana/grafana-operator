@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 	v1 "k8s.io/api/core/v1"
 
-	grapi "github.com/grafana/grafana-api-golang-client"
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/config"
@@ -123,50 +122,6 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 		}
 	}
 	return credentials, nil
-}
-
-func NewGrafanaClient(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (*grapi.Client, error) {
-	var timeout time.Duration
-	if grafana.Spec.Client != nil && grafana.Spec.Client.TimeoutSeconds != nil {
-		timeout = time.Duration(*grafana.Spec.Client.TimeoutSeconds)
-		if timeout < 0 {
-			timeout = 0
-		}
-	} else {
-		timeout = 10
-	}
-
-	credentials, err := getAdminCredentials(ctx, c, grafana)
-	if err != nil {
-		return nil, err
-	}
-
-	clientConfig := grapi.Config{
-		HTTPHeaders: nil,
-		Client: &http.Client{
-			Transport: NewInstrumentedRoundTripper(grafana.Name, metrics.GrafanaApiRequests, grafana.IsExternal()),
-			Timeout:   time.Second * timeout,
-		},
-		// TODO populate me
-		OrgID: 0,
-		// TODO populate me
-		NumRetries: 0,
-	}
-
-	if credentials.apikey != "" {
-		clientConfig.APIKey = credentials.apikey
-	}
-
-	if credentials.username != "" && credentials.password != "" {
-		clientConfig.BasicAuth = url.UserPassword(credentials.username, credentials.password)
-	}
-
-	grafanaClient, err := grapi.New(grafana.Status.AdminUrl, clientConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	return grafanaClient, nil
 }
 
 func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (*genapi.GrafanaHTTPAPI, error) {
