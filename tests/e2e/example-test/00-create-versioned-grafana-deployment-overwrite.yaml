@@ -1,0 +1,26 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana-ten-deployment-overwrite
+  labels:
+    dashboards: "grafana"
+spec:
+  client:
+    preferIngress: false
+  deployment:
+    spec:
+      replicas: 2
+      template:
+        spec:
+          containers:
+            - name: grafana
+              image: grafana/grafana:10.4.0
+  version: 10.3.5
+  config:
+    log:
+      mode: "console"
+    auth:
+      disable_login_form: "false"
+    security:
+      admin_user: root
+      admin_password: secret

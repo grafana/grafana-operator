@@ -14,6 +14,10 @@ spec:
         file: 00-create-grafana.yaml
     - apply:
         file: 00-create-versioned-grafana.yaml
+    - apply:
+        file: 00-create-versioned-grafana-deployment.yaml
+    - apply:
+        file: 00-create-versioned-grafana-deployment-overwrite.yaml
     - assert:
         file: 00-assert.yaml
   - name: step-01

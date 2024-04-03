@@ -28,3 +28,21 @@ status:
   stage: complete
   stageStatus: success
   version: 10.3.5
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana-ten-deployment
+status:
+  stage: complete
+  stageStatus: success
+  version: 10.4.0
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana-ten-deployment-overwrite
+status:
+  stage: complete
+  stageStatus: success
+  version: 10.4.0
