@@ -3,7 +3,7 @@ kind: Grafana
 metadata:
   name: grafana-ten-deployment
   labels:
-    dashboards: "grafana"
+    dashboards: "grafana-deployment"
 spec:
   client:
     preferIngress: false
