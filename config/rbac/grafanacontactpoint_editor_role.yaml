@@ -1,0 +1,31 @@
+# permissions for end users to edit grafanacontactpoints.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: grafanacontactpoint-editor-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: grafana-operator
+    app.kubernetes.io/part-of: grafana-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: grafanacontactpoint-editor-role
+rules:
+- apiGroups:
+  - grafana.integreatly.org
+  resources:
+  - grafanacontactpoints
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - grafana.integreatly.org
+  resources:
+  - grafanacontactpoints/status
+  verbs:
+  - get

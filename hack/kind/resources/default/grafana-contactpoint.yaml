@@ -1,0 +1,18 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaContactPoint
+metadata:
+  labels:
+    app.kubernetes.io/name: grafanacontactpoint
+    app.kubernetes.io/instance: grafanacontactpoint-sample
+    app.kubernetes.io/part-of: grafana-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: grafana-operator
+  name: grafanacontactpoint-sample
+spec:
+  name: grafanacontactpoint-sample
+  type: "email"
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  settings:
+    addresses: "email@email.com"
