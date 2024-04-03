@@ -40,7 +40,7 @@ metadata:
     dashboards: "external-grafana"
 spec:
   external:
-    url: http://grafana-internal-service
+    url: (join('',['http://grafana-internal-service.',$namespace,':3000']))
     adminPassword:
       name: grafana-internal-admin-credentials
       key: GF_SECURITY_ADMIN_PASSWORD

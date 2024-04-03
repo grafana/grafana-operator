@@ -124,6 +124,23 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 	return credentials, nil
 }
 
+func NewHTTPClient(grafana *v1beta1.Grafana) *http.Client {
+	var timeout time.Duration
+	if grafana.Spec.Client != nil && grafana.Spec.Client.TimeoutSeconds != nil {
+		timeout = time.Duration(*grafana.Spec.Client.TimeoutSeconds)
+		if timeout < 0 {
+			timeout = 0
+		}
+	} else {
+		timeout = 10
+	}
+
+	return &http.Client{
+		Transport: NewInstrumentedRoundTripper(grafana.Name, metrics.GrafanaApiRequests, grafana.IsExternal()),
+		Timeout:   time.Second * timeout,
+	}
+}
+
 func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (*genapi.GrafanaHTTPAPI, error) {
 	var timeout time.Duration
 	if grafana.Spec.Client != nil && grafana.Spec.Client.TimeoutSeconds != nil {

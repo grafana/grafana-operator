@@ -2235,6 +2235,13 @@ GrafanaSpec defines the desired state of Grafana
           ServiceAccount sets how the ServiceAccount object should look like with your grafana instance, contains a number of defaults.<br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>version</b></td>
+        <td>string</td>
+        <td>
+          Version specifies the version of Grafana to use for this deployment. It follows the same format as the docker.io/grafana/grafana tags<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -17338,6 +17345,13 @@ GrafanaStatus defines the observed state of Grafana
         <td>false</td>
       </tr><tr>
         <td><b>stageStatus</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>version</b></td>
         <td>string</td>
         <td>
           <br/>
