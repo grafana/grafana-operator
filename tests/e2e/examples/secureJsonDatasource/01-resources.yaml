@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: grafana-querier
+  labels:
+    app: grafana-querier
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: netcat
+          image: dwdraju/alpine-curl-jq #alpine
+          env:
+            - name: BASEURL
+              value: (join('',['http://root:secret@grafana-service.',$namespace,'.svc',':3000']))
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              sleep 15
+              echo "The base URL for grafana: ${BASEURL}"
+              export DATASOURCE_UID=$(curl -v "${BASEURL}/api/datasources" -H "Accept: application/json" | jq -r '.[0].uid')
+              echo "Datasource UID: ${DATASOURCE_UID}"
+              RESULT=$(curl -s "${BASEURL}/api/datasources/uid/${DATASOURCE_UID}/health" -H "Accept: application/json" | jq -r '.')
+              echo "Result: ${RESULT}"

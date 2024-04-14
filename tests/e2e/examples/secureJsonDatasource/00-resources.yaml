@@ -1,0 +1,103 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana
+  labels:
+    dashboards: "grafana"
+spec:
+  config:
+    log:
+      mode: "console"
+    auth:
+      disable_login_form: "false"
+    security:
+      admin_user: root
+      admin_password: secret
+  deployment:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: grafana
+              image: grafana/grafana:10.4.2 # Not all grafana versions support the API to test the datasource
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grafana-instance-sa-token
+stringData:
+  token: "token-content"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: thanos
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  datasource:
+    access: proxy
+    basicAuth: false
+    editable: true
+    isDefault: true
+    jsonData:
+      httpHeaderName1: 'Authorization'
+      timeInterval: 5s
+      tlsSkipVerify: true
+    secureJsonData:
+      httpHeaderValue1: 'Bearer ${token}'
+    name: Prometheus
+    orgId: 1
+    type: prometheus
+    url: (join('',['http://thanos-querier.',$namespace,'.svc',':8080']))
+  valuesFrom:
+    - targetPath: "secureJsonData.httpHeaderValue1"
+      valueFrom:
+        secretKeyRef:
+          name: grafana-instance-sa-token
+          key: token
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thanos-querier
+  labels:
+    app: thanos-querier
+spec:
+  selector:
+    matchLabels:
+      app: thanos-querier
+  template:
+    metadata:
+      labels:
+        app: thanos-querier
+    spec:
+      terminationGracePeriodSeconds: 3
+      containers:
+        - name: netcat
+          image: alpine
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              echo "Starting pod"
+              while true; do echo -e 'HTTP/1.1 200 OK\n\n{"asdf":"date"}' | nc -l -p 8080; done
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thanos-querier
+spec:
+  selector:
+    app: thanos-querier
+  ports:
+    - port: 8080
+      name: http
+      protocol: TCP
+      targetPort: 8080
