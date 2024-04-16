@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thanos
+  labels:
+    app: thanos
+spec:
+  selector:
+    matchLabels:
+      app: thanos
+  template:
+    metadata:
+      labels:
+        app: thanos
+    spec:
+      terminationGracePeriodSeconds: 3
+      containers:
+        - name: netcat
+          image: alpine
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              echo "Starting pod"
+              while true; do echo -e 'HTTP/1.1 200 OK\n\n{"asdf":"date"}' | nc -l -p 8080; done
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thanos
+spec:
+  selector:
+    app: thanos
+  ports:
+    - port: 8080
+      name: http
+      protocol: TCP
+      targetPort: 8080
