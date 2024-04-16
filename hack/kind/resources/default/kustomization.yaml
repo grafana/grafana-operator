@@ -3,3 +3,8 @@ resources:
   - grafana-dashboard.yaml
   - grafana-datasource.yaml
   - grafana-contactpoint.yaml
+
+  - grafana-datasource-thanos.yaml
+  - secret.yaml
+  - serviceaccount.yaml
+  - deployment-thanos.yaml
