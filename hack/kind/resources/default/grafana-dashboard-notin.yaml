@@ -1,18 +1,21 @@
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
-  name: grafana
+  name: grafana-notin-grafana-2
   labels:
     dashboards: "grafana"
 spec:
   folder: my-folder-name
   instanceSelector:
-    matchLabels:
-      dashboards: grafana
+    matchExpressions:
+      - key: dashboards
+        operator: NotIn
+        values:
+          - grafana-2
   json: |
     {
       "id": null,
-      "title": "Simple Dashboard MatchLabels",
+      "title": "Simple Dashboard notIn grafana-2",
       "tags": [],
       "style": "dark",
       "timezone": "browser",

@@ -1,18 +1,19 @@
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
-  name: grafana
+  name: grafana-notexist
   labels:
     dashboards: "grafana"
 spec:
   folder: my-folder-name
   instanceSelector:
-    matchLabels:
-      dashboards: grafana
+    matchExpressions:
+      - key: exists
+        operator: DoesNotExist
   json: |
     {
       "id": null,
-      "title": "Simple Dashboard MatchLabels",
+      "title": "Simple Dashboard NotExist",
       "tags": [],
       "style": "dark",
       "timezone": "browser",
