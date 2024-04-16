@@ -1,6 +1,6 @@
 resources:
   - grafana.yaml
-  - grafana-2.yaml 
+  - grafana-2.yaml
   - grafana-dashboard.yaml
   - grafana-dashboard-in.yaml
   - grafana-dashboard-notin.yaml
