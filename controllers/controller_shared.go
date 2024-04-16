@@ -33,9 +33,48 @@ func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSel
 	opts := []client.ListOption{
 		client.MatchingLabels(labelSelector.MatchLabels),
 	}
-
 	err := k8sClient.List(ctx, &list, opts...)
-	return list, err
+
+	var selectedList v1beta1.GrafanaList
+
+	for _, instance := range list.Items {
+		selected := true
+		for _, matchExpression := range labelSelector.MatchExpressions {
+			if val, ok := instance.Labels[matchExpression.Key]; ok {
+				if matchExpression.Operator == "DoesNotExist" {
+					selected = false
+					break
+				} else if matchExpression.Operator == "Exists" {
+					break
+				}
+				valueMatched := labelMatchedExpression(val, matchExpression)
+				if !valueMatched {
+					selected = false
+					break
+				}
+			} else if matchExpression.Operator == "In" || matchExpression.Operator == "Exists" {
+				selected = false
+				break
+			}
+		}
+
+		if selected {
+			selectedList.Items = append(selectedList.Items, instance)
+		}
+	}
+
+	return selectedList, err
+}
+
+func labelMatchedExpression(val string, matchExpression v1.LabelSelectorRequirement) bool {
+	valueMatched := matchExpression.Operator == "NotIn"
+
+	for _, value := range matchExpression.Values {
+		if val == value {
+			return matchExpression.Operator == "In"
+		}
+	}
+	return valueMatched
 }
 
 func ReconcilePlugins(ctx context.Context, k8sClient client.Client, scheme *runtime.Scheme, grafana *v1beta1.Grafana, plugins v1beta1.PluginList, resource string) error {
