@@ -27,7 +27,7 @@ spec:
   - name: step-02
     try:
       - script:
-          content: 'oc logs -n ${namespace} -l job-name=grafana-querier | grep "Result: " -A200 | sed "s|Result:||" | jq -r "."'
+          content: 'kubectl logs -n ${namespace} -l job-name=grafana-querier | grep "Result: " -A200 | sed "s|Result:||" | jq -r "."'
           env:
             - name: namespace
               value: ($namespace)
@@ -42,7 +42,7 @@ spec:
   - name: step-03
     try:
       - script:
-          content: 'oc logs -n ${namespace} -l app=thanos-querier | grep "^Authorization:" | head -n 1'
+          content: 'kubectl logs -n ${namespace} -l app=thanos-querier | grep "^Authorization:" | head -n 1'
           env:
             - name: namespace
               value: ($namespace)
