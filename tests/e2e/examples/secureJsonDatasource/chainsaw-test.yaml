@@ -25,6 +25,8 @@ spec:
           file: 01-assertions.yaml
   # This step verifies that grafana is happy with the datasource
   - name: step-02
+    timeouts:
+      assert: 5s
     try:
       - script:
           content: 'kubectl logs -n ${namespace} -l job-name=grafana-querier | grep "Result: " -A200 | sed "s|Result:||" | jq -r "."'
@@ -40,6 +42,8 @@ spec:
               status: OK
     # This step verifies that netcat/thanos got a call with a token
   - name: step-03
+    timeouts:
+      assert: 5s
     try:
       - script:
           content: 'kubectl logs -n ${namespace} -l app=thanos-querier | grep "^Authorization:" | head -n 1'
