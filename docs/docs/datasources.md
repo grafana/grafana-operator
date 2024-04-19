@@ -54,7 +54,6 @@ spec:
       "timeInterval": "5s"
     secureJsonData:
       "password": ${PROMETHEUS_PASSWORD} # Notice the brakes around PROMETHEUS_PASSWORD
-    editable: true
 ```
 
 **NOTE:** The secret must exist in the same namespace as the datasource.
@@ -66,7 +65,6 @@ spec:
 [Plugins](https://grafana.com/grafana/plugins/) is a way to extend the grafana functionality in dashboards and datasources.
 
 Plugins can be installed to grafana instances managed by the operator and be defined in both datasources and dashboards.
-
 
 ```yaml
 apiVersion: grafana.integreatly.org/v1beta1

@@ -36,11 +36,14 @@ type GrafanaDatasourceInternal struct {
 	Access        string `json:"access,omitempty"`
 	Database      string `json:"database,omitempty"`
 	User          string `json:"user,omitempty"`
-	OrgID         *int64 `json:"orgId,omitempty"`
 	IsDefault     *bool  `json:"isDefault,omitempty"`
 	BasicAuth     *bool  `json:"basicAuth,omitempty"`
 	BasicAuthUser string `json:"basicAuthUser,omitempty"`
-	Editable      *bool  `json:"editable,omitempty"`
+
+	// Deprecated field, it has no effect
+	OrgID *int64 `json:"orgId,omitempty"`
+	// Deprecated field, it has no effect
+	Editable *bool `json:"editable,omitempty"`
 
 	// +kubebuilder:validation:Schemaless
 	// +kubebuilder:pruning:PreserveUnknownFields
