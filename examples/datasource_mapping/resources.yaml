@@ -30,9 +30,8 @@ spec:
     url: http://prometheus-service:9090
     isDefault: true
     jsonData:
-      'tlsSkipVerify': true
-      'timeInterval': "5s"
-    editable: true
+      "tlsSkipVerify": true
+      "timeInterval": "5s"
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDatasource
@@ -49,9 +48,8 @@ spec:
     url: http://prometheus-service:9090
     isDefault: false
     jsonData:
-      'tlsSkipVerify': true
-      'timeInterval': "5s"
-    editable: true
+      "tlsSkipVerify": true
+      "timeInterval": "5s"
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard

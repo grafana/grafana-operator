@@ -1475,7 +1475,7 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         <td><b>editable</b></td>
         <td>boolean</td>
         <td>
-          <br/>
+          Deprecated field. Please, remove it from your manifests<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1503,7 +1503,7 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         <td><b>orgId</b></td>
         <td>integer</td>
         <td>
-          <br/>
+          Deprecated field. Please, remove it from your manifests<br/>
           <br/>
             <i>Format</i>: int64<br/>
         </td>

@@ -48,7 +48,6 @@ spec:
     jsonData:
       "tlsSkipVerify": true
       "timeInterval": "5s"
-      httpHeaderName1: 'Authorization'
+      httpHeaderName1: "Authorization"
     secureJsonData:
       "httpHeaderValue1": "Bearer ${PROMETHEUS_TOKEN}"
-    editable: true
