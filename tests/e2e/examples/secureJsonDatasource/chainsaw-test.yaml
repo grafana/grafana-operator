@@ -1,0 +1,59 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/chainsaw/main/.schemas/json/test-chainsaw-v1alpha1.json
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: secure-json-datasource
+spec:
+  concurrent: false
+  steps:
+  # This starts the grafana and the netcat simulating thanos.
+  - name: step-00
+    try:
+    - apply:
+        template: true
+        file: 00-resources.yaml
+    - assert:
+        template: true
+        file: 00-assertions.yaml
+  # This queries the grafana to trigger a query to the netcat simulating thanos.
+  - name: step-01
+    try:
+      - apply:
+          template: true
+          file: 01-resources.yaml
+      - assert:
+          file: 01-assertions.yaml
+  # This step verifies that grafana is happy with the datasource
+  - name: step-02
+    timeouts:
+      assert: 5s
+    try:
+      - script:
+          content: 'kubectl logs -n ${namespace} -l job-name=grafana-querier | grep "Result: " -A200 | sed "s|Result:||" | jq -r "."'
+          env:
+            - name: namespace
+              value: ($namespace)
+          outputs:
+            - name: grafana_response
+              value: (json_parse($stdout))
+      - assert:
+          resource:
+            ($grafana_response):
+              status: OK
+    # This step verifies that netcat/thanos got a call with a token
+  - name: step-03
+    timeouts:
+      assert: 5s
+    try:
+      - script:
+          content: 'kubectl logs -n ${namespace} -l app=thanos-querier | grep "^Authorization:" | head -n 1'
+          env:
+            - name: namespace
+              value: ($namespace)
+          outputs:
+            - name: thanos_request_log
+              value: ($stdout)
+      - assert:
+          resource:
+            ($thanos_request_log):
+              "Authorization: Bearer token-content"
