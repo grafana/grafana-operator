@@ -16,6 +16,5 @@ spec:
     url: http://prometheus-service:9090
     isDefault: true
     jsonData:
-      'tlsSkipVerify': true
-      'timeInterval': "5s"
-    editable: true
+      "tlsSkipVerify": true
+      "timeInterval": "5s"

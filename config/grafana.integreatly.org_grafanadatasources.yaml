@@ -60,6 +60,7 @@ spec:
                   database:
                     type: string
                   editable:
+                    description: Deprecated field. Please, remove it from your manifests
                     type: boolean
                   isDefault:
                     type: boolean
@@ -69,6 +70,7 @@ spec:
                   name:
                     type: string
                   orgId:
+                    description: Deprecated field. Please, remove it from your manifests
                     format: int64
                     type: integer
                   secureJsonData:

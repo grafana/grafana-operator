@@ -22,7 +22,6 @@ spec:
     jsonData:
       'tlsSkipVerify': true
       'timeInterval': "5s"
-    editable: true
 
 ]]
 
