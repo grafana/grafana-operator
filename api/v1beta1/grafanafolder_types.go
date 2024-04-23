@@ -45,6 +45,10 @@ type GrafanaFolderSpec struct {
 
 	// how often the folder is synced, defaults to 5m if not set
 	// +optional
+	// +kubebuilder:validation:Type=string
+	// +kubebuilder:validation:Format=duration
+	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
+	// +kubebuilder:default="5m"
 	ResyncPeriod string `json:"resyncPeriod,omitempty"`
 }
 
