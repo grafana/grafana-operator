@@ -101,7 +101,7 @@ manifests: yq controller-gen ## Generate WebhookConfiguration, ClusterRole and C
 
 .PHONY: kustomize-crd
 kustomize-crd: kustomize manifests
-	$(KUSTOMIZE) build config/ -o deploy/kustomize/base/crds.yaml
+	$(KUSTOMIZE) build config/crd -o deploy/kustomize/base/crds.yaml
 
 # Generate API reference documentation
 api-docs: gen-crd-api-reference-docs kustomize
