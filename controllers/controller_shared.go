@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"slices"
 	"time"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -38,26 +39,7 @@ func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSel
 	var selectedList v1beta1.GrafanaList
 
 	for _, instance := range list.Items {
-		selected := true
-		for _, matchExpression := range labelSelector.MatchExpressions {
-			if val, ok := instance.Labels[matchExpression.Key]; ok {
-				if matchExpression.Operator == "DoesNotExist" {
-					selected = false
-					break
-				} else if matchExpression.Operator == "Exists" {
-					break
-				}
-				valueMatched := labelMatchedExpression(val, matchExpression)
-				if !valueMatched {
-					selected = false
-					break
-				}
-			} else if matchExpression.Operator == "In" || matchExpression.Operator == "Exists" {
-				selected = false
-				break
-			}
-		}
-
+		selected := labelMatchedExpression(instance, labelSelector)
 		if selected {
 			selectedList.Items = append(selectedList.Items, instance)
 		}
@@ -66,15 +48,28 @@ func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSel
 	return selectedList, err
 }
 
-func labelMatchedExpression(val string, matchExpression v1.LabelSelectorRequirement) bool {
-	valueMatched := matchExpression.Operator == "NotIn"
+func labelMatchedExpression(instance v1beta1.Grafana, labelSelector *v1.LabelSelector) bool {
+	selected := true
+	for _, matchExpression := range labelSelector.MatchExpressions {
+		if label, ok := instance.Labels[matchExpression.Key]; ok {
+			switch matchExpression.Operator {
+			case metav1.LabelSelectorOpDoesNotExist:
+				selected = false
+			case metav1.LabelSelectorOpExists:
+				selected = true
+			case metav1.LabelSelectorOpIn:
+				selected = slices.Contains(matchExpression.Values, label)
+			case metav1.LabelSelectorOpNotIn:
+				selected = !slices.Contains(matchExpression.Values, label)
+			}
 
-	for _, value := range matchExpression.Values {
-		if val == value {
-			return matchExpression.Operator == "In"
+			// All matchExpressions must evaluate to true in order to satisfy the conditions
+			if !selected {
+				break
+			}
 		}
 	}
-	return valueMatched
+	return selected
 }
 
 func ReconcilePlugins(ctx context.Context, k8sClient client.Client, scheme *runtime.Scheme, grafana *v1beta1.Grafana, plugins v1beta1.PluginList, resource string) error {
