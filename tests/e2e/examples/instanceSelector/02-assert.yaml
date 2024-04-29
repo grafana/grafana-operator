@@ -1,0 +1,47 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name:  grafana-match-labels
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name:  grafana-exists
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name:  grafana-not-exists
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name:  grafana-not-in
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name:  grafana-in
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana
+status:
+  dashboards:
+    - (join('/', [$namespace, 'grafana-not-in/notin']))
+    - (join('/', [$namespace, 'grafana-exists/exists']))
+    - (join('/', [$namespace, 'grafana-match-labels/matchLabels']))
+  stage: complete
+  stageStatus: success
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana-1
+status:
+  dashboards:
+    - (join('/', [$namespace, 'grafana-in/in']))
+    - (join('/', [$namespace, 'grafana-exists/exists']))
+  stage: complete
+  stageStatus: success
