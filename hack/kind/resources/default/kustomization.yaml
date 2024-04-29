@@ -1,10 +1,5 @@
 resources:
   - grafana.yaml
-  - grafana-2.yaml
   - grafana-dashboard.yaml
-  - grafana-dashboard-in.yaml
-  - grafana-dashboard-notin.yaml
-  - grafana-dashboard-exist.yaml
-  - grafana-dashboard-notexist.yaml
   - grafana-datasource.yaml
   - grafana-contactpoint.yaml
