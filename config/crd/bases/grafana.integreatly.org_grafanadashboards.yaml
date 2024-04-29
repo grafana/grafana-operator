@@ -202,6 +202,9 @@ spec:
                   type: object
                 type: array
               resyncPeriod:
+                default: 5m
+                format: duration
+                pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
               url:
                 type: string
