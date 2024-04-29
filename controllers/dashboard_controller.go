@@ -305,10 +305,14 @@ func (r *GrafanaDashboardReconciler) onDashboardDeleted(ctx context.Context, nam
 			resp, err := grafanaClient.Dashboards.GetDashboardByUID(*uid)
 			if err != nil {
 				var notFound *dashboards.GetDashboardByUIDNotFound
-				if !errors.As(err, &notFound) {
-					return err
+				if errors.As(err, &notFound) {
+					// nothing to do if the dashboard doesn't exist
+					return nil
 				}
+
+				return err
 			}
+
 			dash := resp.GetPayload()
 
 			_, err = grafanaClient.Dashboards.DeleteDashboardByUID(*uid) //nolint:errcheck
