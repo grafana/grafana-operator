@@ -29,9 +29,9 @@ metadata:
   name: grafana
 status:
   dashboards:
+    - (join('/', [$namespace, 'grafana-match-labels/matchLabels']))
     - (join('/', [$namespace, 'grafana-not-in/notin']))
     - (join('/', [$namespace, 'grafana-exists/exists']))
-    - (join('/', [$namespace, 'grafana-match-labels/matchLabels']))
   stage: complete
   stageStatus: success
 ---
