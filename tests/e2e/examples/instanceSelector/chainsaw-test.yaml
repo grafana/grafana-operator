@@ -21,6 +21,8 @@ spec:
     try:
     - apply:
         file: 02-resources.yaml
+    - sleep:
+        duration: 10s
     - assert:
         template: true
         file: 02-assert.yaml

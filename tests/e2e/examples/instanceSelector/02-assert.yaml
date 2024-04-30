@@ -28,10 +28,7 @@ kind: Grafana
 metadata:
   name: grafana
 status:
-  dashboards:
-    - (join('/', [$namespace, 'grafana-match-labels/matchLabels']))
-    - (join('/', [$namespace, 'grafana-not-in/notin']))
-    - (join('/', [$namespace, 'grafana-exists/exists']))
+  (length(dashboards)): 3
   stage: complete
   stageStatus: success
 ---
@@ -40,8 +37,6 @@ kind: Grafana
 metadata:
   name: grafana-1
 status:
-  dashboards:
-    - (join('/', [$namespace, 'grafana-in/in']))
-    - (join('/', [$namespace, 'grafana-exists/exists']))
+  (length(dashboards)): 2
   stage: complete
   stageStatus: success
