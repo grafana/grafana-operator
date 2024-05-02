@@ -75,6 +75,10 @@ type GrafanaDatasourceSpec struct {
 
 	// how often the datasource is refreshed, defaults to 5m if not set
 	// +optional
+	// +kubebuilder:validation:Type=string
+	// +kubebuilder:validation:Format=duration
+	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
+	// +kubebuilder:default="5m"
 	ResyncPeriod string `json:"resyncPeriod,omitempty"`
 
 	// allow to import this resources from an operator in a different namespace
