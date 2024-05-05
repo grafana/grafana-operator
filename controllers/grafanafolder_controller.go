@@ -26,7 +26,6 @@ import (
 
 	"github.com/go-logr/logr"
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
-	"github.com/grafana/grafana-openapi-client-go/client/dashboards"
 	"github.com/grafana/grafana-openapi-client-go/client/folders"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
@@ -92,14 +91,14 @@ func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result,
 		}
 	}
 
-	// delete all dashboards that no longer have a cr
-	for grafana, folders := range foldersToDelete {
+	// delete all folders that no longer have a cr
+	for grafana, existingFolders := range foldersToDelete {
 		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 		if err != nil {
 			return ctrl.Result{Requeue: true}, err
 		}
 
-		for _, folder := range folders {
+		for _, folder := range existingFolders {
 			// avoid bombarding the grafana instance with a large number of requests at once, limit
 			// the sync to a certain number of folders per cycle. This means that it will take longer to sync
 			// a large number of deleted dashboard crs, but that should be an edge case.
@@ -108,9 +107,11 @@ func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result,
 			}
 
 			namespace, name, uid := folder.Split()
-			_, err = grafanaClient.Dashboards.DeleteDashboardByUID(uid) //nolint
+
+			params := folders.NewDeleteFolderParams().WithFolderUID(uid)
+			_, err = grafanaClient.Folders.DeleteFolder(params) //nolint
 			if err != nil {
-				var notFound *dashboards.DeleteDashboardByUIDNotFound
+				var notFound *folders.DeleteFolderNotFound
 				if errors.As(err, &notFound) {
 					syncLog.Info("folder no longer exists", "namespace", namespace, "name", name)
 				} else {
