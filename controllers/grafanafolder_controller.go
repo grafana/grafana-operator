@@ -269,7 +269,7 @@ func (r *GrafanaFolderReconciler) onFolderDeleted(ctx context.Context, namespace
 			_, err = grafanaClient.Folders.DeleteFolder(params) //nolint
 			if err != nil {
 				var notFound *folders.DeleteFolderNotFound
-				if errors.As(err, &notFound) {
+				if !errors.As(err, &notFound) {
 					return err
 				}
 			}
@@ -281,6 +281,7 @@ func (r *GrafanaFolderReconciler) onFolderDeleted(ctx context.Context, namespace
 			}
 		}
 	}
+
 	return nil
 }
 
