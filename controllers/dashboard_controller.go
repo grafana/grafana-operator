@@ -302,37 +302,43 @@ func (r *GrafanaDashboardReconciler) onDashboardDeleted(ctx context.Context, nam
 				return err
 			}
 
+			isCleanupInGrafanaRequired := true
+
 			resp, err := grafanaClient.Dashboards.GetDashboardByUID(*uid)
 			if err != nil {
 				var notFound *dashboards.GetDashboardByUIDNotFound
-				if errors.As(err, &notFound) {
-					// nothing to do if the dashboard doesn't exist
-					return nil
-				}
-
-				return err
-			}
-
-			dash := resp.GetPayload()
-
-			_, err = grafanaClient.Dashboards.DeleteDashboardByUID(*uid) //nolint:errcheck
-			if err != nil {
-				var notFound *dashboards.DeleteDashboardByUIDNotFound
 				if !errors.As(err, &notFound) {
 					return err
 				}
+
+				isCleanupInGrafanaRequired = false
 			}
 
-			if dash != nil && dash.Meta.FolderUID != "" {
-				resp, err := r.DeleteFolderIfEmpty(grafanaClient, dash.Meta.FolderUID)
+			if isCleanupInGrafanaRequired {
+				var dash *models.DashboardFullWithMeta
+				if resp != nil {
+					dash = resp.GetPayload()
+				}
+
+				_, err = grafanaClient.Dashboards.DeleteDashboardByUID(*uid) //nolint:errcheck
 				if err != nil {
-					return err
+					var notFound *dashboards.DeleteDashboardByUIDNotFound
+					if !errors.As(err, &notFound) {
+						return err
+					}
 				}
-				if resp.StatusCode == 200 {
-					r.Log.Info("unused folder successfully removed")
-				}
-				if resp.StatusCode == 432 {
-					r.Log.Info("folder still in use by other dashboards")
+
+				if dash != nil && dash.Meta != nil && dash.Meta.FolderUID != "" {
+					resp, err := r.DeleteFolderIfEmpty(grafanaClient, dash.Meta.FolderUID)
+					if err != nil {
+						return err
+					}
+					if resp.StatusCode == 200 {
+						r.Log.Info("unused folder successfully removed")
+					}
+					if resp.StatusCode == 432 {
+						r.Log.Info("folder still in use by other dashboards")
+					}
 				}
 			}
 
