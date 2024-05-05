@@ -39,7 +39,7 @@ func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSel
 	var selectedList v1beta1.GrafanaList
 
 	for _, instance := range list.Items {
-		selected := labelsMatchExpressions(instance.Labels, labelSelector.MatchExpressions)
+		selected := labelsSatisfyMatchExpressions(instance.Labels, labelSelector.MatchExpressions)
 		if selected {
 			selectedList.Items = append(selectedList.Items, instance)
 		}
@@ -48,7 +48,7 @@ func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSel
 	return selectedList, err
 }
 
-func labelsMatchExpressions(labels map[string]string, matchExpressions []metav1.LabelSelectorRequirement) bool {
+func labelsSatisfyMatchExpressions(labels map[string]string, matchExpressions []metav1.LabelSelectorRequirement) bool {
 	if len(labels) == 0 {
 		return false
 	}

@@ -23,7 +23,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestLabelsMatchExpressions(t *testing.T) {
+func TestLabelsSatisfyMatchExpressions(t *testing.T) {
 	tests := []struct {
 		name             string
 		labels           map[string]string
@@ -197,7 +197,7 @@ func TestLabelsMatchExpressions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := labelsMatchExpressions(tt.labels, tt.matchExpressions)
+			got := labelsSatisfyMatchExpressions(tt.labels, tt.matchExpressions)
 			assert.Equal(t, tt.want, got)
 		})
 	}
