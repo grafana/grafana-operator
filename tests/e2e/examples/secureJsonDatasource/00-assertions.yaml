@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana-deployment
+  ownerReferences:
+  - apiVersion: grafana.integreatly.org/v1beta1
+    kind: Grafana
+    name: grafana
+status:
+  availableReplicas: 1
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: thanos
+spec:
+  datasource:
+    secureJsonData:
+      httpHeaderValue1: 'Bearer ${token}'
+  valuesFrom:
+    - targetPath: "secureJsonData.httpHeaderValue1"
+      valueFrom:
+        secretKeyRef:
+          name: grafana-instance-sa-token
+          key: token
+status:
+  uid:
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thanos-querier
+status:
+  availableReplicas: 1

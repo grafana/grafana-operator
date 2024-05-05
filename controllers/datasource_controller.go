@@ -315,7 +315,7 @@ func (r *GrafanaDatasourceReconciler) onDatasourceDeleted(ctx context.Context, n
 	return nil
 }
 
-func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDatasource, datasource *models.DataSource, hash string) error {
+func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDatasource, datasource *models.UpdateDataSourceCommand, hash string) error {
 	if grafana.IsExternal() && cr.Spec.Plugins != nil {
 		return fmt.Errorf("external grafana instances don't support plugins, please remove spec.plugins from your datasource cr")
 	}
@@ -436,7 +436,7 @@ func (r *GrafanaDatasourceReconciler) GetMatchingDatasourceInstances(ctx context
 	return instances, err
 }
 
-func (r *GrafanaDatasourceReconciler) getDatasourceContent(ctx context.Context, cr *v1beta1.GrafanaDatasource) (*models.DataSource, string, error) {
+func (r *GrafanaDatasourceReconciler) getDatasourceContent(ctx context.Context, cr *v1beta1.GrafanaDatasource) (*models.UpdateDataSourceCommand, string, error) {
 	initialBytes, err := json.Marshal(cr.Spec.Datasource)
 	if err != nil {
 		return nil, "", err
@@ -473,10 +473,10 @@ func (r *GrafanaDatasourceReconciler) getDatasourceContent(ctx context.Context, 
 	if err != nil {
 		return nil, "", err
 	}
-	var res models.DataSource
 
-	err = json.Unmarshal(newBytes, &res)
-	if err != nil {
+	// We use UpdateDataSourceCommand here because models.DataSource lacks the SecureJsonData field
+	var res models.UpdateDataSourceCommand
+	if err = json.Unmarshal(newBytes, &res); err != nil {
 		return nil, "", err
 	}
 

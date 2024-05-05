@@ -36,11 +36,14 @@ type GrafanaDatasourceInternal struct {
 	Access        string `json:"access,omitempty"`
 	Database      string `json:"database,omitempty"`
 	User          string `json:"user,omitempty"`
-	OrgID         *int64 `json:"orgId,omitempty"`
 	IsDefault     *bool  `json:"isDefault,omitempty"`
 	BasicAuth     *bool  `json:"basicAuth,omitempty"`
 	BasicAuthUser string `json:"basicAuthUser,omitempty"`
-	Editable      *bool  `json:"editable,omitempty"`
+
+	// Deprecated field, it has no effect
+	OrgID *int64 `json:"orgId,omitempty"`
+	// Deprecated field, it has no effect
+	Editable *bool `json:"editable,omitempty"`
 
 	// +kubebuilder:validation:Schemaless
 	// +kubebuilder:pruning:PreserveUnknownFields
@@ -72,6 +75,10 @@ type GrafanaDatasourceSpec struct {
 
 	// how often the datasource is refreshed, defaults to 5m if not set
 	// +optional
+	// +kubebuilder:validation:Type=string
+	// +kubebuilder:validation:Format=duration
+	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
+	// +kubebuilder:default="5m"
 	ResyncPeriod string `json:"resyncPeriod,omitempty"`
 
 	// allow to import this resources from an operator in a different namespace

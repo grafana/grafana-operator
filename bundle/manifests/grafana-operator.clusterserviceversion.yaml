@@ -33,13 +33,6 @@ metadata:
           "apiVersion": "grafana.integreatly.org/v1beta1",
           "kind": "GrafanaAlertRuleGroup",
           "metadata": {
-            "labels": {
-              "app.kubernetes.io/created-by": "grafana-operator",
-              "app.kubernetes.io/instance": "grafanaalertrulegroup-sample",
-              "app.kubernetes.io/managed-by": "kustomize",
-              "app.kubernetes.io/name": "grafanaalertrulegroup",
-              "app.kubernetes.io/part-of": "grafana-operator"
-            },
             "name": "grafanaalertrulegroup-sample"
           },
           "spec": {
@@ -128,6 +121,32 @@ metadata:
         },
         {
           "apiVersion": "grafana.integreatly.org/v1beta1",
+          "kind": "GrafanaContactPoint",
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/created-by": "grafana-operator",
+              "app.kubernetes.io/instance": "grafanacontactpoint-sample",
+              "app.kubernetes.io/managed-by": "kustomize",
+              "app.kubernetes.io/name": "grafanacontactpoint",
+              "app.kubernetes.io/part-of": "grafana-operator"
+            },
+            "name": "grafanacontactpoint-sample"
+          },
+          "spec": {
+            "instanceSelector": {
+              "matchLabels": {
+                "dashboards": "grafana-a"
+              }
+            },
+            "name": "grafanacontactpoint-sample",
+            "settings": {
+              "email": null
+            },
+            "type": "email"
+          }
+        },
+        {
+          "apiVersion": "grafana.integreatly.org/v1beta1",
           "kind": "GrafanaDashboard",
           "metadata": {
             "name": "grafanadashboard-sample"
@@ -150,7 +169,6 @@ metadata:
           "spec": {
             "datasource": {
               "access": "proxy",
-              "editable": true,
               "isDefault": true,
               "jsonData": {
                 "timeInterval": "5s",
@@ -192,13 +210,13 @@ metadata:
     capabilities: Basic Install
     categories: Monitoring
     containerImage: ghcr.io/grafana/grafana-operator@sha256:97561cef949b58f55ec67d133c02ac205e2ec3fb77388aeb868dacfcebad0752
-    createdAt: "2024-03-05T15:09:12Z"
+    createdAt: "2024-04-23T12:57:39Z"
     description: Deploys and manages Grafana instances, dashboards and data sources
     operators.operatorframework.io/builder: operator-sdk-v1.32.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/grafana/grafana-operator
     support: Grafana Labs
-  name: grafana-operator.v5.6.3
+  name: grafana-operator.v5.8.1
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -208,6 +226,11 @@ spec:
         displayName: Grafana Alert Rule Group
         kind: GrafanaAlertRuleGroup
         name: grafanaalertrulegroups.grafana.integreatly.org
+        version: v1beta1
+      - description: GrafanaContactPoint is the Schema for the grafanacontactpoints API
+        displayName: Grafana Contact Point
+        kind: GrafanaContactPoint
+        name: grafanacontactpoints.grafana.integreatly.org
         version: v1beta1
       - description: GrafanaDashboard is the Schema for the grafanadashboards API
         displayName: Grafana Dashboard
@@ -298,6 +321,32 @@ spec:
                 - grafana.integreatly.org
               resources:
                 - grafanaalertrulegroups/status
+              verbs:
+                - get
+                - patch
+                - update
+            - apiGroups:
+                - grafana.integreatly.org
+              resources:
+                - grafanacontactpoints
+              verbs:
+                - create
+                - delete
+                - get
+                - list
+                - patch
+                - update
+                - watch
+            - apiGroups:
+                - grafana.integreatly.org
+              resources:
+                - grafanacontactpoints/finalizers
+              verbs:
+                - update
+            - apiGroups:
+                - grafana.integreatly.org
+              resources:
+                - grafanacontactpoints/status
               verbs:
                 - get
                 - patch
@@ -456,12 +505,12 @@ spec:
                       - --leader-elect
                     env:
                       - name: RELATED_IMAGE_GRAFANA
-                        value: docker.io/grafana/grafana@sha256:ff68ed4324e471ffa269aa5308cdcf12276ef2d5a660daea95db9d629a32a7d8
+                        value: docker.io/grafana/grafana@sha256:9a2acaa26a0b302a56d8e113068a1297cf0726fcaff5e6bb77344888e5f1c976
                       - name: WATCH_NAMESPACE
                         valueFrom:
                           fieldRef:
                             fieldPath: metadata.annotations['olm.targetNamespaces']
-                    image: ghcr.io/grafana/grafana-operator@sha256:e398d39e48abdd16ae126233bc3b485b0c7f79e9b087fc5db5c164e9d64da276
+                    image: ghcr.io/grafana/grafana-operator@sha256:34229f59e1609764196870aa2672aa1b784e88583ec445ff04e810a8333b72a7
                     imagePullPolicy: Always
                     livenessProbe:
                       httpGet:
@@ -553,9 +602,9 @@ spec:
     name: Grafana Labs
     url: https://grafana.com
   relatedImages:
-    - image: docker.io/grafana/grafana@sha256:ff68ed4324e471ffa269aa5308cdcf12276ef2d5a660daea95db9d629a32a7d8
+    - image: docker.io/grafana/grafana@sha256:9a2acaa26a0b302a56d8e113068a1297cf0726fcaff5e6bb77344888e5f1c976
       name: grafana
-    - image: ghcr.io/grafana/grafana-operator@sha256:e398d39e48abdd16ae126233bc3b485b0c7f79e9b087fc5db5c164e9d64da276
+    - image: ghcr.io/grafana/grafana-operator@sha256:34229f59e1609764196870aa2672aa1b784e88583ec445ff04e810a8333b72a7
       name: manager
     - image: ghcr.io/grafana/grafana-operator@sha256:97561cef949b58f55ec67d133c02ac205e2ec3fb77388aeb868dacfcebad0752
       name: grafana-operator-97561cef949b58f55ec67d133c02ac205e2ec3fb77388aeb868dacfcebad0752-annotation

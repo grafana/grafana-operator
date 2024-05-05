@@ -11,6 +11,7 @@ To follow along, you will need:
 * The Helm CLI installed locally
 
 ## Installing the Operator
+
 To install the Grafana Operator in your Kubernetes cluster, Run the following command in your terminal:
 
 ```bash
@@ -50,6 +51,7 @@ Run `kubectl get pods -w` to see the status of the deployment. Once the `grafana
 The operator uses the `GrafanaDatasource` resource to configure data sources in Grafana.
 
 An example data source connecting to a Prometheus backend is provided below:
+
 ```yaml
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDatasource
@@ -68,14 +70,12 @@ spec:
     jsonData:
       'tlsSkipVerify': true
       'timeInterval': "5s"
-    editable: true
 ```
 
 Save the file to `datasource.yaml` and apply it using `kubectl apply -f datasource.yaml`
 
 It is important that the `instanceSelector` matches the `metadata.labels` field of the Grafana instance.
 Otherwise the data source will not show up.
-
 
 ## Adding a dashboard
 
@@ -139,6 +139,7 @@ spec:
       "weekStart": ""
     }
 ```
+
 Save the file to `dashboard.yaml` and apply it using `kubectl apply -f dashboard.yaml`
 
 You will find the dashboard in a folder with the same name as your namespace.

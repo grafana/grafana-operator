@@ -1,0 +1,27 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: thanos
+spec:
+  datasource:
+    access: proxy
+    basicAuth: false
+    isDefault: true
+    jsonData:
+      httpHeaderName1: Authorization
+      timeInterval: 5s
+      tlsSkipVerify: true
+    name: Thanos
+    secureJsonData:
+      httpHeaderValue1: Bearer ${token}
+    type: prometheus
+    url: http://thanos.default.svc:8080
+  instanceSelector:
+    matchLabels:
+      dashboards: grafana
+  valuesFrom:
+    - targetPath: "secureJsonData.httpHeaderValue1"
+      valueFrom:
+        secretKeyRef:
+          name: grafana-instance-sa-token
+          key: token
