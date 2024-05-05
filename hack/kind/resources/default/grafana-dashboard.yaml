@@ -8,11 +8,11 @@ spec:
   folder: my-folder-name
   instanceSelector:
     matchLabels:
-      dashboards: grafana
+      dashboards: "grafana"
   json: |
     {
       "id": null,
-      "title": "Simple Dashboard MatchLabels",
+      "title": "Simple Dashboard",
       "tags": [],
       "style": "dark",
       "timezone": "browser",
