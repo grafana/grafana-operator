@@ -19,157 +19,186 @@ package controllers
 import (
 	"testing"
 
-	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestLabelMatchedExpression(t *testing.T) {
-	dashboardList := v1beta1.GrafanaDashboardList{
-		TypeMeta: metav1.TypeMeta{},
-		ListMeta: metav1.ListMeta{},
-		Items: []v1beta1.GrafanaDashboard{
-			{
-				TypeMeta: metav1.TypeMeta{},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "grafana-match-labels",
-					Namespace: "grafana-operator-system",
-				},
-				Spec: v1beta1.GrafanaDashboardSpec{
-					InstanceSelector: &metav1.LabelSelector{
-						MatchLabels: map[string]string{
-							"dashboard": "grafana",
-						},
-					},
-				},
-			},
-			{
-				TypeMeta: metav1.TypeMeta{},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "grafana-exists",
-					Namespace: "grafana-operator-system",
-				},
-				Spec: v1beta1.GrafanaDashboardSpec{
-					InstanceSelector: &metav1.LabelSelector{
-						MatchExpressions: []metav1.LabelSelectorRequirement{
-							{
-								Operator: metav1.LabelSelectorOpExists,
-								Key:      "dashboard",
-							},
-						},
-					},
-				},
-			},
-			{
-				TypeMeta: metav1.TypeMeta{},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "grafana-not-exists",
-					Namespace: "grafana-operator-system",
-				},
-				Spec: v1beta1.GrafanaDashboardSpec{
-					InstanceSelector: &metav1.LabelSelector{
-						MatchExpressions: []metav1.LabelSelectorRequirement{
-							{
-								Operator: metav1.LabelSelectorOpDoesNotExist,
-								Key:      "dashboard",
-							},
-						},
-					},
-				},
-			},
-			{
-				TypeMeta: metav1.TypeMeta{},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "grafana-not-in",
-					Namespace: "grafana-operator-system",
-				},
-				Spec: v1beta1.GrafanaDashboardSpec{
-					InstanceSelector: &metav1.LabelSelector{
-						MatchExpressions: []metav1.LabelSelectorRequirement{
-							{
-								Operator: metav1.LabelSelectorOpNotIn,
-								Key:      "dashboard",
-								Values: []string{
-									"grafana-1",
-								},
-							},
-						},
-					},
-				},
-			},
-			{
-				TypeMeta: metav1.TypeMeta{},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "grafana-in",
-					Namespace: "grafana-operator-system",
-				},
-				Spec: v1beta1.GrafanaDashboardSpec{
-					InstanceSelector: &metav1.LabelSelector{
-						MatchExpressions: []metav1.LabelSelectorRequirement{
-							{
-								Operator: metav1.LabelSelectorOpIn,
-								Key:      "dashboard",
-								Values: []string{
-									"grafana-1",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-	grafanaList := []v1beta1.Grafana{
+func TestLabelsMatchExpressions(t *testing.T) {
+	tests := []struct {
+		name             string
+		labels           map[string]string
+		matchExpressions []metav1.LabelSelectorRequirement
+		want             bool
+	}{
 		{
-			TypeMeta: metav1.TypeMeta{},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "grafana",
-				Namespace: "grafana-operator-system",
-				Labels: map[string]string{
-					"dashboard": "grafana",
-				},
-			},
-			Status: v1beta1.GrafanaStatus{
-				Dashboards: v1beta1.NamespacedResourceList{
-					"grafana-match-labels/matchLabels",
-					"grafana-not-in/notin",
-					"grafana-exists/exists",
-				},
-			},
+			name:             "No labels and no expressions",
+			labels:           map[string]string{},
+			matchExpressions: []metav1.LabelSelectorRequirement{},
+			want:             false,
 		},
 		{
-			TypeMeta: metav1.TypeMeta{},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "grafana-1",
-				Namespace: "grafana-operator-system",
-				Labels: map[string]string{
-					"dashboard": "grafana-1",
+			name:   "No labels",
+			labels: map[string]string{},
+			matchExpressions: []metav1.LabelSelectorRequirement{
+				{
+					Operator: metav1.LabelSelectorOpExists,
+					Key:      "dashboards",
 				},
 			},
-			Status: v1beta1.GrafanaStatus{
-				Dashboards: v1beta1.NamespacedResourceList{
-					"grafana-in/in",
-					"grafana-exists/exists",
+			want: false,
+		},
+		{
+			name: "No matchExpressions",
+			labels: map[string]string{
+				"dashboards": "grafana",
+			},
+			matchExpressions: []metav1.LabelSelectorRequirement{},
+			want:             true,
+		},
+		{
+			name: "Matches DoesNotExist",
+			labels: map[string]string{
+				"dashboards": "grafana",
+			},
+			matchExpressions: []metav1.LabelSelectorRequirement{
+				{
+					Operator: metav1.LabelSelectorOpDoesNotExist,
+					Key:      "dashboards",
 				},
 			},
+			want: false,
+		},
+		{
+			name: "Matches Exists",
+			labels: map[string]string{
+				"dashboards": "grafana",
+			},
+			matchExpressions: []metav1.LabelSelectorRequirement{
+				{
+					Operator: metav1.LabelSelectorOpExists,
+					Key:      "dashboards",
+				},
+			},
+			want: true,
+		},
+		{
+			name: "Matches In",
+			labels: map[string]string{
+				"dashboards": "grafana",
+			},
+			matchExpressions: []metav1.LabelSelectorRequirement{
+				{
+					Operator: metav1.LabelSelectorOpIn,
+					Key:      "dashboards",
+					Values: []string{
+						"grafana",
+					},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "Matches NotIn",
+			labels: map[string]string{
+				"dashboards": "grafana",
+			},
+			matchExpressions: []metav1.LabelSelectorRequirement{
+				{
+					Operator: metav1.LabelSelectorOpNotIn,
+					Key:      "dashboards",
+					Values: []string{
+						"grafana",
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			name: "Does not match In",
+			labels: map[string]string{
+				"dashboards": "grafana",
+			},
+			matchExpressions: []metav1.LabelSelectorRequirement{
+				{
+					Operator: metav1.LabelSelectorOpIn,
+					Key:      "dashboards",
+					Values: []string{
+						"grafana-external",
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			name: "Does not match NotIn",
+			labels: map[string]string{
+				"dashboards": "grafana",
+			},
+			matchExpressions: []metav1.LabelSelectorRequirement{
+				{
+					Operator: metav1.LabelSelectorOpNotIn,
+					Key:      "dashboards",
+					Values: []string{
+						"grafana-external",
+					},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "Matches multiple expressions",
+			labels: map[string]string{
+				"dashboards":  "grafana",
+				"environment": "production",
+			},
+			matchExpressions: []metav1.LabelSelectorRequirement{
+				{
+					Operator: metav1.LabelSelectorOpIn,
+					Key:      "dashboards",
+					Values: []string{
+						"grafana",
+					},
+				},
+				{
+					Operator: metav1.LabelSelectorOpIn,
+					Key:      "environment",
+					Values: []string{
+						"production",
+					},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "Doesn't match one of expressions",
+			labels: map[string]string{
+				"dashboards":  "grafana",
+				"environment": "production",
+			},
+			matchExpressions: []metav1.LabelSelectorRequirement{
+				{
+					Operator: metav1.LabelSelectorOpIn,
+					Key:      "dashboards",
+					Values: []string{
+						"grafana",
+					},
+				},
+				{
+					Operator: metav1.LabelSelectorOpIn,
+					Key:      "environment",
+					Values: []string{
+						"development",
+					},
+				},
+			},
+			want: false,
 		},
 	}
 
-	for _, dashboard := range dashboardList.Items {
-		var selectedList v1beta1.GrafanaList
-		for _, instance := range grafanaList {
-			selected := labelMatchedExpression(instance, dashboard.Spec.InstanceSelector)
-			if selected {
-				selectedList.Items = append(selectedList.Items, instance)
-			}
-		}
-		for _, instance := range selectedList.Items {
-			if instance.Name == "grafana" {
-				assert.Equal(t, v1beta1.NamespacedResourceList{"grafana-match-labels/matchLabels", "grafana-not-in/notin", "grafana-exists/exists"}, instance.Status.Dashboards)
-			}
-			if instance.Name == "grafana-1" {
-				assert.Equal(t, v1beta1.NamespacedResourceList{"grafana-in/in", "grafana-exists/exists"}, instance.Status.Dashboards)
-			}
-		}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := labelsMatchExpressions(tt.labels, tt.matchExpressions)
+			assert.Equal(t, tt.want, got)
+		})
 	}
 }

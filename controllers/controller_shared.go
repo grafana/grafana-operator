@@ -39,7 +39,7 @@ func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSel
 	var selectedList v1beta1.GrafanaList
 
 	for _, instance := range list.Items {
-		selected := labelMatchedExpression(instance, labelSelector)
+		selected := labelsMatchExpressions(instance.Labels, labelSelector.MatchExpressions)
 		if selected {
 			selectedList.Items = append(selectedList.Items, instance)
 		}
@@ -48,10 +48,19 @@ func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSel
 	return selectedList, err
 }
 
-func labelMatchedExpression(instance v1beta1.Grafana, labelSelector *v1.LabelSelector) bool {
-	selected := true
-	for _, matchExpression := range labelSelector.MatchExpressions {
-		if label, ok := instance.Labels[matchExpression.Key]; ok {
+func labelsMatchExpressions(labels map[string]string, matchExpressions []metav1.LabelSelectorRequirement) bool {
+	if len(labels) == 0 {
+		return false
+	}
+
+	if len(matchExpressions) == 0 {
+		return true
+	}
+
+	for _, matchExpression := range matchExpressions {
+		selected := false
+
+		if label, ok := labels[matchExpression.Key]; ok {
 			switch matchExpression.Operator {
 			case metav1.LabelSelectorOpDoesNotExist:
 				selected = false
@@ -65,11 +74,12 @@ func labelMatchedExpression(instance v1beta1.Grafana, labelSelector *v1.LabelSel
 
 			// All matchExpressions must evaluate to true in order to satisfy the conditions
 			if !selected {
-				break
+				return false
 			}
 		}
 	}
-	return selected
+
+	return true
 }
 
 func ReconcilePlugins(ctx context.Context, k8sClient client.Client, scheme *runtime.Scheme, grafana *v1beta1.Grafana, plugins v1beta1.PluginList, resource string) error {
