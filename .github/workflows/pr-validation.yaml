@@ -99,6 +99,10 @@ jobs:
         with:
           version: "v1.56.2"
 
+      - name: Verify golangci-lint config
+        run: |
+          golangci-lint config verify
+
   test:
     runs-on: ubuntu-latest
     steps:
