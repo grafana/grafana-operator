@@ -37,6 +37,7 @@ type GrafanaFolderSpec struct {
 	Permissions string `json:"permissions,omitempty"`
 
 	// selects Grafanas for import
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
 	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`
 
 	// allow to import this resources from an operator in a different namespace

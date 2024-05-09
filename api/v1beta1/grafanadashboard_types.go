@@ -78,6 +78,7 @@ type GrafanaDashboardSpec struct {
 	ConfigMapRef *v1.ConfigMapKeySelector `json:"configMapRef,omitempty"`
 
 	// selects Grafanas for import
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
 	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`
 
 	// folder assignment for dashboard

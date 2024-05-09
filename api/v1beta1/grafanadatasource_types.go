@@ -63,6 +63,7 @@ type GrafanaDatasourceSpec struct {
 	Datasource *GrafanaDatasourceInternal `json:"datasource"`
 
 	// selects Grafana instances for import
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
 	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`
 
 	// plugins
