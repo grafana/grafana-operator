@@ -94,6 +94,9 @@ spec:
                     type: object
                 type: object
                 x-kubernetes-map-type: atomic
+                x-kubernetes-validations:
+                - message: Value is immutable
+                  rule: self == oldSelf
               permissions:
                 description: raw json with folder permissions
                 type: string
