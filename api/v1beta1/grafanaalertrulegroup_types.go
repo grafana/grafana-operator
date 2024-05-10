@@ -64,7 +64,7 @@ type AlertRule struct {
 	// +kubebuilder:validation:Required
 	Data []*AlertQuery `json:"data"`
 
-	// +kubebuilder:validation:Enum=OK;Alerting;Error
+	// +kubebuilder:validation:Enum=OK;Alerting;Error;KeepLast
 	ExecErrState string `json:"execErrState"`
 
 	// +kubebuilder:validation:Type=string
@@ -77,7 +77,7 @@ type AlertRule struct {
 
 	Labels map[string]string `json:"labels,omitempty"`
 
-	// +kubebuilder:validation:Enum=Alerting;NoData;OK
+	// +kubebuilder:validation:Enum=Alerting;NoData;OK;KeepLast
 	NoDataState *string `json:"noDataState"`
 
 	// +kubebuilder:validation:MinLength=1
