@@ -159,6 +159,7 @@ spec:
                       - OK
                       - Alerting
                       - Error
+                      - KeepLast
                       type: string
                     for:
                       format: duration
@@ -175,6 +176,7 @@ spec:
                       - Alerting
                       - NoData
                       - OK
+                      - KeepLast
                       type: string
                     title:
                       example: Always firing

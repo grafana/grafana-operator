@@ -277,7 +277,7 @@ AlertRule defines a specific rule to be evaluated. It is based on the upstream m
         <td>
           <br/>
           <br/>
-            <i>Enum</i>: OK, Alerting, Error<br/>
+            <i>Enum</i>: OK, Alerting, Error, KeepLast<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -295,7 +295,7 @@ AlertRule defines a specific rule to be evaluated. It is based on the upstream m
         <td>
           <br/>
           <br/>
-            <i>Enum</i>: Alerting, NoData, OK<br/>
+            <i>Enum</i>: Alerting, NoData, OK, KeepLast<br/>
         </td>
         <td>true</td>
       </tr><tr>
