@@ -210,13 +210,13 @@ metadata:
     capabilities: Basic Install
     categories: Monitoring
     containerImage: ghcr.io/grafana/grafana-operator@sha256:97561cef949b58f55ec67d133c02ac205e2ec3fb77388aeb868dacfcebad0752
-    createdAt: "2024-04-23T12:57:39Z"
+    createdAt: "2024-05-09T08:55:59Z"
     description: Deploys and manages Grafana instances, dashboards and data sources
     operators.operatorframework.io/builder: operator-sdk-v1.32.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/grafana/grafana-operator
     support: Grafana Labs
-  name: grafana-operator.v5.8.1
+  name: grafana-operator.v5.9.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -510,7 +510,7 @@ spec:
                         valueFrom:
                           fieldRef:
                             fieldPath: metadata.annotations['olm.targetNamespaces']
-                    image: ghcr.io/grafana/grafana-operator@sha256:34229f59e1609764196870aa2672aa1b784e88583ec445ff04e810a8333b72a7
+                    image: ghcr.io/grafana/grafana-operator@sha256:48cbc5e4e361e80f27d054fb986762109c199678b12f8b1baf63cfbafc69fc82
                     imagePullPolicy: Always
                     livenessProbe:
                       httpGet:
@@ -604,7 +604,7 @@ spec:
   relatedImages:
     - image: docker.io/grafana/grafana@sha256:9a2acaa26a0b302a56d8e113068a1297cf0726fcaff5e6bb77344888e5f1c976
       name: grafana
-    - image: ghcr.io/grafana/grafana-operator@sha256:34229f59e1609764196870aa2672aa1b784e88583ec445ff04e810a8333b72a7
+    - image: ghcr.io/grafana/grafana-operator@sha256:48cbc5e4e361e80f27d054fb986762109c199678b12f8b1baf63cfbafc69fc82
       name: manager
     - image: ghcr.io/grafana/grafana-operator@sha256:97561cef949b58f55ec67d133c02ac205e2ec3fb77388aeb868dacfcebad0752
       name: grafana-operator-97561cef949b58f55ec67d133c02ac205e2ec3fb77388aeb868dacfcebad0752-annotation
@@ -615,4 +615,4 @@ spec:
     - grafana-operator.v5.6.3
     - grafana-operator.v5.7.0
     - grafana-operator.v5.8.0
-  version: 5.8.1
+  version: 5.9.0

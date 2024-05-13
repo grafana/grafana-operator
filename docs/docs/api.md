@@ -103,6 +103,8 @@ GrafanaAlertRuleGroupSpec defines the desired state of GrafanaAlertRuleGroup
         <td>object</td>
         <td>
           selects Grafanas for import<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: Value is immutable</li>
         </td>
         <td>true</td>
       </tr><tr>
@@ -627,6 +629,8 @@ GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
         <td>object</td>
         <td>
           selects Grafanas for import<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: Value is immutable</li>
         </td>
         <td>true</td>
       </tr><tr>
@@ -961,6 +965,8 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         <td>object</td>
         <td>
           selects Grafanas for import<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: Value is immutable</li>
         </td>
         <td>true</td>
       </tr><tr>
@@ -1784,6 +1790,8 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         <td>object</td>
         <td>
           selects Grafana instances for import<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: Value is immutable</li>
         </td>
         <td>true</td>
       </tr><tr>
@@ -2342,6 +2350,8 @@ GrafanaFolderSpec defines the desired state of GrafanaFolder
         <td>object</td>
         <td>
           selects Grafanas for import<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: Value is immutable</li>
         </td>
         <td>true</td>
       </tr><tr>
