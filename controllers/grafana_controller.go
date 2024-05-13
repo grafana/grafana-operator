@@ -149,8 +149,11 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 func (r *GrafanaReconciler) getVersion(cr *grafanav1beta1.Grafana) (string, error) {
 	cl := client2.NewHTTPClient(cr)
-
-	resp, err := cl.Get(cr.Status.AdminUrl + grafana.GrafanaHealthEndpoint)
+	instanceUrl := cr.Status.AdminUrl
+	if instanceUrl == "" && cr.Spec.External != nil {
+		instanceUrl = cr.Spec.External.URL
+	}
+	resp, err := cl.Get(instanceUrl + grafana.GrafanaHealthEndpoint)
 	if err != nil {
 		return "", fmt.Errorf("fetching version: %w", err)
 	}

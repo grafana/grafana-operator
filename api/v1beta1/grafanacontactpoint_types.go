@@ -34,6 +34,7 @@ type GrafanaContactPointSpec struct {
 	ResyncPeriod metav1.Duration `json:"resyncPeriod,omitempty"`
 
 	// selects Grafanas for import
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
 	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`
 
 	// +optional

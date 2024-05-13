@@ -79,11 +79,13 @@ spec:
                           items:
                             type: string
                           type: array
+                          x-kubernetes-list-type: atomic
                       required:
                       - key
                       - operator
                       type: object
                     type: array
+                    x-kubernetes-list-type: atomic
                   matchLabels:
                     additionalProperties:
                       type: string
@@ -94,6 +96,9 @@ spec:
                     type: object
                 type: object
                 x-kubernetes-map-type: atomic
+                x-kubernetes-validations:
+                - message: Value is immutable
+                  rule: self == oldSelf
               interval:
                 format: duration
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
@@ -154,6 +159,7 @@ spec:
                       - OK
                       - Alerting
                       - Error
+                      - KeepLast
                       type: string
                     for:
                       format: duration
@@ -170,6 +176,7 @@ spec:
                       - Alerting
                       - NoData
                       - OK
+                      - KeepLast
                       type: string
                     title:
                       example: Always firing

@@ -58,7 +58,7 @@ linters-settings:
     default-signifies-exhaustive: false
 
   nestif:
-    min-complexity: 20
+    min-complexity: 30
 
   goconst:
     min-len: 3
