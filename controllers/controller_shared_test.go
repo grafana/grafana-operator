@@ -170,10 +170,34 @@ func TestLabelsSatisfyMatchExpressions(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "Doesn't match one of expressions",
+			name: "Does not match one of expressions (matching labels, different value)",
 			labels: map[string]string{
 				"dashboards":  "grafana",
 				"environment": "production",
+			},
+			matchExpressions: []metav1.LabelSelectorRequirement{
+				{
+					Operator: metav1.LabelSelectorOpIn,
+					Key:      "dashboards",
+					Values: []string{
+						"grafana",
+					},
+				},
+				{
+					Operator: metav1.LabelSelectorOpIn,
+					Key:      "environment",
+					Values: []string{
+						"development",
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			name: "Does not match any of expressions (different labels)",
+			labels: map[string]string{
+				"random-label":  "random-value-1",
+				"random-label2": "random-value-2",
 			},
 			matchExpressions: []metav1.LabelSelectorRequirement{
 				{

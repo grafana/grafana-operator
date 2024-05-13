@@ -71,11 +71,11 @@ func labelsSatisfyMatchExpressions(labels map[string]string, matchExpressions []
 			case metav1.LabelSelectorOpNotIn:
 				selected = !slices.Contains(matchExpression.Values, label)
 			}
+		}
 
-			// All matchExpressions must evaluate to true in order to satisfy the conditions
-			if !selected {
-				return false
-			}
+		// All matchExpressions must evaluate to true in order to satisfy the conditions
+		if !selected {
+			return false
 		}
 	}
 
