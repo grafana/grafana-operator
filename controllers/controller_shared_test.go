@@ -196,8 +196,8 @@ func TestLabelsSatisfyMatchExpressions(t *testing.T) {
 		{
 			name: "Does not match any of expressions (different labels)",
 			labels: map[string]string{
-				"random-label":  "random-value-1",
-				"random-label2": "random-value-2",
+				"random-label-1": "random-value-1",
+				"random-label-2": "random-value-2",
 			},
 			matchExpressions: []metav1.LabelSelectorRequirement{
 				{
