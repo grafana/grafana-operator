@@ -36,7 +36,7 @@ If applicable, add screenshots to help explain your problem.
 - OS: [e.g. Linux,Fedora,Mac]
 - Grafana Operator Version [e.g. v5.0.0]
 - Environment: [e.g Openshift,Kubernetes,minikube etc. please specify versions]
-- Deployment type: [e.g running the operator locally, or deployed]
+- Deployment type: [e.g Openshift OLM/Helm/kustomize]
 - Other: [Other variables/things that might be relevant to this bug, versions of other services e.g. operator-sdk]
 
 **Additional context**
