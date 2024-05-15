@@ -5,9 +5,7 @@ metadata:
   namespace: {{ include "grafana-operator.namespace" . }}
   labels:
     {{- include "grafana-operator.labels" . | nindent 4 }}
-    {{- with .Values.additionalLabels }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
+    app.kubernetes.io/component: workload
 spec:
   replicas: 1
   selector:
@@ -21,9 +19,7 @@ spec:
       {{- end }}
       labels:
         {{- include "grafana-operator.selectorLabels" . | nindent 8 }}
-        {{- with .Values.additionalLabels }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
+        app.kubernetes.io/component: workload
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
