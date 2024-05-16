@@ -34,7 +34,7 @@ func TestLabelsSatisfyMatchExpressions(t *testing.T) {
 			name:             "No labels and no expressions",
 			labels:           map[string]string{},
 			matchExpressions: []metav1.LabelSelectorRequirement{},
-			want:             false,
+			want:             true,
 		},
 		{
 			name:   "No labels",
@@ -45,7 +45,7 @@ func TestLabelsSatisfyMatchExpressions(t *testing.T) {
 					Key:      "dashboards",
 				},
 			},
-			want: false,
+			want: true,
 		},
 		{
 			name: "No matchExpressions",

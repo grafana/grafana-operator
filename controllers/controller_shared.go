@@ -49,8 +49,9 @@ func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSel
 }
 
 func labelsSatisfyMatchExpressions(labels map[string]string, matchExpressions []metav1.LabelSelectorRequirement) bool {
+	// To preserve support for scenario with instanceSelector: {}
 	if len(labels) == 0 {
-		return false
+		return true
 	}
 
 	if len(matchExpressions) == 0 {
