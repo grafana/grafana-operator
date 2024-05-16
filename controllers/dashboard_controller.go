@@ -490,9 +490,6 @@ func (r *GrafanaDashboardReconciler) fetchDashboardJson(ctx context.Context, das
 
 func (r *GrafanaDashboardReconciler) getDashboardEnvs(ctx context.Context, dashboard *v1beta1.GrafanaDashboard) (map[string]string, error) {
 	envs := make(map[string]string)
-	if dashboard.Spec.EnvsFrom == nil && dashboard.Spec.Envs == nil {
-		return nil, fmt.Errorf("dashboard.Spec.Envs or dashboard.Spec.EnvFrom nil, can't get envs for dashboard: %s", dashboard.Name)
-	}
 	if dashboard.Spec.EnvsFrom != nil {
 		for _, ref := range dashboard.Spec.EnvsFrom {
 			key, val, err := r.getReferencedValue(ctx, dashboard, ref)
