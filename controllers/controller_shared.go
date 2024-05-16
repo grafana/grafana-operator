@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"slices"
 	"time"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -33,9 +34,53 @@ func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSel
 	opts := []client.ListOption{
 		client.MatchingLabels(labelSelector.MatchLabels),
 	}
-
 	err := k8sClient.List(ctx, &list, opts...)
-	return list, err
+
+	var selectedList v1beta1.GrafanaList
+
+	for _, instance := range list.Items {
+		selected := labelsSatisfyMatchExpressions(instance.Labels, labelSelector.MatchExpressions)
+		if selected {
+			selectedList.Items = append(selectedList.Items, instance)
+		}
+	}
+
+	return selectedList, err
+}
+
+func labelsSatisfyMatchExpressions(labels map[string]string, matchExpressions []metav1.LabelSelectorRequirement) bool {
+	// To preserve support for scenario with instanceSelector: {}
+	if len(labels) == 0 {
+		return true
+	}
+
+	if len(matchExpressions) == 0 {
+		return true
+	}
+
+	for _, matchExpression := range matchExpressions {
+		selected := false
+
+		if label, ok := labels[matchExpression.Key]; ok {
+			switch matchExpression.Operator {
+			case metav1.LabelSelectorOpDoesNotExist:
+				selected = false
+			case metav1.LabelSelectorOpExists:
+				selected = true
+			case metav1.LabelSelectorOpIn:
+				selected = slices.Contains(matchExpression.Values, label)
+			case metav1.LabelSelectorOpNotIn:
+				selected = !slices.Contains(matchExpression.Values, label)
+			}
+		}
+
+		// All matchExpressions must evaluate to true in order to satisfy the conditions
+		if !selected {
+			return false
+		}
+	}
+
+	return true
 }
 
 func ReconcilePlugins(ctx context.Context, k8sClient client.Client, scheme *runtime.Scheme, grafana *v1beta1.Grafana, plugins v1beta1.PluginList, resource string) error {
