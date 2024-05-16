@@ -75,6 +75,8 @@ type AlertRule struct {
 
 	IsPaused bool `json:"isPaused,omitempty"`
 
+	NotificationSettings *NotificationSettings `json:"notificationSettings,omitempty"`
+
 	Labels map[string]string `json:"labels,omitempty"`
 
 	// +kubebuilder:validation:Enum=Alerting;NoData;OK;KeepLast
@@ -87,6 +89,15 @@ type AlertRule struct {
 
 	// +kubebuilder:validation:Pattern="^[a-zA-Z0-9-_]+$"
 	UID string `json:"uid"`
+}
+
+type NotificationSettings struct {
+	GroupBy           []string `json:"group_by,omitempty"`
+	GroupInterval     string   `json:"group_interval,omitempty"`
+	GroupWait         string   `json:"group_wait,omitempty"`
+	Receiver          string   `json:"receiver"`
+	MuteTimeIntervals []string `json:"mute_time_intervals,omitempty"`
+	RepeatInterval    string   `json:"repeat_interval,omitempty"`
 }
 
 type AlertQuery struct {

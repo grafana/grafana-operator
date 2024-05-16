@@ -225,6 +225,15 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 			Title:        &rule.Title,
 			UID:          rule.UID,
 		}
+		if rule.NotificationSettings != nil {
+			apiRule.NotificationSettings = &models.AlertRuleNotificationSettings{
+				Receiver:       &rule.NotificationSettings.Receiver,
+				GroupBy:        rule.NotificationSettings.GroupBy,
+				GroupWait:      rule.NotificationSettings.GroupWait,
+				GroupInterval:  rule.NotificationSettings.GroupInterval,
+				RepeatInterval: rule.NotificationSettings.RepeatInterval,
+			}
+		}
 		for idx, q := range rule.Data {
 			apiRule.Data[idx] = &models.AlertQuery{
 				DatasourceUID:     q.DatasourceUID,
