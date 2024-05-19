@@ -4,3 +4,4 @@ resources:
   - serviceaccount.yaml
   - service.yaml
   - deployment.yaml
+  - rbac.yaml
