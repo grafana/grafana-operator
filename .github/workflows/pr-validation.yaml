@@ -180,8 +180,6 @@ jobs:
           fi
 
       - name: Check if overlays can be successfully built
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           for d in deploy/kustomize/overlays/*/ ; do
             kustomize build "$d" --load-restrictor LoadRestrictionsNone > /dev/null
