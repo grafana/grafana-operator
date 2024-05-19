@@ -70,7 +70,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           for d in deploy/kustomize/overlays/*/ ; do
-               kustomize build "$d" > kustomize-$(basename "$d").yaml
+            kustomize build "$d" --load-restrictor LoadRestrictionsNone > kustomize-$(basename "$d").yaml
           done
           gh release upload "${{ github.ref_name }}" kustomize-*.yaml deploy/kustomize/base/crds.yaml
 
