@@ -25,6 +25,8 @@ const (
 	conditionNoMatchingFolder   = "NoMatchingFolder"
 )
 
+//+kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update;patch;delete
+
 func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSelector *v1.LabelSelector) (v1beta1.GrafanaList, error) {
 	if labelSelector == nil {
 		return v1beta1.GrafanaList{}, nil
