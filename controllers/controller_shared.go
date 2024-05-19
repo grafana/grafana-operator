@@ -56,10 +56,6 @@ func labelsSatisfyMatchExpressions(labels map[string]string, matchExpressions []
 		return true
 	}
 
-	if len(matchExpressions) == 0 {
-		return true
-	}
-
 	for _, matchExpression := range matchExpressions {
 		selected := false
 
