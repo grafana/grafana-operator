@@ -4,4 +4,12 @@ resources:
   - serviceaccount.yaml
   - service.yaml
   - deployment.yaml
-  - rbac.yaml
+  - rolebinding.yaml
+  - ../../../config/rbac/role.yaml
+patches:
+  - target:
+      kind: ClusterRole
+    patch: |
+      - op: replace
+        path: /metadata/name
+        value: grafana-operator-permissions
