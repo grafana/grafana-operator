@@ -6,13 +6,13 @@ Make sure `namespace` is set to the namespace where you want to install the oper
 Then run:
 
 ```shell
-kubectl create -k deploy/kustomize/overlays/cluster_scoped
+kustomize build deploy/kustomize/overlays/cluster_scoped --load-restrictor LoadRestrictionsNone | kubectl apply -f -
 ```
 
 for a cluster scoped installation, or:
 
 ```shell
-kubectl create -k deploy/kustomize/overlays/namespace_scoped
+kustomize build deploy/kustomize/overlays/namespace_scoped --load-restrictor LoadRestrictionsNone | kubectl apply -f -
 ```
 
 for a namespace scoped installation.
@@ -23,5 +23,5 @@ Else you will get the following error `invalid: metadata.annotations: Too long: 
 For example
 
 ```shell
-kubectl replace -k deploy/kustomize/overlays/cluster_scoped
+kustomize build deploy/kustomize/overlays/namespace_scoped --load-restrictor LoadRestrictionsNone | kubectl replace -f -
 ```
