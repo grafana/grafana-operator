@@ -2,7 +2,6 @@ namespace: grafana
 
 resources:
   - ../../base
-  - rbac.yaml
 
 patches:
   - path: deployment.yaml
@@ -11,3 +10,18 @@ patches:
       version: v1
       group: apps
       name: grafana-operator-controller-manager
+  - target:
+      kind: ClusterRole
+    patch: |
+      - op: replace
+        path: /kind
+        value: Role
+  - target:
+      kind: ClusterRoleBinding
+    patch: |
+      - op: replace
+        path: /kind
+        value: RoleBinding
+      - op: replace
+        path: /roleRef/kind
+        value: Role

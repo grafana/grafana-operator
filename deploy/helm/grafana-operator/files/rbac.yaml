@@ -2,39 +2,8 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: grafana-operator-permissions
+  name: manager-role
 rules:
-  - apiGroups:
-      - ""
-    resources:
-      - configmaps
-    verbs:
-      - get
-      - list
-      - watch
-      - create
-      - update
-      - patch
-      - delete
-  - apiGroups:
-      - coordination.k8s.io
-    resources:
-      - leases
-    verbs:
-      - get
-      - list
-      - watch
-      - create
-      - update
-      - patch
-      - delete
-  - apiGroups:
-      - ""
-    resources:
-      - events
-    verbs:
-      - create
-      - patch
   - apiGroups:
       - ""
     resources:
@@ -74,6 +43,18 @@ rules:
       - update
       - watch
   - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
       - grafana.integreatly.org
     resources:
       - grafanaalertrulegroups
@@ -95,6 +76,32 @@ rules:
       - grafana.integreatly.org
     resources:
       - grafanaalertrulegroups/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - grafana.integreatly.org
+    resources:
+      - grafanacontactpoints
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - grafana.integreatly.org
+    resources:
+      - grafanacontactpoints/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - grafana.integreatly.org
+    resources:
+      - grafanacontactpoints/status
     verbs:
       - get
       - patch
@@ -215,54 +222,3 @@ rules:
       - patch
       - update
       - watch
-  - apiGroups:
-      - route.openshift.io
-    resources:
-      - routes
-      - routes/custom-host
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - update
-      - watch
-  - apiGroups:
-      - grafana.integreatly.org
-    resources:
-      - grafanacontactpoints
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - grafana.integreatly.org
-    resources:
-      - grafanacontactpoints/finalizers
-    verbs:
-      - update
-  - apiGroups:
-      - grafana.integreatly.org
-    resources:
-      - grafanacontactpoints/status
-    verbs:
-      - get
-      - patch
-      - update
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: grafana-operator-permissions
-subjects:
-  - kind: ServiceAccount
-    name: grafana-operator-controller-manager
-    namespace: default
-roleRef:
-  kind: ClusterRole
-  name: grafana-operator-permissions
-  apiGroup: rbac.authorization.k8s.io

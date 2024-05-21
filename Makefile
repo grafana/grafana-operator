@@ -99,6 +99,10 @@ manifests: yq controller-gen ## Generate WebhookConfiguration, ClusterRole and C
 	$(CONTROLLER_GEN) rbac:roleName=manager-role webhook paths="./..." crd:maxDescLen=0,generateEmbeddedObjectMeta=false output:crd:artifacts:config=deploy/helm/grafana-operator/crds
 	$(CONTROLLER_GEN) rbac:roleName=manager-role webhook paths="./..." crd output:crd:artifacts:config=config/
 	yq -i '(select(.kind == "Deployment") | .spec.template.spec.containers[0].env[] | select (.name == "RELATED_IMAGE_GRAFANA")).value="$(GRAFANA_IMAGE):$(GRAFANA_VERSION)"' config/manager/manager.yaml
+	# Sync role definitions to helm chart
+	mkdir -p deploy/helm/grafana-operator/files
+	cat config/rbac/role.yaml | yq -r 'del(.rules[] | select (.apiGroups | contains(["route.openshift.io"])))' > deploy/helm/grafana-operator/files/rbac.yaml
+	cat config/rbac/role.yaml | yq -r 'del(.rules[] | select (.apiGroups | contains(["route.openshift.io"]) | not))'  > deploy/helm/grafana-operator/files/rbac-openshift.yaml
 
 .PHONY: kustomize-crd
 kustomize-crd: kustomize manifests

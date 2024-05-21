@@ -179,6 +179,12 @@ jobs:
             exit 1
           fi
 
+      - name: Check if overlays can be successfully built
+        run: |
+          for d in deploy/kustomize/overlays/*/ ; do
+            kustomize build "$d" --load-restrictor LoadRestrictionsNone > /dev/null
+          done
+
   trivy:
     runs-on: ubuntu-latest
     steps:
