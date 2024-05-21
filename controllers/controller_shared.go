@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/model"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -27,7 +26,7 @@ const (
 
 //+kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update;patch;delete
 
-func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSelector *v1.LabelSelector) (v1beta1.GrafanaList, error) {
+func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSelector *metav1.LabelSelector) (v1beta1.GrafanaList, error) {
 	if labelSelector == nil {
 		return v1beta1.GrafanaList{}, nil
 	}
@@ -53,10 +52,6 @@ func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSel
 func labelsSatisfyMatchExpressions(labels map[string]string, matchExpressions []metav1.LabelSelectorRequirement) bool {
 	// To preserve support for scenario with instanceSelector: {}
 	if len(labels) == 0 {
-		return true
-	}
-
-	if len(matchExpressions) == 0 {
 		return true
 	}
 
