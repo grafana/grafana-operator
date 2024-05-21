@@ -55,7 +55,7 @@ SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
 .PHONY: all
-all: manifests test kustomize-crd api-docs
+all: manifests test api-docs
 
 ##@ General
 
@@ -103,10 +103,6 @@ manifests: yq controller-gen ## Generate WebhookConfiguration, ClusterRole and C
 	mkdir -p deploy/helm/grafana-operator/files
 	cat config/rbac/role.yaml | yq -r 'del(.rules[] | select (.apiGroups | contains(["route.openshift.io"])))' > deploy/helm/grafana-operator/files/rbac.yaml
 	cat config/rbac/role.yaml | yq -r 'del(.rules[] | select (.apiGroups | contains(["route.openshift.io"]) | not))'  > deploy/helm/grafana-operator/files/rbac-openshift.yaml
-
-.PHONY: kustomize-crd
-kustomize-crd: kustomize manifests
-	$(KUSTOMIZE) build config/crd -o deploy/kustomize/base/crds.yaml
 
 # Generate API reference documentation
 api-docs: gen-crd-api-reference-docs kustomize
