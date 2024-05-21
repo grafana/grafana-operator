@@ -1,6 +1,0 @@
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: grafana-querier
-status:
-  succeeded: 1
