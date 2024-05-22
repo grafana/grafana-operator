@@ -1,5 +1,5 @@
 resources:
-  - crds.yaml
+  - ../../../config/crd
   - namespace.yaml
   - serviceaccount.yaml
   - service.yaml
