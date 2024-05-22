@@ -81,17 +81,10 @@ jobs:
         run: |
           kind --kubeconfig="${KUBECONFIG}" create cluster --image=kindest/node:${{ matrix.version }} --config tests/e2e/kind.yaml
 
-      - name: Detect k8s version
-        id: k8s-version
-        shell: bash
-        run: |
-          K8S_VERSION=$(kubectl version -o json | jq '.serverVersion.gitVersion' -r)
-          echo "value=${K8S_VERSION}" >> "$GITHUB_OUTPUT"
-
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
         with:
-          version: ${{ inputs.kubectl_version || steps.k8s-version.outputs.value }}
+          version: ${{ matrix.version }}
 
       - name: Build and load images
         env:
