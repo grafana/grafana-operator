@@ -167,17 +167,9 @@ jobs:
         with:
           go-version-file: "go.mod"
 
-      - name: Run kustomize-crd
+      - name: Install kustomize
         run: |
-          make kustomize-crd
-
-      - name: Check if working tree is dirty
-        run: |
-          if [[ $(git status --porcelain) ]]; then
-            git diff
-            echo '::error::run make kustomize-crd or make all and commit changes'
-            exit 1
-          fi
+          make kustomize
 
       - name: Check if overlays can be successfully built
         run: |
