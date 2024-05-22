@@ -43,7 +43,7 @@ jobs:
         name: Check for docs-only changes
         run: echo "docs_only=true" >> $GITHUB_OUTPUT
 
-  end-to-end:
+  e2e-tests:
     name: e2e on kind ${{ matrix.version }}
     runs-on: ubuntu-latest
     needs:
@@ -115,3 +115,11 @@ jobs:
           kubectl logs -n $NAMESPACE $POD -c manager
           echo "previous pod logs (if any)"
           kubectl logs -p -n $NAMESPACE $POD -c manager || true
+
+  end-to-end:
+    runs-on: ubuntu-latest
+    needs:
+      - e2e-tests
+    steps:
+      - run: |
+          echo "Placeholder job for required checks"
