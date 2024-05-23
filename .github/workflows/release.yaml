@@ -72,7 +72,8 @@ jobs:
           for d in deploy/kustomize/overlays/*/ ; do
             kustomize build "$d" --load-restrictor LoadRestrictionsNone > kustomize-$(basename "$d").yaml
           done
-          gh release upload "${{ github.ref_name }}" kustomize-*.yaml deploy/kustomize/base/crds.yaml
+          kustomize build config/crd > crds.yaml
+          gh release upload "${{ github.ref_name }}" kustomize-*.yaml crds.yaml
 
   image:
     runs-on: ubuntu-latest
