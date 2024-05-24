@@ -122,4 +122,4 @@ jobs:
       - e2e-tests
     steps:
       - run: |
-          echo "Placeholder job for required checks"
+          echo "All E2E tests ran successfully"
