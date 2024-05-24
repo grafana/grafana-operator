@@ -2,7 +2,7 @@
 # NOTE: this section almost matches outputs out kubebuilder v3.7.0
 ###
 # Current Operator version
-VERSION ?= 5.7.0
+VERSION ?= 5.9.1
 
 # BUNDLE_GEN_FLAGS are the flags passed to the operator-sdk generate bundle command
 BUNDLE_GEN_FLAGS ?= -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
@@ -97,7 +97,7 @@ endif
 manifests: yq controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role webhook paths="./..." crd:maxDescLen=0,generateEmbeddedObjectMeta=false output:crd:artifacts:config=config/crd/bases
 	$(CONTROLLER_GEN) rbac:roleName=manager-role webhook paths="./..." crd:maxDescLen=0,generateEmbeddedObjectMeta=false output:crd:artifacts:config=deploy/helm/grafana-operator/crds
-	$(CONTROLLER_GEN) rbac:roleName=manager-role webhook paths="./..." crd output:crd:artifacts:config=config/
+	$(CONTROLLER_GEN) rbac:roleName=manager-role webhook paths="./..." crd output:crd:artifacts:config=config/crd-for-docs-generation
 	yq -i '(select(.kind == "Deployment") | .spec.template.spec.containers[0].env[] | select (.name == "RELATED_IMAGE_GRAFANA")).value="$(GRAFANA_IMAGE):$(GRAFANA_VERSION)"' config/manager/manager.yaml
 	# Sync role definitions to helm chart
 	mkdir -p deploy/helm/grafana-operator/files
@@ -105,13 +105,8 @@ manifests: yq controller-gen ## Generate WebhookConfiguration, ClusterRole and C
 	cat config/rbac/role.yaml | yq -r 'del(.rules[] | select (.apiGroups | contains(["route.openshift.io"]) | not))'  > deploy/helm/grafana-operator/files/rbac-openshift.yaml
 
 # Generate API reference documentation
-api-docs: gen-crd-api-reference-docs kustomize
-	@{ \
-	set -e ;\
-	TMP_DIR=$$(mktemp -d) ; \
-	$(KUSTOMIZE) build config/ -o $$TMP_DIR/crd-output.yaml ;\
-	$(API_REF_GEN) crdoc --resources $$TMP_DIR/crd-output.yaml --output docs/docs/api.md --template hugo/templates/frontmatter-grafana-operator.tmpl ;\
-	}
+api-docs: manifests gen-crd-api-reference-docs
+	$(API_REF_GEN) crdoc --resources config/crd-for-docs-generation --output docs/docs/api.md --template hugo/templates/frontmatter-grafana-operator.tmpl
 
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
