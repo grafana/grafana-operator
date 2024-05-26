@@ -45,7 +45,7 @@ type GrafanaContactPointSpec struct {
 
 	Settings *apiextensions.JSON `json:"settings"`
 
-	// +kubebuilder:validation:Enum=alertmanager;dingding;discord;email;googlechat;kafka;line;opsgenie;pagerduty;pushover;sensugo;slack;teams;telegram;threema;victorops;webhook;wecom
+	// +kubebuilder:validation:Enum=alertmanager;prometheus-alertmanager;dingding;discord;email;googlechat;kafka;line;opsgenie;pagerduty;pushover;sensugo;sensu;slack;teams;telegram;threema;victorops;webhook;wecom;hipchat;oncall
 	Type string `json:"type,omitempty"`
 
 	// +optional

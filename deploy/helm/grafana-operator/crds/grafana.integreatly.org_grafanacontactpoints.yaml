@@ -71,6 +71,7 @@ spec:
               type:
                 enum:
                 - alertmanager
+                - prometheus-alertmanager
                 - dingding
                 - discord
                 - email
@@ -81,6 +82,7 @@ spec:
                 - pagerduty
                 - pushover
                 - sensugo
+                - sensu
                 - slack
                 - teams
                 - telegram
@@ -88,6 +90,8 @@ spec:
                 - victorops
                 - webhook
                 - wecom
+                - hipchat
+                - oncall
                 type: string
             required:
             - instanceSelector
