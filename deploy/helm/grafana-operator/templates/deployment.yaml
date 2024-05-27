@@ -20,7 +20,11 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
+        {{- if .Values.allPodLabels }}
+        {{- include "grafana-operator.labels" . | nindent 8 }}
+        {{- else }}
         {{- include "grafana-operator.selectorLabels" . | nindent 8 }}
+        {{- end }}
         {{- with .Values.additionalLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

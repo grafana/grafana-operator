@@ -67,6 +67,10 @@ additionalLabels: {}
 # -- pod annotations
 podAnnotations: {}
 
+# -- If you want the deployment to include all the labels instead of just the selectorLabels
+# To keep the old behavior this is false by default
+allPodLabels: false
+
 # -- pod security context
 podSecurityContext: {}
 
