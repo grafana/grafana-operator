@@ -19,6 +19,21 @@ helm upgrade -i grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-opera
 
 Sadly helm OCI charts currently don't support searching for available versions of a helm [oci registry](https://github.com/helm/helm/issues/11000).
 
+### Using Terraform
+
+To install the helm chart using terraform, make sure you use the right values for `repository` and `name` as shown below:
+
+```hcl
+resource "helm_release" "grafana_kubernetes_operator" {
+  name       = "grafana-operator"
+  namespace  = "default"
+  repository = "oci://ghcr.io/grafana/helm-charts"
+  chart      = "grafana-operator"
+  verify     = false
+  version    = "v5.9.1"
+}
+```
+
 ## Upgrading
 
 Helm does not provide functionality to update custom resource definitions. This can result in the operator misbehaving when a release contains updates to the custom resource definitions.
