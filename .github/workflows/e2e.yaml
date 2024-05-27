@@ -3,6 +3,7 @@ name: KinD End-to-End
 on:
   pull_request:
     branches: [master]
+  merge_group:
 
 env:
   NAME: grafana-operator
