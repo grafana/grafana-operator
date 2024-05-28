@@ -64,6 +64,7 @@ It's easier to just manage this configuration outside of the operator.
 |-----|------|---------|-------------|
 | additionalLabels | object | `{}` | additional labels to add to all resources |
 | affinity | object | `{}` | pod affinity |
+| allPodLabels | `false` | If you want the deployment to include all the labels instead of just the selectorLabels |
 | env | list | `[]` | Additional environment variables |
 | fullnameOverride | string | `""` | Overrides the fully qualified app name. |
 | image.pullPolicy | string | `"IfNotPresent"` | The image pull policy to use in grafana operator container |
