@@ -5,7 +5,7 @@ metadata:
   namespace: {{ include "grafana-operator.namespace" . }}
   labels:
     {{- include "grafana-operator.labels" . | nindent 4 }}
-    app.kubernetes.io/component: networking
+    app.kubernetes.io/component: operator
 spec:
   type: {{ .Values.metricsService.type }}
   ports:

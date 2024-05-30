@@ -21,7 +21,7 @@ metadata:
   name: {{ include "grafana-operator.fullname" $ }}
   labels:
     {{- include "grafana-operator.labels" $ | nindent 4 }}
-    app.kubernetes.io/component: rbac
+    app.kubernetes.io/component: operator
 rules:
   {{- toYaml $rbac.rules | nindent 2 }}
   {{- if $isOpenShift }}
@@ -37,7 +37,7 @@ metadata:
   {{- end }}
   labels:
     {{- include "grafana-operator.labels" $ | nindent 4 }}
-    app.kubernetes.io/component: rbac
+    app.kubernetes.io/component: operator
 subjects:
   - kind: ServiceAccount
     name: {{ include "grafana-operator.serviceAccountName" $ }}
