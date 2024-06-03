@@ -44,6 +44,10 @@ type GrafanaFolderSpec struct {
 	// +optional
 	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
 
+	// find parent folder where the folder will be created with it UID value
+	// +optional
+	ParentFolderUID string `json:"parentFolderUID,omitempty"`
+
 	// how often the folder is synced, defaults to 5m if not set
 	// +optional
 	// +kubebuilder:validation:Type=string
@@ -144,4 +148,8 @@ func (in *GrafanaFolder) GetResyncPeriod() time.Duration {
 func (in *GrafanaFolder) ResyncPeriodHasElapsed() bool {
 	deadline := in.Status.LastResync.Add(in.GetResyncPeriod())
 	return time.Now().After(deadline)
+}
+
+func (in *GrafanaFolder) HasAParentFolder() bool {
+	return in.Spec.ParentFolderUID != ""
 }

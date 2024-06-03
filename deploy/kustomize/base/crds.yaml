@@ -1244,6 +1244,8 @@ spec:
                 x-kubernetes-validations:
                 - message: Value is immutable
                   rule: self == oldSelf
+              parentFolderUID:
+                type: string
               permissions:
                 description: raw json with folder permissions
                 type: string
