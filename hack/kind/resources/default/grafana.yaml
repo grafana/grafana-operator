@@ -10,6 +10,8 @@ spec:
   config:
     log:
       mode: "console"
+    feature_toggles:
+      enable: nestedFolders
     auth:
       disable_login_form: "false"
     security:
