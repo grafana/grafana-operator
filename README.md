@@ -51,7 +51,7 @@ spec:
     log:
       mode: "console"
     auth:
-      disable_login_form: false
+      disable_login_form: "false"
     security:
       admin_user: root
       admin_password: secret
