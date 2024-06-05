@@ -1,11 +1,11 @@
 resources:
-  - ../../../config/crd
+  - crds.yaml
   - namespace.yaml
   - serviceaccount.yaml
   - service.yaml
   - deployment.yaml
   - rolebinding.yaml
-  - ../../../config/rbac/role.yaml
+  - role.yaml
 patches:
   - target:
       kind: ClusterRole
