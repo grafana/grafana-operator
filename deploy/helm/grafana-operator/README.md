@@ -5,9 +5,10 @@ linkTitle: "Helm installation"
 
 # grafana-operator
 
+
 [grafana-operator](https://github.com/grafana/grafana-operator) for Kubernetes to manage Grafana instances and grafana resources.
 
-![Version: 0.1.4](https://img.shields.io/badge/Version-0.1.4-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v5.9.2](https://img.shields.io/badge/AppVersion-v5.9.2-informational?style=flat-square)
+![Version: 0.1.4](https://img.shields.io/badge/Version-0.1.4-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v5.9.2](https://img.shields.io/badge/AppVersion-v5.9.2-informational?style=flat-square) 
 
 ## Installation
 
@@ -34,6 +35,7 @@ resource "helm_release" "grafana_kubernetes_operator" {
 }
 ```
 
+
 ## Upgrading
 
 Helm does not provide functionality to update custom resource definitions. This can result in the operator misbehaving when a release contains updates to the custom resource definitions.
@@ -58,13 +60,16 @@ Deployments of grafana instances using the CRs is supposed to be done outside of
 Currently the plan is not to support networkpolicy. The operators support os diverse configuration that you have to support all options.
 It's easier to just manage this configuration outside of the operator.
 
+
+
+
 ## Values
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | additionalLabels | object | `{}` | additional labels to add to all resources |
 | affinity | object | `{}` | pod affinity |
-| allPodLabels | `false` | If you want the deployment to include all the labels instead of just the selectorLabels |
+| deployment.additionalLabels | object | `{}` | additional labels to add to the deployed pod |
 | env | list | `[]` | Additional environment variables |
 | fullnameOverride | string | `""` | Overrides the fully qualified app name. |
 | image.pullPolicy | string | `"IfNotPresent"` | The image pull policy to use in grafana operator container |
