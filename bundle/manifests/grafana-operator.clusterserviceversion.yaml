@@ -210,13 +210,13 @@ metadata:
     capabilities: Basic Install
     categories: Monitoring
     containerImage: ghcr.io/grafana/grafana-operator@sha256:97561cef949b58f55ec67d133c02ac205e2ec3fb77388aeb868dacfcebad0752
-    createdAt: "2024-05-09T08:55:59Z"
+    createdAt: "2024-06-13T13:49:44Z"
     description: Deploys and manages Grafana instances, dashboards and data sources
     operators.operatorframework.io/builder: operator-sdk-v1.32.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/grafana/grafana-operator
     support: Grafana Labs
-  name: grafana-operator.v5.9.0
+  name: grafana-operator.v5.9.2
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -291,6 +291,18 @@ spec:
                 - apps
               resources:
                 - deployments
+              verbs:
+                - create
+                - delete
+                - get
+                - list
+                - patch
+                - update
+                - watch
+            - apiGroups:
+                - coordination.k8s.io
+              resources:
+                - leases
               verbs:
                 - create
                 - delete
@@ -505,12 +517,12 @@ spec:
                       - --leader-elect
                     env:
                       - name: RELATED_IMAGE_GRAFANA
-                        value: docker.io/grafana/grafana@sha256:9a2acaa26a0b302a56d8e113068a1297cf0726fcaff5e6bb77344888e5f1c976
+                        value: docker.io/grafana/grafana@sha256:b7fcb534f7b3512801bb3f4e658238846435804deb479d105b5cdc680847c272
                       - name: WATCH_NAMESPACE
                         valueFrom:
                           fieldRef:
                             fieldPath: metadata.annotations['olm.targetNamespaces']
-                    image: ghcr.io/grafana/grafana-operator@sha256:48cbc5e4e361e80f27d054fb986762109c199678b12f8b1baf63cfbafc69fc82
+                    image: ghcr.io/grafana/grafana-operator@sha256:e7923d1a71b90a8ad66d114aec4b2b4e4929f15ba91872f64c5e271629612284
                     imagePullPolicy: Always
                     livenessProbe:
                       httpGet:
@@ -602,9 +614,9 @@ spec:
     name: Grafana Labs
     url: https://grafana.com
   relatedImages:
-    - image: docker.io/grafana/grafana@sha256:9a2acaa26a0b302a56d8e113068a1297cf0726fcaff5e6bb77344888e5f1c976
+    - image: docker.io/grafana/grafana@sha256:b7fcb534f7b3512801bb3f4e658238846435804deb479d105b5cdc680847c272
       name: grafana
-    - image: ghcr.io/grafana/grafana-operator@sha256:48cbc5e4e361e80f27d054fb986762109c199678b12f8b1baf63cfbafc69fc82
+    - image: ghcr.io/grafana/grafana-operator@sha256:e7923d1a71b90a8ad66d114aec4b2b4e4929f15ba91872f64c5e271629612284
       name: manager
     - image: ghcr.io/grafana/grafana-operator@sha256:97561cef949b58f55ec67d133c02ac205e2ec3fb77388aeb868dacfcebad0752
       name: grafana-operator-97561cef949b58f55ec67d133c02ac205e2ec3fb77388aeb868dacfcebad0752-annotation
@@ -615,4 +627,4 @@ spec:
     - grafana-operator.v5.6.3
     - grafana-operator.v5.7.0
     - grafana-operator.v5.8.0
-  version: 5.9.0
+  version: 5.9.2
