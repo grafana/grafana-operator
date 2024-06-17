@@ -44,7 +44,7 @@ type GrafanaFolderSpec struct {
 	// +optional
 	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
 
-	// find parent folder where the folder will be created with it UID value
+	// UID of the folder in which the current folder should be created
 	// +optional
 	ParentFolderUID string `json:"parentFolderUID,omitempty"`
 
@@ -148,8 +148,4 @@ func (in *GrafanaFolder) GetResyncPeriod() time.Duration {
 func (in *GrafanaFolder) ResyncPeriodHasElapsed() bool {
 	deadline := in.Status.LastResync.Add(in.GetResyncPeriod())
 	return time.Now().After(deadline)
-}
-
-func (in *GrafanaFolder) HasAParentFolder() bool {
-	return in.Spec.ParentFolderUID != ""
 }

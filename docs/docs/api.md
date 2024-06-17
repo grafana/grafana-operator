@@ -2476,7 +2476,7 @@ GrafanaFolderSpec defines the desired state of GrafanaFolder
         <td><b>parentFolderUID</b></td>
         <td>string</td>
         <td>
-          find parent folder where the folder will be created with it UID value<br/>
+          UID of the folder in which the current folder should be created<br/>
         </td>
         <td>false</td>
       </tr><tr>

@@ -100,6 +100,8 @@ spec:
                 - message: Value is immutable
                   rule: self == oldSelf
               parentFolderUID:
+                description: UID of the folder in which the current folder should
+                  be created
                 type: string
               permissions:
                 description: raw json with folder permissions
