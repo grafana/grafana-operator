@@ -134,6 +134,11 @@ spec:
                 description: Last time the folder was resynced
                 format: date-time
                 type: string
+              parentFolderUID:
+                description: |-
+                  UID of the parent folder where the folder is created.
+                  Will be empty if the folder is deployed at the root level
+                type: string
             type: object
         type: object
     served: true

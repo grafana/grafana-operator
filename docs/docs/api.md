@@ -2629,6 +2629,14 @@ Important: Run "make" to regenerate code after modifying this file<br/>
             <i>Format</i>: date-time<br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>parentFolderUID</b></td>
+        <td>string</td>
+        <td>
+          UID of the parent folder where the folder is created.
+Will be empty if the folder is deployed at the root level<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
