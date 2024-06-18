@@ -122,6 +122,10 @@ func setNoMatchingInstance(conditions *[]metav1.Condition, generation int64, rea
 	})
 }
 
+func removeNoMatchingInstance(conditions *[]metav1.Condition) {
+	meta.RemoveStatusCondition(conditions, conditionNoMatchingInstance)
+}
+
 func setNoMatchingFolder(conditions *[]metav1.Condition, generation int64, reason, message string) {
 	meta.SetStatusCondition(conditions, metav1.Condition{
 		Type:               conditionNoMatchingFolder,
@@ -135,8 +139,8 @@ func setNoMatchingFolder(conditions *[]metav1.Condition, generation int64, reaso
 	})
 }
 
-func removeNoMatchingInstance(conditions *[]metav1.Condition) {
-	meta.RemoveStatusCondition(conditions, conditionNoMatchingInstance)
+func removeNoMatchingFolder(conditions *[]metav1.Condition) {
+	meta.RemoveStatusCondition(conditions, conditionNoMatchingFolder)
 }
 
 func ignoreStatusUpdates() predicate.Predicate {
