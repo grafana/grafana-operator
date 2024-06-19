@@ -127,7 +127,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 	folderUID := r.GetFolderUID(ctx, group)
 	if folderUID == "" {
 		// error is already set in conditions
-		return ctrl.Result{}, nil
+		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
 	applyErrors := make(map[string]string)
