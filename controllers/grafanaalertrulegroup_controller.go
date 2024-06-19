@@ -76,7 +76,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 			return ctrl.Result{}, nil
 		}
 		controllerLog.Error(err, "error getting grafana alertrulegroup cr")
-		return ctrl.Result{RequeueAfter: RequeueDelay}, err
+		return ctrl.Result{}, err
 	}
 
 	if group.GetDeletionTimestamp() != nil {
@@ -84,12 +84,12 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 			// still need to clean up
 			err := r.finalize(ctx, group)
 			if err != nil {
-				return ctrl.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("cleaning up alert rule group: %w", err)
+				return ctrl.Result{}, fmt.Errorf("cleaning up alert rule group: %w", err)
 			}
 			controllerutil.RemoveFinalizer(group, grafanaFinalizer)
 			if err := r.Update(ctx, group); err != nil {
 				r.Log.Error(err, "failed to remove finalizer")
-				return ctrl.Result{RequeueAfter: RequeueDelay}, err
+				return ctrl.Result{}, err
 			}
 		}
 		return ctrl.Result{}, nil
@@ -114,20 +114,19 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 		setNoMatchingInstance(&group.Status.Conditions, group.Generation, "ErrFetchingInstances", fmt.Sprintf("error occurred during fetching of instances: %s", err.Error()))
 		meta.RemoveStatusCondition(&group.Status.Conditions, conditionAlertGroupSynchronized)
 		r.Log.Error(err, "could not find matching instances")
-		return ctrl.Result{RequeueAfter: RequeueDelay}, err
+		return ctrl.Result{}, err
 	}
 
 	if len(instances) == 0 {
 		meta.RemoveStatusCondition(&group.Status.Conditions, conditionAlertGroupSynchronized)
 		setNoMatchingInstance(&group.Status.Conditions, group.Generation, "EmptyAPIReply", "Instances could not be fetched, reconciliation will be retried")
-		return ctrl.Result{}, nil
+		return ctrl.Result{}, fmt.Errorf("no instances found")
 	}
 
 	removeNoMatchingInstance(&group.Status.Conditions)
 	folderUID := r.GetFolderUID(ctx, group)
 	if folderUID == "" {
-		// error is already set in conditions
-		return ctrl.Result{}, nil
+		return ctrl.Result{}, fmt.Errorf("folder uid not found")
 	}
 
 	applyErrors := make(map[string]string)
@@ -375,5 +374,6 @@ func (r *GrafanaAlertRuleGroupReconciler) GetFolderUID(ctx context.Context, grou
 		setNoMatchingFolder(&group.Status.Conditions, group.Generation, "ErrFetchingFolder", fmt.Sprintf("Failed to fetch folder: %s", err.Error()))
 		return ""
 	}
+	removeNoMatchingFolder(&group.Status.Conditions)
 	return string(folder.UID)
 }
