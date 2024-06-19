@@ -75,7 +75,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 		if kuberr.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
-		controllerLog.Error(err, "error getting grafana folder cr")
+		controllerLog.Error(err, "error getting grafana alertrulegroup cr")
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
 
@@ -154,7 +154,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 
 	if len(applyErrors) == 0 {
 		condition.Status = "True"
-		condition.Reason = "ApplySuccesfull"
+		condition.Reason = "ApplySuccessful"
 		condition.Message = fmt.Sprintf("Alert Rule Group was successfully applied to %d instances", len(instances))
 	} else {
 		condition.Status = "False"
