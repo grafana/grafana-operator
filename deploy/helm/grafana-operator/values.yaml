@@ -26,6 +26,23 @@ env: []
   # - name: MY_VAR
   #   value: "myvalue"
 
+# -- Volume that will be mounted in the container. Configmaps and Secrets need to be in the same namespace
+extraVolumes: []
+  # - name: my-config
+  #   configMap:
+  #     name: my-config
+  # - name: my-secret
+  #   secret:
+  #     secretName: my-secret
+
+# -- Additional Volumes that will be mounted to the operator container. Need to match with an extraVolume name
+extraVolumeMounts: []
+  # - name: my-config
+  #   mountPath: "/etc/config"
+  #   readOnly: true
+  # - name: my-secret
+  #   mountPath: "/etc/secret"
+
 image:
   # -- grafana operator image repository
   repository: ghcr.io/grafana/grafana-operator

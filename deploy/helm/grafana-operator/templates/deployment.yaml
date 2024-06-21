@@ -63,6 +63,9 @@ spec:
           volumeMounts:
             - name: dashboards-dir
               mountPath: /tmp/dashboards
+          {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           ports:
             - containerPort: {{ .Values.metricsService.metricsPort }}
               name: metrics
@@ -82,6 +85,9 @@ spec:
       volumes:
         - name: dashboards-dir
           emptyDir: {}
+      {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
