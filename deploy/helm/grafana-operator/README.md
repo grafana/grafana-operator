@@ -65,6 +65,8 @@ It's easier to just manage this configuration outside of the operator.
 | additionalLabels | object | `{}` | additional labels to add to all resources |
 | affinity | object | `{}` | pod affinity |
 | env | list | `[]` | Additional environment variables |
+| extraVolumeMounts | list | `[]` | Additional Volumes that will be mounted to the operator container. Need to match with an extraVolume name |
+| extraVolumes | list | `[]` | Volume that will be mounted in the container. Configmaps and Secrets need to be in the same namespace |
 | fullnameOverride | string | `""` | Overrides the fully qualified app name. |
 | image.pullPolicy | string | `"IfNotPresent"` | The image pull policy to use in grafana operator container |
 | image.repository | string | `"ghcr.io/grafana/grafana-operator"` | grafana operator image repository |
