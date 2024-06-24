@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"reflect"
 	"time"
 
@@ -153,20 +154,30 @@ func (r *GrafanaReconciler) getVersion(cr *grafanav1beta1.Grafana) (string, erro
 	if instanceUrl == "" && cr.Spec.External != nil {
 		instanceUrl = cr.Spec.External.URL
 	}
-	resp, err := cl.Get(instanceUrl + grafana.GrafanaHealthEndpoint)
+	req, err := http.NewRequest("GET", instanceUrl+"/api/frontend/settings", nil)
+	if err != nil {
+		return "", fmt.Errorf("building request to fetch version: %w", err)
+	}
+	err = client2.InjectAuthHeaders(context.Background(), r.Client, cr, req)
+	if err != nil {
+		return "", fmt.Errorf("fetching authentication information for version detection: %w", err)
+	}
+	resp, err := cl.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("fetching version: %w", err)
 	}
 	data := struct {
-		Version string `json:"version"`
+		BuildInfo struct {
+			Version string `json:"version"`
+		} `json:"buildInfo"`
 	}{}
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 		return "", fmt.Errorf("parsing health endpoint data: %w", err)
 	}
-	if data.Version == "" {
+	if data.BuildInfo.Version == "" {
 		return "", fmt.Errorf("empty version received from server")
 	}
-	return data.Version, nil
+	return data.BuildInfo.Version, nil
 }
 
 func (r *GrafanaReconciler) updateStatus(cr *grafanav1beta1.Grafana, nextStatus *grafanav1beta1.GrafanaStatus) (ctrl.Result, error) {

@@ -119,7 +119,7 @@ jobs:
           for i in ${{ env.REPOS }}
           do
             export KO_DOCKER_REPO=${i}
-            ko build --sbom=spdx --image-refs ./image-digest-${i%.*} --bare --platform linux/arm64,linux/arm/v7,linux/amd64 -t ${{ github.ref_name }} \
+            ko build --sbom=spdx --image-refs ./image-digest-${i%.*} --bare --platform linux/arm64,linux/arm/v7,linux/amd64,linux/ppc64le -t ${{ github.ref_name }} \
             --image-label org.opencontainers.image.title=grafana-operator \
             --image-label org.opencontainers.image.description="An operator for Grafana that installs and manages Grafana instances & Dashboards & Datasources through Kubernetes/OpenShift CRs" \
             --image-label org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }} \

@@ -141,6 +141,19 @@ func NewHTTPClient(grafana *v1beta1.Grafana) *http.Client {
 	}
 }
 
+func InjectAuthHeaders(ctx context.Context, c client.Client, grafana *v1beta1.Grafana, req *http.Request) error {
+	creds, err := getAdminCredentials(ctx, c, grafana)
+	if err != nil {
+		return fmt.Errorf("fetching admin credentials: %w", err)
+	}
+	if creds.apikey != "" {
+		req.Header.Add("Authorization", "Bearer "+creds.apikey)
+	} else {
+		req.SetBasicAuth(creds.username, creds.password)
+	}
+	return nil
+}
+
 func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (*genapi.GrafanaHTTPAPI, error) {
 	var timeout time.Duration
 	if grafana.Spec.Client != nil && grafana.Spec.Client.TimeoutSeconds != nil {
