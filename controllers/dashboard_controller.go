@@ -370,9 +370,9 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return err
 	}
 
-	folderUID, err := r.GetOrCreateFolder(grafanaClient, cr)
+	folderUID, err := r.retrieveFolderUID(ctx, grafanaClient, cr)
 	if err != nil {
-		return kuberr.NewInternalError(err)
+		return err
 	}
 
 	uid := fmt.Sprintf("%s", dashboardModel["uid"])
@@ -427,6 +427,38 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 
 	grafana.Status.Dashboards = grafana.Status.Dashboards.Add(cr.Namespace, cr.Name, uid)
 	return r.Client.Status().Update(ctx, grafana)
+}
+
+func (r *GrafanaDashboardReconciler) retrieveFolderUID(ctx context.Context, grafanaClient *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaDashboard) (string, error) {
+	if cr.Spec.FolderRef != "" && cr.Spec.FolderUID != "" {
+		return "", fmt.Errorf("error folderRef and folderUID cannot be declared at the same time in the CR %s (%s)", cr.Name, cr.Namespace)
+	}
+
+	if cr.Spec.FolderRef != "" {
+		if cr.Spec.FolderTitle != "" {
+			r.Log.Info(fmt.Sprintf("warning folder and folderRef cannot be set at the same time. Ignoring folder field in %s (%s)", cr.Name, cr.Namespace))
+		}
+
+		folder := &v1beta1.GrafanaFolder{}
+
+		err := r.Client.Get(ctx, client.ObjectKey{
+			Namespace: cr.Namespace,
+			Name:      cr.Spec.FolderRef,
+		}, folder)
+		if err != nil {
+			return "", err
+		}
+
+		return string(folder.ObjectMeta.UID), nil
+	}
+	if cr.Spec.FolderUID != "" {
+		if cr.Spec.FolderTitle != "" {
+			r.Log.Info(fmt.Sprintf("warning folder and folderUID cannot be set at the same time. Ignoring folder field in %s (%s)", cr.Name, cr.Namespace))
+		}
+		return cr.Spec.FolderUID, nil
+	}
+
+	return r.GetOrCreateFolder(grafanaClient, cr)
 }
 
 // map data sources that are required in the dashboard to data sources that exist in the instance

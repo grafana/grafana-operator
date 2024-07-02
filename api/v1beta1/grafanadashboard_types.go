@@ -85,6 +85,14 @@ type GrafanaDashboardSpec struct {
 	// +optional
 	FolderTitle string `json:"folder,omitempty"`
 
+	// find parent folder for dashboard
+	// +optional
+	FolderUID string `json:"folderUID" validate:"omitempty,uuid4"`
+
+	// find parent folder using GrafanaFolder CR reference
+	// +optional
+	FolderRef string `json:"folderRef,omitempty"`
+
 	// plugins
 	// +optional
 	Plugins PluginList `json:"plugins,omitempty"`
