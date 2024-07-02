@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -22,6 +24,7 @@ const grafanaFinalizer = "operator.grafana.com/finalizer"
 const (
 	conditionNoMatchingInstance = "NoMatchingInstance"
 	conditionNoMatchingFolder   = "NoMatchingFolder"
+	conditionInvalidSpec        = "InvalidSpec"
 )
 
 //+kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update;patch;delete
@@ -143,6 +146,23 @@ func removeNoMatchingFolder(conditions *[]metav1.Condition) {
 	meta.RemoveStatusCondition(conditions, conditionNoMatchingFolder)
 }
 
+func setInvalidSpec(conditions *[]metav1.Condition, generation int64, reason, message string) {
+	meta.SetStatusCondition(conditions, metav1.Condition{
+		Type:               conditionInvalidSpec,
+		Status:             "True",
+		ObservedGeneration: generation,
+		LastTransitionTime: metav1.Time{
+			Time: time.Now(),
+		},
+		Reason:  reason,
+		Message: message,
+	})
+}
+
+func removeInvalidSpec(conditions *[]metav1.Condition) {
+	meta.RemoveStatusCondition(conditions, conditionInvalidSpec)
+}
+
 func ignoreStatusUpdates() predicate.Predicate {
 	return predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
@@ -150,4 +170,31 @@ func ignoreStatusUpdates() predicate.Predicate {
 			return e.ObjectOld.GetGeneration() != e.ObjectNew.GetGeneration()
 		},
 	}
+}
+
+func buildSynchronizedCondition(resource string, syncType string, generation int64, applyErrors map[string]string, total int) metav1.Condition {
+	condition := metav1.Condition{
+		Type:               syncType,
+		ObservedGeneration: generation,
+		LastTransitionTime: metav1.Time{
+			Time: time.Now(),
+		},
+	}
+
+	if len(applyErrors) == 0 {
+		condition.Status = "True"
+		condition.Reason = "ApplySuccessful"
+		condition.Message = fmt.Sprintf("%s was successfully applied to %d instances", resource, total)
+	} else {
+		condition.Status = "False"
+		condition.Reason = "ApplyFailed"
+
+		var sb strings.Builder
+		for i, err := range applyErrors {
+			sb.WriteString(fmt.Sprintf("\n- %s: %s", i, err))
+		}
+
+		condition.Message = fmt.Sprintf("%s failed to be applied for %d out of %d instances. Errors:%s", resource, len(applyErrors), total, sb.String())
+	}
+	return condition
 }
