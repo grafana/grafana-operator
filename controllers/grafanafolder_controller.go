@@ -301,7 +301,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 	}
 
 	// always update after resync period has elapsed even if cr is unchanged.
-	if exists && cr.Unchanged() && !cr.ResyncPeriodHasElapsed() {
+	if exists && cr.Unchanged() && !cr.ResyncPeriodHasElapsed() && !cr.Moved() {
 		return nil
 	}
 
@@ -327,11 +327,23 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 				return err
 			}
 		}
+
+		if cr.Moved() {
+			_, err = grafanaClient.Folders.MoveFolder(remoteUID, &models.MoveFolderCommand{ //nolint
+				ParentUID: cr.Spec.ParentFolderUID,
+			})
+			if err != nil {
+				return err
+			}
+		}
 	} else {
-		folderResp, err := grafanaClient.Folders.CreateFolder(&models.CreateFolderCommand{
-			Title: title,
-			UID:   uid,
-		})
+		body := &models.CreateFolderCommand{
+			Title:     title,
+			UID:       uid,
+			ParentUID: cr.Spec.ParentFolderUID,
+		}
+
+		folderResp, err := grafanaClient.Folders.CreateFolder(body)
 		if err != nil {
 			return err
 		}
@@ -362,6 +374,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 
 func (r *GrafanaFolderReconciler) UpdateStatus(ctx context.Context, cr *grafanav1beta1.GrafanaFolder) error {
 	cr.Status.Hash = cr.Hash()
+	cr.Status.ParentFolderUID = cr.Spec.ParentFolderUID
 	return r.Client.Status().Update(ctx, cr)
 }
 
@@ -372,7 +385,8 @@ func (r *GrafanaFolderReconciler) Exists(client *genapi.GrafanaHTTPAPI, cr *graf
 	page := int64(1)
 	limit := int64(10000)
 	for {
-		params := folders.NewGetFoldersParams().WithPage(&page).WithLimit(&limit)
+		params := folders.NewGetFoldersParams().WithPage(&page).WithLimit(&limit).WithParentUID(&cr.Status.ParentFolderUID)
+
 		foldersResp, err := client.Folders.GetFolders(params)
 		if err != nil {
 			return false, "", err

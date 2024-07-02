@@ -44,6 +44,10 @@ type GrafanaFolderSpec struct {
 	// +optional
 	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
 
+	// UID of the folder in which the current folder should be created
+	// +optional
+	ParentFolderUID string `json:"parentFolderUID,omitempty"`
+
 	// how often the folder is synced, defaults to 5m if not set
 	// +optional
 	// +kubebuilder:validation:Type=string
@@ -62,6 +66,9 @@ type GrafanaFolderStatus struct {
 	NoMatchingInstances bool `json:"NoMatchingInstances,omitempty"`
 	// Last time the folder was resynced
 	LastResync metav1.Time `json:"lastResync,omitempty"`
+	// UID of the parent folder where the folder is created.
+	// Will be empty if the folder is deployed at the root level
+	ParentFolderUID string `json:"parentFolderUID,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -109,6 +116,10 @@ func (in *GrafanaFolder) Hash() string {
 
 func (in *GrafanaFolder) Unchanged() bool {
 	return in.Hash() == in.Status.Hash
+}
+
+func (in *GrafanaFolder) Moved() bool {
+	return in.Spec.ParentFolderUID != in.Status.ParentFolderUID
 }
 
 func (in *GrafanaFolder) IsAllowCrossNamespaceImport() bool {

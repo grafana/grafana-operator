@@ -99,6 +99,10 @@ spec:
                 x-kubernetes-validations:
                 - message: Value is immutable
                   rule: self == oldSelf
+              parentFolderUID:
+                description: UID of the folder in which the current folder should
+                  be created
+                type: string
               permissions:
                 description: raw json with folder permissions
                 type: string
@@ -129,6 +133,11 @@ spec:
               lastResync:
                 description: Last time the folder was resynced
                 format: date-time
+                type: string
+              parentFolderUID:
+                description: |-
+                  UID of the parent folder where the folder is created.
+                  Will be empty if the folder is deployed at the root level
                 type: string
             type: object
         type: object

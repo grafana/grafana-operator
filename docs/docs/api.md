@@ -2473,6 +2473,13 @@ GrafanaFolderSpec defines the desired state of GrafanaFolder
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>parentFolderUID</b></td>
+        <td>string</td>
+        <td>
+          UID of the folder in which the current folder should be created<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>permissions</b></td>
         <td>string</td>
         <td>
@@ -2620,6 +2627,14 @@ Important: Run "make" to regenerate code after modifying this file<br/>
           Last time the folder was resynced<br/>
           <br/>
             <i>Format</i>: date-time<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>parentFolderUID</b></td>
+        <td>string</td>
+        <td>
+          UID of the parent folder where the folder is created.
+Will be empty if the folder is deployed at the root level<br/>
         </td>
         <td>false</td>
       </tr></tbody>
