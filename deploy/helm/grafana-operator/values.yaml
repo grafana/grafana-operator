@@ -67,6 +67,10 @@ additionalLabels: {}
 # -- pod annotations
 podAnnotations: {}
 
+deployment:
+  # -- additional labels to add to the deployed pod
+  additionalLabels: {}
+
 # -- pod security context
 podSecurityContext: {}
 

@@ -20,6 +20,9 @@ spec:
       labels:
         {{- include "grafana-operator.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: operator
+        {{- with .Values.deployment.additionalLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
