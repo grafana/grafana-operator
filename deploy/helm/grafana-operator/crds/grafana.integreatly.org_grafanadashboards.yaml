@@ -224,6 +224,12 @@ spec:
               folder:
                 description: folder assignment for dashboard
                 type: string
+              folderRef:
+                description: find parent folder using GrafanaFolder CR reference
+                type: string
+              folderUID:
+                description: find parent folder for dashboard
+                type: string
               grafanaCom:
                 description: grafana.com/dashboards
                 properties:
