@@ -31,6 +31,7 @@ import (
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -39,6 +40,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
+)
+
+const (
+	conditionFolderSynchronized = "FolderSynchronized"
 )
 
 // GrafanaFolderReconciler reconciles a GrafanaFolder object
@@ -176,15 +181,30 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
 
+	if folder.Spec.ParentFolderUID == string(folder.UID) {
+		setInvalidSpec(&folder.Status.Conditions, folder.Generation, "CyclicParent", "The value of parentFolderUID must not be the uid of the current folder")
+		meta.RemoveStatusCondition(&folder.Status.Conditions, conditionFolderSynchronized)
+		r.UpdateStatus(ctx, folder)
+		return ctrl.Result{}, fmt.Errorf("cyclic folder reference")
+	}
+	removeInvalidSpec(&folder.Status.Conditions)
+
 	instances, err := r.GetMatchingFolderInstances(ctx, folder, r.Client)
 	if err != nil {
-		controllerLog.Error(err, "could not find matching instances", "name", folder.Name, "namespace", folder.Namespace)
-		return ctrl.Result{RequeueAfter: RequeueDelay}, err
+		setNoMatchingInstance(&folder.Status.Conditions, folder.Generation, "ErrFetchingInstances", fmt.Sprintf("error occurred during fetching of instances: %s", err.Error()))
+		meta.RemoveStatusCondition(&folder.Status.Conditions, conditionFolderSynchronized)
+		r.Log.Error(err, "could not find matching instances")
+		return ctrl.Result{}, err
 	}
-
+	if len(instances.Items) == 0 {
+		setNoMatchingInstance(&folder.Status.Conditions, folder.Generation, "EmptyAPIReply", "Instances could not be fetched, reconciliation will be retried")
+		meta.RemoveStatusCondition(&folder.Status.Conditions, conditionFolderSynchronized)
+		return ctrl.Result{}, fmt.Errorf("no instances found")
+	}
+	removeNoMatchingInstance(&folder.Status.Conditions)
 	controllerLog.Info("found matching Grafana instances for folder", "count", len(instances.Items))
 
-	success := true
+	applyErrors := make(map[string]string)
 	for _, grafana := range instances.Items {
 		// check if this is a cross namespace import
 		if grafana.Namespace != folder.Namespace && !folder.IsAllowCrossNamespaceImport() {
@@ -200,12 +220,14 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		err = r.onFolderCreated(ctx, &grafana, folder)
 		if err != nil {
 			controllerLog.Error(err, "error reconciling folder", "folder", folder.Name, "grafana", grafana.Name)
-			success = false
+			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
 	}
+	condition := buildSynchronizedCondition("Folder", conditionFolderSynchronized, folder.Generation, applyErrors, len(instances.Items))
+	meta.SetStatusCondition(&folder.Status.Conditions, condition)
 
-	if !success {
-		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
+	if len(applyErrors) != 0 {
+		return ctrl.Result{RequeueAfter: RequeueDelay}, r.UpdateStatus(ctx, folder)
 	}
 
 	if folder.ResyncPeriodHasElapsed() {
@@ -295,13 +317,13 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 		return err
 	}
 
-	exists, remoteUID, err := r.Exists(grafanaClient, cr)
+	exists, remoteUID, remoteParent, err := r.Exists(grafanaClient, cr)
 	if err != nil {
 		return err
 	}
 
 	// always update after resync period has elapsed even if cr is unchanged.
-	if exists && cr.Unchanged() && !cr.ResyncPeriodHasElapsed() && !cr.Moved() {
+	if exists && cr.Unchanged() && !cr.ResyncPeriodHasElapsed() && cr.Spec.ParentFolderUID == remoteParent {
 		return nil
 	}
 
@@ -328,7 +350,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 			}
 		}
 
-		if cr.Moved() {
+		if cr.Spec.ParentFolderUID != remoteParent {
 			_, err = grafanaClient.Folders.MoveFolder(remoteUID, &models.MoveFolderCommand{ //nolint
 				ParentUID: cr.Spec.ParentFolderUID,
 			})
@@ -374,30 +396,35 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 
 func (r *GrafanaFolderReconciler) UpdateStatus(ctx context.Context, cr *grafanav1beta1.GrafanaFolder) error {
 	cr.Status.Hash = cr.Hash()
-	cr.Status.ParentFolderUID = cr.Spec.ParentFolderUID
 	return r.Client.Status().Update(ctx, cr)
 }
 
-func (r *GrafanaFolderReconciler) Exists(client *genapi.GrafanaHTTPAPI, cr *grafanav1beta1.GrafanaFolder) (bool, string, error) {
+// Check if the folder exists. Matches UID first and fall back to title. Title matching only works for non-nested folders
+func (r *GrafanaFolderReconciler) Exists(client *genapi.GrafanaHTTPAPI, cr *grafanav1beta1.GrafanaFolder) (bool, string, string, error) {
 	title := cr.GetTitle()
 	uid := string(cr.UID)
+
+	uidResp, err := client.Folders.GetFolderByUID(uid)
+	if err == nil {
+		return true, uidResp.Payload.UID, uidResp.Payload.ParentUID, nil
+	}
 
 	page := int64(1)
 	limit := int64(10000)
 	for {
-		params := folders.NewGetFoldersParams().WithPage(&page).WithLimit(&limit).WithParentUID(&cr.Status.ParentFolderUID)
+		params := folders.NewGetFoldersParams().WithPage(&page).WithLimit(&limit)
 
 		foldersResp, err := client.Folders.GetFolders(params)
 		if err != nil {
-			return false, "", err
+			return false, "", "", err
 		}
 		for _, folder := range foldersResp.Payload {
-			if folder.UID == uid || strings.EqualFold(folder.Title, title) {
-				return true, folder.UID, nil
+			if strings.EqualFold(folder.Title, title) {
+				return true, folder.UID, folder.ParentUID, nil
 			}
 		}
 		if len(foldersResp.Payload) < int(limit) {
-			return false, "", nil
+			return false, "", "", nil
 		}
 		page++
 	}
