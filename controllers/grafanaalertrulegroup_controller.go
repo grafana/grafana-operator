@@ -20,12 +20,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
-	"time"
 
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 
@@ -143,29 +140,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
 	}
-	condition := metav1.Condition{
-		Type:               conditionAlertGroupSynchronized,
-		ObservedGeneration: group.Generation,
-		LastTransitionTime: metav1.Time{
-			Time: time.Now(),
-		},
-	}
-
-	if len(applyErrors) == 0 {
-		condition.Status = "True"
-		condition.Reason = "ApplySuccessful"
-		condition.Message = fmt.Sprintf("Alert Rule Group was successfully applied to %d instances", len(instances))
-	} else {
-		condition.Status = "False"
-		condition.Reason = "ApplyFailed"
-
-		var sb strings.Builder
-		for i, err := range applyErrors {
-			sb.WriteString(fmt.Sprintf("\n- %s: %s", i, err))
-		}
-
-		condition.Message = fmt.Sprintf("Alert Rule Group failed to be applied for %d out of %d instances. Errors:%s", len(applyErrors), len(instances), sb.String())
-	}
+	condition := buildSynchronizedCondition("Alert Rule Group", conditionAlertGroupSynchronized, group.Generation, applyErrors, len(instances))
 	meta.SetStatusCondition(&group.Status.Conditions, condition)
 
 	return ctrl.Result{RequeueAfter: group.Spec.ResyncPeriod.Duration}, nil
