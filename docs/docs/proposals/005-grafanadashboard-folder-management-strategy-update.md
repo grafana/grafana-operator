@@ -232,10 +232,9 @@ Implementing the specified behaviors introduce no change in the GrafanaDashboard
 
 ## Decision Outcome
 
-Outcome from discussing this in our weekly:
+`folderUid` and `folderRef` will be added to the `GrafanaDashboard` CRD. The behaviour is as follows:
 
-we want to only add `folderUid` and `folderRef` fields. The `createFolder` fields is implicitly defined through the presence of the new fields. This means:
-
+* If no folder specification (old or new) is set -> use namespace folder
 * If `folder` is set and none of the other fields is set (backwards compat. case) -> Create the folder
 * If `folderUID` or `folderRef` is set -> don't create the folder
 * If `folderUID` or `folderRef` **AND** folder is set, the new fields take priority -> don't create the folder
