@@ -228,7 +228,7 @@ spec:
 
 ## Impact on the already existing CRD
 
-Implementing the specified behaviors introduce no change in the GrafanaDashboard CRD.
+By keeping the behaviour backwards compatible, existing CRDs will continue to be supported in the same way.
 
 ## Decision Outcome
 
