@@ -156,7 +156,9 @@ spec:
 
 ### Backwards Compatibility
 
-If both field (folder and folderUID/folderRef) are set, folder is ignored and the behavior of `folderRef`/`folderUID` is executed.
+If one of the new fields (`folderUID`/`folderRef`) is set, the legacy `folder` field is ignored and the behavior of `folderRef`/`folderUID` is executed.
+
+In all other cases, the operator behaves the same as in previous versions
 
 ```bash
 # first evolution
