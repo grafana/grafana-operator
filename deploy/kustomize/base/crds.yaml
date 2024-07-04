@@ -1244,9 +1244,15 @@ spec:
                 x-kubernetes-validations:
                 - message: Value is immutable
                   rule: self == oldSelf
+              parentFolderRef:
+                description: |-
+                  Reference to an existing GrafanaFolder CR in the same namespace
+                  should not be defined when parentFolderUID is already defined
+                type: string
               parentFolderUID:
-                description: UID of the folder in which the current folder should
-                  be created
+                description: |-
+                  UID of the folder in which the current folder should be created
+                  should not be defined when parentFolderRef is already defined
                 type: string
               permissions:
                 description: raw json with folder permissions

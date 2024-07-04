@@ -2473,10 +2473,19 @@ GrafanaFolderSpec defines the desired state of GrafanaFolder
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>parentFolderRef</b></td>
+        <td>string</td>
+        <td>
+          Reference to an existing GrafanaFolder CR in the same namespace
+should not be defined when parentFolderUID is already defined<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>parentFolderUID</b></td>
         <td>string</td>
         <td>
-          UID of the folder in which the current folder should be created<br/>
+          UID of the folder in which the current folder should be created
+should not be defined when parentFolderRef is already defined<br/>
         </td>
         <td>false</td>
       </tr><tr>

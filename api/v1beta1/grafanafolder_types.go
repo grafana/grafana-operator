@@ -45,8 +45,14 @@ type GrafanaFolderSpec struct {
 	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
 
 	// UID of the folder in which the current folder should be created
+	// should not be defined when parentFolderRef is already defined
 	// +optional
 	ParentFolderUID string `json:"parentFolderUID,omitempty"`
+
+	// Reference to an existing GrafanaFolder CR in the same namespace
+	// should not be defined when parentFolderUID is already defined
+	// +optional
+	ParentFolderRef string `json:"parentFolderRef,omitempty"`
 
 	// how often the folder is synced, defaults to 5m if not set
 	// +optional

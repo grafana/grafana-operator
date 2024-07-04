@@ -39,6 +39,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 )
 
@@ -321,13 +322,19 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 		return err
 	}
 
+	parentFolderUID, err := r.retrieveParentFolderUID(ctx, cr)
+	if err != nil {
+		return err
+	}
+
 	exists, remoteUID, remoteParent, err := r.Exists(grafanaClient, cr)
+
 	if err != nil {
 		return err
 	}
 
 	// always update after resync period has elapsed even if cr is unchanged.
-	if exists && cr.Unchanged() && !cr.ResyncPeriodHasElapsed() && cr.Spec.ParentFolderUID == remoteParent {
+	if exists && cr.Unchanged() && !cr.ResyncPeriodHasElapsed() && parentFolderUID == remoteParent {
 		return nil
 	}
 
@@ -356,9 +363,9 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 			}
 		}
 
-		if cr.Spec.ParentFolderUID != remoteParent {
+		if parentFolderUID != remoteParent {
 			_, err = grafanaClient.Folders.MoveFolder(remoteUID, &models.MoveFolderCommand{ //nolint
-				ParentUID: cr.Spec.ParentFolderUID,
+				ParentUID: parentFolderUID,
 			})
 			if err != nil {
 				return err
@@ -368,7 +375,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 		body := &models.CreateFolderCommand{
 			Title:     title,
 			UID:       uid,
-			ParentUID: cr.Spec.ParentFolderUID,
+			ParentUID: parentFolderUID,
 		}
 
 		folderResp, err := grafanaClient.Folders.CreateFolder(body)
@@ -398,6 +405,30 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 	}
 
 	return nil
+}
+
+func (r *GrafanaFolderReconciler) retrieveParentFolderUID(ctx context.Context, cr *grafanav1beta1.GrafanaFolder) (string, error) {
+	if cr.Spec.ParentFolderRef != "" && cr.Spec.ParentFolderUID != "" {
+		return "", fmt.Errorf("error folderRef and folderUID cannot be declared at the same time in the CR %s (%s)", cr.Name, cr.Namespace)
+	}
+	if cr.Spec.ParentFolderRef != "" {
+		folder := &v1beta1.GrafanaFolder{}
+
+		err := r.Client.Get(ctx, client.ObjectKey{
+			Namespace: cr.Namespace,
+			Name:      cr.Spec.ParentFolderRef,
+		}, folder)
+		if err != nil {
+			return "", err
+		}
+
+		return string(folder.ObjectMeta.UID), nil
+	}
+
+	if cr.Spec.ParentFolderUID != "" {
+		return cr.Spec.ParentFolderUID, nil
+	}
+	return "", nil
 }
 
 func (r *GrafanaFolderReconciler) UpdateStatus(ctx context.Context, cr *grafanav1beta1.GrafanaFolder) error {
