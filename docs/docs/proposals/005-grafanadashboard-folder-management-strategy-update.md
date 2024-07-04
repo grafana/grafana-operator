@@ -154,7 +154,7 @@ spec:
 
 > Note: this field is mutually exclusive with the folderRef presented in the first proposal.
 
-### Additional usecase: handle retro-compatibility between folder and folderRef/FolderUID
+### Backwards Compatibility
 
 If both field (folder and folderUID/folderRef) are set, folder is ignored and the behavior of `folderRef`/`folderUID` is executed.
 
