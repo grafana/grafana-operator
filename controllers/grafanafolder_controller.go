@@ -39,7 +39,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 )
 
@@ -328,7 +327,6 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 	}
 
 	exists, remoteUID, remoteParent, err := r.Exists(grafanaClient, cr)
-
 	if err != nil {
 		return err
 	}
@@ -412,7 +410,7 @@ func (r *GrafanaFolderReconciler) retrieveParentFolderUID(ctx context.Context, c
 		return "", fmt.Errorf("error folderRef and folderUID cannot be declared at the same time in the CR %s (%s)", cr.Name, cr.Namespace)
 	}
 	if cr.Spec.ParentFolderRef != "" {
-		folder := &v1beta1.GrafanaFolder{}
+		folder := &grafanav1beta1.GrafanaFolder{}
 
 		err := r.Client.Get(ctx, client.ObjectKey{
 			Namespace: cr.Namespace,
