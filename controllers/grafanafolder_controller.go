@@ -332,6 +332,8 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 	}
 
 	if exists {
+		// make sure we use the correct UID
+		uid = remoteUID
 		// Add to status to cover cases:
 		// - operator have previously failed to update status
 		// - the folder was created outside of operator
@@ -389,12 +391,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 			return fmt.Errorf("failed to unmarshal spec.permissions: %w", err)
 		}
 
-		targetUID := uid
-		if exists {
-			targetUID = remoteUID
-		}
-
-		_, err = grafanaClient.FolderPermissions.UpdateFolderPermissions(targetUID, &permissions) //nolint
+		_, err = grafanaClient.FolderPermissions.UpdateFolderPermissions(uid, &permissions) //nolint
 		if err != nil {
 			return fmt.Errorf("failed to update folder permissions: %w", err)
 		}
