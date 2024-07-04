@@ -332,6 +332,8 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 	}
 
 	if exists {
+		// make sure we use the correct UID
+		uid = remoteUID
 		// Add to status to cover cases:
 		// - operator have previously failed to update status
 		// - the folder was created outside of operator
