@@ -121,7 +121,11 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 	}
 
 	removeNoMatchingInstance(&group.Status.Conditions)
-	folderUID := r.GetFolderUID(ctx, group)
+
+	folderUID := group.Spec.FolderUID
+	if group.Spec.FolderRef != "" {
+		folderUID = retrieveFolderUID(ctx, r.Client, group.Spec.FolderRef, group.Namespace, &group.Status.Conditions, group.Generation)
+	}
 	if folderUID == "" {
 		return ctrl.Result{}, fmt.Errorf("folder uid not found")
 	}
@@ -271,7 +275,10 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 }
 
 func (r *GrafanaAlertRuleGroupReconciler) finalize(ctx context.Context, group *grafanav1beta1.GrafanaAlertRuleGroup) error {
-	folderUID := r.GetFolderUID(ctx, group)
+	folderUID := group.Spec.FolderUID
+	if group.Spec.FolderRef != "" {
+		folderUID = retrieveFolderUID(ctx, r.Client, group.Spec.FolderRef, group.Namespace, &group.Status.Conditions, group.Generation)
+	}
 	if folderUID == "" {
 		r.Log.Info("ignoring finalization logic as folder no longer exists")
 		return nil
@@ -330,25 +337,4 @@ func (r *GrafanaAlertRuleGroupReconciler) GetMatchingInstances(ctx context.Conte
 	}
 
 	return items, err
-}
-
-func (r *GrafanaAlertRuleGroupReconciler) GetFolderUID(ctx context.Context, group *grafanav1beta1.GrafanaAlertRuleGroup) string {
-	if group.Spec.FolderUID != "" {
-		return group.Spec.FolderUID
-	}
-	var folder grafanav1beta1.GrafanaFolder
-	err := r.Client.Get(ctx, client.ObjectKey{
-		Namespace: group.Namespace,
-		Name:      group.Spec.FolderRef,
-	}, &folder)
-	if err != nil {
-		if kuberr.IsNotFound(err) {
-			setNoMatchingFolder(&group.Status.Conditions, group.Generation, "NotFound", fmt.Sprintf("Folder with name %s not found in namespace %s", group.Spec.FolderRef, group.Namespace))
-			return ""
-		}
-		setNoMatchingFolder(&group.Status.Conditions, group.Generation, "ErrFetchingFolder", fmt.Sprintf("Failed to fetch folder: %s", err.Error()))
-		return ""
-	}
-	removeNoMatchingFolder(&group.Status.Conditions)
-	return string(folder.UID)
 }

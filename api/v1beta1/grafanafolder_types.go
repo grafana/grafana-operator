@@ -28,6 +28,7 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // GrafanaFolderSpec defines the desired state of GrafanaFolder
+// +kubebuilder:validation:XValidation:rule="(has(self.parentFolderUID) && !(has(self.parentFolderRef))) || (has(self.parentFolderRef) && !(has(self.parentFolderUID))) || !(has(self.parentFolderRef) && (has(self.parentFolderUID)))", message="Only one of parentFolderUID or parentFolderRef can be set"
 type GrafanaFolderSpec struct {
 	// +optional
 	Title string `json:"title,omitempty"`
@@ -45,12 +46,10 @@ type GrafanaFolderSpec struct {
 	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
 
 	// UID of the folder in which the current folder should be created
-	// should not be defined when parentFolderRef is already defined
 	// +optional
 	ParentFolderUID string `json:"parentFolderUID,omitempty"`
 
 	// Reference to an existing GrafanaFolder CR in the same namespace
-	// should not be defined when parentFolderUID is already defined
 	// +optional
 	ParentFolderRef string `json:"parentFolderRef,omitempty"`
 

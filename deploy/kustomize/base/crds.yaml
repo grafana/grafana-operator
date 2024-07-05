@@ -1245,14 +1245,12 @@ spec:
                 - message: Value is immutable
                   rule: self == oldSelf
               parentFolderRef:
-                description: |-
-                  Reference to an existing GrafanaFolder CR in the same namespace
-                  should not be defined when parentFolderUID is already defined
+                description: Reference to an existing GrafanaFolder CR in the same
+                  namespace
                 type: string
               parentFolderUID:
-                description: |-
-                  UID of the folder in which the current folder should be created
-                  should not be defined when parentFolderRef is already defined
+                description: UID of the folder in which the current folder should
+                  be created
                 type: string
               permissions:
                 description: raw json with folder permissions
@@ -1269,6 +1267,11 @@ spec:
             required:
             - instanceSelector
             type: object
+            x-kubernetes-validations:
+            - message: Only one of parentFolderUID or parentFolderRef can be set
+              rule: (has(self.parentFolderUID) && !(has(self.parentFolderRef))) ||
+                (has(self.parentFolderRef) && !(has(self.parentFolderUID))) || !(has(self.parentFolderRef)
+                && (has(self.parentFolderUID)))
           status:
             description: GrafanaFolderStatus defines the observed state of GrafanaFolder
             properties:

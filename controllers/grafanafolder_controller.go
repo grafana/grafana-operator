@@ -321,9 +321,9 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 		return err
 	}
 
-	parentFolderUID, err := r.retrieveParentFolderUID(ctx, cr)
-	if err != nil {
-		return err
+	parentFolderUID := cr.Spec.ParentFolderUID
+	if cr.Spec.ParentFolderRef != "" {
+		parentFolderUID = retrieveFolderUID(ctx, r.Client, cr.Spec.ParentFolderRef, cr.Namespace, &cr.Status.Conditions, cr.Generation)
 	}
 
 	exists, remoteUID, remoteParent, err := r.Exists(grafanaClient, cr)
@@ -403,30 +403,6 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 	}
 
 	return nil
-}
-
-func (r *GrafanaFolderReconciler) retrieveParentFolderUID(ctx context.Context, cr *grafanav1beta1.GrafanaFolder) (string, error) {
-	if cr.Spec.ParentFolderRef != "" && cr.Spec.ParentFolderUID != "" {
-		return "", fmt.Errorf("error folderRef and folderUID cannot be declared at the same time in the CR %s (%s)", cr.Name, cr.Namespace)
-	}
-	if cr.Spec.ParentFolderRef != "" {
-		folder := &grafanav1beta1.GrafanaFolder{}
-
-		err := r.Client.Get(ctx, client.ObjectKey{
-			Namespace: cr.Namespace,
-			Name:      cr.Spec.ParentFolderRef,
-		}, folder)
-		if err != nil {
-			return "", err
-		}
-
-		return string(folder.ObjectMeta.UID), nil
-	}
-
-	if cr.Spec.ParentFolderUID != "" {
-		return cr.Spec.ParentFolderUID, nil
-	}
-	return "", nil
 }
 
 func (r *GrafanaFolderReconciler) UpdateStatus(ctx context.Context, cr *grafanav1beta1.GrafanaFolder) error {

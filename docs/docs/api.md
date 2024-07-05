@@ -2427,6 +2427,8 @@ GrafanaFolder is the Schema for the grafanafolders API
         <td>object</td>
         <td>
           GrafanaFolderSpec defines the desired state of GrafanaFolder<br/>
+          <br/>
+            <i>Validations</i>:<li>(has(self.parentFolderUID) && !(has(self.parentFolderRef))) || (has(self.parentFolderRef) && !(has(self.parentFolderUID))) || !(has(self.parentFolderRef) && (has(self.parentFolderUID))): Only one of parentFolderUID or parentFolderRef can be set</li>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2476,16 +2478,14 @@ GrafanaFolderSpec defines the desired state of GrafanaFolder
         <td><b>parentFolderRef</b></td>
         <td>string</td>
         <td>
-          Reference to an existing GrafanaFolder CR in the same namespace
-should not be defined when parentFolderUID is already defined<br/>
+          Reference to an existing GrafanaFolder CR in the same namespace<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>parentFolderUID</b></td>
         <td>string</td>
         <td>
-          UID of the folder in which the current folder should be created
-should not be defined when parentFolderRef is already defined<br/>
+          UID of the folder in which the current folder should be created<br/>
         </td>
         <td>false</td>
       </tr><tr>
