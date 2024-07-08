@@ -111,3 +111,7 @@ serviceMonitor:
   metricRelabelings: []
   # -- Set relabel_configs as per https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config
   relabelings: []
+
+# -- Array of extra K8s objects to deploy
+extraObjects: []
+
