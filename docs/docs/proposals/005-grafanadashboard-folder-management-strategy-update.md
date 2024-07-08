@@ -15,7 +15,7 @@ The suggested new features are:
 
 ## Info
 
-status: Suggested <!-- TODO: update when validated by maintainers -->
+status: Decided <!-- TODO: update when validated by maintainers -->
 
 ## Motivation
 
