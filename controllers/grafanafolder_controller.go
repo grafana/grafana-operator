@@ -321,9 +321,9 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 		return err
 	}
 
-	parentFolderUID := cr.Spec.ParentFolderUID
-	if cr.Spec.ParentFolderRef != "" {
-		parentFolderUID = retrieveFolderUID(ctx, r.Client, cr.Spec.ParentFolderRef, cr.Namespace, &cr.Status.Conditions, cr.Generation)
+	parentFolderUID, err := getFolderUID(ctx, r.Client, cr)
+	if err != nil {
+		return err
 	}
 
 	exists, remoteUID, remoteParent, err := r.Exists(grafanaClient, cr)

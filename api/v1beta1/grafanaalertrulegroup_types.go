@@ -135,6 +135,33 @@ type GrafanaAlertRuleGroup struct {
 	Status GrafanaAlertRuleGroupStatus `json:"status,omitempty"`
 }
 
+// CurrentGeneration implements FolderReferencer.
+func (in *GrafanaAlertRuleGroup) CurrentGeneration() int64 {
+	return in.Generation
+}
+
+// Conditions implements FolderReferencer.
+func (in *GrafanaAlertRuleGroup) Conditions() *[]metav1.Condition {
+	return &in.Status.Conditions
+}
+
+// FolderNamespace implements FolderReferencer.
+func (in *GrafanaAlertRuleGroup) FolderNamespace() string {
+	return in.Namespace
+}
+
+// FolderRef implements FolderReferencer.
+func (in *GrafanaAlertRuleGroup) FolderRef() string {
+	return in.Spec.FolderRef
+}
+
+// FolderUID implements FolderReferencer.
+func (in *GrafanaAlertRuleGroup) FolderUID() string {
+	return in.Spec.FolderUID
+}
+
+var _ FolderReferencer = (*GrafanaAlertRuleGroup)(nil)
+
 //+kubebuilder:object:root=true
 
 // GrafanaAlertRuleGroupList contains a list of GrafanaAlertRuleGroup

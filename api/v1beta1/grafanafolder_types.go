@@ -88,6 +88,33 @@ type GrafanaFolder struct {
 	Status GrafanaFolderStatus `json:"status,omitempty"`
 }
 
+// Conditions implements FolderReferencer.
+func (in *GrafanaFolder) Conditions() *[]metav1.Condition {
+	return &in.Status.Conditions
+}
+
+// CurrentGeneration implements FolderReferencer.
+func (in *GrafanaFolder) CurrentGeneration() int64 {
+	return in.Generation
+}
+
+// FolderNamespace implements FolderReferencer.
+func (in *GrafanaFolder) FolderNamespace() string {
+	return in.Namespace
+}
+
+// FolderRef implements FolderReferencer.
+func (in *GrafanaFolder) FolderRef() string {
+	return in.Spec.ParentFolderRef
+}
+
+// FolderUID implements FolderReferencer.
+func (in *GrafanaFolder) FolderUID() string {
+	return in.Spec.ParentFolderUID
+}
+
+var _ FolderReferencer = (*GrafanaFolder)(nil)
+
 //+kubebuilder:object:root=true
 
 // GrafanaFolderList contains a list of GrafanaFolder

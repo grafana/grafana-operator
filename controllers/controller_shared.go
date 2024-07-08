@@ -54,28 +54,31 @@ func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSel
 	return selectedList, err
 }
 
-// Retrieve the folderUID from an existing GrafanaFolder CR declared in the specified namespace
-func retrieveFolderUID(ctx context.Context, k8sClient client.Client, folderRef string, namespace string, conditions *[]metav1.Condition, generation int64) string {
-	if folderRef != "" {
-		folder := &grafanav1beta1.GrafanaFolder{}
-
-		err := k8sClient.Get(ctx, client.ObjectKey{
-			Namespace: namespace,
-			Name:      folderRef,
-		}, folder)
-		if err != nil {
-			if kuberr.IsNotFound(err) {
-				setNoMatchingFolder(conditions, generation, "NotFound", fmt.Sprintf("Folder with name %s not found in namespace %s", folderRef, namespace))
-				return ""
-			}
-			setNoMatchingFolder(conditions, generation, "ErrFetchingFolder", fmt.Sprintf("Failed to fetch folder: %s", err.Error()))
-			return ""
-		}
-		removeNoMatchingFolder(conditions)
-
-		return string(folder.ObjectMeta.UID)
+// getFolderUID fetches the folderUID from an existing GrafanaFolder CR declared in the specified namespace
+func getFolderUID(ctx context.Context, k8sClient client.Client, ref v1beta1.FolderReferencer) (string, error) {
+	if ref.FolderUID() != "" {
+		return ref.FolderUID(), nil
 	}
-	return ""
+	if ref.FolderRef() == "" {
+		return "", nil
+	}
+	folder := &grafanav1beta1.GrafanaFolder{}
+
+	err := k8sClient.Get(ctx, client.ObjectKey{
+		Namespace: ref.FolderNamespace(),
+		Name:      ref.FolderRef(),
+	}, folder)
+	if err != nil {
+		if kuberr.IsNotFound(err) {
+			setNoMatchingFolder(ref.Conditions(), ref.CurrentGeneration(), "NotFound", fmt.Sprintf("Folder with name %s not found in namespace %s", ref.FolderRef(), ref.FolderNamespace()))
+			return "", err
+		}
+		setNoMatchingFolder(ref.Conditions(), ref.CurrentGeneration(), "ErrFetchingFolder", fmt.Sprintf("Failed to fetch folder: %s", err.Error()))
+		return "", err
+	}
+	removeNoMatchingFolder(ref.Conditions())
+
+	return string(folder.ObjectMeta.UID), nil
 }
 
 func labelsSatisfyMatchExpressions(labels map[string]string, matchExpressions []metav1.LabelSelectorRequirement) bool {

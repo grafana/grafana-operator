@@ -122,12 +122,9 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 
 	removeNoMatchingInstance(&group.Status.Conditions)
 
-	folderUID := group.Spec.FolderUID
-	if group.Spec.FolderRef != "" {
-		folderUID = retrieveFolderUID(ctx, r.Client, group.Spec.FolderRef, group.Namespace, &group.Status.Conditions, group.Generation)
-	}
-	if folderUID == "" {
-		return ctrl.Result{}, fmt.Errorf("folder uid not found")
+	folderUID, err := getFolderUID(ctx, r.Client, group)
+	if err != nil || folderUID == "" {
+		return ctrl.Result{}, fmt.Errorf("folder uid not found: %w", err)
 	}
 
 	applyErrors := make(map[string]string)
@@ -275,11 +272,8 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 }
 
 func (r *GrafanaAlertRuleGroupReconciler) finalize(ctx context.Context, group *grafanav1beta1.GrafanaAlertRuleGroup) error {
-	folderUID := group.Spec.FolderUID
-	if group.Spec.FolderRef != "" {
-		folderUID = retrieveFolderUID(ctx, r.Client, group.Spec.FolderRef, group.Namespace, &group.Status.Conditions, group.Generation)
-	}
-	if folderUID == "" {
+	folderUID, err := getFolderUID(ctx, r.Client, group)
+	if err != nil {
 		r.Log.Info("ignoring finalization logic as folder no longer exists")
 		return nil
 	}
