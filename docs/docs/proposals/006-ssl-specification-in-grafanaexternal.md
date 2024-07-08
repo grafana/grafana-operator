@@ -14,7 +14,7 @@ The suggested new feature is:
 
 ## Info
 
-status: Suggested
+status: Suggested <!-- TODO: to be discussed with maintainer -->
 
 ## Motivation
 
@@ -23,10 +23,8 @@ Currently, the operator does not permits to connect with a Grafana with a not th
 ## Proposal
 
 This document proposes to extend the Grafana CRD external block to add a block with tls information. In this block, we will find:
-- `caBundle`: This block will contain the name of the secret where the CA bundle is currently stored. To do this, we could use the `*v1.SecretKeySelector` mechanism already used in the Grafana CRD. (facultative - default: empty)
+- `certSecretRef`: This block will contains the name of a secret which will contained certificates based on the `kubernetes.io/tls` format (e.g. `ca.crt`, `tls.crt` and `tls.key`). This secret can contains only `ca.crt` or `tls.crt` and `tls.key` at the same time. Both solution are not mutually exclusive.
 - `insecureSkipVerify`: Disable the server certificate check (facultative - default: false)
-- `cert`: A certificate that can be used to authenticate the request to the response server (mandatory when `key` is defined - default: empty)
-- `key`: The key associated with the certificate declared in `cert_pem` field (mandatory when `cert` is defined - default: empty)
 
 The tls block should be facultative. However, if the tls block is set, at least of it subfield should be present.
 
@@ -49,16 +47,8 @@ spec:
       name: grafana-admin-credentials
       key: GF_SECURITY_ADMIN_USER
     tls:
-      caBundle:
-        name: tls-certificate
-        key: ca-bundle.pem
+      certSecretRef: tls-certificate
       insecureSkipVerify: false
-      cert:
-        name: tls-certificate
-        key: cert.crt
-      key:
-        name: tls-certificate
-        key: key.key
 ```
 
 ## Impact on the already existing CRD
