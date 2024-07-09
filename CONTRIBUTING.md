@@ -93,7 +93,7 @@ But if you generate new RBAC rules or create new deployment options for the oper
 
 Chart.yaml `appVersion` follows the grafana-operator version but the helm chart is versioned separately.
 
-If you add update the chart don't forget to run `make helm-docs`, which will update the helm specific README file.
+If you add update the chart don't forget to run `make helm/docs`, which will update the helm specific README file.
 
 ### Kustomize
 

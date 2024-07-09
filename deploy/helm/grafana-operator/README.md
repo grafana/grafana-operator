@@ -65,6 +65,7 @@ It's easier to just manage this configuration outside of the operator.
 | additionalLabels | object | `{}` | additional labels to add to all resources |
 | affinity | object | `{}` | pod affinity |
 | env | list | `[]` | Additional environment variables |
+| extraObjects | list | `[]` | Array of extra K8s objects to deploy |
 | fullnameOverride | string | `""` | Overrides the fully qualified app name. |
 | image.pullPolicy | string | `"IfNotPresent"` | The image pull policy to use in grafana operator container |
 | image.repository | string | `"ghcr.io/grafana/grafana-operator"` | grafana operator image repository |

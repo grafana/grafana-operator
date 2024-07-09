@@ -111,3 +111,23 @@ serviceMonitor:
   metricRelabelings: []
   # -- Set relabel_configs as per https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config
   relabelings: []
+
+# -- Array of extra K8s objects to deploy
+extraObjects: []
+# - apiVersion: external-secrets.io/v1beta1
+#   kind: ExternalSecret
+#   metadata:
+#     name: grafana-operator-apikey
+#   spec:
+#     refreshInterval: 1h
+#     secretStoreRef:
+#       kind: SecretStore
+#       name: my-secret-store
+#     target:
+#       template:
+#         data:
+#           GRAFANA_CLOUD_INSTANCE_TOKEN: "{{`{{ .Token }}`}}"
+#     dataFrom:
+#     - extract:
+#         key: my-secret-store-secret
+
