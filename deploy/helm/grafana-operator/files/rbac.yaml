@@ -187,6 +187,32 @@ rules:
   - apiGroups:
       - grafana.integreatly.org
     resources:
+      - grafananotificationpolicies
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - grafana.integreatly.org
+    resources:
+      - grafananotificationpolicies/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - grafana.integreatly.org
+    resources:
+      - grafananotificationpolicies/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - grafana.integreatly.org
+    resources:
       - grafanas
     verbs:
       - create
