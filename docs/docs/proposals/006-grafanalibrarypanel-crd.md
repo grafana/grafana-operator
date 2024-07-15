@@ -47,6 +47,58 @@ CRD that supports defining a panel model as JSON, YAML, or via external link. At
 reconcile time, the Library Panel model definition will be provisioned to Grafana
 via the [Library Element API](https://grafana.com/docs/grafana/latest/developers/http_api/library_element/).
 
+### Example Custom Resource
+
+```yaml
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaLibraryPanel
+metadata:
+  name: grpc-server-success-rate
+spec:
+  allowCrossNamespaceImport: true
+  contentCacheDuration: 1m0s
+  folder: shared
+  instanceSelector:
+    matchLabels:
+      env: dev
+      region: us-central1
+  url: http://assets.example.com/library-panels/grpc-server-success-rate.json
+```
+
+### Referencing in Dashboards
+
+When GrafanaLibraryPanels are configured for a Grafana instance, users will be able to browse
+and utilize library panels in dashboards via the GUI workflows. They can export the JSON model
+of the dashboard and store the model in a GrafanaDashboard CR, if desired. Library panels are
+referenced by UID, e.g.:
+
+```json
+"panels": [
+  {
+    "gridPos": {
+      "h": 8,
+      "w": 12,
+      "x": 0,
+      "y": 0
+    },
+    "id": 2,
+    "libraryPanel": {
+      "uid": "ddkbyftwuqfpcf",
+      "name": "gRPC Server Success Rate"
+    }
+  }
+]
+```
+
+The UID of the library panel is defined on the `model` field within the GrafanaLibraryPanel
+custom resource. It can thus be provided by the CR owner. By setting the UID to a stable value
+as opposed to letting Grafana autogenerate it, it's possible to provision both Library Panels
+and Dashboards that reference them as CRs.
+
+In the future we could have more ways of dynamically linking in library panels via the operator,
+where it can look up the UIDs and rewrite placeholder tokens in the dashboard model, if desired.
+Such extensions are out of this proposal's scope.
+
 ### Generalize Dashboard content read/cache logic
 
 Much of the logic in the GrafanaDashboard controller can be re-used with minimal changes,
