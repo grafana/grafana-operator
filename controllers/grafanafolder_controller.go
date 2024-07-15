@@ -321,13 +321,18 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 		return err
 	}
 
+	parentFolderUID, err := getFolderUID(ctx, r.Client, cr)
+	if err != nil {
+		return err
+	}
+
 	exists, remoteUID, remoteParent, err := r.Exists(grafanaClient, cr)
 	if err != nil {
 		return err
 	}
 
 	// always update after resync period has elapsed even if cr is unchanged.
-	if exists && cr.Unchanged() && !cr.ResyncPeriodHasElapsed() && cr.Spec.ParentFolderUID == remoteParent {
+	if exists && cr.Unchanged() && !cr.ResyncPeriodHasElapsed() && parentFolderUID == remoteParent {
 		return nil
 	}
 
@@ -356,9 +361,9 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 			}
 		}
 
-		if cr.Spec.ParentFolderUID != remoteParent {
+		if parentFolderUID != remoteParent {
 			_, err = grafanaClient.Folders.MoveFolder(remoteUID, &models.MoveFolderCommand{ //nolint
-				ParentUID: cr.Spec.ParentFolderUID,
+				ParentUID: parentFolderUID,
 			})
 			if err != nil {
 				return err
@@ -368,7 +373,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 		body := &models.CreateFolderCommand{
 			Title:     title,
 			UID:       uid,
-			ParentUID: cr.Spec.ParentFolderUID,
+			ParentUID: parentFolderUID,
 		}
 
 		folderResp, err := grafanaClient.Folders.CreateFolder(body)

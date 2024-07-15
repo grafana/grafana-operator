@@ -2427,6 +2427,8 @@ GrafanaFolder is the Schema for the grafanafolders API
         <td>object</td>
         <td>
           GrafanaFolderSpec defines the desired state of GrafanaFolder<br/>
+          <br/>
+            <i>Validations</i>:<li>(has(self.parentFolderUID) && !(has(self.parentFolderRef))) || (has(self.parentFolderRef) && !(has(self.parentFolderUID))) || !(has(self.parentFolderRef) && (has(self.parentFolderUID))): Only one of parentFolderUID or parentFolderRef can be set</li>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2470,6 +2472,13 @@ GrafanaFolderSpec defines the desired state of GrafanaFolder
         <td>boolean</td>
         <td>
           allow to import this resources from an operator in a different namespace<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>parentFolderRef</b></td>
+        <td>string</td>
+        <td>
+          Reference to an existing GrafanaFolder CR in the same namespace<br/>
         </td>
         <td>false</td>
       </tr><tr>

@@ -18,6 +18,7 @@ package v1beta1
 
 import (
 	"github.com/grafana/grafana-openapi-client-go/models"
+	operatorapi "github.com/grafana/grafana-operator/v5/api"
 	apiextensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -134,6 +135,33 @@ type GrafanaAlertRuleGroup struct {
 	Spec   GrafanaAlertRuleGroupSpec   `json:"spec,omitempty"`
 	Status GrafanaAlertRuleGroupStatus `json:"status,omitempty"`
 }
+
+// CurrentGeneration implements FolderReferencer.
+func (in *GrafanaAlertRuleGroup) CurrentGeneration() int64 {
+	return in.Generation
+}
+
+// Conditions implements FolderReferencer.
+func (in *GrafanaAlertRuleGroup) Conditions() *[]metav1.Condition {
+	return &in.Status.Conditions
+}
+
+// FolderNamespace implements FolderReferencer.
+func (in *GrafanaAlertRuleGroup) FolderNamespace() string {
+	return in.Namespace
+}
+
+// FolderRef implements FolderReferencer.
+func (in *GrafanaAlertRuleGroup) FolderRef() string {
+	return in.Spec.FolderRef
+}
+
+// FolderUID implements FolderReferencer.
+func (in *GrafanaAlertRuleGroup) FolderUID() string {
+	return in.Spec.FolderUID
+}
+
+var _ operatorapi.FolderReferencer = (*GrafanaAlertRuleGroup)(nil)
 
 //+kubebuilder:object:root=true
 

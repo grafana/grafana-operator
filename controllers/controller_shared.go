@@ -9,8 +9,11 @@ import (
 	"strings"
 	"time"
 
+	operatorapi "github.com/grafana/grafana-operator/v5/api"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/model"
+	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -50,6 +53,33 @@ func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSel
 	}
 
 	return selectedList, err
+}
+
+// getFolderUID fetches the folderUID from an existing GrafanaFolder CR declared in the specified namespace
+func getFolderUID(ctx context.Context, k8sClient client.Client, ref operatorapi.FolderReferencer) (string, error) {
+	if ref.FolderUID() != "" {
+		return ref.FolderUID(), nil
+	}
+	if ref.FolderRef() == "" {
+		return "", nil
+	}
+	folder := &grafanav1beta1.GrafanaFolder{}
+
+	err := k8sClient.Get(ctx, client.ObjectKey{
+		Namespace: ref.FolderNamespace(),
+		Name:      ref.FolderRef(),
+	}, folder)
+	if err != nil {
+		if kuberr.IsNotFound(err) {
+			setNoMatchingFolder(ref.Conditions(), ref.CurrentGeneration(), "NotFound", fmt.Sprintf("Folder with name %s not found in namespace %s", ref.FolderRef(), ref.FolderNamespace()))
+			return "", err
+		}
+		setNoMatchingFolder(ref.Conditions(), ref.CurrentGeneration(), "ErrFetchingFolder", fmt.Sprintf("Failed to fetch folder: %s", err.Error()))
+		return "", err
+	}
+	removeNoMatchingFolder(ref.Conditions())
+
+	return string(folder.ObjectMeta.UID), nil
 }
 
 func labelsSatisfyMatchExpressions(labels map[string]string, matchExpressions []metav1.LabelSelectorRequirement) bool {

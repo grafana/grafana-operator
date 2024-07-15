@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"time"
 
+	operatorapi "github.com/grafana/grafana-operator/v5/api"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -28,6 +29,7 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // GrafanaFolderSpec defines the desired state of GrafanaFolder
+// +kubebuilder:validation:XValidation:rule="(has(self.parentFolderUID) && !(has(self.parentFolderRef))) || (has(self.parentFolderRef) && !(has(self.parentFolderUID))) || !(has(self.parentFolderRef) && (has(self.parentFolderUID)))", message="Only one of parentFolderUID or parentFolderRef can be set"
 type GrafanaFolderSpec struct {
 	// +optional
 	Title string `json:"title,omitempty"`
@@ -47,6 +49,10 @@ type GrafanaFolderSpec struct {
 	// UID of the folder in which the current folder should be created
 	// +optional
 	ParentFolderUID string `json:"parentFolderUID,omitempty"`
+
+	// Reference to an existing GrafanaFolder CR in the same namespace
+	// +optional
+	ParentFolderRef string `json:"parentFolderRef,omitempty"`
 
 	// how often the folder is synced, defaults to 5m if not set
 	// +optional
@@ -82,6 +88,33 @@ type GrafanaFolder struct {
 	Spec   GrafanaFolderSpec   `json:"spec,omitempty"`
 	Status GrafanaFolderStatus `json:"status,omitempty"`
 }
+
+// Conditions implements FolderReferencer.
+func (in *GrafanaFolder) Conditions() *[]metav1.Condition {
+	return &in.Status.Conditions
+}
+
+// CurrentGeneration implements FolderReferencer.
+func (in *GrafanaFolder) CurrentGeneration() int64 {
+	return in.Generation
+}
+
+// FolderNamespace implements FolderReferencer.
+func (in *GrafanaFolder) FolderNamespace() string {
+	return in.Namespace
+}
+
+// FolderRef implements FolderReferencer.
+func (in *GrafanaFolder) FolderRef() string {
+	return in.Spec.ParentFolderRef
+}
+
+// FolderUID implements FolderReferencer.
+func (in *GrafanaFolder) FolderUID() string {
+	return in.Spec.ParentFolderUID
+}
+
+var _ operatorapi.FolderReferencer = (*GrafanaFolder)(nil)
 
 //+kubebuilder:object:root=true
 
