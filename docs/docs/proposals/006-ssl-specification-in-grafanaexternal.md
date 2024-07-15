@@ -47,7 +47,8 @@ spec:
       name: grafana-admin-credentials
       key: GF_SECURITY_ADMIN_USER
     tls:
-      certSecretRef: tls-certificate
+      certSecretRef:
+        name: tls-certificate
       insecureSkipVerify: false
 ```
 
