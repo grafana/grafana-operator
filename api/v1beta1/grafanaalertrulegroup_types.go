@@ -18,6 +18,7 @@ package v1beta1
 
 import (
 	"github.com/grafana/grafana-openapi-client-go/models"
+	operatorapi "github.com/grafana/grafana-operator/v5/api"
 	apiextensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -160,7 +161,7 @@ func (in *GrafanaAlertRuleGroup) FolderUID() string {
 	return in.Spec.FolderUID
 }
 
-var _ FolderReferencer = (*GrafanaAlertRuleGroup)(nil)
+var _ operatorapi.FolderReferencer = (*GrafanaAlertRuleGroup)(nil)
 
 //+kubebuilder:object:root=true
 

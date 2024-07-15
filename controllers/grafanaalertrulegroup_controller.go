@@ -275,7 +275,7 @@ func (r *GrafanaAlertRuleGroupReconciler) finalize(ctx context.Context, group *g
 	folderUID, err := getFolderUID(ctx, r.Client, group)
 	if err != nil {
 		r.Log.Info("ignoring finalization logic as folder no longer exists")
-		return nil
+		return nil //nolint:nilerr
 	}
 	instances, err := r.GetMatchingInstances(ctx, group, r.Client)
 	if err != nil {

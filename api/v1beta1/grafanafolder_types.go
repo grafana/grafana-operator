@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"time"
 
+	operatorapi "github.com/grafana/grafana-operator/v5/api"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -113,7 +114,7 @@ func (in *GrafanaFolder) FolderUID() string {
 	return in.Spec.ParentFolderUID
 }
 
-var _ FolderReferencer = (*GrafanaFolder)(nil)
+var _ operatorapi.FolderReferencer = (*GrafanaFolder)(nil)
 
 //+kubebuilder:object:root=true
 

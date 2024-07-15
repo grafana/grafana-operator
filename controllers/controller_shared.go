@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	operatorapi "github.com/grafana/grafana-operator/v5/api"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/model"
@@ -55,7 +56,7 @@ func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSel
 }
 
 // getFolderUID fetches the folderUID from an existing GrafanaFolder CR declared in the specified namespace
-func getFolderUID(ctx context.Context, k8sClient client.Client, ref v1beta1.FolderReferencer) (string, error) {
+func getFolderUID(ctx context.Context, k8sClient client.Client, ref operatorapi.FolderReferencer) (string, error) {
 	if ref.FolderUID() != "" {
 		return ref.FolderUID(), nil
 	}
