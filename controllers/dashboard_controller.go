@@ -45,6 +45,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/fetchers"
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/discovery"
@@ -56,8 +57,10 @@ import (
 )
 
 const (
-	initialSyncDelay = "10s"
-	syncBatchSize    = 100
+	initialSyncDelay               = "10s"
+	syncBatchSize                  = 100
+	conditionDashboardSynchronized = "DashboardSynchronized"
+	conditionErrorFetchingInstance = "ErrFetchingInstances"
 )
 
 // GrafanaDashboardReconciler reconciles a GrafanaDashboard object
@@ -192,10 +195,13 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	instances, err := r.GetMatchingDashboardInstances(ctx, cr, r.Client)
 	if err != nil {
+		setNoMatchingInstance(&cr.Status.Conditions, cr.Generation, conditionErrorFetchingInstance, fmt.Sprintf("error occurred during fetching of instances: %s", err.Error()))
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
 		controllerLog.Error(err, "could not find matching instances", "name", cr.Name, "namespace", cr.Namespace)
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
 
+	removeNoMatchingInstance(&cr.Status.Conditions)
 	controllerLog.Info("found matching Grafana instances for dashboard", "count", len(instances.Items))
 
 	dashboardJson, err := r.fetchDashboardJson(ctx, cr)
@@ -232,6 +238,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	success := true
+	applyErrors := make(map[string]string)
 	for _, grafana := range instances.Items {
 		// check if this is a cross namespace import
 		if grafana.Namespace != cr.Namespace && !cr.IsAllowCrossNamespaceImport() {
@@ -262,8 +269,12 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		err = r.onDashboardCreated(ctx, &grafana, cr, dashboardModel, hash)
 		if err != nil {
 			controllerLog.Error(err, "error reconciling dashboard", "dashboard", cr.Name, "grafana", grafana.Name)
+			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 			success = false
 		}
+
+		condition := buildSynchronizedCondition("Dashboard", conditionDashboardSynchronized, cr.Generation, applyErrors, len(instances.Items))
+		meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
 		if grafana.Spec.Preferences != nil && uid == grafana.Spec.Preferences.HomeDashboardUID {
 			err = r.UpdateHomeDashboard(ctx, grafana, uid, cr)
@@ -370,9 +381,16 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return err
 	}
 
-	folderUID, err := r.retrieveFolderUID(ctx, grafanaClient, cr)
+	folderUID, err := getFolderUID(ctx, r.Client, cr)
 	if err != nil {
 		return err
+	}
+
+	if folderUID == "" {
+		folderUID, err = r.GetOrCreateFolder(grafanaClient, cr)
+		if err != nil {
+			return err
+		}
 	}
 
 	uid := fmt.Sprintf("%s", dashboardModel["uid"])
@@ -427,38 +445,6 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 
 	grafana.Status.Dashboards = grafana.Status.Dashboards.Add(cr.Namespace, cr.Name, uid)
 	return r.Client.Status().Update(ctx, grafana)
-}
-
-func (r *GrafanaDashboardReconciler) retrieveFolderUID(ctx context.Context, grafanaClient *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaDashboard) (string, error) {
-	if cr.Spec.FolderRef != "" && cr.Spec.FolderUID != "" {
-		return "", fmt.Errorf("error folderRef and folderUID cannot be declared at the same time in the CR %s (%s)", cr.Name, cr.Namespace)
-	}
-
-	if cr.Spec.FolderRef != "" {
-		if cr.Spec.FolderTitle != "" {
-			r.Log.Info(fmt.Sprintf("warning folder and folderRef cannot be set at the same time. Ignoring folder field in %s (%s)", cr.Name, cr.Namespace))
-		}
-
-		folder := &v1beta1.GrafanaFolder{}
-
-		err := r.Client.Get(ctx, client.ObjectKey{
-			Namespace: cr.Namespace,
-			Name:      cr.Spec.FolderRef,
-		}, folder)
-		if err != nil {
-			return "", err
-		}
-
-		return string(folder.ObjectMeta.UID), nil
-	}
-	if cr.Spec.FolderUID != "" {
-		if cr.Spec.FolderTitle != "" {
-			r.Log.Info(fmt.Sprintf("warning folder and folderUID cannot be set at the same time. Ignoring folder field in %s (%s)", cr.Name, cr.Namespace))
-		}
-		return cr.Spec.FolderUID, nil
-	}
-
-	return r.GetOrCreateFolder(grafanaClient, cr)
 }
 
 // map data sources that are required in the dashboard to data sources that exist in the instance

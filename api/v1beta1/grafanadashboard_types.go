@@ -168,6 +168,8 @@ type GrafanaDashboardStatus struct {
 	// Last time the dashboard was resynced
 	LastResync metav1.Time `json:"lastResync,omitempty"`
 	UID        string      `json:"uid,omitempty"`
+
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -192,6 +194,31 @@ type GrafanaDashboardList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []GrafanaDashboard `json:"items"`
+}
+
+// FolderRef implements FolderReferencer.
+func (in *GrafanaDashboard) FolderRef() string {
+	return in.Spec.FolderRef
+}
+
+// FolderUID implements FolderReferencer.
+func (in *GrafanaDashboard) FolderUID() string {
+	return in.Spec.FolderUID
+}
+
+// FolderNamespace implements FolderReferencer.
+func (in *GrafanaDashboard) FolderNamespace() string {
+	return in.Namespace
+}
+
+// Conditions implements FolderReferencer.
+func (in *GrafanaDashboard) Conditions() *[]metav1.Condition {
+	return &in.Status.Conditions
+}
+
+// CurrentGeneration implements FolderReferencer.
+func (in *GrafanaDashboard) CurrentGeneration() int64 {
+	return in.Generation
 }
 
 func (in *GrafanaDashboard) Unchanged(hash string) bool {
