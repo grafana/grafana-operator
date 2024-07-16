@@ -14,7 +14,7 @@ The suggested new feature is:
 
 ## Info
 
-status: Suggested <!-- TODO: to be discussed with maintainer -->
+status: Decided
 
 ## Motivation
 
@@ -59,8 +59,9 @@ However, because this functionality touch to the Grafana client, we need to be s
 
 ## Decision Outcome
 
-<!-- TODO: to be discussed with maintainer -->
+We're going to implement CA verification simmilar to [the way flux does it](https://fluxcd.io/flux/components/source/helmrepositories/#cert-secret-reference) to keep in line with the rest of the Kubernetes ecosystem
 
 ## Related discussions
 
 - [PR 1590](https://github.com/grafana/grafana-operator/pull/1590)
+- [PR 1594](https://github.com/grafana/grafana-operator/pull/1594)
