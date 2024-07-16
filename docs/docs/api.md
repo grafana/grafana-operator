@@ -1000,6 +1000,8 @@ GrafanaDashboard is the Schema for the grafanadashboards API
         <td>object</td>
         <td>
           GrafanaDashboardSpec defines the desired state of GrafanaDashboard<br/>
+          <br/>
+            <i>Validations</i>:<li>(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID))) || !(has(self.folderRef) && (has(self.folderUID))): Only one of folderUID or folderRef can be declared at the same time</li><li>(has(self.folder) && !(has(self.folderRef) || has(self.folderUID))) || !(has(self.folder)): folder field cannot be set when folderUID or folderRef is already declared</li>
         </td>
         <td>false</td>
       </tr><tr>
