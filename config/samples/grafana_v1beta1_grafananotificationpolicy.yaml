@@ -7,18 +7,18 @@ spec:
     matchLabels:
       dashboards: "grafana"
   route:
-    receiver: grafana cloud oncall
+    receiver: Grafana Cloud OnCall
     group_by:
       - grafana_folder
       - alertname
     routes:
-      - receiver: some-other-receiver
+      - receiver: grafana-default-email
         object_matchers:
           - - foo
             - =
             - bar
         routes:
-          - receiver: a_third_receiver
+          - receiver: Grafana Cloud OnCall
             object_matchers:
               - - severity
                 - =

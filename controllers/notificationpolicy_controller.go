@@ -121,9 +121,17 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 	removeNoMatchingInstance(&notificationPolicy.Status.Conditions)
 
 	applyErrors := make(map[string]string)
+	appliedCount := 0
 	for _, grafana := range instances.Items {
 		// can be removed in go 1.22+
 		grafana := grafana
+		appliedPolicy := grafana.Annotations[annotationAppliedNotificationPolicy]
+		if appliedPolicy != "" && appliedPolicy != notificationPolicy.NamespacedResource() {
+			controllerLog.Info("instance already has a different notification policy applied - skipping", "grafana", grafana.Name)
+			continue
+		}
+		appliedCount++
+
 		if grafana.Status.Stage != grafanav1beta1.OperatorStageComplete || grafana.Status.StageStatus != grafanav1beta1.OperatorStageResultSuccess {
 			controllerLog.Info("grafana instance not ready", "grafana", grafana.Name)
 			continue
@@ -134,7 +142,7 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
 	}
-	condition := buildSynchronizedCondition("Notification Policy", conditionFolderSynchronized, notificationPolicy.Generation, applyErrors, len(instances.Items))
+	condition := buildSynchronizedCondition("Notification Policy", conditionNotificationPolicySynchronized, notificationPolicy.Generation, applyErrors, appliedCount)
 	meta.SetStatusCondition(&notificationPolicy.Status.Conditions, condition)
 
 	return ctrl.Result{RequeueAfter: notificationPolicy.Spec.ResyncPeriod.Duration}, nil
@@ -151,6 +159,10 @@ func (r *GrafanaNotificationPolicyReconciler) reconcileWithInstance(ctx context.
 	if _, err := cl.Provisioning.PutPolicyTree(params); err != nil { //nolint:errcheck
 		return fmt.Errorf("applying notification policy: %w", err)
 	}
+	instance.Annotations[annotationAppliedNotificationPolicy] = notificationPolicy.NamespacedResource()
+	if err := r.Client.Update(ctx, instance); err != nil {
+		return fmt.Errorf("saving applied policy to instance CR: %w", err)
+	}
 	return nil
 }
 
@@ -162,6 +174,11 @@ func (r *GrafanaNotificationPolicyReconciler) resetInstance(ctx context.Context,
 	if _, err := cl.Provisioning.ResetPolicyTree(); err != nil { //nolint:errcheck
 		return fmt.Errorf("resetting policy tree")
 	}
+	delete(instance.Annotations, annotationAppliedNotificationPolicy)
+	if err := r.Client.Update(ctx, instance); err != nil {
+		return fmt.Errorf("removing applied policy from instance CR: %w", err)
+	}
+
 	return nil
 }
 
@@ -174,6 +191,12 @@ func (r *GrafanaNotificationPolicyReconciler) finalize(ctx context.Context, noti
 	}
 	for _, i := range instances.Items {
 		instance := i
+		appliedPolicy := i.Annotations[annotationAppliedNotificationPolicy]
+		if appliedPolicy != "" && appliedPolicy != notificationPolicy.NamespacedResource() {
+			r.Log.Info("instance already has a different notification policy applied - skipping", "grafana", instance.Name)
+			continue
+		}
+
 		if err := r.resetInstance(ctx, &instance); err != nil {
 			return fmt.Errorf("resetting instance notification policy: %w", err)
 		}

@@ -96,6 +96,7 @@ spec:
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
               route:
+                description: Routes for alerts to match against
                 properties:
                   continue:
                     description: continue

@@ -17,6 +17,8 @@ limitations under the License.
 package v1beta1
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana-openapi-client-go/models"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -39,7 +41,6 @@ type GrafanaNotificationPolicySpec struct {
 }
 
 type Route struct {
-
 	// continue
 	Continue bool `json:"continue,omitempty"`
 
@@ -78,7 +79,6 @@ type Route struct {
 }
 
 type Matcher struct {
-
 	// is equal
 	IsEqual bool `json:"isEqual,omitempty"`
 
@@ -142,6 +142,10 @@ type GrafanaNotificationPolicy struct {
 
 	Spec   GrafanaNotificationPolicySpec   `json:"spec,omitempty"`
 	Status GrafanaNotificationPolicyStatus `json:"status,omitempty"`
+}
+
+func (np *GrafanaNotificationPolicy) NamespacedResource() string {
+	return fmt.Sprintf("%v/%v/%v", np.ObjectMeta.Namespace, np.ObjectMeta.Name, np.ObjectMeta.UID)
 }
 
 //+kubebuilder:object:root=true
