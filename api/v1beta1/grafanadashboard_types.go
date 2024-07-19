@@ -87,11 +87,11 @@ type GrafanaDashboardSpec struct {
 	// +optional
 	FolderTitle string `json:"folder,omitempty"`
 
-	// find parent folder for dashboard
+	// UID of the target folder for this dashboard
 	// +optional
-	FolderUID string `json:"folderUID" validate:"omitempty,uuid4"`
+	FolderUID string `json:"folderUID,omitempty"`
 
-	// find parent folder using GrafanaFolder CR reference
+	// Name of a `GrafanaFolder` resource in the same namespace
 	// +optional
 	FolderRef string `json:"folderRef,omitempty"`
 

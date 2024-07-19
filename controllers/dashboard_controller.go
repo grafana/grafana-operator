@@ -60,7 +60,6 @@ const (
 	initialSyncDelay               = "10s"
 	syncBatchSize                  = 100
 	conditionDashboardSynchronized = "DashboardSynchronized"
-	conditionErrorFetchingInstance = "ErrFetchingInstances"
 )
 
 // GrafanaDashboardReconciler reconciles a GrafanaDashboard object
@@ -195,8 +194,6 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	instances, err := r.GetMatchingDashboardInstances(ctx, cr, r.Client)
 	if err != nil {
-		setNoMatchingInstance(&cr.Status.Conditions, cr.Generation, conditionErrorFetchingInstance, fmt.Sprintf("error occurred during fetching of instances: %s", err.Error()))
-		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
 		controllerLog.Error(err, "could not find matching instances", "name", cr.Name, "namespace", cr.Namespace)
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}

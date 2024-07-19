@@ -1093,14 +1093,14 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         <td><b>folderRef</b></td>
         <td>string</td>
         <td>
-          find parent folder using GrafanaFolder CR reference<br/>
+          Name of a `GrafanaFolder` resource in the same namespace<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>folderUID</b></td>
         <td>string</td>
         <td>
-          find parent folder for dashboard<br/>
+          UID of the target folder for this dashboard<br/>
         </td>
         <td>false</td>
       </tr><tr>
