@@ -45,6 +45,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/fetchers"
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/discovery"
@@ -56,8 +57,9 @@ import (
 )
 
 const (
-	initialSyncDelay = "10s"
-	syncBatchSize    = 100
+	initialSyncDelay               = "10s"
+	syncBatchSize                  = 100
+	conditionDashboardSynchronized = "DashboardSynchronized"
 )
 
 // GrafanaDashboardReconciler reconciles a GrafanaDashboard object
@@ -196,6 +198,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
 
+	removeNoMatchingInstance(&cr.Status.Conditions)
 	controllerLog.Info("found matching Grafana instances for dashboard", "count", len(instances.Items))
 
 	dashboardJson, err := r.fetchDashboardJson(ctx, cr)
@@ -232,6 +235,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	success := true
+	applyErrors := make(map[string]string)
 	for _, grafana := range instances.Items {
 		// check if this is a cross namespace import
 		if grafana.Namespace != cr.Namespace && !cr.IsAllowCrossNamespaceImport() {
@@ -262,8 +266,12 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		err = r.onDashboardCreated(ctx, &grafana, cr, dashboardModel, hash)
 		if err != nil {
 			controllerLog.Error(err, "error reconciling dashboard", "dashboard", cr.Name, "grafana", grafana.Name)
+			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 			success = false
 		}
+
+		condition := buildSynchronizedCondition("Dashboard", conditionDashboardSynchronized, cr.Generation, applyErrors, len(instances.Items))
+		meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
 		if grafana.Spec.Preferences != nil && uid == grafana.Spec.Preferences.HomeDashboardUID {
 			err = r.UpdateHomeDashboard(ctx, grafana, uid, cr)
@@ -370,9 +378,16 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return err
 	}
 
-	folderUID, err := r.GetOrCreateFolder(grafanaClient, cr)
+	folderUID, err := getFolderUID(ctx, r.Client, cr)
 	if err != nil {
-		return kuberr.NewInternalError(err)
+		return err
+	}
+
+	if folderUID == "" {
+		folderUID, err = r.GetOrCreateFolder(grafanaClient, cr)
+		if err != nil {
+			return err
+		}
 	}
 
 	uid := fmt.Sprintf("%s", dashboardModel["uid"])
