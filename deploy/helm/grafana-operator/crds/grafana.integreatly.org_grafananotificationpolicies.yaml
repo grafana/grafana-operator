@@ -166,8 +166,7 @@ spec:
                     type: string
                   routes:
                     description: routes
-                    items: {}
-                    type: array
+                    x-kubernetes-preserve-unknown-fields: true
                 type: object
             required:
             - instanceSelector

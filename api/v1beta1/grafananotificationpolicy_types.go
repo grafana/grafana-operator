@@ -75,6 +75,8 @@ type Route struct {
 	RepeatInterval string `json:"repeat_interval,omitempty"`
 
 	// routes
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// +kubebuilder:validation:Schemaless
 	Routes []*Route `json:"routes,omitempty"`
 }
 
