@@ -1,6 +1,7 @@
 package fetchers
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -28,7 +29,7 @@ func TestFetchDashboardFromUrl(t *testing.T) {
 		Status: v1beta1.GrafanaDashboardStatus{},
 	}
 
-	fetchedDashboard, err := FetchDashboardFromUrl(dashboard, nil)
+	fetchedDashboard, err := FetchDashboardFromUrl(context.Background(), dashboard, k8sClient, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, dashboardJSON, fetchedDashboard, "Fetched dashboard doesn't match the original")
 
