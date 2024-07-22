@@ -1,9 +1,12 @@
 package fetchers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
@@ -12,7 +15,7 @@ import (
 
 const grafanaComDashboardApiUrlRoot = "https://grafana.com/api/dashboards"
 
-func FetchDashboardFromGrafanaCom(dashboard *v1beta1.GrafanaDashboard) ([]byte, error) {
+func FetchDashboardFromGrafanaCom(ctx context.Context, dashboard *v1beta1.GrafanaDashboard, c client.Client) ([]byte, error) {
 	cache := dashboard.GetContentCache()
 	if len(cache) > 0 {
 		return cache, nil
@@ -30,7 +33,7 @@ func FetchDashboardFromGrafanaCom(dashboard *v1beta1.GrafanaDashboard) ([]byte, 
 
 	dashboard.Spec.Url = fmt.Sprintf("%s/%d/revisions/%d/download", grafanaComDashboardApiUrlRoot, source.Id, *source.Revision)
 
-	return FetchDashboardFromUrl(dashboard)
+	return FetchDashboardFromUrl(ctx, dashboard, c)
 }
 
 func getLatestGrafanaComRevision(dashboard *v1beta1.GrafanaDashboard) (int, error) {

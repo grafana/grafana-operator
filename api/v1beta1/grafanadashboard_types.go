@@ -45,6 +45,15 @@ type GrafanaDashboardDatasource struct {
 	DatasourceName string `json:"datasourceName"`
 }
 
+type GrafanaDashboardUrlBasicAuth struct {
+	Username *v1.SecretKeySelector `json:"username,omitempty"`
+	Password *v1.SecretKeySelector `json:"password,omitempty"`
+}
+
+type GrafanaDashboardUrlAuthorization struct {
+	BasicAuth *GrafanaDashboardUrlBasicAuth `json:"basicAuth,omitempty"`
+}
+
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
@@ -63,6 +72,10 @@ type GrafanaDashboardSpec struct {
 	// dashboard url
 	// +optional
 	Url string `json:"url,omitempty"`
+
+	// authorization options for dashboard from url
+	// +optional
+	UrlAuthorization *GrafanaDashboardUrlAuthorization `json:"urlAuthorization,omitempty"`
 
 	// Jsonnet
 	// +optional
