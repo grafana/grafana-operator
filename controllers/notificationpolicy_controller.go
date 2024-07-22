@@ -23,10 +23,13 @@ import (
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/go-logr/logr"
 	"github.com/grafana/grafana-openapi-client-go/client/provisioning"
@@ -159,6 +162,9 @@ func (r *GrafanaNotificationPolicyReconciler) reconcileWithInstance(ctx context.
 	if _, err := cl.Provisioning.PutPolicyTree(params); err != nil { //nolint:errcheck
 		return fmt.Errorf("applying notification policy: %w", err)
 	}
+	if instance.Annotations == nil {
+		instance.Annotations = make(map[string]string)
+	}
 	instance.Annotations[annotationAppliedNotificationPolicy] = notificationPolicy.NamespacedResource()
 	if err := r.Client.Update(ctx, instance); err != nil {
 		return fmt.Errorf("saving applied policy to instance CR: %w", err)
@@ -209,5 +215,24 @@ func (r *GrafanaNotificationPolicyReconciler) finalize(ctx context.Context, noti
 func (r *GrafanaNotificationPolicyReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&grafanav1beta1.GrafanaNotificationPolicy{}).
+		Watches(&grafanav1beta1.GrafanaContactPoint{}, handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
+			// resync all notification policies for now. Can be optimized by comparing instance selectors
+			nps := &grafanav1beta1.GrafanaNotificationPolicyList{}
+			if err := r.List(ctx, nps); err != nil {
+				r.Log.Error(err, "failed to fetch notification policies for watch mapping")
+				return nil
+			}
+			requests := make([]reconcile.Request, len(nps.Items))
+			for i, np := range nps.Items {
+				requests[i] = reconcile.Request{
+					NamespacedName: types.NamespacedName{
+						Name:      np.Name,
+						Namespace: np.Namespace,
+					},
+				}
+			}
+			return requests
+		})).
+		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
 }
