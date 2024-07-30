@@ -2735,17 +2735,17 @@ GrafanaFolderStatus defines the observed state of GrafanaFolder
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#grafanafolderstatusconditionsindex">conditions</a></b></td>
-        <td>[]object</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
         <td><b>NoMatchingInstances</b></td>
         <td>boolean</td>
         <td>
           The folder instanceSelector can't find matching grafana instances<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanafolderstatusconditionsindex">conditions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
