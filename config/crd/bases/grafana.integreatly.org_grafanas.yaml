@@ -8277,6 +8277,11 @@ spec:
                         description: Disable the CA check of the server
                         type: boolean
                     type: object
+                    x-kubernetes-validations:
+                    - message: insecureSkipVerify and certSecretRef cannot be set
+                        at the same time
+                      rule: (has(self.insecureSkipVerify) && !(has(self.certSecretRef)))
+                        || (has(self.certSecretRef) && !(has(self.insecureSkipVerify)))
                   url:
                     description: URL of the external grafana instance you want to
                       manage.

@@ -19196,6 +19196,8 @@ External enables you to configure external grafana instances that is not managed
         <td>object</td>
         <td>
           TLS Configuration used to talk with the external grafana instance.<br/>
+          <br/>
+            <i>Validations</i>:<li>(has(self.insecureSkipVerify) && !(has(self.certSecretRef))) || (has(self.certSecretRef) && !(has(self.insecureSkipVerify))): insecureSkipVerify and certSecretRef cannot be set at the same time</li>
         </td>
         <td>false</td>
       </tr></tbody>
