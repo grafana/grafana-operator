@@ -89,6 +89,17 @@ type External struct {
 	AdminUser *v1.SecretKeySelector `json:"adminUser,omitempty"`
 	// AdminPassword key to talk to the external grafana instance.
 	AdminPassword *v1.SecretKeySelector `json:"adminPassword,omitempty"`
+	// TLS Configuration used to talk with the external grafana instance.
+	TLS *ExternalTLSConfig `json:"tls,omitempty"`
+}
+
+type ExternalTLSConfig struct {
+	// Disable the CA check of the server
+	// +optional
+	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
+	// Use a secret as a reference to give TLS Certificate information
+	// +optional
+	CertSecretRef *v1.SecretReference `json:"certSecretRef,omitempty"`
 }
 
 type JsonnetConfig struct {

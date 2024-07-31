@@ -19191,6 +19191,13 @@ External enables you to configure external grafana instances that is not managed
           The API key to talk to the external grafana instance, you need to define ether apiKey or adminUser/adminPassword.<br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanaspecexternaltls">tls</a></b></td>
+        <td>object</td>
+        <td>
+          TLS Configuration used to talk with the external grafana instance.<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -19336,6 +19343,74 @@ TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://git
         <td>boolean</td>
         <td>
           Specify whether the Secret or its key must be defined<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.external.tls
+<sup><sup>[↩ Parent](#grafanaspecexternal)</sup></sup>
+
+
+
+TLS Configuration used to talk with the external grafana instance.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanaspecexternaltlscertsecretref">certSecretRef</a></b></td>
+        <td>object</td>
+        <td>
+          Use a secret as a reference to give TLS Certificate information<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>insecureSkipVerify</b></td>
+        <td>boolean</td>
+        <td>
+          Disable the CA check of the server<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.external.tls.certSecretRef
+<sup><sup>[↩ Parent](#grafanaspecexternaltls)</sup></sup>
+
+
+
+Use a secret as a reference to give TLS Certificate information
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          name is unique within a namespace to reference a secret resource.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          namespace defines the space within which the secret name must be unique.<br/>
         </td>
         <td>false</td>
       </tr></tbody>

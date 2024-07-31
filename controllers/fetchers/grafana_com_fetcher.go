@@ -42,7 +42,9 @@ func getLatestGrafanaComRevision(dashboard *v1beta1.GrafanaDashboard) (int, erro
 		return -1, err
 	}
 
-	client := client2.NewInstrumentedRoundTripper(fmt.Sprintf("%v/%v", dashboard.Namespace, dashboard.Name), metrics.GrafanaComApiRevisionRequests, true)
+	// insecure to true because we don't know if the target URL is recognized by the default certificate
+	tlsConfig := client2.BuildInsecureTLSConfiguration()
+	client := client2.NewInstrumentedRoundTripper(fmt.Sprintf("%v/%v", dashboard.Namespace, dashboard.Name), metrics.GrafanaComApiRevisionRequests, true, tlsConfig)
 	response, err := client.RoundTrip(request)
 	if err != nil {
 		return -1, err

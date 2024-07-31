@@ -8255,6 +8255,28 @@ spec:
                     - key
                     type: object
                     x-kubernetes-map-type: atomic
+                  tls:
+                    description: TLS Configuration used to talk with the external
+                      grafana instance.
+                    properties:
+                      certSecretRef:
+                        description: Use a secret as a reference to give TLS Certificate
+                          information
+                        properties:
+                          name:
+                            description: name is unique within a namespace to reference
+                              a secret resource.
+                            type: string
+                          namespace:
+                            description: namespace defines the space within which
+                              the secret name must be unique.
+                            type: string
+                        type: object
+                        x-kubernetes-map-type: atomic
+                      insecureSkipVerify:
+                        description: Disable the CA check of the server
+                        type: boolean
+                    type: object
                   url:
                     description: URL of the external grafana instance you want to
                       manage.
