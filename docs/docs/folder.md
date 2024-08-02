@@ -28,6 +28,54 @@ spec:
   title: custom title
 ```
 
+## Subfolder into an already existing Folder
+
+With the arrival of Grafana 10, you can create a complete `Folder` hierarchie in Grafana. To do this, you have two choices:
+
+* Use an existing GrafanaFolder CR as reference with the `parentFolderRef` field:
+
+```yaml
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: folder-with-parent
+spec:
+  title: parent folder
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: subfolder-in-parent
+spec:
+  title: subfolder
+  # GrafanaFolder parent folder reference
+  parentFolderRef: folder-with-parent
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+```
+
+* Select an existing Folder in Grafana using its uid:
+
+```yaml
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: existing-folder-uid
+spec:
+  # parent Folder uid to retrieve in your Grafana
+  parentFolderUID: "3e7b4fe1-ca90-4125-a8ab-06567c1971b5"
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+```
+
+
 ## Folder with custom permissions
 
 When `permissions` value is empty/absent, a folder is created with default permissions. In all other scenarios, a raw JSON is passed to Grafana API, and it's up to Grafana to interpret it.
