@@ -1002,6 +1002,8 @@ GrafanaDashboard is the Schema for the grafanadashboards API
         <td>object</td>
         <td>
           GrafanaDashboardSpec defines the desired state of GrafanaDashboard<br/>
+          <br/>
+            <i>Validations</i>:<li>(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID))) || !(has(self.folderRef) && (has(self.folderUID))): Only one of folderUID or folderRef can be declared at the same time</li><li>(has(self.folder) && !(has(self.folderRef) || has(self.folderUID))) || !(has(self.folder)): folder field cannot be set when folderUID or folderRef is already declared</li>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1087,6 +1089,20 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         <td>string</td>
         <td>
           folder assignment for dashboard<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>folderRef</b></td>
+        <td>string</td>
+        <td>
+          Name of a `GrafanaFolder` resource in the same namespace<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>folderUID</b></td>
+        <td>string</td>
+        <td>
+          UID of the target folder for this dashboard<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1759,6 +1775,13 @@ GrafanaDashboardStatus defines the observed state of GrafanaDashboard
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanadashboardstatusconditionsindex">conditions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>contentCache</b></td>
         <td>string</td>
         <td>
@@ -1804,6 +1827,103 @@ GrafanaDashboardStatus defines the observed state of GrafanaDashboard
         <td>string</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.status.conditions[index]
+<sup><sup>[↩ Parent](#grafanadashboardstatus)</sup></sup>
+
+
+
+Condition contains details for one aspect of the current state of this API Resource.
+---
+This struct is intended for direct use as an array at the field path .status.conditions.  For example,
+
+
+	type FooStatus struct{
+	    // Represents the observations of a foo's current state.
+	    // Known .status.conditions.type are: "Available", "Progressing", and "Degraded"
+	    // +patchMergeKey=type
+	    // +patchStrategy=merge
+	    // +listType=map
+	    // +listMapKey=type
+	    Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
+
+
+	    // other fields
+	}
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>lastTransitionTime</b></td>
+        <td>string</td>
+        <td>
+          lastTransitionTime is the last time the condition transitioned from one status to another.
+This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.<br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>message</b></td>
+        <td>string</td>
+        <td>
+          message is a human readable message indicating details about the transition.
+This may be an empty string.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>reason</b></td>
+        <td>string</td>
+        <td>
+          reason contains a programmatic identifier indicating the reason for the condition's last transition.
+Producers of specific condition types may define expected values and meanings for this field,
+and whether the values are considered a guaranteed API.
+The value should be a CamelCase string.
+This field may not be empty.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>status</b></td>
+        <td>enum</td>
+        <td>
+          status of the condition, one of True, False, Unknown.<br/>
+          <br/>
+            <i>Enum</i>: True, False, Unknown<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          type of condition in CamelCase or in foo.example.com/CamelCase.
+---
+Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be
+useful (see .node.status.conditions), the ability to deconflict is important.
+The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>observedGeneration</b></td>
+        <td>integer</td>
+        <td>
+          observedGeneration represents the .metadata.generation that the condition was set based upon.
+For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+with respect to the current state of the instance.<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+            <i>Minimum</i>: 0<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -2617,17 +2737,17 @@ GrafanaFolderStatus defines the observed state of GrafanaFolder
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#grafanafolderstatusconditionsindex">conditions</a></b></td>
-        <td>[]object</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
         <td><b>NoMatchingInstances</b></td>
         <td>boolean</td>
         <td>
           The folder instanceSelector can't find matching grafana instances<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanafolderstatusconditionsindex">conditions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>

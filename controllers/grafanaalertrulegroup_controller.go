@@ -143,7 +143,9 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 	}
 	condition := buildSynchronizedCondition("Alert Rule Group", conditionAlertGroupSynchronized, group.Generation, applyErrors, len(instances))
 	meta.SetStatusCondition(&group.Status.Conditions, condition)
-
+	if len(applyErrors) > 0 {
+		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
+	}
 	return ctrl.Result{RequeueAfter: group.Spec.ResyncPeriod.Duration}, nil
 }
 
