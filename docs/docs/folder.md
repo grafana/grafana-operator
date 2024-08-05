@@ -60,7 +60,7 @@ spec:
       dashboards: "grafana"
 ```
 
-* Select an existing Folder in Grafana using its uid:
+* Select an existing Folder in Grafana using its UID:
 
 ```yaml
 apiVersion: grafana.integreatly.org/v1beta1
