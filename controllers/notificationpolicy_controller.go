@@ -147,6 +147,9 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 	}
 	condition := buildSynchronizedCondition("Notification Policy", conditionNotificationPolicySynchronized, notificationPolicy.Generation, applyErrors, appliedCount)
 	meta.SetStatusCondition(&notificationPolicy.Status.Conditions, condition)
+	if len(applyErrors) > 0 {
+		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
+	}
 
 	return ctrl.Result{RequeueAfter: notificationPolicy.Spec.ResyncPeriod.Duration}, nil
 }
