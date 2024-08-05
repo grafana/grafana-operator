@@ -308,7 +308,7 @@ spec:
 
 If you want to put the dashboard in a specific folder, you have two choices:
 
-* Select an already deployed GrafanaFolder CR, you can use its reference:
+* Use an `GrafanaFolder` resouce as a reference:
 
 ```yaml
 ---
