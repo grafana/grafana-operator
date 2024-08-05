@@ -259,7 +259,7 @@ To mitigate the scenario, if `uid` is not hardcoded, the operator will insert th
 
 ## Select the folder where the dashboard will be deployed
 
-By default, a dashboard declared will appear in a Folder with the name of the namespace
+By default, a dashboard will appear in a Folder with the name of the namespace
 
 ```yaml
 ---
