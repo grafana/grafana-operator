@@ -366,7 +366,7 @@ spec:
     }
 ```
 
-* Select an already existing folder in Grafana, you can use it uid as a selector:
+* Use a static UID as a folder reference
 
 ```yaml
 ---
