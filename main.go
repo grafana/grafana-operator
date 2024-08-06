@@ -88,7 +88,7 @@ func main() {
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	flag.StringVar(&pprofAddr, "pprof-addr", "", "The address to expose the pprof server. Default is empty string which disables the pprof server.")
+	flag.StringVar(&pprofAddr, "pprof-addr", ":8888", "The address to expose the pprof server. Empty string disables the pprof server.")
 	opts := zap.Options{
 		Development: true,
 	}
