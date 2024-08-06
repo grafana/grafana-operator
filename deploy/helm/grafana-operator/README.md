@@ -74,6 +74,7 @@ It's easier to just manage this configuration outside of the operator.
 | isOpenShift | bool | `false` | Determines if the target cluster is OpenShift. Additional rbac permissions for routes will be added on OpenShift |
 | leaderElect | bool | `false` | If you want to run multiple replicas of the grafana-operator, this is not recommended. |
 | metricsService.metricsPort | int | `9090` | metrics service port |
+| metricsService.pprofPort | int | `8888` | port for the pprof profiling endpoint |
 | metricsService.type | string | `"ClusterIP"` | metrics service type |
 | nameOverride | string | `""` | Overrides the name of the chart. |
 | namespaceOverride | string | `""` | Overrides the namespace name. |
