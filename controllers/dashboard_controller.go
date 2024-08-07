@@ -429,6 +429,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		Dashboard: dashboardModel,
 		FolderUID: folderUID,
 		Overwrite: true,
+		Message: "Reconcilled by Grafana Operator"
 	})
 	if err != nil {
 		return err
