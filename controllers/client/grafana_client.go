@@ -7,12 +7,10 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/grafana/grafana-operator/v5/controllers/metrics"
-	v1 "k8s.io/api/core/v1"
-
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/config"
+	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 	"github.com/grafana/grafana-operator/v5/controllers/model"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -25,32 +23,11 @@ type grafanaAdminCredentials struct {
 
 func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (*grafanaAdminCredentials, error) {
 	credentials := &grafanaAdminCredentials{}
-	getValueFromSecret := func(ref *v1.SecretKeySelector) ([]byte, error) {
-		secret := &v1.Secret{}
-		selector := client.ObjectKey{
-			Name:      ref.Name,
-			Namespace: grafana.Namespace,
-		}
-		err := c.Get(ctx, selector, secret)
-		if err != nil {
-			return nil, err
-		}
-
-		if secret.Data == nil {
-			return nil, fmt.Errorf("empty credential secret: %v/%v", grafana.Namespace, ref.Name)
-		}
-
-		if val, ok := secret.Data[ref.Key]; ok {
-			return val, nil
-		}
-
-		return nil, fmt.Errorf("admin credentials not found: %v/%v", grafana.Namespace, ref.Name)
-	}
 
 	if grafana.IsExternal() {
 		// prefer api key if present
 		if grafana.Spec.External.ApiKey != nil {
-			apikey, err := getValueFromSecret(grafana.Spec.External.ApiKey)
+			apikey, err := GetValueFromSecretKey(ctx, grafana.Spec.External.ApiKey, c, grafana.Namespace)
 			if err != nil {
 				return nil, err
 			}
@@ -59,12 +36,12 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 		}
 
 		// rely on username and password otherwise
-		username, err := getValueFromSecret(grafana.Spec.External.AdminUser)
+		username, err := GetValueFromSecretKey(ctx, grafana.Spec.External.AdminUser, c, grafana.Namespace)
 		if err != nil {
 			return nil, err
 		}
 
-		password, err := getValueFromSecret(grafana.Spec.External.AdminPassword)
+		password, err := GetValueFromSecretKey(ctx, grafana.Spec.External.AdminPassword, c, grafana.Namespace)
 		if err != nil {
 			return nil, err
 		}
@@ -95,7 +72,7 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 
 				if env.ValueFrom != nil {
 					if env.ValueFrom.SecretKeyRef != nil {
-						usernameFromSecret, err := getValueFromSecret(env.ValueFrom.SecretKeyRef)
+						usernameFromSecret, err := GetValueFromSecretKey(ctx, env.ValueFrom.SecretKeyRef, c, grafana.Namespace)
 						if err != nil {
 							return nil, err
 						}
@@ -111,7 +88,7 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 
 				if env.ValueFrom != nil {
 					if env.ValueFrom.SecretKeyRef != nil {
-						passwordFromSecret, err := getValueFromSecret(env.ValueFrom.SecretKeyRef)
+						passwordFromSecret, err := GetValueFromSecretKey(ctx, env.ValueFrom.SecretKeyRef, c, grafana.Namespace)
 						if err != nil {
 							return nil, err
 						}
