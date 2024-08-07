@@ -57,6 +57,7 @@ spec:
           args:
             - --health-probe-bind-address=:8081
             - --metrics-bind-address=0.0.0.0:{{ .Values.metricsService.metricsPort }}
+            - --pprof-addr=0.0.0.0:{{ .Values.metricsService.pprofPort }}
             {{- if .Values.leaderElect }}
             - --leader-elect
             {{- end }}
@@ -66,6 +67,9 @@ spec:
           ports:
             - containerPort: {{ .Values.metricsService.metricsPort }}
               name: metrics
+              protocol: TCP
+            - containerPort: {{ .Values.metricsService.pprofPort }}
+              name: pprof
               protocol: TCP
           livenessProbe:
             httpGet:

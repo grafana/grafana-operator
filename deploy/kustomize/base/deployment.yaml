@@ -28,6 +28,9 @@ spec:
             - containerPort: 9090
               name: metrics
               protocol: TCP
+            - containerPort: 8888
+              name: pprof
+              protocol: TCP
           livenessProbe:
             httpGet:
               path: /healthz

@@ -13,5 +13,9 @@ spec:
       targetPort: metrics
       protocol: TCP
       name: metrics
+    - port: {{ .Values.metricsService.pprofPort }}
+      targetPort: pprof
+      protocol: TCP
+      name: pprof
   selector:
     {{- include "grafana-operator.selectorLabels" . | nindent 4 }}

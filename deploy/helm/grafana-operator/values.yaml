@@ -60,6 +60,8 @@ metricsService:
   type: ClusterIP
   # -- metrics service port
   metricsPort: 9090
+  # -- port for the pprof profiling endpoint
+  pprofPort: 8888
 
 # -- additional labels to add to all resources
 additionalLabels: {}
