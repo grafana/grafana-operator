@@ -89,6 +89,20 @@ type External struct {
 	AdminUser *v1.SecretKeySelector `json:"adminUser,omitempty"`
 	// AdminPassword key to talk to the external grafana instance.
 	AdminPassword *v1.SecretKeySelector `json:"adminPassword,omitempty"`
+	// TLS Configuration used to talk with the external grafana instance.
+	// +optional
+	TLS *ExternalTLSConfig `json:"tls,omitempty"`
+}
+
+// TLS Configuration to an external Grafana endpoint
+// +kubebuilder:validation:XValidation:rule="(has(self.insecureSkipVerify) && !(has(self.certSecretRef))) || (has(self.certSecretRef) && !(has(self.insecureSkipVerify)))", message="insecureSkipVerify and certSecretRef cannot be set at the same time"
+type ExternalTLSConfig struct {
+	// Disable the CA check of the server
+	// +optional
+	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
+	// Use a secret as a reference to give TLS Certificate information
+	// +optional
+	CertSecretRef *v1.SecretReference `json:"certSecretRef,omitempty"`
 }
 
 type JsonnetConfig struct {

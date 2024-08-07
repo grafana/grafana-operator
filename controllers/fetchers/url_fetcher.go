@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/controllers/client"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 
@@ -30,7 +31,8 @@ func FetchDashboardFromUrl(dashboard *v1beta1.GrafanaDashboard) ([]byte, error) 
 		return nil, err
 	}
 
-	client := client2.NewInstrumentedRoundTripper(fmt.Sprintf("%v/%v", dashboard.Namespace, dashboard.Name), metrics.DashboardUrlRequests, true)
+	tlsConfig := client.BuildInsecureTLSConfiguration()
+	client := client2.NewInstrumentedRoundTripper(fmt.Sprintf("%v/%v", dashboard.Namespace, dashboard.Name), metrics.DashboardUrlRequests, true, tlsConfig)
 	response, err := client.RoundTrip(request)
 	if err != nil {
 		return nil, err
