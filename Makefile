@@ -82,7 +82,7 @@ ifeq (,$(shell which yq 2>/dev/null))
 	@{ \
 	set -e ;\
 	mkdir -p $(dir $(YQ)) ;\
-	OSTYPE=$(shell uname | awk '{print tolower($0)}') && ARCH=$(shell go env GOARCH) && \
+	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
 	curl -sSLo $(YQ) https://github.com/mikefarah/yq/releases/download/$(YQ_VERSION)/yq_$${OSTYPE}_$${ARCH} ;\
 	chmod +x $(YQ) ;\
 	}
