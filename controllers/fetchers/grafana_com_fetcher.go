@@ -1,6 +1,7 @@
 package fetchers
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -20,8 +21,10 @@ func FetchDashboardFromGrafanaCom(dashboard *v1beta1.GrafanaDashboard) ([]byte, 
 
 	source := dashboard.Spec.GrafanaCom
 
+	tlsConfig := client2.DefaultTLSConfiguration
+
 	if source.Revision == nil {
-		rev, err := getLatestGrafanaComRevision(dashboard)
+		rev, err := getLatestGrafanaComRevision(dashboard, tlsConfig)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get latest revision for dashboard id %d: %w", source.Id, err)
 		}
@@ -30,10 +33,10 @@ func FetchDashboardFromGrafanaCom(dashboard *v1beta1.GrafanaDashboard) ([]byte, 
 
 	dashboard.Spec.Url = fmt.Sprintf("%s/%d/revisions/%d/download", grafanaComDashboardApiUrlRoot, source.Id, *source.Revision)
 
-	return FetchDashboardFromUrl(dashboard)
+	return FetchDashboardFromUrl(dashboard, tlsConfig)
 }
 
-func getLatestGrafanaComRevision(dashboard *v1beta1.GrafanaDashboard) (int, error) {
+func getLatestGrafanaComRevision(dashboard *v1beta1.GrafanaDashboard, tlsConfig *tls.Config) (int, error) {
 	source := dashboard.Spec.GrafanaCom
 	url := fmt.Sprintf("%s/%d/revisions", grafanaComDashboardApiUrlRoot, source.Id)
 
@@ -42,8 +45,6 @@ func getLatestGrafanaComRevision(dashboard *v1beta1.GrafanaDashboard) (int, erro
 		return -1, err
 	}
 
-	// insecure to true because we don't know if the target URL is recognized by the default certificate
-	tlsConfig := client2.BuildInsecureTLSConfiguration()
 	client := client2.NewInstrumentedRoundTripper(fmt.Sprintf("%v/%v", dashboard.Namespace, dashboard.Name), metrics.GrafanaComApiRevisionRequests, true, tlsConfig)
 	response, err := client.RoundTrip(request)
 	if err != nil {

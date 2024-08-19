@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"crypto/tls"
 	"net/http"
 	"time"
 
@@ -31,8 +30,4 @@ func NewHTTPClient(ctx context.Context, c client.Client, grafana *v1beta1.Grafan
 		Transport: NewInstrumentedRoundTripper(grafana.Name, metrics.GrafanaApiRequests, grafana.IsExternal(), tlsConfig),
 		Timeout:   time.Second * timeout,
 	}, nil
-}
-
-func BuildInsecureTLSConfiguration() *tls.Config {
-	return &tls.Config{MinVersion: tls.VersionTLS12, InsecureSkipVerify: true} // #nosec G402 - Linter disabled because InsecureSkipVerify is the wanted behavior for this usecase
 }

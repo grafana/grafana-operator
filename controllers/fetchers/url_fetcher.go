@@ -1,6 +1,7 @@
 package fetchers
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net/http"
@@ -8,14 +9,13 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	"github.com/grafana/grafana-operator/v5/controllers/client"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func FetchDashboardFromUrl(dashboard *v1beta1.GrafanaDashboard) ([]byte, error) {
+func FetchDashboardFromUrl(dashboard *v1beta1.GrafanaDashboard, tlsConfig *tls.Config) ([]byte, error) {
 	url, err := url.Parse(dashboard.Spec.Url)
 	if err != nil {
 		return nil, err
@@ -31,7 +31,6 @@ func FetchDashboardFromUrl(dashboard *v1beta1.GrafanaDashboard) ([]byte, error) 
 		return nil, err
 	}
 
-	tlsConfig := client.BuildInsecureTLSConfiguration()
 	client := client2.NewInstrumentedRoundTripper(fmt.Sprintf("%v/%v", dashboard.Namespace, dashboard.Name), metrics.DashboardUrlRequests, true, tlsConfig)
 	response, err := client.RoundTrip(request)
 	if err != nil {
