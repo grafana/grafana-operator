@@ -72,7 +72,7 @@ type GrafanaFolderStatus struct {
 	NoMatchingInstances bool `json:"NoMatchingInstances,omitempty"`
 	// Last time the folder was resynced
 	LastResync metav1.Time        `json:"lastResync,omitempty"`
-	Conditions []metav1.Condition `json:"conditions"`
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true

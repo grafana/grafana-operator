@@ -1,0 +1,25 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicy
+metadata:
+  name: grafananotificationpolicy-sample
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  route:
+    receiver: Grafana Cloud OnCall
+    group_by:
+      - grafana_folder
+      - alertname
+    routes:
+      - receiver: grafana-default-email
+        object_matchers:
+          - - foo
+            - =
+            - bar
+        routes:
+          - receiver: Grafana Cloud OnCall
+            object_matchers:
+              - - severity
+                - =
+                - critical

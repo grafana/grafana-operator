@@ -21,6 +21,8 @@ Resource Types:
 
 - [GrafanaFolder](#grafanafolder)
 
+- [GrafanaNotificationPolicy](#grafananotificationpolicy)
+
 - [Grafana](#grafana)
 
 
@@ -2735,17 +2737,17 @@ GrafanaFolderStatus defines the observed state of GrafanaFolder
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#grafanafolderstatusconditionsindex">conditions</a></b></td>
-        <td>[]object</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
         <td><b>NoMatchingInstances</b></td>
         <td>boolean</td>
         <td>
           The folder instanceSelector can't find matching grafana instances<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanafolderstatusconditionsindex">conditions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2771,6 +2773,463 @@ Important: Run "make" to regenerate code after modifying this file<br/>
 
 ### GrafanaFolder.status.conditions[index]
 <sup><sup>[↩ Parent](#grafanafolderstatus)</sup></sup>
+
+
+
+Condition contains details for one aspect of the current state of this API Resource.
+---
+This struct is intended for direct use as an array at the field path .status.conditions.  For example,
+
+
+	type FooStatus struct{
+	    // Represents the observations of a foo's current state.
+	    // Known .status.conditions.type are: "Available", "Progressing", and "Degraded"
+	    // +patchMergeKey=type
+	    // +patchStrategy=merge
+	    // +listType=map
+	    // +listMapKey=type
+	    Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
+
+
+	    // other fields
+	}
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>lastTransitionTime</b></td>
+        <td>string</td>
+        <td>
+          lastTransitionTime is the last time the condition transitioned from one status to another.
+This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.<br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>message</b></td>
+        <td>string</td>
+        <td>
+          message is a human readable message indicating details about the transition.
+This may be an empty string.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>reason</b></td>
+        <td>string</td>
+        <td>
+          reason contains a programmatic identifier indicating the reason for the condition's last transition.
+Producers of specific condition types may define expected values and meanings for this field,
+and whether the values are considered a guaranteed API.
+The value should be a CamelCase string.
+This field may not be empty.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>status</b></td>
+        <td>enum</td>
+        <td>
+          status of the condition, one of True, False, Unknown.<br/>
+          <br/>
+            <i>Enum</i>: True, False, Unknown<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          type of condition in CamelCase or in foo.example.com/CamelCase.
+---
+Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be
+useful (see .node.status.conditions), the ability to deconflict is important.
+The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>observedGeneration</b></td>
+        <td>integer</td>
+        <td>
+          observedGeneration represents the .metadata.generation that the condition was set based upon.
+For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+with respect to the current state of the instance.<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+            <i>Minimum</i>: 0<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+## GrafanaNotificationPolicy
+<sup><sup>[↩ Parent](#grafanaintegreatlyorgv1beta1 )</sup></sup>
+
+
+
+
+
+
+GrafanaNotificationPolicy is the Schema for the GrafanaNotificationPolicy API
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+      <td><b>apiVersion</b></td>
+      <td>string</td>
+      <td>grafana.integreatly.org/v1beta1</td>
+      <td>true</td>
+      </tr>
+      <tr>
+      <td><b>kind</b></td>
+      <td>string</td>
+      <td>GrafanaNotificationPolicy</td>
+      <td>true</td>
+      </tr>
+      <tr>
+      <td><b><a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta">metadata</a></b></td>
+      <td>object</td>
+      <td>Refer to the Kubernetes API documentation for the fields of the `metadata` field.</td>
+      <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafananotificationpolicyspec">spec</a></b></td>
+        <td>object</td>
+        <td>
+          GrafanaNotificationPolicySpec defines the desired state of GrafanaNotificationPolicy<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafananotificationpolicystatus">status</a></b></td>
+        <td>object</td>
+        <td>
+          GrafanaNotificationPolicyStatus defines the observed state of GrafanaNotificationPolicy<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaNotificationPolicy.spec
+<sup><sup>[↩ Parent](#grafananotificationpolicy)</sup></sup>
+
+
+
+GrafanaNotificationPolicySpec defines the desired state of GrafanaNotificationPolicy
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafananotificationpolicyspecinstanceselector">instanceSelector</a></b></td>
+        <td>object</td>
+        <td>
+          selects Grafanas for import<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: Value is immutable</li>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafananotificationpolicyspecroute">route</a></b></td>
+        <td>object</td>
+        <td>
+          Routes for alerts to match against<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>resyncPeriod</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: duration<br/>
+            <i>Default</i>: 10m<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaNotificationPolicy.spec.instanceSelector
+<sup><sup>[↩ Parent](#grafananotificationpolicyspec)</sup></sup>
+
+
+
+selects Grafanas for import
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafananotificationpolicyspecinstanceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaNotificationPolicy.spec.instanceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#grafananotificationpolicyspecinstanceselector)</sup></sup>
+
+
+
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          key is the label key that the selector applies to.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaNotificationPolicy.spec.route
+<sup><sup>[↩ Parent](#grafananotificationpolicyspec)</sup></sup>
+
+
+
+Routes for alerts to match against
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>continue</b></td>
+        <td>boolean</td>
+        <td>
+          continue<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>group_by</b></td>
+        <td>[]string</td>
+        <td>
+          group by<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>group_interval</b></td>
+        <td>string</td>
+        <td>
+          group interval<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>group_wait</b></td>
+        <td>string</td>
+        <td>
+          group wait<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>match_re</b></td>
+        <td>map[string]string</td>
+        <td>
+          match re<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafananotificationpolicyspecroutematchersindex">matchers</a></b></td>
+        <td>[]object</td>
+        <td>
+          matchers<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mute_time_intervals</b></td>
+        <td>[]string</td>
+        <td>
+          mute time intervals<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>object_matchers</b></td>
+        <td>[][]string</td>
+        <td>
+          object matchers<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>provenance</b></td>
+        <td>string</td>
+        <td>
+          provenance<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>receiver</b></td>
+        <td>string</td>
+        <td>
+          receiver<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>repeat_interval</b></td>
+        <td>string</td>
+        <td>
+          repeat interval<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>routes</b></td>
+        <td>JSON</td>
+        <td>
+          routes<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaNotificationPolicy.spec.route.matchers[index]
+<sup><sup>[↩ Parent](#grafananotificationpolicyspecroute)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>isRegex</b></td>
+        <td>boolean</td>
+        <td>
+          is regex<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>value</b></td>
+        <td>string</td>
+        <td>
+          value<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>isEqual</b></td>
+        <td>boolean</td>
+        <td>
+          is equal<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          name<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaNotificationPolicy.status
+<sup><sup>[↩ Parent](#grafananotificationpolicy)</sup></sup>
+
+
+
+GrafanaNotificationPolicyStatus defines the observed state of GrafanaNotificationPolicy
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafananotificationpolicystatusconditionsindex">conditions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaNotificationPolicy.status.conditions[index]
+<sup><sup>[↩ Parent](#grafananotificationpolicystatus)</sup></sup>
 
 
 

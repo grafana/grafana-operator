@@ -212,8 +212,6 @@ spec:
                 description: Last time the folder was resynced
                 format: date-time
                 type: string
-            required:
-            - conditions
             type: object
         type: object
     served: true
