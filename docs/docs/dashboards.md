@@ -368,6 +368,7 @@ spec:
 
 * Use a static UID as a folder reference
 
+
 ```yaml
 ---
 apiVersion: grafana.integreatly.org/v1beta1
@@ -414,6 +415,8 @@ spec:
 ```
 
 ## Custom folders
+
+> Note: This method is not recommended. Prefer to use the GrafanaFolder CR and `folderRef` field to declare a folder instead.
 
 In a standard scenario, the operator would use the namespace a CR is deployed to as a folder name in grafana. `folder` field can be used to set a custom folder name:
 
