@@ -7,7 +7,7 @@ linkTitle: "Helm installation"
 
 [grafana-operator](https://github.com/grafana/grafana-operator) for Kubernetes to manage Grafana instances and grafana resources.
 
-![Version: 0.2.0](https://img.shields.io/badge/Version-0.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v5.12.0](https://img.shields.io/badge/AppVersion-v5.12.0-informational?style=flat-square)
+![Version: 0.3.0](https://img.shields.io/badge/Version-0.3.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v5.12.0](https://img.shields.io/badge/AppVersion-v5.12.0-informational?style=flat-square)
 
 ## Installation
 
@@ -83,6 +83,8 @@ It's easier to just manage this configuration outside of the operator.
 | podAnnotations | object | `{}` | pod annotations |
 | podSecurityContext | object | `{}` | pod security context |
 | priorityClassName | string | `""` | pod priority class name |
+| rbac.create | bool | `true` | Specifies whether to create the ClusterRole and ClusterRoleBinding. If "namescapeScope" is true or "watchNamespaces" is set, this will create Role and RoleBinding instead. |
+| rbac.rules | list | `[]` | The rules affected to the ClusterRole. If not set and create is true, the rules are recovered from files/rbac.yaml or files/rbac-openshift.yaml. |
 | resources | object | `{}` | grafana operator container resources |
 | securityContext | object | `{"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true,"runAsNonRoot":true}` | grafana operator container security context |
 | serviceAccount.annotations | object | `{}` | Annotations to add to the service account |
