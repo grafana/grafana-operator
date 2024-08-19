@@ -1,6 +1,7 @@
 package fetchers
 
 import (
+	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"testing"
 
 	"github.com/onsi/ginkgo"
@@ -36,6 +37,15 @@ var _ = ginkgo.BeforeSuite(func() {
 	cfg, err := testEnv.Start()
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
+
+	err = grafanav1beta1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = grafanav1beta1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = grafanav1beta1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
 
 	//+kubebuilder:scaffold:scheme
 
