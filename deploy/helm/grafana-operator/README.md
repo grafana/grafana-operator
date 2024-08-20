@@ -84,7 +84,6 @@ It's easier to just manage this configuration outside of the operator.
 | podSecurityContext | object | `{}` | pod security context |
 | priorityClassName | string | `""` | pod priority class name |
 | rbac.create | bool | `true` | Specifies whether to create the ClusterRole and ClusterRoleBinding. If "namescapeScope" is true or "watchNamespaces" is set, this will create Role and RoleBinding instead. |
-| rbac.rules | list | `[]` | The rules affected to the ClusterRole. If not set and create is true, the rules are recovered from files/rbac.yaml or files/rbac-openshift.yaml. |
 | resources | object | `{}` | grafana operator container resources |
 | securityContext | object | `{"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true,"runAsNonRoot":true}` | grafana operator container security context |
 | serviceAccount.annotations | object | `{}` | Annotations to add to the service account |

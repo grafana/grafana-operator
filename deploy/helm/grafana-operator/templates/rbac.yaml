@@ -24,13 +24,9 @@ metadata:
     {{- include "grafana-operator.labels" $ | nindent 4 }}
     app.kubernetes.io/component: operator
 rules:
-  {{- if gt (len $.Values.rbac.rules) 0 }}
-  {{- toYaml $.Values.rbac.rules | nindent 2 }}
-  {{- else }}
   {{- toYaml $rbac.rules | nindent 2 }}
   {{- if $isOpenShift }}
   {{- toYaml $rbacOpenShift.rules | nindent 2 -}}
-  {{- end }}
   {{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1

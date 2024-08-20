@@ -60,10 +60,6 @@ rbac:
   # If "namescapeScope" is true or "watchNamespaces" is set, this will create Role and RoleBinding instead.
   create: true
 
-  # -- The rules affected to the ClusterRole.
-  # If not set and create is true, the rules are recovered from files/rbac.yaml or files/rbac-openshift.yaml.
-  rules: []
-
 metricsService:
   # -- metrics service type
   type: ClusterIP
