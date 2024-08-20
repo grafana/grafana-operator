@@ -57,7 +57,7 @@ serviceAccount:
 
 rbac:
   # -- Specifies whether to create the ClusterRole and ClusterRoleBinding.
-  # If "namescapeScope" is true or "watchNamespaces" is set, this will create Role and RoleBinding instead.
+  # If "namespaceScope" is true or "watchNamespaces" is set, this will create Role and RoleBinding instead.
   create: true
 
 metricsService:
