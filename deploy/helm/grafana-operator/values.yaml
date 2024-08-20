@@ -55,6 +55,11 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
+rbac:
+  # -- Specifies whether to create the ClusterRole and ClusterRoleBinding.
+  # If "namespaceScope" is true or "watchNamespaces" is set, this will create Role and RoleBinding instead.
+  create: true
+
 metricsService:
   # -- metrics service type
   type: ClusterIP

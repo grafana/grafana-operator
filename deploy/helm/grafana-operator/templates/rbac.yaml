@@ -1,3 +1,4 @@
+{{- if .Values.rbac.create -}}
 {{ $rbac := .Files.Get "files/rbac.yaml" | fromYaml  }}
 {{ $rbacOpenShift := .Files.Get "files/rbac-openshift.yaml" | fromYaml  }}
 {{- $watchNamespaces := coalesce .Values.watchNamespaces .Values.namespaceOverride .Release.Namespace  }}
@@ -46,4 +47,5 @@ roleRef:
   kind: {{ if not $namespaceScoped }}Cluster{{ end }}Role
   name: {{ include "grafana-operator.fullname" $ }}
   apiGroup: rbac.authorization.k8s.io
+{{- end }}
 {{- end }}
