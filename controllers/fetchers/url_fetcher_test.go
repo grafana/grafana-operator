@@ -28,7 +28,7 @@ func TestFetchDashboardFromUrl(t *testing.T) {
 		Status: v1beta1.GrafanaDashboardStatus{},
 	}
 
-	fetchedDashboard, err := FetchDashboardFromUrl(dashboard)
+	fetchedDashboard, err := FetchDashboardFromUrl(dashboard, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, dashboardJSON, fetchedDashboard, "Fetched dashboard doesn't match the original")
 

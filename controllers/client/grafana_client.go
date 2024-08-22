@@ -124,23 +124,6 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 	return credentials, nil
 }
 
-func NewHTTPClient(grafana *v1beta1.Grafana) *http.Client {
-	var timeout time.Duration
-	if grafana.Spec.Client != nil && grafana.Spec.Client.TimeoutSeconds != nil {
-		timeout = time.Duration(*grafana.Spec.Client.TimeoutSeconds)
-		if timeout < 0 {
-			timeout = 0
-		}
-	} else {
-		timeout = 10
-	}
-
-	return &http.Client{
-		Transport: NewInstrumentedRoundTripper(grafana.Name, metrics.GrafanaApiRequests, grafana.IsExternal()),
-		Timeout:   time.Second * timeout,
-	}
-}
-
 func InjectAuthHeaders(ctx context.Context, c client.Client, grafana *v1beta1.Grafana, req *http.Request) error {
 	creds, err := getAdminCredentials(ctx, c, grafana)
 	if err != nil {
@@ -170,12 +153,17 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1
 		return nil, err
 	}
 
+	tlsConfig, err := buildTLSConfiguration(ctx, c, grafana)
+	if err != nil {
+		return nil, err
+	}
+
 	gURL, err := url.Parse(grafana.Status.AdminUrl)
 	if err != nil {
 		return nil, fmt.Errorf("parsing url for client: %w", err)
 	}
 
-	transport := NewInstrumentedRoundTripper(grafana.Name, metrics.GrafanaApiRequests, grafana.IsExternal())
+	transport := NewInstrumentedRoundTripper(grafana.Name, metrics.GrafanaApiRequests, grafana.IsExternal(), tlsConfig)
 
 	client := &http.Client{
 		Transport: transport,
@@ -191,6 +179,7 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1
 		// NumRetries contains the optional number of attempted retries
 		NumRetries: 0,
 		Client:     client,
+		TLSConfig:  tlsConfig,
 	}
 	if credentials.username != "" {
 		cfg.BasicAuth = url.UserPassword(credentials.username, credentials.password)

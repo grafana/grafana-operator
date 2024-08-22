@@ -91,7 +91,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		nextStatus.Stage = grafanav1beta1.OperatorStageComplete
 		nextStatus.StageStatus = grafanav1beta1.OperatorStageResultSuccess
 		nextStatus.AdminUrl = grafana.Spec.External.URL
-		v, err := r.getVersion(grafana)
+		v, err := r.getVersion(ctx, grafana)
 		if err != nil {
 			controllerLog.Error(err, "failed to get version from external instance")
 		}
@@ -137,7 +137,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	if finished {
-		v, err := r.getVersion(grafana)
+		v, err := r.getVersion(ctx, grafana)
 		if err != nil {
 			controllerLog.Error(err, "failed to get version from instance")
 		}
@@ -148,8 +148,11 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	return r.updateStatus(grafana, nextStatus)
 }
 
-func (r *GrafanaReconciler) getVersion(cr *grafanav1beta1.Grafana) (string, error) {
-	cl := client2.NewHTTPClient(cr)
+func (r *GrafanaReconciler) getVersion(ctx context.Context, cr *grafanav1beta1.Grafana) (string, error) {
+	cl, err := client2.NewHTTPClient(ctx, r.Client, cr)
+	if err != nil {
+		return "", fmt.Errorf("setup of the http client: %w", err)
+	}
 	instanceUrl := cr.Status.AdminUrl
 	if instanceUrl == "" && cr.Spec.External != nil {
 		instanceUrl = cr.Spec.External.URL
