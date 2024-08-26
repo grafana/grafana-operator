@@ -128,6 +128,7 @@ type GrafanaAlertRuleGroupStatus struct {
 //+kubebuilder:subresource:status
 
 // GrafanaAlertRuleGroup is the Schema for the grafanaalertrulegroups API
+// +kubebuilder:resource:categories={grafana-operator}
 type GrafanaAlertRuleGroup struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

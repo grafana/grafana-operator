@@ -7,6 +7,8 @@ metadata:
 spec:
   group: grafana.integreatly.org
   names:
+    categories:
+    - grafana-operator
     kind: GrafanaAlertRuleGroup
     listKind: GrafanaAlertRuleGroupList
     plural: grafanaalertrulegroups
@@ -316,6 +318,8 @@ metadata:
 spec:
   group: grafana.integreatly.org
   names:
+    categories:
+    - grafana-operator
     kind: GrafanaContactPoint
     listKind: GrafanaContactPointList
     plural: grafanacontactpoints
@@ -984,6 +988,8 @@ metadata:
 spec:
   group: grafana.integreatly.org
   names:
+    categories:
+    - grafana-operator
     kind: GrafanaDatasource
     listKind: GrafanaDatasourceList
     plural: grafanadatasources
@@ -1237,6 +1243,8 @@ metadata:
 spec:
   group: grafana.integreatly.org
   names:
+    categories:
+    - grafana-operator
     kind: GrafanaFolder
     listKind: GrafanaFolderList
     plural: grafanafolders
@@ -1457,6 +1465,8 @@ metadata:
 spec:
   group: grafana.integreatly.org
   names:
+    categories:
+    - grafana-operator
     kind: GrafanaNotificationPolicy
     listKind: GrafanaNotificationPolicyList
     plural: grafananotificationpolicies

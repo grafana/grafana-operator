@@ -138,6 +138,7 @@ type GrafanaNotificationPolicyStatus struct {
 //+kubebuilder:subresource:status
 
 // GrafanaNotificationPolicy is the Schema for the GrafanaNotificationPolicy API
+// +kubebuilder:resource:categories={grafana-operator}
 type GrafanaNotificationPolicy struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

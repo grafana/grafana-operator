@@ -63,6 +63,7 @@ type GrafanaContactPointStatus struct {
 //+kubebuilder:subresource:status
 
 // GrafanaContactPoint is the Schema for the grafanacontactpoints API
+// +kubebuilder:resource:categories={grafana-operator}
 type GrafanaContactPoint struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
