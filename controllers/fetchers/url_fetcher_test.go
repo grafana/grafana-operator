@@ -98,7 +98,7 @@ func TestFetchDashboardFromUrlBasicAuth(t *testing.T) {
 	err = k8sClient.Create(context.Background(), credentialsSecret)
 	assert.NoError(t, err)
 
-	fetchedDashboard, err := FetchDashboardFromUrl(context.Background(), dashboard, k8sClient)
+	fetchedDashboard, err := FetchDashboardFromUrl(context.Background(), dashboard, k8sClient, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, dashboardJSON, fetchedDashboard, "Fetched dashboard doesn't match the original")
 
