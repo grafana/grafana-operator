@@ -32,5 +32,5 @@ func GetValueFromSecretKey(ctx context.Context, ref *v1.SecretKeySelector, c cli
 		return val, nil
 	}
 
-	return nil, fmt.Errorf("admin credentials not found: %v/%v", namespace, ref.Name)
+	return nil, fmt.Errorf("credentials not found in secret: %v/%v", namespace, ref.Name)
 }
