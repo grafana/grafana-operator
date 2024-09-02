@@ -1,8 +1,9 @@
 package fetchers
 
 import (
-	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"testing"
+
+	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 
 	"github.com/onsi/ginkgo"
 	"k8s.io/client-go/kubernetes/scheme"
