@@ -1,6 +1,7 @@
 package fetchers
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -17,7 +18,7 @@ func TestFetchDashboardFromGrafanaCom(t *testing.T) {
 		Status: v1beta1.GrafanaDashboardStatus{},
 	}
 
-	fetchedDashboard, err := FetchDashboardFromGrafanaCom(dashboard)
+	fetchedDashboard, err := FetchDashboardFromGrafanaCom(context.Background(), dashboard, k8sClient)
 	assert.Nil(t, err)
 	assert.NotNil(t, fetchedDashboard, "Fetched dashboard shouldn't be empty")
 	assert.GreaterOrEqual(t, *dashboard.Spec.GrafanaCom.Revision, 30, "At least 30 revisions exist for dashboard 1860 as of 2023-03-29")

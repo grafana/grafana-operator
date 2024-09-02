@@ -1166,6 +1166,13 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
           dashboard url<br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanadashboardspecurlauthorization">urlAuthorization</a></b></td>
+        <td>object</td>
+        <td>
+          authorization options for dashboard from url<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -1747,6 +1754,165 @@ Jsonnet project build
           <br/>
         </td>
         <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.spec.urlAuthorization
+<sup><sup>[↩ Parent](#grafanadashboardspec)</sup></sup>
+
+
+
+authorization options for dashboard from url
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanadashboardspecurlauthorizationbasicauth">basicAuth</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.spec.urlAuthorization.basicAuth
+<sup><sup>[↩ Parent](#grafanadashboardspecurlauthorization)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanadashboardspecurlauthorizationbasicauthpassword">password</a></b></td>
+        <td>object</td>
+        <td>
+          SecretKeySelector selects a key of a Secret.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanadashboardspecurlauthorizationbasicauthusername">username</a></b></td>
+        <td>object</td>
+        <td>
+          SecretKeySelector selects a key of a Secret.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.spec.urlAuthorization.basicAuth.password
+<sup><sup>[↩ Parent](#grafanadashboardspecurlauthorizationbasicauth)</sup></sup>
+
+
+
+SecretKeySelector selects a key of a Secret.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          The key of the secret to select from.  Must be a valid secret key.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the referent.
+This field is effectively required, but due to backwards compatibility is
+allowed to be empty. Instances of this type with an empty value here are
+almost certainly wrong.
+TODO: Add other useful fields. apiVersion, kind, uid?
+More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>optional</b></td>
+        <td>boolean</td>
+        <td>
+          Specify whether the Secret or its key must be defined<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.spec.urlAuthorization.basicAuth.username
+<sup><sup>[↩ Parent](#grafanadashboardspecurlauthorizationbasicauth)</sup></sup>
+
+
+
+SecretKeySelector selects a key of a Secret.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          The key of the secret to select from.  Must be a valid secret key.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the referent.
+This field is effectively required, but due to backwards compatibility is
+allowed to be empty. Instances of this type with an empty value here are
+almost certainly wrong.
+TODO: Add other useful fields. apiVersion, kind, uid?
+More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>optional</b></td>
+        <td>boolean</td>
+        <td>
+          Specify whether the Secret or its key must be defined<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 

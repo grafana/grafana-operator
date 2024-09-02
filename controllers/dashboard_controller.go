@@ -481,7 +481,7 @@ func (r *GrafanaDashboardReconciler) fetchDashboardJson(ctx context.Context, das
 	case v1beta1.DashboardSourceTypeGzipJson:
 		return v1beta1.Gunzip([]byte(dashboard.Spec.GzipJson))
 	case v1beta1.DashboardSourceTypeUrl:
-		return fetchers.FetchDashboardFromUrl(dashboard, client2.InsecureTLSConfiguration)
+		return fetchers.FetchDashboardFromUrl(ctx, dashboard, r.Client, client2.InsecureTLSConfiguration)
 	case v1beta1.DashboardSourceTypeJsonnet:
 		envs, err := r.getDashboardEnvs(ctx, dashboard)
 		if err != nil {
@@ -495,7 +495,7 @@ func (r *GrafanaDashboardReconciler) fetchDashboardJson(ctx context.Context, das
 		}
 		return fetchers.BuildProjectAndFetchJsonnetFrom(dashboard, envs)
 	case v1beta1.DashboardSourceTypeGrafanaCom:
-		return fetchers.FetchDashboardFromGrafanaCom(dashboard)
+		return fetchers.FetchDashboardFromGrafanaCom(ctx, dashboard, r.Client)
 	case v1beta1.DashboardSourceConfigMap:
 		return fetchers.FetchDashboardFromConfigMap(dashboard, r.Client)
 	default:
