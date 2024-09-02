@@ -1,6 +1,7 @@
 package fetchers
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"io"
@@ -8,14 +9,17 @@ import (
 	"net/url"
 	"time"
 
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
+	grafanaClient "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 
+	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func FetchDashboardFromUrl(dashboard *v1beta1.GrafanaDashboard, tlsConfig *tls.Config) ([]byte, error) {
+func FetchDashboardFromUrl(ctx context.Context, dashboard *v1beta1.GrafanaDashboard, c client.Client, tlsConfig *tls.Config) ([]byte, error) {
 	url, err := url.Parse(dashboard.Spec.Url)
 	if err != nil {
 		return nil, err
@@ -32,6 +36,25 @@ func FetchDashboardFromUrl(dashboard *v1beta1.GrafanaDashboard, tlsConfig *tls.C
 	}
 
 	client := client2.NewInstrumentedRoundTripper(fmt.Sprintf("%v/%v", dashboard.Namespace, dashboard.Name), metrics.DashboardUrlRequests, true, tlsConfig)
+	// basic auth is supported for dashboards from url
+	if dashboard.Spec.UrlAuthorization != nil && dashboard.Spec.UrlAuthorization.BasicAuth != nil {
+		username, err := grafanaClient.GetValueFromSecretKey(ctx, dashboard.Spec.UrlAuthorization.BasicAuth.Username, c, dashboard.Namespace)
+		if err != nil {
+			return nil, err
+		}
+
+		password, err := grafanaClient.GetValueFromSecretKey(ctx, dashboard.Spec.UrlAuthorization.BasicAuth.Password, c, dashboard.Namespace)
+		if err != nil {
+			return nil, err
+		}
+
+		if username != nil && password != nil {
+			request.SetBasicAuth(string(username), string(password))
+		} else {
+			return nil, fmt.Errorf("basic auth username and/or password are missing for dashboard %s/%s", dashboard.Namespace, dashboard.Name)
+		}
+	}
+
 	response, err := client.RoundTrip(request)
 	if err != nil {
 		return nil, err
