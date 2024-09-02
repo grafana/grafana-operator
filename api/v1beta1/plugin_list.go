@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 
 	"github.com/blang/semver"
@@ -30,10 +31,11 @@ func (l PluginList) Hash() string {
 }
 
 func (l PluginList) String() string {
-	plugins := make([]string, 0, len(l))
+	plugins := make(sort.StringSlice, 0, len(l))
 	for _, plugin := range l {
 		plugins = append(plugins, fmt.Sprintf("%s %s", plugin.Name, plugin.Version))
 	}
+	sort.Sort(plugins)
 	return strings.Join(plugins, ",")
 }
 
