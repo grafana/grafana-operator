@@ -8,6 +8,8 @@ metadata:
 spec:
   group: grafana.integreatly.org
   names:
+    categories:
+    - grafana-operator
     kind: GrafanaAlertRuleGroup
     listKind: GrafanaAlertRuleGroupList
     plural: grafanaalertrulegroups

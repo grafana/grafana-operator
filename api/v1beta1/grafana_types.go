@@ -53,6 +53,7 @@ type OperatorReconcileVars struct {
 }
 
 // GrafanaSpec defines the desired state of Grafana
+// +kubebuilder:resource:categories={grafana-operator}
 type GrafanaSpec struct {
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// Config defines how your grafana ini file should looks like.
