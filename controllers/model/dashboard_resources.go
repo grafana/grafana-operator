@@ -15,6 +15,7 @@ func GetPluginsConfigMap(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-plugins", cr.Name),
 			Namespace: cr.Namespace,
+			Labels:    CommonLabels,
 		},
 	}
 	controllerutil.SetControllerReference(cr, config, scheme) //nolint:errcheck

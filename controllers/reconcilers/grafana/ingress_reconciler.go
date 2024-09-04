@@ -52,6 +52,7 @@ func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Gr
 	ingress := model.GetGrafanaIngress(cr, scheme)
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, ingress, func() error {
+		model.SetCommonLabels(ingress)
 		ingress.Spec = getIngressSpec(cr, scheme)
 		return v1beta1.Merge(ingress, cr.Spec.Ingress)
 	})
@@ -85,6 +86,7 @@ func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Graf
 	route := model.GetGrafanaRoute(cr, scheme)
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, route, func() error {
+		model.SetCommonLabels(route)
 		route.Spec = getRouteSpec(cr, scheme)
 		err := v1beta1.Merge(route, cr.Spec.Route)
 		return err
