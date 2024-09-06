@@ -88,6 +88,9 @@ metricsService:
 # -- additional labels to add to all resources
 additionalLabels: {}
 
+# -- pod labels
+podLabels: {}
+
 # -- pod annotations
 podAnnotations: {}
 
