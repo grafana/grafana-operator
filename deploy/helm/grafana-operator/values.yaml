@@ -24,6 +24,13 @@ watchNamespaceSelector: ""
 watchLabelSelectors: ""
 # watchLabelSelectors: "partition in (customerA, customerB),environment!=qa"
 
+# -- Sets the `CLUSTER_LOCAL_DOMAIN` environment variable,
+# it defines how the the Grafana Admin API is addressed when not explicitly using a Kubernetes Ingress or Openshift Route configuration.
+# By default, this is set to `.svc`, which should be fine for most deployments, but depending on network agents and frameworks, you may
+# want to change this to the FQDN domain `.svc.cluster.local`.
+# The default setting accommodates Openshift's default certificate signing behavior.
+clusterLocalDomain: ""
+
 # -- Determines if the target cluster is OpenShift. Additional rbac permissions for routes will be added on OpenShift
 isOpenShift: false
 
@@ -36,7 +43,8 @@ logging:
   time: rfc3339
 
 # -- Additional environment variables
-env: []
+env:
+  []
   # -- grafana image, e.g. docker.io/grafana/grafana:9.1.6, overwrites the default grafana image defined in the operator
   # - name: RELATED_IMAGE_GRAFANA
   #   value: "docker.io/grafana/grafana:9.1.6"

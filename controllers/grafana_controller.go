@@ -46,9 +46,10 @@ import (
 // GrafanaReconciler reconciles a Grafana object
 type GrafanaReconciler struct {
 	client.Client
-	Scheme      *runtime.Scheme
-	Discovery   discovery.DiscoveryInterface
-	IsOpenShift bool
+	Scheme             *runtime.Scheme
+	Discovery          discovery.DiscoveryInterface
+	IsOpenShift        bool
+	ClusterLocalDomain string
 }
 
 // +kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanas,verbs=get;list;watch;create;update;patch;delete
@@ -253,7 +254,7 @@ func (r *GrafanaReconciler) getReconcilerForStage(stage grafanav1beta1.OperatorS
 	case grafanav1beta1.OperatorStageServiceAccount:
 		return grafana.NewServiceAccountReconciler(r.Client)
 	case grafanav1beta1.OperatorStageService:
-		return grafana.NewServiceReconciler(r.Client)
+		return grafana.NewServiceReconciler(r.Client, r.ClusterLocalDomain)
 	case grafanav1beta1.OperatorStageIngress:
 		return grafana.NewIngressReconciler(r.Client, r.IsOpenShift)
 	case grafanav1beta1.OperatorStagePlugins:
