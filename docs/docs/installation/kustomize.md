@@ -77,7 +77,7 @@ kind: Kustomization
 
 # update the version to the release you need
 resources:
-  - https://github.com/grafana/grafana-operator/releases/download/v5.0.10/kustomize-cluster_scoped.yaml
+  - https://github.com/grafana/grafana-operator/releases/download/{{<param version>}}/kustomize-cluster_scoped.yaml
 
 ```
 
