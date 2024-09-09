@@ -36,16 +36,17 @@ This will install the operator in the grafana namespace.
 kubectl create -f https://github.com/grafana/grafana-operator/releases/latest/download/kustomize-cluster_scoped.yaml
 ```
 
-for a namespace scoped installation
+For a namespace scoped installation:
 
 ```shell
 kubectl create -f https://github.com/grafana/grafana-operator/releases/latest/download/kustomize-namespace_scoped.yaml
 ```
 
+Note `kubectl apply -f ...` instead of `kubectl create -f ...` may produce the following error: `invalid: metadata.annotations: Too long: must have at most 262144 bytes`
 ### Patching grafana-operator
 
-When you want to path the grafana operator instead of using `kubectl apply` you need to use `kubectl replace`.
-Else you will get the following error `invalid: metadata.annotations: Too long: must have at most 262144 bytes`.
+When you want to patch the grafana operator instead of using `kubectl apply` you need to use `kubectl replace`.
+Else, you will get the following error: `invalid: metadata.annotations: Too long: must have at most 262144 bytes`
 
 For example
 
