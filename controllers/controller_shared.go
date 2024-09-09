@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/model"
+	corev1 "k8s.io/api/core/v1"
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -229,4 +230,31 @@ func buildSynchronizedCondition(resource string, syncType string, generation int
 		condition.Message = fmt.Sprintf("%s failed to be applied for %d out of %d instances. Errors:%s", resource, len(applyErrors), total, sb.String())
 	}
 	return condition
+}
+
+func getReferencedValue(ctx context.Context, cl client.Client, cr metav1.ObjectMetaAccessor, source v1beta1.ValueFromSource) (string, string, error) {
+	objMeta := cr.GetObjectMeta()
+	if source.SecretKeyRef != nil {
+		s := &corev1.Secret{}
+		err := cl.Get(ctx, client.ObjectKey{Namespace: objMeta.GetNamespace(), Name: source.SecretKeyRef.Name}, s)
+		if err != nil {
+			return "", "", err
+		}
+		if val, ok := s.Data[source.SecretKeyRef.Key]; ok {
+			return string(val), source.SecretKeyRef.Key, nil
+		} else {
+			return "", "", fmt.Errorf("missing key %s in secret %s", source.SecretKeyRef.Key, source.SecretKeyRef.Name)
+		}
+	} else {
+		s := &corev1.ConfigMap{}
+		err := cl.Get(ctx, client.ObjectKey{Namespace: objMeta.GetNamespace(), Name: source.ConfigMapKeyRef.Name}, s)
+		if err != nil {
+			return "", "", err
+		}
+		if val, ok := s.Data[source.ConfigMapKeyRef.Key]; ok {
+			return val, source.ConfigMapKeyRef.Key, nil
+		} else {
+			return "", "", fmt.Errorf("missing key %s in configmap %s", source.ConfigMapKeyRef.Key, source.ConfigMapKeyRef.Name)
+		}
+	}
 }

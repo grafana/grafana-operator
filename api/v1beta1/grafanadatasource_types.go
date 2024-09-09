@@ -23,8 +23,6 @@ import (
 	"fmt"
 	"time"
 
-	v1 "k8s.io/api/core/v1"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -72,7 +70,7 @@ type GrafanaDatasourceSpec struct {
 
 	// environments variables from secrets or config maps
 	// +optional
-	ValuesFrom []GrafanaDatasourceValueFrom `json:"valuesFrom,omitempty"`
+	ValuesFrom []ValueFrom `json:"valuesFrom,omitempty"`
 
 	// how often the datasource is refreshed, defaults to 5m if not set
 	// +optional
@@ -85,20 +83,6 @@ type GrafanaDatasourceSpec struct {
 	// allow to import this resources from an operator in a different namespace
 	// +optional
 	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
-}
-
-type GrafanaDatasourceValueFrom struct {
-	TargetPath string                           `json:"targetPath"`
-	ValueFrom  GrafanaDatasourceValueFromSource `json:"valueFrom"`
-}
-
-type GrafanaDatasourceValueFromSource struct {
-	// Selects a key of a ConfigMap.
-	// +optional
-	ConfigMapKeyRef *v1.ConfigMapKeySelector `json:"configMapKeyRef,omitempty"`
-	// Selects a key of a Secret.
-	// +optional
-	SecretKeyRef *v1.SecretKeySelector `json:"secretKeyRef,omitempty"`
 }
 
 // GrafanaDatasourceStatus defines the observed state of GrafanaDatasource

@@ -25,8 +25,6 @@ import (
 	"strings"
 	"time"
 
-	v1 "k8s.io/api/core/v1"
-
 	simplejson "github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-openapi-client-go/client/datasources"
 	"github.com/grafana/grafana-openapi-client-go/models"
@@ -453,7 +451,7 @@ func (r *GrafanaDatasourceReconciler) getDatasourceContent(ctx context.Context, 
 
 	for _, ref := range cr.Spec.ValuesFrom {
 		ref := ref
-		val, key, err := r.getReferencedValue(ctx, cr, &ref.ValueFrom)
+		val, key, err := getReferencedValue(ctx, r.Client, cr, ref.ValueFrom)
 		if err != nil {
 			return nil, "", err
 		}
@@ -484,30 +482,4 @@ func (r *GrafanaDatasourceReconciler) getDatasourceContent(ctx context.Context, 
 	hash.Write(newBytes)
 
 	return &res, fmt.Sprintf("%x", hash.Sum(nil)), nil
-}
-
-func (r *GrafanaDatasourceReconciler) getReferencedValue(ctx context.Context, cr *v1beta1.GrafanaDatasource, source *v1beta1.GrafanaDatasourceValueFromSource) (string, string, error) {
-	if source.SecretKeyRef != nil {
-		s := &v1.Secret{}
-		err := r.Client.Get(ctx, client.ObjectKey{Namespace: cr.Namespace, Name: source.SecretKeyRef.Name}, s)
-		if err != nil {
-			return "", "", err
-		}
-		if val, ok := s.Data[source.SecretKeyRef.Key]; ok {
-			return string(val), source.SecretKeyRef.Key, nil
-		} else {
-			return "", "", fmt.Errorf("missing key %s in secret %s", source.SecretKeyRef.Key, source.SecretKeyRef.Name)
-		}
-	} else {
-		s := &v1.ConfigMap{}
-		err := r.Client.Get(ctx, client.ObjectKey{Namespace: cr.Namespace, Name: source.ConfigMapKeyRef.Name}, s)
-		if err != nil {
-			return "", "", err
-		}
-		if val, ok := s.Data[source.ConfigMapKeyRef.Key]; ok {
-			return val, source.ConfigMapKeyRef.Key, nil
-		} else {
-			return "", "", fmt.Errorf("missing key %s in configmap %s", source.ConfigMapKeyRef.Key, source.ConfigMapKeyRef.Name)
-		}
-	}
 }
