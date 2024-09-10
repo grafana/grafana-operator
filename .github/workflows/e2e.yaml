@@ -75,7 +75,7 @@ jobs:
           version: v0.13.0
 
       - name: Install chainsaw
-        uses: kyverno/action-install-chainsaw@v0.2.8
+        uses: kyverno/action-install-chainsaw@v0.2.9
 
       - name: Create KinD cluster ${{ matrix.version }}
         id: kind
