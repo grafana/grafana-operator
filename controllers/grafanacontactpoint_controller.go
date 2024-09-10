@@ -198,6 +198,7 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 		updatedCP.Name = contactPoint.Spec.Name
 		updatedCP.Type = &contactPoint.Spec.Type
 		updatedCP.Settings = contactPoint.Spec.Settings
+		updatedCP.DisableResolveMessage = contactPoint.Spec.DisableResolveMessage
 		_, err := cl.Provisioning.PutContactpoint(provisioning.NewPutContactpointParams().WithUID(applied.UID).WithBody(&updatedCP)) //nolint:errcheck
 		if err != nil {
 			return fmt.Errorf("updating contact point: %w", err)
