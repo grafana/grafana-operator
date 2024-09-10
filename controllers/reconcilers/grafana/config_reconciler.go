@@ -31,6 +31,7 @@ func (r *ConfigReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, s
 
 	configMap := model.GetGrafanaConfigMap(cr, scheme)
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, configMap, func() error {
+		model.SetCommonLabels(configMap)
 		if configMap.Data == nil {
 			configMap.Data = make(map[string]string)
 		}

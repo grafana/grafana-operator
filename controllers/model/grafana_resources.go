@@ -13,11 +13,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
+var CommonLabels = map[string]string{
+	"app.kubernetes.io/managed-by": "grafana-operator",
+}
+
 func GetGrafanaConfigMap(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1.ConfigMap {
 	config := &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-ini", cr.Name),
 			Namespace: cr.Namespace,
+			Labels:    CommonLabels,
 		},
 	}
 	controllerutil.SetControllerReference(cr, config, scheme) //nolint:errcheck
@@ -29,6 +34,7 @@ func GetGrafanaAdminSecret(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-admin-credentials", cr.Name),
 			Namespace: cr.Namespace,
+			Labels:    CommonLabels,
 		},
 	}
 
@@ -43,6 +49,7 @@ func GetGrafanaDataPVC(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1.P
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-pvc", cr.Name),
 			Namespace: cr.Namespace,
+			Labels:    CommonLabels,
 		},
 	}
 	// using OwnerReference specifically here to allow admins to change storage variables without the operator complaining
@@ -55,6 +62,7 @@ func GetGrafanaServiceAccount(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-sa", cr.Name),
 			Namespace: cr.Namespace,
+			Labels:    CommonLabels,
 		},
 	}
 	controllerutil.SetControllerReference(cr, sa, scheme) //nolint:errcheck
@@ -66,6 +74,7 @@ func GetGrafanaService(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1.S
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-service", cr.Name),
 			Namespace: cr.Namespace,
+			Labels:    CommonLabels,
 		},
 	}
 	controllerutil.SetControllerReference(cr, service, scheme) //nolint:errcheck
@@ -77,6 +86,7 @@ func GetGrafanaIngress(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v12.
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-ingress", cr.Name),
 			Namespace: cr.Namespace,
+			Labels:    CommonLabels,
 		},
 	}
 	controllerutil.SetControllerReference(cr, ingress, scheme) //nolint:errcheck
@@ -88,6 +98,7 @@ func GetGrafanaRoute(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *routev
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-route", cr.Name),
 			Namespace: cr.Namespace,
+			Labels:    CommonLabels,
 		},
 	}
 	controllerutil.SetControllerReference(cr, route, scheme) //nolint:errcheck
@@ -99,6 +110,7 @@ func GetGrafanaDeployment(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-deployment", cr.Name),
 			Namespace: cr.Namespace,
+			Labels:    CommonLabels,
 		},
 	}
 	if scheme != nil {
