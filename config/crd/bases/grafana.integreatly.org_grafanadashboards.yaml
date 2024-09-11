@@ -8,6 +8,8 @@ metadata:
 spec:
   group: grafana.integreatly.org
   names:
+    categories:
+    - grafana-operator
     kind: GrafanaDashboard
     listKind: GrafanaDashboardList
     plural: grafanadashboards
