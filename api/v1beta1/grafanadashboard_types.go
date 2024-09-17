@@ -60,7 +60,6 @@ type GrafanaDashboardUrlAuthorization struct {
 // GrafanaDashboardSpec defines the desired state of GrafanaDashboard
 // +kubebuilder:validation:XValidation:rule="(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID))) || !(has(self.folderRef) && (has(self.folderUID)))", message="Only one of folderUID or folderRef can be declared at the same time"
 // +kubebuilder:validation:XValidation:rule="(has(self.folder) && !(has(self.folderRef) || has(self.folderUID))) || !(has(self.folder))", message="folder field cannot be set when folderUID or folderRef is already declared"
-// +kubebuilder:resource:categories={grafana-operator}
 type GrafanaDashboardSpec struct {
 	// dashboard json
 	// +optional
@@ -195,6 +194,7 @@ type GrafanaDashboardStatus struct {
 // +kubebuilder:printcolumn:name="No matching instances",type="boolean",JSONPath=".status.NoMatchingInstances",description=""
 // +kubebuilder:printcolumn:name="Last resync",type="date",format="date-time",JSONPath=".status.lastResync",description=""
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""
+// +kubebuilder:resource:categories={grafana-operator}
 type GrafanaDashboard struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

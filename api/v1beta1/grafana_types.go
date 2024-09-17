@@ -53,7 +53,6 @@ type OperatorReconcileVars struct {
 }
 
 // GrafanaSpec defines the desired state of Grafana
-// +kubebuilder:resource:categories={grafana-operator}
 type GrafanaSpec struct {
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// Config defines how your grafana ini file should looks like.
@@ -144,6 +143,7 @@ type GrafanaStatus struct {
 // +kubebuilder:printcolumn:name="Stage",type="string",JSONPath=".status.stage",description=""
 // +kubebuilder:printcolumn:name="Stage status",type="string",JSONPath=".status.stageStatus",description=""
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""
+// +kubebuilder:resource:categories={grafana-operator}
 type Grafana struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
