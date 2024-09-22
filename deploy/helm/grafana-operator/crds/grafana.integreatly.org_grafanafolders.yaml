@@ -121,6 +121,11 @@ spec:
                 type: string
               title:
                 type: string
+              uid:
+                type: string
+                x-kubernetes-validations:
+                - message: Value is immutable
+                  rule: self == oldSelf
             required:
             - instanceSelector
             type: object
@@ -129,6 +134,9 @@ spec:
               rule: (has(self.parentFolderUID) && !(has(self.parentFolderRef))) ||
                 (has(self.parentFolderRef) && !(has(self.parentFolderUID))) || !(has(self.parentFolderRef)
                 && (has(self.parentFolderUID)))
+            - message: uid is immutable
+              rule: (!has(oldSelf.uid) && !(has(self.uid)) || has(oldSelf.uid) &&
+                has(self.uid))
           status:
             description: GrafanaFolderStatus defines the observed state of GrafanaFolder
             properties:

@@ -30,7 +30,12 @@ import (
 
 // GrafanaFolderSpec defines the desired state of GrafanaFolder
 // +kubebuilder:validation:XValidation:rule="(has(self.parentFolderUID) && !(has(self.parentFolderRef))) || (has(self.parentFolderRef) && !(has(self.parentFolderUID))) || !(has(self.parentFolderRef) && (has(self.parentFolderUID)))", message="Only one of parentFolderUID or parentFolderRef can be set"
+// +kubebuilder:validation:XValidation:rule="(!has(oldSelf.uid) && !(has(self.uid)) || has(oldSelf.uid) && has(self.uid))", message="uid is immutable"
 type GrafanaFolderSpec struct {
+	// +optional
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
+	CustomUID string `json:"uid,omitempty"`
+
 	// +optional
 	Title string `json:"title,omitempty"`
 
@@ -113,6 +118,14 @@ func (in *GrafanaFolder) FolderRef() string {
 // FolderUID implements FolderReferencer.
 func (in *GrafanaFolder) FolderUID() string {
 	return in.Spec.ParentFolderUID
+}
+
+// Wrapper around CustomUID or default metadata.uid
+func (in *GrafanaFolder) CustomUIDOrUID() string {
+	if in.Spec.CustomUID != "" {
+		return in.Spec.CustomUID
+	}
+	return string(in.ObjectMeta.UID)
 }
 
 var _ operatorapi.FolderReferencer = (*GrafanaFolder)(nil)
