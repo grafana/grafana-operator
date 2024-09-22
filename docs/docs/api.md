@@ -2807,7 +2807,7 @@ GrafanaFolder is the Schema for the grafanafolders API
         <td>
           GrafanaFolderSpec defines the desired state of GrafanaFolder<br/>
           <br/>
-            <i>Validations</i>:<li>(has(self.parentFolderUID) && !(has(self.parentFolderRef))) || (has(self.parentFolderRef) && !(has(self.parentFolderUID))) || !(has(self.parentFolderRef) && (has(self.parentFolderUID))): Only one of parentFolderUID or parentFolderRef can be set</li>
+            <i>Validations</i>:<li>(has(self.parentFolderUID) && !(has(self.parentFolderRef))) || (has(self.parentFolderRef) && !(has(self.parentFolderUID))) || !(has(self.parentFolderRef) && (has(self.parentFolderUID))): Only one of parentFolderUID or parentFolderRef can be set</li><li>((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid))): spec.uid is immutable</li>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2841,7 +2841,7 @@ GrafanaFolderSpec defines the desired state of GrafanaFolder
         <td><b><a href="#grafanafolderspecinstanceselector">instanceSelector</a></b></td>
         <td>object</td>
         <td>
-          selects Grafanas for import<br/>
+          Selects Grafanas for import<br/>
           <br/>
             <i>Validations</i>:<li>self == oldSelf: Value is immutable</li>
         </td>
@@ -2850,7 +2850,7 @@ GrafanaFolderSpec defines the desired state of GrafanaFolder
         <td><b>allowCrossNamespaceImport</b></td>
         <td>boolean</td>
         <td>
-          allow to import this resources from an operator in a different namespace<br/>
+          Enable matching Grafana instances outside the current namespace<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2871,14 +2871,14 @@ GrafanaFolderSpec defines the desired state of GrafanaFolder
         <td><b>permissions</b></td>
         <td>string</td>
         <td>
-          raw json with folder permissions<br/>
+          Raw json with folder permissions, potentially exported from Grafana<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>resyncPeriod</b></td>
         <td>string</td>
         <td>
-          how often the folder is synced, defaults to 5m if not set<br/>
+          How often the folder is synced, defaults to 5m if not set<br/>
           <br/>
             <i>Format</i>: duration<br/>
             <i>Default</i>: 5m<br/>
@@ -2888,7 +2888,16 @@ GrafanaFolderSpec defines the desired state of GrafanaFolder
         <td><b>title</b></td>
         <td>string</td>
         <td>
+          Display name of the folder in Grafana<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>uid</b></td>
+        <td>string</td>
+        <td>
+          Manually specify the UID the Folder is created with<br/>
           <br/>
+            <i>Validations</i>:<li>self == oldSelf: spec.uid is immutable</li>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -2900,7 +2909,7 @@ GrafanaFolderSpec defines the desired state of GrafanaFolder
 
 
 
-selects Grafanas for import
+Selects Grafanas for import
 
 <table>
     <thead>

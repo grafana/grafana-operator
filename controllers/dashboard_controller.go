@@ -699,15 +699,16 @@ func (r *GrafanaDashboardReconciler) GetFolderUID(
 	limit := int64(1000)
 	for {
 		params := folders.NewGetFoldersParams().WithPage(&page).WithLimit(&limit)
-		resp, err := client.Folders.GetFolders(params)
+
+		foldersResp, err := client.Folders.GetFolders(params)
 		if err != nil {
 			return false, "", err
 		}
-		folders := resp.GetPayload()
+		folders := foldersResp.GetPayload()
 
-		for _, folder := range folders {
-			if strings.EqualFold(folder.Title, title) {
-				return true, folder.UID, nil
+		for _, remoteFolder := range folders {
+			if strings.EqualFold(remoteFolder.Title, title) {
+				return true, remoteFolder.UID, nil
 			}
 		}
 		if len(folders) < int(limit) {
