@@ -429,12 +429,14 @@ func (r *GrafanaFolderReconciler) Exists(client *genapi.GrafanaHTTPAPI, cr *graf
 		if err != nil {
 			return false, "", "", err
 		}
-		for _, folder := range foldersResp.Payload {
-			if strings.EqualFold(folder.Title, title) {
-				return true, folder.UID, folder.ParentUID, nil
+		folders := foldersResp.GetPayload()
+
+		for _, remoteFolder := range folders {
+			if strings.EqualFold(remoteFolder.Title, title) {
+				return true, remoteFolder.UID, remoteFolder.ParentUID, nil
 			}
 		}
-		if len(foldersResp.Payload) < int(limit) {
+		if len(folders) < int(limit) {
 			return false, "", "", nil
 		}
 		page++
