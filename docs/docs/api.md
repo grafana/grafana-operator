@@ -2716,7 +2716,7 @@ GrafanaFolder is the Schema for the grafanafolders API
         <td>
           GrafanaFolderSpec defines the desired state of GrafanaFolder<br/>
           <br/>
-            <i>Validations</i>:<li>(has(self.parentFolderUID) && !(has(self.parentFolderRef))) || (has(self.parentFolderRef) && !(has(self.parentFolderUID))) || !(has(self.parentFolderRef) && (has(self.parentFolderUID))): Only one of parentFolderUID or parentFolderRef can be set</li>
+            <i>Validations</i>:<li>(has(self.parentFolderUID) && !(has(self.parentFolderRef))) || (has(self.parentFolderRef) && !(has(self.parentFolderUID))) || !(has(self.parentFolderRef) && (has(self.parentFolderUID))): Only one of parentFolderUID or parentFolderRef can be set</li><li>(!has(oldSelf.uid) && !(has(self.uid)) || has(oldSelf.uid) && has(self.uid)): uid is immutable</li>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2798,6 +2798,15 @@ GrafanaFolderSpec defines the desired state of GrafanaFolder
         <td>string</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>uid</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: Value is immutable</li>
         </td>
         <td>false</td>
       </tr></tbody>
