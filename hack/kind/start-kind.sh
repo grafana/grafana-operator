@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+KIND=${KIND:-kind}
 KIND_CLUSTER_NAME=${KIND_CLUSTER_NAME:-kind-grafana}
 KUBECONFIG=${KUBECONFIG:-~/.kube/kind-grafana-operator}
 CRD_NS=${CRD_NS:-grafana-crds}
@@ -6,19 +7,19 @@ CRD_NS=${CRD_NS:-grafana-crds}
 set -eu
 
 # Find the script directory
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
 # Make sure there is no current cluster
 echo "Delete existing cluster"
-kind --kubeconfig="${KUBECONFIG}" delete cluster --name "${KIND_CLUSTER_NAME}" \
-  || echo "There was no existing cluster"
+${KIND} --kubeconfig="${KUBECONFIG}" delete cluster --name "${KIND_CLUSTER_NAME}" ||
+  echo "There was no existing cluster"
 
 # Start kind cluster
 echo ""
 echo "###############################"
 echo "# 1. Start kind cluster       #"
 echo "###############################"
-kind --kubeconfig "${KUBECONFIG}" create cluster \
+${KIND} --kubeconfig "${KUBECONFIG}" create cluster \
   --name "${KIND_CLUSTER_NAME}" \
   --wait 120s \
   --config="${SCRIPT_DIR}/resources/cluster.yaml"
@@ -34,10 +35,10 @@ echo "###############################"
 kubectl --kubeconfig="${KUBECONFIG}" \
   apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
 kubectl --kubeconfig="${KUBECONFIG}" \
-        -n ingress-nginx \
-        wait deploy ingress-nginx-controller \
-        --for condition=Available \
-        --timeout=90s
+  -n ingress-nginx \
+  wait deploy ingress-nginx-controller \
+  --for condition=Available \
+  --timeout=90s
 
 # Will install the CRD:s
 echo ""
