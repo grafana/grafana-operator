@@ -89,14 +89,14 @@ type External struct {
 	AdminUser *v1.SecretKeySelector `json:"adminUser,omitempty"`
 	// AdminPassword key to talk to the external grafana instance.
 	AdminPassword *v1.SecretKeySelector `json:"adminPassword,omitempty"`
-	// TLS Configuration used to talk with the external grafana instance.
+	// DEPRECATED, use top level `tls` instead.
 	// +optional
-	TLS *ExternalTLSConfig `json:"tls,omitempty"`
+	TLS *TLSConfig `json:"tls,omitempty"`
 }
 
-// TLS Configuration to an external Grafana endpoint
+// TLSConfig specifies options to use when communicating with the Grafana endpoint
 // +kubebuilder:validation:XValidation:rule="(has(self.insecureSkipVerify) && !(has(self.certSecretRef))) || (has(self.certSecretRef) && !(has(self.insecureSkipVerify)))", message="insecureSkipVerify and certSecretRef cannot be set at the same time"
-type ExternalTLSConfig struct {
+type TLSConfig struct {
 	// Disable the CA check of the server
 	// +optional
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
@@ -116,6 +116,9 @@ type GrafanaClient struct {
 	// +nullable
 	// If the operator should send it's request through the grafana instances ingress object instead of through the service.
 	PreferIngress *bool `json:"preferIngress,omitempty"`
+	// TLS Configuration used to talk with the grafana instance.
+	// +optional
+	TLS *TLSConfig `json:"tls,omitempty"`
 }
 
 // GrafanaPreferences holds Grafana preferences API settings
