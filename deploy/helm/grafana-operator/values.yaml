@@ -18,6 +18,15 @@ watchNamespaceSelector: ""
 # -- Determines if the target cluster is OpenShift. Additional rbac permissions for routes will be added on OpenShift
 isOpenShift: false
 
+# -- Log options for the Operator
+logging:
+  # -- Log encoding (one of 'json' or 'console')
+  encoder: console
+  # -- Configure the verbosity of logging. Can be one of 'debug', 'info', 'error'
+  level: info
+  # -- Time encoding (one of 'epoch', 'millis', 'nano', 'iso8601', 'rfc3339' or 'rfc3339nano').
+  time: epoch
+
 # -- Additional environment variables
 env: []
   # -- grafana image, e.g. docker.io/grafana/grafana:9.1.6, overwrites the default grafana image defined in the operator
