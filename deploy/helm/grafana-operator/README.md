@@ -88,6 +88,7 @@ It's easier to just manage this configuration outside of the operator.
 | priorityClassName | string | `""` | pod priority class name |
 | rbac.create | bool | `true` | Specifies whether to create the ClusterRole and ClusterRoleBinding. If "namespaceScope" is true or "watchNamespaces" is set, this will create Role and RoleBinding instead. |
 | resources | object | `{}` | grafana operator container resources |
+| securityContext.allowPrivilegeEscalation | bool | `false` | Disables privilege escalation inside the container |
 | securityContext.capabilities | object | `{"drop":["ALL"]}` | grafana operator does not require default capabilities |
 | securityContext.readOnlyRootFilesystem | bool | `true` | Allow writing to filesystem |
 | securityContext.runAsNonRoot | bool | `true` | Force user to not be root |
