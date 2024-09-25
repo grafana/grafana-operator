@@ -6,19 +6,19 @@ namespaceScope: false
 leaderElect: false
 
 # -- Sets the WATCH_NAMESPACE environment variable,
-# it defines which namespaces the operator should be listening for.
-# By default it's all namespaces, if you only want to listen for the same namespace as the operator is deployed to look at namespaceScope.
+# Defines namespaces the operator should be listening for.
+# By default it's all namespaces, if you want to limit the Operator to its own namespace, instead set namespaceScope: true.
 watchNamespaces: ""
 
 # -- Sets the WATCH_NAMESPACE_SELECTOR environment variable,
-# it defines which namespaces the operator should be listening for based on label and key value pair added on namespace kind.
+# Defines namespaces the operator should be listening for based on label and key value pair added on namespace kind.
 # By default it's all namespaces.
 watchNamespaceSelector: ""
 
 # -- Determines if the target cluster is OpenShift. Additional rbac permissions for routes will be added on OpenShift
 isOpenShift: false
 
-# -- Log options for the Operator
+# Log options for the Operator
 logging:
   # -- Log encoding (one of 'json' or 'console')
   encoder: console
@@ -86,12 +86,15 @@ podAnnotations: {}
 # -- pod security context
 podSecurityContext: {}
 
-# -- grafana operator container security context
+# https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 securityContext:
+  # -- grafana operator does not require default capabilities
   capabilities:
     drop:
       - ALL
+  # -- Allow writing to filesystem
   readOnlyRootFilesystem: true
+  # -- Force user to not be root
   runAsNonRoot: true
 
 # -- grafana operator container resources
@@ -109,9 +112,9 @@ tolerations: []
 # -- pod affinity
 affinity: {}
 
-# -- Enable this to use with Prometheus Operator
 serviceMonitor:
-  # -- When set true then use a ServiceMonitor to configure scraping
+  # -- Used with Prometheus Operator
+  # When true Create a ServiceMonitor to enable metric scraping
   enabled: false
   # -- Set of labels to transfer from the Kubernetes Service onto the target
   additionalLabels: {}
