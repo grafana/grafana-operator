@@ -92,6 +92,8 @@ securityContext:
   capabilities:
     drop:
       - ALL
+  # -- Disables privilege escalation inside the container
+  allowPrivilegeEscalation: false
   # -- Allow writing to filesystem
   readOnlyRootFilesystem: true
   # -- Force user to not be root
