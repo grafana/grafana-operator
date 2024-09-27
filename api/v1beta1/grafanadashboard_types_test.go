@@ -103,62 +103,158 @@ func Test_Gzip(t *testing.T) {
 	assert.Equal(t, dashboardJSON, decompressed, "Decompressed dashboard should match the original")
 }
 
+func TestGrafanaDashboardUIDPriority(t *testing.T) {
+	crUID := "crUID"
+	dashUID := "dashUID"
+	customUID := "customUID"
+	tests := []struct {
+		name         string
+		crUID        string
+		dashboardUID string
+		customUID    string
+		want         string
+	}{
+		{
+			name:         "Fallback to crUID when customUID is empty",
+			crUID:        crUID,
+			dashboardUID: "",
+			customUID:    "",
+			want:         crUID,
+		},
+		{
+			name:         "crUID overwrites dashboardUID",
+			crUID:        crUID,
+			dashboardUID: dashUID,
+			customUID:    "",
+			want:         crUID,
+		},
+		{
+			name:         "customUID has priority over crUID",
+			crUID:        crUID,
+			dashboardUID: "",
+			customUID:    customUID,
+			want:         customUID,
+		},
+		{
+			name:         "customUID trumps crUID and overwrites dashboardUID",
+			crUID:        crUID,
+			dashboardUID: dashUID,
+			customUID:    customUID,
+			want:         customUID,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cr := getDashboardCR(t, tt.crUID, tt.crUID, tt.customUID)
+			got := cr.CustomUIDOrUID()
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func TestGrafanaDashboardIsUpdatedUID(t *testing.T) {
 	crUID := "crUID"
+	dashUID := "dashUID"
+	customUID := "customUID"
 	tests := []struct {
 		name         string
 		crUID        string
 		statusUID    string
 		dashboardUID string
+		customUID    string
 		want         bool
 	}{
+		// Validate that dashboardUID is always ignored despite the presence of customUID
+		// dashboardUID is always overwritten by customUID which falls back to crUID
 		{
-			name:         "Status.UID and dashboard UID are empty",
+			name:         "DashboardUID set and ignored customUID empty",
 			crUID:        crUID,
-			statusUID:    "",
-			dashboardUID: "newUID",
+			statusUID:    crUID,
+			dashboardUID: dashUID,
+			customUID:    "",
 			want:         false,
 		},
 		{
-			name:         "Status.UID is empty, dashboard UID is not",
+			name:         "DashboardUID set and ignored customUID set",
 			crUID:        crUID,
-			statusUID:    "",
-			dashboardUID: "newUID",
+			statusUID:    customUID,
+			dashboardUID: dashUID,
+			customUID:    customUID,
 			want:         false,
 		},
 		{
-			name:         "Status.UID is not empty (same as CR uid), new UID is empty",
+			name:         "DashboardUID empty and ignored customUID empty",
 			crUID:        crUID,
 			statusUID:    crUID,
 			dashboardUID: "",
+			customUID:    "",
 			want:         false,
 		},
 		{
-			name:         "Status.UID is not empty (different from CR uid), new UID is empty",
+			name:         "DashboardUID empty and ignored customUID set",
+			crUID:        crUID,
+			statusUID:    customUID,
+			dashboardUID: "",
+			customUID:    customUID,
+			want:         false,
+		},
+		// Validate always false when statusUID is empty
+		// Since dashbaordUID is ignoredk the only variable is customUID
+		{
+			name:         "Empty StatusUID always results in false",
+			crUID:        crUID,
+			statusUID:    "",
+			dashboardUID: "",
+			customUID:    "",
+			want:         false,
+		},
+		{
+			name:         "Always false when statusUID is empty regardless of customUID or dashUID being set",
+			crUID:        crUID,
+			statusUID:    "",
+			dashboardUID: "",
+			customUID:    customUID,
+			want:         false,
+		},
+		// Validate impossible true cases (Backwards compatible before immutable UIDs)
+		// NOTE Could be deleted in v1 when dashboard UID is immutable
+		{
+			name:         "IMPOSSIBLE: Old status with no customUID",
 			crUID:        crUID,
 			statusUID:    "oldUID",
 			dashboardUID: "",
+			customUID:    "",
 			want:         true,
 		},
 		{
-			name:         "Status.UID is not empty, new UID is different",
+			name:         "IMPOSSIBLE: Old status with customUID",
 			crUID:        crUID,
 			statusUID:    "oldUID",
-			dashboardUID: "newUID",
+			dashboardUID: "",
+			customUID:    customUID,
+			want:         true,
+		},
+		{
+			name:         "IMPOSSIBLE: Old Status with all UIDs being equal",
+			crUID:        crUID,
+			statusUID:    "oldUID",
+			dashboardUID: "",
+			customUID:    crUID,
 			want:         true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cr := getDashboardCR(t, tt.crUID, tt.statusUID)
-			got := cr.IsUpdatedUID(tt.dashboardUID)
+			cr := getDashboardCR(t, tt.crUID, tt.statusUID, tt.customUID)
+			got := cr.IsUpdatedUID()
 			assert.Equal(t, tt.want, got)
 		})
 	}
 }
 
-func getDashboardCR(t *testing.T, crUID string, statusUID string) GrafanaDashboard {
+func getDashboardCR(t *testing.T, crUID string, statusUID string, specUID string) GrafanaDashboard {
 	t.Helper()
 
 	cr := GrafanaDashboard{
@@ -174,6 +270,7 @@ func getDashboardCR(t *testing.T, crUID string, statusUID string) GrafanaDashboa
 					"dashboard": "grafana",
 				},
 			},
+			CustomUID: specUID,
 		},
 		Status: GrafanaDashboardStatus{
 			UID: statusUID,

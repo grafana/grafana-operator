@@ -207,16 +207,17 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
+	// Retrieving the model before the loop ensures to exit early in case of failure and not fail once per matching instance
 	dashboardModel, hash, err := r.getDashboardModel(cr, dashboardJson)
 	if err != nil {
 		controllerLog.Error(err, "failed to prepare dashboard model", "dashboard", cr.Name)
 		return ctrl.Result{Requeue: false}, nil
 	}
 
-	uid := fmt.Sprintf("%s", dashboardModel["uid"])
-
+	// TODO (STE) This if block could potentially be deleted when GrafanaDashboard/v1 is published
+	//      With CustomUIDOrUID, the dashboardModel.uid is overwritten with an immutable uid removing the need to check for changes
 	// Garbage collection for a case where dashboard uid get changed, dashboard creation is expected to happen in a separate reconcilication cycle
-	if cr.IsUpdatedUID(uid) {
+	if cr.IsUpdatedUID() {
 		controllerLog.Info("dashboard uid got updated, deleting dashboards with the old uid")
 		err = r.onDashboardDeleted(ctx, req.Namespace, req.Name)
 		if err != nil {
@@ -273,8 +274,8 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		condition := buildSynchronizedCondition("Dashboard", conditionDashboardSynchronized, cr.Generation, applyErrors, len(instances.Items))
 		meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
-		if grafana.Spec.Preferences != nil && uid == grafana.Spec.Preferences.HomeDashboardUID {
-			err = r.UpdateHomeDashboard(ctx, grafana, uid, cr)
+		if grafana.Spec.Preferences != nil && cr.CustomUIDOrUID() == grafana.Spec.Preferences.HomeDashboardUID {
+			err = r.UpdateHomeDashboard(ctx, grafana, cr)
 			if err != nil {
 				return ctrl.Result{RequeueAfter: RequeueDelay}, err
 			}
@@ -287,7 +288,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			cr.Status.LastResync = metav1.Time{Time: time.Now()}
 		}
 		cr.Status.Hash = hash
-		cr.Status.UID = uid
+		cr.Status.UID = cr.CustomUIDOrUID()
 		return ctrl.Result{RequeueAfter: cr.GetResyncPeriod()}, r.Client.Status().Update(ctx, cr)
 	}
 
@@ -390,7 +391,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		}
 	}
 
-	uid := fmt.Sprintf("%s", dashboardModel["uid"])
+	uid := cr.CustomUIDOrUID()
 	title := fmt.Sprintf("%s", dashboardModel["title"])
 
 	exists, remoteUID, err := r.Exists(grafanaClient, uid, title, folderUID)
@@ -578,12 +579,9 @@ func (r *GrafanaDashboardReconciler) getDashboardModel(cr *v1beta1.GrafanaDashbo
 	//       And, in case the id is non-existent, grafana will respond with 404. https://github.com/grafana/grafana-operator/issues/1108
 	dashboardModel["id"] = nil
 
-	uid, _ := dashboardModel["uid"].(string) //nolint:errcheck
-	if uid == "" {
-		uid = string(cr.UID)
-	}
-
-	dashboardModel["uid"] = uid
+	// NOTE: Overwriting ensures that UID collisions originate from the users
+	//       Additionally, aligns the DashboardSpec with other CRs on assigning UIDs
+	dashboardModel["uid"] = cr.CustomUIDOrUID()
 
 	return dashboardModel, fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
@@ -805,14 +803,14 @@ func (r *GrafanaDashboardReconciler) GetMatchingDashboardInstances(ctx context.C
 	return instances, err
 }
 
-func (r *GrafanaDashboardReconciler) UpdateHomeDashboard(ctx context.Context, grafana v1beta1.Grafana, uid string, dashboard *v1beta1.GrafanaDashboard) error {
+func (r *GrafanaDashboardReconciler) UpdateHomeDashboard(ctx context.Context, grafana v1beta1.Grafana, dashboard *v1beta1.GrafanaDashboard) error {
 	grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 	if err != nil {
 		return err
 	}
 
 	_, err = grafanaClient.OrgPreferences.UpdateOrgPreferences(&models.UpdatePrefsCmd{ //nolint:errcheck
-		HomeDashboardUID: uid,
+		HomeDashboardUID: dashboard.CustomUIDOrUID(),
 	})
 	if err != nil {
 		r.Log.Error(err, "unable to update the home dashboard", "namespace", dashboard.Namespace, "name", dashboard.Name)

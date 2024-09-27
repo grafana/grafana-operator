@@ -60,7 +60,13 @@ type GrafanaDashboardUrlAuthorization struct {
 // GrafanaDashboardSpec defines the desired state of GrafanaDashboard
 // +kubebuilder:validation:XValidation:rule="(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID))) || !(has(self.folderRef) && (has(self.folderUID)))", message="Only one of folderUID or folderRef can be declared at the same time"
 // +kubebuilder:validation:XValidation:rule="(has(self.folder) && !(has(self.folderRef) || has(self.folderUID))) || !(has(self.folder))", message="folder field cannot be set when folderUID or folderRef is already declared"
+// +kubebuilder:validation:XValidation:rule="((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid)))", message="spec.uid is immutable"
 type GrafanaDashboardSpec struct {
+	// Manually specify the uid for the dashboard, overwrites uids already present in the json model
+	// +optional
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="spec.uid is immutable"
+	CustomUID string `json:"uid,omitempty"`
+
 	// dashboard json
 	// +optional
 	Json string `json:"json,omitempty"`
@@ -222,6 +228,14 @@ func (in *GrafanaDashboard) FolderUID() string {
 	return in.Spec.FolderUID
 }
 
+// Wrapper around CustomUID or default metadata.uid
+func (in *GrafanaDashboard) CustomUIDOrUID() string {
+	if in.Spec.CustomUID != "" {
+		return in.Spec.CustomUID
+	}
+	return string(in.ObjectMeta.UID)
+}
+
 // FolderNamespace implements FolderReferencer.
 func (in *GrafanaDashboard) FolderNamespace() string {
 	return in.Namespace
@@ -325,17 +339,14 @@ func (in *GrafanaDashboard) IsAllowCrossNamespaceImport() bool {
 	return false
 }
 
-func (in *GrafanaDashboard) IsUpdatedUID(uid string) bool {
+func (in *GrafanaDashboard) IsUpdatedUID() bool {
 	// Dashboard has just been created, status is not yet updated
 	if in.Status.UID == "" {
 		return false
 	}
 
-	if uid == "" {
-		uid = string(in.UID)
-	}
-
-	return in.Status.UID != uid
+	// Check if uid got updated
+	return in.Status.UID != in.CustomUIDOrUID()
 }
 
 func Gunzip(compressed []byte) ([]byte, error) {
