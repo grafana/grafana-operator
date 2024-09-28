@@ -24,7 +24,7 @@ spec:
     local myRange = std.extVar('CUSTOM_RANGE_ENV');
     {
       id: null,
-      title: "Simple Dashboard wht CM envs",
+      title: "Simple Dashboard with CM envs",
       tags: [],
       style: "dark",
       timezone: "browser",

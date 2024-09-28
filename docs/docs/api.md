@@ -1510,7 +1510,7 @@ TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://git
         <td><b>value</b></td>
         <td>string</td>
         <td>
-          Inline evn value<br/>
+          Inline env value<br/>
         </td>
         <td>false</td>
       </tr><tr>
