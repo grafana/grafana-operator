@@ -117,7 +117,7 @@ func TestGrafanaDashboardIsUpdatedUID(t *testing.T) {
 		want         bool
 	}{
 		// Validate always false when statusUID is empty
-		// Since dashbaordUID is ignoredk the only variable is customUID
+		// Since dashboardUID is ignoredk the only variable is customUID
 		{
 			name:         "Empty StatusUID always results in false",
 			crUID:        crUID,

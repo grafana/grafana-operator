@@ -718,7 +718,7 @@ spec:
                     name:
                       type: string
                     value:
-                      description: Inline evn value
+                      description: Inline env value
                       type: string
                     valueFrom:
                       description: Reference on value source, might be the reference

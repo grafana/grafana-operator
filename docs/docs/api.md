@@ -1633,7 +1633,7 @@ More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/nam
         <td><b>value</b></td>
         <td>string</td>
         <td>
-          Inline evn value<br/>
+          Inline env value<br/>
         </td>
         <td>false</td>
       </tr><tr>
