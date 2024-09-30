@@ -1,0 +1,83 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/chainsaw/main/.schemas/json/test-chainsaw-v1alpha1.json
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: dashboards-uids
+spec:
+  concurrent: true
+  steps:
+    - name: Create dashboards
+      try:
+        - apply:
+            file: base-resources.yaml
+
+    - name: Attempt dashboards updates
+      try:
+        - apply:
+            file: update-dash-uid.yaml
+
+        - apply:
+            resource:
+              apiVersion: grafana.integreatly.org/v1beta1
+              kind: GrafanaDashboard
+              metadata:
+                name: metadata-uid
+                namespace: uid-immutability
+              spec:
+                instanceSelector:
+                  matchLabels:
+                    dashboards: "grafana"
+                uid: newCRUID
+                json: ""
+            expect:
+              - check:
+                  ($error != null): true
+
+        - apply:
+            resource:
+              apiVersion: grafana.integreatly.org/v1beta1
+              kind: GrafanaDashboard
+              metadata:
+                name: spec-uid
+                namespace: uid-immutability
+              spec:
+                instanceSelector:
+                  matchLabels:
+                    dashboards: "grafana"
+                uid: newSpecUID
+                json: ""
+            expect:
+              - check:
+                  ($error != null): true
+
+    - name: Verify uids only changed for jsonModels
+      try:
+        - assert:
+            file: assertions.yaml
+
+        - assert:
+            resource:
+              apiVersion: grafana.integreatly.org/v1beta1
+              kind: GrafanaDashboard
+              metadata:
+                name: metadata-uid
+                namespace: uid-immutability
+              spec:
+                instanceSelector:
+                  matchLabels:
+                    dashboards: "grafana"
+                json: ""
+
+        - assert:
+            resource:
+              apiVersion: grafana.integreatly.org/v1beta1
+              kind: GrafanaDashboard
+              metadata:
+                name: spec-uid
+                namespace: uid-immutability
+              spec:
+                instanceSelector:
+                  matchLabels:
+                    dashboards: "grafana"
+                uid: oldSpecUID
+                json: ""
