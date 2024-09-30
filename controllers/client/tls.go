@@ -18,10 +18,16 @@ var (
 
 // build the tls.Config object based on the content of the Grafana CR object
 func buildTLSConfiguration(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (*tls.Config, error) {
-	if grafana.IsInternal() || grafana.Spec.External.TLS == nil {
+	// if nothing is specified, ignore tls settings
+	if (grafana.Spec.Client == nil || grafana.Spec.Client.TLS == nil) && (grafana.Spec.External == nil || grafana.Spec.External.TLS == nil) {
 		return nil, nil
 	}
-	tlsConfigBlock := grafana.Spec.External.TLS
+	tlsConfigBlock := grafana.Spec.Client.TLS
+
+	// prefer top level if set, fall back to deprecated field
+	if tlsConfigBlock == nil && grafana.Spec.External != nil && grafana.Spec.External.TLS != nil {
+		tlsConfigBlock = grafana.Spec.External.TLS
+	}
 
 	if tlsConfigBlock.InsecureSkipVerify {
 		return InsecureTLSConfiguration, nil

@@ -1,0 +1,143 @@
+# Test against a grafana instance with tls configured. Can only check if the
+# connection works with verification disabled as the chainsaw namespace (and
+# thus service name) will be randomized
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grafana-tls
+stringData:
+  ca.crt: |
+    -----BEGIN CERTIFICATE-----
+    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
+    -----END CERTIFICATE-----
+  tls.crt: |
+    -----BEGIN CERTIFICATE-----
+    MIIEcTCCAlmgAwIBAgIUb6F3jg6no+/0E5f49VJ398gz8CswDQYJKoZIhvcNAQEL
+    BQAwQjELMAkGA1UEBhMCWFgxFTATBgNVBAcMDERlZmF1bHQgQ2l0eTEcMBoGA1UE
+    CgwTRGVmYXVsdCBDb21wYW55IEx0ZDAgFw0yNDA5MjQwOTE4MzJaGA8yMTIyMDMx
+    NTA5MTgzMlowXTELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAkNBMRQwEgYDVQQKDAtN
+    eU9yZywgSW5jLjErMCkGA1UEAwwib3BlcmF0b3ItdGVzdC5ncmFmYW5hLW9wZXJh
+    dG9yLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBANKXPb/4hKaO
+    /CXuEErgp3HIG221tzBSJiHlVQy68DHwf2EfVIzpH3sInKfCOXzk95csrDkHpmmp
+    qL5oJJnwWFDsSCePtqzSe8O0PA8ZsosbM5Y1ePw0CWl7bcZgHKhYEAdOclM8/KIO
+    roHH2XHsFcwsUOLY42KR4CLBrXgg+3l2AOmyxMQtyyh4MQJR+JuPoJKSdHvaPw9U
+    Ulk7ClhSUXOmwpaXy+0NTKc8CrGPjapJ4AciPBY77d0jwW1k1+Ei7P3KaxTG0Zqh
+    3M+s79AVczQR5xTsYhH/F7otMcL2KnQjmZmSKHgbKLHorzUz9GofStsJRP5quDyZ
+    wdWLgstz9NMCAwEAAaNCMEAwHQYDVR0OBBYEFKnQi57Ls6++4rZp2pyclWF6RGi9
+    MB8GA1UdIwQYMBaAFNJIqSxohM6aUGOKPnM2+wNwia47MA0GCSqGSIb3DQEBCwUA
+    A4ICAQCU4TAaX6d9C9NebKqA7IvTZ4U1KPGZoEz4+gIX6jQsefVTvq1eHndmb0Z7
+    wQhOCogOs0471WXi7q+HfHVn+Fd/yBG11AH2h1d8TSYqN/EgXCGgJrSRexXVW7FB
+    Ec3+t7k9N1ys1RNF9L7Yh+jRZBtM+uI7oM9JaaBY9Fqw2irofaW3dNHLgn+KV/Pu
+    Jbq4wUvTPE3uqFDy11K5FAZrAAkK1bYC5qlBMpx9mRyS59RPcMRDmkwDTVRUUrbW
+    5C6po1HylP5Kz7S8K33bKIrING3ekZkdUqboL+7590HBmOTQvV6ChuEHnUJ+zOn4
+    f9Ci0Ur+V0OKFjCxatQNnAHBiqPwPtNKM9TpAGCbwZxF4QBnIjaQng/k9WIWJu7F
+    ZZpMWw2J/qRvwoTS8R8Sb9ZSEH7+6JYVhALOMHGG88dVlrxS5yvjKnnx8aKURjXq
+    HxP+OASJIirkEGXi7xMGAv7tHOOmZrpZ4BCaJ++fPWBByTohr+HFncgXr2a4qrJe
+    TA94/jUatNKDrI303LtRBs0yhj9gCKs85S5lDOzzBuDZ/CgamRcMDasjjvvzAqY7
+    zNLMZwqKoCHnmQ8MjgR0Lnnzr1VykWSLYLtNYfndPFhDEiOcu5GS8+Gy2o/ilvmw
+    vkf6KDfvp0TqymxiEGprhiGxdVuLI2EIvP22rojDpl3OmA7VVg==
+    -----END CERTIFICATE-----
+  tls.key: |
+    -----BEGIN PRIVATE KEY-----
+    MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDSlz2/+ISmjvwl
+    7hBK4KdxyBtttbcwUiYh5VUMuvAx8H9hH1SM6R97CJynwjl85PeXLKw5B6Zpqai+
+    aCSZ8FhQ7Egnj7as0nvDtDwPGbKLGzOWNXj8NAlpe23GYByoWBAHTnJTPPyiDq6B
+    x9lx7BXMLFDi2ONikeAiwa14IPt5dgDpssTELcsoeDECUfibj6CSknR72j8PVFJZ
+    OwpYUlFzpsKWl8vtDUynPAqxj42qSeAHIjwWO+3dI8FtZNfhIuz9ymsUxtGaodzP
+    rO/QFXM0EecU7GIR/xe6LTHC9ip0I5mZkih4Gyix6K81M/RqH0rbCUT+arg8mcHV
+    i4LLc/TTAgMBAAECggEAROAvU4qaBAmu4U7v6DV6vmWGxwaQQA8WJq7ldrDrX0H7
+    v02qbx3N7IUAC4QkHjua2MhFGa/tVxCkvoW8NtbbY7grzzibNAHxdawMmpm6gfGn
+    GSErDT2NuICkgiWsKckHkQQwsxW2wOARZiPxc+eVp331BISQNgxk5Kk4rZoH9Yyx
+    CCkK3Z2KzGe8JrRjEx5rUwAdrGKn4UQgtUkIEOhX9Tzg4IKdmYknIl/QS0CHgUda
+    NmAbNFHPEW6wZfqOdg8ILcAmq5YxodF84lstUedOQwvFl5LeRD0M8FBVR12Uccaf
+    EYJTM/Bsho1iOEaybG0v8DAZvaF5ZW7lx2EucGyU8QKBgQD3Ro0C9Dw7qvFXh7sZ
+    11vQzaxYN8IU57Q9mZWeHMEtuEFvL5FyDVfoDIXX88Fn2xNf3D/6GH3Xxd/I6Ie+
+    ZKAuYqAfn/gOepFBpVFu6kqpYqpIdCyxv3rz4rpVhcz85AZy8/4y0Fxc0dNTfBb5
+    ggZAf1aI0BjI8ffJKgA7IlK5QwKBgQDaBVhNE3LWJFVU6IP9iE52wZddocrHy9EM
+    lJTe/b/KvbVz0vN6r7qj2ycaT3yNtP+496kxAjQFucB7e2ANox4jBcSJyrS5GsjS
+    93pc8PCUxff1oZXVzKCWRD/cbXkzZiTkYio48/RSLDkz+spuYSqWPYdenSbicpLi
+    ZfyEYSQVMQKBgDGT/6nb9kewWntGR4lC2LHgyvFVHKC8ZDMFnC37bfAQxW3Zh7vq
+    WPm5qQxHXzvHfPb3Xgxy5KhikB/kH3NZEZS7SYeNt1qP0Jfs4YrvhtC3a5TjViK9
+    VZWYm+uRzCvYPELIEOt3Q02I9GoEs0aLf11nKp57urxvZ1L6DNnOY++pAoGAatK5
+    nDJOTwxIXyz6FwxlXZynPLJceB6uVBqtAsGT6pOfR5vxvohBy61CcIrHvWsU7R0z
+    4hZxROjpndcqjiQBTSmzTcxrVlMAWRX293j6d/qz7r94eeQkPtw76hYdj4iZxOkw
+    RO2LJYQTlxtnekPTqP+Gx136wnNe8t0DqB0sn9ECgYAaVWsMdtUnLfo7aEpYDp2p
+    4luli+DDb78hxXlh54YNgz42GLUNoAALpKq+Ur8oFMK5erlI6WSXSlG8t+V647Fh
+    xg26DHY7Sv56YjAa5LQzMNjlVFDuNU0ocaB4RWmHpRt5w4+Ujj9wqD7kTfro+n4L
+    Ld3vLJJdQcOqHoIIoiBm/A==
+    -----END PRIVATE KEY-----
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana-tls
+  labels:
+    dashboards: "grafana-tls"
+spec:
+  client:
+    tls:
+      insecureSkipVerify: true
+  config:
+    server:
+      ca_cert: /certs/ca.crt
+      cert_file: /certs/tls.crt
+      cert_key: /certs/tls.key
+      domain: operator-test.grafana-operator.com
+      protocol: https
+      root_url: https://operator-test.grafana-operator.com
+  deployment:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: grafana
+              readinessProbe:
+                httpGet:
+                  port: 3000
+                  scheme: HTTPS
+              volumeMounts:
+                - mountPath: /certs/ca.crt
+                  name: tls
+                  readOnly: true
+                  subPath: ca.crt
+                - mountPath: /certs/tls.crt
+                  name: tls
+                  readOnly: true
+                  subPath: tls.crt
+                - mountPath: /certs/tls.key
+                  name: tls
+                  readOnly: true
+                  subPath: tls.key
+          volumes:
+            - name: tls
+              secret:
+                secretName: grafana-tls
