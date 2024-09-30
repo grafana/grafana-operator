@@ -30,7 +30,7 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-CHAINSAW_VERSION ?= v0.1.9
+CHAINSAW_VERSION ?= v0.2.10
 
 # Checks if chainsaw is in your PATH
 ifneq ($(shell which chainsaw),)
