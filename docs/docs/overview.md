@@ -8,7 +8,7 @@ weight: 11
 Grafana doesn't have any webhooks or similar ways of giving information to the operator that a Grafana resource, like a dashboard, has changed.
 Due to this the Grafana operator has to constantly poll the Grafana API to test for changes in the dashboard.
 
-To avoid control how often this polling should occur, you can set the `spec.resyncPeriod` field.
+To control how often this polling should occur, you can set the `spec.resyncPeriod` field.
 This field tells the operator how often it should poll the Grafana instance for changes.
 
 So, if for example, a dashboard has changed, the operator comes in and overwrite those settings after `5m` by default.
@@ -26,6 +26,11 @@ spec:
   url: "https://grafana.com/api/dashboards/7651/revisions/44/download"
   resyncPeriod: 0m
 ```
+
+{{% alert title="Warning" color="warning" %}}
+Even after setting `resyncPeriod` to `0m`, the operator will still sync the resource whenever it changes or the operator is restarted
+{{% /alert %}}
+
 
 This can of course be annoying for your dashboard developers. The recommended workflow is to copy the dashboard and work on the copy instead.
 When you finish your changes, export the changes and update the dashboard CR.
