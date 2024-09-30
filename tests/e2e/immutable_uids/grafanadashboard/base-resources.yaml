@@ -1,0 +1,50 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana-immutable
+  labels:
+    immutable: "grafana"
+spec:
+  config:
+    log:
+      mode: "console"
+    auth:
+      disable_login_form: "false"
+    security:
+      admin_user: root
+      admin_password: secret
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: dashboard-uid
+spec:
+  instanceSelector:
+    matchLabels:
+      immutable: "grafana"
+  resyncPeriod: 3s
+  json: ($dashboardModel)
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: metadata-uid
+spec:
+  instanceSelector:
+    matchLabels:
+      immutable: "grafana"
+  resyncPeriod: 3s
+  json: ($dashboardModel)
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: spec-uid
+spec:
+  instanceSelector:
+    matchLabels:
+      immutable: "grafana"
+  resyncPeriod: 3s
+  json: ($dashboardModel)
+  uid: SpecUID

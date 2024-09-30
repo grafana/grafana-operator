@@ -1,0 +1,171 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/chainsaw/main/.schemas/json/test-chainsaw-v1alpha1.json
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: dashboards-uids
+spec:
+  bindings:
+    - name: dashboardModel
+      value: |
+        {
+          "id": null,
+          "title": "Simple Dashboard",
+          "tags": [],
+          "timezone": "browser",
+          "editable": true,
+          "graphTooltip": 1,
+          "panels": [],
+          "time": {
+            "from": "now-6h",
+            "to": "now"
+          },
+          "timepicker": {
+            "time_options": [],
+            "refresh_intervals": []
+          },
+          "templating": {
+            "list": []
+          },
+          "annotations": {
+            "list": []
+          },
+          "refresh": "5s",
+          "schemaVersion": 39,
+          "version": 0,
+          "links": [],
+          "fiscalYearStartMonth": 0,
+          "weekStart": ""
+        }
+    - name: dashboardModelPatch
+      value: |
+        {
+          "id": null,
+          "uid": "newDashUID",
+          "title": "Simple Dashboard2",
+          "tags": [],
+          "timezone": "browser",
+          "editable": true,
+          "graphTooltip": 1,
+          "panels": [],
+          "time": {
+            "from": "now-6h",
+            "to": "now"
+          },
+          "timepicker": {
+            "time_options": [],
+            "refresh_intervals": []
+          },
+          "templating": {
+            "list": []
+          },
+          "annotations": {
+            "list": []
+          },
+          "refresh": "5s",
+          "schemaVersion": 39,
+          "version": 0,
+          "links": [],
+          "fiscalYearStartMonth": 0,
+          "weekStart": ""
+        }
+
+  steps:
+    - name: Create dashboards and Grafana instance
+      try:
+        - apply:
+            file: base-resources.yaml
+
+    - name: Attempt patching uids
+      try:
+        - patch:
+            resource:
+              apiVersion: grafana.integreatly.org/v1beta1
+              kind: GrafanaDashboard
+              metadata:
+                name: dashboard-uid
+              spec:
+                json: ($dashboardModelPatch)
+
+        - patch:
+            resource:
+              apiVersion: grafana.integreatly.org/v1beta1
+              kind: GrafanaDashboard
+              metadata:
+                name: metadata-uid
+              spec:
+                uid: newCRUID
+            expect:
+              - check:
+                  ($error != null): true
+
+        - patch:
+            resource:
+              apiVersion: grafana.integreatly.org/v1beta1
+              kind: GrafanaDashboard
+              metadata:
+                name: spec-uid
+              spec:
+                uid: newSpecUID
+            expect:
+              - check:
+                  ($error != null): true
+
+    - name: Verify uid only changed for jsonModels
+      try:
+        - assert:
+            resource:
+              apiVersion: grafana.integreatly.org/v1beta1
+              kind: GrafanaDashboard
+              metadata:
+                name: dashboard-uid
+              spec:
+                json: ($dashboardModelPatch)
+
+        - script:
+            content: kubectl get grafanadashboards -n $NAMESPACE -o json metadata-uid
+            outputs:
+              - name: metadataUid
+                value: (json_parse($stdout))
+        - assert:
+            resource:
+              apiVersion: grafana.integreatly.org/v1beta1
+              kind: GrafanaDashboard
+              metadata:
+                name: metadata-uid
+                uid: "($metadataUid.metadata.uid)"
+
+        - assert:
+            resource:
+              apiVersion: grafana.integreatly.org/v1beta1
+              kind: GrafanaDashboard
+              metadata:
+                name: spec-uid
+              spec:
+                uid: SpecUID
+
+    - name: Verify uid in Grafana Instance status object
+      try:
+        - script:
+            content: kubectl get grafanadashboards -n $NAMESPACE -o json metadata-uid
+            outputs:
+              - name: metadataUid
+                value: (json_parse($stdout))
+        - script:
+            content: kubectl get grafanadashboards -n $NAMESPACE -o json spec-uid
+            outputs:
+              - name: specUid
+                value: (json_parse($stdout))
+
+        - sleep:
+            duration: 30s
+
+        - assert:
+            resource:
+              apiVersion: grafana.integreatly.org/v1beta1
+              kind: Grafana
+              metadata:
+                name: grafana-immutable
+              status:
+                (contains(dashboards[*], join('/', [$namespace, 'dashboard-uid', 'newDashUID']))): true
+                (contains(dashboards[*], join('/', [$namespace, 'metadata-uid', $metadataUid.metadata.uid]))): true
+                (contains(dashboards[*], join('/', [$namespace, 'spec-uid', $specUid.spec.uid]))): true
