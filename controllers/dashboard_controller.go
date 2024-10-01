@@ -580,7 +580,11 @@ func (r *GrafanaDashboardReconciler) getDashboardModel(cr *v1beta1.GrafanaDashbo
 
 	uid, _ := dashboardModel["uid"].(string) //nolint:errcheck
 	if uid == "" {
-		uid = string(cr.UID)
+		if cr.Spec.DefaultUID != nil && *cr.Spec.DefaultUID != "" {
+			uid = *cr.Spec.DefaultUID
+		} else {
+			uid = string(cr.UID)
+		}
 	}
 
 	dashboardModel["uid"] = uid

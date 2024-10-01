@@ -128,6 +128,10 @@ type GrafanaDashboardSpec struct {
 	// +optional
 	Datasources []GrafanaDashboardDatasource `json:"datasources,omitempty"`
 
+	// Allows specifying the UID of a dashboard if one is not provided, defaults to metadata.uid
+	// +optional
+	DefaultUID *string `json:"defaultUID,omitempty"`
+
 	// allow to import this resources from an operator in a different namespace
 	// +optional
 	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
