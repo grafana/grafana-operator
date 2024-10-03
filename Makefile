@@ -158,7 +158,7 @@ KIND = $(LOCALBIN)/kind
 # This is useful for CI or a project to utilize a specific version of the operator-sdk toolkit.
 OPERATOR_SDK_VERSION ?= v1.32.0
 KUSTOMIZE_VERSION ?= v5.1.1
-CONTROLLER_TOOLS_VERSION ?= v0.14.0
+CONTROLLER_TOOLS_VERSION ?= v0.16.3
 OPM_VERSION ?= v1.23.2
 YQ_VERSION ?= v4.35.2
 KIND_VERSION ?= v0.24.0
