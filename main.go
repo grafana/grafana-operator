@@ -44,6 +44,7 @@ import (
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers"
 	"github.com/grafana/grafana-operator/v5/controllers/autodetect"
+	"github.com/grafana/grafana-operator/v5/embeds"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -66,7 +67,7 @@ const (
 
 var (
 	scheme   = runtime.NewScheme()
-	setupLog = ctrl.Log.WithName("setup")
+	setupLog = ctrl.Log.WithName("setup").WithValues("version", embeds.Version)
 )
 
 func init() {
