@@ -72,7 +72,7 @@ jobs:
       - name: Install ko
         uses: ko-build/setup-ko@v0.7
         with:
-          version: v0.13.0
+          version: v0.16.0
 
       - name: Install chainsaw
         uses: kyverno/action-install-chainsaw@v0.2.10
