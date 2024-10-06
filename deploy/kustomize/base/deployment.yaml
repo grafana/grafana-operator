@@ -22,9 +22,9 @@ spec:
             - --health-probe-bind-address=:8081
             - --metrics-bind-address=0.0.0.0:9090
             - --leader-elect
-            - -zap-encoder=console
-            - -zap-log-level=info
-            - -zap-time-encoding=epoch
+            # - -zap-encoder=console
+            # - -zap-log-level=info
+            # - -zap-time-encoding=epoch
           image: ghcr.io/grafana/grafana-operator:v5.6.0
           imagePullPolicy: Always
           ports:
