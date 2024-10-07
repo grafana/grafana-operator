@@ -5,14 +5,14 @@ namespaceScope: false
 # -- If you want to run multiple replicas of the grafana-operator, this is not recommended.
 leaderElect: false
 
-# -- Sets the WATCH_NAMESPACE environment variable,
-# it defines which namespaces the operator should be listening for.
+# -- Sets the `WATCH_NAMESPACE` environment variable,
+# it defines which namespaces the operator should be listening for (e.g. `"grafana, foo"`).
 # By default, the operator watches all namespaces. To make it watch only its own namespace, check out `namespaceScope` option instead.
 watchNamespaces: ""
 
-# -- Sets the WATCH_NAMESPACE_SELECTOR environment variable,
-# it defines which namespaces the operator should be listening for.
-# By default it's all namespaces, if you only want to listen for the same namespace as the operator is deployed to look at namespaceScope.
+# -- Sets the `WATCH_NAMESPACE_SELECTOR` environment variable,
+# it defines which namespaces the operator should be listening for based on a namespace label (e.g. `"environment: dev"`).
+# By default, the operator watches all namespaces. To make it watch only its own namespace, check out `namespaceScope` option instead.
 watchNamespaceSelector: ""
 
 # -- Determines if the target cluster is OpenShift. Additional rbac permissions for routes will be added on OpenShift
@@ -148,4 +148,3 @@ extraObjects: []
 #     dataFrom:
 #     - extract:
 #         key: my-secret-store-secret
-
