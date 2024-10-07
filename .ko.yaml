@@ -1,0 +1,8 @@
+builds:
+- id: grafana-operator
+  dir: .
+  main: .
+  flags:
+  - '-trimpath'
+  ldflags:
+  - -X github.com/grafana/grafana-operator/v5/embeds.Version={{.Git.Tag}}

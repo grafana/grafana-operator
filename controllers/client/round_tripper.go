@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/grafana/grafana-operator/v5/embeds"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -36,6 +37,7 @@ func NewInstrumentedRoundTripper(relatedResource string, metric *prometheus.Coun
 }
 
 func (in *instrumentedRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
+	r.Header.Add("user-agent", "grafana-operator/"+embeds.Version)
 	resp, err := in.wrapped.RoundTrip(r)
 	if resp != nil {
 		in.metric.WithLabelValues(
