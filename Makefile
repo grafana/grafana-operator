@@ -40,7 +40,7 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-CHAINSAW_VERSION ?= v0.1.9
+CHAINSAW_VERSION ?= v0.2.10
 
 # Checks if chainsaw is in your PATH
 ifneq ($(shell which chainsaw),)
@@ -55,7 +55,7 @@ SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
 .PHONY: all
-all: manifests test api-docs
+all: manifests test api-docs helm/docs
 
 ##@ General
 

@@ -1132,7 +1132,7 @@ GrafanaDashboard is the Schema for the grafanadashboards API
         <td>
           GrafanaDashboardSpec defines the desired state of GrafanaDashboard<br/>
           <br/>
-            <i>Validations</i>:<li>(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID))) || !(has(self.folderRef) && (has(self.folderUID))): Only one of folderUID or folderRef can be declared at the same time</li><li>(has(self.folder) && !(has(self.folderRef) || has(self.folderUID))) || !(has(self.folder)): folder field cannot be set when folderUID or folderRef is already declared</li>
+            <i>Validations</i>:<li>(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID))) || !(has(self.folderRef) && (has(self.folderUID))): Only one of folderUID or folderRef can be declared at the same time</li><li>(has(self.folder) && !(has(self.folderRef) || has(self.folderUID))) || !(has(self.folder)): folder field cannot be set when folderUID or folderRef is already declared</li><li>((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid))): spec.uid is immutable</li>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1286,6 +1286,15 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
           <br/>
             <i>Format</i>: duration<br/>
             <i>Default</i>: 5m<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>uid</b></td>
+        <td>string</td>
+        <td>
+          Manually specify the uid for the dashboard, overwrites uids already present in the json model<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: spec.uid is immutable</li>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1624,7 +1633,7 @@ More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/nam
         <td><b>value</b></td>
         <td>string</td>
         <td>
-          Inline evn value<br/>
+          Inline env value<br/>
         </td>
         <td>false</td>
       </tr><tr>
