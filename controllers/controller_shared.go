@@ -82,7 +82,7 @@ func getFolderUID(ctx context.Context, k8sClient client.Client, ref operatorapi.
 	}
 	removeNoMatchingFolder(ref.Conditions())
 
-	return string(folder.ObjectMeta.UID), nil
+	return folder.CustomUIDOrUID(), nil
 }
 
 func labelsSatisfyMatchExpressions(labels map[string]string, matchExpressions []metav1.LabelSelectorRequirement) bool {
