@@ -108,6 +108,10 @@ type GrafanaDashboardSpec struct {
 	// +optional
 	FolderRef string `json:"folderRef,omitempty"`
 
+	// SkipFolderCreation is `true` prevents folder creation if the folder does not already exist.
+	// +optional
+	SkipFolderCreation bool `json:"skipFolderCreation,omitempty"`
+
 	// plugins
 	// +optional
 	Plugins PluginList `json:"plugins,omitempty"`

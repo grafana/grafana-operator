@@ -671,6 +671,10 @@ func (r *GrafanaDashboardReconciler) GetOrCreateFolder(client *genapi.GrafanaHTT
 		return folderUID, nil
 	}
 
+	if cr.Spec.SkipFolderCreation {
+		return "", fmt.Errorf("folder %s not found and SkipFolderCreation is set to true", title)
+	}
+
 	// Folder wasn't found, let's create it
 	body := &models.CreateFolderCommand{
 		Title: title,

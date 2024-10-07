@@ -891,6 +891,10 @@ spec:
                 format: duration
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
+              skipFolderCreation:
+                description: SkipFolderCreation is `true` prevents folder creation
+                  if the folder does not already exist.
+                type: boolean
               url:
                 description: dashboard url
                 type: string

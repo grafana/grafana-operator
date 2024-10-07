@@ -1289,6 +1289,13 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>skipFolderCreation</b></td>
+        <td>boolean</td>
+        <td>
+          SkipFolderCreation is `true` prevents folder creation if the folder does not already exist.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>url</b></td>
         <td>string</td>
         <td>
