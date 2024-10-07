@@ -103,7 +103,7 @@ patches:
     patch: |-
       - op: add
         path: /spec/template/spec/containers/0/args/-
-        value: -zap-encoder=json
+        value: --zap-encoder=json
 ```
 
 ## Common Issues
