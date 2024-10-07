@@ -52,7 +52,12 @@ spec:
               cpu: 100m
               memory: 20Mi
           securityContext:
+            capabilities:
+              drop:
+                - ALL
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
           volumeMounts:
             - name: dashboards-dir
               mountPath: /tmp/dashboards

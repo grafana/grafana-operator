@@ -5,18 +5,26 @@ namespaceScope: false
 # -- If you want to run multiple replicas of the grafana-operator, this is not recommended.
 leaderElect: false
 
-# -- Sets the WATCH_NAMESPACE environment variable,
-# it defines which namespaces the operator should be listening for.
-# By default it's all namespaces, if you only want to listen for the same namespace as the operator is deployed to look at namespaceScope.
+# -- Sets the `WATCH_NAMESPACE` environment variable,
+# it defines which namespaces the operator should be listening for (e.g. `"grafana, foo"`).
+# By default, the operator watches all namespaces. To make it watch only its own namespace, check out `namespaceScope` option instead.
 watchNamespaces: ""
 
-# -- Sets the WATCH_NAMESPACE_SELECTOR environment variable,
-# it defines which namespaces the operator should be listening for based on label and key value pair added on namespace kind.
-# By default it's all namespaces.
+# -- Sets the `WATCH_NAMESPACE_SELECTOR` environment variable,
+# it defines which namespaces the operator should be listening for based on a namespace label (e.g. `"environment: dev"`).
+# By default, the operator watches all namespaces. To make it watch only its own namespace, check out `namespaceScope` option instead.
 watchNamespaceSelector: ""
 
 # -- Determines if the target cluster is OpenShift. Additional rbac permissions for routes will be added on OpenShift
 isOpenShift: false
+
+logging:
+  # -- Log encoding ("console", "json")
+  encoder: console
+  # -- Configure the verbosity of logging ("debug", "error", "info")
+  level: info
+  # -- Time encoding ("epoch", "iso8601", "millis", "nano", "rfc3339", "rfc3339nano")
+  time: rfc3339
 
 # -- Additional environment variables
 env: []
@@ -77,12 +85,16 @@ podAnnotations: {}
 # -- pod security context
 podSecurityContext: {}
 
-# -- grafana operator container security context
 securityContext:
+  # -- A list of capabilities to drop
   capabilities:
     drop:
       - ALL
+  # -- Whether to allow privilege escalation
+  allowPrivilegeEscalation: false
+  # -- Whether to allow writing to the root filesystem
   readOnlyRootFilesystem: true
+  # -- Whether to require a container to run as a non-root user
   runAsNonRoot: true
 
 # -- grafana operator container resources
@@ -100,9 +112,8 @@ tolerations: []
 # -- pod affinity
 affinity: {}
 
-# -- Enable this to use with Prometheus Operator
 serviceMonitor:
-  # -- When set true then use a ServiceMonitor to configure scraping
+  # -- Whether to create a ServiceMonitor
   enabled: false
   # -- Set of labels to transfer from the Kubernetes Service onto the target
   additionalLabels: {}
@@ -137,4 +148,3 @@ extraObjects: []
 #     dataFrom:
 #     - extract:
 #         key: my-secret-store-secret
-

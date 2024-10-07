@@ -73,6 +73,9 @@ It's easier to just manage this configuration outside of the operator.
 | imagePullSecrets | list | `[]` | image pull secrets |
 | isOpenShift | bool | `false` | Determines if the target cluster is OpenShift. Additional rbac permissions for routes will be added on OpenShift |
 | leaderElect | bool | `false` | If you want to run multiple replicas of the grafana-operator, this is not recommended. |
+| logging.encoder | string | `"console"` | Log encoding ("console", "json") |
+| logging.level | string | `"info"` | Configure the verbosity of logging ("debug", "error", "info") |
+| logging.time | string | `"rfc3339"` | Time encoding ("epoch", "iso8601", "millis", "nano", "rfc3339", "rfc3339nano") |
 | metricsService.metricsPort | int | `9090` | metrics service port |
 | metricsService.pprofPort | int | `8888` | port for the pprof profiling endpoint |
 | metricsService.type | string | `"ClusterIP"` | metrics service type |
@@ -85,13 +88,15 @@ It's easier to just manage this configuration outside of the operator.
 | priorityClassName | string | `""` | pod priority class name |
 | rbac.create | bool | `true` | Specifies whether to create the ClusterRole and ClusterRoleBinding. If "namespaceScope" is true or "watchNamespaces" is set, this will create Role and RoleBinding instead. |
 | resources | object | `{}` | grafana operator container resources |
-| securityContext | object | `{"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true,"runAsNonRoot":true}` | grafana operator container security context |
+| securityContext.allowPrivilegeEscalation | bool | `false` | Whether to allow privilege escalation |
+| securityContext.capabilities | object | `{"drop":["ALL"]}` | A list of capabilities to drop |
+| securityContext.readOnlyRootFilesystem | bool | `true` | Whether to allow writing to the root filesystem |
+| securityContext.runAsNonRoot | bool | `true` | Whether to require a container to run as a non-root user |
 | serviceAccount.annotations | object | `{}` | Annotations to add to the service account |
 | serviceAccount.create | bool | `true` | Specifies whether a service account should be created |
 | serviceAccount.name | string | `""` | The name of the service account to use. If not set and create is true, a name is generated using the fullname template |
-| serviceMonitor | object | `{"additionalLabels":{},"enabled":false,"interval":"1m","metricRelabelings":[],"relabelings":[],"scrapeTimeout":"10s","targetLabels":[],"telemetryPath":"/metrics"}` | Enable this to use with Prometheus Operator |
 | serviceMonitor.additionalLabels | object | `{}` | Set of labels to transfer from the Kubernetes Service onto the target |
-| serviceMonitor.enabled | bool | `false` | When set true then use a ServiceMonitor to configure scraping |
+| serviceMonitor.enabled | bool | `false` | Whether to create a ServiceMonitor |
 | serviceMonitor.interval | string | `"1m"` | Set how frequently Prometheus should scrape |
 | serviceMonitor.metricRelabelings | list | `[]` | MetricRelabelConfigs to apply to samples before ingestion |
 | serviceMonitor.relabelings | list | `[]` | Set relabel_configs as per https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config |
@@ -99,5 +104,5 @@ It's easier to just manage this configuration outside of the operator.
 | serviceMonitor.targetLabels | list | `[]` | Set of labels to transfer from the Kubernetes Service onto the target |
 | serviceMonitor.telemetryPath | string | `"/metrics"` | Set path to metrics path |
 | tolerations | list | `[]` | pod tolerations |
-| watchNamespaceSelector | string | `""` | Sets the WATCH_NAMESPACE_SELECTOR environment variable, it defines which namespaces the operator should be listening for based on label and key value pair added on namespace kind. By default it's all namespaces. |
-| watchNamespaces | string | `""` | Sets the WATCH_NAMESPACE environment variable, it defines which namespaces the operator should be listening for. By default it's all namespaces, if you only want to listen for the same namespace as the operator is deployed to look at namespaceScope. |
+| watchNamespaceSelector | string | `""` | Sets the `WATCH_NAMESPACE_SELECTOR` environment variable, it defines which namespaces the operator should be listening for based on a namespace label (e.g. `"environment: dev"`). By default, the operator watches all namespaces. To make it watch only its own namespace, check out `namespaceScope` option instead. |
+| watchNamespaces | string | `""` | Sets the `WATCH_NAMESPACE` environment variable, it defines which namespaces the operator should be listening for (e.g. `"grafana, foo"`). By default, the operator watches all namespaces. To make it watch only its own namespace, check out `namespaceScope` option instead. |

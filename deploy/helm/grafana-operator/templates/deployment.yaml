@@ -58,6 +58,9 @@ spec:
             - --health-probe-bind-address=:8081
             - --metrics-bind-address=0.0.0.0:{{ .Values.metricsService.metricsPort }}
             - --pprof-addr=0.0.0.0:{{ .Values.metricsService.pprofPort }}
+            - --zap-encoder={{ .Values.logging.encoder }}
+            - --zap-log-level={{ .Values.logging.level }}
+            - --zap-time-encoding={{ .Values.logging.time }}
             {{- if .Values.leaderElect }}
             - --leader-elect
             {{- end }}
