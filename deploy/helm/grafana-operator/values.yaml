@@ -19,12 +19,12 @@ watchNamespaceSelector: ""
 isOpenShift: false
 
 logging:
-  # -- Log encoding (one of "json" or "console")
+  # -- Log encoding ("console", "json")
   encoder: console
-  # -- Configure the verbosity of logging. Can be one of "debug", "info", "error"
+  # -- Configure the verbosity of logging ("debug", "error", "info")
   level: info
-  # -- Time encoding (one of "epoch", "millis", "nano", "iso8601", "rfc3339" or "rfc3339nano").
-  time: epoch
+  # -- Time encoding ("epoch", "iso8601", "millis", "nano", "rfc3339", "rfc3339nano")
+  time: rfc3339
 
 # -- Additional environment variables
 env: []

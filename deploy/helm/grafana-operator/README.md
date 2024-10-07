@@ -73,9 +73,9 @@ It's easier to just manage this configuration outside of the operator.
 | imagePullSecrets | list | `[]` | image pull secrets |
 | isOpenShift | bool | `false` | Determines if the target cluster is OpenShift. Additional rbac permissions for routes will be added on OpenShift |
 | leaderElect | bool | `false` | If you want to run multiple replicas of the grafana-operator, this is not recommended. |
-| logging.encoder | string | `"console"` | Log encoding (one of "json" or "console") |
-| logging.level | string | `"info"` | Configure the verbosity of logging. Can be one of "debug", "info", "error" |
-| logging.time | string | `"epoch"` | Time encoding (one of "epoch", "millis", "nano", "iso8601", "rfc3339" or "rfc3339nano"). |
+| logging.encoder | string | `"console"` | Log encoding ("console", "json") |
+| logging.level | string | `"info"` | Configure the verbosity of logging ("debug", "error", "info") |
+| logging.time | string | `"rfc3339"` | Time encoding ("epoch", "iso8601", "millis", "nano", "rfc3339", "rfc3339nano") |
 | metricsService.metricsPort | int | `9090` | metrics service port |
 | metricsService.pprofPort | int | `8888` | port for the pprof profiling endpoint |
 | metricsService.type | string | `"ClusterIP"` | metrics service type |
