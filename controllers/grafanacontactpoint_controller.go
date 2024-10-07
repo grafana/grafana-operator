@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -31,6 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	simplejson "github.com/bitly/go-simplejson"
 	"github.com/go-logr/logr"
 	"github.com/grafana/grafana-openapi-client-go/client/provisioning"
 	"github.com/grafana/grafana-openapi-client-go/models"
@@ -179,13 +181,18 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 		return fmt.Errorf("getting contact point by UID: %w", err)
 	}
 
+	settings, err := r.buildSettings(ctx, contactPoint)
+	if err != nil {
+		return fmt.Errorf("overriding settings: %w", err)
+	}
+
 	if applied.UID == "" {
 		// create
 		cp := &models.EmbeddedContactPoint{
 			DisableResolveMessage: contactPoint.Spec.DisableResolveMessage,
 			Name:                  contactPoint.Spec.Name,
 			Type:                  &contactPoint.Spec.Type,
-			Settings:              contactPoint.Spec.Settings,
+			Settings:              settings,
 			UID:                   string(contactPoint.UID),
 		}
 		_, err := cl.Provisioning.PostContactpoints(provisioning.NewPostContactpointsParams().WithBody(cp)) //nolint:errcheck
@@ -197,7 +204,7 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 		var updatedCP models.EmbeddedContactPoint
 		updatedCP.Name = contactPoint.Spec.Name
 		updatedCP.Type = &contactPoint.Spec.Type
-		updatedCP.Settings = contactPoint.Spec.Settings
+		updatedCP.Settings = settings
 		updatedCP.DisableResolveMessage = contactPoint.Spec.DisableResolveMessage
 		_, err := cl.Provisioning.PutContactpoint(provisioning.NewPutContactpointParams().WithUID(applied.UID).WithBody(&updatedCP)) //nolint:errcheck
 		if err != nil {
@@ -205,6 +212,27 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 		}
 	}
 	return nil
+}
+
+func (r *GrafanaContactPointReconciler) buildSettings(ctx context.Context, contactPoint *grafanav1beta1.GrafanaContactPoint) (models.JSON, error) {
+	marshaled, err := json.Marshal(contactPoint.Spec.Settings)
+	if err != nil {
+		return nil, fmt.Errorf("encoding existing settings as json: %w", err)
+	}
+	simpleContent, err := simplejson.NewJson(marshaled)
+	if err != nil {
+		return nil, fmt.Errorf("parsing marshaled json as simplejson")
+	}
+	for _, override := range contactPoint.Spec.ValuesFrom {
+		val, _, err := getReferencedValue(ctx, r.Client, contactPoint, override.ValueFrom)
+		if err != nil {
+			return nil, fmt.Errorf("getting referenced value: %w", err)
+		}
+		r.Log.Info("overriding value", "key", override.TargetPath, "value", val)
+
+		simpleContent.SetPath(strings.Split(override.TargetPath, "."), val)
+	}
+	return simpleContent.Interface(), nil
 }
 
 func (r *GrafanaContactPointReconciler) getContactPointFromUID(ctx context.Context, instance *grafanav1beta1.Grafana, contactPoint *grafanav1beta1.GrafanaContactPoint) (models.EmbeddedContactPoint, error) {

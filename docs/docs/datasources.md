@@ -28,12 +28,12 @@ metadata:
   name: grafanadatasource-sample
 spec:
   valuesFrom:
-    - targetPath: "user"
+    - targetPath: "basicAuthUser"
       valueFrom:
         secretKeyRef:
           name: "credentials"
           key: "PROMETHEUS_USERNAME"
-    - targetPath: "secureJsonData.password"
+    - targetPath: "secureJsonData.basicAuthPassword"
       valueFrom:
         secretKeyRef:
           name: "credentials"
@@ -48,12 +48,12 @@ spec:
     basicAuth: true
     url: http://prometheus-service:9090
     isDefault: true
-    user: ${PROMETHEUS_USERNAME}
+    basicAuthUser: ${PROMETHEUS_USERNAME}
     jsonData:
       "tlsSkipVerify": true
       "timeInterval": "5s"
     secureJsonData:
-      "password": ${PROMETHEUS_PASSWORD} # Notice the brakes around PROMETHEUS_PASSWORD
+      "basicAuthPassword": ${PROMETHEUS_PASSWORD} # Notice the braces around PROMETHEUS_PASSWORD
 ```
 
 **NOTE:** The secret must exist in the same namespace as the datasource.

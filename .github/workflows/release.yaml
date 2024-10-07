@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: install flux
-        uses: fluxcd/flux2/action@v2.3.0
+        uses: fluxcd/flux2/action@v2.4.0
       - name: Clone repo
         uses: actions/checkout@v4
       - name: Prepare
@@ -102,10 +102,10 @@ jobs:
 
       - uses: ko-build/setup-ko@v0.7
         with:
-          version: v0.15.1
+          version: v0.16.0
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@v3.6.0
+        uses: sigstore/cosign-installer@v3.7.0
         with:
           cosign-release: "v2.2.2"
 
