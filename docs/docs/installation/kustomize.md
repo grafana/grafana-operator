@@ -81,7 +81,33 @@ resources:
 
 ```
 
-#### ArgoCD
+## Configuration
+
+Kustomize allows for customization through overlays. For example: if you want to
+change log format to JSON, you can apply an override to the container and provide the
+required arguments:
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - https://github.com/grafana/grafana-operator/releases/download/{{<param version>}}/kustomize-cluster_scoped.yaml
+
+patches:
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: grafana-operator-controller-manager
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: --zap-encoder=json
+```
+
+## Common Issues
+### ArgoCD
 
 If you are using ArgoCD you need to add this patch to fix the errors during apply of the CRD.
 
@@ -108,3 +134,4 @@ patches:
           argocd.argoproj.io/sync-options: ServerSideApply=true
         name: grafanas.grafana.integreatly.org
 ```
+
