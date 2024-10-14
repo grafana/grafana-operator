@@ -113,7 +113,8 @@ func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result,
 
 			namespace, name, uid := folder.Split()
 
-			params := folders.NewDeleteFolderParams().WithFolderUID(uid)
+			reftrue := true
+			params := folders.NewDeleteFolderParams().WithFolderUID(uid).WithForceDeleteRules(&reftrue)
 			_, err = grafanaClient.Folders.DeleteFolder(params) //nolint
 			if err != nil {
 				var notFound *folders.DeleteFolderNotFound
@@ -292,7 +293,8 @@ func (r *GrafanaFolderReconciler) onFolderDeleted(ctx context.Context, namespace
 			if err != nil {
 				return err
 			}
-			params := folders.NewDeleteFolderParams().WithFolderUID(*uid)
+			reftrue := true
+			params := folders.NewDeleteFolderParams().WithFolderUID(*uid).WithForceDeleteRules(&reftrue)
 			_, err = grafanaClient.Folders.DeleteFolder(params) //nolint
 			if err != nil {
 				var notFound *folders.DeleteFolderNotFound
