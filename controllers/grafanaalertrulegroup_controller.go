@@ -162,7 +162,12 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
 	}
-	strue := "true"
+
+	xDisableProvenance := "true"
+	editable := true
+	if group.Spec.Editable != nil && !*group.Spec.Editable {
+		editable = false
+	}
 
 	_, err = cl.Folders.GetFolderByUID(folderUID) //nolint:errcheck
 	if err != nil {
@@ -225,16 +230,20 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 		if _, ok := currentRules[rule.UID]; ok {
 			params := provisioning.NewPutAlertRuleParams().
 				WithBody(apiRule).
-				WithXDisableProvenance(&strue).
 				WithUID(rule.UID)
+			if editable {
+				params.SetXDisableProvenance(&xDisableProvenance)
+			}
 			_, err := cl.Provisioning.PutAlertRule(params) //nolint:errcheck
 			if err != nil {
 				return fmt.Errorf("updating rule: %w", err)
 			}
 		} else {
 			params := provisioning.NewPostAlertRuleParams().
-				WithBody(apiRule).
-				WithXDisableProvenance(&strue)
+				WithBody(apiRule)
+			if editable {
+				params.SetXDisableProvenance(&xDisableProvenance)
+			}
 			_, err = cl.Provisioning.PostAlertRule(params) //nolint:errcheck
 			if err != nil {
 				return fmt.Errorf("creating rule: %w", err)
@@ -247,8 +256,10 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 	for uid, present := range currentRules {
 		if !present {
 			params := provisioning.NewDeleteAlertRuleParams().
-				WithUID(uid).
-				WithXDisableProvenance(&strue)
+				WithUID(uid)
+			if editable {
+				params.SetXDisableProvenance(&xDisableProvenance)
+			}
 			_, err := cl.Provisioning.DeleteAlertRule(params) //nolint:errcheck
 			if err != nil {
 				return fmt.Errorf("deleting old alert rule %s: %w", uid, err)
@@ -265,8 +276,10 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 	params := provisioning.NewPutAlertRuleGroupParams().
 		WithBody(mGroup).
 		WithGroup(groupName).
-		WithFolderUID(folderUID).
-		WithXDisableProvenance(&strue)
+		WithFolderUID(folderUID)
+	if editable {
+		params.SetXDisableProvenance(&xDisableProvenance)
+	}
 	_, err = cl.Provisioning.PutAlertRuleGroup(params) //nolint:errcheck
 	if err != nil {
 		return fmt.Errorf("updating group: %s", err.Error())

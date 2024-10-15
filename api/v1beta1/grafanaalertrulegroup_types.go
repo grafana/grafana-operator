@@ -58,6 +58,11 @@ type GrafanaAlertRuleGroupSpec struct {
 
 	// +optional
 	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
+
+	// Whether to enable or disable editing of the alert rule group in Grafana UI
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
+	// +optional
+	Editable *bool `json:"editable,omitempty"`
 }
 
 // AlertRule defines a specific rule to be evaluated. It is based on the upstream model with some k8s specific type mappings
