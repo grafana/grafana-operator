@@ -264,7 +264,7 @@ bundle/redhat: bundle
 .PHONY: e2e-kind
 e2e-kind:
 ifeq (,$(shell kind get clusters $(KIND_CLUSTER_NAME)))
-	kind --kubeconfig="${KUBECONFIG}" create cluster --image=kindest/node:v$(ENVTEST_K8S_VERSION) --config tests/e2e/kind.yaml
+	$(KIND) --kubeconfig="${KUBECONFIG}" create cluster --image=kindest/node:v$(ENVTEST_K8S_VERSION) --config tests/e2e/kind.yaml
 endif
 
 .PHONY: e2e-local-gh-actions
