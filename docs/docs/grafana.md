@@ -67,7 +67,7 @@ spec:
       key: GF_SECURITY_ADMIN_USER
 ```
 
-A more comprehensive example can be found [here](../examples/external_grafana/readme).
+A more comprehensive example can be found [here](../../examples/external_grafana/).
 
 ## Organizations
 
