@@ -45,7 +45,7 @@ SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
 .PHONY: all
-all: manifests test api-docs
+all: manifests test api-docs helm/docs
 
 ##@ General
 

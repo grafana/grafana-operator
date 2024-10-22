@@ -207,6 +207,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
+	// Retrieving the model before the loop ensures to exit early in case of failure and not fail once per matching instance
 	dashboardModel, hash, err := r.getDashboardModel(cr, dashboardJson)
 	if err != nil {
 		controllerLog.Error(err, "failed to prepare dashboard model", "dashboard", cr.Name)
@@ -579,11 +580,7 @@ func (r *GrafanaDashboardReconciler) getDashboardModel(cr *v1beta1.GrafanaDashbo
 	dashboardModel["id"] = nil
 
 	uid, _ := dashboardModel["uid"].(string) //nolint:errcheck
-	if uid == "" {
-		uid = string(cr.UID)
-	}
-
-	dashboardModel["uid"] = uid
+	dashboardModel["uid"] = cr.CustomUIDOrUID(uid)
 
 	return dashboardModel, fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
