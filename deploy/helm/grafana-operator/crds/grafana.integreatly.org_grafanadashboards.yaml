@@ -155,7 +155,7 @@ spec:
                     name:
                       type: string
                     value:
-                      description: Inline evn value
+                      description: Inline env value
                       type: string
                     valueFrom:
                       description: Reference on value source, might be the reference
@@ -328,6 +328,13 @@ spec:
                 format: duration
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
+              uid:
+                description: Manually specify the uid for the dashboard, overwrites
+                  uids already present in the json model
+                type: string
+                x-kubernetes-validations:
+                - message: spec.uid is immutable
+                  rule: self == oldSelf
               url:
                 description: dashboard url
                 type: string
@@ -398,6 +405,9 @@ spec:
                 declared
               rule: (has(self.folder) && !(has(self.folderRef) || has(self.folderUID)))
                 || !(has(self.folder))
+            - message: spec.uid is immutable
+              rule: ((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) &&
+                has(self.uid)))
           status:
             description: GrafanaDashboardStatus defines the observed state of GrafanaDashboard
             properties:

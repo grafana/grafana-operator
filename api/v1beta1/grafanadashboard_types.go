@@ -60,7 +60,13 @@ type GrafanaDashboardUrlAuthorization struct {
 // GrafanaDashboardSpec defines the desired state of GrafanaDashboard
 // +kubebuilder:validation:XValidation:rule="(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID))) || !(has(self.folderRef) && (has(self.folderUID)))", message="Only one of folderUID or folderRef can be declared at the same time"
 // +kubebuilder:validation:XValidation:rule="(has(self.folder) && !(has(self.folderRef) || has(self.folderUID))) || !(has(self.folder))", message="folder field cannot be set when folderUID or folderRef is already declared"
+// +kubebuilder:validation:XValidation:rule="((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid)))", message="spec.uid is immutable"
 type GrafanaDashboardSpec struct {
+	// Manually specify the uid for the dashboard, overwrites uids already present in the json model
+	// +optional
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="spec.uid is immutable"
+	CustomUID string `json:"uid,omitempty"`
+
 	// dashboard json
 	// +optional
 	Json string `json:"json,omitempty"`
@@ -143,7 +149,7 @@ type GrafanaDashboardSpec struct {
 
 type GrafanaDashboardEnv struct {
 	Name string `json:"name"`
-	// Inline evn value
+	// Inline env value
 	// +optional
 	Value string `json:"value,omitempty"`
 	// Reference on value source, might be the reference on a secret or config map
@@ -220,6 +226,19 @@ func (in *GrafanaDashboard) FolderRef() string {
 // FolderUID implements FolderReferencer.
 func (in *GrafanaDashboard) FolderUID() string {
 	return in.Spec.FolderUID
+}
+
+// Wrapper around CustomUID, dashboardModelUID or default metadata.uid
+func (in *GrafanaDashboard) CustomUIDOrUID(dashboardUID string) string {
+	if in.Spec.CustomUID != "" {
+		return in.Spec.CustomUID
+	}
+
+	if dashboardUID == "" {
+		return string(in.ObjectMeta.UID)
+	}
+
+	return dashboardUID
 }
 
 // FolderNamespace implements FolderReferencer.
@@ -331,9 +350,7 @@ func (in *GrafanaDashboard) IsUpdatedUID(uid string) bool {
 		return false
 	}
 
-	if uid == "" {
-		uid = string(in.UID)
-	}
+	uid = in.CustomUIDOrUID(uid)
 
 	return in.Status.UID != uid
 }
