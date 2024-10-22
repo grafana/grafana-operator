@@ -251,7 +251,7 @@ func getDashboardCR(t *testing.T, crUID string, statusUID string, specUID string
 	t.Helper()
 	var dashboardModel map[string]interface{} = make(map[string]interface{})
 	dashboardModel["uid"] = dashUID
-	dashboard, _ := json.Marshal(dashboardModel)
+	dashboard, _ := json.Marshal(dashboardModel) //nolint:errcheck
 
 	cr := GrafanaDashboard{
 		TypeMeta: metav1.TypeMeta{},
