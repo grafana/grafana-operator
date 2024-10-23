@@ -1,1 +1,0 @@
-../../../deploy/helm/grafana-operator/README.md
