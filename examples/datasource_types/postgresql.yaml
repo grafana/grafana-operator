@@ -10,8 +10,8 @@ spec:
   datasource:
     name: postgresql
     type: postgres
-    database: postgres
     jsonData:
+      database: postgres
       connMaxLifetime: 14400
       maxIdleConns: 2
       maxOpenConns: 0
