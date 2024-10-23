@@ -1,0 +1,24 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicy
+metadata:
+  name: grafananotificationpolicy-sample
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  route:
+    receiver: grafana-email-default
+    group_by:
+      - grafana_folder
+      - alertname
+    routes:
+      - receiver: grafana-email-operations
+        object_matchers:
+          - - team
+            - =
+            - operations
+      - receiver: grafana-email-security
+        object_matchers:
+          - - team
+            - =
+            - security
