@@ -1,0 +1,26 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaContactPoint
+metadata:
+  name: operations-team
+spec:
+  name: operations-team
+  type: "email"
+  instanceSelector:
+    matchLabels:
+      instance: my-grafana-stack
+  settings:
+    addresses: 'operations@example.com'
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaContactPoint
+metadata:
+  name: security-team
+spec:
+  name: security-team
+  type: "email"
+  instanceSelector:
+    matchLabels:
+      instance: my-grafana-stack
+  settings:
+    addresses: 'security@example.com'

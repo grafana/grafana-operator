@@ -1,0 +1,31 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicy
+metadata:
+  name: test
+spec:
+  instanceSelector:
+    matchLabels:
+      instance: "my-grafana-stack"
+  route:
+    receiver: grafana-default-email
+    group_by:
+      - grafana_folder
+      - alertname
+    routes:
+      - receiver: operations-team
+        object_matchers:
+          - - team
+            - =
+            - operations
+        routes:
+          - object_matchers:
+              - - severity
+                - =
+                - high
+            repeat_interval: 5m
+      - receiver: security-team
+        object_matchers:
+          - - team
+            - =
+            - security

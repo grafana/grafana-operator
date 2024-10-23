@@ -1,0 +1,90 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaAlertRuleGroup
+metadata:
+  name: security-alert-rules
+spec:
+  folderRef: alerts-demo
+  instanceSelector:
+    matchLabels:
+      instance: "my-grafana-stack"
+  interval: 5m
+  rules:
+    - uid: fe1q7kelzb400a
+      title: Unauthorized log entry
+      condition: C
+      for: 0s
+      data:
+        - refId: A
+          queryType: range
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: grafanacloud-demoinfra-logs
+          model:
+            datasource:
+                type: loki
+                uid: grafanacloud-demoinfra-logs
+            editorMode: code
+            expr: count_over_time({namespace="quickpizza",container="copy"}[5m] |= "unauthorized")
+            hide: false
+            intervalMs: 1000
+            maxDataPoints: 43200
+            queryType: range
+            refId: A
+        - refId: B
+          datasourceUid: __expr__
+          model:
+            conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                        - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+            datasource:
+                type: __expr__
+                uid: __expr__
+            expression: A
+            intervalMs: 1000
+            maxDataPoints: 43200
+            reducer: last
+            refId: B
+            type: reduce
+        - refId: C
+          datasourceUid: __expr__
+          model:
+            conditions:
+                - evaluator:
+                    params:
+                        - 0
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                        - C
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+            datasource:
+                type: __expr__
+                uid: __expr__
+            expression: B
+            intervalMs: 1000
+            maxDataPoints: 43200
+            refId: C
+            type: threshold
+      noDataState: OK
+      execErrState: Error
+      labels:
+        team: security
+        severity: high
+      isPaused: false

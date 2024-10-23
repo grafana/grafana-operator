@@ -16,6 +16,12 @@ spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
+    - description: GrafanaNotificationPolicy is the Schema for the GrafanaNotificationPolicy
+        API
+      displayName: Grafana Notification policy
+      kind: GrafanaNotificationPolicy
+      name: grafananotificationpolicies.grafana.integreatly.org
+      version: v1beta1
     - description: GrafanaAlertRuleGroup is the Schema for the grafanaalertrulegroups
         API
       displayName: Grafana Alert Rule Group
