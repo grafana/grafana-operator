@@ -143,6 +143,52 @@ spec:
               spec:
                 uid: SpecUID
 
+    - name: Ensure Grafana and other resources are ready
+      try:
+        - assert:
+            resource:
+              apiVersion: grafana.integreatly.org/v1beta1
+              kind: Grafana
+              metadata:
+                name: grafana-immutable
+              status:
+                stage: complete
+                stageStatus: success
+
+        - assert:
+            resource:
+              apiVersion: grafana.integreatly.org/v1beta1
+              kind: GrafanaDashboard
+              metadata:
+                name: dashboard-uid
+              status:
+                conditions:
+                - reason: ApplySuccessful
+                  status: "True"
+                  type: DashboardSynchronized
+        - assert:
+            resource:
+              apiVersion: grafana.integreatly.org/v1beta1
+              kind: GrafanaDashboard
+              metadata:
+                name: metadata-uid
+              status:
+                conditions:
+                - reason: ApplySuccessful
+                  status: "True"
+                  type: DashboardSynchronized
+        - assert:
+            resource:
+              apiVersion: grafana.integreatly.org/v1beta1
+              kind: GrafanaDashboard
+              metadata:
+                name: spec-uid
+              status:
+                conditions:
+                - reason: ApplySuccessful
+                  status: "True"
+                  type: DashboardSynchronized
+
     - name: Verify uid in Grafana Instance status object
       try:
         - script:
@@ -155,9 +201,6 @@ spec:
             outputs:
               - name: specUid
                 value: (json_parse($stdout))
-
-        - sleep:
-            duration: 30s
 
         - assert:
             resource:
