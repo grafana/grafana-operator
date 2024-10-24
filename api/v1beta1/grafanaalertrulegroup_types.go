@@ -54,6 +54,11 @@ type GrafanaAlertRuleGroupSpec struct {
 
 	// +optional
 	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
+
+	// Whether to enable or disable editing of the alert rule group in Grafana UI
+	// Note that this field can be changed from true to false, but cannot from false to true, otherwise the request would return 500 status code
+	// +optional
+	Editable *bool `json:"editable,omitempty"`
 }
 
 // AlertRule defines a specific rule to be evaluated. It is based on the upstream model with some k8s specific type mappings

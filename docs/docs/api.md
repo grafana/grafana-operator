@@ -133,6 +133,14 @@ GrafanaAlertRuleGroupSpec defines the desired state of GrafanaAlertRuleGroup
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>editable</b></td>
+        <td>boolean</td>
+        <td>
+          Whether to enable or disable editing of the alert rule group in Grafana UI
+Note that this field can be changed from true to false, but cannot from false to true, otherwise the request would return 500 status code<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>folderRef</b></td>
         <td>string</td>
         <td>
