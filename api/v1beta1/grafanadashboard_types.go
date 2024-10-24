@@ -234,11 +234,11 @@ func (in *GrafanaDashboard) CustomUIDOrUID(dashboardUID string) string {
 		return in.Spec.CustomUID
 	}
 
-	if dashboardUID == "" {
-		return string(in.ObjectMeta.UID)
+	if dashboardUID != "" {
+		return dashboardUID
 	}
 
-	return dashboardUID
+	return string(in.ObjectMeta.UID)
 }
 
 // FolderNamespace implements FolderReferencer.
