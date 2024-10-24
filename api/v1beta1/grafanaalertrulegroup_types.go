@@ -28,6 +28,11 @@ import (
 type GrafanaAlertRuleGroupSpec struct {
 	// +optional
 	// +kubebuilder:validation:Type=string
+	// Name of the alert rule group
+	Name string `json:"name,omitempty"`
+
+	// +optional
+	// +kubebuilder:validation:Type=string
 	// +kubebuilder:validation:Format=duration
 	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
 	// +kubebuilder:default="10m"
@@ -135,6 +140,15 @@ type GrafanaAlertRuleGroup struct {
 
 	Spec   GrafanaAlertRuleGroupSpec   `json:"spec,omitempty"`
 	Status GrafanaAlertRuleGroupStatus `json:"status,omitempty"`
+}
+
+// GetName get the name of alert rule group.
+func (in *GrafanaAlertRuleGroup) GetName() string {
+	groupName := in.Spec.Name
+	if groupName == "" {
+		groupName = in.Name
+	}
+	return groupName
 }
 
 // CurrentGeneration implements FolderReferencer.
