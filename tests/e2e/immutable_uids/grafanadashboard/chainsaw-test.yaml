@@ -4,6 +4,7 @@ kind: Test
 metadata:
   name: dashboards-uids
 spec:
+  concurrent: false
   bindings:
     - name: dashboardModel
       value: |
