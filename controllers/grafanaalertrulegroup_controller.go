@@ -173,7 +173,8 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 		return fmt.Errorf("fetching folder: %w", err)
 	}
 
-	applied, err := cl.Provisioning.GetAlertRuleGroup(group.Name, folderUID)
+	groupName := group.GroupName()
+	applied, err := cl.Provisioning.GetAlertRuleGroup(groupName, folderUID)
 	var ruleNotFound *provisioning.GetAlertRuleGroupNotFound
 	if err != nil && !errors.As(err, &ruleNotFound) {
 		return fmt.Errorf("fetching existing alert rule group: %w", err)
@@ -198,7 +199,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 			IsPaused:     rule.IsPaused,
 			Labels:       rule.Labels,
 			NoDataState:  rule.NoDataState,
-			RuleGroup:    &group.Name,
+			RuleGroup:    &groupName,
 			Title:        &rule.Title,
 			UID:          rule.UID,
 		}
@@ -263,7 +264,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 	}
 	params := provisioning.NewPutAlertRuleGroupParams().
 		WithBody(mGroup).
-		WithGroup(group.Name).
+		WithGroup(groupName).
 		WithFolderUID(folderUID).
 		WithXDisableProvenance(&strue)
 	_, err = cl.Provisioning.PutAlertRuleGroup(params) //nolint:errcheck
@@ -297,7 +298,7 @@ func (r *GrafanaAlertRuleGroupReconciler) removeFromInstance(ctx context.Context
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
 	}
-	remote, err := cl.Provisioning.GetAlertRuleGroup(group.Name, folderUID)
+	remote, err := cl.Provisioning.GetAlertRuleGroup(group.GroupName(), folderUID)
 	if err != nil {
 		var notFound *provisioning.GetAlertRuleGroupNotFound
 		if errors.As(err, &notFound) {

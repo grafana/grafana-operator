@@ -27,6 +27,10 @@ import (
 // +kubebuilder:validation:XValidation:rule="(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID)))", message="Only one of FolderUID or FolderRef can be set"
 type GrafanaAlertRuleGroupSpec struct {
 	// +optional
+	// Name of the alert rule group. If not specified, the resource name will be used.
+	Name string `json:"name,omitempty"`
+
+	// +optional
 	// +kubebuilder:validation:Type=string
 	// +kubebuilder:validation:Format=duration
 	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
@@ -135,6 +139,15 @@ type GrafanaAlertRuleGroup struct {
 
 	Spec   GrafanaAlertRuleGroupSpec   `json:"spec,omitempty"`
 	Status GrafanaAlertRuleGroupStatus `json:"status,omitempty"`
+}
+
+// GroupName returns the name of alert rule group.
+func (in *GrafanaAlertRuleGroup) GroupName() string {
+	groupName := in.Spec.Name
+	if groupName == "" {
+		groupName = in.Name
+	}
+	return groupName
 }
 
 // CurrentGeneration implements FolderReferencer.

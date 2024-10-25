@@ -148,6 +148,13 @@ Overrides the FolderSelector<br/>
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the alert rule group. If not specified, the resource name will be used.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>resyncPeriod</b></td>
         <td>string</td>
         <td>
