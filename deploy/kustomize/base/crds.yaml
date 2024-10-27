@@ -485,10 +485,15 @@ spec:
                           type: object
                           x-kubernetes-map-type: atomic
                       type: object
+                      x-kubernetes-validations:
+                      - message: Either configMapKeyRef or secretKeyRef must be set
+                        rule: (has(self.configMapKeyRef) && !has(self.secretKeyRef))
+                          || (!has(self.configMapKeyRef) && has(self.secretKeyRef))
                   required:
                   - targetPath
                   - valueFrom
                   type: object
+                maxItems: 99
                 type: array
             required:
             - instanceSelector
@@ -1279,10 +1284,15 @@ spec:
                           type: object
                           x-kubernetes-map-type: atomic
                       type: object
+                      x-kubernetes-validations:
+                      - message: Either configMapKeyRef or secretKeyRef must be set
+                        rule: (has(self.configMapKeyRef) && !has(self.secretKeyRef))
+                          || (!has(self.configMapKeyRef) && has(self.secretKeyRef))
                   required:
                   - targetPath
                   - valueFrom
                   type: object
+                maxItems: 99
                 type: array
             required:
             - datasource

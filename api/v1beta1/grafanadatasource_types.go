@@ -70,6 +70,7 @@ type GrafanaDatasourceSpec struct {
 
 	// environments variables from secrets or config maps
 	// +optional
+	// +kubebuilder:validation:MaxItems=99
 	ValuesFrom []ValueFrom `json:"valuesFrom,omitempty"`
 
 	// how often the datasource is refreshed, defaults to 5m if not set

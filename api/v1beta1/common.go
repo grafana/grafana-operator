@@ -7,6 +7,7 @@ type ValueFrom struct {
 	ValueFrom  ValueFromSource `json:"valueFrom"`
 }
 
+// +kubebuilder:validation:XValidation:rule="(has(self.configMapKeyRef) && !has(self.secretKeyRef)) || (!has(self.configMapKeyRef) && has(self.secretKeyRef))", message="Either configMapKeyRef or secretKeyRef must be set"
 type ValueFromSource struct {
 	// Selects a key of a ConfigMap.
 	// +optional
