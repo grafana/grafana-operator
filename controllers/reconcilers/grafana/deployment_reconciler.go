@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	config2 "github.com/grafana/grafana-operator/v5/controllers/config"
@@ -30,6 +31,7 @@ const (
 	ReadinessProbePeriodSeconds       int32 = 10
 	ReadinessProbeSuccessThreshold    int32 = 1
 	ReadinessProbeTimeoutSeconds      int32 = 3
+	RelatedImageGrafanaEnvVar               = "RELATED_IMAGE_GRAFANA"
 )
 
 type DeploymentReconciler struct {
@@ -42,6 +44,10 @@ func NewDeploymentReconciler(client client.Client, isOpenShift bool) reconcilers
 		client:      client,
 		isOpenShift: isOpenShift,
 	}
+}
+
+func IsImageSHA256(image string) bool {
+	return strings.Contains(image, "@sha256:")
 }
 
 func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
@@ -135,10 +141,15 @@ func getVolumeMounts(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.VolumeMou
 }
 
 func getGrafanaImage(cr *v1beta1.Grafana) string {
+	grafanaImg := os.Getenv(RelatedImageGrafanaEnvVar)
+	if IsImageSHA256(grafanaImg) {
+		return grafanaImg
+	}
+
 	if cr.Spec.Version != "" {
 		return fmt.Sprintf("%s:%s", config2.GrafanaImage, cr.Spec.Version)
 	}
-	grafanaImg := os.Getenv("RELATED_IMAGE_GRAFANA")
+
 	if grafanaImg == "" {
 		grafanaImg = fmt.Sprintf("%s:%s", config2.GrafanaImage, config2.GrafanaVersion)
 	}
