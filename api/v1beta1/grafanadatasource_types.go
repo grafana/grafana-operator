@@ -27,6 +27,8 @@ import (
 )
 
 type GrafanaDatasourceInternal struct {
+	// Deprecated, please use spec.uid instead
+	// +optional
 	UID           string `json:"uid,omitempty"`
 	Name          string `json:"name,omitempty"`
 	Type          string `json:"type,omitempty"`
@@ -57,7 +59,13 @@ type GrafanaDatasourceInternal struct {
 }
 
 // GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
+// +kubebuilder:validation:XValidation:rule="((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid)))", message="spec.uid is immutable"
 type GrafanaDatasourceSpec struct {
+	// The UID, for the datasource, fallback to the deprecated spec.datasource.uid and metadata.uid
+	// +optional
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="spec.uid is immutable"
+	CustomUID string `json:"uid,omitempty"`
+
 	Datasource *GrafanaDatasourceInternal `json:"datasource"`
 
 	// selects Grafana instances for import
@@ -146,17 +154,26 @@ func (in *GrafanaDatasource) Unchanged(hash string) bool {
 	return in.Status.Hash == hash
 }
 
-func (in *GrafanaDatasource) IsUpdatedUID(uid string) bool {
+func (in *GrafanaDatasource) IsUpdatedUID() bool {
 	// Datasource has just been created, status is not yet updated
 	if in.Status.UID == "" {
 		return false
 	}
 
-	if uid == "" {
-		uid = string(in.UID)
+	return in.Status.UID != in.CustomUIDOrUID()
+}
+
+// Wrapper around CustomUID, datasourcelUID or default metadata.uid
+func (in *GrafanaDatasource) CustomUIDOrUID() string {
+	if in.Spec.CustomUID != "" {
+		return in.Spec.CustomUID
 	}
 
-	return in.Status.UID != uid
+	if in.Spec.Datasource.UID != "" {
+		return in.Spec.Datasource.UID
+	}
+
+	return string(in.ObjectMeta.UID)
 }
 
 func (in *GrafanaDatasource) ExpandVariables(variables map[string][]byte) ([]byte, error) {

@@ -2437,7 +2437,7 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         <td><b>uid</b></td>
         <td>string</td>
         <td>
-          <br/>
+          Deprecated field, use spec.uid instead<br/>
         </td>
         <td>false</td>
       </tr><tr>

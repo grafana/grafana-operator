@@ -196,7 +196,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
 
-	if cr.IsUpdatedUID(datasource.UID) {
+	if cr.IsUpdatedUID() {
 		controllerLog.Info("datasource uid got updated, deleting datasources with the old uid")
 		err = r.onDatasourceDeleted(ctx, req.Namespace, req.Name)
 		if err != nil {
@@ -258,7 +258,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		if cr.ResyncPeriodHasElapsed() {
 			cr.Status.LastResync = metav1.Time{Time: time.Now()}
 		}
-		cr.Status.UID = datasource.UID
+		cr.Status.UID = cr.CustomUIDOrUID()
 		return ctrl.Result{RequeueAfter: cr.GetResyncPeriod()}, r.Client.Status().Update(ctx, cr)
 	} else {
 		// if there was an issue with the datasource, update the status
@@ -445,9 +445,7 @@ func (r *GrafanaDatasourceReconciler) getDatasourceContent(ctx context.Context, 
 		return nil, "", err
 	}
 
-	if cr.Spec.Datasource.UID == "" {
-		simpleContent.Set("uid", string(cr.UID))
-	}
+	simpleContent.Set("uid", cr.CustomUIDOrUID())
 
 	for _, ref := range cr.Spec.ValuesFrom {
 		ref := ref
