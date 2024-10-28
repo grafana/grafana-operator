@@ -662,6 +662,8 @@ GrafanaContactPoint is the Schema for the grafanacontactpoints API
         <td>object</td>
         <td>
           GrafanaContactPointSpec defines the desired state of GrafanaContactPoint<br/>
+          <br/>
+            <i>Validations</i>:<li>((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid))): spec.uid is immutable</li>
         </td>
         <td>false</td>
       </tr><tr>
@@ -745,6 +747,15 @@ GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
           <br/>
           <br/>
             <i>Enum</i>: alertmanager, prometheus-alertmanager, dingding, discord, email, googlechat, kafka, line, opsgenie, pagerduty, pushover, sensugo, sensu, slack, teams, telegram, threema, victorops, webhook, wecom, hipchat, oncall<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>uid</b></td>
+        <td>string</td>
+        <td>
+          Manually specify the UID the Contact Point is created with<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: spec.uid is immutable</li>
         </td>
         <td>false</td>
       </tr><tr>

@@ -437,6 +437,13 @@ spec:
                 - hipchat
                 - oncall
                 type: string
+              uid:
+                description: Manually specify the UID the Contact Point is created
+                  with
+                type: string
+                x-kubernetes-validations:
+                - message: spec.uid is immutable
+                  rule: self == oldSelf
               valuesFrom:
                 items:
                   properties:
@@ -507,6 +514,10 @@ spec:
             - name
             - settings
             type: object
+            x-kubernetes-validations:
+            - message: spec.uid is immutable
+              rule: ((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) &&
+                has(self.uid)))
           status:
             description: GrafanaContactPointStatus defines the observed state of GrafanaContactPoint
             properties:
