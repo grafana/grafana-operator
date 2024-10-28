@@ -1,9 +1,17 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/chainsaw/main/.schemas/json/configuration-chainsaw-v1alpha1.json
-apiVersion: chainsaw.kyverno.io/v1alpha1
+apiVersion: chainsaw.kyverno.io/v1alpha2
 kind: Configuration
 metadata:
   name: configuration
 spec:
+  error:
+    catch:
+      - describe:
+          apiVersion: grafana.integreatly.org/v1beta1
+          kind: grafana-operator
+      - podLogs:
+          namespace: grafana-operator-system
+          tail: 100
   timeouts:
     assert: 2m0s
     cleanup: 3m0s
