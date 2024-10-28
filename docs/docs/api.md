@@ -859,6 +859,8 @@ merge patch.<br/>
         <td>object</td>
         <td>
           <br/>
+          <br/>
+            <i>Validations</i>:<li>(has(self.configMapKeyRef) && !has(self.secretKeyRef)) || (!has(self.configMapKeyRef) && has(self.secretKeyRef)): Either configMapKeyRef or secretKeyRef must be set</li>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -2591,6 +2593,8 @@ merge patch.<br/>
         <td>object</td>
         <td>
           <br/>
+          <br/>
+            <i>Validations</i>:<li>(has(self.configMapKeyRef) && !has(self.secretKeyRef)) || (!has(self.configMapKeyRef) && has(self.secretKeyRef)): Either configMapKeyRef or secretKeyRef must be set</li>
         </td>
         <td>true</td>
       </tr></tbody>
