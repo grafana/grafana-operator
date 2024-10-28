@@ -9,12 +9,23 @@ permissions:
   contents: write
   packages: write
 
+env:
+  CR_INDEX_PATH: "${{ github.workspace }}/.cr-index"
+  CR_TOOL_PATH: "${{ github.workspace }}/.cr-tool"
+
 jobs:
   helm:
     runs-on: ubuntu-latest
     steps:
-      - name: Clone repo
+      - name: Checkout
         uses: actions/checkout@v4
+        with:
+          path: source
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.16.2
 
       - name: Prepare
         run: |
@@ -26,11 +37,63 @@ jobs:
 
       - name: Publish Helm charts
         run: |
-          cd deploy/helm
+          cd source/deploy/helm
           yq -i '.image.repository = "${{ env.GHCR_REPO }}"' grafana-operator/values.yaml
           helm registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
           helm package --app-version ${{ github.ref_name }} --version ${{ github.ref_name }} grafana-operator
+
           helm push grafana-operator-${{ github.ref_name }}.tgz ${{ env.HELM_REPO }}
+
+      - name: Install CR tool
+        run: |
+          mkdir "${CR_TOOL_PATH}"
+          mkdir "${CR_INDEX_PATH}"
+          curl -sSLo cr.tar.gz "https://github.com/helm/chart-releaser/releases/download/v1.4.0/chart-releaser_1.4.0_linux_amd64.tar.gz"
+          tar -xzf cr.tar.gz -C "${CR_TOOL_PATH}"
+          rm -f cr.tar.gz
+
+      - name: Create a GitHub App installation access token
+        uses: tibdex/github-app-token@v2
+        id: app-token
+        with:
+          app_id: ${{ secrets.GRAFANA_OPERATOR_HELM_RELEASE_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_OPERATOR_HELM_RELEASE_PEM_KEY }}
+
+      - name: Set the correct token (Github App or PAT)
+        run: |
+          echo "AUTHTOKEN=${{ steps.app-token.outputs.token }}" >> $GITHUB_ENV
+          
+      - name: Make github release
+        uses: softprops/action-gh-release@v1
+        with:
+          body: |
+            Helm chart for the [grafana-operator](https://github.com/${{ github.repository }}
+
+            Tag on source: https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}
+          files: |
+            source/deploy/helm/grafana-operator-${{ github.ref_name }}.tgz
+          repository: grafana/helm-charts
+          tag_name: grafana-operator-${{ github.ref_name }}
+          token: ${{ env.AUTHTOKEN }}
+
+      - name: Checkout helm-charts
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          repository: grafana/helm-charts
+          path: helm-charts
+          token: ${{ env.AUTHTOKEN }}
+
+      - name: Configure Git for helm-charts
+        run: |
+          cd helm-charts
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: Update helm repo index.yaml
+        run: |
+          cd helm-charts
+          "${CR_TOOL_PATH}/cr" index --config ../source/deploy/helm/cr.yaml --token "${{ env.AUTHTOKEN }}" --index-path "${CR_INDEX_PATH}" --package-path ../source/deploy/helm/grafana-operator-${{ github.ref_name }}.tgz --push
 
   kustomize:
     runs-on: ubuntu-latest
