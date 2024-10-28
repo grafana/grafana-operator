@@ -1853,6 +1853,32 @@ spec:
                   timeout:
                     nullable: true
                     type: integer
+                  tls:
+                    description: TLS Configuration used to talk with the grafana instance.
+                    properties:
+                      certSecretRef:
+                        description: Use a secret as a reference to give TLS Certificate
+                          information
+                        properties:
+                          name:
+                            description: name is unique within a namespace to reference
+                              a secret resource.
+                            type: string
+                          namespace:
+                            description: namespace defines the space within which
+                              the secret name must be unique.
+                            type: string
+                        type: object
+                        x-kubernetes-map-type: atomic
+                      insecureSkipVerify:
+                        description: Disable the CA check of the server
+                        type: boolean
+                    type: object
+                    x-kubernetes-validations:
+                    - message: insecureSkipVerify and certSecretRef cannot be set
+                        at the same time
+                      rule: (has(self.insecureSkipVerify) && !(has(self.certSecretRef)))
+                        || (has(self.certSecretRef) && !(has(self.insecureSkipVerify)))
                 type: object
               config:
                 additionalProperties:
@@ -10010,8 +10036,7 @@ spec:
                     type: object
                     x-kubernetes-map-type: atomic
                   tls:
-                    description: TLS Configuration used to talk with the external
-                      grafana instance.
+                    description: DEPRECATED, use top level `tls` instead.
                     properties:
                       certSecretRef:
                         description: Use a secret as a reference to give TLS Certificate

@@ -2,6 +2,10 @@
 title: "Add TLS management block in Grafana CR External block"
 linkTitle: "Add TLS management block in Grafana CR External block"
 ---
+{{% pageinfo color="info" %}}
+TLS settings are top level options (`spec.client.tls`) as of [#1690](https://github.com/grafana/grafana-operator/pull/1690) and apply to _all_ Grafana instances.
+Other than this change, the original proposal still holds
+{{% /pageinfo %}}
 
 ## Summary
 

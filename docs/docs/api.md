@@ -3758,6 +3758,83 @@ Client defines how the grafana-operator talks to the grafana instance.
           <br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanaspecclienttls">tls</a></b></td>
+        <td>object</td>
+        <td>
+          TLS Configuration used to talk with the grafana instance.<br/>
+          <br/>
+            <i>Validations</i>:<li>(has(self.insecureSkipVerify) && !(has(self.certSecretRef))) || (has(self.certSecretRef) && !(has(self.insecureSkipVerify))): insecureSkipVerify and certSecretRef cannot be set at the same time</li>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.client.tls
+<sup><sup>[↩ Parent](#grafanaspecclient)</sup></sup>
+
+
+
+TLS Configuration used to talk with the grafana instance.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanaspecclienttlscertsecretref">certSecretRef</a></b></td>
+        <td>object</td>
+        <td>
+          Use a secret as a reference to give TLS Certificate information<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>insecureSkipVerify</b></td>
+        <td>boolean</td>
+        <td>
+          Disable the CA check of the server<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.client.tls.certSecretRef
+<sup><sup>[↩ Parent](#grafanaspecclienttls)</sup></sup>
+
+
+
+Use a secret as a reference to give TLS Certificate information
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          name is unique within a namespace to reference a secret resource.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          namespace defines the space within which the secret name must be unique.<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -19465,7 +19542,7 @@ External enables you to configure external grafana instances that is not managed
         <td><b><a href="#grafanaspecexternaltls">tls</a></b></td>
         <td>object</td>
         <td>
-          TLS Configuration used to talk with the external grafana instance.<br/>
+          DEPRECATED, use top level `tls` instead.<br/>
           <br/>
             <i>Validations</i>:<li>(has(self.insecureSkipVerify) && !(has(self.certSecretRef))) || (has(self.certSecretRef) && !(has(self.insecureSkipVerify))): insecureSkipVerify and certSecretRef cannot be set at the same time</li>
         </td>
@@ -19620,7 +19697,7 @@ More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/nam
 
 
 
-TLS Configuration used to talk with the external grafana instance.
+DEPRECATED, use top level `tls` instead.
 
 <table>
     <thead>
