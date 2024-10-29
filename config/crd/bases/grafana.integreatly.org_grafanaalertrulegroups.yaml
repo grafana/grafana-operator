@@ -44,6 +44,13 @@ spec:
             properties:
               allowCrossNamespaceImport:
                 type: boolean
+              editable:
+                description: Whether to enable or disable editing of the alert rule
+                  group in Grafana UI
+                type: boolean
+                x-kubernetes-validations:
+                - message: Value is immutable
+                  rule: self == oldSelf
               folderRef:
                 description: Match GrafanaFolders CRs to infer the uid
                 type: string
