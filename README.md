@@ -101,11 +101,15 @@ Feel free to drop into our Grafana Operator discussions on:
 
 [![Kubernetes Slack](https://img.shields.io/badge/kubernetes%20slack-white?logo=slack&logoColor=black)](https://kubernetes.slack.com/archives/C019A1KTYKC) [![Grafana Slack](https://img.shields.io/badge/grafana%20community%20Slack-4A254A?logo=slack&logoColor=white)](https://join.slack.com/t/grafana/shared_invite/zt-2eqidcplt-QzkxMuhZA4tGQeFQenE_MQ)
 
-
-
 ## Contributing
 
 For more information on how to contribute to the operator look at [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Anonymous usage statistics reporting
+
+Grafana Operator includes a system that optionally and anonymously reports non-sensitive, non-personally identifiable information about the running the Grafana Operator to a remote statistics server. Grafana Operator maintainers use this anonymous information to learn more about how the open source community runs the operator and what the team should focus on when working on the next features and documentation improvements.
+
+The anonymous usage statistics reporting is enabled by default and as of now cannot be turned off.
 
 ## Version Support and Development Mindset
 
