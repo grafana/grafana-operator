@@ -163,7 +163,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 		return fmt.Errorf("building grafana client: %w", err)
 	}
 
-	xDisableProvenance := "true"
+	trueRef := "true"
 	editable := true
 	if group.Spec.Editable != nil && !*group.Spec.Editable {
 		editable = false
@@ -232,7 +232,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 				WithBody(apiRule).
 				WithUID(rule.UID)
 			if editable {
-				params.SetXDisableProvenance(&xDisableProvenance)
+				params.SetXDisableProvenance(&trueRef)
 			}
 			_, err := cl.Provisioning.PutAlertRule(params) //nolint:errcheck
 			if err != nil {
@@ -242,7 +242,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 			params := provisioning.NewPostAlertRuleParams().
 				WithBody(apiRule)
 			if editable {
-				params.SetXDisableProvenance(&xDisableProvenance)
+				params.SetXDisableProvenance(&trueRef)
 			}
 			_, err = cl.Provisioning.PostAlertRule(params) //nolint:errcheck
 			if err != nil {
@@ -258,7 +258,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 			params := provisioning.NewDeleteAlertRuleParams().
 				WithUID(uid)
 			if editable {
-				params.SetXDisableProvenance(&xDisableProvenance)
+				params.SetXDisableProvenance(&trueRef)
 			}
 			_, err := cl.Provisioning.DeleteAlertRule(params) //nolint:errcheck
 			if err != nil {
@@ -278,7 +278,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 		WithGroup(groupName).
 		WithFolderUID(folderUID)
 	if editable {
-		params.SetXDisableProvenance(&xDisableProvenance)
+		params.SetXDisableProvenance(&trueRef)
 	}
 	_, err = cl.Provisioning.PutAlertRuleGroup(params) //nolint:errcheck
 	if err != nil {
