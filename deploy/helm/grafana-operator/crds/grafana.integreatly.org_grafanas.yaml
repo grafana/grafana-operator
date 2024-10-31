@@ -8175,6 +8175,9 @@ spec:
                 description: External enables you to configure external grafana instances
                   that is not managed by the operator.
                 properties:
+                  OrgID:
+                    format: int64
+                    type: integer
                   adminPassword:
                     description: AdminPassword key to talk to the external grafana
                       instance.

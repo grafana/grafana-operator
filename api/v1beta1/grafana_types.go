@@ -91,7 +91,8 @@ type External struct {
 	AdminPassword *v1.SecretKeySelector `json:"adminPassword,omitempty"`
 	// DEPRECATED, use top level `tls` instead.
 	// +optional
-	TLS *TLSConfig `json:"tls,omitempty"`
+	TLS   *TLSConfig `json:"tls,omitempty"`
+	OrgID int64      `json:"OrgID,omitempty"`
 }
 
 // TLSConfig specifies options to use when communicating with the Grafana endpoint

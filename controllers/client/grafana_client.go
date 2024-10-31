@@ -101,6 +101,17 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 	return credentials, nil
 }
 
+func CheckOrgID(grafana *v1beta1.Grafana) int64 {
+	if grafana.Spec.External != nil {
+		// If the user has set the OrgID in the CR, use it
+		if grafana.Spec.External.OrgID != 0 {
+			return grafana.Spec.External.OrgID
+		}
+	}
+
+	return 0
+}
+
 func InjectAuthHeaders(ctx context.Context, c client.Client, grafana *v1beta1.Grafana, req *http.Request) error {
 	creds, err := getAdminCredentials(ctx, c, grafana)
 	if err != nil {
@@ -157,6 +168,7 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1
 		NumRetries: 0,
 		Client:     client,
 		TLSConfig:  tlsConfig,
+		OrgID:      CheckOrgID(grafana),
 	}
 	if credentials.username != "" {
 		cfg.BasicAuth = url.UserPassword(credentials.username, credentials.password)
