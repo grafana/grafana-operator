@@ -19527,6 +19527,15 @@ External enables you to configure external grafana instances that is not managed
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>OrgID</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecexternaladminpassword">adminPassword</a></b></td>
         <td>object</td>
         <td>
