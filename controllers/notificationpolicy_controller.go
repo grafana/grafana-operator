@@ -160,8 +160,15 @@ func (r *GrafanaNotificationPolicyReconciler) reconcileWithInstance(ctx context.
 		return fmt.Errorf("building grafana client: %w", err)
 	}
 
-	strue := "true"
-	params := provisioning.NewPutPolicyTreeParams().WithBody(notificationPolicy.Spec.Route.ToModelRoute()).WithXDisableProvenance(&strue)
+	trueRef := "true"
+	editable := true
+	if notificationPolicy.Spec.Editable != nil && !*notificationPolicy.Spec.Editable {
+		editable = false
+	}
+	params := provisioning.NewPutPolicyTreeParams().WithBody(notificationPolicy.Spec.Route.ToModelRoute())
+	if editable {
+		params.SetXDisableProvenance(&trueRef)
+	}
 	if _, err := cl.Provisioning.PutPolicyTree(params); err != nil { //nolint:errcheck
 		return fmt.Errorf("applying notification policy: %w", err)
 	}

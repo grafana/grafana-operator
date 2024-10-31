@@ -1593,6 +1593,13 @@ spec:
             description: GrafanaNotificationPolicySpec defines the desired state of
               GrafanaNotificationPolicy
             properties:
+              editable:
+                description: Whether to enable or disable editing of the notification
+                  policy in Grafana UI
+                type: boolean
+                x-kubernetes-validations:
+                - message: Value is immutable
+                  rule: self == oldSelf
               instanceSelector:
                 description: selects Grafanas for import
                 properties:
