@@ -182,6 +182,9 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, nil
 	}
 
+	// Overwrite OrgID to ensure the field is useless
+	cr.Spec.Datasource.OrgID = nil
+
 	instances, err := r.GetMatchingDatasourceInstances(ctx, cr, r.Client)
 	if err != nil {
 		controllerLog.Error(err, "could not find matching instances", "name", cr.Name, "namespace", cr.Namespace)

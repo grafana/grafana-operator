@@ -67,7 +67,8 @@ spec:
                   database:
                     type: string
                   editable:
-                    description: Deprecated field, it has no effect
+                    description: Whether to enable/disable editing of the datasource
+                      in Grafana UI
                     type: boolean
                   isDefault:
                     type: boolean
@@ -86,6 +87,7 @@ spec:
                   type:
                     type: string
                   uid:
+                    description: Deprecated field, use spec.uid instead
                     type: string
                   url:
                     type: string
@@ -161,6 +163,13 @@ spec:
                 format: duration
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
+              uid:
+                description: The UID, for the datasource, fallback to the deprecated
+                  spec.datasource.uid and metadata.uid
+                type: string
+                x-kubernetes-validations:
+                - message: spec.uid is immutable
+                  rule: self == oldSelf
               valuesFrom:
                 description: environments variables from secrets or config maps
                 items:
@@ -231,6 +240,10 @@ spec:
             - datasource
             - instanceSelector
             type: object
+            x-kubernetes-validations:
+            - message: spec.uid is immutable
+              rule: ((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) &&
+                has(self.uid)))
           status:
             description: GrafanaDatasourceStatus defines the observed state of GrafanaDatasource
             properties:

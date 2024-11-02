@@ -27,7 +27,7 @@ import (
 )
 
 type GrafanaDatasourceInternal struct {
-	// Deprecated, please use spec.uid instead
+	// Deprecated field, use spec.uid instead
 	// +optional
 	UID           string `json:"uid,omitempty"`
 	Name          string `json:"name,omitempty"`
@@ -42,7 +42,9 @@ type GrafanaDatasourceInternal struct {
 
 	// Deprecated field, it has no effect
 	OrgID *int64 `json:"orgId,omitempty"`
-	// Deprecated field, it has no effect
+
+	// Whether to enable/disable editing of the datasource in Grafana UI
+	// +optional
 	Editable *bool `json:"editable,omitempty"`
 
 	// +kubebuilder:validation:Schemaless
