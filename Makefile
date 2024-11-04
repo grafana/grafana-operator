@@ -420,3 +420,11 @@ API_REF_GEN=$(GOBIN)/crdoc
 else
 API_REF_GEN=$(shell which crdoc)
 endif
+
+.PHONY: prep-release
+prep-release: yq
+	$(YQ) -i '.version="v$(VERSION)"' deploy/helm/grafana-operator/Chart.yaml
+	$(YQ) -i '.appVersion="v$(VERSION)"' deploy/helm/grafana-operator/Chart.yaml
+	$(YQ) -i '.params.version="v$(VERSION)"' hugo/config.yaml
+	sed -i 's/--version v5.*/--version v$(VERSION)/g' README.md
+	make helm/docs
