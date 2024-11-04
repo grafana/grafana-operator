@@ -38,6 +38,11 @@ type GrafanaNotificationPolicySpec struct {
 
 	// Routes for alerts to match against
 	Route *Route `json:"route"`
+
+	// Whether to enable or disable editing of the notification policy in Grafana UI
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
+	// +optional
+	Editable *bool `json:"editable,omitempty"`
 }
 
 type Route struct {

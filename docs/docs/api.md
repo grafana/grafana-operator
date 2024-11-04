@@ -3229,6 +3229,15 @@ GrafanaNotificationPolicySpec defines the desired state of GrafanaNotificationPo
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>editable</b></td>
+        <td>boolean</td>
+        <td>
+          Whether to enable or disable editing of the notification policy in Grafana UI<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: Value is immutable</li>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>resyncPeriod</b></td>
         <td>string</td>
         <td>
