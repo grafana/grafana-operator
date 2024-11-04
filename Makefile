@@ -1,5 +1,5 @@
 # Current Operator version
-VERSION ?= 5.15.0
+VERSION ?= 5.15.1
 
 # BUNDLE_GEN_FLAGS are the flags passed to the operator-sdk generate bundle command
 BUNDLE_GEN_FLAGS ?= -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)

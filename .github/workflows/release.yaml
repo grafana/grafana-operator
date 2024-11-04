@@ -93,7 +93,7 @@ jobs:
       - name: Update helm repo index.yaml
         run: |
           cd helm-charts
-          "${CR_TOOL_PATH}/cr" index --config ../source/deploy/helm/cr.yaml --token "${{ env.AUTHTOKEN }}" --index-path "${CR_INDEX_PATH}" --package-path ../source/deploy/helm/grafana-operator-${{ github.ref_name }}.tgz --push
+          "${CR_TOOL_PATH}/cr" index --config ../source/deploy/helm/cr.yaml --token "${{ env.AUTHTOKEN }}" --index-path "${CR_INDEX_PATH}" --package-path ../source/deploy/helm/ --push
 
   kustomize:
     runs-on: ubuntu-latest
