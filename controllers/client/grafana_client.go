@@ -154,9 +154,10 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1
 		// APIKey is an optional API key or service account token.
 		APIKey: credentials.apikey,
 		// NumRetries contains the optional number of attempted retries
-		NumRetries: 0,
-		Client:     client,
-		TLSConfig:  tlsConfig,
+		NumRetries:  0,
+		Client:      client,
+		TLSConfig:   tlsConfig,
+		HTTPHeaders: grafana.Spec.Client.Headers,
 	}
 	if credentials.username != "" {
 		cfg.BasicAuth = url.UserPassword(credentials.username, credentials.password)

@@ -3785,6 +3785,13 @@ Client defines how the grafana-operator talks to the grafana instance.
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>headers</b></td>
+        <td>map[string]string</td>
+        <td>
+          Optional list of Header configuration objects that specify headers and their value.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>preferIngress</b></td>
         <td>boolean</td>
         <td>
