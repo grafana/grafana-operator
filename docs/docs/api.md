@@ -3785,10 +3785,10 @@ Client defines how the grafana-operator talks to the grafana instance.
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>headers</b></td>
-        <td>map[string]string</td>
+        <td><b><a href="#grafanaspecclientheadersindex">headers</a></b></td>
+        <td>[]object</td>
         <td>
-          Optional list of Header configuration objects that specify headers and their value.<br/>
+          Optional list of Header configuration objects that specify headers key and their value.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3812,6 +3812,40 @@ Client defines how the grafana-operator talks to the grafana instance.
           TLS Configuration used to talk with the grafana instance.<br/>
           <br/>
             <i>Validations</i>:<li>(has(self.insecureSkipVerify) && !(has(self.certSecretRef))) || (has(self.certSecretRef) && !(has(self.insecureSkipVerify))): insecureSkipVerify and certSecretRef cannot be set at the same time</li>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.client.headers[index]
+<sup><sup>[↩ Parent](#grafanaspecclient)</sup></sup>
+
+
+
+Header specifies http.Header key and value
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          Header name<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>value</b></td>
+        <td>string</td>
+        <td>
+          Header value<br/>
         </td>
         <td>false</td>
       </tr></tbody>

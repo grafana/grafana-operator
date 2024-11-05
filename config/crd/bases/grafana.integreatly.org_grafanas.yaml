@@ -59,11 +59,19 @@ spec:
                   grafana instance.
                 properties:
                   headers:
-                    additionalProperties:
-                      type: string
                     description: Optional list of Header configuration objects that
-                      specify headers and their value.
-                    type: object
+                      specify headers key and their value.
+                    items:
+                      description: Header specifies http.Header key and value
+                      properties:
+                        key:
+                          description: Header name
+                          type: string
+                        value:
+                          description: Header value
+                          type: string
+                      type: object
+                    type: array
                   preferIngress:
                     description: If the operator should send it's request through
                       the grafana instances ingress object instead of through the

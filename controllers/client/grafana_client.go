@@ -141,6 +141,9 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1
 	}
 
 	transport := NewInstrumentedRoundTripper(grafana.Name, metrics.GrafanaApiRequests, grafana.IsExternal(), tlsConfig)
+	if grafana.Spec.Client.Headers != nil {
+		transport.(*instrumentedRoundTripper).addHeaders(extractClientHeaders(grafana))
+	}
 
 	client := &http.Client{
 		Transport: transport,
@@ -154,15 +157,28 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1
 		// APIKey is an optional API key or service account token.
 		APIKey: credentials.apikey,
 		// NumRetries contains the optional number of attempted retries
-		NumRetries:  0,
-		Client:      client,
-		TLSConfig:   tlsConfig,
-		HTTPHeaders: grafana.Spec.Client.Headers,
+		NumRetries: 0,
+		Client:     client,
+		TLSConfig:  tlsConfig,
 	}
 	if credentials.username != "" {
 		cfg.BasicAuth = url.UserPassword(credentials.username, credentials.password)
 	}
+
 	cl := genapi.NewHTTPClientWithConfig(nil, cfg)
 
 	return cl, nil
+}
+
+func extractClientHeaders(grafana *v1beta1.Grafana) map[string]string {
+	if grafana.Spec.Client.Headers == nil {
+		return nil
+	}
+
+	headers := make(map[string]string, len(*grafana.Spec.Client.Headers))
+	for _, h := range *grafana.Spec.Client.Headers {
+		headers[h.Key] = h.Value
+	}
+
+	return headers
 }
