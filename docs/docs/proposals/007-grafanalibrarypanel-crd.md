@@ -57,7 +57,7 @@ metadata:
 spec:
   allowCrossNamespaceImport: true
   contentCacheDuration: 1m0s
-  folder: shared
+  folderRef: folder-ref
   instanceSelector:
     matchLabels:
       env: dev
@@ -66,6 +66,8 @@ spec:
 ```
 
 ### Referencing in Dashboards
+
+#### Static referencing
 
 When GrafanaLibraryPanels are configured for a Grafana instance, users will be able to browse
 and utilize library panels in dashboards via the GUI workflows. They can export the JSON model
@@ -95,9 +97,132 @@ custom resource. It can thus be provided by the CR owner. By setting the UID to 
 as opposed to letting Grafana autogenerate it, it's possible to provision both Library Panels
 and Dashboards that reference them as CRs.
 
-In the future we could have more ways of dynamically linking in library panels via the operator,
-where it can look up the UIDs and rewrite placeholder tokens in the dashboard model, if desired.
-Such extensions are out of this proposal's scope.
+#### Dynamic referencing
+
+Similar to how Datasources can be dynamically referenced via the
+`.spec.datasources` field, we can extend the GrafanaDashboard CR to similarly
+allow mapping library panels via a new `.spec.libraryPanels` field structured
+very similarly. The CR author can specify a replacement string and a reference
+to the library panel deployed itself as a CR.
+
+When reconciling the GrafanaDashboard, the controller will fetch the dependent
+GrafanaLibraryPanel CRs, look up their UIDs, and then perform the string
+replacement.
+
+```yaml
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: grpc-overview
+spec:
+  libraryPanels:
+    - inputName: "LP_GRPC_SUCCESS_RATE"
+      libraryPanelRef: "grpc-server-success-rate"
+  allowCrossNamespaceImport: true
+  contentCacheDuration: 1m0s
+  folderRef: folder-ref
+  instanceSelector:
+    matchLabels:
+      env: dev
+      region: us-central1
+  json: >
+    {
+      "__inputs": [
+        {
+          "name": "DS_PROMETHEUS",
+          "label": "prometheus",
+          "description": "",
+          "type": "datasource",
+          "pluginId": "prometheus",
+          "pluginName": "Prometheus"
+        }
+      ],
+      "__elements": {},
+      "__requires": [
+        {
+          "type": "grafana",
+          "id": "grafana",
+          "name": "Grafana",
+          "version": "9.1.6"
+        },
+        {
+          "type": "datasource",
+          "id": "prometheus",
+          "name": "Prometheus",
+          "version": "1.0.0"
+        },
+        {
+          "type": "panel",
+          "id": "timeseries",
+          "name": "Time series",
+          "version": ""
+        }
+      ],
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": {
+              "type": "grafana",
+              "uid": "-- Grafana --"
+            },
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "target": {
+              "limit": 100,
+              "matchAny": false,
+              "tags": [],
+              "type": "dashboard"
+            },
+            "type": "dashboard"
+          }
+        ]
+      },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 1,
+      "id": null,
+      "links": [],
+      "liveNow": false,
+      "panels": [
+        {
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 0
+          },
+          "id": 2,
+          "libraryPanel": {
+            "uid": "${LP_GRPC_SERVER_SUCCESS_RATE}",
+            "name": "gRPC Server Success Rate"
+          }
+        }
+      ],
+      "refresh": "5s",
+      "schemaVersion": 37,
+      "style": "dark",
+      "tags": [],
+      "templating": {
+        "list": []
+      },
+      "time": {
+        "from": "now-6h",
+        "to": "now"
+      },
+      "timepicker": {
+        "refresh_intervals": [],
+        "time_options": []
+      },
+      "timezone": "browser",
+      "title": "gRPC Overview",
+      "uid": "10605d5d-da66-4bb0-a77a-2635fae239f7",
+      "version": 3,
+      "weekStart": ""
+    }
+```
 
 ### Generalize Dashboard content read/cache logic
 
