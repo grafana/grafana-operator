@@ -17,10 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
-	"bytes"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -176,26 +173,6 @@ func (in *GrafanaDatasource) CustomUIDOrUID() string {
 	}
 
 	return string(in.ObjectMeta.UID)
-}
-
-func (in *GrafanaDatasource) ExpandVariables(variables map[string][]byte) ([]byte, error) {
-	if in.Spec.Datasource == nil {
-		return nil, errors.New("data source is empty, can't expand variables")
-	}
-
-	raw, err := json.Marshal(in.Spec.Datasource)
-	if err != nil {
-		return nil, err
-	}
-
-	for key, value := range variables {
-		patterns := []string{fmt.Sprintf("$%v", key), fmt.Sprintf("${%v}", key)}
-		for _, pattern := range patterns {
-			raw = bytes.ReplaceAll(raw, []byte(pattern), value)
-		}
-	}
-
-	return raw, nil
 }
 
 func (in *GrafanaDatasource) IsAllowCrossNamespaceImport() bool {
