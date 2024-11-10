@@ -193,8 +193,15 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
 
+	defer func() {
+		if err := r.Client.Status().Update(ctx, cr); err != nil {
+			r.Log.Error(err, "updating status")
+		}
+	}()
+
 	instances, err := r.GetMatchingDashboardInstances(ctx, cr, r.Client)
 	if err != nil {
+		setNoMatchingInstance(&cr.Status.Conditions, cr.Generation, "ErrFetchingInstances", fmt.Sprintf("error occurred during fetching of instances: %s", err.Error()))
 		controllerLog.Error(err, "could not find matching instances", "name", cr.Name, "namespace", cr.Namespace)
 		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
@@ -227,10 +234,6 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 		// Clean up uid, so further reconciliations can track changes there
 		cr.Status.UID = ""
-		err = r.Client.Status().Update(ctx, cr)
-		if err != nil {
-			return ctrl.Result{RequeueAfter: RequeueDelay}, err
-		}
 
 		// Status update should trigger the next reconciliation right away, no need to requeue for dashboard creation
 		return ctrl.Result{}, nil
@@ -240,13 +243,6 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	applyErrors := make(map[string]string)
 	for _, grafana := range instances {
 		grafana := grafana
-		// an admin url is required to interact with grafana
-		// the instance or route might not yet be ready
-		if grafana.Status.Stage != v1beta1.OperatorStageComplete || grafana.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
-			controllerLog.Info("grafana instance not ready", "grafana", grafana.Name)
-			success = false
-			continue
-		}
 
 		if grafana.IsInternal() {
 			// first reconcile the plugins
@@ -285,7 +281,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 		cr.Status.Hash = hash
 		cr.Status.UID = uid
-		return ctrl.Result{RequeueAfter: cr.GetResyncPeriod()}, r.Client.Status().Update(ctx, cr)
+		return ctrl.Result{RequeueAfter: cr.GetResyncPeriod()}, nil
 	}
 
 	return ctrl.Result{RequeueAfter: RequeueDelay}, nil
@@ -783,17 +779,16 @@ func (r *GrafanaDashboardReconciler) SetupWithManager(mgr ctrl.Manager, ctx cont
 }
 
 func (r *GrafanaDashboardReconciler) GetMatchingDashboardInstances(ctx context.Context, dashboard *v1beta1.GrafanaDashboard, k8sClient client.Client) ([]v1beta1.Grafana, error) {
+	dashboard.Status.NoMatchingInstances = true
 	instances, err := GetMatchingInstances(ctx, k8sClient, dashboard.Spec.InstanceSelector)
-	if err != nil || len(instances.Items) == 0 {
-		dashboard.Status.NoMatchingInstances = true
-		if err := r.Client.Status().Update(ctx, dashboard); err != nil {
-			r.Log.Info("unable to update the status of %v, in %v", dashboard.Name, dashboard.Namespace)
-		}
-		if err != nil {
-			return []v1beta1.Grafana{}, err
-		}
+	if err != nil {
+		return []v1beta1.Grafana{}, fmt.Errorf("no matching instances %w", err)
+	}
+	if len(instances.Items) == 0 {
 		return []v1beta1.Grafana{}, errors.New("no matching instances")
 	}
+
+	// Only match instances in the same namespace when false
 	if dashboard.Spec.AllowCrossNamespaceImport != nil && *dashboard.Spec.AllowCrossNamespaceImport {
 		dashboard.Status.NoMatchingInstances = false
 		return instances.Items, nil
@@ -801,21 +796,27 @@ func (r *GrafanaDashboardReconciler) GetMatchingDashboardInstances(ctx context.C
 
 	// Filter out instances outside namespace
 	valid_instances := []grafanav1beta1.Grafana{}
-	for _, i := range instances.Items {
-		if i.Namespace == dashboard.Namespace {
-			valid_instances = append(valid_instances, i)
+	unready_instances := []string{}
+	for _, instance := range instances.Items {
+		if instance.Namespace != dashboard.Namespace {
+			continue
 		}
+		// an admin url is required to interact with grafana
+		// the instance or route might not yet be ready
+		if instance.Status.Stage != v1beta1.OperatorStageComplete || instance.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
+			unready_instances = append(unready_instances, instance.Name)
+			continue
+		}
+		valid_instances = append(valid_instances, instance)
+	}
+	if len(unready_instances) > 1 {
+		r.Log.Info("grafana instances not ready", "instances", unready_instances)
 	}
 	if len(valid_instances) == 0 {
-		dashboard.Status.NoMatchingInstances = true
 		return []v1beta1.Grafana{}, errors.New("no matching instances in namespace")
 	}
 
 	dashboard.Status.NoMatchingInstances = false
-	if err := r.Client.Status().Update(ctx, dashboard); err != nil {
-		r.Log.Info("unable to update the status of %v, in %v", dashboard.Name, dashboard.Namespace)
-	}
-
 	return valid_instances, err
 }
 
