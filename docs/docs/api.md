@@ -2258,6 +2258,8 @@ GrafanaDatasource is the Schema for the grafanadatasources API
         <td>object</td>
         <td>
           GrafanaDatasourceSpec defines the desired state of GrafanaDatasource<br/>
+          <br/>
+            <i>Validations</i>:<li>((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid))): spec.uid is immutable</li>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2328,6 +2330,15 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>uid</b></td>
+        <td>string</td>
+        <td>
+          The UID, for the datasource, fallback to the deprecated spec.datasource.uid and metadata.uid<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: spec.uid is immutable</li>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanadatasourcespecvaluesfromindex">valuesFrom</a></b></td>
         <td>[]object</td>
         <td>
@@ -2386,7 +2397,7 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         <td><b>editable</b></td>
         <td>boolean</td>
         <td>
-          Deprecated field, it has no effect<br/>
+          Whether to enable/disable editing of the datasource in Grafana UI<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2437,7 +2448,7 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         <td><b>uid</b></td>
         <td>string</td>
         <td>
-          <br/>
+          Deprecated field, use spec.uid instead<br/>
         </td>
         <td>false</td>
       </tr><tr>

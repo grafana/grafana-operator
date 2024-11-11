@@ -1,62 +1,70 @@
 package v1beta1
 
 import (
-	"bytes"
-	"fmt"
-	"testing"
+	"context"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestGrafanaDatasources_expandVariables(t *testing.T) {
-	type testcase struct {
-		name      string
-		variables map[string][]byte
-		in        GrafanaDatasource
-		out       []byte
-	}
-
-	testcases := []testcase{
-		{
-			name: "basic replacement",
-			variables: map[string][]byte{
-				"PROMETHEUS_USERNAME": []byte("root"),
-			},
-			in: GrafanaDatasource{
-				Spec: GrafanaDatasourceSpec{
-					Datasource: &GrafanaDatasourceInternal{
-						Name: "prometheus",
-						User: "${PROMETHEUS_USERNAME}",
-					},
+func newDatasource(name string, uid string) *GrafanaDatasource {
+	return &GrafanaDatasource{
+		TypeMeta: v1.TypeMeta{
+			APIVersion: APIVersion,
+			Kind:       "GrafanaDatasource",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      name,
+			Namespace: "default",
+		},
+		Spec: GrafanaDatasourceSpec{
+			CustomUID: uid,
+			InstanceSelector: &v1.LabelSelector{
+				MatchLabels: map[string]string{
+					"test": "datasource",
 				},
 			},
-			out: []byte("{\"name\":\"prometheus\",\"user\":\"root\"}"),
-		},
-		{
-			name: "replacement without curly braces",
-			variables: map[string][]byte{
-				"PROMETHEUS_USERNAME": []byte("root"),
+			Datasource: &GrafanaDatasourceInternal{
+				Name:   "testdata",
+				Type:   "grafana-testdata-datasource",
+				Access: "proxy",
 			},
-			in: GrafanaDatasource{
-				Spec: GrafanaDatasourceSpec{
-					Datasource: &GrafanaDatasourceInternal{
-						Name: "prometheus",
-						User: "$PROMETHEUS_USERNAME",
-					},
-				},
-			},
-			out: []byte("{\"name\":\"prometheus\",\"user\":\"root\"}"),
 		},
-	}
-
-	for _, tc := range testcases {
-		t.Run(tc.name, func(t *testing.T) {
-			b, err := tc.in.ExpandVariables(tc.variables)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			if !bytes.Equal(b, tc.out) {
-				t.Error(fmt.Errorf("expected %v, but got %v", string(tc.out), string(b)))
-			}
-		})
 	}
 }
+
+var _ = Describe("Datasource type", func() {
+	Context("Ensure Datasource spec.uid is immutable", func() {
+		ctx := context.Background()
+		It("Should block adding uid field when missing", func() {
+			ds := newDatasource("missing-uid", "")
+			By("Create new Datasource without uid")
+			Expect(k8sClient.Create(ctx, ds)).To(Succeed())
+
+			By("Adding a uid")
+			ds.Spec.CustomUID = "new-uid"
+			Expect(k8sClient.Update(ctx, ds)).To(HaveOccurred())
+		})
+
+		It("Should block removing uid field when set", func() {
+			ds := newDatasource("existing-uid", "existing-uid")
+			By("Creating Datasource with existing UID")
+			Expect(k8sClient.Create(ctx, ds)).To(Succeed())
+
+			By("And setting UID to ''")
+			ds.Spec.CustomUID = ""
+			Expect(k8sClient.Update(ctx, ds)).To(HaveOccurred())
+		})
+
+		It("Should block changing value of uid", func() {
+			ds := newDatasource("removing-uid", "existing-uid")
+			By("Create new Datasource with existing UID")
+			Expect(k8sClient.Create(ctx, ds)).To(Succeed())
+
+			By("Changing the existing UID")
+			ds.Spec.CustomUID = "new-uid"
+			Expect(k8sClient.Update(ctx, ds)).To(HaveOccurred())
+		})
+	})
+})
