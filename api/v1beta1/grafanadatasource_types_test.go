@@ -37,6 +37,7 @@ func newDatasource(name string, uid string) *GrafanaDatasource {
 var _ = Describe("Datasource type", func() {
 	Context("Ensure Datasource spec.uid is immutable", func() {
 		ctx := context.Background()
+
 		It("Should block adding uid field when missing", func() {
 			ds := newDatasource("missing-uid", "")
 			By("Create new Datasource without uid")
