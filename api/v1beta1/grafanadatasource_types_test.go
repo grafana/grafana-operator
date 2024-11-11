@@ -44,7 +44,7 @@ var _ = Describe("Datasource type", func() {
 			Expect(k8sClient.Create(ctx, ds)).To(Succeed())
 
 			By("Adding a uid")
-			ds.Spec.CustomUID = "new-uid"
+			ds.Spec.CustomUID = "new-ds-uid"
 			Expect(k8sClient.Update(ctx, ds)).To(HaveOccurred())
 		})
 
@@ -64,7 +64,7 @@ var _ = Describe("Datasource type", func() {
 			Expect(k8sClient.Create(ctx, ds)).To(Succeed())
 
 			By("Changing the existing UID")
-			ds.Spec.CustomUID = "new-uid"
+			ds.Spec.CustomUID = "new-ds-uid"
 			Expect(k8sClient.Update(ctx, ds)).To(HaveOccurred())
 		})
 	})
