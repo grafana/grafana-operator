@@ -193,7 +193,7 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 			Name:                  contactPoint.Spec.Name,
 			Type:                  &contactPoint.Spec.Type,
 			Settings:              settings,
-			UID:                   string(contactPoint.UID),
+			UID:                   contactPoint.CustomUIDOrUID(),
 		}
 		_, err := cl.Provisioning.PostContactpoints(provisioning.NewPostContactpointsParams().WithBody(cp)) //nolint:errcheck
 		if err != nil {
@@ -245,7 +245,7 @@ func (r *GrafanaContactPointReconciler) getContactPointFromUID(ctx context.Conte
 		return models.EmbeddedContactPoint{}, fmt.Errorf("getting contact points: %w", err)
 	}
 	for _, cp := range remote.Payload {
-		if cp.UID == string(contactPoint.UID) {
+		if cp.UID == contactPoint.CustomUIDOrUID() {
 			return *cp, nil
 		}
 	}
@@ -279,7 +279,7 @@ func (r *GrafanaContactPointReconciler) removeFromInstance(ctx context.Context, 
 	if err != nil {
 		return fmt.Errorf("getting contact point by UID: %w", err)
 	}
-	_, err = cl.Provisioning.DeleteContactpoints(string(contactPoint.UID)) //nolint:errcheck
+	_, err = cl.Provisioning.DeleteContactpoints(contactPoint.CustomUIDOrUID()) //nolint:errcheck
 	if err != nil {
 		return fmt.Errorf("deleting contact point: %w", err)
 	}
