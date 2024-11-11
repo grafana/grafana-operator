@@ -17,16 +17,15 @@ limitations under the License.
 package v1beta1
 
 import (
-	"bytes"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type GrafanaDatasourceInternal struct {
+	// Deprecated field, use spec.uid instead
+	// +optional
 	UID           string `json:"uid,omitempty"`
 	Name          string `json:"name,omitempty"`
 	Type          string `json:"type,omitempty"`
@@ -40,7 +39,9 @@ type GrafanaDatasourceInternal struct {
 
 	// Deprecated field, it has no effect
 	OrgID *int64 `json:"orgId,omitempty"`
-	// Deprecated field, it has no effect
+
+	// Whether to enable/disable editing of the datasource in Grafana UI
+	// +optional
 	Editable *bool `json:"editable,omitempty"`
 
 	// +kubebuilder:validation:Schemaless
@@ -57,7 +58,13 @@ type GrafanaDatasourceInternal struct {
 }
 
 // GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
+// +kubebuilder:validation:XValidation:rule="((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid)))", message="spec.uid is immutable"
 type GrafanaDatasourceSpec struct {
+	// The UID, for the datasource, fallback to the deprecated spec.datasource.uid and metadata.uid
+	// +optional
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="spec.uid is immutable"
+	CustomUID string `json:"uid,omitempty"`
+
 	Datasource *GrafanaDatasourceInternal `json:"datasource"`
 
 	// selects Grafana instances for import
@@ -146,37 +153,26 @@ func (in *GrafanaDatasource) Unchanged(hash string) bool {
 	return in.Status.Hash == hash
 }
 
-func (in *GrafanaDatasource) IsUpdatedUID(uid string) bool {
+func (in *GrafanaDatasource) IsUpdatedUID() bool {
 	// Datasource has just been created, status is not yet updated
 	if in.Status.UID == "" {
 		return false
 	}
 
-	if uid == "" {
-		uid = string(in.UID)
-	}
-
-	return in.Status.UID != uid
+	return in.Status.UID != in.CustomUIDOrUID()
 }
 
-func (in *GrafanaDatasource) ExpandVariables(variables map[string][]byte) ([]byte, error) {
-	if in.Spec.Datasource == nil {
-		return nil, errors.New("data source is empty, can't expand variables")
+// Wrapper around CustomUID, datasourcelUID or default metadata.uid
+func (in *GrafanaDatasource) CustomUIDOrUID() string {
+	if in.Spec.CustomUID != "" {
+		return in.Spec.CustomUID
 	}
 
-	raw, err := json.Marshal(in.Spec.Datasource)
-	if err != nil {
-		return nil, err
+	if in.Spec.Datasource.UID != "" {
+		return in.Spec.Datasource.UID
 	}
 
-	for key, value := range variables {
-		patterns := []string{fmt.Sprintf("$%v", key), fmt.Sprintf("${%v}", key)}
-		for _, pattern := range patterns {
-			raw = bytes.ReplaceAll(raw, []byte(pattern), value)
-		}
-	}
-
-	return raw, nil
+	return string(in.ObjectMeta.UID)
 }
 
 func (in *GrafanaDatasource) IsAllowCrossNamespaceImport() bool {

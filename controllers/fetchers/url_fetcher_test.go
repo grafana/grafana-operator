@@ -10,7 +10,7 @@ import (
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
