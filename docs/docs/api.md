@@ -3205,6 +3205,8 @@ GrafanaNotificationPolicy is the Schema for the GrafanaNotificationPolicy API
         <td>object</td>
         <td>
           GrafanaNotificationPolicySpec defines the desired state of GrafanaNotificationPolicy<br/>
+          <br/>
+            <i>Validations</i>:<li>((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable) && has(self.editable))): spec.editable is immutable</li>
         </td>
         <td>false</td>
       </tr><tr>

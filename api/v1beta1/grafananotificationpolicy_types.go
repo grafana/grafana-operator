@@ -24,6 +24,7 @@ import (
 )
 
 // GrafanaNotificationPolicySpec defines the desired state of GrafanaNotificationPolicy
+// +kubebuilder:validation:XValidation:rule="((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable) && has(self.editable)))", message="spec.editable is immutable"
 type GrafanaNotificationPolicySpec struct {
 	// +optional
 	// +kubebuilder:validation:Type=string
