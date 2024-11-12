@@ -238,6 +238,9 @@ spec:
             - message: Only one of FolderUID or FolderRef can be set
               rule: (has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef)
                 && !(has(self.folderUID)))
+            - message: spec.editable is immutable
+              rule: ((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable)
+                && has(self.editable)))
           status:
             description: GrafanaAlertRuleGroupStatus defines the observed state of
               GrafanaAlertRuleGroup
