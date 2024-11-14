@@ -142,7 +142,7 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1
 
 	transport := NewInstrumentedRoundTripper(grafana.Name, metrics.GrafanaApiRequests, grafana.IsExternal(), tlsConfig)
 	if grafana.Spec.Client.Headers != nil {
-		transport.(*instrumentedRoundTripper).addHeaders(extractClientHeaders(grafana))
+		transport.(*instrumentedRoundTripper).addHeaders(*grafana.Spec.Client.Headers)
 	}
 
 	client := &http.Client{
@@ -168,17 +168,4 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1
 	cl := genapi.NewHTTPClientWithConfig(nil, cfg)
 
 	return cl, nil
-}
-
-func extractClientHeaders(grafana *v1beta1.Grafana) map[string]string {
-	if grafana.Spec.Client.Headers == nil {
-		return nil
-	}
-
-	headers := make(map[string]string, len(*grafana.Spec.Client.Headers))
-	for _, h := range *grafana.Spec.Client.Headers {
-		headers[h.Key] = h.Value
-	}
-
-	return headers
 }

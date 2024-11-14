@@ -119,17 +119,9 @@ type GrafanaClient struct {
 	// TLS Configuration used to talk with the grafana instance.
 	// +optional
 	TLS *TLSConfig `json:"tls,omitempty"`
-	// Optional list of Header configuration objects that specify headers key and their value.
+	// Optional map of header key and value.
 	// +optional
-	Headers *[]Header `json:"headers,omitempty"`
-}
-
-// Header specifies http.Header key and value
-type Header struct {
-	// Header name
-	Key string `json:"key,omitempty"`
-	// Header value
-	Value string `json:"value,omitempty"`
+	Headers *map[string]string `json:"headers,omitempty"`
 }
 
 // GrafanaPreferences holds Grafana preferences API settings
