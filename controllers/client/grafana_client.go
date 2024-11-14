@@ -142,7 +142,7 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1
 
 	transport := NewInstrumentedRoundTripper(grafana.Name, metrics.GrafanaApiRequests, grafana.IsExternal(), tlsConfig)
 	if grafana.Spec.Client.Headers != nil {
-		transport.(*instrumentedRoundTripper).addHeaders(*grafana.Spec.Client.Headers)
+		transport.(*instrumentedRoundTripper).addHeaders(grafana.Spec.Client.Headers)
 	}
 
 	client := &http.Client{

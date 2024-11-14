@@ -28,7 +28,7 @@ func NewHTTPClient(ctx context.Context, c client.Client, grafana *v1beta1.Grafan
 
 	transport := NewInstrumentedRoundTripper(grafana.Name, metrics.GrafanaApiRequests, grafana.IsExternal(), tlsConfig)
 	if grafana.Spec.Client.Headers != nil {
-		transport.(*instrumentedRoundTripper).addHeaders(*grafana.Spec.Client.Headers)
+		transport.(*instrumentedRoundTripper).addHeaders(grafana.Spec.Client.Headers)
 	}
 
 	return &http.Client{

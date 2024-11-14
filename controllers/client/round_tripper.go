@@ -30,11 +30,14 @@ func NewInstrumentedRoundTripper(relatedResource string, metric *prometheus.Coun
 		transport.Proxy = nil
 	}
 
+	headers := make(map[string]string)
+	headers["user-agent"] = "grafana-operator/" + embeds.Version
+
 	return &instrumentedRoundTripper{
 		relatedResource: relatedResource,
 		wrapped:         transport,
 		metric:          metric,
-		headers:         map[string]string{"user-agent": "grafana-operator/" + embeds.Version},
+		headers:         headers,
 	}
 }
 
@@ -57,9 +60,12 @@ func (in *instrumentedRoundTripper) RoundTrip(r *http.Request) (*http.Response, 
 }
 
 func (in *instrumentedRoundTripper) addHeaders(headers map[string]string) {
-	if in.headers == nil {
-		in.headers = headers
+	if headers == nil {
 		return
+	}
+
+	if in.headers == nil {
+		in.headers = make(map[string]string)
 	}
 
 	for k, v := range headers {

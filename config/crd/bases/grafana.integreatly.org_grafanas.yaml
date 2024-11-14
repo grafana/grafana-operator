@@ -61,7 +61,8 @@ spec:
                   headers:
                     additionalProperties:
                       type: string
-                    description: Optional map of header key and value.
+                    description: Custom HTTP headers to use when interacting with
+                      this Grafana.
                     type: object
                   preferIngress:
                     description: If the operator should send it's request through

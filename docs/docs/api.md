@@ -3788,7 +3788,7 @@ Client defines how the grafana-operator talks to the grafana instance.
         <td><b>headers</b></td>
         <td>map[string]string</td>
         <td>
-          Optional map of header key and value.<br/>
+          Custom HTTP headers to use when interacting with this Grafana.<br/>
         </td>
         <td>false</td>
       </tr><tr>
