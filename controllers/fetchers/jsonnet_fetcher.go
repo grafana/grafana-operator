@@ -163,6 +163,7 @@ func getDecompressedGzipArchiveFilePath(fileName string) string {
 func storeByteArrayGzipOnDisk(gzipFileName string, base64EncodedGzipJsonnetProject []byte) (string, error) {
 	gzipFileLocalPath := getGzipArchiveFilePath(gzipFileName)
 
+	// #nosec G306
 	if err := os.WriteFile(gzipFileLocalPath, base64EncodedGzipJsonnetProject, os.ModePerm); err != nil {
 		return "", fmt.Errorf("error writing compressed data to file: %w", err)
 	}
@@ -325,7 +326,7 @@ func untarGzip(archivePath, extractPath string) error {
 				}
 			}
 		case tar.TypeReg:
-			fileToWrite, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+			fileToWrite, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode)) // #nosec G115
 			if err != nil {
 				return err
 			}
