@@ -215,7 +215,7 @@ spec:
               rule: ((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) &&
                 has(self.uid)))
           status:
-            description: GrafanaContactPointStatus defines the observed state of GrafanaContactPoint
+            description: The most recent observed state of a Grafana resource
             properties:
               conditions:
                 description: Results when synchonizing resource with Grafana instances
@@ -274,8 +274,13 @@ spec:
                   - type
                   type: object
                 type: array
-            required:
-            - conditions
+              hash:
+                description: Detect resource changes
+                type: string
+              lastResync:
+                description: Last time the resource was synchronized
+                format: date-time
+                type: string
             type: object
         type: object
     served: true

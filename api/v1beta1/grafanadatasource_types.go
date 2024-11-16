@@ -81,13 +81,12 @@ type GrafanaDatasourceSpec struct {
 
 // GrafanaDatasourceStatus defines the observed state of GrafanaDatasource
 type GrafanaDatasourceStatus struct {
-	Hash        string `json:"hash,omitempty"`
+	GrafanaCommonStatus `json:",inline"`
+
 	LastMessage string `json:"lastMessage,omitempty"`
 	// The datasource instanceSelector can't find matching grafana instances
-	NoMatchingInstances bool `json:"NoMatchingInstances,omitempty"`
-	// Last time the datasource was resynced
-	LastResync metav1.Time `json:"lastResync,omitempty"`
-	UID        string      `json:"uid,omitempty"`
+	NoMatchingInstances bool   `json:"NoMatchingInstances,omitempty"`
+	UID                 string `json:"uid,omitempty"`
 }
 
 //+kubebuilder:object:root=true

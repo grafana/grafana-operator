@@ -187,8 +187,7 @@ spec:
             - route
             type: object
           status:
-            description: GrafanaNotificationPolicyStatus defines the observed state
-              of GrafanaNotificationPolicy
+            description: The most recent observed state of a Grafana resource
             properties:
               conditions:
                 description: Results when synchonizing resource with Grafana instances
@@ -247,8 +246,13 @@ spec:
                   - type
                   type: object
                 type: array
-            required:
-            - conditions
+              hash:
+                description: Detect resource changes
+                type: string
+              lastResync:
+                description: Last time the resource was synchronized
+                format: date-time
+                type: string
             type: object
         type: object
     served: true
