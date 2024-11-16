@@ -538,7 +538,7 @@ GrafanaAlertRuleGroupStatus defines the observed state of GrafanaAlertRuleGroup
         <td><b><a href="#grafanaalertrulegroupstatusconditionsindex">conditions</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          Results when synchonizing resource with Grafana instances<br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -1035,8 +1035,7 @@ GrafanaContactPointStatus defines the observed state of GrafanaContactPoint
         <td><b><a href="#grafanacontactpointstatusconditionsindex">conditions</a></b></td>
         <td>[]object</td>
         <td>
-          INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-Important: Run "make" to regenerate code after modifying this file<br/>
+          Results when synchonizing resource with Grafana instances<br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -2097,7 +2096,7 @@ GrafanaDashboardStatus defines the observed state of GrafanaDashboard
         <td><b><a href="#grafanadashboardstatusconditionsindex">conditions</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          Results when synchonizing resource with Grafana instances<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2129,14 +2128,14 @@ GrafanaDashboardStatus defines the observed state of GrafanaDashboard
         <td><b>hash</b></td>
         <td>string</td>
         <td>
-          <br/>
+          Detect resource changes<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>lastResync</b></td>
         <td>string</td>
         <td>
-          Last time the dashboard was resynced<br/>
+          Last time the resource was synchronized<br/>
           <br/>
             <i>Format</i>: date-time<br/>
         </td>
@@ -3064,22 +3063,21 @@ GrafanaFolderStatus defines the observed state of GrafanaFolder
         <td><b><a href="#grafanafolderstatusconditionsindex">conditions</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          Results when synchonizing resource with Grafana instances<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>hash</b></td>
         <td>string</td>
         <td>
-          INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-Important: Run "make" to regenerate code after modifying this file<br/>
+          Detect resource changes<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>lastResync</b></td>
         <td>string</td>
         <td>
-          Last time the folder was resynced<br/>
+          Last time the resource was synchronized<br/>
           <br/>
             <i>Format</i>: date-time<br/>
         </td>
@@ -3534,7 +3532,7 @@ GrafanaNotificationPolicyStatus defines the observed state of GrafanaNotificatio
         <td><b><a href="#grafananotificationpolicystatusconditionsindex">conditions</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          Results when synchonizing resource with Grafana instances<br/>
         </td>
         <td>true</td>
       </tr></tbody>

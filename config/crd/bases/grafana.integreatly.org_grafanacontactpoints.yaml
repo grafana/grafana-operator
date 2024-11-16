@@ -218,9 +218,7 @@ spec:
             description: GrafanaContactPointStatus defines the observed state of GrafanaContactPoint
             properties:
               conditions:
-                description: |-
-                  INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-                  Important: Run "make" to regenerate code after modifying this file
+                description: Results when synchonizing resource with Grafana instances
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.

@@ -49,10 +49,10 @@ type GrafanaContactPointSpec struct {
 	Type string `json:"type,omitempty"`
 }
 
+// TODO Implement GrafanaCommonStatus
 // GrafanaContactPointStatus defines the observed state of GrafanaContactPoint
 type GrafanaContactPointStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// Results when synchonizing resource with Grafana instances
 	Conditions []metav1.Condition `json:"conditions"`
 }
 

@@ -5,6 +5,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// WARN Run `make` on all file changes
+
 type ValueFrom struct {
 	TargetPath string          `json:"targetPath"`
 	ValueFrom  ValueFromSource `json:"valueFrom"`

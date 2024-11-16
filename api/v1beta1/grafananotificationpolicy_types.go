@@ -125,8 +125,10 @@ func (r *Route) ToModelRoute() *models.Route {
 	return out
 }
 
+// TODO Implement GrafanaCommonStatus
 // GrafanaNotificationPolicyStatus defines the observed state of GrafanaNotificationPolicy
 type GrafanaNotificationPolicyStatus struct {
+	// Results when synchonizing resource with Grafana instances
 	Conditions []metav1.Condition `json:"conditions"`
 }
 

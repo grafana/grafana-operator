@@ -416,6 +416,7 @@ spec:
                   instances
                 type: boolean
               conditions:
+                description: Results when synchonizing resource with Grafana instances
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -480,9 +481,10 @@ spec:
               contentUrl:
                 type: string
               hash:
+                description: Detect resource changes
                 type: string
               lastResync:
-                description: Last time the dashboard was resynced
+                description: Last time the resource was synchronized
                 format: date-time
                 type: string
               uid:
