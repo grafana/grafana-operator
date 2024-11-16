@@ -222,6 +222,19 @@ func ignoreStatusUpdates() predicate.Predicate {
 	}
 }
 
+func NilOrEmptyInstanceListCondition(conditions *[]metav1.Condition, conditionCRSynchronized string, generation int64, err error) {
+	var reason, message string
+	if err != nil {
+		reason = "ErrFetchingInstances"
+		message = fmt.Sprintf("error occurred during fetching of instances: %s", err.Error())
+	} else {
+		reason = "EmptyAPIReply"
+		message = "Instances could not be fetched, reconciliation will be retried"
+	}
+	setNoMatchingInstance(conditions, generation, reason, message)
+	meta.RemoveStatusCondition(conditions, conditionCRSynchronized)
+}
+
 func buildSynchronizedCondition(resource string, syncType string, generation int64, applyErrors map[string]string, total int) metav1.Condition {
 	condition := metav1.Condition{
 		Type:               syncType,

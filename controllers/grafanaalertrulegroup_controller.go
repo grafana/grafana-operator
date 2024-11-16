@@ -106,21 +106,15 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 		}
 	}()
 
-	instances, err := r.GetMatchingInstances(ctx, group, r.Client)
-	if err != nil {
-		setNoMatchingInstance(&group.Status.Conditions, group.Generation, "ErrFetchingInstances", fmt.Sprintf("error occurred during fetching of instances: %s", err.Error()))
-		meta.RemoveStatusCondition(&group.Status.Conditions, conditionAlertGroupSynchronized)
-		r.Log.Error(err, "could not find matching instances")
-		return ctrl.Result{}, err
-	}
-
-	if len(instances) == 0 {
-		meta.RemoveStatusCondition(&group.Status.Conditions, conditionAlertGroupSynchronized)
-		setNoMatchingInstance(&group.Status.Conditions, group.Generation, "EmptyAPIReply", "Instances could not be fetched, reconciliation will be retried")
-		return ctrl.Result{}, fmt.Errorf("no instances found")
+	instances, err := GetMatchingInstances(controllerLog, ctx, r.Client, group.Spec.GrafanaCommonSpec, group.ObjectMeta.Namespace)
+	if err != nil || len(instances) == 0 {
+		NilOrEmptyInstanceListCondition(&group.Status.Conditions, conditionAlertGroupSynchronized, group.Generation, err)
+		controllerLog.Error(err, "could not find matching instances", "name", group.Name, "namespace", group.Namespace)
+		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
 	removeNoMatchingInstance(&group.Status.Conditions)
+	controllerLog.Info("found matching Grafana instances for alert rule group", "count", len(instances))
 
 	folderUID, err := getFolderUID(ctx, r.Client, group)
 	if err != nil || folderUID == "" {
@@ -131,18 +125,16 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 	for _, grafana := range instances {
 		// can be removed in go 1.22+
 		grafana := grafana
-		if grafana.Status.Stage != grafanav1beta1.OperatorStageComplete || grafana.Status.StageStatus != grafanav1beta1.OperatorStageResultSuccess {
-			controllerLog.Info("grafana instance not ready", "grafana", grafana.Name)
-			continue
-		}
 
 		err := r.reconcileWithInstance(ctx, &grafana, group, folderUID)
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
 	}
+
 	condition := buildSynchronizedCondition("Alert Rule Group", conditionAlertGroupSynchronized, group.Generation, applyErrors, len(instances))
 	meta.SetStatusCondition(&group.Status.Conditions, condition)
+
 	if len(applyErrors) > 0 {
 		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
 	}
@@ -293,14 +285,14 @@ func (r *GrafanaAlertRuleGroupReconciler) finalize(ctx context.Context, group *g
 		r.Log.Info("ignoring finalization logic as folder no longer exists")
 		return nil //nolint:nilerr
 	}
-	instances, err := r.GetMatchingInstances(ctx, group, r.Client)
+	instances, err := GetMatchingInstances(r.Log, ctx, r.Client, group.Spec.GrafanaCommonSpec, group.ObjectMeta.Namespace)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
 	for _, i := range instances {
 		instance := i
 		if err := r.removeFromInstance(ctx, &instance, group, folderUID); err != nil {
-			return fmt.Errorf("removing from instance")
+			return fmt.Errorf("removing from instance %w", err)
 		}
 	}
 	return nil

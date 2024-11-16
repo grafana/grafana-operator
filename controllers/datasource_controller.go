@@ -35,6 +35,7 @@ import (
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -50,6 +51,10 @@ type GrafanaDatasourceReconciler struct {
 	Scheme *runtime.Scheme
 	Log    logr.Logger
 }
+
+const (
+	conditionDatasourceSynchronized = "DashboardSynchronized"
+)
 
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadatasources,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadatasources/status,verbs=get;update;patch
@@ -176,6 +181,12 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
 
+	defer func() {
+		if err := r.Client.Status().Update(ctx, cr); err != nil {
+			r.Log.Error(err, "updating status")
+		}
+	}()
+
 	if cr.Spec.Datasource == nil {
 		controllerLog.Info("skipped datasource with empty spec", cr.Name, cr.Namespace)
 		// TODO: add a custom status around that?
@@ -185,18 +196,20 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	// Overwrite OrgID to ensure the field is useless
 	cr.Spec.Datasource.OrgID = nil
 
-	instances, err := r.GetMatchingDatasourceInstances(ctx, cr, r.Client)
-	if err != nil {
+	instances, err := GetMatchingInstances(controllerLog, ctx, r.Client, cr.Spec.GrafanaCommonSpec, cr.ObjectMeta.Namespace)
+	if err != nil || len(instances) == 0 {
+		NilOrEmptyInstanceListCondition(&cr.Status.Conditions, conditionDatasourceSynchronized, cr.Generation, err)
 		controllerLog.Error(err, "could not find matching instances", "name", cr.Name, "namespace", cr.Namespace)
-		return ctrl.Result{RequeueAfter: RequeueDelay}, err
+		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
-	controllerLog.Info("found matching Grafana instances for datasource", "count", len(instances.Items))
+	removeNoMatchingInstance(&cr.Status.Conditions)
+	controllerLog.Info("found matching Grafana instances for datasource", "count", len(instances))
 
 	datasource, hash, err := r.getDatasourceContent(ctx, cr)
 	if err != nil {
 		controllerLog.Error(err, "could not retrieve datasource contents", "name", cr.Name, "namespace", cr.Namespace)
-		return ctrl.Result{RequeueAfter: RequeueDelay}, err
+		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
 	if cr.IsUpdatedUID() {
@@ -209,30 +222,13 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		// Clean up uid, so further reconcilications can track changes there
 		cr.Status.UID = ""
 
-		err = r.Client.Status().Update(ctx, cr)
-		if err != nil {
-			return ctrl.Result{RequeueAfter: RequeueDelay}, err
-		}
-
-		// Status update should trigger the next reconciliation right away, no need to requeue for dashboard creation
-		return ctrl.Result{}, nil
+		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
 	success := true
-	for _, grafana := range instances.Items {
-		// check if this is a cross namespace import
-		if grafana.Namespace != cr.Namespace && !cr.IsAllowCrossNamespaceImport() {
-			continue
-		}
-
+	applyErrors := make(map[string]string)
+	for _, grafana := range instances {
 		grafana := grafana
-		// an admin url is required to interact with grafana
-		// the instance or route might not yet be ready
-		if grafana.Status.Stage != v1beta1.OperatorStageComplete || grafana.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
-			controllerLog.Info("grafana instance not ready", "grafana", grafana.Name)
-			success = false
-			continue
-		}
 
 		if grafana.IsInternal() {
 			// first reconcile the plugins
@@ -249,23 +245,26 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		err = r.onDatasourceCreated(ctx, &grafana, cr, datasource, hash)
 		if err != nil {
 			success = false
-			cr.Status.LastMessage = err.Error()
-			controllerLog.Error(err, "error reconciling datasource", "datasource", cr.Name, "grafana", grafana.Name)
+			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
 	}
 
+	condition := buildSynchronizedCondition("Datasource", conditionDatasourceSynchronized, cr.Generation, applyErrors, len(instances))
+	meta.SetStatusCondition(&cr.Status.Conditions, condition)
+
+	if len(applyErrors) > 0 {
+		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
+	}
 	// if the datasource was successfully synced in all instances, wait for its re-sync period
 	if success {
-		cr.Status.LastMessage = ""
 		cr.Status.Hash = hash
 		if cr.ResyncPeriodHasElapsed() {
 			cr.Status.LastResync = metav1.Time{Time: time.Now()}
 		}
 		cr.Status.UID = cr.CustomUIDOrUID()
-		return ctrl.Result{RequeueAfter: cr.Spec.ResyncPeriod.Duration}, r.Client.Status().Update(ctx, cr)
+		return ctrl.Result{RequeueAfter: cr.Spec.ResyncPeriod.Duration}, nil
 	} else {
-		// if there was an issue with the datasource, update the status
-		return ctrl.Result{RequeueAfter: RequeueDelay}, r.Client.Status().Update(ctx, cr)
+		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 }
 

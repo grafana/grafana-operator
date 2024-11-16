@@ -194,45 +194,30 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 	removeInvalidSpec(&folder.Status.Conditions)
 
-	instances, err := r.GetMatchingFolderInstances(ctx, folder, r.Client)
-	if err != nil {
-		setNoMatchingInstance(&folder.Status.Conditions, folder.Generation, "ErrFetchingInstances", fmt.Sprintf("error occurred during fetching of instances: %s", err.Error()))
-		meta.RemoveStatusCondition(&folder.Status.Conditions, conditionFolderSynchronized)
-		r.Log.Error(err, "could not find matching instances")
-		return ctrl.Result{}, err
+	instances, err := GetMatchingInstances(controllerLog, ctx, r.Client, folder.Spec.GrafanaCommonSpec, folder.ObjectMeta.Namespace)
+	if err != nil || len(instances) == 0 {
+		NilOrEmptyInstanceListCondition(&folder.Status.Conditions, conditionFolderSynchronized, folder.Generation, err)
+		controllerLog.Error(err, "could not find matching instances", "name", folder.Name, "namespace", folder.Namespace)
+		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
-	if len(instances.Items) == 0 {
-		setNoMatchingInstance(&folder.Status.Conditions, folder.Generation, "EmptyAPIReply", "Instances could not be fetched, reconciliation will be retried")
-		meta.RemoveStatusCondition(&folder.Status.Conditions, conditionFolderSynchronized)
-		return ctrl.Result{}, fmt.Errorf("no instances found")
-	}
+
 	removeNoMatchingInstance(&folder.Status.Conditions)
-	controllerLog.Info("found matching Grafana instances for folder", "count", len(instances.Items))
+	controllerLog.Info("found matching Grafana instances for folder", "count", len(instances))
 
 	applyErrors := make(map[string]string)
-	for _, grafana := range instances.Items {
-		// check if this is a cross namespace import
-		if grafana.Namespace != folder.Namespace && !folder.IsAllowCrossNamespaceImport() {
-			continue
-		}
-
+	for _, grafana := range instances {
 		grafana := grafana
-		if grafana.Status.Stage != grafanav1beta1.OperatorStageComplete || grafana.Status.StageStatus != grafanav1beta1.OperatorStageResultSuccess {
-			controllerLog.Info("grafana instance not ready", "grafana", grafana.Name)
-			continue
-		}
 
 		err = r.onFolderCreated(ctx, &grafana, folder)
 		if err != nil {
-			controllerLog.Error(err, "error reconciling folder", "folder", folder.Name, "grafana", grafana.Name)
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
 	}
-	condition := buildSynchronizedCondition("Folder", conditionFolderSynchronized, folder.Generation, applyErrors, len(instances.Items))
+	condition := buildSynchronizedCondition("Folder", conditionFolderSynchronized, folder.Generation, applyErrors, len(instances))
 	meta.SetStatusCondition(&folder.Status.Conditions, condition)
 
-	if len(applyErrors) != 0 {
-		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
+	if len(applyErrors) > 0 {
+		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
 	}
 
 	if folder.ResyncPeriodHasElapsed() {
