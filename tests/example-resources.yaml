@@ -63,7 +63,6 @@ spec:
         - refId: A
           relativeTimeRange:
             from: 600
-            to: 0
           datasourceUid: grafana-testdata
           model:
             drop: 0
@@ -82,7 +81,6 @@ spec:
         - refId: B
           relativeTimeRange:
             from: 600
-            to: 0
           datasourceUid: __expr__
           model:
             conditions:
@@ -115,7 +113,6 @@ spec:
         - refId: C
           relativeTimeRange:
             from: 600
-            to: 0
           datasourceUid: __expr__
           model:
             conditions:
@@ -145,9 +142,6 @@ spec:
       noDataState: NoData
       execErrState: Error
       for: 5m
-      annotations: {}
-      labels: {}
-      isPaused: false
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
