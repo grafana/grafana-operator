@@ -42,4 +42,4 @@ metadata:
   name: example-grafanadatasource
   namespace: (join('-', ['cross', $namespace]))
 status:
-  (lastMessage != null): true
+  (conditions != null): true
