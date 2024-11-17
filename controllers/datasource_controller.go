@@ -420,23 +420,6 @@ func (r *GrafanaDatasourceReconciler) SetupWithManager(mgr ctrl.Manager, ctx con
 	return err
 }
 
-func (r *GrafanaDatasourceReconciler) GetMatchingDatasourceInstances(ctx context.Context, datasource *v1beta1.GrafanaDatasource, k8sClient client.Client) (v1beta1.GrafanaList, error) {
-	instances, err := GetMatchingInstances(ctx, k8sClient, datasource.Spec.InstanceSelector)
-	if err != nil || len(instances.Items) == 0 {
-		datasource.Status.NoMatchingInstances = true
-		if err := r.Client.Status().Update(ctx, datasource); err != nil {
-			r.Log.Info("unable to update the status of %v, in %v", datasource.Name, datasource.Namespace)
-		}
-		return v1beta1.GrafanaList{}, err
-	}
-	datasource.Status.NoMatchingInstances = false
-	if err := r.Client.Status().Update(ctx, datasource); err != nil {
-		r.Log.Info("unable to update the status of %v, in %v", datasource.Name, datasource.Namespace)
-	}
-
-	return instances, err
-}
-
 func (r *GrafanaDatasourceReconciler) getDatasourceContent(ctx context.Context, cr *v1beta1.GrafanaDatasource) (*models.UpdateDataSourceCommand, string, error) {
 	initialBytes, err := json.Marshal(cr.Spec.Datasource)
 	if err != nil {

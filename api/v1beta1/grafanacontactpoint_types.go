@@ -17,6 +17,8 @@ limitations under the License.
 package v1beta1
 
 import (
+	"time"
+
 	apiextensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -81,4 +83,9 @@ func (in *GrafanaContactPoint) CustomUIDOrUID() string {
 
 func init() {
 	SchemeBuilder.Register(&GrafanaContactPoint{}, &GrafanaContactPointList{})
+}
+
+func (in *GrafanaContactPoint) ResyncPeriodHasElapsed() bool {
+	deadline := in.Status.LastResync.Add(in.Spec.ResyncPeriod.Duration)
+	return time.Now().After(deadline)
 }

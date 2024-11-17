@@ -148,13 +148,6 @@ func (in *GrafanaFolder) Unchanged() bool {
 	return in.Hash() == in.Status.Hash
 }
 
-func (in *GrafanaFolder) IsAllowCrossNamespaceImport() bool {
-	if in.Spec.AllowCrossNamespaceImport != nil {
-		return *in.Spec.AllowCrossNamespaceImport
-	}
-	return false
-}
-
 func (in *GrafanaFolder) GetTitle() string {
 	if in.Spec.Title != "" {
 		return in.Spec.Title

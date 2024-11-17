@@ -786,23 +786,6 @@ func (r *GrafanaDashboardReconciler) SetupWithManager(mgr ctrl.Manager, ctx cont
 	return err
 }
 
-func (r *GrafanaDashboardReconciler) GetMatchingDashboardInstances(ctx context.Context, dashboard *v1beta1.GrafanaDashboard, k8sClient client.Client) (v1beta1.GrafanaList, error) {
-	instances, err := GetMatchingInstances(ctx, k8sClient, dashboard.Spec.InstanceSelector)
-	if err != nil || len(instances.Items) == 0 {
-		dashboard.Status.NoMatchingInstances = true
-		if err := r.Client.Status().Update(ctx, dashboard); err != nil {
-			r.Log.Info("unable to update the status of %v, in %v", dashboard.Name, dashboard.Namespace)
-		}
-		return v1beta1.GrafanaList{}, err
-	}
-	dashboard.Status.NoMatchingInstances = false
-	if err := r.Client.Status().Update(ctx, dashboard); err != nil {
-		r.Log.Info("unable to update the status of %v, in %v", dashboard.Name, dashboard.Namespace)
-	}
-
-	return instances, err
-}
-
 func (r *GrafanaDashboardReconciler) UpdateHomeDashboard(ctx context.Context, grafana v1beta1.Grafana, uid string, dashboard *v1beta1.GrafanaDashboard) error {
 	grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 	if err != nil {

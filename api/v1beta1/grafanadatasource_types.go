@@ -145,13 +145,6 @@ func (in *GrafanaDatasource) CustomUIDOrUID() string {
 	return string(in.ObjectMeta.UID)
 }
 
-func (in *GrafanaDatasource) IsAllowCrossNamespaceImport() bool {
-	if in.Spec.AllowCrossNamespaceImport != nil {
-		return *in.Spec.AllowCrossNamespaceImport
-	}
-	return false
-}
-
 func (in *GrafanaDatasourceList) Find(namespace string, name string) *GrafanaDatasource {
 	for _, datasource := range in.Items {
 		if datasource.Namespace == namespace && datasource.Name == name {

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-logr/logr"
 	operatorapi "github.com/grafana/grafana-operator/v5/api"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -31,31 +32,47 @@ const (
 	conditionInvalidSpec        = "InvalidSpec"
 )
 
-const annotationAppliedNotificationPolicy = "operator.grafana.com/applied-notificationpolicy"
-
 //+kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update;patch;delete
 
-func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSelector *metav1.LabelSelector) (v1beta1.GrafanaList, error) {
-	if labelSelector == nil {
-		return v1beta1.GrafanaList{}, nil
+func GetMatchingInstances(log logr.Logger, ctx context.Context, k8sClient client.Client, commonSpec v1beta1.GrafanaCommonSpec, namespace string) ([]v1beta1.Grafana, error) {
+	if commonSpec.InstanceSelector.MatchLabels == nil {
+		return []v1beta1.Grafana{}, nil
+	}
+
+	opts := []client.ListOption{
+		client.MatchingLabels(commonSpec.InstanceSelector.MatchLabels),
+	}
+	if commonSpec.AllowCrossNamespaceImport != nil && !*commonSpec.AllowCrossNamespaceImport {
+		// Only query resource namespace
+		opts = append(opts, client.InNamespace(namespace))
 	}
 
 	var list v1beta1.GrafanaList
-	opts := []client.ListOption{
-		client.MatchingLabels(labelSelector.MatchLabels),
-	}
 	err := k8sClient.List(ctx, &list, opts...)
-
-	var selectedList v1beta1.GrafanaList
-
-	for _, instance := range list.Items {
-		selected := labelsSatisfyMatchExpressions(instance.Labels, labelSelector.MatchExpressions)
-		if selected {
-			selectedList.Items = append(selectedList.Items, instance)
-		}
+	if err != nil || len(list.Items) == 0 {
+		return []v1beta1.Grafana{}, err
 	}
 
-	return selectedList, err
+	selectedList := []v1beta1.Grafana{}
+	var unready_instances []string
+	for _, instance := range list.Items {
+		selected := labelsSatisfyMatchExpressions(instance.Labels, commonSpec.InstanceSelector.MatchExpressions)
+		if !selected {
+			continue
+		}
+		// admin url is required to interact with Grafana
+		// the instance or route might not yet be ready
+		if instance.Status.Stage != v1beta1.OperatorStageComplete || instance.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
+			unready_instances = append(unready_instances, instance.Name)
+			continue
+		}
+		selectedList = append(selectedList, instance)
+	}
+	if len(unready_instances) > 1 {
+		log.Info("Grafana instances not ready", "instances", unready_instances)
+	}
+
+	return selectedList, nil
 }
 
 // getFolderUID fetches the folderUID from an existing GrafanaFolder CR declared in the specified namespace

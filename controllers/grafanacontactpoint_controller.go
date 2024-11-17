@@ -287,24 +287,6 @@ func (r *GrafanaContactPointReconciler) removeFromInstance(ctx context.Context, 
 	return nil
 }
 
-func (r *GrafanaContactPointReconciler) GetMatchingInstances(ctx context.Context, contactPoint *grafanav1beta1.GrafanaContactPoint, k8sClient client.Client) ([]grafanav1beta1.Grafana, error) {
-	instances, err := GetMatchingInstances(ctx, k8sClient, contactPoint.Spec.InstanceSelector)
-	if err != nil || len(instances.Items) == 0 {
-		return nil, err
-	}
-	if contactPoint.Spec.AllowCrossNamespaceImport != nil && *contactPoint.Spec.AllowCrossNamespaceImport {
-		return instances.Items, nil
-	}
-	items := []grafanav1beta1.Grafana{}
-	for _, i := range instances.Items {
-		if i.Namespace == contactPoint.Namespace {
-			items = append(items, i)
-		}
-	}
-
-	return items, err
-}
-
 // SetupWithManager sets up the controller with the Manager.
 func (r *GrafanaContactPointReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).

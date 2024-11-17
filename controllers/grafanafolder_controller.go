@@ -444,20 +444,3 @@ func (r *GrafanaFolderReconciler) Exists(client *genapi.GrafanaHTTPAPI, cr *graf
 		page++
 	}
 }
-
-func (r *GrafanaFolderReconciler) GetMatchingFolderInstances(ctx context.Context, folder *grafanav1beta1.GrafanaFolder, k8sClient client.Client) (grafanav1beta1.GrafanaList, error) {
-	instances, err := GetMatchingInstances(ctx, k8sClient, folder.Spec.InstanceSelector)
-	if err != nil || len(instances.Items) == 0 {
-		folder.Status.NoMatchingInstances = true
-		if err := r.Client.Status().Update(ctx, folder); err != nil {
-			r.Log.Info("unable to update the status of %v, in %v", folder.Name, folder.Namespace)
-		}
-		return grafanav1beta1.GrafanaList{}, err
-	}
-	folder.Status.NoMatchingInstances = false
-	if err := r.Client.Status().Update(ctx, folder); err != nil {
-		r.Log.Info("unable to update the status of %v, in %v", folder.Name, folder.Namespace)
-	}
-
-	return instances, err
-}

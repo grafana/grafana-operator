@@ -330,21 +330,3 @@ func (r *GrafanaAlertRuleGroupReconciler) removeFromInstance(ctx context.Context
 	}
 	return nil
 }
-
-func (r *GrafanaAlertRuleGroupReconciler) GetMatchingInstances(ctx context.Context, group *grafanav1beta1.GrafanaAlertRuleGroup, k8sClient client.Client) ([]grafanav1beta1.Grafana, error) {
-	instances, err := GetMatchingInstances(ctx, k8sClient, group.Spec.InstanceSelector)
-	if err != nil || len(instances.Items) == 0 {
-		return nil, err
-	}
-	if group.Spec.AllowCrossNamespaceImport != nil && *group.Spec.AllowCrossNamespaceImport {
-		return instances.Items, nil
-	}
-	items := []grafanav1beta1.Grafana{}
-	for _, i := range instances.Items {
-		if i.Namespace == group.Namespace {
-			items = append(items, i)
-		}
-	}
-
-	return items, err
-}

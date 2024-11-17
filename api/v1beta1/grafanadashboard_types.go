@@ -306,13 +306,6 @@ func (in *GrafanaDashboardStatus) getContentCache(url string, cacheDuration time
 	return cache
 }
 
-func (in *GrafanaDashboard) IsAllowCrossNamespaceImport() bool {
-	if in.Spec.AllowCrossNamespaceImport != nil {
-		return *in.Spec.AllowCrossNamespaceImport
-	}
-	return false
-}
-
 func (in *GrafanaDashboard) IsUpdatedUID(uid string) bool {
 	// Dashboard has just been created, status is not yet updated
 	if in.Status.UID == "" {
