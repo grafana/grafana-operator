@@ -43,6 +43,10 @@ spec:
             description: GrafanaNotificationPolicySpec defines the desired state of
               GrafanaNotificationPolicy
             properties:
+              allowCrossNamespaceImport:
+                description: Allow the Operator to match this resource with Grafanas
+                  outside the current namespace
+                type: boolean
               editable:
                 description: Whether to enable or disable editing of the notification
                   policy in Grafana UI
@@ -51,7 +55,7 @@ spec:
                 - message: Value is immutable
                   rule: self == oldSelf
               instanceSelector:
-                description: selects Grafanas for import
+                description: Selects Grafana instances for import
                 properties:
                   matchExpressions:
                     description: matchExpressions is a list of label selector requirements.
@@ -97,10 +101,12 @@ spec:
                 type: object
                 x-kubernetes-map-type: atomic
                 x-kubernetes-validations:
-                - message: Value is immutable
+                - message: spec.instanceSelector is immutable
                   rule: self == oldSelf
               resyncPeriod:
-                default: 10m
+                default: 10m0s
+                description: How often the resource is synced, defaults to 10m0s if
+                  not set
                 format: duration
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string

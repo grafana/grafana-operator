@@ -261,9 +261,11 @@ func getDashboardCR(t *testing.T, crUID string, statusUID string, specUID string
 			UID:       types.UID(crUID),
 		},
 		Spec: GrafanaDashboardSpec{
-			InstanceSelector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"dashboard": "grafana",
+			GrafanaCommonSpec: GrafanaCommonSpec{
+				InstanceSelector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"dashboard": "grafana",
+					},
 				},
 			},
 			CustomUID: specUID,

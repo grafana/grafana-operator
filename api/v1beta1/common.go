@@ -1,6 +1,9 @@
 package v1beta1
 
-import v1 "k8s.io/api/core/v1"
+import (
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
 
 type ValueFrom struct {
 	TargetPath string          `json:"targetPath"`
@@ -15,4 +18,32 @@ type ValueFromSource struct {
 	// Selects a key of a Secret.
 	// +optional
 	SecretKeyRef *v1.SecretKeySelector `json:"secretKeyRef,omitempty"`
+}
+
+type GrafanaCommonSpec struct {
+	// How often the resource is synced, defaults to 10m0s if not set
+	// +optional
+	// +kubebuilder:validation:Type=string
+	// +kubebuilder:validation:Format=duration
+	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
+	// +kubebuilder:default="10m0s"
+	ResyncPeriod metav1.Duration `json:"resyncPeriod,omitempty"`
+
+	// Selects Grafana instances for import
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="spec.instanceSelector is immutable"
+	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`
+
+	// Allow the Operator to match this resource with Grafanas outside the current namespace
+	// +optional
+	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
+}
+
+// The most recent observed state of a Grafana resource
+type GrafanaCommonStatus struct {
+	// Detect resource changes
+	Hash string `json:"hash,omitempty"`
+	// Last time the resource was synchronized
+	LastResync metav1.Time `json:"lastResync,omitempty"`
+	// Results when synchonizing resource with Grafana instances
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }

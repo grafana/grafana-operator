@@ -104,9 +104,9 @@ GrafanaAlertRuleGroupSpec defines the desired state of GrafanaAlertRuleGroup
         <td><b><a href="#grafanaalertrulegroupspecinstanceselector">instanceSelector</a></b></td>
         <td>object</td>
         <td>
-          selects Grafanas for import<br/>
+          Selects Grafana instances for import<br/>
           <br/>
-            <i>Validations</i>:<li>self == oldSelf: Value is immutable</li>
+            <i>Validations</i>:<li>self == oldSelf: spec.instanceSelector is immutable</li>
         </td>
         <td>true</td>
       </tr><tr>
@@ -129,7 +129,7 @@ GrafanaAlertRuleGroupSpec defines the desired state of GrafanaAlertRuleGroup
         <td><b>allowCrossNamespaceImport</b></td>
         <td>boolean</td>
         <td>
-          <br/>
+          Allow the Operator to match this resource with Grafanas outside the current namespace<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -167,10 +167,10 @@ Overrides the FolderSelector<br/>
         <td><b>resyncPeriod</b></td>
         <td>string</td>
         <td>
-          <br/>
+          How often the resource is synced, defaults to 10m0s if not set<br/>
           <br/>
             <i>Format</i>: duration<br/>
-            <i>Default</i>: 10m<br/>
+            <i>Default</i>: 10m0s<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -182,7 +182,7 @@ Overrides the FolderSelector<br/>
 
 
 
-selects Grafanas for import
+Selects Grafana instances for import
 
 <table>
     <thead>
@@ -697,9 +697,9 @@ GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
         <td><b><a href="#grafanacontactpointspecinstanceselector">instanceSelector</a></b></td>
         <td>object</td>
         <td>
-          selects Grafanas for import<br/>
+          Selects Grafana instances for import<br/>
           <br/>
-            <i>Validations</i>:<li>self == oldSelf: Value is immutable</li>
+            <i>Validations</i>:<li>self == oldSelf: spec.instanceSelector is immutable</li>
         </td>
         <td>true</td>
       </tr><tr>
@@ -720,7 +720,7 @@ GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
         <td><b>allowCrossNamespaceImport</b></td>
         <td>boolean</td>
         <td>
-          <br/>
+          Allow the Operator to match this resource with Grafanas outside the current namespace<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -734,10 +734,10 @@ GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
         <td><b>resyncPeriod</b></td>
         <td>string</td>
         <td>
-          <br/>
+          How often the resource is synced, defaults to 10m0s if not set<br/>
           <br/>
             <i>Format</i>: duration<br/>
-            <i>Default</i>: 10m<br/>
+            <i>Default</i>: 10m0s<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -774,7 +774,7 @@ GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
 
 
 
-selects Grafanas for import
+Selects Grafana instances for import
 
 <table>
     <thead>
@@ -1195,16 +1195,16 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         <td><b><a href="#grafanadashboardspecinstanceselector">instanceSelector</a></b></td>
         <td>object</td>
         <td>
-          selects Grafanas for import<br/>
+          Selects Grafana instances for import<br/>
           <br/>
-            <i>Validations</i>:<li>self == oldSelf: Value is immutable</li>
+            <i>Validations</i>:<li>self == oldSelf: spec.instanceSelector is immutable</li>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>allowCrossNamespaceImport</b></td>
         <td>boolean</td>
         <td>
-          allow to import this resources from an operator in a different namespace<br/>
+          Allow the Operator to match this resource with Grafanas outside the current namespace<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1311,10 +1311,10 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         <td><b>resyncPeriod</b></td>
         <td>string</td>
         <td>
-          how often the dashboard is refreshed, defaults to 5m if not set<br/>
+          How often the resource is synced, defaults to 10m0s if not set<br/>
           <br/>
             <i>Format</i>: duration<br/>
-            <i>Default</i>: 5m<br/>
+            <i>Default</i>: 10m0s<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1349,7 +1349,7 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
 
 
 
-selects Grafanas for import
+Selects Grafana instances for import
 
 <table>
     <thead>
@@ -2311,16 +2311,16 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         <td><b><a href="#grafanadatasourcespecinstanceselector">instanceSelector</a></b></td>
         <td>object</td>
         <td>
-          selects Grafana instances for import<br/>
+          Selects Grafana instances for import<br/>
           <br/>
-            <i>Validations</i>:<li>self == oldSelf: Value is immutable</li>
+            <i>Validations</i>:<li>self == oldSelf: spec.instanceSelector is immutable</li>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>allowCrossNamespaceImport</b></td>
         <td>boolean</td>
         <td>
-          allow to import this resources from an operator in a different namespace<br/>
+          Allow the Operator to match this resource with Grafanas outside the current namespace<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2334,10 +2334,10 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         <td><b>resyncPeriod</b></td>
         <td>string</td>
         <td>
-          how often the datasource is refreshed, defaults to 5m if not set<br/>
+          How often the resource is synced, defaults to 10m0s if not set<br/>
           <br/>
             <i>Format</i>: duration<br/>
-            <i>Default</i>: 5m<br/>
+            <i>Default</i>: 10m0s<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2485,7 +2485,7 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
 
 
 
-selects Grafana instances for import
+Selects Grafana instances for import
 
 <table>
     <thead>
@@ -2892,16 +2892,16 @@ GrafanaFolderSpec defines the desired state of GrafanaFolder
         <td><b><a href="#grafanafolderspecinstanceselector">instanceSelector</a></b></td>
         <td>object</td>
         <td>
-          Selects Grafanas for import<br/>
+          Selects Grafana instances for import<br/>
           <br/>
-            <i>Validations</i>:<li>self == oldSelf: Value is immutable</li>
+            <i>Validations</i>:<li>self == oldSelf: spec.instanceSelector is immutable</li>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>allowCrossNamespaceImport</b></td>
         <td>boolean</td>
         <td>
-          Enable matching Grafana instances outside the current namespace<br/>
+          Allow the Operator to match this resource with Grafanas outside the current namespace<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2929,10 +2929,10 @@ GrafanaFolderSpec defines the desired state of GrafanaFolder
         <td><b>resyncPeriod</b></td>
         <td>string</td>
         <td>
-          How often the folder is synced, defaults to 5m if not set<br/>
+          How often the resource is synced, defaults to 10m0s if not set<br/>
           <br/>
             <i>Format</i>: duration<br/>
-            <i>Default</i>: 5m<br/>
+            <i>Default</i>: 10m0s<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2960,7 +2960,7 @@ GrafanaFolderSpec defines the desired state of GrafanaFolder
 
 
 
-Selects Grafanas for import
+Selects Grafana instances for import
 
 <table>
     <thead>
@@ -3238,9 +3238,9 @@ GrafanaNotificationPolicySpec defines the desired state of GrafanaNotificationPo
         <td><b><a href="#grafananotificationpolicyspecinstanceselector">instanceSelector</a></b></td>
         <td>object</td>
         <td>
-          selects Grafanas for import<br/>
+          Selects Grafana instances for import<br/>
           <br/>
-            <i>Validations</i>:<li>self == oldSelf: Value is immutable</li>
+            <i>Validations</i>:<li>self == oldSelf: spec.instanceSelector is immutable</li>
         </td>
         <td>true</td>
       </tr><tr>
@@ -3250,6 +3250,13 @@ GrafanaNotificationPolicySpec defines the desired state of GrafanaNotificationPo
           Routes for alerts to match against<br/>
         </td>
         <td>true</td>
+      </tr><tr>
+        <td><b>allowCrossNamespaceImport</b></td>
+        <td>boolean</td>
+        <td>
+          Allow the Operator to match this resource with Grafanas outside the current namespace<br/>
+        </td>
+        <td>false</td>
       </tr><tr>
         <td><b>editable</b></td>
         <td>boolean</td>
@@ -3263,10 +3270,10 @@ GrafanaNotificationPolicySpec defines the desired state of GrafanaNotificationPo
         <td><b>resyncPeriod</b></td>
         <td>string</td>
         <td>
-          <br/>
+          How often the resource is synced, defaults to 10m0s if not set<br/>
           <br/>
             <i>Format</i>: duration<br/>
-            <i>Default</i>: 10m<br/>
+            <i>Default</i>: 10m0s<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -3278,7 +3285,7 @@ GrafanaNotificationPolicySpec defines the desired state of GrafanaNotificationPo
 
 
 
-selects Grafanas for import
+Selects Grafana instances for import
 
 <table>
     <thead>

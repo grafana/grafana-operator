@@ -20,9 +20,11 @@ func newDatasource(name string, uid string) *GrafanaDatasource {
 		},
 		Spec: GrafanaDatasourceSpec{
 			CustomUID: uid,
-			InstanceSelector: &v1.LabelSelector{
-				MatchLabels: map[string]string{
-					"test": "datasource",
+			GrafanaCommonSpec: GrafanaCommonSpec{
+				InstanceSelector: &v1.LabelSelector{
+					MatchLabels: map[string]string{
+						"test": "datasource",
+					},
 				},
 			},
 			Datasource: &GrafanaDatasourceInternal{

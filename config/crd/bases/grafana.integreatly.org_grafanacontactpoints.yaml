@@ -43,11 +43,13 @@ spec:
             description: GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
             properties:
               allowCrossNamespaceImport:
+                description: Allow the Operator to match this resource with Grafanas
+                  outside the current namespace
                 type: boolean
               disableResolveMessage:
                 type: boolean
               instanceSelector:
-                description: selects Grafanas for import
+                description: Selects Grafana instances for import
                 properties:
                   matchExpressions:
                     description: matchExpressions is a list of label selector requirements.
@@ -93,12 +95,14 @@ spec:
                 type: object
                 x-kubernetes-map-type: atomic
                 x-kubernetes-validations:
-                - message: Value is immutable
+                - message: spec.instanceSelector is immutable
                   rule: self == oldSelf
               name:
                 type: string
               resyncPeriod:
-                default: 10m
+                default: 10m0s
+                description: How often the resource is synced, defaults to 10m0s if
+                  not set
                 format: duration
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string

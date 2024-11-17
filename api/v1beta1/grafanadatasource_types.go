@@ -60,16 +60,14 @@ type GrafanaDatasourceInternal struct {
 // GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
 // +kubebuilder:validation:XValidation:rule="((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid)))", message="spec.uid is immutable"
 type GrafanaDatasourceSpec struct {
+	GrafanaCommonSpec `json:",inline"`
+
 	// The UID, for the datasource, fallback to the deprecated spec.datasource.uid and metadata.uid
 	// +optional
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="spec.uid is immutable"
 	CustomUID string `json:"uid,omitempty"`
 
 	Datasource *GrafanaDatasourceInternal `json:"datasource"`
-
-	// selects Grafana instances for import
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
-	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`
 
 	// plugins
 	// +optional
@@ -79,18 +77,6 @@ type GrafanaDatasourceSpec struct {
 	// +optional
 	// +kubebuilder:validation:MaxItems=99
 	ValuesFrom []ValueFrom `json:"valuesFrom,omitempty"`
-
-	// how often the datasource is refreshed, defaults to 5m if not set
-	// +optional
-	// +kubebuilder:validation:Type=string
-	// +kubebuilder:validation:Format=duration
-	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
-	// +kubebuilder:default="5m"
-	ResyncPeriod string `json:"resyncPeriod,omitempty"`
-
-	// allow to import this resources from an operator in a different namespace
-	// +optional
-	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
 }
 
 // GrafanaDatasourceStatus defines the observed state of GrafanaDatasource
@@ -129,23 +115,8 @@ type GrafanaDatasourceList struct {
 	Items           []GrafanaDatasource `json:"items"`
 }
 
-func (in *GrafanaDatasource) GetResyncPeriod() time.Duration {
-	if in.Spec.ResyncPeriod == "" {
-		in.Spec.ResyncPeriod = DefaultResyncPeriod
-		return in.GetResyncPeriod()
-	}
-
-	duration, err := time.ParseDuration(in.Spec.ResyncPeriod)
-	if err != nil {
-		in.Spec.ResyncPeriod = DefaultResyncPeriod
-		return in.GetResyncPeriod()
-	}
-
-	return duration
-}
-
 func (in *GrafanaDatasource) ResyncPeriodHasElapsed() bool {
-	deadline := in.Status.LastResync.Add(in.GetResyncPeriod())
+	deadline := in.Status.LastResync.Add(in.Spec.ResyncPeriod.Duration)
 	return time.Now().After(deadline)
 }
 

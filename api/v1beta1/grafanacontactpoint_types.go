@@ -27,21 +27,12 @@ import (
 // GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
 // +kubebuilder:validation:XValidation:rule="((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid)))", message="spec.uid is immutable"
 type GrafanaContactPointSpec struct {
+	GrafanaCommonSpec `json:",inline"`
+
 	// Manually specify the UID the Contact Point is created with
 	// +optional
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="spec.uid is immutable"
 	CustomUID string `json:"uid,omitempty"`
-
-	// +optional
-	// +kubebuilder:validation:Type=string
-	// +kubebuilder:validation:Format=duration
-	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
-	// +kubebuilder:default="10m"
-	ResyncPeriod metav1.Duration `json:"resyncPeriod,omitempty"`
-
-	// selects Grafanas for import
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
-	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`
 
 	// +optional
 	DisableResolveMessage bool `json:"disableResolveMessage,omitempty"`
@@ -56,9 +47,6 @@ type GrafanaContactPointSpec struct {
 
 	// +kubebuilder:validation:Enum=alertmanager;prometheus-alertmanager;dingding;discord;email;googlechat;kafka;line;opsgenie;pagerduty;pushover;sensugo;sensu;slack;teams;telegram;threema;victorops;webhook;wecom;hipchat;oncall
 	Type string `json:"type,omitempty"`
-
-	// +optional
-	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
 }
 
 // GrafanaContactPointStatus defines the observed state of GrafanaContactPoint
