@@ -198,7 +198,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 	}()
 
-	instances, err := GetMatchingInstances(controllerLog, ctx, r.Client, cr.Spec.GrafanaCommonSpec, cr.ObjectMeta.Namespace)
+	instances, err := GetMatchingInstances(controllerLog, ctx, r.Client, cr)
 	if err != nil || len(instances) == 0 {
 		NilOrEmptyInstanceListCondition(&cr.Status.Conditions, conditionDashboardSynchronized, cr.Generation, err)
 		cr.Status.NoMatchingInstances = true

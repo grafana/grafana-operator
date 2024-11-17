@@ -89,3 +89,7 @@ func (in *GrafanaContactPoint) ResyncPeriodHasElapsed() bool {
 	deadline := in.Status.LastResync.Add(in.Spec.ResyncPeriod.Duration)
 	return time.Now().After(deadline)
 }
+
+func (in *GrafanaContactPoint) MatchConditions() (*metav1.LabelSelector, string, *bool) {
+	return in.Spec.InstanceSelector, in.ObjectMeta.Namespace, in.Spec.AllowCrossNamespaceImport
+}

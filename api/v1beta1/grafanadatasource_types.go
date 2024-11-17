@@ -159,3 +159,7 @@ func (in *GrafanaDatasourceList) Find(namespace string, name string) *GrafanaDat
 func init() {
 	SchemeBuilder.Register(&GrafanaDatasource{}, &GrafanaDatasourceList{})
 }
+
+func (in *GrafanaDatasource) MatchConditions() (*metav1.LabelSelector, string, *bool) {
+	return in.Spec.InstanceSelector, in.ObjectMeta.Namespace, in.Spec.AllowCrossNamespaceImport
+}

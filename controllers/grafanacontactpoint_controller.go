@@ -110,7 +110,7 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 		}
 	}()
 
-	instances, err := GetMatchingInstances(controllerLog, ctx, r.Client, contactPoint.Spec.GrafanaCommonSpec, contactPoint.ObjectMeta.Namespace)
+	instances, err := GetMatchingInstances(controllerLog, ctx, r.Client, contactPoint)
 	if err != nil || len(instances) == 0 {
 		NilOrEmptyInstanceListCondition(&contactPoint.Status.Conditions, conditionContactPointSynchronized, contactPoint.Generation, err)
 		controllerLog.Error(err, "could not find matching instances", "name", contactPoint.Name, "namespace", contactPoint.Namespace)

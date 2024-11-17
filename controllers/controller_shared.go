@@ -34,15 +34,17 @@ const (
 
 //+kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update;patch;delete
 
-func GetMatchingInstances(log logr.Logger, ctx context.Context, k8sClient client.Client, commonSpec v1beta1.GrafanaCommonSpec, namespace string) ([]v1beta1.Grafana, error) {
-	if commonSpec.InstanceSelector.MatchLabels == nil {
+func GetMatchingInstances(log logr.Logger, ctx context.Context, k8sClient client.Client, cr operatorapi.CommonResource) ([]v1beta1.Grafana, error) {
+	instanceSelector, namespace, allowCrossNamespaceImport := cr.MatchConditions()
+	if instanceSelector.MatchLabels == nil {
 		return []v1beta1.Grafana{}, nil
 	}
 
 	opts := []client.ListOption{
-		client.MatchingLabels(commonSpec.InstanceSelector.MatchLabels),
+		client.MatchingLabels(instanceSelector.MatchLabels),
 	}
-	if commonSpec.AllowCrossNamespaceImport != nil && !*commonSpec.AllowCrossNamespaceImport {
+
+	if allowCrossNamespaceImport != nil && !*allowCrossNamespaceImport {
 		// Only query resource namespace
 		opts = append(opts, client.InNamespace(namespace))
 	}
@@ -56,7 +58,7 @@ func GetMatchingInstances(log logr.Logger, ctx context.Context, k8sClient client
 	selectedList := []v1beta1.Grafana{}
 	var unready_instances []string
 	for _, instance := range list.Items {
-		selected := labelsSatisfyMatchExpressions(instance.Labels, commonSpec.InstanceSelector.MatchExpressions)
+		selected := labelsSatisfyMatchExpressions(instance.Labels, instanceSelector.MatchExpressions)
 		if !selected {
 			continue
 		}

@@ -108,7 +108,7 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 		}
 	}()
 
-	instances, err := GetMatchingInstances(controllerLog, ctx, r.Client, notificationPolicy.Spec.GrafanaCommonSpec, notificationPolicy.ObjectMeta.Namespace)
+	instances, err := GetMatchingInstances(controllerLog, ctx, r.Client, notificationPolicy)
 	if err != nil || len(instances) == 0 {
 		NilOrEmptyInstanceListCondition(&notificationPolicy.Status.Conditions, conditionNotificationPolicySynchronized, notificationPolicy.Generation, err)
 		controllerLog.Error(err, "could not find matching instances", "name", notificationPolicy.Name, "namespace", notificationPolicy.Namespace)

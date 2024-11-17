@@ -106,7 +106,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 		}
 	}()
 
-	instances, err := GetMatchingInstances(controllerLog, ctx, r.Client, group.Spec.GrafanaCommonSpec, group.ObjectMeta.Namespace)
+	instances, err := GetMatchingInstances(controllerLog, ctx, r.Client, group)
 	if err != nil || len(instances) == 0 {
 		NilOrEmptyInstanceListCondition(&group.Status.Conditions, conditionAlertGroupSynchronized, group.Generation, err)
 		controllerLog.Error(err, "could not find matching instances", "name", group.Name, "namespace", group.Namespace)

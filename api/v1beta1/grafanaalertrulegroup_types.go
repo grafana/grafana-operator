@@ -177,3 +177,7 @@ type GrafanaAlertRuleGroupList struct {
 func init() {
 	SchemeBuilder.Register(&GrafanaAlertRuleGroup{}, &GrafanaAlertRuleGroupList{})
 }
+
+func (in *GrafanaAlertRuleGroup) MatchConditions() (*metav1.LabelSelector, string, *bool) {
+	return in.Spec.InstanceSelector, in.ObjectMeta.Namespace, in.Spec.AllowCrossNamespaceImport
+}

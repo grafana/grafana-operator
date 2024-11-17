@@ -194,7 +194,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 	removeInvalidSpec(&folder.Status.Conditions)
 
-	instances, err := GetMatchingInstances(controllerLog, ctx, r.Client, folder.Spec.GrafanaCommonSpec, folder.ObjectMeta.Namespace)
+	instances, err := GetMatchingInstances(controllerLog, ctx, r.Client, folder)
 	if err != nil || len(instances) == 0 {
 		NilOrEmptyInstanceListCondition(&folder.Status.Conditions, conditionFolderSynchronized, folder.Generation, err)
 		folder.Status.NoMatchingInstances = true

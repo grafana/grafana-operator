@@ -196,7 +196,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	// Overwrite OrgID to ensure the field is useless
 	cr.Spec.Datasource.OrgID = nil
 
-	instances, err := GetMatchingInstances(controllerLog, ctx, r.Client, cr.Spec.GrafanaCommonSpec, cr.ObjectMeta.Namespace)
+	instances, err := GetMatchingInstances(controllerLog, ctx, r.Client, cr)
 	if err != nil || len(instances) == 0 {
 		NilOrEmptyInstanceListCondition(&cr.Status.Conditions, conditionDatasourceSynchronized, cr.Generation, err)
 		cr.Status.NoMatchingInstances = true

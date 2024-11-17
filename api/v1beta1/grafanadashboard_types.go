@@ -354,3 +354,7 @@ func (in *GrafanaDashboardList) Find(namespace string, name string) *GrafanaDash
 func init() {
 	SchemeBuilder.Register(&GrafanaDashboard{}, &GrafanaDashboardList{})
 }
+
+func (in *GrafanaDashboard) MatchConditions() (*metav1.LabelSelector, string, *bool) {
+	return in.Spec.InstanceSelector, in.ObjectMeta.Namespace, in.Spec.AllowCrossNamespaceImport
+}
