@@ -285,13 +285,13 @@ func (r *GrafanaAlertRuleGroupReconciler) finalize(ctx context.Context, group *g
 		r.Log.Info("ignoring finalization logic as folder no longer exists")
 		return nil //nolint:nilerr
 	}
-	instances, err := GetMatchingInstances(r.Log, ctx, r.Client, group.Spec.GrafanaCommonSpec, group.ObjectMeta.Namespace)
+	instances, err := GetAllInstances(ctx, r.Client)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
-	for _, i := range instances {
-		instance := i
-		if err := r.removeFromInstance(ctx, &instance, group, folderUID); err != nil {
+	for _, grafana := range instances {
+		grafana := grafana
+		if err := r.removeFromInstance(ctx, &grafana, group, folderUID); err != nil {
 			return fmt.Errorf("removing from instance %w", err)
 		}
 	}

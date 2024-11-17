@@ -232,13 +232,13 @@ func (r *GrafanaContactPointReconciler) getContactPointFromUID(ctx context.Conte
 func (r *GrafanaContactPointReconciler) finalize(ctx context.Context, contactPoint *grafanav1beta1.GrafanaContactPoint) error {
 	r.Log.Info("Finalizing GrafanaContactPoint")
 
-	instances, err := GetMatchingInstances(r.Log, ctx, r.Client, contactPoint.Spec.GrafanaCommonSpec, contactPoint.ObjectMeta.Namespace)
+	instances, err := GetAllInstances(ctx, r.Client)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
-	for _, i := range instances {
-		instance := i
-		if err := r.removeFromInstance(ctx, &instance, contactPoint); err != nil {
+	for _, grafana := range instances {
+		grafana := grafana
+		if err := r.removeFromInstance(ctx, &grafana, contactPoint); err != nil {
 			return fmt.Errorf("removing contact point from instance: %w", err)
 		}
 	}

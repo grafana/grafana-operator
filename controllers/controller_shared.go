@@ -75,6 +75,26 @@ func GetMatchingInstances(log logr.Logger, ctx context.Context, k8sClient client
 	return selectedList, nil
 }
 
+func GetAllInstances(ctx context.Context, k8sClient client.Client) ([]v1beta1.Grafana, error) {
+	var list v1beta1.GrafanaList
+	err := k8sClient.List(ctx, &list)
+	if err != nil || len(list.Items) == 0 {
+		return []v1beta1.Grafana{}, err
+	}
+
+	selectedList := []v1beta1.Grafana{}
+	for _, instance := range list.Items {
+		// admin url is required to interact with Grafana
+		// the instance or route might not yet be ready
+		if instance.Status.Stage != v1beta1.OperatorStageComplete || instance.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
+			continue
+		}
+		selectedList = append(selectedList, instance)
+	}
+
+	return selectedList, nil
+}
+
 // getFolderUID fetches the folderUID from an existing GrafanaFolder CR declared in the specified namespace
 func getFolderUID(ctx context.Context, k8sClient client.Client, ref operatorapi.FolderReferencer) (string, error) {
 	if ref.FolderUID() != "" {

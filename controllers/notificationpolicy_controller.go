@@ -191,7 +191,7 @@ func (r *GrafanaNotificationPolicyReconciler) resetInstance(ctx context.Context,
 func (r *GrafanaNotificationPolicyReconciler) finalize(ctx context.Context, notificationPolicy *grafanav1beta1.GrafanaNotificationPolicy) error {
 	r.Log.Info("Finalizing GrafanaNotificationPolicy")
 
-	instances, err := GetMatchingInstances(r.Log, ctx, r.Client, notificationPolicy.Spec.GrafanaCommonSpec, notificationPolicy.ObjectMeta.Namespace)
+	instances, err := GetAllInstances(ctx, r.Client)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
