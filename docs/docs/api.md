@@ -2832,7 +2832,7 @@ GrafanaDatasourceStatus defines the observed state of GrafanaDatasource
         <td><b>lastMessage</b></td>
         <td>string</td>
         <td>
-          <br/>
+          Deprecated: See status.conditions<br/>
         </td>
         <td>false</td>
       </tr><tr>

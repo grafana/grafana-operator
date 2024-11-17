@@ -56,11 +56,11 @@ type GrafanaFolderSpec struct {
 	ParentFolderRef string `json:"parentFolderRef,omitempty"`
 }
 
+// TODO(V1) Remove
 // GrafanaFolderStatus defines the observed state of GrafanaFolder
 type GrafanaFolderStatus struct {
 	GrafanaCommonStatus `json:",inline"`
 
-	// TODO(V1) Remove
 	// The folder instanceSelector can't find matching grafana instances
 	NoMatchingInstances bool `json:"NoMatchingInstances,omitempty"`
 }

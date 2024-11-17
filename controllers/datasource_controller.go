@@ -199,11 +199,13 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	instances, err := GetMatchingInstances(controllerLog, ctx, r.Client, cr.Spec.GrafanaCommonSpec, cr.ObjectMeta.Namespace)
 	if err != nil || len(instances) == 0 {
 		NilOrEmptyInstanceListCondition(&cr.Status.Conditions, conditionDatasourceSynchronized, cr.Generation, err)
+		cr.Status.NoMatchingInstances = true
 		controllerLog.Error(err, "could not find matching instances", "name", cr.Name, "namespace", cr.Namespace)
 		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
 	removeNoMatchingInstance(&cr.Status.Conditions)
+	cr.Status.NoMatchingInstances = false
 	controllerLog.Info("found matching Grafana instances for datasource", "count", len(instances))
 
 	datasource, hash, err := r.getDatasourceContent(ctx, cr)

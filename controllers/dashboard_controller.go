@@ -201,11 +201,13 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	instances, err := GetMatchingInstances(controllerLog, ctx, r.Client, cr.Spec.GrafanaCommonSpec, cr.ObjectMeta.Namespace)
 	if err != nil || len(instances) == 0 {
 		NilOrEmptyInstanceListCondition(&cr.Status.Conditions, conditionDashboardSynchronized, cr.Generation, err)
+		cr.Status.NoMatchingInstances = true
 		controllerLog.Error(err, "could not find matching instances", "name", cr.Name, "namespace", cr.Namespace)
 		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
 	removeNoMatchingInstance(&cr.Status.Conditions)
+	cr.Status.NoMatchingInstances = false
 	controllerLog.Info("found matching Grafana instances for dashboard", "count", len(instances))
 
 	dashboardJson, err := r.fetchDashboardJson(ctx, cr)

@@ -197,11 +197,13 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	instances, err := GetMatchingInstances(controllerLog, ctx, r.Client, folder.Spec.GrafanaCommonSpec, folder.ObjectMeta.Namespace)
 	if err != nil || len(instances) == 0 {
 		NilOrEmptyInstanceListCondition(&folder.Status.Conditions, conditionFolderSynchronized, folder.Generation, err)
+		folder.Status.NoMatchingInstances = true
 		controllerLog.Error(err, "could not find matching instances", "name", folder.Name, "namespace", folder.Namespace)
 		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
 	removeNoMatchingInstance(&folder.Status.Conditions)
+	folder.Status.NoMatchingInstances = false
 	controllerLog.Info("found matching Grafana instances for folder", "count", len(instances))
 
 	applyErrors := make(map[string]string)

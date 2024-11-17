@@ -79,10 +79,12 @@ type GrafanaDatasourceSpec struct {
 	ValuesFrom []ValueFrom `json:"valuesFrom,omitempty"`
 }
 
+// TODO(V1) Remove
 // GrafanaDatasourceStatus defines the observed state of GrafanaDatasource
 type GrafanaDatasourceStatus struct {
 	GrafanaCommonStatus `json:",inline"`
 
+	// Deprecated: See status.conditions
 	LastMessage string `json:"lastMessage,omitempty"`
 	// The datasource instanceSelector can't find matching grafana instances
 	NoMatchingInstances bool   `json:"NoMatchingInstances,omitempty"`

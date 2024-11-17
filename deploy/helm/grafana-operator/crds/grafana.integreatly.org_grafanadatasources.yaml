@@ -312,6 +312,7 @@ spec:
                 description: Detect resource changes
                 type: string
               lastMessage:
+                description: 'Deprecated: See status.conditions'
                 type: string
               lastResync:
                 description: Last time the resource was synchronized

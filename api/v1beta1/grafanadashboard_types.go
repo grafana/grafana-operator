@@ -164,6 +164,7 @@ type GrafanaComDashboardReference struct {
 	Revision *int `json:"revision,omitempty"`
 }
 
+// TODO(V1) Remove
 // GrafanaDashboardStatus defines the observed state of GrafanaDashboard
 type GrafanaDashboardStatus struct {
 	GrafanaCommonStatus `json:",inline"`
@@ -171,7 +172,6 @@ type GrafanaDashboardStatus struct {
 	ContentCache     []byte      `json:"contentCache,omitempty"`
 	ContentTimestamp metav1.Time `json:"contentTimestamp,omitempty"`
 	ContentUrl       string      `json:"contentUrl,omitempty"`
-	// TODO(V1) Remove
 	// The dashboard instanceSelector can't find matching grafana instances
 	NoMatchingInstances bool   `json:"NoMatchingInstances,omitempty"`
 	UID                 string `json:"uid,omitempty"`
