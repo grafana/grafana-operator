@@ -1617,6 +1617,10 @@ spec:
             description: GrafanaNotificationPolicySpec defines the desired state of
               GrafanaNotificationPolicy
             properties:
+              allowCrossNamespaceImport:
+                description: allow to import this resource into a Grafana instance
+                  in a different namespace
+                type: boolean
               editable:
                 description: Whether to enable or disable editing of the notification
                   policy in Grafana UI

@@ -211,12 +211,13 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	applyErrors := make(map[string]string)
 	for _, grafana := range instances.Items {
+		grafana := grafana
+
 		// check if this is a cross namespace import
 		if grafana.Namespace != folder.Namespace && !folder.IsAllowCrossNamespaceImport() {
 			continue
 		}
 
-		grafana := grafana
 		if grafana.Status.Stage != grafanav1beta1.OperatorStageComplete || grafana.Status.StageStatus != grafanav1beta1.OperatorStageResultSuccess {
 			controllerLog.Info("grafana instance not ready", "grafana", grafana.Name)
 			continue

@@ -238,12 +238,13 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	success := true
 	applyErrors := make(map[string]string)
 	for _, grafana := range instances.Items {
+		grafana := grafana
+
 		// check if this is a cross namespace import
 		if grafana.Namespace != cr.Namespace && !cr.IsAllowCrossNamespaceImport() {
 			continue
 		}
 
-		grafana := grafana
 		// an admin url is required to interact with grafana
 		// the instance or route might not yet be ready
 		if grafana.Status.Stage != v1beta1.OperatorStageComplete || grafana.Status.StageStatus != v1beta1.OperatorStageResultSuccess {

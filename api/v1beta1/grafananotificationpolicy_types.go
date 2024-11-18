@@ -43,6 +43,10 @@ type GrafanaNotificationPolicySpec struct {
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
 	// +optional
 	Editable *bool `json:"editable,omitempty"`
+
+	// allow to import this resource into a Grafana instance in a different namespace
+	// +optional
+	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
 }
 
 type Route struct {
@@ -163,6 +167,13 @@ type GrafanaNotificationPolicyList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []GrafanaNotificationPolicy `json:"items"`
+}
+
+func (np *GrafanaNotificationPolicy) IsAllowCrossNamespaceImport() bool {
+	if np.Spec.AllowCrossNamespaceImport != nil {
+		return *np.Spec.AllowCrossNamespaceImport
+	}
+	return false
 }
 
 func init() {

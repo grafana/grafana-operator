@@ -3251,6 +3251,13 @@ GrafanaNotificationPolicySpec defines the desired state of GrafanaNotificationPo
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>allowCrossNamespaceImport</b></td>
+        <td>boolean</td>
+        <td>
+          allow to import this resource into a Grafana instance in a different namespace<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>editable</b></td>
         <td>boolean</td>
         <td>
