@@ -42,9 +42,11 @@ func TestGetDashboardsToDelete(t *testing.T) {
 					Namespace: "grafana-operator-system",
 				},
 				Spec: v1beta1.GrafanaDashboardSpec{
-					InstanceSelector: &metav1.LabelSelector{
-						MatchLabels: map[string]string{
-							"dashboard": "external",
+					GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
+						InstanceSelector: &metav1.LabelSelector{
+							MatchLabels: map[string]string{
+								"dashboard": "external",
+							},
 						},
 					},
 				},
@@ -56,9 +58,11 @@ func TestGetDashboardsToDelete(t *testing.T) {
 					Namespace: "grafana-operator-system",
 				},
 				Spec: v1beta1.GrafanaDashboardSpec{
-					InstanceSelector: &metav1.LabelSelector{
-						MatchLabels: map[string]string{
-							"dashboard": "internal",
+					GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
+						InstanceSelector: &metav1.LabelSelector{
+							MatchLabels: map[string]string{
+								"dashboard": "external",
+							},
 						},
 					},
 				},

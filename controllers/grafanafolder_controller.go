@@ -238,7 +238,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if folder.ResyncPeriodHasElapsed() {
 		folder.Status.LastResync = metav1.Time{Time: time.Now()}
 	}
-	return ctrl.Result{RequeueAfter: folder.GetResyncPeriod()}, nil
+	return ctrl.Result{RequeueAfter: folder.Spec.ResyncPeriod.Duration}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

@@ -246,23 +246,8 @@ func (in *GrafanaDashboard) Unchanged(hash string) bool {
 }
 
 func (in *GrafanaDashboard) ResyncPeriodHasElapsed() bool {
-	deadline := in.Status.LastResync.Add(in.GetResyncPeriod())
+	deadline := in.Status.LastResync.Add(in.Spec.ResyncPeriod.Duration)
 	return time.Now().After(deadline)
-}
-
-func (in *GrafanaDashboard) GetResyncPeriod() time.Duration {
-	if in.Spec.ResyncPeriod == "" {
-		in.Spec.ResyncPeriod = DefaultResyncPeriod
-		return in.GetResyncPeriod()
-	}
-
-	duration, err := time.ParseDuration(in.Spec.ResyncPeriod)
-	if err != nil {
-		in.Spec.ResyncPeriod = DefaultResyncPeriod
-		return in.GetResyncPeriod()
-	}
-
-	return duration
 }
 
 func (in *GrafanaDashboard) GetSourceTypes() []DashboardSourceType {
