@@ -204,7 +204,7 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 		Ports: []v1.ContainerPort{
 			{
 				Name:          "grafana-http",
-				ContainerPort: int32(GetGrafanaPort(cr)),
+				ContainerPort: int32(GetGrafanaPort(cr)), // #nosec G115
 				Protocol:      "TCP",
 			},
 		},
