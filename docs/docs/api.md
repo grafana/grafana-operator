@@ -70,7 +70,7 @@ GrafanaAlertRuleGroup is the Schema for the grafanaalertrulegroups API
         <td>
           GrafanaAlertRuleGroupSpec defines the desired state of GrafanaAlertRuleGroup<br/>
           <br/>
-            <i>Validations</i>:<li>(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID))): Only one of FolderUID or FolderRef can be set</li>
+            <i>Validations</i>:<li>(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID))): Only one of FolderUID or FolderRef can be set</li><li>((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable) && has(self.editable))): spec.editable is immutable</li>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3205,6 +3205,8 @@ GrafanaNotificationPolicy is the Schema for the GrafanaNotificationPolicy API
         <td>object</td>
         <td>
           GrafanaNotificationPolicySpec defines the desired state of GrafanaNotificationPolicy<br/>
+          <br/>
+            <i>Validations</i>:<li>((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable) && has(self.editable))): spec.editable is immutable</li>
         </td>
         <td>false</td>
       </tr><tr>

@@ -25,6 +25,7 @@ import (
 
 // GrafanaAlertRuleGroupSpec defines the desired state of GrafanaAlertRuleGroup
 // +kubebuilder:validation:XValidation:rule="(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID)))", message="Only one of FolderUID or FolderRef can be set"
+// +kubebuilder:validation:XValidation:rule="((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable) && has(self.editable)))", message="spec.editable is immutable"
 type GrafanaAlertRuleGroupSpec struct {
 	// +optional
 	// Name of the alert rule group. If not specified, the resource name will be used.

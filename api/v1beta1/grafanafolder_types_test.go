@@ -1,10 +1,14 @@
 package v1beta1
 
 import (
+	"context"
 	"testing"
 
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestGrafanaFolder_GetTitle(t *testing.T) {
@@ -72,3 +76,60 @@ func TestGrafanaFolder_GetUID(t *testing.T) {
 		})
 	}
 }
+
+func newFolder(name string, uid string) *GrafanaFolder {
+	return &GrafanaFolder{
+		TypeMeta: v1.TypeMeta{
+			APIVersion: APIVersion,
+			Kind:       "GrafanaFolder",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      name,
+			Namespace: "default",
+		},
+		Spec: GrafanaFolderSpec{
+			CustomUID: uid,
+			InstanceSelector: &v1.LabelSelector{
+				MatchLabels: map[string]string{
+					"test": "folder",
+				},
+			},
+		},
+	}
+}
+
+var _ = Describe("Folder type", func() {
+	Context("Ensure Folder spec.uid is immutable", func() {
+		ctx := context.Background()
+
+		It("Should block adding uid field when missing", func() {
+			folder := newFolder("missing-uid", "")
+			By("Create new Folder without uid")
+			Expect(k8sClient.Create(ctx, folder)).To(Succeed())
+
+			By("Adding a uid")
+			folder.Spec.CustomUID = "new-folder-uid"
+			Expect(k8sClient.Update(ctx, folder)).To(HaveOccurred())
+		})
+
+		It("Should block removing uid field when set", func() {
+			folder := newFolder("existing-uid", "existing-uid")
+			By("Creating Folder with existing UID")
+			Expect(k8sClient.Create(ctx, folder)).To(Succeed())
+
+			By("And setting UID to ''")
+			folder.Spec.CustomUID = ""
+			Expect(k8sClient.Update(ctx, folder)).To(HaveOccurred())
+		})
+
+		It("Should block changing value of uid", func() {
+			folder := newFolder("removing-uid", "existing-uid")
+			By("Create new Folder with existing UID")
+			Expect(k8sClient.Create(ctx, folder)).To(Succeed())
+
+			By("Changing the existing UID")
+			folder.Spec.CustomUID = "new-folder-uid"
+			Expect(k8sClient.Update(ctx, folder)).To(HaveOccurred())
+		})
+	})
+})

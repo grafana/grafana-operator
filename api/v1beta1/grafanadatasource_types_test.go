@@ -37,13 +37,14 @@ func newDatasource(name string, uid string) *GrafanaDatasource {
 var _ = Describe("Datasource type", func() {
 	Context("Ensure Datasource spec.uid is immutable", func() {
 		ctx := context.Background()
+
 		It("Should block adding uid field when missing", func() {
 			ds := newDatasource("missing-uid", "")
 			By("Create new Datasource without uid")
 			Expect(k8sClient.Create(ctx, ds)).To(Succeed())
 
 			By("Adding a uid")
-			ds.Spec.CustomUID = "new-uid"
+			ds.Spec.CustomUID = "new-ds-uid"
 			Expect(k8sClient.Update(ctx, ds)).To(HaveOccurred())
 		})
 
@@ -63,7 +64,7 @@ var _ = Describe("Datasource type", func() {
 			Expect(k8sClient.Create(ctx, ds)).To(Succeed())
 
 			By("Changing the existing UID")
-			ds.Spec.CustomUID = "new-uid"
+			ds.Spec.CustomUID = "new-ds-uid"
 			Expect(k8sClient.Update(ctx, ds)).To(HaveOccurred())
 		})
 	})
