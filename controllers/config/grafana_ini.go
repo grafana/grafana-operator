@@ -31,6 +31,14 @@ func WriteIni(cfg map[string]map[string]string) (string, string) {
 		cfg["dashboards"]["versions_to_keep"] = "20"
 	}
 
+	if cfg["unified_alerting"] == nil {
+		cfg["unified_alerting"] = make(map[string]string)
+	}
+
+	if cfg["unified_alerting"]["rule_version_record_limit"] == "" {
+		cfg["unified_alerting"]["rule_version_record_limit"] = "5"
+	}
+
 	sections := make([]string, 0, len(cfg))
 	for key := range cfg {
 		sections = append(sections, key)
