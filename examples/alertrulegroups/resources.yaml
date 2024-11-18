@@ -15,8 +15,12 @@ spec:
       admin_user: root
       admin_password: secret
 
-    ## Starting from Grafana 11.3.0, it is possible to enforce a limit on how many alert rule versions should be stored in a database (including the current version of the rule).
-    ## The default value in Grafana is "0", which means no limit. To mitigate that behaviour, the operator sets it to 5 by default starting from v5.16.0
+    ## Starting from Grafana 11.3.0, it is possible to enforce
+    ## a limit on how many alert rule versions should be stored
+    ## in a database (including the current version of the rule).
+    ## The default value in Grafana is "0", which means no limit.
+    ## To mitigate that behaviour, the operator sets it to 5
+    ## by default starting from v5.16.0
     # unified_alerting:
     #   rule_version_record_limit: "5"
 ---
@@ -45,8 +49,8 @@ spec:
         - datasourceUid: grafanacloud-demoinfra-prom
           model:
             datasource:
-                type: prometheus
-                uid: grafanacloud-demoinfra-prom
+              type: prometheus
+              uid: grafanacloud-demoinfra-prom
             editorMode: code
             expr: weather_temp_c{}
             instant: true
@@ -61,22 +65,22 @@ spec:
         - datasourceUid: __expr__
           model:
             conditions:
-                - evaluator:
-                    params:
-                        - 0
-                    type: lt
-                  operator:
-                    type: and
-                  query:
-                    params:
-                        - C
-                  reducer:
-                    params: []
-                    type: last
-                  type: query
+              - evaluator:
+                  params:
+                    - 0
+                  type: lt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                reducer:
+                  params: []
+                  type: last
+                type: query
             datasource:
-                type: __expr__
-                uid: __expr__
+              type: __expr__
+              uid: __expr__
             expression: A
             intervalMs: 1000
             maxDataPoints: 43200
