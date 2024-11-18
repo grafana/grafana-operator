@@ -160,7 +160,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 		return fmt.Errorf("building grafana client: %w", err)
 	}
 
-	trueRef := "true"
+	trueRef := "true" //nolint:goconst
 	editable := true
 	if group.Spec.Editable != nil && !*group.Spec.Editable {
 		editable = false

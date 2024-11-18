@@ -148,12 +148,12 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 	}
 
 	if len(applyErrors) == 0 {
-		condition.Status = "True"
-		condition.Reason = "ApplySuccessful"
+		condition.Status = metav1.ConditionTrue
+		condition.Reason = conditionApplySuccessful
 		condition.Message = fmt.Sprintf("Contact point was successfully applied to %d instances", len(instances))
 	} else {
-		condition.Status = "False"
-		condition.Reason = "ApplyFailed"
+		condition.Status = metav1.ConditionFalse
+		condition.Reason = conditionApplyFailed
 
 		var sb strings.Builder
 		for i, err := range applyErrors {
