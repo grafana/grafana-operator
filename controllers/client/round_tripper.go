@@ -17,7 +17,7 @@ type instrumentedRoundTripper struct {
 }
 
 func NewInstrumentedRoundTripper(relatedResource string, metric *prometheus.CounterVec, useProxy bool, tlsConfig *tls.Config) http.RoundTripper {
-	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport := http.DefaultTransport.(*http.Transport).Clone() //nolint:errcheck
 
 	transport.DisableKeepAlives = true
 	transport.MaxIdleConnsPerHost = -1

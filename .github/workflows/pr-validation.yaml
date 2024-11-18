@@ -99,7 +99,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6.1.1
         with:
-          version: "v1.57.2"
+          version: "v1.62.0"
 
       - name: Verify golangci-lint config
         run: |
