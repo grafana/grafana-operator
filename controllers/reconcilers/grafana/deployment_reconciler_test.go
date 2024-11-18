@@ -34,15 +34,13 @@ func Test_getGrafanaImage_specificVersion(t *testing.T) {
 	assert.Equal(t, expectedDeploymentImage, getGrafanaImage(cr))
 }
 
-func Test_getGrafanaImage_withEnvironmentOverride(t *testing.T) {
+func Test_getGrafanaImage_withImageInVersion(t *testing.T) {
+	expectedDeploymentImage := "docker.io/grafana/grafana@sha256:b7fcb534f7b3512801bb3f4e658238846435804deb479d105b5cdc680847c272"
 	cr := &v1beta1.Grafana{
 		Spec: v1beta1.GrafanaSpec{
-			Version: "",
+			Version: expectedDeploymentImage,
 		},
 	}
-
-	expectedDeploymentImage := "I want this grafana image"
-	t.Setenv("RELATED_IMAGE_GRAFANA", expectedDeploymentImage)
 
 	assert.Equal(t, expectedDeploymentImage, getGrafanaImage(cr))
 }
