@@ -89,9 +89,11 @@ func newFolder(name string, uid string) *GrafanaFolder {
 		},
 		Spec: GrafanaFolderSpec{
 			CustomUID: uid,
-			InstanceSelector: &v1.LabelSelector{
-				MatchLabels: map[string]string{
-					"test": "folder",
+			GrafanaCommonSpec: GrafanaCommonSpec{
+				InstanceSelector: &v1.LabelSelector{
+					MatchLabels: map[string]string{
+						"test": "folder",
+					},
 				},
 			},
 		},
