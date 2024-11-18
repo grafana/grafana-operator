@@ -80,3 +80,9 @@ spec:
         file: 11-tls.yaml
     - assert:
         file: 11-assert.yaml
+  - name: step-12
+    try:
+    - apply:
+        file: 12-notification-template.yaml
+    - assert:
+        file: 12-assert.yaml
