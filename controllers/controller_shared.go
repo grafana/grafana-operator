@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-logr/logr"
 	operatorapi "github.com/grafana/grafana-operator/v5/api"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -35,6 +36,7 @@ const annotationAppliedNotificationPolicy = "operator.grafana.com/applied-notifi
 
 //+kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update;patch;delete
 
+// Gets all instances matching labelSelector
 func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSelector *metav1.LabelSelector) (v1beta1.GrafanaList, error) {
 	if labelSelector == nil {
 		return v1beta1.GrafanaList{}, nil
@@ -56,6 +58,84 @@ func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSel
 	}
 
 	return selectedList, err
+}
+
+// Only matching instances in the scope of the resource are returned
+// Resources with allowCrossNamespaceImport expands the scope to the entire cluster
+// Intended to be used in reconciler functions
+func GetScopedMatchingInstances(log logr.Logger, ctx context.Context, k8sClient client.Client, cr operatorapi.CommonResource) ([]v1beta1.Grafana, error) {
+	instanceSelector, namespace, allowCrossNamespaceImport := cr.MatchConditions()
+	if instanceSelector.MatchLabels == nil {
+		return []v1beta1.Grafana{}, nil
+	}
+
+	opts := []client.ListOption{
+		client.MatchingLabels(instanceSelector.MatchLabels),
+	}
+
+	if allowCrossNamespaceImport != nil && !*allowCrossNamespaceImport {
+		// Only query resource namespace
+		opts = append(opts, client.InNamespace(namespace))
+	}
+
+	var list v1beta1.GrafanaList
+	err := k8sClient.List(ctx, &list, opts...)
+	if err != nil || len(list.Items) == 0 {
+		return []v1beta1.Grafana{}, err
+	}
+
+	selectedList := []v1beta1.Grafana{}
+	var unready_instances []string
+	for _, instance := range list.Items {
+		selected := labelsSatisfyMatchExpressions(instance.Labels, instanceSelector.MatchExpressions)
+		if !selected {
+			continue
+		}
+		// admin url is required to interact with Grafana
+		// the instance or route might not yet be ready
+		if instance.Status.Stage != v1beta1.OperatorStageComplete || instance.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
+			unready_instances = append(unready_instances, instance.Name)
+			continue
+		}
+		selectedList = append(selectedList, instance)
+	}
+	if len(unready_instances) > 1 {
+		log.Info("Grafana instances not ready", "instances", unready_instances)
+	}
+
+	return selectedList, nil
+}
+
+// Same as GetScopedMatchingInstances, except the scope is always global
+// Intended to be used in finalizer and onDelete functions due to allowCrossNamespaceImport being a mutable field
+// Not using this may leave behind resources in instances no longer in scope.
+func GetAllMatchingInstances(ctx context.Context, k8sClient client.Client, cr operatorapi.CommonResource) ([]v1beta1.Grafana, error) {
+	instanceSelector, _, _ := cr.MatchConditions()
+	if instanceSelector.MatchLabels == nil {
+		return []v1beta1.Grafana{}, nil
+	}
+
+	var list v1beta1.GrafanaList
+	err := k8sClient.List(ctx, &list)
+	if err != nil || len(list.Items) == 0 {
+		return []v1beta1.Grafana{}, err
+	}
+
+	selectedList := []v1beta1.Grafana{}
+	for _, instance := range list.Items {
+		selected := labelsSatisfyMatchExpressions(instance.Labels, instanceSelector.MatchExpressions)
+		if !selected {
+			continue
+		}
+		// admin url is required to interact with Grafana
+		// the instance or route might not yet be ready
+		if instance.Status.Stage != v1beta1.OperatorStageComplete || instance.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
+			continue
+		}
+		selectedList = append(selectedList, instance)
+	}
+
+	return selectedList, nil
 }
 
 // getFolderUID fetches the folderUID from an existing GrafanaFolder CR declared in the specified namespace
@@ -143,6 +223,28 @@ func ReconcilePlugins(ctx context.Context, k8sClient client.Client, scheme *runt
 	}
 
 	return nil
+}
+
+// Correctly determine cause of no matching instance from error
+func setNoMatchingInstancesCondition(conditions *[]metav1.Condition, generation int64, err error) {
+	var reason, message string
+	if err != nil {
+		reason = "ErrFetchingInstances"
+		message = fmt.Sprintf("error occurred during fetching of instances: %s", err.Error())
+	} else {
+		reason = "EmptyAPIReply"
+		message = "Instances could not be fetched, reconciliation will be retried"
+	}
+	meta.SetStatusCondition(conditions, metav1.Condition{
+		Type:               conditionNoMatchingInstance,
+		Status:             "True",
+		ObservedGeneration: generation,
+		Reason:             reason,
+		Message:            message,
+		LastTransitionTime: metav1.Time{
+			Time: time.Now(),
+		},
+	})
 }
 
 func setNoMatchingInstance(conditions *[]metav1.Condition, generation int64, reason, message string) {
