@@ -131,6 +131,8 @@ type GrafanaPreferences struct {
 
 // GrafanaStatus defines the observed state of Grafana
 type GrafanaStatus struct {
+	GrafanaCommonStatus `json:",inline"`
+
 	Stage       OperatorStageName      `json:"stage,omitempty"`
 	StageStatus OperatorStageStatus    `json:"stageStatus,omitempty"`
 	LastMessage string                 `json:"lastMessage,omitempty"`

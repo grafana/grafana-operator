@@ -95,6 +95,8 @@ type GrafanaDatasourceSpec struct {
 
 // GrafanaDatasourceStatus defines the observed state of GrafanaDatasource
 type GrafanaDatasourceStatus struct {
+	GrafanaCommonStatus `json:",inline"`
+
 	Hash        string `json:"hash,omitempty"`
 	LastMessage string `json:"lastMessage,omitempty"`
 	// The datasource instanceSelector can't find matching grafana instances

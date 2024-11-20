@@ -135,11 +135,6 @@ func (r *Route) ToModelRoute() *models.Route {
 	return out
 }
 
-// GrafanaNotificationPolicyStatus defines the observed state of GrafanaNotificationPolicy
-type GrafanaNotificationPolicyStatus struct {
-	Conditions []metav1.Condition `json:"conditions"`
-}
-
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
@@ -149,8 +144,8 @@ type GrafanaNotificationPolicy struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   GrafanaNotificationPolicySpec   `json:"spec,omitempty"`
-	Status GrafanaNotificationPolicyStatus `json:"status,omitempty"`
+	Spec   GrafanaNotificationPolicySpec `json:"spec,omitempty"`
+	Status GrafanaCommonStatus           `json:"status,omitempty"`
 }
 
 func (np *GrafanaNotificationPolicy) NamespacedResource() string {
