@@ -212,15 +212,14 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 		err = r.onFolderCreated(ctx, &grafana, folder)
 		if err != nil {
-			controllerLog.Error(err, "error reconciling folder", "folder", folder.Name, "grafana", grafana.Name)
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
 	}
 	condition := buildSynchronizedCondition("Folder", conditionFolderSynchronized, folder.Generation, applyErrors, len(instances))
 	meta.SetStatusCondition(&folder.Status.Conditions, condition)
 
-	if len(applyErrors) != 0 {
-		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
+	if len(applyErrors) > 0 {
+		return ctrl.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
 	}
 
 	if folder.ResyncPeriodHasElapsed() {
