@@ -151,13 +151,6 @@ func (in *GrafanaFolder) Unchanged() bool {
 	return in.Hash() == in.Status.Hash
 }
 
-func (in *GrafanaFolder) IsAllowCrossNamespaceImport() bool {
-	if in.Spec.AllowCrossNamespaceImport != nil {
-		return *in.Spec.AllowCrossNamespaceImport
-	}
-	return false
-}
-
 func (in *GrafanaFolder) GetTitle() string {
 	if in.Spec.Title != "" {
 		return in.Spec.Title
@@ -169,4 +162,8 @@ func (in *GrafanaFolder) GetTitle() string {
 func (in *GrafanaFolder) ResyncPeriodHasElapsed() bool {
 	deadline := in.Status.LastResync.Add(in.Spec.ResyncPeriod.Duration)
 	return time.Now().After(deadline)
+}
+
+func (in *GrafanaFolder) MatchConditions() (*metav1.LabelSelector, string, *bool) {
+	return in.Spec.InstanceSelector, in.ObjectMeta.Namespace, in.Spec.AllowCrossNamespaceImport
 }
