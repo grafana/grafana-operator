@@ -39,6 +39,7 @@ import (
 
 const (
 	conditionNotificationPolicySynchronized = "NotificationPolicySynchronized"
+	annotationAppliedNotificationPolicy     = "operator.grafana.com/applied-notificationpolicy"
 )
 
 // GrafanaNotificationPolicyReconciler reconciles a GrafanaNotificationPolicy object

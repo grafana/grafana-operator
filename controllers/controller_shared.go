@@ -32,8 +32,6 @@ const (
 	conditionInvalidSpec        = "InvalidSpec"
 )
 
-const annotationAppliedNotificationPolicy = "operator.grafana.com/applied-notificationpolicy"
-
 //+kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update;patch;delete
 
 // Gets all instances matching labelSelector
