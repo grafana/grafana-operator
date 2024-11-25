@@ -336,7 +336,7 @@ func (r *GrafanaAlertRuleGroupReconciler) GetMatchingInstances(ctx context.Conte
 	if err != nil || len(instances.Items) == 0 {
 		return nil, err
 	}
-	if group.Spec.AllowCrossNamespaceImport != nil && *group.Spec.AllowCrossNamespaceImport {
+	if group.Spec.AllowCrossNamespaceImport {
 		return instances.Items, nil
 	}
 	items := []grafanav1beta1.Grafana{}
