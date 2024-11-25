@@ -28,10 +28,6 @@ spec:
         spec:
           containers:
             - name: grafana
-              image: grafana/grafana:9.4.3
-              securityContext:
-                allowPrivilegeEscalation: true
-                readOnlyRootFilesystem: false
               readinessProbe:
                 failureThreshold: 3
           volumes:
