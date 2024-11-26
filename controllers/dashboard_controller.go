@@ -289,7 +289,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 		cr.Status.Hash = hash
 		cr.Status.UID = uid
-		return ctrl.Result{RequeueAfter: cr.GetResyncPeriod()}, r.Client.Status().Update(ctx, cr)
+		return ctrl.Result{RequeueAfter: cr.Spec.ResyncPeriod.Duration}, r.Client.Status().Update(ctx, cr)
 	}
 
 	return ctrl.Result{RequeueAfter: RequeueDelay}, nil

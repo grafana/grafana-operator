@@ -42,6 +42,8 @@ spec:
             description: GrafanaAlertRuleGroupSpec defines the desired state of GrafanaAlertRuleGroup
             properties:
               allowCrossNamespaceImport:
+                description: Allow the Operator to match this resource with Grafanas
+                  outside the current namespace
                 type: boolean
               editable:
                 description: Whether to enable or disable editing of the alert rule
@@ -59,7 +61,7 @@ spec:
                   Overrides the FolderSelector
                 type: string
               instanceSelector:
-                description: selects Grafanas for import
+                description: Selects Grafana instances for import
                 properties:
                   matchExpressions:
                     description: matchExpressions is a list of label selector requirements.
@@ -105,7 +107,7 @@ spec:
                 type: object
                 x-kubernetes-map-type: atomic
                 x-kubernetes-validations:
-                - message: Value is immutable
+                - message: spec.instanceSelector is immutable
                   rule: self == oldSelf
               interval:
                 format: duration
@@ -116,7 +118,9 @@ spec:
                   name will be used.
                 type: string
               resyncPeriod:
-                default: 10m
+                default: 10m0s
+                description: How often the resource is synced, defaults to 10m0s if
+                  not set
                 format: duration
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
@@ -354,11 +358,13 @@ spec:
             description: GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
             properties:
               allowCrossNamespaceImport:
+                description: Allow the Operator to match this resource with Grafanas
+                  outside the current namespace
                 type: boolean
               disableResolveMessage:
                 type: boolean
               instanceSelector:
-                description: selects Grafanas for import
+                description: Selects Grafana instances for import
                 properties:
                   matchExpressions:
                     description: matchExpressions is a list of label selector requirements.
@@ -404,12 +410,14 @@ spec:
                 type: object
                 x-kubernetes-map-type: atomic
                 x-kubernetes-validations:
-                - message: Value is immutable
+                - message: spec.instanceSelector is immutable
                   rule: self == oldSelf
               name:
                 type: string
               resyncPeriod:
-                default: 10m
+                default: 10m0s
+                description: How often the resource is synced, defaults to 10m0s if
+                  not set
                 format: duration
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
@@ -646,8 +654,8 @@ spec:
             description: GrafanaDashboardSpec defines the desired state of GrafanaDashboard
             properties:
               allowCrossNamespaceImport:
-                description: allow to import this resources from an operator in a
-                  different namespace
+                description: Allow the Operator to match this resource with Grafanas
+                  outside the current namespace
                 type: boolean
               configMapRef:
                 description: dashboard from configmap
@@ -831,7 +839,7 @@ spec:
                 format: byte
                 type: string
               instanceSelector:
-                description: selects Grafanas for import
+                description: Selects Grafana instances for import
                 properties:
                   matchExpressions:
                     description: matchExpressions is a list of label selector requirements.
@@ -877,7 +885,7 @@ spec:
                 type: object
                 x-kubernetes-map-type: atomic
                 x-kubernetes-validations:
-                - message: Value is immutable
+                - message: spec.instanceSelector is immutable
                   rule: self == oldSelf
               json:
                 description: dashboard json
@@ -915,9 +923,9 @@ spec:
                   type: object
                 type: array
               resyncPeriod:
-                default: 5m
-                description: how often the dashboard is refreshed, defaults to 5m
-                  if not set
+                default: 10m0s
+                description: How often the resource is synced, defaults to 10m0s if
+                  not set
                 format: duration
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
@@ -1141,8 +1149,8 @@ spec:
             description: GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
             properties:
               allowCrossNamespaceImport:
-                description: allow to import this resources from an operator in a
-                  different namespace
+                description: Allow the Operator to match this resource with Grafanas
+                  outside the current namespace
                 type: boolean
               datasource:
                 properties:
@@ -1183,7 +1191,7 @@ spec:
                     type: string
                 type: object
               instanceSelector:
-                description: selects Grafana instances for import
+                description: Selects Grafana instances for import
                 properties:
                   matchExpressions:
                     description: matchExpressions is a list of label selector requirements.
@@ -1229,7 +1237,7 @@ spec:
                 type: object
                 x-kubernetes-map-type: atomic
                 x-kubernetes-validations:
-                - message: Value is immutable
+                - message: spec.instanceSelector is immutable
                   rule: self == oldSelf
               plugins:
                 description: plugins
@@ -1245,9 +1253,9 @@ spec:
                   type: object
                 type: array
               resyncPeriod:
-                default: 5m
-                description: how often the datasource is refreshed, defaults to 5m
-                  if not set
+                default: 10m0s
+                description: How often the resource is synced, defaults to 10m0s if
+                  not set
                 format: duration
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
@@ -1406,11 +1414,11 @@ spec:
             description: GrafanaFolderSpec defines the desired state of GrafanaFolder
             properties:
               allowCrossNamespaceImport:
-                description: Enable matching Grafana instances outside the current
-                  namespace
+                description: Allow the Operator to match this resource with Grafanas
+                  outside the current namespace
                 type: boolean
               instanceSelector:
-                description: Selects Grafanas for import
+                description: Selects Grafana instances for import
                 properties:
                   matchExpressions:
                     description: matchExpressions is a list of label selector requirements.
@@ -1456,7 +1464,7 @@ spec:
                 type: object
                 x-kubernetes-map-type: atomic
                 x-kubernetes-validations:
-                - message: Value is immutable
+                - message: spec.instanceSelector is immutable
                   rule: self == oldSelf
               parentFolderRef:
                 description: Reference to an existing GrafanaFolder CR in the same
@@ -1471,9 +1479,9 @@ spec:
                   from Grafana
                 type: string
               resyncPeriod:
-                default: 5m
-                description: How often the folder is synced, defaults to 5m if not
-                  set
+                default: 10m0s
+                description: How often the resource is synced, defaults to 10m0s if
+                  not set
                 format: duration
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
@@ -1620,6 +1628,10 @@ spec:
             description: GrafanaNotificationPolicySpec defines the desired state of
               GrafanaNotificationPolicy
             properties:
+              allowCrossNamespaceImport:
+                description: Allow the Operator to match this resource with Grafanas
+                  outside the current namespace
+                type: boolean
               editable:
                 description: Whether to enable or disable editing of the notification
                   policy in Grafana UI
@@ -1628,7 +1640,7 @@ spec:
                 - message: Value is immutable
                   rule: self == oldSelf
               instanceSelector:
-                description: selects Grafanas for import
+                description: Selects Grafana instances for import
                 properties:
                   matchExpressions:
                     description: matchExpressions is a list of label selector requirements.
@@ -1674,10 +1686,12 @@ spec:
                 type: object
                 x-kubernetes-map-type: atomic
                 x-kubernetes-validations:
-                - message: Value is immutable
+                - message: spec.instanceSelector is immutable
                   rule: self == oldSelf
               resyncPeriod:
-                default: 10m
+                default: 10m0s
+                description: How often the resource is synced, defaults to 10m0s if
+                  not set
                 format: duration
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string

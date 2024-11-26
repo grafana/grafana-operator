@@ -20,9 +20,11 @@ func newNotificationPolicy(name string, editable *bool) *GrafanaNotificationPoli
 		},
 		Spec: GrafanaNotificationPolicySpec{
 			Editable: editable,
-			InstanceSelector: &v1.LabelSelector{
-				MatchLabels: map[string]string{
-					"test": "notificationpolicy",
+			GrafanaCommonSpec: GrafanaCommonSpec{
+				InstanceSelector: &v1.LabelSelector{
+					MatchLabels: map[string]string{
+						"test": "notificationpolicy",
+					},
 				},
 			},
 			Route: &Route{

@@ -32,6 +32,8 @@ import (
 // +kubebuilder:validation:XValidation:rule="(has(self.parentFolderUID) && !(has(self.parentFolderRef))) || (has(self.parentFolderRef) && !(has(self.parentFolderUID))) || !(has(self.parentFolderRef) && (has(self.parentFolderUID)))", message="Only one of parentFolderUID or parentFolderRef can be set"
 // +kubebuilder:validation:XValidation:rule="((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid)))", message="spec.uid is immutable"
 type GrafanaFolderSpec struct {
+	GrafanaCommonSpec `json:",inline"`
+
 	// Manually specify the UID the Folder is created with
 	// +optional
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="spec.uid is immutable"
@@ -45,14 +47,6 @@ type GrafanaFolderSpec struct {
 	// +optional
 	Permissions string `json:"permissions,omitempty"`
 
-	// Selects Grafanas for import
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
-	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`
-
-	// Enable matching Grafana instances outside the current namespace
-	// +optional
-	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
-
 	// UID of the folder in which the current folder should be created
 	// +optional
 	ParentFolderUID string `json:"parentFolderUID,omitempty"`
@@ -60,14 +54,6 @@ type GrafanaFolderSpec struct {
 	// Reference to an existing GrafanaFolder CR in the same namespace
 	// +optional
 	ParentFolderRef string `json:"parentFolderRef,omitempty"`
-
-	// How often the folder is synced, defaults to 5m if not set
-	// +optional
-	// +kubebuilder:validation:Type=string
-	// +kubebuilder:validation:Format=duration
-	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
-	// +kubebuilder:default="5m"
-	ResyncPeriod string `json:"resyncPeriod,omitempty"`
 }
 
 // GrafanaFolderStatus defines the observed state of GrafanaFolder
@@ -180,22 +166,7 @@ func (in *GrafanaFolder) GetTitle() string {
 	return in.Name
 }
 
-func (in *GrafanaFolder) GetResyncPeriod() time.Duration {
-	if in.Spec.ResyncPeriod == "" {
-		in.Spec.ResyncPeriod = DefaultResyncPeriod
-		return in.GetResyncPeriod()
-	}
-
-	duration, err := time.ParseDuration(in.Spec.ResyncPeriod)
-	if err != nil {
-		in.Spec.ResyncPeriod = DefaultResyncPeriod
-		return in.GetResyncPeriod()
-	}
-
-	return duration
-}
-
 func (in *GrafanaFolder) ResyncPeriodHasElapsed() bool {
-	deadline := in.Status.LastResync.Add(in.GetResyncPeriod())
+	deadline := in.Status.LastResync.Add(in.Spec.ResyncPeriod.Duration)
 	return time.Now().After(deadline)
 }

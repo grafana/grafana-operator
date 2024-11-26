@@ -22,9 +22,11 @@ func newAlertRuleGroup(name string, editable *bool) *GrafanaAlertRuleGroup {
 			Name:      name,
 			Editable:  editable,
 			FolderRef: "DummyFolderRef",
-			InstanceSelector: &v1.LabelSelector{
-				MatchLabels: map[string]string{
-					"test": "alertrulegroup",
+			GrafanaCommonSpec: GrafanaCommonSpec{
+				InstanceSelector: &v1.LabelSelector{
+					MatchLabels: map[string]string{
+						"test": "alertrulegroup",
+					},
 				},
 			},
 			Rules: []AlertRule{},

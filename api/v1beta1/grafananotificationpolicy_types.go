@@ -26,16 +26,7 @@ import (
 // GrafanaNotificationPolicySpec defines the desired state of GrafanaNotificationPolicy
 // +kubebuilder:validation:XValidation:rule="((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable) && has(self.editable)))", message="spec.editable is immutable"
 type GrafanaNotificationPolicySpec struct {
-	// +optional
-	// +kubebuilder:validation:Type=string
-	// +kubebuilder:validation:Format=duration
-	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
-	// +kubebuilder:default="10m"
-	ResyncPeriod metav1.Duration `json:"resyncPeriod,omitempty"`
-
-	// selects Grafanas for import
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
-	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`
+	GrafanaCommonSpec `json:",inline"`
 
 	// Routes for alerts to match against
 	Route *Route `json:"route"`

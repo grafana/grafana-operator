@@ -27,9 +27,11 @@ func newContactPoint(name string, uid string) *GrafanaContactPoint {
 		},
 		Spec: GrafanaContactPointSpec{
 			CustomUID: uid,
-			InstanceSelector: &v1.LabelSelector{
-				MatchLabels: map[string]string{
-					"test": "datasource",
+			GrafanaCommonSpec: GrafanaCommonSpec{
+				InstanceSelector: &v1.LabelSelector{
+					MatchLabels: map[string]string{
+						"test": "datasource",
+					},
 				},
 			},
 			Settings: settings,

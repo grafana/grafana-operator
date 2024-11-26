@@ -27,20 +27,11 @@ import (
 // +kubebuilder:validation:XValidation:rule="(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID)))", message="Only one of FolderUID or FolderRef can be set"
 // +kubebuilder:validation:XValidation:rule="((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable) && has(self.editable)))", message="spec.editable is immutable"
 type GrafanaAlertRuleGroupSpec struct {
+	GrafanaCommonSpec `json:",inline"`
+
 	// +optional
 	// Name of the alert rule group. If not specified, the resource name will be used.
 	Name string `json:"name,omitempty"`
-
-	// +optional
-	// +kubebuilder:validation:Type=string
-	// +kubebuilder:validation:Format=duration
-	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
-	// +kubebuilder:default="10m"
-	ResyncPeriod metav1.Duration `json:"resyncPeriod,omitempty"`
-
-	// selects Grafanas for import
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
-	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`
 
 	// UID of the folder containing this rule group
 	// Overrides the FolderSelector
@@ -56,9 +47,6 @@ type GrafanaAlertRuleGroupSpec struct {
 	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
 	// +kubebuilder:validation:Required
 	Interval metav1.Duration `json:"interval"`
-
-	// +optional
-	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
 
 	// Whether to enable or disable editing of the alert rule group in Grafana UI
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
