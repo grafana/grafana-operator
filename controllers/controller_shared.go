@@ -36,6 +36,7 @@ const (
 
 // Gets all instances matching labelSelector
 func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSelector *metav1.LabelSelector) (v1beta1.GrafanaList, error) {
+	// Should never happen, sanity check
 	if labelSelector == nil {
 		return v1beta1.GrafanaList{}, nil
 	}
@@ -61,19 +62,22 @@ func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSel
 // Only matching instances in the scope of the resource are returned
 // Resources with allowCrossNamespaceImport expands the scope to the entire cluster
 // Intended to be used in reconciler functions
-func GetScopedMatchingInstances(log logr.Logger, ctx context.Context, k8sClient client.Client, cr operatorapi.CommonResource) ([]v1beta1.Grafana, error) {
-	instanceSelector, namespace, allowCrossNamespaceImport := cr.MatchConditions()
-	if instanceSelector.MatchLabels == nil {
+func GetScopedMatchingInstances(log logr.Logger, ctx context.Context, k8sClient client.Client, cr v1beta1.CommonResource) ([]v1beta1.Grafana, error) {
+	instanceSelector := cr.MatchLabels()
+
+	// Should never happen, sanity check
+	if instanceSelector == nil {
 		return []v1beta1.Grafana{}, nil
 	}
 
 	opts := []client.ListOption{
+		// Matches all instances when MatchLabels is undefined
 		client.MatchingLabels(instanceSelector.MatchLabels),
 	}
 
-	if allowCrossNamespaceImport != nil && !*allowCrossNamespaceImport {
+	if !cr.AllowCrossNamespace() {
 		// Only query resource namespace
-		opts = append(opts, client.InNamespace(namespace))
+		opts = append(opts, client.InNamespace(cr.MatchNamespace()))
 	}
 
 	var list v1beta1.GrafanaList
@@ -85,6 +89,7 @@ func GetScopedMatchingInstances(log logr.Logger, ctx context.Context, k8sClient 
 	selectedList := []v1beta1.Grafana{}
 	var unready_instances []string
 	for _, instance := range list.Items {
+		// Matches all instances when MatchExpressions is undefined
 		selected := labelsSatisfyMatchExpressions(instance.Labels, instanceSelector.MatchExpressions)
 		if !selected {
 			continue
@@ -107,20 +112,23 @@ func GetScopedMatchingInstances(log logr.Logger, ctx context.Context, k8sClient 
 // Same as GetScopedMatchingInstances, except the scope is always global
 // Intended to be used in finalizer and onDelete functions due to allowCrossNamespaceImport being a mutable field
 // Not using this may leave behind resources in instances no longer in scope.
-func GetAllMatchingInstances(ctx context.Context, k8sClient client.Client, cr operatorapi.CommonResource) ([]v1beta1.Grafana, error) {
-	instanceSelector, _, _ := cr.MatchConditions()
-	if instanceSelector.MatchLabels == nil {
+func GetAllMatchingInstances(ctx context.Context, k8sClient client.Client, cr v1beta1.CommonResource) ([]v1beta1.Grafana, error) {
+	instanceSelector := cr.MatchLabels()
+
+	// Should never happen, sanity check
+	if instanceSelector == nil {
 		return []v1beta1.Grafana{}, nil
 	}
 
 	var list v1beta1.GrafanaList
-	err := k8sClient.List(ctx, &list)
+	err := k8sClient.List(ctx, &list, client.MatchingLabels(instanceSelector.MatchLabels))
 	if err != nil || len(list.Items) == 0 {
 		return []v1beta1.Grafana{}, err
 	}
 
 	selectedList := []v1beta1.Grafana{}
 	for _, instance := range list.Items {
+		// Matches all instances when MatchExpressions is undefined
 		selected := labelsSatisfyMatchExpressions(instance.Labels, instanceSelector.MatchExpressions)
 		if !selected {
 			continue
