@@ -3662,6 +3662,8 @@ GrafanaNotificationTemplate is the Schema for the GrafanaNotificationTemplate AP
         <td>object</td>
         <td>
           GrafanaNotificationTemplateSpec defines the desired state of GrafanaNotificationTemplate<br/>
+          <br/>
+            <i>Validations</i>:<li>((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable) && has(self.editable))): spec.editable is immutable</li>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3695,23 +3697,23 @@ GrafanaNotificationTemplateSpec defines the desired state of GrafanaNotification
         <td><b><a href="#grafananotificationtemplatespecinstanceselector">instanceSelector</a></b></td>
         <td>object</td>
         <td>
-          selects Grafanas for import<br/>
+          Selects Grafana instances for import<br/>
           <br/>
-            <i>Validations</i>:<li>self == oldSelf: Value is immutable</li>
+            <i>Validations</i>:<li>self == oldSelf: spec.instanceSelector is immutable</li>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          <br/>
+          Template name<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>allowCrossNamespaceImport</b></td>
         <td>boolean</td>
         <td>
-          <br/>
+          Allow the Operator to match this resource with Grafanas outside the current namespace<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3727,17 +3729,17 @@ GrafanaNotificationTemplateSpec defines the desired state of GrafanaNotification
         <td><b>resyncPeriod</b></td>
         <td>string</td>
         <td>
-          <br/>
+          How often the resource is synced, defaults to 10m0s if not set<br/>
           <br/>
             <i>Format</i>: duration<br/>
-            <i>Default</i>: 10m<br/>
+            <i>Default</i>: 10m0s<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>template</b></td>
         <td>string</td>
         <td>
-          <br/>
+          Template content<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -3749,7 +3751,7 @@ GrafanaNotificationTemplateSpec defines the desired state of GrafanaNotification
 
 
 
-selects Grafanas for import
+Selects Grafana instances for import
 
 <table>
     <thead>

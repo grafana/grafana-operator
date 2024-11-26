@@ -138,12 +138,12 @@ func (r *GrafanaNotificationTemplateReconciler) Reconcile(ctx context.Context, r
 	}
 
 	if len(applyErrors) == 0 {
-		condition.Status = "True"
-		condition.Reason = "ApplySuccessful"
+		condition.Status = metav1.ConditionTrue
+		condition.Reason = conditionApplySuccessful
 		condition.Message = fmt.Sprintf("Notification template was successfully applied to %d instances", len(instances))
 	} else {
-		condition.Status = "False"
-		condition.Reason = "ApplyFailed"
+		condition.Status = metav1.ConditionFalse
+		condition.Reason = conditionApplyFailed
 
 		var sb strings.Builder
 		for i, err := range applyErrors {
@@ -163,7 +163,7 @@ func (r *GrafanaNotificationTemplateReconciler) reconcileWithInstance(ctx contex
 		return fmt.Errorf("building grafana client: %w", err)
 	}
 
-	trueRef := "true"
+	trueRef := "true" //nolint:goconst
 	editable := true
 	if notificationTemplate.Spec.Editable != nil && !*notificationTemplate.Spec.Editable {
 		editable = false

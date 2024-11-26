@@ -23,29 +23,20 @@ import (
 )
 
 // GrafanaNotificationTemplateSpec defines the desired state of GrafanaNotificationTemplate
+// +kubebuilder:validation:XValidation:rule="((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable) && has(self.editable)))", message="spec.editable is immutable"
 type GrafanaNotificationTemplateSpec struct {
-	// +optional
-	// +kubebuilder:validation:Type=string
-	// +kubebuilder:validation:Format=duration
-	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
-	// +kubebuilder:default="10m"
-	ResyncPeriod metav1.Duration `json:"resyncPeriod,omitempty"`
+	GrafanaCommonSpec `json:",inline"`
 
-	// selects Grafanas for import
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
-	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`
-
+	// Template name
 	Name string `json:"name"`
 
+	// Template content
 	Template string `json:"template,omitempty"`
 
 	// Whether to enable or disable editing of the notification template in Grafana UI
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
 	// +optional
 	Editable *bool `json:"editable,omitempty"`
-
-	// +optional
-	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
 }
 
 // GrafanaNotificationTemplateStatus defines the observed state of GrafanaNotificationTemplate

@@ -1889,6 +1889,8 @@ spec:
               of GrafanaNotificationTemplate
             properties:
               allowCrossNamespaceImport:
+                description: Allow the Operator to match this resource with Grafanas
+                  outside the current namespace
                 type: boolean
               editable:
                 description: Whether to enable or disable editing of the notification
@@ -1898,7 +1900,7 @@ spec:
                 - message: Value is immutable
                   rule: self == oldSelf
               instanceSelector:
-                description: selects Grafanas for import
+                description: Selects Grafana instances for import
                 properties:
                   matchExpressions:
                     description: matchExpressions is a list of label selector requirements.
@@ -1944,21 +1946,29 @@ spec:
                 type: object
                 x-kubernetes-map-type: atomic
                 x-kubernetes-validations:
-                - message: Value is immutable
+                - message: spec.instanceSelector is immutable
                   rule: self == oldSelf
               name:
+                description: Template name
                 type: string
               resyncPeriod:
-                default: 10m
+                default: 10m0s
+                description: How often the resource is synced, defaults to 10m0s if
+                  not set
                 format: duration
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
               template:
+                description: Template content
                 type: string
             required:
             - instanceSelector
             - name
             type: object
+            x-kubernetes-validations:
+            - message: spec.editable is immutable
+              rule: ((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable)
+                && has(self.editable)))
           status:
             description: GrafanaNotificationTemplateStatus defines the observed state
               of GrafanaNotificationTemplate
