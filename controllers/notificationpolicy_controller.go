@@ -128,6 +128,12 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 	for _, grafana := range instances.Items {
 		// can be removed in go 1.22+
 		grafana := grafana
+
+		// check if this is a cross namespace import
+		if grafana.Namespace != notificationPolicy.Namespace && !notificationPolicy.IsAllowCrossNamespaceImport() {
+			continue
+		}
+
 		appliedPolicy := grafana.Annotations[annotationAppliedNotificationPolicy]
 		if appliedPolicy != "" && appliedPolicy != notificationPolicy.NamespacedResource() {
 			controllerLog.Info("instance already has a different notification policy applied - skipping", "grafana", grafana.Name)
