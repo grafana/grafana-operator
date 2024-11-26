@@ -94,7 +94,7 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 .PHONY: test
-test: manifests generate code/gofumpt api-docs vet envtest ## Run tests.
+test: manifests generate code/gofumpt code/golangci-lint api-docs vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile cover.out
 
 ##@ Build
@@ -290,7 +290,7 @@ golangci:
 ifeq (, $(shell which golangci-lint))
 	@{ \
 	set -e ;\
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.56.2 ;\
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.62.0 ;\
 	}
 GOLANGCI=$(GOBIN)/golangci-lint
 else

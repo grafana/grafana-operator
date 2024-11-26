@@ -70,7 +70,7 @@ GrafanaAlertRuleGroup is the Schema for the grafanaalertrulegroups API
         <td>
           GrafanaAlertRuleGroupSpec defines the desired state of GrafanaAlertRuleGroup<br/>
           <br/>
-            <i>Validations</i>:<li>(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID))): Only one of FolderUID or FolderRef can be set</li>
+            <i>Validations</i>:<li>(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID))): Only one of FolderUID or FolderRef can be set</li><li>((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable) && has(self.editable))): spec.editable is immutable</li>
         </td>
         <td>false</td>
       </tr><tr>
@@ -662,6 +662,8 @@ GrafanaContactPoint is the Schema for the grafanacontactpoints API
         <td>object</td>
         <td>
           GrafanaContactPointSpec defines the desired state of GrafanaContactPoint<br/>
+          <br/>
+            <i>Validations</i>:<li>((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid))): spec.uid is immutable</li>
         </td>
         <td>false</td>
       </tr><tr>
@@ -745,6 +747,15 @@ GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
           <br/>
           <br/>
             <i>Enum</i>: alertmanager, prometheus-alertmanager, dingding, discord, email, googlechat, kafka, line, opsgenie, pagerduty, pushover, sensugo, sensu, slack, teams, telegram, threema, victorops, webhook, wecom, hipchat, oncall<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>uid</b></td>
+        <td>string</td>
+        <td>
+          Manually specify the UID the Contact Point is created with<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: spec.uid is immutable</li>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2258,6 +2269,8 @@ GrafanaDatasource is the Schema for the grafanadatasources API
         <td>object</td>
         <td>
           GrafanaDatasourceSpec defines the desired state of GrafanaDatasource<br/>
+          <br/>
+            <i>Validations</i>:<li>((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid))): spec.uid is immutable</li>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2328,6 +2341,15 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>uid</b></td>
+        <td>string</td>
+        <td>
+          The UID, for the datasource, fallback to the deprecated spec.datasource.uid and metadata.uid<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: spec.uid is immutable</li>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanadatasourcespecvaluesfromindex">valuesFrom</a></b></td>
         <td>[]object</td>
         <td>
@@ -2386,7 +2408,7 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         <td><b>editable</b></td>
         <td>boolean</td>
         <td>
-          Deprecated field, it has no effect<br/>
+          Whether to enable/disable editing of the datasource in Grafana UI<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2437,7 +2459,7 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         <td><b>uid</b></td>
         <td>string</td>
         <td>
-          <br/>
+          Deprecated field, use spec.uid instead<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3183,6 +3205,8 @@ GrafanaNotificationPolicy is the Schema for the GrafanaNotificationPolicy API
         <td>object</td>
         <td>
           GrafanaNotificationPolicySpec defines the desired state of GrafanaNotificationPolicy<br/>
+          <br/>
+            <i>Validations</i>:<li>((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable) && has(self.editable))): spec.editable is immutable</li>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3763,6 +3787,13 @@ Client defines how the grafana-operator talks to the grafana instance.
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>headers</b></td>
+        <td>map[string]string</td>
+        <td>
+          Custom HTTP headers to use when interacting with this Grafana.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>preferIngress</b></td>
         <td>boolean</td>
         <td>

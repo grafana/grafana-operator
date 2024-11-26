@@ -7,10 +7,6 @@ metadata:
     dashboards: "grafana"
 spec:
   config:
-    log:
-      mode: "console"
-    auth:
-      disable_login_form: "false"
     security:
       admin_user: root
       admin_password: secret
@@ -20,9 +16,13 @@ spec:
         spec:
           containers:
             - name: grafana
-              image: grafana/grafana:9.4.3
               securityContext:
-                allowPrivilegeEscalation: true
-                readOnlyRootFilesystem: false
+                # Customize this in case your volume provider needs specific UIDs/GIDs
+                runAsUser: 1001
+                runAsGroup: 1001
+                runAsNonRoot: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
               readinessProbe:
                 failureThreshold: 3

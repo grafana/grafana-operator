@@ -3,9 +3,9 @@ kind: Grafana
 metadata:
   name: grafana-tls
 spec:
-  version: 10.4.3
+  version: 11.3.0
 status:
   (wildcard('https://grafana-tls-service.*:3000', adminUrl || '')): true
   stage: complete
   stageStatus: success
-  version: 10.4.3
+  version: 11.3.0

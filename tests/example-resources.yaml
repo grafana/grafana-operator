@@ -24,7 +24,7 @@ spec:
     matchLabels:
       test: "testdata"
   uid: testdata
-  title: "Test Data testdata"
+  title: "Folder!"
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDatasource
@@ -35,10 +35,10 @@ spec:
   instanceSelector:
     matchLabels:
       test: "testdata"
+  uid: testdata-datasource
   datasource:
     orgId: 1
     isDefault: true
-    uid: grafana-testdata
     name: grafana-testdata-datasource
     type: grafana-testdata-datasource
     access: proxy
@@ -159,6 +159,7 @@ spec:
   instanceSelector:
     matchLabels:
       test: "testdata"
+  uid: testdata-dash
   json: >
     {
       "annotations": {
@@ -185,7 +186,7 @@ spec:
         {
           "datasource": {
             "type": "grafana-testdata-datasource",
-            "uid": "grafana-testdata"
+            "uid": "testdata-datasource"
           },
           "fieldConfig": {
             "defaults": {
@@ -254,7 +255,7 @@ spec:
             {
               "datasource": {
                 "type": "grafana-testdata-datasource",
-                "uid": "grafana-testdata"
+                "uid": "testdata-datasource"
               },
               "refId": "A",
               "scenarioId": "grafana_api",
@@ -267,7 +268,7 @@ spec:
         {
           "datasource": {
             "type": "grafana-testdata-datasource",
-            "uid": "grafana-testdata"
+            "uid": "testdata-datasource"
           },
           "fieldConfig": {
             "defaults": {
@@ -322,7 +323,7 @@ spec:
             {
               "datasource": {
                 "type": "grafana-testdata-datasource",
-                "uid": "grafana-testdata"
+                "uid": "testdata-datasource"
               },
               "hide": false,
               "refId": "A",
@@ -334,6 +335,7 @@ spec:
           "type": "table"
         }
       ],
+      "refresh": "5s",
       "schemaVersion": 39,
       "tags": [],
       "templating": {

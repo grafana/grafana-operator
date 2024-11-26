@@ -39,7 +39,7 @@ func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 	}
 
 	// plugins config map found, but may be empty
-	if plugins.BinaryData == nil || len(plugins.BinaryData) == 0 {
+	if len(plugins.BinaryData) == 0 {
 		vars.Plugins = ""
 		return v1beta1.OperatorStageResultSuccess, nil
 	}
