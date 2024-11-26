@@ -21,7 +21,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -99,8 +101,16 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return r.updateStatus(grafana, nextStatus)
 	}
 
+	// set spec to the current default version to avoid accidental updates when we
+	// change the default. For clusters where RELATED_IMAGE_GRAFANA is set to an
+	// image hash, we want to set this to the value of the variable to support air
+	// gapped clusters as well
 	if grafana.Spec.Version == "" {
-		grafana.Spec.Version = config.GrafanaVersion
+		targetVersion := config.GrafanaVersion
+		if envVersion := os.Getenv("RELATED_IMAGE_GRAFANA"); isImageSHA256(envVersion) {
+			targetVersion = envVersion
+		}
+		grafana.Spec.Version = targetVersion
 		if err := r.Client.Update(ctx, grafana); err != nil {
 			return ctrl.Result{}, fmt.Errorf("updating grafana version in spec: %w", err)
 		}
@@ -260,4 +270,8 @@ func (r *GrafanaReconciler) getReconcilerForStage(stage grafanav1beta1.OperatorS
 	default:
 		return nil
 	}
+}
+
+func isImageSHA256(image string) bool {
+	return strings.Contains(image, "@sha256:")
 }
