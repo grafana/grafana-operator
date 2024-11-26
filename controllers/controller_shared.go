@@ -61,8 +61,9 @@ func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSel
 // Only matching instances in the scope of the resource are returned
 // Resources with allowCrossNamespaceImport expands the scope to the entire cluster
 // Intended to be used in reconciler functions
-func GetScopedMatchingInstances(log logr.Logger, ctx context.Context, k8sClient client.Client, cr operatorapi.CommonResource) ([]v1beta1.Grafana, error) {
-	instanceSelector, namespace, allowCrossNamespaceImport := cr.MatchConditions()
+func GetScopedMatchingInstances(log logr.Logger, ctx context.Context, k8sClient client.Client, cr v1beta1.CommonResource) ([]v1beta1.Grafana, error) {
+	instanceSelector := cr.MatchLabels()
+
 	if instanceSelector.MatchLabels == nil {
 		return []v1beta1.Grafana{}, nil
 	}
@@ -71,9 +72,9 @@ func GetScopedMatchingInstances(log logr.Logger, ctx context.Context, k8sClient 
 		client.MatchingLabels(instanceSelector.MatchLabels),
 	}
 
-	if allowCrossNamespaceImport != nil && !*allowCrossNamespaceImport {
+	if !cr.AllowCrossNamespace() {
 		// Only query resource namespace
-		opts = append(opts, client.InNamespace(namespace))
+		opts = append(opts, client.InNamespace(cr.MatchNamespace()))
 	}
 
 	var list v1beta1.GrafanaList
@@ -107,8 +108,8 @@ func GetScopedMatchingInstances(log logr.Logger, ctx context.Context, k8sClient 
 // Same as GetScopedMatchingInstances, except the scope is always global
 // Intended to be used in finalizer and onDelete functions due to allowCrossNamespaceImport being a mutable field
 // Not using this may leave behind resources in instances no longer in scope.
-func GetAllMatchingInstances(ctx context.Context, k8sClient client.Client, cr operatorapi.CommonResource) ([]v1beta1.Grafana, error) {
-	instanceSelector, _, _ := cr.MatchConditions()
+func GetAllMatchingInstances(ctx context.Context, k8sClient client.Client, cr v1beta1.CommonResource) ([]v1beta1.Grafana, error) {
+	instanceSelector := cr.MatchLabels()
 	if instanceSelector.MatchLabels == nil {
 		return []v1beta1.Grafana{}, nil
 	}

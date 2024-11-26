@@ -164,6 +164,17 @@ func (in *GrafanaFolder) ResyncPeriodHasElapsed() bool {
 	return time.Now().After(deadline)
 }
 
-func (in *GrafanaFolder) MatchConditions() (*metav1.LabelSelector, string, *bool) {
-	return in.Spec.InstanceSelector, in.ObjectMeta.Namespace, in.Spec.AllowCrossNamespaceImport
+func (in *GrafanaFolder) MatchLabels() *metav1.LabelSelector {
+	return in.Spec.InstanceSelector
+}
+
+func (in *GrafanaFolder) MatchNamespace() string {
+	return in.ObjectMeta.Namespace
+}
+
+func (in *GrafanaFolder) AllowCrossNamespace() bool {
+	if in.Spec.AllowCrossNamespaceImport != nil {
+		return *in.Spec.AllowCrossNamespaceImport
+	}
+	return false
 }
