@@ -15,6 +15,38 @@ spec:
       admin_password: secret
 ---
 apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaContactPoint
+metadata:
+  name: testdata
+  labels:
+    test: "testdata"
+spec:
+  name: testdata
+  type: email
+  instanceSelector:
+    matchLabels:
+      test: "testdata"
+  settings:
+    addresses: "void@testdata.invalid"
+    subject: 'Grafana Alert'
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicy
+metadata:
+  name: testdata
+  labels:
+    test: "testdata"
+spec:
+  instanceSelector:
+    matchLabels:
+      test: "testdata"
+  route:
+    receiver: testdata
+    group_by:
+      - grafana_folder
+      - alertname
+---
+apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaFolder
 metadata:
   name: testdata
