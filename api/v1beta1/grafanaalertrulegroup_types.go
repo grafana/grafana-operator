@@ -129,11 +129,6 @@ type AlertQuery struct {
 	RelativeTimeRange *models.RelativeTimeRange `json:"relativeTimeRange,omitempty"`
 }
 
-// GrafanaAlertRuleGroupStatus defines the observed state of GrafanaAlertRuleGroup
-type GrafanaAlertRuleGroupStatus struct {
-	Conditions []metav1.Condition `json:"conditions"`
-}
-
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
@@ -143,8 +138,8 @@ type GrafanaAlertRuleGroup struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   GrafanaAlertRuleGroupSpec   `json:"spec,omitempty"`
-	Status GrafanaAlertRuleGroupStatus `json:"status,omitempty"`
+	Spec   GrafanaAlertRuleGroupSpec `json:"spec,omitempty"`
+	Status GrafanaCommonStatus       `json:"status,omitempty"`
 }
 
 // GroupName returns the name of alert rule group.
