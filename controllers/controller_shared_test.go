@@ -17,10 +17,17 @@ limitations under the License.
 package controllers
 
 import (
+	"context"
 	"testing"
 
+	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 func TestLabelsSatisfyMatchExpressions(t *testing.T) {
@@ -226,3 +233,118 @@ func TestLabelsSatisfyMatchExpressions(t *testing.T) {
 		})
 	}
 }
+
+var _ = Describe("GetMatchingInstances functions", Ordered, func() {
+	namespace := corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "get-matching-test",
+		},
+	}
+	allowFolder := v1beta1.GrafanaFolder{
+		TypeMeta: v1.TypeMeta{
+			APIVersion: "grafana.integreatly.org/v1beta1",
+			Kind:       "GrafanaFolder",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "allow-cross-namespace",
+			Namespace: namespace.Name,
+		},
+		Spec: v1beta1.GrafanaFolderSpec{
+			GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
+				AllowCrossNamespaceImport: true,
+				InstanceSelector: &v1.LabelSelector{
+					MatchLabels: map[string]string{
+						"test": "folder",
+					},
+				},
+			},
+		},
+	}
+	DefaultGrafana := v1beta1.Grafana{
+		TypeMeta: v1.TypeMeta{
+			APIVersion: "grafana.integreatly.org/v1beta1",
+			Kind:       "Grafana",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "instance",
+			Namespace: "default",
+			Labels: map[string]string{
+				"test": "folder",
+			},
+		},
+		Spec: v1beta1.GrafanaSpec{},
+	}
+
+	// Create duplicate resources, changing key fields
+	denyFolder := allowFolder.DeepCopy()
+	denyFolder.Name = "deny-cross-namespace"
+	denyFolder.Spec.AllowCrossNamespaceImport = false
+
+	invalidFolder := allowFolder.DeepCopy()
+	invalidFolder.Name = "invalid-match-labels"
+	invalidFolder.Spec.InstanceSelector.MatchLabels = nil
+
+	TestGrafana := DefaultGrafana.DeepCopy()
+	TestGrafana.Namespace = namespace.Name
+
+	unreadyGrafana := DefaultGrafana.DeepCopy()
+	unreadyGrafana.Name = "unready-instance"
+
+	// Pre-create all resources
+	ctx := context.Background()
+	BeforeAll(func() { // Necessary to use assertions
+		Expect(k8sClient.Create(ctx, &namespace)).NotTo(HaveOccurred())
+
+		Expect(k8sClient.Create(ctx, &allowFolder)).NotTo(HaveOccurred())
+		Expect(k8sClient.Create(ctx, denyFolder)).NotTo(HaveOccurred())
+		Expect(k8sClient.Create(ctx, invalidFolder)).NotTo(HaveOccurred())
+
+		Expect(k8sClient.Create(ctx, &DefaultGrafana)).NotTo(HaveOccurred())
+		Expect(k8sClient.Create(ctx, TestGrafana)).NotTo(HaveOccurred())
+		Expect(k8sClient.Create(ctx, unreadyGrafana)).NotTo(HaveOccurred())
+
+		// Update Status post apply to pass instance ready check
+		DefaultGrafana.Status.Stage = v1beta1.OperatorStageComplete
+		DefaultGrafana.Status.StageStatus = v1beta1.OperatorStageResultSuccess
+
+		TestGrafana.Status.Stage = v1beta1.OperatorStageComplete
+		TestGrafana.Status.StageStatus = v1beta1.OperatorStageResultSuccess
+		Expect(k8sClient.Status().Update(ctx, &DefaultGrafana)).ToNot(HaveOccurred())
+		Expect(k8sClient.Status().Update(ctx, TestGrafana)).ToNot(HaveOccurred())
+	})
+
+	Context("Ensure AllowCrossNamespaceImport is upheld by GetScopedMatchingInstances", func() {
+		testLog := log.FromContext(ctx).WithSink(log.NullLogSink{})
+		It("Finds no instances when selector is nil", func() {
+			instances, err := GetScopedMatchingInstances(testLog, ctx, k8sClient, invalidFolder)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(instances).To(BeEmpty())
+		})
+		It("Finds all instances", func() {
+			instances, err := GetScopedMatchingInstances(testLog, ctx, k8sClient, &allowFolder)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(instances).ToNot(BeEmpty())
+			Expect(instances).To(HaveLen(2))
+		})
+		It("Finds one instance", func() {
+			instances, err := GetScopedMatchingInstances(testLog, ctx, k8sClient, denyFolder)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(instances).ToNot(BeEmpty())
+			Expect(instances).To(HaveLen(1))
+		})
+	})
+
+	Context("Ensure AllowCrossNamespaceImport is ignored by GetAllMatchingInstances", func() {
+		It("Finds no instances when selector is nil", func() {
+			instances, err := GetAllMatchingInstances(ctx, k8sClient, invalidFolder)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(instances).To(BeEmpty())
+		})
+		It("Ignores AllowCrossNamespaceImport", func() {
+			instances, err := GetAllMatchingInstances(ctx, k8sClient, &allowFolder)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(instances).ToNot(BeEmpty())
+			Expect(instances).To(HaveLen(2))
+		})
+	})
+})
