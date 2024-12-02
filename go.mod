@@ -10,7 +10,7 @@ require (
 	github.com/google/go-jsonnet v0.20.0
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20240430202104-3ad0f7e4ee52
 	github.com/onsi/ginkgo/v2 v2.22.0
-	github.com/onsi/gomega v1.35.1
+	github.com/onsi/gomega v1.36.0
 	github.com/openshift/api v3.9.0+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.20.5
