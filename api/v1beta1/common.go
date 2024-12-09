@@ -37,5 +37,15 @@ type GrafanaCommonSpec struct {
 
 	// Allow the Operator to match this resource with Grafanas outside the current namespace
 	// +optional
-	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
+	// +kubebuilder:default=false
+	AllowCrossNamespaceImport bool `json:"allowCrossNamespaceImport,omitempty"`
+}
+
+// Common Functions that all CRs should implement, excluding Grafana
+// +kubebuilder:object:generate=false
+type CommonResource interface {
+	MatchLabels() *metav1.LabelSelector
+	MatchNamespace() string
+	AllowCrossNamespace() bool
+	ResyncPeriodHasElapsed() bool
 }
