@@ -18,7 +18,7 @@ To find all possible configuration options, look at the [official documentation]
 
 The operator needs extensive access to be able to manage Grafana instances. Depending on your needs, you might want to restrict the operator to specific namespaces.
 
-To support that, we offer 3 operational modes (you can switch between those through `WATCH_NAMESPACE` environment variable):
+To support that, we offer 4 operational modes (you can switch between those through `WATCH_NAMESPACE` environment variable):
 
 - cluster-wide (`WATCH_NAMESPACE: ""`);
 - multiple namespaces (`WATCH_NAMESPACE: "grafana, foo"`):
