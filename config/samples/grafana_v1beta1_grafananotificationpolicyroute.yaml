@@ -1,0 +1,12 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicyRoute
+metadata:
+  labels:
+    app.kubernetes.io/name: grafananotificationpolicyroute
+    app.kubernetes.io/instance: grafananotificationpolicyroute-sample
+    app.kubernetes.io/part-of: grafana-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: grafana-operator
+  name: grafananotificationpolicyroute-sample
+spec:
+  # TODO(user): Add fields here
