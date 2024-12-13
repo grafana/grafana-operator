@@ -28,8 +28,17 @@ type GrafanaNotificationPolicyRouteSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of GrafanaNotificationPolicyRoute. Edit grafananotificationpolicyroute_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// Selects Grafana instances for import
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="spec.instanceSelector is immutable"
+	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`
+
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=100
+	// +optional
+	Priority *int8 `json:"priority,omitempty"`
+
+	// Route for alerts to match against
+	Route *Route `json:"route"`
 }
 
 // GrafanaNotificationPolicyRouteStatus defines the observed state of GrafanaNotificationPolicyRoute
