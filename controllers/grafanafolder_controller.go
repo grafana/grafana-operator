@@ -182,7 +182,8 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
 	defer func() {
-		if err := r.UpdateStatus(ctx, folder); err != nil {
+		folder.Status.Hash = folder.Hash()
+		if err := r.Status().Update(ctx, folder); err != nil {
 			r.Log.Error(err, "updating status")
 		}
 	}()
@@ -392,11 +393,6 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 	}
 
 	return nil
-}
-
-func (r *GrafanaFolderReconciler) UpdateStatus(ctx context.Context, cr *grafanav1beta1.GrafanaFolder) error {
-	cr.Status.Hash = cr.Hash()
-	return r.Client.Status().Update(ctx, cr)
 }
 
 // Check if the folder exists. Matches UID first and fall back to title. Title matching only works for non-nested folders
