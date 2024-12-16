@@ -183,6 +183,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 	defer func() {
 		folder.Status.Hash = folder.Hash()
+		folder.Status.LastResync = metav1.Time{Time: time.Now()}
 		if err := r.Status().Update(ctx, folder); err != nil {
 			r.Log.Error(err, "updating status")
 		}
@@ -223,9 +224,6 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
 	}
 
-	if folder.ResyncPeriodHasElapsed() {
-		folder.Status.LastResync = metav1.Time{Time: time.Now()}
-	}
 	return ctrl.Result{RequeueAfter: folder.Spec.ResyncPeriod.Duration}, nil
 }
 
@@ -233,6 +231,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 func (r *GrafanaFolderReconciler) SetupWithManager(mgr ctrl.Manager, ctx context.Context) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&grafanav1beta1.GrafanaFolder{}).
+		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
 
 	if err == nil {
