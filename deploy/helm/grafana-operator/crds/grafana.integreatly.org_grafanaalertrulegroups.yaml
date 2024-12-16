@@ -43,6 +43,7 @@ spec:
             description: GrafanaAlertRuleGroupSpec defines the desired state of GrafanaAlertRuleGroup
             properties:
               allowCrossNamespaceImport:
+                default: false
                 description: Allow the Operator to match this resource with Grafanas
                   outside the current namespace
                 type: boolean
