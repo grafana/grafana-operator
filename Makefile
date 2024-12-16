@@ -30,15 +30,6 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-CHAINSAW_VERSION ?= v0.2.10
-
-# Checks if chainsaw is in your PATH
-ifneq ($(shell which chainsaw),)
-CHAINSAW=$(shell which chainsaw)
-else
-CHAINSAW=$(shell pwd)/bin/chainsaw
-endif
-
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
 SHELL = /usr/bin/env bash -o pipefail
@@ -163,6 +154,7 @@ OPM_VERSION ?= v1.23.2
 YQ_VERSION ?= v4.35.2
 KO_VERSION ?= v0.16.0
 KIND_VERSION ?= v0.24.0
+CHAINSAW_VERSION ?= v0.2.10
 
 KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
 .PHONY: kustomize
