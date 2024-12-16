@@ -200,6 +200,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if err != nil || len(instances) == 0 {
 		setNoMatchingInstancesCondition(&folder.Status.Conditions, folder.Generation, err)
 		folder.Status.NoMatchingInstances = true
+		meta.RemoveStatusCondition(&folder.Status.Conditions, conditionFolderSynchronized)
 		controllerLog.Error(err, "could not find matching instances", "name", folder.Name, "namespace", folder.Namespace)
 		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
@@ -217,12 +218,13 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
 	}
-	condition := buildSynchronizedCondition("Folder", conditionFolderSynchronized, folder.Generation, applyErrors, len(instances))
-	meta.SetStatusCondition(&folder.Status.Conditions, condition)
 
 	if len(applyErrors) > 0 {
 		return ctrl.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
 	}
+
+	condition := buildSynchronizedCondition("Folder", conditionFolderSynchronized, folder.Generation, applyErrors, len(instances))
+	meta.SetStatusCondition(&folder.Status.Conditions, condition)
 
 	return ctrl.Result{RequeueAfter: folder.Spec.ResyncPeriod.Duration}, nil
 }
