@@ -39,3 +39,12 @@ type GrafanaCommonSpec struct {
 	// +optional
 	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
 }
+
+// Common Functions that all CRs should implement, excluding Grafana
+// +kubebuilder:object:generate=false
+type CommonResource interface {
+	MatchLabels() *metav1.LabelSelector
+	MatchNamespace() string
+	AllowCrossNamespace() bool
+	ResyncPeriodHasElapsed() bool
+}
