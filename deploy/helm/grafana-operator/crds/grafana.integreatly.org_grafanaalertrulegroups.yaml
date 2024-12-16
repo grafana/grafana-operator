@@ -247,10 +247,10 @@ spec:
               rule: ((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable)
                 && has(self.editable)))
           status:
-            description: GrafanaAlertRuleGroupStatus defines the observed state of
-              GrafanaAlertRuleGroup
+            description: The most recent observed state of a Grafana resource
             properties:
               conditions:
+                description: Results when synchonizing resource with Grafana instances
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -306,8 +306,11 @@ spec:
                   - type
                   type: object
                 type: array
-            required:
-            - conditions
+              lastResync:
+                description: Last time the resource was synchronized with Grafana
+                  instances
+                format: date-time
+                type: string
             type: object
         type: object
     served: true
