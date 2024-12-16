@@ -178,8 +178,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			}
 			return ctrl.Result{}, nil
 		}
-		controllerLog.Error(err, "error getting grafana folder cr")
-		return ctrl.Result{RequeueAfter: RequeueDelay}, err
+		return ctrl.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("error getting grafana folder cr: %w", err)
 	}
 	defer func() {
 		folder.Status.Hash = folder.Hash()
