@@ -250,6 +250,10 @@ spec:
                   - type
                   type: object
                 type: array
+              discoveredRoutes:
+                items:
+                  type: string
+                type: array
             required:
             - conditions
             type: object

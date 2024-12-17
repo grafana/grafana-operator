@@ -129,6 +129,8 @@ func (r *Route) ToModelRoute() *models.Route {
 // GrafanaNotificationPolicyStatus defines the observed state of GrafanaNotificationPolicy
 type GrafanaNotificationPolicyStatus struct {
 	Conditions []metav1.Condition `json:"conditions"`
+
+	DiscoveredRoutes *[]string `json:"discoveredRoutes,omitempty"`
 }
 
 //+kubebuilder:object:root=true
