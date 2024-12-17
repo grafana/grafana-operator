@@ -17,6 +17,9 @@ limitations under the License.
 package v1beta1
 
 import (
+	"fmt"
+	"sort"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -62,6 +65,60 @@ type GrafanaNotificationPolicyRouteList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []GrafanaNotificationPolicyRoute `json:"items"`
+}
+
+// Implement sort.Interface for GrafanaNotificationPolicyRouteList
+
+func (l GrafanaNotificationPolicyRouteList) Len() int {
+	return len(l.Items)
+}
+
+func (l GrafanaNotificationPolicyRouteList) Less(i, j int) bool {
+	iPriority := l.Items[i].Spec.Priority
+	jPriority := l.Items[j].Spec.Priority
+
+	// If both priorities are nil, maintain original order
+	if iPriority == nil && jPriority == nil {
+		return i < j
+	}
+
+	// Nil priorities are considered lower (come later)
+	if iPriority == nil {
+		return false
+	}
+	if jPriority == nil {
+		return true
+	}
+
+	// Compare non-nil priorities
+	return *iPriority < *jPriority
+}
+
+func (l GrafanaNotificationPolicyRouteList) Swap(i, j int) {
+	l.Items[i], l.Items[j] = l.Items[j], l.Items[i]
+}
+
+// SortByPriority sorts the list by Priority
+// Priority can be 1-100 or nil, with nil being the lowest priority 100
+func (l *GrafanaNotificationPolicyRouteList) SortByPriority() {
+	sort.Sort(l)
+}
+
+// StatusDiscoveredRoutes returns the list of discovered routes using the namespace and name
+// Used to display all discovered routes in the GrafanaNotificationPolicy status
+func (l *GrafanaNotificationPolicyRouteList) StatusDiscoveredRoutes() []string {
+	sort.Sort(l)
+
+	discoveredRoutes := make([]string, len(l.Items))
+	for i, route := range l.Items {
+		priority := "nil"
+		if route.Spec.Priority != nil {
+			priority = fmt.Sprintf("%d", *route.Spec.Priority)
+		}
+		discoveredRoutes[i] = fmt.Sprintf("%s/%s (priority: %s)", route.Namespace, route.Name, priority)
+	}
+
+	return discoveredRoutes
 }
 
 func init() {
