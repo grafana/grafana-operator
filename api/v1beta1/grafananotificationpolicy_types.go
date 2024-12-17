@@ -28,6 +28,9 @@ import (
 type GrafanaNotificationPolicySpec struct {
 	GrafanaCommonSpec `json:",inline"`
 
+	// Selects GrafanaNotificationPolicyRoutes to merge in when specified
+	RouteSelector *metav1.LabelSelector `json:"routeSelector,omitempty"`
+
 	// Routes for alerts to match against
 	Route *Route `json:"route"`
 

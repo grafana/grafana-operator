@@ -28,10 +28,6 @@ type GrafanaNotificationPolicyRouteSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Selects Grafana instances for import
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="spec.instanceSelector is immutable"
-	InstanceSelector *metav1.LabelSelector `json:"instanceSelector"`
-
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=100
 	// +optional
