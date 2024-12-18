@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -365,4 +366,18 @@ func getReferencedValue(ctx context.Context, cl client.Client, cr metav1.ObjectM
 			return "", "", fmt.Errorf("missing key %s in configmap %s", source.ConfigMapKeyRef.Key, source.ConfigMapKeyRef.Name)
 		}
 	}
+}
+
+// Add finalizer through a MergePatch
+// Avoids updating the entire object and only changes the finalizers
+func addFinalizer(ctx context.Context, cl client.Client, cr client.Object) error {
+	patch := []byte(`{"metadata":{"finalizers":["` + grafanaFinalizer + `"]}}`)
+	return cl.Patch(ctx, cr, client.RawPatch(types.MergePatchType, patch))
+}
+
+// Remove finalizer through a MergePatch
+// Avoids updating the entire object and only changes the finalizers
+func removeFinalizer(ctx context.Context, cl client.Client, cr client.Object) error {
+	patch := []byte(`{"metadata":{"finalizers":null}}`)
+	return cl.Patch(ctx, cr, client.RawPatch(types.MergePatchType, patch))
 }

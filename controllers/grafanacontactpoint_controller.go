@@ -101,12 +101,13 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 			r.Log.Error(err, "updating status")
 		}
 		if meta.IsStatusConditionTrue(contactPoint.Status.Conditions, conditionNoMatchingInstance) {
-			controllerutil.RemoveFinalizer(contactPoint, grafanaFinalizer)
+			if err := removeFinalizer(ctx, r.Client, contactPoint); err != nil {
+				r.Log.Error(err, "failed to remove finalizer")
+			}
 		} else {
-			controllerutil.AddFinalizer(contactPoint, grafanaFinalizer)
-		}
-		if err := r.Update(ctx, contactPoint); err != nil {
-			r.Log.Error(err, "failed to set finalizer")
+			if err := addFinalizer(ctx, r.Client, contactPoint); err != nil {
+				r.Log.Error(err, "failed to set finalizer")
+			}
 		}
 	}()
 
