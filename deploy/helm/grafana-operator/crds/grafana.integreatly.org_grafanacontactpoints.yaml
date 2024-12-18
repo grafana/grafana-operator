@@ -128,6 +128,7 @@ spec:
                 - telegram
                 - threema
                 - victorops
+                - webex
                 - webhook
                 - wecom
                 - hipchat
