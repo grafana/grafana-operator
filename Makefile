@@ -96,7 +96,7 @@ build: generate code/gofumpt vet ## Build manager binary.
 
 .PHONY: run
 run: manifests generate code/gofumpt vet ## Run a controller from your host.
-	go run ./main.go
+	go run ./main.go --zap-devel=true
 
 ##@ Deployment
 
