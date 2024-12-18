@@ -178,7 +178,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			}
 			return ctrl.Result{}, nil
 		}
-		return ctrl.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("error getting grafana folder cr: %w", err)
+		return ctrl.Result{}, fmt.Errorf("error getting grafana folder cr: %w", err)
 	}
 	defer func() {
 		folder.Status.Hash = folder.Hash()
@@ -219,7 +219,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	if len(applyErrors) > 0 {
-		return ctrl.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
+		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
 	}
 
 	condition := buildSynchronizedCondition("Folder", conditionFolderSynchronized, folder.Generation, applyErrors, len(instances))
