@@ -99,12 +99,13 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 			r.Log.Error(err, "updating status")
 		}
 		if meta.IsStatusConditionTrue(notificationPolicy.Status.Conditions, conditionNoMatchingInstance) {
-			controllerutil.RemoveFinalizer(notificationPolicy, grafanaFinalizer)
+			if err := removeFinalizer(ctx, r.Client, notificationPolicy); err != nil {
+				r.Log.Error(err, "failed to remove finalizer")
+			}
 		} else {
-			controllerutil.AddFinalizer(notificationPolicy, grafanaFinalizer)
-		}
-		if err := r.Update(ctx, notificationPolicy); err != nil {
-			r.Log.Error(err, "failed to set finalizer")
+			if err := setFinalizer(ctx, r.Client, notificationPolicy); err != nil {
+				r.Log.Error(err, "failed to set finalizer")
+			}
 		}
 	}()
 
