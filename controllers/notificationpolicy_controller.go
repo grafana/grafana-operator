@@ -20,13 +20,15 @@ import (
 	"context"
 	"fmt"
 
+	corev1 "k8s.io/api/core/v1"
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -47,8 +49,9 @@ const (
 // GrafanaNotificationPolicyReconciler reconciles a GrafanaNotificationPolicy object
 type GrafanaNotificationPolicyReconciler struct {
 	client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
+	Log      logr.Logger
+	Scheme   *runtime.Scheme
+	Recorder record.EventRecorder
 }
 
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafananotificationpolicies,verbs=get;list;watch;create;update;patch;delete
@@ -130,7 +133,7 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 	var matchingNotificationPolicyRoutes *v1beta1.GrafanaNotificationPolicyRouteList
 	if notificationPolicy.Spec.RouteSelector != nil {
 		var namespace *string
-		if notificationPolicy.Spec.AllowCrossNamespaceImport != nil && !*notificationPolicy.Spec.AllowCrossNamespaceImport {
+		if !notificationPolicy.IsCrossNamespaceImportAllowed() {
 			ns := notificationPolicy.GetObjectMeta().GetNamespace()
 			namespace = &ns
 		}
@@ -143,12 +146,6 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 
 	if matchingNotificationPolicyRoutes != nil {
 		notificationPolicy = mergeNotificationPolicyRoutesWithRouteList(notificationPolicy, matchingNotificationPolicyRoutes)
-
-		err := r.ensureOwnerReferencesForNotificationPolicyRouteList(ctx, notificationPolicy, matchingNotificationPolicyRoutes)
-		if err != nil {
-			r.Log.Error(err, "failed to set owner reference on GrafanaNotificationPolicyRoutes")
-			return ctrl.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("failed to set owner reference on GrafanaNotificationPolicyRoutes: %w", err)
-		}
 	}
 
 	applyErrors := make(map[string]string)
@@ -184,25 +181,11 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 		notificationPolicy.Status.DiscoveredRoutes = &discoveredRoutes
 	}
 
+	if err := r.recordMergedEventForNotificationPolicyRoutes(ctx, notificationPolicy, matchingNotificationPolicyRoutes); err != nil {
+		r.Log.Error(err, "failed to add merged events to routes")
+	}
+
 	return ctrl.Result{RequeueAfter: notificationPolicy.Spec.ResyncPeriod.Duration}, nil
-}
-
-func (r *GrafanaNotificationPolicyReconciler) ensureOwnerReferencesForNotificationPolicyRouteList(ctx context.Context, notificationPolicy *grafanav1beta1.GrafanaNotificationPolicy, notificationPolicyRoutes *grafanav1beta1.GrafanaNotificationPolicyRouteList) error {
-	if notificationPolicy == nil || notificationPolicyRoutes == nil {
-		return nil
-	}
-
-	for i := range notificationPolicyRoutes.Items {
-		route := &notificationPolicyRoutes.Items[i]
-		err := controllerutil.SetOwnerReference(notificationPolicy, route, r.Scheme)
-		if err != nil {
-			return err
-		}
-		if err := r.Update(ctx, route); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 // mergeNotificationPolicyRoutesWithRouteList merges a list of GrafanaNotificationPolicyRoutes into the
@@ -310,7 +293,41 @@ func (r *GrafanaNotificationPolicyReconciler) SetupWithManager(mgr ctrl.Manager)
 			}
 			return requests
 		})).
-		Owns(&grafanav1beta1.GrafanaNotificationPolicyRoute{}, builder.MatchEveryOwner).
+		Watches(&grafanav1beta1.GrafanaNotificationPolicyRoute{}, handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
+			// resync all notification policies that have a routeSelector that matches the routes labels
+			nps := &grafanav1beta1.GrafanaNotificationPolicyList{}
+			if err := r.List(ctx, nps); err != nil {
+				r.Log.Error(err, "failed to fetch notification policies for watch mapping")
+				return nil
+			}
+			requests := []reconcile.Request{}
+			for _, np := range nps.Items {
+				if np.Spec.RouteSelector == nil {
+					continue
+				}
+
+				if np.GetNamespace() != o.GetNamespace() && !np.IsCrossNamespaceImportAllowed() {
+					continue
+				}
+
+				selector, err := metav1.LabelSelectorAsSelector(np.Spec.RouteSelector)
+				if err != nil {
+					r.Log.Error(err, "failed to create selector from RouteSelector")
+					continue
+				}
+
+				if selector.Matches(labels.Set(o.GetLabels())) {
+					requests = append(requests,
+						reconcile.Request{
+							NamespacedName: types.NamespacedName{
+								Name:      np.Name,
+								Namespace: np.Namespace,
+							},
+						})
+				}
+			}
+			return requests
+		})).
 		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
 }
@@ -333,4 +350,17 @@ func getMatchingNotificationPolicyRoutes(ctx context.Context, k8sClient client.C
 
 	err := k8sClient.List(ctx, &list, opts...)
 	return &list, err
+}
+
+// recordMergedEventForNotificationPolicyRoutes emits a merged event to all matched notification policy routes
+func (r *GrafanaNotificationPolicyReconciler) recordMergedEventForNotificationPolicyRoutes(ctx context.Context, notificationPolicy *grafanav1beta1.GrafanaNotificationPolicy, routes *v1beta1.GrafanaNotificationPolicyRouteList) error {
+	if notificationPolicy == nil || routes == nil {
+		return nil
+	}
+
+	for i := range routes.Items {
+		route := &routes.Items[i]
+		r.Recorder.Event(route, corev1.EventTypeNormal, "Merged", fmt.Sprintf("Route merged into NotificationPolicy %s/%s", notificationPolicy.GetNamespace(), notificationPolicy.GetName()))
+	}
+	return nil
 }
