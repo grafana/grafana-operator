@@ -42,98 +42,151 @@ kind: GrafanaNotificationPolicy
 metadata:
   name: grafananotificationpolicy-sample
 spec:
+  allowCrossNamespaceImport: true
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
+  routeSelector:
+    matchLabels:
+      dynamicroute: "grafana"
   route:
-    receiver: grafana-email-default
+    receiver: grafana-default-email
     group_by:
       - grafana_folder
       - alertname
-    routeSelector:
-      matchLabels:
-        dynamicroute: "grafana"
     routes:
-      - receiver: inline-from-notification-policy-a
+      - receiver: grafana-default-email
         object_matchers:
           - - team
             - =
             - a
-      - receiver: inline-from-notification-policy-b
+          - - inline
+            - =
+            - first
+      - receiver: grafana-default-email
         object_matchers:
           - - team
             - =
             - b
+          - - inline
+            - =
+            - second
 ```
 
 > In this example `routeSelector` and `routes` are used combined, we could also make them mutually exclusive, to simplify this even more.
 
-Two example `NotificationPolicyRoute` resources:
+Three example `NotificationPolicyRoute` resources:
 
 ```yaml
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaNotificationPolicyRoute
 metadata:
-  name: sample-route
+  name: dynamic-c
+  namespace: grafana-crds
   labels:
     dynamicroute: "grafana"
 spec:
-  instanceSelector:
-    matchLabels:
-      dashboards: "grafana"
   priority: 1
-  routes:
-    - receiver: grafana-receiver-1
-       object_matchers:
-          - - dynamic
-            - =
-            - 1
+  route:
+    receiver: grafana-default-email
+    object_matchers:
+      - - crossNamespace
+        - =
+        - "true"
+      - - dynamic
+        - =
+        - c
+      - - priority
+        - =
+        - "1"
 ```
 
 ```yaml
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaNotificationPolicyRoute
 metadata:
-  name: sample-route
+  name: dynamic-d
   labels:
     dynamicroute: "grafana"
 spec:
-  instanceSelector:
-    matchLabels:
-      dashboards: "grafana"
   priority: 2
-  routes:
-    - receiver: grafana-receiver-2
-       object_matchers:
-          - - dynamic
-            - =
-            - 2
+  route:
+    receiver: grafana-default-email
+    object_matchers:
+      - - dynamic
+        - =
+        - d
+      - - priority
+        - =
+        - "2"
+```
+
+```yaml
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicyRoute
+metadata:
+  name: dynamic-e
+  labels:
+    dynamicroute: "grafana"
+spec:
+  route:
+    receiver: grafana-default-email
+    object_matchers:
+      - - dynamic
+        - =
+        - e
+      - - priority
+        - =
+        - none
 ```
 
 Which would result in the following merged routes:
 
 ```yaml
-    routes:
-      - receiver: inline-from-notification-policy-a
-        object_matchers:
-          - - team
-            - =
-            - a
-      - receiver: inline-from-notification-policy-b
-        object_matchers:
-          - - team
-            - =
-            - b
-     - receiver: grafana-receiver-2
-       object_matchers:
-          - - dynamic
-            - =
-            - 2
-    - receiver: grafana-receiver-1
-       object_matchers:
-          - - dynamic
-            - =
-            - 1
+      routes:
+        - receiver: grafana-default-email
+          object_matchers:
+            - - inline
+              - =
+              - first
+            - - team
+              - =
+              - a
+        - receiver: grafana-default-email
+          object_matchers:
+            - - inline
+              - =
+              - second
+            - - team
+              - =
+              - b
+        - receiver: grafana-default-email
+          object_matchers:
+            - - crossNamespace
+              - =
+              - "true"
+            - - dynamic
+              - =
+              - c
+            - - priority
+              - =
+              - "1"
+        - receiver: grafana-default-email
+          object_matchers:
+            - - dynamic
+              - =
+              - d
+            - - priority
+              - =
+              - "2"
+        - receiver: grafana-default-email
+          object_matchers:
+            - - dynamic
+              - =
+              - e
+            - - priority
+              - =
+              - none
 ```
 
 > This example assumes that routes with a higher priority value are merged before lower priority values.
