@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -142,6 +143,12 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 
 	if matchingNotificationPolicyRoutes != nil {
 		notificationPolicy = mergeNotificationPolicyRoutesWithRouteList(notificationPolicy, matchingNotificationPolicyRoutes)
+
+		err := r.ensureOwnerReferencesForNotificationPolicyRouteList(ctx, notificationPolicy, matchingNotificationPolicyRoutes)
+		if err != nil {
+			r.Log.Error(err, "failed to set owner reference on GrafanaNotificationPolicyRoutes")
+			return ctrl.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("failed to set owner reference on GrafanaNotificationPolicyRoutes: %w", err)
+		}
 	}
 
 	applyErrors := make(map[string]string)
@@ -178,6 +185,24 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 	}
 
 	return ctrl.Result{RequeueAfter: notificationPolicy.Spec.ResyncPeriod.Duration}, nil
+}
+
+func (r *GrafanaNotificationPolicyReconciler) ensureOwnerReferencesForNotificationPolicyRouteList(ctx context.Context, notificationPolicy *grafanav1beta1.GrafanaNotificationPolicy, notificationPolicyRoutes *grafanav1beta1.GrafanaNotificationPolicyRouteList) error {
+	if notificationPolicy == nil || notificationPolicyRoutes == nil {
+		return nil
+	}
+
+	for i := range notificationPolicyRoutes.Items {
+		route := &notificationPolicyRoutes.Items[i]
+		err := controllerutil.SetOwnerReference(notificationPolicy, route, r.Scheme)
+		if err != nil {
+			return err
+		}
+		if err := r.Update(ctx, route); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // mergeNotificationPolicyRoutesWithRouteList merges a list of GrafanaNotificationPolicyRoutes into the
@@ -285,6 +310,7 @@ func (r *GrafanaNotificationPolicyReconciler) SetupWithManager(mgr ctrl.Manager)
 			}
 			return requests
 		})).
+		Owns(&grafanav1beta1.GrafanaNotificationPolicyRoute{}, builder.MatchEveryOwner).
 		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
 }
