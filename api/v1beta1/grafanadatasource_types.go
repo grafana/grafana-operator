@@ -147,10 +147,7 @@ func (in *GrafanaDatasource) CustomUIDOrUID() string {
 }
 
 func (in *GrafanaDatasource) IsAllowCrossNamespaceImport() bool {
-	if in.Spec.AllowCrossNamespaceImport != nil {
-		return *in.Spec.AllowCrossNamespaceImport
-	}
-	return false
+	return in.Spec.AllowCrossNamespaceImport
 }
 
 func (in *GrafanaDatasourceList) Find(namespace string, name string) *GrafanaDatasource {

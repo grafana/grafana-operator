@@ -130,6 +130,8 @@ GrafanaAlertRuleGroupSpec defines the desired state of GrafanaAlertRuleGroup
         <td>boolean</td>
         <td>
           Allow the Operator to match this resource with Grafanas outside the current namespace<br/>
+          <br/>
+            <i>Default</i>: false<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -730,6 +732,8 @@ GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
         <td>boolean</td>
         <td>
           Allow the Operator to match this resource with Grafanas outside the current namespace<br/>
+          <br/>
+            <i>Default</i>: false<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1222,6 +1226,8 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         <td>boolean</td>
         <td>
           Allow the Operator to match this resource with Grafanas outside the current namespace<br/>
+          <br/>
+            <i>Default</i>: false<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2338,6 +2344,8 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         <td>boolean</td>
         <td>
           Allow the Operator to match this resource with Grafanas outside the current namespace<br/>
+          <br/>
+            <i>Default</i>: false<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3003,6 +3011,8 @@ GrafanaFolderSpec defines the desired state of GrafanaFolder
         <td>boolean</td>
         <td>
           Allow the Operator to match this resource with Grafanas outside the current namespace<br/>
+          <br/>
+            <i>Default</i>: false<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3357,6 +3367,8 @@ GrafanaNotificationPolicySpec defines the desired state of GrafanaNotificationPo
         <td>boolean</td>
         <td>
           Allow the Operator to match this resource with Grafanas outside the current namespace<br/>
+          <br/>
+            <i>Default</i>: false<br/>
         </td>
         <td>false</td>
       </tr><tr>

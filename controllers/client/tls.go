@@ -36,11 +36,16 @@ func buildTLSConfiguration(ctx context.Context, c client.Client, grafana *v1beta
 	}
 
 	tlsConfig := &tls.Config{MinVersion: tls.VersionTLS12}
+	secretName := tlsConfigBlock.CertSecretRef.Name
+	secretNamespace := grafana.Namespace
+	if tlsConfigBlock.CertSecretRef.Namespace != "" {
+		secretNamespace = tlsConfigBlock.CertSecretRef.Namespace
+	}
 
 	secret := &v1.Secret{}
 	selector := client.ObjectKey{
-		Name:      tlsConfigBlock.CertSecretRef.Name,
-		Namespace: grafana.Namespace,
+		Name:      secretName,
+		Namespace: secretNamespace,
 	}
 	err := c.Get(ctx, selector, secret)
 	if err != nil {

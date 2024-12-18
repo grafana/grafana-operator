@@ -178,11 +178,12 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			}
 			return ctrl.Result{}, nil
 		}
-		controllerLog.Error(err, "error getting grafana folder cr")
-		return ctrl.Result{RequeueAfter: RequeueDelay}, err
+		return ctrl.Result{}, fmt.Errorf("error getting grafana folder cr: %w", err)
 	}
 	defer func() {
-		if err := r.UpdateStatus(ctx, folder); err != nil {
+		folder.Status.Hash = folder.Hash()
+		folder.Status.LastResync = metav1.Time{Time: time.Now()}
+		if err := r.Status().Update(ctx, folder); err != nil {
 			r.Log.Error(err, "updating status")
 		}
 	}()
@@ -198,6 +199,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if err != nil || len(instances) == 0 {
 		setNoMatchingInstancesCondition(&folder.Status.Conditions, folder.Generation, err)
 		folder.Status.NoMatchingInstances = true
+		meta.RemoveStatusCondition(&folder.Status.Conditions, conditionFolderSynchronized)
 		controllerLog.Error(err, "could not find matching instances", "name", folder.Name, "namespace", folder.Namespace)
 		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
@@ -215,16 +217,14 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
 	}
+
+	if len(applyErrors) > 0 {
+		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
+	}
+
 	condition := buildSynchronizedCondition("Folder", conditionFolderSynchronized, folder.Generation, applyErrors, len(instances))
 	meta.SetStatusCondition(&folder.Status.Conditions, condition)
 
-	if len(applyErrors) > 0 {
-		return ctrl.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
-	}
-
-	if folder.ResyncPeriodHasElapsed() {
-		folder.Status.LastResync = metav1.Time{Time: time.Now()}
-	}
 	return ctrl.Result{RequeueAfter: folder.Spec.ResyncPeriod.Duration}, nil
 }
 
@@ -232,6 +232,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 func (r *GrafanaFolderReconciler) SetupWithManager(mgr ctrl.Manager, ctx context.Context) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&grafanav1beta1.GrafanaFolder{}).
+		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
 
 	if err == nil {
@@ -392,11 +393,6 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 	}
 
 	return nil
-}
-
-func (r *GrafanaFolderReconciler) UpdateStatus(ctx context.Context, cr *grafanav1beta1.GrafanaFolder) error {
-	cr.Status.Hash = cr.Hash()
-	return r.Client.Status().Update(ctx, cr)
 }
 
 // Check if the folder exists. Matches UID first and fall back to title. Title matching only works for non-nested folders

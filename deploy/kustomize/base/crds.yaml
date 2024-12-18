@@ -42,6 +42,7 @@ spec:
             description: GrafanaAlertRuleGroupSpec defines the desired state of GrafanaAlertRuleGroup
             properties:
               allowCrossNamespaceImport:
+                default: false
                 description: Allow the Operator to match this resource with Grafanas
                   outside the current namespace
                 type: boolean
@@ -361,6 +362,7 @@ spec:
             description: GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
             properties:
               allowCrossNamespaceImport:
+                default: false
                 description: Allow the Operator to match this resource with Grafanas
                   outside the current namespace
                 type: boolean
@@ -658,6 +660,7 @@ spec:
             description: GrafanaDashboardSpec defines the desired state of GrafanaDashboard
             properties:
               allowCrossNamespaceImport:
+                default: false
                 description: Allow the Operator to match this resource with Grafanas
                   outside the current namespace
                 type: boolean
@@ -1155,6 +1158,7 @@ spec:
             description: GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
             properties:
               allowCrossNamespaceImport:
+                default: false
                 description: Allow the Operator to match this resource with Grafanas
                   outside the current namespace
                 type: boolean
@@ -1478,6 +1482,7 @@ spec:
             description: GrafanaFolderSpec defines the desired state of GrafanaFolder
             properties:
               allowCrossNamespaceImport:
+                default: false
                 description: Allow the Operator to match this resource with Grafanas
                   outside the current namespace
                 type: boolean
@@ -1692,6 +1697,7 @@ spec:
               GrafanaNotificationPolicy
             properties:
               allowCrossNamespaceImport:
+                default: false
                 description: Allow the Operator to match this resource with Grafanas
                   outside the current namespace
                 type: boolean
