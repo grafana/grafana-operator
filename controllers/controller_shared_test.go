@@ -235,8 +235,6 @@ func TestLabelsSatisfyMatchExpressions(t *testing.T) {
 }
 
 var _ = Describe("GetMatchingInstances functions", Ordered, func() {
-	refTrue := true
-	refFalse := false
 	namespace := corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "get-matching-test",
@@ -253,7 +251,7 @@ var _ = Describe("GetMatchingInstances functions", Ordered, func() {
 		},
 		Spec: v1beta1.GrafanaFolderSpec{
 			GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
-				AllowCrossNamespaceImport: &refTrue,
+				AllowCrossNamespaceImport: true,
 				InstanceSelector: &v1.LabelSelector{
 					MatchLabels: map[string]string{
 						"test": "folder",
@@ -265,7 +263,7 @@ var _ = Describe("GetMatchingInstances functions", Ordered, func() {
 	// Create duplicate resources, changing key fields
 	denyFolder := allowFolder.DeepCopy()
 	denyFolder.Name = "deny-cross-namespace"
-	denyFolder.Spec.AllowCrossNamespaceImport = &refFalse
+	denyFolder.Spec.AllowCrossNamespaceImport = false
 
 	matchAllFolder := allowFolder.DeepCopy()
 	matchAllFolder.Name = "invalid-match-labels"

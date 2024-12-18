@@ -24,6 +24,8 @@ import (
 	"strings"
 	"syscall"
 
+	uberzap "go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -90,8 +92,11 @@ func main() {
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.StringVar(&pprofAddr, "pprof-addr", ":8888", "The address to expose the pprof server. Empty string disables the pprof server.")
+
+	logCfg := uberzap.NewProductionEncoderConfig()
+	logCfg.EncodeTime = zapcore.ISO8601TimeEncoder
 	opts := zap.Options{
-		Development: true,
+		Encoder: zapcore.NewConsoleEncoder(logCfg),
 	}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
