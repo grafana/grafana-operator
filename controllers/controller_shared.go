@@ -19,7 +19,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
@@ -365,4 +367,36 @@ func getReferencedValue(ctx context.Context, cl client.Client, cr metav1.ObjectM
 			return "", "", fmt.Errorf("missing key %s in configmap %s", source.ConfigMapKeyRef.Key, source.ConfigMapKeyRef.Name)
 		}
 	}
+}
+
+// Add finalizer through a MergePatch
+// Avoids updating the entire object and only changes the finalizers
+func addFinalizer(ctx context.Context, cl client.Client, cr client.Object) error {
+	// Only update when changed
+	if controllerutil.AddFinalizer(cr, grafanaFinalizer) {
+		return patchFinalizers(ctx, cl, cr)
+	}
+	return nil
+}
+
+// Remove finalizer through a MergePatch
+// Avoids updating the entire object and only changes the finalizers
+func removeFinalizer(ctx context.Context, cl client.Client, cr client.Object) error {
+	// Only update when changed
+	if controllerutil.RemoveFinalizer(cr, grafanaFinalizer) {
+		return patchFinalizers(ctx, cl, cr)
+	}
+	return nil
+}
+
+// Helper func for add/remove, avoid using directly
+func patchFinalizers(ctx context.Context, cl client.Client, cr client.Object) error {
+	crFinalizers := cr.GetFinalizers()
+
+	// Create patch using slice
+	patch, err := json.Marshal(map[string]interface{}{"metadata": map[string]interface{}{"finalizers": crFinalizers}})
+	if err != nil {
+		return err
+	}
+	return cl.Patch(ctx, cr, client.RawPatch(types.MergePatchType, patch))
 }
