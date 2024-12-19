@@ -5,6 +5,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// WARN Run `make` on all file changes
+
 type ValueFrom struct {
 	TargetPath string          `json:"targetPath"`
 	ValueFrom  ValueFromSource `json:"valueFrom"`
@@ -48,4 +50,12 @@ type CommonResource interface {
 	MatchNamespace() string
 	AllowCrossNamespace() bool
 	ResyncPeriodHasElapsed() bool
+}
+
+// The most recent observed state of a Grafana resource
+type GrafanaCommonStatus struct {
+	// Results when synchonizing resource with Grafana instances
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	// Last time the resource was synchronized with Grafana instances
+	LastResync metav1.Time `json:"lastResync,omitempty"`
 }
