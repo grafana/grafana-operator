@@ -149,6 +149,7 @@ spec:
                   instances
                 type: boolean
               conditions:
+                description: Results when synchonizing resource with Grafana instances
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -205,12 +206,10 @@ spec:
                   type: object
                 type: array
               hash:
-                description: |-
-                  INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-                  Important: Run "make" to regenerate code after modifying this file
                 type: string
               lastResync:
-                description: Last time the folder was resynced
+                description: Last time the resource was synchronized with Grafana
+                  instances
                 format: date-time
                 type: string
             type: object
