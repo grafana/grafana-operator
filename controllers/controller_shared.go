@@ -27,9 +27,14 @@ import (
 const grafanaFinalizer = "operator.grafana.com/finalizer"
 
 const (
+	// condition types
 	conditionNoMatchingInstance = "NoMatchingInstance"
 	conditionNoMatchingFolder   = "NoMatchingFolder"
 	conditionInvalidSpec        = "InvalidSpec"
+
+	// condition reasons
+	conditionApplySuccessful = "ApplySuccessful"
+	conditionApplyFailed     = "ApplyFailed"
 )
 
 //+kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update;patch;delete
@@ -243,7 +248,7 @@ func setNoMatchingInstancesCondition(conditions *[]metav1.Condition, generation 
 	}
 	meta.SetStatusCondition(conditions, metav1.Condition{
 		Type:               conditionNoMatchingInstance,
-		Status:             "True",
+		Status:             metav1.ConditionTrue,
 		ObservedGeneration: generation,
 		Reason:             reason,
 		Message:            message,
@@ -256,7 +261,7 @@ func setNoMatchingInstancesCondition(conditions *[]metav1.Condition, generation 
 func setNoMatchingInstance(conditions *[]metav1.Condition, generation int64, reason, message string) {
 	meta.SetStatusCondition(conditions, metav1.Condition{
 		Type:               conditionNoMatchingInstance,
-		Status:             "True",
+		Status:             metav1.ConditionTrue,
 		ObservedGeneration: generation,
 		LastTransitionTime: metav1.Time{
 			Time: time.Now(),
@@ -273,7 +278,7 @@ func removeNoMatchingInstance(conditions *[]metav1.Condition) {
 func setNoMatchingFolder(conditions *[]metav1.Condition, generation int64, reason, message string) {
 	meta.SetStatusCondition(conditions, metav1.Condition{
 		Type:               conditionNoMatchingFolder,
-		Status:             "True",
+		Status:             metav1.ConditionTrue,
 		ObservedGeneration: generation,
 		LastTransitionTime: metav1.Time{
 			Time: time.Now(),
@@ -290,7 +295,7 @@ func removeNoMatchingFolder(conditions *[]metav1.Condition) {
 func setInvalidSpec(conditions *[]metav1.Condition, generation int64, reason, message string) {
 	meta.SetStatusCondition(conditions, metav1.Condition{
 		Type:               conditionInvalidSpec,
-		Status:             "True",
+		Status:             metav1.ConditionTrue,
 		ObservedGeneration: generation,
 		LastTransitionTime: metav1.Time{
 			Time: time.Now(),
@@ -323,11 +328,11 @@ func buildSynchronizedCondition(resource string, syncType string, generation int
 	}
 
 	if len(applyErrors) == 0 {
-		condition.Status = "True"
+		condition.Status = metav1.ConditionTrue
 		condition.Reason = "ApplySuccessful"
 		condition.Message = fmt.Sprintf("%s was successfully applied to %d instances", resource, total)
 	} else {
-		condition.Status = "False"
+		condition.Status = metav1.ConditionFalse
 		condition.Reason = "ApplyFailed"
 
 		var sb strings.Builder
