@@ -292,7 +292,7 @@ func (r *GrafanaContactPointReconciler) GetMatchingInstances(ctx context.Context
 	if err != nil || len(instances.Items) == 0 {
 		return nil, err
 	}
-	if contactPoint.Spec.AllowCrossNamespaceImport != nil && *contactPoint.Spec.AllowCrossNamespaceImport {
+	if contactPoint.Spec.AllowCrossNamespaceImport {
 		return instances.Items, nil
 	}
 	items := []grafanav1beta1.Grafana{}

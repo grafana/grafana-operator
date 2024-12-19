@@ -173,8 +173,5 @@ func (in *GrafanaFolder) MatchNamespace() string {
 }
 
 func (in *GrafanaFolder) AllowCrossNamespace() bool {
-	if in.Spec.AllowCrossNamespaceImport != nil {
-		return *in.Spec.AllowCrossNamespaceImport
-	}
-	return false
+	return in.Spec.AllowCrossNamespaceImport
 }

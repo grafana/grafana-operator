@@ -57,7 +57,6 @@ type GrafanaAlertRuleGroupReconciler struct {
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-//+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanaalertrulegroups/finalizers,verbs=update
 
 func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	controllerLog := log.FromContext(ctx).WithName("GrafanaAlertRuleGroupReconciler")
@@ -336,7 +335,7 @@ func (r *GrafanaAlertRuleGroupReconciler) GetMatchingInstances(ctx context.Conte
 	if err != nil || len(instances.Items) == 0 {
 		return nil, err
 	}
-	if group.Spec.AllowCrossNamespaceImport != nil && *group.Spec.AllowCrossNamespaceImport {
+	if group.Spec.AllowCrossNamespaceImport {
 		return instances.Items, nil
 	}
 	items := []grafanav1beta1.Grafana{}

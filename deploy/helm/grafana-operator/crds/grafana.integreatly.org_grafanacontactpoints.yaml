@@ -43,6 +43,7 @@ spec:
             description: GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
             properties:
               allowCrossNamespaceImport:
+                default: false
                 description: Allow the Operator to match this resource with Grafanas
                   outside the current namespace
                 type: boolean
