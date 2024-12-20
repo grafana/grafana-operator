@@ -1,0 +1,74 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicy
+metadata:
+  name: grafananotificationpolicy-sample
+spec:
+  allowCrossNamespaceImport: true
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  routeSelector:
+    matchLabels:
+      dynamicroute: "grafana"
+  route:
+    receiver: grafana-default-email
+    group_by:
+      - grafana_folder
+      - alertname
+    routes:
+      - receiver: grafana-default-email
+        object_matchers:
+          - - team
+            - =
+            - a
+          - - inline
+            - =
+            - first
+      - receiver: grafana-default-email
+        object_matchers:
+          - - team
+            - =
+            - b
+          - - inline
+            - =
+            - second
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicyRoute
+metadata:
+  name: dynamic-c
+  namespace: grafana-crds
+  labels:
+    dynamicroute: "grafana"
+spec:
+  priority: 1
+  route:
+    receiver: grafana-default-email
+    object_matchers:
+      - - crossNamespace
+        - =
+        - "true"
+      - - dynamic
+        - =
+        - c
+      - - priority
+        - =
+        - "1"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicyRoute
+metadata:
+  name: dynamic-d
+  labels:
+    dynamicroute: "grafana"
+spec:
+  priority: 2
+  route:
+    receiver: grafana-default-email
+    object_matchers:
+      - - dynamic
+        - =
+        - d
+      - - priority
+        - =
+        - "2"

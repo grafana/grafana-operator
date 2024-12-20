@@ -28,6 +28,9 @@ import (
 type GrafanaNotificationPolicySpec struct {
 	GrafanaCommonSpec `json:",inline"`
 
+	// Selects GrafanaNotificationPolicyRoutes to merge in when specified
+	RouteSelector *metav1.LabelSelector `json:"routeSelector,omitempty"`
+
 	// Routes for alerts to match against
 	Route *Route `json:"route"`
 
@@ -129,6 +132,8 @@ func (r *Route) ToModelRoute() *models.Route {
 // GrafanaNotificationPolicyStatus defines the observed state of GrafanaNotificationPolicy
 type GrafanaNotificationPolicyStatus struct {
 	Conditions []metav1.Condition `json:"conditions"`
+
+	DiscoveredRoutes *[]string `json:"discoveredRoutes,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -146,6 +151,11 @@ type GrafanaNotificationPolicy struct {
 
 func (np *GrafanaNotificationPolicy) NamespacedResource() string {
 	return fmt.Sprintf("%v/%v/%v", np.ObjectMeta.Namespace, np.ObjectMeta.Name, np.ObjectMeta.UID)
+}
+
+// IsCrossNamespaceImportAllowed returns true when cross namespace imports are allowed
+func (np *GrafanaNotificationPolicy) IsCrossNamespaceImportAllowed() bool {
+	return np.Spec.AllowCrossNamespaceImport != nil && *np.Spec.AllowCrossNamespaceImport
 }
 
 //+kubebuilder:object:root=true
