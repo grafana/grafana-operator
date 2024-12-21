@@ -58,14 +58,11 @@ type GrafanaFolderSpec struct {
 
 // GrafanaFolderStatus defines the observed state of GrafanaFolder
 type GrafanaFolderStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	GrafanaCommonStatus `json:",inline"`
+
 	Hash string `json:"hash,omitempty"`
 	// The folder instanceSelector can't find matching grafana instances
 	NoMatchingInstances bool `json:"NoMatchingInstances,omitempty"`
-	// Last time the folder was resynced
-	LastResync metav1.Time        `json:"lastResync,omitempty"`
-	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true

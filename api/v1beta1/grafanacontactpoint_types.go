@@ -49,13 +49,6 @@ type GrafanaContactPointSpec struct {
 	Type string `json:"type,omitempty"`
 }
 
-// GrafanaContactPointStatus defines the observed state of GrafanaContactPoint
-type GrafanaContactPointStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-	Conditions []metav1.Condition `json:"conditions"`
-}
-
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
@@ -65,8 +58,8 @@ type GrafanaContactPoint struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   GrafanaContactPointSpec   `json:"spec,omitempty"`
-	Status GrafanaContactPointStatus `json:"status,omitempty"`
+	Spec   GrafanaContactPointSpec `json:"spec,omitempty"`
+	Status GrafanaCommonStatus     `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
