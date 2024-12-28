@@ -26,6 +26,13 @@ spec:
     spec:
       template:
         spec:
+          initContainers:
+            - name: init-chown-data
+              image: busybox
+              command: [ "sh", "-c", "chown -R 10001:10001 /var/lib/grafana" ]
+              volumeMounts:
+                - name: grafana-data
+                  mountPath: /var/lib/grafana
           containers:
             - name: grafana
               readinessProbe:
