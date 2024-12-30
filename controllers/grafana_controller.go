@@ -69,6 +69,7 @@ type GrafanaReconciler struct {
 
 func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	controllerLog := log.FromContext(ctx).WithName("GrafanaReconciler")
+	r.Log = controllerLog
 
 	grafana := &grafanav1beta1.Grafana{}
 	err := r.Get(ctx, req.NamespacedName, grafana)
