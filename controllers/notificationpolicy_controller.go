@@ -80,15 +80,13 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 	}
 
 	if notificationPolicy.GetDeletionTimestamp() != nil {
+		// Check if resource needs clean up
 		if controllerutil.ContainsFinalizer(notificationPolicy, grafanaFinalizer) {
-			err := r.finalize(ctx, notificationPolicy)
-			if err != nil {
-				return ctrl.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("failed to finalize GrafanaNotificationPolicy: %w", err)
+			if err := r.finalize(ctx, notificationPolicy); err != nil {
+				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaNotificationPolicy: %w", err)
 			}
-			controllerutil.RemoveFinalizer(notificationPolicy, grafanaFinalizer)
-			if err := r.Update(ctx, notificationPolicy); err != nil {
-				r.Log.Error(err, "failed to remove finalizer")
-				return ctrl.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("failed to update GrafanaNotificationPolicy: %w", err)
+			if err := removeFinalizer(ctx, r.Client, notificationPolicy); err != nil {
+				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
 			}
 		}
 		return ctrl.Result{}, nil
@@ -99,12 +97,13 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 			r.Log.Error(err, "updating status")
 		}
 		if meta.IsStatusConditionTrue(notificationPolicy.Status.Conditions, conditionNoMatchingInstance) {
-			controllerutil.RemoveFinalizer(notificationPolicy, grafanaFinalizer)
+			if err := removeFinalizer(ctx, r.Client, notificationPolicy); err != nil {
+				r.Log.Error(err, "failed to remove finalizer")
+			}
 		} else {
-			controllerutil.AddFinalizer(notificationPolicy, grafanaFinalizer)
-		}
-		if err := r.Update(ctx, notificationPolicy); err != nil {
-			r.Log.Error(err, "failed to set finalizer")
+			if err := addFinalizer(ctx, r.Client, notificationPolicy); err != nil {
+				r.Log.Error(err, "failed to set finalizer")
+			}
 		}
 	}()
 

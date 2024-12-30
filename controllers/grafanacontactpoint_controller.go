@@ -82,15 +82,13 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 	}
 
 	if contactPoint.GetDeletionTimestamp() != nil {
+		// Check if resource needs clean up
 		if controllerutil.ContainsFinalizer(contactPoint, grafanaFinalizer) {
-			err := r.finalize(ctx, contactPoint)
-			if err != nil {
-				return ctrl.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("failed to finalize GrafanaContactPoint: %w", err)
+			if err := r.finalize(ctx, contactPoint); err != nil {
+				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaContactPoint: %w", err)
 			}
-			controllerutil.RemoveFinalizer(contactPoint, grafanaFinalizer)
-			if err := r.Update(ctx, contactPoint); err != nil {
-				r.Log.Error(err, "failed to remove finalizer")
-				return ctrl.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("failed to update GrafanaContactPoint: %w", err)
+			if err := removeFinalizer(ctx, r.Client, contactPoint); err != nil {
+				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
 			}
 		}
 		return ctrl.Result{}, nil
@@ -101,12 +99,13 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 			r.Log.Error(err, "updating status")
 		}
 		if meta.IsStatusConditionTrue(contactPoint.Status.Conditions, conditionNoMatchingInstance) {
-			controllerutil.RemoveFinalizer(contactPoint, grafanaFinalizer)
+			if err := removeFinalizer(ctx, r.Client, contactPoint); err != nil {
+				r.Log.Error(err, "failed to remove finalizer")
+			}
 		} else {
-			controllerutil.AddFinalizer(contactPoint, grafanaFinalizer)
-		}
-		if err := r.Update(ctx, contactPoint); err != nil {
-			r.Log.Error(err, "failed to set finalizer")
+			if err := addFinalizer(ctx, r.Client, contactPoint); err != nil {
+				r.Log.Error(err, "failed to set finalizer")
+			}
 		}
 	}()
 

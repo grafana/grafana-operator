@@ -76,16 +76,13 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 	}
 
 	if group.GetDeletionTimestamp() != nil {
+		// Check if resource needs clean up
 		if controllerutil.ContainsFinalizer(group, grafanaFinalizer) {
-			// still need to clean up
-			err := r.finalize(ctx, group)
-			if err != nil {
-				return ctrl.Result{}, fmt.Errorf("cleaning up alert rule group: %w", err)
+			if err := r.finalize(ctx, group); err != nil {
+				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaAlertRuleGroup: %w", err)
 			}
-			controllerutil.RemoveFinalizer(group, grafanaFinalizer)
-			if err := r.Update(ctx, group); err != nil {
-				r.Log.Error(err, "failed to remove finalizer")
-				return ctrl.Result{}, err
+			if err := removeFinalizer(ctx, r.Client, group); err != nil {
+				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
 			}
 		}
 		return ctrl.Result{}, nil
@@ -96,12 +93,13 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 			r.Log.Error(err, "updating status")
 		}
 		if meta.IsStatusConditionTrue(group.Status.Conditions, conditionNoMatchingInstance) {
-			controllerutil.RemoveFinalizer(group, grafanaFinalizer)
+			if err := removeFinalizer(ctx, r.Client, group); err != nil {
+				r.Log.Error(err, "failed to remove finalizer")
+			}
 		} else {
-			controllerutil.AddFinalizer(group, grafanaFinalizer)
-		}
-		if err := r.Update(ctx, group); err != nil {
-			r.Log.Error(err, "failed to set finalizer")
+			if err := addFinalizer(ctx, r.Client, group); err != nil {
+				r.Log.Error(err, "failed to set finalizer")
+			}
 		}
 	}()
 
