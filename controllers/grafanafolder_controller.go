@@ -66,9 +66,7 @@ func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result,
 	var opts []client.ListOption
 	err := r.Client.List(ctx, grafanas, opts...)
 	if err != nil {
-		return ctrl.Result{
-			Requeue: true,
-		}, err
+		return ctrl.Result{}, err
 	}
 
 	// no instances, no need to sync
@@ -80,9 +78,7 @@ func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result,
 	allFolders := &grafanav1beta1.GrafanaFolderList{}
 	err = r.Client.List(ctx, allFolders, opts...)
 	if err != nil {
-		return ctrl.Result{
-			Requeue: true,
-		}, err
+		return ctrl.Result{}, err
 	}
 
 	// sync folders, delete folders from grafana that do no longer have a cr
@@ -100,7 +96,7 @@ func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result,
 	for grafana, existingFolders := range foldersToDelete {
 		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 		if err != nil {
-			return ctrl.Result{Requeue: true}, err
+			return ctrl.Result{}, err
 		}
 
 		for _, folder := range existingFolders {
@@ -121,7 +117,7 @@ func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result,
 				if errors.As(err, &notFound) {
 					r.Log.Info("folder no longer exists", "namespace", namespace, "name", name)
 				} else {
-					return ctrl.Result{Requeue: false}, err
+					return ctrl.Result{}, err
 				}
 			}
 
