@@ -37,6 +37,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -166,25 +167,44 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	folder := &grafanav1beta1.GrafanaFolder{}
-
 	err := r.Client.Get(ctx, client.ObjectKey{
 		Namespace: req.Namespace,
 		Name:      req.Name,
 	}, folder)
 	if err != nil {
 		if kuberr.IsNotFound(err) {
-			if err := r.onFolderDeleted(ctx, req.Namespace, req.Name); err != nil {
-				return ctrl.Result{RequeueAfter: RequeueDelay}, err
-			}
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{}, fmt.Errorf("error getting grafana folder cr: %w", err)
 	}
+
+	if folder.GetDeletionTimestamp() != nil {
+		// Check if resource needs clean up
+		if controllerutil.ContainsFinalizer(folder, grafanaFinalizer) {
+			if err := r.finalize(ctx, folder); err != nil {
+				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaFolder: %w", err)
+			}
+			if err := removeFinalizer(ctx, r.Client, folder); err != nil {
+				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
+			}
+		}
+		return ctrl.Result{}, nil
+	}
+
 	defer func() {
 		folder.Status.Hash = folder.Hash()
 		folder.Status.LastResync = metav1.Time{Time: time.Now()}
 		if err := r.Status().Update(ctx, folder); err != nil {
 			r.Log.Error(err, "updating status")
+		}
+		if meta.IsStatusConditionTrue(folder.Status.Conditions, conditionNoMatchingInstance) {
+			if err := removeFinalizer(ctx, r.Client, folder); err != nil {
+				r.Log.Error(err, "failed to remove finalizer")
+			}
+		} else {
+			if err := addFinalizer(ctx, r.Client, folder); err != nil {
+				r.Log.Error(err, "failed to set finalizer")
+			}
 		}
 	}()
 
@@ -196,11 +216,17 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	removeInvalidSpec(&folder.Status.Conditions)
 
 	instances, err := GetScopedMatchingInstances(controllerLog, ctx, r.Client, folder)
-	if err != nil || len(instances) == 0 {
+	if err != nil {
 		setNoMatchingInstancesCondition(&folder.Status.Conditions, folder.Generation, err)
-		folder.Status.NoMatchingInstances = true
 		meta.RemoveStatusCondition(&folder.Status.Conditions, conditionFolderSynchronized)
-		controllerLog.Error(err, "could not find matching instances", "name", folder.Name, "namespace", folder.Namespace)
+		folder.Status.NoMatchingInstances = true
+		return ctrl.Result{}, fmt.Errorf("could not find matching instances: %w", err)
+	}
+
+	if len(instances) == 0 {
+		setNoMatchingInstancesCondition(&folder.Status.Conditions, folder.Generation, err)
+		meta.RemoveStatusCondition(&folder.Status.Conditions, conditionFolderSynchronized)
+		folder.Status.NoMatchingInstances = true
 		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
@@ -266,7 +292,7 @@ func (r *GrafanaFolderReconciler) SetupWithManager(mgr ctrl.Manager, ctx context
 	return err
 }
 
-func (r *GrafanaFolderReconciler) onFolderDeleted(ctx context.Context, namespace string, name string) error {
+func (r *GrafanaFolderReconciler) finalize(ctx context.Context, folder *grafanav1beta1.GrafanaFolder) error {
 	list := grafanav1beta1.GrafanaList{}
 	var opts []client.ListOption
 	err := r.Client.List(ctx, &list, opts...)
@@ -276,7 +302,7 @@ func (r *GrafanaFolderReconciler) onFolderDeleted(ctx context.Context, namespace
 
 	for _, grafana := range list.Items {
 		grafana := grafana
-		if found, uid := grafana.Status.Folders.Find(namespace, name); found {
+		if found, uid := grafana.Status.Folders.Find(folder.Namespace, folder.Name); found {
 			grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 			if err != nil {
 				return err
@@ -291,7 +317,7 @@ func (r *GrafanaFolderReconciler) onFolderDeleted(ctx context.Context, namespace
 				}
 			}
 
-			grafana.Status.Folders = grafana.Status.Folders.Remove(namespace, name)
+			grafana.Status.Folders = grafana.Status.Folders.Remove(folder.Namespace, folder.Name)
 			err = r.Client.Status().Update(ctx, &grafana)
 			if err != nil {
 				return err
