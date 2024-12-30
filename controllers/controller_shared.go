@@ -102,7 +102,7 @@ func GetScopedMatchingInstances(log logr.Logger, ctx context.Context, k8sClient 
 		}
 		selectedList = append(selectedList, instance)
 	}
-	if len(unready_instances) > 1 {
+	if len(unready_instances) > 0 {
 		log.Info("Grafana instances not ready", "instances", unready_instances)
 	}
 

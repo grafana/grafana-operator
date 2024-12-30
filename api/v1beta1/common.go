@@ -49,7 +49,6 @@ type CommonResource interface {
 	MatchLabels() *metav1.LabelSelector
 	MatchNamespace() string
 	AllowCrossNamespace() bool
-	ResyncPeriodHasElapsed() bool
 }
 
 // The most recent observed state of a Grafana resource
