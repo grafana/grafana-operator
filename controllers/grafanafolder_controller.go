@@ -59,7 +59,6 @@ type GrafanaFolderReconciler struct {
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanafolders/finalizers,verbs=update
 
 func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result, error) {
-	syncLog := log.FromContext(ctx).WithName("GrafanaFolderReconciler")
 	foldersSynced := 0
 
 	// get all grafana instances
@@ -120,7 +119,7 @@ func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result,
 			if err != nil {
 				var notFound *folders.DeleteFolderNotFound
 				if errors.As(err, &notFound) {
-					syncLog.Info("folder no longer exists", "namespace", namespace, "name", name)
+					r.Log.Info("folder no longer exists", "namespace", namespace, "name", name)
 				} else {
 					return ctrl.Result{Requeue: false}, err
 				}
@@ -134,12 +133,12 @@ func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result,
 		// so we should minimize those updates
 		err = r.Client.Status().Update(ctx, grafana)
 		if err != nil {
-			return ctrl.Result{Requeue: false}, err
+			return ctrl.Result{}, err
 		}
 	}
 
 	if foldersSynced > 0 {
-		syncLog.Info("successfully synced folders", "folders", foldersSynced)
+		r.Log.Info("successfully synced folders", "folders", foldersSynced)
 	}
 	return ctrl.Result{Requeue: false}, nil
 }
@@ -154,8 +153,7 @@ func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result,
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.9.2/pkg/reconcile
 func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	controllerLog := log.FromContext(ctx).WithName("GrafanaFolderReconciler")
-	r.Log = controllerLog
+	r.Log = log.FromContext(ctx).WithName("GrafanaFolderReconciler")
 
 	// periodic sync reconcile
 	if req.Namespace == "" && req.Name == "" {
@@ -215,7 +213,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 	removeInvalidSpec(&folder.Status.Conditions)
 
-	instances, err := GetScopedMatchingInstances(controllerLog, ctx, r.Client, folder)
+	instances, err := GetScopedMatchingInstances(r.Log, ctx, r.Client, folder)
 	if err != nil {
 		setNoMatchingInstancesCondition(&folder.Status.Conditions, folder.Generation, err)
 		meta.RemoveStatusCondition(&folder.Status.Conditions, conditionFolderSynchronized)
@@ -232,7 +230,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	removeNoMatchingInstance(&folder.Status.Conditions)
 	folder.Status.NoMatchingInstances = false
-	controllerLog.Info("found matching Grafana instances for folder", "count", len(instances))
+	r.Log.Info("found matching Grafana instances for folder", "count", len(instances))
 
 	applyErrors := make(map[string]string)
 	for _, grafana := range instances {
