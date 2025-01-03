@@ -256,17 +256,12 @@ func (r *GrafanaFolderReconciler) SetupWithManager(mgr ctrl.Manager, ctx context
 		Complete(r)
 
 	if err == nil {
-		d, err := time.ParseDuration(initialSyncDelay)
-		if err != nil {
-			return err
-		}
-
 		go func() {
 			for {
 				select {
 				case <-ctx.Done():
 					return
-				case <-time.After(d):
+				case <-time.After(initialSyncDelay):
 					result, err := r.Reconcile(ctx, ctrl.Request{})
 					if err != nil {
 						r.Log.Error(err, "error synchronizing folders")

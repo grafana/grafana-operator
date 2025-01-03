@@ -26,9 +26,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
-const grafanaFinalizer = "operator.grafana.com/finalizer"
-
 const (
+	// Synchronization size and timeout values
+	syncBatchSize    = 100
+	initialSyncDelay = 10 * time.Second
+	RequeueDelay     = 10 * time.Second
+
 	// condition types
 	conditionNoMatchingInstance = "NoMatchingInstance"
 	conditionNoMatchingFolder   = "NoMatchingFolder"
@@ -37,6 +40,9 @@ const (
 	// condition reasons
 	conditionApplySuccessful = "ApplySuccessful"
 	conditionApplyFailed     = "ApplyFailed"
+
+	// Finalizer
+	grafanaFinalizer = "operator.grafana.com/finalizer"
 )
 
 //+kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update;patch;delete

@@ -24,7 +24,6 @@ import (
 	"os"
 	"reflect"
 	"strings"
-	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/grafana/grafana-operator/v5/controllers/config"
@@ -43,10 +42,6 @@ import (
 
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
-)
-
-const (
-	RequeueDelay = 10 * time.Second
 )
 
 // GrafanaReconciler reconciles a Grafana object
