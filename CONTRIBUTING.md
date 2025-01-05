@@ -10,7 +10,7 @@ The operator embeds [grafonnet-lib](https://github.com/grafana/grafonnet-lib) in
 
 **NOTE:** please, run `make all` before opening a PR to make sure your changes are compliant with our standards and all automatically generated files (like CRDs) are up-to-date.
 
-### Code standards
+### Code standards 2
 
 We use a number of code standards in the project that we apply using a number of different tools.
 As a part of the CI solution these settings will be validated, but all of them can be tested using the Makefile before pushing.
