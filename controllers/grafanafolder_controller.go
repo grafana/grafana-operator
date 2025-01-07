@@ -214,7 +214,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		setNoMatchingInstancesCondition(&folder.Status.Conditions, folder.Generation, err)
 		meta.RemoveStatusCondition(&folder.Status.Conditions, conditionFolderSynchronized)
 		folder.Status.NoMatchingInstances = true
-		return ctrl.Result{}, fmt.Errorf("could not find matching instances: %w", err)
+		return ctrl.Result{}, fmt.Errorf("failed fetching instances: %w", err)
 	}
 
 	if len(instances) == 0 {
