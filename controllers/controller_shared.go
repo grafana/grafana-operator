@@ -84,8 +84,12 @@ func GetScopedMatchingInstances(log logr.Logger, ctx context.Context, k8sClient 
 
 	var list v1beta1.GrafanaList
 	err := k8sClient.List(ctx, &list, opts...)
-	if err != nil || len(list.Items) == 0 {
+	if err != nil {
 		return []v1beta1.Grafana{}, err
+	}
+
+	if len(list.Items) == 0 {
+		return []v1beta1.Grafana{}, nil
 	}
 
 	selectedList := []v1beta1.Grafana{}
@@ -124,8 +128,12 @@ func GetAllMatchingInstances(ctx context.Context, k8sClient client.Client, cr v1
 
 	var list v1beta1.GrafanaList
 	err := k8sClient.List(ctx, &list, client.MatchingLabels(instanceSelector.MatchLabels))
-	if err != nil || len(list.Items) == 0 {
+	if err != nil {
 		return []v1beta1.Grafana{}, err
+	}
+
+	if len(list.Items) == 0 {
+		return []v1beta1.Grafana{}, nil
 	}
 
 	selectedList := []v1beta1.Grafana{}
