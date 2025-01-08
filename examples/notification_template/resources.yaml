@@ -1,9 +1,12 @@
 ---
 apiVersion: grafana.integreatly.org/v1beta1
-kind: GrafanaNotificatonTemplate
+kind: GrafanaNotificationTemplate
 metadata:
   name: notificationtemplate-sample
 spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
   name: notificationtemplate-sample
   editable: false
   template: |
