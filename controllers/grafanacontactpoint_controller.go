@@ -65,8 +65,7 @@ type GrafanaContactPointReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.4/pkg/reconcile
 func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	controllerLog := log.FromContext(ctx).WithName("GrafanaContactPointReconciler")
-	r.Log = log.FromContext(ctx)
+	r.Log = log.FromContext(ctx).WithName("GrafanaContactPointReconciler")
 
 	contactPoint := &grafanav1beta1.GrafanaContactPoint{}
 	err := r.Client.Get(ctx, client.ObjectKey{
@@ -77,8 +76,7 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 		if kuberr.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
-		controllerLog.Error(err, "Failed to get GrafanaContactPoint")
-		return ctrl.Result{RequeueAfter: RequeueDelay}, err
+		return ctrl.Result{}, fmt.Errorf("error getting grafana Contact point cr: %w", err)
 	}
 
 	if contactPoint.GetDeletionTimestamp() != nil {
@@ -95,6 +93,7 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 	}
 
 	defer func() {
+		contactPoint.Status.LastResync = metav1.Time{Time: time.Now()}
 		if err := r.Client.Status().Update(ctx, contactPoint); err != nil {
 			r.Log.Error(err, "updating status")
 		}
@@ -109,59 +108,38 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 		}
 	}()
 
-	instances, err := r.GetMatchingInstances(ctx, contactPoint, r.Client)
+	instances, err := GetScopedMatchingInstances(r.Log, ctx, r.Client, contactPoint)
 	if err != nil {
-		setNoMatchingInstance(&contactPoint.Status.Conditions, contactPoint.Generation, "ErrFetchingInstances", fmt.Sprintf("error occurred during fetching of instances: %s", err.Error()))
+		setNoMatchingInstancesCondition(&contactPoint.Status.Conditions, contactPoint.Generation, err)
 		meta.RemoveStatusCondition(&contactPoint.Status.Conditions, conditionContactPointSynchronized)
-		r.Log.Error(err, "could not find matching instances")
-		return ctrl.Result{RequeueAfter: RequeueDelay}, err
+		return ctrl.Result{}, fmt.Errorf("failed fetching instances: %w", err)
 	}
 
 	if len(instances) == 0 {
+		setNoMatchingInstancesCondition(&contactPoint.Status.Conditions, contactPoint.Generation, err)
 		meta.RemoveStatusCondition(&contactPoint.Status.Conditions, conditionContactPointSynchronized)
-		setNoMatchingInstance(&contactPoint.Status.Conditions, contactPoint.Generation, "EmptyAPIReply", "Instances could not be fetched, reconciliation will be retried")
-		return ctrl.Result{}, nil
+		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
 	removeNoMatchingInstance(&contactPoint.Status.Conditions)
+	r.Log.Info("found matching Grafana instances for Contact point", "count", len(instances))
 
 	applyErrors := make(map[string]string)
 	for _, grafana := range instances {
 		// can be removed in go 1.22+
 		grafana := grafana
-		if grafana.Status.Stage != grafanav1beta1.OperatorStageComplete || grafana.Status.StageStatus != grafanav1beta1.OperatorStageResultSuccess {
-			controllerLog.Info("grafana instance not ready", "grafana", grafana.Name)
-			continue
-		}
 
 		err := r.reconcileWithInstance(ctx, &grafana, contactPoint)
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
 	}
-	condition := metav1.Condition{
-		Type:               conditionContactPointSynchronized,
-		ObservedGeneration: contactPoint.Generation,
-		LastTransitionTime: metav1.Time{
-			Time: time.Now(),
-		},
+
+	if len(applyErrors) > 0 {
+		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
 	}
 
-	if len(applyErrors) == 0 {
-		condition.Status = metav1.ConditionTrue
-		condition.Reason = conditionApplySuccessful
-		condition.Message = fmt.Sprintf("Contact point was successfully applied to %d instances", len(instances))
-	} else {
-		condition.Status = metav1.ConditionFalse
-		condition.Reason = conditionApplyFailed
-
-		var sb strings.Builder
-		for i, err := range applyErrors {
-			sb.WriteString(fmt.Sprintf("\n- %s: %s", i, err))
-		}
-
-		condition.Message = fmt.Sprintf("Contact point failed to be applied for %d out of %d instances. Errors:%s", len(applyErrors), len(instances), sb.String())
-	}
+	condition := buildSynchronizedCondition("Contact point", conditionContactPointSynchronized, contactPoint.Generation, applyErrors, len(instances))
 	meta.SetStatusCondition(&contactPoint.Status.Conditions, condition)
 
 	return ctrl.Result{RequeueAfter: contactPoint.Spec.ResyncPeriod.Duration}, nil
@@ -254,7 +232,7 @@ func (r *GrafanaContactPointReconciler) getContactPointFromUID(ctx context.Conte
 func (r *GrafanaContactPointReconciler) finalize(ctx context.Context, contactPoint *grafanav1beta1.GrafanaContactPoint) error {
 	r.Log.Info("Finalizing GrafanaContactPoint")
 
-	instances, err := r.GetMatchingInstances(ctx, contactPoint, r.Client)
+	instances, err := GetScopedMatchingInstances(r.Log, ctx, r.Client, contactPoint)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
@@ -286,27 +264,10 @@ func (r *GrafanaContactPointReconciler) removeFromInstance(ctx context.Context, 
 	return nil
 }
 
-func (r *GrafanaContactPointReconciler) GetMatchingInstances(ctx context.Context, contactPoint *grafanav1beta1.GrafanaContactPoint, k8sClient client.Client) ([]grafanav1beta1.Grafana, error) {
-	instances, err := GetMatchingInstances(ctx, k8sClient, contactPoint.Spec.InstanceSelector)
-	if err != nil || len(instances.Items) == 0 {
-		return nil, err
-	}
-	if contactPoint.Spec.AllowCrossNamespaceImport {
-		return instances.Items, nil
-	}
-	items := []grafanav1beta1.Grafana{}
-	for _, i := range instances.Items {
-		if i.Namespace == contactPoint.Namespace {
-			items = append(items, i)
-		}
-	}
-
-	return items, err
-}
-
 // SetupWithManager sets up the controller with the Manager.
 func (r *GrafanaContactPointReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&grafanav1beta1.GrafanaContactPoint{}).
+		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
 }

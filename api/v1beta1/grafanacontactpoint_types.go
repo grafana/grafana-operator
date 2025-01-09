@@ -79,6 +79,18 @@ func (in *GrafanaContactPoint) CustomUIDOrUID() string {
 	return string(in.ObjectMeta.UID)
 }
 
+func (in *GrafanaContactPoint) MatchLabels() *metav1.LabelSelector {
+	return in.Spec.InstanceSelector
+}
+
+func (in *GrafanaContactPoint) MatchNamespace() string {
+	return in.ObjectMeta.Namespace
+}
+
+func (in *GrafanaContactPoint) AllowCrossNamespace() bool {
+	return in.Spec.AllowCrossNamespaceImport
+}
+
 func init() {
 	SchemeBuilder.Register(&GrafanaContactPoint{}, &GrafanaContactPointList{})
 }
