@@ -205,7 +205,7 @@ func (r *GrafanaContactPointReconciler) buildSettings(ctx context.Context, conta
 		if err != nil {
 			return nil, fmt.Errorf("getting referenced value: %w", err)
 		}
-		r.Log.Info("overriding value", "key", override.TargetPath, "value", val)
+		r.Log.V(1).Info("overriding value", "key", override.TargetPath, "value", val)
 
 		simpleContent.SetPath(strings.Split(override.TargetPath, "."), val)
 	}
