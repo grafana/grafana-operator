@@ -1670,7 +1670,15 @@ spec:
     singular: grafananotificationpolicy
   scope: Namespaced
   versions:
-  - name: v1beta1
+  - additionalPrinterColumns:
+    - format: date-time
+      jsonPath: .status.lastResync
+      name: Last resync
+      type: date
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1beta1
     schema:
       openAPIV3Schema:
         description: GrafanaNotificationPolicy is the Schema for the GrafanaNotificationPolicy
