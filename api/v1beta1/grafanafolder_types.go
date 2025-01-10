@@ -70,6 +70,7 @@ type GrafanaFolderStatus struct {
 
 // GrafanaFolder is the Schema for the grafanafolders API
 // +kubebuilder:printcolumn:name="No matching instances",type="boolean",JSONPath=".status.NoMatchingInstances",description=""
+// +kubebuilder:printcolumn:name="Last resync",type="date",format="date-time",JSONPath=".status.lastResync",description=""
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""
 // +kubebuilder:resource:categories={grafana-operator}
 type GrafanaFolder struct {

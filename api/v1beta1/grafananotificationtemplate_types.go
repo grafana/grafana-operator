@@ -43,6 +43,8 @@ type GrafanaNotificationTemplateSpec struct {
 //+kubebuilder:subresource:status
 
 // GrafanaNotificationTemplate is the Schema for the GrafanaNotificationTemplate API
+// +kubebuilder:printcolumn:name="Last resync",type="date",format="date-time",JSONPath=".status.lastResync",description=""
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""
 // +kubebuilder:resource:categories={grafana-operator}
 type GrafanaNotificationTemplate struct {
 	metav1.TypeMeta   `json:",inline"`

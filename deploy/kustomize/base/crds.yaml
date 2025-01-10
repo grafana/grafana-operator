@@ -1454,6 +1454,10 @@ spec:
     - jsonPath: .status.NoMatchingInstances
       name: No matching instances
       type: boolean
+    - format: date-time
+      jsonPath: .status.lastResync
+      name: Last resync
+      type: date
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
@@ -1934,7 +1938,15 @@ spec:
     singular: grafananotificationtemplate
   scope: Namespaced
   versions:
-  - name: v1beta1
+  - additionalPrinterColumns:
+    - format: date-time
+      jsonPath: .status.lastResync
+      name: Last resync
+      type: date
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1beta1
     schema:
       openAPIV3Schema:
         description: GrafanaNotificationTemplate is the Schema for the GrafanaNotificationTemplate
