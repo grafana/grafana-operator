@@ -15,6 +15,35 @@ spec:
       admin_password: secret
 ---
 apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationTemplate
+metadata:
+  name: testdata
+spec:
+  name: emailtestdata
+  instanceSelector:
+    matchLabels:
+      test: "testdata"
+  resyncPeriod: 3s
+  template: |
+    {{ define "emailAlert" }}
+      [{{.Status}}] {{ .Labels.alertname }}
+      {{ .Annotations.AlertValues }}
+    {{ end }}
+
+    {{ define "emailAlertMessage" }}
+      {{ if gt (len .Alerts.Firing) 0 }}
+        {{ len .Alerts.Firing }} firing:
+        {{ range .Alerts.Firing }} {{ template "emailAlert" . }} {{ end }}
+      {{ end }}
+      {{ if gt (len .Alerts.Resolved) 0 }}
+        {{ len .Alerts.Resolved }} resolved:
+        {{ range .Alerts.Resolved }} {{ template "emailAlert" . }} {{ end }}
+      {{ end }}
+    {{ end }}
+
+    {{ template "emailAlertMessage" . }}
+---
+apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaContactPoint
 metadata:
   name: testdata
@@ -26,9 +55,11 @@ spec:
   instanceSelector:
     matchLabels:
       test: "testdata"
+  resyncPeriod: 3s
   settings:
     addresses: "void@testdata.invalid"
-    subject: 'Grafana Alert'
+    subject: '{{ template "emailAlert" . }}'
+    message: '{{ template "emailAlertMessage" . }}'
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaNotificationPolicy
@@ -40,6 +71,7 @@ spec:
   instanceSelector:
     matchLabels:
       test: "testdata"
+  resyncPeriod: 3s
   route:
     receiver: testdata
     group_by:
