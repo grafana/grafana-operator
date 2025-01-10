@@ -53,6 +53,8 @@ type GrafanaContactPointSpec struct {
 //+kubebuilder:subresource:status
 
 // GrafanaContactPoint is the Schema for the grafanacontactpoints API
+// +kubebuilder:printcolumn:name="Last resync",type="date",format="date-time",JSONPath=".status.lastResync",description=""
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""
 // +kubebuilder:resource:categories={grafana-operator}
 type GrafanaContactPoint struct {
 	metav1.TypeMeta   `json:",inline"`
