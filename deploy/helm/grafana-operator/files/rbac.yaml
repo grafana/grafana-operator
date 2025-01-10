@@ -62,6 +62,7 @@ rules:
       - grafanadashboards
       - grafanadatasources
       - grafanafolders
+      - grafanamutetimings
       - grafananotificationpolicies
       - grafananotificationtemplates
       - grafanas
@@ -81,6 +82,7 @@ rules:
       - grafanadashboards/finalizers
       - grafanadatasources/finalizers
       - grafanafolders/finalizers
+      - grafanamutetimings/finalizers
       - grafananotificationpolicies/finalizers
       - grafananotificationtemplates/finalizers
       - grafanas/finalizers
@@ -94,6 +96,7 @@ rules:
       - grafanadashboards/status
       - grafanadatasources/status
       - grafanafolders/status
+      - grafanamutetimings/status
       - grafananotificationpolicies/status
       - grafananotificationtemplates/status
       - grafanas/status
