@@ -168,7 +168,7 @@ func main() {
 	case strings.Contains(watchNamespace, ","):
 		// multi namespace scoped
 		controllerOptions.Cache.DefaultNamespaces = getNamespaceConfig(watchNamespace)
-		setupLog.Info("manager set up with multiple namespaces", "namespaces", watchNamespace)
+		setupLog.Info("operator running in namespace scoped mode for multiple namespaces", "namespaces", watchNamespace)
 	case watchNamespace != "":
 		// namespace scoped
 		controllerOptions.Cache.DefaultNamespaces = getNamespaceConfig(watchNamespace)
@@ -216,7 +216,6 @@ func main() {
 	if err = (&controllers.GrafanaDashboardReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-		Log:    ctrl.Log.WithName("DashboardReconciler"),
 	}).SetupWithManager(mgr, ctx); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDashboard")
 		os.Exit(1)
@@ -224,7 +223,6 @@ func main() {
 	if err = (&controllers.GrafanaDatasourceReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-		Log:    ctrl.Log.WithName("DatasourceReconciler"),
 	}).SetupWithManager(mgr, ctx); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDatasource")
 		os.Exit(1)
