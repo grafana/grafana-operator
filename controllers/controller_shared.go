@@ -26,9 +26,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
-const grafanaFinalizer = "operator.grafana.com/finalizer"
-
 const (
+	// Synchronization size and timeout values
+	syncBatchSize    = 100
+	initialSyncDelay = 10 * time.Second
+	RequeueDelay     = 10 * time.Second
+
 	// condition types
 	conditionNoMatchingInstance = "NoMatchingInstance"
 	conditionNoMatchingFolder   = "NoMatchingFolder"
@@ -37,6 +40,9 @@ const (
 	// condition reasons
 	conditionApplySuccessful = "ApplySuccessful"
 	conditionApplyFailed     = "ApplyFailed"
+
+	// Finalizer
+	grafanaFinalizer = "operator.grafana.com/finalizer"
 )
 
 //+kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update;patch;delete
@@ -114,7 +120,7 @@ func GetScopedMatchingInstances(log logr.Logger, ctx context.Context, k8sClient 
 		selectedList = append(selectedList, instance)
 	}
 	if len(unready_instances) > 0 {
-		log.Info("Grafana instances not ready", "instances", unready_instances)
+		log.Info("Grafana instances not ready, excluded from matching", "instances", unready_instances)
 	}
 
 	return selectedList, nil
