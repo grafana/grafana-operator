@@ -24,6 +24,7 @@ type ValueFromSource struct {
 
 // Common Options that all CRs should embed, excluding GrafanaSpec
 // Ensure alignment on handling ResyncPeriod, InstanceSelector, and AllowCrossNamespaceImport
+// +kubebuilder:validation:XValidation:rule="!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport)", message="disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state"
 type GrafanaCommonSpec struct {
 	// How often the resource is synced, defaults to 10m0s if not set
 	// +optional
