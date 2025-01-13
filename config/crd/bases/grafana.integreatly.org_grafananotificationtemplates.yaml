@@ -125,6 +125,10 @@ spec:
             - message: spec.editable is immutable
               rule: ((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable)
                 && has(self.editable)))
+            - message: disabling spec.allowCrossNamespaceImport requires a recreate
+                to ensure desired state
+              rule: '!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport
+                && self.allowCrossNamespaceImport)'
           status:
             description: The most recent observed state of a Grafana resource
             properties:
