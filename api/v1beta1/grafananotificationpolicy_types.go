@@ -130,6 +130,8 @@ func (r *Route) ToModelRoute() *models.Route {
 //+kubebuilder:subresource:status
 
 // GrafanaNotificationPolicy is the Schema for the GrafanaNotificationPolicy API
+// +kubebuilder:printcolumn:name="Last resync",type="date",format="date-time",JSONPath=".status.lastResync",description=""
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""
 // +kubebuilder:resource:categories={grafana-operator}
 type GrafanaNotificationPolicy struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -150,6 +152,18 @@ type GrafanaNotificationPolicyList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []GrafanaNotificationPolicy `json:"items"`
+}
+
+func (in *GrafanaNotificationPolicy) MatchLabels() *metav1.LabelSelector {
+	return in.Spec.InstanceSelector
+}
+
+func (in *GrafanaNotificationPolicy) MatchNamespace() string {
+	return in.ObjectMeta.Namespace
+}
+
+func (in *GrafanaNotificationPolicy) AllowCrossNamespace() bool {
+	return in.Spec.AllowCrossNamespaceImport
 }
 
 func init() {
