@@ -246,6 +246,10 @@ spec:
             - message: spec.editable is immutable
               rule: ((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable)
                 && has(self.editable)))
+            - message: disabling spec.allowCrossNamespaceImport requires a recreate
+                to ensure desired state
+              rule: '!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport
+                && self.allowCrossNamespaceImport)'
           status:
             description: The most recent observed state of a Grafana resource
             properties:
@@ -543,6 +547,10 @@ spec:
             - message: spec.uid is immutable
               rule: ((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) &&
                 has(self.uid)))
+            - message: disabling spec.allowCrossNamespaceImport requires a recreate
+                to ensure desired state
+              rule: '!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport
+                && self.allowCrossNamespaceImport)'
           status:
             description: The most recent observed state of a Grafana resource
             properties:
@@ -1025,6 +1033,10 @@ spec:
             - message: spec.uid is immutable
               rule: ((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) &&
                 has(self.uid)))
+            - message: disabling spec.allowCrossNamespaceImport requires a recreate
+                to ensure desired state
+              rule: '!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport
+                && self.allowCrossNamespaceImport)'
           status:
             description: GrafanaDashboardStatus defines the observed state of GrafanaDashboard
             properties:
@@ -1359,6 +1371,10 @@ spec:
             - message: spec.uid is immutable
               rule: ((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) &&
                 has(self.uid)))
+            - message: disabling spec.allowCrossNamespaceImport requires a recreate
+                to ensure desired state
+              rule: '!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport
+                && self.allowCrossNamespaceImport)'
           status:
             description: GrafanaDatasourceStatus defines the observed state of GrafanaDatasource
             properties:
@@ -1587,6 +1603,10 @@ spec:
             - message: spec.uid is immutable
               rule: ((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) &&
                 has(self.uid)))
+            - message: disabling spec.allowCrossNamespaceImport requires a recreate
+                to ensure desired state
+              rule: '!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport
+                && self.allowCrossNamespaceImport)'
           status:
             description: GrafanaFolderStatus defines the observed state of GrafanaFolder
             properties:
@@ -1865,6 +1885,10 @@ spec:
             - message: spec.editable is immutable
               rule: ((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable)
                 && has(self.editable)))
+            - message: disabling spec.allowCrossNamespaceImport requires a recreate
+                to ensure desired state
+              rule: '!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport
+                && self.allowCrossNamespaceImport)'
           status:
             description: The most recent observed state of a Grafana resource
             properties:
@@ -2071,6 +2095,10 @@ spec:
             - message: spec.editable is immutable
               rule: ((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable)
                 && has(self.editable)))
+            - message: disabling spec.allowCrossNamespaceImport requires a recreate
+                to ensure desired state
+              rule: '!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport
+                && self.allowCrossNamespaceImport)'
           status:
             description: The most recent observed state of a Grafana resource
             properties:
