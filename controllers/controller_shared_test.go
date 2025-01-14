@@ -335,18 +335,4 @@ var _ = Describe("GetMatchingInstances functions", Ordered, func() {
 			Expect(instances).To(HaveLen(1))
 		})
 	})
-
-	Context("Ensure AllowCrossNamespaceImport is ignored by GetAllMatchingInstances", func() {
-		It("Finds all ready instances when instanceSelector is empty", func() {
-			instances, err := GetAllMatchingInstances(ctx, k8sClient, matchAllFolder)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(instances).To(HaveLen(3))
-		})
-		It("Finds matching and ready instances ignoring AllowCrossNamespaceImport", func() {
-			instances, err := GetAllMatchingInstances(ctx, k8sClient, denyFolder)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(instances).ToNot(BeEmpty())
-			Expect(instances).To(HaveLen(2))
-		})
-	})
 })

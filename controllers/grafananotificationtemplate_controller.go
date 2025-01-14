@@ -160,7 +160,7 @@ func (r *GrafanaNotificationTemplateReconciler) reconcileWithInstance(ctx contex
 func (r *GrafanaNotificationTemplateReconciler) finalize(ctx context.Context, notificationTemplate *grafanav1beta1.GrafanaNotificationTemplate) error {
 	r.Log.Info("Finalizing GrafanaNotificationTemplate")
 
-	instances, err := GetAllMatchingInstances(ctx, r.Client, notificationTemplate)
+	instances, err := GetScopedMatchingInstances(r.Log, ctx, r.Client, notificationTemplate)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}

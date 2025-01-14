@@ -126,45 +126,6 @@ func GetScopedMatchingInstances(log logr.Logger, ctx context.Context, k8sClient 
 	return selectedList, nil
 }
 
-// Same as GetScopedMatchingInstances, except the scope is always global
-// Intended to be used in finalizer and onDelete functions due to allowCrossNamespaceImport being a mutable field
-// Not using this may leave behind resources in instances no longer in scope.
-func GetAllMatchingInstances(ctx context.Context, k8sClient client.Client, cr v1beta1.CommonResource) ([]v1beta1.Grafana, error) {
-	instanceSelector := cr.MatchLabels()
-
-	// Should never happen, sanity check
-	if instanceSelector == nil {
-		return []v1beta1.Grafana{}, nil
-	}
-
-	var list v1beta1.GrafanaList
-	err := k8sClient.List(ctx, &list, client.MatchingLabels(instanceSelector.MatchLabels))
-	if err != nil {
-		return []v1beta1.Grafana{}, err
-	}
-
-	if len(list.Items) == 0 {
-		return []v1beta1.Grafana{}, nil
-	}
-
-	selectedList := []v1beta1.Grafana{}
-	for _, instance := range list.Items {
-		// Matches all instances when MatchExpressions is undefined
-		selected := labelsSatisfyMatchExpressions(instance.Labels, instanceSelector.MatchExpressions)
-		if !selected {
-			continue
-		}
-		// admin url is required to interact with Grafana
-		// the instance or route might not yet be ready
-		if instance.Status.Stage != v1beta1.OperatorStageComplete || instance.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
-			continue
-		}
-		selectedList = append(selectedList, instance)
-	}
-
-	return selectedList, nil
-}
-
 // getFolderUID fetches the folderUID from an existing GrafanaFolder CR declared in the specified namespace
 func getFolderUID(ctx context.Context, k8sClient client.Client, ref operatorapi.FolderReferencer) (string, error) {
 	if ref.FolderUID() != "" {
