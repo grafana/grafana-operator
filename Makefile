@@ -292,7 +292,7 @@ endif
 
 .PHONY: code/golangci-lint
 code/golangci-lint: golangci
-	$(GOLANGCI) run ./...
+	$(GOLANGCI) run --allow-parallel-runners ./...
 
 gofumpt:
 ifeq (, $(shell which gofumpt))
