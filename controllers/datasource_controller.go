@@ -174,12 +174,6 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, fmt.Errorf("error getting grafana datasource cr: %w", err)
 	}
 
-	if cr.Spec.Datasource == nil {
-		r.Log.Info("skipped datasource with empty spec", cr.Name, cr.Namespace)
-		// TODO: add a custom status around that?
-		return ctrl.Result{}, nil
-	}
-
 	defer func() {
 		cr.Status.LastResync = metav1.Time{Time: time.Now()}
 		if err := r.Status().Update(ctx, cr); err != nil {
