@@ -399,6 +399,7 @@ func (r *GrafanaDatasourceReconciler) Exists(client *genapi.GrafanaHTTPAPI, uid,
 func (r *GrafanaDatasourceReconciler) SetupWithManager(mgr ctrl.Manager, ctx context.Context) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.GrafanaDatasource{}).
+		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
 
 	if err == nil {
