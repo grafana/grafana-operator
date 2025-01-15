@@ -86,3 +86,9 @@ spec:
         file: 12-notification-template.yaml
     - assert:
         file: 12-assert.yaml
+  - name: step-13
+    try:
+    - apply:
+        file: 13-mute-timing.yaml
+    - assert:
+        file: 13-assert.yaml

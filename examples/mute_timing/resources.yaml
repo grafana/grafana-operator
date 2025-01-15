@@ -1,0 +1,18 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaMuteTiming
+metadata:
+  name: mutetiming-sample
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  name: mutetiming-sample
+  editable: false
+  time_intervals:
+    - times:
+        - start_time: "00:00"
+          end_time: "06:00"
+      weekdays: ["saturday", "sunday"]
+      days_of_month: ["1", "10"]
+      location: "Asia/Shanghai"
