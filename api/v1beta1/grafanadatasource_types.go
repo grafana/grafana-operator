@@ -149,10 +149,6 @@ func (in *GrafanaDatasource) CustomUIDOrUID() string {
 	return string(in.ObjectMeta.UID)
 }
 
-func (in *GrafanaDatasource) IsAllowCrossNamespaceImport() bool {
-	return in.Spec.AllowCrossNamespaceImport
-}
-
 func (in *GrafanaDatasourceList) Find(namespace string, name string) *GrafanaDatasource {
 	for _, datasource := range in.Items {
 		if datasource.Namespace == namespace && datasource.Name == name {
@@ -160,6 +156,18 @@ func (in *GrafanaDatasourceList) Find(namespace string, name string) *GrafanaDat
 		}
 	}
 	return nil
+}
+
+func (in *GrafanaDatasource) MatchLabels() *metav1.LabelSelector {
+	return in.Spec.InstanceSelector
+}
+
+func (in *GrafanaDatasource) MatchNamespace() string {
+	return in.ObjectMeta.Namespace
+}
+
+func (in *GrafanaDatasource) AllowCrossNamespace() bool {
+	return in.Spec.AllowCrossNamespaceImport
 }
 
 func init() {
