@@ -420,4 +420,5 @@ prep-release: yq
 	$(YQ) -i '.appVersion="v$(VERSION)"' deploy/helm/grafana-operator/Chart.yaml
 	$(YQ) -i '.params.version="v$(VERSION)"' hugo/config.yaml
 	sed -i 's/--version v5.*/--version v$(VERSION)/g' README.md
+	sed -i 's/VERSION ?= 5.*/VERSION ?= $(VERSION)/g' Makefile
 	make helm/docs
