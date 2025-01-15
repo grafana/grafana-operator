@@ -1,0 +1,19 @@
+documentation:
+- changed-files:
+  - any-glob-to-any-file: docs/**
+  - any-glob-to-any-file: examples/**
+
+feature:
+ - head-branch: ['^feature', 'feature', '^feat']
+
+bugfix:
+ - head-branch: ['^fix', 'fix', '^bugfix']
+
+chore:
+ - head-branch: ['^chore', '^ci']
+
+refactor:
+ - head-branch: ['^refactor']
+
+test:
+ - head-branch: ['^test']
