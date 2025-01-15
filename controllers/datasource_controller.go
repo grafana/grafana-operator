@@ -35,6 +35,7 @@ import (
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -42,6 +43,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
+)
+
+const (
+	conditionDatasourceSynchronized = "DatasourceSynchronized"
 )
 
 // GrafanaDatasourceReconciler reconciles a GrafanaDatasource object
@@ -183,13 +188,24 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	// Overwrite OrgID to ensure the field is useless
 	cr.Spec.Datasource.OrgID = nil
 
-	instances, err := r.GetMatchingDatasourceInstances(ctx, cr, r.Client)
+	instances, err := GetScopedMatchingInstances(r.Log, ctx, r.Client, cr)
 	if err != nil {
-		r.Log.Error(err, "could not find matching instances", "name", cr.Name, "namespace", cr.Namespace)
-		return ctrl.Result{RequeueAfter: RequeueDelay}, err
+		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDatasourceSynchronized)
+		cr.Status.NoMatchingInstances = true
+		return ctrl.Result{}, fmt.Errorf("failed fetching instances: %w", err)
 	}
 
-	r.Log.Info("found matching Grafana instances for datasource", "count", len(instances.Items))
+	if len(instances) == 0 {
+		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDatasourceSynchronized)
+		cr.Status.NoMatchingInstances = true
+		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
+	}
+
+	removeNoMatchingInstance(&cr.Status.Conditions)
+	cr.Status.NoMatchingInstances = false
+	r.Log.Info("found matching Grafana instances for datasource", "count", len(instances))
 
 	datasource, hash, err := r.getDatasourceContent(ctx, cr)
 	if err != nil {
@@ -217,20 +233,8 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	success := true
-	for _, grafana := range instances.Items {
-		// check if this is a cross namespace import
-		if grafana.Namespace != cr.Namespace && !cr.IsAllowCrossNamespaceImport() {
-			continue
-		}
-
+	for _, grafana := range instances {
 		grafana := grafana
-		// an admin url is required to interact with grafana
-		// the instance or route might not yet be ready
-		if grafana.Status.Stage != v1beta1.OperatorStageComplete || grafana.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
-			r.Log.Info("grafana instance not ready", "grafana", grafana.Name)
-			success = false
-			continue
-		}
 
 		if grafana.IsInternal() {
 			// first reconcile the plugins
