@@ -40,6 +40,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -165,19 +166,37 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}, cr)
 	if err != nil {
 		if kuberr.IsNotFound(err) {
-			err = r.onDatasourceDeleted(ctx, req.Namespace, req.Name)
-			if err != nil {
-				return ctrl.Result{}, err
-			}
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{}, fmt.Errorf("error getting grafana datasource cr: %w", err)
+	}
+
+	if cr.GetDeletionTimestamp() != nil {
+		// Check if resource needs clean up
+		if controllerutil.ContainsFinalizer(cr, grafanaFinalizer) {
+			if err := r.finalize(ctx, cr); err != nil {
+				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaDatasource: %w", err)
+			}
+			if err := removeFinalizer(ctx, r.Client, cr); err != nil {
+				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
+			}
+		}
+		return ctrl.Result{}, nil
 	}
 
 	defer func() {
 		cr.Status.LastResync = metav1.Time{Time: time.Now()}
 		if err := r.Status().Update(ctx, cr); err != nil {
 			r.Log.Error(err, "updating status")
+		}
+		if meta.IsStatusConditionTrue(cr.Status.Conditions, conditionNoMatchingInstance) {
+			if err := removeFinalizer(ctx, r.Client, cr); err != nil {
+				r.Log.Error(err, "failed to remove finalizer")
+			}
+		} else {
+			if err := addFinalizer(ctx, r.Client, cr); err != nil {
+				r.Log.Error(err, "failed to set finalizer")
+			}
 		}
 	}()
 
@@ -210,8 +229,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	if cr.IsUpdatedUID() {
 		r.Log.Info("datasource uid got updated, deleting datasources with the old uid")
-		err = r.onDatasourceDeleted(ctx, req.Namespace, req.Name)
-		if err != nil {
+		if err = r.finalize(ctx, cr); err != nil {
 			return ctrl.Result{}, err
 		}
 
@@ -265,17 +283,15 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	return ctrl.Result{RequeueAfter: cr.Spec.ResyncPeriod.Duration}, nil
 }
 
-func (r *GrafanaDatasourceReconciler) onDatasourceDeleted(ctx context.Context, namespace string, name string) error {
-	list := v1beta1.GrafanaList{}
-	opts := []client.ListOption{}
-	err := r.Client.List(ctx, &list, opts...)
+func (r *GrafanaDatasourceReconciler) finalize(ctx context.Context, cr *v1beta1.GrafanaDatasource) error {
+	instances, err := GetScopedMatchingInstances(r.Log, ctx, r.Client, cr)
 	if err != nil {
-		return err
+		return fmt.Errorf("fetching instances: %w", err)
 	}
 
-	for _, grafana := range list.Items {
+	for _, grafana := range instances {
 		grafana := grafana
-		if found, uid := grafana.Status.Datasources.Find(namespace, name); found {
+		if found, uid := grafana.Status.Datasources.Find(cr.Namespace, cr.Name); found {
 			grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 			if err != nil {
 				return err
@@ -298,13 +314,13 @@ func (r *GrafanaDatasourceReconciler) onDatasourceDeleted(ctx context.Context, n
 			}
 
 			if grafana.IsInternal() {
-				err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, fmt.Sprintf("%v-datasource", name))
+				err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, fmt.Sprintf("%v-datasource", cr.Name))
 				if err != nil {
 					return err
 				}
 			}
 
-			grafana.Status.Datasources = grafana.Status.Datasources.Remove(namespace, name)
+			grafana.Status.Datasources = grafana.Status.Datasources.Remove(cr.Namespace, cr.Name)
 			return r.Client.Status().Update(ctx, &grafana)
 		}
 	}
@@ -411,17 +427,6 @@ func (r *GrafanaDatasourceReconciler) SetupWithManager(mgr ctrl.Manager, ctx con
 	return err
 }
 
-func (r *GrafanaDatasourceReconciler) GetMatchingDatasourceInstances(ctx context.Context, datasource *v1beta1.GrafanaDatasource, k8sClient client.Client) (v1beta1.GrafanaList, error) {
-	instances, err := GetMatchingInstances(ctx, k8sClient, datasource.Spec.InstanceSelector)
-	if err != nil || len(instances.Items) == 0 {
-		datasource.Status.NoMatchingInstances = true
-		return v1beta1.GrafanaList{}, err
-	}
-	datasource.Status.NoMatchingInstances = false
-
-	return instances, err
-}
-
 func (r *GrafanaDatasourceReconciler) getDatasourceContent(ctx context.Context, cr *v1beta1.GrafanaDatasource) (*models.UpdateDataSourceCommand, string, error) {
 	initialBytes, err := json.Marshal(cr.Spec.Datasource)
 	if err != nil {
@@ -458,6 +463,7 @@ func (r *GrafanaDatasourceReconciler) getDatasourceContent(ctx context.Context, 
 		return nil, "", err
 	}
 
+	// TODO models.DataSource has SecureJsonData field now, verify if below is still true
 	// We use UpdateDataSourceCommand here because models.DataSource lacks the SecureJsonData field
 	var res models.UpdateDataSourceCommand
 	if err = json.Unmarshal(newBytes, &res); err != nil {
