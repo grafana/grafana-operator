@@ -200,9 +200,6 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		}
 	}()
 
-	// Overwrite OrgID to ensure the field is useless
-	cr.Spec.Datasource.OrgID = nil
-
 	instances, err := GetScopedMatchingInstances(r.Log, ctx, r.Client, cr)
 	if err != nil {
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
@@ -428,11 +425,15 @@ func (r *GrafanaDatasourceReconciler) SetupWithManager(mgr ctrl.Manager, ctx con
 }
 
 func (r *GrafanaDatasourceReconciler) getDatasourceContent(ctx context.Context, cr *v1beta1.GrafanaDatasource) (*models.UpdateDataSourceCommand, string, error) {
+	// Overwrite OrgID to ensure the field is useless
+	cr.Spec.Datasource.OrgID = nil
+
 	initialBytes, err := json.Marshal(cr.Spec.Datasource)
 	if err != nil {
 		return nil, "", err
 	}
 
+	// Unstructured object for mutating target paths
 	simpleContent, err := simplejson.NewJson(initialBytes)
 	if err != nil {
 		return nil, "", err
