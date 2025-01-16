@@ -33,11 +33,12 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 
-	corev1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/cache"
-
 	routev1 "github.com/openshift/api/route/v1"
+	v1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	discovery2 "k8s.io/client-go/discovery"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -46,6 +47,7 @@ import (
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers"
 	"github.com/grafana/grafana-operator/v5/controllers/autodetect"
+	"github.com/grafana/grafana-operator/v5/controllers/model"
 	"github.com/grafana/grafana-operator/v5/embeds"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -106,19 +108,46 @@ func main() {
 	watchNamespace, _ := os.LookupEnv(watchNamespaceEnvVar)
 	watchNamespaceSelector, _ := os.LookupEnv(watchNamespaceEnvSelector)
 
+	// Platform detection
+	restConfig := ctrl.GetConfigOrDie()
+	autodetect, err := autodetect.New(restConfig)
+	if err != nil {
+		setupLog.Error(err, "failed to setup auto-detect routine")
+		os.Exit(1)
+	}
+	isOpenShift, err := autodetect.IsOpenshift()
+	if err != nil {
+		setupLog.Error(err, "unable to detect the platform")
+		os.Exit(1)
+	}
+
+	cacheLabels := cache.ByObject{Label: labels.SelectorFromSet(model.CommonLabels)}
 	controllerOptions := ctrl.Options{
-		Scheme: scheme,
-		Metrics: metricsserver.Options{
-			BindAddress: metricsAddr,
-		},
-		WebhookServer: webhook.NewServer(webhook.Options{
-			Port: 9443,
-		}),
+		Scheme:                 scheme,
+		Metrics:                metricsserver.Options{BindAddress: metricsAddr},
+		WebhookServer:          webhook.NewServer(webhook.Options{Port: 9443}),
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "f75f3bba.integreatly.org",
 		PprofBindAddress:       pprofAddr,
+		// Limit caching to reduce heap usage with CommonLabels as selector
+		// ConfigMap and Secret are omitted here to prevent interference with Get and List in reconcilers, see TODO below
+		Cache: cache.Options{ByObject: map[client.Object]cache.ByObject{
+			&v1.Deployment{}:                cacheLabels,
+			&corev1.Service{}:               cacheLabels,
+			&corev1.ServiceAccount{}:        cacheLabels,
+			&networkingv1.Ingress{}:         cacheLabels,
+			&corev1.PersistentVolumeClaim{}: cacheLabels,
+		}},
 	}
+	if isOpenShift {
+		controllerOptions.Cache.ByObject[&routev1.Route{}] = cacheLabels
+	}
+
+	// TODO Add a config option to limit ConfigMaps and Secrets in Cache
+	// Likely similar to how namespace scope is handled
+	// controllerOptions.Cache.ByObject[&corev1.ConfigMap{}] = cacheLabels
+	// controllerOptions.Cache.ByObject[&corev1.Secret{}] = cacheLabels
 
 	getNamespaceConfig := func(namespaces string) map[string]cache.Config {
 		defaultNamespaces := map[string]cache.Config{}
@@ -186,29 +215,17 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGPIPE)
 	defer stop()
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), controllerOptions)
+	mgr, err := ctrl.NewManager(restConfig, controllerOptions)
 	if err != nil {
 		setupLog.Error(err, "unable to create new manager")
 		os.Exit(1) //nolint
-	}
-
-	restConfig := ctrl.GetConfigOrDie()
-	autodetect, err := autodetect.New(restConfig)
-	if err != nil {
-		setupLog.Error(err, "failed to setup auto-detect routine")
-		os.Exit(1)
-	}
-	isOpenShift, err := autodetect.IsOpenshift()
-	if err != nil {
-		setupLog.Error(err, "unable to detect the platform")
-		os.Exit(1)
 	}
 
 	if err = (&controllers.GrafanaReconciler{
 		Client:      mgr.GetClient(),
 		Scheme:      mgr.GetScheme(),
 		IsOpenShift: isOpenShift,
-		Discovery:   discovery2.NewDiscoveryClientForConfigOrDie(ctrl.GetConfigOrDie()),
+		Discovery:   discovery2.NewDiscoveryClientForConfigOrDie(restConfig),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Grafana")
 		os.Exit(1)
