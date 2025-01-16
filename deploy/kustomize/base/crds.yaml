@@ -1465,6 +1465,7 @@ spec:
               hash:
                 type: string
               lastMessage:
+                description: 'Deprecated: Check status.conditions or operator logs'
                 type: string
               lastResync:
                 description: Last time the resource was synchronized with Grafana

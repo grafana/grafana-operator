@@ -86,7 +86,8 @@ type GrafanaDatasourceSpec struct {
 type GrafanaDatasourceStatus struct {
 	GrafanaCommonStatus `json:",inline"`
 
-	Hash        string `json:"hash,omitempty"`
+	Hash string `json:"hash,omitempty"`
+	// Deprecated: Check status.conditions or operator logs
 	LastMessage string `json:"lastMessage,omitempty"`
 	// The datasource instanceSelector can't find matching grafana instances
 	NoMatchingInstances bool   `json:"NoMatchingInstances,omitempty"`
