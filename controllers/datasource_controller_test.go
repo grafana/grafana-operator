@@ -30,7 +30,7 @@ func TestGetDatasourceContent(t *testing.T) {
 			},
 		}
 
-		content, hash, err := reconciler.getDatasourceContent(context.TODO(), cr)
+		content, hash, err := reconciler.buildDatasourceModel(context.TODO(), cr)
 		got := content.SecureJSONData["httpHeaderValue1"]
 
 		assert.Nil(t, err)

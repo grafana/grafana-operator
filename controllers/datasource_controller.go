@@ -219,11 +219,6 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	cr.Status.NoMatchingInstances = false
 	r.Log.Info("found matching Grafana instances for datasource", "count", len(instances))
 
-	datasource, hash, err := r.getDatasourceContent(ctx, cr)
-	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("could not retrieve datasource contents: %w", err)
-	}
-
 	if cr.IsUpdatedUID() {
 		r.Log.Info("datasource uid got updated, deleting datasources with the old uid")
 		if err = r.finalize(ctx, cr); err != nil {
@@ -236,6 +231,15 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		// Force requeue for datasource creation
 		return ctrl.Result{Requeue: true}, nil
 	}
+
+	datasource, hash, err := r.buildDatasourceModel(ctx, cr)
+	if err != nil {
+		setInvalidSpec(&cr.Status.Conditions, cr.Generation, "InvalidModel", err.Error())
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDatasourceSynchronized)
+		return ctrl.Result{}, fmt.Errorf("could not build datasource model: %w", err)
+	}
+
+	removeInvalidSpec(&cr.Status.Conditions)
 
 	pluginErrors := make(map[string]string)
 	applyErrors := make(map[string]string)
@@ -259,6 +263,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		}
 	}
 
+	// NOTE New Condition?
 	// Specific to datasources
 	if len(pluginErrors) > 0 {
 		err := fmt.Errorf("%v", pluginErrors)
@@ -424,31 +429,30 @@ func (r *GrafanaDatasourceReconciler) SetupWithManager(mgr ctrl.Manager, ctx con
 	return err
 }
 
-func (r *GrafanaDatasourceReconciler) getDatasourceContent(ctx context.Context, cr *v1beta1.GrafanaDatasource) (*models.UpdateDataSourceCommand, string, error) {
+func (r *GrafanaDatasourceReconciler) buildDatasourceModel(ctx context.Context, cr *v1beta1.GrafanaDatasource) (*models.UpdateDataSourceCommand, string, error) {
 	// Overwrite OrgID to ensure the field is useless
 	cr.Spec.Datasource.OrgID = nil
 
 	initialBytes, err := json.Marshal(cr.Spec.Datasource)
 	if err != nil {
-		return nil, "", err
+		return nil, "", fmt.Errorf("encoding existing datasource model as json: %w", err)
 	}
 
 	// Unstructured object for mutating target paths
 	simpleContent, err := simplejson.NewJson(initialBytes)
 	if err != nil {
-		return nil, "", err
+		return nil, "", fmt.Errorf("parsing marshaled json as simplejson")
 	}
 
 	simpleContent.Set("uid", cr.CustomUIDOrUID())
 
-	for _, ref := range cr.Spec.ValuesFrom {
-		ref := ref
-		val, key, err := getReferencedValue(ctx, r.Client, cr, ref.ValueFrom)
+	for _, override := range cr.Spec.ValuesFrom {
+		val, key, err := getReferencedValue(ctx, r.Client, cr, override.ValueFrom)
 		if err != nil {
-			return nil, "", err
+			return nil, "", fmt.Errorf("getting referenced value: %w", err)
 		}
 
-		patternToReplace := simpleContent.GetPath(strings.Split(ref.TargetPath, ".")...)
+		patternToReplace := simpleContent.GetPath(strings.Split(override.TargetPath, ".")...)
 		patternString, err := patternToReplace.String()
 		if err != nil {
 			return nil, "", fmt.Errorf("pattern must be a string")
@@ -456,7 +460,9 @@ func (r *GrafanaDatasourceReconciler) getDatasourceContent(ctx context.Context, 
 
 		patternString = strings.ReplaceAll(patternString, fmt.Sprintf("${%v}", key), val)
 		patternString = strings.ReplaceAll(patternString, fmt.Sprintf("$%v", key), val)
-		simpleContent.SetPath(strings.Split(ref.TargetPath, "."), patternString)
+
+		r.Log.V(1).Info("overriding value", "key", override.TargetPath, "value", val)
+		simpleContent.SetPath(strings.Split(override.TargetPath, "."), patternString)
 	}
 
 	newBytes, err := simpleContent.MarshalJSON()
