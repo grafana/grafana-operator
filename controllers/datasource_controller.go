@@ -258,7 +258,6 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		// then import the datasource into the matching grafana instances
 		err = r.onDatasourceCreated(ctx, &grafana, cr, datasource, hash)
 		if err != nil {
-			cr.Status.LastMessage = err.Error()
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
 	}
@@ -277,7 +276,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
 	cr.Status.Hash = hash
-	cr.Status.LastMessage = ""
+	cr.Status.LastMessage = "" // nolint:staticcheck
 	cr.Status.UID = cr.CustomUIDOrUID()
 
 	return ctrl.Result{RequeueAfter: cr.Spec.ResyncPeriod.Duration}, nil
@@ -471,6 +470,7 @@ func (r *GrafanaDatasourceReconciler) getDatasourceContent(ctx context.Context, 
 		return nil, "", err
 	}
 
+	// TODO Remove hashing along with the Status.Hash field
 	hash := sha256.New()
 	hash.Write(newBytes)
 
