@@ -34,6 +34,7 @@ import (
 
 	simplejson "github.com/bitly/go-simplejson"
 	"github.com/go-logr/logr"
+	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	"github.com/grafana/grafana-openapi-client-go/client/provisioning"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -124,12 +125,21 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 	removeNoMatchingInstance(&contactPoint.Status.Conditions)
 	r.Log.Info("found matching Grafana instances for Contact point", "count", len(instances))
 
+	settings, err := r.buildContactPointSettings(ctx, contactPoint)
+	if err != nil {
+		setInvalidSpec(&contactPoint.Status.Conditions, contactPoint.Generation, "InvalidSettings", err.Error())
+		meta.RemoveStatusCondition(&contactPoint.Status.Conditions, conditionContactPointSynchronized)
+		return ctrl.Result{}, fmt.Errorf("could not build contactpoint settings: %w", err)
+	}
+
+	removeInvalidSpec(&contactPoint.Status.Conditions)
+
 	applyErrors := make(map[string]string)
 	for _, grafana := range instances {
 		// can be removed in go 1.22+
 		grafana := grafana
 
-		err := r.reconcileWithInstance(ctx, &grafana, contactPoint)
+		err := r.reconcileWithInstance(ctx, &grafana, contactPoint, &settings)
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
@@ -145,22 +155,16 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 	return ctrl.Result{RequeueAfter: contactPoint.Spec.ResyncPeriod.Duration}, nil
 }
 
-func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Context, instance *grafanav1beta1.Grafana, contactPoint *grafanav1beta1.GrafanaContactPoint) error {
+func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Context, instance *grafanav1beta1.Grafana, contactPoint *grafanav1beta1.GrafanaContactPoint, settings *models.JSON) error {
 	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
 	}
 
 	var applied models.EmbeddedContactPoint
-
-	applied, err = r.getContactPointFromUID(ctx, instance, contactPoint)
+	applied, err = r.getContactPointFromUID(cl, contactPoint)
 	if err != nil {
 		return fmt.Errorf("getting contact point by UID: %w", err)
-	}
-
-	settings, err := r.buildSettings(ctx, contactPoint)
-	if err != nil {
-		return fmt.Errorf("overriding settings: %w", err)
 	}
 
 	if applied.UID == "" {
@@ -191,7 +195,7 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 	return nil
 }
 
-func (r *GrafanaContactPointReconciler) buildSettings(ctx context.Context, contactPoint *grafanav1beta1.GrafanaContactPoint) (models.JSON, error) {
+func (r *GrafanaContactPointReconciler) buildContactPointSettings(ctx context.Context, contactPoint *grafanav1beta1.GrafanaContactPoint) (models.JSON, error) {
 	marshaled, err := json.Marshal(contactPoint.Spec.Settings)
 	if err != nil {
 		return nil, fmt.Errorf("encoding existing settings as json: %w", err)
@@ -212,12 +216,7 @@ func (r *GrafanaContactPointReconciler) buildSettings(ctx context.Context, conta
 	return simpleContent.Interface(), nil
 }
 
-func (r *GrafanaContactPointReconciler) getContactPointFromUID(ctx context.Context, instance *grafanav1beta1.Grafana, contactPoint *grafanav1beta1.GrafanaContactPoint) (models.EmbeddedContactPoint, error) {
-	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
-	if err != nil {
-		return models.EmbeddedContactPoint{}, fmt.Errorf("building grafana client: %w", err)
-	}
-
+func (r *GrafanaContactPointReconciler) getContactPointFromUID(cl *genapi.GrafanaHTTPAPI, contactPoint *grafanav1beta1.GrafanaContactPoint) (models.EmbeddedContactPoint, error) {
 	params := provisioning.NewGetContactpointsParams()
 	remote, err := cl.Provisioning.GetContactpoints(params)
 	if err != nil {
@@ -254,7 +253,7 @@ func (r *GrafanaContactPointReconciler) removeFromInstance(ctx context.Context, 
 		return fmt.Errorf("building grafana client: %w", err)
 	}
 
-	_, err = r.getContactPointFromUID(ctx, instance, contactPoint)
+	_, err = r.getContactPointFromUID(cl, contactPoint)
 	if err != nil {
 		return fmt.Errorf("getting contact point by UID: %w", err)
 	}
