@@ -4,3 +4,12 @@ metadata:
   name: grafana-deployment
 status:
   availableReplicas: 1
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: grafanadatasource-sample
+status:
+  conditions:
+    - type: DatasourceSynchronized
+      status: "True"
