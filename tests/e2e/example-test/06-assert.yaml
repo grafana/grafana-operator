@@ -8,4 +8,4 @@ binaryData:
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
-  name:  grafana-dashboard-secret-envs
+  name: grafana-dashboard-secret-envs
