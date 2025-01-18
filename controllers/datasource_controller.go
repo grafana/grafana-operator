@@ -221,7 +221,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	if cr.IsUpdatedUID() {
 		r.Log.Info("datasource uid got updated, deleting datasources with the old uid")
-		if err = r.finalize(ctx, cr); err != nil {
+		if err = r.deleteOldDatasource(ctx, cr); err != nil {
 			return ctrl.Result{}, err
 		}
 
@@ -284,6 +284,45 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	return ctrl.Result{RequeueAfter: cr.Spec.ResyncPeriod.Duration}, nil
 }
 
+func (r *GrafanaDatasourceReconciler) deleteOldDatasource(ctx context.Context, cr *v1beta1.GrafanaDatasource) error {
+	instances, err := GetScopedMatchingInstances(r.Log, ctx, r.Client, cr)
+	if err != nil {
+		return fmt.Errorf("fetching instances: %w", err)
+	}
+
+	for _, grafana := range instances {
+		grafana := grafana
+
+		found, uid := grafana.Status.Datasources.Find(cr.Namespace, cr.Name)
+		if !found {
+			continue
+		}
+
+		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
+		if err != nil {
+			return err
+		}
+
+		datasource, err := grafanaClient.Datasources.GetDataSourceByUID(*uid)
+		if err != nil {
+			var notFound *datasources.GetDataSourceByUIDNotFound
+			if !errors.As(err, &notFound) {
+				return err
+			}
+		} else {
+			_, err = grafanaClient.Datasources.DeleteDataSourceByUID(datasource.Payload.UID) //nolint
+			if err != nil {
+				return fmt.Errorf("deleting datasource to update uid %s: %w", *uid, err)
+			}
+		}
+
+		grafana.Status.Datasources = grafana.Status.Datasources.Remove(cr.Namespace, cr.Name)
+		return r.Client.Status().Update(ctx, &grafana)
+	}
+
+	return nil
+}
+
 func (r *GrafanaDatasourceReconciler) finalize(ctx context.Context, cr *v1beta1.GrafanaDatasource) error {
 	instances, err := GetScopedMatchingInstances(r.Log, ctx, r.Client, cr)
 	if err != nil {
@@ -292,38 +331,35 @@ func (r *GrafanaDatasourceReconciler) finalize(ctx context.Context, cr *v1beta1.
 
 	for _, grafana := range instances {
 		grafana := grafana
-		if found, uid := grafana.Status.Datasources.Find(cr.Namespace, cr.Name); found {
-			grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
+
+		found, uid := grafana.Status.Datasources.Find(cr.Namespace, cr.Name)
+		if !found {
+			continue
+		}
+
+		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
+		if err != nil {
+			return err
+		}
+
+		_, err = grafanaClient.Datasources.DeleteDataSourceByUID(*uid) // nolint:errcheck
+		if err != nil {
+			var notFound *datasources.DeleteDataSourceByUIDNotFound
+			if errors.As(err, &notFound) {
+				return nil
+			}
+			return fmt.Errorf("deleting datasource %s: %w", *uid, err)
+		}
+
+		if grafana.IsInternal() {
+			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, fmt.Sprintf("%v-datasource", cr.Name))
 			if err != nil {
 				return err
 			}
-
-			datasource, err := grafanaClient.Datasources.GetDataSourceByUID(*uid)
-			if err != nil {
-				var notFound *datasources.GetDataSourceByUIDNotFound
-				if errors.As(err, &notFound) {
-					return err
-				}
-			} else {
-				_, err = grafanaClient.Datasources.DeleteDataSourceByUID(datasource.Payload.UID) //nolint
-				if err != nil {
-					var notFound *datasources.DeleteDataSourceByUIDNotFound
-					if errors.As(err, &notFound) {
-						return err
-					}
-				}
-			}
-
-			if grafana.IsInternal() {
-				err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, fmt.Sprintf("%v-datasource", cr.Name))
-				if err != nil {
-					return err
-				}
-			}
-
-			grafana.Status.Datasources = grafana.Status.Datasources.Remove(cr.Namespace, cr.Name)
-			return r.Client.Status().Update(ctx, &grafana)
 		}
+
+		grafana.Status.Datasources = grafana.Status.Datasources.Remove(cr.Namespace, cr.Name)
+		return r.Client.Status().Update(ctx, &grafana)
 	}
 
 	return nil
