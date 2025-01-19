@@ -78,6 +78,10 @@ const (
 	// eg: 'partition in (customerA, customerB),environment!=qa'
 	// If empty of undefined, the operator will watch all CRs.
 	watchLabelSelectorsEnvVar = "WATCH_LABEL_SELECTORS"
+	// Enable caching of ConfigMaps and Secrets to reduce API read requests
+	// If empty or undefined, the operator will disable caching
+	// This will hide all referenced ConfigMaps and Secrets not labeled with: app.kubernetes.io/managed-by=grafana-operator
+	watchLabeledReferencesOnlyEnvVar = "WATCH_LABELED_REFERENCES_ONLY"
 	// clusterDomainEnvVar is the constant for env variable CLUSTER_DOMAIN, which specifies the cluster domain to use for addressing.
 	// By default, this is empty, and internal services are addressed without a cluster domain specified, i.e., a
 	// relative domain name that will resolve regardless of if a custom domain is configured for the cluster. If you
@@ -100,7 +104,7 @@ func init() {
 	//+kubebuilder:scaffold:scheme
 }
 
-func main() {
+func main() { // nolint:gocyclo
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
@@ -136,6 +140,8 @@ func main() {
 		setupLog.Error(err, "failed to adjust GOMAXPROCS")
 	}
 
+	// Detect environment variables
+	_, watchLabeledReferencesOnly := os.LookupEnv(watchLabeledReferencesOnlyEnvVar)
 	watchNamespace, _ := os.LookupEnv(watchNamespaceEnvVar)
 	watchNamespaceSelector, _ := os.LookupEnv(watchNamespaceEnvSelector)
 	watchLabelSelectors, _ := os.LookupEnv(watchLabelSelectorsEnvVar)
@@ -173,6 +179,8 @@ func main() {
 			&corev1.ServiceAccount{}:        cacheLabels,
 			&networkingv1.Ingress{}:         cacheLabels,
 			&corev1.PersistentVolumeClaim{}: cacheLabels,
+			&corev1.ConfigMap{}:             cacheLabels, // Matching just labeled ConfigMaps and Secrets greatly reduces cache size
+			&corev1.Secret{}:                cacheLabels, // Omitting labels or supporting custom labels would require changes in Grafana Reconciler
 		}},
 	}
 	if isOpenShift {
@@ -184,6 +192,18 @@ func main() {
 		setupLog.Error(err, fmt.Sprintf("unable to parse %s", watchLabelSelectorsEnvVar))
 		os.Exit(1) //nolint
 	}
+
+	// Disable ConfigMap and Secret cache lookups per default
+	// all reads will hit the api
+	if !watchLabeledReferencesOnly {
+		controllerOptions.Client = client.Options{
+			Cache: &client.CacheOptions{
+				DisableFor: []client.Object{&corev1.ConfigMap{}, &corev1.Secret{}},
+			},
+		}
+	}
+
+	// Determine Operator scope
 	switch {
 	case strings.Contains(watchNamespace, ","):
 		// multi namespace scoped
@@ -213,6 +233,7 @@ func main() {
 		os.Exit(1) //nolint
 	}
 
+	// Register controllers
 	if err = (&controllers.GrafanaReconciler{
 		Client:        mgr.GetClient(),
 		Scheme:        mgr.GetScheme(),
