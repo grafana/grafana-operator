@@ -73,6 +73,10 @@ const (
 	// eg: "environment: dev"
 	// If empty or undefined, the operator will run in cluster scope.
 	watchNamespaceEnvSelector = "WATCH_NAMESPACE_SELECTOR"
+	// Enable caching of ConfigMaps and Secrets to reduce API read requests
+	// If empty or undefined, the operator will disable caching
+	// This will hide all referenced ConfigMaps and Secrets not labeled with: app.kubernetes.io/managed-by: grafana-operator
+	watchLabeledReferencesOnlyEnvVar = "WATCH_LABELED_REFERENCES_ONLY"
 )
 
 var (
@@ -123,8 +127,10 @@ func main() {
 		setupLog.Error(err, "failed to adjust GOMAXPROCS")
 	}
 
+	// Detect environment variables
 	watchNamespace, _ := os.LookupEnv(watchNamespaceEnvVar)
 	watchNamespaceSelector, _ := os.LookupEnv(watchNamespaceEnvSelector)
+	_, watchLabeledReferencesOnly := os.LookupEnv(watchLabeledReferencesOnlyEnvVar)
 
 	// Fetch k8s api credentials and detect platform
 	restConfig := ctrl.GetConfigOrDie()
@@ -155,12 +161,25 @@ func main() {
 			&corev1.ServiceAccount{}:        cacheLabels,
 			&networkingv1.Ingress{}:         cacheLabels,
 			&corev1.PersistentVolumeClaim{}: cacheLabels,
+			&corev1.ConfigMap{}:             cacheLabels, // Matching just labeled ConfigMaps and Secrets greatly reduces cache size
+			&corev1.Secret{}:                cacheLabels, // Omitting labels or supporting custom labels would require changes in Grafana Reconciler
 		}},
 	}
 	if isOpenShift {
 		controllerOptions.Cache.ByObject[&routev1.Route{}] = cacheLabels
 	}
 
+	// Disable ConfigMap and Secret cache lookups per default
+	// all reads will hit the api
+	if !watchLabeledReferencesOnly {
+		controllerOptions.Client = client.Options{
+			Cache: &client.CacheOptions{
+				DisableFor: []client.Object{&corev1.ConfigMap{}, &corev1.Secret{}},
+			},
+		}
+	}
+
+	// Determine Operator scope
 	switch {
 	case strings.Contains(watchNamespace, ","):
 		// multi namespace scoped
@@ -189,6 +208,7 @@ func main() {
 		os.Exit(1) //nolint
 	}
 
+	// Register controllers
 	if err = (&controllers.GrafanaReconciler{
 		Client:      mgr.GetClient(),
 		Scheme:      mgr.GetScheme(),
