@@ -15,6 +15,12 @@ watchNamespaces: ""
 # By default, the operator watches all namespaces. To make it watch only its own namespace, check out `namespaceScope` option instead.
 watchNamespaceSelector: ""
 
+# -- Sets the `WATCH_LABELED_REFERENCES_ONLY` environment variable,
+# it enables the caching of ConfigMaps and Secrets labeled with `"app.kubernetes.io/managed-by": "grafana-operator"` to reduce requests to the api.
+# By default, ConfigMaps and Secrets are not cached to reduce the memory usage of the operator in large clusters.
+# WARNING This will hide unlabeled ConfigMaps and Secrets from the Operator
+watchLabeledReferencesOnly: false
+
 # -- Determines if the target cluster is OpenShift. Additional rbac permissions for routes will be added on OpenShift
 isOpenShift: false
 
