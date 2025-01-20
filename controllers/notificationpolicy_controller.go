@@ -131,13 +131,13 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 	removeNoMatchingInstance(&notificationPolicy.Status.Conditions)
 
 	var matchingNotificationPolicyRoutes *v1beta1.GrafanaNotificationPolicyRouteList
-	if notificationPolicy.Spec.RouteSelector != nil {
+	if notificationPolicy.Spec.Route.RouteSelector != nil {
 		var namespace *string
 		if !notificationPolicy.IsCrossNamespaceImportAllowed() {
 			ns := notificationPolicy.GetObjectMeta().GetNamespace()
 			namespace = &ns
 		}
-		matchingNotificationPolicyRoutes, err = getMatchingNotificationPolicyRoutes(ctx, r.Client, notificationPolicy.Spec.RouteSelector, namespace)
+		matchingNotificationPolicyRoutes, err = getMatchingNotificationPolicyRoutes(ctx, r.Client, notificationPolicy.Spec.Route.RouteSelector, namespace)
 		if err != nil {
 			r.Log.Error(err, "failed to get matching GrafanaNotificationPolicyRoutes")
 			return ctrl.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("failed to get matching GrafanaNotificationPolicyRoutes: %w", err)
@@ -302,7 +302,7 @@ func (r *GrafanaNotificationPolicyReconciler) SetupWithManager(mgr ctrl.Manager)
 			}
 			requests := []reconcile.Request{}
 			for _, np := range nps.Items {
-				if np.Spec.RouteSelector == nil {
+				if np.Spec.Route.RouteSelector == nil {
 					continue
 				}
 
@@ -310,7 +310,7 @@ func (r *GrafanaNotificationPolicyReconciler) SetupWithManager(mgr ctrl.Manager)
 					continue
 				}
 
-				selector, err := metav1.LabelSelectorAsSelector(np.Spec.RouteSelector)
+				selector, err := metav1.LabelSelectorAsSelector(np.Spec.Route.RouteSelector)
 				if err != nil {
 					r.Log.Error(err, "failed to create selector from RouteSelector")
 					continue

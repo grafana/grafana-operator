@@ -28,9 +28,6 @@ import (
 type GrafanaNotificationPolicySpec struct {
 	GrafanaCommonSpec `json:",inline"`
 
-	// Selects GrafanaNotificationPolicyRoutes to merge in when specified
-	RouteSelector *metav1.LabelSelector `json:"routeSelector,omitempty"`
-
 	// Routes for alerts to match against
 	Route *Route `json:"route"`
 
@@ -40,6 +37,7 @@ type GrafanaNotificationPolicySpec struct {
 	Editable *bool `json:"editable,omitempty"`
 }
 
+// +kubebuilder:validation:XValidation:rule="has(self.routeSelector) != has(self.routes)", message="routeSelector and routes are mutually exclusive"
 type Route struct {
 	// continue
 	Continue bool `json:"continue,omitempty"`
@@ -73,6 +71,9 @@ type Route struct {
 
 	// repeat interval
 	RepeatInterval string `json:"repeat_interval,omitempty"`
+
+	// Selects GrafanaNotificationPolicyRoutes to merge in when specified
+	RouteSelector *metav1.LabelSelector `json:"routeSelector,omitempty"`
 
 	// routes
 	// +kubebuilder:pruning:PreserveUnknownFields

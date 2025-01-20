@@ -1417,11 +1417,6 @@ func (in *GrafanaNotificationPolicyRouteStatus) DeepCopy() *GrafanaNotificationP
 func (in *GrafanaNotificationPolicySpec) DeepCopyInto(out *GrafanaNotificationPolicySpec) {
 	*out = *in
 	in.GrafanaCommonSpec.DeepCopyInto(&out.GrafanaCommonSpec)
-	if in.RouteSelector != nil {
-		in, out := &in.RouteSelector, &out.RouteSelector
-		*out = new(metav1.LabelSelector)
-		(*in).DeepCopyInto(*out)
-	}
 	if in.Route != nil {
 		in, out := &in.Route, &out.Route
 		*out = new(Route)
@@ -1978,6 +1973,11 @@ func (in *Route) DeepCopyInto(out *Route) {
 				copy(*out, *in)
 			}
 		}
+	}
+	if in.RouteSelector != nil {
+		in, out := &in.RouteSelector, &out.RouteSelector
+		*out = new(metav1.LabelSelector)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.Routes != nil {
 		in, out := &in.Routes, &out.Routes
