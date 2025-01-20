@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"os"
 	"os/signal"
@@ -48,6 +49,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/autodetect"
 	"github.com/grafana/grafana-operator/v5/embeds"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -65,6 +67,10 @@ const (
 	// eg: "environment: dev"
 	// If empty or undefined, the operator will run in cluster scope.
 	watchNamespaceEnvSelector = "WATCH_NAMESPACE_SELECTOR"
+	// watchLabelSelectorsEnvVar is the constnat for env variable WATCH_LABEL_SELECTORS which specifies the resources to watch according to their labels.
+	// eg: '{"labelKey": "labelValue"}'
+	// If empty of undefined, the operator will watch all CRs.
+	watchLabelSelectorsEnvVar = "WATCH_LABEL_SELECTORS"
 )
 
 var (
@@ -105,6 +111,7 @@ func main() {
 
 	watchNamespace, _ := os.LookupEnv(watchNamespaceEnvVar)
 	watchNamespaceSelector, _ := os.LookupEnv(watchNamespaceEnvSelector)
+	watchLabelSelectors, _ := os.LookupEnv(watchLabelSelectorsEnvVar)
 
 	controllerOptions := ctrl.Options{
 		Scheme: scheme,
@@ -181,6 +188,23 @@ func main() {
 	case watchNamespace == "" && watchNamespaceSelector == "":
 		// cluster scoped
 		setupLog.Info("operator running in cluster scoped mode")
+	}
+
+	if watchLabelSelectors != "" {
+		labelSelectors := map[string]string{}
+		err := json.Unmarshal([]byte(watchLabelSelectors), &labelSelectors)
+		if err != nil {
+			setupLog.Error(err, "unable to Unmarshal labelSelectors")
+			os.Exit(1) //nolint
+		}
+		for k, v := range labelSelectors {
+			req, err := labels.NewRequirement(k, selection.Equals, []string{v}, nil)
+			if err != nil {
+				setupLog.Error(err, "unable to create labels selector")
+				os.Exit(1) //nolint
+			}
+			controllerOptions.Cache.DefaultLabelSelector.Add(*req)
+		}
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGPIPE)

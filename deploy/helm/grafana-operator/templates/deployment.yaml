@@ -51,6 +51,12 @@ spec:
               {{ else }}
               value: {{quote .Values.watchNamespaceSelector }}
               {{- end }}
+            - name: WATCH_LABEL_SELECTORS
+              {{- if and .Values.watchLabelSelectors (eq .Values.watchLabelSelectors "") }}
+              value: ""
+              {{ else }}
+              value: {{quote .Values.watchLabelSelectors | toJson }}
+              {{- end }}
             {{- with .Values.env }}
               {{- toYaml . | nindent 12 }}
             {{- end }}

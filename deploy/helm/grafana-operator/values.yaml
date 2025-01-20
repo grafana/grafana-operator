@@ -15,6 +15,12 @@ watchNamespaces: ""
 # By default, the operator watches all namespaces. To make it watch only its own namespace, check out `namespaceScope` option instead.
 watchNamespaceSelector: ""
 
+# -- Sets the `WATCH_LABEL_SELECTORS` environment variable,
+# if defines which CRs are watched according to thei labels.
+# By default, the operator watches all CRs. To make it watch only a subset of CRs, set the value to a map of key/value
+watchLabelSelectors: {}
+# labelKey: labelValue
+
 # -- Determines if the target cluster is OpenShift. Additional rbac permissions for routes will be added on OpenShift
 isOpenShift: false
 
