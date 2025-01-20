@@ -15,6 +15,13 @@ watchNamespaces: ""
 # By default, the operator watches all namespaces. To make it watch only its own namespace, check out `namespaceScope` option instead.
 watchNamespaceSelector: ""
 
+# -- Sets the `WATCH_LABEL_SELECTORS` environment variable,
+# it defines which CRs are watched according to their labels.
+# By default, the operator watches all CRs. To make it watch only a subset of CRs, define the variable as a *stringified label selector*.
+# See also: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+watchLabelSelectors: ""
+# watchLabelSelectors: "partition in (customerA, customerB),environment!=qa"
+
 # -- Determines if the target cluster is OpenShift. Additional rbac permissions for routes will be added on OpenShift
 isOpenShift: false
 

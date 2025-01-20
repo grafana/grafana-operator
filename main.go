@@ -19,6 +19,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"log/slog"
 	"os"
@@ -71,6 +72,10 @@ const (
 	// eg: "environment: dev"
 	// If empty or undefined, the operator will run in cluster scope.
 	watchNamespaceEnvSelector = "WATCH_NAMESPACE_SELECTOR"
+	// watchLabelSelectorsEnvVar is the constant for env variable WATCH_LABEL_SELECTORS which specifies the resources to watch according to their labels.
+	// eg: 'partition in (customerA, customerB),environment!=qa'
+	// If empty of undefined, the operator will watch all CRs.
+	watchLabelSelectorsEnvVar = "WATCH_LABEL_SELECTORS"
 )
 
 var (
@@ -123,6 +128,7 @@ func main() {
 
 	watchNamespace, _ := os.LookupEnv(watchNamespaceEnvVar)
 	watchNamespaceSelector, _ := os.LookupEnv(watchNamespaceEnvSelector)
+	watchLabelSelectors, _ := os.LookupEnv(watchLabelSelectorsEnvVar)
 
 	// Fetch k8s api credentials and detect platform
 	restConfig := ctrl.GetConfigOrDie()
@@ -151,22 +157,28 @@ func main() {
 		PprofBindAddress:       pprofAddr,
 	}
 
+	labelSelectors, err := getLabelSelectors(watchLabelSelectors)
+	if err != nil {
+		setupLog.Error(err, fmt.Sprintf("unable to parse %s", watchLabelSelectorsEnvVar))
+		os.Exit(1) //nolint
+	}
 	switch {
 	case strings.Contains(watchNamespace, ","):
 		// multi namespace scoped
-		controllerOptions.Cache.DefaultNamespaces = getNamespaceConfig(watchNamespace)
+		controllerOptions.Cache.DefaultNamespaces = getNamespaceConfig(watchNamespace, labelSelectors)
 		setupLog.Info("operator running in namespace scoped mode for multiple namespaces", "namespaces", watchNamespace)
 	case watchNamespace != "":
 		// namespace scoped
-		controllerOptions.Cache.DefaultNamespaces = getNamespaceConfig(watchNamespace)
+		controllerOptions.Cache.DefaultNamespaces = getNamespaceConfig(watchNamespace, labelSelectors)
 		setupLog.Info("operator running in namespace scoped mode", "namespace", watchNamespace)
 	case strings.Contains(watchNamespaceSelector, ":"):
 		// namespace scoped
-		controllerOptions.Cache.DefaultNamespaces = getNamespaceConfigSelector(restConfig, watchNamespaceSelector)
+		controllerOptions.Cache.DefaultNamespaces = getNamespaceConfigSelector(restConfig, watchNamespaceSelector, labelSelectors)
 		setupLog.Info("operator running in namespace scoped mode using namespace selector", "namespace", watchNamespace)
 
 	case watchNamespace == "" && watchNamespaceSelector == "":
 		// cluster scoped
+		controllerOptions.Cache.DefaultLabelSelector = labelSelectors
 		setupLog.Info("operator running in cluster scoped mode")
 	}
 
@@ -266,7 +278,7 @@ func main() {
 	setupLog.Info("SIGTERM request gotten, shutting down operator")
 }
 
-func getNamespaceConfig(namespaces string) map[string]cache.Config {
+func getNamespaceConfig(namespaces string, labelSelectors labels.Selector) map[string]cache.Config {
 	defaultNamespaces := map[string]cache.Config{}
 	for _, v := range strings.Split(namespaces, ",") {
 		// Generate a mapping of namespaces to label/field selectors, set to Everything() to enable matching all
@@ -274,7 +286,7 @@ func getNamespaceConfig(namespaces string) map[string]cache.Config {
 		// this is the default behavior of the operator on v5, if you require finer grained control over this
 		// please file an issue in the grafana-operator/grafana-operator GH project
 		defaultNamespaces[v] = cache.Config{
-			LabelSelector:         labels.Everything(), // Match any labels
+			LabelSelector:         labelSelectors,
 			FieldSelector:         fields.Everything(), // Match any fields
 			Transform:             nil,
 			UnsafeDisableDeepCopy: nil,
@@ -283,7 +295,7 @@ func getNamespaceConfig(namespaces string) map[string]cache.Config {
 	return defaultNamespaces
 }
 
-func getNamespaceConfigSelector(restConfig *rest.Config, selector string) map[string]cache.Config {
+func getNamespaceConfigSelector(restConfig *rest.Config, selector string, labelSelectors labels.Selector) map[string]cache.Config {
 	cl, err := client.New(restConfig, client.Options{})
 	if err != nil {
 		setupLog.Error(err, "Failed to get watch namespaces")
@@ -305,11 +317,27 @@ func getNamespaceConfigSelector(restConfig *rest.Config, selector string) map[st
 		// this is the default behavior of the operator on v5, if you require finer grained control over this
 		// please file an issue in the grafana-operator/grafana-operator GH project
 		defaultNamespaces[v.Name] = cache.Config{
-			LabelSelector:         labels.Everything(), // Match any labels
+			LabelSelector:         labelSelectors,
 			FieldSelector:         fields.Everything(), // Match any fields
 			Transform:             nil,
 			UnsafeDisableDeepCopy: nil,
 		}
 	}
 	return defaultNamespaces
+}
+
+func getLabelSelectors(watchLabelSelectors string) (labels.Selector, error) {
+	var (
+		labelSelectors labels.Selector
+		err            error
+	)
+	if watchLabelSelectors != "" {
+		labelSelectors, err = labels.Parse(watchLabelSelectors)
+		if err != nil {
+			return labelSelectors, fmt.Errorf("unable to parse %s: %w", watchLabelSelectorsEnvVar, err)
+		}
+	} else {
+		labelSelectors = labels.Everything() // Match any labels
+	}
+	return labelSelectors, nil
 }
