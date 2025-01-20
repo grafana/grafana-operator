@@ -163,7 +163,7 @@ jobs:
           go-version-file: "go.mod"
           cache: true
 
-      - uses: ko-build/setup-ko@v0.7
+      - uses: ko-build/setup-ko@v0.8
         with:
           version: v0.16.0
 
