@@ -17,240 +17,22 @@ limitations under the License.
 package controllers
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-func Test_mergeNotificationPolicyRoutesWithRouteList(t *testing.T) {
-	type args struct {
-		notificationPolicy          *grafanav1beta1.GrafanaNotificationPolicy
-		notificationPolicyRouteList *grafanav1beta1.GrafanaNotificationPolicyRouteList
+func routesToRuntimeObjects(routes []grafanav1beta1.GrafanaNotificationPolicyRoute) []runtime.Object {
+	objects := make([]runtime.Object, len(routes))
+	for i := range routes {
+		objects[i] = &routes[i]
 	}
-	tests := []struct {
-		name string
-		args args
-		want *grafanav1beta1.GrafanaNotificationPolicy
-	}{
-		{
-			name: "Merge with empty route list",
-			args: args{
-				notificationPolicy: &grafanav1beta1.GrafanaNotificationPolicy{
-					Spec: grafanav1beta1.GrafanaNotificationPolicySpec{
-						Route: &grafanav1beta1.Route{
-							Receiver: "default-receiver",
-							Routes:   []*grafanav1beta1.Route{},
-						},
-					},
-				},
-				notificationPolicyRouteList: &grafanav1beta1.GrafanaNotificationPolicyRouteList{},
-			},
-			want: &grafanav1beta1.GrafanaNotificationPolicy{
-				Spec: grafanav1beta1.GrafanaNotificationPolicySpec{
-					Route: &grafanav1beta1.Route{
-						Receiver: "default-receiver",
-						Routes:   []*grafanav1beta1.Route{},
-					},
-				},
-			},
-		},
-		{
-			name: "Merge into nil route list",
-			args: args{
-				notificationPolicy: &grafanav1beta1.GrafanaNotificationPolicy{
-					Spec: grafanav1beta1.GrafanaNotificationPolicySpec{
-						Route: &grafanav1beta1.Route{
-							Receiver: "default-receiver",
-							Routes:   nil,
-						},
-					},
-				},
-				notificationPolicyRouteList: &grafanav1beta1.GrafanaNotificationPolicyRouteList{},
-			},
-			want: &grafanav1beta1.GrafanaNotificationPolicy{
-				Spec: grafanav1beta1.GrafanaNotificationPolicySpec{
-					Route: &grafanav1beta1.Route{
-						Receiver: "default-receiver",
-						Routes:   nil,
-					},
-				},
-			},
-		},
-		{
-			name: "Merge with un-ordered non-empty route list",
-			args: args{
-				notificationPolicy: &grafanav1beta1.GrafanaNotificationPolicy{
-					Spec: grafanav1beta1.GrafanaNotificationPolicySpec{
-						Route: &grafanav1beta1.Route{
-							Receiver: "default-receiver",
-							Routes:   []*grafanav1beta1.Route{},
-						},
-					},
-				},
-				notificationPolicyRouteList: &grafanav1beta1.GrafanaNotificationPolicyRouteList{
-					Items: []grafanav1beta1.GrafanaNotificationPolicyRoute{
-						{
-							Spec: grafanav1beta1.GrafanaNotificationPolicyRouteSpec{
-								Route: &grafanav1beta1.Route{
-									Receiver: "team-B-receiver",
-									Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("team"), Value: "B", IsEqual: true}},
-								},
-								Priority: int8P(2),
-							},
-						},
-						{
-							Spec: grafanav1beta1.GrafanaNotificationPolicyRouteSpec{
-								Route: &grafanav1beta1.Route{
-									Receiver: "team-A-receiver",
-									Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("team"), Value: "A", IsEqual: true}},
-								},
-								Priority: int8P(1),
-							},
-						},
-					},
-				},
-			},
-			want: &grafanav1beta1.GrafanaNotificationPolicy{
-				Spec: grafanav1beta1.GrafanaNotificationPolicySpec{
-					Route: &grafanav1beta1.Route{
-						Receiver: "default-receiver",
-						Routes: []*grafanav1beta1.Route{
-							{
-								Receiver: "team-A-receiver",
-								Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("team"), Value: "A", IsEqual: true}},
-							},
-							{
-								Receiver: "team-B-receiver",
-								Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("team"), Value: "B", IsEqual: true}},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "Merge with existing routes in GrafanaNotificationPolicy, existing routes ordered first",
-			args: args{
-				notificationPolicy: &grafanav1beta1.GrafanaNotificationPolicy{
-					Spec: grafanav1beta1.GrafanaNotificationPolicySpec{
-						Route: &grafanav1beta1.Route{
-							Receiver: "default-receiver",
-							Routes: []*grafanav1beta1.Route{
-								{
-									Receiver: "existing-receiver",
-									Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("severity"), Value: "critical", IsEqual: true}},
-								},
-							},
-						},
-					},
-				},
-				notificationPolicyRouteList: &grafanav1beta1.GrafanaNotificationPolicyRouteList{
-					Items: []grafanav1beta1.GrafanaNotificationPolicyRoute{
-						{
-							Spec: grafanav1beta1.GrafanaNotificationPolicyRouteSpec{
-								Route: &grafanav1beta1.Route{
-									Receiver: "new-receiver",
-									Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("team"), Value: "C", IsEqual: true}},
-								},
-								Priority: int8P(1),
-							},
-						},
-					},
-				},
-			},
-			want: &grafanav1beta1.GrafanaNotificationPolicy{
-				Spec: grafanav1beta1.GrafanaNotificationPolicySpec{
-					Route: &grafanav1beta1.Route{
-						Receiver: "default-receiver",
-						Routes: []*grafanav1beta1.Route{
-							{
-								Receiver: "existing-receiver",
-								Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("severity"), Value: "critical", IsEqual: true}},
-							},
-							{
-								Receiver: "new-receiver",
-								Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("team"), Value: "C", IsEqual: true}},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "Merge with multiple routes, nil priority has least priority",
-			args: args{
-				notificationPolicy: &grafanav1beta1.GrafanaNotificationPolicy{
-					Spec: grafanav1beta1.GrafanaNotificationPolicySpec{
-						Route: &grafanav1beta1.Route{
-							Receiver: "default-receiver",
-							Routes:   []*grafanav1beta1.Route{},
-						},
-					},
-				},
-				notificationPolicyRouteList: &grafanav1beta1.GrafanaNotificationPolicyRouteList{
-					Items: []grafanav1beta1.GrafanaNotificationPolicyRoute{
-						{
-							Spec: grafanav1beta1.GrafanaNotificationPolicyRouteSpec{
-								Route: &grafanav1beta1.Route{
-									Receiver: "low-priority",
-									Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("severity"), Value: "info", IsEqual: true}},
-								},
-								Priority: nil,
-							},
-						},
-						{
-							Spec: grafanav1beta1.GrafanaNotificationPolicyRouteSpec{
-								Route: &grafanav1beta1.Route{
-									Receiver: "high-priority",
-									Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("severity"), Value: "critical", IsEqual: true}},
-								},
-								Priority: int8P(1),
-							},
-						},
-						{
-							Spec: grafanav1beta1.GrafanaNotificationPolicyRouteSpec{
-								Route: &grafanav1beta1.Route{
-									Receiver: "medium-priority",
-									Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("severity"), Value: "warning", IsEqual: true}},
-								},
-								Priority: int8P(2),
-							},
-						},
-					},
-				},
-			},
-			want: &grafanav1beta1.GrafanaNotificationPolicy{
-				Spec: grafanav1beta1.GrafanaNotificationPolicySpec{
-					Route: &grafanav1beta1.Route{
-						Receiver: "default-receiver",
-						Routes: []*grafanav1beta1.Route{
-							{
-								Receiver: "high-priority",
-								Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("severity"), Value: "critical", IsEqual: true}},
-							},
-							{
-								Receiver: "medium-priority",
-								Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("severity"), Value: "warning", IsEqual: true}},
-							},
-							{
-								Receiver: "low-priority",
-								Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("severity"), Value: "info", IsEqual: true}},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := mergeNotificationPolicyRoutesWithRouteList(tt.args.notificationPolicy, tt.args.notificationPolicyRouteList)
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("mergeNotificationPolicyRoutesWithRouteList() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+	return objects
 }
 
 func stringP(s string) *string {
@@ -260,4 +42,195 @@ func stringP(s string) *string {
 func int8P(i int) *int8 {
 	i8 := int8(i)
 	return &i8
+}
+
+func TestAssembleNotificationPolicyRoutes(t *testing.T) {
+	tests := []struct {
+		name               string
+		notificationPolicy *grafanav1beta1.GrafanaNotificationPolicy
+		existingRoutes     []grafanav1beta1.GrafanaNotificationPolicyRoute
+		want               *grafanav1beta1.GrafanaNotificationPolicy
+		wantErr            bool
+	}{
+		{
+			name: "Simple assembly with one level of routes",
+			notificationPolicy: &grafanav1beta1.GrafanaNotificationPolicy{
+				Spec: grafanav1beta1.GrafanaNotificationPolicySpec{
+					Route: &grafanav1beta1.Route{
+						Receiver: "default-receiver",
+						RouteSelector: &metav1.LabelSelector{
+							MatchLabels: map[string]string{"tier": "first"},
+						},
+					},
+				},
+			},
+			existingRoutes: []grafanav1beta1.GrafanaNotificationPolicyRoute{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "route-1",
+						Namespace: "default",
+						Labels:    map[string]string{"tier": "first"},
+					},
+					Spec: grafanav1beta1.GrafanaNotificationPolicyRouteSpec{
+						Route: &grafanav1beta1.Route{
+							Receiver: "team-A-receiver",
+							Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("team"), Value: "A", IsEqual: true}},
+						},
+					},
+				},
+			},
+			want: &grafanav1beta1.GrafanaNotificationPolicy{
+				Spec: grafanav1beta1.GrafanaNotificationPolicySpec{
+					Route: &grafanav1beta1.Route{
+						Receiver: "default-receiver",
+						RouteSelector: &metav1.LabelSelector{
+							MatchLabels: map[string]string{"tier": "first"},
+						},
+						Routes: []*grafanav1beta1.Route{
+							{
+								Receiver: "team-A-receiver",
+								Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("team"), Value: "A", IsEqual: true}},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Assembly with nested routes",
+			notificationPolicy: &grafanav1beta1.GrafanaNotificationPolicy{
+				Spec: grafanav1beta1.GrafanaNotificationPolicySpec{
+					Route: &grafanav1beta1.Route{
+						Receiver: "default-receiver",
+						RouteSelector: &metav1.LabelSelector{
+							MatchLabels: map[string]string{"tier": "first"},
+						},
+					},
+				},
+			},
+			existingRoutes: []grafanav1beta1.GrafanaNotificationPolicyRoute{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "route-1",
+						Namespace: "default",
+						Labels:    map[string]string{"tier": "first"},
+					},
+					Spec: grafanav1beta1.GrafanaNotificationPolicyRouteSpec{
+						Route: &grafanav1beta1.Route{
+							Receiver: "team-A-receiver",
+							Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("team"), Value: "A", IsEqual: true}},
+							RouteSelector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{"tier": "second"},
+							},
+						},
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "route-2",
+						Namespace: "default",
+						Labels:    map[string]string{"tier": "second"},
+					},
+					Spec: grafanav1beta1.GrafanaNotificationPolicyRouteSpec{
+						Route: &grafanav1beta1.Route{
+							Receiver: "team-B-receiver",
+							Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("team"), Value: "B", IsEqual: true}},
+						},
+					},
+				},
+			},
+			want: &grafanav1beta1.GrafanaNotificationPolicy{
+				Spec: grafanav1beta1.GrafanaNotificationPolicySpec{
+					Route: &grafanav1beta1.Route{
+						Receiver: "default-receiver",
+						RouteSelector: &metav1.LabelSelector{
+							MatchLabels: map[string]string{"tier": "first"},
+						},
+						Routes: []*grafanav1beta1.Route{
+							{
+								Receiver: "team-A-receiver",
+								Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("team"), Value: "A", IsEqual: true}},
+								RouteSelector: &metav1.LabelSelector{
+									MatchLabels: map[string]string{"tier": "second"},
+								},
+								Routes: []*grafanav1beta1.Route{
+									{
+										Receiver: "team-B-receiver",
+										Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("team"), Value: "B", IsEqual: true}},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Detect loop in routes",
+			notificationPolicy: &grafanav1beta1.GrafanaNotificationPolicy{
+				Spec: grafanav1beta1.GrafanaNotificationPolicySpec{
+					Route: &grafanav1beta1.Route{
+						Receiver: "default-receiver",
+						RouteSelector: &metav1.LabelSelector{
+							MatchLabels: map[string]string{"tier": "first"},
+						},
+					},
+				},
+			},
+			existingRoutes: []grafanav1beta1.GrafanaNotificationPolicyRoute{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "route-1",
+						Namespace: "default",
+						Labels:    map[string]string{"tier": "first"},
+					},
+					Spec: grafanav1beta1.GrafanaNotificationPolicyRouteSpec{
+						Route: &grafanav1beta1.Route{
+							Receiver: "team-A-receiver",
+							Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("team"), Value: "A", IsEqual: true}},
+							RouteSelector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{"tier": "second"},
+							},
+						},
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "route-2",
+						Namespace: "default",
+						Labels:    map[string]string{"tier": "second"},
+					},
+					Spec: grafanav1beta1.GrafanaNotificationPolicyRouteSpec{
+						Route: &grafanav1beta1.Route{
+							Receiver: "team-B-receiver",
+							Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("team"), Value: "B", IsEqual: true}},
+							RouteSelector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{"tier": "first"},
+							},
+						},
+					},
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			client := fake.NewClientBuilder().WithRuntimeObjects(routesToRuntimeObjects(tt.existingRoutes)...).Build()
+
+			gotPolicy, _, err := assembleNotificationPolicyRoutes(ctx, client, nil, tt.notificationPolicy)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("assembleNotificationPolicyRoutes() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(gotPolicy, tt.want) {
+				t.Errorf("assembleNotificationPolicyRoutes() = %v, want %v", gotPolicy, tt.want)
+			}
+		})
+	}
 }
