@@ -131,7 +131,7 @@ func (r *Route) ToModelRoute() *models.Route {
 
 // GrafanaNotificationPolicyStatus defines the observed state of GrafanaNotificationPolicy
 type GrafanaNotificationPolicyStatus struct {
-	GrafanaCommonStatus
+	GrafanaCommonStatus `json:",inline"`
 
 	DiscoveredRoutes *[]string `json:"discoveredRoutes,omitempty"`
 }
@@ -147,7 +147,7 @@ type GrafanaNotificationPolicy struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   GrafanaNotificationPolicySpec `json:"spec,omitempty"`
+	Spec   GrafanaNotificationPolicySpec   `json:"spec,omitempty"`
 	Status GrafanaNotificationPolicyStatus `json:"status,omitempty"`
 }
 
@@ -157,7 +157,7 @@ func (np *GrafanaNotificationPolicy) NamespacedResource() string {
 
 // IsCrossNamespaceImportAllowed returns true when cross namespace imports are allowed
 func (np *GrafanaNotificationPolicy) IsCrossNamespaceImportAllowed() bool {
-	return np.Spec.AllowCrossNamespaceImport != nil && *np.Spec.AllowCrossNamespaceImport
+	return np.Spec.AllowCrossNamespaceImport
 }
 
 //+kubebuilder:object:root=true

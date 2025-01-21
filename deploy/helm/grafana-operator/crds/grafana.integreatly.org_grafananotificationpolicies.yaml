@@ -251,7 +251,8 @@ spec:
               rule: '!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport
                 && self.allowCrossNamespaceImport)'
           status:
-            description: The most recent observed state of a Grafana resource
+            description: GrafanaNotificationPolicyStatus defines the observed state
+              of GrafanaNotificationPolicy
             properties:
               conditions:
                 description: Results when synchonizing resource with Grafana instances
@@ -314,8 +315,6 @@ spec:
                 items:
                   type: string
                 type: array
-            required:
-            - conditions
               lastResync:
                 description: Last time the resource was synchronized with Grafana
                   instances
