@@ -235,19 +235,6 @@ func setNoMatchingInstancesCondition(conditions *[]metav1.Condition, generation 
 	})
 }
 
-func setNoMatchingInstance(conditions *[]metav1.Condition, generation int64, reason, message string) {
-	meta.SetStatusCondition(conditions, metav1.Condition{
-		Type:               conditionNoMatchingInstance,
-		Status:             metav1.ConditionTrue,
-		ObservedGeneration: generation,
-		LastTransitionTime: metav1.Time{
-			Time: time.Now(),
-		},
-		Reason:  reason,
-		Message: message,
-	})
-}
-
 func removeNoMatchingInstance(conditions *[]metav1.Condition) {
 	meta.RemoveStatusCondition(conditions, conditionNoMatchingInstance)
 }
