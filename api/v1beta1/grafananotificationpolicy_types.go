@@ -37,7 +37,6 @@ type GrafanaNotificationPolicySpec struct {
 	Editable *bool `json:"editable,omitempty"`
 }
 
-// +kubebuilder:validation:XValidation:rule="has(self.routeSelector) != has(self.routes)", message="routeSelector and routes are mutually exclusive"
 type Route struct {
 	// continue
 	Continue bool `json:"continue,omitempty"`

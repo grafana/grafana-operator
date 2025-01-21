@@ -7,9 +7,6 @@ spec:
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
-  routeSelector:
-    matchLabels:
-      dynamicroute: "grafana"
   route:
     receiver: grafana-default-email
     group_by:
@@ -24,6 +21,9 @@ spec:
           - - inline
             - =
             - first
+        routeSelector:
+          matchLabels:
+            team-a: "child"
       - receiver: grafana-default-email
         object_matchers:
           - - team
@@ -39,9 +39,8 @@ metadata:
   name: dynamic-c
   namespace: grafana-crds
   labels:
-    dynamicroute: "grafana"
+    team-a: "child"
 spec:
-  priority: 1
   route:
     receiver: grafana-default-email
     object_matchers:
@@ -51,34 +50,30 @@ spec:
       - - dynamic
         - =
         - c
-      - - priority
-        - =
-        - "1"
+    routeSelector:
+      matchLabels:
+        team-c: "child"
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaNotificationPolicyRoute
 metadata:
   name: dynamic-d
   labels:
-    dynamicroute: "grafana"
+    team-c: "child"
 spec:
-  priority: 2
   route:
     receiver: grafana-default-email
     object_matchers:
       - - dynamic
         - =
         - d
-      - - priority
-        - =
-        - "2"
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaNotificationPolicyRoute
 metadata:
   name: dynamic-e
   labels:
-    dynamicroute: "grafana"
+    team-a: "child"
 spec:
   route:
     receiver: grafana-default-email
@@ -86,6 +81,3 @@ spec:
       - - dynamic
         - =
         - e
-      - - priority
-        - =
-        - none

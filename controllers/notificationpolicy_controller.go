@@ -58,7 +58,6 @@ type GrafanaNotificationPolicyReconciler struct {
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafananotificationpolicies/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafananotificationpolicies/finalizers,verbs=update
 
-// TODO listen for updates on GrafanaNotificationPolicyRoutes
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 // TODO(user): Modify the Reconcile function to compare the state specified by
@@ -130,14 +129,17 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 
 	removeNoMatchingInstance(&notificationPolicy.Status.Conditions)
 
-	var mergedRoutes *v1beta1.GrafanaNotificationPolicyRouteList
-	if notificationPolicy.Spec.Route.RouteSelector != nil {
+	var mergedRoutes []*v1beta1.GrafanaNotificationPolicyRoute
+	assembledNotificationPolicy := notificationPolicy.DeepCopy()
+
+	if notificationPolicy.Spec.Route.RouteSelector != nil || hasRouteSelector(notificationPolicy.Spec.Route) {
 		var namespace *string
 		if !notificationPolicy.IsCrossNamespaceImportAllowed() {
 			ns := notificationPolicy.GetObjectMeta().GetNamespace()
 			namespace = &ns
 		}
-		notificationPolicy, mergedRoutes, err = assembleNotificationPolicyRoutes(ctx, r.Client, namespace, notificationPolicy)
+		assembledNotificationPolicy, mergedRoutes, err = assembleNotificationPolicyRoutes(ctx, r.Client, namespace, assembledNotificationPolicy)
+		r.Log.Info("assembled notification policy routes", "mergedRoutes", mergedRoutes)
 		if err != nil {
 			r.Log.Error(err, "failed to assemble GrafanaNotificationPolicy using routeSelectors")
 			return ctrl.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("failed to assemble GrafanaNotificationPolicy using routeSelectors: %w", err)
@@ -161,7 +163,7 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 			continue
 		}
 
-		err := r.reconcileWithInstance(ctx, &grafana, notificationPolicy)
+		err := r.reconcileWithInstance(ctx, &grafana, assembledNotificationPolicy)
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
@@ -172,8 +174,8 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
 	}
 
-	if mergedRoutes != nil && len(mergedRoutes.Items) > 0 {
-		status := mergedRoutes.StatusDiscoveredRoutes()
+	if mergedRoutes != nil && len(mergedRoutes) > 0 {
+		status := statusDiscoveredRoutes(mergedRoutes)
 		notificationPolicy.Status.DiscoveredRoutes = &status
 	}
 
@@ -187,62 +189,71 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 // assembleNotificationPolicyRoutes iterates over all routeSelectors transitively.
 // returns an assembled GrafanaNotificationPolicy as well as a list of all merged routes.
 // it ensures that there are no reference loops when discovering routes via labelSelectors
-func assembleNotificationPolicyRoutes(ctx context.Context, k8sClient client.Client, namespace *string, notificationPolicy *grafanav1beta1.GrafanaNotificationPolicy) (*grafanav1beta1.GrafanaNotificationPolicy, *v1beta1.GrafanaNotificationPolicyRouteList, error) {
-	if notificationPolicy.Spec.Route.RouteSelector == nil {
-		return notificationPolicy, nil, nil
-	}
 
+func assembleNotificationPolicyRoutes(ctx context.Context, k8sClient client.Client, namespace *string, notificationPolicy *grafanav1beta1.GrafanaNotificationPolicy) (*grafanav1beta1.GrafanaNotificationPolicy, []*v1beta1.GrafanaNotificationPolicyRoute, error) {
 	assembledPolicy := notificationPolicy.DeepCopy()
-	assembledPolicy.Spec.Route.Routes = []*grafanav1beta1.Route{}
+	mergedRoutes := []*v1beta1.GrafanaNotificationPolicyRoute{}
 
-	mergedRoutes := v1beta1.GrafanaNotificationPolicyRouteList{}
-	// visitedGlobal keeps track of all routes that have been appened to mergedRoutes
+	// visitedGlobal keeps track of all routes that have been appended to mergedRoutes
 	// so we can record a status update for them later
 	visitedGlobal := make(map[string]bool)
 
-	// visitedChilds keeps track of all downstream routes to detect loops
+	// visitedChilds keeps track of all routes that have been visited on the current path
+	// so we can detect loops
 	visitedChilds := make(map[string]bool)
 
-	var dfs func(*metav1.LabelSelector) error
-	dfs = func(selector *metav1.LabelSelector) error {
-		routes, err := getMatchingNotificationPolicyRoutes(ctx, k8sClient, selector, namespace)
-		if err != nil {
-			return fmt.Errorf("failed to get matching routes: %w", err)
-		}
-
-		for i := range routes.Items {
-			route := &routes.Items[i]
-			key := fmt.Sprintf("%s/%s", route.Namespace, route.Name)
-
-			if visitedChilds[key] {
-				return fmt.Errorf("loop detected in notification policy routes: %s", key)
+	var assembleRoute func(*grafanav1beta1.Route) error
+	assembleRoute = func(route *grafanav1beta1.Route) error {
+		if route.RouteSelector != nil {
+			routes, err := getMatchingNotificationPolicyRoutes(ctx, k8sClient, route.RouteSelector, namespace)
+			if err != nil {
+				return fmt.Errorf("failed to get matching routes: %w", err)
 			}
 
-			if !visitedGlobal[key] {
-				mergedRoutes.Items = append(mergedRoutes.Items, *route)
-			}
-			visitedGlobal[key] = true
+			// Replace the RouteSelector with matched routes
+			route.RouteSelector = nil
+			for i := range routes.Items {
+				matchedRoute := &routes.Items[i]
+				key := fmt.Sprintf("%s/%s", matchedRoute.Namespace, matchedRoute.Name)
 
-			visitedChilds[key] = true
-			assembledPolicy.Spec.Route.Routes = append(assembledPolicy.Spec.Route.Routes, route.Spec.Route)
+				if _, exists := visitedGlobal[key]; !exists {
+					mergedRoutes = append(mergedRoutes, matchedRoute)
+					visitedGlobal[key] = true
+				}
 
-			if route.Spec.Route.RouteSelector != nil {
-				if err := dfs(route.Spec.Route.RouteSelector); err != nil {
+				if _, exists := visitedChilds[key]; exists {
+					return fmt.Errorf("loop detected, visited %s before", key)
+				}
+				visitedChilds[key] = true
+
+				// Recursively assemble the matched route
+				if err := assembleRoute(matchedRoute.Spec.Route); err != nil {
 					return err
 				}
-			}
 
-			delete(visitedChilds, key)
+				delete(visitedChilds, key)
+
+				route.Routes = append(route.Routes, matchedRoute.Spec.Route)
+			}
+		} else {
+			// if no RouteSelector is specified, process inline routes, as they are mutually exclusive
+			for i, inlineRoute := range route.Routes {
+				if err := assembleRoute(inlineRoute); err != nil {
+					return err
+				}
+				route.Routes[i] = inlineRoute
+			}
 		}
 
 		return nil
 	}
 
-	if err := dfs(notificationPolicy.Spec.Route.RouteSelector); err != nil {
+	// Start with Spec.Route
+	if err := assembleRoute(assembledPolicy.Spec.Route); err != nil {
 		return nil, nil, err
 	}
 
-	return assembledPolicy, &mergedRoutes, nil
+	return assembledPolicy, mergedRoutes, nil
 }
 
 func (r *GrafanaNotificationPolicyReconciler) reconcileWithInstance(ctx context.Context, instance *grafanav1beta1.Grafana, notificationPolicy *grafanav1beta1.GrafanaNotificationPolicy) error {
@@ -343,7 +354,7 @@ func (r *GrafanaNotificationPolicyReconciler) SetupWithManager(mgr ctrl.Manager)
 			}
 			requests := []reconcile.Request{}
 			for _, np := range nps.Items {
-				if np.Spec.Route.RouteSelector == nil {
+				if !hasRouteSelector(np.Spec.Route) {
 					continue
 				}
 
@@ -351,20 +362,24 @@ func (r *GrafanaNotificationPolicyReconciler) SetupWithManager(mgr ctrl.Manager)
 					continue
 				}
 
-				selector, err := metav1.LabelSelectorAsSelector(np.Spec.Route.RouteSelector)
-				if err != nil {
-					r.Log.Error(err, "failed to create selector from RouteSelector")
-					continue
-				}
+				allRouteSelectors := getRouteSelectors(np.Spec.Route)
 
-				if selector.Matches(labels.Set(o.GetLabels())) {
-					requests = append(requests,
-						reconcile.Request{
-							NamespacedName: types.NamespacedName{
-								Name:      np.Name,
-								Namespace: np.Namespace,
-							},
-						})
+				for _, routeSelector := range allRouteSelectors {
+					selector, err := metav1.LabelSelectorAsSelector(routeSelector)
+					if err != nil {
+						r.Log.Error(err, "failed to create selector from RouteSelector")
+						continue
+					}
+
+					if selector.Matches(labels.Set(o.GetLabels())) {
+						requests = append(requests,
+							reconcile.Request{
+								NamespacedName: types.NamespacedName{
+									Name:      np.Name,
+									Namespace: np.Namespace,
+								},
+							})
+					}
 				}
 			}
 			return requests
@@ -394,14 +409,63 @@ func getMatchingNotificationPolicyRoutes(ctx context.Context, k8sClient client.C
 }
 
 // recordMergedEventForNotificationPolicyRoutes emits a merged event to all matched notification policy routes
-func (r *GrafanaNotificationPolicyReconciler) recordMergedEventForNotificationPolicyRoutes(ctx context.Context, notificationPolicy *grafanav1beta1.GrafanaNotificationPolicy, routes *v1beta1.GrafanaNotificationPolicyRouteList) error {
+func (r *GrafanaNotificationPolicyReconciler) recordMergedEventForNotificationPolicyRoutes(ctx context.Context, notificationPolicy *grafanav1beta1.GrafanaNotificationPolicy, routes []*v1beta1.GrafanaNotificationPolicyRoute) error {
 	if notificationPolicy == nil || routes == nil {
 		return nil
 	}
 
-	for i := range routes.Items {
-		route := &routes.Items[i]
+	for _, route := range routes {
 		r.Recorder.Event(route, corev1.EventTypeNormal, "Merged", fmt.Sprintf("Route merged into NotificationPolicy %s/%s", notificationPolicy.GetNamespace(), notificationPolicy.GetName()))
 	}
 	return nil
+}
+
+// hasRouteSelector checks if the given Route or any of its nested Routes has a RouteSelector
+func hasRouteSelector(route *grafanav1beta1.Route) bool {
+	if route == nil {
+		return false
+	}
+
+	if route.RouteSelector != nil {
+		return true
+	}
+
+	for _, nestedRoute := range route.Routes {
+		if hasRouteSelector(nestedRoute) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// getRouteSelectors returns a list of all route selectors specified on a notification policy
+// in either the Route.RouteSelector or any of its Routes
+func getRouteSelectors(route *grafanav1beta1.Route) []*metav1.LabelSelector {
+	if route == nil {
+		return nil
+	}
+
+	var selectors []*metav1.LabelSelector
+
+	if route.RouteSelector != nil {
+		selectors = append(selectors, route.RouteSelector)
+	}
+
+	for _, nestedRoute := range route.Routes {
+		selectors = append(selectors, getRouteSelectors(nestedRoute)...)
+	}
+
+	return selectors
+}
+
+// statusDiscoveredRoutes returns the list of discovered routes using the namespace and name
+// Used to display all discovered routes in the GrafanaNotificationPolicy status
+func statusDiscoveredRoutes(routes []*v1beta1.GrafanaNotificationPolicyRoute) []string {
+	discoveredRoutes := make([]string, len(routes))
+	for i, route := range routes {
+		discoveredRoutes[i] = fmt.Sprintf("%s/%s", route.Namespace, route.Name)
+	}
+
+	return discoveredRoutes
 }
