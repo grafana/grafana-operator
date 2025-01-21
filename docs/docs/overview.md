@@ -11,7 +11,7 @@ Due to this the Grafana operator has to constantly poll the Grafana API to test 
 To control how often this polling should occur, you can set the `spec.resyncPeriod` field.
 This field tells the operator how often it should poll the Grafana instance for changes.
 
-So, if for example, a dashboard has changed, the operator comes in and overwrite those settings after `5m` by default.
+So, if for example, a dashboard has changed, the operator comes in and overwrite those settings after `10m` by default.
 If you never want the operator to poll for changes in the dashboards you need to set this value to `0m`:
 
 ```yaml

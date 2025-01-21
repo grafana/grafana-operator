@@ -117,22 +117,19 @@ type AlertQuery struct {
 	RelativeTimeRange *models.RelativeTimeRange `json:"relativeTimeRange,omitempty"`
 }
 
-// GrafanaAlertRuleGroupStatus defines the observed state of GrafanaAlertRuleGroup
-type GrafanaAlertRuleGroupStatus struct {
-	Conditions []metav1.Condition `json:"conditions"`
-}
-
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
 // GrafanaAlertRuleGroup is the Schema for the grafanaalertrulegroups API
+// +kubebuilder:printcolumn:name="Last resync",type="date",format="date-time",JSONPath=".status.lastResync",description=""
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""
 // +kubebuilder:resource:categories={grafana-operator}
 type GrafanaAlertRuleGroup struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   GrafanaAlertRuleGroupSpec   `json:"spec,omitempty"`
-	Status GrafanaAlertRuleGroupStatus `json:"status,omitempty"`
+	Spec   GrafanaAlertRuleGroupSpec `json:"spec,omitempty"`
+	Status GrafanaCommonStatus       `json:"status,omitempty"`
 }
 
 // GroupName returns the name of alert rule group.
@@ -167,6 +164,18 @@ func (in *GrafanaAlertRuleGroup) FolderRef() string {
 // FolderUID implements FolderReferencer.
 func (in *GrafanaAlertRuleGroup) FolderUID() string {
 	return in.Spec.FolderUID
+}
+
+func (in *GrafanaAlertRuleGroup) MatchLabels() *metav1.LabelSelector {
+	return in.Spec.InstanceSelector
+}
+
+func (in *GrafanaAlertRuleGroup) MatchNamespace() string {
+	return in.ObjectMeta.Namespace
+}
+
+func (in *GrafanaAlertRuleGroup) AllowCrossNamespace() bool {
+	return in.Spec.AllowCrossNamespaceImport
 }
 
 var _ operatorapi.FolderReferencer = (*GrafanaAlertRuleGroup)(nil)

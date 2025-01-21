@@ -17,10 +17,17 @@ limitations under the License.
 package controllers
 
 import (
+	"context"
 	"testing"
 
+	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 func TestLabelsSatisfyMatchExpressions(t *testing.T) {
@@ -226,3 +233,106 @@ func TestLabelsSatisfyMatchExpressions(t *testing.T) {
 		})
 	}
 }
+
+var _ = Describe("GetMatchingInstances functions", Ordered, func() {
+	namespace := corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "get-matching-test",
+		},
+	}
+	allowFolder := v1beta1.GrafanaFolder{
+		TypeMeta: v1.TypeMeta{
+			APIVersion: "grafana.integreatly.org/v1beta1",
+			Kind:       "GrafanaFolder",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "allow-cross-namespace",
+			Namespace: namespace.Name,
+		},
+		Spec: v1beta1.GrafanaFolderSpec{
+			GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
+				AllowCrossNamespaceImport: true,
+				InstanceSelector: &v1.LabelSelector{
+					MatchLabels: map[string]string{
+						"test": "folder",
+					},
+				},
+			},
+		},
+	}
+	// Create duplicate resources, changing key fields
+	denyFolder := allowFolder.DeepCopy()
+	denyFolder.Name = "deny-cross-namespace"
+	denyFolder.Spec.AllowCrossNamespaceImport = false
+
+	matchAllFolder := allowFolder.DeepCopy()
+	matchAllFolder.Name = "invalid-match-labels"
+	matchAllFolder.Spec.InstanceSelector = &metav1.LabelSelector{} // InstanceSelector is never nil
+
+	DefaultGrafana := v1beta1.Grafana{
+		TypeMeta: v1.TypeMeta{
+			APIVersion: "grafana.integreatly.org/v1beta1",
+			Kind:       "Grafana",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "instance",
+			Namespace: "default",
+			Labels: map[string]string{
+				"test": "folder",
+			},
+		},
+		Spec: v1beta1.GrafanaSpec{},
+	}
+	matchesNothingGrafana := DefaultGrafana.DeepCopy()
+	matchesNothingGrafana.Name = "match-nothing-instance"
+	matchesNothingGrafana.Labels = nil
+
+	secondNamespaceGrafana := DefaultGrafana.DeepCopy()
+	secondNamespaceGrafana.Name = "second-namespace-instance"
+	secondNamespaceGrafana.Namespace = namespace.Name
+
+	// Status update is skipped for this
+	unreadyGrafana := DefaultGrafana.DeepCopy()
+	unreadyGrafana.Name = "unready-instance"
+
+	ctx := context.Background()
+	// Pre-create all resources
+	BeforeAll(func() { // Necessary to use assertions
+		Expect(k8sClient.Create(ctx, &namespace)).NotTo(HaveOccurred())
+		Expect(k8sClient.Create(ctx, &allowFolder)).NotTo(HaveOccurred())
+		Expect(k8sClient.Create(ctx, denyFolder)).NotTo(HaveOccurred())
+		Expect(k8sClient.Create(ctx, matchAllFolder)).NotTo(HaveOccurred())
+		Expect(k8sClient.Create(ctx, unreadyGrafana)).NotTo(HaveOccurred())
+
+		grafanas := []v1beta1.Grafana{DefaultGrafana, *matchesNothingGrafana, *secondNamespaceGrafana}
+		for _, instance := range grafanas {
+			Expect(k8sClient.Create(ctx, &instance)).NotTo(HaveOccurred())
+
+			// Apply status to pass instance ready check
+			instance.Status.Stage = v1beta1.OperatorStageComplete
+			instance.Status.StageStatus = v1beta1.OperatorStageResultSuccess
+			Expect(k8sClient.Status().Update(ctx, &instance)).ToNot(HaveOccurred())
+		}
+	})
+
+	Context("Ensure AllowCrossNamespaceImport is upheld by GetScopedMatchingInstances", func() {
+		testLog := log.FromContext(ctx).WithSink(log.NullLogSink{})
+		It("Finds all ready instances when instanceSelector is empty", func() {
+			instances, err := GetScopedMatchingInstances(testLog, ctx, k8sClient, matchAllFolder)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(instances).To(HaveLen(3))
+		})
+		It("Finds all ready and Matching instances", func() {
+			instances, err := GetScopedMatchingInstances(testLog, ctx, k8sClient, &allowFolder)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(instances).ToNot(BeEmpty())
+			Expect(instances).To(HaveLen(2))
+		})
+		It("Finds matching and ready and matching instance in namespace", func() {
+			instances, err := GetScopedMatchingInstances(testLog, ctx, k8sClient, denyFolder)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(instances).ToNot(BeEmpty())
+			Expect(instances).To(HaveLen(1))
+		})
+	})
+})

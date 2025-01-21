@@ -24,7 +24,6 @@ import (
 	"os"
 	"reflect"
 	"strings"
-	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/grafana/grafana-operator/v5/controllers/config"
@@ -43,10 +42,6 @@ import (
 
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
-)
-
-const (
-	RequeueDelay = 10 * time.Second
 )
 
 // GrafanaReconciler reconciles a Grafana object
@@ -69,6 +64,7 @@ type GrafanaReconciler struct {
 
 func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	controllerLog := log.FromContext(ctx).WithName("GrafanaReconciler")
+	r.Log = controllerLog
 
 	grafana := &grafanav1beta1.Grafana{}
 	err := r.Get(ctx, req.NamespacedName, grafana)

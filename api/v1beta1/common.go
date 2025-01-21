@@ -5,6 +5,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// WARN Run `make` on all file changes
+
 type ValueFrom struct {
 	TargetPath string          `json:"targetPath"`
 	ValueFrom  ValueFromSource `json:"valueFrom"`
@@ -22,6 +24,7 @@ type ValueFromSource struct {
 
 // Common Options that all CRs should embed, excluding GrafanaSpec
 // Ensure alignment on handling ResyncPeriod, InstanceSelector, and AllowCrossNamespaceImport
+// +kubebuilder:validation:XValidation:rule="!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport)", message="disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state"
 type GrafanaCommonSpec struct {
 	// How often the resource is synced, defaults to 10m0s if not set
 	// +optional
@@ -37,5 +40,22 @@ type GrafanaCommonSpec struct {
 
 	// Allow the Operator to match this resource with Grafanas outside the current namespace
 	// +optional
-	AllowCrossNamespaceImport *bool `json:"allowCrossNamespaceImport,omitempty"`
+	// +kubebuilder:default=false
+	AllowCrossNamespaceImport bool `json:"allowCrossNamespaceImport,omitempty"`
+}
+
+// Common Functions that all CRs should implement, excluding Grafana
+// +kubebuilder:object:generate=false
+type CommonResource interface {
+	MatchLabels() *metav1.LabelSelector
+	MatchNamespace() string
+	AllowCrossNamespace() bool
+}
+
+// The most recent observed state of a Grafana resource
+type GrafanaCommonStatus struct {
+	// Results when synchonizing resource with Grafana instances
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	// Last time the resource was synchronized with Grafana instances
+	LastResync metav1.Time `json:"lastResync,omitempty"`
 }

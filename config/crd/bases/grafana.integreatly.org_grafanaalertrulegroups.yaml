@@ -16,7 +16,15 @@ spec:
     singular: grafanaalertrulegroup
   scope: Namespaced
   versions:
-  - name: v1beta1
+  - additionalPrinterColumns:
+    - format: date-time
+      jsonPath: .status.lastResync
+      name: Last resync
+      type: date
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1beta1
     schema:
       openAPIV3Schema:
         description: GrafanaAlertRuleGroup is the Schema for the grafanaalertrulegroups
@@ -43,6 +51,7 @@ spec:
             description: GrafanaAlertRuleGroupSpec defines the desired state of GrafanaAlertRuleGroup
             properties:
               allowCrossNamespaceImport:
+                default: false
                 description: Allow the Operator to match this resource with Grafanas
                   outside the current namespace
                 type: boolean
@@ -246,11 +255,15 @@ spec:
             - message: spec.editable is immutable
               rule: ((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable)
                 && has(self.editable)))
+            - message: disabling spec.allowCrossNamespaceImport requires a recreate
+                to ensure desired state
+              rule: '!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport
+                && self.allowCrossNamespaceImport)'
           status:
-            description: GrafanaAlertRuleGroupStatus defines the observed state of
-              GrafanaAlertRuleGroup
+            description: The most recent observed state of a Grafana resource
             properties:
               conditions:
+                description: Results when synchonizing resource with Grafana instances
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -306,8 +319,11 @@ spec:
                   - type
                   type: object
                 type: array
-            required:
-            - conditions
+              lastResync:
+                description: Last time the resource was synchronized with Grafana
+                  instances
+                format: date-time
+                type: string
             type: object
         type: object
     served: true

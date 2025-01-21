@@ -53,6 +53,7 @@ spec:
             description: GrafanaDashboardSpec defines the desired state of GrafanaDashboard
             properties:
               allowCrossNamespaceImport:
+                default: false
                 description: Allow the Operator to match this resource with Grafanas
                   outside the current namespace
                 type: boolean
@@ -408,6 +409,10 @@ spec:
             - message: spec.uid is immutable
               rule: ((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) &&
                 has(self.uid)))
+            - message: disabling spec.allowCrossNamespaceImport requires a recreate
+                to ensure desired state
+              rule: '!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport
+                && self.allowCrossNamespaceImport)'
           status:
             description: GrafanaDashboardStatus defines the observed state of GrafanaDashboard
             properties:
@@ -416,6 +421,7 @@ spec:
                   instances
                 type: boolean
               conditions:
+                description: Results when synchonizing resource with Grafana instances
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -482,7 +488,8 @@ spec:
               hash:
                 type: string
               lastResync:
-                description: Last time the dashboard was resynced
+                description: Last time the resource was synchronized with Grafana
+                  instances
                 format: date-time
                 type: string
               uid:

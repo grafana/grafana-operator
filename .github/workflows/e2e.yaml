@@ -25,7 +25,7 @@ jobs:
 
       - id: changed-files
         name: Get changed files
-        uses: tj-actions/changed-files@bab30c2299617f6615ec02a68b9a40d10bd21366 #v45.0.5
+        uses: tj-actions/changed-files@d6e91a2266cdb9d62096cebf1e8546899c6aa18f #v45.0.6
         with:
           files_ignore: |
             **/*.md
@@ -70,7 +70,7 @@ jobs:
           cache: true
 
       - name: Install ko
-        uses: ko-build/setup-ko@v0.7
+        uses: ko-build/setup-ko@v0.8
         with:
           version: v0.16.0
 

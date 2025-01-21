@@ -58,14 +58,11 @@ type GrafanaFolderSpec struct {
 
 // GrafanaFolderStatus defines the observed state of GrafanaFolder
 type GrafanaFolderStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	GrafanaCommonStatus `json:",inline"`
+
 	Hash string `json:"hash,omitempty"`
 	// The folder instanceSelector can't find matching grafana instances
 	NoMatchingInstances bool `json:"NoMatchingInstances,omitempty"`
-	// Last time the folder was resynced
-	LastResync metav1.Time        `json:"lastResync,omitempty"`
-	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -73,6 +70,7 @@ type GrafanaFolderStatus struct {
 
 // GrafanaFolder is the Schema for the grafanafolders API
 // +kubebuilder:printcolumn:name="No matching instances",type="boolean",JSONPath=".status.NoMatchingInstances",description=""
+// +kubebuilder:printcolumn:name="Last resync",type="date",format="date-time",JSONPath=".status.lastResync",description=""
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""
 // +kubebuilder:resource:categories={grafana-operator}
 type GrafanaFolder struct {
@@ -151,13 +149,6 @@ func (in *GrafanaFolder) Unchanged() bool {
 	return in.Hash() == in.Status.Hash
 }
 
-func (in *GrafanaFolder) IsAllowCrossNamespaceImport() bool {
-	if in.Spec.AllowCrossNamespaceImport != nil {
-		return *in.Spec.AllowCrossNamespaceImport
-	}
-	return false
-}
-
 func (in *GrafanaFolder) GetTitle() string {
 	if in.Spec.Title != "" {
 		return in.Spec.Title
@@ -169,4 +160,16 @@ func (in *GrafanaFolder) GetTitle() string {
 func (in *GrafanaFolder) ResyncPeriodHasElapsed() bool {
 	deadline := in.Status.LastResync.Add(in.Spec.ResyncPeriod.Duration)
 	return time.Now().After(deadline)
+}
+
+func (in *GrafanaFolder) MatchLabels() *metav1.LabelSelector {
+	return in.Spec.InstanceSelector
+}
+
+func (in *GrafanaFolder) MatchNamespace() string {
+	return in.ObjectMeta.Namespace
+}
+
+func (in *GrafanaFolder) AllowCrossNamespace() bool {
+	return in.Spec.AllowCrossNamespaceImport
 }

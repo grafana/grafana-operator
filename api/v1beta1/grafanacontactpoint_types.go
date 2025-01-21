@@ -45,28 +45,23 @@ type GrafanaContactPointSpec struct {
 	// +kubebuilder:validation:MaxItems=99
 	ValuesFrom []ValueFrom `json:"valuesFrom,omitempty"`
 
-	// +kubebuilder:validation:Enum=alertmanager;prometheus-alertmanager;dingding;discord;email;googlechat;kafka;line;opsgenie;pagerduty;pushover;sensugo;sensu;slack;teams;telegram;threema;victorops;webhook;wecom;hipchat;oncall
+	// +kubebuilder:validation:Enum=alertmanager;prometheus-alertmanager;dingding;discord;email;googlechat;kafka;line;opsgenie;pagerduty;pushover;sensugo;sensu;slack;teams;telegram;threema;victorops;webex;webhook;wecom;hipchat;oncall
 	Type string `json:"type,omitempty"`
-}
-
-// GrafanaContactPointStatus defines the observed state of GrafanaContactPoint
-type GrafanaContactPointStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-	Conditions []metav1.Condition `json:"conditions"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
 // GrafanaContactPoint is the Schema for the grafanacontactpoints API
+// +kubebuilder:printcolumn:name="Last resync",type="date",format="date-time",JSONPath=".status.lastResync",description=""
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""
 // +kubebuilder:resource:categories={grafana-operator}
 type GrafanaContactPoint struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   GrafanaContactPointSpec   `json:"spec,omitempty"`
-	Status GrafanaContactPointStatus `json:"status,omitempty"`
+	Spec   GrafanaContactPointSpec `json:"spec,omitempty"`
+	Status GrafanaCommonStatus     `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -84,6 +79,18 @@ func (in *GrafanaContactPoint) CustomUIDOrUID() string {
 		return in.Spec.CustomUID
 	}
 	return string(in.ObjectMeta.UID)
+}
+
+func (in *GrafanaContactPoint) MatchLabels() *metav1.LabelSelector {
+	return in.Spec.InstanceSelector
+}
+
+func (in *GrafanaContactPoint) MatchNamespace() string {
+	return in.ObjectMeta.Namespace
+}
+
+func (in *GrafanaContactPoint) AllowCrossNamespace() bool {
+	return in.Spec.AllowCrossNamespaceImport
 }
 
 func init() {

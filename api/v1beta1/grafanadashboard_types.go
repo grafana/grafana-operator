@@ -165,17 +165,15 @@ type GrafanaComDashboardReference struct {
 
 // GrafanaDashboardStatus defines the observed state of GrafanaDashboard
 type GrafanaDashboardStatus struct {
+	GrafanaCommonStatus `json:",inline"`
+
 	ContentCache     []byte      `json:"contentCache,omitempty"`
 	ContentTimestamp metav1.Time `json:"contentTimestamp,omitempty"`
 	ContentUrl       string      `json:"contentUrl,omitempty"`
 	Hash             string      `json:"hash,omitempty"`
 	// The dashboard instanceSelector can't find matching grafana instances
-	NoMatchingInstances bool `json:"NoMatchingInstances,omitempty"`
-	// Last time the dashboard was resynced
-	LastResync metav1.Time `json:"lastResync,omitempty"`
-	UID        string      `json:"uid,omitempty"`
-
-	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	NoMatchingInstances bool   `json:"NoMatchingInstances,omitempty"`
+	UID                 string `json:"uid,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -308,10 +306,7 @@ func (in *GrafanaDashboardStatus) getContentCache(url string, cacheDuration time
 }
 
 func (in *GrafanaDashboard) IsAllowCrossNamespaceImport() bool {
-	if in.Spec.AllowCrossNamespaceImport != nil {
-		return *in.Spec.AllowCrossNamespaceImport
-	}
-	return false
+	return in.Spec.AllowCrossNamespaceImport
 }
 
 func (in *GrafanaDashboard) IsUpdatedUID(uid string) bool {

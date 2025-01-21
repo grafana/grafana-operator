@@ -37,6 +37,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -58,7 +59,6 @@ type GrafanaFolderReconciler struct {
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanafolders/finalizers,verbs=update
 
 func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result, error) {
-	syncLog := log.FromContext(ctx).WithName("GrafanaFolderReconciler")
 	foldersSynced := 0
 
 	// get all grafana instances
@@ -66,9 +66,7 @@ func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result,
 	var opts []client.ListOption
 	err := r.Client.List(ctx, grafanas, opts...)
 	if err != nil {
-		return ctrl.Result{
-			Requeue: true,
-		}, err
+		return ctrl.Result{}, err
 	}
 
 	// no instances, no need to sync
@@ -80,9 +78,7 @@ func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result,
 	allFolders := &grafanav1beta1.GrafanaFolderList{}
 	err = r.Client.List(ctx, allFolders, opts...)
 	if err != nil {
-		return ctrl.Result{
-			Requeue: true,
-		}, err
+		return ctrl.Result{}, err
 	}
 
 	// sync folders, delete folders from grafana that do no longer have a cr
@@ -100,7 +96,7 @@ func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result,
 	for grafana, existingFolders := range foldersToDelete {
 		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 		if err != nil {
-			return ctrl.Result{Requeue: true}, err
+			return ctrl.Result{}, err
 		}
 
 		for _, folder := range existingFolders {
@@ -119,9 +115,9 @@ func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result,
 			if err != nil {
 				var notFound *folders.DeleteFolderNotFound
 				if errors.As(err, &notFound) {
-					syncLog.Info("folder no longer exists", "namespace", namespace, "name", name)
+					r.Log.Info("folder no longer exists", "namespace", namespace, "name", name)
 				} else {
-					return ctrl.Result{Requeue: false}, err
+					return ctrl.Result{}, err
 				}
 			}
 
@@ -133,12 +129,12 @@ func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result,
 		// so we should minimize those updates
 		err = r.Client.Status().Update(ctx, grafana)
 		if err != nil {
-			return ctrl.Result{Requeue: false}, err
+			return ctrl.Result{}, err
 		}
 	}
 
 	if foldersSynced > 0 {
-		syncLog.Info("successfully synced folders", "folders", foldersSynced)
+		r.Log.Info("successfully synced folders", "folders", foldersSynced)
 	}
 	return ctrl.Result{Requeue: false}, nil
 }
@@ -153,8 +149,7 @@ func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result,
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.9.2/pkg/reconcile
 func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	controllerLog := log.FromContext(ctx).WithName("GrafanaFolderReconciler")
-	r.Log = controllerLog
+	r.Log = log.FromContext(ctx).WithName("GrafanaFolderReconciler")
 
 	// periodic sync reconcile
 	if req.Namespace == "" && req.Name == "" {
@@ -166,24 +161,44 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	folder := &grafanav1beta1.GrafanaFolder{}
-
 	err := r.Client.Get(ctx, client.ObjectKey{
 		Namespace: req.Namespace,
 		Name:      req.Name,
 	}, folder)
 	if err != nil {
 		if kuberr.IsNotFound(err) {
-			if err := r.onFolderDeleted(ctx, req.Namespace, req.Name); err != nil {
-				return ctrl.Result{RequeueAfter: RequeueDelay}, err
-			}
 			return ctrl.Result{}, nil
 		}
-		controllerLog.Error(err, "error getting grafana folder cr")
-		return ctrl.Result{RequeueAfter: RequeueDelay}, err
+		return ctrl.Result{}, fmt.Errorf("error getting grafana folder cr: %w", err)
 	}
+
+	if folder.GetDeletionTimestamp() != nil {
+		// Check if resource needs clean up
+		if controllerutil.ContainsFinalizer(folder, grafanaFinalizer) {
+			if err := r.finalize(ctx, folder); err != nil {
+				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaFolder: %w", err)
+			}
+			if err := removeFinalizer(ctx, r.Client, folder); err != nil {
+				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
+			}
+		}
+		return ctrl.Result{}, nil
+	}
+
 	defer func() {
-		if err := r.UpdateStatus(ctx, folder); err != nil {
+		folder.Status.Hash = folder.Hash()
+		folder.Status.LastResync = metav1.Time{Time: time.Now()}
+		if err := r.Status().Update(ctx, folder); err != nil {
 			r.Log.Error(err, "updating status")
+		}
+		if meta.IsStatusConditionTrue(folder.Status.Conditions, conditionNoMatchingInstance) {
+			if err := removeFinalizer(ctx, r.Client, folder); err != nil {
+				r.Log.Error(err, "failed to remove finalizer")
+			}
+		} else {
+			if err := addFinalizer(ctx, r.Client, folder); err != nil {
+				r.Log.Error(err, "failed to set finalizer")
+			}
 		}
 	}()
 
@@ -194,50 +209,42 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 	removeInvalidSpec(&folder.Status.Conditions)
 
-	instances, err := r.GetMatchingFolderInstances(ctx, folder, r.Client)
+	instances, err := GetScopedMatchingInstances(r.Log, ctx, r.Client, folder)
 	if err != nil {
-		setNoMatchingInstance(&folder.Status.Conditions, folder.Generation, "ErrFetchingInstances", fmt.Sprintf("error occurred during fetching of instances: %s", err.Error()))
+		setNoMatchingInstancesCondition(&folder.Status.Conditions, folder.Generation, err)
 		meta.RemoveStatusCondition(&folder.Status.Conditions, conditionFolderSynchronized)
-		r.Log.Error(err, "could not find matching instances")
-		return ctrl.Result{}, err
+		folder.Status.NoMatchingInstances = true
+		return ctrl.Result{}, fmt.Errorf("failed fetching instances: %w", err)
 	}
-	if len(instances.Items) == 0 {
-		setNoMatchingInstance(&folder.Status.Conditions, folder.Generation, "EmptyAPIReply", "Instances could not be fetched, reconciliation will be retried")
+
+	if len(instances) == 0 {
+		setNoMatchingInstancesCondition(&folder.Status.Conditions, folder.Generation, err)
 		meta.RemoveStatusCondition(&folder.Status.Conditions, conditionFolderSynchronized)
-		return ctrl.Result{}, fmt.Errorf("no instances found")
-	}
-	removeNoMatchingInstance(&folder.Status.Conditions)
-	controllerLog.Info("found matching Grafana instances for folder", "count", len(instances.Items))
-
-	applyErrors := make(map[string]string)
-	for _, grafana := range instances.Items {
-		// check if this is a cross namespace import
-		if grafana.Namespace != folder.Namespace && !folder.IsAllowCrossNamespaceImport() {
-			continue
-		}
-
-		grafana := grafana
-		if grafana.Status.Stage != grafanav1beta1.OperatorStageComplete || grafana.Status.StageStatus != grafanav1beta1.OperatorStageResultSuccess {
-			controllerLog.Info("grafana instance not ready", "grafana", grafana.Name)
-			continue
-		}
-
-		err = r.onFolderCreated(ctx, &grafana, folder)
-		if err != nil {
-			controllerLog.Error(err, "error reconciling folder", "folder", folder.Name, "grafana", grafana.Name)
-			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
-		}
-	}
-	condition := buildSynchronizedCondition("Folder", conditionFolderSynchronized, folder.Generation, applyErrors, len(instances.Items))
-	meta.SetStatusCondition(&folder.Status.Conditions, condition)
-
-	if len(applyErrors) != 0 {
+		folder.Status.NoMatchingInstances = true
 		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
-	if folder.ResyncPeriodHasElapsed() {
-		folder.Status.LastResync = metav1.Time{Time: time.Now()}
+	removeNoMatchingInstance(&folder.Status.Conditions)
+	folder.Status.NoMatchingInstances = false
+	r.Log.Info("found matching Grafana instances for folder", "count", len(instances))
+
+	applyErrors := make(map[string]string)
+	for _, grafana := range instances {
+		grafana := grafana
+
+		err = r.onFolderCreated(ctx, &grafana, folder)
+		if err != nil {
+			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
+		}
 	}
+
+	if len(applyErrors) > 0 {
+		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
+	}
+
+	condition := buildSynchronizedCondition("Folder", conditionFolderSynchronized, folder.Generation, applyErrors, len(instances))
+	meta.SetStatusCondition(&folder.Status.Conditions, condition)
+
 	return ctrl.Result{RequeueAfter: folder.Spec.ResyncPeriod.Duration}, nil
 }
 
@@ -245,20 +252,16 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 func (r *GrafanaFolderReconciler) SetupWithManager(mgr ctrl.Manager, ctx context.Context) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&grafanav1beta1.GrafanaFolder{}).
+		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
 
 	if err == nil {
-		d, err := time.ParseDuration(initialSyncDelay)
-		if err != nil {
-			return err
-		}
-
 		go func() {
 			for {
 				select {
 				case <-ctx.Done():
 					return
-				case <-time.After(d):
+				case <-time.After(initialSyncDelay):
 					result, err := r.Reconcile(ctx, ctrl.Request{})
 					if err != nil {
 						r.Log.Error(err, "error synchronizing folders")
@@ -278,24 +281,24 @@ func (r *GrafanaFolderReconciler) SetupWithManager(mgr ctrl.Manager, ctx context
 	return err
 }
 
-func (r *GrafanaFolderReconciler) onFolderDeleted(ctx context.Context, namespace string, name string) error {
-	list := grafanav1beta1.GrafanaList{}
-	var opts []client.ListOption
-	err := r.Client.List(ctx, &list, opts...)
+func (r *GrafanaFolderReconciler) finalize(ctx context.Context, folder *grafanav1beta1.GrafanaFolder) error {
+	instances, err := GetScopedMatchingInstances(r.Log, ctx, r.Client, folder)
 	if err != nil {
-		return err
+		return fmt.Errorf("fetching instances: %w", err)
 	}
 
-	for _, grafana := range list.Items {
+	reftrue := true
+	params := folders.NewDeleteFolderParams().WithForceDeleteRules(&reftrue)
+
+	for _, grafana := range instances {
 		grafana := grafana
-		if found, uid := grafana.Status.Folders.Find(namespace, name); found {
+		if found, uid := grafana.Status.Folders.Find(folder.Namespace, folder.Name); found {
 			grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 			if err != nil {
 				return err
 			}
-			reftrue := true
-			params := folders.NewDeleteFolderParams().WithFolderUID(*uid).WithForceDeleteRules(&reftrue)
-			_, err = grafanaClient.Folders.DeleteFolder(params) //nolint
+
+			_, err = grafanaClient.Folders.DeleteFolder(params.WithFolderUID(*uid)) //nolint
 			if err != nil {
 				var notFound *folders.DeleteFolderNotFound
 				if !errors.As(err, &notFound) {
@@ -303,10 +306,9 @@ func (r *GrafanaFolderReconciler) onFolderDeleted(ctx context.Context, namespace
 				}
 			}
 
-			grafana.Status.Folders = grafana.Status.Folders.Remove(namespace, name)
-			err = r.Client.Status().Update(ctx, &grafana)
-			if err != nil {
-				return err
+			grafana.Status.Folders = grafana.Status.Folders.Remove(folder.Namespace, folder.Name)
+			if err = r.Client.Status().Update(ctx, &grafana); err != nil {
+				return fmt.Errorf("removing Folder from Grafana cr: %w", err)
 			}
 		}
 	}
@@ -407,11 +409,6 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 	return nil
 }
 
-func (r *GrafanaFolderReconciler) UpdateStatus(ctx context.Context, cr *grafanav1beta1.GrafanaFolder) error {
-	cr.Status.Hash = cr.Hash()
-	return r.Client.Status().Update(ctx, cr)
-}
-
 // Check if the folder exists. Matches UID first and fall back to title. Title matching only works for non-nested folders
 func (r *GrafanaFolderReconciler) Exists(client *genapi.GrafanaHTTPAPI, cr *grafanav1beta1.GrafanaFolder) (bool, string, string, error) {
 	title := cr.GetTitle()
@@ -443,21 +440,4 @@ func (r *GrafanaFolderReconciler) Exists(client *genapi.GrafanaHTTPAPI, cr *graf
 		}
 		page++
 	}
-}
-
-func (r *GrafanaFolderReconciler) GetMatchingFolderInstances(ctx context.Context, folder *grafanav1beta1.GrafanaFolder, k8sClient client.Client) (grafanav1beta1.GrafanaList, error) {
-	instances, err := GetMatchingInstances(ctx, k8sClient, folder.Spec.InstanceSelector)
-	if err != nil || len(instances.Items) == 0 {
-		folder.Status.NoMatchingInstances = true
-		if err := r.Client.Status().Update(ctx, folder); err != nil {
-			r.Log.Info("unable to update the status of %v, in %v", folder.Name, folder.Namespace)
-		}
-		return grafanav1beta1.GrafanaList{}, err
-	}
-	folder.Status.NoMatchingInstances = false
-	if err := r.Client.Status().Update(ctx, folder); err != nil {
-		r.Log.Info("unable to update the status of %v, in %v", folder.Name, folder.Namespace)
-	}
-
-	return instances, err
 }

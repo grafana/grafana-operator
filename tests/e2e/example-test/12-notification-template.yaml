@@ -1,0 +1,28 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationTemplate
+metadata:
+  name: test
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  name: test
+  template: |
+    {{ define "SlackAlert" }}
+      [{{.Status}}] {{ .Labels.alertname }}
+      {{ .Annotations.AlertValues }}
+    {{ end }}
+
+    {{ define "SlackAlertMessage" }}
+      {{ if gt (len .Alerts.Firing) 0 }}
+        {{ len .Alerts.Firing }} firing:
+        {{ range .Alerts.Firing }} {{ template "SlackAlert" . }} {{ end }}
+      {{ end }}
+      {{ if gt (len .Alerts.Resolved) 0 }}
+        {{ len .Alerts.Resolved }} resolved:
+        {{ range .Alerts.Resolved }} {{ template "SlackAlert" . }} {{ end }}
+      {{ end }}
+    {{ end }}
+
+    {{ template "SlackAlertMessage" . }}

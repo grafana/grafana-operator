@@ -81,13 +81,13 @@ type GrafanaDatasourceSpec struct {
 
 // GrafanaDatasourceStatus defines the observed state of GrafanaDatasource
 type GrafanaDatasourceStatus struct {
+	GrafanaCommonStatus `json:",inline"`
+
 	Hash        string `json:"hash,omitempty"`
 	LastMessage string `json:"lastMessage,omitempty"`
 	// The datasource instanceSelector can't find matching grafana instances
-	NoMatchingInstances bool `json:"NoMatchingInstances,omitempty"`
-	// Last time the datasource was resynced
-	LastResync metav1.Time `json:"lastResync,omitempty"`
-	UID        string      `json:"uid,omitempty"`
+	NoMatchingInstances bool   `json:"NoMatchingInstances,omitempty"`
+	UID                 string `json:"uid,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -147,10 +147,7 @@ func (in *GrafanaDatasource) CustomUIDOrUID() string {
 }
 
 func (in *GrafanaDatasource) IsAllowCrossNamespaceImport() bool {
-	if in.Spec.AllowCrossNamespaceImport != nil {
-		return *in.Spec.AllowCrossNamespaceImport
-	}
-	return false
+	return in.Spec.AllowCrossNamespaceImport
 }
 
 func (in *GrafanaDatasourceList) Find(namespace string, name string) *GrafanaDatasource {

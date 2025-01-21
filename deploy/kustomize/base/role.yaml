@@ -64,6 +64,7 @@ rules:
   - grafanafolders
   - grafananotificationpolicies
   - grafananotificationpolicyroutes
+  - grafananotificationtemplates
   - grafanas
   verbs:
   - create
@@ -83,6 +84,7 @@ rules:
   - grafanafolders/finalizers
   - grafananotificationpolicies/finalizers
   - grafananotificationpolicyroutes/finalizers
+  - grafananotificationtemplates/finalizers
   - grafanas/finalizers
   verbs:
   - update
@@ -96,6 +98,7 @@ rules:
   - grafanafolders/status
   - grafananotificationpolicies/status
   - grafananotificationpolicyroutes/status
+  - grafananotificationtemplates/status
   - grafanas/status
   verbs:
   - get

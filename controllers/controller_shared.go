@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-logr/logr"
 	operatorapi "github.com/grafana/grafana-operator/v5/api"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -18,24 +19,37 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
-const grafanaFinalizer = "operator.grafana.com/finalizer"
-
 const (
+	// Synchronization size and timeout values
+	syncBatchSize    = 100
+	initialSyncDelay = 10 * time.Second
+	RequeueDelay     = 10 * time.Second
+
+	// condition types
 	conditionNoMatchingInstance = "NoMatchingInstance"
 	conditionNoMatchingFolder   = "NoMatchingFolder"
 	conditionInvalidSpec        = "InvalidSpec"
-)
 
-const annotationAppliedNotificationPolicy = "operator.grafana.com/applied-notificationpolicy"
+	// condition reasons
+	conditionApplySuccessful = "ApplySuccessful"
+	conditionApplyFailed     = "ApplyFailed"
+
+	// Finalizer
+	grafanaFinalizer = "operator.grafana.com/finalizer"
+)
 
 //+kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update;patch;delete
 
+// Gets all instances matching labelSelector
 func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSelector *metav1.LabelSelector) (v1beta1.GrafanaList, error) {
+	// Should never happen, sanity check
 	if labelSelector == nil {
 		return v1beta1.GrafanaList{}, nil
 	}
@@ -56,6 +70,60 @@ func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSel
 	}
 
 	return selectedList, err
+}
+
+// Only matching instances in the scope of the resource are returned
+// Resources with allowCrossNamespaceImport expands the scope to the entire cluster
+// Intended to be used in reconciler functions
+func GetScopedMatchingInstances(log logr.Logger, ctx context.Context, k8sClient client.Client, cr v1beta1.CommonResource) ([]v1beta1.Grafana, error) {
+	instanceSelector := cr.MatchLabels()
+
+	// Should never happen, sanity check
+	if instanceSelector == nil {
+		return []v1beta1.Grafana{}, nil
+	}
+
+	opts := []client.ListOption{
+		// Matches all instances when MatchLabels is undefined
+		client.MatchingLabels(instanceSelector.MatchLabels),
+	}
+
+	if !cr.AllowCrossNamespace() {
+		// Only query resource namespace
+		opts = append(opts, client.InNamespace(cr.MatchNamespace()))
+	}
+
+	var list v1beta1.GrafanaList
+	err := k8sClient.List(ctx, &list, opts...)
+	if err != nil {
+		return []v1beta1.Grafana{}, err
+	}
+
+	if len(list.Items) == 0 {
+		return []v1beta1.Grafana{}, nil
+	}
+
+	selectedList := []v1beta1.Grafana{}
+	var unready_instances []string
+	for _, instance := range list.Items {
+		// Matches all instances when MatchExpressions is undefined
+		selected := labelsSatisfyMatchExpressions(instance.Labels, instanceSelector.MatchExpressions)
+		if !selected {
+			continue
+		}
+		// admin url is required to interact with Grafana
+		// the instance or route might not yet be ready
+		if instance.Status.Stage != v1beta1.OperatorStageComplete || instance.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
+			unready_instances = append(unready_instances, instance.Name)
+			continue
+		}
+		selectedList = append(selectedList, instance)
+	}
+	if len(unready_instances) > 0 {
+		log.Info("Grafana instances not ready, excluded from matching", "instances", unready_instances)
+	}
+
+	return selectedList, nil
 }
 
 // getFolderUID fetches the folderUID from an existing GrafanaFolder CR declared in the specified namespace
@@ -145,16 +213,25 @@ func ReconcilePlugins(ctx context.Context, k8sClient client.Client, scheme *runt
 	return nil
 }
 
-func setNoMatchingInstance(conditions *[]metav1.Condition, generation int64, reason, message string) {
+// Correctly determine cause of no matching instance from error
+func setNoMatchingInstancesCondition(conditions *[]metav1.Condition, generation int64, err error) {
+	var reason, message string
+	if err != nil {
+		reason = "ErrFetchingInstances"
+		message = fmt.Sprintf("error occurred during fetching of instances: %s", err.Error())
+	} else {
+		reason = "EmptyAPIReply"
+		message = "Instances could not be fetched, reconciliation will be retried"
+	}
 	meta.SetStatusCondition(conditions, metav1.Condition{
 		Type:               conditionNoMatchingInstance,
-		Status:             "True",
+		Status:             metav1.ConditionTrue,
 		ObservedGeneration: generation,
+		Reason:             reason,
+		Message:            message,
 		LastTransitionTime: metav1.Time{
 			Time: time.Now(),
 		},
-		Reason:  reason,
-		Message: message,
 	})
 }
 
@@ -165,7 +242,7 @@ func removeNoMatchingInstance(conditions *[]metav1.Condition) {
 func setNoMatchingFolder(conditions *[]metav1.Condition, generation int64, reason, message string) {
 	meta.SetStatusCondition(conditions, metav1.Condition{
 		Type:               conditionNoMatchingFolder,
-		Status:             "True",
+		Status:             metav1.ConditionTrue,
 		ObservedGeneration: generation,
 		LastTransitionTime: metav1.Time{
 			Time: time.Now(),
@@ -182,7 +259,7 @@ func removeNoMatchingFolder(conditions *[]metav1.Condition) {
 func setInvalidSpec(conditions *[]metav1.Condition, generation int64, reason, message string) {
 	meta.SetStatusCondition(conditions, metav1.Condition{
 		Type:               conditionInvalidSpec,
-		Status:             "True",
+		Status:             metav1.ConditionTrue,
 		ObservedGeneration: generation,
 		LastTransitionTime: metav1.Time{
 			Time: time.Now(),
@@ -215,12 +292,12 @@ func buildSynchronizedCondition(resource string, syncType string, generation int
 	}
 
 	if len(applyErrors) == 0 {
-		condition.Status = "True"
-		condition.Reason = "ApplySuccessful"
+		condition.Status = metav1.ConditionTrue
+		condition.Reason = conditionApplySuccessful
 		condition.Message = fmt.Sprintf("%s was successfully applied to %d instances", resource, total)
 	} else {
-		condition.Status = "False"
-		condition.Reason = "ApplyFailed"
+		condition.Status = metav1.ConditionFalse
+		condition.Reason = conditionApplyFailed
 
 		var sb strings.Builder
 		for i, err := range applyErrors {
@@ -257,4 +334,36 @@ func getReferencedValue(ctx context.Context, cl client.Client, cr metav1.ObjectM
 			return "", "", fmt.Errorf("missing key %s in configmap %s", source.ConfigMapKeyRef.Key, source.ConfigMapKeyRef.Name)
 		}
 	}
+}
+
+// Add finalizer through a MergePatch
+// Avoids updating the entire object and only changes the finalizers
+func addFinalizer(ctx context.Context, cl client.Client, cr client.Object) error {
+	// Only update when changed
+	if controllerutil.AddFinalizer(cr, grafanaFinalizer) {
+		return patchFinalizers(ctx, cl, cr)
+	}
+	return nil
+}
+
+// Remove finalizer through a MergePatch
+// Avoids updating the entire object and only changes the finalizers
+func removeFinalizer(ctx context.Context, cl client.Client, cr client.Object) error {
+	// Only update when changed
+	if controllerutil.RemoveFinalizer(cr, grafanaFinalizer) {
+		return patchFinalizers(ctx, cl, cr)
+	}
+	return nil
+}
+
+// Helper func for add/remove, avoid using directly
+func patchFinalizers(ctx context.Context, cl client.Client, cr client.Object) error {
+	crFinalizers := cr.GetFinalizers()
+
+	// Create patch using slice
+	patch, err := json.Marshal(map[string]interface{}{"metadata": map[string]interface{}{"finalizers": crFinalizers}})
+	if err != nil {
+		return err
+	}
+	return cl.Patch(ctx, cr, client.RawPatch(types.MergePatchType, patch))
 }

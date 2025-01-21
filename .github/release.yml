@@ -1,11 +1,17 @@
 changelog:
+  exclude:
+    labels:
+      - documentation
+      - chore
+      - refactor
+      - release-ignore
   categories:
-    - title: Changes
+    - title: Features
       labels:
-        - '*'
-      exclude:
-        labels:
-          - dependencies
+        - 'feature'
+    - title: Fixes
+      labels:
+        - 'bugfix'
     - title: Dependencies
       labels:
         - dependencies

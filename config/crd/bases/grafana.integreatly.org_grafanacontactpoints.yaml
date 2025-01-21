@@ -16,7 +16,15 @@ spec:
     singular: grafanacontactpoint
   scope: Namespaced
   versions:
-  - name: v1beta1
+  - additionalPrinterColumns:
+    - format: date-time
+      jsonPath: .status.lastResync
+      name: Last resync
+      type: date
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1beta1
     schema:
       openAPIV3Schema:
         description: GrafanaContactPoint is the Schema for the grafanacontactpoints
@@ -43,6 +51,7 @@ spec:
             description: GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
             properties:
               allowCrossNamespaceImport:
+                default: false
                 description: Allow the Operator to match this resource with Grafanas
                   outside the current namespace
                 type: boolean
@@ -128,6 +137,7 @@ spec:
                 - telegram
                 - threema
                 - victorops
+                - webex
                 - webhook
                 - wecom
                 - hipchat
@@ -214,13 +224,15 @@ spec:
             - message: spec.uid is immutable
               rule: ((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) &&
                 has(self.uid)))
+            - message: disabling spec.allowCrossNamespaceImport requires a recreate
+                to ensure desired state
+              rule: '!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport
+                && self.allowCrossNamespaceImport)'
           status:
-            description: GrafanaContactPointStatus defines the observed state of GrafanaContactPoint
+            description: The most recent observed state of a Grafana resource
             properties:
               conditions:
-                description: |-
-                  INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-                  Important: Run "make" to regenerate code after modifying this file
+                description: Results when synchonizing resource with Grafana instances
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -276,8 +288,11 @@ spec:
                   - type
                   type: object
                 type: array
-            required:
-            - conditions
+              lastResync:
+                description: Last time the resource was synchronized with Grafana
+                  instances
+                format: date-time
+                type: string
             type: object
         type: object
     served: true

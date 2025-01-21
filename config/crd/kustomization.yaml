@@ -10,6 +10,7 @@ resources:
 - bases/grafana.integreatly.org_grafanacontactpoints.yaml
 - bases/grafana.integreatly.org_grafananotificationpolicies.yaml
 - bases/grafana.integreatly.org_grafananotificationpolicyroutes.yaml
+- bases/grafana.integreatly.org_grafananotificationtemplates.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
