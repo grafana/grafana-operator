@@ -28,11 +28,6 @@ type GrafanaNotificationPolicyRouteSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Maximum=100
-	// +optional
-	Priority *int8 `json:"priority,omitempty"`
-
 	// Route for alerts to match against
 	Route *Route `json:"route"`
 }

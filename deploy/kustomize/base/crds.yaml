@@ -1937,10 +1937,6 @@ spec:
             description: GrafanaNotificationPolicyRouteSpec defines the desired state
               of GrafanaNotificationPolicyRoute
             properties:
-              priority:
-                maximum: 100
-                minimum: 1
-                type: integer
               route:
                 description: Route for alerts to match against
                 properties:
