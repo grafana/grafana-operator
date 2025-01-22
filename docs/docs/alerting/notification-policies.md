@@ -18,14 +18,20 @@ The following snippet shows an example notification policy routing to the `opera
 ## Dynamic Notification Policy Routes
 
 There might be scenarios where you can not define the entire notification policy in a single place and you have to assemble it from multiple resouces.
-In this case, you can use the `spec.routeSelector` in combination with multiple `GrafanaNotificationPolicyRoute` resources.
+In this case, you can use the `spec.route.routeSelector` in combination with multiple `GrafanaNotificationPolicyRoute` resources.
 
-All `GrafanaNotificationPolicyRoute` resources will then be discovered based on the label selector defined in `spec.routeSelector`.
+The `routeSelector` can be specified in any `route` object, including the list of `spec.route.routes`.
+
+All `GrafanaNotificationPolicyRoute` resources will then be discovered based on the label selector defined in `spec.route.routeSelector`.
 In case `spec.allowCrossNamespaceImport` is enabled, matching routes will be fetched from all namespaces.
 Otherwise only routes from the same namespace as the `GrafanaNotificationPolicy` will be discovered.
 
-All discovered routes will then get appended to the `spec.route.routes[]` of the `GrafanaNotificationPolicy` based on the priority defined in the `GrafanaNotificationPolicyRoute`.
-Priorities can be in the range 1-100 with `1` being merged first and `100` last. If no priority is specified, it is treated as a priority of `100`.
+All discovered routes will then get set on the `spec.route.routes[]` of the `GrafanaNotificationPolicy`.
+
+{{% alert title="Note" color="secondary" %}}
+The `spec.route.routes` and `spec.route.routeSelector` fields are mutually exclusive.
+When both fields are specified, the `routeSelector` takes precedence and overrides anything defined in `routes`.
+{{% /alert %}}
 
 The following shows an example of how dynamic routes will get merged.
 
@@ -50,6 +56,26 @@ policies:
             - - team
               - =
               - a
+          routes:
+            - receiver: grafana-default-email
+              object_matchers:
+                - - dynamic
+                  - =
+                  - e
+            - receiver: grafana-default-email
+              object_matchers:
+                - - crossNamespace
+                  - =
+                  - "true"
+                - - dynamic
+                  - =
+                  - c
+              routes:
+                - receiver: grafana-default-email
+                  object_matchers:
+                    - - dynamic
+                      - =
+                      - d
         - receiver: grafana-default-email
           object_matchers:
             - - inline
@@ -58,23 +84,4 @@ policies:
             - - team
               - =
               - b
-        - receiver: grafana-default-email
-          object_matchers:
-            - - crossNamespace
-              - =
-              - "true"
-            - - dynamic
-              - =
-              - c
-            - - priority
-              - =
-              - "1"
-        - receiver: grafana-default-email
-          object_matchers:
-            - - dynamic
-              - =
-              - d
-            - - priority
-              - =
-              - "2"
 ```

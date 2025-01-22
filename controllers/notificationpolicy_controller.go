@@ -131,7 +131,6 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 			namespace = &ns
 		}
 		assembledNotificationPolicy, mergedRoutes, err = assembleNotificationPolicyRoutes(ctx, r.Client, namespace, assembledNotificationPolicy)
-		r.Log.Info("assembled notification policy routes", "mergedRoutes", mergedRoutes)
 		if err != nil {
 			r.Log.Error(err, "failed to assemble GrafanaNotificationPolicy using routeSelectors")
 			return ctrl.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("failed to assemble GrafanaNotificationPolicy using routeSelectors: %w", err)
