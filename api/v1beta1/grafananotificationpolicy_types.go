@@ -129,6 +129,27 @@ func (r *Route) ToModelRoute() *models.Route {
 	return out
 }
 
+// isMutuallyExclusive checks if a single route satisfies the mutual exclusivity constraint
+func isMutuallyExclusive(r *Route) bool {
+	return !(r.RouteSelector != nil && len(r.Routes) > 0)
+}
+
+// IsRouteSelectorMutuallyExclusive returns true when the route and all its sub-routes
+// satisfy the constraint of routes and routeSelector being mutually exclusive
+func (r *Route) IsRouteSelectorMutuallyExclusive() bool {
+	if !isMutuallyExclusive(r) {
+		return false
+	}
+
+	// Recursively check all child routes
+	for _, childRoute := range r.Routes {
+		if !childRoute.IsRouteSelectorMutuallyExclusive() {
+			return false
+		}
+	}
+	return true
+}
+
 // GrafanaNotificationPolicyStatus defines the observed state of GrafanaNotificationPolicy
 type GrafanaNotificationPolicyStatus struct {
 	GrafanaCommonStatus `json:",inline"`

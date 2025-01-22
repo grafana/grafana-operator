@@ -44,8 +44,9 @@ import (
 )
 
 const (
-	conditionNotificationPolicySynchronized = "NotificationPolicySynchronized"
-	annotationAppliedNotificationPolicy     = "operator.grafana.com/applied-notificationpolicy"
+	conditionNotificationPolicySynchronized  = "NotificationPolicySynchronized"
+	conditionRoutesIgnoredDueToRouteSelector = "RoutesIgnoredDueToRouteSelector"
+	annotationAppliedNotificationPolicy      = "operator.grafana.com/applied-notificationpolicy"
 )
 
 // GrafanaNotificationPolicyReconciler reconciles a GrafanaNotificationPolicy object
@@ -157,13 +158,19 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
 	}
 
-	if mergedRoutes != nil && len(mergedRoutes) > 0 {
+	if len(mergedRoutes) > 0 {
 		status := statusDiscoveredRoutes(mergedRoutes)
 		notificationPolicy.Status.DiscoveredRoutes = &status
 	}
 
-	if err := r.recordMergedEventForNotificationPolicyRoutes(ctx, notificationPolicy, mergedRoutes); err != nil {
+	if err := r.updateNotificationPolicyRoutesStatus(ctx, notificationPolicy, mergedRoutes); err != nil {
 		r.Log.Error(err, "failed to add merged events to routes")
+	}
+
+	if notificationPolicy.Spec.Route.IsRouteSelectorMutuallyExclusive() {
+		meta.RemoveStatusCondition(&notificationPolicy.Status.Conditions, conditionRoutesIgnoredDueToRouteSelector)
+	} else {
+		setRoutesIgnoredDueToRouteSelectorCondition(&notificationPolicy.Status.Conditions, notificationPolicy.Generation)
 	}
 
 	condition := buildSynchronizedCondition("Notification Policy", conditionNotificationPolicySynchronized, notificationPolicy.Generation, applyErrors, len(instances))
@@ -201,6 +208,13 @@ func assembleNotificationPolicyRoutes(ctx context.Context, k8sClient client.Clie
 			for i := range routes.Items {
 				matchedRoute := &routes.Items[i]
 				key := fmt.Sprintf("%s/%s", matchedRoute.Namespace, matchedRoute.Name)
+
+				// validate constraints
+				if matchedRoute.Spec.Route.IsRouteSelectorMutuallyExclusive() {
+					meta.RemoveStatusCondition(&matchedRoute.Status.Conditions, conditionRoutesIgnoredDueToRouteSelector)
+				} else {
+					setRoutesIgnoredDueToRouteSelectorCondition(&matchedRoute.Status.Conditions, matchedRoute.Generation)
+				}
 
 				if _, exists := visitedGlobal[key]; !exists {
 					mergedRoutes = append(mergedRoutes, matchedRoute)
@@ -386,14 +400,19 @@ func getMatchingNotificationPolicyRoutes(ctx context.Context, k8sClient client.C
 	return &list, err
 }
 
-// recordMergedEventForNotificationPolicyRoutes emits a merged event to all matched notification policy routes
-func (r *GrafanaNotificationPolicyReconciler) recordMergedEventForNotificationPolicyRoutes(ctx context.Context, notificationPolicy *grafanav1beta1.GrafanaNotificationPolicy, routes []*v1beta1.GrafanaNotificationPolicyRoute) error {
+// updateNotificationPolicyRoutesStatus sets status conditions and emits a merged event to all matched notification policy routes
+func (r *GrafanaNotificationPolicyReconciler) updateNotificationPolicyRoutesStatus(ctx context.Context, notificationPolicy *grafanav1beta1.GrafanaNotificationPolicy, routes []*v1beta1.GrafanaNotificationPolicyRoute) error {
 	if notificationPolicy == nil || routes == nil {
 		return nil
 	}
 
 	for _, route := range routes {
 		r.Recorder.Event(route, corev1.EventTypeNormal, "Merged", fmt.Sprintf("Route merged into NotificationPolicy %s/%s", notificationPolicy.GetNamespace(), notificationPolicy.GetName()))
+
+		// Update the status of the route in case conditions have been set
+		if err := r.Status().Update(ctx, route); err != nil {
+			return fmt.Errorf("failed to update status for route %s/%s: %w", route.Namespace, route.Name, err)
+		}
 	}
 	return nil
 }

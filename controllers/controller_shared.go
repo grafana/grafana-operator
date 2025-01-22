@@ -235,6 +235,19 @@ func setNoMatchingInstancesCondition(conditions *[]metav1.Condition, generation 
 	})
 }
 
+func setRoutesIgnoredDueToRouteSelectorCondition(conditions *[]metav1.Condition, generation int64) {
+	meta.SetStatusCondition(conditions, metav1.Condition{
+		Type:               conditionRoutesIgnoredDueToRouteSelector,
+		Status:             metav1.ConditionTrue,
+		ObservedGeneration: generation,
+		Reason:             "BothRoutesAndRouteSelectorSpecified",
+		Message:            "Dynamically matched definitions from routeSelector will take precedence and the routes field is ignored",
+		LastTransitionTime: metav1.Time{
+			Time: time.Now(),
+		},
+	})
+}
+
 func removeNoMatchingInstance(conditions *[]metav1.Condition) {
 	meta.RemoveStatusCondition(conditions, conditionNoMatchingInstance)
 }

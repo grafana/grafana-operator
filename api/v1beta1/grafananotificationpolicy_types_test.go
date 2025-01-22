@@ -2,9 +2,11 @@ package v1beta1
 
 import (
 	"context"
+	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -74,3 +76,83 @@ var _ = Describe("NotificationPolicy type", func() {
 		})
 	})
 })
+
+func TestIsRouteSelectorMutuallyExclusive(t *testing.T) {
+	tests := []struct {
+		name     string
+		route    *Route
+		expected bool
+	}{
+		{
+			name:     "Empty route",
+			route:    &Route{},
+			expected: true,
+		},
+		{
+			name: "Route with only RouteSelector",
+			route: &Route{
+				RouteSelector: &metav1.LabelSelector{},
+			},
+			expected: true,
+		},
+		{
+			name: "Route with only sub-routes",
+			route: &Route{
+				Routes: []*Route{
+					{},
+					{},
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "Route with both RouteSelector and sub-routes",
+			route: &Route{
+				RouteSelector: &metav1.LabelSelector{},
+				Routes: []*Route{
+					{},
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "Nested routes with mutual exclusivity",
+			route: &Route{
+				Routes: []*Route{
+					{
+						RouteSelector: &metav1.LabelSelector{},
+					},
+					{
+						Routes: []*Route{
+							{},
+						},
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "Nested routes without mutual exclusivity",
+			route: &Route{
+				Routes: []*Route{
+					{
+						RouteSelector: &metav1.LabelSelector{},
+						Routes: []*Route{
+							{},
+						},
+					},
+				},
+			},
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.route.IsRouteSelectorMutuallyExclusive()
+			if result != tt.expected {
+				t.Errorf("IsRouteSelectorMutuallyExclusive() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}

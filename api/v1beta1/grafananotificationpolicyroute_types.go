@@ -32,12 +32,6 @@ type GrafanaNotificationPolicyRouteSpec struct {
 	Route *Route `json:"route"`
 }
 
-// GrafanaNotificationPolicyRouteStatus defines the observed state of GrafanaNotificationPolicyRoute
-type GrafanaNotificationPolicyRouteStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-}
-
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
@@ -46,8 +40,8 @@ type GrafanaNotificationPolicyRoute struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   GrafanaNotificationPolicyRouteSpec   `json:"spec,omitempty"`
-	Status GrafanaNotificationPolicyRouteStatus `json:"status,omitempty"`
+	Spec   GrafanaNotificationPolicyRouteSpec `json:"spec,omitempty"`
+	Status GrafanaCommonStatus                `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
