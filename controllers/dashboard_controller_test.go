@@ -23,8 +23,6 @@ import (
 	"syscall"
 	"testing"
 
-	ctrl "sigs.k8s.io/controller-runtime"
-
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -150,7 +148,6 @@ func TestGetDashboardEnvs(t *testing.T) {
 
 	reconciler := &GrafanaDashboardReconciler{
 		Client: k8sClient,
-		Log:    ctrl.Log.WithName("TestDashboardReconciler"),
 	}
 
 	envs, err := reconciler.getDashboardEnvs(ctx, &dashboard)
