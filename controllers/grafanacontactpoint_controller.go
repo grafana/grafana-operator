@@ -30,10 +30,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	simplejson "github.com/bitly/go-simplejson"
-	"github.com/go-logr/logr"
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	"github.com/grafana/grafana-openapi-client-go/client/provisioning"
 	"github.com/grafana/grafana-openapi-client-go/models"
@@ -48,7 +47,6 @@ const (
 // GrafanaContactPointReconciler reconciles a GrafanaContactPoint object
 type GrafanaContactPointReconciler struct {
 	client.Client
-	Log    logr.Logger
 	Scheme *runtime.Scheme
 }
 
@@ -66,7 +64,8 @@ type GrafanaContactPointReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.4/pkg/reconcile
 func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	r.Log = log.FromContext(ctx).WithName("GrafanaContactPointReconciler")
+	log := logf.FromContext(ctx).WithName("GrafanaContactPointReconciler")
+	logf.IntoContext(ctx, log)
 
 	contactPoint := &grafanav1beta1.GrafanaContactPoint{}
 	err := r.Client.Get(ctx, client.ObjectKey{
@@ -96,20 +95,20 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 	defer func() {
 		contactPoint.Status.LastResync = metav1.Time{Time: time.Now()}
 		if err := r.Client.Status().Update(ctx, contactPoint); err != nil {
-			r.Log.Error(err, "updating status")
+			log.Error(err, "updating status")
 		}
 		if meta.IsStatusConditionTrue(contactPoint.Status.Conditions, conditionNoMatchingInstance) {
 			if err := removeFinalizer(ctx, r.Client, contactPoint); err != nil {
-				r.Log.Error(err, "failed to remove finalizer")
+				log.Error(err, "failed to remove finalizer")
 			}
 		} else {
 			if err := addFinalizer(ctx, r.Client, contactPoint); err != nil {
-				r.Log.Error(err, "failed to set finalizer")
+				log.Error(err, "failed to set finalizer")
 			}
 		}
 	}()
 
-	instances, err := GetScopedMatchingInstances(r.Log, ctx, r.Client, contactPoint)
+	instances, err := GetScopedMatchingInstances(ctx, r.Client, contactPoint)
 	if err != nil {
 		setNoMatchingInstancesCondition(&contactPoint.Status.Conditions, contactPoint.Generation, err)
 		meta.RemoveStatusCondition(&contactPoint.Status.Conditions, conditionContactPointSynchronized)
@@ -123,7 +122,7 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 	}
 
 	removeNoMatchingInstance(&contactPoint.Status.Conditions)
-	r.Log.Info("found matching Grafana instances for Contact point", "count", len(instances))
+	log.Info("found matching Grafana instances for Contact point", "count", len(instances))
 
 	settings, err := r.buildContactPointSettings(ctx, contactPoint)
 	if err != nil {
@@ -196,6 +195,7 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 }
 
 func (r *GrafanaContactPointReconciler) buildContactPointSettings(ctx context.Context, contactPoint *grafanav1beta1.GrafanaContactPoint) (models.JSON, error) {
+	log := logf.FromContext(ctx)
 	marshaled, err := json.Marshal(contactPoint.Spec.Settings)
 	if err != nil {
 		return nil, fmt.Errorf("encoding existing settings as json: %w", err)
@@ -209,7 +209,7 @@ func (r *GrafanaContactPointReconciler) buildContactPointSettings(ctx context.Co
 		if err != nil {
 			return nil, fmt.Errorf("getting referenced value: %w", err)
 		}
-		r.Log.V(1).Info("overriding value", "key", override.TargetPath, "value", val)
+		log.V(1).Info("overriding value", "key", override.TargetPath, "value", val)
 
 		simpleContent.SetPath(strings.Split(override.TargetPath, "."), val)
 	}
@@ -231,9 +231,10 @@ func (r *GrafanaContactPointReconciler) getContactPointFromUID(cl *genapi.Grafan
 }
 
 func (r *GrafanaContactPointReconciler) finalize(ctx context.Context, contactPoint *grafanav1beta1.GrafanaContactPoint) error {
-	r.Log.Info("Finalizing GrafanaContactPoint")
+	log := logf.FromContext(ctx)
+	log.Info("Finalizing GrafanaContactPoint")
 
-	instances, err := GetScopedMatchingInstances(r.Log, ctx, r.Client, contactPoint)
+	instances, err := GetScopedMatchingInstances(ctx, r.Client, contactPoint)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
