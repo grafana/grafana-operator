@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type ConfigReconciler struct {
@@ -24,7 +24,7 @@ func NewConfigReconciler(client client.Client) reconcilers.OperatorGrafanaReconc
 }
 
 func (r *ConfigReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
-	_ = log.FromContext(ctx)
+	_ = logf.FromContext(ctx)
 
 	config, hash := config.WriteIni(cr.Spec.Config)
 	vars.ConfigHash = hash

@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type PluginsReconciler struct {
@@ -24,7 +24,7 @@ func NewPluginsReconciler(client client.Client) reconcilers.OperatorGrafanaRecon
 }
 
 func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
-	logger := log.FromContext(ctx).WithName("PluginsReconciler")
+	log := logf.FromContext(ctx).WithName("PluginsReconciler")
 
 	vars.Plugins = ""
 
@@ -34,7 +34,7 @@ func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 		return nil
 	})
 	if err != nil {
-		logger.Error(err, "error getting plugins config map", "name", plugins.Name, "namespace", plugins.Namespace)
+		log.Error(err, "error getting plugins config map", "name", plugins.Name, "namespace", plugins.Namespace)
 		return v1beta1.OperatorStageResultFailed, err
 	}
 
@@ -49,7 +49,7 @@ func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 		var dashboardPlugins v1beta1.PluginList
 		err = json.Unmarshal(plugins, &dashboardPlugins)
 		if err != nil {
-			logger.Error(err, "error consolidating plugins", "dashboard", dashboard)
+			log.Error(err, "error consolidating plugins", "dashboard", dashboard)
 			return v1beta1.OperatorStageResultFailed, err
 		}
 
@@ -64,12 +64,12 @@ func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 			// newer version of plugin already installed
 			hasNewer, err := consolidatedPlugins.HasNewerVersionOf(&plugin)
 			if err != nil {
-				logger.Error(err, "error checking existing plugins", "dashboard", dashboard)
+				log.Error(err, "error checking existing plugins", "dashboard", dashboard)
 				return v1beta1.OperatorStageResultFailed, err
 			}
 
 			if hasNewer {
-				logger.Info("skipping plugin", "dashboard", dashboard, "plugin",
+				log.Info("skipping plugin", "dashboard", dashboard, "plugin",
 					plugin.Name, "version", plugin.Version)
 				continue
 			}
