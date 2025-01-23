@@ -62,8 +62,11 @@ type GrafanaDatasourceInternal struct {
 type GrafanaDatasourceSpec struct {
 	GrafanaCommonSpec `json:",inline"`
 
-	// The UID, for the datasource, fallback to the deprecated spec.datasource.uid and metadata.uid
-	// +optional
+	// The UID, for the datasource, fallback to the deprecated spec.datasource.uid
+	// and metadata.uid. Can be any string consisting of alphanumeric characters,
+	// - and _ with a maximum length of 40 +optional
+	// +kubebuilder:validation:MaxLength=40
+	// +kubebuilder:validation:Pattern="^[a-zA-Z0-9-_]+$"
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="spec.uid is immutable"
 	CustomUID string `json:"uid,omitempty"`
 

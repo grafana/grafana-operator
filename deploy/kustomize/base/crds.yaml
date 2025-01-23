@@ -230,6 +230,10 @@ spec:
                       minLength: 1
                       type: string
                     uid:
+                      description: UID of the alert rule. Can be any string consisting
+                        of alphanumeric characters, - and _ with a maximum length
+                        of 40
+                      maxLength: 40
                       pattern: ^[a-zA-Z0-9-_]+$
                       type: string
                   required:
@@ -476,7 +480,10 @@ spec:
                 type: string
               uid:
                 description: Manually specify the UID the Contact Point is created
-                  with
+                  with. Can be any string consisting of alphanumeric characters, -
+                  and _ with a maximum length of 40
+                maxLength: 40
+                pattern: ^[a-zA-Z0-9-_]+$
                 type: string
                 x-kubernetes-validations:
                 - message: spec.uid is immutable
@@ -962,8 +969,12 @@ spec:
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
               uid:
-                description: Manually specify the uid for the dashboard, overwrites
-                  uids already present in the json model
+                description: |-
+                  Manually specify the uid for the dashboard, overwrites uids already present
+                  in the json model. Can be any string consisting of alphanumeric characters,
+                  - and _ with a maximum length of 40
+                maxLength: 40
+                pattern: ^[a-zA-Z0-9-_]+$
                 type: string
                 x-kubernetes-validations:
                 - message: spec.uid is immutable
@@ -1299,8 +1310,12 @@ spec:
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
               uid:
-                description: The UID, for the datasource, fallback to the deprecated
-                  spec.datasource.uid and metadata.uid
+                description: |-
+                  The UID, for the datasource, fallback to the deprecated spec.datasource.uid
+                  and metadata.uid. Can be any string consisting of alphanumeric characters,
+                  - and _ with a maximum length of 40 +optional
+                maxLength: 40
+                pattern: ^[a-zA-Z0-9-_]+$
                 type: string
                 x-kubernetes-validations:
                 - message: spec.uid is immutable
@@ -1595,7 +1610,11 @@ spec:
                 description: Display name of the folder in Grafana
                 type: string
               uid:
-                description: Manually specify the UID the Folder is created with
+                description: Manually specify the UID the Folder is created with.
+                  Can be any string consisting of alphanumeric characters, - and _
+                  with a maximum length of 40
+                maxLength: 40
+                pattern: ^[a-zA-Z0-9-_]+$
                 type: string
                 x-kubernetes-validations:
                 - message: spec.uid is immutable

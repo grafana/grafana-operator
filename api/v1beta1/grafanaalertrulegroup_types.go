@@ -86,6 +86,8 @@ type AlertRule struct {
 	// +kubebuilder:example="Always firing"
 	Title string `json:"title"`
 
+	// UID of the alert rule. Can be any string consisting of alphanumeric characters, - and _ with a maximum length of 40
+	// +kubebuilder:validation:MaxLength=40
 	// +kubebuilder:validation:Pattern="^[a-zA-Z0-9-_]+$"
 	UID string `json:"uid"`
 }

@@ -165,8 +165,12 @@ spec:
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
               uid:
-                description: The UID, for the datasource, fallback to the deprecated
-                  spec.datasource.uid and metadata.uid
+                description: |-
+                  The UID, for the datasource, fallback to the deprecated spec.datasource.uid
+                  and metadata.uid. Can be any string consisting of alphanumeric characters,
+                  - and _ with a maximum length of 40 +optional
+                maxLength: 40
+                pattern: ^[a-zA-Z0-9-_]+$
                 type: string
                 x-kubernetes-validations:
                 - message: spec.uid is immutable

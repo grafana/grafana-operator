@@ -231,6 +231,10 @@ spec:
                       minLength: 1
                       type: string
                     uid:
+                      description: UID of the alert rule. Can be any string consisting
+                        of alphanumeric characters, - and _ with a maximum length
+                        of 40
+                      maxLength: 40
                       pattern: ^[a-zA-Z0-9-_]+$
                       type: string
                   required:

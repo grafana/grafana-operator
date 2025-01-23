@@ -331,7 +331,7 @@ AlertRule defines a specific rule to be evaluated. It is based on the upstream m
         <td><b>uid</b></td>
         <td>string</td>
         <td>
-          <br/>
+          UID of the alert rule. Can be any string consisting of alphanumeric characters, - and _ with a maximum length of 40<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -768,7 +768,7 @@ GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
         <td><b>uid</b></td>
         <td>string</td>
         <td>
-          Manually specify the UID the Contact Point is created with<br/>
+          Manually specify the UID the Contact Point is created with. Can be any string consisting of alphanumeric characters, - and _ with a maximum length of 40<br/>
           <br/>
             <i>Validations</i>:<li>self == oldSelf: spec.uid is immutable</li>
         </td>
@@ -1346,7 +1346,9 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         <td><b>uid</b></td>
         <td>string</td>
         <td>
-          Manually specify the uid for the dashboard, overwrites uids already present in the json model<br/>
+          Manually specify the uid for the dashboard, overwrites uids already present
+in the json model. Can be any string consisting of alphanumeric characters,
+- and _ with a maximum length of 40<br/>
           <br/>
             <i>Validations</i>:<li>self == oldSelf: spec.uid is immutable</li>
         </td>
@@ -2371,7 +2373,9 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         <td><b>uid</b></td>
         <td>string</td>
         <td>
-          The UID, for the datasource, fallback to the deprecated spec.datasource.uid and metadata.uid<br/>
+          The UID, for the datasource, fallback to the deprecated spec.datasource.uid
+and metadata.uid. Can be any string consisting of alphanumeric characters,
+- and _ with a maximum length of 40 +optional<br/>
           <br/>
             <i>Validations</i>:<li>self == oldSelf: spec.uid is immutable</li>
         </td>
@@ -3059,7 +3063,7 @@ GrafanaFolderSpec defines the desired state of GrafanaFolder
         <td><b>uid</b></td>
         <td>string</td>
         <td>
-          Manually specify the UID the Folder is created with<br/>
+          Manually specify the UID the Folder is created with. Can be any string consisting of alphanumeric characters, - and _ with a maximum length of 40<br/>
           <br/>
             <i>Validations</i>:<li>self == oldSelf: spec.uid is immutable</li>
         </td>
