@@ -25,7 +25,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/go-logr/logr"
 	"github.com/grafana/grafana-operator/v5/controllers/config"
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
@@ -38,7 +37,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
@@ -47,7 +46,6 @@ import (
 // GrafanaReconciler reconciles a Grafana object
 type GrafanaReconciler struct {
 	client.Client
-	Log         logr.Logger
 	Scheme      *runtime.Scheme
 	Discovery   discovery.DiscoveryInterface
 	IsOpenShift bool
@@ -63,18 +61,18 @@ type GrafanaReconciler struct {
 // +kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
 
 func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	controllerLog := log.FromContext(ctx).WithName("GrafanaReconciler")
-	r.Log = controllerLog
+	log := logf.FromContext(ctx).WithName("GrafanaReconciler")
+	logf.IntoContext(ctx, log)
 
 	grafana := &grafanav1beta1.Grafana{}
 	err := r.Get(ctx, req.NamespacedName, grafana)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			controllerLog.Info("grafana cr has been deleted", "name", req.NamespacedName)
+			log.Info("grafana cr has been deleted", "name", req.NamespacedName)
 			return ctrl.Result{}, nil
 		}
 
-		controllerLog.Error(err, "error getting grafana cr")
+		log.Error(err, "error getting grafana cr")
 		return ctrl.Result{}, err
 	}
 
@@ -91,10 +89,10 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		nextStatus.AdminUrl = grafana.Spec.External.URL
 		v, err := r.getVersion(ctx, grafana)
 		if err != nil {
-			controllerLog.Error(err, "failed to get version from external instance")
+			log.Error(err, "failed to get version from external instance")
 		}
 		nextStatus.Version = v
-		return r.updateStatus(grafana, nextStatus)
+		return r.updateStatus(ctx, grafana, nextStatus)
 	}
 
 	// set spec to the current default version to avoid accidental updates when we
@@ -113,19 +111,19 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	for _, stage := range stages {
-		controllerLog.Info("running stage", "stage", stage)
+		log.Info("running stage", "stage", stage)
 
 		nextStatus.Stage = stage
 		reconciler := r.getReconcilerForStage(stage)
 
 		if reconciler == nil {
-			controllerLog.Info("no reconciler known for stage", "stage", stage)
+			log.Info("no reconciler known for stage", "stage", stage)
 			continue
 		}
 
 		status, err := reconciler.Reconcile(ctx, grafana, nextStatus, vars, r.Scheme)
 		if err != nil {
-			controllerLog.Error(err, "reconciler error in stage", "stage", stage)
+			log.Error(err, "reconciler error in stage", "stage", stage)
 			nextStatus.LastMessage = err.Error()
 
 			metrics.GrafanaFailedReconciles.WithLabelValues(grafana.Name, string(stage)).Inc()
@@ -136,7 +134,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		nextStatus.StageStatus = status
 
 		if status != grafanav1beta1.OperatorStageResultSuccess {
-			controllerLog.Info("stage in progress", "stage", stage)
+			log.Info("stage in progress", "stage", stage)
 			finished = false
 			break
 		}
@@ -145,13 +143,13 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if finished {
 		v, err := r.getVersion(ctx, grafana)
 		if err != nil {
-			controllerLog.Error(err, "failed to get version from instance")
+			log.Error(err, "failed to get version from instance")
 		}
 		nextStatus.Version = v
-		controllerLog.Info("grafana installation complete")
+		log.Info("grafana installation complete")
 	}
 
-	return r.updateStatus(grafana, nextStatus)
+	return r.updateStatus(ctx, grafana, nextStatus)
 }
 
 func (r *GrafanaReconciler) getVersion(ctx context.Context, cr *grafanav1beta1.Grafana) (string, error) {
@@ -189,7 +187,8 @@ func (r *GrafanaReconciler) getVersion(ctx context.Context, cr *grafanav1beta1.G
 	return data.BuildInfo.Version, nil
 }
 
-func (r *GrafanaReconciler) updateStatus(cr *grafanav1beta1.Grafana, nextStatus *grafanav1beta1.GrafanaStatus) (ctrl.Result, error) {
+func (r *GrafanaReconciler) updateStatus(ctx context.Context, cr *grafanav1beta1.Grafana, nextStatus *grafanav1beta1.GrafanaStatus) (ctrl.Result, error) {
+	log := logf.FromContext(ctx)
 	if !reflect.DeepEqual(&cr.Status, nextStatus) {
 		nextStatus.DeepCopyInto(&cr.Status)
 		err := r.Client.Status().Update(context.Background(), cr)
@@ -208,7 +207,7 @@ func (r *GrafanaReconciler) updateStatus(cr *grafanav1beta1.Grafana, nextStatus 
 		}, nil
 	}
 	if cr.Status.Version == "" {
-		r.Log.Info("version not yet found, requeuing")
+		log.Info("version not yet found, requeuing")
 		return ctrl.Result{
 			Requeue:      true,
 			RequeueAfter: RequeueDelay,
