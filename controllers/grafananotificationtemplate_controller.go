@@ -28,9 +28,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/go-logr/logr"
 	"github.com/grafana/grafana-openapi-client-go/client/provisioning"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -44,7 +43,6 @@ const (
 // GrafanaNotificationTemplateReconciler reconciles a GrafanaNotificationTemplate object
 type GrafanaNotificationTemplateReconciler struct {
 	client.Client
-	Log    logr.Logger
 	Scheme *runtime.Scheme
 }
 
@@ -53,8 +51,8 @@ type GrafanaNotificationTemplateReconciler struct {
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafananotificationtemplates/finalizers,verbs=update
 
 func (r *GrafanaNotificationTemplateReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	controllerLog := log.FromContext(ctx).WithName("GrafanaNotificationTemplateReconciler")
-	r.Log = controllerLog
+	log := logf.FromContext(ctx).WithName("GrafanaNotificationTemplateReconciler")
+	logf.IntoContext(ctx, log)
 
 	notificationTemplate := &grafanav1beta1.GrafanaNotificationTemplate{}
 	err := r.Client.Get(ctx, client.ObjectKey{
@@ -84,20 +82,20 @@ func (r *GrafanaNotificationTemplateReconciler) Reconcile(ctx context.Context, r
 	defer func() {
 		notificationTemplate.Status.LastResync = metav1.Time{Time: time.Now()}
 		if err := r.Client.Status().Update(ctx, notificationTemplate); err != nil {
-			r.Log.Error(err, "updating status")
+			log.Error(err, "updating status")
 		}
 		if meta.IsStatusConditionTrue(notificationTemplate.Status.Conditions, conditionNoMatchingInstance) {
 			if err := removeFinalizer(ctx, r.Client, notificationTemplate); err != nil {
-				r.Log.Error(err, "failed to remove finalizer")
+				log.Error(err, "failed to remove finalizer")
 			}
 		} else {
 			if err := addFinalizer(ctx, r.Client, notificationTemplate); err != nil {
-				r.Log.Error(err, "failed to set finalizer")
+				log.Error(err, "failed to set finalizer")
 			}
 		}
 	}()
 
-	instances, err := GetScopedMatchingInstances(controllerLog, ctx, r.Client, notificationTemplate)
+	instances, err := GetScopedMatchingInstances(ctx, r.Client, notificationTemplate)
 	if err != nil {
 		setNoMatchingInstancesCondition(&notificationTemplate.Status.Conditions, notificationTemplate.Generation, err)
 		meta.RemoveStatusCondition(&notificationTemplate.Status.Conditions, conditionNotificationTemplateSynchronized)
@@ -111,7 +109,7 @@ func (r *GrafanaNotificationTemplateReconciler) Reconcile(ctx context.Context, r
 	}
 
 	removeNoMatchingInstance(&notificationTemplate.Status.Conditions)
-	controllerLog.Info("found matching Grafana instances for notification template", "count", len(instances))
+	log.Info("found matching Grafana instances for notification template", "count", len(instances))
 
 	applyErrors := make(map[string]string)
 	for _, grafana := range instances {
@@ -158,9 +156,10 @@ func (r *GrafanaNotificationTemplateReconciler) reconcileWithInstance(ctx contex
 }
 
 func (r *GrafanaNotificationTemplateReconciler) finalize(ctx context.Context, notificationTemplate *grafanav1beta1.GrafanaNotificationTemplate) error {
-	r.Log.Info("Finalizing GrafanaNotificationTemplate")
+	log := logf.FromContext(ctx)
+	log.Info("Finalizing GrafanaNotificationTemplate")
 
-	instances, err := GetScopedMatchingInstances(r.Log, ctx, r.Client, notificationTemplate)
+	instances, err := GetScopedMatchingInstances(ctx, r.Client, notificationTemplate)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
