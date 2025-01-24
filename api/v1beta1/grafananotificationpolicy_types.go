@@ -71,10 +71,11 @@ type Route struct {
 	// repeat interval
 	RepeatInterval string `json:"repeat_interval,omitempty"`
 
-	// Selects GrafanaNotificationPolicyRoutes to merge in when specified
+	// selects GrafanaNotificationPolicyRoutes to merge in when specified
+	// mutually exclusive with Routes
 	RouteSelector *metav1.LabelSelector `json:"routeSelector,omitempty"`
 
-	// routes
+	// routes, mutually exclusive with RouteSelector
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// +kubebuilder:validation:Schemaless
 	Routes []*Route `json:"routes,omitempty"`
