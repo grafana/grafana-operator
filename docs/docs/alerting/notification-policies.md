@@ -20,7 +20,7 @@ The following snippet shows an example notification policy routing to the `opera
 There might be scenarios where you can not define the entire notification policy in a single place and you have to assemble it from multiple resouces.
 In this case, you can use the `spec.route.routeSelector` in combination with multiple `GrafanaNotificationPolicyRoute` resources.
 
-The `routeSelector` can be specified in any `route` object, including the list of `spec.route.routes`.
+Both `GrafanaNotificationPolicy` and `GrafanaNotificationPolicyRoute` objects support the `routeSelector` field.
 
 All `GrafanaNotificationPolicyRoute` resources will then be discovered based on the label selector defined in `spec.route.routeSelector`.
 In case `spec.allowCrossNamespaceImport` is enabled, matching routes will be fetched from all namespaces.
