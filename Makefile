@@ -256,7 +256,7 @@ bundle/redhat: bundle
 # e2e
 .PHONY: e2e-kind
 e2e-kind:
-ifeq (,$(shell kind get clusters $(KIND_CLUSTER_NAME)))
+ifeq (,$(shell kind get clusters ))
 	$(KIND) --kubeconfig="${KUBECONFIG}" create cluster --image=kindest/node:v$(ENVTEST_K8S_VERSION) --config tests/e2e/kind.yaml
 endif
 
