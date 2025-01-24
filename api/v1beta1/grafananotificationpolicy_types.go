@@ -129,15 +129,16 @@ func (r *Route) ToModelRoute() *models.Route {
 	return out
 }
 
-// isMutuallyExclusive checks if a single route satisfies the mutual exclusivity constraint
-func isMutuallyExclusive(r *Route) bool {
+// selectorMutuallyExclusive checks if a single route satisfies the mutual exclusivity constraint
+// for checking the entire route including nested routes, use IsRouteSelectorMutuallyExclusive
+func (r *Route) selectorMutuallyExclusive() bool {
 	return !(r.RouteSelector != nil && len(r.Routes) > 0)
 }
 
 // IsRouteSelectorMutuallyExclusive returns true when the route and all its sub-routes
 // satisfy the constraint of routes and routeSelector being mutually exclusive
 func (r *Route) IsRouteSelectorMutuallyExclusive() bool {
-	if !isMutuallyExclusive(r) {
+	if !r.selectorMutuallyExclusive() {
 		return false
 	}
 
