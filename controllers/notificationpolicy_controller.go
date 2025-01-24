@@ -25,7 +25,6 @@ import (
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
@@ -362,25 +361,13 @@ func (r *GrafanaNotificationPolicyReconciler) SetupWithManager(mgr ctrl.Manager)
 					continue
 				}
 
-				allRouteSelectors := getRouteSelectors(np.Spec.Route)
-
-				for _, routeSelector := range allRouteSelectors {
-					selector, err := metav1.LabelSelectorAsSelector(routeSelector)
-					if err != nil {
-						r.Log.Error(err, "failed to create selector from RouteSelector")
-						continue
-					}
-
-					if selector.Matches(labels.Set(o.GetLabels())) {
-						requests = append(requests,
-							reconcile.Request{
-								NamespacedName: types.NamespacedName{
-									Name:      np.Name,
-									Namespace: np.Namespace,
-								},
-							})
-					}
-				}
+				requests = append(requests,
+					reconcile.Request{
+						NamespacedName: types.NamespacedName{
+							Name:      np.Name,
+							Namespace: np.Namespace,
+						},
+					})
 			}
 			return requests
 		})).
@@ -442,26 +429,6 @@ func hasRouteSelector(route *grafanav1beta1.Route) bool {
 	}
 
 	return false
-}
-
-// getRouteSelectors returns a list of all route selectors specified on a notification policy
-// in either the Route.RouteSelector or any of its Routes
-func getRouteSelectors(route *grafanav1beta1.Route) []*metav1.LabelSelector {
-	if route == nil {
-		return nil
-	}
-
-	var selectors []*metav1.LabelSelector
-
-	if route.RouteSelector != nil {
-		selectors = append(selectors, route.RouteSelector)
-	}
-
-	for _, nestedRoute := range route.Routes {
-		selectors = append(selectors, getRouteSelectors(nestedRoute)...)
-	}
-
-	return selectors
 }
 
 // statusDiscoveredRoutes returns the list of discovered routes using the namespace and name
