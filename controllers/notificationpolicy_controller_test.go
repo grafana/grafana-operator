@@ -72,7 +72,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 						Labels:    map[string]string{"tier": "first"},
 					},
 					Spec: grafanav1beta1.GrafanaNotificationPolicyRouteSpec{
-						Route: &grafanav1beta1.Route{
+						Route: grafanav1beta1.Route{
 							Receiver: "team-A-receiver",
 							Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("team"), Value: "A", IsEqual: true}},
 						},
@@ -114,7 +114,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 						Labels:    map[string]string{"tier": "first"},
 					},
 					Spec: grafanav1beta1.GrafanaNotificationPolicyRouteSpec{
-						Route: &grafanav1beta1.Route{
+						Route: grafanav1beta1.Route{
 							Receiver: "team-A-receiver",
 							Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("team"), Value: "A", IsEqual: true}},
 							RouteSelector: &metav1.LabelSelector{
@@ -130,7 +130,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 						Labels:    map[string]string{"tier": "second"},
 					},
 					Spec: grafanav1beta1.GrafanaNotificationPolicyRouteSpec{
-						Route: &grafanav1beta1.Route{
+						Route: grafanav1beta1.Route{
 							Receiver: "team-B-receiver",
 							Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("team"), Value: "B", IsEqual: true}},
 						},
@@ -191,7 +191,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 						Labels:    map[string]string{"tier": "second", "team": "A"},
 					},
 					Spec: grafanav1beta1.GrafanaNotificationPolicyRouteSpec{
-						Route: &grafanav1beta1.Route{
+						Route: grafanav1beta1.Route{
 							Receiver: "project-X-receiver",
 							Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("project"), Value: "X", IsEqual: true}},
 						},
@@ -204,7 +204,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 						Labels:    map[string]string{"tier": "second", "team": "B"},
 					},
 					Spec: grafanav1beta1.GrafanaNotificationPolicyRouteSpec{
-						Route: &grafanav1beta1.Route{
+						Route: grafanav1beta1.Route{
 							Receiver: "project-Y-receiver",
 							Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("project"), Value: "Y", IsEqual: true}},
 						},
@@ -262,7 +262,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 						Labels:    map[string]string{"tier": "first"},
 					},
 					Spec: grafanav1beta1.GrafanaNotificationPolicyRouteSpec{
-						Route: &grafanav1beta1.Route{
+						Route: grafanav1beta1.Route{
 							Receiver: "team-A-receiver",
 							Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("team"), Value: "A", IsEqual: true}},
 							RouteSelector: &metav1.LabelSelector{
@@ -278,7 +278,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 						Labels:    map[string]string{"tier": "second"},
 					},
 					Spec: grafanav1beta1.GrafanaNotificationPolicyRouteSpec{
-						Route: &grafanav1beta1.Route{
+						Route: grafanav1beta1.Route{
 							Receiver: "team-B-receiver",
 							Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("team"), Value: "B", IsEqual: true}},
 							RouteSelector: &metav1.LabelSelector{

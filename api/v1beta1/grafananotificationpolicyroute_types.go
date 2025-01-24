@@ -29,7 +29,7 @@ type GrafanaNotificationPolicyRouteSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Route for alerts to match against
-	Route *Route `json:"route"`
+	Route `json:",inline"`
 }
 
 //+kubebuilder:object:root=true

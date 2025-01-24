@@ -188,8 +188,9 @@ spec:
                     description: repeat interval
                     type: string
                   routeSelector:
-                    description: Selects GrafanaNotificationPolicyRoutes to merge
-                      in when specified
+                    description: |-
+                      selects GrafanaNotificationPolicyRoutes to merge in when specified
+                      mutually exclusive with Routes
                     properties:
                       matchExpressions:
                         description: matchExpressions is a list of label selector
@@ -235,7 +236,7 @@ spec:
                     type: object
                     x-kubernetes-map-type: atomic
                   routes:
-                    description: routes
+                    description: routes, mutually exclusive with RouteSelector
                     x-kubernetes-preserve-unknown-fields: true
                 type: object
             required:

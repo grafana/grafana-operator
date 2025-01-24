@@ -226,13 +226,13 @@ func assembleNotificationPolicyRoutes(ctx context.Context, k8sClient client.Clie
 				visitedChilds[key] = true
 
 				// Recursively assemble the matched route
-				if err := assembleRoute(matchedRoute.Spec.Route); err != nil {
+				if err := assembleRoute(&matchedRoute.Spec.Route); err != nil {
 					return err
 				}
 
 				delete(visitedChilds, key)
 
-				route.Routes = append(route.Routes, matchedRoute.Spec.Route)
+				route.Routes = append(route.Routes, &matchedRoute.Spec.Route)
 			}
 		} else {
 			// if no RouteSelector is specified, process inline routes, as they are mutually exclusive

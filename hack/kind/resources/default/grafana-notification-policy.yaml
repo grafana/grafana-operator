@@ -41,18 +41,17 @@ metadata:
   labels:
     team-a: "child"
 spec:
-  route:
-    receiver: grafana-default-email
-    object_matchers:
-      - - crossNamespace
-        - =
-        - "true"
-      - - dynamic
-        - =
-        - c
-    routeSelector:
-      matchLabels:
-        team-c: "child"
+  receiver: grafana-default-email
+  object_matchers:
+    - - crossNamespace
+      - =
+      - "true"
+    - - dynamic
+      - =
+      - c
+  routeSelector:
+    matchLabels:
+      team-c: "child"
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaNotificationPolicyRoute
@@ -61,12 +60,11 @@ metadata:
   labels:
     team-c: "child"
 spec:
-  route:
-    receiver: grafana-default-email
-    object_matchers:
-      - - dynamic
-        - =
-        - d
+  receiver: grafana-default-email
+  object_matchers:
+    - - dynamic
+      - =
+      - d
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaNotificationPolicyRoute
@@ -75,9 +73,8 @@ metadata:
   labels:
     team-a: "child"
 spec:
-  route:
-    receiver: grafana-default-email
-    object_matchers:
-      - - dynamic
-        - =
-        - e
+  receiver: grafana-default-email
+  object_matchers:
+    - - dynamic
+      - =
+      - e
