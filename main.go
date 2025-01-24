@@ -257,13 +257,6 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaNotificationPolicy")
 		os.Exit(1)
 	}
-	if err = (&controllers.GrafanaNotificationPolicyRouteReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "GrafanaNotificationPolicyRoute")
-		os.Exit(1)
-	}
 	if err = (&controllers.GrafanaNotificationTemplateReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
