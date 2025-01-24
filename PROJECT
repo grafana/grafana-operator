@@ -67,7 +67,7 @@ resources:
 - api:
     crdVersion: v1
     namespaced: true
-  controller: true
+  controller: false
   domain: integreatly.org
   group: grafana
   kind: GrafanaNotificationPolicyRoute
