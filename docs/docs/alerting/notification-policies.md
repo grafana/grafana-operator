@@ -26,7 +26,7 @@ All `GrafanaNotificationPolicyRoute` resources will then be discovered based on 
 In case `spec.allowCrossNamespaceImport` is enabled, matching routes will be fetched from all namespaces.
 Otherwise only routes from the same namespace as the `GrafanaNotificationPolicy` will be discovered.
 
-All discovered routes will then get set on the `spec.route.routes[]` of the `GrafanaNotificationPolicy`.
+The discovered routes are then used when applying the notification policy.
 
 {{% alert title="Note" color="secondary" %}}
 The `spec.route.routes` and `spec.route.routeSelector` fields are mutually exclusive.
