@@ -17,6 +17,8 @@ limitations under the License.
 package v1beta1
 
 import (
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -42,6 +44,10 @@ type GrafanaNotificationPolicyRoute struct {
 
 	Spec   GrafanaNotificationPolicyRouteSpec `json:"spec,omitempty"`
 	Status GrafanaCommonStatus                `json:"status,omitempty"`
+}
+
+func (r *GrafanaNotificationPolicyRoute) NamespacedResource() string {
+	return fmt.Sprintf("%v/%v/%v", r.ObjectMeta.Namespace, r.ObjectMeta.Name, r.ObjectMeta.UID)
 }
 
 //+kubebuilder:object:root=true

@@ -209,7 +209,7 @@ func assembleNotificationPolicyRoutes(ctx context.Context, k8sClient client.Clie
 			route.RouteSelector = nil
 			for i := range routes.Items {
 				matchedRoute := &routes.Items[i]
-				key := fmt.Sprintf("%s/%s", matchedRoute.Namespace, matchedRoute.Name)
+				key := matchedRoute.NamespacedResource()
 
 				// validate constraints
 				if matchedRoute.Spec.Route.IsRouteSelectorMutuallyExclusive() {
