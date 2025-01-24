@@ -47,6 +47,7 @@ const (
 	conditionNotificationPolicySynchronized  = "NotificationPolicySynchronized"
 	conditionRoutesIgnoredDueToRouteSelector = "RoutesIgnoredDueToRouteSelector"
 	annotationAppliedNotificationPolicy      = "operator.grafana.com/applied-notificationpolicy"
+	globalApplyError                         = "global"
 )
 
 // GrafanaNotificationPolicyReconciler reconciles a GrafanaNotificationPolicy object
@@ -66,6 +67,9 @@ type GrafanaNotificationPolicyReconciler struct {
 
 func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.Log = log.FromContext(ctx).WithName("GrafanaNotificationPolicyReconciler")
+
+	applyErrors := make(map[string]string)
+	var instances []grafanav1beta1.Grafana
 
 	notificationPolicy := &grafanav1beta1.GrafanaNotificationPolicy{}
 	err := r.Client.Get(ctx, client.ObjectKey{
@@ -93,6 +97,9 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 	}
 
 	defer func() {
+		condition := buildSynchronizedCondition("Notification Policy", conditionNotificationPolicySynchronized, notificationPolicy.Generation, applyErrors, len(instances))
+		meta.SetStatusCondition(&notificationPolicy.Status.Conditions, condition)
+
 		notificationPolicy.Status.LastResync = metav1.Time{Time: time.Now()}
 		if err := r.Client.Status().Update(ctx, notificationPolicy); err != nil {
 			r.Log.Error(err, "updating status")
@@ -108,7 +115,7 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 		}
 	}()
 
-	instances, err := GetScopedMatchingInstances(r.Log, ctx, r.Client, notificationPolicy)
+	instances, err = GetScopedMatchingInstances(r.Log, ctx, r.Client, notificationPolicy)
 	if err != nil {
 		setNoMatchingInstancesCondition(&notificationPolicy.Status.Conditions, notificationPolicy.Generation, err)
 		meta.RemoveStatusCondition(&notificationPolicy.Status.Conditions, conditionNotificationPolicySynchronized)
@@ -135,12 +142,11 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 		}
 		assembledNotificationPolicy, mergedRoutes, err = assembleNotificationPolicyRoutes(ctx, r.Client, namespace, assembledNotificationPolicy)
 		if err != nil {
-			r.Log.Error(err, "failed to assemble GrafanaNotificationPolicy using routeSelectors")
-			return ctrl.Result{RequeueAfter: RequeueDelay}, fmt.Errorf("failed to assemble GrafanaNotificationPolicy using routeSelectors: %w", err)
+			applyErrors[globalApplyError] = err.Error()
+			return ctrl.Result{Requeue: false}, fmt.Errorf("failed to assemble GrafanaNotificationPolicy using routeSelectors: %w", err)
 		}
 	}
 
-	applyErrors := make(map[string]string)
 	for _, grafana := range instances {
 		// can be removed in go 1.22+
 		grafana := grafana
