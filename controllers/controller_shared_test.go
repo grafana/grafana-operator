@@ -27,7 +27,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 func TestLabelsSatisfyMatchExpressions(t *testing.T) {
@@ -296,6 +296,9 @@ var _ = Describe("GetMatchingInstances functions", Ordered, func() {
 	unreadyGrafana.Name = "unready-instance"
 
 	ctx := context.Background()
+	testLog := logf.FromContext(ctx).WithSink(logf.NullLogSink{})
+	logf.IntoContext(ctx, testLog)
+
 	// Pre-create all resources
 	BeforeAll(func() { // Necessary to use assertions
 		Expect(k8sClient.Create(ctx, &namespace)).NotTo(HaveOccurred())
@@ -316,20 +319,19 @@ var _ = Describe("GetMatchingInstances functions", Ordered, func() {
 	})
 
 	Context("Ensure AllowCrossNamespaceImport is upheld by GetScopedMatchingInstances", func() {
-		testLog := log.FromContext(ctx).WithSink(log.NullLogSink{})
 		It("Finds all ready instances when instanceSelector is empty", func() {
-			instances, err := GetScopedMatchingInstances(testLog, ctx, k8sClient, matchAllFolder)
+			instances, err := GetScopedMatchingInstances(ctx, k8sClient, matchAllFolder)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(instances).To(HaveLen(3))
 		})
 		It("Finds all ready and Matching instances", func() {
-			instances, err := GetScopedMatchingInstances(testLog, ctx, k8sClient, &allowFolder)
+			instances, err := GetScopedMatchingInstances(ctx, k8sClient, &allowFolder)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(instances).ToNot(BeEmpty())
 			Expect(instances).To(HaveLen(2))
 		})
 		It("Finds matching and ready and matching instance in namespace", func() {
-			instances, err := GetScopedMatchingInstances(testLog, ctx, k8sClient, denyFolder)
+			instances, err := GetScopedMatchingInstances(ctx, k8sClient, denyFolder)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(instances).ToNot(BeEmpty())
 			Expect(instances).To(HaveLen(1))
