@@ -7,13 +7,11 @@ import (
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/stretchr/testify/assert"
-	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 func TestGetDatasourceContent(t *testing.T) {
 	reconciler := &GrafanaDatasourceReconciler{
 		Client: k8sClient,
-		Log:    ctrl.Log.WithName("TestDatasourceReconciler"),
 	}
 
 	t.Run("secureJsonData is preserved", func(t *testing.T) {

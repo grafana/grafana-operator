@@ -31,7 +31,6 @@ import (
 
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 
-	"github.com/go-logr/logr"
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
@@ -39,7 +38,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 )
@@ -48,7 +47,6 @@ import (
 type GrafanaDatasourceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	Log    logr.Logger
 }
 
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadatasources,verbs=get;list;watch;create;update;patch;delete
@@ -56,7 +54,7 @@ type GrafanaDatasourceReconciler struct {
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadatasources/finalizers,verbs=update
 
 func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl.Result, error) {
-	syncLog := log.FromContext(ctx).WithName("GrafanaDatasourceReconciler")
+	log := logf.FromContext(ctx)
 	datasourcesSynced := 0
 
 	// get all grafana instances
@@ -117,7 +115,7 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 				if errors.As(err, &notFound) {
 					return ctrl.Result{Requeue: false}, err
 				}
-				syncLog.Info("datasource no longer exists", "namespace", namespace, "name", name)
+				log.Info("datasource no longer exists", "namespace", namespace, "name", name)
 			} else {
 				_, err = grafanaClient.Datasources.DeleteDataSourceByUID(instanceDatasource.Payload.UID) //nolint
 				if err != nil {
@@ -141,14 +139,14 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 	}
 
 	if datasourcesSynced > 0 {
-		syncLog.Info("successfully synced datasources", "datasources", datasourcesSynced)
+		log.Info("successfully synced datasources", "datasources", datasourcesSynced)
 	}
 	return ctrl.Result{Requeue: false}, nil
 }
 
 func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	controllerLog := log.FromContext(ctx).WithName("GrafanaDatasourceReconciler")
-	r.Log = controllerLog
+	log := logf.FromContext(ctx).WithName("GrafanaDatasourceReconciler")
+	logf.IntoContext(ctx, log)
 
 	// periodic sync reconcile
 	if req.Namespace == "" && req.Name == "" {
@@ -172,12 +170,12 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			}
 			return ctrl.Result{}, nil
 		}
-		controllerLog.Error(err, "error getting grafana datasource cr")
+		log.Error(err, "error getting grafana datasource cr")
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
 
 	if cr.Spec.Datasource == nil {
-		controllerLog.Info("skipped datasource with empty spec", cr.Name, cr.Namespace)
+		log.Info("skipped datasource with empty spec", cr.Name, cr.Namespace)
 		// TODO: add a custom status around that?
 		return ctrl.Result{}, nil
 	}
@@ -187,20 +185,20 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	instances, err := r.GetMatchingDatasourceInstances(ctx, cr, r.Client)
 	if err != nil {
-		controllerLog.Error(err, "could not find matching instances", "name", cr.Name, "namespace", cr.Namespace)
+		log.Error(err, "could not find matching instances", "name", cr.Name, "namespace", cr.Namespace)
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
 
-	controllerLog.Info("found matching Grafana instances for datasource", "count", len(instances.Items))
+	log.Info("found matching Grafana instances for datasource", "count", len(instances.Items))
 
 	datasource, hash, err := r.getDatasourceContent(ctx, cr)
 	if err != nil {
-		controllerLog.Error(err, "could not retrieve datasource contents", "name", cr.Name, "namespace", cr.Namespace)
+		log.Error(err, "could not retrieve datasource contents", "name", cr.Name, "namespace", cr.Namespace)
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
 
 	if cr.IsUpdatedUID() {
-		controllerLog.Info("datasource uid got updated, deleting datasources with the old uid")
+		log.Info("datasource uid got updated, deleting datasources with the old uid")
 		err = r.onDatasourceDeleted(ctx, req.Namespace, req.Name)
 		if err != nil {
 			return ctrl.Result{RequeueAfter: RequeueDelay}, err
@@ -229,7 +227,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		// an admin url is required to interact with grafana
 		// the instance or route might not yet be ready
 		if grafana.Status.Stage != v1beta1.OperatorStageComplete || grafana.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
-			controllerLog.Info("grafana instance not ready", "grafana", grafana.Name)
+			log.Info("grafana instance not ready", "grafana", grafana.Name)
 			success = false
 			continue
 		}
@@ -241,7 +239,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, cr.Spec.Plugins, fmt.Sprintf("%v-datasource", cr.Name))
 			if err != nil {
 				success = false
-				controllerLog.Error(err, "error reconciling plugins", "datasource", cr.Name, "grafana", grafana.Name)
+				log.Error(err, "error reconciling plugins", "datasource", cr.Name, "grafana", grafana.Name)
 			}
 		}
 
@@ -250,7 +248,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		if err != nil {
 			success = false
 			cr.Status.LastMessage = err.Error()
-			controllerLog.Error(err, "error reconciling datasource", "datasource", cr.Name, "grafana", grafana.Name)
+			log.Error(err, "error reconciling datasource", "datasource", cr.Name, "grafana", grafana.Name)
 		}
 	}
 
@@ -391,6 +389,7 @@ func (r *GrafanaDatasourceReconciler) SetupWithManager(mgr ctrl.Manager, ctx con
 
 	if err == nil {
 		go func() {
+			log := logf.FromContext(ctx).WithName("GrafanaDatasourceReconciler")
 			for {
 				select {
 				case <-ctx.Done():
@@ -398,14 +397,14 @@ func (r *GrafanaDatasourceReconciler) SetupWithManager(mgr ctrl.Manager, ctx con
 				case <-time.After(initialSyncDelay):
 					result, err := r.Reconcile(ctx, ctrl.Request{})
 					if err != nil {
-						r.Log.Error(err, "error synchronizing datasources")
+						log.Error(err, "error synchronizing datasources")
 						continue
 					}
 					if result.Requeue {
-						r.Log.Info("more datasources left to synchronize")
+						log.Info("more datasources left to synchronize")
 						continue
 					}
-					r.Log.Info("datasources sync complete")
+					log.Info("datasources sync complete")
 					return
 				}
 			}
@@ -416,17 +415,18 @@ func (r *GrafanaDatasourceReconciler) SetupWithManager(mgr ctrl.Manager, ctx con
 }
 
 func (r *GrafanaDatasourceReconciler) GetMatchingDatasourceInstances(ctx context.Context, datasource *v1beta1.GrafanaDatasource, k8sClient client.Client) (v1beta1.GrafanaList, error) {
+	log := logf.FromContext(ctx)
 	instances, err := GetMatchingInstances(ctx, k8sClient, datasource.Spec.InstanceSelector)
 	if err != nil || len(instances.Items) == 0 {
 		datasource.Status.NoMatchingInstances = true
 		if err := r.Client.Status().Update(ctx, datasource); err != nil {
-			r.Log.Info("unable to update the status of %v, in %v", datasource.Name, datasource.Namespace)
+			log.Info("unable to update the status of %v, in %v", datasource.Name, datasource.Namespace)
 		}
 		return v1beta1.GrafanaList{}, err
 	}
 	datasource.Status.NoMatchingInstances = false
 	if err := r.Client.Status().Update(ctx, datasource); err != nil {
-		r.Log.Info("unable to update the status of %v, in %v", datasource.Name, datasource.Namespace)
+		log.Info("unable to update the status of %v, in %v", datasource.Name, datasource.Namespace)
 	}
 
 	return instances, err
