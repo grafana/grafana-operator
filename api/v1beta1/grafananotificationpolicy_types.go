@@ -178,11 +178,6 @@ func (np *GrafanaNotificationPolicy) NamespacedResource() string {
 	return fmt.Sprintf("%v/%v/%v", np.ObjectMeta.Namespace, np.ObjectMeta.Name, np.ObjectMeta.UID)
 }
 
-// IsCrossNamespaceImportAllowed returns true when cross namespace imports are allowed
-func (np *GrafanaNotificationPolicy) IsCrossNamespaceImportAllowed() bool {
-	return np.Spec.AllowCrossNamespaceImport
-}
-
 //+kubebuilder:object:root=true
 
 // GrafanaNotificationPolicyList contains a list of GrafanaNotificationPolicy

@@ -135,7 +135,7 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 
 	if notificationPolicy.Spec.Route.RouteSelector != nil || hasRouteSelector(notificationPolicy.Spec.Route) {
 		var namespace *string
-		if !notificationPolicy.IsCrossNamespaceImportAllowed() {
+		if !notificationPolicy.AllowCrossNamespace() {
 			ns := notificationPolicy.GetObjectMeta().GetNamespace()
 			namespace = &ns
 		}
@@ -357,7 +357,7 @@ func (r *GrafanaNotificationPolicyReconciler) SetupWithManager(mgr ctrl.Manager)
 					continue
 				}
 
-				if np.GetNamespace() != o.GetNamespace() && !np.IsCrossNamespaceImportAllowed() {
+				if np.GetNamespace() != o.GetNamespace() && !np.AllowCrossNamespace() {
 					continue
 				}
 
