@@ -19,11 +19,14 @@ package main
 import (
 	"context"
 	"flag"
+	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 
+	"go.uber.org/automaxprocs/maxprocs"
 	uberzap "go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -35,6 +38,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 
+	"github.com/KimMachineGun/automemlimit/memlimit"
+	"github.com/go-logr/logr"
 	routev1 "github.com/openshift/api/route/v1"
 	discovery2 "k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
@@ -102,6 +107,18 @@ func main() {
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+
+	slogger := slog.New(logr.ToSlogHandler(setupLog))
+	slog.SetDefault(slogger)
+
+	// Optimize Go runtime based on CGroup limits (GOMEMLIMIT, sets a soft memory limit for the runtime)
+	memlimit.SetGoMemLimitWithOpts(memlimit.WithLogger(slogger)) //nolint:errcheck
+
+	// Optimize Go runtime based on CGroup limits (GOMAXPROCS, limits the number of operating system threads that can execute user-level Go code simultaneously)
+	_, err := maxprocs.Set(maxprocs.Logger(log.Printf))
+	if err != nil {
+		setupLog.Error(err, "failed to adjust GOMAXPROCS")
+	}
 
 	watchNamespace, _ := os.LookupEnv(watchNamespaceEnvVar)
 	watchNamespaceSelector, _ := os.LookupEnv(watchNamespaceEnvSelector)

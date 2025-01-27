@@ -3,6 +3,7 @@ module github.com/grafana/grafana-operator/v5
 go 1.23.3
 
 require (
+	github.com/KimMachineGun/automemlimit v0.7.0
 	github.com/bitly/go-simplejson v0.5.1
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/go-logr/logr v1.4.2
@@ -15,6 +16,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.20.5
 	github.com/stretchr/testify v1.10.0
+	go.uber.org/automaxprocs v1.6.0
 	k8s.io/api v0.32.1
 	k8s.io/apimachinery v0.32.1
 	k8s.io/client-go v0.32.1
@@ -40,6 +42,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
+	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.mongodb.org/mongo-driver v1.14.0 // indirect
 	go.opentelemetry.io/otel v1.28.0 // indirect
