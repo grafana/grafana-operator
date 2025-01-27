@@ -39,11 +39,6 @@ func stringP(s string) *string {
 	return &s
 }
 
-func int8P(i int) *int8 {
-	i8 := int8(i)
-	return &i8
-}
-
 func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 	tests := []struct {
 		name               string
@@ -295,7 +290,8 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			s := runtime.NewScheme()
-			_ = grafanav1beta1.AddToScheme(s)
+			err := grafanav1beta1.AddToScheme(s)
+			assert.NoError(t, err, "adding scheme")
 			client := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(routesToRuntimeObjects(tt.existingRoutes)...).Build()
 
 			gotPolicy, _, err := assembleNotificationPolicyRoutes(ctx, client, nil, tt.notificationPolicy)
