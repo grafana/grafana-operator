@@ -175,9 +175,6 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 		r.Log.Error(err, "failed to add merged events to routes")
 	}
 
-	condition := buildSynchronizedCondition("Notification Policy", conditionNotificationPolicySynchronized, notificationPolicy.Generation, applyErrors, len(instances))
-	meta.SetStatusCondition(&notificationPolicy.Status.Conditions, condition)
-
 	return ctrl.Result{RequeueAfter: notificationPolicy.Spec.ResyncPeriod.Duration}, nil
 }
 
