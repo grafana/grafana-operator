@@ -263,7 +263,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		}
 	}
 
-	// NOTE New Condition?
+	// TODO Add new Condition displaing plugin reconciliation errors
 	// Specific to datasources
 	if len(pluginErrors) > 0 {
 		err := fmt.Errorf("%v", pluginErrors)
@@ -304,16 +304,18 @@ func (r *GrafanaDatasourceReconciler) deleteOldDatasource(ctx context.Context, c
 		}
 
 		datasource, err := grafanaClient.Datasources.GetDataSourceByUID(*uid)
+		var notFound *datasources.GetDataSourceByUIDNotFound
+		if errors.As(err, &notFound) {
+			continue
+		}
+
 		if err != nil {
-			var notFound *datasources.GetDataSourceByUIDNotFound
-			if !errors.As(err, &notFound) {
-				return err
-			}
-		} else {
-			_, err = grafanaClient.Datasources.DeleteDataSourceByUID(datasource.Payload.UID) //nolint
-			if err != nil {
-				return fmt.Errorf("deleting datasource to update uid %s: %w", *uid, err)
-			}
+			return fmt.Errorf("fetching datasource: %w", err)
+		}
+
+		_, err = grafanaClient.Datasources.DeleteDataSourceByUID(datasource.Payload.UID) //nolint
+		if err != nil {
+			return fmt.Errorf("deleting datasource to update uid %s: %w", *uid, err)
 		}
 
 		grafana.Status.Datasources = grafana.Status.Datasources.Remove(cr.Namespace, cr.Name)
@@ -343,11 +345,12 @@ func (r *GrafanaDatasourceReconciler) finalize(ctx context.Context, cr *v1beta1.
 		}
 
 		_, err = grafanaClient.Datasources.DeleteDataSourceByUID(*uid) // nolint:errcheck
+		var notFound *datasources.DeleteDataSourceByUIDNotFound
+		if errors.As(err, &notFound) {
+			continue
+		}
+
 		if err != nil {
-			var notFound *datasources.DeleteDataSourceByUIDNotFound
-			if errors.As(err, &notFound) {
-				return nil
-			}
 			return fmt.Errorf("deleting datasource %s: %w", *uid, err)
 		}
 
@@ -479,7 +482,7 @@ func (r *GrafanaDatasourceReconciler) buildDatasourceModel(ctx context.Context, 
 	// Unstructured object for mutating target paths
 	simpleContent, err := simplejson.NewJson(initialBytes)
 	if err != nil {
-		return nil, "", fmt.Errorf("parsing marshaled json as simplejson")
+		return nil, "", fmt.Errorf("parsing marshaled json as simplejson: %w", err)
 	}
 
 	simpleContent.Set("uid", cr.CustomUIDOrUID())
@@ -505,14 +508,14 @@ func (r *GrafanaDatasourceReconciler) buildDatasourceModel(ctx context.Context, 
 
 	newBytes, err := simpleContent.MarshalJSON()
 	if err != nil {
-		return nil, "", err
+		return nil, "", fmt.Errorf("encoding expanded datasource model as json: %w", err)
 	}
 
 	// TODO models.DataSource has SecureJsonData field now, verify if below is still true
 	// We use UpdateDataSourceCommand here because models.DataSource lacks the SecureJsonData field
 	var res models.UpdateDataSourceCommand
 	if err = json.Unmarshal(newBytes, &res); err != nil {
-		return nil, "", err
+		return nil, "", fmt.Errorf("deserializing expanded datasource model from json: %w", err)
 	}
 
 	// TODO Remove hashing along with the Status.Hash field
