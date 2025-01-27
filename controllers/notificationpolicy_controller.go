@@ -140,12 +140,7 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 	var mergedRoutes []*v1beta1.GrafanaNotificationPolicyRoute
 
 	if notificationPolicy.Spec.Route.RouteSelector != nil || notificationPolicy.Spec.Route.HasRouteSelector() {
-		var namespace *string
-		if !notificationPolicy.AllowCrossNamespace() {
-			ns := notificationPolicy.GetObjectMeta().GetNamespace()
-			namespace = &ns
-		}
-		notificationPolicy, mergedRoutes, err = assembleNotificationPolicyRoutes(ctx, r.Client, namespace, notificationPolicy)
+		notificationPolicy, mergedRoutes, err = assembleNotificationPolicyRoutes(ctx, r.Client, notificationPolicy)
 		if err != nil {
 			applyErrors[globalApplyError] = err.Error()
 			return ctrl.Result{}, fmt.Errorf("failed to assemble GrafanaNotificationPolicy using routeSelectors: %w", err)
@@ -190,7 +185,12 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 // returns an assembled GrafanaNotificationPolicy as well as a list of all merged routes.
 // it ensures that there are no reference loops when discovering routes via labelSelectors
 
-func assembleNotificationPolicyRoutes(ctx context.Context, k8sClient client.Client, namespace *string, notificationPolicy *grafanav1beta1.GrafanaNotificationPolicy) (*grafanav1beta1.GrafanaNotificationPolicy, []*v1beta1.GrafanaNotificationPolicyRoute, error) {
+func assembleNotificationPolicyRoutes(ctx context.Context, k8sClient client.Client, notificationPolicy *grafanav1beta1.GrafanaNotificationPolicy) (*grafanav1beta1.GrafanaNotificationPolicy, []*v1beta1.GrafanaNotificationPolicyRoute, error) {
+	var namespace *string
+	if !notificationPolicy.AllowCrossNamespace() {
+		ns := notificationPolicy.GetObjectMeta().GetNamespace()
+		namespace = &ns
+	}
 	mergedRoutes := []*v1beta1.GrafanaNotificationPolicyRoute{}
 
 	// visitedGlobal keeps track of all routes that have been appended to mergedRoutes

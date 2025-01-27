@@ -90,6 +90,70 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "Ignore routes from other namespace when cross-namespace import is not allowed",
+			notificationPolicy: &grafanav1beta1.GrafanaNotificationPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: grafanav1beta1.GrafanaNotificationPolicySpec{
+					GrafanaCommonSpec: grafanav1beta1.GrafanaCommonSpec{
+						AllowCrossNamespaceImport: false,
+					},
+					Route: &grafanav1beta1.Route{
+						Receiver: "default-receiver",
+						RouteSelector: &metav1.LabelSelector{
+							MatchLabels: map[string]string{"tier": "first"},
+						},
+					},
+				},
+			},
+			existingRoutes: []grafanav1beta1.GrafanaNotificationPolicyRoute{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "route-1",
+						Namespace: "default",
+						Labels:    map[string]string{"tier": "first"},
+					},
+					Spec: grafanav1beta1.GrafanaNotificationPolicyRouteSpec{
+						Route: grafanav1beta1.Route{
+							Receiver: "team-A-receiver",
+							Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("team"), Value: "A", IsEqual: true}},
+						},
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "route-2",
+						Namespace: "other-namespace",
+						Labels:    map[string]string{"tier": "first"},
+					},
+					Spec: grafanav1beta1.GrafanaNotificationPolicyRouteSpec{
+						Route: grafanav1beta1.Route{
+							Receiver: "team-A-receiver-other-namespace",
+							Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("team"), Value: "A", IsEqual: true}},
+						},
+					},
+				},
+			},
+			want: &grafanav1beta1.GrafanaNotificationPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: grafanav1beta1.GrafanaNotificationPolicySpec{
+					Route: &grafanav1beta1.Route{
+						Receiver: "default-receiver",
+						Routes: []*grafanav1beta1.Route{
+							{
+								Receiver: "team-A-receiver",
+								Matchers: grafanav1beta1.Matchers{&grafanav1beta1.Matcher{Name: stringP("team"), Value: "A", IsEqual: true}},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "Assembly with nested routes",
 			notificationPolicy: &grafanav1beta1.GrafanaNotificationPolicy{
 				Spec: grafanav1beta1.GrafanaNotificationPolicySpec{
@@ -294,7 +358,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 			assert.NoError(t, err, "adding scheme")
 			client := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(routesToRuntimeObjects(tt.existingRoutes)...).Build()
 
-			gotPolicy, _, err := assembleNotificationPolicyRoutes(ctx, client, nil, tt.notificationPolicy)
+			gotPolicy, _, err := assembleNotificationPolicyRoutes(ctx, client, tt.notificationPolicy)
 			if tt.wantErr {
 				assert.Error(t, err, "assembleNotificationPolicyRoutes() should return an error")
 			} else {
