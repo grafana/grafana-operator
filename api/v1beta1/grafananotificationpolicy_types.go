@@ -152,6 +152,21 @@ func (r *Route) IsRouteSelectorMutuallyExclusive() bool {
 	return true
 }
 
+// HasRouteSelector checks if the given Route or any of its nested Routes has a RouteSelector
+func (r *Route) HasRouteSelector() bool {
+	if r.RouteSelector != nil {
+		return true
+	}
+
+	for _, nestedRoute := range r.Routes {
+		if nestedRoute.HasRouteSelector() {
+			return true
+		}
+	}
+
+	return false
+}
+
 // GrafanaNotificationPolicyStatus defines the observed state of GrafanaNotificationPolicy
 type GrafanaNotificationPolicyStatus struct {
 	GrafanaCommonStatus `json:",inline"`

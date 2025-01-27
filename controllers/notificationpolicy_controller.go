@@ -133,7 +133,7 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 	var mergedRoutes []*v1beta1.GrafanaNotificationPolicyRoute
 	assembledNotificationPolicy := notificationPolicy.DeepCopy()
 
-	if notificationPolicy.Spec.Route.RouteSelector != nil || hasRouteSelector(notificationPolicy.Spec.Route) {
+	if notificationPolicy.Spec.Route.RouteSelector != nil || notificationPolicy.Spec.Route.HasRouteSelector() {
 		var namespace *string
 		if !notificationPolicy.AllowCrossNamespace() {
 			ns := notificationPolicy.GetObjectMeta().GetNamespace()
@@ -353,7 +353,7 @@ func (r *GrafanaNotificationPolicyReconciler) SetupWithManager(mgr ctrl.Manager)
 			}
 			requests := []reconcile.Request{}
 			for _, np := range nps.Items {
-				if !hasRouteSelector(np.Spec.Route) {
+				if !np.Spec.Route.HasRouteSelector() {
 					continue
 				}
 
@@ -410,25 +410,6 @@ func (r *GrafanaNotificationPolicyReconciler) updateNotificationPolicyRoutesStat
 		}
 	}
 	return nil
-}
-
-// hasRouteSelector checks if the given Route or any of its nested Routes has a RouteSelector
-func hasRouteSelector(route *grafanav1beta1.Route) bool {
-	if route == nil {
-		return false
-	}
-
-	if route.RouteSelector != nil {
-		return true
-	}
-
-	for _, nestedRoute := range route.Routes {
-		if hasRouteSelector(nestedRoute) {
-			return true
-		}
-	}
-
-	return false
 }
 
 // statusDiscoveredRoutes returns the list of discovered routes using the namespace and name
