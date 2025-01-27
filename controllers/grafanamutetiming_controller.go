@@ -29,9 +29,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/go-logr/logr"
 	"github.com/grafana/grafana-openapi-client-go/client/provisioning"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -45,7 +44,6 @@ const (
 // GrafanaMuteTimingReconciler reconciles a GrafanaMuteTiming object
 type GrafanaMuteTimingReconciler struct {
 	client.Client
-	Log    logr.Logger
 	Scheme *runtime.Scheme
 }
 
@@ -54,8 +52,8 @@ type GrafanaMuteTimingReconciler struct {
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanamutetimings/finalizers,verbs=update
 
 func (r *GrafanaMuteTimingReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	controllerLog := log.FromContext(ctx).WithName("GrafanaMuteTimingReconciler")
-	r.Log = controllerLog
+	log := logf.FromContext(ctx).WithName("GrafanaMuteTimingReconciler")
+	logf.IntoContext(ctx, log)
 
 	muteTiming := &grafanav1beta1.GrafanaMuteTiming{}
 	err := r.Client.Get(ctx, client.ObjectKey{
@@ -85,20 +83,20 @@ func (r *GrafanaMuteTimingReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	defer func() {
 		muteTiming.Status.LastResync = metav1.Time{Time: time.Now()}
 		if err := r.Client.Status().Update(ctx, muteTiming); err != nil {
-			r.Log.Error(err, "updating status")
+			log.Error(err, "updating status")
 		}
 		if meta.IsStatusConditionTrue(muteTiming.Status.Conditions, conditionNoMatchingInstance) {
 			if err := removeFinalizer(ctx, r.Client, muteTiming); err != nil {
-				r.Log.Error(err, "failed to remove finalizer")
+				log.Error(err, "failed to remove finalizer")
 			}
 		} else {
 			if err := addFinalizer(ctx, r.Client, muteTiming); err != nil {
-				r.Log.Error(err, "failed to set finalizer")
+				log.Error(err, "failed to set finalizer")
 			}
 		}
 	}()
 
-	instances, err := GetScopedMatchingInstances(controllerLog, ctx, r.Client, muteTiming)
+	instances, err := GetScopedMatchingInstances(ctx, r.Client, muteTiming)
 	if err != nil {
 		setNoMatchingInstancesCondition(&muteTiming.Status.Conditions, muteTiming.Generation, err)
 		meta.RemoveStatusCondition(&muteTiming.Status.Conditions, conditionMuteTimingSynchronized)
@@ -112,7 +110,7 @@ func (r *GrafanaMuteTimingReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	removeNoMatchingInstance(&muteTiming.Status.Conditions)
-	controllerLog.Info("found matching Grafana instances for mute timing", "count", len(instances))
+	log.Info("found matching Grafana instances for mute timing", "count", len(instances))
 
 	applyErrors := make(map[string]string)
 	for _, grafana := range instances {
@@ -204,9 +202,10 @@ func (r *GrafanaMuteTimingReconciler) getMuteTimingByName(ctx context.Context, n
 }
 
 func (r *GrafanaMuteTimingReconciler) finalize(ctx context.Context, muteTiming *grafanav1beta1.GrafanaMuteTiming) error {
-	r.Log.Info("Finalizing GrafanaMuteTiming")
+	log := logf.FromContext(ctx)
+	log.Info("Finalizing GrafanaMuteTiming")
 
-	instances, err := GetScopedMatchingInstances(r.Log, ctx, r.Client, muteTiming)
+	instances, err := GetScopedMatchingInstances(ctx, r.Client, muteTiming)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
