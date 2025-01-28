@@ -149,7 +149,7 @@ func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result,
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.9.2/pkg/reconcile
 func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx).WithName("GrafanaFolderReconciler")
-	logf.IntoContext(ctx, log)
+	ctx = logf.IntoContext(ctx, log)
 
 	// periodic sync reconcile
 	if req.Namespace == "" && req.Name == "" {

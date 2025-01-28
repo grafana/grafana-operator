@@ -60,7 +60,7 @@ type GrafanaAlertRuleGroupReconciler struct {
 
 func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx).WithName("GrafanaAlertRuleGroupReconciler")
-	logf.IntoContext(ctx, log)
+	ctx = logf.IntoContext(ctx, log)
 
 	group := &grafanav1beta1.GrafanaAlertRuleGroup{}
 	err := r.Client.Get(ctx, client.ObjectKey{

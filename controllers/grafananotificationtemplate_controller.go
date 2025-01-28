@@ -52,7 +52,7 @@ type GrafanaNotificationTemplateReconciler struct {
 
 func (r *GrafanaNotificationTemplateReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx).WithName("GrafanaNotificationTemplateReconciler")
-	logf.IntoContext(ctx, log)
+	ctx = logf.IntoContext(ctx, log)
 
 	notificationTemplate := &grafanav1beta1.GrafanaNotificationTemplate{}
 	err := r.Client.Get(ctx, client.ObjectKey{

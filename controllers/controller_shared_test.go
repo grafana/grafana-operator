@@ -297,7 +297,7 @@ var _ = Describe("GetMatchingInstances functions", Ordered, func() {
 
 	ctx := context.Background()
 	testLog := logf.FromContext(ctx).WithSink(logf.NullLogSink{})
-	logf.IntoContext(ctx, testLog)
+	ctx = logf.IntoContext(ctx, testLog)
 
 	// Pre-create all resources
 	BeforeAll(func() { // Necessary to use assertions

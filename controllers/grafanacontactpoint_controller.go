@@ -65,7 +65,7 @@ type GrafanaContactPointReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.4/pkg/reconcile
 func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx).WithName("GrafanaContactPointReconciler")
-	logf.IntoContext(ctx, log)
+	ctx = logf.IntoContext(ctx, log)
 
 	contactPoint := &grafanav1beta1.GrafanaContactPoint{}
 	err := r.Client.Get(ctx, client.ObjectKey{

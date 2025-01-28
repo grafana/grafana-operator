@@ -146,7 +146,7 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 
 func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx).WithName("GrafanaDatasourceReconciler")
-	logf.IntoContext(ctx, log)
+	ctx = logf.IntoContext(ctx, log)
 
 	// periodic sync reconcile
 	if req.Namespace == "" && req.Name == "" {

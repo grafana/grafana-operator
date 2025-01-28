@@ -53,7 +53,7 @@ type GrafanaMuteTimingReconciler struct {
 
 func (r *GrafanaMuteTimingReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx).WithName("GrafanaMuteTimingReconciler")
-	logf.IntoContext(ctx, log)
+	ctx = logf.IntoContext(ctx, log)
 
 	muteTiming := &grafanav1beta1.GrafanaMuteTiming{}
 	err := r.Client.Get(ctx, client.ObjectKey{

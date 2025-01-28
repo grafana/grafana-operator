@@ -160,7 +160,7 @@ func getDashboardsToDelete(allDashboards *v1beta1.GrafanaDashboardList, grafanas
 
 func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx).WithName("GrafanaDashboardReconciler")
-	logf.IntoContext(ctx, log)
+	ctx = logf.IntoContext(ctx, log)
 
 	// periodic sync reconcile
 	if req.Namespace == "" && req.Name == "" {

@@ -62,7 +62,7 @@ type GrafanaReconciler struct {
 
 func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx).WithName("GrafanaReconciler")
-	logf.IntoContext(ctx, log)
+	ctx = logf.IntoContext(ctx, log)
 
 	grafana := &grafanav1beta1.Grafana{}
 	err := r.Get(ctx, req.NamespacedName, grafana)

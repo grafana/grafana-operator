@@ -55,7 +55,7 @@ type GrafanaNotificationPolicyReconciler struct {
 
 func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx).WithName("GrafanaNotificationPolicyReconciler")
-	logf.IntoContext(ctx, log)
+	ctx = logf.IntoContext(ctx, log)
 
 	notificationPolicy := &grafanav1beta1.GrafanaNotificationPolicy{}
 	err := r.Client.Get(ctx, client.ObjectKey{
