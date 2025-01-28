@@ -63,9 +63,13 @@ type GrafanaDashboardUrlAuthorization struct {
 type GrafanaDashboardSpec struct {
 	GrafanaCommonSpec `json:",inline"`
 
-	// Manually specify the uid for the dashboard, overwrites uids already present in the json model
+	// Manually specify the uid for the dashboard, overwrites uids already present
+	// in the json model. Can be any string consisting of alphanumeric characters,
+	// - and _ with a maximum length of 40
 	// +optional
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="spec.uid is immutable"
+	// +kubebuilder:validation:MaxLength=40
+	// +kubebuilder:validation:Pattern="^[a-zA-Z0-9-_]+$"
 	CustomUID string `json:"uid,omitempty"`
 
 	// dashboard json

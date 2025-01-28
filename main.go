@@ -19,15 +19,17 @@ package main
 import (
 	"context"
 	"flag"
+	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 
+	"go.uber.org/automaxprocs/maxprocs"
 	uberzap "go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	"k8s.io/apimachinery/pkg/fields"
@@ -36,8 +38,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 
+	"github.com/KimMachineGun/automemlimit/memlimit"
+	"github.com/go-logr/logr"
 	routev1 "github.com/openshift/api/route/v1"
 	discovery2 "k8s.io/client-go/discovery"
+	"k8s.io/client-go/rest"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -104,8 +109,33 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
+	slogger := slog.New(logr.ToSlogHandler(setupLog))
+	slog.SetDefault(slogger)
+
+	// Optimize Go runtime based on CGroup limits (GOMEMLIMIT, sets a soft memory limit for the runtime)
+	memlimit.SetGoMemLimitWithOpts(memlimit.WithLogger(slogger)) //nolint:errcheck
+
+	// Optimize Go runtime based on CGroup limits (GOMAXPROCS, limits the number of operating system threads that can execute user-level Go code simultaneously)
+	_, err := maxprocs.Set(maxprocs.Logger(log.Printf))
+	if err != nil {
+		setupLog.Error(err, "failed to adjust GOMAXPROCS")
+	}
+
 	watchNamespace, _ := os.LookupEnv(watchNamespaceEnvVar)
 	watchNamespaceSelector, _ := os.LookupEnv(watchNamespaceEnvSelector)
+
+	// Fetch k8s api credentials and detect platform
+	restConfig := ctrl.GetConfigOrDie()
+	autodetect, err := autodetect.New(restConfig)
+	if err != nil {
+		setupLog.Error(err, "failed to setup auto-detect routine")
+		os.Exit(1)
+	}
+	isOpenShift, err := autodetect.IsOpenshift()
+	if err != nil {
+		setupLog.Error(err, "unable to detect the platform")
+		os.Exit(1)
+	}
 
 	controllerOptions := ctrl.Options{
 		Scheme: scheme,
@@ -121,50 +151,6 @@ func main() {
 		PprofBindAddress:       pprofAddr,
 	}
 
-	getNamespaceConfig := func(namespaces string) map[string]cache.Config {
-		defaultNamespaces := map[string]cache.Config{}
-		for _, v := range strings.Split(namespaces, ",") {
-			// Generate a mapping of namespaces to label/field selectors, set to Everything() to enable matching all
-			// instances in all namespaces from watchNamespace to be controlled by the operator
-			// this is the default behavior of the operator on v5, if you require finer grained control over this
-			// please file an issue in the grafana-operator/grafana-operator GH project
-			defaultNamespaces[v] = cache.Config{
-				LabelSelector:         labels.Everything(), // Match any labels
-				FieldSelector:         fields.Everything(), // Match any fields
-				Transform:             nil,
-				UnsafeDisableDeepCopy: nil,
-			}
-		}
-		return defaultNamespaces
-	}
-	getNamespaceConfigSelector := func(selector string) map[string]cache.Config {
-		cl, err := client.New(config.GetConfigOrDie(), client.Options{})
-		if err != nil {
-			setupLog.Error(err, "Failed to get watch namespaces")
-		}
-		nsList := &corev1.NamespaceList{}
-		listOpts := []client.ListOption{
-			client.MatchingLabels(map[string]string{strings.Split(selector, ":")[0]: strings.Split(selector, ":")[1]}),
-		}
-		err = cl.List(context.Background(), nsList, listOpts...)
-		if err != nil {
-			setupLog.Error(err, "Failed to get watch namespaces")
-		}
-		defaultNamespaces := map[string]cache.Config{}
-		for _, v := range nsList.Items {
-			// Generate a mapping of namespaces to label/field selectors, set to Everything() to enable matching all
-			// instances in all namespaces from watchNamespace to be controlled by the operator
-			// this is the default behavior of the operator on v5, if you require finer grained control over this
-			// please file an issue in the grafana-operator/grafana-operator GH project
-			defaultNamespaces[v.Name] = cache.Config{
-				LabelSelector:         labels.Everything(), // Match any labels
-				FieldSelector:         fields.Everything(), // Match any fields
-				Transform:             nil,
-				UnsafeDisableDeepCopy: nil,
-			}
-		}
-		return defaultNamespaces
-	}
 	switch {
 	case strings.Contains(watchNamespace, ","):
 		// multi namespace scoped
@@ -176,7 +162,7 @@ func main() {
 		setupLog.Info("operator running in namespace scoped mode", "namespace", watchNamespace)
 	case strings.Contains(watchNamespaceSelector, ":"):
 		// namespace scoped
-		controllerOptions.Cache.DefaultNamespaces = getNamespaceConfigSelector(watchNamespaceSelector)
+		controllerOptions.Cache.DefaultNamespaces = getNamespaceConfigSelector(restConfig, watchNamespaceSelector)
 		setupLog.Info("operator running in namespace scoped mode using namespace selector", "namespace", watchNamespace)
 
 	case watchNamespace == "" && watchNamespaceSelector == "":
@@ -187,29 +173,17 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGPIPE)
 	defer stop()
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), controllerOptions)
+	mgr, err := ctrl.NewManager(restConfig, controllerOptions)
 	if err != nil {
 		setupLog.Error(err, "unable to create new manager")
 		os.Exit(1) //nolint
-	}
-
-	restConfig := ctrl.GetConfigOrDie()
-	autodetect, err := autodetect.New(restConfig)
-	if err != nil {
-		setupLog.Error(err, "failed to setup auto-detect routine")
-		os.Exit(1)
-	}
-	isOpenShift, err := autodetect.IsOpenshift()
-	if err != nil {
-		setupLog.Error(err, "unable to detect the platform")
-		os.Exit(1)
 	}
 
 	if err = (&controllers.GrafanaReconciler{
 		Client:      mgr.GetClient(),
 		Scheme:      mgr.GetScheme(),
 		IsOpenShift: isOpenShift,
-		Discovery:   discovery2.NewDiscoveryClientForConfigOrDie(ctrl.GetConfigOrDie()),
+		Discovery:   discovery2.NewDiscoveryClientForConfigOrDie(restConfig),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Grafana")
 		os.Exit(1)
@@ -264,6 +238,13 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaNotificationTemplate")
 		os.Exit(1)
 	}
+	if err = (&controllers.GrafanaMuteTimingReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "GrafanaMuteTiming")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
@@ -283,4 +264,52 @@ func main() {
 
 	<-ctx.Done()
 	setupLog.Info("SIGTERM request gotten, shutting down operator")
+}
+
+func getNamespaceConfig(namespaces string) map[string]cache.Config {
+	defaultNamespaces := map[string]cache.Config{}
+	for _, v := range strings.Split(namespaces, ",") {
+		// Generate a mapping of namespaces to label/field selectors, set to Everything() to enable matching all
+		// instances in all namespaces from watchNamespace to be controlled by the operator
+		// this is the default behavior of the operator on v5, if you require finer grained control over this
+		// please file an issue in the grafana-operator/grafana-operator GH project
+		defaultNamespaces[v] = cache.Config{
+			LabelSelector:         labels.Everything(), // Match any labels
+			FieldSelector:         fields.Everything(), // Match any fields
+			Transform:             nil,
+			UnsafeDisableDeepCopy: nil,
+		}
+	}
+	return defaultNamespaces
+}
+
+func getNamespaceConfigSelector(restConfig *rest.Config, selector string) map[string]cache.Config {
+	cl, err := client.New(restConfig, client.Options{})
+	if err != nil {
+		setupLog.Error(err, "Failed to get watch namespaces")
+	}
+
+	nsList := &corev1.NamespaceList{}
+	listOpts := []client.ListOption{
+		client.MatchingLabels(map[string]string{strings.Split(selector, ":")[0]: strings.Split(selector, ":")[1]}),
+	}
+	err = cl.List(context.Background(), nsList, listOpts...)
+	if err != nil {
+		setupLog.Error(err, "Failed to get watch namespaces")
+	}
+
+	defaultNamespaces := map[string]cache.Config{}
+	for _, v := range nsList.Items {
+		// Generate a mapping of namespaces to label/field selectors, set to Everything() to enable matching all
+		// instances in all namespaces from watchNamespace to be controlled by the operator
+		// this is the default behavior of the operator on v5, if you require finer grained control over this
+		// please file an issue in the grafana-operator/grafana-operator GH project
+		defaultNamespaces[v.Name] = cache.Config{
+			LabelSelector:         labels.Everything(), // Match any labels
+			FieldSelector:         fields.Everything(), // Match any fields
+			Transform:             nil,
+			UnsafeDisableDeepCopy: nil,
+		}
+	}
+	return defaultNamespaces
 }

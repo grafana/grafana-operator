@@ -4,22 +4,19 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.3
-  name: grafanafolders.grafana.integreatly.org
+  name: grafanamutetimings.grafana.integreatly.org
 spec:
   group: grafana.integreatly.org
   names:
     categories:
     - grafana-operator
-    kind: GrafanaFolder
-    listKind: GrafanaFolderList
-    plural: grafanafolders
-    singular: grafanafolder
+    kind: GrafanaMuteTiming
+    listKind: GrafanaMuteTimingList
+    plural: grafanamutetimings
+    singular: grafanamutetiming
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .status.NoMatchingInstances
-      name: No matching instances
-      type: boolean
     - format: date-time
       jsonPath: .status.lastResync
       name: Last resync
@@ -30,7 +27,7 @@ spec:
     name: v1beta1
     schema:
       openAPIV3Schema:
-        description: GrafanaFolder is the Schema for the grafanafolders API
+        description: GrafanaMuteTiming is the Schema for the GrafanaMuteTiming API
         properties:
           apiVersion:
             description: |-
@@ -50,13 +47,21 @@ spec:
           metadata:
             type: object
           spec:
-            description: GrafanaFolderSpec defines the desired state of GrafanaFolder
+            description: GrafanaMuteTimingSpec defines the desired state of GrafanaMuteTiming
             properties:
               allowCrossNamespaceImport:
                 default: false
                 description: Allow the Operator to match this resource with Grafanas
                   outside the current namespace
                 type: boolean
+              editable:
+                default: true
+                description: Whether to enable or disable editing of the mute timing
+                  in Grafana UI
+                type: boolean
+                x-kubernetes-validations:
+                - message: spec.editable is immutable
+                  rule: self == oldSelf
               instanceSelector:
                 description: Selects Grafana instances for import
                 properties:
@@ -106,17 +111,8 @@ spec:
                 x-kubernetes-validations:
                 - message: spec.instanceSelector is immutable
                   rule: self == oldSelf
-              parentFolderRef:
-                description: Reference to an existing GrafanaFolder CR in the same
-                  namespace
-                type: string
-              parentFolderUID:
-                description: UID of the folder in which the current folder should
-                  be created
-                type: string
-              permissions:
-                description: Raw json with folder permissions, potentially exported
-                  from Grafana
+              name:
+                description: A unique name for the mute timing
                 type: string
               resyncPeriod:
                 default: 10m0s
@@ -125,41 +121,75 @@ spec:
                 format: duration
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
-              title:
-                description: Display name of the folder in Grafana
-                type: string
-              uid:
-                description: Manually specify the UID the Folder is created with.
-                  Can be any string consisting of alphanumeric characters, - and _
-                  with a maximum length of 40
-                maxLength: 40
-                pattern: ^[a-zA-Z0-9-_]+$
-                type: string
-                x-kubernetes-validations:
-                - message: spec.uid is immutable
-                  rule: self == oldSelf
+              time_intervals:
+                description: Time intervals for muting
+                items:
+                  properties:
+                    days_of_month:
+                      description: |-
+                        The date 1-31 of a month. Negative values can also be used to represent days that begin at the end of the month.
+                        For example: -1 for the last day of the month.
+                      items:
+                        type: string
+                      type: array
+                    location:
+                      description: Depending on the location, the time range is displayed
+                        in local time.
+                      type: string
+                    months:
+                      description: |-
+                        The months of the year in either numerical or the full calendar month.
+                        For example: 1, may.
+                      items:
+                        type: string
+                      type: array
+                    times:
+                      description: The time inclusive of the start and exclusive of
+                        the end time (in UTC if no location has been selected, otherwise
+                        local time).
+                      items:
+                        properties:
+                          end_time:
+                            description: end time
+                            type: string
+                          start_time:
+                            description: start time
+                            type: string
+                        required:
+                        - end_time
+                        - start_time
+                        type: object
+                      type: array
+                    weekdays:
+                      description: |-
+                        The day or range of days of the week.
+                        For example: monday, thursday
+                      items:
+                        type: string
+                      type: array
+                    years:
+                      description: |-
+                        The year or years for the interval.
+                        For example: 2021
+                      items:
+                        type: string
+                      type: array
+                  type: object
+                minItems: 1
+                type: array
             required:
             - instanceSelector
+            - name
+            - time_intervals
             type: object
             x-kubernetes-validations:
-            - message: Only one of parentFolderUID or parentFolderRef can be set
-              rule: (has(self.parentFolderUID) && !(has(self.parentFolderRef))) ||
-                (has(self.parentFolderRef) && !(has(self.parentFolderUID))) || !(has(self.parentFolderRef)
-                && (has(self.parentFolderUID)))
-            - message: spec.uid is immutable
-              rule: ((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) &&
-                has(self.uid)))
             - message: disabling spec.allowCrossNamespaceImport requires a recreate
                 to ensure desired state
               rule: '!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport
                 && self.allowCrossNamespaceImport)'
           status:
-            description: GrafanaFolderStatus defines the observed state of GrafanaFolder
+            description: The most recent observed state of a Grafana resource
             properties:
-              NoMatchingInstances:
-                description: The folder instanceSelector can't find matching grafana
-                  instances
-                type: boolean
               conditions:
                 description: Results when synchonizing resource with Grafana instances
                 items:
@@ -217,8 +247,6 @@ spec:
                   - type
                   type: object
                 type: array
-              hash:
-                type: string
               lastResync:
                 description: Last time the resource was synchronized with Grafana
                   instances

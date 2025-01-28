@@ -29,9 +29,11 @@ import (
 type GrafanaContactPointSpec struct {
 	GrafanaCommonSpec `json:",inline"`
 
-	// Manually specify the UID the Contact Point is created with
+	// Manually specify the UID the Contact Point is created with. Can be any string consisting of alphanumeric characters, - and _ with a maximum length of 40
 	// +optional
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="spec.uid is immutable"
+	// +kubebuilder:validation:MaxLength=40
+	// +kubebuilder:validation:Pattern="^[a-zA-Z0-9-_]+$"
 	CustomUID string `json:"uid,omitempty"`
 
 	// +optional
