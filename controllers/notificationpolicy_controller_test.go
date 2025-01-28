@@ -41,11 +41,12 @@ func stringP(s string) *string {
 
 func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 	tests := []struct {
-		name               string
-		notificationPolicy *grafanav1beta1.GrafanaNotificationPolicy
-		existingRoutes     []grafanav1beta1.GrafanaNotificationPolicyRoute
-		want               *grafanav1beta1.GrafanaNotificationPolicy
-		wantErr            bool
+		name                string
+		notificationPolicy  *grafanav1beta1.GrafanaNotificationPolicy
+		existingRoutes      []grafanav1beta1.GrafanaNotificationPolicyRoute
+		want                *grafanav1beta1.GrafanaNotificationPolicy
+		wantErr             bool
+		wantLoopDetectedErr bool
 	}{
 		{
 			name: "Simple assembly with one level of routes",
@@ -347,7 +348,8 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 					},
 				},
 			},
-			wantErr: true,
+			wantErr:             true,
+			wantLoopDetectedErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -359,6 +361,9 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 			client := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(routesToRuntimeObjects(tt.existingRoutes)...).Build()
 
 			gotPolicy, _, err := assembleNotificationPolicyRoutes(ctx, client, tt.notificationPolicy)
+			if tt.wantLoopDetectedErr {
+				assert.IsType(t, &LoopDetectedError{}, err, "expected error to be of type LoopDetectedError")
+			}
 			if tt.wantErr {
 				assert.Error(t, err, "assembleNotificationPolicyRoutes() should return an error")
 			} else {

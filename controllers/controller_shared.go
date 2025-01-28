@@ -33,9 +33,10 @@ const (
 	RequeueDelay     = 10 * time.Second
 
 	// condition types
-	conditionNoMatchingInstance = "NoMatchingInstance"
-	conditionNoMatchingFolder   = "NoMatchingFolder"
-	conditionInvalidSpec        = "InvalidSpec"
+	conditionNoMatchingInstance             = "NoMatchingInstance"
+	conditionNoMatchingFolder               = "NoMatchingFolder"
+	conditionInvalidSpec                    = "InvalidSpec"
+	conditionNotificationPolicyLoopDetected = "NotificationPolicyLoopDetected"
 
 	// condition reasons
 	conditionApplySuccessful = "ApplySuccessful"
