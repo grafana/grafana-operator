@@ -343,7 +343,7 @@ func (r *GrafanaNotificationPolicyReconciler) SetupWithManager(mgr ctrl.Manager)
 		})).
 		Watches(&grafanav1beta1.GrafanaNotificationPolicyRoute{}, handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
 			log := logf.FromContext(ctx).WithName("GrafanaNotificationPolicyReconciler")
-      npr, ok := o.(*grafanav1beta1.GrafanaNotificationPolicyRoute)
+			npr, ok := o.(*grafanav1beta1.GrafanaNotificationPolicyRoute)
 			if !ok {
 				log.Error(fmt.Errorf("expected object to be NotificationPolicyRoute"), "skipping resource")
 			}
