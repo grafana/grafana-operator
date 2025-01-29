@@ -48,10 +48,6 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
-	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
-	"github.com/grafana/grafana-operator/v5/controllers"
-	"github.com/grafana/grafana-operator/v5/controllers/autodetect"
-	"github.com/grafana/grafana-operator/v5/embeds"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -59,6 +55,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+
+	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/controllers"
+	"github.com/grafana/grafana-operator/v5/controllers/autodetect"
+	"github.com/grafana/grafana-operator/v5/embeds"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -223,8 +224,9 @@ func main() {
 		os.Exit(1)
 	}
 	if err = (&controllers.GrafanaNotificationPolicyReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("GrafanaNotificationPolicy"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaNotificationPolicy")
 		os.Exit(1)

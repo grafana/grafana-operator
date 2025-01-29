@@ -71,7 +71,11 @@ type Route struct {
 	// repeat interval
 	RepeatInterval string `json:"repeat_interval,omitempty"`
 
-	// routes
+	// selects GrafanaNotificationPolicyRoutes to merge in when specified
+	// mutually exclusive with Routes
+	RouteSelector *metav1.LabelSelector `json:"routeSelector,omitempty"`
+
+	// routes, mutually exclusive with RouteSelector
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// +kubebuilder:validation:Schemaless
 	Routes []*Route `json:"routes,omitempty"`
@@ -126,6 +130,50 @@ func (r *Route) ToModelRoute() *models.Route {
 	return out
 }
 
+// selectorMutuallyExclusive checks if a single route satisfies the mutual exclusivity constraint
+// for checking the entire route including nested routes, use IsRouteSelectorMutuallyExclusive
+func (r *Route) selectorMutuallyExclusive() bool {
+	return !(r.RouteSelector != nil && len(r.Routes) > 0)
+}
+
+// IsRouteSelectorMutuallyExclusive returns true when the route and all its sub-routes
+// satisfy the constraint of routes and routeSelector being mutually exclusive
+func (r *Route) IsRouteSelectorMutuallyExclusive() bool {
+	if !r.selectorMutuallyExclusive() {
+		return false
+	}
+
+	// Recursively check all child routes
+	for _, childRoute := range r.Routes {
+		if !childRoute.IsRouteSelectorMutuallyExclusive() {
+			return false
+		}
+	}
+	return true
+}
+
+// HasRouteSelector checks if the given Route or any of its nested Routes has a RouteSelector
+func (r *Route) HasRouteSelector() bool {
+	if r.RouteSelector != nil {
+		return true
+	}
+
+	for _, nestedRoute := range r.Routes {
+		if nestedRoute.HasRouteSelector() {
+			return true
+		}
+	}
+
+	return false
+}
+
+// GrafanaNotificationPolicyStatus defines the observed state of GrafanaNotificationPolicy
+type GrafanaNotificationPolicyStatus struct {
+	GrafanaCommonStatus `json:",inline"`
+
+	DiscoveredRoutes *[]string `json:"discoveredRoutes,omitempty"`
+}
+
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
@@ -137,8 +185,8 @@ type GrafanaNotificationPolicy struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   GrafanaNotificationPolicySpec `json:"spec,omitempty"`
-	Status GrafanaCommonStatus           `json:"status,omitempty"`
+	Spec   GrafanaNotificationPolicySpec   `json:"spec,omitempty"`
+	Status GrafanaNotificationPolicyStatus `json:"status,omitempty"`
 }
 
 func (np *GrafanaNotificationPolicy) NamespacedResource() string {
