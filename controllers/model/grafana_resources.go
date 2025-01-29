@@ -81,6 +81,18 @@ func GetGrafanaService(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1.S
 	return service
 }
 
+func GetGrafanaHeadlessService(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1.Service {
+	service := &v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-alerting", cr.Name),
+			Namespace: cr.Namespace,
+			Labels:    CommonLabels,
+		},
+	}
+	controllerutil.SetControllerReference(cr, service, scheme) //nolint:errcheck
+	return service
+}
+
 func GetGrafanaIngress(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v12.Ingress {
 	ingress := &v12.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
