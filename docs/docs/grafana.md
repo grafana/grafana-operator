@@ -7,8 +7,7 @@ The grafana Custom Resource Definition (CRD) exist to manage one or multiple man
 
 ## Grafana config
 
-In version 4 of the operator, we defined all the configuration values that could be done in the CRD.
-In version 5, we no longer do that. Instead, we offer `grafana.config` field where you can pass any grafana configuration values you want.
+We offer the `grafana.config` field where you can pass any Grafana configuration values you want.
 
 The operator does not make any extra validation of your configuration, so just like a non-operator deployment of Grafana, your Grafana instance might be broken due to a configuration error.
 
@@ -69,11 +68,15 @@ spec:
 
 A more comprehensive example can be found [here](../examples/external_grafana/readme).
 
+## Delete instances
+
+Deleting instances will clean up all associated resources *except* associated volumes.
+Persistent Volume Claims are not deleted to prevent data loss on accidental deletion.
+If you want to recreate an instance, be sure to delete the volume as well.
+Otherwise, the new instance will start up with the old database and encounter authentication issues.
+
 ## Organizations
 
-For grafana-operator v4, there have been multiple requests around adding support for Grafana organizations.
 There have been much design work around how it could be done, but no one have managed to come up with a good design that would be simple-to-use for end users and be easy-to-manage code-wise from maintainer's perspective.
-
-Since version 5 now supports multiple Grafana instances, we are taking the same stance as Grafana Cloud does meaning we will not support organizations in the operator.
-
 Instead we suggest that you use multiple grafana instances together with good CI/CD solutions to manage your dashboards, datasources, etc.
+If you really need support for organizations, you can use the `spec.client.headers` map to set the `X-Grafana-Org-Id` Header.
