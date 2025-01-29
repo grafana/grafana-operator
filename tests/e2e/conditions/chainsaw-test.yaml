@@ -1,0 +1,109 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/chainsaw/main/.schemas/json/test-chainsaw-v1alpha1.json
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: validate-conditions
+spec:
+  concurrent: false
+  bindings:
+    - name: USER
+      value: root
+    - name: PASS
+      value: secret
+  steps:
+    # Normal everything works
+    - name: Create Grafana instance with testdata resources
+      try:
+        - apply:
+            file: ../testdata-resources.yaml
+
+        - assert:
+            resource:
+              apiVersion: v1
+              kind: Pod
+              metadata:
+                (contains(name, 'testdata-deployment')): true
+
+        - wait:
+            apiVersion: v1
+            kind: Pod
+            timeout: 1m
+            for:
+              condition:
+                name: Ready
+                value: 'true'
+
+        - assert:
+            resource:
+              apiVersion: grafana.integreatly.org/v1beta1
+              kind: Grafana
+              metadata:
+                name: testdata
+              status:
+                stage: complete
+                stageStatus: success
+
+        - assert:
+            file: "../testdata-resource-assertions.yaml"
+
+    # reason: NoMatchingInstances
+    - name: Alter Grafana instance label
+      try:
+        - update:
+            resource:
+              apiVersion: grafana.integreatly.org/v1beta1
+              kind: Grafana
+              metadata:
+                name: testdata
+                labels:
+                  test: MatchNothing
+
+        - assert:
+            file: "./no-matching-instances-assertions.yaml"
+
+    - name: Revert Grafana instance to default
+      try:
+        - apply:
+            file: "../testdata-resources.yaml"
+
+        - assert:
+            file: "../testdata-resource-assertions.yaml"
+
+    # Figure out a way to trigger ApplyFailed?
+    # reason: ApplyFailed
+    # - name: Scale Grafana instance to zero
+    #   try:
+    #     - update:
+    #         resource:
+    #           apiVersion: grafana.integreatly.org/v1beta1
+    #           kind: Grafana
+    #           metadata:
+    #             name: testdata
+    #           spec:
+    #             deployment:
+    #               spec:
+    #                 replicas: 0
+
+    #     - assert:
+    #         resource:
+    #           apiVersion: v1
+    #           kind: Event
+    #           reason: ScalingReplicaSet
+    #           source:
+    #             component: kubelet
+    #           involvedObject:
+    #             apiVersion: v1
+    #             kind: Deployment
+    #             name: grafana-testdata-deployment
+
+    #     - assert:
+    #         file: "./apply-failed-assertions.yaml"
+
+    # reason: InvalidSpec
+    - name: Invalidate resource specs
+      try:
+        - update:
+            file: "./testdata-resource-invalid-spec.yaml"
+
+        - assert:
+            file: "./invalid-spec-assertions.yaml"

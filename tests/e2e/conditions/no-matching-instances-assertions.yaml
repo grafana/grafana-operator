@@ -1,0 +1,77 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationTemplate
+metadata:
+  name: testdata
+status:
+  conditions:
+  - reason: EmptyAPIReply
+    status: "True"
+    type: NoMatchingInstance
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaContactPoint
+metadata:
+  name: testdata
+status:
+  conditions:
+  - reason: EmptyAPIReply
+    status: "True"
+    type: NoMatchingInstance
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicy
+metadata:
+  name: testdata
+status:
+  conditions:
+  - reason: EmptyAPIReply
+    status: "True"
+    type: NoMatchingInstance
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: testdata
+status:
+  conditions:
+  - reason: EmptyAPIReply
+    status: "True"
+    type: NoMatchingInstance
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaAlertRuleGroup
+metadata:
+  name: testdata
+status:
+  conditions:
+  - reason: EmptyAPIReply
+    status: "True"
+    type: NoMatchingInstance
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: testdata
+status:
+  NoMatchingInstances: true
+# TODO Switch dashboard assert to conditions
+# status:
+#   conditions:
+#   - reason: EmptyAPIReply
+#     status: "True"
+#     type: NoMatchingInstance
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: testdata
+status:
+  uid: grafana-testdata
+# TODO Switch datasource assert to conditions
+# status:
+#   conditions:
+#   - reason: EmptyAPIReply
+#     status: "True"
+#     type: DatasourceSynchronized
+

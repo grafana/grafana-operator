@@ -1,0 +1,40 @@
+---
+# Make folder reference itself as parent
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: testdata
+spec:
+  resyncPeriod: 10s
+  instanceSelector:
+    matchLabels:
+      test: ($test.metadata.name)
+  uid: testdata-uid
+  title: "Test Data"
+  parentFolderUID: testdata-uid
+---
+# Reference non-existing secret
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaContactPoint
+metadata:
+  name: testdata
+spec:
+  name: testdata
+  type: email
+  instanceSelector:
+    matchLabels:
+      test: ($test.metadata.name)
+  resyncPeriod: 10s
+  # Override settings
+  settings: {}
+  valuesFrom:
+    - targetPath: addresses
+      valueFrom:
+        secretKeyRef:
+          name: contact-mails
+          key: alert-mails
+# TODO Datasource when InvalidSpec is implemented for building datasource from overrides
+# Reference non-existing secret
+
+# TODO Grafana when InvalidSpec is implemented for external Grafana admin secret
+# Reference non-existing secret

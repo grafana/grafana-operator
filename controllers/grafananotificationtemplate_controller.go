@@ -121,12 +121,14 @@ func (r *GrafanaNotificationTemplateReconciler) Reconcile(ctx context.Context, r
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
 	}
+
+	condition := buildSynchronizedCondition("Notification template", conditionNotificationTemplateSynchronized, notificationTemplate.Generation, applyErrors, len(instances))
+	meta.SetStatusCondition(&notificationTemplate.Status.Conditions, condition)
+
 	if len(applyErrors) > 0 {
 		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
 	}
 
-	condition := buildSynchronizedCondition("Notification template", conditionNotificationTemplateSynchronized, notificationTemplate.Generation, applyErrors, len(instances))
-	meta.SetStatusCondition(&notificationTemplate.Status.Conditions, condition)
 	return ctrl.Result{RequeueAfter: notificationTemplate.Spec.ResyncPeriod.Duration}, nil
 }
 

@@ -15,11 +15,69 @@ spec:
       admin_password: ($PASS)
 ---
 apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationTemplate
+metadata:
+  name: testdata
+spec:
+  name: emailtestdata
+  instanceSelector:
+    matchLabels:
+      test: ($test.metadata.name)
+  resyncPeriod: 10s
+  template: |
+    {{ define "emailAlert" }}
+      [{{.Status}}] {{ .Labels.alertname }}
+      {{ .Annotations.AlertValues }}
+    {{ end }}
+
+    {{ define "emailAlertMessage" }}
+      {{ if gt (len .Alerts.Firing) 0 }}
+        {{ len .Alerts.Firing }} firing:
+        {{ range .Alerts.Firing }} {{ template "emailAlert" . }} {{ end }}
+      {{ end }}
+      {{ if gt (len .Alerts.Resolved) 0 }}
+        {{ len .Alerts.Resolved }} resolved:
+        {{ range .Alerts.Resolved }} {{ template "emailAlert" . }} {{ end }}
+      {{ end }}
+    {{ end }}
+
+    {{ template "emailAlertMessage" . }}
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaContactPoint
+metadata:
+  name: testdata
+spec:
+  name: testdata
+  type: email
+  instanceSelector:
+    matchLabels:
+      test: ($test.metadata.name)
+  resyncPeriod: 10s
+  settings:
+    addresses: "void@testdata.invalid"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicy
+metadata:
+  name: testdata
+spec:
+  instanceSelector:
+    matchLabels:
+      test: ($test.metadata.name)
+  resyncPeriod: 3s
+  route:
+    receiver: testdata
+    group_by:
+      - grafana_folder
+      - alertname
+---
+apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaFolder
 metadata:
   name: testdata
 spec:
-  resyncPeriod: 3s
+  resyncPeriod: 10s
   instanceSelector:
     matchLabels:
       test: ($test.metadata.name)
@@ -31,7 +89,7 @@ kind: GrafanaDatasource
 metadata:
   name: testdata
 spec:
-  resyncPeriod: 3s
+  resyncPeriod: 10s
   instanceSelector:
     matchLabels:
       test: "($test.metadata.name)"
@@ -50,7 +108,7 @@ metadata:
   name: testdata
 spec:
   folderRef: testdata
-  resyncPeriod: 3s
+  resyncPeriod: 10s
   instanceSelector:
     matchLabels:
       test: ($test.metadata.name)
@@ -155,7 +213,7 @@ metadata:
   name: testdata
 spec:
   folderRef: testdata
-  resyncPeriod: 3s
+  resyncPeriod: 10s
   instanceSelector:
     matchLabels:
       test: "($test.metadata.name)"

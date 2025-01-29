@@ -1,0 +1,73 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationTemplate
+metadata:
+  name: testdata
+status:
+  conditions:
+  - reason: ApplyFailed
+    status: "False"
+    type: NotificationTemplateSynchronized
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaContactPoint
+metadata:
+  name: testdata
+status:
+  conditions:
+  - reason: ApplyFailed
+    status: "False"
+    type: ContactPointSynchronized
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicy
+metadata:
+  name: testdata
+status:
+  conditions:
+  - reason: ApplyFailed
+    status: "False"
+    type: NotificationPolicySynchronized
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: testdata
+status:
+  conditions:
+  - reason: ApplyFailed
+    status: "False"
+    type: FolderSynchronized
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaAlertRuleGroup
+metadata:
+  name: testdata
+status:
+  conditions:
+  - reason: ApplyFailed
+    status: "False"
+    type: AlertGroupSynchronized
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: testdata
+status:
+  conditions:
+  - reason: ApplyFailed
+    status: "False"
+    type: DashboardSynchronized
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: testdata
+status:
+  uid: grafana-testdata
+# TODO Add switch to datasource conditions later
+# status:
+#   conditions:
+#   - reason: ApplyFailed
+#     status: "False"
+#     type: DatasourceSynchronized
