@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -360,15 +361,15 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 			assert.NoError(t, err, "adding scheme")
 			client := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(routesToRuntimeObjects(tt.existingRoutes)...).Build()
 
-			gotPolicy, _, err := assembleNotificationPolicyRoutes(ctx, client, tt.notificationPolicy)
+			_, err = assembleNotificationPolicyRoutes(ctx, client, tt.notificationPolicy)
 			if tt.wantLoopDetectedErr {
-				assert.IsType(t, &LoopDetectedError{}, err, "expected error to be of type LoopDetectedError")
+				assert.True(t, errors.Is(err, ErrLoopDetected))
 			}
 			if tt.wantErr {
 				assert.Error(t, err, "assembleNotificationPolicyRoutes() should return an error")
 			} else {
 				assert.NoError(t, err, "assembleNotificationPolicyRoutes() should not return an error")
-				assert.Equal(t, tt.want, gotPolicy, "assembleNotificationPolicyRoutes() returned unexpected policy")
+				assert.Equal(t, tt.want, tt.notificationPolicy, "assembleNotificationPolicyRoutes() returned unexpected policy")
 			}
 		})
 	}
