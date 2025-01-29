@@ -49,6 +49,7 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	"github.com/grafana/grafana-operator/v5/controllers/model"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -339,5 +340,7 @@ func getLabelSelectors(watchLabelSelectors string) (labels.Selector, error) {
 	} else {
 		labelSelectors = labels.Everything() // Match any labels
 	}
+	managedByLabelSelector, _ := labels.SelectorFromSet(model.CommonLabels).Requirements()
+	labelSelectors.Add(managedByLabelSelector...)
 	return labelSelectors, nil
 }
