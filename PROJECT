@@ -8,7 +8,7 @@ layout:
 plugins:
   manifests.sdk.operatorframework.io/v2: {}
 projectName: grafana-operator
-repo: github.com/grafana/grafana-operator/v5
+repo: github.com/grafana/grafana-operator
 resources:
 - api:
     crdVersion: v1
