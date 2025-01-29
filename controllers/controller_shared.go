@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-logr/logr"
 	operatorapi "github.com/grafana/grafana-operator/v5/api"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -23,6 +22,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
@@ -75,7 +75,8 @@ func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSel
 // Only matching instances in the scope of the resource are returned
 // Resources with allowCrossNamespaceImport expands the scope to the entire cluster
 // Intended to be used in reconciler functions
-func GetScopedMatchingInstances(log logr.Logger, ctx context.Context, k8sClient client.Client, cr v1beta1.CommonResource) ([]v1beta1.Grafana, error) {
+func GetScopedMatchingInstances(ctx context.Context, k8sClient client.Client, cr v1beta1.CommonResource) ([]v1beta1.Grafana, error) {
+	log := logf.FromContext(ctx)
 	instanceSelector := cr.MatchLabels()
 
 	// Should never happen, sanity check

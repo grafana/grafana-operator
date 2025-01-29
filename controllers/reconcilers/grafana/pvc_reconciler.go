@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type PvcReconciler struct {
@@ -23,10 +23,10 @@ func NewPvcReconciler(client client.Client) reconcilers.OperatorGrafanaReconcile
 }
 
 func (r *PvcReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
-	logger := log.FromContext(ctx).WithName("PvcReconciler")
+	log := logf.FromContext(ctx).WithName("PvcReconciler")
 
 	if cr.Spec.PersistentVolumeClaim == nil {
-		logger.Info("skip creating persistent volume claim")
+		log.Info("skip creating persistent volume claim")
 		return v1beta1.OperatorStageResultSuccess, nil
 	}
 
