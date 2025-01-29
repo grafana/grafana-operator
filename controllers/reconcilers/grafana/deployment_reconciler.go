@@ -17,7 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const (
@@ -45,10 +45,10 @@ func NewDeploymentReconciler(client client.Client, isOpenShift bool) reconcilers
 }
 
 func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
-	logger := log.FromContext(ctx).WithName("DeploymentReconciler")
+	log := logf.FromContext(ctx).WithName("DeploymentReconciler")
 
 	openshiftPlatform := r.isOpenShift
-	logger.Info("reconciling deployment", "openshift", openshiftPlatform)
+	log.Info("reconciling deployment", "openshift", openshiftPlatform)
 
 	deployment := model.GetGrafanaDeployment(cr, scheme)
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, deployment, func() error {

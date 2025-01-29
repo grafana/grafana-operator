@@ -32,10 +32,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/go-logr/logr"
 	"github.com/grafana/grafana-openapi-client-go/client/provisioning"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -60,7 +59,6 @@ const (
 // GrafanaNotificationPolicyReconciler reconciles a GrafanaNotificationPolicy object
 type GrafanaNotificationPolicyReconciler struct {
 	client.Client
-	Log      logr.Logger
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
 }
@@ -73,7 +71,8 @@ type GrafanaNotificationPolicyReconciler struct {
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafananotificationpolicyroutes/finalizers,verbs=update
 
 func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	r.Log = log.FromContext(ctx).WithName("GrafanaNotificationPolicyReconciler")
+	log := logf.FromContext(ctx).WithName("GrafanaNotificationPolicyReconciler")
+	ctx = logf.IntoContext(ctx, log)
 
 	notificationPolicy := &grafanav1beta1.GrafanaNotificationPolicy{}
 	err := r.Client.Get(ctx, client.ObjectKey{
@@ -103,15 +102,15 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 	defer func() {
 		notificationPolicy.Status.LastResync = metav1.Time{Time: time.Now()}
 		if err := r.Client.Status().Update(ctx, notificationPolicy); err != nil {
-			r.Log.Error(err, "updating status")
+			log.Error(err, "updating status")
 		}
 		if meta.IsStatusConditionTrue(notificationPolicy.Status.Conditions, conditionNoMatchingInstance) {
 			if err := removeFinalizer(ctx, r.Client, notificationPolicy); err != nil {
-				r.Log.Error(err, "failed to remove finalizer")
+				log.Error(err, "failed to remove finalizer")
 			}
 		} else {
 			if err := addFinalizer(ctx, r.Client, notificationPolicy); err != nil {
-				r.Log.Error(err, "failed to set finalizer")
+				log.Error(err, "failed to set finalizer")
 			}
 		}
 	}()
@@ -123,7 +122,7 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 	}
 	removeInvalidSpec(&notificationPolicy.Status.Conditions)
 
-	instances, err := GetScopedMatchingInstances(r.Log, ctx, r.Client, notificationPolicy)
+	instances, err := GetScopedMatchingInstances(ctx, r.Client, notificationPolicy)
 	if err != nil {
 		setNoMatchingInstancesCondition(&notificationPolicy.Status.Conditions, notificationPolicy.Generation, err)
 		meta.RemoveStatusCondition(&notificationPolicy.Status.Conditions, conditionNotificationPolicySynchronized)
@@ -137,7 +136,7 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 	}
 
 	removeNoMatchingInstance(&notificationPolicy.Status.Conditions)
-	r.Log.Info("found matching Grafana instances for notificationPolicy", "count", len(instances))
+	log.Info("found matching Grafana instances for notificationPolicy", "count", len(instances))
 
 	var mergedRoutes []*v1beta1.GrafanaNotificationPolicyRoute
 
@@ -156,7 +155,7 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 
 		appliedPolicy := grafana.Annotations[annotationAppliedNotificationPolicy]
 		if appliedPolicy != "" && appliedPolicy != notificationPolicy.NamespacedResource() {
-			r.Log.Info("instance already has a different notification policy applied - skipping", "grafana", grafana.Name)
+			log.Info("instance already has a different notification policy applied - skipping", "grafana", grafana.Name)
 			continue
 		}
 
@@ -179,7 +178,7 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 	}
 
 	if err := r.updateNotificationPolicyRoutesStatus(ctx, notificationPolicy, mergedRoutes); err != nil {
-		r.Log.Error(err, "failed to add merged events to routes")
+		log.Error(err, "failed to add merged events to routes")
 	}
 
 	return ctrl.Result{RequeueAfter: notificationPolicy.Spec.ResyncPeriod.Duration}, nil
@@ -288,7 +287,8 @@ func (r *GrafanaNotificationPolicyReconciler) reconcileWithInstance(ctx context.
 }
 
 func (r *GrafanaNotificationPolicyReconciler) finalize(ctx context.Context, notificationPolicy *grafanav1beta1.GrafanaNotificationPolicy) error {
-	instances, err := GetScopedMatchingInstances(r.Log, ctx, r.Client, notificationPolicy)
+	log := logf.FromContext(ctx)
+	instances, err := GetScopedMatchingInstances(ctx, r.Client, notificationPolicy)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
@@ -297,7 +297,7 @@ func (r *GrafanaNotificationPolicyReconciler) finalize(ctx context.Context, noti
 
 		appliedPolicy := grafana.Annotations[annotationAppliedNotificationPolicy]
 		if appliedPolicy != "" && appliedPolicy != notificationPolicy.NamespacedResource() {
-			r.Log.Info("instance already has a different notification policy applied - skipping", "grafana", grafana.Name)
+			log.Info("instance already has a different notification policy applied - skipping", "grafana", grafana.Name)
 			continue
 		}
 
@@ -323,10 +323,11 @@ func (r *GrafanaNotificationPolicyReconciler) SetupWithManager(mgr ctrl.Manager)
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&grafanav1beta1.GrafanaNotificationPolicy{}).
 		Watches(&grafanav1beta1.GrafanaContactPoint{}, handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
+			log := logf.FromContext(ctx).WithName("GrafanaNotificationPolicyReconciler")
 			// resync all notification policies for now. Can be optimized by comparing instance selectors
 			nps := &grafanav1beta1.GrafanaNotificationPolicyList{}
 			if err := r.List(ctx, nps); err != nil {
-				r.Log.Error(err, "failed to fetch notification policies for watch mapping")
+				log.Error(err, "failed to fetch notification policies for watch mapping")
 				return nil
 			}
 			requests := make([]reconcile.Request, len(nps.Items))
@@ -341,15 +342,16 @@ func (r *GrafanaNotificationPolicyReconciler) SetupWithManager(mgr ctrl.Manager)
 			return requests
 		})).
 		Watches(&grafanav1beta1.GrafanaNotificationPolicyRoute{}, handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
-			npr, ok := o.(*grafanav1beta1.GrafanaNotificationPolicyRoute)
+			log := logf.FromContext(ctx).WithName("GrafanaNotificationPolicyReconciler")
+      npr, ok := o.(*grafanav1beta1.GrafanaNotificationPolicyRoute)
 			if !ok {
-				r.Log.Error(fmt.Errorf("expected object to be NotificationPolicyRoute"), "skipping resource")
+				log.Error(fmt.Errorf("expected object to be NotificationPolicyRoute"), "skipping resource")
 			}
 
 			defer func() {
 				// update the status
 				if err := r.Client.Status().Update(ctx, npr); err != nil {
-					r.Log.Error(err, "updating NotificationPolicyRoute status")
+					log.Error(err, "updating NotificationPolicyRoute status")
 				}
 			}()
 
@@ -363,7 +365,7 @@ func (r *GrafanaNotificationPolicyReconciler) SetupWithManager(mgr ctrl.Manager)
 			// resync all notification policies that have a routeSelector that matches the routes labels
 			npList := &grafanav1beta1.GrafanaNotificationPolicyList{}
 			if err := r.List(ctx, npList); err != nil {
-				r.Log.Error(err, "failed to fetch notification policies for watch mapping")
+				log.Error(err, "failed to fetch notification policies for watch mapping")
 				return nil
 			}
 			requests := []reconcile.Request{}
