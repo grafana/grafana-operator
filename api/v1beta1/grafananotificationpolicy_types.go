@@ -66,7 +66,8 @@ type Route struct {
 	Provenance models.Provenance `json:"provenance,omitempty"`
 
 	// receiver
-	Receiver string `json:"receiver,omitempty"`
+	// +kubebuilder:validation:MinLength=1
+	Receiver string `json:"receiver"`
 
 	// repeat interval
 	RepeatInterval string `json:"repeat_interval,omitempty"`
