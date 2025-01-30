@@ -71,3 +71,27 @@ var _ = Describe("Datasource type", func() {
 		})
 	})
 })
+
+var _ = Describe("Fail on field behavior changes", func() {
+	emptyDatasource := &GrafanaDatasource{
+		TypeMeta: v1.TypeMeta{
+			APIVersion: APIVersion,
+			Kind:       "GrafanaDatasource",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "test-nil-datasource",
+			Namespace: "default",
+		},
+		Spec: GrafanaDatasourceSpec{
+			GrafanaCommonSpec: GrafanaCommonSpec{
+				InstanceSelector: &v1.LabelSelector{},
+			},
+			Datasource: nil,
+		},
+	}
+
+	ctx := context.Background()
+	It("Fails creating GrafanaDatasource with undefined spec.datasource", func() {
+		Expect(k8sClient.Create(ctx, emptyDatasource)).To(HaveOccurred())
+	})
+})
