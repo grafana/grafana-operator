@@ -118,7 +118,7 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 
 	// Assemble routes and check for loops
 	var mergedRoutes []*v1beta1.GrafanaNotificationPolicyRoute
-	if notificationPolicy.Spec.Route.RouteSelector != nil || notificationPolicy.Spec.Route.HasRouteSelector() {
+	if notificationPolicy.Spec.Route.HasRouteSelector() {
 		mergedRoutes, err = assembleNotificationPolicyRoutes(ctx, r.Client, notificationPolicy)
 
 		if errors.Is(err, ErrLoopDetected) {
