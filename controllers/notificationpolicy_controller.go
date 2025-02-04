@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -457,6 +458,8 @@ func statusDiscoveredRoutes(routes []*v1beta1.GrafanaNotificationPolicyRoute) []
 	for i, route := range routes {
 		discoveredRoutes[i] = fmt.Sprintf("%s/%s", route.Namespace, route.Name)
 	}
+	// Reduce status updates by ensuring order of routes
+	slices.Sort(discoveredRoutes)
 
 	return discoveredRoutes
 }
