@@ -119,12 +119,14 @@ func (r *GrafanaMuteTimingReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
 	}
+
+	condition := buildSynchronizedCondition("Mute timing", conditionMuteTimingSynchronized, muteTiming.Generation, applyErrors, len(instances))
+	meta.SetStatusCondition(&muteTiming.Status.Conditions, condition)
+
 	if len(applyErrors) > 0 {
 		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
 	}
 
-	condition := buildSynchronizedCondition("Mute timing", conditionMuteTimingSynchronized, muteTiming.Generation, applyErrors, len(instances))
-	meta.SetStatusCondition(&muteTiming.Status.Conditions, condition)
 	return ctrl.Result{RequeueAfter: muteTiming.Spec.ResyncPeriod.Duration}, nil
 }
 
