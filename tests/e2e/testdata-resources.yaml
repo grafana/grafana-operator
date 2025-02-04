@@ -1,18 +1,112 @@
+---
 apiVersion: grafana.integreatly.org/v1beta1
-kind: Grafana
+kind: GrafanaNotificationTemplate
 metadata:
   name: testdata
-  labels:
-    test: ($test.metadata.name)
 spec:
-  config:
-    log:
-      mode: "console"
-    auth:
-      disable_login_form: "false"
-    security:
-      admin_user: ($USER)
-      admin_password: ($PASS)
+  name: emailtestdata
+  instanceSelector:
+    matchLabels:
+      test: ($test.metadata.name)
+  resyncPeriod: 3s
+  template: |
+    {{ define "emailAlert" }}
+      [{{.Status}}] {{ .Labels.alertname }}
+      {{ .Annotations.AlertValues }}
+    {{ end }}
+
+    {{ define "emailAlertMessage" }}
+      {{ if gt (len .Alerts.Firing) 0 }}
+        {{ len .Alerts.Firing }} firing:
+        {{ range .Alerts.Firing }} {{ template "emailAlert" . }} {{ end }}
+      {{ end }}
+      {{ if gt (len .Alerts.Resolved) 0 }}
+        {{ len .Alerts.Resolved }} resolved:
+        {{ range .Alerts.Resolved }} {{ template "emailAlert" . }} {{ end }}
+      {{ end }}
+    {{ end }}
+
+    {{ template "emailAlertMessage" . }}
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaContactPoint
+metadata:
+  name: testdata
+spec:
+  name: testdata
+  type: email
+  instanceSelector:
+    matchLabels:
+      test: ($test.metadata.name)
+  resyncPeriod: 3s
+  settings:
+    addresses: "void@testdata.invalid"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicy
+metadata:
+  name: testdata
+spec:
+  instanceSelector:
+    matchLabels:
+      test: ($test.metadata.name)
+  resyncPeriod: 3s
+  route:
+    receiver: testdata
+    group_by:
+      - grafana_folder
+      - alertname
+    routes:
+      - receiver: grafana-default-email
+        object_matchers:
+          - - team
+            - =
+            - a
+        routeSelector:
+          matchLabels:
+            team-a: "child"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicyRoute
+metadata:
+  labels:
+    team-a: "child"
+  name: team-b
+spec:
+  receiver: grafana-default-email
+  object_matchers:
+    - - team
+      - =
+      - b
+  routeSelector:
+    matchLabels:
+      team-b: "child"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicyRoute
+metadata:
+  labels:
+    team-b: "child"
+  name: team-c
+spec:
+  receiver: grafana-default-email
+  object_matchers:
+    - - team
+      - =
+      - c
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicyRoute
+metadata:
+  labels:
+    team-a: "child"
+  name: team-d
+spec:
+  receiver: grafana-default-email
+  object_matchers:
+    - - team
+      - =
+      - d
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaFolder
@@ -43,6 +137,26 @@ spec:
     type: grafana-testdata-datasource
     access: proxy
     basicAuth: false
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaMuteTiming
+metadata:
+  name: testdata
+spec:
+  resyncPeriod: 3s
+  instanceSelector:
+    matchLabels:
+      test: "($test.metadata.name)"
+  name: testdata
+  editable: false
+  time_intervals:
+    - times:
+        - start_time: "20:00"
+          end_time: "23:59"
+        - start_time: "00:00"
+          end_time: "06:00"
+      weekdays: [saturday, sunday]
+      location: Europe/Amsterdam
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaAlertRuleGroup
@@ -349,3 +463,20 @@ spec:
       "version": 0,
       "weekStart": ""
     }
+---
+# Last to be cleaned up first
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: testdata
+  labels:
+    test: ($test.metadata.name)
+spec:
+  config:
+    log:
+      mode: "console"
+    auth:
+      disable_login_form: "false"
+    security:
+      admin_user: ($USER)
+      admin_password: ($PASS)

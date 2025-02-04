@@ -65,18 +65,54 @@ apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaNotificationPolicy
 metadata:
   name: testdata
-  labels:
-    test: "testdata"
 spec:
   instanceSelector:
     matchLabels:
       test: "testdata"
   resyncPeriod: 3s
   route:
-    receiver: testdata
+    receiver: grafana-default-email
     group_by:
       - grafana_folder
       - alertname
+    routes:
+      - receiver: grafana-default-email
+        object_matchers:
+          - - team
+            - =
+            - a
+        routeSelector:
+          matchLabels:
+            team-a: "child"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicyRoute
+metadata:
+  labels:
+    team-a: "child"
+  name: team-b
+spec:
+  receiver: grafana-default-email
+  object_matchers:
+    - - team
+      - =
+      - b
+  routeSelector:
+    matchLabels:
+      team-b: "child"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicyRoute
+metadata:
+  labels:
+    team-b: "child"
+  name: team-c
+spec:
+  receiver: grafana-default-email
+  object_matchers:
+    - - team
+      - =
+      - c
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaFolder
@@ -212,6 +248,26 @@ spec:
       annotations: {}
       labels: {}
       isPaused: false
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaMuteTiming
+metadata:
+  name: testdata
+spec:
+  resyncPeriod: 3s
+  instanceSelector:
+    matchLabels:
+      test: "testdata"
+  name: testdata
+  editable: false
+  time_intervals:
+    - times:
+        - start_time: "20:00"
+          end_time: "23:59"
+        - start_time: "00:00"
+          end_time: "06:00"
+      weekdays: [saturday, sunday]
+      location: Europe/Amsterdam
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard

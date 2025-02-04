@@ -1,0 +1,86 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationTemplate
+metadata:
+  name: testdata
+status:
+  conditions:
+  - reason: ApplyFailed
+    status: "True"
+    type: NotificationTemplateSynchronized
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaContactPoint
+metadata:
+  name: testdata
+status:
+  conditions:
+  - reason: ApplyFailed
+    status: "True"
+    type: ContactPointSynchronized
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicy
+metadata:
+  name: testdata
+status:
+  conditions:
+  - reason: ApplyFailed
+    status: "True"
+    type: NotificationPolicySynchronized
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: testdata
+status:
+  conditions:
+  - reason: ApplyFailed
+    status: "True"
+    type: FolderSynchronized
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaAlertRuleGroup
+metadata:
+  name: testdata
+status:
+  conditions:
+  - reason: ApplyFailed
+    status: "True"
+    type: AlertGroupSynchronized
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaMuteTiming
+metadata:
+  name: testdata
+status:
+  conditions:
+  - reason: ApplyFailed
+    status: "True"
+    type: MuteTimingSynchronized
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: testdata
+status:
+  conditions:
+# TODO Status is never updated on failed apply
+#   - reason: ApplyFailed
+#     status: "True"
+#     type: DashboardSynchronized
+    - reason: ApplySuccessful
+      status: "True"
+      type: DashboardSynchronized
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: testdata
+status:
+  uid: grafana-testdata
+status:
+  conditions:
+  - reason: ApplyFailed
+    status: "True"
+    type: DatasourceSynchronized
