@@ -183,6 +183,7 @@ spec:
                     type: string
                   receiver:
                     description: receiver
+                    minLength: 1
                     type: string
                   repeat_interval:
                     description: repeat interval
@@ -238,6 +239,8 @@ spec:
                   routes:
                     description: routes, mutually exclusive with RouteSelector
                     x-kubernetes-preserve-unknown-fields: true
+                required:
+                - receiver
                 type: object
             required:
             - instanceSelector

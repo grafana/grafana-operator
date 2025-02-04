@@ -3925,6 +3925,13 @@ Routes for alerts to match against
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>receiver</b></td>
+        <td>string</td>
+        <td>
+          receiver<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
         <td><b>continue</b></td>
         <td>boolean</td>
         <td>
@@ -3985,13 +3992,6 @@ Routes for alerts to match against
         <td>string</td>
         <td>
           provenance<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>receiver</b></td>
-        <td>string</td>
-        <td>
-          receiver<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -4341,6 +4341,13 @@ GrafanaNotificationPolicyRouteSpec defines the desired state of GrafanaNotificat
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>receiver</b></td>
+        <td>string</td>
+        <td>
+          receiver<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
         <td><b>continue</b></td>
         <td>boolean</td>
         <td>
@@ -4401,13 +4408,6 @@ GrafanaNotificationPolicyRouteSpec defines the desired state of GrafanaNotificat
         <td>string</td>
         <td>
           provenance<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>receiver</b></td>
-        <td>string</td>
-        <td>
-          receiver<br/>
         </td>
         <td>false</td>
       </tr><tr>

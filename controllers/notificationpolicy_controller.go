@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -116,6 +117,31 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 	}
 	removeInvalidSpec(&notificationPolicy.Status.Conditions)
 
+	// Assemble routes and check for loops
+	var mergedRoutes []*v1beta1.GrafanaNotificationPolicyRoute
+	if notificationPolicy.Spec.Route.HasRouteSelector() {
+		mergedRoutes, err = assembleNotificationPolicyRoutes(ctx, r.Client, notificationPolicy)
+
+		if errors.Is(err, ErrLoopDetected) {
+			meta.SetStatusCondition(&notificationPolicy.Status.Conditions, metav1.Condition{
+				Type:               conditionNotificationPolicyLoopDetected,
+				Status:             metav1.ConditionTrue,
+				ObservedGeneration: notificationPolicy.Generation,
+				Reason:             "LoopDetected",
+				Message:            fmt.Sprintf("Loop detected in notification policy routes: %s", err.Error()),
+			})
+			meta.RemoveStatusCondition(&notificationPolicy.Status.Conditions, conditionNotificationPolicySynchronized)
+			return ctrl.Result{}, fmt.Errorf("failed to assemble notification policy routes: %w", err)
+		}
+
+		if err != nil {
+			r.Recorder.Event(notificationPolicy, corev1.EventTypeWarning, "AssemblyFailed", fmt.Sprintf("Failed to assemble GrafanaNotificationPolicy using routeSelectors: %v", err))
+			return ctrl.Result{}, fmt.Errorf("failed to assemble GrafanaNotificationPolicy using routeSelectors: %w", err)
+		}
+	}
+
+	meta.RemoveStatusCondition(&notificationPolicy.Status.Conditions, conditionNotificationPolicyLoopDetected)
+
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, notificationPolicy)
 	if err != nil {
 		setNoMatchingInstancesCondition(&notificationPolicy.Status.Conditions, notificationPolicy.Generation, err)
@@ -131,16 +157,6 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 
 	removeNoMatchingInstance(&notificationPolicy.Status.Conditions)
 	log.Info("found matching Grafana instances for notificationPolicy", "count", len(instances))
-
-	var mergedRoutes []*v1beta1.GrafanaNotificationPolicyRoute
-
-	if notificationPolicy.Spec.Route.RouteSelector != nil || notificationPolicy.Spec.Route.HasRouteSelector() {
-		mergedRoutes, err = assembleNotificationPolicyRoutes(ctx, r.Client, notificationPolicy)
-		if err := r.handleAssembleError(err, notificationPolicy); err != nil {
-			return ctrl.Result{}, err
-		}
-	}
-	meta.RemoveStatusCondition(&notificationPolicy.Status.Conditions, conditionNotificationPolicyLoopDetected)
 
 	applyErrors := make(map[string]string)
 	for _, grafana := range instances {
@@ -442,6 +458,8 @@ func statusDiscoveredRoutes(routes []*v1beta1.GrafanaNotificationPolicyRoute) []
 	for i, route := range routes {
 		discoveredRoutes[i] = fmt.Sprintf("%s/%s", route.Namespace, route.Name)
 	}
+	// Reduce status updates by ensuring order of routes
+	slices.Sort(discoveredRoutes)
 
 	return discoveredRoutes
 }
@@ -449,24 +467,4 @@ func statusDiscoveredRoutes(routes []*v1beta1.GrafanaNotificationPolicyRoute) []
 // setInvalidSpecMutuallyExclusive sets the invalid spec condition due to the routeSelector being mutually exclusive with routes
 func setInvalidSpecMutuallyExclusive(conditions *[]metav1.Condition, generation int64) {
 	setInvalidSpec(conditions, generation, "FieldsMutuallyExclusive", "RouteSelector and Routes are mutually exclusive")
-}
-
-// handleAssembleError handles errors during notification policy assembly
-func (r *GrafanaNotificationPolicyReconciler) handleAssembleError(err error, notificationPolicy *grafanav1beta1.GrafanaNotificationPolicy) error {
-	if err == nil {
-		return nil
-	}
-
-	if errors.Is(err, ErrLoopDetected) {
-		meta.SetStatusCondition(&notificationPolicy.Status.Conditions, metav1.Condition{
-			Type:               conditionNotificationPolicyLoopDetected,
-			Status:             metav1.ConditionTrue,
-			ObservedGeneration: notificationPolicy.Generation,
-			Reason:             "LoopDetected",
-			Message:            fmt.Sprintf("Loop detected in notification policy routes: %s", err.Error()),
-		})
-		return nil
-	}
-	r.Recorder.Event(notificationPolicy, corev1.EventTypeWarning, "AssemblyFailed", fmt.Sprintf("Failed to assemble GrafanaNotificationPolicy using routeSelectors: %v", err))
-	return fmt.Errorf("failed to assemble GrafanaNotificationPolicy using routeSelectors: %w", err)
 }
