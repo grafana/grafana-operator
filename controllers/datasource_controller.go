@@ -270,12 +270,12 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		log.Error(err, "failed to apply plugins to all instances")
 	}
 
+	condition := buildSynchronizedCondition("Datasource", conditionDatasourceSynchronized, cr.Generation, applyErrors, len(instances))
+	meta.SetStatusCondition(&cr.Status.Conditions, condition)
+
 	if len(applyErrors) > 0 {
 		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
 	}
-
-	condition := buildSynchronizedCondition("Datasource", conditionDatasourceSynchronized, cr.Generation, applyErrors, len(instances))
-	meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
 	cr.Status.Hash = hash
 	cr.Status.LastMessage = "" // nolint:staticcheck

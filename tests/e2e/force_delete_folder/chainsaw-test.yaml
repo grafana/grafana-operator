@@ -4,7 +4,6 @@ kind: Test
 metadata:
   name: force-delete-folders
 spec:
-  concurrent: false
   bindings:
     - name: USER
       value: root
