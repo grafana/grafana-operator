@@ -95,8 +95,10 @@ func (importer *EmbedFSImporter) Import(importedFrom, importedPath string) (cont
 	return foundContents, s, nil
 }
 
-func FetchJsonnet(dashboard *v1beta1.GrafanaDashboard, envs map[string]string, libsonnet embed.FS) ([]byte, error) {
-	if dashboard.Spec.Jsonnet == "" {
+func FetchJsonnet(cr v1beta1.GrafanaContentResource, envs map[string]string, libsonnet embed.FS) ([]byte, error) {
+	spec := cr.GrafanaContentSpec()
+
+	if spec.Jsonnet == "" {
 		return nil, fmt.Errorf("no jsonnet Content Found, nil or empty string")
 	}
 	vm := jsonnet.MakeVM()
@@ -106,7 +108,7 @@ func FetchJsonnet(dashboard *v1beta1.GrafanaDashboard, envs map[string]string, l
 
 	vm.Importer(&EmbedFSImporter{Embed: libsonnet})
 
-	jsonString, err := vm.EvaluateAnonymousSnippet(dashboard.Name, dashboard.Spec.Jsonnet)
+	jsonString, err := vm.EvaluateAnonymousSnippet(cr.GetName(), spec.Jsonnet)
 	return []byte(jsonString), err
 }
 
@@ -137,15 +139,15 @@ func generateRandomString(length int) (string, error) {
 	return s, nil
 }
 
-func getJsonProjectBuildRoundName(dashboardName string) (string, error) {
+func getJsonProjectBuildRoundName(modelName string) (string, error) {
 	tsNow := strconv.FormatInt(time.Now().Unix(), 10)
 	salt, err := generateRandomString(5)
 	if err != nil {
 		return "", fmt.Errorf("error salt generating as random string: %w", err)
 	}
 	// Round name generated using 3 parameters: dash name provided from k8s manifest, current timestamp and
-	// salt to prevent collisions between simulations calls and/or multiple dashboards with same name
-	return fmt.Sprintf("%s-%s-%s", dashboardName, tsNow, salt), nil
+	// salt to prevent collisions between simulations calls and/or multiple models with same name
+	return fmt.Sprintf("%s-%s-%s", modelName, tsNow, salt), nil
 }
 
 func getGzipArchiveFileNameWithExtension(fileName string) string {
@@ -179,23 +181,25 @@ func addPrefixToElements(prefix string, array []string) []string {
 	return result
 }
 
-func buildJsonnetProject(buildName string, envs map[string]string, dashboard *v1beta1.GrafanaDashboard) ([]byte, error) {
-	if dashboard.Spec.JsonnetProjectBuild == nil {
+func buildJsonnetProject(buildName string, envs map[string]string, cr v1beta1.GrafanaContentResource) ([]byte, error) {
+	spec := cr.GrafanaContentSpec()
+
+	if spec.JsonnetProjectBuild == nil {
 		return nil, fmt.Errorf("illegal argument: JsonnetProjectBuild is nil")
 	}
-	if dashboard.Spec.JsonnetProjectBuild.FileName == "" {
+	if spec.JsonnetProjectBuild.FileName == "" {
 		return nil, fmt.Errorf("illegal argument: FileName is empty")
 	}
-	if dashboard.Spec.JsonnetProjectBuild.GzipJsonnetProject == nil {
+	if spec.JsonnetProjectBuild.GzipJsonnetProject == nil {
 		return nil, fmt.Errorf("illegal argument: GzipJsonnetProject is nil")
 	}
 
 	jPath := []string{""}
-	if dashboard.Spec.JsonnetProjectBuild.JPath != nil {
-		jPath = append(jPath, dashboard.Spec.JsonnetProjectBuild.JPath...)
+	if spec.JsonnetProjectBuild.JPath != nil {
+		jPath = append(jPath, spec.JsonnetProjectBuild.JPath...)
 	}
 
-	base64EncodedGzipJsonnetProject := []byte(dashboard.Spec.JsonnetProjectBuild.GzipJsonnetProject)
+	base64EncodedGzipJsonnetProject := []byte(spec.JsonnetProjectBuild.GzipJsonnetProject)
 
 	gzipFileLocalPath, err := storeByteArrayGzipOnDisk(buildName, base64EncodedGzipJsonnetProject)
 	if err != nil {
@@ -219,7 +223,7 @@ func buildJsonnetProject(buildName string, envs map[string]string, dashboard *v1
 
 	vm.Importer(&jsonnet.FileImporter{JPaths: jPath})
 
-	evaluateFilePath := fmt.Sprintf("%s/%s", extractTo, dashboard.Spec.JsonnetProjectBuild.FileName)
+	evaluateFilePath := fmt.Sprintf("%s/%s", extractTo, spec.JsonnetProjectBuild.FileName)
 
 	jsonString, err := vm.EvaluateFile(evaluateFilePath)
 	if err != nil {
@@ -255,13 +259,13 @@ func postJsonnetProjectBuild(buildName string) error {
 	return nil
 }
 
-func BuildProjectAndFetchJsonnetFrom(dashboard *v1beta1.GrafanaDashboard, envs map[string]string) ([]byte, error) {
-	jsonnetProjectBuildName, err := getJsonProjectBuildRoundName(dashboard.Name)
+func BuildProjectAndFetchJsonnetFrom(cr v1beta1.GrafanaContentResource, envs map[string]string) ([]byte, error) {
+	jsonnetProjectBuildName, err := getJsonProjectBuildRoundName(cr.GetName())
 	if err != nil {
 		return nil, fmt.Errorf("error generating jsonnet project build name: %w", err)
 	}
 
-	jsonBytes, err := buildJsonnetProject(jsonnetProjectBuildName, envs, dashboard)
+	jsonBytes, err := buildJsonnetProject(jsonnetProjectBuildName, envs, cr)
 	if postErr := postJsonnetProjectBuild(jsonnetProjectBuildName); postErr != nil {
 		fmt.Println("error cleaning up jsonnet project build: %w", postErr)
 	}
