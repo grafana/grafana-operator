@@ -43,3 +43,13 @@ metadata:
   namespace: (join('-', ['cross', $namespace]))
 status:
   (conditions != null): true
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicy
+metadata:
+  name: test-isolated
+  namespace: (join('-', ['cross', $namespace]))
+status:
+  conditions:
+  - status: "True"
+    type: NoMatchingInstance
