@@ -155,7 +155,11 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 	removeNoMatchingInstance(&libraryPanel.Status.Conditions)
 	log.Info("found matching Grafana instances for library panel", "count", len(instances))
 
-	resolver, err := content.NewContentResolver(libraryPanel, r.Client)
+	resolver, err := content.NewContentResolver(libraryPanel, r.Client, content.WithDisabledSources([]content.ContentSourceType{
+		// grafana.com does not currently support hosting library panels for distribution, but perhaps
+		// this will change in the future.
+		content.ContentSourceTypeGrafanaCom,
+	}))
 	if err != nil {
 		log.Error(err, "error creating library panel content resolver, this indicates an implementation bug", "libraryPanel", libraryPanel.Name)
 		// Failing to create a resolver is an unrecoverable error
