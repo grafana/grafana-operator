@@ -1,0 +1,19 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaLibraryPanel
+metadata:
+  name: grafana-library-panel-inline-envs
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  envs:
+    - name: CUSTOM_RANGE_ENV
+      value: "now - 12h"
+  plugins:
+    - name: grafana-piechart-panel
+      version: 1.3.9
+  jsonnet: >
+    local myRange = std.extVar('CUSTOM_RANGE_ENV');
+    {
+      model: {}
+    }
