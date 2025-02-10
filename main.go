@@ -209,6 +209,13 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaFolder")
 		os.Exit(1)
 	}
+	if err = (&controllers.GrafanaLibraryPanelReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "GrafanaLibraryPanel")
+		os.Exit(1)
+	}
 	if err = (&controllers.GrafanaAlertRuleGroupReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
