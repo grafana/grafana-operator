@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"slices"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanaClient "github.com/grafana/grafana-operator/v5/controllers/client"
@@ -60,21 +61,36 @@ func Unchanged(cr v1beta1.GrafanaContentResource, hash string) bool {
 }
 
 type ContentResolver struct {
-	Client   client.Client
-	resource v1beta1.GrafanaContentResource
+	Client          client.Client
+	resource        v1beta1.GrafanaContentResource
+	disabledSources []ContentSourceType
 }
 
-func NewContentResolver(cr v1beta1.GrafanaContentResource, client client.Client) (*ContentResolver, error) {
+type Option func(r *ContentResolver)
+
+func WithDisabledSources(disabledSources []ContentSourceType) Option {
+	return func(r *ContentResolver) {
+		r.disabledSources = disabledSources
+	}
+}
+
+func NewContentResolver(cr v1beta1.GrafanaContentResource, client client.Client, opts ...Option) (*ContentResolver, error) {
 	// Perform these error checks once in initialization; we assume in the function calls
 	// that the spec and status will be non-nil as a result.
 	if cr.GrafanaContentSpec() == nil || cr.GrafanaContentStatus() == nil {
 		return nil, fmt.Errorf("resource does not properly implement content spec or status fields; this indicates a bug in implementation")
 	}
 
-	return &ContentResolver{
+	resolver := &ContentResolver{
 		Client:   client,
 		resource: cr,
-	}, nil
+	}
+
+	for _, opt := range opts {
+		opt(resolver)
+	}
+
+	return resolver, nil
 }
 
 func (h *ContentResolver) Resolve(ctx context.Context) (map[string]interface{}, string, error) {
@@ -121,6 +137,10 @@ func (h *ContentResolver) fetchContentJson(ctx context.Context) ([]byte, error) 
 
 	if len(sourceTypes) > 1 {
 		return nil, fmt.Errorf("more than one source types found for content resource %v", h.resource.GetName())
+	}
+
+	if slices.Contains(h.disabledSources, sourceTypes[0]) {
+		return nil, fmt.Errorf("source type %v is disabled for content resource %v", sourceTypes[0], h.resource.GetName())
 	}
 
 	spec := h.resource.GrafanaContentSpec()
