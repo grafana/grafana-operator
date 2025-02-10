@@ -193,7 +193,8 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	resolver, err := content.NewContentResolver(cr, r.Client)
 	if err != nil {
 		log.Error(err, "error creating dashboard content resolver", "dashboard", cr.Name)
-		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
+		// Failing to create a resolver is an unrecoverable error
+		return ctrl.Result{Requeue: false}, nil
 	}
 
 	// Retrieving the model before the loop ensures to exit early in case of failure and not fail once per matching instance
