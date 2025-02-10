@@ -48,6 +48,13 @@ var (
 		Help:      "time in ms to sync dashboards after operator restart",
 	})
 
+	InitialLibraryPanelSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: "grafana_operator",
+		Subsystem: "librarypanels",
+		Name:      "initial_sync_duration",
+		Help:      "time in ms to sync library panels after operator restart",
+	})
+
 	InitialDatasourceSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: "grafana_operator",
 		Subsystem: "datasources",

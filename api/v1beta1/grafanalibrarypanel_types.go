@@ -98,6 +98,18 @@ func (in *GrafanaLibraryPanel) ResyncPeriodHasElapsed() bool {
 	return time.Now().After(deadline)
 }
 
+func (in *GrafanaLibraryPanel) MatchLabels() *metav1.LabelSelector {
+	return in.Spec.InstanceSelector
+}
+
+func (in *GrafanaLibraryPanel) MatchNamespace() string {
+	return in.ObjectMeta.Namespace
+}
+
+func (in *GrafanaLibraryPanel) AllowCrossNamespace() bool {
+	return in.Spec.AllowCrossNamespaceImport
+}
+
 // GrafanaContentSpec implements GrafanaContentResource
 func (in *GrafanaLibraryPanel) GrafanaContentSpec() *GrafanaContentSpec {
 	return &in.Spec.GrafanaContentSpec
