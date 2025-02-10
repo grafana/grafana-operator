@@ -17,7 +17,7 @@ import (
 
 const grafanaComDashboardApiUrlRoot = "https://grafana.com/api/dashboards"
 
-func FetchDashboardFromGrafanaCom(ctx context.Context, cr v1beta1.GrafanaContentResource, c client.Client) ([]byte, error) {
+func FetchFromGrafanaCom(ctx context.Context, cr v1beta1.GrafanaContentResource, c client.Client) ([]byte, error) {
 	cache := cache.GetContentCache(cr)
 	if len(cache) > 0 {
 		return cache, nil
@@ -42,7 +42,7 @@ func FetchDashboardFromGrafanaCom(ctx context.Context, cr v1beta1.GrafanaContent
 
 	spec.Url = fmt.Sprintf("%s/%d/revisions/%d/download", grafanaComDashboardApiUrlRoot, source.Id, *source.Revision)
 
-	return FetchDashboardFromUrl(ctx, cr, c, tlsConfig)
+	return FetchFromUrl(ctx, cr, c, tlsConfig)
 }
 
 func getLatestGrafanaComRevision(cr v1beta1.GrafanaContentResource, tlsConfig *tls.Config) (int, error) {
