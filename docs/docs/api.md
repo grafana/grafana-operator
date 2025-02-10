@@ -765,7 +765,7 @@ GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
         <td>
           <br/>
           <br/>
-            <i>Enum</i>: alertmanager, prometheus-alertmanager, dingding, discord, email, googlechat, kafka, line, opsgenie, pagerduty, pushover, sensugo, sensu, slack, teams, telegram, threema, victorops, webex, webhook, wecom, hipchat, oncall<br/>
+            <i>Enum</i>: alertmanager, prometheus-alertmanager, dingding, discord, email, googlechat, kafka, line, opsgenie, pagerduty, pushover, sensugo, sensu, slack, sns, teams, telegram, threema, victorops, webex, webhook, wecom, hipchat, oncall<br/>
         </td>
         <td>false</td>
       </tr><tr>
