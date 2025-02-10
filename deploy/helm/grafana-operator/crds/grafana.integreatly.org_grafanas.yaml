@@ -9511,6 +9511,10 @@ spec:
                 type: array
               lastMessage:
                 type: string
+              libraryPanels:
+                items:
+                  type: string
+                type: array
               stage:
                 type: string
               stageStatus:
