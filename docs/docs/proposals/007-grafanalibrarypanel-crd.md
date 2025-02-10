@@ -13,7 +13,7 @@ process that utilizes the Grafana API.)
 
 ## Info
 
-Status: Suggested
+Status: Decided
 
 ## Motivation
 
