@@ -126,7 +126,7 @@ func (h *ContentResolver) resolveDatasources(contentJson []byte) ([]byte, error)
 	return contentJson, nil
 }
 
-// fetchContentJson delegates obtaining the dashboard json definition to one of the known fetchers, for example
+// fetchContentJson delegates obtaining the json definition to one of the known fetchers, for example
 // from embedded raw json or from a url
 func (h *ContentResolver) fetchContentJson(ctx context.Context) ([]byte, error) {
 	sourceTypes := GetSourceTypes(h.resource)
@@ -151,21 +151,21 @@ func (h *ContentResolver) fetchContentJson(ctx context.Context) ([]byte, error) 
 	case ContentSourceTypeGzipJson:
 		return cache.Gunzip([]byte(spec.GzipJson))
 	case ContentSourceTypeUrl:
-		return fetchers.FetchDashboardFromUrl(ctx, h.resource, h.Client, grafanaClient.InsecureTLSConfiguration)
+		return fetchers.FetchFromUrl(ctx, h.resource, h.Client, grafanaClient.InsecureTLSConfiguration)
 	case ContentSourceTypeJsonnet:
-		envs, err := h.getDashboardEnvs(ctx)
+		envs, err := h.getContentEnvs(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("something went wrong while collecting envs, error: %w", err)
 		}
 		return fetchers.FetchJsonnet(h.resource, envs, embeds.GrafonnetEmbed)
 	case ContentSourceJsonnetProject:
-		envs, err := h.getDashboardEnvs(ctx)
+		envs, err := h.getContentEnvs(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("something went wrong while collecting envs, error: %w", err)
 		}
 		return fetchers.BuildProjectAndFetchJsonnetFrom(h.resource, envs)
 	case ContentSourceTypeGrafanaCom:
-		return fetchers.FetchDashboardFromGrafanaCom(ctx, h.resource, h.Client)
+		return fetchers.FetchFromGrafanaCom(ctx, h.resource, h.Client)
 	case ContentSourceConfigMap:
 		return fetchers.FetchDashboardFromConfigMap(h.resource, h.Client)
 	default:
@@ -173,7 +173,7 @@ func (h *ContentResolver) fetchContentJson(ctx context.Context) ([]byte, error) 
 	}
 }
 
-func (h *ContentResolver) getDashboardEnvs(ctx context.Context) (map[string]string, error) {
+func (h *ContentResolver) getContentEnvs(ctx context.Context) (map[string]string, error) {
 	spec := h.resource.GrafanaContentSpec()
 
 	envs := make(map[string]string)
