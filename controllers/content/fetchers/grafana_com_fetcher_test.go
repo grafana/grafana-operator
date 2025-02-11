@@ -11,8 +11,10 @@ import (
 func TestFetchDashboardFromGrafanaCom(t *testing.T) {
 	dashboard := &v1beta1.GrafanaDashboard{
 		Spec: v1beta1.GrafanaDashboardSpec{
-			GrafanaCom: &v1beta1.GrafanaComDashboardReference{
-				Id: 1860,
+			GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+				GrafanaCom: &v1beta1.GrafanaComContentReference{
+					Id: 1860,
+				},
 			},
 		},
 		Status: v1beta1.GrafanaDashboardStatus{},

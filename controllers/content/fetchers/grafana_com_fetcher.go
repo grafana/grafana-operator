@@ -11,36 +11,47 @@ import (
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
+	"github.com/grafana/grafana-operator/v5/controllers/content/cache"
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 )
 
 const grafanaComDashboardApiUrlRoot = "https://grafana.com/api/dashboards"
 
-func FetchDashboardFromGrafanaCom(ctx context.Context, dashboard *v1beta1.GrafanaDashboard, c client.Client) ([]byte, error) {
-	cache := dashboard.GetContentCache()
+func FetchDashboardFromGrafanaCom(ctx context.Context, cr v1beta1.GrafanaContentResource, c client.Client) ([]byte, error) {
+	cache := cache.GetContentCache(cr)
 	if len(cache) > 0 {
 		return cache, nil
 	}
 
-	source := dashboard.Spec.GrafanaCom
+	spec := cr.GrafanaContentSpec()
+	if spec == nil {
+		return nil, fmt.Errorf("missing content spec definition on resource")
+	}
+
+	source := spec.GrafanaCom
 
 	tlsConfig := client2.DefaultTLSConfiguration
 
 	if source.Revision == nil {
-		rev, err := getLatestGrafanaComRevision(dashboard, tlsConfig)
+		rev, err := getLatestGrafanaComRevision(cr, tlsConfig)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get latest revision for dashboard id %d: %w", source.Id, err)
 		}
 		source.Revision = &rev
 	}
 
-	dashboard.Spec.Url = fmt.Sprintf("%s/%d/revisions/%d/download", grafanaComDashboardApiUrlRoot, source.Id, *source.Revision)
+	spec.Url = fmt.Sprintf("%s/%d/revisions/%d/download", grafanaComDashboardApiUrlRoot, source.Id, *source.Revision)
 
-	return FetchDashboardFromUrl(ctx, dashboard, c, tlsConfig)
+	return FetchDashboardFromUrl(ctx, cr, c, tlsConfig)
 }
 
-func getLatestGrafanaComRevision(dashboard *v1beta1.GrafanaDashboard, tlsConfig *tls.Config) (int, error) {
-	source := dashboard.Spec.GrafanaCom
+func getLatestGrafanaComRevision(cr v1beta1.GrafanaContentResource, tlsConfig *tls.Config) (int, error) {
+	spec := cr.GrafanaContentSpec()
+	if spec == nil {
+		return -1, nil
+	}
+
+	source := spec.GrafanaCom
 	url := fmt.Sprintf("%s/%d/revisions", grafanaComDashboardApiUrlRoot, source.Id)
 
 	request, err := http.NewRequest(http.MethodGet, url, nil)
@@ -48,7 +59,7 @@ func getLatestGrafanaComRevision(dashboard *v1beta1.GrafanaDashboard, tlsConfig 
 		return -1, err
 	}
 
-	client := client2.NewInstrumentedRoundTripper(fmt.Sprintf("%v/%v", dashboard.Namespace, dashboard.Name), metrics.GrafanaComApiRevisionRequests, true, tlsConfig)
+	client := client2.NewInstrumentedRoundTripper(fmt.Sprintf("%v/%v", cr.GetNamespace(), cr.GetName()), metrics.GrafanaComApiRevisionRequests, true, tlsConfig)
 	response, err := client.RoundTrip(request)
 	if err != nil {
 		return -1, err
@@ -56,7 +67,7 @@ func getLatestGrafanaComRevision(dashboard *v1beta1.GrafanaDashboard, tlsConfig 
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
-		return -1, fmt.Errorf("unexpected status code when requesting revisions, got %v for dashboard %v", response.StatusCode, dashboard.Name)
+		return -1, fmt.Errorf("unexpected status code when requesting revisions, got %v for dashboard %v", response.StatusCode, cr.GetName())
 	}
 
 	type dashboardRevisionItem struct {

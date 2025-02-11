@@ -9,11 +9,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func FetchDashboardFromConfigMap(dashboard *v1beta1.GrafanaDashboard, c client.Client) ([]byte, error) {
-	ref := dashboard.Spec.ConfigMapRef
+func FetchDashboardFromConfigMap(cr v1beta1.GrafanaContentResource, c client.Client) ([]byte, error) {
+	spec := cr.GrafanaContentSpec()
+	if spec == nil {
+		return nil, nil // TODO
+	}
+	ref := spec.ConfigMapRef
 	dashboardConfigMap := &v1.ConfigMap{}
 	selector := client.ObjectKey{
-		Namespace: dashboard.Namespace,
+		Namespace: cr.GetNamespace(),
 		Name:      ref.Name,
 	}
 
@@ -27,5 +31,5 @@ func FetchDashboardFromConfigMap(dashboard *v1beta1.GrafanaDashboard, c client.C
 	}
 
 	return nil, fmt.Errorf("cannot find key '%v' in config map '%v' for dashboard %v/%v",
-		ref.Key, ref.Name, dashboard.Namespace, dashboard.Name)
+		ref.Key, ref.Name, cr.GetNamespace(), cr.GetName())
 }

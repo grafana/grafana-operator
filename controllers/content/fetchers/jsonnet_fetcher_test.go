@@ -67,7 +67,9 @@ func TestFetchJsonnet(t *testing.T) {
 					Namespace: "grafana",
 				},
 				Spec: v1beta1.GrafanaDashboardSpec{
-					Jsonnet: string(embeds.TestDashboardEmbed),
+					GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+						Jsonnet: string(embeds.TestDashboardEmbed),
+					},
 				},
 				Status: v1beta1.GrafanaDashboardStatus{},
 			},
@@ -81,7 +83,9 @@ func TestFetchJsonnet(t *testing.T) {
 			dashboard: &v1beta1.GrafanaDashboard{
 				ObjectMeta: metav1.ObjectMeta{Name: "dashboard-1"},
 				Spec: v1beta1.GrafanaDashboardSpec{
-					Jsonnet: "",
+					GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+						Jsonnet: "",
+					},
 				},
 				Status: v1beta1.GrafanaDashboardStatus{},
 			},
@@ -98,7 +102,9 @@ func TestFetchJsonnet(t *testing.T) {
 					Namespace: "grafana",
 				},
 				Spec: v1beta1.GrafanaDashboardSpec{
-					Jsonnet: string(embeds.TestDashboardEmbedWithEnv),
+					GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+						Jsonnet: string(embeds.TestDashboardEmbedWithEnv),
+					},
 				},
 				Status: v1beta1.GrafanaDashboardStatus{},
 			},
@@ -146,10 +152,12 @@ func TestBuildProjectAndFetchJsonnetFrom(t *testing.T) {
 					Namespace: "grafana",
 				},
 				Spec: v1beta1.GrafanaDashboardSpec{
-					JsonnetProjectBuild: &v1beta1.JsonnetProjectBuild{
-						JPath:              []string{"/testing/jsonnetProjectWithRuntimeRaw"},
-						FileName:           "testing/jsonnetProjectWithRuntimeRaw/dashboard_with_envs.jsonnet",
-						GzipJsonnetProject: embeds.TestJsonnetProjectBuildFolderGzip,
+					GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+						JsonnetProjectBuild: &v1beta1.JsonnetProjectBuild{
+							JPath:              []string{"/testing/jsonnetProjectWithRuntimeRaw"},
+							FileName:           "testing/jsonnetProjectWithRuntimeRaw/dashboard_with_envs.jsonnet",
+							GzipJsonnetProject: embeds.TestJsonnetProjectBuildFolderGzip,
+						},
 					},
 				},
 				Status: v1beta1.GrafanaDashboardStatus{},
