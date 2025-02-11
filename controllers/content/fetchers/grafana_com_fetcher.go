@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/controllers/content/cache"
-	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 )
 
 const grafanaComDashboardApiUrlRoot = "https://grafana.com/api/dashboards"
@@ -59,7 +58,9 @@ func getLatestGrafanaComRevision(cr v1beta1.GrafanaContentResource, tlsConfig *t
 		return -1, err
 	}
 
-	client := client2.NewInstrumentedRoundTripper(fmt.Sprintf("%v/%v", cr.GetNamespace(), cr.GetName()), metrics.GrafanaComApiRevisionRequests, true, tlsConfig)
+	metric := cr.GrafanaContentMetrics().GrafanaComRevisionRequestCounter
+
+	client := client2.NewInstrumentedRoundTripper(fmt.Sprintf("%v/%v", cr.GetNamespace(), cr.GetName()), metric, true, tlsConfig)
 	response, err := client.RoundTrip(request)
 	if err != nil {
 		return -1, err
