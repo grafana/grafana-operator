@@ -468,6 +468,7 @@ spec:
                 - sensugo
                 - sensu
                 - slack
+                - sns
                 - teams
                 - telegram
                 - threema
