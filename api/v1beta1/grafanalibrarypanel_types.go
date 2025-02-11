@@ -3,6 +3,7 @@ package v1beta1
 import (
 	"time"
 
+	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -119,6 +120,16 @@ func (in *GrafanaLibraryPanel) GrafanaContentSpec() *GrafanaContentSpec {
 func (in *GrafanaLibraryPanel) GrafanaContentStatus() *GrafanaContentStatus {
 	return &in.Status.GrafanaContentStatus
 }
+
+// GrafanaContentMetrics implements GrafanaContentResource
+func (in *GrafanaLibraryPanel) GrafanaContentMetrics() GrafanaContentMetrics {
+	return GrafanaContentMetrics{
+		URLRequestCounter: metrics.LibraryPanelUrlRequests,
+		// NOTE: we do not export the grafana.com request metric here b/c it's not supported.
+	}
+}
+
+var _ GrafanaContentResource = &GrafanaLibraryPanel{}
 
 func (in *GrafanaLibraryPanelList) Find(namespace string, name string) *GrafanaLibraryPanel {
 	for _, e := range in.Items {

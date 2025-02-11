@@ -53,6 +53,10 @@ func (n *NopContentResource) GrafanaContentStatus() *v1beta1.GrafanaContentStatu
 	return &n.Status
 }
 
+func (n *NopContentResource) GrafanaContentMetrics() v1beta1.GrafanaContentMetrics {
+	return v1beta1.GrafanaContentMetrics{}
+}
+
 func (in *NopContentResource) DeepCopyObject() runtime.Object {
 	if c := in.DeepCopy(); c != nil {
 		return c

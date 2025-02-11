@@ -49,7 +49,7 @@ func (in *instrumentedRoundTripper) RoundTrip(r *http.Request) (*http.Response, 
 	}
 
 	resp, err := in.wrapped.RoundTrip(r)
-	if resp != nil {
+	if resp != nil && in.metric != nil {
 		in.metric.WithLabelValues(
 			in.relatedResource,
 			r.Method,

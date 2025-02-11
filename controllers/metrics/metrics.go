@@ -34,6 +34,13 @@ var (
 		Help:      "requests to fetch dashboards from urls",
 	}, []string{"dashboard", "method", "status"})
 
+	LibraryPanelUrlRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "grafana_operator",
+		Subsystem: "librarypanels",
+		Name:      "requests",
+		Help:      "requests to fetch library panels from urls",
+	}, []string{"librarypanel", "method", "status"})
+
 	GrafanaComApiRevisionRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "grafana_operator",
 		Subsystem: "dashboards",
