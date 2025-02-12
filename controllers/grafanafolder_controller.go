@@ -420,6 +420,11 @@ func (r *GrafanaFolderReconciler) Exists(client *genapi.GrafanaHTTPAPI, cr *graf
 		return true, uidResp.Payload.UID, uidResp.Payload.ParentUID, nil
 	}
 
+	// If we could not find the UID in the Grafana but a CustomUID is set in the CR we must assume the folder does not exist.
+	if cr.Spec.CustomUID != "" {
+		return false, uid, "", nil
+	}
+
 	page := int64(1)
 	limit := int64(10000)
 	for {
