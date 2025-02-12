@@ -64,6 +64,9 @@ It's easier to just manage this configuration outside of the operator.
 |-----|------|---------|-------------|
 | additionalLabels | object | `{}` | additional labels to add to all resources |
 | affinity | object | `{}` | pod affinity |
+| dashboard.additionalLabels | object | `{}` | Labels to add to the Grafana dashboard ConfigMap |
+| dashboard.annotations | object | `{}` | Annotations to add to the Grafana dashboard ConfigMap |
+| dashboard.enabled | bool | `false` | Whether to create a ConfigMap containing a dashboard monitoring the operator metrics. Consider enabling this if you are enabling the ServiceMonitor. Optionally, a GrafanaDashboard CR can be manually created pointing to the Grafana.com dashboard ID 22785 https://grafana.com/grafana/dashboards/22785-grafana-operator/ |
 | env | list | `[]` | Additional environment variables |
 | extraObjects | list | `[]` | Array of extra K8s objects to deploy |
 | fullnameOverride | string | `""` | Overrides the fully qualified app name. |
