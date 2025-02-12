@@ -51,6 +51,12 @@ spec:
               {{ else }}
               value: {{quote .Values.watchNamespaceSelector }}
               {{- end }}
+            - name: WATCH_LABELED_REFERENCES_ONLY
+              {{- if .Values.watchLabeledReferencesOnly }}
+              value: "true"
+              {{ else }}
+              value: ""
+              {{- end }}
             {{- with .Values.env }}
               {{- toYaml . | nindent 12 }}
             {{- end }}
