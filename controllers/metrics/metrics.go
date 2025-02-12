@@ -34,6 +34,13 @@ var (
 		Help:      "requests to fetch dashboards from urls",
 	}, []string{"dashboard", "method", "status"})
 
+	LibraryPanelUrlRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "grafana_operator",
+		Subsystem: "librarypanels",
+		Name:      "requests",
+		Help:      "requests to fetch library panels from urls",
+	}, []string{"librarypanel", "method", "status"})
+
 	GrafanaComApiRevisionRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "grafana_operator",
 		Subsystem: "dashboards",
@@ -46,6 +53,13 @@ var (
 		Subsystem: "dashboards",
 		Name:      "initial_sync_duration",
 		Help:      "time in ms to sync dashboards after operator restart",
+	})
+
+	InitialLibraryPanelSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: "grafana_operator",
+		Subsystem: "librarypanels",
+		Name:      "initial_sync_duration",
+		Help:      "time in ms to sync library panels after operator restart",
 	})
 
 	InitialDatasourceSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{

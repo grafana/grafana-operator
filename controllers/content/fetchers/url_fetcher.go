@@ -14,13 +14,12 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanaClient "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/controllers/content/cache"
-	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func FetchDashboardFromUrl(ctx context.Context, cr v1beta1.GrafanaContentResource, c client.Client, tlsConfig *tls.Config) ([]byte, error) {
+func FetchFromUrl(ctx context.Context, cr v1beta1.GrafanaContentResource, c client.Client, tlsConfig *tls.Config) ([]byte, error) {
 	spec := cr.GrafanaContentSpec()
 
 	url, err := url.Parse(spec.Url)
@@ -38,7 +37,9 @@ func FetchDashboardFromUrl(ctx context.Context, cr v1beta1.GrafanaContentResourc
 		return nil, err
 	}
 
-	client := client2.NewInstrumentedRoundTripper(fmt.Sprintf("%v/%v", cr.GetNamespace(), cr.GetName()), metrics.DashboardUrlRequests, true, tlsConfig)
+	metric := cr.GrafanaContentMetrics().URLRequestCounter
+
+	client := client2.NewInstrumentedRoundTripper(fmt.Sprintf("%v/%v", cr.GetNamespace(), cr.GetName()), metric, true, tlsConfig)
 	// basic auth is supported for dashboards from url
 	if spec.UrlAuthorization != nil && spec.UrlAuthorization.BasicAuth != nil {
 		username, err := grafanaClient.GetValueFromSecretKey(ctx, spec.UrlAuthorization.BasicAuth.Username, c, cr.GetNamespace())
