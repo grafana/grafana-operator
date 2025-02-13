@@ -1,19 +1,18 @@
 module github.com/grafana/grafana-operator/v5
 
-go 1.23.3
+go 1.23.6
 
 require (
 	github.com/KimMachineGun/automemlimit v0.7.0
 	github.com/bitly/go-simplejson v0.5.1
-	github.com/blang/semver v3.5.1+incompatible
 	github.com/go-logr/logr v1.4.2
 	github.com/go-openapi/strfmt v0.23.0
 	github.com/google/go-jsonnet v0.20.0
-	github.com/grafana/grafana-openapi-client-go v0.0.0-20240430202104-3ad0f7e4ee52
+	github.com/grafana/grafana-openapi-client-go v0.0.0-20250108132429-8d7e1f158f65
+	github.com/grafana/grafana-operator/v5/api v0.0.0-00010101000000-000000000000
 	github.com/onsi/ginkgo/v2 v2.22.2
 	github.com/onsi/gomega v1.36.2
 	github.com/openshift/api v3.9.0+incompatible
-	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.20.5
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/automaxprocs v1.6.0
@@ -25,6 +24,7 @@ require (
 
 require (
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
+	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -43,6 +43,7 @@ require (
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.mongodb.org/mongo-driver v1.14.0 // indirect
 	go.opentelemetry.io/otel v1.28.0 // indirect
@@ -91,7 +92,7 @@ require (
 	google.golang.org/protobuf v1.36.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/apiextensions-apiserver v0.32.1
+	k8s.io/apiextensions-apiserver v0.32.1 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20241105132330-32ad38e42d3f // indirect
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738
@@ -100,4 +101,7 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
-replace github.com/openshift/api => github.com/openshift/api v0.0.0-20190924102528-32369d4db2ad
+replace (
+	github.com/grafana/grafana-operator/v5/api => ./api
+	github.com/openshift/api => github.com/openshift/api v0.0.0-20190924102528-32369d4db2ad
+)
