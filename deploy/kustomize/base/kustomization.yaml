@@ -13,3 +13,6 @@ patches:
       - op: replace
         path: /metadata/name
         value: grafana-operator-permissions
+images:
+  - name: ghcr.io/grafana/grafana-operator
+    newTag: v5.16.0
