@@ -45,6 +45,7 @@ import (
 	"k8s.io/client-go/discovery"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -167,19 +168,37 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}, cr)
 	if err != nil {
 		if kuberr.IsNotFound(err) {
-			err = r.onDashboardDeleted(ctx, req.Namespace, req.Name)
-			if err != nil {
-				return ctrl.Result{}, err
-			}
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{}, fmt.Errorf("getting grafana dashboard cr: %w", err)
+	}
+
+	if cr.GetDeletionTimestamp() != nil {
+		// Check if resource needs clean up
+		if controllerutil.ContainsFinalizer(cr, grafanaFinalizer) {
+			if err := r.finalize(ctx, cr); err != nil {
+				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaDatasource: %w", err)
+			}
+			if err := removeFinalizer(ctx, r.Client, cr); err != nil {
+				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
+			}
+		}
+		return ctrl.Result{}, nil
 	}
 
 	defer func() {
 		cr.Status.LastResync = metav1.Time{Time: time.Now()}
 		if err := r.Status().Update(ctx, cr); err != nil {
 			log.Error(err, "updating status")
+		}
+		if meta.IsStatusConditionTrue(cr.Status.Conditions, conditionNoMatchingInstance) {
+			if err := removeFinalizer(ctx, r.Client, cr); err != nil {
+				log.Error(err, "failed to remove finalizer")
+			}
+		} else {
+			if err := addFinalizer(ctx, r.Client, cr); err != nil {
+				log.Error(err, "failed to set finalizer")
+			}
 		}
 	}()
 
@@ -220,8 +239,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	// Garbage collection for a case where dashboard uid get changed, dashboard creation is expected to happen in a separate reconcilication cycle
 	if content.IsUpdatedUID(cr, uid) {
 		log.Info("dashboard uid got updated, deleting dashboards with the old uid")
-		err = r.onDashboardDeleted(ctx, req.Namespace, req.Name)
-		if err != nil {
+		if err = r.finalize(ctx, cr); err != nil {
 			return ctrl.Result{}, err
 		}
 
@@ -282,7 +300,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	return ctrl.Result{RequeueAfter: cr.Spec.ResyncPeriod.Duration}, nil
 }
 
-func (r *GrafanaDashboardReconciler) onDashboardDeleted(ctx context.Context, namespace string, name string) error {
+func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.GrafanaDashboard) error {
 	log := logf.FromContext(ctx)
 	list := v1beta1.GrafanaList{}
 	var opts []client.ListOption
@@ -292,7 +310,7 @@ func (r *GrafanaDashboardReconciler) onDashboardDeleted(ctx context.Context, nam
 	}
 
 	for _, grafana := range list.Items {
-		if found, uid := grafana.Status.Dashboards.Find(namespace, name); found {
+		if found, uid := grafana.Status.Dashboards.Find(cr.Namespace, cr.Name); found {
 			grafana := grafana
 			grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 			if err != nil {
@@ -340,13 +358,13 @@ func (r *GrafanaDashboardReconciler) onDashboardDeleted(ctx context.Context, nam
 			}
 
 			if grafana.IsInternal() {
-				err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, fmt.Sprintf("%v-dashboard", name))
+				err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, fmt.Sprintf("%v-dashboard", cr.Name))
 				if err != nil {
 					return err
 				}
 			}
 
-			grafana.Status.Dashboards = grafana.Status.Dashboards.Remove(namespace, name)
+			grafana.Status.Dashboards = grafana.Status.Dashboards.Remove(cr.Namespace, cr.Name)
 			err = r.Client.Status().Update(ctx, &grafana)
 			if err != nil {
 				return err
