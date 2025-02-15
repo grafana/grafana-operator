@@ -185,10 +185,21 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("could not find matching instances: %w", err)
+		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
+		cr.Status.NoMatchingInstances = true
+		return ctrl.Result{}, fmt.Errorf("failed fetching instances: %w", err)
+	}
+
+	if len(instances) == 0 {
+		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
+		cr.Status.NoMatchingInstances = true
+		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
 	removeNoMatchingInstance(&cr.Status.Conditions)
+	cr.Status.NoMatchingInstances = false
 	log.Info("found matching Grafana instances for dashboard", "count", len(instances))
 
 	resolver, err := content.NewContentResolver(cr, r.Client)
