@@ -54,7 +54,7 @@ const (
 
 // GrafanaDashboardReconciler reconciles a GrafanaDashboard object
 type GrafanaDashboardReconciler struct {
-	Client    client.Client
+	client.Client
 	Scheme    *runtime.Scheme
 	Discovery discovery.DiscoveryInterface
 }
@@ -176,6 +176,13 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, fmt.Errorf("getting grafana dashboard cr: %w", err)
 	}
 
+	defer func() {
+		cr.Status.LastResync = metav1.Time{Time: time.Now()}
+		if err := r.Status().Update(ctx, cr); err != nil {
+			log.Error(err, "updating status")
+		}
+	}()
+
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("could not find matching instances: %w", err)
@@ -209,13 +216,9 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 		// Clean up uid, so further reconciliations can track changes there
 		cr.Status.UID = ""
-		err = r.Client.Status().Update(ctx, cr)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
 
-		// Status update should trigger the next reconciliation right away, no need to requeue for dashboard creation
-		return ctrl.Result{}, nil
+		// Trigger the next reconciliation right away
+		return ctrl.Result{Requeue: true}, nil
 	}
 
 	success := true
@@ -240,9 +243,6 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			success = false
 		}
 
-		condition := buildSynchronizedCondition("Dashboard", conditionDashboardSynchronized, cr.Generation, applyErrors, len(instances))
-		meta.SetStatusCondition(&cr.Status.Conditions, condition)
-
 		if grafana.Spec.Preferences != nil && uid == grafana.Spec.Preferences.HomeDashboardUID {
 			err = r.UpdateHomeDashboard(ctx, grafana, uid, cr)
 			if err != nil {
@@ -251,6 +251,9 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 	}
 
+	condition := buildSynchronizedCondition("Dashboard", conditionDashboardSynchronized, cr.Generation, applyErrors, len(instances))
+	meta.SetStatusCondition(&cr.Status.Conditions, condition)
+
 	// if the dashboard was successfully synced in all instances, wait for its re-sync period
 	if success {
 		if cr.ResyncPeriodHasElapsed() {
@@ -258,7 +261,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 		cr.Status.Hash = hash
 		cr.Status.UID = uid
-		return ctrl.Result{RequeueAfter: cr.Spec.ResyncPeriod.Duration}, r.Client.Status().Update(ctx, cr)
+		return ctrl.Result{RequeueAfter: cr.Spec.ResyncPeriod.Duration}, nil
 	}
 
 	return ctrl.Result{RequeueAfter: RequeueDelay}, nil
@@ -584,6 +587,7 @@ func (r *GrafanaDashboardReconciler) DeleteFolderIfEmpty(client *genapi.GrafanaH
 func (r *GrafanaDashboardReconciler) SetupWithManager(mgr ctrl.Manager, ctx context.Context) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.GrafanaDashboard{}).
+		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
 
 	if err == nil {
