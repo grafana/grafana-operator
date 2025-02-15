@@ -264,7 +264,6 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	// TODO Add new Condition displaing plugin reconciliation errors
-	// Specific to datasources
 	if len(pluginErrors) > 0 {
 		err := fmt.Errorf("%v", pluginErrors)
 		log.Error(err, "failed to apply plugins to all instances")
