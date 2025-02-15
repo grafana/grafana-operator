@@ -181,14 +181,14 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
 
-	instances, err := r.GetMatchingDashboardInstances(ctx, cr, r.Client)
+	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
 		log.Error(err, "could not find matching instances", "name", cr.Name, "namespace", cr.Namespace)
 		return ctrl.Result{RequeueAfter: RequeueDelay}, err
 	}
 
 	removeNoMatchingInstance(&cr.Status.Conditions)
-	log.Info("found matching Grafana instances for dashboard", "count", len(instances.Items))
+	log.Info("found matching Grafana instances for dashboard", "count", len(instances))
 
 	resolver, err := content.NewContentResolver(cr, r.Client)
 	if err != nil {
@@ -227,21 +227,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	success := true
 	applyErrors := make(map[string]string)
-	for _, grafana := range instances.Items {
-		// check if this is a cross namespace import
-		if grafana.Namespace != cr.Namespace && !cr.IsAllowCrossNamespaceImport() {
-			continue
-		}
-
-		grafana := grafana
-		// an admin url is required to interact with grafana
-		// the instance or route might not yet be ready
-		if grafana.Status.Stage != v1beta1.OperatorStageComplete || grafana.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
-			log.Info("grafana instance not ready", "grafana", grafana.Name)
-			success = false
-			continue
-		}
-
+	for _, grafana := range instances {
 		if grafana.IsInternal() {
 			// first reconcile the plugins
 			// append the requested dashboards to a configmap from where the
@@ -261,7 +247,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			success = false
 		}
 
-		condition := buildSynchronizedCondition("Dashboard", conditionDashboardSynchronized, cr.Generation, applyErrors, len(instances.Items))
+		condition := buildSynchronizedCondition("Dashboard", conditionDashboardSynchronized, cr.Generation, applyErrors, len(instances))
 		meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
 		if grafana.Spec.Preferences != nil && uid == grafana.Spec.Preferences.HomeDashboardUID {
@@ -632,24 +618,6 @@ func (r *GrafanaDashboardReconciler) SetupWithManager(mgr ctrl.Manager, ctx cont
 	}
 
 	return err
-}
-
-func (r *GrafanaDashboardReconciler) GetMatchingDashboardInstances(ctx context.Context, dashboard *v1beta1.GrafanaDashboard, k8sClient client.Client) (v1beta1.GrafanaList, error) {
-	log := logf.FromContext(ctx)
-	instances, err := GetMatchingInstances(ctx, k8sClient, dashboard.Spec.InstanceSelector)
-	if err != nil || len(instances.Items) == 0 {
-		dashboard.Status.NoMatchingInstances = true
-		if err := r.Client.Status().Update(ctx, dashboard); err != nil {
-			log.Info("unable to update the status of %v, in %v", dashboard.Name, dashboard.Namespace)
-		}
-		return v1beta1.GrafanaList{}, err
-	}
-	dashboard.Status.NoMatchingInstances = false
-	if err := r.Client.Status().Update(ctx, dashboard); err != nil {
-		log.Info("unable to update the status of %v, in %v", dashboard.Name, dashboard.Namespace)
-	}
-
-	return instances, err
 }
 
 func (r *GrafanaDashboardReconciler) UpdateHomeDashboard(ctx context.Context, grafana v1beta1.Grafana, uid string, dashboard *v1beta1.GrafanaDashboard) error {
