@@ -72,9 +72,7 @@ func (r *GrafanaDashboardReconciler) syncDashboards(ctx context.Context) (ctrl.R
 	var opts []client.ListOption
 	err := r.Client.List(ctx, grafanas, opts...)
 	if err != nil {
-		return ctrl.Result{
-			Requeue: true,
-		}, err
+		return ctrl.Result{}, err
 	}
 
 	// no instances, no need to sync
@@ -86,9 +84,7 @@ func (r *GrafanaDashboardReconciler) syncDashboards(ctx context.Context) (ctrl.R
 	allDashboards := &v1beta1.GrafanaDashboardList{}
 	err = r.Client.List(ctx, allDashboards, opts...)
 	if err != nil {
-		return ctrl.Result{
-			Requeue: true,
-		}, err
+		return ctrl.Result{}, err
 	}
 
 	dashboardsToDelete := getDashboardsToDelete(allDashboards, grafanas.Items)
@@ -97,7 +93,7 @@ func (r *GrafanaDashboardReconciler) syncDashboards(ctx context.Context) (ctrl.R
 	for grafana, oldDashboards := range dashboardsToDelete {
 		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 		if err != nil {
-			return ctrl.Result{Requeue: true}, err
+			return ctrl.Result{}, err
 		}
 
 		for _, dashboard := range oldDashboards {
@@ -127,7 +123,7 @@ func (r *GrafanaDashboardReconciler) syncDashboards(ctx context.Context) (ctrl.R
 		// so we should minimize those updates
 		err = r.Client.Status().Update(ctx, grafana)
 		if err != nil {
-			return ctrl.Result{Requeue: false}, err
+			return ctrl.Result{}, err
 		}
 	}
 
@@ -173,18 +169,16 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		if kuberr.IsNotFound(err) {
 			err = r.onDashboardDeleted(ctx, req.Namespace, req.Name)
 			if err != nil {
-				return ctrl.Result{RequeueAfter: RequeueDelay}, err
+				return ctrl.Result{}, err
 			}
 			return ctrl.Result{}, nil
 		}
-		log.Error(err, "error getting grafana dashboard cr")
-		return ctrl.Result{RequeueAfter: RequeueDelay}, err
+		return ctrl.Result{}, fmt.Errorf("getting grafana dashboard cr: %w", err)
 	}
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
-		log.Error(err, "could not find matching instances", "name", cr.Name, "namespace", cr.Namespace)
-		return ctrl.Result{RequeueAfter: RequeueDelay}, err
+		return ctrl.Result{}, fmt.Errorf("could not find matching instances: %w", err)
 	}
 
 	removeNoMatchingInstance(&cr.Status.Conditions)
@@ -192,16 +186,15 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	resolver, err := content.NewContentResolver(cr, r.Client)
 	if err != nil {
-		log.Error(err, "error creating dashboard content resolver", "dashboard", cr.Name)
+		// TODO Add InvalidSpec condition
 		// Failing to create a resolver is an unrecoverable error
-		return ctrl.Result{Requeue: false}, nil
+		return ctrl.Result{}, fmt.Errorf("creating dashboard content resolver: %w", err)
 	}
 
 	// Retrieving the model before the loop ensures to exit early in case of failure and not fail once per matching instance
 	dashboardModel, hash, err := resolver.Resolve(ctx)
 	if err != nil {
-		log.Error(err, "error resolving dashboard contents", "dashboard", cr.Name)
-		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
+		return ctrl.Result{}, fmt.Errorf("resolving dashboard contents: %w", err)
 	}
 
 	uid := fmt.Sprintf("%s", dashboardModel["uid"])
@@ -211,14 +204,14 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		log.Info("dashboard uid got updated, deleting dashboards with the old uid")
 		err = r.onDashboardDeleted(ctx, req.Namespace, req.Name)
 		if err != nil {
-			return ctrl.Result{RequeueAfter: RequeueDelay}, err
+			return ctrl.Result{}, err
 		}
 
 		// Clean up uid, so further reconciliations can track changes there
 		cr.Status.UID = ""
 		err = r.Client.Status().Update(ctx, cr)
 		if err != nil {
-			return ctrl.Result{RequeueAfter: RequeueDelay}, err
+			return ctrl.Result{}, err
 		}
 
 		// Status update should trigger the next reconciliation right away, no need to requeue for dashboard creation
@@ -253,7 +246,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		if grafana.Spec.Preferences != nil && uid == grafana.Spec.Preferences.HomeDashboardUID {
 			err = r.UpdateHomeDashboard(ctx, grafana, uid, cr)
 			if err != nil {
-				return ctrl.Result{RequeueAfter: RequeueDelay}, err
+				return ctrl.Result{}, err
 			}
 		}
 	}
