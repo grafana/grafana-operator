@@ -42,7 +42,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/discovery"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -56,8 +55,7 @@ const (
 // GrafanaDashboardReconciler reconciles a GrafanaDashboard object
 type GrafanaDashboardReconciler struct {
 	client.Client
-	Scheme    *runtime.Scheme
-	Discovery discovery.DiscoveryInterface
+	Scheme *runtime.Scheme
 }
 
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadashboards,verbs=get;list;watch;create;update;patch;delete
