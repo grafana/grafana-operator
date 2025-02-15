@@ -48,31 +48,6 @@ const (
 
 //+kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update;patch;delete
 
-// Gets all instances matching labelSelector
-func GetMatchingInstances(ctx context.Context, k8sClient client.Client, labelSelector *metav1.LabelSelector) (v1beta1.GrafanaList, error) {
-	// Should never happen, sanity check
-	if labelSelector == nil {
-		return v1beta1.GrafanaList{}, nil
-	}
-
-	var list v1beta1.GrafanaList
-	opts := []client.ListOption{
-		client.MatchingLabels(labelSelector.MatchLabels),
-	}
-	err := k8sClient.List(ctx, &list, opts...)
-
-	var selectedList v1beta1.GrafanaList
-
-	for _, instance := range list.Items {
-		selected := labelsSatisfyMatchExpressions(instance.Labels, labelSelector.MatchExpressions)
-		if selected {
-			selectedList.Items = append(selectedList.Items, instance)
-		}
-	}
-
-	return selectedList, err
-}
-
 // Only matching instances in the scope of the resource are returned
 // Resources with allowCrossNamespaceImport expands the scope to the entire cluster
 // Intended to be used in reconciler functions
