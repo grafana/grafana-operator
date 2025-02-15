@@ -161,6 +161,7 @@ func labelsSatisfyMatchExpressions(labels map[string]string, matchExpressions []
 	return true
 }
 
+// TODO Refactor to use scheme from k8sClient.Scheme() as it's the same anyways
 func ReconcilePlugins(ctx context.Context, k8sClient client.Client, scheme *runtime.Scheme, grafana *v1beta1.Grafana, plugins v1beta1.PluginList, resource string) error {
 	pluginsConfigMap := model.GetPluginsConfigMap(grafana, scheme)
 	selector := client.ObjectKey{
