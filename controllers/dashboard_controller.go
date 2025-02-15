@@ -302,73 +302,75 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.GrafanaDashboard) error {
 	log := logf.FromContext(ctx)
-	list := v1beta1.GrafanaList{}
-	var opts []client.ListOption
-	err := r.Client.List(ctx, &list, opts...)
+	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
-		return err
+		return fmt.Errorf("fetching instances: %w", err)
 	}
 
-	for _, grafana := range list.Items {
-		if found, uid := grafana.Status.Dashboards.Find(cr.Namespace, cr.Name); found {
-			grafana := grafana
-			grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
-			if err != nil {
+	for _, grafana := range instances {
+		found, uid := grafana.Status.Dashboards.Find(cr.Namespace, cr.Name)
+		if !found {
+			continue
+		}
+
+		grafana := grafana
+		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
+		if err != nil {
+			return err
+		}
+
+		isCleanupInGrafanaRequired := true
+
+		resp, err := grafanaClient.Dashboards.GetDashboardByUID(*uid)
+		if err != nil {
+			var notFound *dashboards.GetDashboardByUIDNotFound
+			if !errors.As(err, &notFound) {
 				return err
 			}
 
-			isCleanupInGrafanaRequired := true
+			isCleanupInGrafanaRequired = false
+		}
 
-			resp, err := grafanaClient.Dashboards.GetDashboardByUID(*uid)
+		if isCleanupInGrafanaRequired {
+			var dash *models.DashboardFullWithMeta
+			if resp != nil {
+				dash = resp.GetPayload()
+			}
+
+			_, err = grafanaClient.Dashboards.DeleteDashboardByUID(*uid) //nolint:errcheck
 			if err != nil {
-				var notFound *dashboards.GetDashboardByUIDNotFound
+				var notFound *dashboards.DeleteDashboardByUIDNotFound
 				if !errors.As(err, &notFound) {
 					return err
 				}
-
-				isCleanupInGrafanaRequired = false
 			}
 
-			if isCleanupInGrafanaRequired {
-				var dash *models.DashboardFullWithMeta
-				if resp != nil {
-					dash = resp.GetPayload()
-				}
-
-				_, err = grafanaClient.Dashboards.DeleteDashboardByUID(*uid) //nolint:errcheck
-				if err != nil {
-					var notFound *dashboards.DeleteDashboardByUIDNotFound
-					if !errors.As(err, &notFound) {
-						return err
-					}
-				}
-
-				if dash != nil && dash.Meta != nil && dash.Meta.FolderUID != "" {
-					resp, err := r.DeleteFolderIfEmpty(grafanaClient, dash.Meta.FolderUID)
-					if err != nil {
-						return err
-					}
-					if resp.StatusCode == 200 {
-						log.Info("unused folder successfully removed")
-					}
-					if resp.StatusCode == 432 {
-						log.Info("folder still in use by other dashboards")
-					}
-				}
-			}
-
-			if grafana.IsInternal() {
-				err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, fmt.Sprintf("%v-dashboard", cr.Name))
+			if dash != nil && dash.Meta != nil && dash.Meta.FolderUID != "" {
+				resp, err := r.DeleteFolderIfEmpty(grafanaClient, dash.Meta.FolderUID)
 				if err != nil {
 					return err
 				}
+				if resp.StatusCode == 200 {
+					log.Info("unused folder successfully removed")
+				}
+				if resp.StatusCode == 432 {
+					log.Info("folder still in use by other dashboards")
+				}
 			}
+		}
 
-			grafana.Status.Dashboards = grafana.Status.Dashboards.Remove(cr.Namespace, cr.Name)
-			err = r.Client.Status().Update(ctx, &grafana)
+		if grafana.IsInternal() {
+			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, fmt.Sprintf("%v-dashboard", cr.Name))
 			if err != nil {
 				return err
 			}
+		}
+
+		// Update status of Grafana instance
+		grafana.Status.Dashboards = grafana.Status.Dashboards.Remove(cr.Namespace, cr.Name)
+		err = r.Client.Status().Update(ctx, &grafana)
+		if err != nil {
+			return err
 		}
 	}
 
