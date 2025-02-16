@@ -146,7 +146,7 @@ func getDashboardsToDelete(allDashboards *v1beta1.GrafanaDashboardList, grafanas
 	return dashboardsToDelete
 }
 
-func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) { //nolint:gocyclo
 	log := logf.FromContext(ctx).WithName("GrafanaDashboardReconciler")
 	ctx = logf.IntoContext(ctx, log)
 
@@ -306,15 +306,15 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 	}
 
 	for _, grafana := range instances {
+		grafana := grafana
 		found, uid := grafana.Status.Dashboards.Find(cr.Namespace, cr.Name)
 		if !found {
 			continue
 		}
 
-		grafana := grafana
 		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 		if err != nil {
-			return err
+			return fmt.Errorf("creating grafana http client: %w", err)
 		}
 
 		isCleanupInGrafanaRequired := true
@@ -323,7 +323,7 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 		if err != nil {
 			var notFound *dashboards.GetDashboardByUIDNotFound
 			if !errors.As(err, &notFound) {
-				return err
+				return fmt.Errorf("fetching dashboard from instance: %w", err)
 			}
 
 			isCleanupInGrafanaRequired = false
@@ -339,20 +339,20 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 			if err != nil {
 				var notFound *dashboards.DeleteDashboardByUIDNotFound
 				if !errors.As(err, &notFound) {
-					return err
+					return fmt.Errorf("deleting dashboard from instance: %w", err)
 				}
 			}
 
 			if dash != nil && dash.Meta != nil && dash.Meta.FolderUID != "" {
 				resp, err := r.DeleteFolderIfEmpty(grafanaClient, dash.Meta.FolderUID)
 				if err != nil {
-					return err
+					return fmt.Errorf("deleting empty parent folder from instance: %w", err)
 				}
 				if resp.StatusCode == 200 {
 					log.Info("unused folder successfully removed")
 				}
 				if resp.StatusCode == 432 {
-					log.Info("folder still in use by other dashboards")
+					log.Info("folder still in use by other dashboards, libraryPanels, or alertrules")
 				}
 			}
 		}
@@ -360,7 +360,7 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 		if grafana.IsInternal() {
 			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, fmt.Sprintf("%v-dashboard", cr.Name))
 			if err != nil {
-				return err
+				return fmt.Errorf("reconciling plugins: %w", err)
 			}
 		}
 
@@ -368,7 +368,7 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 		grafana.Status.Dashboards = grafana.Status.Dashboards.Remove(cr.Namespace, cr.Name)
 		err = r.Client.Status().Update(ctx, &grafana)
 		if err != nil {
-			return err
+			return fmt.Errorf("updating grafana cr status %s/%s: %w", grafana.Namespace, grafana.Name, err)
 		}
 	}
 
@@ -383,7 +383,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 
 	grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
-		return err
+		return fmt.Errorf("creating grafana http client: %w", err)
 	}
 
 	folderUID, err := getFolderUID(ctx, r.Client, cr)
@@ -401,6 +401,8 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	uid := fmt.Sprintf("%s", dashboardModel["uid"])
 	title := fmt.Sprintf("%s", dashboardModel["title"])
 
+	// TODO Check if cr.Spec.CustomUID is defined and skip the search. Get the dashboard directly with the UID
+	// The 'Exists' function is unreasonably expensive if reconciling multiple instances with a lot of :wqdashboards.
 	exists, remoteUID, err := r.Exists(grafanaClient, uid, title, folderUID)
 	if err != nil {
 		return err
@@ -424,6 +426,8 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return nil
 	}
 
+	// NOTE Only the dashboard reconciler will detect if the cr and remote model differ by walking the structure
+	// Most others instead apply the resource and outsource it to the instance or check a hash.
 	remoteChanged, err := r.hasRemoteChange(exists, grafanaClient, uid, dashboardModel)
 	if err != nil {
 		return err
