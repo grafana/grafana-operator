@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/controllers/config"
 	config2 "github.com/grafana/grafana-operator/v5/controllers/config"
 	"github.com/grafana/grafana-operator/v5/controllers/model"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
@@ -184,6 +185,16 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 		Value: config2.GrafanaDataPath,
 	})
 
+	// env var to get Pod IP from downward API for gossip (useful for unified alerting).
+	envVars = append(envVars, v1.EnvVar{
+		Name: "POD_IP",
+		ValueFrom: &v1.EnvVarSource{
+			FieldRef: &v1.ObjectFieldSelector{
+				FieldPath: "status.podIP",
+			},
+		},
+	})
+
 	containers = append(containers, v1.Container{
 		Name:       "grafana",
 		Image:      image,
@@ -193,6 +204,11 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 			{
 				Name:          "grafana-http",
 				ContainerPort: int32(GetGrafanaPort(cr)), // #nosec G115
+				Protocol:      "TCP",
+			},
+			{
+				Name:          config.GrafanaAlertPortName,
+				ContainerPort: int32(config.GrafanaAlertPort),
 				Protocol:      "TCP",
 			},
 		},
