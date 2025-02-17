@@ -324,16 +324,6 @@ type RouteOpenshiftV1 struct {
 	Spec       *RouteOpenShiftV1Spec `json:"spec,omitempty"`
 }
 
-// RouteHTTPHeaderActionType defines actions that can be performed on HTTP headers.
-type RouteHTTPHeaderActionType string
-
-const (
-	// Set specifies that an HTTP header should be set.
-	Set RouteHTTPHeaderActionType = "Set"
-	// Delete specifies that an HTTP header should be deleted.
-	Delete RouteHTTPHeaderActionType = "Delete"
-)
-
 // RouteTargetReference specifies the target that resolve into endpoints. Only the 'Service'
 // kind is allowed. Use 'weight' field to emphasize one over others.
 type RouteTargetReference struct {
