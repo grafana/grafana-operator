@@ -319,7 +319,10 @@ func (r *GrafanaDatasourceReconciler) deleteOldDatasource(ctx context.Context, c
 		}
 
 		grafana.Status.Datasources = grafana.Status.Datasources.Remove(cr.Namespace, cr.Name)
-		return r.Client.Status().Update(ctx, &grafana)
+		err = r.Client.Status().Update(ctx, &grafana)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -357,12 +360,15 @@ func (r *GrafanaDatasourceReconciler) finalize(ctx context.Context, cr *v1beta1.
 		if grafana.IsInternal() {
 			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, fmt.Sprintf("%v-datasource", cr.Name))
 			if err != nil {
-				return err
+				return fmt.Errorf("reconciling plugins: %w", err)
 			}
 		}
 
 		grafana.Status.Datasources = grafana.Status.Datasources.Remove(cr.Namespace, cr.Name)
-		return r.Client.Status().Update(ctx, &grafana)
+		err = r.Client.Status().Update(ctx, &grafana)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
