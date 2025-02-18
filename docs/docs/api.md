@@ -22590,6 +22590,8 @@ ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery
         <td>object</td>
         <td>
           TLSConfig defines config used to secure a route and provide termination<br/>
+          <br/>
+            <i>Validations</i>:<li>has(self.termination) && has(self.insecureEdgeTerminationPolicy) ? !((self.termination=='passthrough') && (self.insecureEdgeTerminationPolicy=='Allow')) : true: cannot have both spec.tls.termination: passthrough and spec.tls.insecureEdgeTerminationPolicy: Allow</li>
         </td>
         <td>false</td>
       </tr><tr>
@@ -22630,9 +22632,12 @@ kind is allowed. Use 'weight' field to emphasize one over others.
     </thead>
     <tbody><tr>
         <td><b>kind</b></td>
-        <td>string</td>
+        <td>enum</td>
         <td>
           The kind of target that the route is referring to. Currently, only 'Service' is allowed<br/>
+          <br/>
+            <i>Enum</i>: Service, <br/>
+            <i>Default</i>: Service<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -22650,8 +22655,11 @@ kind is allowed. Use 'weight' field to emphasize one over others.
 against other target reference objects. 0 suppresses requests to this backend.<br/>
           <br/>
             <i>Format</i>: int32<br/>
+            <i>Default</i>: 100<br/>
+            <i>Minimum</i>: 0<br/>
+            <i>Maximum</i>: 256<br/>
         </td>
-        <td>true</td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -22703,9 +22711,17 @@ TLSConfig defines config used to secure a route and provide termination
     </thead>
     <tbody><tr>
         <td><b>termination</b></td>
-        <td>string</td>
+        <td>enum</td>
         <td>
-          termination indicates termination type.<br/>
+          termination indicates termination type.
+
+* edge - TLS termination is done by the router and http is used to communicate with the backend (default)
+* passthrough - Traffic is sent straight to the destination without the router providing TLS termination
+* reencrypt - TLS termination is done by the router and https is used to communicate with the backend
+
+Note: passthrough termination is incompatible with httpHeader actions<br/>
+          <br/>
+            <i>Enum</i>: edge, reencrypt, passthrough<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -22719,7 +22735,8 @@ TLSConfig defines config used to secure a route and provide termination
         <td><b>certificate</b></td>
         <td>string</td>
         <td>
-          certificate provides certificate contents<br/>
+          certificate provides certificate contents. This should be a single serving certificate, not a certificate
+chain. Do not include a CA certificate.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -22734,15 +22751,34 @@ verify.<br/>
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanaspecroutespectlsexternalcertificate">externalCertificate</a></b></td>
+        <td>object</td>
+        <td>
+          externalCertificate provides certificate contents as a secret reference.
+This should be a single serving certificate, not a certificate
+chain. Do not include a CA certificate. The secret referenced should
+be present in the same namespace as that of the Route.
+Forbidden when `certificate` is set.
+The router service account needs to be granted with read-only access to this secret,
+please refer to openshift docs for additional details.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>insecureEdgeTerminationPolicy</b></td>
-        <td>string</td>
+        <td>enum</td>
         <td>
           insecureEdgeTerminationPolicy indicates the desired behavior for insecure connections to a route. While
 each router may make its own decisions on which ports to expose, this is normally port 80.
 
-* Allow - traffic is sent to the server on the insecure port (default)
-* Disable - no traffic is allowed on the insecure port.
+If a route does not specify insecureEdgeTerminationPolicy, then the default behavior is "None".
+
+* Allow - traffic is sent to the server on the insecure port (edge/reencrypt terminations only).
+
+* None - no traffic is allowed on the insecure port (default).
+
 * Redirect - clients are redirected to the secure port.<br/>
+          <br/>
+            <i>Enum</i>: Allow, None, Redirect, <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -22750,6 +22786,40 @@ each router may make its own decisions on which ports to expose, this is normall
         <td>string</td>
         <td>
           key provides key file contents<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.route.spec.tls.externalCertificate
+<sup><sup>[↩ Parent](#grafanaspecroutespectls)</sup></sup>
+
+
+
+externalCertificate provides certificate contents as a secret reference.
+This should be a single serving certificate, not a certificate
+chain. Do not include a CA certificate. The secret referenced should
+be present in the same namespace as that of the Route.
+Forbidden when `certificate` is set.
+The router service account needs to be granted with read-only access to this secret,
+please refer to openshift docs for additional details.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          name of the referent.
+More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -22775,9 +22845,12 @@ kind is allowed. Use 'weight' field to emphasize one over others.
     </thead>
     <tbody><tr>
         <td><b>kind</b></td>
-        <td>string</td>
+        <td>enum</td>
         <td>
           The kind of target that the route is referring to. Currently, only 'Service' is allowed<br/>
+          <br/>
+            <i>Enum</i>: Service, <br/>
+            <i>Default</i>: Service<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -22795,8 +22868,11 @@ kind is allowed. Use 'weight' field to emphasize one over others.
 against other target reference objects. 0 suppresses requests to this backend.<br/>
           <br/>
             <i>Format</i>: int32<br/>
+            <i>Default</i>: 100<br/>
+            <i>Minimum</i>: 0<br/>
+            <i>Maximum</i>: 256<br/>
         </td>
-        <td>true</td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
