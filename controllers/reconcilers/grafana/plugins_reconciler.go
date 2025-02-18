@@ -30,7 +30,7 @@ func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 
 	plugins := model.GetPluginsConfigMap(cr, scheme)
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, plugins, func() error {
-		model.SetCommonLabels(plugins)
+		model.SetInheritedLabels(plugins, cr.Labels)
 		return nil
 	})
 	if err != nil {

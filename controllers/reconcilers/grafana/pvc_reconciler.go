@@ -32,7 +32,7 @@ func (r *PvcReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, stat
 
 	pvc := model.GetGrafanaDataPVC(cr, scheme)
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, pvc, func() error {
-		model.SetCommonLabels(pvc)
+		model.SetInheritedLabels(pvc, cr.Labels)
 		return v1beta1.Merge(pvc, cr.Spec.PersistentVolumeClaim)
 	})
 	if err != nil {
