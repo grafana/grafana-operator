@@ -12,12 +12,11 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/controllers/content/cache"
-	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 )
 
 const grafanaComDashboardApiUrlRoot = "https://grafana.com/api/dashboards"
 
-func FetchDashboardFromGrafanaCom(ctx context.Context, cr v1beta1.GrafanaContentResource, c client.Client) ([]byte, error) {
+func FetchFromGrafanaCom(ctx context.Context, cr v1beta1.GrafanaContentResource, c client.Client) ([]byte, error) {
 	cache := cache.GetContentCache(cr)
 	if len(cache) > 0 {
 		return cache, nil
@@ -42,7 +41,7 @@ func FetchDashboardFromGrafanaCom(ctx context.Context, cr v1beta1.GrafanaContent
 
 	spec.Url = fmt.Sprintf("%s/%d/revisions/%d/download", grafanaComDashboardApiUrlRoot, source.Id, *source.Revision)
 
-	return FetchDashboardFromUrl(ctx, cr, c, tlsConfig)
+	return FetchFromUrl(ctx, cr, c, tlsConfig)
 }
 
 func getLatestGrafanaComRevision(cr v1beta1.GrafanaContentResource, tlsConfig *tls.Config) (int, error) {
@@ -59,7 +58,9 @@ func getLatestGrafanaComRevision(cr v1beta1.GrafanaContentResource, tlsConfig *t
 		return -1, err
 	}
 
-	client := client2.NewInstrumentedRoundTripper(fmt.Sprintf("%v/%v", cr.GetNamespace(), cr.GetName()), metrics.GrafanaComApiRevisionRequests, true, tlsConfig)
+	metric := cr.GrafanaContentMetrics().GrafanaComRevisionRequestCounter
+
+	client := client2.NewInstrumentedRoundTripper(fmt.Sprintf("%v/%v", cr.GetNamespace(), cr.GetName()), metric, true, tlsConfig)
 	response, err := client.RoundTrip(request)
 	if err != nil {
 		return -1, err
