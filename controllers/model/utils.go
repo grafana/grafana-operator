@@ -48,3 +48,12 @@ func SetCommonLabels(obj metav1.ObjectMetaAccessor) {
 	}
 	meta.SetLabels(labels)
 }
+
+func SetInheritedLabels(obj metav1.ObjectMetaAccessor, extraLabels map[string]string) {
+	SetCommonLabels(obj)
+	meta := obj.GetObjectMeta()
+	labels := meta.GetLabels()
+	for k, v := range extraLabels {
+		labels[k] = v
+	}
+}
