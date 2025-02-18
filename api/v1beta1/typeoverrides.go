@@ -2,8 +2,9 @@ package v1beta1
 
 import (
 	"encoding/json"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"reflect"
+
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
