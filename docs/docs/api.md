@@ -765,7 +765,7 @@ GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
         <td>
           <br/>
           <br/>
-            <i>Enum</i>: alertmanager, prometheus-alertmanager, dingding, discord, email, googlechat, kafka, line, opsgenie, pagerduty, pushover, sensugo, sensu, slack, teams, telegram, threema, victorops, webex, webhook, wecom, hipchat, oncall<br/>
+            <i>Enum</i>: alertmanager, prometheus-alertmanager, dingding, discord, email, googlechat, kafka, line, opsgenie, pagerduty, pushover, sensugo, sensu, slack, sns, teams, telegram, threema, victorops, webex, webhook, wecom, hipchat, oncall<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1240,14 +1240,14 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         <td><b><a href="#grafanadashboardspecconfigmapref">configMapRef</a></b></td>
         <td>object</td>
         <td>
-          dashboard from configmap<br/>
+          model from configmap<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>contentCacheDuration</b></td>
         <td>string</td>
         <td>
-          Cache duration for dashboards fetched from URLs<br/>
+          Cache duration for models fetched from URLs<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1303,7 +1303,7 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         <td><b>gzipJson</b></td>
         <td>string</td>
         <td>
-          GzipJson the dashboard's JSON compressed with Gzip. Base64-encoded when in YAML.<br/>
+          GzipJson the model's JSON compressed with Gzip. Base64-encoded when in YAML.<br/>
           <br/>
             <i>Format</i>: byte<br/>
         </td>
@@ -1312,7 +1312,7 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         <td><b>json</b></td>
         <td>string</td>
         <td>
-          dashboard json<br/>
+          model json<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1350,9 +1350,8 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         <td><b>uid</b></td>
         <td>string</td>
         <td>
-          Manually specify the uid for the dashboard, overwrites uids already present
-in the json model. Can be any string consisting of alphanumeric characters,
-- and _ with a maximum length of 40<br/>
+          Manually specify the uid, overwrites uids already present in the json model.
+Can be any string consisting of alphanumeric characters, - and _ with a maximum length of 40.<br/>
           <br/>
             <i>Validations</i>:<li>self == oldSelf: spec.uid is immutable</li>
         </td>
@@ -1361,14 +1360,14 @@ in the json model. Can be any string consisting of alphanumeric characters,
         <td><b>url</b></td>
         <td>string</td>
         <td>
-          dashboard url<br/>
+          model url<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#grafanadashboardspecurlauthorization">urlAuthorization</a></b></td>
         <td>object</td>
         <td>
-          authorization options for dashboard from url<br/>
+          authorization options for model from url<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1462,7 +1461,7 @@ merge patch.<br/>
 
 
 
-dashboard from configmap
+model from configmap
 
 <table>
     <thead>
@@ -1509,7 +1508,8 @@ More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/nam
 
 
 
-
+GrafanaResourceDatasource is used to set the datasource name of any templated datasources in
+content definitions (e.g., dashboard JSON).
 
 <table>
     <thead>
@@ -1951,7 +1951,7 @@ Jsonnet project build
 
 
 
-authorization options for dashboard from url
+authorization options for model from url
 
 <table>
     <thead>

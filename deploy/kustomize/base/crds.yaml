@@ -468,6 +468,7 @@ spec:
                 - sensugo
                 - sensu
                 - slack
+                - sns
                 - teams
                 - telegram
                 - threema
@@ -697,7 +698,7 @@ spec:
                   outside the current namespace
                 type: boolean
               configMapRef:
-                description: dashboard from configmap
+                description: model from configmap
                 properties:
                   key:
                     description: The key to select.
@@ -720,11 +721,14 @@ spec:
                 type: object
                 x-kubernetes-map-type: atomic
               contentCacheDuration:
-                description: Cache duration for dashboards fetched from URLs
+                description: Cache duration for models fetched from URLs
                 type: string
               datasources:
                 description: maps required data sources to existing ones
                 items:
+                  description: |-
+                    GrafanaResourceDatasource is used to set the datasource name of any templated datasources in
+                    content definitions (e.g., dashboard JSON).
                   properties:
                     datasourceName:
                       type: string
@@ -873,7 +877,7 @@ spec:
                 - id
                 type: object
               gzipJson:
-                description: GzipJson the dashboard's JSON compressed with Gzip. Base64-encoded
+                description: GzipJson the model's JSON compressed with Gzip. Base64-encoded
                   when in YAML.
                 format: byte
                 type: string
@@ -927,7 +931,7 @@ spec:
                 - message: spec.instanceSelector is immutable
                   rule: self == oldSelf
               json:
-                description: dashboard json
+                description: model json
                 type: string
               jsonnet:
                 description: Jsonnet
@@ -970,9 +974,8 @@ spec:
                 type: string
               uid:
                 description: |-
-                  Manually specify the uid for the dashboard, overwrites uids already present
-                  in the json model. Can be any string consisting of alphanumeric characters,
-                  - and _ with a maximum length of 40
+                  Manually specify the uid, overwrites uids already present in the json model.
+                  Can be any string consisting of alphanumeric characters, - and _ with a maximum length of 40.
                 maxLength: 40
                 pattern: ^[a-zA-Z0-9-_]+$
                 type: string
@@ -980,10 +983,10 @@ spec:
                 - message: spec.uid is immutable
                   rule: self == oldSelf
               url:
-                description: dashboard url
+                description: model url
                 type: string
               urlAuthorization:
-                description: authorization options for dashboard from url
+                description: authorization options for model from url
                 properties:
                   basicAuth:
                     properties:

@@ -168,7 +168,7 @@ jobs:
           version: v0.16.0
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@v3.7.0
+        uses: sigstore/cosign-installer@v3.8.0
         with:
           cosign-release: "v2.2.2"
 

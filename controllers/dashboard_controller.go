@@ -17,10 +17,7 @@ limitations under the License.
 package controllers
 
 import (
-	"bytes"
 	"context"
-	"crypto/sha256"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -32,8 +29,6 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/grafana/grafana-operator/v5/embeds"
-
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	"github.com/grafana/grafana-openapi-client-go/client/dashboards"
 	"github.com/grafana/grafana-openapi-client-go/client/folders"
@@ -41,7 +36,7 @@ import (
 	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
-	"github.com/grafana/grafana-operator/v5/controllers/fetchers"
+	"github.com/grafana/grafana-operator/v5/controllers/content"
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -51,8 +46,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-
-	v1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -197,23 +190,24 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	removeNoMatchingInstance(&cr.Status.Conditions)
 	log.Info("found matching Grafana instances for dashboard", "count", len(instances.Items))
 
-	dashboardJson, err := r.fetchDashboardJson(ctx, cr)
+	resolver, err := content.NewContentResolver(cr, r.Client)
 	if err != nil {
-		log.Error(err, "error fetching dashboard", "dashboard", cr.Name)
-		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
+		log.Error(err, "error creating dashboard content resolver", "dashboard", cr.Name)
+		// Failing to create a resolver is an unrecoverable error
+		return ctrl.Result{Requeue: false}, nil
 	}
 
 	// Retrieving the model before the loop ensures to exit early in case of failure and not fail once per matching instance
-	dashboardModel, hash, err := r.getDashboardModel(cr, dashboardJson)
+	dashboardModel, hash, err := resolver.Resolve(ctx)
 	if err != nil {
-		log.Error(err, "failed to prepare dashboard model", "dashboard", cr.Name)
-		return ctrl.Result{Requeue: false}, nil
+		log.Error(err, "error resolving dashboard contents", "dashboard", cr.Name)
+		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
 	uid := fmt.Sprintf("%s", dashboardModel["uid"])
 
 	// Garbage collection for a case where dashboard uid get changed, dashboard creation is expected to happen in a separate reconcilication cycle
-	if cr.IsUpdatedUID(uid) {
+	if content.IsUpdatedUID(cr, uid) {
 		log.Info("dashboard uid got updated, deleting dashboards with the old uid")
 		err = r.onDashboardDeleted(ctx, req.Namespace, req.Name)
 		if err != nil {
@@ -411,7 +405,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		exists = false
 	}
 
-	if exists && cr.Unchanged(hash) && !cr.ResyncPeriodHasElapsed() {
+	if exists && content.Unchanged(cr, hash) && !cr.ResyncPeriodHasElapsed() {
 		return nil
 	}
 
@@ -441,146 +435,6 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 
 	grafana.Status.Dashboards = grafana.Status.Dashboards.Add(cr.Namespace, cr.Name, uid)
 	return r.Client.Status().Update(ctx, grafana)
-}
-
-// map data sources that are required in the dashboard to data sources that exist in the instance
-func (r *GrafanaDashboardReconciler) resolveDatasources(dashboard *v1beta1.GrafanaDashboard, dashboardJson []byte) ([]byte, error) {
-	if len(dashboard.Spec.Datasources) == 0 {
-		return dashboardJson, nil
-	}
-
-	for _, input := range dashboard.Spec.Datasources {
-		if input.DatasourceName == "" || input.InputName == "" {
-			return nil, fmt.Errorf("invalid datasource input rule in dashboard %v/%v, input or datasource empty", dashboard.Namespace, dashboard.Name)
-		}
-
-		searchValue := fmt.Sprintf("${%s}", input.InputName)
-		dashboardJson = bytes.ReplaceAll(dashboardJson, []byte(searchValue), []byte(input.DatasourceName))
-	}
-
-	return dashboardJson, nil
-}
-
-// fetchDashboardJson delegates obtaining the dashboard json definition to one of the known fetchers, for example
-// from embedded raw json or from a url
-func (r *GrafanaDashboardReconciler) fetchDashboardJson(ctx context.Context, dashboard *v1beta1.GrafanaDashboard) ([]byte, error) {
-	sourceTypes := dashboard.GetSourceTypes()
-
-	if len(sourceTypes) == 0 {
-		return nil, fmt.Errorf("no source type provided for dashboard %v", dashboard.Name)
-	}
-
-	if len(sourceTypes) > 1 {
-		return nil, fmt.Errorf("more than one source types found for dashboard %v", dashboard.Name)
-	}
-
-	switch sourceTypes[0] {
-	case v1beta1.DashboardSourceTypeRawJson:
-		return []byte(dashboard.Spec.Json), nil
-	case v1beta1.DashboardSourceTypeGzipJson:
-		return v1beta1.Gunzip([]byte(dashboard.Spec.GzipJson))
-	case v1beta1.DashboardSourceTypeUrl:
-		return fetchers.FetchDashboardFromUrl(ctx, dashboard, r.Client, client2.InsecureTLSConfiguration)
-	case v1beta1.DashboardSourceTypeJsonnet:
-		envs, err := r.getDashboardEnvs(ctx, dashboard)
-		if err != nil {
-			return nil, fmt.Errorf("something went wrong while collecting envs, error: %w", err)
-		}
-		return fetchers.FetchJsonnet(dashboard, envs, embeds.GrafonnetEmbed)
-	case v1beta1.DashboardSourceJsonnetProject:
-		envs, err := r.getDashboardEnvs(ctx, dashboard)
-		if err != nil {
-			return nil, fmt.Errorf("something went wrong while collecting envs, error: %w", err)
-		}
-		return fetchers.BuildProjectAndFetchJsonnetFrom(dashboard, envs)
-	case v1beta1.DashboardSourceTypeGrafanaCom:
-		return fetchers.FetchDashboardFromGrafanaCom(ctx, dashboard, r.Client)
-	case v1beta1.DashboardSourceConfigMap:
-		return fetchers.FetchDashboardFromConfigMap(dashboard, r.Client)
-	default:
-		return nil, fmt.Errorf("unknown source type %v found in dashboard %v", sourceTypes[0], dashboard.Name)
-	}
-}
-
-func (r *GrafanaDashboardReconciler) getDashboardEnvs(ctx context.Context, dashboard *v1beta1.GrafanaDashboard) (map[string]string, error) {
-	envs := make(map[string]string)
-	if dashboard.Spec.EnvsFrom != nil {
-		for _, ref := range dashboard.Spec.EnvsFrom {
-			key, val, err := r.getReferencedValue(ctx, dashboard, ref)
-			if err != nil {
-				return nil, fmt.Errorf("something went wrong processing envs, error: %w", err)
-			}
-			envs[key] = val
-		}
-	}
-	if dashboard.Spec.Envs != nil {
-		for _, ref := range dashboard.Spec.Envs {
-			if ref.Value != "" {
-				envs[ref.Name] = ref.Value
-			} else {
-				val, key, err := r.getReferencedValue(ctx, dashboard, ref.ValueFrom)
-				if err != nil {
-					return nil, fmt.Errorf("something went wrong processing referenced env %s, error: %w", ref.Name, err)
-				}
-				envs[key] = val
-			}
-		}
-	}
-	return envs, nil
-}
-
-func (r *GrafanaDashboardReconciler) getReferencedValue(ctx context.Context, cr *v1beta1.GrafanaDashboard, source v1beta1.GrafanaDashboardEnvFromSource) (string, string, error) {
-	if source.SecretKeyRef != nil {
-		s := &v1.Secret{}
-		err := r.Client.Get(ctx, client.ObjectKey{Namespace: cr.Namespace, Name: source.SecretKeyRef.Name}, s)
-		if err != nil {
-			return "", "", err
-		}
-		if val, ok := s.Data[source.SecretKeyRef.Key]; ok {
-			return source.SecretKeyRef.Key, string(val), nil
-		} else {
-			return "", "", fmt.Errorf("missing key %s in secret %s", source.SecretKeyRef.Key, source.SecretKeyRef.Name)
-		}
-	}
-	if source.ConfigMapKeyRef != nil {
-		s := &v1.ConfigMap{}
-		err := r.Client.Get(ctx, client.ObjectKey{Namespace: cr.Namespace, Name: source.ConfigMapKeyRef.Name}, s)
-		if err != nil {
-			return "", "", err
-		}
-		if val, ok := s.Data[source.ConfigMapKeyRef.Key]; ok {
-			return source.ConfigMapKeyRef.Key, val, nil
-		} else {
-			return "", "", fmt.Errorf("missing key %s in configmap %s", source.ConfigMapKeyRef.Key, source.ConfigMapKeyRef.Name)
-		}
-	}
-	return "", "", fmt.Errorf("source couldn't be parsed source: %s", source)
-}
-
-// getDashboardModel resolves datasources, updates uid (if needed) and converts raw json to type grafana client accepts
-func (r *GrafanaDashboardReconciler) getDashboardModel(cr *v1beta1.GrafanaDashboard, dashboardJson []byte) (map[string]interface{}, string, error) {
-	dashboardJson, err := r.resolveDatasources(cr, dashboardJson)
-	if err != nil {
-		return map[string]interface{}{}, "", err
-	}
-
-	hash := sha256.New()
-	hash.Write(dashboardJson)
-
-	var dashboardModel map[string]interface{}
-	err = json.Unmarshal(dashboardJson, &dashboardModel)
-	if err != nil {
-		return map[string]interface{}{}, "", err
-	}
-
-	// NOTE: id should never be hardcoded in a dashboard, otherwise grafana will try to update a dashboard by id instead of uid.
-	//       And, in case the id is non-existent, grafana will respond with 404. https://github.com/grafana/grafana-operator/issues/1108
-	dashboardModel["id"] = nil
-
-	uid, _ := dashboardModel["uid"].(string) //nolint:errcheck
-	dashboardModel["uid"] = cr.CustomUIDOrUID(uid)
-
-	return dashboardModel, fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
 
 func (r *GrafanaDashboardReconciler) Exists(client *genapi.GrafanaHTTPAPI, uid string, title string, folderUID string) (bool, string, error) {

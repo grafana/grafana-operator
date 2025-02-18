@@ -17,10 +17,6 @@ limitations under the License.
 package controllers
 
 import (
-	"context"
-	"os"
-	"os/signal"
-	"syscall"
 	"testing"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -124,35 +120,4 @@ func TestGetDashboardsToDelete(t *testing.T) {
 			assert.Equal(t, []v1beta1.NamespacedResource([]v1beta1.NamespacedResource{"grafana-operator-system/broken2/cb1688d2-547a-465b-bc49-df3ccf3da883"}), dashboardsToDelete[dashboard])
 		}
 	}
-}
-
-func TestGetDashboardEnvs(t *testing.T) {
-	dashboard := v1beta1.GrafanaDashboard{
-		TypeMeta: metav1.TypeMeta{},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-dashboard",
-			Namespace: "grafana-operator-system",
-		},
-		Spec: v1beta1.GrafanaDashboardSpec{
-			Envs: []v1beta1.GrafanaDashboardEnv{
-				{
-					Name:  "TEST_ENV",
-					Value: "test-env-value",
-				},
-			},
-		},
-	}
-
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGPIPE)
-	defer stop()
-
-	reconciler := &GrafanaDashboardReconciler{
-		Client: k8sClient,
-	}
-
-	envs, err := reconciler.getDashboardEnvs(ctx, &dashboard)
-
-	assert.NoError(t, err)
-	assert.NotNil(t, envs)
-	assert.True(t, len(envs) == 1, "Expected 1 env, got %d", len(envs))
 }

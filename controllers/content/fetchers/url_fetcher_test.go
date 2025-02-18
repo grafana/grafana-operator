@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/controllers/content/cache"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -16,7 +17,7 @@ import (
 
 var _ = Describe("Fetching dashboards from URL", func() {
 	dashboardJSON := []byte(`{"dummyField": "dummyData"}`)
-	compressedJSON, err := v1beta1.Gzip(dashboardJSON)
+	compressedJSON, err := cache.Gzip(dashboardJSON)
 	Expect(err).NotTo(HaveOccurred())
 
 	var server *ghttp.Server
@@ -35,7 +36,9 @@ var _ = Describe("Fetching dashboards from URL", func() {
 		It("fetches the correct url", func() {
 			dashboard := &v1beta1.GrafanaDashboard{
 				Spec: v1beta1.GrafanaDashboardSpec{
-					Url: server.URL(),
+					GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+						Url: server.URL(),
+					},
 				},
 				Status: v1beta1.GrafanaDashboardStatus{},
 			}
@@ -65,22 +68,24 @@ var _ = Describe("Fetching dashboards from URL", func() {
 					Namespace: "default",
 				},
 				Spec: v1beta1.GrafanaDashboardSpec{
-					Url: server.URL(),
-					UrlAuthorization: &v1beta1.GrafanaDashboardUrlAuthorization{
-						BasicAuth: &v1beta1.GrafanaDashboardUrlBasicAuth{
-							Username: &v1.SecretKeySelector{
-								LocalObjectReference: v1.LocalObjectReference{
-									Name: "credentials",
+					GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+						Url: server.URL(),
+						UrlAuthorization: &v1beta1.GrafanaContentUrlAuthorization{
+							BasicAuth: &v1beta1.GrafanaContentUrlBasicAuth{
+								Username: &v1.SecretKeySelector{
+									LocalObjectReference: v1.LocalObjectReference{
+										Name: "credentials",
+									},
+									Key:      "USERNAME",
+									Optional: nil,
 								},
-								Key:      "USERNAME",
-								Optional: nil,
-							},
-							Password: &v1.SecretKeySelector{
-								LocalObjectReference: v1.LocalObjectReference{
-									Name: "credentials",
+								Password: &v1.SecretKeySelector{
+									LocalObjectReference: v1.LocalObjectReference{
+										Name: "credentials",
+									},
+									Key:      "PASSWORD",
+									Optional: nil,
 								},
-								Key:      "PASSWORD",
-								Optional: nil,
 							},
 						},
 					},

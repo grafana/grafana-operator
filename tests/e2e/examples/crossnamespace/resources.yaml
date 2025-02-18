@@ -40,11 +40,24 @@ spec:
   datasource:
     access: proxy
     database: prometheus
-    jsonData:
-      timeInterval: 5s
-      tlsSkipVerify: true
     name: Prometheus
-    url: http://prometheus-service:9090
+    url: https://demo.promlabs.com
   instanceSelector:
     matchLabels:
       dashboards: grafana
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicy
+metadata:
+  name: test-isolated
+  namespace: (join('-', ['cross', $namespace]))
+spec:
+  allowCrossNamespaceImport: false
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  route:
+    receiver: grafana-default-email
+    group_by:
+      - grafana_folder
+      - alertname
