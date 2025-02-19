@@ -229,8 +229,14 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	// Retrieving the model before the loop ensures to exit early in case of failure and not fail once per matching instance
 	dashboardModel, hash, err := resolver.Resolve(ctx)
 	if err != nil {
+		// Resolve has a lot of failure cases.
+		// fetch content errors could be a temporary network issue but would result in an InvalidSpec condition
+		setInvalidSpec(&cr.Status.Conditions, cr.Generation, "InvalidModel", err.Error())
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
 		return ctrl.Result{}, fmt.Errorf("resolving dashboard contents: %w", err)
 	}
+
+	removeInvalidSpec(&cr.Status.Conditions)
 
 	uid := fmt.Sprintf("%s", dashboardModel["uid"])
 
