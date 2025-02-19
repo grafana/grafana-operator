@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -187,14 +186,12 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 	condition := buildSynchronizedCondition("Library panel", conditionLibraryPanelSynchronized, libraryPanel.Generation, applyErrors, len(instances))
 	meta.SetStatusCondition(&libraryPanel.Status.Conditions, condition)
 
-	defer func() {
-		contentUID := fmt.Sprintf("%s", contentModel["uid"])
-		libraryPanel.Status.Hash = hash
-		libraryPanel.Status.UID = content.CustomUIDOrUID(libraryPanel, contentUID)
-		if err := r.Client.Status().Update(ctx, libraryPanel); err != nil {
-			log.Error(err, "updating status")
-		}
-	}()
+	contentUID := fmt.Sprintf("%s", contentModel["uid"])
+	libraryPanel.Status.Hash = hash
+	libraryPanel.Status.UID = content.CustomUIDOrUID(libraryPanel, contentUID)
+	if err := r.Client.Status().Update(ctx, libraryPanel); err != nil {
+		log.Error(err, "failed to update status")
+	}
 
 	if len(applyErrors) > 0 {
 		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
@@ -221,13 +218,10 @@ func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Contex
 	folderUID, err := getFolderUID(ctx, r.Client, cr)
 	if err != nil {
 		return err
-	}
-
-	if folderUID == "" {
-		folderUID, err = r.GetOrCreateFolder(grafanaClient, cr)
-		if err != nil {
-			return err
-		}
+	} else if folderUID == "" {
+		// this indicates an implementation error; we should be returning errors
+		// if the folder isn't found, but an empty UID is still technically possible to return.
+		return fmt.Errorf("found folder but could not determine its UID")
 	}
 
 	uid := content.CustomUIDOrUID(cr, fmt.Sprintf("%s", modelWithHash.Model["uid"]))
@@ -242,7 +236,7 @@ func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Contex
 		Version:       0, // this will be filled in by computeOperation in case of update
 	}
 
-	op, err := r.computeOperation(ctx, grafanaClient, cr, desired)
+	op, err := r.computeOperation(grafanaClient, cr, desired)
 	if err != nil {
 		return err
 	}
@@ -281,13 +275,12 @@ func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Contex
 
 // computeOperation looks at the current state of Grafana versus the CR and determines
 // whether a create or update operation should take place (or neither.)
-func (r *GrafanaLibraryPanelReconciler) computeOperation(ctx context.Context, client *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaLibraryPanel, desired *libraryPanelToReconcile) (libraryElementOperation, error) {
-	log := logf.FromContext(ctx)
-	resp, err := client.LibraryElements.GetLibraryElementByName(desired.Name)
+func (r *GrafanaLibraryPanelReconciler) computeOperation(client *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaLibraryPanel, desired *libraryPanelToReconcile) (libraryElementOperation, error) {
+	resp, err := client.LibraryElements.GetLibraryElementByUID(desired.UID)
 
-	var panelNotFound *library_elements.GetLibraryElementByNameNotFound
+	var panelNotFound *library_elements.GetLibraryElementByUIDNotFound
 	if err != nil {
-		// doesn't yet exist, globally--should provision
+		// doesn't yet exist--should provision
 		if errors.As(err, &panelNotFound) {
 			return libraryElementOperationCreate, nil
 		}
@@ -295,38 +288,22 @@ func (r *GrafanaLibraryPanelReconciler) computeOperation(ctx context.Context, cl
 		return libraryElementOperationNoop, err
 	}
 
-	var remoteUID string
-	for _, element := range resp.Payload.Result {
-		if element.UID == desired.UID || (element.Name == desired.Name && element.FolderUID == desired.FolderUID) {
-			remoteUID = element.UID
-			// mutate(!) to provide the version--this is a bit clunky, but allows us
-			// to keep the logic of computing the create vs. update in a separate function
-			// while minimizing calls to the Grafana API.
-			desired.Version = element.Version
-			break
-		}
-	}
-
-	if remoteUID == "" {
-		// doesn't yet exist, w/in folder--should provision
-		return libraryElementOperationCreate, nil
-	}
-
-	if content.IsUpdatedUID(cr, remoteUID) {
-		log.Info("found library panel with the same name (in the same folder) but different uid, removing the library panel before recreating it with a new uid")
-		_, err = client.LibraryElements.DeleteLibraryElementByUID(remoteUID) //nolint:errcheck
-		if err != nil {
-			return libraryElementOperationNoop, err
-		}
-
-		// we deleted an existing one w/ the same uid--should provision
-		return libraryElementOperationCreate, nil
+	// it can happen that the user does not utilize `.spec.uid` but updates
+	// the UID within the content model itself. this will create a conflict b/c
+	// we are effectively requesting a change to the uid, which is immutable.
+	if content.IsUpdatedUID(cr, desired.UID) {
+		return libraryElementOperationNoop, fmt.Errorf("library panel uid is immutable, but was updated on the content model")
 	}
 
 	// handle content caching
 	if content.Unchanged(cr, desired.ModelWithHash.Hash) && !cr.ResyncPeriodHasElapsed() {
 		return libraryElementOperationNoop, nil
 	}
+
+	// mutate(!) to provide the version--this is a bit clunky, but allows us
+	// to keep the logic of computing the create vs. update in a separate function
+	// while minimizing calls to the Grafana API.
+	desired.Version = resp.Payload.Result.Version
 
 	return libraryElementOperationUpdate, nil
 }
@@ -420,70 +397,6 @@ func (r *GrafanaLibraryPanelReconciler) SetupWithManager(mgr ctrl.Manager) error
 		For(&v1beta1.GrafanaLibraryPanel{}).
 		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
-}
-
-func (r *GrafanaLibraryPanelReconciler) GetOrCreateFolder(client *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaLibraryPanel) (string, error) {
-	title := cr.Namespace
-	if cr.Spec.FolderTitle != "" {
-		title = cr.Spec.FolderTitle
-	}
-
-	exists, folderUID, err := r.GetFolderUID(client, title)
-	if err != nil {
-		return "", err
-	}
-
-	if exists {
-		return folderUID, nil
-	}
-
-	// Folder wasn't found, let's create it
-	body := &models.CreateFolderCommand{
-		Title: title,
-	}
-	resp, err := client.Folders.CreateFolder(body)
-	if err != nil {
-		return "", err
-	}
-	folder := resp.GetPayload()
-	if folder == nil {
-		return "", fmt.Errorf("invalid payload returned")
-	}
-
-	return folder.UID, nil
-}
-
-func (r *GrafanaLibraryPanelReconciler) GetFolderUID(
-	client *genapi.GrafanaHTTPAPI,
-	title string,
-) (bool, string, error) {
-	// Pre-existing folder that is not returned in Folder API
-	if strings.EqualFold(title, "General") {
-		return true, "", nil
-	}
-	page := int64(1)
-	limit := int64(1000)
-	for {
-		params := folders.NewGetFoldersParams().WithPage(&page).WithLimit(&limit)
-
-		foldersResp, err := client.Folders.GetFolders(params)
-		if err != nil {
-			return false, "", err
-		}
-		folders := foldersResp.GetPayload()
-
-		for _, remoteFolder := range folders {
-			if strings.EqualFold(remoteFolder.Title, title) {
-				return true, remoteFolder.UID, nil
-			}
-		}
-		if len(folders) < int(limit) {
-			break
-		}
-		page++
-	}
-
-	return false, "", nil
 }
 
 func (r *GrafanaLibraryPanelReconciler) DeleteFolderIfEmpty(client *genapi.GrafanaHTTPAPI, folderUID string) (http.Response, error) {

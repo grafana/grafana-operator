@@ -3328,7 +3328,7 @@ GrafanaLibraryPanel is the Schema for the grafanalibrarypanels API
         <td>
           GrafanaLibraryPanelSpec defines the desired state of GrafanaLibraryPanel<br/>
           <br/>
-            <i>Validations</i>:<li>(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID))) || !(has(self.folderRef) && (has(self.folderUID))): Only one of folderUID or folderRef can be declared at the same time</li><li>(has(self.folder) && !(has(self.folderRef) || has(self.folderUID))) || !(has(self.folder)): folder field cannot be set when folderUID or folderRef is already declared</li><li>((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid))): spec.uid is immutable</li><li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
+            <i>Validations</i>:<li>(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID))) || !(has(self.folderRef) && (has(self.folderUID))): Only one of folderUID or folderRef can be declared at the same time</li><li>((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid))): spec.uid is immutable</li><li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3409,13 +3409,6 @@ GrafanaLibraryPanelSpec defines the desired state of GrafanaLibraryPanel
         <td>[]object</td>
         <td>
           environments variables as a map<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>folder</b></td>
-        <td>string</td>
-        <td>
-          folder assignment for dashboard<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -4258,13 +4251,6 @@ GrafanaLibraryPanelStatus defines the observed state of GrafanaLibraryPanel
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>NoMatchingInstances</b></td>
-        <td>boolean</td>
-        <td>
-          The instanceSelector can't find matching grafana instances<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b><a href="#grafanalibrarypanelstatusconditionsindex">conditions</a></b></td>
         <td>[]object</td>
         <td>

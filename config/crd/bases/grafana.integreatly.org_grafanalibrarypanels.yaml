@@ -216,9 +216,6 @@ spec:
                   - name
                   type: object
                 type: array
-              folder:
-                description: folder assignment for dashboard
-                type: string
               folderRef:
                 description: Name of a `GrafanaFolder` resource in the same namespace
                 type: string
@@ -407,10 +404,6 @@ spec:
                 time
               rule: (has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef)
                 && !(has(self.folderUID))) || !(has(self.folderRef) && (has(self.folderUID)))
-            - message: folder field cannot be set when folderUID or folderRef is already
-                declared
-              rule: (has(self.folder) && !(has(self.folderRef) || has(self.folderUID)))
-                || !(has(self.folder))
             - message: spec.uid is immutable
               rule: ((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) &&
                 has(self.uid)))
@@ -421,9 +414,6 @@ spec:
           status:
             description: GrafanaLibraryPanelStatus defines the observed state of GrafanaLibraryPanel
             properties:
-              NoMatchingInstances:
-                description: The instanceSelector can't find matching grafana instances
-                type: boolean
               conditions:
                 description: Results when synchonizing resource with Grafana instances
                 items:

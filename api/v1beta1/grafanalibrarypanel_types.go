@@ -9,15 +9,10 @@ import (
 
 // GrafanaLibraryPanelSpec defines the desired state of GrafanaLibraryPanel
 // +kubebuilder:validation:XValidation:rule="(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID))) || !(has(self.folderRef) && (has(self.folderUID)))", message="Only one of folderUID or folderRef can be declared at the same time"
-// +kubebuilder:validation:XValidation:rule="(has(self.folder) && !(has(self.folderRef) || has(self.folderUID))) || !(has(self.folder))", message="folder field cannot be set when folderUID or folderRef is already declared"
 // +kubebuilder:validation:XValidation:rule="((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid)))", message="spec.uid is immutable"
 type GrafanaLibraryPanelSpec struct {
 	GrafanaCommonSpec  `json:",inline"`
 	GrafanaContentSpec `json:",inline"`
-
-	// folder assignment for dashboard
-	// +optional
-	FolderTitle string `json:"folder,omitempty"`
 
 	// UID of the target folder for this dashboard
 	// +optional
@@ -36,9 +31,6 @@ type GrafanaLibraryPanelSpec struct {
 type GrafanaLibraryPanelStatus struct {
 	GrafanaCommonStatus  `json:",inline"`
 	GrafanaContentStatus `json:",inline"`
-
-	// The instanceSelector can't find matching grafana instances
-	NoMatchingInstances bool `json:"NoMatchingInstances,omitempty"`
 }
 
 //+kubebuilder:object:root=true
