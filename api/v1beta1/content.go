@@ -1,7 +1,6 @@
 package v1beta1
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -125,13 +124,4 @@ type GrafanaContentResource interface {
 	client.Object
 	GrafanaContentSpec() *GrafanaContentSpec
 	GrafanaContentStatus() *GrafanaContentStatus
-	GrafanaContentMetrics() GrafanaContentMetrics
-}
-
-// GrafanaContentMetrics holds runtime information about telemetry configured for a particular
-// content resource, allowing for resources to have different logical metrics.
-// +kubebuilder:object:generate=false
-type GrafanaContentMetrics struct {
-	URLRequestCounter                *prometheus.CounterVec
-	GrafanaComRevisionRequestCounter *prometheus.CounterVec
 }

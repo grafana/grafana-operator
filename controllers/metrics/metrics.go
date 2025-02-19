@@ -27,26 +27,18 @@ var (
 		Help:      "requests against the grafana api per instance",
 	}, []string{"instance_name", "method", "status"})
 
-	DashboardUrlRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
+	ContentUrlRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "grafana_operator",
-		Subsystem: "dashboards",
+		Subsystem: "content",
 		Name:      "requests",
-		Help:      "requests to fetch dashboards from urls",
-	}, []string{"dashboard", "method", "status"})
-
-	LibraryPanelUrlRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "grafana_operator",
-		Subsystem: "librarypanels",
-		Name:      "requests",
-		Help:      "requests to fetch library panels from urls",
-	}, []string{"librarypanel", "method", "status"})
+		Help:      "requests to fetch model contents from urls",
+	}, []string{"kind", "resource", "method", "status"})
 
 	GrafanaComApiRevisionRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "grafana_operator",
-		Subsystem: "dashboards",
 		Name:      "revision_requests",
-		Help:      "requests to list dashboard revisions on grafana.com/dashboards",
-	}, []string{"dashboard", "method", "status"})
+		Help:      "requests to list content revisions on grafana.com",
+	}, []string{"kind", "resource", "method", "status"})
 
 	InitialDashboardSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: "grafana_operator",
@@ -81,7 +73,7 @@ func init() {
 	metrics.Registry.MustRegister(GrafanaReconciles)
 	metrics.Registry.MustRegister(GrafanaFailedReconciles)
 	metrics.Registry.MustRegister(GrafanaApiRequests)
-	metrics.Registry.MustRegister(DashboardUrlRequests)
+	metrics.Registry.MustRegister(ContentUrlRequests)
 	metrics.Registry.MustRegister(InitialDashboardSyncDuration)
 	metrics.Registry.MustRegister(InitialDatasourceSyncDuration)
 	metrics.Registry.MustRegister(InitialFoldersSyncDuration)

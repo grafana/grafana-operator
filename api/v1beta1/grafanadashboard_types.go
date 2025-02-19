@@ -19,7 +19,6 @@ package v1beta1
 import (
 	"time"
 
-	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -123,14 +122,6 @@ func (in *GrafanaDashboard) GrafanaContentSpec() *GrafanaContentSpec {
 // GrafanaContentSpec implements GrafanaContentResource
 func (in *GrafanaDashboard) GrafanaContentStatus() *GrafanaContentStatus {
 	return &in.Status.GrafanaContentStatus
-}
-
-// GrafanaContentMetrics implements GrafanaContentResource
-func (in *GrafanaDashboard) GrafanaContentMetrics() GrafanaContentMetrics {
-	return GrafanaContentMetrics{
-		URLRequestCounter:                metrics.DashboardUrlRequests,
-		GrafanaComRevisionRequestCounter: metrics.GrafanaComApiRevisionRequests,
-	}
 }
 
 var _ GrafanaContentResource = &GrafanaDashboard{}

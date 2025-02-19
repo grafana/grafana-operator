@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/controllers/content/cache"
+	"github.com/grafana/grafana-operator/v5/controllers/metrics"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 const grafanaComDashboardApiUrlRoot = "https://grafana.com/api/dashboards"
@@ -58,9 +60,15 @@ func getLatestGrafanaComRevision(cr v1beta1.GrafanaContentResource, tlsConfig *t
 		return -1, err
 	}
 
-	metric := cr.GrafanaContentMetrics().GrafanaComRevisionRequestCounter
+	metric, err := metrics.GrafanaComApiRevisionRequests.CurryWith(prometheus.Labels{
+		"kind":     cr.GetObjectKind().GroupVersionKind().Kind,
+		"resource": fmt.Sprintf("%v/%v", cr.GetNamespace(), cr.GetName()),
+	})
+	if err != nil {
+		return -1, err
+	}
 
-	client := client2.NewInstrumentedRoundTripper(fmt.Sprintf("%v/%v", cr.GetNamespace(), cr.GetName()), metric, true, tlsConfig)
+	client := client2.NewInstrumentedRoundTripper(metric, true, tlsConfig)
 	response, err := client.RoundTrip(request)
 	if err != nil {
 		return -1, err
