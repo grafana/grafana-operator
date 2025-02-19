@@ -55,7 +55,16 @@ status:
       status: "True"
       type: InvalidSpec
 ---
-# TODO GrafanaDashboard when InvalidSpec is implemented for dashboards with an invalid model
+# Model is not valid JSON or any other resolution error
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: testdata
+status:
+  conditions:
+    - reason: InvalidModelResolution
+      status: "True"
+      type: InvalidSpec
 ---
 # Reference non-existing secret
 apiVersion: grafana.integreatly.org/v1beta1
