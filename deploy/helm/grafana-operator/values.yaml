@@ -19,6 +19,8 @@ watchNamespaceSelector: ""
 # it defines which CRs are watched according to their labels.
 # By default, the operator watches all CRs. To make it watch only a subset of CRs, define the variable as a *stringified label selector*.
 # See also: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+# Beware: Always label Grafana CRs before enabling to ensure labels are inherited.
+# # Existing Secrets/ConfigMaps referenced in CRs also need to be labelled to continue working.
 watchLabelSelectors: ""
 # watchLabelSelectors: "partition in (customerA, customerB),environment!=qa"
 
