@@ -181,7 +181,7 @@ func (r *GrafanaNotificationTemplateReconciler) removeFromInstance(ctx context.C
 		return fmt.Errorf("building grafana client: %w", err)
 	}
 
-	_, err = cl.Provisioning.DeleteTemplate(notificationTemplate.Spec.Name) //nolint:errcheck
+	_, err = cl.Provisioning.DeleteTemplate(&provisioning.DeleteTemplateParams{Name: notificationTemplate.Spec.Name}) //nolint:errcheck
 	if err != nil {
 		return fmt.Errorf("deleting notification template: %w", err)
 	}
