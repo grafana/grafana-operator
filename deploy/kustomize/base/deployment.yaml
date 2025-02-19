@@ -22,7 +22,7 @@ spec:
             - --health-probe-bind-address=:8081
             - --metrics-bind-address=0.0.0.0:9090
             - --leader-elect
-          image: ghcr.io/grafana/grafana-operator:v5.6.0
+          image: ghcr.io/grafana/grafana-operator:v5.16.0
           imagePullPolicy: Always
           ports:
             - containerPort: 9090
