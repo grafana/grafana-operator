@@ -36,9 +36,10 @@ func BoolPtr(b bool) *bool { return &b }
 
 func IntPtr(b int64) *int64 { return &b }
 
-func SetCommonLabels(obj metav1.ObjectMetaAccessor) {
+func SetInheritedLabels(obj metav1.ObjectMetaAccessor, extraLabels map[string]string) {
 	meta := obj.GetObjectMeta()
 	labels := meta.GetLabels()
+	// Ensure default CommonLabels for child resources
 	if labels == nil {
 		labels = CommonLabels
 	} else {
@@ -46,14 +47,9 @@ func SetCommonLabels(obj metav1.ObjectMetaAccessor) {
 			labels[k] = v
 		}
 	}
-	meta.SetLabels(labels)
-}
-
-func SetInheritedLabels(obj metav1.ObjectMetaAccessor, extraLabels map[string]string) {
-	SetCommonLabels(obj)
-	meta := obj.GetObjectMeta()
-	labels := meta.GetLabels()
+	// Inherit labels from the parent grafana instance if any
 	for k, v := range extraLabels {
 		labels[k] = v
 	}
+	meta.SetLabels(labels)
 }
