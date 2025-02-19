@@ -64,17 +64,11 @@ type ContentResolver struct {
 	resource v1beta1.GrafanaContentResource
 }
 
-func NewContentResolver(cr v1beta1.GrafanaContentResource, client client.Client) (*ContentResolver, error) {
-	// Perform these error checks once in initialization; we assume in the function calls
-	// that the spec and status will be non-nil as a result.
-	if cr.GrafanaContentSpec() == nil || cr.GrafanaContentStatus() == nil {
-		return nil, fmt.Errorf("resource does not properly implement content spec or status fields; this indicates a bug in implementation")
-	}
-
+func NewContentResolver(cr v1beta1.GrafanaContentResource, client client.Client) *ContentResolver {
 	return &ContentResolver{
 		Client:   client,
 		resource: cr,
-	}, nil
+	}
 }
 
 func (h *ContentResolver) Resolve(ctx context.Context) (map[string]interface{}, string, error) {

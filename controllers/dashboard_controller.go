@@ -200,6 +200,19 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 	}()
 
+	// Retrieving the model before the loop ensures to exit early in case of failure and not fail once per matching instance
+	resolver := content.NewContentResolver(cr, r.Client)
+	dashboardModel, hash, err := resolver.Resolve(ctx)
+	if err != nil {
+		// Resolve has a lot of failure cases.
+		// fetch content errors could be a temporary network issue but would result in an InvalidSpec condition
+		setInvalidSpec(&cr.Status.Conditions, cr.Generation, "InvalidModelResolution", err.Error())
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
+		return ctrl.Result{}, fmt.Errorf("resolving dashboard contents: %w", err)
+	}
+
+	removeInvalidSpec(&cr.Status.Conditions)
+
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
@@ -218,25 +231,6 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	removeNoMatchingInstance(&cr.Status.Conditions)
 	cr.Status.NoMatchingInstances = false
 	log.Info("found matching Grafana instances for dashboard", "count", len(instances))
-
-	resolver, err := content.NewContentResolver(cr, r.Client)
-	if err != nil {
-		// TODO Add InvalidSpec condition
-		// Failing to create a resolver is an unrecoverable error
-		return ctrl.Result{}, fmt.Errorf("creating dashboard content resolver: %w", err)
-	}
-
-	// Retrieving the model before the loop ensures to exit early in case of failure and not fail once per matching instance
-	dashboardModel, hash, err := resolver.Resolve(ctx)
-	if err != nil {
-		// Resolve has a lot of failure cases.
-		// fetch content errors could be a temporary network issue but would result in an InvalidSpec condition
-		setInvalidSpec(&cr.Status.Conditions, cr.Generation, "InvalidModel", err.Error())
-		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
-		return ctrl.Result{}, fmt.Errorf("resolving dashboard contents: %w", err)
-	}
-
-	removeInvalidSpec(&cr.Status.Conditions)
 
 	uid := fmt.Sprintf("%s", dashboardModel["uid"])
 
