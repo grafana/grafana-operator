@@ -130,7 +130,7 @@ func main() {
 	watchNamespace, _ := os.LookupEnv(watchNamespaceEnvVar)
 	watchNamespaceSelector, _ := os.LookupEnv(watchNamespaceEnvSelector)
 	if watchNamespaceSelector != "" {
-		setupLog.Info(fmt.Sprintf("sharding is enabled via %s=%s. Beware: Always label Grafana CRs before enabling to ensure labels are inherited. Existing Secrets/ConfigMaps referenced in CRs also need to be labelled to continue working.", watchNamespaceEnvSelector, watchNamespaceSelector))
+		setupLog.Info(fmt.Sprintf("sharding is enabled via %s=%s. Beware: Always label Grafana CRs before enabling to ensure labels are inherited. Existing Secrets/ConfigMaps referenced in CRs also need to be labeled to continue working.", watchNamespaceEnvSelector, watchNamespaceSelector))
 	}
 	watchLabelSelectors, _ := os.LookupEnv(watchLabelSelectorsEnvVar)
 
