@@ -54,6 +54,24 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 			int32(GetGrafanaPort(cr))) // #nosec G115
 	}
 
+	// Headless service for grafana unified alerting
+	headlessService := model.GetGrafanaHeadlessService(cr, scheme)
+	_, err = controllerutil.CreateOrUpdate(ctx, r.client, headlessService, func() error {
+		model.SetCommonLabels(headlessService)
+		headlessService.Spec = v1.ServiceSpec{
+			ClusterIP: "None",
+			Ports:     getHeadlessServicePorts(cr),
+			Selector: map[string]string{
+				"app": cr.Name,
+			},
+			Type: v1.ServiceTypeClusterIP,
+		}
+		return nil
+	})
+	if err != nil {
+		return v1beta1.OperatorStageResultFailed, err
+	}
+
 	return v1beta1.OperatorStageResultSuccess, nil
 }
 
@@ -90,6 +108,21 @@ func getServicePorts(cr *v1beta1.Grafana) []v1.ServicePort {
 			Protocol:   "TCP",
 			Port:       intPort,
 			TargetPort: intstr.FromString("grafana-http"),
+		},
+	}
+
+	return defaultPorts
+}
+
+func getHeadlessServicePorts(_ *v1beta1.Grafana) []v1.ServicePort {
+	intPort := int32(config.GrafanaAlertPort)
+
+	defaultPorts := []v1.ServicePort{
+		{
+			Name:       config.GrafanaAlertPortName,
+			Protocol:   "TCP",
+			Port:       intPort,
+			TargetPort: intstr.FromInt32(intPort),
 		},
 	}
 
