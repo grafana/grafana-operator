@@ -39,16 +39,15 @@ func IntPtr(b int64) *int64 { return &b }
 func SetInheritedLabels(obj metav1.ObjectMetaAccessor, extraLabels map[string]string) {
 	meta := obj.GetObjectMeta()
 	labels := meta.GetLabels()
-	// Ensure default CommonLabels for child resources
 	if labels == nil {
-		labels = CommonLabels
-	} else {
-		for k, v := range CommonLabels {
-			labels[k] = v
-		}
+		labels = make(map[string]string)
 	}
 	// Inherit labels from the parent grafana instance if any
 	for k, v := range extraLabels {
+		labels[k] = v
+	}
+	// Ensure default CommonLabels for child resources
+	for k, v := range CommonLabels {
 		labels[k] = v
 	}
 	meta.SetLabels(labels)
