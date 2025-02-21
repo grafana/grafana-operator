@@ -57,8 +57,8 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 	// Headless service for grafana unified alerting
 	headlessService := model.GetGrafanaHeadlessService(cr, scheme)
 	_, err = controllerutil.CreateOrUpdate(ctx, r.client, headlessService, func() error {
-		model.SetCommonLabels(service)
-		service.Spec = v1.ServiceSpec{
+		model.SetCommonLabels(headlessService)
+		headlessService.Spec = v1.ServiceSpec{
 			ClusterIP: "None",
 			Ports:     getHeadlessServicePorts(cr),
 			Selector: map[string]string{
