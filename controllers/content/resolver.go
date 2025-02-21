@@ -171,11 +171,11 @@ func (h *ContentResolver) getDashboardEnvs(ctx context.Context) (map[string]stri
 			if ref.Value != "" {
 				envs[ref.Name] = ref.Value
 			} else {
-				val, key, err := h.getReferencedValue(ctx, h.resource, ref.ValueFrom)
+				_, val, err := h.getReferencedValue(ctx, h.resource, ref.ValueFrom)
 				if err != nil {
 					return nil, fmt.Errorf("something went wrong processing referenced env %s, error: %w", ref.Name, err)
 				}
-				envs[key] = val
+				envs[ref.Name] = val
 			}
 		}
 	}
