@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -47,7 +48,22 @@ func FetchFromUrl(ctx context.Context, cr v1beta1.GrafanaContentResource, c clie
 		return nil, err
 	}
 
-	client := client2.NewInstrumentedRoundTripper(metric, true, tlsConfig)
+	onResponse := func(method string, responseCode int) {
+		responseCodeStr := strconv.Itoa(responseCode)
+		metric.WithLabelValues(method, responseCodeStr).Inc()
+
+		// backwards-compatibility for legacy dashboard request metric
+		if _, isDashboard := cr.(*v1beta1.GrafanaDashboard); isDashboard {
+			//nolint:staticcheck
+			metrics.DashboardUrlRequests.WithLabelValues(
+				fmt.Sprintf("%v/%v", cr.GetNamespace(), cr.GetName()),
+				method,
+				responseCodeStr,
+			).Inc()
+		}
+	}
+
+	client := client2.NewInstrumentedRoundTripper(onResponse, true, tlsConfig)
 	// basic auth is supported for dashboards from url
 	if spec.UrlAuthorization != nil && spec.UrlAuthorization.BasicAuth != nil {
 		username, err := grafanaClient.GetValueFromSecretKey(ctx, spec.UrlAuthorization.BasicAuth.Username, c, cr.GetNamespace())

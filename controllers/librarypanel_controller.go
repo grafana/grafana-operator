@@ -46,17 +46,11 @@ import (
 
 type libraryElementType int
 
-type libraryElementOperation int
-
 const (
 	conditionLibraryPanelSynchronized = "LibraryPanelSynchronized"
 
 	libraryElementTypePanel    libraryElementType = 1
 	libraryElementTypeVariable libraryElementType = 2
-
-	libraryElementOperationNoop   libraryElementOperation = 0
-	libraryElementOperationCreate libraryElementOperation = 1
-	libraryElementOperationUpdate libraryElementOperation = 2
 )
 
 type libraryPanelModelWithHash struct {
@@ -227,85 +221,70 @@ func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Contex
 	uid := content.CustomUIDOrUID(cr, fmt.Sprintf("%s", modelWithHash.Model["uid"]))
 	name := fmt.Sprintf("%s", modelWithHash.Model["name"])
 
+	finishWithStatus := func() error {
+		instance.Status.LibraryPanels = instance.Status.LibraryPanels.Add(cr.Namespace, cr.Name, uid)
+		return r.Client.Status().Update(ctx, instance)
+	}
+
 	desired := &libraryPanelToReconcile{
 		Name:          name,
 		FolderUID:     folderUID,
 		Kind:          int64(libraryElementTypePanel),
 		UID:           uid,
 		ModelWithHash: modelWithHash,
-		Version:       0, // this will be filled in by computeOperation in case of update
+		Version:       0, // this will be set to the existing version in case of update
 	}
 
-	op, err := r.computeOperation(grafanaClient, cr, desired)
+	resp, err := grafanaClient.LibraryElements.GetLibraryElementByUID(desired.UID)
+
+	var panelNotFound *library_elements.GetLibraryElementByUIDNotFound
 	if err != nil {
-		return err
-	}
+		if !errors.As(err, &panelNotFound) {
+			return err
+		}
 
-	switch op {
-	case libraryElementOperationNoop: // do nothing
-	case libraryElementOperationCreate:
+		// doesn't yet exist--should provision
 		// nolint:errcheck
-		_, err = grafanaClient.LibraryElements.CreateLibraryElement(&models.CreateLibraryElementCommand{
+		if _, err = grafanaClient.LibraryElements.CreateLibraryElement(&models.CreateLibraryElementCommand{
 			FolderUID: desired.FolderUID,
 			Kind:      desired.Kind,
 			Model:     desired.ModelWithHash.Model,
 			Name:      desired.Name,
 			UID:       desired.UID,
-		})
-		if err != nil {
+		}); err != nil {
 			return err
 		}
-	case libraryElementOperationUpdate:
-		// nolint:errcheck
-		_, err = grafanaClient.LibraryElements.UpdateLibraryElement(desired.UID, &models.PatchLibraryElementCommand{
-			FolderUID: desired.FolderUID,
-			Kind:      desired.Kind,
-			Model:     desired.ModelWithHash.Model,
-			Name:      desired.Name,
-			Version:   desired.Version,
-		})
-		if err != nil {
-			return err
-		}
-	}
 
-	instance.Status.LibraryPanels = instance.Status.LibraryPanels.Add(cr.Namespace, cr.Name, uid)
-	return r.Client.Status().Update(ctx, instance)
-}
-
-// computeOperation looks at the current state of Grafana versus the CR and determines
-// whether a create or update operation should take place (or neither.)
-func (r *GrafanaLibraryPanelReconciler) computeOperation(client *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaLibraryPanel, desired *libraryPanelToReconcile) (libraryElementOperation, error) {
-	resp, err := client.LibraryElements.GetLibraryElementByUID(desired.UID)
-
-	var panelNotFound *library_elements.GetLibraryElementByUIDNotFound
-	if err != nil {
-		// doesn't yet exist--should provision
-		if errors.As(err, &panelNotFound) {
-			return libraryElementOperationCreate, nil
-		}
-
-		return libraryElementOperationNoop, err
+		return finishWithStatus()
 	}
 
 	// it can happen that the user does not utilize `.spec.uid` but updates
 	// the UID within the content model itself. this will create a conflict b/c
 	// we are effectively requesting a change to the uid, which is immutable.
 	if content.IsUpdatedUID(cr, desired.UID) {
-		return libraryElementOperationNoop, fmt.Errorf("library panel uid is immutable, but was updated on the content model")
+		return fmt.Errorf("library panel uid is immutable, but was updated on the content model")
 	}
 
 	// handle content caching
 	if content.Unchanged(cr, desired.ModelWithHash.Hash) && !cr.ResyncPeriodHasElapsed() {
-		return libraryElementOperationNoop, nil
+		return nil
 	}
 
-	// mutate(!) to provide the version--this is a bit clunky, but allows us
-	// to keep the logic of computing the create vs. update in a separate function
-	// while minimizing calls to the Grafana API.
 	desired.Version = resp.Payload.Result.Version
+	// nolint:errcheck
+	if _, err = grafanaClient.LibraryElements.UpdateLibraryElement(desired.UID, &models.PatchLibraryElementCommand{
+		FolderUID: desired.FolderUID,
+		Kind:      desired.Kind,
+		Model:     desired.ModelWithHash.Model,
+		Name:      desired.Name,
+		Version:   desired.Version,
+	}); err != nil {
+		return err
+	}
 
-	return libraryElementOperationUpdate, nil
+	// always update the status--this is an idempotent operation and helps if we somehow
+	// failed to write the status on create.
+	return finishWithStatus()
 }
 
 func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, libraryPanel *v1beta1.GrafanaLibraryPanel) error {

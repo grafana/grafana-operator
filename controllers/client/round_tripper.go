@@ -3,19 +3,19 @@ package client
 import (
 	"crypto/tls"
 	"net/http"
-	"strconv"
 
 	"github.com/grafana/grafana-operator/v5/embeds"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
+type RoundTripperOnResponse func(requestMethod string, responseCode int)
+
 type instrumentedRoundTripper struct {
-	wrapped http.RoundTripper
-	metric  *prometheus.CounterVec
-	headers map[string]string
+	wrapped    http.RoundTripper
+	onResponse RoundTripperOnResponse
+	headers    map[string]string
 }
 
-func NewInstrumentedRoundTripper(metric *prometheus.CounterVec, useProxy bool, tlsConfig *tls.Config) http.RoundTripper {
+func NewInstrumentedRoundTripper(onResponse RoundTripperOnResponse, useProxy bool, tlsConfig *tls.Config) http.RoundTripper {
 	transport := http.DefaultTransport.(*http.Transport).Clone() //nolint:errcheck
 
 	transport.DisableKeepAlives = true
@@ -33,9 +33,9 @@ func NewInstrumentedRoundTripper(metric *prometheus.CounterVec, useProxy bool, t
 	headers["user-agent"] = "grafana-operator/" + embeds.Version
 
 	return &instrumentedRoundTripper{
-		wrapped: transport,
-		metric:  metric,
-		headers: headers,
+		wrapped:    transport,
+		onResponse: onResponse,
+		headers:    headers,
 	}
 }
 
@@ -47,11 +47,8 @@ func (in *instrumentedRoundTripper) RoundTrip(r *http.Request) (*http.Response, 
 	}
 
 	resp, err := in.wrapped.RoundTrip(r)
-	if resp != nil && in.metric != nil {
-		in.metric.WithLabelValues(
-			r.Method,
-			strconv.Itoa(resp.StatusCode)).
-			Inc()
+	if resp != nil && in.onResponse != nil {
+		in.onResponse(r.Method, resp.StatusCode)
 	}
 	return resp, err
 }

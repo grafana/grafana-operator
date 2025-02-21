@@ -27,6 +27,16 @@ var (
 		Help:      "requests against the grafana api per instance",
 	}, []string{"instance_name", "method", "status"})
 
+	// Deprecated: will be removed in a future version of the operator. Use
+	// ContentUrlRequests instead, which handles more types of resources that
+	// directly utilize Grafana model JSON.
+	DashboardUrlRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "grafana_operator",
+		Subsystem: "dashboards",
+		Name:      "requests",
+		Help:      "requests to fetch dashboards from urls",
+	}, []string{"dashboard", "method", "status"})
+
 	ContentUrlRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "grafana_operator",
 		Subsystem: "content",
@@ -73,6 +83,8 @@ func init() {
 	metrics.Registry.MustRegister(GrafanaReconciles)
 	metrics.Registry.MustRegister(GrafanaFailedReconciles)
 	metrics.Registry.MustRegister(GrafanaApiRequests)
+	metrics.Registry.MustRegister(GrafanaComApiRevisionRequests)
+	metrics.Registry.MustRegister(DashboardUrlRequests)
 	metrics.Registry.MustRegister(ContentUrlRequests)
 	metrics.Registry.MustRegister(InitialDashboardSyncDuration)
 	metrics.Registry.MustRegister(InitialDatasourceSyncDuration)
