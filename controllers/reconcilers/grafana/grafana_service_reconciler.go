@@ -33,7 +33,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 	service := model.GetGrafanaService(cr, scheme)
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, service, func() error {
-		model.SetCommonLabels(service)
+		model.SetInheritedLabels(service, cr.Labels)
 		service.Spec = v1.ServiceSpec{
 			Ports: getServicePorts(cr),
 			Selector: map[string]string{
@@ -57,7 +57,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 	// Headless service for grafana unified alerting
 	headlessService := model.GetGrafanaHeadlessService(cr, scheme)
 	_, err = controllerutil.CreateOrUpdate(ctx, r.client, headlessService, func() error {
-		model.SetCommonLabels(headlessService)
+		model.SetInheritedLabels(headlessService, cr.Labels)
 		headlessService.Spec = v1.ServiceSpec{
 			ClusterIP: "None",
 			Ports:     getHeadlessServicePorts(cr),
