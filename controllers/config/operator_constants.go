@@ -22,6 +22,8 @@ const (
 	GrafanaHttpPort       int = 3000
 	GrafanaHttpPortName       = "grafana"
 	GrafanaServerProtocol     = "http"
+	GrafanaAlertPort      int = 9094
+	GrafanaAlertPortName      = "grafana-alert"
 
 	// Data storage
 	GrafanaProvisionPluginVolumeName    = "grafana-provision-plugins"
