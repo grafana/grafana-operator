@@ -145,9 +145,6 @@ func main() { // nolint:gocyclo
 	watchNamespace, _ := os.LookupEnv(watchNamespaceEnvVar)
 	watchNamespaceSelector, _ := os.LookupEnv(watchNamespaceEnvSelector)
 	watchLabelSelectors, _ := os.LookupEnv(watchLabelSelectorsEnvVar)
-	if watchLabelSelectors != "" {
-		setupLog.Info(fmt.Sprintf("sharding is enabled via %s=%s. Beware: Always label Grafana CRs before enabling to ensure labels are inherited. Existing Secrets/ConfigMaps referenced in CRs also need to be labeled to continue working.", watchLabelSelectorsEnvVar, watchLabelSelectors))
-	}
 	clusterDomain, _ := os.LookupEnv(clusterDomainEnvVar)
 
 	// Fetch k8s api credentials and detect platform
@@ -387,6 +384,7 @@ func getLabelSelectors(watchLabelSelectors string) (labels.Selector, error) {
 		if err != nil {
 			return labelSelectors, fmt.Errorf("unable to parse %s: %w", watchLabelSelectorsEnvVar, err)
 		}
+		setupLog.Info(fmt.Sprintf("sharding is enabled via %s=%s. Beware: Always label Grafana CRs before enabling to ensure labels are inherited. Existing Secrets/ConfigMaps referenced in CRs also need to be labeled to continue working.", watchLabelSelectorsEnvVar, watchLabelSelectors))
 	} else {
 		labelSelectors = labels.Everything() // Match any labels
 	}
