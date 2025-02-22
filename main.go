@@ -104,7 +104,7 @@ func init() {
 	//+kubebuilder:scaffold:scheme
 }
 
-func main() { // nolint:gocyclo
+func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
@@ -211,7 +211,7 @@ func main() { // nolint:gocyclo
 		controllerOptions.Cache.DefaultNamespaces = getNamespaceConfig(watchNamespace, labelSelectors)
 		setupLog.Info("operator running in namespace scoped mode", "namespace", watchNamespace)
 	case strings.Contains(watchNamespaceSelector, ":"):
-		// namespace scoped
+		// multi namespace scoped
 		controllerOptions.Cache.DefaultNamespaces = getNamespaceConfigSelector(restConfig, watchNamespaceSelector, labelSelectors)
 		setupLog.Info("operator running in namespace scoped mode using namespace selector", "namespace", watchNamespace)
 
