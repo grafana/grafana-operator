@@ -53,7 +53,7 @@ spec:
   - name: step-07
     try:
     - apply:
-        file: 07-jsonnet-project.yaml
+        file: 07-jsonnet.yaml
     - assert:
         file: 07-assert.yaml
   - name: step-08
