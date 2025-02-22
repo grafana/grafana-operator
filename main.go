@@ -141,10 +141,10 @@ func main() {
 	}
 
 	// Detect environment variables
-	_, watchLabeledReferencesOnly := os.LookupEnv(watchLabeledReferencesOnlyEnvVar)
 	watchNamespace, _ := os.LookupEnv(watchNamespaceEnvVar)
 	watchNamespaceSelector, _ := os.LookupEnv(watchNamespaceEnvSelector)
 	watchLabelSelectors, _ := os.LookupEnv(watchLabelSelectorsEnvVar)
+	watchLabeledReferencesOnly, _ := os.LookupEnv(watchLabeledReferencesOnlyEnvVar)
 	clusterDomain, _ := os.LookupEnv(clusterDomainEnvVar)
 
 	// Fetch k8s api credentials and detect platform
@@ -160,7 +160,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	cacheLabels := cache.ByObject{Label: labels.SelectorFromSet(model.CommonLabels)}
+	labelSelectors, err := getLabelSelectors(watchLabelSelectors)
+	if err != nil {
+		setupLog.Error(err, fmt.Sprintf("unable to parse %s", watchLabelSelectorsEnvVar))
+		os.Exit(1) //nolint
+	}
+
+	cacheLabelConfig := cache.ByObject{Label: labelSelectors}
 	controllerOptions := ctrl.Options{
 		Scheme:                 scheme,
 		Metrics:                metricsserver.Options{BindAddress: metricsAddr},
@@ -171,28 +177,21 @@ func main() {
 		PprofBindAddress:       pprofAddr,
 		// Limit caching to reduce heap usage with CommonLabels as selector
 		Cache: cache.Options{ByObject: map[client.Object]cache.ByObject{
-			&v1.Deployment{}:                cacheLabels,
-			&corev1.Service{}:               cacheLabels,
-			&corev1.ServiceAccount{}:        cacheLabels,
-			&networkingv1.Ingress{}:         cacheLabels,
-			&corev1.PersistentVolumeClaim{}: cacheLabels,
-			&corev1.ConfigMap{}:             cacheLabels, // Matching just labeled ConfigMaps and Secrets greatly reduces cache size
-			&corev1.Secret{}:                cacheLabels, // Omitting labels or supporting custom labels would require changes in Grafana Reconciler
+			&v1.Deployment{}:                cacheLabelConfig,
+			&corev1.Service{}:               cacheLabelConfig,
+			&corev1.ServiceAccount{}:        cacheLabelConfig,
+			&networkingv1.Ingress{}:         cacheLabelConfig,
+			&corev1.PersistentVolumeClaim{}: cacheLabelConfig,
+			&corev1.ConfigMap{}:             cacheLabelConfig, // Matching just labeled ConfigMaps and Secrets greatly reduces cache size
+			&corev1.Secret{}:                cacheLabelConfig, // Omitting labels or supporting custom labels would require changes in Grafana Reconciler
 		}},
 	}
 	if isOpenShift {
-		controllerOptions.Cache.ByObject[&routev1.Route{}] = cacheLabels
+		controllerOptions.Cache.ByObject[&routev1.Route{}] = cacheLabelConfig
 	}
-
-	labelSelectors, err := getLabelSelectors(watchLabelSelectors)
-	if err != nil {
-		setupLog.Error(err, fmt.Sprintf("unable to parse %s", watchLabelSelectorsEnvVar))
-		os.Exit(1) //nolint
-	}
-
-	// Disable ConfigMap and Secret cache lookups per default
-	// all reads will hit the api
-	if !watchLabeledReferencesOnly {
+	// ConfigMap and Secret lookups always skip the cache unless enabled
+	// Skip when references should be cached
+	if watchLabeledReferencesOnly == "" {
 		controllerOptions.Client = client.Options{
 			Cache: &client.CacheOptions{
 				DisableFor: []client.Object{&corev1.ConfigMap{}, &corev1.Secret{}},
