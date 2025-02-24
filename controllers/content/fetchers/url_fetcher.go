@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strconv"
 	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -40,30 +39,22 @@ func FetchFromUrl(ctx context.Context, cr v1beta1.GrafanaContentResource, c clie
 		return nil, err
 	}
 
-	metric, err := metrics.ContentUrlRequests.CurryWith(prometheus.Labels{
+	contentMetric, err := metrics.ContentUrlRequests.CurryWith(prometheus.Labels{
 		"kind":     cr.GetObjectKind().GroupVersionKind().Kind,
 		"resource": fmt.Sprintf("%v/%v", cr.GetNamespace(), cr.GetName()),
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("building dashboards metric: %w", err)
 	}
 
-	onResponse := func(method string, responseCode int) {
-		responseCodeStr := strconv.Itoa(responseCode)
-		metric.WithLabelValues(method, responseCodeStr).Inc()
-
-		// backwards-compatibility for legacy dashboard request metric
-		if _, isDashboard := cr.(*v1beta1.GrafanaDashboard); isDashboard {
-			//nolint:staticcheck
-			metrics.DashboardUrlRequests.WithLabelValues(
-				fmt.Sprintf("%v/%v", cr.GetNamespace(), cr.GetName()),
-				method,
-				responseCodeStr,
-			).Inc()
-		}
+	dashboardMetric, err := metrics.DashboardUrlRequests.CurryWith(prometheus.Labels{
+		"dashboard": fmt.Sprintf("%v/%v", cr.GetNamespace(), cr.GetName()),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("building dashboards metric: %w", err)
 	}
 
-	client := client2.NewInstrumentedRoundTripper(onResponse, true, tlsConfig)
+	client := client2.NewInstrumentedRoundTripper(true, tlsConfig, contentMetric, dashboardMetric)
 	// basic auth is supported for dashboards from url
 	if spec.UrlAuthorization != nil && spec.UrlAuthorization.BasicAuth != nil {
 		username, err := grafanaClient.GetValueFromSecretKey(ctx, spec.UrlAuthorization.BasicAuth.Username, c, cr.GetNamespace())

@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -14,6 +13,7 @@ import (
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/controllers/content/cache"
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 const grafanaComDashboardApiUrlRoot = "https://grafana.com/api/dashboards"
@@ -60,16 +60,10 @@ func getLatestGrafanaComRevision(cr v1beta1.GrafanaContentResource, tlsConfig *t
 		return -1, err
 	}
 
-	onResponse := func(method string, responseCode int) {
-		metrics.GrafanaComApiRevisionRequests.WithLabelValues(
-			cr.GetObjectKind().GroupVersionKind().Kind,            // kind
-			fmt.Sprintf("%v/%v", cr.GetNamespace(), cr.GetName()), // resource
-			method,
-			strconv.Itoa(responseCode),
-		)
-	}
-
-	client := client2.NewInstrumentedRoundTripper(onResponse, true, tlsConfig)
+	client := client2.NewInstrumentedRoundTripper(true, tlsConfig, metrics.GrafanaComApiRevisionRequests.MustCurryWith(prometheus.Labels{
+		"kind":     cr.GetObjectKind().GroupVersionKind().Kind,
+		"resource": fmt.Sprintf("%v/%v", cr.GetNamespace(), cr.GetName()),
+	}))
 	response, err := client.RoundTrip(request)
 	if err != nil {
 		return -1, err

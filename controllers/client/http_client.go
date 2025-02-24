@@ -3,11 +3,11 @@ package client
 import (
 	"context"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
+	"github.com/prometheus/client_golang/prometheus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -27,11 +27,9 @@ func NewHTTPClient(ctx context.Context, c client.Client, grafana *v1beta1.Grafan
 		return nil, err
 	}
 
-	onResponse := func(method string, responseCode int) {
-		metrics.GrafanaApiRequests.WithLabelValues(grafana.Name, method, strconv.Itoa(responseCode)).Inc()
-	}
-
-	transport := NewInstrumentedRoundTripper(onResponse, grafana.IsExternal(), tlsConfig)
+	transport := NewInstrumentedRoundTripper(grafana.IsExternal(), tlsConfig, metrics.GrafanaApiRequests.MustCurryWith(prometheus.Labels{
+		"instance_name": grafana.Name,
+	}))
 	if grafana.Spec.Client != nil && grafana.Spec.Client.Headers != nil {
 		transport.(*instrumentedRoundTripper).addHeaders(grafana.Spec.Client.Headers) //nolint:errcheck
 	}

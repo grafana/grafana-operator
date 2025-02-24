@@ -2,20 +2,23 @@ package client
 
 import (
 	"crypto/tls"
+	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana-operator/v5/embeds"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type RoundTripperOnResponse func(requestMethod string, responseCode int)
 
 type instrumentedRoundTripper struct {
-	wrapped    http.RoundTripper
-	onResponse RoundTripperOnResponse
-	headers    map[string]string
+	wrapped http.RoundTripper
+	headers map[string]string
+	metrics []*prometheus.CounterVec
 }
 
-func NewInstrumentedRoundTripper(onResponse RoundTripperOnResponse, useProxy bool, tlsConfig *tls.Config) http.RoundTripper {
+func NewInstrumentedRoundTripper(useProxy bool, tlsConfig *tls.Config, metrics ...*prometheus.CounterVec) http.RoundTripper {
 	transport := http.DefaultTransport.(*http.Transport).Clone() //nolint:errcheck
 
 	transport.DisableKeepAlives = true
@@ -33,9 +36,9 @@ func NewInstrumentedRoundTripper(onResponse RoundTripperOnResponse, useProxy boo
 	headers["user-agent"] = "grafana-operator/" + embeds.Version
 
 	return &instrumentedRoundTripper{
-		wrapped:    transport,
-		onResponse: onResponse,
-		headers:    headers,
+		wrapped: transport,
+		headers: headers,
+		metrics: metrics,
 	}
 }
 
@@ -47,8 +50,18 @@ func (in *instrumentedRoundTripper) RoundTrip(r *http.Request) (*http.Response, 
 	}
 
 	resp, err := in.wrapped.RoundTrip(r)
-	if resp != nil && in.onResponse != nil {
-		in.onResponse(r.Method, resp.StatusCode)
+	if resp != nil {
+		for _, m := range in.metrics {
+			c, err := m.GetMetricWith(prometheus.Labels{
+				"method": r.Method,
+				"status": strconv.Itoa(resp.StatusCode),
+			})
+			if err != nil {
+				slog.WarnContext(r.Context(), "failed constructing metric", "err", err)
+				continue
+			}
+			c.Inc()
+		}
 	}
 	return resp, err
 }
