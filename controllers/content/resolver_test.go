@@ -39,7 +39,7 @@ func TestGetDashboardEnvs(t *testing.T) {
 	resolver, err := NewContentResolver(&dashboard, k8sClient)
 	assert.NoError(t, err)
 
-	envs, err := resolver.getDashboardEnvs(ctx)
+	envs, err := resolver.getContentEnvs(ctx)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, envs)

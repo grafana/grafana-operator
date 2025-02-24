@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/config"
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 	"github.com/grafana/grafana-operator/v5/controllers/model"
+	"github.com/prometheus/client_golang/prometheus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -140,7 +141,9 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1
 		return nil, fmt.Errorf("parsing url for client: %w", err)
 	}
 
-	transport := NewInstrumentedRoundTripper(grafana.Name, metrics.GrafanaApiRequests, grafana.IsExternal(), tlsConfig)
+	transport := NewInstrumentedRoundTripper(grafana.IsExternal(), tlsConfig, metrics.GrafanaApiRequests.MustCurryWith(prometheus.Labels{
+		"instance_name": grafana.Name,
+	}))
 	if grafana.Spec.Client != nil && grafana.Spec.Client.Headers != nil {
 		transport.(*instrumentedRoundTripper).addHeaders(grafana.Spec.Client.Headers) //nolint:errcheck
 	}

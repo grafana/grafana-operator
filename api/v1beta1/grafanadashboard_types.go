@@ -124,6 +124,8 @@ func (in *GrafanaDashboard) GrafanaContentStatus() *GrafanaContentStatus {
 	return &in.Status.GrafanaContentStatus
 }
 
+var _ GrafanaContentResource = &GrafanaDashboard{}
+
 func (in *GrafanaDashboard) IsAllowCrossNamespaceImport() bool {
 	return in.Spec.AllowCrossNamespaceImport
 }
