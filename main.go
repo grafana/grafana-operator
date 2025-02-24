@@ -82,6 +82,8 @@ const (
 	// If empty or undefined, the operator will disable caching
 	// This will hide all referenced ConfigMaps and Secrets not labeled with: app.kubernetes.io/managed-by=grafana-operator
 	watchLabeledReferencesOnlyEnvVar = "WATCH_LABELED_REFERENCES_ONLY"
+	// Opt out of cache limits and allow the operator to see everything within the configured RBAC rules
+	disableCacheLabelLimitsEnvVar = "DISABLE_CACHE_LABEL_LIMITS"
 	// clusterDomainEnvVar is the constant for env variable CLUSTER_DOMAIN, which specifies the cluster domain to use for addressing.
 	// By default, this is empty, and internal services are addressed without a cluster domain specified, i.e., a
 	// relative domain name that will resolve regardless of if a custom domain is configured for the cluster. If you
@@ -104,7 +106,7 @@ func init() {
 	//+kubebuilder:scaffold:scheme
 }
 
-func main() {
+func main() { // nolint:gocyclo
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
@@ -145,6 +147,7 @@ func main() {
 	watchNamespaceSelector, _ := os.LookupEnv(watchNamespaceEnvSelector)
 	watchLabelSelectors, _ := os.LookupEnv(watchLabelSelectorsEnvVar)
 	watchLabeledReferencesOnly, _ := os.LookupEnv(watchLabeledReferencesOnlyEnvVar)
+	disableCacheLabelLimit, _ := os.LookupEnv(disableCacheLabelLimitsEnvVar)
 	clusterDomain, _ := os.LookupEnv(clusterDomainEnvVar)
 
 	// Fetch k8s api credentials and detect platform
@@ -206,6 +209,12 @@ func main() {
 				DisableFor: []client.Object{&corev1.ConfigMap{}, &corev1.Secret{}},
 			},
 		}
+	}
+
+	// Allow users to disable the above cache limits
+	if disableCacheLabelLimit != "" {
+		controllerOptions.Cache.ByObject = make(map[client.Object]cache.ByObject, 0)
+		controllerOptions.Client.Cache.DisableFor = make([]client.Object, 0)
 	}
 
 	// Determine Operator scope
