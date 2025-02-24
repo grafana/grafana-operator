@@ -166,7 +166,16 @@ func main() {
 		os.Exit(1) //nolint
 	}
 
-	cacheLabelConfig := cache.ByObject{Label: labelSelectors}
+	// Necessary because getLabelSelector defaults to labels.Everything()
+	var cacheLabelConfig cache.ByObject
+	if watchLabelSelectors != "" {
+		// When sharding, limit cache according to shard labels
+		cacheLabelConfig = cache.ByObject{Label: labelSelectors}
+	} else {
+		// Otherwise limit it to managed-by label
+		cacheLabelConfig = cache.ByObject{Label: labels.SelectorFromSet(model.CommonLabels)}
+	}
+
 	controllerOptions := ctrl.Options{
 		Scheme:                 scheme,
 		Metrics:                metricsserver.Options{BindAddress: metricsAddr},
