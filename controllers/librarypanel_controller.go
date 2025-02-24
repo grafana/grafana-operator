@@ -20,15 +20,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
-	"github.com/grafana/grafana-openapi-client-go/client/folders"
 	"github.com/grafana/grafana-openapi-client-go/client/library_elements"
-	"github.com/grafana/grafana-openapi-client-go/client/search"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
@@ -52,20 +49,6 @@ const (
 	libraryElementTypePanel    libraryElementType = 1
 	libraryElementTypeVariable libraryElementType = 2
 )
-
-type libraryPanelModelWithHash struct {
-	Model map[string]interface{}
-	Hash  string
-}
-
-type libraryPanelToReconcile struct {
-	FolderUID     string
-	Kind          int64
-	Name          string
-	UID           string
-	ModelWithHash *libraryPanelModelWithHash
-	Version       int64
-}
 
 // GrafanaLibraryPanelReconciler reconciles a GrafanaLibraryPanel object
 type GrafanaLibraryPanelReconciler struct {
@@ -168,10 +151,7 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 
 	applyErrors := make(map[string]string)
 	for _, grafana := range instances {
-		err := r.reconcileWithInstance(ctx, &grafana, libraryPanel, &libraryPanelModelWithHash{
-			Model: contentModel,
-			Hash:  hash,
-		})
+		err := r.reconcileWithInstance(ctx, &grafana, libraryPanel, contentModel, hash)
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
@@ -194,7 +174,7 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 	return ctrl.Result{RequeueAfter: libraryPanel.Spec.ResyncPeriod.Duration}, nil
 }
 
-func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaLibraryPanel, modelWithHash *libraryPanelModelWithHash) error {
+func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaLibraryPanel, model map[string]any, hash string) error {
 	if instance.IsInternal() {
 		err := ReconcilePlugins(ctx, r.Client, r.Scheme, instance, cr.Spec.Plugins, fmt.Sprintf("%v-librarypanel", cr.Name))
 		if err != nil {
@@ -212,30 +192,17 @@ func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Contex
 	folderUID, err := getFolderUID(ctx, r.Client, cr)
 	if err != nil {
 		return err
-	} else if folderUID == "" {
-		// this indicates an implementation error; we should be returning errors
-		// if the folder isn't found, but an empty UID is still technically possible to return.
-		return fmt.Errorf("found folder but could not determine its UID")
 	}
 
-	uid := content.CustomUIDOrUID(cr, fmt.Sprintf("%s", modelWithHash.Model["uid"]))
-	name := fmt.Sprintf("%s", modelWithHash.Model["name"])
+	uid := content.CustomUIDOrUID(cr, fmt.Sprintf("%s", model["uid"]))
+	name := fmt.Sprintf("%s", model["name"])
 
-	finishWithStatus := func() error {
+	defer func() {
 		instance.Status.LibraryPanels = instance.Status.LibraryPanels.Add(cr.Namespace, cr.Name, uid)
-		return r.Client.Status().Update(ctx, instance)
-	}
+		r.Client.Status().Update(ctx, instance)
+	}()
 
-	desired := &libraryPanelToReconcile{
-		Name:          name,
-		FolderUID:     folderUID,
-		Kind:          int64(libraryElementTypePanel),
-		UID:           uid,
-		ModelWithHash: modelWithHash,
-		Version:       0, // this will be set to the existing version in case of update
-	}
-
-	resp, err := grafanaClient.LibraryElements.GetLibraryElementByUID(desired.UID)
+	resp, err := grafanaClient.LibraryElements.GetLibraryElementByUID(uid)
 
 	var panelNotFound *library_elements.GetLibraryElementByUIDNotFound
 	if err != nil {
@@ -246,45 +213,41 @@ func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Contex
 		// doesn't yet exist--should provision
 		// nolint:errcheck
 		if _, err = grafanaClient.LibraryElements.CreateLibraryElement(&models.CreateLibraryElementCommand{
-			FolderUID: desired.FolderUID,
-			Kind:      desired.Kind,
-			Model:     desired.ModelWithHash.Model,
-			Name:      desired.Name,
-			UID:       desired.UID,
+			FolderUID: folderUID,
+			Kind:      int64(libraryElementTypePanel),
+			Model:     model,
+			Name:      name,
+			UID:       uid,
 		}); err != nil {
 			return err
 		}
-
-		return finishWithStatus()
+		return nil
 	}
 
 	// it can happen that the user does not utilize `.spec.uid` but updates
 	// the UID within the content model itself. this will create a conflict b/c
 	// we are effectively requesting a change to the uid, which is immutable.
-	if content.IsUpdatedUID(cr, desired.UID) {
+	if content.IsUpdatedUID(cr, uid) {
 		return fmt.Errorf("library panel uid is immutable, but was updated on the content model")
 	}
 
 	// handle content caching
-	if content.Unchanged(cr, desired.ModelWithHash.Hash) && !cr.ResyncPeriodHasElapsed() {
+	if content.Unchanged(cr, hash) && !cr.ResyncPeriodHasElapsed() {
 		return nil
 	}
 
-	desired.Version = resp.Payload.Result.Version
 	// nolint:errcheck
-	if _, err = grafanaClient.LibraryElements.UpdateLibraryElement(desired.UID, &models.PatchLibraryElementCommand{
-		FolderUID: desired.FolderUID,
-		Kind:      desired.Kind,
-		Model:     desired.ModelWithHash.Model,
-		Name:      desired.Name,
-		Version:   desired.Version,
+	if _, err = grafanaClient.LibraryElements.UpdateLibraryElement(uid, &models.PatchLibraryElementCommand{
+		FolderUID: folderUID,
+		Kind:      int64(libraryElementTypePanel),
+		Model:     model,
+		Name:      name,
+		Version:   resp.Payload.Result.Version,
 	}); err != nil {
 		return err
 	}
 
-	// always update the status--this is an idempotent operation and helps if we somehow
-	// failed to write the status on create.
-	return finishWithStatus()
+	return nil
 }
 
 func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, libraryPanel *v1beta1.GrafanaLibraryPanel) error {
@@ -306,8 +269,6 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, libraryPan
 }
 
 func (r *GrafanaLibraryPanelReconciler) removeFromInstance(ctx context.Context, instance *v1beta1.Grafana, libraryPanel *v1beta1.GrafanaLibraryPanel) error {
-	log := logf.FromContext(ctx)
-
 	grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return err
@@ -320,7 +281,7 @@ func (r *GrafanaLibraryPanelReconciler) removeFromInstance(ctx context.Context, 
 
 	uid := libraryPanel.Status.UID
 
-	resp, err := grafanaClient.LibraryElements.GetLibraryElementByUID(uid)
+	_, err = grafanaClient.LibraryElements.GetLibraryElementByUID(uid)
 	if err != nil {
 		var notFound *library_elements.GetLibraryElementByUIDNotFound
 		if errors.As(err, &notFound) {
@@ -328,15 +289,6 @@ func (r *GrafanaLibraryPanelReconciler) removeFromInstance(ctx context.Context, 
 			return updateInstanceRefs()
 		}
 		return fmt.Errorf("fetching library panel from instance %s: %w", instance.Status.AdminUrl, err)
-	}
-
-	var wrappedRes *models.LibraryElementResponse
-	if resp != nil {
-		wrappedRes = resp.GetPayload()
-	}
-	var elem *models.LibraryElementDTO
-	if wrappedRes != nil {
-		elem = wrappedRes.Result
 	}
 
 	switch hasConnections, err := libraryElementHasConnections(grafanaClient, uid); {
@@ -354,19 +306,6 @@ func (r *GrafanaLibraryPanelReconciler) removeFromInstance(ctx context.Context, 
 		}
 	}
 
-	if elem != nil && elem.Meta != nil && elem.Meta.FolderUID != "" {
-		resp, err := r.DeleteFolderIfEmpty(grafanaClient, elem.Meta.FolderUID)
-		if err != nil {
-			return err
-		}
-		if resp.StatusCode == 200 {
-			log.Info("unused folder successfully removed")
-		}
-		if resp.StatusCode == 432 {
-			log.Info("folder still in use by other resources")
-		}
-	}
-
 	return updateInstanceRefs()
 }
 
@@ -376,36 +315,4 @@ func (r *GrafanaLibraryPanelReconciler) SetupWithManager(mgr ctrl.Manager) error
 		For(&v1beta1.GrafanaLibraryPanel{}).
 		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
-}
-
-func (r *GrafanaLibraryPanelReconciler) DeleteFolderIfEmpty(client *genapi.GrafanaHTTPAPI, folderUID string) (http.Response, error) {
-	params := search.NewSearchParams().WithFolderUIDs([]string{folderUID})
-	results, err := client.Search.Search(params)
-	if err != nil {
-		return http.Response{
-			Status:     "internal grafana client error getting library panels",
-			StatusCode: 500,
-		}, err
-	}
-	if len(results.GetPayload()) > 0 {
-		return http.Response{
-			Status:     "resource is still in use",
-			StatusCode: http.StatusLocked,
-		}, err
-	}
-
-	deleteParams := folders.NewDeleteFolderParams().WithFolderUID(folderUID)
-	if _, err = client.Folders.DeleteFolder(deleteParams); err != nil { //nolint:errcheck
-		var notFound *folders.DeleteFolderNotFound
-		if !errors.As(err, &notFound) {
-			return http.Response{
-				Status:     "internal grafana client error deleting grafana folder",
-				StatusCode: 500,
-			}, err
-		}
-	}
-	return http.Response{
-		Status:     "grafana folder deleted",
-		StatusCode: 200,
-	}, nil
 }
