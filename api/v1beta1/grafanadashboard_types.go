@@ -124,10 +124,6 @@ func (in *GrafanaDashboard) GrafanaContentStatus() *GrafanaContentStatus {
 	return &in.Status.GrafanaContentStatus
 }
 
-func (in *GrafanaDashboard) IsAllowCrossNamespaceImport() bool {
-	return in.Spec.AllowCrossNamespaceImport
-}
-
 func (in *GrafanaDashboardList) Find(namespace string, name string) *GrafanaDashboard {
 	for _, dashboard := range in.Items {
 		if dashboard.Namespace == namespace && dashboard.Name == name {
@@ -135,6 +131,18 @@ func (in *GrafanaDashboardList) Find(namespace string, name string) *GrafanaDash
 		}
 	}
 	return nil
+}
+
+func (in *GrafanaDashboard) MatchLabels() *metav1.LabelSelector {
+	return in.Spec.InstanceSelector
+}
+
+func (in *GrafanaDashboard) MatchNamespace() string {
+	return in.ObjectMeta.Namespace
+}
+
+func (in *GrafanaDashboard) AllowCrossNamespace() bool {
+	return in.Spec.AllowCrossNamespaceImport
 }
 
 func init() {
