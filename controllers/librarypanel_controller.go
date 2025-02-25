@@ -34,7 +34,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/discovery"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -50,11 +49,12 @@ const (
 	libraryElementTypeVariable libraryElementType = 2
 )
 
+var errLibraryPanelContentUIDImmutable = errors.New("library panel uid is immutable, but was updated on the content model")
+
 // GrafanaLibraryPanelReconciler reconciles a GrafanaLibraryPanel object
 type GrafanaLibraryPanelReconciler struct {
-	Client    client.Client
-	Scheme    *runtime.Scheme
-	Discovery discovery.DiscoveryInterface
+	Client client.Client
+	Scheme *runtime.Scheme
 }
 
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanalibrarypanels,verbs=get;list;watch;create;update;patch;delete
@@ -115,21 +115,7 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 		}
 	}()
 
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, libraryPanel)
-	if err != nil {
-		setNoMatchingInstancesCondition(&libraryPanel.Status.Conditions, libraryPanel.Generation, err)
-		meta.RemoveStatusCondition(&libraryPanel.Status.Conditions, conditionLibraryPanelSynchronized)
-		return ctrl.Result{}, fmt.Errorf("could not find matching instances: %w", err)
-	}
-
-	if len(instances) == 0 {
-		setNoMatchingInstancesCondition(&libraryPanel.Status.Conditions, libraryPanel.Generation, err)
-		meta.RemoveStatusCondition(&libraryPanel.Status.Conditions, conditionLibraryPanelSynchronized)
-		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
-	}
-
-	removeNoMatchingInstance(&libraryPanel.Status.Conditions)
-	log.Info("found matching Grafana instances for library panel", "count", len(instances))
+	// begin validation checks
 
 	resolver, err := content.NewContentResolver(libraryPanel, r.Client, content.WithDisabledSources([]content.ContentSourceType{
 		// grafana.com does not currently support hosting library panels for distribution, but perhaps
@@ -145,9 +131,40 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 	// Retrieving the model before the loop ensures to exit early in case of failure and not fail once per matching instance
 	contentModel, hash, err := resolver.Resolve(ctx)
 	if err != nil {
-		log.Error(err, "error resolving library panel contents", "libraryPanel", libraryPanel.Name)
+		setInvalidSpec(&libraryPanel.Status.Conditions, libraryPanel.Generation, "InvalidModelResolution", err.Error())
+		meta.RemoveStatusCondition(&libraryPanel.Status.Conditions, conditionLibraryPanelSynchronized)
+		return ctrl.Result{}, fmt.Errorf("error resolving library panel contents: %w", err)
+	}
+
+	contentUID := fmt.Sprintf("%s", contentModel["uid"])
+	// it can happen that the user does not utilize `.spec.uid` but updates
+	// the UID within the content model itself. this will create a conflict b/c
+	// we are effectively requesting a change to the uid, which is immutable.
+	if content.IsUpdatedUID(libraryPanel, contentUID) {
+		setInvalidSpec(&libraryPanel.Status.Conditions, libraryPanel.Generation, "InvalidModel", errLibraryPanelContentUIDImmutable.Error())
+		meta.RemoveStatusCondition(&libraryPanel.Status.Conditions, conditionLibraryPanelSynchronized)
+		return ctrl.Result{}, errLibraryPanelContentUIDImmutable
+	}
+
+	removeInvalidSpec(&libraryPanel.Status.Conditions)
+	libraryPanel.Status.Hash = hash
+	libraryPanel.Status.UID = content.CustomUIDOrUID(libraryPanel, contentUID)
+
+	// begin instance selection and reconciliation
+
+	instances, err := GetScopedMatchingInstances(ctx, r.Client, libraryPanel)
+	if err != nil {
+		setNoMatchingInstancesCondition(&libraryPanel.Status.Conditions, libraryPanel.Generation, err)
+		meta.RemoveStatusCondition(&libraryPanel.Status.Conditions, conditionLibraryPanelSynchronized)
+		return ctrl.Result{}, fmt.Errorf("could not find matching instances: %w", err)
+	} else if len(instances) == 0 {
+		setNoMatchingInstancesCondition(&libraryPanel.Status.Conditions, libraryPanel.Generation, err)
+		meta.RemoveStatusCondition(&libraryPanel.Status.Conditions, conditionLibraryPanelSynchronized)
 		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
+
+	removeNoMatchingInstance(&libraryPanel.Status.Conditions)
+	log.Info("found matching Grafana instances for library panel", "count", len(instances))
 
 	applyErrors := make(map[string]string)
 	for _, grafana := range instances {
@@ -159,13 +176,6 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 
 	condition := buildSynchronizedCondition("Library panel", conditionLibraryPanelSynchronized, libraryPanel.Generation, applyErrors, len(instances))
 	meta.SetStatusCondition(&libraryPanel.Status.Conditions, condition)
-
-	contentUID := fmt.Sprintf("%s", contentModel["uid"])
-	libraryPanel.Status.Hash = hash
-	libraryPanel.Status.UID = content.CustomUIDOrUID(libraryPanel, contentUID)
-	if err := r.Client.Status().Update(ctx, libraryPanel); err != nil {
-		log.Error(err, "failed to update status")
-	}
 
 	if len(applyErrors) > 0 {
 		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
@@ -199,7 +209,8 @@ func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Contex
 
 	defer func() {
 		instance.Status.LibraryPanels = instance.Status.LibraryPanels.Add(cr.Namespace, cr.Name, uid)
-		r.Client.Status().Update(ctx, instance)
+		//nolint:errcheck
+		_ = r.Client.Status().Update(ctx, instance)
 	}()
 
 	resp, err := grafanaClient.LibraryElements.GetLibraryElementByUID(uid)
@@ -222,13 +233,6 @@ func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Contex
 			return err
 		}
 		return nil
-	}
-
-	// it can happen that the user does not utilize `.spec.uid` but updates
-	// the UID within the content model itself. this will create a conflict b/c
-	// we are effectively requesting a change to the uid, which is immutable.
-	if content.IsUpdatedUID(cr, uid) {
-		return fmt.Errorf("library panel uid is immutable, but was updated on the content model")
 	}
 
 	// handle content caching
@@ -281,7 +285,7 @@ func (r *GrafanaLibraryPanelReconciler) removeFromInstance(ctx context.Context, 
 
 	uid := libraryPanel.Status.UID
 
-	_, err = grafanaClient.LibraryElements.GetLibraryElementByUID(uid)
+	_, err = grafanaClient.LibraryElements.GetLibraryElementByUID(uid) //nolint:errcheck
 	if err != nil {
 		var notFound *library_elements.GetLibraryElementByUIDNotFound
 		if errors.As(err, &notFound) {

@@ -81,10 +81,6 @@ func (in *GrafanaLibraryPanel) CurrentGeneration() int64 {
 	return in.Generation
 }
 
-func (in *GrafanaLibraryPanel) IsAllowCrossNamespaceImport() bool {
-	return in.Spec.AllowCrossNamespaceImport
-}
-
 func (in *GrafanaLibraryPanel) ResyncPeriodHasElapsed() bool {
 	deadline := in.Status.LastResync.Add(in.Spec.ResyncPeriod.Duration)
 	return time.Now().After(deadline)

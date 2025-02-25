@@ -47,6 +47,8 @@ func FetchFromUrl(ctx context.Context, cr v1beta1.GrafanaContentResource, c clie
 		return nil, fmt.Errorf("building dashboards metric: %w", err)
 	}
 
+	// this is a documented deprecated metric but we don't want to fail lint
+	//nolint:staticcheck
 	dashboardMetric, err := metrics.DashboardUrlRequests.CurryWith(prometheus.Labels{
 		"dashboard": fmt.Sprintf("%v/%v", cr.GetNamespace(), cr.GetName()),
 	})
