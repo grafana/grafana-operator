@@ -42,7 +42,6 @@ import (
 	"github.com/KimMachineGun/automemlimit/memlimit"
 	"github.com/go-logr/logr"
 	routev1 "github.com/openshift/api/route/v1"
-	discovery2 "k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -199,7 +198,6 @@ func main() {
 		Client:      mgr.GetClient(),
 		Scheme:      mgr.GetScheme(),
 		IsOpenShift: isOpenShift,
-		Discovery:   discovery2.NewDiscoveryClientForConfigOrDie(restConfig),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Grafana")
 		os.Exit(1)
