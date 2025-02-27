@@ -27,6 +27,9 @@ var (
 		Help:      "requests against the grafana api per instance",
 	}, []string{"instance_name", "method", "status"})
 
+	// Deprecated: will be removed in a future version of the operator. Use
+	// ContentUrlRequests instead, which handles more types of resources that
+	// directly utilize Grafana model JSON.
 	DashboardUrlRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "grafana_operator",
 		Subsystem: "dashboards",
@@ -34,18 +37,31 @@ var (
 		Help:      "requests to fetch dashboards from urls",
 	}, []string{"dashboard", "method", "status"})
 
+	ContentUrlRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "grafana_operator",
+		Subsystem: "content",
+		Name:      "requests",
+		Help:      "requests to fetch model contents from urls",
+	}, []string{"kind", "resource", "method", "status"})
+
 	GrafanaComApiRevisionRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "grafana_operator",
-		Subsystem: "dashboards",
 		Name:      "revision_requests",
-		Help:      "requests to list dashboard revisions on grafana.com/dashboards",
-	}, []string{"dashboard", "method", "status"})
+		Help:      "requests to list content revisions on grafana.com",
+	}, []string{"kind", "resource", "method", "status"})
 
 	InitialDashboardSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: "grafana_operator",
 		Subsystem: "dashboards",
 		Name:      "initial_sync_duration",
 		Help:      "time in ms to sync dashboards after operator restart",
+	})
+
+	InitialLibraryPanelSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: "grafana_operator",
+		Subsystem: "librarypanels",
+		Name:      "initial_sync_duration",
+		Help:      "time in ms to sync library panels after operator restart",
 	})
 
 	InitialDatasourceSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
@@ -67,7 +83,9 @@ func init() {
 	metrics.Registry.MustRegister(GrafanaReconciles)
 	metrics.Registry.MustRegister(GrafanaFailedReconciles)
 	metrics.Registry.MustRegister(GrafanaApiRequests)
+	metrics.Registry.MustRegister(GrafanaComApiRevisionRequests)
 	metrics.Registry.MustRegister(DashboardUrlRequests)
+	metrics.Registry.MustRegister(ContentUrlRequests)
 	metrics.Registry.MustRegister(InitialDashboardSyncDuration)
 	metrics.Registry.MustRegister(InitialDatasourceSyncDuration)
 	metrics.Registry.MustRegister(InitialFoldersSyncDuration)

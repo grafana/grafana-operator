@@ -1,0 +1,21 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaLibraryPanel
+metadata:
+  name: grafana-library-panel
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  plugins:
+    - name: grafana-piechart-panel
+      version: 1.3.9
+  json: >
+    {
+      "uid": "V--OrYHnz",
+      "name": "API docs Example",
+      "kind": 1,
+      "type": "text",
+      "description": "",
+      "model": {},
+      "version": 1
+    }

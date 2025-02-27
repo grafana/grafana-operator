@@ -1,0 +1,20 @@
+# permissions for end users to view grafanalibrarypanels.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: grafanalibrarypanel-viewer-role
+rules:
+- apiGroups:
+  - grafana.integreatly.org
+  resources:
+  - grafanalibrarypanels
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - grafana.integreatly.org
+  resources:
+  - grafanalibrarypanels/status
+  verbs:
+  - get

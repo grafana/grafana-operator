@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"slices"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanaClient "github.com/grafana/grafana-operator/v5/controllers/client"
@@ -60,21 +61,36 @@ func Unchanged(cr v1beta1.GrafanaContentResource, hash string) bool {
 }
 
 type ContentResolver struct {
-	Client   client.Client
-	resource v1beta1.GrafanaContentResource
+	Client          client.Client
+	resource        v1beta1.GrafanaContentResource
+	disabledSources []ContentSourceType
 }
 
-func NewContentResolver(cr v1beta1.GrafanaContentResource, client client.Client) (*ContentResolver, error) {
+type Option func(r *ContentResolver)
+
+func WithDisabledSources(disabledSources []ContentSourceType) Option {
+	return func(r *ContentResolver) {
+		r.disabledSources = disabledSources
+	}
+}
+
+func NewContentResolver(cr v1beta1.GrafanaContentResource, client client.Client, opts ...Option) (*ContentResolver, error) {
 	// Perform these error checks once in initialization; we assume in the function calls
 	// that the spec and status will be non-nil as a result.
 	if cr.GrafanaContentSpec() == nil || cr.GrafanaContentStatus() == nil {
 		return nil, fmt.Errorf("resource does not properly implement content spec or status fields; this indicates a bug in implementation")
 	}
 
-	return &ContentResolver{
+	resolver := &ContentResolver{
 		Client:   client,
 		resource: cr,
-	}, nil
+	}
+
+	for _, opt := range opts {
+		opt(resolver)
+	}
+
+	return resolver, nil
 }
 
 func (h *ContentResolver) Resolve(ctx context.Context) (map[string]interface{}, string, error) {
@@ -110,7 +126,7 @@ func (h *ContentResolver) resolveDatasources(contentJson []byte) ([]byte, error)
 	return contentJson, nil
 }
 
-// fetchContentJson delegates obtaining the dashboard json definition to one of the known fetchers, for example
+// fetchContentJson delegates obtaining the json definition to one of the known fetchers, for example
 // from embedded raw json or from a url
 func (h *ContentResolver) fetchContentJson(ctx context.Context) ([]byte, error) {
 	sourceTypes := GetSourceTypes(h.resource)
@@ -123,6 +139,10 @@ func (h *ContentResolver) fetchContentJson(ctx context.Context) ([]byte, error) 
 		return nil, fmt.Errorf("more than one source types found for content resource %v", h.resource.GetName())
 	}
 
+	if slices.Contains(h.disabledSources, sourceTypes[0]) {
+		return nil, fmt.Errorf("source type %v is disabled for content resource %v", sourceTypes[0], h.resource.GetName())
+	}
+
 	spec := h.resource.GrafanaContentSpec()
 
 	switch sourceTypes[0] {
@@ -131,21 +151,21 @@ func (h *ContentResolver) fetchContentJson(ctx context.Context) ([]byte, error) 
 	case ContentSourceTypeGzipJson:
 		return cache.Gunzip([]byte(spec.GzipJson))
 	case ContentSourceTypeUrl:
-		return fetchers.FetchDashboardFromUrl(ctx, h.resource, h.Client, grafanaClient.InsecureTLSConfiguration)
+		return fetchers.FetchFromUrl(ctx, h.resource, h.Client, grafanaClient.InsecureTLSConfiguration)
 	case ContentSourceTypeJsonnet:
-		envs, err := h.getDashboardEnvs(ctx)
+		envs, err := h.getContentEnvs(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("something went wrong while collecting envs, error: %w", err)
 		}
 		return fetchers.FetchJsonnet(h.resource, envs, embeds.GrafonnetEmbed)
 	case ContentSourceJsonnetProject:
-		envs, err := h.getDashboardEnvs(ctx)
+		envs, err := h.getContentEnvs(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("something went wrong while collecting envs, error: %w", err)
 		}
 		return fetchers.BuildProjectAndFetchJsonnetFrom(h.resource, envs)
 	case ContentSourceTypeGrafanaCom:
-		return fetchers.FetchDashboardFromGrafanaCom(ctx, h.resource, h.Client)
+		return fetchers.FetchFromGrafanaCom(ctx, h.resource, h.Client)
 	case ContentSourceConfigMap:
 		return fetchers.FetchDashboardFromConfigMap(h.resource, h.Client)
 	default:
@@ -153,7 +173,7 @@ func (h *ContentResolver) fetchContentJson(ctx context.Context) ([]byte, error) 
 	}
 }
 
-func (h *ContentResolver) getDashboardEnvs(ctx context.Context) (map[string]string, error) {
+func (h *ContentResolver) getContentEnvs(ctx context.Context) (map[string]string, error) {
 	spec := h.resource.GrafanaContentSpec()
 
 	envs := make(map[string]string)
