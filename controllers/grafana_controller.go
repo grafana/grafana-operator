@@ -120,7 +120,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			continue
 		}
 
-		status, err := reconciler.Reconcile(ctx, grafana, nextStatus, vars, r.Scheme)
+		status, err := reconciler.Reconcile(ctx, grafana, vars, r.Scheme)
 		if err != nil {
 			log.Error(err, "reconciler error in stage", "stage", stage)
 			nextStatus.LastMessage = err.Error()

@@ -45,7 +45,7 @@ func NewDeploymentReconciler(client client.Client, isOpenShift bool) reconcilers
 	}
 }
 
-func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
 	log := logf.FromContext(ctx).WithName("DeploymentReconciler")
 
 	openshiftPlatform := r.isOpenShift
