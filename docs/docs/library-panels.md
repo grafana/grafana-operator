@@ -22,6 +22,7 @@ most of the features of dashboard management in the operator can be used for lib
 * Content caching
 * Stable `uid` derived from the CR, if not defined explicitly on the content model
 * Environment variable interpolation
+* Mapping datasource references
 
 Here is an example library panel that shows a graph of container restarts, using data
 fetched from Google Cloud Monitoring:
@@ -35,6 +36,9 @@ spec:
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
+  datasources:
+    - inputName: "DS_GCP"
+      datasourceName: "gcp"
   json: >
     {
       "__inputs": [
