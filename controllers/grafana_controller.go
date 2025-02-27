@@ -32,7 +32,6 @@ import (
 	v1 "k8s.io/api/apps/v1"
 	v12 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/client-go/discovery"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -47,7 +46,6 @@ import (
 type GrafanaReconciler struct {
 	client.Client
 	Scheme        *runtime.Scheme
-	Discovery     discovery.DiscoveryInterface
 	IsOpenShift   bool
 	ClusterDomain string
 }
@@ -158,22 +156,27 @@ func (r *GrafanaReconciler) getVersion(ctx context.Context, cr *grafanav1beta1.G
 	if err != nil {
 		return "", fmt.Errorf("setup of the http client: %w", err)
 	}
+
 	instanceUrl := cr.Status.AdminUrl
 	if instanceUrl == "" && cr.Spec.External != nil {
 		instanceUrl = cr.Spec.External.URL
 	}
+
 	req, err := http.NewRequest("GET", instanceUrl+"/api/frontend/settings", nil)
 	if err != nil {
 		return "", fmt.Errorf("building request to fetch version: %w", err)
 	}
+
 	err = client2.InjectAuthHeaders(context.Background(), r.Client, cr, req)
 	if err != nil {
 		return "", fmt.Errorf("fetching authentication information for version detection: %w", err)
 	}
+
 	resp, err := cl.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("fetching version: %w", err)
 	}
+
 	data := struct {
 		BuildInfo struct {
 			Version string `json:"version"`
@@ -226,6 +229,7 @@ func (r *GrafanaReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&grafanav1beta1.Grafana{}).
 		Owns(&v1.Deployment{}).
 		Owns(&v12.ConfigMap{}).
+		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
 }
 

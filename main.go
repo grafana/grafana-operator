@@ -38,7 +38,7 @@ import (
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
-	discovery2 "k8s.io/client-go/discovery"
+
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -254,7 +254,6 @@ func main() { // nolint:gocyclo
 		Client:        mgr.GetClient(),
 		Scheme:        mgr.GetScheme(),
 		IsOpenShift:   isOpenShift,
-		Discovery:     discovery2.NewDiscoveryClientForConfigOrDie(restConfig),
 		ClusterDomain: clusterDomain,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Grafana")
