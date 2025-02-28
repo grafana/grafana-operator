@@ -2,8 +2,14 @@
 
 ## Installing and running Hugo
 
-When installing hugo install the `extended` edition, you can easily find it on there github page.
-We are currently using [0.111.2](https://github.com/gohugoio/hugo/releases/tag/v0.111.2) but it probably works with other versions as well.
+When installing hugo install the `extended` edition at version `v0.134.0`. You
+can find it on the [Hugo release
+page](https://github.com/gohugoio/hugo/releases/tag/v0.134.0) or build it with a
+working Go toolchain:
+
+```shell
+CGO_ENABLED=1 go install -tags extended github.com/gohugoio/hugo@v0.134.0
+```
 
 To develop locally you need to also follow the docsy [pre-req](https://github.com/google/docsy#prerequisites).
 But in most cases it should work to just run

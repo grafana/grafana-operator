@@ -1,6 +1,6 @@
 ---
 title: Folders
-weight: 14
+weight: 15
 ---
 
 Dashboard folders is a good way to manage your dashboards.
