@@ -12,6 +12,7 @@ resources:
 - bases/grafana.integreatly.org_grafananotificationpolicyroutes.yaml
 - bases/grafana.integreatly.org_grafananotificationtemplates.yaml
 - bases/grafana.integreatly.org_grafanamutetimings.yaml
+- bases/grafana.integreatly.org_grafanalibrarypanels.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
