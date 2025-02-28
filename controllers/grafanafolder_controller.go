@@ -101,7 +101,7 @@ func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result,
 		for _, folder := range existingFolders {
 			// avoid bombarding the grafana instance with a large number of requests at once, limit
 			// the sync to a certain number of folders per cycle. This means that it will take longer to sync
-			// a large number of deleted dashboard crs, but that should be an edge case.
+			// a large number of deleted folders crs, but that should be an edge case.
 			if foldersSynced >= syncBatchSize {
 				return ctrl.Result{Requeue: true}, nil
 			}
