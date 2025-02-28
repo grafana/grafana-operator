@@ -114,7 +114,7 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 			instanceDatasource, err := grafanaClient.Datasources.GetDataSourceByUID(uid)
 			if err != nil {
 				var notFound *datasources.GetDataSourceByUIDNotFound
-				if errors.As(err, &notFound) {
+				if !errors.As(err, &notFound) {
 					return ctrl.Result{}, err
 				}
 				log.Info("datasource no longer exists", "namespace", namespace, "name", name)
@@ -122,7 +122,7 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 				_, err = grafanaClient.Datasources.DeleteDataSourceByUID(instanceDatasource.Payload.UID) //nolint
 				if err != nil {
 					var notFound *datasources.DeleteDataSourceByUIDNotFound
-					if errors.As(err, &notFound) {
+					if !errors.As(err, &notFound) {
 						return ctrl.Result{}, err
 					}
 				}
