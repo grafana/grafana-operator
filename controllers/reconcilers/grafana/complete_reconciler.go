@@ -31,7 +31,7 @@ func (r *CompleteReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana,
 	version, err := r.getVersion(ctx, cr)
 	if err != nil {
 		cr.Status.Version = ""
-		return v1beta1.OperatorStageResultFailed, fmt.Errorf("failed to get version from instance: %w", err)
+		return v1beta1.OperatorStageResultFailed, fmt.Errorf("failed fetching version from instance: %w", err)
 	}
 
 	cr.Status.Version = version
@@ -58,12 +58,12 @@ func (r *CompleteReconciler) getVersion(ctx context.Context, cr *v1beta1.Grafana
 
 	err = client2.InjectAuthHeaders(context.Background(), r.client, cr, req)
 	if err != nil {
-		return "", fmt.Errorf("fetching authentication information for version detection: %w", err)
+		return "", fmt.Errorf("fetching credentials for version detection: %w", err)
 	}
 
 	resp, err := cl.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("fetching version: %w", err)
+		return "", err
 	}
 
 	data := struct {

@@ -79,45 +79,34 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 	}()
 
-	vars := &grafanav1beta1.OperatorReconcileVars{}
+	var stages []grafanav1beta1.OperatorStageName
 	if cr.IsExternal() {
-		cr.Status.Stage = grafanav1beta1.OperatorStageComplete
+		// Only reconcile the Completion stage for external instances
+		stages = []grafanav1beta1.OperatorStageName{grafanav1beta1.OperatorStageComplete}
+		// AdminURL is normally set during ingress/route stage.
+		// External instances only use the complete stage
+		cr.Status.AdminURL = cr.Spec.External.URL
+	} else {
+		stages = getInstallationStages()
 
-		reconciler := grafana.NewCompleteReconciler(r.Client)
-		stageStatus, err := reconciler.Reconcile(ctx, cr, vars, r.Scheme)
-		if err != nil {
-			cr.Status.Version = ""
-			cr.Status.LastMessage = err.Error()
-			cr.Status.StageStatus = stageStatus
-
-			metrics.GrafanaFailedReconciles.WithLabelValues(cr.Namespace, cr.Name, string(cr.Status.Stage)).Inc()
-
-			return ctrl.Result{}, fmt.Errorf("reconciler error in stage '%s': %w", cr.Status.Stage, err)
-		}
-
-		cr.Status.StageStatus = stageStatus
-		cr.Status.LastMessage = ""
-
-		return ctrl.Result{}, nil
-	}
-
-	// set spec to the current default version to avoid accidental updates when we
-	// change the default. For clusters where RELATED_IMAGE_GRAFANA is set to an
-	// image hash, we want to set this to the value of the variable to support air
-	// gapped clusters as well
-	if cr.Spec.Version == "" {
-		targetVersion := config.GrafanaVersion
-		if envVersion := os.Getenv("RELATED_IMAGE_GRAFANA"); isImageSHA256(envVersion) {
-			targetVersion = envVersion
-		}
-
-		cr.Spec.Version = targetVersion
-		if err := r.Update(ctx, cr); err != nil {
-			return ctrl.Result{}, fmt.Errorf("updating grafana version in spec: %w", err)
+		// set spec to the current default version to avoid accidental updates when we
+		// change the default. For clusters where RELATED_IMAGE_GRAFANA is set to an
+		// image hash, we want to set this to the value of the variable to support air
+		// gapped clusters as well
+		if cr.Spec.Version == "" {
+			targetVersion := config.GrafanaVersion
+			if envVersion := os.Getenv("RELATED_IMAGE_GRAFANA"); isImageSHA256(envVersion) {
+				targetVersion = envVersion
+			}
+			cr.Spec.Version = targetVersion
+			if err := r.Update(ctx, cr); err != nil {
+				return ctrl.Result{}, fmt.Errorf("updating grafana version in spec: %w", err)
+			}
 		}
 	}
 
-	for _, stage := range getInstallationStages() {
+	vars := &grafanav1beta1.OperatorReconcileVars{}
+	for _, stage := range stages {
 		log.Info("running stage", "stage", stage)
 
 		cr.Status.Stage = stage
@@ -134,17 +123,13 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			cr.Status.LastMessage = err.Error()
 
 			metrics.GrafanaFailedReconciles.WithLabelValues(cr.Namespace, cr.Name, string(stage)).Inc()
-
-			if stage == grafanav1beta1.OperatorStageComplete {
-				log.Error(err, fmt.Sprintf("reconciler error in stage '%s'", cr.Status.Stage))
-				return ctrl.Result{RequeueAfter: RequeueDelay}, nil
-			}
-
 			return ctrl.Result{}, fmt.Errorf("reconciler error in stage '%s': %w", stage, err)
 		}
 	}
 
+	cr.Status.StageStatus = grafanav1beta1.OperatorStageResultSuccess
 	cr.Status.LastMessage = ""
+
 	return ctrl.Result{}, nil
 }
 
