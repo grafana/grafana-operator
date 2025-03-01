@@ -107,10 +107,8 @@ func (r *GrafanaDashboardReconciler) syncDashboards(ctx context.Context) (ctrl.R
 			_, err = grafanaClient.Dashboards.DeleteDashboardByUID(uid) //nolint:errcheck
 			if err != nil {
 				var notFound *dashboards.DeleteDashboardByUIDNotFound
-				if errors.As(err, &notFound) {
-					log.Info("dashboard no longer exists", "namespace", namespace, "name", name)
-				} else {
-					return ctrl.Result{Requeue: false}, err
+				if !errors.As(err, &notFound) {
+					return ctrl.Result{}, err
 				}
 			}
 
@@ -136,7 +134,6 @@ func (r *GrafanaDashboardReconciler) syncDashboards(ctx context.Context) (ctrl.R
 func getDashboardsToDelete(allDashboards *v1beta1.GrafanaDashboardList, grafanas []v1beta1.Grafana) map[*v1beta1.Grafana][]v1beta1.NamespacedResource {
 	dashboardsToDelete := map[*v1beta1.Grafana][]v1beta1.NamespacedResource{}
 	for _, grafana := range grafanas {
-		grafana := grafana
 		for _, dashboard := range grafana.Status.Dashboards {
 			if allDashboards.Find(dashboard.Namespace(), dashboard.Name()) == nil {
 				dashboardsToDelete[&grafana] = append(dashboardsToDelete[&grafana], dashboard)
@@ -220,7 +217,6 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		cr.Status.NoMatchingInstances = true
 		return ctrl.Result{}, fmt.Errorf("failed fetching instances: %w", err)
 	}
-
 	if len(instances) == 0 {
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
@@ -293,6 +289,10 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	condition := buildSynchronizedCondition("Dashboard", conditionDashboardSynchronized, cr.Generation, applyErrors, len(instances))
 	meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
+	if len(applyErrors) > 0 {
+		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
+	}
+
 	cr.Status.Hash = hash
 	cr.Status.UID = uid
 	return ctrl.Result{RequeueAfter: cr.Spec.ResyncPeriod.Duration}, nil
@@ -306,7 +306,6 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 	}
 
 	for _, grafana := range instances {
-		grafana := grafana
 		found, uid := grafana.Status.Dashboards.Find(cr.Namespace, cr.Name)
 		if !found {
 			continue

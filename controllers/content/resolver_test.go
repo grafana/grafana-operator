@@ -36,8 +36,7 @@ func TestGetDashboardEnvs(t *testing.T) {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGPIPE)
 	defer stop()
 
-	resolver, err := NewContentResolver(&dashboard, k8sClient)
-	assert.NoError(t, err)
+	resolver := NewContentResolver(&dashboard, k8sClient)
 
 	envs, err := resolver.getContentEnvs(ctx)
 
