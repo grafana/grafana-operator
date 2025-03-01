@@ -69,7 +69,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, err
 	}
 
-	metrics.GrafanaReconciles.WithLabelValues(cr.Name).Inc()
+	metrics.GrafanaReconciles.WithLabelValues(cr.Namespace, cr.Name).Inc()
 
 	defer func() {
 		if err := r.Status().Update(ctx, cr); err != nil {
@@ -117,7 +117,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		if err != nil {
 			cr.Status.StageStatus = stageStatus // In progress or failed, both accompanied by Error
 			cr.Status.LastMessage = err.Error()
-			metrics.GrafanaFailedReconciles.WithLabelValues(cr.Name, string(stage)).Inc()
+			metrics.GrafanaFailedReconciles.WithLabelValues(cr.Namespace, cr.Name, string(stage)).Inc()
 
 			return ctrl.Result{}, fmt.Errorf("reconciler error in stage '%s': %w", stage, err)
 		}
