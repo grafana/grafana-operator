@@ -71,6 +71,13 @@ var (
 		Help:      "time in ms to sync datasources after operator restart",
 	})
 
+	InitialServiceAccountSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: "grafana_operator",
+		Subsystem: "serviceaccounts",
+		Name:      "initial_sync_duration",
+		Help:      "time in ms to sync serviceaccounts after operator restart",
+	})
+
 	InitialFoldersSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: "grafana_operator",
 		Subsystem: "folders",
