@@ -9515,6 +9515,10 @@ spec:
                 items:
                   type: string
                 type: array
+              serviceaccounts:
+                items:
+                  type: string
+                type: array
               stage:
                 type: string
               stageStatus:

@@ -1,0 +1,7 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: ($test.metadata.name)
+status:
+  stage: complete
+  stageStatus: success
