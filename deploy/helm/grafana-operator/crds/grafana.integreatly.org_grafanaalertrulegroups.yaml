@@ -225,6 +225,16 @@ spec:
                       required:
                       - receiver
                       type: object
+                    record:
+                      properties:
+                        from:
+                          type: string
+                        metric:
+                          type: string
+                      required:
+                      - from
+                      - metric
+                      type: object
                     title:
                       example: Always firing
                       maxLength: 190
