@@ -1,0 +1,66 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/chainsaw/main/.schemas/json/test-chainsaw-v1alpha1.json
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: delete-grafana
+spec:
+  bindings:
+    - name: USER
+      value: root
+    - name: PASS
+      value: secret
+  steps:
+    - try:
+        - apply:
+            file: ../grafana-resource.yaml
+        - assert:
+            file: ../grafana-ready.yaml
+        - apply:
+            file: ../sa-resource.yaml
+        - assert:
+            file: ../sa-assert.yaml
+        - assert:
+            file: ../grafana-assert.yaml
+        - delete:
+            ref:
+              apiVersion: grafana.integreatly.org/v1beta1
+              kind: Grafana
+              name: ($test.metadata.name)
+            expect:
+            - match:
+                apiVersion: grafana.integreatly.org/v1beta1
+                kind: Grafana
+                name: ($test.metadata.name)
+              check:
+                ($error != null): false
+        - wait:
+            apiVersion: grafana.integreatly.org/v1beta1
+            kind: Grafana
+            name: ($test.metadata.name)
+            for:
+              deletion: {}
+        - assert:
+            resource:
+              apiVersion: grafana.integreatly.org/v1beta1
+              kind: GrafanaServiceAccount
+              metadata:
+                name: ($test.metadata.name)
+              status:
+                conditions:
+                  - type: NoMatchingInstance
+                    status: "True"
+                instances:
+                  - grafanaRefName: ($test.metadata.name)
+                    grafanaRefNamespace: ($namespace)
+                    serviceAccountID: 2
+                    tokens:
+                      - name: (join('-', [$test.metadata.name, 'default-token']))
+                        secretName: (join('-', [$test.metadata.name, 'default-token']))
+                        tokenId: 1
+        - error:
+            resource:
+              apiVersion: grafana.integreatly.org/v1beta1
+              kind: Grafana
+              name: ($test.metadata.name)
+              status:
+                instances: {}

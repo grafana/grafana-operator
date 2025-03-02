@@ -33,6 +33,8 @@ Resource Types:
 
 - [Grafana](#grafana)
 
+- [GrafanaServiceAccount](#grafanaserviceaccount)
+
 
 
 
@@ -24815,6 +24817,13 @@ GrafanaStatus defines the observed state of Grafana
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>serviceaccounts</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>stage</b></td>
         <td>string</td>
         <td>
@@ -24835,5 +24844,497 @@ GrafanaStatus defines the observed state of Grafana
           <br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+## GrafanaServiceAccount
+<sup><sup>[↩ Parent](#grafanaintegreatlyorgv1beta1 )</sup></sup>
+
+
+
+
+
+
+GrafanaServiceAccount is the Schema for the grafanaserviceaccounts API.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+      <td><b>apiVersion</b></td>
+      <td>string</td>
+      <td>grafana.integreatly.org/v1beta1</td>
+      <td>true</td>
+      </tr>
+      <tr>
+      <td><b>kind</b></td>
+      <td>string</td>
+      <td>GrafanaServiceAccount</td>
+      <td>true</td>
+      </tr>
+      <tr>
+      <td><b><a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta">metadata</a></b></td>
+      <td>object</td>
+      <td>Refer to the Kubernetes API documentation for the fields of the `metadata` field.</td>
+      <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanaserviceaccountspec">spec</a></b></td>
+        <td>object</td>
+        <td>
+          GrafanaServiceAccountSpec defines the desired state of a GrafanaServiceAccount.<br/>
+          <br/>
+            <i>Validations</i>:<li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanaserviceaccountstatus">status</a></b></td>
+        <td>object</td>
+        <td>
+          GrafanaServiceAccountStatus defines the observed state of a GrafanaServiceAccount.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaServiceAccount.spec
+<sup><sup>[↩ Parent](#grafanaserviceaccount)</sup></sup>
+
+
+
+GrafanaServiceAccountSpec defines the desired state of a GrafanaServiceAccount.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanaserviceaccountspecinstanceselector">instanceSelector</a></b></td>
+        <td>object</td>
+        <td>
+          Selects Grafana instances for import<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: spec.instanceSelector is immutable</li>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name is the name of the service account in Grafana.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>role</b></td>
+        <td>enum</td>
+        <td>
+          Role is the service account role in Grafana (Viewer, Editor, Admin, etc.).<br/>
+          <br/>
+            <i>Enum</i>: Viewer, Editor, Admin<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>allowCrossNamespaceImport</b></td>
+        <td>boolean</td>
+        <td>
+          Allow the Operator to match this resource with Grafanas outside the current namespace<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>generateTokenSecret</b></td>
+        <td>boolean</td>
+        <td>
+          GenerateTokenSecret indicates whether the operator should automatically create a Kubernetes Secret
+to store a token for this service account. If true (default), at least one Secret with a token will be created.
+If false, no token is generated unless explicitly defined in Tokens.<br/>
+          <br/>
+            <i>Default</i>: true<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>isDisabled</b></td>
+        <td>boolean</td>
+        <td>
+          IsDisabled indicates whether the service account should be disabled in Grafana.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanaserviceaccountspecpermissionsindex">permissions</a></b></td>
+        <td>[]object</td>
+        <td>
+          Permissions specifies additional access permissions for users or teams in Grafana
+related to this service account. This aligns with the UI where you can grant specific
+users or groups Edit/Admin permissions on the service account.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>resyncPeriod</b></td>
+        <td>string</td>
+        <td>
+          How often the resource is synced, defaults to 10m0s if not set<br/>
+          <br/>
+            <i>Format</i>: duration<br/>
+            <i>Default</i>: 10m0s<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanaserviceaccountspectokensindex">tokens</a></b></td>
+        <td>[]object</td>
+        <td>
+          Tokens is the list of tokens to create for this service account. For each token in the list,
+the operator generates a Grafana access token and stores it in a Kubernetes Secret with the specified name.
+If no tokens are specified and GenerateTokenSecret is true, the operator creates a default token
+in a Secret with a default name.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaServiceAccount.spec.instanceSelector
+<sup><sup>[↩ Parent](#grafanaserviceaccountspec)</sup></sup>
+
+
+
+Selects Grafana instances for import
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanaserviceaccountspecinstanceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaServiceAccount.spec.instanceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#grafanaserviceaccountspecinstanceselector)</sup></sup>
+
+
+
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          key is the label key that the selector applies to.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaServiceAccount.spec.permissions[index]
+<sup><sup>[↩ Parent](#grafanaserviceaccountspec)</sup></sup>
+
+
+
+GrafanaServiceAccountPermission defines a permission grant for a user or group related to this service account.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>permission</b></td>
+        <td>enum</td>
+        <td>
+          Permission is the level of access granted to that user or group for this service account
+(e.g., "Edit" or "Admin"). Depending on the Grafana version, this might map to an RBAC role or other permissions.<br/>
+          <br/>
+            <i>Enum</i>: Viewer, Editor, Admin<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>team</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>user</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaServiceAccount.spec.tokens[index]
+<sup><sup>[↩ Parent](#grafanaserviceaccountspec)</sup></sup>
+
+
+
+GrafanaServiceAccountToken defines a token to be created for a Grafana service account.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name is the name of the Kubernetes Secret in which this token will be stored.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>expires</b></td>
+        <td>string</td>
+        <td>
+          Expires specifies the expiration timestamp (TTL) for this token. If set, the operator
+will rotate or replace the token once the specified expiration time is reached.
+If not set, the token does not expire (defaults to never expire).<br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaServiceAccount.status
+<sup><sup>[↩ Parent](#grafanaserviceaccount)</sup></sup>
+
+
+
+GrafanaServiceAccountStatus defines the observed state of a GrafanaServiceAccount.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanaserviceaccountstatusconditionsindex">conditions</a></b></td>
+        <td>[]object</td>
+        <td>
+          Results when synchonizing resource with Grafana instances<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>id</b></td>
+        <td>integer</td>
+        <td>
+          ID is the numeric identifier of the service account in Grafana.<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>lastResync</b></td>
+        <td>string</td>
+        <td>
+          Last time the resource was synchronized with Grafana instances<br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanaserviceaccountstatustokensindex">tokens</a></b></td>
+        <td>[]object</td>
+        <td>
+          Tokens is a list of detailed information for each token created in Grafana.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaServiceAccount.status.conditions[index]
+<sup><sup>[↩ Parent](#grafanaserviceaccountstatus)</sup></sup>
+
+
+
+Condition contains details for one aspect of the current state of this API Resource.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>lastTransitionTime</b></td>
+        <td>string</td>
+        <td>
+          lastTransitionTime is the last time the condition transitioned from one status to another.
+This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.<br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>message</b></td>
+        <td>string</td>
+        <td>
+          message is a human readable message indicating details about the transition.
+This may be an empty string.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>reason</b></td>
+        <td>string</td>
+        <td>
+          reason contains a programmatic identifier indicating the reason for the condition's last transition.
+Producers of specific condition types may define expected values and meanings for this field,
+and whether the values are considered a guaranteed API.
+The value should be a CamelCase string.
+This field may not be empty.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>status</b></td>
+        <td>enum</td>
+        <td>
+          status of the condition, one of True, False, Unknown.<br/>
+          <br/>
+            <i>Enum</i>: True, False, Unknown<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          type of condition in CamelCase or in foo.example.com/CamelCase.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>observedGeneration</b></td>
+        <td>integer</td>
+        <td>
+          observedGeneration represents the .metadata.generation that the condition was set based upon.
+For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+with respect to the current state of the instance.<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+            <i>Minimum</i>: 0<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaServiceAccount.status.tokens[index]
+<sup><sup>[↩ Parent](#grafanaserviceaccountstatus)</sup></sup>
+
+
+
+GrafanaServiceAccountTokenStatus describes the current state of a token that was created in Grafana.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name is the name of the token, matching the one specified in .spec.tokens or generated automatically.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>secretName</b></td>
+        <td>string</td>
+        <td>
+          SecretName is the name of the Kubernetes Secret that stores the actual token value (Key).<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>tokenId</b></td>
+        <td>integer</td>
+        <td>
+          TokenID is the numeric identifier of the token as returned by Grafana upon creation.<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
