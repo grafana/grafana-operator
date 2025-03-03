@@ -99,7 +99,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: install flux
-        uses: fluxcd/flux2/action@v2.5.0
+        uses: fluxcd/flux2/action@v2.5.1
       - name: Clone repo
         uses: actions/checkout@v4
       - name: Prepare
