@@ -27,7 +27,7 @@ func NewServiceReconciler(client client.Client) reconcilers.OperatorGrafanaRecon
 	}
 }
 
-func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
 	_ = logf.FromContext(ctx)
 
 	service := model.GetGrafanaService(cr, scheme)
@@ -50,7 +50,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 	// try to assign the admin url
 	if !cr.PreferIngress() {
 		// .svc suffix needed for automatic openshift certificates: https://docs.openshift.com/container-platform/4.17/security/certificates/service-serving-certificate.html#add-service-certificate_service-serving-certificate
-		status.AdminUrl = fmt.Sprintf("%v://%v.%v.svc:%d", getGrafanaServerProtocol(cr), service.Name, cr.Namespace,
+		cr.Status.AdminUrl = fmt.Sprintf("%v://%v.%v.svc:%d", getGrafanaServerProtocol(cr), service.Name, cr.Namespace,
 			int32(GetGrafanaPort(cr))) // #nosec G115
 	}
 
