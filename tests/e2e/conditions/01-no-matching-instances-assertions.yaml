@@ -65,12 +65,11 @@ metadata:
   name: testdata
 status:
   NoMatchingInstances: true
-# TODO Switch dashboard assert to conditions
-# status:
-#   conditions:
-#   - reason: EmptyAPIReply
-#     status: "True"
-#     type: NoMatchingInstance
+status:
+  conditions:
+  - reason: EmptyAPIReply
+    status: "True"
+    type: NoMatchingInstance
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDatasource

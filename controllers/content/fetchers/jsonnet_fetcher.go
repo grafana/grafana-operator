@@ -384,11 +384,6 @@ func unwrapSingleSubdirectory(dirPath string) error {
 	}
 
 	subDirPath := filepath.Join(dirPath, subDirEntry.Name())
-	if err != nil {
-		fmt.Println("Smth goes wrong")
-		return err
-	}
-
 	err = copyDir(subDirPath, dirPath)
 	if err != nil {
 		fmt.Println("Error copying dir", err)
