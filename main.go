@@ -77,6 +77,10 @@ const (
 	// eg: 'partition in (customerA, customerB),environment!=qa'
 	// If empty of undefined, the operator will watch all CRs.
 	watchLabelSelectorsEnvVar = "WATCH_LABEL_SELECTORS"
+	// clusterLocalDomainEnvVar is the constant for env variable CLUSTER_LOCAL_DOMAIN, which specifies the host domain for the Grafana Admin API when not
+	// preferring an explicit Ingress or Route, i.e., using Kubernetes' internal DNS.
+	// If empty or undefined, the operator will default to `.svc`
+	clusterLocalDomainEnvVar = "CLUSTER_LOCAL_DOMAIN"
 )
 
 var (
@@ -133,6 +137,7 @@ func main() {
 	if watchLabelSelectors != "" {
 		setupLog.Info(fmt.Sprintf("sharding is enabled via %s=%s. Beware: Always label Grafana CRs before enabling to ensure labels are inherited. Existing Secrets/ConfigMaps referenced in CRs also need to be labeled to continue working.", watchLabelSelectorsEnvVar, watchLabelSelectors))
 	}
+	clusterLocalDomain, _ := os.LookupEnv(clusterLocalDomainEnvVar)
 
 	// Fetch k8s api credentials and detect platform
 	restConfig := ctrl.GetConfigOrDie()
@@ -196,10 +201,11 @@ func main() {
 	}
 
 	if err = (&controllers.GrafanaReconciler{
-		Client:      mgr.GetClient(),
-		Scheme:      mgr.GetScheme(),
-		IsOpenShift: isOpenShift,
-		Discovery:   discovery2.NewDiscoveryClientForConfigOrDie(restConfig),
+		Client:             mgr.GetClient(),
+		Scheme:             mgr.GetScheme(),
+		IsOpenShift:        isOpenShift,
+		Discovery:          discovery2.NewDiscoveryClientForConfigOrDie(restConfig),
+		ClusterLocalDomain: clusterLocalDomain,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Grafana")
 		os.Exit(1)
