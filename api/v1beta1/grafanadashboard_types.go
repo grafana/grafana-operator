@@ -71,7 +71,7 @@ type GrafanaDashboard struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   GrafanaDashboardSpec   `json:"spec,omitempty"`
+	Spec   GrafanaDashboardSpec   `json:"spec"`
 	Status GrafanaDashboardStatus `json:"status,omitempty"`
 }
 

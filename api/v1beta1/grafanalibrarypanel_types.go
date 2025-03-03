@@ -43,7 +43,7 @@ type GrafanaLibraryPanel struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   GrafanaLibraryPanelSpec   `json:"spec,omitempty"`
+	Spec   GrafanaLibraryPanelSpec   `json:"spec"`
 	Status GrafanaLibraryPanelStatus `json:"status,omitempty"`
 }
 

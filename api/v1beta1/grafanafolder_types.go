@@ -79,7 +79,7 @@ type GrafanaFolder struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   GrafanaFolderSpec   `json:"spec,omitempty"`
+	Spec   GrafanaFolderSpec   `json:"spec"`
 	Status GrafanaFolderStatus `json:"status,omitempty"`
 }
 
