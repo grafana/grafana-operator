@@ -368,6 +368,13 @@ AlertRule defines a specific rule to be evaluated. It is based on the upstream m
           <br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanaalertrulegroupspecrulesindexrecord">record</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -524,6 +531,40 @@ relative time range
           <br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaAlertRuleGroup.spec.rules[index].record
+<sup><sup>[↩ Parent](#grafanaalertrulegroupspecrulesindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>from</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>metric</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
