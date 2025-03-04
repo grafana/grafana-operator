@@ -130,7 +130,7 @@ type GrafanaAlertRuleGroup struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   GrafanaAlertRuleGroupSpec `json:"spec,omitempty"`
+	Spec   GrafanaAlertRuleGroupSpec `json:"spec"`
 	Status GrafanaCommonStatus       `json:"status,omitempty"`
 }
 

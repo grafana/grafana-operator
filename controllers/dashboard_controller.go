@@ -42,9 +42,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/discovery"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -54,9 +54,8 @@ const (
 
 // GrafanaDashboardReconciler reconciles a GrafanaDashboard object
 type GrafanaDashboardReconciler struct {
-	Client    client.Client
-	Scheme    *runtime.Scheme
-	Discovery discovery.DiscoveryInterface
+	client.Client
+	Scheme *runtime.Scheme
 }
 
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadashboards,verbs=get;list;watch;create;update;patch;delete
@@ -72,9 +71,7 @@ func (r *GrafanaDashboardReconciler) syncDashboards(ctx context.Context) (ctrl.R
 	var opts []client.ListOption
 	err := r.Client.List(ctx, grafanas, opts...)
 	if err != nil {
-		return ctrl.Result{
-			Requeue: true,
-		}, err
+		return ctrl.Result{}, err
 	}
 
 	// no instances, no need to sync
@@ -86,9 +83,7 @@ func (r *GrafanaDashboardReconciler) syncDashboards(ctx context.Context) (ctrl.R
 	allDashboards := &v1beta1.GrafanaDashboardList{}
 	err = r.Client.List(ctx, allDashboards, opts...)
 	if err != nil {
-		return ctrl.Result{
-			Requeue: true,
-		}, err
+		return ctrl.Result{}, err
 	}
 
 	dashboardsToDelete := getDashboardsToDelete(allDashboards, grafanas.Items)
@@ -97,7 +92,7 @@ func (r *GrafanaDashboardReconciler) syncDashboards(ctx context.Context) (ctrl.R
 	for grafana, oldDashboards := range dashboardsToDelete {
 		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 		if err != nil {
-			return ctrl.Result{Requeue: true}, err
+			return ctrl.Result{}, err
 		}
 
 		for _, dashboard := range oldDashboards {
@@ -112,10 +107,8 @@ func (r *GrafanaDashboardReconciler) syncDashboards(ctx context.Context) (ctrl.R
 			_, err = grafanaClient.Dashboards.DeleteDashboardByUID(uid) //nolint:errcheck
 			if err != nil {
 				var notFound *dashboards.DeleteDashboardByUIDNotFound
-				if errors.As(err, &notFound) {
-					log.Info("dashboard no longer exists", "namespace", namespace, "name", name)
-				} else {
-					return ctrl.Result{Requeue: false}, err
+				if !errors.As(err, &notFound) {
+					return ctrl.Result{}, err
 				}
 			}
 
@@ -127,7 +120,7 @@ func (r *GrafanaDashboardReconciler) syncDashboards(ctx context.Context) (ctrl.R
 		// so we should minimize those updates
 		err = r.Client.Status().Update(ctx, grafana)
 		if err != nil {
-			return ctrl.Result{Requeue: false}, err
+			return ctrl.Result{}, err
 		}
 	}
 
@@ -141,7 +134,6 @@ func (r *GrafanaDashboardReconciler) syncDashboards(ctx context.Context) (ctrl.R
 func getDashboardsToDelete(allDashboards *v1beta1.GrafanaDashboardList, grafanas []v1beta1.Grafana) map[*v1beta1.Grafana][]v1beta1.NamespacedResource {
 	dashboardsToDelete := map[*v1beta1.Grafana][]v1beta1.NamespacedResource{}
 	for _, grafana := range grafanas {
-		grafana := grafana
 		for _, dashboard := range grafana.Status.Dashboards {
 			if allDashboards.Find(dashboard.Namespace(), dashboard.Name()) == nil {
 				dashboardsToDelete[&grafana] = append(dashboardsToDelete[&grafana], dashboard)
@@ -151,7 +143,7 @@ func getDashboardsToDelete(allDashboards *v1beta1.GrafanaDashboardList, grafanas
 	return dashboardsToDelete
 }
 
-func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) { //nolint:gocyclo
 	log := logf.FromContext(ctx).WithName("GrafanaDashboardReconciler")
 	ctx = logf.IntoContext(ctx, log)
 
@@ -171,189 +163,211 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}, cr)
 	if err != nil {
 		if kuberr.IsNotFound(err) {
-			err = r.onDashboardDeleted(ctx, req.Namespace, req.Name)
-			if err != nil {
-				return ctrl.Result{RequeueAfter: RequeueDelay}, err
-			}
 			return ctrl.Result{}, nil
 		}
-		log.Error(err, "error getting grafana dashboard cr")
-		return ctrl.Result{RequeueAfter: RequeueDelay}, err
+		return ctrl.Result{}, fmt.Errorf("getting grafana dashboard cr: %w", err)
 	}
 
-	instances, err := r.GetMatchingDashboardInstances(ctx, cr, r.Client)
+	if cr.GetDeletionTimestamp() != nil {
+		// Check if resource needs clean up
+		if controllerutil.ContainsFinalizer(cr, grafanaFinalizer) {
+			if err := r.finalize(ctx, cr); err != nil {
+				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaDatasource: %w", err)
+			}
+			if err := removeFinalizer(ctx, r.Client, cr); err != nil {
+				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
+			}
+		}
+		return ctrl.Result{}, nil
+	}
+
+	defer func() {
+		cr.Status.LastResync = metav1.Time{Time: time.Now()}
+		if err := r.Status().Update(ctx, cr); err != nil {
+			log.Error(err, "updating status")
+		}
+		if meta.IsStatusConditionTrue(cr.Status.Conditions, conditionNoMatchingInstance) {
+			if err := removeFinalizer(ctx, r.Client, cr); err != nil {
+				log.Error(err, "failed to remove finalizer")
+			}
+		} else {
+			if err := addFinalizer(ctx, r.Client, cr); err != nil {
+				log.Error(err, "failed to set finalizer")
+			}
+		}
+	}()
+
+	// Retrieving the model before the loop ensures to exit early in case of failure and not fail once per matching instance
+	resolver := content.NewContentResolver(cr, r.Client)
+	dashboardModel, hash, err := resolver.Resolve(ctx)
 	if err != nil {
-		log.Error(err, "could not find matching instances", "name", cr.Name, "namespace", cr.Namespace)
-		return ctrl.Result{RequeueAfter: RequeueDelay}, err
+		// Resolve has a lot of failure cases.
+		// fetch content errors could be a temporary network issue but would result in an InvalidSpec condition
+		setInvalidSpec(&cr.Status.Conditions, cr.Generation, "InvalidModelResolution", err.Error())
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
+		return ctrl.Result{}, fmt.Errorf("resolving dashboard contents: %w", err)
+	}
+
+	removeInvalidSpec(&cr.Status.Conditions)
+
+	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
+	if err != nil {
+		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
+		cr.Status.NoMatchingInstances = true
+		return ctrl.Result{}, fmt.Errorf("failed fetching instances: %w", err)
+	}
+	if len(instances) == 0 {
+		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
+		cr.Status.NoMatchingInstances = true
+		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
 	removeNoMatchingInstance(&cr.Status.Conditions)
-	log.Info("found matching Grafana instances for dashboard", "count", len(instances.Items))
-
-	resolver, err := content.NewContentResolver(cr, r.Client)
-	if err != nil {
-		log.Error(err, "error creating dashboard content resolver", "dashboard", cr.Name)
-		// Failing to create a resolver is an unrecoverable error
-		return ctrl.Result{Requeue: false}, nil
-	}
-
-	// Retrieving the model before the loop ensures to exit early in case of failure and not fail once per matching instance
-	dashboardModel, hash, err := resolver.Resolve(ctx)
-	if err != nil {
-		log.Error(err, "error resolving dashboard contents", "dashboard", cr.Name)
-		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
-	}
+	cr.Status.NoMatchingInstances = false
+	log.Info("found matching Grafana instances for dashboard", "count", len(instances))
 
 	uid := fmt.Sprintf("%s", dashboardModel["uid"])
 
 	// Garbage collection for a case where dashboard uid get changed, dashboard creation is expected to happen in a separate reconcilication cycle
 	if content.IsUpdatedUID(cr, uid) {
 		log.Info("dashboard uid got updated, deleting dashboards with the old uid")
-		err = r.onDashboardDeleted(ctx, req.Namespace, req.Name)
-		if err != nil {
-			return ctrl.Result{RequeueAfter: RequeueDelay}, err
+		if err = r.finalize(ctx, cr); err != nil {
+			return ctrl.Result{}, err
 		}
 
 		// Clean up uid, so further reconciliations can track changes there
 		cr.Status.UID = ""
-		err = r.Client.Status().Update(ctx, cr)
-		if err != nil {
-			return ctrl.Result{RequeueAfter: RequeueDelay}, err
-		}
 
-		// Status update should trigger the next reconciliation right away, no need to requeue for dashboard creation
-		return ctrl.Result{}, nil
+		// Trigger the next reconciliation right away
+		return ctrl.Result{Requeue: true}, nil
 	}
 
-	success := true
+	applyHomeErrors := make(map[string]string)
+	pluginErrors := make(map[string]string)
 	applyErrors := make(map[string]string)
-	for _, grafana := range instances.Items {
-		// check if this is a cross namespace import
-		if grafana.Namespace != cr.Namespace && !cr.IsAllowCrossNamespaceImport() {
-			continue
-		}
-
-		grafana := grafana
-		// an admin url is required to interact with grafana
-		// the instance or route might not yet be ready
-		if grafana.Status.Stage != v1beta1.OperatorStageComplete || grafana.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
-			log.Info("grafana instance not ready", "grafana", grafana.Name)
-			success = false
-			continue
-		}
-
+	for _, grafana := range instances {
 		if grafana.IsInternal() {
 			// first reconcile the plugins
 			// append the requested dashboards to a configmap from where the
 			// grafana reconciler will pick them up
 			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, cr.Spec.Plugins, fmt.Sprintf("%v-dashboard", cr.Name))
 			if err != nil {
+				pluginErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 				log.Error(err, "error reconciling plugins", "dashboard", cr.Name, "grafana", grafana.Name)
-				success = false
 			}
 		}
 
 		// then import the dashboard into the matching grafana instances
 		err = r.onDashboardCreated(ctx, &grafana, cr, dashboardModel, hash)
 		if err != nil {
-			log.Error(err, "error reconciling dashboard", "dashboard", cr.Name, "grafana", grafana.Name)
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
-			success = false
 		}
-
-		condition := buildSynchronizedCondition("Dashboard", conditionDashboardSynchronized, cr.Generation, applyErrors, len(instances.Items))
-		meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
 		if grafana.Spec.Preferences != nil && uid == grafana.Spec.Preferences.HomeDashboardUID {
 			err = r.UpdateHomeDashboard(ctx, grafana, uid, cr)
 			if err != nil {
-				return ctrl.Result{RequeueAfter: RequeueDelay}, err
+				applyHomeErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 			}
 		}
 	}
 
-	// if the dashboard was successfully synced in all instances, wait for its re-sync period
-	if success {
-		if cr.ResyncPeriodHasElapsed() {
-			cr.Status.LastResync = metav1.Time{Time: time.Now()}
-		}
-		cr.Status.Hash = hash
-		cr.Status.UID = uid
-		return ctrl.Result{RequeueAfter: cr.Spec.ResyncPeriod.Duration}, r.Client.Status().Update(ctx, cr)
+	// TODO Add new Condition displaying plugin reconciliation errors
+	if len(pluginErrors) > 0 {
+		err := fmt.Errorf("%v", pluginErrors)
+		log.Error(err, "failed to apply plugins to all instances")
 	}
 
-	return ctrl.Result{RequeueAfter: RequeueDelay}, nil
+	// Specific to dashboards
+	// NOTE Add new Condition displaying home dash sync errors?
+	if len(applyHomeErrors) > 0 {
+		err := fmt.Errorf("%v", pluginErrors)
+		log.Error(err, "failed to apply home dashboards to all instances")
+	}
+
+	condition := buildSynchronizedCondition("Dashboard", conditionDashboardSynchronized, cr.Generation, applyErrors, len(instances))
+	meta.SetStatusCondition(&cr.Status.Conditions, condition)
+
+	if len(applyErrors) > 0 {
+		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
+	}
+
+	cr.Status.Hash = hash
+	cr.Status.UID = uid
+	return ctrl.Result{RequeueAfter: cr.Spec.ResyncPeriod.Duration}, nil
 }
 
-func (r *GrafanaDashboardReconciler) onDashboardDeleted(ctx context.Context, namespace string, name string) error {
+func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.GrafanaDashboard) error {
 	log := logf.FromContext(ctx)
-	list := v1beta1.GrafanaList{}
-	var opts []client.ListOption
-	err := r.Client.List(ctx, &list, opts...)
+	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
-		return err
+		return fmt.Errorf("fetching instances: %w", err)
 	}
 
-	for _, grafana := range list.Items {
-		if found, uid := grafana.Status.Dashboards.Find(namespace, name); found {
-			grafana := grafana
-			grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
-			if err != nil {
-				return err
+	for _, grafana := range instances {
+		found, uid := grafana.Status.Dashboards.Find(cr.Namespace, cr.Name)
+		if !found {
+			continue
+		}
+
+		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
+		if err != nil {
+			return fmt.Errorf("creating grafana http client: %w", err)
+		}
+
+		isCleanupInGrafanaRequired := true
+
+		resp, err := grafanaClient.Dashboards.GetDashboardByUID(*uid)
+		if err != nil {
+			var notFound *dashboards.GetDashboardByUIDNotFound
+			if !errors.As(err, &notFound) {
+				return fmt.Errorf("fetching dashboard from instance: %w", err)
 			}
 
-			isCleanupInGrafanaRequired := true
+			isCleanupInGrafanaRequired = false
+		}
 
-			resp, err := grafanaClient.Dashboards.GetDashboardByUID(*uid)
+		if isCleanupInGrafanaRequired {
+			var dash *models.DashboardFullWithMeta
+			if resp != nil {
+				dash = resp.GetPayload()
+			}
+
+			_, err = grafanaClient.Dashboards.DeleteDashboardByUID(*uid) //nolint:errcheck
 			if err != nil {
-				var notFound *dashboards.GetDashboardByUIDNotFound
+				var notFound *dashboards.DeleteDashboardByUIDNotFound
 				if !errors.As(err, &notFound) {
-					return err
+					return fmt.Errorf("deleting dashboard from instance: %w", err)
 				}
-
-				isCleanupInGrafanaRequired = false
 			}
 
-			if isCleanupInGrafanaRequired {
-				var dash *models.DashboardFullWithMeta
-				if resp != nil {
-					dash = resp.GetPayload()
-				}
-
-				_, err = grafanaClient.Dashboards.DeleteDashboardByUID(*uid) //nolint:errcheck
+			if dash != nil && dash.Meta != nil && dash.Meta.FolderUID != "" {
+				resp, err := r.DeleteFolderIfEmpty(grafanaClient, dash.Meta.FolderUID)
 				if err != nil {
-					var notFound *dashboards.DeleteDashboardByUIDNotFound
-					if !errors.As(err, &notFound) {
-						return err
-					}
+					return fmt.Errorf("deleting empty parent folder from instance: %w", err)
 				}
-
-				if dash != nil && dash.Meta != nil && dash.Meta.FolderUID != "" {
-					resp, err := r.DeleteFolderIfEmpty(grafanaClient, dash.Meta.FolderUID)
-					if err != nil {
-						return err
-					}
-					if resp.StatusCode == 200 {
-						log.Info("unused folder successfully removed")
-					}
-					if resp.StatusCode == 432 {
-						log.Info("folder still in use by other dashboards")
-					}
+				if resp.StatusCode == 200 {
+					log.Info("unused folder successfully removed")
+				}
+				if resp.StatusCode == 432 {
+					log.Info("folder still in use by other dashboards, libraryPanels, or alertrules")
 				}
 			}
+		}
 
-			if grafana.IsInternal() {
-				err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, fmt.Sprintf("%v-dashboard", name))
-				if err != nil {
-					return err
-				}
-			}
-
-			grafana.Status.Dashboards = grafana.Status.Dashboards.Remove(namespace, name)
-			err = r.Client.Status().Update(ctx, &grafana)
+		if grafana.IsInternal() {
+			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, fmt.Sprintf("%v-dashboard", cr.Name))
 			if err != nil {
-				return err
+				return fmt.Errorf("reconciling plugins: %w", err)
 			}
+		}
+
+		// Update status of Grafana instance
+		grafana.Status.Dashboards = grafana.Status.Dashboards.Remove(cr.Namespace, cr.Name)
+		err = r.Client.Status().Update(ctx, &grafana)
+		if err != nil {
+			return fmt.Errorf("updating grafana cr status %s/%s: %w", grafana.Namespace, grafana.Name, err)
 		}
 	}
 
@@ -368,7 +382,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 
 	grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
-		return err
+		return fmt.Errorf("creating grafana http client: %w", err)
 	}
 
 	folderUID, err := getFolderUID(ctx, r.Client, cr)
@@ -386,6 +400,8 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	uid := fmt.Sprintf("%s", dashboardModel["uid"])
 	title := fmt.Sprintf("%s", dashboardModel["title"])
 
+	// TODO Check if cr.Spec.CustomUID is defined and skip the search. Get the dashboard directly with the UID
+	// The 'Exists' function is unreasonably expensive if reconciling multiple instances with a lot of :wqdashboards.
 	exists, remoteUID, err := r.Exists(grafanaClient, uid, title, folderUID)
 	if err != nil {
 		return err
@@ -409,6 +425,8 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return nil
 	}
 
+	// NOTE Only the dashboard reconciler will detect if the cr and remote model differ by walking the structure
+	// Most others instead apply the resource and outsource it to the instance or check a hash.
 	remoteChanged, err := r.hasRemoteChange(exists, grafanaClient, uid, dashboardModel)
 	if err != nil {
 		return err
@@ -605,6 +623,7 @@ func (r *GrafanaDashboardReconciler) DeleteFolderIfEmpty(client *genapi.GrafanaH
 func (r *GrafanaDashboardReconciler) SetupWithManager(mgr ctrl.Manager, ctx context.Context) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.GrafanaDashboard{}).
+		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
 
 	if err == nil {
@@ -632,24 +651,6 @@ func (r *GrafanaDashboardReconciler) SetupWithManager(mgr ctrl.Manager, ctx cont
 	}
 
 	return err
-}
-
-func (r *GrafanaDashboardReconciler) GetMatchingDashboardInstances(ctx context.Context, dashboard *v1beta1.GrafanaDashboard, k8sClient client.Client) (v1beta1.GrafanaList, error) {
-	log := logf.FromContext(ctx)
-	instances, err := GetMatchingInstances(ctx, k8sClient, dashboard.Spec.InstanceSelector)
-	if err != nil || len(instances.Items) == 0 {
-		dashboard.Status.NoMatchingInstances = true
-		if err := r.Client.Status().Update(ctx, dashboard); err != nil {
-			log.Info("unable to update the status of %v, in %v", dashboard.Name, dashboard.Namespace)
-		}
-		return v1beta1.GrafanaList{}, err
-	}
-	dashboard.Status.NoMatchingInstances = false
-	if err := r.Client.Status().Update(ctx, dashboard); err != nil {
-		log.Info("unable to update the status of %v, in %v", dashboard.Name, dashboard.Namespace)
-	}
-
-	return instances, err
 }
 
 func (r *GrafanaDashboardReconciler) UpdateHomeDashboard(ctx context.Context, grafana v1beta1.Grafana, uid string, dashboard *v1beta1.GrafanaDashboard) error {

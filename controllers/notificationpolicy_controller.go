@@ -160,9 +160,6 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 
 	applyErrors := make(map[string]string)
 	for _, grafana := range instances {
-		// can be removed in go 1.22+
-		grafana := grafana
-
 		appliedPolicy := grafana.Annotations[annotationAppliedNotificationPolicy]
 		if appliedPolicy != "" && appliedPolicy != notificationPolicy.NamespacedResource() {
 			log.Info("instance already has a different notification policy applied - skipping", "grafana", grafana.Name)
@@ -303,8 +300,6 @@ func (r *GrafanaNotificationPolicyReconciler) finalize(ctx context.Context, noti
 		return fmt.Errorf("fetching instances: %w", err)
 	}
 	for _, grafana := range instances {
-		grafana := grafana
-
 		appliedPolicy := grafana.Annotations[annotationAppliedNotificationPolicy]
 		if appliedPolicy != "" && appliedPolicy != notificationPolicy.NamespacedResource() {
 			log.Info("instance already has a different notification policy applied - skipping", "grafana", grafana.Name)

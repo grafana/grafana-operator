@@ -113,9 +113,6 @@ func (r *GrafanaNotificationTemplateReconciler) Reconcile(ctx context.Context, r
 
 	applyErrors := make(map[string]string)
 	for _, grafana := range instances {
-		// can be removed in go 1.22+
-		grafana := grafana
-
 		err := r.reconcileWithInstance(ctx, &grafana, notificationTemplate)
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
@@ -165,8 +162,7 @@ func (r *GrafanaNotificationTemplateReconciler) finalize(ctx context.Context, no
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
-	for _, i := range instances {
-		instance := i
+	for _, instance := range instances {
 		if err := r.removeFromInstance(ctx, &instance, notificationTemplate); err != nil {
 			return fmt.Errorf("removing notification template from instance: %w", err)
 		}

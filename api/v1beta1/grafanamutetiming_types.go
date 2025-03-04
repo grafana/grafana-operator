@@ -89,7 +89,7 @@ type GrafanaMuteTiming struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   GrafanaMuteTimingSpec `json:"spec,omitempty"`
+	Spec   GrafanaMuteTimingSpec `json:"spec"`
 	Status GrafanaCommonStatus   `json:"status,omitempty"`
 }
 

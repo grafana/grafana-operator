@@ -154,7 +154,7 @@ type GrafanaStatus struct {
 type Grafana struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              GrafanaSpec   `json:"spec,omitempty"`
+	Spec              GrafanaSpec   `json:"spec"`
 	Status            GrafanaStatus `json:"status,omitempty"`
 }
 

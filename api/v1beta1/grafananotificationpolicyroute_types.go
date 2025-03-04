@@ -43,7 +43,7 @@ type GrafanaNotificationPolicyRoute struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   GrafanaNotificationPolicyRouteSpec `json:"spec,omitempty"`
+	Spec   GrafanaNotificationPolicyRouteSpec `json:"spec"`
 	Status GrafanaCommonStatus                `json:"status,omitempty"`
 }
 

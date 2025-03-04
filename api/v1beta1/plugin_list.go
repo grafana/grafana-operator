@@ -53,7 +53,6 @@ func (l PluginList) Update(plugin *GrafanaPlugin) {
 func (l PluginList) Sanitize() PluginList {
 	var sanitized PluginList
 	for _, plugin := range l {
-		plugin := plugin
 		_, err := semver.Parse(plugin.Version)
 		if err != nil {
 			continue

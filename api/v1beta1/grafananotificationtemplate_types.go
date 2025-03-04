@@ -50,7 +50,7 @@ type GrafanaNotificationTemplate struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   GrafanaNotificationTemplateSpec `json:"spec,omitempty"`
+	Spec   GrafanaNotificationTemplateSpec `json:"spec"`
 	Status GrafanaCommonStatus             `json:"status,omitempty"`
 }
 
