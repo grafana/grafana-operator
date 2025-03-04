@@ -36,10 +36,13 @@ func TestGetDashboardEnvs(t *testing.T) {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGPIPE)
 	defer stop()
 
-	resolver, err := NewContentResolver(&dashboard, k8sClient)
-	assert.NoError(t, err)
+	var contentResource v1beta1.GrafanaContentResource = &dashboard
+	assert.NotNil(t, contentResource.GrafanaContentSpec(), "resource does not properly implement content spec or status fields; this indicates a bug in implementation")
+	assert.NotNil(t, contentResource.GrafanaContentStatus(), "resource does not properly implement content spec or status fields; this indicates a bug in implementation")
 
-	envs, err := resolver.getDashboardEnvs(ctx)
+	resolver := NewContentResolver(&dashboard, k8sClient)
+
+	envs, err := resolver.getContentEnvs(ctx)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, envs)

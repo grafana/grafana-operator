@@ -131,14 +131,15 @@ type GrafanaPreferences struct {
 
 // GrafanaStatus defines the observed state of Grafana
 type GrafanaStatus struct {
-	Stage       OperatorStageName      `json:"stage,omitempty"`
-	StageStatus OperatorStageStatus    `json:"stageStatus,omitempty"`
-	LastMessage string                 `json:"lastMessage,omitempty"`
-	AdminUrl    string                 `json:"adminUrl,omitempty"`
-	Dashboards  NamespacedResourceList `json:"dashboards,omitempty"`
-	Datasources NamespacedResourceList `json:"datasources,omitempty"`
-	Folders     NamespacedResourceList `json:"folders,omitempty"`
-	Version     string                 `json:"version,omitempty"`
+	Stage         OperatorStageName      `json:"stage,omitempty"`
+	StageStatus   OperatorStageStatus    `json:"stageStatus,omitempty"`
+	LastMessage   string                 `json:"lastMessage,omitempty"`
+	AdminUrl      string                 `json:"adminUrl,omitempty"`
+	Dashboards    NamespacedResourceList `json:"dashboards,omitempty"`
+	Datasources   NamespacedResourceList `json:"datasources,omitempty"`
+	Folders       NamespacedResourceList `json:"folders,omitempty"`
+	LibraryPanels NamespacedResourceList `json:"libraryPanels,omitempty"`
+	Version       string                 `json:"version,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -153,7 +154,7 @@ type GrafanaStatus struct {
 type Grafana struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              GrafanaSpec   `json:"spec,omitempty"`
+	Spec              GrafanaSpec   `json:"spec"`
 	Status            GrafanaStatus `json:"status,omitempty"`
 }
 

@@ -21,6 +21,8 @@ Resource Types:
 
 - [GrafanaFolder](#grafanafolder)
 
+- [GrafanaLibraryPanel](#grafanalibrarypanel)
+
 - [GrafanaMuteTiming](#grafanamutetiming)
 
 - [GrafanaNotificationPolicy](#grafananotificationpolicy)
@@ -78,7 +80,7 @@ GrafanaAlertRuleGroup is the Schema for the grafanaalertrulegroups API
           <br/>
             <i>Validations</i>:<li>(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID))): Only one of FolderUID or FolderRef can be set</li><li>((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable) && has(self.editable))): spec.editable is immutable</li><li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
         <td><b><a href="#grafanaalertrulegroupstatus">status</a></b></td>
         <td>object</td>
@@ -682,7 +684,7 @@ GrafanaContactPoint is the Schema for the grafanacontactpoints API
           <br/>
             <i>Validations</i>:<li>((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid))): spec.uid is immutable</li><li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
         <td><b><a href="#grafanacontactpointstatus">status</a></b></td>
         <td>object</td>
@@ -1190,7 +1192,7 @@ GrafanaDashboard is the Schema for the grafanadashboards API
           <br/>
             <i>Validations</i>:<li>(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID))) || !(has(self.folderRef) && (has(self.folderUID))): Only one of folderUID or folderRef can be declared at the same time</li><li>(has(self.folder) && !(has(self.folderRef) || has(self.folderUID))) || !(has(self.folder)): folder field cannot be set when folderUID or folderRef is already declared</li><li>((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid))): spec.uid is immutable</li><li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
         <td><b><a href="#grafanadashboardstatus">status</a></b></td>
         <td>object</td>
@@ -2303,7 +2305,7 @@ GrafanaDatasource is the Schema for the grafanadatasources API
           <br/>
             <i>Validations</i>:<li>((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid))): spec.uid is immutable</li><li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
         <td><b><a href="#grafanadatasourcestatus">status</a></b></td>
         <td>object</td>
@@ -2979,7 +2981,7 @@ GrafanaFolder is the Schema for the grafanafolders API
           <br/>
             <i>Validations</i>:<li>(has(self.parentFolderUID) && !(has(self.parentFolderRef))) || (has(self.parentFolderRef) && !(has(self.parentFolderUID))) || !(has(self.parentFolderRef) && (has(self.parentFolderUID))): Only one of parentFolderUID or parentFolderRef can be set</li><li>((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid))): spec.uid is immutable</li><li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
         <td><b><a href="#grafanafolderstatus">status</a></b></td>
         <td>object</td>
@@ -3284,6 +3286,1105 @@ with respect to the current state of the instance.<br/>
       </tr></tbody>
 </table>
 
+## GrafanaLibraryPanel
+<sup><sup>[↩ Parent](#grafanaintegreatlyorgv1beta1 )</sup></sup>
+
+
+
+
+
+
+GrafanaLibraryPanel is the Schema for the grafanalibrarypanels API
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+      <td><b>apiVersion</b></td>
+      <td>string</td>
+      <td>grafana.integreatly.org/v1beta1</td>
+      <td>true</td>
+      </tr>
+      <tr>
+      <td><b>kind</b></td>
+      <td>string</td>
+      <td>GrafanaLibraryPanel</td>
+      <td>true</td>
+      </tr>
+      <tr>
+      <td><b><a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta">metadata</a></b></td>
+      <td>object</td>
+      <td>Refer to the Kubernetes API documentation for the fields of the `metadata` field.</td>
+      <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanalibrarypanelspec">spec</a></b></td>
+        <td>object</td>
+        <td>
+          GrafanaLibraryPanelSpec defines the desired state of GrafanaLibraryPanel<br/>
+          <br/>
+            <i>Validations</i>:<li>(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID))) || !(has(self.folderRef) && (has(self.folderUID))): Only one of folderUID or folderRef can be declared at the same time</li><li>((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid))): spec.uid is immutable</li><li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanalibrarypanelstatus">status</a></b></td>
+        <td>object</td>
+        <td>
+          GrafanaLibraryPanelStatus defines the observed state of GrafanaLibraryPanel<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaLibraryPanel.spec
+<sup><sup>[↩ Parent](#grafanalibrarypanel)</sup></sup>
+
+
+
+GrafanaLibraryPanelSpec defines the desired state of GrafanaLibraryPanel
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanalibrarypanelspecinstanceselector">instanceSelector</a></b></td>
+        <td>object</td>
+        <td>
+          Selects Grafana instances for import<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: spec.instanceSelector is immutable</li>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>allowCrossNamespaceImport</b></td>
+        <td>boolean</td>
+        <td>
+          Allow the Operator to match this resource with Grafanas outside the current namespace<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanalibrarypanelspecconfigmapref">configMapRef</a></b></td>
+        <td>object</td>
+        <td>
+          model from configmap<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>contentCacheDuration</b></td>
+        <td>string</td>
+        <td>
+          Cache duration for models fetched from URLs<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanalibrarypanelspecdatasourcesindex">datasources</a></b></td>
+        <td>[]object</td>
+        <td>
+          maps required data sources to existing ones<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanalibrarypanelspecenvfromindex">envFrom</a></b></td>
+        <td>[]object</td>
+        <td>
+          environments variables from secrets or config maps<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanalibrarypanelspecenvsindex">envs</a></b></td>
+        <td>[]object</td>
+        <td>
+          environments variables as a map<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>folderRef</b></td>
+        <td>string</td>
+        <td>
+          Name of a `GrafanaFolder` resource in the same namespace<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>folderUID</b></td>
+        <td>string</td>
+        <td>
+          UID of the target folder for this dashboard<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanalibrarypanelspecgrafanacom">grafanaCom</a></b></td>
+        <td>object</td>
+        <td>
+          grafana.com/dashboards<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>gzipJson</b></td>
+        <td>string</td>
+        <td>
+          GzipJson the model's JSON compressed with Gzip. Base64-encoded when in YAML.<br/>
+          <br/>
+            <i>Format</i>: byte<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>json</b></td>
+        <td>string</td>
+        <td>
+          model json<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>jsonnet</b></td>
+        <td>string</td>
+        <td>
+          Jsonnet<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanalibrarypanelspecjsonnetlib">jsonnetLib</a></b></td>
+        <td>object</td>
+        <td>
+          Jsonnet project build<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanalibrarypanelspecpluginsindex">plugins</a></b></td>
+        <td>[]object</td>
+        <td>
+          plugins<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>resyncPeriod</b></td>
+        <td>string</td>
+        <td>
+          How often the resource is synced, defaults to 10m0s if not set<br/>
+          <br/>
+            <i>Format</i>: duration<br/>
+            <i>Default</i>: 10m0s<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>uid</b></td>
+        <td>string</td>
+        <td>
+          Manually specify the uid, overwrites uids already present in the json model.
+Can be any string consisting of alphanumeric characters, - and _ with a maximum length of 40.<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: spec.uid is immutable</li>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>url</b></td>
+        <td>string</td>
+        <td>
+          model url<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanalibrarypanelspecurlauthorization">urlAuthorization</a></b></td>
+        <td>object</td>
+        <td>
+          authorization options for model from url<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaLibraryPanel.spec.instanceSelector
+<sup><sup>[↩ Parent](#grafanalibrarypanelspec)</sup></sup>
+
+
+
+Selects Grafana instances for import
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanalibrarypanelspecinstanceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaLibraryPanel.spec.instanceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#grafanalibrarypanelspecinstanceselector)</sup></sup>
+
+
+
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          key is the label key that the selector applies to.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaLibraryPanel.spec.configMapRef
+<sup><sup>[↩ Parent](#grafanalibrarypanelspec)</sup></sup>
+
+
+
+model from configmap
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          The key to select.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the referent.
+This field is effectively required, but due to backwards compatibility is
+allowed to be empty. Instances of this type with an empty value here are
+almost certainly wrong.
+More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>optional</b></td>
+        <td>boolean</td>
+        <td>
+          Specify whether the ConfigMap or its key must be defined<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaLibraryPanel.spec.datasources[index]
+<sup><sup>[↩ Parent](#grafanalibrarypanelspec)</sup></sup>
+
+
+
+GrafanaResourceDatasource is used to set the datasource name of any templated datasources in
+content definitions (e.g., dashboard JSON).
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>datasourceName</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>inputName</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaLibraryPanel.spec.envFrom[index]
+<sup><sup>[↩ Parent](#grafanalibrarypanelspec)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanalibrarypanelspecenvfromindexconfigmapkeyref">configMapKeyRef</a></b></td>
+        <td>object</td>
+        <td>
+          Selects a key of a ConfigMap.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanalibrarypanelspecenvfromindexsecretkeyref">secretKeyRef</a></b></td>
+        <td>object</td>
+        <td>
+          Selects a key of a Secret.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaLibraryPanel.spec.envFrom[index].configMapKeyRef
+<sup><sup>[↩ Parent](#grafanalibrarypanelspecenvfromindex)</sup></sup>
+
+
+
+Selects a key of a ConfigMap.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          The key to select.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the referent.
+This field is effectively required, but due to backwards compatibility is
+allowed to be empty. Instances of this type with an empty value here are
+almost certainly wrong.
+More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>optional</b></td>
+        <td>boolean</td>
+        <td>
+          Specify whether the ConfigMap or its key must be defined<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaLibraryPanel.spec.envFrom[index].secretKeyRef
+<sup><sup>[↩ Parent](#grafanalibrarypanelspecenvfromindex)</sup></sup>
+
+
+
+Selects a key of a Secret.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          The key of the secret to select from.  Must be a valid secret key.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the referent.
+This field is effectively required, but due to backwards compatibility is
+allowed to be empty. Instances of this type with an empty value here are
+almost certainly wrong.
+More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>optional</b></td>
+        <td>boolean</td>
+        <td>
+          Specify whether the Secret or its key must be defined<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaLibraryPanel.spec.envs[index]
+<sup><sup>[↩ Parent](#grafanalibrarypanelspec)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>value</b></td>
+        <td>string</td>
+        <td>
+          Inline env value<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanalibrarypanelspecenvsindexvaluefrom">valueFrom</a></b></td>
+        <td>object</td>
+        <td>
+          Reference on value source, might be the reference on a secret or config map<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaLibraryPanel.spec.envs[index].valueFrom
+<sup><sup>[↩ Parent](#grafanalibrarypanelspecenvsindex)</sup></sup>
+
+
+
+Reference on value source, might be the reference on a secret or config map
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanalibrarypanelspecenvsindexvaluefromconfigmapkeyref">configMapKeyRef</a></b></td>
+        <td>object</td>
+        <td>
+          Selects a key of a ConfigMap.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanalibrarypanelspecenvsindexvaluefromsecretkeyref">secretKeyRef</a></b></td>
+        <td>object</td>
+        <td>
+          Selects a key of a Secret.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaLibraryPanel.spec.envs[index].valueFrom.configMapKeyRef
+<sup><sup>[↩ Parent](#grafanalibrarypanelspecenvsindexvaluefrom)</sup></sup>
+
+
+
+Selects a key of a ConfigMap.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          The key to select.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the referent.
+This field is effectively required, but due to backwards compatibility is
+allowed to be empty. Instances of this type with an empty value here are
+almost certainly wrong.
+More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>optional</b></td>
+        <td>boolean</td>
+        <td>
+          Specify whether the ConfigMap or its key must be defined<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaLibraryPanel.spec.envs[index].valueFrom.secretKeyRef
+<sup><sup>[↩ Parent](#grafanalibrarypanelspecenvsindexvaluefrom)</sup></sup>
+
+
+
+Selects a key of a Secret.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          The key of the secret to select from.  Must be a valid secret key.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the referent.
+This field is effectively required, but due to backwards compatibility is
+allowed to be empty. Instances of this type with an empty value here are
+almost certainly wrong.
+More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>optional</b></td>
+        <td>boolean</td>
+        <td>
+          Specify whether the Secret or its key must be defined<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaLibraryPanel.spec.grafanaCom
+<sup><sup>[↩ Parent](#grafanalibrarypanelspec)</sup></sup>
+
+
+
+grafana.com/dashboards
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>id</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>revision</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaLibraryPanel.spec.jsonnetLib
+<sup><sup>[↩ Parent](#grafanalibrarypanelspec)</sup></sup>
+
+
+
+Jsonnet project build
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>fileName</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>gzipJsonnetProject</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: byte<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>jPath</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaLibraryPanel.spec.plugins[index]
+<sup><sup>[↩ Parent](#grafanalibrarypanelspec)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>version</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaLibraryPanel.spec.urlAuthorization
+<sup><sup>[↩ Parent](#grafanalibrarypanelspec)</sup></sup>
+
+
+
+authorization options for model from url
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanalibrarypanelspecurlauthorizationbasicauth">basicAuth</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaLibraryPanel.spec.urlAuthorization.basicAuth
+<sup><sup>[↩ Parent](#grafanalibrarypanelspecurlauthorization)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanalibrarypanelspecurlauthorizationbasicauthpassword">password</a></b></td>
+        <td>object</td>
+        <td>
+          SecretKeySelector selects a key of a Secret.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanalibrarypanelspecurlauthorizationbasicauthusername">username</a></b></td>
+        <td>object</td>
+        <td>
+          SecretKeySelector selects a key of a Secret.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaLibraryPanel.spec.urlAuthorization.basicAuth.password
+<sup><sup>[↩ Parent](#grafanalibrarypanelspecurlauthorizationbasicauth)</sup></sup>
+
+
+
+SecretKeySelector selects a key of a Secret.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          The key of the secret to select from.  Must be a valid secret key.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the referent.
+This field is effectively required, but due to backwards compatibility is
+allowed to be empty. Instances of this type with an empty value here are
+almost certainly wrong.
+More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>optional</b></td>
+        <td>boolean</td>
+        <td>
+          Specify whether the Secret or its key must be defined<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaLibraryPanel.spec.urlAuthorization.basicAuth.username
+<sup><sup>[↩ Parent](#grafanalibrarypanelspecurlauthorizationbasicauth)</sup></sup>
+
+
+
+SecretKeySelector selects a key of a Secret.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          The key of the secret to select from.  Must be a valid secret key.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the referent.
+This field is effectively required, but due to backwards compatibility is
+allowed to be empty. Instances of this type with an empty value here are
+almost certainly wrong.
+More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>optional</b></td>
+        <td>boolean</td>
+        <td>
+          Specify whether the Secret or its key must be defined<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaLibraryPanel.status
+<sup><sup>[↩ Parent](#grafanalibrarypanel)</sup></sup>
+
+
+
+GrafanaLibraryPanelStatus defines the observed state of GrafanaLibraryPanel
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanalibrarypanelstatusconditionsindex">conditions</a></b></td>
+        <td>[]object</td>
+        <td>
+          Results when synchonizing resource with Grafana instances<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>contentCache</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: byte<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>contentTimestamp</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>contentUrl</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>hash</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>lastResync</b></td>
+        <td>string</td>
+        <td>
+          Last time the resource was synchronized with Grafana instances<br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>uid</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaLibraryPanel.status.conditions[index]
+<sup><sup>[↩ Parent](#grafanalibrarypanelstatus)</sup></sup>
+
+
+
+Condition contains details for one aspect of the current state of this API Resource.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>lastTransitionTime</b></td>
+        <td>string</td>
+        <td>
+          lastTransitionTime is the last time the condition transitioned from one status to another.
+This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.<br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>message</b></td>
+        <td>string</td>
+        <td>
+          message is a human readable message indicating details about the transition.
+This may be an empty string.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>reason</b></td>
+        <td>string</td>
+        <td>
+          reason contains a programmatic identifier indicating the reason for the condition's last transition.
+Producers of specific condition types may define expected values and meanings for this field,
+and whether the values are considered a guaranteed API.
+The value should be a CamelCase string.
+This field may not be empty.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>status</b></td>
+        <td>enum</td>
+        <td>
+          status of the condition, one of True, False, Unknown.<br/>
+          <br/>
+            <i>Enum</i>: True, False, Unknown<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          type of condition in CamelCase or in foo.example.com/CamelCase.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>observedGeneration</b></td>
+        <td>integer</td>
+        <td>
+          observedGeneration represents the .metadata.generation that the condition was set based upon.
+For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+with respect to the current state of the instance.<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+            <i>Minimum</i>: 0<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
 ## GrafanaMuteTiming
 <sup><sup>[↩ Parent](#grafanaintegreatlyorgv1beta1 )</sup></sup>
 
@@ -3328,7 +4429,7 @@ GrafanaMuteTiming is the Schema for the GrafanaMuteTiming API
           <br/>
             <i>Validations</i>:<li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
         <td><b><a href="#grafanamutetimingstatus">status</a></b></td>
         <td>object</td>
@@ -3750,7 +4851,7 @@ GrafanaNotificationPolicy is the Schema for the GrafanaNotificationPolicy API
           <br/>
             <i>Validations</i>:<li>((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable) && has(self.editable))): spec.editable is immutable</li><li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
         <td><b><a href="#grafananotificationpolicystatus">status</a></b></td>
         <td>object</td>
@@ -4312,7 +5413,7 @@ GrafanaNotificationPolicyRoute is the Schema for the grafananotificationpolicyro
         <td>
           GrafanaNotificationPolicyRouteSpec defines the desired state of GrafanaNotificationPolicyRoute<br/>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
         <td><b><a href="#grafananotificationpolicyroutestatus">status</a></b></td>
         <td>object</td>
@@ -4723,7 +5824,7 @@ GrafanaNotificationTemplate is the Schema for the GrafanaNotificationTemplate AP
           <br/>
             <i>Validations</i>:<li>((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable) && has(self.editable))): spec.editable is immutable</li><li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
         <td><b><a href="#grafananotificationtemplatestatus">status</a></b></td>
         <td>object</td>
@@ -5042,7 +6143,7 @@ Grafana is the Schema for the grafanas API
         <td>
           GrafanaSpec defines the desired state of Grafana<br/>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
         <td><b><a href="#grafanastatus">status</a></b></td>
         <td>object</td>
@@ -22590,6 +23691,8 @@ ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery
         <td>object</td>
         <td>
           TLSConfig defines config used to secure a route and provide termination<br/>
+          <br/>
+            <i>Validations</i>:<li>has(self.termination) && has(self.insecureEdgeTerminationPolicy) ? !((self.termination=='passthrough') && (self.insecureEdgeTerminationPolicy=='Allow')) : true: cannot have both spec.tls.termination: passthrough and spec.tls.insecureEdgeTerminationPolicy: Allow</li>
         </td>
         <td>false</td>
       </tr><tr>
@@ -22630,9 +23733,12 @@ kind is allowed. Use 'weight' field to emphasize one over others.
     </thead>
     <tbody><tr>
         <td><b>kind</b></td>
-        <td>string</td>
+        <td>enum</td>
         <td>
           The kind of target that the route is referring to. Currently, only 'Service' is allowed<br/>
+          <br/>
+            <i>Enum</i>: Service, <br/>
+            <i>Default</i>: Service<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -22650,8 +23756,11 @@ kind is allowed. Use 'weight' field to emphasize one over others.
 against other target reference objects. 0 suppresses requests to this backend.<br/>
           <br/>
             <i>Format</i>: int32<br/>
+            <i>Default</i>: 100<br/>
+            <i>Minimum</i>: 0<br/>
+            <i>Maximum</i>: 256<br/>
         </td>
-        <td>true</td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -22703,9 +23812,17 @@ TLSConfig defines config used to secure a route and provide termination
     </thead>
     <tbody><tr>
         <td><b>termination</b></td>
-        <td>string</td>
+        <td>enum</td>
         <td>
-          termination indicates termination type.<br/>
+          termination indicates termination type.
+
+* edge - TLS termination is done by the router and http is used to communicate with the backend (default)
+* passthrough - Traffic is sent straight to the destination without the router providing TLS termination
+* reencrypt - TLS termination is done by the router and https is used to communicate with the backend
+
+Note: passthrough termination is incompatible with httpHeader actions<br/>
+          <br/>
+            <i>Enum</i>: edge, reencrypt, passthrough<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -22719,7 +23836,8 @@ TLSConfig defines config used to secure a route and provide termination
         <td><b>certificate</b></td>
         <td>string</td>
         <td>
-          certificate provides certificate contents<br/>
+          certificate provides certificate contents. This should be a single serving certificate, not a certificate
+chain. Do not include a CA certificate.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -22734,15 +23852,34 @@ verify.<br/>
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanaspecroutespectlsexternalcertificate">externalCertificate</a></b></td>
+        <td>object</td>
+        <td>
+          externalCertificate provides certificate contents as a secret reference.
+This should be a single serving certificate, not a certificate
+chain. Do not include a CA certificate. The secret referenced should
+be present in the same namespace as that of the Route.
+Forbidden when `certificate` is set.
+The router service account needs to be granted with read-only access to this secret,
+please refer to openshift docs for additional details.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>insecureEdgeTerminationPolicy</b></td>
-        <td>string</td>
+        <td>enum</td>
         <td>
           insecureEdgeTerminationPolicy indicates the desired behavior for insecure connections to a route. While
 each router may make its own decisions on which ports to expose, this is normally port 80.
 
-* Allow - traffic is sent to the server on the insecure port (default)
-* Disable - no traffic is allowed on the insecure port.
+If a route does not specify insecureEdgeTerminationPolicy, then the default behavior is "None".
+
+* Allow - traffic is sent to the server on the insecure port (edge/reencrypt terminations only).
+
+* None - no traffic is allowed on the insecure port (default).
+
 * Redirect - clients are redirected to the secure port.<br/>
+          <br/>
+            <i>Enum</i>: Allow, None, Redirect, <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -22750,6 +23887,40 @@ each router may make its own decisions on which ports to expose, this is normall
         <td>string</td>
         <td>
           key provides key file contents<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.route.spec.tls.externalCertificate
+<sup><sup>[↩ Parent](#grafanaspecroutespectls)</sup></sup>
+
+
+
+externalCertificate provides certificate contents as a secret reference.
+This should be a single serving certificate, not a certificate
+chain. Do not include a CA certificate. The secret referenced should
+be present in the same namespace as that of the Route.
+Forbidden when `certificate` is set.
+The router service account needs to be granted with read-only access to this secret,
+please refer to openshift docs for additional details.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          name of the referent.
+More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -22775,9 +23946,12 @@ kind is allowed. Use 'weight' field to emphasize one over others.
     </thead>
     <tbody><tr>
         <td><b>kind</b></td>
-        <td>string</td>
+        <td>enum</td>
         <td>
           The kind of target that the route is referring to. Currently, only 'Service' is allowed<br/>
+          <br/>
+            <i>Enum</i>: Service, <br/>
+            <i>Default</i>: Service<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -22795,8 +23969,11 @@ kind is allowed. Use 'weight' field to emphasize one over others.
 against other target reference objects. 0 suppresses requests to this backend.<br/>
           <br/>
             <i>Format</i>: int32<br/>
+            <i>Default</i>: 100<br/>
+            <i>Minimum</i>: 0<br/>
+            <i>Maximum</i>: 256<br/>
         </td>
-        <td>true</td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -23587,6 +24764,13 @@ GrafanaStatus defines the observed state of Grafana
       </tr><tr>
         <td><b>lastMessage</b></td>
         <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>libraryPanels</b></td>
+        <td>[]string</td>
         <td>
           <br/>
         </td>

@@ -20,6 +20,9 @@ spec:
       labels:
         {{- include "grafana-operator.labels" . | nindent 8 }}
         app.kubernetes.io/component: operator
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -50,6 +53,12 @@ spec:
               value: ""
               {{ else }}
               value: {{quote .Values.watchNamespaceSelector }}
+              {{- end }}
+            - name: WATCH_LABEL_SELECTORS
+              {{- if and .Values.watchLabelSelectors (eq .Values.watchLabelSelectors "") }}
+              value: ""
+              {{ else }}
+              value: {{quote .Values.watchLabelSelectors }}
               {{- end }}
             {{- with .Values.env }}
               {{- toYaml . | nindent 12 }}

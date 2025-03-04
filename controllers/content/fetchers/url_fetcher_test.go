@@ -43,7 +43,7 @@ var _ = Describe("Fetching dashboards from URL", func() {
 				Status: v1beta1.GrafanaDashboardStatus{},
 			}
 
-			fetchedDashboard, err := FetchDashboardFromUrl(context.Background(), dashboard, k8sClient, nil)
+			fetchedDashboard, err := FetchFromUrl(context.Background(), dashboard, k8sClient, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(fetchedDashboard).To(Equal(fetchedDashboard))
 			Expect(dashboard.Status.ContentTimestamp.Time.IsZero()).To(BeFalse())
@@ -105,7 +105,7 @@ var _ = Describe("Fetching dashboards from URL", func() {
 			}
 			err = k8sClient.Create(context.Background(), credentialsSecret)
 			Expect(err).NotTo(HaveOccurred())
-			fetchedDashboard, err := FetchDashboardFromUrl(context.Background(), dashboard, k8sClient, nil)
+			fetchedDashboard, err := FetchFromUrl(context.Background(), dashboard, k8sClient, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(fetchedDashboard).To(Equal(fetchedDashboard))
 			Expect(dashboard.Status.ContentTimestamp.Time.IsZero()).To(BeFalse())

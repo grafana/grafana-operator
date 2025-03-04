@@ -32,7 +32,13 @@ spec:
     matchLabels:
       team-b: "child"
 ---
-# TODO GrafanaDashboard when InvalidSpec is triggered on invalid dashboard model
+# Model is not valid JSON
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: testdata
+spec:
+  json: "{"
 ---
 # Reference non-existing secret
 apiVersion: grafana.integreatly.org/v1beta1

@@ -87,6 +87,7 @@ It's easier to just manage this configuration outside of the operator.
 | namespaceScope | bool | `false` | If the operator should run in namespace-scope or not, if true the operator will only be able to manage instances in the same namespace |
 | nodeSelector | object | `{}` | pod node selector |
 | podAnnotations | object | `{}` | pod annotations |
+| podLabels | object | `{}` | pod labels |
 | podSecurityContext | object | `{}` | pod security context |
 | priorityClassName | string | `""` | pod priority class name |
 | rbac.create | bool | `true` | Specifies whether to create the ClusterRole and ClusterRoleBinding. If "namespaceScope" is true or "watchNamespaces" is set, this will create Role and RoleBinding instead. |
@@ -107,5 +108,6 @@ It's easier to just manage this configuration outside of the operator.
 | serviceMonitor.targetLabels | list | `[]` | Set of labels to transfer from the Kubernetes Service onto the target |
 | serviceMonitor.telemetryPath | string | `"/metrics"` | Set path to metrics path |
 | tolerations | list | `[]` | pod tolerations |
+| watchLabelSelectors | string | `""` | Sets the `WATCH_LABEL_SELECTORS` environment variable, it defines which CRs are watched according to their labels. By default, the operator watches all CRs. To make it watch only a subset of CRs, define the variable as a *stringified label selector*. See also: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/ Beware: Always label Grafana CRs before enabling to ensure labels are inherited. # Existing Secrets/ConfigMaps referenced in CRs also need to be labeled to continue working. |
 | watchNamespaceSelector | string | `""` | Sets the `WATCH_NAMESPACE_SELECTOR` environment variable, it defines which namespaces the operator should be listening for based on a namespace label (e.g. `"environment: dev"`). By default, the operator watches all namespaces. To make it watch only its own namespace, check out `namespaceScope` option instead. |
 | watchNamespaces | string | `""` | Sets the `WATCH_NAMESPACE` environment variable, it defines which namespaces the operator should be listening for (e.g. `"grafana, foo"`). By default, the operator watches all namespaces. To make it watch only its own namespace, check out `namespaceScope` option instead. |

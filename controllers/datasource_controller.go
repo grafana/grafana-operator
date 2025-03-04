@@ -86,7 +86,6 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 	// sync datasources, delete datasources from grafana that do no longer have a cr
 	datasourcesToDelete := map[*v1beta1.Grafana][]v1beta1.NamespacedResource{}
 	for _, grafana := range grafanas.Items {
-		grafana := grafana
 		for _, datasource := range grafana.Status.Datasources {
 			if allDatasources.Find(datasource.Namespace(), datasource.Name()) == nil {
 				datasourcesToDelete[&grafana] = append(datasourcesToDelete[&grafana], datasource)
@@ -96,7 +95,6 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 
 	// delete all datasources that no longer have a cr
 	for grafana, existingDatasources := range datasourcesToDelete {
-		grafana := grafana
 		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 		if err != nil {
 			return ctrl.Result{}, err
@@ -114,7 +112,7 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 			instanceDatasource, err := grafanaClient.Datasources.GetDataSourceByUID(uid)
 			if err != nil {
 				var notFound *datasources.GetDataSourceByUIDNotFound
-				if errors.As(err, &notFound) {
+				if !errors.As(err, &notFound) {
 					return ctrl.Result{}, err
 				}
 				log.Info("datasource no longer exists", "namespace", namespace, "name", name)
@@ -122,7 +120,7 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 				_, err = grafanaClient.Datasources.DeleteDataSourceByUID(instanceDatasource.Payload.UID) //nolint
 				if err != nil {
 					var notFound *datasources.DeleteDataSourceByUIDNotFound
-					if errors.As(err, &notFound) {
+					if !errors.As(err, &notFound) {
 						return ctrl.Result{}, err
 					}
 				}
@@ -244,8 +242,6 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	pluginErrors := make(map[string]string)
 	applyErrors := make(map[string]string)
 	for _, grafana := range instances {
-		grafana := grafana
-
 		if grafana.IsInternal() {
 			// first reconcile the plugins
 			// append the requested datasources to a configmap from where the
@@ -264,7 +260,6 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	// TODO Add new Condition displaing plugin reconciliation errors
-	// Specific to datasources
 	if len(pluginErrors) > 0 {
 		err := fmt.Errorf("%v", pluginErrors)
 		log.Error(err, "failed to apply plugins to all instances")
@@ -291,8 +286,6 @@ func (r *GrafanaDatasourceReconciler) deleteOldDatasource(ctx context.Context, c
 	}
 
 	for _, grafana := range instances {
-		grafana := grafana
-
 		found, uid := grafana.Status.Datasources.Find(cr.Namespace, cr.Name)
 		if !found {
 			continue
@@ -319,7 +312,10 @@ func (r *GrafanaDatasourceReconciler) deleteOldDatasource(ctx context.Context, c
 		}
 
 		grafana.Status.Datasources = grafana.Status.Datasources.Remove(cr.Namespace, cr.Name)
-		return r.Client.Status().Update(ctx, &grafana)
+		err = r.Client.Status().Update(ctx, &grafana)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -332,8 +328,6 @@ func (r *GrafanaDatasourceReconciler) finalize(ctx context.Context, cr *v1beta1.
 	}
 
 	for _, grafana := range instances {
-		grafana := grafana
-
 		found, uid := grafana.Status.Datasources.Find(cr.Namespace, cr.Name)
 		if !found {
 			continue
@@ -357,12 +351,15 @@ func (r *GrafanaDatasourceReconciler) finalize(ctx context.Context, cr *v1beta1.
 		if grafana.IsInternal() {
 			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, fmt.Sprintf("%v-datasource", cr.Name))
 			if err != nil {
-				return err
+				return fmt.Errorf("reconciling plugins: %w", err)
 			}
 		}
 
 		grafana.Status.Datasources = grafana.Status.Datasources.Remove(cr.Namespace, cr.Name)
-		return r.Client.Status().Update(ctx, &grafana)
+		err = r.Client.Status().Update(ctx, &grafana)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

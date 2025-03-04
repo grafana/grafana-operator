@@ -33,7 +33,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 	service := model.GetGrafanaService(cr, scheme)
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, service, func() error {
-		model.SetCommonLabels(service)
+		model.SetInheritedLabels(service, cr.Labels)
 		service.Spec = v1.ServiceSpec{
 			Ports: getServicePorts(cr),
 			Selector: map[string]string{
@@ -52,6 +52,24 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 		// .svc suffix needed for automatic openshift certificates: https://docs.openshift.com/container-platform/4.17/security/certificates/service-serving-certificate.html#add-service-certificate_service-serving-certificate
 		status.AdminUrl = fmt.Sprintf("%v://%v.%v.svc:%d", getGrafanaServerProtocol(cr), service.Name, cr.Namespace,
 			int32(GetGrafanaPort(cr))) // #nosec G115
+	}
+
+	// Headless service for grafana unified alerting
+	headlessService := model.GetGrafanaHeadlessService(cr, scheme)
+	_, err = controllerutil.CreateOrUpdate(ctx, r.client, headlessService, func() error {
+		model.SetInheritedLabels(headlessService, cr.Labels)
+		headlessService.Spec = v1.ServiceSpec{
+			ClusterIP: "None",
+			Ports:     getHeadlessServicePorts(cr),
+			Selector: map[string]string{
+				"app": cr.Name,
+			},
+			Type: v1.ServiceTypeClusterIP,
+		}
+		return nil
+	})
+	if err != nil {
+		return v1beta1.OperatorStageResultFailed, err
 	}
 
 	return v1beta1.OperatorStageResultSuccess, nil
@@ -90,6 +108,21 @@ func getServicePorts(cr *v1beta1.Grafana) []v1.ServicePort {
 			Protocol:   "TCP",
 			Port:       intPort,
 			TargetPort: intstr.FromString("grafana-http"),
+		},
+	}
+
+	return defaultPorts
+}
+
+func getHeadlessServicePorts(_ *v1beta1.Grafana) []v1.ServicePort {
+	intPort := int32(config.GrafanaAlertPort)
+
+	defaultPorts := []v1.ServicePort{
+		{
+			Name:       config.GrafanaAlertPortName,
+			Protocol:   "TCP",
+			Port:       intPort,
+			TargetPort: intstr.FromInt32(intPort),
 		},
 	}
 

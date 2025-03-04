@@ -211,8 +211,7 @@ func (r *GrafanaMuteTimingReconciler) finalize(ctx context.Context, muteTiming *
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
-	for _, i := range instances {
-		instance := i
+	for _, instance := range instances {
 		if err := r.removeFromInstance(ctx, &instance, muteTiming); err != nil {
 			return fmt.Errorf("removing mute timing from instance: %w", err)
 		}
@@ -227,7 +226,7 @@ func (r *GrafanaMuteTimingReconciler) removeFromInstance(ctx context.Context, in
 		return fmt.Errorf("building grafana client: %w", err)
 	}
 
-	_, err = cl.Provisioning.DeleteMuteTiming(muteTiming.Spec.Name) //nolint:errcheck
+	_, err = cl.Provisioning.DeleteMuteTiming(&provisioning.DeleteMuteTimingParams{Name: muteTiming.Spec.Name}) //nolint:errcheck
 	if err != nil {
 		return fmt.Errorf("deleting mute timing: %w", err)
 	}
