@@ -77,9 +77,10 @@ const (
 	// eg: 'partition in (customerA, customerB),environment!=qa'
 	// If empty of undefined, the operator will watch all CRs.
 	watchLabelSelectorsEnvVar = "WATCH_LABEL_SELECTORS"
-	// clusterLocalDomainEnvVar is the constant for env variable CLUSTER_LOCAL_DOMAIN, which specifies the host domain for the Grafana Admin API when not
-	// preferring an explicit Ingress or Route, i.e., using Kubernetes' internal DNS.
-	// If empty or undefined, the operator will default to `.svc`
+	// clusterLocalDomainEnvVar is the constant for env variable CLUSTER_LOCAL_DOMAIN, which specifies the host domain for the Grafana Admin API
+	// when using internal Kubernetes service addresses, i.e., not using an explicit Ingress or OpenShift Route.
+	// Defaults to empty string, meaning the API will be exposed on a Kubernetes service host `<name>.<namespace>.svc`.
+	// To use the full Kubernetes cluster-local FQDN, set to `.cluster.local`.
 	clusterLocalDomainEnvVar = "CLUSTER_LOCAL_DOMAIN"
 )
 

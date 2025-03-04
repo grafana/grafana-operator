@@ -17,18 +17,12 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-// .svc suffix needed for automatic openshift certificates: https://docs.openshift.com/container-platform/4.17/security/certificates/service-serving-certificate.html#add-service-certificate_service-serving-certificate
-const defaultClusterLocalDomain = ".svc"
-
 type ServiceReconciler struct {
 	client             client.Client
 	clusterLocalDomain string
 }
 
 func NewServiceReconciler(client client.Client, clusterLocalDomain string) reconcilers.OperatorGrafanaReconciler {
-	if clusterLocalDomain == "" {
-		clusterLocalDomain = defaultClusterLocalDomain
-	}
 	return &ServiceReconciler{
 		client:             client,
 		clusterLocalDomain: clusterLocalDomain,
@@ -57,7 +51,9 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 
 	// try to assign the admin url
 	if !cr.PreferIngress() {
-		adminHost := service.Name + "." + cr.Namespace + r.clusterLocalDomain
+		// default empty clusterLocalDomain supports automatic openshift certificates:
+		// https://docs.openshift.com/container-platform/4.17/security/certificates/service-serving-certificate.html#add-service-certificate_service-serving-certificate
+		adminHost := fmt.Sprintf("%v.%v.svc%v", service.Name, cr.Namespace, r.clusterLocalDomain)
 		status.AdminUrl = fmt.Sprintf("%v://%v:%d", getGrafanaServerProtocol(cr), adminHost, int32(GetGrafanaPort(cr))) // #nosec G115
 	}
 

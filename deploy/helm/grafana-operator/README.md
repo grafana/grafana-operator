@@ -64,7 +64,7 @@ It's easier to just manage this configuration outside of the operator.
 |-----|------|---------|-------------|
 | additionalLabels | object | `{}` | additional labels to add to all resources |
 | affinity | object | `{}` | pod affinity |
-| clusterLocalDomain | string | `""` | Sets the `CLUSTER_LOCAL_DOMAIN` environment variable, it defines how the the Grafana Admin API is addressed when not explicitly using a Kubernetes Ingress or Openshift Route configuration. By default, this is set to `.svc`, which should be fine for most deployments, but depending on network agents and frameworks, you may want to change this to the FQDN domain `.svc.cluster.local`. The default setting accommodates Openshift's default certificate signing behavior. |
+| clusterLocalDomain | string | `""` | Sets the `CLUSTER_LOCAL_DOMAIN` environment variable, it defines how the the Grafana Admin API is addressed when not explicitly using a Kubernetes Ingress or Openshift Route configuration. By default, this is empty, which should be fine for most deployments, but depending on network agents and frameworks, you may want to change this to the FQDN domain for cluster-local services: `.cluster.local`. |
 | env | list | `[]` | Additional environment variables |
 | extraObjects | list | `[]` | Array of extra K8s objects to deploy |
 | fullnameOverride | string | `""` | Overrides the fully qualified app name. |
