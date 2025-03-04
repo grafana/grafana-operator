@@ -28,3 +28,13 @@ spec:
         routeSelector:
           matchLabels:
             dynamic: "child"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: no-resolvable-model
+spec:
+  resyncPeriod: 3s
+  instanceSelector:
+    matchLabels:
+      test: "($test.metadata.name)"

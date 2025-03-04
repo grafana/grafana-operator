@@ -117,16 +117,11 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 
 	// begin validation checks
 
-	resolver, err := content.NewContentResolver(libraryPanel, r.Client, content.WithDisabledSources([]content.ContentSourceType{
+	resolver := content.NewContentResolver(libraryPanel, r.Client, content.WithDisabledSources([]content.ContentSourceType{
 		// grafana.com does not currently support hosting library panels for distribution, but perhaps
 		// this will change in the future.
 		content.ContentSourceTypeGrafanaCom,
 	}))
-	if err != nil {
-		log.Error(err, "error creating library panel content resolver, this indicates an implementation bug", "libraryPanel", libraryPanel.Name)
-		// Failing to create a resolver is an unrecoverable error
-		return ctrl.Result{Requeue: false}, nil
-	}
 
 	// Retrieving the model before the loop ensures to exit early in case of failure and not fail once per matching instance
 	contentModel, hash, err := resolver.Resolve(ctx)
@@ -157,7 +152,8 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 		setNoMatchingInstancesCondition(&libraryPanel.Status.Conditions, libraryPanel.Generation, err)
 		meta.RemoveStatusCondition(&libraryPanel.Status.Conditions, conditionLibraryPanelSynchronized)
 		return ctrl.Result{}, fmt.Errorf("could not find matching instances: %w", err)
-	} else if len(instances) == 0 {
+	}
+	if len(instances) == 0 {
 		setNoMatchingInstancesCondition(&libraryPanel.Status.Conditions, libraryPanel.Generation, err)
 		meta.RemoveStatusCondition(&libraryPanel.Status.Conditions, conditionLibraryPanelSynchronized)
 		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
@@ -262,8 +258,7 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, libraryPan
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
-	for _, i := range instances {
-		instance := i
+	for _, instance := range instances {
 		if err := r.removeFromInstance(ctx, &instance, libraryPanel); err != nil {
 			return fmt.Errorf("removing notification template from instance: %w", err)
 		}
