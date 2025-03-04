@@ -83,7 +83,6 @@ func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result,
 	// sync folders, delete folders from grafana that do no longer have a cr
 	foldersToDelete := map[*grafanav1beta1.Grafana][]grafanav1beta1.NamespacedResource{}
 	for _, grafana := range grafanas.Items {
-		grafana := grafana
 		for _, folder := range grafana.Status.Folders {
 			if allFolders.Find(folder.Namespace(), folder.Name()) == nil {
 				foldersToDelete[&grafana] = append(foldersToDelete[&grafana], folder)
@@ -230,8 +229,6 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	applyErrors := make(map[string]string)
 	for _, grafana := range instances {
-		grafana := grafana
-
 		err = r.onFolderCreated(ctx, &grafana, folder)
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
@@ -292,25 +289,27 @@ func (r *GrafanaFolderReconciler) finalize(ctx context.Context, folder *grafanav
 	params := folders.NewDeleteFolderParams().WithForceDeleteRules(&reftrue)
 
 	for _, grafana := range instances {
-		grafana := grafana
-		if found, uid := grafana.Status.Folders.Find(folder.Namespace, folder.Name); found {
-			grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
-			if err != nil {
+		found, uid := grafana.Status.Folders.Find(folder.Namespace, folder.Name)
+		if !found {
+			continue
+		}
+
+		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
+		if err != nil {
+			return err
+		}
+
+		_, err = grafanaClient.Folders.DeleteFolder(params.WithFolderUID(*uid)) //nolint
+		if err != nil {
+			var notFound *folders.DeleteFolderNotFound
+			if !errors.As(err, &notFound) {
 				return err
 			}
+		}
 
-			_, err = grafanaClient.Folders.DeleteFolder(params.WithFolderUID(*uid)) //nolint
-			if err != nil {
-				var notFound *folders.DeleteFolderNotFound
-				if !errors.As(err, &notFound) {
-					return err
-				}
-			}
-
-			grafana.Status.Folders = grafana.Status.Folders.Remove(folder.Namespace, folder.Name)
-			if err = r.Client.Status().Update(ctx, &grafana); err != nil {
-				return fmt.Errorf("removing Folder from Grafana cr: %w", err)
-			}
+		grafana.Status.Folders = grafana.Status.Folders.Remove(folder.Namespace, folder.Name)
+		if err = r.Client.Status().Update(ctx, &grafana); err != nil {
+			return fmt.Errorf("removing Folder from Grafana cr: %w", err)
 		}
 	}
 

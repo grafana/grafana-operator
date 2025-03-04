@@ -106,7 +106,7 @@ type GrafanaDatasource struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   GrafanaDatasourceSpec   `json:"spec,omitempty"`
+	Spec   GrafanaDatasourceSpec   `json:"spec"`
 	Status GrafanaDatasourceStatus `json:"status,omitempty"`
 }
 
