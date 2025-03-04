@@ -88,9 +88,11 @@ func GetScopedMatchingInstances(ctx context.Context, k8sClient client.Client, cr
 		if !selected {
 			continue
 		}
+
+		doReadyCheck := instance.Annotations["grafana/skip-ready-check"] == ""
 		// admin url is required to interact with Grafana
 		// the instance or route might not yet be ready
-		if instance.Status.Stage != v1beta1.OperatorStageComplete || instance.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
+		if doReadyCheck && (instance.Status.Stage != v1beta1.OperatorStageComplete || instance.Status.StageStatus != v1beta1.OperatorStageResultSuccess) {
 			unready_instances = append(unready_instances, instance.Name)
 			continue
 		}

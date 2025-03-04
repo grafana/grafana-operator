@@ -18,11 +18,8 @@ package controllers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
-	"reflect"
 	"strings"
 
 	"github.com/grafana/grafana-operator/v5/controllers/config"
@@ -32,7 +29,6 @@ import (
 	v1 "k8s.io/api/apps/v1"
 	v12 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/client-go/discovery"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -40,14 +36,12 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
-	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 )
 
 // GrafanaReconciler reconciles a Grafana object
 type GrafanaReconciler struct {
 	client.Client
 	Scheme      *runtime.Scheme
-	Discovery   discovery.DiscoveryInterface
 	IsOpenShift bool
 }
 
@@ -64,11 +58,10 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	log := logf.FromContext(ctx).WithName("GrafanaReconciler")
 	ctx = logf.IntoContext(ctx, log)
 
-	grafana := &grafanav1beta1.Grafana{}
-	err := r.Get(ctx, req.NamespacedName, grafana)
+	cr := &grafanav1beta1.Grafana{}
+	err := r.Get(ctx, req.NamespacedName, cr)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			log.Info("grafana cr has been deleted", "name", req.NamespacedName)
 			return ctrl.Result{}, nil
 		}
 
@@ -76,44 +69,43 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, err
 	}
 
-	metrics.GrafanaReconciles.WithLabelValues(grafana.Name).Inc()
+	metrics.GrafanaReconciles.WithLabelValues(cr.Namespace, cr.Name).Inc()
 
-	finished := true
-	stages := getInstallationStages()
-	nextStatus := grafana.Status.DeepCopy()
+	defer func() {
+		if err := r.Status().Update(ctx, cr); err != nil {
+			log.Error(err, "updating status")
+		}
+	}()
+
+	var stages []grafanav1beta1.OperatorStageName
+	if cr.IsExternal() {
+		cr.Status.AdminUrl = cr.Spec.External.URL
+		// Only reconcile the Completion stage for external instances
+		stages = []grafanav1beta1.OperatorStageName{grafanav1beta1.OperatorStageComplete}
+	} else {
+		stages = getInstallationStages()
+
+		// set spec to the current default version to avoid accidental updates when we
+		// change the default. For clusters where RELATED_IMAGE_GRAFANA is set to an
+		// image hash, we want to set this to the value of the variable to support air
+		// gapped clusters as well
+		if cr.Spec.Version == "" {
+			targetVersion := config.GrafanaVersion
+			if envVersion := os.Getenv("RELATED_IMAGE_GRAFANA"); isImageSHA256(envVersion) {
+				targetVersion = envVersion
+			}
+			cr.Spec.Version = targetVersion
+			if err := r.Client.Update(ctx, cr); err != nil {
+				return ctrl.Result{}, fmt.Errorf("updating grafana version in spec: %w", err)
+			}
+		}
+	}
+
 	vars := &grafanav1beta1.OperatorReconcileVars{}
-
-	if grafana.IsExternal() {
-		nextStatus.Stage = grafanav1beta1.OperatorStageComplete
-		nextStatus.StageStatus = grafanav1beta1.OperatorStageResultSuccess
-		nextStatus.AdminUrl = grafana.Spec.External.URL
-		v, err := r.getVersion(ctx, grafana)
-		if err != nil {
-			log.Error(err, "failed to get version from external instance")
-		}
-		nextStatus.Version = v
-		return r.updateStatus(ctx, grafana, nextStatus)
-	}
-
-	// set spec to the current default version to avoid accidental updates when we
-	// change the default. For clusters where RELATED_IMAGE_GRAFANA is set to an
-	// image hash, we want to set this to the value of the variable to support air
-	// gapped clusters as well
-	if grafana.Spec.Version == "" {
-		targetVersion := config.GrafanaVersion
-		if envVersion := os.Getenv("RELATED_IMAGE_GRAFANA"); isImageSHA256(envVersion) {
-			targetVersion = envVersion
-		}
-		grafana.Spec.Version = targetVersion
-		if err := r.Client.Update(ctx, grafana); err != nil {
-			return ctrl.Result{}, fmt.Errorf("updating grafana version in spec: %w", err)
-		}
-	}
-
 	for _, stage := range stages {
 		log.Info("running stage", "stage", stage)
 
-		nextStatus.Stage = stage
+		cr.Status.Stage = stage
 		reconciler := r.getReconcilerForStage(stage)
 
 		if reconciler == nil {
@@ -121,102 +113,21 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			continue
 		}
 
-		status, err := reconciler.Reconcile(ctx, grafana, nextStatus, vars, r.Scheme)
+		stageStatus, err := reconciler.Reconcile(ctx, cr, vars, r.Scheme)
 		if err != nil {
-			log.Error(err, "reconciler error in stage", "stage", stage)
-			nextStatus.LastMessage = err.Error()
+			cr.Status.StageStatus = stageStatus // In progress or failed, both accompanied by Error
+			cr.Status.LastMessage = err.Error()
+			metrics.GrafanaFailedReconciles.WithLabelValues(cr.Namespace, cr.Name, string(stage)).Inc()
 
-			metrics.GrafanaFailedReconciles.WithLabelValues(grafana.Name, string(stage)).Inc()
-		} else {
-			nextStatus.LastMessage = ""
+			return ctrl.Result{}, fmt.Errorf("reconciler error in stage '%s': %w", stage, err)
 		}
 
-		nextStatus.StageStatus = status
-
-		if status != grafanav1beta1.OperatorStageResultSuccess {
-			log.Info("stage in progress", "stage", stage)
-			finished = false
-			break
-		}
+		cr.Status.StageStatus = stageStatus // Should always be Success
 	}
 
-	if finished {
-		v, err := r.getVersion(ctx, grafana)
-		if err != nil {
-			log.Error(err, "failed to get version from instance")
-		}
-		nextStatus.Version = v
-		log.Info("grafana installation complete")
-	}
+	cr.Status.LastMessage = ""
 
-	return r.updateStatus(ctx, grafana, nextStatus)
-}
-
-func (r *GrafanaReconciler) getVersion(ctx context.Context, cr *grafanav1beta1.Grafana) (string, error) {
-	cl, err := client2.NewHTTPClient(ctx, r.Client, cr)
-	if err != nil {
-		return "", fmt.Errorf("setup of the http client: %w", err)
-	}
-	instanceUrl := cr.Status.AdminUrl
-	if instanceUrl == "" && cr.Spec.External != nil {
-		instanceUrl = cr.Spec.External.URL
-	}
-	req, err := http.NewRequest("GET", instanceUrl+"/api/frontend/settings", nil)
-	if err != nil {
-		return "", fmt.Errorf("building request to fetch version: %w", err)
-	}
-	err = client2.InjectAuthHeaders(context.Background(), r.Client, cr, req)
-	if err != nil {
-		return "", fmt.Errorf("fetching authentication information for version detection: %w", err)
-	}
-	resp, err := cl.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("fetching version: %w", err)
-	}
-	data := struct {
-		BuildInfo struct {
-			Version string `json:"version"`
-		} `json:"buildInfo"`
-	}{}
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return "", fmt.Errorf("parsing health endpoint data: %w", err)
-	}
-	if data.BuildInfo.Version == "" {
-		return "", fmt.Errorf("empty version received from server")
-	}
-	return data.BuildInfo.Version, nil
-}
-
-func (r *GrafanaReconciler) updateStatus(ctx context.Context, cr *grafanav1beta1.Grafana, nextStatus *grafanav1beta1.GrafanaStatus) (ctrl.Result, error) {
-	log := logf.FromContext(ctx)
-	if !reflect.DeepEqual(&cr.Status, nextStatus) {
-		nextStatus.DeepCopyInto(&cr.Status)
-		err := r.Client.Status().Update(context.Background(), cr)
-		if err != nil {
-			return ctrl.Result{
-				Requeue:      true,
-				RequeueAfter: RequeueDelay,
-			}, err
-		}
-	}
-
-	if nextStatus.StageStatus != grafanav1beta1.OperatorStageResultSuccess {
-		return ctrl.Result{
-			Requeue:      true,
-			RequeueAfter: RequeueDelay,
-		}, nil
-	}
-	if cr.Status.Version == "" {
-		log.Info("version not yet found, requeuing")
-		return ctrl.Result{
-			Requeue:      true,
-			RequeueAfter: RequeueDelay,
-		}, nil
-	}
-
-	return ctrl.Result{
-		Requeue: false,
-	}, nil
+	return ctrl.Result{}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -225,6 +136,7 @@ func (r *GrafanaReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&grafanav1beta1.Grafana{}).
 		Owns(&v1.Deployment{}).
 		Owns(&v12.ConfigMap{}).
+		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
 }
 
@@ -261,7 +173,7 @@ func (r *GrafanaReconciler) getReconcilerForStage(stage grafanav1beta1.OperatorS
 	case grafanav1beta1.OperatorStageDeployment:
 		return grafana.NewDeploymentReconciler(r.Client, r.IsOpenShift)
 	case grafanav1beta1.OperatorStageComplete:
-		return grafana.NewCompleteReconciler()
+		return grafana.NewCompleteReconciler(r.Client)
 	default:
 		return nil
 	}

@@ -142,6 +142,7 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1
 	}
 
 	transport := NewInstrumentedRoundTripper(grafana.IsExternal(), tlsConfig, metrics.GrafanaApiRequests.MustCurryWith(prometheus.Labels{
+		"namespace":     grafana.Namespace,
 		"instance_name": grafana.Name,
 	}))
 	if grafana.Spec.Client != nil && grafana.Spec.Client.Headers != nil {
