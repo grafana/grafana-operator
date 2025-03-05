@@ -24,6 +24,14 @@ watchNamespaceSelector: ""
 watchLabelSelectors: ""
 # watchLabelSelectors: "partition in (customerA, customerB),environment!=qa"
 
+# -- Sets the `CLUSTER_DOMAIN` environment variable,
+# it defines how internal Kubernetes services managed by the operator are addressed.
+# By default, this is empty, and internal services are addressed without a cluster domain specified, i.e., a
+# relative domain name that will resolve regardless of if a custom domain is configured for the cluster. If you
+# wish to have services addressed using their FQDNs, you can specify the cluster domain explicitly, e.g., "cluster.local"
+# for the default Kubernetes configuration.
+clusterDomain: ""
+
 # -- Determines if the target cluster is OpenShift. Additional rbac permissions for routes will be added on OpenShift
 isOpenShift: false
 
@@ -36,7 +44,8 @@ logging:
   time: rfc3339
 
 # -- Additional environment variables
-env: []
+env:
+  []
   # -- grafana image, e.g. docker.io/grafana/grafana:9.1.6, overwrites the default grafana image defined in the operator
   # - name: RELATED_IMAGE_GRAFANA
   #   value: "docker.io/grafana/grafana:9.1.6"
