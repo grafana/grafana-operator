@@ -60,11 +60,11 @@ spec:
               {{ else }}
               value: {{quote .Values.watchLabelSelectors }}
               {{- end }}
-            - name: CLUSTER_LOCAL_DOMAIN
-              {{- if and .Values.clusterLocalDomain (eq .Values.clusterLocalDomain "") }}
+            - name: CLUSTER_DOMAIN
+              {{- if and .Values.clusterDomain (eq .Values.clusterDomain "") }}
               value: ""
               {{ else }}
-              value: {{quote .Values.clusterLocalDomain }}
+              value: {{quote .Values.clusterDomain }}
               {{- end }}
             {{- with .Values.env }}
               {{- toYaml . | nindent 12 }}

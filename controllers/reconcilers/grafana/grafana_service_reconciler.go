@@ -18,14 +18,14 @@ import (
 )
 
 type ServiceReconciler struct {
-	client             client.Client
-	clusterLocalDomain string
+	client        client.Client
+	clusterDomain string
 }
 
-func NewServiceReconciler(client client.Client, clusterLocalDomain string) reconcilers.OperatorGrafanaReconciler {
+func NewServiceReconciler(client client.Client, clusterDomain string) reconcilers.OperatorGrafanaReconciler {
 	return &ServiceReconciler{
-		client:             client,
-		clusterLocalDomain: clusterLocalDomain,
+		client:        client,
+		clusterDomain: clusterDomain,
 	}
 }
 
@@ -51,9 +51,12 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 
 	// try to assign the admin url
 	if !cr.PreferIngress() {
-		// default empty clusterLocalDomain supports automatic openshift certificates:
+		// default empty clusterDomain supports automatic openshift certificates:
 		// https://docs.openshift.com/container-platform/4.17/security/certificates/service-serving-certificate.html#add-service-certificate_service-serving-certificate
-		adminHost := fmt.Sprintf("%v.%v.svc%v", service.Name, cr.Namespace, r.clusterLocalDomain)
+		adminHost := fmt.Sprintf("%v.%v.svc", service.Name, cr.Namespace)
+		if r.clusterDomain != "" {
+			adminHost += "." + r.clusterDomain
+		}
 		status.AdminUrl = fmt.Sprintf("%v://%v:%d", getGrafanaServerProtocol(cr), adminHost, int32(GetGrafanaPort(cr))) // #nosec G115
 	}
 
