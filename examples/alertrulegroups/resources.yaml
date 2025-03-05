@@ -14,6 +14,10 @@ spec:
     security:
       admin_user: root
       admin_password: secret
+    # To enable Grafana-managed recording rules, add the following configuration.
+    recording_rules:
+      enabled: "true"
+      url: http://prometheus-service:9090
 
     ## Starting from Grafana 11.3.0, it is possible to enforce
     ## a limit on how many alert rule versions should be stored
@@ -94,3 +98,6 @@ spec:
       noDataState: NoData
       title: Temperature below zero
       uid: 4843de5c-4f8a-4af0-9509-23526a04faf8
+      record:
+        from: A
+        metric: "weather:temperature:celsius"
