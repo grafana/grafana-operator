@@ -114,7 +114,9 @@ func main() {
 	logCfg := uberzap.NewProductionEncoderConfig()
 	logCfg.EncodeTime = zapcore.ISO8601TimeEncoder
 	opts := zap.Options{
-		Encoder: zapcore.NewConsoleEncoder(logCfg),
+		NewEncoder: func(eco ...zap.EncoderConfigOption) zapcore.Encoder {
+			return zapcore.NewConsoleEncoder(logCfg)
+		},
 	}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()

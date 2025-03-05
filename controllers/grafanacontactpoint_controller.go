@@ -135,9 +135,6 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 
 	applyErrors := make(map[string]string)
 	for _, grafana := range instances {
-		// can be removed in go 1.22+
-		grafana := grafana
-
 		err := r.reconcileWithInstance(ctx, &grafana, contactPoint, &settings)
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
@@ -238,8 +235,7 @@ func (r *GrafanaContactPointReconciler) finalize(ctx context.Context, contactPoi
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
-	for _, i := range instances {
-		instance := i
+	for _, instance := range instances {
 		if err := r.removeFromInstance(ctx, &instance, contactPoint); err != nil {
 			return fmt.Errorf("removing contact point from instance: %w", err)
 		}
