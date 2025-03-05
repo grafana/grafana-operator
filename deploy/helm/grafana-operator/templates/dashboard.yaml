@@ -15,6 +15,6 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 data:
-  grafana-operator: |-
-{{- .Files.Get "files/dashboard.yaml" | nindent 4 }}
+  grafana-operator.json: |-
+{{- .Files.Get "files/dashboard.json" | nindent 4 }}
 {{- end -}}
