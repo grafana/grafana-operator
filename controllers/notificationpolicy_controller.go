@@ -39,7 +39,6 @@ import (
 
 	"github.com/grafana/grafana-openapi-client-go/client/provisioning"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 )
 
@@ -69,7 +68,7 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 	log := logf.FromContext(ctx).WithName("GrafanaNotificationPolicyReconciler")
 	ctx = logf.IntoContext(ctx, log)
 
-	notificationPolicy := &grafanav1beta1.GrafanaNotificationPolicy{}
+	notificationPolicy := &v1beta1.GrafanaNotificationPolicy{}
 	err := r.Client.Get(ctx, client.ObjectKey{
 		Namespace: req.Namespace,
 		Name:      req.Name,
@@ -195,7 +194,7 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 // returns an assembled GrafanaNotificationPolicy as well as a list of all merged routes.
 // it ensures that there are no reference loops when discovering routes via labelSelectors
 
-func assembleNotificationPolicyRoutes(ctx context.Context, k8sClient client.Client, notificationPolicy *grafanav1beta1.GrafanaNotificationPolicy) ([]*v1beta1.GrafanaNotificationPolicyRoute, error) {
+func assembleNotificationPolicyRoutes(ctx context.Context, k8sClient client.Client, notificationPolicy *v1beta1.GrafanaNotificationPolicy) ([]*v1beta1.GrafanaNotificationPolicyRoute, error) {
 	var namespace *string
 	if !notificationPolicy.AllowCrossNamespace() {
 		ns := notificationPolicy.GetObjectMeta().GetNamespace()
@@ -211,8 +210,8 @@ func assembleNotificationPolicyRoutes(ctx context.Context, k8sClient client.Clie
 	// so we can detect loops
 	visitedChilds := make(map[string]bool)
 
-	var assembleRoute func(*grafanav1beta1.Route) error
-	assembleRoute = func(route *grafanav1beta1.Route) error {
+	var assembleRoute func(*v1beta1.Route) error
+	assembleRoute = func(route *v1beta1.Route) error {
 		if route.RouteSelector != nil {
 			routes, err := getMatchingNotificationPolicyRoutes(ctx, k8sClient, route.RouteSelector, namespace)
 			if err != nil {
@@ -265,7 +264,7 @@ func assembleNotificationPolicyRoutes(ctx context.Context, k8sClient client.Clie
 	return mergedRoutes, nil
 }
 
-func (r *GrafanaNotificationPolicyReconciler) reconcileWithInstance(ctx context.Context, instance *grafanav1beta1.Grafana, notificationPolicy *grafanav1beta1.GrafanaNotificationPolicy) error {
+func (r *GrafanaNotificationPolicyReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, notificationPolicy *v1beta1.GrafanaNotificationPolicy) error {
 	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
@@ -293,7 +292,7 @@ func (r *GrafanaNotificationPolicyReconciler) reconcileWithInstance(ctx context.
 	return nil
 }
 
-func (r *GrafanaNotificationPolicyReconciler) finalize(ctx context.Context, notificationPolicy *grafanav1beta1.GrafanaNotificationPolicy) error {
+func (r *GrafanaNotificationPolicyReconciler) finalize(ctx context.Context, notificationPolicy *v1beta1.GrafanaNotificationPolicy) error {
 	log := logf.FromContext(ctx)
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, notificationPolicy)
 	if err != nil {
@@ -326,11 +325,11 @@ func (r *GrafanaNotificationPolicyReconciler) finalize(ctx context.Context, noti
 // SetupWithManager sets up the controller with the Manager.
 func (r *GrafanaNotificationPolicyReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&grafanav1beta1.GrafanaNotificationPolicy{}).
-		Watches(&grafanav1beta1.GrafanaContactPoint{}, handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
+		For(&v1beta1.GrafanaNotificationPolicy{}).
+		Watches(&v1beta1.GrafanaContactPoint{}, handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
 			log := logf.FromContext(ctx).WithName("GrafanaNotificationPolicyReconciler")
 			// resync all notification policies for now. Can be optimized by comparing instance selectors
-			nps := &grafanav1beta1.GrafanaNotificationPolicyList{}
+			nps := &v1beta1.GrafanaNotificationPolicyList{}
 			if err := r.List(ctx, nps); err != nil {
 				log.Error(err, "failed to fetch notification policies for watch mapping")
 				return nil
@@ -346,9 +345,9 @@ func (r *GrafanaNotificationPolicyReconciler) SetupWithManager(mgr ctrl.Manager)
 			}
 			return requests
 		})).
-		Watches(&grafanav1beta1.GrafanaNotificationPolicyRoute{}, handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
+		Watches(&v1beta1.GrafanaNotificationPolicyRoute{}, handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
 			log := logf.FromContext(ctx).WithName("GrafanaNotificationPolicyReconciler")
-			npr, ok := o.(*grafanav1beta1.GrafanaNotificationPolicyRoute)
+			npr, ok := o.(*v1beta1.GrafanaNotificationPolicyRoute)
 			if !ok {
 				log.Error(fmt.Errorf("expected object to be NotificationPolicyRoute"), "skipping resource")
 			}
@@ -368,7 +367,7 @@ func (r *GrafanaNotificationPolicyReconciler) SetupWithManager(mgr ctrl.Manager)
 			removeInvalidSpec(&npr.Status.Conditions)
 
 			// resync all notification policies that have a routeSelector that matches the routes labels
-			npList := &grafanav1beta1.GrafanaNotificationPolicyList{}
+			npList := &v1beta1.GrafanaNotificationPolicyList{}
 			if err := r.List(ctx, npList); err != nil {
 				log.Error(err, "failed to fetch notification policies for watch mapping")
 				return nil
@@ -399,7 +398,7 @@ func (r *GrafanaNotificationPolicyReconciler) SetupWithManager(mgr ctrl.Manager)
 
 // getMatchingNotificationPolicyRoutes retrieves all valid GrafanaNotificationPolicyRoutes for the given labelSelector
 // results will be limited to namespace when specified and excludes routes with invalidSpec status condition
-func getMatchingNotificationPolicyRoutes(ctx context.Context, k8sClient client.Client, labelSelector *metav1.LabelSelector, namespace *string) ([]grafanav1beta1.GrafanaNotificationPolicyRoute, error) {
+func getMatchingNotificationPolicyRoutes(ctx context.Context, k8sClient client.Client, labelSelector *metav1.LabelSelector, namespace *string) ([]v1beta1.GrafanaNotificationPolicyRoute, error) {
 	if labelSelector == nil {
 		return nil, nil
 	}
@@ -430,7 +429,7 @@ func getMatchingNotificationPolicyRoutes(ctx context.Context, k8sClient client.C
 }
 
 // updateNotificationPolicyRoutesStatus sets status conditions and emits a merged event to all matched notification policy routes
-func (r *GrafanaNotificationPolicyReconciler) updateNotificationPolicyRoutesStatus(ctx context.Context, notificationPolicy *grafanav1beta1.GrafanaNotificationPolicy, routes []*v1beta1.GrafanaNotificationPolicyRoute) error {
+func (r *GrafanaNotificationPolicyReconciler) updateNotificationPolicyRoutesStatus(ctx context.Context, notificationPolicy *v1beta1.GrafanaNotificationPolicy, routes []*v1beta1.GrafanaNotificationPolicyRoute) error {
 	if notificationPolicy == nil || routes == nil {
 		return nil
 	}
