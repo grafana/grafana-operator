@@ -151,7 +151,7 @@ dashboard:
   # -- Annotations to add to the Grafana dashboard ConfigMap
   annotations: {}
   # -- Labels to add to the Grafana dashboard ConfigMap
-  additionalLabels: {}
+  labels: {}
 
 # -- Array of extra K8s objects to deploy
 extraObjects: []
