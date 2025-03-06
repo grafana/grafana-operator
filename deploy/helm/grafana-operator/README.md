@@ -64,6 +64,7 @@ It's easier to just manage this configuration outside of the operator.
 |-----|------|---------|-------------|
 | additionalLabels | object | `{}` | additional labels to add to all resources |
 | affinity | object | `{}` | pod affinity |
+| clusterDomain | string | `""` | Sets the `CLUSTER_DOMAIN` environment variable, it defines how internal Kubernetes services managed by the operator are addressed. By default, this is empty, and internal services are addressed without a cluster domain specified, i.e., a relative domain name that will resolve regardless of if a custom domain is configured for the cluster. If you wish to have services addressed using their FQDNs, you can specify the cluster domain explicitly, e.g., "cluster.local" for the default Kubernetes configuration. |
 | env | list | `[]` | Additional environment variables |
 | extraObjects | list | `[]` | Array of extra K8s objects to deploy |
 | fullnameOverride | string | `""` | Overrides the fully qualified app name. |
