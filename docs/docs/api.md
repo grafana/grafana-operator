@@ -80,7 +80,7 @@ GrafanaAlertRuleGroup is the Schema for the grafanaalertrulegroups API
           <br/>
             <i>Validations</i>:<li>(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID))): Only one of FolderUID or FolderRef can be set</li><li>((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable) && has(self.editable))): spec.editable is immutable</li><li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
         <td><b><a href="#grafanaalertrulegroupstatus">status</a></b></td>
         <td>object</td>
@@ -725,7 +725,7 @@ GrafanaContactPoint is the Schema for the grafanacontactpoints API
           <br/>
             <i>Validations</i>:<li>((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid))): spec.uid is immutable</li><li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
         <td><b><a href="#grafanacontactpointstatus">status</a></b></td>
         <td>object</td>
@@ -1233,7 +1233,7 @@ GrafanaDashboard is the Schema for the grafanadashboards API
           <br/>
             <i>Validations</i>:<li>(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID))) || !(has(self.folderRef) && (has(self.folderUID))): Only one of folderUID or folderRef can be declared at the same time</li><li>(has(self.folder) && !(has(self.folderRef) || has(self.folderUID))) || !(has(self.folder)): folder field cannot be set when folderUID or folderRef is already declared</li><li>((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid))): spec.uid is immutable</li><li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
         <td><b><a href="#grafanadashboardstatus">status</a></b></td>
         <td>object</td>
@@ -2346,7 +2346,7 @@ GrafanaDatasource is the Schema for the grafanadatasources API
           <br/>
             <i>Validations</i>:<li>((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid))): spec.uid is immutable</li><li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
         <td><b><a href="#grafanadatasourcestatus">status</a></b></td>
         <td>object</td>
@@ -3022,7 +3022,7 @@ GrafanaFolder is the Schema for the grafanafolders API
           <br/>
             <i>Validations</i>:<li>(has(self.parentFolderUID) && !(has(self.parentFolderRef))) || (has(self.parentFolderRef) && !(has(self.parentFolderUID))) || !(has(self.parentFolderRef) && (has(self.parentFolderUID))): Only one of parentFolderUID or parentFolderRef can be set</li><li>((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid))): spec.uid is immutable</li><li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
         <td><b><a href="#grafanafolderstatus">status</a></b></td>
         <td>object</td>
@@ -3371,7 +3371,7 @@ GrafanaLibraryPanel is the Schema for the grafanalibrarypanels API
           <br/>
             <i>Validations</i>:<li>(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID))) || !(has(self.folderRef) && (has(self.folderUID))): Only one of folderUID or folderRef can be declared at the same time</li><li>((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid))): spec.uid is immutable</li><li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
         <td><b><a href="#grafanalibrarypanelstatus">status</a></b></td>
         <td>object</td>
@@ -4470,7 +4470,7 @@ GrafanaMuteTiming is the Schema for the GrafanaMuteTiming API
           <br/>
             <i>Validations</i>:<li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
         <td><b><a href="#grafanamutetimingstatus">status</a></b></td>
         <td>object</td>
@@ -4892,7 +4892,7 @@ GrafanaNotificationPolicy is the Schema for the GrafanaNotificationPolicy API
           <br/>
             <i>Validations</i>:<li>((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable) && has(self.editable))): spec.editable is immutable</li><li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
         <td><b><a href="#grafananotificationpolicystatus">status</a></b></td>
         <td>object</td>
@@ -5454,7 +5454,7 @@ GrafanaNotificationPolicyRoute is the Schema for the grafananotificationpolicyro
         <td>
           GrafanaNotificationPolicyRouteSpec defines the desired state of GrafanaNotificationPolicyRoute<br/>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
         <td><b><a href="#grafananotificationpolicyroutestatus">status</a></b></td>
         <td>object</td>
@@ -5865,7 +5865,7 @@ GrafanaNotificationTemplate is the Schema for the GrafanaNotificationTemplate AP
           <br/>
             <i>Validations</i>:<li>((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable) && has(self.editable))): spec.editable is immutable</li><li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
         <td><b><a href="#grafananotificationtemplatestatus">status</a></b></td>
         <td>object</td>
@@ -6184,7 +6184,7 @@ Grafana is the Schema for the grafanas API
         <td>
           GrafanaSpec defines the desired state of Grafana<br/>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
         <td><b><a href="#grafanastatus">status</a></b></td>
         <td>object</td>

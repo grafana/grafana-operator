@@ -52,7 +52,7 @@ spec:
       test: ($test.metadata.name)
   resyncPeriod: 3s
   route:
-    receiver: testdata
+    receiver: grafana-default-email
     group_by:
       - grafana_folder
       - alertname

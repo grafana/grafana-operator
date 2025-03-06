@@ -211,8 +211,7 @@ func (r *GrafanaMuteTimingReconciler) finalize(ctx context.Context, muteTiming *
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
-	for _, i := range instances {
-		instance := i
+	for _, instance := range instances {
 		if err := r.removeFromInstance(ctx, &instance, muteTiming); err != nil {
 			return fmt.Errorf("removing mute timing from instance: %w", err)
 		}

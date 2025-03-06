@@ -40,10 +40,18 @@ func WriteIni(cfg map[string]map[string]string) (string, string) {
 	}
 
 	sections := make([]string, 0, len(cfg))
+	hasGlobal := false
 	for key := range cfg {
+		if key == "global" {
+			hasGlobal = true
+			continue
+		}
 		sections = append(sections, key)
 	}
 	sort.Strings(sections)
+	if hasGlobal {
+		sections = append([]string{"global"}, sections...)
+	}
 	sb := &strings.Builder{}
 	for _, section := range sections {
 		if cfg[section] == nil || len(cfg[section]) == 0 {
@@ -59,8 +67,10 @@ func WriteIni(cfg map[string]map[string]string) (string, string) {
 }
 
 func writeSection(name string, settings map[string]string, sb *strings.Builder) {
-	sb.WriteString(fmt.Sprintf("[%s]", name))
-	sb.WriteByte('\n')
+	if name != "global" {
+		sb.WriteString(fmt.Sprintf("[%s]", name))
+		sb.WriteByte('\n')
+	}
 
 	keys := make([]string, 0, len(settings))
 	for key := range settings {

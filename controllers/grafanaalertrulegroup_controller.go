@@ -126,9 +126,6 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 
 	applyErrors := make(map[string]string)
 	for _, grafana := range instances {
-		// can be removed in go 1.22+
-		grafana := grafana
-
 		err := r.reconcileWithInstance(ctx, &grafana, group, folderUID)
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
@@ -189,7 +186,6 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 	}
 
 	for _, rule := range group.Spec.Rules {
-		rule := rule
 		apiRule := &models.ProvisionedAlertRule{
 			Annotations:  rule.Annotations,
 			Condition:    &rule.Condition,
@@ -256,16 +252,17 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 	}
 
 	for uid, present := range currentRules {
-		if !present {
-			params := provisioning.NewDeleteAlertRuleParams().
-				WithUID(uid)
-			if editable {
-				params.SetXDisableProvenance(&trueRef)
-			}
-			_, err := cl.Provisioning.DeleteAlertRule(params) //nolint:errcheck
-			if err != nil {
-				return fmt.Errorf("deleting old alert rule %s: %w", uid, err)
-			}
+		if present {
+			continue
+		}
+		params := provisioning.NewDeleteAlertRuleParams().
+			WithUID(uid)
+		if editable {
+			params.SetXDisableProvenance(&trueRef)
+		}
+		_, err := cl.Provisioning.DeleteAlertRule(params) //nolint:errcheck
+		if err != nil {
+			return fmt.Errorf("deleting old alert rule %s: %w", uid, err)
 		}
 	}
 
@@ -302,8 +299,7 @@ func (r *GrafanaAlertRuleGroupReconciler) finalize(ctx context.Context, group *g
 		return fmt.Errorf("fetching instances: %w", err)
 	}
 
-	for _, i := range instances {
-		instance := i
+	for _, instance := range instances {
 		if err := r.removeFromInstance(ctx, &instance, group, folderUID); err != nil {
 			return fmt.Errorf("removing from instance")
 		}
@@ -326,7 +322,6 @@ func (r *GrafanaAlertRuleGroupReconciler) removeFromInstance(ctx context.Context
 		return fmt.Errorf("fetching alert rule group from instance %s: %w", instance.Status.AdminUrl, err)
 	}
 	for _, rule := range remote.Payload.Rules {
-		rule := rule
 		params := provisioning.NewDeleteAlertRuleParams().WithUID(rule.UID)
 		_, err := cl.Provisioning.DeleteAlertRule(params) //nolint:errcheck
 		if err != nil {

@@ -338,6 +338,8 @@ spec:
                 format: date-time
                 type: string
             type: object
+        required:
+        - spec
         type: object
     served: true
     storage: true
@@ -643,6 +645,8 @@ spec:
                 format: date-time
                 type: string
             type: object
+        required:
+        - spec
         type: object
     served: true
     storage: true
@@ -1151,6 +1155,8 @@ spec:
               uid:
                 type: string
             type: object
+        required:
+        - spec
         type: object
     served: true
     storage: true
@@ -1488,6 +1494,8 @@ spec:
               uid:
                 type: string
             type: object
+        required:
+        - spec
         type: object
     served: true
     storage: true
@@ -1720,6 +1728,8 @@ spec:
                 format: date-time
                 type: string
             type: object
+        required:
+        - spec
         type: object
     served: true
     storage: true
@@ -2215,6 +2225,8 @@ spec:
               uid:
                 type: string
             type: object
+        required:
+        - spec
         type: object
     served: true
     storage: true
@@ -2475,6 +2487,8 @@ spec:
                 format: date-time
                 type: string
             type: object
+        required:
+        - spec
         type: object
     served: true
     storage: true
@@ -2807,6 +2821,8 @@ spec:
                 format: date-time
                 type: string
             type: object
+        required:
+        - spec
         type: object
     served: true
     storage: true
@@ -3043,6 +3059,8 @@ spec:
                 format: date-time
                 type: string
             type: object
+        required:
+        - spec
         type: object
     served: true
     storage: true
@@ -3253,6 +3271,8 @@ spec:
                 format: date-time
                 type: string
             type: object
+        required:
+        - spec
         type: object
     served: true
     storage: true
@@ -12782,6 +12802,8 @@ spec:
               version:
                 type: string
             type: object
+        required:
+        - spec
         type: object
     served: true
     storage: true
