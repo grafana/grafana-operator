@@ -78,12 +78,13 @@ const (
 	// eg: 'partition in (customerA, customerB),environment!=qa'
 	// If empty of undefined, the operator will watch all CRs.
 	watchLabelSelectorsEnvVar = "WATCH_LABEL_SELECTORS"
-	// Enable caching of ConfigMaps and Secrets to reduce API read requests
-	// If empty or undefined, the operator will disable caching
-	// This will hide all referenced ConfigMaps and Secrets not labeled with: app.kubernetes.io/managed-by=grafana-operator
+	// Only applicable when when EXPERIMENTAL_ENABLE_CACHE_LABEL_LIMITS="1"
+	// Re-enable caching of ConfigMaps and Secrets to reduce API read requests
+	// If empty or undefined, the operator will disable caching of Secrets and ConfigMaps
+	// WARNING This hides all referenced ConfigMaps and Secrets not labeled with: app.kubernetes.io/managed-by=grafana-operator
 	watchLabeledReferencesOnlyEnvVar = "WATCH_LABELED_REFERENCES_ONLY"
 	// Opt in to enable new experimental cache limits
-	experimentalEnableCacheLabelLimitsEnvVar = "EXPERIMENTAL_ENABLE_CACHE_LABELLIMITS"
+	experimentalEnableCacheLabelLimitsEnvVar = "EXPERIMENTAL_ENABLE_CACHE_LABEL_LIMITS"
 	// clusterDomainEnvVar is the constant for env variable CLUSTER_DOMAIN, which specifies the cluster domain to use for addressing.
 	// By default, this is empty, and internal services are addressed without a cluster domain specified, i.e., a
 	// relative domain name that will resolve regardless of if a custom domain is configured for the cluster. If you
