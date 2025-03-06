@@ -25,8 +25,8 @@ spec:
         - datasourceUid: grafanacloud-demoinfra-prom
           model:
             datasource:
-                type: prometheus
-                uid: grafanacloud-demoinfra-prom
+              type: prometheus
+              uid: grafanacloud-demoinfra-prom
             editorMode: code
             expr: weather_temp_c{location="Toronto"}
             instant: true
@@ -41,22 +41,22 @@ spec:
         - datasourceUid: __expr__
           model:
             conditions:
-                - evaluator:
-                    params:
-                        - 10
-                    type: gt
-                  operator:
-                    type: and
-                  query:
-                    params:
-                        - C
-                  reducer:
-                    params: []
-                    type: last
-                  type: query
+              - evaluator:
+                  params:
+                    - 10
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                reducer:
+                  params: []
+                  type: last
+                type: query
             datasource:
-                type: __expr__
-                uid: __expr__
+              type: __expr__
+              uid: __expr__
             expression: A
             intervalMs: 1000
             maxDataPoints: 43200
@@ -70,3 +70,7 @@ spec:
       noDataState: NoData
       title: test rule from operator updated
       uid: 4843de5c-4f8a-4af0-9509-23526a04faf8
+      ## Grafana-managed recording rule, which is an opt-in feature that must be first enabled and configured in a Grafana instance
+      record:
+        from: A
+        metric: "weather:temperature:celsius"

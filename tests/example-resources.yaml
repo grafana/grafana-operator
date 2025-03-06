@@ -13,9 +13,6 @@ spec:
     security:
       admin_user: root
       admin_password: secret
-    recording_rules:
-      enabled: "true"
-      url: http://prometheus-service:9090
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaNotificationTemplate
@@ -251,9 +248,6 @@ spec:
       annotations: {}
       labels: {}
       isPaused: false
-      record:
-        from: A
-        metric: "grafana_alerts_ratio"
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaMuteTiming
