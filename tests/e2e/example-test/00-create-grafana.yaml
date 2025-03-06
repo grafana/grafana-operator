@@ -15,3 +15,9 @@ spec:
     security:
       admin_user: root
       admin_password: secret
+    ## Required to test creation of Grafana-managed recording rules
+    feature_toggles:
+      grafanaManagedRecordingRules: "true"
+    recording_rules:
+      enabled: "true"
+      url: http://prometheus:9090/api/prom/push
