@@ -97,5 +97,5 @@ spec:
       dashboards: "grafana"
   configMapRef:
     name: grafana-operator-dashboard
-    key: grafana-operator
+    key: grafana-operator.json
 ```
