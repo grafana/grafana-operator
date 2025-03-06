@@ -274,7 +274,7 @@ func buildSynchronizedCondition(resource string, syncType string, generation int
 		condition.Reason = conditionApplySuccessful
 		condition.Message = fmt.Sprintf("%s was successfully applied to %d instances", resource, total)
 	} else {
-		condition.Status = metav1.ConditionTrue
+		condition.Status = metav1.ConditionFalse
 		condition.Reason = conditionApplyFailed
 
 		var sb strings.Builder
