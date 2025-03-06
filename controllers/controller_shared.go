@@ -11,7 +11,6 @@ import (
 
 	operatorapi "github.com/grafana/grafana-operator/v5/api"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/model"
 	corev1 "k8s.io/api/core/v1"
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
@@ -111,7 +110,7 @@ func getFolderUID(ctx context.Context, k8sClient client.Client, ref operatorapi.
 	if ref.FolderRef() == "" {
 		return "", nil
 	}
-	folder := &grafanav1beta1.GrafanaFolder{}
+	folder := &v1beta1.GrafanaFolder{}
 
 	err := k8sClient.Get(ctx, client.ObjectKey{
 		Namespace: ref.FolderNamespace(),
