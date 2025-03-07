@@ -151,6 +151,18 @@ serviceMonitor:
   # -- Set relabel_configs as per https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config
   relabelings: []
 
+dashboard:
+  # -- Whether to create a ConfigMap containing a dashboard monitoring the operator metrics.
+  # Consider enabling this if you are enabling the ServiceMonitor.
+  # Optionally, a GrafanaDashboard CR can be manually created pointing to the Grafana.com dashboard ID 22785
+  # https://grafana.com/grafana/dashboards/22785-grafana-operator/
+  # The Grafana.com dashboard is maintained by the community and does not necessarily match the JSON definition in this repository.
+  enabled: false
+  # -- Annotations to add to the Grafana dashboard ConfigMap
+  annotations: {}
+  # -- Labels to add to the Grafana dashboard ConfigMap
+  labels: {}
+
 # -- Array of extra K8s objects to deploy
 extraObjects: []
 # - apiVersion: external-secrets.io/v1beta1
