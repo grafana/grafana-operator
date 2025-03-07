@@ -11,21 +11,21 @@ var (
 		Subsystem: "reconciler",
 		Name:      "reconciles",
 		Help:      "reconciles per Grafana instance",
-	}, []string{"instance_name"})
+	}, []string{"instance_namespace", "instance_name"})
 
 	GrafanaFailedReconciles = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "grafana_operator",
 		Subsystem: "reconciler",
 		Name:      "failed_reconciles",
 		Help:      "failed reconciles per Grafana instance and stage",
-	}, []string{"instance_name", "stage"})
+	}, []string{"instance_namespace", "instance_name", "stage"})
 
 	GrafanaApiRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "grafana_operator",
 		Subsystem: "grafana_api",
 		Name:      "requests",
 		Help:      "requests against the grafana api per instance",
-	}, []string{"instance_name", "method", "status"})
+	}, []string{"instance_namespace", "instance_name", "method", "status"})
 
 	// Deprecated: will be removed in a future version of the operator. Use
 	// ContentUrlRequests instead, which handles more types of resources that
