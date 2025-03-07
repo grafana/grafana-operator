@@ -60,6 +60,8 @@ spec:
     revision: 2
 ```
 
+Note that using the above mentioned grafana.com reference you are using a community maintained version of the Dashboard. Revisions might change, and different changes might exist between the JSON definition provided locally in the Grafana-Operator Repository. 
+
 #### Option 2: Use the JSON Definition
 
 Alternatively, you can use the JSON definition of the dashboard. The `files/dashboard.json` file contains the complete dashboard definition.
