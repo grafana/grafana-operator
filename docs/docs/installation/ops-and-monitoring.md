@@ -25,14 +25,13 @@ When enabled, Helm will create a ConfigMap containing the Grafana Operator dashb
 
 The Dashboard by default gets created inside a ConfigMap to avoid the chicken and egg problems that arrise when we use operator-managed Custom Resources in the same chart that is deploying the Custom Resource Definitions.
 
-If your Grafana instance has a sidecar looking for ConfigMaps containing dashboards, then leveraging the `dashboard.additionalLabels` and `dashboard.annotations` values we can manipulate the dashboard ConfigMap labels and annotations so that the sidecar can find it and load the dashboard into Grafana.
+If your Grafana instance has a sidecar looking for ConfigMaps containing dashboards, then leveraging the `dashboard.labels` values we can manipulate the dashboard ConfigMap labels and annotations so that the sidecar can find it and load the dashboard into Grafana.
 
 #### Helm Values Breakdown
 
 | **Value**                        | **Type**  | **Default**  | **Description**                                                     |
 |----------------------------------|-----------|-------------|----------------------------------------------------------------------|
-| `dashboard.additionalLabels`     | object    | `{}`        | Labels to add to the Grafana dashboard ConfigMap.                    |
-| `dashboard.annotations`          | object    | `{}`        | Annotations to add to the Grafana dashboard ConfigMap.               |
+| `dashboard.labels`               | object    | `{}`        | Labels to add to the Grafana dashboard ConfigMap.                    |
 | `dashboard.enabled`              | bool      | `false`     | Set to `true` to create a ConfigMap containing the dashboard.        |
 
 ### Alternative Methods for Loading the Dashboard
