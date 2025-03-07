@@ -81,6 +81,8 @@ type AlertRule struct {
 	// +kubebuilder:validation:Enum=Alerting;NoData;OK;KeepLast
 	NoDataState *string `json:"noDataState"`
 
+	Record *Record `json:"record,omitempty"`
+
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=190
 	// +kubebuilder:example="Always firing"
@@ -99,6 +101,14 @@ type NotificationSettings struct {
 	Receiver          string   `json:"receiver"`
 	MuteTimeIntervals []string `json:"mute_time_intervals,omitempty"`
 	RepeatInterval    string   `json:"repeat_interval,omitempty"`
+}
+
+type Record struct {
+	// +kubebuilder:validation:Required
+	From string `json:"from"`
+
+	// +kubebuilder:validation:Required
+	Metric string `json:"metric"`
 }
 
 type AlertQuery struct {

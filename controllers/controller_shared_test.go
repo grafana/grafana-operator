@@ -26,7 +26,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -241,18 +240,18 @@ var _ = Describe("GetMatchingInstances functions", Ordered, func() {
 		},
 	}
 	allowFolder := v1beta1.GrafanaFolder{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			APIVersion: "grafana.integreatly.org/v1beta1",
 			Kind:       "GrafanaFolder",
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      "allow-cross-namespace",
 			Namespace: namespace.Name,
 		},
 		Spec: v1beta1.GrafanaFolderSpec{
 			GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
 				AllowCrossNamespaceImport: true,
-				InstanceSelector: &v1.LabelSelector{
+				InstanceSelector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{
 						"test": "folder",
 					},
@@ -270,11 +269,11 @@ var _ = Describe("GetMatchingInstances functions", Ordered, func() {
 	matchAllFolder.Spec.InstanceSelector = &metav1.LabelSelector{} // InstanceSelector is never nil
 
 	DefaultGrafana := v1beta1.Grafana{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			APIVersion: "grafana.integreatly.org/v1beta1",
 			Kind:       "Grafana",
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      "instance",
 			Namespace: "default",
 			Labels: map[string]string{
