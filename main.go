@@ -27,29 +27,29 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/KimMachineGun/automemlimit/memlimit"
 	"go.uber.org/automaxprocs/maxprocs"
 	uberzap "go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/labels"
-
-	corev1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/cache"
-
-	"github.com/KimMachineGun/automemlimit/memlimit"
 	"github.com/go-logr/logr"
+	"go.uber.org/zap/zapcore"
+
 	routev1 "github.com/openshift/api/route/v1"
+	v1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	discovery2 "k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
-	"github.com/grafana/grafana-operator/v5/controllers/model"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -61,6 +61,7 @@ import (
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers"
 	"github.com/grafana/grafana-operator/v5/controllers/autodetect"
+	"github.com/grafana/grafana-operator/v5/controllers/model"
 	"github.com/grafana/grafana-operator/v5/embeds"
 	//+kubebuilder:scaffold:imports
 )
@@ -77,6 +78,13 @@ const (
 	// eg: 'partition in (customerA, customerB),environment!=qa'
 	// If empty of undefined, the operator will watch all CRs.
 	watchLabelSelectorsEnvVar = "WATCH_LABEL_SELECTORS"
+	// Only applicable when when EXPERIMENTAL_ENABLE_CACHE_LABEL_LIMITS="1"
+	// Re-enable caching of ConfigMaps and Secrets to reduce API read requests
+	// If empty or undefined, the operator will disable caching of Secrets and ConfigMaps
+	// WARNING This hides all referenced ConfigMaps and Secrets not labeled with: app.kubernetes.io/managed-by=grafana-operator
+	watchLabeledReferencesOnlyEnvVar = "WATCH_LABELED_REFERENCES_ONLY"
+	// Opt in to enable new experimental cache limits
+	experimentalEnableCacheLabelLimitsEnvVar = "EXPERIMENTAL_ENABLE_CACHE_LABEL_LIMITS"
 	// clusterDomainEnvVar is the constant for env variable CLUSTER_DOMAIN, which specifies the cluster domain to use for addressing.
 	// By default, this is empty, and internal services are addressed without a cluster domain specified, i.e., a
 	// relative domain name that will resolve regardless of if a custom domain is configured for the cluster. If you
@@ -99,7 +107,7 @@ func init() {
 	//+kubebuilder:scaffold:scheme
 }
 
-func main() {
+func main() { // nolint:gocyclo
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
@@ -135,12 +143,12 @@ func main() {
 		setupLog.Error(err, "failed to adjust GOMAXPROCS")
 	}
 
+	// Detect environment variables
 	watchNamespace, _ := os.LookupEnv(watchNamespaceEnvVar)
 	watchNamespaceSelector, _ := os.LookupEnv(watchNamespaceEnvSelector)
 	watchLabelSelectors, _ := os.LookupEnv(watchLabelSelectorsEnvVar)
-	if watchLabelSelectors != "" {
-		setupLog.Info(fmt.Sprintf("sharding is enabled via %s=%s. Beware: Always label Grafana CRs before enabling to ensure labels are inherited. Existing Secrets/ConfigMaps referenced in CRs also need to be labeled to continue working.", watchLabelSelectorsEnvVar, watchLabelSelectors))
-	}
+	watchLabeledReferencesOnly, _ := os.LookupEnv(watchLabeledReferencesOnlyEnvVar)
+	enableCacheLabelLimits, _ := os.LookupEnv(experimentalEnableCacheLabelLimitsEnvVar)
 	clusterDomain, _ := os.LookupEnv(clusterDomainEnvVar)
 
 	// Fetch k8s api credentials and detect platform
@@ -156,25 +164,61 @@ func main() {
 		os.Exit(1)
 	}
 
-	controllerOptions := ctrl.Options{
-		Scheme: scheme,
-		Metrics: metricsserver.Options{
-			BindAddress: metricsAddr,
-		},
-		WebhookServer: webhook.NewServer(webhook.Options{
-			Port: 9443,
-		}),
-		HealthProbeBindAddress: probeAddr,
-		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "f75f3bba.integreatly.org",
-		PprofBindAddress:       pprofAddr,
-	}
-
 	labelSelectors, err := getLabelSelectors(watchLabelSelectors)
 	if err != nil {
 		setupLog.Error(err, fmt.Sprintf("unable to parse %s", watchLabelSelectorsEnvVar))
 		os.Exit(1) //nolint
 	}
+
+	// Necessary because getLabelSelector defaults to labels.Everything()
+	var cacheLabelConfig cache.ByObject
+	if watchLabelSelectors != "" {
+		// When sharding, limit cache according to shard labels
+		cacheLabelConfig = cache.ByObject{Label: labelSelectors}
+	} else {
+		// Otherwise limit it to managed-by label
+		cacheLabelConfig = cache.ByObject{Label: labels.SelectorFromSet(model.CommonLabels)}
+	}
+
+	controllerOptions := ctrl.Options{
+		Scheme:                 scheme,
+		Metrics:                metricsserver.Options{BindAddress: metricsAddr},
+		WebhookServer:          webhook.NewServer(webhook.Options{Port: 9443}),
+		HealthProbeBindAddress: probeAddr,
+		LeaderElection:         enableLeaderElection,
+		LeaderElectionID:       "f75f3bba.integreatly.org",
+		PprofBindAddress:       pprofAddr,
+		// Limit caching to reduce heap usage with CommonLabels as selector
+		Cache: cache.Options{ByObject: map[client.Object]cache.ByObject{
+			&v1.Deployment{}:                cacheLabelConfig,
+			&corev1.Service{}:               cacheLabelConfig,
+			&corev1.ServiceAccount{}:        cacheLabelConfig,
+			&networkingv1.Ingress{}:         cacheLabelConfig,
+			&corev1.PersistentVolumeClaim{}: cacheLabelConfig,
+			&corev1.ConfigMap{}:             cacheLabelConfig, // Matching just labeled ConfigMaps and Secrets greatly reduces cache size
+			&corev1.Secret{}:                cacheLabelConfig, // Omitting labels or supporting custom labels would require changes in Grafana Reconciler
+		}},
+	}
+	if isOpenShift {
+		controllerOptions.Cache.ByObject[&routev1.Route{}] = cacheLabelConfig
+	}
+	// ConfigMap and Secret lookups always skip the cache unless enabled
+	// Skip when references should be cached
+	if watchLabeledReferencesOnly == "" {
+		controllerOptions.Client = client.Options{
+			Cache: &client.CacheOptions{
+				DisableFor: []client.Object{&corev1.ConfigMap{}, &corev1.Secret{}},
+			},
+		}
+	}
+
+	// Allow users to enable the above cache limits before a full rollout
+	if enableCacheLabelLimits == "" {
+		controllerOptions.Cache.ByObject = make(map[client.Object]cache.ByObject, 0)
+		controllerOptions.Client.Cache.DisableFor = make([]client.Object, 0)
+	}
+
+	// Determine Operator scope
 	switch {
 	case strings.Contains(watchNamespace, ","):
 		// multi namespace scoped
@@ -185,7 +229,7 @@ func main() {
 		controllerOptions.Cache.DefaultNamespaces = getNamespaceConfig(watchNamespace, labelSelectors)
 		setupLog.Info("operator running in namespace scoped mode", "namespace", watchNamespace)
 	case strings.Contains(watchNamespaceSelector, ":"):
-		// namespace scoped
+		// multi namespace scoped
 		controllerOptions.Cache.DefaultNamespaces = getNamespaceConfigSelector(restConfig, watchNamespaceSelector, labelSelectors)
 		setupLog.Info("operator running in namespace scoped mode using namespace selector", "namespace", watchNamespace)
 
@@ -204,6 +248,7 @@ func main() {
 		os.Exit(1) //nolint
 	}
 
+	// Register controllers
 	if err = (&controllers.GrafanaReconciler{
 		Client:        mgr.GetClient(),
 		Scheme:        mgr.GetScheme(),
@@ -357,6 +402,7 @@ func getLabelSelectors(watchLabelSelectors string) (labels.Selector, error) {
 		if err != nil {
 			return labelSelectors, fmt.Errorf("unable to parse %s: %w", watchLabelSelectorsEnvVar, err)
 		}
+		setupLog.Info(fmt.Sprintf("sharding is enabled via %s=%s. Beware: Always label Grafana CRs before enabling to ensure labels are inherited. Existing Secrets/ConfigMaps referenced in CRs also need to be labeled to continue working.", watchLabelSelectorsEnvVar, watchLabelSelectors))
 	} else {
 		labelSelectors = labels.Everything() // Match any labels
 	}
