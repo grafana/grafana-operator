@@ -60,7 +60,7 @@ spec:
     revision: 2
 ```
 
-Note that using the above mentioned grafana.com reference you are using a community maintained version of the Dashboard. Revisions might change, and different changes might exist between the JSON definition provided locally in the Grafana-Operator Repository. 
+Note that using the above mentioned grafana.com reference you are using a community maintained version of the Dashboard. Revisions might change, and different changes might exist between the JSON definition provided locally in the Grafana-Operator Repository.
 
 #### Option 2: Use the JSON Definition
 
