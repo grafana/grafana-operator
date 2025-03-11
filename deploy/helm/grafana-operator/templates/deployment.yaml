@@ -60,11 +60,11 @@ spec:
               {{ else }}
               value: {{quote .Values.watchLabelSelectors }}
               {{- end }}
-            - name: WATCH_LABELED_REFERENCES_ONLY
-              {{- if .Values.watchLabeledReferencesOnly }}
-              value: "true"
+            - name: ENFORCE_CACHE_LABELS
+              {{- if .Values.enforceCacheLabels }}
+              value: {{quote .Values.enforceCacheLabels }}
               {{ else }}
-              value: ""
+              value: "off"
               {{- end }}
             - name: CLUSTER_DOMAIN
               {{- if and .Values.clusterDomain (eq .Values.clusterDomain "") }}

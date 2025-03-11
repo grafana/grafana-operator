@@ -78,13 +78,8 @@ const (
 	// eg: 'partition in (customerA, customerB),environment!=qa'
 	// If empty of undefined, the operator will watch all CRs.
 	watchLabelSelectorsEnvVar = "WATCH_LABEL_SELECTORS"
-	// Only applicable when when EXPERIMENTAL_ENABLE_CACHE_LABEL_LIMITS="1"
-	// Re-enable caching of ConfigMaps and Secrets to reduce API read requests
-	// If empty or undefined, the operator will disable caching of Secrets and ConfigMaps
-	// WARNING This hides all referenced ConfigMaps and Secrets not labeled with: app.kubernetes.io/managed-by=grafana-operator
-	watchLabeledReferencesOnlyEnvVar = "WATCH_LABELED_REFERENCES_ONLY"
-	// Opt in to enable new experimental cache limits
-	experimentalEnableCacheLabelLimitsEnvVar = "EXPERIMENTAL_ENABLE_CACHE_LABEL_LIMITS"
+	// Opt in to enable new experimental cache limits by setting this to `safe` or `all`. Valid values are `off`, `safe` and `all`
+	enforceCacheLabelsEnvVar = "ENFORCE_CACHE_LABELS"
 	// clusterDomainEnvVar is the constant for env variable CLUSTER_DOMAIN, which specifies the cluster domain to use for addressing.
 	// By default, this is empty, and internal services are addressed without a cluster domain specified, i.e., a
 	// relative domain name that will resolve regardless of if a custom domain is configured for the cluster. If you
@@ -147,8 +142,21 @@ func main() { // nolint:gocyclo
 	watchNamespace, _ := os.LookupEnv(watchNamespaceEnvVar)
 	watchNamespaceSelector, _ := os.LookupEnv(watchNamespaceEnvSelector)
 	watchLabelSelectors, _ := os.LookupEnv(watchLabelSelectorsEnvVar)
-	watchLabeledReferencesOnly, _ := os.LookupEnv(watchLabeledReferencesOnlyEnvVar)
-	enableCacheLabelLimits, _ := os.LookupEnv(experimentalEnableCacheLabelLimitsEnvVar)
+	if watchLabelSelectors != "" {
+		setupLog.Info(fmt.Sprintf("sharding is enabled via %s=%s. Beware: Always label Grafana CRs before enabling to ensure labels are inherited. Existing Secrets/ConfigMaps referenced in CRs also need to be labeled to continue working.", watchLabelSelectorsEnvVar, watchLabelSelectors))
+	}
+
+	enforceCacheLabelsLevel, _ := os.LookupEnv(enforceCacheLabelsEnvVar)
+	enforceCacheLabels := false
+	switch enforceCacheLabelsLevel {
+	case "safe", "all":
+		enforceCacheLabels = true
+		setupLog.Info("label restrictions for cached resources are active", "level", enforceCacheLabelsLevel)
+	case "off", "":
+	default:
+		setupLog.Error(fmt.Errorf("invalid value %s for %s", enforceCacheLabelsLevel, enforceCacheLabelsEnvVar), "falling back to disabling cache enforcement")
+	}
+
 	clusterDomain, _ := os.LookupEnv(clusterDomainEnvVar)
 
 	// Fetch k8s api credentials and detect platform
@@ -164,22 +172,6 @@ func main() { // nolint:gocyclo
 		os.Exit(1)
 	}
 
-	labelSelectors, err := getLabelSelectors(watchLabelSelectors)
-	if err != nil {
-		setupLog.Error(err, fmt.Sprintf("unable to parse %s", watchLabelSelectorsEnvVar))
-		os.Exit(1) //nolint
-	}
-
-	// Necessary because getLabelSelector defaults to labels.Everything()
-	var cacheLabelConfig cache.ByObject
-	if watchLabelSelectors != "" {
-		// When sharding, limit cache according to shard labels
-		cacheLabelConfig = cache.ByObject{Label: labelSelectors}
-	} else {
-		// Otherwise limit it to managed-by label
-		cacheLabelConfig = cache.ByObject{Label: labels.SelectorFromSet(model.CommonLabels)}
-	}
-
 	controllerOptions := ctrl.Options{
 		Scheme:                 scheme,
 		Metrics:                metricsserver.Options{BindAddress: metricsAddr},
@@ -188,8 +180,27 @@ func main() { // nolint:gocyclo
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "f75f3bba.integreatly.org",
 		PprofBindAddress:       pprofAddr,
-		// Limit caching to reduce heap usage with CommonLabels as selector
-		Cache: cache.Options{ByObject: map[client.Object]cache.ByObject{
+	}
+
+	labelSelectors, err := getLabelSelectors(watchLabelSelectors)
+	if err != nil {
+		setupLog.Error(err, fmt.Sprintf("unable to parse %s", watchLabelSelectorsEnvVar))
+		os.Exit(1) //nolint
+	}
+
+	if enforceCacheLabels {
+		var cacheLabelConfig cache.ByObject
+		if watchLabelSelectors != "" {
+			// When sharding, limit cache according to shard labels
+			cacheLabelConfig = cache.ByObject{Label: labelSelectors}
+			setupLog.Info(fmt.Sprintf("sharding is enabled via %s=%s. Beware: Always label Grafana CRs before enabling to ensure labels are inherited. Existing Secrets/ConfigMaps referenced in CRs also need to be labeled to continue working.", watchLabelSelectorsEnvVar, watchLabelSelectors))
+		} else {
+			// Otherwise limit it to managed-by label
+			cacheLabelConfig = cache.ByObject{Label: labels.SelectorFromSet(model.CommonLabels)}
+		}
+
+		// ConfigMaps and secrets stay fully cached until we implement support for bypassing the cache for referenced objects
+		controllerOptions.Cache.ByObject = map[client.Object]cache.ByObject{
 			&v1.Deployment{}:                cacheLabelConfig,
 			&corev1.Service{}:               cacheLabelConfig,
 			&corev1.ServiceAccount{}:        cacheLabelConfig,
@@ -197,25 +208,15 @@ func main() { // nolint:gocyclo
 			&corev1.PersistentVolumeClaim{}: cacheLabelConfig,
 			&corev1.ConfigMap{}:             cacheLabelConfig, // Matching just labeled ConfigMaps and Secrets greatly reduces cache size
 			&corev1.Secret{}:                cacheLabelConfig, // Omitting labels or supporting custom labels would require changes in Grafana Reconciler
-		}},
-	}
-	if isOpenShift {
-		controllerOptions.Cache.ByObject[&routev1.Route{}] = cacheLabelConfig
-	}
-	// ConfigMap and Secret lookups always skip the cache unless enabled
-	// Skip when references should be cached
-	if watchLabeledReferencesOnly == "" {
-		controllerOptions.Client = client.Options{
-			Cache: &client.CacheOptions{
-				DisableFor: []client.Object{&corev1.ConfigMap{}, &corev1.Secret{}},
-			},
 		}
-	}
-
-	// Allow users to enable the above cache limits before a full rollout
-	if enableCacheLabelLimits == "" {
-		controllerOptions.Cache.ByObject = make(map[client.Object]cache.ByObject, 0)
-		controllerOptions.Client.Cache.DisableFor = make([]client.Object, 0)
+		if isOpenShift {
+			controllerOptions.Cache.ByObject[&routev1.Route{}] = cacheLabelConfig
+		}
+		if enforceCacheLabelsLevel == "safe" {
+			controllerOptions.Client.Cache = &client.CacheOptions{
+				DisableFor: []client.Object{&corev1.ConfigMap{}, &corev1.Secret{}},
+			}
+		}
 	}
 
 	// Determine Operator scope
@@ -402,7 +403,6 @@ func getLabelSelectors(watchLabelSelectors string) (labels.Selector, error) {
 		if err != nil {
 			return labelSelectors, fmt.Errorf("unable to parse %s: %w", watchLabelSelectorsEnvVar, err)
 		}
-		setupLog.Info(fmt.Sprintf("sharding is enabled via %s=%s. Beware: Always label Grafana CRs before enabling to ensure labels are inherited. Existing Secrets/ConfigMaps referenced in CRs also need to be labeled to continue working.", watchLabelSelectorsEnvVar, watchLabelSelectors))
 	} else {
 		labelSelectors = labels.Everything() // Match any labels
 	}
