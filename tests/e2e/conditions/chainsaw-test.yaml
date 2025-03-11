@@ -78,7 +78,9 @@ spec:
               metadata:
                 name: testdata
                 annotations:
-                  grafana/skip-ready-check: "true"
+                  # Disables the check that would otherwise omit the instance from reconciliation.
+                  # Without this a NoMatchingInstances condition would be added to the status instead.
+                  grafana/skip-readiness-check: "true"
               spec:
                 deployment:
                   spec:
@@ -94,7 +96,7 @@ spec:
               metadata:
                 name: testdata
                 annotations:
-                  grafana/skip-ready-check: ""
+                  grafana/skip-readiness-check: ""
               spec:
                 deployment:
                   spec:
