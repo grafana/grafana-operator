@@ -1,5 +1,5 @@
 # Current Operator version
-VERSION ?= 5.15.1
+VERSION ?= 5.17.0
 
 # BUNDLE_GEN_FLAGS are the flags passed to the operator-sdk generate bundle command
 BUNDLE_GEN_FLAGS ?= -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
@@ -420,6 +420,6 @@ prep-release: yq
 	$(YQ) -i '.appVersion="v$(VERSION)"' deploy/helm/grafana-operator/Chart.yaml
 	$(YQ) -i '.params.version="v$(VERSION)"' hugo/config.yaml
 	sed -i 's/--version v5.*/--version v$(VERSION)/g' README.md
-	sed -i 's/VERSION ?= 5.*/VERSION ?= $(VERSION)/g' Makefile
+	sed -i 's/^VERSION ?= 5.*/VERSION ?= $(VERSION)/g' Makefile
 	$(YQ) -i '.images[0].newTag="v$(VERSION)"' deploy/kustomize/base/kustomization.yaml
 	make helm/docs
