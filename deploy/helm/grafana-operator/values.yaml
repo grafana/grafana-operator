@@ -24,6 +24,13 @@ watchNamespaceSelector: ""
 watchLabelSelectors: ""
 # watchLabelSelectors: "partition in (customerA, customerB),environment!=qa"
 
+# -- Sets the `ENFORCE_CACHE_LABELS` environment variable,
+# Enables the enforcment of cache labels, reducing memory usage significantly.
+# Valid values are "off","safe" and "all".
+# When using `safe` mode, ConfigMaps and Secrets are excluded from caching.
+# When using `all` mode, ConfigMaps and Secrets are cached and require the `app.kubernetes.io/managed-by: grafana-operator` label.
+enforceCacheLabels: "off"
+
 # -- Sets the `CLUSTER_DOMAIN` environment variable,
 # it defines how internal Kubernetes services managed by the operator are addressed.
 # By default, this is empty, and internal services are addressed without a cluster domain specified, i.e., a

@@ -60,6 +60,12 @@ spec:
               {{ else }}
               value: {{quote .Values.watchLabelSelectors }}
               {{- end }}
+            - name: ENFORCE_CACHE_LABELS
+              {{- if .Values.enforceCacheLabels }}
+              value: {{quote .Values.enforceCacheLabels }}
+              {{ else }}
+              value: "off"
+              {{- end }}
             - name: CLUSTER_DOMAIN
               {{- if and .Values.clusterDomain (eq .Values.clusterDomain "") }}
               value: ""

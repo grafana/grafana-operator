@@ -68,6 +68,7 @@ It's easier to just manage this configuration outside of the operator.
 | dashboard.annotations | object | `{}` | Annotations to add to the Grafana dashboard ConfigMap |
 | dashboard.enabled | bool | `false` | Whether to create a ConfigMap containing a dashboard monitoring the operator metrics. Consider enabling this if you are enabling the ServiceMonitor. Optionally, a GrafanaDashboard CR can be manually created pointing to the Grafana.com dashboard ID 22785 https://grafana.com/grafana/dashboards/22785-grafana-operator/ The Grafana.com dashboard is maintained by the community and does not necessarily match the JSON definition in this repository. |
 | dashboard.labels | object | `{}` | Labels to add to the Grafana dashboard ConfigMap |
+| enforceCacheLabels | string | `"off"` | Sets the `ENFORCE_CACHE_LABELS` environment variable, Enables the enforcment of cache labels, reducing memory usage significantly. Valid values are "off","safe" and "all". When using `safe` mode, ConfigMaps and Secrets are excluded from caching. When using `all` mode, ConfigMaps and Secrets are cached and require the `app.kubernetes.io/managed-by: grafana-operator` label. |
 | env | list | `[]` | Additional environment variables |
 | extraObjects | list | `[]` | Array of extra K8s objects to deploy |
 | fullnameOverride | string | `""` | Overrides the fully qualified app name. |
