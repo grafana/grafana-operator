@@ -49,6 +49,12 @@ spec:
       kind: GrafanaFolder
       name: grafanafolders.grafana.integreatly.org
       version: v1beta1
+    - description: GrafanaNotificationPolicyRoute is the Schema for the grafananotificationpolicyroutes
+        API
+      displayName: Grafana Notification Policy Route
+      kind: GrafanaNotificationPolicyRoute
+      name: grafananotificationpolicyroutes.grafana.integreatly.org
+      version: v1beta1
     - description: Grafana is the Schema for the grafanas API
       displayName: Grafana
       kind: Grafana
