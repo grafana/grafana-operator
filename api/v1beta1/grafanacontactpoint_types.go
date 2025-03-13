@@ -47,8 +47,8 @@ type GrafanaContactPointSpec struct {
 	// +kubebuilder:validation:MaxItems=99
 	ValuesFrom []ValueFrom `json:"valuesFrom,omitempty"`
 
-	// +kubebuilder:validation:Enum=alertmanager;prometheus-alertmanager;dingding;discord;email;googlechat;kafka;line;opsgenie;pagerduty;pushover;sensugo;sensu;slack;sns;teams;telegram;threema;victorops;webex;webhook;wecom;hipchat;oncall
-	Type string `json:"type,omitempty"`
+	// +kubebuilder:validation:MinLength=1
+	Type string `json:"type"`
 }
 
 //+kubebuilder:object:root=true
