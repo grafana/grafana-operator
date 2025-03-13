@@ -301,32 +301,17 @@ func (r *GrafanaAlertRuleGroupReconciler) finalize(ctx context.Context, group *g
 	}
 
 	for _, instance := range instances {
-		if err := r.removeFromInstance(ctx, &instance, group, folderUID); err != nil {
-			return fmt.Errorf("removing from instance")
-		}
-	}
-	return nil
-}
-
-func (r *GrafanaAlertRuleGroupReconciler) removeFromInstance(ctx context.Context, instance *grafanav1beta1.Grafana, group *grafanav1beta1.GrafanaAlertRuleGroup, folderUID string) error {
-	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
-	if err != nil {
-		return fmt.Errorf("building grafana client: %w", err)
-	}
-	remote, err := cl.Provisioning.GetAlertRuleGroup(group.GroupName(), folderUID)
-	if err != nil {
-		var notFound *provisioning.GetAlertRuleGroupNotFound
-		if errors.As(err, &notFound) {
-			// nothing to do
-			return nil
-		}
-		return fmt.Errorf("fetching alert rule group from instance %s: %w", instance.Status.AdminUrl, err)
-	}
-	for _, rule := range remote.Payload.Rules {
-		params := provisioning.NewDeleteAlertRuleParams().WithUID(rule.UID)
-		_, err := cl.Provisioning.DeleteAlertRule(params) //nolint:errcheck
+		cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &instance)
 		if err != nil {
-			return fmt.Errorf("deleting alert rule %s: %w", rule.UID, err)
+			return fmt.Errorf("building grafana client: %w", err)
+		}
+
+		_, err = cl.Provisioning.DeleteAlertRuleGroup(group.GroupName(), folderUID) //nolint:errcheck
+		if err != nil {
+			var notFound *provisioning.DeleteAlertRuleGroupNotFound
+			if !errors.As(err, &notFound) {
+				return fmt.Errorf("deleting alert rule group: %w", err)
+			}
 		}
 	}
 	return nil
