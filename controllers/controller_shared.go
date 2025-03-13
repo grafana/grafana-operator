@@ -344,3 +344,39 @@ func patchFinalizers(ctx context.Context, cl client.Client, cr client.Object) er
 	}
 	return cl.Patch(ctx, cr, client.RawPatch(types.MergePatchType, patch))
 }
+
+func addAnnotation(ctx context.Context, cl client.Client, cr client.Object, key string, value string) error {
+	crAnnotations := cr.GetAnnotations()
+
+	if crAnnotations[key] == value {
+		return nil
+	}
+
+	// Add key to map and create patch
+	crAnnotations[key] = value
+	patch, err := json.Marshal(map[string]interface{}{"metadata": map[string]interface{}{"annotations": crAnnotations}})
+	if err != nil {
+		return err
+	}
+
+	return cl.Patch(ctx, cr, client.RawPatch(types.MergePatchType, patch))
+}
+
+func removeAnnotation(ctx context.Context, cl client.Client, cr client.Object, key string) error {
+	crAnnotations := cr.GetAnnotations()
+	if crAnnotations[key] == "" {
+		return nil
+	}
+
+	// Escape slash '/' according to RFC6901
+	// We could also escape tilde(~), but that is not a valid character in annotation keys anyways.
+	key = strings.ReplaceAll(key, "/", "~1")
+	patch, err := json.Marshal([]interface{}{map[string]interface{}{"op": "remove", "path": "/metadata/annotations/" + key}})
+	if err != nil {
+		return err
+	}
+
+	// MergePatchType only removes map keys when the value is null, unlike overwriting an array in the above removeFinalizer
+	// JSONPatchType allows just removing a path
+	return cl.Patch(ctx, cr, client.RawPatch(types.JSONPatchType, patch))
+}

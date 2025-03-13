@@ -285,9 +285,10 @@ func (r *GrafanaNotificationPolicyReconciler) reconcileWithInstance(ctx context.
 	if instance.Annotations == nil {
 		instance.Annotations = make(map[string]string)
 	}
-	instance.Annotations[annotationAppliedNotificationPolicy] = notificationPolicy.NamespacedResource()
-	if err := r.Client.Update(ctx, instance); err != nil {
-		return fmt.Errorf("saving applied policy to instance CR: %w", err)
+
+	err = addAnnotation(ctx, r.Client, instance, annotationAppliedNotificationPolicy, notificationPolicy.NamespacedResource())
+	if err != nil {
+		return fmt.Errorf("saving applied notification policy to Grafana CR: %w", err)
 	}
 	return nil
 }
@@ -313,9 +314,9 @@ func (r *GrafanaNotificationPolicyReconciler) finalize(ctx context.Context, noti
 			return fmt.Errorf("resetting policy tree")
 		}
 
-		delete(grafana.Annotations, annotationAppliedNotificationPolicy)
-		if err := r.Client.Update(ctx, &grafana); err != nil {
-			return fmt.Errorf("removing applied notification policy from Grafana cr: %w", err)
+		err = removeAnnotation(ctx, r.Client, &grafana, annotationAppliedNotificationPolicy)
+		if err != nil {
+			return fmt.Errorf("removing applied notification policy from Grafana CR: %w", err)
 		}
 	}
 
