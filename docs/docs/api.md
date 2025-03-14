@@ -777,6 +777,13 @@ GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
         <td><b>allowCrossNamespaceImport</b></td>
         <td>boolean</td>
         <td>
@@ -800,15 +807,6 @@ GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
           <br/>
             <i>Format</i>: duration<br/>
             <i>Default</i>: 10m0s<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>type</b></td>
-        <td>enum</td>
-        <td>
-          <br/>
-          <br/>
-            <i>Enum</i>: alertmanager, prometheus-alertmanager, dingding, discord, email, googlechat, kafka, line, opsgenie, pagerduty, pushover, sensugo, sensu, slack, sns, teams, telegram, threema, victorops, webex, webhook, wecom, hipchat, oncall<br/>
         </td>
         <td>false</td>
       </tr><tr>
