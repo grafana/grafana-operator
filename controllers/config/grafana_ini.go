@@ -8,7 +8,9 @@ import (
 	"strings"
 )
 
-func WriteIni(cfg map[string]map[string]string) (string, string) {
+// NOTE: even though there is no need to return map, it's added here to make sure
+// we can test the case where the passed value is nil
+func setDefaults(cfg map[string]map[string]string) map[string]map[string]string {
 	if cfg == nil {
 		cfg = make(map[string]map[string]string)
 	}
@@ -28,7 +30,7 @@ func WriteIni(cfg map[string]map[string]string) (string, string) {
 	}
 
 	if cfg["dashboards"]["versions_to_keep"] == "" {
-		cfg["dashboards"]["versions_to_keep"] = "20"
+		cfg["dashboards"]["versions_to_keep"] = GrafanaDashboardVersionsToKeep
 	}
 
 	if cfg["unified_alerting"] == nil {
@@ -36,8 +38,14 @@ func WriteIni(cfg map[string]map[string]string) (string, string) {
 	}
 
 	if cfg["unified_alerting"]["rule_version_record_limit"] == "" {
-		cfg["unified_alerting"]["rule_version_record_limit"] = "5"
+		cfg["unified_alerting"]["rule_version_record_limit"] = GrafanaRuleVersionRecordLimit
 	}
+
+	return cfg
+}
+
+func WriteIni(cfg map[string]map[string]string) string {
+	cfg = setDefaults(cfg)
 
 	sections := make([]string, 0, len(cfg))
 	hasGlobal := false
@@ -60,10 +68,7 @@ func WriteIni(cfg map[string]map[string]string) (string, string) {
 		writeSection(section, cfg[section], sb)
 	}
 
-	hash := sha256.New()
-	io.WriteString(hash, sb.String()) //nolint
-
-	return sb.String(), fmt.Sprintf("%x", hash.Sum(nil))
+	return sb.String()
 }
 
 func writeSection(name string, settings map[string]string, sb *strings.Builder) {
@@ -83,4 +88,11 @@ func writeSection(name string, settings map[string]string, sb *strings.Builder) 
 		sb.WriteByte('\n')
 	}
 	sb.WriteByte('\n')
+}
+
+func GetHash(cfg string) string {
+	hash := sha256.New()
+	io.WriteString(hash, cfg) //nolint
+
+	return fmt.Sprintf("%x", hash.Sum(nil))
 }

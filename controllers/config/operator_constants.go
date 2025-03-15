@@ -12,6 +12,10 @@ const (
 	GrafanaProvisioningPath       = "/etc/grafana/provisioning/"
 	GrafanaDashboardsRuntimeBuild = "/tmp/dashboards"
 
+	// Default limits
+	GrafanaDashboardVersionsToKeep = "20"
+	GrafanaRuleVersionRecordLimit  = "5"
+
 	// Grafana env vars and admin user
 	DefaultAdminUser           = "admin"
 	GrafanaAdminUserEnvVar     = "GF_SECURITY_ADMIN_USER"
