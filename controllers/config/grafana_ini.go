@@ -71,13 +71,6 @@ func WriteIni(cfg map[string]map[string]string) string {
 	return sb.String()
 }
 
-func GetHash(cfg string) string {
-	hash := sha256.New()
-	io.WriteString(hash, cfg)
-
-	return fmt.Sprintf("%x", hash.Sum(nil))
-}
-
 func writeSection(name string, settings map[string]string, sb *strings.Builder) {
 	if name != "global" {
 		sb.WriteString(fmt.Sprintf("[%s]", name))
@@ -95,4 +88,11 @@ func writeSection(name string, settings map[string]string, sb *strings.Builder) 
 		sb.WriteByte('\n')
 	}
 	sb.WriteByte('\n')
+}
+
+func GetHash(cfg string) string {
+	hash := sha256.New()
+	io.WriteString(hash, cfg)
+
+	return fmt.Sprintf("%x", hash.Sum(nil))
 }
