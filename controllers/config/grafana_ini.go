@@ -92,7 +92,7 @@ func writeSection(name string, settings map[string]string, sb *strings.Builder) 
 
 func GetHash(cfg string) string {
 	hash := sha256.New()
-	io.WriteString(hash, cfg)
+	io.WriteString(hash, cfg) //nolint
 
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
