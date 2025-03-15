@@ -8,7 +8,9 @@ import (
 	"strings"
 )
 
-func setDefaults(cfg map[string]map[string]string) {
+// NOTE: even though there is no need to return map, it's added here to make sure
+// we can test the case where the passed value is nil
+func setDefaults(cfg map[string]map[string]string) map[string]map[string]string {
 	if cfg == nil {
 		cfg = make(map[string]map[string]string)
 	}
@@ -38,10 +40,12 @@ func setDefaults(cfg map[string]map[string]string) {
 	if cfg["unified_alerting"]["rule_version_record_limit"] == "" {
 		cfg["unified_alerting"]["rule_version_record_limit"] = GrafanaRuleVersionRecordLimit
 	}
+
+	return cfg
 }
 
 func WriteIni(cfg map[string]map[string]string) string {
-	setDefaults(cfg)
+	cfg = setDefaults(cfg)
 
 	sections := make([]string, 0, len(cfg))
 	hasGlobal := false
