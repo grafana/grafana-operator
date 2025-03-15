@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func WriteIni(cfg map[string]map[string]string) (string, string) {
+func WriteIni(cfg map[string]map[string]string) string {
 	if cfg == nil {
 		cfg = make(map[string]map[string]string)
 	}
@@ -60,10 +60,14 @@ func WriteIni(cfg map[string]map[string]string) (string, string) {
 		writeSection(section, cfg[section], sb)
 	}
 
-	hash := sha256.New()
-	io.WriteString(hash, sb.String()) //nolint
+	return sb.String()
+}
 
-	return sb.String(), fmt.Sprintf("%x", hash.Sum(nil))
+func GetHash(cfg string) string {
+	hash := sha256.New()
+	io.WriteString(hash, cfg)
+
+	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 
 func writeSection(name string, settings map[string]string, sb *strings.Builder) {
