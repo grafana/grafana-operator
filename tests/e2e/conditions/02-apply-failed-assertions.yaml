@@ -1,5 +1,13 @@
 ---
 apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: testdata
+status:
+  stage: complete
+  stageStatus: failed
+---
+apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaNotificationTemplate
 metadata:
   name: testdata
