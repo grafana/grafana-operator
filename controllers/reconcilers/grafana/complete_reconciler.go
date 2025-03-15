@@ -15,7 +15,7 @@ func NewCompleteReconciler() reconcilers.OperatorGrafanaReconciler {
 	return &CompleteReconciler{}
 }
 
-func (r *CompleteReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+func (r *CompleteReconciler) Reconcile(ctx context.Context, _cr *v1beta1.Grafana, _vars *v1beta1.OperatorReconcileVars, _scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
 	log := logf.FromContext(ctx).WithName("CompleteReconciler")
 	log.Info("grafana installation complete")
 
