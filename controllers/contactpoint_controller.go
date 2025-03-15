@@ -235,28 +235,17 @@ func (r *GrafanaContactPointReconciler) finalize(ctx context.Context, contactPoi
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
+
 	for _, instance := range instances {
-		if err := r.removeFromInstance(ctx, &instance, contactPoint); err != nil {
-			return fmt.Errorf("removing contact point from instance: %w", err)
+		cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &instance)
+		if err != nil {
+			return fmt.Errorf("building grafana client: %w", err)
 		}
-	}
 
-	return nil
-}
-
-func (r *GrafanaContactPointReconciler) removeFromInstance(ctx context.Context, instance *grafanav1beta1.Grafana, contactPoint *grafanav1beta1.GrafanaContactPoint) error {
-	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
-	if err != nil {
-		return fmt.Errorf("building grafana client: %w", err)
-	}
-
-	_, err = r.getContactPointFromUID(cl, contactPoint)
-	if err != nil {
-		return fmt.Errorf("getting contact point by UID: %w", err)
-	}
-	_, err = cl.Provisioning.DeleteContactpoints(contactPoint.CustomUIDOrUID()) //nolint:errcheck
-	if err != nil {
-		return fmt.Errorf("deleting contact point: %w", err)
+		_, err = cl.Provisioning.DeleteContactpoints(contactPoint.CustomUIDOrUID()) //nolint:errcheck
+		if err != nil {
+			return fmt.Errorf("deleting contact point: %w", err)
+		}
 	}
 
 	return nil
