@@ -28,7 +28,7 @@ func WriteIni(cfg map[string]map[string]string) (string, string) {
 	}
 
 	if cfg["dashboards"]["versions_to_keep"] == "" {
-		cfg["dashboards"]["versions_to_keep"] = "20"
+		cfg["dashboards"]["versions_to_keep"] = GrafanaDashboardVersionsToKeep
 	}
 
 	if cfg["unified_alerting"] == nil {
@@ -36,7 +36,7 @@ func WriteIni(cfg map[string]map[string]string) (string, string) {
 	}
 
 	if cfg["unified_alerting"]["rule_version_record_limit"] == "" {
-		cfg["unified_alerting"]["rule_version_record_limit"] = "5"
+		cfg["unified_alerting"]["rule_version_record_limit"] = GrafanaRuleVersionRecordLimit
 	}
 
 	sections := make([]string, 0, len(cfg))
