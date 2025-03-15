@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func WriteIni(cfg map[string]map[string]string) string {
+func setDefaults(cfg map[string]map[string]string) {
 	if cfg == nil {
 		cfg = make(map[string]map[string]string)
 	}
@@ -38,6 +38,10 @@ func WriteIni(cfg map[string]map[string]string) string {
 	if cfg["unified_alerting"]["rule_version_record_limit"] == "" {
 		cfg["unified_alerting"]["rule_version_record_limit"] = GrafanaRuleVersionRecordLimit
 	}
+}
+
+func WriteIni(cfg map[string]map[string]string) string {
+	setDefaults(cfg)
 
 	sections := make([]string, 0, len(cfg))
 	hasGlobal := false
