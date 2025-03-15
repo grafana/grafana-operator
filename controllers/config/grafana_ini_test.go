@@ -17,12 +17,12 @@ instance_name = my_instance
 
 `
 
-var standardSectionRaw = map[string]string{
+var nonGlobalSectionRaw = map[string]string{
 	"type": "sqlite3",
 	"host": "127.0.0.1:3306",
 }
 
-var standardSectionRendered = `[database]
+var nonGlobalSectionRendered = `[database]
 host = 127.0.0.1:3306
 type = sqlite3
 
@@ -139,13 +139,13 @@ func TestWriteIni(t *testing.T) {
 		assert.True(t, strings.HasPrefix(got, globalSectionRendered))
 	})
 
-	t.Run("Standard section is present", func(t *testing.T) {
+	t.Run("Non-global section is present", func(t *testing.T) {
 		cfg := getDefaultConfig(t)
-		cfg["database"] = standardSectionRaw
+		cfg["database"] = nonGlobalSectionRaw
 
 		got := WriteIni(cfg)
 
-		assert.Contains(t, got, standardSectionRendered)
+		assert.Contains(t, got, nonGlobalSectionRendered)
 	})
 
 	t.Run("Empty and nil sections are skipped", func(t *testing.T) {
@@ -174,10 +174,10 @@ func TestWriteSection(t *testing.T) {
 			want:        globalSectionRendered,
 		},
 		{
-			name:        "Standard section should have title",
+			name:        "Non-global section should have title",
 			sectionName: "database",
-			settings:    standardSectionRaw,
-			want:        standardSectionRendered,
+			settings:    nonGlobalSectionRaw,
+			want:        nonGlobalSectionRendered,
 		},
 	}
 
