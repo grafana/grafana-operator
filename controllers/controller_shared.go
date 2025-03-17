@@ -369,14 +369,14 @@ func removeAnnotation(ctx context.Context, cl client.Client, cr client.Object, k
 	}
 
 	// Escape slash '/' according to RFC6901
-	// We could also escape tilde(~), but that is not a valid character in annotation keys anyways.
+	// We could also escape tilde '~', but that is not a valid character in annotation keys.
 	key = strings.ReplaceAll(key, "/", "~1")
 	patch, err := json.Marshal([]interface{}{map[string]interface{}{"op": "remove", "path": "/metadata/annotations/" + key}})
 	if err != nil {
 		return err
 	}
 
-	// MergePatchType only removes map keys when the value is null, unlike overwriting an array in the above removeFinalizer
-	// JSONPatchType allows just removing a path
+	// MergePatchType only removes map keys when the value is null. JSONPatchType allows removing anything under a path.
+	// Differs from removeFinalizer where we overwrite an array.
 	return cl.Patch(ctx, cr, client.RawPatch(types.JSONPatchType, patch))
 }
