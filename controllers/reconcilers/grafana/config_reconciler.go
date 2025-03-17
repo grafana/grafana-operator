@@ -26,8 +26,8 @@ func NewConfigReconciler(client client.Client) reconcilers.OperatorGrafanaReconc
 func (r *ConfigReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
 	_ = logf.FromContext(ctx)
 
-	config, hash := config.WriteIni(cr.Spec.Config)
-	vars.ConfigHash = hash
+	cfg := config.WriteIni(cr.Spec.Config)
+	vars.ConfigHash = config.GetHash(cfg)
 
 	configMap := model.GetGrafanaConfigMap(cr, scheme)
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, configMap, func() error {
@@ -35,7 +35,7 @@ func (r *ConfigReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, s
 		if configMap.Data == nil {
 			configMap.Data = make(map[string]string)
 		}
-		configMap.Data["grafana.ini"] = config
+		configMap.Data["grafana.ini"] = cfg
 		return nil
 	})
 	if err != nil {
