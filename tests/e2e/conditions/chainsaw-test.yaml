@@ -69,7 +69,7 @@ spec:
             file: "../testdata-assertions.yaml"
 
     # reason: ApplyFailed
-    - name: Scale Grafana deployment to zero
+    - name: Scale Grafana deployment to zero and skip ready check
       try:
         - patch:
             resource:
@@ -77,6 +77,10 @@ spec:
               kind: Grafana
               metadata:
                 name: testdata
+                annotations:
+                  # Disables the check that would otherwise omit the instance from reconciliation.
+                  # Without this a NoMatchingInstances condition would be added to the status instead.
+                  grafana/skip-readiness-check: "true"
               spec:
                 deployment:
                   spec:
@@ -91,6 +95,8 @@ spec:
               kind: Grafana
               metadata:
                 name: testdata
+                annotations:
+                  grafana/skip-readiness-check: ""
               spec:
                 deployment:
                   spec:
