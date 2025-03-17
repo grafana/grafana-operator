@@ -2,6 +2,8 @@ module github.com/grafana/grafana-operator/v5
 
 go 1.23.6
 
+toolchain go1.24.1
+
 require (
 	github.com/KimMachineGun/automemlimit v0.7.1
 	github.com/bitly/go-simplejson v0.5.1
@@ -16,9 +18,9 @@ require (
 	github.com/prometheus/client_golang v1.21.1
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/automaxprocs v1.6.0
-	k8s.io/api v0.32.2
-	k8s.io/apimachinery v0.32.2
-	k8s.io/client-go v0.32.2
+	k8s.io/api v0.32.3
+	k8s.io/apimachinery v0.32.3
+	k8s.io/client-go v0.32.3
 	sigs.k8s.io/controller-runtime v0.20.3
 )
 
