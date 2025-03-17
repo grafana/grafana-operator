@@ -10,10 +10,46 @@ env:
   NAMESPACE: grafana-operator-system
 
 jobs:
-  # TODO: skip e2e-tests if only docs have changes
+  docs_only_check:
+    name: Check for docs-only change
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      docs_only: ${{ steps.docs_only_check.outputs.docs_only }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: changed-files
+        name: Get changed files
+        uses: step-security/changed-files@3dbe17c78367e7d60f00d78ae6781a35be47b4a1 # v45.0.1
+        with:
+          files_ignore: |
+            **/*.md
+            **/*.html
+            hugo/**
+
+      - id: which_files
+        name: Which files was changed
+        run: |
+          echo "One or more files has changed."
+          echo "List all the files that have changed: ${{ steps.changed-files.outputs.all_changed_files }}"
+          echo "What is any changed ${{ steps.changed-files.outputs.any_changed }}"
+
+      - id: docs_only_check
+        if: steps.changed-files.outputs.any_changed != 'true'
+        name: Check for docs-only changes
+        run: echo "docs_only=true" >> $GITHUB_OUTPUT
+
   e2e-tests:
     name: e2e on kind ${{ matrix.version }}
     runs-on: ubuntu-latest
+    needs:
+      - docs_only_check
+    if: (needs.docs_only_check.outputs.docs_only != 'true')
     env:
       KUBECONFIG: /home/runner/.kube/kind-grafana-operator-e2e
     strategy:
