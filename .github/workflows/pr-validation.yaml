@@ -97,9 +97,9 @@ jobs:
           go-version-file: "go.mod"
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6.5.0
+        uses: golangci/golangci-lint-action@v6.5.1
         with:
-          version: "v1.62.0"
+          version: v1.64.6
 
       - name: Verify golangci-lint config
         run: |

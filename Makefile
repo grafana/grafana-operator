@@ -155,6 +155,7 @@ YQ_VERSION ?= v4.35.2
 KO_VERSION ?= v0.16.0
 KIND_VERSION ?= v0.24.0
 CHAINSAW_VERSION ?= v0.2.10
+GOLANGCI_LINT_VERSION ?= v1.64.6
 
 KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
 .PHONY: kustomize
@@ -282,7 +283,7 @@ golangci:
 ifeq (, $(shell which golangci-lint))
 	@{ \
 	set -e ;\
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.62.0 ;\
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION) ;\
 	}
 GOLANGCI=$(GOBIN)/golangci-lint
 else
