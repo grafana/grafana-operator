@@ -76,10 +76,6 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	metrics.GrafanaReconciles.WithLabelValues(grafana.Namespace, grafana.Name).Inc()
 
-	finished := true
-	stages := getInstallationStages()
-	vars := &grafanav1beta1.OperatorReconcileVars{}
-
 	defer func() {
 		if err := r.Status().Update(ctx, grafana); err != nil {
 			log.Error(err, "updating status")
@@ -90,12 +86,13 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		grafana.Status.Stage = grafanav1beta1.OperatorStageComplete
 		grafana.Status.StageStatus = grafanav1beta1.OperatorStageResultSuccess
 		grafana.Status.AdminUrl = grafana.Spec.External.URL
-		v, err := r.getVersion(ctx, grafana)
+		version, err := r.getVersion(ctx, grafana)
 		if err != nil {
-			log.Error(err, "failed to get version from external instance")
+			return ctrl.Result{}, fmt.Errorf("failed to get version from external instance: %w", err)
 		}
-		grafana.Status.Version = v
-		return r.updateStatus(ctx, grafana)
+
+		grafana.Status.Version = version
+		return ctrl.Result{}, nil
 	}
 
 	// set spec to the current default version to avoid accidental updates when we
@@ -113,7 +110,8 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 	}
 
-	for _, stage := range stages {
+	vars := &grafanav1beta1.OperatorReconcileVars{}
+	for _, stage := range getInstallationStages() {
 		log.Info("running stage", "stage", stage)
 
 		grafana.Status.Stage = stage
@@ -124,35 +122,26 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			continue
 		}
 
-		status, err := reconciler.Reconcile(ctx, grafana, vars, r.Scheme)
+		stageStatus, err := reconciler.Reconcile(ctx, grafana, vars, r.Scheme)
 		if err != nil {
-			log.Error(err, "reconciler error in stage", "stage", stage)
+			grafana.Status.StageStatus = stageStatus // In progress or failed, both accompanied by Error
 			grafana.Status.LastMessage = err.Error()
-
 			metrics.GrafanaFailedReconciles.WithLabelValues(grafana.Namespace, grafana.Name, string(stage)).Inc()
-		} else {
-			grafana.Status.LastMessage = ""
+
+			return ctrl.Result{}, fmt.Errorf("reconciler error in stage '%s': %w", stage, err)
 		}
 
-		grafana.Status.StageStatus = status
-
-		if status != grafanav1beta1.OperatorStageResultSuccess {
-			log.Info("stage in progress", "stage", stage)
-			finished = false
-			break
-		}
+		grafana.Status.StageStatus = grafanav1beta1.OperatorStageResultSuccess
+		grafana.Status.LastMessage = ""
 	}
 
-	if finished {
-		v, err := r.getVersion(ctx, grafana)
-		if err != nil {
-			log.Error(err, "failed to get version from instance")
-		}
-		grafana.Status.Version = v
-		log.Info("grafana installation complete")
+	version, err := r.getVersion(ctx, grafana)
+	if err != nil {
+		return ctrl.Result{}, fmt.Errorf("failed to get version from instance: %w", err)
 	}
 
-	return r.updateStatus(ctx, grafana)
+	grafana.Status.Version = version
+	return ctrl.Result{}, nil
 }
 
 func (r *GrafanaReconciler) getVersion(ctx context.Context, cr *grafanav1beta1.Grafana) (string, error) {
@@ -192,29 +181,8 @@ func (r *GrafanaReconciler) getVersion(ctx context.Context, cr *grafanav1beta1.G
 	if data.BuildInfo.Version == "" {
 		return "", fmt.Errorf("empty version received from server")
 	}
+
 	return data.BuildInfo.Version, nil
-}
-
-func (r *GrafanaReconciler) updateStatus(ctx context.Context, cr *grafanav1beta1.Grafana) (ctrl.Result, error) {
-	log := logf.FromContext(ctx)
-
-	if cr.Status.StageStatus != grafanav1beta1.OperatorStageResultSuccess {
-		return ctrl.Result{
-			Requeue:      true,
-			RequeueAfter: RequeueDelay,
-		}, nil
-	}
-	if cr.Status.Version == "" {
-		log.Info("version not yet found, requeuing")
-		return ctrl.Result{
-			Requeue:      true,
-			RequeueAfter: RequeueDelay,
-		}, nil
-	}
-
-	return ctrl.Result{
-		Requeue: false,
-	}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
