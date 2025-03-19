@@ -77,7 +77,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, err
 	}
 
-	metrics.GrafanaReconciles.WithLabelValues(grafana.Name).Inc()
+	metrics.GrafanaReconciles.WithLabelValues(grafana.Namespace, grafana.Name).Inc()
 
 	finished := true
 	stages := getInstallationStages()
@@ -127,7 +127,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			log.Error(err, "reconciler error in stage", "stage", stage)
 			nextStatus.LastMessage = err.Error()
 
-			metrics.GrafanaFailedReconciles.WithLabelValues(grafana.Name, string(stage)).Inc()
+			metrics.GrafanaFailedReconciles.WithLabelValues(grafana.Namespace, grafana.Name, string(stage)).Inc()
 		} else {
 			nextStatus.LastMessage = ""
 		}
