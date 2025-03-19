@@ -419,7 +419,7 @@ func (r *GrafanaServiceAccountReconciler) reconcileTokens(
 	// Remove stale or expired tokens.
 	{
 		tokensMap := make(map[string]*metav1.Time, len(expectedTokens))
-		for _, token := range cr.Spec.Tokens {
+		for _, token := range expectedTokens {
 			tokensMap[token.Name] = token.Expires
 		}
 
