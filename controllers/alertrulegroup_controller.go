@@ -202,11 +202,12 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 		}
 		if rule.NotificationSettings != nil {
 			apiRule.NotificationSettings = &models.AlertRuleNotificationSettings{
-				Receiver:       &rule.NotificationSettings.Receiver,
-				GroupBy:        rule.NotificationSettings.GroupBy,
-				GroupWait:      rule.NotificationSettings.GroupWait,
-				GroupInterval:  rule.NotificationSettings.GroupInterval,
-				RepeatInterval: rule.NotificationSettings.RepeatInterval,
+				Receiver:          &rule.NotificationSettings.Receiver,
+				GroupBy:           rule.NotificationSettings.GroupBy,
+				GroupWait:         rule.NotificationSettings.GroupWait,
+				MuteTimeIntervals: rule.NotificationSettings.MuteTimeIntervals,
+				GroupInterval:     rule.NotificationSettings.GroupInterval,
+				RepeatInterval:    rule.NotificationSettings.RepeatInterval,
 			}
 		}
 		if rule.Record != nil {
