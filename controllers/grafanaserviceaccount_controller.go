@@ -444,6 +444,11 @@ func (r *GrafanaServiceAccountReconciler) reconcileTokens(
 		existingSecrets[tokenStatus.SecretName] = struct{}{}
 	}
 	for _, token := range expectedTokens {
+		if token.Expires != nil && time.Now().After(token.Expires.Time) {
+			log.FromContext(ctx).Info("skipping already expired token", "tokenName", token.Name)
+			continue
+		}
+
 		secretName := token.Name
 		if secretName == "" {
 			secretName = fmt.Sprintf("%s-default-token", cr.Name)
@@ -452,12 +457,20 @@ func (r *GrafanaServiceAccountReconciler) reconcileTokens(
 			continue
 		}
 
+		// Calculate SecondsToLive if Expires != nil
+		var ttlSeconds int64
+		if token.Expires != nil {
+			ttl := time.Until(token.Expires.Time)
+			if ttl <= 0 {
+				log.FromContext(ctx).Info("skipping token creation with negative or zero TTL", "tokenName", token.Name, "expires", token.Expires.Time)
+				continue
+			}
+			ttlSeconds = int64(ttl.Seconds())
+		}
+
 		cmd := models.AddServiceAccountTokenCommand{
 			Name:          token.Name,
-			SecondsToLive: int64(time.Until(token.Expires.Time).Seconds()),
-		}
-		if token.Expires != nil {
-			cmd.SecondsToLive = int64(time.Until(token.Expires.Time).Seconds())
+			SecondsToLive: ttlSeconds,
 		}
 		resp, err := serviceAccountsClient.CreateToken(
 			service_accounts.
