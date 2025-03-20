@@ -24,7 +24,7 @@ func NewAdminSecretReconciler(client client.Client) reconcilers.OperatorGrafanaR
 	}
 }
 
-func (r *AdminSecretReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+func (r *AdminSecretReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, _ *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
 	secret := model.GetGrafanaAdminSecret(cr, scheme)
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, secret, func() error {
 		model.SetInheritedLabels(secret, cr.Labels)

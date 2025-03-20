@@ -22,7 +22,7 @@ func NewPvcReconciler(client client.Client) reconcilers.OperatorGrafanaReconcile
 	}
 }
 
-func (r *PvcReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+func (r *PvcReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
 	log := logf.FromContext(ctx).WithName("PvcReconciler")
 
 	if cr.Spec.PersistentVolumeClaim == nil {

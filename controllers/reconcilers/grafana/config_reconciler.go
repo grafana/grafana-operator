@@ -23,7 +23,7 @@ func NewConfigReconciler(client client.Client) reconcilers.OperatorGrafanaReconc
 	}
 }
 
-func (r *ConfigReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+func (r *ConfigReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
 	_ = logf.FromContext(ctx)
 
 	cfg := config.WriteIni(cr.Spec.Config)

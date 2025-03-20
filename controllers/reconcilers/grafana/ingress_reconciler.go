@@ -32,19 +32,19 @@ func NewIngressReconciler(client client.Client, isOpenShift bool) reconcilers.Op
 	}
 }
 
-func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
 	log := logf.FromContext(ctx).WithName("IngressReconciler")
 
 	if r.isOpenShift {
 		log.Info("reconciling route", "platform", "openshift")
-		return r.reconcileRoute(ctx, cr, status, vars, scheme)
+		return r.reconcileRoute(ctx, cr, vars, scheme)
 	} else {
 		log.Info("reconciling ingress", "platform", "kubernetes")
-		return r.reconcileIngress(ctx, cr, status, vars, scheme)
+		return r.reconcileIngress(ctx, cr, vars, scheme)
 	}
 }
 
-func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, _ *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Grafana, _ *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
 	if cr.Spec.Ingress == nil {
 		return v1beta1.OperatorStageResultSuccess, nil
 	}
@@ -72,13 +72,13 @@ func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Gr
 			return v1beta1.OperatorStageResultFailed, fmt.Errorf("ingress spec is incomplete")
 		}
 
-		status.AdminUrl = adminURL
+		cr.Status.AdminUrl = adminURL
 	}
 
 	return v1beta1.OperatorStageResultSuccess, nil
 }
 
-func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, _ *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Grafana, _ *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
 	if cr.Spec.Route == nil || cr.Spec.Route.Spec == nil {
 		return v1beta1.OperatorStageResultSuccess, nil
 	}
@@ -98,7 +98,7 @@ func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Graf
 	// try to assign the admin url
 	if cr.PreferIngress() {
 		if route.Spec.Host != "" {
-			status.AdminUrl = fmt.Sprintf("https://%v", route.Spec.Host)
+			cr.Status.AdminUrl = fmt.Sprintf("https://%v", route.Spec.Host)
 		}
 	}
 
