@@ -21,7 +21,7 @@ func NewServiceAccountReconciler(client client.Client) reconcilers.OperatorGrafa
 	}
 }
 
-func (r *ServiceAccountReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+func (r *ServiceAccountReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
 	sa := model.GetGrafanaServiceAccount(cr, scheme)
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, sa, func() error {

@@ -29,7 +29,7 @@ func NewServiceReconciler(client client.Client, clusterDomain string) reconciler
 	}
 }
 
-func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, status *v1beta1.GrafanaStatus, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
 	_ = logf.FromContext(ctx)
 
 	service := model.GetGrafanaService(cr, scheme)
@@ -57,7 +57,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 		if r.clusterDomain != "" {
 			adminHost += "." + r.clusterDomain
 		}
-		status.AdminUrl = fmt.Sprintf("%v://%v:%d", getGrafanaServerProtocol(cr), adminHost, int32(GetGrafanaPort(cr))) // #nosec G115
+		cr.Status.AdminUrl = fmt.Sprintf("%v://%v:%d", getGrafanaServerProtocol(cr), adminHost, int32(GetGrafanaPort(cr))) // #nosec G115
 	}
 
 	// Headless service for grafana unified alerting
