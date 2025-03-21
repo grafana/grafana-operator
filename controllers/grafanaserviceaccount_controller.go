@@ -568,48 +568,48 @@ func (r *GrafanaServiceAccountReconciler) reconcilePermissions(
 		}
 	}
 
-	for _, resourcePermission := range resp.Payload {
-		l := l.WithValues("current_permission", resourcePermission.Permission)
+	for _, curr := range resp.Payload {
+		l := l.WithValues("current_permission", curr.Permission)
 
 		switch {
-		case resourcePermission.TeamID != 0 && resourcePermission.UserID == 0:
-			desiredPermission := desiredTeams[resourcePermission.TeamID]
-			if desiredPermission == resourcePermission.Permission {
+		case curr.TeamID != 0 && curr.UserID == 0:
+			desiredPermission := desiredTeams[curr.TeamID]
+			if desiredPermission == curr.Permission {
 				continue
 			}
-			l := l.WithValues("team_id", resourcePermission.TeamID, "new_permission", desiredPermission)
+			l := l.WithValues("team_id", curr.TeamID, "new_permission", desiredPermission)
 
 			if _, err := accessControlClient.SetResourcePermissionsForTeam( // nolint:errcheck
 				access_control.NewSetResourcePermissionsForTeamParamsWithContext(ctx).
 					WithBody(&models.SetPermissionCommand{Permission: desiredPermission}).
 					WithResource(resource).
 					WithResourceID(resourceID).
-					WithTeamID(resourcePermission.TeamID),
+					WithTeamID(curr.TeamID),
 			); err != nil {
 				l.Error(err, "failed to update permission for team")
 			} else {
 				l.Info("updated permission for team")
 			}
-		case resourcePermission.TeamID == 0 && resourcePermission.UserID != 0:
-			desiredPerm := desiredUsers[resourcePermission.UserID]
-			if desiredPerm == resourcePermission.Permission {
+		case curr.TeamID == 0 && curr.UserID != 0:
+			desiredPerm := desiredUsers[curr.UserID]
+			if desiredPerm == curr.Permission {
 				continue
 			}
-			l := l.WithValues("user_id", resourcePermission.UserID, "new_permission", desiredPerm)
+			l := l.WithValues("user_id", curr.UserID, "new_permission", desiredPerm)
 
 			if _, err := accessControlClient.SetResourcePermissionsForUser( // nolint:errcheck
 				access_control.NewSetResourcePermissionsForUserParamsWithContext(ctx).
 					WithBody(&models.SetPermissionCommand{Permission: desiredPerm}).
 					WithResource(resource).
 					WithResourceID(resourceID).
-					WithUserID(resourcePermission.UserID),
+					WithUserID(curr.UserID),
 			); err != nil {
 				l.Error(err, "failed to update permission for user")
 			} else {
 				l.Info("updated permission for user", "userID")
 			}
 		default:
-			return fmt.Errorf("malformed existing permission entry: team_id=%d user_id=%d", resourcePermission.TeamID, resourcePermission.UserID)
+			return fmt.Errorf("malformed existing permission entry: team_id=%d user_id=%d", curr.TeamID, curr.UserID)
 		}
 	}
 
