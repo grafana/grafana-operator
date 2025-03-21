@@ -49,10 +49,11 @@ type GrafanaServiceAccountTokenStatus struct {
 
 // GrafanaServiceAccountPermission defines a permission grant for a user or group related to this service account.
 type GrafanaServiceAccountPermission struct {
-	// User specifies the Grafana user (or group) that is granted the permission.
-	// This could be a username, email, or a team name depending on Grafana's configuration.
-	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Optional
 	User string `json:"user"`
+
+	// +kubebuilder:validation:Optional
+	Team string `json:"team"`
 
 	// Permission is the level of access granted to that user or group for this service account
 	// (e.g., "Edit" or "Admin"). Depending on the Grafana version, this might map to an RBAC role or other permissions.

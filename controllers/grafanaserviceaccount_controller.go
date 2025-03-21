@@ -25,6 +25,8 @@ import (
 
 	"github.com/grafana/grafana-openapi-client-go/client/access_control"
 	"github.com/grafana/grafana-openapi-client-go/client/service_accounts"
+	"github.com/grafana/grafana-openapi-client-go/client/teams"
+	"github.com/grafana/grafana-openapi-client-go/client/users"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	v1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
@@ -246,7 +248,7 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 			return ctrl.Result{}, fmt.Errorf("creating Grafana client: %w", err)
 		}
 
-		if err = r.setupServiceAccount(ctx, &grafana, &cr, &updateForm, grafanaClient.AccessControl, grafanaClient.ServiceAccounts); err != nil {
+		if err = r.setupServiceAccount(ctx, &grafana, &cr, &updateForm, grafanaClient.AccessControl, grafanaClient.ServiceAccounts, grafanaClient.Teams, grafanaClient.Users); err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
 	}
@@ -299,6 +301,8 @@ func (r *GrafanaServiceAccountReconciler) setupServiceAccount(
 	saForm *models.CreateServiceAccountForm,
 	accessControlClient access_control.ClientService,
 	serviceAccountsClient service_accounts.ClientService,
+	teamsClient teams.ClientService,
+	usersClient users.ClientService,
 ) error {
 	var perPage int64 = 1
 	serviceAccounts, err := serviceAccountsClient.SearchOrgServiceAccountsWithPaging(
@@ -358,7 +362,7 @@ func (r *GrafanaServiceAccountReconciler) setupServiceAccount(
 	if err := r.reconcileTokens(ctx, cr, serviceAccountID, serviceAccountsClient); err != nil {
 		return fmt.Errorf("reconciling tokens: %w", err)
 	}
-	if err := r.reconcilePermissions(ctx, cr, serviceAccountID, accessControlClient); err != nil {
+	if err := r.reconcilePermissions(ctx, cr, serviceAccountID, accessControlClient, teamsClient, usersClient); err != nil {
 		return fmt.Errorf("reconciling permissions: %w", err)
 	}
 
@@ -526,58 +530,131 @@ func (r *GrafanaServiceAccountReconciler) reconcilePermissions(
 	cr *v1beta1.GrafanaServiceAccount,
 	serviceAccountID int64,
 	accessControlClient access_control.ClientService,
+	teamsClient teams.ClientService,
+	usersClient users.ClientService,
 ) error {
 	l := log.FromContext(ctx)
 
-	// Build desired role set.
-	expectedRoles := map[string]struct{}{}
+	const resource = "serviceaccounts"
+	resourceID := strconv.FormatInt(serviceAccountID, 10)
+
+	resp, err := accessControlClient.GetResourcePermissionsWithParams(
+		access_control.NewGetResourcePermissionsParamsWithContext(ctx).
+			WithResource(resource).
+			WithResourceID(resourceID),
+	)
+	if err != nil {
+		return fmt.Errorf("listing current resource permissions for service account %d: %w", serviceAccountID, err)
+	}
+
+	desiredTeams := map[int64]string{}
+	desiredUsers := map[int64]string{}
 	for _, perm := range cr.Spec.Permissions {
-		if perm.Permission != "" {
-			expectedRoles[perm.Permission] = struct{}{}
-		}
-	}
-
-	// List current roles in Grafana.
-	existingRoles := map[string]struct{}{}
-	{
-		rolesResp, err := accessControlClient.ListUserRoles(serviceAccountID)
-		if err != nil {
-			return fmt.Errorf("listing current roles for service account %d: %w", serviceAccountID, err)
-		}
-		for _, role := range rolesResp.Payload {
-			existingRoles[role.UID] = struct{}{}
-		}
-	}
-
-	// Add missing roles.
-	for roleUID := range expectedRoles {
-		if _, exists := existingRoles[roleUID]; !exists {
-			l.Info("adding missing RBAC role", "roleUID", roleUID)
-			if _, err := accessControlClient.AddUserRoleWithParams( // nolint:errcheck
-				access_control.NewAddUserRoleParamsWithContext(ctx).
-					WithUserID(serviceAccountID).
-					WithBody(&models.AddUserRoleCommand{
-						RoleUID: roleUID,
-						Global:  false,
-					}),
-			); err != nil {
-				return fmt.Errorf("assigning role %s to service account %d: %w", roleUID, serviceAccountID, err)
+		switch {
+		case perm.Team != "" && perm.User == "":
+			id, err := r.findTeamID(ctx, teamsClient, perm.Team)
+			if err != nil {
+				return fmt.Errorf("finding team %q: %w", perm.Team, err)
 			}
+			desiredTeams[id] = perm.Permission
+		case perm.Team == "" && perm.User != "":
+			id, err := r.findUserID(ctx, usersClient, perm.User)
+			if err != nil {
+				return fmt.Errorf("finding user %q: %w", perm.User, err)
+			}
+			desiredUsers[id] = perm.Permission
+		default:
+			return fmt.Errorf("malfomed permission entry: team=%q user=%q", perm.Team, perm.User)
 		}
 	}
 
-	// Remove roles that are no longer needed.
-	for roleUID := range existingRoles {
-		if _, exists := expectedRoles[roleUID]; !exists {
-			l.Info("removing stale RBAC role", "roleUID", roleUID)
-			if _, err := accessControlClient.RemoveUserRole( // nolint:errcheck
-				access_control.
-					NewRemoveUserRoleParams().
-					WithUserID(serviceAccountID).
-					WithRoleUID(roleUID),
-			); err != nil {
-				l.Error(err, "removing role", "roleUID", roleUID)
+	for _, resourcePermission := range resp.Payload {
+		l := l.WithValues("current_permission", resourcePermission.Permission)
+
+		switch {
+		case resourcePermission.TeamID != 0 && resourcePermission.UserID == 0:
+			desiredPermission := desiredTeams[resourcePermission.TeamID]
+			if desiredPermission == resourcePermission.Permission {
+				continue
 			}
+			l := l.WithValues("team_id", resourcePermission.TeamID, "new_permission", desiredPermission)
+
+			if _, err := accessControlClient.SetResourcePermissionsForTeam( // nolint:errcheck
+				access_control.NewSetResourcePermissionsForTeamParamsWithContext(ctx).
+					WithBody(&models.SetPermissionCommand{Permission: desiredPermission}).
+					WithResource(resource).
+					WithResourceID(resourceID).
+					WithTeamID(resourcePermission.TeamID),
+			); err != nil {
+				l.Error(err, "failed to update permission for team")
+			} else {
+				l.Info("updated permission for team")
+			}
+		case resourcePermission.TeamID == 0 && resourcePermission.UserID != 0:
+			desiredPerm := desiredUsers[resourcePermission.UserID]
+			if desiredPerm == resourcePermission.Permission {
+				continue
+			}
+			l := l.WithValues("user_id", resourcePermission.UserID, "new_permission", desiredPerm)
+
+			if _, err := accessControlClient.SetResourcePermissionsForUser( // nolint:errcheck
+				access_control.NewSetResourcePermissionsForUserParamsWithContext(ctx).
+					WithBody(&models.SetPermissionCommand{Permission: desiredPerm}).
+					WithResource(resource).
+					WithResourceID(resourceID).
+					WithUserID(resourcePermission.UserID),
+			); err != nil {
+				l.Error(err, "failed to update permission for user")
+			} else {
+				l.Info("updated permission for user", "userID")
+			}
+		default:
+			return fmt.Errorf("malformed existing permission entry: team_id=%d user_id=%d", resourcePermission.TeamID, resourcePermission.UserID)
+		}
+	}
+
+	existingTeams := map[int64]string{}
+	existingUsers := map[int64]string{}
+	for _, dto := range resp.Payload {
+		switch {
+		case dto.TeamID != 0 && dto.UserID == 0:
+			existingTeams[dto.TeamID] = dto.Permission
+		case dto.TeamID == 0 && dto.UserID != 0:
+			existingUsers[dto.UserID] = dto.Permission
+		default:
+			return fmt.Errorf("malformed existing permission entry: team_id=%d user_id=%d", dto.TeamID, dto.UserID)
+		}
+	}
+	for teamID, desiredPerm := range desiredTeams {
+		if _, exists := existingTeams[teamID]; exists {
+			continue
+		}
+		if _, err := accessControlClient.SetResourcePermissionsForTeam( // nolint:errcheck
+			access_control.NewSetResourcePermissionsForTeamParamsWithContext(ctx).
+				WithBody(&models.SetPermissionCommand{Permission: desiredPerm}).
+				WithResource(resource).
+				WithResourceID(resourceID).
+				WithTeamID(teamID),
+		); err != nil {
+			l.Error(err, "failed to grant permission for team", "team_id", teamID, "permission", desiredPerm)
+		} else {
+			l.Info("granted permission for team", "team_id", teamID, "permission", desiredPerm)
+		}
+	}
+	for userID, desiredPerm := range desiredUsers {
+		if _, exists := existingUsers[userID]; exists {
+			continue
+		}
+		if _, err := accessControlClient.SetResourcePermissionsForUser( // nolint:errcheck
+			access_control.NewSetResourcePermissionsForUserParamsWithContext(ctx).
+				WithBody(&models.SetPermissionCommand{Permission: desiredPerm}).
+				WithResource(resource).
+				WithResourceID(resourceID).
+				WithUserID(userID),
+		); err != nil {
+			l.Error(err, "failed to grant permission for users", "user_id", userID, "permission", desiredPerm)
+		} else {
+			l.Info("granted permission for users", "user_id", userID, "permission", desiredPerm)
 		}
 	}
 
@@ -625,4 +702,47 @@ func (r *GrafanaServiceAccountReconciler) removeToken(
 	}
 
 	return nil
+}
+
+// findUserID looks up a Grafana user by login/email.
+func (r *GrafanaServiceAccountReconciler) findUserID(
+	ctx context.Context,
+	usersClient users.ClientService,
+	loginOrEmail string,
+) (int64, error) {
+	resp, err := usersClient.GetUserByLoginOrEmailWithParams(
+		users.NewGetUserByLoginOrEmailParamsWithContext(ctx).
+			WithLoginOrEmail(loginOrEmail),
+	)
+	if err != nil {
+		return 0, fmt.Errorf("searching user %q: %w", loginOrEmail, err)
+	}
+
+	return resp.Payload.ID, nil
+}
+
+// findTeamID looks up a Grafana team by name.
+func (r *GrafanaServiceAccountReconciler) findTeamID(
+	ctx context.Context,
+	teamsClient teams.ClientService,
+	teamName string,
+) (int64, error) {
+	resp, err := teamsClient.SearchTeams(
+		teams.NewSearchTeamsParamsWithContext(ctx).
+			WithQuery(&teamName),
+	)
+	if err != nil {
+		return 0, fmt.Errorf("searching teams for %q: %w", teamName, err)
+	}
+	if resp.Payload.TotalCount > 1 {
+		return 0, fmt.Errorf("multiple teams found with name %q", teamName)
+	}
+	if resp.Payload.TotalCount != int64(len(resp.Payload.Teams)) {
+		return 0, fmt.Errorf("inconsistent team count: %d != %d", resp.Payload.TotalCount, len(resp.Payload.Teams))
+	}
+	if resp.Payload.TotalCount == 0 {
+		return 0, fmt.Errorf("team %q not found in Grafana", teamName)
+	}
+
+	return resp.Payload.Teams[0].ID, nil
 }
