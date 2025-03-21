@@ -362,7 +362,7 @@ func (r *GrafanaServiceAccountReconciler) setupServiceAccount(
 	if err := r.reconcileTokens(ctx, cr, serviceAccountID, serviceAccountsClient); err != nil {
 		return fmt.Errorf("reconciling tokens: %w", err)
 	}
-	if err := r.reconcilePermissions(ctx, cr, serviceAccountID, accessControlClient, teamsClient, usersClient); err != nil {
+	if err := r.reconcilePermissions(ctx, cr.Spec.Permissions, serviceAccountID, accessControlClient, teamsClient, usersClient); err != nil {
 		return fmt.Errorf("reconciling permissions: %w", err)
 	}
 
@@ -527,7 +527,7 @@ func (r *GrafanaServiceAccountReconciler) reconcileTokens(
 // reconcilePermissions assigns or removes RBAC roles based on the CR spec.
 func (r *GrafanaServiceAccountReconciler) reconcilePermissions(
 	ctx context.Context,
-	cr *v1beta1.GrafanaServiceAccount,
+	permissions []v1beta1.GrafanaServiceAccountPermission,
 	serviceAccountID int64,
 	accessControlClient access_control.ClientService,
 	teamsClient teams.ClientService,
@@ -549,22 +549,22 @@ func (r *GrafanaServiceAccountReconciler) reconcilePermissions(
 
 	desiredTeams := map[int64]string{}
 	desiredUsers := map[int64]string{}
-	for _, perm := range cr.Spec.Permissions {
+	for _, permission := range permissions {
 		switch {
-		case perm.Team != "" && perm.User == "":
-			id, err := r.findTeamID(ctx, teamsClient, perm.Team)
+		case permission.Team != "" && permission.User == "":
+			id, err := r.findTeamID(ctx, teamsClient, permission.Team)
 			if err != nil {
-				return fmt.Errorf("finding team %q: %w", perm.Team, err)
+				return fmt.Errorf("finding team %q: %w", permission.Team, err)
 			}
-			desiredTeams[id] = perm.Permission
-		case perm.Team == "" && perm.User != "":
-			id, err := r.findUserID(ctx, usersClient, perm.User)
+			desiredTeams[id] = permission.Permission
+		case permission.Team == "" && permission.User != "":
+			id, err := r.findUserID(ctx, usersClient, permission.User)
 			if err != nil {
-				return fmt.Errorf("finding user %q: %w", perm.User, err)
+				return fmt.Errorf("finding user %q: %w", permission.User, err)
 			}
-			desiredUsers[id] = perm.Permission
+			desiredUsers[id] = permission.Permission
 		default:
-			return fmt.Errorf("malfomed permission entry: team=%q user=%q", perm.Team, perm.User)
+			return fmt.Errorf("malfomed permission entry: team=%q user=%q", permission.Team, permission.User)
 		}
 	}
 
