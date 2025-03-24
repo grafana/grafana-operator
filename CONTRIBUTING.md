@@ -17,12 +17,19 @@ As a part of the CI solution these settings will be validated, but all of them c
 
 - [golanci-lint](https://golangci-lint.run/)
 - [gofumpt](https://github.com/mvdan/gofumpt)
+- [pre-commit](https://pre-commit.com)
 
-Before pushing any code we recommend that you run the following make commands.
+Before pushing any code we recommend that you run the following make commands:
 
 ```shell
 make test
 make code/golangci-lint
+```
+
+Also, to make sure `pre-commit` runs automatically on `git commit`, its hooks need to be installed first (installation of `pre-commit` itself is described [here](https://pre-commit.com/#installation)):
+
+```shell
+pre-commit install
 ```
 
 Depending on what you have changed these commands will update a number of different files.
@@ -107,4 +114,4 @@ To make sure its copy of CRDs is up-to-date, please, run `make all`.
 All documentation is stored under docs, for our homepage we are using hugo and the [docsy theme](https://github.com/google/docsy).
 
 If you don't feel the needs to preview the changes that you have done to the docs all you need to do is to edit them.
-But if you want to see how your changes will look you need to install hugo locally, see [Hugo ](./hugo/README.md)
+But if you want to see how your changes will look you need to install hugo locally, see [Hugo](./hugo/README.md)
