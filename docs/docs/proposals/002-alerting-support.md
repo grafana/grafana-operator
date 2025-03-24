@@ -217,4 +217,3 @@ The maintianrs have decided to use _Option 1_ to keep Alerting separated from ot
 
 - [Issue 911](https://github.com/grafana/grafana-operator/issues/911)
 - [PR 1144](https://github.com/grafana/grafana-operator/pull/1144)
-
