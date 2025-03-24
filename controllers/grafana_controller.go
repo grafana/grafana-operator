@@ -84,14 +84,16 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	if grafana.IsExternal() {
 		grafana.Status.Stage = grafanav1beta1.OperatorStageComplete
-		grafana.Status.StageStatus = grafanav1beta1.OperatorStageResultSuccess
 		grafana.Status.AdminUrl = grafana.Spec.External.URL
 		version, err := r.getVersion(ctx, grafana)
 		if err != nil {
+			grafana.Status.LastMessage = err.Error()
 			return ctrl.Result{}, fmt.Errorf("failed to get version from external instance: %w", err)
 		}
 
 		grafana.Status.Version = version
+		grafana.Status.LastMessage = ""
+		grafana.Status.StageStatus = grafanav1beta1.OperatorStageResultSuccess
 		return ctrl.Result{}, nil
 	}
 
@@ -104,6 +106,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		if envVersion := os.Getenv("RELATED_IMAGE_GRAFANA"); isImageSHA256(envVersion) {
 			targetVersion = envVersion
 		}
+
 		grafana.Spec.Version = targetVersion
 		if err := r.Client.Update(ctx, grafana); err != nil {
 			return ctrl.Result{}, fmt.Errorf("updating grafana version in spec: %w", err)
@@ -132,15 +135,16 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 
 		grafana.Status.StageStatus = grafanav1beta1.OperatorStageResultSuccess
-		grafana.Status.LastMessage = ""
 	}
 
 	version, err := r.getVersion(ctx, grafana)
 	if err != nil {
+		grafana.Status.LastMessage = err.Error()
 		return ctrl.Result{}, fmt.Errorf("failed to get version from instance: %w", err)
 	}
 
 	grafana.Status.Version = version
+	grafana.Status.LastMessage = ""
 	return ctrl.Result{}, nil
 }
 
