@@ -137,6 +137,10 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 	}
 
+	// NOTE When exiting the loop successfully, consider the internal instance reconciled
+	// This is due to the 'E2E conditions test' relying on it having a successful status to even attempt reconciliation.
+	// Unready instances are omitted from synchronization
+	// TODO Implement a solution to mark an instance as failing but also validate `ApplyFailed` conditions for resources
 	grafana.Status.StageStatus = grafanav1beta1.OperatorStageResultSuccess
 
 	version, err := r.getVersion(ctx, grafana)
