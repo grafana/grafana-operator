@@ -134,4 +134,3 @@ patches:
           argocd.argoproj.io/sync-options: ServerSideApply=true
         name: grafanas.grafana.integreatly.org
 ```
-

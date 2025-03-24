@@ -62,7 +62,7 @@ jobs:
       - name: Set the correct token (Github App or PAT)
         run: |
           echo "AUTHTOKEN=${{ steps.app-token.outputs.token }}" >> $GITHUB_ENV
-          
+
       - name: Make github release
         uses: softprops/action-gh-release@v2
         with:

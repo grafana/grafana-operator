@@ -24,61 +24,61 @@
 Instantiate a dashboard.
 
 * **description**: (type: string, default: `null`)
-  
+
 * **editable**: (type: boolean, default: `true`)
-  
+
 * **graphTooltip**: (type: integer, default: `0`)
-  
+
 * **refresh**: (type: string, default: `null`)
-  
+
 * **schemaVersion**: (type: integer, default: `25`)
-  
+
 * **style**: (type: string, default: `"dark"`)
-  
+
 * **tags**: (type: array, default: `[]`)
-  
+
 * **timezone**: (type: string, default: `null`)
-  
+
 * **title**: (type: string, default: `null`)
-  
+
 * **uid**: (type: string, default: `null`)
-  
+
 
 #### #setTime
 
 * **from**: (type: string, default: `"now-6h"`)
-  
+
 * **to**: (type: string, default: `"now"`)
-  
+
 #### #setTimepicker
 
 * **hidden**: (type: boolean, default: `false`)
-  
+
 * **refreshIntervals**: (type: array, default: `["5s","10s","30s","1m","5m","15m","30m","1h","2h","1d"]`)
-  
+
 
 #### #addAnnotation
 
 * **builtIn**: (type: integer, default: `0`)
-  
+
 * **datasource**: (type: string, default: `"default"`)
-  
+
 * **enable**: (type: boolean, default: `true`)
-  
+
 * **hide**: (type: boolean, default: `false`)
-  
+
 * **iconColor**: (type: string, default: `null`)
-  
+
 * **name**: (type: string, default: `null`)
-  
+
 * **rawQuery**: (type: string, default: `null`)
-  
+
 * **showIn**: (type: integer, default: `0`)
-  
+
 #### #addTemplate
 
 * **template**: (type: object)
-  
+
 
 
 ## panel
@@ -90,28 +90,28 @@ Instantiate a dashboard.
 
 
 * **datasource**: (type: string, default: `"default"`)
-  
+
 * **description**: (type: string, default: `null`)
-  
+
 * **repeat**: (type: string, default: `null`)
-  
+
 * **repeatDirection**: (type: string, default: `null`)
-  
+
 * **title**: (type: string, default: `null`)
-  
+
 * **transparent**: (type: boolean, default: `false`)
-  
+
 
 #### #setFieldConfig
 
 * **max**: (type: integer, default: `null`)
-  
+
 * **min**: (type: integer, default: `null`)
-  
+
 * **thresholdMode**: (type: string, default: `"absolute"`)
-  
+
 * **unit**: (type: string, default: `null`)
-  
+
 #### #setGridPos
 
 * **h**: (type: integer, default: `8`)
@@ -125,66 +125,66 @@ Instantiate a dashboard.
 #### #setOptions
 
 * **calcs**: (type: array, default: `["mean"]`)
-  
+
 * **fields**: (type: string, default: `null`)
-  
+
 * **orientation**: (type: string, default: `"auto"`)
-  
+
 * **showThresholdLabels**: (type: boolean, default: `false`)
-  
+
 * **showThresholdMarkers**: (type: boolean, default: `true`)
-  
+
 * **values**: (type: boolean, default: `false`)
-  
+
 
 #### #addDataLink
 
 * **targetBlank**: (type: boolean, default: `true`)
-  
+
 * **title**: (type: string, default: `null`)
-  
+
 * **url**: (type: string, default: `null`)
-  
+
 #### #addPanelLink
 
 * **targetBlank**: (type: boolean, default: `true`)
-  
+
 * **title**: (type: string, default: `null`)
-  
+
 * **url**: (type: string, default: `null`)
-  
+
 #### #addMapping
 
 * **from**: (type: string, default: `null`)
-  
+
 * **id**: (type: integer, default: `null`)
-  
+
 * **operator**: (type: string, default: `null`)
-  
+
 * **text**: (type: string, default: `null`)
-  
+
 * **to**: (type: string, default: `null`)
-  
+
 * **type**: (type: integer, default: `null`)
-  
+
 * **value**: (type: string, default: `null`)
-  
+
 #### #addOverride
 
 * **matcher**: (type: oject, default: `null`)
-  
+
 * **properties**: (type: array, default: `null`)
-  
+
 #### #addThresholdStep
 
 * **color**: (type: string, default: `null`)
-  
+
 * **value**: (type: integer, default: `null`)
-  
+
 #### #addTarget
 
 * **target**: (type: object)
-  
+
 
 
 ### panel.graph.new
@@ -198,12 +198,12 @@ Instantiate a dashboard.
 * **dashes**: (type: boolean, default: `false`)
   Show line with dashes.
 * **datasource**: (type: string, default: `"default"`)
-  
+
 * **decimals**: (type: integer, default: `null`)
   Controls how many decimals are displayed for legend values and
   graph hover tooltips.
 * **description**: (type: string, default: `null`)
-  
+
 * **fill**: (type: integer, default: `1`)
   Amount of color fill for a series. Expects a value between 0 and 1.
 * **fillGradient**: (type: integer, default: `0`)
@@ -233,9 +233,9 @@ Instantiate a dashboard.
 * **points**: (type: boolean, default: `false`)
   Display points for values.
 * **repeat**: (type: string, default: `null`)
-  
+
 * **repeatDirection**: (type: string, default: `null`)
-  
+
 * **spaceLength**: (type: integer, default: `10`)
   Dashed line spacing when `dashes` is true.
 * **stack**: (type: boolean, default: `false`)
@@ -243,13 +243,13 @@ Instantiate a dashboard.
 * **steppedLine**: (type: boolean, default: `false`)
   Draws adjacent points as staircase.
 * **timeFrom**: (type: string, default: `null`)
-  
+
 * **timeShift**: (type: string, default: `null`)
-  
+
 * **title**: (type: string, default: `null`)
-  
+
 * **transparent**: (type: boolean, default: `false`)
-  
+
 
 #### #setGridPos
 
@@ -283,11 +283,11 @@ Instantiate a dashboard.
 * **total**: (type: boolean, default: `false`)
   Sum of all values returned from the metric query.
 * **values**: (type: boolean, default: `true`)
-  
+
 #### #setThresholds
 
 * **thresholdMode**: (type: string, default: `"absolute"`)
-  
+
 #### #setTooltip
 
 * **shared**: (type: boolean, default: `true`)
@@ -309,7 +309,7 @@ Instantiate a dashboard.
 #### #setXaxis
 
 * **buckets**: (type: string, default: `null`)
-  
+
 * **mode**: (type: string, default: `"time"`)
   The display mode completely changes the visualization of the
   graph panel. It’s like three panels in one. The main mode is
@@ -325,7 +325,7 @@ Instantiate a dashboard.
     called buckets or bins. Taller bars show that more data falls
     in that range.
 * **name**: (type: string, default: `null`)
-  
+
 * **show**: (type: boolean, default: `true`)
   Show or hide the axis.
 #### #setYaxis
@@ -339,81 +339,81 @@ Instantiate a dashboard.
 #### #addDataLink
 
 * **targetBlank**: (type: boolean, default: `true`)
-  
+
 * **title**: (type: string, default: `null`)
-  
+
 * **url**: (type: string, default: `null`)
-  
+
 #### #addPanelLink
 
 * **targetBlank**: (type: boolean, default: `true`)
-  
+
 * **title**: (type: string, default: `null`)
-  
+
 * **url**: (type: string, default: `null`)
-  
+
 #### #addOverride
 
 * **matcher**: (type: oject, default: `null`)
-  
+
 * **properties**: (type: array, default: `null`)
-  
+
 #### #addSeriesOverride
 
 * **alias**: (type: string, default: `null`)
   Alias or regex matching the series you'd like to target.
 * **bars**: (type: boolean, default: `null`)
-  
+
 * **color**: (type: string, default: `null`)
-  
+
 * **dashLength**: (type: integer, default: `null`)
-  
+
 * **dashes**: (type: boolean, default: `null`)
-  
+
 * **fill**: (type: integer, default: `null`)
-  
+
 * **fillBelowTo**: (type: string, default: `null`)
-  
+
 * **fillGradient**: (type: integer, default: `null`)
-  
+
 * **hiddenSeries**: (type: boolean, default: `null`)
-  
+
 * **hideTooltip**: (type: boolean, default: `null`)
-  
+
 * **legend**: (type: boolean, default: `null`)
-  
+
 * **lines**: (type: boolean, default: `null`)
-  
+
 * **linewidth**: (type: integer, default: `null`)
-  
+
 * **nullPointMode**: (type: string, default: `null`)
-  
+
 * **pointradius**: (type: integer, default: `null`)
-  
+
 * **points**: (type: boolean, default: `null`)
-  
+
 * **spaceLength**: (type: integer, default: `null`)
-  
+
 * **stack**: (type: integer, default: `null`)
-  
+
 * **steppedLine**: (type: boolean, default: `null`)
-  
+
 * **transform**: (type: string, default: `null`)
-  
+
 * **yaxis**: (type: integer, default: `null`)
-  
+
 * **zindex**: (type: integer, default: `null`)
-  
+
 #### #addThresholdStep
 
 * **color**: (type: string, default: `null`)
-  
+
 * **value**: (type: integer, default: `null`)
-  
+
 #### #addTarget
 
 * **target**: (type: object)
-  
+
 #### #addYaxis
 
 * **decimals**: (type: integer, default: `null`)
@@ -442,21 +442,21 @@ Instantiate a dashboard.
 
 
 * **collapse**: (type: boolean, default: `true`)
-  
+
 * **collapsed**: (type: boolean, default: `true`)
-  
+
 * **datasource**: (type: string, default: `null`)
-  
+
 * **repeat**: (type: string, default: `null`)
-  
+
 * **repeatIteration**: (type: string, default: `null`)
-  
+
 * **showTitle**: (type: boolean, default: `true`)
-  
+
 * **title**: (type: string, default: `null`)
-  
+
 * **titleSize**: (type: string, default: `"h6"`)
-  
+
 
 #### #setGridPos
 
@@ -472,7 +472,7 @@ Instantiate a dashboard.
 #### #addPanel
 
 * **panel**: (type: object)
-  
+
 
 
 ### panel.stat.new
@@ -480,28 +480,28 @@ Instantiate a dashboard.
 
 
 * **datasource**: (type: string, default: `"default"`)
-  
+
 * **description**: (type: string, default: `null`)
-  
+
 * **repeat**: (type: string, default: `null`)
-  
+
 * **repeatDirection**: (type: string, default: `null`)
-  
+
 * **title**: (type: string, default: `null`)
-  
+
 * **transparent**: (type: boolean, default: `false`)
-  
+
 
 #### #setFieldConfig
 
 * **max**: (type: integer, default: `null`)
-  
+
 * **min**: (type: integer, default: `null`)
-  
+
 * **thresholdMode**: (type: string, default: `"absolute"`)
-  
+
 * **unit**: (type: string, default: `null`)
-  
+
 #### #setGridPos
 
 * **h**: (type: integer, default: `8`)
@@ -515,70 +515,70 @@ Instantiate a dashboard.
 #### #setOptions
 
 * **calcs**: (type: array, default: `["mean"]`)
-  
+
 * **colorMode**: (type: string, default: `"value"`)
-  
+
 * **fields**: (type: string, default: `null`)
-  
+
 * **graphMode**: (type: string, default: `"none"`)
-  
+
 * **justifyMode**: (type: string, default: `"auto"`)
-  
+
 * **orientation**: (type: string, default: `"auto"`)
-  
+
 * **textMode**: (type: string, default: `"auto"`)
-  
+
 * **values**: (type: boolean, default: `false`)
-  
+
 
 #### #addDataLink
 
 * **targetBlank**: (type: boolean, default: `true`)
-  
+
 * **title**: (type: string, default: `null`)
-  
+
 * **url**: (type: string, default: `null`)
-  
+
 #### #addPanelLink
 
 * **targetBlank**: (type: boolean, default: `true`)
-  
+
 * **title**: (type: string, default: `null`)
-  
+
 * **url**: (type: string, default: `null`)
-  
+
 #### #addMapping
 
 * **from**: (type: string, default: `null`)
-  
+
 * **id**: (type: integer, default: `null`)
-  
+
 * **operator**: (type: string, default: `null`)
-  
+
 * **text**: (type: string, default: `null`)
-  
+
 * **to**: (type: string, default: `null`)
-  
+
 * **type**: (type: integer, default: `null`)
-  
+
 * **value**: (type: string, default: `null`)
-  
+
 #### #addOverride
 
 * **matcher**: (type: oject, default: `null`)
-  
+
 * **properties**: (type: array, default: `null`)
-  
+
 #### #addThresholdStep
 
 * **color**: (type: string, default: `null`)
-  
+
 * **value**: (type: integer, default: `null`)
-  
+
 #### #addTarget
 
 * **target**: (type: object)
-  
+
 
 
 ### panel.table.new
@@ -586,34 +586,34 @@ Instantiate a dashboard.
 
 
 * **datasource**: (type: string, default: `"default"`)
-  
+
 * **description**: (type: string, default: `null`)
-  
+
 * **repeat**: (type: string, default: `null`)
-  
+
 * **repeatDirection**: (type: string, default: `null`)
-  
+
 * **title**: (type: string, default: `null`)
-  
+
 * **transparent**: (type: boolean, default: `false`)
-  
+
 
 #### #setFieldConfig
 
 * **displayName**: (type: string, default: `null`)
-  
+
 * **max**: (type: integer, default: `null`)
-  
+
 * **min**: (type: integer, default: `null`)
-  
+
 * **thresholdMode**: (type: string, default: `"absolute"`)
-  
+
 * **noValue**: (type: string, default: `null`)
-  
+
 * **unit**: (type: string, default: `"short"`)
-  
+
 * **width**: (type: integer, default: `null`)
-  
+
 #### #setGridPos
 
 * **h**: (type: integer, default: `8`)
@@ -627,56 +627,56 @@ Instantiate a dashboard.
 #### #setOptions
 
 * **showHeader**: (type: boolean, default: `true`)
-  
+
 
 #### #addDataLink
 
 * **targetBlank**: (type: boolean, default: `true`)
-  
+
 * **title**: (type: string, default: `null`)
-  
+
 * **url**: (type: string, default: `null`)
-  
+
 #### #addPanelLink
 
 * **targetBlank**: (type: boolean, default: `true`)
-  
+
 * **title**: (type: string, default: `null`)
-  
+
 * **url**: (type: string, default: `null`)
-  
+
 #### #addMapping
 
 * **from**: (type: string, default: `null`)
-  
+
 * **id**: (type: integer, default: `null`)
-  
+
 * **operator**: (type: string, default: `null`)
-  
+
 * **text**: (type: string, default: `null`)
-  
+
 * **to**: (type: string, default: `null`)
-  
+
 * **type**: (type: integer, default: `null`)
-  
+
 * **value**: (type: string, default: `null`)
-  
+
 #### #addOverride
 
 * **matcher**: (type: oject, default: `null`)
-  
+
 * **properties**: (type: array, default: `null`)
-  
+
 #### #addThresholdStep
 
 * **color**: (type: string, default: `null`)
-  
+
 * **value**: (type: integer, default: `null`)
-  
+
 #### #addTarget
 
 * **target**: (type: object)
-  
+
 
 
 ### panel.text.new
@@ -684,21 +684,21 @@ Instantiate a dashboard.
 
 
 * **content**: (type: string, default: `null`)
-  
+
 * **datasource**: (type: string, default: `"default"`)
-  
+
 * **description**: (type: string, default: `null`)
-  
+
 * **mode**: (type: string, default: `"markdown"`)
-  
+
 * **repeat**: (type: string, default: `null`)
-  
+
 * **repeatDirection**: (type: string, default: `null`)
-  
+
 * **title**: (type: string, default: `null`)
-  
+
 * **transparent**: (type: boolean, default: `false`)
-  
+
 
 #### #setGridPos
 
@@ -714,15 +714,15 @@ Instantiate a dashboard.
 #### #addPanelLink
 
 * **targetBlank**: (type: boolean, default: `true`)
-  
+
 * **title**: (type: string, default: `null`)
-  
+
 * **url**: (type: string, default: `null`)
-  
+
 #### #addTarget
 
 * **target**: (type: object)
-  
+
 
 
 
@@ -735,19 +735,19 @@ Instantiate a dashboard.
 
 
 * **datasource**: (type: string, default: `"default"`)
-  
+
 * **expr**: (type: string, default: `null`)
-  
+
 * **format**: (type: string, default: `"time_series"`)
-  
+
 * **instant**: (type: boolean, default: `null`)
-  
+
 * **interval**: (type: string, default: `null`)
-  
+
 * **intervalFactor**: (type: integer, default: `null`)
-  
+
 * **legendFormat**: (type: string, default: `null`)
-  
+
 
 
 
@@ -762,32 +762,32 @@ Instantiate a dashboard.
 
 
 * **allValue**: (type: string, default: `null`)
-  
+
 * **hide**: (type: integer, default: `0`)
-  
+
 * **includeAll**: (type: boolean, default: `false`)
-  
+
 * **label**: (type: string, default: `null`)
-  
+
 * **multi**: (type: boolean, default: `false`)
-  
+
 * **name**: (type: string, default: `null`)
-  
+
 * **query**: (type: string, default: `null`)
-  
+
 * **queryValue**: (type: string, default: `""`)
-  
+
 * **skipUrlSync**: (type: string, default: `false`)
-  
+
 
 #### #setCurrent
 
 * **selected**: (type: boolean, default: `false`)
-  
+
 * **text**: (type: string, default: `null`)
-  
+
 * **value**: (type: string, default: `null`)
-  
+
 
 
 
@@ -796,32 +796,32 @@ Instantiate a dashboard.
 
 
 * **hide**: (type: integer, default: `0`)
-  
+
 * **includeAll**: (type: boolean, default: `false`)
-  
+
 * **label**: (type: string, default: `null`)
-  
+
 * **multi**: (type: boolean, default: `false`)
-  
+
 * **name**: (type: string, default: `null`)
-  
+
 * **query**: (type: string, default: `null`)
-  
+
 * **refresh**: (type: integer, default: `1`)
-  
+
 * **regex**: (type: string, default: `null`)
-  
+
 * **skipUrlSync**: (type: string, default: `false`)
-  
+
 
 #### #setCurrent
 
 * **selected**: (type: boolean, default: `false`)
-  
+
 * **text**: (type: string, default: `null`)
-  
+
 * **value**: (type: string, default: `null`)
-  
+
 
 
 
@@ -830,56 +830,53 @@ Instantiate a dashboard.
 
 
 * **allValue**: (type: string, default: `null`)
-  
+
 * **datasource**: (type: string, default: `null`)
-  
+
 * **definition**: (type: string, default: `null`)
-  
+
 * **hide**: (type: integer, default: `0`)
-  
+
 * **includeAll**: (type: boolean, default: `false`)
-  
+
 * **label**: (type: string, default: `null`)
-  
+
 * **multi**: (type: boolean, default: `false`)
-  
+
 * **name**: (type: string, default: `null`)
-  
+
 * **query**: (type: string, default: `null`)
-  
+
 * **refresh**: (type: integer, default: `0`)
-  
+
 * **regex**: (type: string, default: `null`)
-  
+
 * **skipUrlSync**: (type: string, default: `false`)
-  
+
 * **sort**: (type: integer, default: `0`)
-  
+
 * **tagValuesQuery**: (type: string, default: `null`)
-  
+
 * **tags**: (type: array, default: `null`)
-  
+
 * **tagsQuery**: (type: string, default: `null`)
-  
+
 * **useTags**: (type: boolean, default: `false`)
-  
+
 
 #### #setCurrent
 
 * **selected**: (type: boolean, default: `null`)
-  
+
 * **text**: (type: string, default: `null`)
-  
+
 * **value**: (type: string, default: `null`)
-  
+
 
 #### #addOption
 
 * **selected**: (type: boolean, default: `true`)
-  
+
 * **text**: (type: string, default: `null`)
-  
+
 * **value**: (type: string, default: `null`)
-  
-
-

@@ -14,4 +14,3 @@ detect-broken-links:
 		--exclude=github.com \
 		--exclude=grafana.127.0.0.1.nip.io \
 		$(DOCS_URL)
-
