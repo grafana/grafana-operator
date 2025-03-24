@@ -14,7 +14,7 @@ jobs:
       - name: Clone the code
         uses: actions/checkout@v4 #v3.2.0
       - name: reviewdog
-        uses: reviewdog/action-setup@3f401fe1d58fe77e10d665ab713057375e39b887 # v1.3.0
+        uses: reviewdog/action-setup@e04ffabe3898a0af8d0fb1af00c188831c4b5893 # v1.3.2
         with:
           reviewdog_version: latest
 
@@ -97,7 +97,7 @@ jobs:
           go-version-file: "go.mod"
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6.5.1
+        uses: golangci/golangci-lint-action@v6.5.2
         with:
           version: v1.64.6
 
