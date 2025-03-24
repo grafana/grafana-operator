@@ -87,7 +87,9 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		grafana.Status.AdminUrl = grafana.Spec.External.URL
 		version, err := r.getVersion(ctx, grafana)
 		if err != nil {
+			grafana.Status.Version = ""
 			grafana.Status.LastMessage = err.Error()
+			grafana.Status.StageStatus = grafanav1beta1.OperatorStageResultFailed
 			return ctrl.Result{}, fmt.Errorf("failed to get version from external instance: %w", err)
 		}
 
@@ -133,12 +135,13 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 			return ctrl.Result{}, fmt.Errorf("reconciler error in stage '%s': %w", stage, err)
 		}
-
-		grafana.Status.StageStatus = grafanav1beta1.OperatorStageResultSuccess
 	}
+
+	grafana.Status.StageStatus = grafanav1beta1.OperatorStageResultSuccess
 
 	version, err := r.getVersion(ctx, grafana)
 	if err != nil {
+		grafana.Status.Version = ""
 		grafana.Status.LastMessage = err.Error()
 		return ctrl.Result{}, fmt.Errorf("failed to get version from instance: %w", err)
 	}
