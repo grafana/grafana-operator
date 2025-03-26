@@ -90,7 +90,11 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			grafana.Status.Version = ""
 			grafana.Status.LastMessage = err.Error()
 			grafana.Status.StageStatus = grafanav1beta1.OperatorStageResultFailed
-			return ctrl.Result{}, fmt.Errorf("failed to get version from external instance: %w", err)
+
+			// requeueDelay is returned instead of an error to prevent bombarding a
+			// single instance with reconciliation retries in quick succession
+			log.Error(err, "failed to get version from external instance")
+			return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 		}
 
 		grafana.Status.Version = version
@@ -147,7 +151,10 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if err != nil {
 		grafana.Status.Version = ""
 		grafana.Status.LastMessage = err.Error()
-		return ctrl.Result{}, fmt.Errorf("failed to get version from instance: %w", err)
+
+		// The same as the external instances above, avoids overloading a single instance
+		log.Error(err, "failed to get version from instance")
+		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
 	grafana.Status.Version = version
