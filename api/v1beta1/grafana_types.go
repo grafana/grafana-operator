@@ -78,6 +78,13 @@ type GrafanaSpec struct {
 	External *External `json:"external,omitempty"`
 	// Preferences holds the Grafana Preferences settings
 	Preferences *GrafanaPreferences `json:"preferences,omitempty"`
+	// OperatorOptions holds settings to customize Grafana CR reconciliation by operator
+	OperatorOptions *GrafanaOperatorOptions `json:"operatorOptions,omitempty"`
+}
+
+type GrafanaOperatorOptions struct {
+	// DisableDefaultAdminSecret prevents operator from creating default admin-credentials secret
+	DisableDefaultAdminSecret bool `json:"disableDefaultAdminSecret,omitempty"`
 }
 
 type External struct {

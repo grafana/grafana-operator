@@ -6253,6 +6253,13 @@ GrafanaSpec defines the desired state of Grafana
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanaspecoperatoroptions">operatorOptions</a></b></td>
+        <td>object</td>
+        <td>
+          OperatorOptions holds settings to customize Grafana CR reconciliation by operator<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecpersistentvolumeclaim">persistentVolumeClaim</a></b></td>
         <td>object</td>
         <td>
@@ -23171,6 +23178,33 @@ Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
 the values array must be non-empty. If the operator is Exists or DoesNotExist,
 the values array must be empty. This array is replaced during a strategic
 merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.operatorOptions
+<sup><sup>[↩ Parent](#grafanaspec)</sup></sup>
+
+
+
+OperatorOptions holds settings to customize Grafana CR reconciliation by operator
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>disableDefaultAdminSecret</b></td>
+        <td>boolean</td>
+        <td>
+          DisableDefaultAdminSecret prevents operator from creating default admin-credentials secret<br/>
         </td>
         <td>false</td>
       </tr></tbody>
