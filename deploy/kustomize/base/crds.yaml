@@ -11912,6 +11912,15 @@ spec:
                     type: object
                     x-kubernetes-map-type: atomic
                 type: object
+              operatorOptions:
+                description: OperatorOptions holds settings to customize Grafana CR
+                  reconciliation by operator
+                properties:
+                  disableDefaultAdminSecret:
+                    description: DisableDefaultAdminSecret prevents operator from
+                      creating default admin-credentials secret
+                    type: boolean
+                type: object
               persistentVolumeClaim:
                 description: PersistentVolumeClaim creates a PVC if you need to attach
                   one to your grafana instance.
