@@ -78,6 +78,8 @@ type GrafanaSpec struct {
 	External *External `json:"external,omitempty"`
 	// Preferences holds the Grafana Preferences settings
 	Preferences *GrafanaPreferences `json:"preferences,omitempty"`
+	// DisableDefaultAdminSecret prevents operator from creating default admin-credentials secret
+	DisableDefaultAdminSecret bool `json:"disableDefaultAdminSecret,omitempty"`
 }
 
 type External struct {
