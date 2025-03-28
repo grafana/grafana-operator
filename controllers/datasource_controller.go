@@ -87,7 +87,7 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 	datasourcesToDelete := map[*v1beta1.Grafana][]v1beta1.NamespacedResource{}
 	for _, grafana := range grafanas.Items {
 		for _, datasource := range grafana.Status.Datasources {
-			if allDatasources.Find(datasource.Namespace(), datasource.Name()) == nil {
+			if allDatasources.Find(datasource.Namespace(), datasource.Name(), datasource.Uid()) == nil {
 				datasourcesToDelete[&grafana] = append(datasourcesToDelete[&grafana], datasource)
 			}
 		}
