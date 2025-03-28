@@ -83,15 +83,7 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 		return ctrl.Result{}, err
 	}
 
-	// sync datasources, delete datasources from grafana that do no longer have a cr
-	datasourcesToDelete := map[*v1beta1.Grafana][]v1beta1.NamespacedResource{}
-	for _, grafana := range grafanas.Items {
-		for _, datasource := range grafana.Status.Datasources {
-			if allDatasources.Find(datasource.Namespace(), datasource.Name()) == nil {
-				datasourcesToDelete[&grafana] = append(datasourcesToDelete[&grafana], datasource)
-			}
-		}
-	}
+	datasourcesToDelete := getDatasourcesToDelete(allDatasources, grafanas.Items)
 
 	// delete all datasources that no longer have a cr
 	for grafana, existingDatasources := range datasourcesToDelete {
@@ -142,6 +134,19 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 		log.Info("successfully synced datasources", "datasources", datasourcesSynced)
 	}
 	return ctrl.Result{Requeue: false}, nil
+}
+
+// return a list of datasources from the grafana cr that do no longer have a datasource cr
+func getDatasourcesToDelete(allDatasources *v1beta1.GrafanaDatasourceList, grafanas []v1beta1.Grafana) map[*v1beta1.Grafana][]v1beta1.NamespacedResource {
+	datasourcesToDelete := map[*v1beta1.Grafana][]v1beta1.NamespacedResource{}
+	for _, grafana := range grafanas {
+		for _, datasource := range grafana.Status.Datasources {
+			if allDatasources.Find(datasource.Namespace(), datasource.Name(), datasource.UID()) == nil {
+				datasourcesToDelete[&grafana] = append(datasourcesToDelete[&grafana], datasource)
+			}
+		}
+	}
+	return datasourcesToDelete
 }
 
 func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
