@@ -107,6 +107,9 @@ func GetScopedMatchingInstances(ctx context.Context, k8sClient client.Client, cr
 	if len(unready_instances) > 0 {
 		log.Info("Grafana instances not ready, excluded from matching", "instances", unready_instances)
 	}
+	if len(selectedList) == 0 {
+		log.Info("No instances matched selector, reconciliation will be retried", "AllowCrossNamespaceImport", cr.AllowCrossNamespace())
+	}
 
 	return selectedList, nil
 }
