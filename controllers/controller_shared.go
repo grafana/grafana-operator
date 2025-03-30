@@ -87,9 +87,18 @@ func GetScopedMatchingInstances(ctx context.Context, k8sClient client.Client, cr
 		if !selected {
 			continue
 		}
+
+		// Readiness checks omits instances that have not completed a full reconciliation successfully.
+		// This allows speeding up reconciliations and reduces the amount of noisy errors.
+		// A toggle to skip the readiness check allows additional testing of reconcilers, like provoking the ApplyFailed synchronization condition.
+		doReadinessCheck := true
+		if instance.Annotations["grafana-operator/skip-readiness-check"] == "true" {
+			doReadinessCheck = false
+		}
+
 		// admin url is required to interact with Grafana
 		// the instance or route might not yet be ready
-		if instance.Status.Stage != v1beta1.OperatorStageComplete || instance.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
+		if doReadinessCheck && (instance.Status.Stage != v1beta1.OperatorStageComplete || instance.Status.StageStatus != v1beta1.OperatorStageResultSuccess) {
 			unready_instances = append(unready_instances, instance.Name)
 			continue
 		}
