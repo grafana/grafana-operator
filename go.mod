@@ -1,7 +1,6 @@
 module github.com/grafana/grafana-operator/v5
 
 go 1.24.1
-
 require (
 	github.com/KimMachineGun/automemlimit v0.7.1
 	github.com/bitly/go-simplejson v0.5.1
@@ -19,7 +18,7 @@ require (
 	k8s.io/api v0.32.3
 	k8s.io/apimachinery v0.32.3
 	k8s.io/client-go v0.32.3
-	sigs.k8s.io/controller-runtime v0.20.3
+	sigs.k8s.io/controller-runtime v0.20.4
 )
 
 require (
