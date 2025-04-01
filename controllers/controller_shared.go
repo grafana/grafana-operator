@@ -108,7 +108,7 @@ func GetScopedMatchingInstances(ctx context.Context, k8sClient client.Client, cr
 		log.Info("Grafana instances not ready, excluded from matching", "instances", unready_instances)
 	}
 	if len(selectedList) == 0 {
-		log.Info("No instances matched selector, reconciliation will be retried", "AllowCrossNamespaceImport", cr.AllowCrossNamespace())
+		log.Info("None of the available Grafana instances matched the selector, skipping reconciliation", "AllowCrossNamespaceImport", cr.AllowCrossNamespace())
 	}
 
 	return selectedList, nil
@@ -210,7 +210,7 @@ func setNoMatchingInstancesCondition(conditions *[]metav1.Condition, generation 
 		message = fmt.Sprintf("error occurred during fetching of instances: %s", err.Error())
 	} else {
 		reason = "EmptyAPIReply"
-		message = "Instances could not be fetched, reconciliation will be retried"
+		message = "None of the available Grafana instances matched the selector, skipping reconciliation"
 	}
 	meta.SetStatusCondition(conditions, metav1.Condition{
 		Type:               conditionNoMatchingInstance,
