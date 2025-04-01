@@ -119,7 +119,8 @@ func getVolumeMounts(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.VolumeMou
 
 	mounts = append(mounts, v1.VolumeMount{
 		Name:      config.Name,
-		MountPath: "/etc/grafana/",
+		MountPath: "/etc/grafana/grafana.ini",
+		SubPath:   "grafana.ini",
 	})
 
 	mounts = append(mounts, v1.VolumeMount{
