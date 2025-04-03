@@ -147,12 +147,16 @@ func main() { // nolint:gocyclo
 	}
 
 	enforceCacheLabelsLevel, _ := os.LookupEnv(enforceCacheLabelsEnvVar)
+	if enforceCacheLabelsLevel == "" {
+		enforceCacheLabelsLevel = "safe"
+	}
+
 	enforceCacheLabels := false
 	switch enforceCacheLabelsLevel {
 	case "safe", "all":
 		enforceCacheLabels = true
 		setupLog.Info("label restrictions for cached resources are active", "level", enforceCacheLabelsLevel)
-	case "off", "":
+	case "off":
 	default:
 		setupLog.Error(fmt.Errorf("invalid value %s for %s", enforceCacheLabelsLevel, enforceCacheLabelsEnvVar), "falling back to disabling cache enforcement")
 	}
