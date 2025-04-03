@@ -392,3 +392,23 @@ func removeAnnotation(ctx context.Context, cl client.Client, cr client.Object, k
 	// Differs from removeFinalizer where we overwrite an array.
 	return cl.Patch(ctx, cr, client.RawPatch(types.JSONPatchType, patch))
 }
+
+func mergeReconcileErrors(sources ...map[string]string) map[string]string {
+	merged := make(map[string]string)
+
+	for _, source := range sources {
+		if source == nil {
+			source = make(map[string]string)
+		}
+
+		for k, v := range source {
+			if merged[k] == "" {
+				merged[k] = v
+			} else {
+				merged[k] = fmt.Sprintf("%v; %v", merged[k], v)
+			}
+		}
+	}
+
+	return merged
+}
