@@ -6232,6 +6232,13 @@ GrafanaSpec defines the desired state of Grafana
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>disableDefaultAdminSecret</b></td>
+        <td>boolean</td>
+        <td>
+          DisableDefaultAdminSecret prevents operator from creating default admin-credentials secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecexternal">external</a></b></td>
         <td>object</td>
         <td>
