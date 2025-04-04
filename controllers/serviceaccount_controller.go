@@ -41,7 +41,9 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -94,6 +96,7 @@ func (r *GrafanaServiceAccountReconciler) syncServiceAccounts(ctx context.Contex
 			continue
 		}
 
+		var toRemove v1beta1.NamespacedResourceList
 		for _, serviceAccountResource := range grafana.Status.ServiceAccounts {
 			// Limit deletions per cycle to avoid flooding requests
 			if removed >= syncBatchSize {
@@ -114,19 +117,27 @@ func (r *GrafanaServiceAccountReconciler) syncServiceAccounts(ctx context.Contex
 				continue
 			}
 
-			err = r.removeServiceAccount(ctx, grafanaClient, serviceAccountID)
-			if err != nil {
-				return ctrl.Result{}, fmt.Errorf("removing service account: %w", err)
-			}
+			r.removeServiceAccount(ctx, grafanaClient, serviceAccountID)
 
-			grafana.Status.ServiceAccounts = grafana.Status.ServiceAccounts.Remove(namespace, name)
+			toRemove = append(toRemove, serviceAccountResource)
 			removed++
 		}
 
-		// Update Grafana status after processing each instance
-		res, err := r.updateObjectStatus(ctx, &grafana)
+		err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			latest := &v1beta1.Grafana{}
+			err := r.Client.Get(ctx, types.NamespacedName{Namespace: grafana.Namespace, Name: grafana.Name}, latest)
+			if err != nil {
+				return err
+			}
+
+			for _, resource := range toRemove {
+				latest.Status.ServiceAccounts = latest.Status.ServiceAccounts.Remove(resource.Namespace(), resource.Name())
+			}
+
+			return r.Client.Status().Update(ctx, latest)
+		})
 		if err != nil {
-			return res, fmt.Errorf("updating Grafana status: %w", err)
+			return ctrl.Result{}, fmt.Errorf("updating Grafana status: %w", err)
 		}
 	}
 
@@ -150,11 +161,7 @@ func (r *GrafanaServiceAccountReconciler) cleanupServiceAccount(
 	}
 	cr.Status.Tokens = nil
 
-	err := r.removeServiceAccount(ctx, client, cr.Status.ID)
-	if err != nil {
-		return fmt.Errorf("removing service account %q: %w", cr.Status.ID, err)
-	}
-	cr.Status.ID = 0
+	r.removeServiceAccount(ctx, client, cr.Status.ID)
 
 	return nil
 }
@@ -163,23 +170,16 @@ func (r *GrafanaServiceAccountReconciler) removeServiceAccount(
 	ctx context.Context,
 	client *genapi.GrafanaHTTPAPI,
 	serviceAccountID int64,
-) error {
+) {
 	log := logf.FromContext(ctx)
 
-	log.Info("deleting service account from Grafana")
 	if _, err := client.ServiceAccounts.DeleteServiceAccountWithParams( // nolint:errcheck
 		service_accounts.
 			NewDeleteServiceAccountParamsWithContext(ctx).
 			WithServiceAccountID(serviceAccountID),
 	); err != nil {
-		var notFound *service_accounts.DeleteServiceAccountInternalServerError // TODO: check if this is the correct error type
-		if !errors.As(err, &notFound) {
-			return fmt.Errorf("deleting service account %d: %w", serviceAccountID, err)
-		}
-		log.Info("service account not found in Grafana, skip")
+		log.Error(err, "failed to delete service account from Grafana", "serviceAccountID", serviceAccountID)
 	}
-
-	return nil
 }
 
 // Reconcile contains the main reconciliation logic for GrafanaServiceAccount.
@@ -198,7 +198,7 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 
 	// If CR is marked for deletion, run finalization logic.
 	if cr.GetDeletionTimestamp() != nil {
-		err := r.execFinalizer(ctx, cr)
+		err := r.finalize(ctx, cr)
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("executing finalizer: %w", err)
 		}
@@ -221,7 +221,7 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 	}
 	removeNoMatchingInstance(&cr.Status.Conditions)
 	removeInvalidSpec(&cr.Status.Conditions)
-	log.Info("found matching Grafana instances", "count", len(grafanas))
+	log.V(1).Info("found matching Grafana instances", "count", len(grafanas))
 
 	// Apply changes to each matching Grafana instance.
 	applyErrors := map[string]string{}
@@ -234,12 +234,23 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 		err = r.setupServiceAccount(ctx, grafanaClient, cr)
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
+			continue
 		}
 
-		grafana.Status.ServiceAccounts = grafana.Status.ServiceAccounts.Add(cr.Namespace, cr.Name, strconv.FormatInt(cr.Status.ID, 10))
-		res, err := r.updateObjectStatus(ctx, &grafana)
+		saUID := strconv.FormatInt(cr.Status.ID, 10)
+		err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			latest := &v1beta1.Grafana{}
+			err := r.Client.Get(ctx, types.NamespacedName{Namespace: grafana.Namespace, Name: grafana.Name}, latest)
+			if err != nil {
+				return err
+			}
+
+			latest.Status.ServiceAccounts = latest.Status.ServiceAccounts.Add(cr.Namespace, cr.Name, saUID)
+
+			return r.Client.Status().Update(ctx, latest)
+		})
 		if err != nil {
-			return res, fmt.Errorf("updating Grafana status: %w", err)
+			return ctrl.Result{}, fmt.Errorf("updating Grafana status: %w", err)
 		}
 	}
 
@@ -251,24 +262,6 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 	}
 
 	return ctrl.Result{RequeueAfter: cr.Spec.ResyncPeriod.Duration}, nil
-}
-
-func (r *GrafanaServiceAccountReconciler) updateObjectStatus(ctx context.Context, obj client.Object) (ctrl.Result, error) {
-	err := r.Client.Status().Update(ctx, obj)
-	if err != nil {
-		if kuberr.IsConflict(err) {
-			logf.FromContext(ctx).Error(err, "Object status conflict, retrying",
-				"kind", obj.GetObjectKind().GroupVersionKind(),
-				"namespace", obj.GetNamespace(),
-				"name", obj.GetName(),
-				"uid", obj.GetUID(),
-			)
-			return ctrl.Result{Requeue: true}, err
-		}
-		return ctrl.Result{}, err
-	}
-
-	return ctrl.Result{}, nil
 }
 
 func (r *GrafanaServiceAccountReconciler) syncStatusAndFinalizer(ctx context.Context, cr *v1beta1.GrafanaServiceAccount) {
@@ -290,26 +283,11 @@ func (r *GrafanaServiceAccountReconciler) syncStatusAndFinalizer(ctx context.Con
 	}
 }
 
-func (r *GrafanaServiceAccountReconciler) execFinalizer(ctx context.Context, cr *v1beta1.GrafanaServiceAccount) error {
+func (r *GrafanaServiceAccountReconciler) finalize(ctx context.Context, cr *v1beta1.GrafanaServiceAccount) error {
 	if !controllerutil.ContainsFinalizer(cr, grafanaFinalizer) {
 		return nil
 	}
 
-	err := r.finalize(ctx, cr)
-	if err != nil {
-		return fmt.Errorf("finalizing GrafanaServiceAccount %s/%s: %w", cr.Namespace, cr.Name, err)
-	}
-
-	err = removeFinalizer(ctx, r.Client, cr)
-	if err != nil {
-		return fmt.Errorf("removing finalizer %s/%s: %w", cr.Namespace, cr.Name, err)
-	}
-
-	return nil
-}
-
-// finalize removes the service account from Grafana when the CR is deleted.
-func (r *GrafanaServiceAccountReconciler) finalize(ctx context.Context, cr *v1beta1.GrafanaServiceAccount) error {
 	grafanas, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
 		return fmt.Errorf("fetching instances for finalization: %w", err)
@@ -326,16 +304,25 @@ func (r *GrafanaServiceAccountReconciler) finalize(ctx context.Context, cr *v1be
 			return fmt.Errorf("cleaning up service account: %w", err)
 		}
 
-		grafana.Status.ServiceAccounts = grafana.Status.ServiceAccounts.Remove(cr.Namespace, cr.Name)
-		_, err = r.updateObjectStatus(ctx, &grafana)
+		err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			latest := &v1beta1.Grafana{}
+			err := r.Client.Get(ctx, types.NamespacedName{Namespace: grafana.Namespace, Name: grafana.Name}, latest)
+			if err != nil {
+				return err
+			}
+
+			latest.Status.ServiceAccounts = latest.Status.ServiceAccounts.Remove(cr.Namespace, cr.Name)
+
+			return r.Client.Status().Update(ctx, latest)
+		})
 		if err != nil {
 			return fmt.Errorf("updating Grafana status after service account removal: %w", err)
 		}
 	}
 
-	_, err = r.updateObjectStatus(ctx, cr)
+	err = removeFinalizer(ctx, r.Client, cr)
 	if err != nil {
-		return fmt.Errorf("updating GrafanaServiceAccount status: %w", err)
+		return fmt.Errorf("removing finalizer %s/%s: %w", cr.Namespace, cr.Name, err)
 	}
 
 	return nil
@@ -490,21 +477,29 @@ func (r *GrafanaServiceAccountReconciler) grafanaToServiceAccounts(ctx context.C
 // SetupWithManager registers the reconciler with the manager.
 func (r *GrafanaServiceAccountReconciler) SetupWithManager(mgr ctrl.Manager, ctx context.Context) error {
 	err := ctrl.NewControllerManagedBy(mgr).
-		For(&v1beta1.GrafanaServiceAccount{}).
-		Watches(&v1beta1.Grafana{}, handler.EnqueueRequestsFromMapFunc(r.grafanaToServiceAccounts)).
-		WithEventFilter(predicate.Funcs{
-			UpdateFunc: func(e event.UpdateEvent) bool {
-				oldObj, ok := e.ObjectOld.(*v1beta1.Grafana)
-				if !ok {
-					return false
-				}
-				newObj, ok := e.ObjectNew.(*v1beta1.Grafana)
-				if !ok {
-					return false
-				}
-				return !reflect.DeepEqual(oldObj.Labels, newObj.Labels)
-			},
-		}).
+		For(
+			&v1beta1.GrafanaServiceAccount{},
+			builder.WithPredicates(predicate.GenerationChangedPredicate{}),
+		).
+		Watches(
+			&v1beta1.Grafana{},
+			handler.EnqueueRequestsFromMapFunc(r.grafanaToServiceAccounts),
+			builder.WithPredicates(
+				predicate.Funcs{
+					CreateFunc: func(e event.CreateEvent) bool { return true },
+					DeleteFunc: func(e event.DeleteEvent) bool { return true },
+					UpdateFunc: func(e event.UpdateEvent) bool {
+						oldG, okOld := e.ObjectOld.(*v1beta1.Grafana)
+						newG, okNew := e.ObjectNew.(*v1beta1.Grafana)
+						if !okOld || !okNew {
+							return false
+						}
+						return !reflect.DeepEqual(oldG.Labels, newG.Labels)
+					},
+					GenericFunc: func(e event.GenericEvent) bool { return false },
+				},
+			),
+		).
 		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
 	if err != nil {
@@ -520,19 +515,19 @@ func (r *GrafanaServiceAccountReconciler) SetupWithManager(mgr ctrl.Manager, ctx
 				return
 			case <-time.After(initialSyncDelay):
 				start := time.Now()
-				res, err := r.syncServiceAccounts(ctx)
+				// res, err := r.syncServiceAccounts(ctx)
 				elapsed := time.Since(start).Milliseconds()
 				metrics.InitialServiceAccountSyncDuration.Set(float64(elapsed))
 
-				if err != nil {
-					log.Error(err, "synchronizing service accounts")
-					continue
-				}
-				if res.Requeue {
-					log.Info("more service accounts to synchronize")
-					continue
-				}
-				log.Info("service account sync complete")
+				// if err != nil {
+				// 	log.Error(err, "synchronizing service accounts")
+				// 	continue
+				// }
+				// if res.Requeue {
+				// 	log.Info("more service accounts to synchronize")
+				// 	continue
+				// }
+				log.V(1).Info("service account sync complete")
 				return
 			}
 		}
@@ -701,9 +696,6 @@ func (r *GrafanaServiceAccountReconciler) reconcilePermissions(
 	cr *v1beta1.GrafanaServiceAccount,
 ) error {
 	const resource = "serviceaccounts"
-
-	log := logf.FromContext(ctx)
-
 	resourceID := strconv.FormatInt(cr.Status.ID, 10)
 
 	resp, err := client.AccessControl.GetResourcePermissionsWithParams(
@@ -780,7 +772,6 @@ func (r *GrafanaServiceAccountReconciler) reconcilePermissions(
 	}
 
 	if len(cmds) == 0 {
-		log.V(1).Info("permissions are already up to date")
 		return nil
 	}
 
@@ -803,20 +794,22 @@ func (r *GrafanaServiceAccountReconciler) revokeToken(
 	serviceAccountID int64,
 	tokenID int64,
 ) error {
-	if _, err := client.ServiceAccounts.DeleteTokenWithParams( // nolint:errcheck
+	_, err := client.ServiceAccounts.DeleteTokenWithParams( // nolint:errcheck
 		service_accounts.
 			NewDeleteTokenParamsWithContext(ctx).
 			WithServiceAccountID(serviceAccountID).
 			WithTokenID(tokenID),
-	); err != nil {
-		var notFound *service_accounts.DeleteTokenInternalServerError // TODO: check if this is the correct error type
-		if errors.As(err, &notFound) {
-			logf.FromContext(ctx).Info("token not found in Grafana, skip", "serviceaccount_id", serviceAccountID, "token_id", tokenID)
-			return nil
-		}
+	)
+	if err == nil {
+		return nil
+	}
+
+	var notFound *service_accounts.DeleteTokenInternalServerError // TODO: check if this is the correct error type
+	if !errors.As(err, &notFound) {
 		return fmt.Errorf("deleting token %d: %w", tokenID, err)
 	}
 
+	logf.FromContext(ctx).Info("token not found in Grafana, skip", "serviceAccountID", serviceAccountID, "tokenID", tokenID)
 	return nil
 }
 

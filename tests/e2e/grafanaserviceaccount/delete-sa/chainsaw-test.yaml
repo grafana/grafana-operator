@@ -39,20 +39,20 @@ spec:
             ref:
               apiVersion: grafana.integreatly.org/v1beta1
               kind: GrafanaServiceAccount
-              name: ($test.metadata.name)
+              # name: ($test.metadata.name)
             expect:
             - match:
                 apiVersion: grafana.integreatly.org/v1beta1
                 kind: GrafanaServiceAccount
-                name: ($test.metadata.name)
+                # name: ($test.metadata.name)
               check:
                 ($error != null): false
-        # - wait:
-        #     apiVersion: grafana.integreatly.org/v1beta1
-        #     kind: GrafanaServiceAccount
-        #     name: ($test.metadata.name)
-        #     for:
-        #       deletion: {}
+        - wait:
+            apiVersion: grafana.integreatly.org/v1beta1
+            kind: GrafanaServiceAccount
+            # name: ($test.metadata.name)
+            for:
+              deletion: {}
         # - assert:
         #     resource:
         #       apiVersion: grafana.integreatly.org/v1beta1
