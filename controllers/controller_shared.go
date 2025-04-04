@@ -185,6 +185,10 @@ func ReconcilePlugins(ctx context.Context, k8sClient client.Client, scheme *runt
 		return err
 	}
 
+	// Even though model.GetPluginsConfigMap already sets an owner reference, it gets overwritten
+	// when we fetch the actual contents of the ConfigMap using k8sClient, so we need to set it here again
+	controllerutil.SetControllerReference(grafana, pluginsConfigMap, scheme) //nolint:errcheck
+
 	val, err := json.Marshal(plugins.Sanitize())
 	if err != nil {
 		return err
@@ -391,4 +395,24 @@ func removeAnnotation(ctx context.Context, cl client.Client, cr client.Object, k
 	// MergePatchType only removes map keys when the value is null. JSONPatchType allows removing anything under a path.
 	// Differs from removeFinalizer where we overwrite an array.
 	return cl.Patch(ctx, cr, client.RawPatch(types.JSONPatchType, patch))
+}
+
+func mergeReconcileErrors(sources ...map[string]string) map[string]string {
+	merged := make(map[string]string)
+
+	for _, source := range sources {
+		if source == nil {
+			source = make(map[string]string)
+		}
+
+		for k, v := range source {
+			if merged[k] == "" {
+				merged[k] = v
+			} else {
+				merged[k] = fmt.Sprintf("%v; %v", merged[k], v)
+			}
+		}
+	}
+
+	return merged
 }

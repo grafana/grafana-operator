@@ -54,6 +54,8 @@ func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafan
 	deployment := model.GetGrafanaDeployment(cr, scheme)
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, deployment, func() error {
 		model.SetInheritedLabels(deployment, cr.Labels)
+		// Prevents overwrites for owner references
+		controllerutil.SetControllerReference(cr, deployment, scheme) //nolint:errcheck
 		deployment.Spec = getDeploymentSpec(cr, deployment.Name, scheme, vars, openshiftPlatform)
 		err := v1beta1.Merge(deployment, cr.Spec.Deployment)
 		return err
