@@ -185,6 +185,10 @@ func ReconcilePlugins(ctx context.Context, k8sClient client.Client, scheme *runt
 		return err
 	}
 
+	// Even though model.GetPluginsConfigMap already sets an owner reference, it gets overwritten
+	// when we fetch the actual contents of the ConfigMap using k8sClient, so we need to set it here again
+	controllerutil.SetControllerReference(grafana, pluginsConfigMap, scheme) //nolint:errcheck
+
 	val, err := json.Marshal(plugins.Sanitize())
 	if err != nil {
 		return err
