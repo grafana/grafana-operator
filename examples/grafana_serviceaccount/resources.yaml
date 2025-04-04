@@ -1,0 +1,32 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaServiceAccount
+metadata:
+  name: mysa
+spec:
+  name: "my-service-account"
+  role: "Viewer"
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaServiceAccount
+metadata:
+  name: mysa2
+spec:
+  name: "my-service-account2"
+  role: "Editor"
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaServiceAccount
+metadata:
+  name: mysa3
+spec:
+  name: "my-service-account3"
+  role: "Admin"
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
