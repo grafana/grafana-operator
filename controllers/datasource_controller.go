@@ -100,11 +100,11 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 			return ctrl.Result{}, err
 		}
 
-		for _, datasource := range existingDatasources {
+		for syncCounter, datasource := range existingDatasources {
 			// avoid bombarding the grafana instance with a large number of requests at once, limit
 			// the sync to ten datasources per cycle. This means that it will take longer to sync
 			// a large number of deleted datasource crs, but that should be an edge case.
-			if datasourcesSynced >= syncBatchSize {
+			if syncCounter >= syncBatchSize {
 				return ctrl.Result{Requeue: true}, nil
 			}
 
