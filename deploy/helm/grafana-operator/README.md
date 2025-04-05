@@ -77,7 +77,7 @@ It's easier to just manage this configuration outside of the operator.
 | image.tag | string | `""` | Overrides the image tag whose default is the chart appVersion. |
 | imagePullSecrets | list | `[]` | image pull secrets |
 | isOpenShift | bool | `false` | Determines if the target cluster is OpenShift. Additional rbac permissions for routes will be added on OpenShift |
-| leaderElect | bool | `false` | If you want to run multiple replicas of the grafana-operator, this is not recommended. |
+| leaderElect | bool | `true` | This is recommended in most scenarios, even when only running a single instance of the operator. |
 | logging.encoder | string | `"console"` | Log encoding ("console", "json") |
 | logging.level | string | `"info"` | Configure the verbosity of logging ("debug", "error", "info") |
 | logging.time | string | `"rfc3339"` | Time encoding ("epoch", "iso8601", "millis", "nano", "rfc3339", "rfc3339nano") |
