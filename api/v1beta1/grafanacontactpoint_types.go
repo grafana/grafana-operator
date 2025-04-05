@@ -66,6 +66,8 @@ type GrafanaContactPoint struct {
 	Status GrafanaCommonStatus     `json:"status,omitempty"`
 }
 
+var _ CommonResource = (*GrafanaContactPoint)(nil)
+
 //+kubebuilder:object:root=true
 
 // GrafanaContactPointList contains a list of GrafanaContactPoint
@@ -102,6 +104,10 @@ func (in *GrafanaContactPoint) MatchNamespace() string {
 
 func (in *GrafanaContactPoint) AllowCrossNamespace() bool {
 	return in.Spec.AllowCrossNamespaceImport
+}
+
+func (in *GrafanaContactPoint) CommonStatus() *GrafanaCommonStatus {
+	return &in.Status
 }
 
 func init() {

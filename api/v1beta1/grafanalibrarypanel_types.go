@@ -47,6 +47,8 @@ type GrafanaLibraryPanel struct {
 	Status GrafanaLibraryPanelStatus `json:"status,omitempty"`
 }
 
+var _ CommonResource = (*GrafanaLibraryPanel)(nil)
+
 //+kubebuilder:object:root=true
 
 // GrafanaLibraryPanelList contains a list of GrafanaLibraryPanel
@@ -96,6 +98,10 @@ func (in *GrafanaLibraryPanel) MatchNamespace() string {
 
 func (in *GrafanaLibraryPanel) AllowCrossNamespace() bool {
 	return in.Spec.AllowCrossNamespaceImport
+}
+
+func (in *GrafanaLibraryPanel) CommonStatus() *GrafanaCommonStatus {
+	return &in.Status.GrafanaCommonStatus
 }
 
 // GrafanaContentSpec implements GrafanaContentResource
