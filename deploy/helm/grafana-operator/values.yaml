@@ -2,8 +2,8 @@
 # if true the operator will only be able to manage instances in the same namespace
 namespaceScope: false
 
-# -- If you want to run multiple replicas of the grafana-operator, this is not recommended.
-leaderElect: false
+# -- This is recommended in most scenarios, even when only running a single instance of the operator.
+leaderElect: true
 
 # -- Sets the `WATCH_NAMESPACE` environment variable,
 # it defines which namespaces the operator should be listening for (e.g. `"grafana, foo"`).
