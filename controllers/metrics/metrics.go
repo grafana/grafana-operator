@@ -87,6 +87,7 @@ func init() {
 	metrics.Registry.MustRegister(DashboardURLRequests)
 	metrics.Registry.MustRegister(ContentURLRequests)
 	metrics.Registry.MustRegister(InitialDashboardSyncDuration)
+	metrics.Registry.MustRegister(InitialLibraryPanelSyncDuration)
 	metrics.Registry.MustRegister(InitialDatasourceSyncDuration)
 	metrics.Registry.MustRegister(InitialFoldersSyncDuration)
 }
