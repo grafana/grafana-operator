@@ -31,7 +31,6 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -184,22 +183,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, nil
 	}
 
-	defer func() {
-		folder.Status.Hash = folder.Hash()
-		folder.Status.LastResync = metav1.Time{Time: time.Now()}
-		if err := r.Status().Update(ctx, folder); err != nil {
-			log.Error(err, "updating status")
-		}
-		if meta.IsStatusConditionTrue(folder.Status.Conditions, conditionNoMatchingInstance) {
-			if err := removeFinalizer(ctx, r.Client, folder); err != nil {
-				log.Error(err, "failed to remove finalizer")
-			}
-		} else {
-			if err := addFinalizer(ctx, r.Client, folder); err != nil {
-				log.Error(err, "failed to set finalizer")
-			}
-		}
-	}()
+	defer UpdateStatus(ctx, r.Client, folder)
 
 	if folder.Spec.ParentFolderUID == folder.CustomUIDOrUID() {
 		setInvalidSpec(&folder.Status.Conditions, folder.Generation, "CyclicParent", "The value of parentFolderUID must not be the uid of the current folder")
@@ -242,6 +226,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
 	}
 
+	folder.Status.Hash = folder.Hash()
 	return ctrl.Result{RequeueAfter: folder.Spec.ResyncPeriod.Duration}, nil
 }
 

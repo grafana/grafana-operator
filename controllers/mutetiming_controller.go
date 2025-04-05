@@ -20,11 +20,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -80,21 +78,7 @@ func (r *GrafanaMuteTimingReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, nil
 	}
 
-	defer func() {
-		muteTiming.Status.LastResync = metav1.Time{Time: time.Now()}
-		if err := r.Client.Status().Update(ctx, muteTiming); err != nil {
-			log.Error(err, "updating status")
-		}
-		if meta.IsStatusConditionTrue(muteTiming.Status.Conditions, conditionNoMatchingInstance) {
-			if err := removeFinalizer(ctx, r.Client, muteTiming); err != nil {
-				log.Error(err, "failed to remove finalizer")
-			}
-		} else {
-			if err := addFinalizer(ctx, r.Client, muteTiming); err != nil {
-				log.Error(err, "failed to set finalizer")
-			}
-		}
-	}()
+	defer UpdateStatus(ctx, r.Client, muteTiming)
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, muteTiming)
 	if err != nil {
