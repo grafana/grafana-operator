@@ -12933,6 +12933,11 @@ spec:
                   required:
                   - permission
                   type: object
+                  x-kubernetes-validations:
+                  - message: one of user or team must be set
+                    rule: self.user != '' || self.team != ''
+                  - message: user and team cannot both be set
+                    rule: '!(self.user != '''' && self.team != '''')'
                 type: array
               resyncPeriod:
                 default: 10m0s

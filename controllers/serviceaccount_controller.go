@@ -41,6 +41,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -118,45 +119,30 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 	// Reconcile service accounts for each matching Grafana
 	applyErrors := map[string]string{}
 	for _, grafana := range grafanas {
-		gnn := strings.Join([]string{grafana.Namespace, grafana.Name}, "/")
-
-		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
-		if err != nil {
-			applyErrors[gnn] = fmt.Sprintf("creating Grafana client: %v", err)
+		err := r.reconcileGrafana(ctx, grafana, cr)
+		if err == nil {
 			continue
 		}
 
-		resp, err := grafanaClient.Health.GetHealthWithParams(health.NewGetHealthParamsWithContext(ctx))
-		if err != nil {
-			applyErrors[gnn] = fmt.Sprintf("getting Grafana health: %v", err)
-			continue
-		}
-		if !resp.IsSuccess() {
-			applyErrors[gnn] = fmt.Sprintf("Grafana is not healthy: %v", resp)
-			continue
+		switch {
+		case errors.Is(err, &service_accounts.CreateTokenBadRequest{}):
+			setInvalidSpec(&cr.Status.Conditions, cr.Generation, "InvalidSpec", err.Error())
+			meta.RemoveStatusCondition(&cr.Status.Conditions, conditionServiceAccountSynchronized)
+		case kuberr.IsAlreadyExists(err):
+			setInvalidSpec(&cr.Status.Conditions, cr.Generation, "InvalidSpec", err.Error())
+			meta.RemoveStatusCondition(&cr.Status.Conditions, conditionServiceAccountSynchronized)
+		case kuberr.IsConflict(err):
+			meta.SetStatusCondition(&cr.Status.Conditions, metav1.Condition{
+				Type:               conditionServiceAccountSynchronized,
+				Status:             metav1.ConditionFalse,
+				Reason:             "Conflict",
+				Message:            err.Error(),
+				ObservedGeneration: cr.GetGeneration(),
+			})
+			meta.RemoveStatusCondition(&cr.Status.Conditions, conditionServiceAccountSynchronized)
 		}
 
-		// Reconcile one instance record in cr.Status.Instances
-		grafanaRef, err := r.reconcileGrafanaInstance(ctx, grafanaClient, cr, &grafana)
-		if err != nil {
-			applyErrors[gnn] = fmt.Sprintf("reconciling Grafana instance: %v", err)
-			continue
-		}
-
-		// Update the Grafana status.ServiceAccounts (for housekeeping)
-		saUID := strconv.FormatInt(grafanaRef.ServiceAccountID, 10)
-		err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
-			latest := &v1beta1.Grafana{}
-			err := r.Client.Get(ctx, types.NamespacedName{Namespace: grafana.Namespace, Name: grafana.Name}, latest)
-			if err != nil {
-				return fmt.Errorf("getting Grafana %s/%s: %w", grafana.Namespace, grafana.Name, err)
-			}
-			latest.Status.ServiceAccounts = latest.Status.ServiceAccounts.Add(cr.Namespace, cr.Name, saUID)
-			return r.Client.Status().Update(ctx, latest)
-		})
-		if err != nil {
-			applyErrors[gnn] = fmt.Sprintf("updating Grafana status: %v", err)
-		}
+		applyErrors[strings.Join([]string{grafana.Namespace, grafana.Name}, "/")] = fmt.Sprintf("reconciling Grafana: %v", err)
 	}
 
 	meta.SetStatusCondition(&cr.Status.Conditions, buildSynchronizedCondition(
@@ -172,6 +158,48 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 	}
 
 	return ctrl.Result{RequeueAfter: cr.Spec.ResyncPeriod.Duration}, nil
+}
+
+func (r *GrafanaServiceAccountReconciler) reconcileGrafana(
+	ctx context.Context,
+	grafana v1beta1.Grafana,
+	cr *v1beta1.GrafanaServiceAccount,
+) error {
+	grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
+	if err != nil {
+		return fmt.Errorf("creating Grafana client: %w", err)
+	}
+
+	resp, err := grafanaClient.Health.GetHealthWithParams(health.NewGetHealthParamsWithContext(ctx))
+	if err != nil {
+		return fmt.Errorf("getting Grafana health: %w", err)
+	}
+	if !resp.IsSuccess() {
+		return fmt.Errorf("Grafana is not healthy: %w", resp)
+	}
+
+	// Reconcile one instance record in cr.Status.Instances
+	grafanaRef, err := r.reconcileGrafanaInstance(ctx, grafanaClient, cr, &grafana)
+	if err != nil {
+		return fmt.Errorf("reconciling Grafana instance: %w", err)
+	}
+
+	// Update the Grafana status.ServiceAccounts (for housekeeping)
+	saUID := strconv.FormatInt(grafanaRef.ServiceAccountID, 10)
+	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		latest := &v1beta1.Grafana{}
+		err := r.Client.Get(ctx, types.NamespacedName{Namespace: grafana.Namespace, Name: grafana.Name}, latest)
+		if err != nil {
+			return fmt.Errorf("getting Grafana %s/%s: %w", grafana.Namespace, grafana.Name, err)
+		}
+		latest.Status.ServiceAccounts = latest.Status.ServiceAccounts.Add(cr.Namespace, cr.Name, saUID)
+		return r.Client.Status().Update(ctx, latest)
+	})
+	if err != nil {
+		return fmt.Errorf("updating Grafana status: %w", err)
+	}
+
+	return nil
 }
 
 // reconcileGrafanaInstance ensures that for a given Grafana instance, we have a record in cr.Status.Instances,
@@ -316,9 +344,14 @@ func (r *GrafanaServiceAccountReconciler) lookupServiceAccount(
 				return nil
 			}
 
-			err := fmt.Errorf("Grafana has service account name=%q ID=%d, but instance record ID=%d", sa.Name, sa.ID, instanceStatus.ServiceAccountID)
-			setConflictCondition(cr, err)
-			logf.FromContext(ctx).Error(err, "service account conflict")
+			err := kuberr.NewConflict(
+				schema.GroupResource{
+					Group:    v1beta1.GroupVersion.Group,
+					Resource: "GrafanaServiceAccount",
+				},
+				"GrafanaServiceAccount",
+				fmt.Errorf("Grafana has service account name=%q ID=%d, but instance record ID=%d", sa.Name, sa.ID, instanceStatus.ServiceAccountID),
+			)
 			return err
 		}
 	}
@@ -452,12 +485,7 @@ func (r *GrafanaServiceAccountReconciler) createMissingTokens(
 
 		keyResult, err := r.createToken(ctx, grafanaClient, instanceStatus.ServiceAccountID, token)
 		if err != nil {
-			if errors.Is(err, &service_accounts.CreateTokenBadRequest{}) {
-				err := fmt.Errorf("creating token %q for service account %d: %w", token.Name, instanceStatus.ServiceAccountID, err)
-				setInvalidSpec(&cr.Status.Conditions, cr.Generation, "InvalidSpec", err.Error())
-				meta.RemoveStatusCondition(&cr.Status.Conditions, conditionServiceAccountSynchronized)
-			}
-			return err
+			return fmt.Errorf("creating token %q for service account %d: %w", token.Name, instanceStatus.ServiceAccountID, err)
 		}
 
 		// Create a Kubernetes Secret
@@ -556,10 +584,7 @@ func (r *GrafanaServiceAccountReconciler) reconcilePermissionsForInstance(
 			desired[subject{userID: resp.Payload.ID}] = p.Permission
 
 		default:
-			err := fmt.Errorf("malformed permission entry: team=%q user=%q", p.Team, p.User)
-			setInvalidSpec(&cr.Status.Conditions, cr.Generation, "InvalidSpec", err.Error())
-			meta.RemoveStatusCondition(&cr.Status.Conditions, conditionServiceAccountSynchronized)
-			return err
+			return fmt.Errorf("malformed permission entry: team=%q user=%q", p.Team, p.User)
 		}
 	}
 
@@ -738,11 +763,6 @@ func (r *GrafanaServiceAccountReconciler) storeTokenSecret(
 	}
 	err = r.Client.Create(ctx, secret)
 	if err != nil {
-		if kuberr.IsAlreadyExists(err) {
-			setInvalidSpec(&cr.Status.Conditions, cr.Generation, "InvalidSpec", err.Error())
-			meta.RemoveStatusCondition(&cr.Status.Conditions, conditionServiceAccountSynchronized)
-			logf.FromContext(ctx).Error(err, "token secret already exists")
-		}
 		return fmt.Errorf("creating token secret %s: %w", secretName, err)
 	}
 
@@ -811,14 +831,4 @@ func findOrCreateInstanceRecord(
 	})
 
 	return &cr.Status.Instances[len(cr.Status.Instances)-1]
-}
-
-func setConflictCondition(cr *v1beta1.GrafanaServiceAccount, err error) {
-	meta.SetStatusCondition(&cr.Status.Conditions, metav1.Condition{
-		Type:               conditionServiceAccountSynchronized,
-		Status:             metav1.ConditionFalse,
-		Reason:             "Conflict",
-		Message:            err.Error(),
-		ObservedGeneration: cr.GetGeneration(),
-	})
 }

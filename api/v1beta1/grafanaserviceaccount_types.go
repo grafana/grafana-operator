@@ -46,6 +46,8 @@ type GrafanaServiceAccountTokenStatus struct {
 }
 
 // GrafanaServiceAccountPermission defines a permission grant for a user or team.
+// +kubebuilder:validation:XValidation:rule="self.user != '' || self.team != ''",message="one of user or team must be set"
+// +kubebuilder:validation:XValidation:rule="!(self.user != '' && self.team != '')",message="user and team cannot both be set"
 type GrafanaServiceAccountPermission struct {
 	// User login or email to grant permissions to (optional).
 	// +kubebuilder:validation:Optional
