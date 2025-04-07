@@ -80,6 +80,9 @@ const (
 	watchLabelSelectorsEnvVar = "WATCH_LABEL_SELECTORS"
 	// Opt in to enable new experimental cache limits by setting this to `safe` or `all`. Valid values are `off`, `safe` and `all`
 	enforceCacheLabelsEnvVar = "ENFORCE_CACHE_LABELS"
+	cachingLevelAll          = "all"
+	cachingLevelOff          = "off"
+	cachingLevelSafe         = "safe"
 	// clusterDomainEnvVar is the constant for env variable CLUSTER_DOMAIN, which specifies the cluster domain to use for addressing.
 	// By default, this is empty, and internal services are addressed without a cluster domain specified, i.e., a
 	// relative domain name that will resolve regardless of if a custom domain is configured for the cluster. If you
@@ -147,12 +150,16 @@ func main() { // nolint:gocyclo
 	}
 
 	enforceCacheLabelsLevel, _ := os.LookupEnv(enforceCacheLabelsEnvVar)
+	if enforceCacheLabelsLevel == "" {
+		enforceCacheLabelsLevel = cachingLevelSafe
+	}
+
 	enforceCacheLabels := false
 	switch enforceCacheLabelsLevel {
-	case "safe", "all":
+	case cachingLevelSafe, cachingLevelAll:
 		enforceCacheLabels = true
 		setupLog.Info("label restrictions for cached resources are active", "level", enforceCacheLabelsLevel)
-	case "off", "":
+	case cachingLevelOff:
 	default:
 		setupLog.Error(fmt.Errorf("invalid value %s for %s", enforceCacheLabelsLevel, enforceCacheLabelsEnvVar), "falling back to disabling cache enforcement")
 	}
@@ -212,7 +219,7 @@ func main() { // nolint:gocyclo
 		if isOpenShift {
 			controllerOptions.Cache.ByObject[&routev1.Route{}] = cacheLabelConfig
 		}
-		if enforceCacheLabelsLevel == "safe" {
+		if enforceCacheLabelsLevel == cachingLevelSafe {
 			controllerOptions.Client.Cache = &client.CacheOptions{
 				DisableFor: []client.Object{&corev1.ConfigMap{}, &corev1.Secret{}},
 			}

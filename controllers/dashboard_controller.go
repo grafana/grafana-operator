@@ -273,24 +273,23 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 	}
 
-	// TODO Add new Condition displaying plugin reconciliation errors
 	if len(pluginErrors) > 0 {
 		err := fmt.Errorf("%v", pluginErrors)
 		log.Error(err, "failed to apply plugins to all instances")
 	}
 
-	// Specific to dashboards
-	// NOTE Add new Condition displaying home dash sync errors?
 	if len(applyHomeErrors) > 0 {
 		err := fmt.Errorf("%v", pluginErrors)
 		log.Error(err, "failed to apply home dashboards to all instances")
 	}
 
-	condition := buildSynchronizedCondition("Dashboard", conditionDashboardSynchronized, cr.Generation, applyErrors, len(instances))
+	allApplyErrors := mergeReconcileErrors(applyErrors, pluginErrors, applyHomeErrors)
+
+	condition := buildSynchronizedCondition("Dashboard", conditionDashboardSynchronized, cr.Generation, allApplyErrors, len(instances))
 	meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
-	if len(applyErrors) > 0 {
-		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
+	if len(allApplyErrors) > 0 {
+		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", allApplyErrors)
 	}
 
 	cr.Status.Hash = hash
