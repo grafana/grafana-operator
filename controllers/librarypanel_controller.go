@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/controllers/content"
+	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 
@@ -61,13 +62,53 @@ type GrafanaLibraryPanelReconciler struct {
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanalibrarypanels/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanalibrarypanels/finalizers,verbs=update
 
-// libraryElementHasConnections returns whether a library panel is still connected to any dashboards
-func libraryElementHasConnections(grafanaClient *genapi.GrafanaHTTPAPI, uid string) (bool, error) {
-	resp, err := grafanaClient.LibraryElements.GetLibraryElementConnections(uid)
+func (r *GrafanaLibraryPanelReconciler) syncStatuses(ctx context.Context) error {
+	log := logf.FromContext(ctx)
+
+	// get all grafana instances
+	grafanas := &v1beta1.GrafanaList{}
+	var opts []client.ListOption
+	err := r.Client.List(ctx, grafanas, opts...)
 	if err != nil {
-		return false, err
+		return err
 	}
-	return len(resp.Payload.Result) > 0, nil
+	// no instances, no need to sync
+	if len(grafanas.Items) == 0 {
+		return nil
+	}
+
+	// get all panels
+	allPanels := &v1beta1.GrafanaLibraryPanelList{}
+	err = r.Client.List(ctx, allPanels, opts...)
+	if err != nil {
+		return err
+	}
+
+	// delete panels from grafana statuses that no longer have a CR
+	panelsSynced := 0
+	for _, grafana := range grafanas.Items {
+		statusUpdated := false
+		for _, panel := range grafana.Status.LibraryPanels {
+			namespace, name, _ := panel.Split()
+			if allPanels.Find(namespace, name) == nil {
+				grafana.Status.LibraryPanels = grafana.Status.LibraryPanels.Remove(namespace, name)
+				panelsSynced += 1
+				statusUpdated = true
+			}
+		}
+
+		if statusUpdated {
+			err = r.Client.Status().Update(ctx, &grafana)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	if panelsSynced > 0 {
+		log.Info("successfully synced library panels", "library panels", panelsSynced)
+	}
+	return nil
 }
 
 func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -258,60 +299,88 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, libraryPan
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
+
 	for _, instance := range instances {
-		if err := r.removeFromInstance(ctx, &instance, libraryPanel); err != nil {
-			return fmt.Errorf("removing notification template from instance: %w", err)
+		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &instance)
+		if err != nil {
+			return err
+		}
+
+		// Not in removeFromInstance to ensure that deleted library panels are removed on sync
+		// Avoids repeated synchronization loops if a panel has leftover connections
+		switch hasConnections, err := libraryElementHasConnections(grafanaClient, libraryPanel.Status.UID); {
+		case err != nil:
+			return fmt.Errorf("fetching library panel from instance %s/%s: %w", instance.Namespace, instance.Name, err)
+		case hasConnections:
+			return fmt.Errorf("library panel %s/%s/%s on instance %s/%s has existing connections", libraryPanel.Namespace, libraryPanel.Name, libraryPanel.Status.UID, instance.Namespace, instance.Name) //nolint
+		}
+
+		_, err = grafanaClient.LibraryElements.DeleteLibraryElementByUID(libraryPanel.Status.UID) //nolint:errcheck
+		if err != nil {
+			var notFound *library_elements.DeleteLibraryElementByUIDNotFound
+			if !errors.As(err, &notFound) {
+				return err
+			}
+		}
+
+		instance.Status.LibraryPanels = instance.Status.LibraryPanels.Remove(libraryPanel.Namespace, libraryPanel.Name)
+		if err = r.Client.Status().Update(ctx, &instance); err != nil {
+			return fmt.Errorf("removing Folder from Grafana cr: %w", err)
 		}
 	}
 
 	return nil
 }
 
-func (r *GrafanaLibraryPanelReconciler) removeFromInstance(ctx context.Context, instance *v1beta1.Grafana, libraryPanel *v1beta1.GrafanaLibraryPanel) error {
-	grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
+// libraryElementHasConnections returns whether a library panel is still connected to any dashboards
+func libraryElementHasConnections(grafanaClient *genapi.GrafanaHTTPAPI, uid string) (bool, error) {
+	resp, err := grafanaClient.LibraryElements.GetLibraryElementConnections(uid)
+	if err != nil {
+		var notFound *library_elements.GetLibraryElementByUIDNotFound
+		if errors.Is(err, notFound) {
+			// ensure we update the list of managed panels, otherwise we will have dangling references
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	return len(resp.Payload.Result) > 0, nil
+}
+
+// SetupWithManager sets up the controller with the Manager.
+func (r *GrafanaLibraryPanelReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
+	err := ctrl.NewControllerManagedBy(mgr).
+		For(&v1beta1.GrafanaLibraryPanel{}).
+		WithEventFilter(ignoreStatusUpdates()).
+		Complete(r)
 	if err != nil {
 		return err
 	}
 
-	updateInstanceRefs := func() error {
-		instance.Status.LibraryPanels = instance.Status.LibraryPanels.Remove(libraryPanel.Namespace, libraryPanel.Name)
-		return r.Client.Status().Update(ctx, instance)
-	}
+	go func() {
+		// periodic sync reconcile
+		log := logf.FromContext(ctx).WithName("GrafanaLibraryPanelReconciler")
 
-	uid := libraryPanel.Status.UID
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(initialSyncDelay):
+				start := time.Now()
+				err := r.syncStatuses(ctx)
+				elapsed := time.Since(start).Milliseconds()
+				metrics.InitialLibraryPanelSyncDuration.Set(float64(elapsed))
+				if err != nil {
+					log.Error(err, "error synchronizing library panels")
+					continue
+				}
 
-	_, err = grafanaClient.LibraryElements.GetLibraryElementByUID(uid) //nolint:errcheck
-	if err != nil {
-		var notFound *library_elements.GetLibraryElementByUIDNotFound
-		if errors.As(err, &notFound) {
-			// ensure we update the list of managed panels, otherwise we will have dangling references
-			return updateInstanceRefs()
+				log.Info("library panel sync complete")
+				return
+			}
 		}
-		return fmt.Errorf("fetching library panel from instance %s: %w", instance.Status.AdminURL, err)
-	}
+	}()
 
-	switch hasConnections, err := libraryElementHasConnections(grafanaClient, uid); {
-	case err != nil:
-		return fmt.Errorf("fetching library panel from instance %s: %w", instance.Status.AdminURL, err)
-	case hasConnections:
-		return fmt.Errorf("library panel %s on instance %s has existing connections", uid, instance.Status.AdminURL) //nolint
-	}
-
-	_, err = grafanaClient.LibraryElements.DeleteLibraryElementByUID(uid) //nolint:errcheck
-	if err != nil {
-		var notFound *library_elements.DeleteLibraryElementByUIDNotFound
-		if !errors.As(err, &notFound) {
-			return err
-		}
-	}
-
-	return updateInstanceRefs()
-}
-
-// SetupWithManager sets up the controller with the Manager.
-func (r *GrafanaLibraryPanelReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1beta1.GrafanaLibraryPanel{}).
-		WithEventFilter(ignoreStatusUpdates()).
-		Complete(r)
+	return nil
 }
