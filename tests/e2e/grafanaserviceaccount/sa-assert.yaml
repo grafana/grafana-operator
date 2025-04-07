@@ -8,8 +8,8 @@ status:
     status: "True"
     type: ServiceAccountSynchronized
   instances:
-    - grafanaRefName: ($test.metadata.name)
-      grafanaRefNamespace: ($namespace)
+    - grafanaName: ($test.metadata.name)
+      grafanaNamespace: ($namespace)
       serviceAccountID: 2
       tokens:
         - name: (join('-', [$test.metadata.name, 'default-token']))

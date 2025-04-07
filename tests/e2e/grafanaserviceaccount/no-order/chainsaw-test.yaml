@@ -16,27 +16,6 @@ spec:
         - apply:
             file: ../sa-resource.yaml
         - assert:
-            resource:
-              apiVersion: grafana.integreatly.org/v1beta1
-              kind: GrafanaServiceAccount
-              metadata:
-                name: ($test.metadata.name)
-              status:
-                conditions:
-                - reason: ApplySuccessful
-                  status: "True"
-                  type: ServiceAccountSynchronized
-                id: 2
-                tokens:
-                - name: (join('-', [$test.metadata.name, 'default-token']))
-                  secretName: (join('-', [$test.metadata.name, 'default-token']))
-                  tokenId: 1
+            file: ../sa-assert.yaml
         - assert:
-            resource:
-              apiVersion: grafana.integreatly.org/v1beta1
-              kind: Grafana
-              metadata:
-                name: ($test.metadata.name)
-              status:
-                serviceaccounts:
-                  - (join('/', [$namespace, $test.metadata.name, '2']))
+            file: ../grafana-assert.yaml
