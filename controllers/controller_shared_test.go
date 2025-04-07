@@ -233,6 +233,60 @@ func TestLabelsSatisfyMatchExpressions(t *testing.T) {
 	}
 }
 
+func TestMergeReconcileErrors(t *testing.T) {
+	tests := []struct {
+		name    string
+		sources []map[string]string
+		want    map[string]string
+	}{
+		{
+			name: "Merge multiple maps",
+			sources: []map[string]string{
+				{
+					"default-grafana": "error1",
+				},
+				{
+					"default-grafana": "error2",
+				},
+				{
+					"default-grafana2": "error3",
+				},
+			},
+			want: map[string]string{
+				"default-grafana":  "error1; error2",
+				"default-grafana2": "error3",
+			},
+		},
+		{
+			name: "Nil maps are properly handled",
+			sources: []map[string]string{
+				nil,
+				{
+					"default-grafana": "error1",
+				},
+			},
+			want: map[string]string{
+				"default-grafana": "error1",
+			},
+		},
+		{
+			name: "Empty maps are properly handled",
+			sources: []map[string]string{
+				{},
+				{},
+			},
+			want: map[string]string{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := mergeReconcileErrors(tt.sources...)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 var _ = Describe("GetMatchingInstances functions", Ordered, func() {
 	namespace := corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
