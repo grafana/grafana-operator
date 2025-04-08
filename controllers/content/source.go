@@ -5,10 +5,10 @@ import "github.com/grafana/grafana-operator/v5/api/v1beta1"
 type ContentSourceType string
 
 const (
-	ContentSourceTypeRawJson    ContentSourceType = "json"
-	ContentSourceTypeGzipJson   ContentSourceType = "gzipJson"
+	ContentSourceTypeRawJSON    ContentSourceType = "json"
+	ContentSourceTypeGzipJSON   ContentSourceType = "gzipJson"
 	ContentSourceJsonnetProject ContentSourceType = "jsonnetProjectWithRuntimeRaw"
-	ContentSourceTypeUrl        ContentSourceType = "url"
+	ContentSourceTypeURL        ContentSourceType = "url"
 	ContentSourceTypeJsonnet    ContentSourceType = "jsonnet"
 	ContentSourceTypeGrafanaCom ContentSourceType = "grafana"
 	ContentSourceConfigMap      ContentSourceType = "configmap"
@@ -20,15 +20,15 @@ func GetSourceTypes(cr v1beta1.GrafanaContentResource) []ContentSourceType {
 	spec := cr.GrafanaContentSpec()
 
 	if spec.Json != "" {
-		sourceTypes = append(sourceTypes, ContentSourceTypeRawJson)
+		sourceTypes = append(sourceTypes, ContentSourceTypeRawJSON)
 	}
 
 	if spec.GzipJson != nil {
-		sourceTypes = append(sourceTypes, ContentSourceTypeGzipJson)
+		sourceTypes = append(sourceTypes, ContentSourceTypeGzipJSON)
 	}
 
 	if spec.Url != "" {
-		sourceTypes = append(sourceTypes, ContentSourceTypeUrl)
+		sourceTypes = append(sourceTypes, ContentSourceTypeURL)
 	}
 
 	if spec.Jsonnet != "" {

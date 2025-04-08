@@ -88,7 +88,7 @@ func NewContentResolver(cr v1beta1.GrafanaContentResource, client client.Client,
 }
 
 func (h *ContentResolver) Resolve(ctx context.Context) (map[string]interface{}, string, error) {
-	json, err := h.fetchContentJson(ctx)
+	json, err := h.fetchContentJSON(ctx)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to fetch contents: %w", err)
 	}
@@ -102,10 +102,10 @@ func (h *ContentResolver) Resolve(ctx context.Context) (map[string]interface{}, 
 }
 
 // map data sources that are required in the content model to data sources that exist in the instance
-func (h *ContentResolver) resolveDatasources(contentJson []byte) ([]byte, error) {
+func (h *ContentResolver) resolveDatasources(contentJSON []byte) ([]byte, error) {
 	spec := h.resource.GrafanaContentSpec()
 	if len(spec.Datasources) == 0 {
-		return contentJson, nil
+		return contentJSON, nil
 	}
 
 	for _, input := range spec.Datasources {
@@ -114,15 +114,15 @@ func (h *ContentResolver) resolveDatasources(contentJson []byte) ([]byte, error)
 		}
 
 		searchValue := fmt.Sprintf("${%s}", input.InputName)
-		contentJson = bytes.ReplaceAll(contentJson, []byte(searchValue), []byte(input.DatasourceName))
+		contentJSON = bytes.ReplaceAll(contentJSON, []byte(searchValue), []byte(input.DatasourceName))
 	}
 
-	return contentJson, nil
+	return contentJSON, nil
 }
 
-// fetchContentJson delegates obtaining the json definition to one of the known fetchers, for example
+// fetchContentJSON delegates obtaining the json definition to one of the known fetchers, for example
 // from embedded raw json or from a url
-func (h *ContentResolver) fetchContentJson(ctx context.Context) ([]byte, error) {
+func (h *ContentResolver) fetchContentJSON(ctx context.Context) ([]byte, error) {
 	sourceTypes := GetSourceTypes(h.resource)
 
 	if len(sourceTypes) == 0 {
@@ -140,12 +140,12 @@ func (h *ContentResolver) fetchContentJson(ctx context.Context) ([]byte, error) 
 	spec := h.resource.GrafanaContentSpec()
 
 	switch sourceTypes[0] {
-	case ContentSourceTypeRawJson:
+	case ContentSourceTypeRawJSON:
 		return []byte(spec.Json), nil
-	case ContentSourceTypeGzipJson:
+	case ContentSourceTypeGzipJSON:
 		return cache.Gunzip([]byte(spec.GzipJson))
-	case ContentSourceTypeUrl:
-		return fetchers.FetchFromUrl(ctx, h.resource, h.Client, grafanaClient.InsecureTLSConfiguration)
+	case ContentSourceTypeURL:
+		return fetchers.FetchFromURL(ctx, h.resource, h.Client, grafanaClient.InsecureTLSConfiguration)
 	case ContentSourceTypeJsonnet:
 		envs, err := h.getContentEnvs(ctx)
 		if err != nil {
@@ -225,17 +225,17 @@ func (h *ContentResolver) getReferencedValue(ctx context.Context, cr v1beta1.Gra
 }
 
 // getContentModel resolves datasources, updates uid (if needed) and converts raw json to type grafana client accepts
-func (h *ContentResolver) getContentModel(contentJson []byte) (map[string]interface{}, string, error) {
-	contentJson, err := h.resolveDatasources(contentJson)
+func (h *ContentResolver) getContentModel(contentJSON []byte) (map[string]interface{}, string, error) {
+	contentJSON, err := h.resolveDatasources(contentJSON)
 	if err != nil {
 		return map[string]interface{}{}, "", err
 	}
 
 	hash := sha256.New()
-	hash.Write(contentJson)
+	hash.Write(contentJSON)
 
 	var contentModel map[string]interface{}
-	err = json.Unmarshal(contentJson, &contentModel)
+	err = json.Unmarshal(contentJSON, &contentModel)
 	if err != nil {
 		return map[string]interface{}{}, "", err
 	}

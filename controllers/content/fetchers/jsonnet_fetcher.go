@@ -139,7 +139,7 @@ func generateRandomString(length int) (string, error) {
 	return s, nil
 }
 
-func getJsonProjectBuildRoundName(modelName string) (string, error) {
+func getJSONProjectBuildRoundName(modelName string) (string, error) {
 	tsNow := strconv.FormatInt(time.Now().Unix(), 10)
 	salt, err := generateRandomString(5)
 	if err != nil {
@@ -260,7 +260,7 @@ func postJsonnetProjectBuild(buildName string) error {
 }
 
 func BuildProjectAndFetchJsonnetFrom(cr v1beta1.GrafanaContentResource, envs map[string]string) ([]byte, error) {
-	jsonnetProjectBuildName, err := getJsonProjectBuildRoundName(cr.GetName())
+	jsonnetProjectBuildName, err := getJSONProjectBuildRoundName(cr.GetName())
 	if err != nil {
 		return nil, fmt.Errorf("error generating jsonnet project build name: %w", err)
 	}

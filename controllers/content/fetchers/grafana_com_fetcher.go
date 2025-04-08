@@ -43,7 +43,7 @@ func FetchFromGrafanaCom(ctx context.Context, cr v1beta1.GrafanaContentResource,
 
 	spec.Url = fmt.Sprintf("%s/%d/revisions/%d/download", grafanaComDashboardApiUrlRoot, source.Id, *source.Revision)
 
-	return FetchFromUrl(ctx, cr, c, tlsConfig)
+	return FetchFromURL(ctx, cr, c, tlsConfig)
 }
 
 func getLatestGrafanaComRevision(cr v1beta1.GrafanaContentResource, tlsConfig *tls.Config) (int, error) {

@@ -90,16 +90,16 @@ func getGrafanaServerProtocol(cr *v1beta1.Grafana) string {
 
 func GetGrafanaPort(cr *v1beta1.Grafana) int {
 	if cr.Spec.Config["server"] == nil {
-		return config.GrafanaHttpPort
+		return config.GrafanaHTTPPort
 	}
 
 	if cr.Spec.Config["server"]["http_port"] == "" {
-		return config.GrafanaHttpPort
+		return config.GrafanaHTTPPort
 	}
 
 	port, err := strconv.Atoi(cr.Spec.Config["server"]["http_port"])
 	if err != nil {
-		return config.GrafanaHttpPort
+		return config.GrafanaHTTPPort
 	}
 
 	return port
@@ -110,7 +110,7 @@ func getServicePorts(cr *v1beta1.Grafana) []v1.ServicePort {
 
 	defaultPorts := []v1.ServicePort{
 		{
-			Name:       config.GrafanaHttpPortName,
+			Name:       config.GrafanaHTTPPortName,
 			Protocol:   "TCP",
 			Port:       intPort,
 			TargetPort: intstr.FromString("grafana-http"),

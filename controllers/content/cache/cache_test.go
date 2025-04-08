@@ -13,14 +13,14 @@ import (
 
 var _ = Describe("fetchers#Gzip", func() {
 	It("Can compress and uncompress", func() {
-		contentJson := []byte(`{"dummyField": "dummyData"}`)
-		compressed, err := Gzip(contentJson)
+		contentJSON := []byte(`{"dummyField": "dummyData"}`)
+		compressed, err := Gzip(contentJSON)
 		Expect(err).NotTo(HaveOccurred())
 
 		decompressed, err := Gunzip(compressed)
 		Expect(err).NotTo(HaveOccurred())
 
-		Expect(decompressed).To(Equal(contentJson))
+		Expect(decompressed).To(Equal(contentJSON))
 	})
 })
 
