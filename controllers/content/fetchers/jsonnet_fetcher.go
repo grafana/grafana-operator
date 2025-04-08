@@ -318,7 +318,7 @@ func untarGzip(archivePath, extractPath string) error {
 			return fmt.Errorf("tar contained invalid name error %q", target)
 		}
 
-		target = filepath.Join(extractPath, header.Name)
+		target = filepath.Join(extractPath, header.Name) // #nosec G305
 
 		// check the type
 		switch header.Typeflag {

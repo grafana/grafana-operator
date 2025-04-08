@@ -1,20 +1,13 @@
-run:
-  timeout: 4m
-
+version: "2"
 linters:
-  disable-all: false
   enable:
     - dogsled
-    - errcheck
     - errorlint
     - exhaustive
     - goconst
     - gocritic
     - gocyclo
-    - gofumpt
     - gosec
-    - gosimple
-    - govet
     - makezero
     - misspell
     - nakedret
@@ -22,98 +15,100 @@ linters:
     - nilerr
     - prealloc
     - revive
-    - staticcheck
     - thelper
     - unparam
-    - unused
     - whitespace
 
-linters-settings:
-  dogsled:
-    max-blank-identifiers: 2
+  settings:
+    dogsled:
+      max-blank-identifiers: 2
 
-  errcheck:
-    check-type-assertions: true
-    check-blank: true
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
 
-  errorlint:
-    errorf: true
-    asserts: true
-    comparison: true
+    errorlint:
+      errorf: true
+      asserts: true
+      comparison: true
 
-  exhaustive:
-    check-generated: false
-    default-signifies-exhaustive: false
+    exhaustive:
+      default-signifies-exhaustive: false
 
-  goconst:
-    min-len: 3
-    min-occurrences: 3
+    goconst:
+      min-len: 3
+      min-occurrences: 3
 
-  gocyclo:
-    min-complexity: 25
+    gocyclo:
+      min-complexity: 25
 
-  gosimple:
-    checks: ["all"]
+    makezero:
+      always: false
 
-  makezero:
-    always: false
+    misspell:
+      locale: US
 
-  misspell:
-    locale: US
+    nakedret:
+      max-func-lines: 30
 
-  nakedret:
-    max-func-lines: 30
+    nestif:
+      min-complexity: 30
 
-  nestif:
-    min-complexity: 30
+    nolintlint:
+      allow-unused: false
+      allow-no-explanation: []
+      require-explanation: false
+      require-specific: false
 
-  nolintlint:
-    allow-unused: false
-    allow-no-explanation: []
-    require-explanation: false
-    require-specific: false
+    prealloc:
+      simple: true
+      range-loops: true
+      for-loops: false
 
-  prealloc:
-    simple: true
-    range-loops: true
-    for-loops: false
+    revive:
+      severity: warning
 
-  revive:
-    ignore-generated-header: true
-    severity: warning
+    staticcheck:
+      checks:
+        - all
 
-  staticcheck:
-    checks: ["all"]
+    thelper:
+      test:
+        first: true
+        name: true
+        begin: true
+      benchmark:
+        first: true
+        name: true
+        begin: true
+      tb:
+        first: true
+        name: true
+        begin: true
 
-  thelper:
-    test:
-      first: true
-      name: true
-      begin: true
-    benchmark:
-      first: true
-      name: true
-      begin: true
-    tb:
-      first: true
-      name: true
-      begin: true
+    unparam:
+      check-exported: true
 
-  unparam:
-    check-exported: true
+    whitespace:
+      multi-if: false
+      multi-func: false
 
-  whitespace:
-    multi-if: false
-    multi-func: false
+  exclusions:
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
 
-issues:
-  exclude:
-    - "G305: File traversal when extracting zip/tar archive" # Related to json_fetch.go: target = filepath.Join(extractPath, header.Name)
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - funlen
-        - gocognit
-        - gocyclo
-        - unparam
-        - unused
+    rules:
+      - linters:
+          - funlen
+          - gocognit
+          - gocyclo
+          - unparam
+          - unused
+        path: _test\.go
+
+formatters:
+  enable:
+    - gofumpt
