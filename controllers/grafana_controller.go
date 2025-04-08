@@ -205,7 +205,6 @@ func (r *GrafanaReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&grafanav1beta1.Grafana{}).
 		Owns(&v1.Deployment{}).
 		Owns(&v12.ConfigMap{}).
-		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
 }
 

@@ -1,6 +1,6 @@
 module github.com/grafana/grafana-operator/v5/api
 
-go 1.23.6
+go 1.24.2
 
 require (
 	github.com/blang/semver v2.2.0+incompatible
