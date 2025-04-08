@@ -137,6 +137,7 @@ type GrafanaStatus struct {
 	StageStatus   OperatorStageStatus    `json:"stageStatus,omitempty"`
 	LastMessage   string                 `json:"lastMessage,omitempty"`
 	AdminURL      string                 `json:"adminUrl,omitempty"`
+	ContactPoints NamespacedResourceList `json:"contactPoints,omitempty"`
 	Dashboards    NamespacedResourceList `json:"dashboards,omitempty"`
 	Datasources   NamespacedResourceList `json:"datasources,omitempty"`
 	Folders       NamespacedResourceList `json:"folders,omitempty"`

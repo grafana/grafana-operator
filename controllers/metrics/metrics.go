@@ -50,6 +50,13 @@ var (
 		Help:      "requests to list content revisions on grafana.com",
 	}, []string{"kind", "resource", "method", "status"})
 
+	InitialContactPointSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: "grafana_operator",
+		Subsystem: "contactpoints",
+		Name:      "initial_sync_duration",
+		Help:      "time in ms to sync contact-points after operator restart",
+	})
+
 	InitialDashboardSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: "grafana_operator",
 		Subsystem: "dashboards",
@@ -86,6 +93,7 @@ func init() {
 	metrics.Registry.MustRegister(GrafanaComAPIRevisionRequests)
 	metrics.Registry.MustRegister(DashboardURLRequests)
 	metrics.Registry.MustRegister(ContentURLRequests)
+	metrics.Registry.MustRegister(InitialContactPointSyncDuration)
 	metrics.Registry.MustRegister(InitialDashboardSyncDuration)
 	metrics.Registry.MustRegister(InitialLibraryPanelSyncDuration)
 	metrics.Registry.MustRegister(InitialDatasourceSyncDuration)

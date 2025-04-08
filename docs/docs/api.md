@@ -24778,6 +24778,13 @@ GrafanaStatus defines the observed state of Grafana
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>contactPoints</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>dashboards</b></td>
         <td>[]string</td>
         <td>
