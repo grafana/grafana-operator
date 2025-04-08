@@ -295,6 +295,8 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, libraryPan
 	log := logf.FromContext(ctx)
 	log.Info("finalizing GrafanaLibraryPanel")
 
+	uid := content.CustomUIDOrUID(libraryPanel, libraryPanel.Status.UID)
+
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, libraryPanel)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
@@ -308,14 +310,14 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, libraryPan
 
 		// Not in removeFromInstance to ensure that deleted library panels are removed on sync
 		// Avoids repeated synchronization loops if a panel has leftover connections
-		switch hasConnections, err := libraryElementHasConnections(grafanaClient, libraryPanel.Status.UID); {
+		switch hasConnections, err := libraryElementHasConnections(grafanaClient, uid); {
 		case err != nil:
 			return fmt.Errorf("fetching library panel from instance %s/%s: %w", instance.Namespace, instance.Name, err)
 		case hasConnections:
-			return fmt.Errorf("library panel %s/%s/%s on instance %s/%s has existing connections", libraryPanel.Namespace, libraryPanel.Name, libraryPanel.Status.UID, instance.Namespace, instance.Name) //nolint
+			return fmt.Errorf("library panel %s/%s/%s on instance %s/%s has existing connections", libraryPanel.Namespace, libraryPanel.Name, uid, instance.Namespace, instance.Name) //nolint
 		}
 
-		_, err = grafanaClient.LibraryElements.DeleteLibraryElementByUID(libraryPanel.Status.UID) //nolint:errcheck
+		_, err = grafanaClient.LibraryElements.DeleteLibraryElementByUID(uid) //nolint:errcheck
 		if err != nil {
 			var notFound *library_elements.DeleteLibraryElementByUIDNotFound
 			if !errors.As(err, &notFound) {
