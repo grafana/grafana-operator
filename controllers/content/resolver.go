@@ -141,9 +141,9 @@ func (h *ContentResolver) fetchContentJSON(ctx context.Context) ([]byte, error) 
 
 	switch sourceTypes[0] {
 	case ContentSourceTypeRawJSON:
-		return []byte(spec.Json), nil
+		return []byte(spec.JSON), nil
 	case ContentSourceTypeGzipJSON:
-		return cache.Gunzip([]byte(spec.GzipJson))
+		return cache.Gunzip([]byte(spec.GzipJSON))
 	case ContentSourceTypeURL:
 		return fetchers.FetchFromURL(ctx, h.resource, h.Client, grafanaClient.InsecureTLSConfiguration)
 	case ContentSourceTypeJsonnet:

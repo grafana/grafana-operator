@@ -23,7 +23,7 @@ import (
 func FetchFromURL(ctx context.Context, cr v1beta1.GrafanaContentResource, c client.Client, tlsConfig *tls.Config) ([]byte, error) {
 	spec := cr.GrafanaContentSpec()
 
-	url, err := url.Parse(spec.Url)
+	url, err := url.Parse(spec.URL)
 	if err != nil {
 		return nil, err
 	}
@@ -57,13 +57,13 @@ func FetchFromURL(ctx context.Context, cr v1beta1.GrafanaContentResource, c clie
 
 	client := grafanaClient.NewInstrumentedRoundTripper(true, tlsConfig, contentMetric, dashboardMetric)
 	// basic auth is supported for dashboards from url
-	if spec.UrlAuthorization != nil && spec.UrlAuthorization.BasicAuth != nil {
-		username, err := grafanaClient.GetValueFromSecretKey(ctx, spec.UrlAuthorization.BasicAuth.Username, c, cr.GetNamespace())
+	if spec.URLAuthorization != nil && spec.URLAuthorization.BasicAuth != nil {
+		username, err := grafanaClient.GetValueFromSecretKey(ctx, spec.URLAuthorization.BasicAuth.Username, c, cr.GetNamespace())
 		if err != nil {
 			return nil, err
 		}
 
-		password, err := grafanaClient.GetValueFromSecretKey(ctx, spec.UrlAuthorization.BasicAuth.Password, c, cr.GetNamespace())
+		password, err := grafanaClient.GetValueFromSecretKey(ctx, spec.URLAuthorization.BasicAuth.Password, c, cr.GetNamespace())
 		if err != nil {
 			return nil, err
 		}
@@ -98,7 +98,7 @@ func FetchFromURL(ctx context.Context, cr v1beta1.GrafanaContentResource, c clie
 	status := cr.GrafanaContentStatus()
 	status.ContentCache = gz
 	status.ContentTimestamp = v1.Time{Time: time.Now()}
-	status.ContentUrl = spec.Url
+	status.ContentURL = spec.URL
 
 	return content, nil
 }

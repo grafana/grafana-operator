@@ -36,12 +36,12 @@ func FetchFromGrafanaCom(ctx context.Context, cr v1beta1.GrafanaContentResource,
 	if source.Revision == nil {
 		rev, err := getLatestGrafanaComRevision(cr, tlsConfig)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get latest revision for dashboard id %d: %w", source.Id, err)
+			return nil, fmt.Errorf("failed to get latest revision for dashboard id %d: %w", source.ID, err)
 		}
 		source.Revision = &rev
 	}
 
-	spec.Url = fmt.Sprintf("%s/%d/revisions/%d/download", grafanaComDashboardsAPIEndpoint, source.Id, *source.Revision)
+	spec.URL = fmt.Sprintf("%s/%d/revisions/%d/download", grafanaComDashboardsAPIEndpoint, source.ID, *source.Revision)
 
 	return FetchFromURL(ctx, cr, c, tlsConfig)
 }
@@ -53,7 +53,7 @@ func getLatestGrafanaComRevision(cr v1beta1.GrafanaContentResource, tlsConfig *t
 	}
 
 	source := spec.GrafanaCom
-	url := fmt.Sprintf("%s/%d/revisions", grafanaComDashboardsAPIEndpoint, source.Id)
+	url := fmt.Sprintf("%s/%d/revisions", grafanaComDashboardsAPIEndpoint, source.ID)
 
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {

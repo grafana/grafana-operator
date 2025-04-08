@@ -37,7 +37,7 @@ var _ = Describe("Fetching dashboards from URL", func() {
 			dashboard := &v1beta1.GrafanaDashboard{
 				Spec: v1beta1.GrafanaDashboardSpec{
 					GrafanaContentSpec: v1beta1.GrafanaContentSpec{
-						Url: server.URL(),
+						URL: server.URL(),
 					},
 				},
 				Status: v1beta1.GrafanaDashboardStatus{},
@@ -48,7 +48,7 @@ var _ = Describe("Fetching dashboards from URL", func() {
 			Expect(fetchedDashboard).To(Equal(fetchedDashboard))
 			Expect(dashboard.Status.ContentTimestamp.Time.IsZero()).To(BeFalse())
 			Expect(dashboard.Status.ContentCache).To(Equal(compressedJSON))
-			Expect(dashboard.Status.ContentUrl).To(Equal(server.URL()))
+			Expect(dashboard.Status.ContentURL).To(Equal(server.URL()))
 		})
 	})
 	When("using authentication", func() {
@@ -69,9 +69,9 @@ var _ = Describe("Fetching dashboards from URL", func() {
 				},
 				Spec: v1beta1.GrafanaDashboardSpec{
 					GrafanaContentSpec: v1beta1.GrafanaContentSpec{
-						Url: server.URL(),
-						UrlAuthorization: &v1beta1.GrafanaContentUrlAuthorization{
-							BasicAuth: &v1beta1.GrafanaContentUrlBasicAuth{
+						URL: server.URL(),
+						URLAuthorization: &v1beta1.GrafanaContentURLAuthorization{
+							BasicAuth: &v1beta1.GrafanaContentURLBasicAuth{
 								Username: &v1.SecretKeySelector{
 									LocalObjectReference: v1.LocalObjectReference{
 										Name: "credentials",
@@ -110,7 +110,7 @@ var _ = Describe("Fetching dashboards from URL", func() {
 			Expect(fetchedDashboard).To(Equal(fetchedDashboard))
 			Expect(dashboard.Status.ContentTimestamp.Time.IsZero()).To(BeFalse())
 			Expect(dashboard.Status.ContentCache).To(Equal(compressedJSON))
-			Expect(dashboard.Status.ContentUrl).To(Equal(server.URL()))
+			Expect(dashboard.Status.ContentURL).To(Equal(server.URL()))
 		})
 	})
 })

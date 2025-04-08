@@ -207,7 +207,7 @@ func getCR(t *testing.T, crUID string, statusUID string, specUID string, dashUID
 		},
 		Spec: v1beta1.GrafanaContentSpec{
 			CustomUID: specUID,
-			Json:      string(dashboard),
+			JSON:      string(dashboard),
 		},
 		Status: v1beta1.GrafanaContentStatus{
 			UID: statusUID,

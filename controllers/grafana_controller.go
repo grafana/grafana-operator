@@ -84,7 +84,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	if grafana.IsExternal() {
 		grafana.Status.Stage = grafanav1beta1.OperatorStageComplete
-		grafana.Status.AdminUrl = grafana.Spec.External.URL
+		grafana.Status.AdminURL = grafana.Spec.External.URL
 		version, err := r.getVersion(ctx, grafana)
 		if err != nil {
 			grafana.Status.Version = ""
@@ -164,7 +164,7 @@ func (r *GrafanaReconciler) getVersion(ctx context.Context, cr *grafanav1beta1.G
 		return "", fmt.Errorf("setup of the http client: %w", err)
 	}
 
-	instanceURL := cr.Status.AdminUrl
+	instanceURL := cr.Status.AdminURL
 	if instanceURL == "" && cr.Spec.External != nil {
 		instanceURL = cr.Spec.External.URL
 	}

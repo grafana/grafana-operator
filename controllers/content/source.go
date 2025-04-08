@@ -19,15 +19,15 @@ func GetSourceTypes(cr v1beta1.GrafanaContentResource) []ContentSourceType {
 
 	spec := cr.GrafanaContentSpec()
 
-	if spec.Json != "" {
+	if spec.JSON != "" {
 		sourceTypes = append(sourceTypes, ContentSourceTypeRawJSON)
 	}
 
-	if spec.GzipJson != nil {
+	if spec.GzipJSON != nil {
 		sourceTypes = append(sourceTypes, ContentSourceTypeGzipJSON)
 	}
 
-	if spec.Url != "" {
+	if spec.URL != "" {
 		sourceTypes = append(sourceTypes, ContentSourceTypeURL)
 	}
 

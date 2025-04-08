@@ -72,7 +72,7 @@ func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Gr
 			return v1beta1.OperatorStageResultFailed, fmt.Errorf("ingress spec is incomplete")
 		}
 
-		cr.Status.AdminUrl = adminURL
+		cr.Status.AdminURL = adminURL
 	}
 
 	return v1beta1.OperatorStageResultSuccess, nil
@@ -98,7 +98,7 @@ func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Graf
 	// try to assign the admin url
 	if cr.PreferIngress() {
 		if route.Spec.Host != "" {
-			cr.Status.AdminUrl = fmt.Sprintf("https://%v", route.Spec.Host)
+			cr.Status.AdminURL = fmt.Sprintf("https://%v", route.Spec.Host)
 		}
 	}
 

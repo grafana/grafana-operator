@@ -38,14 +38,14 @@ func TestGrafanaDashboardStatus_getContentCache(t *testing.T) {
 	status := v1beta1.GrafanaContentStatus{
 		ContentCache:     cachedDashboard,
 		ContentTimestamp: timestamp,
-		ContentUrl:       url,
+		ContentURL:       url,
 	}
 
 	// Corrupted cache
 	statusCorrupted := v1beta1.GrafanaContentStatus{
 		ContentCache:     []byte("abc"),
 		ContentTimestamp: timestamp,
-		ContentUrl:       url,
+		ContentURL:       url,
 	}
 
 	tests := []struct {
@@ -57,7 +57,7 @@ func TestGrafanaDashboardStatus_getContentCache(t *testing.T) {
 	}{
 		{
 			name:     "no cache: fields are not populated",
-			url:      status.ContentUrl,
+			url:      status.ContentURL,
 			duration: infinite,
 			status:   v1beta1.GrafanaContentStatus{},
 			want:     []byte{},
@@ -71,28 +71,28 @@ func TestGrafanaDashboardStatus_getContentCache(t *testing.T) {
 		},
 		{
 			name:     "no cache: expired",
-			url:      status.ContentUrl,
+			url:      status.ContentURL,
 			duration: 1 * time.Minute,
 			status:   status,
 			want:     []byte{},
 		},
 		{
 			name:     "no cache: corrupted gzip",
-			url:      statusCorrupted.ContentUrl,
+			url:      statusCorrupted.ContentURL,
 			duration: infinite,
 			status:   statusCorrupted,
 			want:     []byte{},
 		},
 		{
 			name:     "valid cache: not expired yet",
-			url:      status.ContentUrl,
+			url:      status.ContentURL,
 			duration: 24 * time.Hour,
 			status:   status,
 			want:     dashboardJSON,
 		},
 		{
 			name:     "valid cache: not expired yet (infinite)",
-			url:      status.ContentUrl,
+			url:      status.ContentURL,
 			duration: infinite,
 			status:   status,
 			want:     dashboardJSON,
