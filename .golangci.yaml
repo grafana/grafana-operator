@@ -4,86 +4,83 @@ run:
 linters:
   disable-all: false
   enable:
-    - gocyclo
-    - misspell
-    - nilerr
-    - unparam
-    - gosec
-    - unused
-    - govet
-    - gosimple
-    - errorlint
-    - gofumpt
-    - errcheck
     - dogsled
+    - errcheck
+    - errorlint
     - exhaustive
-    - nestif
     - goconst
     - gocritic
-    - revive
+    - gocyclo
+    - gofumpt
+    - gosec
+    - gosimple
+    - govet
     - makezero
+    - misspell
     - nakedret
+    - nestif
+    - nilerr
     - prealloc
+    - revive
     - staticcheck
     - thelper
+    - unparam
+    - unused
     - whitespace
 
 linters-settings:
-  gocyclo:
-    min-complexity: 25
+  dogsled:
+    max-blank-identifiers: 2
 
-  misspell:
-    locale: US
-
-  unparam:
-    check-exported: true
-
-  gosimple:
-    checks: ["all"]
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
 
   errorlint:
     errorf: true
     asserts: true
     comparison: true
 
-  errcheck:
-    check-type-assertions: true
-    check-blank: true
-
-  dogsled:
-    max-blank-identifiers: 2
-
   exhaustive:
     check-generated: false
     default-signifies-exhaustive: false
-
-  nestif:
-    min-complexity: 30
 
   goconst:
     min-len: 3
     min-occurrences: 3
 
-  revive:
-    ignore-generated-header: true
-    severity: warning
+  gocyclo:
+    min-complexity: 25
+
+  gosimple:
+    checks: ["all"]
 
   makezero:
     always: false
 
+  misspell:
+    locale: US
+
   nakedret:
     max-func-lines: 30
 
-  prealloc:
-    simple: true
-    range-loops: true
-    for-loops: false
+  nestif:
+    min-complexity: 30
 
   nolintlint:
     allow-unused: false
     allow-no-explanation: []
     require-explanation: false
     require-specific: false
+
+  prealloc:
+    simple: true
+    range-loops: true
+    for-loops: false
+
+  revive:
+    ignore-generated-header: true
+    severity: warning
 
   staticcheck:
     checks: ["all"]
@@ -102,6 +99,9 @@ linters-settings:
       name: true
       begin: true
 
+  unparam:
+    check-exported: true
+
   whitespace:
     multi-if: false
     multi-func: false
@@ -112,8 +112,8 @@ issues:
   exclude-rules:
     - path: _test\.go
       linters:
-        - gocyclo
         - funlen
         - gocognit
+        - gocyclo
         - unparam
         - unused
