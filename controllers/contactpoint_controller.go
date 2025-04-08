@@ -68,7 +68,7 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 	ctx = logf.IntoContext(ctx, log)
 
 	contactPoint := &grafanav1beta1.GrafanaContactPoint{}
-	err := r.Client.Get(ctx, client.ObjectKey{
+	err := r.Get(ctx, client.ObjectKey{
 		Namespace: req.Namespace,
 		Name:      req.Name,
 	}, contactPoint)

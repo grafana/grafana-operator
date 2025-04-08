@@ -69,7 +69,7 @@ func (r *GrafanaDashboardReconciler) syncDashboards(ctx context.Context) (ctrl.R
 	// get all grafana instances
 	grafanas := &v1beta1.GrafanaList{}
 	var opts []client.ListOption
-	err := r.Client.List(ctx, grafanas, opts...)
+	err := r.List(ctx, grafanas, opts...)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -81,7 +81,7 @@ func (r *GrafanaDashboardReconciler) syncDashboards(ctx context.Context) (ctrl.R
 
 	// get all dashboards
 	allDashboards := &v1beta1.GrafanaDashboardList{}
-	err = r.Client.List(ctx, allDashboards, opts...)
+	err = r.List(ctx, allDashboards, opts...)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -157,7 +157,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	cr := &v1beta1.GrafanaDashboard{}
-	err := r.Client.Get(ctx, client.ObjectKey{
+	err := r.Get(ctx, client.ObjectKey{
 		Namespace: req.Namespace,
 		Name:      req.Name,
 	}, cr)

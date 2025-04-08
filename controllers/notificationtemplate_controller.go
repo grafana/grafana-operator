@@ -55,7 +55,7 @@ func (r *GrafanaNotificationTemplateReconciler) Reconcile(ctx context.Context, r
 	ctx = logf.IntoContext(ctx, log)
 
 	notificationTemplate := &grafanav1beta1.GrafanaNotificationTemplate{}
-	err := r.Client.Get(ctx, client.ObjectKey{
+	err := r.Get(ctx, client.ObjectKey{
 		Namespace: req.Namespace,
 		Name:      req.Name,
 	}, notificationTemplate)

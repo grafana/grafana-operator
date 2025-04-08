@@ -63,7 +63,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 	ctx = logf.IntoContext(ctx, log)
 
 	group := &grafanav1beta1.GrafanaAlertRuleGroup{}
-	err := r.Client.Get(ctx, client.ObjectKey{
+	err := r.Get(ctx, client.ObjectKey{
 		Namespace: req.Namespace,
 		Name:      req.Name,
 	}, group)

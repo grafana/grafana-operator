@@ -114,7 +114,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 
 		grafana.Spec.Version = targetVersion
-		if err := r.Client.Update(ctx, grafana); err != nil {
+		if err := r.Update(ctx, grafana); err != nil {
 			return ctrl.Result{}, fmt.Errorf("updating grafana version in spec: %w", err)
 		}
 	}

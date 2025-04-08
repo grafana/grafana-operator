@@ -66,7 +66,7 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 	// get all grafana instances
 	grafanas := &v1beta1.GrafanaList{}
 	var opts []client.ListOption
-	err := r.Client.List(ctx, grafanas, opts...)
+	err := r.List(ctx, grafanas, opts...)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -78,7 +78,7 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 
 	// get all datasources
 	allDatasources := &v1beta1.GrafanaDatasourceList{}
-	err = r.Client.List(ctx, allDatasources, opts...)
+	err = r.List(ctx, allDatasources, opts...)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -158,7 +158,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	cr := &v1beta1.GrafanaDatasource{}
-	err := r.Client.Get(ctx, client.ObjectKey{
+	err := r.Get(ctx, client.ObjectKey{
 		Namespace: req.Namespace,
 		Name:      req.Name,
 	}, cr)
