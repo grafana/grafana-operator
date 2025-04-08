@@ -292,9 +292,11 @@ GOLANGCI=$(shell which golangci-lint)
 endif
 
 .PHONY: code/golangci-lint
+ifndef GITHUB_ACTIONS # Inside GitHub Actions, we run golangci-lint in a separate step
 code/golangci-lint: golangci
 	$(GOLANGCI) run --allow-parallel-runners ./...
 	cd api && $(GOLANGCI) run --allow-parallel-runners ./... && cd -
+endif
 
 gofumpt:
 ifeq (, $(shell which gofumpt))
