@@ -191,7 +191,7 @@ type GrafanaNotificationPolicy struct {
 }
 
 func (in *GrafanaNotificationPolicy) NamespacedResource() string {
-	return fmt.Sprintf("%v/%v/%v", in.ObjectMeta.Namespace, in.ObjectMeta.Name, in.ObjectMeta.UID)
+	return fmt.Sprintf("%v/%v/%v", in.Namespace, in.Name, in.UID)
 }
 
 //+kubebuilder:object:root=true
@@ -208,7 +208,7 @@ func (in *GrafanaNotificationPolicy) MatchLabels() *metav1.LabelSelector {
 }
 
 func (in *GrafanaNotificationPolicy) MatchNamespace() string {
-	return in.ObjectMeta.Namespace
+	return in.Namespace
 }
 
 func (in *GrafanaNotificationPolicy) AllowCrossNamespace() bool {

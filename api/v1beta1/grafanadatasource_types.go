@@ -147,7 +147,7 @@ func (in *GrafanaDatasource) CustomUIDOrUID() string {
 		return in.Spec.Datasource.UID
 	}
 
-	return string(in.ObjectMeta.UID)
+	return string(in.UID)
 }
 
 func (in *GrafanaDatasourceList) Find(namespace string, name string) *GrafanaDatasource {
@@ -164,7 +164,7 @@ func (in *GrafanaDatasource) MatchLabels() *metav1.LabelSelector {
 }
 
 func (in *GrafanaDatasource) MatchNamespace() string {
-	return in.ObjectMeta.Namespace
+	return in.Namespace
 }
 
 func (in *GrafanaDatasource) AllowCrossNamespace() bool {

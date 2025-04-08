@@ -100,7 +100,7 @@ func (in *GrafanaMuteTiming) MatchLabels() *metav1.LabelSelector {
 }
 
 func (in *GrafanaMuteTiming) MatchNamespace() string {
-	return in.ObjectMeta.Namespace
+	return in.Namespace
 }
 
 func (in *GrafanaMuteTiming) AllowCrossNamespace() bool {
@@ -108,7 +108,7 @@ func (in *GrafanaMuteTiming) AllowCrossNamespace() bool {
 }
 
 func (in *GrafanaMuteTiming) NamespacedResource() string {
-	return fmt.Sprintf("%v/%v/%v", in.ObjectMeta.Namespace, in.ObjectMeta.Name, in.ObjectMeta.UID)
+	return fmt.Sprintf("%v/%v/%v", in.Namespace, in.Name, in.UID)
 }
 
 //+kubebuilder:object:root=true

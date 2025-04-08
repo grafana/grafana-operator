@@ -61,7 +61,7 @@ func (in *GrafanaNotificationTemplate) MatchLabels() *metav1.LabelSelector {
 }
 
 func (in *GrafanaNotificationTemplate) MatchNamespace() string {
-	return in.ObjectMeta.Namespace
+	return in.Namespace
 }
 
 func (in *GrafanaNotificationTemplate) AllowCrossNamespace() bool {
@@ -69,7 +69,7 @@ func (in *GrafanaNotificationTemplate) AllowCrossNamespace() bool {
 }
 
 func (in *GrafanaNotificationTemplate) NamespacedResource() string {
-	return fmt.Sprintf("%v/%v/%v", in.ObjectMeta.Namespace, in.ObjectMeta.Name, in.ObjectMeta.UID)
+	return fmt.Sprintf("%v/%v/%v", in.Namespace, in.Name, in.UID)
 }
 
 //+kubebuilder:object:root=true
