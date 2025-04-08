@@ -73,7 +73,7 @@ func WriteIni(cfg map[string]map[string]string) string {
 
 func writeSection(name string, settings map[string]string, sb *strings.Builder) {
 	if name != "global" {
-		sb.WriteString(fmt.Sprintf("[%s]", name))
+		fmt.Fprintf(sb, "[%s]", name)
 		sb.WriteByte('\n')
 	}
 
@@ -84,7 +84,7 @@ func writeSection(name string, settings map[string]string, sb *strings.Builder) 
 	sort.Strings(keys)
 
 	for _, key := range keys {
-		sb.WriteString(fmt.Sprintf("%s = %s", key, settings[key]))
+		fmt.Fprintf(sb, "%s = %s", key, settings[key])
 		sb.WriteByte('\n')
 	}
 	sb.WriteByte('\n')
