@@ -1,0 +1,29 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: (join('-', [$test.metadata.name, 'a']))
+status:
+  serviceaccounts:
+    - (join('/', [$namespace, $test.metadata.name, '2']))
+  stage: complete
+  stageStatus: success
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: (join('-', [$test.metadata.name, 'b']))
+status:
+  serviceaccounts:
+    - (join('/', [$namespace, $test.metadata.name, '2']))
+  stage: complete
+  stageStatus: success
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: (join('-', [$test.metadata.name, 'c']))
+status:
+  serviceaccounts:
+    - (join('/', [$namespace, $test.metadata.name, '2']))
+  stage: complete
+  stageStatus: success

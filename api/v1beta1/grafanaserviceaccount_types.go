@@ -46,8 +46,8 @@ type GrafanaServiceAccountTokenStatus struct {
 }
 
 // GrafanaServiceAccountPermission defines a permission grant for a user or team.
-// +kubebuilder:validation:XValidation:rule="self.user != '' || self.team != ''",message="one of user or team must be set"
-// +kubebuilder:validation:XValidation:rule="!(self.user != '' && self.team != '')",message="user and team cannot both be set"
+// +kubebuilder:validation:XValidation:rule="(has(self.user) && self.user != '') || (has(self.team) && self.team != '')",message="one of user or team must be set"
+// +kubebuilder:validation:XValidation:rule="!((has(self.user) && self.user != '') && (has(self.team) && self.team != ''))",message="user and team cannot both be set"
 type GrafanaServiceAccountPermission struct {
 	// User login or email to grant permissions to (optional).
 	// +kubebuilder:validation:Optional
@@ -57,9 +57,9 @@ type GrafanaServiceAccountPermission struct {
 	// +kubebuilder:validation:Optional
 	Team string `json:"team,omitempty"`
 
-	// Permission level: Viewer, Editor, or Admin.
+	// Permission level: Edit or Admin.
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Enum=Viewer;Editor;Admin
+	// +kubebuilder:validation:Enum=Edit;Admin
 	Permission string `json:"permission"`
 }
 

@@ -18,9 +18,11 @@ package controllers
 
 import (
 	"context"
+	"crypto/sha1"
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -210,21 +212,69 @@ func (r *GrafanaServiceAccountReconciler) reconcileGrafanaInstance(
 	cr *v1beta1.GrafanaServiceAccount,
 	grafana *v1beta1.Grafana,
 ) (*v1beta1.GrafanaServiceAccountInstanceStatus, error) {
-	instance := findOrCreateInstanceRecord(cr, grafana)
+	idx := slices.IndexFunc(cr.Status.Instances, func(si v1beta1.GrafanaServiceAccountInstanceStatus) bool {
+		return si.GrafanaNamespace == grafana.Namespace && si.GrafanaName == grafana.Name
+	})
+	if idx == -1 {
+		cr.Status.Instances = append(cr.Status.Instances, v1beta1.GrafanaServiceAccountInstanceStatus{
+			GrafanaNamespace: grafana.Namespace,
+			GrafanaName:      grafana.Name,
+			ServiceAccountID: 0,
+			Tokens:           nil,
+		})
+		idx = len(cr.Status.Instances) - 1
+	}
+	instance := &cr.Status.Instances[idx]
 
-	err := r.lookupServiceAccount(ctx, grafanaClient, cr, instance)
+	search, err := grafanaClient.ServiceAccounts.SearchOrgServiceAccountsWithPaging(
+		service_accounts.NewSearchOrgServiceAccountsWithPagingParamsWithContext(ctx).
+			WithQuery(&cr.Spec.Name),
+	)
 	if err != nil {
-		return instance, fmt.Errorf("lookup service account: %w", err)
+		return nil, fmt.Errorf("searching service accounts: %w", err)
+	}
+	for _, sa := range search.Payload.ServiceAccounts {
+		if sa.Name == cr.Spec.Name {
+			if instance.ServiceAccountID == 0 || instance.ServiceAccountID == sa.ID {
+				instance.ServiceAccountID = sa.ID
+				break
+			}
+
+			return nil, kuberr.NewConflict(
+				schema.GroupResource{
+					Group:    v1beta1.GroupVersion.Group,
+					Resource: "GrafanaServiceAccount",
+				},
+				"GrafanaServiceAccount",
+				fmt.Errorf("Grafana has service account name=%q ID=%d, but instance record ID=%d", sa.Name, sa.ID, instance.ServiceAccountID),
+			)
+		}
 	}
 
-	// If no ID yet create, otherwise update
 	if instance.ServiceAccountID == 0 {
-		err := r.createServiceAccount(ctx, grafanaClient, cr, instance)
+		resp, err := grafanaClient.ServiceAccounts.CreateServiceAccount(
+			service_accounts.NewCreateServiceAccountParamsWithContext(ctx).
+				WithBody(&models.CreateServiceAccountForm{
+					Name:       cr.Spec.Name,
+					Role:       cr.Spec.Role,
+					IsDisabled: cr.Spec.IsDisabled,
+				}),
+		)
 		if err != nil {
-			return instance, fmt.Errorf("create service account: %w", err)
+			return instance, fmt.Errorf("creating service account: %w", err)
 		}
+		instance.ServiceAccountID = resp.Payload.ID
 	} else {
-		err := r.updateServiceAccount(ctx, grafanaClient, cr, instance)
+		_, err := grafanaClient.ServiceAccounts.UpdateServiceAccount( // nolint:errcheck
+			service_accounts.NewUpdateServiceAccountParamsWithContext(ctx).
+				WithBody(&models.UpdateServiceAccountForm{
+					Name:             cr.Spec.Name,
+					Role:             cr.Spec.Role,
+					IsDisabled:       cr.Spec.IsDisabled,
+					ServiceAccountID: instance.ServiceAccountID,
+				}).
+				WithServiceAccountID(instance.ServiceAccountID),
+		)
 		if err != nil {
 			return instance, fmt.Errorf("update service account: %w", err)
 		}
@@ -238,11 +288,6 @@ func (r *GrafanaServiceAccountReconciler) reconcileGrafanaInstance(
 	if err != nil {
 		return instance, fmt.Errorf("reconcile permissions: %w", err)
 	}
-
-	// err = r.Client.Status().Update(ctx, cr)
-	// if err != nil {
-	// 	return instance, fmt.Errorf("updating CR status with instance data: %w", err)
-	// }
 
 	return instance, nil
 }
@@ -292,9 +337,13 @@ func (r *GrafanaServiceAccountReconciler) finalize(ctx context.Context, cr *v1be
 		}
 
 		if instance.ServiceAccountID != 0 {
-			err := r.removeServiceAccount(ctx, grafanaClient, instance.ServiceAccountID)
+			_, err := grafanaClient.ServiceAccounts.DeleteServiceAccountWithParams( // nolint:errcheck
+				service_accounts.NewDeleteServiceAccountParamsWithContext(ctx).
+					WithServiceAccountID(instance.ServiceAccountID),
+			)
 			if err != nil {
-				log.Error(err, "failed to remove service account from Grafana", "serviceAccountID", instance.ServiceAccountID)
+				logf.FromContext(ctx).Error(err, "failed to delete service account from Grafana", "serviceAccountID", instance.ServiceAccountID)
+				return err
 			}
 		}
 
@@ -323,84 +372,30 @@ func (r *GrafanaServiceAccountReconciler) finalize(ctx context.Context, cr *v1be
 	return nil
 }
 
-func (r *GrafanaServiceAccountReconciler) lookupServiceAccount(
-	ctx context.Context,
-	grafanaClient *genapi.GrafanaHTTPAPI,
-	cr *v1beta1.GrafanaServiceAccount,
-	instanceStatus *v1beta1.GrafanaServiceAccountInstanceStatus,
-) error {
-	search, err := grafanaClient.ServiceAccounts.SearchOrgServiceAccountsWithPaging(
-		service_accounts.NewSearchOrgServiceAccountsWithPagingParamsWithContext(ctx).
-			WithQuery(&cr.Spec.Name),
-	)
-	if err != nil {
-		return fmt.Errorf("searching service accounts: %w", err)
+func generateTokenSecretName(crName, grafanaName, tokenName string) string {
+	const maxSecretNameLength = 63
+
+	sanitizeK8sName := func(s string) string {
+		s = strings.ToLower(s)
+		s = strings.ReplaceAll(s, "_", "-")
+		return s
 	}
 
-	for _, sa := range search.Payload.ServiceAccounts {
-		if sa.Name == cr.Spec.Name {
-			if instanceStatus.ServiceAccountID == 0 || instanceStatus.ServiceAccountID == sa.ID {
-				instanceStatus.ServiceAccountID = sa.ID
-				return nil
-			}
-
-			err := kuberr.NewConflict(
-				schema.GroupResource{
-					Group:    v1beta1.GroupVersion.Group,
-					Resource: "GrafanaServiceAccount",
-				},
-				"GrafanaServiceAccount",
-				fmt.Errorf("Grafana has service account name=%q ID=%d, but instance record ID=%d", sa.Name, sa.ID, instanceStatus.ServiceAccountID),
-			)
-			return err
-		}
+	base := fmt.Sprintf("%s-%s-%s", crName, grafanaName, tokenName)
+	if len(base) <= maxSecretNameLength {
+		return sanitizeK8sName(base)
 	}
 
-	// not found
-	return nil
-}
-
-func (r *GrafanaServiceAccountReconciler) createServiceAccount(
-	ctx context.Context,
-	grafanaClient *genapi.GrafanaHTTPAPI,
-	cr *v1beta1.GrafanaServiceAccount,
-	instanceStatus *v1beta1.GrafanaServiceAccountInstanceStatus,
-) error {
-	resp, err := grafanaClient.ServiceAccounts.CreateServiceAccount(
-		service_accounts.NewCreateServiceAccountParamsWithContext(ctx).
-			WithBody(&models.CreateServiceAccountForm{
-				Name:       cr.Spec.Name,
-				Role:       cr.Spec.Role,
-				IsDisabled: cr.Spec.IsDisabled,
-			}),
-	)
-	if err != nil {
-		return err
+	prefixLen := maxSecretNameLength - 7
+	if prefixLen < 1 {
+		prefixLen = 1
 	}
-	instanceStatus.ServiceAccountID = resp.Payload.ID
-	return nil
-}
+	prefix := base[:prefixLen]
 
-func (r *GrafanaServiceAccountReconciler) updateServiceAccount(
-	ctx context.Context,
-	grafanaClient *genapi.GrafanaHTTPAPI,
-	cr *v1beta1.GrafanaServiceAccount,
-	instanceStatus *v1beta1.GrafanaServiceAccountInstanceStatus,
-) error {
-	if instanceStatus.ServiceAccountID == 0 {
-		return fmt.Errorf("cannot update service account: ID is 0")
-	}
-	_, err := grafanaClient.ServiceAccounts.UpdateServiceAccount( // nolint:errcheck
-		service_accounts.NewUpdateServiceAccountParamsWithContext(ctx).
-			WithBody(&models.UpdateServiceAccountForm{
-				Name:             cr.Spec.Name,
-				Role:             cr.Spec.Role,
-				IsDisabled:       cr.Spec.IsDisabled,
-				ServiceAccountID: instanceStatus.ServiceAccountID,
-			}).
-			WithServiceAccountID(instanceStatus.ServiceAccountID),
-	)
-	return err
+	sum := sha1.Sum([]byte(base)) // nolint:gosec
+	shortHash := fmt.Sprintf("%x", sum[:3])
+
+	return sanitizeK8sName(fmt.Sprintf("%s-%s", prefix, shortHash))
 }
 
 // reconcileTokens cleans up expired or removed tokens, then creates missing ones.
@@ -417,26 +412,6 @@ func (r *GrafanaServiceAccountReconciler) reconcileTokens(
 	}
 
 	// Remove tokens that are no longer valid or in spec
-	err := r.cleanupTokens(ctx, grafanaClient, cr, instanceStatus)
-	if err != nil {
-		return fmt.Errorf("cleanup tokens: %w", err)
-	}
-
-	// Create new ones if needed
-	err = r.createMissingTokens(ctx, grafanaClient, cr, instanceStatus)
-	if err != nil {
-		return fmt.Errorf("create missing tokens: %w", err)
-	}
-
-	return nil
-}
-
-func (r *GrafanaServiceAccountReconciler) cleanupTokens(
-	ctx context.Context,
-	grafanaClient *genapi.GrafanaHTTPAPI,
-	cr *v1beta1.GrafanaServiceAccount,
-	instanceStatus *v1beta1.GrafanaServiceAccountInstanceStatus,
-) error {
 	now := time.Now()
 
 	desiredTokens := make(map[string]*metav1.Time, len(cr.Spec.Tokens))
@@ -461,37 +436,56 @@ func (r *GrafanaServiceAccountReconciler) cleanupTokens(
 			return fmt.Errorf("removing token secret %s: %w", existing.SecretName, err)
 		}
 	}
-
 	instanceStatus.Tokens = kept
-	return nil
-}
 
-func (r *GrafanaServiceAccountReconciler) createMissingTokens(
-	ctx context.Context,
-	grafanaClient *genapi.GrafanaHTTPAPI,
-	cr *v1beta1.GrafanaServiceAccount,
-	instanceStatus *v1beta1.GrafanaServiceAccountInstanceStatus,
-) error {
+	// Create new ones if needed
 	existingSecrets := make(map[string]struct{}, len(instanceStatus.Tokens))
 	for _, token := range instanceStatus.Tokens {
 		existingSecrets[token.SecretName] = struct{}{}
 	}
-
 	for _, token := range cr.Spec.Tokens {
-		secretName := token.Name
+		secretName := generateTokenSecretName(cr.Name, instanceStatus.GrafanaName, token.Name)
 		if _, exists := existingSecrets[secretName]; exists {
 			continue
 		}
 
-		keyResult, err := r.createToken(ctx, grafanaClient, instanceStatus.ServiceAccountID, token)
+		cmd := models.AddServiceAccountTokenCommand{Name: token.Name}
+		if token.Expires != nil {
+			cmd.SecondsToLive = int64(time.Until(token.Expires.Time).Seconds())
+		}
+		resp, err := grafanaClient.ServiceAccounts.CreateToken(
+			service_accounts.NewCreateTokenParamsWithContext(ctx).
+				WithServiceAccountID(instanceStatus.ServiceAccountID).
+				WithBody(&cmd),
+		)
 		if err != nil {
 			return fmt.Errorf("creating token %q for service account %d: %w", token.Name, instanceStatus.ServiceAccountID, err)
 		}
+		keyResult := resp.Payload
 
 		// Create a Kubernetes Secret
-		err = r.storeTokenSecret(ctx, cr, secretName, []byte(keyResult.Key), token.Expires)
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      secretName,
+				Namespace: cr.Namespace,
+				Labels:    map[string]string{"app": "grafana-serviceaccount-token"},
+			},
+			Data: map[string][]byte{
+				"token": []byte(keyResult.Key),
+			},
+		}
+		if token.Expires != nil {
+			secret.Annotations = map[string]string{
+				"grafana.integreatly.org/token-expiry": token.Expires.Format(time.RFC3339),
+			}
+		}
+		err = controllerutil.SetControllerReference(cr, secret, r.Scheme)
 		if err != nil {
-			return fmt.Errorf("storing token secret %s: %w", secretName, err)
+			logf.FromContext(ctx).Error(err, "failed to set owner reference on token secret")
+		}
+		err = r.Client.Create(ctx, secret)
+		if err != nil {
+			return fmt.Errorf("creating token secret %s: %w", secretName, err)
 		}
 
 		instanceStatus.Tokens = append(instanceStatus.Tokens, v1beta1.GrafanaServiceAccountTokenStatus{
@@ -503,27 +497,6 @@ func (r *GrafanaServiceAccountReconciler) createMissingTokens(
 	}
 
 	return nil
-}
-
-func (r *GrafanaServiceAccountReconciler) createToken(
-	ctx context.Context,
-	grafanaClient *genapi.GrafanaHTTPAPI,
-	serviceAccountID int64,
-	token v1beta1.GrafanaServiceAccountToken,
-) (*models.NewAPIKeyResult, error) {
-	cmd := models.AddServiceAccountTokenCommand{Name: token.Name}
-	if token.Expires != nil {
-		cmd.SecondsToLive = int64(time.Until(token.Expires.Time).Seconds())
-	}
-	resp, err := grafanaClient.ServiceAccounts.CreateToken(
-		service_accounts.NewCreateTokenParamsWithContext(ctx).
-			WithServiceAccountID(serviceAccountID).
-			WithBody(&cmd),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("creating token in Grafana: %w", err)
-	}
-	return resp.Payload, nil
 }
 
 func (r *GrafanaServiceAccountReconciler) reconcilePermissionsForInstance(
@@ -540,6 +513,7 @@ func (r *GrafanaServiceAccountReconciler) reconcilePermissionsForInstance(
 	const resource = "serviceaccounts"
 	resourceID := strconv.FormatInt(instance.ServiceAccountID, 10)
 
+	// Check if the resource exists
 	resp, err := gafanaClient.AccessControl.GetResourcePermissionsWithParams(
 		access_control.NewGetResourcePermissionsParamsWithContext(ctx).
 			WithResource(resource).
@@ -590,7 +564,7 @@ func (r *GrafanaServiceAccountReconciler) reconcilePermissionsForInstance(
 
 	var cmds []*models.SetResourcePermissionCommand
 
-	// Compare with existing
+	// Compare with existing permissions
 	existing := map[subject]struct{}{}
 	for _, curr := range resp.Payload {
 		s := subject{teamID: curr.TeamID, userID: curr.UserID}
@@ -606,6 +580,7 @@ func (r *GrafanaServiceAccountReconciler) reconcilePermissionsForInstance(
 			})
 		}
 	}
+
 	// Add new
 	for s, desiredPerm := range desired {
 		if _, exists := existing[s]; !exists {
@@ -628,22 +603,6 @@ func (r *GrafanaServiceAccountReconciler) reconcilePermissionsForInstance(
 	)
 	if err != nil {
 		return fmt.Errorf("setting permissions for service account %d: %w", instance.ServiceAccountID, err)
-	}
-	return nil
-}
-
-func (r *GrafanaServiceAccountReconciler) removeServiceAccount(
-	ctx context.Context,
-	grafanaClient *genapi.GrafanaHTTPAPI,
-	serviceAccountID int64,
-) error {
-	_, err := grafanaClient.ServiceAccounts.DeleteServiceAccountWithParams( // nolint:errcheck
-		service_accounts.NewDeleteServiceAccountParamsWithContext(ctx).
-			WithServiceAccountID(serviceAccountID),
-	)
-	if err != nil {
-		logf.FromContext(ctx).Error(err, "failed to delete service account from Grafana", "serviceAccountID", serviceAccountID)
-		return err
 	}
 	return nil
 }
@@ -679,6 +638,13 @@ func (r *GrafanaServiceAccountReconciler) SetupWithManager(mgr ctrl.Manager, _ c
 
 func (r *GrafanaServiceAccountReconciler) updateStatusAndFinalizer(ctx context.Context, cr *v1beta1.GrafanaServiceAccount) {
 	cr.Status.LastResync = metav1.Time{Time: time.Now()}
+
+	slices.SortFunc(cr.Status.Instances, func(a, b v1beta1.GrafanaServiceAccountInstanceStatus) int {
+		if a.GrafanaNamespace == b.GrafanaNamespace {
+			return strings.Compare(a.GrafanaName, b.GrafanaName)
+		}
+		return strings.Compare(a.GrafanaNamespace, b.GrafanaNamespace)
+	})
 
 	err := r.Status().Update(ctx, cr)
 	if err != nil {
@@ -735,40 +701,6 @@ func (r *GrafanaServiceAccountReconciler) grafanaToServiceAccounts(ctx context.C
 	return requests
 }
 
-func (r *GrafanaServiceAccountReconciler) storeTokenSecret(
-	ctx context.Context,
-	cr *v1beta1.GrafanaServiceAccount,
-	secretName string,
-	token []byte,
-	expires *metav1.Time,
-) error {
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      secretName,
-			Namespace: cr.Namespace,
-			Labels:    map[string]string{"app": "grafana-serviceaccount-token"},
-		},
-		Data: map[string][]byte{
-			"token": token,
-		},
-	}
-	if expires != nil {
-		secret.Annotations = map[string]string{
-			"grafana.integreatly.org/token-expiry": expires.Format(time.RFC3339),
-		}
-	}
-	err := controllerutil.SetControllerReference(cr, secret, r.Scheme)
-	if err != nil {
-		logf.FromContext(ctx).Error(err, "failed to set owner reference on token secret")
-	}
-	err = r.Client.Create(ctx, secret)
-	if err != nil {
-		return fmt.Errorf("creating token secret %s: %w", secretName, err)
-	}
-
-	return nil
-}
-
 func (r *GrafanaServiceAccountReconciler) revokeToken(
 	ctx context.Context,
 	client *genapi.GrafanaHTTPAPI,
@@ -811,24 +743,4 @@ func (r *GrafanaServiceAccountReconciler) revokeSecret(ctx context.Context, name
 	}
 
 	return nil
-}
-
-func findOrCreateInstanceRecord(
-	cr *v1beta1.GrafanaServiceAccount,
-	grafana *v1beta1.Grafana,
-) *v1beta1.GrafanaServiceAccountInstanceStatus {
-	for _, instance := range cr.Status.Instances {
-		if instance.GrafanaNamespace == grafana.Namespace && instance.GrafanaName == grafana.Name {
-			return &instance
-		}
-	}
-
-	cr.Status.Instances = append(cr.Status.Instances, v1beta1.GrafanaServiceAccountInstanceStatus{
-		GrafanaNamespace: grafana.Namespace,
-		GrafanaName:      grafana.Name,
-		ServiceAccountID: 0,
-		Tokens:           nil,
-	})
-
-	return &cr.Status.Instances[len(cr.Status.Instances)-1]
 }

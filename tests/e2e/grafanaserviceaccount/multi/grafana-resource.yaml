@@ -1,7 +1,7 @@
 apiVersion: grafana.integreatly.org/v1beta1
 kind: Grafana
 metadata:
-  name: (join('-', [$test.metadata.name, 'a']))
+  name: grafana-a
   labels:
     test: ($test.metadata.name)
 spec:
@@ -17,7 +17,23 @@ spec:
 apiVersion: grafana.integreatly.org/v1beta1
 kind: Grafana
 metadata:
-  name: (join('-', [$test.metadata.name, 'b']))
+  name: grafana-b
+  labels:
+    test: ($test.metadata.name)
+spec:
+  config:
+    log:
+      mode: "console"
+    auth:
+      disable_login_form: "false"
+    security:
+      admin_user: ($USER)
+      admin_password: ($PASS)
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana-c
   labels:
     test: ($test.metadata.name)
 spec:

@@ -1,0 +1,64 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/chainsaw/main/.schemas/json/test-chainsaw-v1alpha1.json
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: multi
+spec:
+  bindings:
+    - name: USER
+      value: root
+    - name: PASS
+      value: secret
+    - name: NAMESPACE
+      value: ($namespace)
+  steps:
+    - try:
+        # - apply:
+        #     file: grafana-resource.yaml
+        # - apply:
+        #     file: sa-resource.yaml
+        - assert:
+            file: sa-assert.yaml
+        # - assert:
+        #     file: grafana-assert.yaml
+        - script:
+            content: >
+                kubectl exec -n $NS service/grafana-a-service -- \
+                  curl --fail --silent --show-error -u $USER:$PASS \
+                  "http://localhost:3000/api/serviceaccounts/search"
+            env:
+              - name: USER
+                value: ($USER)
+              - name: PASS
+                value: ($PASS)
+              - name: NS
+                value: ($NAMESPACE)
+            outputs:
+              - name: serviceaccounts
+                value: (json_parse($stdout))
+            check:
+              ($error == null): true
+        - assert:
+            resource:
+              ($serviceaccounts.totalCount): 4
+              (length($serviceaccounts.serviceAccounts)): 4
+              ($serviceaccounts.serviceAccounts[0].name): 'my-service-account'
+              ($serviceaccounts.serviceAccounts[0].login): 'sa-1-my-service-account'
+              ($serviceaccounts.serviceAccounts[0].isDisabled): false
+              ($serviceaccounts.serviceAccounts[0].role): 'Viewer'
+              ($serviceaccounts.serviceAccounts[0].tokens): 1
+              ($serviceaccounts.serviceAccounts[1].name): 'my-service-account2'
+              ($serviceaccounts.serviceAccounts[1].login): 'sa-1-my-service-account2'
+              ($serviceaccounts.serviceAccounts[1].isDisabled): true
+              ($serviceaccounts.serviceAccounts[1].role): 'Editor'
+              ($serviceaccounts.serviceAccounts[1].tokens): 1
+              ($serviceaccounts.serviceAccounts[2].name): 'my-service-account3'
+              ($serviceaccounts.serviceAccounts[2].login): 'sa-1-my-service-account3'
+              ($serviceaccounts.serviceAccounts[2].isDisabled): false
+              ($serviceaccounts.serviceAccounts[2].role): 'Admin'
+              ($serviceaccounts.serviceAccounts[2].tokens): 2
+              ($serviceaccounts.serviceAccounts[3].name): 'my-service-account4'
+              ($serviceaccounts.serviceAccounts[3].login): 'sa-1-my-service-account4'
+              ($serviceaccounts.serviceAccounts[3].isDisabled): false
+              ($serviceaccounts.serviceAccounts[3].role): 'Editor'
+              ($serviceaccounts.serviceAccounts[3].tokens): 1

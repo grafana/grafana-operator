@@ -1,0 +1,109 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaServiceAccount
+metadata:
+  name: sa1
+status:
+  conditions:
+  - reason: ApplySuccessful
+    status: "True"
+    type: ServiceAccountSynchronized
+  instances:
+  - grafanaName: grafana-a
+    grafanaNamespace: ($namespace)
+    tokens:
+      - name: sa1-default-token
+        secretName: sa1-grafana-a-sa1-default-token
+  - grafanaName: grafana-b
+    grafanaNamespace: ($namespace)
+    tokens:
+      - name: sa1-default-token
+        secretName: sa1-grafana-b-sa1-default-token
+  - grafanaName: grafana-c
+    grafanaNamespace: ($namespace)
+    tokens:
+      - name: sa1-default-token
+        secretName: sa1-grafana-c-sa1-default-token
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaServiceAccount
+metadata:
+  name: sa2
+status:
+  conditions:
+  - reason: ApplySuccessful
+    status: "True"
+    type: ServiceAccountSynchronized
+  instances:
+  - grafanaName: grafana-a
+    grafanaNamespace: ($namespace)
+    tokens:
+      - name: sa2-default-token
+        secretName: sa2-grafana-a-sa2-default-token
+  - grafanaName: grafana-b
+    grafanaNamespace: ($namespace)
+    tokens:
+      - name: sa2-default-token
+        secretName: sa2-grafana-b-sa2-default-token
+  - grafanaName: grafana-c
+    grafanaNamespace: ($namespace)
+    tokens:
+      - name: sa2-default-token
+        secretName: sa2-grafana-c-sa2-default-token
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaServiceAccount
+metadata:
+  name: sa3
+status:
+  conditions:
+  - reason: ApplySuccessful
+    status: "True"
+    type: ServiceAccountSynchronized
+  instances:
+  - grafanaName: grafana-a
+    grafanaNamespace: mytest2
+    tokens:
+      - name: mytoken1
+        secretName: sa3-grafana-a-mytoken1
+      - name: mytoken2
+        secretName: sa3-grafana-a-mytoken2
+  - grafanaName: grafana-b
+    grafanaNamespace: mytest2
+    tokens:
+      - name: mytoken1
+        secretName: sa3-grafana-b-mytoken1
+      - name: mytoken2
+        secretName: sa3-grafana-b-mytoken2
+  - grafanaName: grafana-c
+    grafanaNamespace: mytest2
+    tokens:
+      - name: mytoken1
+        secretName: sa3-grafana-c-mytoken1
+      - name: mytoken2
+        secretName: sa3-grafana-c-mytoken2
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaServiceAccount
+metadata:
+  name: sa4
+status:
+  conditions:
+  - reason: ApplySuccessful
+    status: "True"
+    type: ServiceAccountSynchronized
+  instances:
+  - grafanaName: grafana-a
+    grafanaNamespace: mytest2
+    tokens:
+      - name: sa4-default-token
+        secretName: sa4-grafana-a-sa4-default-token
+  - grafanaName: grafana-b
+    grafanaNamespace: mytest2
+    tokens:
+      - name: sa4-default-token
+        secretName: sa4-grafana-b-sa4-default-token
+  - grafanaName: grafana-c
+    grafanaNamespace: mytest2
+    tokens:
+      - name: sa4-default-token
+        secretName: sa4-grafana-c-sa4-default-token

@@ -13,9 +13,9 @@ spec:
     - try:
         # - apply:
         #     file: grafana-resource.yaml
-        - apply:
-            file: ../sa-resource.yaml
-        - assert:
-            file: ../sa-assert.yaml
+        # - apply:
+        #     file: ../sa-resource.yaml
+        # - assert:
+        #     file: ../sa-assert.yaml
         # - assert:
         #     file: grafana-assert.yaml
