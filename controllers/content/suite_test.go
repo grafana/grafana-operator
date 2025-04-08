@@ -45,12 +45,12 @@ type NopContentResource struct {
 	Status v1beta1.GrafanaContentStatus
 }
 
-func (n *NopContentResource) GrafanaContentSpec() *v1beta1.GrafanaContentSpec {
-	return &n.Spec
+func (in *NopContentResource) GrafanaContentSpec() *v1beta1.GrafanaContentSpec {
+	return &in.Spec
 }
 
-func (n *NopContentResource) GrafanaContentStatus() *v1beta1.GrafanaContentStatus {
-	return &n.Status
+func (in *NopContentResource) GrafanaContentStatus() *v1beta1.GrafanaContentStatus {
+	return &in.Status
 }
 
 func (in *NopContentResource) DeepCopyObject() runtime.Object {
