@@ -141,7 +141,7 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1
 		return nil, fmt.Errorf("parsing url for client: %w", err)
 	}
 
-	transport := NewInstrumentedRoundTripper(grafana.IsExternal(), tlsConfig, metrics.GrafanaApiRequests.MustCurryWith(prometheus.Labels{
+	transport := NewInstrumentedRoundTripper(grafana.IsExternal(), tlsConfig, metrics.GrafanaAPIRequests.MustCurryWith(prometheus.Labels{
 		"instance_namespace": grafana.Namespace,
 		"instance_name":      grafana.Name,
 	}))

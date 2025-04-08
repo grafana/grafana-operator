@@ -164,12 +164,12 @@ func (r *GrafanaReconciler) getVersion(ctx context.Context, cr *grafanav1beta1.G
 		return "", fmt.Errorf("setup of the http client: %w", err)
 	}
 
-	instanceUrl := cr.Status.AdminUrl
-	if instanceUrl == "" && cr.Spec.External != nil {
-		instanceUrl = cr.Spec.External.URL
+	instanceURL := cr.Status.AdminUrl
+	if instanceURL == "" && cr.Spec.External != nil {
+		instanceURL = cr.Spec.External.URL
 	}
 
-	req, err := http.NewRequest("GET", instanceUrl+"/api/frontend/settings", nil)
+	req, err := http.NewRequest("GET", instanceURL+"/api/frontend/settings", nil)
 	if err != nil {
 		return "", fmt.Errorf("building request to fetch version: %w", err)
 	}

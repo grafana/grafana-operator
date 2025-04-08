@@ -22,7 +22,7 @@ import (
 
 const (
 	MemoryRequest                           = "256Mi"
-	CpuRequest                              = "100m"
+	CPURequest                              = "100m"
 	MemoryLimit                             = "1024Mi"
 	GrafanaHealthEndpoint                   = "/api/health"
 	ReadinessProbeFailureThreshold    int32 = 1
@@ -70,7 +70,7 @@ func getResources() v1.ResourceRequirements {
 	return v1.ResourceRequirements{
 		Requests: v1.ResourceList{
 			v1.ResourceMemory: resource.MustParse(MemoryRequest),
-			v1.ResourceCPU:    resource.MustParse(CpuRequest),
+			v1.ResourceCPU:    resource.MustParse(CPURequest),
 		},
 		Limits: v1.ResourceList{
 			v1.ResourceMemory: resource.MustParse(MemoryLimit),

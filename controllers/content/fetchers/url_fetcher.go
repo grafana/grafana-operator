@@ -38,7 +38,7 @@ func FetchFromURL(ctx context.Context, cr v1beta1.GrafanaContentResource, c clie
 		return nil, err
 	}
 
-	contentMetric, err := metrics.ContentUrlRequests.CurryWith(prometheus.Labels{
+	contentMetric, err := metrics.ContentURLRequests.CurryWith(prometheus.Labels{
 		"kind":     cr.GetObjectKind().GroupVersionKind().Kind,
 		"resource": fmt.Sprintf("%v/%v", cr.GetNamespace(), cr.GetName()),
 	})
@@ -48,7 +48,7 @@ func FetchFromURL(ctx context.Context, cr v1beta1.GrafanaContentResource, c clie
 
 	// this is a documented deprecated metric but we don't want to fail lint
 	//nolint:staticcheck
-	dashboardMetric, err := metrics.DashboardUrlRequests.CurryWith(prometheus.Labels{
+	dashboardMetric, err := metrics.DashboardURLRequests.CurryWith(prometheus.Labels{
 		"dashboard": fmt.Sprintf("%v/%v", cr.GetNamespace(), cr.GetName()),
 	})
 	if err != nil {

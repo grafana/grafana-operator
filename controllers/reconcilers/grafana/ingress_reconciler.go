@@ -135,19 +135,19 @@ func (r *IngressReconciler) getIngressAdminURL(ingress *v1.Ingress) string {
 
 	// if all fails, try to get access through the load balancer
 	if hostname == "" {
-		loadBalancerIp := ""
+		loadBalancerIP := ""
 		for _, lb := range ingress.Status.LoadBalancer.Ingress {
 			if lb.Hostname != "" {
 				hostname = lb.Hostname
 				break
 			}
 			if lb.IP != "" {
-				loadBalancerIp = lb.IP
+				loadBalancerIP = lb.IP
 			}
 		}
 
-		if hostname == "" && loadBalancerIp != "" {
-			hostname = loadBalancerIp
+		if hostname == "" && loadBalancerIP != "" {
+			hostname = loadBalancerIP
 		}
 	}
 
