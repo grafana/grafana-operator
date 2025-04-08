@@ -107,8 +107,8 @@ func (in *GrafanaMuteTiming) AllowCrossNamespace() bool {
 	return in.Spec.AllowCrossNamespaceImport
 }
 
-func (np *GrafanaMuteTiming) NamespacedResource() string {
-	return fmt.Sprintf("%v/%v/%v", np.ObjectMeta.Namespace, np.ObjectMeta.Name, np.ObjectMeta.UID)
+func (in *GrafanaMuteTiming) NamespacedResource() string {
+	return fmt.Sprintf("%v/%v/%v", in.ObjectMeta.Namespace, in.ObjectMeta.Name, in.ObjectMeta.UID)
 }
 
 //+kubebuilder:object:root=true

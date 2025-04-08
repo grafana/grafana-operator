@@ -190,8 +190,8 @@ type GrafanaNotificationPolicy struct {
 	Status GrafanaNotificationPolicyStatus `json:"status,omitempty"`
 }
 
-func (np *GrafanaNotificationPolicy) NamespacedResource() string {
-	return fmt.Sprintf("%v/%v/%v", np.ObjectMeta.Namespace, np.ObjectMeta.Name, np.ObjectMeta.UID)
+func (in *GrafanaNotificationPolicy) NamespacedResource() string {
+	return fmt.Sprintf("%v/%v/%v", in.ObjectMeta.Namespace, in.ObjectMeta.Name, in.ObjectMeta.UID)
 }
 
 //+kubebuilder:object:root=true
