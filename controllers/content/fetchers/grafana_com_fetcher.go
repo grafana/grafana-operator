@@ -16,7 +16,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-const grafanaComDashboardApiUrlRoot = "https://grafana.com/api/dashboards"
+const grafanaComDashboardsAPIEndpoint = "https://grafana.com/api/dashboards"
 
 func FetchFromGrafanaCom(ctx context.Context, cr v1beta1.GrafanaContentResource, c client.Client) ([]byte, error) {
 	cache := cache.GetContentCache(cr)
@@ -41,7 +41,7 @@ func FetchFromGrafanaCom(ctx context.Context, cr v1beta1.GrafanaContentResource,
 		source.Revision = &rev
 	}
 
-	spec.Url = fmt.Sprintf("%s/%d/revisions/%d/download", grafanaComDashboardApiUrlRoot, source.Id, *source.Revision)
+	spec.Url = fmt.Sprintf("%s/%d/revisions/%d/download", grafanaComDashboardsAPIEndpoint, source.Id, *source.Revision)
 
 	return FetchFromURL(ctx, cr, c, tlsConfig)
 }
@@ -53,7 +53,7 @@ func getLatestGrafanaComRevision(cr v1beta1.GrafanaContentResource, tlsConfig *t
 	}
 
 	source := spec.GrafanaCom
-	url := fmt.Sprintf("%s/%d/revisions", grafanaComDashboardApiUrlRoot, source.Id)
+	url := fmt.Sprintf("%s/%d/revisions", grafanaComDashboardsAPIEndpoint, source.Id)
 
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
