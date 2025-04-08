@@ -271,7 +271,7 @@ func (r *GrafanaNotificationPolicyReconciler) reconcileWithInstance(ctx context.
 	}
 
 	trueRef := "true"
-	editable := true
+	editable := true //nolint:staticcheck
 	if notificationPolicy.Spec.Editable != nil && !*notificationPolicy.Spec.Editable {
 		editable = false
 	}

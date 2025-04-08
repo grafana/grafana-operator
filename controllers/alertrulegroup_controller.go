@@ -157,7 +157,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 	}
 
 	trueRef := "true" //nolint:goconst
-	editable := true
+	editable := true  //nolint:staticcheck
 	if group.Spec.Editable != nil && !*group.Spec.Editable {
 		editable = false
 	}

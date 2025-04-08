@@ -136,7 +136,7 @@ func (r *GrafanaNotificationTemplateReconciler) reconcileWithInstance(ctx contex
 	}
 
 	trueRef := "true" //nolint:goconst
-	editable := true
+	editable := true  //nolint:staticcheck
 	if notificationTemplate.Spec.Editable != nil && !*notificationTemplate.Spec.Editable {
 		editable = false
 	}
