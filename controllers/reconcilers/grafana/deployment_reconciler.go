@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/config"
-	config2 "github.com/grafana/grafana-operator/v5/controllers/config"
 	"github.com/grafana/grafana-operator/v5/controllers/model"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
 	v12 "k8s.io/api/apps/v1"
@@ -82,15 +81,15 @@ func getResources() v1.ResourceRequirements {
 func getVolumes(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.Volume {
 	var volumes []v1.Volume
 
-	config := model.GetGrafanaConfigMap(cr, scheme)
+	cm := model.GetGrafanaConfigMap(cr, scheme)
 
 	// Volume to mount the config file from a config map
 	volumes = append(volumes, v1.Volume{
-		Name: config.Name,
+		Name: cm.Name,
 		VolumeSource: v1.VolumeSource{
 			ConfigMap: &v1.ConfigMapVolumeSource{
 				LocalObjectReference: v1.LocalObjectReference{
-					Name: config.Name,
+					Name: cm.Name,
 				},
 			},
 		},
@@ -98,14 +97,14 @@ func getVolumes(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.Volume {
 
 	// Volume to store the logs
 	volumes = append(volumes, v1.Volume{
-		Name: config2.GrafanaLogsVolumeName,
+		Name: config.GrafanaLogsVolumeName,
 		VolumeSource: v1.VolumeSource{
 			EmptyDir: &v1.EmptyDirVolumeSource{},
 		},
 	})
 
 	volumes = append(volumes, v1.Volume{
-		Name: config2.GrafanaDataVolumeName,
+		Name: config.GrafanaDataVolumeName,
 		VolumeSource: v1.VolumeSource{
 			EmptyDir: &v1.EmptyDirVolumeSource{},
 		},
@@ -117,22 +116,22 @@ func getVolumes(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.Volume {
 func getVolumeMounts(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.VolumeMount {
 	var mounts []v1.VolumeMount
 
-	config := model.GetGrafanaConfigMap(cr, scheme)
+	cm := model.GetGrafanaConfigMap(cr, scheme)
 
 	mounts = append(mounts, v1.VolumeMount{
-		Name:      config.Name,
+		Name:      cm.Name,
 		MountPath: "/etc/grafana/grafana.ini",
 		SubPath:   "grafana.ini",
 	})
 
 	mounts = append(mounts, v1.VolumeMount{
-		Name:      config2.GrafanaDataVolumeName,
-		MountPath: config2.GrafanaDataPath,
+		Name:      config.GrafanaDataVolumeName,
+		MountPath: config.GrafanaDataPath,
 	})
 
 	mounts = append(mounts, v1.VolumeMount{
-		Name:      config2.GrafanaLogsVolumeName,
-		MountPath: config2.GrafanaLogsPath,
+		Name:      config.GrafanaLogsVolumeName,
+		MountPath: config.GrafanaLogsPath,
 	})
 
 	return mounts
@@ -140,12 +139,12 @@ func getVolumeMounts(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.VolumeMou
 
 func getGrafanaImage(cr *v1beta1.Grafana) string {
 	if cr.Spec.Version == "" {
-		return fmt.Sprintf("%s:%s", config2.GrafanaImage, config2.GrafanaVersion)
+		return fmt.Sprintf("%s:%s", config.GrafanaImage, config.GrafanaVersion)
 	}
 	if strings.ContainsAny(cr.Spec.Version, ":/@") {
 		return cr.Spec.Version
 	}
-	return fmt.Sprintf("%s:%s", config2.GrafanaImage, cr.Spec.Version)
+	return fmt.Sprintf("%s:%s", config.GrafanaImage, cr.Spec.Version)
 }
 
 func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.OperatorReconcileVars, openshiftPlatform bool) []v1.Container {
@@ -185,7 +184,7 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 	// env var to set location where temporary files can be written (e.g. plugin downloads)
 	envVars = append(envVars, v1.EnvVar{
 		Name:  "TMPDIR",
-		Value: config2.GrafanaDataPath,
+		Value: config.GrafanaDataPath,
 	})
 
 	// env var to get Pod IP from downward API for gossip (useful for unified alerting).
@@ -230,24 +229,24 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 
 	for i := 0; i < len(containers); i++ {
 		containers[i].Env = append(containers[i].Env, v1.EnvVar{
-			Name: config2.GrafanaAdminUserEnvVar,
+			Name: config.GrafanaAdminUserEnvVar,
 			ValueFrom: &v1.EnvVarSource{
 				SecretKeyRef: &v1.SecretKeySelector{
 					LocalObjectReference: v1.LocalObjectReference{
 						Name: secret.Name,
 					},
-					Key: config2.GrafanaAdminUserEnvVar,
+					Key: config.GrafanaAdminUserEnvVar,
 				},
 			},
 		})
 		containers[i].Env = append(containers[i].Env, v1.EnvVar{
-			Name: config2.GrafanaAdminPasswordEnvVar,
+			Name: config.GrafanaAdminPasswordEnvVar,
 			ValueFrom: &v1.EnvVarSource{
 				SecretKeyRef: &v1.SecretKeySelector{
 					LocalObjectReference: v1.LocalObjectReference{
 						Name: secret.Name,
 					},
-					Key: config2.GrafanaAdminPasswordEnvVar,
+					Key: config.GrafanaAdminPasswordEnvVar,
 				},
 			},
 		})

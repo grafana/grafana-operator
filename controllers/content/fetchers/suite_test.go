@@ -5,7 +5,6 @@ import (
 
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 
-	"github.com/onsi/ginkgo/v2"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -24,12 +23,12 @@ var (
 )
 
 func TestAPIs(t *testing.T) {
-	RegisterFailHandler(ginkgo.Fail)
+	RegisterFailHandler(Fail)
 
 	RunSpecs(t, "Fetchers Suite")
 }
 
-var _ = ginkgo.BeforeSuite(func() {
+var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
 	By("bootstrapping test environment")

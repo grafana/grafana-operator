@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 
-	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -56,7 +55,7 @@ func FetchFromUrl(ctx context.Context, cr v1beta1.GrafanaContentResource, c clie
 		return nil, fmt.Errorf("building dashboards metric: %w", err)
 	}
 
-	client := client2.NewInstrumentedRoundTripper(true, tlsConfig, contentMetric, dashboardMetric)
+	client := grafanaClient.NewInstrumentedRoundTripper(true, tlsConfig, contentMetric, dashboardMetric)
 	// basic auth is supported for dashboards from url
 	if spec.UrlAuthorization != nil && spec.UrlAuthorization.BasicAuth != nil {
 		username, err := grafanaClient.GetValueFromSecretKey(ctx, spec.UrlAuthorization.BasicAuth.Username, c, cr.GetNamespace())
