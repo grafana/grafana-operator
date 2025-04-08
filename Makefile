@@ -85,18 +85,20 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 .PHONY: test
-test: manifests generate code/gofumpt code/golangci-lint api-docs vet envtest ## Run tests.
+test: manifests generate code/golangci-lint api-docs vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile cover.out
 	cd api && KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile ../cover-api.out && cd -
 
 ##@ Build
 
 .PHONY: build
-build: generate code/gofumpt vet ## Build manager binary.
+build: generate golangci vet ## Build manager binary.
+	golangci-lint fmt ./...
 	go build -o bin/manager main.go
 
 .PHONY: run
-run: manifests generate code/gofumpt vet ## Run a controller from your host.
+run: manifests generate golangci vet ## Run a controller from your host.
+	golangci-lint fmt ./...
 	go run ./main.go --zap-devel=true
 
 ##@ Deployment
@@ -297,21 +299,6 @@ code/golangci-lint: golangci
 	$(GOLANGCI) run --allow-parallel-runners ./...
 	cd api && $(GOLANGCI) run --allow-parallel-runners ./... && cd -
 endif
-
-gofumpt:
-ifeq (, $(shell which gofumpt))
-	@{ \
-	set -e ;\
-	go install mvdan.cc/gofumpt@v0.6.0 ;\
-	}
-GOFUMPT=$(GOBIN)/gofumpt
-else
-GOFUMPT=$(shell which gofumpt)
-endif
-
-.PHONY: code/gofumpt
-code/gofumpt: gofumpt
-	$(GOFUMPT) -l -w .
 
 ko:
 ifeq (, $(shell which ko))
