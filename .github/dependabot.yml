@@ -20,3 +20,13 @@ updates:
         update-types:
           - minor
           - patch
+
+  - package-ecosystem: "gomod"
+    directory: "/api"
+    schedule:
+      interval: "weekly"
+    groups:
+      gomod:
+        update-types:
+          - minor
+          - patch
