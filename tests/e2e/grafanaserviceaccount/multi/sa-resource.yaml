@@ -1,0 +1,54 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaServiceAccount
+metadata:
+  name: sa1
+spec:
+  name: my-service-account
+  role: Viewer
+  instanceSelector:
+    matchLabels:
+      test: ($test.metadata.name)
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaServiceAccount
+metadata:
+  name: sa2
+spec:
+  name: my-service-account2
+  role: Editor
+  isDisabled: true
+  instanceSelector:
+    matchLabels:
+      test: ($test.metadata.name)
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaServiceAccount
+metadata:
+  name: sa3
+spec:
+  name: my-service-account3
+  role: Admin
+  generateTokenSecret: false
+  tokens:
+    - name: mytoken1
+      expires: 2030-01-01T00:00:00Z
+    - name: mytoken2
+      expires: 2030-01-01T00:00:00Z
+  instanceSelector:
+    matchLabels:
+      test: ($test.metadata.name)
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaServiceAccount
+metadata:
+  name: sa4
+spec:
+  name: my-service-account4
+  role: Editor
+  isDisabled: false
+  permissions:
+    - user: ($USER)
+      permission: Edit
+  instanceSelector:
+    matchLabels:
+      test: ($test.metadata.name)

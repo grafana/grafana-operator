@@ -1,0 +1,15 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: ($test.metadata.name)
+status:
+  serviceaccounts:
+    - (join('/', [$namespace, $test.metadata.name, '2']))
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: (join('-', [$test.metadata.name, '2']))
+status:
+  serviceaccounts:
+    - (join('/', [$namespace, $test.metadata.name, '2']))

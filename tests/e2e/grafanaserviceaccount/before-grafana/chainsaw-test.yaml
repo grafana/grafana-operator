@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/chainsaw/main/.schemas/json/test-chainsaw-v1alpha1.json
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: before-grafana
+spec:
+  bindings:
+    - name: USER
+      value: root
+    - name: PASS
+      value: secret
+  steps:
+    - try:
+        - apply:
+            file: ../sa-resource.yaml
+        - wait:
+            apiVersion: grafana.integreatly.org/v1beta1
+            kind: GrafanaServiceAccount
+            name: ($test.metadata.name)
+            timeout: 30s
+            for:
+              jsonPath:
+                path: '.status.conditions[?(@.type=="NoMatchingInstance")].status'
+                value: "True"
+        - assert:
+            resource:
+              apiVersion: grafana.integreatly.org/v1beta1
+              kind: GrafanaServiceAccount
+              metadata:
+                name: ($test.metadata.name)
+              status:
+                conditions:
+                  - type: NoMatchingInstance
+                    status: "True"
+        - apply:
+            file: ../grafana-resource.yaml
+        - assert:
+            file: ../grafana-ready.yaml
+        - assert:
+            file: ../sa-assert.yaml
+        - assert:
+            file: ../grafana-assert.yaml

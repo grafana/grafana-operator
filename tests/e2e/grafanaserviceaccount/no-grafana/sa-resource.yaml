@@ -1,0 +1,10 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaServiceAccount
+metadata:
+  name: ($test.metadata.name)
+spec:
+  name: my-service-account
+  role: Viewer
+  instanceSelector:
+    matchLabels:
+      test: ($test.metadata.name)

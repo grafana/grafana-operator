@@ -5,6 +5,7 @@ resources:
 - bases/grafana.integreatly.org_grafanas.yaml
 - bases/grafana.integreatly.org_grafanadashboards.yaml
 - bases/grafana.integreatly.org_grafanadatasources.yaml
+- bases/grafana.integreatly.org_grafanaserviceaccounts.yaml
 - bases/grafana.integreatly.org_grafanafolders.yaml
 - bases/grafana.integreatly.org_grafanaalertrulegroups.yaml
 - bases/grafana.integreatly.org_grafanacontactpoints.yaml
