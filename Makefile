@@ -87,6 +87,7 @@ vet: ## Run go vet against code.
 .PHONY: test
 test: manifests generate code/gofumpt code/golangci-lint api-docs vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile cover.out
+	cd api && KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile ../cover-api.out && cd -
 
 ##@ Build
 
@@ -293,6 +294,7 @@ endif
 .PHONY: code/golangci-lint
 code/golangci-lint: golangci
 	$(GOLANGCI) run --allow-parallel-runners ./...
+	cd api && $(GOLANGCI) run --allow-parallel-runners ./... && cd -
 
 gofumpt:
 ifeq (, $(shell which gofumpt))
