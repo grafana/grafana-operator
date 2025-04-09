@@ -2,11 +2,11 @@ package v1beta1
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -530,26 +530,26 @@ func Merge(base, overrides interface{}) error {
 
 	baseBytes, err := json.Marshal(base)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert current object to byte sequence")
+		return fmt.Errorf("failed to convert current object to byte sequence: %w", err)
 	}
 
 	overrideBytes, err := json.Marshal(overrides)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert current object to byte sequence")
+		return fmt.Errorf("failed to convert current object to byte sequence: %w", err)
 	}
 
 	patchMeta, err := strategicpatch.NewPatchMetaFromStruct(base)
 	if err != nil {
-		return errors.Wrap(err, "failed to produce patch meta from struct")
+		return fmt.Errorf("failed to produce patch meta from struct: %w", err)
 	}
 	patch, err := strategicpatch.CreateThreeWayMergePatch(overrideBytes, overrideBytes, baseBytes, patchMeta, true)
 	if err != nil {
-		return errors.Wrap(err, "failed to create three way merge patch")
+		return fmt.Errorf("failed to create three way merge patch: %w", err)
 	}
 
 	merged, err := strategicpatch.StrategicMergePatchUsingLookupPatchMeta(baseBytes, patch, patchMeta)
 	if err != nil {
-		return errors.Wrap(err, "failed to apply patch")
+		return fmt.Errorf("failed to apply patch: %w", err)
 	}
 
 	valueOfBase := reflect.Indirect(reflect.ValueOf(base))
@@ -558,7 +558,7 @@ func Merge(base, overrides interface{}) error {
 		return err
 	}
 	if !valueOfBase.CanSet() {
-		return errors.New("unable to set unmarshalled value into base object")
+		return fmt.Errorf("unable to set unmarshalled value into base object")
 	}
 	valueOfBase.Set(reflect.Indirect(into))
 	return nil
