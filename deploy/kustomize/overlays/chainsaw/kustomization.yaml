@@ -1,5 +1,5 @@
 resources:
-  - ../default
+  - ../../base
 
 patches:
   - path: deployment-patch.yaml

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OPENSHIFT_VERSIONS="\"v4.11-v4.16\""
+OPENSHIFT_VERSIONS="\"v4.11\""
 
 {
     echo ""

@@ -9,7 +9,7 @@ metadata:
 spec:
   ports:
     - name: metrics
-      port: 8443
+      port: 9090
       protocol: TCP
       targetPort: metrics
     - port: 8888
