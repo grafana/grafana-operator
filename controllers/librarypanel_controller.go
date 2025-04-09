@@ -287,14 +287,14 @@ func (r *GrafanaLibraryPanelReconciler) removeFromInstance(ctx context.Context, 
 			// ensure we update the list of managed panels, otherwise we will have dangling references
 			return updateInstanceRefs()
 		}
-		return fmt.Errorf("fetching library panel from instance %s: %w", instance.Status.AdminUrl, err)
+		return fmt.Errorf("fetching library panel from instance %s: %w", instance.Status.AdminURL, err)
 	}
 
 	switch hasConnections, err := libraryElementHasConnections(grafanaClient, uid); {
 	case err != nil:
-		return fmt.Errorf("fetching library panel from instance %s: %w", instance.Status.AdminUrl, err)
+		return fmt.Errorf("fetching library panel from instance %s: %w", instance.Status.AdminURL, err)
 	case hasConnections:
-		return fmt.Errorf("library panel %s on instance %s has existing connections", uid, instance.Status.AdminUrl) //nolint
+		return fmt.Errorf("library panel %s on instance %s has existing connections", uid, instance.Status.AdminURL) //nolint
 	}
 
 	_, err = grafanaClient.LibraryElements.DeleteLibraryElementByUID(uid) //nolint:errcheck

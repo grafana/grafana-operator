@@ -69,7 +69,7 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 	ctx = logf.IntoContext(ctx, log)
 
 	notificationPolicy := &v1beta1.GrafanaNotificationPolicy{}
-	err := r.Client.Get(ctx, client.ObjectKey{
+	err := r.Get(ctx, client.ObjectKey{
 		Namespace: req.Namespace,
 		Name:      req.Name,
 	}, notificationPolicy)
@@ -271,7 +271,7 @@ func (r *GrafanaNotificationPolicyReconciler) reconcileWithInstance(ctx context.
 	}
 
 	trueRef := "true"
-	editable := true
+	editable := true //nolint:staticcheck
 	if notificationPolicy.Spec.Editable != nil && !*notificationPolicy.Spec.Editable {
 		editable = false
 	}

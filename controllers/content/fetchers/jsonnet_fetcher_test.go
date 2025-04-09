@@ -28,7 +28,7 @@ func teardown(t *testing.T) {
 	require.NoError(t, os.RemoveAll(config.GrafanaDashboardsRuntimeBuild))
 }
 
-func normalizeAndCompareJson(json1, json2 []byte) bool {
+func normalizeAndCompareJSON(json1, json2 []byte) bool {
 	var data1, data2 map[string]interface{}
 
 	if err := json.Unmarshal(json1, &data1); err != nil {
@@ -125,7 +125,7 @@ func TestFetchJsonnet(t *testing.T) {
 				t.Errorf("expected error %v, but got %v", test.expectedError, err)
 			}
 
-			if test.expected != nil && !normalizeAndCompareJson(test.expected, result) {
+			if test.expected != nil && !normalizeAndCompareJSON(test.expected, result) {
 				t.Errorf("expected string %s, but got %s", string(test.expected), string(result))
 			}
 		})
@@ -179,7 +179,7 @@ func TestBuildProjectAndFetchJsonnetFrom(t *testing.T) {
 				t.Errorf("expected error %v, but got %v", test.expectedError, err)
 			}
 
-			if test.expected != nil && !normalizeAndCompareJson(test.expected, result) {
+			if test.expected != nil && !normalizeAndCompareJSON(test.expected, result) {
 				t.Errorf("expected string %s, but got %s", string(test.expected), string(result))
 			}
 		})
@@ -187,7 +187,7 @@ func TestBuildProjectAndFetchJsonnetFrom(t *testing.T) {
 }
 
 func TestGetJsonProjectBuildRoundName(t *testing.T) {
-	roundName, err := getJsonProjectBuildRoundName("test")
+	roundName, err := getJSONProjectBuildRoundName("test")
 	require.NoError(t, err)
 	roundNameParts := strings.Split(roundName, "-")
 	require.Equal(t, 3, len(roundNameParts))

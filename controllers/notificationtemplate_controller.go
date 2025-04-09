@@ -55,7 +55,7 @@ func (r *GrafanaNotificationTemplateReconciler) Reconcile(ctx context.Context, r
 	ctx = logf.IntoContext(ctx, log)
 
 	notificationTemplate := &grafanav1beta1.GrafanaNotificationTemplate{}
-	err := r.Client.Get(ctx, client.ObjectKey{
+	err := r.Get(ctx, client.ObjectKey{
 		Namespace: req.Namespace,
 		Name:      req.Name,
 	}, notificationTemplate)
@@ -136,7 +136,7 @@ func (r *GrafanaNotificationTemplateReconciler) reconcileWithInstance(ctx contex
 	}
 
 	trueRef := "true" //nolint:goconst
-	editable := true
+	editable := true  //nolint:staticcheck
 	if notificationTemplate.Spec.Editable != nil && !*notificationTemplate.Spec.Editable {
 		editable = false
 	}

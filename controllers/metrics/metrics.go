@@ -20,7 +20,7 @@ var (
 		Help:      "failed reconciles per Grafana instance and stage",
 	}, []string{"instance_namespace", "instance_name", "stage"})
 
-	GrafanaApiRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
+	GrafanaAPIRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "grafana_operator",
 		Subsystem: "grafana_api",
 		Name:      "requests",
@@ -28,23 +28,23 @@ var (
 	}, []string{"instance_namespace", "instance_name", "method", "status"})
 
 	// Deprecated: will be removed in a future version of the operator. Use
-	// ContentUrlRequests instead, which handles more types of resources that
+	// ContentURLRequests instead, which handles more types of resources that
 	// directly utilize Grafana model JSON.
-	DashboardUrlRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
+	DashboardURLRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "grafana_operator",
 		Subsystem: "dashboards",
 		Name:      "requests",
 		Help:      "requests to fetch dashboards from urls",
 	}, []string{"dashboard", "method", "status"})
 
-	ContentUrlRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
+	ContentURLRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "grafana_operator",
 		Subsystem: "content",
 		Name:      "requests",
 		Help:      "requests to fetch model contents from urls",
 	}, []string{"kind", "resource", "method", "status"})
 
-	GrafanaComApiRevisionRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
+	GrafanaComAPIRevisionRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "grafana_operator",
 		Name:      "revision_requests",
 		Help:      "requests to list content revisions on grafana.com",
@@ -82,10 +82,10 @@ var (
 func init() {
 	metrics.Registry.MustRegister(GrafanaReconciles)
 	metrics.Registry.MustRegister(GrafanaFailedReconciles)
-	metrics.Registry.MustRegister(GrafanaApiRequests)
-	metrics.Registry.MustRegister(GrafanaComApiRevisionRequests)
-	metrics.Registry.MustRegister(DashboardUrlRequests)
-	metrics.Registry.MustRegister(ContentUrlRequests)
+	metrics.Registry.MustRegister(GrafanaAPIRequests)
+	metrics.Registry.MustRegister(GrafanaComAPIRevisionRequests)
+	metrics.Registry.MustRegister(DashboardURLRequests)
+	metrics.Registry.MustRegister(ContentURLRequests)
 	metrics.Registry.MustRegister(InitialDashboardSyncDuration)
 	metrics.Registry.MustRegister(InitialDatasourceSyncDuration)
 	metrics.Registry.MustRegister(InitialFoldersSyncDuration)

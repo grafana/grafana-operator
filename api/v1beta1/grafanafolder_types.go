@@ -113,7 +113,7 @@ func (in *GrafanaFolder) CustomUIDOrUID() string {
 	if in.Spec.CustomUID != "" {
 		return in.Spec.CustomUID
 	}
-	return string(in.ObjectMeta.UID)
+	return string(in.UID)
 }
 
 var _ operatorapi.FolderReferencer = (*GrafanaFolder)(nil)
@@ -169,7 +169,7 @@ func (in *GrafanaFolder) MatchLabels() *metav1.LabelSelector {
 }
 
 func (in *GrafanaFolder) MatchNamespace() string {
-	return in.ObjectMeta.Namespace
+	return in.Namespace
 }
 
 func (in *GrafanaFolder) AllowCrossNamespace() bool {

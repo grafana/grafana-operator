@@ -91,7 +91,7 @@ func (in *GrafanaLibraryPanel) MatchLabels() *metav1.LabelSelector {
 }
 
 func (in *GrafanaLibraryPanel) MatchNamespace() string {
-	return in.ObjectMeta.Namespace
+	return in.Namespace
 }
 
 func (in *GrafanaLibraryPanel) AllowCrossNamespace() bool {

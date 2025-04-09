@@ -134,7 +134,7 @@ func (r *Route) ToModelRoute() *models.Route {
 // selectorMutuallyExclusive checks if a single route satisfies the mutual exclusivity constraint
 // for checking the entire route including nested routes, use IsRouteSelectorMutuallyExclusive
 func (r *Route) selectorMutuallyExclusive() bool {
-	return !(r.RouteSelector != nil && len(r.Routes) > 0)
+	return !(r.RouteSelector != nil && len(r.Routes) > 0) // nolint:staticcheck
 }
 
 // IsRouteSelectorMutuallyExclusive returns true when the route and all its sub-routes
@@ -190,8 +190,8 @@ type GrafanaNotificationPolicy struct {
 	Status GrafanaNotificationPolicyStatus `json:"status,omitempty"`
 }
 
-func (np *GrafanaNotificationPolicy) NamespacedResource() string {
-	return fmt.Sprintf("%v/%v/%v", np.ObjectMeta.Namespace, np.ObjectMeta.Name, np.ObjectMeta.UID)
+func (in *GrafanaNotificationPolicy) NamespacedResource() string {
+	return fmt.Sprintf("%v/%v/%v", in.Namespace, in.Name, in.UID)
 }
 
 //+kubebuilder:object:root=true
@@ -208,7 +208,7 @@ func (in *GrafanaNotificationPolicy) MatchLabels() *metav1.LabelSelector {
 }
 
 func (in *GrafanaNotificationPolicy) MatchNamespace() string {
-	return in.ObjectMeta.Namespace
+	return in.Namespace
 }
 
 func (in *GrafanaNotificationPolicy) AllowCrossNamespace() bool {

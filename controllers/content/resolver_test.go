@@ -194,7 +194,7 @@ func TestContentIsUpdatedUID(t *testing.T) {
 
 func getCR(t *testing.T, crUID string, statusUID string, specUID string, dashUID string) *NopContentResource {
 	t.Helper()
-	var dashboardModel map[string]interface{} = make(map[string]interface{})
+	dashboardModel := make(map[string]interface{})
 	dashboardModel["uid"] = dashUID
 	dashboard, _ := json.Marshal(dashboardModel) //nolint:errcheck
 
@@ -207,7 +207,7 @@ func getCR(t *testing.T, crUID string, statusUID string, specUID string, dashUID
 		},
 		Spec: v1beta1.GrafanaContentSpec{
 			CustomUID: specUID,
-			Json:      string(dashboard),
+			JSON:      string(dashboard),
 		},
 		Status: v1beta1.GrafanaContentStatus{
 			UID: statusUID,

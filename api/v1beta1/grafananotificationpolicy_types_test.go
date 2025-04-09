@@ -7,23 +7,22 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func newNotificationPolicy(name string, editable *bool) *GrafanaNotificationPolicy {
 	return &GrafanaNotificationPolicy{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			APIVersion: APIVersion,
 			Kind:       "GrafanaNotificationPolicy",
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: "default",
 		},
 		Spec: GrafanaNotificationPolicySpec{
 			Editable: editable,
 			GrafanaCommonSpec: GrafanaCommonSpec{
-				InstanceSelector: &v1.LabelSelector{
+				InstanceSelector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{
 						"test": "notificationpolicy",
 					},

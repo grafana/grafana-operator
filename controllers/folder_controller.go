@@ -63,7 +63,7 @@ func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result,
 	// get all grafana instances
 	grafanas := &grafanav1beta1.GrafanaList{}
 	var opts []client.ListOption
-	err := r.Client.List(ctx, grafanas, opts...)
+	err := r.List(ctx, grafanas, opts...)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -75,7 +75,7 @@ func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result,
 
 	// get all folders
 	allFolders := &grafanav1beta1.GrafanaFolderList{}
-	err = r.Client.List(ctx, allFolders, opts...)
+	err = r.List(ctx, allFolders, opts...)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -160,7 +160,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	folder := &grafanav1beta1.GrafanaFolder{}
-	err := r.Client.Get(ctx, client.ObjectKey{
+	err := r.Get(ctx, client.ObjectKey{
 		Namespace: req.Namespace,
 		Name:      req.Name,
 	}, folder)

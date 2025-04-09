@@ -48,7 +48,7 @@ type GrafanaNotificationPolicyRoute struct {
 }
 
 func (r *GrafanaNotificationPolicyRoute) NamespacedResource() string {
-	return fmt.Sprintf("%v/%v/%v", r.ObjectMeta.Namespace, r.ObjectMeta.Name, r.ObjectMeta.UID)
+	return fmt.Sprintf("%v/%v/%v", r.Namespace, r.Name, r.UID)
 }
 
 //+kubebuilder:object:root=true

@@ -45,12 +45,12 @@ func GetContentCache(cr v1beta1.GrafanaContentResource) []byte {
 		return nil
 	}
 
-	return getContentCache(status, spec.Url, spec.ContentCacheDuration.Duration)
+	return getContentCache(status, spec.URL, spec.ContentCacheDuration.Duration)
 }
 
 // getContentCache returns content cache when the following conditions are met: url is the same, data is not expired, gzipped data is not corrupted
 func getContentCache(in *v1beta1.GrafanaContentStatus, url string, cacheDuration time.Duration) []byte {
-	if in.ContentUrl != url {
+	if in.ContentURL != url {
 		return []byte{}
 	}
 

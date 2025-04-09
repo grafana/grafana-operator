@@ -101,12 +101,12 @@ func (l PluginList) HasNewerVersionOf(plugin *GrafanaPlugin) (bool, error) {
 			continue
 		}
 
-		listedVersion, err := semver.Make(listedPlugin.Version)
+		listedVersion, err := semver.Parse(listedPlugin.Version)
 		if err != nil {
 			return false, err
 		}
 
-		requestedVersion, err := semver.Make(plugin.Version)
+		requestedVersion, err := semver.Parse(plugin.Version)
 		if err != nil {
 			return false, err
 		}

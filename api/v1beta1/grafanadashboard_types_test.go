@@ -28,7 +28,7 @@ func newDashboard(name string, uid string) *GrafanaDashboard {
 			},
 			GrafanaContentSpec: GrafanaContentSpec{
 				CustomUID: uid,
-				Json:      "",
+				JSON:      "",
 			},
 		},
 	}

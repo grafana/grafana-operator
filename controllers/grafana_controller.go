@@ -84,7 +84,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	if grafana.IsExternal() {
 		grafana.Status.Stage = grafanav1beta1.OperatorStageComplete
-		grafana.Status.AdminUrl = grafana.Spec.External.URL
+		grafana.Status.AdminURL = grafana.Spec.External.URL
 		version, err := r.getVersion(ctx, grafana)
 		if err != nil {
 			grafana.Status.Version = ""
@@ -114,7 +114,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 
 		grafana.Spec.Version = targetVersion
-		if err := r.Client.Update(ctx, grafana); err != nil {
+		if err := r.Update(ctx, grafana); err != nil {
 			return ctrl.Result{}, fmt.Errorf("updating grafana version in spec: %w", err)
 		}
 	}
@@ -164,12 +164,12 @@ func (r *GrafanaReconciler) getVersion(ctx context.Context, cr *grafanav1beta1.G
 		return "", fmt.Errorf("setup of the http client: %w", err)
 	}
 
-	instanceUrl := cr.Status.AdminUrl
-	if instanceUrl == "" && cr.Spec.External != nil {
-		instanceUrl = cr.Spec.External.URL
+	instanceURL := cr.Status.AdminURL
+	if instanceURL == "" && cr.Spec.External != nil {
+		instanceURL = cr.Spec.External.URL
 	}
 
-	req, err := http.NewRequest("GET", instanceUrl+"/api/frontend/settings", nil)
+	req, err := http.NewRequest("GET", instanceURL+"/api/frontend/settings", nil)
 	if err != nil {
 		return "", fmt.Errorf("building request to fetch version: %w", err)
 	}

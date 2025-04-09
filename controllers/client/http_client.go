@@ -27,7 +27,7 @@ func NewHTTPClient(ctx context.Context, c client.Client, grafana *v1beta1.Grafan
 		return nil, err
 	}
 
-	transport := NewInstrumentedRoundTripper(grafana.IsExternal(), tlsConfig, metrics.GrafanaApiRequests.MustCurryWith(prometheus.Labels{
+	transport := NewInstrumentedRoundTripper(grafana.IsExternal(), tlsConfig, metrics.GrafanaAPIRequests.MustCurryWith(prometheus.Labels{
 		"instance_namespace": grafana.Namespace,
 		"instance_name":      grafana.Name,
 	}))
