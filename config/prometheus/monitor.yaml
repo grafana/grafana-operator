@@ -10,11 +10,8 @@ metadata:
 spec:
   endpoints:
     - path: /metrics
-      port: https
-      scheme: https
-      bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
-      tlsConfig:
-        insecureSkipVerify: true
+      port: metrics
+      interval: 60s
   selector:
     matchLabels:
       app.kubernetes.io/name: grafana-operator
