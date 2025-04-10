@@ -259,12 +259,16 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, libraryPan
 			return err
 		}
 
-		// Not in removeFromInstance to ensure that deleted library panels are removed on sync
-		// Avoids repeated synchronization loops if a panel has leftover connections
-		switch hasConnections, err := libraryElementHasConnections(grafanaClient, uid); {
-		case err != nil:
-			return fmt.Errorf("fetching library panel from instance %s/%s: %w", instance.Namespace, instance.Name, err)
-		case hasConnections:
+		resp, err := grafanaClient.LibraryElements.GetLibraryElementConnections(uid)
+		if err != nil {
+			var notFound *library_elements.GetLibraryElementConnectionsNotFound
+			if !errors.Is(err, notFound) {
+				return fmt.Errorf("fetching library panel from instance %s/%s: %w", instance.Namespace, instance.Name, err)
+			}
+
+			continue
+		}
+		if len(resp.Payload.Result) > 0 {
 			return fmt.Errorf("library panel %s/%s/%s on instance %s/%s has existing connections", libraryPanel.Namespace, libraryPanel.Name, uid, instance.Namespace, instance.Name) //nolint
 		}
 
@@ -283,22 +287,6 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, libraryPan
 	}
 
 	return nil
-}
-
-// libraryElementHasConnections returns whether a library panel is still connected to any dashboards
-func libraryElementHasConnections(grafanaClient *genapi.GrafanaHTTPAPI, uid string) (bool, error) {
-	resp, err := grafanaClient.LibraryElements.GetLibraryElementConnections(uid)
-	if err != nil {
-		var notFound *library_elements.GetLibraryElementByUIDNotFound
-		if errors.Is(err, notFound) {
-			// ensure we update the list of managed panels, otherwise we will have dangling references
-			return false, nil
-		}
-
-		return false, err
-	}
-
-	return len(resp.Payload.Result) > 0, nil
 }
 
 func (r *GrafanaLibraryPanelReconciler) syncStatuses(ctx context.Context) error {
