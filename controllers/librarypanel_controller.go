@@ -23,8 +23,8 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/util/retry"
 
-	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	"github.com/grafana/grafana-openapi-client-go/client/library_elements"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -325,7 +325,9 @@ func (r *GrafanaLibraryPanelReconciler) syncStatuses(ctx context.Context) error 
 		}
 
 		if statusUpdated {
-			err = r.Client.Status().Update(ctx, &grafana)
+			err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+				return r.Client.Status().Update(ctx, &grafana)
+			})
 			if err != nil {
 				return err
 			}
@@ -348,29 +350,7 @@ func (r *GrafanaLibraryPanelReconciler) SetupWithManager(ctx context.Context, mg
 		return err
 	}
 
-	go func() {
-		// periodic sync reconcile
-		log := logf.FromContext(ctx).WithName("GrafanaLibraryPanelReconciler")
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-time.After(initialSyncDelay):
-				start := time.Now()
-				err := r.syncStatuses(ctx)
-				elapsed := time.Since(start).Milliseconds()
-				metrics.InitialLibraryPanelSyncDuration.Set(float64(elapsed))
-				if err != nil {
-					log.Error(err, "error synchronizing library panels")
-					continue
-				}
-
-				log.Info("library panel sync complete")
-				return
-			}
-		}
-	}()
+	go syncGrafanaStatuses(ctx, r, "GrafanaLibraryPanel", metrics.InitialLibraryPanelSyncDuration)
 
 	return nil
 }
