@@ -82,7 +82,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if cr.IsExternal() {
 		// Only reconcile the Completion stage for external instances
 		stages = []grafanav1beta1.OperatorStageName{grafanav1beta1.OperatorStageComplete}
-		cr.Status.AdminUrl = cr.Spec.External.URL
+		cr.Status.AdminURL = cr.Spec.External.URL
 	} else {
 		stages = getInstallationStages()
 
@@ -96,7 +96,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 				targetVersion = envVersion
 			}
 			cr.Spec.Version = targetVersion
-			if err := r.Client.Update(ctx, cr); err != nil {
+			if err := r.Update(ctx, cr); err != nil {
 				return ctrl.Result{}, fmt.Errorf("updating grafana version in spec: %w", err)
 			}
 		}

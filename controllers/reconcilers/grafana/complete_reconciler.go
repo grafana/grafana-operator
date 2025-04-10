@@ -31,7 +31,7 @@ func (r *CompleteReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana,
 	version, err := r.getVersion(ctx, cr)
 	if err != nil {
 		cr.Status.Version = ""
-		return v1beta1.OperatorStageResultFailed, fmt.Errorf("Failed fetching version from instance: %w", err)
+		return v1beta1.OperatorStageResultFailed, fmt.Errorf("failed fetching version from instance: %w", err)
 	}
 
 	cr.Status.Version = version
