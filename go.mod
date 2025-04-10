@@ -12,7 +12,7 @@ require (
 	github.com/grafana/grafana-operator/v5/api v0.0.0-00010101000000-000000000000
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.37.0
-	github.com/openshift/api v3.9.0+incompatible
+	github.com/openshift/api v0.0.0-20190924102528-32369d4db2ad
 	github.com/prometheus/client_golang v1.22.0
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/automaxprocs v1.6.0
@@ -100,7 +100,4 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
-replace (
-	github.com/grafana/grafana-operator/v5/api => ./api
-	github.com/openshift/api => github.com/openshift/api v0.0.0-20190924102528-32369d4db2ad
-)
+replace github.com/grafana/grafana-operator/v5/api => ./api
