@@ -130,7 +130,6 @@ spec:
                 default: 10m0s
                 description: How often the resource is synced, defaults to 10m0s if
                   not set
-                format: duration
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
               rules:
@@ -459,7 +458,6 @@ spec:
                 default: 10m0s
                 description: How often the resource is synced, defaults to 10m0s if
                   not set
-                format: duration
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
               settings:
@@ -960,7 +958,6 @@ spec:
                 default: 10m0s
                 description: How often the resource is synced, defaults to 10m0s if
                   not set
-                format: duration
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
               uid:
@@ -1302,7 +1299,6 @@ spec:
                 default: 10m0s
                 description: How often the resource is synced, defaults to 10m0s if
                   not set
-                format: duration
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
               uid:
@@ -1602,7 +1598,6 @@ spec:
                 default: 10m0s
                 description: How often the resource is synced, defaults to 10m0s if
                   not set
-                format: duration
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
               title:
@@ -2038,7 +2033,6 @@ spec:
                 default: 10m0s
                 description: How often the resource is synced, defaults to 10m0s if
                   not set
-                format: duration
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
               uid:
@@ -2329,7 +2323,6 @@ spec:
                 default: 10m0s
                 description: How often the resource is synced, defaults to 10m0s if
                   not set
-                format: duration
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
               time_intervals:
@@ -2589,7 +2582,6 @@ spec:
                 default: 10m0s
                 description: How often the resource is synced, defaults to 10m0s if
                   not set
-                format: duration
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
               route:
@@ -3164,7 +3156,6 @@ spec:
                 default: 10m0s
                 description: How often the resource is synced, defaults to 10m0s if
                   not set
-                format: duration
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
               template:
