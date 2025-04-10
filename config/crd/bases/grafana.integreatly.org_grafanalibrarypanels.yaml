@@ -324,7 +324,6 @@ spec:
                 default: 10m0s
                 description: How often the resource is synced, defaults to 10m0s if
                   not set
-                format: duration
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
               uid:
