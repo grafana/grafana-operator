@@ -335,7 +335,7 @@ func (r *GrafanaLibraryPanelReconciler) syncStatuses(ctx context.Context) error 
 	}
 
 	if panelsSynced > 0 {
-		log.Info("successfully synced library panels", "library panels", panelsSynced)
+		log.Info("successfully synced GrafanaLibraryPanels", "count", panelsSynced)
 	}
 	return nil
 }
