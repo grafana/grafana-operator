@@ -150,9 +150,9 @@ func (in *GrafanaDatasource) CustomUIDOrUID() string {
 	return string(in.UID)
 }
 
-func (in *GrafanaDatasourceList) Find(namespace string, name string) *GrafanaDatasource {
+func (in *GrafanaDatasourceList) Find(namespace string, name string, id string) *GrafanaDatasource {
 	for _, datasource := range in.Items {
-		if datasource.Namespace == namespace && datasource.Name == name {
+		if datasource.Namespace == namespace && datasource.Name == name && datasource.Status.UID == id {
 			return &datasource
 		}
 	}
