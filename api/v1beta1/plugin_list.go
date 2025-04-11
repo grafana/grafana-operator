@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/blang/semver"
+	"github.com/blang/semver/v4"
 )
 
 type GrafanaPlugin struct {
