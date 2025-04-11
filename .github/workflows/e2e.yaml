@@ -79,8 +79,10 @@ jobs:
 
       - name: Create KinD cluster ${{ matrix.version }}
         id: kind
+        env:
+          KIND_NODE_VERSION: "${{ matrix.version }}"
         run: |
-          kind --kubeconfig="${KUBECONFIG}" create cluster --image=kindest/node:${{ matrix.version }} --config tests/e2e/kind.yaml
+          make e2e-kind
 
       - name: Install kubectl
         uses: azure/setup-kubectl@v4

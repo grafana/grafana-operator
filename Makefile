@@ -21,7 +21,7 @@ REGISTRY ?= ghcr.io
 ORG ?= grafana
 IMG ?= $(REGISTRY)/$(ORG)/grafana-operator:v$(VERSION)
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-ENVTEST_K8S_VERSION = 1.28.0
+ENVTEST_K8S_VERSION = 1.31.0
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -131,6 +131,7 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 .PHONY: start-kind
 start-kind: kind ## Start kind cluster locally
 	@hack/kind/start-kind.sh
+	@hack/kind/populate-kind-cluster.sh
 
 ##@ Build Dependencies
 
@@ -259,8 +260,7 @@ bundle/redhat: bundle
 # e2e
 .PHONY: e2e-kind
 e2e-kind: kind
-	# Check if kind-grafana cluster exists or create it
-	[[ "$(kind get clusters)" =~ "kind-grafana" ]] || $(KIND) --kubeconfig="${KUBECONFIG}" create cluster --image=kindest/node:v$(ENVTEST_K8S_VERSION) --config tests/e2e/kind.yaml
+	@KIND_NODE_VERSION="$(ENVTEST_K8S_VERSION)" RECREATE_CLUSTER="no" hack/kind/start-kind.sh
 
 .PHONY: e2e-local-gh-actions
 e2e-local-gh-actions: e2e-kind ko-build-kind e2e
