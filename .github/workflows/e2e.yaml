@@ -98,8 +98,6 @@ jobs:
       - name: Run e2e tests
         shell: bash
         run: |
-          # install chainsaw
-          make chainsaw
           # Run e2e
           VERSION=latest make e2e
 
