@@ -258,10 +258,9 @@ bundle/redhat: bundle
 
 # e2e
 .PHONY: e2e-kind
-e2e-kind:
-ifeq (,$(shell kind get clusters ))
-	$(KIND) --kubeconfig="${KUBECONFIG}" create cluster --image=kindest/node:v$(ENVTEST_K8S_VERSION) --config tests/e2e/kind.yaml
-endif
+e2e-kind: kind
+	# Check if kind-grafana cluster exists or create it
+	[[ "$(kind get clusters)" =~ "kind-grafana" ]] || $(KIND) --kubeconfig="${KUBECONFIG}" create cluster --image=kindest/node:v$(ENVTEST_K8S_VERSION) --config tests/e2e/kind.yaml
 
 .PHONY: e2e-local-gh-actions
 e2e-local-gh-actions: e2e-kind ko-build-kind e2e
@@ -321,7 +320,7 @@ ko-build-local: ko ## Build Docker image with KO
 	$(KO) build --sbom=none --bare
 
 .PHONY: ko-build-kind
-ko-build-kind: ko-build-local ## Build and Load Docker image into kind cluster
+ko-build-kind: ko-build-local kind ## Build and Load Docker image into kind cluster
 	$(KIND) load docker-image $(KO_DOCKER_REPO) --name $(KIND_CLUSTER_NAME)
 
 helm-docs:
