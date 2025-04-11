@@ -290,7 +290,7 @@ func main() { // nolint:gocyclo
 	if err = (&controllers.GrafanaLibraryPanelReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(ctx, mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaLibraryPanel")
 		os.Exit(1)
 	}

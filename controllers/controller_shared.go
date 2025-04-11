@@ -12,6 +12,7 @@ import (
 	operatorapi "github.com/grafana/grafana-operator/v5/api"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/model"
+	"github.com/prometheus/client_golang/prometheus"
 	corev1 "k8s.io/api/core/v1"
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -415,4 +416,32 @@ func mergeReconcileErrors(sources ...map[string]string) map[string]string {
 	}
 
 	return merged
+}
+
+type StatusSyncReconciler interface {
+	syncStatuses(context.Context) error
+}
+
+func syncGrafanaStatuses(ctx context.Context, r StatusSyncReconciler, kind string, gauge prometheus.Gauge) {
+	log := logf.FromContext(ctx).WithName(fmt.Sprintf("%sReconciler", kind))
+	ctx = logf.IntoContext(ctx, log)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(initialSyncDelay):
+			start := time.Now()
+			err := r.syncStatuses(ctx)
+			elapsed := time.Since(start).Milliseconds()
+			gauge.Set(float64(elapsed))
+			if err != nil {
+				log.Error(err, fmt.Sprintf("error synchronizing %s", kind))
+				continue
+			}
+
+			log.Info(fmt.Sprintf("%s sync complete", kind))
+			return
+		}
+	}
 }
