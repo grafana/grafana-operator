@@ -35,6 +35,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -91,10 +92,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			grafana.Status.LastMessage = err.Error()
 			grafana.Status.StageStatus = grafanav1beta1.OperatorStageResultFailed
 
-			// requeueDelay is returned instead of an error to prevent bombarding a
-			// single instance with reconciliation retries in quick succession
-			log.Error(err, "failed to get version from external instance")
-			return ctrl.Result{RequeueAfter: RequeueDelay}, nil
+			return ctrl.Result{}, fmt.Errorf("failed to get version from external instance: %w", err)
 		}
 
 		grafana.Status.Version = version
@@ -147,9 +145,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		grafana.Status.LastMessage = err.Error()
 		grafana.Status.StageStatus = grafanav1beta1.OperatorStageResultFailed
 
-		// The same as the external instances above, avoids overloading a single instance
-		log.Error(err, "failed to get version from instance")
-		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
+		return ctrl.Result{}, fmt.Errorf("failed to get version from instance: %w", err)
 	}
 
 	grafana.Status.Version = version
@@ -205,6 +201,7 @@ func (r *GrafanaReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&grafanav1beta1.Grafana{}).
 		Owns(&v1.Deployment{}).
 		Owns(&v12.ConfigMap{}).
+		WithOptions(controller.Options{RateLimiter: defaultRateLimiter()}).
 		Complete(r)
 }
 
