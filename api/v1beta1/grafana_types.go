@@ -78,13 +78,15 @@ type GrafanaSpec struct {
 	External *External `json:"external,omitempty"`
 	// Preferences holds the Grafana Preferences settings
 	Preferences *GrafanaPreferences `json:"preferences,omitempty"`
+	// DisableDefaultAdminSecret prevents operator from creating default admin-credentials secret
+	DisableDefaultAdminSecret bool `json:"disableDefaultAdminSecret,omitempty"`
 }
 
 type External struct {
 	// URL of the external grafana instance you want to manage.
 	URL string `json:"url"`
 	// The API key to talk to the external grafana instance, you need to define ether apiKey or adminUser/adminPassword.
-	ApiKey *v1.SecretKeySelector `json:"apiKey,omitempty"`
+	APIKey *v1.SecretKeySelector `json:"apiKey,omitempty"`
 	// AdminUser key to talk to the external grafana instance.
 	AdminUser *v1.SecretKeySelector `json:"adminUser,omitempty"`
 	// AdminPassword key to talk to the external grafana instance.
@@ -134,7 +136,7 @@ type GrafanaStatus struct {
 	Stage         OperatorStageName      `json:"stage,omitempty"`
 	StageStatus   OperatorStageStatus    `json:"stageStatus,omitempty"`
 	LastMessage   string                 `json:"lastMessage,omitempty"`
-	AdminUrl      string                 `json:"adminUrl,omitempty"`
+	AdminURL      string                 `json:"adminUrl,omitempty"`
 	Dashboards    NamespacedResourceList `json:"dashboards,omitempty"`
 	Datasources   NamespacedResourceList `json:"datasources,omitempty"`
 	Folders       NamespacedResourceList `json:"folders,omitempty"`

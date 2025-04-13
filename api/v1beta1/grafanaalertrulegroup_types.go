@@ -183,7 +183,7 @@ func (in *GrafanaAlertRuleGroup) MatchLabels() *metav1.LabelSelector {
 }
 
 func (in *GrafanaAlertRuleGroup) MatchNamespace() string {
-	return in.ObjectMeta.Namespace
+	return in.Namespace
 }
 
 func (in *GrafanaAlertRuleGroup) AllowCrossNamespace() bool {

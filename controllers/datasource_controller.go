@@ -66,7 +66,7 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 	// get all grafana instances
 	grafanas := &v1beta1.GrafanaList{}
 	var opts []client.ListOption
-	err := r.Client.List(ctx, grafanas, opts...)
+	err := r.List(ctx, grafanas, opts...)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -78,7 +78,7 @@ func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl
 
 	// get all datasources
 	allDatasources := &v1beta1.GrafanaDatasourceList{}
-	err = r.Client.List(ctx, allDatasources, opts...)
+	err = r.List(ctx, allDatasources, opts...)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -158,7 +158,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	cr := &v1beta1.GrafanaDatasource{}
-	err := r.Client.Get(ctx, client.ObjectKey{
+	err := r.Get(ctx, client.ObjectKey{
 		Namespace: req.Namespace,
 		Name:      req.Name,
 	}, cr)
@@ -259,17 +259,18 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		}
 	}
 
-	// TODO Add new Condition displaing plugin reconciliation errors
 	if len(pluginErrors) > 0 {
 		err := fmt.Errorf("%v", pluginErrors)
 		log.Error(err, "failed to apply plugins to all instances")
 	}
 
-	condition := buildSynchronizedCondition("Datasource", conditionDatasourceSynchronized, cr.Generation, applyErrors, len(instances))
+	allApplyErrors := mergeReconcileErrors(applyErrors, pluginErrors)
+
+	condition := buildSynchronizedCondition("Datasource", conditionDatasourceSynchronized, cr.Generation, allApplyErrors, len(instances))
 	meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
-	if len(applyErrors) > 0 {
-		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
+	if len(allApplyErrors) > 0 {
+		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", allApplyErrors)
 	}
 
 	cr.Status.Hash = hash

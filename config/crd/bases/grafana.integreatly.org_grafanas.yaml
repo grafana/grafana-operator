@@ -8207,6 +8207,10 @@ spec:
                         type: object
                     type: object
                 type: object
+              disableDefaultAdminSecret:
+                description: DisableDefaultAdminSecret prevents operator from creating
+                  default admin-credentials secret
+                type: boolean
               external:
                 description: External enables you to configure external grafana instances
                   that is not managed by the operator.

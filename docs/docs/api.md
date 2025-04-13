@@ -179,7 +179,6 @@ Overrides the FolderSelector<br/>
         <td>
           How often the resource is synced, defaults to 10m0s if not set<br/>
           <br/>
-            <i>Format</i>: duration<br/>
             <i>Default</i>: 10m0s<br/>
         </td>
         <td>false</td>
@@ -805,7 +804,6 @@ GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
         <td>
           How often the resource is synced, defaults to 10m0s if not set<br/>
           <br/>
-            <i>Format</i>: duration<br/>
             <i>Default</i>: 10m0s<br/>
         </td>
         <td>false</td>
@@ -1383,7 +1381,6 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         <td>
           How often the resource is synced, defaults to 10m0s if not set<br/>
           <br/>
-            <i>Format</i>: duration<br/>
             <i>Default</i>: 10m0s<br/>
         </td>
         <td>false</td>
@@ -2410,7 +2407,6 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         <td>
           How often the resource is synced, defaults to 10m0s if not set<br/>
           <br/>
-            <i>Format</i>: duration<br/>
             <i>Default</i>: 10m0s<br/>
         </td>
         <td>false</td>
@@ -3093,7 +3089,6 @@ GrafanaFolderSpec defines the desired state of GrafanaFolder
         <td>
           How often the resource is synced, defaults to 10m0s if not set<br/>
           <br/>
-            <i>Format</i>: duration<br/>
             <i>Default</i>: 10m0s<br/>
         </td>
         <td>false</td>
@@ -3514,7 +3509,6 @@ GrafanaLibraryPanelSpec defines the desired state of GrafanaLibraryPanel
         <td>
           How often the resource is synced, defaults to 10m0s if not set<br/>
           <br/>
-            <i>Format</i>: duration<br/>
             <i>Default</i>: 10m0s<br/>
         </td>
         <td>false</td>
@@ -4544,7 +4538,6 @@ GrafanaMuteTimingSpec defines the desired state of GrafanaMuteTiming
         <td>
           How often the resource is synced, defaults to 10m0s if not set<br/>
           <br/>
-            <i>Format</i>: duration<br/>
             <i>Default</i>: 10m0s<br/>
         </td>
         <td>false</td>
@@ -4958,7 +4951,6 @@ GrafanaNotificationPolicySpec defines the desired state of GrafanaNotificationPo
         <td>
           How often the resource is synced, defaults to 10m0s if not set<br/>
           <br/>
-            <i>Format</i>: duration<br/>
             <i>Default</i>: 10m0s<br/>
         </td>
         <td>false</td>
@@ -5931,7 +5923,6 @@ GrafanaNotificationTemplateSpec defines the desired state of GrafanaNotification
         <td>
           How often the resource is synced, defaults to 10m0s if not set<br/>
           <br/>
-            <i>Format</i>: duration<br/>
             <i>Default</i>: 10m0s<br/>
         </td>
         <td>false</td>
@@ -6229,6 +6220,13 @@ GrafanaSpec defines the desired state of Grafana
         <td>object</td>
         <td>
           Deployment sets how the deployment object should look like with your grafana instance, contains a number of defaults.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>disableDefaultAdminSecret</b></td>
+        <td>boolean</td>
+        <td>
+          DisableDefaultAdminSecret prevents operator from creating default admin-credentials secret<br/>
         </td>
         <td>false</td>
       </tr><tr>

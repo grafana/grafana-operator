@@ -17,14 +17,13 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 
-	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func FetchFromUrl(ctx context.Context, cr v1beta1.GrafanaContentResource, c client.Client, tlsConfig *tls.Config) ([]byte, error) {
+func FetchFromURL(ctx context.Context, cr v1beta1.GrafanaContentResource, c client.Client, tlsConfig *tls.Config) ([]byte, error) {
 	spec := cr.GrafanaContentSpec()
 
-	url, err := url.Parse(spec.Url)
+	url, err := url.Parse(spec.URL)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +38,7 @@ func FetchFromUrl(ctx context.Context, cr v1beta1.GrafanaContentResource, c clie
 		return nil, err
 	}
 
-	contentMetric, err := metrics.ContentUrlRequests.CurryWith(prometheus.Labels{
+	contentMetric, err := metrics.ContentURLRequests.CurryWith(prometheus.Labels{
 		"kind":     cr.GetObjectKind().GroupVersionKind().Kind,
 		"resource": fmt.Sprintf("%v/%v", cr.GetNamespace(), cr.GetName()),
 	})
@@ -49,22 +48,22 @@ func FetchFromUrl(ctx context.Context, cr v1beta1.GrafanaContentResource, c clie
 
 	// this is a documented deprecated metric but we don't want to fail lint
 	//nolint:staticcheck
-	dashboardMetric, err := metrics.DashboardUrlRequests.CurryWith(prometheus.Labels{
+	dashboardMetric, err := metrics.DashboardURLRequests.CurryWith(prometheus.Labels{
 		"dashboard": fmt.Sprintf("%v/%v", cr.GetNamespace(), cr.GetName()),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("building dashboards metric: %w", err)
 	}
 
-	client := client2.NewInstrumentedRoundTripper(true, tlsConfig, contentMetric, dashboardMetric)
+	client := grafanaClient.NewInstrumentedRoundTripper(true, tlsConfig, contentMetric, dashboardMetric)
 	// basic auth is supported for dashboards from url
-	if spec.UrlAuthorization != nil && spec.UrlAuthorization.BasicAuth != nil {
-		username, err := grafanaClient.GetValueFromSecretKey(ctx, spec.UrlAuthorization.BasicAuth.Username, c, cr.GetNamespace())
+	if spec.URLAuthorization != nil && spec.URLAuthorization.BasicAuth != nil {
+		username, err := grafanaClient.GetValueFromSecretKey(ctx, spec.URLAuthorization.BasicAuth.Username, c, cr.GetNamespace())
 		if err != nil {
 			return nil, err
 		}
 
-		password, err := grafanaClient.GetValueFromSecretKey(ctx, spec.UrlAuthorization.BasicAuth.Password, c, cr.GetNamespace())
+		password, err := grafanaClient.GetValueFromSecretKey(ctx, spec.URLAuthorization.BasicAuth.Password, c, cr.GetNamespace())
 		if err != nil {
 			return nil, err
 		}
@@ -99,7 +98,7 @@ func FetchFromUrl(ctx context.Context, cr v1beta1.GrafanaContentResource, c clie
 	status := cr.GrafanaContentStatus()
 	status.ContentCache = gz
 	status.ContentTimestamp = v1.Time{Time: time.Now()}
-	status.ContentUrl = spec.Url
+	status.ContentURL = spec.URL
 
 	return content, nil
 }

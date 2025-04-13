@@ -80,7 +80,7 @@ func GetScopedMatchingInstances(ctx context.Context, k8sClient client.Client, cr
 	}
 
 	selectedList := []v1beta1.Grafana{}
-	var unready_instances []string
+	var unreadyInstances []string
 	for _, instance := range list.Items {
 		// Matches all instances when MatchExpressions is undefined
 		selected := labelsSatisfyMatchExpressions(instance.Labels, instanceSelector.MatchExpressions)
@@ -99,13 +99,13 @@ func GetScopedMatchingInstances(ctx context.Context, k8sClient client.Client, cr
 		// admin url is required to interact with Grafana
 		// the instance or route might not yet be ready
 		if doReadinessCheck && (instance.Status.Stage != v1beta1.OperatorStageComplete || instance.Status.StageStatus != v1beta1.OperatorStageResultSuccess) {
-			unready_instances = append(unready_instances, instance.Name)
+			unreadyInstances = append(unreadyInstances, instance.Name)
 			continue
 		}
 		selectedList = append(selectedList, instance)
 	}
-	if len(unready_instances) > 0 {
-		log.Info("Grafana instances not ready, excluded from matching", "instances", unready_instances)
+	if len(unreadyInstances) > 0 {
+		log.Info("Grafana instances not ready, excluded from matching", "instances", unreadyInstances)
 	}
 	if len(selectedList) == 0 {
 		log.Info("None of the available Grafana instances matched the selector, skipping reconciliation", "AllowCrossNamespaceImport", cr.AllowCrossNamespace())
@@ -184,6 +184,10 @@ func ReconcilePlugins(ctx context.Context, k8sClient client.Client, scheme *runt
 	if err != nil {
 		return err
 	}
+
+	// Even though model.GetPluginsConfigMap already sets an owner reference, it gets overwritten
+	// when we fetch the actual contents of the ConfigMap using k8sClient, so we need to set it here again
+	controllerutil.SetControllerReference(grafana, pluginsConfigMap, scheme) //nolint:errcheck
 
 	val, err := json.Marshal(plugins.Sanitize())
 	if err != nil {
@@ -391,4 +395,24 @@ func removeAnnotation(ctx context.Context, cl client.Client, cr client.Object, k
 	// MergePatchType only removes map keys when the value is null. JSONPatchType allows removing anything under a path.
 	// Differs from removeFinalizer where we overwrite an array.
 	return cl.Patch(ctx, cr, client.RawPatch(types.JSONPatchType, patch))
+}
+
+func mergeReconcileErrors(sources ...map[string]string) map[string]string {
+	merged := make(map[string]string)
+
+	for _, source := range sources {
+		if source == nil {
+			source = make(map[string]string)
+		}
+
+		for k, v := range source {
+			if merged[k] == "" {
+				merged[k] = v
+			} else {
+				merged[k] = fmt.Sprintf("%v; %v", merged[k], v)
+			}
+		}
+	}
+
+	return merged
 }

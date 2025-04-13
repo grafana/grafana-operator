@@ -80,7 +80,7 @@ func (in *GrafanaContactPoint) CustomUIDOrUID() string {
 	if in.Spec.CustomUID != "" {
 		return in.Spec.CustomUID
 	}
-	return string(in.ObjectMeta.UID)
+	return string(in.UID)
 }
 
 func (in *GrafanaContactPoint) MatchLabels() *metav1.LabelSelector {
@@ -88,7 +88,7 @@ func (in *GrafanaContactPoint) MatchLabels() *metav1.LabelSelector {
 }
 
 func (in *GrafanaContactPoint) MatchNamespace() string {
-	return in.ObjectMeta.Namespace
+	return in.Namespace
 }
 
 func (in *GrafanaContactPoint) AllowCrossNamespace() bool {

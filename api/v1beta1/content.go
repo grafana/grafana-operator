@@ -32,13 +32,13 @@ type GrafanaContentEnvFromSource struct {
 	SecretKeyRef *v1.SecretKeySelector `json:"secretKeyRef,omitempty"`
 }
 
-type GrafanaContentUrlBasicAuth struct {
+type GrafanaContentURLBasicAuth struct {
 	Username *v1.SecretKeySelector `json:"username,omitempty"`
 	Password *v1.SecretKeySelector `json:"password,omitempty"`
 }
 
-type GrafanaContentUrlAuthorization struct {
-	BasicAuth *GrafanaContentUrlBasicAuth `json:"basicAuth,omitempty"`
+type GrafanaContentURLAuthorization struct {
+	BasicAuth *GrafanaContentURLBasicAuth `json:"basicAuth,omitempty"`
 }
 
 type JsonnetProjectBuild struct {
@@ -49,7 +49,7 @@ type JsonnetProjectBuild struct {
 
 // GrafanaComContentReference is a reference to content hosted on grafana.com
 type GrafanaComContentReference struct {
-	Id       int  `json:"id"`
+	ID       int  `json:"id"`
 	Revision *int `json:"revision,omitempty"`
 }
 
@@ -64,19 +64,19 @@ type GrafanaContentSpec struct {
 
 	// model json
 	// +optional
-	Json string `json:"json,omitempty"`
+	JSON string `json:"json,omitempty"`
 
 	// GzipJson the model's JSON compressed with Gzip. Base64-encoded when in YAML.
 	// +optional
-	GzipJson []byte `json:"gzipJson,omitempty"`
+	GzipJSON []byte `json:"gzipJson,omitempty"`
 
 	// model url
 	// +optional
-	Url string `json:"url,omitempty"`
+	URL string `json:"url,omitempty"`
 
 	// authorization options for model from url
 	// +optional
-	UrlAuthorization *GrafanaContentUrlAuthorization `json:"urlAuthorization,omitempty"`
+	URLAuthorization *GrafanaContentURLAuthorization `json:"urlAuthorization,omitempty"`
 
 	// Jsonnet
 	// +optional
@@ -113,7 +113,7 @@ type GrafanaContentSpec struct {
 type GrafanaContentStatus struct {
 	ContentCache     []byte      `json:"contentCache,omitempty"`
 	ContentTimestamp metav1.Time `json:"contentTimestamp,omitempty"`
-	ContentUrl       string      `json:"contentUrl,omitempty"`
+	ContentURL       string      `json:"contentUrl,omitempty"`
 	Hash             string      `json:"hash,omitempty"`
 	UID              string      `json:"uid,omitempty"`
 }

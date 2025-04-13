@@ -13,7 +13,7 @@ func TestFetchDashboardFromGrafanaCom(t *testing.T) {
 		Spec: v1beta1.GrafanaDashboardSpec{
 			GrafanaContentSpec: v1beta1.GrafanaContentSpec{
 				GrafanaCom: &v1beta1.GrafanaComContentReference{
-					Id: 1860,
+					ID: 1860,
 				},
 			},
 		},
@@ -26,5 +26,5 @@ func TestFetchDashboardFromGrafanaCom(t *testing.T) {
 	assert.GreaterOrEqual(t, *dashboard.Spec.GrafanaCom.Revision, 30, "At least 30 revisions exist for dashboard 1860 as of 2023-03-29")
 
 	assert.False(t, dashboard.Status.ContentTimestamp.Time.IsZero(), "ContentTimestamp should have been set")
-	assert.NotEmpty(t, dashboard.Status.ContentUrl, "ContentUrl should have been set")
+	assert.NotEmpty(t, dashboard.Status.ContentURL, "ContentURL should have been set")
 }

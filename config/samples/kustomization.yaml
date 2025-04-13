@@ -7,5 +7,8 @@ resources:
 - grafana_v1beta1_grafanaalertrulegroup.yaml
 - grafana_v1beta1_grafanacontactpoint.yaml
 - grafana_v1beta1_grafananotificationpolicy.yaml
+- grafana_v1beta1_grafananotificationtemplate.yaml
 - grafana_v1beta1_grafananotificationpolicyroute.yaml
+- grafana_v1beta1_grafanalibrarypanel.yaml
+- grafana_v1beta1_grafanamutetiming.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

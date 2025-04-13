@@ -28,7 +28,7 @@ func newLibraryPanel(name string, uid string) *GrafanaLibraryPanel {
 			},
 			GrafanaContentSpec: GrafanaContentSpec{
 				CustomUID: uid,
-				Json:      "",
+				JSON:      "",
 			},
 		},
 	}

@@ -56,7 +56,7 @@ func (r *GrafanaMuteTimingReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	ctx = logf.IntoContext(ctx, log)
 
 	muteTiming := &grafanav1beta1.GrafanaMuteTiming{}
-	err := r.Client.Get(ctx, client.ObjectKey{
+	err := r.Get(ctx, client.ObjectKey{
 		Namespace: req.Namespace,
 		Name:      req.Name,
 	}, muteTiming)

@@ -7,14 +7,14 @@ linkTitle: "Helm installation"
 
 [grafana-operator](https://github.com/grafana/grafana-operator) for Kubernetes to manage Grafana instances and grafana resources.
 
-![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v5.17.0](https://img.shields.io/badge/AppVersion-v5.17.0-informational?style=flat-square)
+![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v5.17.1](https://img.shields.io/badge/AppVersion-v5.17.1-informational?style=flat-square)
 
 ## Installation
 
 This is a OCI helm chart, helm started support OCI in version 3.8.0.
 
 ```shell
-helm upgrade -i grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-operator --version v5.17.0
+helm upgrade -i grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-operator --version v5.17.1
 ```
 
 Sadly helm OCI charts currently don't support searching for available versions of a helm [oci registry](https://github.com/helm/helm/issues/11000).
@@ -30,7 +30,7 @@ resource "helm_release" "grafana_kubernetes_operator" {
   repository = "oci://ghcr.io/grafana/helm-charts"
   chart      = "grafana-operator"
   verify     = false
-  version    = "v5.17.0"
+  version    = "v5.17.1"
 }
 ```
 
@@ -40,7 +40,7 @@ Helm does not provide functionality to update custom resource definitions. This 
 To avoid issues due to outdated or missing definitions, run the following command before updating an existing installation:
 
 ```shell
-kubectl apply --server-side --force-conflicts -f https://github.com/grafana/grafana-operator/releases/download/v5.17.0/crds.yaml
+kubectl apply --server-side --force-conflicts -f https://github.com/grafana/grafana-operator/releases/download/v5.17.1/crds.yaml
 ```
 
 The `--server-side` and `--force-conflict` flags are required to avoid running into issues with the `kubectl.kubernetes.io/last-applied-configuration` annotation.
@@ -68,7 +68,7 @@ It's easier to just manage this configuration outside of the operator.
 | dashboard.annotations | object | `{}` | Annotations to add to the Grafana dashboard ConfigMap |
 | dashboard.enabled | bool | `false` | Whether to create a ConfigMap containing a dashboard monitoring the operator metrics. Consider enabling this if you are enabling the ServiceMonitor. Optionally, a GrafanaDashboard CR can be manually created pointing to the Grafana.com dashboard ID 22785 https://grafana.com/grafana/dashboards/22785-grafana-operator/ The Grafana.com dashboard is maintained by the community and does not necessarily match the JSON definition in this repository. |
 | dashboard.labels | object | `{}` | Labels to add to the Grafana dashboard ConfigMap |
-| enforceCacheLabels | string | `"off"` | Sets the `ENFORCE_CACHE_LABELS` environment variable, Enables the enforcment of cache labels, reducing memory usage significantly. Valid values are "off","safe" and "all". When using `safe` mode, ConfigMaps and Secrets are excluded from caching. When using `all` mode, ConfigMaps and Secrets are cached and require the `app.kubernetes.io/managed-by: grafana-operator` label. |
+| enforceCacheLabels | string | `"safe"` | Sets the `ENFORCE_CACHE_LABELS` environment variable, Allows to tweak how caching of various Kubernetes resources works inside the operator. Valid values are "off", "safe", and "all". When set to "off", all resources are cached (including Deployments, Services, Ingresses, and any other native resources that the operator interacts with), which results in much higher memory usage (essentially, grows with cluster size). When set to `safe`, ConfigMaps and Secrets are not cached, all other native resources are cached only when they have `app.kubernetes.io/managed-by: grafana-operator` label. The label is automatically set on all resources that are created/owned by the operator (applicable to any mode). When set to `all`, only resources that have `app.kubernetes.io/managed-by: grafana-operator` are cached. The caveat is that ConfigMaps and Secrets can be seen by the operator only if they have the label. Thus, usage of this mode requires more careful planning. |
 | env | list | `[]` | Additional environment variables |
 | extraObjects | list | `[]` | Array of extra K8s objects to deploy |
 | fullnameOverride | string | `""` | Overrides the fully qualified app name. |

@@ -140,7 +140,7 @@ func (in *GrafanaDashboard) MatchLabels() *metav1.LabelSelector {
 }
 
 func (in *GrafanaDashboard) MatchNamespace() string {
-	return in.ObjectMeta.Namespace
+	return in.Namespace
 }
 
 func (in *GrafanaDashboard) AllowCrossNamespace() bool {

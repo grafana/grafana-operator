@@ -27,8 +27,8 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 
 	if grafana.IsExternal() {
 		// prefer api key if present
-		if grafana.Spec.External.ApiKey != nil {
-			apikey, err := GetValueFromSecretKey(ctx, grafana.Spec.External.ApiKey, c, grafana.Namespace)
+		if grafana.Spec.External.APIKey != nil {
+			apikey, err := GetValueFromSecretKey(ctx, grafana.Spec.External.APIKey, c, grafana.Namespace)
 			if err != nil {
 				return nil, err
 			}
@@ -136,12 +136,12 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1
 		return nil, err
 	}
 
-	gURL, err := url.Parse(grafana.Status.AdminUrl)
+	gURL, err := url.Parse(grafana.Status.AdminURL)
 	if err != nil {
 		return nil, fmt.Errorf("parsing url for client: %w", err)
 	}
 
-	transport := NewInstrumentedRoundTripper(grafana.IsExternal(), tlsConfig, metrics.GrafanaApiRequests.MustCurryWith(prometheus.Labels{
+	transport := NewInstrumentedRoundTripper(grafana.IsExternal(), tlsConfig, metrics.GrafanaAPIRequests.MustCurryWith(prometheus.Labels{
 		"instance_namespace": grafana.Namespace,
 		"instance_name":      grafana.Name,
 	}))

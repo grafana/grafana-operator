@@ -45,6 +45,7 @@ var _ = Describe("ContactPoint type", func() {
 
 		It("Should block adding uid field when missing", func() {
 			contactpoint := newContactPoint("missing-uid", "")
+			contactpoint.Spec.Type = "webhook" // nolint:goconst
 			By("Create new ContactPoint without uid")
 			Expect(k8sClient.Create(ctx, contactpoint)).To(Succeed())
 
@@ -55,6 +56,7 @@ var _ = Describe("ContactPoint type", func() {
 
 		It("Should block removing uid field when set", func() {
 			contactpoint := newContactPoint("existing-uid", "existing-uid")
+			contactpoint.Spec.Type = "webhook" // nolint:goconst
 			By("Creating ContactPoint with existing UID")
 			Expect(k8sClient.Create(ctx, contactpoint)).To(Succeed())
 
@@ -65,6 +67,7 @@ var _ = Describe("ContactPoint type", func() {
 
 		It("Should block changing value of uid", func() {
 			contactpoint := newContactPoint("removing-uid", "existing-uid")
+			contactpoint.Spec.Type = "webhook" // nolint:goconst
 			By("Create new ContactPoint with existing UID")
 			Expect(k8sClient.Create(ctx, contactpoint)).To(Succeed())
 

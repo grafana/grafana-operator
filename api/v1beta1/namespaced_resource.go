@@ -24,16 +24,16 @@ func (in NamespacedResource) Name() string {
 	return name
 }
 
-func (in NamespacedResource) Uid() string {
+func (in NamespacedResource) UID() string {
 	_, _, uid := in.Split()
 	return uid
 }
 
 func (in NamespacedResourceList) Find(namespace string, name string) (bool, *string) {
 	for _, r := range in {
-		foundNamespace, foundName, foundUid := r.Split()
+		foundNamespace, foundName, foundUID := r.Split()
 		if foundNamespace == namespace && foundName == name {
-			return true, &foundUid
+			return true, &foundUID
 		}
 	}
 	return false, nil

@@ -1,5 +1,5 @@
 # Current Operator version
-VERSION ?= 5.17.0
+VERSION ?= 5.17.1
 
 # BUNDLE_GEN_FLAGS are the flags passed to the operator-sdk generate bundle command
 BUNDLE_GEN_FLAGS ?= -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
@@ -85,17 +85,20 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 .PHONY: test
-test: manifests generate code/gofumpt code/golangci-lint api-docs vet envtest ## Run tests.
+test: manifests generate code/golangci-lint api-docs vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile cover.out
+	cd api && KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile ../cover-api.out && cd -
 
 ##@ Build
 
 .PHONY: build
-build: generate code/gofumpt vet ## Build manager binary.
+build: generate golangci vet ## Build manager binary.
+	golangci-lint fmt ./...
 	go build -o bin/manager main.go
 
 .PHONY: run
-run: manifests generate code/gofumpt vet ## Run a controller from your host.
+run: manifests generate golangci vet ## Run a controller from your host.
+	golangci-lint fmt ./...
 	go run ./main.go --zap-devel=true
 
 ##@ Deployment
@@ -114,12 +117,12 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 
 .PHONY: deploy
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	$(KUSTOMIZE) build config/default | kubectl apply --server-side --force-conflicts -f -
+	cd deploy/kustomize/overlays/cluster_scoped && $(KUSTOMIZE) edit set image controller=${IMG}
+	$(KUSTOMIZE) build deploy/kustomize/overlays/cluster_scoped | kubectl apply --server-side --force-conflicts -f -
 
 .PHONY: deploy-chainsaw
 deploy-chainsaw: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/chainsaw-overlay | kubectl apply --server-side --force-conflicts -f -
+	$(KUSTOMIZE) build deploy/kustomize/overlays/chainsaw | kubectl apply --server-side --force-conflicts -f -
 
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
@@ -155,7 +158,7 @@ YQ_VERSION ?= v4.35.2
 KO_VERSION ?= v0.16.0
 KIND_VERSION ?= v0.24.0
 CHAINSAW_VERSION ?= v0.2.10
-GOLANGCI_LINT_VERSION ?= v1.64.6
+GOLANGCI_LINT_VERSION ?= v2.0.2
 
 KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
 .PHONY: kustomize
@@ -283,7 +286,7 @@ golangci:
 ifeq (, $(shell which golangci-lint))
 	@{ \
 	set -e ;\
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION) ;\
+	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION) ;\
 	}
 GOLANGCI=$(GOBIN)/golangci-lint
 else
@@ -291,23 +294,12 @@ GOLANGCI=$(shell which golangci-lint)
 endif
 
 .PHONY: code/golangci-lint
+ifndef GITHUB_ACTIONS # Inside GitHub Actions, we run golangci-lint in a separate step
 code/golangci-lint: golangci
+	$(GOLANGCI) fmt ./...
 	$(GOLANGCI) run --allow-parallel-runners ./...
-
-gofumpt:
-ifeq (, $(shell which gofumpt))
-	@{ \
-	set -e ;\
-	go install mvdan.cc/gofumpt@v0.6.0 ;\
-	}
-GOFUMPT=$(GOBIN)/gofumpt
-else
-GOFUMPT=$(shell which gofumpt)
+	cd api && $(GOLANGCI) run --allow-parallel-runners ./... && cd -
 endif
-
-.PHONY: code/gofumpt
-code/gofumpt: gofumpt
-	$(GOFUMPT) -l -w .
 
 ko:
 ifeq (, $(shell which ko))

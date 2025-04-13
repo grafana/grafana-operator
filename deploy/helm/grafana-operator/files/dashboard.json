@@ -596,7 +596,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "$datasource"
       },
       "description": "Time in ms to sync Custom Resources after operator restart",
       "fieldConfig": {
@@ -654,7 +654,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "expr": "sum(grafana_operator_datasources_initial_sync_duration{$k8sClusterLabelKey=\"$cluster\", pod=~\"$pod\", job=\"$job\"})",
@@ -667,7 +667,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "$datasource"
           },
           "editorMode": "code",
           "expr": "sum(grafana_operator_folders_initial_sync_duration{$k8sClusterLabelKey=\"$cluster\", pod=~\"$pod\", job=\"$job\"})",
@@ -684,7 +684,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "$datasource"
       },
       "description": "Reconciles per Grafana instance",
       "fieldConfig": {
@@ -1208,7 +1208,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "$datasource"
       },
       "description": "Requests against the Grafana api per instance",
       "fieldConfig": {

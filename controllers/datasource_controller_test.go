@@ -15,15 +15,15 @@ func TestGetDatasourceContent(t *testing.T) {
 	}
 
 	t.Run("secureJsonData is preserved", func(t *testing.T) {
-		secureJsonData := []byte(`{"httpHeaderValue1": "Bearer ${PROMETHEUS_TOKEN}"}`)
-		secureJsonDataRaw := (*json.RawMessage)(&secureJsonData)
+		secureJSONData := []byte(`{"httpHeaderValue1": "Bearer ${PROMETHEUS_TOKEN}"}`)
+		secureJSONDataRaw := (*json.RawMessage)(&secureJSONData)
 		// Here, we only check if contents of secureJsonData is preserved, not secrets replacement
 		want := "Bearer ${PROMETHEUS_TOKEN}"
 
 		cr := &v1beta1.GrafanaDatasource{
 			Spec: v1beta1.GrafanaDatasourceSpec{
 				Datasource: &v1beta1.GrafanaDatasourceInternal{
-					SecureJSONData: *secureJsonDataRaw,
+					SecureJSONData: *secureJSONDataRaw,
 				},
 			},
 		}

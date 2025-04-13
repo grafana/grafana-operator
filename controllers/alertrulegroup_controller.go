@@ -63,7 +63,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 	ctx = logf.IntoContext(ctx, log)
 
 	group := &grafanav1beta1.GrafanaAlertRuleGroup{}
-	err := r.Client.Get(ctx, client.ObjectKey{
+	err := r.Get(ctx, client.ObjectKey{
 		Namespace: req.Namespace,
 		Name:      req.Name,
 	}, group)
@@ -157,7 +157,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 	}
 
 	trueRef := "true" //nolint:goconst
-	editable := true
+	editable := true  //nolint:staticcheck
 	if group.Spec.Editable != nil && !*group.Spec.Editable {
 		editable = false
 	}
