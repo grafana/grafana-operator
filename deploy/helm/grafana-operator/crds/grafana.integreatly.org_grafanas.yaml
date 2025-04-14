@@ -9501,6 +9501,10 @@ spec:
             properties:
               adminUrl:
                 type: string
+              contactPoints:
+                items:
+                  type: string
+                type: array
               dashboards:
                 items:
                   type: string

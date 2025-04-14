@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana-openapi-client-go/models"
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
+	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 )
 
 const (
@@ -54,15 +55,55 @@ type GrafanaContactPointReconciler struct {
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanacontactpoints/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanacontactpoints/finalizers,verbs=update
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the GrafanaContactPoint object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.4/pkg/reconcile
+func (r *GrafanaContactPointReconciler) syncStatuses(ctx context.Context) error {
+	log := logf.FromContext(ctx)
+
+	// get all grafana instances
+	grafanas := &grafanav1beta1.GrafanaList{}
+	var opts []client.ListOption
+	err := r.List(ctx, grafanas, opts...)
+	if err != nil {
+		return err
+	}
+	// no instances, no need to sync
+	if len(grafanas.Items) == 0 {
+		return nil
+	}
+
+	// get all contact points
+	allContactPoints := &grafanav1beta1.GrafanaContactPointList{}
+	err = r.List(ctx, allContactPoints, opts...)
+	if err != nil {
+		return err
+	}
+
+	// delete contact points from grafana statuses that do no longer have a cr
+	contactpointsSynced := 0
+	for _, grafana := range grafanas.Items {
+		statusUpdated := false
+		for _, contactpoint := range grafana.Status.ContactPoints {
+			namespace, name, _ := contactpoint.Split()
+			if allContactPoints.Find(namespace, name) == nil {
+				grafana.Status.ContactPoints = grafana.Status.ContactPoints.Remove(namespace, name)
+				contactpointsSynced += 1
+				statusUpdated = true
+			}
+		}
+
+		if statusUpdated {
+			err = r.Client.Status().Update(ctx, &grafana)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	if contactpointsSynced > 0 {
+		log.Info("successfully synced contact points", "contactpoints", contactpointsSynced)
+	}
+	return nil
+}
+
 func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx).WithName("GrafanaContactPointReconciler")
 	ctx = logf.IntoContext(ctx, log)
@@ -188,6 +229,13 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 			return fmt.Errorf("updating contact point: %w", err)
 		}
 	}
+
+	// Update grafana instance Status
+	instance.Status.ContactPoints = instance.Status.ContactPoints.Add(contactPoint.Namespace, contactPoint.Name, applied.UID)
+	if err = r.Client.Status().Update(ctx, instance); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -246,15 +294,47 @@ func (r *GrafanaContactPointReconciler) finalize(ctx context.Context, contactPoi
 		if err != nil {
 			return fmt.Errorf("deleting contact point: %w", err)
 		}
+
+		instance.Status.ContactPoints = instance.Status.ContactPoints.Remove(contactPoint.Namespace, contactPoint.Name)
+		if err = r.Client.Status().Update(ctx, &instance); err != nil {
+			return fmt.Errorf("removing contact point from Grafana cr: %w", err)
+		}
 	}
 
 	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *GrafanaContactPointReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
+func (r *GrafanaContactPointReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
+	err := ctrl.NewControllerManagedBy(mgr).
 		For(&grafanav1beta1.GrafanaContactPoint{}).
 		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		log := logf.FromContext(ctx).WithName("GrafanaContactPointReconciler")
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(initialSyncDelay):
+				start := time.Now()
+				err := r.syncStatuses(ctx)
+				elapsed := time.Since(start).Milliseconds()
+				metrics.InitialContactPointSyncDuration.Set(float64(elapsed))
+				if err != nil {
+					log.Error(err, "error synchronizing contact points")
+					continue
+				}
+
+				log.Info("contact point sync complete")
+				return
+			}
+		}
+	}()
+
+	return nil
 }
