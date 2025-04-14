@@ -52,7 +52,7 @@ const (
 // Allow slower initial retry on any failure
 // Significantly slower compared to the default exponential backoff
 func defaultRateLimiter() workqueue.TypedRateLimiter[reconcile.Request] {
-	return workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](RequeueDelay, 12*RequeueDelay)
+	return workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](RequeueDelay, 120*time.Second)
 }
 
 // Only matching instances in the scope of the resource are returned
