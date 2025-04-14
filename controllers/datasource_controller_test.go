@@ -54,16 +54,6 @@ func TestGetDatasourcesToDelete(t *testing.T) {
 					UID: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
 				},
 			},
-			{
-				TypeMeta: metav1.TypeMeta{},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "datasource-b",
-					Namespace: "namespace",
-				},
-				Status: v1beta1.GrafanaDatasourceStatus{
-					UID: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
-				},
-			},
 		},
 	}
 	grafanaList := []v1beta1.Grafana{
@@ -76,7 +66,6 @@ func TestGetDatasourcesToDelete(t *testing.T) {
 			Status: v1beta1.GrafanaStatus{
 				Datasources: v1beta1.NamespacedResourceList{
 					"namespace/datasource-a/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
-					"namespace/datasource-a/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 					"namespace/datasource-c/cccccccc-cccc-cccc-cccc-cccccccccccc",
 				},
 			},
@@ -87,7 +76,6 @@ func TestGetDatasourcesToDelete(t *testing.T) {
 	for grafana := range datasourcesToDelete {
 		if grafana.Name == "grafana-1" {
 			assert.Equal(t, []v1beta1.NamespacedResource([]v1beta1.NamespacedResource{
-				"namespace/datasource-a/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 				"namespace/datasource-c/cccccccc-cccc-cccc-cccc-cccccccccccc",
 			}), datasourcesToDelete[grafana])
 		}

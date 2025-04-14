@@ -141,7 +141,7 @@ func getDatasourcesToDelete(allDatasources *v1beta1.GrafanaDatasourceList, grafa
 	datasourcesToDelete := map[*v1beta1.Grafana][]v1beta1.NamespacedResource{}
 	for _, grafana := range grafanas {
 		for _, datasource := range grafana.Status.Datasources {
-			if allDatasources.Find(datasource.Namespace(), datasource.Name(), datasource.UID()) == nil {
+			if allDatasources.Find(datasource.Namespace(), datasource.Name()) == nil {
 				datasourcesToDelete[&grafana] = append(datasourcesToDelete[&grafana], datasource)
 			}
 		}
