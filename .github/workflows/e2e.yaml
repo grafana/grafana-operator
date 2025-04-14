@@ -70,7 +70,7 @@ jobs:
           cache: true
 
       - name: Install ko
-        uses: ko-build/setup-ko@v0.8
+        uses: ko-build/setup-ko@v0.9
         with:
           version: v0.16.0
 
