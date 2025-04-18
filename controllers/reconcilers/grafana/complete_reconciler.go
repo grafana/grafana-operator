@@ -27,7 +27,7 @@ func NewCompleteReconciler(client client.Client) reconcilers.OperatorGrafanaReco
 func (r *CompleteReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, _ *v1beta1.OperatorReconcileVars, _ *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
 	log := logf.FromContext(ctx).WithName("CompleteReconciler")
 
-	log.Info("fetching Grafana version from instance")
+	log.V(1).Info("fetching Grafana version from instance")
 	version, err := r.getVersion(ctx, cr)
 	if err != nil {
 		cr.Status.Version = ""
@@ -35,7 +35,7 @@ func (r *CompleteReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana,
 	}
 
 	cr.Status.Version = version
-	log.Info("reconciliation completed")
+	log.V(1).Info("reconciliation completed")
 
 	return v1beta1.OperatorStageResultSuccess, nil
 }
