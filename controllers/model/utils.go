@@ -47,7 +47,7 @@ func SetInheritedLabels(obj metav1.ObjectMetaAccessor, extraLabels map[string]st
 		labels[k] = v
 	}
 	// Ensure default CommonLabels for child resources
-	for k, v := range CommonLabels {
+	for k, v := range GetCommonLabels() {
 		labels[k] = v
 	}
 	meta.SetLabels(labels)
