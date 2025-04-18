@@ -15,7 +15,7 @@ fi
 
 NODE_VERSION_ARG=""
 if [[ -n "${KIND_NODE_VERSION:-}" ]]; then
-    NODE_VERSION_ARG="--image=kindest/node:v${KIND_NODE_VERSION}"
+    NODE_VERSION_ARG="--image=kindest/node:${KIND_NODE_VERSION}"
 fi
 
 # Start kind cluster
