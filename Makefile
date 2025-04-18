@@ -260,7 +260,7 @@ bundle/redhat: bundle
 # e2e
 .PHONY: e2e-kind
 e2e-kind: kind
-	@KIND_NODE_VERSION="$(ENVTEST_K8S_VERSION)" RECREATE_CLUSTER="no" hack/kind/start-kind.sh
+	hack/kind/start-kind.sh
 
 .PHONY: e2e-local-gh-actions
 e2e-local-gh-actions: e2e-kind ko-build-kind e2e
