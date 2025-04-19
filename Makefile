@@ -151,7 +151,6 @@ YQ = $(LOCALBIN)/yq
 # This is useful for CI or a project to utilize a specific version of the operator-sdk toolkit.
 OPM_VERSION ?= v1.23.2
 YQ_VERSION ?= v4.35.2
-KO_VERSION ?= v0.16.0
 CHAINSAW_VERSION ?= v0.2.10
 GOLANGCI_LINT_VERSION ?= v2.0.2
 
@@ -253,23 +252,12 @@ code/golangci-lint: golangci
 	cd api && $(GOLANGCI) run --allow-parallel-runners ./... && cd -
 endif
 
-ko:
-ifeq (, $(shell which ko))
-	@{ \
-	set -e ;\
-	go install github.com/google/ko@${KO_VERSION} ;\
-	}
-KO=$(GOBIN)/ko
-else
-KO=$(shell which ko)
-endif
-
 export KO_DOCKER_REPO ?= ko.local/grafana/grafana-operator
 export KIND_CLUSTER_NAME ?= kind-grafana
 export KUBECONFIG        ?= ${HOME}/.kube/kind-grafana-operator
 
 .PHONY: ko-build-local
-ko-build-local: ko ## Build Docker image with KO
+ko-build-local: ## Build Docker image with KO
 	$(KO) build --sbom=none --bare
 
 .PHONY: ko-build-kind
