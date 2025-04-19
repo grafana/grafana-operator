@@ -1,3 +1,6 @@
+# Lazily installs tools the Makefile relies on
+include .bingo/Variables.mk
+
 # Current Operator version
 VERSION ?= 5.17.1
 
