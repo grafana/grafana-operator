@@ -74,9 +74,6 @@ jobs:
         with:
           version: v0.16.0
 
-      - name: Install chainsaw
-        uses: kyverno/action-install-chainsaw@v0.2.12
-
       - name: Create KinD cluster ${{ matrix.version }}
         id: kind
         run: |
@@ -98,8 +95,6 @@ jobs:
       - name: Run e2e tests
         shell: bash
         run: |
-          # install chainsaw
-          make chainsaw
           # Run e2e
           VERSION=latest make e2e
 
