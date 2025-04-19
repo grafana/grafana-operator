@@ -132,7 +132,7 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: start-kind
-start-kind: kind ## Start kind cluster locally
+start-kind: ## Start kind cluster locally
 	@hack/kind/start-kind.sh
 
 ##@ Build Dependencies
@@ -145,7 +145,6 @@ $(LOCALBIN):
 ## Tool Binaries
 ENVTEST ?= $(LOCALBIN)/setup-envtest
 YQ = $(LOCALBIN)/yq
-KIND = $(LOCALBIN)/kind
 
 ## Tool Versions
 # Set the Operator SDK version to use. By default, what is installed on the system is used.
@@ -153,7 +152,6 @@ KIND = $(LOCALBIN)/kind
 OPM_VERSION ?= v1.23.2
 YQ_VERSION ?= v4.35.2
 KO_VERSION ?= v0.16.0
-KIND_VERSION ?= v0.24.0
 CHAINSAW_VERSION ?= v0.2.10
 GOLANGCI_LINT_VERSION ?= v2.0.2
 
@@ -175,22 +173,6 @@ ifeq (,$(shell which yq 2>/dev/null))
 	}
 else
 YQ = $(shell which yq)
-endif
-endif
-
-.PHONY: kind
-kind: ## Download kind locally if necessary.
-ifeq (,$(wildcard $(KIND)))
-ifeq (,$(shell which kind 2>/dev/null))
-	@{ \
-	set -e ;\
-	mkdir -p $(dir $(KIND)) ;\
-	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(KIND) https://github.com/kubernetes-sigs/kind/releases/download/$(KIND_VERSION)/kind-$${OSTYPE}-$${ARCH} ;\
-	chmod +x $(KIND) ;\
-	}
-else
-KIND = $(shell which kind)
 endif
 endif
 
