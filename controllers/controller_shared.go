@@ -424,3 +424,21 @@ func mergeReconcileErrors(sources ...map[string]string) map[string]string {
 
 	return merged
 }
+
+func UpdateStatus(ctx context.Context, cl client.Client, cr v1beta1.CommonResource) {
+	log := logf.FromContext(ctx)
+
+	cr.CommonStatus().LastResync = metav1.Time{Time: time.Now()}
+	if err := cl.Status().Update(ctx, cr); err != nil {
+		log.Error(err, "updating status")
+	}
+	if meta.IsStatusConditionTrue(cr.CommonStatus().Conditions, conditionNoMatchingInstance) {
+		if err := removeFinalizer(ctx, cl, cr); err != nil {
+			log.Error(err, "failed to remove finalizer")
+		}
+	} else {
+		if err := addFinalizer(ctx, cl, cr); err != nil {
+			log.Error(err, "failed to set finalizer")
+		}
+	}
+}

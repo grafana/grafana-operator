@@ -75,6 +75,8 @@ type GrafanaDashboard struct {
 	Status GrafanaDashboardStatus `json:"status,omitempty"`
 }
 
+var _ CommonResource = (*GrafanaDashboard)(nil)
+
 //+kubebuilder:object:root=true
 
 // GrafanaDashboardList contains a list of GrafanaDashboard
@@ -145,6 +147,10 @@ func (in *GrafanaDashboard) MatchNamespace() string {
 
 func (in *GrafanaDashboard) AllowCrossNamespace() bool {
 	return in.Spec.AllowCrossNamespaceImport
+}
+
+func (in *GrafanaDashboard) CommonStatus() *GrafanaCommonStatus {
+	return &in.Status.GrafanaCommonStatus
 }
 
 func init() {

@@ -3,6 +3,7 @@ package v1beta1
 import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // WARN Run `make` on all file changes
@@ -46,9 +47,11 @@ type GrafanaCommonSpec struct {
 // Common Functions that all CRs should implement, excluding Grafana
 // +kubebuilder:object:generate=false
 type CommonResource interface {
+	client.Object
 	MatchLabels() *metav1.LabelSelector
 	MatchNamespace() string
 	AllowCrossNamespace() bool
+	CommonStatus() *GrafanaCommonStatus
 }
 
 // The most recent observed state of a Grafana resource

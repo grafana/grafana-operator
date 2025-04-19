@@ -22,8 +22,6 @@ import (
 	"fmt"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/grafana/grafana-openapi-client-go/client/library_elements"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -139,21 +137,7 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	defer func() {
-		libraryPanel.Status.LastResync = metav1.Time{Time: time.Now()}
-		if err := r.Client.Status().Update(ctx, libraryPanel); err != nil {
-			log.Error(err, "updating status")
-		}
-		if meta.IsStatusConditionTrue(libraryPanel.Status.Conditions, conditionNoMatchingInstance) {
-			if err := removeFinalizer(ctx, r.Client, libraryPanel); err != nil {
-				log.Error(err, "failed to remove finalizer")
-			}
-		} else {
-			if err := addFinalizer(ctx, r.Client, libraryPanel); err != nil {
-				log.Error(err, "failed to set finalizer")
-			}
-		}
-	}()
+	defer UpdateStatus(ctx, r.Client, libraryPanel)
 
 	// begin validation checks
 

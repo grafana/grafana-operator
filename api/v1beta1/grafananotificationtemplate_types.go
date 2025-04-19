@@ -72,6 +72,10 @@ func (in *GrafanaNotificationTemplate) NamespacedResource() string {
 	return fmt.Sprintf("%v/%v/%v", in.Namespace, in.Name, in.UID)
 }
 
+func (in *GrafanaNotificationTemplate) CommonStatus() *GrafanaCommonStatus {
+	return &in.Status
+}
+
 //+kubebuilder:object:root=true
 
 // GrafanaNotificationTemplateList contains a list of GrafanaNotificationTemplate

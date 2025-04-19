@@ -111,6 +111,10 @@ func (in *GrafanaMuteTiming) NamespacedResource() string {
 	return fmt.Sprintf("%v/%v/%v", in.Namespace, in.Name, in.UID)
 }
 
+func (in *GrafanaMuteTiming) CommonStatus() *GrafanaCommonStatus {
+	return &in.Status
+}
+
 //+kubebuilder:object:root=true
 
 // GrafanaMuteTimingList contains a list of GrafanaMuteTiming
