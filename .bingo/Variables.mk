@@ -23,6 +23,12 @@ $(BINGO): $(BINGO_DIR)/bingo.mod
 	@echo "(re)installing $(GOBIN)/bingo-v0.9.0"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=bingo.mod -o=$(GOBIN)/bingo-v0.9.0 "github.com/bwplotka/bingo"
 
+CHAINSAW := $(GOBIN)/chainsaw-v0.2.10
+$(CHAINSAW): $(BINGO_DIR)/chainsaw.mod
+	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
+	@echo "(re)installing $(GOBIN)/chainsaw-v0.2.10"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=chainsaw.mod -o=$(GOBIN)/chainsaw-v0.2.10 "github.com/kyverno/chainsaw"
+
 CONTROLLER_GEN := $(GOBIN)/controller-gen-v0.16.3
 $(CONTROLLER_GEN): $(BINGO_DIR)/controller-gen.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.

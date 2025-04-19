@@ -149,7 +149,6 @@ ENVTEST ?= $(LOCALBIN)/setup-envtest
 # Set the Operator SDK version to use. By default, what is installed on the system is used.
 # This is useful for CI or a project to utilize a specific version of the operator-sdk toolkit.
 OPM_VERSION ?= v1.23.2
-CHAINSAW_VERSION ?= v0.2.10
 GOLANGCI_LINT_VERSION ?= v2.0.2
 
 .PHONY: envtest
@@ -200,20 +199,8 @@ endif
 e2e-local-gh-actions: e2e-kind ko-build-kind e2e
 
 .PHONY: e2e
-e2e: chainsaw install deploy-chainsaw ## Run e2e tests using chainsaw.
+e2e: install deploy-chainsaw ## Run e2e tests using chainsaw.
 	$(CHAINSAW) test --test-dir ./tests/e2e/$(TESTS)
-
-# Find or download chainsaw
-chainsaw:
-ifeq (, $(shell which chainsaw))
-	@{ \
-	set -e ;\
-	go install github.com/kyverno/chainsaw@$(CHAINSAW_VERSION) ;\
-	}
-CHAINSAW=$(GOBIN)/chainsaw
-else
-CHAINSAW=$(shell which chainsaw)
-endif
 
 golangci:
 ifeq (, $(shell which golangci-lint))
