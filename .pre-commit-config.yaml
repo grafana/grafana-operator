@@ -5,6 +5,12 @@ repos:
       - id: check-shebang-scripts-are-executable
 
       - id: end-of-file-fixer
+        exclude: |
+          (?x)^(
+            .bingo/go.mod|
+            .bingo/variables.env|
+            .bingo/Variables.mk
+          )$
 
       - id: mixed-line-ending
         args: [--fix=lf]
