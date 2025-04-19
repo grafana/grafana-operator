@@ -1,4 +1,3 @@
-# Lazily installs tools the Makefile relies on
 include .bingo/Variables.mk
 
 # Current Operator version
@@ -61,7 +60,7 @@ help: ## Display this help.
 ##@ Development
 
 .PHONY: manifests
-manifests: ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
+manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) $(YQ) ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role webhook paths="./..." crd output:crd:artifacts:config=config/crd/bases
 	$(CONTROLLER_GEN) rbac:roleName=manager-role webhook paths="./..." crd output:crd:artifacts:config=deploy/helm/grafana-operator/crds
 	$(YQ) -i '(select(.kind == "Deployment") | .spec.template.spec.containers[0].env[] | select (.name == "RELATED_IMAGE_GRAFANA")).value="$(GRAFANA_IMAGE):$(GRAFANA_VERSION)"' config/manager/manager.yaml
@@ -76,11 +75,11 @@ manifests: ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefin
 	cat config/rbac/role.yaml | $(YQ) -r 'del(.rules[] | select (.apiGroups | contains(["route.openshift.io"]) | not))'  > deploy/helm/grafana-operator/files/rbac-openshift.yaml
 
 # Generate API reference documentation
-api-docs: manifests
+api-docs: manifests $(CRDOC)
 	$(CRDOC) --resources config/crd/bases --output docs/docs/api.md --template hugo/templates/frontmatter-grafana-operator.tmpl
 
 .PHONY: generate
-generate: ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+generate: $(CONTROLLER_GEN) ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: vet
@@ -88,19 +87,19 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 .PHONY: test
-test: manifests generate code/golangci-lint api-docs vet ## Run tests.
+test: manifests generate code/golangci-lint api-docs vet $(SETUP_ENVTEST) ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(SETUP_ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile cover.out
 	cd api && KUBEBUILDER_ASSETS="$(shell $(SETUP_ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile ../cover-api.out && cd -
 
 ##@ Build
 
 .PHONY: build
-build: generate vet ## Build manager binary.
+build: generate vet $(GOLANGCI_LINT) ## Build manager binary.
 	$(GOLANGCI_LINT) fmt ./...
 	go build -o bin/manager main.go
 
 .PHONY: run
-run: manifests generate vet ## Run a controller from your host.
+run: manifests generate vet $(GOLANGCI_LINT) ## Run a controller from your host.
 	$(GOLANGCI_LINT) fmt ./...
 	go run ./main.go --zap-devel=true
 
@@ -111,28 +110,28 @@ ifndef ignore-not-found
 endif
 
 .PHONY: install
-install: manifests ## Install CRDs into the K8s cluster specified in ~/.kube/config.
+install: manifests $(KUSTOMIZE) ## Install CRDs into the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/crd | kubectl replace --force=true -f -
 
 .PHONY: uninstall
-uninstall: manifests ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
+uninstall: manifests $(KUSTOMIZE) ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/crd | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: deploy
-deploy: manifests ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+deploy: manifests $(KUSTOMIZE) ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd deploy/kustomize/overlays/cluster_scoped && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build deploy/kustomize/overlays/cluster_scoped | kubectl apply --server-side --force-conflicts -f -
 
 .PHONY: deploy-chainsaw
-deploy-chainsaw: manifests ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+deploy-chainsaw: manifests $(KUSTOMIZE) ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build deploy/kustomize/overlays/chainsaw | kubectl apply --server-side --force-conflicts -f -
 
 .PHONY: undeploy
-undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
+undeploy: $(KUSTOMIZE) ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: start-kind
-start-kind: ## Start kind cluster locally
+start-kind: $(KIND) ## Start kind cluster locally
 	@hack/kind/start-kind.sh
 
 ##@ Build Dependencies
@@ -164,7 +163,7 @@ endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
 .PHONY: bundle
-bundle: manifests ## Generate bundle manifests and metadata, then validate generated files.
+bundle: manifests $(KUSTOMIZE) $(OPERATOR_SDK) ## Generate bundle manifests and metadata, then validate generated files.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS)
 	./hack/add-openshift-annotations.sh
@@ -176,7 +175,7 @@ bundle/redhat: bundle
 
 # e2e
 .PHONY: e2e-kind
-e2e-kind:
+e2e-kind: $(KIND)
 ifeq (,$(shell kind get clusters ))
 	$(KIND) --kubeconfig="${KUBECONFIG}" create cluster --image=kindest/node:v$(ENVTEST_K8S_VERSION) --config tests/e2e/kind.yaml
 endif
@@ -185,12 +184,12 @@ endif
 e2e-local-gh-actions: e2e-kind ko-build-kind e2e
 
 .PHONY: e2e
-e2e: install deploy-chainsaw ## Run e2e tests using chainsaw.
+e2e: install deploy-chainsaw  $(CHAINSAW) ## Run e2e tests using chainsaw.
 	$(CHAINSAW) test --test-dir ./tests/e2e/$(TESTS)
 
 .PHONY: code/golangci-lint
 ifndef GITHUB_ACTIONS # Inside GitHub Actions, we run golangci-lint in a separate step
-code/golangci-lint:
+code/golangci-lint: $(GOLANGCI_LINT)
 	$(GOLANGCI_LINT) fmt ./...
 	$(GOLANGCI_LINT) run --allow-parallel-runners ./...
 	cd api && $(GOLANGCI_LINT) run --allow-parallel-runners ./... && cd -
@@ -201,15 +200,15 @@ export KIND_CLUSTER_NAME ?= kind-grafana
 export KUBECONFIG        ?= ${HOME}/.kube/kind-grafana-operator
 
 .PHONY: ko-build-local
-ko-build-local: ## Build Docker image with KO
+ko-build-local: $(KO) ## Build Docker image with KO
 	$(KO) build --sbom=none --bare
 
 .PHONY: ko-build-kind
-ko-build-kind: ko-build-local ## Build and Load Docker image into kind cluster
+ko-build-kind: $(KO) ko-build-local ## Build and Load Docker image into kind cluster
 	$(KIND) load docker-image $(KO_DOCKER_REPO) --name $(KIND_CLUSTER_NAME)
 
 .PHONY: helm/docs
-helm/docs:
+helm/docs: $(HELM_DOCS)
 	$(HELM_DOCS)
 
 BUNDLE_IMG ?= $(REGISTRY)/$(ORG)/grafana-operator-bundle:v$(VERSION)
@@ -237,7 +236,7 @@ endif
 # Build a catalog image by adding bundle images to an empty catalog using the operator package manager tool, 'opm'.
 # This recipe invokes 'opm' in 'semver' bundle add mode. For more information on add modes, see:
 # https://github.com/operator-framework/community-operators/blob/7f1438c/docs/packaging-operator.md#updating-your-existing-operator
-.PHONY: catalog-build
+.PHONY: catalog-build $(OPM)
 catalog-build: ## Build a catalog image.
 	$(OPM) index add --container-tool docker --mode semver --tag $(CATALOG_IMG) --bundles $(BUNDLE_IMGS) $(FROM_INDEX_OPT)
 
@@ -247,7 +246,7 @@ catalog-push: ## Push a catalog image.
 	docker push $(CATALOG_IMG)
 
 .PHONY: prep-release
-prep-release:
+prep-release: $(YQ)
 	$(YQ) -i '.version="v$(VERSION)"' deploy/helm/grafana-operator/Chart.yaml
 	$(YQ) -i '.appVersion="v$(VERSION)"' deploy/helm/grafana-operator/Chart.yaml
 	$(YQ) -i '.params.version="v$(VERSION)"' hugo/config.yaml
