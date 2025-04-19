@@ -59,3 +59,9 @@ $(OPERATOR_SDK): $(BINGO_DIR)/operator-sdk.mod
 	@echo "(re)installing $(GOBIN)/operator-sdk-v1.32.0"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=operator-sdk.mod -o=$(GOBIN)/operator-sdk-v1.32.0 "github.com/operator-framework/operator-sdk/cmd/operator-sdk"
 
+YQ := $(GOBIN)/yq-v4.35.2
+$(YQ): $(BINGO_DIR)/yq.mod
+	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
+	@echo "(re)installing $(GOBIN)/yq-v4.35.2"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=yq.mod -o=$(GOBIN)/yq-v4.35.2 "github.com/mikefarah/yq/v4"
+
