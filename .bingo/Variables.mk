@@ -35,6 +35,12 @@ $(CONTROLLER_GEN): $(BINGO_DIR)/controller-gen.mod
 	@echo "(re)installing $(GOBIN)/controller-gen-v0.16.3"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=controller-gen.mod -o=$(GOBIN)/controller-gen-v0.16.3 "sigs.k8s.io/controller-tools/cmd/controller-gen"
 
+CRDOC := $(GOBIN)/crdoc-v0.6.4
+$(CRDOC): $(BINGO_DIR)/crdoc.mod
+	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
+	@echo "(re)installing $(GOBIN)/crdoc-v0.6.4"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=crdoc.mod -o=$(GOBIN)/crdoc-v0.6.4 "fybrik.io/crdoc"
+
 HELM_DOCS := $(GOBIN)/helm-docs-v1.11.0
 $(HELM_DOCS): $(BINGO_DIR)/helm-docs.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
