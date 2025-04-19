@@ -41,6 +41,12 @@ $(CRDOC): $(BINGO_DIR)/crdoc.mod
 	@echo "(re)installing $(GOBIN)/crdoc-v0.6.4"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=crdoc.mod -o=$(GOBIN)/crdoc-v0.6.4 "fybrik.io/crdoc"
 
+GOLANGCI_LINT := $(GOBIN)/golangci-lint-v2.0.2
+$(GOLANGCI_LINT): $(BINGO_DIR)/golangci-lint.mod
+	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
+	@echo "(re)installing $(GOBIN)/golangci-lint-v2.0.2"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=golangci-lint.mod -o=$(GOBIN)/golangci-lint-v2.0.2 "github.com/golangci/golangci-lint/v2/cmd/golangci-lint"
+
 HELM_DOCS := $(GOBIN)/helm-docs-v1.11.0
 $(HELM_DOCS): $(BINGO_DIR)/helm-docs.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.

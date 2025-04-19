@@ -95,13 +95,13 @@ test: manifests generate code/golangci-lint api-docs vet ## Run tests.
 ##@ Build
 
 .PHONY: build
-build: generate golangci vet ## Build manager binary.
-	golangci-lint fmt ./...
+build: generate vet ## Build manager binary.
+	$(GOLANGCI_LINT) fmt ./...
 	go build -o bin/manager main.go
 
 .PHONY: run
-run: manifests generate golangci vet ## Run a controller from your host.
-	golangci-lint fmt ./...
+run: manifests generate vet ## Run a controller from your host.
+	$(GOLANGCI_LINT) fmt ./...
 	go run ./main.go --zap-devel=true
 
 ##@ Deployment
@@ -141,9 +141,6 @@ start-kind: ## Start kind cluster locally
 LOCALBIN ?= $(shell pwd)/bin
 $(LOCALBIN):
 	mkdir -p $(LOCALBIN)
-
-## Tool Versions
-GOLANGCI_LINT_VERSION ?= v2.0.2
 
 # CHANNELS define the bundle channels used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g CHANNELS = "candidate,fast,stable")
@@ -191,23 +188,12 @@ e2e-local-gh-actions: e2e-kind ko-build-kind e2e
 e2e: install deploy-chainsaw ## Run e2e tests using chainsaw.
 	$(CHAINSAW) test --test-dir ./tests/e2e/$(TESTS)
 
-golangci:
-ifeq (, $(shell which golangci-lint))
-	@{ \
-	set -e ;\
-	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION) ;\
-	}
-GOLANGCI=$(GOBIN)/golangci-lint
-else
-GOLANGCI=$(shell which golangci-lint)
-endif
-
 .PHONY: code/golangci-lint
 ifndef GITHUB_ACTIONS # Inside GitHub Actions, we run golangci-lint in a separate step
-code/golangci-lint: golangci
-	$(GOLANGCI) fmt ./...
-	$(GOLANGCI) run --allow-parallel-runners ./...
-	cd api && $(GOLANGCI) run --allow-parallel-runners ./... && cd -
+code/golangci-lint:
+	$(GOLANGCI_LINT) fmt ./...
+	$(GOLANGCI_LINT) run --allow-parallel-runners ./...
+	cd api && $(GOLANGCI_LINT) run --allow-parallel-runners ./... && cd -
 endif
 
 export KO_DOCKER_REPO ?= ko.local/grafana/grafana-operator
