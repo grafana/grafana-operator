@@ -60,6 +60,7 @@ jobs:
       - name: Run helm-lint
         run: |
           helm lint deploy/helm/grafana-operator/
+
       - name: Run helm-docs
         run: |
           make helm/docs
@@ -71,23 +72,6 @@ jobs:
             echo '::error::run make helm/docs and commit changes'
             exit 1
           fi
-
-  kustomize:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Clone repo
-        uses: actions/checkout@v4
-
-      - name: Setup go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: "go.mod"
-
-      - name: Check if overlays can be successfully built
-        run: |
-          for d in deploy/kustomize/overlays/*/ ; do
-            kustomize build "$d" --load-restrictor LoadRestrictionsNone > /dev/null
-          done
 
   trivy:
     runs-on: ubuntu-latest
