@@ -109,10 +109,6 @@ jobs:
         with:
           go-version-file: "go.mod"
 
-      - name: Install kustomize
-        run: |
-          make kustomize
-
       - name: Check if overlays can be successfully built
         run: |
           for d in deploy/kustomize/overlays/*/ ; do
