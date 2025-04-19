@@ -188,12 +188,11 @@ e2e: install deploy-chainsaw $(CHAINSAW) ## Run e2e tests using chainsaw.
 	$(CHAINSAW) test --test-dir ./tests/e2e/$(TESTS)
 
 .PHONY: code/golangci-lint
-ifndef GITHUB_ACTIONS # Inside GitHub Actions, we run golangci-lint in a separate step
 code/golangci-lint: $(GOLANGCI_LINT)
+	$(GOLANGCI_LINT) config verify
 	$(GOLANGCI_LINT) fmt ./...
 	$(GOLANGCI_LINT) run --allow-parallel-runners ./...
 	cd api && $(GOLANGCI_LINT) run --allow-parallel-runners ./... && cd -
-endif
 
 export KO_DOCKER_REPO ?= ko.local/grafana/grafana-operator
 export KIND_CLUSTER_NAME ?= kind-grafana
