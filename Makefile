@@ -143,7 +143,6 @@ $(LOCALBIN):
 	mkdir -p $(LOCALBIN)
 
 ## Tool Binaries
-KUSTOMIZE ?= $(LOCALBIN)/kustomize
 ENVTEST ?= $(LOCALBIN)/setup-envtest
 YQ = $(LOCALBIN)/yq
 KIND = $(LOCALBIN)/kind
