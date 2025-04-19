@@ -184,7 +184,7 @@ endif
 e2e-local-gh-actions: e2e-kind ko-build-kind e2e
 
 .PHONY: e2e
-e2e: install deploy-chainsaw  $(CHAINSAW) ## Run e2e tests using chainsaw.
+e2e: install deploy-chainsaw $(CHAINSAW) ## Run e2e tests using chainsaw.
 	$(CHAINSAW) test --test-dir ./tests/e2e/$(TESTS)
 
 .PHONY: code/golangci-lint
