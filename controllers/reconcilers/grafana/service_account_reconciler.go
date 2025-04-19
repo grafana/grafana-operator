@@ -25,8 +25,21 @@ func (r *ServiceAccountReconciler) Reconcile(ctx context.Context, cr *v1beta1.Gr
 	sa := model.GetGrafanaServiceAccount(cr, scheme)
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, sa, func() error {
+		err := v1beta1.Merge(sa, cr.Spec.ServiceAccount)
+		if err != nil {
+			return err
+		}
+
+		if scheme != nil {
+			err = controllerutil.SetControllerReference(cr, sa, scheme)
+			if err != nil {
+				return err
+			}
+		}
+
 		model.SetInheritedLabels(sa, cr.Labels)
-		return v1beta1.Merge(sa, cr.Spec.ServiceAccount)
+
+		return nil
 	})
 	if err != nil {
 		return v1beta1.OperatorStageResultFailed, err
