@@ -119,7 +119,7 @@ uninstall: manifests $(KUSTOMIZE) ## Uninstall CRDs from the K8s cluster specifi
 
 .PHONY: deploy
 deploy: manifests $(KUSTOMIZE) ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	cd deploy/kustomize/overlays/cluster_scoped && $(KUSTOMIZE) edit set image controller=${IMG}
+	cd deploy/kustomize/overlays/cluster_scoped && $(KUSTOMIZE) edit set image ghcr.io/grafana/grafana-operator=${IMG}
 	$(KUSTOMIZE) build deploy/kustomize/overlays/cluster_scoped | kubectl apply --server-side --force-conflicts -f -
 
 .PHONY: deploy-chainsaw
