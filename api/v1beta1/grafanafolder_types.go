@@ -83,6 +83,8 @@ type GrafanaFolder struct {
 	Status GrafanaFolderStatus `json:"status,omitempty"`
 }
 
+var _ CommonResource = (*GrafanaFolder)(nil)
+
 // Conditions implements FolderReferencer.
 func (in *GrafanaFolder) Conditions() *[]metav1.Condition {
 	return &in.Status.Conditions
@@ -174,4 +176,8 @@ func (in *GrafanaFolder) MatchNamespace() string {
 
 func (in *GrafanaFolder) AllowCrossNamespace() bool {
 	return in.Spec.AllowCrossNamespaceImport
+}
+
+func (in *GrafanaFolder) CommonStatus() *GrafanaCommonStatus {
+	return &in.Status.GrafanaCommonStatus
 }

@@ -27,8 +27,6 @@ import (
 
 	"k8s.io/utils/strings/slices"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	"github.com/grafana/grafana-openapi-client-go/client/dashboards"
 	"github.com/grafana/grafana-openapi-client-go/client/folders"
@@ -181,21 +179,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, nil
 	}
 
-	defer func() {
-		cr.Status.LastResync = metav1.Time{Time: time.Now()}
-		if err := r.Status().Update(ctx, cr); err != nil {
-			log.Error(err, "updating status")
-		}
-		if meta.IsStatusConditionTrue(cr.Status.Conditions, conditionNoMatchingInstance) {
-			if err := removeFinalizer(ctx, r.Client, cr); err != nil {
-				log.Error(err, "failed to remove finalizer")
-			}
-		} else {
-			if err := addFinalizer(ctx, r.Client, cr); err != nil {
-				log.Error(err, "failed to set finalizer")
-			}
-		}
-	}()
+	defer UpdateStatus(ctx, r.Client, cr)
 
 	// Retrieving the model before the loop ensures to exit early in case of failure and not fail once per matching instance
 	resolver := content.NewContentResolver(cr, r.Client)

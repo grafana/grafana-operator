@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 	"slices"
-	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
@@ -93,21 +92,7 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 		return ctrl.Result{}, nil
 	}
 
-	defer func() {
-		notificationPolicy.Status.LastResync = metav1.Time{Time: time.Now()}
-		if err := r.Client.Status().Update(ctx, notificationPolicy); err != nil {
-			log.Error(err, "updating status")
-		}
-		if meta.IsStatusConditionTrue(notificationPolicy.Status.Conditions, conditionNoMatchingInstance) {
-			if err := removeFinalizer(ctx, r.Client, notificationPolicy); err != nil {
-				log.Error(err, "failed to remove finalizer")
-			}
-		} else {
-			if err := addFinalizer(ctx, r.Client, notificationPolicy); err != nil {
-				log.Error(err, "failed to set finalizer")
-			}
-		}
-	}()
+	defer UpdateStatus(ctx, r.Client, notificationPolicy)
 
 	// check if spec is valid
 	if !notificationPolicy.Spec.Route.IsRouteSelectorMutuallyExclusive() {

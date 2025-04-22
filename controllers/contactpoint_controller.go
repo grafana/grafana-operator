@@ -25,7 +25,6 @@ import (
 
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -133,21 +132,7 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	defer func() {
-		contactPoint.Status.LastResync = metav1.Time{Time: time.Now()}
-		if err := r.Client.Status().Update(ctx, contactPoint); err != nil {
-			log.Error(err, "updating status")
-		}
-		if meta.IsStatusConditionTrue(contactPoint.Status.Conditions, conditionNoMatchingInstance) {
-			if err := removeFinalizer(ctx, r.Client, contactPoint); err != nil {
-				log.Error(err, "failed to remove finalizer")
-			}
-		} else {
-			if err := addFinalizer(ctx, r.Client, contactPoint); err != nil {
-				log.Error(err, "failed to set finalizer")
-			}
-		}
-	}()
+	defer UpdateStatus(ctx, r.Client, contactPoint)
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, contactPoint)
 	if err != nil {
