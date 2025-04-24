@@ -97,7 +97,7 @@ test-kustomize-overlays: $(KUSTOMIZE)
 	done
 
 .PHONY: test
-test: manifests test-kustomize-overlays generate code/golangci-lint api-docs vet $(SETUP_ENVTEST) ## Run tests.
+test: manifests test-kustomize-overlays helm/lint helm/template helm/docs generate code/golangci-lint api-docs vet $(SETUP_ENVTEST) ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(SETUP_ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile cover.out
 	cd api && KUBEBUILDER_ASSETS="$(shell $(SETUP_ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile ../cover-api.out && cd -
 
@@ -219,6 +219,14 @@ ko-build-kind: $(KO) ko-build-local ## Build and Load Docker image into kind clu
 .PHONY: helm/docs
 helm/docs: $(HELM_DOCS)
 	$(HELM_DOCS)
+
+.PHONY: helm/lint
+helm/lint: $(HELM)
+	$(HELM) lint deploy/helm/grafana-operator/
+
+.PHONY: helm/template
+helm/template: $(HELM)
+	$(HELM) template deploy/helm/grafana-operator/ > /dev/null
 
 BUNDLE_IMG ?= $(REGISTRY)/$(ORG)/grafana-operator-bundle:v$(VERSION)
 

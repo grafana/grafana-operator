@@ -42,37 +42,6 @@ jobs:
             exit 1
           fi
 
-  helm:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Clone repo
-        uses: actions/checkout@v4
-
-      - name: Setup go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: "go.mod"
-
-      - name: Run helm-template
-        run: |
-          helm template deploy/helm/grafana-operator/
-
-      - name: Run helm-lint
-        run: |
-          helm lint deploy/helm/grafana-operator/
-
-      - name: Run helm-docs
-        run: |
-          make helm/docs
-
-      - name: Check if working tree is dirty
-        run: |
-          if [[ $(git status --porcelain) ]]; then
-            git diff
-            echo '::error::run make helm/docs and commit changes'
-            exit 1
-          fi
-
   hugo:
     uses: ./.github/workflows/_hugo.yaml
     secrets: inherit
