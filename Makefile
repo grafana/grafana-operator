@@ -82,7 +82,7 @@ api-docs: manifests $(CRDOC)
 
 .PHONY: hugo
 hugo: $(HUGO)
-	cd hugo && hugo --environment production --gc --minify --baseURL "https://grafana.github.io/grafana-operator/" && cd -
+	cd hugo && $(HUGO) --environment production --gc --minify --baseURL "https://grafana.github.io/grafana-operator/" && cd -
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
