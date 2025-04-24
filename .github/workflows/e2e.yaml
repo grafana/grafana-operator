@@ -69,28 +69,21 @@ jobs:
           go-version-file: "go.mod"
           cache: true
 
-      - name: Install ko
-        uses: ko-build/setup-ko@v0.9
-        with:
-          version: v0.16.0
-
-      - name: Create KinD cluster ${{ matrix.version }}
-        id: kind
-        run: |
-          kind --kubeconfig="${KUBECONFIG}" create cluster --image=kindest/node:${{ matrix.version }} --config tests/e2e/kind.yaml
-
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
         with:
           version: ${{ matrix.version }}
 
-      - name: Build and load images
+      - name: Create KinD cluster ${{ matrix.version }}
+        id: kind
         env:
-          KO_DOCKER_REPO: ko.local/grafana/grafana-operator
+          KIND_CLUSTER_VERSION: ${{ matrix.version }}
         run: |
-          set -e
-          ko build --sbom=none --bare
-          kind load docker-image "$KO_DOCKER_REPO"
+          make e2e-kind
+
+      - name: Build and load images
+        run: |
+          make ko-build-kind
 
       - name: Run e2e tests
         shell: bash
