@@ -73,6 +73,10 @@ jobs:
             exit 1
           fi
 
+  hugo:
+    uses: ./.github/workflows/_hugo.yaml
+    secrets: inherit
+
   trivy:
     runs-on: ubuntu-latest
     steps:

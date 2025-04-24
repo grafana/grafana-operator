@@ -78,6 +78,10 @@ manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) $(YQ) ## Generate WebhookConfiguration
 api-docs: manifests $(CRDOC)
 	$(CRDOC) --resources config/crd/bases --output docs/docs/api.md --template hugo/templates/frontmatter-grafana-operator.tmpl
 
+.PHONY: hugo
+hugo: $(HUGO)
+	cd hugo && hugo --environment production --gc --minify --baseURL "https://grafana.github.io/grafana-operator/" && cd -
+
 .PHONY: generate
 generate: $(CONTROLLER_GEN) ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
