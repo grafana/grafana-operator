@@ -65,11 +65,11 @@ $(HUGO): $(BINGO_DIR)/hugo.mod
 	@echo "(re)installing $(GOBIN)/hugo-v0.134.3"
 	@cd $(BINGO_DIR) && GOWORK=off CGO_ENABLED=1 $(GO) build -tags=extended -mod=mod -modfile=hugo.mod -o=$(GOBIN)/hugo-v0.134.3 "github.com/gohugoio/hugo"
 
-KIND := $(GOBIN)/kind-v0.24.0
+KIND := $(GOBIN)/kind-v0.27.0
 $(KIND): $(BINGO_DIR)/kind.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/kind-v0.24.0"
-	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=kind.mod -o=$(GOBIN)/kind-v0.24.0 "sigs.k8s.io/kind"
+	@echo "(re)installing $(GOBIN)/kind-v0.27.0"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=kind.mod -o=$(GOBIN)/kind-v0.27.0 "sigs.k8s.io/kind"
 
 KO := $(GOBIN)/ko-v0.16.0
 $(KO): $(BINGO_DIR)/ko.mod
