@@ -53,6 +53,12 @@ $(HELM_DOCS): $(BINGO_DIR)/helm-docs.mod
 	@echo "(re)installing $(GOBIN)/helm-docs-v1.11.0"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=helm-docs.mod -o=$(GOBIN)/helm-docs-v1.11.0 "github.com/norwoodj/helm-docs/cmd/helm-docs"
 
+HELM := $(GOBIN)/helm-v3.17.3
+$(HELM): $(BINGO_DIR)/helm.mod
+	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
+	@echo "(re)installing $(GOBIN)/helm-v3.17.3"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=helm.mod -o=$(GOBIN)/helm-v3.17.3 "helm.sh/helm/v3/cmd/helm"
+
 HUGO := $(GOBIN)/hugo-v0.134.3
 $(HUGO): $(BINGO_DIR)/hugo.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
