@@ -110,6 +110,7 @@ jobs:
 
       - name: Get all tools using bingo
         run: |
+          make $(HUGO)
           make bingo/get-all
 
   hugo:
