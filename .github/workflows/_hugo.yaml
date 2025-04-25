@@ -11,11 +11,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      DART_SASS_VERSION: 1.86.0
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Install dart-sass
+        uses: ./.github/actions/install-dart-sass
 
       - name: Restore ~/go/bin
         uses: ./.github/actions/bingo-restore
@@ -29,12 +30,6 @@ jobs:
         run: |
           cd hugo
           [[ -f package-lock.json || -f npm-shrinkwrap.json ]] && npm ci || true
-
-      - name: Install Dart Sass
-        run: |
-          wget -O ${{ runner.temp }}/dart-sass.tar.gz https://github.com/sass/dart-sass/releases/download/${DART_SASS_VERSION}/dart-sass-${DART_SASS_VERSION}-linux-x64-musl.tar.gz \
-          && tar -xvf ${{ runner.temp }}/dart-sass.tar.gz -C ${{ runner.temp }}/ \
-          && echo "${{ runner.temp }}/dart-sass" >> $GITHUB_PATH
 
       - name: Build with Hugo
         run: |

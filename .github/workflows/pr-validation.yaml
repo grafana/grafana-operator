@@ -83,6 +83,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install dart-sass
+        uses: ./.github/actions/install-dart-sass
+
       - uses: actions/setup-go@v5
         with:
           go-version-file: "go.mod"
