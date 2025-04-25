@@ -115,7 +115,7 @@ func InjectAuthHeaders(ctx context.Context, c client.Client, grafana *v1beta1.Gr
 	return nil
 }
 
-func parseAdminURL(adminURL string) (*url.URL, error) {
+func ParseAdminURL(adminURL string) (*url.URL, error) {
 	gURL, err := url.Parse(adminURL)
 	if err != nil {
 		return nil, fmt.Errorf("parsing url for client: %w", err)
@@ -145,7 +145,7 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1
 		return nil, err
 	}
 
-	gURL, err := parseAdminURL(grafana.Status.AdminURL)
+	gURL, err := ParseAdminURL(grafana.Status.AdminURL)
 	if err != nil {
 		return nil, err
 	}

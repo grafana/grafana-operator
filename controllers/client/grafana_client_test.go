@@ -56,7 +56,7 @@ func TestGeneratedClientURLPathFormatting(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseAdminURL(tt.adminURL)
+			got, err := ParseAdminURL(tt.adminURL)
 			if tt.wantError {
 				assert.Error(t, err, "This should be an invalid url input")
 			} else {
