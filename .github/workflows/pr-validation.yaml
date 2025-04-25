@@ -8,6 +8,10 @@ on:
   merge_group:
 
 jobs:
+  ###
+  ## Jobs that do not rely on bingo
+  ###
+
   pre-commit:
     runs-on: ubuntu-latest
     steps:
@@ -18,33 +22,6 @@ jobs:
           python-version: "3.13"
 
       - uses: pre-commit/action@v3.0.1
-
-  hugo:
-    uses: ./.github/workflows/_hugo.yaml
-    secrets: inherit
-
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Clone repo
-        uses: actions/checkout@v4
-
-      - name: Setup go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: "go.mod"
-
-      - name: Run test
-        run: |
-          make test
-
-      - name: Check if working tree is dirty
-        run: |
-          if [[ $(git status --porcelain) ]]; then
-            git diff
-            echo '::error::run make test and commit changes'
-            exit 1
-          fi
 
   docs_only_check:
     name: Check for docs-only change
@@ -80,11 +57,58 @@ jobs:
         name: Check for docs-only changes
         run: echo "docs_only=true" >> $GITHUB_OUTPUT
 
-  e2e-tests:
-    name: e2e on kind ${{ matrix.version }}
+  trivy:
     runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "table"
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: "CRITICAL,HIGH"
+
+  ###
+  ## Jobs that DO rely on bingo
+  ###
+
+  hugo:
+    uses: ./.github/workflows/_hugo.yaml
+    secrets: inherit
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v4
+
+      - name: Setup go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+
+      - name: Run test
+        run: |
+          make test
+
+      - name: Check if working tree is dirty
+        run: |
+          if [[ $(git status --porcelain) ]]; then
+            git diff
+            echo '::error::run make test and commit changes'
+            exit 1
+          fi
+
+  e2e-tests:
     needs:
       - docs_only_check
+    name: e2e on kind ${{ matrix.version }}
+    runs-on: ubuntu-latest
     if: (needs.docs_only_check.outputs.docs_only != 'true')
     env:
       KUBECONFIG: /home/runner/.kube/kind-grafana-operator-e2e
@@ -148,19 +172,3 @@ jobs:
     steps:
       - run: |
           echo "All E2E tests ran successfully"
-
-  trivy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Clone repo
-        uses: actions/checkout@v4
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: "fs"
-          scan-ref: "."
-          format: "table"
-          exit-code: "1"
-          ignore-unfixed: true
-          severity: "CRITICAL,HIGH"
