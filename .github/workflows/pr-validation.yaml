@@ -101,7 +101,7 @@ jobs:
         with:
           path: |
             ~/go/bin
-          key: bingo-bin-${{ runner.os }}-go-${{ hashFiles('.bingo/*.sum') }}
+          key: bingo-bin-${{ runner.os }}-go-${{ hashFiles('.bingo/*.sum', '.bingo/*.mod') }}
           restore-keys: |
             bingo-bin-${{ runner.os }}-go-
 
