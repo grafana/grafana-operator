@@ -63,6 +63,9 @@ help: ## Display this help.
 bingo/get-all: $(BINGO)
 	$(BINGO) get
 
+.PHONE: install/hugo
+install/hugo: $(HUGO)
+
 ##@ Development
 
 .PHONY: manifests
@@ -233,6 +236,12 @@ helm/lint: $(HELM)
 .PHONY: helm/template
 helm/template: $(HELM)
 	$(HELM) template deploy/helm/grafana-operator/ > /dev/null
+
+.PHONY: helm/publish
+helm/publish: $(HELM)
+	GHCR_REPO := $(shell echo "ghcr.io/$(GITHUB_REPOSITORY)" | tr '[:upper:]' '[:lower:]')
+	HELM_REPO := $(shell echo "oci://ghcr.io/$(GITHUB_REPOSITORY_OWNER)/helm-charts" | tr '[:upper:]' '[:lower:]')
+	$(shell echo $(GHCR_REPO))
 
 BUNDLE_IMG ?= $(REGISTRY)/$(ORG)/grafana-operator-bundle:v$(VERSION)
 
