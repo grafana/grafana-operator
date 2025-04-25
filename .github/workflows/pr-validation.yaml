@@ -94,15 +94,6 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: bingo-${{ runner.os }}-go-${{ hashFiles('.bingo/*.sum') }}
-          restore-keys: |
-            bingo-${{ runner.os }}-go-
-
-      - uses: actions/cache@v4
-        with:
-          path: |
             ~/go/bin
           key: bingo-bin-${{ runner.os }}-go-${{ hashFiles('.bingo/*.sum', '.bingo/*.mod') }}
           restore-keys: |
