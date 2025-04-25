@@ -99,6 +99,14 @@ jobs:
           restore-keys: |
             bingo-bin-${{ runner.os }}-go-
 
+      - name: Show cached tools
+        run: |
+          ls -alh ~/go/bin
+
+      - name: Show env
+        run: |
+          env
+
       - name: Install all tools
         run: |
           make install/all
