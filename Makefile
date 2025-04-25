@@ -98,7 +98,7 @@ vet: ## Run go vet against code.
 .PHONE: test-kustomize-overlays
 test-kustomize-overlays: $(KUSTOMIZE)
 	for d in deploy/kustomize/overlays/*/ ; do \
-		kustomize build "$$d" --load-restrictor LoadRestrictionsNone > /dev/null; \
+		$(KUSTOMIZE) build "$$d" --load-restrictor LoadRestrictionsNone > /dev/null; \
 	done
 
 .PHONY: test
