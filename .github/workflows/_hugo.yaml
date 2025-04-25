@@ -17,6 +17,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Restore ~/go/bin
+        uses: ./.github/actions/bingo-restore
+
       - name: Setup go
         uses: actions/setup-go@v5
         with:

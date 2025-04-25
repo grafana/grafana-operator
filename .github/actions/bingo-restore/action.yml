@@ -1,0 +1,13 @@
+name: bingo-restore
+description: Restores binaries built using bingo
+runs:
+  using: "composite"
+  steps:
+    - name: Restore ~/go/bin
+      uses: actions/cache/restore@v4
+      with:
+        path: |
+          ~/go/bin
+        key: bingo-bin-${{ runner.os }}-go-${{ hashFiles('.bingo/*.sum') }}
+        restore-keys: |
+          bingo-bin-${{ runner.os }}-go-

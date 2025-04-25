@@ -77,15 +77,54 @@ jobs:
   ## Jobs that DO rely on bingo
   ###
 
+  bingo-tools:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+          cache: false
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: bingo-${{ runner.os }}-go-${{ hashFiles('.bingo/*.sum') }}
+          restore-keys: |
+            bingo-${{ runner.os }}-go-
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/bin
+          key: bingo-bin-${{ runner.os }}-go-${{ hashFiles('.bingo/*.sum') }}
+          restore-keys: |
+            bingo-bin-${{ runner.os }}-go-
+
+      - name: Get all tools using bingo
+        run: |
+          make bingo/get-all
+
   hugo:
+    needs:
+      - bingo-tools
     uses: ./.github/workflows/_hugo.yaml
     secrets: inherit
 
   test:
+    needs:
+      - bingo-tools
     runs-on: ubuntu-latest
     steps:
       - name: Clone repo
         uses: actions/checkout@v4
+
+      - name: Restore ~/go/bin
+        uses: ./.github/actions/bingo-restore
 
       - name: Setup go
         uses: actions/setup-go@v5
@@ -106,6 +145,7 @@ jobs:
 
   e2e-tests:
     needs:
+      - bingo-tools
       - docs_only_check
     name: e2e on kind ${{ matrix.version }}
     runs-on: ubuntu-latest
@@ -122,6 +162,9 @@ jobs:
     steps:
       - name: Clone repo and checkout
         uses: actions/checkout@v4
+
+      - name: Restore ~/go/bin
+        uses: ./.github/actions/bingo-restore
 
       - name: Install go
         uses: actions/setup-go@v5
