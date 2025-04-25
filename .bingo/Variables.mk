@@ -59,11 +59,11 @@ $(HELM): $(BINGO_DIR)/helm.mod
 	@echo "(re)installing $(GOBIN)/helm-v3.17.3"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=helm.mod -o=$(GOBIN)/helm-v3.17.3 "helm.sh/helm/v3/cmd/helm"
 
-HUGO := $(GOBIN)/hugo-v0.145.0
+HUGO := $(GOBIN)/hugo-v0.134.3
 $(HUGO): $(BINGO_DIR)/hugo.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/hugo-v0.145.0"
-	@cd $(BINGO_DIR) && GOWORK=off CGO_ENABLED=1 $(GO) build -tags=extended -mod=mod -modfile=hugo.mod -o=$(GOBIN)/hugo-v0.145.0 "github.com/gohugoio/hugo"
+	@echo "(re)installing $(GOBIN)/hugo-v0.134.3"
+	@cd $(BINGO_DIR) && GOWORK=off CGO_ENABLED=1 $(GO) build -tags=extended -mod=mod -modfile=hugo.mod -o=$(GOBIN)/hugo-v0.134.3 "github.com/gohugoio/hugo"
 
 KIND := $(GOBIN)/kind-v0.27.0
 $(KIND): $(BINGO_DIR)/kind.mod
