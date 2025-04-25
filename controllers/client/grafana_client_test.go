@@ -29,6 +29,13 @@ func TestGeneratedClientURLPathFormatting(t *testing.T) {
 			wantError: false,
 		},
 		{
+			name:      "Custom Port",
+			adminURL:  "https://grafana.example.com:3000/",
+			wantHost:  "grafana.example.com:3000",
+			wantPath:  "/api",
+			wantError: false,
+		},
+		{
 			name:      "No Path and no Scheme",
 			adminURL:  "grafana.example.com",
 			wantError: true,
