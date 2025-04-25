@@ -115,6 +115,20 @@ func InjectAuthHeaders(ctx context.Context, c client.Client, grafana *v1beta1.Gr
 	return nil
 }
 
+func parseAdminURL(adminURL string) (*url.URL, error) {
+	gURL, err := url.Parse(adminURL)
+	if err != nil {
+		return nil, fmt.Errorf("parsing url for client: %w", err)
+	}
+
+	if gURL.Host == "" {
+		return nil, fmt.Errorf("invalid Grafana adminURL, url must contain protocol and host")
+	}
+
+	gURL = gURL.JoinPath("/api")
+	return gURL, nil
+}
+
 func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (*genapi.GrafanaHTTPAPI, error) {
 	var timeout time.Duration
 	if grafana.Spec.Client != nil && grafana.Spec.Client.TimeoutSeconds != nil {
@@ -126,19 +140,14 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1
 		timeout = 10
 	}
 
-	credentials, err := getAdminCredentials(ctx, c, grafana)
-	if err != nil {
-		return nil, err
-	}
-
 	tlsConfig, err := buildTLSConfiguration(ctx, c, grafana)
 	if err != nil {
 		return nil, err
 	}
 
-	gURL, err := url.Parse(grafana.Status.AdminURL)
+	gURL, err := parseAdminURL(grafana.Status.AdminURL)
 	if err != nil {
-		return nil, fmt.Errorf("parsing url for client: %w", err)
+		return nil, err
 	}
 
 	transport := NewInstrumentedRoundTripper(grafana.IsExternal(), tlsConfig, metrics.GrafanaAPIRequests.MustCurryWith(prometheus.Labels{
@@ -149,21 +158,25 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1
 		transport.(*instrumentedRoundTripper).addHeaders(grafana.Spec.Client.Headers) //nolint:errcheck
 	}
 
-	client := &http.Client{
-		Transport: transport,
-		Timeout:   timeout * time.Second,
+	// Secrets and ConfigMaps are not cached by default, get credentials as the last step.
+	credentials, err := getAdminCredentials(ctx, c, grafana)
+	if err != nil {
+		return nil, err
 	}
 
 	cfg := &genapi.TransportConfig{
 		Schemes:  []string{gURL.Scheme},
-		BasePath: "/api",
+		BasePath: gURL.Path,
 		Host:     gURL.Host,
 		// APIKey is an optional API key or service account token.
 		APIKey: credentials.apikey,
 		// NumRetries contains the optional number of attempted retries
 		NumRetries: 0,
-		Client:     client,
 		TLSConfig:  tlsConfig,
+		Client: &http.Client{
+			Transport: transport,
+			Timeout:   timeout * time.Second,
+		},
 	}
 	if credentials.username != "" {
 		cfg.BasicAuth = url.UserPassword(credentials.username, credentials.password)
