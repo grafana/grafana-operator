@@ -108,13 +108,9 @@ jobs:
           restore-keys: |
             bingo-bin-${{ runner.os }}-go-
 
-      - name: Install hugo
+      - name: Install all tools
         run: |
-          make install/hugo
-
-      - name: Get all tools using bingo
-        run: |
-          make bingo/get-all
+          make install/all
 
   hugo:
     needs:
