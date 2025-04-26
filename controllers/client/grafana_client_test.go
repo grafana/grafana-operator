@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGeneratedClientURLPathFormatting(t *testing.T) {
+func TestParseAdminURL(t *testing.T) {
 	tests := []struct {
 		name      string
 		adminURL  string
