@@ -18,13 +18,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           path: source
           persist-credentials: false
 
       - name: Install Helm
-        uses: azure/setup-helm@v4
+        uses: azure/setup-helm@b9e51907a09c216f16ebe8536097933489208112 # v4
         with:
           version: v3.16.2
 
@@ -56,7 +56,7 @@ jobs:
           rm -f cr.tar.gz
 
       - name: Create a GitHub App installation access token
-        uses: tibdex/github-app-token@v2
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # v2
         id: app-token
         with:
           app_id: ${{ secrets.GRAFANA_OPERATOR_HELM_RELEASE_APP_ID }}
@@ -67,7 +67,7 @@ jobs:
           echo "AUTHTOKEN=${{ steps.app-token.outputs.token }}" >> $GITHUB_ENV
 
       - name: Make github release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631 # v2
         with:
           body: |
             Helm chart for the [grafana-operator](https://github.com/${{ github.repository }}
@@ -80,7 +80,7 @@ jobs:
           token: ${{ env.AUTHTOKEN }}
 
       - name: Checkout helm-charts # zizmor: ignore[artipacked] required to push using chart releaser in last step
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           fetch-depth: 0
           repository: grafana/helm-charts
@@ -104,9 +104,9 @@ jobs:
       contents: write
     steps:
       - name: install flux
-        uses: fluxcd/flux2/action@v2.5.1
+        uses: fluxcd/flux2/action@8d5f40dca5aa5d3c0fc3414457dda15a0ac92fa4 # v2.5.1
       - name: Clone repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           persist-credentials: false
       - name: Prepare
@@ -124,7 +124,7 @@ jobs:
           cd deploy/kustomize/base
           kustomize edit set image ghcr.io/${{ github.repository }}=${{ env.GHCR_REPO }}:${RELEASE_NAME}
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -151,34 +151,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           persist-credentials: false
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Login to Quay.io
-        uses: docker/login-action@v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
         with:
           registry: quay.io
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_PASSWORD }}
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5
         with:
           go-version-file: "go.mod"
           cache: false
 
-      - uses: ko-build/setup-ko@v0.9
+      - uses: ko-build/setup-ko@d006021bd0c28d1ce33a07e7943d48b079944c8d # v0.9
         with:
           version: v0.16.0
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@v3.8.1
+        uses: sigstore/cosign-installer@d7d6bc7722e3daa8354c50bcb52f4837da5e9b6a # v3.8.1
         with:
           cosign-release: "v2.2.2"
 
