@@ -1,5 +1,5 @@
 name: "Pull Request Labeler"
-on:
+on: # zizmor: ignore[dangerous-triggers] pull_request target used here as per recommendation from GitHub in actions/labeler
 - pull_request_target
 
 jobs:

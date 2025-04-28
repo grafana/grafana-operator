@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-python@v5
         with:
@@ -24,6 +26,8 @@ jobs:
     steps:
       - name: Clone repo
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Setup go
         uses: actions/setup-go@v5
@@ -50,6 +54,8 @@ jobs:
     steps:
       - name: Clone repo
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Setup go
         uses: actions/setup-go@v5
@@ -73,6 +79,8 @@ jobs:
     steps:
       - name: Clone repo
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Setup go
         uses: actions/setup-go@v5
@@ -103,6 +111,8 @@ jobs:
     steps:
       - name: Clone repo
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Setup go
         uses: actions/setup-go@v5
@@ -124,6 +134,8 @@ jobs:
     steps:
       - name: Clone repo
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master

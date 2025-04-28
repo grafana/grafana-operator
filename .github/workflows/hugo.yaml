@@ -9,10 +9,6 @@ on:
   workflow_dispatch:
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
-permissions:
-  contents: read
-  pages: write
-  id-token: write
 
 # Allow one concurrent deployment
 concurrency:
@@ -27,6 +23,8 @@ defaults:
 jobs:
   # Build job
   build:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     env:
       HUGO_VERSION: 0.134.3
@@ -43,6 +41,8 @@ jobs:
           && echo "${{ runner.temp }}/dart-sass" >> $GITHUB_PATH
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: true
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v5
@@ -50,7 +50,7 @@ jobs:
         run: |
           cd hugo
           [[ -f package-lock.json || -f npm-shrinkwrap.json ]] && npm ci || true
-      - name: Build with Hugo
+      - name: Build with Hugo # zizmor: ignore[template-injection] configure-pages considered safe
         env:
           # For maximum backward compatibility with Hugo modules
           HUGO_ENVIRONMENT: production
@@ -68,6 +68,9 @@ jobs:
 
   # Deployment job
   deploy:
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

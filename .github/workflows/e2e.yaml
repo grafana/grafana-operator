@@ -9,12 +9,13 @@ env:
   NAME: grafana-operator
   NAMESPACE: grafana-operator-system
 
+permissions:
+  content: read
+
 jobs:
   docs_only_check:
     name: Check for docs-only change
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     outputs:
       docs_only: ${{ steps.docs_only_check.outputs.docs_only }}
     steps:
@@ -22,6 +23,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - id: changed-files
         name: Get changed files
@@ -31,13 +33,6 @@ jobs:
             **/*.md
             **/*.html
             hugo/**
-
-      - id: which_files
-        name: Which files was changed
-        run: |
-          echo "One or more files has changed."
-          echo "List all the files that have changed: ${{ steps.changed-files.outputs.all_changed_files }}"
-          echo "What is any changed ${{ steps.changed-files.outputs.any_changed }}"
 
       - id: docs_only_check
         if: steps.changed-files.outputs.any_changed != 'true'
@@ -62,6 +57,8 @@ jobs:
     steps:
       - name: Clone repo and checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Install go
         uses: actions/setup-go@v5
