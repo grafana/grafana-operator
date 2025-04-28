@@ -30,16 +30,10 @@ jobs:
         with:
           go-version-file: "go.mod"
 
-      - name: golangci-lint (root module)
+      - name: golangci-lint
         uses: golangci/golangci-lint-action@v7.0.0
         with:
           version: v2.0.2
-
-      - name: golangci-lint (api module)
-        uses: golangci/golangci-lint-action@v7.0.0
-        with:
-          install-mode: none
-          working-directory: api
 
       - name: Verify golangci-lint config
         run: |
