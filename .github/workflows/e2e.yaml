@@ -10,7 +10,7 @@ env:
   NAMESPACE: grafana-operator-system
 
 permissions:
-  content: read
+  contents: read
 
 jobs:
   docs_only_check:
