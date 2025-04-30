@@ -42,7 +42,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -604,11 +603,10 @@ func (r *GrafanaDashboardReconciler) DeleteFolderIfEmpty(client *genapi.GrafanaH
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *GrafanaDashboardReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, opts controller.Options) error {
+func (r *GrafanaDashboardReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.GrafanaDashboard{}).
 		WithEventFilter(ignoreStatusUpdates()).
-		WithOptions(opts).
 		Complete(r)
 
 	if err == nil {

@@ -24,6 +24,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"sigs.k8s.io/controller-runtime/pkg/config"
 	"strings"
 	"syscall"
 
@@ -42,7 +43,6 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -191,6 +191,9 @@ func main() { // nolint:gocyclo
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "f75f3bba.integreatly.org",
 		PprofBindAddress:       pprofAddr,
+		Controller: config.Controller{
+			MaxConcurrentReconciles: maxConcurrentReconciles,
+		},
 	}
 
 	labelSelectors, err := getLabelSelectors(watchLabelSelectors)
@@ -260,7 +263,6 @@ func main() { // nolint:gocyclo
 		os.Exit(1) //nolint
 	}
 
-	ctrlOpts := controller.Options{MaxConcurrentReconciles: maxConcurrentReconciles}
 	// Register controllers
 	if err = (&controllers.GrafanaReconciler{
 		Client:        mgr.GetClient(),
@@ -274,21 +276,21 @@ func main() { // nolint:gocyclo
 	if err = (&controllers.GrafanaDashboardReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(ctx, mgr, ctrlOpts); err != nil {
+	}).SetupWithManager(ctx, mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDashboard")
 		os.Exit(1)
 	}
 	if err = (&controllers.GrafanaDatasourceReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(ctx, mgr, ctrlOpts); err != nil {
+	}).SetupWithManager(ctx, mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDatasource")
 		os.Exit(1)
 	}
 	if err = (&controllers.GrafanaFolderReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(ctx, mgr, ctrlOpts); err != nil {
+	}).SetupWithManager(ctx, mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaFolder")
 		os.Exit(1)
 	}
