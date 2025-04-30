@@ -6,24 +6,25 @@ on:
       - v5.*
 
 permissions:
-  contents: write
-  packages: write
+  packages: write # zizmor: ignore[excessive-permissions] needed by all jobs as they publish OCI packages to ghcr.io
 
 env:
   CR_INDEX_PATH: "${{ github.workspace }}/.cr-index"
   CR_TOOL_PATH: "${{ github.workspace }}/.cr-tool"
+  RELEASE_NAME: ${{ github.ref_name }}
 
 jobs:
   helm:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           path: source
+          persist-credentials: false
 
       - name: Install Helm
-        uses: azure/setup-helm@v4
+        uses: azure/setup-helm@b9e51907a09c216f16ebe8536097933489208112 # v4
         with:
           version: v3.16.2
 
@@ -36,13 +37,15 @@ jobs:
           echo "HELM_REPO=$HELM_REPO" >> $GITHUB_ENV
 
       - name: Publish Helm charts
+        env:
+          RELEASE_ACTOR: ${{ github.actor }}
         run: |
           cd source/deploy/helm
           yq -i '.image.repository = "${{ env.GHCR_REPO }}"' grafana-operator/values.yaml
-          helm registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
-          helm package --app-version ${{ github.ref_name }} --version ${{ github.ref_name }} grafana-operator
+          helm registry login -u "${RELEASE_ACTOR}" -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
+          helm package --app-version ${RELEASE_NAME} --version ${RELEASE_NAME} grafana-operator
 
-          helm push grafana-operator-${{ github.ref_name }}.tgz ${{ env.HELM_REPO }}
+          helm push "grafana-operator-${RELEASE_NAME}.tgz" ${{ env.HELM_REPO }}
 
       - name: Install CR tool
         run: |
@@ -53,18 +56,18 @@ jobs:
           rm -f cr.tar.gz
 
       - name: Create a GitHub App installation access token
-        uses: tibdex/github-app-token@v2
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # v2
         id: app-token
         with:
           app_id: ${{ secrets.GRAFANA_OPERATOR_HELM_RELEASE_APP_ID }}
           private_key: ${{ secrets.GRAFANA_OPERATOR_HELM_RELEASE_PEM_KEY }}
 
-      - name: Set the correct token (Github App or PAT)
+      - name: Set the correct token (Github App or PAT) # zizmor: ignore[template-injection] app token considered safe
         run: |
           echo "AUTHTOKEN=${{ steps.app-token.outputs.token }}" >> $GITHUB_ENV
 
       - name: Make github release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631 # v2
         with:
           body: |
             Helm chart for the [grafana-operator](https://github.com/${{ github.repository }}
@@ -76,8 +79,8 @@ jobs:
           tag_name: grafana-operator-${{ github.ref_name }}
           token: ${{ env.AUTHTOKEN }}
 
-      - name: Checkout helm-charts
-        uses: actions/checkout@v4
+      - name: Checkout helm-charts # zizmor: ignore[artipacked] required to push using chart releaser in last step
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           fetch-depth: 0
           repository: grafana/helm-charts
@@ -97,11 +100,15 @@ jobs:
 
   kustomize:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: install flux
-        uses: fluxcd/flux2/action@v2.5.1
+        uses: fluxcd/flux2/action@8d5f40dca5aa5d3c0fc3414457dda15a0ac92fa4 # v2.5.1
       - name: Clone repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          persist-credentials: false
       - name: Prepare
         run: |
           # OCI standard enforces lower-case paths
@@ -115,19 +122,21 @@ jobs:
           make kustomize
           # Update image to match the new image and tag
           cd deploy/kustomize/base
-          kustomize edit set image ghcr.io/${{ github.repository }}=${{ env.GHCR_REPO }}:${{ github.ref_name }}
+          kustomize edit set image ghcr.io/${{ github.repository }}=${{ env.GHCR_REPO }}:${RELEASE_NAME}
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Publish Kustomize OCI artifact to GHCR
+        env:
+          PUBLISH_SOURCE: ${{ github.event.repository.html_url }}
         run: |
-          flux push artifact ${{ env.KUSTOMIZE_REPO }}:${{ github.ref_name }} \
+          flux push artifact ${{ env.KUSTOMIZE_REPO }}:${RELEASE_NAME} \
             --path="./deploy/kustomize" \
-            --source="${{ github.event.repository.html_url }}" \
-            --revision="${GITHUB_REF_NAME}/${GITHUB_SHA}"
+            --source="${PUBLISH_SOURCE}" \
+            --revision="${RELEASE_NAME}/${GITHUB_SHA}"
       - name: update-kustomize-assert
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -136,39 +145,40 @@ jobs:
             kustomize build "$d" --load-restrictor LoadRestrictionsNone > kustomize-$(basename "$d").yaml
           done
           kustomize build config/crd > crds.yaml
-          gh release upload "${{ github.ref_name }}" kustomize-*.yaml crds.yaml
+          gh release upload "${RELEASE_NAME}" kustomize-*.yaml crds.yaml
 
   image:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repo
-        uses: actions/checkout@v4
-
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          persist-credentials: false
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Login to Quay.io
-        uses: docker/login-action@v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
         with:
           registry: quay.io
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_PASSWORD }}
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5
         with:
           go-version-file: "go.mod"
-          cache: true
+          cache: false
 
-      - uses: ko-build/setup-ko@v0.9
+      - uses: ko-build/setup-ko@d006021bd0c28d1ce33a07e7943d48b079944c8d # v0.9
         with:
           version: v0.16.0
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@v3.8.1
+        uses: sigstore/cosign-installer@d7d6bc7722e3daa8354c50bcb52f4837da5e9b6a # v3.8.1
         with:
           cosign-release: "v2.2.2"
 
@@ -178,16 +188,18 @@ jobs:
           echo "REPOS"="quay.io/grafana-operator/grafana-operator" "ghcr.io/${{ github.repository }}" >> $GITHUB_ENV
 
       - name: Build and push
+        env:
+          IMAGE_VERSION: ${{ github.ref_name }}
         run: |
           for i in ${{ env.REPOS }}
           do
             export KO_DOCKER_REPO=${i}
-            ko build --sbom=spdx --image-refs ./image-digest-${i%.*} --bare --platform linux/arm64,linux/arm/v7,linux/amd64,linux/ppc64le -t ${{ github.ref_name }} \
+            ko build --sbom=spdx --image-refs ./image-digest-${i%.*} --bare --platform linux/arm64,linux/arm/v7,linux/amd64,linux/ppc64le -t ${IMAGE_VERSION} \
             --image-label org.opencontainers.image.title=grafana-operator \
             --image-label org.opencontainers.image.description="An operator for Grafana that installs and manages Grafana instances & Dashboards & Datasources through Kubernetes/OpenShift CRs" \
             --image-label org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }} \
             --image-label org.opencontainers.image.revision=${{ github.sha }} \
-            --image-label org.opencontainers.image.version=${{ github.ref_name }} \
+            --image-label org.opencontainers.image.version=${IMAGE_VERSION} \
             --image-label org.opencontainers.image.created=${{ env.BUILD_DATE }}
           done
 
