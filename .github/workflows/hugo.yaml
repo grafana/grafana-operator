@@ -9,10 +9,6 @@ on:
   workflow_dispatch:
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
-permissions:
-  contents: read
-  pages: write
-  id-token: write
 
 # Allow one concurrent deployment
 concurrency:
@@ -27,6 +23,8 @@ defaults:
 jobs:
   # Build job
   build:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     env:
       HUGO_VERSION: 0.134.3
@@ -42,15 +40,17 @@ jobs:
           && tar -xvf ${{ runner.temp }}/dart-sass.tar.gz -C ${{ runner.temp }}/ \
           && echo "${{ runner.temp }}/dart-sass" >> $GITHUB_PATH
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          persist-credentials: true
       - name: Setup Pages
         id: pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
       - name: Install Node.js dependencies
         run: |
           cd hugo
           [[ -f package-lock.json || -f npm-shrinkwrap.json ]] && npm ci || true
-      - name: Build with Hugo
+      - name: Build with Hugo # zizmor: ignore[template-injection] configure-pages considered safe
         env:
           # For maximum backward compatibility with Hugo modules
           HUGO_ENVIRONMENT: production
@@ -62,12 +62,15 @@ jobs:
             --minify \
             --baseURL "${{ steps.pages.outputs.base_url }}/"
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:
           path: ./hugo/public
 
   # Deployment job
   deploy:
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -76,4 +79,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
