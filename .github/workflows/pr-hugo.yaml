@@ -7,6 +7,9 @@ defaults:
   run:
     shell: bash
 
+permissions:
+  contents: read
+
 jobs:
   # Build job
   build:
@@ -25,15 +28,17 @@ jobs:
           && tar -xvf ${{ runner.temp }}/dart-sass.tar.gz -C ${{ runner.temp }}/ \
           && echo "${{ runner.temp }}/dart-sass" >> $GITHUB_PATH
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          persist-credentials: false
       - name: Setup Pages
         id: pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
       - name: Install Node.js dependencies
         run: |
           cd hugo
           [[ -f package-lock.json || -f npm-shrinkwrap.json ]] && npm ci || true
-      - name: Build with Hugo
+      - name: Build with Hugo # zizmor: ignore[template-injection] configure-pages considered safe
         env:
           # For maximum backward compatibility with Hugo modules
           HUGO_ENVIRONMENT: production
