@@ -85,7 +85,7 @@ spec:
             {{- if .Values.leaderElect }}
             - --leader-elect
             {{- end }}
-            - --max-concurrent-reconciles=1
+            - --max-concurrent-reconciles={{ .Values.maxConcurrentReconciles }}
           volumeMounts:
             - name: dashboards-dir
               mountPath: /tmp/dashboards
