@@ -14,11 +14,6 @@ if [[ "$($KIND get clusters)" =~ "$KIND_CLUSTER_NAME" ]]; then
     exit 0
 fi
 
-NODE_VERSION_ARG=""
-if [[ -n "${KIND_NODE_VERSION:-}" ]]; then
-    NODE_VERSION_ARG="--image=kindest/node:${KIND_NODE_VERSION}"
-fi
-
 # Start kind cluster
 echo ""
 echo "###############################"
@@ -28,4 +23,4 @@ ${KIND} --kubeconfig "${KUBECONFIG}" create cluster \
     --name "${KIND_CLUSTER_NAME}" \
     --wait 120s \
     --config="${SCRIPT_DIR}/resources/cluster.yaml" \
-    $NODE_VERSION_ARG
+    --image="kindest/node:${KIND_NODE_VERSION}"
