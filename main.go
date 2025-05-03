@@ -203,7 +203,7 @@ func main() { // nolint:gocyclo
 			setupLog.Info(fmt.Sprintf("sharding is enabled via %s=%s. Beware: Always label Grafana CRs before enabling to ensure labels are inherited. Existing Secrets/ConfigMaps referenced in CRs also need to be labeled to continue working.", watchLabelSelectorsEnvVar, watchLabelSelectors))
 		} else {
 			// Otherwise limit it to managed-by label
-			cacheLabelConfig = cache.ByObject{Label: labels.SelectorFromSet(model.CommonLabels)}
+			cacheLabelConfig = cache.ByObject{Label: labels.SelectorFromSet(model.GetCommonLabels())}
 		}
 
 		// ConfigMaps and secrets stay fully cached until we implement support for bypassing the cache for referenced objects
@@ -412,7 +412,7 @@ func getLabelSelectors(watchLabelSelectors string) (labels.Selector, error) {
 	} else {
 		labelSelectors = labels.Everything() // Match any labels
 	}
-	managedByLabelSelector, _ := labels.SelectorFromSet(model.CommonLabels).Requirements()
+	managedByLabelSelector, _ := labels.SelectorFromSet(model.GetCommonLabels()).Requirements()
 	labelSelectors.Add(managedByLabelSelector...)
 	return labelSelectors, nil
 }

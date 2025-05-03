@@ -144,6 +144,8 @@ type GrafanaAlertRuleGroup struct {
 	Status GrafanaCommonStatus       `json:"status,omitempty"`
 }
 
+var _ CommonResource = (*GrafanaAlertRuleGroup)(nil)
+
 // GroupName returns the name of alert rule group.
 func (in *GrafanaAlertRuleGroup) GroupName() string {
 	groupName := in.Spec.Name
@@ -188,6 +190,10 @@ func (in *GrafanaAlertRuleGroup) MatchNamespace() string {
 
 func (in *GrafanaAlertRuleGroup) AllowCrossNamespace() bool {
 	return in.Spec.AllowCrossNamespaceImport
+}
+
+func (in *GrafanaAlertRuleGroup) CommonStatus() *GrafanaCommonStatus {
+	return &in.Status
 }
 
 var _ operatorapi.FolderReferencer = (*GrafanaAlertRuleGroup)(nil)

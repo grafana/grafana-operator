@@ -28,15 +28,27 @@ func (r *AdminSecretReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafa
 	if cr.Spec.DisableDefaultAdminSecret {
 		return v1beta1.OperatorStageResultSuccess, nil
 	}
+
 	secret := model.GetGrafanaAdminSecret(cr, scheme)
+
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, secret, func() error {
-		model.SetInheritedLabels(secret, cr.Labels)
 		secret.Data = getData(cr, secret)
+
+		if scheme != nil {
+			err := controllerutil.SetControllerReference(cr, secret, scheme)
+			if err != nil {
+				return err
+			}
+		}
+
+		model.SetInheritedLabels(secret, cr.Labels)
+
 		return nil
 	})
 	if err != nil {
 		return v1beta1.OperatorStageResultFailed, err
 	}
+
 	return v1beta1.OperatorStageResultSuccess, nil
 }
 

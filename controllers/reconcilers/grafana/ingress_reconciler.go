@@ -52,9 +52,21 @@ func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Gr
 	ingress := model.GetGrafanaIngress(cr, scheme)
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, ingress, func() error {
-		model.SetInheritedLabels(ingress, cr.Labels)
 		ingress.Spec = getIngressSpec(cr, scheme)
-		return v1beta1.Merge(ingress, cr.Spec.Ingress)
+
+		err := v1beta1.Merge(ingress, cr.Spec.Ingress)
+		if err != nil {
+			return err
+		}
+
+		err = controllerutil.SetControllerReference(cr, ingress, scheme)
+		if err != nil {
+			return err
+		}
+
+		model.SetInheritedLabels(ingress, cr.Labels)
+
+		return nil
 	})
 	if err != nil {
 		return v1beta1.OperatorStageResultFailed, err
@@ -86,10 +98,23 @@ func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Graf
 	route := model.GetGrafanaRoute(cr, scheme)
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, route, func() error {
-		model.SetInheritedLabels(route, cr.Labels)
 		route.Spec = getRouteSpec(cr, scheme)
+
 		err := v1beta1.Merge(route, cr.Spec.Route)
-		return err
+		if err != nil {
+			return err
+		}
+
+		if scheme != nil {
+			err = controllerutil.SetControllerReference(cr, route, scheme)
+			if err != nil {
+				return err
+			}
+		}
+
+		model.SetInheritedLabels(route, cr.Labels)
+
+		return nil
 	})
 	if err != nil {
 		return v1beta1.OperatorStageResultFailed, err

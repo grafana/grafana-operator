@@ -87,7 +87,6 @@ vet: ## Run go vet against code.
 .PHONY: test
 test: manifests generate code/golangci-lint api-docs vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile cover.out
-	cd api && KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile ../cover-api.out && cd -
 
 ##@ Build
 
@@ -117,7 +116,7 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 
 .PHONY: deploy
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	cd deploy/kustomize/overlays/cluster_scoped && $(KUSTOMIZE) edit set image controller=${IMG}
+	cd deploy/kustomize/overlays/cluster_scoped && $(KUSTOMIZE) edit set image ghcr.io/grafana/grafana-operator=${IMG}
 	$(KUSTOMIZE) build deploy/kustomize/overlays/cluster_scoped | kubectl apply --server-side --force-conflicts -f -
 
 .PHONY: deploy-chainsaw
@@ -297,7 +296,6 @@ ifndef GITHUB_ACTIONS # Inside GitHub Actions, we run golangci-lint in a separat
 code/golangci-lint: golangci
 	$(GOLANGCI) fmt ./...
 	$(GOLANGCI) run --allow-parallel-runners ./...
-	cd api && $(GOLANGCI) run --allow-parallel-runners ./... && cd -
 endif
 
 ko:

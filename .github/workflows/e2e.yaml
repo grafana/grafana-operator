@@ -9,19 +9,21 @@ env:
   NAME: grafana-operator
   NAMESPACE: grafana-operator-system
 
+permissions:
+  contents: read
+
 jobs:
   docs_only_check:
     name: Check for docs-only change
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     outputs:
       docs_only: ${{ steps.docs_only_check.outputs.docs_only }}
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - id: changed-files
         name: Get changed files
@@ -31,13 +33,6 @@ jobs:
             **/*.md
             **/*.html
             hugo/**
-
-      - id: which_files
-        name: Which files was changed
-        run: |
-          echo "One or more files has changed."
-          echo "List all the files that have changed: ${{ steps.changed-files.outputs.all_changed_files }}"
-          echo "What is any changed ${{ steps.changed-files.outputs.any_changed }}"
 
       - id: docs_only_check
         if: steps.changed-files.outputs.any_changed != 'true'
@@ -61,21 +56,23 @@ jobs:
           - v1.32.2
     steps:
       - name: Clone repo and checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          persist-credentials: false
 
       - name: Install go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5
         with:
           go-version-file: "go.mod"
           cache: true
 
       - name: Install ko
-        uses: ko-build/setup-ko@v0.9
+        uses: ko-build/setup-ko@d006021bd0c28d1ce33a07e7943d48b079944c8d # v0.9
         with:
           version: v0.16.0
 
       - name: Install chainsaw
-        uses: kyverno/action-install-chainsaw@v0.2.12
+        uses: kyverno/action-install-chainsaw@f2b47b97dc889c12702113753d713f01ec268de5 # v0.2.12
 
       - name: Create KinD cluster ${{ matrix.version }}
         id: kind
@@ -85,7 +82,7 @@ jobs:
           make e2e-kind
 
       - name: Install kubectl
-        uses: azure/setup-kubectl@v4
+        uses: azure/setup-kubectl@3e0aec4d80787158d308d7b364cb1b702e7feb7f # v4
         with:
           version: ${{ matrix.version }}
 

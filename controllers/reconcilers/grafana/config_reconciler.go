@@ -31,15 +31,26 @@ func (r *ConfigReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, v
 
 	configMap := model.GetGrafanaConfigMap(cr, scheme)
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, configMap, func() error {
-		model.SetInheritedLabels(configMap, cr.Labels)
 		if configMap.Data == nil {
 			configMap.Data = make(map[string]string)
 		}
+
 		configMap.Data["grafana.ini"] = cfg
+
+		if scheme != nil {
+			err := controllerutil.SetControllerReference(cr, configMap, scheme)
+			if err != nil {
+				return err
+			}
+		}
+
+		model.SetInheritedLabels(configMap, cr.Labels)
+
 		return nil
 	})
 	if err != nil {
 		return v1beta1.OperatorStageResultFailed, err
 	}
+
 	return v1beta1.OperatorStageResultSuccess, nil
 }

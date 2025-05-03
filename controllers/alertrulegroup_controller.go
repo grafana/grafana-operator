@@ -20,11 +20,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 
@@ -87,21 +85,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 		return ctrl.Result{}, nil
 	}
 
-	defer func() {
-		group.Status.LastResync = metav1.Time{Time: time.Now()}
-		if err := r.Client.Status().Update(ctx, group); err != nil {
-			log.Error(err, "updating status")
-		}
-		if meta.IsStatusConditionTrue(group.Status.Conditions, conditionNoMatchingInstance) {
-			if err := removeFinalizer(ctx, r.Client, group); err != nil {
-				log.Error(err, "failed to remove finalizer")
-			}
-		} else {
-			if err := addFinalizer(ctx, r.Client, group); err != nil {
-				log.Error(err, "failed to set finalizer")
-			}
-		}
-	}()
+	defer UpdateStatus(ctx, r.Client, group)
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, group)
 	if err != nil {
