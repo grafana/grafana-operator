@@ -22,84 +22,23 @@ type grafanaAdminCredentials struct {
 	apikey   string
 }
 
-func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (*grafanaAdminCredentials, error) {
-	credentials := &grafanaAdminCredentials{}
+var grafanaClientPool sync.Map
 
-	if grafana.IsExternal() {
-		// prefer api key if present
-		if grafana.Spec.External.APIKey != nil {
-			apikey, err := GetValueFromSecretKey(ctx, grafana.Spec.External.APIKey, c, grafana.Namespace)
-			if err != nil {
-				return nil, err
-			}
-			credentials.apikey = string(apikey)
-			return credentials, nil
-		}
-
-		// rely on username and password otherwise
-		username, err := GetValueFromSecretKey(ctx, grafana.Spec.External.AdminUser, c, grafana.Namespace)
-		if err != nil {
-			return nil, err
-		}
-
-		password, err := GetValueFromSecretKey(ctx, grafana.Spec.External.AdminPassword, c, grafana.Namespace)
-		if err != nil {
-			return nil, err
-		}
-
-		credentials.username = string(username)
-		credentials.password = string(password)
-		return credentials, nil
-	}
-
-	deployment := model.GetGrafanaDeployment(grafana, nil)
-	selector := client.ObjectKey{
-		Namespace: deployment.Namespace,
-		Name:      deployment.Name,
-	}
-
-	err := c.Get(ctx, selector, deployment)
+func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (*genapi.GrafanaHTTPAPI, error) {
+	cred, err := getAdminCredentials(ctx, c, grafana)
 	if err != nil {
 		return nil, err
 	}
-
-	for _, container := range deployment.Spec.Template.Spec.Containers {
-		for _, env := range container.Env {
-			if env.Name == config.GrafanaAdminUserEnvVar {
-				if env.Value != "" {
-					credentials.username = env.Value
-					continue
-				}
-
-				if env.ValueFrom != nil {
-					if env.ValueFrom.SecretKeyRef != nil {
-						usernameFromSecret, err := GetValueFromSecretKey(ctx, env.ValueFrom.SecretKeyRef, c, grafana.Namespace)
-						if err != nil {
-							return nil, err
-						}
-						credentials.username = string(usernameFromSecret)
-					}
-				}
-			}
-			if env.Name == config.GrafanaAdminPasswordEnvVar {
-				if env.Value != "" {
-					credentials.password = env.Value
-					continue
-				}
-
-				if env.ValueFrom != nil {
-					if env.ValueFrom.SecretKeyRef != nil {
-						passwordFromSecret, err := GetValueFromSecretKey(ctx, env.ValueFrom.SecretKeyRef, c, grafana.Namespace)
-						if err != nil {
-							return nil, err
-						}
-						credentials.password = string(passwordFromSecret)
-					}
-				}
-			}
-		}
+	cl, ok := grafanaClientPool.Load(cred)
+	if ok {
+		return cl.(*genapi.GrafanaHTTPAPI), nil
 	}
-	return credentials, nil
+	gc, err := newGeneratedGrafanaClient(ctx, c, grafana)
+	if err != nil {
+		return nil, err
+	}
+	grafanaClientPool.Store(cred, gc)
+	return gc, nil
 }
 
 func InjectAuthHeaders(ctx context.Context, c client.Client, grafana *v1beta1.Grafana, req *http.Request) error {
@@ -129,7 +68,7 @@ func ParseAdminURL(adminURL string) (*url.URL, error) {
 	return gURL, nil
 }
 
-func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (*genapi.GrafanaHTTPAPI, error) {
+func newGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (*genapi.GrafanaHTTPAPI, error) {
 	var timeout time.Duration
 	if grafana.Spec.Client != nil && grafana.Spec.Client.TimeoutSeconds != nil {
 		timeout = time.Duration(*grafana.Spec.Client.TimeoutSeconds)
@@ -150,7 +89,8 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1
 		return nil, err
 	}
 
-	transport := NewInstrumentedRoundTripper(grafana.IsExternal(), tlsConfig, metrics.GrafanaAPIRequests.MustCurryWith(prometheus.Labels{
+	tp := defaultPooledTransport()
+	transport := newInstrumentedRoundTripper(tp, grafana.IsExternal(), tlsConfig, metrics.GrafanaAPIRequests.MustCurryWith(prometheus.Labels{
 		"instance_namespace": grafana.Namespace,
 		"instance_name":      grafana.Name,
 	}))
