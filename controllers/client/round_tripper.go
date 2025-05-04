@@ -19,15 +19,14 @@ type instrumentedRoundTripper struct {
 }
 
 func NewInstrumentedRoundTripper(useProxy bool, tlsConfig *tls.Config, metrics ...*prometheus.CounterVec) http.RoundTripper {
-	transport := http.DefaultTransport.(*http.Transport).Clone() //nolint:errcheck
+	tp := defaultTransport()
+	return newInstrumentedRoundTripper(tp, useProxy, tlsConfig, metrics...)
+}
 
-	transport.DisableKeepAlives = true
-	transport.MaxIdleConnsPerHost = -1
-
+func newInstrumentedRoundTripper(transport *http.Transport, useProxy bool, tlsConfig *tls.Config, metrics ...*prometheus.CounterVec) http.RoundTripper {
 	if tlsConfig != nil {
 		transport.TLSClientConfig = tlsConfig
 	}
-
 	if !useProxy {
 		transport.Proxy = nil
 	}
