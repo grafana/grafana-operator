@@ -22,6 +22,7 @@ spec:
             - --health-probe-bind-address=:8081
             - --metrics-bind-address=0.0.0.0:9090
             - --leader-elect
+            # - --max-concurrent-reconciles=1
           image: ghcr.io/grafana/grafana-operator:v5.16.0
           imagePullPolicy: Always
           ports:

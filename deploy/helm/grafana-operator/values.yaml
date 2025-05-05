@@ -40,6 +40,9 @@ enforceCacheLabels: "safe"
 # for the default Kubernetes configuration.
 clusterDomain: ""
 
+# -- Maximum number of concurrent reconciles per Custom Resource.
+maxConcurrentReconciles: 1
+
 # -- Determines if the target cluster is OpenShift. Additional rbac permissions for routes will be added on OpenShift
 isOpenShift: false
 
