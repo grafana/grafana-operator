@@ -207,16 +207,3 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 	}
 	return cred, nil
 }
-
-func InjectAuthHeaders(ctx context.Context, c client.Client, grafana *v1beta1.Grafana, req *http.Request) error {
-	cred, err := getAdminCredentials(ctx, c, grafana)
-	if err != nil {
-		return fmt.Errorf("fetching admin credentials: %w", err)
-	}
-	if cred.apikey != "" {
-		req.Header.Add("Authorization", "Bearer "+cred.apikey)
-	} else {
-		req.SetBasicAuth(cred.username, cred.password)
-	}
-	return nil
-}
