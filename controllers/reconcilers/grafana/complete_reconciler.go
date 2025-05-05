@@ -46,12 +46,13 @@ func (r *CompleteReconciler) getVersion(ctx context.Context, cr *v1beta1.Grafana
 		return "", fmt.Errorf("setup of the http client: %w", err)
 	}
 
-	instanceURL := cr.Status.AdminURL
-	if instanceURL == "" && cr.Spec.External != nil {
-		instanceURL = cr.Spec.External.URL
+	gURL, err := client2.ParseAdminURL(cr.Status.AdminURL)
+	if err != nil {
+		return "", err
 	}
 
-	req, err := http.NewRequest("GET", instanceURL+"/api/frontend/settings", nil)
+	instanceURL := gURL.JoinPath("/frontend/settings").String()
+	req, err := http.NewRequest("GET", instanceURL, nil)
 	if err != nil {
 		return "", fmt.Errorf("building request to fetch version: %w", err)
 	}

@@ -76,8 +76,10 @@ jobs:
 
       - name: Create KinD cluster ${{ matrix.version }}
         id: kind
+        env:
+          KIND_NODE_VERSION: "${{ matrix.version }}"
         run: |
-          kind --kubeconfig="${KUBECONFIG}" create cluster --image=kindest/node:${{ matrix.version }} --config tests/e2e/kind.yaml
+          make e2e-kind
 
       - name: Install kubectl
         uses: azure/setup-kubectl@3e0aec4d80787158d308d7b364cb1b702e7feb7f # v4
@@ -88,15 +90,11 @@ jobs:
         env:
           KO_DOCKER_REPO: ko.local/grafana/grafana-operator
         run: |
-          set -e
-          ko build --sbom=none --bare
-          kind load docker-image "$KO_DOCKER_REPO"
+          make ko-build-kind
 
       - name: Run e2e tests
         shell: bash
         run: |
-          # install chainsaw
-          make chainsaw
           # Run e2e
           VERSION=latest make e2e
 
