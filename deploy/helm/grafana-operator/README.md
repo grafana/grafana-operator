@@ -81,6 +81,7 @@ It's easier to just manage this configuration outside of the operator.
 | logging.encoder | string | `"console"` | Log encoding ("console", "json") |
 | logging.level | string | `"info"` | Configure the verbosity of logging ("debug", "error", "info") |
 | logging.time | string | `"rfc3339"` | Time encoding ("epoch", "iso8601", "millis", "nano", "rfc3339", "rfc3339nano") |
+| maxConcurrentReconciles | int | `1` | Maximum number of concurrent reconciles per Custom Resource. |
 | metricsService.metricsPort | int | `9090` | metrics service port |
 | metricsService.pprofPort | int | `8888` | port for the pprof profiling endpoint |
 | metricsService.type | string | `"ClusterIP"` | metrics service type |

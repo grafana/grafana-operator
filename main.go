@@ -42,8 +42,8 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
-
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -110,12 +110,15 @@ func main() { // nolint:gocyclo
 	var enableLeaderElection bool
 	var probeAddr string
 	var pprofAddr string
+	var maxConcurrentReconciles int
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.StringVar(&pprofAddr, "pprof-addr", ":8888", "The address to expose the pprof server. Empty string disables the pprof server.")
+	flag.IntVar(&maxConcurrentReconciles, "max-concurrent-reconciles", 1,
+		"Maximum number of concurrent reconciles for dashboard, datasource, folder controllers.")
 
 	logCfg := uberzap.NewProductionEncoderConfig()
 	logCfg.EncodeTime = zapcore.ISO8601TimeEncoder
@@ -179,7 +182,7 @@ func main() { // nolint:gocyclo
 		os.Exit(1)
 	}
 
-	controllerOptions := ctrl.Options{
+	mgrOptions := ctrl.Options{
 		Scheme:                 scheme,
 		Metrics:                metricsserver.Options{BindAddress: metricsAddr},
 		WebhookServer:          webhook.NewServer(webhook.Options{Port: 9443}),
@@ -187,6 +190,9 @@ func main() { // nolint:gocyclo
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "f75f3bba.integreatly.org",
 		PprofBindAddress:       pprofAddr,
+		Controller: config.Controller{
+			MaxConcurrentReconciles: maxConcurrentReconciles,
+		},
 	}
 
 	labelSelectors, err := getLabelSelectors(watchLabelSelectors)
@@ -207,7 +213,7 @@ func main() { // nolint:gocyclo
 		}
 
 		// ConfigMaps and secrets stay fully cached until we implement support for bypassing the cache for referenced objects
-		controllerOptions.Cache.ByObject = map[client.Object]cache.ByObject{
+		mgrOptions.Cache.ByObject = map[client.Object]cache.ByObject{
 			&v1.Deployment{}:                cacheLabelConfig,
 			&corev1.Service{}:               cacheLabelConfig,
 			&corev1.ServiceAccount{}:        cacheLabelConfig,
@@ -217,10 +223,10 @@ func main() { // nolint:gocyclo
 			&corev1.Secret{}:                cacheLabelConfig, // Omitting labels or supporting custom labels would require changes in Grafana Reconciler
 		}
 		if isOpenShift {
-			controllerOptions.Cache.ByObject[&routev1.Route{}] = cacheLabelConfig
+			mgrOptions.Cache.ByObject[&routev1.Route{}] = cacheLabelConfig
 		}
 		if enforceCacheLabelsLevel == cachingLevelSafe {
-			controllerOptions.Client.Cache = &client.CacheOptions{
+			mgrOptions.Client.Cache = &client.CacheOptions{
 				DisableFor: []client.Object{&corev1.ConfigMap{}, &corev1.Secret{}},
 			}
 		}
@@ -230,27 +236,27 @@ func main() { // nolint:gocyclo
 	switch {
 	case strings.Contains(watchNamespace, ","):
 		// multi namespace scoped
-		controllerOptions.Cache.DefaultNamespaces = getNamespaceConfig(watchNamespace, labelSelectors)
+		mgrOptions.Cache.DefaultNamespaces = getNamespaceConfig(watchNamespace, labelSelectors)
 		setupLog.Info("operator running in namespace scoped mode for multiple namespaces", "namespaces", watchNamespace)
 	case watchNamespace != "":
 		// namespace scoped
-		controllerOptions.Cache.DefaultNamespaces = getNamespaceConfig(watchNamespace, labelSelectors)
+		mgrOptions.Cache.DefaultNamespaces = getNamespaceConfig(watchNamespace, labelSelectors)
 		setupLog.Info("operator running in namespace scoped mode", "namespace", watchNamespace)
 	case strings.Contains(watchNamespaceSelector, ":"):
 		// multi namespace scoped
-		controllerOptions.Cache.DefaultNamespaces = getNamespaceConfigSelector(restConfig, watchNamespaceSelector, labelSelectors)
+		mgrOptions.Cache.DefaultNamespaces = getNamespaceConfigSelector(restConfig, watchNamespaceSelector, labelSelectors)
 		setupLog.Info("operator running in namespace scoped mode using namespace selector", "namespace", watchNamespace)
 
 	case watchNamespace == "" && watchNamespaceSelector == "":
 		// cluster scoped
-		controllerOptions.Cache.DefaultLabelSelector = labelSelectors
+		mgrOptions.Cache.DefaultLabelSelector = labelSelectors
 		setupLog.Info("operator running in cluster scoped mode")
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGPIPE)
 	defer stop()
 
-	mgr, err := ctrl.NewManager(restConfig, controllerOptions)
+	mgr, err := ctrl.NewManager(restConfig, mgrOptions)
 	if err != nil {
 		setupLog.Error(err, "unable to create new manager")
 		os.Exit(1) //nolint
@@ -269,21 +275,21 @@ func main() { // nolint:gocyclo
 	if err = (&controllers.GrafanaDashboardReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr, ctx); err != nil {
+	}).SetupWithManager(ctx, mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDashboard")
 		os.Exit(1)
 	}
 	if err = (&controllers.GrafanaDatasourceReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr, ctx); err != nil {
+	}).SetupWithManager(ctx, mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDatasource")
 		os.Exit(1)
 	}
 	if err = (&controllers.GrafanaFolderReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr, ctx); err != nil {
+	}).SetupWithManager(ctx, mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaFolder")
 		os.Exit(1)
 	}

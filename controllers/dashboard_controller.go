@@ -603,7 +603,7 @@ func (r *GrafanaDashboardReconciler) DeleteFolderIfEmpty(client *genapi.GrafanaH
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *GrafanaDashboardReconciler) SetupWithManager(mgr ctrl.Manager, ctx context.Context) error {
+func (r *GrafanaDashboardReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.GrafanaDashboard{}).
 		WithEventFilter(ignoreStatusUpdates()).
