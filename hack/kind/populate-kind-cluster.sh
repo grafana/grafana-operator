@@ -39,8 +39,8 @@ echo "###############################"
 echo "# 4. Install grafana objects  #"
 echo "###############################"
 # Create an extra namespace for CRDs
-kubectl --kubeconfig "${KUBECONFIG}" \
-    create ns "${CRD_NS}"
+kubectl --kubeconfig "${KUBECONFIG}" get ns "${CRD_NS}" &>/dev/null ||
+    kubectl --kubeconfig "${KUBECONFIG}" create ns "${CRD_NS}"
 kubectl --kubeconfig "${KUBECONFIG}" \
     label ns "${CRD_NS}" grafanacrd=grafana --overwrite
 
