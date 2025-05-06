@@ -14,7 +14,7 @@ type fakeClient struct {
 }
 
 func (c fakeClient) Get(_ context.Context, _ client.ObjectKey, ref client.Object, _ ...client.GetOption) error {
-	s := ref.(*v1.Secret)
+	s := ref.(*v1.Secret) //nolint:errcheck
 	s.Data = map[string][]byte{
 		"fake": []byte("something"),
 	}

@@ -41,7 +41,7 @@ type syncPool[T any] struct {
 }
 
 func (s *syncPool[T]) Get() T {
-	return s.Pool.Get().(T)
+	return s.Pool.Get().(T) //nolint:errcheck
 }
 
 func (s *syncPool[T]) Put(t T) {
