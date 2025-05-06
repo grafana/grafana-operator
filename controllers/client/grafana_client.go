@@ -62,7 +62,9 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1
 	}
 
 	tp := httpTransportPool.Get()
-	defer httpTransportPool.Put(tp)
+	defer func() {
+		httpTransportPool.Put(tp)
+	}()
 
 	transport := newInstrumentedRoundTripper(tp, grafana.IsExternal(), tlsConfig, metrics.GrafanaAPIRequests.MustCurryWith(prometheus.Labels{
 		"instance_namespace": grafana.Namespace,
@@ -78,7 +80,9 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1
 	}
 
 	cfg := genTransportCfgPool.Get()
-	defer genTransportCfgPool.Put(cfg)
+	defer func() {
+		genTransportCfgPool.Put(cfg)
+	}()
 
 	cfg.Schemes = []string{gURL.Scheme}
 	cfg.BasePath = gURL.Path
