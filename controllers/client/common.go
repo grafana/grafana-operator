@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -33,4 +34,16 @@ func GetValueFromSecretKey(ctx context.Context, ref *v1.SecretKeySelector, c cli
 	}
 
 	return nil, fmt.Errorf("credentials not found in secret: %v/%v", namespace, ref.Name)
+}
+
+type syncPool[T any] struct {
+	sync.Pool
+}
+
+func (s *syncPool[T]) Get() T {
+	return s.Pool.Get().(T)
+}
+
+func (s *syncPool[T]) Put(t T) {
+	s.Pool.Put(t)
 }
