@@ -100,7 +100,7 @@ func GetScopedMatchingInstances(ctx context.Context, k8sClient client.Client, cr
 		// This allows speeding up reconciliations and reduces the amount of noisy errors.
 		// A toggle to skip the readiness check allows additional testing of reconcilers, like provoking the ApplyFailed synchronization condition.
 		doReadinessCheck := true
-		if instance.Annotations["grafana-operator/skip-readiness-check"] == "true" {
+		if instance.Annotations["grafana-operator/skip-readiness-check"] == "true" { //nolint:goconst
 			doReadinessCheck = false
 		}
 
