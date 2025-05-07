@@ -26,8 +26,25 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
+
+var instanceSelectorNoMatchingInstances = v1beta1.GrafanaCommonSpec{
+	InstanceSelector: &metav1.LabelSelector{
+		MatchLabels: map[string]string{"test": "no-matching-instances"},
+	},
+}
+
+func requestFromMeta(obj metav1.ObjectMeta) ctrl.Request {
+	return ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      obj.Name,
+			Namespace: obj.Namespace,
+		},
+	}
+}
 
 func TestLabelsSatisfyMatchExpressions(t *testing.T) {
 	tests := []struct {
