@@ -51,7 +51,7 @@ var errLibraryPanelContentUIDImmutable = errors.New("library panel uid is immuta
 
 // GrafanaLibraryPanelReconciler reconciles a GrafanaLibraryPanel object
 type GrafanaLibraryPanelReconciler struct {
-	Client client.Client
+	client.Client
 	Scheme *runtime.Scheme
 }
 
@@ -65,7 +65,7 @@ func (r *GrafanaLibraryPanelReconciler) syncStatuses(ctx context.Context) error 
 	// get all grafana instances
 	grafanas := &v1beta1.GrafanaList{}
 	var opts []client.ListOption
-	err := r.Client.List(ctx, grafanas, opts...)
+	err := r.List(ctx, grafanas, opts...)
 	if err != nil {
 		return err
 	}
@@ -76,7 +76,7 @@ func (r *GrafanaLibraryPanelReconciler) syncStatuses(ctx context.Context) error 
 
 	// get all panels
 	allPanels := &v1beta1.GrafanaLibraryPanelList{}
-	err = r.Client.List(ctx, allPanels, opts...)
+	err = r.List(ctx, allPanels, opts...)
 	if err != nil {
 		return err
 	}
@@ -113,7 +113,7 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 	ctx = logf.IntoContext(ctx, log)
 
 	libraryPanel := &v1beta1.GrafanaLibraryPanel{}
-	err := r.Client.Get(ctx, client.ObjectKey{
+	err := r.Get(ctx, client.ObjectKey{
 		Namespace: req.Namespace,
 		Name:      req.Name,
 	}, libraryPanel)
