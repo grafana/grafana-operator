@@ -5,6 +5,11 @@ namespaceScope: false
 # -- This is recommended in most scenarios, even when only running a single instance of the operator.
 leaderElect: true
 
+# -- The number of operators to run simultaneously.
+# With leader election, only one instance reconciles CRs preventing duplicate reconciliations.
+# Note: Multiple replicas increase stability, it does not increase throughput.
+replicas: 1
+
 # -- Sets the `WATCH_NAMESPACE` environment variable,
 # it defines which namespaces the operator should be listening for (e.g. `"grafana, foo"`).
 # By default, the operator watches all namespaces. To make it watch only its own namespace, check out `namespaceScope` option instead.

@@ -94,6 +94,7 @@ It's easier to just manage this configuration outside of the operator.
 | podSecurityContext | object | `{}` | pod security context |
 | priorityClassName | string | `""` | pod priority class name |
 | rbac.create | bool | `true` | Specifies whether to create the ClusterRole and ClusterRoleBinding. If "namespaceScope" is true or "watchNamespaces" is set, this will create Role and RoleBinding instead. |
+| replicas | int | `1` | The number of operators to run simultaneously. With leader election, only one instance reconciles CRs preventing duplicate reconciliations. Note: Multiple replicas increase stability, it does not increase throughput. |
 | resources | object | `{}` | grafana operator container resources |
 | securityContext.allowPrivilegeEscalation | bool | `false` | Whether to allow privilege escalation |
 | securityContext.capabilities | object | `{"drop":["ALL"]}` | A list of capabilities to drop |
