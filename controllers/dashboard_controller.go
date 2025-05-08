@@ -60,99 +60,58 @@ type GrafanaDashboardReconciler struct {
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadashboards/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadashboards/finalizers,verbs=update
 
-func (r *GrafanaDashboardReconciler) syncDashboards(ctx context.Context) (ctrl.Result, error) {
+func (r *GrafanaDashboardReconciler) syncStatuses(ctx context.Context) error {
 	log := logf.FromContext(ctx)
-	dashboardsSynced := 0
 
 	// get all grafana instances
 	grafanas := &v1beta1.GrafanaList{}
 	var opts []client.ListOption
 	err := r.List(ctx, grafanas, opts...)
 	if err != nil {
-		return ctrl.Result{}, err
+		return err
 	}
-
 	// no instances, no need to sync
 	if len(grafanas.Items) == 0 {
-		return ctrl.Result{Requeue: false}, nil
+		return nil
 	}
 
 	// get all dashboards
 	allDashboards := &v1beta1.GrafanaDashboardList{}
 	err = r.List(ctx, allDashboards, opts...)
 	if err != nil {
-		return ctrl.Result{}, err
+		return err
 	}
 
-	dashboardsToDelete := getDashboardsToDelete(allDashboards, grafanas.Items)
-
-	// delete all dashboards that no longer have a cr
-	for grafana, oldDashboards := range dashboardsToDelete {
-		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
-		if err != nil {
-			return ctrl.Result{}, err
+	// delete dashboards from grafana statuses that do no longer have a cr
+	dashboardsSynced := 0
+	for _, grafana := range grafanas.Items {
+		statusUpdated := false
+		for _, dashboard := range grafana.Status.Dashboards {
+			namespace, name, _ := dashboard.Split()
+			if allDashboards.Find(namespace, name) == nil {
+				grafana.Status.Dashboards = grafana.Status.Dashboards.Remove(namespace, name)
+				dashboardsSynced += 1
+				statusUpdated = true
+			}
 		}
 
-		for syncCounter, dashboard := range oldDashboards {
-			// avoid bombarding the grafana instance with a large number of requests at once, limit
-			// the sync to a certain number of dashboards per cycle. This means that it will take longer to sync
-			// a large number of deleted dashboard crs, but that should be an edge case.
-			if syncCounter >= syncBatchSize {
-				return ctrl.Result{Requeue: true}, nil
-			}
-
-			namespace, name, uid := dashboard.Split()
-			_, err = grafanaClient.Dashboards.DeleteDashboardByUID(uid) //nolint:errcheck
+		if statusUpdated {
+			err = r.Client.Status().Update(ctx, &grafana)
 			if err != nil {
-				var notFound *dashboards.DeleteDashboardByUIDNotFound
-				if !errors.As(err, &notFound) {
-					return ctrl.Result{}, err
-				}
+				return err
 			}
-
-			grafana.Status.Dashboards = grafana.Status.Dashboards.Remove(namespace, name)
-			dashboardsSynced += 1
-		}
-
-		// one update per grafana - this will trigger a reconcile of the grafana controller
-		// so we should minimize those updates
-		err = r.Client.Status().Update(ctx, grafana)
-		if err != nil {
-			return ctrl.Result{}, err
 		}
 	}
 
 	if dashboardsSynced > 0 {
 		log.Info("successfully synced dashboards", "dashboards", dashboardsSynced)
 	}
-	return ctrl.Result{Requeue: false}, nil
-}
-
-// sync dashboards, delete dashboards from grafana that do no longer have a cr
-func getDashboardsToDelete(allDashboards *v1beta1.GrafanaDashboardList, grafanas []v1beta1.Grafana) map[*v1beta1.Grafana][]v1beta1.NamespacedResource {
-	dashboardsToDelete := map[*v1beta1.Grafana][]v1beta1.NamespacedResource{}
-	for _, grafana := range grafanas {
-		for _, dashboard := range grafana.Status.Dashboards {
-			if allDashboards.Find(dashboard.Namespace(), dashboard.Name()) == nil {
-				dashboardsToDelete[&grafana] = append(dashboardsToDelete[&grafana], dashboard)
-			}
-		}
-	}
-	return dashboardsToDelete
+	return nil
 }
 
 func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) { //nolint:gocyclo
 	log := logf.FromContext(ctx).WithName("GrafanaDashboardReconciler")
 	ctx = logf.IntoContext(ctx, log)
-
-	// periodic sync reconcile
-	if req.Namespace == "" && req.Name == "" {
-		start := time.Now()
-		syncResult, err := r.syncDashboards(ctx)
-		elapsed := time.Since(start).Milliseconds()
-		metrics.InitialDashboardSyncDuration.Set(float64(elapsed))
-		return syncResult, err
-	}
 
 	cr := &v1beta1.GrafanaDashboard{}
 	err := r.Get(ctx, client.ObjectKey{
@@ -608,32 +567,33 @@ func (r *GrafanaDashboardReconciler) SetupWithManager(ctx context.Context, mgr c
 		For(&v1beta1.GrafanaDashboard{}).
 		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
-
-	if err == nil {
-		go func() {
-			log := logf.FromContext(ctx).WithName("GrafanaDashboardReconciler")
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case <-time.After(initialSyncDelay):
-					result, err := r.Reconcile(ctx, ctrl.Request{})
-					if err != nil {
-						log.Error(err, "error synchronizing dashboards")
-						continue
-					}
-					if result.Requeue {
-						log.Info("more dashboards left to synchronize")
-						continue
-					}
-					log.Info("dashboard sync complete")
-					return
-				}
-			}
-		}()
+	if err != nil {
+		return err
 	}
 
-	return err
+	go func() {
+		log := logf.FromContext(ctx).WithName("GrafanaDashboardReconciler")
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(initialSyncDelay):
+				start := time.Now()
+				err := r.syncStatuses(ctx)
+				elapsed := time.Since(start).Milliseconds()
+				metrics.InitialDashboardSyncDuration.Set(float64(elapsed))
+				if err != nil {
+					log.Error(err, "error synchronizing dashboards")
+					continue
+				}
+
+				log.Info("dashboard sync complete")
+				return
+			}
+		}
+	}()
+
+	return nil
 }
 
 func (r *GrafanaDashboardReconciler) UpdateHomeDashboard(ctx context.Context, grafana v1beta1.Grafana, uid string, dashboard *v1beta1.GrafanaDashboard) error {
