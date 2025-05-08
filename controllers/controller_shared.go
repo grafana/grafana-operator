@@ -87,7 +87,7 @@ func GetScopedMatchingInstances(ctx context.Context, k8sClient client.Client, cr
 		return []v1beta1.Grafana{}, nil
 	}
 
-	selectedList := []v1beta1.Grafana{}
+	selectedList := make([]v1beta1.Grafana, 0, len(list.Items))
 	var unreadyInstances []string
 	for _, instance := range list.Items {
 		// Matches all instances when MatchExpressions is undefined
