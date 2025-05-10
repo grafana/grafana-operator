@@ -38,6 +38,7 @@ var instanceSelectorNoMatchingInstances = v1beta1.GrafanaCommonSpec{
 }
 
 func requestFromMeta(obj metav1.ObjectMeta) ctrl.Request {
+	GinkgoHelper()
 	return ctrl.Request{
 		NamespacedName: types.NamespacedName{
 			Name:      obj.Name,
