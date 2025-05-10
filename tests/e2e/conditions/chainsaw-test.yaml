@@ -45,29 +45,6 @@ spec:
         - assert:
             file: "../testdata-assertions.yaml"
 
-    # reason: NoMatchingInstances
-    - name: Alter Grafana instance label
-      try:
-        - patch:
-            resource:
-              apiVersion: grafana.integreatly.org/v1beta1
-              kind: Grafana
-              metadata:
-                name: testdata
-                labels:
-                  test: MatchNothing
-
-        - assert:
-            file: "./01-no-matching-instances-assertions.yaml"
-
-    - name: Revert Grafana instance to default
-      try: &RevertResources
-        - apply:
-            file: "../testdata-resources.yaml"
-
-        - assert:
-            file: "../testdata-assertions.yaml"
-
     # reason: ApplyFailed
     - name: Scale Grafana deployment to zero and skip readiness check
       try:
@@ -103,7 +80,12 @@ spec:
                     replicas: 1
 
     - name: Revert Grafana instance to default
-      try: *RevertResources
+      try:
+        - apply:
+            file: "../testdata-resources.yaml"
+
+        - assert:
+            file: "../testdata-assertions.yaml"
 
     # reason: InvalidSpec
     - name: Invalidate resource specs

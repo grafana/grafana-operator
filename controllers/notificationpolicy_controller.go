@@ -255,8 +255,8 @@ func (r *GrafanaNotificationPolicyReconciler) reconcileWithInstance(ctx context.
 		return fmt.Errorf("building grafana client: %w", err)
 	}
 
-	trueRef := "true"
-	editable := true //nolint:staticcheck
+	trueRef := "true" //nolint:goconst
+	editable := true  //nolint:staticcheck
 	if notificationPolicy.Spec.Editable != nil && !*notificationPolicy.Spec.Editable {
 		editable = false
 	}

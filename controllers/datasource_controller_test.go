@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"testing"
 
+	v1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	v1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 func TestGetDatasourceContent(t *testing.T) {
@@ -42,23 +44,12 @@ func TestGetDatasourceContent(t *testing.T) {
 func TestGetDatasourcesToDelete(t *testing.T) {
 	f := func(ds []v1beta1.GrafanaDatasource, grafana v1beta1.Grafana, expected []v1beta1.NamespacedResource) {
 		t.Helper()
-		dashboardList := v1beta1.GrafanaDatasourceList{
+		datasourcesList := v1beta1.GrafanaDatasourceList{
 			TypeMeta: metav1.TypeMeta{},
 			ListMeta: metav1.ListMeta{},
-			Items: []v1beta1.GrafanaDatasource{
-				{
-					TypeMeta: metav1.TypeMeta{},
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "datasource-a",
-						Namespace: "namespace",
-					},
-					Status: v1beta1.GrafanaDatasourceStatus{
-						UID: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
-					},
-				},
-			},
+			Items:    ds,
 		}
-		datasourcesToDelete := getDatasourcesToDelete(&dashboardList, []v1beta1.Grafana{grafana})
+		datasourcesToDelete := getDatasourcesToDelete(&datasourcesList, []v1beta1.Grafana{grafana})
 		for _, out := range datasourcesToDelete {
 			assert.Equal(t, out, expected)
 		}
@@ -94,3 +85,36 @@ func TestGetDatasourcesToDelete(t *testing.T) {
 		},
 	)
 }
+
+var _ = Describe("Datasource: Reconciler", func() {
+	It("Results in NoMatchingInstances Condition", func() {
+		// Create object
+		cr := &v1beta1.GrafanaDatasource{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "no-match",
+				Namespace: "default",
+			},
+			Spec: v1beta1.GrafanaDatasourceSpec{
+				GrafanaCommonSpec: instanceSelectorNoMatchingInstances,
+				Datasource:        &v1beta1.GrafanaDatasourceInternal{},
+			},
+		}
+		ctx := context.Background()
+		err := k8sClient.Create(ctx, cr)
+		Expect(err).ToNot(HaveOccurred())
+
+		// Reconciliation Request
+		req := requestFromMeta(cr.ObjectMeta)
+
+		// Reconcile
+		r := GrafanaDatasourceReconciler{Client: k8sClient}
+		_, err = r.Reconcile(ctx, req)
+		Expect(err).ShouldNot(HaveOccurred()) // NoMatchingInstances is a valid reconciliation result
+
+		resultCr := &v1beta1.GrafanaDatasource{}
+		Expect(r.Get(ctx, req.NamespacedName, resultCr)).Should(Succeed()) // NoMatchingInstances is a valid status
+
+		// Verify NoMatchingInstances condition
+		Expect(resultCr.Status.Conditions).Should(ContainElement(HaveField("Type", conditionNoMatchingInstance)))
+	})
+})
