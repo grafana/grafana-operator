@@ -26,8 +26,10 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers/grafana"
+	routev1 "github.com/openshift/api/route/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -136,11 +138,20 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *GrafanaReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
+	cb := ctrl.NewControllerManagedBy(mgr).
 		For(&grafanav1beta1.Grafana{}, builder.WithPredicates(ignoreStatusUpdates())).
 		Owns(&appsv1.Deployment{}, builder.WithPredicates(ignoreStatusUpdates())).
+		Owns(&networkingv1.Ingress{}, builder.WithPredicates(ignoreStatusUpdates())).
 		Owns(&corev1.ConfigMap{}).
-		WithOptions(controller.Options{RateLimiter: defaultRateLimiter()}).
+		Owns(&corev1.Secret{}).
+		Owns(&corev1.Service{}).
+		Owns(&corev1.ServiceAccount{}).
+		Owns(&corev1.PersistentVolumeClaim{})
+	if r.IsOpenShift {
+		cb.Owns(&routev1.Route{}, builder.WithPredicates(ignoreStatusUpdates()))
+	}
+
+	return cb.WithOptions(controller.Options{RateLimiter: defaultRateLimiter()}).
 		Complete(r)
 }
 
