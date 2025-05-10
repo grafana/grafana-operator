@@ -77,7 +77,7 @@ It's easier to just manage this configuration outside of the operator.
 | image.tag | string | `""` | Overrides the image tag whose default is the chart appVersion. |
 | imagePullSecrets | list | `[]` | image pull secrets |
 | isOpenShift | bool | `false` | Determines if the target cluster is OpenShift. Additional rbac permissions for routes will be added on OpenShift |
-| leaderElect | bool | `false` | If you want to run multiple replicas of the grafana-operator, this is not recommended. |
+| leaderElect | bool | `true` | This is recommended in most scenarios, even when only running a single instance of the operator. |
 | logging.encoder | string | `"console"` | Log encoding ("console", "json") |
 | logging.level | string | `"info"` | Configure the verbosity of logging ("debug", "error", "info") |
 | logging.time | string | `"rfc3339"` | Time encoding ("epoch", "iso8601", "millis", "nano", "rfc3339", "rfc3339nano") |
@@ -94,6 +94,7 @@ It's easier to just manage this configuration outside of the operator.
 | podSecurityContext | object | `{}` | pod security context |
 | priorityClassName | string | `""` | pod priority class name |
 | rbac.create | bool | `true` | Specifies whether to create the ClusterRole and ClusterRoleBinding. If "namespaceScope" is true or "watchNamespaces" is set, this will create Role and RoleBinding instead. |
+| replicas | int | `1` | The number of operators to run simultaneously. With leader election, only one instance reconciles CRs preventing duplicate reconciliations. Note: Multiple replicas increase stability, it does not increase throughput. |
 | resources | object | `{}` | grafana operator container resources |
 | securityContext.allowPrivilegeEscalation | bool | `false` | Whether to allow privilege escalation |
 | securityContext.capabilities | object | `{"drop":["ALL"]}` | A list of capabilities to drop |
