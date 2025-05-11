@@ -372,7 +372,6 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	if err != nil {
 		return err
 	}
-
 	if folderUID == "" {
 		folderUID, err = r.GetOrCreateFolder(grafanaClient, cr)
 		if err != nil {
@@ -382,15 +381,25 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 
 	uid := fmt.Sprintf("%s", dashboardModel["uid"])
 	title := fmt.Sprintf("%s", dashboardModel["title"])
-
-	// TODO Check if cr.Spec.CustomUID is defined and skip the search. Get the dashboard directly with the UID
-	// The 'Exists' function is unreasonably expensive if reconciling multiple instances with a lot of :wqdashboards.
-	exists, remoteUID, err := r.Exists(grafanaClient, uid, title, folderUID)
-	if err != nil {
-		return err
+	remoteUID := uid
+	if cr.Spec.CustomUID == "" {
+		log.V(1).Info(".spec.uid empty, verifying uid has not changed using search")
+		remoteUID, err = r.Exists(grafanaClient, uid, title, folderUID)
+		if err != nil {
+			return err
+		}
 	}
 
-	if exists && remoteUID != uid {
+	dashWithMeta, err := grafanaClient.Dashboards.GetDashboardByUID(remoteUID)
+	if err != nil {
+		var notFound *dashboards.GetDashboardByUIDNotFound
+		if !errors.As(err, &notFound) {
+			return err
+		}
+	}
+
+	exists := dashWithMeta != nil
+	if exists && (remoteUID != uid || dashWithMeta.Payload.Meta.FolderUID != folderUID) {
 		// If there's already a dashboard with the same title in the same folder, grafana preserves that dashboard's uid, so we should remove it first
 		log.Info("found dashboard with the same title (in the same folder) but different uid, removing the dashboard before recreating it with a new uid")
 		_, err = grafanaClient.Dashboards.DeleteDashboardByUID(remoteUID) //nolint:errcheck
@@ -400,21 +409,18 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 				return err
 			}
 		}
-
 		exists = false
 	}
 
 	if exists && content.Unchanged(cr, hash) && !cr.ResyncPeriodHasElapsed() {
+		log.V(1).Info("dashboard model unchanged and resyncPeriod not reached. skipping remaining requests")
 		return nil
 	}
 
-	// NOTE Only the dashboard reconciler will detect if the cr and remote model differ by walking the structure
-	// Most others instead apply the resource and outsource it to the instance or check a hash.
-	remoteChanged, err := r.hasRemoteChange(exists, grafanaClient, uid, dashboardModel)
+	remoteChanged, err := r.hasRemoteChange(exists, dashboardModel, dashWithMeta)
 	if err != nil {
 		return err
 	}
-
 	if !remoteChanged {
 		return nil
 	}
@@ -438,7 +444,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	return r.Client.Status().Update(ctx, grafana)
 }
 
-func (r *GrafanaDashboardReconciler) Exists(client *genapi.GrafanaHTTPAPI, uid string, title string, folderUID string) (bool, string, error) {
+func (r *GrafanaDashboardReconciler) Exists(client *genapi.GrafanaHTTPAPI, uid string, title string, folderUID string) (string, error) {
 	tvar := "dash-db"
 
 	page := int64(1)
@@ -447,47 +453,38 @@ func (r *GrafanaDashboardReconciler) Exists(client *genapi.GrafanaHTTPAPI, uid s
 		params := search.NewSearchParams().WithType(&tvar).WithLimit(&limit).WithPage(&page)
 		resp, err := client.Search.Search(params)
 		if err != nil {
-			return false, "", err
+			return "", err
 		}
-		results := resp.GetPayload()
+		hits := resp.GetPayload()
 
-		for _, dashboard := range results {
-			if dashboard.UID == uid || (dashboard.Title == title && dashboard.FolderUID == folderUID) {
-				return true, dashboard.UID, nil
+		for _, hit := range hits {
+			if hit.UID == uid || (hit.Title == title && hit.FolderUID == folderUID) {
+				return hit.UID, err
 			}
 		}
-		if len(results) < int(limit) {
+		if len(hits) < int(limit) {
 			break
 		}
 		page++
 	}
-	return false, "", nil
+	return "", nil
 }
 
 // HasRemoteChange checks if a dashboard in Grafana is different to the model defined in the custom resources
-func (r *GrafanaDashboardReconciler) hasRemoteChange(exists bool, client *genapi.GrafanaHTTPAPI, uid string, model map[string]interface{}) (bool, error) {
+func (r *GrafanaDashboardReconciler) hasRemoteChange(exists bool, model map[string]interface{}, remoteDashboard *dashboards.GetDashboardByUIDOK) (bool, error) {
 	if !exists {
 		// if the dashboard doesn't exist, don't even request
 		return true, nil
 	}
 
-	remoteDashboard, err := client.Dashboards.GetDashboardByUID(uid)
-	if err != nil {
-		var notFound *dashboards.GetDashboardByUIDNotFound
-		if !errors.As(err, &notFound) {
-			return true, nil
-		}
-		return false, err
+	remoteModel, ok := (remoteDashboard.GetPayload().Dashboard).(map[string]interface{})
+	if !ok {
+		return true, fmt.Errorf("remote dashboard is not a valid object")
 	}
 
 	keys := make([]string, 0, len(model))
 	for key := range model {
 		keys = append(keys, key)
-	}
-
-	remoteModel, ok := (remoteDashboard.GetPayload().Dashboard).(map[string]interface{})
-	if !ok {
-		return false, fmt.Errorf("remote dashboard is not an object")
 	}
 
 	skipKeys := []string{"id", "version"} //nolint
