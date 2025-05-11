@@ -325,7 +325,8 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 				}
 			}
 
-			if dash != nil && dash.Meta != nil && dash.Meta.FolderUID != "" {
+			if dash != nil && dash.Meta != nil && dash.Meta.FolderUID != "" && cr.Spec.FolderRef == "" && cr.Spec.FolderUID == "" {
+				log.V(1).Info("Folder qualifies for deletion, checking if empty")
 				resp, err := r.DeleteFolderIfEmpty(grafanaClient, dash.Meta.FolderUID)
 				if err != nil {
 					return fmt.Errorf("deleting empty parent folder from instance: %w", err)
