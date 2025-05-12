@@ -164,13 +164,22 @@ func (r *GrafanaReconciler) setDefaultGrafanaVersion(ctx context.Context, cr cli
 	return r.Patch(ctx, cr, client.RawPatch(types.MergePatchType, patch))
 }
 
+func removeMissingCRs[T interface{}](statusList *grafanav1beta1.NamespacedResourceList, crs grafanav1beta1.NamespacedResourceImpl[T], updateStatus *bool) {
+	for _, namespacedCR := range *statusList {
+		namespace, name, _ := namespacedCR.Split()
+		if crs.Find(namespace, name) == nil {
+			*statusList = statusList.Remove(namespace, name)
+			*updateStatus = true
+		}
+	}
+}
+
 func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 	log := logf.FromContext(ctx)
 
 	// get all grafana instances
 	grafanas := &grafanav1beta1.GrafanaList{}
-	var opts []client.ListOption
-	err := r.List(ctx, grafanas, opts...)
+	err := r.List(ctx, grafanas)
 	if err != nil {
 		return err
 	}
@@ -181,91 +190,52 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 
 	// folders
 	folders := &grafanav1beta1.GrafanaFolderList{}
-	err = r.List(ctx, folders, opts...)
+	err = r.List(ctx, folders)
 	if err != nil {
 		return err
 	}
 
 	// dashboards
 	dashboards := &grafanav1beta1.GrafanaDashboardList{}
-	err = r.List(ctx, dashboards, opts...)
+	err = r.List(ctx, dashboards)
 	if err != nil {
 		return err
 	}
 
-	// library panels
-	panels := &grafanav1beta1.GrafanaLibraryPanelList{}
-	err = r.List(ctx, panels, opts...)
+	// library libraryPanels
+	libraryPanels := &grafanav1beta1.GrafanaLibraryPanelList{}
+	err = r.List(ctx, libraryPanels)
 	if err != nil {
 		return err
 	}
 
 	// datasources
-	datasource := &grafanav1beta1.GrafanaDatasourceList{}
-	err = r.List(ctx, datasource, opts...)
+	datasources := &grafanav1beta1.GrafanaDatasourceList{}
+	err = r.List(ctx, datasources)
 	if err != nil {
 		return err
 	}
 
 	// contact points
-	allContactPoints := &grafanav1beta1.GrafanaContactPointList{}
-	err = r.List(ctx, allContactPoints, opts...)
+	contactPoints := &grafanav1beta1.GrafanaContactPointList{}
+	err = r.List(ctx, contactPoints)
 	if err != nil {
 		return err
 	}
 
 	// delete resources from grafana statuses that no longer have a CR
-	statusesSynced := 0
+	statusUpdates := 0
 	for _, grafana := range grafanas.Items {
-		statusUpdated := false
+		updateStatus := false
 
-		// folders
-		for _, folder := range grafana.Status.Folders {
-			namespace, name, _ := folder.Split()
-			if folders.Find(namespace, name) == nil {
-				grafana.Status.Folders = grafana.Status.Folders.Remove(namespace, name)
-				statusUpdated = true
-			}
-		}
+		removeMissingCRs(&grafana.Status.Folders, folders, &updateStatus)
+		removeMissingCRs(&grafana.Status.Dashboards, dashboards, &updateStatus)
+		removeMissingCRs(&grafana.Status.LibraryPanels, libraryPanels, &updateStatus)
+		removeMissingCRs(&grafana.Status.Datasources, datasources, &updateStatus)
+		removeMissingCRs(&grafana.Status.ContactPoints, contactPoints, &updateStatus)
 
-		// dashboards
-		for _, dashboard := range grafana.Status.Dashboards {
-			namespace, name, _ := dashboard.Split()
-			if dashboards.Find(namespace, name) == nil {
-				grafana.Status.Dashboards = grafana.Status.Dashboards.Remove(namespace, name)
-				statusUpdated = true
-			}
-		}
-
-		// library panels
-		for _, panel := range grafana.Status.LibraryPanels {
-			namespace, name, _ := panel.Split()
-			if panels.Find(namespace, name) == nil {
-				grafana.Status.LibraryPanels = grafana.Status.LibraryPanels.Remove(namespace, name)
-				statusUpdated = true
-			}
-		}
-
-		// datasource
-		for _, ds := range grafana.Status.Datasources {
-			namespace, name, _ := ds.Split()
-			if datasource.Find(namespace, name) == nil {
-				grafana.Status.Datasources = grafana.Status.Datasources.Remove(namespace, name)
-				statusUpdated = true
-			}
-		}
-
-		// contact points
-		for _, contactpoint := range grafana.Status.ContactPoints {
-			namespace, name, _ := contactpoint.Split()
-			if allContactPoints.Find(namespace, name) == nil {
-				grafana.Status.ContactPoints = grafana.Status.ContactPoints.Remove(namespace, name)
-				statusUpdated = true
-			}
-		}
-
-		if statusUpdated {
-			statusesSynced += 1
+		if updateStatus {
+			statusUpdates += 1
 			err = r.Client.Status().Update(ctx, &grafana)
 			if err != nil {
 				return err
@@ -273,8 +243,8 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 		}
 	}
 
-	if statusesSynced > 0 {
-		log.Info("successfully synced grafana statuses", "count", statusesSynced)
+	if statusUpdates > 0 {
+		log.Info("successfully synced grafana statuses", "update count", statusUpdates)
 	}
 	return nil
 }
