@@ -50,6 +50,14 @@ var (
 		Help:      "requests to list content revisions on grafana.com",
 	}, []string{"kind", "resource", "method", "status"})
 
+	InitialStatusSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: "grafana_operator",
+		Subsystem: "reconciler",
+		Name:      "initial_sync_duration",
+		Help:      "time in ms to sync statuses after operator restart",
+	})
+
+	// Deprecated: All Initial Sync Duration metrics have merged into a single metric
 	InitialContactPointSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: "grafana_operator",
 		Subsystem: "contactpoints",
@@ -57,6 +65,7 @@ var (
 		Help:      "time in ms to sync contact-points after operator restart",
 	})
 
+	// Deprecated: All Initial Sync Duration metrics have merged into a single metric
 	InitialDashboardSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: "grafana_operator",
 		Subsystem: "dashboards",
@@ -64,6 +73,7 @@ var (
 		Help:      "time in ms to sync dashboards after operator restart",
 	})
 
+	// Deprecated: All Initial Sync Duration metrics have merged into a single metric
 	InitialLibraryPanelSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: "grafana_operator",
 		Subsystem: "librarypanels",
@@ -71,6 +81,7 @@ var (
 		Help:      "time in ms to sync library panels after operator restart",
 	})
 
+	// Deprecated: All Initial Sync Duration metrics have merged into a single metric
 	InitialDatasourceSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: "grafana_operator",
 		Subsystem: "datasources",
@@ -78,6 +89,7 @@ var (
 		Help:      "time in ms to sync datasources after operator restart",
 	})
 
+	// Deprecated: All Initial Sync Duration metrics have merged into a single metric
 	InitialFoldersSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: "grafana_operator",
 		Subsystem: "folders",
@@ -93,6 +105,8 @@ func init() {
 	metrics.Registry.MustRegister(GrafanaComAPIRevisionRequests)
 	metrics.Registry.MustRegister(DashboardURLRequests)
 	metrics.Registry.MustRegister(ContentURLRequests)
+	metrics.Registry.MustRegister(InitialStatusSyncDuration)
+	// TODO Remvoe below registrations
 	metrics.Registry.MustRegister(InitialContactPointSyncDuration)
 	metrics.Registry.MustRegister(InitialDashboardSyncDuration)
 	metrics.Registry.MustRegister(InitialLibraryPanelSyncDuration)
