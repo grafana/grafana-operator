@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/model"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
-	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -22,7 +21,7 @@ func NewPvcReconciler(client client.Client) reconcilers.OperatorGrafanaReconcile
 	}
 }
 
-func (r *PvcReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+func (r *PvcReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars *v1beta1.OperatorReconcileVars) (v1beta1.OperatorStageStatus, error) {
 	log := logf.FromContext(ctx).WithName("PvcReconciler")
 
 	if cr.Spec.PersistentVolumeClaim == nil {
@@ -30,15 +29,15 @@ func (r *PvcReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars
 		return v1beta1.OperatorStageResultSuccess, nil
 	}
 
-	pvc := model.GetGrafanaDataPVC(cr, scheme)
+	pvc := model.GetGrafanaDataPVC(cr, r.client.Scheme())
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, pvc, func() error {
 		err := v1beta1.Merge(pvc, cr.Spec.PersistentVolumeClaim)
 		if err != nil {
 			return err
 		}
 
-		if scheme != nil {
-			err = controllerutil.SetControllerReference(cr, pvc, scheme)
+		if r.client.Scheme() != nil {
+			err = controllerutil.SetControllerReference(cr, pvc, r.client.Scheme())
 			if err != nil {
 				return err
 			}

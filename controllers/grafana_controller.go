@@ -30,7 +30,6 @@ import (
 	v12 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -42,7 +41,6 @@ import (
 // GrafanaReconciler reconciles a Grafana object
 type GrafanaReconciler struct {
 	client.Client
-	Scheme        *runtime.Scheme
 	IsOpenShift   bool
 	ClusterDomain string
 }
@@ -117,7 +115,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			continue
 		}
 
-		stageStatus, err := reconciler.Reconcile(ctx, cr, vars, r.Scheme)
+		stageStatus, err := reconciler.Reconcile(ctx, cr, vars)
 		if err != nil {
 			cr.Status.StageStatus = stageStatus // In progress or failed, both accompanied by Error
 			cr.Status.LastMessage = err.Error()

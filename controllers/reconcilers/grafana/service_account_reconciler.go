@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/model"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
-	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -21,8 +20,8 @@ func NewServiceAccountReconciler(client client.Client) reconcilers.OperatorGrafa
 	}
 }
 
-func (r *ServiceAccountReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
-	sa := model.GetGrafanaServiceAccount(cr, scheme)
+func (r *ServiceAccountReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars *v1beta1.OperatorReconcileVars) (v1beta1.OperatorStageStatus, error) {
+	sa := model.GetGrafanaServiceAccount(cr, r.client.Scheme())
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, sa, func() error {
 		err := v1beta1.Merge(sa, cr.Spec.ServiceAccount)
@@ -30,8 +29,8 @@ func (r *ServiceAccountReconciler) Reconcile(ctx context.Context, cr *v1beta1.Gr
 			return err
 		}
 
-		if scheme != nil {
-			err = controllerutil.SetControllerReference(cr, sa, scheme)
+		if r.client.Scheme() != nil {
+			err = controllerutil.SetControllerReference(cr, sa, r.client.Scheme())
 			if err != nil {
 				return err
 			}

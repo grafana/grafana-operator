@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"k8s.io/client-go/kubernetes/scheme"
 )
 
 var _ = Describe("Reconcile AdminSecret", func() {
@@ -19,7 +18,7 @@ var _ = Describe("Reconcile AdminSecret", func() {
 		}
 
 		vars := &v1beta1.OperatorReconcileVars{}
-		status, err := r.Reconcile(context.Background(), cr, vars, scheme.Scheme)
+		status, err := r.Reconcile(context.Background(), cr, vars)
 
 		Expect(err).ToNot(HaveOccurred())
 		Expect(status).To(Equal(v1beta1.OperatorStageResultSuccess))

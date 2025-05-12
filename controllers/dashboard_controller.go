@@ -41,7 +41,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/types"
 
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -58,7 +57,6 @@ const (
 // GrafanaDashboardReconciler reconciles a GrafanaDashboard object
 type GrafanaDashboardReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
 }
 
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadashboards,verbs=get;list;watch;create;update;patch;delete
@@ -197,7 +195,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			// first reconcile the plugins
 			// append the requested dashboards to a configmap from where the
 			// grafana reconciler will pick them up
-			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, cr.Spec.Plugins, fmt.Sprintf("%v-dashboard", cr.Name))
+			err = ReconcilePlugins(ctx, r.Client, &grafana, cr.Spec.Plugins, fmt.Sprintf("%v-dashboard", cr.Name))
 			if err != nil {
 				pluginErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 				log.Error(err, "error reconciling plugins", "dashboard", cr.Name, "grafana", grafana.Name)
@@ -302,7 +300,7 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 		}
 
 		if grafana.IsInternal() {
-			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, fmt.Sprintf("%v-dashboard", cr.Name))
+			err = ReconcilePlugins(ctx, r.Client, &grafana, nil, fmt.Sprintf("%v-dashboard", cr.Name))
 			if err != nil {
 				return fmt.Errorf("reconciling plugins: %w", err)
 			}
