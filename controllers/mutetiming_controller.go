@@ -54,10 +54,7 @@ func (r *GrafanaMuteTimingReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	ctx = logf.IntoContext(ctx, log)
 
 	muteTiming := &grafanav1beta1.GrafanaMuteTiming{}
-	err := r.Get(ctx, client.ObjectKey{
-		Namespace: req.Namespace,
-		Name:      req.Name,
-	}, muteTiming)
+	err := r.Get(ctx, req.NamespacedName, muteTiming)
 	if err != nil {
 		if kuberr.IsNotFound(err) {
 			return ctrl.Result{}, nil
