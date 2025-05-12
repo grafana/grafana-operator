@@ -108,10 +108,7 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 	ctx = logf.IntoContext(ctx, log)
 
 	contactPoint := &grafanav1beta1.GrafanaContactPoint{}
-	err := r.Get(ctx, client.ObjectKey{
-		Namespace: req.Namespace,
-		Name:      req.Name,
-	}, contactPoint)
+	err := r.Get(ctx, req.NamespacedName, contactPoint)
 	if err != nil {
 		if kuberr.IsNotFound(err) {
 			return ctrl.Result{}, nil
