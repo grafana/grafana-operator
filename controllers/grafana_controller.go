@@ -164,14 +164,165 @@ func (r *GrafanaReconciler) setDefaultGrafanaVersion(ctx context.Context, cr cli
 	return r.Patch(ctx, cr, client.RawPatch(types.MergePatchType, patch))
 }
 
+func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
+	log := logf.FromContext(ctx)
+
+	// get all grafana instances
+	grafanas := &grafanav1beta1.GrafanaList{}
+	var opts []client.ListOption
+	err := r.List(ctx, grafanas, opts...)
+	if err != nil {
+		return err
+	}
+	// no instances, skip sync
+	if len(grafanas.Items) == 0 {
+		return nil
+	}
+
+	// folders
+	folders := &grafanav1beta1.GrafanaFolderList{}
+	err = r.List(ctx, folders, opts...)
+	if err != nil {
+		return err
+	}
+
+	// dashboards
+	dashboards := &grafanav1beta1.GrafanaDashboardList{}
+	err = r.List(ctx, dashboards, opts...)
+	if err != nil {
+		return err
+	}
+
+	// library panels
+	panels := &grafanav1beta1.GrafanaLibraryPanelList{}
+	err = r.List(ctx, panels, opts...)
+	if err != nil {
+		return err
+	}
+
+	// datasources
+	datasource := &grafanav1beta1.GrafanaDatasourceList{}
+	err = r.List(ctx, datasource, opts...)
+	if err != nil {
+		return err
+	}
+
+	// contact points
+	allContactPoints := &grafanav1beta1.GrafanaContactPointList{}
+	err = r.List(ctx, allContactPoints, opts...)
+	if err != nil {
+		return err
+	}
+
+	// delete resources from grafana statuses that no longer have a CR
+	statusesSynced := 0
+	for _, grafana := range grafanas.Items {
+		statusUpdated := false
+
+		// folders
+		for _, folder := range grafana.Status.Folders {
+			namespace, name, _ := folder.Split()
+			if folders.Find(namespace, name) == nil {
+				grafana.Status.Folders = grafana.Status.Folders.Remove(namespace, name)
+				statusUpdated = true
+			}
+		}
+
+		// dashboards
+		for _, dashboard := range grafana.Status.Dashboards {
+			namespace, name, _ := dashboard.Split()
+			if dashboards.Find(namespace, name) == nil {
+				grafana.Status.Dashboards = grafana.Status.Dashboards.Remove(namespace, name)
+				statusUpdated = true
+			}
+		}
+
+		// library panels
+		for _, panel := range grafana.Status.LibraryPanels {
+			namespace, name, _ := panel.Split()
+			if panels.Find(namespace, name) == nil {
+				grafana.Status.LibraryPanels = grafana.Status.LibraryPanels.Remove(namespace, name)
+				statusUpdated = true
+			}
+		}
+
+		// datasource
+		for _, ds := range grafana.Status.Datasources {
+			namespace, name, _ := ds.Split()
+			if datasource.Find(namespace, name) == nil {
+				grafana.Status.Datasources = grafana.Status.Datasources.Remove(namespace, name)
+				statusUpdated = true
+			}
+		}
+
+		// contact points
+		for _, contactpoint := range grafana.Status.ContactPoints {
+			namespace, name, _ := contactpoint.Split()
+			if allContactPoints.Find(namespace, name) == nil {
+				grafana.Status.ContactPoints = grafana.Status.ContactPoints.Remove(namespace, name)
+				statusUpdated = true
+			}
+		}
+
+		if statusUpdated {
+			statusesSynced += 1
+			err = r.Client.Status().Update(ctx, &grafana)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	if statusesSynced > 0 {
+		log.Info("successfully synced grafana statuses", "count", statusesSynced)
+	}
+	return nil
+}
+
 // SetupWithManager sets up the controller with the Manager.
-func (r *GrafanaReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
+func (r *GrafanaReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
+	err := ctrl.NewControllerManagedBy(mgr).
 		For(&grafanav1beta1.Grafana{}, builder.WithPredicates(ignoreStatusUpdates())).
 		Owns(&appsv1.Deployment{}, builder.WithPredicates(ignoreStatusUpdates())).
 		Owns(&corev1.ConfigMap{}).
 		WithOptions(controller.Options{RateLimiter: defaultRateLimiter()}).
 		Complete(r)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		// Wait with sync until elected as leader
+		select {
+		case <-ctx.Done():
+			return
+		case <-mgr.Elected():
+		}
+
+		// periodic sync reconcile
+		log := logf.FromContext(ctx).WithName("GrafanaReconciler")
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(initialSyncDelay):
+				start := time.Now()
+				err := r.syncStatuses(ctx)
+				elapsed := time.Since(start).Milliseconds()
+				metrics.InitialStatusSyncDuration.Set(float64(elapsed))
+				if err != nil {
+					log.Error(err, "error synchronizing grafana statuses")
+					continue
+				}
+
+				log.Info("Grafana status sync complete")
+				return
+			}
+		}
+	}()
+
+	return nil
 }
 
 func getInstallationStages() []grafanav1beta1.OperatorStageName {
