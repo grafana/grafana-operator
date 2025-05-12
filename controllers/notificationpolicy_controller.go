@@ -68,10 +68,7 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 	ctx = logf.IntoContext(ctx, log)
 
 	notificationPolicy := &v1beta1.GrafanaNotificationPolicy{}
-	err := r.Get(ctx, client.ObjectKey{
-		Namespace: req.Namespace,
-		Name:      req.Name,
-	}, notificationPolicy)
+	err := r.Get(ctx, req.NamespacedName, notificationPolicy)
 	if err != nil {
 		if kuberr.IsNotFound(err) {
 			return ctrl.Result{}, nil

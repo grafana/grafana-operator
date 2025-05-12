@@ -61,10 +61,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 	ctx = logf.IntoContext(ctx, log)
 
 	group := &grafanav1beta1.GrafanaAlertRuleGroup{}
-	err := r.Get(ctx, client.ObjectKey{
-		Namespace: req.Namespace,
-		Name:      req.Name,
-	}, group)
+	err := r.Get(ctx, req.NamespacedName, group)
 	if err != nil {
 		if kuberr.IsNotFound(err) {
 			return ctrl.Result{}, nil
