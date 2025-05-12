@@ -23,7 +23,6 @@ import (
 
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/go-openapi/strfmt"
@@ -45,7 +44,6 @@ const (
 // GrafanaAlertRuleGroupReconciler reconciles a GrafanaAlertRuleGroup object
 type GrafanaAlertRuleGroupReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
 }
 
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanaalertrulegroups,verbs=get;list;watch;create;update;patch;delete

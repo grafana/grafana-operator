@@ -33,7 +33,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/types"
 
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -57,7 +56,6 @@ var errLibraryPanelContentUIDImmutable = errors.New("library panel uid is immuta
 // GrafanaLibraryPanelReconciler reconciles a GrafanaLibraryPanel object
 type GrafanaLibraryPanelReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
 }
 
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanalibrarypanels,verbs=get;list;watch;create;update;patch;delete
@@ -208,7 +206,7 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 
 func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaLibraryPanel, model map[string]any, hash string) error {
 	if instance.IsInternal() {
-		err := ReconcilePlugins(ctx, r.Client, r.Scheme, instance, cr.Spec.Plugins, fmt.Sprintf("%v-librarypanel", cr.Name))
+		err := ReconcilePlugins(ctx, r.Client, instance, cr.Spec.Plugins, fmt.Sprintf("%v-librarypanel", cr.Name))
 		if err != nil {
 			return err
 		}

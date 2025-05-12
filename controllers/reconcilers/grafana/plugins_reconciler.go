@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/model"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
-	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -23,15 +22,15 @@ func NewPluginsReconciler(client client.Client) reconcilers.OperatorGrafanaRecon
 	}
 }
 
-func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars *v1beta1.OperatorReconcileVars) (v1beta1.OperatorStageStatus, error) {
 	log := logf.FromContext(ctx).WithName("PluginsReconciler")
 
 	vars.Plugins = ""
 
-	plugins := model.GetPluginsConfigMap(cr, scheme)
+	plugins := model.GetPluginsConfigMap(cr, r.client.Scheme())
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, plugins, func() error {
-		if scheme != nil {
-			err := controllerutil.SetOwnerReference(cr, plugins, scheme)
+		if r.client.Scheme() != nil {
+			err := controllerutil.SetOwnerReference(cr, plugins, r.client.Scheme())
 			if err != nil {
 				return err
 			}

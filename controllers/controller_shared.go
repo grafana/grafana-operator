@@ -16,7 +16,6 @@ import (
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -180,9 +179,8 @@ func labelsSatisfyMatchExpressions(labels map[string]string, matchExpressions []
 	return true
 }
 
-// TODO Refactor to use scheme from k8sClient.Scheme() as it's the same anyways
-func ReconcilePlugins(ctx context.Context, k8sClient client.Client, scheme *runtime.Scheme, grafana *v1beta1.Grafana, plugins v1beta1.PluginList, resource string) error {
-	pluginsConfigMap := model.GetPluginsConfigMap(grafana, scheme)
+func ReconcilePlugins(ctx context.Context, k8sClient client.Client, grafana *v1beta1.Grafana, plugins v1beta1.PluginList, resource string) error {
+	pluginsConfigMap := model.GetPluginsConfigMap(grafana, k8sClient.Scheme())
 	selector := client.ObjectKey{
 		Namespace: pluginsConfigMap.Namespace,
 		Name:      pluginsConfigMap.Name,
@@ -195,7 +193,7 @@ func ReconcilePlugins(ctx context.Context, k8sClient client.Client, scheme *runt
 
 	// Even though model.GetPluginsConfigMap already sets an owner reference, it gets overwritten
 	// when we fetch the actual contents of the ConfigMap using k8sClient, so we need to set it here again
-	controllerutil.SetControllerReference(grafana, pluginsConfigMap, scheme) //nolint:errcheck
+	controllerutil.SetControllerReference(grafana, pluginsConfigMap, k8sClient.Scheme()) //nolint:errcheck
 
 	val, err := json.Marshal(plugins.Sanitize())
 	if err != nil {

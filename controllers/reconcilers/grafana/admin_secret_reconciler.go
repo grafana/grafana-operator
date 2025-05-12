@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/model"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -24,18 +23,18 @@ func NewAdminSecretReconciler(client client.Client) reconcilers.OperatorGrafanaR
 	}
 }
 
-func (r *AdminSecretReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, _ *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+func (r *AdminSecretReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, _ *v1beta1.OperatorReconcileVars) (v1beta1.OperatorStageStatus, error) {
 	if cr.Spec.DisableDefaultAdminSecret {
 		return v1beta1.OperatorStageResultSuccess, nil
 	}
 
-	secret := model.GetGrafanaAdminSecret(cr, scheme)
+	secret := model.GetGrafanaAdminSecret(cr, r.client.Scheme())
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, secret, func() error {
 		secret.Data = getData(cr, secret)
 
-		if scheme != nil {
-			err := controllerutil.SetControllerReference(cr, secret, scheme)
+		if r.client.Scheme() != nil {
+			err := controllerutil.SetControllerReference(cr, secret, r.client.Scheme())
 			if err != nil {
 				return err
 			}

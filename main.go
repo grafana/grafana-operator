@@ -265,74 +265,57 @@ func main() { // nolint:gocyclo
 	// Register controllers
 	if err = (&controllers.GrafanaReconciler{
 		Client:        mgr.GetClient(),
-		Scheme:        mgr.GetScheme(),
 		IsOpenShift:   isOpenShift,
 		ClusterDomain: clusterDomain,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Grafana")
 		os.Exit(1)
 	}
-	if err = (&controllers.GrafanaDashboardReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(ctx, mgr); err != nil {
+	if err = (&controllers.GrafanaDashboardReconciler{Client: mgr.GetClient()}).
+		SetupWithManager(ctx, mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDashboard")
 		os.Exit(1)
 	}
-	if err = (&controllers.GrafanaDatasourceReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(ctx, mgr); err != nil {
+	if err = (&controllers.GrafanaDatasourceReconciler{Client: mgr.GetClient()}).
+		SetupWithManager(ctx, mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDatasource")
 		os.Exit(1)
 	}
-	if err = (&controllers.GrafanaFolderReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(ctx, mgr); err != nil {
+	if err = (&controllers.GrafanaFolderReconciler{Client: mgr.GetClient()}).
+		SetupWithManager(ctx, mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaFolder")
 		os.Exit(1)
 	}
 	if err = (&controllers.GrafanaLibraryPanelReconciler{
 		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(ctx, mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaLibraryPanel")
 		os.Exit(1)
 	}
-	if err = (&controllers.GrafanaAlertRuleGroupReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	if err = (&controllers.GrafanaAlertRuleGroupReconciler{Client: mgr.GetClient()}).
+		SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaAlertRuleGroup")
 		os.Exit(1)
 	}
-	if err = (&controllers.GrafanaContactPointReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(ctx, mgr); err != nil {
+	if err = (&controllers.GrafanaContactPointReconciler{Client: mgr.GetClient()}).
+		SetupWithManager(ctx, mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaContactPoint")
 		os.Exit(1)
 	}
 	if err = (&controllers.GrafanaNotificationPolicyReconciler{
 		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("GrafanaNotificationPolicy"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaNotificationPolicy")
 		os.Exit(1)
 	}
-	if err = (&controllers.GrafanaNotificationTemplateReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	if err = (&controllers.GrafanaNotificationTemplateReconciler{Client: mgr.GetClient()}).
+		SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaNotificationTemplate")
 		os.Exit(1)
 	}
-	if err = (&controllers.GrafanaMuteTimingReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	if err = (&controllers.GrafanaMuteTimingReconciler{Client: mgr.GetClient()}).
+		SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaMuteTiming")
 		os.Exit(1)
 	}

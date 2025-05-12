@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/model"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -29,10 +28,10 @@ func NewServiceReconciler(client client.Client, clusterDomain string) reconciler
 	}
 }
 
-func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars *v1beta1.OperatorReconcileVars) (v1beta1.OperatorStageStatus, error) {
 	_ = logf.FromContext(ctx)
 
-	service := model.GetGrafanaService(cr, scheme)
+	service := model.GetGrafanaService(cr, r.client.Scheme())
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, service, func() error {
 		service.Spec = v1.ServiceSpec{
@@ -48,8 +47,8 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 			return err
 		}
 
-		if scheme != nil {
-			err = controllerutil.SetControllerReference(cr, service, scheme)
+		if r.client.Scheme() != nil {
+			err = controllerutil.SetControllerReference(cr, service, r.client.Scheme())
 			if err != nil {
 				return err
 			}
@@ -75,7 +74,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 	}
 
 	// Headless service for grafana unified alerting
-	headlessService := model.GetGrafanaHeadlessService(cr, scheme)
+	headlessService := model.GetGrafanaHeadlessService(cr, r.client.Scheme())
 	_, err = controllerutil.CreateOrUpdate(ctx, r.client, headlessService, func() error {
 		model.SetInheritedLabels(headlessService, cr.Labels)
 		headlessService.Spec = v1.ServiceSpec{

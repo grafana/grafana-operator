@@ -44,23 +44,23 @@ func NewDeploymentReconciler(client client.Client, isOpenShift bool) reconcilers
 	}
 }
 
-func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars *v1beta1.OperatorReconcileVars) (v1beta1.OperatorStageStatus, error) {
 	log := logf.FromContext(ctx).WithName("DeploymentReconciler")
 
 	openshiftPlatform := r.isOpenShift
 	log.Info("reconciling deployment", "openshift", openshiftPlatform)
 
-	deployment := model.GetGrafanaDeployment(cr, scheme)
+	deployment := model.GetGrafanaDeployment(cr, r.client.Scheme())
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, deployment, func() error {
-		deployment.Spec = getDeploymentSpec(cr, deployment.Name, scheme, vars, openshiftPlatform)
+		deployment.Spec = getDeploymentSpec(cr, deployment.Name, r.client.Scheme(), vars, openshiftPlatform)
 
 		err := v1beta1.Merge(deployment, cr.Spec.Deployment)
 		if err != nil {
 			return err
 		}
 
-		if scheme != nil {
-			err = controllerutil.SetControllerReference(cr, deployment, scheme)
+		if r.client.Scheme() != nil {
+			err = controllerutil.SetControllerReference(cr, deployment, r.client.Scheme())
 			if err != nil {
 				return err
 			}

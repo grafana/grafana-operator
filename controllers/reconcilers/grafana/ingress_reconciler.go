@@ -32,34 +32,34 @@ func NewIngressReconciler(client client.Client, isOpenShift bool) reconcilers.Op
 	}
 }
 
-func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars *v1beta1.OperatorReconcileVars) (v1beta1.OperatorStageStatus, error) {
 	log := logf.FromContext(ctx).WithName("IngressReconciler")
 
 	if r.isOpenShift {
 		log.Info("reconciling route", "platform", "openshift")
-		return r.reconcileRoute(ctx, cr, vars, scheme)
+		return r.reconcileRoute(ctx, cr, vars)
 	} else {
 		log.Info("reconciling ingress", "platform", "kubernetes")
-		return r.reconcileIngress(ctx, cr, vars, scheme)
+		return r.reconcileIngress(ctx, cr, vars)
 	}
 }
 
-func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Grafana, _ *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Grafana, _ *v1beta1.OperatorReconcileVars) (v1beta1.OperatorStageStatus, error) {
 	if cr.Spec.Ingress == nil {
 		return v1beta1.OperatorStageResultSuccess, nil
 	}
 
-	ingress := model.GetGrafanaIngress(cr, scheme)
+	ingress := model.GetGrafanaIngress(cr, r.client.Scheme())
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, ingress, func() error {
-		ingress.Spec = getIngressSpec(cr, scheme)
+		ingress.Spec = getIngressSpec(cr, r.client.Scheme())
 
 		err := v1beta1.Merge(ingress, cr.Spec.Ingress)
 		if err != nil {
 			return err
 		}
 
-		err = controllerutil.SetControllerReference(cr, ingress, scheme)
+		err = controllerutil.SetControllerReference(cr, ingress, r.client.Scheme())
 		if err != nil {
 			return err
 		}
@@ -90,23 +90,23 @@ func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Gr
 	return v1beta1.OperatorStageResultSuccess, nil
 }
 
-func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Grafana, _ *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Grafana, _ *v1beta1.OperatorReconcileVars) (v1beta1.OperatorStageStatus, error) {
 	if cr.Spec.Route == nil || cr.Spec.Route.Spec == nil {
 		return v1beta1.OperatorStageResultSuccess, nil
 	}
 
-	route := model.GetGrafanaRoute(cr, scheme)
+	route := model.GetGrafanaRoute(cr, r.client.Scheme())
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, route, func() error {
-		route.Spec = getRouteSpec(cr, scheme)
+		route.Spec = getRouteSpec(cr, r.client.Scheme())
 
 		err := v1beta1.Merge(route, cr.Spec.Route)
 		if err != nil {
 			return err
 		}
 
-		if scheme != nil {
-			err = controllerutil.SetControllerReference(cr, route, scheme)
+		if r.client.Scheme() != nil {
+			err = controllerutil.SetControllerReference(cr, route, r.client.Scheme())
 			if err != nil {
 				return err
 			}

@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/config"
 	"github.com/grafana/grafana-operator/v5/controllers/model"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
-	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -23,13 +22,13 @@ func NewConfigReconciler(client client.Client) reconcilers.OperatorGrafanaReconc
 	}
 }
 
-func (r *ConfigReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+func (r *ConfigReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars *v1beta1.OperatorReconcileVars) (v1beta1.OperatorStageStatus, error) {
 	_ = logf.FromContext(ctx)
 
 	cfg := config.WriteIni(cr.Spec.Config)
 	vars.ConfigHash = config.GetHash(cfg)
 
-	configMap := model.GetGrafanaConfigMap(cr, scheme)
+	configMap := model.GetGrafanaConfigMap(cr, r.client.Scheme())
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, configMap, func() error {
 		if configMap.Data == nil {
 			configMap.Data = make(map[string]string)
@@ -37,8 +36,8 @@ func (r *ConfigReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, v
 
 		configMap.Data["grafana.ini"] = cfg
 
-		if scheme != nil {
-			err := controllerutil.SetControllerReference(cr, configMap, scheme)
+		if r.client.Scheme() != nil {
+			err := controllerutil.SetControllerReference(cr, configMap, r.client.Scheme())
 			if err != nil {
 				return err
 			}

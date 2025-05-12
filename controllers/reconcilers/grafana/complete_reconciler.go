@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
-	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -24,7 +23,7 @@ func NewCompleteReconciler(client client.Client) reconcilers.OperatorGrafanaReco
 	}
 }
 
-func (r *CompleteReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, _ *v1beta1.OperatorReconcileVars, _ *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+func (r *CompleteReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, _ *v1beta1.OperatorReconcileVars) (v1beta1.OperatorStageStatus, error) {
 	log := logf.FromContext(ctx).WithName("CompleteReconciler")
 
 	log.V(1).Info("fetching Grafana version from instance")
