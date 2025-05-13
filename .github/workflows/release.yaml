@@ -5,8 +5,7 @@ on:
     tags:
       - v5.*
 
-permissions:
-  packages: write # zizmor: ignore[excessive-permissions] needed by all jobs as they publish OCI packages to ghcr.io
+permissions: {}
 
 env:
   CR_INDEX_PATH: "${{ github.workspace }}/.cr-index"
@@ -15,6 +14,9 @@ env:
 
 jobs:
   helm:
+    permissions:
+      contents: read
+      packages: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -70,7 +72,7 @@ jobs:
         uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631 # v2
         with:
           body: |
-            Helm chart for the [grafana-operator](https://github.com/${{ github.repository }}
+            Helm chart for the [grafana-operator](https://github.com/${{ github.repository }})
 
             Tag on source: https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}
           files: |
@@ -102,6 +104,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      packages: write
     steps:
       - name: install flux
         uses: fluxcd/flux2/action@8d5f40dca5aa5d3c0fc3414457dda15a0ac92fa4 # v2.5.1
@@ -148,6 +151,9 @@ jobs:
           gh release upload "${RELEASE_NAME}" kustomize-*.yaml crds.yaml
 
   image:
+    permissions:
+      contents: read
+      packages: write
     runs-on: ubuntu-latest
     steps:
       - name: Clone repo
