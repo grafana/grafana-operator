@@ -75,6 +75,10 @@ spec:
   - name: step-10
     try:
     - apply:
+        file: 10-contact-points.yaml
+    - assert:
+        file: 10-assert-contact-points.yaml
+    - apply:
         file: 10-notification-policy.yaml
     - assert:
         file: 10-assert.yaml
