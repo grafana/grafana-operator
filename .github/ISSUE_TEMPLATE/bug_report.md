@@ -33,6 +33,8 @@ If applicable, add screenshots to help explain your problem.
 
 **Runtime (please complete the following information):**
 
+<!-- ⚠️ BITNAMI USERS: make sure you can reproduce the bug with our official helm chart before submitting it ⚠️ -->
+
 - OS: [e.g. Linux,Fedora,Mac]
 - Grafana Operator Version [e.g. v5.0.0]
 - Environment: [e.g Openshift,Kubernetes,minikube etc. please specify versions]
