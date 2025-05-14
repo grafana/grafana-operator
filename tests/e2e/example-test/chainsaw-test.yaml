@@ -59,6 +59,10 @@ spec:
   - name: step-08
     try:
     - apply:
+        file: 08-alert-folder.yaml
+    - assert:
+        file: 08-folder-assert.yaml
+    - apply:
         file: 08-alert-rule-group.yaml
     - assert:
         file: 08-assert.yaml
