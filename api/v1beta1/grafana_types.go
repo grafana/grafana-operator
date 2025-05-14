@@ -133,16 +133,22 @@ type GrafanaPreferences struct {
 
 // GrafanaStatus defines the observed state of Grafana
 type GrafanaStatus struct {
-	Stage         OperatorStageName      `json:"stage,omitempty"`
-	StageStatus   OperatorStageStatus    `json:"stageStatus,omitempty"`
-	LastMessage   string                 `json:"lastMessage,omitempty"`
-	AdminURL      string                 `json:"adminUrl,omitempty"`
+	// Reconciliation constants, while spec is unchanged
+	AdminURL string `json:"adminUrl,omitempty"`
+	Version  string `json:"version,omitempty"`
+
+	// Reconcialition stage and health
+	Conditions  []metav1.Condition  `json:"conditions,omitempty"`
+	Stage       OperatorStageName   `json:"stage,omitempty"`
+	StageStatus OperatorStageStatus `json:"stageStatus,omitempty"`
+	LastMessage string              `json:"lastMessage,omitempty"`
+
+	// Applied resources
 	ContactPoints NamespacedResourceList `json:"contactPoints,omitempty"`
 	Dashboards    NamespacedResourceList `json:"dashboards,omitempty"`
 	Datasources   NamespacedResourceList `json:"datasources,omitempty"`
 	Folders       NamespacedResourceList `json:"folders,omitempty"`
 	LibraryPanels NamespacedResourceList `json:"libraryPanels,omitempty"`
-	Version       string                 `json:"version,omitempty"`
 }
 
 // +kubebuilder:object:root=true
