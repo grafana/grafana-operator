@@ -143,6 +143,7 @@ type GrafanaStatus struct {
 	Folders       NamespacedResourceList `json:"folders,omitempty"`
 	LibraryPanels NamespacedResourceList `json:"libraryPanels,omitempty"`
 	Version       string                 `json:"version,omitempty"`
+	Conditions    []metav1.Condition     `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
