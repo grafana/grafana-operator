@@ -10,10 +10,7 @@ bugfix:
  - head-branch: ['^fix', 'fix', '^bugfix']
 
 chore:
- - head-branch: ['^chore', '^ci']
-
-refactor:
- - head-branch: ['^refactor']
+ - head-branch: ['^chore', '^ci', ^refactor]
 
 test:
  - head-branch: ['^test']
