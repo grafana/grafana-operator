@@ -36,14 +36,19 @@ import (
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/controllers/content"
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
+	corev1 "k8s.io/api/core/v1"
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/types"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 const (
@@ -604,9 +609,24 @@ func (r *GrafanaDashboardReconciler) DeleteFolderIfEmpty(client *genapi.GrafanaH
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *GrafanaDashboardReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
+	const (
+		configMapIndexKey string = ".metadata.configMap"
+	)
+
+	// Index the dashboards by the ConfigMap references they (may) point at.
+	if err := mgr.GetCache().IndexField(ctx, &v1beta1.GrafanaDashboard{}, configMapIndexKey,
+		r.indexConfigMapSource()); err != nil {
+		return fmt.Errorf("failed setting index fields: %w", err)
+	}
+
 	err := ctrl.NewControllerManagedBy(mgr).
-		For(&v1beta1.GrafanaDashboard{}).
-		WithEventFilter(ignoreStatusUpdates()).
+		For(&v1beta1.GrafanaDashboard{}, builder.WithPredicates(
+			ignoreStatusUpdates(),
+		)).
+		Watches(
+			&corev1.ConfigMap{},
+			handler.EnqueueRequestsFromMapFunc(r.requestsForChangeByField(configMapIndexKey)),
+		).
 		Complete(r)
 
 	if err == nil {
@@ -634,6 +654,42 @@ func (r *GrafanaDashboardReconciler) SetupWithManager(ctx context.Context, mgr c
 	}
 
 	return err
+}
+
+func (r *GrafanaDashboardReconciler) indexConfigMapSource() func(o client.Object) []string {
+	return func(o client.Object) []string {
+		dashboard, ok := o.(*v1beta1.GrafanaDashboard)
+		if !ok {
+			panic(fmt.Sprintf("Expected a GrafanaDashboard, got %T", o))
+		}
+
+		if dashboard.Spec.ConfigMapRef != nil {
+			return []string{fmt.Sprintf("%s/%s", dashboard.Namespace, dashboard.Spec.ConfigMapRef.Name)}
+		}
+
+		return nil
+	}
+}
+
+func (r *GrafanaDashboardReconciler) requestsForChangeByField(indexKey string) handler.MapFunc {
+	return func(ctx context.Context, o client.Object) []reconcile.Request {
+		var list v1beta1.GrafanaDashboardList
+		if err := r.List(ctx, &list, client.MatchingFields{
+			indexKey: fmt.Sprintf("%s/%s", o.GetNamespace(), o.GetName()),
+		}); err != nil {
+			return nil
+		}
+
+		var reqs []reconcile.Request
+		for _, dashboard := range list.Items {
+			reqs = append(reqs, reconcile.Request{NamespacedName: types.NamespacedName{
+				Namespace: dashboard.Namespace,
+				Name:      dashboard.Name,
+			}})
+		}
+
+		return reqs
+	}
 }
 
 func (r *GrafanaDashboardReconciler) UpdateHomeDashboard(ctx context.Context, grafana v1beta1.Grafana, uid string, dashboard *v1beta1.GrafanaDashboard) error {

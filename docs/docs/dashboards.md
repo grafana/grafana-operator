@@ -580,5 +580,69 @@ spec:
       {{- (.Files.Get "dashboards.tar.gz") | b64enc | nindent 6 }}
 ```
 
+## Dashboard from ConfigMap
+
+Alternatively a ConfigMap can be referenced which contains the dashboard.
+
 ```yaml
-[Example documentation](../examples/dashboard_with_custom_folder/readme).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dashboard-definition
+  labels:
+    app.kubernetes.io/managed-by: grafana-operator
+data:
+  json: >
+    {
+      "id": null,
+      "title": "Simple Dashboard from ConfigMap",
+      "tags": [],
+      "style": "dark",
+      "timezone": "browser",
+      "editable": true,
+      "hideControls": false,
+      "graphTooltip": 1,
+      "panels": [],
+      "time": {
+        "from": "now-6h",
+        "to": "now"
+      },
+      "timepicker": {
+        "time_options": [],
+        "refresh_intervals": []
+      },
+      "templating": {
+        "list": []
+      },
+      "annotations": {
+        "list": []
+      },
+      "refresh": "5s",
+      "schemaVersion": 17,
+      "version": 0,
+      "links": []
+    }
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: grafanadashboard-from-configmap
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  configMapRef:
+    name: dashboard-definition
+    key: json
+```
+
+By default the GrafanaDashboard resource is not reconciled if the contents of the referenced ConfigMap changes.
+This is due the fact that the default settings for the controller are optimized for performance and ConfigMaps therefore are cached.
+If the Dashboard should be reconciled immediately after a ConfigMap change it requires either changing the controller behaviour or labeling the ConfigMap accordingly.
+
+This can be achieved with either option:
+
+* Set the `app.kubernetes.io/managed-by: grafana-operator` label to the ConfigMap as in the example above.
+* Disable the controller cache. Set the env variable `ENFORCE_CACHE_LABELS=off` on the controller.
+  **Note**: This can have a significant impact on performance depending on the size and numbers of resources in the cluster.
+* Use a custom sharding key. Set the env variable `WATCH_LABEL_SELECTORS` to a custom resource selector on the controller.
