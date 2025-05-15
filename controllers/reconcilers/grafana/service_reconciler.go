@@ -45,8 +45,10 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 
 		err := v1beta1.Merge(service, cr.Spec.Service)
 		if err != nil {
+			setInvalidMergeCondition(cr, "Service", err)
 			return err
 		}
+		removeInvalidMergeCondition(cr, "Service")
 
 		if scheme != nil {
 			err = controllerutil.SetControllerReference(cr, service, scheme)
