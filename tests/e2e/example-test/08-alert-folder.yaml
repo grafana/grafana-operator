@@ -5,6 +5,7 @@ metadata:
   labels:
     folder: "test-folder"
 spec:
+  resyncPeriod: 30s
   instanceSelector:
     matchLabels:
       dashboards: "grafana"

@@ -5,6 +5,7 @@ metadata:
 spec:
   name: first-test
   type: "email"
+  resyncPeriod: 30s
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
@@ -18,6 +19,7 @@ metadata:
 spec:
   name: second-test
   type: "email"
+  resyncPeriod: 30s
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
