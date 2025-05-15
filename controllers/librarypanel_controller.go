@@ -28,14 +28,19 @@ import (
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/controllers/content"
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
+	corev1 "k8s.io/api/core/v1"
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/types"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 type libraryElementType int
@@ -323,9 +328,24 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, libraryPan
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *GrafanaLibraryPanelReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
+	const (
+		configMapIndexKey string = ".metadata.configMap"
+	)
+
+	// Index the library panels by the ConfigMap references they (may) point at.
+	if err := mgr.GetCache().IndexField(ctx, &v1beta1.GrafanaLibraryPanel{}, configMapIndexKey,
+		r.indexConfigMapSource()); err != nil {
+		return fmt.Errorf("failed setting index fields: %w", err)
+	}
+
 	err := ctrl.NewControllerManagedBy(mgr).
-		For(&v1beta1.GrafanaLibraryPanel{}).
-		WithEventFilter(ignoreStatusUpdates()).
+		For(&v1beta1.GrafanaLibraryPanel{}, builder.WithPredicates(
+			ignoreStatusUpdates(),
+		)).
+		Watches(
+			&corev1.ConfigMap{},
+			handler.EnqueueRequestsFromMapFunc(r.requestsForChangeByField(configMapIndexKey)),
+		).
 		Complete(r)
 	if err != nil {
 		return err
@@ -356,4 +376,40 @@ func (r *GrafanaLibraryPanelReconciler) SetupWithManager(ctx context.Context, mg
 	}()
 
 	return nil
+}
+
+func (r *GrafanaLibraryPanelReconciler) indexConfigMapSource() func(o client.Object) []string {
+	return func(o client.Object) []string {
+		libraryPanel, ok := o.(*v1beta1.GrafanaLibraryPanel)
+		if !ok {
+			panic(fmt.Sprintf("Expected a GrafanaLibraryPanel, got %T", o))
+		}
+
+		if libraryPanel.Spec.ConfigMapRef != nil {
+			return []string{fmt.Sprintf("%s/%s", libraryPanel.Namespace, libraryPanel.Spec.ConfigMapRef.Name)}
+		}
+
+		return nil
+	}
+}
+
+func (r *GrafanaLibraryPanelReconciler) requestsForChangeByField(indexKey string) handler.MapFunc {
+	return func(ctx context.Context, o client.Object) []reconcile.Request {
+		var list v1beta1.GrafanaLibraryPanelList
+		if err := r.List(ctx, &list, client.MatchingFields{
+			indexKey: fmt.Sprintf("%s/%s", o.GetNamespace(), o.GetName()),
+		}); err != nil {
+			return nil
+		}
+
+		var reqs []reconcile.Request
+		for _, libraryPanel := range list.Items {
+			reqs = append(reqs, reconcile.Request{NamespacedName: types.NamespacedName{
+				Namespace: libraryPanel.Namespace,
+				Name:      libraryPanel.Name,
+			}})
+		}
+
+		return reqs
+	}
 }
