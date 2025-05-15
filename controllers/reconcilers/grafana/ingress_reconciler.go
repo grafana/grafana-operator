@@ -57,8 +57,10 @@ func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Gr
 
 		err := v1beta1.Merge(ingress, cr.Spec.Ingress)
 		if err != nil {
+			setInvalidMergeCondition(cr, "Ingress", err)
 			return err
 		}
+		removeInvalidMergeCondition(cr, "Ingress")
 
 		err = controllerutil.SetControllerReference(cr, ingress, scheme)
 		if err != nil {
@@ -103,8 +105,10 @@ func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Graf
 
 		err := v1beta1.Merge(route, cr.Spec.Route)
 		if err != nil {
+			setInvalidMergeCondition(cr, "Route", err)
 			return err
 		}
+		removeInvalidMergeCondition(cr, "Route")
 
 		if scheme != nil {
 			err = controllerutil.SetControllerReference(cr, route, scheme)

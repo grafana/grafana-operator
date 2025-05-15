@@ -56,8 +56,10 @@ func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafan
 
 		err := v1beta1.Merge(deployment, cr.Spec.Deployment)
 		if err != nil {
+			setInvalidMergeCondition(cr, "Deployment", err)
 			return err
 		}
+		removeInvalidMergeCondition(cr, "Deployment")
 
 		if scheme != nil {
 			err = controllerutil.SetControllerReference(cr, deployment, scheme)
