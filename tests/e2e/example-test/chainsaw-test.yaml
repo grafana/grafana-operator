@@ -59,6 +59,10 @@ spec:
   - name: step-08
     try:
     - apply:
+        file: 08-alert-folder.yaml
+    - assert:
+        file: 08-folder-assert.yaml
+    - apply:
         file: 08-alert-rule-group.yaml
     - assert:
         file: 08-assert.yaml
@@ -70,6 +74,10 @@ spec:
         file: 09-assert.yaml
   - name: step-10
     try:
+    - apply:
+        file: 10-contact-points.yaml
+    - assert:
+        file: 10-assert-contact-points.yaml
     - apply:
         file: 10-notification-policy.yaml
     - assert:

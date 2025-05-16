@@ -5,10 +5,6 @@ on:
     branches: [master]
   merge_group:
 
-env:
-  NAME: grafana-operator
-  NAMESPACE: grafana-operator-system
-
 permissions:
   contents: read
 
@@ -51,10 +47,10 @@ jobs:
     strategy:
       matrix:
         version:
-          - v1.27.13
           - v1.30.10
           - v1.31.6
           - v1.32.2
+          - v1.33.0
     steps:
       - name: Clone repo and checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -101,11 +97,13 @@ jobs:
 
       - name: Debug failure
         if: failure()
+        env:
+          NAMESPACE: default
         run: |
           set -e
           kubectl version
-          kubectl -n $NAMESPACE get all
-          kubectl -n $NAMESPACE get grafana
+          kubectl get all -A
+          kubectl get grafanas -A
           kubectl get crd
           POD=$(kubectl get pods -n $NAMESPACE -l app.kubernetes.io/name=grafana-operator --output='jsonpath={.items[].metadata.name}')
           echo "pod logs"

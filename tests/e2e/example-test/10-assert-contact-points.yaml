@@ -1,0 +1,19 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaContactPoint
+metadata:
+  name: first-test
+status:
+  conditions:
+  - reason: ApplySuccessful
+    status: "True"
+    type: ContactPointSynchronized
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaContactPoint
+metadata:
+  name: second-test
+status:
+  conditions:
+  - reason: ApplySuccessful
+    status: "True"
+    type: ContactPointSynchronized
