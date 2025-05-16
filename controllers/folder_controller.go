@@ -55,108 +55,58 @@ type GrafanaFolderReconciler struct {
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanafolders/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanafolders/finalizers,verbs=update
 
-func (r *GrafanaFolderReconciler) syncFolders(ctx context.Context) (ctrl.Result, error) {
+func (r *GrafanaFolderReconciler) syncStatuses(ctx context.Context) error {
 	log := logf.FromContext(ctx)
-	foldersSynced := 0
 
 	// get all grafana instances
 	grafanas := &grafanav1beta1.GrafanaList{}
 	var opts []client.ListOption
 	err := r.List(ctx, grafanas, opts...)
 	if err != nil {
-		return ctrl.Result{}, err
+		return err
 	}
-
 	// no instances, no need to sync
 	if len(grafanas.Items) == 0 {
-		return ctrl.Result{Requeue: false}, nil
+		return nil
 	}
 
 	// get all folders
 	allFolders := &grafanav1beta1.GrafanaFolderList{}
 	err = r.List(ctx, allFolders, opts...)
 	if err != nil {
-		return ctrl.Result{}, err
+		return err
 	}
 
-	// sync folders, delete folders from grafana that do no longer have a cr
-	foldersToDelete := map[*grafanav1beta1.Grafana][]grafanav1beta1.NamespacedResource{}
+	// delete folders from grafana statuses that no longer have a CR
+	foldersSynced := 0
 	for _, grafana := range grafanas.Items {
+		statusUpdated := false
 		for _, folder := range grafana.Status.Folders {
-			if allFolders.Find(folder.Namespace(), folder.Name()) == nil {
-				foldersToDelete[&grafana] = append(foldersToDelete[&grafana], folder)
+			namespace, name, _ := folder.Split()
+			if allFolders.Find(namespace, name) == nil {
+				grafana.Status.Folders = grafana.Status.Folders.Remove(namespace, name)
+				foldersSynced += 1
+				statusUpdated = true
 			}
 		}
-	}
 
-	// delete all folders that no longer have a cr
-	for grafana, existingFolders := range foldersToDelete {
-		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
-
-		for syncCounter, folder := range existingFolders {
-			// avoid bombarding the grafana instance with a large number of requests at once, limit
-			// the sync to a certain number of folders per cycle. This means that it will take longer to sync
-			// a large number of deleted folders crs, but that should be an edge case.
-			if syncCounter >= syncBatchSize {
-				return ctrl.Result{Requeue: true}, nil
-			}
-
-			namespace, name, uid := folder.Split()
-
-			reftrue := true
-			params := folders.NewDeleteFolderParams().WithFolderUID(uid).WithForceDeleteRules(&reftrue)
-			_, err = grafanaClient.Folders.DeleteFolder(params) //nolint
+		if statusUpdated {
+			err = r.Status().Update(ctx, &grafana)
 			if err != nil {
-				var notFound *folders.DeleteFolderNotFound
-				if errors.As(err, &notFound) {
-					log.Info("folder no longer exists", "namespace", namespace, "name", name)
-				} else {
-					return ctrl.Result{}, err
-				}
+				return err
 			}
-
-			grafana.Status.Folders = grafana.Status.Folders.Remove(namespace, name)
-			foldersSynced += 1
-		}
-
-		// one update per grafana - this will trigger a reconcile of the grafana controller
-		// so we should minimize those updates
-		err = r.Client.Status().Update(ctx, grafana)
-		if err != nil {
-			return ctrl.Result{}, err
 		}
 	}
 
 	if foldersSynced > 0 {
 		log.Info("successfully synced folders", "folders", foldersSynced)
 	}
-	return ctrl.Result{Requeue: false}, nil
+	return nil
 }
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the GrafanaFolder object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.9.2/pkg/reconcile
 func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx).WithName("GrafanaFolderReconciler")
 	ctx = logf.IntoContext(ctx, log)
-
-	// periodic sync reconcile
-	if req.Namespace == "" && req.Name == "" {
-		start := time.Now()
-		syncResult, err := r.syncFolders(ctx)
-		elapsed := time.Since(start).Milliseconds()
-		metrics.InitialFoldersSyncDuration.Set(float64(elapsed))
-		return syncResult, err
-	}
 
 	folder := &grafanav1beta1.GrafanaFolder{}
 	err := r.Get(ctx, client.ObjectKey{
@@ -230,40 +180,6 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	return ctrl.Result{RequeueAfter: folder.Spec.ResyncPeriod.Duration}, nil
 }
 
-// SetupWithManager sets up the controller with the Manager.
-func (r *GrafanaFolderReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
-	err := ctrl.NewControllerManagedBy(mgr).
-		For(&grafanav1beta1.GrafanaFolder{}).
-		WithEventFilter(ignoreStatusUpdates()).
-		Complete(r)
-
-	if err == nil {
-		go func() {
-			log := logf.FromContext(ctx).WithName("GrafanaFolderReconciler")
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case <-time.After(initialSyncDelay):
-					result, err := r.Reconcile(ctx, ctrl.Request{})
-					if err != nil {
-						log.Error(err, "error synchronizing folders")
-						continue
-					}
-					if result.Requeue {
-						log.Info("more folders left to synchronize")
-						continue
-					}
-					log.Info("folder sync complete")
-					return
-				}
-			}
-		}()
-	}
-
-	return err
-}
-
 func (r *GrafanaFolderReconciler) finalize(ctx context.Context, folder *grafanav1beta1.GrafanaFolder) error {
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, folder)
 	if err != nil {
@@ -293,7 +209,7 @@ func (r *GrafanaFolderReconciler) finalize(ctx context.Context, folder *grafanav
 		}
 
 		grafana.Status.Folders = grafana.Status.Folders.Remove(folder.Namespace, folder.Name)
-		if err = r.Client.Status().Update(ctx, &grafana); err != nil {
+		if err = r.Status().Update(ctx, &grafana); err != nil {
 			return fmt.Errorf("removing Folder from Grafana cr: %w", err)
 		}
 	}
@@ -334,7 +250,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 		// - the folder was created through dashboard controller
 		if found, _ := grafana.Status.Folders.Find(cr.Namespace, cr.Name); !found {
 			grafana.Status.Folders = grafana.Status.Folders.Add(cr.Namespace, cr.Name, uid)
-			err = r.Client.Status().Update(ctx, grafana)
+			err = r.Status().Update(ctx, grafana)
 			if err != nil {
 				return err
 			}
@@ -371,7 +287,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 		}
 
 		grafana.Status.Folders = grafana.Status.Folders.Add(cr.Namespace, cr.Name, folderResp.Payload.UID)
-		err = r.Client.Status().Update(ctx, grafana)
+		err = r.Status().Update(ctx, grafana)
 		if err != nil {
 			return err
 		}
@@ -430,4 +346,39 @@ func (r *GrafanaFolderReconciler) Exists(client *genapi.GrafanaHTTPAPI, cr *graf
 		}
 		page++
 	}
+}
+
+// SetupWithManager sets up the controller with the Manager.
+func (r *GrafanaFolderReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
+	err := ctrl.NewControllerManagedBy(mgr).
+		For(&grafanav1beta1.GrafanaFolder{}).
+		WithEventFilter(ignoreStatusUpdates()).
+		Complete(r)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		log := logf.FromContext(ctx).WithName("GrafanaFolderReconciler")
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(initialSyncDelay):
+				start := time.Now()
+				err := r.syncStatuses(ctx)
+				elapsed := time.Since(start).Milliseconds()
+				metrics.InitialFoldersSyncDuration.Set(float64(elapsed))
+				if err != nil {
+					log.Error(err, "error synchronizing folders")
+					continue
+				}
+
+				log.Info("folder sync complete")
+				return
+			}
+		}
+	}()
+
+	return nil
 }
