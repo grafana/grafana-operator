@@ -154,6 +154,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
+      attestations: write
     runs-on: ubuntu-latest
     steps:
       - name: Clone repo
@@ -182,6 +184,7 @@ jobs:
           cosign-release: "v2.2.2"
 
       - name: Build and push
+        id: publish-image
         env:
           IMAGE_VERSION: ${{ github.ref_name }}
           KO_DOCKER_REPO: "ghcr.io/${{ github.repository }}"
@@ -193,10 +196,14 @@ jobs:
             --image-label org.opencontainers.image.revision=${{ github.sha }} \
             --image-label org.opencontainers.image.version=${IMAGE_VERSION} \
             --image-label org.opencontainers.image.created="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-
-      - name: Sign Image
-        run: |
-          cosign sign -d -y $(cat ./image-digest)
+          echo "IMAGE_DIGEST=$(cat ./image-digest | cut -d@ -f2)" >> $GITHUB_OUTPUT
+      - name: Attest
+        uses: actions/attest-build-provenance@db473fddc028af60658334401dc6fa3ffd8669fd # v2
+        id: attest
+        with:
+          subject-name: "ghcr.io/${{ github.repository }}"
+          subject-digest: ${{ steps.publish-image.outputs.IMAGE_DIGEST }}
+          push-to-registry: true
 
   distribute-to-quay:
     runs-on: ubuntu-latest
