@@ -91,3 +91,29 @@ spec:
 **NOTE:** To make grafana install a plugin, the operator bootstraps a grafana instance with a custom value passed in `GF_INSTALL_PLUGINS` environment variable ([Install plugins in the Docker container](https://grafana.com/docs/grafana/latest/setup-grafana/installation/docker/#install-official-and-community-grafana-plugins)). Thus, there is no way for the operator to install a plugin in an external grafana instance.
 
 Look here for more examples on how to install [plugins](../examples/plugins/readme)
+
+## Private data source connect (PDC)
+
+[Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/), or PDC, is a way for you to establish a private, secured connection between a Grafana Cloud instance, or stack, and data sources secured within a private network.
+
+To enable PDC on data sources configured through the Grafana operator, set the `enableSecureSocksProxy` and `secureSocksProxyUsername` fields in the `jsonData` field of the resource like this:
+```.
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: grafanadatasource-sample
+spec:
+  instanceSelector:
+    matchLabels:
+      instance: grafanacloud-instance
+  datasource:
+    name: prometheus-pdc-operator
+    type: prometheus
+    access: proxy
+    url: http://localhost:9090
+    jsonData:
+      "enableSecureSocksProxy": true
+      "secureSocksProxyUsername": "<your-pdc-network-id>"
+```
+
+To find the PDC network ID, go to the *Connections / Private data source connect* page in your Grafana Cloud instance and select the network you want to connect to.
