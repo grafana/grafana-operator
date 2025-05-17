@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"net/http"
+	"runtime"
 	"time"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -39,4 +40,24 @@ func NewHTTPClient(ctx context.Context, c client.Client, grafana *v1beta1.Grafan
 		Transport: transport,
 		Timeout:   time.Second * timeout,
 	}, nil
+}
+
+// defaultTransport returns a new http.Transport with similar default values to
+// http.DefaultTransport, but with idle connections and keepalives disabled.
+func defaultTransport() *http.Transport {
+	tp := defaultPooledTransport()
+	tp.DisableKeepAlives = true
+	tp.MaxIdleConnsPerHost = -1
+	return tp
+}
+
+// defaultPooledTransport returns a new http.Transport with similar default
+// values to http.DefaultTransport. Do not use this for transient transports as
+// it can leak file descriptors over time. Only use this for transports that
+// will be re-used for the same host(s).
+func defaultPooledTransport() *http.Transport {
+	tp := http.DefaultTransport.(*http.Transport).Clone() //nolint:errcheck
+	tp.DisableKeepAlives = false
+	tp.MaxIdleConnsPerHost = runtime.GOMAXPROCS(0) + 1
+	return tp
 }
