@@ -17,88 +17,34 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var (
-	httpTransportPool = syncPool[*http.Transport]{
-		Pool: sync.Pool{
-			New: func() interface{} {
-				return defaultPooledTransport()
-			},
-		},
-	}
-	genTransportCfgPool = syncPool[*genapi.TransportConfig]{
-		Pool: sync.Pool{
-			New: func() interface{} {
-				return &genapi.TransportConfig{}
-			},
-		},
-	}
-)
-
 type grafanaAdminCredentials struct {
 	username string
 	password string
 	apikey   string
 }
 
+var grafanaClientPool sync.Map
+
 func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (*genapi.GrafanaHTTPAPI, error) {
-	var timeout time.Duration
-	if grafana.Spec.Client != nil && grafana.Spec.Client.TimeoutSeconds != nil {
-		timeout = time.Duration(*grafana.Spec.Client.TimeoutSeconds)
-		if timeout < 0 {
-			timeout = 0
-		}
-	} else {
-		timeout = 10
+	type fingerPrint struct {
+		ns, name string
+		gen      int64
 	}
-
-	tlsConfig, err := buildTLSConfiguration(ctx, c, grafana)
+	fp := fingerPrint{
+		ns:   grafana.Namespace,
+		name: grafana.Name,
+		gen:  grafana.Generation,
+	}
+	cl, ok := grafanaClientPool.Load(fp)
+	if ok {
+		return cl.(*genapi.GrafanaHTTPAPI), nil
+	}
+	gc, err := newGeneratedGrafanaClient(ctx, c, grafana)
 	if err != nil {
 		return nil, err
 	}
-
-	gURL, err := ParseAdminURL(grafana.Status.AdminURL)
-	if err != nil {
-		return nil, err
-	}
-
-	tp := httpTransportPool.Get()
-	defer func() {
-		httpTransportPool.Put(tp)
-	}()
-
-	transport := newInstrumentedRoundTripper(tp, grafana.IsExternal(), tlsConfig, metrics.GrafanaAPIRequests.MustCurryWith(prometheus.Labels{
-		"instance_namespace": grafana.Namespace,
-		"instance_name":      grafana.Name,
-	}))
-	if grafana.Spec.Client != nil && grafana.Spec.Client.Headers != nil {
-		transport.(*instrumentedRoundTripper).addHeaders(grafana.Spec.Client.Headers) //nolint:errcheck
-	}
-
-	cred, err := getAdminCredentials(ctx, c, grafana)
-	if err != nil {
-		return nil, err
-	}
-
-	cfg := genTransportCfgPool.Get()
-	defer func() {
-		genTransportCfgPool.Put(cfg)
-	}()
-
-	cfg.Schemes = []string{gURL.Scheme}
-	cfg.BasePath = gURL.Path
-	cfg.Host = gURL.Host
-	cfg.APIKey = cred.apikey
-	cfg.TLSConfig = tlsConfig
-	cfg.Client = &http.Client{
-		Transport: transport,
-		Timeout:   timeout * time.Second,
-	}
-	if cred.username != "" {
-		cfg.BasicAuth = url.UserPassword(cred.username, cred.password)
-	}
-
-	cl := genapi.NewHTTPClientWithConfig(nil, cfg)
-	return cl, nil
+	grafanaClientPool.Store(fp, gc)
+	return gc, nil
 }
 
 func InjectAuthHeaders(ctx context.Context, c client.Client, grafana *v1beta1.Grafana, req *http.Request) error {
@@ -126,6 +72,65 @@ func ParseAdminURL(adminURL string) (*url.URL, error) {
 
 	gURL = gURL.JoinPath("/api")
 	return gURL, nil
+}
+
+func newGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (*genapi.GrafanaHTTPAPI, error) {
+	var timeout time.Duration
+	if grafana.Spec.Client != nil && grafana.Spec.Client.TimeoutSeconds != nil {
+		timeout = time.Duration(*grafana.Spec.Client.TimeoutSeconds)
+		if timeout < 0 {
+			timeout = 0
+		}
+	} else {
+		timeout = 10
+	}
+
+	tlsConfig, err := buildTLSConfiguration(ctx, c, grafana)
+	if err != nil {
+		return nil, err
+	}
+
+	gURL, err := ParseAdminURL(grafana.Status.AdminURL)
+	if err != nil {
+		return nil, err
+	}
+
+	tp := defaultPooledTransport()
+	transport := newInstrumentedRoundTripper(tp, grafana.IsExternal(), tlsConfig, metrics.GrafanaAPIRequests.MustCurryWith(prometheus.Labels{
+		"instance_namespace": grafana.Namespace,
+		"instance_name":      grafana.Name,
+	}))
+	if grafana.Spec.Client != nil && grafana.Spec.Client.Headers != nil {
+		transport.(*instrumentedRoundTripper).addHeaders(grafana.Spec.Client.Headers) //nolint:errcheck
+	}
+
+	// Secrets and ConfigMaps are not cached by default, get credentials as the last step.
+	cred, err := getAdminCredentials(ctx, c, grafana)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg := &genapi.TransportConfig{
+		Schemes:  []string{gURL.Scheme},
+		BasePath: gURL.Path,
+		Host:     gURL.Host,
+		// APIKey is an optional API key or service account token.
+		APIKey: cred.apikey,
+		// NumRetries contains the optional number of attempted retries
+		NumRetries: 0,
+		TLSConfig:  tlsConfig,
+		Client: &http.Client{
+			Transport: transport,
+			Timeout:   timeout * time.Second,
+		},
+	}
+	if cred.username != "" {
+		cfg.BasicAuth = url.UserPassword(cred.username, cred.password)
+	}
+
+	cl := genapi.NewHTTPClientWithConfig(nil, cfg)
+
+	return cl, nil
 }
 
 func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (*grafanaAdminCredentials, error) {
