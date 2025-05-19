@@ -58,108 +58,58 @@ type GrafanaDatasourceReconciler struct {
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadatasources/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadatasources/finalizers,verbs=update
 
-func (r *GrafanaDatasourceReconciler) syncDatasources(ctx context.Context) (ctrl.Result, error) {
+func (r *GrafanaDatasourceReconciler) syncStatuses(ctx context.Context) error {
 	log := logf.FromContext(ctx)
-	datasourcesSynced := 0
 
 	// get all grafana instances
 	grafanas := &v1beta1.GrafanaList{}
 	var opts []client.ListOption
 	err := r.List(ctx, grafanas, opts...)
 	if err != nil {
-		return ctrl.Result{}, err
+		return err
 	}
-
 	// no instances, no need to sync
 	if len(grafanas.Items) == 0 {
-		return ctrl.Result{Requeue: false}, nil
+		return nil
 	}
 
 	// get all datasources
-	allDatasources := &v1beta1.GrafanaDatasourceList{}
-	err = r.List(ctx, allDatasources, opts...)
+	allDatasource := &v1beta1.GrafanaDatasourceList{}
+	err = r.List(ctx, allDatasource, opts...)
 	if err != nil {
-		return ctrl.Result{}, err
+		return err
 	}
 
-	datasourcesToDelete := getDatasourcesToDelete(allDatasources, grafanas.Items)
-
-	// delete all datasources that no longer have a cr
-	for grafana, existingDatasources := range datasourcesToDelete {
-		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
-		if err != nil {
-			return ctrl.Result{}, err
+	// delete datasources datasourcegrafana statuses that no longer have a CR
+	datasourcesSynced := 0
+	for _, grafana := range grafanas.Items {
+		statusUpdated := false
+		for _, ds := range grafana.Status.Datasources {
+			namespace, name, _ := ds.Split()
+			if allDatasource.Find(namespace, name) == nil {
+				grafana.Status.Datasources = grafana.Status.Datasources.Remove(namespace, name)
+				datasourcesSynced += 1
+				statusUpdated = true
+			}
 		}
 
-		for syncCounter, datasource := range existingDatasources {
-			// avoid bombarding the grafana instance with a large number of requests at once, limit
-			// the sync to ten datasources per cycle. This means that it will take longer to sync
-			// a large number of deleted datasource crs, but that should be an edge case.
-			if syncCounter >= syncBatchSize {
-				return ctrl.Result{Requeue: true}, nil
-			}
-
-			namespace, name, uid := datasource.Split()
-			instanceDatasource, err := grafanaClient.Datasources.GetDataSourceByUID(uid)
+		if statusUpdated {
+			err = r.Status().Update(ctx, &grafana)
 			if err != nil {
-				var notFound *datasources.GetDataSourceByUIDNotFound
-				if !errors.As(err, &notFound) {
-					return ctrl.Result{}, err
-				}
-				log.Info("datasource no longer exists", "namespace", namespace, "name", name)
-			} else {
-				_, err = grafanaClient.Datasources.DeleteDataSourceByUID(instanceDatasource.Payload.UID) //nolint
-				if err != nil {
-					var notFound *datasources.DeleteDataSourceByUIDNotFound
-					if !errors.As(err, &notFound) {
-						return ctrl.Result{}, err
-					}
-				}
+				return err
 			}
-
-			grafana.Status.Datasources = grafana.Status.Datasources.Remove(namespace, name)
-			datasourcesSynced += 1
-		}
-
-		// one update per grafana - this will trigger a reconcile of the grafana controller
-		// so we should minimize those updates
-		err = r.Client.Status().Update(ctx, grafana)
-		if err != nil {
-			return ctrl.Result{}, err
 		}
 	}
 
 	if datasourcesSynced > 0 {
 		log.Info("successfully synced datasources", "datasources", datasourcesSynced)
 	}
-	return ctrl.Result{Requeue: false}, nil
-}
-
-// return a list of datasources from the grafana cr that do no longer have a datasource cr
-func getDatasourcesToDelete(allDatasources *v1beta1.GrafanaDatasourceList, grafanas []v1beta1.Grafana) map[*v1beta1.Grafana][]v1beta1.NamespacedResource {
-	datasourcesToDelete := map[*v1beta1.Grafana][]v1beta1.NamespacedResource{}
-	for _, grafana := range grafanas {
-		for _, datasource := range grafana.Status.Datasources {
-			if allDatasources.Find(datasource.Namespace(), datasource.Name()) == nil {
-				datasourcesToDelete[&grafana] = append(datasourcesToDelete[&grafana], datasource)
-			}
-		}
-	}
-	return datasourcesToDelete
+	return nil
 }
 
 func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx).WithName("GrafanaDatasourceReconciler")
 	ctx = logf.IntoContext(ctx, log)
-
-	// periodic sync reconcile
-	if req.Namespace == "" && req.Name == "" {
-		start := time.Now()
-		syncResult, err := r.syncDatasources(ctx)
-		elapsed := time.Since(start).Milliseconds()
-		metrics.InitialDatasourceSyncDuration.Set(float64(elapsed))
-		return syncResult, err
-	}
 
 	cr := &v1beta1.GrafanaDatasource{}
 	err := r.Get(ctx, client.ObjectKey{
@@ -303,7 +253,7 @@ func (r *GrafanaDatasourceReconciler) deleteOldDatasource(ctx context.Context, c
 		}
 
 		grafana.Status.Datasources = grafana.Status.Datasources.Remove(cr.Namespace, cr.Name)
-		err = r.Client.Status().Update(ctx, &grafana)
+		err = r.Status().Update(ctx, &grafana)
 		if err != nil {
 			return err
 		}
@@ -347,7 +297,7 @@ func (r *GrafanaDatasourceReconciler) finalize(ctx context.Context, cr *v1beta1.
 		}
 
 		grafana.Status.Datasources = grafana.Status.Datasources.Remove(cr.Namespace, cr.Name)
-		err = r.Client.Status().Update(ctx, &grafana)
+		err = r.Status().Update(ctx, &grafana)
 		if err != nil {
 			return err
 		}
@@ -405,7 +355,7 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 	}
 
 	grafana.Status.Datasources = grafana.Status.Datasources.Add(cr.Namespace, cr.Name, datasource.UID)
-	return r.Client.Status().Update(ctx, grafana)
+	return r.Status().Update(ctx, grafana)
 }
 
 func (r *GrafanaDatasourceReconciler) Exists(client *genapi.GrafanaHTTPAPI, uid, name string) (bool, string, error) {
@@ -429,32 +379,35 @@ func (r *GrafanaDatasourceReconciler) SetupWithManager(ctx context.Context, mgr 
 		For(&v1beta1.GrafanaDatasource{}).
 		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
-
-	if err == nil {
-		go func() {
-			log := logf.FromContext(ctx).WithName("GrafanaDatasourceReconciler")
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case <-time.After(initialSyncDelay):
-					result, err := r.Reconcile(ctx, ctrl.Request{})
-					if err != nil {
-						log.Error(err, "error synchronizing datasources")
-						continue
-					}
-					if result.Requeue {
-						log.Info("more datasources left to synchronize")
-						continue
-					}
-					log.Info("datasources sync complete")
-					return
-				}
-			}
-		}()
+	if err != nil {
+		return err
 	}
 
-	return err
+	go func() {
+		// periodic sync reconcile
+		log := logf.FromContext(ctx).WithName("GrafanaDatasourceReconciler")
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(initialSyncDelay):
+				start := time.Now()
+				err := r.syncStatuses(ctx)
+				elapsed := time.Since(start).Milliseconds()
+				metrics.InitialDatasourceSyncDuration.Set(float64(elapsed))
+				if err != nil {
+					log.Error(err, "error synchronizing datasources")
+					continue
+				}
+
+				log.Info("datasource sync complete")
+				return
+			}
+		}
+	}()
+
+	return nil
 }
 
 func (r *GrafanaDatasourceReconciler) buildDatasourceModel(ctx context.Context, cr *v1beta1.GrafanaDatasource) (*models.UpdateDataSourceCommand, string, error) {
