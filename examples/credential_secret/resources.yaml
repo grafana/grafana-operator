@@ -16,6 +16,12 @@ metadata:
   labels:
     dashboards: "grafana"
 spec:
+  config:
+    log:
+      mode: "console"
+    auth:
+      disable_login_form: "false"
+  disableDefaultAdminSecret: true
   deployment:
     spec:
       template:
@@ -33,8 +39,3 @@ spec:
                     secretKeyRef:
                       key: GF_SECURITY_ADMIN_PASSWORD
                       name: credentials
-  config:
-    log:
-      mode: "console"
-    auth:
-      disable_login_form: "false"
