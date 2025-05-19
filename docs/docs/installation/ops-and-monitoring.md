@@ -6,6 +6,33 @@ description: "Operations and monitoring of the Grafana Operator itself"
 
 # Grafana Operator Operational Monitoring
 
+## Metrics
+
+The Grafana operator exposes metrics about the status of managed resources using a prometheus compatible metrics endpoint.
+By default, the endpoint is available at `:9090/metrics`.
+
+When running the prometheus operator in your cluster, you can scrape the metrics endpoint automatically using this `ServiceMonitor` resource:
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    app.kubernetes.io/name: grafana-operator
+  name: controller-manager-metrics-monitor
+  namespace: system
+spec:
+  endpoints:
+    - path: /metrics
+      port: metrics
+      interval: 60s
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: grafana-operator
+```
+
+If you are using helm to manage the operator, you can also deploy the `ServiceMonitor` by setting `serviceMonitor: { enabled: true }` in your `values.yaml` file.
+
 ## Dashboard
 
 By default we provide a Dashboard that leverages the operator metrics to give a overview of the operator state. This dashboard is based on the [Grafana Operator Dashboard (ID 22785)](https://grafana.com/grafana/dashboards/22785-grafana-operator/).
