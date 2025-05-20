@@ -48,10 +48,10 @@ type GrafanaNotificationTemplateSpec struct {
 // +kubebuilder:resource:categories={grafana-operator}
 type GrafanaNotificationTemplate struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 
 	Spec   GrafanaNotificationTemplateSpec `json:"spec"`
-	Status GrafanaCommonStatus             `json:"status,omitempty"`
+	Status GrafanaCommonStatus             `json:"status"`
 }
 
 var _ CommonResource = (*GrafanaNotificationTemplate)(nil)
@@ -81,7 +81,7 @@ func (in *GrafanaNotificationTemplate) CommonStatus() *GrafanaCommonStatus {
 // GrafanaNotificationTemplateList contains a list of GrafanaNotificationTemplate
 type GrafanaNotificationTemplateList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata"`
 	Items           []GrafanaNotificationTemplate `json:"items"`
 }
 

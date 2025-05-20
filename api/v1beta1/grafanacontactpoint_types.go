@@ -60,10 +60,10 @@ type GrafanaContactPointSpec struct {
 // +kubebuilder:resource:categories={grafana-operator}
 type GrafanaContactPoint struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 
 	Spec   GrafanaContactPointSpec `json:"spec"`
-	Status GrafanaCommonStatus     `json:"status,omitempty"`
+	Status GrafanaCommonStatus     `json:"status"`
 }
 
 var _ CommonResource = (*GrafanaContactPoint)(nil)
@@ -73,7 +73,7 @@ var _ CommonResource = (*GrafanaContactPoint)(nil)
 // GrafanaContactPointList contains a list of GrafanaContactPoint
 type GrafanaContactPointList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata"`
 	Items           []GrafanaContactPoint `json:"items"`
 }
 

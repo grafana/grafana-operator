@@ -49,8 +49,8 @@ func (override *ObjectMeta) Merge(meta metav1.ObjectMeta) metav1.ObjectMeta {
 // +kubebuilder:object:generate=true
 
 type DeploymentV1 struct {
-	ObjectMeta ObjectMeta       `json:"metadata,omitempty"`
-	Spec       DeploymentV1Spec `json:"spec,omitempty"`
+	ObjectMeta ObjectMeta       `json:"metadata"`
+	Spec       DeploymentV1Spec `json:"spec"`
 }
 
 type DeploymentV1Spec struct {
@@ -81,7 +81,7 @@ type DeploymentV1PodTemplateSpec struct {
 	// Standard object's metadata.
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	// +optional
-	ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	ObjectMeta `json:"metadata" protobuf:"bytes,1,opt,name=metadata"`
 
 	// Specification of the desired behavior of the pod.
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
@@ -314,14 +314,14 @@ type DeploymentV1PodSpec struct {
 // +kubebuilder:object:generate=true
 
 type IngressNetworkingV1 struct {
-	ObjectMeta ObjectMeta                `json:"metadata,omitempty"`
+	ObjectMeta ObjectMeta                `json:"metadata"`
 	Spec       *networkingv1.IngressSpec `json:"spec,omitempty"`
 }
 
 // +kubebuilder:object:generate=true
 
 type RouteOpenshiftV1 struct {
-	ObjectMeta ObjectMeta            `json:"metadata,omitempty"`
+	ObjectMeta ObjectMeta            `json:"metadata"`
 	Spec       *RouteOpenShiftV1Spec `json:"spec,omitempty"`
 }
 
@@ -482,12 +482,12 @@ type RouteOpenShiftV1Spec struct {
 }
 
 type ServiceV1 struct {
-	ObjectMeta ObjectMeta          `json:"metadata,omitempty"`
+	ObjectMeta ObjectMeta          `json:"metadata"`
 	Spec       *corev1.ServiceSpec `json:"spec,omitempty"`
 }
 
 type PersistentVolumeClaimV1 struct {
-	ObjectMeta ObjectMeta                   `json:"metadata,omitempty"`
+	ObjectMeta ObjectMeta                   `json:"metadata"`
 	Spec       *PersistentVolumeClaimV1Spec `json:"spec,omitempty"`
 }
 
@@ -512,7 +512,7 @@ type PersistentVolumeClaimV1Spec struct {
 }
 
 type ServiceAccountV1 struct {
-	ObjectMeta ObjectMeta               `json:"metadata,omitempty"`
+	ObjectMeta ObjectMeta               `json:"metadata"`
 	Secrets    []corev1.ObjectReference `json:"secrets,omitempty" patchStrategy:"merge" patchMergeKey:"name" protobuf:"bytes,2,rep,name=secrets"`
 	// +optional
 	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty" protobuf:"bytes,3,rep,name=imagePullSecrets"`
