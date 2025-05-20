@@ -322,7 +322,7 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 	return nil
 }
 
-func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDashboard, dashboardModel map[string]interface{}, hash string) error {
+func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDashboard, dashboardModel map[string]any, hash string) error {
 	log := logf.FromContext(ctx)
 	if grafana.IsExternal() && cr.Spec.Plugins != nil {
 		return fmt.Errorf("external grafana instances don't support plugins, please remove spec.plugins from your dashboard cr")
@@ -436,13 +436,13 @@ func (r *GrafanaDashboardReconciler) Exists(client *genapi.GrafanaHTTPAPI, uid s
 }
 
 // HasRemoteChange checks if a dashboard in Grafana is different to the model defined in the custom resources
-func (r *GrafanaDashboardReconciler) hasRemoteChange(exists bool, model map[string]interface{}, remoteDashboard *dashboards.GetDashboardByUIDOK) (bool, error) {
+func (r *GrafanaDashboardReconciler) hasRemoteChange(exists bool, model map[string]any, remoteDashboard *dashboards.GetDashboardByUIDOK) (bool, error) {
 	if !exists {
 		// if the dashboard doesn't exist, don't even request
 		return true, nil
 	}
 
-	remoteModel, ok := (remoteDashboard.GetPayload().Dashboard).(map[string]interface{})
+	remoteModel, ok := (remoteDashboard.GetPayload().Dashboard).(map[string]any)
 	if !ok {
 		return true, fmt.Errorf("remote dashboard is not a valid object")
 	}
