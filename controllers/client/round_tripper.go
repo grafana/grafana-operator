@@ -3,6 +3,7 @@ package client
 import (
 	"crypto/tls"
 	"log/slog"
+	"maps"
 	"net/http"
 	"strconv"
 
@@ -75,7 +76,5 @@ func (in *instrumentedRoundTripper) addHeaders(headers map[string]string) {
 		in.headers = make(map[string]string)
 	}
 
-	for k, v := range headers {
-		in.headers[k] = v
-	}
+	maps.Copy(in.headers, headers)
 }
