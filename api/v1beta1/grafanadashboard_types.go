@@ -69,10 +69,10 @@ type GrafanaDashboardStatus struct {
 // +kubebuilder:resource:categories={grafana-operator}
 type GrafanaDashboard struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 
 	Spec   GrafanaDashboardSpec   `json:"spec"`
-	Status GrafanaDashboardStatus `json:"status,omitempty"`
+	Status GrafanaDashboardStatus `json:"status"`
 }
 
 var _ CommonResource = (*GrafanaDashboard)(nil)
@@ -82,7 +82,7 @@ var _ CommonResource = (*GrafanaDashboard)(nil)
 // GrafanaDashboardList contains a list of GrafanaDashboard
 type GrafanaDashboardList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata"`
 	Items           []GrafanaDashboard `json:"items"`
 }
 

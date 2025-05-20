@@ -184,10 +184,10 @@ type GrafanaNotificationPolicyStatus struct {
 // +kubebuilder:resource:categories={grafana-operator}
 type GrafanaNotificationPolicy struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 
 	Spec   GrafanaNotificationPolicySpec   `json:"spec"`
-	Status GrafanaNotificationPolicyStatus `json:"status,omitempty"`
+	Status GrafanaNotificationPolicyStatus `json:"status"`
 }
 
 var _ CommonResource = (*GrafanaNotificationPolicy)(nil)
@@ -201,7 +201,7 @@ func (in *GrafanaNotificationPolicy) NamespacedResource() string {
 // GrafanaNotificationPolicyList contains a list of GrafanaNotificationPolicy
 type GrafanaNotificationPolicyList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata"`
 	Items           []GrafanaNotificationPolicy `json:"items"`
 }
 

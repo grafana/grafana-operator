@@ -87,10 +87,10 @@ type TimeRange struct {
 // +kubebuilder:resource:categories={grafana-operator}
 type GrafanaMuteTiming struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 
 	Spec   GrafanaMuteTimingSpec `json:"spec"`
-	Status GrafanaCommonStatus   `json:"status,omitempty"`
+	Status GrafanaCommonStatus   `json:"status"`
 }
 
 var _ CommonResource = (*GrafanaMuteTiming)(nil)
@@ -120,7 +120,7 @@ func (in *GrafanaMuteTiming) CommonStatus() *GrafanaCommonStatus {
 // GrafanaMuteTimingList contains a list of GrafanaMuteTiming
 type GrafanaMuteTimingList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata"`
 	Items           []GrafanaMuteTiming `json:"items"`
 }
 
