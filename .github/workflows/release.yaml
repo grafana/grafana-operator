@@ -223,14 +223,22 @@ jobs:
     permissions:
       packages: read
     steps:
+      - name: Get secrets
+        id: secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@5d7e361bc7e0a183cde8afe9899fb7b596d2659b # get-vault-secrets-v1.2.0
+        with:
+          repo_secrets: |
+            QUAY_USERNAME=quay-io:username
+            QUAY_PASSWORD=quay-io:token
+          export_env: false
       - name: Copy image to quay
         env:
           IMAGE_VERSION: ${{ github.ref_name }}
           DOCKER_REPO: "ghcr.io/${{ github.repository }}"
           GHCR_USERNAME: ${{ github.actor }}
           GHCR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-          QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
-          QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+          QUAY_USERNAME: ${{ fromJSON(steps.secrets.outputs.secrets || '{}').QUAY_USERNAME }}
+          QUAY_PASSWORD: ${{ fromJSON(steps.secrets.outputs.secrets || '{}').QUAY_PASSWORD }}
         run: |
           docker run -it --rm quay.io/containers/skopeo:v1.18.0 \
             copy --multi-arch all \
