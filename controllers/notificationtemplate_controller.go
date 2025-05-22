@@ -128,10 +128,18 @@ func (r *GrafanaNotificationTemplateReconciler) reconcileWithInstance(ctx contex
 	if editable {
 		params.SetXDisableProvenance(&trueRef)
 	}
+
 	_, err = cl.Provisioning.PutTemplate(params) //nolint:errcheck
 	if err != nil {
 		return fmt.Errorf("creating or updating notification template: %w", err)
 	}
+
+	// Update grafana instance Status
+	instance.Status.NotificationTemplates = instance.Status.NotificationTemplates.Add(notificationTemplate.Namespace, notificationTemplate.Name, notificationTemplate.Spec.Name)
+	if err = r.Client.Status().Update(ctx, instance); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -146,6 +154,11 @@ func (r *GrafanaNotificationTemplateReconciler) finalize(ctx context.Context, no
 	for _, instance := range instances {
 		if err := r.removeFromInstance(ctx, &instance, notificationTemplate); err != nil {
 			return fmt.Errorf("removing notification template from instance: %w", err)
+		}
+
+		instance.Status.NotificationTemplates = instance.Status.NotificationTemplates.Remove(notificationTemplate.Namespace, notificationTemplate.Name)
+		if err = r.Client.Status().Update(ctx, &instance); err != nil {
+			return fmt.Errorf("removing notification template from Grafana cr: %w", err)
 		}
 	}
 
