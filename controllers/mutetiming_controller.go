@@ -170,6 +170,12 @@ func (r *GrafanaMuteTimingReconciler) reconcileWithInstance(ctx context.Context,
 		}
 	}
 
+	// Update grafana instance Status
+	instance.Status.MuteTimings = instance.Status.MuteTimings.Add(muteTiming.Namespace, muteTiming.Name, muteTiming.Spec.Name)
+	if err = r.Client.Status().Update(ctx, instance); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -198,6 +204,11 @@ func (r *GrafanaMuteTimingReconciler) finalize(ctx context.Context, muteTiming *
 	for _, instance := range instances {
 		if err := r.removeFromInstance(ctx, &instance, muteTiming); err != nil {
 			return fmt.Errorf("removing mute timing from instance: %w", err)
+		}
+
+		instance.Status.MuteTimings = instance.Status.MuteTimings.Remove(muteTiming.Namespace, muteTiming.Name)
+		if err = r.Client.Status().Update(ctx, &instance); err != nil {
+			return fmt.Errorf("removing mute timings from Grafana cr: %w", err)
 		}
 	}
 

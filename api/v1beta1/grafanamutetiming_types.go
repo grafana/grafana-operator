@@ -124,6 +124,15 @@ type GrafanaMuteTimingList struct {
 	Items           []GrafanaMuteTiming `json:"items"`
 }
 
+func (in *GrafanaMuteTimingList) Find(namespace string, name string) *GrafanaMuteTiming {
+	for _, muteTiming := range in.Items {
+		if muteTiming.Namespace == namespace && muteTiming.Name == name {
+			return &muteTiming
+		}
+	}
+	return nil
+}
+
 func init() {
 	SchemeBuilder.Register(&GrafanaMuteTiming{}, &GrafanaMuteTimingList{})
 }
