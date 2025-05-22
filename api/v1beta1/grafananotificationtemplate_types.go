@@ -85,6 +85,15 @@ type GrafanaNotificationTemplateList struct {
 	Items           []GrafanaNotificationTemplate `json:"items"`
 }
 
+func (in *GrafanaNotificationTemplateList) Find(namespace string, name string) *GrafanaNotificationTemplate {
+	for _, notificationTemplate := range in.Items {
+		if notificationTemplate.Namespace == namespace && notificationTemplate.Name == name {
+			return &notificationTemplate
+		}
+	}
+	return nil
+}
+
 func init() {
 	SchemeBuilder.Register(&GrafanaNotificationTemplate{}, &GrafanaNotificationTemplateList{})
 }
