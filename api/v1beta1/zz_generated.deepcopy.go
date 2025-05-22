@@ -1841,6 +1841,11 @@ func (in *GrafanaStatus) DeepCopyInto(out *GrafanaStatus) {
 		*out = make(NamespacedResourceList, len(*in))
 		copy(*out, *in)
 	}
+	if in.MuteTimings != nil {
+		in, out := &in.MuteTimings, &out.MuteTimings
+		*out = make(NamespacedResourceList, len(*in))
+		copy(*out, *in)
+	}
 	if in.NotificationTemplates != nil {
 		in, out := &in.NotificationTemplates, &out.NotificationTemplates
 		*out = make(NamespacedResourceList, len(*in))
