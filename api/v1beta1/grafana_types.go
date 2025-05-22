@@ -133,16 +133,17 @@ type GrafanaPreferences struct {
 
 // GrafanaStatus defines the observed state of Grafana
 type GrafanaStatus struct {
-	Stage         OperatorStageName      `json:"stage,omitempty"`
-	StageStatus   OperatorStageStatus    `json:"stageStatus,omitempty"`
-	LastMessage   string                 `json:"lastMessage,omitempty"`
-	AdminURL      string                 `json:"adminUrl,omitempty"`
-	ContactPoints NamespacedResourceList `json:"contactPoints,omitempty"`
-	Dashboards    NamespacedResourceList `json:"dashboards,omitempty"`
-	Datasources   NamespacedResourceList `json:"datasources,omitempty"`
-	Folders       NamespacedResourceList `json:"folders,omitempty"`
-	LibraryPanels NamespacedResourceList `json:"libraryPanels,omitempty"`
-	Version       string                 `json:"version,omitempty"`
+	Stage                 OperatorStageName      `json:"stage,omitempty"`
+	StageStatus           OperatorStageStatus    `json:"stageStatus,omitempty"`
+	LastMessage           string                 `json:"lastMessage,omitempty"`
+	AdminURL              string                 `json:"adminUrl,omitempty"`
+	ContactPoints         NamespacedResourceList `json:"contactPoints,omitempty"`
+	Dashboards            NamespacedResourceList `json:"dashboards,omitempty"`
+	Datasources           NamespacedResourceList `json:"datasources,omitempty"`
+	Folders               NamespacedResourceList `json:"folders,omitempty"`
+	LibraryPanels         NamespacedResourceList `json:"libraryPanels,omitempty"`
+	NotificationTemplates NamespacedResourceList `json:"notificationTemplates,omitempty"`
+	Version               string                 `json:"version,omitempty"`
 }
 
 // +kubebuilder:object:root=true
