@@ -217,19 +217,8 @@ ko-build-local: $(KO) ## Build Docker image with KO
 ko-build-kind: $(KIND) ko-build-local ## Build and Load Docker image into kind cluster
 	$(KIND) load docker-image $(KO_DOCKER_REPO) --name $(KIND_CLUSTER_NAME)
 
-helm-docs:
-ifeq (, $(shell which helm-docs))
-	@{ \
-	set -e ;\
-	go install github.com/norwoodj/helm-docs/cmd/helm-docs@v1.11.0 ;\
-	}
-HELM_DOCS=$(GOBIN)/helm-docs
-else
-HELM_DOCS=$(shell which helm-docs)
-endif
-
 .PHONY: helm/docs
-helm/docs: helm-docs
+helm/docs: $(HELM_DOCS)
 	$(HELM_DOCS)
 
 BUNDLE_IMG ?= $(REGISTRY)/$(ORG)/grafana-operator-bundle:v$(VERSION)

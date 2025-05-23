@@ -8,6 +8,7 @@ CHAINSAW_VERSION = v0.2.10
 CONTROLLER_GEN_VERSION = v0.16.3
 CRDOC_VERSION = v0.6.4
 GOLANGCI_LINT_VERSION = v2.1.6
+HELM_DOCS_VERSION = v1.11.0
 KIND_VERSION = v0.27.0
 KO_VERSION = v0.16.0
 KUSTOMIZE_VERSION = v5.1.1
@@ -79,6 +80,15 @@ ifeq (, $(shell which $(CRDOC)))
 	@{ \
 	GOBIN=$(BIN) go install fybrik.io/crdoc@$(CRDOC_VERSION) ;\
 	mv $(BIN)/crdoc $(CRDOC) ;\
+	}
+endif
+
+HELM_DOCS := $(BIN)/helm-docs-$(HELM_DOCS_VERSION)
+$(HELM_DOCS): $(BIN)
+ifeq (, $(shell which $(HELM_DOCS)))
+	@{ \
+	GOBIN=$(BIN) go install github.com/norwoodj/helm-docs/cmd/helm-docs@$(HELM_DOCS_VERSION) ;\
+	mv $(BIN)/helm-docs $(HELM_DOCS) ;\
 	}
 endif
 
