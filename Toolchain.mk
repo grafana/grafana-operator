@@ -73,7 +73,7 @@ $(HELM): $(BIN)
 ifeq (, $(shell which $(HELM)))
 	@{ \
 	set -e ;\
-	curl -sSfL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | HELM_INSTALL_DIR=$(BIN) sh -s -- -v $(HELM_VERSION) --no-sudo ;\
+	curl -sSfL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | HELM_INSTALL_DIR=$(BIN) bash -s -- -v $(HELM_VERSION) --no-sudo ;\
 	mv $(BIN)/helm $(HELM) ;\
 	}
 endif
