@@ -52,6 +52,7 @@ OPM := $(BIN)/opm-$(OPM_VERSION)
 $(OPM): $(BIN)
 ifeq (, $(shell which $(OPM)))
 	@{ \
+	set -e ;\
 	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
 	curl -sSLo $(OPM) https://github.com/operator-framework/operator-registry/releases/download/$(OPM_VERSION)/$${OS}-$${ARCH}-opm ;\
 	chmod +x $(OPM) ;\
@@ -62,6 +63,7 @@ KIND := $(BIN)/kind-$(KIND_VERSION)
 $(KIND): $(BIN)
 ifeq (, $(shell which $(KIND)))
 	@{ \
+	set -e ;\
 	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
 	curl -sSLo $(KIND) https://github.com/kubernetes-sigs/kind/releases/download/$(KIND_VERSION)/kind-$${OSTYPE}-$${ARCH} ;\
 	chmod +x $(KIND) ;\
@@ -72,6 +74,7 @@ CHAINSAW := $(BIN)/chainsaw-$(CHAINSAW_VERSION)
 $(CHAINSAW): $(BIN)
 ifeq (, $(shell which $(CHAINSAW)))
 	@{ \
+	set -e ;\
 	GOBIN=$(BIN) go install github.com/kyverno/chainsaw@$(CHAINSAW_VERSION) ;\
 	mv $(BIN)/chainsaw $(CHAINSAW) ;\
 	}
@@ -81,6 +84,7 @@ CONTROLLER_GEN := $(BIN)/controller-gen-$(CONTROLLER_GEN_VERSION)
 $(CONTROLLER_GEN): $(BIN)
 ifeq (, $(shell which $(CONTROLLER_GEN)))
 	@{ \
+	set -e ;\
 	GOBIN=$(BIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_GEN_VERSION) ;\
 	mv $(BIN)/controller-gen $(CONTROLLER_GEN) ;\
 	}
@@ -90,6 +94,7 @@ CRDOC := $(BIN)/crdoc-$(CRDOC_VERSION)
 $(CRDOC): $(BIN)
 ifeq (, $(shell which $(CRDOC)))
 	@{ \
+	set -e ;\
 	GOBIN=$(BIN) go install fybrik.io/crdoc@$(CRDOC_VERSION) ;\
 	mv $(BIN)/crdoc $(CRDOC) ;\
 	}
@@ -109,6 +114,7 @@ HELM_DOCS := $(BIN)/helm-docs-$(HELM_DOCS_VERSION)
 $(HELM_DOCS): $(BIN)
 ifeq (, $(shell which $(HELM_DOCS)))
 	@{ \
+	set -e ;\
 	GOBIN=$(BIN) go install github.com/norwoodj/helm-docs/cmd/helm-docs@$(HELM_DOCS_VERSION) ;\
 	mv $(BIN)/helm-docs $(HELM_DOCS) ;\
 	}
@@ -118,6 +124,7 @@ KO := $(BIN)/ko-$(KO_VERSION)
 $(KO): $(BIN)
 ifeq (, $(shell which $(KO)))
 	@{ \
+	set -e ;\
 	GOBIN=$(BIN) go install github.com/google/ko@$(KO_VERSION) ;\
 	mv $(BIN)/ko $(KO) ;\
 	}
