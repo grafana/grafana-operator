@@ -4,6 +4,8 @@ $(BIN):
 
 PATH := $(BIN):$(PATH)
 
+M = $(shell printf "\033[34;1m▶\033[0m")
+
 CHAINSAW_VERSION = v0.2.10
 CONTROLLER_GEN_VERSION = v0.16.3
 CRDOC_VERSION = v0.6.4
@@ -21,6 +23,7 @@ YQ_VERSION = v4.35.2
 CHAINSAW := $(BIN)/chainsaw-$(CHAINSAW_VERSION)
 $(CHAINSAW): $(BIN)
 ifeq (, $(shell which $(CHAINSAW)))
+	$(info $(M) installing chainsaw)
 	@{ \
 	set -e ;\
 	GOBIN=$(BIN) go install github.com/kyverno/chainsaw@$(CHAINSAW_VERSION) ;\
@@ -31,6 +34,7 @@ endif
 CONTROLLER_GEN := $(BIN)/controller-gen-$(CONTROLLER_GEN_VERSION)
 $(CONTROLLER_GEN): $(BIN)
 ifeq (, $(shell which $(CONTROLLER_GEN)))
+	$(info $(M) installing controller-gen)
 	@{ \
 	set -e ;\
 	GOBIN=$(BIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_GEN_VERSION) ;\
@@ -41,6 +45,7 @@ endif
 CRDOC := $(BIN)/crdoc-$(CRDOC_VERSION)
 $(CRDOC): $(BIN)
 ifeq (, $(shell which $(CRDOC)))
+	$(info $(M) installing crdoc)
 	@{ \
 	set -e ;\
 	GOBIN=$(BIN) go install fybrik.io/crdoc@$(CRDOC_VERSION) ;\
@@ -51,6 +56,7 @@ endif
 ENVTEST := $(BIN)/setup-envtest-$(ENVTEST_VERSION)
 $(ENVTEST): $(BIN)
 ifeq (, $(shell which $(ENVTEST)))
+	$(info $(M) installing setup-envtest)
 	@{ \
 	set -e ;\
 	GOBIN=$(BIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@release-$(ENVTEST_VERSION) ;\
@@ -61,6 +67,7 @@ endif
 GOLANGCI_LINT := $(BIN)/golangci-lint-$(GOLANGCI_LINT_VERSION)
 $(GOLANGCI_LINT): $(BIN)
 ifeq (, $(shell which $(GOLANGCI_LINT)))
+	$(info $(M) installing golangci-lint)
 	@{ \
 	set -e ;\
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s $(GOLANGCI_LINT_VERSION) ;\
@@ -71,6 +78,7 @@ endif
 HELM := $(BIN)/helm-$(HELM_VERSION)
 $(HELM): $(BIN)
 ifeq (, $(shell which $(HELM)))
+	$(info $(M) installing helm)
 	@{ \
 	set -e ;\
 	curl -sSfL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | HELM_INSTALL_DIR=$(BIN) bash -s -- -v $(HELM_VERSION) --no-sudo ;\
@@ -81,6 +89,7 @@ endif
 HELM_DOCS := $(BIN)/helm-docs-$(HELM_DOCS_VERSION)
 $(HELM_DOCS): $(BIN)
 ifeq (, $(shell which $(HELM_DOCS)))
+	$(info $(M) installing helm-docs)
 	@{ \
 	set -e ;\
 	GOBIN=$(BIN) go install github.com/norwoodj/helm-docs/cmd/helm-docs@$(HELM_DOCS_VERSION) ;\
@@ -91,6 +100,7 @@ endif
 KIND := $(BIN)/kind-$(KIND_VERSION)
 $(KIND): $(BIN)
 ifeq (, $(shell which $(KIND)))
+	$(info $(M) installing kind)
 	@{ \
 	set -e ;\
 	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
@@ -102,6 +112,7 @@ endif
 KO := $(BIN)/ko-$(KO_VERSION)
 $(KO): $(BIN)
 ifeq (, $(shell which $(KO)))
+	$(info $(M) installing ko)
 	@{ \
 	set -e ;\
 	GOBIN=$(BIN) go install github.com/google/ko@$(KO_VERSION) ;\
@@ -112,6 +123,7 @@ endif
 KUSTOMIZE := $(BIN)/kustomize-$(KUSTOMIZE_VERSION)
 $(KUSTOMIZE): $(BIN)
 ifeq (, $(shell which $(KUSTOMIZE)))
+	$(info $(M) installing kustomize)
 	@{ \
 	set -e ;\
 	curl -sSfL "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash -s -- $(subst v,,$(KUSTOMIZE_VERSION)) $(BIN) ;\
@@ -122,6 +134,7 @@ endif
 OPERATOR_SDK := $(BIN)/operator-sdk-$(OPERATOR_SDK_VERSION)
 $(OPERATOR_SDK): $(BIN)
 ifeq (, $(shell which $(OPERATOR_SDK)))
+	$(info $(M) installing operator-sdk)
 	@{ \
 	set -e ;\
 	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
@@ -133,6 +146,7 @@ endif
 OPM := $(BIN)/opm-$(OPM_VERSION)
 $(OPM): $(BIN)
 ifeq (, $(shell which $(OPM)))
+	$(info $(M) installing opm)
 	@{ \
 	set -e ;\
 	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
@@ -144,6 +158,7 @@ endif
 YQ := $(BIN)/yq-$(YQ_VERSION)
 $(YQ): $(BIN)
 ifeq (, $(shell which $(YQ)))
+	$(info $(M) installing yq)
 	@{ \
 	set -e ;\
 	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
