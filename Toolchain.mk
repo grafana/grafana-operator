@@ -7,7 +7,7 @@ PATH := $(BIN):$(PATH)
 CHAINSAW_VERSION = v0.2.10
 CONTROLLER_GEN_VERSION = v0.16.3
 CRDOC_VERSION = v0.6.4
-ENVTEST_VERSION = latest
+ENVTEST_VERSION = 0.20
 GOLANGCI_LINT_VERSION = v2.1.6
 HELM_DOCS_VERSION = v1.11.0
 KIND_VERSION = v0.27.0
@@ -52,7 +52,7 @@ $(ENVTEST): $(BIN)
 ifeq (, $(shell which $(ENVTEST)))
 	@{ \
 	set -e ;\
-	GOBIN=$(BIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@$(ENVTEST_VERSION) ;\
+	GOBIN=$(BIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@release-$(ENVTEST_VERSION) ;\
 	mv $(BIN)/setup-envtest $(ENVTEST) ;\
 	}
 endif
