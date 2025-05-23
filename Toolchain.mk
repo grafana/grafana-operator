@@ -4,6 +4,7 @@ $(BIN):
 
 PATH := $(BIN):$(PATH)
 
+CONTROLLER_GEN_VERSION = v0.16.3
 GOLANGCI_LINT_VERSION = v2.1.6
 KIND_VERSION = v0.27.0
 KUSTOMIZE_VERSION = v5.1.1
@@ -47,5 +48,14 @@ ifeq (, $(shell which $(KIND)))
 	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
 	curl -sSLo $(KIND) https://github.com/kubernetes-sigs/kind/releases/download/$(KIND_VERSION)/kind-$${OSTYPE}-$${ARCH} ;\
 	chmod +x $(KIND) ;\
+	}
+endif
+
+CONTROLLER_GEN := $(BIN)/controller-gen-$(CONTROLLER_GEN_VERSION)
+$(CONTROLLER_GEN): $(BIN)
+ifeq (, $(shell which $(CONTROLLER_GEN)))
+	@{ \
+	GOBIN=$(BIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_GEN_VERSION) ;\
+	mv $(BIN)/controller-gen $(CONTROLLER_GEN) ;\
 	}
 endif
