@@ -38,7 +38,7 @@ SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
 .PHONY: all
-all: manifests test api-docs helm/docs
+all: manifests test api-docs helm-docs
 
 ##@ General
 
@@ -55,7 +55,7 @@ all: manifests test api-docs helm/docs
 
 .PHONY: help
 help: ## Display this help.
-	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 ##@ Development
 
@@ -87,18 +87,27 @@ generate: $(CONTROLLER_GEN) ## Generate code containing DeepCopy, DeepCopyInto, 
 vet: ## Run go vet against code.
 	go vet ./...
 
-.PHONY: kustomize/lint ## Lint kustomize overlays.
-kustomize/lint: $(KUSTOMIZE)
+.PHONY:
+helm-docs: $(HELM_DOCS) ## Generate helm docs
+	$(HELM_DOCS)
+
+.PHONY: helm-lint
+helm-lint: $(HELM) ## Validate helm chart.
+	$(HELM) template deploy/helm/grafana-operator/ > /dev/null
+	$(HELM) lint deploy/helm/grafana-operator/
+
+.PHONY: kustomize-lint
+kustomize-lint: $(KUSTOMIZE) ## Lint kustomize overlays.
 	@for d in deploy/kustomize/overlays/*/ ; do \
 		kustomize build "$${d}" --load-restrictor LoadRestrictionsNone > /dev/null ;\
 	done
 
-.PHONY: kustomize/set-image ## Sets release image.
-kustomize/set-image: $(KUSTOMIZE)
+.PHONY: kustomize-set-image
+kustomize-set-image: $(KUSTOMIZE) ## Sets release image.
 	cd deploy/kustomize/base && kustomize edit set image ghcr.io/${GITHUB_REPOSITORY}=${GHCR_REPO}:${RELEASE_NAME} && cd -
 
-.PHONY: kustomize/generate-github-assets ## Generates GitHub assets.
-kustomize/generate-github-assets: $(KUSTOMIZE)
+.PHONY: kustomize-github-assets
+kustomize-github-assets: $(KUSTOMIZE) ## Generates GitHub assets.
 	@for d in deploy/kustomize/overlays/*/ ; do \
 		echo "$${d}" ;\
 		kustomize build "$${d}" --load-restrictor LoadRestrictionsNone > kustomize-$$(basename "$${d}").yaml ;\
@@ -106,7 +115,7 @@ kustomize/generate-github-assets: $(KUSTOMIZE)
 	kustomize build config/crd > crds.yaml
 
 .PHONY: test
-test: $(ENVTEST) manifests generate code/golangci-lint api-docs vet kustomize/lint helm/lint ## Run tests.
+test: $(ENVTEST) manifests generate code/golangci-lint api-docs vet kustomize-lint helm-lint ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(BIN) -p path)" go test ./... -coverprofile cover.out
 
 ##@ Build
@@ -216,15 +225,6 @@ ko-build-local: $(KO) ## Build Docker image with KO
 ko-build-kind: $(KIND) ko-build-local ## Build and Load Docker image into kind cluster
 	$(KIND) load docker-image $(KO_DOCKER_REPO) --name $(KIND_CLUSTER_NAME)
 
-.PHONY:
-helm/docs: $(HELM_DOCS)
-	$(HELM_DOCS)
-
-.PHONY: helm/lint
-helm/lint: $(HELM)
-	$(HELM) template deploy/helm/grafana-operator/ > /dev/null
-	$(HELM) lint deploy/helm/grafana-operator/
-
 BUNDLE_IMG ?= $(REGISTRY)/$(ORG)/grafana-operator-bundle:v$(VERSION)
 
 .PHONY: bundle-build
@@ -267,4 +267,4 @@ prep-release: $(YQ)
 	sed -i 's/--version v5.*/--version v$(VERSION)/g' README.md
 	sed -i 's/^VERSION ?= 5.*/VERSION ?= $(VERSION)/g' Makefile
 	$(YQ) -i '.images[0].newTag="v$(VERSION)"' deploy/kustomize/base/kustomization.yaml
-	make helm/docs
+	make helm-docs
