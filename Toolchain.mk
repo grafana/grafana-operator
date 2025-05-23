@@ -9,7 +9,7 @@ M = $(shell printf "\033[34;1m▶\033[0m")
 CHAINSAW_VERSION = v0.2.10
 CONTROLLER_GEN_VERSION = v0.16.3
 CRDOC_VERSION = v0.6.4
-ENVTEST_VERSION = 0.20
+ENVTEST_VERSION = v0.20.4
 GOLANGCI_LINT_VERSION = v2.1.6
 HELM_DOCS_VERSION = v1.11.0
 HELM_VERSION = v3.16.2
@@ -59,8 +59,9 @@ ifeq (, $(shell which $(ENVTEST)))
 	$(info $(M) installing setup-envtest)
 	@{ \
 	set -e ;\
-	GOBIN=$(BIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@release-$(ENVTEST_VERSION) ;\
-	mv $(BIN)/setup-envtest $(ENVTEST) ;\
+	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
+	curl -sSLo $(ENVTEST) https://github.com/kubernetes-sigs/controller-runtime/releases/download/$(ENVTEST_VERSION)/setup-envtest-$${OSTYPE}-$${ARCH} ;\
+	chmod +x $(ENVTEST) ;\
 	}
 endif
 
