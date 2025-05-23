@@ -1,3 +1,5 @@
+include Toolchain.mk
+
 # Current Operator version
 VERSION ?= 5.18.0
 
@@ -91,13 +93,13 @@ test: manifests generate code/golangci-lint api-docs vet envtest ## Run tests.
 ##@ Build
 
 .PHONY: build
-build: generate golangci vet ## Build manager binary.
-	golangci-lint fmt ./...
+build: $(GOLANGCI_LINT) generate vet ## Build manager binary.
+	$(GOLANGCI_LINT) fmt ./...
 	go build -o bin/manager main.go
 
 .PHONY: run
-run: manifests generate golangci vet ## Run a controller from your host.
-	golangci-lint fmt ./...
+run: $(GOLANGCI_LINT) manifests generate vet ## Run a controller from your host.
+	$(GOLANGCI_LINT) fmt ./...
 	go run ./main.go --zap-devel=true
 
 ##@ Deployment
@@ -158,7 +160,6 @@ YQ_VERSION ?= v4.35.2
 KO_VERSION ?= v0.16.0
 KIND_VERSION ?= v0.27.0
 CHAINSAW_VERSION ?= v0.2.10
-GOLANGCI_LINT_VERSION ?= v2.1.6
 
 KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
 .PHONY: kustomize
@@ -280,22 +281,11 @@ else
 CHAINSAW=$(shell which chainsaw)
 endif
 
-golangci:
-ifeq (, $(shell which golangci-lint))
-	@{ \
-	set -e ;\
-	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION) ;\
-	}
-GOLANGCI=$(GOBIN)/golangci-lint
-else
-GOLANGCI=$(shell which golangci-lint)
-endif
-
 .PHONY: code/golangci-lint
 ifndef GITHUB_ACTIONS # Inside GitHub Actions, we run golangci-lint in a separate step
-code/golangci-lint: golangci
-	$(GOLANGCI) fmt ./...
-	$(GOLANGCI) run --allow-parallel-runners ./...
+code/golangci-lint: $(GOLANGCI_LINT)
+	$(GOLANGCI_LINT) fmt ./...
+	$(GOLANGCI_LINT) run --allow-parallel-runners ./...
 endif
 
 ko:
