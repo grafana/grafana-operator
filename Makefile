@@ -87,8 +87,14 @@ generate: $(CONTROLLER_GEN) ## Generate code containing DeepCopy, DeepCopyInto, 
 vet: ## Run go vet against code.
 	go vet ./...
 
+.PHONY: kustomize/lint ## Lint kustomize overlays.
+kustomize/lint: $(KUSTOMIZE)
+	for d in deploy/kustomize/overlays/*/ ; do \
+		kustomize build "$${d}" --load-restrictor LoadRestrictionsNone > /dev/null ;\
+	done
+
 .PHONY: test
-test: $(ENVTEST) manifests generate code/golangci-lint api-docs vet ## Run tests.
+test: $(ENVTEST) manifests generate code/golangci-lint api-docs vet kustomize/lint ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(BIN) -p path)" go test ./... -coverprofile cover.out
 
 ##@ Build
