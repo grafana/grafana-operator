@@ -130,9 +130,9 @@ undeploy: $(KUSTOMIZE) ## Undeploy controller from the K8s cluster specified in 
 	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: start-kind
-start-kind: kind ## Start kind cluster locally
-	@hack/kind/start-kind.sh
-	@hack/kind/populate-kind-cluster.sh
+start-kind: $(KIND) ## Start kind cluster locally
+	KIND=$(KIND) @hack/kind/start-kind.sh
+	KIND=$(KIND) @hack/kind/populate-kind-cluster.sh
 
 ##@ Build Dependencies
 
@@ -145,7 +145,6 @@ $(LOCALBIN):
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 ENVTEST ?= $(LOCALBIN)/setup-envtest
 YQ = $(LOCALBIN)/yq
-KIND = $(LOCALBIN)/kind
 
 ## Tool Versions
 # Set the Operator SDK version to use. By default, what is installed on the system is used.
@@ -154,7 +153,6 @@ CONTROLLER_TOOLS_VERSION ?= v0.16.3
 OPM_VERSION ?= v1.23.2
 YQ_VERSION ?= v4.35.2
 KO_VERSION ?= v0.16.0
-KIND_VERSION ?= v0.27.0
 CHAINSAW_VERSION ?= v0.2.10
 
 .PHONY: controller-gen
@@ -180,22 +178,6 @@ ifeq (,$(shell which yq 2>/dev/null))
 	}
 else
 YQ = $(shell which yq)
-endif
-endif
-
-.PHONY: kind
-kind: ## Download kind locally if necessary.
-ifeq (,$(wildcard $(KIND)))
-ifeq (,$(shell which kind 2>/dev/null))
-	@{ \
-	set -e ;\
-	mkdir -p $(dir $(KIND)) ;\
-	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(KIND) https://github.com/kubernetes-sigs/kind/releases/download/$(KIND_VERSION)/kind-$${OSTYPE}-$${ARCH} ;\
-	chmod +x $(KIND) ;\
-	}
-else
-KIND = $(shell which kind)
 endif
 endif
 
@@ -233,8 +215,8 @@ bundle/redhat: bundle
 
 # e2e
 .PHONY: e2e-kind
-e2e-kind: kind
-	hack/kind/start-kind.sh
+e2e-kind: $(KIND)
+	KIND=$(KIND) hack/kind/start-kind.sh
 
 .PHONY: e2e-local-gh-actions
 e2e-local-gh-actions: e2e-kind ko-build-kind e2e
@@ -282,7 +264,7 @@ ko-build-local: ko ## Build Docker image with KO
 	$(KO) build --sbom=none --bare
 
 .PHONY: ko-build-kind
-ko-build-kind: ko-build-local kind ## Build and Load Docker image into kind cluster
+ko-build-kind: $(KIND) ko-build-local ## Build and Load Docker image into kind cluster
 	$(KIND) load docker-image $(KO_DOCKER_REPO) --name $(KIND_CLUSTER_NAME)
 
 helm-docs:

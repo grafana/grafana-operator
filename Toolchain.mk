@@ -5,6 +5,7 @@ $(BIN):
 PATH := $(BIN):$(PATH)
 
 GOLANGCI_LINT_VERSION = v2.1.6
+KIND_VERSION = v0.27.0
 KUSTOMIZE_VERSION = v5.1.1
 OPERATOR_SDK_VERSION = v1.32.0
 
@@ -36,5 +37,15 @@ ifeq (, $(shell which $(OPERATOR_SDK)))
 	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
 	curl -sSLo $(OPERATOR_SDK) https://github.com/operator-framework/operator-sdk/releases/download/$(OPERATOR_SDK_VERSION)/operator-sdk_$${OS}_$${ARCH} ;\
 	chmod +x $(OPERATOR_SDK);\
+	}
+endif
+
+KIND := $(BIN)/kind-$(KIND_VERSION)
+$(KIND): $(BIN)
+ifeq (, $(shell which $(KIND)))
+	@{ \
+	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
+	curl -sSLo $(KIND) https://github.com/kubernetes-sigs/kind/releases/download/$(KIND_VERSION)/kind-$${OSTYPE}-$${ARCH} ;\
+	chmod +x $(KIND) ;\
 	}
 endif
