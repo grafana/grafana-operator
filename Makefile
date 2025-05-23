@@ -89,9 +89,21 @@ vet: ## Run go vet against code.
 
 .PHONY: kustomize/lint ## Lint kustomize overlays.
 kustomize/lint: $(KUSTOMIZE)
-	for d in deploy/kustomize/overlays/*/ ; do \
+	@for d in deploy/kustomize/overlays/*/ ; do \
 		kustomize build "$${d}" --load-restrictor LoadRestrictionsNone > /dev/null ;\
 	done
+
+.PHONY: kustomize/set-image ## Sets release image.
+kustomize/set-image: $(KUSTOMIZE)
+	cd deploy/kustomize/base && kustomize edit set image ghcr.io/${GITHUB_REPOSITORY}=${GHCR_REPO}:${RELEASE_NAME} && cd -
+
+.PHONY: kustomize/generate-github-assets ## Generates GitHub assets.
+kustomize/generate-github-assets: $(KUSTOMIZE)
+	@for d in deploy/kustomize/overlays/*/ ; do \
+		echo "$${d}" ;\
+		kustomize build "$${d}" --load-restrictor LoadRestrictionsNone > kustomize-$$(basename "$${d}").yaml ;\
+	done
+	kustomize build config/crd > crds.yaml
 
 .PHONY: test
 test: $(ENVTEST) manifests generate code/golangci-lint api-docs vet kustomize/lint ## Run tests.
