@@ -13,6 +13,7 @@ KIND_VERSION = v0.27.0
 KO_VERSION = v0.16.0
 KUSTOMIZE_VERSION = v5.1.1
 OPERATOR_SDK_VERSION = v1.32.0
+OPM_VERSION = v1.23.2
 YQ_VERSION = v4.35.2
 
 GOLANGCI_LINT := $(BIN)/golangci-lint-$(GOLANGCI_LINT_VERSION)
@@ -43,6 +44,16 @@ ifeq (, $(shell which $(OPERATOR_SDK)))
 	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
 	curl -sSLo $(OPERATOR_SDK) https://github.com/operator-framework/operator-sdk/releases/download/$(OPERATOR_SDK_VERSION)/operator-sdk_$${OS}_$${ARCH} ;\
 	chmod +x $(OPERATOR_SDK);\
+	}
+endif
+
+OPM := $(BIN)/opm-$(OPM_VERSION)
+$(OPM): $(BIN)
+ifeq (, $(shell which $(OPM)))
+	@{ \
+	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
+	curl -sSLo $(OPM) https://github.com/operator-framework/operator-registry/releases/download/$(OPM_VERSION)/$${OS}-$${ARCH}-opm ;\
+	chmod +x $(OPM) ;\
 	}
 endif
 
