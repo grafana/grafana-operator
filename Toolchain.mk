@@ -17,59 +17,6 @@ OPERATOR_SDK_VERSION = v1.32.0
 OPM_VERSION = v1.23.2
 YQ_VERSION = v4.35.2
 
-GOLANGCI_LINT := $(BIN)/golangci-lint-$(GOLANGCI_LINT_VERSION)
-$(GOLANGCI_LINT): $(BIN)
-ifeq (, $(shell which $(GOLANGCI_LINT)))
-	@{ \
-	set -e ;\
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s $(GOLANGCI_LINT_VERSION) ;\
-	mv $(BIN)/golangci-lint $(GOLANGCI_LINT) ;\
-	}
-endif
-
-KUSTOMIZE := $(BIN)/kustomize-$(KUSTOMIZE_VERSION)
-$(KUSTOMIZE): $(BIN)
-ifeq (, $(shell which $(KUSTOMIZE)))
-	@{ \
-	set -e ;\
-	curl -sSfL "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash -s -- $(subst v,,$(KUSTOMIZE_VERSION)) $(BIN) ;\
-	mv $(BIN)/kustomize $(KUSTOMIZE) ;\
-	}
-endif
-
-OPERATOR_SDK := $(BIN)/operator-sdk-$(OPERATOR_SDK_VERSION)
-$(OPERATOR_SDK): $(BIN)
-ifeq (, $(shell which $(OPERATOR_SDK)))
-	@{ \
-	set -e ;\
-	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(OPERATOR_SDK) https://github.com/operator-framework/operator-sdk/releases/download/$(OPERATOR_SDK_VERSION)/operator-sdk_$${OS}_$${ARCH} ;\
-	chmod +x $(OPERATOR_SDK);\
-	}
-endif
-
-OPM := $(BIN)/opm-$(OPM_VERSION)
-$(OPM): $(BIN)
-ifeq (, $(shell which $(OPM)))
-	@{ \
-	set -e ;\
-	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(OPM) https://github.com/operator-framework/operator-registry/releases/download/$(OPM_VERSION)/$${OS}-$${ARCH}-opm ;\
-	chmod +x $(OPM) ;\
-	}
-endif
-
-KIND := $(BIN)/kind-$(KIND_VERSION)
-$(KIND): $(BIN)
-ifeq (, $(shell which $(KIND)))
-	@{ \
-	set -e ;\
-	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(KIND) https://github.com/kubernetes-sigs/kind/releases/download/$(KIND_VERSION)/kind-$${OSTYPE}-$${ARCH} ;\
-	chmod +x $(KIND) ;\
-	}
-endif
-
 CHAINSAW := $(BIN)/chainsaw-$(CHAINSAW_VERSION)
 $(CHAINSAW): $(BIN)
 ifeq (, $(shell which $(CHAINSAW)))
@@ -110,6 +57,16 @@ ifeq (, $(shell which $(ENVTEST)))
 	}
 endif
 
+GOLANGCI_LINT := $(BIN)/golangci-lint-$(GOLANGCI_LINT_VERSION)
+$(GOLANGCI_LINT): $(BIN)
+ifeq (, $(shell which $(GOLANGCI_LINT)))
+	@{ \
+	set -e ;\
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s $(GOLANGCI_LINT_VERSION) ;\
+	mv $(BIN)/golangci-lint $(GOLANGCI_LINT) ;\
+	}
+endif
+
 HELM_DOCS := $(BIN)/helm-docs-$(HELM_DOCS_VERSION)
 $(HELM_DOCS): $(BIN)
 ifeq (, $(shell which $(HELM_DOCS)))
@@ -120,6 +77,17 @@ ifeq (, $(shell which $(HELM_DOCS)))
 	}
 endif
 
+KIND := $(BIN)/kind-$(KIND_VERSION)
+$(KIND): $(BIN)
+ifeq (, $(shell which $(KIND)))
+	@{ \
+	set -e ;\
+	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
+	curl -sSLo $(KIND) https://github.com/kubernetes-sigs/kind/releases/download/$(KIND_VERSION)/kind-$${OSTYPE}-$${ARCH} ;\
+	chmod +x $(KIND) ;\
+	}
+endif
+
 KO := $(BIN)/ko-$(KO_VERSION)
 $(KO): $(BIN)
 ifeq (, $(shell which $(KO)))
@@ -127,6 +95,38 @@ ifeq (, $(shell which $(KO)))
 	set -e ;\
 	GOBIN=$(BIN) go install github.com/google/ko@$(KO_VERSION) ;\
 	mv $(BIN)/ko $(KO) ;\
+	}
+endif
+
+KUSTOMIZE := $(BIN)/kustomize-$(KUSTOMIZE_VERSION)
+$(KUSTOMIZE): $(BIN)
+ifeq (, $(shell which $(KUSTOMIZE)))
+	@{ \
+	set -e ;\
+	curl -sSfL "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash -s -- $(subst v,,$(KUSTOMIZE_VERSION)) $(BIN) ;\
+	mv $(BIN)/kustomize $(KUSTOMIZE) ;\
+	}
+endif
+
+OPERATOR_SDK := $(BIN)/operator-sdk-$(OPERATOR_SDK_VERSION)
+$(OPERATOR_SDK): $(BIN)
+ifeq (, $(shell which $(OPERATOR_SDK)))
+	@{ \
+	set -e ;\
+	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
+	curl -sSLo $(OPERATOR_SDK) https://github.com/operator-framework/operator-sdk/releases/download/$(OPERATOR_SDK_VERSION)/operator-sdk_$${OS}_$${ARCH} ;\
+	chmod +x $(OPERATOR_SDK);\
+	}
+endif
+
+OPM := $(BIN)/opm-$(OPM_VERSION)
+$(OPM): $(BIN)
+ifeq (, $(shell which $(OPM)))
+	@{ \
+	set -e ;\
+	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
+	curl -sSLo $(OPM) https://github.com/operator-framework/operator-registry/releases/download/$(OPM_VERSION)/$${OS}-$${ARCH}-opm ;\
+	chmod +x $(OPM) ;\
 	}
 endif
 
