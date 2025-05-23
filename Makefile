@@ -60,7 +60,7 @@ help: ## Display this help.
 ##@ Development
 
 .PHONY: manifests
-manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) yq ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
+manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) $(YQ) ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role webhook paths="./..." crd output:crd:artifacts:config=config/crd/bases
 	$(CONTROLLER_GEN) rbac:roleName=manager-role webhook paths="./..." crd output:crd:artifacts:config=deploy/helm/grafana-operator/crds
 	$(YQ) -i '(select(.kind == "Deployment") | .spec.template.spec.containers[0].env[] | select (.name == "RELATED_IMAGE_GRAFANA")).value="$(GRAFANA_IMAGE):$(GRAFANA_VERSION)"' config/manager/manager.yaml
@@ -143,35 +143,17 @@ $(LOCALBIN):
 
 ## Tool Binaries
 ENVTEST ?= $(LOCALBIN)/setup-envtest
-YQ = $(LOCALBIN)/yq
 
 ## Tool Versions
 # Set the Operator SDK version to use. By default, what is installed on the system is used.
 # This is useful for CI or a project to utilize a specific version of the operator-sdk toolkit.
 OPM_VERSION ?= v1.23.2
-YQ_VERSION ?= v4.35.2
 CHAINSAW_VERSION ?= v0.2.10
 
 .PHONY: envtest
 envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.
 $(ENVTEST): $(LOCALBIN)
 	test -s $(LOCALBIN)/setup-envtest || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
-
-.PHONY: yq
-yq: ## Download yq locally if necessary.
-ifeq (,$(wildcard $(YQ)))
-ifeq (,$(shell which yq 2>/dev/null))
-	@{ \
-	set -e ;\
-	mkdir -p $(dir $(YQ)) ;\
-	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(YQ) https://github.com/mikefarah/yq/releases/download/$(YQ_VERSION)/yq_$${OSTYPE}_$${ARCH} ;\
-	chmod +x $(YQ) ;\
-	}
-else
-YQ = $(shell which yq)
-endif
-endif
 
 # CHANNELS define the bundle channels used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g CHANNELS = "candidate,fast,stable")
@@ -331,7 +313,7 @@ API_REF_GEN=$(shell which crdoc)
 endif
 
 .PHONY: prep-release
-prep-release: yq
+prep-release: $(YQ)
 	$(YQ) -i '.version="v$(VERSION)"' deploy/helm/grafana-operator/Chart.yaml
 	$(YQ) -i '.appVersion="v$(VERSION)"' deploy/helm/grafana-operator/Chart.yaml
 	$(YQ) -i '.params.version="v$(VERSION)"' hugo/config.yaml

@@ -10,6 +10,7 @@ KIND_VERSION = v0.27.0
 KO_VERSION = v0.16.0
 KUSTOMIZE_VERSION = v5.1.1
 OPERATOR_SDK_VERSION = v1.32.0
+YQ_VERSION = v4.35.2
 
 GOLANGCI_LINT := $(BIN)/golangci-lint-$(GOLANGCI_LINT_VERSION)
 $(GOLANGCI_LINT): $(BIN)
@@ -67,5 +68,16 @@ ifeq (, $(shell which $(KO)))
 	@{ \
 	GOBIN=$(BIN) go install github.com/google/ko@$(KO_VERSION) ;\
 	mv $(BIN)/ko $(KO) ;\
+	}
+endif
+
+YQ := $(BIN)/yq-$(YQ_VERSION)
+$(YQ): $(BIN)
+ifeq (, $(shell which $(YQ)))
+	@{ \
+	set -e ;\
+	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
+	curl -sSLo $(YQ) https://github.com/mikefarah/yq/releases/download/$(YQ_VERSION)/yq_$${OSTYPE}_$${ARCH} ;\
+	chmod +x $(YQ) ;\
 	}
 endif
