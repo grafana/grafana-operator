@@ -10,6 +10,7 @@ CRDOC_VERSION = v0.6.4
 ENVTEST_VERSION = 0.20
 GOLANGCI_LINT_VERSION = v2.1.6
 HELM_DOCS_VERSION = v1.11.0
+HELM_VERSION = v3.16.2
 KIND_VERSION = v0.27.0
 KO_VERSION = v0.16.0
 KUSTOMIZE_VERSION = v5.1.1
@@ -64,6 +65,16 @@ ifeq (, $(shell which $(GOLANGCI_LINT)))
 	set -e ;\
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s $(GOLANGCI_LINT_VERSION) ;\
 	mv $(BIN)/golangci-lint $(GOLANGCI_LINT) ;\
+	}
+endif
+
+HELM := $(BIN)/helm-$(HELM_VERSION)
+$(HELM): $(BIN)
+ifeq (, $(shell which $(HELM)))
+	@{ \
+	set -e ;\
+	curl -sSfL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | HELM_INSTALL_DIR=$(BIN) sh -s -- -v $(HELM_VERSION) --no-sudo ;\
+	mv $(BIN)/helm $(HELM) ;\
 	}
 endif
 

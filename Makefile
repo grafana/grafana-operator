@@ -106,7 +106,7 @@ kustomize/generate-github-assets: $(KUSTOMIZE)
 	kustomize build config/crd > crds.yaml
 
 .PHONY: test
-test: $(ENVTEST) manifests generate code/golangci-lint api-docs vet kustomize/lint ## Run tests.
+test: $(ENVTEST) manifests generate code/golangci-lint api-docs vet kustomize/lint helm/lint ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(BIN) -p path)" go test ./... -coverprofile cover.out
 
 ##@ Build
@@ -216,9 +216,14 @@ ko-build-local: $(KO) ## Build Docker image with KO
 ko-build-kind: $(KIND) ko-build-local ## Build and Load Docker image into kind cluster
 	$(KIND) load docker-image $(KO_DOCKER_REPO) --name $(KIND_CLUSTER_NAME)
 
-.PHONY: helm/docs
+.PHONY:
 helm/docs: $(HELM_DOCS)
 	$(HELM_DOCS)
+
+.PHONY: helm/lint
+helm/lint: $(HELM)
+	$(HELM) template deploy/helm/grafana-operator/ > /dev/null
+	$(HELM) lint deploy/helm/grafana-operator/
 
 BUNDLE_IMG ?= $(REGISTRY)/$(ORG)/grafana-operator-bundle:v$(VERSION)
 
