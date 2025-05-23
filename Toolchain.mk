@@ -7,6 +7,7 @@ PATH := $(BIN):$(PATH)
 CONTROLLER_GEN_VERSION = v0.16.3
 GOLANGCI_LINT_VERSION = v2.1.6
 KIND_VERSION = v0.27.0
+KO_VERSION = v0.16.0
 KUSTOMIZE_VERSION = v5.1.1
 OPERATOR_SDK_VERSION = v1.32.0
 
@@ -57,5 +58,14 @@ ifeq (, $(shell which $(CONTROLLER_GEN)))
 	@{ \
 	GOBIN=$(BIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_GEN_VERSION) ;\
 	mv $(BIN)/controller-gen $(CONTROLLER_GEN) ;\
+	}
+endif
+
+KO := $(BIN)/ko-$(KO_VERSION)
+$(KO): $(BIN)
+ifeq (, $(shell which $(KO)))
+	@{ \
+	GOBIN=$(BIN) go install github.com/google/ko@$(KO_VERSION) ;\
+	mv $(BIN)/ko $(KO) ;\
 	}
 endif
