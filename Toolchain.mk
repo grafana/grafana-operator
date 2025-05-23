@@ -37,8 +37,9 @@ ifeq (, $(shell which $(CONTROLLER_GEN)))
 	$(info $(M) installing controller-gen)
 	@{ \
 	set -e ;\
-	GOBIN=$(BIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_GEN_VERSION) ;\
-	mv $(BIN)/controller-gen $(CONTROLLER_GEN) ;\
+	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
+	curl -sSLo $(CONTROLLER_GEN) https://github.com/kubernetes-sigs/controller-tools/releases/download/$(CONTROLLER_GEN_VERSION)/controller-gen-$${OSTYPE}-$${ARCH} ;\
+	chmod +x $(CONTROLLER_GEN) ;\
 	}
 endif
 
