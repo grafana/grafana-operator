@@ -26,8 +26,12 @@ ifeq (, $(shell which $(CHAINSAW)))
 	$(info $(M) installing chainsaw)
 	@{ \
 	set -e ;\
-	GOBIN=$(BIN) go install github.com/kyverno/chainsaw@$(CHAINSAW_VERSION) ;\
-	mv $(BIN)/chainsaw $(CHAINSAW) ;\
+	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
+	curl -sSLo $(CHAINSAW).tar.gz https://github.com/kyverno/chainsaw/releases/download/$(CHAINSAW_VERSION)/chainsaw_$${OSTYPE}_$${ARCH}.tar.gz && \
+	tar -zxvf $(CHAINSAW).tar.gz chainsaw && \
+	chmod +x chainsaw && \
+	mv chainsaw $(CHAINSAW) && \
+	rm $(CHAINSAW).tar.gz ;\
 	}
 endif
 
