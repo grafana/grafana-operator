@@ -63,14 +63,6 @@ jobs:
           go-version-file: "go.mod"
           cache: true
 
-      - name: Install ko
-        uses: ko-build/setup-ko@d006021bd0c28d1ce33a07e7943d48b079944c8d # v0.9
-        with:
-          version: v0.16.0
-
-      - name: Install chainsaw
-        uses: kyverno/action-install-chainsaw@f2b47b97dc889c12702113753d713f01ec268de5 # v0.2.12
-
       - name: Create KinD cluster ${{ matrix.version }}
         id: kind
         env:
