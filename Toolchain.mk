@@ -7,6 +7,7 @@ PATH := $(BIN):$(PATH)
 CHAINSAW_VERSION = v0.2.10
 CONTROLLER_GEN_VERSION = v0.16.3
 CRDOC_VERSION = v0.6.4
+ENVTEST_VERSION = latest
 GOLANGCI_LINT_VERSION = v2.1.6
 HELM_DOCS_VERSION = v1.11.0
 KIND_VERSION = v0.27.0
@@ -91,6 +92,16 @@ ifeq (, $(shell which $(CRDOC)))
 	@{ \
 	GOBIN=$(BIN) go install fybrik.io/crdoc@$(CRDOC_VERSION) ;\
 	mv $(BIN)/crdoc $(CRDOC) ;\
+	}
+endif
+
+ENVTEST := $(BIN)/setup-envtest-$(ENVTEST_VERSION)
+$(ENVTEST): $(BIN)
+ifeq (, $(shell which $(ENVTEST)))
+	@{ \
+	set -e ;\
+	GOBIN=$(BIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@$(ENVTEST_VERSION) ;\
+	mv $(BIN)/setup-envtest $(ENVTEST) ;\
 	}
 endif
 
