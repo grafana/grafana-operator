@@ -134,13 +134,6 @@ start-kind: $(KIND) ## Start kind cluster locally
 	KIND=$(KIND) @hack/kind/start-kind.sh
 	KIND=$(KIND) @hack/kind/populate-kind-cluster.sh
 
-##@ Build Dependencies
-
-## Location to install dependencies to
-LOCALBIN ?= $(shell pwd)/bin
-$(LOCALBIN):
-	mkdir -p $(LOCALBIN)
-
 # CHANNELS define the bundle channels used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g CHANNELS = "candidate,fast,stable")
 # To re-generate a bundle for other specific channels without changing the standard setup, you can:
