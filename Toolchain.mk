@@ -4,6 +4,7 @@ $(BIN):
 
 PATH := $(BIN):$(PATH)
 
+CHAINSAW_VERSION = v0.2.10
 CONTROLLER_GEN_VERSION = v0.16.3
 CRDOC_VERSION = v0.6.4
 GOLANGCI_LINT_VERSION = v2.1.6
@@ -51,6 +52,15 @@ ifeq (, $(shell which $(KIND)))
 	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
 	curl -sSLo $(KIND) https://github.com/kubernetes-sigs/kind/releases/download/$(KIND_VERSION)/kind-$${OSTYPE}-$${ARCH} ;\
 	chmod +x $(KIND) ;\
+	}
+endif
+
+CHAINSAW := $(BIN)/chainsaw-$(CHAINSAW_VERSION)
+$(CHAINSAW): $(BIN)
+ifeq (, $(shell which $(CHAINSAW)))
+	@{ \
+	GOBIN=$(BIN) go install github.com/kyverno/chainsaw@$(CHAINSAW_VERSION) ;\
+	mv $(BIN)/chainsaw $(CHAINSAW) ;\
 	}
 endif
 
