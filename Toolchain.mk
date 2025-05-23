@@ -5,6 +5,7 @@ $(BIN):
 PATH := $(BIN):$(PATH)
 
 CONTROLLER_GEN_VERSION = v0.16.3
+CRDOC_VERSION = v0.6.4
 GOLANGCI_LINT_VERSION = v2.1.6
 KIND_VERSION = v0.27.0
 KO_VERSION = v0.16.0
@@ -59,6 +60,15 @@ ifeq (, $(shell which $(CONTROLLER_GEN)))
 	@{ \
 	GOBIN=$(BIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_GEN_VERSION) ;\
 	mv $(BIN)/controller-gen $(CONTROLLER_GEN) ;\
+	}
+endif
+
+CRDOC := $(BIN)/crdoc-$(CRDOC_VERSION)
+$(CRDOC): $(BIN)
+ifeq (, $(shell which $(CRDOC)))
+	@{ \
+	GOBIN=$(BIN) go install fybrik.io/crdoc@$(CRDOC_VERSION) ;\
+	mv $(BIN)/crdoc $(CRDOC) ;\
 	}
 endif
 

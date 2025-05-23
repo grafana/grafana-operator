@@ -75,8 +75,8 @@ manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) $(YQ) ## Generate WebhookConfiguration
 	cat config/rbac/role.yaml | $(YQ) -r 'del(.rules[] | select (.apiGroups | contains(["route.openshift.io"]) | not))'  > deploy/helm/grafana-operator/files/rbac-openshift.yaml
 
 # Generate API reference documentation
-api-docs: manifests gen-crd-api-reference-docs
-	$(API_REF_GEN) crdoc --resources config/crd/bases --output docs/docs/api.md --template hugo/templates/frontmatter-grafana-operator.tmpl
+api-docs: $(CRDOC) manifests
+	$(CRDOC) crdoc --resources config/crd/bases --output docs/docs/api.md --template hugo/templates/frontmatter-grafana-operator.tmpl
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -295,22 +295,6 @@ catalog-build: opm ## Build a catalog image.
 .PHONY: catalog-push
 catalog-push: ## Push a catalog image.
 	docker push $(CATALOG_IMG)
-
-# Find or download gen-crd-api-reference-docs
-gen-crd-api-reference-docs:
-ifeq (, $(shell which crdoc))
-	@{ \
-	set -e ;\
-	API_REF_GEN_TMP_DIR=$$(mktemp -d) ;\
-	cd $$API_REF_GEN_TMP_DIR ;\
-	go mod init tmp ;\
-	go install fybrik.io/crdoc@ad5ba1e62f8db46cb5a9282dfedfc3d8f3d45065 ;\
-	rm -rf $$API_REF_GEN_TMP_DIR ;\
-	}
-API_REF_GEN=$(GOBIN)/crdoc
-else
-API_REF_GEN=$(shell which crdoc)
-endif
 
 .PHONY: prep-release
 prep-release: $(YQ)
