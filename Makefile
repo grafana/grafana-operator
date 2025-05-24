@@ -1,5 +1,7 @@
 include Toolchain.mk
 
+.DEFAULT_GOAL := all
+
 # Current Operator version
 VERSION ?= 5.18.0
 
