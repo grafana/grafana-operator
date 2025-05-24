@@ -29,7 +29,7 @@ func teardown(t *testing.T) {
 }
 
 func normalizeAndCompareJSON(json1, json2 []byte) bool {
-	var data1, data2 map[string]interface{}
+	var data1, data2 map[string]any
 
 	if err := json.Unmarshal(json1, &data1); err != nil {
 		return false
