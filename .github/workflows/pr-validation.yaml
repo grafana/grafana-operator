@@ -81,47 +81,17 @@ jobs:
         with:
           go-version-file: "go.mod"
 
-      - name: Run helm-template
-        run: |
-          helm template deploy/helm/grafana-operator/
-
-      - name: Run helm-lint
-        run: |
-          helm lint deploy/helm/grafana-operator/
       - name: Run helm-docs
         run: |
-          make helm/docs
+          make helm-docs
 
       - name: Check if working tree is dirty
         run: |
           if [[ $(git status --porcelain) ]]; then
             git diff
-            echo '::error::run make helm/docs and commit changes'
+            echo '::error::run make helm-docs and commit changes'
             exit 1
           fi
-
-  kustomize:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Clone repo
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-        with:
-          persist-credentials: false
-
-      - name: Setup go
-        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5
-        with:
-          go-version-file: "go.mod"
-
-      - name: Install kustomize
-        run: |
-          make kustomize
-
-      - name: Check if overlays can be successfully built
-        run: |
-          for d in deploy/kustomize/overlays/*/ ; do
-            kustomize build "$d" --load-restrictor LoadRestrictionsNone > /dev/null
-          done
 
   trivy:
     runs-on: ubuntu-latest

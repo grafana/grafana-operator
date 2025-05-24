@@ -73,7 +73,7 @@ jobs:
           app-id: ${{ fromJSON(steps.secrets.outputs.secrets || '{}').APP_ID }}
           private-key: ${{ fromJSON(steps.secrets.outputs.secrets || '{}').APP_PRIVATE_KEY }}
           repositories: helm-charts
-          owner: '${{ github.event.repository.owner.login }}'
+          owner: "${{ github.event.repository.owner.login }}"
 
       - name: Set the correct token (Github App or PAT) # zizmor: ignore[template-injection] app token considered safe
         run: |
@@ -132,11 +132,7 @@ jobs:
           echo "GHCR_REPO=$GHCR_REPO" >> $GITHUB_ENV
       - name: update-kustomize-image
         run: |
-          # Install kustomize
-          make kustomize
-          # Update image to match the new image and tag
-          cd deploy/kustomize/base
-          kustomize edit set image ghcr.io/${{ github.repository }}=${{ env.GHCR_REPO }}:${RELEASE_NAME}
+          make kustomize-set-image
       - name: Login to GitHub Container Registry
         uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
         with:
@@ -151,14 +147,11 @@ jobs:
             --path="./deploy/kustomize" \
             --source="${PUBLISH_SOURCE}" \
             --revision="${RELEASE_NAME}/${GITHUB_SHA}"
-      - name: update-kustomize-assert
+      - name: upload kustomize assets
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          for d in deploy/kustomize/overlays/*/ ; do
-            kustomize build "$d" --load-restrictor LoadRestrictionsNone > kustomize-$(basename "$d").yaml
-          done
-          kustomize build config/crd > crds.yaml
+          make kustomize-github-assets
           gh release upload "${RELEASE_NAME}" kustomize-*.yaml crds.yaml
 
   image:
