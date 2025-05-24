@@ -40,7 +40,7 @@ func (a *autoDetect) IsOpenshift() (bool, error) {
 	}
 
 	apiGroups := apiList.Groups
-	for i := 0; i < len(apiGroups); i++ {
+	for i := range apiGroups {
 		if apiGroups[i].Name == "route.openshift.io" {
 			return true, nil
 		}
