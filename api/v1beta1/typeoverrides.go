@@ -3,6 +3,7 @@ package v1beta1
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 	"reflect"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -31,17 +32,13 @@ func (override *ObjectMeta) Merge(meta metav1.ObjectMeta) metav1.ObjectMeta {
 		if meta.Annotations == nil {
 			meta.Annotations = make(map[string]string)
 		}
-		for key, val := range override.Annotations {
-			meta.Annotations[key] = val
-		}
+		maps.Copy(meta.Annotations, override.Annotations)
 	}
 	if len(override.Labels) > 0 {
 		if meta.Labels == nil {
 			meta.Labels = make(map[string]string)
 		}
-		for key, val := range override.Labels {
-			meta.Labels[key] = val
-		}
+		maps.Copy(meta.Labels, override.Labels)
 	}
 	return meta
 }
@@ -523,7 +520,7 @@ type ServiceAccountV1 struct {
 // Merge merges `overrides` into `base` using the SMP (structural merge patch) approach.
 // - It intentionally does not remove fields present in base but missing from overrides
 // - It merges slices only if the `patchStrategy:"merge"` tag is present and the `patchMergeKey` identifies the unique field
-func Merge(base, overrides interface{}) error {
+func Merge(base, overrides any) error {
 	if overrides == nil {
 		return nil
 	}

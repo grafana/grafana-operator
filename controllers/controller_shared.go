@@ -362,7 +362,7 @@ func patchFinalizers(ctx context.Context, cl client.Client, cr client.Object) er
 	crFinalizers := cr.GetFinalizers()
 
 	// Create patch using slice
-	patch, err := json.Marshal(map[string]interface{}{"metadata": map[string]interface{}{"finalizers": crFinalizers}})
+	patch, err := json.Marshal(map[string]any{"metadata": map[string]any{"finalizers": crFinalizers}})
 	if err != nil {
 		return err
 	}
@@ -378,7 +378,7 @@ func addAnnotation(ctx context.Context, cl client.Client, cr client.Object, key 
 
 	// Add key to map and create patch
 	crAnnotations[key] = value
-	patch, err := json.Marshal(map[string]interface{}{"metadata": map[string]interface{}{"annotations": crAnnotations}})
+	patch, err := json.Marshal(map[string]any{"metadata": map[string]any{"annotations": crAnnotations}})
 	if err != nil {
 		return err
 	}
@@ -395,7 +395,7 @@ func removeAnnotation(ctx context.Context, cl client.Client, cr client.Object, k
 	// Escape slash '/' according to RFC6901
 	// We could also escape tilde '~', but that is not a valid character in annotation keys.
 	key = strings.ReplaceAll(key, "/", "~1")
-	patch, err := json.Marshal([]interface{}{map[string]interface{}{"op": "remove", "path": "/metadata/annotations/" + key}})
+	patch, err := json.Marshal([]any{map[string]any{"op": "remove", "path": "/metadata/annotations/" + key}})
 	if err != nil {
 		return err
 	}

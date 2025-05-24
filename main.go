@@ -359,7 +359,7 @@ func main() { // nolint:gocyclo
 
 func getNamespaceConfig(namespaces string, labelSelectors labels.Selector) map[string]cache.Config {
 	defaultNamespaces := map[string]cache.Config{}
-	for _, v := range strings.Split(namespaces, ",") {
+	for v := range strings.SplitSeq(namespaces, ",") {
 		// Generate a mapping of namespaces to label/field selectors, set to Everything() to enable matching all
 		// instances in all namespaces from watchNamespace to be controlled by the operator
 		// this is the default behavior of the operator on v5, if you require finer grained control over this

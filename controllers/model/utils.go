@@ -3,6 +3,7 @@ package model
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"maps"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -26,9 +27,7 @@ func MergeAnnotations(requested map[string]string, existing map[string]string) m
 		return requested
 	}
 
-	for k, v := range requested {
-		existing[k] = v
-	}
+	maps.Copy(existing, requested)
 	return existing
 }
 
@@ -43,12 +42,8 @@ func SetInheritedLabels(obj metav1.ObjectMetaAccessor, extraLabels map[string]st
 		labels = make(map[string]string)
 	}
 	// Inherit labels from the parent grafana instance if any
-	for k, v := range extraLabels {
-		labels[k] = v
-	}
+	maps.Copy(labels, extraLabels)
 	// Ensure default CommonLabels for child resources
-	for k, v := range GetCommonLabels() {
-		labels[k] = v
-	}
+	maps.Copy(labels, GetCommonLabels())
 	meta.SetLabels(labels)
 }

@@ -87,7 +87,7 @@ func NewContentResolver(cr v1beta1.GrafanaContentResource, client client.Client,
 	return resolver
 }
 
-func (h *ContentResolver) Resolve(ctx context.Context) (map[string]interface{}, string, error) {
+func (h *ContentResolver) Resolve(ctx context.Context) (map[string]any, string, error) {
 	json, err := h.fetchContentJSON(ctx)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to fetch contents: %w", err)
@@ -225,19 +225,19 @@ func (h *ContentResolver) getReferencedValue(ctx context.Context, cr v1beta1.Gra
 }
 
 // getContentModel resolves datasources, updates uid (if needed) and converts raw json to type grafana client accepts
-func (h *ContentResolver) getContentModel(contentJSON []byte) (map[string]interface{}, string, error) {
+func (h *ContentResolver) getContentModel(contentJSON []byte) (map[string]any, string, error) {
 	contentJSON, err := h.resolveDatasources(contentJSON)
 	if err != nil {
-		return map[string]interface{}{}, "", err
+		return map[string]any{}, "", err
 	}
 
 	hash := sha256.New()
 	hash.Write(contentJSON)
 
-	var contentModel map[string]interface{}
+	var contentModel map[string]any
 	err = json.Unmarshal(contentJSON, &contentModel)
 	if err != nil {
-		return map[string]interface{}{}, "", err
+		return map[string]any{}, "", err
 	}
 
 	// NOTE: id should never be hardcoded in a model, otherwise grafana will try to update a model by id instead of uid.

@@ -14,10 +14,7 @@ import (
 func NewHTTPClient(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (*http.Client, error) {
 	var timeout time.Duration
 	if grafana.Spec.Client != nil && grafana.Spec.Client.TimeoutSeconds != nil {
-		timeout = time.Duration(*grafana.Spec.Client.TimeoutSeconds)
-		if timeout < 0 {
-			timeout = 0
-		}
+		timeout = max(time.Duration(*grafana.Spec.Client.TimeoutSeconds), 0)
 	} else {
 		timeout = 10
 	}
