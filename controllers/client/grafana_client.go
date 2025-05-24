@@ -132,10 +132,7 @@ func ParseAdminURL(adminURL string) (*url.URL, error) {
 func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (*genapi.GrafanaHTTPAPI, error) {
 	var timeout time.Duration
 	if grafana.Spec.Client != nil && grafana.Spec.Client.TimeoutSeconds != nil {
-		timeout = time.Duration(*grafana.Spec.Client.TimeoutSeconds)
-		if timeout < 0 {
-			timeout = 0
-		}
+		timeout = max(time.Duration(*grafana.Spec.Client.TimeoutSeconds), 0)
 	} else {
 		timeout = 10
 	}
