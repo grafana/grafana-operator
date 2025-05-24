@@ -3,6 +3,7 @@ package grafana
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/model"
@@ -150,11 +151,8 @@ func (r *IngressReconciler) getIngressAdminURL(ingress *v1.Ingress) string {
 
 	// If we can find the target host in any of the IngressTLS, then we should use https protocol
 	for _, tls := range ingress.Spec.TLS {
-		for _, h := range tls.Hosts {
-			if h == hostname {
-				protocol = "https"
-				break
-			}
+		if slices.Contains(tls.Hosts, hostname) {
+			protocol = "https"
 		}
 	}
 
