@@ -91,7 +91,7 @@ vet: ## Run go vet against code.
 
 .PHONY:
 helm-docs: $(HELM_DOCS) ## Generate helm docs
-	$(HELM_DOCS)
+	$(HELM_DOCS) deploy/helm
 
 .PHONY: helm-lint
 helm-lint: $(HELM) ## Validate helm chart.
