@@ -126,7 +126,7 @@ kustomize-github-assets: $(KUSTOMIZE) ## Generates GitHub assets.
 	kustomize build config/crd > crds.yaml
 
 .PHONY: test
-test: $(ENVTEST) manifests generate code/golangci-lint api-docs vet kustomize-lint helm-docs helm-lint ## Run tests.
+test: $(ENVTEST) manifests generate golangci-lint api-docs vet kustomize-lint helm-docs helm-lint ## Run tests.
 	$(info $(M) running $@)
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(BIN) -p path)" go test ./... -coverprofile cover.out
 
@@ -229,8 +229,8 @@ e2e: $(CHAINSAW) install deploy-chainsaw ## Run e2e tests using chainsaw.
 	$(info $(M) running $@)
 	$(CHAINSAW) test --test-dir ./tests/e2e/$(TESTS)
 
-.PHONY: code/golangci-lint
-code/golangci-lint: $(GOLANGCI_LINT)
+.PHONY: golangci-lint
+golangci-lint: $(GOLANGCI_LINT) ## Run golangci-lint checks.
 	$(info $(M) running $@)
 	$(GOLANGCI_LINT) config verify
 	$(GOLANGCI_LINT) fmt ./...
