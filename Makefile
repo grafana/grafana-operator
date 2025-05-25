@@ -93,8 +93,8 @@ vet: ## Run go vet against code.
 	$(info $(M) running $@)
 	go vet ./...
 
-.PHONY:
-helm-docs: $(HELM_DOCS) ## Generate helm docs
+.PHONY: helm-docs
+helm-docs: $(HELM_DOCS) ## Generate helm docs.
 	$(info $(M) running $@)
 	$(HELM_DOCS) deploy/helm
 
