@@ -238,7 +238,7 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 	// Use auto generated admin account?
 	secret := model.GetGrafanaAdminSecret(cr, scheme)
 
-	for i := 0; i < len(containers); i++ {
+	for i := range containers {
 		containers[i].Env = append(containers[i].Env, v1.EnvVar{
 			Name: config.GrafanaAdminUserEnvVar,
 			ValueFrom: &v1.EnvVarSource{
