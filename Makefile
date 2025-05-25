@@ -63,6 +63,7 @@ help: ## Display this help.
 
 .PHONY: manifests
 manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) $(YQ) ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
+	$(info $(M) running $@)
 	$(CONTROLLER_GEN) rbac:roleName=manager-role webhook paths="./..." crd output:crd:artifacts:config=config/crd/bases
 	$(CONTROLLER_GEN) rbac:roleName=manager-role webhook paths="./..." crd output:crd:artifacts:config=deploy/helm/grafana-operator/crds
 	$(YQ) -i '(select(.kind == "Deployment") | .spec.template.spec.containers[0].env[] | select (.name == "RELATED_IMAGE_GRAFANA")).value="$(GRAFANA_IMAGE):$(GRAFANA_VERSION)"' config/manager/manager.yaml
@@ -79,37 +80,45 @@ manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) $(YQ) ## Generate WebhookConfiguration
 # Generate API reference documentation
 .PHONY: api-docs
 api-docs: $(CRDOC) manifests
+	$(info $(M) running $@)
 	$(CRDOC) --resources config/crd/bases --output docs/docs/api.md --template hugo/templates/frontmatter-grafana-operator.tmpl
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+	$(info $(M) running $@)
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: vet
 vet: ## Run go vet against code.
+	$(info $(M) running $@)
 	go vet ./...
 
 .PHONY:
 helm-docs: $(HELM_DOCS) ## Generate helm docs
+	$(info $(M) running $@)
 	$(HELM_DOCS) deploy/helm
 
 .PHONY: helm-lint
 helm-lint: $(HELM) ## Validate helm chart.
+	$(info $(M) running $@)
 	$(HELM) template deploy/helm/grafana-operator/ > /dev/null
 	$(HELM) lint deploy/helm/grafana-operator/
 
 .PHONY: kustomize-lint
 kustomize-lint: $(KUSTOMIZE) ## Lint kustomize overlays.
+	$(info $(M) running $@)
 	@for d in deploy/kustomize/overlays/*/ ; do \
 		kustomize build "$${d}" --load-restrictor LoadRestrictionsNone > /dev/null ;\
 	done
 
 .PHONY: kustomize-set-image
 kustomize-set-image: $(KUSTOMIZE) ## Sets release image.
+	$(info $(M) running $@)
 	cd deploy/kustomize/base && kustomize edit set image ghcr.io/${GITHUB_REPOSITORY}=${GHCR_REPO}:${RELEASE_NAME} && cd -
 
 .PHONY: kustomize-github-assets
 kustomize-github-assets: $(KUSTOMIZE) ## Generates GitHub assets.
+	$(info $(M) running $@)
 	@for d in deploy/kustomize/overlays/*/ ; do \
 		echo "$${d}" ;\
 		kustomize build "$${d}" --load-restrictor LoadRestrictionsNone > kustomize-$$(basename "$${d}").yaml ;\
@@ -118,17 +127,20 @@ kustomize-github-assets: $(KUSTOMIZE) ## Generates GitHub assets.
 
 .PHONY: test
 test: $(ENVTEST) manifests generate code/golangci-lint api-docs vet kustomize-lint helm-docs helm-lint ## Run tests.
+	$(info $(M) running $@)
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(BIN) -p path)" go test ./... -coverprofile cover.out
 
 ##@ Build
 
 .PHONY: build
 build: $(GOLANGCI_LINT) generate vet ## Build manager binary.
+	$(info $(M) running $@)
 	$(GOLANGCI_LINT) fmt ./...
 	go build -o bin/manager main.go
 
 .PHONY: run
 run: $(GOLANGCI_LINT) manifests generate vet ## Run a controller from your host.
+	$(info $(M) running $@)
 	$(GOLANGCI_LINT) fmt ./...
 	go run ./main.go --zap-devel=true
 
@@ -140,27 +152,33 @@ endif
 
 .PHONY: install
 install: $(KUSTOMIZE) manifests ## Install CRDs into the K8s cluster specified in ~/.kube/config.
+	$(info $(M) running $@)
 	$(KUSTOMIZE) build config/crd | kubectl replace --force=true -f -
 
 .PHONY: uninstall
 uninstall: $(KUSTOMIZE) manifests ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
+	$(info $(M) running $@)
 	$(KUSTOMIZE) build config/crd | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: deploy
 deploy: $(KUSTOMIZE) manifests ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+	$(info $(M) running $@)
 	cd deploy/kustomize/overlays/cluster_scoped && $(KUSTOMIZE) edit set image ghcr.io/grafana/grafana-operator=${IMG}
 	$(KUSTOMIZE) build deploy/kustomize/overlays/cluster_scoped | kubectl apply --server-side --force-conflicts -f -
 
 .PHONY: deploy-chainsaw
 deploy-chainsaw: $(KUSTOMIZE) manifests ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+	$(info $(M) running $@)
 	$(KUSTOMIZE) build deploy/kustomize/overlays/chainsaw | kubectl apply --server-side --force-conflicts -f -
 
 .PHONY: undeploy
 undeploy: $(KUSTOMIZE) ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
+	$(info $(M) running $@)
 	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: start-kind
 start-kind: $(KIND) ## Start kind cluster locally
+	$(info $(M) running $@)
 	@KIND=$(KIND) hack/kind/start-kind.sh
 	@KIND=$(KIND) hack/kind/populate-kind-cluster.sh
 
@@ -187,6 +205,7 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
 .PHONY: bundle
 bundle: $(KUSTOMIZE) $(OPERATOR_SDK) manifests ## Generate bundle manifests and metadata, then validate generated files.
+	$(info $(M) running $@)
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS)
 	./hack/add-openshift-annotations.sh
@@ -199,6 +218,7 @@ bundle/redhat: bundle
 # e2e
 .PHONY: e2e-kind
 e2e-kind: $(KIND)
+	$(info $(M) running $@)
 	KIND=$(KIND) hack/kind/start-kind.sh
 
 .PHONY: e2e-local-gh-actions
@@ -206,11 +226,13 @@ e2e-local-gh-actions: e2e-kind ko-build-kind e2e
 
 .PHONY: e2e
 e2e: $(CHAINSAW) install deploy-chainsaw ## Run e2e tests using chainsaw.
+	$(info $(M) running $@)
 	$(CHAINSAW) test --test-dir ./tests/e2e/$(TESTS)
 
 .PHONY: code/golangci-lint
 ifndef GITHUB_ACTIONS # Inside GitHub Actions, we run golangci-lint in a separate step
 code/golangci-lint: $(GOLANGCI_LINT)
+	$(info $(M) running $@)
 	$(GOLANGCI_LINT) config verify
 	$(GOLANGCI_LINT) fmt ./...
 	$(GOLANGCI_LINT) run --allow-parallel-runners ./...
@@ -222,20 +244,24 @@ export KUBECONFIG        ?= ${HOME}/.kube/kind-grafana-operator
 
 .PHONY: ko-build-local
 ko-build-local: $(KO) ## Build Docker image with KO
+	$(info $(M) running $@)
 	$(KO) build --sbom=none --bare
 
 .PHONY: ko-build-kind
 ko-build-kind: $(KIND) ko-build-local ## Build and Load Docker image into kind cluster
+	$(info $(M) running $@)
 	$(KIND) load docker-image $(KO_DOCKER_REPO) --name $(KIND_CLUSTER_NAME)
 
 BUNDLE_IMG ?= $(REGISTRY)/$(ORG)/grafana-operator-bundle:v$(VERSION)
 
 .PHONY: bundle-build
 bundle-build: ## Build the bundle image.
+	$(info $(M) running $@)
 	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
 
 .PHONY: bundle-push
 bundle-push: ## Push the bundle image.
+	$(info $(M) running $@)
 	docker push $(BUNDLE_IMG)
 
 # A comma-separated list of bundle images (e.g. make catalog-build BUNDLE_IMGS=example.com/operator-bundle:v0.1.0,example.com/operator-bundle:v0.2.0).
@@ -255,15 +281,18 @@ endif
 # https://github.com/operator-framework/community-operators/blob/7f1438c/docs/packaging-operator.md#updating-your-existing-operator
 .PHONY: catalog-build
 catalog-build: $(OPM) ## Build a catalog image.
+	$(info $(M) running $@)
 	$(OPM) index add --container-tool docker --mode semver --tag $(CATALOG_IMG) --bundles $(BUNDLE_IMGS) $(FROM_INDEX_OPT)
 
 # Push the catalog image.
 .PHONY: catalog-push
 catalog-push: ## Push a catalog image.
+	$(info $(M) running $@)
 	docker push $(CATALOG_IMG)
 
 .PHONY: prep-release
 prep-release: $(YQ)
+	$(info $(M) running $@)
 	$(YQ) -i '.version="v$(VERSION)"' deploy/helm/grafana-operator/Chart.yaml
 	$(YQ) -i '.appVersion="v$(VERSION)"' deploy/helm/grafana-operator/Chart.yaml
 	$(YQ) -i '.params.version="v$(VERSION)"' hugo/config.yaml
