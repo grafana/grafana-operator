@@ -11,14 +11,14 @@ Due to this the Grafana operator constantly polls the Grafana API to test for ch
 We describe this loop as a synchronizing resources with Grafana instances.
 
 To control how often this polling should occur, you can set the `spec.resyncPeriod` field.
-This field tells sets how often it should poll the Grafana instance for changes for the specific resource.
+This field tells the operator how often it should poll the Grafana instance for changes for the specific resource.
 
-If a dashboard has changed, the operator will overwrite and synchronize the dashboard after `10m` per default.
+If a dashboard has changed, the operator will overwrite and synchronize the dashboard after `10m` by default.
 
 This can of course be annoying for developers actively updating a resource. The recommended workflow is to duplicate the dashboard/alert/other and work on the copy.
 When finished, export the changes and update the resource manifest to update the original.
 
-This can be disabled by setting a value `0m`
+This can be disabled by setting a the value to `0m`
 
 ```yaml
 apiVersion: grafana.integreatly.org/v1beta1
@@ -117,11 +117,11 @@ spec:
   json: ...
 ```
 
-Disabled per default to avoid exposing possibly sensitive resources by accident.
+Disabled by default to avoid exposing possibly sensitive resources by accident.
 
 More information can be found in [#44](https://github.com/grafana-operator/grafana-operator-experimental/issues/44).
 
-`allowCrossNamespaceImport` is one-way mutable, you can always enable it(`true`) but never disable.
+`allowCrossNamespaceImport` is one-way mutable, you can always enable it (`true`) but never disable.
 
 Disabling requires a full recreate, delete and apply.
 
