@@ -161,8 +161,8 @@ undeploy: $(KUSTOMIZE) ## Undeploy controller from the K8s cluster specified in 
 
 .PHONY: start-kind
 start-kind: $(KIND) ## Start kind cluster locally
-	KIND=$(KIND) @hack/kind/start-kind.sh
-	KIND=$(KIND) @hack/kind/populate-kind-cluster.sh
+	@KIND=$(KIND) hack/kind/start-kind.sh
+	@KIND=$(KIND) hack/kind/populate-kind-cluster.sh
 
 # CHANNELS define the bundle channels used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g CHANNELS = "candidate,fast,stable")
