@@ -211,6 +211,7 @@ e2e: $(CHAINSAW) install deploy-chainsaw ## Run e2e tests using chainsaw.
 .PHONY: code/golangci-lint
 ifndef GITHUB_ACTIONS # Inside GitHub Actions, we run golangci-lint in a separate step
 code/golangci-lint: $(GOLANGCI_LINT)
+	$(GOLANGCI_LINT) config verify
 	$(GOLANGCI_LINT) fmt ./...
 	$(GOLANGCI_LINT) run --allow-parallel-runners ./...
 endif
