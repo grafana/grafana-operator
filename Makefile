@@ -117,7 +117,7 @@ kustomize-github-assets: $(KUSTOMIZE) ## Generates GitHub assets.
 	kustomize build config/crd > crds.yaml
 
 .PHONY: test
-test: $(ENVTEST) manifests generate code/golangci-lint api-docs vet kustomize-lint helm-lint ## Run tests.
+test: $(ENVTEST) manifests generate code/golangci-lint api-docs vet kustomize-lint helm-docs helm-lint ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(BIN) -p path)" go test ./... -coverprofile cover.out
 
 ##@ Build
