@@ -88,10 +88,12 @@ generate: $(CONTROLLER_GEN) ## Generate code containing DeepCopy, DeepCopyInto, 
 	$(info $(M) running $@)
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
-.PHONY: vet
-vet: ## Run go vet against code.
+.PHONY: golangci-lint
+golangci-lint: $(GOLANGCI_LINT) ## Run golangci-lint checks.
 	$(info $(M) running $@)
-	go vet ./...
+	$(GOLANGCI_LINT) config verify
+	$(GOLANGCI_LINT) fmt ./...
+	$(GOLANGCI_LINT) run --allow-parallel-runners ./...
 
 .PHONY: helm-docs
 helm-docs: $(HELM_DOCS) ## Generate helm docs.
@@ -129,6 +131,11 @@ kustomize-github-assets: $(KUSTOMIZE) ## Generates GitHub assets.
 test: $(ENVTEST) manifests generate vet golangci-lint api-docs kustomize-lint helm-docs helm-lint ## Run tests.
 	$(info $(M) running $@)
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(BIN) -p path)" go test ./... -coverprofile cover.out
+
+.PHONY: vet
+vet: ## Run go vet against code.
+	$(info $(M) running $@)
+	go vet ./...
 
 ##@ Build
 
@@ -228,13 +235,6 @@ e2e-local-gh-actions: e2e-kind ko-build-kind e2e
 e2e: $(CHAINSAW) install deploy-chainsaw ## Run e2e tests using chainsaw.
 	$(info $(M) running $@)
 	$(CHAINSAW) test --test-dir ./tests/e2e/$(TESTS)
-
-.PHONY: golangci-lint
-golangci-lint: $(GOLANGCI_LINT) ## Run golangci-lint checks.
-	$(info $(M) running $@)
-	$(GOLANGCI_LINT) config verify
-	$(GOLANGCI_LINT) fmt ./...
-	$(GOLANGCI_LINT) run --allow-parallel-runners ./...
 
 export KO_DOCKER_REPO ?= ko.local/grafana/grafana-operator
 export KIND_CLUSTER_NAME ?= kind-grafana
