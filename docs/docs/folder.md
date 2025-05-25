@@ -30,7 +30,7 @@ spec:
 
 ## Subfolder into an already existing Folder
 
-With the arrival of Grafana 10, you can create a complete `Folder` hierarchie in Grafana. To do this, you have two choices:
+With the arrival of Grafana 10, you can create a complete `Folder` hierarchy in Grafana. To do this, you have two choices:
 
 * Use an existing GrafanaFolder CR as reference with the `parentFolderRef` field:
 
