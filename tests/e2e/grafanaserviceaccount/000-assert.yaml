@@ -1,0 +1,14 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: service-accounts
+  labels:
+    test: service-accounts
+status:
+  stage: complete
+  stageStatus: success
+  (conditions[?type == 'GrafanaReady']):
+  - message: Grafana reconcile completed
+    reason: GrafanaReady
+    status: 'True'
+    type: GrafanaReady

@@ -1,0 +1,104 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: service-accounts
+  labels:
+    test: service-accounts
+status:
+  (conditions[?type == 'ServiceAccountsSynchronized']):
+  - message: service accounts reconciled
+    reason: ApplySuccessful
+    status: 'True'
+    type: ServiceAccountsSynchronized
+  serviceAccounts:
+    - name: grafana-service-account-sa2
+      role: Viewer
+      (serviceAccountId > `2` && serviceAccountId < `5`): true
+      specId: grafana-sa2
+      tokens:
+        - name: tokena
+          secret:
+            name: service-accounts-grafana-sa2-tokena
+            namespace: ($NAMESPACE)
+          (tokenId > `1` && tokenId < `6`): true
+        - name: tokenb
+          secret:
+            name: service-accounts-grafana-sa2-tokenb
+            namespace: ($NAMESPACE)
+          (tokenId > `1` && tokenId < `6`): true
+    - name: grafana-service-account-sa3
+      role: Admin
+      isDisabled: true
+      (serviceAccountId > `2` && serviceAccountId < `5`): true
+      specId: grafana-sa3
+      tokens:
+        - name: tokenc
+          secret:
+            name: service-accounts-grafana-sa3-tokenc
+            namespace: ($NAMESPACE)
+          (tokenId > `2` && tokenId < `10`): true
+        - name: tokend
+          secret:
+            name: service-accounts-grafana-sa3-tokend
+            namespace: ($NAMESPACE)
+          (tokenId > `2` && tokenId < `10`): true
+---
+apiVersion: v1
+data:
+  (length(token) > `0`): true
+kind: Secret
+metadata:
+  labels:
+    app: grafana-serviceaccount-token
+  name: service-accounts-grafana-sa2-tokena
+  ownerReferences:
+    - apiVersion: grafana.integreatly.org/v1beta1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Grafana
+      name: service-accounts
+---
+apiVersion: v1
+data:
+  (length(token) > `0`): true
+kind: Secret
+metadata:
+  labels:
+    app: grafana-serviceaccount-token
+  name: service-accounts-grafana-sa2-tokenb
+  ownerReferences:
+    - apiVersion: grafana.integreatly.org/v1beta1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Grafana
+      name: service-accounts
+---
+apiVersion: v1
+data:
+  (length(token) > `0`): true
+kind: Secret
+metadata:
+  labels:
+    app: grafana-serviceaccount-token
+  name: service-accounts-grafana-sa3-tokenc
+  ownerReferences:
+    - apiVersion: grafana.integreatly.org/v1beta1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Grafana
+      name: service-accounts
+---
+apiVersion: v1
+data:
+  (length(token) > `0`): true
+kind: Secret
+metadata:
+  labels:
+    app: grafana-serviceaccount-token
+  name: service-accounts-grafana-sa3-tokend
+  ownerReferences:
+    - apiVersion: grafana.integreatly.org/v1beta1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Grafana
+      name: service-accounts

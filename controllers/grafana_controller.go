@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 	"time"
 
@@ -32,6 +33,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/util/retry"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -82,7 +85,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	metrics.GrafanaReconciles.WithLabelValues(cr.Namespace, cr.Name).Inc()
 
 	defer func() {
-		if err := r.Status().Update(ctx, cr); err != nil {
+		if err := r.updateStatus(ctx, cr); err != nil {
 			log.Error(err, "updating status")
 		}
 	}()
@@ -141,24 +144,58 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	cr.Status.LastMessage = ""
 
 	meta.SetStatusCondition(&cr.Status.Conditions, metav1.Condition{
-		Type:               ConditionTypeGrafanaReady, // Maybe use Grafana instead to be consistent with other conditions
-		Reason:             "GrafanaReady",
-		Message:            "Grafana reconcile completed",
-		ObservedGeneration: cr.Generation,
-		Status:             metav1.ConditionTrue,
-		LastTransitionTime: metav1.Time{Time: time.Now()},
+		Type:    ConditionTypeGrafanaReady, // Maybe use Grafana instead to be consistent with other conditions
+		Reason:  "GrafanaReady",
+		Message: "Grafana reconcile completed",
+		Status:  metav1.ConditionTrue,
 	})
 
 	return ctrl.Result{}, nil
 }
 
+func (r *GrafanaReconciler) updateStatus(ctx context.Context, cr *grafanav1beta1.Grafana) error {
+	namespacedName := types.NamespacedName{Name: cr.Name, Namespace: cr.Namespace}
+
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		base := &grafanav1beta1.Grafana{}
+		if err := r.Get(ctx, namespacedName, base); err != nil {
+			return err
+		}
+
+		newCR := base.DeepCopy()
+		newCR.Status.AdminURL = cr.Status.AdminURL
+		newCR.Status.Version = cr.Status.Version
+		newCR.Status.Stage = cr.Status.Stage
+		newCR.Status.StageStatus = cr.Status.StageStatus
+		newCR.Status.LastMessage = cr.Status.LastMessage
+		cond := meta.FindStatusCondition(cr.Status.Conditions, ConditionTypeGrafanaReady)
+		if cond != nil && !meta.IsStatusConditionPresentAndEqual(newCR.Status.Conditions, cond.Type, cond.Status) {
+			cond.LastTransitionTime = metav1.Time{Time: time.Now()}
+			cond.ObservedGeneration = base.Generation
+			meta.SetStatusCondition(&newCR.Status.Conditions, *cond)
+		}
+		if reflect.DeepEqual(newCR.Status, base.Status) {
+			logf.FromContext(ctx).Info("Grafana status is up to date, skipping update", "namespacedName", namespacedName.String())
+			return nil
+		}
+
+		err := r.Status().Patch(ctx, newCR, client.MergeFrom(base))
+		if err != nil {
+			logf.FromContext(ctx).Error(err, "failed to update Grafana status", "generation", newCR.Generation)
+		}
+
+		return err
+	})
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *GrafanaReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&grafanav1beta1.Grafana{}, builder.WithPredicates(ignoreStatusUpdates())).
+		For(&grafanav1beta1.Grafana{}, builder.WithPredicates(ignoreStatusUpdates() /*, ignoreServiceAccountSpecChanges()*/)).
 		Owns(&appsv1.Deployment{}, builder.WithPredicates(ignoreStatusUpdates())).
 		Owns(&corev1.ConfigMap{}).
 		WithOptions(controller.Options{RateLimiter: defaultRateLimiter()}).
+		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
 }
 
