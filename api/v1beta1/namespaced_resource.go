@@ -10,8 +10,8 @@ type NamespacedResource string
 type NamespacedResourceList []NamespacedResource
 
 // +kubebuilder:object:generate=false
-type NamespacedResourceImpl[T interface{}] interface {
-	Find(namespace string, name string) *T
+type NamespacedResourceImpl interface {
+	Exists(namespace string, name string) bool
 }
 
 func (in NamespacedResource) Split() (string, string, string) {
