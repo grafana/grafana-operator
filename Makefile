@@ -110,22 +110,22 @@ helm-lint: $(HELM) ## Validate helm chart.
 kustomize-lint: $(KUSTOMIZE) ## Lint kustomize overlays.
 	$(info $(M) running $@)
 	@for d in deploy/kustomize/overlays/*/ ; do \
-		kustomize build "$${d}" --load-restrictor LoadRestrictionsNone > /dev/null ;\
+		$(KUSTOMIZE) build "$${d}" --load-restrictor LoadRestrictionsNone > /dev/null ;\
 	done
 
 .PHONY: kustomize-set-image
 kustomize-set-image: $(KUSTOMIZE) ## Sets release image.
 	$(info $(M) running $@)
-	cd deploy/kustomize/base && kustomize edit set image ghcr.io/${GITHUB_REPOSITORY}=${GHCR_REPO}:${RELEASE_NAME} && cd -
+	cd deploy/kustomize/base && $(KUSTOMIZE) edit set image ghcr.io/${GITHUB_REPOSITORY}=${GHCR_REPO}:${RELEASE_NAME} && cd -
 
 .PHONY: kustomize-github-assets
 kustomize-github-assets: $(KUSTOMIZE) ## Generates GitHub assets.
 	$(info $(M) running $@)
 	@for d in deploy/kustomize/overlays/*/ ; do \
 		echo "$${d}" ;\
-		kustomize build "$${d}" --load-restrictor LoadRestrictionsNone > kustomize-$$(basename "$${d}").yaml ;\
+		$(KUSTOMIZE) build "$${d}" --load-restrictor LoadRestrictionsNone > kustomize-$$(basename "$${d}").yaml ;\
 	done
-	kustomize build config/crd > crds.yaml
+	$(KUSTOMIZE) build config/crd > crds.yaml
 
 .PHONY: test
 test: $(ENVTEST) manifests generate vet golangci-lint api-docs kustomize-lint helm-docs helm-lint ## Run tests.
