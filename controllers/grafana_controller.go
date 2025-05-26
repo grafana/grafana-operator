@@ -164,10 +164,10 @@ func (r *GrafanaReconciler) setDefaultGrafanaVersion(ctx context.Context, cr cli
 	return r.Patch(ctx, cr, client.RawPatch(types.MergePatchType, patch))
 }
 
-func removeMissingCRs[T interface{}](statusList *grafanav1beta1.NamespacedResourceList, crs grafanav1beta1.NamespacedResourceImpl[T], updateStatus *bool) {
+func removeMissingCRs(statusList *grafanav1beta1.NamespacedResourceList, crs grafanav1beta1.NamespacedResourceImpl, updateStatus *bool) {
 	for _, namespacedCR := range *statusList {
 		namespace, name, _ := namespacedCR.Split()
-		if crs.Find(namespace, name) == nil {
+		if !crs.Exists(namespace, name) {
 			*statusList = statusList.Remove(namespace, name)
 			*updateStatus = true
 		}
@@ -188,35 +188,31 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 		return nil
 	}
 
-	// folders
+	// Fetch all resources
 	folders := &grafanav1beta1.GrafanaFolderList{}
 	err = r.List(ctx, folders)
 	if err != nil {
 		return err
 	}
 
-	// dashboards
 	dashboards := &grafanav1beta1.GrafanaDashboardList{}
 	err = r.List(ctx, dashboards)
 	if err != nil {
 		return err
 	}
 
-	// library libraryPanels
 	libraryPanels := &grafanav1beta1.GrafanaLibraryPanelList{}
 	err = r.List(ctx, libraryPanels)
 	if err != nil {
 		return err
 	}
 
-	// datasources
 	datasources := &grafanav1beta1.GrafanaDatasourceList{}
 	err = r.List(ctx, datasources)
 	if err != nil {
 		return err
 	}
 
-	// contact points
 	contactPoints := &grafanav1beta1.GrafanaContactPointList{}
 	err = r.List(ctx, contactPoints)
 	if err != nil {

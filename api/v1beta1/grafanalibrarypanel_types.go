@@ -116,13 +116,13 @@ func (in *GrafanaLibraryPanel) GrafanaContentStatus() *GrafanaContentStatus {
 
 var _ GrafanaContentResource = &GrafanaLibraryPanel{}
 
-func (in *GrafanaLibraryPanelList) Find(namespace string, name string) *GrafanaLibraryPanel {
+func (in *GrafanaLibraryPanelList) Exists(namespace, name string) bool {
 	for _, e := range in.Items {
 		if e.Namespace == namespace && e.Name == name {
-			return &e
+			return true
 		}
 	}
-	return nil
+	return false
 }
 
 func init() {

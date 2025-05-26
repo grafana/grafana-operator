@@ -128,13 +128,13 @@ func (in *GrafanaDashboard) GrafanaContentStatus() *GrafanaContentStatus {
 
 var _ GrafanaContentResource = &GrafanaDashboard{}
 
-func (in *GrafanaDashboardList) Find(namespace string, name string) *GrafanaDashboard {
+func (in *GrafanaDashboardList) Exists(namespace, name string) bool {
 	for _, dashboard := range in.Items {
 		if dashboard.Namespace == namespace && dashboard.Name == name {
-			return &dashboard
+			return true
 		}
 	}
-	return nil
+	return false
 }
 
 func (in *GrafanaDashboard) MatchLabels() *metav1.LabelSelector {
