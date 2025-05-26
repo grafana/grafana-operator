@@ -28,7 +28,7 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@b9e51907a09c216f16ebe8536097933489208112 # v4
         with:
-          version: v3.16.2
+          version: v3.17.3
 
       - name: Prepare
         run: |
@@ -180,7 +180,7 @@ jobs:
 
       - uses: ko-build/setup-ko@d006021bd0c28d1ce33a07e7943d48b079944c8d # v0.9
         with:
-          version: v0.16.0
+          version: v0.18.0
 
       - name: Install cosign
         uses: sigstore/cosign-installer@3454372f43399081ed03b604cb2d021dabca52bb # v3.8.2
