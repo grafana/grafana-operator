@@ -138,10 +138,10 @@ type AlertQuery struct {
 // +kubebuilder:resource:categories={grafana-operator}
 type GrafanaAlertRuleGroup struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 
 	Spec   GrafanaAlertRuleGroupSpec `json:"spec"`
-	Status GrafanaCommonStatus       `json:"status,omitempty"`
+	Status GrafanaCommonStatus       `json:"status"`
 }
 
 var _ CommonResource = (*GrafanaAlertRuleGroup)(nil)
@@ -203,7 +203,7 @@ var _ operatorapi.FolderReferencer = (*GrafanaAlertRuleGroup)(nil)
 // GrafanaAlertRuleGroupList contains a list of GrafanaAlertRuleGroup
 type GrafanaAlertRuleGroupList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata"`
 	Items           []GrafanaAlertRuleGroup `json:"items"`
 }
 

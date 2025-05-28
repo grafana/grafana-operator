@@ -20,7 +20,7 @@ type GrafanaContentEnv struct {
 	Value string `json:"value,omitempty"`
 	// Reference on value source, might be the reference on a secret or config map
 	// +optional
-	ValueFrom GrafanaContentEnvFromSource `json:"valueFrom,omitempty"`
+	ValueFrom GrafanaContentEnvFromSource `json:"valueFrom"`
 }
 
 type GrafanaContentEnvFromSource struct {
@@ -95,7 +95,7 @@ type GrafanaContentSpec struct {
 
 	// Cache duration for models fetched from URLs
 	// +optional
-	ContentCacheDuration metav1.Duration `json:"contentCacheDuration,omitempty"`
+	ContentCacheDuration metav1.Duration `json:"contentCacheDuration"`
 
 	// maps required data sources to existing ones
 	// +optional
@@ -112,7 +112,7 @@ type GrafanaContentSpec struct {
 
 type GrafanaContentStatus struct {
 	ContentCache     []byte      `json:"contentCache,omitempty"`
-	ContentTimestamp metav1.Time `json:"contentTimestamp,omitempty"`
+	ContentTimestamp metav1.Time `json:"contentTimestamp"`
 	ContentURL       string      `json:"contentUrl,omitempty"`
 	Hash             string      `json:"hash,omitempty"`
 	UID              string      `json:"uid,omitempty"`
