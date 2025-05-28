@@ -296,7 +296,7 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, libraryPan
 		resp, err := grafanaClient.LibraryElements.GetLibraryElementConnections(uid)
 		if err != nil {
 			var notFound *library_elements.GetLibraryElementConnectionsNotFound
-			if !errors.Is(err, notFound) {
+			if !errors.As(err, &notFound) {
 				return fmt.Errorf("fetching library panel from instance %s/%s: %w", instance.Namespace, instance.Name, err)
 			}
 
