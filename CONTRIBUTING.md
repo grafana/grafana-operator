@@ -23,7 +23,6 @@ Before pushing any code we recommend that you run the following make commands:
 
 ```shell
 make test
-make code/golangci-lint
 ```
 
 Also, to make sure `pre-commit` runs automatically on `git commit`, its hooks need to be installed first (installation of `pre-commit` itself is described [here](https://pre-commit.com/#installation)):
