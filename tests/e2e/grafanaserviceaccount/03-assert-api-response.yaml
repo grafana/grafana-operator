@@ -1,0 +1,8 @@
+($serviceaccounts.totalCount): 1
+(length($serviceaccounts.serviceAccounts)): 1
+($serviceaccounts.serviceAccounts[0].id): 2
+($serviceaccounts.serviceAccounts[0].name): 'grafana-service-account-sa1-new'
+($serviceaccounts.serviceAccounts[0].login): 'sa-1-grafana-service-account-sa1'
+($serviceaccounts.serviceAccounts[0].orgId): 1
+($serviceaccounts.serviceAccounts[0].role): 'Editor'
+($serviceaccounts.serviceAccounts[0].tokens): 1
