@@ -119,10 +119,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	ctx = logf.IntoContext(ctx, log)
 
 	cr := &v1beta1.GrafanaDashboard{}
-	err := r.Get(ctx, client.ObjectKey{
-		Namespace: req.Namespace,
-		Name:      req.Name,
-	}, cr)
+	err := r.Get(ctx, req.NamespacedName, cr)
 	if err != nil {
 		if kuberr.IsNotFound(err) {
 			return ctrl.Result{}, nil

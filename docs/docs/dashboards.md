@@ -308,7 +308,7 @@ spec:
 
 If you want to put the dashboard in a specific folder, you have two choices:
 
-* Use an `GrafanaFolder` resouce as a reference:
+* Use an `GrafanaFolder` resource as a reference:
 
 ```yaml
 ---

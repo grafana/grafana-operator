@@ -17,7 +17,7 @@ The following snippet shows an example notification policy routing to the `opera
 
 ## Dynamic Notification Policy Routes
 
-There might be scenarios where you can not define the entire notification policy in a single place and you have to assemble it from multiple resouces.
+There might be scenarios where you can not define the entire notification policy in a single place and you have to assemble it from multiple resources.
 In this case, you can use the `routeSelector` field in combination with multiple `GrafanaNotificationPolicyRoute` resources.
 
 Both `GrafanaNotificationPolicy` and `GrafanaNotificationPolicyRoute` objects support the `routeSelector` field.

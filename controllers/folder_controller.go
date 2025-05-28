@@ -109,10 +109,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	ctx = logf.IntoContext(ctx, log)
 
 	folder := &grafanav1beta1.GrafanaFolder{}
-	err := r.Get(ctx, client.ObjectKey{
-		Namespace: req.Namespace,
-		Name:      req.Name,
-	}, folder)
+	err := r.Get(ctx, req.NamespacedName, folder)
 	if err != nil {
 		if kuberr.IsNotFound(err) {
 			return ctrl.Result{}, nil
