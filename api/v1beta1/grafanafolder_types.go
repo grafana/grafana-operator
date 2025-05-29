@@ -133,13 +133,13 @@ func init() {
 	SchemeBuilder.Register(&GrafanaFolder{}, &GrafanaFolderList{})
 }
 
-func (in *GrafanaFolderList) Find(namespace string, name string) *GrafanaFolder {
+func (in *GrafanaFolderList) Exists(namespace, name string) bool {
 	for _, folder := range in.Items {
 		if folder.Namespace == namespace && folder.Name == name {
-			return &folder
+			return true
 		}
 	}
-	return nil
+	return false
 }
 
 func (in *GrafanaFolder) Hash() string {

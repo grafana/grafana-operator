@@ -22,13 +22,11 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	"github.com/grafana/grafana-openapi-client-go/client/folders"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
-	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 
@@ -54,55 +52,6 @@ type GrafanaFolderReconciler struct {
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanafolders,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanafolders/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanafolders/finalizers,verbs=update
-
-func (r *GrafanaFolderReconciler) syncStatuses(ctx context.Context) error {
-	log := logf.FromContext(ctx)
-
-	// get all grafana instances
-	grafanas := &grafanav1beta1.GrafanaList{}
-	var opts []client.ListOption
-	err := r.List(ctx, grafanas, opts...)
-	if err != nil {
-		return err
-	}
-	// no instances, no need to sync
-	if len(grafanas.Items) == 0 {
-		return nil
-	}
-
-	// get all folders
-	allFolders := &grafanav1beta1.GrafanaFolderList{}
-	err = r.List(ctx, allFolders, opts...)
-	if err != nil {
-		return err
-	}
-
-	// delete folders from grafana statuses that no longer have a CR
-	foldersSynced := 0
-	for _, grafana := range grafanas.Items {
-		statusUpdated := false
-		for _, folder := range grafana.Status.Folders {
-			namespace, name, _ := folder.Split()
-			if allFolders.Find(namespace, name) == nil {
-				grafana.Status.Folders = grafana.Status.Folders.Remove(namespace, name)
-				foldersSynced += 1
-				statusUpdated = true
-			}
-		}
-
-		if statusUpdated {
-			err = r.Status().Update(ctx, &grafana)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	if foldersSynced > 0 {
-		log.Info("successfully synced folders", "folders", foldersSynced)
-	}
-	return nil
-}
 
 func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx).WithName("GrafanaFolderReconciler")
@@ -346,36 +295,9 @@ func (r *GrafanaFolderReconciler) Exists(client *genapi.GrafanaHTTPAPI, cr *graf
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *GrafanaFolderReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
-	err := ctrl.NewControllerManagedBy(mgr).
+func (r *GrafanaFolderReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
 		For(&grafanav1beta1.GrafanaFolder{}).
 		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
-	if err != nil {
-		return err
-	}
-
-	go func() {
-		log := logf.FromContext(ctx).WithName("GrafanaFolderReconciler")
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-time.After(initialSyncDelay):
-				start := time.Now()
-				err := r.syncStatuses(ctx)
-				elapsed := time.Since(start).Milliseconds()
-				metrics.InitialFoldersSyncDuration.Set(float64(elapsed))
-				if err != nil {
-					log.Error(err, "error synchronizing folders")
-					continue
-				}
-
-				log.Info("folder sync complete")
-				return
-			}
-		}
-	}()
-
-	return nil
 }
