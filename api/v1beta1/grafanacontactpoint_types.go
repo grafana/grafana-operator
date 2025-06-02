@@ -77,13 +77,13 @@ type GrafanaContactPointList struct {
 	Items           []GrafanaContactPoint `json:"items"`
 }
 
-func (in *GrafanaContactPointList) Find(namespace string, name string) *GrafanaContactPoint {
+func (in *GrafanaContactPointList) Exists(namespace, name string) bool {
 	for _, contactpoint := range in.Items {
 		if contactpoint.Namespace == namespace && contactpoint.Name == name {
-			return &contactpoint
+			return true
 		}
 	}
-	return nil
+	return false
 }
 
 // Wrapper around CustomUID or default metadata.uid

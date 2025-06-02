@@ -20,14 +20,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/grafana/grafana-openapi-client-go/client/library_elements"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/controllers/content"
-	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 	corev1 "k8s.io/api/core/v1"
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -63,55 +61,6 @@ type GrafanaLibraryPanelReconciler struct {
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanalibrarypanels,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanalibrarypanels/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanalibrarypanels/finalizers,verbs=update
-
-func (r *GrafanaLibraryPanelReconciler) syncStatuses(ctx context.Context) error {
-	log := logf.FromContext(ctx)
-
-	// get all grafana instances
-	grafanas := &v1beta1.GrafanaList{}
-	var opts []client.ListOption
-	err := r.List(ctx, grafanas, opts...)
-	if err != nil {
-		return err
-	}
-	// no instances, no need to sync
-	if len(grafanas.Items) == 0 {
-		return nil
-	}
-
-	// get all panels
-	allPanels := &v1beta1.GrafanaLibraryPanelList{}
-	err = r.List(ctx, allPanels, opts...)
-	if err != nil {
-		return err
-	}
-
-	// delete panels from grafana statuses that no longer have a CR
-	panelsSynced := 0
-	for _, grafana := range grafanas.Items {
-		statusUpdated := false
-		for _, panel := range grafana.Status.LibraryPanels {
-			namespace, name, _ := panel.Split()
-			if allPanels.Find(namespace, name) == nil {
-				grafana.Status.LibraryPanels = grafana.Status.LibraryPanels.Remove(namespace, name)
-				panelsSynced += 1
-				statusUpdated = true
-			}
-		}
-
-		if statusUpdated {
-			err = r.Client.Status().Update(ctx, &grafana)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	if panelsSynced > 0 {
-		log.Info("successfully synced library panels", "library panels", panelsSynced)
-	}
-	return nil
-}
 
 func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx).WithName("GrafanaLibraryPanelReconciler")
@@ -335,7 +284,7 @@ func (r *GrafanaLibraryPanelReconciler) SetupWithManager(ctx context.Context, mg
 		return fmt.Errorf("failed setting index fields: %w", err)
 	}
 
-	err := ctrl.NewControllerManagedBy(mgr).
+	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.GrafanaLibraryPanel{}, builder.WithPredicates(
 			ignoreStatusUpdates(),
 		)).
@@ -344,35 +293,6 @@ func (r *GrafanaLibraryPanelReconciler) SetupWithManager(ctx context.Context, mg
 			handler.EnqueueRequestsFromMapFunc(r.requestsForChangeByField(configMapIndexKey)),
 		).
 		Complete(r)
-	if err != nil {
-		return err
-	}
-
-	go func() {
-		// periodic sync reconcile
-		log := logf.FromContext(ctx).WithName("GrafanaLibraryPanelReconciler")
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-time.After(initialSyncDelay):
-				start := time.Now()
-				err := r.syncStatuses(ctx)
-				elapsed := time.Since(start).Milliseconds()
-				metrics.InitialLibraryPanelSyncDuration.Set(float64(elapsed))
-				if err != nil {
-					log.Error(err, "error synchronizing library panels")
-					continue
-				}
-
-				log.Info("library panel sync complete")
-				return
-			}
-		}
-	}()
-
-	return nil
 }
 
 func (r *GrafanaLibraryPanelReconciler) indexConfigMapSource() func(o client.Object) []string {
