@@ -41,10 +41,10 @@ type GrafanaLibraryPanelStatus struct {
 // +kubebuilder:resource:categories={grafana-operator}
 type GrafanaLibraryPanel struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 
 	Spec   GrafanaLibraryPanelSpec   `json:"spec"`
-	Status GrafanaLibraryPanelStatus `json:"status,omitempty"`
+	Status GrafanaLibraryPanelStatus `json:"status"`
 }
 
 var _ CommonResource = (*GrafanaLibraryPanel)(nil)
@@ -54,7 +54,7 @@ var _ CommonResource = (*GrafanaLibraryPanel)(nil)
 // GrafanaLibraryPanelList contains a list of GrafanaLibraryPanel
 type GrafanaLibraryPanelList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata"`
 	Items           []GrafanaLibraryPanel `json:"items"`
 }
 

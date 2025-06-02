@@ -41,10 +41,10 @@ type GrafanaNotificationPolicyRouteSpec struct {
 // +kubebuilder:resource:categories={grafana-operator}
 type GrafanaNotificationPolicyRoute struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 
 	Spec   GrafanaNotificationPolicyRouteSpec `json:"spec"`
-	Status GrafanaCommonStatus                `json:"status,omitempty"`
+	Status GrafanaCommonStatus                `json:"status"`
 }
 
 func (r *GrafanaNotificationPolicyRoute) NamespacedResource() string {
@@ -56,7 +56,7 @@ func (r *GrafanaNotificationPolicyRoute) NamespacedResource() string {
 // GrafanaNotificationPolicyRouteList contains a list of GrafanaNotificationPolicyRoute
 type GrafanaNotificationPolicyRouteList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata"`
 	Items           []GrafanaNotificationPolicyRoute `json:"items"`
 }
 

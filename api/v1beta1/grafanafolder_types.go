@@ -77,10 +77,10 @@ type GrafanaFolderStatus struct {
 // +kubebuilder:resource:categories={grafana-operator}
 type GrafanaFolder struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 
 	Spec   GrafanaFolderSpec   `json:"spec"`
-	Status GrafanaFolderStatus `json:"status,omitempty"`
+	Status GrafanaFolderStatus `json:"status"`
 }
 
 var _ CommonResource = (*GrafanaFolder)(nil)
@@ -125,7 +125,7 @@ var _ operatorapi.FolderReferencer = (*GrafanaFolder)(nil)
 // GrafanaFolderList contains a list of GrafanaFolder
 type GrafanaFolderList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata"`
 	Items           []GrafanaFolder `json:"items"`
 }
 

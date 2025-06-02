@@ -156,9 +156,9 @@ type GrafanaStatus struct {
 // +kubebuilder:resource:categories={grafana-operator}
 type Grafana struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 	Spec              GrafanaSpec   `json:"spec"`
-	Status            GrafanaStatus `json:"status,omitempty"`
+	Status            GrafanaStatus `json:"status"`
 }
 
 // +kubebuilder:object:root=true
@@ -166,7 +166,7 @@ type Grafana struct {
 // GrafanaList contains a list of Grafana
 type GrafanaList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata"`
 	Items           []Grafana `json:"items"`
 }
 

@@ -32,7 +32,7 @@ type GrafanaCommonSpec struct {
 	// +kubebuilder:validation:Type=string
 	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
 	// +kubebuilder:default="10m0s"
-	ResyncPeriod metav1.Duration `json:"resyncPeriod,omitempty"`
+	ResyncPeriod metav1.Duration `json:"resyncPeriod"`
 
 	// Selects Grafana instances for import
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="spec.instanceSelector is immutable"
@@ -59,5 +59,5 @@ type GrafanaCommonStatus struct {
 	// Results when synchonizing resource with Grafana instances
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 	// Last time the resource was synchronized with Grafana instances
-	LastResync metav1.Time `json:"lastResync,omitempty"`
+	LastResync metav1.Time `json:"lastResync"`
 }
