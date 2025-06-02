@@ -1,0 +1,38 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: service-accounts
+  labels:
+    test: service-accounts
+status:
+  (conditions[?type == 'ServiceAccountsSynchronized']):
+  - message: service accounts reconciled
+    reason: ApplySuccessful
+    status: 'True'
+    type: ServiceAccountsSynchronized
+  serviceAccounts:
+    - name: grafana-service-account-sa1-new
+      role: Admin
+      serviceAccountId: 2
+      specId: grafana-sa1
+      tokens:
+        - name: service-accounts-grafana-sa1-default-token
+          secret:
+            name: service-accounts-grafana-sa1-service-accounts-grafana-sa-069616
+            namespace: ($NAMESPACE)
+          tokenId: 1
+---
+apiVersion: v1
+data:
+  (length(token) > `0`): true
+kind: Secret
+metadata:
+  labels:
+    app: grafana-serviceaccount-token
+  name: service-accounts-grafana-sa1-service-accounts-grafana-sa-069616
+  ownerReferences:
+    - apiVersion: grafana.integreatly.org/v1beta1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Grafana
+      name: service-accounts

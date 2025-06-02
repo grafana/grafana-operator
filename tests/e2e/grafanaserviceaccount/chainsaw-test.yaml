@@ -1,0 +1,151 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/chainsaw/main/.schemas/json/test-chainsaw-v1alpha1.json
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: service-accounts
+spec:
+  bindings:
+    - name: NAMESPACE
+      value: ($namespace)
+    - name: USER
+      value: root
+    - name: PASS
+      value: secret
+    - name: NOW
+      value: (time_now())
+  steps:
+    - name: Create Grafana instance
+      try:
+      - apply: { file: 000-deploy-grafana.yaml }
+      - assert: { file: 000-assert.yaml }
+
+    - name: Create a new service account with default token
+      try:
+      - patch: { file: 010-sa-default-token.yaml }
+      - assert: { file: 010-assert.yaml }
+      - script: &fetchSAs
+          content: >
+              kubectl exec -n $NS $DEPLOYMENT -- \
+                curl --fail --silent --show-error -u $USER:$PASS \
+                "http://localhost:3000/api/serviceaccounts/search"
+          env:
+            - name: USER
+              value: ($USER)
+            - name: PASS
+              value: ($PASS)
+            - name: NS
+              value: ($NAMESPACE)
+            - name: DEPLOYMENT
+              value: (join('/', ['deployment', join('-', [$test.metadata.name, 'deployment'])]))
+          outputs:
+            - name: serviceaccounts
+              value: (json_parse($stdout))
+          check:
+            ($error == null): true
+      - assert: { file: 010-assert-api-response.yaml }
+
+    - name: Rename the service account
+      try:
+      - patch: { file: 020-rename-sa.yaml }
+      - assert: { file: 020-assert.yaml }
+      - script: { <<: *fetchSAs }
+      - assert: { file: 020-assert-api-response.yaml }
+
+    - name: Enable the service account
+      try:
+      - patch: { file: 030-enable-sa.yaml }
+      - assert: { file: 030-assert.yaml }
+      - error:
+          timeout: "5s"
+          file: 030-error.yaml
+      - script: { <<: *fetchSAs }
+      - assert: { file: 030-assert-api-response.yaml }
+
+    - name: Change a role of the service account
+      try:
+      - patch: { file: 040-change-role.yaml }
+      - assert: { file: 040-assert.yaml }
+      - script: { <<: *fetchSAs }
+      - assert: { file: 040-assert-api-response.yaml }
+
+    - name: Replace previous account with two new ones
+      try:
+      - patch: { file: 050-replace-sa.yaml }
+      - wait:
+          apiVersion: v1
+          kind: Secret
+          name: service-accounts-grafana-sa1-service-accounts-grafana-sa-069616
+          for:
+            deletion: {}
+      - assert: { file: 050-assert.yaml }
+      - script: { <<: *fetchSAs }
+      - assert: { file: 050-assert-api-response.yaml }
+
+    - name: Update token expirations to trigger recreation when TTL changes
+      try:
+      - patch: { file: 060-update-expirations.yaml }
+      - assert: { file: 060-assert.yaml }
+      - script: { <<: *fetchSAs }
+      - assert: { file: 060-assert-api-response.yaml }
+
+    - name: Remove token expirations to trigger recreation when TTL changes
+      try:
+      - patch: { file: 070-remove-expirations.yaml }
+      - assert: { file: 070-assert.yaml }
+      - script: { <<: *fetchSAs }
+      - assert: { file: 070-assert-api-response.yaml }
+
+    - name: Remove all service accounts and ensure secrets and status are cleaned up
+      try:
+      - patch: { file: 080-remove-all-sa.yaml }
+      - wait:
+          apiVersion: v1
+          kind: Secret
+          name: service-accounts-grafana-sa2-tokena
+          for:
+            deletion: {}
+      - wait:
+          apiVersion: v1
+          kind: Secret
+          name: service-accounts-grafana-sa2-tokenb
+          for:
+            deletion: {}
+      - wait:
+          apiVersion: v1
+          kind: Secret
+          name: service-accounts-grafana-sa3-tokenc
+          for:
+            deletion: {}
+      - wait:
+          apiVersion: v1
+          kind: Secret
+          name: service-accounts-grafana-sa3-tokend
+          for:
+            deletion: {}
+      - assert: { file: 080-assert.yaml }
+      - error:
+          timeout: "5s"
+          file: 080-error.yaml
+      - script: { <<: *fetchSAs }
+      - assert: { file: 080-assert-api-response.yaml }
+
+    - name: Delete Grafana
+      try:
+      - delete:
+          ref:
+            apiVersion: grafana.integreatly.org/v1beta1
+            kind: Grafana
+            name: service-accounts
+          expect:
+          - match:
+              apiVersion: grafana.integreatly.org/v1beta1
+              kind: Grafana
+              name: service-accounts
+            check:
+              ($error != null): false
+      - wait:
+          apiVersion: grafana.integreatly.org/v1beta1
+          kind: Grafana
+          name: service-accounts
+          for:
+            deletion: {}

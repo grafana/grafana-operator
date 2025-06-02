@@ -9,10 +9,10 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/config"
 	"github.com/grafana/grafana-operator/v5/controllers/model"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
-	v12 "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	v13 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -56,8 +56,10 @@ func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafan
 
 		err := v1beta1.Merge(deployment, cr.Spec.Deployment)
 		if err != nil {
+			setInvalidMergeCondition(cr, "Deployment", err)
 			return err
 		}
+		removeInvalidMergeCondition(cr, "Deployment")
 
 		if scheme != nil {
 			err = controllerutil.SetControllerReference(cr, deployment, scheme)
@@ -77,29 +79,29 @@ func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafan
 	return v1beta1.OperatorStageResultSuccess, nil
 }
 
-func getResources() v1.ResourceRequirements {
-	return v1.ResourceRequirements{
-		Requests: v1.ResourceList{
-			v1.ResourceMemory: resource.MustParse(MemoryRequest),
-			v1.ResourceCPU:    resource.MustParse(CPURequest),
+func getResources() corev1.ResourceRequirements {
+	return corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			corev1.ResourceMemory: resource.MustParse(MemoryRequest),
+			corev1.ResourceCPU:    resource.MustParse(CPURequest),
 		},
-		Limits: v1.ResourceList{
-			v1.ResourceMemory: resource.MustParse(MemoryLimit),
+		Limits: corev1.ResourceList{
+			corev1.ResourceMemory: resource.MustParse(MemoryLimit),
 		},
 	}
 }
 
-func getVolumes(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.Volume {
-	var volumes []v1.Volume
+func getVolumes(cr *v1beta1.Grafana, scheme *runtime.Scheme) []corev1.Volume {
+	var volumes []corev1.Volume
 
 	cm := model.GetGrafanaConfigMap(cr, scheme)
 
 	// Volume to mount the config file from a config map
-	volumes = append(volumes, v1.Volume{
+	volumes = append(volumes, corev1.Volume{
 		Name: cm.Name,
-		VolumeSource: v1.VolumeSource{
-			ConfigMap: &v1.ConfigMapVolumeSource{
-				LocalObjectReference: v1.LocalObjectReference{
+		VolumeSource: corev1.VolumeSource{
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{
 					Name: cm.Name,
 				},
 			},
@@ -107,40 +109,40 @@ func getVolumes(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.Volume {
 	})
 
 	// Volume to store the logs
-	volumes = append(volumes, v1.Volume{
+	volumes = append(volumes, corev1.Volume{
 		Name: config.GrafanaLogsVolumeName,
-		VolumeSource: v1.VolumeSource{
-			EmptyDir: &v1.EmptyDirVolumeSource{},
+		VolumeSource: corev1.VolumeSource{
+			EmptyDir: &corev1.EmptyDirVolumeSource{},
 		},
 	})
 
-	volumes = append(volumes, v1.Volume{
+	volumes = append(volumes, corev1.Volume{
 		Name: config.GrafanaDataVolumeName,
-		VolumeSource: v1.VolumeSource{
-			EmptyDir: &v1.EmptyDirVolumeSource{},
+		VolumeSource: corev1.VolumeSource{
+			EmptyDir: &corev1.EmptyDirVolumeSource{},
 		},
 	})
 
 	return volumes
 }
 
-func getVolumeMounts(cr *v1beta1.Grafana, scheme *runtime.Scheme) []v1.VolumeMount {
-	var mounts []v1.VolumeMount
+func getVolumeMounts(cr *v1beta1.Grafana, scheme *runtime.Scheme) []corev1.VolumeMount {
+	var mounts []corev1.VolumeMount
 
 	cm := model.GetGrafanaConfigMap(cr, scheme)
 
-	mounts = append(mounts, v1.VolumeMount{
+	mounts = append(mounts, corev1.VolumeMount{
 		Name:      cm.Name,
 		MountPath: "/etc/grafana/grafana.ini",
 		SubPath:   "grafana.ini",
 	})
 
-	mounts = append(mounts, v1.VolumeMount{
+	mounts = append(mounts, corev1.VolumeMount{
 		Name:      config.GrafanaDataVolumeName,
 		MountPath: config.GrafanaDataPath,
 	})
 
-	mounts = append(mounts, v1.VolumeMount{
+	mounts = append(mounts, corev1.VolumeMount{
 		Name:      config.GrafanaLogsVolumeName,
 		MountPath: config.GrafanaLogsPath,
 	})
@@ -158,20 +160,20 @@ func getGrafanaImage(cr *v1beta1.Grafana) string {
 	return fmt.Sprintf("%s:%s", config.GrafanaImage, cr.Spec.Version)
 }
 
-func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.OperatorReconcileVars, openshiftPlatform bool) []v1.Container {
-	var containers []v1.Container
+func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.OperatorReconcileVars, openshiftPlatform bool) []corev1.Container {
+	var containers []corev1.Container
 
 	image := getGrafanaImage(cr)
 	plugins := model.GetPluginsConfigMap(cr, scheme)
 
 	// env var to restart containers if plugins change
 	t := true
-	var envVars []v1.EnvVar
-	envVars = append(envVars, v1.EnvVar{
+	var envVars []corev1.EnvVar
+	envVars = append(envVars, corev1.EnvVar{
 		Name: "PLUGINS_HASH",
-		ValueFrom: &v1.EnvVarSource{
-			ConfigMapKeyRef: &v1.ConfigMapKeySelector{
-				LocalObjectReference: v1.LocalObjectReference{
+		ValueFrom: &corev1.EnvVarSource{
+			ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{
 					Name: plugins.Name,
 				},
 				Key:      "PLUGINS_HASH",
@@ -181,39 +183,39 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 	})
 
 	// env var to restart container if config changes
-	envVars = append(envVars, v1.EnvVar{
+	envVars = append(envVars, corev1.EnvVar{
 		Name:  "CONFIG_HASH",
 		Value: vars.ConfigHash,
 	})
 
 	// env var to restart container if plugins change
-	envVars = append(envVars, v1.EnvVar{
+	envVars = append(envVars, corev1.EnvVar{
 		Name:  "GF_INSTALL_PLUGINS",
 		Value: vars.Plugins,
 	})
 
 	// env var to set location where temporary files can be written (e.g. plugin downloads)
-	envVars = append(envVars, v1.EnvVar{
+	envVars = append(envVars, corev1.EnvVar{
 		Name:  "TMPDIR",
 		Value: config.GrafanaDataPath,
 	})
 
 	// env var to get Pod IP from downward API for gossip (useful for unified alerting).
-	envVars = append(envVars, v1.EnvVar{
+	envVars = append(envVars, corev1.EnvVar{
 		Name: "POD_IP",
-		ValueFrom: &v1.EnvVarSource{
-			FieldRef: &v1.ObjectFieldSelector{
+		ValueFrom: &corev1.EnvVarSource{
+			FieldRef: &corev1.ObjectFieldSelector{
 				FieldPath: "status.podIP",
 			},
 		},
 	})
 
-	containers = append(containers, v1.Container{
+	containers = append(containers, corev1.Container{
 		Name:       "grafana",
 		Image:      image,
 		Args:       []string{"-config=/etc/grafana/grafana.ini"},
 		WorkingDir: "",
-		Ports: []v1.ContainerPort{
+		Ports: []corev1.ContainerPort{
 			{
 				Name:          "grafana-http",
 				ContainerPort: int32(GetGrafanaPort(cr)), // #nosec G115
@@ -239,22 +241,22 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 	secret := model.GetGrafanaAdminSecret(cr, scheme)
 
 	for i := range containers {
-		containers[i].Env = append(containers[i].Env, v1.EnvVar{
+		containers[i].Env = append(containers[i].Env, corev1.EnvVar{
 			Name: config.GrafanaAdminUserEnvVar,
-			ValueFrom: &v1.EnvVarSource{
-				SecretKeyRef: &v1.SecretKeySelector{
-					LocalObjectReference: v1.LocalObjectReference{
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
 						Name: secret.Name,
 					},
 					Key: config.GrafanaAdminUserEnvVar,
 				},
 			},
 		})
-		containers[i].Env = append(containers[i].Env, v1.EnvVar{
+		containers[i].Env = append(containers[i].Env, corev1.EnvVar{
 			Name: config.GrafanaAdminPasswordEnvVar,
-			ValueFrom: &v1.EnvVarSource{
-				SecretKeyRef: &v1.SecretKeySelector{
-					LocalObjectReference: v1.LocalObjectReference{
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
 						Name: secret.Name,
 					},
 					Key: config.GrafanaAdminPasswordEnvVar,
@@ -267,14 +269,14 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 }
 
 // getGrafanaContainerSecurityContext provides default securityContext for grafana container
-func getGrafanaContainerSecurityContext(openshiftPlatform bool) *v1.SecurityContext {
-	capability := &v1.Capabilities{
-		Drop: []v1.Capability{
+func getGrafanaContainerSecurityContext(openshiftPlatform bool) *corev1.SecurityContext {
+	capability := &corev1.Capabilities{
+		Drop: []corev1.Capability{
 			"ALL",
 		},
 	}
 	if openshiftPlatform {
-		return &v1.SecurityContext{
+		return &corev1.SecurityContext{
 			AllowPrivilegeEscalation: model.BoolPtr(false),
 			ReadOnlyRootFilesystem:   model.BoolPtr(true),
 			Privileged:               model.BoolPtr(false),
@@ -282,7 +284,7 @@ func getGrafanaContainerSecurityContext(openshiftPlatform bool) *v1.SecurityCont
 			Capabilities:             capability,
 		}
 	}
-	return &v1.SecurityContext{
+	return &corev1.SecurityContext{
 		AllowPrivilegeEscalation: model.BoolPtr(false),
 		ReadOnlyRootFilesystem:   model.BoolPtr(true),
 		Privileged:               model.BoolPtr(false),
@@ -293,13 +295,13 @@ func getGrafanaContainerSecurityContext(openshiftPlatform bool) *v1.SecurityCont
 	}
 }
 
-func getReadinessProbe(cr *v1beta1.Grafana) *v1.Probe {
-	return &v1.Probe{
-		ProbeHandler: v1.ProbeHandler{
-			HTTPGet: &v1.HTTPGetAction{
+func getReadinessProbe(cr *v1beta1.Grafana) *corev1.Probe {
+	return &corev1.Probe{
+		ProbeHandler: corev1.ProbeHandler{
+			HTTPGet: &corev1.HTTPGetAction{
 				Path:   GrafanaHealthEndpoint,
 				Port:   intstr.FromInt(GetGrafanaPort(cr)),
-				Scheme: v1.URISchemeHTTP,
+				Scheme: corev1.URISchemeHTTP,
 			},
 		},
 		InitialDelaySeconds: ReadinessProbeInitialDelaySeconds,
@@ -310,31 +312,31 @@ func getReadinessProbe(cr *v1beta1.Grafana) *v1.Probe {
 	}
 }
 
-func getPodSecurityContext() *v1.PodSecurityContext {
-	return &v1.PodSecurityContext{
-		SeccompProfile: &v1.SeccompProfile{
+func getPodSecurityContext() *corev1.PodSecurityContext {
+	return &corev1.PodSecurityContext{
+		SeccompProfile: &corev1.SeccompProfile{
 			Type: "RuntimeDefault",
 		},
 	}
 }
 
-func getDeploymentSpec(cr *v1beta1.Grafana, deploymentName string, scheme *runtime.Scheme, vars *v1beta1.OperatorReconcileVars, openshiftPlatform bool) v12.DeploymentSpec {
+func getDeploymentSpec(cr *v1beta1.Grafana, deploymentName string, scheme *runtime.Scheme, vars *v1beta1.OperatorReconcileVars, openshiftPlatform bool) appsv1.DeploymentSpec {
 	sa := model.GetGrafanaServiceAccount(cr, scheme)
 
-	return v12.DeploymentSpec{
-		Selector: &v13.LabelSelector{
+	return appsv1.DeploymentSpec{
+		Selector: &metav1.LabelSelector{
 			MatchLabels: map[string]string{
 				"app": cr.Name,
 			},
 		},
-		Template: v1.PodTemplateSpec{
-			ObjectMeta: v13.ObjectMeta{
+		Template: corev1.PodTemplateSpec{
+			ObjectMeta: metav1.ObjectMeta{
 				Name: deploymentName,
 				Labels: map[string]string{
 					"app": cr.Name,
 				},
 			},
-			Spec: v1.PodSpec{
+			Spec: corev1.PodSpec{
 				Volumes:            getVolumes(cr, scheme),
 				Containers:         getContainers(cr, scheme, vars, openshiftPlatform),
 				SecurityContext:    getPodSecurityContext(),
