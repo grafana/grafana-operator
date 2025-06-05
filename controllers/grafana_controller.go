@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-operator/v5/controllers/config"
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
@@ -29,6 +30,8 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -38,6 +41,10 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
+)
+
+const (
+	ConditionTypeGrafanaReady = "GrafanaReady"
 )
 
 // GrafanaReconciler reconciles a Grafana object
@@ -101,6 +108,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			}
 			cr.Spec.Version = targetVersion
 			if err := r.Update(ctx, cr); err != nil {
+				meta.RemoveStatusCondition(&cr.Status.Conditions, ConditionTypeGrafanaReady)
 				return ctrl.Result{}, fmt.Errorf("updating grafana version in spec: %w", err)
 			}
 		}
@@ -124,12 +132,22 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			cr.Status.LastMessage = err.Error()
 
 			metrics.GrafanaFailedReconciles.WithLabelValues(cr.Namespace, cr.Name, string(stage)).Inc()
+			meta.RemoveStatusCondition(&cr.Status.Conditions, ConditionTypeGrafanaReady)
 			return ctrl.Result{}, fmt.Errorf("reconciler error in stage '%s': %w", stage, err)
 		}
 	}
 
 	cr.Status.StageStatus = grafanav1beta1.OperatorStageResultSuccess
 	cr.Status.LastMessage = ""
+
+	meta.SetStatusCondition(&cr.Status.Conditions, metav1.Condition{
+		Type:               ConditionTypeGrafanaReady, // Maybe use Grafana instead to be consistent with other conditions
+		Reason:             "GrafanaReady",
+		Message:            "Grafana reconcile completed",
+		ObservedGeneration: cr.Generation,
+		Status:             metav1.ConditionTrue,
+		LastTransitionTime: metav1.Time{Time: time.Now()},
+	})
 
 	return ctrl.Result{}, nil
 }

@@ -27,8 +27,10 @@ func (r *ServiceAccountReconciler) Reconcile(ctx context.Context, cr *v1beta1.Gr
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, sa, func() error {
 		err := v1beta1.Merge(sa, cr.Spec.ServiceAccount)
 		if err != nil {
+			setInvalidMergeCondition(cr, "ServiceAccount", err)
 			return err
 		}
+		removeInvalidMergeCondition(cr, "ServiceAccount")
 
 		if scheme != nil {
 			err = controllerutil.SetControllerReference(cr, sa, scheme)
