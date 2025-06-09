@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -32,6 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -97,19 +99,12 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	} else {
 		stages = getInstallationStages()
 
-		// set spec to the current default version to avoid accidental updates when we
-		// change the default. For clusters where RELATED_IMAGE_GRAFANA is set to an
-		// image hash, we want to set this to the value of the variable to support air
-		// gapped clusters as well
+		// set spec.version to the current default version to avoid accidental updates when we change the default.
 		if cr.Spec.Version == "" {
-			targetVersion := config.GrafanaVersion
-			if envVersion := os.Getenv("RELATED_IMAGE_GRAFANA"); isImageSHA256(envVersion) {
-				targetVersion = envVersion
-			}
-			cr.Spec.Version = targetVersion
-			if err := r.Update(ctx, cr); err != nil {
+			err := r.setDefaultGrafanaVersion(ctx, cr)
+			if err != nil {
 				meta.RemoveStatusCondition(&cr.Status.Conditions, ConditionTypeGrafanaReady)
-				return ctrl.Result{}, fmt.Errorf("updating grafana version in spec: %w", err)
+				return ctrl.Result{}, fmt.Errorf("patching grafana version in spec: %w", err)
 			}
 		}
 	}
@@ -150,6 +145,23 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	})
 
 	return ctrl.Result{}, nil
+}
+
+func (r *GrafanaReconciler) setDefaultGrafanaVersion(ctx context.Context, cr client.Object) error {
+	// For clusters where RELATED_IMAGE_GRAFANA is set to an image hash,
+	// we want to set version to the value of the variable to support airgapped clusters as well
+	targetVersion := config.GrafanaVersion
+	if envVersion := os.Getenv("RELATED_IMAGE_GRAFANA"); isImageSHA256(envVersion) {
+		targetVersion = envVersion
+	}
+
+	// Create patch with the target version
+	patch, err := json.Marshal(map[string]any{"spec": map[string]any{"version": targetVersion}})
+	if err != nil {
+		return err
+	}
+
+	return r.Patch(ctx, cr, client.RawPatch(types.MergePatchType, patch))
 }
 
 // SetupWithManager sets up the controller with the Manager.
