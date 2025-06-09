@@ -8219,6 +8219,14 @@ spec:
                 description: DisableDefaultAdminSecret prevents operator from creating
                   default admin-credentials secret
                 type: boolean
+              disableDefaultSecurityContext:
+                description: DisableDefaultSecurityContext prevents the operator from
+                  populating securityContext on deployments
+                enum:
+                - Pod
+                - Container
+                - All
+                type: string
               external:
                 description: External enables you to configure external grafana instances
                   that is not managed by the operator.

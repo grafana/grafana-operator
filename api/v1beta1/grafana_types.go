@@ -80,6 +80,9 @@ type GrafanaSpec struct {
 	Preferences *GrafanaPreferences `json:"preferences,omitempty"`
 	// DisableDefaultAdminSecret prevents operator from creating default admin-credentials secret
 	DisableDefaultAdminSecret bool `json:"disableDefaultAdminSecret,omitempty"`
+	// DisableDefaultSecurityContext prevents the operator from populating securityContext on deployments
+	// +kubebuilder:validation:Enum=Pod;Container;All
+	DisableDefaultSecurityContext string `json:"disableDefaultSecurityContext,omitempty"`
 }
 
 type External struct {
