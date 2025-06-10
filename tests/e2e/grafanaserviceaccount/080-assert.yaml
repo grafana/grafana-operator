@@ -1,0 +1,14 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: service-accounts
+  labels:
+    test: service-accounts
+status:
+  stage: complete
+  stageStatus: success
+  (conditions[?type == 'ServiceAccountsSynchronized']):
+  - message: service accounts reconciled
+    reason: ApplySuccessful
+    status: 'True'
+    type: ServiceAccountsSynchronized
