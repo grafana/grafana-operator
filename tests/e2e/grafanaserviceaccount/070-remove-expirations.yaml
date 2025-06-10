@@ -1,0 +1,23 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: service-accounts
+  labels:
+    test: service-accounts
+spec:
+  grafanaServiceAccounts:
+    accounts:
+    - id: grafana-sa2
+      name: grafana-service-account-sa2
+      role: Viewer
+      isDisabled: false
+      tokens:
+      - name: tokena
+      - name: tokenb
+    - id: grafana-sa3
+      name: grafana-service-account-sa3
+      role: Admin
+      isDisabled: true
+      tokens:
+      - name: tokenc
+      - name: tokend

@@ -1,4 +1,10 @@
 namespace: grafana
 
 resources:
-  - ../../base
+- ../../base
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+images:
+- name: ghcr.io/grafana/grafana-operator
+  newName: ghcr.io/grafana/grafana-operator
+  newTag: v5.18.0

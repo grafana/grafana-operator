@@ -6250,6 +6250,13 @@ GrafanaSpec defines the desired state of Grafana
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanaspecgrafanaserviceaccounts">grafanaServiceAccounts</a></b></td>
+        <td>object</td>
+        <td>
+          Grafana Service Accounts<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecingress">ingress</a></b></td>
         <td>object</td>
         <td>
@@ -19952,6 +19959,137 @@ Use a secret as a reference to give TLS Certificate information
 </table>
 
 
+### Grafana.spec.grafanaServiceAccounts
+<sup><sup>[↩ Parent](#grafanaspec)</sup></sup>
+
+
+
+Grafana Service Accounts
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanaspecgrafanaserviceaccountsaccountsindex">accounts</a></b></td>
+        <td>[]object</td>
+        <td>
+          Accounts lists Grafana service accounts to manage.
+Each service account is uniquely identified by its ID.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>generateTokenSecret</b></td>
+        <td>boolean</td>
+        <td>
+          GenerateTokenSecret, if true, will create one default API token in a Secret if no Tokens are specified.
+If false, no token is created unless explicitly listed in Tokens.<br/>
+          <br/>
+            <i>Default</i>: true<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.grafanaServiceAccounts.accounts[index]
+<sup><sup>[↩ Parent](#grafanaspecgrafanaserviceaccounts)</sup></sup>
+
+
+
+GrafanaServiceAccountSpec defines the desired state of a GrafanaServiceAccount.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>id</b></td>
+        <td>string</td>
+        <td>
+          ID is a kind of unique identifier to distinguish between service accounts if the name is changed.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name is the desired name of the service account in Grafana.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>role</b></td>
+        <td>enum</td>
+        <td>
+          Role is the Grafana role for the service account (Viewer, Editor, Admin).<br/>
+          <br/>
+            <i>Enum</i>: Viewer, Editor, Admin<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>isDisabled</b></td>
+        <td>boolean</td>
+        <td>
+          IsDisabled indicates if the service account should be disabled in Grafana.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanaspecgrafanaserviceaccountsaccountsindextokensindex">tokens</a></b></td>
+        <td>[]object</td>
+        <td>
+          Tokens defines API tokens to create for this service account. Each token will be stored in a Kubernetes Secret with the given name.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.grafanaServiceAccounts.accounts[index].tokens[index]
+<sup><sup>[↩ Parent](#grafanaspecgrafanaserviceaccountsaccountsindex)</sup></sup>
+
+
+
+GrafanaServiceAccountTokenSpec describes a token to create.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name is the name of the Kubernetes Secret (and token identifier in Grafana). The secret will contain the token value.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>expires</b></td>
+        <td>string</td>
+        <td>
+          Expires is the optional expiration time for the token. After this time, the operator may rotate the token.<br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
 ### Grafana.spec.ingress
 <sup><sup>[↩ Parent](#grafanaspec)</sup></sup>
 
@@ -22386,6 +22524,13 @@ GrafanaStatus defines the observed state of Grafana
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanastatusserviceaccountsindex">serviceAccounts</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>stage</b></td>
         <td>string</td>
         <td>
@@ -22481,6 +22626,162 @@ with respect to the current state of the instance.<br/>
           <br/>
             <i>Format</i>: int64<br/>
             <i>Minimum</i>: 0<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.status.serviceAccounts[index]
+<sup><sup>[↩ Parent](#grafanastatus)</sup></sup>
+
+
+
+GrafanaServiceAccountStatus holds status for one Grafana instance.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name is the name of the service account in Grafana.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>role</b></td>
+        <td>string</td>
+        <td>
+          Role is the Grafana role for the service account (Viewer, Editor, Admin).<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>serviceAccountId</b></td>
+        <td>integer</td>
+        <td>
+          ServiceAccountID is the numeric ID of the service account in this Grafana.<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>specId</b></td>
+        <td>string</td>
+        <td>
+          SpecID is a kind of unique identifier to distinguish between service accounts if the name is changed.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>isDisabled</b></td>
+        <td>boolean</td>
+        <td>
+          IsDisabled indicates if the service account is disabled.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanastatusserviceaccountsindextokensindex">tokens</a></b></td>
+        <td>[]object</td>
+        <td>
+          Tokens is the status of tokens for this service account in Grafana.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.status.serviceAccounts[index].tokens[index]
+<sup><sup>[↩ Parent](#grafanastatusserviceaccountsindex)</sup></sup>
+
+
+
+GrafanaServiceAccountTokenStatus describes a token created in Grafana.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name is the name of the Kubernetes Secret. The secret will contain the token value.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>tokenId</b></td>
+        <td>integer</td>
+        <td>
+          ID is the Grafana-assigned ID of the token.<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>expires</b></td>
+        <td>string</td>
+        <td>
+          Expires is the expiration time for the token.
+N.B. There's possible discrepancy with the expiration time in spec.
+It happens because Grafana API accepts TTL in seconds then calculates the expiration time against the current time.<br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanastatusserviceaccountsindextokensindexsecret">secret</a></b></td>
+        <td>object</td>
+        <td>
+          Secret is the Kubernetes Secret that stores the actual token value.
+This may seem redundant if the Secret name usually matches the token's Name,
+but it's stored explicitly in Status for clarity and future flexibility.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.status.serviceAccounts[index].tokens[index].secret
+<sup><sup>[↩ Parent](#grafanastatusserviceaccountsindextokensindex)</sup></sup>
+
+
+
+Secret is the Kubernetes Secret that stores the actual token value.
+This may seem redundant if the Secret name usually matches the token's Name,
+but it's stored explicitly in Status for clarity and future flexibility.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>

@@ -52,6 +52,54 @@ type OperatorReconcileVars struct {
 	Plugins string
 }
 
+// GrafanaServiceAccountTokenSpec describes a token to create.
+type GrafanaServiceAccountTokenSpec struct {
+	// Name is the name of the Kubernetes Secret (and token identifier in Grafana). The secret will contain the token value.
+	// +kubebuilder:validation:Required
+	Name string `json:"name"`
+
+	// Expires is the optional expiration time for the token. After this time, the operator may rotate the token.
+	// +kubebuilder:validation:Optional
+	Expires *metav1.Time `json:"expires,omitempty"`
+}
+
+// GrafanaServiceAccountSpec defines the desired state of a GrafanaServiceAccount.
+type GrafanaServiceAccountSpec struct {
+	// ID is a kind of unique identifier to distinguish between service accounts if the name is changed.
+	// +kubebuilder:validation:Required
+	ID string `json:"id"`
+
+	// Name is the desired name of the service account in Grafana.
+	// +kubebuilder:validation:Required
+	Name string `json:"name"`
+
+	// Role is the Grafana role for the service account (Viewer, Editor, Admin).
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Enum=Viewer;Editor;Admin
+	Role string `json:"role"`
+
+	// IsDisabled indicates if the service account should be disabled in Grafana.
+	// +kubebuilder:validation:Optional
+	IsDisabled bool `json:"isDisabled,omitempty"`
+
+	// Tokens defines API tokens to create for this service account. Each token will be stored in a Kubernetes Secret with the given name.
+	// +kubebuilder:validation:Optional
+	Tokens []GrafanaServiceAccountTokenSpec `json:"tokens,omitempty"`
+}
+
+type GrafanaServiceAccounts struct {
+	// Accounts lists Grafana service accounts to manage.
+	// Each service account is uniquely identified by its ID.
+	// +listType=map
+	// +listMapKey=id
+	Accounts []GrafanaServiceAccountSpec `json:"accounts,omitempty"`
+
+	// GenerateTokenSecret, if true, will create one default API token in a Secret if no Tokens are specified.
+	// If false, no token is created unless explicitly listed in Tokens.
+	// +kubebuilder:default=true
+	GenerateTokenSecret bool `json:"generateTokenSecret,omitempty"`
+}
+
 // GrafanaSpec defines the desired state of Grafana
 type GrafanaSpec struct {
 	// +kubebuilder:pruning:PreserveUnknownFields
@@ -83,6 +131,8 @@ type GrafanaSpec struct {
 	// DisableDefaultSecurityContext prevents the operator from populating securityContext on deployments
 	// +kubebuilder:validation:Enum=Pod;Container;All
 	DisableDefaultSecurityContext string `json:"disableDefaultSecurityContext,omitempty"`
+	// Grafana Service Accounts
+	GrafanaServiceAccounts *GrafanaServiceAccounts `json:"grafanaServiceAccounts,omitempty"`
 }
 
 type External struct {
@@ -134,22 +184,68 @@ type GrafanaPreferences struct {
 	HomeDashboardUID string `json:"homeDashboardUid,omitempty"`
 }
 
+type GrafanaServiceAccountSecretStatus struct {
+	Namespace string `json:"namespace,omitempty"`
+	Name      string `json:"name,omitempty"`
+}
+
+// GrafanaServiceAccountTokenStatus describes a token created in Grafana.
+type GrafanaServiceAccountTokenStatus struct {
+	// Name is the name of the Kubernetes Secret. The secret will contain the token value.
+	Name string `json:"name"`
+
+	// Expires is the expiration time for the token.
+	// N.B. There's possible discrepancy with the expiration time in spec.
+	// It happens because Grafana API accepts TTL in seconds then calculates the expiration time against the current time.
+	Expires *metav1.Time `json:"expires,omitempty"`
+
+	// ID is the Grafana-assigned ID of the token.
+	ID int64 `json:"tokenId"`
+
+	// Secret is the Kubernetes Secret that stores the actual token value.
+	// This may seem redundant if the Secret name usually matches the token's Name,
+	// but it's stored explicitly in Status for clarity and future flexibility.
+	Secret *GrafanaServiceAccountSecretStatus `json:"secret,omitempty"`
+}
+
+// GrafanaServiceAccountStatus holds status for one Grafana instance.
+type GrafanaServiceAccountStatus struct {
+	// SpecID is a kind of unique identifier to distinguish between service accounts if the name is changed.
+	SpecID string `json:"specId"`
+
+	// Name is the name of the service account in Grafana.
+	Name string `json:"name"`
+
+	// ServiceAccountID is the numeric ID of the service account in this Grafana.
+	ServiceAccountID int64 `json:"serviceAccountId"`
+
+	// Role is the Grafana role for the service account (Viewer, Editor, Admin).
+	Role string `json:"role"`
+
+	// IsDisabled indicates if the service account is disabled.
+	IsDisabled bool `json:"isDisabled,omitempty"`
+
+	// Tokens is the status of tokens for this service account in Grafana.
+	Tokens []GrafanaServiceAccountTokenStatus `json:"tokens,omitempty"`
+}
+
 // GrafanaStatus defines the observed state of Grafana
 type GrafanaStatus struct {
-	Stage                 OperatorStageName      `json:"stage,omitempty"`
-	StageStatus           OperatorStageStatus    `json:"stageStatus,omitempty"`
-	LastMessage           string                 `json:"lastMessage,omitempty"`
-	AdminURL              string                 `json:"adminUrl,omitempty"`
-	AlertRuleGroups       NamespacedResourceList `json:"alertRuleGroups,omitempty"`
-	ContactPoints         NamespacedResourceList `json:"contactPoints,omitempty"`
-	Dashboards            NamespacedResourceList `json:"dashboards,omitempty"`
-	Datasources           NamespacedResourceList `json:"datasources,omitempty"`
-	Folders               NamespacedResourceList `json:"folders,omitempty"`
-	LibraryPanels         NamespacedResourceList `json:"libraryPanels,omitempty"`
-	MuteTimings           NamespacedResourceList `json:"muteTimings,omitempty"`
-	NotificationTemplates NamespacedResourceList `json:"notificationTemplates,omitempty"`
-	Version               string                 `json:"version,omitempty"`
-	Conditions            []metav1.Condition     `json:"conditions,omitempty"`
+	Stage                  OperatorStageName             `json:"stage,omitempty"`
+	StageStatus            OperatorStageStatus           `json:"stageStatus,omitempty"`
+	LastMessage            string                        `json:"lastMessage,omitempty"`
+	AdminURL               string                        `json:"adminUrl,omitempty"`
+	AlertRuleGroups        NamespacedResourceList        `json:"alertRuleGroups,omitempty"`
+	ContactPoints          NamespacedResourceList        `json:"contactPoints,omitempty"`
+	Dashboards             NamespacedResourceList        `json:"dashboards,omitempty"`
+	Datasources            NamespacedResourceList        `json:"datasources,omitempty"`
+	Folders                NamespacedResourceList        `json:"folders,omitempty"`
+	LibraryPanels          NamespacedResourceList        `json:"libraryPanels,omitempty"`
+	MuteTimings            NamespacedResourceList        `json:"muteTimings,omitempty"`
+	NotificationTemplates  NamespacedResourceList        `json:"notificationTemplates,omitempty"`
+	Version                string                        `json:"version,omitempty"`
+	Conditions             []metav1.Condition            `json:"conditions,omitempty"`
+	GrafanaServiceAccounts []GrafanaServiceAccountStatus `json:"serviceAccounts,omitempty"`
 }
 
 // +kubebuilder:object:root=true
