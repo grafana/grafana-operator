@@ -1,7 +1,12 @@
 package model
 
 import (
+	// sha1 is used to generate a hash of service account token secret names
+	"crypto/sha1" // nolint:gosec
 	"fmt"
+	"strconv"
+	"strings"
+	"time"
 
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 	routev1 "github.com/openshift/api/route/v1"
@@ -38,6 +43,73 @@ func GetGrafanaAdminSecret(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *
 			Namespace: cr.Namespace,
 			Labels:    GetCommonLabels(),
 		},
+	}
+
+	if scheme != nil {
+		controllerutil.SetControllerReference(cr, secret, scheme) //nolint:errcheck
+	}
+	return secret
+}
+
+func generateInternalServiceAccountTokenSecretName(grafanaName, serviceAccountSpecID, tokenName string) string {
+	const maxSecretNameLength = 63
+
+	sanitizeK8sName := func(s string) string {
+		s = strings.ToLower(s)
+		s = strings.ReplaceAll(s, "_", "-")
+		return s
+	}
+
+	base := strings.Join([]string{grafanaName, serviceAccountSpecID, tokenName}, "-")
+	if len(base) <= maxSecretNameLength {
+		return sanitizeK8sName(base)
+	}
+
+	prefixLen := maxSecretNameLength - 7
+	if prefixLen < 1 {
+		prefixLen = 1
+	}
+	prefix := base[:prefixLen]
+
+	sum := sha1.Sum([]byte(base)) // nolint:gosec
+	shortHash := fmt.Sprintf("%x", sum[:3])
+
+	return sanitizeK8sName(fmt.Sprintf("%s-%s", prefix, shortHash))
+}
+
+func GetInternalServiceAccountSecret(
+	cr *grafanav1beta1.Grafana,
+	saStatus grafanav1beta1.GrafanaServiceAccountStatus,
+	tokenStatus grafanav1beta1.GrafanaServiceAccountTokenStatus,
+	tokenKey []byte,
+	scheme *runtime.Scheme,
+) *v1.Secret {
+	secret := &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      generateInternalServiceAccountTokenSecretName(cr.Name, saStatus.SpecID, tokenStatus.Name),
+			Namespace: cr.Namespace,
+			Labels: MergeAnnotations(
+				GetCommonLabels(),
+				map[string]string{
+					"app":                                "grafana-serviceaccount-token",
+					"grafana.integreatly.org/instance":   cr.Name,
+					"grafana.integreatly.org/sa-spec-id": saStatus.SpecID,
+					"grafana.integreatly.org/token-name": tokenStatus.Name,
+				},
+			),
+			Annotations: map[string]string{
+				"grafana.integreatly.org/token-id": strconv.FormatInt(tokenStatus.ID, 10),
+			},
+		},
+		Type: v1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			"token": tokenKey,
+		},
+	}
+	if tokenStatus.Expires != nil {
+		secret.Annotations = map[string]string{
+			"grafana.integreatly.org/token-expiry": tokenStatus.Expires.Format(time.RFC3339),
+		}
 	}
 
 	if scheme != nil {

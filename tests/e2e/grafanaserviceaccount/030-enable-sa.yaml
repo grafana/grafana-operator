@@ -1,0 +1,13 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: service-accounts
+  labels:
+    test: service-accounts
+spec:
+  grafanaServiceAccounts:
+    accounts:
+    - id: grafana-sa1
+      name: grafana-service-account-sa1-new
+      role: Editor
+      isDisabled: false

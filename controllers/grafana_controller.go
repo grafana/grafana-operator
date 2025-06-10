@@ -80,11 +80,12 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		log.Error(err, "error getting grafana cr")
 		return ctrl.Result{}, err
 	}
+	origCR := cr.DeepCopy()
 
 	metrics.GrafanaReconciles.WithLabelValues(cr.Namespace, cr.Name).Inc()
 
 	defer func() {
-		if err := r.Status().Update(ctx, cr); err != nil {
+		if err := r.Status().Patch(ctx, cr, client.MergeFrom(origCR)); err != nil {
 			log.Error(err, "updating status")
 		}
 	}()
@@ -143,6 +144,15 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		Status:             metav1.ConditionTrue,
 		LastTransitionTime: metav1.Time{Time: time.Now()},
 	})
+
+	{
+		sar := newGrafanaServiceAccountReconciler(r.Client, r.Scheme)
+		err := sar.reconcile(ctx, cr)
+		if err != nil {
+			log.Error(err, "Failed to reconcile grafana service accounts")
+			return ctrl.Result{RequeueAfter: RequeueDelay}, nil
+		}
+	}
 
 	return ctrl.Result{}, nil
 }
@@ -240,6 +250,8 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 	// delete resources from grafana statuses that no longer have a CR
 	statusUpdates := 0
 	for _, grafana := range grafanas.Items {
+		origCR := grafana.DeepCopy()
+
 		updateStatus := false
 
 		removeMissingCRs(&grafana.Status.AlertRuleGroups, alertRuleGroups, &updateStatus)
@@ -253,7 +265,7 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 
 		if updateStatus {
 			statusUpdates += 1
-			err = r.Client.Status().Update(ctx, &grafana)
+			err = r.Client.Status().Patch(ctx, &grafana, client.MergeFrom(origCR))
 			if err != nil {
 				return err
 			}

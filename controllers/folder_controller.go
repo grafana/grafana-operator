@@ -136,6 +136,8 @@ func (r *GrafanaFolderReconciler) finalize(ctx context.Context, folder *grafanav
 	params := folders.NewDeleteFolderParams().WithForceDeleteRules(&reftrue)
 
 	for _, grafana := range instances {
+		origCR := client.MergeFrom(grafana.DeepCopy())
+
 		found, uid := grafana.Status.Folders.Find(folder.Namespace, folder.Name)
 		if !found {
 			continue
@@ -155,7 +157,7 @@ func (r *GrafanaFolderReconciler) finalize(ctx context.Context, folder *grafanav
 		}
 
 		grafana.Status.Folders = grafana.Status.Folders.Remove(folder.Namespace, folder.Name)
-		if err = r.Status().Update(ctx, &grafana); err != nil {
+		if err = r.Status().Patch(ctx, &grafana, origCR); err != nil {
 			return fmt.Errorf("removing Folder from Grafana cr: %w", err)
 		}
 	}
@@ -164,6 +166,8 @@ func (r *GrafanaFolderReconciler) finalize(ctx context.Context, folder *grafanav
 }
 
 func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *grafanav1beta1.Grafana, cr *grafanav1beta1.GrafanaFolder) error {
+	origCR := client.MergeFrom(grafana.DeepCopy())
+
 	title := cr.GetTitle()
 	uid := cr.CustomUIDOrUID()
 
@@ -196,7 +200,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 		// - the folder was created through dashboard controller
 		if found, _ := grafana.Status.Folders.Find(cr.Namespace, cr.Name); !found {
 			grafana.Status.Folders = grafana.Status.Folders.Add(cr.Namespace, cr.Name, uid)
-			err = r.Status().Update(ctx, grafana)
+			err = r.Status().Patch(ctx, grafana, origCR)
 			if err != nil {
 				return err
 			}
@@ -233,7 +237,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 		}
 
 		grafana.Status.Folders = grafana.Status.Folders.Add(cr.Namespace, cr.Name, folderResp.Payload.UID)
-		err = r.Status().Update(ctx, grafana)
+		err = r.Status().Patch(ctx, grafana, origCR)
 		if err != nil {
 			return err
 		}

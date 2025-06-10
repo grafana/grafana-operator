@@ -124,6 +124,8 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 }
 
 func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Context, instance *grafanav1beta1.Grafana, contactPoint *grafanav1beta1.GrafanaContactPoint, settings *models.JSON) error {
+	origCR := client.MergeFrom(instance.DeepCopy())
+
 	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
@@ -163,7 +165,7 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 
 	// Update grafana instance Status
 	instance.Status.ContactPoints = instance.Status.ContactPoints.Add(contactPoint.Namespace, contactPoint.Name, applied.UID)
-	if err = r.Client.Status().Update(ctx, instance); err != nil {
+	if err = r.Client.Status().Patch(ctx, instance, origCR); err != nil {
 		return err
 	}
 
@@ -216,6 +218,8 @@ func (r *GrafanaContactPointReconciler) finalize(ctx context.Context, contactPoi
 	}
 
 	for _, instance := range instances {
+		origCR := client.MergeFrom(instance.DeepCopy())
+
 		cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &instance)
 		if err != nil {
 			return fmt.Errorf("building grafana client: %w", err)
@@ -227,7 +231,7 @@ func (r *GrafanaContactPointReconciler) finalize(ctx context.Context, contactPoi
 		}
 
 		instance.Status.ContactPoints = instance.Status.ContactPoints.Remove(contactPoint.Namespace, contactPoint.Name)
-		if err = r.Client.Status().Update(ctx, &instance); err != nil {
+		if err = r.Client.Status().Patch(ctx, &instance, origCR); err != nil {
 			return fmt.Errorf("removing contact point from Grafana cr: %w", err)
 		}
 	}

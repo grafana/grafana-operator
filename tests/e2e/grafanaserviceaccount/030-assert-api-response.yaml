@@ -1,0 +1,12 @@
+($serviceaccounts):
+  totalCount: 1
+  serviceAccounts:
+    - id: 2
+      name: "grafana-service-account-sa1-new"
+      login: "sa-1-grafana-service-account-sa1"
+      orgId: 1
+      isDisabled: false
+      role : "Editor"
+      tokens: 1
+  page: 1
+  perPage: 1000

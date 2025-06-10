@@ -227,7 +227,7 @@ func main() { // nolint:gocyclo
 		}
 		if enforceCacheLabelsLevel == cachingLevelSafe {
 			mgrOptions.Client.Cache = &client.CacheOptions{
-				DisableFor: []client.Object{&corev1.ConfigMap{}, &corev1.Secret{}},
+				DisableFor: []client.Object{&corev1.ConfigMap{}, &corev1.Secret{}, &grafanav1beta1.Grafana{}},
 			}
 		}
 	}
