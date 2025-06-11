@@ -3,6 +3,6 @@ title: "Grafana deployment config"
 linkTitle: "Grafana deployment config"
 ---
 
-A basic deployment of Grafana that overrides the existing image, readiness and securityContext.
+A basic Grafana CR modifying the securityContext of the deployment..
 
 {{< readfile file="resources.yaml" code="true" lang="yaml" >}}
