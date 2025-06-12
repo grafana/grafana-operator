@@ -23,7 +23,6 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
-	"time"
 
 	"k8s.io/utils/strings/slices"
 
@@ -35,7 +34,6 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/controllers/content"
-	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 	corev1 "k8s.io/api/core/v1"
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -64,55 +62,6 @@ type GrafanaDashboardReconciler struct {
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadashboards,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadashboards/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadashboards/finalizers,verbs=update
-
-func (r *GrafanaDashboardReconciler) syncStatuses(ctx context.Context) error {
-	log := logf.FromContext(ctx)
-
-	// get all grafana instances
-	grafanas := &v1beta1.GrafanaList{}
-	var opts []client.ListOption
-	err := r.List(ctx, grafanas, opts...)
-	if err != nil {
-		return err
-	}
-	// no instances, no need to sync
-	if len(grafanas.Items) == 0 {
-		return nil
-	}
-
-	// get all dashboards
-	allDashboards := &v1beta1.GrafanaDashboardList{}
-	err = r.List(ctx, allDashboards, opts...)
-	if err != nil {
-		return err
-	}
-
-	// delete dashboards from grafana statuses that do no longer have a cr
-	dashboardsSynced := 0
-	for _, grafana := range grafanas.Items {
-		statusUpdated := false
-		for _, dashboard := range grafana.Status.Dashboards {
-			namespace, name, _ := dashboard.Split()
-			if allDashboards.Find(namespace, name) == nil {
-				grafana.Status.Dashboards = grafana.Status.Dashboards.Remove(namespace, name)
-				dashboardsSynced += 1
-				statusUpdated = true
-			}
-		}
-
-		if statusUpdated {
-			err = r.Client.Status().Update(ctx, &grafana)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	if dashboardsSynced > 0 {
-		log.Info("successfully synced dashboards", "dashboards", dashboardsSynced)
-	}
-	return nil
-}
 
 func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) { //nolint:gocyclo
 	log := logf.FromContext(ctx).WithName("GrafanaDashboardReconciler")
@@ -573,7 +522,7 @@ func (r *GrafanaDashboardReconciler) SetupWithManager(ctx context.Context, mgr c
 		return fmt.Errorf("failed setting index fields: %w", err)
 	}
 
-	err := ctrl.NewControllerManagedBy(mgr).
+	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.GrafanaDashboard{}, builder.WithPredicates(
 			ignoreStatusUpdates(),
 		)).
@@ -582,33 +531,6 @@ func (r *GrafanaDashboardReconciler) SetupWithManager(ctx context.Context, mgr c
 			handler.EnqueueRequestsFromMapFunc(r.requestsForChangeByField(configMapIndexKey)),
 		).
 		Complete(r)
-	if err != nil {
-		return err
-	}
-
-	go func() {
-		log := logf.FromContext(ctx).WithName("GrafanaDashboardReconciler")
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-time.After(initialSyncDelay):
-				start := time.Now()
-				err := r.syncStatuses(ctx)
-				elapsed := time.Since(start).Milliseconds()
-				metrics.InitialDashboardSyncDuration.Set(float64(elapsed))
-				if err != nil {
-					log.Error(err, "error synchronizing dashboards")
-					continue
-				}
-
-				log.Info("dashboard sync complete")
-				return
-			}
-		}
-	}()
-
-	return nil
 }
 
 func (r *GrafanaDashboardReconciler) indexConfigMapSource() func(o client.Object) []string {
