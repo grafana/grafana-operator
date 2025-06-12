@@ -1,5 +1,6 @@
 
 # Binaries for programs and plugins
+__debug_bin*
 *.exe
 *.exe~
 *.dll
@@ -26,6 +27,7 @@ vendor
 *~
 
 .vscode/
+.mirrord/
 .DS_Store
 
 # Audit lab
