@@ -36,13 +36,14 @@ func NewIngressReconciler(client client.Client, isOpenShift bool) reconcilers.Op
 func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
 	log := logf.FromContext(ctx).WithName("IngressReconciler")
 
-	if r.isOpenShift {
-		log.Info("reconciling route", "platform", "openshift")
+	// On openshift, Fallback to Ingress when spec.route is undefined
+	if r.isOpenShift && cr.Spec.Route != nil {
+		log.Info("reconciling route")
 		return r.reconcileRoute(ctx, cr, vars, scheme)
-	} else {
-		log.Info("reconciling ingress", "platform", "kubernetes")
-		return r.reconcileIngress(ctx, cr, vars, scheme)
 	}
+
+	log.Info("reconciling ingress")
+	return r.reconcileIngress(ctx, cr, vars, scheme)
 }
 
 func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Grafana, _ *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
