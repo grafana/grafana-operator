@@ -64,11 +64,17 @@ spec:
               folderRef:
                 description: Match GrafanaFolders CRs to infer the uid
                 type: string
+                x-kubernetes-validations:
+                - message: Value is immutable
+                  rule: self == oldSelf
               folderUID:
                 description: |-
                   UID of the folder containing this rule group
                   Overrides the FolderSelector
                 type: string
+                x-kubernetes-validations:
+                - message: Value is immutable
+                  rule: self == oldSelf
               instanceSelector:
                 description: Selects Grafana instances for import
                 properties:
@@ -261,12 +267,19 @@ spec:
             - rules
             type: object
             x-kubernetes-validations:
-            - message: Only one of FolderUID or FolderRef can be set
+            - message: Only one of FolderUID or FolderRef can be set and one must
+                be defined
               rule: (has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef)
                 && !(has(self.folderUID)))
             - message: spec.editable is immutable
               rule: ((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable)
                 && has(self.editable)))
+            - message: spec.folderUID is immutable
+              rule: ((!has(oldSelf.folderUID) && !has(self.folderUID)) || (has(oldSelf.folderUID)
+                && has(self.folderUID)))
+            - message: spec.folderRef is immutable
+              rule: ((!has(oldSelf.folderRef) && !has(self.folderRef)) || (has(oldSelf.folderRef)
+                && has(self.folderRef)))
             - message: disabling spec.allowCrossNamespaceImport requires a recreate
                 to ensure desired state
               rule: '!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport
