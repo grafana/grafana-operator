@@ -24,8 +24,10 @@ import (
 )
 
 // GrafanaAlertRuleGroupSpec defines the desired state of GrafanaAlertRuleGroup
-// +kubebuilder:validation:XValidation:rule="(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID)))", message="Only one of FolderUID or FolderRef can be set"
+// +kubebuilder:validation:XValidation:rule="(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID)))", message="Only one of FolderUID or FolderRef can be set and one must be defined"
 // +kubebuilder:validation:XValidation:rule="((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable) && has(self.editable)))", message="spec.editable is immutable"
+// +kubebuilder:validation:XValidation:rule="((!has(oldSelf.folderUID) && !has(self.folderUID)) || (has(oldSelf.folderUID) && has(self.folderUID)))", message="spec.folderUID is immutable"
+// +kubebuilder:validation:XValidation:rule="((!has(oldSelf.folderRef) && !has(self.folderRef)) || (has(oldSelf.folderRef) && has(self.folderRef)))", message="spec.folderRef is immutable"
 type GrafanaAlertRuleGroupSpec struct {
 	GrafanaCommonSpec `json:",inline"`
 
@@ -35,9 +37,11 @@ type GrafanaAlertRuleGroupSpec struct {
 
 	// UID of the folder containing this rule group
 	// Overrides the FolderSelector
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
 	FolderUID string `json:"folderUID,omitempty"`
 
 	// Match GrafanaFolders CRs to infer the uid
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
 	FolderRef string `json:"folderRef,omitempty"`
 
 	Rules []AlertRule `json:"rules"`
