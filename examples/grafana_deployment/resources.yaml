@@ -10,6 +10,9 @@ spec:
     security:
       admin_user: root
       admin_password: secret
+
+  # Optionally Configure the deployment spec
+  # Modifications to the securityContext and readinessProbe
   deployment:
     spec:
       template:
@@ -24,5 +27,6 @@ spec:
                 allowPrivilegeEscalation: false
                 capabilities:
                   drop: ["ALL"]
-              readinessProbe:
-                failureThreshold: 3
+
+  # If needed, the default securityContext can be disabled
+  disableDefaultSecurityContext: Pod # Pod, Container, All
