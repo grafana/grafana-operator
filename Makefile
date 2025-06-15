@@ -113,6 +113,13 @@ hugo: $(HUGO) ## Prepare production build for hugo docs.
 	HUGO_ENVIRONMENT=production HUGO_ENV=production $(HUGO) --gc --minify && \
 	cd -
 
+.PHONY: hugo-dev
+hugo-dev: $(HUGO) ## Start development server for hugo.
+	$(info $(M) running $@)
+	cd hugo && \
+	$(HUGO) server --baseURL http://127.0.0.1/ && \
+	cd -
+
 .PHONY: kustomize-lint
 kustomize-lint: $(KUSTOMIZE) ## Lint kustomize overlays.
 	$(info $(M) running $@)
