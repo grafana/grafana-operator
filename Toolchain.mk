@@ -13,6 +13,7 @@ ENVTEST_VERSION = v0.21.0
 GOLANGCI_LINT_VERSION = v2.1.6
 HELM_DOCS_VERSION = v1.14.2
 HELM_VERSION = v3.17.3
+HUGO_VERSION = 0.134.3
 KIND_VERSION = v0.29.0
 KO_VERSION = v0.18.0
 KUSTOMIZE_VERSION = v5.6.0
@@ -87,6 +88,20 @@ $(HELM_DOCS): | $(BIN)
 	set -e ;\
 	GOBIN=$(BIN) go install github.com/norwoodj/helm-docs/cmd/helm-docs@$(HELM_DOCS_VERSION) ;\
 	mv $(BIN)/helm-docs $(HELM_DOCS) ;\
+	}
+
+HUGO := $(BIN)/hugo-$(HUGO_VERSION)
+$(HUGO): | $(BIN)
+	$(info $(M) installing hugo)
+	@{ \
+	set -e ;\
+	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
+	if [ "`uname`" = "Darwin" ]; then ARCH="universal"; fi && \
+	curl -sSLo $(HUGO).tar.gz https://github.com/gohugoio/hugo/releases/download/v$(HUGO_VERSION)/hugo_extended_$(HUGO_VERSION)_$${OSTYPE}-$${ARCH}.tar.gz && \
+	tar -zxvf $(HUGO).tar.gz -C $(BIN) hugo && \
+	mv $(BIN)/hugo $(HUGO) && \
+	chmod +x $(HUGO) && \
+	rm $(HUGO).tar.gz ;\
 	}
 
 KIND := $(BIN)/kind-$(KIND_VERSION)
