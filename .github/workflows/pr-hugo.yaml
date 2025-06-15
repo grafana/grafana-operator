@@ -14,14 +14,7 @@ jobs:
   # Build job
   build:
     runs-on: ubuntu-latest
-    env:
-      DART_SASS_VERSION: 1.86.0
     steps:
-      - name: Install Dart Sass
-        run: |
-          wget -O ${{ runner.temp }}/dart-sass.tar.gz https://github.com/sass/dart-sass/releases/download/${DART_SASS_VERSION}/dart-sass-${DART_SASS_VERSION}-linux-x64-musl.tar.gz \
-          && tar -xvf ${{ runner.temp }}/dart-sass.tar.gz -C ${{ runner.temp }}/ \
-          && echo "${{ runner.temp }}/dart-sass" >> $GITHUB_PATH
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
