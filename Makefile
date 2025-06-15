@@ -107,18 +107,20 @@ helm-lint: $(HELM) ## Validate helm chart.
 	$(HELM) lint deploy/helm/grafana-operator/
 
 .PHONY: hugo
-hugo: $(HUGO) ## Prepare production build for hugo docs.
+hugo: $(DART_SASS) $(HUGO) ## Prepare production build for hugo docs.
 	$(info $(M) running $@)
-	cd hugo && \
-	HUGO_ENVIRONMENT=production HUGO_ENV=production $(HUGO) --gc --minify && \
-	cd -
+	@echo -- Checking presence of dart-sass
+	@cd hugo && $(HUGO) env | grep dart-sass
+	@echo -- Building artifacts
+	@cd hugo && HUGO_ENVIRONMENT=production HUGO_ENV=production $(HUGO) --gc --minify
 
 .PHONY: hugo-dev
-hugo-dev: $(HUGO) ## Start development server for hugo.
+hugo-dev: $(DART_SASS) $(HUGO) ## Start development server for hugo.
 	$(info $(M) running $@)
-	cd hugo && \
-	$(HUGO) server --baseURL http://127.0.0.1/ && \
-	cd -
+	@echo -- Checking presence of dart-sass
+	@cd hugo && $(HUGO) env | grep dart-sass
+	@echo -- Starting dev server
+	@cd hugo && $(HUGO) env && $(HUGO) server --baseURL http://127.0.0.1/
 
 .PHONY: kustomize-lint
 kustomize-lint: $(KUSTOMIZE) ## Lint kustomize overlays.
