@@ -106,6 +106,13 @@ helm-lint: $(HELM) ## Validate helm chart.
 	$(HELM) template deploy/helm/grafana-operator/ > /dev/null
 	$(HELM) lint deploy/helm/grafana-operator/
 
+.PHONY: hugo
+hugo: $(HUGO) ## Prepare production build for hugo docs.
+	$(info $(M) running $@)
+	cd hugo && \
+	HUGO_ENVIRONMENT=production HUGO_ENV=production $(HUGO) --gc --minify && \
+	cd -
+
 .PHONY: kustomize-lint
 kustomize-lint: $(KUSTOMIZE) ## Lint kustomize overlays.
 	$(info $(M) running $@)

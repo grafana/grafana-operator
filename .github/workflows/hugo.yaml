@@ -27,7 +27,6 @@ jobs:
       contents: read
     runs-on: ubuntu-latest
     env:
-      HUGO_VERSION: 0.134.3
       DART_SASS_VERSION: 1.86.0
     steps:
       - name: Install Hugo CLI
@@ -51,16 +50,8 @@ jobs:
           cd hugo
           [[ -f package-lock.json || -f npm-shrinkwrap.json ]] && npm ci || true
       - name: Build with Hugo # zizmor: ignore[template-injection] configure-pages considered safe
-        env:
-          # For maximum backward compatibility with Hugo modules
-          HUGO_ENVIRONMENT: production
-          HUGO_ENV: production
         run: |
-          cd hugo
-          hugo \
-            --gc \
-            --minify \
-            --baseURL "${{ steps.pages.outputs.base_url }}/"
+          make hugo
       - name: Upload artifact
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:
