@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -37,7 +36,6 @@ import (
 	"github.com/grafana/grafana-openapi-client-go/models"
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
-	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 )
 
 const (
@@ -53,55 +51,6 @@ type GrafanaContactPointReconciler struct {
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanacontactpoints,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanacontactpoints/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanacontactpoints/finalizers,verbs=update
-
-func (r *GrafanaContactPointReconciler) syncStatuses(ctx context.Context) error {
-	log := logf.FromContext(ctx)
-
-	// get all grafana instances
-	grafanas := &grafanav1beta1.GrafanaList{}
-	var opts []client.ListOption
-	err := r.List(ctx, grafanas, opts...)
-	if err != nil {
-		return err
-	}
-	// no instances, no need to sync
-	if len(grafanas.Items) == 0 {
-		return nil
-	}
-
-	// get all contact points
-	allContactPoints := &grafanav1beta1.GrafanaContactPointList{}
-	err = r.List(ctx, allContactPoints, opts...)
-	if err != nil {
-		return err
-	}
-
-	// delete contact points from grafana statuses that do no longer have a cr
-	contactpointsSynced := 0
-	for _, grafana := range grafanas.Items {
-		statusUpdated := false
-		for _, contactpoint := range grafana.Status.ContactPoints {
-			namespace, name, _ := contactpoint.Split()
-			if allContactPoints.Find(namespace, name) == nil {
-				grafana.Status.ContactPoints = grafana.Status.ContactPoints.Remove(namespace, name)
-				contactpointsSynced += 1
-				statusUpdated = true
-			}
-		}
-
-		if statusUpdated {
-			err = r.Client.Status().Update(ctx, &grafana)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	if contactpointsSynced > 0 {
-		log.Info("successfully synced contact points", "contactpoints", contactpointsSynced)
-	}
-	return nil
-}
 
 func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx).WithName("GrafanaContactPointReconciler")
@@ -287,36 +236,9 @@ func (r *GrafanaContactPointReconciler) finalize(ctx context.Context, contactPoi
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *GrafanaContactPointReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
-	err := ctrl.NewControllerManagedBy(mgr).
+func (r *GrafanaContactPointReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
 		For(&grafanav1beta1.GrafanaContactPoint{}).
 		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
-	if err != nil {
-		return err
-	}
-
-	go func() {
-		log := logf.FromContext(ctx).WithName("GrafanaContactPointReconciler")
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-time.After(initialSyncDelay):
-				start := time.Now()
-				err := r.syncStatuses(ctx)
-				elapsed := time.Since(start).Milliseconds()
-				metrics.InitialContactPointSyncDuration.Set(float64(elapsed))
-				if err != nil {
-					log.Error(err, "error synchronizing contact points")
-					continue
-				}
-
-				log.Info("contact point sync complete")
-				return
-			}
-		}
-	}()
-
-	return nil
 }

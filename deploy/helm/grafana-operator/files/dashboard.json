@@ -598,7 +598,7 @@
         "type": "prometheus",
         "uid": "$datasource"
       },
-      "description": "Time in ms to sync Custom Resources after operator restart",
+      "description": "Time in ms to sync Custom Resources after operator restart or leader change",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -620,7 +620,7 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 12,
+        "w": 4,
         "x": 0,
         "y": 9
       },
@@ -646,39 +646,13 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum(grafana_operator_dashboards_initial_sync_duration{$k8sClusterLabelKey=\"$cluster\", pod=~\"$pod\", job=\"$job\"})",
+          "expr": "sum(grafana_operator_reconciler_initial_sync_duration{$k8sClusterLabelKey=\"$cluster\", pod=~\"$pod\", job=\"$job\"})",
           "legendFormat": "Dashboards",
           "range": true,
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "editorMode": "code",
-          "expr": "sum(grafana_operator_datasources_initial_sync_duration{$k8sClusterLabelKey=\"$cluster\", pod=~\"$pod\", job=\"$job\"})",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "Datasources",
-          "range": true,
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "editorMode": "code",
-          "expr": "sum(grafana_operator_folders_initial_sync_duration{$k8sClusterLabelKey=\"$cluster\", pod=~\"$pod\", job=\"$job\"})",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "Folders",
-          "range": true,
-          "refId": "C"
         }
       ],
-      "title": "CR Initial Sync Durations",
+      "title": "CR Initial Sync Duration",
       "type": "stat"
     },
     {
@@ -744,8 +718,8 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 12,
-        "x": 12,
+        "w": 20,
+        "x": 4,
         "y": 9
       },
       "id": 17,
@@ -769,7 +743,7 @@
           "exemplar": false,
           "expr": "rate(grafana_operator_reconciler_reconciles{$k8sClusterLabelKey=\"$cluster\", pod=~\"$pod\", job=\"$job\"}[$__rate_interval])",
           "instant": false,
-          "legendFormat": "{{instance_name}}",
+          "legendFormat": "{{instance_namespace}}/{{instance_name}}",
           "range": true,
           "refId": "A"
         }

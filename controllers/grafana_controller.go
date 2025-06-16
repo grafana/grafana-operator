@@ -164,14 +164,131 @@ func (r *GrafanaReconciler) setDefaultGrafanaVersion(ctx context.Context, cr cli
 	return r.Patch(ctx, cr, client.RawPatch(types.MergePatchType, patch))
 }
 
+func removeMissingCRs(statusList *grafanav1beta1.NamespacedResourceList, crs grafanav1beta1.NamespacedResourceImpl, updateStatus *bool) {
+	for _, namespacedCR := range *statusList {
+		namespace, name, _ := namespacedCR.Split()
+		if !crs.Exists(namespace, name) {
+			*statusList = statusList.Remove(namespace, name)
+			*updateStatus = true
+		}
+	}
+}
+
+func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
+	log := logf.FromContext(ctx)
+
+	// get all grafana instances
+	grafanas := &grafanav1beta1.GrafanaList{}
+	err := r.List(ctx, grafanas)
+	if err != nil {
+		return err
+	}
+	// no instances, skip sync
+	if len(grafanas.Items) == 0 {
+		return nil
+	}
+
+	// Fetch all resources
+	folders := &grafanav1beta1.GrafanaFolderList{}
+	err = r.List(ctx, folders)
+	if err != nil {
+		return err
+	}
+
+	dashboards := &grafanav1beta1.GrafanaDashboardList{}
+	err = r.List(ctx, dashboards)
+	if err != nil {
+		return err
+	}
+
+	libraryPanels := &grafanav1beta1.GrafanaLibraryPanelList{}
+	err = r.List(ctx, libraryPanels)
+	if err != nil {
+		return err
+	}
+
+	datasources := &grafanav1beta1.GrafanaDatasourceList{}
+	err = r.List(ctx, datasources)
+	if err != nil {
+		return err
+	}
+
+	contactPoints := &grafanav1beta1.GrafanaContactPointList{}
+	err = r.List(ctx, contactPoints)
+	if err != nil {
+		return err
+	}
+
+	// delete resources from grafana statuses that no longer have a CR
+	statusUpdates := 0
+	for _, grafana := range grafanas.Items {
+		updateStatus := false
+
+		removeMissingCRs(&grafana.Status.Folders, folders, &updateStatus)
+		removeMissingCRs(&grafana.Status.Dashboards, dashboards, &updateStatus)
+		removeMissingCRs(&grafana.Status.LibraryPanels, libraryPanels, &updateStatus)
+		removeMissingCRs(&grafana.Status.Datasources, datasources, &updateStatus)
+		removeMissingCRs(&grafana.Status.ContactPoints, contactPoints, &updateStatus)
+
+		if updateStatus {
+			statusUpdates += 1
+			err = r.Client.Status().Update(ctx, &grafana)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	if statusUpdates > 0 {
+		log.Info("successfully synced grafana statuses", "update count", statusUpdates)
+	}
+	return nil
+}
+
 // SetupWithManager sets up the controller with the Manager.
-func (r *GrafanaReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
+func (r *GrafanaReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
+	err := ctrl.NewControllerManagedBy(mgr).
 		For(&grafanav1beta1.Grafana{}, builder.WithPredicates(ignoreStatusUpdates())).
 		Owns(&appsv1.Deployment{}, builder.WithPredicates(ignoreStatusUpdates())).
 		Owns(&corev1.ConfigMap{}).
 		WithOptions(controller.Options{RateLimiter: defaultRateLimiter()}).
 		Complete(r)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		// Wait with sync until elected as leader
+		select {
+		case <-ctx.Done():
+			return
+		case <-mgr.Elected():
+		}
+
+		// periodic sync reconcile
+		log := logf.FromContext(ctx).WithName("GrafanaReconciler")
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(initialSyncDelay):
+				start := time.Now()
+				err := r.syncStatuses(ctx)
+				elapsed := time.Since(start).Milliseconds()
+				metrics.InitialStatusSyncDuration.Set(float64(elapsed))
+				if err != nil {
+					log.Error(err, "error synchronizing grafana statuses")
+					continue
+				}
+
+				log.Info("Grafana status sync complete")
+				return
+			}
+		}
+	}()
+
+	return nil
 }
 
 func getInstallationStages() []grafanav1beta1.OperatorStageName {

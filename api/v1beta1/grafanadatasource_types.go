@@ -152,13 +152,13 @@ func (in *GrafanaDatasource) CustomUIDOrUID() string {
 	return string(in.UID)
 }
 
-func (in *GrafanaDatasourceList) Find(namespace string, name string) *GrafanaDatasource {
+func (in *GrafanaDatasourceList) Exists(namespace, name string) bool {
 	for _, datasource := range in.Items {
 		if datasource.Namespace == namespace && datasource.Name == name {
-			return &datasource
+			return true
 		}
 	}
-	return nil
+	return false
 }
 
 func (in *GrafanaDatasource) MatchLabels() *metav1.LabelSelector {

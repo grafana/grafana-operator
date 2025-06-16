@@ -9,6 +9,11 @@ type NamespacedResource string
 
 type NamespacedResourceList []NamespacedResource
 
+// +kubebuilder:object:generate=false
+type NamespacedResourceImpl interface {
+	Exists(namespace string, name string) bool
+}
+
 func (in NamespacedResource) Split() (string, string, string) {
 	parts := strings.Split(string(in), "/")
 	return parts[0], parts[1], parts[2]

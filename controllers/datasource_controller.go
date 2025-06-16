@@ -23,13 +23,10 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	simplejson "github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-openapi-client-go/client/datasources"
 	"github.com/grafana/grafana-openapi-client-go/models"
-
-	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
@@ -57,55 +54,6 @@ type GrafanaDatasourceReconciler struct {
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadatasources,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadatasources/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadatasources/finalizers,verbs=update
-
-func (r *GrafanaDatasourceReconciler) syncStatuses(ctx context.Context) error {
-	log := logf.FromContext(ctx)
-
-	// get all grafana instances
-	grafanas := &v1beta1.GrafanaList{}
-	var opts []client.ListOption
-	err := r.List(ctx, grafanas, opts...)
-	if err != nil {
-		return err
-	}
-	// no instances, no need to sync
-	if len(grafanas.Items) == 0 {
-		return nil
-	}
-
-	// get all datasources
-	allDatasource := &v1beta1.GrafanaDatasourceList{}
-	err = r.List(ctx, allDatasource, opts...)
-	if err != nil {
-		return err
-	}
-
-	// delete datasources datasourcegrafana statuses that no longer have a CR
-	datasourcesSynced := 0
-	for _, grafana := range grafanas.Items {
-		statusUpdated := false
-		for _, ds := range grafana.Status.Datasources {
-			namespace, name, _ := ds.Split()
-			if allDatasource.Find(namespace, name) == nil {
-				grafana.Status.Datasources = grafana.Status.Datasources.Remove(namespace, name)
-				datasourcesSynced += 1
-				statusUpdated = true
-			}
-		}
-
-		if statusUpdated {
-			err = r.Status().Update(ctx, &grafana)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	if datasourcesSynced > 0 {
-		log.Info("successfully synced datasources", "datasources", datasourcesSynced)
-	}
-	return nil
-}
 
 func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx).WithName("GrafanaDatasourceReconciler")
@@ -371,40 +319,11 @@ func (r *GrafanaDatasourceReconciler) Exists(client *genapi.GrafanaHTTPAPI, uid,
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *GrafanaDatasourceReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
-	err := ctrl.NewControllerManagedBy(mgr).
+func (r *GrafanaDatasourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.GrafanaDatasource{}).
 		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
-	if err != nil {
-		return err
-	}
-
-	go func() {
-		// periodic sync reconcile
-		log := logf.FromContext(ctx).WithName("GrafanaDatasourceReconciler")
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-time.After(initialSyncDelay):
-				start := time.Now()
-				err := r.syncStatuses(ctx)
-				elapsed := time.Since(start).Milliseconds()
-				metrics.InitialDatasourceSyncDuration.Set(float64(elapsed))
-				if err != nil {
-					log.Error(err, "error synchronizing datasources")
-					continue
-				}
-
-				log.Info("datasource sync complete")
-				return
-			}
-		}
-	}()
-
-	return nil
 }
 
 func (r *GrafanaDatasourceReconciler) buildDatasourceModel(ctx context.Context, cr *v1beta1.GrafanaDatasource) (*models.UpdateDataSourceCommand, string, error) {
