@@ -9,7 +9,11 @@ In a standard scenario, a folder with default settings gets created through a `G
 
 If you need more control over folders (such as RBAC settings), it can be achieved through a `GrafanaFolder` CR.
 
-**NOTE:** When the operator starts managing a folder, it changes the folder's uid to `metadata.uid` of the respective `GrafanaFolder` CR. There's no way to change that.
+{{% alert title="Note" color="primary" %}}
+The folder reconciler attempts to take control over existing folders if a folder with the same name already exists.
+This can lead to unpredictable behavior and will be removed in future versions.
+Please take care to make sure any managed folders are created by the operator.
+{{% /alert %}}
 
 To view all configuration you can do within folders, look at our [API documentation](../api/#grafanafolderspec).
 
