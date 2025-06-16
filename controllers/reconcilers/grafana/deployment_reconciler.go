@@ -233,7 +233,7 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 		TerminationMessagePath:   "/dev/termination-log",
 		TerminationMessagePolicy: "File",
 		ImagePullPolicy:          "IfNotPresent",
-		SecurityContext:          getGrafanaContainerSecurityContext(openshiftPlatform),
+		SecurityContext:          getDefaultContainerSecurityContext(cr.Spec.DisableDefaultSecurityContext, openshiftPlatform),
 		ReadinessProbe:           getReadinessProbe(cr),
 	})
 
@@ -268,8 +268,12 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 	return containers
 }
 
-// getGrafanaContainerSecurityContext provides default securityContext for grafana container
-func getGrafanaContainerSecurityContext(openshiftPlatform bool) *corev1.SecurityContext {
+// getDefaultContainerSecurityContext provides securityContext for grafana container unless disabled
+func getDefaultContainerSecurityContext(disableSecurityContext string, openshiftPlatform bool) *corev1.SecurityContext {
+	if disableSecurityContext == "Container" || disableSecurityContext == "All" {
+		return nil
+	}
+
 	capability := &corev1.Capabilities{
 		Drop: []corev1.Capability{
 			"ALL",
@@ -312,7 +316,12 @@ func getReadinessProbe(cr *v1beta1.Grafana) *corev1.Probe {
 	}
 }
 
-func getPodSecurityContext() *corev1.PodSecurityContext {
+// getDefaultPodSecurityContext provides securityContext for grafana pod unless disabled
+func getDefaultPodSecurityContext(disableSecurityContext string) *corev1.PodSecurityContext {
+	if disableSecurityContext == "Pod" || disableSecurityContext == "All" {
+		return nil
+	}
+
 	return &corev1.PodSecurityContext{
 		SeccompProfile: &corev1.SeccompProfile{
 			Type: "RuntimeDefault",
@@ -339,7 +348,7 @@ func getDeploymentSpec(cr *v1beta1.Grafana, deploymentName string, scheme *runti
 			Spec: corev1.PodSpec{
 				Volumes:            getVolumes(cr, scheme),
 				Containers:         getContainers(cr, scheme, vars, openshiftPlatform),
-				SecurityContext:    getPodSecurityContext(),
+				SecurityContext:    getDefaultPodSecurityContext(cr.Spec.DisableDefaultSecurityContext),
 				ServiceAccountName: sa.Name,
 			},
 		},

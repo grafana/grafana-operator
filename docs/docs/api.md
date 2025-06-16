@@ -6230,6 +6230,15 @@ GrafanaSpec defines the desired state of Grafana
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>disableDefaultSecurityContext</b></td>
+        <td>enum</td>
+        <td>
+          DisableDefaultSecurityContext prevents the operator from populating securityContext on deployments<br/>
+          <br/>
+            <i>Enum</i>: Pod, Container, All<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecexternal">external</a></b></td>
         <td>object</td>
         <td>
