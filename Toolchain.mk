@@ -2,17 +2,17 @@ BIN = $(CURDIR)/bin
 $(BIN):
 	mkdir -p $(BIN)
 
-PATH := $(BIN):$(PATH)
-
 M = $(shell printf "\033[34;1m▶\033[0m")
 
 CHAINSAW_VERSION = v0.2.12
 CONTROLLER_GEN_VERSION = v0.17.3
 CRDOC_VERSION = v0.6.4
+DART_SASS_VERSION = 1.86.0
 ENVTEST_VERSION = v0.21.0
 GOLANGCI_LINT_VERSION = v2.1.6
 HELM_DOCS_VERSION = v1.14.2
 HELM_VERSION = v3.17.3
+HUGO_VERSION = 0.134.3
 KIND_VERSION = v0.29.0
 KO_VERSION = v0.18.0
 KUSTOMIZE_VERSION = v5.6.0
@@ -52,6 +52,20 @@ $(CRDOC): | $(BIN)
 	mv $(BIN)/crdoc $(CRDOC) ;\
 	}
 
+DART_SASS := $(BIN)/dart-sass-$(DART_SASS_VERSION)
+$(DART_SASS): | $(BIN)
+	$(info $(M) installing dart-sass)
+	@{ \
+	set -e ;\
+	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
+	if [ "`uname`" = "Darwin" ]; then OSTYPE="macos"; fi && \
+	if [ "`go env GOARCH`" = "amd64" ]; then ARCH="x64"; fi && \
+	curl -sSLo $(DART_SASS).tar.gz https://github.com/sass/dart-sass/releases/download/$(DART_SASS_VERSION)/dart-sass-$(DART_SASS_VERSION)-$${OSTYPE}-$${ARCH}.tar.gz && \
+	mkdir -p $(DART_SASS) && \
+	tar -zxvf $(DART_SASS).tar.gz -C $(DART_SASS) --strip-components=1 && \
+	rm $(DART_SASS).tar.gz ;\
+	}
+
 ENVTEST := $(BIN)/setup-envtest-$(ENVTEST_VERSION)
 $(ENVTEST): | $(BIN)
 	$(info $(M) installing setup-envtest)
@@ -87,6 +101,20 @@ $(HELM_DOCS): | $(BIN)
 	set -e ;\
 	GOBIN=$(BIN) go install github.com/norwoodj/helm-docs/cmd/helm-docs@$(HELM_DOCS_VERSION) ;\
 	mv $(BIN)/helm-docs $(HELM_DOCS) ;\
+	}
+
+HUGO := $(BIN)/hugo-$(HUGO_VERSION)
+$(HUGO): | $(BIN)
+	$(info $(M) installing hugo)
+	@{ \
+	set -e ;\
+	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
+	if [ "`uname`" = "Darwin" ]; then ARCH="universal"; fi && \
+	curl -sSLo $(HUGO).tar.gz https://github.com/gohugoio/hugo/releases/download/v$(HUGO_VERSION)/hugo_extended_$(HUGO_VERSION)_$${OSTYPE}-$${ARCH}.tar.gz && \
+	tar -zxvf $(HUGO).tar.gz -C $(BIN) hugo && \
+	mv $(BIN)/hugo $(HUGO) && \
+	chmod +x $(HUGO) && \
+	rm $(HUGO).tar.gz ;\
 	}
 
 KIND := $(BIN)/kind-$(KIND_VERSION)
@@ -146,3 +174,5 @@ $(YQ): | $(BIN)
 	curl -sSLo $(YQ) https://github.com/mikefarah/yq/releases/download/$(YQ_VERSION)/yq_$${OSTYPE}_$${ARCH} ;\
 	chmod +x $(YQ) ;\
 	}
+
+PATH := $(DART_SASS):$(BIN):$(PATH)
