@@ -70,4 +70,46 @@ var _ = Describe("AlertRuleGroup type", func() {
 			Expect(k8sClient.Update(ctx, arg)).To(HaveOccurred())
 		})
 	})
+	Context("Ensure AlertRuleGroup spec.folderRef and spec.folderUID are immutable", func() {
+		ctx := context.Background()
+		refTrue := true
+
+		It("Should block changing value of folderRef", func() {
+			arg := newAlertRuleGroup("changing-folder-ref", &refTrue)
+			By("Creating new AlertRuleGroup with existing folderRef")
+			Expect(k8sClient.Create(ctx, arg)).To(Succeed())
+
+			By("Changing folderRef")
+			arg.Spec.FolderRef = "newFolder"
+			Expect(k8sClient.Update(ctx, arg)).To(HaveOccurred())
+		})
+
+		It("Should block changing value of folderUID", func() {
+			arg := newAlertRuleGroup("changing-folder-uid", &refTrue)
+			arg.Spec.FolderRef = ""
+
+			arg.Spec.FolderUID = "originalUID"
+			By("Creating new AlertRuleGroup with existing folderUID")
+			Expect(k8sClient.Create(ctx, arg)).To(Succeed())
+
+			By("Changing folderUID")
+			arg.Spec.FolderUID = "newUID"
+			Expect(k8sClient.Update(ctx, arg)).To(HaveOccurred())
+		})
+
+		It("At least one of spec.folderRef or spec.folderUID is defined", func() {
+			arg := newAlertRuleGroup("missing-folder", &refTrue)
+			arg.Spec.FolderRef = ""
+			arg.Spec.FolderUID = ""
+			By("Creating new AlertRuleGroup with neither folderUID")
+			Expect(k8sClient.Create(ctx, arg)).To(HaveOccurred())
+		})
+
+		It("Only one of spec.folderRef or spec.folderUID is defined", func() {
+			arg := newAlertRuleGroup("mutually-exclusive-folder-reference", &refTrue)
+			arg.Spec.FolderUID = "DummyUID"
+			By("Creating new AlertRuleGroup with neither folderUID")
+			Expect(k8sClient.Create(ctx, arg)).To(HaveOccurred())
+		})
+	})
 })
