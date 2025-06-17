@@ -5030,6 +5030,10 @@ spec:
                   items:
                     type: string
                   type: array
+                notificationTemplates:
+                  items:
+                    type: string
+                  type: array
                 stage:
                   type: string
                 stageStatus:
