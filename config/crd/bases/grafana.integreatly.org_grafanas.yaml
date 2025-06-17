@@ -5030,6 +5030,10 @@ spec:
                   items:
                     type: string
                   type: array
+                muteTimings:
+                  items:
+                    type: string
+                  type: array
                 notificationTemplates:
                   items:
                     type: string

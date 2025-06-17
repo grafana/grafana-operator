@@ -145,6 +145,7 @@ type GrafanaStatus struct {
 	Datasources           NamespacedResourceList `json:"datasources,omitempty"`
 	Folders               NamespacedResourceList `json:"folders,omitempty"`
 	LibraryPanels         NamespacedResourceList `json:"libraryPanels,omitempty"`
+	MuteTimings           NamespacedResourceList `json:"muteTimings,omitempty"`
 	NotificationTemplates NamespacedResourceList `json:"notificationTemplates,omitempty"`
 	Version               string                 `json:"version,omitempty"`
 	Conditions            []metav1.Condition     `json:"conditions,omitempty"`

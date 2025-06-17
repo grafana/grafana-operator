@@ -225,6 +225,12 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 		return err
 	}
 
+	muteTimings := &grafanav1beta1.GrafanaMuteTimingList{}
+	err = r.List(ctx, muteTimings)
+	if err != nil {
+		return err
+	}
+
 	// delete resources from grafana statuses that no longer have a CR
 	statusUpdates := 0
 	for _, grafana := range grafanas.Items {
@@ -236,6 +242,7 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 		removeMissingCRs(&grafana.Status.Datasources, datasources, &updateStatus)
 		removeMissingCRs(&grafana.Status.ContactPoints, contactPoints, &updateStatus)
 		removeMissingCRs(&grafana.Status.NotificationTemplates, notificationTemplates, &updateStatus)
+		removeMissingCRs(&grafana.Status.MuteTimings, muteTimings, &updateStatus)
 
 		if updateStatus {
 			statusUpdates += 1
