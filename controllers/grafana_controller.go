@@ -189,26 +189,8 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 	}
 
 	// Fetch all resources
-	folders := &grafanav1beta1.GrafanaFolderList{}
-	err = r.List(ctx, folders)
-	if err != nil {
-		return err
-	}
-
-	dashboards := &grafanav1beta1.GrafanaDashboardList{}
-	err = r.List(ctx, dashboards)
-	if err != nil {
-		return err
-	}
-
-	libraryPanels := &grafanav1beta1.GrafanaLibraryPanelList{}
-	err = r.List(ctx, libraryPanels)
-	if err != nil {
-		return err
-	}
-
-	datasources := &grafanav1beta1.GrafanaDatasourceList{}
-	err = r.List(ctx, datasources)
+	alertRuleGroups := &grafanav1beta1.GrafanaAlertRuleGroupList{}
+	err = r.List(ctx, alertRuleGroups)
 	if err != nil {
 		return err
 	}
@@ -219,14 +201,38 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 		return err
 	}
 
-	notificationTemplates := &grafanav1beta1.GrafanaNotificationTemplateList{}
-	err = r.List(ctx, notificationTemplates)
+	dashboards := &grafanav1beta1.GrafanaDashboardList{}
+	err = r.List(ctx, dashboards)
 	if err != nil {
 		return err
 	}
 
-	muteTimings := &grafanav1beta1.GrafanaMuteTimingList{}
+	datasources := &grafanav1beta1.GrafanaDatasourceList{}
+	err = r.List(ctx, datasources)
+	if err != nil {
+		return err
+	}
+
+	folders := &grafanav1beta1.GrafanaFolderList{}
+	err = r.List(ctx, folders)
+	if err != nil {
+		return err
+	}
+
+	libraryPanels := &grafanav1beta1.GrafanaLibraryPanelList{}
+	err = r.List(ctx, libraryPanels)
+	if err != nil {
+		return err
+	}
+
+	muteTimings := &grafanav1beta1.GrafanaLibraryPanelList{}
 	err = r.List(ctx, muteTimings)
+	if err != nil {
+		return err
+	}
+
+	notificationTemplates := &grafanav1beta1.GrafanaNotificationTemplateList{}
+	err = r.List(ctx, notificationTemplates)
 	if err != nil {
 		return err
 	}
@@ -236,13 +242,14 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 	for _, grafana := range grafanas.Items {
 		updateStatus := false
 
-		removeMissingCRs(&grafana.Status.Folders, folders, &updateStatus)
-		removeMissingCRs(&grafana.Status.Dashboards, dashboards, &updateStatus)
-		removeMissingCRs(&grafana.Status.LibraryPanels, libraryPanels, &updateStatus)
-		removeMissingCRs(&grafana.Status.Datasources, datasources, &updateStatus)
+		removeMissingCRs(&grafana.Status.AlertRuleGroups, alertRuleGroups, &updateStatus)
 		removeMissingCRs(&grafana.Status.ContactPoints, contactPoints, &updateStatus)
-		removeMissingCRs(&grafana.Status.NotificationTemplates, notificationTemplates, &updateStatus)
+		removeMissingCRs(&grafana.Status.Dashboards, dashboards, &updateStatus)
+		removeMissingCRs(&grafana.Status.Datasources, datasources, &updateStatus)
+		removeMissingCRs(&grafana.Status.Folders, folders, &updateStatus)
+		removeMissingCRs(&grafana.Status.LibraryPanels, libraryPanels, &updateStatus)
 		removeMissingCRs(&grafana.Status.MuteTimings, muteTimings, &updateStatus)
+		removeMissingCRs(&grafana.Status.NotificationTemplates, notificationTemplates, &updateStatus)
 
 		if updateStatus {
 			statusUpdates += 1

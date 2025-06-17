@@ -265,7 +265,10 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 	if err != nil {
 		return fmt.Errorf("updating group: %s", err.Error())
 	}
-	return nil
+
+	// Update grafana instance Status
+	instance.Status.AlertRuleGroups = instance.Status.AlertRuleGroups.Add(group.Namespace, group.Name, groupName)
+	return r.Client.Status().Update(ctx, instance)
 }
 
 func (r *GrafanaAlertRuleGroupReconciler) finalize(ctx context.Context, group *grafanav1beta1.GrafanaAlertRuleGroup) error {
@@ -293,6 +296,12 @@ func (r *GrafanaAlertRuleGroupReconciler) finalize(ctx context.Context, group *g
 			if !errors.As(err, &notFound) {
 				return fmt.Errorf("deleting alert rule group: %w", err)
 			}
+		}
+
+		// Update grafana instance Status
+		instance.Status.AlertRuleGroups = instance.Status.AlertRuleGroups.Remove(group.Namespace, group.Name)
+		if err = r.Client.Status().Update(ctx, &instance); err != nil {
+			return err
 		}
 	}
 	return nil
