@@ -211,6 +211,15 @@ type GrafanaAlertRuleGroupList struct {
 	Items           []GrafanaAlertRuleGroup `json:"items"`
 }
 
+func (in *GrafanaAlertRuleGroupList) Exists(namespace, name string) bool {
+	for _, contactpoint := range in.Items {
+		if contactpoint.Namespace == namespace && contactpoint.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
 func init() {
 	SchemeBuilder.Register(&GrafanaAlertRuleGroup{}, &GrafanaAlertRuleGroupList{})
 }

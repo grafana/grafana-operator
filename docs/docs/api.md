@@ -22316,6 +22316,13 @@ GrafanaStatus defines the observed state of Grafana
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>alertRuleGroups</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanastatusconditionsindex">conditions</a></b></td>
         <td>[]object</td>
         <td>

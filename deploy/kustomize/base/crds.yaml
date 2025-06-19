@@ -8308,6 +8308,10 @@ spec:
             properties:
               adminUrl:
                 type: string
+              alertRuleGroups:
+                items:
+                  type: string
+                type: array
               conditions:
                 items:
                   description: Condition contains details for one aspect of the current
