@@ -44,6 +44,7 @@ type GrafanaAlertRuleGroupSpec struct {
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
 	FolderRef string `json:"folderRef,omitempty"`
 
+	// +kubebuilder:validation:MinItems=1
 	Rules []AlertRule `json:"rules"`
 
 	// +kubebuilder:validation:Type=string
