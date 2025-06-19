@@ -164,7 +164,99 @@ spec:
           relativeTimeRange:
             from: 600
             to: 0
-          datasourceUid: grafana-testdata
+          datasourceUid: testdata-datasource
+          model:
+            drop: 0
+            intervalMs: 1000
+            labels: ""
+            max: 50
+            maxDataPoints: 43200
+            min: -50
+            noise: 0
+            refId: A
+            scenarioId: random_walk
+            seriesCount: 3
+            spread: 5
+            startValue: 0
+            stringInput: 1,20,90,30,5,0
+        - refId: B
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            conditions:
+              - evaluator:
+                  params:
+                    - 0
+                    - 0
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params: []
+                reducer:
+                  params: []
+                  type: avg
+                type: query
+            datasource:
+              name: Expression
+              type: __expr__
+              uid: __expr__
+            expression: A
+            hide: false
+            intervalMs: 1000
+            maxDataPoints: 43200
+            reducer: max
+            refId: B
+            settings:
+              mode: dropNN
+            type: reduce
+        - refId: C
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            conditions:
+              - evaluator:
+                  params:
+                    - 45
+                    - 0
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params: []
+                reducer:
+                  params: []
+                  type: avg
+                type: query
+            datasource:
+              name: Expression
+              type: __expr__
+              uid: __expr__
+            expression: B
+            hide: false
+            intervalMs: 1000
+            maxDataPoints: 43200
+            refId: C
+            type: threshold
+      noDataState: NoData
+      execErrState: Error
+      for: 5m
+      annotations: {}
+      labels: {}
+      isPaused: false
+    - uid: ae1rhq2
+      title: Test2
+      condition: C
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: testdata-datasource
           model:
             drop: 0
             intervalMs: 1000

@@ -2,19 +2,21 @@ package v1beta1
 
 import (
 	"context"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func newAlertRuleGroup(name string, editable *bool) *GrafanaAlertRuleGroup {
+	noDataState := "NoData"
 	return &GrafanaAlertRuleGroup{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			APIVersion: APIVersion,
 			Kind:       "GrafanaAlertRuleGroup",
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: "default",
 		},
@@ -23,13 +25,22 @@ func newAlertRuleGroup(name string, editable *bool) *GrafanaAlertRuleGroup {
 			Editable:  editable,
 			FolderRef: "DummyFolderRef",
 			GrafanaCommonSpec: GrafanaCommonSpec{
-				InstanceSelector: &v1.LabelSelector{
+				InstanceSelector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{
 						"test": "alertrulegroup",
 					},
 				},
 			},
-			Rules: []AlertRule{},
+			Rules: []AlertRule{
+				{
+					Title:        "TestRule",
+					UID:          "akdj-wonvo",
+					ExecErrState: "KeepLast",
+					NoDataState:  &noDataState,
+					For:          &metav1.Duration{Duration: 60 * time.Second},
+					Data:         []*AlertQuery{},
+				},
+			},
 		},
 	}
 }

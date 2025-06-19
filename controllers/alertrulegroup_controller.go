@@ -105,9 +105,17 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 		return ctrl.Result{}, fmt.Errorf("folder uid not found: %w", err)
 	}
 
+	editable := "true" //nolint:goconst
+	if group.Spec.Editable != nil && !*group.Spec.Editable {
+		editable = "false"
+	}
+
+	mGroup := crToModel(group, folderUID)
+	log.V(1).Info("converted cr to api model")
+
 	applyErrors := make(map[string]string)
 	for _, grafana := range instances {
-		err := r.reconcileWithInstance(ctx, &grafana, group, folderUID)
+		err := r.reconcileWithInstance(ctx, &grafana, group, &mGroup, editable)
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
@@ -123,81 +131,46 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 	return ctrl.Result{RequeueAfter: group.Spec.ResyncPeriod.Duration}, nil
 }
 
-// SetupWithManager sets up the controller with the Manager.
-func (r *GrafanaAlertRuleGroupReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&grafanav1beta1.GrafanaAlertRuleGroup{}).
-		WithEventFilter(ignoreStatusUpdates()).
-		Complete(r)
-}
+func crToModel(cr *grafanav1beta1.GrafanaAlertRuleGroup, folderUID string) models.AlertRuleGroup {
+	groupName := cr.GroupName()
 
-func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Context, instance *grafanav1beta1.Grafana, group *grafanav1beta1.GrafanaAlertRuleGroup, folderUID string) error {
-	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
-	if err != nil {
-		return fmt.Errorf("building grafana client: %w", err)
-	}
+	mRules := make(models.ProvisionedAlertRules, 0, len(cr.Spec.Rules))
 
-	trueRef := "true" //nolint:goconst
-	editable := true  //nolint:staticcheck
-	if group.Spec.Editable != nil && !*group.Spec.Editable {
-		editable = false
-	}
-
-	_, err = cl.Folders.GetFolderByUID(folderUID) //nolint:errcheck
-	if err != nil {
-		var folderNotFound *folders.GetFolderByUIDNotFound
-		if errors.As(err, &folderNotFound) {
-			return fmt.Errorf("folder with uid %s not found", folderUID)
-		}
-		return fmt.Errorf("fetching folder: %w", err)
-	}
-
-	groupName := group.GroupName()
-	applied, err := cl.Provisioning.GetAlertRuleGroup(groupName, folderUID)
-	var ruleNotFound *provisioning.GetAlertRuleGroupNotFound
-	if err != nil && !errors.As(err, &ruleNotFound) {
-		return fmt.Errorf("fetching existing alert rule group: %w", err)
-	}
-
-	currentRules := make(map[string]bool)
-	if applied != nil {
-		for _, rule := range applied.Payload.Rules {
-			currentRules[rule.UID] = false
-		}
-	}
-
-	for _, rule := range group.Spec.Rules {
+	for _, r := range cr.Spec.Rules {
 		apiRule := &models.ProvisionedAlertRule{
-			Annotations:  rule.Annotations,
-			Condition:    &rule.Condition,
-			Data:         make([]*models.AlertQuery, len(rule.Data)),
-			ExecErrState: &rule.ExecErrState,
+			Annotations:  r.Annotations,
+			Condition:    &r.Condition,
+			Data:         make([]*models.AlertQuery, len(r.Data)),
+			ExecErrState: &r.ExecErrState,
 			FolderUID:    &folderUID,
-			For:          (*strfmt.Duration)(&rule.For.Duration),
-			IsPaused:     rule.IsPaused,
-			Labels:       rule.Labels,
-			NoDataState:  rule.NoDataState,
+			For:          (*strfmt.Duration)(&r.For.Duration),
+			IsPaused:     r.IsPaused,
+			Labels:       r.Labels,
+			NoDataState:  r.NoDataState,
 			RuleGroup:    &groupName,
-			Title:        &rule.Title,
-			UID:          rule.UID,
+			Title:        &r.Title,
+			UID:          r.UID,
 		}
-		if rule.NotificationSettings != nil {
+
+		if r.NotificationSettings != nil {
 			apiRule.NotificationSettings = &models.AlertRuleNotificationSettings{
-				Receiver:          &rule.NotificationSettings.Receiver,
-				GroupBy:           rule.NotificationSettings.GroupBy,
-				GroupWait:         rule.NotificationSettings.GroupWait,
-				MuteTimeIntervals: rule.NotificationSettings.MuteTimeIntervals,
-				GroupInterval:     rule.NotificationSettings.GroupInterval,
-				RepeatInterval:    rule.NotificationSettings.RepeatInterval,
+				Receiver:          &r.NotificationSettings.Receiver,
+				GroupBy:           r.NotificationSettings.GroupBy,
+				GroupWait:         r.NotificationSettings.GroupWait,
+				MuteTimeIntervals: r.NotificationSettings.MuteTimeIntervals,
+				GroupInterval:     r.NotificationSettings.GroupInterval,
+				RepeatInterval:    r.NotificationSettings.RepeatInterval,
 			}
 		}
-		if rule.Record != nil {
+
+		if r.Record != nil {
 			apiRule.Record = &models.Record{
-				From:   &rule.Record.From,
-				Metric: &rule.Record.Metric,
+				From:   &r.Record.From,
+				Metric: &r.Record.Metric,
 			}
 		}
-		for idx, q := range rule.Data {
+
+		for idx, q := range r.Data {
 			apiRule.Data[idx] = &models.AlertQuery{
 				DatasourceUID:     q.DatasourceUID,
 				Model:             q.Model,
@@ -207,67 +180,82 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 			}
 		}
 
-		if _, ok := currentRules[rule.UID]; ok {
-			params := provisioning.NewPutAlertRuleParams().
-				WithBody(apiRule).
-				WithUID(rule.UID)
-			if editable {
-				params.SetXDisableProvenance(&trueRef)
+		mRules = append(mRules, apiRule)
+	}
+
+	return models.AlertRuleGroup{
+		FolderUID: folderUID,
+		Interval:  int64(cr.Spec.Interval.Seconds()),
+		Rules:     mRules,
+		Title:     groupName,
+	}
+}
+
+func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Context, instance *grafanav1beta1.Grafana, group *grafanav1beta1.GrafanaAlertRuleGroup, mGroup *models.AlertRuleGroup, disableProvenance string) error {
+	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
+	if err != nil {
+		return fmt.Errorf("building grafana client: %w", err)
+	}
+
+	folderUID := mGroup.FolderUID
+	_, err = cl.Folders.GetFolderByUID(folderUID) //nolint:errcheck
+	if err != nil {
+		var folderNotFound *folders.GetFolderByUIDNotFound
+		if errors.As(err, &folderNotFound) {
+			return fmt.Errorf("folder with uid %s not found", folderUID)
+		}
+		return fmt.Errorf("fetching folder: %w", err)
+	}
+
+	applied, err := cl.Provisioning.GetAlertRuleGroup(mGroup.Title, folderUID)
+	var ruleNotFound *provisioning.GetAlertRuleGroupNotFound
+	if err != nil && !errors.As(err, &ruleNotFound) {
+		return fmt.Errorf("fetching existing alert rule group: %w", err)
+	}
+
+	// Create an empty collection to loop over if group does not exist on remote
+	remoteRules := models.ProvisionedAlertRules{}
+	if applied != nil && applied.Payload != nil {
+		remoteRules = applied.Payload.Rules
+	}
+
+	// Rules must be created individually
+	// Find rules missing on the instance and create them
+	for _, mRule := range mGroup.Rules {
+		ruleExists := false
+		for _, remoteRule := range remoteRules {
+			if mRule.UID == remoteRule.UID {
+				ruleExists = true
+				break
 			}
-			_, err := cl.Provisioning.PutAlertRule(params) //nolint:errcheck
-			if err != nil {
-				return fmt.Errorf("updating rule: %w", err)
-			}
-		} else {
+		}
+
+		if !ruleExists {
 			params := provisioning.NewPostAlertRuleParams().
-				WithBody(apiRule)
-			if editable {
-				params.SetXDisableProvenance(&trueRef)
-			}
+				WithBody(mRule).
+				WithXDisableProvenance(&disableProvenance)
 			_, err = cl.Provisioning.PostAlertRule(params) //nolint:errcheck
 			if err != nil {
 				return fmt.Errorf("creating rule: %w", err)
 			}
 		}
-
-		currentRules[rule.UID] = true
 	}
 
-	for uid, present := range currentRules {
-		if present {
-			continue
-		}
-		params := provisioning.NewDeleteAlertRuleParams().
-			WithUID(uid)
-		if editable {
-			params.SetXDisableProvenance(&trueRef)
-		}
-		_, err := cl.Provisioning.DeleteAlertRule(params) //nolint:errcheck
-		if err != nil {
-			return fmt.Errorf("deleting old alert rule %s: %w", uid, err)
-		}
-	}
-
-	mGroup := &models.AlertRuleGroup{
-		FolderUID: folderUID,
-		Interval:  int64(group.Spec.Interval.Seconds()),
-		Rules:     []*models.ProvisionedAlertRule{},
-		Title:     "",
-	}
+	// Update whole group and all rules existing rules at once
+	// Will delete rules not present in the body
 	params := provisioning.NewPutAlertRuleGroupParams().
 		WithBody(mGroup).
-		WithGroup(groupName).
-		WithFolderUID(folderUID)
-	if editable {
-		params.SetXDisableProvenance(&trueRef)
-	}
+		WithGroup(mGroup.Title).
+		WithFolderUID(folderUID).
+		WithXDisableProvenance(&disableProvenance)
+
 	_, err = cl.Provisioning.PutAlertRuleGroup(params) //nolint:errcheck
 	if err != nil {
 		return fmt.Errorf("updating group: %s", err.Error())
 	}
 
 	// Update grafana instance Status
-	instance.Status.AlertRuleGroups = instance.Status.AlertRuleGroups.Add(group.Namespace, group.Name, groupName)
+	instance.Status.AlertRuleGroups = instance.Status.AlertRuleGroups.Add(group.Namespace, group.Name, mGroup.Title)
 	return r.Client.Status().Update(ctx, instance)
 }
 
@@ -305,4 +293,12 @@ func (r *GrafanaAlertRuleGroupReconciler) finalize(ctx context.Context, group *g
 		}
 	}
 	return nil
+}
+
+// SetupWithManager sets up the controller with the Manager.
+func (r *GrafanaAlertRuleGroupReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&grafanav1beta1.GrafanaAlertRuleGroup{}).
+		WithEventFilter(ignoreStatusUpdates()).
+		Complete(r)
 }
