@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"time"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,6 +14,7 @@ import (
 var _ = Describe("AlertRulegroup: Reconciler", func() {
 	It("Results in NoMatchingInstances Condition", func() {
 		// Create object
+		noDataState := "NoData"
 		cr := &v1beta1.GrafanaAlertRuleGroup{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "no-match",
@@ -21,7 +23,16 @@ var _ = Describe("AlertRulegroup: Reconciler", func() {
 			Spec: v1beta1.GrafanaAlertRuleGroupSpec{
 				GrafanaCommonSpec: instanceSelectorNoMatchingInstances,
 				FolderUID:         "GroupUID",
-				Rules:             []v1beta1.AlertRule{},
+				Rules: []v1beta1.AlertRule{
+					{
+						Title:        "TestRule",
+						UID:          "akdj-wonvo",
+						ExecErrState: "KeepLast",
+						NoDataState:  &noDataState,
+						For:          &metav1.Duration{Duration: 60 * time.Second},
+						Data:         []*v1beta1.AlertQuery{},
+					},
+				},
 			},
 		}
 		ctx := context.Background()
