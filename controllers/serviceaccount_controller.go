@@ -290,7 +290,20 @@ func (r *GrafanaServiceAccountReconciler) removeAccount(
 			)
 			return nil
 		}
-		return fmt.Errorf("deleting service account %q: %w", status.SpecID, err)
+
+		// TODO: Grafana Operator currently deployes Grafana 11.3.0 (see controllers/config/operator_constants.go#L6).
+		// Till Grafana 12.0.2 there was no reliable way to detect a 404 when deleting a service account.
+		// The API still returns 500 (see grafana/grafana#106618).
+		//
+		// Once we upgrade to Grafana > 12.0.2 and bump github.com/grafana/grafana-openapi-client-go,
+		// we can handle the real 404 explicitly.
+		//
+		// In the meantime we treat any non-nil error from the delete call as "already removed" and just log it for visibility.
+		logf.FromContext(ctx).Error(err, "failed to delete service account",
+			"serviceAccountID", status.ServiceAccountID,
+			"specID", status.SpecID,
+		)
+		// return fmt.Errorf("deleting service account %q: %w", status.SpecID, err)
 	}
 
 	return nil
