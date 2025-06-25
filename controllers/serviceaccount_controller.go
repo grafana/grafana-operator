@@ -280,21 +280,17 @@ func (r *GrafanaServiceAccountReconciler) removeAccount(
 			WithServiceAccountID(status.ServiceAccountID),
 	)
 	if err != nil {
-		// TODO at the moment, Grafana API doesn't return a specific error for not found service accounts.
-		// So, we cannot distinguish between a not found service account and an error.
-		// To fix this, we need:
-		// 1. Grafana API to return a specific error for not found service accounts.
-		//    https://github.com/grafana/grafana/pull/106618
-		// 2. Grafana OpenAPI client to handle this error properly.
-		//    TBD
-		// For now, we just assume that the service account was removed successfully if the error is not nil.
-		// But, let's still log it.
-
-		logf.FromContext(ctx).Error(err, "failed to delete service account",
-			"serviceAccountID", status.ServiceAccountID,
-			"specID", status.SpecID,
-		)
-		// return fmt.Errorf("deleting service account %q: %w", status.SpecID, err)
+		// ATM, service_accounts.DeleteServiceAccountNotFound doesn't have Is, Unwrap, Unwrap.
+		// So, we cannot rely only on errors.Is().
+		_, ok := err.(*service_accounts.DeleteServiceAccountNotFound) // nolint:errorlint
+		if ok || errors.Is(err, service_accounts.NewDeleteServiceAccountNotFound()) {
+			logf.FromContext(ctx).Info("service account not found, skipping removal",
+				"serviceAccountID", status.ServiceAccountID,
+				"specID", status.SpecID,
+			)
+			return nil
+		}
+		return fmt.Errorf("deleting service account %q: %w", status.SpecID, err)
 	}
 
 	return nil
