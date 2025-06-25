@@ -13,7 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -49,38 +48,40 @@ func setSuccessfulServiceAccountsCondition(cr *v1beta1.Grafana, message string) 
 
 type GrafanaServiceAccountReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	scheme *runtime.Scheme
 }
 
-func (r *GrafanaServiceAccountReconciler) reconcile(ctx context.Context, cr *v1beta1.Grafana) (ctrl.Result, error) {
-	if cr.Spec.GrafanaServiceAccounts == nil && cr.Status.GrafanaServiceAccounts == nil {
-		return ctrl.Result{}, nil
+func newGrafanaServiceAccountReconciler(client client.Client, scheme *runtime.Scheme) *GrafanaServiceAccountReconciler {
+	return &GrafanaServiceAccountReconciler{
+		Client: client,
+		scheme: scheme,
 	}
+}
 
-	if !meta.IsStatusConditionPresentAndEqual(cr.Status.Conditions, ConditionTypeGrafanaReady, metav1.ConditionTrue) {
-		setFailedServiceAccountsCondition(cr, "Grafana instance isn't ready yet")
-		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
+func (r *GrafanaServiceAccountReconciler) reconcile(ctx context.Context, cr *v1beta1.Grafana) error {
+	if cr.Spec.GrafanaServiceAccounts == nil && cr.Status.GrafanaServiceAccounts == nil {
+		return nil
 	}
 
 	gClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, cr)
 	if err != nil {
 		setFailedServiceAccountsCondition(cr, err.Error())
-		return ctrl.Result{}, fmt.Errorf("building grafana client: %w", err)
+		return fmt.Errorf("building grafana client: %w", err)
 	}
 
-	err = r.reconcileAccounts(ctx, cr, gClient, r.Scheme)
+	err = r.reconcileAccounts(ctx, cr, gClient, r.scheme)
 	if err != nil {
 		setFailedServiceAccountsCondition(cr, err.Error())
-		return ctrl.Result{}, fmt.Errorf("reconciling service accounts: %w", err)
+		return fmt.Errorf("reconciling service accounts: %w", err)
 	}
 	setSuccessfulServiceAccountsCondition(cr, "service accounts reconciled")
 
 	if cr.Spec.GrafanaServiceAccounts == nil {
 		// Spec is empty, so we don't need to check periodically the service accounts status.
-		return ctrl.Result{}, nil
+		return nil
 	}
 
-	return ctrl.Result{}, nil
+	return nil
 }
 
 // syncAccounts checks if the service accounts status in the Grafana CR is up to date

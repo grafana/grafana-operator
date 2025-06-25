@@ -146,14 +146,11 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	})
 
 	{
-		sar := GrafanaServiceAccountReconciler{Client: r.Client, Scheme: r.Scheme}
-		result, err := sar.reconcile(ctx, cr)
+		sar := newGrafanaServiceAccountReconciler(r.Client, r.Scheme)
+		err := sar.reconcile(ctx, cr)
 		if err != nil {
 			log.Error(err, "Failed to reconcile grafana service accounts")
-		}
-		if !result.IsZero() {
-			log.Info("Reconciling grafana service accounts returned non-zero result", "result", result)
-			return result, nil
+			return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 		}
 	}
 
