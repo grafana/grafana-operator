@@ -1,0 +1,38 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: mygrafana
+spec:
+  config:
+    security:
+      admin_user: root
+      admin_password: secret
+  grafanaServiceAccounts:
+    accounts:
+    - id: grafana-sa1
+      name: grafana-service-account-a
+      role: Editor
+      isDisabled: true
+      tokens:
+      - name: tokena
+        expires: "2025-12-31T23:59:59Z"
+      - name: tokena-2
+        expires: "2025-12-30T23:59:59Z"
+      - name: tokena-3
+        expires: "2025-12-29T23:59:59Z"
+      - name: tokena-4
+        expires: "2025-12-26T23:59:59Z"
+    - id: grafana-saa-2
+      name: grafana-service-account2
+      role: Admin
+      isDisabled: false
+      tokens:
+      - name: token
+        expires: "2025-12-31T23:59:59Z"
+      - name: token2
+        expires: "2025-12-30T23:59:59Z"
+      - name: token3
+        expires: "2025-12-29T23:59:59Z"
+      - name: token4
+        expires: "2025-12-26T23:59:59Z"

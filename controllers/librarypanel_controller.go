@@ -156,6 +156,8 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 }
 
 func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaLibraryPanel, model map[string]any, hash string) error {
+	origCR := client.MergeFrom(instance.DeepCopy())
+
 	if instance.IsInternal() {
 		err := ReconcilePlugins(ctx, r.Client, r.Scheme, instance, cr.Spec.Plugins, fmt.Sprintf("%v-librarypanel", cr.Name))
 		if err != nil {
@@ -181,7 +183,7 @@ func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Contex
 	defer func() {
 		instance.Status.LibraryPanels = instance.Status.LibraryPanels.Add(cr.Namespace, cr.Name, uid)
 		//nolint:errcheck
-		_ = r.Client.Status().Update(ctx, instance)
+		_ = r.Client.Status().Patch(ctx, instance, origCR)
 	}()
 
 	resp, err := grafanaClient.LibraryElements.GetLibraryElementByUID(uid)
@@ -237,6 +239,8 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, libraryPan
 	}
 
 	for _, instance := range instances {
+		origCR := client.MergeFrom(instance.DeepCopy())
+
 		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &instance)
 		if err != nil {
 			return err
@@ -264,7 +268,7 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, libraryPan
 		}
 
 		instance.Status.LibraryPanels = instance.Status.LibraryPanels.Remove(libraryPanel.Namespace, libraryPanel.Name)
-		if err = r.Client.Status().Update(ctx, &instance); err != nil {
+		if err = r.Client.Status().Patch(ctx, &instance, origCR); err != nil {
 			return fmt.Errorf("removing Folder from Grafana cr: %w", err)
 		}
 	}

@@ -199,6 +199,8 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 	}
 
 	for _, grafana := range instances {
+		origCR := client.MergeFrom(grafana.DeepCopy())
+
 		found, uid := grafana.Status.Dashboards.Find(cr.Namespace, cr.Name)
 		if !found {
 			continue
@@ -259,7 +261,7 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 
 		// Update status of Grafana instance
 		grafana.Status.Dashboards = grafana.Status.Dashboards.Remove(cr.Namespace, cr.Name)
-		err = r.Client.Status().Update(ctx, &grafana)
+		err = r.Client.Status().Patch(ctx, &grafana, origCR)
 		if err != nil {
 			return fmt.Errorf("updating grafana cr status %s/%s: %w", grafana.Namespace, grafana.Name, err)
 		}
@@ -269,6 +271,8 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 }
 
 func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDashboard, dashboardModel map[string]any, hash string) error {
+	origCR := client.MergeFrom(grafana.DeepCopy())
+
 	log := logf.FromContext(ctx)
 	if grafana.IsExternal() && cr.Spec.Plugins != nil {
 		return fmt.Errorf("external grafana instances don't support plugins, please remove spec.plugins from your dashboard cr")
@@ -352,7 +356,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	}
 
 	grafana.Status.Dashboards = grafana.Status.Dashboards.Add(cr.Namespace, cr.Name, uid)
-	return r.Client.Status().Update(ctx, grafana)
+	return r.Client.Status().Patch(ctx, grafana, origCR)
 }
 
 func (r *GrafanaDashboardReconciler) Exists(client *genapi.GrafanaHTTPAPI, uid string, title string, folderUID string) (string, error) {
