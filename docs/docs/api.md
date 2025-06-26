@@ -21333,6 +21333,13 @@ ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>subdomain</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecroutespectls">tls</a></b></td>
         <td>object</td>
         <td>

@@ -475,6 +475,9 @@ type RouteOpenShiftV1Spec struct {
 
 	TLS *OpenshiftTLSConfig `json:"tls,omitempty" protobuf:"bytes,6,opt,name=tls"`
 
+	// +optional
+	Subdomain string `json:"subdomain,omitempty" protobuf:"bytes,8,opt,name=subdomain"`
+
 	WildcardPolicy WildcardPolicyType `json:"wildcardPolicy,omitempty" protobuf:"bytes,7,opt,name=wildcardPolicy"`
 }
 
