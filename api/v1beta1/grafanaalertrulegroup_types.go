@@ -201,6 +201,10 @@ func (in *GrafanaAlertRuleGroup) CommonStatus() *GrafanaCommonStatus {
 	return &in.Status
 }
 
+func (in *GrafanaAlertRuleGroup) NamespacedResource() NamespacedResource {
+	return NewNamespacedResource(in.Namespace, in.Name, in.GroupName())
+}
+
 var _ operatorapi.FolderReferencer = (*GrafanaAlertRuleGroup)(nil)
 
 //+kubebuilder:object:root=true

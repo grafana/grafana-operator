@@ -110,6 +110,10 @@ func (in *GrafanaContactPoint) CommonStatus() *GrafanaCommonStatus {
 	return &in.Status
 }
 
+func (in *GrafanaContactPoint) NamespacedResource() NamespacedResource {
+	return NewNamespacedResource(in.Namespace, in.Name, in.CustomUIDOrUID())
+}
+
 func init() {
 	SchemeBuilder.Register(&GrafanaContactPoint{}, &GrafanaContactPointList{})
 }
