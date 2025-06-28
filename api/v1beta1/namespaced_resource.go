@@ -43,18 +43,6 @@ func (in NamespacedResourceList) IndexOf(namespace string, name string) int {
 	return -1
 }
 
-func (in NamespacedResourceList) Add(namespace string, name string, uid string) NamespacedResourceList {
-	resource := NamespacedResource(fmt.Sprintf("%v/%v/%v", namespace, name, uid))
-	resources := NamespacedResourceList{resource}
-	for _, r := range in {
-		if r == resource {
-			return in
-		}
-		resources = append(resources, r)
-	}
-	return resources
-}
-
 func (in NamespacedResourceList) Remove(namespace string, name string) NamespacedResourceList {
 	resources := NamespacedResourceList{}
 	for _, r := range in {
