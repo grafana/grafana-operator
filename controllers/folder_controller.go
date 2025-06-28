@@ -155,7 +155,7 @@ func (r *GrafanaFolderReconciler) finalize(ctx context.Context, folder *grafanav
 		}
 
 		// Update grafana instance Status
-		err = removeNamespacedResource(ctx, r.Client, &grafana, folder)
+		err = grafana.RemoveNamespacedResource(ctx, r.Client, folder)
 		if err != nil {
 			return fmt.Errorf("removing Folder from Grafana cr: %w", err)
 		}
@@ -238,7 +238,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 	}
 
 	// Update grafana instance Status
-	return addNamespacedResource(ctx, r.Client, grafana, cr, cr.NamespacedResource(uid))
+	return grafana.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource(uid))
 }
 
 // Check if the folder exists. Matches UID first and fall back to title. Title matching only works for non-nested folders

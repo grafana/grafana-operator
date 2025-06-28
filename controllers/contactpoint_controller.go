@@ -162,7 +162,7 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 	}
 
 	// Update grafana instance Status
-	return addNamespacedResource(ctx, r.Client, instance, contactPoint, contactPoint.NamespacedResource())
+	return instance.AddNamespacedResource(ctx, r.Client, contactPoint, contactPoint.NamespacedResource())
 }
 
 func (r *GrafanaContactPointReconciler) buildContactPointSettings(ctx context.Context, contactPoint *grafanav1beta1.GrafanaContactPoint) (models.JSON, error) {
@@ -222,7 +222,7 @@ func (r *GrafanaContactPointReconciler) finalize(ctx context.Context, contactPoi
 		}
 
 		// Update grafana instance Status
-		err = removeNamespacedResource(ctx, r.Client, &instance, contactPoint)
+		err = instance.RemoveNamespacedResource(ctx, r.Client, contactPoint)
 		if err != nil {
 			return fmt.Errorf("removing contact point from Grafana cr: %w", err)
 		}

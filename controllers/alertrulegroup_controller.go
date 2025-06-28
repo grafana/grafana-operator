@@ -255,7 +255,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 	}
 
 	// Update grafana instance Status
-	return addNamespacedResource(ctx, r.Client, instance, group, group.NamespacedResource())
+	return instance.AddNamespacedResource(ctx, r.Client, group, group.NamespacedResource())
 }
 
 func (r *GrafanaAlertRuleGroupReconciler) finalize(ctx context.Context, group *grafanav1beta1.GrafanaAlertRuleGroup) error {
@@ -286,7 +286,7 @@ func (r *GrafanaAlertRuleGroupReconciler) finalize(ctx context.Context, group *g
 		}
 
 		// Update grafana instance Status
-		err = removeNamespacedResource(ctx, r.Client, &instance, group)
+		err = instance.RemoveNamespacedResource(ctx, r.Client, group)
 		if err != nil {
 			return err
 		}

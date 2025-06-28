@@ -168,7 +168,7 @@ func (r *GrafanaMuteTimingReconciler) reconcileWithInstance(ctx context.Context,
 	}
 
 	// Update grafana instance Status
-	return addNamespacedResource(ctx, r.Client, instance, muteTiming, muteTiming.NamespacedResource())
+	return instance.AddNamespacedResource(ctx, r.Client, muteTiming, muteTiming.NamespacedResource())
 }
 
 func (r *GrafanaMuteTimingReconciler) getMuteTimingByName(ctx context.Context, name string, instance *grafanav1beta1.Grafana) (*models.MuteTimeInterval, error) {
@@ -199,7 +199,7 @@ func (r *GrafanaMuteTimingReconciler) finalize(ctx context.Context, muteTiming *
 		}
 
 		// Update grafana instance Status
-		err = removeNamespacedResource(ctx, r.Client, &instance, muteTiming)
+		err = instance.RemoveNamespacedResource(ctx, r.Client, muteTiming)
 		if err != nil {
 			return fmt.Errorf("removing mute timings from Grafana cr: %w", err)
 		}
