@@ -215,7 +215,7 @@ func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Contex
 	}
 
 	// Update grafana instance Status
-	return addNamespacedResource(ctx, r.Client, instance, cr, cr.NamespacedResource(uid))
+	return instance.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource(uid))
 }
 
 func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, libraryPanel *v1beta1.GrafanaLibraryPanel) error {
@@ -257,7 +257,7 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, libraryPan
 		}
 
 		// Update grafana instance Status
-		err = removeNamespacedResource(ctx, r.Client, &instance, libraryPanel)
+		err = instance.RemoveNamespacedResource(ctx, r.Client, libraryPanel)
 		if err != nil {
 			return fmt.Errorf("removing Folder from Grafana cr: %w", err)
 		}

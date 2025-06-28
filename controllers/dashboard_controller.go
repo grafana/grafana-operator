@@ -258,7 +258,7 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 		}
 
 		// Update grafana instance Status
-		err = removeNamespacedResource(ctx, r.Client, &grafana, cr)
+		err = grafana.RemoveNamespacedResource(ctx, r.Client, cr)
 		if err != nil {
 			return fmt.Errorf("removing dashboard from grafana cr: %w", err)
 		}
@@ -351,7 +351,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	}
 
 	// Update grafana instance Status
-	return addNamespacedResource(ctx, r.Client, grafana, cr, cr.NamespacedResource(uid))
+	return grafana.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource(uid))
 }
 
 func (r *GrafanaDashboardReconciler) Exists(client *genapi.GrafanaHTTPAPI, uid string, title string, folderUID string) (string, error) {
