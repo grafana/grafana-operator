@@ -19,21 +19,6 @@ func (in NamespacedResource) Split() (string, string, string) {
 	return parts[0], parts[1], parts[2]
 }
 
-func (in NamespacedResource) Namespace() string {
-	namespace, _, _ := in.Split()
-	return namespace
-}
-
-func (in NamespacedResource) Name() string {
-	_, name, _ := in.Split()
-	return name
-}
-
-func (in NamespacedResource) UID() string {
-	_, _, uid := in.Split()
-	return uid
-}
-
 func (in NamespacedResourceList) Find(namespace string, name string) (bool, *string) {
 	for _, r := range in {
 		foundNamespace, foundName, foundUID := r.Split()
@@ -42,16 +27,6 @@ func (in NamespacedResourceList) Find(namespace string, name string) (bool, *str
 		}
 	}
 	return false, nil
-}
-
-func (in NamespacedResourceList) ForNamespace(namespace string) NamespacedResourceList {
-	resources := NamespacedResourceList{}
-	for _, r := range in {
-		if r.Namespace() == namespace {
-			resources = append(resources, r)
-		}
-	}
-	return resources
 }
 
 func (in NamespacedResourceList) Add(namespace string, name string, uid string) NamespacedResourceList {
