@@ -153,6 +153,12 @@ func (in *GrafanaDashboard) CommonStatus() *GrafanaCommonStatus {
 	return &in.Status.GrafanaCommonStatus
 }
 
+func (in *GrafanaDashboard) NamespacedResource(uid string) NamespacedResource {
+	// Not enough context to call content.CustomUIDOrUID(uid).
+	// Hence, use uid from args as the caller has more context
+	return NewNamespacedResource(in.Namespace, in.Name, uid)
+}
+
 func init() {
 	SchemeBuilder.Register(&GrafanaDashboard{}, &GrafanaDashboardList{})
 }

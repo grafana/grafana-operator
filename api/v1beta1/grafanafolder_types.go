@@ -181,3 +181,10 @@ func (in *GrafanaFolder) AllowCrossNamespace() bool {
 func (in *GrafanaFolder) CommonStatus() *GrafanaCommonStatus {
 	return &in.Status.GrafanaCommonStatus
 }
+
+func (in *GrafanaFolder) NamespacedResource(uid string) NamespacedResource {
+	// .CustomUIDOrUID() can be wrong when the fallback to search is used.
+	// Hence, use uid from args as the caller has more context
+	// TODO Remove uid arg along with the search fallback
+	return NewNamespacedResource(in.Namespace, in.Name, uid)
+}

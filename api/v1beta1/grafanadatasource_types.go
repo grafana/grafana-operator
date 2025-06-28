@@ -177,6 +177,10 @@ func (in *GrafanaDatasource) CommonStatus() *GrafanaCommonStatus {
 	return &in.Status.GrafanaCommonStatus
 }
 
+func (in *GrafanaDatasource) NamespacedResource() NamespacedResource {
+	return NewNamespacedResource(in.Namespace, in.Name, in.CustomUIDOrUID())
+}
+
 func init() {
 	SchemeBuilder.Register(&GrafanaDatasource{}, &GrafanaDatasourceList{})
 }
