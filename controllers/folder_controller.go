@@ -154,8 +154,9 @@ func (r *GrafanaFolderReconciler) finalize(ctx context.Context, folder *grafanav
 			}
 		}
 
-		grafana.Status.Folders = grafana.Status.Folders.Remove(folder.Namespace, folder.Name)
-		if err = r.Status().Update(ctx, &grafana); err != nil {
+		// Update grafana instance Status
+		err = removeNamespacedResource(ctx, r.Client, &grafana, folder)
+		if err != nil {
 			return fmt.Errorf("removing Folder from Grafana cr: %w", err)
 		}
 	}
@@ -190,20 +191,9 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 	if exists {
 		// make sure we use the correct UID
 		uid = remoteUID
-		// Add to status to cover cases:
-		// - operator have previously failed to update status
-		// - the folder was created outside of operator
-		// - the folder was created through dashboard controller
-		if found, _ := grafana.Status.Folders.Find(cr.Namespace, cr.Name); !found {
-			grafana.Status.Folders = grafana.Status.Folders.Add(cr.Namespace, cr.Name, uid)
-			err = r.Status().Update(ctx, grafana)
-			if err != nil {
-				return err
-			}
-		}
 
 		if !cr.Unchanged() {
-			_, err = grafanaClient.Folders.UpdateFolder(remoteUID, &models.UpdateFolderCommand{ //nolint
+			_, err = grafanaClient.Folders.UpdateFolder(remoteUID, &models.UpdateFolderCommand{ //nolint:errcheck
 				Overwrite: true,
 				Title:     title,
 			})
@@ -213,7 +203,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 		}
 
 		if parentFolderUID != remoteParent {
-			_, err = grafanaClient.Folders.MoveFolder(remoteUID, &models.MoveFolderCommand{ //nolint
+			_, err = grafanaClient.Folders.MoveFolder(remoteUID, &models.MoveFolderCommand{ //nolint:errcheck
 				ParentUID: parentFolderUID,
 			})
 			if err != nil {
@@ -227,13 +217,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 			ParentUID: parentFolderUID,
 		}
 
-		folderResp, err := grafanaClient.Folders.CreateFolder(body)
-		if err != nil {
-			return err
-		}
-
-		grafana.Status.Folders = grafana.Status.Folders.Add(cr.Namespace, cr.Name, folderResp.Payload.UID)
-		err = r.Status().Update(ctx, grafana)
+		_, err := grafanaClient.Folders.CreateFolder(body) // nolint:errcheck
 		if err != nil {
 			return err
 		}
@@ -247,13 +231,14 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 			return fmt.Errorf("failed to unmarshal spec.permissions: %w", err)
 		}
 
-		_, err = grafanaClient.FolderPermissions.UpdateFolderPermissions(uid, &permissions) //nolint
+		_, err = grafanaClient.FolderPermissions.UpdateFolderPermissions(uid, &permissions) //nolint:errcheck
 		if err != nil {
 			return fmt.Errorf("failed to update folder permissions: %w", err)
 		}
 	}
 
-	return nil
+	// Update grafana instance Status
+	return addNamespacedResource(ctx, r.Client, grafana, cr, cr.NamespacedResource(uid))
 }
 
 // Check if the folder exists. Matches UID first and fall back to title. Title matching only works for non-nested folders

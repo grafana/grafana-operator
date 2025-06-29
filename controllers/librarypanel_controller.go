@@ -178,12 +178,6 @@ func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Contex
 	uid := content.CustomUIDOrUID(cr, fmt.Sprintf("%s", model["uid"]))
 	name := fmt.Sprintf("%s", model["name"])
 
-	defer func() {
-		instance.Status.LibraryPanels = instance.Status.LibraryPanels.Add(cr.Namespace, cr.Name, uid)
-		//nolint:errcheck
-		_ = r.Client.Status().Update(ctx, instance)
-	}()
-
 	resp, err := grafanaClient.LibraryElements.GetLibraryElementByUID(uid)
 
 	var panelNotFound *library_elements.GetLibraryElementByUIDNotFound
@@ -207,22 +201,21 @@ func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Contex
 	}
 
 	// handle content caching
-	if content.Unchanged(cr, hash) && !cr.ResyncPeriodHasElapsed() {
-		return nil
+	if !content.Unchanged(cr, hash) && cr.ResyncPeriodHasElapsed() {
+		_, err = grafanaClient.LibraryElements.UpdateLibraryElement(uid, &models.PatchLibraryElementCommand{ // nolint:errcheck
+			FolderUID: folderUID,
+			Kind:      int64(libraryElementTypePanel),
+			Model:     model,
+			Name:      name,
+			Version:   resp.Payload.Result.Version,
+		})
+		if err != nil {
+			return err
+		}
 	}
 
-	// nolint:errcheck
-	if _, err = grafanaClient.LibraryElements.UpdateLibraryElement(uid, &models.PatchLibraryElementCommand{
-		FolderUID: folderUID,
-		Kind:      int64(libraryElementTypePanel),
-		Model:     model,
-		Name:      name,
-		Version:   resp.Payload.Result.Version,
-	}); err != nil {
-		return err
-	}
-
-	return nil
+	// Update grafana instance Status
+	return addNamespacedResource(ctx, r.Client, instance, cr, cr.NamespacedResource(uid))
 }
 
 func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, libraryPanel *v1beta1.GrafanaLibraryPanel) error {
@@ -263,8 +256,9 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, libraryPan
 			}
 		}
 
-		instance.Status.LibraryPanels = instance.Status.LibraryPanels.Remove(libraryPanel.Namespace, libraryPanel.Name)
-		if err = r.Client.Status().Update(ctx, &instance); err != nil {
+		// Update grafana instance Status
+		err = removeNamespacedResource(ctx, r.Client, &instance, libraryPanel)
+		if err != nil {
 			return fmt.Errorf("removing Folder from Grafana cr: %w", err)
 		}
 	}
