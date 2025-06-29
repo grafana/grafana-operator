@@ -2,11 +2,22 @@ package v1beta1
 
 import (
 	"context"
+	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+func TestGrafanaStatusListDatasource(t *testing.T) {
+	t.Run("&Datasource{} maps to NamespacedResource list", func(t *testing.T) {
+		g := &Grafana{}
+		arg := &GrafanaDatasource{}
+		_, _, err := g.Status.StatusList(arg)
+		assert.NoError(t, err, "Datasource does not have a case in Grafana.Status.StatusList")
+	})
+}
 
 func newDatasource(name string, uid string) *GrafanaDatasource {
 	return &GrafanaDatasource{

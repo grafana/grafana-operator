@@ -6,8 +6,18 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+func TestGrafanaStatusListNotificationPolicy(t *testing.T) {
+	t.Run("&NotificationPolicy{} does not map to NamespacedResource list", func(t *testing.T) {
+		g := &Grafana{}
+		arg := &GrafanaNotificationPolicy{}
+		_, _, err := g.Status.StatusList(arg)
+		assert.Error(t, err, "NotificationPolicy should not have a case in Grafana.Status.StatusList")
+	})
+}
 
 func newNotificationPolicy(name string, editable *bool) *GrafanaNotificationPolicy {
 	return &GrafanaNotificationPolicy{

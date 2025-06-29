@@ -2,11 +2,22 @@ package v1beta1
 
 import (
 	"context"
+	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+func TestGrafanaStatusListLibraryPanel(t *testing.T) {
+	t.Run("&LibraryPanel{} maps to NamespacedResource list", func(t *testing.T) {
+		g := &Grafana{}
+		arg := &GrafanaLibraryPanel{}
+		_, _, err := g.Status.StatusList(arg)
+		assert.NoError(t, err, "LibraryPanel does not have a case in Grafana.Status.StatusList")
+	})
+}
 
 func newLibraryPanel(name string, uid string) *GrafanaLibraryPanel {
 	return &GrafanaLibraryPanel{
