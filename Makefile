@@ -151,6 +151,10 @@ kustomize-github-assets: $(KUSTOMIZE) ## Generates GitHub assets.
 muffet-dev: $(MUFFET)
 	$(MUFFET) --include=http://localhost:1313 http://localhost:1313
 
+.PHONY:
+muffet-dev-external: $(MUFFET)
+	$(MUFFET) -v --exclude=http://grafana.127.0.0.1.nip.io --buffer-size=8192 --rate-limit=10 --max-connections-per-host=5 http://localhost:1313
+
 .PHONY: test
 test: $(ENVTEST) manifests generate vet golangci-lint api-docs kustomize-lint helm-docs helm-lint ## Run tests.
 	$(info $(M) running $@)

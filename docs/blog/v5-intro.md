@@ -12,7 +12,7 @@ The maintainers are extremely happy to finally being able to do so.
 As a part of this we have merged version 5 in to the master branch and we will continue to support version 4 through the v4 branch. Any changes that needs to be done towards version 4 should be directed to that branch.
 
 In this blog we will try to explain the changes that we have made and the future of the operator.
-In [v5 getting started](v5-getting-started.md), you will be able to read how to try out the operator.
+In [v5 getting started]({{< relref "v5-getting-started.md" >}}), you will be able to read how to try out the operator.
 
 Version 5 or v5 as I will write from now on is a complete rewrite of version 4 of the operator.
 The API versions are different so if you want you can run both the operators at the same time while you do a migration.
@@ -215,10 +215,10 @@ But we need **your** help, first of all try out version 5.
 - Is everything working as you expected?
 - Is there any features missing?
 - Is there an open issue for that feature? Please search for it and if it's not please create an issue.
-- Help out with PR:s, to get started look at the [CONTRIBUTING.md](CONTRIBUTING.md) file.
+- Help out with PR's, to get started look at the [CONTRIBUTING.md](https://github.com/grafana/grafana-operator/blob/master/CONTRIBUTING.md) file.
 
 We probably won't support all the features that we did in v4, due to maintenance burden, but if a missing feature get lots of up votes we might give it a second review.
 
 An extra note about the **do you like it?**, getting feedback is one of the hardest things in open-source.
-Even if "all" you did was to follow the new v5 [installation guide](v5-getting-started.md) we want to know about it, you might feel that you don't have specific insights or thoughts and that is fine.
+Even if "all" you did was to follow the new v5 [installation guide]({{< relref "v5-getting-started.md" >}}) we want to know about it, you might feel that you don't have specific insights or thoughts and that is fine.
 But writing one row on slack and saying "hey I installed version v5 and it worked as I expected". Helps us a lot since we get to know that people are trying it.
