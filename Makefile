@@ -148,7 +148,7 @@ kustomize-github-assets: $(KUSTOMIZE) ## Generates GitHub assets.
 	$(KUSTOMIZE) build config/crd > crds.yaml
 
 .PHONY:
-muffet-dev: $(MUFFET)
+muffet-dev: $(MUFFET) ## Detect broken internal links in docs.
 	$(MUFFET) --include=http://localhost:1313 http://localhost:1313
 
 .PHONY: test
