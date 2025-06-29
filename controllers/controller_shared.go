@@ -395,7 +395,10 @@ func removeAnnotation(ctx context.Context, cl client.Client, cr client.Object, k
 	// Escape slash '/' according to RFC6901
 	// We could also escape tilde '~', but that is not a valid character in annotation keys.
 	key = strings.ReplaceAll(key, "/", "~1")
-	patch, err := json.Marshal([]any{map[string]any{"op": "remove", "path": "/metadata/annotations/" + key}})
+	patch, err := json.Marshal([]any{map[string]any{
+		"op":   "remove",
+		"path": "/metadata/annotations/" + key,
+	}})
 	if err != nil {
 		return err
 	}
@@ -403,6 +406,95 @@ func removeAnnotation(ctx context.Context, cl client.Client, cr client.Object, k
 	// MergePatchType only removes map keys when the value is null. JSONPatchType allows removing anything under a path.
 	// Differs from removeFinalizer where we overwrite an array.
 	return cl.Patch(ctx, cr, client.RawPatch(types.JSONPatchType, patch))
+}
+
+// Adds a resource to the end of the Grafana status list matching 'kind'
+func addNamespacedResource(ctx context.Context, cl client.Client, grafana *v1beta1.Grafana, cr client.Object, r v1beta1.NamespacedResource) error {
+	list, kind, err := grafana.Status.StatusList(cr)
+	if err != nil {
+		return err
+	}
+
+	// Check if resource already exists with the same UID.
+	// Allows overwriting resources with old UIDs/Names below
+	var statusResource v1beta1.NamespacedResource
+	idx := list.IndexOf(cr.GetNamespace(), cr.GetName())
+	if idx != -1 {
+		statusResource = (*list)[idx]
+		if r == statusResource {
+			return nil
+		}
+	}
+
+	var jsonPatch []any
+	switch {
+	case len(*list) == 0:
+		// Create list if previously empty or append to the end
+		jsonPatch = []any{map[string]any{
+			"op":    "add",
+			"path":  fmt.Sprintf("/status/%s", kind),
+			"value": []string{string(r)},
+		}}
+	case idx == -1:
+		// Add resource to the end of the status list
+		jsonPatch = []any{map[string]any{
+			"op":    "add",
+			"path":  fmt.Sprintf("/status/%s/-", kind),
+			"value": string(r),
+		}}
+	case r != statusResource:
+		// Overwrite old entry, prevents old UIDs/Names to block status updates
+		jsonPatch = []any{map[string]any{
+			"op":    "replace",
+			"path":  fmt.Sprintf("/status/%s/%d", kind, idx),
+			"value": string(r),
+		}}
+	default:
+		// If none of the above is true, resource already exists in the status with the correct UID/Name
+		// Skip Patch request
+		return nil
+	}
+
+	patch, err := json.Marshal(jsonPatch)
+	if err != nil {
+		return err
+	}
+
+	return cl.Status().Patch(ctx, grafana, client.RawPatch(types.JSONPatchType, patch))
+}
+
+// Removes a resource at index from the Grafana status list matching 'kind'
+func removeNamespacedResource(ctx context.Context, cl client.Client, grafana *v1beta1.Grafana, cr client.Object) error {
+	list, kind, err := grafana.Status.StatusList(cr)
+	if err != nil {
+		return err
+	}
+
+	idx := list.IndexOf(cr.GetNamespace(), cr.GetName())
+	if idx == -1 {
+		return nil
+	}
+
+	var jsonPatch []any
+	// Conditionally delete item at idx or entire list
+	if idx == 0 && len(*list) == 1 {
+		jsonPatch = []any{map[string]any{
+			"op":   "add",
+			"path": fmt.Sprintf("/status/%s", kind),
+		}}
+	} else {
+		jsonPatch = []any{map[string]any{
+			"op":   "remove",
+			"path": fmt.Sprintf("/status/%s/%d", kind, idx),
+		}}
+	}
+
+	patch, err := json.Marshal(jsonPatch)
+	if err != nil {
+		return err
+	}
+
+	return cl.Status().Patch(ctx, grafana, client.RawPatch(types.JSONPatchType, patch))
 }
 
 func mergeReconcileErrors(sources ...map[string]string) map[string]string {

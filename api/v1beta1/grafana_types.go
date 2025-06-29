@@ -17,8 +17,11 @@ limitations under the License.
 package v1beta1
 
 import (
+	"fmt"
+
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type OperatorStageName string
@@ -150,6 +153,29 @@ type GrafanaStatus struct {
 	NotificationTemplates NamespacedResourceList `json:"notificationTemplates,omitempty"`
 	Version               string                 `json:"version,omitempty"`
 	Conditions            []metav1.Condition     `json:"conditions,omitempty"`
+}
+
+func (in *GrafanaStatus) StatusList(cr client.Object) (*NamespacedResourceList, string, error) {
+	switch t := cr.(type) {
+	case *GrafanaAlertRuleGroup:
+		return &in.AlertRuleGroups, "alertRuleGroups", nil
+	case *GrafanaContactPoint:
+		return &in.ContactPoints, "contactPoints", nil
+	case *GrafanaDashboard:
+		return &in.Dashboards, "dashboards", nil
+	case *GrafanaDatasource:
+		return &in.Datasources, "datasources", nil
+	case *GrafanaFolder:
+		return &in.Folders, "folders", nil
+	case *GrafanaLibraryPanel:
+		return &in.LibraryPanels, "libraryPanels", nil
+	case *GrafanaMuteTiming:
+		return &in.MuteTimings, "muteTimings", nil
+	case *GrafanaNotificationTemplate:
+		return &in.NotificationTemplates, "notificationTemplates", nil
+	default:
+		return nil, "", fmt.Errorf("unknown struct %T, extend Grafana.StatusListName", t)
+	}
 }
 
 // +kubebuilder:object:root=true
