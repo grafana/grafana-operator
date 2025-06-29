@@ -57,7 +57,7 @@ As I've said in the introduction of this blogpost, the operator, in my opinion, 
 a number of reasons:
 The following list is just observations, not complaints ;)
 
-### 1. The git repository itself is largely meaningless when it comes to a vast majority of the users.
+### 1. The git repository itself is largely meaningless when it comes to a vast majority of the users
 
 This is not to say that grafana-operator users don't care about the operator, but rather, they don't need to care, and
 ironically, I see this as a pretty positive sign that the project is in good shape. This is mainly because most of the
@@ -218,6 +218,6 @@ I look forward to continuing this journey, and I am super thankful for all the o
 day-to-day:
 **Peter**, **Edvin** and **Igor**, and hopefully many more to come!
 
-Extra reading: https://grafana-operator.github.io/grafana-operator/blog/2023/11/21/moving-upstream/ <- For more context
+Extra reading: [moving upstream]({{< relref "operator-migration-to-upstream-grafana.md" >}}) (for more context).
 
 Feel free to reach out if you've got any questions or feedback!
