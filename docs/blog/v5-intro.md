@@ -182,7 +182,7 @@ In v5 you will be able to look at your grafana dashboard CR and see that it got 
 
 ### No more plugin sidecar
 
-As you might know we have had a python container that have been an [sidecar](https://github.com/grafana/grafana_plugins_init) to the operator that have been in charge of installing the plugins to grafana.
+As you might know we have had a python container that have been an [sidecar](https://github.com/grafana-operator/grafana_plugins_init) to the operator that have been in charge of installing the plugins to grafana.
 The sidecar have been badly maintained and to be honest it's just not needed. Instead we use an environment variable to install plugins during startup.
 So when version 4 is out of support we will archive the grafana plugins init repo.
 
