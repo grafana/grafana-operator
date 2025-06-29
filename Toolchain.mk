@@ -16,6 +16,7 @@ HUGO_VERSION = 0.134.3
 KIND_VERSION = v0.29.0
 KO_VERSION = v0.18.0
 KUSTOMIZE_VERSION = v5.6.0
+MUFFET_VERSION = v2.10.9
 OPERATOR_SDK_VERSION = v1.32.0
 OPM_VERSION = v1.23.2
 YQ_VERSION = v4.45.4
@@ -143,6 +144,19 @@ $(KUSTOMIZE): | $(BIN)
 	set -e ;\
 	curl -sSfL "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash -s -- $(subst v,,$(KUSTOMIZE_VERSION)) $(BIN) ;\
 	mv $(BIN)/kustomize $(KUSTOMIZE) ;\
+	}
+
+MUFFET := $(BIN)/muffet-$(MUFFET_VERSION)
+$(MUFFET): | $(BIN)
+	$(info $(M) installing muffet)
+	@{ \
+	set -e ;\
+	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
+	curl -sSLo $(MUFFET).tar.gz https://github.com/raviqqe/muffet/releases/download/$(MUFFET_VERSION)/muffet_$${OSTYPE}_$${ARCH}.tar.gz && \
+	tar -zxvf $(MUFFET).tar.gz muffet && \
+	chmod +x muffet && \
+	mv muffet $(MUFFET) && \
+	rm $(MUFFET).tar.gz ;\
 	}
 
 OPERATOR_SDK := $(BIN)/operator-sdk-$(OPERATOR_SDK_VERSION)
