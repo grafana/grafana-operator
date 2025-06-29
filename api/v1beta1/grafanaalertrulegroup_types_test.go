@@ -2,12 +2,23 @@ package v1beta1
 
 import (
 	"context"
+	"testing"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+func TestGrafanaStatusListAlertRuleGroup(t *testing.T) {
+	t.Run("&AlertRuleGroup{} maps to NamespacedResource list", func(t *testing.T) {
+		g := &Grafana{}
+		arg := &GrafanaAlertRuleGroup{}
+		_, _, err := g.Status.StatusList(arg)
+		assert.NoError(t, err, "AlertRuleGroup does not have a case in Grafana.Status.StatusList")
+	})
+}
 
 func newAlertRuleGroup(name string, editable *bool) *GrafanaAlertRuleGroup {
 	noDataState := "NoData"

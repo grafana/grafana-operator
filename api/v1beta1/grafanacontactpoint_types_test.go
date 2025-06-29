@@ -3,14 +3,25 @@ package v1beta1
 import (
 	"context"
 	"encoding/json"
+	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 
 	// apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+func TestGrafanaStatusListContactPoint(t *testing.T) {
+	t.Run("&ContactPoint{} maps to NamespacedResource list", func(t *testing.T) {
+		g := &Grafana{}
+		arg := &GrafanaContactPoint{}
+		_, _, err := g.Status.StatusList(arg)
+		assert.NoError(t, err, "ContactPoint does not have a case in Grafana.Status.StatusList")
+	})
+}
 
 func newContactPoint(name string, uid string) *GrafanaContactPoint {
 	settings := new(apiextensionsv1.JSON)
