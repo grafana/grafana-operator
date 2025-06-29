@@ -147,6 +147,10 @@ kustomize-github-assets: $(KUSTOMIZE) ## Generates GitHub assets.
 	done
 	$(KUSTOMIZE) build config/crd > crds.yaml
 
+.PHONY:
+muffet-dev: $(MUFFET)
+	$(MUFFET) --include=http://localhost:1313 http://localhost:1313
+
 .PHONY: test
 test: $(ENVTEST) manifests generate vet golangci-lint api-docs kustomize-lint helm-docs helm-lint ## Run tests.
 	$(info $(M) running $@)
