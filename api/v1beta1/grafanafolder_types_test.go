@@ -10,6 +10,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+func TestGrafanaStatusListFolder(t *testing.T) {
+	t.Run("&Folder{} maps to NamespacedResource list", func(t *testing.T) {
+		g := &Grafana{}
+		arg := &GrafanaFolder{}
+		_, _, err := g.Status.StatusList(arg)
+		assert.NoError(t, err, "Folder does not have a case in Grafana.Status.StatusList")
+	})
+}
+
 func TestGrafanaFolder_GetTitle(t *testing.T) {
 	tests := []struct {
 		name string

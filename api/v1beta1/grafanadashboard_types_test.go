@@ -2,11 +2,22 @@ package v1beta1
 
 import (
 	"context"
+	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+func TestGrafanaStatusListDashboard(t *testing.T) {
+	t.Run("&Dashboard{} maps to NamespacedResource list", func(t *testing.T) {
+		g := &Grafana{}
+		arg := &GrafanaDashboard{}
+		_, _, err := g.Status.StatusList(arg)
+		assert.NoError(t, err, "Dashboard does not have a case in Grafana.Status.StatusList")
+	})
+}
 
 func newDashboard(name string, uid string) *GrafanaDashboard {
 	return &GrafanaDashboard{

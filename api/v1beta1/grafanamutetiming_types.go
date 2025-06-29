@@ -17,8 +17,6 @@ limitations under the License.
 package v1beta1
 
 import (
-	"fmt"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -107,8 +105,8 @@ func (in *GrafanaMuteTiming) AllowCrossNamespace() bool {
 	return in.Spec.AllowCrossNamespaceImport
 }
 
-func (in *GrafanaMuteTiming) NamespacedResource() string {
-	return fmt.Sprintf("%v/%v/%v", in.Namespace, in.Name, in.UID)
+func (in *GrafanaMuteTiming) NamespacedResource() NamespacedResource {
+	return NewNamespacedResource(in.Namespace, in.Name, in.Spec.Name)
 }
 
 func (in *GrafanaMuteTiming) CommonStatus() *GrafanaCommonStatus {

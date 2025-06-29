@@ -14,24 +14,13 @@ type NamespacedResourceImpl interface {
 	Exists(namespace string, name string) bool
 }
 
+func NewNamespacedResource(namespace, name, identifier string) NamespacedResource {
+	return NamespacedResource(fmt.Sprintf("%s/%s/%s", namespace, name, identifier))
+}
+
 func (in NamespacedResource) Split() (string, string, string) {
 	parts := strings.Split(string(in), "/")
 	return parts[0], parts[1], parts[2]
-}
-
-func (in NamespacedResource) Namespace() string {
-	namespace, _, _ := in.Split()
-	return namespace
-}
-
-func (in NamespacedResource) Name() string {
-	_, name, _ := in.Split()
-	return name
-}
-
-func (in NamespacedResource) UID() string {
-	_, _, uid := in.Split()
-	return uid
 }
 
 func (in NamespacedResourceList) Find(namespace string, name string) (bool, *string) {
@@ -44,26 +33,14 @@ func (in NamespacedResourceList) Find(namespace string, name string) (bool, *str
 	return false, nil
 }
 
-func (in NamespacedResourceList) ForNamespace(namespace string) NamespacedResourceList {
-	resources := NamespacedResourceList{}
-	for _, r := range in {
-		if r.Namespace() == namespace {
-			resources = append(resources, r)
+func (in NamespacedResourceList) IndexOf(namespace string, name string) int {
+	for i, r := range in {
+		foundNamespace, foundName, _ := r.Split()
+		if foundNamespace == namespace && foundName == name {
+			return i
 		}
 	}
-	return resources
-}
-
-func (in NamespacedResourceList) Add(namespace string, name string, uid string) NamespacedResourceList {
-	resource := NamespacedResource(fmt.Sprintf("%v/%v/%v", namespace, name, uid))
-	resources := NamespacedResourceList{resource}
-	for _, r := range in {
-		if r == resource {
-			return in
-		}
-		resources = append(resources, r)
-	}
-	return resources
+	return -1
 }
 
 func (in NamespacedResourceList) Remove(namespace string, name string) NamespacedResourceList {

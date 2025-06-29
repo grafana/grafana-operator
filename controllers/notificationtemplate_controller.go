@@ -135,8 +135,7 @@ func (r *GrafanaNotificationTemplateReconciler) reconcileWithInstance(ctx contex
 	}
 
 	// Update grafana instance Status
-	instance.Status.NotificationTemplates = instance.Status.NotificationTemplates.Add(notificationTemplate.Namespace, notificationTemplate.Name, notificationTemplate.Spec.Name)
-	return r.Status().Update(ctx, instance)
+	return instance.AddNamespacedResource(ctx, r.Client, notificationTemplate, notificationTemplate.NamespacedResource())
 }
 
 func (r *GrafanaNotificationTemplateReconciler) finalize(ctx context.Context, notificationTemplate *grafanav1beta1.GrafanaNotificationTemplate) error {
@@ -152,8 +151,9 @@ func (r *GrafanaNotificationTemplateReconciler) finalize(ctx context.Context, no
 			return fmt.Errorf("removing notification template from instance: %w", err)
 		}
 
-		instance.Status.NotificationTemplates = instance.Status.NotificationTemplates.Remove(notificationTemplate.Namespace, notificationTemplate.Name)
-		if err = r.Status().Update(ctx, &instance); err != nil {
+		// Update grafana instance Status
+		err = instance.RemoveNamespacedResource(ctx, r.Client, notificationTemplate)
+		if err != nil {
 			return fmt.Errorf("removing notification template from Grafana cr: %w", err)
 		}
 	}

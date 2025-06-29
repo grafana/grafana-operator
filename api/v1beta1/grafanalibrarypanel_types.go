@@ -114,6 +114,12 @@ func (in *GrafanaLibraryPanel) GrafanaContentStatus() *GrafanaContentStatus {
 	return &in.Status.GrafanaContentStatus
 }
 
+func (in *GrafanaLibraryPanel) NamespacedResource(uid string) NamespacedResource {
+	// Not enough context to call content.CustomUIDOrUID(uid).
+	// Hence, use uid from args as the caller has more context
+	return NewNamespacedResource(in.Namespace, in.Name, uid)
+}
+
 var _ GrafanaContentResource = &GrafanaLibraryPanel{}
 
 func (in *GrafanaLibraryPanelList) Exists(namespace, name string) bool {
