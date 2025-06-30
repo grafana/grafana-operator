@@ -1,13 +1,14 @@
 ---
 title: "Introduction"
 linkTitle: "Documentation"
-weight: 20
+weight: 10
 menu:
   main:
-    weight: 20
+    weight: 10
 ---
 
 The Grafana operator allows you to:
+
 * ⚙️ Deploy & Manage Grafana Instances inside of Kubernetes with ease
 * 🌐 Manage externally hosted instances using Kubernetes resources (for example Grafana Cloud)
 
