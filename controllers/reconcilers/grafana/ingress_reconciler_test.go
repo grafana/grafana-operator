@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/controllers/model"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -57,10 +58,11 @@ var _ = Describe("Allow use of Ingress on OpenShift", func() {
 			Spec: v1beta1.GrafanaSpec{
 				Ingress: &v1beta1.IngressNetworkingV1{},
 				Route: &v1beta1.RouteOpenshiftV1{
-					Spec: &v1beta1.RouteOpenShiftV1Spec{},
+					Spec: nil,
 				},
 			},
 		}
+		cr.Spec.Route.Spec = &model.GetGrafanaRoute(cr, k8sClient.Scheme()).Spec
 
 		ctx := context.Background()
 		Expect(k8sClient.Create(ctx, cr)).To(Succeed())

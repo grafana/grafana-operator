@@ -6,8 +6,7 @@ import (
 	"maps"
 	"reflect"
 
-	"k8s.io/apimachinery/pkg/util/intstr"
-
+	routev1 "github.com/openshift/api/route/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -318,67 +317,9 @@ type IngressNetworkingV1 struct {
 // +kubebuilder:object:generate=true
 
 type RouteOpenshiftV1 struct {
-	ObjectMeta ObjectMeta            `json:"metadata,omitempty"`
-	Spec       *RouteOpenShiftV1Spec `json:"spec,omitempty"`
+	ObjectMeta ObjectMeta         `json:"metadata,omitempty"`
+	Spec       *routev1.RouteSpec `json:"spec,omitempty"`
 }
-
-// RouteTargetReference specifies the target that resolve into endpoints. Only the 'Service'
-// kind is allowed. Use 'weight' field to emphasize one over others.
-type RouteTargetReference struct {
-	// The kind of target that the route is referring to. Currently, only 'Service' is allowed
-	//
-	// +kubebuilder:validation:Enum=Service;""
-	// +kubebuilder:default=Service
-	Kind string `json:"kind" protobuf:"bytes,1,opt,name=kind"`
-
-	// name of the service/target that is being referred to. e.g. name of the service
-	//
-	// +kubebuilder:validation:MinLength=1
-	Name string `json:"name" protobuf:"bytes,2,opt,name=name"`
-
-	// weight as an integer between 0 and 256, default 100, that specifies the target's relative weight
-	// against other target reference objects. 0 suppresses requests to this backend.
-	//
-	// +optional
-	// +kubebuilder:validation:Minimum=0
-	// +kubebuilder:validation:Maximum=256
-	// +kubebuilder:default=100
-	Weight *int32 `json:"weight" protobuf:"varint,3,opt,name=weight"`
-}
-
-// RoutePort defines a port mapping from a router to an endpoint in the service endpoints.
-type RoutePort struct {
-	// The target port on pods selected by the service this route points to.
-	// If this is a string, it will be looked up as a named port in the target
-	// endpoints port list. Required
-	TargetPort intstr.IntOrString `json:"targetPort" protobuf:"bytes,1,opt,name=targetPort"`
-}
-
-// TLSTerminationType dictates where the secure communication will stop
-// TODO: Reconsider this type in v2
-type TLSTerminationType string
-
-// InsecureEdgeTerminationPolicyType dictates the behavior of insecure
-// connections to an edge-terminated route.
-type InsecureEdgeTerminationPolicyType string
-
-const (
-	// TLSTerminationEdge terminate encryption at the edge router.
-	TLSTerminationEdge TLSTerminationType = "edge"
-	// TLSTerminationPassthrough terminate encryption at the destination, the destination is responsible for decrypting traffic
-	TLSTerminationPassthrough TLSTerminationType = "passthrough"
-	// TLSTerminationReencrypt terminate encryption at the edge router and re-encrypt it with a new certificate supplied by the destination
-	TLSTerminationReencrypt TLSTerminationType = "reencrypt"
-
-	// InsecureEdgeTerminationPolicyNone disables insecure connections for an edge-terminated route.
-	InsecureEdgeTerminationPolicyNone InsecureEdgeTerminationPolicyType = "None"
-	// InsecureEdgeTerminationPolicyAllow allows insecure connections for an edge-terminated route.
-	InsecureEdgeTerminationPolicyAllow InsecureEdgeTerminationPolicyType = "Allow"
-	// InsecureEdgeTerminationPolicyRedirect redirects insecure connections for an edge-terminated route.
-	// As an example, for routers that support HTTP and HTTPS, the
-	// insecure HTTP connections will be redirected to use HTTPS.
-	InsecureEdgeTerminationPolicyRedirect InsecureEdgeTerminationPolicyType = "Redirect"
-)
 
 // LocalObjectReference contains enough information to let you locate the
 // referenced object inside the same namespace.
@@ -388,94 +329,6 @@ type LocalObjectReference struct {
 	// More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
 	// +optional
 	Name string `json:"name,omitempty" protobuf:"bytes,1,opt,name=name"`
-}
-
-// TLSConfig defines config used to secure a route and provide termination
-//
-// +kubebuilder:validation:XValidation:rule="has(self.termination) && has(self.insecureEdgeTerminationPolicy) ? !((self.termination=='passthrough') && (self.insecureEdgeTerminationPolicy=='Allow')) : true", message="cannot have both spec.tls.termination: passthrough and spec.tls.insecureEdgeTerminationPolicy: Allow"
-// +openshift:validation:FeatureGateAwareXValidation:featureGate=RouteExternalCertificate,rule="!(has(self.certificate) && has(self.externalCertificate))", message="cannot have both spec.tls.certificate and spec.tls.externalCertificate"
-type OpenshiftTLSConfig struct {
-	// termination indicates termination type.
-	//
-	// * edge - TLS termination is done by the router and http is used to communicate with the backend (default)
-	// * passthrough - Traffic is sent straight to the destination without the router providing TLS termination
-	// * reencrypt - TLS termination is done by the router and https is used to communicate with the backend
-	//
-	// Note: passthrough termination is incompatible with httpHeader actions
-	// +kubebuilder:validation:Enum=edge;reencrypt;passthrough
-	Termination TLSTerminationType `json:"termination" protobuf:"bytes,1,opt,name=termination,casttype=TLSTerminationType"`
-
-	// certificate provides certificate contents. This should be a single serving certificate, not a certificate
-	// chain. Do not include a CA certificate.
-	Certificate string `json:"certificate,omitempty" protobuf:"bytes,2,opt,name=certificate"`
-
-	// key provides key file contents
-	Key string `json:"key,omitempty" protobuf:"bytes,3,opt,name=key"`
-
-	// caCertificate provides the cert authority certificate contents
-	CACertificate string `json:"caCertificate,omitempty" protobuf:"bytes,4,opt,name=caCertificate"`
-
-	// destinationCACertificate provides the contents of the ca certificate of the final destination.  When using reencrypt
-	// termination this file should be provided in order to have routers use it for health checks on the secure connection.
-	// If this field is not specified, the router may provide its own destination CA and perform hostname validation using
-	// the short service name (service.namespace.svc), which allows infrastructure generated certificates to automatically
-	// verify.
-	DestinationCACertificate string `json:"destinationCACertificate,omitempty" protobuf:"bytes,5,opt,name=destinationCACertificate"`
-
-	// insecureEdgeTerminationPolicy indicates the desired behavior for insecure connections to a route. While
-	// each router may make its own decisions on which ports to expose, this is normally port 80.
-	//
-	// If a route does not specify insecureEdgeTerminationPolicy, then the default behavior is "None".
-	//
-	// * Allow - traffic is sent to the server on the insecure port (edge/reencrypt terminations only).
-	//
-	// * None - no traffic is allowed on the insecure port (default).
-	//
-	// * Redirect - clients are redirected to the secure port.
-	//
-	// +kubebuilder:validation:Enum=Allow;None;Redirect;""
-	InsecureEdgeTerminationPolicy InsecureEdgeTerminationPolicyType `json:"insecureEdgeTerminationPolicy,omitempty" protobuf:"bytes,6,opt,name=insecureEdgeTerminationPolicy,casttype=InsecureEdgeTerminationPolicyType"`
-
-	// externalCertificate provides certificate contents as a secret reference.
-	// This should be a single serving certificate, not a certificate
-	// chain. Do not include a CA certificate. The secret referenced should
-	// be present in the same namespace as that of the Route.
-	// Forbidden when `certificate` is set.
-	// The router service account needs to be granted with read-only access to this secret,
-	// please refer to openshift docs for additional details.
-	//
-	// +openshift:enable:FeatureGate=RouteExternalCertificate
-	// +optional
-	ExternalCertificate *LocalObjectReference `json:"externalCertificate,omitempty" protobuf:"bytes,7,opt,name=externalCertificate"`
-}
-
-// WildcardPolicyType indicates the type of wildcard support needed by routes.
-type WildcardPolicyType string
-
-const (
-	// WildcardPolicyNone indicates no wildcard support is needed.
-	WildcardPolicyNone WildcardPolicyType = "None"
-
-	// WildcardPolicySubdomain indicates the host needs wildcard support for the subdomain.
-	// Example: For host = "www.acme.test", indicates that the router
-	//          should support requests for *.acme.test
-	//          Note that this will not match acme.test only *.acme.test
-	WildcardPolicySubdomain WildcardPolicyType = "Subdomain"
-)
-
-type RouteOpenShiftV1Spec struct {
-	Host string `json:"host,omitempty" protobuf:"bytes,1,opt,name=host"`
-	Path string `json:"path,omitempty" protobuf:"bytes,2,opt,name=path"`
-
-	To *RouteTargetReference `json:"to,omitempty" protobuf:"bytes,3,opt,name=to"`
-
-	AlternateBackends []RouteTargetReference `json:"alternateBackends,omitempty" protobuf:"bytes,4,rep,name=alternateBackends"`
-
-	Port *RoutePort `json:"port,omitempty" protobuf:"bytes,5,opt,name=port"`
-
-	TLS *OpenshiftTLSConfig `json:"tls,omitempty" protobuf:"bytes,6,opt,name=tls"`
-
-	WildcardPolicy WildcardPolicyType `json:"wildcardPolicy,omitempty" protobuf:"bytes,7,opt,name=wildcardPolicy"`
 }
 
 type ServiceV1 struct {
