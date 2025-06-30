@@ -81,7 +81,7 @@ helm upgrade -i grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-opera
 
 ## Use operator
 
-Easiest way to get started is to look in our [examples]({{< ref "docs/examples" >}}) which contains multiple examples on how to configure a grafana instance.
+Easiest way to get started is to look in our [examples]({{< ref "/docs/examples" >}}) which contains multiple examples on how to configure a grafana instance.
 
 Other then looking at the examples it's also good to use one of the most underrated command in Kubernetes, `explain`.
 For example, `kubectl explain grafanadashboard.spec` will give you insights on how you can configure the grafanadashboard.
@@ -176,7 +176,7 @@ Yes we did, so in the next session lets use it.
 
 ### Ingress example
 
-Now lets use the ingress example instead, you can find the [example]({{< ref "docs/examples/ingress_http/readme/" >}}).
+Now lets use the ingress example instead, you can find the [example]({{< ref "/docs/examples/ingress_http/readme/" >}}).
 But this time we will do some modifications to it.
 
 Same settings but updating the label and the name to show case that we can run multiple instances of grafana without any issues.
