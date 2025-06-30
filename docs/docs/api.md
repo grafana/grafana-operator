@@ -21177,7 +21177,21 @@ Route sets how the ingress object should look like with your grafana instance, t
         <td><b><a href="#grafanaspecroutespec">spec</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          RouteSpec describes the hostname or path the route exposes, any security information,
+and one to four backends (services) the route points to. Requests are distributed
+among the backends depending on the weights assigned to each backend. When using
+roundrobin scheduling the portion of requests that go to each backend is the backend
+weight divided by the sum of all of the backend weights. When the backend has more than
+one endpoint the requests that end up on the backend are roundrobin distributed among
+the endpoints. Weights are between 0 and 256 with default 100. Weight 0 causes no requests
+to the backend. If all weights are zero the route will be considered to have no backends
+and return a standard 503 response.
+
+The `tls` field is optional and allows specific certificates or behavior for the
+route. Routers typically configure a default certificate on a wildcard domain to
+terminate routes without explicit certificates, but custom hostnames usually must
+choose passthrough (send traffic directly to the backend via the TLS Server-Name-
+Indication field) or provide a certificate.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -21223,7 +21237,21 @@ ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery
 
 
 
+RouteSpec describes the hostname or path the route exposes, any security information,
+and one to four backends (services) the route points to. Requests are distributed
+among the backends depending on the weights assigned to each backend. When using
+roundrobin scheduling the portion of requests that go to each backend is the backend
+weight divided by the sum of all of the backend weights. When the backend has more than
+one endpoint the requests that end up on the backend are roundrobin distributed among
+the endpoints. Weights are between 0 and 256 with default 100. Weight 0 causes no requests
+to the backend. If all weights are zero the route will be considered to have no backends
+and return a standard 503 response.
 
+The `tls` field is optional and allows specific certificates or behavior for the
+route. Routers typically configure a default certificate on a wildcard domain to
+terminate routes without explicit certificates, but custom hostnames usually must
+choose passthrough (send traffic directly to the backend via the TLS Server-Name-
+Indication field) or provide a certificate.
 
 <table>
     <thead>
@@ -21235,57 +21263,128 @@ ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#grafanaspecroutespecalternatebackendsindex">alternateBackends</a></b></td>
-        <td>[]object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>host</b></td>
         <td>string</td>
         <td>
-          <br/>
+          host is an alias/DNS that points to the service. Optional.
+If not specified a route name will typically be automatically
+chosen.
+Must follow DNS952 subdomain conventions.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanaspecroutespecto">to</a></b></td>
+        <td>object</td>
+        <td>
+          to is an object the route should use as the primary backend. Only the Service kind
+is allowed, and it will be defaulted to Service. If the weight field (0-256 default 100)
+is set to zero, no traffic will be sent to this backend.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanaspecroutespecalternatebackendsindex">alternateBackends</a></b></td>
+        <td>[]object</td>
+        <td>
+          alternateBackends allows up to 3 additional backends to be assigned to the route.
+Only the Service kind is allowed, and it will be defaulted to Service.
+Use the weight field in RouteTargetReference object to specify relative preference.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>path</b></td>
         <td>string</td>
         <td>
-          <br/>
+          path that the router watches for, to route traffic for to the service. Optional<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#grafanaspecroutespecport">port</a></b></td>
         <td>object</td>
         <td>
-          RoutePort defines a port mapping from a router to an endpoint in the service endpoints.<br/>
+          If specified, the port to be used by the router. Most routers will use all
+endpoints exposed by the service by default - set this value to instruct routers
+which port to use.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>subdomain</b></td>
+        <td>string</td>
+        <td>
+          subdomain is a DNS subdomain that is requested within the ingress controller's
+domain (as a subdomain). If host is set this field is ignored. An ingress
+controller may choose to ignore this suggested name, in which case the controller
+will report the assigned name in the status.ingress array or refuse to admit the
+route. If this value is set and the server does not support this field host will
+be populated automatically. Otherwise host is left empty. The field may have
+multiple parts separated by a dot, but not all ingress controllers may honor
+the request. This field may not be changed after creation except by a user with
+the update routes/custom-host permission.
+
+Example: subdomain `frontend` automatically receives the router subdomain
+`apps.mycluster.com` to have a full hostname `frontend.apps.mycluster.com`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#grafanaspecroutespectls">tls</a></b></td>
         <td>object</td>
         <td>
-          TLSConfig defines config used to secure a route and provide termination<br/>
-          <br/>
-            <i>Validations</i>:<li>has(self.termination) && has(self.insecureEdgeTerminationPolicy) ? !((self.termination=='passthrough') && (self.insecureEdgeTerminationPolicy=='Allow')) : true: cannot have both spec.tls.termination: passthrough and spec.tls.insecureEdgeTerminationPolicy: Allow</li>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#grafanaspecroutespecto">to</a></b></td>
-        <td>object</td>
-        <td>
-          RouteTargetReference specifies the target that resolve into endpoints. Only the 'Service'
-kind is allowed. Use 'weight' field to emphasize one over others.<br/>
+          The tls field provides the ability to configure certificates and termination for the route.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>wildcardPolicy</b></td>
         <td>string</td>
         <td>
-          WildcardPolicyType indicates the type of wildcard support needed by routes.<br/>
+          Wildcard policy if any for the route.
+Currently only 'Subdomain' or 'None' is allowed.<br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.route.spec.to
+<sup><sup>[↩ Parent](#grafanaspecroutespec)</sup></sup>
+
+
+
+to is an object the route should use as the primary backend. Only the Service kind
+is allowed, and it will be defaulted to Service. If the weight field (0-256 default 100)
+is set to zero, no traffic will be sent to this backend.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>kind</b></td>
+        <td>string</td>
+        <td>
+          The kind of target that the route is referring to. Currently, only 'Service' is allowed<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          name of the service/target that is being referred to. e.g. name of the service<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>weight</b></td>
+        <td>integer</td>
+        <td>
+          weight as an integer between 0 and 256, default 100, that specifies the target's relative weight
+against other target reference objects. 0 suppresses requests to this backend.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -21309,12 +21408,9 @@ kind is allowed. Use 'weight' field to emphasize one over others.
     </thead>
     <tbody><tr>
         <td><b>kind</b></td>
-        <td>enum</td>
+        <td>string</td>
         <td>
           The kind of target that the route is referring to. Currently, only 'Service' is allowed<br/>
-          <br/>
-            <i>Enum</i>: Service, <br/>
-            <i>Default</i>: Service<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -21332,11 +21428,8 @@ kind is allowed. Use 'weight' field to emphasize one over others.
 against other target reference objects. 0 suppresses requests to this backend.<br/>
           <br/>
             <i>Format</i>: int32<br/>
-            <i>Default</i>: 100<br/>
-            <i>Minimum</i>: 0<br/>
-            <i>Maximum</i>: 256<br/>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -21346,7 +21439,9 @@ against other target reference objects. 0 suppresses requests to this backend.<b
 
 
 
-RoutePort defines a port mapping from a router to an endpoint in the service endpoints.
+If specified, the port to be used by the router. Most routers will use all
+endpoints exposed by the service by default - set this value to instruct routers
+which port to use.
 
 <table>
     <thead>
@@ -21375,7 +21470,7 @@ endpoints port list. Required<br/>
 
 
 
-TLSConfig defines config used to secure a route and provide termination
+The tls field provides the ability to configure certificates and termination for the route.
 
 <table>
     <thead>
@@ -21388,17 +21483,9 @@ TLSConfig defines config used to secure a route and provide termination
     </thead>
     <tbody><tr>
         <td><b>termination</b></td>
-        <td>enum</td>
+        <td>string</td>
         <td>
-          termination indicates termination type.
-
-* edge - TLS termination is done by the router and http is used to communicate with the backend (default)
-* passthrough - Traffic is sent straight to the destination without the router providing TLS termination
-* reencrypt - TLS termination is done by the router and https is used to communicate with the backend
-
-Note: passthrough termination is incompatible with httpHeader actions<br/>
-          <br/>
-            <i>Enum</i>: edge, reencrypt, passthrough<br/>
+          termination indicates termination type.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -21412,8 +21499,7 @@ Note: passthrough termination is incompatible with httpHeader actions<br/>
         <td><b>certificate</b></td>
         <td>string</td>
         <td>
-          certificate provides certificate contents. This should be a single serving certificate, not a certificate
-chain. Do not include a CA certificate.<br/>
+          certificate provides certificate contents<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -21428,34 +21514,15 @@ verify.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#grafanaspecroutespectlsexternalcertificate">externalCertificate</a></b></td>
-        <td>object</td>
-        <td>
-          externalCertificate provides certificate contents as a secret reference.
-This should be a single serving certificate, not a certificate
-chain. Do not include a CA certificate. The secret referenced should
-be present in the same namespace as that of the Route.
-Forbidden when `certificate` is set.
-The router service account needs to be granted with read-only access to this secret,
-please refer to openshift docs for additional details.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>insecureEdgeTerminationPolicy</b></td>
-        <td>enum</td>
+        <td>string</td>
         <td>
           insecureEdgeTerminationPolicy indicates the desired behavior for insecure connections to a route. While
 each router may make its own decisions on which ports to expose, this is normally port 80.
 
-If a route does not specify insecureEdgeTerminationPolicy, then the default behavior is "None".
-
-* Allow - traffic is sent to the server on the insecure port (edge/reencrypt terminations only).
-
-* None - no traffic is allowed on the insecure port (default).
-
+* Allow - traffic is sent to the server on the insecure port (default)
+* Disable - no traffic is allowed on the insecure port.
 * Redirect - clients are redirected to the secure port.<br/>
-          <br/>
-            <i>Enum</i>: Allow, None, Redirect, <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -21463,91 +21530,6 @@ If a route does not specify insecureEdgeTerminationPolicy, then the default beha
         <td>string</td>
         <td>
           key provides key file contents<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### Grafana.spec.route.spec.tls.externalCertificate
-<sup><sup>[↩ Parent](#grafanaspecroutespectls)</sup></sup>
-
-
-
-externalCertificate provides certificate contents as a secret reference.
-This should be a single serving certificate, not a certificate
-chain. Do not include a CA certificate. The secret referenced should
-be present in the same namespace as that of the Route.
-Forbidden when `certificate` is set.
-The router service account needs to be granted with read-only access to this secret,
-please refer to openshift docs for additional details.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>name</b></td>
-        <td>string</td>
-        <td>
-          name of the referent.
-More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### Grafana.spec.route.spec.to
-<sup><sup>[↩ Parent](#grafanaspecroutespec)</sup></sup>
-
-
-
-RouteTargetReference specifies the target that resolve into endpoints. Only the 'Service'
-kind is allowed. Use 'weight' field to emphasize one over others.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>kind</b></td>
-        <td>enum</td>
-        <td>
-          The kind of target that the route is referring to. Currently, only 'Service' is allowed<br/>
-          <br/>
-            <i>Enum</i>: Service, <br/>
-            <i>Default</i>: Service<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>name</b></td>
-        <td>string</td>
-        <td>
-          name of the service/target that is being referred to. e.g. name of the service<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>weight</b></td>
-        <td>integer</td>
-        <td>
-          weight as an integer between 0 and 256, default 100, that specifies the target's relative weight
-against other target reference objects. 0 suppresses requests to this backend.<br/>
-          <br/>
-            <i>Format</i>: int32<br/>
-            <i>Default</i>: 100<br/>
-            <i>Minimum</i>: 0<br/>
-            <i>Maximum</i>: 256<br/>
         </td>
         <td>false</td>
       </tr></tbody>
