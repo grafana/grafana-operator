@@ -108,8 +108,6 @@ func GetGrafanaIngress(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v12.
 }
 
 func GetGrafanaRoute(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *routev1.Route {
-	routeDefaultWeight := int32(100)
-
 	route := &routev1.Route{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-route", cr.Name),
@@ -118,10 +116,10 @@ func GetGrafanaRoute(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *routev
 		},
 		Spec: routev1.RouteSpec{
 			To: routev1.RouteTargetReference{
-				Kind:   "Service",
-				Name:   GetGrafanaService(cr, scheme).Name,
-				Weight: &routeDefaultWeight,
+				Kind: "Service",
+				Name: GetGrafanaService(cr, scheme).Name,
 			},
+			TLS: nil,
 		},
 	}
 	controllerutil.SetControllerReference(cr, route, scheme) //nolint:errcheck
