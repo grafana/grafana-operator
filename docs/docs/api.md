@@ -21263,16 +21263,6 @@ Indication field) or provide a certificate.
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>host</b></td>
-        <td>string</td>
-        <td>
-          host is an alias/DNS that points to the service. Optional.
-If not specified a route name will typically be automatically
-chosen.
-Must follow DNS952 subdomain conventions.<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
         <td><b><a href="#grafanaspecroutespecto">to</a></b></td>
         <td>object</td>
         <td>
@@ -21288,6 +21278,23 @@ is set to zero, no traffic will be sent to this backend.<br/>
           alternateBackends allows up to 3 additional backends to be assigned to the route.
 Only the Service kind is allowed, and it will be defaulted to Service.
 Use the weight field in RouteTargetReference object to specify relative preference.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>host</b></td>
+        <td>string</td>
+        <td>
+          host is an alias/DNS that points to the service. Optional.
+If not specified a route name will typically be automatically
+chosen.
+Must follow DNS952 subdomain conventions.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanaspecroutespechttpheaders">httpHeaders</a></b></td>
+        <td>object</td>
+        <td>
+          httpHeaders defines policy for HTTP headers.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -21329,14 +21336,19 @@ Example: subdomain `frontend` automatically receives the router subdomain
         <td>object</td>
         <td>
           The tls field provides the ability to configure certificates and termination for the route.<br/>
+          <br/>
+            <i>Validations</i>:<li>has(self.termination) && has(self.insecureEdgeTerminationPolicy) ? !((self.termination=='passthrough') && (self.insecureEdgeTerminationPolicy=='Allow')) : true: cannot have both spec.tls.termination: passthrough and spec.tls.insecureEdgeTerminationPolicy: Allow</li>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>wildcardPolicy</b></td>
-        <td>string</td>
+        <td>enum</td>
         <td>
           Wildcard policy if any for the route.
 Currently only 'Subdomain' or 'None' is allowed.<br/>
+          <br/>
+            <i>Enum</i>: None, Subdomain, <br/>
+            <i>Default</i>: None<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -21363,9 +21375,12 @@ is set to zero, no traffic will be sent to this backend.
     </thead>
     <tbody><tr>
         <td><b>kind</b></td>
-        <td>string</td>
+        <td>enum</td>
         <td>
           The kind of target that the route is referring to. Currently, only 'Service' is allowed<br/>
+          <br/>
+            <i>Enum</i>: Service, <br/>
+            <i>Default</i>: Service<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -21383,8 +21398,11 @@ is set to zero, no traffic will be sent to this backend.
 against other target reference objects. 0 suppresses requests to this backend.<br/>
           <br/>
             <i>Format</i>: int32<br/>
+            <i>Default</i>: 100<br/>
+            <i>Minimum</i>: 0<br/>
+            <i>Maximum</i>: 256<br/>
         </td>
-        <td>true</td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -21408,9 +21426,12 @@ kind is allowed. Use 'weight' field to emphasize one over others.
     </thead>
     <tbody><tr>
         <td><b>kind</b></td>
-        <td>string</td>
+        <td>enum</td>
         <td>
           The kind of target that the route is referring to. Currently, only 'Service' is allowed<br/>
+          <br/>
+            <i>Enum</i>: Service, <br/>
+            <i>Default</i>: Service<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -21428,6 +21449,386 @@ kind is allowed. Use 'weight' field to emphasize one over others.
 against other target reference objects. 0 suppresses requests to this backend.<br/>
           <br/>
             <i>Format</i>: int32<br/>
+            <i>Default</i>: 100<br/>
+            <i>Minimum</i>: 0<br/>
+            <i>Maximum</i>: 256<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.route.spec.httpHeaders
+<sup><sup>[↩ Parent](#grafanaspecroutespec)</sup></sup>
+
+
+
+httpHeaders defines policy for HTTP headers.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanaspecroutespechttpheadersactions">actions</a></b></td>
+        <td>object</td>
+        <td>
+          actions specifies options for modifying headers and their values.
+Note that this option only applies to cleartext HTTP connections
+and to secure HTTP connections for which the ingress controller
+terminates encryption (that is, edge-terminated or reencrypt
+connections).  Headers cannot be modified for TLS passthrough
+connections.
+Setting the HSTS (`Strict-Transport-Security`) header is not supported via actions.
+`Strict-Transport-Security` may only be configured using the "haproxy.router.openshift.io/hsts_header"
+route annotation, and only in accordance with the policy specified in Ingress.Spec.RequiredHSTSPolicies.
+In case of HTTP request headers, the actions specified in spec.httpHeaders.actions on the Route will be executed after
+the actions specified in the IngressController's spec.httpHeaders.actions field.
+In case of HTTP response headers, the actions specified in spec.httpHeaders.actions on the IngressController will be
+executed after the actions specified in the Route's spec.httpHeaders.actions field.
+The headers set via this API will not appear in access logs.
+Any actions defined here are applied after any actions related to the following other fields:
+cache-control, spec.clientTLS,
+spec.httpHeaders.forwardedHeaderPolicy, spec.httpHeaders.uniqueId,
+and spec.httpHeaders.headerNameCaseAdjustments.
+The following header names are reserved and may not be modified via this API:
+Strict-Transport-Security, Proxy, Cookie, Set-Cookie.
+Note that the total size of all net added headers *after* interpolating dynamic values
+must not exceed the value of spec.tuningOptions.headerBufferMaxRewriteBytes on the
+IngressController. Please refer to the documentation
+for that API field for more details.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.route.spec.httpHeaders.actions
+<sup><sup>[↩ Parent](#grafanaspecroutespechttpheaders)</sup></sup>
+
+
+
+actions specifies options for modifying headers and their values.
+Note that this option only applies to cleartext HTTP connections
+and to secure HTTP connections for which the ingress controller
+terminates encryption (that is, edge-terminated or reencrypt
+connections).  Headers cannot be modified for TLS passthrough
+connections.
+Setting the HSTS (`Strict-Transport-Security`) header is not supported via actions.
+`Strict-Transport-Security` may only be configured using the "haproxy.router.openshift.io/hsts_header"
+route annotation, and only in accordance with the policy specified in Ingress.Spec.RequiredHSTSPolicies.
+In case of HTTP request headers, the actions specified in spec.httpHeaders.actions on the Route will be executed after
+the actions specified in the IngressController's spec.httpHeaders.actions field.
+In case of HTTP response headers, the actions specified in spec.httpHeaders.actions on the IngressController will be
+executed after the actions specified in the Route's spec.httpHeaders.actions field.
+The headers set via this API will not appear in access logs.
+Any actions defined here are applied after any actions related to the following other fields:
+cache-control, spec.clientTLS,
+spec.httpHeaders.forwardedHeaderPolicy, spec.httpHeaders.uniqueId,
+and spec.httpHeaders.headerNameCaseAdjustments.
+The following header names are reserved and may not be modified via this API:
+Strict-Transport-Security, Proxy, Cookie, Set-Cookie.
+Note that the total size of all net added headers *after* interpolating dynamic values
+must not exceed the value of spec.tuningOptions.headerBufferMaxRewriteBytes on the
+IngressController. Please refer to the documentation
+for that API field for more details.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanaspecroutespechttpheadersactionsrequestindex">request</a></b></td>
+        <td>[]object</td>
+        <td>
+          request is a list of HTTP request headers to modify.
+Currently, actions may define to either `Set` or `Delete` headers values.
+Actions defined here will modify the request headers of all requests made through a route.
+These actions are applied to a specific Route defined within a cluster i.e. connections made through a route.
+Currently, actions may define to either `Set` or `Delete` headers values.
+Route actions will be executed after IngressController actions for request headers.
+Actions are applied in sequence as defined in this list.
+A maximum of 20 request header actions may be configured.
+You can use this field to specify HTTP request headers that should be set or deleted
+when forwarding connections from the client to your application.
+Sample fetchers allowed are "req.hdr" and "ssl_c_der".
+Converters allowed are "lower" and "base64".
+Example header values: "%[req.hdr(X-target),lower]", "%{+Q}[ssl_c_der,base64]".
+Any request header configuration applied directly via a Route resource using this API
+will override header configuration for a header of the same name applied via
+spec.httpHeaders.actions on the IngressController or route annotation.
+Note: This field cannot be used if your route uses TLS passthrough.<br/>
+          <br/>
+            <i>Validations</i>:<li>self.all(key, key.action.type == "Delete" || (has(key.action.set) && key.action.set.value.matches('^(?:%(?:%|(?:\\{[-+]?[QXE](?:,[-+]?[QXE])*\\})?\\[(?:req\\.hdr\\([0-9A-Za-z-]+\\)|ssl_c_der)(?:,(?:lower|base64))*\\])|[^%[:cntrl:]])+$'))): Either the header value provided is not in correct format or the sample fetcher/converter specified is not allowed. The dynamic header value will be interpreted as an HAProxy format string as defined in http://cbonte.github.io/haproxy-dconv/2.6/configuration.html#8.2.6 and may use HAProxy's %[] syntax and otherwise must be a valid HTTP header value as defined in https://datatracker.ietf.org/doc/html/rfc7230#section-3.2. Sample fetchers allowed are req.hdr, ssl_c_der. Converters allowed are lower, base64.</li>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanaspecroutespechttpheadersactionsresponseindex">response</a></b></td>
+        <td>[]object</td>
+        <td>
+          response is a list of HTTP response headers to modify.
+Currently, actions may define to either `Set` or `Delete` headers values.
+Actions defined here will modify the response headers of all requests made through a route.
+These actions are applied to a specific Route defined within a cluster i.e. connections made through a route.
+Route actions will be executed before IngressController actions for response headers.
+Actions are applied in sequence as defined in this list.
+A maximum of 20 response header actions may be configured.
+You can use this field to specify HTTP response headers that should be set or deleted
+when forwarding responses from your application to the client.
+Sample fetchers allowed are "res.hdr" and "ssl_c_der".
+Converters allowed are "lower" and "base64".
+Example header values: "%[res.hdr(X-target),lower]", "%{+Q}[ssl_c_der,base64]".
+Note: This field cannot be used if your route uses TLS passthrough.<br/>
+          <br/>
+            <i>Validations</i>:<li>self.all(key, key.action.type == "Delete" || (has(key.action.set) && key.action.set.value.matches('^(?:%(?:%|(?:\\{[-+]?[QXE](?:,[-+]?[QXE])*\\})?\\[(?:res\\.hdr\\([0-9A-Za-z-]+\\)|ssl_c_der)(?:,(?:lower|base64))*\\])|[^%[:cntrl:]])+$'))): Either the header value provided is not in correct format or the sample fetcher/converter specified is not allowed. The dynamic header value will be interpreted as an HAProxy format string as defined in http://cbonte.github.io/haproxy-dconv/2.6/configuration.html#8.2.6 and may use HAProxy's %[] syntax and otherwise must be a valid HTTP header value as defined in https://datatracker.ietf.org/doc/html/rfc7230#section-3.2. Sample fetchers allowed are res.hdr, ssl_c_der. Converters allowed are lower, base64.</li>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.route.spec.httpHeaders.actions.request[index]
+<sup><sup>[↩ Parent](#grafanaspecroutespechttpheadersactions)</sup></sup>
+
+
+
+RouteHTTPHeader specifies configuration for setting or deleting an HTTP header.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanaspecroutespechttpheadersactionsrequestindexaction">action</a></b></td>
+        <td>object</td>
+        <td>
+          action specifies actions to perform on headers, such as setting or deleting headers.<br/>
+          <br/>
+            <i>Validations</i>:<li>has(self.type) && self.type == 'Set' ?  has(self.set) : !has(self.set): set is required when type is Set, and forbidden otherwise</li>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          name specifies the name of a header on which to perform an action. Its value must be a valid HTTP header
+name as defined in RFC 2616 section 4.2.
+The name must consist only of alphanumeric and the following special characters, "-!#$%&'*+.^_`".
+The following header names are reserved and may not be modified via this API:
+Strict-Transport-Security, Proxy, Cookie, Set-Cookie.
+It must be no more than 255 characters in length.
+Header name must be unique.<br/>
+          <br/>
+            <i>Validations</i>:<li>self.lowerAscii() != 'strict-transport-security': strict-transport-security header may not be modified via header actions</li><li>self.lowerAscii() != 'proxy': proxy header may not be modified via header actions</li><li>self.lowerAscii() != 'cookie': cookie header may not be modified via header actions</li><li>self.lowerAscii() != 'set-cookie': set-cookie header may not be modified via header actions</li>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.route.spec.httpHeaders.actions.request[index].action
+<sup><sup>[↩ Parent](#grafanaspecroutespechttpheadersactionsrequestindex)</sup></sup>
+
+
+
+action specifies actions to perform on headers, such as setting or deleting headers.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          type defines the type of the action to be applied on the header.
+Possible values are Set or Delete.
+Set allows you to set HTTP request and response headers.
+Delete allows you to delete HTTP request and response headers.<br/>
+          <br/>
+            <i>Enum</i>: Set, Delete<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanaspecroutespechttpheadersactionsrequestindexactionset">set</a></b></td>
+        <td>object</td>
+        <td>
+          set defines the HTTP header that should be set: added if it doesn't exist or replaced if it does.
+This field is required when type is Set and forbidden otherwise.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.route.spec.httpHeaders.actions.request[index].action.set
+<sup><sup>[↩ Parent](#grafanaspecroutespechttpheadersactionsrequestindexaction)</sup></sup>
+
+
+
+set defines the HTTP header that should be set: added if it doesn't exist or replaced if it does.
+This field is required when type is Set and forbidden otherwise.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>value</b></td>
+        <td>string</td>
+        <td>
+          value specifies a header value.
+Dynamic values can be added. The value will be interpreted as an HAProxy format string as defined in
+http://cbonte.github.io/haproxy-dconv/2.6/configuration.html#8.2.6 and may use HAProxy's %[] syntax and
+otherwise must be a valid HTTP header value as defined in https://datatracker.ietf.org/doc/html/rfc7230#section-3.2.
+The value of this field must be no more than 16384 characters in length.
+Note that the total size of all net added headers *after* interpolating dynamic values
+must not exceed the value of spec.tuningOptions.headerBufferMaxRewriteBytes on the
+IngressController.<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.route.spec.httpHeaders.actions.response[index]
+<sup><sup>[↩ Parent](#grafanaspecroutespechttpheadersactions)</sup></sup>
+
+
+
+RouteHTTPHeader specifies configuration for setting or deleting an HTTP header.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanaspecroutespechttpheadersactionsresponseindexaction">action</a></b></td>
+        <td>object</td>
+        <td>
+          action specifies actions to perform on headers, such as setting or deleting headers.<br/>
+          <br/>
+            <i>Validations</i>:<li>has(self.type) && self.type == 'Set' ?  has(self.set) : !has(self.set): set is required when type is Set, and forbidden otherwise</li>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          name specifies the name of a header on which to perform an action. Its value must be a valid HTTP header
+name as defined in RFC 2616 section 4.2.
+The name must consist only of alphanumeric and the following special characters, "-!#$%&'*+.^_`".
+The following header names are reserved and may not be modified via this API:
+Strict-Transport-Security, Proxy, Cookie, Set-Cookie.
+It must be no more than 255 characters in length.
+Header name must be unique.<br/>
+          <br/>
+            <i>Validations</i>:<li>self.lowerAscii() != 'strict-transport-security': strict-transport-security header may not be modified via header actions</li><li>self.lowerAscii() != 'proxy': proxy header may not be modified via header actions</li><li>self.lowerAscii() != 'cookie': cookie header may not be modified via header actions</li><li>self.lowerAscii() != 'set-cookie': set-cookie header may not be modified via header actions</li>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.route.spec.httpHeaders.actions.response[index].action
+<sup><sup>[↩ Parent](#grafanaspecroutespechttpheadersactionsresponseindex)</sup></sup>
+
+
+
+action specifies actions to perform on headers, such as setting or deleting headers.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          type defines the type of the action to be applied on the header.
+Possible values are Set or Delete.
+Set allows you to set HTTP request and response headers.
+Delete allows you to delete HTTP request and response headers.<br/>
+          <br/>
+            <i>Enum</i>: Set, Delete<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanaspecroutespechttpheadersactionsresponseindexactionset">set</a></b></td>
+        <td>object</td>
+        <td>
+          set defines the HTTP header that should be set: added if it doesn't exist or replaced if it does.
+This field is required when type is Set and forbidden otherwise.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.route.spec.httpHeaders.actions.response[index].action.set
+<sup><sup>[↩ Parent](#grafanaspecroutespechttpheadersactionsresponseindexaction)</sup></sup>
+
+
+
+set defines the HTTP header that should be set: added if it doesn't exist or replaced if it does.
+This field is required when type is Set and forbidden otherwise.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>value</b></td>
+        <td>string</td>
+        <td>
+          value specifies a header value.
+Dynamic values can be added. The value will be interpreted as an HAProxy format string as defined in
+http://cbonte.github.io/haproxy-dconv/2.6/configuration.html#8.2.6 and may use HAProxy's %[] syntax and
+otherwise must be a valid HTTP header value as defined in https://datatracker.ietf.org/doc/html/rfc7230#section-3.2.
+The value of this field must be no more than 16384 characters in length.
+Note that the total size of all net added headers *after* interpolating dynamic values
+must not exceed the value of spec.tuningOptions.headerBufferMaxRewriteBytes on the
+IngressController.<br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -21483,9 +21884,17 @@ The tls field provides the ability to configure certificates and termination for
     </thead>
     <tbody><tr>
         <td><b>termination</b></td>
-        <td>string</td>
+        <td>enum</td>
         <td>
-          termination indicates termination type.<br/>
+          termination indicates termination type.
+
+* edge - TLS termination is done by the router and http is used to communicate with the backend (default)
+* passthrough - Traffic is sent straight to the destination without the router providing TLS termination
+* reencrypt - TLS termination is done by the router and https is used to communicate with the backend
+
+Note: passthrough termination is incompatible with httpHeader actions<br/>
+          <br/>
+            <i>Enum</i>: edge, reencrypt, passthrough<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -21499,7 +21908,8 @@ The tls field provides the ability to configure certificates and termination for
         <td><b>certificate</b></td>
         <td>string</td>
         <td>
-          certificate provides certificate contents<br/>
+          certificate provides certificate contents. This should be a single serving certificate, not a certificate
+chain. Do not include a CA certificate.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -21514,15 +21924,34 @@ verify.<br/>
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanaspecroutespectlsexternalcertificate">externalCertificate</a></b></td>
+        <td>object</td>
+        <td>
+          externalCertificate provides certificate contents as a secret reference.
+This should be a single serving certificate, not a certificate
+chain. Do not include a CA certificate. The secret referenced should
+be present in the same namespace as that of the Route.
+Forbidden when `certificate` is set.
+The router service account needs to be granted with read-only access to this secret,
+please refer to openshift docs for additional details.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>insecureEdgeTerminationPolicy</b></td>
-        <td>string</td>
+        <td>enum</td>
         <td>
           insecureEdgeTerminationPolicy indicates the desired behavior for insecure connections to a route. While
 each router may make its own decisions on which ports to expose, this is normally port 80.
 
-* Allow - traffic is sent to the server on the insecure port (default)
-* Disable - no traffic is allowed on the insecure port.
+If a route does not specify insecureEdgeTerminationPolicy, then the default behavior is "None".
+
+* Allow - traffic is sent to the server on the insecure port (edge/reencrypt terminations only).
+
+* None - no traffic is allowed on the insecure port (default).
+
 * Redirect - clients are redirected to the secure port.<br/>
+          <br/>
+            <i>Enum</i>: Allow, None, Redirect, <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -21530,6 +21959,40 @@ each router may make its own decisions on which ports to expose, this is normall
         <td>string</td>
         <td>
           key provides key file contents<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.route.spec.tls.externalCertificate
+<sup><sup>[↩ Parent](#grafanaspecroutespectls)</sup></sup>
+
+
+
+externalCertificate provides certificate contents as a secret reference.
+This should be a single serving certificate, not a certificate
+chain. Do not include a CA certificate. The secret referenced should
+be present in the same namespace as that of the Route.
+Forbidden when `certificate` is set.
+The router service account needs to be granted with read-only access to this secret,
+please refer to openshift docs for additional details.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          name of the referent.
+More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>
         </td>
         <td>false</td>
       </tr></tbody>
