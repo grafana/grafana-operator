@@ -68,10 +68,6 @@ module:
   mounts:
     - source: ../docs
       target: content
-    - source: ../docs
-      target: content
-    - source: ../examples
-      target: content/docs/examples
     - source: ../examples
       target: content/docs/examples
     - source: ../deploy/helm/grafana-operator/README.md
