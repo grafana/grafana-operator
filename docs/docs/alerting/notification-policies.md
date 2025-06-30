@@ -39,4 +39,4 @@ The following shows an example of how dynamic routes will get merged.
 
 The resulting Notification Policy will be the following:
 
-![Dynamic notification policy tree after applying the example routes](./dynamic-notification-policy.png)
+![Dynamic notification policy tree after applying the example routes](../dynamic-notification-policy.png)
