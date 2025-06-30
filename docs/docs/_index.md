@@ -1,22 +1,20 @@
 ---
 title: "Introduction"
 linkTitle: "Documentation"
-weight: 20
+weight: 10
 menu:
   main:
-    weight: 20
+    weight: 10
 ---
 
-The Grafana operator allows you to:
-* ⚙️ Deploy & Manage Grafana Instances inside of Kubernetes with ease
-* 🌐 Manage externally hosted instances using Kubernetes resources (for example Grafana Cloud)
+## What is Grafana Operator
 
-To install the Grafana Operator in your Kubernetes cluster, Run the following command in your terminal:
+Grafana Operator is a Kubernetes operator built to help you manage your Grafana instances and its resources in and outside of Kubernetes.
 
-```bash
-helm upgrade -i grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-operator --version {{<param version>}}
-```
+Whether you’re running one Grafana instance or many, the Grafana Operator simplifies the processes of installing, configuring, and maintaining Grafana and its resources. Additionally, it's perfect for those who prefer to manage resources using infrastructure as code or using GitOps workflows through tools like ArgoCD and Flux CD.
 
-For a detailed installation guide, refer to [the installation documentation]({{<relref installation>}}).
+## Ready to get started?
 
-To get started, take a look at the [quick start guide]({{<relref quick-start.md>}}).
+To get started, take a look at the [quick start guide]({{< relref quick-start.md >}}).
+
+For a detailed installation guide, please, refer to [the installation documentation]({{< relref installation >}}).

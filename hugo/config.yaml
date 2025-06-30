@@ -51,11 +51,9 @@ params:
       - name: GitHub
         url: https://github.com/grafana/grafana-operator
         icon: fab fa-github
-        desc: Development takes place here!
       - name: Slack
-        url: https://kubernetes.slack.com/messages/grafana-operator/
+        url: https://grafana.slack.com/messages/grafana-operator/
         icon: fab fa-slack
-        desc: Chat with other grafana-operator users
 module:
   hugoVersion:
     extended: true
@@ -68,10 +66,6 @@ module:
   mounts:
     - source: ../docs
       target: content
-    - source: ../docs
-      target: content
-    - source: ../examples
-      target: content/docs/examples
     - source: ../examples
       target: content/docs/examples
     - source: ../deploy/helm/grafana-operator/README.md

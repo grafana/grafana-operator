@@ -93,15 +93,13 @@ Switching to Grafana Operator from traditional deployments amplifies your effici
 - Providing multi-architecture support, making it versatile across different platforms.
 - Offering one-click installation through Operatorhub/OLM.
 
-## Get In Touch!
+## Get In Touch
 
 Got questions or suggestions? Let us know! The quickest way to reach us is through our [GitHub Issues](https://github.com/grafana/grafana-operator/issues) or by joining our weekly public meeting on Mondays at 11:00 Central European (Summer) Time (09:00/10:00 UTC in Summer/Winter) (link [here](https://meet.google.com/spw-jtbk-mwj)).
 
 Feel free to drop into our Grafana Operator discussions on:
 
-[![Kubernetes Slack](https://img.shields.io/badge/kubernetes%20slack-white?logo=slack&logoColor=black)](https://kubernetes.slack.com/archives/C019A1KTYKC) [![Grafana Slack](https://img.shields.io/badge/grafana%20community%20Slack-4A254A?logo=slack&logoColor=white)](https://join.slack.com/t/grafana/shared_invite/zt-2eqidcplt-QzkxMuhZA4tGQeFQenE_MQ)
-
-
+[![Grafana Slack](https://img.shields.io/badge/grafana%20community%20Slack-4A254A?logo=slack&logoColor=white)](https://join.slack.com/t/grafana/shared_invite/zt-2eqidcplt-QzkxMuhZA4tGQeFQenE_MQ) [![Kubernetes Slack](https://img.shields.io/badge/kubernetes%20slack-white?logo=slack&logoColor=black)](https://kubernetes.slack.com/archives/C019A1KTYKC)
 
 ## Contributing
 
@@ -112,7 +110,6 @@ For more information on how to contribute to the operator look at [CONTRIBUTING.
 > [!CAUTION]
 > v4 will stop receiving bug fixes and security updates as of the 22nd of December 2023.
 > We recommend you migrate to v5 if you haven't yet! Please follow our [v4 -> v5 Migration Guide](https://grafana.github.io/grafana-operator/blog/2023/05/27/v4-to-v5-migration/) to mitigate any potential future risks.
-
 
 V5 is the current, actively developed and maintained version of the operator, which you can find on the
 ***[Master Branch](https://github.com/grafana/grafana-operator/tree/master)***.
@@ -144,15 +141,15 @@ With certain standards and approaches, we can provide a better user experience t
 
 - Better designed Custom Resource Definitions (Upstream Grafana Native fields will be supported without having to
   whitelist them in the operator logic).
-    - Upstream documentation can be followed to define the Grafana Operator Custom Resources.
-    - This also means a change in API versions for the resources, but we see this as a benefit, our previous mantra of
+  - Upstream documentation can be followed to define the Grafana Operator Custom Resources.
+  - This also means a change in API versions for the resources, but we see this as a benefit, our previous mantra of
       maintaining a seamless upgrade from version to version, limited us in the changes we wanted to make for a long
       time.
 - A more streamlined Grafana resource management workflow, one that will be reflected across all controllers.
 - Using an upstream Grafana API client (standardizing our interactions with the Grafana API, moving away from bespoke
   logic).
 - The use of a more up-to-date Operator-SDK version, making use of newer features.
-    - along with all relevant dependencies being kept up-to-date.
+  - along with all relevant dependencies being kept up-to-date.
 - Proper testing.
 - Cleaning and cutting down on code.
 - Multi-instance and Multi-namespace support!

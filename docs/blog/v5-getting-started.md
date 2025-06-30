@@ -313,6 +313,6 @@ Learned about the new concepts that we have introduced with the operator and hop
 
 If you find any issues feel free to create one after reading through the existing once in v5 [labels](https://github.com/grafana/grafana-operator/labels/v5) to see all open issues.
 
-To give feedback you can also join us in the [Kubernetes Slack](https://slack.k8s.io/) in the [grafana-operator channel](https://kubernetes.slack.com/messages/grafana-operator/).
+To give feedback you can also join us in the [Grafana Slack](https://grafana.slack.com) in the [grafana-operator channel](https://grafana.slack.com/messages/grafana-operator/).
 
 And of course we are happy to receive PRs.
