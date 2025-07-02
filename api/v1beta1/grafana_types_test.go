@@ -7,9 +7,132 @@ import (
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var _ = Describe("Grafana Status", Ordered, func() {
+var _ = Describe("Grafana status NamespacedResourceList all CRs works", func() {
+	ctx := context.Background()
+	Context("Update entry in NamespacedResourceList", Ordered, func() {
+		meta := func() metav1.ObjectMeta {
+			return metav1.ObjectMeta{
+				Name:      "status-list-item",
+				Namespace: "default",
+			}
+		}
+
+		alertRuleGroup := &GrafanaAlertRuleGroup{ObjectMeta: meta()}
+		contactPoint := &GrafanaContactPoint{
+			ObjectMeta: meta(),
+			Spec: GrafanaContactPointSpec{
+				CustomUID: "contact-one",
+			},
+		}
+		dashboard := &GrafanaDashboard{
+			ObjectMeta: meta(),
+			Spec: GrafanaDashboardSpec{
+				GrafanaContentSpec: GrafanaContentSpec{
+					CustomUID: "db-unique-identifier",
+				},
+			},
+		}
+		datasource := &GrafanaDatasource{
+			ObjectMeta: meta(),
+			Spec: GrafanaDatasourceSpec{
+				CustomUID: "ds-one-unique-identifier",
+			},
+		}
+		folder := &GrafanaFolder{
+			ObjectMeta: meta(),
+			Spec: GrafanaFolderSpec{
+				CustomUID: "folder-unique-identifier",
+			},
+		}
+		libraryPanel := &GrafanaLibraryPanel{
+			ObjectMeta: meta(),
+			Spec: GrafanaLibraryPanelSpec{
+				GrafanaContentSpec: GrafanaContentSpec{
+					CustomUID: "lp-one-unique-identifier",
+				},
+			},
+		}
+		muteTiming := &GrafanaMuteTiming{ObjectMeta: meta()}
+		notificationTemplate := &GrafanaNotificationTemplate{ObjectMeta: meta()}
+
+		crList := []client.Object{alertRuleGroup, contactPoint, dashboard, datasource, folder, libraryPanel, muteTiming, notificationTemplate}
+
+		crGrafana := &Grafana{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "status-patch-all-crs",
+				Namespace: "default",
+				Labels: map[string]string{
+					"test": "status-patch",
+				},
+			},
+			Spec: GrafanaSpec{},
+		}
+
+		BeforeAll(func() {
+			Expect(k8sClient.Create(ctx, crGrafana)).To(Succeed())
+			crGrafana.Status.Stage = OperatorStageComplete
+			crGrafana.Status.StageStatus = OperatorStageResultSuccess
+			Expect(k8sClient.Status().Update(ctx, crGrafana)).To(Succeed())
+		})
+
+		It("Adds item to status of Grafana", func() {
+			Expect(crGrafana.AddNamespacedResource(ctx, k8sClient, alertRuleGroup, alertRuleGroup.NamespacedResource())).Should(Succeed())
+			Expect(crGrafana.AddNamespacedResource(ctx, k8sClient, contactPoint, contactPoint.NamespacedResource())).Should(Succeed())
+			Expect(crGrafana.AddNamespacedResource(ctx, k8sClient, dashboard, dashboard.NamespacedResource(dashboard.Spec.CustomUID))).Should(Succeed())
+			Expect(crGrafana.AddNamespacedResource(ctx, k8sClient, datasource, datasource.NamespacedResource())).Should(Succeed())
+			Expect(crGrafana.AddNamespacedResource(ctx, k8sClient, folder, folder.NamespacedResource(folder.Spec.CustomUID))).Should(Succeed())
+			Expect(crGrafana.AddNamespacedResource(ctx, k8sClient, libraryPanel, libraryPanel.NamespacedResource(libraryPanel.Spec.CustomUID))).Should(Succeed())
+			Expect(crGrafana.AddNamespacedResource(ctx, k8sClient, muteTiming, muteTiming.NamespacedResource())).Should(Succeed())
+			Expect(crGrafana.AddNamespacedResource(ctx, k8sClient, notificationTemplate, notificationTemplate.NamespacedResource())).Should(Succeed())
+
+			im := &Grafana{}
+			Expect(k8sClient.Get(ctx, types.NamespacedName{
+				Namespace: crGrafana.Namespace,
+				Name:      crGrafana.Name,
+			}, im)).To(Succeed())
+
+			for _, cr := range crList {
+				list, _, err := im.Status.StatusList(cr)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(list).ToNot(BeNil())
+				Expect(*list).ToNot(BeEmpty())
+				Expect(*list).To(HaveLen(1))
+
+				idx := im.Status.Datasources.IndexOf(cr.GetNamespace(), cr.GetName())
+				Expect(idx).To(Equal(0))
+			}
+
+			Expect(crGrafana.RemoveNamespacedResource(ctx, k8sClient, alertRuleGroup)).Should(Succeed())
+			Expect(crGrafana.RemoveNamespacedResource(ctx, k8sClient, contactPoint)).Should(Succeed())
+			Expect(crGrafana.RemoveNamespacedResource(ctx, k8sClient, dashboard)).Should(Succeed())
+			Expect(crGrafana.RemoveNamespacedResource(ctx, k8sClient, datasource)).Should(Succeed())
+			Expect(crGrafana.RemoveNamespacedResource(ctx, k8sClient, folder)).Should(Succeed())
+			Expect(crGrafana.RemoveNamespacedResource(ctx, k8sClient, libraryPanel)).Should(Succeed())
+			Expect(crGrafana.RemoveNamespacedResource(ctx, k8sClient, muteTiming)).Should(Succeed())
+			Expect(crGrafana.RemoveNamespacedResource(ctx, k8sClient, notificationTemplate)).Should(Succeed())
+
+			result := &Grafana{}
+			Expect(k8sClient.Get(ctx, types.NamespacedName{
+				Namespace: crGrafana.Namespace,
+				Name:      crGrafana.Name,
+			}, result)).To(Succeed())
+
+			for _, cr := range crList {
+				list, _, err := result.Status.StatusList(cr)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(*list).To(BeEmpty())
+
+				idx := result.Status.Datasources.IndexOf(cr.GetNamespace(), cr.GetName())
+				Expect(idx).To(Equal(-1))
+			}
+		})
+	})
+})
+
+var _ = Describe("Grafana Status NamespacedResourceList CRUD", Ordered, func() {
 	// Prep
 	ctx := context.Background()
 	g := &Grafana{
