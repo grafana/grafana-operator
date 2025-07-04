@@ -92,6 +92,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	if cr.Spec.Suspend {
 		setSuspended(&cr.Status.Conditions, cr.Generation, conditionReconcileSuspended)
+		meta.RemoveStatusCondition(&cr.Status.Conditions, ConditionTypeGrafanaReady)
 		return ctrl.Result{}, nil
 	}
 	removeSuspended(&cr.Status.Conditions)

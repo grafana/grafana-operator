@@ -78,6 +78,7 @@ func (r *GrafanaNotificationTemplateReconciler) Reconcile(ctx context.Context, r
 
 	if notificationTemplate.Spec.Suspend {
 		setSuspended(&notificationTemplate.Status.Conditions, notificationTemplate.Generation, conditionApplySuspended)
+		meta.RemoveStatusCondition(&notificationTemplate.Status.Conditions, conditionNotificationTemplateSynchronized)
 		return ctrl.Result{}, nil
 	}
 	removeSuspended(&notificationTemplate.Status.Conditions)

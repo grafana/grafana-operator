@@ -86,6 +86,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 
 	if group.Spec.Suspend {
 		setSuspended(&group.Status.Conditions, group.Generation, conditionApplySuspended)
+		meta.RemoveStatusCondition(&group.Status.Conditions, conditionAlertGroupSynchronized)
 		return ctrl.Result{}, nil
 	}
 	removeSuspended(&group.Status.Conditions)

@@ -92,6 +92,7 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 
 	if libraryPanel.Spec.Suspend {
 		setSuspended(&libraryPanel.Status.Conditions, libraryPanel.Generation, conditionApplySuspended)
+		meta.RemoveStatusCondition(&libraryPanel.Status.Conditions, conditionLibraryPanelSynchronized)
 		return ctrl.Result{}, nil
 	}
 	removeSuspended(&libraryPanel.Status.Conditions)

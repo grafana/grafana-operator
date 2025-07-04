@@ -93,6 +93,7 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 
 	if notificationPolicy.Spec.Suspend {
 		setSuspended(&notificationPolicy.Status.Conditions, notificationPolicy.Generation, conditionApplySuspended)
+		meta.RemoveStatusCondition(&notificationPolicy.Status.Conditions, conditionNotificationPolicySynchronized)
 		return ctrl.Result{}, nil
 	}
 	removeSuspended(&notificationPolicy.Status.Conditions)
@@ -100,6 +101,7 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 	// check if spec is valid
 	if !notificationPolicy.Spec.Route.IsRouteSelectorMutuallyExclusive() {
 		setInvalidSpecMutuallyExclusive(&notificationPolicy.Status.Conditions, notificationPolicy.Generation)
+		meta.RemoveStatusCondition(&notificationPolicy.Status.Conditions, conditionNotificationPolicySynchronized)
 		return ctrl.Result{}, fmt.Errorf("invalid route spec discovered: routeSelector is mutually exclusive with routes")
 	}
 	removeInvalidSpec(&notificationPolicy.Status.Conditions)
