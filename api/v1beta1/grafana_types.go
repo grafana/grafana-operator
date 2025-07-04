@@ -292,9 +292,9 @@ func (in *Grafana) RemoveNamespacedResource(ctx context.Context, cl client.Clien
 
 	var jsonPatch []any
 	// Conditionally delete item at idx or entire list
-	if idx == 0 && len(*list) == 1 {
+	if len(*list) == 1 {
 		jsonPatch = []any{map[string]any{
-			"op":   "add",
+			"op":   "remove",
 			"path": fmt.Sprintf("/status/%s", kind),
 		}}
 	} else {
