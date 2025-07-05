@@ -191,7 +191,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 	}
 
 	// always update after resync period has elapsed even if cr is unchanged.
-	if exists && cr.Unchanged() && !cr.ResyncPeriodHasElapsed() && parentFolderUID == remoteParent {
+	if exists && cr.Unchanged() && parentFolderUID == remoteParent {
 		return nil
 	}
 
