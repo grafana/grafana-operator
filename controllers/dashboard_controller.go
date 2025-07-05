@@ -329,7 +329,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		exists = false
 	}
 
-	if exists && content.Unchanged(cr, hash) && !cr.ResyncPeriodHasElapsed() {
+	if exists && content.Unchanged(cr, hash) {
 		log.V(1).Info("dashboard model unchanged and resyncPeriod not reached. skipping remaining requests")
 		return nil
 	}

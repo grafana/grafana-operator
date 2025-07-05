@@ -17,8 +17,6 @@ limitations under the License.
 package v1beta1
 
 import (
-	"time"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -109,11 +107,6 @@ func (in *GrafanaDashboard) Conditions() *[]metav1.Condition {
 // CurrentGeneration implements FolderReferencer.
 func (in *GrafanaDashboard) CurrentGeneration() int64 {
 	return in.Generation
-}
-
-func (in *GrafanaDashboard) ResyncPeriodHasElapsed() bool {
-	deadline := in.Status.LastResync.Add(in.Spec.ResyncPeriod.Duration)
-	return time.Now().After(deadline)
 }
 
 // GrafanaContentSpec implements GrafanaContentResource
