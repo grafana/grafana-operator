@@ -1,8 +1,6 @@
 package v1beta1
 
 import (
-	"time"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -81,11 +79,6 @@ func (in *GrafanaLibraryPanel) Conditions() *[]metav1.Condition {
 // CurrentGeneration implements FolderReferencer.
 func (in *GrafanaLibraryPanel) CurrentGeneration() int64 {
 	return in.Generation
-}
-
-func (in *GrafanaLibraryPanel) ResyncPeriodHasElapsed() bool {
-	deadline := in.Status.LastResync.Add(in.Spec.ResyncPeriod.Duration)
-	return time.Now().After(deadline)
 }
 
 func (in *GrafanaLibraryPanel) MatchLabels() *metav1.LabelSelector {

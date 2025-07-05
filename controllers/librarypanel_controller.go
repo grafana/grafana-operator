@@ -201,7 +201,7 @@ func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Contex
 	}
 
 	// handle content caching
-	if !content.Unchanged(cr, hash) && cr.ResyncPeriodHasElapsed() {
+	if content.HasChanged(cr, hash) {
 		_, err = grafanaClient.LibraryElements.UpdateLibraryElement(uid, &models.PatchLibraryElementCommand{ // nolint:errcheck
 			FolderUID: folderUID,
 			Kind:      int64(libraryElementTypePanel),
