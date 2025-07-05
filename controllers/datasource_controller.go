@@ -262,7 +262,7 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		return err
 	}
 
-	if exists && cr.Unchanged(hash) && !cr.ResyncPeriodHasElapsed() {
+	if exists && cr.Unchanged(hash) {
 		return nil
 	}
 
