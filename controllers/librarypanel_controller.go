@@ -188,16 +188,18 @@ func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Contex
 
 		// doesn't yet exist--should provision
 		// nolint:errcheck
-		if _, err = grafanaClient.LibraryElements.CreateLibraryElement(&models.CreateLibraryElementCommand{
+		_, err = grafanaClient.LibraryElements.CreateLibraryElement(&models.CreateLibraryElementCommand{
 			FolderUID: folderUID,
 			Kind:      int64(libraryElementTypePanel),
 			Model:     model,
 			Name:      name,
 			UID:       uid,
-		}); err != nil {
+		})
+		if err != nil {
 			return err
 		}
-		return nil
+
+		return instance.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource(uid))
 	}
 
 	// handle content caching
