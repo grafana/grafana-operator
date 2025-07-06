@@ -182,25 +182,12 @@ func (r *GrafanaDatasourceReconciler) deleteOldDatasource(ctx context.Context, c
 			return err
 		}
 
-		datasource, err := grafanaClient.Datasources.GetDataSourceByUID(*uid)
+		_, err = grafanaClient.Datasources.DeleteDataSourceByUID(*uid) //nolint
 		var notFound *datasources.GetDataSourceByUIDNotFound
-		if errors.As(err, &notFound) {
-			continue
-		}
-
 		if err != nil {
-			return fmt.Errorf("fetching datasource: %w", err)
-		}
-
-		_, err = grafanaClient.Datasources.DeleteDataSourceByUID(datasource.Payload.UID) //nolint
-		if err != nil {
-			return fmt.Errorf("deleting datasource to update uid %s: %w", *uid, err)
-		}
-
-		// Update grafana instance Status
-		err = grafana.RemoveNamespacedResource(ctx, r.Client, cr)
-		if err != nil {
-			return err
+			if !errors.As(err, &notFound) {
+				return fmt.Errorf("deleting datasource to update uid %s: %w", *uid, err)
+			}
 		}
 	}
 
@@ -226,12 +213,10 @@ func (r *GrafanaDatasourceReconciler) finalize(ctx context.Context, cr *v1beta1.
 
 		_, err = grafanaClient.Datasources.DeleteDataSourceByUID(*uid) // nolint:errcheck
 		var notFound *datasources.DeleteDataSourceByUIDNotFound
-		if errors.As(err, &notFound) {
-			continue
-		}
-
 		if err != nil {
-			return fmt.Errorf("deleting datasource %s: %w", *uid, err)
+			if !errors.As(err, &notFound) {
+				return fmt.Errorf("deleting datasource %s: %w", *uid, err)
+			}
 		}
 
 		if grafana.IsInternal() {

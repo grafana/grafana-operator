@@ -260,10 +260,12 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 
 func (r *GrafanaAlertRuleGroupReconciler) finalize(ctx context.Context, group *grafanav1beta1.GrafanaAlertRuleGroup) error {
 	log := logf.FromContext(ctx)
+
+	isCleanupInGrafanaRequired := true
 	folderUID, err := getFolderUID(ctx, r.Client, group)
 	if err != nil {
-		log.Info("ignoring finalization logic as folder no longer exists")
-		return nil //nolint:nilerr
+		log.Info("Skipping Grafana finalize logic as folder no longer exists")
+		isCleanupInGrafanaRequired = false
 	}
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, group)
@@ -272,16 +274,19 @@ func (r *GrafanaAlertRuleGroupReconciler) finalize(ctx context.Context, group *g
 	}
 
 	for _, instance := range instances {
-		cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &instance)
-		if err != nil {
-			return fmt.Errorf("building grafana client: %w", err)
-		}
+		// Skip cleanup in instances
+		if isCleanupInGrafanaRequired {
+			cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &instance)
+			if err != nil {
+				return fmt.Errorf("building grafana client: %w", err)
+			}
 
-		_, err = cl.Provisioning.DeleteAlertRuleGroup(group.GroupName(), folderUID) //nolint:errcheck
-		if err != nil {
-			var notFound *provisioning.DeleteAlertRuleGroupNotFound
-			if !errors.As(err, &notFound) {
-				return fmt.Errorf("deleting alert rule group: %w", err)
+			_, err = cl.Provisioning.DeleteAlertRuleGroup(group.GroupName(), folderUID) //nolint:errcheck
+			if err != nil {
+				var notFound *provisioning.DeleteAlertRuleGroupNotFound
+				if !errors.As(err, &notFound) {
+					return fmt.Errorf("deleting alert rule group: %w", err)
+				}
 			}
 		}
 

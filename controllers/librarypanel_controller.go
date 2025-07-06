@@ -237,24 +237,28 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, libraryPan
 			return err
 		}
 
+		isCleanupInGrafanaRequired := true
 		resp, err := grafanaClient.LibraryElements.GetLibraryElementConnections(uid)
 		if err != nil {
 			var notFound *library_elements.GetLibraryElementConnectionsNotFound
 			if !errors.As(err, &notFound) {
 				return fmt.Errorf("fetching library panel from instance %s/%s: %w", instance.Namespace, instance.Name, err)
 			}
-
-			continue
-		}
-		if len(resp.Payload.Result) > 0 {
-			return fmt.Errorf("library panel %s/%s/%s on instance %s/%s has existing connections", libraryPanel.Namespace, libraryPanel.Name, uid, instance.Namespace, instance.Name) //nolint
+			isCleanupInGrafanaRequired = false
 		}
 
-		_, err = grafanaClient.LibraryElements.DeleteLibraryElementByUID(uid) //nolint:errcheck
-		if err != nil {
-			var notFound *library_elements.DeleteLibraryElementByUIDNotFound
-			if !errors.As(err, &notFound) {
-				return err
+		// Skip cleanup in instances
+		if isCleanupInGrafanaRequired {
+			if len(resp.Payload.Result) > 0 {
+				return fmt.Errorf("library panel %s/%s/%s on instance %s/%s has existing connections", libraryPanel.Namespace, libraryPanel.Name, uid, instance.Namespace, instance.Name) //nolint
+			}
+
+			_, err = grafanaClient.LibraryElements.DeleteLibraryElementByUID(uid) //nolint:errcheck
+			if err != nil {
+				var notFound *library_elements.DeleteLibraryElementByUIDNotFound
+				if !errors.As(err, &notFound) {
+					return err
+				}
 			}
 		}
 
