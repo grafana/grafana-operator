@@ -229,17 +229,8 @@ func (in *Grafana) AddNamespacedResource(ctx context.Context, cl client.Client, 
 		return err
 	}
 
-	// Check if resource already exists with the same UID.
 	// Allows overwriting resources with old UIDs/Names below
-	var statusResource NamespacedResource
 	idx := list.IndexOf(cr.GetNamespace(), cr.GetName())
-	if idx != -1 {
-		statusResource = (*list)[idx]
-		if r == statusResource {
-			// Already present in list
-			return nil
-		}
-	}
 
 	var jsonPatch []any
 	switch {
@@ -257,17 +248,16 @@ func (in *Grafana) AddNamespacedResource(ctx context.Context, cl client.Client, 
 			"path":  fmt.Sprintf("/status/%s/-", kind),
 			"value": string(r),
 		}}
-	case r != statusResource:
+	case r == (*list)[idx]:
+		// Do nothing if resource already exists with the same UID/Name.
+		return nil
+	default:
 		// Overwrite old entry, prevents old UIDs/Names to block status updates
 		jsonPatch = []any{map[string]any{
 			"op":    "replace",
 			"path":  fmt.Sprintf("/status/%s/%d", kind, idx),
 			"value": string(r),
 		}}
-	default:
-		// If none of the above is true, resource already exists in the status with the correct UID/Name
-		// Skip Patch request
-		return nil
 	}
 
 	patch, err := json.Marshal(jsonPatch)

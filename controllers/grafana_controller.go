@@ -165,12 +165,17 @@ func (r *GrafanaReconciler) setDefaultGrafanaVersion(ctx context.Context, cr cli
 }
 
 func removeMissingCRs(statusList *grafanav1beta1.NamespacedResourceList, crs grafanav1beta1.NamespacedResourceImpl, updateStatus *bool) {
-	for _, namespacedCR := range *statusList {
-		namespace, name, _ := namespacedCR.Split()
+	toRemove := grafanav1beta1.NamespacedResourceList{}
+	for _, r := range *statusList {
+		namespace, name, _ := r.Split()
 		if !crs.Exists(namespace, name) {
-			*statusList = statusList.Remove(namespace, name)
-			*updateStatus = true
+			toRemove = append(toRemove, r)
 		}
+	}
+
+	if len(toRemove) > 0 {
+		*statusList = statusList.RemoveEntries(&toRemove)
+		*updateStatus = true
 	}
 }
 
