@@ -172,6 +172,8 @@ func (r *GrafanaDatasourceReconciler) deleteOldDatasource(ctx context.Context, c
 	}
 
 	for _, grafana := range instances {
+		origCR := client.MergeFrom(grafana.DeepCopy())
+
 		found, uid := grafana.Status.Datasources.Find(cr.Namespace, cr.Name)
 		if !found {
 			continue
@@ -198,7 +200,7 @@ func (r *GrafanaDatasourceReconciler) deleteOldDatasource(ctx context.Context, c
 		}
 
 		grafana.Status.Datasources = grafana.Status.Datasources.Remove(cr.Namespace, cr.Name)
-		err = r.Status().Update(ctx, &grafana)
+		err = r.Status().Patch(ctx, &grafana, origCR)
 		if err != nil {
 			return err
 		}
@@ -214,6 +216,8 @@ func (r *GrafanaDatasourceReconciler) finalize(ctx context.Context, cr *v1beta1.
 	}
 
 	for _, grafana := range instances {
+		origCR := client.MergeFrom(grafana.DeepCopy())
+
 		found, uid := grafana.Status.Datasources.Find(cr.Namespace, cr.Name)
 		if !found {
 			continue
@@ -242,7 +246,7 @@ func (r *GrafanaDatasourceReconciler) finalize(ctx context.Context, cr *v1beta1.
 		}
 
 		grafana.Status.Datasources = grafana.Status.Datasources.Remove(cr.Namespace, cr.Name)
-		err = r.Status().Update(ctx, &grafana)
+		err = r.Status().Patch(ctx, &grafana, origCR)
 		if err != nil {
 			return err
 		}
@@ -252,6 +256,8 @@ func (r *GrafanaDatasourceReconciler) finalize(ctx context.Context, cr *v1beta1.
 }
 
 func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDatasource, datasource *models.UpdateDataSourceCommand, hash string) error {
+	origCR := client.MergeFrom(grafana.DeepCopy())
+
 	if grafana.IsExternal() && cr.Spec.Plugins != nil {
 		return fmt.Errorf("external grafana instances don't support plugins, please remove spec.plugins from your datasource cr")
 	}
@@ -300,7 +306,7 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 	}
 
 	grafana.Status.Datasources = grafana.Status.Datasources.Add(cr.Namespace, cr.Name, datasource.UID)
-	return r.Status().Update(ctx, grafana)
+	return r.Status().Patch(ctx, grafana, origCR)
 }
 
 func (r *GrafanaDatasourceReconciler) Exists(client *genapi.GrafanaHTTPAPI, uid, name string) (bool, string, error) {
