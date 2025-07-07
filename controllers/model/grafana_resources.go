@@ -88,15 +88,12 @@ func GetInternalServiceAccountSecret(
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      generateInternalServiceAccountTokenSecretName(cr.Name, saStatus.SpecID, tokenStatus.Name),
 			Namespace: cr.Namespace,
-			Labels: MergeAnnotations(
-				GetCommonLabels(),
-				map[string]string{
-					"app":                                "grafana-serviceaccount-token",
-					"grafana.integreatly.org/instance":   cr.Name,
-					"grafana.integreatly.org/sa-spec-id": saStatus.SpecID,
-					"grafana.integreatly.org/token-name": tokenStatus.Name,
-				},
-			),
+			Labels: map[string]string{
+				"app":                                "grafana-serviceaccount-token",
+				"grafana.integreatly.org/instance":   cr.Name,
+				"grafana.integreatly.org/sa-spec-id": saStatus.SpecID,
+				"grafana.integreatly.org/token-name": tokenStatus.Name,
+			},
 			Annotations: map[string]string{
 				"grafana.integreatly.org/token-id": strconv.FormatInt(tokenStatus.ID, 10),
 			},
@@ -111,6 +108,7 @@ func GetInternalServiceAccountSecret(
 			"grafana.integreatly.org/token-expiry": tokenStatus.Expires.Format(time.RFC3339),
 		}
 	}
+	SetInheritedLabels(secret, cr.Labels)
 
 	if scheme != nil {
 		controllerutil.SetControllerReference(cr, secret, scheme) //nolint:errcheck
