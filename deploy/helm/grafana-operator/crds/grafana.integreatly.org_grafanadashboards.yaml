@@ -331,6 +331,10 @@ spec:
                   not set
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
+              suspend:
+                description: Suspend pauses synchronizing attempts and tells the operator
+                  to ignore changes
+                type: boolean
               uid:
                 description: |-
                   Manually specify the uid, overwrites uids already present in the json model.

@@ -241,6 +241,10 @@ spec:
                 required:
                 - receiver
                 type: object
+              suspend:
+                description: Suspend pauses synchronizing attempts and tells the operator
+                  to ignore changes
+                type: boolean
             required:
             - instanceSelector
             - route

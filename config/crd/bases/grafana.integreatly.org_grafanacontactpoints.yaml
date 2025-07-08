@@ -116,6 +116,10 @@ spec:
                 type: string
               settings:
                 x-kubernetes-preserve-unknown-fields: true
+              suspend:
+                description: Suspend pauses synchronizing attempts and tells the operator
+                  to ignore changes
+                type: boolean
               type:
                 minLength: 1
                 type: string
