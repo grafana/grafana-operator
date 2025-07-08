@@ -35,3 +35,9 @@ labs/benchmark/datasources
 
 # kind artifacts
 kubeconfig
+
+# Ignore hack folder except explicitly added
+# git add --force <filename>
+hack/
+
+__debug_bin*
