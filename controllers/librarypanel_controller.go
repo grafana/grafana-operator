@@ -90,7 +90,11 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 
 	defer UpdateStatus(ctx, r.Client, libraryPanel)
 
-	// begin validation checks
+	if libraryPanel.Spec.Suspend {
+		setSuspended(&libraryPanel.Status.Conditions, libraryPanel.Generation, conditionApplySuspended)
+		return ctrl.Result{}, nil
+	}
+	removeSuspended(&libraryPanel.Status.Conditions)
 
 	resolver := content.NewContentResolver(libraryPanel, r.Client, content.WithDisabledSources([]content.ContentSourceType{
 		// grafana.com does not currently support hosting library panels for distribution, but perhaps

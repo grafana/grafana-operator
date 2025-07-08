@@ -38,10 +38,12 @@ const (
 	conditionNoMatchingFolder               = "NoMatchingFolder"
 	conditionInvalidSpec                    = "InvalidSpec"
 	conditionNotificationPolicyLoopDetected = "NotificationPolicyLoopDetected"
+	conditionSuspended                      = "Suspended"
 
 	// condition reasons
 	conditionApplySuccessful = "ApplySuccessful"
 	conditionApplyFailed     = "ApplyFailed"
+	conditionApplySuspended  = "ApplySuspended"
 
 	// Finalizer
 	grafanaFinalizer = "operator.grafana.com/finalizer"
@@ -272,6 +274,23 @@ func setInvalidSpec(conditions *[]metav1.Condition, generation int64, reason, me
 
 func removeInvalidSpec(conditions *[]metav1.Condition) {
 	meta.RemoveStatusCondition(conditions, conditionInvalidSpec)
+}
+
+func setSuspended(conditions *[]metav1.Condition, generation int64, reason string) {
+	*conditions = []metav1.Condition{{
+		Type:               conditionSuspended,
+		Reason:             reason,
+		Status:             metav1.ConditionTrue,
+		ObservedGeneration: generation,
+		LastTransitionTime: metav1.Time{
+			Time: time.Now(),
+		},
+		Message: "Resource changes are ignored",
+	}}
+}
+
+func removeSuspended(conditions *[]metav1.Condition) {
+	meta.RemoveStatusCondition(conditions, conditionSuspended)
 }
 
 func ignoreStatusUpdates() predicate.Predicate {

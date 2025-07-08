@@ -84,6 +84,12 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 
 	defer UpdateStatus(ctx, r.Client, group)
 
+	if group.Spec.Suspend {
+		setSuspended(&group.Status.Conditions, group.Generation, conditionApplySuspended)
+		return ctrl.Result{}, nil
+	}
+	removeSuspended(&group.Status.Conditions)
+
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, group)
 	if err != nil {
 		setNoMatchingInstancesCondition(&group.Status.Conditions, group.Generation, err)

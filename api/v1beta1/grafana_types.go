@@ -86,6 +86,9 @@ type GrafanaSpec struct {
 	Preferences *GrafanaPreferences `json:"preferences,omitempty"`
 	// DisableDefaultAdminSecret prevents operator from creating default admin-credentials secret
 	DisableDefaultAdminSecret bool `json:"disableDefaultAdminSecret,omitempty"`
+	// Suspend pauses reconciliation of owned resources like deployments, Services, Etc. upon changes
+	// +optional
+	Suspend bool `json:"suspend,omitempty"`
 	// DisableDefaultSecurityContext prevents the operator from populating securityContext on deployments
 	// +kubebuilder:validation:Enum=Pod;Container;All
 	DisableDefaultSecurityContext string `json:"disableDefaultSecurityContext,omitempty"`

@@ -80,6 +80,12 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 
 	defer UpdateStatus(ctx, r.Client, contactPoint)
 
+	if contactPoint.Spec.Suspend {
+		setSuspended(&contactPoint.Status.Conditions, contactPoint.Generation, conditionApplySuspended)
+		return ctrl.Result{}, nil
+	}
+	removeSuspended(&contactPoint.Status.Conditions)
+
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, contactPoint)
 	if err != nil {
 		setNoMatchingInstancesCondition(&contactPoint.Status.Conditions, contactPoint.Generation, err)

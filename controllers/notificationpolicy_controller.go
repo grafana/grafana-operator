@@ -91,6 +91,12 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 
 	defer UpdateStatus(ctx, r.Client, notificationPolicy)
 
+	if notificationPolicy.Spec.Suspend {
+		setSuspended(&notificationPolicy.Status.Conditions, notificationPolicy.Generation, conditionApplySuspended)
+		return ctrl.Result{}, nil
+	}
+	removeSuspended(&notificationPolicy.Status.Conditions)
+
 	// check if spec is valid
 	if !notificationPolicy.Spec.Route.IsRouteSelectorMutuallyExclusive() {
 		setInvalidSpecMutuallyExclusive(&notificationPolicy.Status.Conditions, notificationPolicy.Generation)

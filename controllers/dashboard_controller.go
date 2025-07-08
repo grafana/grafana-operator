@@ -91,6 +91,12 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	defer UpdateStatus(ctx, r.Client, cr)
 
+	if cr.Spec.Suspend {
+		setSuspended(&cr.Status.Conditions, cr.Generation, conditionApplySuspended)
+		return ctrl.Result{}, nil
+	}
+	removeSuspended(&cr.Status.Conditions)
+
 	// Retrieving the model before the loop ensures to exit early in case of failure and not fail once per matching instance
 	resolver := content.NewContentResolver(cr, r.Client)
 	dashboardModel, hash, err := resolver.Resolve(ctx)

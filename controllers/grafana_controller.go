@@ -46,7 +46,8 @@ import (
 )
 
 const (
-	ConditionTypeGrafanaReady = "GrafanaReady"
+	ConditionTypeGrafanaReady   = "GrafanaReady"
+	conditionReconcileSuspended = "ReconcileSuspended"
 )
 
 // GrafanaReconciler reconciles a Grafana object
@@ -88,6 +89,12 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			log.Error(err, "updating status")
 		}
 	}()
+
+	if cr.Spec.Suspend {
+		setSuspended(&cr.Status.Conditions, cr.Generation, conditionReconcileSuspended)
+		return ctrl.Result{}, nil
+	}
+	removeSuspended(&cr.Status.Conditions)
 
 	var stages []grafanav1beta1.OperatorStageName
 	if cr.IsExternal() {
