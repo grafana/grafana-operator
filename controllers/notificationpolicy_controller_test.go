@@ -378,35 +378,58 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 	}
 }
 
-var _ = Describe("NotificationPolicy: Reconciler", func() {
-	It("Results in NoMatchingInstances Condition", func() {
-		// Create object
-		cr := &v1beta1.GrafanaNotificationPolicy{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "no-match",
-				Namespace: "default",
+var _ = Describe("NotificationPolicy Reconciler: Provoke Conditions", func() {
+	tests := []struct {
+		name          string
+		cr            *v1beta1.GrafanaNotificationPolicy
+		wantCondition string
+		wantReason    string
+	}{
+		{
+			name: "Suspended Condition",
+			cr: &v1beta1.GrafanaNotificationPolicy{
+				ObjectMeta: objectMetaSuspended,
+				Spec: v1beta1.GrafanaNotificationPolicySpec{
+					GrafanaCommonSpec: commonSpecSuspended,
+					Route:             &v1beta1.Route{Receiver: "default-receiver"},
+				},
 			},
-			Spec: v1beta1.GrafanaNotificationPolicySpec{
-				GrafanaCommonSpec: instanceSelectorNoMatchingInstances,
-				Route:             &v1beta1.Route{Receiver: "default-receiver"},
+			wantCondition: conditionSuspended,
+			wantReason:    conditionReasonApplySuspended,
+		},
+		{
+			name: "NoMatchingInstances Condition",
+			cr: &v1beta1.GrafanaNotificationPolicy{
+				ObjectMeta: objectMetaNoMatchingInstances,
+				Spec: v1beta1.GrafanaNotificationPolicySpec{
+					GrafanaCommonSpec: commonSpecNoMatchingInstances,
+					Route:             &v1beta1.Route{Receiver: "default-receiver"},
+				},
 			},
-		}
-		ctx := context.Background()
-		err := k8sClient.Create(ctx, cr)
-		Expect(err).ToNot(HaveOccurred())
+			wantCondition: conditionNoMatchingInstance,
+			wantReason:    conditionReasonEmptyAPIReply,
+		},
+	}
 
-		// Reconciliation Request
-		req := requestFromMeta(cr.ObjectMeta)
+	for _, test := range tests {
+		It(test.name, func() {
+			err := k8sClient.Create(testCtx, test.cr)
+			Expect(err).ToNot(HaveOccurred())
 
-		// Reconcile
-		r := GrafanaNotificationPolicyReconciler{Client: k8sClient}
-		_, err = r.Reconcile(ctx, req)
-		Expect(err).ShouldNot(HaveOccurred()) // NoMatchingInstances is a valid reconciliation result
+			// Reconciliation Request
+			req := requestFromMeta(test.cr.ObjectMeta)
 
-		resultCr := &v1beta1.GrafanaNotificationPolicy{}
-		Expect(r.Get(ctx, req.NamespacedName, resultCr)).Should(Succeed()) // NoMatchingInstances is a valid status
+			// Reconcile
+			r := GrafanaNotificationPolicyReconciler{Client: k8sClient}
+			_, err = r.Reconcile(testCtx, req)
+			Expect(err).ShouldNot(HaveOccurred())
 
-		// Verify NoMatchingInstances condition
-		Expect(resultCr.Status.Conditions).Should(ContainElement(HaveField("Type", conditionNoMatchingInstance)))
-	})
+			resultCr := &v1beta1.GrafanaNotificationPolicy{}
+			Expect(r.Get(testCtx, req.NamespacedName, resultCr)).Should(Succeed())
+
+			// Verify Condition
+			Expect(resultCr.Status.Conditions).Should(ContainElement(HaveField("Type", test.wantCondition)))
+			Expect(resultCr.Status.Conditions).Should(ContainElement(HaveField("Reason", test.wantReason)))
+		})
+	}
 })

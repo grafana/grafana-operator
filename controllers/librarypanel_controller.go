@@ -91,7 +91,7 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 	defer UpdateStatus(ctx, r.Client, libraryPanel)
 
 	if libraryPanel.Spec.Suspend {
-		setSuspended(&libraryPanel.Status.Conditions, libraryPanel.Generation, conditionApplySuspended)
+		setSuspended(&libraryPanel.Status.Conditions, libraryPanel.Generation, conditionReasonApplySuspended)
 		meta.RemoveStatusCondition(&libraryPanel.Status.Conditions, conditionLibraryPanelSynchronized)
 		return ctrl.Result{}, nil
 	}

@@ -81,7 +81,7 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 	defer UpdateStatus(ctx, r.Client, contactPoint)
 
 	if contactPoint.Spec.Suspend {
-		setSuspended(&contactPoint.Status.Conditions, contactPoint.Generation, conditionApplySuspended)
+		setSuspended(&contactPoint.Status.Conditions, contactPoint.Generation, conditionReasonApplySuspended)
 		meta.RemoveStatusCondition(&contactPoint.Status.Conditions, conditionContactPointSynchronized)
 		return ctrl.Result{}, nil
 	}

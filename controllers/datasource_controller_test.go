@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 
@@ -33,7 +32,7 @@ func TestGetDatasourceContent(t *testing.T) {
 			},
 		}
 
-		content, hash, err := reconciler.buildDatasourceModel(context.TODO(), cr)
+		content, hash, err := reconciler.buildDatasourceModel(testCtx, cr)
 		got := content.SecureJSONData["httpHeaderValue1"]
 
 		assert.Nil(t, err)
@@ -43,36 +42,6 @@ func TestGetDatasourceContent(t *testing.T) {
 }
 
 var _ = Describe("Datasource: Reconciler", func() {
-	It("Results in NoMatchingInstances Condition", func() {
-		// Create object
-		cr := &v1beta1.GrafanaDatasource{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "no-match",
-				Namespace: "default",
-			},
-			Spec: v1beta1.GrafanaDatasourceSpec{
-				GrafanaCommonSpec: instanceSelectorNoMatchingInstances,
-				Datasource:        &v1beta1.GrafanaDatasourceInternal{},
-			},
-		}
-		ctx := context.Background()
-		err := k8sClient.Create(ctx, cr)
-		Expect(err).ToNot(HaveOccurred())
-
-		// Reconciliation Request
-		req := requestFromMeta(cr.ObjectMeta)
-
-		// Reconcile
-		r := GrafanaDatasourceReconciler{Client: k8sClient}
-		_, err = r.Reconcile(ctx, req)
-		Expect(err).ShouldNot(HaveOccurred()) // NoMatchingInstances is a valid reconciliation result
-
-		resultCr := &v1beta1.GrafanaDatasource{}
-		Expect(r.Get(ctx, req.NamespacedName, resultCr)).Should(Succeed()) // NoMatchingInstances is a valid status
-
-		// Verify NoMatchingInstances condition
-		Expect(resultCr.Status.Conditions).Should(ContainElement(HaveField("Type", conditionNoMatchingInstance)))
-	})
 	It("Correctly substitutes valuesFrom", func() {
 		cm := corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
@@ -84,7 +53,7 @@ var _ = Describe("Datasource: Reconciler", func() {
 				"CUSTOM_TRACEID": "substituted",
 			},
 		}
-		err := k8sClient.Create(context.Background(), &cm)
+		err := k8sClient.Create(testCtx, &cm)
 		Expect(err).ToNot(HaveOccurred())
 		cr := &v1beta1.GrafanaDatasource{
 			ObjectMeta: metav1.ObjectMeta{
@@ -123,7 +92,7 @@ var _ = Describe("Datasource: Reconciler", func() {
 		}
 
 		r := GrafanaDatasourceReconciler{Client: k8sClient}
-		content, hash, err := r.buildDatasourceModel(context.TODO(), cr)
+		content, hash, err := r.buildDatasourceModel(testCtx, cr)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(hash).ToNot(BeEmpty())
 		Expect(content.URL).To(Equal(cm.Data["CUSTOM_URL"]))
@@ -131,4 +100,60 @@ var _ = Describe("Datasource: Reconciler", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(marshaled).To(ContainSubstring(cm.Data["CUSTOM_TRACEID"]))
 	})
+})
+
+var _ = Describe("Datasource Reconciler: Provoke Conditions", func() {
+	tests := []struct {
+		name          string
+		cr            *v1beta1.GrafanaDatasource
+		wantCondition string
+		wantReason    string
+	}{
+		{
+			name: "Suspended Condition",
+			cr: &v1beta1.GrafanaDatasource{
+				ObjectMeta: objectMetaSuspended,
+				Spec: v1beta1.GrafanaDatasourceSpec{
+					GrafanaCommonSpec: commonSpecSuspended,
+					Datasource:        &v1beta1.GrafanaDatasourceInternal{},
+				},
+			},
+			wantCondition: conditionSuspended,
+			wantReason:    conditionReasonApplySuspended,
+		},
+		{
+			name: "NoMatchingInstances Condition",
+			cr: &v1beta1.GrafanaDatasource{
+				ObjectMeta: objectMetaNoMatchingInstances,
+				Spec: v1beta1.GrafanaDatasourceSpec{
+					GrafanaCommonSpec: commonSpecNoMatchingInstances,
+					Datasource:        &v1beta1.GrafanaDatasourceInternal{},
+				},
+			},
+			wantCondition: conditionNoMatchingInstance,
+			wantReason:    conditionReasonEmptyAPIReply,
+		},
+	}
+
+	for _, test := range tests {
+		It(test.name, func() {
+			err := k8sClient.Create(testCtx, test.cr)
+			Expect(err).ToNot(HaveOccurred())
+
+			// Reconciliation Request
+			req := requestFromMeta(test.cr.ObjectMeta)
+
+			// Reconcile
+			r := GrafanaDatasourceReconciler{Client: k8sClient}
+			_, err = r.Reconcile(testCtx, req)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			resultCr := &v1beta1.GrafanaDatasource{}
+			Expect(r.Get(testCtx, req.NamespacedName, resultCr)).Should(Succeed())
+
+			// Verify Condition
+			Expect(resultCr.Status.Conditions).Should(ContainElement(HaveField("Type", test.wantCondition)))
+			Expect(resultCr.Status.Conditions).Should(ContainElement(HaveField("Reason", test.wantReason)))
+		})
+	}
 })

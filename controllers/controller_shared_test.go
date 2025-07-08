@@ -31,11 +31,28 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-var instanceSelectorNoMatchingInstances = v1beta1.GrafanaCommonSpec{
-	InstanceSelector: &metav1.LabelSelector{
-		MatchLabels: map[string]string{"test": "no-matching-instances"},
-	},
-}
+var (
+	objectMetaNoMatchingInstances = metav1.ObjectMeta{
+		Namespace: "default",
+		Name:      "no-match",
+	}
+	commonSpecNoMatchingInstances = v1beta1.GrafanaCommonSpec{
+		InstanceSelector: &metav1.LabelSelector{
+			MatchLabels: map[string]string{"test": "no-matching-instances"},
+		},
+	}
+
+	objectMetaSuspended = metav1.ObjectMeta{
+		Namespace: "default",
+		Name:      "suspended",
+	}
+	commonSpecSuspended = v1beta1.GrafanaCommonSpec{
+		Suspend: true,
+		InstanceSelector: &metav1.LabelSelector{
+			MatchLabels: map[string]string{"test": "suspended"},
+		},
+	}
+)
 
 func requestFromMeta(obj metav1.ObjectMeta) ctrl.Request {
 	GinkgoHelper()

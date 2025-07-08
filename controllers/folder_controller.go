@@ -82,7 +82,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	defer UpdateStatus(ctx, r.Client, folder)
 
 	if folder.Spec.Suspend {
-		setSuspended(&folder.Status.Conditions, folder.Generation, conditionApplySuspended)
+		setSuspended(&folder.Status.Conditions, folder.Generation, conditionReasonApplySuspended)
 		meta.RemoveStatusCondition(&folder.Status.Conditions, conditionFolderSynchronized)
 		return ctrl.Result{}, nil
 	}
