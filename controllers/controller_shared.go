@@ -395,7 +395,10 @@ func removeAnnotation(ctx context.Context, cl client.Client, cr client.Object, k
 	// Escape slash '/' according to RFC6901
 	// We could also escape tilde '~', but that is not a valid character in annotation keys.
 	key = strings.ReplaceAll(key, "/", "~1")
-	patch, err := json.Marshal([]any{map[string]any{"op": "remove", "path": "/metadata/annotations/" + key}})
+	patch, err := json.Marshal([]any{map[string]any{
+		"op":   "remove",
+		"path": "/metadata/annotations/" + key,
+	}})
 	if err != nil {
 		return err
 	}

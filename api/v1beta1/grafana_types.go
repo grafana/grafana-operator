@@ -17,8 +17,14 @@ limitations under the License.
 package v1beta1
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type OperatorStageName string
@@ -152,6 +158,29 @@ type GrafanaStatus struct {
 	Conditions            []metav1.Condition     `json:"conditions,omitempty"`
 }
 
+func (in *GrafanaStatus) StatusList(cr client.Object) (*NamespacedResourceList, string, error) {
+	switch t := cr.(type) {
+	case *GrafanaAlertRuleGroup:
+		return &in.AlertRuleGroups, "alertRuleGroups", nil
+	case *GrafanaContactPoint:
+		return &in.ContactPoints, "contactPoints", nil
+	case *GrafanaDashboard:
+		return &in.Dashboards, "dashboards", nil
+	case *GrafanaDatasource:
+		return &in.Datasources, "datasources", nil
+	case *GrafanaFolder:
+		return &in.Folders, "folders", nil
+	case *GrafanaLibraryPanel:
+		return &in.LibraryPanels, "libraryPanels", nil
+	case *GrafanaMuteTiming:
+		return &in.MuteTimings, "muteTimings", nil
+	case *GrafanaNotificationTemplate:
+		return &in.NotificationTemplates, "notificationTemplates", nil
+	default:
+		return nil, "", fmt.Errorf("unknown struct %T, extend Grafana.StatusListName", t)
+	}
+}
+
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 
@@ -191,4 +220,75 @@ func (in *Grafana) IsInternal() bool {
 
 func (in *Grafana) IsExternal() bool {
 	return in.Spec.External != nil
+}
+
+// Adds a resource to the end of the Grafana status list matching 'kind'
+func (in *Grafana) AddNamespacedResource(ctx context.Context, cl client.Client, cr client.Object, r NamespacedResource) error {
+	list, kind, err := in.Status.StatusList(cr)
+	if err != nil {
+		return err
+	}
+
+	// Allows overwriting resources with old UIDs/Names below
+	idx := list.IndexOf(cr.GetNamespace(), cr.GetName())
+
+	var jsonPatch []any
+	switch {
+	case len(*list) == 0:
+		// Create list if previously empty or append to the end
+		jsonPatch = []any{map[string]any{
+			"op":    "add",
+			"path":  fmt.Sprintf("/status/%s", kind),
+			"value": []string{string(r)},
+		}}
+	case idx == -1:
+		// Add resource to the end of the status list
+		jsonPatch = []any{map[string]any{
+			"op":    "add",
+			"path":  fmt.Sprintf("/status/%s/-", kind),
+			"value": string(r),
+		}}
+	case r == (*list)[idx]:
+		// Do nothing if resource already exists with the same UID/Name.
+		return nil
+	default:
+		// Overwrite old entry, prevents old UIDs/Names to block status updates
+		jsonPatch = []any{map[string]any{
+			"op":    "replace",
+			"path":  fmt.Sprintf("/status/%s/%d", kind, idx),
+			"value": string(r),
+		}}
+	}
+
+	patch, err := json.Marshal(jsonPatch)
+	if err != nil {
+		return err
+	}
+
+	return cl.Status().Patch(ctx, in, client.RawPatch(types.JSONPatchType, patch))
+}
+
+// Removes a resource at index from the Grafana status list matching 'kind'
+func (in *Grafana) RemoveNamespacedResource(ctx context.Context, cl client.Client, cr client.Object) error {
+	list, kind, err := in.Status.StatusList(cr)
+	if err != nil {
+		return err
+	}
+
+	idx := list.IndexOf(cr.GetNamespace(), cr.GetName())
+	if idx == -1 {
+		return nil
+	}
+
+	// Create patch removing entry
+	jsonPatch := []any{map[string]any{
+		"op":   "remove",
+		"path": fmt.Sprintf("/status/%s/%d", kind, idx),
+	}}
+	patch, err := json.Marshal(jsonPatch)
+	if err != nil {
+		return err
+	}
+
+	return cl.Status().Patch(ctx, in, client.RawPatch(types.JSONPatchType, patch))
 }

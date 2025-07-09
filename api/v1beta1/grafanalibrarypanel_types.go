@@ -1,8 +1,6 @@
 package v1beta1
 
 import (
-	"time"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -83,11 +81,6 @@ func (in *GrafanaLibraryPanel) CurrentGeneration() int64 {
 	return in.Generation
 }
 
-func (in *GrafanaLibraryPanel) ResyncPeriodHasElapsed() bool {
-	deadline := in.Status.LastResync.Add(in.Spec.ResyncPeriod.Duration)
-	return time.Now().After(deadline)
-}
-
 func (in *GrafanaLibraryPanel) MatchLabels() *metav1.LabelSelector {
 	return in.Spec.InstanceSelector
 }
@@ -112,6 +105,12 @@ func (in *GrafanaLibraryPanel) GrafanaContentSpec() *GrafanaContentSpec {
 // GrafanaContentSpec implements GrafanaContentResource
 func (in *GrafanaLibraryPanel) GrafanaContentStatus() *GrafanaContentStatus {
 	return &in.Status.GrafanaContentStatus
+}
+
+func (in *GrafanaLibraryPanel) NamespacedResource(uid string) NamespacedResource {
+	// Not enough context to call content.CustomUIDOrUID(uid).
+	// Hence, use uid from args as the caller has more context
+	return NewNamespacedResource(in.Namespace, in.Name, uid)
 }
 
 var _ GrafanaContentResource = &GrafanaLibraryPanel{}

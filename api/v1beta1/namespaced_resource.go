@@ -2,6 +2,7 @@ package v1beta1
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -14,66 +15,40 @@ type NamespacedResourceImpl interface {
 	Exists(namespace string, name string) bool
 }
 
-func (in NamespacedResource) Split() (string, string, string) {
+func NewNamespacedResource(namespace, name, identifier string) NamespacedResource {
+	return NamespacedResource(fmt.Sprintf("%s/%s/%s", namespace, name, identifier))
+}
+
+func (in NamespacedResource) Split() (namespace, name, identifier string) {
 	parts := strings.Split(string(in), "/")
 	return parts[0], parts[1], parts[2]
 }
 
-func (in NamespacedResource) Namespace() string {
-	namespace, _, _ := in.Split()
-	return namespace
-}
+func (in NamespacedResourceList) Find(namespace string, name string) (found bool, identifier *string) {
+	i := in.IndexOf(namespace, name)
 
-func (in NamespacedResource) Name() string {
-	_, name, _ := in.Split()
-	return name
-}
-
-func (in NamespacedResource) UID() string {
-	_, _, uid := in.Split()
-	return uid
-}
-
-func (in NamespacedResourceList) Find(namespace string, name string) (bool, *string) {
-	for _, r := range in {
-		foundNamespace, foundName, foundUID := r.Split()
-		if foundNamespace == namespace && foundName == name {
-			return true, &foundUID
-		}
+	if i == -1 {
+		return false, nil
 	}
-	return false, nil
+
+	_, _, uid := in[i].Split()
+	return true, &uid
 }
 
-func (in NamespacedResourceList) ForNamespace(namespace string) NamespacedResourceList {
-	resources := NamespacedResourceList{}
-	for _, r := range in {
-		if r.Namespace() == namespace {
-			resources = append(resources, r)
-		}
-	}
-	return resources
+func (in NamespacedResourceList) IndexOf(namespace string, name string) int {
+	p := fmt.Sprintf("%s/%s/", namespace, name)
+
+	i := slices.IndexFunc(in, func(r NamespacedResource) bool {
+		return strings.HasPrefix(string(r), p)
+	})
+
+	return i
 }
 
-func (in NamespacedResourceList) Add(namespace string, name string, uid string) NamespacedResourceList {
-	resource := NamespacedResource(fmt.Sprintf("%v/%v/%v", namespace, name, uid))
-	resources := NamespacedResourceList{resource}
-	for _, r := range in {
-		if r == resource {
-			return in
-		}
-		resources = append(resources, r)
-	}
-	return resources
-}
+func (in NamespacedResourceList) RemoveEntries(toRemove *NamespacedResourceList) NamespacedResourceList {
+	resources := slices.DeleteFunc(in.DeepCopy(), func(r NamespacedResource) bool {
+		return slices.Contains(*toRemove, r)
+	})
 
-func (in NamespacedResourceList) Remove(namespace string, name string) NamespacedResourceList {
-	resources := NamespacedResourceList{}
-	for _, r := range in {
-		foundNamespace, foundName, _ := r.Split()
-		if foundNamespace == namespace && foundName == name {
-			continue
-		}
-		resources = append(resources, r)
-	}
 	return resources
 }

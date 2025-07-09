@@ -162,12 +162,7 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 	}
 
 	// Update grafana instance Status
-	instance.Status.ContactPoints = instance.Status.ContactPoints.Add(contactPoint.Namespace, contactPoint.Name, applied.UID)
-	if err = r.Client.Status().Update(ctx, instance); err != nil {
-		return err
-	}
-
-	return nil
+	return instance.AddNamespacedResource(ctx, r.Client, contactPoint, contactPoint.NamespacedResource())
 }
 
 func (r *GrafanaContactPointReconciler) buildContactPointSettings(ctx context.Context, contactPoint *grafanav1beta1.GrafanaContactPoint) (models.JSON, error) {
@@ -226,8 +221,9 @@ func (r *GrafanaContactPointReconciler) finalize(ctx context.Context, contactPoi
 			return fmt.Errorf("deleting contact point: %w", err)
 		}
 
-		instance.Status.ContactPoints = instance.Status.ContactPoints.Remove(contactPoint.Namespace, contactPoint.Name)
-		if err = r.Client.Status().Update(ctx, &instance); err != nil {
+		// Update grafana instance Status
+		err = instance.RemoveNamespacedResource(ctx, r.Client, contactPoint)
+		if err != nil {
 			return fmt.Errorf("removing contact point from Grafana cr: %w", err)
 		}
 	}

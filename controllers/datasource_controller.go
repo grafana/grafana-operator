@@ -182,25 +182,12 @@ func (r *GrafanaDatasourceReconciler) deleteOldDatasource(ctx context.Context, c
 			return err
 		}
 
-		datasource, err := grafanaClient.Datasources.GetDataSourceByUID(*uid)
+		_, err = grafanaClient.Datasources.DeleteDataSourceByUID(*uid) //nolint
 		var notFound *datasources.GetDataSourceByUIDNotFound
-		if errors.As(err, &notFound) {
-			continue
-		}
-
 		if err != nil {
-			return fmt.Errorf("fetching datasource: %w", err)
-		}
-
-		_, err = grafanaClient.Datasources.DeleteDataSourceByUID(datasource.Payload.UID) //nolint
-		if err != nil {
-			return fmt.Errorf("deleting datasource to update uid %s: %w", *uid, err)
-		}
-
-		grafana.Status.Datasources = grafana.Status.Datasources.Remove(cr.Namespace, cr.Name)
-		err = r.Status().Update(ctx, &grafana)
-		if err != nil {
-			return err
+			if !errors.As(err, &notFound) {
+				return fmt.Errorf("deleting datasource to update uid %s: %w", *uid, err)
+			}
 		}
 	}
 
@@ -226,12 +213,10 @@ func (r *GrafanaDatasourceReconciler) finalize(ctx context.Context, cr *v1beta1.
 
 		_, err = grafanaClient.Datasources.DeleteDataSourceByUID(*uid) // nolint:errcheck
 		var notFound *datasources.DeleteDataSourceByUIDNotFound
-		if errors.As(err, &notFound) {
-			continue
-		}
-
 		if err != nil {
-			return fmt.Errorf("deleting datasource %s: %w", *uid, err)
+			if !errors.As(err, &notFound) {
+				return fmt.Errorf("deleting datasource %s: %w", *uid, err)
+			}
 		}
 
 		if grafana.IsInternal() {
@@ -241,8 +226,8 @@ func (r *GrafanaDatasourceReconciler) finalize(ctx context.Context, cr *v1beta1.
 			}
 		}
 
-		grafana.Status.Datasources = grafana.Status.Datasources.Remove(cr.Namespace, cr.Name)
-		err = r.Status().Update(ctx, &grafana)
+		// Update grafana instance Status
+		err = grafana.RemoveNamespacedResource(ctx, r.Client, cr)
 		if err != nil {
 			return err
 		}
@@ -299,8 +284,8 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		}
 	}
 
-	grafana.Status.Datasources = grafana.Status.Datasources.Add(cr.Namespace, cr.Name, datasource.UID)
-	return r.Status().Update(ctx, grafana)
+	// Update grafana instance Status
+	return grafana.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource())
 }
 
 func (r *GrafanaDatasourceReconciler) Exists(client *genapi.GrafanaHTTPAPI, uid, name string) (bool, string, error) {
