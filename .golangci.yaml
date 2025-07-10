@@ -17,6 +17,7 @@ linters:
     - revive
     - thelper
     - unparam
+    - usestdlibvars
     - whitespace
 
   settings:
