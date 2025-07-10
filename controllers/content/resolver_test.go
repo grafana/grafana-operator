@@ -47,7 +47,7 @@ func TestGetDashboardEnvs(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.NotNil(t, envs)
-	assert.True(t, len(envs) == 1, "Expected 1 env, got %d", len(envs))
+	assert.Len(t, envs, 1)
 }
 
 func TestContentIsUpdatedUID(t *testing.T) {
