@@ -35,12 +35,12 @@ func TestDetectPlatformBasedOnAvailableAPIGroups(t *testing.T) {
 	} {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			output, err := json.Marshal(tt.apiGroupList)
-			require.NoError(t, err)
+			assert.NoError(t, err)
 
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			_, err = w.Write(output)
-			require.NoError(t, err)
+			assert.NoError(t, err)
 		}))
 		defer server.Close()
 
