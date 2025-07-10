@@ -129,11 +129,12 @@ func (in *GrafanaDashboard) GrafanaContentStatus() *GrafanaContentStatus {
 var _ GrafanaContentResource = &GrafanaDashboard{}
 
 func (in *GrafanaDashboardList) Exists(namespace, name string) bool {
-	for _, dashboard := range in.Items {
-		if dashboard.Namespace == namespace && dashboard.Name == name {
+	for _, item := range in.Items {
+		if item.Namespace == namespace && item.Name == name {
 			return true
 		}
 	}
+
 	return false
 }
 

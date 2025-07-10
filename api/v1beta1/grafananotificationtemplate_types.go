@@ -84,11 +84,12 @@ type GrafanaNotificationTemplateList struct {
 }
 
 func (in *GrafanaNotificationTemplateList) Exists(namespace, name string) bool {
-	for _, notificationTemplate := range in.Items {
-		if notificationTemplate.Namespace == namespace && notificationTemplate.Name == name {
+	for _, item := range in.Items {
+		if item.Namespace == namespace && item.Name == name {
 			return true
 		}
 	}
+
 	return false
 }
 
