@@ -23,9 +23,9 @@ func TestSplit(t *testing.T) {
 	r := NamespacedResource("namespace/name/identifier")
 	ns, n, i := r.Split()
 
-	assert.Equal(t, ns, "namespace")
-	assert.Equal(t, n, "name")
-	assert.Equal(t, i, "identifier")
+	assert.Equal(t, "namespace", ns)
+	assert.Equal(t, "name", n)
+	assert.Equal(t, "identifier", i)
 }
 
 func TestFind(t *testing.T) {
