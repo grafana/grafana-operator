@@ -18,11 +18,11 @@ package controllers
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -360,18 +360,20 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			s := runtime.NewScheme()
+
 			err := v1beta1.AddToScheme(s)
-			assert.NoError(t, err, "adding scheme")
+			require.NoError(t, err, "adding scheme")
+
 			client := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(routesToRuntimeObjects(tt.existingRoutes)...).Build()
 
 			_, err = assembleNotificationPolicyRoutes(ctx, client, tt.notificationPolicy)
 			if tt.wantLoopDetectedErr {
-				assert.True(t, errors.Is(err, ErrLoopDetected))
+				require.ErrorIs(t, err, ErrLoopDetected)
 			}
 			if tt.wantErr {
-				assert.Error(t, err, "assembleNotificationPolicyRoutes() should return an error")
+				require.Error(t, err, "assembleNotificationPolicyRoutes() should return an error")
 			} else {
-				assert.NoError(t, err, "assembleNotificationPolicyRoutes() should not return an error")
+				require.NoError(t, err, "assembleNotificationPolicyRoutes() should not return an error")
 				assert.Equal(t, tt.want, tt.notificationPolicy, "assembleNotificationPolicyRoutes() returned unexpected policy")
 			}
 		})

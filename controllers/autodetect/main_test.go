@@ -47,11 +47,8 @@ func TestDetectPlatformBasedOnAvailableAPIGroups(t *testing.T) {
 		autoDetect, err := autodetect.New(&rest.Config{Host: server.URL})
 		require.NoError(t, err)
 
-		// test
 		plt, err := autoDetect.IsOpenshift()
-
-		// verify
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, tt.expected, plt)
 	}
 }

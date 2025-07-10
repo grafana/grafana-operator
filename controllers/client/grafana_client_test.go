@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseAdminURL(t *testing.T) {
@@ -67,7 +68,7 @@ func TestParseAdminURL(t *testing.T) {
 			if tt.wantError {
 				assert.Error(t, err, "This should be an invalid url input")
 			} else {
-				assert.Nil(t, err, "This should be a valid url")
+				require.NoError(t, err, "This should be a valid url")
 				assert.Equal(t, tt.wantPath, got.Path, "Path does not match")
 				assert.Equal(t, tt.wantHost, got.Host, "Host does not match")
 				assert.Contains(t, got.Path, "api", "/api is not appended to path correctly")

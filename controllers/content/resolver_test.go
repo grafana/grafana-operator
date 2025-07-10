@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -44,7 +45,7 @@ func TestGetDashboardEnvs(t *testing.T) {
 
 	envs, err := resolver.getContentEnvs(ctx)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, envs)
 	assert.True(t, len(envs) == 1, "Expected 1 env, got %d", len(envs))
 }
