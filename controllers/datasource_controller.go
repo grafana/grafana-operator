@@ -24,9 +24,9 @@ import (
 	"fmt"
 	"strings"
 
-	simplejson "github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-openapi-client-go/client/datasources"
 	"github.com/grafana/grafana-openapi-client-go/models"
+	"github.com/spyzhov/ajson"
 
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
@@ -320,14 +320,14 @@ func (r *GrafanaDatasourceReconciler) buildDatasourceModel(ctx context.Context, 
 	if err != nil {
 		return nil, "", fmt.Errorf("encoding existing datasource model as json: %w", err)
 	}
-
-	// Unstructured object for mutating target paths
-	simpleContent, err := simplejson.NewJson(initialBytes)
+	jsonRoot, err := ajson.Unmarshal(initialBytes)
 	if err != nil {
-		return nil, "", fmt.Errorf("parsing marshaled json as simplejson: %w", err)
+		return nil, "", fmt.Errorf("parsing marshaled json as abstract json: %w", err)
 	}
 
-	simpleContent.Set("uid", cr.CustomUIDOrUID())
+	if err := jsonRoot.AppendObject("uid", ajson.StringNode("", cr.CustomUIDOrUID())); err != nil {
+		return nil, "", fmt.Errorf("overriding uid: %w", err)
+	}
 
 	for _, override := range cr.Spec.ValuesFrom {
 		val, key, err := getReferencedValue(ctx, r.Client, cr, override.ValueFrom)
@@ -335,20 +335,25 @@ func (r *GrafanaDatasourceReconciler) buildDatasourceModel(ctx context.Context, 
 			return nil, "", fmt.Errorf("getting referenced value: %w", err)
 		}
 
-		patternToReplace := simpleContent.GetPath(strings.Split(override.TargetPath, ".")...)
-		patternString, err := patternToReplace.String()
+		nodes, err := jsonRoot.JSONPath("$." + override.TargetPath)
 		if err != nil {
-			return nil, "", fmt.Errorf("pattern must be a string")
+			return nil, "", fmt.Errorf("getting nodes to override: %w", err)
 		}
-
-		patternString = strings.ReplaceAll(patternString, fmt.Sprintf("${%v}", key), val)
-		patternString = strings.ReplaceAll(patternString, fmt.Sprintf("$%v", key), val)
-
-		log.V(1).Info("overriding value", "key", override.TargetPath, "value", val)
-		simpleContent.SetPath(strings.Split(override.TargetPath, "."), patternString)
+		for _, n := range nodes {
+			currentValue, err := n.GetString()
+			if err != nil {
+				return nil, "", fmt.Errorf("cannot replace non string field: %w", err)
+			}
+			substitution := strings.ReplaceAll(currentValue, fmt.Sprintf("${%v}", key), val)
+			substitution = strings.ReplaceAll(substitution, fmt.Sprintf("$%v", key), val)
+			log.V(1).Info("overriding value", "key", override.TargetPath, "value", val)
+			if err := n.SetString(substitution); err != nil {
+				return nil, "", fmt.Errorf("setting new value for field: %w", err)
+			}
+		}
 	}
 
-	newBytes, err := simpleContent.MarshalJSON()
+	newBytes, err := ajson.Marshal(jsonRoot)
 	if err != nil {
 		return nil, "", fmt.Errorf("encoding expanded datasource model as json: %w", err)
 	}

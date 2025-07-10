@@ -14,6 +14,7 @@ require (
 	github.com/onsi/gomega v1.37.0
 	github.com/openshift/api v0.0.0-20190924102528-32369d4db2ad
 	github.com/prometheus/client_golang v1.22.0
+	github.com/spyzhov/ajson v0.9.6
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/automaxprocs v1.6.0
 	k8s.io/api v0.33.2

@@ -7,6 +7,7 @@ import (
 
 	v1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -71,5 +72,63 @@ var _ = Describe("Datasource: Reconciler", func() {
 
 		// Verify NoMatchingInstances condition
 		Expect(resultCr.Status.Conditions).Should(ContainElement(HaveField("Type", conditionNoMatchingInstance)))
+	})
+	It("Correctly substitutes valuesFrom", func() {
+		cm := corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-valuesfrom-plain",
+				Namespace: "default",
+			},
+			Data: map[string]string{
+				"CUSTOM_URL":     "https://demo.promlabs.com",
+				"CUSTOM_TRACEID": "substituted",
+			},
+		}
+		err := k8sClient.Create(context.Background(), &cm)
+		Expect(err).ToNot(HaveOccurred())
+		cr := &v1beta1.GrafanaDatasource{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+			},
+			Spec: v1beta1.GrafanaDatasourceSpec{
+				ValuesFrom: []v1beta1.ValueFrom{
+					{
+						TargetPath: "url",
+						ValueFrom: v1beta1.ValueFromSource{
+							ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: cm.Name,
+								},
+								Key: "CUSTOM_URL",
+							},
+						},
+					},
+					{
+						TargetPath: "jsonData.list[0].value",
+						ValueFrom: v1beta1.ValueFromSource{
+							ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: cm.Name,
+								},
+								Key: "CUSTOM_TRACEID",
+							},
+						},
+					},
+				},
+				Datasource: &v1beta1.GrafanaDatasourceInternal{
+					URL:      "${CUSTOM_URL}",
+					JSONData: json.RawMessage([]byte(`{"list":[{"value":"${CUSTOM_TRACEID}"}]}`)),
+				},
+			},
+		}
+
+		r := GrafanaDatasourceReconciler{Client: k8sClient}
+		content, hash, err := r.buildDatasourceModel(context.TODO(), cr)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(hash).ToNot(BeEmpty())
+		Expect(content.URL).To(Equal(cm.Data["CUSTOM_URL"]))
+		marshaled, err := json.Marshal(content.JSONData)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(marshaled).To(ContainSubstring(cm.Data["CUSTOM_TRACEID"]))
 	})
 })
