@@ -52,6 +52,16 @@ var (
 			MatchLabels: map[string]string{"test": "suspended"},
 		},
 	}
+
+	objectMetaApplyFailed = metav1.ObjectMeta{
+		Namespace: "apply-failed",
+		Name:      "apply-failed",
+	}
+	commonSpecApplyFailed = v1beta1.GrafanaCommonSpec{
+		InstanceSelector: &metav1.LabelSelector{
+			MatchLabels: map[string]string{"test": "apply-failed"},
+		},
+	}
 )
 
 func requestFromMeta(obj metav1.ObjectMeta) ctrl.Request {
@@ -410,7 +420,7 @@ var _ = Describe("GetMatchingInstances functions", Ordered, func() {
 		It("Finds all ready instances when instanceSelector is empty", func() {
 			instances, err := GetScopedMatchingInstances(ctx, k8sClient, matchAllFolder)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(instances).To(HaveLen(3))
+			Expect(instances).To(HaveLen(3 + 1)) // +1 To account for instance created in suite_test.go to provoke ApplyFailed conditions
 		})
 		It("Finds all ready and Matching instances", func() {
 			instances, err := GetScopedMatchingInstances(ctx, k8sClient, &allowFolder)

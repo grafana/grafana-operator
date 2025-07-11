@@ -77,7 +77,7 @@ var _ = Describe("Grafana Reconciler: Provoke Conditions", func() {
 			req := requestFromMeta(test.cr.ObjectMeta)
 
 			// Reconcile
-			r := GrafanaReconciler{Client: k8sClient}
+			r := GrafanaReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
 			_, err = r.Reconcile(testCtx, req)
 			Expect(err).ShouldNot(HaveOccurred())
 
