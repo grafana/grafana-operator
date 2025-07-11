@@ -17,6 +17,7 @@ limitations under the License.
 package controllers
 
 import (
+	"context"
 	"path/filepath"
 	"testing"
 
@@ -38,6 +39,7 @@ import (
 var (
 	k8sClient client.Client
 	testEnv   *envtest.Environment
+	testCtx   context.Context
 )
 
 func TestAPIs(t *testing.T) {
@@ -47,6 +49,8 @@ func TestAPIs(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
+	testCtx = context.Background()
+
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
 	By("bootstrapping test environment")

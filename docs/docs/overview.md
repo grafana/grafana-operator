@@ -127,6 +127,33 @@ Disabling requires a full recreate, delete and apply.
 
 This helps guaranteeing proper cleanup across all matched Grafana instances.
 
+## Suspending resources
+
+It can in many scenarios be useful to temporarily halt the reconciliation and synchronization of resources.
+
+This can be achieved with the `.spec.suspend` option on all resources, with the exception of `GrafanaNotificationPolicyRoutes`.
+
+```yaml
+apiVersion: grafana.integreatly.org/v1beta1
+kind: ...
+metadata:
+  name: suspended
+spec:
+  suspend: true
+...
+status:
+  conditions:
+  - lastTransitionTime: "2025-07-06T15:58:29Z"
+    message: Resource changes are ignored
+    observedGeneration: 2
+    reason: ApplySuspended
+    status: "True"
+    type: Suspended
+  lastResync: "2025-07-06T15:58:29Z"
+```
+
+When `.spec.suspend` is `true` The Operator will ignore any changes where they are normally synchronized immediately.
+
 ## Using a proxy server
 
 The Operator can use a proxy server when fetching URL-based / Grafana.com dashboards or making requests to external Grafana instances.

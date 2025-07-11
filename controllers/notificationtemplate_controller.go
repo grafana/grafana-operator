@@ -76,6 +76,13 @@ func (r *GrafanaNotificationTemplateReconciler) Reconcile(ctx context.Context, r
 
 	defer UpdateStatus(ctx, r.Client, notificationTemplate)
 
+	if notificationTemplate.Spec.Suspend {
+		setSuspended(&notificationTemplate.Status.Conditions, notificationTemplate.Generation, conditionReasonApplySuspended)
+		meta.RemoveStatusCondition(&notificationTemplate.Status.Conditions, conditionNotificationTemplateSynchronized)
+		return ctrl.Result{}, nil
+	}
+	removeSuspended(&notificationTemplate.Status.Conditions)
+
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, notificationTemplate)
 	if err != nil {
 		setNoMatchingInstancesCondition(&notificationTemplate.Status.Conditions, notificationTemplate.Generation, err)

@@ -81,6 +81,13 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	defer UpdateStatus(ctx, r.Client, folder)
 
+	if folder.Spec.Suspend {
+		setSuspended(&folder.Status.Conditions, folder.Generation, conditionReasonApplySuspended)
+		meta.RemoveStatusCondition(&folder.Status.Conditions, conditionFolderSynchronized)
+		return ctrl.Result{}, nil
+	}
+	removeSuspended(&folder.Status.Conditions)
+
 	if folder.Spec.ParentFolderUID == folder.CustomUIDOrUID() {
 		setInvalidSpec(&folder.Status.Conditions, folder.Generation, "CyclicParent", "The value of parentFolderUID must not be the uid of the current folder")
 		meta.RemoveStatusCondition(&folder.Status.Conditions, conditionFolderSynchronized)

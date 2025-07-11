@@ -186,6 +186,13 @@ Overrides the FolderSelector<br/>
             <i>Default</i>: 10m0s<br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>suspend</b></td>
+        <td>boolean</td>
+        <td>
+          Suspend pauses synchronizing attempts and tells the operator to ignore changes<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -812,6 +819,13 @@ GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>suspend</b></td>
+        <td>boolean</td>
+        <td>
+          Suspend pauses synchronizing attempts and tells the operator to ignore changes<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>uid</b></td>
         <td>string</td>
         <td>
@@ -1386,6 +1400,13 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
           How often the resource is synced, defaults to 10m0s if not set<br/>
           <br/>
             <i>Default</i>: 10m0s<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>suspend</b></td>
+        <td>boolean</td>
+        <td>
+          Suspend pauses synchronizing attempts and tells the operator to ignore changes<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2415,6 +2436,13 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>suspend</b></td>
+        <td>boolean</td>
+        <td>
+          Suspend pauses synchronizing attempts and tells the operator to ignore changes<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>uid</b></td>
         <td>string</td>
         <td>
@@ -3097,6 +3125,13 @@ GrafanaFolderSpec defines the desired state of GrafanaFolder
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>suspend</b></td>
+        <td>boolean</td>
+        <td>
+          Suspend pauses synchronizing attempts and tells the operator to ignore changes<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>title</b></td>
         <td>string</td>
         <td>
@@ -3514,6 +3549,13 @@ GrafanaLibraryPanelSpec defines the desired state of GrafanaLibraryPanel
           How often the resource is synced, defaults to 10m0s if not set<br/>
           <br/>
             <i>Default</i>: 10m0s<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>suspend</b></td>
+        <td>boolean</td>
+        <td>
+          Suspend pauses synchronizing attempts and tells the operator to ignore changes<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -4545,6 +4587,13 @@ GrafanaMuteTimingSpec defines the desired state of GrafanaMuteTiming
             <i>Default</i>: 10m0s<br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>suspend</b></td>
+        <td>boolean</td>
+        <td>
+          Suspend pauses synchronizing attempts and tells the operator to ignore changes<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -4956,6 +5005,13 @@ GrafanaNotificationPolicySpec defines the desired state of GrafanaNotificationPo
           How often the resource is synced, defaults to 10m0s if not set<br/>
           <br/>
             <i>Default</i>: 10m0s<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>suspend</b></td>
+        <td>boolean</td>
+        <td>
+          Suspend pauses synchronizing attempts and tells the operator to ignore changes<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5931,6 +5987,13 @@ GrafanaNotificationTemplateSpec defines the desired state of GrafanaNotification
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>suspend</b></td>
+        <td>boolean</td>
+        <td>
+          Suspend pauses synchronizing attempts and tells the operator to ignore changes<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>template</b></td>
         <td>string</td>
         <td>
@@ -6296,6 +6359,13 @@ GrafanaSpec defines the desired state of Grafana
         <td>object</td>
         <td>
           ServiceAccount sets how the ServiceAccount object should look like with your grafana instance, contains a number of defaults.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>suspend</b></td>
+        <td>boolean</td>
+        <td>
+          Suspend pauses reconciliation of owned resources like deployments, Services, Etc. upon changes<br/>
         </td>
         <td>false</td>
       </tr><tr>

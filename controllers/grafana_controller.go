@@ -46,7 +46,8 @@ import (
 )
 
 const (
-	ConditionTypeGrafanaReady = "GrafanaReady"
+	conditionTypeGrafanaReady         = "GrafanaReady"
+	conditionReasonReconcileSuspended = "ReconcileSuspended"
 )
 
 // GrafanaReconciler reconciles a Grafana object
@@ -89,6 +90,13 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 	}()
 
+	if cr.Spec.Suspend {
+		setSuspended(&cr.Status.Conditions, cr.Generation, conditionReasonReconcileSuspended)
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionTypeGrafanaReady)
+		return ctrl.Result{}, nil
+	}
+	removeSuspended(&cr.Status.Conditions)
+
 	var stages []grafanav1beta1.OperatorStageName
 	if cr.IsExternal() {
 		// Only reconcile the Completion stage for external instances
@@ -103,7 +111,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		if cr.Spec.Version == "" {
 			err := r.setDefaultGrafanaVersion(ctx, cr)
 			if err != nil {
-				meta.RemoveStatusCondition(&cr.Status.Conditions, ConditionTypeGrafanaReady)
+				meta.RemoveStatusCondition(&cr.Status.Conditions, conditionTypeGrafanaReady)
 				return ctrl.Result{}, fmt.Errorf("patching grafana version in spec: %w", err)
 			}
 		}
@@ -127,7 +135,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			cr.Status.LastMessage = err.Error()
 
 			metrics.GrafanaFailedReconciles.WithLabelValues(cr.Namespace, cr.Name, string(stage)).Inc()
-			meta.RemoveStatusCondition(&cr.Status.Conditions, ConditionTypeGrafanaReady)
+			meta.RemoveStatusCondition(&cr.Status.Conditions, conditionTypeGrafanaReady)
 			return ctrl.Result{}, fmt.Errorf("reconciler error in stage '%s': %w", stage, err)
 		}
 	}
@@ -136,7 +144,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	cr.Status.LastMessage = ""
 
 	meta.SetStatusCondition(&cr.Status.Conditions, metav1.Condition{
-		Type:               ConditionTypeGrafanaReady, // Maybe use Grafana instead to be consistent with other conditions
+		Type:               conditionTypeGrafanaReady, // Maybe use Grafana instead to be consistent with other conditions
 		Reason:             "GrafanaReady",
 		Message:            "Grafana reconcile completed",
 		ObservedGeneration: cr.Generation,

@@ -38,10 +38,13 @@ const (
 	conditionNoMatchingFolder               = "NoMatchingFolder"
 	conditionInvalidSpec                    = "InvalidSpec"
 	conditionNotificationPolicyLoopDetected = "NotificationPolicyLoopDetected"
+	conditionSuspended                      = "Suspended"
 
 	// condition reasons
-	conditionApplySuccessful = "ApplySuccessful"
-	conditionApplyFailed     = "ApplyFailed"
+	conditionReasonApplySuccessful = "ApplySuccessful"
+	conditionReasonApplyFailed     = "ApplyFailed"
+	conditionReasonApplySuspended  = "ApplySuspended"
+	conditionReasonEmptyAPIReply   = "EmptyAPIReply"
 
 	// Finalizer
 	grafanaFinalizer = "operator.grafana.com/finalizer"
@@ -221,7 +224,7 @@ func setNoMatchingInstancesCondition(conditions *[]metav1.Condition, generation 
 		reason = "ErrFetchingInstances"
 		message = fmt.Sprintf("error occurred during fetching of instances: %s", err.Error())
 	} else {
-		reason = "EmptyAPIReply"
+		reason = conditionReasonEmptyAPIReply
 		message = "None of the available Grafana instances matched the selector, skipping reconciliation"
 	}
 	meta.SetStatusCondition(conditions, metav1.Condition{
@@ -274,6 +277,23 @@ func removeInvalidSpec(conditions *[]metav1.Condition) {
 	meta.RemoveStatusCondition(conditions, conditionInvalidSpec)
 }
 
+func setSuspended(conditions *[]metav1.Condition, generation int64, reason string) {
+	*conditions = []metav1.Condition{{
+		Type:               conditionSuspended,
+		Reason:             reason,
+		Status:             metav1.ConditionTrue,
+		ObservedGeneration: generation,
+		LastTransitionTime: metav1.Time{
+			Time: time.Now(),
+		},
+		Message: "Resource changes are ignored",
+	}}
+}
+
+func removeSuspended(conditions *[]metav1.Condition) {
+	meta.RemoveStatusCondition(conditions, conditionSuspended)
+}
+
 func ignoreStatusUpdates() predicate.Predicate {
 	return predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
@@ -294,11 +314,11 @@ func buildSynchronizedCondition(resource string, syncType string, generation int
 
 	if len(applyErrors) == 0 {
 		condition.Status = metav1.ConditionTrue
-		condition.Reason = conditionApplySuccessful
+		condition.Reason = conditionReasonApplySuccessful
 		condition.Message = fmt.Sprintf("%s was successfully applied to %d instances", resource, total)
 	} else {
 		condition.Status = metav1.ConditionFalse
-		condition.Reason = conditionApplyFailed
+		condition.Reason = conditionReasonApplyFailed
 
 		var sb strings.Builder
 		for i, err := range applyErrors {

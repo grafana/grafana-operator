@@ -262,6 +262,10 @@ spec:
                   type: object
                 minItems: 1
                 type: array
+              suspend:
+                description: Suspend pauses synchronizing attempts and tells the operator
+                  to ignore changes
+                type: boolean
             required:
             - instanceSelector
             - interval
@@ -476,6 +480,10 @@ spec:
                 type: string
               settings:
                 x-kubernetes-preserve-unknown-fields: true
+              suspend:
+                description: Suspend pauses synchronizing attempts and tells the operator
+                  to ignore changes
+                type: boolean
               type:
                 minLength: 1
                 type: string
@@ -974,6 +982,10 @@ spec:
                   not set
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
+              suspend:
+                description: Suspend pauses synchronizing attempts and tells the operator
+                  to ignore changes
+                type: boolean
               uid:
                 description: |-
                   Manually specify the uid, overwrites uids already present in the json model.
@@ -1315,6 +1327,10 @@ spec:
                   not set
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
+              suspend:
+                description: Suspend pauses synchronizing attempts and tells the operator
+                  to ignore changes
+                type: boolean
               uid:
                 description: |-
                   The UID, for the datasource, fallback to the deprecated spec.datasource.uid
@@ -1614,6 +1630,10 @@ spec:
                   not set
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
+              suspend:
+                description: Suspend pauses synchronizing attempts and tells the operator
+                  to ignore changes
+                type: boolean
               title:
                 description: Display name of the folder in Grafana
                 type: string
@@ -2049,6 +2069,10 @@ spec:
                   not set
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
+              suspend:
+                description: Suspend pauses synchronizing attempts and tells the operator
+                  to ignore changes
+                type: boolean
               uid:
                 description: |-
                   Manually specify the uid, overwrites uids already present in the json model.
@@ -2339,6 +2363,10 @@ spec:
                   not set
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
+              suspend:
+                description: Suspend pauses synchronizing attempts and tells the operator
+                  to ignore changes
+                type: boolean
               time_intervals:
                 description: Time intervals for muting
                 items:
@@ -2721,6 +2749,10 @@ spec:
                 required:
                 - receiver
                 type: object
+              suspend:
+                description: Suspend pauses synchronizing attempts and tells the operator
+                  to ignore changes
+                type: boolean
             required:
             - instanceSelector
             - route
@@ -3172,6 +3204,10 @@ spec:
                   not set
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
+              suspend:
+                description: Suspend pauses synchronizing attempts and tells the operator
+                  to ignore changes
+                type: boolean
               template:
                 description: Template content
                 type: string
@@ -8298,6 +8334,10 @@ spec:
                       x-kubernetes-map-type: atomic
                     type: array
                 type: object
+              suspend:
+                description: Suspend pauses reconciliation of owned resources like
+                  deployments, Services, Etc. upon changes
+                type: boolean
               version:
                 description: Version specifies the version of Grafana to use for this
                   deployment. It follows the same format as the docker.io/grafana/grafana

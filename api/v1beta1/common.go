@@ -42,6 +42,10 @@ type GrafanaCommonSpec struct {
 	// +optional
 	// +kubebuilder:default=false
 	AllowCrossNamespaceImport bool `json:"allowCrossNamespaceImport,omitempty"`
+
+	// Suspend pauses synchronizing attempts and tells the operator to ignore changes
+	// +optional
+	Suspend bool `json:"suspend,omitempty"`
 }
 
 // Common Functions that all CRs should implement, excluding Grafana
