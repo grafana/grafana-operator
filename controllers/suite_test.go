@@ -21,10 +21,10 @@ import (
 	"fmt"
 	"path/filepath"
 	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -78,21 +78,18 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
 
-	By("Create namespace and an 'Invalid' instance to provoke ApplyFailed statuses")
-	invalidNS := &corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: objectMetaApplyFailed.Namespace,
-		},
-	}
-	Expect(k8sClient.Create(testCtx, invalidNS)).NotTo(HaveOccurred())
+	// Ensure k8sClient is 100% ready
+	time.Sleep(100 * time.Millisecond)
 
+	By("Create a dummy 'invalid' instance to provoke conditions")
 	intP := 1
 	grafanaCr := &v1beta1.Grafana{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      objectMetaApplyFailed.Name,
-			Namespace: objectMetaApplyFailed.Namespace,
+			Name:      "dummy",
+			Namespace: "default",
 			Labels: map[string]string{
-				"test": "apply-failed",
+				"apply-failed": "test",
+				"invalid-spec": "test",
 			},
 		},
 		Spec: v1beta1.GrafanaSpec{
