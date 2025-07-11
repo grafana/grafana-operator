@@ -18,18 +18,22 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/controllers/config"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -53,6 +57,10 @@ var _ = BeforeSuite(func() {
 
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
+	ctx := context.Background()
+	log := logf.FromContext(ctx).WithName("ControllerTests")
+	testCtx = logf.IntoContext(ctx, log)
+
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
 		CRDDirectoryPaths:     []string{filepath.Join("..", "config", "crd", "bases")},
@@ -62,15 +70,63 @@ var _ = BeforeSuite(func() {
 	cfg, err := testEnv.Start()
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
-
-	err = grafanav1beta1.AddToScheme(scheme.Scheme)
-	Expect(err).NotTo(HaveOccurred())
+	Expect(v1beta1.AddToScheme(scheme.Scheme)).NotTo(HaveOccurred())
 
 	//+kubebuilder:scaffold:scheme
 
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
+
+	By("Create namespace and an 'Invalid' instance to provoke ApplyFailed statuses")
+	invalidNS := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: objectMetaApplyFailed.Namespace,
+		},
+	}
+	Expect(k8sClient.Create(testCtx, invalidNS)).NotTo(HaveOccurred())
+
+	intP := 1
+	grafanaCr := &v1beta1.Grafana{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      objectMetaApplyFailed.Name,
+			Namespace: objectMetaApplyFailed.Namespace,
+			Labels: map[string]string{
+				"test": "apply-failed",
+			},
+		},
+		Spec: v1beta1.GrafanaSpec{
+			Client: &v1beta1.GrafanaClient{TimeoutSeconds: &intP},
+			Config: map[string]map[string]string{
+				"security": {
+					"admin_user":     "root",
+					"admin_password": "secret",
+				},
+			},
+		},
+	}
+	Expect(k8sClient.Create(testCtx, grafanaCr)).NotTo(HaveOccurred())
+
+	grafanaCr.Status = v1beta1.GrafanaStatus{
+		Stage:       v1beta1.OperatorStageComplete,
+		StageStatus: v1beta1.OperatorStageResultSuccess,
+		AdminURL:    fmt.Sprintf("http://%s-service", "invalid"),
+		Version:     config.GrafanaVersion,
+	}
+	Expect(k8sClient.Status().Update(testCtx, grafanaCr)).ToNot(HaveOccurred())
+
+	// Should not be reconciled
+	By("Creating folder to use when provoking ApplyFailed conditions")
+	folderCr := &v1beta1.GrafanaFolder{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: objectMetaApplyFailed.Namespace,
+			Name:      "apply-failed-helper",
+		},
+		Spec: v1beta1.GrafanaFolderSpec{
+			GrafanaCommonSpec: commonSpecApplyFailed,
+		},
+	}
+	Expect(k8sClient.Create(testCtx, folderCr)).ToNot(HaveOccurred())
 })
 
 var _ = AfterSuite(func() {
