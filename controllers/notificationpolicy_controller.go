@@ -93,7 +93,6 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 
 	if notificationPolicy.Spec.Suspend {
 		setSuspended(&notificationPolicy.Status.Conditions, notificationPolicy.Generation, conditionReasonApplySuspended)
-		meta.RemoveStatusCondition(&notificationPolicy.Status.Conditions, conditionNotificationPolicySynchronized)
 		return ctrl.Result{}, nil
 	}
 	removeSuspended(&notificationPolicy.Status.Conditions)
