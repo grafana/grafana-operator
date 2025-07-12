@@ -358,7 +358,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
+			testCtx := context.Background()
 			s := runtime.NewScheme()
 
 			err := v1beta1.AddToScheme(s)
@@ -366,7 +366,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 
 			client := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(routesToRuntimeObjects(tt.existingRoutes)...).Build()
 
-			_, err = assembleNotificationPolicyRoutes(ctx, client, tt.notificationPolicy)
+			_, err = assembleNotificationPolicyRoutes(testCtx, client, tt.notificationPolicy)
 			if tt.wantLoopDetectedErr {
 				require.ErrorIs(t, err, ErrLoopDetected)
 			}
@@ -425,6 +425,27 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke Conditions", func() {
 			wantReason:    conditionReasonApplyFailed,
 			wantErr:       "failed to apply to all instances",
 		},
+		{
+			name: "Mutually Exclusive fields routes/routeSelector",
+			cr: &v1beta1.GrafanaNotificationPolicy{
+				ObjectMeta: objectMetaInvalidSpec,
+				Spec: v1beta1.GrafanaNotificationPolicySpec{
+					GrafanaCommonSpec: commonSpecInvalidSpec,
+					Route: &v1beta1.Route{
+						Receiver: "default-receiver",
+						Routes: []*v1beta1.Route{{
+							Receiver: "default-receiver",
+						}},
+						RouteSelector: &metav1.LabelSelector{
+							MatchLabels: map[string]string{},
+						},
+					},
+				},
+			},
+			wantCondition: conditionInvalidSpec,
+			wantReason:    conditionReasonFieldsMutuallyExclusive,
+			wantErr:       "invalid route spec discovered: routeSelector is mutually exclusive with routes",
+		},
 	}
 
 	for _, test := range tests {
@@ -436,7 +457,7 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke Conditions", func() {
 			req := requestFromMeta(test.cr.ObjectMeta)
 
 			// Reconcile
-			r := GrafanaNotificationPolicyReconciler{Client: k8sClient}
+			r := GrafanaNotificationPolicyReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
 			_, err = r.Reconcile(testCtx, req)
 			if test.wantErr == "" {
 				Expect(err).ShouldNot(HaveOccurred())
@@ -453,4 +474,84 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke Conditions", func() {
 			Expect(resultCr.Status.Conditions).Should(ContainElement(HaveField("Reason", test.wantReason)))
 		})
 	}
+})
+
+var _ = Describe("NotificationPolicy Reconciler: Provoke LoopDetected Condition", func() {
+	np := &v1beta1.GrafanaNotificationPolicy{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "loopdetected-spec",
+		},
+		Spec: v1beta1.GrafanaNotificationPolicySpec{
+			GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
+				InstanceSelector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{"loop-detected": "test"},
+				},
+			},
+			Route: &v1beta1.Route{
+				Receiver: "grafana-default-email",
+				Routes: []*v1beta1.Route{{
+					Receiver: "grafana-default-email",
+					Matchers: v1beta1.Matchers{{Name: stringP("team"), Value: "a", IsEqual: true}},
+					RouteSelector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{"team-a": "child"},
+					},
+				}},
+			},
+		},
+	}
+	teamB := &v1beta1.GrafanaNotificationPolicyRoute{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "team-b",
+			Labels:    map[string]string{"team-a": "child"},
+		},
+		Spec: v1beta1.GrafanaNotificationPolicyRouteSpec{
+			Route: v1beta1.Route{
+				Receiver: "grafana-default-email",
+				Matchers: v1beta1.Matchers{{Name: stringP("team"), Value: "b", IsEqual: true}},
+				RouteSelector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{"team-b": "child"},
+				},
+			},
+		},
+	}
+	teamC := &v1beta1.GrafanaNotificationPolicyRoute{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "team-c",
+			Labels:    map[string]string{"team-b": "child"},
+		},
+		Spec: v1beta1.GrafanaNotificationPolicyRouteSpec{
+			Route: v1beta1.Route{
+				Receiver: "grafana-default-email",
+				Matchers: v1beta1.Matchers{{Name: stringP("team"), Value: "b", IsEqual: true}}, // Also matches team b
+				RouteSelector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{"team-b": "child"},
+				},
+			},
+		},
+	}
+
+	It("Provokes the NotificationPolicyLoopDetected Condition", func() {
+		Expect(k8sClient.Create(testCtx, np)).To(Succeed())
+		Expect(k8sClient.Create(testCtx, teamB)).To(Succeed())
+		Expect(k8sClient.Create(testCtx, teamC)).To(Succeed())
+
+		// Reconciliation Request
+		req := requestFromMeta(np.ObjectMeta)
+
+		// Reconcile
+		r := GrafanaNotificationPolicyReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+		_, err := r.Reconcile(testCtx, req)
+		Expect(err).To(HaveOccurred())
+		Expect(err.Error()).To(HavePrefix("failed to assemble notification policy routes"))
+
+		resultCr := &v1beta1.GrafanaNotificationPolicy{}
+		Expect(r.Get(testCtx, req.NamespacedName, resultCr)).Should(Succeed())
+
+		// Verify Condition
+		Expect(resultCr.Status.Conditions).Should(ContainElement(HaveField("Type", conditionNotificationPolicyLoopDetected)))
+		Expect(resultCr.Status.Conditions).Should(ContainElement(HaveField("Reason", conditionReasonLoopDetected)))
+	})
 })

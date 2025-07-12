@@ -47,6 +47,9 @@ const (
 	conditionNotificationPolicySynchronized  = "NotificationPolicySynchronized"
 	conditionRoutesIgnoredDueToRouteSelector = "RoutesIgnoredDueToRouteSelector"
 	annotationAppliedNotificationPolicy      = "operator.grafana.com/applied-notificationpolicy"
+
+	conditionReasonFieldsMutuallyExclusive = "FieldsMutuallyExclusive"
+	conditionReasonLoopDetected            = "LoopDetected"
 )
 
 // GrafanaNotificationPolicyReconciler reconciles a GrafanaNotificationPolicy object
@@ -115,7 +118,7 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 				Type:               conditionNotificationPolicyLoopDetected,
 				Status:             metav1.ConditionTrue,
 				ObservedGeneration: notificationPolicy.Generation,
-				Reason:             "LoopDetected",
+				Reason:             conditionReasonLoopDetected,
 				Message:            fmt.Sprintf("Loop detected in notification policy routes: %s", err.Error()),
 			})
 			meta.RemoveStatusCondition(&notificationPolicy.Status.Conditions, conditionNotificationPolicySynchronized)
@@ -450,5 +453,5 @@ func statusDiscoveredRoutes(routes []*v1beta1.GrafanaNotificationPolicyRoute) []
 
 // setInvalidSpecMutuallyExclusive sets the invalid spec condition due to the routeSelector being mutually exclusive with routes
 func setInvalidSpecMutuallyExclusive(conditions *[]metav1.Condition, generation int64) {
-	setInvalidSpec(conditions, generation, "FieldsMutuallyExclusive", "RouteSelector and Routes are mutually exclusive")
+	setInvalidSpec(conditions, generation, conditionReasonFieldsMutuallyExclusive, "RouteSelector and Routes are mutually exclusive")
 }
