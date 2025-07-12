@@ -49,6 +49,20 @@ var _ = Describe("Folder Reconciler: Provoke Conditions", func() {
 			wantReason:    conditionReasonApplyFailed,
 			wantErr:       "failed to apply to all instances",
 		},
+		{
+			name: "InvalidSpec Condition",
+			cr: &v1beta1.GrafanaFolder{
+				ObjectMeta: objectMetaInvalidSpec,
+				Spec: v1beta1.GrafanaFolderSpec{
+					GrafanaCommonSpec: commonSpecInvalidSpec,
+					CustomUID:         "self-ref",
+					ParentFolderUID:   "self-ref",
+				},
+			},
+			wantCondition: conditionInvalidSpec,
+			wantReason:    conditionReasonCyclicParent,
+			wantErr:       "cyclic folder reference",
+		},
 	}
 
 	for _, test := range tests {
