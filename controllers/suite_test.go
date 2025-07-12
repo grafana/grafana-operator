@@ -78,7 +78,8 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
 
-	// Ensure k8sClient is 100% ready
+	// NOTE(Baarsgaard) Ensure k8sClient is 100% ready
+	// ENVTEST sometimes fail all tests with a 401 Unauthorized
 	time.Sleep(100 * time.Millisecond)
 
 	By("Create a dummy 'invalid' instance to provoke conditions")
@@ -88,8 +89,9 @@ var _ = BeforeSuite(func() {
 			Name:      "dummy",
 			Namespace: "default",
 			Labels: map[string]string{
-				"apply-failed": "test",
-				"invalid-spec": "test",
+				"apply-failed":  "test",
+				"invalid-spec":  "test",
+				"loop-detected": "test",
 			},
 		},
 		Spec: v1beta1.GrafanaSpec{
