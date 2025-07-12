@@ -40,6 +40,7 @@ import (
 
 const (
 	conditionContactPointSynchronized = "ContactPointSynchronized"
+	conditionReasonInvalidSettings    = "InvalidSettings"
 )
 
 // GrafanaContactPointReconciler reconciles a GrafanaContactPoint object
@@ -104,9 +105,9 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 
 	settings, err := r.buildContactPointSettings(ctx, contactPoint)
 	if err != nil {
-		setInvalidSpec(&contactPoint.Status.Conditions, contactPoint.Generation, "InvalidSettings", err.Error())
+		setInvalidSpec(&contactPoint.Status.Conditions, contactPoint.Generation, conditionReasonInvalidSettings, err.Error())
 		meta.RemoveStatusCondition(&contactPoint.Status.Conditions, conditionContactPointSynchronized)
-		return ctrl.Result{}, fmt.Errorf("could not build contactpoint settings: %w", err)
+		return ctrl.Result{}, fmt.Errorf("building contactpoint settings: %w", err)
 	}
 
 	removeInvalidSpec(&contactPoint.Status.Conditions)
