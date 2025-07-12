@@ -65,33 +65,43 @@ func TestFind(t *testing.T) {
 }
 
 func TestIndexOf(t *testing.T) {
-	in := mockNamespacedResourceList()
+	list := NamespacedResourceList{
+		NamespacedResource("default/folder0/aaaa"),
+		NamespacedResource("default/folder1/bbbb"),
+		NamespacedResource("default/folder2/cccc"),
+	}
 
 	tests := []struct {
-		testName   string
+		name       string
 		rNamespace string
 		rName      string
-		wantIdx    int
+		want       int
 	}{
 		{
-			testName:   "Missing from list",
+			name:       "Not found",
 			rNamespace: "default",
 			rName:      "not-found",
-			wantIdx:    -1,
+			want:       -1,
 		},
 		{
-			testName:   "Present in list",
+			name:       "Found at 0",
+			rNamespace: "default",
+			rName:      "folder0",
+			want:       0,
+		},
+		{
+			name:       "Found at 2",
 			rNamespace: "default",
 			rName:      "folder2",
-			wantIdx:    2,
+			want:       2,
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.testName, func(t *testing.T) {
-			gotIdx := in.IndexOf(tt.rNamespace, tt.rName)
+		t.Run(tt.name, func(t *testing.T) {
+			got := list.IndexOf(tt.rNamespace, tt.rName)
 
-			assert.Equal(t, tt.wantIdx, gotIdx)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
