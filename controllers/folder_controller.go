@@ -172,6 +172,8 @@ func (r *GrafanaFolderReconciler) finalize(ctx context.Context, folder *grafanav
 }
 
 func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *grafanav1beta1.Grafana, cr *grafanav1beta1.GrafanaFolder) error {
+	log := logf.FromContext(ctx)
+
 	title := cr.GetTitle()
 	uid := cr.CustomUIDOrUID()
 
@@ -190,8 +192,9 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 		return err
 	}
 
-	// always update after resync period has elapsed even if cr is unchanged.
+	// Update when missing, the CR is updated or parentFolder has changed.
 	if exists && cr.Unchanged() && parentFolderUID == remoteParent {
+		log.V(1).Info("folder unchanged. skipping remaining requests")
 		return nil
 	}
 
