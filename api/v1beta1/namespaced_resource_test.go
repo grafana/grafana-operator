@@ -97,54 +97,62 @@ func TestIndexOf(t *testing.T) {
 }
 
 func TestRemoveEntries(t *testing.T) {
-	in := mockNamespacedResourceList()
+	r1 := NamespacedResource("1/1/1")
+	r2 := NamespacedResource("1/1/2")
+	r3 := NamespacedResource("3/3/3")
+	r4 := NamespacedResource("3/3/4")
 
 	tests := []struct {
 		name     string
+		list     NamespacedResourceList
 		toRemove NamespacedResourceList
-		wantLen  int
+		want     NamespacedResourceList
 	}{
 		{
 			name:     "Remove 'missing' entry from list",
-			toRemove: NamespacedResourceList{},
-			wantLen:  len(in),
+			list:     NamespacedResourceList{r1, r2, r3},
+			toRemove: NamespacedResourceList{r4},
+			want:     NamespacedResourceList{r1, r2, r3},
 		},
 		{
 			name:     "Remove first entry from the list",
-			toRemove: NamespacedResourceList{"default/folder0/aaaa"},
-			wantLen:  len(in) - 1,
+			list:     NamespacedResourceList{r1, r2, r3},
+			toRemove: NamespacedResourceList{r1},
+			want:     NamespacedResourceList{r2, r3},
 		},
 		{
 			name:     "Remove middle entry from the list",
-			toRemove: NamespacedResourceList{"default/folder2/cccc"},
-			wantLen:  len(in) - 1,
+			list:     NamespacedResourceList{r1, r2, r3},
+			toRemove: NamespacedResourceList{r2},
+			want:     NamespacedResourceList{r1, r3},
 		},
 		{
 			name:     "Remove last entry from the list",
-			toRemove: NamespacedResourceList{"default/folder3/dddd"},
-			wantLen:  len(in) - 1,
+			list:     NamespacedResourceList{r1, r2, r3},
+			toRemove: NamespacedResourceList{r3},
+			want:     NamespacedResourceList{r1, r2},
 		},
 		{
 			name:     "Remove multiple entries from the list",
-			toRemove: NamespacedResourceList{"default/folder1/bbbb", "default/folder2/cccc", "default/folder3/dddd"},
-			wantLen:  len(in) - 3,
+			list:     NamespacedResourceList{r1, r2, r3},
+			toRemove: NamespacedResourceList{r1, r2},
+			want:     NamespacedResourceList{r3},
 		},
 		{
 			name:     "Remove all entries from the list",
-			toRemove: NamespacedResourceList{"default/folder0/aaaa", "default/folder1/bbbb", "default/folder2/cccc", "default/folder3/dddd"},
-			wantLen:  0,
+			list:     NamespacedResourceList{r1, r2, r3},
+			toRemove: NamespacedResourceList{r1, r2, r3},
+			want:     NamespacedResourceList{},
 		},
 	}
 
 	for _, tt := range tests {
-		list := mockNamespacedResourceList()
-
 		t.Run(tt.name, func(t *testing.T) {
-			gotList := list.RemoveEntries(&tt.toRemove)
+			got := tt.list.RemoveEntries(&tt.toRemove)
 
-			assert.Equal(t, tt.wantLen, len(gotList))
+			assert.Equal(t, tt.want, got)
 			for _, r := range tt.toRemove {
-				assert.NotContainsf(t, gotList, r, "Resources should have removed from the source list")
+				assert.NotContainsf(t, got, r, "Resources should have removed from the source list")
 			}
 		})
 	}
