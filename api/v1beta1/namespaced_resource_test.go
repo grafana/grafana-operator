@@ -6,17 +6,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func strP(s string) *string {
-	return &s
-}
+func strP(t *testing.T, s string) *string {
+	t.Helper()
 
-func mockNamespacedResourceList() NamespacedResourceList {
-	return NamespacedResourceList{
-		NamespacedResource("default/folder0/aaaa"),
-		NamespacedResource("default/folder1/bbbb"),
-		NamespacedResource("default/folder2/cccc"),
-		NamespacedResource("default/folder3/dddd"),
-	}
+	return &s
 }
 
 func TestSplit(t *testing.T) {
@@ -29,37 +22,40 @@ func TestSplit(t *testing.T) {
 }
 
 func TestFind(t *testing.T) {
-	in := mockNamespacedResourceList()
+	list := NamespacedResourceList{
+		NamespacedResource("default/folder0/aaaa"),
+		NamespacedResource("default/folder1/bbbb"),
+	}
 
 	tests := []struct {
-		testName   string
-		rNamespace string
-		rName      string
-		found      bool
-		wantIdent  *string
+		name           string
+		rNamespace     string
+		rName          string
+		wantFound      bool
+		wantIdentifier *string
 	}{
 		{
-			testName:   "Missing from list",
-			rNamespace: "default",
-			rName:      "not-found",
-			found:      false,
-			wantIdent:  nil,
+			name:           "Not found",
+			rNamespace:     "default",
+			rName:          "not-found",
+			wantFound:      false,
+			wantIdentifier: nil,
 		},
 		{
-			testName:   "Present in list",
-			rNamespace: "default",
-			rName:      "folder2",
-			found:      true,
-			wantIdent:  strP("cccc"),
+			name:           "Found",
+			rNamespace:     "default",
+			rName:          "folder1",
+			wantFound:      true,
+			wantIdentifier: strP(t, "bbbb"),
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.testName, func(t *testing.T) {
-			found, gotIdent := in.Find(tt.rNamespace, tt.rName)
+		t.Run(tt.name, func(t *testing.T) {
+			found, gotIdent := list.Find(tt.rNamespace, tt.rName)
 
-			assert.Equal(t, tt.found, found)
-			assert.Equal(t, tt.wantIdent, gotIdent)
+			assert.Equal(t, tt.wantFound, found)
+			assert.Equal(t, tt.wantIdentifier, gotIdent)
 		})
 	}
 }
