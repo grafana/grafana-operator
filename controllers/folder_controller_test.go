@@ -16,7 +16,7 @@ var _ = Describe("Folder Reconciler: Provoke Conditions", func() {
 		wantErr       string
 	}{
 		{
-			name: "Suspended Condition",
+			name: ".spec.suspend=true",
 			cr: &v1beta1.GrafanaFolder{
 				ObjectMeta: objectMetaSuspended,
 				Spec: v1beta1.GrafanaFolderSpec{
@@ -27,7 +27,7 @@ var _ = Describe("Folder Reconciler: Provoke Conditions", func() {
 			wantReason:    conditionReasonApplySuspended,
 		},
 		{
-			name: "NoMatchingInstances Condition",
+			name: "GetScopedMatchingInstances returns empty list",
 			cr: &v1beta1.GrafanaFolder{
 				ObjectMeta: objectMetaNoMatchingInstances,
 				Spec: v1beta1.GrafanaFolderSpec{
@@ -38,7 +38,7 @@ var _ = Describe("Folder Reconciler: Provoke Conditions", func() {
 			wantReason:    conditionReasonEmptyAPIReply,
 		},
 		{
-			name: "ApplyFailed Condition",
+			name: "Failed to apply to instance",
 			cr: &v1beta1.GrafanaFolder{
 				ObjectMeta: objectMetaApplyFailed,
 				Spec: v1beta1.GrafanaFolderSpec{

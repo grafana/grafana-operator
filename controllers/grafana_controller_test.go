@@ -57,7 +57,7 @@ var _ = Describe("Grafana Reconciler: Provoke Conditions", func() {
 		wantReason    string
 	}{
 		{
-			name: "Suspend Condition",
+			name: ".spec.suspend=true",
 			cr: &v1beta1.Grafana{
 				ObjectMeta: objectMetaSuspended,
 				Spec: v1beta1.GrafanaSpec{
@@ -67,6 +67,7 @@ var _ = Describe("Grafana Reconciler: Provoke Conditions", func() {
 			wantCondition: conditionSuspended,
 			wantReason:    conditionReasonReconcileSuspended,
 		},
+		// TODO When InvalidSpec is implemented for external instances admin secret referencing a non-existing secret
 	}
 
 	for _, test := range tests {

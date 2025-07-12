@@ -32,7 +32,7 @@ var _ = Describe("MuteTiming Reconciler: Provoke Conditions", func() {
 		wantErr       string
 	}{
 		{
-			name: "Suspended Condition",
+			name: ".spec.suspend=true",
 			cr: &v1beta1.GrafanaMuteTiming{
 				ObjectMeta: objectMetaSuspended,
 				Spec: v1beta1.GrafanaMuteTimingSpec{
@@ -44,7 +44,7 @@ var _ = Describe("MuteTiming Reconciler: Provoke Conditions", func() {
 			wantReason:    conditionReasonApplySuspended,
 		},
 		{
-			name: "NoMatchingInstances Condition",
+			name: "GetScopedMatchingInstances returns empty list",
 			cr: &v1beta1.GrafanaMuteTiming{
 				ObjectMeta: objectMetaNoMatchingInstances,
 				Spec: v1beta1.GrafanaMuteTimingSpec{
@@ -56,7 +56,7 @@ var _ = Describe("MuteTiming Reconciler: Provoke Conditions", func() {
 			wantReason:    conditionReasonEmptyAPIReply,
 		},
 		{
-			name: "ApplyFailed Condition",
+			name: "Failed to apply to instance",
 			cr: &v1beta1.GrafanaMuteTiming{
 				ObjectMeta: objectMetaApplyFailed,
 				Spec: v1beta1.GrafanaMuteTimingSpec{

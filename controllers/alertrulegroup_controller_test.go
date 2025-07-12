@@ -30,7 +30,7 @@ var _ = Describe("AlertRulegroup Reconciler: Provoke Conditions", func() {
 		wantErr       string
 	}{
 		{
-			name: "Suspend Condition",
+			name: ".spec.suspend=true",
 			cr: &v1beta1.GrafanaAlertRuleGroup{
 				ObjectMeta: objectMetaSuspended,
 				Spec: v1beta1.GrafanaAlertRuleGroupSpec{
@@ -43,7 +43,7 @@ var _ = Describe("AlertRulegroup Reconciler: Provoke Conditions", func() {
 			wantReason:    conditionReasonApplySuspended,
 		},
 		{
-			name: "NoMatchingInstances Condition",
+			name: "GetScopedMatchingInstances returns empty list",
 			cr: &v1beta1.GrafanaAlertRuleGroup{
 				ObjectMeta: objectMetaNoMatchingInstances,
 				Spec: v1beta1.GrafanaAlertRuleGroupSpec{
@@ -56,7 +56,7 @@ var _ = Describe("AlertRulegroup Reconciler: Provoke Conditions", func() {
 			wantReason:    conditionReasonEmptyAPIReply,
 		},
 		{
-			name: "ApplyFailed Condition",
+			name: "Failed to apply to instance",
 			cr: &v1beta1.GrafanaAlertRuleGroup{
 				ObjectMeta: objectMetaApplyFailed,
 				Spec: v1beta1.GrafanaAlertRuleGroupSpec{

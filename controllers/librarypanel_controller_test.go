@@ -16,7 +16,7 @@ var _ = Describe("LibraryPanel Reconciler: Provoke Conditions", func() {
 		wantErr       string
 	}{
 		{
-			name: "Suspended Condition",
+			name: ".spec.suspend=true",
 			cr: &v1beta1.GrafanaLibraryPanel{
 				ObjectMeta: objectMetaSuspended,
 				Spec: v1beta1.GrafanaLibraryPanelSpec{
@@ -28,7 +28,7 @@ var _ = Describe("LibraryPanel Reconciler: Provoke Conditions", func() {
 			wantReason:    conditionReasonApplySuspended,
 		},
 		{
-			name: "NoMatchingInstances Condition",
+			name: "GetScopedMatchingInstances returns empty list",
 			cr: &v1beta1.GrafanaLibraryPanel{
 				ObjectMeta: objectMetaNoMatchingInstances,
 				Spec: v1beta1.GrafanaLibraryPanelSpec{
@@ -40,7 +40,7 @@ var _ = Describe("LibraryPanel Reconciler: Provoke Conditions", func() {
 			wantReason:    conditionReasonEmptyAPIReply,
 		},
 		{
-			name: "ApplyFailed Condition",
+			name: "Failed to apply to instance",
 			cr: &v1beta1.GrafanaLibraryPanel{
 				ObjectMeta: objectMetaApplyFailed,
 				Spec: v1beta1.GrafanaLibraryPanelSpec{
