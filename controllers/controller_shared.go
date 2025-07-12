@@ -277,8 +277,9 @@ func removeInvalidSpec(conditions *[]metav1.Condition) {
 	meta.RemoveStatusCondition(conditions, conditionInvalidSpec)
 }
 
+// Replaces all conditions with Suspended if not set
 func setSuspended(conditions *[]metav1.Condition, generation int64, reason string) {
-	*conditions = []metav1.Condition{{
+	suspendCondition := metav1.Condition{
 		Type:               conditionSuspended,
 		Reason:             reason,
 		Status:             metav1.ConditionTrue,
@@ -287,7 +288,16 @@ func setSuspended(conditions *[]metav1.Condition, generation int64, reason strin
 			Time: time.Now(),
 		},
 		Message: "Resource changes are ignored",
-	}}
+	}
+
+	// If already present, update the condition
+	if meta.IsStatusConditionTrue(*conditions, conditionSuspended) {
+		meta.SetStatusCondition(conditions, suspendCondition)
+		return
+	}
+
+	// If missing, overwrite the conditions array entirely
+	*conditions = []metav1.Condition{suspendCondition}
 }
 
 func removeSuspended(conditions *[]metav1.Condition) {
