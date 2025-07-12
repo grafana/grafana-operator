@@ -248,7 +248,7 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 				if err != nil {
 					return fmt.Errorf("deleting empty parent folder from instance: %w", err)
 				}
-				if resp.StatusCode == 200 {
+				if resp.StatusCode == http.StatusOK {
 					log.Info("unused folder successfully removed")
 				}
 				if resp.StatusCode == 432 {
@@ -490,7 +490,7 @@ func (r *GrafanaDashboardReconciler) DeleteFolderIfEmpty(client *genapi.GrafanaH
 	if err != nil {
 		return http.Response{
 			Status:     "internal grafana client error getting dashboards",
-			StatusCode: 500,
+			StatusCode: http.StatusInternalServerError,
 		}, err
 	}
 	if len(results.GetPayload()) > 0 {
@@ -506,13 +506,13 @@ func (r *GrafanaDashboardReconciler) DeleteFolderIfEmpty(client *genapi.GrafanaH
 		if !errors.As(err, &notFound) {
 			return http.Response{
 				Status:     "internal grafana client error deleting grafana folder",
-				StatusCode: 500,
+				StatusCode: http.StatusInternalServerError,
 			}, err
 		}
 	}
 	return http.Response{
 		Status:     "grafana folder deleted",
-		StatusCode: 200,
+		StatusCode: http.StatusOK,
 	}, nil
 }
 

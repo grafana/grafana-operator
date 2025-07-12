@@ -217,11 +217,12 @@ type GrafanaAlertRuleGroupList struct {
 }
 
 func (in *GrafanaAlertRuleGroupList) Exists(namespace, name string) bool {
-	for _, contactpoint := range in.Items {
-		if contactpoint.Namespace == namespace && contactpoint.Name == name {
+	for _, item := range in.Items {
+		if item.Namespace == namespace && item.Name == name {
 			return true
 		}
 	}
+
 	return false
 }
 

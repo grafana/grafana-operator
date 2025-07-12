@@ -15,8 +15,10 @@ linters:
     - nilerr
     - prealloc
     - revive
+    - testifylint
     - thelper
     - unparam
+    - usestdlibvars
     - whitespace
 
   settings:

@@ -6,6 +6,7 @@ import (
 
 	v1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -35,7 +36,7 @@ func TestGetDatasourceContent(t *testing.T) {
 		content, hash, err := reconciler.buildDatasourceModel(testCtx, cr)
 		got := content.SecureJSONData["httpHeaderValue1"]
 
-		assert.Nil(t, err)
+		require.NoError(t, err)
 		assert.NotEmpty(t, hash)
 		assert.Equal(t, want, got)
 	})

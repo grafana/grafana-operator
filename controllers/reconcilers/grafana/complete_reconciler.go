@@ -52,7 +52,7 @@ func (r *CompleteReconciler) getVersion(ctx context.Context, cr *v1beta1.Grafana
 	}
 
 	instanceURL := gURL.JoinPath("/frontend/settings").String()
-	req, err := http.NewRequest("GET", instanceURL, nil)
+	req, err := http.NewRequest(http.MethodGet, instanceURL, nil)
 	if err != nil {
 		return "", fmt.Errorf("building request to fetch version: %w", err)
 	}
