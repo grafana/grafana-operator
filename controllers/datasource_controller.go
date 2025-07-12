@@ -43,6 +43,7 @@ import (
 
 const (
 	conditionDatasourceSynchronized = "DatasourceSynchronized"
+	conditionReasonInvalidModel     = "InvalidModel"
 )
 
 // GrafanaDatasourceReconciler reconciles a GrafanaDatasource object
@@ -103,7 +104,6 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		cr.Status.NoMatchingInstances = true
 		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
-
 	removeNoMatchingInstance(&cr.Status.Conditions)
 	cr.Status.NoMatchingInstances = false
 	log.Info("found matching Grafana instances for datasource", "count", len(instances))
@@ -123,11 +123,10 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	datasource, hash, err := r.buildDatasourceModel(ctx, cr)
 	if err != nil {
-		setInvalidSpec(&cr.Status.Conditions, cr.Generation, "InvalidModel", err.Error())
+		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidModel, err.Error())
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDatasourceSynchronized)
-		return ctrl.Result{}, fmt.Errorf("could not build datasource model: %w", err)
+		return ctrl.Result{}, fmt.Errorf("building datasource model: %w", err)
 	}
-
 	removeInvalidSpec(&cr.Status.Conditions)
 
 	pluginErrors := make(map[string]string)

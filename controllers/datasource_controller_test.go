@@ -148,6 +148,28 @@ var _ = Describe("Datasource Reconciler: Provoke Conditions", func() {
 			wantReason:    conditionReasonApplyFailed,
 			wantErr:       "failed to apply to all instances",
 		},
+		{
+			name: "Referenced secret does not exist",
+			cr: &v1beta1.GrafanaDatasource{
+				ObjectMeta: objectMetaInvalidSpec,
+				Spec: v1beta1.GrafanaDatasourceSpec{
+					GrafanaCommonSpec: commonSpecInvalidSpec,
+					Datasource:        &v1beta1.GrafanaDatasourceInternal{},
+					ValuesFrom: []v1beta1.ValueFrom{{
+						TargetPath: "secureJsonData.httpHeaderValue1",
+						ValueFrom: v1beta1.ValueFromSource{SecretKeyRef: &corev1.SecretKeySelector{
+							Key: "credentials",
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "PROMETHEUS_TOKEN",
+							},
+						}},
+					}},
+				},
+			},
+			wantCondition: conditionInvalidSpec,
+			wantReason:    conditionReasonInvalidModel,
+			wantErr:       "building datasource model",
+		},
 	}
 
 	for _, test := range tests {
