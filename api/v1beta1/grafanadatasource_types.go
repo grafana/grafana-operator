@@ -153,11 +153,12 @@ func (in *GrafanaDatasource) CustomUIDOrUID() string {
 }
 
 func (in *GrafanaDatasourceList) Exists(namespace, name string) bool {
-	for _, datasource := range in.Items {
-		if datasource.Namespace == namespace && datasource.Name == name {
+	for _, item := range in.Items {
+		if item.Namespace == namespace && item.Name == name {
 			return true
 		}
 	}
+
 	return false
 }
 

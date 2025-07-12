@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFetchDashboardFromGrafanaCom(t *testing.T) {
@@ -21,7 +22,7 @@ func TestFetchDashboardFromGrafanaCom(t *testing.T) {
 	}
 
 	fetchedDashboard, err := FetchFromGrafanaCom(context.Background(), dashboard, k8sClient)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, fetchedDashboard, "Fetched dashboard shouldn't be empty")
 	assert.GreaterOrEqual(t, *dashboard.Spec.GrafanaCom.Revision, 30, "At least 30 revisions exist for dashboard 1860 as of 2023-03-29")
 

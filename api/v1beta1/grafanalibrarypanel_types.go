@@ -116,11 +116,12 @@ func (in *GrafanaLibraryPanel) NamespacedResource(uid string) NamespacedResource
 var _ GrafanaContentResource = &GrafanaLibraryPanel{}
 
 func (in *GrafanaLibraryPanelList) Exists(namespace, name string) bool {
-	for _, e := range in.Items {
-		if e.Namespace == namespace && e.Name == name {
+	for _, item := range in.Items {
+		if item.Namespace == namespace && item.Name == name {
 			return true
 		}
 	}
+
 	return false
 }
 

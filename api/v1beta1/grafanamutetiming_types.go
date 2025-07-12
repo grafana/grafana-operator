@@ -123,11 +123,12 @@ type GrafanaMuteTimingList struct {
 }
 
 func (in *GrafanaMuteTimingList) Exists(namespace, name string) bool {
-	for _, muteTiming := range in.Items {
-		if muteTiming.Namespace == namespace && muteTiming.Name == name {
+	for _, item := range in.Items {
+		if item.Namespace == namespace && item.Name == name {
 			return true
 		}
 	}
+
 	return false
 }
 

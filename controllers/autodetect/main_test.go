@@ -35,23 +35,20 @@ func TestDetectPlatformBasedOnAvailableAPIGroups(t *testing.T) {
 	} {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			output, err := json.Marshal(tt.apiGroupList)
-			require.NoError(t, err)
+			assert.NoError(t, err)
 
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			_, err = w.Write(output)
-			require.NoError(t, err)
+			assert.NoError(t, err)
 		}))
 		defer server.Close()
 
 		autoDetect, err := autodetect.New(&rest.Config{Host: server.URL})
 		require.NoError(t, err)
 
-		// test
 		plt, err := autoDetect.IsOpenshift()
-
-		// verify
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, tt.expected, plt)
 	}
 }

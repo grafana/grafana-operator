@@ -189,14 +189,15 @@ func TestBuildProjectAndFetchJsonnetFrom(t *testing.T) {
 func TestGetJsonProjectBuildRoundName(t *testing.T) {
 	roundName, err := getJSONProjectBuildRoundName("test")
 	require.NoError(t, err)
+
 	roundNameParts := strings.Split(roundName, "-")
-	require.Equal(t, 3, len(roundNameParts))
+	require.Len(t, roundNameParts, 3)
 	require.Equal(t, "test", roundNameParts[0])
 }
 
 func TestGetGzipArchiveFileNameWithExtension(t *testing.T) {
 	archiveName := getGzipArchiveFileNameWithExtension("test")
-	require.Equal(t, archiveName, "test.tar.gz")
+	require.Equal(t, "test.tar.gz", archiveName)
 }
 
 func TestStoreByteArrayGzipOnDisk(t *testing.T) {

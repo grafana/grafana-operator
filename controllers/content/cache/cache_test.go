@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -30,7 +31,7 @@ func TestGrafanaDashboardStatus_getContentCache(t *testing.T) {
 	dashboardJSON := []byte(`{"dummyField": "dummyData"}`)
 
 	cachedDashboard, err := Gzip(dashboardJSON)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	url := "http://127.0.0.1:8080/1.json"
 

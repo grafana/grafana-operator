@@ -6,145 +6,159 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func strP(s string) *string {
-	return &s
-}
+func strP(t *testing.T, s string) *string {
+	t.Helper()
 
-func mockNamespacedResourceList() NamespacedResourceList {
-	return NamespacedResourceList{
-		NamespacedResource("default/folder0/aaaa"),
-		NamespacedResource("default/folder1/bbbb"),
-		NamespacedResource("default/folder2/cccc"),
-		NamespacedResource("default/folder3/dddd"),
-	}
+	return &s
 }
 
 func TestSplit(t *testing.T) {
 	r := NamespacedResource("namespace/name/identifier")
 	ns, n, i := r.Split()
 
-	assert.Equal(t, ns, "namespace")
-	assert.Equal(t, n, "name")
-	assert.Equal(t, i, "identifier")
+	assert.Equal(t, "namespace", ns)
+	assert.Equal(t, "name", n)
+	assert.Equal(t, "identifier", i)
 }
 
 func TestFind(t *testing.T) {
-	in := mockNamespacedResourceList()
+	list := NamespacedResourceList{
+		NamespacedResource("default/folder0/aaaa"),
+		NamespacedResource("default/folder1/bbbb"),
+	}
 
 	tests := []struct {
-		testName   string
-		rNamespace string
-		rName      string
-		found      bool
-		wantIdent  *string
+		name           string
+		rNamespace     string
+		rName          string
+		wantFound      bool
+		wantIdentifier *string
 	}{
 		{
-			testName:   "Missing from list",
-			rNamespace: "default",
-			rName:      "not-found",
-			found:      false,
-			wantIdent:  nil,
+			name:           "Not found",
+			rNamespace:     "default",
+			rName:          "not-found",
+			wantFound:      false,
+			wantIdentifier: nil,
 		},
 		{
-			testName:   "Present in list",
-			rNamespace: "default",
-			rName:      "folder2",
-			found:      true,
-			wantIdent:  strP("cccc"),
+			name:           "Found",
+			rNamespace:     "default",
+			rName:          "folder1",
+			wantFound:      true,
+			wantIdentifier: strP(t, "bbbb"),
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.testName, func(t *testing.T) {
-			found, gotIdent := in.Find(tt.rNamespace, tt.rName)
+		t.Run(tt.name, func(t *testing.T) {
+			found, gotIdent := list.Find(tt.rNamespace, tt.rName)
 
-			assert.Equal(t, tt.found, found)
-			assert.Equal(t, tt.wantIdent, gotIdent)
+			assert.Equal(t, tt.wantFound, found)
+			assert.Equal(t, tt.wantIdentifier, gotIdent)
 		})
 	}
 }
 
 func TestIndexOf(t *testing.T) {
-	in := mockNamespacedResourceList()
+	list := NamespacedResourceList{
+		NamespacedResource("default/folder0/aaaa"),
+		NamespacedResource("default/folder1/bbbb"),
+		NamespacedResource("default/folder2/cccc"),
+	}
 
 	tests := []struct {
-		testName   string
+		name       string
 		rNamespace string
 		rName      string
-		wantIdx    int
+		want       int
 	}{
 		{
-			testName:   "Missing from list",
+			name:       "Not found",
 			rNamespace: "default",
 			rName:      "not-found",
-			wantIdx:    -1,
+			want:       -1,
 		},
 		{
-			testName:   "Present in list",
+			name:       "Found at 0",
+			rNamespace: "default",
+			rName:      "folder0",
+			want:       0,
+		},
+		{
+			name:       "Found at 2",
 			rNamespace: "default",
 			rName:      "folder2",
-			wantIdx:    2,
+			want:       2,
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.testName, func(t *testing.T) {
-			gotIdx := in.IndexOf(tt.rNamespace, tt.rName)
+		t.Run(tt.name, func(t *testing.T) {
+			got := list.IndexOf(tt.rNamespace, tt.rName)
 
-			assert.Equal(t, tt.wantIdx, gotIdx)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
 
 func TestRemoveEntries(t *testing.T) {
-	in := mockNamespacedResourceList()
+	r1 := NamespacedResource("1/1/1")
+	r2 := NamespacedResource("1/1/2")
+	r3 := NamespacedResource("3/3/3")
+	r4 := NamespacedResource("3/3/4")
 
 	tests := []struct {
 		name     string
+		list     NamespacedResourceList
 		toRemove NamespacedResourceList
-		wantLen  int
+		want     NamespacedResourceList
 	}{
 		{
 			name:     "Remove 'missing' entry from list",
-			toRemove: NamespacedResourceList{},
-			wantLen:  len(in),
+			list:     NamespacedResourceList{r1, r2, r3},
+			toRemove: NamespacedResourceList{r4},
+			want:     NamespacedResourceList{r1, r2, r3},
 		},
 		{
 			name:     "Remove first entry from the list",
-			toRemove: NamespacedResourceList{"default/folder0/aaaa"},
-			wantLen:  len(in) - 1,
+			list:     NamespacedResourceList{r1, r2, r3},
+			toRemove: NamespacedResourceList{r1},
+			want:     NamespacedResourceList{r2, r3},
 		},
 		{
 			name:     "Remove middle entry from the list",
-			toRemove: NamespacedResourceList{"default/folder2/cccc"},
-			wantLen:  len(in) - 1,
+			list:     NamespacedResourceList{r1, r2, r3},
+			toRemove: NamespacedResourceList{r2},
+			want:     NamespacedResourceList{r1, r3},
 		},
 		{
 			name:     "Remove last entry from the list",
-			toRemove: NamespacedResourceList{"default/folder3/dddd"},
-			wantLen:  len(in) - 1,
+			list:     NamespacedResourceList{r1, r2, r3},
+			toRemove: NamespacedResourceList{r3},
+			want:     NamespacedResourceList{r1, r2},
 		},
 		{
 			name:     "Remove multiple entries from the list",
-			toRemove: NamespacedResourceList{"default/folder1/bbbb", "default/folder2/cccc", "default/folder3/dddd"},
-			wantLen:  len(in) - 3,
+			list:     NamespacedResourceList{r1, r2, r3},
+			toRemove: NamespacedResourceList{r1, r2},
+			want:     NamespacedResourceList{r3},
 		},
 		{
 			name:     "Remove all entries from the list",
-			toRemove: NamespacedResourceList{"default/folder0/aaaa", "default/folder1/bbbb", "default/folder2/cccc", "default/folder3/dddd"},
-			wantLen:  0,
+			list:     NamespacedResourceList{r1, r2, r3},
+			toRemove: NamespacedResourceList{r1, r2, r3},
+			want:     NamespacedResourceList{},
 		},
 	}
 
 	for _, tt := range tests {
-		list := mockNamespacedResourceList()
-
 		t.Run(tt.name, func(t *testing.T) {
-			gotList := list.RemoveEntries(&tt.toRemove)
+			got := tt.list.RemoveEntries(&tt.toRemove)
 
-			assert.Equal(t, tt.wantLen, len(gotList))
+			assert.Equal(t, tt.want, got)
 			for _, r := range tt.toRemove {
-				assert.NotContainsf(t, gotList, r, "Resources should have removed from the source list")
+				assert.NotContainsf(t, got, r, "Resources should have removed from the source list")
 			}
 		})
 	}
