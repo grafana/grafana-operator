@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -67,6 +68,34 @@ var _ = Describe("Dashboard Reconciler: Provoke Conditions", func() {
 			wantCondition: conditionDashboardSynchronized,
 			wantReason:    conditionReasonApplyFailed,
 			wantErr:       "failed to apply to all instances",
+		},
+		{
+			name: "Invalid JSON",
+			cr: &v1beta1.GrafanaDashboard{
+				ObjectMeta: objectMetaInvalidSpec,
+				Spec: v1beta1.GrafanaDashboardSpec{
+					GrafanaCommonSpec:  commonSpecInvalidSpec,
+					GrafanaContentSpec: v1beta1.GrafanaContentSpec{JSON: "{]"}, // Invalid json
+				},
+			},
+			wantCondition: conditionInvalidSpec,
+			wantReason:    conditionReasonInvalidModelResolution,
+			wantErr:       "resolving dashboard contents",
+		},
+		{
+			name: "No model can be resolved, no model source is defined",
+			cr: &v1beta1.GrafanaDashboard{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "invalid-spec-no-model-source",
+				},
+				Spec: v1beta1.GrafanaDashboardSpec{
+					GrafanaCommonSpec: commonSpecInvalidSpec,
+				},
+			},
+			wantCondition: conditionInvalidSpec,
+			wantReason:    conditionReasonInvalidModelResolution,
+			wantErr:       "resolving dashboard contents",
 		},
 	}
 
