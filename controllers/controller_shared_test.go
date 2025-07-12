@@ -63,6 +63,16 @@ var (
 			MatchLabels: map[string]string{"apply-failed": "test"},
 		},
 	}
+
+	objectMetaInvalidSpec = metav1.ObjectMeta{
+		Namespace: "default",
+		Name:      "invalid-spec",
+	}
+	commonSpecInvalidSpec = v1beta1.GrafanaCommonSpec{
+		InstanceSelector: &metav1.LabelSelector{
+			MatchLabels: map[string]string{"invalid-spec": "test"},
+		},
+	}
 )
 
 func requestFromMeta(obj metav1.ObjectMeta) ctrl.Request {
