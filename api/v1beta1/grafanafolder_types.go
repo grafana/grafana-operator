@@ -19,7 +19,6 @@ package v1beta1
 import (
 	"crypto/sha256"
 	"fmt"
-	"time"
 
 	operatorapi "github.com/grafana/grafana-operator/v5/api"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -160,11 +159,6 @@ func (in *GrafanaFolder) GetTitle() string {
 	}
 
 	return in.Name
-}
-
-func (in *GrafanaFolder) ResyncPeriodHasElapsed() bool {
-	deadline := in.Status.LastResync.Add(in.Spec.ResyncPeriod.Duration)
-	return time.Now().After(deadline)
 }
 
 func (in *GrafanaFolder) MatchLabels() *metav1.LabelSelector {

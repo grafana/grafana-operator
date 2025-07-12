@@ -18,7 +18,6 @@ package v1beta1
 
 import (
 	"encoding/json"
-	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -119,11 +118,6 @@ type GrafanaDatasourceList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []GrafanaDatasource `json:"items"`
-}
-
-func (in *GrafanaDatasource) ResyncPeriodHasElapsed() bool {
-	deadline := in.Status.LastResync.Add(in.Spec.ResyncPeriod.Duration)
-	return time.Now().After(deadline)
 }
 
 func (in *GrafanaDatasource) Unchanged(hash string) bool {
