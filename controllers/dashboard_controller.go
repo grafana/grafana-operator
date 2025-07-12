@@ -93,7 +93,6 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	if cr.Spec.Suspend {
 		setSuspended(&cr.Status.Conditions, cr.Generation, conditionReasonApplySuspended)
-		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
 		return ctrl.Result{}, nil
 	}
 	removeSuspended(&cr.Status.Conditions)
