@@ -7770,6 +7770,8 @@ spec:
                         required:
                         - targetPort
                         type: object
+                      subdomain:
+                        type: string
                       tls:
                         description: TLSConfig defines config used to secure a route
                           and provide termination
