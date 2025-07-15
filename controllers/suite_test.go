@@ -23,27 +23,47 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	"github.com/docker/go-connections/nat"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/config"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/wait"
 	//+kubebuilder:scaffold:imports
 )
 
 // These tests use Ginkgo (BDD-style Go testing framework). Refer to
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
+const (
+	grafanaName = "external-grafana"
+	grafanaUser = "root"
+	grafanaPass = "secret"
+)
+
 var (
-	k8sClient client.Client
-	testEnv   *envtest.Environment
-	testCtx   context.Context
+	k8sClient         client.Client
+	testEnv           *envtest.Environment
+	testCtx           context.Context
+	grafanaContainer  testcontainers.Container
+	externalGrafanaCr *v1beta1.Grafana
+
+	grafanaPort        = nat.Port(fmt.Sprint(config.GrafanaHTTPPort)) //nolint
+	grafanaCredentials = map[string]string{
+		"GF_SECURITY_ADMIN_USER":     grafanaUser,
+		"GF_SECURITY_ADMIN_PASSWORD": grafanaPass,
+	}
 )
 
 func TestAPIs(t *testing.T) {
@@ -78,20 +98,71 @@ var _ = BeforeSuite(func() {
 
 	//+kubebuilder:scaffold:scheme
 
+	By("Instantiating k8sClient")
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
 
-	// NOTE(Baarsgaard) Ensure k8sClient is 100% ready
-	// ENVTEST sometimes fail all tests with a 401 Unauthorized
-	time.Sleep(100 * time.Millisecond)
+	By("Starting Grafana TestContainer")
+	grafanaContainer, err = testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		Started: true,
+		ContainerRequest: testcontainers.ContainerRequest{
+			Name:         fmt.Sprintf("%s-%d", grafanaName, GinkgoRandomSeed()),
+			Image:        fmt.Sprintf("%s:%s", config.GrafanaImage, config.GrafanaVersion),
+			ExposedPorts: []string{grafanaPort.Port()},
+			WaitingFor: wait.ForAll(
+				wait.ForListeningPort(grafanaPort),
+				wait.ForHTTP("/api/frontend/settings").
+					WithPort(grafanaPort).
+					WithBasicAuth(grafanaUser, grafanaPass).
+					WithStartupTimeout(8*time.Second),
+			),
+			Env: grafanaCredentials,
+		},
+	})
+	Expect(err).NotTo(HaveOccurred())
 
-	By("Create a dummy 'invalid' instance to provoke conditions")
-	intP := 1
-	grafanaCr := &v1beta1.Grafana{
+	port, err := grafanaContainer.MappedPort(testCtx, grafanaPort)
+	Expect(err).NotTo(HaveOccurred())
+
+	createSharedTestCRs(port.Port())
+})
+
+var _ = AfterSuite(func() {
+	By("tearing down the test environment")
+	testcontainers.CleanupContainer(GinkgoTB(), grafanaContainer)
+	Expect(testEnv.Stop()).To(Succeed())
+})
+
+func createSharedTestCRs(port string) {
+	GinkgoHelper()
+
+	By("Creating Configmaps and GrafanaFolder for testing")
+	secretCR := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "dummy",
 			Namespace: "default",
+			Name:      "external-credentials",
+		},
+		StringData: grafanaCredentials,
+	}
+	Expect(k8sClient.Create(testCtx, secretCR)).ToNot(HaveOccurred())
+	folderCR := &v1beta1.GrafanaFolder{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "apply-failed-helper",
+		},
+		Spec: v1beta1.GrafanaFolderSpec{
+			GrafanaCommonSpec: commonSpecApplyFailed,
+		},
+	}
+	Expect(k8sClient.Create(testCtx, folderCR)).ToNot(HaveOccurred())
+
+	By("Creating Grafana CRs. One Fake and one External")
+	intP := 1
+	dummy := &v1beta1.Grafana{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "dummy",
 			Labels: map[string]string{
 				"apply-failed":  "test",
 				"invalid-spec":  "test",
@@ -100,40 +171,61 @@ var _ = BeforeSuite(func() {
 		},
 		Spec: v1beta1.GrafanaSpec{
 			Client: &v1beta1.GrafanaClient{TimeoutSeconds: &intP},
-			Config: map[string]map[string]string{
-				"security": {
-					"admin_user":     "root",
-					"admin_password": "secret",
-				},
-			},
 		},
 	}
-	Expect(k8sClient.Create(testCtx, grafanaCr)).NotTo(HaveOccurred())
+	external := &v1beta1.Grafana{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      grafanaName,
+			Labels: map[string]string{
+				"synchronized": "test",
+				"dashboards":   "grafana",
+			},
+		},
+		Spec: v1beta1.GrafanaSpec{
+			External: &v1beta1.External{
+				URL: fmt.Sprintf("http://localhost:%s", port),
+				AdminUser: &corev1.SecretKeySelector{
+					Key: "GF_SECURITY_ADMIN_USER",
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: secretCR.Name,
+					},
+				},
+				AdminPassword: &corev1.SecretKeySelector{
+					Key: "GF_SECURITY_ADMIN_PASSWORD",
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: secretCR.Name,
+					},
+				},
+			},
+			Client: &v1beta1.GrafanaClient{TimeoutSeconds: &intP},
+		},
+	}
+	Expect(k8sClient.Create(testCtx, dummy)).Should(Succeed())
+	Expect(k8sClient.Create(testCtx, external)).Should(Succeed())
 
-	grafanaCr.Status = v1beta1.GrafanaStatus{
+	dummy.Status = v1beta1.GrafanaStatus{
 		Stage:       v1beta1.OperatorStageComplete,
 		StageStatus: v1beta1.OperatorStageResultSuccess,
 		AdminURL:    fmt.Sprintf("http://%s-service", "invalid"),
 		Version:     config.GrafanaVersion,
 	}
-	Expect(k8sClient.Status().Update(testCtx, grafanaCr)).ToNot(HaveOccurred())
+	Expect(k8sClient.Status().Update(testCtx, dummy)).ToNot(HaveOccurred())
 
-	// Should not be reconciled
-	By("Creating folder to use when provoking ApplyFailed conditions")
-	folderCr := &v1beta1.GrafanaFolder{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: objectMetaApplyFailed.Namespace,
-			Name:      "apply-failed-helper",
-		},
-		Spec: v1beta1.GrafanaFolderSpec{
-			GrafanaCommonSpec: commonSpecApplyFailed,
-		},
+	By("Reconciling External Grafana")
+	r := GrafanaReconciler{
+		Client:      k8sClient,
+		Scheme:      k8sClient.Scheme(),
+		IsOpenShift: false,
 	}
-	Expect(k8sClient.Create(testCtx, folderCr)).ToNot(HaveOccurred())
-})
+	reg := requestFromMeta(external.ObjectMeta)
+	_, err := r.Reconcile(testCtx, reg)
+	Expect(err).ToNot(HaveOccurred())
 
-var _ = AfterSuite(func() {
-	By("tearing down the test environment")
-	err := testEnv.Stop()
-	Expect(err).NotTo(HaveOccurred())
-})
+	By("Get External Grafana")
+	externalGrafanaCr = &v1beta1.Grafana{}
+	Expect(k8sClient.Get(testCtx, types.NamespacedName{
+		Namespace: external.Namespace,
+		Name:      external.Name,
+	}, externalGrafanaCr)).Should(Succeed())
+}
