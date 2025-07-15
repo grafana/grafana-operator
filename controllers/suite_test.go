@@ -47,9 +47,13 @@ var (
 )
 
 func TestAPIs(t *testing.T) {
+	if testing.Short() {
+		t.Skip("-short was passed, skipping Controllers")
+	}
+
 	RegisterFailHandler(Fail)
 
-	RunSpecs(t, "Controller Suite")
+	RunSpecs(t, "Controllers Suite")
 }
 
 var _ = BeforeSuite(func() {
