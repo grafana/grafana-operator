@@ -436,7 +436,7 @@ var _ = Describe("GetMatchingInstances functions", Ordered, func() {
 		It("Finds all ready instances when instanceSelector is empty", func() {
 			instances, err := GetScopedMatchingInstances(ctx, k8sClient, matchAllFolder)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(instances).To(HaveLen(3 + 1)) // +1 To account for instance created in suite_test.go to provoke ApplyFailed conditions
+			Expect(instances).To(HaveLen(3 + 2)) // +2 To account for instances created in controllers/suite_test.go to provoke conditions
 		})
 		It("Finds all ready and Matching instances", func() {
 			instances, err := GetScopedMatchingInstances(ctx, k8sClient, &allowFolder)
