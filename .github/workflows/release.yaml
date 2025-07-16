@@ -249,7 +249,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        platform: [linux/arm64, linux/arm/v7, linux/amd64, linux/ppc64le]
+        platform: [linux/arm64, linux/amd64]
     steps:
       - name: Login to GitHub Container Registry
         uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
