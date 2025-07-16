@@ -178,8 +178,9 @@ func createSharedTestCRs(port string) {
 			Namespace: "default",
 			Name:      grafanaName,
 			Labels: map[string]string{
-				"synchronized": "test",
-				"dashboards":   "grafana",
+				"synchronized":       "test",
+				"matching-instances": "test",
+				"dashboards":         "grafana",
 			},
 		},
 		Spec: v1beta1.GrafanaSpec{

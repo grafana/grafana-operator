@@ -17,7 +17,6 @@ limitations under the License.
 package controllers
 
 import (
-	"context"
 	"testing"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -28,7 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Reusable objectMetas and CommonSpecs to make test tables less verbose
@@ -355,24 +354,19 @@ func TestMergeReconcileErrors(t *testing.T) {
 }
 
 var _ = Describe("GetMatchingInstances functions", Ordered, func() {
-	ns1 := corev1.Namespace{ObjectMeta: metav1.ObjectMeta{
-		Name: "get-matching-test",
-	}}
-	ns2 := corev1.Namespace{ObjectMeta: metav1.ObjectMeta{
-		Name: "additional-grafana-namespace",
+	ns := corev1.Namespace{ObjectMeta: metav1.ObjectMeta{
+		Name: "matching-instances",
 	}}
 	allowFolder := v1beta1.GrafanaFolder{
 		ObjectMeta: metav1.ObjectMeta{
+			Namespace: ns.Name,
 			Name:      "allow-cross-namespace",
-			Namespace: ns1.Name,
 		},
 		Spec: v1beta1.GrafanaFolderSpec{
 			GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
 				AllowCrossNamespaceImport: true,
 				InstanceSelector: &metav1.LabelSelector{
-					MatchLabels: map[string]string{
-						"test": "folder",
-					},
+					MatchLabels: map[string]string{"matching-instances": "test"},
 				},
 			},
 		},
@@ -383,69 +377,58 @@ var _ = Describe("GetMatchingInstances functions", Ordered, func() {
 	denyFolder.Spec.AllowCrossNamespaceImport = false
 
 	matchAllFolder := allowFolder.DeepCopy()
-	matchAllFolder.Name = "invalid-match-labels"
+	matchAllFolder.Name = "match-all-grafanas"
 	matchAllFolder.Spec.InstanceSelector = &metav1.LabelSelector{} // InstanceSelector is never nil
 
-	DefaultGrafana := v1beta1.Grafana{
+	BaseGrafana := v1beta1.Grafana{
 		ObjectMeta: metav1.ObjectMeta{
+			Namespace: ns.Name,
 			Name:      "instance",
-			Namespace: ns2.Name,
-			Labels: map[string]string{
-				"test": "folder",
-			},
+			Labels:    map[string]string{"matching-instances": "test"},
 		},
 		Spec: v1beta1.GrafanaSpec{},
 	}
-	matchesNothingGrafana := DefaultGrafana.DeepCopy()
-	matchesNothingGrafana.Name = "match-nothing-instance"
+	matchesNothingGrafana := BaseGrafana.DeepCopy()
+	matchesNothingGrafana.Name = "no-labels-instance"
 	matchesNothingGrafana.Labels = nil
 
-	secondNamespaceGrafana := DefaultGrafana.DeepCopy()
-	secondNamespaceGrafana.Name = "second-namespace-instance"
-	secondNamespaceGrafana.Namespace = ns1.Name
-
 	// Status update is skipped for this
-	unreadyGrafana := DefaultGrafana.DeepCopy()
+	unreadyGrafana := BaseGrafana.DeepCopy()
 	unreadyGrafana.Name = "unready-instance"
 
-	ctx := context.Background()
-	testLog := logf.FromContext(ctx).WithSink(logf.NullLogSink{})
-	ctx = logf.IntoContext(ctx, testLog)
+	createCRs := []client.Object{&ns, &allowFolder, denyFolder, matchAllFolder, unreadyGrafana}
 
 	// Pre-create all resources
 	BeforeAll(func() { // Necessary to use assertions
-		Expect(k8sClient.Create(ctx, &ns1)).NotTo(HaveOccurred())
-		Expect(k8sClient.Create(ctx, &ns2)).NotTo(HaveOccurred())
-		Expect(k8sClient.Create(ctx, &allowFolder)).NotTo(HaveOccurred())
-		Expect(k8sClient.Create(ctx, denyFolder)).NotTo(HaveOccurred())
-		Expect(k8sClient.Create(ctx, matchAllFolder)).NotTo(HaveOccurred())
-		Expect(k8sClient.Create(ctx, unreadyGrafana)).NotTo(HaveOccurred())
+		for _, cr := range createCRs {
+			Expect(k8sClient.Create(testCtx, cr)).Should(Succeed())
+		}
 
-		grafanas := []v1beta1.Grafana{DefaultGrafana, *matchesNothingGrafana, *secondNamespaceGrafana}
+		grafanas := []v1beta1.Grafana{BaseGrafana, *matchesNothingGrafana}
 		for _, instance := range grafanas {
-			Expect(k8sClient.Create(ctx, &instance)).NotTo(HaveOccurred())
+			Expect(k8sClient.Create(testCtx, &instance)).NotTo(HaveOccurred())
 
 			// Apply status to pass instance ready check
 			instance.Status.Stage = v1beta1.OperatorStageComplete
 			instance.Status.StageStatus = v1beta1.OperatorStageResultSuccess
-			Expect(k8sClient.Status().Update(ctx, &instance)).ToNot(HaveOccurred())
+			Expect(k8sClient.Status().Update(testCtx, &instance)).ToNot(HaveOccurred())
 		}
 	})
 
 	Context("Ensure AllowCrossNamespaceImport is upheld by GetScopedMatchingInstances", func() {
 		It("Finds all ready instances when instanceSelector is empty", func() {
-			instances, err := GetScopedMatchingInstances(ctx, k8sClient, matchAllFolder)
+			instances, err := GetScopedMatchingInstances(testCtx, k8sClient, matchAllFolder)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(instances).To(HaveLen(3 + 2)) // +2 To account for instances created in controllers/suite_test.go to provoke conditions
+			Expect(instances).To(HaveLen(2 + 2)) // +2 To account for instances created in controllers/suite_test.go to provoke conditions
 		})
 		It("Finds all ready and Matching instances", func() {
-			instances, err := GetScopedMatchingInstances(ctx, k8sClient, &allowFolder)
+			instances, err := GetScopedMatchingInstances(testCtx, k8sClient, &allowFolder)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(instances).ToNot(BeEmpty())
 			Expect(instances).To(HaveLen(2))
 		})
 		It("Finds matching and ready and matching instance in namespace", func() {
-			instances, err := GetScopedMatchingInstances(ctx, k8sClient, denyFolder)
+			instances, err := GetScopedMatchingInstances(testCtx, k8sClient, denyFolder)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(instances).ToNot(BeEmpty())
 			Expect(instances).To(HaveLen(1))
