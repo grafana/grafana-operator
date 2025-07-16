@@ -73,6 +73,16 @@ var (
 			MatchLabels: map[string]string{"invalid-spec": "test"},
 		},
 	}
+
+	objectMetaSynchronized = metav1.ObjectMeta{
+		Namespace: "default",
+		Name:      "synchronized",
+	}
+	commonSpecSynchronized = v1beta1.GrafanaCommonSpec{
+		InstanceSelector: &metav1.LabelSelector{
+			MatchLabels: map[string]string{"synchronized": "test"},
+		},
+	}
 )
 
 func requestFromMeta(obj metav1.ObjectMeta) ctrl.Request {
