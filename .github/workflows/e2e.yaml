@@ -66,6 +66,7 @@ jobs:
       - name: Create KinD cluster ${{ matrix.version }}
         id: kind
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           KIND_NODE_VERSION: "${{ matrix.version }}"
         run: |
           make e2e-kind
@@ -77,12 +78,15 @@ jobs:
 
       - name: Build and load images
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           KO_DOCKER_REPO: ko.local/grafana/grafana-operator
         run: |
           make ko-build-kind
 
       - name: Run e2e tests
         shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Run e2e
           VERSION=latest make e2e

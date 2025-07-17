@@ -35,6 +35,8 @@ jobs:
           go-version-file: "go.mod"
 
       - name: Run test
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           make test
 

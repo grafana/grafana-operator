@@ -131,6 +131,8 @@ jobs:
           echo "KUSTOMIZE_REPO=$KUSTOMIZE_REPO" >> $GITHUB_ENV
           echo "GHCR_REPO=$GHCR_REPO" >> $GITHUB_ENV
       - name: update-kustomize-image
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           make kustomize-set-image
       - name: Login to GitHub Container Registry

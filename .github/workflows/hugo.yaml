@@ -39,6 +39,8 @@ jobs:
           cd hugo
           [[ -f package-lock.json || -f npm-shrinkwrap.json ]] && npm ci || true
       - name: Build with Hugo # zizmor: ignore[template-injection] configure-pages considered safe
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           make hugo
       - name: Upload artifact
