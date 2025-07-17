@@ -117,12 +117,15 @@ jobs:
       contents: write
       packages: write
     steps:
+
       - name: install flux
         uses: fluxcd/flux2/action@6bf37f6a560fd84982d67f853162e4b3c2235edb # v2.6.4
+
       - name: Clone repo
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           persist-credentials: false
+
       - name: Prepare
         run: |
           # OCI standard enforces lower-case paths
@@ -130,17 +133,20 @@ jobs:
           GHCR_REPO=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           echo "KUSTOMIZE_REPO=$KUSTOMIZE_REPO" >> $GITHUB_ENV
           echo "GHCR_REPO=$GHCR_REPO" >> $GITHUB_ENV
+
       - name: update-kustomize-image
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           make kustomize-set-image
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Publish Kustomize OCI artifact to GHCR
         env:
           PUBLISH_SOURCE: ${{ github.event.repository.html_url }}
@@ -149,6 +155,7 @@ jobs:
             --path="./deploy/kustomize" \
             --source="${PUBLISH_SOURCE}" \
             --revision="${RELEASE_NAME}/${GITHUB_SHA}"
+
       - name: upload kustomize assets
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -168,6 +175,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           persist-credentials: false
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
         with:
@@ -203,6 +211,7 @@ jobs:
             --image-label org.opencontainers.image.version=${IMAGE_VERSION} \
             --image-label org.opencontainers.image.created="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           echo "IMAGE_DIGEST=$(cat ./image-digest | cut -d@ -f2)" >> $GITHUB_OUTPUT
+
       - name: Attest
         uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
         id: attest
@@ -226,6 +235,7 @@ jobs:
             QUAY_USERNAME=quay-io:username
             QUAY_PASSWORD=quay-io:token
           export_env: false
+
       - name: Copy image to quay
         env:
           IMAGE_VERSION: ${{ github.ref_name }}
