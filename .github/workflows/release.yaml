@@ -53,7 +53,7 @@ jobs:
         run: |
           mkdir "${CR_TOOL_PATH}"
           mkdir "${CR_INDEX_PATH}"
-          curl -sSLo cr.tar.gz "https://github.com/helm/chart-releaser/releases/download/v1.4.0/chart-releaser_1.4.0_linux_amd64.tar.gz"
+          curl -sSLo cr.tar.gz -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' "https://github.com/helm/chart-releaser/releases/download/v1.4.0/chart-releaser_1.4.0_linux_amd64.tar.gz"
           tar -xzf cr.tar.gz -C "${CR_TOOL_PATH}"
           rm -f cr.tar.gz
 
