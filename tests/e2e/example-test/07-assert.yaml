@@ -11,4 +11,5 @@ metadata:
 status:
   conditions:
   - type: DashboardSynchronized
+    reason: ApplySuccessful
     status: "True"

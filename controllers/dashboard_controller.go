@@ -50,7 +50,8 @@ import (
 )
 
 const (
-	conditionDashboardSynchronized = "DashboardSynchronized"
+	conditionDashboardSynchronized        = "DashboardSynchronized"
+	conditionReasonInvalidModelResolution = "InvalidModelResolution"
 )
 
 // GrafanaDashboardReconciler reconciles a GrafanaDashboard object
@@ -103,7 +104,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	if err != nil {
 		// Resolve has a lot of failure cases.
 		// fetch content errors could be a temporary network issue but would result in an InvalidSpec condition
-		setInvalidSpec(&cr.Status.Conditions, cr.Generation, "InvalidModelResolution", err.Error())
+		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidModelResolution, err.Error())
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
 		return ctrl.Result{}, fmt.Errorf("resolving dashboard contents: %w", err)
 	}

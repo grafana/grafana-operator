@@ -41,6 +41,7 @@ import (
 
 const (
 	conditionFolderSynchronized = "FolderSynchronized"
+	conditionReasonCyclicParent = "CyclicParent"
 )
 
 // GrafanaFolderReconciler reconciles a GrafanaFolder object
@@ -88,7 +89,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	removeSuspended(&folder.Status.Conditions)
 
 	if folder.Spec.ParentFolderUID == folder.CustomUIDOrUID() {
-		setInvalidSpec(&folder.Status.Conditions, folder.Generation, "CyclicParent", "The value of parentFolderUID must not be the uid of the current folder")
+		setInvalidSpec(&folder.Status.Conditions, folder.Generation, conditionReasonCyclicParent, "The value of parentFolderUID must not be the uid of the current folder")
 		meta.RemoveStatusCondition(&folder.Status.Conditions, conditionFolderSynchronized)
 		return ctrl.Result{}, fmt.Errorf("cyclic folder reference")
 	}

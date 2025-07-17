@@ -13,9 +13,10 @@ var _ = Describe("Folder Reconciler: Provoke Conditions", func() {
 		cr            *v1beta1.GrafanaFolder
 		wantCondition string
 		wantReason    string
+		wantErr       string
 	}{
 		{
-			name: "Suspended Condition",
+			name: ".spec.suspend=true",
 			cr: &v1beta1.GrafanaFolder{
 				ObjectMeta: objectMetaSuspended,
 				Spec: v1beta1.GrafanaFolderSpec{
@@ -26,7 +27,7 @@ var _ = Describe("Folder Reconciler: Provoke Conditions", func() {
 			wantReason:    conditionReasonApplySuspended,
 		},
 		{
-			name: "NoMatchingInstances Condition",
+			name: "GetScopedMatchingInstances returns empty list",
 			cr: &v1beta1.GrafanaFolder{
 				ObjectMeta: objectMetaNoMatchingInstances,
 				Spec: v1beta1.GrafanaFolderSpec{
@@ -35,6 +36,32 @@ var _ = Describe("Folder Reconciler: Provoke Conditions", func() {
 			},
 			wantCondition: conditionNoMatchingInstance,
 			wantReason:    conditionReasonEmptyAPIReply,
+		},
+		{
+			name: "Failed to apply to instance",
+			cr: &v1beta1.GrafanaFolder{
+				ObjectMeta: objectMetaApplyFailed,
+				Spec: v1beta1.GrafanaFolderSpec{
+					GrafanaCommonSpec: commonSpecApplyFailed,
+				},
+			},
+			wantCondition: conditionFolderSynchronized,
+			wantReason:    conditionReasonApplyFailed,
+			wantErr:       "failed to apply to all instances",
+		},
+		{
+			name: "InvalidSpec Condition",
+			cr: &v1beta1.GrafanaFolder{
+				ObjectMeta: objectMetaInvalidSpec,
+				Spec: v1beta1.GrafanaFolderSpec{
+					GrafanaCommonSpec: commonSpecInvalidSpec,
+					CustomUID:         "self-ref",
+					ParentFolderUID:   "self-ref",
+				},
+			},
+			wantCondition: conditionInvalidSpec,
+			wantReason:    conditionReasonCyclicParent,
+			wantErr:       "cyclic folder reference",
 		},
 	}
 
@@ -47,9 +74,14 @@ var _ = Describe("Folder Reconciler: Provoke Conditions", func() {
 			req := requestFromMeta(test.cr.ObjectMeta)
 
 			// Reconcile
-			r := GrafanaFolderReconciler{Client: k8sClient}
+			r := GrafanaFolderReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
 			_, err = r.Reconcile(testCtx, req)
-			Expect(err).ShouldNot(HaveOccurred())
+			if test.wantErr == "" {
+				Expect(err).ShouldNot(HaveOccurred())
+			} else {
+				Expect(err).Should(HaveOccurred())
+				Expect(err.Error()).Should(HavePrefix(test.wantErr))
+			}
 
 			resultCr := &v1beta1.GrafanaFolder{}
 			Expect(r.Get(testCtx, req.NamespacedName, resultCr)).Should(Succeed())

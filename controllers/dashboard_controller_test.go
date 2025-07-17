@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -29,9 +30,10 @@ var _ = Describe("Dashboard Reconciler: Provoke Conditions", func() {
 		cr            *v1beta1.GrafanaDashboard
 		wantCondition string
 		wantReason    string
+		wantErr       string
 	}{
 		{
-			name: "Suspended Condition",
+			name: ".spec.suspend=true",
 			cr: &v1beta1.GrafanaDashboard{
 				ObjectMeta: objectMetaSuspended,
 				Spec: v1beta1.GrafanaDashboardSpec{
@@ -43,7 +45,7 @@ var _ = Describe("Dashboard Reconciler: Provoke Conditions", func() {
 			wantReason:    conditionReasonApplySuspended,
 		},
 		{
-			name: "NoMatchingInstances Condition",
+			name: "GetScopedMatchingInstances returns empty list",
 			cr: &v1beta1.GrafanaDashboard{
 				ObjectMeta: objectMetaNoMatchingInstances,
 				Spec: v1beta1.GrafanaDashboardSpec{
@@ -53,6 +55,47 @@ var _ = Describe("Dashboard Reconciler: Provoke Conditions", func() {
 			},
 			wantCondition: conditionNoMatchingInstance,
 			wantReason:    conditionReasonEmptyAPIReply,
+		},
+		{
+			name: "Failed to apply to instance",
+			cr: &v1beta1.GrafanaDashboard{
+				ObjectMeta: objectMetaApplyFailed,
+				Spec: v1beta1.GrafanaDashboardSpec{
+					GrafanaCommonSpec:  commonSpecApplyFailed,
+					GrafanaContentSpec: v1beta1.GrafanaContentSpec{JSON: "{}"},
+				},
+			},
+			wantCondition: conditionDashboardSynchronized,
+			wantReason:    conditionReasonApplyFailed,
+			wantErr:       "failed to apply to all instances",
+		},
+		{
+			name: "Invalid JSON",
+			cr: &v1beta1.GrafanaDashboard{
+				ObjectMeta: objectMetaInvalidSpec,
+				Spec: v1beta1.GrafanaDashboardSpec{
+					GrafanaCommonSpec:  commonSpecInvalidSpec,
+					GrafanaContentSpec: v1beta1.GrafanaContentSpec{JSON: "{]"}, // Invalid json
+				},
+			},
+			wantCondition: conditionInvalidSpec,
+			wantReason:    conditionReasonInvalidModelResolution,
+			wantErr:       "resolving dashboard contents",
+		},
+		{
+			name: "No model can be resolved, no model source is defined",
+			cr: &v1beta1.GrafanaDashboard{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "invalid-spec-no-model-source",
+				},
+				Spec: v1beta1.GrafanaDashboardSpec{
+					GrafanaCommonSpec: commonSpecInvalidSpec,
+				},
+			},
+			wantCondition: conditionInvalidSpec,
+			wantReason:    conditionReasonInvalidModelResolution,
+			wantErr:       "resolving dashboard contents",
 		},
 	}
 
@@ -65,9 +108,14 @@ var _ = Describe("Dashboard Reconciler: Provoke Conditions", func() {
 			req := requestFromMeta(test.cr.ObjectMeta)
 
 			// Reconcile
-			r := GrafanaDashboardReconciler{Client: k8sClient}
+			r := GrafanaDashboardReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
 			_, err = r.Reconcile(testCtx, req)
-			Expect(err).ShouldNot(HaveOccurred())
+			if test.wantErr == "" {
+				Expect(err).ShouldNot(HaveOccurred())
+			} else {
+				Expect(err).Should(HaveOccurred())
+				Expect(err.Error()).Should(HavePrefix(test.wantErr))
+			}
 
 			resultCr := &v1beta1.GrafanaDashboard{}
 			Expect(r.Get(testCtx, req.NamespacedName, resultCr)).Should(Succeed())

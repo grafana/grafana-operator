@@ -31,6 +31,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+// Reusable objectMetas and CommonSpecs to make test tables less verbose
 var (
 	objectMetaNoMatchingInstances = metav1.ObjectMeta{
 		Namespace: "default",
@@ -38,7 +39,7 @@ var (
 	}
 	commonSpecNoMatchingInstances = v1beta1.GrafanaCommonSpec{
 		InstanceSelector: &metav1.LabelSelector{
-			MatchLabels: map[string]string{"test": "no-matching-instances"},
+			MatchLabels: map[string]string{"no-matching-instances": "test"},
 		},
 	}
 
@@ -49,7 +50,27 @@ var (
 	commonSpecSuspended = v1beta1.GrafanaCommonSpec{
 		Suspend: true,
 		InstanceSelector: &metav1.LabelSelector{
-			MatchLabels: map[string]string{"test": "suspended"},
+			MatchLabels: map[string]string{"suspended": "test"},
+		},
+	}
+
+	objectMetaApplyFailed = metav1.ObjectMeta{
+		Namespace: "default",
+		Name:      "apply-failed",
+	}
+	commonSpecApplyFailed = v1beta1.GrafanaCommonSpec{
+		InstanceSelector: &metav1.LabelSelector{
+			MatchLabels: map[string]string{"apply-failed": "test"},
+		},
+	}
+
+	objectMetaInvalidSpec = metav1.ObjectMeta{
+		Namespace: "default",
+		Name:      "invalid-spec",
+	}
+	commonSpecInvalidSpec = v1beta1.GrafanaCommonSpec{
+		InstanceSelector: &metav1.LabelSelector{
+			MatchLabels: map[string]string{"invalid-spec": "test"},
 		},
 	}
 )
@@ -323,19 +344,16 @@ func TestMergeReconcileErrors(t *testing.T) {
 }
 
 var _ = Describe("GetMatchingInstances functions", Ordered, func() {
-	namespace := corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "get-matching-test",
-		},
-	}
+	ns1 := corev1.Namespace{ObjectMeta: metav1.ObjectMeta{
+		Name: "get-matching-test",
+	}}
+	ns2 := corev1.Namespace{ObjectMeta: metav1.ObjectMeta{
+		Name: "additional-grafana-namespace",
+	}}
 	allowFolder := v1beta1.GrafanaFolder{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "grafana.integreatly.org/v1beta1",
-			Kind:       "GrafanaFolder",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "allow-cross-namespace",
-			Namespace: namespace.Name,
+			Namespace: ns1.Name,
 		},
 		Spec: v1beta1.GrafanaFolderSpec{
 			GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
@@ -358,13 +376,9 @@ var _ = Describe("GetMatchingInstances functions", Ordered, func() {
 	matchAllFolder.Spec.InstanceSelector = &metav1.LabelSelector{} // InstanceSelector is never nil
 
 	DefaultGrafana := v1beta1.Grafana{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "grafana.integreatly.org/v1beta1",
-			Kind:       "Grafana",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "instance",
-			Namespace: "default",
+			Namespace: ns2.Name,
 			Labels: map[string]string{
 				"test": "folder",
 			},
@@ -377,7 +391,7 @@ var _ = Describe("GetMatchingInstances functions", Ordered, func() {
 
 	secondNamespaceGrafana := DefaultGrafana.DeepCopy()
 	secondNamespaceGrafana.Name = "second-namespace-instance"
-	secondNamespaceGrafana.Namespace = namespace.Name
+	secondNamespaceGrafana.Namespace = ns1.Name
 
 	// Status update is skipped for this
 	unreadyGrafana := DefaultGrafana.DeepCopy()
@@ -389,7 +403,8 @@ var _ = Describe("GetMatchingInstances functions", Ordered, func() {
 
 	// Pre-create all resources
 	BeforeAll(func() { // Necessary to use assertions
-		Expect(k8sClient.Create(ctx, &namespace)).NotTo(HaveOccurred())
+		Expect(k8sClient.Create(ctx, &ns1)).NotTo(HaveOccurred())
+		Expect(k8sClient.Create(ctx, &ns2)).NotTo(HaveOccurred())
 		Expect(k8sClient.Create(ctx, &allowFolder)).NotTo(HaveOccurred())
 		Expect(k8sClient.Create(ctx, denyFolder)).NotTo(HaveOccurred())
 		Expect(k8sClient.Create(ctx, matchAllFolder)).NotTo(HaveOccurred())
@@ -410,7 +425,7 @@ var _ = Describe("GetMatchingInstances functions", Ordered, func() {
 		It("Finds all ready instances when instanceSelector is empty", func() {
 			instances, err := GetScopedMatchingInstances(ctx, k8sClient, matchAllFolder)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(instances).To(HaveLen(3))
+			Expect(instances).To(HaveLen(3 + 1)) // +1 To account for instance created in suite_test.go to provoke ApplyFailed conditions
 		})
 		It("Finds all ready and Matching instances", func() {
 			instances, err := GetScopedMatchingInstances(ctx, k8sClient, &allowFolder)

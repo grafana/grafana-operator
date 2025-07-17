@@ -109,9 +109,10 @@ var _ = Describe("Datasource Reconciler: Provoke Conditions", func() {
 		cr            *v1beta1.GrafanaDatasource
 		wantCondition string
 		wantReason    string
+		wantErr       string
 	}{
 		{
-			name: "Suspended Condition",
+			name: ".spec.suspend=true",
 			cr: &v1beta1.GrafanaDatasource{
 				ObjectMeta: objectMetaSuspended,
 				Spec: v1beta1.GrafanaDatasourceSpec{
@@ -123,7 +124,7 @@ var _ = Describe("Datasource Reconciler: Provoke Conditions", func() {
 			wantReason:    conditionReasonApplySuspended,
 		},
 		{
-			name: "NoMatchingInstances Condition",
+			name: "GetScopedMatchingInstances returns empty list",
 			cr: &v1beta1.GrafanaDatasource{
 				ObjectMeta: objectMetaNoMatchingInstances,
 				Spec: v1beta1.GrafanaDatasourceSpec{
@@ -133,6 +134,41 @@ var _ = Describe("Datasource Reconciler: Provoke Conditions", func() {
 			},
 			wantCondition: conditionNoMatchingInstance,
 			wantReason:    conditionReasonEmptyAPIReply,
+		},
+		{
+			name: "Failed to apply to instance",
+			cr: &v1beta1.GrafanaDatasource{
+				ObjectMeta: objectMetaApplyFailed,
+				Spec: v1beta1.GrafanaDatasourceSpec{
+					GrafanaCommonSpec: commonSpecApplyFailed,
+					Datasource:        &v1beta1.GrafanaDatasourceInternal{},
+				},
+			},
+			wantCondition: conditionDatasourceSynchronized,
+			wantReason:    conditionReasonApplyFailed,
+			wantErr:       "failed to apply to all instances",
+		},
+		{
+			name: "Referenced secret does not exist",
+			cr: &v1beta1.GrafanaDatasource{
+				ObjectMeta: objectMetaInvalidSpec,
+				Spec: v1beta1.GrafanaDatasourceSpec{
+					GrafanaCommonSpec: commonSpecInvalidSpec,
+					Datasource:        &v1beta1.GrafanaDatasourceInternal{},
+					ValuesFrom: []v1beta1.ValueFrom{{
+						TargetPath: "secureJsonData.httpHeaderValue1",
+						ValueFrom: v1beta1.ValueFromSource{SecretKeyRef: &corev1.SecretKeySelector{
+							Key: "credentials",
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "PROMETHEUS_TOKEN",
+							},
+						}},
+					}},
+				},
+			},
+			wantCondition: conditionInvalidSpec,
+			wantReason:    conditionReasonInvalidModel,
+			wantErr:       "building datasource model",
 		},
 	}
 
@@ -145,9 +181,14 @@ var _ = Describe("Datasource Reconciler: Provoke Conditions", func() {
 			req := requestFromMeta(test.cr.ObjectMeta)
 
 			// Reconcile
-			r := GrafanaDatasourceReconciler{Client: k8sClient}
+			r := GrafanaDatasourceReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
 			_, err = r.Reconcile(testCtx, req)
-			Expect(err).ShouldNot(HaveOccurred())
+			if test.wantErr == "" {
+				Expect(err).ShouldNot(HaveOccurred())
+			} else {
+				Expect(err).Should(HaveOccurred())
+				Expect(err.Error()).Should(HavePrefix(test.wantErr))
+			}
 
 			resultCr := &v1beta1.GrafanaDatasource{}
 			Expect(r.Get(testCtx, req.NamespacedName, resultCr)).Should(Succeed())

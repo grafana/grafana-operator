@@ -5,4 +5,5 @@ metadata:
 status:
   conditions:
   - type: AlertGroupSynchronized
+    reason: ApplySuccessful
     status: "True"

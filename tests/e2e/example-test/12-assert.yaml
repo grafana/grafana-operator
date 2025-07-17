@@ -5,4 +5,5 @@ metadata:
 status:
   conditions:
   - type: NotificationTemplateSynchronized
+    reason: ApplySuccessful
     status: "True"
