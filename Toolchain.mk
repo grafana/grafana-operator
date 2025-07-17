@@ -14,7 +14,7 @@ HELM_DOCS_VERSION = v1.14.2
 HELM_VERSION = v3.17.3
 HUGO_VERSION = 0.134.3
 KIND_VERSION = v0.29.0
-KO_VERSION = v0.18.0
+KO_VERSION = 0.18.0
 KUSTOMIZE_VERSION = v5.6.0
 MUFFET_VERSION = v2.10.9
 OPERATOR_SDK_VERSION = v1.32.0
@@ -132,13 +132,18 @@ $(KIND): | $(BIN)
 	chmod +x $(KIND) ;\
 	}
 
-KO := $(BIN)/ko-$(KO_VERSION)
+KO := $(BIN)/ko-v$(KO_VERSION)
 $(KO): | $(BIN)
 	$(info $(M) installing ko)
 	@{ \
 	set -e ;\
-	GOBIN=$(BIN) go install github.com/google/ko@$(KO_VERSION) ;\
-	mv $(BIN)/ko $(KO) ;\
+	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
+	if [ "`go env GOARCH`" = "amd64" ]; then ARCH="x86_64"; fi && \
+	curl -sSLfo $(KO).tar.gz $(CURL_GH_AUTH) https://github.com/ko-build/ko/releases/download/v$(KO_VERSION)/ko_$(KO_VERSION)_$${OSTYPE}_$${ARCH}.tar.gz && \
+	tar -zxvf $(KO).tar.gz -C $(BIN) ko && \
+	mv $(BIN)/ko $(KO) && \
+	chmod +x $(KO) && \
+	rm $(KO).tar.gz ;\
 	}
 
 KUSTOMIZE := $(BIN)/kustomize-$(KUSTOMIZE_VERSION)
