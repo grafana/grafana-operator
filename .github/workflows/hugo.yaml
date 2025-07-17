@@ -8,8 +8,6 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
-
 # Allow one concurrent deployment
 concurrency:
   group: "pages"
@@ -31,16 +29,22 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           persist-credentials: true
+
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
+
       - name: Install Node.js dependencies
         run: |
           cd hugo
           [[ -f package-lock.json || -f npm-shrinkwrap.json ]] && npm ci || true
+
       - name: Build with Hugo # zizmor: ignore[template-injection] configure-pages considered safe
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           make hugo
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:
@@ -48,7 +52,7 @@ jobs:
 
   # Deployment job
   deploy:
-    permissions:
+    permissions: # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
       pages: write
       id-token: write
     environment:

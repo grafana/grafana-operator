@@ -30,6 +30,8 @@ jobs:
           [[ -f package-lock.json || -f npm-shrinkwrap.json ]] && npm ci || true
 
       - name: Build with Hugo # zizmor: ignore[template-injection] configure-pages considered safe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           make hugo
 
@@ -38,5 +40,7 @@ jobs:
           make hugo-dev &
 
       - name: Validate internal links
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           make muffet-dev
