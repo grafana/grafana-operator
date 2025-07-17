@@ -31,7 +31,7 @@ $(CHAINSAW): | $(BIN)
 	@{ \
 	set -e ;\
 	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(CHAINSAW).tar.gz https://github.com/kyverno/chainsaw/releases/download/$(CHAINSAW_VERSION)/chainsaw_$${OSTYPE}_$${ARCH}.tar.gz && \
+	curl -sSLo $(CHAINSAW).tar.gz $(CURL_GH_AUTH) https://github.com/kyverno/chainsaw/releases/download/$(CHAINSAW_VERSION)/chainsaw_$${OSTYPE}_$${ARCH}.tar.gz && \
 	tar -zxvf $(CHAINSAW).tar.gz chainsaw && \
 	chmod +x chainsaw && \
 	mv chainsaw $(CHAINSAW) && \
@@ -44,7 +44,7 @@ $(CONTROLLER_GEN): | $(BIN)
 	@{ \
 	set -e ;\
 	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(CONTROLLER_GEN) https://github.com/kubernetes-sigs/controller-tools/releases/download/$(CONTROLLER_GEN_VERSION)/controller-gen-$${OSTYPE}-$${ARCH} ;\
+	curl -sSLo $(CONTROLLER_GEN) $(CURL_GH_AUTH) https://github.com/kubernetes-sigs/controller-tools/releases/download/$(CONTROLLER_GEN_VERSION)/controller-gen-$${OSTYPE}-$${ARCH} ;\
 	chmod +x $(CONTROLLER_GEN) ;\
 	}
 
@@ -65,7 +65,7 @@ $(DART_SASS): | $(BIN)
 	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
 	if [ "`uname`" = "Darwin" ]; then OSTYPE="macos"; fi && \
 	if [ "`go env GOARCH`" = "amd64" ]; then ARCH="x64"; fi && \
-	curl -sSLo $(DART_SASS).tar.gz https://github.com/sass/dart-sass/releases/download/$(DART_SASS_VERSION)/dart-sass-$(DART_SASS_VERSION)-$${OSTYPE}-$${ARCH}.tar.gz && \
+	curl -sSLo $(DART_SASS).tar.gz $(CURL_GH_AUTH) https://github.com/sass/dart-sass/releases/download/$(DART_SASS_VERSION)/dart-sass-$(DART_SASS_VERSION)-$${OSTYPE}-$${ARCH}.tar.gz && \
 	mkdir -p $(DART_SASS) && \
 	tar -zxvf $(DART_SASS).tar.gz -C $(DART_SASS) --strip-components=1 && \
 	rm $(DART_SASS).tar.gz ;\
@@ -77,7 +77,7 @@ $(ENVTEST): | $(BIN)
 	@{ \
 	set -e ;\
 	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(ENVTEST) https://github.com/kubernetes-sigs/controller-runtime/releases/download/$(ENVTEST_VERSION)/setup-envtest-$${OSTYPE}-$${ARCH} ;\
+	curl -sSLo $(ENVTEST) $(CURL_GH_AUTH) https://github.com/kubernetes-sigs/controller-runtime/releases/download/$(ENVTEST_VERSION)/setup-envtest-$${OSTYPE}-$${ARCH} ;\
 	chmod +x $(ENVTEST) ;\
 	}
 
@@ -86,7 +86,7 @@ $(GOLANGCI_LINT): | $(BIN)
 	$(info $(M) installing golangci-lint)
 	@{ \
 	set -e ;\
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s $(GOLANGCI_LINT_VERSION) ;\
+	curl -sSfL $(CURL_GH_AUTH) https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s $(GOLANGCI_LINT_VERSION) ;\
 	mv $(BIN)/golangci-lint $(GOLANGCI_LINT) ;\
 	}
 
@@ -95,7 +95,7 @@ $(HELM): | $(BIN)
 	$(info $(M) installing helm)
 	@{ \
 	set -e ;\
-	curl -sSfL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | HELM_INSTALL_DIR=$(BIN) bash -s -- -v $(HELM_VERSION) --no-sudo ;\
+	curl -sSfL $(CURL_GH_AUTH) https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | HELM_INSTALL_DIR=$(BIN) bash -s -- -v $(HELM_VERSION) --no-sudo ;\
 	mv $(BIN)/helm $(HELM) ;\
 	}
 
@@ -115,7 +115,7 @@ $(HUGO): | $(BIN)
 	set -e ;\
 	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
 	if [ "`uname`" = "Darwin" ]; then ARCH="universal"; fi && \
-	curl -sSLo $(HUGO).tar.gz https://github.com/gohugoio/hugo/releases/download/v$(HUGO_VERSION)/hugo_extended_$(HUGO_VERSION)_$${OSTYPE}-$${ARCH}.tar.gz && \
+	curl -sSLo $(HUGO).tar.gz $(CURL_GH_AUTH) https://github.com/gohugoio/hugo/releases/download/v$(HUGO_VERSION)/hugo_extended_$(HUGO_VERSION)_$${OSTYPE}-$${ARCH}.tar.gz && \
 	tar -zxvf $(HUGO).tar.gz -C $(BIN) hugo && \
 	mv $(BIN)/hugo $(HUGO) && \
 	chmod +x $(HUGO) && \
@@ -128,7 +128,7 @@ $(KIND): | $(BIN)
 	@{ \
 	set -e ;\
 	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(KIND) https://github.com/kubernetes-sigs/kind/releases/download/$(KIND_VERSION)/kind-$${OSTYPE}-$${ARCH} ;\
+	curl -sSLo $(KIND) $(CURL_GH_AUTH) https://github.com/kubernetes-sigs/kind/releases/download/$(KIND_VERSION)/kind-$${OSTYPE}-$${ARCH} ;\
 	chmod +x $(KIND) ;\
 	}
 
@@ -146,7 +146,7 @@ $(KUSTOMIZE): | $(BIN)
 	$(info $(M) installing kustomize)
 	@{ \
 	set -e ;\
-	curl -sSfL "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash -s -- $(subst v,,$(KUSTOMIZE_VERSION)) $(BIN) ;\
+	curl -sSfL $(CURL_GH_AUTH) "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash -s -- $(subst v,,$(KUSTOMIZE_VERSION)) $(BIN) ;\
 	mv $(BIN)/kustomize $(KUSTOMIZE) ;\
 	}
 
@@ -156,7 +156,7 @@ $(MUFFET): | $(BIN)
 	@{ \
 	set -e ;\
 	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(MUFFET).tar.gz https://github.com/raviqqe/muffet/releases/download/$(MUFFET_VERSION)/muffet_$${OSTYPE}_$${ARCH}.tar.gz && \
+	curl -sSLo $(MUFFET).tar.gz $(CURL_GH_AUTH) https://github.com/raviqqe/muffet/releases/download/$(MUFFET_VERSION)/muffet_$${OSTYPE}_$${ARCH}.tar.gz && \
 	tar -zxvf $(MUFFET).tar.gz muffet && \
 	chmod +x muffet && \
 	mv muffet $(MUFFET) && \
@@ -169,7 +169,7 @@ $(OPERATOR_SDK): | $(BIN)
 	@{ \
 	set -e ;\
 	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(OPERATOR_SDK) https://github.com/operator-framework/operator-sdk/releases/download/$(OPERATOR_SDK_VERSION)/operator-sdk_$${OS}_$${ARCH} ;\
+	curl -sSLo $(OPERATOR_SDK) $(CURL_GH_AUTH) https://github.com/operator-framework/operator-sdk/releases/download/$(OPERATOR_SDK_VERSION)/operator-sdk_$${OS}_$${ARCH} ;\
 	chmod +x $(OPERATOR_SDK);\
 	}
 
@@ -179,7 +179,7 @@ $(OPM): | $(BIN)
 	@{ \
 	set -e ;\
 	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(OPM) https://github.com/operator-framework/operator-registry/releases/download/$(OPM_VERSION)/$${OS}-$${ARCH}-opm ;\
+	curl -sSLo $(OPM) $(CURL_GH_AUTH) https://github.com/operator-framework/operator-registry/releases/download/$(OPM_VERSION)/$${OS}-$${ARCH}-opm ;\
 	chmod +x $(OPM) ;\
 	}
 
@@ -189,7 +189,7 @@ $(YQ): | $(BIN)
 	@{ \
 	set -e ;\
 	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(YQ) https://github.com/mikefarah/yq/releases/download/$(YQ_VERSION)/yq_$${OSTYPE}_$${ARCH} ;\
+	curl -sSLo $(YQ) $(CURL_GH_AUTH) https://github.com/mikefarah/yq/releases/download/$(YQ_VERSION)/yq_$${OSTYPE}_$${ARCH} ;\
 	chmod +x $(YQ) ;\
 	}
 
