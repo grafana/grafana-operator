@@ -21,6 +21,10 @@ OPERATOR_SDK_VERSION = v1.32.0
 OPM_VERSION = v1.23.2
 YQ_VERSION = v4.45.4
 
+ifdef GITHUB_TOKEN
+	CURL_GH_AUTH=-H 'Authorization: Bearer $(GITHUB_TOKEN)'
+endif
+
 CHAINSAW := $(BIN)/chainsaw-$(CHAINSAW_VERSION)
 $(CHAINSAW): | $(BIN)
 	$(info $(M) installing chainsaw)
