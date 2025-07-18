@@ -21,9 +21,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"testing"
-	"time"
 
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -59,11 +57,7 @@ var (
 	grafanaContainer  testcontainers.Container
 	externalGrafanaCr *v1beta1.Grafana
 
-	grafanaPort        = nat.Port(fmt.Sprint(config.GrafanaHTTPPort)) //nolint
-	grafanaCredentials = map[string]string{
-		"GF_SECURITY_ADMIN_USER":     grafanaUser,
-		"GF_SECURITY_ADMIN_PASSWORD": grafanaPass,
-	}
+	grafanaPort = nat.Port(fmt.Sprint(config.GrafanaHTTPPort)) //nolint
 )
 
 func TestAPIs(t *testing.T) {
@@ -110,22 +104,12 @@ var _ = BeforeSuite(func() {
 			Name:         fmt.Sprintf("%s-%d", grafanaName, GinkgoRandomSeed()),
 			Image:        fmt.Sprintf("%s:%s", config.GrafanaImage, config.GrafanaVersion),
 			ExposedPorts: []string{grafanaPort.Port()},
-			WaitingFor: wait.ForAll(
-				wait.ForListeningPort(grafanaPort),
-				wait.ForHTTP("/api/frontend/settings").
-					WithPort(grafanaPort).
-					WithBasicAuth(grafanaUser, grafanaPass).
-					WithStartupTimeout(8*time.Second),
-			),
-			Env: grafanaCredentials,
+			WaitingFor:   wait.ForHTTP("/").WithPort(grafanaPort),
 		},
 	})
 	Expect(err).NotTo(HaveOccurred())
 
-	port, err := grafanaContainer.MappedPort(testCtx, grafanaPort)
-	Expect(err).NotTo(HaveOccurred())
-
-	createSharedTestCRs(port.Port())
+	createSharedTestCRs()
 })
 
 var _ = AfterSuite(func() {
@@ -134,18 +118,10 @@ var _ = AfterSuite(func() {
 	Expect(testEnv.Stop()).To(Succeed())
 })
 
-func createSharedTestCRs(port string) {
+func createSharedTestCRs() {
 	GinkgoHelper()
 
-	By("Creating Configmaps and GrafanaFolder for testing")
-	secretCR := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "default",
-			Name:      "external-credentials",
-		},
-		StringData: grafanaCredentials,
-	}
-	Expect(k8sClient.Create(testCtx, secretCR)).ToNot(HaveOccurred())
+	By("Creating GrafanaFolder for testing")
 	folderCR := &v1beta1.GrafanaFolder{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
@@ -173,6 +149,11 @@ func createSharedTestCRs(port string) {
 			Client: &v1beta1.GrafanaClient{TimeoutSeconds: &intP},
 		},
 	}
+
+	// External Endpoint
+	endpoint, err := grafanaContainer.PortEndpoint(testCtx, grafanaPort, "http")
+	Expect(err).NotTo(HaveOccurred())
+
 	external := &v1beta1.Grafana{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
@@ -185,18 +166,12 @@ func createSharedTestCRs(port string) {
 		},
 		Spec: v1beta1.GrafanaSpec{
 			External: &v1beta1.External{
-				URL: fmt.Sprintf("http://localhost:%s", port),
-				AdminUser: &corev1.SecretKeySelector{
-					Key: "GF_SECURITY_ADMIN_USER",
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: secretCR.Name,
-					},
-				},
-				AdminPassword: &corev1.SecretKeySelector{
-					Key: "GF_SECURITY_ADMIN_PASSWORD",
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: secretCR.Name,
-					},
+				URL: endpoint,
+			},
+			Config: map[string]map[string]string{
+				"security": {
+					"admin_user":     config.DefaultAdminUser,
+					"admin_password": config.DefaultAdminPassword,
 				},
 			},
 			Client: &v1beta1.GrafanaClient{TimeoutSeconds: &intP},
@@ -220,7 +195,7 @@ func createSharedTestCRs(port string) {
 		IsOpenShift: false,
 	}
 	reg := requestFromMeta(external.ObjectMeta)
-	_, err := r.Reconcile(testCtx, reg)
+	_, err = r.Reconcile(testCtx, reg)
 	Expect(err).ToNot(HaveOccurred())
 
 	By("Get External Grafana")
