@@ -10,11 +10,11 @@ CRDOC_VERSION = v0.6.4
 DART_SASS_VERSION = 1.86.0
 ENVTEST_VERSION = v0.21.0
 GOLANGCI_LINT_VERSION = v2.1.6
-HELM_DOCS_VERSION = v1.14.2
+HELM_DOCS_VERSION = 1.14.2
 HELM_VERSION = v3.17.3
 HUGO_VERSION = 0.134.3
 KIND_VERSION = v0.29.0
-KO_VERSION = v0.18.0
+KO_VERSION = 0.18.0
 KUSTOMIZE_VERSION = v5.6.0
 MUFFET_VERSION = v2.10.9
 OPERATOR_SDK_VERSION = v1.32.0
@@ -31,7 +31,7 @@ $(CHAINSAW): | $(BIN)
 	@{ \
 	set -e ;\
 	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(CHAINSAW).tar.gz $(CURL_GH_AUTH) https://github.com/kyverno/chainsaw/releases/download/$(CHAINSAW_VERSION)/chainsaw_$${OSTYPE}_$${ARCH}.tar.gz && \
+	curl -sSLfo $(CHAINSAW).tar.gz $(CURL_GH_AUTH) https://github.com/kyverno/chainsaw/releases/download/$(CHAINSAW_VERSION)/chainsaw_$${OSTYPE}_$${ARCH}.tar.gz && \
 	tar -zxvf $(CHAINSAW).tar.gz chainsaw && \
 	chmod +x chainsaw && \
 	mv chainsaw $(CHAINSAW) && \
@@ -44,7 +44,7 @@ $(CONTROLLER_GEN): | $(BIN)
 	@{ \
 	set -e ;\
 	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(CONTROLLER_GEN) $(CURL_GH_AUTH) https://github.com/kubernetes-sigs/controller-tools/releases/download/$(CONTROLLER_GEN_VERSION)/controller-gen-$${OSTYPE}-$${ARCH} ;\
+	curl -sSLfo $(CONTROLLER_GEN) $(CURL_GH_AUTH) https://github.com/kubernetes-sigs/controller-tools/releases/download/$(CONTROLLER_GEN_VERSION)/controller-gen-$${OSTYPE}-$${ARCH} ;\
 	chmod +x $(CONTROLLER_GEN) ;\
 	}
 
@@ -53,8 +53,13 @@ $(CRDOC): | $(BIN)
 	$(info $(M) installing crdoc)
 	@{ \
 	set -e ;\
-	GOBIN=$(BIN) go install fybrik.io/crdoc@$(CRDOC_VERSION) ;\
-	mv $(BIN)/crdoc $(CRDOC) ;\
+	OSTYPE=$(shell uname) && ARCH=$(shell go env GOARCH) && \
+	if [ "`go env GOARCH`" = "amd64" ]; then ARCH="x86_64"; fi && \
+	curl -sSLfo $(CRDOC).tar.gz $(CURL_GH_AUTH) https://github.com/fybrik/crdoc/releases/download/$(CRDOC_VERSION)/crdoc_$${OSTYPE}_$${ARCH}.tar.gz && \
+	tar -zxvf $(CRDOC).tar.gz -C $(BIN) crdoc && \
+	mv $(BIN)/crdoc $(CRDOC) && \
+	chmod +x $(CRDOC) && \
+	rm $(CRDOC).tar.gz ;\
 	}
 
 DART_SASS := $(BIN)/dart-sass-$(DART_SASS_VERSION)
@@ -65,7 +70,7 @@ $(DART_SASS): | $(BIN)
 	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
 	if [ "`uname`" = "Darwin" ]; then OSTYPE="macos"; fi && \
 	if [ "`go env GOARCH`" = "amd64" ]; then ARCH="x64"; fi && \
-	curl -sSLo $(DART_SASS).tar.gz $(CURL_GH_AUTH) https://github.com/sass/dart-sass/releases/download/$(DART_SASS_VERSION)/dart-sass-$(DART_SASS_VERSION)-$${OSTYPE}-$${ARCH}.tar.gz && \
+	curl -sSLfo $(DART_SASS).tar.gz $(CURL_GH_AUTH) https://github.com/sass/dart-sass/releases/download/$(DART_SASS_VERSION)/dart-sass-$(DART_SASS_VERSION)-$${OSTYPE}-$${ARCH}.tar.gz && \
 	mkdir -p $(DART_SASS) && \
 	tar -zxvf $(DART_SASS).tar.gz -C $(DART_SASS) --strip-components=1 && \
 	rm $(DART_SASS).tar.gz ;\
@@ -77,7 +82,7 @@ $(ENVTEST): | $(BIN)
 	@{ \
 	set -e ;\
 	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(ENVTEST) $(CURL_GH_AUTH) https://github.com/kubernetes-sigs/controller-runtime/releases/download/$(ENVTEST_VERSION)/setup-envtest-$${OSTYPE}-$${ARCH} ;\
+	curl -sSLfo $(ENVTEST) $(CURL_GH_AUTH) https://github.com/kubernetes-sigs/controller-runtime/releases/download/$(ENVTEST_VERSION)/setup-envtest-$${OSTYPE}-$${ARCH} ;\
 	chmod +x $(ENVTEST) ;\
 	}
 
@@ -99,13 +104,18 @@ $(HELM): | $(BIN)
 	mv $(BIN)/helm $(HELM) ;\
 	}
 
-HELM_DOCS := $(BIN)/helm-docs-$(HELM_DOCS_VERSION)
+HELM_DOCS := $(BIN)/helm-docs-v$(HELM_DOCS_VERSION)
 $(HELM_DOCS): | $(BIN)
 	$(info $(M) installing helm-docs)
 	@{ \
 	set -e ;\
-	GOBIN=$(BIN) go install github.com/norwoodj/helm-docs/cmd/helm-docs@$(HELM_DOCS_VERSION) ;\
-	mv $(BIN)/helm-docs $(HELM_DOCS) ;\
+	OSTYPE=$(shell uname) && ARCH=$(shell go env GOARCH) && \
+	if [ "`go env GOARCH`" = "amd64" ]; then ARCH="x86_64"; fi && \
+	curl -sSLfo $(HELM_DOCS).tar.gz $(CURL_GH_AUTH) https://github.com/norwoodj/helm-docs/releases/download/v$(HELM_DOCS_VERSION)/helm-docs_$(HELM_DOCS_VERSION)_$${OSTYPE}_$${ARCH}.tar.gz && \
+	tar -zxvf $(HELM_DOCS).tar.gz -C $(BIN) helm-docs && \
+	mv $(BIN)/helm-docs $(HELM_DOCS) && \
+	chmod +x $(HELM_DOCS) && \
+	rm $(HELM_DOCS).tar.gz ;\
 	}
 
 HUGO := $(BIN)/hugo-$(HUGO_VERSION)
@@ -115,7 +125,7 @@ $(HUGO): | $(BIN)
 	set -e ;\
 	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
 	if [ "`uname`" = "Darwin" ]; then ARCH="universal"; fi && \
-	curl -sSLo $(HUGO).tar.gz $(CURL_GH_AUTH) https://github.com/gohugoio/hugo/releases/download/v$(HUGO_VERSION)/hugo_extended_$(HUGO_VERSION)_$${OSTYPE}-$${ARCH}.tar.gz && \
+	curl -sSLfo $(HUGO).tar.gz $(CURL_GH_AUTH) https://github.com/gohugoio/hugo/releases/download/v$(HUGO_VERSION)/hugo_extended_$(HUGO_VERSION)_$${OSTYPE}-$${ARCH}.tar.gz && \
 	tar -zxvf $(HUGO).tar.gz -C $(BIN) hugo && \
 	mv $(BIN)/hugo $(HUGO) && \
 	chmod +x $(HUGO) && \
@@ -128,17 +138,22 @@ $(KIND): | $(BIN)
 	@{ \
 	set -e ;\
 	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(KIND) $(CURL_GH_AUTH) https://github.com/kubernetes-sigs/kind/releases/download/$(KIND_VERSION)/kind-$${OSTYPE}-$${ARCH} ;\
+	curl -sSLfo $(KIND) $(CURL_GH_AUTH) https://github.com/kubernetes-sigs/kind/releases/download/$(KIND_VERSION)/kind-$${OSTYPE}-$${ARCH} ;\
 	chmod +x $(KIND) ;\
 	}
 
-KO := $(BIN)/ko-$(KO_VERSION)
+KO := $(BIN)/ko-v$(KO_VERSION)
 $(KO): | $(BIN)
 	$(info $(M) installing ko)
 	@{ \
 	set -e ;\
-	GOBIN=$(BIN) go install github.com/google/ko@$(KO_VERSION) ;\
-	mv $(BIN)/ko $(KO) ;\
+	OSTYPE=$(shell uname) && ARCH=$(shell go env GOARCH) && \
+	if [ "`go env GOARCH`" = "amd64" ]; then ARCH="x86_64"; fi && \
+	curl -sSLfo $(KO).tar.gz $(CURL_GH_AUTH) https://github.com/ko-build/ko/releases/download/v$(KO_VERSION)/ko_$(KO_VERSION)_$${OSTYPE}_$${ARCH}.tar.gz && \
+	tar -zxvf $(KO).tar.gz -C $(BIN) ko && \
+	mv $(BIN)/ko $(KO) && \
+	chmod +x $(KO) && \
+	rm $(KO).tar.gz ;\
 	}
 
 KUSTOMIZE := $(BIN)/kustomize-$(KUSTOMIZE_VERSION)
@@ -156,7 +171,7 @@ $(MUFFET): | $(BIN)
 	@{ \
 	set -e ;\
 	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(MUFFET).tar.gz $(CURL_GH_AUTH) https://github.com/raviqqe/muffet/releases/download/$(MUFFET_VERSION)/muffet_$${OSTYPE}_$${ARCH}.tar.gz && \
+	curl -sSLfo $(MUFFET).tar.gz $(CURL_GH_AUTH) https://github.com/raviqqe/muffet/releases/download/$(MUFFET_VERSION)/muffet_$${OSTYPE}_$${ARCH}.tar.gz && \
 	tar -zxvf $(MUFFET).tar.gz muffet && \
 	chmod +x muffet && \
 	mv muffet $(MUFFET) && \
@@ -169,7 +184,7 @@ $(OPERATOR_SDK): | $(BIN)
 	@{ \
 	set -e ;\
 	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(OPERATOR_SDK) $(CURL_GH_AUTH) https://github.com/operator-framework/operator-sdk/releases/download/$(OPERATOR_SDK_VERSION)/operator-sdk_$${OS}_$${ARCH} ;\
+	curl -sSLfo $(OPERATOR_SDK) $(CURL_GH_AUTH) https://github.com/operator-framework/operator-sdk/releases/download/$(OPERATOR_SDK_VERSION)/operator-sdk_$${OS}_$${ARCH} ;\
 	chmod +x $(OPERATOR_SDK);\
 	}
 
@@ -179,7 +194,7 @@ $(OPM): | $(BIN)
 	@{ \
 	set -e ;\
 	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(OPM) $(CURL_GH_AUTH) https://github.com/operator-framework/operator-registry/releases/download/$(OPM_VERSION)/$${OS}-$${ARCH}-opm ;\
+	curl -sSLfo $(OPM) $(CURL_GH_AUTH) https://github.com/operator-framework/operator-registry/releases/download/$(OPM_VERSION)/$${OS}-$${ARCH}-opm ;\
 	chmod +x $(OPM) ;\
 	}
 
@@ -189,7 +204,7 @@ $(YQ): | $(BIN)
 	@{ \
 	set -e ;\
 	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(YQ) $(CURL_GH_AUTH) https://github.com/mikefarah/yq/releases/download/$(YQ_VERSION)/yq_$${OSTYPE}_$${ARCH} ;\
+	curl -sSLfo $(YQ) $(CURL_GH_AUTH) https://github.com/mikefarah/yq/releases/download/$(YQ_VERSION)/yq_$${OSTYPE}_$${ARCH} ;\
 	chmod +x $(YQ) ;\
 	}
 
