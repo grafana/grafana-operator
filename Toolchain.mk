@@ -53,8 +53,13 @@ $(CRDOC): | $(BIN)
 	$(info $(M) installing crdoc)
 	@{ \
 	set -e ;\
-	GOBIN=$(BIN) go install fybrik.io/crdoc@$(CRDOC_VERSION) ;\
-	mv $(BIN)/crdoc $(CRDOC) ;\
+	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
+	if [ "`go env GOARCH`" = "amd64" ]; then ARCH="x86_64"; fi && \
+	curl -sSLfo $(CRDOC).tar.gz $(CURL_GH_AUTH) https://github.com/fybrik/crdoc/releases/download/$(CRDOC_VERSION)/crdoc_$${OSTYPE}_$${ARCH}.tar.gz && \
+	tar -zxvf $(CRDOC).tar.gz -C $(BIN) crdoc && \
+	mv $(BIN)/crdoc $(CRDOC) && \
+	chmod +x $(CRDOC) && \
+	rm $(CRDOC).tar.gz ;\
 	}
 
 DART_SASS := $(BIN)/dart-sass-$(DART_SASS_VERSION)
