@@ -10,7 +10,7 @@ CRDOC_VERSION = v0.6.4
 DART_SASS_VERSION = 1.86.0
 ENVTEST_VERSION = v0.21.0
 GOLANGCI_LINT_VERSION = v2.1.6
-HELM_DOCS_VERSION = v1.14.2
+HELM_DOCS_VERSION = 1.14.2
 HELM_VERSION = v3.17.3
 HUGO_VERSION = 0.134.3
 KIND_VERSION = v0.29.0
@@ -104,13 +104,18 @@ $(HELM): | $(BIN)
 	mv $(BIN)/helm $(HELM) ;\
 	}
 
-HELM_DOCS := $(BIN)/helm-docs-$(HELM_DOCS_VERSION)
+HELM_DOCS := $(BIN)/helm-docs-v$(HELM_DOCS_VERSION)
 $(HELM_DOCS): | $(BIN)
 	$(info $(M) installing helm-docs)
 	@{ \
 	set -e ;\
-	GOBIN=$(BIN) go install github.com/norwoodj/helm-docs/cmd/helm-docs@$(HELM_DOCS_VERSION) ;\
-	mv $(BIN)/helm-docs $(HELM_DOCS) ;\
+	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
+	if [ "`go env GOARCH`" = "amd64" ]; then ARCH="x86_64"; fi && \
+	curl -sSLfo $(HELM_DOCS).tar.gz $(CURL_GH_AUTH) https://github.com/norwoodj/helm-docs/releases/download/v$(HELM_DOCS_VERSION)/helm-docs_$(HELM_DOCS_VERSION)_$${OSTYPE}_$${ARCH}.tar.gz && \
+	tar -zxvf $(HELM_DOCS).tar.gz -C $(BIN) helm-docs && \
+	mv $(BIN)/helm-docs $(HELM_DOCS) && \
+	chmod +x $(HELM_DOCS) && \
+	rm $(HELM_DOCS).tar.gz ;\
 	}
 
 HUGO := $(BIN)/hugo-$(HUGO_VERSION)
