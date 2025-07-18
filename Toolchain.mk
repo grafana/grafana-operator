@@ -53,7 +53,7 @@ $(CRDOC): | $(BIN)
 	$(info $(M) installing crdoc)
 	@{ \
 	set -e ;\
-	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
+	OSTYPE=$(shell uname) && ARCH=$(shell go env GOARCH) && \
 	if [ "`go env GOARCH`" = "amd64" ]; then ARCH="x86_64"; fi && \
 	curl -sSLfo $(CRDOC).tar.gz $(CURL_GH_AUTH) https://github.com/fybrik/crdoc/releases/download/$(CRDOC_VERSION)/crdoc_$${OSTYPE}_$${ARCH}.tar.gz && \
 	tar -zxvf $(CRDOC).tar.gz -C $(BIN) crdoc && \
@@ -109,7 +109,7 @@ $(HELM_DOCS): | $(BIN)
 	$(info $(M) installing helm-docs)
 	@{ \
 	set -e ;\
-	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
+	OSTYPE=$(shell uname) && ARCH=$(shell go env GOARCH) && \
 	if [ "`go env GOARCH`" = "amd64" ]; then ARCH="x86_64"; fi && \
 	curl -sSLfo $(HELM_DOCS).tar.gz $(CURL_GH_AUTH) https://github.com/norwoodj/helm-docs/releases/download/v$(HELM_DOCS_VERSION)/helm-docs_$(HELM_DOCS_VERSION)_$${OSTYPE}_$${ARCH}.tar.gz && \
 	tar -zxvf $(HELM_DOCS).tar.gz -C $(BIN) helm-docs && \
@@ -147,7 +147,7 @@ $(KO): | $(BIN)
 	$(info $(M) installing ko)
 	@{ \
 	set -e ;\
-	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
+	OSTYPE=$(shell uname) && ARCH=$(shell go env GOARCH) && \
 	if [ "`go env GOARCH`" = "amd64" ]; then ARCH="x86_64"; fi && \
 	curl -sSLfo $(KO).tar.gz $(CURL_GH_AUTH) https://github.com/ko-build/ko/releases/download/v$(KO_VERSION)/ko_$(KO_VERSION)_$${OSTYPE}_$${ARCH}.tar.gz && \
 	tar -zxvf $(KO).tar.gz -C $(BIN) ko && \
