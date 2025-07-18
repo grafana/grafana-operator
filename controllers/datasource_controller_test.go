@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	v1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
+	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
@@ -42,64 +43,132 @@ func TestGetDatasourceContent(t *testing.T) {
 	})
 }
 
-var _ = Describe("Datasource: Reconciler", func() {
+var _ = Describe("Datasource: substitute reference values", func() {
 	It("Correctly substitutes valuesFrom", func() {
-		cm := corev1.ConfigMap{
+		cm := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-valuesfrom-plain",
 				Namespace: "default",
+				Name:      "ds-valuesfrom-configmap",
 			},
 			Data: map[string]string{
-				"CUSTOM_URL":     "https://demo.promlabs.com",
-				"CUSTOM_TRACEID": "substituted",
+				"customTraceId": "substituted",
 			},
 		}
-		err := k8sClient.Create(testCtx, &cm)
-		Expect(err).ToNot(HaveOccurred())
-		cr := &v1beta1.GrafanaDatasource{
+		sc := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "default",
+				Name:      "ds-values-from-secret",
+			},
+			StringData: map[string]string{
+				"PROMETHEUS_TOKEN": "secret_token",
+				"URL":              "https://demo.promlabs.com",
+			},
+		}
+		ds := &v1beta1.GrafanaDatasource{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "substitute-reference-values",
 			},
 			Spec: v1beta1.GrafanaDatasourceSpec{
+				GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
+					InstanceSelector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							"dashboards": "grafana",
+						},
+					},
+				},
+				CustomUID: "substitute",
 				ValuesFrom: []v1beta1.ValueFrom{
 					{
-						TargetPath: "url",
+						TargetPath: "secureJsonData.httpHeaderValue1",
 						ValueFrom: v1beta1.ValueFromSource{
-							ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+							SecretKeyRef: &corev1.SecretKeySelector{
 								LocalObjectReference: corev1.LocalObjectReference{
-									Name: cm.Name,
+									Name: sc.Name,
 								},
-								Key: "CUSTOM_URL",
+								Key: "PROMETHEUS_TOKEN",
 							},
 						},
 					},
 					{
-						TargetPath: "jsonData.list[0].value",
+						TargetPath: "url",
+						ValueFrom: v1beta1.ValueFromSource{
+							SecretKeyRef: &corev1.SecretKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: sc.Name,
+								},
+								Key: "URL",
+							},
+						},
+					},
+					{
+						TargetPath: "jsonData.exemplarTraceIdDestinations[1].name",
 						ValueFrom: v1beta1.ValueFromSource{
 							ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 								LocalObjectReference: corev1.LocalObjectReference{
 									Name: cm.Name,
 								},
-								Key: "CUSTOM_TRACEID",
+								Key: "customTraceId",
 							},
 						},
 					},
 				},
 				Datasource: &v1beta1.GrafanaDatasourceInternal{
-					URL:      "${CUSTOM_URL}",
-					JSONData: json.RawMessage([]byte(`{"list":[{"value":"${CUSTOM_TRACEID}"}]}`)),
+					Name:   "substitute-prometheus",
+					Type:   "prometheus",
+					Access: "proxy",
+					URL:    "${URL}",
+					JSONData: json.RawMessage([]byte(`{
+						"tlsSkipVerify": true,
+						"timeInterval": "10s",
+						"httpHeaderName1": "Authorization",
+						"exemplarTraceIdDestinations": [
+							{"name": "traceID"},
+							{"name": "${customTraceId}"}
+						]
+					}`)),
+					SecureJSONData: json.RawMessage([]byte(`{
+						"httpHeaderValue1": "Bearer ${PROMETHEUS_TOKEN}"
+					}`)),
 				},
 			},
 		}
+		Expect(k8sClient.Create(testCtx, cm)).Should(Succeed())
+		Expect(k8sClient.Create(testCtx, sc)).Should(Succeed())
+		Expect(k8sClient.Create(testCtx, ds)).Should(Succeed())
 
-		r := GrafanaDatasourceReconciler{Client: k8sClient}
-		content, hash, err := r.buildDatasourceModel(testCtx, cr)
+		req := requestFromMeta(ds.ObjectMeta)
+		r := GrafanaDatasourceReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+		_, err := r.Reconcile(testCtx, req)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(hash).ToNot(BeEmpty())
-		Expect(content.URL).To(Equal(cm.Data["CUSTOM_URL"]))
-		marshaled, err := json.Marshal(content.JSONData)
+
+		Expect(r.Get(testCtx, req.NamespacedName, ds)).Should(Succeed())
+		Expect(ds.Status.Conditions).Should(ContainElement(HaveField("Type", conditionDatasourceSynchronized)))
+		Expect(ds.Status.Conditions).Should(ContainElement(HaveField("Reason", conditionReasonApplySuccessful)))
+
+		cl, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(marshaled).To(ContainSubstring(cm.Data["CUSTOM_TRACEID"]))
+
+		model, err := cl.Datasources.GetDataSourceByUID(ds.Spec.CustomUID)
+		Expect(err).ToNot(HaveOccurred())
+
+		Expect(model.Payload.URL).To(Equal("https://demo.promlabs.com"))
+		Expect(model.Payload.SecureJSONFields["httpHeaderValue1"]).To(BeTrue())
+
+		// Serialize and Derserialize jsonData
+		b, err := json.Marshal(model.Payload.JSONData)
+		Expect(err).ToNot(HaveOccurred())
+
+		type ExemplarTraceIDDestination struct {
+			Name string `json:"name"`
+		}
+		type SubstitutedJSONData struct {
+			ExemplarTraceIDDestinations []ExemplarTraceIDDestination `json:"exemplarTraceIdDestinations"`
+		}
+		var jsonData SubstitutedJSONData // map with array of
+		err = json.Unmarshal(b, &jsonData)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(jsonData.ExemplarTraceIDDestinations[1].Name).To(Equal("substituted"))
 	})
 })
 

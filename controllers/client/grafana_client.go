@@ -36,19 +36,33 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 			return credentials, nil
 		}
 
-		// rely on username and password otherwise
-		username, err := GetValueFromSecretKey(ctx, grafana.Spec.External.AdminUser, c, grafana.Namespace)
-		if err != nil {
-			return nil, err
+		switch {
+		case grafana.Spec.External.AdminUser != nil:
+			username, err := GetValueFromSecretKey(ctx, grafana.Spec.External.AdminUser, c, grafana.Namespace)
+			if err != nil {
+				return nil, err
+			}
+			credentials.username = string(username)
+		case grafana.Spec.Config["security"]["admin_user"] != "":
+			credentials.username = grafana.Spec.Config["security"]["admin_user"]
+		default:
+			return nil, fmt.Errorf("authentication undefined, set apiKey or userName for external instance: %s/%s", grafana.Namespace, grafana.Name)
 		}
 
-		password, err := GetValueFromSecretKey(ctx, grafana.Spec.External.AdminPassword, c, grafana.Namespace)
-		if err != nil {
-			return nil, err
+		switch {
+		case grafana.Spec.External.AdminPassword != nil:
+			password, err := GetValueFromSecretKey(ctx, grafana.Spec.External.AdminPassword, c, grafana.Namespace)
+			if err != nil {
+				return nil, err
+			}
+			credentials.password = string(password)
+		case grafana.Spec.Config["security"]["admin_password"] != "":
+			credentials.password = grafana.Spec.Config["security"]["admin_password"]
+		default:
+			// If username is defined, we can assume apiKey will not be used
+			return nil, fmt.Errorf("password not set for external instance: %s/%s", grafana.Namespace, grafana.Name)
 		}
 
-		credentials.username = string(username)
-		credentials.password = string(password)
 		return credentials, nil
 	}
 

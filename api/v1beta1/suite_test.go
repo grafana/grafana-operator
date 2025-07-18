@@ -43,6 +43,10 @@ var (
 )
 
 func TestAPIs(t *testing.T) {
+	if testing.Short() {
+		t.Skip("-short was passed, skipping CRDs")
+	}
+
 	RegisterFailHandler(Fail)
 
 	RunSpecs(t, "CRDs Suite")
