@@ -57,7 +57,7 @@ var _ = Describe("AlertRulegroup Reconciler: Provoke Conditions", func() {
 				ObjectMeta: objectMetaApplyFailed,
 				Spec: v1beta1.GrafanaAlertRuleGroupSpec{
 					GrafanaCommonSpec: commonSpecApplyFailed,
-					FolderRef:         "apply-failed-helper",
+					FolderRef:         "pre-existing",
 					Rules:             rules,
 				},
 			},
