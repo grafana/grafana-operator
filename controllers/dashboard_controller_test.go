@@ -97,6 +97,23 @@ var _ = Describe("Dashboard Reconciler: Provoke Conditions", func() {
 			wantReason:    conditionReasonInvalidModelResolution,
 			wantErr:       "resolving dashboard contents",
 		},
+		{
+			name: "Successfully applied resource to instance",
+			cr: &v1beta1.GrafanaDashboard{
+				ObjectMeta: objectMetaSynchronized,
+				Spec: v1beta1.GrafanaDashboardSpec{
+					GrafanaCommonSpec: commonSpecSynchronized,
+					GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+						JSON: `{
+							"title": "Minimal Dashboard",
+							"links": []
+						}`,
+					},
+				},
+			},
+			wantCondition: conditionDashboardSynchronized,
+			wantReason:    conditionReasonApplySuccessful,
+		},
 	}
 
 	for _, test := range tests {
