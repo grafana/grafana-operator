@@ -63,6 +63,17 @@ var _ = Describe("Folder Reconciler: Provoke Conditions", func() {
 			wantReason:    conditionReasonCyclicParent,
 			wantErr:       "cyclic folder reference",
 		},
+		{
+			name: "Successfully applied resource to instance",
+			cr: &v1beta1.GrafanaFolder{
+				ObjectMeta: objectMetaSynchronized,
+				Spec: v1beta1.GrafanaFolderSpec{
+					GrafanaCommonSpec: commonSpecSynchronized,
+				},
+			},
+			wantCondition: conditionFolderSynchronized,
+			wantReason:    conditionReasonApplySuccessful,
+		},
 	}
 
 	for _, test := range tests {
