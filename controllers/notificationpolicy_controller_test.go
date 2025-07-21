@@ -36,6 +36,7 @@ func routesToRuntimeObjects(routes []v1beta1.GrafanaNotificationPolicyRoute) []r
 	for i := range routes {
 		objects[i] = &routes[i]
 	}
+
 	return objects
 }
 
@@ -370,6 +371,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 			if tt.wantLoopDetectedErr {
 				require.ErrorIs(t, err, ErrLoopDetected)
 			}
+
 			if tt.wantErr {
 				require.Error(t, err, "assembleNotificationPolicyRoutes() should return an error")
 			} else {

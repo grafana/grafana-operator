@@ -81,6 +81,7 @@ func GetScopedMatchingInstances(ctx context.Context, k8sClient client.Client, cr
 	}
 
 	var list v1beta1.GrafanaList
+
 	err := k8sClient.List(ctx, &list, opts...)
 	if err != nil {
 		return []v1beta1.Grafana{}, err
@@ -91,7 +92,9 @@ func GetScopedMatchingInstances(ctx context.Context, k8sClient client.Client, cr
 	}
 
 	selectedList := make([]v1beta1.Grafana, 0, len(list.Items))
+
 	var unreadyInstances []string
+
 	for _, instance := range list.Items {
 		// Matches all instances when MatchExpressions is undefined
 		selected := labelsSatisfyMatchExpressions(instance.Labels, instanceSelector.MatchExpressions)
@@ -105,11 +108,14 @@ func GetScopedMatchingInstances(ctx context.Context, k8sClient client.Client, cr
 			unreadyInstances = append(unreadyInstances, instance.Name)
 			continue
 		}
+
 		selectedList = append(selectedList, instance)
 	}
+
 	if len(unreadyInstances) > 0 {
 		log.Info("Grafana instances not ready, excluded from matching", "instances", unreadyInstances)
 	}
+
 	if len(selectedList) == 0 {
 		log.Info("None of the available Grafana instances matched the selector, skipping reconciliation", "AllowCrossNamespaceImport", cr.AllowCrossNamespace())
 	}
@@ -122,9 +128,11 @@ func getFolderUID(ctx context.Context, k8sClient client.Client, ref operatorapi.
 	if ref.FolderUID() != "" {
 		return ref.FolderUID(), nil
 	}
+
 	if ref.FolderRef() == "" {
 		return "", nil
 	}
+
 	folder := &v1beta1.GrafanaFolder{}
 
 	err := k8sClient.Get(ctx, client.ObjectKey{
@@ -136,9 +144,12 @@ func getFolderUID(ctx context.Context, k8sClient client.Client, ref operatorapi.
 			setNoMatchingFolder(ref.Conditions(), ref.CurrentGeneration(), "NotFound", fmt.Sprintf("Folder with name %s not found in namespace %s", ref.FolderRef(), ref.FolderNamespace()))
 			return "", err
 		}
+
 		setNoMatchingFolder(ref.Conditions(), ref.CurrentGeneration(), "ErrFetchingFolder", fmt.Sprintf("Failed to fetch folder: %s", err.Error()))
+
 		return "", err
 	}
+
 	removeNoMatchingFolder(ref.Conditions())
 
 	return folder.CustomUIDOrUID(), nil
@@ -219,6 +230,7 @@ func setNoMatchingInstancesCondition(conditions *[]metav1.Condition, generation 
 		reason = conditionReasonEmptyAPIReply
 		message = "None of the available Grafana instances matched the selector, skipping reconciliation"
 	}
+
 	meta.SetStatusCondition(conditions, metav1.Condition{
 		Type:               conditionNoMatchingInstance,
 		Status:             metav1.ConditionTrue,
@@ -329,17 +341,21 @@ func buildSynchronizedCondition(resource string, syncType string, generation int
 
 		condition.Message = fmt.Sprintf("%s failed to be applied for %d out of %d instances. Errors:%s", resource, len(applyErrors), total, sb.String())
 	}
+
 	return condition
 }
 
 func getReferencedValue(ctx context.Context, cl client.Client, cr metav1.ObjectMetaAccessor, source v1beta1.ValueFromSource) (string, string, error) {
 	objMeta := cr.GetObjectMeta()
+
 	if source.SecretKeyRef != nil {
 		s := &corev1.Secret{}
+
 		err := cl.Get(ctx, client.ObjectKey{Namespace: objMeta.GetNamespace(), Name: source.SecretKeyRef.Name}, s)
 		if err != nil {
 			return "", "", err
 		}
+
 		if val, ok := s.Data[source.SecretKeyRef.Key]; ok {
 			return string(val), source.SecretKeyRef.Key, nil
 		} else {
@@ -347,10 +363,12 @@ func getReferencedValue(ctx context.Context, cl client.Client, cr metav1.ObjectM
 		}
 	} else {
 		s := &corev1.ConfigMap{}
+
 		err := cl.Get(ctx, client.ObjectKey{Namespace: objMeta.GetNamespace(), Name: source.ConfigMapKeyRef.Name}, s)
 		if err != nil {
 			return "", "", err
 		}
+
 		if val, ok := s.Data[source.ConfigMapKeyRef.Key]; ok {
 			return val, source.ConfigMapKeyRef.Key, nil
 		} else {
@@ -366,6 +384,7 @@ func addFinalizer(ctx context.Context, cl client.Client, cr client.Object) error
 	if controllerutil.AddFinalizer(cr, grafanaFinalizer) {
 		return patchFinalizers(ctx, cl, cr)
 	}
+
 	return nil
 }
 
@@ -376,6 +395,7 @@ func removeFinalizer(ctx context.Context, cl client.Client, cr client.Object) er
 	if controllerutil.RemoveFinalizer(cr, grafanaFinalizer) {
 		return patchFinalizers(ctx, cl, cr)
 	}
+
 	return nil
 }
 
@@ -388,6 +408,7 @@ func patchFinalizers(ctx context.Context, cl client.Client, cr client.Object) er
 	if err != nil {
 		return err
 	}
+
 	return cl.Patch(ctx, cr, client.RawPatch(types.MergePatchType, patch))
 }
 
@@ -400,6 +421,7 @@ func addAnnotation(ctx context.Context, cl client.Client, cr client.Object, key 
 
 	// Add key to map and create patch
 	crAnnotations[key] = value
+
 	patch, err := json.Marshal(map[string]any{"metadata": map[string]any{"annotations": crAnnotations}})
 	if err != nil {
 		return err
@@ -417,6 +439,7 @@ func removeAnnotation(ctx context.Context, cl client.Client, cr client.Object, k
 	// Escape slash '/' according to RFC6901
 	// We could also escape tilde '~', but that is not a valid character in annotation keys.
 	key = strings.ReplaceAll(key, "/", "~1")
+
 	patch, err := json.Marshal([]any{map[string]any{
 		"op":   "remove",
 		"path": "/metadata/annotations/" + key,
@@ -457,6 +480,7 @@ func UpdateStatus(ctx context.Context, cl client.Client, cr v1beta1.CommonResour
 	if err := cl.Status().Update(ctx, cr); err != nil {
 		log.Error(err, "updating status")
 	}
+
 	if meta.IsStatusConditionTrue(cr.CommonStatus().Conditions, conditionNoMatchingInstance) {
 		if err := removeFinalizer(ctx, cl, cr); err != nil {
 			log.Error(err, "failed to remove finalizer")

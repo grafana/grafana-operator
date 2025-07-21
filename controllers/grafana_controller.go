@@ -72,6 +72,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	ctx = logf.IntoContext(ctx, log)
 
 	cr := &grafanav1beta1.Grafana{}
+
 	err := r.Get(ctx, req.NamespacedName, cr)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -79,6 +80,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 
 		log.Error(err, "error getting grafana cr")
+
 		return ctrl.Result{}, err
 	}
 
@@ -94,6 +96,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		setSuspended(&cr.Status.Conditions, cr.Generation, conditionReasonReconcileSuspended)
 		return ctrl.Result{}, nil
 	}
+
 	removeSuspended(&cr.Status.Conditions)
 
 	var stages []grafanav1beta1.OperatorStageName
@@ -117,6 +120,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	vars := &grafanav1beta1.OperatorReconcileVars{}
+
 	for _, stage := range stages {
 		log.Info("running stage", "stage", stage)
 
@@ -135,6 +139,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 			metrics.GrafanaFailedReconciles.WithLabelValues(cr.Namespace, cr.Name, string(stage)).Inc()
 			meta.RemoveStatusCondition(&cr.Status.Conditions, conditionTypeGrafanaReady)
+
 			return ctrl.Result{}, fmt.Errorf("reconciler error in stage '%s': %w", stage, err)
 		}
 	}
@@ -192,6 +197,7 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 
 	// get all grafana instances
 	grafanas := &grafanav1beta1.GrafanaList{}
+
 	err := r.List(ctx, grafanas)
 	if err != nil {
 		return err
@@ -203,48 +209,56 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 
 	// Fetch all resources
 	alertRuleGroups := &grafanav1beta1.GrafanaAlertRuleGroupList{}
+
 	err = r.List(ctx, alertRuleGroups)
 	if err != nil {
 		return err
 	}
 
 	contactPoints := &grafanav1beta1.GrafanaContactPointList{}
+
 	err = r.List(ctx, contactPoints)
 	if err != nil {
 		return err
 	}
 
 	dashboards := &grafanav1beta1.GrafanaDashboardList{}
+
 	err = r.List(ctx, dashboards)
 	if err != nil {
 		return err
 	}
 
 	datasources := &grafanav1beta1.GrafanaDatasourceList{}
+
 	err = r.List(ctx, datasources)
 	if err != nil {
 		return err
 	}
 
 	folders := &grafanav1beta1.GrafanaFolderList{}
+
 	err = r.List(ctx, folders)
 	if err != nil {
 		return err
 	}
 
 	libraryPanels := &grafanav1beta1.GrafanaLibraryPanelList{}
+
 	err = r.List(ctx, libraryPanels)
 	if err != nil {
 		return err
 	}
 
 	muteTimings := &grafanav1beta1.GrafanaLibraryPanelList{}
+
 	err = r.List(ctx, muteTimings)
 	if err != nil {
 		return err
 	}
 
 	notificationTemplates := &grafanav1beta1.GrafanaNotificationTemplateList{}
+
 	err = r.List(ctx, notificationTemplates)
 	if err != nil {
 		return err
@@ -252,6 +266,7 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 
 	// delete resources from grafana statuses that no longer have a CR
 	statusUpdates := 0
+
 	for _, grafana := range grafanas.Items {
 		updateStatus := false
 
@@ -266,6 +281,7 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 
 		if updateStatus {
 			statusUpdates += 1
+
 			err = r.Client.Status().Update(ctx, &grafana)
 			if err != nil {
 				return err
@@ -276,6 +292,7 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 	if statusUpdates > 0 {
 		log.Info("successfully synced grafana statuses", "update count", statusUpdates)
 	}
+
 	return nil
 }
 
@@ -311,12 +328,14 @@ func (r *GrafanaReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manag
 				err := r.syncStatuses(ctx)
 				elapsed := time.Since(start).Milliseconds()
 				metrics.InitialStatusSyncDuration.Set(float64(elapsed))
+
 				if err != nil {
 					log.Error(err, "error synchronizing grafana statuses")
 					continue
 				}
 
 				log.Info("Grafana status sync complete")
+
 				return
 			}
 		}

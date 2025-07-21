@@ -19,6 +19,7 @@ func GetValueFromSecretKey(ctx context.Context, ref *v1.SecretKeySelector, c cli
 		Name:      ref.Name,
 		Namespace: namespace,
 	}
+
 	err := c.Get(ctx, selector, secret)
 	if err != nil {
 		return nil, err

@@ -51,6 +51,7 @@ func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafan
 	log.Info("reconciling deployment", "openshift", openshiftPlatform)
 
 	deployment := model.GetGrafanaDeployment(cr, scheme)
+
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, deployment, func() error {
 		deployment.Spec = getDeploymentSpec(cr, deployment.Name, scheme, vars, openshiftPlatform)
 
@@ -59,6 +60,7 @@ func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafan
 			setInvalidMergeCondition(cr, "Deployment", err)
 			return err
 		}
+
 		removeInvalidMergeCondition(cr, "Deployment")
 
 		if scheme != nil {
@@ -154,9 +156,11 @@ func getGrafanaImage(cr *v1beta1.Grafana) string {
 	if cr.Spec.Version == "" {
 		return fmt.Sprintf("%s:%s", config.GrafanaImage, config.GrafanaVersion)
 	}
+
 	if strings.ContainsAny(cr.Spec.Version, ":/@") {
 		return cr.Spec.Version
 	}
+
 	return fmt.Sprintf("%s:%s", config.GrafanaImage, cr.Spec.Version)
 }
 
@@ -168,7 +172,9 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 
 	// env var to restart containers if plugins change
 	t := true
+
 	var envVars []corev1.EnvVar
+
 	envVars = append(envVars, corev1.EnvVar{
 		Name: "PLUGINS_HASH",
 		ValueFrom: &corev1.EnvVarSource{
@@ -288,6 +294,7 @@ func getDefaultContainerSecurityContext(disableSecurityContext string, openshift
 			Capabilities:             capability,
 		}
 	}
+
 	return &corev1.SecurityContext{
 		AllowPrivilegeEscalation: model.BoolPtr(false),
 		ReadOnlyRootFilesystem:   model.BoolPtr(true),

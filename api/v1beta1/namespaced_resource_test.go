@@ -157,6 +157,7 @@ func TestRemoveEntries(t *testing.T) {
 			got := tt.list.RemoveEntries(&tt.toRemove)
 
 			assert.Equal(t, tt.want, got)
+
 			for _, r := range tt.toRemove {
 				assert.NotContainsf(t, got, r, "Resources should have removed from the source list")
 			}

@@ -34,6 +34,7 @@ func normalizeAndCompareJSON(json1, json2 []byte) bool {
 	if err := json.Unmarshal(json1, &data1); err != nil {
 		return false
 	}
+
 	if err := json.Unmarshal(json2, &data2); err != nil {
 		return false
 	}
@@ -42,6 +43,7 @@ func normalizeAndCompareJSON(json1, json2 []byte) bool {
 	if err != nil {
 		return false
 	}
+
 	normalized2, err := json.Marshal(data2)
 	if err != nil {
 		return false
@@ -120,7 +122,6 @@ func TestFetchJsonnet(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			result, err := FetchJsonnet(test.dashboard, test.envs, test.libsonnet)
-
 			if fmt.Sprintf("%v", err) != fmt.Sprintf("%v", test.expectedError) {
 				t.Errorf("expected error %v, but got %v", test.expectedError, err)
 			}
@@ -174,7 +175,6 @@ func TestBuildProjectAndFetchJsonnetFrom(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			result, err := BuildProjectAndFetchJsonnetFrom(test.dashboard, test.envs)
-
 			if fmt.Sprintf("%v", err) != fmt.Sprintf("%v", test.expectedError) {
 				t.Errorf("expected error %v, but got %v", test.expectedError, err)
 			}
@@ -211,6 +211,7 @@ func TestStoreByteArrayGzipOnDisk(t *testing.T) {
 	path, err := storeByteArrayGzipOnDisk(gzipFileName, []byte(bytesString))
 
 	targetGzipFilePath := getGzipArchiveFilePath(gzipFileName)
+
 	require.NoError(t, err)
 	require.NotEmpty(t, path)
 	require.Equal(t, targetGzipFilePath, path)

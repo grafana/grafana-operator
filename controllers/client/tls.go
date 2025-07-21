@@ -19,6 +19,7 @@ var (
 // build the tls.Config object based on the content of the Grafana CR object
 func buildTLSConfiguration(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (*tls.Config, error) {
 	var tlsConfigBlock *v1beta1.TLSConfig
+
 	switch {
 	case grafana.Spec.Client != nil && grafana.Spec.Client.TLS != nil:
 		// prefer top level if set, fall back to deprecated field
@@ -37,6 +38,7 @@ func buildTLSConfiguration(ctx context.Context, c client.Client, grafana *v1beta
 
 	tlsConfig := &tls.Config{MinVersion: tls.VersionTLS12}
 	secretName := tlsConfigBlock.CertSecretRef.Name
+
 	secretNamespace := grafana.Namespace
 	if tlsConfigBlock.CertSecretRef.Namespace != "" {
 		secretNamespace = tlsConfigBlock.CertSecretRef.Namespace
@@ -47,6 +49,7 @@ func buildTLSConfiguration(ctx context.Context, c client.Client, grafana *v1beta
 		Name:      secretName,
 		Namespace: secretNamespace,
 	}
+
 	err := c.Get(ctx, selector, secret)
 	if err != nil {
 		return nil, err
@@ -66,6 +69,7 @@ func buildTLSConfiguration(ctx context.Context, c client.Client, grafana *v1beta
 		if err != nil {
 			return nil, fmt.Errorf("certificate from secret %v/%v cannot be parsed : %w", grafana.Namespace, tlsConfigBlock.CertSecretRef.Name, err)
 		}
+
 		tlsConfig.Certificates = []tls.Certificate{loadedCrt}
 	}
 
@@ -74,6 +78,7 @@ func buildTLSConfiguration(ctx context.Context, c client.Client, grafana *v1beta
 		if !caCertPool.AppendCertsFromPEM(ca) {
 			return nil, fmt.Errorf("failed to add ca.crt from the secret %s/%s", tlsConfigBlock.CertSecretRef.Namespace, tlsConfigBlock.CertSecretRef.Name)
 		}
+
 		tlsConfig.RootCAs = caCertPool
 	}
 

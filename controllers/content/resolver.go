@@ -155,12 +155,14 @@ func (h *ContentResolver) fetchContentJSON(ctx context.Context) ([]byte, error) 
 		if err != nil {
 			return nil, fmt.Errorf("something went wrong while collecting envs, error: %w", err)
 		}
+
 		return fetchers.FetchJsonnet(h.resource, envs, embeds.GrafonnetEmbed)
 	case ContentSourceJsonnetProject:
 		envs, err := h.getContentEnvs(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("something went wrong while collecting envs, error: %w", err)
 		}
+
 		return fetchers.BuildProjectAndFetchJsonnetFrom(h.resource, envs)
 	case ContentSourceTypeGrafanaCom:
 		return fetchers.FetchFromGrafanaCom(ctx, h.resource, h.Client)
@@ -175,15 +177,18 @@ func (h *ContentResolver) getContentEnvs(ctx context.Context) (map[string]string
 	spec := h.resource.GrafanaContentSpec()
 
 	envs := make(map[string]string)
+
 	if spec.EnvsFrom != nil {
 		for _, ref := range spec.EnvsFrom {
 			key, val, err := h.getReferencedValue(ctx, h.resource, ref)
 			if err != nil {
 				return nil, fmt.Errorf("something went wrong processing envs, error: %w", err)
 			}
+
 			envs[key] = val
 		}
 	}
+
 	if spec.Envs != nil {
 		for _, ref := range spec.Envs {
 			if ref.Value != "" {
@@ -193,38 +198,46 @@ func (h *ContentResolver) getContentEnvs(ctx context.Context) (map[string]string
 				if err != nil {
 					return nil, fmt.Errorf("something went wrong processing referenced env %s, error: %w", ref.Name, err)
 				}
+
 				envs[ref.Name] = val
 			}
 		}
 	}
+
 	return envs, nil
 }
 
 func (h *ContentResolver) getReferencedValue(ctx context.Context, cr v1beta1.GrafanaContentResource, source v1beta1.GrafanaContentEnvFromSource) (string, string, error) {
 	if source.SecretKeyRef != nil {
 		s := &v1.Secret{}
+
 		err := h.Client.Get(ctx, client.ObjectKey{Namespace: cr.GetNamespace(), Name: source.SecretKeyRef.Name}, s)
 		if err != nil {
 			return "", "", err
 		}
+
 		if val, ok := s.Data[source.SecretKeyRef.Key]; ok {
 			return source.SecretKeyRef.Key, string(val), nil
 		} else {
 			return "", "", fmt.Errorf("missing key %s in secret %s", source.SecretKeyRef.Key, source.SecretKeyRef.Name)
 		}
 	}
+
 	if source.ConfigMapKeyRef != nil {
 		s := &v1.ConfigMap{}
+
 		err := h.Client.Get(ctx, client.ObjectKey{Namespace: cr.GetNamespace(), Name: source.ConfigMapKeyRef.Name}, s)
 		if err != nil {
 			return "", "", err
 		}
+
 		if val, ok := s.Data[source.ConfigMapKeyRef.Key]; ok {
 			return source.ConfigMapKeyRef.Key, val, nil
 		} else {
 			return "", "", fmt.Errorf("missing key %s in configmap %s", source.ConfigMapKeyRef.Key, source.ConfigMapKeyRef.Name)
 		}
 	}
+
 	return "", "", fmt.Errorf("source couldn't be parsed source: %s", source)
 }
 
@@ -239,6 +252,7 @@ func (h *ContentResolver) getContentModel(contentJSON []byte) (map[string]any, s
 	hash.Write(contentJSON)
 
 	var contentModel map[string]any
+
 	err = json.Unmarshal(contentJSON, &contentModel)
 	if err != nil {
 		return map[string]any{}, "", err

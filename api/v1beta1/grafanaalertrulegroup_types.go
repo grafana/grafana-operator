@@ -157,6 +157,7 @@ func (in *GrafanaAlertRuleGroup) GroupName() string {
 	if groupName == "" {
 		groupName = in.Name
 	}
+
 	return groupName
 }
 

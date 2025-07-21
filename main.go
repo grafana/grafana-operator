@@ -106,11 +106,14 @@ func init() {
 }
 
 func main() { // nolint:gocyclo
-	var metricsAddr string
-	var enableLeaderElection bool
-	var probeAddr string
-	var pprofAddr string
-	var maxConcurrentReconciles int
+	var (
+		metricsAddr             string
+		enableLeaderElection    bool
+		probeAddr               string
+		pprofAddr               string
+		maxConcurrentReconciles int
+	)
+
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
@@ -147,6 +150,7 @@ func main() { // nolint:gocyclo
 	// Detect environment variables
 	watchNamespace, _ := os.LookupEnv(watchNamespaceEnvVar)
 	watchNamespaceSelector, _ := os.LookupEnv(watchNamespaceEnvSelector)
+
 	watchLabelSelectors, _ := os.LookupEnv(watchLabelSelectorsEnvVar)
 	if watchLabelSelectors != "" {
 		setupLog.Info(fmt.Sprintf("sharding is enabled via %s=%s. Beware: Always label Grafana CRs before enabling to ensure labels are inherited. Existing Secrets/ConfigMaps referenced in CRs also need to be labeled to continue working.", watchLabelSelectorsEnvVar, watchLabelSelectors))
@@ -158,9 +162,11 @@ func main() { // nolint:gocyclo
 	}
 
 	enforceCacheLabels := false
+
 	switch enforceCacheLabelsLevel {
 	case cachingLevelSafe, cachingLevelAll:
 		enforceCacheLabels = true
+
 		setupLog.Info("label restrictions for cached resources are active", "level", enforceCacheLabelsLevel)
 	case cachingLevelOff:
 	default:
@@ -171,11 +177,13 @@ func main() { // nolint:gocyclo
 
 	// Fetch k8s api credentials and detect platform
 	restConfig := ctrl.GetConfigOrDie()
+
 	autodetect, err := autodetect.New(restConfig)
 	if err != nil {
 		setupLog.Error(err, "failed to setup auto-detect routine")
 		os.Exit(1)
 	}
+
 	isOpenShift, err := autodetect.IsOpenshift()
 	if err != nil {
 		setupLog.Error(err, "unable to detect the platform")
@@ -206,6 +214,7 @@ func main() { // nolint:gocyclo
 		if watchLabelSelectors != "" {
 			// When sharding, limit cache according to shard labels
 			cacheLabelConfig = cache.ByObject{Label: labelSelectors}
+
 			setupLog.Info(fmt.Sprintf("sharding is enabled via %s=%s. Beware: Always label Grafana CRs before enabling to ensure labels are inherited. Existing Secrets/ConfigMaps referenced in CRs also need to be labeled to continue working.", watchLabelSelectorsEnvVar, watchLabelSelectors))
 		} else {
 			// Otherwise limit it to managed-by label
@@ -225,6 +234,7 @@ func main() { // nolint:gocyclo
 		if isOpenShift {
 			mgrOptions.Cache.ByObject[&routev1.Route{}] = cacheLabelConfig
 		}
+
 		if enforceCacheLabelsLevel == cachingLevelSafe {
 			mgrOptions.Client.Cache = &client.CacheOptions{
 				DisableFor: []client.Object{&corev1.ConfigMap{}, &corev1.Secret{}},
@@ -245,11 +255,13 @@ func main() { // nolint:gocyclo
 	case strings.Contains(watchNamespaceSelector, ":"):
 		// multi namespace scoped
 		mgrOptions.Cache.DefaultNamespaces = getNamespaceConfigSelector(restConfig, watchNamespaceSelector, labelSelectors)
+
 		setupLog.Info("operator running in namespace scoped mode using namespace selector", "namespace", watchNamespace)
 
 	case watchNamespace == "" && watchNamespaceSelector == "":
 		// cluster scoped
 		mgrOptions.Cache.DefaultLabelSelector = labelSelectors
+
 		setupLog.Info("operator running in cluster scoped mode")
 	}
 
@@ -272,6 +284,7 @@ func main() { // nolint:gocyclo
 		setupLog.Error(err, "unable to create controller", "controller", "Grafana")
 		os.Exit(1)
 	}
+
 	if err = (&controllers.GrafanaDashboardReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
@@ -279,6 +292,7 @@ func main() { // nolint:gocyclo
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDashboard")
 		os.Exit(1)
 	}
+
 	if err = (&controllers.GrafanaDatasourceReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
@@ -286,6 +300,7 @@ func main() { // nolint:gocyclo
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDatasource")
 		os.Exit(1)
 	}
+
 	if err = (&controllers.GrafanaFolderReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
@@ -293,6 +308,7 @@ func main() { // nolint:gocyclo
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaFolder")
 		os.Exit(1)
 	}
+
 	if err = (&controllers.GrafanaLibraryPanelReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
@@ -300,6 +316,7 @@ func main() { // nolint:gocyclo
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaLibraryPanel")
 		os.Exit(1)
 	}
+
 	if err = (&controllers.GrafanaAlertRuleGroupReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
@@ -307,6 +324,7 @@ func main() { // nolint:gocyclo
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaAlertRuleGroup")
 		os.Exit(1)
 	}
+
 	if err = (&controllers.GrafanaContactPointReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
@@ -314,6 +332,7 @@ func main() { // nolint:gocyclo
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaContactPoint")
 		os.Exit(1)
 	}
+
 	if err = (&controllers.GrafanaNotificationPolicyReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
@@ -322,6 +341,7 @@ func main() { // nolint:gocyclo
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaNotificationPolicy")
 		os.Exit(1)
 	}
+
 	if err = (&controllers.GrafanaNotificationTemplateReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
@@ -329,6 +349,7 @@ func main() { // nolint:gocyclo
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaNotificationTemplate")
 		os.Exit(1)
 	}
+
 	if err = (&controllers.GrafanaMuteTimingReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
@@ -342,12 +363,14 @@ func main() { // nolint:gocyclo
 		setupLog.Error(err, "unable to set up health check")
 		os.Exit(1)
 	}
+
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
 
 	setupLog.Info("starting manager")
+
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
@@ -371,6 +394,7 @@ func getNamespaceConfig(namespaces string, labelSelectors labels.Selector) map[s
 			UnsafeDisableDeepCopy: nil,
 		}
 	}
+
 	return defaultNamespaces
 }
 
@@ -384,6 +408,7 @@ func getNamespaceConfigSelector(restConfig *rest.Config, selector string, labelS
 	listOpts := []client.ListOption{
 		client.MatchingLabels(map[string]string{strings.Split(selector, ":")[0]: strings.Split(selector, ":")[1]}),
 	}
+
 	err = cl.List(context.Background(), nsList, listOpts...)
 	if err != nil {
 		setupLog.Error(err, "Failed to get watch namespaces")
@@ -402,6 +427,7 @@ func getNamespaceConfigSelector(restConfig *rest.Config, selector string, labelS
 			UnsafeDisableDeepCopy: nil,
 		}
 	}
+
 	return defaultNamespaces
 }
 
@@ -418,7 +444,9 @@ func getLabelSelectors(watchLabelSelectors string) (labels.Selector, error) {
 	} else {
 		labelSelectors = labels.Everything() // Match any labels
 	}
+
 	managedByLabelSelector, _ := labels.SelectorFromSet(model.GetCommonLabels()).Requirements()
 	labelSelectors.Add(managedByLabelSelector...)
+
 	return labelSelectors, nil
 }

@@ -43,6 +43,7 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 	}
 
 	log.Info("reconciling ingress")
+
 	return r.reconcileIngress(ctx, cr, vars, scheme)
 }
 
@@ -61,6 +62,7 @@ func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Gr
 			setInvalidMergeCondition(cr, "Ingress", err)
 			return err
 		}
+
 		removeInvalidMergeCondition(cr, "Ingress")
 
 		err = controllerutil.SetControllerReference(cr, ingress, scheme)
@@ -109,6 +111,7 @@ func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Graf
 			setInvalidMergeCondition(cr, "Route", err)
 			return err
 		}
+
 		removeInvalidMergeCondition(cr, "Route")
 
 		if scheme != nil {
@@ -143,10 +146,14 @@ func (r *IngressReconciler) getIngressAdminURL(ingress *v1.Ingress) string {
 	}
 
 	protocol := "http"
-	var hostname string
-	var adminURL string
+
+	var (
+		hostname string
+		adminURL string
+	)
 
 	// An ingress rule might not have the field Host specified, better not to consider such rules
+
 	for _, rule := range ingress.Spec.Rules {
 		if rule.Host != "" {
 			hostname = rule.Host
@@ -164,11 +171,13 @@ func (r *IngressReconciler) getIngressAdminURL(ingress *v1.Ingress) string {
 	// if all fails, try to get access through the load balancer
 	if hostname == "" {
 		loadBalancerIP := ""
+
 		for _, lb := range ingress.Status.LoadBalancer.Ingress {
 			if lb.Hostname != "" {
 				hostname = lb.Hostname
 				break
 			}
+
 			if lb.IP != "" {
 				loadBalancerIP = lb.IP
 			}
@@ -224,15 +233,18 @@ func getIngressSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) v1.IngressSpec 
 	service := model.GetGrafanaService(cr, scheme)
 
 	port := GetIngressTargetPort(cr)
+
 	var assignedPort v1.ServiceBackendPort
 	if port.IntVal > 0 {
 		assignedPort.Number = port.IntVal
 	}
+
 	if port.StrVal != "" {
 		assignedPort.Name = port.StrVal
 	}
 
 	pathType := v1.PathTypePrefix
+
 	return v1.IngressSpec{
 		Rules: []v1.IngressRule{
 			{

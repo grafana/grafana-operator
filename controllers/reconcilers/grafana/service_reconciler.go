@@ -48,6 +48,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 			setInvalidMergeCondition(cr, "Service", err)
 			return err
 		}
+
 		removeInvalidMergeCondition(cr, "Service")
 
 		if scheme != nil {
@@ -73,11 +74,13 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 		if r.clusterDomain != "" {
 			adminHost += "." + r.clusterDomain
 		}
+
 		cr.Status.AdminURL = fmt.Sprintf("%v://%v:%d", getGrafanaServerProtocol(cr), adminHost, int32(GetGrafanaPort(cr))) // #nosec G115
 	}
 
 	// Headless service for grafana unified alerting
 	headlessService := model.GetGrafanaHeadlessService(cr, scheme)
+
 	_, err = controllerutil.CreateOrUpdate(ctx, r.client, headlessService, func() error {
 		model.SetInheritedLabels(headlessService, cr.Labels)
 		headlessService.Spec = v1.ServiceSpec{
@@ -88,6 +91,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 			},
 			Type: v1.ServiceTypeClusterIP,
 		}
+
 		return nil
 	})
 	if err != nil {
@@ -101,6 +105,7 @@ func getGrafanaServerProtocol(cr *v1beta1.Grafana) string {
 	if cr.Spec.Config != nil && cr.Spec.Config["server"] != nil && cr.Spec.Config["server"]["protocol"] != "" {
 		return cr.Spec.Config["server"]["protocol"]
 	}
+
 	return config.GrafanaServerProtocol
 }
 

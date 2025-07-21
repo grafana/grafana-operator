@@ -32,7 +32,9 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 			if err != nil {
 				return nil, err
 			}
+
 			credentials.apikey = string(apikey)
+
 			return credentials, nil
 		}
 
@@ -49,6 +51,7 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 
 		credentials.username = string(username)
 		credentials.password = string(password)
+
 		return credentials, nil
 	}
 
@@ -77,10 +80,12 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 						if err != nil {
 							return nil, err
 						}
+
 						credentials.username = string(usernameFromSecret)
 					}
 				}
 			}
+
 			if env.Name == config.GrafanaAdminPasswordEnvVar {
 				if env.Value != "" {
 					credentials.password = env.Value
@@ -93,12 +98,14 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 						if err != nil {
 							return nil, err
 						}
+
 						credentials.password = string(passwordFromSecret)
 					}
 				}
 			}
 		}
 	}
+
 	return credentials, nil
 }
 
@@ -107,11 +114,13 @@ func InjectAuthHeaders(ctx context.Context, c client.Client, grafana *v1beta1.Gr
 	if err != nil {
 		return fmt.Errorf("fetching admin credentials: %w", err)
 	}
+
 	if creds.apikey != "" {
 		req.Header.Add("Authorization", "Bearer "+creds.apikey)
 	} else {
 		req.SetBasicAuth(creds.username, creds.password)
 	}
+
 	return nil
 }
 
@@ -126,6 +135,7 @@ func ParseAdminURL(adminURL string) (*url.URL, error) {
 	}
 
 	gURL = gURL.JoinPath("/api")
+
 	return gURL, nil
 }
 

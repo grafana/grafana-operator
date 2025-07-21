@@ -13,6 +13,7 @@ func TestPluginString(t *testing.T) {
 		if strings.Contains(a, ",") || strings.Contains(b, ",") || strings.Contains(c, ",") {
 			return true // skip plugins with ,
 		}
+
 		pl := PluginList{
 			{
 				Name:    a,
@@ -28,16 +29,20 @@ func TestPluginString(t *testing.T) {
 			},
 		}
 		out := pl.String()
+
 		split := strings.Split(out, ",")
 		if len(split) != 3 {
 			return false
 		}
+
 		if split[0] > split[1] {
 			return false
 		}
+
 		if split[1] > split[2] {
 			return false
 		}
+
 		return true
 	}, nil)
 	if err != nil {

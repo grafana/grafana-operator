@@ -61,9 +61,11 @@ func (in *instrumentedRoundTripper) RoundTrip(r *http.Request) (*http.Response, 
 				slog.WarnContext(r.Context(), "failed constructing metric", "err", err)
 				continue
 			}
+
 			c.Inc()
 		}
 	}
+
 	return resp, err
 }
 

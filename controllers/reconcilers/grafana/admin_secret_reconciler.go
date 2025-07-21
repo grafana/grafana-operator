@@ -57,8 +57,10 @@ func getAdminUser(cr *v1beta1.Grafana, current *v1.Secret) []byte {
 		if current != nil && current.Data[config.GrafanaAdminUserEnvVar] != nil {
 			return current.Data[config.GrafanaAdminUserEnvVar]
 		}
+
 		return []byte(config.DefaultAdminUser)
 	}
+
 	return []byte(cr.Spec.Config["security"]["admin_user"])
 }
 
@@ -68,8 +70,10 @@ func getAdminPassword(cr *v1beta1.Grafana, current *v1.Secret) []byte {
 		if current != nil && current.Data[config.GrafanaAdminPasswordEnvVar] != nil {
 			return current.Data[config.GrafanaAdminPasswordEnvVar]
 		}
+
 		return []byte(model.RandStringRunes(10))
 	}
+
 	return []byte(cr.Spec.Config["security"]["admin_password"])
 }
 
