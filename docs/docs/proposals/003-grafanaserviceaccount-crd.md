@@ -37,25 +37,24 @@ When not using persistent storage, this service account is removed on reconcilia
 
 ## Proposal
 
-To suppor this functionality, we propose the following changes to the Grafana operator.
+To support this functionality, we propose the following changes to the Grafana operator.
 
 ### Create a new resource `GrafanaServiceAccount`
 
-This resource controlls the reconciliation of service accounts. An example could look like this:
+This resource controls the reconciliation of service accounts. An example could look like this:
 
-```
+```.yaml
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaServiceAccount
 metadata:
   name: grafana-sa
 spec:
   instanceName: test-grafana-instance
-  uid: grafana-sa
   name: grafana-service-account
-  role: [Viewer/Editor/Admin]
+  role: Viewer # Valid options: Viewer, Editor, Admin
   tokens:
     - name: test-token
-      expires: 2025-12-31 # optional / never expires if unset
+      expires: 2025-12-31T14:00:00+02:00 # optional / never expires if unset
       secretName: grafana-sa-token # optional / generated if unset
   permissions: # this controls who is allowed to customize the service account
     - user: <users in the cluster/root user etc>
@@ -66,7 +65,7 @@ spec:
 Since reconciling lists is a complex operation to implement, both the permissions & tokens lists are seen as authoritive.
 This means that, if defined, these lists are the full set of specified values and any customizations made through the Grafana UI are replaced/removed on reconciliation.
 
-Service accounts reference an instance by resource name directly to ensure correct targeting and avoid accidentialy creating accounts on instances which should not be targeted.
+Service accounts reference an instance by resource name directly to ensure correct targeting and avoid accidentially creating accounts on instances which should not be targeted.
 For now, service accounts can only exist in the same namespace as the Grafana resource as a security precaution.
 
 
@@ -98,6 +97,6 @@ Future implementations could support creation of service accounts through the Gr
 
 ## Additional context
 
-@ndk started implementing the original proposal which sparked a lot of discussions around the proposal and wheter it makes sense to implement it as is.
+@ndk started implementing the original proposal which sparked a lot of discussions around the proposal and whether it makes sense to implement it as is.
 We discussed different controller strategies, placement of resources and implementation complexity.
 As an outcome, this proposal has been updated to reflect many, many sessions of discussing this topic so it can serve as a reference for implementing this functionality.
