@@ -5,41 +5,50 @@ weight: 50
 
 ## Verification of container images
 
-Grafana-operator container images are signed by cosign using identity-based ("keyless") signing and transparency. Executing the following command can be used to verify the signature of a container image:
+Grafana-operator container images are signed by github [attestation](https://docs.github.com/en/actions/how-tos/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds). Executing the following command can be used to verify the signature of a container image:
 
-To verify the grafana-operator run
+> This only applies from grafana-operator version 5.19.0 and forward
 
-Pre-requirement
+### Pre-requirement
 
-- cosign v2.0.0 or higher [installation instructions](https://docs.sigstore.dev/system_config/installation/).
+- cosign v2.5.0 or higher [installation instructions](https://docs.sigstore.dev/cosign/system_config/installation/).
+- gh 2.72.0 or higher [cli](https://github.com/cli/cli/releases)
+- crane [installation instructions](https://github.com/google/go-containerregistry/blob/main/cmd/crane/doc/crane.md) or oras [installation instructions](https://oras.land/docs/installation)
+
+### verify the grafana-operator image
 
 ```shell
-cosign verify ghcr.io/grafana/grafana-operator@<version> \
-  --certificate-identity-regexp 'https://github\.com/grafana/grafana-operator/\.github/workflows/.+' \
-  --certificate-oidc-issuer https://token.actions.githubusercontent.com | jq
+gh attestation verify --owner grafana oci://ghcr.io/grafana/grafana-operator:<version>
 ```
 
 For example
 
 ```shell
-cosign verify ghcr.io/grafana/grafana-operator@v5.6.1 \
-  --certificate-identity-regexp 'https://github\.com/grafana/grafana-operator/\.github/workflows/.+' \
-  --certificate-oidc-issuer https://token.actions.githubusercontent.com | jq
+gh attestation verify --owner grafana oci://ghcr.io/grafana/grafana-operator:v5.19.0
 ```
 
-## SBOM
+Or if you prefer, you can use cosign.
+
+```shell
+cosign verify-attestation --certificate-identity-regexp 'https://github\.com/grafana/grafana-operator/\.github/workflows/.+'  --certificate-oidc-issuer https://token.actions.githubusercontent.com --new-bundle-format  --type=slsaprovenance1 ghcr.io/grafana/grafana-operator:v5.19.0 | jq -r '.payload | @base64d | fromjson'
+```
+
+### Verify SBOM
 
 As a part of our release cycle we also generate SBOMs.
-You can find them as artifacts in our supported repositories.
+You can find them as artifacts in our github repositorie or in the public cosign instance.
 
-To download the sbom you can run
-
-```shell
-cosign download sbom --platform linux/amd64 ghcr.io/grafana/grafana-operator:<version>
-```
-
-example:
+> Notice the platform specification in the commands.
+> This is needed since the sbom is matching to the platform specific container image.
 
 ```shell
-cosign download sbom --platform linux/amd64 ghcr.io/grafana/grafana-operator:v5.6.1
+# Get the image digest using crane
+crane digest --platform linux/amd64 ghcr.io/grafana/grafana-operator:v5.19.0
+
+# Or using oras
+oras resolve --platform linux/amd64 ghcr.io/grafana/grafana-operator:v5.19.0
+
+# Download the SBOM attestation using the digest (example with oras)
+cosign download attestation --predicate-type https://spdx.dev/Document \
+  ghcr.io/grafana/grafana-operator@$(oras resolve --platform linux/amd64 ghcr.io/grafana/grafana-operator:v5.19.0)
 ```
