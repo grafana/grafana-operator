@@ -22,6 +22,7 @@ func TestGrafanaStatusListAlertRuleGroup(t *testing.T) {
 
 func newAlertRuleGroup(name string, editable *bool) *GrafanaAlertRuleGroup {
 	noDataState := "NoData"
+
 	return &GrafanaAlertRuleGroup{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: APIVersion,

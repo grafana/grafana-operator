@@ -54,11 +54,13 @@ func (r *GrafanaMuteTimingReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	ctx = logf.IntoContext(ctx, log)
 
 	muteTiming := &grafanav1beta1.GrafanaMuteTiming{}
+
 	err := r.Get(ctx, req.NamespacedName, muteTiming)
 	if err != nil {
 		if kuberr.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
+
 		return ctrl.Result{}, fmt.Errorf("failed to get GrafanaMuteTiming: %w", err)
 	}
 
@@ -68,10 +70,12 @@ func (r *GrafanaMuteTimingReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			if err := r.finalize(ctx, muteTiming); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaMuteTiming: %w", err)
 			}
+
 			if err := removeFinalizer(ctx, r.Client, muteTiming); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
 			}
 		}
+
 		return ctrl.Result{}, nil
 	}
 
@@ -81,18 +85,21 @@ func (r *GrafanaMuteTimingReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		setSuspended(&muteTiming.Status.Conditions, muteTiming.Generation, conditionReasonApplySuspended)
 		return ctrl.Result{}, nil
 	}
+
 	removeSuspended(&muteTiming.Status.Conditions)
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, muteTiming)
 	if err != nil {
 		setNoMatchingInstancesCondition(&muteTiming.Status.Conditions, muteTiming.Generation, err)
 		meta.RemoveStatusCondition(&muteTiming.Status.Conditions, conditionMuteTimingSynchronized)
+
 		return ctrl.Result{}, fmt.Errorf("could not find matching instances: %w", err)
 	}
 
 	if len(instances) == 0 {
 		setNoMatchingInstancesCondition(&muteTiming.Status.Conditions, muteTiming.Generation, err)
 		meta.RemoveStatusCondition(&muteTiming.Status.Conditions, conditionMuteTimingSynchronized)
+
 		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
@@ -100,6 +107,7 @@ func (r *GrafanaMuteTimingReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	log.Info("found matching Grafana instances for mute timing", "count", len(instances))
 
 	applyErrors := make(map[string]string)
+
 	for _, grafana := range instances {
 		err := r.reconcileWithInstance(ctx, &grafana, muteTiming)
 		if err != nil {
@@ -124,6 +132,7 @@ func (r *GrafanaMuteTimingReconciler) reconcileWithInstance(ctx context.Context,
 	}
 
 	_, err = r.getMuteTimingByName(ctx, muteTiming.Spec.Name, instance)
+
 	shouldCreate := false
 	if errors.Is(err, provisioning.NewGetMuteTimingNotFound()) {
 		shouldCreate = true
@@ -134,7 +143,9 @@ func (r *GrafanaMuteTimingReconciler) reconcileWithInstance(ctx context.Context,
 	trueRef := "true" //nolint:goconst
 
 	var payload models.MuteTimeInterval
+
 	payload.Name = muteTiming.Spec.Name
+
 	payload.TimeIntervals = make([]*models.TimeIntervalItem, 0, len(muteTiming.Spec.TimeIntervals))
 	for _, ti := range muteTiming.Spec.TimeIntervals {
 		times := make([]*models.TimeIntervalTimeRange, 0, len(ti.Times))
@@ -144,6 +155,7 @@ func (r *GrafanaMuteTimingReconciler) reconcileWithInstance(ctx context.Context,
 				EndTime:   tr.EndTime,
 			})
 		}
+
 		payload.TimeIntervals = append(payload.TimeIntervals, &models.TimeIntervalItem{
 			DaysOfMonth: ti.DaysOfMonth,
 			Location:    ti.Location,
@@ -153,11 +165,13 @@ func (r *GrafanaMuteTimingReconciler) reconcileWithInstance(ctx context.Context,
 			Times:       times,
 		})
 	}
+
 	if shouldCreate {
 		params := provisioning.NewPostMuteTimingParams().WithBody(&payload)
 		if muteTiming.Spec.Editable {
 			params.SetXDisableProvenance(&trueRef)
 		}
+
 		_, err = cl.Provisioning.PostMuteTiming(params) //nolint:errcheck
 		if err != nil {
 			return fmt.Errorf("creating mute timing: %w", err)
@@ -167,6 +181,7 @@ func (r *GrafanaMuteTimingReconciler) reconcileWithInstance(ctx context.Context,
 		if muteTiming.Spec.Editable {
 			params.SetXDisableProvenance(&trueRef)
 		}
+
 		_, err = cl.Provisioning.PutMuteTiming(params) //nolint:errcheck
 		if err != nil {
 			return fmt.Errorf("updating mute timing: %w", err)
@@ -199,6 +214,7 @@ func (r *GrafanaMuteTimingReconciler) finalize(ctx context.Context, muteTiming *
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
+
 	for _, instance := range instances {
 		if err := r.removeFromInstance(ctx, &instance, muteTiming); err != nil {
 			return fmt.Errorf("removing mute timing from instance: %w", err)

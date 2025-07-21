@@ -92,6 +92,7 @@ func (in *GrafanaContactPoint) CustomUIDOrUID() string {
 	if in.Spec.CustomUID != "" {
 		return in.Spec.CustomUID
 	}
+
 	return string(in.UID)
 }
 

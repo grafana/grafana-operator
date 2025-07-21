@@ -28,18 +28,23 @@ func (override *ObjectMeta) Merge(meta metav1.ObjectMeta) metav1.ObjectMeta {
 	if override == nil {
 		return meta
 	}
+
 	if len(override.Annotations) > 0 {
 		if meta.Annotations == nil {
 			meta.Annotations = make(map[string]string)
 		}
+
 		maps.Copy(meta.Annotations, override.Annotations)
 	}
+
 	if len(override.Labels) > 0 {
 		if meta.Labels == nil {
 			meta.Labels = make(map[string]string)
 		}
+
 		maps.Copy(meta.Labels, override.Labels)
 	}
+
 	return meta
 }
 
@@ -542,6 +547,7 @@ func Merge(base, overrides any) error {
 	if err != nil {
 		return fmt.Errorf("failed to produce patch meta from struct: %w", err)
 	}
+
 	patch, err := strategicpatch.CreateThreeWayMergePatch(overrideBytes, overrideBytes, baseBytes, patchMeta, true)
 	if err != nil {
 		return fmt.Errorf("failed to create three way merge patch: %w", err)
@@ -553,13 +559,17 @@ func Merge(base, overrides any) error {
 	}
 
 	valueOfBase := reflect.Indirect(reflect.ValueOf(base))
+
 	into := reflect.New(valueOfBase.Type())
 	if err := json.Unmarshal(merged, into.Interface()); err != nil {
 		return err
 	}
+
 	if !valueOfBase.CanSet() {
 		return fmt.Errorf("unable to set unmarshalled value into base object")
 	}
+
 	valueOfBase.Set(reflect.Indirect(into))
+
 	return nil
 }

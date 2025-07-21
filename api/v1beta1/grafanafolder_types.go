@@ -114,6 +114,7 @@ func (in *GrafanaFolder) CustomUIDOrUID() string {
 	if in.Spec.CustomUID != "" {
 		return in.Spec.CustomUID
 	}
+
 	return string(in.UID)
 }
 
@@ -146,6 +147,7 @@ func (in *GrafanaFolder) Hash() string {
 	hash := sha256.New()
 	hash.Write([]byte(in.Spec.Title))
 	hash.Write([]byte(in.Spec.Permissions))
+
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 

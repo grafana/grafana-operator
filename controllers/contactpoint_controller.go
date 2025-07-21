@@ -58,11 +58,13 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 	ctx = logf.IntoContext(ctx, log)
 
 	contactPoint := &grafanav1beta1.GrafanaContactPoint{}
+
 	err := r.Get(ctx, req.NamespacedName, contactPoint)
 	if err != nil {
 		if kuberr.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
+
 		return ctrl.Result{}, fmt.Errorf("error getting grafana Contact point cr: %w", err)
 	}
 
@@ -72,10 +74,12 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 			if err := r.finalize(ctx, contactPoint); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaContactPoint: %w", err)
 			}
+
 			if err := removeFinalizer(ctx, r.Client, contactPoint); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
 			}
 		}
+
 		return ctrl.Result{}, nil
 	}
 
@@ -85,18 +89,21 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 		setSuspended(&contactPoint.Status.Conditions, contactPoint.Generation, conditionReasonApplySuspended)
 		return ctrl.Result{}, nil
 	}
+
 	removeSuspended(&contactPoint.Status.Conditions)
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, contactPoint)
 	if err != nil {
 		setNoMatchingInstancesCondition(&contactPoint.Status.Conditions, contactPoint.Generation, err)
 		meta.RemoveStatusCondition(&contactPoint.Status.Conditions, conditionContactPointSynchronized)
+
 		return ctrl.Result{}, fmt.Errorf("failed fetching instances: %w", err)
 	}
 
 	if len(instances) == 0 {
 		setNoMatchingInstancesCondition(&contactPoint.Status.Conditions, contactPoint.Generation, err)
 		meta.RemoveStatusCondition(&contactPoint.Status.Conditions, conditionContactPointSynchronized)
+
 		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
@@ -107,12 +114,14 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 	if err != nil {
 		setInvalidSpec(&contactPoint.Status.Conditions, contactPoint.Generation, conditionReasonInvalidSettings, err.Error())
 		meta.RemoveStatusCondition(&contactPoint.Status.Conditions, conditionContactPointSynchronized)
+
 		return ctrl.Result{}, fmt.Errorf("building contactpoint settings: %w", err)
 	}
 
 	removeInvalidSpec(&contactPoint.Status.Conditions)
 
 	applyErrors := make(map[string]string)
+
 	for _, grafana := range instances {
 		err := r.reconcileWithInstance(ctx, &grafana, contactPoint, &settings)
 		if err != nil {
@@ -137,6 +146,7 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 	}
 
 	var applied models.EmbeddedContactPoint
+
 	applied, err = r.getContactPointFromUID(cl, contactPoint)
 	if err != nil {
 		return fmt.Errorf("getting contact point by UID: %w", err)
@@ -151,6 +161,7 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 			Settings:              settings,
 			UID:                   contactPoint.CustomUIDOrUID(),
 		}
+
 		_, err := cl.Provisioning.PostContactpoints(provisioning.NewPostContactpointsParams().WithBody(cp)) //nolint:errcheck
 		if err != nil {
 			return fmt.Errorf("creating contact point: %w", err)
@@ -158,10 +169,12 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 	} else {
 		// update
 		var updatedCP models.EmbeddedContactPoint
+
 		updatedCP.Name = contactPoint.Spec.Name
 		updatedCP.Type = &contactPoint.Spec.Type
 		updatedCP.Settings = settings
 		updatedCP.DisableResolveMessage = contactPoint.Spec.DisableResolveMessage
+
 		_, err := cl.Provisioning.PutContactpoint(provisioning.NewPutContactpointParams().WithUID(applied.UID).WithBody(&updatedCP)) //nolint:errcheck
 		if err != nil {
 			return fmt.Errorf("updating contact point: %w", err)
@@ -174,37 +187,45 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 
 func (r *GrafanaContactPointReconciler) buildContactPointSettings(ctx context.Context, contactPoint *grafanav1beta1.GrafanaContactPoint) (models.JSON, error) {
 	log := logf.FromContext(ctx)
+
 	marshaled, err := json.Marshal(contactPoint.Spec.Settings)
 	if err != nil {
 		return nil, fmt.Errorf("encoding existing settings as json: %w", err)
 	}
+
 	simpleContent, err := simplejson.NewJson(marshaled)
 	if err != nil {
 		return nil, fmt.Errorf("parsing marshaled json as simplejson")
 	}
+
 	for _, override := range contactPoint.Spec.ValuesFrom {
 		val, _, err := getReferencedValue(ctx, r.Client, contactPoint, override.ValueFrom)
 		if err != nil {
 			return nil, fmt.Errorf("getting referenced value: %w", err)
 		}
+
 		log.V(1).Info("overriding value", "key", override.TargetPath, "value", val)
 
 		simpleContent.SetPath(strings.Split(override.TargetPath, "."), val)
 	}
+
 	return simpleContent.Interface(), nil
 }
 
 func (r *GrafanaContactPointReconciler) getContactPointFromUID(cl *genapi.GrafanaHTTPAPI, contactPoint *grafanav1beta1.GrafanaContactPoint) (models.EmbeddedContactPoint, error) {
 	params := provisioning.NewGetContactpointsParams()
+
 	remote, err := cl.Provisioning.GetContactpoints(params)
 	if err != nil {
 		return models.EmbeddedContactPoint{}, fmt.Errorf("getting contact points: %w", err)
 	}
+
 	for _, cp := range remote.Payload {
 		if cp.UID == contactPoint.CustomUIDOrUID() {
 			return *cp, nil
 		}
 	}
+
 	return models.EmbeddedContactPoint{}, nil
 }
 

@@ -236,6 +236,7 @@ func (in *Grafana) AddNamespacedResource(ctx context.Context, cl client.Client, 
 	idx := list.IndexOf(cr.GetNamespace(), cr.GetName())
 
 	var jsonPatch []any
+
 	switch {
 	case len(*list) == 0:
 		// Create list if previously empty or append to the end
@@ -288,6 +289,7 @@ func (in *Grafana) RemoveNamespacedResource(ctx context.Context, cl client.Clien
 		"op":   "remove",
 		"path": fmt.Sprintf("/status/%s/%d", kind, idx),
 	}}
+
 	patch, err := json.Marshal(jsonPatch)
 	if err != nil {
 		return err

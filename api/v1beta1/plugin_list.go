@@ -25,6 +25,7 @@ func (l PluginList) Hash() string {
 		sb.WriteString(plugin.Name)
 		sb.WriteString(plugin.Version)
 	}
+
 	hash := sha256.New()
 	io.WriteString(hash, sb.String()) //nolint
 	return fmt.Sprintf("%x", hash.Sum(nil))
@@ -35,7 +36,9 @@ func (l PluginList) String() string {
 	for _, plugin := range l {
 		plugins = append(plugins, fmt.Sprintf("%s %s", plugin.Name, plugin.Version))
 	}
+
 	sort.Sort(plugins)
+
 	return strings.Join(plugins, ",")
 }
 
@@ -52,15 +55,18 @@ func (l PluginList) Update(plugin *GrafanaPlugin) {
 // Sanitize remove duplicates and enforce semver
 func (l PluginList) Sanitize() PluginList {
 	var sanitized PluginList
+
 	for _, plugin := range l {
 		_, err := semver.Parse(plugin.Version)
 		if err != nil {
 			continue
 		}
+
 		if !sanitized.HasSomeVersionOf(&plugin) {
 			sanitized = append(sanitized, plugin)
 		}
 	}
+
 	return sanitized
 }
 
@@ -71,6 +77,7 @@ func (l PluginList) HasSomeVersionOf(plugin *GrafanaPlugin) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -81,6 +88,7 @@ func (l PluginList) GetInstalledVersionOf(plugin *GrafanaPlugin) *GrafanaPlugin 
 			return &listedPlugin
 		}
 	}
+
 	return nil
 }
 
@@ -91,6 +99,7 @@ func (l PluginList) HasExactVersionOf(plugin *GrafanaPlugin) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -115,16 +124,19 @@ func (l PluginList) HasNewerVersionOf(plugin *GrafanaPlugin) (bool, error) {
 			return true, nil
 		}
 	}
+
 	return false, nil
 }
 
 // VersionsOf returns the number of different versions of a given plugin in the list
 func (l PluginList) VersionsOf(plugin *GrafanaPlugin) int {
 	i := 0
+
 	for _, listedPlugin := range l {
 		if listedPlugin.Name == plugin.Name {
 			i++
 		}
 	}
+
 	return i
 }

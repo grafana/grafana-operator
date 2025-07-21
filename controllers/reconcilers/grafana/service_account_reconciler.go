@@ -30,6 +30,7 @@ func (r *ServiceAccountReconciler) Reconcile(ctx context.Context, cr *v1beta1.Gr
 			setInvalidMergeCondition(cr, "ServiceAccount", err)
 			return err
 		}
+
 		removeInvalidMergeCondition(cr, "ServiceAccount")
 
 		if scheme != nil {

@@ -28,6 +28,7 @@ func (r *CompleteReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana,
 	log := logf.FromContext(ctx).WithName("CompleteReconciler")
 
 	log.V(1).Info("fetching Grafana version from instance")
+
 	version, err := r.getVersion(ctx, cr)
 	if err != nil {
 		cr.Status.Version = ""
@@ -35,6 +36,7 @@ func (r *CompleteReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana,
 	}
 
 	cr.Status.Version = version
+
 	log.V(1).Info("reconciliation completed")
 
 	return v1beta1.OperatorStageResultSuccess, nil
@@ -52,6 +54,7 @@ func (r *CompleteReconciler) getVersion(ctx context.Context, cr *v1beta1.Grafana
 	}
 
 	instanceURL := gURL.JoinPath("/frontend/settings").String()
+
 	req, err := http.NewRequest(http.MethodGet, instanceURL, nil)
 	if err != nil {
 		return "", fmt.Errorf("building request to fetch version: %w", err)
@@ -75,6 +78,7 @@ func (r *CompleteReconciler) getVersion(ctx context.Context, cr *v1beta1.Grafana
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 		return "", fmt.Errorf("parsing health endpoint data: %w", err)
 	}
+
 	if data.BuildInfo.Version == "" {
 		return "", fmt.Errorf("empty version received from server")
 	}

@@ -32,6 +32,7 @@ func (in NamespacedResourceList) Find(namespace string, name string) (found bool
 	}
 
 	_, _, uid := in[i].Split()
+
 	return true, &uid
 }
 
