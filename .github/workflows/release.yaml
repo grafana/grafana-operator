@@ -117,7 +117,6 @@ jobs:
       contents: write
       packages: write
     steps:
-
       - name: install flux
         uses: fluxcd/flux2/action@6bf37f6a560fd84982d67f853162e4b3c2235edb # v2.6.4
 
@@ -135,10 +134,10 @@ jobs:
           echo "GHCR_REPO=$GHCR_REPO" >> $GITHUB_ENV
 
       - name: update-kustomize-image
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           make kustomize-set-image
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
@@ -168,8 +167,9 @@ jobs:
       contents: read
       packages: write
       id-token: write
-      attestations: write
     runs-on: ubuntu-latest
+    outputs:
+      platform-map: ${{ steps.publish-image.outputs.PLATFORM_MAP }}
     steps:
       - name: Clone repo
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -192,38 +192,137 @@ jobs:
         with:
           version: v0.18.0
 
-      - name: Install cosign
-        uses: sigstore/cosign-installer@398d4b0eeef1380460a10c8013a76f728fb906ac # v3.9.1
-        with:
-          cosign-release: "v2.2.2"
-
       - name: Build and push
         id: publish-image
         env:
           IMAGE_VERSION: ${{ github.ref_name }}
           KO_DOCKER_REPO: "ghcr.io/${{ github.repository }}"
         run: |
-          ko build --sbom=spdx --image-refs ./image-digest --bare --platform linux/arm64,linux/amd64 -t ${IMAGE_VERSION} \
+          # Create SBOM directory
+          mkdir -p ./sboms
+
+          # Build multi-platform with SBOMs
+          ko build --sbom=spdx --sbom-dir ./sboms --image-refs ./image-digest --bare --platform linux/arm64,linux/amd64 -t ${IMAGE_VERSION} \
             --image-label org.opencontainers.image.title=grafana-operator \
             --image-label org.opencontainers.image.description="An operator for Grafana that installs and manages Grafana instances & Dashboards & Datasources through Kubernetes/OpenShift CRs" \
             --image-label org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }} \
             --image-label org.opencontainers.image.revision=${{ github.sha }} \
             --image-label org.opencontainers.image.version=${IMAGE_VERSION} \
             --image-label org.opencontainers.image.created="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-          echo "IMAGE_DIGEST=$(cat ./image-digest | cut -d@ -f2)" >> $GITHUB_OUTPUT
 
-      - name: Attest
+          # Extract manifest digest
+          MANIFEST_DIGEST=$(cat ./image-digest | cut -d@ -f2)
+
+          # Build platform map by processing SBOM files
+          PLATFORM_MAP=$(
+            find ./sboms -name "*.spdx.json" -not -name "*index*" | while read file; do
+              platform=$(basename "$file" .spdx.json | sed 's/^main\.go-//' | sed 's/-/\//g')
+              digest=$(jq -r '.packages[] | select(.primaryPackagePurpose == "CONTAINER") | .name | sub("sha256:"; "")' "$file")
+              echo "{\"platform\":\"$platform\",\"digest\":\"$digest\",\"sbom\":\"$file\"}"
+            done | jq -s .
+          )
+
+          # Output using heredoc
+          {
+            echo 'MANIFEST_DIGEST<<EOF'
+            echo "$MANIFEST_DIGEST"
+            echo 'EOF'
+            echo 'PLATFORM_MAP<<EOF'
+            echo "$PLATFORM_MAP"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+          # Display summary
+          echo "Build Summary:"
+          echo "  Manifest: $MANIFEST_DIGEST"
+          echo "$PLATFORM_MAP" | jq -r '.[] | "  \(.platform): sha256:\(.digest)"'
+
+          # TODO: Add SBOM enrichment here in the future
+          # You can modify the SBOM files before attestation
+          # For example: add custom metadata, vulnerability scan results, etc.
+
+      - name: Upload SBOMs as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sboms
+          path: ./sboms/
+          retention-days: 1
+
+  attest:
+    needs: image
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: [linux/arm64, linux/amd64]
+    steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download SBOMs
+        uses: actions/download-artifact@v4
+        with:
+          name: sboms
+          path: ./sboms/
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@398d4b0eeef1380460a10c8013a76f728fb906ac # v3.9.1
+        with:
+          cosign-release: "v2.2.2"
+
+      - name: Extract platform info
+        id: platform-info
+        env:
+          PLATFORM_MAP: ${{ needs.image.outputs.platform-map }}
+          CURRENT_PLATFORM: ${{ matrix.platform }}
+        run: |
+          PLATFORM_INFO=$(echo "$PLATFORM_MAP" | jq -r ".[] | select(.platform == \"$CURRENT_PLATFORM\")")
+          DIGEST=$(echo "$PLATFORM_INFO" | jq -r '.digest')
+          SBOM=$(echo "$PLATFORM_INFO" | jq -r '.sbom')
+
+          # Add sha256: prefix for cosign
+          DIGEST_WITH_PREFIX="sha256:$DIGEST"
+
+          echo "DIGEST=$DIGEST_WITH_PREFIX" >> $GITHUB_OUTPUT
+          echo "SBOM=$SBOM" >> $GITHUB_OUTPUT
+
+          echo "Platform: $CURRENT_PLATFORM"
+          echo "Digest: $DIGEST_WITH_PREFIX"
+          echo "SBOM: $SBOM"
+
+      - name: Attest build provenance
         uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
-        id: attest
         with:
           subject-name: "ghcr.io/${{ github.repository }}"
-          subject-digest: ${{ steps.publish-image.outputs.IMAGE_DIGEST }}
+          subject-digest: ${{ steps.platform-info.outputs.DIGEST }}
           push-to-registry: true
+
+      - name: Sign and attach SBOM
+        env:
+          REPO_URI: "ghcr.io/${{ github.repository }}"
+        run: |
+          echo "Attesting SBOM for ${{ matrix.platform }}..."
+          echo "  Image: ${REPO_URI}@${{ steps.platform-info.outputs.DIGEST }}"
+          echo "  SBOM:  ${{ steps.platform-info.outputs.SBOM }}"
+
+          cosign attest --yes --predicate "${{ steps.platform-info.outputs.SBOM }}" --type spdxjson \
+            "${REPO_URI}@${{ steps.platform-info.outputs.DIGEST }}"
+
+          echo "Successfully attested SBOM for ${{ matrix.platform }}"
+          echo "To verify: cosign download attestation --predicate-type https://spdx.dev/Document ${REPO_URI}@${{ steps.platform-info.outputs.DIGEST }}"
 
   distribute-to-quay:
     runs-on: ubuntu-latest
     needs:
-      - image
+      - attest
     permissions:
       packages: read
     steps:
