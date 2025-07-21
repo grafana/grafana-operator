@@ -136,6 +136,8 @@ jobs:
       - name: update-kustomize-image
         run: |
           make kustomize-set-image
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
