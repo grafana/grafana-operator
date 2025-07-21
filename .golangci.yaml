@@ -20,6 +20,7 @@ linters:
     - unparam
     - usestdlibvars
     - whitespace
+    - wsl_v5
 
   settings:
     dogsled:
