@@ -192,6 +192,7 @@ spec:
                       - KeepLast
                       type: string
                     for:
+                      default: 0s
                       format: duration
                       pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                       type: string

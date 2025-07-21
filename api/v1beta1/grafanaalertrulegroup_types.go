@@ -74,7 +74,7 @@ type AlertRule struct {
 	// +kubebuilder:validation:Type=string
 	// +kubebuilder:validation:Format=duration
 	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
-	// +kubebuilder:validation:Required
+	// +kubebuilder:default="0s"
 	For *metav1.Duration `json:"for"`
 
 	IsPaused bool `json:"isPaused,omitempty"`
