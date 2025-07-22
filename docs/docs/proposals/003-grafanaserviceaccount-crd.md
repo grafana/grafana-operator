@@ -89,6 +89,18 @@ For now, namespaces are the finest granularity on which we grant access control.
 This means, it is not possible to have multiple Grafana instances in one namespace with different access rules.
 Future implementations could support creation of service accounts through the Grafana resource itself, solving for this situation as well.
 
+### Scopes & Limitations
+
+The service account API doesn't support UIDs so we'll have to do some kind of matching between existing resources and the desired state.
+To resolve conflicts, we _always_ apply what's defined in the operator resources.
+If an administrator manually creates or modifies service accounts, these changes will be overwritten by the operator.
+This significantly reduces the implementation complexity as it avoids the need to store state in the `status` field.
+
+Another limitation regards the creation of secrets.
+For now, `GrafanaServiceAccount` resources only support creating secrets in the same namespace.
+This ensures that we don't compromise the integrity of secrets in other namespaces to which the creator of the service account might not have access to.
+
+
 ## Related issues
 
 - [Issue 1388](https://github.com/grafana/grafana-operator/issues/1388)
