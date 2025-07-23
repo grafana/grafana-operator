@@ -122,6 +122,7 @@ func createSharedTestCRs() {
 	GinkgoHelper()
 
 	By("Creating GrafanaFolder for testing")
+
 	folderCR := &v1beta1.GrafanaFolder{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
@@ -134,6 +135,7 @@ func createSharedTestCRs() {
 	Expect(k8sClient.Create(testCtx, folderCR)).ToNot(HaveOccurred())
 
 	By("Creating Grafana CRs. One Fake and one External")
+
 	intP := 1
 	dummy := &v1beta1.Grafana{
 		ObjectMeta: metav1.ObjectMeta{
@@ -177,6 +179,7 @@ func createSharedTestCRs() {
 			Client: &v1beta1.GrafanaClient{TimeoutSeconds: &intP},
 		},
 	}
+
 	Expect(k8sClient.Create(testCtx, dummy)).Should(Succeed())
 	Expect(k8sClient.Create(testCtx, external)).Should(Succeed())
 
@@ -189,6 +192,7 @@ func createSharedTestCRs() {
 	Expect(k8sClient.Status().Update(testCtx, dummy)).ToNot(HaveOccurred())
 
 	By("Reconciling External Grafana")
+
 	r := GrafanaReconciler{
 		Client:      k8sClient,
 		Scheme:      k8sClient.Scheme(),
@@ -199,6 +203,7 @@ func createSharedTestCRs() {
 	Expect(err).ToNot(HaveOccurred())
 
 	By("Get External Grafana")
+
 	externalGrafanaCr = &v1beta1.Grafana{}
 	Expect(k8sClient.Get(testCtx, types.NamespacedName{
 		Namespace: external.Namespace,
