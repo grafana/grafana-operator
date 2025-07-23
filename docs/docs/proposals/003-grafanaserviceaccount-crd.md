@@ -7,12 +7,7 @@ linkTitle: "GrafanaServiceAccount CRD"
 
 Add GrafanaServiceAccounts to the Grafana CRD so the operator can create Grafana Service Accounts automatically when deploying grafana instances.
 
-Today its required to manually set them up in a running grafana instance using the Grafana GUI or the HTTP-API. This document introduces the suggestion of having them as separate objects that can be setup by the operator on deploy.
-
-The suggested new features are:
-
-- Let the operator create a grafana service account during deploy of grafana using the GrafanaServiceAccount parts of the grafana CRD.
-- Let the operator store the token as a k8s-secret
+This proposal outlines a new custom resource called `GrafanaServiceAccount` that manages the service account, it's role and associated tokens.
 
 ## Info
 
@@ -20,63 +15,100 @@ Status: Suggested
 
 ## Motivation
 
-Today Grafana Service Accounts has to be created after deploy when the grafana is running using the HTTP-API or the GUI. I instead suggest to have a Grafana Service Account as part of the Grafana CRD so that the Service Accounts could be predefined and created by the operator at deploy and the tokens will be created as k8s-secrets that then can be read by applications when needed.
+The Grafana operator does not support management of service accounts in a declarative way.
+
+We want to cover the following use cases:
+
+* As an administrator of a Grafana instance, I want to create a service account for it
+* As a developer requiring a Grafana service account, I want to create a service account on demand per application
+* As a security concious SRE, I want to ensure nobody can compromise a Grafana instance through the Grafana operator
+
 
 ## Verification
 
-- Create integration tests for the operator creating grafana service accounts from a bare minimum yaml
-- Create integration tests for the operator creating grafana service accounts from a fully specified yaml
-- Create integration tests to check that it can rotate/invalidate tokens with TTL set (and passed).
+- The operator can create new Grafana service accounts
+- The operator can rotate tokens when the expiration date changes
+- The operator overrides manually set tokens
 
 ## Current solution
 
-Currently you are only able to create these grafana service accounts using the grafana GUI or by using the HTTP-API after the grafana has already been deployed and is running. And its removed when the grafana pod is restarted/redeployed without persistent storage. Meaning a new service account has to be manually created and its new token has to be updated where its being used.
+Currently you are only able to create these grafana service accounts using the grafana GUI or by using the HTTP-API after the grafana has already been deployed and is running.
+When not using persistent storage, this service account is removed on reconciliation so there is no way to declaratively manage service accounts as code, using the operator.
 
 ## Proposal
 
-My proposal is to handle grafana service account as part of the Grafana CRD that can be specified by the user even before setup and that can be included in a CICD pipeline. It will enable so that the operator can create predefined service accounts on deploy and store the token in a k8s-secret readable by other applications without any manual steps.
+To support this functionality, we propose the following changes to the Grafana operator.
 
-### Defining what Grafana Service Account belongs to what grafana.
+### Create a new resource `GrafanaServiceAccount`
 
-When placing them inside the Grafana CRD this is not an issue.
-
-### Defining Grafana Service Account to Grafana operator.
-
-Today the Grafana Service Account is only held in memory if not using persistent, so when a pod is restarted or redeployed the grafana service account is removed. The grafana service accounts are also only possible to create using the Grafana GUI or with the HTTP-API and cannot be pre-defined before deploy or kept as IAC. But with the token kept as a k8s-secret it would be possible for other applications to use that token even when its rotated or recreated by the operator. RBAC rules are often more restrictive in the view scope so having the k8s-secret with the token in the same namespace as the grafana instance and other running applications would be beneficial.
-
-> Proposed updated CRD for Grafana
+This resource controls the reconciliation of service accounts. An example could look like this:
 
 ```.yaml
 apiVersion: grafana.integreatly.org/v1beta1
-kind: Grafana
+kind: GrafanaServiceAccount
 metadata:
   name: grafana-sa
-  namespace: grafana-namespace
 spec:
-  grafanaServiceAccounts: #Not sure if this is the right place to place it but thats easily fixed when implementing.
-    createServiceAccount:
-        generateTokenSecret: [true/false] #Will create the k8s-secret with a default name if true. Defaults to true.
-    accounts: #Since its possible today to have multiple service accounts it should be a list of accounts.
-        - id: grafana-sa
-          name: grafana-service-account
-          roles: [Viewer/Editor/Admin]
-          tokens: #This is a list of the tokens that belongs to this GSA and that the operator should create k8s-secrets with tokens for with the names specified. If not specified it would default to creating a token in a k8s-secret with a default name if spec.createServiceAccount.generateTokenSecret is true.
-              - Name: grafana-sa-token-<name-of-GSA>
-              expires: <Absolute date for expiration, defaults to Never>
-          permissions:    #This is to try and match what values can be set when creating GSA in the GUI where you can set different permissions for users and groups.
-              - user: <users in the cluster/root user etc>
-              permission: [Edit/Admin]
+  instanceName: test-grafana-instance
+  name: grafana-service-account
+  role: Viewer # Valid options: Viewer, Editor, Admin
+  tokens:
+    - name: test-token
+      expires: 2025-12-31T14:00:00+02:00 # optional / never expires if unset
+      secretName: grafana-sa-token # optional / generated if unset
+  permissions: # this controls who is allowed to customize the service account
+    - user: <users in the cluster/root user etc>
+      permission: [Edit/Admin]
 
 ```
 
-My suggestions is that "Last used" value for the token would be kept in memory and wiped at restart/redeploy just like it would be today when the SA is removed completely together with any "last used" information. This is in order to avoid having additional requirements on storage, either being persistent storage in the cluster or an external db.
+Since reconciling lists is a complex operation to implement, both the permissions & tokens lists are seen as authoritive.
+This means that, if defined, these lists are the full set of specified values and any customizations made through the Grafana UI are replaced/removed on reconciliation.
 
-As for the creation time for both the service account and the token should be possible to fetch from the objects themselves. Kubernetes objects have a creationTimestamp in their metadata.
+Service accounts reference an instance by resource name directly to ensure correct targeting and avoid accidentially creating accounts on instances which should not be targeted.
+For now, service accounts can only exist in the same namespace as the Grafana resource as a security precaution.
+
+
 
 ### The handling of TTL of tokens
 
-This suggestion would still allow for the operator to handle TTL by just replacing the secret with a new token that then can be picked up by applications in the cluster.
+Grafana supports setting expiration of tokens. The operator should respect this and not automatically extend the TTL.
+When the user updates the `expires` field of a token, the operator deletes the token and creates a new token under the same name with the updated expiration date.
+This effectively rotates the secret.
+
+### Security considerations
+
+As service accounts are a sensitive topic when it comes to security and auditing, special attention is taken here to reflect on security implications of this resource.
+
+Pointed out by @nissessenap in [the original proposal discussions](https://github.com/grafana/grafana-operator/pull/1413#issuecomment-1962404070), users need a way to restrict who can create service accounts for a specific Grafana instance.
+
+By having a dedicated resource, the permission to create service accounts can be granted through standard kuberentes RBAC on a namespace level.
+This works to ensure kubernetes users can only create Grafana service accounts when explicitly granted access to do so in a specific namespace.
+Granting cluster-wide permissions to create service accounts is not adviseable.
+For now, namespaces are the finest granularity on which we grant access control.
+This means, it is not possible to have multiple Grafana instances in one namespace with different access rules.
+Future implementations could support creation of service accounts through the Grafana resource itself, solving for this situation as well.
+
+### Scopes & Limitations
+
+The service account API doesn't support UIDs so we'll have to do some kind of matching between existing resources and the desired state.
+To resolve conflicts, we _always_ apply what's defined in the operator resources.
+If an administrator manually creates or modifies service accounts, these changes will be overwritten by the operator.
+This significantly reduces the implementation complexity as it avoids the need to store state in the `status` field.
+
+Another limitation regards the creation of secrets.
+For now, `GrafanaServiceAccount` resources only support creating secrets in the same namespace.
+This ensures that we don't compromise the integrity of secrets in other namespaces to which the creator of the service account might not have access to.
+
 
 ## Related issues
 
 - [Issue 1388](https://github.com/grafana/grafana-operator/issues/1388)
+- [PR 1907](https://github.com/grafana/grafana-operator/pull/1907)
+- [PR 2055](https://github.com/grafana/grafana-operator/pull/2055)
+
+## Additional context
+
+@ndk started implementing the original proposal which sparked a lot of discussions around the proposal and whether it makes sense to implement it as is.
+We discussed different controller strategies, placement of resources and implementation complexity.
+As an outcome, this proposal has been updated to reflect many, many sessions of discussing this topic so it can serve as a reference for implementing this functionality.
