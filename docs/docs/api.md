@@ -325,6 +325,7 @@ AlertRule defines a specific rule to be evaluated. It is based on the upstream m
           <br/>
           <br/>
             <i>Format</i>: duration<br/>
+            <i>Default</i>: 0s<br/>
         </td>
         <td>true</td>
       </tr><tr>

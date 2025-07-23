@@ -1,10 +1,7 @@
 package controllers
 
 import (
-	"time"
-
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -18,7 +15,6 @@ var _ = Describe("AlertRulegroup Reconciler: Provoke Conditions", func() {
 			UID:          "akdj-wonvo",
 			ExecErrState: "KeepLast",
 			NoDataState:  &noDataState,
-			For:          &metav1.Duration{Duration: 60 * time.Second},
 			Data:         []*v1beta1.AlertQuery{},
 		},
 	}
