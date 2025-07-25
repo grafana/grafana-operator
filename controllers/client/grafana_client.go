@@ -27,8 +27,7 @@ func getExternalAdminUser(ctx context.Context, c client.Client, cr *v1beta1.Graf
 	case cr.Spec.External.AdminUser != nil:
 		adminUser, err := GetValueFromSecretKey(ctx, cr.Spec.External.AdminUser, c, cr.Namespace)
 		if err != nil {
-			println("got here")
-			return "", err
+     return "", err
 		}
 
 		return string(adminUser), nil
