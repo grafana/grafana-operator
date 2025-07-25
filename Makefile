@@ -156,6 +156,11 @@ test: $(ENVTEST) manifests generate vet golangci-lint api-docs kustomize-lint he
 	$(info $(M) running $@)
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(BIN) -p path)" go test ./... -coverprofile cover.out
 
+.PHONY: test-short
+test-short: ## Skips slow integration tests
+	$(info $(M) running $@)
+	go test ./... -short -coverprofile cover.out
+
 .PHONY: vet
 vet: ## Run go vet against code.
 	$(info $(M) running $@)

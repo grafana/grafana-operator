@@ -81,6 +81,10 @@ func (in *NopContentResource) DeepCopyInto(out *NopContentResource) {
 }
 
 func TestAPIs(t *testing.T) {
+	if testing.Short() {
+		t.Skip("-short was passed, skipping Content")
+	}
+
 	RegisterFailHandler(Fail)
 
 	RunSpecs(t, "Content Suite")
