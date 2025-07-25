@@ -162,6 +162,15 @@ var _ = Describe("AlertRulegroup Reconciler: Provoke Conditions", func() {
 			// Verify condition
 			Expect(resultCr.Status.Conditions).Should(ContainElement(HaveField("Type", test.wantCondition)))
 			Expect(resultCr.Status.Conditions).Should(ContainElement(HaveField("Reason", test.wantReason)))
+
+			// Delete resource
+			Expect(k8sClient.Delete(testCtx, resultCr)).Should(Succeed())
+
+			// Skip finalizer
+			if test.wantErr == "" {
+				_, err = r.Reconcile(testCtx, req)
+				Expect(err).ShouldNot(HaveOccurred())
+			}
 		})
 	}
 })
