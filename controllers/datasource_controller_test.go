@@ -239,6 +239,23 @@ var _ = Describe("Datasource Reconciler: Provoke Conditions", func() {
 			wantReason:    conditionReasonInvalidModel,
 			wantErr:       "building datasource model",
 		},
+		{
+			name: "Successfully applied resource to instance",
+			cr: &v1beta1.GrafanaDatasource{
+				ObjectMeta: objectMetaSynchronized,
+				Spec: v1beta1.GrafanaDatasourceSpec{
+					GrafanaCommonSpec: commonSpecSynchronized,
+					Datasource: &v1beta1.GrafanaDatasourceInternal{
+						Name:   "synced-prometheus",
+						Type:   "prometheus",
+						Access: "proxy",
+						URL:    "https://demo.promlabs.com",
+					},
+				},
+			},
+			wantCondition: conditionDatasourceSynchronized,
+			wantReason:    conditionReasonApplySuccessful,
+		},
 	}
 
 	for _, test := range tests {

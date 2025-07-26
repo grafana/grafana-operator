@@ -448,6 +448,20 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke Conditions", func() {
 			wantReason:    conditionReasonFieldsMutuallyExclusive,
 			wantErr:       "invalid route spec discovered: routeSelector is mutually exclusive with routes",
 		},
+		{
+			name: "Successfully applied resource to instance",
+			cr: &v1beta1.GrafanaNotificationPolicy{
+				ObjectMeta: objectMetaSynchronized,
+				Spec: v1beta1.GrafanaNotificationPolicySpec{
+					GrafanaCommonSpec: commonSpecSynchronized,
+					Route: &v1beta1.Route{
+						Receiver: "grafana-default-email",
+					},
+				},
+			},
+			wantCondition: conditionNotificationPolicySynchronized,
+			wantReason:    conditionReasonApplySuccessful,
+		},
 	}
 
 	for _, test := range tests {
