@@ -237,65 +237,6 @@ func TestGetExternalAdminCredentials(t *testing.T) {
 
 // TODO currently only tests code paths for external grafanas
 func TestGetAdminCredentials(t *testing.T) {
-	tests := []struct {
-		name            string
-		spec            v1beta1.GrafanaSpec
-		wantCredentials *grafanaAdminCredentials
-		wantErr         bool
-	}{
-		{
-			name: "ApiKey from Secret ignoring config",
-			spec: v1beta1.GrafanaSpec{
-				External: &v1beta1.External{
-					APIKey: &v1.SecretKeySelector{
-						LocalObjectReference: v1.LocalObjectReference{
-							Name: "grafana-credentials",
-						},
-						Key: "token",
-					},
-				},
-				Config: map[string]map[string]string{
-					"security": {
-						"admin_user":     "root",
-						"admin_password": "secret",
-					},
-				},
-			},
-			wantCredentials: &grafanaAdminCredentials{
-				adminUser:     "",
-				adminPassword: "",
-				apikey:        "service-account-key",
-			},
-			wantErr: false,
-		},
-		{
-			name: "fallback to admin user/password",
-			spec: v1beta1.GrafanaSpec{
-				External: &v1beta1.External{},
-				Config: map[string]map[string]string{
-					"security": {
-						"admin_user":     "root",
-						"admin_password": "secret",
-					},
-				},
-			},
-			wantCredentials: &grafanaAdminCredentials{
-				adminUser:     "root",
-				adminPassword: "secret",
-				apikey:        "",
-			},
-			wantErr: false,
-		},
-		{
-			name: "err when neither apiKey or admin user/password is set",
-			spec: v1beta1.GrafanaSpec{
-				External: &v1beta1.External{},
-			},
-			wantCredentials: nil,
-			wantErr:         true,
-		},
-	}
-
 	credSecret := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
@@ -318,26 +259,79 @@ func TestGetAdminCredentials(t *testing.T) {
 		WithObjects(credSecret).
 		Build()
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			cr := &v1beta1.Grafana{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "default",
-					Name:      "grafana",
+	t.Run("with defined credentials", func(t *testing.T) {
+		tests := []struct {
+			name     string
+			external *v1beta1.External
+			want     *grafanaAdminCredentials
+		}{
+			{
+				name: "apiKey is preferred",
+				external: &v1beta1.External{
+					APIKey: &v1.SecretKeySelector{
+						LocalObjectReference: v1.LocalObjectReference{
+							Name: "grafana-credentials",
+						},
+						Key: "token",
+					},
 				},
-				Spec: tt.spec,
-			}
+				want: &grafanaAdminCredentials{
+					adminUser:     "",
+					adminPassword: "",
+					apikey:        "service-account-key",
+				},
+			},
+			{
+				name:     "fallback to admin user/password",
+				external: &v1beta1.External{},
+				want: &grafanaAdminCredentials{
+					adminUser:     "root",
+					adminPassword: "secret",
+					apikey:        "",
+				},
+			},
+		}
 
-			credentials, err := getAdminCredentials(testCtx, client, cr)
-			if tt.wantErr {
-				require.Error(t, err, "getAdminCredentials() should return an error")
-				require.Nil(t, credentials, "credentials should be nil on error")
-			} else {
-				require.NoError(t, err, "getAdminCredentials() should not return an error")
-				require.Equal(t, tt.wantCredentials.apikey, credentials.apikey)
-				require.Equal(t, tt.wantCredentials.adminUser, credentials.adminUser)
-				require.Equal(t, tt.wantCredentials.adminPassword, credentials.adminPassword)
-			}
-		})
-	}
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				cr := &v1beta1.Grafana{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "grafana",
+					},
+					Spec: v1beta1.GrafanaSpec{
+						Config: map[string]map[string]string{
+							"security": {
+								"admin_user":     "root",
+								"admin_password": "secret",
+							},
+						},
+						External: tt.external,
+					},
+				}
+
+				got, err := getAdminCredentials(testCtx, client, cr)
+				require.NoError(t, err)
+
+				assert.Equal(t, tt.want, got)
+			})
+		}
+	})
+
+	t.Run("with undefined credentials", func(t *testing.T) {
+		cr := &v1beta1.Grafana{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "grafana",
+			},
+			Spec: v1beta1.GrafanaSpec{
+				External: &v1beta1.External{},
+			},
+		}
+
+		got, err := getAdminCredentials(testCtx, client, cr)
+		require.Error(t, err)
+
+		assert.Nil(t, got)
+	})
 }
