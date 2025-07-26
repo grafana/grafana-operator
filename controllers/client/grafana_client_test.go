@@ -239,31 +239,25 @@ func TestGetExternalAdminCredentials(t *testing.T) {
 func TestGetAdminCredentials(t *testing.T) {
 	tests := []struct {
 		name            string
-		grafana         *v1beta1.Grafana
+		spec            v1beta1.GrafanaSpec
 		wantCredentials *grafanaAdminCredentials
 		wantErr         bool
 	}{
 		{
 			name: "ApiKey from Secret ignoring config",
-			grafana: &v1beta1.Grafana{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "default",
-					Name:      "grafana",
-				},
-				Spec: v1beta1.GrafanaSpec{
-					External: &v1beta1.External{
-						APIKey: &v1.SecretKeySelector{
-							LocalObjectReference: v1.LocalObjectReference{
-								Name: "grafana-credentials",
-							},
-							Key: "token",
+			spec: v1beta1.GrafanaSpec{
+				External: &v1beta1.External{
+					APIKey: &v1.SecretKeySelector{
+						LocalObjectReference: v1.LocalObjectReference{
+							Name: "grafana-credentials",
 						},
+						Key: "token",
 					},
-					Config: map[string]map[string]string{
-						"security": {
-							"admin_user":     "root",
-							"admin_password": "secret",
-						},
+				},
+				Config: map[string]map[string]string{
+					"security": {
+						"admin_user":     "root",
+						"admin_password": "secret",
 					},
 				},
 			},
@@ -276,18 +270,12 @@ func TestGetAdminCredentials(t *testing.T) {
 		},
 		{
 			name: "fallback to admin user/password",
-			grafana: &v1beta1.Grafana{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "default",
-					Name:      "grafana",
-				},
-				Spec: v1beta1.GrafanaSpec{
-					External: &v1beta1.External{},
-					Config: map[string]map[string]string{
-						"security": {
-							"admin_user":     "root",
-							"admin_password": "secret",
-						},
+			spec: v1beta1.GrafanaSpec{
+				External: &v1beta1.External{},
+				Config: map[string]map[string]string{
+					"security": {
+						"admin_user":     "root",
+						"admin_password": "secret",
 					},
 				},
 			},
@@ -300,14 +288,8 @@ func TestGetAdminCredentials(t *testing.T) {
 		},
 		{
 			name: "err when neither apiKey or admin user/password is set",
-			grafana: &v1beta1.Grafana{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "default",
-					Name:      "grafana",
-				},
-				Spec: v1beta1.GrafanaSpec{
-					External: &v1beta1.External{},
-				},
+			spec: v1beta1.GrafanaSpec{
+				External: &v1beta1.External{},
 			},
 			wantCredentials: nil,
 			wantErr:         true,
@@ -338,7 +320,15 @@ func TestGetAdminCredentials(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			credentials, err := getAdminCredentials(testCtx, client, tt.grafana)
+			cr := &v1beta1.Grafana{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "grafana",
+				},
+				Spec: tt.spec,
+			}
+
+			credentials, err := getAdminCredentials(testCtx, client, cr)
 			if tt.wantErr {
 				require.Error(t, err, "getAdminCredentials() should return an error")
 				require.Nil(t, credentials, "credentials should be nil on error")
