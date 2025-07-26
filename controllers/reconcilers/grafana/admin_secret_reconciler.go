@@ -66,16 +66,17 @@ func getAdminUser(cr *v1beta1.Grafana, current *v1.Secret) []byte {
 }
 
 func getAdminPassword(cr *v1beta1.Grafana, current *v1.Secret) []byte {
-	if cr.Spec.Config["security"] == nil || cr.Spec.Config["security"]["admin_password"] == "" {
-		// If a password is already set, don't change it
-		if current != nil && current.Data[config.GrafanaAdminPasswordEnvVar] != nil {
-			return current.Data[config.GrafanaAdminPasswordEnvVar]
-		}
-
-		return []byte(model.RandStringRunes(10))
+	adminPassword := cr.GetConfigSectionValue("security", "admin_password")
+	if adminPassword != "" {
+		return []byte(adminPassword)
 	}
 
-	return []byte(cr.Spec.Config["security"]["admin_password"])
+	// If a password is already set, don't change it
+	if current != nil && current.Data != nil && current.Data[config.GrafanaAdminPasswordEnvVar] != nil {
+		return current.Data[config.GrafanaAdminPasswordEnvVar]
+	}
+
+	return []byte(model.RandStringRunes(10))
 }
 
 func getData(cr *v1beta1.Grafana, current *v1.Secret) map[string][]byte {

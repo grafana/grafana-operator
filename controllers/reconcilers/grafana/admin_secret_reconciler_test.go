@@ -99,3 +99,91 @@ func TestGetAdminUser(t *testing.T) {
 		})
 	}
 }
+
+func TestGetAdminPassword(t *testing.T) {
+	t.Run("with user-defined password", func(t *testing.T) {
+		tests := []struct {
+			name   string
+			config map[string]map[string]string
+			secret *corev1.Secret
+			want   []byte
+		}{
+			{
+				name: "config section is preferred",
+				config: map[string]map[string]string{
+					"security": {
+						"admin_password": "password_from_config",
+					},
+				},
+				secret: &corev1.Secret{
+					Data: map[string][]byte{
+						config.GrafanaAdminPasswordEnvVar: []byte("password_from_secret"),
+					},
+				},
+				want: []byte("password_from_config"),
+			},
+			{
+				name:   "value from secret when config is not set",
+				config: map[string]map[string]string{},
+				secret: &corev1.Secret{
+					Data: map[string][]byte{
+						config.GrafanaAdminPasswordEnvVar: []byte("password_from_secret"),
+					},
+				},
+				want: []byte("password_from_secret"),
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				cr := &v1beta1.Grafana{
+					Spec: v1beta1.GrafanaSpec{
+						Config: tt.config,
+					},
+				}
+
+				got := getAdminPassword(cr, tt.secret)
+
+				assert.Equal(t, tt.want, got)
+			})
+		}
+	})
+
+	t.Run("with generated password", func(t *testing.T) {
+		tests := []struct {
+			name   string
+			secret *corev1.Secret
+		}{
+			{
+				name: "random value when secret is empty",
+				secret: &corev1.Secret{
+					Data: map[string][]byte{},
+				},
+			},
+			{
+				name: "random value when secret data is nil",
+				secret: &corev1.Secret{
+					Data: nil,
+				},
+			},
+			{
+				name:   "random value when secret is nil",
+				secret: nil,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				cr := &v1beta1.Grafana{
+					Spec: v1beta1.GrafanaSpec{
+						Config: map[string]map[string]string{},
+					},
+				}
+
+				got := getAdminPassword(cr, tt.secret)
+
+				assert.NotEmpty(t, got)
+			})
+		}
+	})
+}
