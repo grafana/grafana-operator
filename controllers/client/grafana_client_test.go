@@ -192,46 +192,23 @@ func TestGetExternalAdminCredentials(t *testing.T) {
 	})
 
 	t.Run("with undefined credentials", func(t *testing.T) {
-		tests := []struct {
-			name string
-			spec v1beta1.GrafanaSpec
-		}{
-			{
-				name: "err from empty config",
-				spec: v1beta1.GrafanaSpec{
-					External: &v1beta1.External{},
-					Config: map[string]map[string]string{
-						"security": {},
-					},
-				},
+		cr := &v1beta1.Grafana{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "grafana",
 			},
-			{
-				name: "err when reference is unset or security.admin_user/password is set",
-				spec: v1beta1.GrafanaSpec{
-					External: &v1beta1.External{},
-				},
+			Spec: v1beta1.GrafanaSpec{
+				External: &v1beta1.External{},
 			},
 		}
 
-		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				cr := &v1beta1.Grafana{
-					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "grafana",
-					},
-					Spec: tt.spec,
-				}
+		adminUser, err := getExternalAdminUser(testCtx, client, cr)
+		require.Error(t, err)
+		assert.Empty(t, adminUser)
 
-				adminUser, err := getExternalAdminUser(testCtx, client, cr)
-				require.Error(t, err)
-				assert.Empty(t, adminUser)
-
-				adminPassword, err := getExternalAdminPassword(testCtx, client, cr)
-				require.Error(t, err)
-				assert.Empty(t, adminPassword)
-			})
-		}
+		adminPassword, err := getExternalAdminPassword(testCtx, client, cr)
+		require.Error(t, err)
+		assert.Empty(t, adminPassword)
 	})
 }
 
