@@ -213,6 +213,24 @@ func init() {
 	SchemeBuilder.Register(&Grafana{}, &GrafanaList{})
 }
 
+func (in *Grafana) GetConfigSection(name string) map[string]string {
+	if in.Spec.Config == nil {
+		return map[string]string{}
+	}
+
+	if in.Spec.Config[name] == nil {
+		return map[string]string{}
+	}
+
+	return in.Spec.Config[name]
+}
+
+func (in *Grafana) GetConfigSectionValue(name, key string) string {
+	section := in.GetConfigSection(name)
+
+	return section[key]
+}
+
 func (in *Grafana) PreferIngress() bool {
 	return in.Spec.Client != nil && in.Spec.Client.PreferIngress != nil && *in.Spec.Client.PreferIngress
 }

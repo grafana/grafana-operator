@@ -23,36 +23,40 @@ type grafanaAdminCredentials struct {
 }
 
 func getExternalAdminUser(ctx context.Context, c client.Client, cr *v1beta1.Grafana) (string, error) {
-	switch {
-	case cr.Spec.External.AdminUser != nil:
+	if cr.Spec.External != nil && cr.Spec.External.AdminUser != nil {
 		adminUser, err := GetValueFromSecretKey(ctx, cr.Spec.External.AdminUser, c, cr.Namespace)
 		if err != nil {
 			return "", err
 		}
 
 		return string(adminUser), nil
-	case cr.Spec.Config["security"] != nil && cr.Spec.Config["security"]["admin_user"] != "":
-		return cr.Spec.Config["security"]["admin_user"], nil
-	default:
-		return "", fmt.Errorf("authentication undefined, set apiKey or userName for external instance: %s/%s", cr.Namespace, cr.Name)
 	}
+
+	adminUser := cr.GetConfigSectionValue("security", "admin_user")
+	if adminUser != "" {
+		return adminUser, nil
+	}
+
+	return "", fmt.Errorf("authentication undefined, set apiKey or userName for external instance: %s/%s", cr.Namespace, cr.Name)
 }
 
 func getExternalAdminPassword(ctx context.Context, c client.Client, cr *v1beta1.Grafana) (string, error) {
-	switch {
-	case cr.Spec.External.AdminPassword != nil:
+	if cr.Spec.External != nil && cr.Spec.External.AdminPassword != nil {
 		adminPassword, err := GetValueFromSecretKey(ctx, cr.Spec.External.AdminPassword, c, cr.Namespace)
 		if err != nil {
 			return "", err
 		}
 
 		return string(adminPassword), nil
-	case cr.Spec.Config["security"] != nil && cr.Spec.Config["security"]["admin_password"] != "":
-		return cr.Spec.Config["security"]["admin_password"], nil
-	default:
-		// If username is defined, we can assume apiKey will not be used
-		return "", fmt.Errorf("password not set for external instance: %s/%s", cr.Namespace, cr.Name)
 	}
+
+	adminPassword := cr.GetConfigSectionValue("security", "admin_password")
+	if adminPassword != "" {
+		return adminPassword, nil
+	}
+
+	// If username is defined, we can assume apiKey will not be used
+	return "", fmt.Errorf("password not set for external instance: %s/%s", cr.Namespace, cr.Name)
 }
 
 func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (*grafanaAdminCredentials, error) {
