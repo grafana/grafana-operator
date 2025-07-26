@@ -102,8 +102,9 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 }
 
 func getGrafanaServerProtocol(cr *v1beta1.Grafana) string {
-	if cr.Spec.Config != nil && cr.Spec.Config["server"] != nil && cr.Spec.Config["server"]["protocol"] != "" {
-		return cr.Spec.Config["server"]["protocol"]
+	protocol := cr.GetConfigSectionValue("server", "protocol")
+	if protocol != "" {
+		return protocol
 	}
 
 	return config.GrafanaServerProtocol
