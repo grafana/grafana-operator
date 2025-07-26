@@ -52,16 +52,17 @@ func (r *AdminSecretReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafa
 }
 
 func getAdminUser(cr *v1beta1.Grafana, current *v1.Secret) []byte {
-	if cr.Spec.Config["security"] == nil || cr.Spec.Config["security"]["admin_user"] == "" {
-		// If a user is already set, don't change it
-		if current != nil && current.Data[config.GrafanaAdminUserEnvVar] != nil {
-			return current.Data[config.GrafanaAdminUserEnvVar]
-		}
-
-		return []byte(config.DefaultAdminUser)
+	adminUser := cr.GetConfigSectionValue("security", "admin_user")
+	if adminUser != "" {
+		return []byte(adminUser)
 	}
 
-	return []byte(cr.Spec.Config["security"]["admin_user"])
+	// If a user is already set, don't change it
+	if current != nil && current.Data != nil && current.Data[config.GrafanaAdminUserEnvVar] != nil {
+		return current.Data[config.GrafanaAdminUserEnvVar]
+	}
+
+	return []byte(config.DefaultAdminUser)
 }
 
 func getAdminPassword(cr *v1beta1.Grafana, current *v1.Secret) []byte {
