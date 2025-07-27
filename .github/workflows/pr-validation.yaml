@@ -21,7 +21,7 @@ jobs:
 
       - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
 
-  test:
+  test-env:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repo
@@ -34,11 +34,25 @@ jobs:
         with:
           go-version-file: "go.mod"
 
-      - name: Run test
+      - name: Run test-env
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          make test
+          make test-env
+
+  test-generated-files:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          persist-credentials: false
+
+      - name: Run Generators
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          make test-generators
 
       - name: Check if working tree is dirty
         run: |
@@ -47,6 +61,12 @@ jobs:
             echo '::error::run make test and commit changes'
             exit 1
           fi
+
+      - name: Run linters
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          make test-lints
 
   trivy:
     runs-on: ubuntu-latest
