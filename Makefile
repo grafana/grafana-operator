@@ -152,12 +152,22 @@ muffet-dev: $(MUFFET) ## Detect broken internal links in docs.
 	$(MUFFET) --include=http://localhost:1313 http://localhost:1313
 
 .PHONY: test
-test: $(ENVTEST) manifests generate vet golangci-lint api-docs kustomize-lint helm-docs helm-lint ## Run tests.
+test: test-generators test-lints test-env ## Run all tests.
+	$(info $(M) running $@)
+
+.PHONY: test-lints
+test-lints: vet golangci-lint kustomize-lint helm-lint ## Run linters
+
+.PHONY: test-generators
+test-generators: generate manifests api-docs helm-docs ## Run generators (Code, Manifests, Docs)
+
+.PHONY: test-env
+test-env: $(ENVTEST) generate manifests ## Run Go integration tests
 	$(info $(M) running $@)
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(BIN) -p path)" go test ./... -coverprofile cover.out
 
 .PHONY: test-short
-test-short: ## Skips slow integration tests
+test-short: generate ## Skips slow integration tests
 	$(info $(M) running $@)
 	go test ./... -short -coverprofile cover.out
 
