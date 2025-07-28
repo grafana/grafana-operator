@@ -1,16 +1,9 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: grafana-plugins
-binaryData:
-  grafana-library-panel-inline-envs-librarypanel: W3sibmFtZSI6ImdyYWZhbmEtcGllY2hhcnQtcGFuZWwiLCJ2ZXJzaW9uIjoiMS4zLjkifV0=
----
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaLibraryPanel
 metadata:
   name: grafana-library-panel-inline-envs
 status:
   conditions:
-  - reason: ApplySuccessful
-    status: "True"
-    type: LibraryPanelSynchronized
+    - reason: ApplySuccessful
+      status: "True"
+      type: LibraryPanelSynchronized
