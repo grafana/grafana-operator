@@ -16,3 +16,11 @@ spec:
     security:
       admin_user: root
       admin_password: secret
+  deployment:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: grafana
+              readinessProbe:
+                periodSeconds: 2

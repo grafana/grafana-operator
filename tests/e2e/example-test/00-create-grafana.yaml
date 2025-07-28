@@ -21,3 +21,11 @@ spec:
     recording_rules:
       enabled: "true"
       url: http://prometheus:9090/api/prom/push
+  deployment:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: grafana
+              readinessProbe:
+                periodSeconds: 2
