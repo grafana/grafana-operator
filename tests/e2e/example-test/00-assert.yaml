@@ -31,6 +31,18 @@ status:
 apiVersion: grafana.integreatly.org/v1beta1
 kind: Grafana
 metadata:
+  name: grafana-tls
+spec:
+  version: 11.3.0
+status:
+  (wildcard('https://grafana-tls-service.*:3000', adminUrl || '')): true
+  stage: complete
+  stageStatus: success
+  version: 11.3.0
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
   name: grafana-versioned
 status:
   stage: complete
