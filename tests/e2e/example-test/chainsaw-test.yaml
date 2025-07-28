@@ -9,11 +9,11 @@ spec:
     - name: step-00
       try:
         - apply:
-            file: 00-create-external-grafana.yaml
-        - apply:
             file: 00-create-grafana.yaml
         - apply:
-            file: 00-create-versioned-grafana.yaml
+            file: 00-create-grafana-external.yaml
+        - apply:
+            file: 00-create-grafana-versioned.yaml
         - assert:
             file: 00-assert.yaml
     - name: step-01

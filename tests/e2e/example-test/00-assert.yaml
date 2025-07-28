@@ -17,7 +17,7 @@ status:
 apiVersion: grafana.integreatly.org/v1beta1
 kind: Grafana
 metadata:
-  name: external-grafana
+  name: grafana-external
 status:
   adminUrl: (join('',['http://grafana-internal-service.',$namespace,':3000']))
   stage: complete
