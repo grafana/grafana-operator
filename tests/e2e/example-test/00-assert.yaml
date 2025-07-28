@@ -40,3 +40,10 @@ status:
   - reason: GrafanaReady
     status: "True"
     type: GrafanaReady
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana-deployment
+status:
+  availableReplicas: 1
