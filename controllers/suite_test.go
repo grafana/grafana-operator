@@ -121,19 +121,6 @@ var _ = AfterSuite(func() {
 func createSharedTestCRs() {
 	GinkgoHelper()
 
-	By("Creating GrafanaFolder for testing")
-
-	folderCR := &v1beta1.GrafanaFolder{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "default",
-			Name:      "apply-failed-helper",
-		},
-		Spec: v1beta1.GrafanaFolderSpec{
-			GrafanaCommonSpec: commonSpecApplyFailed,
-		},
-	}
-	Expect(k8sClient.Create(testCtx, folderCR)).ToNot(HaveOccurred())
-
 	By("Creating Grafana CRs. One Fake and one External")
 
 	intP := 1
@@ -209,4 +196,25 @@ func createSharedTestCRs() {
 		Namespace: external.Namespace,
 		Name:      external.Name,
 	}, externalGrafanaCr)).Should(Succeed())
+
+	By("Creating GrafanaFolder for testing")
+
+	appliedFolder := &v1beta1.GrafanaFolder{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "pre-existing",
+		},
+		Spec: v1beta1.GrafanaFolderSpec{
+			GrafanaCommonSpec: commonSpecSynchronized,
+			CustomUID:         "synchronized",
+		},
+	}
+	Expect(k8sClient.Create(testCtx, appliedFolder)).ToNot(HaveOccurred())
+
+	By("Reconciling 'synchronized' folder")
+
+	req := requestFromMeta(appliedFolder.ObjectMeta)
+	fr := GrafanaFolderReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+	_, err = fr.Reconcile(testCtx, req)
+	Expect(err).ToNot(HaveOccurred())
 }
