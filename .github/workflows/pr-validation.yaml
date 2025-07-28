@@ -6,7 +6,7 @@ name: PR Validation
 on:
   pull_request:
   merge_group:
-  # Helps to cut execution time in PRs by generating pre-commit/go/tryvy cache (branches inherit cache from master)
+  # Helps to cut execution time in PRs and the merge queue by generating pre-commit/go/tryvy cache (branches inherit cache from master)
   push:
     branches:
       - master
