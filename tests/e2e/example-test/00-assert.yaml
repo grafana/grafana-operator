@@ -10,9 +10,9 @@ status:
   stageStatus: success
   version: 11.3.0
   conditions:
-  - reason: GrafanaReady
-    status: "True"
-    type: GrafanaReady
+    - reason: GrafanaReady
+      status: "True"
+      type: GrafanaReady
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: Grafana
@@ -24,9 +24,9 @@ status:
   stageStatus: success
   version: 11.3.0
   conditions:
-  - reason: GrafanaReady
-    status: "True"
-    type: GrafanaReady
+    - reason: GrafanaReady
+      status: "True"
+      type: GrafanaReady
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: Grafana
@@ -37,9 +37,9 @@ status:
   stageStatus: success
   version: 10.3.5
   conditions:
-  - reason: GrafanaReady
-    status: "True"
-    type: GrafanaReady
+    - reason: GrafanaReady
+      status: "True"
+      type: GrafanaReady
 ---
 apiVersion: apps/v1
 kind: Deployment
