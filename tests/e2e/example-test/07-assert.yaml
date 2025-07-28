@@ -1,8 +1,13 @@
----
-apiVersion: grafana.integreatly.org/v1beta1
-kind: GrafanaDashboard
-metadata:
-  name: grafana-dashboard-jsonnet-project
+# TODO: fix the example
+# apiVersion: grafana.integreatly.org/v1beta1
+# kind: GrafanaDashboard
+# metadata:
+#   name: grafana-dashboard-jsonnet-project
+# status:
+#   conditions:
+#     - type: DashboardSynchronized
+#       reason: ApplySuccessful
+#       status: "True"
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
@@ -10,6 +15,6 @@ metadata:
   name: jsonnet-env-vars
 status:
   conditions:
-  - type: DashboardSynchronized
-    reason: ApplySuccessful
-    status: "True"
+    - type: DashboardSynchronized
+      reason: ApplySuccessful
+      status: "True"
