@@ -21,15 +21,14 @@ import (
 )
 
 const (
-	MemoryRequest                           = "256Mi"
-	CPURequest                              = "100m"
-	MemoryLimit                             = "1024Mi"
-	GrafanaHealthEndpoint                   = "/api/health"
-	ReadinessProbeFailureThreshold    int32 = 1
-	ReadinessProbeInitialDelaySeconds int32 = 5
-	ReadinessProbePeriodSeconds       int32 = 10
-	ReadinessProbeSuccessThreshold    int32 = 1
-	ReadinessProbeTimeoutSeconds      int32 = 3
+	MemoryRequest                        = "256Mi"
+	CPURequest                           = "100m"
+	MemoryLimit                          = "1024Mi"
+	GrafanaHealthEndpoint                = "/api/health"
+	ReadinessProbeFailureThreshold int32 = 1
+	ReadinessProbePeriodSeconds    int32 = 10
+	ReadinessProbeSuccessThreshold int32 = 1
+	ReadinessProbeTimeoutSeconds   int32 = 3
 )
 
 type DeploymentReconciler struct {
@@ -315,11 +314,10 @@ func getReadinessProbe(cr *v1beta1.Grafana) *corev1.Probe {
 				Scheme: corev1.URISchemeHTTP,
 			},
 		},
-		InitialDelaySeconds: ReadinessProbeInitialDelaySeconds,
-		TimeoutSeconds:      ReadinessProbeTimeoutSeconds,
-		PeriodSeconds:       ReadinessProbePeriodSeconds,
-		SuccessThreshold:    ReadinessProbeSuccessThreshold,
-		FailureThreshold:    ReadinessProbeFailureThreshold,
+		TimeoutSeconds:   ReadinessProbeTimeoutSeconds,
+		PeriodSeconds:    ReadinessProbePeriodSeconds,
+		SuccessThreshold: ReadinessProbeSuccessThreshold,
+		FailureThreshold: ReadinessProbeFailureThreshold,
 	}
 }
 
