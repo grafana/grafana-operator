@@ -151,6 +151,10 @@ kustomize-github-assets: $(KUSTOMIZE) ## Generates GitHub assets.
 muffet-dev: $(MUFFET) ## Detect broken internal links in docs.
 	$(MUFFET) --include=http://localhost:1313 http://localhost:1313
 
+.PHONY:
+test-image-pre-pull: ## Pre-pulls Grafana image used in tests to speed up CI
+	docker pull $(GRAFANA_IMAGE):$(GRAFANA_VERSION) > /dev/null 2>&1 &
+
 .PHONY: test
 test: $(ENVTEST) manifests generate vet golangci-lint api-docs kustomize-lint helm-docs helm-lint ## Run tests.
 	$(info $(M) running $@)
