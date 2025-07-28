@@ -1,10 +1,3 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: grafana-deployment
-status:
-  availableReplicas: 1
----
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDatasource
 metadata:
@@ -14,3 +7,10 @@ status:
     - type: DatasourceSynchronized
       reason: ApplySuccessful
       status: "True"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-plugins
+binaryData:
+  grafanadatasource-sample-datasource: W3sibmFtZSI6ImdyYWZhbmEtY2xvY2stcGFuZWwiLCJ2ZXJzaW9uIjoiMS4zLjAifV0=

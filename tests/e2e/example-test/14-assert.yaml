@@ -1,3 +1,13 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaLibraryPanel
+metadata:
+  name: grafana-library-panel
+status:
+  conditions:
+    - reason: ApplySuccessful
+      status: "True"
+      type: LibraryPanelSynchronized
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
