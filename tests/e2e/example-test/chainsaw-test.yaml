@@ -22,10 +22,6 @@ spec:
             file: 01-datasource.yaml
         - assert:
             file: 01-assert.yaml
-    - name: step-02
-      try:
-        - assert:
-            file: 02-assert.yaml
     - name: step-03
       try:
         - apply:

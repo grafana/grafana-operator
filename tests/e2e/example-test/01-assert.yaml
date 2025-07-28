@@ -7,3 +7,10 @@ status:
     - type: DatasourceSynchronized
       reason: ApplySuccessful
       status: "True"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-plugins
+binaryData:
+  grafanadatasource-sample-datasource: W3sibmFtZSI6ImdyYWZhbmEtY2xvY2stcGFuZWwiLCJ2ZXJzaW9uIjoiMS4zLjAifV0=
