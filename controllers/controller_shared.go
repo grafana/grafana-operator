@@ -50,6 +50,8 @@ const (
 	grafanaFinalizer = "operator.grafana.com/finalizer"
 )
 
+var ErrNoMatchingInstances = fmt.Errorf("no matching instances")
+
 //+kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update;patch;delete
 
 // Allow slower initial retry on any failure

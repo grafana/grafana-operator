@@ -104,7 +104,7 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 		setNoMatchingInstancesCondition(&contactPoint.Status.Conditions, contactPoint.Generation, err)
 		meta.RemoveStatusCondition(&contactPoint.Status.Conditions, conditionContactPointSynchronized)
 
-		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
+		return ctrl.Result{}, ErrNoMatchingInstances
 	}
 
 	removeNoMatchingInstance(&contactPoint.Status.Conditions)

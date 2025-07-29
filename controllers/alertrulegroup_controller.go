@@ -107,7 +107,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 		setNoMatchingInstancesCondition(&group.Status.Conditions, group.Generation, err)
 		meta.RemoveStatusCondition(&group.Status.Conditions, conditionAlertGroupSynchronized)
 
-		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
+		return ctrl.Result{}, ErrNoMatchingInstances
 	}
 
 	removeNoMatchingInstance(&group.Status.Conditions)

@@ -38,6 +38,7 @@ var _ = Describe("NotificationTemplate Reconciler: Provoke Conditions", func() {
 			},
 			wantCondition: conditionNoMatchingInstance,
 			wantReason:    conditionReasonEmptyAPIReply,
+			wantErr:       ErrNoMatchingInstances.Error(),
 		},
 		{
 			name: "Failed to apply to instance",

@@ -99,7 +99,7 @@ func (r *GrafanaNotificationTemplateReconciler) Reconcile(ctx context.Context, r
 		setNoMatchingInstancesCondition(&notificationTemplate.Status.Conditions, notificationTemplate.Generation, err)
 		meta.RemoveStatusCondition(&notificationTemplate.Status.Conditions, conditionNotificationTemplateSynchronized)
 
-		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
+		return ctrl.Result{}, ErrNoMatchingInstances
 	}
 
 	removeNoMatchingInstance(&notificationTemplate.Status.Conditions)
