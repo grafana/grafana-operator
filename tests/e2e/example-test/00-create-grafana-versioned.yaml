@@ -3,7 +3,7 @@ kind: Grafana
 metadata:
   name: grafana-versioned
   labels:
-    dashboards: "grafana"
+    dashboards: grafana-versioned
 spec:
   client:
     preferIngress: false

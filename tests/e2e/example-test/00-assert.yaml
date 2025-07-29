@@ -17,7 +17,7 @@ status:
 apiVersion: grafana.integreatly.org/v1beta1
 kind: Grafana
 metadata:
-  name: external-grafana
+  name: grafana-external
 status:
   adminUrl: (join('',['http://grafana-internal-service.',$namespace,':3000']))
   stage: complete
@@ -27,6 +27,18 @@ status:
     - reason: GrafanaReady
       status: "True"
       type: GrafanaReady
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana-tls
+spec:
+  version: 11.3.0
+status:
+  (wildcard('https://grafana-tls-service.*:3000', adminUrl || '')): true
+  stage: complete
+  stageStatus: success
+  version: 11.3.0
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: Grafana
@@ -47,3 +59,32 @@ metadata:
   name: grafana-deployment
 status:
   availableReplicas: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-service
+  ownerReferences:
+    - apiVersion: grafana.integreatly.org/v1beta1
+      kind: Grafana
+      name: grafana
+spec: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-alerting
+  ownerReferences:
+    - apiVersion: grafana.integreatly.org/v1beta1
+      kind: Grafana
+      name: grafana
+spec: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-ini
+  ownerReferences:
+    - apiVersion: grafana.integreatly.org/v1beta1
+      kind: Grafana
+      name: grafana

@@ -9,11 +9,13 @@ spec:
     - name: step-00
       try:
         - apply:
-            file: 00-create-external-grafana.yaml
-        - apply:
             file: 00-create-grafana.yaml
         - apply:
-            file: 00-create-versioned-grafana.yaml
+            file: 00-create-grafana-external.yaml
+        - apply:
+            file: 00-create-grafana-tls.yaml
+        - apply:
+            file: 00-create-grafana-versioned.yaml
         - assert:
             file: 00-assert.yaml
     - name: step-01
@@ -78,12 +80,6 @@ spec:
             file: 10-notification-policy.yaml
         - assert:
             file: 10-assert-notification-policy.yaml
-    - name: step-11
-      try:
-        - apply:
-            file: 11-tls.yaml
-        - assert:
-            file: 11-assert.yaml
     - name: step-12
       try:
         - apply:
