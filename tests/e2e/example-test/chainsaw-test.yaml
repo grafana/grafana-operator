@@ -14,8 +14,6 @@ spec:
             file: 00-create-grafana-external.yaml
         - apply:
             file: 00-create-grafana-tls.yaml
-        - apply:
-            file: 00-create-grafana-versioned.yaml
         - assert:
             file: 00-assert.yaml
     - name: step-01
