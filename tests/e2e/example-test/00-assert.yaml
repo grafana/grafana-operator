@@ -40,19 +40,6 @@ status:
   stageStatus: success
   version: 12.1.0
 ---
-apiVersion: grafana.integreatly.org/v1beta1
-kind: Grafana
-metadata:
-  name: grafana-versioned
-status:
-  stage: complete
-  stageStatus: success
-  version: 10.3.5
-  conditions:
-    - reason: GrafanaReady
-      status: "True"
-      type: GrafanaReady
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
