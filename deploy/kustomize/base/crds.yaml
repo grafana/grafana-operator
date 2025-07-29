@@ -202,6 +202,11 @@ spec:
                       additionalProperties:
                         type: string
                       type: object
+                    missingSeriesEvalsToResolve:
+                      description: The number of missing series evaluations that must
+                        occur before the rule is considered to be resolved.
+                      format: int64
+                      type: integer
                     noDataState:
                       enum:
                       - Alerting
