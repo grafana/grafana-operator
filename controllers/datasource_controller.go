@@ -109,7 +109,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDatasourceSynchronized)
 		cr.Status.NoMatchingInstances = true
 
-		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
+		return ctrl.Result{}, ErrNoMatchingInstances
 	}
 
 	removeNoMatchingInstance(&cr.Status.Conditions)
