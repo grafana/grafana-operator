@@ -44,6 +44,7 @@ var _ = Describe("ContactPoint Reconciler: Provoke Conditions", func() {
 			},
 			wantCondition: conditionNoMatchingInstance,
 			wantReason:    conditionReasonEmptyAPIReply,
+			wantErr:       ErrNoMatchingInstances.Error(),
 		},
 		{
 			name: "Failed to apply to instance",
@@ -83,6 +84,20 @@ var _ = Describe("ContactPoint Reconciler: Provoke Conditions", func() {
 			wantCondition: conditionInvalidSpec,
 			wantReason:    conditionReasonInvalidSettings,
 			wantErr:       "building contactpoint settings",
+		},
+		{
+			name: "Successfully applied resource to instance",
+			cr: &v1beta1.GrafanaContactPoint{
+				ObjectMeta: objectMetaSynchronized,
+				Spec: v1beta1.GrafanaContactPointSpec{
+					GrafanaCommonSpec: commonSpecSynchronized,
+					Name:              "ContactPointName",
+					Settings:          &v1.JSON{Raw: []byte(`{"url": "http://test.io"}`)},
+					Type:              "webhook",
+				},
+			},
+			wantCondition: conditionContactPointSynchronized,
+			wantReason:    conditionReasonApplySuccessful,
 		},
 	}
 

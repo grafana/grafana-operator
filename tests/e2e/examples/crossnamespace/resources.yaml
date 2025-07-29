@@ -29,6 +29,7 @@ spec:
                 readOnlyRootFilesystem: false
               readinessProbe:
                 failureThreshold: 3
+                periodSeconds: 2
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDatasource

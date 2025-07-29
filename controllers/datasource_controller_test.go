@@ -203,6 +203,7 @@ var _ = Describe("Datasource Reconciler: Provoke Conditions", func() {
 			},
 			wantCondition: conditionNoMatchingInstance,
 			wantReason:    conditionReasonEmptyAPIReply,
+			wantErr:       ErrNoMatchingInstances.Error(),
 		},
 		{
 			name: "Failed to apply to instance",
@@ -238,6 +239,23 @@ var _ = Describe("Datasource Reconciler: Provoke Conditions", func() {
 			wantCondition: conditionInvalidSpec,
 			wantReason:    conditionReasonInvalidModel,
 			wantErr:       "building datasource model",
+		},
+		{
+			name: "Successfully applied resource to instance",
+			cr: &v1beta1.GrafanaDatasource{
+				ObjectMeta: objectMetaSynchronized,
+				Spec: v1beta1.GrafanaDatasourceSpec{
+					GrafanaCommonSpec: commonSpecSynchronized,
+					Datasource: &v1beta1.GrafanaDatasourceInternal{
+						Name:   "synced-prometheus",
+						Type:   "prometheus",
+						Access: "proxy",
+						URL:    "https://demo.promlabs.com",
+					},
+				},
+			},
+			wantCondition: conditionDatasourceSynchronized,
+			wantReason:    conditionReasonApplySuccessful,
 		},
 	}
 

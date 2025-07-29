@@ -124,6 +124,7 @@ spec:
                 httpGet:
                   port: 3000
                   scheme: HTTPS
+                periodSeconds: 2
               volumeMounts:
                 - mountPath: /certs/ca.crt
                   name: tls

@@ -100,7 +100,7 @@ func (r *GrafanaMuteTimingReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		setNoMatchingInstancesCondition(&muteTiming.Status.Conditions, muteTiming.Generation, err)
 		meta.RemoveStatusCondition(&muteTiming.Status.Conditions, conditionMuteTimingSynchronized)
 
-		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
+		return ctrl.Result{}, ErrNoMatchingInstances
 	}
 
 	removeNoMatchingInstance(&muteTiming.Status.Conditions)

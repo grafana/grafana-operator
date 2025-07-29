@@ -55,6 +55,7 @@ var _ = Describe("Dashboard Reconciler: Provoke Conditions", func() {
 			},
 			wantCondition: conditionNoMatchingInstance,
 			wantReason:    conditionReasonEmptyAPIReply,
+			wantErr:       ErrNoMatchingInstances.Error(),
 		},
 		{
 			name: "Failed to apply to instance",
@@ -96,6 +97,23 @@ var _ = Describe("Dashboard Reconciler: Provoke Conditions", func() {
 			wantCondition: conditionInvalidSpec,
 			wantReason:    conditionReasonInvalidModelResolution,
 			wantErr:       "resolving dashboard contents",
+		},
+		{
+			name: "Successfully applied resource to instance",
+			cr: &v1beta1.GrafanaDashboard{
+				ObjectMeta: objectMetaSynchronized,
+				Spec: v1beta1.GrafanaDashboardSpec{
+					GrafanaCommonSpec: commonSpecSynchronized,
+					GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+						JSON: `{
+							"title": "Minimal Dashboard",
+							"links": []
+						}`,
+					},
+				},
+			},
+			wantCondition: conditionDashboardSynchronized,
+			wantReason:    conditionReasonApplySuccessful,
 		},
 	}
 

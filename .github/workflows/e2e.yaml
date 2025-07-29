@@ -52,6 +52,10 @@ jobs:
           - v1.32.2
           - v1.33.0
     steps:
+      - name: Pre-pull kind image
+        run: |
+          docker pull kindest/node:${{ matrix.version }} > /dev/null 2>&1 &
+
       - name: Clone repo and checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:

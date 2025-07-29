@@ -145,7 +145,7 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 		setNoMatchingInstancesCondition(&libraryPanel.Status.Conditions, libraryPanel.Generation, err)
 		meta.RemoveStatusCondition(&libraryPanel.Status.Conditions, conditionLibraryPanelSynchronized)
 
-		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
+		return ctrl.Result{}, ErrNoMatchingInstances
 	}
 
 	removeNoMatchingInstance(&libraryPanel.Status.Conditions)

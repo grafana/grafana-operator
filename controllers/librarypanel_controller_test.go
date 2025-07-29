@@ -38,6 +38,7 @@ var _ = Describe("LibraryPanel Reconciler: Provoke Conditions", func() {
 			},
 			wantCondition: conditionNoMatchingInstance,
 			wantReason:    conditionReasonEmptyAPIReply,
+			wantErr:       ErrNoMatchingInstances.Error(),
 		},
 		{
 			name: "Failed to apply to instance",
@@ -51,6 +52,26 @@ var _ = Describe("LibraryPanel Reconciler: Provoke Conditions", func() {
 			wantCondition: conditionLibraryPanelSynchronized,
 			wantReason:    conditionReasonApplyFailed,
 			wantErr:       "failed to apply to all instances",
+		},
+		{
+			name: "Successfully applied resource to instance",
+			cr: &v1beta1.GrafanaLibraryPanel{
+				ObjectMeta: objectMetaSynchronized,
+				Spec: v1beta1.GrafanaLibraryPanelSpec{
+					GrafanaCommonSpec: commonSpecSynchronized,
+					GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+						JSON: `{
+							"uid": "do-adhv-ank",
+							"name": "API docs Example",
+							"type": "text",
+							"model": {},
+							"version": 1
+						}`,
+					},
+				},
+			},
+			wantCondition: conditionLibraryPanelSynchronized,
+			wantReason:    conditionReasonApplySuccessful,
 		},
 	}
 
