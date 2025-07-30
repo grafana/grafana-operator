@@ -99,6 +99,11 @@ func (in *AlertRule) DeepCopyInto(out *AlertRule) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.MissingSeriesEvalsToResolve != nil {
+		in, out := &in.MissingSeriesEvalsToResolve, &out.MissingSeriesEvalsToResolve
+		*out = new(int64)
+		**out = **in
+	}
 	if in.Record != nil {
 		in, out := &in.Record, &out.Record
 		*out = new(Record)

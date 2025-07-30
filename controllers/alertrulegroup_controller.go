@@ -185,6 +185,10 @@ func crToModel(cr *grafanav1beta1.GrafanaAlertRuleGroup, folderUID string) model
 			}
 		}
 
+		if r.MissingSeriesEvalsToResolve != nil {
+			apiRule.MissingSeriesEvalsToResolve = *r.MissingSeriesEvalsToResolve
+		}
+
 		for idx, q := range r.Data {
 			apiRule.Data[idx] = &models.AlertQuery{
 				DatasourceUID:     q.DatasourceUID,
