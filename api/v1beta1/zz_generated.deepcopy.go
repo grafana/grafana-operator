@@ -104,6 +104,11 @@ func (in *AlertRule) DeepCopyInto(out *AlertRule) {
 		*out = new(int64)
 		**out = **in
 	}
+	if in.KeepFiringFor != nil {
+		in, out := &in.KeepFiringFor, &out.KeepFiringFor
+		*out = new(metav1.Duration)
+		**out = **in
+	}
 	if in.Record != nil {
 		in, out := &in.Record, &out.Record
 		*out = new(Record)

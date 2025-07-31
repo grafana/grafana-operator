@@ -89,6 +89,11 @@ type AlertRule struct {
 	// The number of missing series evaluations that must occur before the rule is considered to be resolved.
 	MissingSeriesEvalsToResolve *int64 `json:"missingSeriesEvalsToResolve,omitempty"`
 
+	// +kubebuilder:validation:Type=string
+	// +kubebuilder:validation:Format=duration
+	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
+	KeepFiringFor *metav1.Duration `json:"keepFiringFor,omitempty"`
+
 	Record *Record `json:"record,omitempty"`
 
 	// +kubebuilder:validation:MinLength=1
