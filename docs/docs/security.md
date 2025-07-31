@@ -9,7 +9,7 @@ Grafana-operator container images are signed by github [attestation](https://doc
 
 > This only applies from grafana-operator version 5.19.0 and forward
 
-### Pre-requirement
+### Prerequisites
 
 - cosign v2.5.0 or higher [installation instructions](https://docs.sigstore.dev/cosign/system_config/installation/).
 - gh 2.72.0 or higher [cli](https://github.com/cli/cli/releases)
