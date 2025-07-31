@@ -15,7 +15,7 @@ Grafana-operator container images are signed by github [attestation](https://doc
 - gh 2.72.0 or higher [cli](https://github.com/cli/cli/releases)
 - crane [installation instructions](https://github.com/google/go-containerregistry/blob/main/cmd/crane/doc/crane.md) or oras [installation instructions](https://oras.land/docs/installation)
 
-### verify the grafana-operator image
+### Verify the grafana-operator image
 
 ```shell
 gh attestation verify --owner grafana oci://ghcr.io/grafana/grafana-operator:<version>
