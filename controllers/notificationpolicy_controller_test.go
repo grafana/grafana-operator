@@ -36,6 +36,7 @@ func routesToRuntimeObjects(routes []v1beta1.GrafanaNotificationPolicyRoute) []r
 	for i := range routes {
 		objects[i] = &routes[i]
 	}
+
 	return objects
 }
 
@@ -370,6 +371,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 			if tt.wantLoopDetectedErr {
 				require.ErrorIs(t, err, ErrLoopDetected)
 			}
+
 			if tt.wantErr {
 				require.Error(t, err, "assembleNotificationPolicyRoutes() should return an error")
 			} else {
@@ -411,6 +413,7 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke Conditions", func() {
 			},
 			wantCondition: conditionNoMatchingInstance,
 			wantReason:    conditionReasonEmptyAPIReply,
+			wantErr:       ErrNoMatchingInstances.Error(),
 		},
 		{
 			name: "Failed to apply to instance",
@@ -445,6 +448,20 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke Conditions", func() {
 			wantCondition: conditionInvalidSpec,
 			wantReason:    conditionReasonFieldsMutuallyExclusive,
 			wantErr:       "invalid route spec discovered: routeSelector is mutually exclusive with routes",
+		},
+		{
+			name: "Successfully applied resource to instance",
+			cr: &v1beta1.GrafanaNotificationPolicy{
+				ObjectMeta: objectMetaSynchronized,
+				Spec: v1beta1.GrafanaNotificationPolicySpec{
+					GrafanaCommonSpec: commonSpecSynchronized,
+					Route: &v1beta1.Route{
+						Receiver: "grafana-default-email",
+					},
+				},
+			},
+			wantCondition: conditionNotificationPolicySynchronized,
+			wantReason:    conditionReasonApplySuccessful,
 		},
 	}
 

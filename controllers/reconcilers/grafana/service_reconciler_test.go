@@ -10,65 +10,33 @@ import (
 
 func Test_getGrafanaServerProtocol(t *testing.T) {
 	tests := []struct {
-		name string
-		cr   *v1beta1.Grafana
-		want string
+		name   string
+		config map[string]map[string]string
+		want   string
 	}{
 		{
-			name: "Config nil",
-			cr: &v1beta1.Grafana{
-				Spec: v1beta1.GrafanaSpec{
-					Config: nil,
-				},
-			},
-			want: config.GrafanaServerProtocol,
-		},
-		{
-			name: "Server nil",
-			cr: &v1beta1.Grafana{
-				Spec: v1beta1.GrafanaSpec{
-					Config: map[string]map[string]string{
-						"server": nil,
-					},
-				},
-			},
-			want: config.GrafanaServerProtocol,
-		},
-		{
 			name: "Server protocol empty",
-			cr: &v1beta1.Grafana{
-				Spec: v1beta1.GrafanaSpec{
-					Config: map[string]map[string]string{
-						"server": {
-							"protocol": "",
-						},
-					},
+			config: map[string]map[string]string{
+				"server": {
+					"protocol": "",
 				},
 			},
 			want: config.GrafanaServerProtocol,
 		},
 		{
 			name: "Server protocol http",
-			cr: &v1beta1.Grafana{
-				Spec: v1beta1.GrafanaSpec{
-					Config: map[string]map[string]string{
-						"server": {
-							"protocol": "http",
-						},
-					},
+			config: map[string]map[string]string{
+				"server": {
+					"protocol": "http",
 				},
 			},
 			want: config.GrafanaServerProtocol,
 		},
 		{
 			name: "Server protocol https",
-			cr: &v1beta1.Grafana{
-				Spec: v1beta1.GrafanaSpec{
-					Config: map[string]map[string]string{
-						"server": {
-							"protocol": "https",
-						},
-					},
+			config: map[string]map[string]string{
+				"server": {
+					"protocol": "https",
 				},
 			},
 			want: "https",
@@ -77,10 +45,61 @@ func Test_getGrafanaServerProtocol(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			want := tt.want
-			got := getGrafanaServerProtocol(tt.cr)
+			cr := &v1beta1.Grafana{
+				Spec: v1beta1.GrafanaSpec{
+					Config: tt.config,
+				},
+			}
 
-			assert.Equal(t, want, got)
+			got := getGrafanaServerProtocol(cr)
+
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestGetGrafanaPort(t *testing.T) {
+	tests := []struct {
+		name   string
+		config map[string]map[string]string
+		want   int
+	}{
+		{
+			name: "correct port",
+			config: map[string]map[string]string{
+				"server": {
+					"http_port": "3001",
+				},
+			},
+			want: 3001,
+		},
+		{
+			name: "incorrect value",
+			config: map[string]map[string]string{
+				"server": {
+					"http_port": "non-number",
+				},
+			},
+			want: config.GrafanaHTTPPort,
+		},
+		{
+			name:   "port is not defined",
+			config: map[string]map[string]string{},
+			want:   config.GrafanaHTTPPort,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cr := &v1beta1.Grafana{
+				Spec: v1beta1.GrafanaSpec{
+					Config: tt.config,
+				},
+			}
+
+			got := GetGrafanaPort(cr)
+
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }

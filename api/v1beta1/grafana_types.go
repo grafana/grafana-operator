@@ -213,6 +213,24 @@ func init() {
 	SchemeBuilder.Register(&Grafana{}, &GrafanaList{})
 }
 
+func (in *Grafana) GetConfigSection(name string) map[string]string {
+	if in.Spec.Config == nil {
+		return map[string]string{}
+	}
+
+	if in.Spec.Config[name] == nil {
+		return map[string]string{}
+	}
+
+	return in.Spec.Config[name]
+}
+
+func (in *Grafana) GetConfigSectionValue(name, key string) string {
+	section := in.GetConfigSection(name)
+
+	return section[key]
+}
+
 func (in *Grafana) PreferIngress() bool {
 	return in.Spec.Client != nil && in.Spec.Client.PreferIngress != nil && *in.Spec.Client.PreferIngress
 }
@@ -236,6 +254,7 @@ func (in *Grafana) AddNamespacedResource(ctx context.Context, cl client.Client, 
 	idx := list.IndexOf(cr.GetNamespace(), cr.GetName())
 
 	var jsonPatch []any
+
 	switch {
 	case len(*list) == 0:
 		// Create list if previously empty or append to the end
@@ -288,6 +307,7 @@ func (in *Grafana) RemoveNamespacedResource(ctx context.Context, cl client.Clien
 		"op":   "remove",
 		"path": fmt.Sprintf("/status/%s/%d", kind, idx),
 	}}
+
 	patch, err := json.Marshal(jsonPatch)
 	if err != nil {
 		return err

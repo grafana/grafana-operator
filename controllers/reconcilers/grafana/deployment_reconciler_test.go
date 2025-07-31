@@ -5,42 +5,45 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	config2 "github.com/grafana/grafana-operator/v5/controllers/config"
+	"github.com/grafana/grafana-operator/v5/controllers/config"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_getGrafanaImage(t *testing.T) {
-	cr := &v1beta1.Grafana{
-		Spec: v1beta1.GrafanaSpec{
-			Version: "",
+func TestGetGrafanaImage(t *testing.T) {
+	tests := []struct {
+		name    string
+		version string
+		want    string
+	}{
+		{
+			name:    "not specified(default version)",
+			version: "",
+			want:    fmt.Sprintf("%s:%s", config.GrafanaImage, config.GrafanaVersion),
+		},
+		{
+			name:    "custom tag",
+			version: "10.4.0",
+			want:    fmt.Sprintf("%s:10.4.0", config.GrafanaImage),
+		},
+		{
+			name:    "fully-qualified image",
+			version: "docker.io/grafana/grafana@sha256:b7fcb534f7b3512801bb3f4e658238846435804deb479d105b5cdc680847c272",
+			want:    "docker.io/grafana/grafana@sha256:b7fcb534f7b3512801bb3f4e658238846435804deb479d105b5cdc680847c272",
 		},
 	}
 
-	expectedDeploymentImage := fmt.Sprintf("%s:%s", config2.GrafanaImage, config2.GrafanaVersion)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cr := &v1beta1.Grafana{
+				Spec: v1beta1.GrafanaSpec{
+					Version: tt.version,
+				},
+			}
 
-	assert.Equal(t, expectedDeploymentImage, getGrafanaImage(cr))
-}
+			got := getGrafanaImage(cr)
 
-func Test_getGrafanaImage_specificVersion(t *testing.T) {
-	cr := &v1beta1.Grafana{
-		Spec: v1beta1.GrafanaSpec{
-			Version: "10.4.0",
-		},
+			assert.Equal(t, tt.want, got)
+		})
 	}
-
-	expectedDeploymentImage := fmt.Sprintf("%s:10.4.0", config2.GrafanaImage)
-
-	assert.Equal(t, expectedDeploymentImage, getGrafanaImage(cr))
-}
-
-func Test_getGrafanaImage_withImageInVersion(t *testing.T) {
-	expectedDeploymentImage := "docker.io/grafana/grafana@sha256:b7fcb534f7b3512801bb3f4e658238846435804deb479d105b5cdc680847c272"
-	cr := &v1beta1.Grafana{
-		Spec: v1beta1.GrafanaSpec{
-			Version: expectedDeploymentImage,
-		},
-	}
-
-	assert.Equal(t, expectedDeploymentImage, getGrafanaImage(cr))
 }

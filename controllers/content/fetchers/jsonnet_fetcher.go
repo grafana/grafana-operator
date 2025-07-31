@@ -62,23 +62,29 @@ func (importer *EmbedFSImporter) Import(importedFrom, importedPath string) (cont
 		return jsonnet.MakeContentsRaw(b), foundAt, nil
 	}
 
-	var foundContents jsonnet.Contents
-	var s string
+	var (
+		foundContents jsonnet.Contents
+		s             string
+	)
 
 	findImport := func(root string) error {
 		err = fs.WalkDir(importer.Embed, root, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}
+
 			if strings.Contains(path, importedPath) {
 				foundContents, s, err = fetchContents(path, importedPath)
 				if err != nil {
 					return err
 				}
+
 				return filepath.SkipDir
 			}
+
 			return nil
 		})
+
 		return err
 	}
 
@@ -101,6 +107,7 @@ func FetchJsonnet(cr v1beta1.GrafanaContentResource, envs map[string]string, lib
 	if spec.Jsonnet == "" {
 		return nil, fmt.Errorf("no jsonnet Content Found, nil or empty string")
 	}
+
 	vm := jsonnet.MakeVM()
 	for k, v := range envs {
 		vm.ExtVar(k, v)
@@ -109,16 +116,19 @@ func FetchJsonnet(cr v1beta1.GrafanaContentResource, envs map[string]string, lib
 	vm.Importer(&EmbedFSImporter{Embed: libsonnet})
 
 	jsonString, err := vm.EvaluateAnonymousSnippet(cr.GetName(), spec.Jsonnet)
+
 	return []byte(jsonString), err
 }
 
 func listDirectoryContents(dirPath string) error {
 	fileInfos, err := os.ReadDir(dirPath)
 	fmt.Println("Reading directory:", dirPath, "file infos:", fileInfos)
+
 	if err != nil {
 		fmt.Println("Error reading directory:", err)
 		return err
 	}
+
 	for _, fileInfo := range fileInfos {
 		fmt.Println(fileInfo.Name())
 	}
@@ -128,6 +138,7 @@ func listDirectoryContents(dirPath string) error {
 
 func generateRandomString(length int) (string, error) {
 	randomBytes := make([]byte, length)
+
 	_, err := rand.Read(randomBytes)
 	if err != nil {
 		return "", err
@@ -141,6 +152,7 @@ func generateRandomString(length int) (string, error) {
 
 func getJSONProjectBuildRoundName(modelName string) (string, error) {
 	tsNow := strconv.FormatInt(time.Now().Unix(), 10)
+
 	salt, err := generateRandomString(5)
 	if err != nil {
 		return "", fmt.Errorf("error salt generating as random string: %w", err)
@@ -178,6 +190,7 @@ func addPrefixToElements(prefix string, array []string) []string {
 	for i, element := range array {
 		result[i] = prefix + element
 	}
+
 	return result
 }
 
@@ -187,9 +200,11 @@ func buildJsonnetProject(buildName string, envs map[string]string, cr v1beta1.Gr
 	if spec.JsonnetProjectBuild == nil {
 		return nil, fmt.Errorf("illegal argument: JsonnetProjectBuild is nil")
 	}
+
 	if spec.JsonnetProjectBuild.FileName == "" {
 		return nil, fmt.Errorf("illegal argument: FileName is empty")
 	}
+
 	if spec.JsonnetProjectBuild.GzipJsonnetProject == nil {
 		return nil, fmt.Errorf("illegal argument: GzipJsonnetProject is nil")
 	}
@@ -229,6 +244,7 @@ func buildJsonnetProject(buildName string, envs map[string]string, cr v1beta1.Gr
 	if err != nil {
 		return nil, fmt.Errorf("error evaluating jsonnet file: %w", err)
 	}
+
 	return []byte(jsonString), nil
 }
 
@@ -244,6 +260,7 @@ func postJsonnetProjectBuild(buildName string) error {
 
 	deleteFoldersList := []string{buildFolderPath, buildGzipArchivePath}
 	fmt.Println("Delete list candidates: ", deleteFoldersList)
+
 	err = deleteFilesAndFolders(deleteFoldersList)
 	if err != nil {
 		return err
@@ -256,6 +273,7 @@ func postJsonnetProjectBuild(buildName string) error {
 		fmt.Println("Error listing directory contents:", err)
 		return err
 	}
+
 	return nil
 }
 
@@ -269,6 +287,7 @@ func BuildProjectAndFetchJsonnetFrom(cr v1beta1.GrafanaContentResource, envs map
 	if postErr := postJsonnetProjectBuild(jsonnetProjectBuildName); postErr != nil {
 		fmt.Println("error cleaning up jsonnet project build: %w", postErr)
 	}
+
 	return jsonBytes, err
 }
 
@@ -279,6 +298,7 @@ func validRelPath(p string) bool {
 		strings.Contains(p, "../") {
 		return false
 	}
+
 	return true
 }
 
@@ -309,9 +329,11 @@ func untarGzip(archivePath, extractPath string) error {
 		if errors.Is(err, io.EOF) {
 			break // End of archive
 		}
+
 		if err != nil {
 			return err
 		}
+
 		target := header.Name
 
 		if !validRelPath(header.Name) {
@@ -342,6 +364,7 @@ func untarGzip(archivePath, extractPath string) error {
 					if errors.Is(err, io.EOF) {
 						break
 					}
+
 					return err
 				}
 			}
@@ -367,6 +390,7 @@ func unwrapSingleSubdirectory(dirPath string) error {
 
 	subDirCount := 0
 	fileCount := 0
+
 	var subDirEntry os.DirEntry
 
 	for _, entry := range entries {
@@ -374,16 +398,19 @@ func unwrapSingleSubdirectory(dirPath string) error {
 			subDirCount++
 			subDirEntry = entry
 		}
+
 		fileCount++
 	}
 
 	if subDirCount != 1 || fileCount > 1 {
 		fmt.Println("No unwrapping needed. Either no subdirectories or more than one subdirectory or there are several files in current directory."+
 			"dirCount - ", subDirCount, " fileCount - ", fileCount)
+
 		return nil
 	}
 
 	subDirPath := filepath.Join(dirPath, subDirEntry.Name())
+
 	err = copyDir(subDirPath, dirPath)
 	if err != nil {
 		fmt.Println("Error copying dir", err)
@@ -458,10 +485,12 @@ func copyFile(src, dst string) error {
 func deleteFilesAndFolders(paths []string) error {
 	for _, path := range paths {
 		fmt.Println("Deleting path: ", path)
+
 		err := os.RemoveAll(path)
 		if err != nil {
 			return fmt.Errorf("error during path \"%s\" deletion, error: %w", path, err)
 		}
 	}
+
 	return nil
 }

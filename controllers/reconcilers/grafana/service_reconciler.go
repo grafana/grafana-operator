@@ -48,6 +48,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 			setInvalidMergeCondition(cr, "Service", err)
 			return err
 		}
+
 		removeInvalidMergeCondition(cr, "Service")
 
 		if scheme != nil {
@@ -73,11 +74,13 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 		if r.clusterDomain != "" {
 			adminHost += "." + r.clusterDomain
 		}
+
 		cr.Status.AdminURL = fmt.Sprintf("%v://%v:%d", getGrafanaServerProtocol(cr), adminHost, int32(GetGrafanaPort(cr))) // #nosec G115
 	}
 
 	// Headless service for grafana unified alerting
 	headlessService := model.GetGrafanaHeadlessService(cr, scheme)
+
 	_, err = controllerutil.CreateOrUpdate(ctx, r.client, headlessService, func() error {
 		model.SetInheritedLabels(headlessService, cr.Labels)
 		headlessService.Spec = v1.ServiceSpec{
@@ -88,6 +91,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 			},
 			Type: v1.ServiceTypeClusterIP,
 		}
+
 		return nil
 	})
 	if err != nil {
@@ -98,27 +102,23 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 }
 
 func getGrafanaServerProtocol(cr *v1beta1.Grafana) string {
-	if cr.Spec.Config != nil && cr.Spec.Config["server"] != nil && cr.Spec.Config["server"]["protocol"] != "" {
-		return cr.Spec.Config["server"]["protocol"]
+	protocol := cr.GetConfigSectionValue("server", "protocol")
+	if protocol != "" {
+		return protocol
 	}
+
 	return config.GrafanaServerProtocol
 }
 
 func GetGrafanaPort(cr *v1beta1.Grafana) int {
-	if cr.Spec.Config["server"] == nil {
-		return config.GrafanaHTTPPort
-	}
+	port := cr.GetConfigSectionValue("server", "http_port")
 
-	if cr.Spec.Config["server"]["http_port"] == "" {
-		return config.GrafanaHTTPPort
-	}
-
-	port, err := strconv.Atoi(cr.Spec.Config["server"]["http_port"])
+	intPort, err := strconv.Atoi(port)
 	if err != nil {
 		return config.GrafanaHTTPPort
 	}
 
-	return port
+	return intPort
 }
 
 func getServicePorts(cr *v1beta1.Grafana) []v1.ServicePort {

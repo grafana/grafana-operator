@@ -17,9 +17,6 @@ spec:
     - secretKeyRef:
         name: grafana-user-secrets
         key: "CUSTOM_RANGE_ENV"
-  plugins:
-    - name: grafana-piechart-panel
-      version: 1.3.9
   jsonnet: >
     local myRange = std.extVar('CUSTOM_RANGE_ENV');
     {

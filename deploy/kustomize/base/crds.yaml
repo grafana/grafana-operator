@@ -192,6 +192,7 @@ spec:
                       - KeepLast
                       type: string
                     for:
+                      default: 0s
                       format: duration
                       pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                       type: string
@@ -201,6 +202,11 @@ spec:
                       additionalProperties:
                         type: string
                       type: object
+                    missingSeriesEvalsToResolve:
+                      description: The number of missing series evaluations that must
+                        occur before the rule is considered to be resolved.
+                      format: int64
+                      type: integer
                     noDataState:
                       enum:
                       - Alerting

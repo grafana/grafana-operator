@@ -12,15 +12,13 @@ var _ = Describe("MuteTiming Reconciler: Provoke Conditions", func() {
 		{
 			DaysOfMonth: []string{"1"},
 			Location:    "Europe/Copenhagen",
-			Months:      []string{"1"},
 			Times: []*v1beta1.TimeRange{
 				{
 					StartTime: "00:00",
 					EndTime:   "02:00",
 				},
 			},
-			Weekdays: []string{"1"},
-			Years:    []string{"2025"},
+			Weekdays: []string{"sunday"},
 		},
 	}
 
@@ -54,6 +52,7 @@ var _ = Describe("MuteTiming Reconciler: Provoke Conditions", func() {
 			},
 			wantCondition: conditionNoMatchingInstance,
 			wantReason:    conditionReasonEmptyAPIReply,
+			wantErr:       ErrNoMatchingInstances.Error(),
 		},
 		{
 			name: "Failed to apply to instance",
@@ -67,6 +66,19 @@ var _ = Describe("MuteTiming Reconciler: Provoke Conditions", func() {
 			wantCondition: conditionMuteTimingSynchronized,
 			wantReason:    conditionReasonApplyFailed,
 			wantErr:       "failed to apply to all instances",
+		},
+		{
+			name: "Successfully applied resource to instance",
+			cr: &v1beta1.GrafanaMuteTiming{
+				ObjectMeta: objectMetaSynchronized,
+				Spec: v1beta1.GrafanaMuteTimingSpec{
+					GrafanaCommonSpec: commonSpecSynchronized,
+					Name:              "Synchronized",
+					TimeIntervals:     timeInterval,
+				},
+			},
+			wantCondition: conditionMuteTimingSynchronized,
+			wantReason:    conditionReasonApplySuccessful,
 		},
 	}
 

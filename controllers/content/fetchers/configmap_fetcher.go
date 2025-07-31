@@ -14,6 +14,7 @@ func FetchDashboardFromConfigMap(cr v1beta1.GrafanaContentResource, c client.Cli
 	if spec == nil {
 		return nil, nil // TODO
 	}
+
 	ref := spec.ConfigMapRef
 	dashboardConfigMap := &v1.ConfigMap{}
 	selector := client.ObjectKey{

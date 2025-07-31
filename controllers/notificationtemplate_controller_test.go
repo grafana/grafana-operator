@@ -38,6 +38,7 @@ var _ = Describe("NotificationTemplate Reconciler: Provoke Conditions", func() {
 			},
 			wantCondition: conditionNoMatchingInstance,
 			wantReason:    conditionReasonEmptyAPIReply,
+			wantErr:       ErrNoMatchingInstances.Error(),
 		},
 		{
 			name: "Failed to apply to instance",
@@ -45,12 +46,25 @@ var _ = Describe("NotificationTemplate Reconciler: Provoke Conditions", func() {
 				ObjectMeta: objectMetaApplyFailed,
 				Spec: v1beta1.GrafanaNotificationTemplateSpec{
 					GrafanaCommonSpec: commonSpecApplyFailed,
-					Name:              "NoMatch",
+					Name:              "ApplyFailed",
 				},
 			},
 			wantCondition: conditionNotificationTemplateSynchronized,
 			wantReason:    conditionReasonApplyFailed,
 			wantErr:       "failed to apply to all instances",
+		},
+		{
+			name: "Successfully applied resource to instance",
+			cr: &v1beta1.GrafanaNotificationTemplate{
+				ObjectMeta: objectMetaSynchronized,
+				Spec: v1beta1.GrafanaNotificationTemplateSpec{
+					GrafanaCommonSpec: commonSpecSynchronized,
+					Name:              "Synchronized",
+					Template:          `{{ define "StatusAlert" }}{{.Status}}{{ end }}`,
+				},
+			},
+			wantCondition: conditionNotificationTemplateSynchronized,
+			wantReason:    conditionReasonApplySuccessful,
 		},
 	}
 

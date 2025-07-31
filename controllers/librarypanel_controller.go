@@ -67,11 +67,13 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 	ctx = logf.IntoContext(ctx, log)
 
 	libraryPanel := &v1beta1.GrafanaLibraryPanel{}
+
 	err := r.Get(ctx, req.NamespacedName, libraryPanel)
 	if err != nil {
 		if kuberr.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
+
 		return ctrl.Result{}, fmt.Errorf("failed to get GrafanaLibraryPanel: %w", err)
 	}
 
@@ -81,10 +83,12 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 			if err := r.finalize(ctx, libraryPanel); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaLibraryPanel: %w", err)
 			}
+
 			if err := removeFinalizer(ctx, r.Client, libraryPanel); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
 			}
 		}
+
 		return ctrl.Result{}, nil
 	}
 
@@ -94,6 +98,7 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 		setSuspended(&libraryPanel.Status.Conditions, libraryPanel.Generation, conditionReasonApplySuspended)
 		return ctrl.Result{}, nil
 	}
+
 	removeSuspended(&libraryPanel.Status.Conditions)
 
 	resolver := content.NewContentResolver(libraryPanel, r.Client, content.WithDisabledSources([]content.ContentSourceType{
@@ -107,6 +112,7 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 	if err != nil {
 		setInvalidSpec(&libraryPanel.Status.Conditions, libraryPanel.Generation, "InvalidModelResolution", err.Error())
 		meta.RemoveStatusCondition(&libraryPanel.Status.Conditions, conditionLibraryPanelSynchronized)
+
 		return ctrl.Result{}, fmt.Errorf("error resolving library panel contents: %w", err)
 	}
 
@@ -117,6 +123,7 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 	if content.IsUpdatedUID(libraryPanel, contentUID) {
 		setInvalidSpec(&libraryPanel.Status.Conditions, libraryPanel.Generation, "InvalidModel", errLibraryPanelContentUIDImmutable.Error())
 		meta.RemoveStatusCondition(&libraryPanel.Status.Conditions, conditionLibraryPanelSynchronized)
+
 		return ctrl.Result{}, errLibraryPanelContentUIDImmutable
 	}
 
@@ -130,18 +137,22 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 	if err != nil {
 		setNoMatchingInstancesCondition(&libraryPanel.Status.Conditions, libraryPanel.Generation, err)
 		meta.RemoveStatusCondition(&libraryPanel.Status.Conditions, conditionLibraryPanelSynchronized)
+
 		return ctrl.Result{}, fmt.Errorf("could not find matching instances: %w", err)
 	}
+
 	if len(instances) == 0 {
 		setNoMatchingInstancesCondition(&libraryPanel.Status.Conditions, libraryPanel.Generation, err)
 		meta.RemoveStatusCondition(&libraryPanel.Status.Conditions, conditionLibraryPanelSynchronized)
-		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
+
+		return ctrl.Result{}, ErrNoMatchingInstances
 	}
 
 	removeNoMatchingInstance(&libraryPanel.Status.Conditions)
 	log.Info("found matching Grafana instances for library panel", "count", len(instances))
 
 	applyErrors := make(map[string]string)
+
 	for _, grafana := range instances {
 		err := r.reconcileWithInstance(ctx, &grafana, libraryPanel, contentModel, hash)
 		if err != nil {
@@ -242,12 +253,14 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, libraryPan
 		}
 
 		isCleanupInGrafanaRequired := true
+
 		resp, err := grafanaClient.LibraryElements.GetLibraryElementConnections(uid)
 		if err != nil {
 			var notFound *library_elements.GetLibraryElementConnectionsNotFound
 			if !errors.As(err, &notFound) {
 				return fmt.Errorf("fetching library panel from instance %s/%s: %w", instance.Namespace, instance.Name, err)
 			}
+
 			isCleanupInGrafanaRequired = false
 		}
 

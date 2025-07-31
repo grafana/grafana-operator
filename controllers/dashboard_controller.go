@@ -69,11 +69,13 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	ctx = logf.IntoContext(ctx, log)
 
 	cr := &v1beta1.GrafanaDashboard{}
+
 	err := r.Get(ctx, req.NamespacedName, cr)
 	if err != nil {
 		if kuberr.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
+
 		return ctrl.Result{}, fmt.Errorf("getting grafana dashboard cr: %w", err)
 	}
 
@@ -83,10 +85,12 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			if err := r.finalize(ctx, cr); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaDatasource: %w", err)
 			}
+
 			if err := removeFinalizer(ctx, r.Client, cr); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
 			}
 		}
+
 		return ctrl.Result{}, nil
 	}
 
@@ -96,16 +100,19 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		setSuspended(&cr.Status.Conditions, cr.Generation, conditionReasonApplySuspended)
 		return ctrl.Result{}, nil
 	}
+
 	removeSuspended(&cr.Status.Conditions)
 
 	// Retrieving the model before the loop ensures to exit early in case of failure and not fail once per matching instance
 	resolver := content.NewContentResolver(cr, r.Client)
+
 	dashboardModel, hash, err := resolver.Resolve(ctx)
 	if err != nil {
 		// Resolve has a lot of failure cases.
 		// fetch content errors could be a temporary network issue but would result in an InvalidSpec condition
 		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidModelResolution, err.Error())
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
+
 		return ctrl.Result{}, fmt.Errorf("resolving dashboard contents: %w", err)
 	}
 
@@ -116,17 +123,21 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
 		cr.Status.NoMatchingInstances = true
+
 		return ctrl.Result{}, fmt.Errorf("failed fetching instances: %w", err)
 	}
+
 	if len(instances) == 0 {
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
 		cr.Status.NoMatchingInstances = true
-		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
+
+		return ctrl.Result{}, ErrNoMatchingInstances
 	}
 
 	removeNoMatchingInstance(&cr.Status.Conditions)
 	cr.Status.NoMatchingInstances = false
+
 	log.Info("found matching Grafana instances for dashboard", "count", len(instances))
 
 	uid := fmt.Sprintf("%s", dashboardModel["uid"])
@@ -134,6 +145,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	// Garbage collection for a case where dashboard uid get changed, dashboard creation is expected to happen in a separate reconcilication cycle
 	if content.IsUpdatedUID(cr, uid) {
 		log.Info("dashboard uid got updated, deleting dashboards with the old uid")
+
 		if err = r.finalize(ctx, cr); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -148,6 +160,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	applyHomeErrors := make(map[string]string)
 	pluginErrors := make(map[string]string)
 	applyErrors := make(map[string]string)
+
 	for _, grafana := range instances {
 		if grafana.IsInternal() {
 			// first reconcile the plugins
@@ -195,11 +208,13 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	cr.Status.Hash = hash
 	cr.Status.UID = uid
+
 	return ctrl.Result{RequeueAfter: cr.Spec.ResyncPeriod.Duration}, nil
 }
 
 func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.GrafanaDashboard) error {
 	log := logf.FromContext(ctx)
+
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
@@ -244,13 +259,16 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 
 			if dash != nil && dash.Meta != nil && dash.Meta.FolderUID != "" && cr.Spec.FolderRef == "" && cr.Spec.FolderUID == "" {
 				log.V(1).Info("Folder qualifies for deletion, checking if empty")
+
 				resp, err := r.DeleteFolderIfEmpty(grafanaClient, dash.Meta.FolderUID)
 				if err != nil {
 					return fmt.Errorf("deleting empty parent folder from instance: %w", err)
 				}
+
 				if resp.StatusCode == http.StatusOK {
 					log.Info("unused folder successfully removed")
 				}
+
 				if resp.StatusCode == 432 {
 					log.Info("folder still in use by other dashboards, libraryPanels, or alertrules")
 				}
@@ -276,6 +294,7 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 
 func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDashboard, dashboardModel map[string]any, hash string) error {
 	log := logf.FromContext(ctx)
+
 	if grafana.IsExternal() && cr.Spec.Plugins != nil {
 		return fmt.Errorf("external grafana instances don't support plugins, please remove spec.plugins from your dashboard cr")
 	}
@@ -289,6 +308,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	if err != nil {
 		return err
 	}
+
 	if folderUID == "" {
 		folderUID, err = r.GetOrCreateFolder(grafanaClient, cr)
 		if err != nil {
@@ -299,8 +319,10 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	uid := fmt.Sprintf("%s", dashboardModel["uid"])
 	title := fmt.Sprintf("%s", dashboardModel["title"])
 	remoteUID := uid
+
 	if cr.Spec.CustomUID == "" {
 		log.V(1).Info(".spec.uid empty, verifying uid has not changed using search")
+
 		remoteUID, err = r.Exists(grafanaClient, uid, title, folderUID)
 		if err != nil {
 			return err
@@ -319,6 +341,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	if exists && (remoteUID != uid || dashWithMeta.Payload.Meta.FolderUID != folderUID) {
 		// If there's already a dashboard with the same title in the same folder, grafana preserves that dashboard's uid, so we should remove it first
 		log.Info("found dashboard with the same title (in the same folder) but different uid, removing the dashboard before recreating it with a new uid")
+
 		_, err = grafanaClient.Dashboards.DeleteDashboardByUID(remoteUID) //nolint:errcheck
 		if err != nil {
 			var notFound *dashboards.DeleteDashboardByUIDNotFound
@@ -326,6 +349,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 				return err
 			}
 		}
+
 		exists = false
 	}
 
@@ -339,6 +363,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	if err != nil {
 		return err
 	}
+
 	if !remoteChanged {
 		return nil
 	}
@@ -366,13 +391,16 @@ func (r *GrafanaDashboardReconciler) Exists(client *genapi.GrafanaHTTPAPI, uid s
 	tvar := "dash-db"
 
 	page := int64(1)
+
 	limit := int64(1000)
 	for {
 		params := search.NewSearchParams().WithType(&tvar).WithLimit(&limit).WithPage(&page)
+
 		resp, err := client.Search.Search(params)
 		if err != nil {
 			return "", err
 		}
+
 		hits := resp.GetPayload()
 
 		for _, hit := range hits {
@@ -380,11 +408,14 @@ func (r *GrafanaDashboardReconciler) Exists(client *genapi.GrafanaHTTPAPI, uid s
 				return hit.UID, err
 			}
 		}
+
 		if len(hits) < int(limit) {
 			break
 		}
+
 		page++
 	}
+
 	return "", nil
 }
 
@@ -411,7 +442,9 @@ func (r *GrafanaDashboardReconciler) hasRemoteChange(exists bool, model map[stri
 		if slices.Contains(skipKeys, key) {
 			continue
 		}
+
 		localValue := model[key]
+
 		remoteValue := remoteModel[key]
 		if !reflect.DeepEqual(localValue, remoteValue) {
 			return true, nil
@@ -440,10 +473,12 @@ func (r *GrafanaDashboardReconciler) GetOrCreateFolder(client *genapi.GrafanaHTT
 	body := &models.CreateFolderCommand{
 		Title: title,
 	}
+
 	resp, err := client.Folders.CreateFolder(body)
 	if err != nil {
 		return "", err
 	}
+
 	folder := resp.GetPayload()
 	if folder == nil {
 		return "", fmt.Errorf("invalid payload returned")
@@ -460,7 +495,9 @@ func (r *GrafanaDashboardReconciler) GetFolderUID(
 	if strings.EqualFold(title, "General") {
 		return true, "", nil
 	}
+
 	page := int64(1)
+
 	limit := int64(1000)
 	for {
 		params := folders.NewGetFoldersParams().WithPage(&page).WithLimit(&limit)
@@ -469,6 +506,7 @@ func (r *GrafanaDashboardReconciler) GetFolderUID(
 		if err != nil {
 			return false, "", err
 		}
+
 		folders := foldersResp.GetPayload()
 
 		for _, remoteFolder := range folders {
@@ -476,9 +514,11 @@ func (r *GrafanaDashboardReconciler) GetFolderUID(
 				return true, remoteFolder.UID, nil
 			}
 		}
+
 		if len(folders) < int(limit) {
 			break
 		}
+
 		page++
 	}
 
@@ -487,6 +527,7 @@ func (r *GrafanaDashboardReconciler) GetFolderUID(
 
 func (r *GrafanaDashboardReconciler) DeleteFolderIfEmpty(client *genapi.GrafanaHTTPAPI, folderUID string) (http.Response, error) {
 	params := search.NewSearchParams().WithFolderUIDs([]string{folderUID})
+
 	results, err := client.Search.Search(params)
 	if err != nil {
 		return http.Response{
@@ -494,6 +535,7 @@ func (r *GrafanaDashboardReconciler) DeleteFolderIfEmpty(client *genapi.GrafanaH
 			StatusCode: http.StatusInternalServerError,
 		}, err
 	}
+
 	if len(results.GetPayload()) > 0 {
 		return http.Response{
 			Status:     "resource is still in use",
@@ -511,6 +553,7 @@ func (r *GrafanaDashboardReconciler) DeleteFolderIfEmpty(client *genapi.GrafanaH
 			}, err
 		}
 	}
+
 	return http.Response{
 		Status:     "grafana folder deleted",
 		StatusCode: http.StatusOK,
@@ -578,6 +621,7 @@ func (r *GrafanaDashboardReconciler) requestsForChangeByField(indexKey string) h
 
 func (r *GrafanaDashboardReconciler) UpdateHomeDashboard(ctx context.Context, grafana v1beta1.Grafana, uid string, dashboard *v1beta1.GrafanaDashboard) error {
 	log := logf.FromContext(ctx)
+
 	grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 	if err != nil {
 		return err
@@ -592,5 +636,6 @@ func (r *GrafanaDashboardReconciler) UpdateHomeDashboard(ctx context.Context, gr
 	}
 
 	log.Info("home dashboard configured", "namespace", dashboard.Namespace, "name", dashboard.Name)
+
 	return nil
 }

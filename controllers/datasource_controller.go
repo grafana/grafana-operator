@@ -61,11 +61,13 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	ctx = logf.IntoContext(ctx, log)
 
 	cr := &v1beta1.GrafanaDatasource{}
+
 	err := r.Get(ctx, req.NamespacedName, cr)
 	if err != nil {
 		if kuberr.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
+
 		return ctrl.Result{}, fmt.Errorf("error getting grafana datasource cr: %w", err)
 	}
 
@@ -75,10 +77,12 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			if err := r.finalize(ctx, cr); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaDatasource: %w", err)
 			}
+
 			if err := removeFinalizer(ctx, r.Client, cr); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
 			}
 		}
+
 		return ctrl.Result{}, nil
 	}
 
@@ -88,6 +92,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		setSuspended(&cr.Status.Conditions, cr.Generation, conditionReasonApplySuspended)
 		return ctrl.Result{}, nil
 	}
+
 	removeSuspended(&cr.Status.Conditions)
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
@@ -95,6 +100,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDatasourceSynchronized)
 		cr.Status.NoMatchingInstances = true
+
 		return ctrl.Result{}, fmt.Errorf("failed fetching instances: %w", err)
 	}
 
@@ -102,14 +108,18 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDatasourceSynchronized)
 		cr.Status.NoMatchingInstances = true
-		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
+
+		return ctrl.Result{}, ErrNoMatchingInstances
 	}
+
 	removeNoMatchingInstance(&cr.Status.Conditions)
 	cr.Status.NoMatchingInstances = false
+
 	log.Info("found matching Grafana instances for datasource", "count", len(instances))
 
 	if cr.IsUpdatedUID() {
 		log.Info("datasource uid got updated, deleting datasources with the old uid")
+
 		if err = r.deleteOldDatasource(ctx, cr); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -125,12 +135,15 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	if err != nil {
 		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidModel, err.Error())
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDatasourceSynchronized)
+
 		return ctrl.Result{}, fmt.Errorf("building datasource model: %w", err)
 	}
+
 	removeInvalidSpec(&cr.Status.Conditions)
 
 	pluginErrors := make(map[string]string)
 	applyErrors := make(map[string]string)
+
 	for _, grafana := range instances {
 		if grafana.IsInternal() {
 			// first reconcile the plugins
@@ -188,6 +201,7 @@ func (r *GrafanaDatasourceReconciler) deleteOldDatasource(ctx context.Context, c
 		}
 
 		_, err = grafanaClient.Datasources.DeleteDataSourceByUID(*uid) //nolint
+
 		var notFound *datasources.GetDataSourceByUIDNotFound
 		if err != nil {
 			if !errors.As(err, &notFound) {
@@ -217,6 +231,7 @@ func (r *GrafanaDatasourceReconciler) finalize(ctx context.Context, cr *v1beta1.
 		}
 
 		_, err = grafanaClient.Datasources.DeleteDataSourceByUID(*uid) // nolint:errcheck
+
 		var notFound *datasources.DeleteDataSourceByUIDNotFound
 		if err != nil {
 			if !errors.As(err, &notFound) {
@@ -268,11 +283,13 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 	if err != nil {
 		return fmt.Errorf("representing datasource as JSON: %w", err)
 	}
+
 	if exists {
 		var body models.UpdateDataSourceCommand
 		if err := json.Unmarshal(encoded, &body); err != nil {
 			return fmt.Errorf("representing data source as update command: %w", err)
 		}
+
 		datasource.UID = uid
 		_, err := grafanaClient.Datasources.UpdateDataSourceByUID(datasource.UID, &body) //nolint
 		if err != nil {
@@ -325,6 +342,7 @@ func (r *GrafanaDatasourceReconciler) buildDatasourceModel(ctx context.Context, 
 	if err != nil {
 		return nil, "", fmt.Errorf("encoding existing datasource model as json: %w", err)
 	}
+
 	jsonRoot, err := ajson.Unmarshal(initialBytes)
 	if err != nil {
 		return nil, "", fmt.Errorf("parsing marshaled json as abstract json: %w", err)
@@ -344,14 +362,17 @@ func (r *GrafanaDatasourceReconciler) buildDatasourceModel(ctx context.Context, 
 		if err != nil {
 			return nil, "", fmt.Errorf("getting nodes to override: %w", err)
 		}
+
 		for _, n := range nodes {
 			currentValue, err := n.GetString()
 			if err != nil {
 				return nil, "", fmt.Errorf("cannot replace non string field: %w", err)
 			}
+
 			substitution := strings.ReplaceAll(currentValue, fmt.Sprintf("${%v}", key), val)
 			substitution = strings.ReplaceAll(substitution, fmt.Sprintf("$%v", key), val)
 			log.V(1).Info("overriding value", "key", override.TargetPath, "value", val)
+
 			if err := n.SetString(substitution); err != nil {
 				return nil, "", fmt.Errorf("setting new value for field: %w", err)
 			}

@@ -325,6 +325,7 @@ AlertRule defines a specific rule to be evaluated. It is based on the upstream m
           <br/>
           <br/>
             <i>Format</i>: duration<br/>
+            <i>Default</i>: 0s<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -369,6 +370,15 @@ AlertRule defines a specific rule to be evaluated. It is based on the upstream m
         <td>map[string]string</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>missingSeriesEvalsToResolve</b></td>
+        <td>integer</td>
+        <td>
+          The number of missing series evaluations that must occur before the rule is considered to be resolved.<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
         </td>
         <td>false</td>
       </tr><tr>

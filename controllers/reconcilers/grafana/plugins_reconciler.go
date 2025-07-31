@@ -29,6 +29,7 @@ func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 	vars.Plugins = ""
 
 	plugins := model.GetPluginsConfigMap(cr, scheme)
+
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, plugins, func() error {
 		if scheme != nil {
 			err := controllerutil.SetOwnerReference(cr, plugins, scheme)
@@ -55,6 +56,7 @@ func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 	var consolidatedPlugins v1beta1.PluginList
 	for dashboard, plugins := range plugins.BinaryData {
 		var dashboardPlugins v1beta1.PluginList
+
 		err = json.Unmarshal(plugins, &dashboardPlugins)
 		if err != nil {
 			log.Error(err, "error consolidating plugins", "dashboard", dashboard)
@@ -77,6 +79,7 @@ func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 			if hasNewer {
 				log.Info("skipping plugin", "dashboard", dashboard, "plugin",
 					plugin.Name, "version", plugin.Version)
+
 				continue
 			}
 
@@ -91,5 +94,6 @@ func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 	}
 
 	vars.Plugins = consolidatedPlugins.String()
+
 	return v1beta1.OperatorStageResultSuccess, nil
 }

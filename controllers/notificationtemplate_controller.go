@@ -53,11 +53,13 @@ func (r *GrafanaNotificationTemplateReconciler) Reconcile(ctx context.Context, r
 	ctx = logf.IntoContext(ctx, log)
 
 	notificationTemplate := &grafanav1beta1.GrafanaNotificationTemplate{}
+
 	err := r.Get(ctx, req.NamespacedName, notificationTemplate)
 	if err != nil {
 		if kuberr.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
+
 		return ctrl.Result{}, fmt.Errorf("failed to get GrafanaNotificationTemplate: %w", err)
 	}
 
@@ -67,10 +69,12 @@ func (r *GrafanaNotificationTemplateReconciler) Reconcile(ctx context.Context, r
 			if err := r.finalize(ctx, notificationTemplate); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaNotificationTemplate: %w", err)
 			}
+
 			if err := removeFinalizer(ctx, r.Client, notificationTemplate); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
 			}
 		}
+
 		return ctrl.Result{}, nil
 	}
 
@@ -80,25 +84,29 @@ func (r *GrafanaNotificationTemplateReconciler) Reconcile(ctx context.Context, r
 		setSuspended(&notificationTemplate.Status.Conditions, notificationTemplate.Generation, conditionReasonApplySuspended)
 		return ctrl.Result{}, nil
 	}
+
 	removeSuspended(&notificationTemplate.Status.Conditions)
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, notificationTemplate)
 	if err != nil {
 		setNoMatchingInstancesCondition(&notificationTemplate.Status.Conditions, notificationTemplate.Generation, err)
 		meta.RemoveStatusCondition(&notificationTemplate.Status.Conditions, conditionNotificationTemplateSynchronized)
+
 		return ctrl.Result{}, fmt.Errorf("failed fetching instances: %w", err)
 	}
 
 	if len(instances) == 0 {
 		setNoMatchingInstancesCondition(&notificationTemplate.Status.Conditions, notificationTemplate.Generation, err)
 		meta.RemoveStatusCondition(&notificationTemplate.Status.Conditions, conditionNotificationTemplateSynchronized)
-		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
+
+		return ctrl.Result{}, ErrNoMatchingInstances
 	}
 
 	removeNoMatchingInstance(&notificationTemplate.Status.Conditions)
 	log.Info("found matching Grafana instances for notification template", "count", len(instances))
 
 	applyErrors := make(map[string]string)
+
 	for _, grafana := range instances {
 		err := r.reconcileWithInstance(ctx, &grafana, notificationTemplate)
 		if err != nil {
@@ -123,13 +131,16 @@ func (r *GrafanaNotificationTemplateReconciler) reconcileWithInstance(ctx contex
 	}
 
 	trueRef := "true" //nolint:goconst
-	editable := true  //nolint:staticcheck
+
+	editable := true //nolint:staticcheck
 	if notificationTemplate.Spec.Editable != nil && !*notificationTemplate.Spec.Editable {
 		editable = false
 	}
 
 	var updatedNT models.NotificationTemplateContent
+
 	updatedNT.Template = notificationTemplate.Spec.Template
+
 	params := provisioning.NewPutTemplateParams().WithName(notificationTemplate.Spec.Name).WithBody(&updatedNT)
 	if editable {
 		params.SetXDisableProvenance(&trueRef)
@@ -152,6 +163,7 @@ func (r *GrafanaNotificationTemplateReconciler) finalize(ctx context.Context, no
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
+
 	for _, instance := range instances {
 		if err := r.removeFromInstance(ctx, &instance, notificationTemplate); err != nil {
 			return fmt.Errorf("removing notification template from instance: %w", err)

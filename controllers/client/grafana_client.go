@@ -17,9 +17,46 @@ import (
 )
 
 type grafanaAdminCredentials struct {
-	username string
-	password string
-	apikey   string
+	adminUser     string
+	adminPassword string
+	apikey        string
+}
+
+func getExternalAdminUser(ctx context.Context, c client.Client, cr *v1beta1.Grafana) (string, error) {
+	if cr.Spec.External != nil && cr.Spec.External.AdminUser != nil {
+		adminUser, err := GetValueFromSecretKey(ctx, cr.Spec.External.AdminUser, c, cr.Namespace)
+		if err != nil {
+			return "", err
+		}
+
+		return string(adminUser), nil
+	}
+
+	adminUser := cr.GetConfigSectionValue("security", "admin_user")
+	if adminUser != "" {
+		return adminUser, nil
+	}
+
+	return "", fmt.Errorf("authentication undefined, set apiKey or userName for external instance: %s/%s", cr.Namespace, cr.Name)
+}
+
+func getExternalAdminPassword(ctx context.Context, c client.Client, cr *v1beta1.Grafana) (string, error) {
+	if cr.Spec.External != nil && cr.Spec.External.AdminPassword != nil {
+		adminPassword, err := GetValueFromSecretKey(ctx, cr.Spec.External.AdminPassword, c, cr.Namespace)
+		if err != nil {
+			return "", err
+		}
+
+		return string(adminPassword), nil
+	}
+
+	adminPassword := cr.GetConfigSectionValue("security", "admin_password")
+	if adminPassword != "" {
+		return adminPassword, nil
+	}
+
+	// If username is defined, we can assume apiKey will not be used
+	return "", fmt.Errorf("password not set for external instance: %s/%s", cr.Namespace, cr.Name)
 }
 
 func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (*grafanaAdminCredentials, error) {
@@ -32,23 +69,24 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 			if err != nil {
 				return nil, err
 			}
+
 			credentials.apikey = string(apikey)
+
 			return credentials, nil
 		}
 
-		// rely on username and password otherwise
-		username, err := GetValueFromSecretKey(ctx, grafana.Spec.External.AdminUser, c, grafana.Namespace)
+		var err error
+
+		credentials.adminUser, err = getExternalAdminUser(ctx, c, grafana)
 		if err != nil {
 			return nil, err
 		}
 
-		password, err := GetValueFromSecretKey(ctx, grafana.Spec.External.AdminPassword, c, grafana.Namespace)
+		credentials.adminPassword, err = getExternalAdminPassword(ctx, c, grafana)
 		if err != nil {
 			return nil, err
 		}
 
-		credentials.username = string(username)
-		credentials.password = string(password)
 		return credentials, nil
 	}
 
@@ -67,7 +105,7 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 		for _, env := range container.Env {
 			if env.Name == config.GrafanaAdminUserEnvVar {
 				if env.Value != "" {
-					credentials.username = env.Value
+					credentials.adminUser = env.Value
 					continue
 				}
 
@@ -77,13 +115,15 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 						if err != nil {
 							return nil, err
 						}
-						credentials.username = string(usernameFromSecret)
+
+						credentials.adminUser = string(usernameFromSecret)
 					}
 				}
 			}
+
 			if env.Name == config.GrafanaAdminPasswordEnvVar {
 				if env.Value != "" {
-					credentials.password = env.Value
+					credentials.adminPassword = env.Value
 					continue
 				}
 
@@ -93,12 +133,14 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 						if err != nil {
 							return nil, err
 						}
-						credentials.password = string(passwordFromSecret)
+
+						credentials.adminPassword = string(passwordFromSecret)
 					}
 				}
 			}
 		}
 	}
+
 	return credentials, nil
 }
 
@@ -107,11 +149,13 @@ func InjectAuthHeaders(ctx context.Context, c client.Client, grafana *v1beta1.Gr
 	if err != nil {
 		return fmt.Errorf("fetching admin credentials: %w", err)
 	}
+
 	if creds.apikey != "" {
 		req.Header.Add("Authorization", "Bearer "+creds.apikey)
 	} else {
-		req.SetBasicAuth(creds.username, creds.password)
+		req.SetBasicAuth(creds.adminUser, creds.adminPassword)
 	}
+
 	return nil
 }
 
@@ -126,6 +170,7 @@ func ParseAdminURL(adminURL string) (*url.URL, error) {
 	}
 
 	gURL = gURL.JoinPath("/api")
+
 	return gURL, nil
 }
 
@@ -175,8 +220,8 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1
 			Timeout:   timeout * time.Second,
 		},
 	}
-	if credentials.username != "" {
-		cfg.BasicAuth = url.UserPassword(credentials.username, credentials.password)
+	if credentials.adminUser != "" {
+		cfg.BasicAuth = url.UserPassword(credentials.adminUser, credentials.adminPassword)
 	}
 
 	cl := genapi.NewHTTPClientWithConfig(nil, cfg)

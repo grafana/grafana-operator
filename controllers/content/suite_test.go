@@ -57,6 +57,7 @@ func (in *NopContentResource) DeepCopyObject() runtime.Object {
 	if c := in.DeepCopy(); c != nil {
 		return c
 	}
+
 	return nil
 }
 
@@ -64,8 +65,10 @@ func (in *NopContentResource) DeepCopy() *NopContentResource {
 	if in == nil {
 		return nil
 	}
+
 	out := new(NopContentResource)
 	in.DeepCopyInto(out)
+
 	return out
 }
 
@@ -78,6 +81,10 @@ func (in *NopContentResource) DeepCopyInto(out *NopContentResource) {
 }
 
 func TestAPIs(t *testing.T) {
+	if testing.Short() {
+		t.Skip("-short was passed, skipping Content")
+	}
+
 	RegisterFailHandler(Fail)
 
 	RunSpecs(t, "Content Suite")

@@ -31,12 +31,14 @@ func (r *PvcReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars
 	}
 
 	pvc := model.GetGrafanaDataPVC(cr, scheme)
+
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, pvc, func() error {
 		err := v1beta1.Merge(pvc, cr.Spec.PersistentVolumeClaim)
 		if err != nil {
 			setInvalidMergeCondition(cr, "PersistentVolumeClaim", err)
 			return err
 		}
+
 		removeInvalidMergeCondition(cr, "PersistentVolumeClaim")
 
 		if scheme != nil {

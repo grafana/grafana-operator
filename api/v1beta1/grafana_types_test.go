@@ -2,9 +2,11 @@ package v1beta1
 
 import (
 	"context"
+	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -400,3 +402,65 @@ var _ = Describe("Grafana Status NamespacedResourceList CRUD", Ordered, func() {
 		})
 	})
 })
+
+func TestGetConfigSection(t *testing.T) {
+	tests := []struct {
+		name   string
+		config map[string]map[string]string
+		want   map[string]string
+	}{
+		{
+			name:   "nil config",
+			config: nil,
+			want:   map[string]string{},
+		},
+		{
+			name: "nil config section",
+			config: map[string]map[string]string{
+				"section": nil,
+			},
+			want: map[string]string{},
+		},
+		{
+			name: "non-empty config section",
+			config: map[string]map[string]string{
+				"section": {
+					"key": "value",
+				},
+			},
+			want: map[string]string{
+				"key": "value",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cr := Grafana{
+				Spec: GrafanaSpec{
+					Config: tt.config,
+				},
+			}
+
+			got := cr.GetConfigSection("section")
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestGetConfigSectionValue(t *testing.T) {
+	cr := Grafana{
+		Spec: GrafanaSpec{
+			Config: map[string]map[string]string{
+				"section": {
+					"key": "value",
+				},
+			},
+		},
+	}
+
+	want := "value"
+	got := cr.GetConfigSectionValue("section", "key")
+
+	assert.Equal(t, want, got)
+}

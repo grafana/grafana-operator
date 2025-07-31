@@ -6,97 +6,87 @@ metadata:
 spec:
   template: true
   steps:
-  - name: step-00
-    try:
-    - apply:
-        file: 00-create-external-grafana.yaml
-    - apply:
-        file: 00-create-grafana.yaml
-    - apply:
-        file: 00-create-versioned-grafana.yaml
-    - assert:
-        file: 00-assert.yaml
-  - name: step-01
-    try:
-    - apply:
-        file: 01-datasource.yaml
-    - assert:
-        file: 01-assert.yaml
-  - name: step-02
-    try:
-    - assert:
-        file: 02-assert.yaml
-  - name: step-03
-    try:
-    - apply:
-        file: 03-dashboard.yaml
-    - assert:
-        file: 03-assert.yaml
-  - name: step-04
-    try:
-    - apply:
-        file: 04-dashboard.yaml
-    - assert:
-        file: 04-assert.yaml
-  - name: step-05
-    try:
-    - apply:
-        file: 05-dashboard.yaml
-    - assert:
-        file: 05-assert.yaml
-  - name: step-06
-    try:
-    - apply:
-        file: 06-dashboard.yaml
-    - assert:
-        file: 06-assert.yaml
-  - name: step-07
-    try:
-    - apply:
-        file: 07-jsonnet.yaml
-    - assert:
-        file: 07-assert.yaml
-  - name: step-08
-    try:
-    - apply:
-        file: 08-alert-folder.yaml
-    - assert:
-        file: 08-folder-assert.yaml
-    - apply:
-        file: 08-alert-rule-group.yaml
-    - assert:
-        file: 08-assert.yaml
-  - name: step-09
-    try:
-    - apply:
-        file: 09-contactpoint.yaml
-    - assert:
-        file: 09-assert.yaml
-  - name: step-10
-    try:
-    - apply:
-        file: 10-contact-points.yaml
-    - assert:
-        file: 10-assert-contact-points.yaml
-    - apply:
-        file: 10-notification-policy.yaml
-    - assert:
-        file: 10-assert.yaml
-  - name: step-11
-    try:
-    - apply:
-        file: 11-tls.yaml
-    - assert:
-        file: 11-assert.yaml
-  - name: step-12
-    try:
-    - apply:
-        file: 12-notification-template.yaml
-    - assert:
-        file: 12-assert.yaml
-  - name: step-13
-    try:
-    - apply:
-        file: 13-mute-timing.yaml
-    - assert:
-        file: 13-assert.yaml
+    - name: step-00
+      try:
+        - apply:
+            file: 00-create-grafana.yaml
+        - apply:
+            file: 00-create-grafana-external.yaml
+        - apply:
+            file: 00-create-grafana-tls.yaml
+        - assert:
+            file: 00-assert.yaml
+    - name: step-01
+      try:
+        - apply:
+            file: 01-datasource.yaml
+        - assert:
+            file: 01-assert.yaml
+    - name: step-03
+      try:
+        - apply:
+            file: 03-dashboard.yaml
+        - assert:
+            file: 03-assert.yaml
+    - name: step-04
+      try:
+        - apply:
+            file: 04-dashboard.yaml
+        - assert:
+            file: 04-assert.yaml
+    - name: step-05
+      try:
+        - apply:
+            file: 05-dashboard.yaml
+        - assert:
+            file: 05-assert.yaml
+    - name: step-06
+      try:
+        - apply:
+            file: 06-dashboard.yaml
+        - assert:
+            file: 06-assert.yaml
+    - name: step-07
+      try:
+        - apply:
+            file: 07-jsonnet.yaml
+        - assert:
+            file: 07-assert.yaml
+    - name: step-08
+      try:
+        - apply:
+            file: 08-alert-folder.yaml
+        - assert:
+            file: 08-alert-folder.yaml
+        - apply:
+            file: 08-alert-rule-group.yaml
+        - assert:
+            file: 08-assert-alert-rule-group.yaml
+    - name: step-09
+      try:
+        - apply:
+            file: 09-contactpoint.yaml
+        - assert:
+            file: 09-assert.yaml
+    - name: step-10
+      try:
+        - apply:
+            file: 10-contact-points.yaml
+        - assert:
+            file: 10-assert-contact-points.yaml
+        - apply:
+            file: 10-notification-policy.yaml
+        - assert:
+            file: 10-assert-notification-policy.yaml
+    - name: step-12
+      try:
+        - apply:
+            file: 12-notification-template.yaml
+        - assert:
+            file: 12-assert.yaml
+    - name: step-13
+      try:
+        - apply:
+            file: 13-mute-timing.yaml
+        - assert:
+            file: 13-assert.yaml

@@ -38,6 +38,7 @@ func FetchFromGrafanaCom(ctx context.Context, cr v1beta1.GrafanaContentResource,
 		if err != nil {
 			return nil, fmt.Errorf("failed to get latest revision for dashboard id %d: %w", source.ID, err)
 		}
+
 		source.Revision = &rev
 	}
 
@@ -64,6 +65,7 @@ func getLatestGrafanaComRevision(cr v1beta1.GrafanaContentResource, tlsConfig *t
 		"kind":     cr.GetObjectKind().GroupVersionKind().Kind,
 		"resource": fmt.Sprintf("%v/%v", cr.GetNamespace(), cr.GetName()),
 	}))
+
 	response, err := client.RoundTrip(request)
 	if err != nil {
 		return -1, err
@@ -83,6 +85,7 @@ func getLatestGrafanaComRevision(cr v1beta1.GrafanaContentResource, tlsConfig *t
 	}
 
 	var listResponse listDashboardRevisionsResponse
+
 	err = json.NewDecoder(response.Body).Decode(&listResponse)
 	if err != nil {
 		return -1, err

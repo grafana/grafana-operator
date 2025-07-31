@@ -195,6 +195,7 @@ func TestContentIsUpdatedUID(t *testing.T) {
 
 func getCR(t *testing.T, crUID string, statusUID string, specUID string, dashUID string) *NopContentResource {
 	t.Helper()
+
 	dashboardModel := make(map[string]any)
 	dashboardModel["uid"] = dashUID
 	dashboard, _ := json.Marshal(dashboardModel) //nolint:errcheck

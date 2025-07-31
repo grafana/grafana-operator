@@ -74,7 +74,7 @@ type AlertRule struct {
 	// +kubebuilder:validation:Type=string
 	// +kubebuilder:validation:Format=duration
 	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
-	// +kubebuilder:validation:Required
+	// +kubebuilder:default="0s"
 	For *metav1.Duration `json:"for"`
 
 	IsPaused bool `json:"isPaused,omitempty"`
@@ -85,6 +85,9 @@ type AlertRule struct {
 
 	// +kubebuilder:validation:Enum=Alerting;NoData;OK;KeepLast
 	NoDataState *string `json:"noDataState"`
+
+	// The number of missing series evaluations that must occur before the rule is considered to be resolved.
+	MissingSeriesEvalsToResolve *int64 `json:"missingSeriesEvalsToResolve,omitempty"`
 
 	Record *Record `json:"record,omitempty"`
 
@@ -157,6 +160,7 @@ func (in *GrafanaAlertRuleGroup) GroupName() string {
 	if groupName == "" {
 		groupName = in.Name
 	}
+
 	return groupName
 }
 

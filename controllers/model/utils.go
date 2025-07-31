@@ -10,10 +10,12 @@ import (
 
 func generateRandomBytes(n int) []byte {
 	b := make([]byte, n)
+
 	_, err := rand.Read(b)
 	if err != nil {
 		panic(err)
 	}
+
 	return b
 }
 
@@ -28,6 +30,7 @@ func MergeAnnotations(requested map[string]string, existing map[string]string) m
 	}
 
 	maps.Copy(existing, requested)
+
 	return existing
 }
 
@@ -37,6 +40,7 @@ func IntPtr(b int64) *int64 { return &b }
 
 func SetInheritedLabels(obj metav1.ObjectMetaAccessor, extraLabels map[string]string) {
 	meta := obj.GetObjectMeta()
+
 	labels := meta.GetLabels()
 	if labels == nil {
 		labels = make(map[string]string)

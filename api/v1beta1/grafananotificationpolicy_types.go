@@ -107,6 +107,7 @@ func (m Matchers) ToModelMatchers() models.Matchers {
 			Value:   &v.Value,
 		}
 	}
+
 	return out
 }
 
@@ -128,6 +129,7 @@ func (r *Route) ToModelRoute() *models.Route {
 	for i, v := range r.Routes {
 		out.Routes[i] = v.ToModelRoute()
 	}
+
 	return out
 }
 
@@ -150,6 +152,7 @@ func (r *Route) IsRouteSelectorMutuallyExclusive() bool {
 			return false
 		}
 	}
+
 	return true
 }
 

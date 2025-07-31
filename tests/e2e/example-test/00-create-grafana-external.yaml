@@ -16,6 +16,14 @@ spec:
     security:
       admin_user: root
       admin_password: secret
+  deployment:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: grafana
+              readinessProbe:
+                periodSeconds: 2
   ingress:
     spec:
       ingressClassName: nginx
@@ -35,9 +43,9 @@ spec:
 apiVersion: grafana.integreatly.org/v1beta1
 kind: Grafana
 metadata:
-  name: external-grafana
+  name: grafana-external
   labels:
-    dashboards: "external-grafana"
+    dashboards: grafana-external
 spec:
   external:
     url: (join('',['http://grafana-internal-service.',$namespace,':3000']))

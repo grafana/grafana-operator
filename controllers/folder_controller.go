@@ -59,11 +59,13 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	ctx = logf.IntoContext(ctx, log)
 
 	folder := &grafanav1beta1.GrafanaFolder{}
+
 	err := r.Get(ctx, req.NamespacedName, folder)
 	if err != nil {
 		if kuberr.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
+
 		return ctrl.Result{}, fmt.Errorf("error getting grafana folder cr: %w", err)
 	}
 
@@ -73,10 +75,12 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			if err := r.finalize(ctx, folder); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaFolder: %w", err)
 			}
+
 			if err := removeFinalizer(ctx, r.Client, folder); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
 			}
 		}
+
 		return ctrl.Result{}, nil
 	}
 
@@ -86,13 +90,16 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		setSuspended(&folder.Status.Conditions, folder.Generation, conditionReasonApplySuspended)
 		return ctrl.Result{}, nil
 	}
+
 	removeSuspended(&folder.Status.Conditions)
 
 	if folder.Spec.ParentFolderUID == folder.CustomUIDOrUID() {
 		setInvalidSpec(&folder.Status.Conditions, folder.Generation, conditionReasonCyclicParent, "The value of parentFolderUID must not be the uid of the current folder")
 		meta.RemoveStatusCondition(&folder.Status.Conditions, conditionFolderSynchronized)
+
 		return ctrl.Result{}, fmt.Errorf("cyclic folder reference")
 	}
+
 	removeInvalidSpec(&folder.Status.Conditions)
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, folder)
@@ -100,6 +107,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		setNoMatchingInstancesCondition(&folder.Status.Conditions, folder.Generation, err)
 		meta.RemoveStatusCondition(&folder.Status.Conditions, conditionFolderSynchronized)
 		folder.Status.NoMatchingInstances = true
+
 		return ctrl.Result{}, fmt.Errorf("failed fetching instances: %w", err)
 	}
 
@@ -107,14 +115,17 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		setNoMatchingInstancesCondition(&folder.Status.Conditions, folder.Generation, err)
 		meta.RemoveStatusCondition(&folder.Status.Conditions, conditionFolderSynchronized)
 		folder.Status.NoMatchingInstances = true
-		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
+
+		return ctrl.Result{}, ErrNoMatchingInstances
 	}
 
 	removeNoMatchingInstance(&folder.Status.Conditions)
 	folder.Status.NoMatchingInstances = false
+
 	log.Info("found matching Grafana instances for folder", "count", len(instances))
 
 	applyErrors := make(map[string]string)
+
 	for _, grafana := range instances {
 		err = r.onFolderCreated(ctx, &grafana, folder)
 		if err != nil {
@@ -130,6 +141,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	folder.Status.Hash = folder.Hash()
+
 	return ctrl.Result{RequeueAfter: folder.Spec.ResyncPeriod.Duration}, nil
 }
 
@@ -236,6 +248,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 	// NOTE: it's up to a user to reset permissions with correct json
 	if cr.Spec.Permissions != "" {
 		permissions := models.UpdateDashboardACLCommand{}
+
 		err = json.Unmarshal([]byte(cr.Spec.Permissions), &permissions)
 		if err != nil {
 			return fmt.Errorf("failed to unmarshal spec.permissions: %w", err)
@@ -267,6 +280,7 @@ func (r *GrafanaFolderReconciler) Exists(client *genapi.GrafanaHTTPAPI, cr *graf
 	}
 
 	page := int64(1)
+
 	limit := int64(10000)
 	for {
 		params := folders.NewGetFoldersParams().WithPage(&page).WithLimit(&limit)
@@ -275,6 +289,7 @@ func (r *GrafanaFolderReconciler) Exists(client *genapi.GrafanaHTTPAPI, cr *graf
 		if err != nil {
 			return false, "", "", err
 		}
+
 		folders := foldersResp.GetPayload()
 
 		for _, remoteFolder := range folders {
@@ -282,9 +297,11 @@ func (r *GrafanaFolderReconciler) Exists(client *genapi.GrafanaHTTPAPI, cr *graf
 				return true, remoteFolder.UID, remoteFolder.ParentUID, nil
 			}
 		}
+
 		if len(folders) < int(limit) {
 			return false, "", "", nil
 		}
+
 		page++
 	}
 }

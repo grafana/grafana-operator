@@ -151,10 +151,19 @@ kustomize-github-assets: $(KUSTOMIZE) ## Generates GitHub assets.
 muffet-dev: $(MUFFET) ## Detect broken internal links in docs.
 	$(MUFFET) --include=http://localhost:1313 http://localhost:1313
 
+.PHONY:
+test-image-pre-pull: ## Pre-pulls Grafana image used in tests to speed up CI
+	docker pull $(GRAFANA_IMAGE):$(GRAFANA_VERSION) > /dev/null 2>&1 &
+
 .PHONY: test
 test: $(ENVTEST) manifests generate vet golangci-lint api-docs kustomize-lint helm-docs helm-lint ## Run tests.
 	$(info $(M) running $@)
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(BIN) -p path)" go test ./... -coverprofile cover.out
+
+.PHONY: test-short
+test-short: ## Skips slow integration tests
+	$(info $(M) running $@)
+	go test ./... -short -coverprofile cover.out
 
 .PHONY: vet
 vet: ## Run go vet against code.
