@@ -7,7 +7,7 @@ weight: 50
 
 Grafana-operator container images are signed by github [attestation](https://docs.github.com/en/actions/how-tos/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds). Executing the following command can be used to verify the signature of a container image:
 
-> This only applies from grafana-operator version 5.19.0 and forward
+> This applies to grafana-operator version 5.19.0 and forward
 
 ### Prerequisites
 
