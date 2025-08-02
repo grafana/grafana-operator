@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 
 	httptransport "github.com/go-openapi/runtime/client"
@@ -62,6 +63,17 @@ func getExternalAdminPassword(ctx context.Context, c client.Client, cr *v1beta1.
 
 func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (*grafanaAdminCredentials, error) {
 	credentials := &grafanaAdminCredentials{}
+
+	if grafana.Spec.Client != nil && grafana.Spec.Client.UseKubeAuth {
+		b, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
+		if err != nil {
+			return nil, err
+		}
+
+		credentials.apikey = string(b)
+
+		return credentials, nil
+	}
 
 	if grafana.IsExternal() {
 		// prefer api key if present
@@ -152,7 +164,7 @@ func InjectAuthHeaders(ctx context.Context, c client.Client, grafana *v1beta1.Gr
 	}
 
 	if creds.apikey != "" {
-		req.Header.Add("Authorization", "Bearer "+creds.apikey)
+		req.Header.Set("Authorization", "Bearer "+creds.apikey)
 	} else {
 		req.SetBasicAuth(creds.adminUser, creds.adminPassword)
 	}
