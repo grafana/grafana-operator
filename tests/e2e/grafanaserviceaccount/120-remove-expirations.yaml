@@ -1,0 +1,13 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaServiceAccount
+metadata:
+  name: grafana1-sa2
+  namespace: ($NAMESPACE)
+spec:
+  tokens:
+    - name: token1
+    - name: token2
+      secretName: fff
+    - name: token3
+      secretName: eee
+    - name: token4

@@ -1,0 +1,20 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaServiceAccount
+metadata:
+  finalizers:
+    - operator.grafana.com/finalizer
+  generation: 1
+  name: grafana1-sa1
+  namespace: ($NAMESPACE)
+status:
+  account:
+    id: 2
+    login: sa-1-sa1
+    name: sa1
+    role: Editor
+  conditions:
+    - message: ServiceAccount was successfully applied to 1 instances
+      reason: ApplySuccessful
+      status: "True"
+      type: ServiceAccountSynchronized
+      observedGeneration: 1

@@ -157,6 +157,7 @@ type GrafanaStatus struct {
 	ContactPoints         NamespacedResourceList `json:"contactPoints,omitempty"`
 	Dashboards            NamespacedResourceList `json:"dashboards,omitempty"`
 	Datasources           NamespacedResourceList `json:"datasources,omitempty"`
+	ServiceAccounts       NamespacedResourceList `json:"serviceaccounts,omitempty"`
 	Folders               NamespacedResourceList `json:"folders,omitempty"`
 	LibraryPanels         NamespacedResourceList `json:"libraryPanels,omitempty"`
 	MuteTimings           NamespacedResourceList `json:"muteTimings,omitempty"`
