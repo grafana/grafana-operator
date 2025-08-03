@@ -1,0 +1,19 @@
+($serviceaccounts):
+  totalCount: 2
+  serviceAccounts:
+    - id: 2
+      name: sa1
+      login: sa-1-sa1
+      orgId: 1
+      isDisabled: false
+      role : Editor
+      tokens: 0
+    - id: 4
+      name: sa2
+      login: sa-1-sa2
+      orgId: 1
+      isDisabled: false
+      role : Viewer
+      tokens: 4
+  page: 1
+  perPage: 1000

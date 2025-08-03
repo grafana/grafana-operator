@@ -1,0 +1,10 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaServiceAccount
+metadata:
+  name: grafana1-sa2
+  namespace: ($NAMESPACE)
+spec:
+  instanceName: ($INSTANCENAME)
+  name: sa2
+  role: Editor
+  isDisabled: false
