@@ -50,7 +50,10 @@ const (
 	grafanaFinalizer = "operator.grafana.com/finalizer"
 )
 
-var ErrNoMatchingInstances = fmt.Errorf("no matching instances")
+var (
+	ErrNoMatchingInstances = fmt.Errorf("no matching instances")
+	ErrFetchingFolder      = "fetching folder to resolve uid: %w"
+)
 
 //+kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update;patch;delete
 
@@ -125,7 +128,7 @@ func GetScopedMatchingInstances(ctx context.Context, k8sClient client.Client, cr
 	return selectedList, nil
 }
 
-// getFolderUID fetches the folderUID from an existing GrafanaFolder CR declared in the specified namespace
+// getFolderUID returns the folderUID from an existing GrafanaFolder CR within the same namespace
 func getFolderUID(ctx context.Context, k8sClient client.Client, ref operatorapi.FolderReferencer) (string, error) {
 	if ref.FolderUID() != "" {
 		return ref.FolderUID(), nil
