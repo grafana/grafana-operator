@@ -1,0 +1,20 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaServiceAccount
+metadata:
+  name: grafana1-sa2
+  namespace: ($NAMESPACE)
+spec:
+  suspend: false
+status:
+  account:
+    id: 3
+    isDisabled: false
+    login: sa-1-sa2
+    name: sa2
+    role: Viewer
+  conditions:
+    - message: ServiceAccount was successfully applied to 1 instances
+      reason: ApplySuccessful
+      status: "True"
+      type: ServiceAccountSynchronized
+      observedGeneration: 7
