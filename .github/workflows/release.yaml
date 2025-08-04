@@ -285,7 +285,7 @@ jobs:
           PLATFORM_MAP: ${{ needs.image.outputs.platform-map }}
           CURRENT_PLATFORM: ${{ matrix.platform }}
         run: |
-          PLATFORM_INFO=$(echo "$PLATFORM_MAP" | jq -r ".[] | select(.platform == \"$CURRENT_PLATFORM\")")
+          PLATFORM_INFO=$(echo "$PLATFORM_MAP" | jq -r ".[] | select(.platform == \"v5/$CURRENT_PLATFORM\")")
           DIGEST=$(echo "$PLATFORM_INFO" | jq -r '.digest')
           SBOM=$(echo "$PLATFORM_INFO" | jq -r '.sbom')
 
