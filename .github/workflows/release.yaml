@@ -17,6 +17,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -325,6 +326,7 @@ jobs:
       - attest
     permissions:
       packages: read
+      id-token: write
     steps:
       - name: Get secrets
         id: secrets
