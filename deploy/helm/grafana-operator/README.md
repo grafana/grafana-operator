@@ -7,14 +7,14 @@ linkTitle: "Helm installation"
 
 [grafana-operator](https://github.com/grafana/grafana-operator) for Kubernetes to manage Grafana instances and grafana resources.
 
-![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v5.18.0](https://img.shields.io/badge/AppVersion-v5.18.0-informational?style=flat-square)
+![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v5.19.0](https://img.shields.io/badge/AppVersion-v5.19.0-informational?style=flat-square)
 
 ## Installation
 
 This is a OCI helm chart, helm started support OCI in version 3.8.0.
 
 ```shell
-helm upgrade -i grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-operator --version v5.18.0
+helm upgrade -i grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-operator --version v5.19.0
 ```
 
 Sadly helm OCI charts currently don't support searching for available versions of a helm [oci registry](https://github.com/helm/helm/issues/11000).
@@ -30,7 +30,7 @@ resource "helm_release" "grafana_kubernetes_operator" {
   repository = "oci://ghcr.io/grafana/helm-charts"
   chart      = "grafana-operator"
   verify     = false
-  version    = "v5.18.0"
+  version    = "v5.19.0"
 }
 ```
 
@@ -40,7 +40,7 @@ Helm does not provide functionality to update custom resource definitions. This 
 To avoid issues due to outdated or missing definitions, run the following command before updating an existing installation:
 
 ```shell
-kubectl apply --server-side --force-conflicts -f https://github.com/grafana/grafana-operator/releases/download/v5.18.0/crds.yaml
+kubectl apply --server-side --force-conflicts -f https://github.com/grafana/grafana-operator/releases/download/v5.19.0/crds.yaml
 ```
 
 The `--server-side` and `--force-conflict` flags are required to avoid running into issues with the `kubectl.kubernetes.io/last-applied-configuration` annotation.
