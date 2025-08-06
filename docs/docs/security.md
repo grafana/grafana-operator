@@ -40,7 +40,7 @@ gh attestation verify --owner grafana oci://ghcr.io/grafana/grafana-operator@$(o
 Or if you prefer, you can use cosign.
 
 ```shell
-cosign verify-attestation --certificate-identity-regexp 'https://github\.com/grafana/grafana-operator/\.github/workflows/.+'  --certificate-oidc-issuer https://token.actions.githubusercontent.com --new-bundle-format  --type=slsaprovenance1 ghcr.io/grafana/grafana-operator:$(oras resolve --platform linux/amd64 ghcr.io/grafana/grafana-operator:v5.19.0) | jq -r '.payload | @base64d | fromjson'
+cosign verify-attestation --certificate-identity-regexp 'https://github\.com/grafana/grafana-operator/\.github/workflows/.+'  --certificate-oidc-issuer https://token.actions.githubusercontent.com --new-bundle-format  --type=slsaprovenance1 ghcr.io/grafana/grafana-operator:@$(oras resolve --platform linux/amd64 ghcr.io/grafana/grafana-operator:v5.19.1) | jq -r '.payload | @base64d | fromjson'
 ```
 
 ### Verify SBOM
