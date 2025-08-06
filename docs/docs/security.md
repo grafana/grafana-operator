@@ -54,5 +54,5 @@ You can find them as artifacts in our github repositorie or in the public cosign
 ```shell
 # Download the SBOM attestation using the digest (example with oras)
 cosign download attestation --predicate-type https://spdx.dev/Document \
-  ghcr.io/grafana/grafana-operator@$(oras resolve --platform linux/amd64 ghcr.io/grafana/grafana-operator:v5.19.0)
+  ghcr.io/grafana/grafana-operator@$(oras resolve --platform linux/amd64 ghcr.io/grafana/grafana-operator:v5.19.1)
 ```
