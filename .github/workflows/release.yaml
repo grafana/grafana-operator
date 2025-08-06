@@ -346,7 +346,7 @@ jobs:
           QUAY_USERNAME: ${{ fromJSON(steps.secrets.outputs.secrets || '{}').QUAY_USERNAME }}
           QUAY_PASSWORD: ${{ fromJSON(steps.secrets.outputs.secrets || '{}').QUAY_PASSWORD }}
         run: |
-          docker run -it --rm quay.io/containers/skopeo:v1.18.0 \
+          docker run --rm quay.io/containers/skopeo:v1.18.0 \
             copy --multi-arch all \
             --source-creds "$GHCR_USERNAME:$GHCR_PASSWORD" \
             --dest-creds "$QUAY_USERNAME:$QUAY_PASSWORD" \
