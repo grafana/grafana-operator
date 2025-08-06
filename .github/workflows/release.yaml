@@ -17,6 +17,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -284,7 +285,7 @@ jobs:
           PLATFORM_MAP: ${{ needs.image.outputs.platform-map }}
           CURRENT_PLATFORM: ${{ matrix.platform }}
         run: |
-          PLATFORM_INFO=$(echo "$PLATFORM_MAP" | jq -r ".[] | select(.platform == \"$CURRENT_PLATFORM\")")
+          PLATFORM_INFO=$(echo "$PLATFORM_MAP" | jq -r ".[] | select(.platform == \"v5/$CURRENT_PLATFORM\")")
           DIGEST=$(echo "$PLATFORM_INFO" | jq -r '.digest')
           SBOM=$(echo "$PLATFORM_INFO" | jq -r '.sbom')
 
@@ -325,6 +326,7 @@ jobs:
       - attest
     permissions:
       packages: read
+      id-token: write
     steps:
       - name: Get secrets
         id: secrets
