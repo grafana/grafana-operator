@@ -285,7 +285,7 @@ jobs:
           PLATFORM_MAP: ${{ needs.image.outputs.platform-map }}
           CURRENT_PLATFORM: ${{ matrix.platform }}
         run: |
-          PLATFORM_INFO=$(echo "$PLATFORM_MAP" | jq -r ".[] | select(.platform == \"$CURRENT_PLATFORM\")")
+          PLATFORM_INFO=$(echo "$PLATFORM_MAP" | jq -r ".[] | select(.platform == \"v5/$CURRENT_PLATFORM\")")
           DIGEST=$(echo "$PLATFORM_INFO" | jq -r '.digest')
           SBOM=$(echo "$PLATFORM_INFO" | jq -r '.sbom')
 
@@ -346,9 +346,9 @@ jobs:
           QUAY_USERNAME: ${{ fromJSON(steps.secrets.outputs.secrets || '{}').QUAY_USERNAME }}
           QUAY_PASSWORD: ${{ fromJSON(steps.secrets.outputs.secrets || '{}').QUAY_PASSWORD }}
         run: |
-          docker run -it --rm quay.io/containers/skopeo:v1.18.0 \
+          docker run --rm quay.io/containers/skopeo:v1.18.0 \
             copy --multi-arch all \
-            --source-creds "$GHCR_USERNAME:$GHCR_PASSWORD" \
+            --src-creds "$GHCR_USERNAME:$GHCR_PASSWORD" \
             --dest-creds "$QUAY_USERNAME:$QUAY_PASSWORD" \
             docker://${DOCKER_REPO}:${IMAGE_VERSION} \
             docker://quay.io/grafana-operator/grafana-operator:${IMAGE_VERSION}
