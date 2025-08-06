@@ -19,7 +19,7 @@ Grafana-operator container images are signed by github [attestation](https://doc
 
 ```shell
 # Get the image digest using crane
-crane digest --platform linux/amd64 ghcr.io/grafana/grafana-operator:v5.19.0
+crane digest --platform linux/amd64 ghcr.io/grafana/grafana-operator:v5.19.1
 
 # Or using oras
 oras resolve --platform linux/amd64 ghcr.io/grafana/grafana-operator:v5.19.1
