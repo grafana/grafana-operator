@@ -22,7 +22,7 @@ Grafana-operator container images are signed by github [attestation](https://doc
 crane digest --platform linux/amd64 ghcr.io/grafana/grafana-operator:v5.19.0
 
 # Or using oras
-oras resolve --platform linux/amd64 ghcr.io/grafana/grafana-operator:v5.19.0
+oras resolve --platform linux/amd64 ghcr.io/grafana/grafana-operator:v5.19.1
 ```
 
 ### Verify the grafana-operator image
