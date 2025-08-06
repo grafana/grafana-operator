@@ -348,7 +348,7 @@ jobs:
         run: |
           docker run --rm quay.io/containers/skopeo:v1.18.0 \
             copy --multi-arch all \
-            --source-creds "$GHCR_USERNAME:$GHCR_PASSWORD" \
+            --src-creds "$GHCR_USERNAME:$GHCR_PASSWORD" \
             --dest-creds "$QUAY_USERNAME:$QUAY_PASSWORD" \
             docker://${DOCKER_REPO}:${IMAGE_VERSION} \
             docker://quay.io/grafana-operator/grafana-operator:${IMAGE_VERSION}
