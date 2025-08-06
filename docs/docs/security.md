@@ -34,7 +34,7 @@ gh attestation verify --owner grafana oci://ghcr.io/grafana/grafana-operator@<sh
 For example
 
 ```shell
-gh attestation verify --owner grafana oci://ghcr.io/grafana/grafana-operator:$(oras resolve --platform linux/amd64 ghcr.io/grafana/grafana-operator:v5.19.0)
+gh attestation verify --owner grafana oci://ghcr.io/grafana/grafana-operator@$(oras resolve --platform linux/amd64 ghcr.io/grafana/grafana-operator:v5.19.1)
 ```
 
 Or if you prefer, you can use cosign.
