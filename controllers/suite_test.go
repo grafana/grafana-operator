@@ -224,6 +224,7 @@ func createSharedTestCRs() {
 
 func containsEqualCondition(conditions []metav1.Condition, target metav1.Condition) {
 	GinkgoHelper()
+
 	t := GinkgoT()
 
 	found := slices.ContainsFunc(conditions, func(c metav1.Condition) bool {
@@ -235,6 +236,7 @@ func containsEqualCondition(conditions []metav1.Condition, target metav1.Conditi
 
 func reconcileAndValidateCondition(r GrafanaCommonReconciler, cr v1beta1.CommonResource, condition metav1.Condition, wantErr string) {
 	GinkgoHelper()
+
 	t := GinkgoT()
 
 	err := k8sClient.Create(testCtx, cr)
