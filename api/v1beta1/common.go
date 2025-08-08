@@ -54,6 +54,7 @@ type CommonResource interface {
 	client.Object
 	MatchLabels() *metav1.LabelSelector
 	MatchNamespace() string
+	Metadata() metav1.ObjectMeta
 	AllowCrossNamespace() bool
 	CommonStatus() *GrafanaCommonStatus
 }

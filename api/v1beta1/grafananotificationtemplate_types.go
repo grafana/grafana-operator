@@ -62,6 +62,10 @@ func (in *GrafanaNotificationTemplate) MatchNamespace() string {
 	return in.Namespace
 }
 
+func (in *GrafanaNotificationTemplate) Metadata() metav1.ObjectMeta {
+	return in.ObjectMeta
+}
+
 func (in *GrafanaNotificationTemplate) AllowCrossNamespace() bool {
 	return in.Spec.AllowCrossNamespaceImport
 }

@@ -89,6 +89,10 @@ func (in *GrafanaLibraryPanel) MatchNamespace() string {
 	return in.Namespace
 }
 
+func (in *GrafanaLibraryPanel) Metadata() metav1.ObjectMeta {
+	return in.ObjectMeta
+}
+
 func (in *GrafanaLibraryPanel) AllowCrossNamespace() bool {
 	return in.Spec.AllowCrossNamespaceImport
 }
