@@ -104,6 +104,10 @@ func (in *GrafanaContactPoint) MatchNamespace() string {
 	return in.Namespace
 }
 
+func (in *GrafanaContactPoint) Metadata() metav1.ObjectMeta {
+	return in.ObjectMeta
+}
+
 func (in *GrafanaContactPoint) AllowCrossNamespace() bool {
 	return in.Spec.AllowCrossNamespaceImport
 }

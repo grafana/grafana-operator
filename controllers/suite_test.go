@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,6 +34,8 @@ import (
 	"github.com/docker/go-connections/nat"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/config"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -217,4 +220,39 @@ func createSharedTestCRs() {
 	fr := GrafanaFolderReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
 	_, err = fr.Reconcile(testCtx, req)
 	Expect(err).ToNot(HaveOccurred())
+}
+
+func containsEqualCondition(conditions []metav1.Condition, target metav1.Condition) {
+	GinkgoHelper()
+
+	t := GinkgoT()
+
+	found := slices.ContainsFunc(conditions, func(c metav1.Condition) bool {
+		return c.Type == target.Type && c.Reason == target.Reason
+	})
+
+	assert.True(t, found)
+}
+
+func reconcileAndValidateCondition(r GrafanaCommonReconciler, cr v1beta1.CommonResource, condition metav1.Condition, wantErr string) {
+	GinkgoHelper()
+
+	t := GinkgoT()
+
+	err := k8sClient.Create(testCtx, cr)
+	require.NoError(t, err)
+
+	req := requestFromMeta(cr.Metadata())
+
+	_, err = r.Reconcile(testCtx, req)
+	if wantErr == "" {
+		require.NoError(t, err)
+	} else {
+		require.ErrorContains(t, err, wantErr)
+	}
+
+	err = r.Get(testCtx, req.NamespacedName, cr)
+	require.NoError(t, err)
+
+	containsEqualCondition(cr.CommonStatus().Conditions, condition)
 }

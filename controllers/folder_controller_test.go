@@ -4,103 +4,89 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var _ = Describe("Folder Reconciler: Provoke Conditions", func() {
 	tests := []struct {
-		name          string
-		cr            *v1beta1.GrafanaFolder
-		wantCondition string
-		wantReason    string
-		wantErr       string
+		name    string
+		meta    metav1.ObjectMeta
+		spec    v1beta1.GrafanaFolderSpec
+		want    metav1.Condition
+		wantErr string
 	}{
 		{
 			name: ".spec.suspend=true",
-			cr: &v1beta1.GrafanaFolder{
-				ObjectMeta: objectMetaSuspended,
-				Spec: v1beta1.GrafanaFolderSpec{
-					GrafanaCommonSpec: commonSpecSuspended,
-				},
+			meta: objectMetaSuspended,
+			spec: v1beta1.GrafanaFolderSpec{
+				GrafanaCommonSpec: commonSpecSuspended,
 			},
-			wantCondition: conditionSuspended,
-			wantReason:    conditionReasonApplySuspended,
+			want: metav1.Condition{
+				Type:   conditionSuspended,
+				Reason: conditionReasonApplySuspended,
+			},
 		},
 		{
 			name: "GetScopedMatchingInstances returns empty list",
-			cr: &v1beta1.GrafanaFolder{
-				ObjectMeta: objectMetaNoMatchingInstances,
-				Spec: v1beta1.GrafanaFolderSpec{
-					GrafanaCommonSpec: commonSpecNoMatchingInstances,
-				},
+			meta: objectMetaNoMatchingInstances,
+			spec: v1beta1.GrafanaFolderSpec{
+				GrafanaCommonSpec: commonSpecNoMatchingInstances,
 			},
-			wantCondition: conditionNoMatchingInstance,
-			wantReason:    conditionReasonEmptyAPIReply,
-			wantErr:       ErrNoMatchingInstances.Error(),
+			want: metav1.Condition{
+				Type:   conditionNoMatchingInstance,
+				Reason: conditionReasonEmptyAPIReply,
+			},
+			wantErr: ErrNoMatchingInstances.Error(),
 		},
 		{
 			name: "Failed to apply to instance",
-			cr: &v1beta1.GrafanaFolder{
-				ObjectMeta: objectMetaApplyFailed,
-				Spec: v1beta1.GrafanaFolderSpec{
-					GrafanaCommonSpec: commonSpecApplyFailed,
-				},
+			meta: objectMetaApplyFailed,
+			spec: v1beta1.GrafanaFolderSpec{
+				GrafanaCommonSpec: commonSpecApplyFailed,
 			},
-			wantCondition: conditionFolderSynchronized,
-			wantReason:    conditionReasonApplyFailed,
-			wantErr:       "failed to apply to all instances",
+			want: metav1.Condition{
+				Type:   conditionFolderSynchronized,
+				Reason: conditionReasonApplyFailed,
+			},
+			wantErr: "failed to apply to all instances",
 		},
 		{
 			name: "InvalidSpec Condition",
-			cr: &v1beta1.GrafanaFolder{
-				ObjectMeta: objectMetaInvalidSpec,
-				Spec: v1beta1.GrafanaFolderSpec{
-					GrafanaCommonSpec: commonSpecInvalidSpec,
-					CustomUID:         "self-ref",
-					ParentFolderUID:   "self-ref",
-				},
+			meta: objectMetaInvalidSpec,
+			spec: v1beta1.GrafanaFolderSpec{
+				GrafanaCommonSpec: commonSpecInvalidSpec,
+				CustomUID:         "self-ref",
+				ParentFolderUID:   "self-ref",
 			},
-			wantCondition: conditionInvalidSpec,
-			wantReason:    conditionReasonCyclicParent,
-			wantErr:       "cyclic folder reference",
+			want: metav1.Condition{
+				Type:   conditionInvalidSpec,
+				Reason: conditionReasonCyclicParent,
+			},
+			wantErr: "cyclic folder reference",
 		},
 		{
 			name: "Successfully applied resource to instance",
-			cr: &v1beta1.GrafanaFolder{
-				ObjectMeta: objectMetaSynchronized,
-				Spec: v1beta1.GrafanaFolderSpec{
-					GrafanaCommonSpec: commonSpecSynchronized,
-				},
+			meta: objectMetaSynchronized,
+			spec: v1beta1.GrafanaFolderSpec{
+				GrafanaCommonSpec: commonSpecSynchronized,
 			},
-			wantCondition: conditionFolderSynchronized,
-			wantReason:    conditionReasonApplySuccessful,
+			want: metav1.Condition{
+				Type:   conditionFolderSynchronized,
+				Reason: conditionReasonApplySuccessful,
+			},
 		},
 	}
 
-	for _, test := range tests {
-		It(test.name, func() {
-			err := k8sClient.Create(testCtx, test.cr)
-			Expect(err).ToNot(HaveOccurred())
-
-			// Reconciliation Request
-			req := requestFromMeta(test.cr.ObjectMeta)
-
-			// Reconcile
-			r := GrafanaFolderReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
-			_, err = r.Reconcile(testCtx, req)
-			if test.wantErr == "" {
-				Expect(err).ShouldNot(HaveOccurred())
-			} else {
-				Expect(err).Should(HaveOccurred())
-				Expect(err.Error()).Should(HavePrefix(test.wantErr))
+	for _, tt := range tests {
+		It(tt.name, func() {
+			cr := &v1beta1.GrafanaFolder{
+				ObjectMeta: tt.meta,
+				Spec:       tt.spec,
 			}
 
-			resultCr := &v1beta1.GrafanaFolder{}
-			Expect(r.Get(testCtx, req.NamespacedName, resultCr)).Should(Succeed())
+			r := &GrafanaFolderReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
 
-			// Verify Condition
-			Expect(resultCr.Status.Conditions).Should(ContainElement(HaveField("Type", test.wantCondition)))
-			Expect(resultCr.Status.Conditions).Should(ContainElement(HaveField("Reason", test.wantReason)))
+			reconcileAndValidateCondition(r, cr, tt.want, tt.wantErr)
 		})
 	}
 })
