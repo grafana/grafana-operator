@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,6 +34,7 @@ import (
 	"github.com/docker/go-connections/nat"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/config"
+	"github.com/stretchr/testify/assert"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -217,4 +219,15 @@ func createSharedTestCRs() {
 	fr := GrafanaFolderReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
 	_, err = fr.Reconcile(testCtx, req)
 	Expect(err).ToNot(HaveOccurred())
+}
+
+func containsEqualCondition(conditions []metav1.Condition, target metav1.Condition) {
+	GinkgoHelper()
+	t := GinkgoT()
+
+	found := slices.ContainsFunc(conditions, func(c metav1.Condition) bool {
+		return c.Type == target.Type && c.Reason == target.Reason
+	})
+
+	assert.True(t, found)
 }
