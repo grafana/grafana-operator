@@ -383,112 +383,116 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 }
 
 var _ = Describe("NotificationPolicy Reconciler: Provoke Conditions", func() {
+	t := GinkgoT()
+
 	tests := []struct {
-		name          string
-		cr            *v1beta1.GrafanaNotificationPolicy
-		wantCondition string
-		wantReason    string
-		wantErr       string
+		name    string
+		meta    metav1.ObjectMeta
+		spec    v1beta1.GrafanaNotificationPolicySpec
+		want    metav1.Condition
+		wantErr string
 	}{
 		{
 			name: ".spec.suspend=true",
-			cr: &v1beta1.GrafanaNotificationPolicy{
-				ObjectMeta: objectMetaSuspended,
-				Spec: v1beta1.GrafanaNotificationPolicySpec{
-					GrafanaCommonSpec: commonSpecSuspended,
-					Route:             &v1beta1.Route{Receiver: "default-receiver"},
-				},
+			meta: objectMetaSuspended,
+			spec: v1beta1.GrafanaNotificationPolicySpec{
+				GrafanaCommonSpec: commonSpecSuspended,
+				Route:             &v1beta1.Route{Receiver: "default-receiver"},
 			},
-			wantCondition: conditionSuspended,
-			wantReason:    conditionReasonApplySuspended,
+			want: metav1.Condition{
+				Type:   conditionSuspended,
+				Reason: conditionReasonApplySuspended,
+			},
 		},
 		{
 			name: "GetScopedMatchingInstances returns empty list",
-			cr: &v1beta1.GrafanaNotificationPolicy{
-				ObjectMeta: objectMetaNoMatchingInstances,
-				Spec: v1beta1.GrafanaNotificationPolicySpec{
-					GrafanaCommonSpec: commonSpecNoMatchingInstances,
-					Route:             &v1beta1.Route{Receiver: "default-receiver"},
-				},
+			meta: objectMetaNoMatchingInstances,
+			spec: v1beta1.GrafanaNotificationPolicySpec{
+				GrafanaCommonSpec: commonSpecNoMatchingInstances,
+				Route:             &v1beta1.Route{Receiver: "default-receiver"},
 			},
-			wantCondition: conditionNoMatchingInstance,
-			wantReason:    conditionReasonEmptyAPIReply,
-			wantErr:       ErrNoMatchingInstances.Error(),
+			want: metav1.Condition{
+				Type:   conditionNoMatchingInstance,
+				Reason: conditionReasonEmptyAPIReply,
+			},
+			wantErr: ErrNoMatchingInstances.Error(),
 		},
 		{
 			name: "Failed to apply to instance",
-			cr: &v1beta1.GrafanaNotificationPolicy{
-				ObjectMeta: objectMetaApplyFailed,
-				Spec: v1beta1.GrafanaNotificationPolicySpec{
-					GrafanaCommonSpec: commonSpecApplyFailed,
-					Route:             &v1beta1.Route{Receiver: "default-receiver"},
-				},
+			meta: objectMetaApplyFailed,
+			spec: v1beta1.GrafanaNotificationPolicySpec{
+				GrafanaCommonSpec: commonSpecApplyFailed,
+				Route:             &v1beta1.Route{Receiver: "default-receiver"},
 			},
-			wantCondition: conditionNotificationPolicySynchronized,
-			wantReason:    conditionReasonApplyFailed,
-			wantErr:       "failed to apply to all instances",
+			want: metav1.Condition{
+				Type:   conditionNotificationPolicySynchronized,
+				Reason: conditionReasonApplyFailed,
+			},
+			wantErr: "failed to apply to all instances",
 		},
 		{
 			name: "Mutually Exclusive fields routes/routeSelector",
-			cr: &v1beta1.GrafanaNotificationPolicy{
-				ObjectMeta: objectMetaInvalidSpec,
-				Spec: v1beta1.GrafanaNotificationPolicySpec{
-					GrafanaCommonSpec: commonSpecInvalidSpec,
-					Route: &v1beta1.Route{
+			meta: objectMetaInvalidSpec,
+			spec: v1beta1.GrafanaNotificationPolicySpec{
+				GrafanaCommonSpec: commonSpecInvalidSpec,
+				Route: &v1beta1.Route{
+					Receiver: "default-receiver",
+					Routes: []*v1beta1.Route{{
 						Receiver: "default-receiver",
-						Routes: []*v1beta1.Route{{
-							Receiver: "default-receiver",
-						}},
-						RouteSelector: &metav1.LabelSelector{
-							MatchLabels: map[string]string{},
-						},
+					}},
+					RouteSelector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{},
 					},
 				},
 			},
-			wantCondition: conditionInvalidSpec,
-			wantReason:    conditionReasonFieldsMutuallyExclusive,
-			wantErr:       "invalid route spec discovered: routeSelector is mutually exclusive with routes",
+			want: metav1.Condition{
+				Type:   conditionInvalidSpec,
+				Reason: conditionReasonFieldsMutuallyExclusive,
+			},
+			wantErr: "invalid route spec discovered: routeSelector is mutually exclusive with routes",
 		},
 		{
 			name: "Successfully applied resource to instance",
-			cr: &v1beta1.GrafanaNotificationPolicy{
-				ObjectMeta: objectMetaSynchronized,
-				Spec: v1beta1.GrafanaNotificationPolicySpec{
-					GrafanaCommonSpec: commonSpecSynchronized,
-					Route: &v1beta1.Route{
-						Receiver: "grafana-default-email",
-					},
+			meta: objectMetaSynchronized,
+			spec: v1beta1.GrafanaNotificationPolicySpec{
+				GrafanaCommonSpec: commonSpecSynchronized,
+				Route: &v1beta1.Route{
+					Receiver: "grafana-default-email",
 				},
 			},
-			wantCondition: conditionNotificationPolicySynchronized,
-			wantReason:    conditionReasonApplySuccessful,
+			want: metav1.Condition{
+				Type:   conditionNotificationPolicySynchronized,
+				Reason: conditionReasonApplySuccessful,
+			},
 		},
 	}
 
-	for _, test := range tests {
-		It(test.name, func() {
-			err := k8sClient.Create(testCtx, test.cr)
-			Expect(err).ToNot(HaveOccurred())
-
-			// Reconciliation Request
-			req := requestFromMeta(test.cr.ObjectMeta)
-
-			// Reconcile
-			r := GrafanaNotificationPolicyReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
-			_, err = r.Reconcile(testCtx, req)
-			if test.wantErr == "" {
-				Expect(err).ShouldNot(HaveOccurred())
-			} else {
-				Expect(err).Should(HaveOccurred())
-				Expect(err.Error()).Should(HavePrefix(test.wantErr))
+	for _, tt := range tests {
+		It(tt.name, func() {
+			cr := &v1beta1.GrafanaNotificationPolicy{
+				ObjectMeta: tt.meta,
+				Spec:       tt.spec,
 			}
 
-			resultCr := &v1beta1.GrafanaNotificationPolicy{}
-			Expect(r.Get(testCtx, req.NamespacedName, resultCr)).Should(Succeed())
+			err := k8sClient.Create(testCtx, cr)
+			require.NoError(t, err)
 
-			// Verify Condition
-			Expect(resultCr.Status.Conditions).Should(ContainElement(HaveField("Type", test.wantCondition)))
-			Expect(resultCr.Status.Conditions).Should(ContainElement(HaveField("Reason", test.wantReason)))
+			r := GrafanaNotificationPolicyReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+			req := requestFromMeta(tt.meta)
+
+			_, err = r.Reconcile(testCtx, req)
+			if tt.wantErr == "" {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, tt.wantErr)
+			}
+
+			cr = &v1beta1.GrafanaNotificationPolicy{}
+
+			err = r.Get(testCtx, req.NamespacedName, cr)
+			require.NoError(t, err)
+
+			containsEqualCondition(cr.Status.Conditions, tt.want)
 		})
 	}
 })
