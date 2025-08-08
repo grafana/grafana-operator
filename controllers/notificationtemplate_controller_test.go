@@ -2,15 +2,12 @@ package controllers
 
 import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	. "github.com/onsi/ginkgo/v2"
 )
 
 var _ = Describe("NotificationTemplate Reconciler: Provoke Conditions", func() {
-	t := GinkgoT()
-
 	tests := []struct {
 		name    string
 		meta    metav1.ObjectMeta
@@ -78,26 +75,9 @@ var _ = Describe("NotificationTemplate Reconciler: Provoke Conditions", func() {
 				Spec:       tt.spec,
 			}
 
-			err := k8sClient.Create(testCtx, cr)
-			require.NoError(t, err)
+			r := &GrafanaNotificationTemplateReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
 
-			r := GrafanaNotificationTemplateReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
-
-			req := requestFromMeta(tt.meta)
-
-			_, err = r.Reconcile(testCtx, req)
-			if tt.wantErr == "" {
-				require.NoError(t, err)
-			} else {
-				require.ErrorContains(t, err, tt.wantErr)
-			}
-
-			cr = &v1beta1.GrafanaNotificationTemplate{}
-
-			err = r.Get(testCtx, req.NamespacedName, cr)
-			require.NoError(t, err)
-
-			containsEqualCondition(cr.Status.Conditions, tt.want)
+			reconcileAndValidateCondition(r, cr, tt.want, tt.wantErr)
 		})
 	}
 })

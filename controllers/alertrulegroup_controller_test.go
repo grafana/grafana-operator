@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -12,8 +11,6 @@ import (
 )
 
 var _ = Describe("AlertRulegroup Reconciler: Provoke Conditions", func() {
-	t := GinkgoT()
-
 	noDataState := "NoData"
 	rules := []v1beta1.AlertRule{
 		{
@@ -150,27 +147,9 @@ var _ = Describe("AlertRulegroup Reconciler: Provoke Conditions", func() {
 				Spec:       tt.spec,
 			}
 
-			err := k8sClient.Create(testCtx, cr)
-			require.NoError(t, err)
+			r := &GrafanaAlertRuleGroupReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
 
-			r := GrafanaAlertRuleGroupReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
-			req := requestFromMeta(tt.meta)
-
-			// Reconcile
-
-			_, err = r.Reconcile(testCtx, req)
-			if tt.wantErr == "" {
-				require.NoError(t, err)
-			} else {
-				require.ErrorContains(t, err, tt.wantErr)
-			}
-
-			cr = &v1beta1.GrafanaAlertRuleGroup{}
-
-			err = r.Get(testCtx, req.NamespacedName, cr)
-			require.NoError(t, err)
-
-			containsEqualCondition(cr.Status.Conditions, tt.want)
+			reconcileAndValidateCondition(r, cr, tt.want, tt.wantErr)
 		})
 	}
 })

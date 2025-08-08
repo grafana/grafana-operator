@@ -382,8 +382,6 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 }
 
 var _ = Describe("NotificationPolicy Reconciler: Provoke Conditions", func() {
-	t := GinkgoT()
-
 	tests := []struct {
 		name    string
 		meta    metav1.ObjectMeta
@@ -473,25 +471,9 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke Conditions", func() {
 				Spec:       tt.spec,
 			}
 
-			err := k8sClient.Create(testCtx, cr)
-			require.NoError(t, err)
+			r := &GrafanaNotificationPolicyReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
 
-			r := GrafanaNotificationPolicyReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
-			req := requestFromMeta(tt.meta)
-
-			_, err = r.Reconcile(testCtx, req)
-			if tt.wantErr == "" {
-				require.NoError(t, err)
-			} else {
-				require.ErrorContains(t, err, tt.wantErr)
-			}
-
-			cr = &v1beta1.GrafanaNotificationPolicy{}
-
-			err = r.Get(testCtx, req.NamespacedName, cr)
-			require.NoError(t, err)
-
-			containsEqualCondition(cr.Status.Conditions, tt.want)
+			reconcileAndValidateCondition(r, cr, tt.want, tt.wantErr)
 		})
 	}
 })
@@ -499,7 +481,7 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke Conditions", func() {
 var _ = Describe("NotificationPolicy Reconciler: Provoke LoopDetected Condition", func() {
 	t := GinkgoT()
 
-	np := &v1beta1.GrafanaNotificationPolicy{
+	cr := &v1beta1.GrafanaNotificationPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
 			Name:      "loopdetected-spec",
@@ -556,31 +538,21 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke LoopDetected Condition"
 	}
 
 	It("Provokes the NotificationPolicyLoopDetected Condition", func() {
-		err := k8sClient.Create(testCtx, np)
-		require.NoError(t, err)
-
-		err = k8sClient.Create(testCtx, teamB)
+		err := k8sClient.Create(testCtx, teamB)
 		require.NoError(t, err)
 
 		err = k8sClient.Create(testCtx, teamC)
 		require.NoError(t, err)
 
-		r := GrafanaNotificationPolicyReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
-		req := requestFromMeta(np.ObjectMeta)
-
-		_, err = r.Reconcile(testCtx, req)
-		require.ErrorContains(t, err, "failed to assemble notification policy routes")
-
-		cr := &v1beta1.GrafanaNotificationPolicy{}
-
-		err = r.Get(testCtx, req.NamespacedName, cr)
-		require.NoError(t, err)
+		r := &GrafanaNotificationPolicyReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
 
 		want := metav1.Condition{
 			Type:   conditionNotificationPolicyLoopDetected,
 			Reason: conditionReasonLoopDetected,
 		}
 
-		containsEqualCondition(cr.Status.Conditions, want)
+		wantErr := "failed to assemble notification policy routes"
+
+		reconcileAndValidateCondition(r, cr, want, wantErr)
 	})
 })
