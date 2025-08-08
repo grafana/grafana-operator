@@ -12,7 +12,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 func TestGetDatasourceContent(t *testing.T) {
@@ -44,6 +43,8 @@ func TestGetDatasourceContent(t *testing.T) {
 }
 
 var _ = Describe("Datasource: substitute reference values", func() {
+	t := GinkgoT()
+
 	It("Correctly substitutes valuesFrom", func() {
 		cm := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
@@ -133,42 +134,63 @@ var _ = Describe("Datasource: substitute reference values", func() {
 				},
 			},
 		}
-		Expect(k8sClient.Create(testCtx, cm)).Should(Succeed())
-		Expect(k8sClient.Create(testCtx, sc)).Should(Succeed())
-		Expect(k8sClient.Create(testCtx, ds)).Should(Succeed())
 
-		req := requestFromMeta(ds.ObjectMeta)
+		err := k8sClient.Create(testCtx, cm)
+		require.NoError(t, err)
+
+		err = k8sClient.Create(testCtx, sc)
+		require.NoError(t, err)
+
+		err = k8sClient.Create(testCtx, ds)
+		require.NoError(t, err)
+
 		r := GrafanaDatasourceReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
-		_, err := r.Reconcile(testCtx, req)
-		Expect(err).ToNot(HaveOccurred())
+		req := requestFromMeta(ds.ObjectMeta)
 
-		Expect(r.Get(testCtx, req.NamespacedName, ds)).Should(Succeed())
-		Expect(ds.Status.Conditions).Should(ContainElement(HaveField("Type", conditionDatasourceSynchronized)))
-		Expect(ds.Status.Conditions).Should(ContainElement(HaveField("Reason", conditionReasonApplySuccessful)))
+		_, err = r.Reconcile(testCtx, req)
+		require.NoError(t, err)
+
+		cr := &v1beta1.GrafanaDatasource{
+			ObjectMeta: *ds.ObjectMeta.DeepCopy(),
+		}
+
+		condition := metav1.Condition{
+			Type:   conditionDatasourceSynchronized,
+			Reason: conditionReasonApplySuccessful,
+		}
+
+		err = r.Get(testCtx, req.NamespacedName, cr)
+		require.NoError(t, err)
+
+		containsEqualCondition(cr.Status.Conditions, condition)
 
 		cl, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
-		Expect(err).ToNot(HaveOccurred())
+		require.NoError(t, err)
 
 		model, err := cl.Datasources.GetDataSourceByUID(ds.Spec.CustomUID)
-		Expect(err).ToNot(HaveOccurred())
+		require.NoError(t, err)
 
-		Expect(model.Payload.URL).To(Equal("https://demo.promlabs.com"))
-		Expect(model.Payload.SecureJSONFields["httpHeaderValue1"]).To(BeTrue())
+		assert.Equal(t, "https://demo.promlabs.com", model.Payload.URL)
+		assert.True(t, model.Payload.SecureJSONFields["httpHeaderValue1"])
 
 		// Serialize and Derserialize jsonData
 		b, err := json.Marshal(model.Payload.JSONData)
-		Expect(err).ToNot(HaveOccurred())
+		require.NoError(t, err)
 
 		type ExemplarTraceIDDestination struct {
 			Name string `json:"name"`
 		}
+
 		type SubstitutedJSONData struct {
 			ExemplarTraceIDDestinations []ExemplarTraceIDDestination `json:"exemplarTraceIdDestinations"`
 		}
+
 		var jsonData SubstitutedJSONData // map with array of
+
 		err = json.Unmarshal(b, &jsonData)
-		Expect(err).ToNot(HaveOccurred())
-		Expect(jsonData.ExemplarTraceIDDestinations[1].Name).To(Equal("substituted"))
+		require.NoError(t, err)
+
+		assert.Equal(t, "substituted", jsonData.ExemplarTraceIDDestinations[1].Name)
 	})
 })
 
