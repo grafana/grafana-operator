@@ -2,12 +2,15 @@ package controllers
 
 import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("MuteTiming Reconciler: Provoke Conditions", func() {
+	t := GinkgoT()
+
 	timeInterval := []*v1beta1.TimeInterval{
 		{
 			DaysOfMonth: []string{"1"},
@@ -23,89 +26,91 @@ var _ = Describe("MuteTiming Reconciler: Provoke Conditions", func() {
 	}
 
 	tests := []struct {
-		name          string
-		cr            *v1beta1.GrafanaMuteTiming
-		wantCondition string
-		wantReason    string
-		wantErr       string
+		name    string
+		meta    metav1.ObjectMeta
+		spec    v1beta1.GrafanaMuteTimingSpec
+		want    metav1.Condition
+		wantErr string
 	}{
 		{
 			name: ".spec.suspend=true",
-			cr: &v1beta1.GrafanaMuteTiming{
-				ObjectMeta: objectMetaSuspended,
-				Spec: v1beta1.GrafanaMuteTimingSpec{
-					GrafanaCommonSpec: commonSpecSuspended,
-					TimeIntervals:     timeInterval,
-				},
+			meta: objectMetaSuspended,
+			spec: v1beta1.GrafanaMuteTimingSpec{
+				GrafanaCommonSpec: commonSpecSuspended,
+				TimeIntervals:     timeInterval,
 			},
-			wantCondition: conditionSuspended,
-			wantReason:    conditionReasonApplySuspended,
+			want: metav1.Condition{
+				Type:   conditionSuspended,
+				Reason: conditionReasonApplySuspended,
+			},
 		},
 		{
 			name: "GetScopedMatchingInstances returns empty list",
-			cr: &v1beta1.GrafanaMuteTiming{
-				ObjectMeta: objectMetaNoMatchingInstances,
-				Spec: v1beta1.GrafanaMuteTimingSpec{
-					GrafanaCommonSpec: commonSpecNoMatchingInstances,
-					TimeIntervals:     timeInterval,
-				},
+			meta: objectMetaNoMatchingInstances,
+			spec: v1beta1.GrafanaMuteTimingSpec{
+				GrafanaCommonSpec: commonSpecNoMatchingInstances,
+				TimeIntervals:     timeInterval,
 			},
-			wantCondition: conditionNoMatchingInstance,
-			wantReason:    conditionReasonEmptyAPIReply,
-			wantErr:       ErrNoMatchingInstances.Error(),
+			want: metav1.Condition{
+				Type:   conditionNoMatchingInstance,
+				Reason: conditionReasonEmptyAPIReply,
+			},
+			wantErr: ErrNoMatchingInstances.Error(),
 		},
 		{
 			name: "Failed to apply to instance",
-			cr: &v1beta1.GrafanaMuteTiming{
-				ObjectMeta: objectMetaApplyFailed,
-				Spec: v1beta1.GrafanaMuteTimingSpec{
-					GrafanaCommonSpec: commonSpecApplyFailed,
-					TimeIntervals:     timeInterval,
-				},
+			meta: objectMetaApplyFailed,
+			spec: v1beta1.GrafanaMuteTimingSpec{
+				GrafanaCommonSpec: commonSpecApplyFailed,
+				TimeIntervals:     timeInterval,
 			},
-			wantCondition: conditionMuteTimingSynchronized,
-			wantReason:    conditionReasonApplyFailed,
-			wantErr:       "failed to apply to all instances",
+			want: metav1.Condition{
+				Type:   conditionMuteTimingSynchronized,
+				Reason: conditionReasonApplyFailed,
+			},
+			wantErr: "failed to apply to all instances",
 		},
 		{
 			name: "Successfully applied resource to instance",
-			cr: &v1beta1.GrafanaMuteTiming{
-				ObjectMeta: objectMetaSynchronized,
-				Spec: v1beta1.GrafanaMuteTimingSpec{
-					GrafanaCommonSpec: commonSpecSynchronized,
-					Name:              "Synchronized",
-					TimeIntervals:     timeInterval,
-				},
+			meta: objectMetaSynchronized,
+			spec: v1beta1.GrafanaMuteTimingSpec{
+				GrafanaCommonSpec: commonSpecSynchronized,
+				Name:              "Synchronized",
+				TimeIntervals:     timeInterval,
 			},
-			wantCondition: conditionMuteTimingSynchronized,
-			wantReason:    conditionReasonApplySuccessful,
+			want: metav1.Condition{
+				Type:   conditionMuteTimingSynchronized,
+				Reason: conditionReasonApplySuccessful,
+			},
 		},
 	}
 
-	for _, test := range tests {
-		It(test.name, func() {
-			err := k8sClient.Create(testCtx, test.cr)
-			Expect(err).ToNot(HaveOccurred())
-
-			// Reconciliation Request
-			req := requestFromMeta(test.cr.ObjectMeta)
-
-			// Reconcile
-			r := GrafanaMuteTimingReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
-			_, err = r.Reconcile(testCtx, req)
-			if test.wantErr == "" {
-				Expect(err).ShouldNot(HaveOccurred())
-			} else {
-				Expect(err).Should(HaveOccurred())
-				Expect(err.Error()).Should(HavePrefix(test.wantErr))
+	for _, tt := range tests {
+		It(tt.name, func() {
+			cr := &v1beta1.GrafanaMuteTiming{
+				ObjectMeta: tt.meta,
+				Spec:       tt.spec,
 			}
 
-			resultCr := &v1beta1.GrafanaMuteTiming{}
-			Expect(r.Get(testCtx, req.NamespacedName, resultCr)).Should(Succeed())
+			err := k8sClient.Create(testCtx, cr)
+			require.NoError(t, err)
 
-			// Verify Condition
-			Expect(resultCr.Status.Conditions).Should(ContainElement(HaveField("Type", test.wantCondition)))
-			Expect(resultCr.Status.Conditions).Should(ContainElement(HaveField("Reason", test.wantReason)))
+			r := GrafanaMuteTimingReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+			req := requestFromMeta(tt.meta)
+
+			_, err = r.Reconcile(testCtx, req)
+			if tt.wantErr == "" {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, tt.wantErr)
+			}
+
+			cr = &v1beta1.GrafanaMuteTiming{}
+
+			err = r.Get(testCtx, req.NamespacedName, cr)
+			require.NoError(t, err)
+
+			containsEqualCondition(cr.Status.Conditions, tt.want)
 		})
 	}
 })
