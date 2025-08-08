@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/config"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -230,4 +231,26 @@ func containsEqualCondition(conditions []metav1.Condition, target metav1.Conditi
 	})
 
 	assert.True(t, found)
+}
+
+func reconcileAndValidateCondition(r GrafanaCommonReconciler, cr v1beta1.CommonResource, condition metav1.Condition, wantErr string) {
+	GinkgoHelper()
+	t := GinkgoT()
+
+	err := k8sClient.Create(testCtx, cr)
+	require.NoError(t, err)
+
+	req := requestFromMeta(cr.Metadata())
+
+	_, err = r.Reconcile(testCtx, req)
+	if wantErr == "" {
+		require.NoError(t, err)
+	} else {
+		require.ErrorContains(t, err, wantErr)
+	}
+
+	err = r.Get(testCtx, req.NamespacedName, cr)
+	require.NoError(t, err)
+
+	containsEqualCondition(cr.CommonStatus().Conditions, condition)
 }
