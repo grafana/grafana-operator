@@ -173,116 +173,120 @@ var _ = Describe("Datasource: substitute reference values", func() {
 })
 
 var _ = Describe("Datasource Reconciler: Provoke Conditions", func() {
+	t := GinkgoT()
+
 	tests := []struct {
-		name          string
-		cr            *v1beta1.GrafanaDatasource
-		wantCondition string
-		wantReason    string
-		wantErr       string
+		name    string
+		meta    metav1.ObjectMeta
+		spec    v1beta1.GrafanaDatasourceSpec
+		want    metav1.Condition
+		wantErr string
 	}{
 		{
 			name: ".spec.suspend=true",
-			cr: &v1beta1.GrafanaDatasource{
-				ObjectMeta: objectMetaSuspended,
-				Spec: v1beta1.GrafanaDatasourceSpec{
-					GrafanaCommonSpec: commonSpecSuspended,
-					Datasource:        &v1beta1.GrafanaDatasourceInternal{},
-				},
+			meta: objectMetaSuspended,
+			spec: v1beta1.GrafanaDatasourceSpec{
+				GrafanaCommonSpec: commonSpecSuspended,
+				Datasource:        &v1beta1.GrafanaDatasourceInternal{},
 			},
-			wantCondition: conditionSuspended,
-			wantReason:    conditionReasonApplySuspended,
+			want: metav1.Condition{
+				Type:   conditionSuspended,
+				Reason: conditionReasonApplySuspended,
+			},
 		},
 		{
 			name: "GetScopedMatchingInstances returns empty list",
-			cr: &v1beta1.GrafanaDatasource{
-				ObjectMeta: objectMetaNoMatchingInstances,
-				Spec: v1beta1.GrafanaDatasourceSpec{
-					GrafanaCommonSpec: commonSpecNoMatchingInstances,
-					Datasource:        &v1beta1.GrafanaDatasourceInternal{},
-				},
+			meta: objectMetaNoMatchingInstances,
+			spec: v1beta1.GrafanaDatasourceSpec{
+				GrafanaCommonSpec: commonSpecNoMatchingInstances,
+				Datasource:        &v1beta1.GrafanaDatasourceInternal{},
 			},
-			wantCondition: conditionNoMatchingInstance,
-			wantReason:    conditionReasonEmptyAPIReply,
-			wantErr:       ErrNoMatchingInstances.Error(),
+			want: metav1.Condition{
+				Type:   conditionNoMatchingInstance,
+				Reason: conditionReasonEmptyAPIReply,
+			},
+			wantErr: ErrNoMatchingInstances.Error(),
 		},
 		{
 			name: "Failed to apply to instance",
-			cr: &v1beta1.GrafanaDatasource{
-				ObjectMeta: objectMetaApplyFailed,
-				Spec: v1beta1.GrafanaDatasourceSpec{
-					GrafanaCommonSpec: commonSpecApplyFailed,
-					Datasource:        &v1beta1.GrafanaDatasourceInternal{},
-				},
+			meta: objectMetaApplyFailed,
+			spec: v1beta1.GrafanaDatasourceSpec{
+				GrafanaCommonSpec: commonSpecApplyFailed,
+				Datasource:        &v1beta1.GrafanaDatasourceInternal{},
 			},
-			wantCondition: conditionDatasourceSynchronized,
-			wantReason:    conditionReasonApplyFailed,
-			wantErr:       "failed to apply to all instances",
+			want: metav1.Condition{
+				Type:   conditionDatasourceSynchronized,
+				Reason: conditionReasonApplyFailed,
+			},
+			wantErr: "failed to apply to all instances",
 		},
 		{
 			name: "Referenced secret does not exist",
-			cr: &v1beta1.GrafanaDatasource{
-				ObjectMeta: objectMetaInvalidSpec,
-				Spec: v1beta1.GrafanaDatasourceSpec{
-					GrafanaCommonSpec: commonSpecInvalidSpec,
-					Datasource:        &v1beta1.GrafanaDatasourceInternal{},
-					ValuesFrom: []v1beta1.ValueFrom{{
-						TargetPath: "secureJsonData.httpHeaderValue1",
-						ValueFrom: v1beta1.ValueFromSource{SecretKeyRef: &corev1.SecretKeySelector{
-							Key: "credentials",
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "PROMETHEUS_TOKEN",
-							},
-						}},
+			meta: objectMetaInvalidSpec,
+			spec: v1beta1.GrafanaDatasourceSpec{
+				GrafanaCommonSpec: commonSpecInvalidSpec,
+				Datasource:        &v1beta1.GrafanaDatasourceInternal{},
+				ValuesFrom: []v1beta1.ValueFrom{{
+					TargetPath: "secureJsonData.httpHeaderValue1",
+					ValueFrom: v1beta1.ValueFromSource{SecretKeyRef: &corev1.SecretKeySelector{
+						Key: "credentials",
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: "PROMETHEUS_TOKEN",
+						},
 					}},
-				},
+				}},
 			},
-			wantCondition: conditionInvalidSpec,
-			wantReason:    conditionReasonInvalidModel,
-			wantErr:       "building datasource model",
+			want: metav1.Condition{
+				Type:   conditionInvalidSpec,
+				Reason: conditionReasonInvalidModel,
+			},
+			wantErr: "building datasource model",
 		},
 		{
 			name: "Successfully applied resource to instance",
-			cr: &v1beta1.GrafanaDatasource{
-				ObjectMeta: objectMetaSynchronized,
-				Spec: v1beta1.GrafanaDatasourceSpec{
-					GrafanaCommonSpec: commonSpecSynchronized,
-					Datasource: &v1beta1.GrafanaDatasourceInternal{
-						Name:   "synced-prometheus",
-						Type:   "prometheus",
-						Access: "proxy",
-						URL:    "https://demo.promlabs.com",
-					},
+			meta: objectMetaSynchronized,
+			spec: v1beta1.GrafanaDatasourceSpec{
+				GrafanaCommonSpec: commonSpecSynchronized,
+				Datasource: &v1beta1.GrafanaDatasourceInternal{
+					Name:   "synced-prometheus",
+					Type:   "prometheus",
+					Access: "proxy",
+					URL:    "https://demo.promlabs.com",
 				},
 			},
-			wantCondition: conditionDatasourceSynchronized,
-			wantReason:    conditionReasonApplySuccessful,
+			want: metav1.Condition{
+				Type:   conditionDatasourceSynchronized,
+				Reason: conditionReasonApplySuccessful,
+			},
 		},
 	}
 
-	for _, test := range tests {
-		It(test.name, func() {
-			err := k8sClient.Create(testCtx, test.cr)
-			Expect(err).ToNot(HaveOccurred())
-
-			// Reconciliation Request
-			req := requestFromMeta(test.cr.ObjectMeta)
-
-			// Reconcile
-			r := GrafanaDatasourceReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
-			_, err = r.Reconcile(testCtx, req)
-			if test.wantErr == "" {
-				Expect(err).ShouldNot(HaveOccurred())
-			} else {
-				Expect(err).Should(HaveOccurred())
-				Expect(err.Error()).Should(HavePrefix(test.wantErr))
+	for _, tt := range tests {
+		It(tt.name, func() {
+			cr := &v1beta1.GrafanaDatasource{
+				ObjectMeta: tt.meta,
+				Spec:       tt.spec,
 			}
 
-			resultCr := &v1beta1.GrafanaDatasource{}
-			Expect(r.Get(testCtx, req.NamespacedName, resultCr)).Should(Succeed())
+			err := k8sClient.Create(testCtx, cr)
+			require.NoError(t, err)
 
-			// Verify Condition
-			Expect(resultCr.Status.Conditions).Should(ContainElement(HaveField("Type", test.wantCondition)))
-			Expect(resultCr.Status.Conditions).Should(ContainElement(HaveField("Reason", test.wantReason)))
+			r := GrafanaDatasourceReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+			req := requestFromMeta(tt.meta)
+
+			_, err = r.Reconcile(testCtx, req)
+			if tt.wantErr == "" {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, tt.wantErr)
+			}
+
+			cr = &v1beta1.GrafanaDatasource{}
+
+			err = r.Get(testCtx, req.NamespacedName, cr)
+			require.NoError(t, err)
+
+			containsEqualCondition(cr.Status.Conditions, tt.want)
 		})
 	}
 })
