@@ -151,10 +151,15 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 	removeNoMatchingInstance(&libraryPanel.Status.Conditions)
 	log.Info("found matching Grafana instances for library panel", "count", len(instances))
 
+	folderUID, err := getFolderUID(ctx, r.Client, libraryPanel)
+	if err != nil {
+		return ctrl.Result{}, fmt.Errorf(ErrFetchingFolder, err)
+	}
+
 	applyErrors := make(map[string]string)
 
 	for _, grafana := range instances {
-		err := r.reconcileWithInstance(ctx, &grafana, libraryPanel, contentModel, hash)
+		err := r.reconcileWithInstance(ctx, &grafana, libraryPanel, contentModel, hash, folderUID)
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
@@ -170,7 +175,7 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 	return ctrl.Result{RequeueAfter: libraryPanel.Spec.ResyncPeriod.Duration}, nil
 }
 
-func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaLibraryPanel, model map[string]any, hash string) error {
+func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaLibraryPanel, model map[string]any, hash, folderUID string) error {
 	if instance.IsInternal() {
 		err := ReconcilePlugins(ctx, r.Client, r.Scheme, instance, cr.Spec.Plugins, fmt.Sprintf("%v-librarypanel", cr.Name))
 		if err != nil {
@@ -181,11 +186,6 @@ func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Contex
 	}
 
 	grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
-	if err != nil {
-		return err
-	}
-
-	folderUID, err := getFolderUID(ctx, r.Client, cr)
 	if err != nil {
 		return err
 	}
