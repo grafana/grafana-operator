@@ -101,6 +101,10 @@ func (in *GrafanaMuteTiming) MatchNamespace() string {
 	return in.Namespace
 }
 
+func (in *GrafanaMuteTiming) Metadata() metav1.ObjectMeta {
+	return in.ObjectMeta
+}
+
 func (in *GrafanaMuteTiming) AllowCrossNamespace() bool {
 	return in.Spec.AllowCrossNamespaceImport
 }

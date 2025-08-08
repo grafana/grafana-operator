@@ -21,126 +21,111 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Dashboard Reconciler: Provoke Conditions", func() {
 	tests := []struct {
-		name          string
-		cr            *v1beta1.GrafanaDashboard
-		wantCondition string
-		wantReason    string
-		wantErr       string
+		name    string
+		meta    metav1.ObjectMeta
+		spec    v1beta1.GrafanaDashboardSpec
+		want    metav1.Condition
+		wantErr string
 	}{
 		{
 			name: ".spec.suspend=true",
-			cr: &v1beta1.GrafanaDashboard{
-				ObjectMeta: objectMetaSuspended,
-				Spec: v1beta1.GrafanaDashboardSpec{
-					GrafanaCommonSpec:  commonSpecSuspended,
-					GrafanaContentSpec: v1beta1.GrafanaContentSpec{JSON: "{}"},
-				},
+			meta: objectMetaSuspended,
+			spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaCommonSpec:  commonSpecSuspended,
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{JSON: "{}"},
 			},
-			wantCondition: conditionSuspended,
-			wantReason:    conditionReasonApplySuspended,
+			want: metav1.Condition{
+				Type:   conditionSuspended,
+				Reason: conditionReasonApplySuspended,
+			},
 		},
 		{
 			name: "GetScopedMatchingInstances returns empty list",
-			cr: &v1beta1.GrafanaDashboard{
-				ObjectMeta: objectMetaNoMatchingInstances,
-				Spec: v1beta1.GrafanaDashboardSpec{
-					GrafanaCommonSpec:  commonSpecNoMatchingInstances,
-					GrafanaContentSpec: v1beta1.GrafanaContentSpec{JSON: "{}"},
-				},
+			meta: objectMetaNoMatchingInstances,
+			spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaCommonSpec:  commonSpecNoMatchingInstances,
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{JSON: "{}"},
 			},
-			wantCondition: conditionNoMatchingInstance,
-			wantReason:    conditionReasonEmptyAPIReply,
-			wantErr:       ErrNoMatchingInstances.Error(),
+			want: metav1.Condition{
+				Type:   conditionNoMatchingInstance,
+				Reason: conditionReasonEmptyAPIReply,
+			},
+			wantErr: ErrNoMatchingInstances.Error(),
 		},
 		{
 			name: "Failed to apply to instance",
-			cr: &v1beta1.GrafanaDashboard{
-				ObjectMeta: objectMetaApplyFailed,
-				Spec: v1beta1.GrafanaDashboardSpec{
-					GrafanaCommonSpec:  commonSpecApplyFailed,
-					GrafanaContentSpec: v1beta1.GrafanaContentSpec{JSON: "{}"},
-				},
+			meta: objectMetaApplyFailed,
+			spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaCommonSpec:  commonSpecApplyFailed,
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{JSON: "{}"},
 			},
-			wantCondition: conditionDashboardSynchronized,
-			wantReason:    conditionReasonApplyFailed,
-			wantErr:       "failed to apply to all instances",
+			want: metav1.Condition{
+				Type:   conditionDashboardSynchronized,
+				Reason: conditionReasonApplyFailed,
+			},
+			wantErr: "failed to apply to all instances",
 		},
 		{
 			name: "Invalid JSON",
-			cr: &v1beta1.GrafanaDashboard{
-				ObjectMeta: objectMetaInvalidSpec,
-				Spec: v1beta1.GrafanaDashboardSpec{
-					GrafanaCommonSpec:  commonSpecInvalidSpec,
-					GrafanaContentSpec: v1beta1.GrafanaContentSpec{JSON: "{]"}, // Invalid json
-				},
+			meta: objectMetaInvalidSpec,
+			spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaCommonSpec:  commonSpecInvalidSpec,
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{JSON: "{]"}, // Invalid json
 			},
-			wantCondition: conditionInvalidSpec,
-			wantReason:    conditionReasonInvalidModelResolution,
-			wantErr:       "resolving dashboard contents",
+			want: metav1.Condition{
+				Type:   conditionInvalidSpec,
+				Reason: conditionReasonInvalidModelResolution,
+			},
+			wantErr: "resolving dashboard contents",
 		},
 		{
 			name: "No model can be resolved, no model source is defined",
-			cr: &v1beta1.GrafanaDashboard{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "default",
-					Name:      "invalid-spec-no-model-source",
-				},
-				Spec: v1beta1.GrafanaDashboardSpec{
-					GrafanaCommonSpec: commonSpecInvalidSpec,
-				},
+			meta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "invalid-spec-no-model-source",
 			},
-			wantCondition: conditionInvalidSpec,
-			wantReason:    conditionReasonInvalidModelResolution,
-			wantErr:       "resolving dashboard contents",
+			spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaCommonSpec: commonSpecInvalidSpec,
+			},
+			want: metav1.Condition{
+				Type:   conditionInvalidSpec,
+				Reason: conditionReasonInvalidModelResolution,
+			},
+			wantErr: "resolving dashboard contents",
 		},
 		{
 			name: "Successfully applied resource to instance",
-			cr: &v1beta1.GrafanaDashboard{
-				ObjectMeta: objectMetaSynchronized,
-				Spec: v1beta1.GrafanaDashboardSpec{
-					GrafanaCommonSpec: commonSpecSynchronized,
-					GrafanaContentSpec: v1beta1.GrafanaContentSpec{
-						JSON: `{
+			meta: objectMetaSynchronized,
+			spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaCommonSpec: commonSpecSynchronized,
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+					JSON: `{
 							"title": "Minimal Dashboard",
 							"links": []
 						}`,
-					},
 				},
 			},
-			wantCondition: conditionDashboardSynchronized,
-			wantReason:    conditionReasonApplySuccessful,
+			want: metav1.Condition{
+				Type:   conditionDashboardSynchronized,
+				Reason: conditionReasonApplySuccessful,
+			},
 		},
 	}
 
-	for _, test := range tests {
-		It(test.name, func() {
-			err := k8sClient.Create(testCtx, test.cr)
-			Expect(err).ToNot(HaveOccurred())
-
-			// Reconciliation Request
-			req := requestFromMeta(test.cr.ObjectMeta)
-
-			// Reconcile
-			r := GrafanaDashboardReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
-			_, err = r.Reconcile(testCtx, req)
-			if test.wantErr == "" {
-				Expect(err).ShouldNot(HaveOccurred())
-			} else {
-				Expect(err).Should(HaveOccurred())
-				Expect(err.Error()).Should(HavePrefix(test.wantErr))
+	for _, tt := range tests {
+		It(tt.name, func() {
+			cr := &v1beta1.GrafanaDashboard{
+				ObjectMeta: tt.meta,
+				Spec:       tt.spec,
 			}
 
-			resultCr := &v1beta1.GrafanaDashboard{}
-			Expect(r.Get(testCtx, req.NamespacedName, resultCr)).Should(Succeed())
+			r := &GrafanaDashboardReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
 
-			// Verify Condition
-			Expect(resultCr.Status.Conditions).Should(ContainElement(HaveField("Type", test.wantCondition)))
-			Expect(resultCr.Status.Conditions).Should(ContainElement(HaveField("Reason", test.wantReason)))
+			reconcileAndValidateCondition(r, cr, tt.want, tt.wantErr)
 		})
 	}
 })

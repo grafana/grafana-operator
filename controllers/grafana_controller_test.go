@@ -5,10 +5,10 @@ import (
 
 	v1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 func TestRemoveMissingCRs(t *testing.T) {
@@ -50,44 +50,50 @@ func TestRemoveMissingCRs(t *testing.T) {
 }
 
 var _ = Describe("Grafana Reconciler: Provoke Conditions", func() {
+	t := GinkgoT()
+
 	tests := []struct {
-		name          string
-		cr            *v1beta1.Grafana
-		wantCondition string
-		wantReason    string
+		name string
+		meta metav1.ObjectMeta
+		spec v1beta1.GrafanaSpec
+		want metav1.Condition
 	}{
 		{
 			name: ".spec.suspend=true",
-			cr: &v1beta1.Grafana{
-				ObjectMeta: objectMetaSuspended,
-				Spec: v1beta1.GrafanaSpec{
-					Suspend: true,
-				},
+			meta: objectMetaSuspended,
+			spec: v1beta1.GrafanaSpec{
+				Suspend: true,
 			},
-			wantCondition: conditionSuspended,
-			wantReason:    conditionReasonReconcileSuspended,
+			want: metav1.Condition{
+				Type:   conditionSuspended,
+				Reason: conditionReasonReconcileSuspended,
+			},
 		},
 		// TODO When InvalidSpec is implemented for external instances admin secret referencing a non-existing secret
 	}
 
-	for _, test := range tests {
-		It(test.name, func() {
-			err := k8sClient.Create(testCtx, test.cr)
-			Expect(err).ToNot(HaveOccurred())
+	for _, tt := range tests {
+		It(tt.name, func() {
+			cr := &v1beta1.Grafana{
+				ObjectMeta: tt.meta,
+				Spec:       tt.spec,
+			}
 
-			req := requestFromMeta(test.cr.ObjectMeta)
+			err := k8sClient.Create(testCtx, cr)
+			require.NoError(t, err)
 
-			// Reconcile
 			r := GrafanaReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+			req := requestFromMeta(tt.meta)
+
 			_, err = r.Reconcile(testCtx, req)
-			Expect(err).ShouldNot(HaveOccurred())
+			require.NoError(t, err)
 
-			resultCr := &v1beta1.Grafana{}
-			Expect(r.Get(testCtx, req.NamespacedName, resultCr)).Should(Succeed())
+			cr = &v1beta1.Grafana{}
 
-			// Verify condition
-			Expect(resultCr.Status.Conditions).Should(ContainElement(HaveField("Type", test.wantCondition)))
-			Expect(resultCr.Status.Conditions).Should(ContainElement(HaveField("Reason", test.wantReason)))
+			err = r.Get(testCtx, req.NamespacedName, cr)
+			require.NoError(t, err)
+
+			containsEqualCondition(cr.Status.Conditions, tt.want)
 		})
 	}
 })

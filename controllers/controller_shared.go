@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
+	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -54,6 +55,11 @@ var (
 	ErrNoMatchingInstances = fmt.Errorf("no matching instances")
 	ErrFetchingFolder      = "fetching folder to resolve uid: %w"
 )
+
+type GrafanaCommonReconciler interface {
+	Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error
+	Reconcile(ctx context.Context, req controllerruntime.Request) (controllerruntime.Result, error)
+}
 
 //+kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update;patch;delete
 

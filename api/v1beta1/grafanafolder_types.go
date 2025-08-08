@@ -171,6 +171,10 @@ func (in *GrafanaFolder) MatchNamespace() string {
 	return in.Namespace
 }
 
+func (in *GrafanaFolder) Metadata() metav1.ObjectMeta {
+	return in.ObjectMeta
+}
+
 func (in *GrafanaFolder) AllowCrossNamespace() bool {
 	return in.Spec.AllowCrossNamespaceImport
 }

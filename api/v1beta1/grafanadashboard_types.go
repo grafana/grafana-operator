@@ -139,6 +139,10 @@ func (in *GrafanaDashboard) MatchNamespace() string {
 	return in.Namespace
 }
 
+func (in *GrafanaDashboard) Metadata() metav1.ObjectMeta {
+	return in.ObjectMeta
+}
+
 func (in *GrafanaDashboard) AllowCrossNamespace() bool {
 	return in.Spec.AllowCrossNamespaceImport
 }
