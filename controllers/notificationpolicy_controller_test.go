@@ -28,7 +28,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 func routesToRuntimeObjects(routes []v1beta1.GrafanaNotificationPolicyRoute) []runtime.Object {
@@ -498,6 +497,8 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke Conditions", func() {
 })
 
 var _ = Describe("NotificationPolicy Reconciler: Provoke LoopDetected Condition", func() {
+	t := GinkgoT()
+
 	np := &v1beta1.GrafanaNotificationPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
@@ -555,24 +556,31 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke LoopDetected Condition"
 	}
 
 	It("Provokes the NotificationPolicyLoopDetected Condition", func() {
-		Expect(k8sClient.Create(testCtx, np)).To(Succeed())
-		Expect(k8sClient.Create(testCtx, teamB)).To(Succeed())
-		Expect(k8sClient.Create(testCtx, teamC)).To(Succeed())
+		err := k8sClient.Create(testCtx, np)
+		require.NoError(t, err)
 
-		// Reconciliation Request
+		err = k8sClient.Create(testCtx, teamB)
+		require.NoError(t, err)
+
+		err = k8sClient.Create(testCtx, teamC)
+		require.NoError(t, err)
+
+		r := GrafanaNotificationPolicyReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
 		req := requestFromMeta(np.ObjectMeta)
 
-		// Reconcile
-		r := GrafanaNotificationPolicyReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
-		_, err := r.Reconcile(testCtx, req)
-		Expect(err).To(HaveOccurred())
-		Expect(err.Error()).To(HavePrefix("failed to assemble notification policy routes"))
+		_, err = r.Reconcile(testCtx, req)
+		require.ErrorContains(t, err, "failed to assemble notification policy routes")
 
-		resultCr := &v1beta1.GrafanaNotificationPolicy{}
-		Expect(r.Get(testCtx, req.NamespacedName, resultCr)).Should(Succeed())
+		cr := &v1beta1.GrafanaNotificationPolicy{}
 
-		// Verify Condition
-		Expect(resultCr.Status.Conditions).Should(ContainElement(HaveField("Type", conditionNotificationPolicyLoopDetected)))
-		Expect(resultCr.Status.Conditions).Should(ContainElement(HaveField("Reason", conditionReasonLoopDetected)))
+		err = r.Get(testCtx, req.NamespacedName, cr)
+		require.NoError(t, err)
+
+		want := metav1.Condition{
+			Type:   conditionNotificationPolicyLoopDetected,
+			Reason: conditionReasonLoopDetected,
+		}
+
+		containsEqualCondition(cr.Status.Conditions, want)
 	})
 })
