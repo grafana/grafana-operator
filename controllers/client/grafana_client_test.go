@@ -2,8 +2,15 @@ package client
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"os"
+	"slices"
 	"testing"
+	"time"
 
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -311,4 +318,88 @@ func TestGetAdminCredentials(t *testing.T) {
 
 		assert.Nil(t, got)
 	})
+}
+
+func TestGetBearerToken(t *testing.T) {
+	t.Parallel()
+
+	now := time.Now()
+	body := jwt.Claims{
+		ID:        "1234",
+		Issuer:    "grafana.operator.com",
+		Audience:  jwt.Audience{"https://grafana.operator.com"},
+		IssuedAt:  jwt.NewNumericDate(now),
+		NotBefore: jwt.NewNumericDate(now),
+		Expiry:    jwt.NewNumericDate(now.Add(time.Duration(30 * float64(time.Second)))),
+	}
+
+	// Generate key
+	testRSAKey, err := rsa.GenerateKey(rand.Reader, 1024) // nolint:gosec
+	require.NotNil(t, testRSAKey)
+	require.NoError(t, err)
+
+	sk := jose.SigningKey{
+		Key: &jose.JSONWebKey{
+			Key:   testRSAKey,
+			KeyID: "test-key",
+		},
+		Algorithm: jose.RS256,
+	}
+
+	// Create signer, and sign token
+	signer, err := jose.NewSigner(sk, &jose.SignerOptions{EmbedJWK: true})
+	require.NoError(t, err)
+
+	origToken, err := jwt.Signed(signer).Claims(body).Serialize()
+	require.NoError(t, err)
+
+	// Create tmp file
+	tokenFile, err := os.CreateTemp(os.TempDir(), "token-*")
+	require.NoError(t, err)
+	require.NotNil(t, testRSAKey)
+
+	// Do not read token file purposefully
+	jwtCache = nil
+	noToken, err := getBearerToken(tokenFile.Name() + "-extra")
+	require.Error(t, err)
+	require.Empty(t, noToken)
+	require.Nil(t, jwtCache)
+
+	// Write token to file
+	writtenBytes, err := tokenFile.WriteString(origToken)
+	require.Equal(t, len([]byte(origToken)), writtenBytes)
+	require.NoError(t, err)
+
+	// Decode token
+	token, err := getBearerToken(tokenFile.Name())
+	require.NoError(t, err)
+	require.Equal(t, origToken, token)
+	require.Equal(t, origToken, jwtCache.Token)
+	require.False(t, jwtCache.Expiration.IsZero())
+
+	// Expire the cache and re-read token
+	jwtCache.Expiration = time.Now().Add(-10 * time.Second)
+	token, err = getBearerToken(tokenFile.Name())
+	require.NoError(t, err)
+	require.Equal(t, origToken, token)
+	require.True(t, jwtCache.Expiration.After(time.Now()))
+
+	// Mangle token
+	reversedOrigToken := []byte(origToken)
+	slices.Reverse(reversedOrigToken)
+	reversedWrittenBytes, err := tokenFile.Write(reversedOrigToken)
+	require.NoError(t, err)
+	require.Equal(t, len([]byte(reversedOrigToken)), reversedWrittenBytes)
+
+	// Successfully get token from cache
+	token, err = getBearerToken(tokenFile.Name())
+	require.NoError(t, err)
+	require.Equal(t, origToken, token)
+
+	// Reset cache and error on mangled token
+	jwtCache = nil
+	mangledToken, err := getBearerToken(tokenFile.Name())
+	require.Error(t, err)
+	require.Empty(t, mangledToken)
+	require.Nil(t, jwtCache)
 }
