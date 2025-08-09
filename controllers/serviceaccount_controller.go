@@ -83,21 +83,6 @@ type GrafanaServiceAccountReconciler struct {
 // +kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanaserviceaccounts/finalizers,verbs=update
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
 
-// SetupWithManager sets up the controller with the Manager.
-func (r *GrafanaServiceAccountReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	// TODO: Consider watching token Secrets for reactive reconciles.
-	// It'll requeue on Secret create/update/delete, reducing reliance on ResyncPeriod.
-	// Example: Owns(&corev1.Secret{}, builder.WithPredicates(...))
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1beta1.GrafanaServiceAccount{}).
-		WithEventFilter(predicate.Or(
-			ignoreStatusUpdates(),
-			predicate.AnnotationChangedPredicate{},
-		)).
-		WithOptions(controller.Options{RateLimiter: defaultRateLimiter()}).
-		Complete(r)
-}
-
 // Reconcile synchronizes the actual state (Grafana service accounts and Kubernetes secrets)
 // with the desired state defined in the GrafanaServiceAccount CR spec,
 // taking into account Kubernetes' eventual consistency model.
@@ -999,4 +984,19 @@ func renewSecret(
 	}
 
 	secret.Annotations["grafana.integreatly.org/service-account-token-id"] = strconv.FormatInt(tokenStatus.ID, 10)
+}
+
+// SetupWithManager sets up the controller with the Manager.
+func (r *GrafanaServiceAccountReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	// TODO: Consider watching token Secrets for reactive reconciles.
+	// It'll requeue on Secret create/update/delete, reducing reliance on ResyncPeriod.
+	// Example: Owns(&corev1.Secret{}, builder.WithPredicates(...))
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&v1beta1.GrafanaServiceAccount{}).
+		WithEventFilter(predicate.Or(
+			ignoreStatusUpdates(),
+			predicate.AnnotationChangedPredicate{},
+		)).
+		WithOptions(controller.Options{RateLimiter: defaultRateLimiter()}).
+		Complete(r)
 }
