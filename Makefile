@@ -211,6 +211,11 @@ deploy-chainsaw: $(KUSTOMIZE) manifests ## Deploy controller to the K8s cluster 
 	$(info $(M) running $@)
 	$(KUSTOMIZE) build deploy/kustomize/overlays/chainsaw | kubectl apply --server-side --force-conflicts -f -
 
+.PHONY: deploy-chainsaw-debug
+deploy-chainsaw-debug: $(KUSTOMIZE) manifests ## Deploy debug controller (http-echo) to the K8s cluster for mirrord (https://github.com/metalbear-co/mirrord) debugging.
+	$(info $(M) running $@)
+	$(KUSTOMIZE) build deploy/kustomize/overlays/chainsaw-debug | kubectl apply --server-side --force-conflicts -f -
+
 .PHONY: undeploy
 undeploy: $(KUSTOMIZE) ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(info $(M) running $@)
