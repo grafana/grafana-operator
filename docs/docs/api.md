@@ -22778,15 +22778,6 @@ GrafanaServiceAccountStatus defines the observed state of a GrafanaServiceAccoun
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>lastGeneration</b></td>
-        <td>integer</td>
-        <td>
-          LastGeneration is the Generation of the last reconciled resource<br/>
-          <br/>
-            <i>Format</i>: int64<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
         <td><b><a href="#grafanaserviceaccountstatusaccount">account</a></b></td>
         <td>object</td>
         <td>

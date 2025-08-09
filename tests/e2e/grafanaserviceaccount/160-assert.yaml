@@ -9,4 +9,3 @@ status:
       reason: ErrFetchingInstances
       status: 'True'
       type: NoMatchingInstance
-  lastGeneration: 1

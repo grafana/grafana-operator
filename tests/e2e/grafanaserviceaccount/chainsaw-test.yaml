@@ -189,7 +189,8 @@ spec:
               name: grafana1-sa2
               namespace: ($NAMESPACE)
             status:
-              lastGeneration: 7
+              conditions:
+                - observedGeneration: 7
       - assert: { file: 100-assert.yaml }
       - script: *fetchSAs
       - assert: { file: 100-assert-api-response.yaml }

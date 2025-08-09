@@ -13,8 +13,8 @@ status:
     name: sa1
     role: Editor
   conditions:
-    - message: service account reconciled
+    - message: ServiceAccount was successfully applied to 1 instances
       reason: ApplySuccessful
       status: "True"
       type: ServiceAccountSynchronized
-  lastGeneration: 1
+      observedGeneration: 1

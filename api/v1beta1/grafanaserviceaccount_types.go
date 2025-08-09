@@ -123,9 +123,6 @@ type GrafanaServiceAccountInfo struct {
 type GrafanaServiceAccountStatus struct {
 	GrafanaCommonStatus `json:",inline"`
 
-	// LastGeneration is the Generation of the last reconciled resource
-	LastGeneration int64 `json:"lastGeneration"`
-
 	// Info contains the Grafana service account information
 	Account *GrafanaServiceAccountInfo `json:"account,omitempty"`
 }
@@ -134,11 +131,6 @@ type GrafanaServiceAccountStatus struct {
 //+kubebuilder:subresource:status
 
 // GrafanaServiceAccount is the Schema for the grafanaserviceaccounts API
-// +kubebuilder:printcolumn:name="Instance",type="string",JSONPath=".spec.instanceName",description="Grafana instance name"
-// +kubebuilder:printcolumn:name="Name",type="string",JSONPath=".spec.name",description="Service account name"
-// +kubebuilder:printcolumn:name="Role",type="string",JSONPath=".spec.role",description="Service account role"
-// +kubebuilder:printcolumn:name="Last resync",type="date",format="date-time",JSONPath=".status.lastResync",description=""
-// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""
 // +kubebuilder:resource:categories={grafana-operator}
 type GrafanaServiceAccount struct {
 	metav1.TypeMeta   `json:",inline"`

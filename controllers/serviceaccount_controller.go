@@ -85,6 +85,9 @@ type GrafanaServiceAccountReconciler struct {
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *GrafanaServiceAccountReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	// TODO: Consider watching token Secrets for reactive reconciles.
+	// It'll requeue on Secret create/update/delete, reducing reliance on ResyncPeriod.
+	// Example: Owns(&corev1.Secret{}, builder.WithPredicates(...))
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.GrafanaServiceAccount{}).
 		WithEventFilter(predicate.Or(
@@ -92,9 +95,6 @@ func (r *GrafanaServiceAccountReconciler) SetupWithManager(mgr ctrl.Manager) err
 			predicate.AnnotationChangedPredicate{},
 		)).
 		WithOptions(controller.Options{RateLimiter: defaultRateLimiter()}).
-		// TODO: Consider watching token Secrets for reactive reconciles.
-		// It'll requeue on Secret create/update/delete, reducing reliance on ResyncPeriod.
-		// Owns(&corev1.Secret{}).
 		Complete(r)
 }
 
@@ -126,12 +126,32 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 	}
 	defer UpdateStatus(ctx, r.Client, cr)
 
-	if cr.Status.LastGeneration != cr.Generation {
-		cr.Status.LastGeneration = cr.Generation
+	// 2. Establish connection to the target Grafana instance
+	// First, get the Grafana CR
+	var grafana v1beta1.Grafana
+
+	err = r.Get(ctx, client.ObjectKey{
+		Namespace: cr.Namespace,
+		Name:      cr.Spec.InstanceName,
+	}, &grafana)
+	if err != nil {
+		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionServiceAccountSynchronized)
+
+		return ctrl.Result{}, err
 	}
 
-	// 2. Establish connection to the target Grafana instance
-	gClient, err := r.newGrafanaClient(ctx, cr)
+	// Check if Grafana instance is ready
+	if grafana.Status.Stage != v1beta1.OperatorStageComplete || grafana.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
+		err := fmt.Errorf("Grafana instance %q is not ready (stage: %q, status: %q)", cr.Spec.InstanceName, grafana.Status.Stage, grafana.Status.StageStatus) // nolint:staticcheck
+		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionServiceAccountSynchronized)
+
+		return ctrl.Result{}, err
+	}
+
+	// Then create the Grafana API client
+	gClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 	if err != nil {
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionServiceAccountSynchronized)
@@ -160,29 +180,25 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 
 	// 4. For active resources - reconcile the actual state with the desired state (creates, updates, removes as needed)
 	err = r.reconcile(ctx, gClient, cr)
-	if err != nil {
-		// 5. Update the resource status with current state and conditions
-		meta.SetStatusCondition(&cr.Status.Conditions, metav1.Condition{
-			Type:               conditionServiceAccountSynchronized,
-			LastTransitionTime: metav1.Time{Time: time.Now()},
-			Status:             metav1.ConditionFalse,
-			ObservedGeneration: cr.Generation,
-			Reason:             conditionReasonApplyFailed,
-			Message:            err.Error(),
-		})
-
-		return ctrl.Result{}, fmt.Errorf("reconciling service account: %w", err)
-	}
 
 	// 5. Update the resource status with current state and conditions
-	meta.SetStatusCondition(&cr.Status.Conditions, metav1.Condition{
-		Type:               conditionServiceAccountSynchronized,
-		LastTransitionTime: metav1.Time{Time: time.Now()},
-		Status:             metav1.ConditionTrue,
-		ObservedGeneration: cr.Generation,
-		Reason:             conditionReasonApplySuccessful,
-		Message:            "service account reconciled",
-	})
+	applyErrors := map[string]string{}
+	if err != nil {
+		applyErrors[grafana.Name] = err.Error()
+	}
+
+	condition := buildSynchronizedCondition(
+		"ServiceAccount",
+		conditionServiceAccountSynchronized,
+		cr.Generation,
+		applyErrors,
+		1, // We're reconciling a single service account
+	)
+	meta.SetStatusCondition(&cr.Status.Conditions, condition)
+
+	if err != nil {
+		return ctrl.Result{}, fmt.Errorf("reconciling service account: %w", err)
+	}
 
 	// 6. Schedule periodic reconciliation based on ResyncPeriod
 	return ctrl.Result{RequeueAfter: cr.Spec.ResyncPeriod.Duration}, nil
@@ -723,38 +739,6 @@ func (r *GrafanaServiceAccountReconciler) pruneAndIndexSecrets(
 	}
 
 	return filtered, nil
-}
-
-func (r *GrafanaServiceAccountReconciler) newGrafanaClient(
-	ctx context.Context,
-	cr *v1beta1.GrafanaServiceAccount,
-) (*genapi.GrafanaHTTPAPI, error) {
-	// Look for Grafana instance in the same namespace (as per security requirements)
-	var grafana v1beta1.Grafana
-
-	err := r.Get(ctx, client.ObjectKey{
-		Namespace: cr.Namespace,
-		Name:      cr.Spec.InstanceName,
-	}, &grafana)
-	if err != nil {
-		if kuberr.IsNotFound(err) {
-			return nil, fmt.Errorf("Grafana instance %q not found in namespace %q", cr.Spec.InstanceName, cr.Namespace) // nolint:staticcheck
-		}
-
-		return nil, fmt.Errorf("fetching Grafana instance: %w", err)
-	}
-
-	// Check if Grafana instance is ready
-	if grafana.Status.Stage != v1beta1.OperatorStageComplete || grafana.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
-		return nil, fmt.Errorf("Grafana instance %q is not ready (stage: %q, status: %q)", cr.Spec.InstanceName, grafana.Status.Stage, grafana.Status.StageStatus) // nolint:staticcheck
-	}
-
-	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
-	if err != nil {
-		return nil, fmt.Errorf("building grafana client: %w", err)
-	}
-
-	return cl, nil
 }
 
 // createAccount creates a new service account in Grafana and all related resources such as tokens and secrets.
