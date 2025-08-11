@@ -68,7 +68,7 @@ jobs:
           export_env: false
 
       - name: Create a GitHub App installation access token
-        uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
+        uses: actions/create-github-app-token@0f859bf9e69e887678d5bbfbee594437cb440ffe # v2.1.0
         id: app-token
         with:
           app-id: ${{ fromJSON(steps.secrets.outputs.secrets || '{}').APP_ID }}
@@ -141,7 +141,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -178,7 +178,7 @@ jobs:
           persist-credentials: false
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -262,7 +262,7 @@ jobs:
         platform: [linux/arm64, linux/amd64]
     steps:
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
