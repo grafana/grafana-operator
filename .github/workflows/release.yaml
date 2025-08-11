@@ -269,7 +269,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download SBOMs
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: sboms
           path: ./sboms/
