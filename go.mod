@@ -2,6 +2,9 @@ module github.com/grafana/grafana-operator/v5
 
 go 1.25.0
 
+// https://github.com/grafana/grafana-openapi-client-go/pull/115
+replace github.com/grafana/grafana-openapi-client-go => github.com/ndk/grafana-openapi-client-go v0.0.0-20250625114140-5abf8d2d12df
+
 require (
 	github.com/KimMachineGun/automemlimit v0.7.4
 	github.com/bitly/go-simplejson v0.5.1

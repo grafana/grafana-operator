@@ -27,6 +27,7 @@ vendor
 
 .vscode/
 .DS_Store
+.mirrord
 
 # Audit lab
 kube-apiserver-audit.log
