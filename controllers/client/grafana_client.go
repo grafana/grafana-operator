@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/config"
@@ -16,10 +19,68 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const (
+	serviceAccountTokenPath = "/var/run/secrets/kubernetes.io/serviceaccount/token" // nolint:gosec
+)
+
 type grafanaAdminCredentials struct {
 	adminUser     string
 	adminPassword string
 	apikey        string
+}
+
+type JWTCache struct {
+	Token      string
+	Expiration time.Time
+}
+
+var jwtCache *JWTCache
+
+// getBearerToken will read JWT token from given file and cache it until it expires.
+// accepts filepath arg for testing
+func getBearerToken(bearerTokenPath string) (string, error) {
+	// Return cached token if not expired
+	if jwtCache != nil && jwtCache.Expiration.After(time.Now()) {
+		return jwtCache.Token, nil
+	}
+
+	b, err := os.ReadFile(bearerTokenPath)
+	if err != nil {
+		return "", fmt.Errorf("reading token file at %s, %w", bearerTokenPath, err)
+	}
+
+	token := string(b)
+
+	// List of accepted JWT signing algorithms from: https://kubernetes.io/docs/reference/access-authn-authz/authentication/#:~:text=oidc-signing-algs
+	t, err := jwt.ParseSigned(token, []jose.SignatureAlgorithm{
+		jose.RS256, jose.RS384, jose.RS512,
+		jose.ES256, jose.ES384, jose.ES512,
+		jose.PS256, jose.PS384, jose.PS512,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	claims := jwt.Claims{}
+
+	// TODO fetch JWKS from https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT_HTTPS}/openid/v1/jwks
+	// Then verify token using the keys
+	err = t.UnsafeClaimsWithoutVerification(&claims)
+	if err != nil {
+		return "", fmt.Errorf("decoding ServiceAccount token %w", err)
+	}
+
+	tokenExpiration := claims.Expiry.Time()
+	if tokenExpiration.Before(time.Now()) {
+		return "", fmt.Errorf("token expired at %s, expected %s to be rotated", tokenExpiration.String(), bearerTokenPath)
+	}
+
+	jwtCache = &JWTCache{
+		Token:      token,
+		Expiration: tokenExpiration,
+	}
+
+	return token, nil
 }
 
 func getExternalAdminUser(ctx context.Context, c client.Client, cr *v1beta1.Grafana) (string, error) {
@@ -61,6 +122,17 @@ func getExternalAdminPassword(ctx context.Context, c client.Client, cr *v1beta1.
 
 func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (*grafanaAdminCredentials, error) {
 	credentials := &grafanaAdminCredentials{}
+
+	if grafana.Spec.Client != nil && grafana.Spec.Client.UseKubeAuth {
+		t, err := getBearerToken(serviceAccountTokenPath)
+		if err != nil {
+			return nil, err
+		}
+
+		credentials.apikey = t
+
+		return credentials, nil
+	}
 
 	if grafana.IsExternal() {
 		// prefer api key if present
@@ -151,7 +223,7 @@ func InjectAuthHeaders(ctx context.Context, c client.Client, grafana *v1beta1.Gr
 	}
 
 	if creds.apikey != "" {
-		req.Header.Add("Authorization", "Bearer "+creds.apikey)
+		req.Header.Set("Authorization", "Bearer "+creds.apikey)
 	} else {
 		req.SetBasicAuth(creds.adminUser, creds.adminPassword)
 	}
