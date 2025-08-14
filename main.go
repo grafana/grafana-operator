@@ -20,7 +20,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -28,7 +27,6 @@ import (
 	"syscall"
 
 	"github.com/KimMachineGun/automemlimit/memlimit"
-	"go.uber.org/automaxprocs/maxprocs"
 	uberzap "go.uber.org/zap"
 
 	"github.com/go-logr/logr"
@@ -44,6 +42,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -140,12 +139,6 @@ func main() { // nolint:gocyclo
 
 	// Optimize Go runtime based on CGroup limits (GOMEMLIMIT, sets a soft memory limit for the runtime)
 	memlimit.SetGoMemLimitWithOpts(memlimit.WithLogger(slogger)) //nolint:errcheck
-
-	// Optimize Go runtime based on CGroup limits (GOMAXPROCS, limits the number of operating system threads that can execute user-level Go code simultaneously)
-	_, err := maxprocs.Set(maxprocs.Logger(log.Printf))
-	if err != nil {
-		setupLog.Error(err, "failed to adjust GOMAXPROCS")
-	}
 
 	// Detect environment variables
 	watchNamespace, _ := os.LookupEnv(watchNamespaceEnvVar)
