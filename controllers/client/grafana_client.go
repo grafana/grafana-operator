@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"time"
 
+	httptransport "github.com/go-openapi/runtime/client"
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/config"
@@ -225,6 +226,13 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, grafana *v1
 	}
 
 	cl := genapi.NewHTTPClientWithConfig(nil, cfg)
+
+	runtime, ok := cl.Transport.(*httptransport.Runtime)
+	if !ok {
+		return nil, fmt.Errorf("casting client transport into *httptransport.Runtime to overwrite the default context")
+	}
+
+	runtime.Context = ctx
 
 	return cl, nil
 }
