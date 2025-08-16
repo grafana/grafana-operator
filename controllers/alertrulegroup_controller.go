@@ -114,8 +114,12 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 	log.Info("found matching Grafana instances for group", "count", len(instances))
 
 	folderUID, err := getFolderUID(ctx, r.Client, group)
-	if err != nil || folderUID == "" {
-		return ctrl.Result{}, fmt.Errorf("folder uid not found: %w", err)
+	if err != nil {
+		return ctrl.Result{}, fmt.Errorf(ErrFetchingFolder, err)
+	}
+
+	if folderUID == "" {
+		return ctrl.Result{}, fmt.Errorf("folder uid not found, alert rule must reference a folder")
 	}
 
 	editable := "true" //nolint:goconst

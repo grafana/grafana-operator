@@ -122,12 +122,17 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	removeNoMatchingInstance(&folder.Status.Conditions)
 	folder.Status.NoMatchingInstances = false
 
+	parentFolderUID, err := getFolderUID(ctx, r.Client, folder)
+	if err != nil {
+		return ctrl.Result{}, fmt.Errorf(ErrFetchingFolder, err)
+	}
+
 	log.Info("found matching Grafana instances for folder", "count", len(instances))
 
 	applyErrors := make(map[string]string)
 
 	for _, grafana := range instances {
-		err = r.onFolderCreated(ctx, &grafana, folder)
+		err = r.onFolderCreated(ctx, &grafana, folder, parentFolderUID)
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
@@ -183,18 +188,13 @@ func (r *GrafanaFolderReconciler) finalize(ctx context.Context, folder *grafanav
 	return nil
 }
 
-func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *grafanav1beta1.Grafana, cr *grafanav1beta1.GrafanaFolder) error {
+func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *grafanav1beta1.Grafana, cr *grafanav1beta1.GrafanaFolder, parentFolderUID string) error {
 	log := logf.FromContext(ctx)
 
 	title := cr.GetTitle()
 	uid := cr.CustomUIDOrUID()
 
 	grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
-	if err != nil {
-		return err
-	}
-
-	parentFolderUID, err := getFolderUID(ctx, r.Client, cr)
 	if err != nil {
 		return err
 	}
