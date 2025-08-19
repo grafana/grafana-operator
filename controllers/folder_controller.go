@@ -151,6 +151,9 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 }
 
 func (r *GrafanaFolderReconciler) finalize(ctx context.Context, folder *grafanav1beta1.GrafanaFolder) error {
+	log := logf.FromContext(ctx)
+	log.Info("Finalizing GrafanaFolder")
+
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, folder)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
@@ -162,6 +165,7 @@ func (r *GrafanaFolderReconciler) finalize(ctx context.Context, folder *grafanav
 	for _, grafana := range instances {
 		found, uid := grafana.Status.Folders.Find(folder.Namespace, folder.Name)
 		if !found {
+			log.Info("folder not found on instance - skipping finalize", "grafana", grafana.Name, "uid", uid)
 			continue
 		}
 

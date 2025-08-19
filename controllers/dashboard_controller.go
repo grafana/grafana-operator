@@ -219,6 +219,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.GrafanaDashboard) error {
 	log := logf.FromContext(ctx)
+	log.Info("Finalizing GrafanaDashboard")
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
@@ -228,6 +229,7 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 	for _, grafana := range instances {
 		found, uid := grafana.Status.Dashboards.Find(cr.Namespace, cr.Name)
 		if !found {
+			log.Info("dashboard not found on instance - skipping finalize", "grafana", grafana.Name, "uid", uid)
 			continue
 		}
 

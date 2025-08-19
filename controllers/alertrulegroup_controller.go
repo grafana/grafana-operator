@@ -292,6 +292,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 
 func (r *GrafanaAlertRuleGroupReconciler) finalize(ctx context.Context, group *grafanav1beta1.GrafanaAlertRuleGroup) error {
 	log := logf.FromContext(ctx)
+	log.Info("Finalizing GrafanaAlertRuleGroup")
 
 	isCleanupInGrafanaRequired := true
 

@@ -214,6 +214,9 @@ func (r *GrafanaDatasourceReconciler) deleteOldDatasource(ctx context.Context, c
 }
 
 func (r *GrafanaDatasourceReconciler) finalize(ctx context.Context, cr *v1beta1.GrafanaDatasource) error {
+	log := logf.FromContext(ctx)
+	log.Info("Finalizing GrafanaDatasource")
+
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
@@ -222,6 +225,7 @@ func (r *GrafanaDatasourceReconciler) finalize(ctx context.Context, cr *v1beta1.
 	for _, grafana := range instances {
 		found, uid := grafana.Status.Datasources.Find(cr.Namespace, cr.Name)
 		if !found {
+			log.Info("datasource not found on instance - skipping finalize", "grafana", grafana.Name, "uid", uid)
 			continue
 		}
 
