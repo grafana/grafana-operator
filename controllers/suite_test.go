@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -255,4 +256,14 @@ func reconcileAndValidateCondition(r GrafanaCommonReconciler, cr v1beta1.CommonR
 	require.NoError(t, err)
 
 	containsEqualCondition(cr.CommonStatus().Conditions, condition)
+
+	err = k8sClient.Delete(testCtx, cr)
+	require.NoError(t, err)
+
+	_, err = r.Reconcile(testCtx, req)
+	if err != nil && strings.Contains(err.Error(), "dummy-deployment") {
+		require.Error(t, err)
+	} else {
+		require.NoError(t, err)
+	}
 }
