@@ -224,14 +224,15 @@ func (r *GrafanaServiceAccountReconciler) finalize(ctx context.Context, cr *v1be
 			return nil
 		}
 
-		// TODO: Grafana Operator currently deploys Grafana 11.3.0 (see controllers/config/operator_constants.go#L6).
-		// Until Grafana 12.0.2 there was no reliable way to detect a 404 when deleting a service account.
-		// The API still returns 500 (see https://github.com/grafana/grafana/issues/106618).
+		// TODO: The operator now deploys Grafana 12.1.0 by default (see controllers/config/operator_constants.go#L6),
+		// but it may still manage older Grafana instances.
 		//
-		// Once we upgrade to Grafana > 12.0.2 and bump github.com/grafana/grafana-openapi-client-go,
-		// we can handle the real 404 explicitly.
+		// Before Grafana 12.0.2, there was no reliable way to detect a 404 when deleting a service account.
+		// The API returned 500 instead (see https://github.com/grafana/grafana/issues/106618).
 		//
-		// In the meantime we treat any non-nil error from the delete call as "already removed" and just log it for visibility.
+		// Once we can guarantee all managed instances are >= 12.0.2 we can handle the real 404 explicitly.
+		//
+		// Until then, we treat any non-nil error from the delete call as "already removed" and just log it for visibility.
 		logf.FromContext(ctx).Error(err, "failed to delete service account (may already be deleted)",
 			"serviceAccountID", cr.Status.Account.ID,
 			"serviceAccountName", cr.Spec.Name,
