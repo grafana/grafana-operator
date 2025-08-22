@@ -328,7 +328,7 @@ spec:
       - wait:
           apiVersion: v1
           kind: Secret
-          selector: grafana.integreatly.org/service-account-name=grafana1-sa2
+          selector: operator.grafana.com/service-account-name=grafana1-sa2
           namespace: ($NAMESPACE)
           for:
             deletion: {}
@@ -391,7 +391,7 @@ spec:
       - wait:
           apiVersion: v1
           kind: Secret
-          selector: grafana.integreatly.org/service-account-name=grafana1-sa1
+          selector: operator.grafana.com/service-account-name=grafana1-sa1
           namespace: ($NAMESPACE)
           for:
             deletion: {}

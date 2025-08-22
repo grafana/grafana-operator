@@ -781,10 +781,9 @@ func isEqualExpirationTime(a, b *metav1.Time) bool {
 
 func buildSecretLabels(cr *v1beta1.GrafanaServiceAccount) map[string]string {
 	return map[string]string{
-		"app": "grafana-serviceaccount-token",
-		"grafana.integreatly.org/service-account-instance": cr.Spec.InstanceName,
-		"grafana.integreatly.org/service-account-name":     cr.Name,
-		"grafana.integreatly.org/service-account-uid":      string(cr.UID),
+		"operator.grafana.com/service-account-instance": cr.Spec.InstanceName,
+		"operator.grafana.com/service-account-name":     cr.Name,
+		"operator.grafana.com/service-account-uid":      string(cr.UID),
 	}
 }
 
@@ -797,7 +796,7 @@ func extractTokenNameFromSecret(secret *corev1.Secret) (string, bool) {
 		return "", false
 	}
 
-	tokenName, ok := secret.Annotations["grafana.integreatly.org/service-account-token-name"]
+	tokenName, ok := secret.Annotations["operator.grafana.com/service-account-token-name"]
 
 	return tokenName, ok
 }
@@ -816,9 +815,9 @@ func buildTokenSecret(
 			Namespace: cr.Namespace,
 			Labels:    buildSecretLabels(cr),
 			Annotations: map[string]string{
-				"grafana.integreatly.org/service-account-spec-name":  cr.Spec.Name,
-				"grafana.integreatly.org/service-account-uid":        string(cr.UID),
-				"grafana.integreatly.org/service-account-token-name": tokenStatus.Name,
+				"operator.grafana.com/service-account-spec-name":  cr.Spec.Name,
+				"operator.grafana.com/service-account-uid":        string(cr.UID),
+				"operator.grafana.com/service-account-token-name": tokenStatus.Name,
 			},
 		},
 		Type: corev1.SecretTypeOpaque,
@@ -830,7 +829,7 @@ func buildTokenSecret(
 	}
 
 	if tokenStatus.Expires != nil {
-		secret.Annotations["grafana.integreatly.org/service-account-token-expiry"] = tokenStatus.Expires.Format(time.RFC3339)
+		secret.Annotations["operator.grafana.com/service-account-token-expiry"] = tokenStatus.Expires.Format(time.RFC3339)
 	}
 
 	model2.SetInheritedLabels(secret, cr.Labels)
@@ -860,7 +859,7 @@ func renewSecret(
 		secret.Annotations = map[string]string{}
 	}
 
-	secret.Annotations["grafana.integreatly.org/service-account-token-id"] = strconv.FormatInt(tokenStatus.ID, 10)
+	secret.Annotations["operator.grafana.com/service-account-token-id"] = strconv.FormatInt(tokenStatus.ID, 10)
 }
 
 // SetupWithManager sets up the controller with the Manager.

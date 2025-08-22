@@ -65,15 +65,14 @@ data:
 kind: Secret
 metadata:
   annotations:
-    grafana.integreatly.org/service-account-spec-name: sa2
-    grafana.integreatly.org/service-account-token-id: '1'
-    grafana.integreatly.org/service-account-token-name: token1
+    operator.grafana.com/service-account-spec-name: sa2
+    operator.grafana.com/service-account-token-id: '1'
+    operator.grafana.com/service-account-token-name: token1
   generateName: grafana1-sa2-token1-
   labels:
-    app: grafana-serviceaccount-token
     app.kubernetes.io/managed-by: grafana-operator
-    grafana.integreatly.org/service-account-instance: grafana1
-    grafana.integreatly.org/service-account-name: grafana1-sa2
+    operator.grafana.com/service-account-instance: grafana1
+    operator.grafana.com/service-account-name: grafana1-sa2
   (starts_with(name, 'grafana1-sa2-token1')): true
   namespace: ($NAMESPACE)
   ownerReferences:
@@ -90,15 +89,14 @@ data:
 kind: Secret
 metadata:
   annotations:
-    grafana.integreatly.org/service-account-spec-name: sa2
-    grafana.integreatly.org/service-account-token-id: '2'
-    grafana.integreatly.org/service-account-token-name: token2
+    operator.grafana.com/service-account-spec-name: sa2
+    operator.grafana.com/service-account-token-id: '2'
+    operator.grafana.com/service-account-token-name: token2
   generateName: grafana1-sa2-token2-
   labels:
-    app: grafana-serviceaccount-token
     app.kubernetes.io/managed-by: grafana-operator
-    grafana.integreatly.org/service-account-instance: grafana1
-    grafana.integreatly.org/service-account-name: grafana1-sa2
+    operator.grafana.com/service-account-instance: grafana1
+    operator.grafana.com/service-account-name: grafana1-sa2
   (starts_with(name, 'grafana1-sa2-token2')): true
   namespace: ($NAMESPACE)
   ownerReferences:
@@ -115,14 +113,13 @@ data:
 kind: Secret
 metadata:
   annotations:
-    grafana.integreatly.org/service-account-spec-name: sa2
-    grafana.integreatly.org/service-account-token-id: '3'
-    grafana.integreatly.org/service-account-token-name: token3
+    operator.grafana.com/service-account-spec-name: sa2
+    operator.grafana.com/service-account-token-id: '3'
+    operator.grafana.com/service-account-token-name: token3
   labels:
-    app: grafana-serviceaccount-token
     app.kubernetes.io/managed-by: grafana-operator
-    grafana.integreatly.org/service-account-instance: grafana1
-    grafana.integreatly.org/service-account-name: grafana1-sa2
+    operator.grafana.com/service-account-instance: grafana1
+    operator.grafana.com/service-account-name: grafana1-sa2
   name: ccc
   namespace: ($NAMESPACE)
   ownerReferences:
@@ -139,14 +136,13 @@ data:
 kind: Secret
 metadata:
   annotations:
-    grafana.integreatly.org/service-account-spec-name: sa2
-    grafana.integreatly.org/service-account-token-id: '4'
-    grafana.integreatly.org/service-account-token-name: token4
+    operator.grafana.com/service-account-spec-name: sa2
+    operator.grafana.com/service-account-token-id: '4'
+    operator.grafana.com/service-account-token-name: token4
   labels:
-    app: grafana-serviceaccount-token
     app.kubernetes.io/managed-by: grafana-operator
-    grafana.integreatly.org/service-account-instance: grafana1
-    grafana.integreatly.org/service-account-name: grafana1-sa2
+    operator.grafana.com/service-account-instance: grafana1
+    operator.grafana.com/service-account-name: grafana1-sa2
   name: ddd
   namespace: ($NAMESPACE)
   ownerReferences:

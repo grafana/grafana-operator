@@ -81,8 +81,8 @@ var _ = Describe("ServiceAccount Controller: Integration Tests", func() {
 
 			Expect(secret).To(PointTo(MatchFields(IgnoreExtras, Fields{
 				"ObjectMeta": MatchFields(IgnoreExtras, Fields{
-					"Labels":      HaveKeyWithValue("grafana.integreatly.org/service-account-name", name),
-					"Annotations": HaveKeyWithValue("grafana.integreatly.org/service-account-token-name", "test-token"),
+					"Labels":      HaveKeyWithValue("operator.grafana.com/service-account-name", name),
+					"Annotations": HaveKeyWithValue("operator.grafana.com/service-account-token-name", "test-token"),
 				}),
 				"Data": HaveKeyWithValue("token", Not(BeEmpty())),
 			})))
