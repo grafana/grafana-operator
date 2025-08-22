@@ -221,18 +221,14 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 	log := logf.FromContext(ctx)
 	log.Info("Finalizing GrafanaDashboard")
 
+	uid := content.CustomUIDOrUID(cr, cr.Status.UID)
+
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
 
 	for _, grafana := range instances {
-		found, uid := grafana.Status.Dashboards.Find(cr.Namespace, cr.Name)
-		if !found {
-			log.Info("dashboard not found on instance - skipping finalize", "grafana", grafana.Name, "uid", uid)
-			continue
-		}
-
 		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 		if err != nil {
 			return fmt.Errorf("creating grafana http client: %w", err)
@@ -240,7 +236,7 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 
 		isCleanupInGrafanaRequired := true
 
-		resp, err := grafanaClient.Dashboards.GetDashboardByUID(*uid)
+		resp, err := grafanaClient.Dashboards.GetDashboardByUID(uid)
 		if err != nil {
 			var notFound *dashboards.GetDashboardByUIDNotFound
 			if !errors.As(err, &notFound) {
@@ -256,7 +252,7 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 				dash = resp.GetPayload()
 			}
 
-			_, err = grafanaClient.Dashboards.DeleteDashboardByUID(*uid) //nolint:errcheck
+			_, err = grafanaClient.Dashboards.DeleteDashboardByUID(uid) //nolint:errcheck
 			if err != nil {
 				var notFound *dashboards.DeleteDashboardByUIDNotFound
 				if !errors.As(err, &notFound) {

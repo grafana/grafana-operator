@@ -222,24 +222,20 @@ func (r *GrafanaDatasourceReconciler) finalize(ctx context.Context, cr *v1beta1.
 		return fmt.Errorf("fetching instances: %w", err)
 	}
 
-	for _, grafana := range instances {
-		found, uid := grafana.Status.Datasources.Find(cr.Namespace, cr.Name)
-		if !found {
-			log.Info("datasource not found on instance - skipping finalize", "grafana", grafana.Name, "uid", uid)
-			continue
-		}
+	uid := cr.CustomUIDOrUID()
 
+	for _, grafana := range instances {
 		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 		if err != nil {
 			return err
 		}
 
-		_, err = grafanaClient.Datasources.DeleteDataSourceByUID(*uid) // nolint:errcheck
+		_, err = grafanaClient.Datasources.DeleteDataSourceByUID(uid) // nolint:errcheck
 
 		var notFound *datasources.DeleteDataSourceByUIDNotFound
 		if err != nil {
 			if !errors.As(err, &notFound) {
-				return fmt.Errorf("deleting datasource %s: %w", *uid, err)
+				return fmt.Errorf("deleting datasource %s: %w", uid, err)
 			}
 		}
 

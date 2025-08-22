@@ -154,6 +154,8 @@ func (r *GrafanaFolderReconciler) finalize(ctx context.Context, folder *grafanav
 	log := logf.FromContext(ctx)
 	log.Info("Finalizing GrafanaFolder")
 
+	uid := folder.CustomUIDOrUID()
+
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, folder)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
@@ -163,18 +165,12 @@ func (r *GrafanaFolderReconciler) finalize(ctx context.Context, folder *grafanav
 	params := folders.NewDeleteFolderParams().WithForceDeleteRules(&reftrue)
 
 	for _, grafana := range instances {
-		found, uid := grafana.Status.Folders.Find(folder.Namespace, folder.Name)
-		if !found {
-			log.Info("folder not found on instance - skipping finalize", "grafana", grafana.Name, "uid", uid)
-			continue
-		}
-
 		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 		if err != nil {
 			return err
 		}
 
-		_, err = grafanaClient.Folders.DeleteFolder(params.WithFolderUID(*uid)) //nolint
+		_, err = grafanaClient.Folders.DeleteFolder(params.WithFolderUID(uid)) //nolint
 		if err != nil {
 			var notFound *folders.DeleteFolderNotFound
 			if !errors.As(err, &notFound) {
