@@ -283,23 +283,6 @@ func (r *GrafanaServiceAccountReconciler) reconcileWithInstance(
 		return fmt.Errorf("upserting service account: %w", err)
 	}
 
-	updateForm := buildUpdateFormIfNeeded(&cr.Spec, cr.Status.Account)
-	if updateForm != nil {
-		update, err := gClient.ServiceAccounts.UpdateServiceAccount(
-			service_accounts.
-				NewUpdateServiceAccountParamsWithContext(ctx).
-				WithServiceAccountID(cr.Status.Account.ID).
-				WithBody(updateForm),
-		)
-		if err != nil {
-			return fmt.Errorf("updating service account: %w", err)
-		}
-
-		cr.Status.Account.IsDisabled = update.Payload.Serviceaccount.IsDisabled
-		cr.Status.Account.Role = update.Payload.Serviceaccount.Role
-		cr.Status.Account.Name = update.Payload.Serviceaccount.Name
-	}
-
 	// Ensure tokens are always sorted for stable ordering
 	defer func() {
 		sort.Slice(cr.Status.Account.Tokens, func(i, j int) bool {
@@ -349,37 +332,6 @@ func convertGrafanaExpiration(expiration strfmt.DateTime) *metav1.Time {
 	}
 
 	return ptr.To(metav1.NewTime(time.Time(expiration)))
-}
-
-// buildUpdateFormIfNeeded compares spec with current status and builds an update form if changes are needed.
-// Returns nil if the account is already in the desired state.
-func buildUpdateFormIfNeeded(spec *v1beta1.GrafanaServiceAccountSpec, status *v1beta1.GrafanaServiceAccountInfo) *models.UpdateServiceAccountForm {
-	form := &models.UpdateServiceAccountForm{
-		// The form contains a ServiceAccountID field which is unused in Grafana, so it's ignored here.
-	}
-
-	hasChanges := false
-
-	if status.Name != spec.Name {
-		hasChanges = true
-		form.Name = spec.Name
-	}
-
-	if status.Role != spec.Role {
-		hasChanges = true
-		form.Role = spec.Role
-	}
-
-	if status.IsDisabled != spec.IsDisabled {
-		hasChanges = true
-		form.IsDisabled = ptr.To(spec.IsDisabled)
-	}
-
-	if !hasChanges {
-		return nil
-	}
-
-	return form
 }
 
 // removeOutdatedTokens removes tokens that are not in the desired spec or have mismatched expiration times.
@@ -646,18 +598,24 @@ func (r *GrafanaServiceAccountReconciler) upsertAccount(
 	cr *v1beta1.GrafanaServiceAccount,
 ) error {
 	if cr.Status.Account != nil {
-		retrieve, err := gClient.ServiceAccounts.RetrieveServiceAccountWithParams(
+		update, err := gClient.ServiceAccounts.UpdateServiceAccount(
 			service_accounts.
-				NewRetrieveServiceAccountParamsWithContext(ctx).
-				WithServiceAccountID(cr.Status.Account.ID),
+				NewUpdateServiceAccountParamsWithContext(ctx).
+				WithServiceAccountID(cr.Status.Account.ID).
+				WithBody(&models.UpdateServiceAccountForm{
+					// The form contains a ServiceAccountID field which is unused in Grafana, so it's ignored here.
+					Name:       cr.Spec.Name,
+					Role:       cr.Spec.Role,
+					IsDisabled: ptr.To(cr.Spec.IsDisabled),
+				}),
 		)
 		if err == nil {
 			cr.Status.Account = &v1beta1.GrafanaServiceAccountInfo{
-				ID:         retrieve.Payload.ID,
-				Role:       retrieve.Payload.Role,
-				IsDisabled: retrieve.Payload.IsDisabled,
-				Name:       retrieve.Payload.Name,
-				Login:      retrieve.Payload.Login,
+				ID:         update.Payload.Serviceaccount.ID,
+				Role:       update.Payload.Serviceaccount.Role,
+				IsDisabled: update.Payload.Serviceaccount.IsDisabled,
+				Name:       update.Payload.Serviceaccount.Name,
+				Login:      update.Payload.Serviceaccount.Login,
 			}
 
 			// Load existing tokens from Grafana
@@ -684,14 +642,13 @@ func (r *GrafanaServiceAccountReconciler) upsertAccount(
 			return nil
 		}
 
-		// ATM, service_accounts.RetrieveServiceAccountNotFound doesn't have Is, Unwrap, Unwrap.
+		// ATM, service_accounts.UpdateServiceAccountNotFound doesn't have Is, Unwrap, Unwrap.
 		// So, we cannot rely only on errors.Is().
-		_, notFound := err.(*service_accounts.RetrieveServiceAccountNotFound) // nolint:errorlint
-		if !notFound && !errors.Is(err, service_accounts.NewRetrieveServiceAccountNotFound()) {
-			return fmt.Errorf("retrieving service account by ID %d: %w", cr.Status.Account.ID, err)
+		_, ok := err.(*service_accounts.UpdateServiceAccountNotFound) // nolint:errorlint
+		if !ok && !errors.Is(err, service_accounts.NewUpdateServiceAccountNotFound()) {
+			return fmt.Errorf("updating service account: %w", err)
 		}
 
-		// Service account not found, clear the status and create a new one
 		cr.Status.Account = nil
 	}
 
