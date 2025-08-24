@@ -308,6 +308,7 @@ func (r *GrafanaNotificationPolicyReconciler) reconcileWithInstance(ctx context.
 
 func (r *GrafanaNotificationPolicyReconciler) finalize(ctx context.Context, notificationPolicy *v1beta1.GrafanaNotificationPolicy) error {
 	log := logf.FromContext(ctx)
+	log.Info("Finalizing GrafanaNotificationPolicy")
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, notificationPolicy)
 	if err != nil {

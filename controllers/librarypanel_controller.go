@@ -237,7 +237,7 @@ func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Contex
 
 func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, libraryPanel *v1beta1.GrafanaLibraryPanel) error {
 	log := logf.FromContext(ctx)
-	log.Info("finalizing GrafanaLibraryPanel")
+	log.Info("Finalizing GrafanaLibraryPanel")
 
 	uid := content.CustomUIDOrUID(libraryPanel, libraryPanel.Status.UID)
 
