@@ -1,9 +1,7 @@
 package fetchers
 
 import (
-	"encoding/json"
 	"os"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -24,30 +22,6 @@ func setup(t *testing.T) {
 func teardown(t *testing.T) {
 	t.Helper()
 	require.NoError(t, os.RemoveAll(config.GrafanaDashboardsRuntimeBuild))
-}
-
-func normalizeAndCompareJSON(json1, json2 []byte) bool {
-	var data1, data2 map[string]any
-
-	if err := json.Unmarshal(json1, &data1); err != nil {
-		return false
-	}
-
-	if err := json.Unmarshal(json2, &data2); err != nil {
-		return false
-	}
-
-	normalized1, err := json.Marshal(data1)
-	if err != nil {
-		return false
-	}
-
-	normalized2, err := json.Marshal(data2)
-	if err != nil {
-		return false
-	}
-
-	return reflect.DeepEqual(normalized1, normalized2)
 }
 
 func TestFetchJsonnet(t *testing.T) {
