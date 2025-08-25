@@ -11,11 +11,12 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-operator/v5/controllers/config"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/embeds"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func setup(t *testing.T) {
@@ -137,53 +138,34 @@ func TestBuildProjectAndFetchJsonnetFrom(t *testing.T) {
 	setup(t)
 	defer teardown(t)
 
-	tests := []struct {
-		name          string
-		dashboard     *v1beta1.GrafanaDashboard
-		libsonnet     embed.FS
-		expected      []byte
-		envs          map[string]string
-		expectedError error
-	}{
-		{
-			name: "Successful Jsonnet Evaluation with jsonnet build",
-			dashboard: &v1beta1.GrafanaDashboard{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "grafanadashboard-jsonnet",
-					Namespace: "grafana",
-				},
-				Spec: v1beta1.GrafanaDashboardSpec{
-					GrafanaContentSpec: v1beta1.GrafanaContentSpec{
-						JsonnetProjectBuild: &v1beta1.JsonnetProjectBuild{
-							JPath:              []string{"/testing/jsonnetProjectWithRuntimeRaw"},
-							FileName:           "testing/jsonnetProjectWithRuntimeRaw/dashboard_with_envs.jsonnet",
-							GzipJsonnetProject: embeds.TestJsonnetProjectBuildFolderGzip,
-						},
+	t.Run("Successful Jsonnet Evaluation with jsonnet build", func(t *testing.T) {
+		cr := &v1beta1.GrafanaDashboard{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "grafanadashboard-jsonnet",
+				Namespace: "grafana",
+			},
+			Spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+					JsonnetProjectBuild: &v1beta1.JsonnetProjectBuild{
+						JPath:              []string{"/testing/jsonnetProjectWithRuntimeRaw"},
+						FileName:           "testing/jsonnetProjectWithRuntimeRaw/dashboard_with_envs.jsonnet",
+						GzipJsonnetProject: embeds.TestJsonnetProjectBuildFolderGzip,
 					},
 				},
-				Status: v1beta1.GrafanaDashboardStatus{},
 			},
-			libsonnet: embeds.GrafonnetEmbed,
-			expected:  []byte("{\n    \"env\" : \"123\"   \n}"),
-			envs: map[string]string{
-				"TEST_ENV": "123",
-			},
-			expectedError: nil,
-		},
-	}
+		}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result, err := BuildProjectAndFetchJsonnetFrom(test.dashboard, test.envs)
-			if fmt.Sprintf("%v", err) != fmt.Sprintf("%v", test.expectedError) {
-				t.Errorf("expected error %v, but got %v", test.expectedError, err)
-			}
+		envs := map[string]string{
+			"TEST_ENV": "123",
+		}
 
-			if test.expected != nil && !normalizeAndCompareJSON(test.expected, result) {
-				t.Errorf("expected string %s, but got %s", string(test.expected), string(result))
-			}
-		})
-	}
+		want := []byte("{\n    \"env\" : \"123\"   \n}")
+
+		got, err := BuildProjectAndFetchJsonnetFrom(cr, envs)
+		require.NoError(t, err)
+
+		assert.JSONEq(t, string(want), string(got))
+	})
 }
 
 func TestGetJsonProjectBuildRoundName(t *testing.T) {
