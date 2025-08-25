@@ -5,6 +5,8 @@ import (
 	"net/http"
 
 	"github.com/onsi/gomega/ghttp"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -12,13 +14,15 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/content/cache"
 
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Fetching dashboards from URL", func() {
-	dashboardJSON := []byte(`{"dummyField": "dummyData"}`)
-	compressedJSON, err := cache.Gzip(dashboardJSON)
-	Expect(err).NotTo(HaveOccurred())
+	t := GinkgoT()
+
+	want := []byte(`{"dummyField": "dummyData"}`)
+	wantCompressed, err := cache.Gzip(want)
+
+	require.NoError(t, err)
 
 	var server *ghttp.Server
 
@@ -29,7 +33,7 @@ var _ = Describe("Fetching dashboards from URL", func() {
 	When("using no authentication", func() {
 		BeforeEach(func() {
 			server.AppendHandlers(ghttp.CombineHandlers(
-				ghttp.RespondWith(http.StatusOK, dashboardJSON),
+				ghttp.RespondWith(http.StatusOK, want),
 			))
 		})
 
@@ -43,21 +47,24 @@ var _ = Describe("Fetching dashboards from URL", func() {
 				Status: v1beta1.GrafanaDashboardStatus{},
 			}
 
-			fetchedDashboard, err := FetchFromURL(context.Background(), dashboard, k8sClient, nil)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(fetchedDashboard).To(Equal(fetchedDashboard))
-			Expect(dashboard.Status.ContentTimestamp.Time.IsZero()).To(BeFalse())
-			Expect(dashboard.Status.ContentCache).To(Equal(compressedJSON))
-			Expect(dashboard.Status.ContentURL).To(Equal(server.URL()))
+			got, err := FetchFromURL(context.Background(), dashboard, k8sClient, nil)
+			require.NoError(t, err)
+
+			assert.Equal(t, want, got)
+			assert.Equal(t, wantCompressed, dashboard.Status.ContentCache)
+			assert.Equal(t, server.URL(), dashboard.Status.ContentURL)
+			assert.NotZero(t, dashboard.Status.ContentTimestamp.Time)
 		})
 	})
+
 	When("using authentication", func() {
 		basicAuthUsername := "admin"
 		basicAuthPassword := "admin"
+
 		BeforeEach(func() {
 			server.AppendHandlers(ghttp.CombineHandlers(
 				ghttp.VerifyBasicAuth(basicAuthUsername, basicAuthPassword),
-				ghttp.RespondWith(http.StatusOK, dashboardJSON),
+				ghttp.RespondWith(http.StatusOK, want),
 			))
 		})
 
@@ -103,14 +110,17 @@ var _ = Describe("Fetching dashboards from URL", func() {
 					"PASSWORD": "admin",
 				},
 			}
+
 			err = k8sClient.Create(context.Background(), credentialsSecret)
-			Expect(err).NotTo(HaveOccurred())
-			fetchedDashboard, err := FetchFromURL(context.Background(), dashboard, k8sClient, nil)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(fetchedDashboard).To(Equal(fetchedDashboard))
-			Expect(dashboard.Status.ContentTimestamp.Time.IsZero()).To(BeFalse())
-			Expect(dashboard.Status.ContentCache).To(Equal(compressedJSON))
-			Expect(dashboard.Status.ContentURL).To(Equal(server.URL()))
+			require.NoError(t, err)
+
+			got, err := FetchFromURL(context.Background(), dashboard, k8sClient, nil)
+			require.NoError(t, err)
+
+			assert.Equal(t, want, got)
+			assert.Equal(t, wantCompressed, dashboard.Status.ContentCache)
+			assert.Equal(t, server.URL(), dashboard.Status.ContentURL)
+			assert.NotZero(t, dashboard.Status.ContentTimestamp.Time)
 		})
 	})
 })
