@@ -123,7 +123,7 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 			return ctrl.Result{}, fmt.Errorf("removing finalizer: %w", err)
 		}
 
-		return ctrl.Result{}, r.finalize(ctx, cr)
+		return ctrl.Result{}, nil
 	}
 
 	// 3. From here on, we're handling normal reconciliation (not deletion)
