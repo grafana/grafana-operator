@@ -23,6 +23,8 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 )
 
+var errJsonnetNoContent = errors.New("no jsonnet Content Found, nil or empty string")
+
 // EmbedFSImporter "imports" data from an in-memory embedFS.
 type EmbedFSImporter struct {
 	Embed embed.FS
@@ -105,7 +107,7 @@ func FetchJsonnet(cr v1beta1.GrafanaContentResource, envs map[string]string, lib
 	spec := cr.GrafanaContentSpec()
 
 	if spec.Jsonnet == "" {
-		return nil, fmt.Errorf("no jsonnet Content Found, nil or empty string")
+		return nil, errJsonnetNoContent
 	}
 
 	vm := jsonnet.MakeVM()

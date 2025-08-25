@@ -1,21 +1,17 @@
 package fetchers
 
 import (
-	"embed"
-	"encoding/json"
-	"errors"
-	"fmt"
 	"os"
-	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/grafana/grafana-operator/v5/controllers/config"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/embeds"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func setup(t *testing.T) {
@@ -28,162 +24,101 @@ func teardown(t *testing.T) {
 	require.NoError(t, os.RemoveAll(config.GrafanaDashboardsRuntimeBuild))
 }
 
-func normalizeAndCompareJSON(json1, json2 []byte) bool {
-	var data1, data2 map[string]any
-
-	if err := json.Unmarshal(json1, &data1); err != nil {
-		return false
-	}
-
-	if err := json.Unmarshal(json2, &data2); err != nil {
-		return false
-	}
-
-	normalized1, err := json.Marshal(data1)
-	if err != nil {
-		return false
-	}
-
-	normalized2, err := json.Marshal(data2)
-	if err != nil {
-		return false
-	}
-
-	return reflect.DeepEqual(normalized1, normalized2)
-}
-
 func TestFetchJsonnet(t *testing.T) {
 	tests := []struct {
-		name          string
-		dashboard     *v1beta1.GrafanaDashboard
-		libsonnet     embed.FS
-		expected      []byte
-		envs          map[string]string
-		expectedError error
+		name    string
+		jsonnet string
+		envs    map[string]string
+		want    []byte
 	}{
 		{
-			name: "Successful Jsonnet Evaluation",
-			dashboard: &v1beta1.GrafanaDashboard{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "grafanadashboard-jsonnet",
-					Namespace: "grafana",
-				},
-				Spec: v1beta1.GrafanaDashboardSpec{
-					GrafanaContentSpec: v1beta1.GrafanaContentSpec{
-						Jsonnet: string(embeds.TestDashboardEmbed),
-					},
-				},
-				Status: v1beta1.GrafanaDashboardStatus{},
-			},
-			libsonnet:     embeds.GrafonnetEmbed,
-			expected:      embeds.TestDashboardEmbedExpectedJSON,
-			envs:          map[string]string{},
-			expectedError: nil,
+			name:    "Successful Jsonnet Evaluation",
+			jsonnet: string(embeds.TestDashboardEmbed),
+			envs:    map[string]string{},
+			want:    embeds.TestDashboardEmbedExpectedJSON,
 		},
 		{
-			name: "Empty Jsonnet Content",
-			dashboard: &v1beta1.GrafanaDashboard{
-				ObjectMeta: metav1.ObjectMeta{Name: "dashboard-1"},
-				Spec: v1beta1.GrafanaDashboardSpec{
-					GrafanaContentSpec: v1beta1.GrafanaContentSpec{
-						Jsonnet: "",
-					},
-				},
-				Status: v1beta1.GrafanaDashboardStatus{},
-			},
-			libsonnet:     embeds.GrafonnetEmbed,
-			expected:      nil,
-			envs:          map[string]string{},
-			expectedError: errors.New("no jsonnet Content Found, nil or empty string"),
-		},
-		{
-			name: "Successful Jsonnet Evaluation with non-empty envs",
-			dashboard: &v1beta1.GrafanaDashboard{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "grafanadashboard-jsonnet",
-					Namespace: "grafana",
-				},
-				Spec: v1beta1.GrafanaDashboardSpec{
-					GrafanaContentSpec: v1beta1.GrafanaContentSpec{
-						Jsonnet: string(embeds.TestDashboardEmbedWithEnv),
-					},
-				},
-				Status: v1beta1.GrafanaDashboardStatus{},
-			},
-			libsonnet: embeds.GrafonnetEmbed,
-			expected:  embeds.TestDashboardEmbedWithEnvExpectedJSON,
+			name:    "Successful Jsonnet Evaluation with non-empty envs",
+			jsonnet: string(embeds.TestDashboardEmbedWithEnv),
+			want:    embeds.TestDashboardEmbedWithEnvExpectedJSON,
 			envs: map[string]string{
 				"TEST_ENV": "123",
 			},
-			expectedError: nil,
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result, err := FetchJsonnet(test.dashboard, test.envs, test.libsonnet)
-			if fmt.Sprintf("%v", err) != fmt.Sprintf("%v", test.expectedError) {
-				t.Errorf("expected error %v, but got %v", test.expectedError, err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cr := &v1beta1.GrafanaDashboard{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "grafanadashboard-jsonnet",
+					Namespace: "grafana",
+				},
+				Spec: v1beta1.GrafanaDashboardSpec{
+					GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+						Jsonnet: tt.jsonnet,
+					},
+				},
 			}
 
-			if test.expected != nil && !normalizeAndCompareJSON(test.expected, result) {
-				t.Errorf("expected string %s, but got %s", string(test.expected), string(result))
-			}
+			got, err := FetchJsonnet(cr, tt.envs, embeds.GrafonnetEmbed)
+			require.NoError(t, err)
+
+			assert.JSONEq(t, string(tt.want), string(got))
 		})
 	}
+
+	t.Run("Empty Jsonnet Content", func(t *testing.T) {
+		cr := &v1beta1.GrafanaDashboard{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "grafanadashboard-jsonnet",
+				Namespace: "grafana",
+			},
+			Spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+					Jsonnet: "",
+				},
+			},
+		}
+
+		got, err := FetchJsonnet(cr, map[string]string{}, embeds.GrafonnetEmbed)
+		assert.Nil(t, got)
+		require.ErrorIs(t, err, errJsonnetNoContent)
+	})
 }
 
 func TestBuildProjectAndFetchJsonnetFrom(t *testing.T) {
 	setup(t)
 	defer teardown(t)
 
-	tests := []struct {
-		name          string
-		dashboard     *v1beta1.GrafanaDashboard
-		libsonnet     embed.FS
-		expected      []byte
-		envs          map[string]string
-		expectedError error
-	}{
-		{
-			name: "Successful Jsonnet Evaluation with jsonnet build",
-			dashboard: &v1beta1.GrafanaDashboard{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "grafanadashboard-jsonnet",
-					Namespace: "grafana",
-				},
-				Spec: v1beta1.GrafanaDashboardSpec{
-					GrafanaContentSpec: v1beta1.GrafanaContentSpec{
-						JsonnetProjectBuild: &v1beta1.JsonnetProjectBuild{
-							JPath:              []string{"/testing/jsonnetProjectWithRuntimeRaw"},
-							FileName:           "testing/jsonnetProjectWithRuntimeRaw/dashboard_with_envs.jsonnet",
-							GzipJsonnetProject: embeds.TestJsonnetProjectBuildFolderGzip,
-						},
+	t.Run("Successful Jsonnet Evaluation with jsonnet build", func(t *testing.T) {
+		cr := &v1beta1.GrafanaDashboard{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "grafanadashboard-jsonnet",
+				Namespace: "grafana",
+			},
+			Spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+					JsonnetProjectBuild: &v1beta1.JsonnetProjectBuild{
+						JPath:              []string{"/testing/jsonnetProjectWithRuntimeRaw"},
+						FileName:           "testing/jsonnetProjectWithRuntimeRaw/dashboard_with_envs.jsonnet",
+						GzipJsonnetProject: embeds.TestJsonnetProjectBuildFolderGzip,
 					},
 				},
-				Status: v1beta1.GrafanaDashboardStatus{},
 			},
-			libsonnet: embeds.GrafonnetEmbed,
-			expected:  []byte("{\n    \"env\" : \"123\"   \n}"),
-			envs: map[string]string{
-				"TEST_ENV": "123",
-			},
-			expectedError: nil,
-		},
-	}
+		}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result, err := BuildProjectAndFetchJsonnetFrom(test.dashboard, test.envs)
-			if fmt.Sprintf("%v", err) != fmt.Sprintf("%v", test.expectedError) {
-				t.Errorf("expected error %v, but got %v", test.expectedError, err)
-			}
+		envs := map[string]string{
+			"TEST_ENV": "123",
+		}
 
-			if test.expected != nil && !normalizeAndCompareJSON(test.expected, result) {
-				t.Errorf("expected string %s, but got %s", string(test.expected), string(result))
-			}
-		})
-	}
+		want := []byte("{\n    \"env\" : \"123\"   \n}")
+
+		got, err := BuildProjectAndFetchJsonnetFrom(cr, envs)
+		require.NoError(t, err)
+
+		assert.JSONEq(t, string(want), string(got))
+	})
 }
 
 func TestGetJsonProjectBuildRoundName(t *testing.T) {
