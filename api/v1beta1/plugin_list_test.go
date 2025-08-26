@@ -189,3 +189,106 @@ func TestPluginListHasExactVersionOf(t *testing.T) {
 		})
 	}
 }
+
+func TestPluginListHasNewerVersionOf(t *testing.T) {
+	tests := []struct {
+		name    string
+		plugins PluginList
+		plugin  GrafanaPlugin
+		want    bool
+	}{
+		{
+			name: "has newer version",
+			plugins: []GrafanaPlugin{
+				{
+					Name:    "a",
+					Version: "1.1.0",
+				},
+			},
+			plugin: GrafanaPlugin{
+				Name:    "a",
+				Version: "1.0.0",
+			},
+			want: true,
+		},
+		{
+			name: "has older version",
+			plugins: []GrafanaPlugin{
+				{
+					Name:    "a",
+					Version: "1.0.0",
+				},
+			},
+			plugin: GrafanaPlugin{
+				Name:    "a",
+				Version: "1.1.0",
+			},
+			want: false,
+		},
+		{
+			name: "doesn't have any versions",
+			plugins: []GrafanaPlugin{
+				{
+					Name:    "a",
+					Version: "1.0.0",
+				},
+			},
+			plugin: GrafanaPlugin{
+				Name:    "b",
+				Version: "1.0.0",
+			},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.plugins.HasNewerVersionOf(&tt.plugin)
+			require.NoError(t, err)
+
+			assert.Equal(t, tt.want, got)
+		})
+	}
+
+	// Error cases
+	tests2 := []struct {
+		name    string
+		plugins PluginList
+		plugin  GrafanaPlugin
+	}{
+		{
+			name: "broken version in plugin list",
+			plugins: []GrafanaPlugin{
+				{
+					Name:    "a",
+					Version: "a.b.c",
+				},
+			},
+			plugin: GrafanaPlugin{
+				Name:    "a",
+				Version: "2.0.0",
+			},
+		},
+		{
+			name: "broken version of target plugin",
+			plugins: []GrafanaPlugin{
+				{
+					Name:    "a",
+					Version: "1.0.0",
+				},
+			},
+			plugin: GrafanaPlugin{
+				Name:    "a",
+				Version: "a.b.c",
+			},
+		},
+	}
+
+	for _, tt := range tests2 {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.plugins.HasNewerVersionOf(&tt.plugin)
+			require.Error(t, err)
+			assert.False(t, got)
+		})
+	}
+}
