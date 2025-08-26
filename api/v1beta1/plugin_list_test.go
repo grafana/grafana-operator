@@ -9,6 +9,39 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestGrafanaPluginString(t *testing.T) {
+	tests := []struct {
+		name   string
+		plugin GrafanaPlugin
+		want   string
+	}{
+		{
+			name: "latest version",
+			plugin: GrafanaPlugin{
+				Name:    "a",
+				Version: "latest",
+			},
+			want: "a",
+		},
+		{
+			name: "semver",
+			plugin: GrafanaPlugin{
+				Name:    "a",
+				Version: "1.0.0",
+			},
+			want: "a 1.0.0",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.plugin.String()
+
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func TestPluginListString(t *testing.T) {
 	err := quick.Check(func(a string, b string, c string) bool {
 		if strings.Contains(a, ",") || strings.Contains(b, ",") || strings.Contains(c, ",") {

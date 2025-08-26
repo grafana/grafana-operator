@@ -13,20 +13,23 @@ type GrafanaPlugin struct {
 	Version string `json:"version"`
 }
 
+func (p GrafanaPlugin) String() string {
+	if p.Version == PluginVersionLatest {
+		return p.Name
+	}
+
+	return fmt.Sprintf("%s %s", p.Name, p.Version)
+}
+
 type PluginList []GrafanaPlugin
 
 type PluginMap map[string]PluginList
 
 func (l PluginList) String() string {
 	plugins := make(sort.StringSlice, 0, len(l))
+
 	for _, plugin := range l {
-		s := fmt.Sprintf("%s %s", plugin.Name, plugin.Version)
-
-		if plugin.Version == PluginVersionLatest {
-			s = plugin.Name
-		}
-
-		plugins = append(plugins, s)
+		plugins = append(plugins, plugin.String())
 	}
 
 	sort.Sort(plugins)
