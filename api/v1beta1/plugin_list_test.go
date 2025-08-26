@@ -68,3 +68,63 @@ func TestPluginListSanitize(t *testing.T) {
 	sanitized := pl.Sanitize()
 	assert.Len(t, sanitized, 2)
 }
+
+func TestPluginListSomeVersionOf(t *testing.T) {
+	tests := []struct {
+		name    string
+		plugins PluginList
+		plugin  GrafanaPlugin
+		want    bool
+	}{
+		{
+			name: "has same version",
+			plugins: []GrafanaPlugin{
+				{
+					Name:    "a",
+					Version: "1.0.0",
+				},
+			},
+			plugin: GrafanaPlugin{
+				Name:    "a",
+				Version: "1.0.0",
+			},
+			want: true,
+		},
+		{
+			name: "has different version",
+			plugins: []GrafanaPlugin{
+				{
+					Name:    "a",
+					Version: "1.0.0",
+				},
+			},
+			plugin: GrafanaPlugin{
+				Name:    "a",
+				Version: "2.0.0",
+			},
+			want: true,
+		},
+		{
+			name: "doesn't have any versions of the same plugin",
+			plugins: []GrafanaPlugin{
+				{
+					Name:    "a",
+					Version: "1.0.0",
+				},
+			},
+			plugin: GrafanaPlugin{
+				Name:    "b",
+				Version: "1.0.0",
+			},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.plugins.HasSomeVersionOf(&tt.plugin)
+
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
