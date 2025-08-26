@@ -102,6 +102,25 @@ func TestPluginListSanitize(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "skip incorrect versions",
+			plugins: PluginList{
+				{
+					Name:    "a",
+					Version: "a.b.c",
+				},
+				{
+					Name:    "b",
+					Version: "2.0.0",
+				},
+			},
+			want: PluginList{
+				{
+					Name:    "b",
+					Version: "2.0.0",
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
