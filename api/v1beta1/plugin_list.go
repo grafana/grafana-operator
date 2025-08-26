@@ -81,17 +81,6 @@ func (l PluginList) HasSomeVersionOf(plugin *GrafanaPlugin) bool {
 	return false
 }
 
-// GetInstalledVersionOf gets the plugin from the list regardless of the version
-func (l PluginList) GetInstalledVersionOf(plugin *GrafanaPlugin) *GrafanaPlugin {
-	for _, listedPlugin := range l {
-		if listedPlugin.Name == plugin.Name {
-			return &listedPlugin
-		}
-	}
-
-	return nil
-}
-
 // HasExactVersionOf returns true if the list contains the same plugin in the same version
 func (l PluginList) HasExactVersionOf(plugin *GrafanaPlugin) bool {
 	for _, listedPlugin := range l {
@@ -126,17 +115,4 @@ func (l PluginList) HasNewerVersionOf(plugin *GrafanaPlugin) (bool, error) {
 	}
 
 	return false, nil
-}
-
-// VersionsOf returns the number of different versions of a given plugin in the list
-func (l PluginList) VersionsOf(plugin *GrafanaPlugin) int {
-	i := 0
-
-	for _, listedPlugin := range l {
-		if listedPlugin.Name == plugin.Name {
-			i++
-		}
-	}
-
-	return i
 }
