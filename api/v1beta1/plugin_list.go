@@ -34,7 +34,13 @@ func (l PluginList) Hash() string {
 func (l PluginList) String() string {
 	plugins := make(sort.StringSlice, 0, len(l))
 	for _, plugin := range l {
-		plugins = append(plugins, fmt.Sprintf("%s %s", plugin.Name, plugin.Version))
+		s := fmt.Sprintf("%s %s", plugin.Name, plugin.Version)
+
+		if plugin.Version == PluginVersionLatest {
+			s = plugin.Name
+		}
+
+		plugins = append(plugins, s)
 	}
 
 	sort.Sort(plugins)
@@ -58,7 +64,7 @@ func (l PluginList) Sanitize() PluginList {
 
 	for _, plugin := range l {
 		_, err := semver.Parse(plugin.Version)
-		if err != nil {
+		if err != nil && plugin.Version != PluginVersionLatest {
 			continue
 		}
 
@@ -97,6 +103,14 @@ func (l PluginList) HasNewerVersionOf(plugin *GrafanaPlugin) (bool, error) {
 	for _, listedPlugin := range l {
 		if listedPlugin.Name != plugin.Name {
 			continue
+		}
+
+		if listedPlugin.Version == PluginVersionLatest && plugin.Version != PluginVersionLatest {
+			return true, nil
+		}
+
+		if plugin.Version == PluginVersionLatest {
+			return false, nil
 		}
 
 		listedVersion, err := semver.Parse(listedPlugin.Version)

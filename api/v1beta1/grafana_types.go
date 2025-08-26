@@ -27,6 +27,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const (
+	PluginVersionLatest string = "latest"
+)
+
 type OperatorStageName string
 
 type OperatorStageStatus string

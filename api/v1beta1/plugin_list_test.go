@@ -57,13 +57,17 @@ func TestPluginListString(t *testing.T) {
 				Version: "1.0.0",
 			},
 			{
+				Name:    "b",
+				Version: "latest",
+			},
+			{
 				Name:    "c",
 				Version: "2.0.0",
 			},
 		}
 
 		got := pl.String()
-		want := "a 1.0.0,c 2.0.0"
+		want := "a 1.0.0,b,c 2.0.0"
 
 		assert.Equal(t, want, got)
 	})
@@ -113,11 +117,19 @@ func TestPluginListSanitize(t *testing.T) {
 					Name:    "b",
 					Version: "2.0.0",
 				},
+				{
+					Name:    "c",
+					Version: "latest",
+				},
 			},
 			want: PluginList{
 				{
 					Name:    "b",
 					Version: "2.0.0",
+				},
+				{
+					Name:    "c",
+					Version: "latest",
 				},
 			},
 		},
@@ -274,6 +286,20 @@ func TestPluginListHasNewerVersionOf(t *testing.T) {
 			want: true,
 		},
 		{
+			name: "has newer version (latest)",
+			plugins: []GrafanaPlugin{
+				{
+					Name:    "a",
+					Version: "latest",
+				},
+			},
+			plugin: GrafanaPlugin{
+				Name:    "a",
+				Version: "1.0.0",
+			},
+			want: true,
+		},
+		{
 			name: "has older version",
 			plugins: []GrafanaPlugin{
 				{
@@ -284,6 +310,20 @@ func TestPluginListHasNewerVersionOf(t *testing.T) {
 			plugin: GrafanaPlugin{
 				Name:    "a",
 				Version: "1.1.0",
+			},
+			want: false,
+		},
+		{
+			name: "has older version (latest)",
+			plugins: []GrafanaPlugin{
+				{
+					Name:    "a",
+					Version: "1.0.0",
+				},
+			},
+			plugin: GrafanaPlugin{
+				Name:    "a",
+				Version: "latest",
 			},
 			want: false,
 		},
