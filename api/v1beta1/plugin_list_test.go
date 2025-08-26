@@ -49,6 +49,24 @@ func TestPluginListString(t *testing.T) {
 	if err != nil {
 		t.Errorf("plugin list was not sorted: %s", err.Error())
 	}
+
+	t.Run("Correct string", func(t *testing.T) {
+		pl := PluginList{
+			{
+				Name:    "a",
+				Version: "1.0.0",
+			},
+			{
+				Name:    "c",
+				Version: "2.0.0",
+			},
+		}
+
+		got := pl.String()
+		want := "a 1.0.0,c 2.0.0"
+
+		assert.Equal(t, want, got)
+	})
 }
 
 func TestPluginListSanitize(t *testing.T) {
