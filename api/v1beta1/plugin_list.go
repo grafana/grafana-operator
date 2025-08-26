@@ -1,9 +1,7 @@
 package v1beta1
 
 import (
-	"crypto/sha256"
 	"fmt"
-	"io"
 	"sort"
 	"strings"
 
@@ -18,18 +16,6 @@ type GrafanaPlugin struct {
 type PluginList []GrafanaPlugin
 
 type PluginMap map[string]PluginList
-
-func (l PluginList) Hash() string {
-	sb := strings.Builder{}
-	for _, plugin := range l {
-		sb.WriteString(plugin.Name)
-		sb.WriteString(plugin.Version)
-	}
-
-	hash := sha256.New()
-	io.WriteString(hash, sb.String()) //nolint
-	return fmt.Sprintf("%x", hash.Sum(nil))
-}
 
 func (l PluginList) String() string {
 	plugins := make(sort.StringSlice, 0, len(l))
