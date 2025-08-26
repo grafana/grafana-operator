@@ -36,9 +36,9 @@ func (l PluginList) String() string {
 
 // Update update plugin version
 func (l PluginList) Update(plugin *GrafanaPlugin) {
-	for _, installedPlugin := range l {
+	for i, installedPlugin := range l {
 		if installedPlugin.Name == plugin.Name {
-			installedPlugin.Version = plugin.Version
+			l[i].Version = plugin.Version
 			break
 		}
 	}
