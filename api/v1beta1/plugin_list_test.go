@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPluginString(t *testing.T) {
+func TestPluginListString(t *testing.T) {
 	err := quick.Check(func(a string, b string, c string) bool {
 		if strings.Contains(a, ",") || strings.Contains(b, ",") || strings.Contains(c, ",") {
 			return true // skip plugins with ,
@@ -50,7 +50,7 @@ func TestPluginString(t *testing.T) {
 	}
 }
 
-func TestPluginSanitize(t *testing.T) {
+func TestPluginListSanitize(t *testing.T) {
 	pl := PluginList{
 		{
 			Name:    "plugin-a",
