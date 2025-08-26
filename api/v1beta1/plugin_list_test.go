@@ -9,6 +9,55 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestGrafanaPluginHasValidVersion(t *testing.T) {
+	tests := []struct {
+		name   string
+		plugin GrafanaPlugin
+		want   bool
+	}{
+		{
+			name: "latest version",
+			plugin: GrafanaPlugin{
+				Name:    "a",
+				Version: "latest",
+			},
+			want: true,
+		},
+		{
+			name: "valid semver version",
+			plugin: GrafanaPlugin{
+				Name:    "a",
+				Version: "1.0.0",
+			},
+			want: true,
+		},
+		{
+			name: "semver version with v prefix", // Not supported yet
+			plugin: GrafanaPlugin{
+				Name:    "a",
+				Version: "v1.0.0",
+			},
+			want: false,
+		},
+		{
+			name: "invalid version",
+			plugin: GrafanaPlugin{
+				Name:    "a",
+				Version: "a.b.c",
+			},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.plugin.HasValidVersion()
+
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func TestGrafanaPluginString(t *testing.T) {
 	tests := []struct {
 		name   string

@@ -13,6 +13,20 @@ type GrafanaPlugin struct {
 	Version string `json:"version"`
 }
 
+func (p GrafanaPlugin) HasValidVersion() bool {
+	if p.Version == PluginVersionLatest {
+		return true
+	}
+
+	_, err := semver.Parse(p.Version)
+
+	return err == nil
+}
+
+func (p GrafanaPlugin) HasInvalidVersion() bool {
+	return !p.HasValidVersion()
+}
+
 func (p GrafanaPlugin) String() string {
 	if p.Version == PluginVersionLatest {
 		return p.Name
@@ -52,8 +66,7 @@ func (l PluginList) Sanitize() PluginList {
 	var sanitized PluginList
 
 	for _, plugin := range l {
-		_, err := semver.Parse(plugin.Version)
-		if err != nil && plugin.Version != PluginVersionLatest {
+		if plugin.HasInvalidVersion() {
 			continue
 		}
 
