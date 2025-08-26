@@ -70,22 +70,47 @@ func TestPluginListString(t *testing.T) {
 }
 
 func TestPluginListSanitize(t *testing.T) {
-	pl := PluginList{
+	tests := []struct {
+		name    string
+		plugins PluginList
+		want    PluginList
+	}{
 		{
-			Name:    "plugin-a",
-			Version: "1.0.0",
-		},
-		{
-			Name:    "plugin-b",
-			Version: "2.0.0",
-		},
-		{
-			Name:    "plugin-a",
-			Version: "3.0.0",
+			name: "duplicates removal",
+			plugins: PluginList{
+				{
+					Name:    "a",
+					Version: "1.0.0",
+				},
+				{
+					Name:    "b",
+					Version: "2.0.0",
+				},
+				{
+					Name:    "a",
+					Version: "3.0.0",
+				},
+			},
+			want: PluginList{
+				{
+					Name:    "a",
+					Version: "1.0.0",
+				},
+				{
+					Name:    "b",
+					Version: "2.0.0",
+				},
+			},
 		},
 	}
-	sanitized := pl.Sanitize()
-	assert.Len(t, sanitized, 2)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.plugins.Sanitize()
+
+			assert.Equal(t, tt.want, got)
+		})
+	}
 }
 
 func TestPluginListSomeVersionOf(t *testing.T) {
