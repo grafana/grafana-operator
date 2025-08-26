@@ -8,7 +8,7 @@ spec:
       dashboards: grafana
   plugins:
     - name: grafana-piechart-panel
-      version: 1.3.9
+      version: 1.3.9 # It can also be set to "latest"
   json: >
     {
       "__inputs": [
