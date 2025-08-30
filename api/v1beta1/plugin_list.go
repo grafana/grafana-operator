@@ -70,9 +70,22 @@ func (l PluginList) Sanitize() PluginList {
 			continue
 		}
 
-		if !sanitized.HasSomeVersionOf(&plugin) {
-			sanitized = append(sanitized, plugin)
+		if sanitized.HasSomeVersionOf(&plugin) {
+			hasNewer, err := sanitized.HasNewerVersionOf(&plugin)
+			if err != nil {
+				continue
+			}
+
+			if hasNewer {
+				continue
+			}
+
+			sanitized.Update(&plugin)
+
+			continue
 		}
+
+		sanitized = append(sanitized, plugin)
 	}
 
 	return sanitized

@@ -224,21 +224,21 @@ func TestPluginListSanitize(t *testing.T) {
 			plugins: PluginList{
 				{
 					Name:    "a",
+					Version: "3.0.0",
+				},
+				{
+					Name:    "a",
 					Version: "1.0.0",
 				},
 				{
 					Name:    "b",
 					Version: "2.0.0",
 				},
-				{
-					Name:    "a",
-					Version: "3.0.0",
-				},
 			},
 			want: PluginList{
 				{
 					Name:    "a",
-					Version: "1.0.0",
+					Version: "3.0.0",
 				},
 				{
 					Name:    "b",
