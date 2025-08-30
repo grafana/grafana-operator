@@ -167,25 +167,8 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 	var containers []corev1.Container
 
 	image := getGrafanaImage(cr)
-	plugins := model.GetPluginsConfigMap(cr, scheme)
-
-	// env var to restart containers if plugins change
-	t := true
 
 	var envVars []corev1.EnvVar
-
-	envVars = append(envVars, corev1.EnvVar{
-		Name: "PLUGINS_HASH",
-		ValueFrom: &corev1.EnvVarSource{
-			ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-				LocalObjectReference: corev1.LocalObjectReference{
-					Name: plugins.Name,
-				},
-				Key:      "PLUGINS_HASH",
-				Optional: &t,
-			},
-		},
-	})
 
 	// env var to restart container if config changes
 	envVars = append(envVars, corev1.EnvVar{
