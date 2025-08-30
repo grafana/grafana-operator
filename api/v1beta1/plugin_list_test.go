@@ -91,6 +91,167 @@ func TestGrafanaPluginString(t *testing.T) {
 	}
 }
 
+func TestGrafanaPluginUpdate(t *testing.T) {
+	tests := []struct {
+		name    string
+		plugin  GrafanaPlugin
+		version string
+		want    GrafanaPlugin
+	}{
+		{
+			name: "same version",
+			plugin: GrafanaPlugin{
+				Name:    "a",
+				Version: "1.0.0",
+			},
+			version: "1.0.0",
+			want: GrafanaPlugin{
+				Name:    "a",
+				Version: "1.0.0",
+			},
+		},
+		{
+			name: "empty target version",
+			plugin: GrafanaPlugin{
+				Name:    "a",
+				Version: "1.0.0",
+			},
+			version: "",
+			want: GrafanaPlugin{
+				Name:    "a",
+				Version: "1.0.0",
+			},
+		},
+		{
+			name: "already latest version",
+			plugin: GrafanaPlugin{
+				Name:    "a",
+				Version: PluginVersionLatest,
+			},
+			version: "1.0.0",
+			want: GrafanaPlugin{
+				Name:    "a",
+				Version: PluginVersionLatest,
+			},
+		},
+		{
+			name: "both have latest version",
+			plugin: GrafanaPlugin{
+				Name:    "a",
+				Version: PluginVersionLatest,
+			},
+			version: PluginVersionLatest,
+			want: GrafanaPlugin{
+				Name:    "a",
+				Version: PluginVersionLatest,
+			},
+		},
+		{
+			name: "older version passed",
+			plugin: GrafanaPlugin{
+				Name:    "a",
+				Version: "1.0.0",
+			},
+			version: "0.1.0",
+			want: GrafanaPlugin{
+				Name:    "a",
+				Version: "1.0.0",
+			},
+		},
+		{
+			name: "newer version passed",
+			plugin: GrafanaPlugin{
+				Name:    "a",
+				Version: "1.0.0",
+			},
+			version: "2.0.0",
+			want: GrafanaPlugin{
+				Name:    "a",
+				Version: "2.0.0",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.plugin.Update(tt.version)
+			require.NoError(t, err)
+
+			got := tt.plugin
+
+			assert.Equal(t, tt.want, got)
+		})
+	}
+
+	// Error cases
+	tests2 := []struct {
+		name    string
+		plugin  GrafanaPlugin
+		version string
+		want    GrafanaPlugin
+	}{
+		{
+			name: "incorrect source version",
+			plugin: GrafanaPlugin{
+				Name:    "a",
+				Version: "a.b.c",
+			},
+			version: "1.0.0",
+			want: GrafanaPlugin{
+				Name:    "a",
+				Version: "a.b.c",
+			},
+		},
+		{
+			name: "incorrect target version",
+			plugin: GrafanaPlugin{
+				Name:    "a",
+				Version: "1.0.0",
+			},
+			version: "a.b.c",
+			want: GrafanaPlugin{
+				Name:    "a",
+				Version: "1.0.0",
+			},
+		},
+		{
+			name: "source semver version with v prefix", // Not supported yet
+			plugin: GrafanaPlugin{
+				Name:    "a",
+				Version: "v1.0.0",
+			},
+			version: "2.0.0",
+			want: GrafanaPlugin{
+				Name:    "a",
+				Version: "v1.0.0",
+			},
+		},
+		{
+			name: "target semver version with v prefix", // Not supported yet
+			plugin: GrafanaPlugin{
+				Name:    "a",
+				Version: "1.0.0",
+			},
+			version: "v2.0.0",
+			want: GrafanaPlugin{
+				Name:    "a",
+				Version: "1.0.0",
+			},
+		},
+	}
+
+	for _, tt := range tests2 {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.plugin.Update(tt.version)
+			require.Error(t, err)
+
+			got := tt.plugin
+
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func TestPluginListString(t *testing.T) {
 	err := quick.Check(func(a string, b string, c string) bool {
 		if strings.Contains(a, ",") || strings.Contains(b, ",") || strings.Contains(c, ",") {

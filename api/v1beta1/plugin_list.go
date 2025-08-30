@@ -35,6 +35,45 @@ func (p GrafanaPlugin) String() string {
 	return fmt.Sprintf("%s %s", p.Name, p.Version)
 }
 
+// Update updates the plugin to the requested version if its newer
+func (p *GrafanaPlugin) Update(version string) error {
+	if p.Version == version {
+		return nil
+	}
+
+	if version == "" {
+		return nil
+	}
+
+	if p.Version == PluginVersionLatest {
+		return nil
+	}
+
+	if version == PluginVersionLatest {
+		p.Version = version
+
+		return nil
+	}
+
+	listedVersion, err := semver.Parse(p.Version)
+	if err != nil {
+		return err
+	}
+
+	requestedVersion, err := semver.Parse(version)
+	if err != nil {
+		return err
+	}
+
+	if listedVersion.Compare(requestedVersion) == -1 {
+		p.Version = version
+
+		return nil
+	}
+
+	return nil
+}
+
 type PluginList []GrafanaPlugin
 
 type PluginMap map[string]PluginList
