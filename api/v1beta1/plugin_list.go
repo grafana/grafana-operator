@@ -2,6 +2,8 @@ package v1beta1
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 	"sort"
 	"strings"
 
@@ -74,9 +76,43 @@ func (p *GrafanaPlugin) Update(version string) error {
 	return nil
 }
 
-type PluginList []GrafanaPlugin
+type PluginMap map[string]GrafanaPlugin
 
-type PluginMap map[string]PluginList
+func (m PluginMap) Merge(plugins PluginList) {
+	for _, p := range plugins {
+		if p.HasInvalidVersion() {
+			continue
+		}
+
+		if plugin, ok := m[p.Name]; ok {
+			// TODO: it can return errors, but if we add CRD validation, that's not necessary
+			plugin.Update(p.Version)
+			m[p.Name] = plugin
+		} else {
+			m[p.Name] = p
+		}
+	}
+}
+
+func (m PluginMap) GetPluginList() PluginList {
+	return slices.Collect(maps.Values(m))
+}
+
+func NewPluginMap() PluginMap {
+	pm := PluginMap{}
+
+	return pm
+}
+
+func NewPluginMapFromList(plugins PluginList) PluginMap {
+	pm := PluginMap{}
+
+	pm.Merge(plugins)
+
+	return pm
+}
+
+type PluginList []GrafanaPlugin
 
 func (l PluginList) String() string {
 	plugins := make(sort.StringSlice, 0, len(l))

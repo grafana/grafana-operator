@@ -2215,16 +2215,7 @@ func (in PluginMap) DeepCopyInto(out *PluginMap) {
 		in := &in
 		*out = make(PluginMap, len(*in))
 		for key, val := range *in {
-			var outVal []GrafanaPlugin
-			if val == nil {
-				(*out)[key] = nil
-			} else {
-				inVal := (*in)[key]
-				in, out := &inVal, &outVal
-				*out = make(PluginList, len(*in))
-				copy(*out, *in)
-			}
-			(*out)[key] = outVal
+			(*out)[key] = val
 		}
 	}
 }

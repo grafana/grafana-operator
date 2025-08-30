@@ -505,6 +505,47 @@ func TestPluginListSomeVersionOf(t *testing.T) {
 	}
 }
 
+func TestPluginMapMerge(t *testing.T) {
+	plugins := []GrafanaPlugin{
+		{
+			Name:    "a",
+			Version: "latest",
+		},
+		{
+			Name:    "a",
+			Version: "1.0.0",
+		},
+		{
+			Name:    "a",
+			Version: "1.0.1",
+		},
+		{
+			Name:    "b",
+			Version: "2.0.1",
+		},
+		{
+			Name:    "b",
+			Version: "2.0.0",
+		},
+	}
+
+	want := PluginMap{
+		"a": {
+			Name:    "a",
+			Version: "latest",
+		},
+		"b": {
+			Name:    "b",
+			Version: "2.0.1",
+		},
+	}
+
+	got := PluginMap{}
+	got.Merge(plugins)
+
+	assert.Equal(t, want, got)
+}
+
 func TestPluginListHasExactVersionOf(t *testing.T) {
 	tests := []struct {
 		name    string
