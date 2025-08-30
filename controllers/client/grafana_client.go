@@ -37,6 +37,10 @@ type JWTCache struct {
 
 var jwtCache *JWTCache
 
+// Revoke tokens early expecting them to be rotated hourly, see 'ExpirationSeconds' in KEP1205
+// Should mitigate mid-reconcile expiration
+const tokenExpirationCompensation = -30 * time.Second
+
 // getBearerToken will read JWT token from given file and cache it until it expires.
 // accepts filepath arg for testing
 func getBearerToken(bearerTokenPath string) (string, error) {
@@ -72,13 +76,13 @@ func getBearerToken(bearerTokenPath string) (string, error) {
 	}
 
 	tokenExpiration := claims.Expiry.Time()
-	if tokenExpiration.Before(time.Now()) {
-		return "", fmt.Errorf("token expired at %s, expected %s to be rotated", tokenExpiration.String(), bearerTokenPath)
+	if tokenExpiration.Add(tokenExpirationCompensation).Before(time.Now()) {
+		return "", fmt.Errorf("token expired at %s, expected %s to be renewed. Tokens are considered expired 30 seconds early", tokenExpiration.String(), bearerTokenPath)
 	}
 
 	jwtCache = &JWTCache{
 		Token:      token,
-		Expiration: tokenExpiration,
+		Expiration: tokenExpiration.Add(tokenExpirationCompensation),
 	}
 
 	return token, nil
