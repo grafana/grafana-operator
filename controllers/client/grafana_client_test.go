@@ -330,7 +330,7 @@ func TestGetBearerToken(t *testing.T) {
 		Audience:  jwt.Audience{"https://grafana.operator.com"},
 		IssuedAt:  jwt.NewNumericDate(now),
 		NotBefore: jwt.NewNumericDate(now),
-		Expiry:    jwt.NewNumericDate(now.Add(time.Duration(30 * float64(time.Second)))),
+		Expiry:    jwt.NewNumericDate(now.Add(time.Duration(60 * float64(time.Second)))),
 	}
 
 	// Generate key
