@@ -122,6 +122,18 @@ func TestGrafanaPluginUpdate(t *testing.T) {
 			},
 		},
 		{
+			name: "latest version",
+			plugin: GrafanaPlugin{
+				Name:    "a",
+				Version: "1.0.0",
+			},
+			version: PluginVersionLatest,
+			want: GrafanaPlugin{
+				Name:    "a",
+				Version: PluginVersionLatest,
+			},
+		},
+		{
 			name: "already latest version",
 			plugin: GrafanaPlugin{
 				Name:    "a",
