@@ -40,7 +40,6 @@ func (p GrafanaPlugin) String() string {
 	return fmt.Sprintf("%s %s", p.Name, p.Version)
 }
 
-// Update updates the plugin to the requested version if its newer
 // Update updates the plugin to the requested version if it's valid and newer
 func (p *GrafanaPlugin) Update(version string) {
 	if p.Version == version {
@@ -81,6 +80,7 @@ func (p *GrafanaPlugin) Update(version string) {
 	}
 }
 
+// Helps to simplify version consolidation
 type PluginMap map[string]GrafanaPlugin
 
 func (m PluginMap) Merge(plugins PluginList) {
@@ -90,7 +90,6 @@ func (m PluginMap) Merge(plugins PluginList) {
 		}
 
 		if plugin, ok := m[p.Name]; ok {
-			// TODO: it can return errors, but if we add CRD validation, that's not necessary
 			plugin.Update(p.Version)
 			m[p.Name] = plugin
 		} else {
