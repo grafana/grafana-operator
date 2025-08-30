@@ -138,32 +138,9 @@ func (l PluginList) Update(plugin *GrafanaPlugin) {
 
 // Sanitize remove duplicates and enforce semver
 func (l PluginList) Sanitize() PluginList {
-	var sanitized PluginList
+	plugins := NewPluginMapFromList(l)
 
-	for _, plugin := range l {
-		if plugin.HasInvalidVersion() {
-			continue
-		}
-
-		if sanitized.HasSomeVersionOf(&plugin) {
-			hasNewer, err := sanitized.HasNewerVersionOf(&plugin)
-			if err != nil {
-				continue
-			}
-
-			if hasNewer {
-				continue
-			}
-
-			sanitized.Update(&plugin)
-
-			continue
-		}
-
-		sanitized = append(sanitized, plugin)
-	}
-
-	return sanitized
+	return plugins.GetPluginList()
 }
 
 // HasSomeVersionOf returns true if the list contains the same plugin in the exact or a different version
