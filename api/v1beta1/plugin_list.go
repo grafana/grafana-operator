@@ -38,42 +38,44 @@ func (p GrafanaPlugin) String() string {
 }
 
 // Update updates the plugin to the requested version if its newer
-func (p *GrafanaPlugin) Update(version string) error {
+// Update updates the plugin to the requested version if it's valid and newer
+func (p *GrafanaPlugin) Update(version string) {
 	if p.Version == version {
-		return nil
+		return
 	}
 
 	if version == "" {
-		return nil
+		return
 	}
 
 	if p.Version == PluginVersionLatest {
-		return nil
+		return
 	}
 
 	if version == PluginVersionLatest {
 		p.Version = version
 
-		return nil
+		return
 	}
 
-	listedVersion, err := semver.Parse(p.Version)
-	if err != nil {
-		return err
-	}
-
+	// Version is not valid, so don't do anything
 	requestedVersion, err := semver.Parse(version)
 	if err != nil {
-		return err
+		return
+	}
+
+	// Helps to recover in case we have previously stored invalid version
+	listedVersion, err := semver.Parse(p.Version)
+	if err != nil {
+		p.Version = version
+		return
 	}
 
 	if listedVersion.Compare(requestedVersion) == -1 {
 		p.Version = version
 
-		return nil
+		return
 	}
-
-	return nil
 }
 
 type PluginMap map[string]GrafanaPlugin

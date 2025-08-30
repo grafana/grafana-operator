@@ -6,7 +6,6 @@ import (
 	"testing/quick"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGrafanaPluginHasValidVersion(t *testing.T) {
@@ -170,28 +169,9 @@ func TestGrafanaPluginUpdate(t *testing.T) {
 				Version: "2.0.0",
 			},
 		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := tt.plugin.Update(tt.version)
-			require.NoError(t, err)
-
-			got := tt.plugin
-
-			assert.Equal(t, tt.want, got)
-		})
-	}
-
-	// Error cases
-	tests2 := []struct {
-		name    string
-		plugin  GrafanaPlugin
-		version string
-		want    GrafanaPlugin
-	}{
+		// Error cases (as we have validation at CRD level, the cases below were added mostly to document function behaviour)
 		{
-			name: "incorrect source version",
+			name: "incorrect source version, but correct target version",
 			plugin: GrafanaPlugin{
 				Name:    "a",
 				Version: "a.b.c",
@@ -199,7 +179,7 @@ func TestGrafanaPluginUpdate(t *testing.T) {
 			version: "1.0.0",
 			want: GrafanaPlugin{
 				Name:    "a",
-				Version: "a.b.c",
+				Version: "1.0.0",
 			},
 		},
 		{
@@ -223,7 +203,7 @@ func TestGrafanaPluginUpdate(t *testing.T) {
 			version: "2.0.0",
 			want: GrafanaPlugin{
 				Name:    "a",
-				Version: "v1.0.0",
+				Version: "2.0.0",
 			},
 		},
 		{
@@ -240,10 +220,9 @@ func TestGrafanaPluginUpdate(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests2 {
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.plugin.Update(tt.version)
-			require.Error(t, err)
+			tt.plugin.Update(tt.version)
 
 			got := tt.plugin
 
