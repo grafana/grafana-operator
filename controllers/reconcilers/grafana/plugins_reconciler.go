@@ -53,7 +53,8 @@ func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 		return v1beta1.OperatorStageResultSuccess, nil
 	}
 
-	var consolidatedPlugins v1beta1.PluginList
+	pm := v1beta1.NewPluginMap()
+
 	for dashboard, plugins := range plugins.BinaryData {
 		var dashboardPlugins v1beta1.PluginList
 
@@ -63,37 +64,10 @@ func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 			return v1beta1.OperatorStageResultFailed, err
 		}
 
-		for _, plugin := range dashboardPlugins {
-			if !consolidatedPlugins.HasSomeVersionOf(&plugin) {
-				consolidatedPlugins = append(consolidatedPlugins, plugin)
-				continue
-			}
-
-			// newer version of plugin already installed
-			hasNewer, err := consolidatedPlugins.HasNewerVersionOf(&plugin)
-			if err != nil {
-				log.Error(err, "error checking existing plugins", "dashboard", dashboard)
-				return v1beta1.OperatorStageResultFailed, err
-			}
-
-			if hasNewer {
-				log.Info("skipping plugin", "dashboard", dashboard, "plugin",
-					plugin.Name, "version", plugin.Version)
-
-				continue
-			}
-
-			// duplicate plugin
-			if consolidatedPlugins.HasExactVersionOf(&plugin) {
-				continue
-			}
-
-			// some version is installed, but it is not newer and it is not the same: must be older
-			consolidatedPlugins.Update(&plugin)
-		}
+		pm.Merge(dashboardPlugins)
 	}
 
-	vars.Plugins = consolidatedPlugins.String()
+	vars.Plugins = pm.GetPluginList().String()
 
 	return v1beta1.OperatorStageResultSuccess, nil
 }
