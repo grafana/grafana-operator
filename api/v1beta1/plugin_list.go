@@ -132,16 +132,6 @@ func (l PluginList) String() string {
 	return strings.Join(plugins, ",")
 }
 
-// Update update plugin version
-func (l PluginList) Update(plugin *GrafanaPlugin) {
-	for i, installedPlugin := range l {
-		if installedPlugin.Name == plugin.Name {
-			l[i].Version = plugin.Version
-			break
-		}
-	}
-}
-
 // Sanitize remove duplicates and enforce semver
 func (l PluginList) Sanitize() PluginList {
 	plugins := NewPluginMapFromList(l)
