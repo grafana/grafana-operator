@@ -60,12 +60,14 @@ func (p *GrafanaPlugin) Update(version string) {
 		return
 	}
 
+	// NOTE: We should not see that happening due to CRD validations
 	// Version is not valid, so don't do anything
 	requestedVersion, err := semver.Parse(version)
 	if err != nil {
 		return
 	}
 
+	// NOTE: We should not see that happening due to CRD validations
 	// Helps to recover in case we have previously stored invalid version
 	listedVersion, err := semver.Parse(p.Version)
 	if err != nil {

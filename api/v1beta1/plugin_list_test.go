@@ -181,7 +181,7 @@ func TestGrafanaPluginUpdate(t *testing.T) {
 				Version: "2.0.0",
 			},
 		},
-		// Error cases (as we have validation at CRD level, the cases below were added mostly to document function behaviour)
+		// Error cases (as we have validation at CRD level, the cases below were added mostly to document function behavior)
 		{
 			name: "incorrect source version, but correct target version",
 			plugin: GrafanaPlugin{
