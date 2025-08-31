@@ -43,7 +43,7 @@ func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 		return nil
 	})
 	if err != nil {
-		log.Error(err, "error getting plugins config map", "name", cm.Name, "namespace", cm.Namespace)
+		log.Error(err, "error getting plugins ConfigMap", "name", cm.Name, "namespace", cm.Namespace)
 		return v1beta1.OperatorStageResultFailed, err
 	}
 
@@ -60,7 +60,7 @@ func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 
 		err = json.Unmarshal(v, &plugins)
 		if err != nil {
-			log.Error(err, "error consolidating plugins", k)
+			log.Error(err, "error consolidating plugins from ConfigMap", "name", cm.Name, "namespace", cm.Namespace, "key", k)
 			return v1beta1.OperatorStageResultFailed, err
 		}
 
