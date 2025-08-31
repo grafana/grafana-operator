@@ -160,7 +160,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		// then import the datasource into the matching grafana instances
 		err = r.onDatasourceCreated(ctx, &grafana, cr, datasource, hash)
 		if err != nil {
-			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = fmt.Sprintf("uid=%s: %s", uid, err.Errror())
+			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = fmt.Sprintf("uid=%s: %s", uid, err.Error())
 		}
 	}
 
