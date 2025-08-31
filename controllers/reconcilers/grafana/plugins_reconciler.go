@@ -28,43 +28,43 @@ func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 
 	vars.Plugins = ""
 
-	plugins := model.GetPluginsConfigMap(cr, scheme)
+	cm := model.GetPluginsConfigMap(cr, scheme)
 
-	_, err := controllerutil.CreateOrUpdate(ctx, r.client, plugins, func() error {
+	_, err := controllerutil.CreateOrUpdate(ctx, r.client, cm, func() error {
 		if scheme != nil {
-			err := controllerutil.SetOwnerReference(cr, plugins, scheme)
+			err := controllerutil.SetOwnerReference(cr, cm, scheme)
 			if err != nil {
 				return err
 			}
 		}
 
-		model.SetInheritedLabels(plugins, cr.Labels)
+		model.SetInheritedLabels(cm, cr.Labels)
 
 		return nil
 	})
 	if err != nil {
-		log.Error(err, "error getting plugins config map", "name", plugins.Name, "namespace", plugins.Namespace)
+		log.Error(err, "error getting plugins config map", "name", cm.Name, "namespace", cm.Namespace)
 		return v1beta1.OperatorStageResultFailed, err
 	}
 
 	// plugins config map found, but may be empty
-	if len(plugins.BinaryData) == 0 {
+	if len(cm.BinaryData) == 0 {
 		vars.Plugins = ""
 		return v1beta1.OperatorStageResultSuccess, nil
 	}
 
 	pm := v1beta1.NewPluginMap()
 
-	for dashboard, plugins := range plugins.BinaryData {
-		var dashboardPlugins v1beta1.PluginList
+	for k, v := range cm.BinaryData {
+		var plugins v1beta1.PluginList
 
-		err = json.Unmarshal(plugins, &dashboardPlugins)
+		err = json.Unmarshal(v, &plugins)
 		if err != nil {
-			log.Error(err, "error consolidating plugins", "dashboard", dashboard)
+			log.Error(err, "error consolidating plugins", k)
 			return v1beta1.OperatorStageResultFailed, err
 		}
 
-		pm.Merge(dashboardPlugins)
+		pm.Merge(plugins)
 	}
 
 	vars.Plugins = pm.GetPluginList().String()
