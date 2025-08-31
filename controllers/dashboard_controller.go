@@ -174,20 +174,20 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, cr.Spec.Plugins, fmt.Sprintf("%v-dashboard", cr.Name))
 			if err != nil {
 				pluginErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
-				log.Error(err, "error reconciling plugins", "dashboard", cr.Name, "grafana", grafana.Name)
-			}
+				log.Error(err, "error reconciling plugins", "dashboard", cr.Name, "grafana", grafana.Name, "uid", uid)
+			  }
 		}
 
 		// then import the dashboard into the matching grafana instances
 		err = r.onDashboardCreated(ctx, &grafana, cr, dashboardModel, hash, folderUID)
 		if err != nil {
-			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
+		  applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = fmt.Sprintf("uid=%s: %s", uid, err.Error())
 		}
 
 		if grafana.Spec.Preferences != nil && uid == grafana.Spec.Preferences.HomeDashboardUID {
 			err = r.UpdateHomeDashboard(ctx, grafana, uid, cr)
 			if err != nil {
-				applyHomeErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
+			  applyHomeErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = fmt.Sprintf("uid=%s: %s", uid, err.Error())
 			}
 		}
 	}
@@ -208,7 +208,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
 	if len(allApplyErrors) > 0 {
-		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", allApplyErrors)
+		return ctrl.Result{}, fmt.Errorf("uid=%s: failed to apply to all instances: %v", uid, allApplyErrors)
 	}
 
 	cr.Status.Hash = hash

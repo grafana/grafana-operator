@@ -117,6 +117,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	log.Info("found matching Grafana instances for datasource", "count", len(instances))
 
+	uid := cr.CustomUIDOrUID()
 	if cr.IsUpdatedUID() {
 		log.Info("datasource uid got updated, deleting datasources with the old uid")
 
@@ -152,13 +153,14 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, cr.Spec.Plugins, fmt.Sprintf("%v-datasource", cr.Name))
 			if err != nil {
 				pluginErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
+				log.Error(err, "error reconciling plugins", "datasource", cr.Name, "grafana", grafana.Name, "uid", uid)
 			}
 		}
 
 		// then import the datasource into the matching grafana instances
 		err = r.onDatasourceCreated(ctx, &grafana, cr, datasource, hash)
 		if err != nil {
-			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
+			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = fmt.Sprintf("uid=%s: %s", uid, err.Errror())
 		}
 	}
 
@@ -173,7 +175,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
 	if len(allApplyErrors) > 0 {
-		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", allApplyErrors)
+		return ctrl.Result{}, fmt.Errorf("uid=%s: failed to apply to all instances: %v", uid, allApplyErrors)
 	}
 
 	cr.Status.Hash = hash
