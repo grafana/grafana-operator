@@ -101,7 +101,12 @@ func (m PluginMap) Merge(plugins PluginList) {
 }
 
 func (m PluginMap) GetPluginList() PluginList {
-	return slices.Collect(maps.Values(m))
+	plugins := slices.Collect(maps.Values(m))
+	slices.SortFunc(plugins, func(a, b GrafanaPlugin) int {
+		return strings.Compare(a.Name, b.Name)
+	})
+
+	return plugins
 }
 
 func NewPluginMap() PluginMap {
