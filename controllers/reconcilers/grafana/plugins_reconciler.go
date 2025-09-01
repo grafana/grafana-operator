@@ -28,72 +28,46 @@ func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 
 	vars.Plugins = ""
 
-	plugins := model.GetPluginsConfigMap(cr, scheme)
+	cm := model.GetPluginsConfigMap(cr, scheme)
 
-	_, err := controllerutil.CreateOrUpdate(ctx, r.client, plugins, func() error {
+	_, err := controllerutil.CreateOrUpdate(ctx, r.client, cm, func() error {
 		if scheme != nil {
-			err := controllerutil.SetOwnerReference(cr, plugins, scheme)
+			err := controllerutil.SetOwnerReference(cr, cm, scheme)
 			if err != nil {
 				return err
 			}
 		}
 
-		model.SetInheritedLabels(plugins, cr.Labels)
+		model.SetInheritedLabels(cm, cr.Labels)
 
 		return nil
 	})
 	if err != nil {
-		log.Error(err, "error getting plugins config map", "name", plugins.Name, "namespace", plugins.Namespace)
+		log.Error(err, "error getting plugins ConfigMap", "name", cm.Name, "namespace", cm.Namespace)
 		return v1beta1.OperatorStageResultFailed, err
 	}
 
 	// plugins config map found, but may be empty
-	if len(plugins.BinaryData) == 0 {
+	if len(cm.BinaryData) == 0 {
 		vars.Plugins = ""
 		return v1beta1.OperatorStageResultSuccess, nil
 	}
 
-	var consolidatedPlugins v1beta1.PluginList
-	for dashboard, plugins := range plugins.BinaryData {
-		var dashboardPlugins v1beta1.PluginList
+	pm := v1beta1.NewPluginMap()
 
-		err = json.Unmarshal(plugins, &dashboardPlugins)
+	for k, v := range cm.BinaryData {
+		var plugins v1beta1.PluginList
+
+		err = json.Unmarshal(v, &plugins)
 		if err != nil {
-			log.Error(err, "error consolidating plugins", "dashboard", dashboard)
+			log.Error(err, "error consolidating plugins from ConfigMap", "name", cm.Name, "namespace", cm.Namespace, "key", k)
 			return v1beta1.OperatorStageResultFailed, err
 		}
 
-		for _, plugin := range dashboardPlugins {
-			if !consolidatedPlugins.HasSomeVersionOf(&plugin) {
-				consolidatedPlugins = append(consolidatedPlugins, plugin)
-				continue
-			}
-
-			// newer version of plugin already installed
-			hasNewer, err := consolidatedPlugins.HasNewerVersionOf(&plugin)
-			if err != nil {
-				log.Error(err, "error checking existing plugins", "dashboard", dashboard)
-				return v1beta1.OperatorStageResultFailed, err
-			}
-
-			if hasNewer {
-				log.Info("skipping plugin", "dashboard", dashboard, "plugin",
-					plugin.Name, "version", plugin.Version)
-
-				continue
-			}
-
-			// duplicate plugin
-			if consolidatedPlugins.HasExactVersionOf(&plugin) {
-				continue
-			}
-
-			// some version is installed, but it is not newer and it is not the same: must be older
-			consolidatedPlugins.Update(&plugin)
-		}
+		pm.Merge(plugins)
 	}
 
-	vars.Plugins = consolidatedPlugins.String()
+	vars.Plugins = pm.GetPluginList().String()
 
 	return v1beta1.OperatorStageResultSuccess, nil
 }
