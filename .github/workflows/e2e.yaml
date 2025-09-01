@@ -47,10 +47,10 @@ jobs:
     strategy:
       matrix:
         version:
-          - v1.30.10
-          - v1.31.6
-          - v1.32.2
-          - v1.33.0
+          - v1.31.9
+          - v1.32.8
+          - v1.33.4
+          - v1.34.0
     steps:
       - name: Pre-pull kind image
         run: |
