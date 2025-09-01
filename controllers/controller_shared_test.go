@@ -312,13 +312,13 @@ func TestUpdatePluginConfigMap(t *testing.T) {
 		{
 			name:          "empty ConfigMap",
 			cm:            &corev1.ConfigMap{},
-			value:         []byte("aa"),
-			key:           "datasource-a-b",
-			deprecatedKey: "b-datasource",
+			value:         []byte("1"),
+			key:           "a",
+			deprecatedKey: "b",
 			want:          true,
 			wantCM: &corev1.ConfigMap{
 				BinaryData: map[string][]byte{
-					"datasource-a-b": []byte("aa"),
+					"a": []byte("1"),
 				},
 			},
 		},
@@ -326,17 +326,16 @@ func TestUpdatePluginConfigMap(t *testing.T) {
 			name: "naming migration",
 			cm: &corev1.ConfigMap{
 				BinaryData: map[string][]byte{
-					"deprecated-key": []byte("aa"),
-					"new-key":        []byte("aa"),
+					"deprecated": []byte("1"),
 				},
 			},
-			value:         []byte("aa"),
-			key:           "new-key",
-			deprecatedKey: "deprecated-key",
+			value:         []byte("1"),
+			key:           "new",
+			deprecatedKey: "deprecated",
 			want:          true,
 			wantCM: &corev1.ConfigMap{
 				BinaryData: map[string][]byte{
-					"new-key": []byte("aa"),
+					"new": []byte("1"),
 				},
 			},
 		},
@@ -344,16 +343,16 @@ func TestUpdatePluginConfigMap(t *testing.T) {
 			name: "updated list of plugins",
 			cm: &corev1.ConfigMap{
 				BinaryData: map[string][]byte{
-					"datasource-a-b": []byte("aa"),
+					"a": []byte("1"),
 				},
 			},
-			value:         []byte("bb"),
-			key:           "datasource-a-b",
-			deprecatedKey: "b-datasource",
+			value:         []byte("2"),
+			key:           "a",
+			deprecatedKey: "b",
 			want:          true,
 			wantCM: &corev1.ConfigMap{
 				BinaryData: map[string][]byte{
-					"datasource-a-b": []byte("bb"),
+					"a": []byte("2"),
 				},
 			},
 		},
@@ -361,16 +360,16 @@ func TestUpdatePluginConfigMap(t *testing.T) {
 			name: "same list of plugins",
 			cm: &corev1.ConfigMap{
 				BinaryData: map[string][]byte{
-					"datasource-a-b": []byte("aa"),
+					"a": []byte("1"),
 				},
 			},
-			value:         []byte("aa"),
-			key:           "datasource-a-b",
-			deprecatedKey: "b-datasource",
+			value:         []byte("1"),
+			key:           "a",
+			deprecatedKey: "b",
 			want:          false,
 			wantCM: &corev1.ConfigMap{
 				BinaryData: map[string][]byte{
-					"datasource-a-b": []byte("aa"),
+					"a": []byte("1"),
 				},
 			},
 		},
