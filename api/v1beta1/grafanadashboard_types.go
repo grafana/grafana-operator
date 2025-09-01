@@ -160,7 +160,7 @@ func (in *GrafanaDashboard) NamespacedResource(uid string) NamespacedResource {
 }
 
 func (in *GrafanaDashboard) GetPluginConfigMapKey() string {
-	return fmt.Sprintf("dashboard-%v-%v", in.Namespace, in.Name)
+	return fmt.Sprintf("db_%v_%v", in.Namespace, in.Name)
 }
 
 func (in *GrafanaDashboard) GetPluginConfigMapDeprecatedKey() string {

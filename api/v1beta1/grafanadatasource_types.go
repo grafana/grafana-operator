@@ -182,7 +182,7 @@ func (in *GrafanaDatasource) NamespacedResource() NamespacedResource {
 }
 
 func (in *GrafanaDatasource) GetPluginConfigMapKey() string {
-	return fmt.Sprintf("datasource-%v-%v", in.Namespace, in.Name)
+	return fmt.Sprintf("ds_%v_%v", in.Namespace, in.Name)
 }
 
 func (in *GrafanaDatasource) GetPluginConfigMapDeprecatedKey() string {
