@@ -5,6 +5,7 @@ metadata:
   name: example-test
 spec:
   template: true
+  namespace: grafana-operator-example-test
   steps:
     - name: step-00
       try:

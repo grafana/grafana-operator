@@ -13,4 +13,4 @@ kind: ConfigMap
 metadata:
   name: grafana-plugins
 binaryData:
-  grafana-dashboard-dashboard: W3sibmFtZSI6ImdyYWZhbmEtcGllY2hhcnQtcGFuZWwiLCJ2ZXJzaW9uIjoiMS4zLjkifV0=
+  dashboard-grafana-operator-example-test-grafana-dashboard: W3sibmFtZSI6ImdyYWZhbmEtcGllY2hhcnQtcGFuZWwiLCJ2ZXJzaW9uIjoiMS4zLjkifV0=

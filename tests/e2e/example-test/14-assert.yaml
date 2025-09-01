@@ -13,4 +13,4 @@ kind: ConfigMap
 metadata:
   name: grafana-plugins
 binaryData:
-  grafana-library-panel-librarypanel: W3sibmFtZSI6ImdyYWZhbmEtcGllY2hhcnQtcGFuZWwiLCJ2ZXJzaW9uIjoiMS4zLjkifV0=
+  librarypanel-grafana-operator-example-test-grafana-library-panel: W3sibmFtZSI6ImdyYWZhbmEtcGllY2hhcnQtcGFuZWwiLCJ2ZXJzaW9uIjoiMS4zLjkifV0=
