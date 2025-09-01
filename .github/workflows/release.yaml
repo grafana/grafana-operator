@@ -300,7 +300,7 @@ jobs:
           echo "SBOM: $SBOM"
 
       - name: Attest build provenance
-        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
         with:
           subject-name: "ghcr.io/${{ github.repository }}"
           subject-digest: ${{ steps.platform-info.outputs.DIGEST }}
