@@ -17,6 +17,8 @@ limitations under the License.
 package v1beta1
 
 import (
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -155,6 +157,14 @@ func (in *GrafanaDashboard) NamespacedResource(uid string) NamespacedResource {
 	// Not enough context to call content.CustomUIDOrUID(uid).
 	// Hence, use uid from args as the caller has more context
 	return NewNamespacedResource(in.Namespace, in.Name, uid)
+}
+
+func (in *GrafanaDashboard) GetPluginConfigMapKey() string {
+	return fmt.Sprintf("dashboard-%v-%v", in.Namespace, in.Name)
+}
+
+func (in *GrafanaDashboard) GetPluginConfigMapDeprecatedKey() string {
+	return fmt.Sprintf("%v-dashboard", in.Name)
 }
 
 func init() {
