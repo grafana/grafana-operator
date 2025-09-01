@@ -8596,6 +8596,10 @@ spec:
                 items:
                   type: string
                 type: array
+              serviceaccounts:
+                items:
+                  type: string
+                type: array
               stage:
                 type: string
               stageStatus:
@@ -8605,6 +8609,259 @@ spec:
             type: object
         required:
         - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.17.3
+  name: grafanaserviceaccounts.grafana.integreatly.org
+spec:
+  group: grafana.integreatly.org
+  names:
+    categories:
+    - grafana-operator
+    kind: GrafanaServiceAccount
+    listKind: GrafanaServiceAccountList
+    plural: grafanaserviceaccounts
+    singular: grafanaserviceaccount
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - format: date-time
+      jsonPath: .status.lastResync
+      name: Last resync
+      type: date
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: GrafanaServiceAccount is the Schema for the grafanaserviceaccounts
+          API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: GrafanaServiceAccountSpec defines the desired state of a
+              GrafanaServiceAccount.
+            properties:
+              instanceName:
+                description: Name of the Grafana instance to create the service account
+                  for
+                minLength: 1
+                type: string
+                x-kubernetes-validations:
+                - message: spec.instanceName is immutable
+                  rule: self == oldSelf
+              isDisabled:
+                default: false
+                description: Whether the service account is disabled
+                type: boolean
+              name:
+                description: Name of the service account in Grafana
+                minLength: 1
+                type: string
+                x-kubernetes-validations:
+                - message: spec.name is immutable
+                  rule: self == oldSelf
+              resyncPeriod:
+                default: 10m0s
+                description: How often the resource is synced, defaults to 10m0s if
+                  not set
+                pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
+                type: string
+                x-kubernetes-validations:
+                - message: spec.resyncPeriod must be greater than 0
+                  rule: duration(self) > duration('0s')
+              role:
+                description: Role of the service account (Viewer, Editor, Admin)
+                enum:
+                - Viewer
+                - Editor
+                - Admin
+                type: string
+              suspend:
+                default: false
+                description: Suspend pauses reconciliation of the service account
+                type: boolean
+              tokens:
+                description: Tokens to create for the service account
+                items:
+                  description: GrafanaServiceAccountTokenSpec defines a token for
+                    a service account
+                  properties:
+                    expires:
+                      description: Expiration date of the token. If not set, the token
+                        never expires
+                      format: date-time
+                      type: string
+                    name:
+                      description: Name of the token
+                      minLength: 1
+                      type: string
+                    secretName:
+                      description: Name of the secret to store the token. If not set,
+                        a name will be generated
+                      minLength: 1
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - name
+                x-kubernetes-list-type: map
+            required:
+            - instanceName
+            - name
+            - role
+            type: object
+          status:
+            description: GrafanaServiceAccountStatus defines the observed state of
+              a GrafanaServiceAccount
+            properties:
+              account:
+                description: Info contains the Grafana service account information
+                properties:
+                  id:
+                    description: ID of the service account in Grafana
+                    format: int64
+                    type: integer
+                  isDisabled:
+                    description: IsDisabled indicates if the service account is disabled
+                    type: boolean
+                  login:
+                    type: string
+                  name:
+                    type: string
+                  role:
+                    description: Role is the Grafana role for the service account
+                      (Viewer, Editor, Admin)
+                    type: string
+                  tokens:
+                    description: Information about tokens
+                    items:
+                      description: GrafanaServiceAccountTokenStatus describes a token
+                        created in Grafana.
+                      properties:
+                        expires:
+                          description: |-
+                            Expiration time of the token
+                            N.B. There's possible discrepancy with the expiration time in spec
+                            It happens because Grafana API accepts TTL in seconds then calculates the expiration time against the current time
+                          format: date-time
+                          type: string
+                        id:
+                          description: ID of the token in Grafana
+                          format: int64
+                          type: integer
+                        name:
+                          type: string
+                        secret:
+                          description: Name of the secret containing the token
+                          properties:
+                            name:
+                              type: string
+                            namespace:
+                              type: string
+                          type: object
+                      required:
+                      - id
+                      - name
+                      type: object
+                    type: array
+                required:
+                - id
+                - isDisabled
+                - login
+                - name
+                - role
+                type: object
+              conditions:
+                description: Results when synchonizing resource with Grafana instances
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              lastResync:
+                description: Last time the resource was synchronized with Grafana
+                  instances
+                format: date-time
+                type: string
+            type: object
         type: object
     served: true
     storage: true

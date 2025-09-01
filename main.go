@@ -294,6 +294,14 @@ func main() { // nolint:gocyclo
 		os.Exit(1)
 	}
 
+	if err = (&controllers.GrafanaServiceAccountReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "GrafanaServiceAccount")
+		os.Exit(1)
+	}
+
 	if err = (&controllers.GrafanaFolderReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),

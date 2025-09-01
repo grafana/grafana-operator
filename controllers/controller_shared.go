@@ -484,7 +484,12 @@ func mergeReconcileErrors(sources ...map[string]string) map[string]string {
 	return merged
 }
 
-func UpdateStatus(ctx context.Context, cl client.Client, cr v1beta1.CommonResource) {
+type statusResource interface {
+	client.Object
+	CommonStatus() *v1beta1.GrafanaCommonStatus
+}
+
+func UpdateStatus(ctx context.Context, cl client.Client, cr statusResource) {
 	log := logf.FromContext(ctx)
 
 	cr.CommonStatus().LastResync = metav1.Time{Time: time.Now()}
