@@ -206,6 +206,7 @@ func updatePluginConfigMap(cm *corev1.ConfigMap, value []byte, key string, depre
 	_, ok := cm.BinaryData[deprecatedKey]
 	if ok {
 		delete(cm.BinaryData, deprecatedKey)
+
 		isUpdated = true
 	}
 
