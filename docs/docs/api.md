@@ -8637,6 +8637,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanaspecdeploymentspectemplatespeccontainersindexrestartpolicyrulesindex">restartPolicyRules</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecdeploymentspectemplatespeccontainersindexsecuritycontext">securityContext</a></b></td>
         <td>object</td>
         <td>
@@ -8782,6 +8789,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanaspecdeploymentspectemplatespeccontainersindexenvindexvaluefromfilekeyref">fileKeyRef</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecdeploymentspectemplatespeccontainersindexenvindexvaluefromresourcefieldref">resourceFieldRef</a></b></td>
         <td>object</td>
         <td>
@@ -8870,6 +8884,56 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>string</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.deployment.spec.template.spec.containers[index].env[index].valueFrom.fileKeyRef
+<sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespeccontainersindexenvindexvaluefrom)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>volumeName</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>optional</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Default</i>: false<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -10318,6 +10382,74 @@ Deployment sets how the deployment object should look like with your grafana ins
 </table>
 
 
+### Grafana.spec.deployment.spec.template.spec.containers[index].restartPolicyRules[index]
+<sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespeccontainersindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>action</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanaspecdeploymentspectemplatespeccontainersindexrestartpolicyrulesindexexitcodes">exitCodes</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.deployment.spec.template.spec.containers[index].restartPolicyRules[index].exitCodes
+<sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespeccontainersindexrestartpolicyrulesindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
 ### Grafana.spec.deployment.spec.template.spec.containers[index].securityContext
 <sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespeccontainersindex)</sup></sup>
 
@@ -11207,6 +11339,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanaspecdeploymentspectemplatespecephemeralcontainersindexrestartpolicyrulesindex">restartPolicyRules</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecdeploymentspectemplatespecephemeralcontainersindexsecuritycontext">securityContext</a></b></td>
         <td>object</td>
         <td>
@@ -11359,6 +11498,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanaspecdeploymentspectemplatespecephemeralcontainersindexenvindexvaluefromfilekeyref">fileKeyRef</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecdeploymentspectemplatespecephemeralcontainersindexenvindexvaluefromresourcefieldref">resourceFieldRef</a></b></td>
         <td>object</td>
         <td>
@@ -11447,6 +11593,56 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>string</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.deployment.spec.template.spec.ephemeralContainers[index].env[index].valueFrom.fileKeyRef
+<sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespecephemeralcontainersindexenvindexvaluefrom)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>volumeName</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>optional</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Default</i>: false<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12895,6 +13091,74 @@ Deployment sets how the deployment object should look like with your grafana ins
 </table>
 
 
+### Grafana.spec.deployment.spec.template.spec.ephemeralContainers[index].restartPolicyRules[index]
+<sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespecephemeralcontainersindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>action</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanaspecdeploymentspectemplatespecephemeralcontainersindexrestartpolicyrulesindexexitcodes">exitCodes</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.deployment.spec.template.spec.ephemeralContainers[index].restartPolicyRules[index].exitCodes
+<sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespecephemeralcontainersindexrestartpolicyrulesindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
 ### Grafana.spec.deployment.spec.template.spec.ephemeralContainers[index].securityContext
 <sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespecephemeralcontainersindex)</sup></sup>
 
@@ -13772,6 +14036,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanaspecdeploymentspectemplatespecinitcontainersindexrestartpolicyrulesindex">restartPolicyRules</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecdeploymentspectemplatespecinitcontainersindexsecuritycontext">securityContext</a></b></td>
         <td>object</td>
         <td>
@@ -13917,6 +14188,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanaspecdeploymentspectemplatespecinitcontainersindexenvindexvaluefromfilekeyref">fileKeyRef</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecdeploymentspectemplatespecinitcontainersindexenvindexvaluefromresourcefieldref">resourceFieldRef</a></b></td>
         <td>object</td>
         <td>
@@ -14005,6 +14283,56 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>string</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.deployment.spec.template.spec.initContainers[index].env[index].valueFrom.fileKeyRef
+<sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespecinitcontainersindexenvindexvaluefrom)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>volumeName</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>optional</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Default</i>: false<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -15445,6 +15773,74 @@ Deployment sets how the deployment object should look like with your grafana ins
       </tr><tr>
         <td><b>request</b></td>
         <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.deployment.spec.template.spec.initContainers[index].restartPolicyRules[index]
+<sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespecinitcontainersindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>action</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanaspecdeploymentspectemplatespecinitcontainersindexrestartpolicyrulesindexexitcodes">exitCodes</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.deployment.spec.template.spec.initContainers[index].restartPolicyRules[index].exitCodes
+<sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespecinitcontainersindexrestartpolicyrulesindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]integer</td>
         <td>
           <br/>
         </td>
@@ -18740,6 +19136,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanaspecdeploymentspectemplatespecvolumesindexprojectedsourcesindexpodcertificate">podCertificate</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecdeploymentspectemplatespecvolumesindexprojectedsourcesindexsecret">secret</a></b></td>
         <td>object</td>
         <td>
@@ -19119,6 +19522,70 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>int or string</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.deployment.spec.template.spec.volumes[index].projected.sources[index].podCertificate
+<sup><sup>[↩ Parent](#grafanaspecdeploymentspectemplatespecvolumesindexprojectedsourcesindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>keyType</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>signerName</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>certificateChainPath</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>credentialBundlePath</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>keyPath</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>maxExpirationSeconds</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int32<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -21062,7 +21529,7 @@ ResourceRequirements describes the compute resource requirements.
           Claims lists the names of resources, defined in spec.resourceClaims,
 that are used by this container.
 
-This is an alpha field and requires enabling the
+This field depends on the
 DynamicResourceAllocation feature gate.
 
 This field is immutable. It can only be set for containers.<br/>
