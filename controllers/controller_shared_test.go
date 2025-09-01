@@ -299,6 +299,93 @@ func TestLabelsSatisfyMatchExpressions(t *testing.T) {
 	}
 }
 
+func TestUpdatePluginConfigMap(t *testing.T) {
+	tests := []struct {
+		name          string
+		cm            *corev1.ConfigMap
+		value         []byte
+		key           string
+		deprecatedKey string
+		want          bool
+		wantCM        *corev1.ConfigMap
+	}{
+		{
+			name:          "empty ConfigMap",
+			cm:            &corev1.ConfigMap{},
+			value:         []byte("aa"),
+			key:           "datasource-a-b",
+			deprecatedKey: "b-datasource",
+			want:          true,
+			wantCM: &corev1.ConfigMap{
+				BinaryData: map[string][]byte{
+					"datasource-a-b": []byte("aa"),
+				},
+			},
+		},
+		{
+			name: "naming migration",
+			cm: &corev1.ConfigMap{
+				BinaryData: map[string][]byte{
+					"deprecated-key": []byte("aa"),
+					"new-key":        []byte("aa"),
+				},
+			},
+			value:         []byte("aa"),
+			key:           "new-key",
+			deprecatedKey: "deprecated-key",
+			want:          true,
+			wantCM: &corev1.ConfigMap{
+				BinaryData: map[string][]byte{
+					"new-key": []byte("aa"),
+				},
+			},
+		},
+		{
+			name: "updated list of plugins",
+			cm: &corev1.ConfigMap{
+				BinaryData: map[string][]byte{
+					"datasource-a-b": []byte("aa"),
+				},
+			},
+			value:         []byte("bb"),
+			key:           "datasource-a-b",
+			deprecatedKey: "b-datasource",
+			want:          true,
+			wantCM: &corev1.ConfigMap{
+				BinaryData: map[string][]byte{
+					"datasource-a-b": []byte("bb"),
+				},
+			},
+		},
+		{
+			name: "same list of plugins",
+			cm: &corev1.ConfigMap{
+				BinaryData: map[string][]byte{
+					"datasource-a-b": []byte("aa"),
+				},
+			},
+			value:         []byte("aa"),
+			key:           "datasource-a-b",
+			deprecatedKey: "b-datasource",
+			want:          false,
+			wantCM: &corev1.ConfigMap{
+				BinaryData: map[string][]byte{
+					"datasource-a-b": []byte("aa"),
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := updatePluginConfigMap(tt.cm, tt.value, tt.key, tt.deprecatedKey)
+
+			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tt.wantCM, tt.cm)
+		})
+	}
+}
+
 func TestMergeReconcileErrors(t *testing.T) {
 	tests := []struct {
 		name    string
