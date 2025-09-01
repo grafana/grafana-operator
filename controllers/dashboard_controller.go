@@ -175,19 +175,19 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			if err != nil {
 				pluginErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 				log.Error(err, "error reconciling plugins", "dashboard", cr.Name, "grafana", grafana.Name, "uid", uid)
-			  }
+			}
 		}
 
 		// then import the dashboard into the matching grafana instances
 		err = r.onDashboardCreated(ctx, &grafana, cr, dashboardModel, hash, folderUID)
 		if err != nil {
-		  applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = fmt.Sprintf("uid=%s: %s", uid, err.Error())
+			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = fmt.Sprintf("uid=%s: %s", uid, err.Error())
 		}
 
 		if grafana.Spec.Preferences != nil && uid == grafana.Spec.Preferences.HomeDashboardUID {
 			err = r.UpdateHomeDashboard(ctx, grafana, uid, cr)
 			if err != nil {
-			  applyHomeErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = fmt.Sprintf("uid=%s: %s", uid, err.Error())
+				applyHomeErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = fmt.Sprintf("uid=%s: %s", uid, err.Error())
 			}
 		}
 	}
