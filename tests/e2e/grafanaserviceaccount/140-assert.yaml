@@ -1,0 +1,152 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaServiceAccount
+metadata:
+  name: grafana1-sa1
+  namespace: ($NAMESPACE)
+status:
+  account:
+    id: 2
+    isDisabled: false
+    login: sa-1-sa1
+    name: sa1
+    role: Editor
+  conditions:
+    - message: ServiceAccount was successfully applied to 1 instances
+      reason: ApplySuccessful
+      status: "True"
+      type: ServiceAccountSynchronized
+      observedGeneration: 1
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaServiceAccount
+metadata:
+  name: grafana1-sa2
+  namespace: ($NAMESPACE)
+status:
+  account:
+    id: 3
+    isDisabled: false
+    login: sa-1-sa2
+    name: sa2
+    role: Viewer
+    tokens:
+      - id: 11
+        name: token1
+        secret:
+          (starts_with(name, 'grafana1-sa2-token1')): true
+          namespace: ($NAMESPACE)
+      - id: 12
+        name: token2
+        secret:
+          name: fff
+          namespace: ($NAMESPACE)
+      - id: 13
+        name: token3
+        secret:
+          name: eee
+          namespace: ($NAMESPACE)
+      - id: 14
+        name: token4
+        secret:
+          (starts_with(name, 'grafana1-sa2-token4')): true
+          namespace: ($NAMESPACE)
+  conditions:
+    - message: ServiceAccount was successfully applied to 1 instances
+      reason: ApplySuccessful
+      status: 'True'
+      type: ServiceAccountSynchronized
+      observedGeneration: 11
+---
+apiVersion: v1
+data:
+  (length(token) > `0`): true
+kind: Secret
+metadata:
+  annotations:
+    operator.grafana.com/service-account-spec-name: sa2
+    operator.grafana.com/service-account-token-id: '11'
+    operator.grafana.com/service-account-token-name: token1
+  generateName: grafana1-sa2-token1-
+  labels:
+    app.kubernetes.io/managed-by: grafana-operator
+    operator.grafana.com/service-account-instance: grafana1
+    operator.grafana.com/service-account-name: grafana1-sa2
+  (starts_with(name, 'grafana1-sa2-token1')): true
+  namespace: ($NAMESPACE)
+  ownerReferences:
+    - apiVersion: grafana.integreatly.org/v1beta1
+      blockOwnerDeletion: true
+      controller: true
+      kind: GrafanaServiceAccount
+      name: grafana1-sa2
+type: Opaque
+---
+apiVersion: v1
+data:
+  (length(token) > `0`): true
+kind: Secret
+metadata:
+  annotations:
+    operator.grafana.com/service-account-spec-name: sa2
+    operator.grafana.com/service-account-token-id: '12'
+    operator.grafana.com/service-account-token-name: token2
+  labels:
+    app.kubernetes.io/managed-by: grafana-operator
+    operator.grafana.com/service-account-instance: grafana1
+    operator.grafana.com/service-account-name: grafana1-sa2
+  name: fff
+  namespace: ($NAMESPACE)
+  ownerReferences:
+    - apiVersion: grafana.integreatly.org/v1beta1
+      blockOwnerDeletion: true
+      controller: true
+      kind: GrafanaServiceAccount
+      name: grafana1-sa2
+type: Opaque
+---
+apiVersion: v1
+data:
+  (length(token) > `0`): true
+kind: Secret
+metadata:
+  annotations:
+    operator.grafana.com/service-account-spec-name: sa2
+    operator.grafana.com/service-account-token-id: '13'
+    operator.grafana.com/service-account-token-name: token3
+  labels:
+    app.kubernetes.io/managed-by: grafana-operator
+    operator.grafana.com/service-account-instance: grafana1
+    operator.grafana.com/service-account-name: grafana1-sa2
+  name: eee
+  namespace: ($NAMESPACE)
+  ownerReferences:
+    - apiVersion: grafana.integreatly.org/v1beta1
+      blockOwnerDeletion: true
+      controller: true
+      kind: GrafanaServiceAccount
+      name: grafana1-sa2
+type: Opaque
+---
+apiVersion: v1
+data:
+  (length(token) > `0`): true
+kind: Secret
+metadata:
+  annotations:
+    operator.grafana.com/service-account-spec-name: sa2
+    operator.grafana.com/service-account-token-id: '14'
+    operator.grafana.com/service-account-token-name: token4
+  generateName: grafana1-sa2-token4-
+  labels:
+    app.kubernetes.io/managed-by: grafana-operator
+    operator.grafana.com/service-account-instance: grafana1
+    operator.grafana.com/service-account-name: grafana1-sa2
+  (starts_with(name, 'grafana1-sa2-token4')): true
+  namespace: ($NAMESPACE)
+  ownerReferences:
+    - apiVersion: grafana.integreatly.org/v1beta1
+      blockOwnerDeletion: true
+      controller: true
+      kind: GrafanaServiceAccount
+      name: grafana1-sa2
+type: Opaque

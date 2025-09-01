@@ -33,6 +33,8 @@ Resource Types:
 
 - [Grafana](#grafana)
 
+- [GrafanaServiceAccount](#grafanaserviceaccount)
+
 
 
 
@@ -22949,6 +22951,13 @@ GrafanaStatus defines the observed state of Grafana
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>serviceaccounts</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>stage</b></td>
         <td>string</td>
         <td>
@@ -22975,6 +22984,456 @@ GrafanaStatus defines the observed state of Grafana
 
 ### Grafana.status.conditions[index]
 <sup><sup>[↩ Parent](#grafanastatus)</sup></sup>
+
+
+
+Condition contains details for one aspect of the current state of this API Resource.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>lastTransitionTime</b></td>
+        <td>string</td>
+        <td>
+          lastTransitionTime is the last time the condition transitioned from one status to another.
+This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.<br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>message</b></td>
+        <td>string</td>
+        <td>
+          message is a human readable message indicating details about the transition.
+This may be an empty string.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>reason</b></td>
+        <td>string</td>
+        <td>
+          reason contains a programmatic identifier indicating the reason for the condition's last transition.
+Producers of specific condition types may define expected values and meanings for this field,
+and whether the values are considered a guaranteed API.
+The value should be a CamelCase string.
+This field may not be empty.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>status</b></td>
+        <td>enum</td>
+        <td>
+          status of the condition, one of True, False, Unknown.<br/>
+          <br/>
+            <i>Enum</i>: True, False, Unknown<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          type of condition in CamelCase or in foo.example.com/CamelCase.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>observedGeneration</b></td>
+        <td>integer</td>
+        <td>
+          observedGeneration represents the .metadata.generation that the condition was set based upon.
+For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+with respect to the current state of the instance.<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+            <i>Minimum</i>: 0<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+## GrafanaServiceAccount
+<sup><sup>[↩ Parent](#grafanaintegreatlyorgv1beta1 )</sup></sup>
+
+
+
+
+
+
+GrafanaServiceAccount is the Schema for the grafanaserviceaccounts API
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+      <td><b>apiVersion</b></td>
+      <td>string</td>
+      <td>grafana.integreatly.org/v1beta1</td>
+      <td>true</td>
+      </tr>
+      <tr>
+      <td><b>kind</b></td>
+      <td>string</td>
+      <td>GrafanaServiceAccount</td>
+      <td>true</td>
+      </tr>
+      <tr>
+      <td><b><a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta">metadata</a></b></td>
+      <td>object</td>
+      <td>Refer to the Kubernetes API documentation for the fields of the `metadata` field.</td>
+      <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanaserviceaccountspec">spec</a></b></td>
+        <td>object</td>
+        <td>
+          GrafanaServiceAccountSpec defines the desired state of a GrafanaServiceAccount.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanaserviceaccountstatus">status</a></b></td>
+        <td>object</td>
+        <td>
+          GrafanaServiceAccountStatus defines the observed state of a GrafanaServiceAccount<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaServiceAccount.spec
+<sup><sup>[↩ Parent](#grafanaserviceaccount)</sup></sup>
+
+
+
+GrafanaServiceAccountSpec defines the desired state of a GrafanaServiceAccount.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>instanceName</b></td>
+        <td>string</td>
+        <td>
+          Name of the Grafana instance to create the service account for<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: spec.instanceName is immutable</li>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the service account in Grafana<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: spec.name is immutable</li>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>role</b></td>
+        <td>enum</td>
+        <td>
+          Role of the service account (Viewer, Editor, Admin)<br/>
+          <br/>
+            <i>Enum</i>: Viewer, Editor, Admin<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>isDisabled</b></td>
+        <td>boolean</td>
+        <td>
+          Whether the service account is disabled<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>resyncPeriod</b></td>
+        <td>string</td>
+        <td>
+          How often the resource is synced, defaults to 10m0s if not set<br/>
+          <br/>
+            <i>Validations</i>:<li>duration(self) > duration('0s'): spec.resyncPeriod must be greater than 0</li>
+            <i>Default</i>: 10m0s<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>suspend</b></td>
+        <td>boolean</td>
+        <td>
+          Suspend pauses reconciliation of the service account<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanaserviceaccountspectokensindex">tokens</a></b></td>
+        <td>[]object</td>
+        <td>
+          Tokens to create for the service account<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaServiceAccount.spec.tokens[index]
+<sup><sup>[↩ Parent](#grafanaserviceaccountspec)</sup></sup>
+
+
+
+GrafanaServiceAccountTokenSpec defines a token for a service account
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the token<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>expires</b></td>
+        <td>string</td>
+        <td>
+          Expiration date of the token. If not set, the token never expires<br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>secretName</b></td>
+        <td>string</td>
+        <td>
+          Name of the secret to store the token. If not set, a name will be generated<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaServiceAccount.status
+<sup><sup>[↩ Parent](#grafanaserviceaccount)</sup></sup>
+
+
+
+GrafanaServiceAccountStatus defines the observed state of a GrafanaServiceAccount
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanaserviceaccountstatusaccount">account</a></b></td>
+        <td>object</td>
+        <td>
+          Info contains the Grafana service account information<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanaserviceaccountstatusconditionsindex">conditions</a></b></td>
+        <td>[]object</td>
+        <td>
+          Results when synchonizing resource with Grafana instances<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>lastResync</b></td>
+        <td>string</td>
+        <td>
+          Last time the resource was synchronized with Grafana instances<br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaServiceAccount.status.account
+<sup><sup>[↩ Parent](#grafanaserviceaccountstatus)</sup></sup>
+
+
+
+Info contains the Grafana service account information
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>id</b></td>
+        <td>integer</td>
+        <td>
+          ID of the service account in Grafana<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>isDisabled</b></td>
+        <td>boolean</td>
+        <td>
+          IsDisabled indicates if the service account is disabled<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>login</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>role</b></td>
+        <td>string</td>
+        <td>
+          Role is the Grafana role for the service account (Viewer, Editor, Admin)<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanaserviceaccountstatusaccounttokensindex">tokens</a></b></td>
+        <td>[]object</td>
+        <td>
+          Information about tokens<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaServiceAccount.status.account.tokens[index]
+<sup><sup>[↩ Parent](#grafanaserviceaccountstatusaccount)</sup></sup>
+
+
+
+GrafanaServiceAccountTokenStatus describes a token created in Grafana.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>id</b></td>
+        <td>integer</td>
+        <td>
+          ID of the token in Grafana<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>expires</b></td>
+        <td>string</td>
+        <td>
+          Expiration time of the token
+N.B. There's possible discrepancy with the expiration time in spec
+It happens because Grafana API accepts TTL in seconds then calculates the expiration time against the current time<br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanaserviceaccountstatusaccounttokensindexsecret">secret</a></b></td>
+        <td>object</td>
+        <td>
+          Name of the secret containing the token<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaServiceAccount.status.account.tokens[index].secret
+<sup><sup>[↩ Parent](#grafanaserviceaccountstatusaccounttokensindex)</sup></sup>
+
+
+
+Name of the secret containing the token
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaServiceAccount.status.conditions[index]
+<sup><sup>[↩ Parent](#grafanaserviceaccountstatus)</sup></sup>
 
 
 

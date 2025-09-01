@@ -1,0 +1,14 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaServiceAccount
+metadata:
+  name: mysa
+spec:
+  name: "my-service-account"
+  role: "Admin"
+  isDisabled: false
+  instanceName: "grafana"
+  tokens:
+    - name: "my-token-a"
+      secretName: thatsfine
+      expires: 2029-12-31T14:00:00+02:00
+    - name: "my-token-b"

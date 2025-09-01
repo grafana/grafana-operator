@@ -1,0 +1,16 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana1
+  namespace: ($NAMESPACE)
+  labels:
+    test: ($test.metadata.name)
+spec:
+  config:
+    log:
+      mode: "console"
+    auth:
+      disable_login_form: "false"
+    security:
+      admin_user: ($USER)
+      admin_password: ($PASS)

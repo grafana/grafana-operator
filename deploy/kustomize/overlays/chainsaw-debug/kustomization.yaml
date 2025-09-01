@@ -1,0 +1,17 @@
+resources:
+  - ../chainsaw
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+images:
+  - name: ko.local/grafana/grafana-operator
+    newName: hashicorp/http-echo
+    newTag: latest
+
+patches:
+  - path: deployment-patch.yaml
+    target:
+      group: apps
+      kind: Deployment
+      version: v1
