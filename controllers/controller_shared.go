@@ -203,11 +203,22 @@ func updatePluginConfigMap(cm *corev1.ConfigMap, value []byte, key string, depre
 	}
 
 	// TODO: temporary solution that is used to migrate to a new naming scheme, can be deprecated later
-	_, ok := cm.BinaryData[deprecatedKey]
-	if ok {
+	if _, ok := cm.BinaryData[deprecatedKey]; ok {
 		delete(cm.BinaryData, deprecatedKey)
 
 		isUpdated = true
+	}
+
+	// Delete the key if no plugins left
+	if len(value) == 0 {
+		if _, ok := cm.BinaryData[key]; ok {
+			{
+				delete(cm.BinaryData, key)
+				isUpdated = true // nolint:wsl_v5
+
+				return
+			}
+		}
 	}
 
 	if !bytes.Equal(value, cm.BinaryData[key]) {
@@ -235,9 +246,15 @@ func ReconcilePlugins(ctx context.Context, k8sClient client.Client, scheme *runt
 	// when we fetch the actual contents of the ConfigMap using k8sClient, so we need to set it here again
 	controllerutil.SetControllerReference(grafana, cm, scheme) //nolint:errcheck
 
-	val, err := json.Marshal(plugins.Sanitize())
-	if err != nil {
-		return err
+	val := []byte{}
+
+	// Just in case we have some broken plugins, better to assess length of the sanitized list, not the original one
+	sanitized := plugins.Sanitize()
+	if len(sanitized) > 0 {
+		val, err = json.Marshal(sanitized)
+		if err != nil {
+			return err
+		}
 	}
 
 	isUpdated := updatePluginConfigMap(cm, val, cmKey, cmDeprecatedKey)

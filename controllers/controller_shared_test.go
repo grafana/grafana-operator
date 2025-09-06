@@ -373,6 +373,36 @@ func TestUpdatePluginConfigMap(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "removed plugin (nil)",
+			cm: &corev1.ConfigMap{
+				BinaryData: map[string][]byte{
+					"a": []byte("1"),
+				},
+			},
+			value:         nil,
+			key:           "a",
+			deprecatedKey: "b",
+			want:          true,
+			wantCM: &corev1.ConfigMap{
+				BinaryData: map[string][]byte{},
+			},
+		},
+		{
+			name: "removed plugin (empty slice)",
+			cm: &corev1.ConfigMap{
+				BinaryData: map[string][]byte{
+					"a": []byte("1"),
+				},
+			},
+			value:         []byte{},
+			key:           "a",
+			deprecatedKey: "b",
+			want:          true,
+			wantCM: &corev1.ConfigMap{
+				BinaryData: map[string][]byte{},
+			},
+		},
 	}
 
 	for _, tt := range tests {
