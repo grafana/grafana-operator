@@ -10,21 +10,20 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var _ = Describe("GrafanaCommonSpec#AllowCrossNamespaceImport Validation rule tests", func() {
 	undefinedCrossImportFolder := &GrafanaFolder{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			APIVersion: APIVersion,
 			Kind:       "GrafanaFolder",
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
 		},
 		Spec: GrafanaFolderSpec{
 			GrafanaCommonSpec: GrafanaCommonSpec{
-				InstanceSelector: &v1.LabelSelector{},
+				InstanceSelector: &metav1.LabelSelector{},
 			},
 		},
 	}
