@@ -198,6 +198,10 @@ func (r *GrafanaServiceAccountReconciler) finalize(ctx context.Context, cr *v1be
 	// Get the Grafana CR for deletion
 	grafana, err := r.lookupGrafana(ctx, cr)
 	if err != nil {
+		if kuberr.IsNotFound(err) {
+			return nil
+		}
+
 		return err
 	}
 
