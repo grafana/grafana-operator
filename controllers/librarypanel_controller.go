@@ -279,6 +279,13 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, cr *v1beta
 			}
 		}
 
+		if grafana.IsInternal() {
+			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, cr.GetPluginConfigMapKey(), cr.GetPluginConfigMapDeprecatedKey())
+			if err != nil {
+				return fmt.Errorf("reconciling plugins: %w", err)
+			}
+		}
+
 		// Update grafana instance Status
 		err = grafana.RemoveNamespacedResource(ctx, r.Client, cr)
 		if err != nil {
