@@ -372,6 +372,7 @@ func (r *GrafanaDatasourceReconciler) indexSecretSource() func(o client.Object) 
 		}
 
 		var secretRefs []string
+
 		for _, valueFrom := range datasource.Spec.ValuesFrom {
 			if valueFrom.ValueFrom.SecretKeyRef != nil {
 				secretRefs = append(secretRefs, fmt.Sprintf("%s/%s", datasource.Namespace, valueFrom.ValueFrom.SecretKeyRef.Name))
@@ -390,6 +391,7 @@ func (r *GrafanaDatasourceReconciler) indexConfigMapSource() func(o client.Objec
 		}
 
 		var configMapRefs []string
+
 		for _, valueFrom := range datasource.Spec.ValuesFrom {
 			if valueFrom.ValueFrom.ConfigMapKeyRef != nil {
 				configMapRefs = append(configMapRefs, fmt.Sprintf("%s/%s", datasource.Namespace, valueFrom.ValueFrom.ConfigMapKeyRef.Name))
