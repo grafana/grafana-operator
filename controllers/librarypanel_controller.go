@@ -254,9 +254,9 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, cr *v1beta
 
 		isCleanupInGrafanaRequired := true
 
-		resp, err := grafanaClient.LibraryElements.GetLibraryElementConnections(uid)
+		resp, err := grafanaClient.LibraryElements.GetLibraryElementByUID(uid)
 		if err != nil {
-			var notFound *library_elements.GetLibraryElementConnectionsNotFound
+			var notFound *library_elements.GetLibraryElementByUIDNotFound
 			if !errors.As(err, &notFound) {
 				return fmt.Errorf("fetching library panel from instance %s/%s: %w", grafana.Namespace, grafana.Name, err)
 			}
@@ -266,7 +266,7 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, cr *v1beta
 
 		// Skip cleanup in instances
 		if isCleanupInGrafanaRequired {
-			if len(resp.Payload.Result) > 0 {
+			if resp.Payload.Result.Meta.ConnectedDashboards > 0 {
 				return fmt.Errorf("library panel %s/%s/%s on instance %s/%s has existing connections", cr.Namespace, cr.Name, uid, grafana.Namespace, grafana.Name) //nolint
 			}
 
