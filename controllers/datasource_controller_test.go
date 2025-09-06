@@ -42,6 +42,166 @@ func TestGetDatasourceContent(t *testing.T) {
 	})
 }
 
+func TestDatasourceIndexing(t *testing.T) {
+	reconciler := &GrafanaDatasourceReconciler{
+		Client: k8sClient,
+	}
+
+	t.Run("indexSecretSource returns correct secret references", func(t *testing.T) {
+		ds := &v1beta1.GrafanaDatasource{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "test-namespace",
+				Name:      "test-datasource",
+			},
+			Spec: v1beta1.GrafanaDatasourceSpec{
+				ValuesFrom: []v1beta1.ValueFrom{
+					{
+						ValueFrom: v1beta1.ValueFromSource{
+							SecretKeyRef: &corev1.SecretKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: "secret1",
+								},
+								Key: "key1",
+							},
+						},
+					},
+					{
+						ValueFrom: v1beta1.ValueFromSource{
+							SecretKeyRef: &corev1.SecretKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: "secret2",
+								},
+								Key: "key2",
+							},
+						},
+					},
+					{
+						ValueFrom: v1beta1.ValueFromSource{
+							ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: "configmap1",
+								},
+								Key: "key1",
+							},
+						},
+					},
+				},
+			},
+		}
+
+		indexFunc := reconciler.indexSecretSource()
+		result := indexFunc(ds)
+
+		expected := []string{"test-namespace/secret1", "test-namespace/secret2"}
+		require.Equal(t, expected, result)
+	})
+
+	t.Run("indexConfigMapSource returns correct configmap references", func(t *testing.T) {
+		ds := &v1beta1.GrafanaDatasource{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "test-namespace",
+				Name:      "test-datasource",
+			},
+			Spec: v1beta1.GrafanaDatasourceSpec{
+				ValuesFrom: []v1beta1.ValueFrom{
+					{
+						ValueFrom: v1beta1.ValueFromSource{
+							SecretKeyRef: &corev1.SecretKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: "secret1",
+								},
+								Key: "key1",
+							},
+						},
+					},
+					{
+						ValueFrom: v1beta1.ValueFromSource{
+							ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: "configmap1",
+								},
+								Key: "key1",
+							},
+						},
+					},
+					{
+						ValueFrom: v1beta1.ValueFromSource{
+							ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: "configmap2",
+								},
+								Key: "key2",
+							},
+						},
+					},
+				},
+			},
+		}
+
+		indexFunc := reconciler.indexConfigMapSource()
+		result := indexFunc(ds)
+
+		expected := []string{"test-namespace/configmap1", "test-namespace/configmap2"}
+		require.Equal(t, expected, result)
+	})
+
+	t.Run("indexSecretSource returns empty slice when no secret references", func(t *testing.T) {
+		ds := &v1beta1.GrafanaDatasource{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "test-namespace",
+				Name:      "test-datasource",
+			},
+			Spec: v1beta1.GrafanaDatasourceSpec{
+				ValuesFrom: []v1beta1.ValueFrom{
+					{
+						ValueFrom: v1beta1.ValueFromSource{
+							ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: "configmap1",
+								},
+								Key: "key1",
+							},
+						},
+					},
+				},
+			},
+		}
+
+		indexFunc := reconciler.indexSecretSource()
+		result := indexFunc(ds)
+
+		require.Empty(t, result)
+	})
+
+	t.Run("indexConfigMapSource returns empty slice when no configmap references", func(t *testing.T) {
+		ds := &v1beta1.GrafanaDatasource{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "test-namespace",
+				Name:      "test-datasource",
+			},
+			Spec: v1beta1.GrafanaDatasourceSpec{
+				ValuesFrom: []v1beta1.ValueFrom{
+					{
+						ValueFrom: v1beta1.ValueFromSource{
+							SecretKeyRef: &corev1.SecretKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: "secret1",
+								},
+								Key: "key1",
+							},
+						},
+					},
+				},
+			},
+		}
+
+		indexFunc := reconciler.indexConfigMapSource()
+		result := indexFunc(ds)
+
+		require.Empty(t, result)
+	})
+}
+
 var _ = Describe("Datasource: substitute reference values", func() {
 	t := GinkgoT()
 
