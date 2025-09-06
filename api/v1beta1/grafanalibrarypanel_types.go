@@ -120,7 +120,7 @@ func (in *GrafanaLibraryPanel) NamespacedResource(uid string) NamespacedResource
 }
 
 func (in *GrafanaLibraryPanel) GetPluginConfigMapKey() string {
-	return fmt.Sprintf("lp_%v_%v", in.Namespace, in.Name)
+	return GetPluginConfigMapKey("librarypanel", &in.ObjectMeta)
 }
 
 func (in *GrafanaLibraryPanel) GetPluginConfigMapDeprecatedKey() string {

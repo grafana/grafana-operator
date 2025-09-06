@@ -13,4 +13,4 @@ kind: ConfigMap
 metadata:
   name: grafana-plugins
 binaryData:
-  ds_grafana-operator-example-test_grafanadatasource-sample: W3sibmFtZSI6ImdyYWZhbmEtY2xvY2stcGFuZWwiLCJ2ZXJzaW9uIjoiMS4zLjAifV0=
+  datasource_grafana-operator-example-test_grafanadatasource-sample: W3sibmFtZSI6ImdyYWZhbmEtY2xvY2stcGFuZWwiLCJ2ZXJzaW9uIjoiMS4zLjAifV0=
