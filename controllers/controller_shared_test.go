@@ -299,6 +299,92 @@ func TestLabelsSatisfyMatchExpressions(t *testing.T) {
 	}
 }
 
+func TestUpdatePluginConfigMap(t *testing.T) {
+	tests := []struct {
+		name          string
+		cm            *corev1.ConfigMap
+		value         []byte
+		key           string
+		deprecatedKey string
+		want          bool
+		wantCM        *corev1.ConfigMap
+	}{
+		{
+			name:          "empty ConfigMap",
+			cm:            &corev1.ConfigMap{},
+			value:         []byte("1"),
+			key:           "a",
+			deprecatedKey: "b",
+			want:          true,
+			wantCM: &corev1.ConfigMap{
+				BinaryData: map[string][]byte{
+					"a": []byte("1"),
+				},
+			},
+		},
+		{
+			name: "naming migration",
+			cm: &corev1.ConfigMap{
+				BinaryData: map[string][]byte{
+					"deprecated": []byte("1"),
+				},
+			},
+			value:         []byte("1"),
+			key:           "new",
+			deprecatedKey: "deprecated",
+			want:          true,
+			wantCM: &corev1.ConfigMap{
+				BinaryData: map[string][]byte{
+					"new": []byte("1"),
+				},
+			},
+		},
+		{
+			name: "updated list of plugins",
+			cm: &corev1.ConfigMap{
+				BinaryData: map[string][]byte{
+					"a": []byte("1"),
+				},
+			},
+			value:         []byte("2"),
+			key:           "a",
+			deprecatedKey: "b",
+			want:          true,
+			wantCM: &corev1.ConfigMap{
+				BinaryData: map[string][]byte{
+					"a": []byte("2"),
+				},
+			},
+		},
+		{
+			name: "same list of plugins",
+			cm: &corev1.ConfigMap{
+				BinaryData: map[string][]byte{
+					"a": []byte("1"),
+				},
+			},
+			value:         []byte("1"),
+			key:           "a",
+			deprecatedKey: "b",
+			want:          false,
+			wantCM: &corev1.ConfigMap{
+				BinaryData: map[string][]byte{
+					"a": []byte("1"),
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := updatePluginConfigMap(tt.cm, tt.value, tt.key, tt.deprecatedKey)
+
+			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tt.wantCM, tt.cm)
+		})
+	}
+}
+
 func TestMergeReconcileErrors(t *testing.T) {
 	tests := []struct {
 		name    string

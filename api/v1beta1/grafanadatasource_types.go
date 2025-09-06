@@ -18,6 +18,7 @@ package v1beta1
 
 import (
 	"encoding/json"
+	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -178,6 +179,14 @@ func (in *GrafanaDatasource) CommonStatus() *GrafanaCommonStatus {
 
 func (in *GrafanaDatasource) NamespacedResource() NamespacedResource {
 	return NewNamespacedResource(in.Namespace, in.Name, in.CustomUIDOrUID())
+}
+
+func (in *GrafanaDatasource) GetPluginConfigMapKey() string {
+	return GetPluginConfigMapKey("datasource", &in.ObjectMeta)
+}
+
+func (in *GrafanaDatasource) GetPluginConfigMapDeprecatedKey() string {
+	return fmt.Sprintf("%v-datasource", in.Name)
 }
 
 func init() {
