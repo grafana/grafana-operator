@@ -148,8 +148,8 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		if grafana.IsInternal() {
 			// first reconcile the plugins
 			// append the requested datasources to a configmap from where the
-			// grafana reconciler will pick them upi
-			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, cr.Spec.Plugins, fmt.Sprintf("%v-datasource", cr.Name))
+			// grafana reconciler will pick them up
+			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, cr.Spec.Plugins, cr.GetPluginConfigMapKey(), cr.GetPluginConfigMapDeprecatedKey())
 			if err != nil {
 				pluginErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 			}
@@ -240,7 +240,7 @@ func (r *GrafanaDatasourceReconciler) finalize(ctx context.Context, cr *v1beta1.
 		}
 
 		if grafana.IsInternal() {
-			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, fmt.Sprintf("%v-datasource", cr.Name))
+			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, cr.GetPluginConfigMapKey(), cr.GetPluginConfigMapDeprecatedKey())
 			if err != nil {
 				return fmt.Errorf("reconciling plugins: %w", err)
 			}

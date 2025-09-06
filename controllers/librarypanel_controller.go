@@ -177,7 +177,7 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 
 func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaLibraryPanel, model map[string]any, hash, folderUID string) error {
 	if instance.IsInternal() {
-		err := ReconcilePlugins(ctx, r.Client, r.Scheme, instance, cr.Spec.Plugins, fmt.Sprintf("%v-librarypanel", cr.Name))
+		err := ReconcilePlugins(ctx, r.Client, r.Scheme, instance, cr.Spec.Plugins, cr.GetPluginConfigMapKey(), cr.GetPluginConfigMapDeprecatedKey())
 		if err != nil {
 			return err
 		}
