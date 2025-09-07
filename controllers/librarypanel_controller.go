@@ -235,30 +235,30 @@ func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Contex
 	return instance.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource(uid))
 }
 
-func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, libraryPanel *v1beta1.GrafanaLibraryPanel) error {
+func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, cr *v1beta1.GrafanaLibraryPanel) error {
 	log := logf.FromContext(ctx)
 	log.Info("Finalizing GrafanaLibraryPanel")
 
-	uid := content.CustomUIDOrUID(libraryPanel, libraryPanel.Status.UID)
+	uid := content.CustomUIDOrUID(cr, cr.Status.UID)
 
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, libraryPanel)
+	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
 
-	for _, instance := range instances {
-		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &instance)
+	for _, grafana := range instances {
+		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 		if err != nil {
 			return err
 		}
 
 		isCleanupInGrafanaRequired := true
 
-		resp, err := grafanaClient.LibraryElements.GetLibraryElementConnections(uid)
+		resp, err := grafanaClient.LibraryElements.GetLibraryElementByUID(uid)
 		if err != nil {
-			var notFound *library_elements.GetLibraryElementConnectionsNotFound
+			var notFound *library_elements.GetLibraryElementByUIDNotFound
 			if !errors.As(err, &notFound) {
-				return fmt.Errorf("fetching library panel from instance %s/%s: %w", instance.Namespace, instance.Name, err)
+				return fmt.Errorf("fetching library panel from instance %s/%s: %w", grafana.Namespace, grafana.Name, err)
 			}
 
 			isCleanupInGrafanaRequired = false
@@ -266,8 +266,8 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, libraryPan
 
 		// Skip cleanup in instances
 		if isCleanupInGrafanaRequired {
-			if len(resp.Payload.Result) > 0 {
-				return fmt.Errorf("library panel %s/%s/%s on instance %s/%s has existing connections", libraryPanel.Namespace, libraryPanel.Name, uid, instance.Namespace, instance.Name) //nolint
+			if resp.Payload.Result.Meta.ConnectedDashboards > 0 {
+				return fmt.Errorf("library panel %s/%s/%s on instance %s/%s has existing connections", cr.Namespace, cr.Name, uid, grafana.Namespace, grafana.Name) //nolint
 			}
 
 			_, err = grafanaClient.LibraryElements.DeleteLibraryElementByUID(uid) //nolint:errcheck
@@ -279,8 +279,15 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, libraryPan
 			}
 		}
 
+		if grafana.IsInternal() {
+			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, cr.GetPluginConfigMapKey(), cr.GetPluginConfigMapDeprecatedKey())
+			if err != nil {
+				return fmt.Errorf("reconciling plugins: %w", err)
+			}
+		}
+
 		// Update grafana instance Status
-		err = instance.RemoveNamespacedResource(ctx, r.Client, libraryPanel)
+		err = grafana.RemoveNamespacedResource(ctx, r.Client, cr)
 		if err != nil {
 			return fmt.Errorf("removing Folder from Grafana cr: %w", err)
 		}
