@@ -1,0 +1,14 @@
+{{- if not .Values.crds.immutable }}
+  {{- range $path, $_ := .Files.Glob "files/crds/*.yaml" }}
+    {{- $crds := regexSplit "^---$" ($.Files.Get $path) -1 }}
+    {{- range $crds }}
+      {{- $crd := . | fromYaml }}
+      {{- $_ := set $crd.metadata.annotations "helm.sh/resource-policy" "keep" }}
+      {{- range $key, $value := $crd }}
+        {{- $key }}: {{ $value | toRawJson }}
+        {{- print "\n" }}
+      {{- end }}
+---
+    {{- end }}
+  {{- end }}
+{{- end }}
