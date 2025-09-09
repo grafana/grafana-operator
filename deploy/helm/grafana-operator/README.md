@@ -36,7 +36,10 @@ resource "helm_release" "grafana_kubernetes_operator" {
 
 ## Upgrading
 
-Helm does not provide functionality to update custom resource definitions. This can result in the operator misbehaving when a release contains updates to the custom resource definitions.
+### Immutable CRDs
+
+Helm [does not provide](https://helm.sh/docs/topics/charts/#limitations-on-crds) functionality to update custom resource definitions using `crds/` directory.
+This can result in the operator misbehaving when a release contains updates to the custom resource definitions.
 To avoid issues due to outdated or missing definitions, run the following command before updating an existing installation:
 
 ```shell
@@ -45,6 +48,18 @@ kubectl apply --server-side --force-conflicts -f https://github.com/grafana/graf
 
 The `--server-side` and `--force-conflict` flags are required to avoid running into issues with the `kubectl.kubernetes.io/last-applied-configuration` annotation.
 By using server side apply, this annotation is not considered. `--force-conflict` allows kubectl to modify fields previously managed by helm.
+
+### Mutable CRDs
+
+To install and upgrade CRDs together with the Helm chart using `templates/` directory
+without manual `kubectl apply` step required, `--set crds.immutable=false` on `helm upgrade`.
+
+Use `helm upgrade -i --take-ownership` when switching to mutable CRDs for the first time only:
+```shell
+helm upgrade -i --take-ownership --set crds.immutable=false grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-operator --version v5.19.0
+```
+
+Both types of CRDs are protected on the Helm chart uninstall to avoid cascading deletion.
 
 ## Development
 
@@ -65,6 +80,7 @@ It's easier to just manage this configuration outside of the operator.
 | additionalLabels | object | `{}` | additional labels to add to all resources |
 | affinity | object | `{}` | pod affinity |
 | clusterDomain | string | `""` | Sets the `CLUSTER_DOMAIN` environment variable, it defines how internal Kubernetes services managed by the operator are addressed. By default, this is empty, and internal services are addressed without a cluster domain specified, i.e., a relative domain name that will resolve regardless of if a custom domain is configured for the cluster. If you wish to have services addressed using their FQDNs, you can specify the cluster domain explicitly, e.g., "cluster.local" for the default Kubernetes configuration. |
+| crds.immutable | bool | `true` | Immutable CustomResourceDefinitions are installed only once using `crds/` directory and require manual upgrade by `kubectl apply`. Mutable CRDs are installed and upgraded together with the Helm chart using `templates/` directory without manual `kubectl apply` step required. Use `helm upgrade -i --take-ownership` when switching to mutable CRDs for the first time only. Both types of CRDs are protected on the Helm chart uninstall to avoid cascading deletion. |
 | dashboard.annotations | object | `{}` | Annotations to add to the Grafana dashboard ConfigMap |
 | dashboard.enabled | bool | `false` | Whether to create a ConfigMap containing a dashboard monitoring the operator metrics. Consider enabling this if you are enabling the ServiceMonitor. Optionally, a GrafanaDashboard CR can be manually created pointing to the Grafana.com dashboard ID 22785 https://grafana.com/grafana/dashboards/22785-grafana-operator/ The Grafana.com dashboard is maintained by the community and does not necessarily match the JSON definition in this repository. |
 | dashboard.labels | object | `{}` | Labels to add to the Grafana dashboard ConfigMap |
