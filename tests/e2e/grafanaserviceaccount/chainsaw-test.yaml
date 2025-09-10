@@ -18,26 +18,15 @@ spec:
     - name: SANAME
       value: sa1
   steps:
-    - name: Create a service account before Grafana
+    - name: Create Grafana instance and Service Account
       try:
-        - apply: {file: 010-precreate-sa.yaml}
+        - apply: {file: 010-deploy-grafana.yaml}
         - assert: {file: 010-assert.yaml}
-    - name: Create Grafana instance
-      try:
-        - apply: {file: 020-deploy-grafana.yaml}
+        - apply: {file: 020-create-sa.yaml}
         - assert: {file: 020-assert.yaml}
-    - name: Precreated service account is reconciled
-      try:
-        - script: &reconcileSA1
-            # Trigger reconciliation
-            content: >
-              kubectl annotate -n $NS grafanaserviceaccount grafana1-sa1 reconcile-trigger="$(date +%s)" --overwrite
 
-            env:
-              - name: NS
-                value: ($NAMESPACE)
-            check:
-              ($error == null): true
+    - name: Service account is reconciled
+      try:
         - assert: {file: 030-assert.yaml}
         - script: &fetchSAs
             # Check the current state of Grafana via API.
