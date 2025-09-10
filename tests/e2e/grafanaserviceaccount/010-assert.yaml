@@ -1,12 +1,15 @@
 apiVersion: grafana.integreatly.org/v1beta1
-kind: GrafanaServiceAccount
+kind: Grafana
 metadata:
-  name: grafana1-sa1
+  name: grafana1
   namespace: ($NAMESPACE)
+  labels:
+    test: ($test.metadata.name)
 status:
+  stage: complete
+  stageStatus: success
   conditions:
-    - reason: ErrFetchingInstances
+    - message: Grafana reconcile completed
+      reason: GrafanaReady
       status: "True"
-      type: NoMatchingInstance
-      message: 'error occurred during fetching of instances: Grafana.grafana.integreatly.org
-        "grafana1" not found'
+      type: GrafanaReady
