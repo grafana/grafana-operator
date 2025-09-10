@@ -43,6 +43,19 @@ var _ = Describe("ServiceAccount Reconciler: Provoke Conditions", func() {
 		wantErr string
 	}{
 		{
+			name: ".spec.suspend=true",
+			meta: objectMetaSuspended,
+			spec: v1beta1.GrafanaServiceAccountSpec{
+				Name:         objectMetaSuspended.Name,
+				InstanceName: grafanaName,
+				Suspend:      true,
+			},
+			want: metav1.Condition{
+				Type:   conditionSuspended,
+				Reason: conditionReasonApplySuspended,
+			},
+		},
+		{
 			name: "LookupGrafana returns nil",
 			meta: objectMetaNoMatchingInstances,
 			spec: v1beta1.GrafanaServiceAccountSpec{
