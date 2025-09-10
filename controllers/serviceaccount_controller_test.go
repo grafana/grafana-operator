@@ -69,6 +69,19 @@ var _ = Describe("ServiceAccount Reconciler: Provoke Conditions", func() {
 			wantErr: ErrNoMatchingInstances.Error(),
 		},
 		{
+			name: "Failed to create client",
+			meta: objectMetaApplyFailed,
+			spec: v1beta1.GrafanaServiceAccountSpec{
+				Name:         objectMetaApplyFailed.Name,
+				InstanceName: "dummy",
+			},
+			want: metav1.Condition{
+				Type:   conditionServiceAccountSynchronized,
+				Reason: conditionReasonApplyFailed,
+			},
+			wantErr: "building grafana client",
+		},
+		{
 			name: "Successfully applied resource to instance",
 			meta: objectMetaSynchronized,
 			spec: v1beta1.GrafanaServiceAccountSpec{
@@ -94,7 +107,6 @@ var _ = Describe("ServiceAccount Reconciler: Provoke Conditions", func() {
 			cr.Spec.ResyncPeriod = metav1.Duration{Duration: 60 * time.Second}
 
 			r := &GrafanaServiceAccountReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
-			// reconcileAndValidateCondition(r, cr, tt.want, tt.wantErr)
 
 			err := k8sClient.Create(testCtx, cr)
 			require.NoError(t, err)
