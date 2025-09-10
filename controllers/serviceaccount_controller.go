@@ -144,8 +144,19 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 	grafana, err := r.lookupGrafana(ctx, cr)
 	if err != nil {
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
-		return ctrl.Result{}, err
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionContactPointSynchronized)
+
+		return ctrl.Result{}, fmt.Errorf("failed fetching instance: %w", err)
 	}
+
+	if grafana == nil {
+		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionContactPointSynchronized)
+
+		return ctrl.Result{}, ErrNoMatchingInstances
+	}
+
+	removeNoMatchingInstance(&cr.Status.Conditions)
 
 	gClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
@@ -159,8 +170,6 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 
 		return ctrl.Result{}, err
 	}
-
-	removeNoMatchingInstance(&cr.Status.Conditions)
 
 	// 5. For active resources - reconcile the actual state with the desired state (creates, updates, removes as needed)
 	err = r.reconcileWithInstance(ctx, gClient, cr)
@@ -260,6 +269,10 @@ func (r *GrafanaServiceAccountReconciler) lookupGrafana(
 		Name:      cr.Spec.InstanceName,
 	}, &grafana)
 	if err != nil {
+		if kuberr.IsNotFound(err) {
+			return nil, nil
+		}
+
 		return nil, err
 	}
 
