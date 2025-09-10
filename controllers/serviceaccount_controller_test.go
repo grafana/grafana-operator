@@ -43,6 +43,19 @@ var _ = Describe("ServiceAccount Reconciler: Provoke Conditions", func() {
 		wantErr string
 	}{
 		{
+			name: "LookupGrafana returns nil",
+			meta: objectMetaNoMatchingInstances,
+			spec: v1beta1.GrafanaServiceAccountSpec{
+				Name:         objectMetaNoMatchingInstances.Name,
+				InstanceName: "does-not-exist",
+			},
+			want: metav1.Condition{
+				Type:   conditionNoMatchingInstance,
+				Reason: conditionReasonEmptyAPIReply,
+			},
+			wantErr: ErrNoMatchingInstances.Error(),
+		},
+		{
 			name: "Successfully applied resource to instance",
 			meta: objectMetaSynchronized,
 			spec: v1beta1.GrafanaServiceAccountSpec{
