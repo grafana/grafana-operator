@@ -170,7 +170,7 @@ spec:
                 namespace: ($NAMESPACE)
               status:
                 conditions:
-                  - observedGeneration: 10
+                  - observedGeneration: 7
         - assert: {file: 110-assert.yaml}
         - script: *fetchSAs
         - assert: {file: 110-assert-api-response.yaml}

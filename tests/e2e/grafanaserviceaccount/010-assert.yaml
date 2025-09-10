@@ -5,8 +5,7 @@ metadata:
   namespace: ($NAMESPACE)
 status:
   conditions:
-    - observedGeneration: 1
-      reason: ErrFetchingInstances
+    - reason: ErrFetchingInstances
       status: "True"
       type: NoMatchingInstance
       message: 'error occurred during fetching of instances: Grafana.grafana.integreatly.org

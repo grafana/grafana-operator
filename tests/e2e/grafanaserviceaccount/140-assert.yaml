@@ -14,7 +14,6 @@ status:
       reason: ApplySuccessful
       status: "True"
       type: ServiceAccountSynchronized
-      observedGeneration: 1
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaServiceAccount
