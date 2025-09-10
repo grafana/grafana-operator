@@ -204,6 +204,10 @@ func (r *GrafanaServiceAccountReconciler) finalize(ctx context.Context, cr *v1be
 		return nil
 	}
 
+	if cr.Status.Account == nil {
+		return nil
+	}
+
 	// Get the Grafana CR for deletion
 	grafana, err := r.lookupGrafana(ctx, cr)
 	if err != nil {
