@@ -18,11 +18,13 @@ package controllers
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-openapi-client-go/client/service_accounts"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -31,6 +33,72 @@ import (
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
 )
+
+var _ = Describe("ServiceAccount Reconciler: Provoke Conditions", func() {
+	tests := []struct {
+		name    string
+		meta    metav1.ObjectMeta
+		spec    v1beta1.GrafanaServiceAccountSpec
+		want    metav1.Condition
+		wantErr string
+	}{
+		{
+			name: "Successfully applied resource to instance",
+			meta: objectMetaSynchronized,
+			spec: v1beta1.GrafanaServiceAccountSpec{
+				Name:         objectMetaSynchronized.Name,
+				InstanceName: grafanaName,
+			},
+			want: metav1.Condition{
+				Type:   conditionServiceAccountSynchronized,
+				Reason: conditionReasonApplySuccessful,
+			},
+		},
+	}
+
+	t := GinkgoT()
+
+	for _, tt := range tests {
+		It(tt.name, func() {
+			cr := &v1beta1.GrafanaServiceAccount{
+				ObjectMeta: tt.meta,
+				Spec:       tt.spec,
+			}
+			cr.Spec.Role = "Viewer"
+			cr.Spec.ResyncPeriod = metav1.Duration{Duration: 60 * time.Second}
+
+			r := &GrafanaServiceAccountReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+			// reconcileAndValidateCondition(r, cr, tt.want, tt.wantErr)
+
+			err := k8sClient.Create(testCtx, cr)
+			require.NoError(t, err)
+
+			req := requestFromMeta(cr.ObjectMeta)
+
+			_, err = r.Reconcile(testCtx, req)
+			if tt.wantErr == "" {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, tt.wantErr)
+			}
+
+			err = r.Get(testCtx, req.NamespacedName, cr)
+			require.NoError(t, err)
+
+			containsEqualCondition(cr.CommonStatus().Conditions, tt.want)
+
+			err = k8sClient.Delete(testCtx, cr)
+			require.NoError(t, err)
+
+			_, err = r.Reconcile(testCtx, req)
+			if err != nil && strings.Contains(err.Error(), "dummy-deployment") {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+})
 
 var _ = Describe("ServiceAccount Controller: Integration Tests", func() {
 	Context("When creating service account with token", func() {
