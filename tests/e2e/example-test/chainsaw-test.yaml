@@ -103,3 +103,9 @@ spec:
             file: 15-library-panel.yaml
         - assert:
             file: 15-assert.yaml
+    - name: step-16
+      try:
+        - apply:
+            file: 16-serviceaccount.yaml
+        - assert:
+            file: 16-assert.yaml
