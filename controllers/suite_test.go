@@ -75,12 +75,10 @@ func TestAPIs(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	testCtx = context.Background()
-
-	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
-
 	ctx := context.Background()
+	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 	log := logf.FromContext(ctx).WithName("ControllerTests")
+
 	testCtx = logf.IntoContext(ctx, log)
 
 	By("bootstrapping test environment")
