@@ -144,26 +144,22 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 	grafana, err := r.lookupGrafana(ctx, cr)
 	if err != nil {
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
-		return ctrl.Result{}, err
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionContactPointSynchronized)
+
+		return ctrl.Result{}, fmt.Errorf("failed fetching instance: %w", err)
 	}
 
-	gClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
-	if err != nil {
-		meta.SetStatusCondition(&cr.Status.Conditions, buildSynchronizedCondition(
-			"ServiceAccount",
-			conditionServiceAccountSynchronized,
-			cr.Generation,
-			map[string]string{grafana.Name: err.Error()},
-			1, // We always synchronize with a single Grafana instance.
-		))
+	if grafana == nil {
+		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionContactPointSynchronized)
 
-		return ctrl.Result{}, err
+		return ctrl.Result{}, ErrNoMatchingInstances
 	}
 
 	removeNoMatchingInstance(&cr.Status.Conditions)
 
 	// 5. For active resources - reconcile the actual state with the desired state (creates, updates, removes as needed)
-	err = r.reconcileWithInstance(ctx, gClient, cr)
+	err = r.reconcileWithInstance(ctx, cr, grafana)
 
 	// 6. Update the resource status with current state and conditions
 	applyErrors := map[string]string{}
@@ -192,6 +188,10 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 // It attempts to remove the service account from Grafana and clean up associated secrets.
 func (r *GrafanaServiceAccountReconciler) finalize(ctx context.Context, cr *v1beta1.GrafanaServiceAccount) error {
 	if !controllerutil.ContainsFinalizer(cr, grafanaFinalizer) {
+		return nil
+	}
+
+	if cr.Status.Account == nil {
 		return nil
 	}
 
@@ -260,6 +260,10 @@ func (r *GrafanaServiceAccountReconciler) lookupGrafana(
 		Name:      cr.Spec.InstanceName,
 	}, &grafana)
 	if err != nil {
+		if kuberr.IsNotFound(err) {
+			return nil, nil
+		}
+
 		return nil, err
 	}
 
@@ -279,10 +283,15 @@ func (r *GrafanaServiceAccountReconciler) lookupGrafana(
 // 3. Manages the lifecycle of authentication tokens and their secrets
 func (r *GrafanaServiceAccountReconciler) reconcileWithInstance(
 	ctx context.Context,
-	gClient *genapi.GrafanaHTTPAPI,
 	cr *v1beta1.GrafanaServiceAccount,
+	grafana *v1beta1.Grafana,
 ) error {
-	err := r.upsertAccount(ctx, gClient, cr)
+	gClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
+	if err != nil {
+		return fmt.Errorf("building grafana client: %w", err)
+	}
+
+	err = r.upsertAccount(ctx, gClient, cr)
 	if err != nil {
 		return fmt.Errorf("upserting service account: %w", err)
 	}
