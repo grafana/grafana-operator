@@ -1,8 +1,7 @@
 ($serviceaccounts):
   totalCount: 1
   serviceAccounts:
-    - id: 2
-      name: sa1
+    - name: sa1
       login: sa-1-sa1
       orgId: 1
       isDisabled: false

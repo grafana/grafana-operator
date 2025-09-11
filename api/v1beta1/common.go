@@ -1,6 +1,9 @@
 package v1beta1
 
 import (
+	"crypto/sha256"
+	"fmt"
+
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -65,4 +68,21 @@ type GrafanaCommonStatus struct {
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 	// Last time the resource was synchronized with Grafana instances
 	LastResync metav1.Time `json:"lastResync,omitempty"`
+}
+
+func GetPluginConfigMapKey(prefix string, m metav1.Object) string {
+	ns := m.GetNamespace() // Subject to 63 character limit
+	name := m.GetName()    // Up to 253 characters, needs to be cut
+	limit := 63
+
+	if len(name) > limit {
+		hash := sha256.New()
+		hash.Write([]byte(name))
+
+		name = fmt.Sprintf("%v-%x", name[:limit], hash.Sum(nil))
+	}
+
+	key := fmt.Sprintf("%v_%v_%v", prefix, ns, name)
+
+	return key
 }

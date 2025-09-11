@@ -7,7 +7,6 @@ spec:
   suspend: false
 status:
   account:
-    id: 3
     isDisabled: false
     login: sa-1-sa2
     name: sa2
@@ -17,4 +16,3 @@ status:
       reason: ApplySuccessful
       status: "True"
       type: ServiceAccountSynchronized
-      observedGeneration: 7

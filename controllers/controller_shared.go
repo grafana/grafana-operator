@@ -197,35 +197,70 @@ func labelsSatisfyMatchExpressions(labels map[string]string, matchExpressions []
 	return true
 }
 
-// TODO Refactor to use scheme from k8sClient.Scheme() as it's the same anyways
-func ReconcilePlugins(ctx context.Context, k8sClient client.Client, scheme *runtime.Scheme, grafana *v1beta1.Grafana, plugins v1beta1.PluginList, resource string) error {
-	pluginsConfigMap := model.GetPluginsConfigMap(grafana, scheme)
-	selector := client.ObjectKey{
-		Namespace: pluginsConfigMap.Namespace,
-		Name:      pluginsConfigMap.Name,
+func updatePluginConfigMap(cm *corev1.ConfigMap, value []byte, key string, deprecatedKey string) (isUpdated bool) {
+	if cm.BinaryData == nil {
+		cm.BinaryData = make(map[string][]byte)
 	}
 
-	err := k8sClient.Get(ctx, selector, pluginsConfigMap)
+	// TODO: temporary solution that is used to migrate to a new naming scheme, can be deprecated later
+	if _, ok := cm.BinaryData[deprecatedKey]; ok {
+		delete(cm.BinaryData, deprecatedKey)
+
+		isUpdated = true
+	}
+
+	// Delete the key if no plugins left
+	if len(value) == 0 {
+		if _, ok := cm.BinaryData[key]; ok {
+			{
+				delete(cm.BinaryData, key)
+				isUpdated = true // nolint:wsl_v5
+
+				return
+			}
+		}
+	}
+
+	if !bytes.Equal(value, cm.BinaryData[key]) {
+		cm.BinaryData[key] = value
+		isUpdated = true
+	}
+
+	return
+}
+
+// TODO Refactor to use scheme from k8sClient.Scheme() as it's the same anyways
+func ReconcilePlugins(ctx context.Context, k8sClient client.Client, scheme *runtime.Scheme, grafana *v1beta1.Grafana, plugins v1beta1.PluginList, cmKey string, cmDeprecatedKey string) error {
+	cm := model.GetPluginsConfigMap(grafana, scheme)
+	selector := client.ObjectKey{
+		Namespace: cm.Namespace,
+		Name:      cm.Name,
+	}
+
+	err := k8sClient.Get(ctx, selector, cm)
 	if err != nil {
 		return err
 	}
 
 	// Even though model.GetPluginsConfigMap already sets an owner reference, it gets overwritten
 	// when we fetch the actual contents of the ConfigMap using k8sClient, so we need to set it here again
-	controllerutil.SetControllerReference(grafana, pluginsConfigMap, scheme) //nolint:errcheck
+	controllerutil.SetControllerReference(grafana, cm, scheme) //nolint:errcheck
 
-	val, err := json.Marshal(plugins.Sanitize())
-	if err != nil {
-		return err
+	val := []byte{}
+
+	// Just in case we have some broken plugins, better to assess length of the sanitized list, not the original one
+	sanitized := plugins.Sanitize()
+	if len(sanitized) > 0 {
+		val, err = json.Marshal(sanitized)
+		if err != nil {
+			return err
+		}
 	}
 
-	if pluginsConfigMap.BinaryData == nil {
-		pluginsConfigMap.BinaryData = make(map[string][]byte)
-	}
+	isUpdated := updatePluginConfigMap(cm, val, cmKey, cmDeprecatedKey)
 
-	if !bytes.Equal(val, pluginsConfigMap.BinaryData[resource]) {
-		pluginsConfigMap.BinaryData[resource] = val
-		return k8sClient.Update(ctx, pluginsConfigMap)
+	if isUpdated {
+		return k8sClient.Update(ctx, cm)
 	}
 
 	return nil

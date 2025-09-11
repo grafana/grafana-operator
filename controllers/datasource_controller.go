@@ -30,13 +30,18 @@ import (
 
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
+	corev1 "k8s.io/api/core/v1"
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	v1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 )
@@ -152,8 +157,8 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		if grafana.IsInternal() {
 			// first reconcile the plugins
 			// append the requested datasources to a configmap from where the
-			// grafana reconciler will pick them upi
-			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, cr.Spec.Plugins, fmt.Sprintf("%v-datasource", cr.Name))
+			// grafana reconciler will pick them up
+			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, cr.Spec.Plugins, cr.GetPluginConfigMapKey(), cr.GetPluginConfigMapDeprecatedKey())
 			if err != nil {
 				pluginErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 			}
@@ -244,7 +249,7 @@ func (r *GrafanaDatasourceReconciler) finalize(ctx context.Context, cr *v1beta1.
 		}
 
 		if grafana.IsInternal() {
-			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, fmt.Sprintf("%v-datasource", cr.Name))
+			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, nil, cr.GetPluginConfigMapKey(), cr.GetPluginConfigMapDeprecatedKey())
 			if err != nil {
 				return fmt.Errorf("reconciling plugins: %w", err)
 			}
@@ -330,11 +335,97 @@ func (r *GrafanaDatasourceReconciler) Exists(client *genapi.GrafanaHTTPAPI, uid,
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *GrafanaDatasourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *GrafanaDatasourceReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
+	const (
+		secretIndexKey    string = ".metadata.secret"
+		configMapIndexKey string = ".metadata.configMap"
+	)
+
+	// Index the datasources by the Secret references they (may) point at.
+	if err := mgr.GetCache().IndexField(ctx, &v1beta1.GrafanaDatasource{}, secretIndexKey,
+		r.indexSecretSource()); err != nil {
+		return fmt.Errorf("failed setting secret index fields: %w", err)
+	}
+
+	// Index the datasources by the ConfigMap references they (may) point at.
+	if err := mgr.GetCache().IndexField(ctx, &v1beta1.GrafanaDatasource{}, configMapIndexKey,
+		r.indexConfigMapSource()); err != nil {
+		return fmt.Errorf("failed setting configmap index fields: %w", err)
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1beta1.GrafanaDatasource{}).
-		WithEventFilter(ignoreStatusUpdates()).
+		For(&v1beta1.GrafanaDatasource{}, builder.WithPredicates(
+			ignoreStatusUpdates(),
+		)).
+		Watches(
+			&corev1.Secret{},
+			handler.EnqueueRequestsFromMapFunc(r.requestsForChangeByField(secretIndexKey)),
+		).
+		Watches(
+			&corev1.ConfigMap{},
+			handler.EnqueueRequestsFromMapFunc(r.requestsForChangeByField(configMapIndexKey)),
+		).
 		Complete(r)
+}
+
+func (r *GrafanaDatasourceReconciler) indexSecretSource() func(o client.Object) []string {
+	return func(o client.Object) []string {
+		datasource, ok := o.(*v1beta1.GrafanaDatasource)
+		if !ok {
+			panic(fmt.Sprintf("Expected a GrafanaDatasource, got %T", o))
+		}
+
+		var secretRefs []string
+
+		for _, valueFrom := range datasource.Spec.ValuesFrom {
+			if valueFrom.ValueFrom.SecretKeyRef != nil {
+				secretRefs = append(secretRefs, fmt.Sprintf("%s/%s", datasource.Namespace, valueFrom.ValueFrom.SecretKeyRef.Name))
+			}
+		}
+
+		return secretRefs
+	}
+}
+
+func (r *GrafanaDatasourceReconciler) indexConfigMapSource() func(o client.Object) []string {
+	return func(o client.Object) []string {
+		datasource, ok := o.(*v1beta1.GrafanaDatasource)
+		if !ok {
+			panic(fmt.Sprintf("Expected a GrafanaDatasource, got %T", o))
+		}
+
+		var configMapRefs []string
+
+		for _, valueFrom := range datasource.Spec.ValuesFrom {
+			if valueFrom.ValueFrom.ConfigMapKeyRef != nil {
+				configMapRefs = append(configMapRefs, fmt.Sprintf("%s/%s", datasource.Namespace, valueFrom.ValueFrom.ConfigMapKeyRef.Name))
+			}
+		}
+
+		return configMapRefs
+	}
+}
+
+func (r *GrafanaDatasourceReconciler) requestsForChangeByField(indexKey string) handler.MapFunc {
+	return func(ctx context.Context, o client.Object) []reconcile.Request {
+		var list v1beta1.GrafanaDatasourceList
+		if err := r.List(ctx, &list, client.MatchingFields{
+			indexKey: fmt.Sprintf("%s/%s", o.GetNamespace(), o.GetName()),
+		}); err != nil {
+			logf.FromContext(ctx).Error(err, "failed to list datasources for watch mapping")
+			return nil
+		}
+
+		var reqs []reconcile.Request
+		for _, datasource := range list.Items {
+			reqs = append(reqs, reconcile.Request{NamespacedName: types.NamespacedName{
+				Namespace: datasource.Namespace,
+				Name:      datasource.Name,
+			}})
+		}
+
+		return reqs
+	}
 }
 
 func (r *GrafanaDatasourceReconciler) buildDatasourceModel(ctx context.Context, cr *v1beta1.GrafanaDatasource) (*models.UpdateDataSourceCommand, string, error) {

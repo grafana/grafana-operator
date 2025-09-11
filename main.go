@@ -289,7 +289,7 @@ func main() { // nolint:gocyclo
 	if err = (&controllers.GrafanaDatasourceReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(ctx, mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDatasource")
 		os.Exit(1)
 	}
