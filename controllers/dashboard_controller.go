@@ -141,6 +141,8 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	log.Info("found matching Grafana instances for dashboard", "count", len(instances))
 
 	uid := fmt.Sprintf("%s", dashboardModel["uid"])
+	log = log.WithValues("uid", uid)
+	ctx = logf.IntoContext(ctx, log)
 
 	// Garbage collection for a case where dashboard uid get changed, dashboard creation is expected to happen in a separate reconcilication cycle
 	if content.IsUpdatedUID(cr, uid) {
@@ -174,7 +176,6 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, cr.Spec.Plugins, cr.GetPluginConfigMapKey(), cr.GetPluginConfigMapDeprecatedKey())
 			if err != nil {
 				pluginErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
-				log.Error(err, "error reconciling plugins", "dashboard", cr.Name, "grafana", grafana.Name)
 			}
 		}
 
@@ -198,7 +199,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	if len(applyHomeErrors) > 0 {
-		err := fmt.Errorf("%v", pluginErrors)
+		err := fmt.Errorf("%v", applyHomeErrors)
 		log.Error(err, "failed to apply home dashboards to all instances")
 	}
 
