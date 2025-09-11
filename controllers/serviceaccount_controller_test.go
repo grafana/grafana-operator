@@ -30,8 +30,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-	. "github.com/onsi/gomega/gstruct"
 )
 
 var _ = Describe("ServiceAccount Reconciler: Provoke Conditions", func() {
@@ -166,7 +164,9 @@ var _ = Describe("ServiceAccount Controller: Integration Tests", func() {
 				},
 			}
 
-			Expect(k8sClient.Create(ctx, sa)).Should(Succeed())
+			t := GinkgoT()
+			err := k8sClient.Create(ctx, sa)
+			require.NoError(t, err)
 
 			// Reconcile
 			r := &GrafanaServiceAccountReconciler{
@@ -175,30 +175,28 @@ var _ = Describe("ServiceAccount Controller: Integration Tests", func() {
 			}
 
 			req := requestFromMeta(sa.ObjectMeta)
-			_, err := r.Reconcile(ctx, req)
-			Expect(err).ToNot(HaveOccurred())
+			_, err = r.Reconcile(ctx, req)
+			require.NoError(t, err)
 
 			// Check that the secret was created with correct metadata and data
 			secret := &corev1.Secret{}
-			Expect(k8sClient.Get(ctx, types.NamespacedName{
+			err = k8sClient.Get(ctx, types.NamespacedName{
 				Name:      secretName,
 				Namespace: namespace,
-			}, secret)).Should(Succeed())
+			}, secret)
+			require.NoError(t, err)
 
-			Expect(secret).To(PointTo(MatchFields(IgnoreExtras, Fields{
-				"ObjectMeta": MatchFields(IgnoreExtras, Fields{
-					"Labels":      HaveKeyWithValue("operator.grafana.com/service-account-name", name),
-					"Annotations": HaveKeyWithValue("operator.grafana.com/service-account-token-name", "test-token"),
-				}),
-				"Data": HaveKeyWithValue("token", Not(BeEmpty())),
-			})))
+			require.Equal(t, "test-token", secret.Annotations["operator.grafana.com/service-account-token-name"])
+			require.Equal(t, name, secret.Labels["operator.grafana.com/service-account-name"])
+			require.NotEmpty(t, secret.Data["token"])
 
 			// Check the status
 			updatedSA := &v1beta1.GrafanaServiceAccount{}
-			Expect(k8sClient.Get(ctx, types.NamespacedName{
+			err = k8sClient.Get(ctx, types.NamespacedName{
 				Name:      name,
 				Namespace: namespace,
-			}, updatedSA)).Should(Succeed())
+			}, updatedSA)
+			require.NoError(t, err)
 
 			// Verify that ServiceAccountSynchronized condition is set to success
 			containsEqualCondition(updatedSA.Status.Conditions, metav1.Condition{
@@ -207,20 +205,14 @@ var _ = Describe("ServiceAccount Controller: Integration Tests", func() {
 			})
 
 			// Verify that tokens are populated in status
-			Expect(updatedSA.Status.Account).To(PointTo(MatchFields(IgnoreExtras, Fields{
-				"Tokens": ConsistOf(MatchFields(IgnoreExtras, Fields{
-					"Name": Equal("test-token"),
-					"Secret": PointTo(MatchFields(IgnoreExtras, Fields{
-						"Name":      Equal(secretName),
-						"Namespace": Equal(namespace),
-					})),
-				})),
-			})))
+			require.Equal(t, "test-token", updatedSA.Status.Account.Tokens[0].Name)
+			require.Equal(t, secretName, updatedSA.Status.Account.Tokens[0].Secret.Name)
+			require.Equal(t, namespace, updatedSA.Status.Account.Tokens[0].Secret.Namespace)
 
 			// Verify that the service account and token were actually created in Grafana
 			// Get Grafana client
 			gClient, err := client2.NewGeneratedGrafanaClient(ctx, k8sClient, externalGrafanaCr)
-			Expect(err).ToNot(HaveOccurred())
+			require.NoError(t, err)
 
 			// Retrieve the service account from Grafana API
 			saFromGrafana, err := gClient.ServiceAccounts.RetrieveServiceAccountWithParams(
@@ -228,12 +220,10 @@ var _ = Describe("ServiceAccount Controller: Integration Tests", func() {
 					NewRetrieveServiceAccountParamsWithContext(ctx).
 					WithServiceAccountID(updatedSA.Status.Account.ID),
 			)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(saFromGrafana.Payload).To(PointTo(MatchFields(IgnoreExtras, Fields{
-				"Name":       Equal("test-account-with-token"),
-				"Role":       Equal("Admin"),
-				"IsDisabled": BeFalse(),
-			})))
+			require.NoError(t, err)
+			require.Equal(t, "Admin", saFromGrafana.Payload.Role)
+			require.Equal(t, "test-account-with-token", saFromGrafana.Payload.Name)
+			require.False(t, saFromGrafana.Payload.IsDisabled)
 
 			// Verify that the token exists in Grafana
 			tokensFromGrafana, err := gClient.ServiceAccounts.ListTokensWithParams(
@@ -241,13 +231,9 @@ var _ = Describe("ServiceAccount Controller: Integration Tests", func() {
 					NewListTokensParamsWithContext(ctx).
 					WithServiceAccountID(updatedSA.Status.Account.ID),
 			)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(tokensFromGrafana.Payload).To(ConsistOf(
-				PointTo(MatchFields(IgnoreExtras, Fields{
-					"Name": Equal("test-token"),
-					"ID":   Equal(updatedSA.Status.Account.Tokens[0].ID),
-				})),
-			))
+			require.NoError(t, err)
+			require.Equal(t, "test-token", tokensFromGrafana.Payload[0].Name)
+			require.Equal(t, updatedSA.Status.Account.Tokens[0].ID, tokensFromGrafana.Payload[0].ID)
 		})
 	})
 })
