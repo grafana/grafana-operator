@@ -141,6 +141,8 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	log.Info("found matching Grafana instances for dashboard", "count", len(instances))
 
 	uid := fmt.Sprintf("%s", dashboardModel["uid"])
+	log = log.WithValues("uid", uid)
+	ctx = logf.IntoContext(ctx, log)
 
 	// Garbage collection for a case where dashboard uid get changed, dashboard creation is expected to happen in a separate reconcilication cycle
 	if content.IsUpdatedUID(cr, uid) {
@@ -174,20 +176,19 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			err = ReconcilePlugins(ctx, r.Client, r.Scheme, &grafana, cr.Spec.Plugins, fmt.Sprintf("%v-dashboard", cr.Name))
 			if err != nil {
 				pluginErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
-				log.Error(err, "error reconciling plugins", "dashboard", cr.Name, "grafana", grafana.Name, "uid", uid)
 			}
 		}
 
 		// then import the dashboard into the matching grafana instances
 		err = r.onDashboardCreated(ctx, &grafana, cr, dashboardModel, hash, folderUID)
 		if err != nil {
-			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = fmt.Sprintf("uid=%s: %s", uid, err.Error())
+			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
 
 		if grafana.Spec.Preferences != nil && uid == grafana.Spec.Preferences.HomeDashboardUID {
 			err = r.UpdateHomeDashboard(ctx, grafana, uid, cr)
 			if err != nil {
-				applyHomeErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = fmt.Sprintf("uid=%s: %s", uid, err.Error())
+				applyHomeErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 			}
 		}
 	}
@@ -198,7 +199,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	if len(applyHomeErrors) > 0 {
-		err := fmt.Errorf("%v", pluginErrors)
+		err := fmt.Errorf("%v", applyHomeErrors)
 		log.Error(err, "failed to apply home dashboards to all instances")
 	}
 
@@ -208,7 +209,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
 	if len(allApplyErrors) > 0 {
-		return ctrl.Result{}, fmt.Errorf("uid=%s: failed to apply to all instances: %v", uid, allApplyErrors)
+		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", allApplyErrors)
 	}
 
 	cr.Status.Hash = hash
