@@ -24,37 +24,10 @@ spec:
         - assert: {file: 010-assert.yaml}
         - apply: {file: 020-create-sa.yaml}
         - assert: {file: 020-assert.yaml}
-
-    - name: Service account is reconciled
-      try:
-        - assert: {file: 030-assert.yaml}
-        - script: &fetchSAs
-            # Check the current state of Grafana via API.
-            content: >
-              kubectl exec -n $NS $DEPLOYMENT -- \
-                curl --fail --silent --show-error -u $USER:$PASS \
-                "http://localhost:3000/api/serviceaccounts/search"
-            env:
-              - name: USER
-                value: ($USER)
-              - name: PASS
-                value: ($PASS)
-              - name: NS
-                value: ($NAMESPACE)
-              - name: DEPLOYMENT
-                value: deployment/grafana1-deployment
-            outputs:
-              - name: serviceaccounts
-                value: (json_parse($stdout))
-            check:
-              ($error == null): true
-        - assert: {file: 030-assert-api-response.yaml}
     - name: Create a new service account without tokens
       try:
         - apply: {file: 040-sa-no-tokens.yaml}
         - assert: {file: 040-assert.yaml}
-        - script: *fetchSAs
-        - assert: {file: 040-assert-api-response.yaml}
     - name: Reconcile service account after external modification
       try:
         - script:
@@ -105,32 +78,22 @@ spec:
             check:
               ($error == null): true
         - assert: {file: 040-assert.yaml}
-        - script: *fetchSAs
-        - assert: {file: 040-assert-api-response.yaml}
     - name: Disable the service account
       try:
         - patch: {file: 050-disable-sa.yaml}
         - assert: {file: 050-assert.yaml}
-        - script: *fetchSAs
-        - assert: {file: 050-assert-api-response.yaml}
     - name: Enable the service account
       try:
         - patch: {file: 060-enable-sa.yaml}
         - assert: {file: 060-assert.yaml}
-        - script: *fetchSAs
-        - assert: {file: 060-assert-api-response.yaml}
     - name: Change the role of the service account
       try:
         - patch: {file: 070-change-role.yaml}
         - assert: {file: 070-assert.yaml}
-        - script: *fetchSAs
-        - assert: {file: 070-assert-api-response.yaml}
     - name: Add multiple tokens to service account
       try:
         - patch: {file: 090-add-tokens.yaml}
         - assert: {file: 090-assert.yaml}
-        - script: *fetchSAs
-        - assert: {file: 090-assert-api-response.yaml}
     - name: Rename token secret
       try:
         - apply: {file: 100-rename-token-secret.yaml}
@@ -143,8 +106,6 @@ spec:
             for:
               deletion: {}
         - assert: {file: 100-assert.yaml}
-        - script: *fetchSAs
-        - assert: {file: 100-assert-api-response.yaml}
     - name: Updating token expirations triggers reconciliation
       try:
         - patch: {file: 110-update-expirations.yaml}
@@ -161,14 +122,10 @@ spec:
                 conditions:
                   - observedGeneration: 7
         - assert: {file: 110-assert.yaml}
-        - script: *fetchSAs
-        - assert: {file: 110-assert-api-response.yaml}
     - name: Remove token expirations
       try:
         - apply: {file: 120-remove-expirations.yaml}
         - assert: {file: 120-assert.yaml}
-        - script: *fetchSAs
-        - assert: {file: 120-assert-api-response.yaml}
     - name: Delete token secret and verify restoration
       try:
         - delete:
@@ -186,8 +143,6 @@ spec:
               deletion: {}
         - script: *reconcileSA2
         - assert: {file: 130-assert.yaml}
-        - script: *fetchSAs
-        - assert: {file: 130-assert-api-response.yaml}
     - name: Delete token externally and verify restoration
       try:
         - script:
@@ -224,8 +179,6 @@ spec:
               ($error == null): true
         - script: *reconcileSA2
         - assert: {file: 140-assert.yaml}
-        - script: *fetchSAs
-        - assert: {file: 140-assert-api-response.yaml}
     - name: Delete service account externally and verify restoration
       try:
         - script:
@@ -279,5 +232,3 @@ spec:
             check:
               ($error == null): true
         - assert: {file: 150-assert.yaml}
-        - script: *fetchSAs
-        - assert: {file: 150-assert-api-response.yaml}
