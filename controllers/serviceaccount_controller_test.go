@@ -152,6 +152,23 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 				return err
 			},
 		},
+		{
+			name: "Recreate token secret when deleted",
+			spec: v1beta1.GrafanaServiceAccountSpec{
+				Tokens: []v1beta1.GrafanaServiceAccountTokenSpec{{
+					Name: "should-be-recreated",
+				}},
+			},
+			scenarioFunc: func(cl client.Client, cr *v1beta1.GrafanaServiceAccount, gClient *genapi.GrafanaHTTPAPI) error {
+				secret := corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      cr.Status.Account.Tokens[0].Secret.Name,
+						Namespace: cr.Status.Account.Tokens[0].Secret.Namespace,
+					},
+				}
+				return cl.Delete(testCtx, &secret)
+			},
+		},
 	}
 
 	for _, tt := range tests {
