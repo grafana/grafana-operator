@@ -21,6 +21,7 @@ import (
 	"strings"
 	"time"
 
+	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	"github.com/grafana/grafana-openapi-client-go/client/service_accounts"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
@@ -28,6 +29,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	. "github.com/onsi/ginkgo/v2"
 )
@@ -132,6 +134,122 @@ var _ = Describe("ServiceAccount Reconciler: Provoke Conditions", func() {
 			} else {
 				require.NoError(t, err)
 			}
+		})
+	}
+})
+
+var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in Grafana", func() {
+	tests := []struct {
+		name         string
+		spec         v1beta1.GrafanaServiceAccountSpec
+		scenarioFunc func(client.Client, *v1beta1.GrafanaServiceAccount, *genapi.GrafanaHTTPAPI) error
+	}{
+		{
+			name: "Recreate account deleted from Grafana instance",
+			spec: v1beta1.GrafanaServiceAccountSpec{},
+			scenarioFunc: func(cl client.Client, cr *v1beta1.GrafanaServiceAccount, gClient *genapi.GrafanaHTTPAPI) error {
+				_, err := gClient.ServiceAccounts.DeleteServiceAccount(cr.Status.Account.ID) //nolint:errcheck
+				return err
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		It(tt.name, func() {
+			t := GinkgoT()
+
+			cr := &v1beta1.GrafanaServiceAccount{ObjectMeta: metav1.ObjectMeta{
+				Name:      "service-account",
+				Namespace: "default",
+			}}
+			req := requestFromMeta(cr.ObjectMeta)
+
+			r := &GrafanaServiceAccountReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+
+			cr.Spec = tt.spec
+			// 0. Apply defaults
+			cr.Spec.InstanceName = grafanaName
+			cr.Spec.Name = "serviceaccount"
+			cr.Spec.Role = "Viewer"
+			cr.Spec.ResyncPeriod = metav1.Duration{Duration: 60 * time.Second}
+
+			// 1. Create
+			err := k8sClient.Create(testCtx, cr)
+			require.NoError(t, err)
+
+			// 2. Reconcile
+			_, err = r.Reconcile(testCtx, req)
+			require.NoError(t, err)
+
+			err = k8sClient.Get(testCtx, req.NamespacedName, cr)
+			require.NoError(t, err)
+
+			// 3. Scenario
+			gClient, err := client2.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+			require.NoError(t, err)
+
+			err = tt.scenarioFunc(r.Client, cr, gClient)
+			require.NoError(t, err)
+
+			// 4. Reconcile
+			_, err = r.Reconcile(testCtx, req)
+			require.NoError(t, err)
+
+			err = k8sClient.Get(testCtx, req.NamespacedName, cr)
+			require.NoError(t, err)
+
+			// 5. Verify
+			err = r.Get(testCtx, req.NamespacedName, cr)
+			require.NoError(t, err)
+
+			sa, err := gClient.ServiceAccounts.RetrieveServiceAccount(cr.Status.Account.ID)
+			require.NoError(t, err)
+			require.NotNil(t, sa)
+			require.NotNil(t, sa.Payload)
+
+			require.Equal(t, cr.Spec.Name, sa.Payload.Name)
+			require.Equal(t, cr.Spec.Role, sa.Payload.Role)
+			require.Equal(t, cr.Spec.IsDisabled, sa.Payload.IsDisabled)
+			require.Equal(t, len(cr.Spec.Tokens), int(sa.Payload.Tokens))
+
+			// Status Tokens values retrieved from Grafana, rely on reconciler to update status
+			for _, tkSpec := range cr.Spec.Tokens {
+				for _, tkStatus := range cr.Status.Account.Tokens {
+					if tkSpec.Name != tkStatus.Name {
+						continue
+					}
+
+					if !tkSpec.Expires.IsZero() {
+						require.True(t, isEqualExpirationTime(tkSpec.Expires, tkSpec.Expires))
+					}
+
+					if tkSpec.SecretName == "" {
+						continue
+					}
+
+					require.Contains(t, tkStatus.Secret.Name, tkSpec.SecretName)
+				}
+			}
+
+			// Check secrets are correctly represented
+			for _, tkStatus := range cr.Status.Account.Tokens {
+				secretRequest := types.NamespacedName{
+					Name:      tkStatus.Secret.Name,
+					Namespace: tkStatus.Secret.Namespace,
+				}
+				s := corev1.Secret{}
+				err = k8sClient.Get(testCtx, secretRequest, &s)
+				require.NoError(t, err)
+				require.NotNil(t, s)
+				require.NotEmpty(t, s.Data["token"])
+			}
+
+			// 6. Cleanup
+			err = k8sClient.Delete(testCtx, cr)
+			require.NoError(t, err)
+
+			_, err = r.Reconcile(testCtx, req)
+			require.NoError(t, err)
 		})
 	}
 })
