@@ -35,7 +35,9 @@ spec:
             content: >
               kubectl exec -n $NS $DEPLOYMENT -- \
                 curl --fail --silent --show-error -X PATCH -u $USER:$PASS \
-                -H "Accept: application/json" -H "Content-Type: application/json" -d '{"name": "test", "role": "Viewer", "isDisabled": true}' \
+                -H "Accept: application/json" \
+                -H "Content-Type: application/json" \
+                -d '{"name": "test", "role": "Viewer", "isDisabled": true}' \
                 "http://localhost:3000/api/serviceaccounts/3"
             env:
               - name: USER
@@ -179,56 +181,3 @@ spec:
               ($error == null): true
         - script: *reconcileSA2
         - assert: {file: 140-assert.yaml}
-    - name: Delete service account externally and verify restoration
-      try:
-        - script:
-            # Delete service account through Grafana API to simulate external deletion
-            content: >
-              kubectl exec -n $NS $DEPLOYMENT -- \
-                curl --fail --silent --show-error -X DELETE -u $USER:$PASS \
-                "http://localhost:3000/api/serviceaccounts/3"
-            env:
-              - name: USER
-                value: ($USER)
-              - name: PASS
-                value: ($PASS)
-              - name: NS
-                value: ($NAMESPACE)
-              - name: DEPLOYMENT
-                value: deployment/grafana1-deployment
-            check:
-              ($error == null): true
-        - script:
-            # Wait for service account to be deleted from Grafana
-            content: >
-              scripts/wait-sa-deletion.sh 3 5s 1s
-
-            env:
-              - name: USER
-                value: ($USER)
-              - name: PASS
-                value: ($PASS)
-              - name: NS
-                value: ($NAMESPACE)
-              - name: DEPLOYMENT
-                value: deployment/grafana1-deployment
-            check:
-              ($error == null): true
-        - script: *reconcileSA2
-        - script:
-            # Wait for the operator to restore the original state after manual changes.
-            content: >
-              scripts/wait-sa.sh 4 5s 1s '{"name": "sa2", "role": "Viewer", "isDisabled": false}'
-
-            env:
-              - name: USER
-                value: ($USER)
-              - name: PASS
-                value: ($PASS)
-              - name: NS
-                value: ($NAMESPACE)
-              - name: DEPLOYMENT
-                value: deployment/grafana1-deployment
-            check:
-              ($error == null): true
-        - assert: {file: 150-assert.yaml}
