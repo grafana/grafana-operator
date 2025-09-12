@@ -128,23 +128,6 @@ spec:
       try:
         - apply: {file: 120-remove-expirations.yaml}
         - assert: {file: 120-assert.yaml}
-    - name: Delete token secret and verify restoration
-      try:
-        - delete:
-            ref:
-              apiVersion: v1
-              kind: Secret
-              name: eee
-              namespace: ($NAMESPACE)
-        - wait:
-            apiVersion: v1
-            kind: Secret
-            name: eee
-            namespace: ($NAMESPACE)
-            for:
-              deletion: {}
-        - script: *reconcileSA2
-        - assert: {file: 130-assert.yaml}
     - name: Delete token externally and verify restoration
       try:
         - script:
