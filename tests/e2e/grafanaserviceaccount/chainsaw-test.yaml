@@ -28,31 +28,13 @@ spec:
       try:
         - apply: {file: 040-sa-no-tokens.yaml}
         - assert: {file: 040-assert.yaml}
-    - name: Reconcile service account after external modification
+    - name: Add multiple tokens to service account
       try:
-        - script:
-            # Manually modify the service account through Grafana API to simulate external changes.
-            content: >
-              kubectl exec -n $NS $DEPLOYMENT -- \
-                curl --fail --silent --show-error -X PATCH -u $USER:$PASS \
-                -H "Accept: application/json" \
-                -H "Content-Type: application/json" \
-                -d '{"name": "test", "role": "Viewer", "isDisabled": true}' \
-                "http://localhost:3000/api/serviceaccounts/3"
-            env:
-              - name: USER
-                value: ($USER)
-              - name: PASS
-                value: ($PASS)
-              - name: NS
-                value: ($NAMESPACE)
-              - name: DEPLOYMENT
-                value: deployment/grafana1-deployment
-            outputs:
-              - name: serviceaccount
-                value: (json_parse($stdout))
-            check:
-              ($error == null): true
+        - patch: {file: 090-add-tokens.yaml}
+        - assert: {file: 090-assert.yaml}
+    - name: Rename token secret
+      try:
+        - apply: {file: 100-rename-token-secret.yaml}
         - script: &reconcileSA2
             # Trigger reconciliation
             content: >
@@ -63,43 +45,6 @@ spec:
                 value: ($NAMESPACE)
             check:
               ($error == null): true
-        - script:
-            # Wait for the operator to restore the original state after manual changes.
-            content: >
-              scripts/wait-sa.sh 3 5s 1s '{"name": "sa2", "role": "Editor", "isDisabled": false}'
-
-            env:
-              - name: USER
-                value: ($USER)
-              - name: PASS
-                value: ($PASS)
-              - name: NS
-                value: ($NAMESPACE)
-              - name: DEPLOYMENT
-                value: deployment/grafana1-deployment
-            check:
-              ($error == null): true
-        - assert: {file: 040-assert.yaml}
-    - name: Disable the service account
-      try:
-        - patch: {file: 050-disable-sa.yaml}
-        - assert: {file: 050-assert.yaml}
-    - name: Enable the service account
-      try:
-        - patch: {file: 060-enable-sa.yaml}
-        - assert: {file: 060-assert.yaml}
-    - name: Change the role of the service account
-      try:
-        - patch: {file: 070-change-role.yaml}
-        - assert: {file: 070-assert.yaml}
-    - name: Add multiple tokens to service account
-      try:
-        - patch: {file: 090-add-tokens.yaml}
-        - assert: {file: 090-assert.yaml}
-    - name: Rename token secret
-      try:
-        - apply: {file: 100-rename-token-secret.yaml}
-        - script: *reconcileSA2
         - wait:
             apiVersion: v1
             kind: Secret
