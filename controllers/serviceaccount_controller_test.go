@@ -23,12 +23,14 @@ import (
 
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	"github.com/grafana/grafana-openapi-client-go/client/service_accounts"
+	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -167,6 +169,23 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 					},
 				}
 				return cl.Delete(testCtx, &secret)
+			},
+		},
+		{
+			name: "Revert account if updated in Grafana",
+			spec: v1beta1.GrafanaServiceAccountSpec{},
+			scenarioFunc: func(cl client.Client, cr *v1beta1.GrafanaServiceAccount, gClient *genapi.GrafanaHTTPAPI) error {
+				_, err := gClient.ServiceAccounts.UpdateServiceAccount( //nolint:errcheck
+					service_accounts.
+						NewUpdateServiceAccountParams().
+						WithServiceAccountID(cr.Status.Account.ID).
+						WithBody(&models.UpdateServiceAccountForm{
+							Role:       "Admin",
+							Name:       "new-name",
+							IsDisabled: ptr.To(true),
+						}),
+				)
+				return err
 			},
 		},
 	}
