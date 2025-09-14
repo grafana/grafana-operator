@@ -188,6 +188,45 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 				return err
 			},
 		},
+		{
+			name: "Add new token",
+			spec: v1beta1.GrafanaServiceAccountSpec{
+				Tokens: []v1beta1.GrafanaServiceAccountTokenSpec{{
+					Name: "first",
+				}},
+			},
+			scenarioFunc: func(cl client.Client, cr *v1beta1.GrafanaServiceAccount, gClient *genapi.GrafanaHTTPAPI) error {
+				cr.Spec.Tokens = append(cr.Spec.Tokens, v1beta1.GrafanaServiceAccountTokenSpec{
+					Name: "second",
+				})
+				return cl.Update(testCtx, cr)
+			},
+		},
+		{
+			name: "Update token name",
+			spec: v1beta1.GrafanaServiceAccountSpec{
+				Tokens: []v1beta1.GrafanaServiceAccountTokenSpec{{
+					Name: "to-be-renamed",
+				}},
+			},
+			scenarioFunc: func(cl client.Client, cr *v1beta1.GrafanaServiceAccount, gClient *genapi.GrafanaHTTPAPI) error {
+				cr.Spec.Tokens[0].Name = "new-token-name"
+				return cl.Update(testCtx, cr)
+			},
+		},
+		{
+			name: "Update token secret name",
+			spec: v1beta1.GrafanaServiceAccountSpec{
+				Tokens: []v1beta1.GrafanaServiceAccountTokenSpec{{
+					Name:       "secret-name-update",
+					SecretName: "to-be-renamed",
+				}},
+			},
+			scenarioFunc: func(cl client.Client, cr *v1beta1.GrafanaServiceAccount, gClient *genapi.GrafanaHTTPAPI) error {
+				cr.Spec.Tokens[0].SecretName = "new-secret-name"
+				return cl.Update(testCtx, cr)
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -255,6 +294,7 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 						continue
 					}
 
+					require.Equal(t, tkSpec.Expires.IsZero(), tkStatus.Expires.IsZero())
 					if !tkSpec.Expires.IsZero() {
 						require.True(t, isEqualExpirationTime(tkSpec.Expires, tkSpec.Expires))
 					}

@@ -32,27 +32,6 @@ spec:
       try:
         - patch: {file: 090-add-tokens.yaml}
         - assert: {file: 090-assert.yaml}
-    - name: Rename token secret
-      try:
-        - apply: {file: 100-rename-token-secret.yaml}
-        - script: &reconcileSA2
-            # Trigger reconciliation
-            content: >
-              kubectl annotate -n $NS grafanaserviceaccount grafana1-sa2 reconcile-trigger="$(date +%s)" --overwrite
-
-            env:
-              - name: NS
-                value: ($NAMESPACE)
-            check:
-              ($error == null): true
-        - wait:
-            apiVersion: v1
-            kind: Secret
-            name: ccc
-            namespace: ($NAMESPACE)
-            for:
-              deletion: {}
-        - assert: {file: 100-assert.yaml}
     - name: Updating token expirations triggers reconciliation
       try:
         - patch: {file: 110-update-expirations.yaml}
