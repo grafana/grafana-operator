@@ -227,6 +227,26 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 				return cl.Update(testCtx, cr)
 			},
 		},
+		{
+			name: "Update token expirations",
+			spec: v1beta1.GrafanaServiceAccountSpec{
+				Tokens: []v1beta1.GrafanaServiceAccountTokenSpec{
+					{
+						Name:    "update-expiration",
+						Expires: &metav1.Time{Time: time.Now().Add(time.Hour)},
+					},
+					{
+						Name:    "remove-expiration",
+						Expires: &metav1.Time{Time: time.Now().Add(time.Hour)},
+					},
+				},
+			},
+			scenarioFunc: func(cl client.Client, cr *v1beta1.GrafanaServiceAccount, gClient *genapi.GrafanaHTTPAPI) error {
+				cr.Spec.Tokens[0].Expires.Time = time.Now().Add(2 * time.Hour)
+				cr.Spec.Tokens[1].Expires = nil
+				return cl.Update(testCtx, cr)
+			},
+		},
 	}
 
 	for _, tt := range tests {
