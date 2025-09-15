@@ -14,3 +14,7 @@ type: application
 # changes to the CRDs which are bundled with the helm resources
 version: v5.19.0
 appVersion: "v5.19.0"
+dependencies:
+  - name: crds
+    version: "0.0.*"
+    condition: crds.immutable

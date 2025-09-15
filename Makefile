@@ -65,10 +65,10 @@ help: ## Display this help.
 manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) $(YQ) ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(info $(M) running $@)
 	$(CONTROLLER_GEN) rbac:roleName=manager-role webhook paths="./..." crd output:crd:artifacts:config=config/crd/bases
-	$(CONTROLLER_GEN) rbac:roleName=manager-role webhook paths="./..." crd output:crd:artifacts:config=deploy/helm/grafana-operator/crds
+	$(CONTROLLER_GEN) rbac:roleName=manager-role webhook paths="./..." crd output:crd:artifacts:config=deploy/helm/grafana-operator/files/crds
 	# Remove CRD descriptions under Grafana#.spec.deployment
 	$(YQ) -i '.spec.versions[] |= del(.schema.openAPIV3Schema.properties.spec.properties.deployment.properties | .. | select(has("description")).description)' config/crd/bases/grafana.integreatly.org_grafanas.yaml
-	$(YQ) -i '.spec.versions[] |= del(.schema.openAPIV3Schema.properties.spec.properties.deployment.properties | .. | select(has("description")).description)' deploy/helm/grafana-operator/crds/grafana.integreatly.org_grafanas.yaml
+	$(YQ) -i '.spec.versions[] |= del(.schema.openAPIV3Schema.properties.spec.properties.deployment.properties | .. | select(has("description")).description)' deploy/helm/grafana-operator/files/crds/grafana.integreatly.org_grafanas.yaml
 
 	$(YQ) -i '(select(.kind == "Deployment") | .spec.template.spec.containers[0].env[] | select (.name == "RELATED_IMAGE_GRAFANA")).value="$(GRAFANA_IMAGE):$(GRAFANA_VERSION)"' config/manager/manager.yaml
 

@@ -37,7 +37,10 @@ resource "helm_release" "grafana_kubernetes_operator" {
 
 ## Upgrading
 
-Helm does not provide functionality to update custom resource definitions. This can result in the operator misbehaving when a release contains updates to the custom resource definitions.
+### Immutable CRDs
+
+Helm [does not provide](https://helm.sh/docs/topics/charts/#limitations-on-crds) functionality to update custom resource definitions using `crds/` directory.
+This can result in the operator misbehaving when a release contains updates to the custom resource definitions.
 To avoid issues due to outdated or missing definitions, run the following command before updating an existing installation:
 
 ```shell
@@ -46,6 +49,18 @@ kubectl apply --server-side --force-conflicts -f https://github.com/grafana/graf
 
 The `--server-side` and `--force-conflict` flags are required to avoid running into issues with the `kubectl.kubernetes.io/last-applied-configuration` annotation.
 By using server side apply, this annotation is not considered. `--force-conflict` allows kubectl to modify fields previously managed by helm.
+
+### Mutable CRDs
+
+To install and upgrade CRDs together with the Helm chart using `templates/` directory
+without manual `kubectl apply` step required, `--set crds.immutable=false` on `helm upgrade`.
+
+Use `helm upgrade -i --take-ownership` when switching to mutable CRDs for the first time only:
+```shell
+helm upgrade -i --take-ownership --set crds.immutable=false grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-operator --version {{ template "chart.appVersion" . }}
+```
+
+Both types of CRDs are protected on the Helm chart uninstall to avoid cascading deletion.
 
 ## Development
 
@@ -59,7 +74,8 @@ Deployments of grafana instances using the CRs is supposed to be done outside of
 Currently the plan is not to support networkpolicy. The operators support os diverse configuration that you have to support all options.
 It's easier to just manage this configuration outside of the operator.
 
-{{ template "chart.requirementsSection" . }}
+{{/* Avoid "Requirements" section/table while it is just "| crds | 0.0.* |" subchart */}}
+{{/* template "chart.requirementsSection" . */}}
 
 
 {{ template "chart.valuesSection" . }}

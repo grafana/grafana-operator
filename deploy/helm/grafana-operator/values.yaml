@@ -102,6 +102,15 @@ rbac:
   # If "namespaceScope" is true or "watchNamespaces" is set, this will create Role and RoleBinding instead.
   create: true
 
+crds:
+  # -- Immutable CustomResourceDefinitions are installed only once using `crds/` directory
+  # and require manual upgrade by `kubectl apply`.
+  # Mutable CRDs are installed and upgraded together with the Helm chart using `templates/` directory
+  # without manual `kubectl apply` step required.
+  # Use `helm upgrade -i --take-ownership` when switching to mutable CRDs for the first time only.
+  # Both types of CRDs are protected on the Helm chart uninstall to avoid cascading deletion.
+  immutable: true
+
 metricsService:
   # -- metrics service type
   type: ClusterIP
