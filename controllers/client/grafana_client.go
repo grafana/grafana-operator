@@ -2,14 +2,15 @@ package client
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
-	"github.com/go-jose/go-jose/v4"
-	"github.com/go-jose/go-jose/v4/jwt"
 	httptransport "github.com/go-openapi/runtime/client"
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -56,26 +57,34 @@ func getBearerToken(bearerTokenPath string) (string, error) {
 
 	token := string(b)
 
-	// List of accepted JWT signing algorithms from: https://kubernetes.io/docs/reference/access-authn-authz/authentication/#:~:text=oidc-signing-algs
-	t, err := jwt.ParseSigned(token, []jose.SignatureAlgorithm{
-		jose.RS256, jose.RS384, jose.RS512,
-		jose.ES256, jose.ES384, jose.ES512,
-		jose.PS256, jose.PS384, jose.PS512,
-	})
-	if err != nil {
-		return "", err
+	encClaims := strings.Split(token, ".")
+	if len(encClaims) != 3 {
+		return "", fmt.Errorf("ServiceAccount JWT token expected to have 3 parts, not %d", len(encClaims))
 	}
 
-	claims := jwt.Claims{}
-
-	// TODO fetch JWKS from https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT_HTTPS}/openid/v1/jwks
-	// Then verify token using the keys
-	err = t.UnsafeClaimsWithoutVerification(&claims)
+	rawClaims, err := base64.RawStdEncoding.DecodeString(encClaims[1])
 	if err != nil {
-		return "", fmt.Errorf("decoding ServiceAccount token %w", err)
+		return "", fmt.Errorf("base64 decoding ServiceAccount JWT token %w", err)
 	}
 
-	tokenExpiration := claims.Expiry.Time()
+	var claims map[string]any
+
+	err = json.Unmarshal(rawClaims, &claims)
+	if err != nil {
+		return "", fmt.Errorf("deserializing ServiceAccount JWT claims %w", err)
+	}
+
+	rawExp, ok := claims["exp"]
+	if !ok {
+		return "", fmt.Errorf("no expiry found in ServiceAccount JWT claims")
+	}
+
+	exp, ok := rawExp.(float64)
+	if !ok {
+		return "", fmt.Errorf("token exp claim (expiry) cannot be cast to a float64")
+	}
+
+	tokenExpiration := time.Unix(int64(exp), 0)
 	if tokenExpiration.Add(tokenExpirationCompensation).Before(time.Now()) {
 		return "", fmt.Errorf("token expired at %s, expected %s to be renewed. Tokens are considered expired 30 seconds early", tokenExpiration.String(), bearerTokenPath)
 	}
