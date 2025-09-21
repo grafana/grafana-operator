@@ -28,6 +28,7 @@ import (
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
+	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
@@ -145,13 +146,17 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 
 		cr := &v1beta1.GrafanaServiceAccount{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "service-account",
+				Name:      "delete-and-recreate",
 				Namespace: "default",
 			},
-			Spec: v1beta1.GrafanaServiceAccountSpec{},
+			Spec: v1beta1.GrafanaServiceAccountSpec{
+				Name: "delete-and-recreate",
+			},
 		}
 
 		r := createAndReconcileCR(t, cr)
+
+		originalStatus := cr.Status.DeepCopy()
 
 		gClient, err := client2.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
 		require.NoError(t, err)
@@ -159,7 +164,10 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 		_, err = gClient.ServiceAccounts.DeleteServiceAccount(cr.Status.Account.ID) //nolint:errcheck
 		require.NoError(t, err)
 
-		compareSpecWithStatus(t, cr, r, gClient)
+		reconcileAndCompareSpecWithStatus(t, cr, r, gClient)
+
+		updatedStatus := cr.Status.DeepCopy()
+		require.NotEqual(t, originalStatus.Account.ID, updatedStatus.Account.ID)
 
 		deleteCR(t, cr, r)
 	})
@@ -169,10 +177,11 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 
 		cr := &v1beta1.GrafanaServiceAccount{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "service-account",
+				Name:      "should-be-recreated",
 				Namespace: "default",
 			},
 			Spec: v1beta1.GrafanaServiceAccountSpec{
+				Name: "token-delete-and-recreated",
 				Tokens: []v1beta1.GrafanaServiceAccountTokenSpec{{
 					Name: "should-be-recreated",
 				}},
@@ -181,19 +190,46 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 
 		r := createAndReconcileCR(t, cr)
 
-		secret := corev1.Secret{
+		// Fetch secret for comparison
+		originalSecret := corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      cr.Status.Account.Tokens[0].Secret.Name,
 				Namespace: cr.Status.Account.Tokens[0].Secret.Namespace,
 			},
 		}
-		err := k8sClient.Delete(testCtx, &secret)
+		err := k8sClient.Get(testCtx, types.NamespacedName{
+			Name:      cr.Status.Account.Tokens[0].Secret.Name,
+			Namespace: cr.Status.Account.Tokens[0].Secret.Namespace,
+		}, &originalSecret)
+		require.NoError(t, err)
+		require.NotNil(t, originalSecret.Data)
+
+		// Delete secret
+		err = k8sClient.Delete(testCtx, &originalSecret)
 		require.NoError(t, err)
 
 		gClient, err := client2.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
 		require.NoError(t, err)
 
-		compareSpecWithStatus(t, cr, r, gClient)
+		// Expect secret to be recreated during reconcile
+		reconcileAndCompareSpecWithStatus(t, cr, r, gClient)
+
+		// Fetch new secret
+		updatedSecret := corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      cr.Status.Account.Tokens[0].Secret.Name,
+				Namespace: cr.Status.Account.Tokens[0].Secret.Namespace,
+			},
+		}
+		err = k8sClient.Get(testCtx, types.NamespacedName{
+			Name:      cr.Status.Account.Tokens[0].Secret.Name,
+			Namespace: cr.Status.Account.Tokens[0].Secret.Namespace,
+		}, &updatedSecret)
+		require.NoError(t, err)
+		require.NotEmpty(t, originalSecret.Data)
+		require.NotEmpty(t, updatedSecret.Data)
+		require.NotEqual(t, originalSecret.UID, updatedSecret.UID)
+		require.NotEqual(t, originalSecret.Data["token"], updatedSecret.Data["token"])
 
 		deleteCR(t, cr, r)
 	})
@@ -203,13 +239,17 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 
 		cr := &v1beta1.GrafanaServiceAccount{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "service-account",
+				Name:      "revert-to-spec",
 				Namespace: "default",
 			},
-			Spec: v1beta1.GrafanaServiceAccountSpec{},
+			Spec: v1beta1.GrafanaServiceAccountSpec{
+				Name: "revert-to-spec",
+			},
 		}
 
 		r := createAndReconcileCR(t, cr)
+
+		originalStatus := cr.Status.DeepCopy()
 
 		gClient, err := client2.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
 		require.NoError(t, err)
@@ -226,7 +266,13 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 		)
 		require.NoError(t, err)
 
-		compareSpecWithStatus(t, cr, r, gClient)
+		reconcileAndCompareSpecWithStatus(t, cr, r, gClient)
+
+		updatedStatus := cr.Status.DeepCopy()
+		require.Equal(t, originalStatus.Account.ID, updatedStatus.Account.ID)
+		require.Equal(t, originalStatus.Account.Role, updatedStatus.Account.Role)
+		require.Equal(t, originalStatus.Account.Name, updatedStatus.Account.Name)
+		require.Equal(t, originalStatus.Account.IsDisabled, updatedStatus.Account.IsDisabled)
 
 		deleteCR(t, cr, r)
 	})
@@ -236,10 +282,11 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 
 		cr := &v1beta1.GrafanaServiceAccount{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "service-account",
+				Name:      "add-token",
 				Namespace: "default",
 			},
 			Spec: v1beta1.GrafanaServiceAccountSpec{
+				Name: "add-token",
 				Tokens: []v1beta1.GrafanaServiceAccountTokenSpec{{
 					Name: "first",
 				}},
@@ -247,6 +294,8 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 		}
 
 		r := createAndReconcileCR(t, cr)
+
+		originalStatus := cr.Status.DeepCopy()
 
 		cr.Spec.Tokens = append(cr.Spec.Tokens, v1beta1.GrafanaServiceAccountTokenSpec{
 			Name: "second",
@@ -257,7 +306,10 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 		gClient, err := client2.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
 		require.NoError(t, err)
 
-		compareSpecWithStatus(t, cr, r, gClient)
+		reconcileAndCompareSpecWithStatus(t, cr, r, gClient)
+
+		updatedStatus := cr.Status.DeepCopy()
+		require.NotEqual(t, len(originalStatus.Account.Tokens), len(updatedStatus.Account.Tokens))
 
 		deleteCR(t, cr, r)
 	})
@@ -267,10 +319,11 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 
 		cr := &v1beta1.GrafanaServiceAccount{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "service-account",
+				Name:      "update-token-name",
 				Namespace: "default",
 			},
 			Spec: v1beta1.GrafanaServiceAccountSpec{
+				Name: "update-token-name",
 				Tokens: []v1beta1.GrafanaServiceAccountTokenSpec{{
 					Name: "to-be-renamed",
 				}},
@@ -279,6 +332,8 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 
 		r := createAndReconcileCR(t, cr)
 
+		originalStatus := cr.Status.DeepCopy()
+
 		cr.Spec.Tokens[0].Name = "new-token-name"
 		err := k8sClient.Update(testCtx, cr)
 		require.NoError(t, err)
@@ -286,7 +341,10 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 		gClient, err := client2.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
 		require.NoError(t, err)
 
-		compareSpecWithStatus(t, cr, r, gClient)
+		reconcileAndCompareSpecWithStatus(t, cr, r, gClient)
+
+		updatedStatus := cr.Status.DeepCopy()
+		require.NotEqual(t, originalStatus.Account.Tokens[0].Name, updatedStatus.Account.Tokens[0].Name)
 
 		deleteCR(t, cr, r)
 	})
@@ -296,10 +354,11 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 
 		cr := &v1beta1.GrafanaServiceAccount{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "service-account",
+				Name:      "update-token-secret-name",
 				Namespace: "default",
 			},
 			Spec: v1beta1.GrafanaServiceAccountSpec{
+				Name: "update-token-secret-name",
 				Tokens: []v1beta1.GrafanaServiceAccountTokenSpec{{
 					Name:       "secret-name-update",
 					SecretName: "to-be-renamed",
@@ -309,6 +368,8 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 
 		r := createAndReconcileCR(t, cr)
 
+		originalStatus := cr.Status.DeepCopy()
+
 		cr.Spec.Tokens[0].SecretName = "new-secret-name"
 		err := k8sClient.Update(testCtx, cr)
 		require.NoError(t, err)
@@ -316,7 +377,24 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 		gClient, err := client2.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
 		require.NoError(t, err)
 
-		compareSpecWithStatus(t, cr, r, gClient)
+		reconcileAndCompareSpecWithStatus(t, cr, r, gClient)
+
+		// Ensure original secret was deleted
+		originalSecret := corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      originalStatus.Account.Tokens[0].Secret.Name,
+				Namespace: originalStatus.Account.Tokens[0].Secret.Namespace,
+			},
+		}
+		err = k8sClient.Get(testCtx, types.NamespacedName{
+			Name:      originalStatus.Account.Tokens[0].Secret.Name,
+			Namespace: originalStatus.Account.Tokens[0].Secret.Namespace,
+		}, &originalSecret)
+		require.Error(t, err)
+		require.True(t, kuberr.IsNotFound(err))
+
+		updatedStatus := cr.Status.DeepCopy()
+		require.NotEqual(t, originalStatus.Account.Tokens[0].Secret.Name, updatedStatus.Account.Tokens[0].Secret.Name)
 
 		deleteCR(t, cr, r)
 	})
@@ -326,13 +404,14 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 
 		cr := &v1beta1.GrafanaServiceAccount{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "service-account",
+				Name:      "update-token-expirations",
 				Namespace: "default",
 			},
 			Spec: v1beta1.GrafanaServiceAccountSpec{
+				Name: "update-token-expirations",
 				Tokens: []v1beta1.GrafanaServiceAccountTokenSpec{
 					{
-						Name:    "update-expiration",
+						Name:    "alter-expiration",
 						Expires: &metav1.Time{Time: time.Now().Add(time.Hour)},
 					},
 					{
@@ -345,6 +424,8 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 
 		r := createAndReconcileCR(t, cr)
 
+		originalStatus := cr.Status.DeepCopy()
+
 		cr.Spec.Tokens[0].Expires.Time = time.Now().Add(2 * time.Hour)
 		cr.Spec.Tokens[1].Expires = nil
 		err := k8sClient.Update(testCtx, cr)
@@ -353,7 +434,15 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 		gClient, err := client2.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
 		require.NoError(t, err)
 
-		compareSpecWithStatus(t, cr, r, gClient)
+		reconcileAndCompareSpecWithStatus(t, cr, r, gClient)
+
+		updatedStatus := cr.Status.DeepCopy()
+		t.Println(updatedStatus.Account)
+		require.NotNil(t, updatedStatus.Account.Tokens[0].Expires)
+		require.Nil(t, updatedStatus.Account.Tokens[1].Expires)
+
+		require.WithinDuration(t, time.Now().Add(time.Hour), originalStatus.Account.Tokens[0].Expires.Time, 30*time.Second)
+		require.WithinDuration(t, time.Now().Add(2*time.Hour), updatedStatus.Account.Tokens[0].Expires.Time, 30*time.Second)
 
 		deleteCR(t, cr, r)
 	})
@@ -366,7 +455,6 @@ func createAndReconcileCR(t FullGinkgoTInterface, cr *v1beta1.GrafanaServiceAcco
 
 	// Apply defaults
 	cr.Spec.InstanceName = grafanaName
-	cr.Spec.Name = "serviceaccount"
 	cr.Spec.Role = "Viewer"
 	cr.Spec.ResyncPeriod = metav1.Duration{Duration: 60 * time.Second}
 
@@ -382,7 +470,7 @@ func createAndReconcileCR(t FullGinkgoTInterface, cr *v1beta1.GrafanaServiceAcco
 	return r
 }
 
-func compareSpecWithStatus(t FullGinkgoTInterface, cr *v1beta1.GrafanaServiceAccount, r *GrafanaServiceAccountReconciler, gClient *genapi.GrafanaHTTPAPI) {
+func reconcileAndCompareSpecWithStatus(t FullGinkgoTInterface, cr *v1beta1.GrafanaServiceAccount, r *GrafanaServiceAccountReconciler, gClient *genapi.GrafanaHTTPAPI) {
 	req := requestFromMeta(cr.ObjectMeta)
 
 	// Reconcile and fetch new object
@@ -404,7 +492,8 @@ func compareSpecWithStatus(t FullGinkgoTInterface, cr *v1beta1.GrafanaServiceAcc
 	require.Equal(t, cr.Spec.Name, sa.Payload.Name)
 	require.Equal(t, cr.Spec.Role, sa.Payload.Role)
 	require.Equal(t, cr.Spec.IsDisabled, sa.Payload.IsDisabled)
-	require.Equal(t, len(cr.Spec.Tokens), int(sa.Payload.Tokens))
+	require.Len(t, cr.Spec.Tokens, int(sa.Payload.Tokens))
+	require.Len(t, cr.Status.Account.Tokens, len(cr.Spec.Tokens))
 
 	// Status Tokens values retrieved from Grafana, rely on reconciler to update status
 	for _, tkSpec := range cr.Spec.Tokens {
