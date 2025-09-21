@@ -31,7 +31,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	. "github.com/onsi/ginkgo/v2"
 )
@@ -141,95 +140,196 @@ var _ = Describe("ServiceAccount Reconciler: Provoke Conditions", func() {
 })
 
 var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in Grafana", func() {
-	tests := []struct {
-		name         string
-		spec         v1beta1.GrafanaServiceAccountSpec
-		scenarioFunc func(client.Client, *v1beta1.GrafanaServiceAccount, *genapi.GrafanaHTTPAPI) error
-	}{
-		{
-			name: "Recreate account deleted from Grafana instance",
-			spec: v1beta1.GrafanaServiceAccountSpec{},
-			scenarioFunc: func(cl client.Client, cr *v1beta1.GrafanaServiceAccount, gClient *genapi.GrafanaHTTPAPI) error {
-				_, err := gClient.ServiceAccounts.DeleteServiceAccount(cr.Status.Account.ID) //nolint:errcheck
-				return err
+	It("Recreate account deleted from Grafana instance", func() {
+		t := GinkgoT()
+
+		cr := &v1beta1.GrafanaServiceAccount{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "service-account",
+				Namespace: "default",
 			},
-		},
-		{
-			name: "Recreate token secret when deleted",
-			spec: v1beta1.GrafanaServiceAccountSpec{
+			Spec: v1beta1.GrafanaServiceAccountSpec{},
+		}
+
+		r := createAndReconcileCR(t, cr)
+
+		gClient, err := client2.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		require.NoError(t, err)
+
+		_, err = gClient.ServiceAccounts.DeleteServiceAccount(cr.Status.Account.ID) //nolint:errcheck
+		require.NoError(t, err)
+
+		compareSpecWithStatus(t, cr, r, gClient)
+
+		deleteCR(t, cr, r)
+	})
+
+	It("Recreate token secret when deleted", func() {
+		t := GinkgoT()
+
+		cr := &v1beta1.GrafanaServiceAccount{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "service-account",
+				Namespace: "default",
+			},
+			Spec: v1beta1.GrafanaServiceAccountSpec{
 				Tokens: []v1beta1.GrafanaServiceAccountTokenSpec{{
 					Name: "should-be-recreated",
 				}},
 			},
-			scenarioFunc: func(cl client.Client, cr *v1beta1.GrafanaServiceAccount, gClient *genapi.GrafanaHTTPAPI) error {
-				secret := corev1.Secret{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      cr.Status.Account.Tokens[0].Secret.Name,
-						Namespace: cr.Status.Account.Tokens[0].Secret.Namespace,
-					},
-				}
-				return cl.Delete(testCtx, &secret)
+		}
+
+		r := createAndReconcileCR(t, cr)
+
+		secret := corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      cr.Status.Account.Tokens[0].Secret.Name,
+				Namespace: cr.Status.Account.Tokens[0].Secret.Namespace,
 			},
-		},
-		{
-			name: "Revert account if updated in Grafana",
-			spec: v1beta1.GrafanaServiceAccountSpec{},
-			scenarioFunc: func(cl client.Client, cr *v1beta1.GrafanaServiceAccount, gClient *genapi.GrafanaHTTPAPI) error {
-				_, err := gClient.ServiceAccounts.UpdateServiceAccount( //nolint:errcheck
-					service_accounts.
-						NewUpdateServiceAccountParams().
-						WithServiceAccountID(cr.Status.Account.ID).
-						WithBody(&models.UpdateServiceAccountForm{
-							Role:       "Admin",
-							Name:       "new-name",
-							IsDisabled: ptr.To(true),
-						}),
-				)
-				return err
+		}
+		err := k8sClient.Delete(testCtx, &secret)
+		require.NoError(t, err)
+
+		gClient, err := client2.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		require.NoError(t, err)
+
+		compareSpecWithStatus(t, cr, r, gClient)
+
+		deleteCR(t, cr, r)
+	})
+
+	It("Revert account if updated in Grafana", func() {
+		t := GinkgoT()
+
+		cr := &v1beta1.GrafanaServiceAccount{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "service-account",
+				Namespace: "default",
 			},
-		},
-		{
-			name: "Add new token",
-			spec: v1beta1.GrafanaServiceAccountSpec{
+			Spec: v1beta1.GrafanaServiceAccountSpec{},
+		}
+
+		r := createAndReconcileCR(t, cr)
+
+		gClient, err := client2.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		require.NoError(t, err)
+
+		_, err = gClient.ServiceAccounts.UpdateServiceAccount( //nolint:errcheck
+			service_accounts.
+				NewUpdateServiceAccountParams().
+				WithServiceAccountID(cr.Status.Account.ID).
+				WithBody(&models.UpdateServiceAccountForm{
+					Role:       "Admin",
+					Name:       "new-name",
+					IsDisabled: ptr.To(true),
+				}),
+		)
+		require.NoError(t, err)
+
+		compareSpecWithStatus(t, cr, r, gClient)
+
+		deleteCR(t, cr, r)
+	})
+
+	It("Add new token", func() {
+		t := GinkgoT()
+
+		cr := &v1beta1.GrafanaServiceAccount{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "service-account",
+				Namespace: "default",
+			},
+			Spec: v1beta1.GrafanaServiceAccountSpec{
 				Tokens: []v1beta1.GrafanaServiceAccountTokenSpec{{
 					Name: "first",
 				}},
 			},
-			scenarioFunc: func(cl client.Client, cr *v1beta1.GrafanaServiceAccount, gClient *genapi.GrafanaHTTPAPI) error {
-				cr.Spec.Tokens = append(cr.Spec.Tokens, v1beta1.GrafanaServiceAccountTokenSpec{
-					Name: "second",
-				})
-				return cl.Update(testCtx, cr)
+		}
+
+		r := createAndReconcileCR(t, cr)
+
+		cr.Spec.Tokens = append(cr.Spec.Tokens, v1beta1.GrafanaServiceAccountTokenSpec{
+			Name: "second",
+		})
+		err := k8sClient.Update(testCtx, cr)
+		require.NoError(t, err)
+
+		gClient, err := client2.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		require.NoError(t, err)
+
+		compareSpecWithStatus(t, cr, r, gClient)
+
+		deleteCR(t, cr, r)
+	})
+
+	It("Update token name", func() {
+		t := GinkgoT()
+
+		cr := &v1beta1.GrafanaServiceAccount{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "service-account",
+				Namespace: "default",
 			},
-		},
-		{
-			name: "Update token name",
-			spec: v1beta1.GrafanaServiceAccountSpec{
+			Spec: v1beta1.GrafanaServiceAccountSpec{
 				Tokens: []v1beta1.GrafanaServiceAccountTokenSpec{{
 					Name: "to-be-renamed",
 				}},
 			},
-			scenarioFunc: func(cl client.Client, cr *v1beta1.GrafanaServiceAccount, gClient *genapi.GrafanaHTTPAPI) error {
-				cr.Spec.Tokens[0].Name = "new-token-name"
-				return cl.Update(testCtx, cr)
+		}
+
+		r := createAndReconcileCR(t, cr)
+
+		cr.Spec.Tokens[0].Name = "new-token-name"
+		err := k8sClient.Update(testCtx, cr)
+		require.NoError(t, err)
+
+		gClient, err := client2.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		require.NoError(t, err)
+
+		compareSpecWithStatus(t, cr, r, gClient)
+
+		deleteCR(t, cr, r)
+	})
+
+	It("Update token secret name", func() {
+		t := GinkgoT()
+
+		cr := &v1beta1.GrafanaServiceAccount{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "service-account",
+				Namespace: "default",
 			},
-		},
-		{
-			name: "Update token secret name",
-			spec: v1beta1.GrafanaServiceAccountSpec{
+			Spec: v1beta1.GrafanaServiceAccountSpec{
 				Tokens: []v1beta1.GrafanaServiceAccountTokenSpec{{
 					Name:       "secret-name-update",
 					SecretName: "to-be-renamed",
 				}},
 			},
-			scenarioFunc: func(cl client.Client, cr *v1beta1.GrafanaServiceAccount, gClient *genapi.GrafanaHTTPAPI) error {
-				cr.Spec.Tokens[0].SecretName = "new-secret-name"
-				return cl.Update(testCtx, cr)
+		}
+
+		r := createAndReconcileCR(t, cr)
+
+		cr.Spec.Tokens[0].SecretName = "new-secret-name"
+		err := k8sClient.Update(testCtx, cr)
+		require.NoError(t, err)
+
+		gClient, err := client2.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		require.NoError(t, err)
+
+		compareSpecWithStatus(t, cr, r, gClient)
+
+		deleteCR(t, cr, r)
+	})
+
+	It("Update token expirations", func() {
+		t := GinkgoT()
+
+		cr := &v1beta1.GrafanaServiceAccount{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "service-account",
+				Namespace: "default",
 			},
-		},
-		{
-			name: "Update token expirations",
-			spec: v1beta1.GrafanaServiceAccountSpec{
+			Spec: v1beta1.GrafanaServiceAccountSpec{
 				Tokens: []v1beta1.GrafanaServiceAccountTokenSpec{
 					{
 						Name:    "update-expiration",
@@ -241,114 +341,115 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 					},
 				},
 			},
-			scenarioFunc: func(cl client.Client, cr *v1beta1.GrafanaServiceAccount, gClient *genapi.GrafanaHTTPAPI) error {
-				cr.Spec.Tokens[0].Expires.Time = time.Now().Add(2 * time.Hour)
-				cr.Spec.Tokens[1].Expires = nil
-				return cl.Update(testCtx, cr)
-			},
-		},
-	}
+		}
 
-	for _, tt := range tests {
-		It(tt.name, func() {
-			t := GinkgoT()
+		r := createAndReconcileCR(t, cr)
 
-			cr := &v1beta1.GrafanaServiceAccount{ObjectMeta: metav1.ObjectMeta{
-				Name:      "service-account",
-				Namespace: "default",
-			}}
-			req := requestFromMeta(cr.ObjectMeta)
+		cr.Spec.Tokens[0].Expires.Time = time.Now().Add(2 * time.Hour)
+		cr.Spec.Tokens[1].Expires = nil
+		err := k8sClient.Update(testCtx, cr)
+		require.NoError(t, err)
 
-			r := &GrafanaServiceAccountReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+		gClient, err := client2.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		require.NoError(t, err)
 
-			cr.Spec = tt.spec
-			// 0. Apply defaults
-			cr.Spec.InstanceName = grafanaName
-			cr.Spec.Name = "serviceaccount"
-			cr.Spec.Role = "Viewer"
-			cr.Spec.ResyncPeriod = metav1.Duration{Duration: 60 * time.Second}
+		compareSpecWithStatus(t, cr, r, gClient)
 
-			// 1. Create
-			err := k8sClient.Create(testCtx, cr)
-			require.NoError(t, err)
-
-			// 2. Reconcile
-			_, err = r.Reconcile(testCtx, req)
-			require.NoError(t, err)
-
-			err = k8sClient.Get(testCtx, req.NamespacedName, cr)
-			require.NoError(t, err)
-
-			// 3. Scenario
-			gClient, err := client2.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
-			require.NoError(t, err)
-
-			err = tt.scenarioFunc(r.Client, cr, gClient)
-			require.NoError(t, err)
-
-			// 4. Reconcile
-			_, err = r.Reconcile(testCtx, req)
-			require.NoError(t, err)
-
-			err = k8sClient.Get(testCtx, req.NamespacedName, cr)
-			require.NoError(t, err)
-
-			// 5. Verify
-			err = r.Get(testCtx, req.NamespacedName, cr)
-			require.NoError(t, err)
-
-			sa, err := gClient.ServiceAccounts.RetrieveServiceAccount(cr.Status.Account.ID)
-			require.NoError(t, err)
-			require.NotNil(t, sa)
-			require.NotNil(t, sa.Payload)
-
-			require.Equal(t, cr.Spec.Name, sa.Payload.Name)
-			require.Equal(t, cr.Spec.Role, sa.Payload.Role)
-			require.Equal(t, cr.Spec.IsDisabled, sa.Payload.IsDisabled)
-			require.Equal(t, len(cr.Spec.Tokens), int(sa.Payload.Tokens))
-
-			// Status Tokens values retrieved from Grafana, rely on reconciler to update status
-			for _, tkSpec := range cr.Spec.Tokens {
-				for _, tkStatus := range cr.Status.Account.Tokens {
-					if tkSpec.Name != tkStatus.Name {
-						continue
-					}
-
-					require.Equal(t, tkSpec.Expires.IsZero(), tkStatus.Expires.IsZero())
-					if !tkSpec.Expires.IsZero() {
-						require.True(t, isEqualExpirationTime(tkSpec.Expires, tkSpec.Expires))
-					}
-
-					if tkSpec.SecretName == "" {
-						continue
-					}
-
-					require.Contains(t, tkStatus.Secret.Name, tkSpec.SecretName)
-				}
-			}
-
-			// Check secrets are correctly represented
-			for _, tkStatus := range cr.Status.Account.Tokens {
-				secretRequest := types.NamespacedName{
-					Name:      tkStatus.Secret.Name,
-					Namespace: tkStatus.Secret.Namespace,
-				}
-				s := corev1.Secret{}
-				err = k8sClient.Get(testCtx, secretRequest, &s)
-				require.NoError(t, err)
-				require.NotNil(t, s)
-				require.NotEmpty(t, s.Data["token"])
-			}
-
-			// 6. Cleanup
-			err = k8sClient.Delete(testCtx, cr)
-			require.NoError(t, err)
-
-			_, err = r.Reconcile(testCtx, req)
-			require.NoError(t, err)
-		})
-	}
+		deleteCR(t, cr, r)
+	})
 })
+
+func createAndReconcileCR(t FullGinkgoTInterface, cr *v1beta1.GrafanaServiceAccount) *GrafanaServiceAccountReconciler {
+	req := requestFromMeta(cr.ObjectMeta)
+
+	r := &GrafanaServiceAccountReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+
+	// Apply defaults
+	cr.Spec.InstanceName = grafanaName
+	cr.Spec.Name = "serviceaccount"
+	cr.Spec.Role = "Viewer"
+	cr.Spec.ResyncPeriod = metav1.Duration{Duration: 60 * time.Second}
+
+	err := k8sClient.Create(testCtx, cr)
+	require.NoError(t, err)
+
+	_, err = r.Reconcile(testCtx, req)
+	require.NoError(t, err)
+
+	err = k8sClient.Get(testCtx, req.NamespacedName, cr)
+	require.NoError(t, err)
+
+	return r
+}
+
+func compareSpecWithStatus(t FullGinkgoTInterface, cr *v1beta1.GrafanaServiceAccount, r *GrafanaServiceAccountReconciler, gClient *genapi.GrafanaHTTPAPI) {
+	req := requestFromMeta(cr.ObjectMeta)
+
+	// Reconcile and fetch new object
+	_, err := r.Reconcile(testCtx, req)
+	require.NoError(t, err)
+
+	err = k8sClient.Get(testCtx, req.NamespacedName, cr)
+	require.NoError(t, err)
+
+	// Verify status reflects spec
+	err = r.Get(testCtx, req.NamespacedName, cr)
+	require.NoError(t, err)
+
+	sa, err := gClient.ServiceAccounts.RetrieveServiceAccount(cr.Status.Account.ID)
+	require.NoError(t, err)
+	require.NotNil(t, sa)
+	require.NotNil(t, sa.Payload)
+
+	require.Equal(t, cr.Spec.Name, sa.Payload.Name)
+	require.Equal(t, cr.Spec.Role, sa.Payload.Role)
+	require.Equal(t, cr.Spec.IsDisabled, sa.Payload.IsDisabled)
+	require.Equal(t, len(cr.Spec.Tokens), int(sa.Payload.Tokens))
+
+	// Status Tokens values retrieved from Grafana, rely on reconciler to update status
+	for _, tkSpec := range cr.Spec.Tokens {
+		for _, tkStatus := range cr.Status.Account.Tokens {
+			if tkSpec.Name != tkStatus.Name {
+				continue
+			}
+
+			require.Equal(t, tkSpec.Expires.IsZero(), tkStatus.Expires.IsZero())
+
+			if !tkSpec.Expires.IsZero() {
+				require.True(t, isEqualExpirationTime(tkSpec.Expires, tkSpec.Expires))
+			}
+
+			if tkSpec.SecretName == "" {
+				continue
+			}
+
+			require.Contains(t, tkStatus.Secret.Name, tkSpec.SecretName)
+		}
+	}
+
+	// Check secrets are correctly represented
+	for _, tkStatus := range cr.Status.Account.Tokens {
+		secretRequest := types.NamespacedName{
+			Name:      tkStatus.Secret.Name,
+			Namespace: tkStatus.Secret.Namespace,
+		}
+		s := corev1.Secret{}
+		err = k8sClient.Get(testCtx, secretRequest, &s)
+		require.NoError(t, err)
+		require.NotNil(t, s)
+		require.NotEmpty(t, s.Data["token"])
+	}
+}
+
+func deleteCR(t FullGinkgoTInterface, cr *v1beta1.GrafanaServiceAccount, r *GrafanaServiceAccountReconciler) {
+	req := requestFromMeta(cr.ObjectMeta)
+
+	err := k8sClient.Delete(testCtx, cr)
+	require.NoError(t, err)
+
+	_, err = r.Reconcile(testCtx, req)
+	require.NoError(t, err)
+}
 
 var _ = Describe("ServiceAccount Controller: Integration Tests", func() {
 	Context("When creating service account with token", func() {
