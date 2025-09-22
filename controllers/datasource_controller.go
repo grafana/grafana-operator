@@ -122,6 +122,10 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	log.Info("found matching Grafana instances for datasource", "count", len(instances))
 
+	uid := cr.CustomUIDOrUID()
+	log = log.WithValues("uid", uid)
+	ctx = logf.IntoContext(ctx, log)
+
 	if cr.IsUpdatedUID() {
 		log.Info("datasource uid got updated, deleting datasources with the old uid")
 
