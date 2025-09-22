@@ -437,7 +437,6 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 		reconcileAndCompareSpecWithStatus(t, cr, r, gClient)
 
 		updatedStatus := cr.Status.DeepCopy()
-		t.Println(updatedStatus.Account)
 		require.NotNil(t, updatedStatus.Account.Tokens[0].Expires)
 		require.Nil(t, updatedStatus.Account.Tokens[1].Expires)
 
