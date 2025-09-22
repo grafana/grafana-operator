@@ -91,3 +91,21 @@ spec:
             file: 13-mute-timing.yaml
         - assert:
             file: 13-assert.yaml
+    - name: step-14
+      try:
+        - apply:
+            file: 14-library-panel.yaml
+        - assert:
+            file: 14-assert.yaml
+    - name: step-15
+      try:
+        - apply:
+            file: 15-library-panel.yaml
+        - assert:
+            file: 15-assert.yaml
+    - name: step-16
+      try:
+        - apply:
+            file: 16-serviceaccount.yaml
+        - assert:
+            file: 16-assert.yaml
