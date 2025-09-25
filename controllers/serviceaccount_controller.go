@@ -835,11 +835,9 @@ func renewSecret(
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *GrafanaServiceAccountReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	// TODO: Consider watching token Secrets for reactive reconciles.
-	// It'll requeue on Secret create/update/delete, reducing reliance on ResyncPeriod.
-	// Example: Owns(&corev1.Secret{}, builder.WithPredicates(...))
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.GrafanaServiceAccount{}).
+		Owns(&corev1.Secret{}).
 		WithEventFilter(predicate.Or(
 			ignoreStatusUpdates(),
 			predicate.AnnotationChangedPredicate{},
