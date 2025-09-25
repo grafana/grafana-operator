@@ -25,10 +25,14 @@ import (
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	simplejson "github.com/bitly/go-simplejson"
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
@@ -36,6 +40,7 @@ import (
 	"github.com/grafana/grafana-openapi-client-go/models"
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
+	corev1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -260,9 +265,95 @@ func (r *GrafanaContactPointReconciler) finalize(ctx context.Context, contactPoi
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *GrafanaContactPointReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *GrafanaContactPointReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
+	const (
+		secretIndexKey    string = ".metadata.secret"
+		configMapIndexKey string = ".metadata.configMap"
+	)
+
+	// Index the contact points by the Secret references they (may) point at.
+	if err := mgr.GetCache().IndexField(ctx, &grafanav1beta1.GrafanaContactPoint{}, secretIndexKey,
+		r.indexSecretSource()); err != nil {
+		return fmt.Errorf("failed setting secret index fields: %w", err)
+	}
+
+	// Index the contact points by the ConfigMap references they (may) point at.
+	if err := mgr.GetCache().IndexField(ctx, &grafanav1beta1.GrafanaContactPoint{}, configMapIndexKey,
+		r.indexConfigMapSource()); err != nil {
+		return fmt.Errorf("failed setting configmap index fields: %w", err)
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&grafanav1beta1.GrafanaContactPoint{}).
-		WithEventFilter(ignoreStatusUpdates()).
+		For(&grafanav1beta1.GrafanaContactPoint{}, builder.WithPredicates(
+			ignoreStatusUpdates(),
+		)).
+		Watches(
+			&corev1.Secret{},
+			handler.EnqueueRequestsFromMapFunc(r.requestsForChangeByField(secretIndexKey)),
+		).
+		Watches(
+			&corev1.ConfigMap{},
+			handler.EnqueueRequestsFromMapFunc(r.requestsForChangeByField(configMapIndexKey)),
+		).
 		Complete(r)
+}
+
+func (r *GrafanaContactPointReconciler) indexSecretSource() func(o client.Object) []string {
+	return func(o client.Object) []string {
+		contactPoint, ok := o.(*grafanav1beta1.GrafanaContactPoint)
+		if !ok {
+			panic(fmt.Sprintf("Expected a GrafanaContactPoint, got %T", o))
+		}
+
+		var secretRefs []string
+
+		for _, valueFrom := range contactPoint.Spec.ValuesFrom {
+			if valueFrom.ValueFrom.SecretKeyRef != nil {
+				secretRefs = append(secretRefs, fmt.Sprintf("%s/%s", contactPoint.Namespace, valueFrom.ValueFrom.SecretKeyRef.Name))
+			}
+		}
+
+		return secretRefs
+	}
+}
+
+func (r *GrafanaContactPointReconciler) indexConfigMapSource() func(o client.Object) []string {
+	return func(o client.Object) []string {
+		contactPoint, ok := o.(*grafanav1beta1.GrafanaContactPoint)
+		if !ok {
+			panic(fmt.Sprintf("Expected a GrafanaContactPoint, got %T", o))
+		}
+
+		var configMapRefs []string
+
+		for _, valueFrom := range contactPoint.Spec.ValuesFrom {
+			if valueFrom.ValueFrom.ConfigMapKeyRef != nil {
+				configMapRefs = append(configMapRefs, fmt.Sprintf("%s/%s", contactPoint.Namespace, valueFrom.ValueFrom.ConfigMapKeyRef.Name))
+			}
+		}
+
+		return configMapRefs
+	}
+}
+
+func (r *GrafanaContactPointReconciler) requestsForChangeByField(indexKey string) handler.MapFunc {
+	return func(ctx context.Context, o client.Object) []reconcile.Request {
+		var list grafanav1beta1.GrafanaContactPointList
+		if err := r.List(ctx, &list, client.MatchingFields{
+			indexKey: fmt.Sprintf("%s/%s", o.GetNamespace(), o.GetName()),
+		}); err != nil {
+			logf.FromContext(ctx).Error(err, "failed to list contact points for watch mapping")
+			return nil
+		}
+
+		var reqs []reconcile.Request
+		for _, contactPoint := range list.Items {
+			reqs = append(reqs, reconcile.Request{NamespacedName: types.NamespacedName{
+				Namespace: contactPoint.Namespace,
+				Name:      contactPoint.Name,
+			}})
+		}
+
+		return reqs
+	}
 }
