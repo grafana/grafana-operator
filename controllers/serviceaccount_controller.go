@@ -54,11 +54,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	"github.com/grafana/grafana-openapi-client-go/client/service_accounts"
@@ -587,17 +587,25 @@ func (r *GrafanaServiceAccountReconciler) pruneAndIndexSecrets(
 		}
 
 		token, ok := desiredTokens[tokenName]
-		if ok &&
-			((token.SecretName == "" && secret.GenerateName != "") ||
-				(token.SecretName != "" && secret.GenerateName == "" && token.SecretName == secret.Name)) {
-			// Keep this secret
-			filtered[tokenName] = secret
-		} else {
-			// Delete orphaned secret
-			err := r.Delete(ctx, &secret)
-			if err != nil && !kuberr.IsNotFound(err) {
-				return nil, fmt.Errorf("deleting orphaned secret %q: %w", secret.Name, err)
+		if ok {
+			b, secretHasToken := secret.Data["token"]
+			secretTokenNotEmpty := len(b) > 0
+			secretNameIsValid := (token.SecretName == "" && secret.GenerateName != "") ||
+				(token.SecretName != "" && secret.GenerateName == "" && token.SecretName == secret.Name)
+
+			if secretHasToken && secretTokenNotEmpty && secretNameIsValid {
+				// Keep this secret
+				filtered[tokenName] = secret
+				continue
 			}
+		}
+
+		// Secret is not referenced or used by ServiceAccount
+		logf.FromContext(ctx).Info("Deleting invalid or orphaned secret", "name", secret.Name, "namespace", secret.Namespace)
+
+		err := r.Delete(ctx, &secret)
+		if err != nil && !kuberr.IsNotFound(err) {
+			return nil, fmt.Errorf("deleting invalid or orphaned secret %q: %w", secret.Name, err)
 		}
 	}
 
@@ -835,15 +843,9 @@ func renewSecret(
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *GrafanaServiceAccountReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	// TODO: Consider watching token Secrets for reactive reconciles.
-	// It'll requeue on Secret create/update/delete, reducing reliance on ResyncPeriod.
-	// Example: Owns(&corev1.Secret{}, builder.WithPredicates(...))
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1beta1.GrafanaServiceAccount{}).
-		WithEventFilter(predicate.Or(
-			ignoreStatusUpdates(),
-			predicate.AnnotationChangedPredicate{},
-		)).
+		For(&v1beta1.GrafanaServiceAccount{}, builder.WithPredicates(ignoreStatusUpdates())).
+		Owns(&corev1.Secret{}).
 		WithOptions(controller.Options{RateLimiter: defaultRateLimiter()}).
 		Complete(r)
 }
