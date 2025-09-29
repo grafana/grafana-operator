@@ -54,6 +54,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -836,12 +837,8 @@ func renewSecret(
 // SetupWithManager sets up the controller with the Manager.
 func (r *GrafanaServiceAccountReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1beta1.GrafanaServiceAccount{}).
+		For(&v1beta1.GrafanaServiceAccount{}, builder.WithPredicates(ignoreStatusUpdates())).
 		Owns(&corev1.Secret{}).
-		WithEventFilter(predicate.Or(
-			ignoreStatusUpdates(),
-			predicate.AnnotationChangedPredicate{},
-		)).
 		WithOptions(controller.Options{RateLimiter: defaultRateLimiter()}).
 		Complete(r)
 }
