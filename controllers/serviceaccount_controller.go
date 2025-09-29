@@ -587,17 +587,25 @@ func (r *GrafanaServiceAccountReconciler) pruneAndIndexSecrets(
 		}
 
 		token, ok := desiredTokens[tokenName]
-		if ok &&
-			((token.SecretName == "" && secret.GenerateName != "") ||
-				(token.SecretName != "" && secret.GenerateName == "" && token.SecretName == secret.Name)) {
-			// Keep this secret
-			filtered[tokenName] = secret
-		} else {
-			// Delete orphaned secret
-			err := r.Delete(ctx, &secret)
-			if err != nil && !kuberr.IsNotFound(err) {
-				return nil, fmt.Errorf("deleting orphaned secret %q: %w", secret.Name, err)
+		if ok {
+			b, secretHasToken := secret.Data["token"]
+			secretTokenNotEmpty := len(b) > 0
+			secretNameIsValid := (token.SecretName == "" && secret.GenerateName != "") ||
+				(token.SecretName != "" && secret.GenerateName == "" && token.SecretName == secret.Name)
+
+			if secretHasToken && secretTokenNotEmpty && secretNameIsValid {
+				// Keep this secret
+				filtered[tokenName] = secret
+				continue
 			}
+		}
+
+		// Secret is not referenced or used by ServiceAccount
+		logf.FromContext(ctx).Info("Deleting invalid or orphaned secret", "name", secret.Name, "namespace", secret.Namespace)
+
+		err := r.Delete(ctx, &secret)
+		if err != nil && !kuberr.IsNotFound(err) {
+			return nil, fmt.Errorf("deleting invalid or orphaned secret %q: %w", secret.Name, err)
 		}
 	}
 
