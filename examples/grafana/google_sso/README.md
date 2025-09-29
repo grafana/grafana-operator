@@ -1,6 +1,8 @@
 ---
-title: "Grafana deployment with Google SSO configuration"
-linkTitle: "Grafana deployment with Google SSO configuration"
+title: "Google SSO"
+linkTitle: "Auth: Google SSO"
+tags:
+  - Auth config
 ---
 
 A basic example of a Grafana Deployment that overrides SSO configuration, it's important to note that most configuration that is valid in the `grafana` container can be done with grafana-operator.

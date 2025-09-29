@@ -1,6 +1,6 @@
 ---
-title: "Multiple replicas"
-linkTitle: "Multiple replicas"
+title: "Database and Multiple replicas"
+linkTitle: "Database and Multiple replicas"
 ---
 
 This example shows how to run multiple replicas of Grafana sharing a PostgreSQL database.

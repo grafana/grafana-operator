@@ -1,4 +1,3 @@
----
 apiVersion: grafana.integreatly.org/v1beta1
 kind: Grafana
 metadata:
@@ -56,6 +55,8 @@ spec:
       dashboards: "external-grafana"
   json: >
     {
+
+
       "id": null,
       "title": "Simple Dashboard",
       "tags": [],

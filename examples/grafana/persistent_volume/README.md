@@ -1,6 +1,6 @@
 ---
-title: "Grafana deployment with a Persistent Volume"
-linkTitle: "Grafana deployment with a Persistent Volume"
+title: "Adding a Persistent Volume"
+linkTitle: "Adding a Persistent Volume"
 ---
 
 A basic deployment of Grafana with a persistent volume attached using existing Storage Class.
