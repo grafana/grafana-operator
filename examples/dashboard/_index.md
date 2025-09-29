@@ -1,6 +1,8 @@
 ---
 title: Dashboards
-weight: 13
+weight: 30
+tags:
+  - Folders
 ---
 
 [Dashboards](https://grafana.com/docs/grafana/latest/dashboards/) is the core feature of Grafana and of course something that you can manage through the operator.
@@ -9,12 +11,15 @@ To view the entire configuration that you can do within dashboards, look at our 
 
 ## Dashboard management
 
-You can configure dashboards as code in many different ways.
+You can configure and reference dashboards as code in many different ways.
 
-- json
-- gzipJson
-- URL
-- Jsonnet
+- [json](#json)
+- [gzipJson](#gzipJson)
+- [URL](#URL)
+- [Jsonnet](#Jsonnet)(Deprecated)
+- [ConfigMap](#ConfigMap)
+
+To view all configuration options for folders, look at our [API documentation](/docs/api/#grafanadashboardspec).
 
 ### Json
 
@@ -91,7 +96,7 @@ spec:
     H4sIAAAAAAAAA4WQQU/DMAyF7/0VVc9MggMgcYV/AOKC0OQubmM1jSPH28Sm/XfSNJ1WcaA3f+/l+dXnqk5fQ6Z5qf3eubt5VlKHCTXvNAaH9RtE2zKI2fQnCgFNsxihj8n39V3mqD/zQwMyXE004ol95q3wMaIsEhpSaPMTlT0WasngK3sVdlN6By4uUi8Q7AezUwpJeig4gEe3ajItTfM5T5l0wuNUwfNx82RLg9nLhTeZXW4iAu2GVHcVNPEtByX2tyuzJtgJRrslrygHKJ3WsZhuCkq+X8c6ivrXDd6zwrLrX3vZP/3PY1yuHHcWR/hEiSlmutpzEQ5XdF+IIz+Uzpeq+gWtMMT1HwIAAA==
 ```
 
-[Example documentation](../examples/dashboard_gzipped/readme).
+[Example documentation](../dashboard_gzipped/readme).
 
 ### URL
 
@@ -109,7 +114,9 @@ spec:
   url: "https://grafana.com/api/dashboards/1860/revisions/30/download"
 ```
 
-**NOTE:** You don't have to rely on Grafana Dashboard registry for this, any URL reachable by the operator would work.
+{{% alert title="Note" color="primary" %}}
+You don't have to rely on Grafana Dashboard registry for this, any URL reachable by the operator would work.
+{{% /alert %}}
 
 [Example documentation](../examples/dashboard_from_url/readme).
 
@@ -416,7 +423,9 @@ spec:
 
 ## Custom folders
 
-> Note: This method is not recommended. Prefer to use the GrafanaFolder CR and `folderRef` field to declare a folder instead.
+{{% alert title="Warning" color="secondary" %}}
+This method is not recommended. Prefer to use the GrafanaFolder CR and `folderRef` field to declare a folder instead.
+{{% /alert %}}
 
 In a standard scenario, the operator would use the namespace a CR is deployed to as a folder name in grafana. `folder` field can be used to set a custom folder name:
 
@@ -433,7 +442,9 @@ spec:
   url: "https://raw.githubusercontent.com/grafana-operator/grafana-operator/master/examples/dashboard_from_url/dashboard.json"
 ```
 
-> Note: the field folder is ignored when `folderUID` or `folderRef` is already present in the GrafanaDashboard declaration.
+{{% alert title="Note" color="primary" %}}
+the `.spec.folder` field is ignored when either `.spec.folderUID` or `.spec.folderRef` is present in the GrafanaDashboard declaration.
+{{% /alert %}}
 
 ## Dashboard customization by providing environment variables
 
@@ -452,7 +463,7 @@ spec:
   envs:
     - name: API_VERSION
       value: "1.0.0"
-    - name: ENV_FROM_CM -- just example, such cm and secrets are not provided by vendor
+    - name: ENV_FROM_CM # just example, such cm and secrets are not provided by vendor
       valueFrom:
         configMapKeyRef:
           name: custom-grafana-dashboard-cm
@@ -462,7 +473,7 @@ spec:
         secretKeyRef:
           name: custom-grafana-dashboard-secrets
           key: PROMETHEUS_USERNAME
-  envFrom: -- just example, such cm and secrets are not provided by vendor
+  envFrom: # just example, such cm and secrets are not provided by vendor
     - configMapRef:
         name: custom-grafana-dashboard-cm
     - secretRef:
@@ -557,7 +568,7 @@ spec:
   envs:
     - name: API_VERSION
       value: "1.0.0"
-    - name: ENV_FROM_CM -- just example, such cm and secrets are not provided by vendor
+    - name: ENV_FROM_CM # just example, such cm and secrets are not provided by vendor
       valueFrom:
         configMapKeyRef:
           name: custom-grafana-dashboard-cm
@@ -567,7 +578,7 @@ spec:
         secretKeyRef:
           name: custom-grafana-dashboard-secrets
           key: PROMETHEUS_USERNAME
-  envFrom: -- just example, such cm and secrets are not provided by vendor
+  envFrom: # just example, such cm and secrets are not provided by vendor
     - configMapRef:
         name: custom-grafana-dashboard-cm
     - secretRef:
