@@ -10,6 +10,8 @@ A basic Grafana deployment of Grafana with a dashboard.
 
 {{< readfile file="./basic-grafana.yaml" code="true" lang="yaml" >}}
 
+To view all configuration options on the `Grafana` CR, look at our [API documentation](/docs/api/#grafanaspec).
+
 ## Where should the operator look for Grafana resources?
 
 The operator needs extensive access to be able to manage Grafana instances. Depending on your needs, you might want to restrict the operator to specific namespaces.

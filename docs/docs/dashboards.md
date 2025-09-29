@@ -646,3 +646,10 @@ This can be achieved with either option:
 * Disable the controller cache. Set the env variable `ENFORCE_CACHE_LABELS=off` on the controller.
   **Note**: This can have a significant impact on performance depending on the size and numbers of resources in the cluster.
 * Use a custom sharding key. Set the env variable `WATCH_LABEL_SELECTORS` to a custom resource selector on the controller.
+
+
+{{% alert title="Note" color="primary" %}}
+In a standard scenario, a folder with default settings gets created through a `GrafanaDashboard` CR. It either matches the Kubernetes namespace a dashboard exist in or `spec.folder` field of the CR.
+
+If you need more control over folders (such as RBAC settings), it can be achieved through a `GrafanaFolder` CR.
+{{% /alert %}}

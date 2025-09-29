@@ -143,3 +143,8 @@ spec:
 Save the file to `dashboard.yaml` and apply it using `kubectl apply -f dashboard.yaml`
 
 You will find the dashboard in a folder with the same name as your namespace.
+
+### Updating Grafana resources
+
+Always update a resource configurations, via the Custom Resources(CR) when the resource is created/managed by the operator.
+Any changes made directly in Grafana will be overwritten by the Grafana-operator as per the configuration defined in the CR.
