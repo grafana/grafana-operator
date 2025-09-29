@@ -1,6 +1,8 @@
 ---
-title: "Grafana deployment with Keycloak OAuth2 SSO configuration"
-linkTitle: "Grafana deployment with Keycloak OAuth2 SSO configuration"
+title: "Keycloak OAuth2 SSO"
+linkTitle: "Auth: Keycloak OAuth2 SSO"
+tags:
+  - Auth config
 ---
 
 A basic example of a Grafana Deployment that overrides generic oauth configuration, it's important to note that most configuration that is valid in the `grafana` container can be done with grafana-operator.

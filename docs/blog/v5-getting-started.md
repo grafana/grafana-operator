@@ -176,7 +176,7 @@ Yes we did, so in the next session lets use it.
 
 ### Ingress example
 
-Now lets use the ingress example instead, you can find the [example]({{< ref "/docs/examples/ingress_http/readme/" >}}).
+Now lets use the ingress example instead, you can find the [example]({{< ref "/docs/examples/grafana/ingress_http/readme/" >}}).
 But this time we will do some modifications to it.
 
 Same settings but updating the label and the name to show case that we can run multiple instances of grafana without any issues.

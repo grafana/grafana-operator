@@ -1,4 +1,3 @@
----
 kind: Secret
 apiVersion: v1
 metadata:
@@ -19,8 +18,7 @@ spec:
   config:
     log:
       mode: "console"
-    auth:
-      disable_login_form: "false"
+  # Default secret with admin credentials is disabled as the username and password are supplied externally
   disableDefaultAdminSecret: true
   deployment:
     spec:
