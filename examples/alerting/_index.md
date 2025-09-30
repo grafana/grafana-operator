@@ -1,6 +1,6 @@
 ---
 title: Alerting
-weight: 13
+weight: 60
 ---
 {{% pageinfo color="primary" %}}
 Alerting resources require Grafana version 9.5 or higher.

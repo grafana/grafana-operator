@@ -1,6 +1,6 @@
 ---
 title: Dashboards
-weight: 30
+weight: 40
 tags:
   - Folders
 ---
