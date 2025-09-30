@@ -118,7 +118,7 @@ You should now be able to view Flux running in the `fleet-infra` namespace.
 We are using Flux to package our Kustomize files through OCI, and they are built and released just as our helm solution.
 
 There are two ways of installing the operator, either with namespace access or cluster access,
-take a look at our [documentation]({{< ref "/docs/grafana/#where-should-the-operator-look-for-grafana-resources">}}) for more information.
+take a look at our [documentation]({{< ref "/docs/examples/#where-should-the-operator-look-for-grafana-resources">}}) for more information.
 Add the following file to your Flux repo under `clusters/my-cluster/grafana-operator.yaml`.
 
 {{< readfile file="flux-gitops/grafana-operator.yaml" code="true" lang="yaml" >}}

@@ -30,6 +30,8 @@ jobs:
             **/*.html
             **/*_test.go
             hugo/**
+            docs/**
+            examples/**
 
       - id: docs_only_check
         if: steps.changed-files.outputs.any_changed != 'true'

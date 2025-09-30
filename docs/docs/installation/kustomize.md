@@ -28,7 +28,7 @@ You can also find the yaml for the `cluster_scoped` and `namespace_scoped` relea
 ## Install
 
 Two overlays are provided, for namespace scoped and cluster scoped installation.
-For more information look at our [documentation](https://grafana-operator.github.io/grafana-operator/docs/grafana/#where-should-the-operator-look-for-grafana-resources).
+For more information look at our [documentation](https://grafana-operator.github.io/grafana-operator/docs/examples/grafana/#where-should-the-operator-look-for-grafana-resources).
 
 This will install the operator in the grafana namespace.
 
