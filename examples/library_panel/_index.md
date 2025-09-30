@@ -205,9 +205,11 @@ spec:
 
 You can adjust positioning/size on the other panel fields just as you would for a normal panel.
 
-**NOTE**: library panels likely depend on dashboard variables to be defined, and they do _not_
+{{% alert title="Note" color="primary" %}}
+library panels likely depend on dashboard variables to be defined, and they do _not_
 automatically configure any. Any dashboards that utilize a library panel must define any required
 variable names.
+{{% /alert %}}
 
 ## Exporting library panels from Grafana
 
