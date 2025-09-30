@@ -55,8 +55,6 @@ spec:
       dashboards: "external-grafana"
   json: >
     {
-
-
       "id": null,
       "title": "Simple Dashboard",
       "tags": [],
