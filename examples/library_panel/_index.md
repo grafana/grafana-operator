@@ -1,6 +1,6 @@
 ---
 title: Library panels
-weight: 14
+weight: 70
 ---
 
 [Library panels](https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/manage-library-panels/)

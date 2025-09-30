@@ -1,6 +1,6 @@
 ---
 title: Folders
-weight: 20
+weight: 30
 ---
 
 Folders are great way to group your Dashboards and a requirement to for AlertRuleGroups.
