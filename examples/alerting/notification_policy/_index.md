@@ -13,7 +13,7 @@ If you already know which contact point an alert should send to, you can directl
 
 The following snippet shows an example notification policy routing to the `operations` or `security` team based on the `team` label.
 
-{{< readfile file="../examples/notification-policy/resources.yaml" code="true" lang="yaml" >}}
+{{< readfile file="notification-policy/resources.yaml" code="true" lang="yaml" >}}
 
 ## Dynamic Notification Policy Routes
 
@@ -35,7 +35,7 @@ When both fields are specified, the `routeSelector` takes precedence and overrid
 
 The following shows an example of how dynamic routes will get merged.
 
-{{< readfile file="../examples/notification-policy/routes.yaml" code="true" lang="yaml" >}}
+{{< readfile file="notification-policy/routes.yaml" code="true" lang="yaml" >}}
 
 The resulting Notification Policy will be the following:
 
