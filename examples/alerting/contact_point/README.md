@@ -17,4 +17,6 @@ The following snippet shows an example contact point which notifies a specific e
 It also highlights how secrets and config maps can utilized to externalize some of the configuration.
 This is especially useful for contact points which contain sensitive information.
 
+To view the entire configuration that you can do within Contact-Points, look at our [API documentation](/docs/api/#grafanacontactpointspec).
+
 {{< readfile file="./resources.yaml" code="true" lang="yaml" >}}

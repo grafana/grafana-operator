@@ -10,7 +10,7 @@ Which is useful when folders are managed through other means than the operator.
 
 But creating a `GrafanaFolder` allows other CRs to use `.spec.folderRef` which enables named references.
 
-To view all configuration options for folders, look at our [API documentation](../api/#grafanafolderspec).
+To view all configuration options for Folders, look at our [API documentation](/docs/api/#grafanafolderspec).
 
 ```yaml
 apiVersion: grafana.integreatly.org/v1beta1

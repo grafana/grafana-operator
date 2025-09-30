@@ -7,7 +7,7 @@ tags:
 
 [Dashboards](https://grafana.com/docs/grafana/latest/dashboards/) is the core feature of Grafana and of course something that you can manage through the operator.
 
-To view the entire configuration that you can do within dashboards, look at our [API documentation](../api/#grafanadashboardspec).
+To view the entire configuration that you can do within Dashboards, look at our [API documentation](/docs/api/#grafanadashboardspec).
 
 ## Dashboard management
 
