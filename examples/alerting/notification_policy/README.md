@@ -9,6 +9,8 @@ For a complete explanation on notification policies, see the [upstream Grafana d
 If you already know which contact point an alert should send to, you can directly set the [`receivers`]({{% relref "/docs/api/#grafanaalertrulegroupspecrulesindexnotificationsettings" %}}) property on the alert rule.
 {{% /alert %}}
 
+To view the entire configuration that you can do within Notification Policies, look at our [API documentation](/docs/api/#grafananotificationpolicyspec).
+
 ## Simple Notification Policy
 
 The following snippet shows an example notification policy routing to the `operations` or `security` team based on the `team` label.

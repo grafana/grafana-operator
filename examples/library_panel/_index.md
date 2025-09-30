@@ -3,14 +3,12 @@ title: Library panels
 weight: 14
 ---
 
-[Library
-panels](https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/manage-library-panels/)
+[Library panels](https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/manage-library-panels/)
 are a reusable panel that you can use in any dashboard. When you make a change
 to a library panel, that change propagates to all instances of where the panel
 is used. Library panels streamline reuse of panels across multiple dashboards.
 
-To find all possible configuration options, look at our [API
-documentation](../api/#grafanalibrarypanelspec).
+To find all possible configuration options, look at our [API documentation](/docs/api/#grafanalibrarypanelspec).
 
 ## Library panel management
 
