@@ -1,5 +1,7 @@
 ---
 title: Contact Points
+tags:
+  - ValuesFrom
 ---
 
 Contact points contain the configuration for sending alert notifications. You can assign a contact point either in the alert rule or notification policy options.
@@ -15,4 +17,4 @@ The following snippet shows an example contact point which notifies a specific e
 It also highlights how secrets and config maps can utilized to externalize some of the configuration.
 This is especially useful for contact points which contain sensitive information.
 
-{{< readfile file="../examples/contactpoint_override/resources.yaml" code="true" lang="yaml" >}}
+{{< readfile file="./resources.yaml" code="true" lang="yaml" >}}

@@ -38,15 +38,15 @@ They group together alerts to run on the same interval and are stored in a Grafa
 
 First, create the folder:
 
-{{< readfile file="../examples/notifications-full/folder.yaml" code="true" lang="yaml" >}}
+{{< readfile file="notification_policy/notifications-full/folder.yaml" code="true" lang="yaml" >}}
 
 The first alert rule group is responsible for alerting on well known Kubernetes issues:
 
-{{< readfile file="../examples/notifications-full/kubernetes-alert-rules.yaml" code="true" lang="yaml" >}}
+{{< readfile file="notification_policy/notifications-full/kubernetes-alert-rules.yaml" code="true" lang="yaml" >}}
 
 The second alert rule group is responsible for alerting on security issues:
 
-{{< readfile file="../examples/notifications-full/security-alert-rules.yaml" code="true" lang="yaml" >}}
+{{< readfile file="notification_policy/notifications-full/security-alert-rules.yaml" code="true" lang="yaml" >}}
 
 After applying the resources, you can see the created rule groups in the _Alert rules_ overview page:
 
@@ -55,11 +55,11 @@ After applying the resources, you can see the created rule groups in the _Alert 
 ### Contact Points
 
 Before you can route alerts to the correct receivers, you need to define how these alerts should be delivered.
-[Contact points](./contact-points) specify the methods used to notify someone using different providers.
+[Contact points](./contact-point/_index.md) specify the methods used to notify someone using different providers.
 
 Since the two different teams get notified using different email addresses, two contact points are required.
 
-{{< readfile file="../examples/notifications-full/contact-points.yaml" code="true" lang="yaml" >}}
+{{< readfile file="notification_policy/notifications-full/contact-points.yaml" code="true" lang="yaml" >}}
 
 ### Notification Policy
 
@@ -69,7 +69,7 @@ A Grafana instance can only have one notification policy applied at a time as it
 
 The following notification policy routes alerts based on the team label and further configures the repetition interval for high severity alerts belonging to the operations team:
 
-{{< readfile file="../examples/notifications-full/notification-policy.yaml" code="true" lang="yaml" >}}
+{{< readfile file="notification_policy/notifications-full/notification-policy.yaml" code="true" lang="yaml" >}}
 
 After applying the resource, Grafana shows the following notification policy tree:
 

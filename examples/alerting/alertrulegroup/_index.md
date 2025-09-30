@@ -9,4 +9,4 @@ The easiest way to get the YAML specification for an alert rule is to use the [m
 
 The following snippet shows an example alert rule group with a single alert that fires when the temperature is below zero degrees.
 
-{{< readfile file="../examples/alertrulegroups/resources.yaml" code="true" lang="yaml" >}}
+{{< readfile file="resources.yaml" code="true" lang="yaml" >}}
