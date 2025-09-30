@@ -13,15 +13,15 @@ To view the entire configuration that you can do within Dashboards, look at our 
 
 You can configure and reference dashboards as code in many different ways.
 
-- [json](#json)
-- [gzipJson](#gzipJson)
-- [URL](#URL)
-- [Jsonnet](#Jsonnet)(Deprecated)
-- [ConfigMap](#ConfigMap)
+- [JSON](#json)
+- [gzipJson](#gzipjson)
+- [URL](#url)
+- [Jsonnet](#jsonnet)(Deprecated)
+- [ConfigMap](#configmap)
 
 To view all configuration options for folders, look at our [API documentation](/docs/api/#grafanadashboardspec).
 
-### Json
+### JSON
 
 A pure JSON representation of your Grafana dashboard.
 Normally you would create your dashboard manually within Grafana, when you have come up with how you want the dashboard to look like, you export it as JSON,
@@ -96,7 +96,7 @@ spec:
     H4sIAAAAAAAAA4WQQU/DMAyF7/0VVc9MggMgcYV/AOKC0OQubmM1jSPH28Sm/XfSNJ1WcaA3f+/l+dXnqk5fQ6Z5qf3eubt5VlKHCTXvNAaH9RtE2zKI2fQnCgFNsxihj8n39V3mqD/zQwMyXE004ol95q3wMaIsEhpSaPMTlT0WasngK3sVdlN6By4uUi8Q7AezUwpJeig4gEe3ajItTfM5T5l0wuNUwfNx82RLg9nLhTeZXW4iAu2GVHcVNPEtByX2tyuzJtgJRrslrygHKJ3WsZhuCkq+X8c6ivrXDd6zwrLrX3vZP/3PY1yuHHcWR/hEiSlmutpzEQ5XdF+IIz+Uzpeq+gWtMMT1HwIAAA==
 ```
 
-[Example documentation](../dashboard_gzipped/readme).
+[Example documentation](./gzip_json/readme).
 
 ### URL
 
@@ -118,7 +118,7 @@ spec:
 You don't have to rely on Grafana Dashboard registry for this, any URL reachable by the operator would work.
 {{% /alert %}}
 
-[Example documentation](../examples/dashboard_from_url/readme).
+[Example documentation](./url/readme).
 
 ### Jsonnet
 
@@ -234,7 +234,7 @@ spec:
     }
 ```
 
-Look here for more examples on how to install [plugins](../examples/plugins/readme)
+Look here for more examples on how to install [plugins](./plugins/readme)
 
 ## Content cache duration
 
@@ -591,7 +591,7 @@ spec:
       {{- (.Files.Get "dashboards.tar.gz") | b64enc | nindent 6 }}
 ```
 
-## Dashboard from ConfigMap
+## ConfigMap
 
 Alternatively a ConfigMap can be referenced which contains the dashboard.
 

@@ -60,7 +60,7 @@ spec:
 The secret must exist in the same namespace as the datasource.
 {{% /alert %}}
 
-[Here](../examples/datasource_variables/readme) you can find a bigger example on how to use datasources with environment variables.
+[Here](./datasource_variables/readme) you can find a bigger example on how to use datasources with environment variables.
 
 ## Plugins
 
@@ -94,7 +94,7 @@ spec:
 To make grafana install a plugin, the operator bootstraps a grafana instance with a custom value passed in `GF_INSTALL_PLUGINS` environment variable ([Install plugins in the Docker container](https://grafana.com/docs/grafana/latest/setup-grafana/installation/docker/#install-official-and-community-grafana-plugins)). Thus, there is no way for the operator to install a plugin in an external grafana instance.
 {{% /alert %}}
 
-Look here for more examples on how to install [plugins](../examples/plugins/readme)
+Look here for more examples on how to install [plugins](./plugins/readme)
 
 ## Private data source connect (PDC)
 

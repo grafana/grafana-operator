@@ -50,12 +50,12 @@ The second alert rule group is responsible for alerting on security issues:
 
 After applying the resources, you can see the created rule groups in the _Alert rules_ overview page:
 
-![Alert rules overview page](./overview-page.png)
+![Alert rules overview page](./notification_policy/overview-page.png)
 
 ### Contact Points
 
 Before you can route alerts to the correct receivers, you need to define how these alerts should be delivered.
-[Contact points](./contact-point/_index.md) specify the methods used to notify someone using different providers.
+[Contact points](./contact_point/readme) specify the methods used to notify someone using different providers.
 
 Since the two different teams get notified using different email addresses, two contact points are required.
 
@@ -73,4 +73,4 @@ The following notification policy routes alerts based on the team label and furt
 
 After applying the resource, Grafana shows the following notification policy tree:
 
-![Notification policy tree after applying the resource](./notification-policy-tree.png)
+![Notification policy tree after applying the resource](./notification_policy/notification-policy-tree.png)
