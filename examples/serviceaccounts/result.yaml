@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  # labels/annotations/... Omitted for brevity
+  name: thatsfine
+  namespace: default
+data:
+  token: Z2xzYV9GdXllSHk3V2Y0MjExbFNIRkpReTRPczljMnFtaUZZVl9iZDliYzk5YQ==
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  # labels/annotations/... Omitted for brevity
+  generateName: grafana-my-service-account-my-token-b-
+  name: grafana-my-service-account-my-token-b-4v9mh
+  namespace: default
+data:
+  token: Z2xzYV9sMXlwaFI3NkdXcWVzV3R5QWEzR1NQTGpjNXhoZGJSUl82NjM5NzQxMQ==
