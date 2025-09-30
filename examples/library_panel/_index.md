@@ -12,7 +12,7 @@ To find all possible configuration options, look at our [API documentation](/doc
 
 ## Library panel management
 
-Library panels are managed in almost exactly the same way as [dashboards](../dashboards), and as such,
+Library panels are managed in almost exactly the same way as [dashboards](../dashboard), and as such,
 most of the features of dashboard management in the operator can be used for library panels:
 
 * Variety of content sources (JSON, gzip, URL, jsonnet)
