@@ -1,6 +1,6 @@
 ---
 title: Common options
-weight: 11
+weight: 9
 ---
 
 ## ResyncPeriod
