@@ -1,0 +1,10 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: versioned
+spec:
+  version: 11.6.0 # grafana/grafana:11.6.0
+  config:
+    security:
+      admin_user: root
+      admin_password: secret
