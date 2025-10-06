@@ -22,9 +22,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"os/signal"
 	"strings"
-	"syscall"
 
 	"github.com/KimMachineGun/automemlimit/memlimit"
 	uberzap "go.uber.org/zap"
@@ -258,8 +256,7 @@ func main() { // nolint:gocyclo
 		setupLog.Info("operator running in cluster scoped mode")
 	}
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGPIPE)
-	defer stop()
+	ctx := ctrl.SetupSignalHandler()
 
 	mgr, err := ctrl.NewManager(restConfig, mgrOptions)
 	if err != nil {
@@ -372,7 +369,7 @@ func main() { // nolint:gocyclo
 
 	setupLog.Info("starting manager")
 
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	if err := mgr.Start(ctx); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
