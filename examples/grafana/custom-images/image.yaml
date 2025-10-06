@@ -1,0 +1,10 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: custom-image
+spec:
+  version: grafana/grafana-enterprise:12.2.0
+  config:
+    security:
+      admin_user: root
+      admin_password: secret
