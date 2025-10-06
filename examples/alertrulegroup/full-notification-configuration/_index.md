@@ -1,5 +1,5 @@
 ---
-title: Alerting
+title: Full Notification Setup
 weight: 60
 ---
 {{% pageinfo color="primary" %}}
@@ -23,7 +23,7 @@ They create:
 2. Two contact points for two different teams
 3. A notification policy to route alerts to the correct team
 
-{{< figure src="./notification_policy/notification-routing.png" title="Flowchart of alerts routed through this system" width="500" >}}
+{{< figure src="notification-routing.png" title="Flowchart of alerts routed through this system" width="500" >}}
 
 {{% alert title="Note" color="primary" %}}
 If you want to try this for yourself, you can [get started with demo data in Grafana cloud](https://grafana.com/docs/grafana-cloud/get-started/#install-demo-data-sources-and-dashboards).
@@ -38,28 +38,28 @@ They group together alerts to run on the same interval and are stored in a Grafa
 
 First, create the folder:
 
-{{< readfile file="notification_policy/notifications-full/folder.yaml" code="true" lang="yaml" >}}
+{{< readfile file="./folder.yaml" code="true" lang="yaml" >}}
 
 The first alert rule group is responsible for alerting on well known Kubernetes issues:
 
-{{< readfile file="notification_policy/notifications-full/kubernetes-alert-rules.yaml" code="true" lang="yaml" >}}
+{{< readfile file="./kubernetes-alert-rules.yaml" code="true" lang="yaml" >}}
 
 The second alert rule group is responsible for alerting on security issues:
 
-{{< readfile file="notification_policy/notifications-full/security-alert-rules.yaml" code="true" lang="yaml" >}}
+{{< readfile file="./security-alert-rules.yaml" code="true" lang="yaml" >}}
 
 After applying the resources, you can see the created rule groups in the _Alert rules_ overview page:
 
-![Alert rules overview page](./notification_policy/overview-page.png)
+![Alert rules overview page](./overview-page.png)
 
 ### Contact Points
 
 Before you can route alerts to the correct receivers, you need to define how these alerts should be delivered.
-[Contact points](./contact_point/readme) specify the methods used to notify someone using different providers.
+[Contact points](../../contact_point/) specify the methods used to notify someone using different providers.
 
 Since the two different teams get notified using different email addresses, two contact points are required.
 
-{{< readfile file="notification_policy/notifications-full/contact-points.yaml" code="true" lang="yaml" >}}
+{{< readfile file="./contact-points.yaml" code="true" lang="yaml" >}}
 
 ### Notification Policy
 
@@ -69,8 +69,8 @@ A Grafana instance can only have one notification policy applied at a time as it
 
 The following notification policy routes alerts based on the team label and further configures the repetition interval for high severity alerts belonging to the operations team:
 
-{{< readfile file="notification_policy/notifications-full/notification-policy.yaml" code="true" lang="yaml" >}}
+{{< readfile file="./notification-policy.yaml" code="true" lang="yaml" >}}
 
 After applying the resource, Grafana shows the following notification policy tree:
 
-![Notification policy tree after applying the resource](./notification_policy/notification-policy-tree.png)
+![Notification policy tree after applying the resource](./notification-policy-tree.png)

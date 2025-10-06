@@ -1,6 +1,8 @@
 ---
 title: Alert Rule Groups
+weight: 60
 tags:
+  - Alerting
   - Folders
 ---
 

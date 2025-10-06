@@ -1,6 +1,8 @@
 ---
 title: Contact Points
+weight: 60
 tags:
+  - Alerting
   - ValuesFrom
 ---
 

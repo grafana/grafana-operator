@@ -1,6 +1,8 @@
 ---
 title: "Notification template"
-linkTitle: "Notification template"
+weight: 60
+tags:
+  - Alerting
 ---
 
 Shows how to create a notification template.

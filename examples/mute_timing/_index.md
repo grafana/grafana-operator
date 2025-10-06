@@ -1,6 +1,8 @@
 ---
 title: "Mute timing"
-linkTitle: "Mute timing"
+weight: 60
+tags:
+  - Alerting
 ---
 
 Shows how to create a mute timing.
