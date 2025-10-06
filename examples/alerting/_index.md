@@ -23,7 +23,7 @@ They create:
 2. Two contact points for two different teams
 3. A notification policy to route alerts to the correct team
 
-{{< figure src="notification-routing.png" title="Flowchart of alerts routed through this system" width="500" >}}
+{{< figure src="./notification_policy/notification-routing.png" title="Flowchart of alerts routed through this system" width="500" >}}
 
 {{% alert title="Note" color="primary" %}}
 If you want to try this for yourself, you can [get started with demo data in Grafana cloud](https://grafana.com/docs/grafana-cloud/get-started/#install-demo-data-sources-and-dashboards).
