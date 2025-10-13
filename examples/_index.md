@@ -1,5 +1,5 @@
 ---
-title: "Examples"
-linkTitle: "Examples"
+title: "Resources"
+linkTitle: "Resources"
 weight: 20
 ---

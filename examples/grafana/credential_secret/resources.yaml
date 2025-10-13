@@ -1,0 +1,39 @@
+kind: Secret
+apiVersion: v1
+metadata:
+  name: credentials
+  namespace: grafana
+stringData:
+  GF_SECURITY_ADMIN_PASSWORD: secret
+  GF_SECURITY_ADMIN_USER: root
+type: Opaque
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana
+  labels:
+    dashboards: "grafana"
+spec:
+  config:
+    log:
+      mode: "console"
+  # Default secret with admin credentials is disabled as the username and password are supplied externally
+  disableDefaultAdminSecret: true
+  deployment:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: grafana
+              env:
+                - name: GF_SECURITY_ADMIN_USER
+                  valueFrom:
+                    secretKeyRef:
+                      key: GF_SECURITY_ADMIN_USER
+                      name: credentials
+                - name: GF_SECURITY_ADMIN_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: GF_SECURITY_ADMIN_PASSWORD
+                      name: credentials
