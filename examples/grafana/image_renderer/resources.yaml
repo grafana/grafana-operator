@@ -1,0 +1,24 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  labels:
+    instance: image-renderer
+  name: image-renderer
+  namespace: default
+spec:
+  # enterprise image if you need to enable the reporting functionality
+  version: docker.io/grafana/grafana-enterprise:12.2.0
+  config:
+    rendering:
+      server_url: http://localhost:8081/render
+  deployment:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: image-renderer
+            image: 'grafana/grafana-image-renderer:latest'
+            resources:
+              requests:
+                memory: '16Gi'
