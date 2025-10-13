@@ -1,7 +1,7 @@
 {{- if .Values.rbac.create -}}
 {{ $rbac := .Files.Get "files/rbac.yaml" | fromYaml  }}
 {{ $rbacOpenShift := .Files.Get "files/rbac-openshift.yaml" | fromYaml  }}
-{{- $watchNamespaces := coalesce .Values.watchNamespaces .Values.namespaceOverride .Release.Namespace  }}
+{{- $watchNamespaces := coalesce .Values.watchNamespaces .Values.namespaceOverride .Release.Namespace | splitList "," }}
 {{- $namespaceScoped := false }}
 {{- $isOpenShift := false }}
 {{- if or (.Values.namespaceScope) (.Values.watchNamespaces) }}
@@ -11,7 +11,7 @@
   {{- $isOpenShift = true }}
 {{- end }}
 {{- $operatorNamespace := .Release.Namespace }}
-{{- range ( split "," $watchNamespaces ) }}
+{{- range $watchNamespaces }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: {{ if not $namespaceScoped }}Cluster{{ end }}Role
@@ -45,6 +45,47 @@ subjects:
     namespace: {{ include "grafana-operator.namespace" $ }}
 roleRef:
   kind: {{ if not $namespaceScoped }}Cluster{{ end }}Role
+  name: {{ include "grafana-operator.fullname" $ }}
+  apiGroup: rbac.authorization.k8s.io
+{{- end }}
+{{- if and $namespaceScoped (not (has .Release.Namespace $watchNamespaces)) }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: {{ .Release.Namespace }}
+  name: {{ include "grafana-operator.fullname" $ }}
+  labels:
+    {{- include "grafana-operator.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: operator
+rules:
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "grafana-operator.fullname" $ }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "grafana-operator.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: operator
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "grafana-operator.serviceAccountName" $ }}
+    namespace: {{ include "grafana-operator.namespace" $ }}
+roleRef:
+  kind: Role
   name: {{ include "grafana-operator.fullname" $ }}
   apiGroup: rbac.authorization.k8s.io
 {{- end }}
