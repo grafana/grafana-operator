@@ -23,6 +23,7 @@ import (
 	"log/slog"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/KimMachineGun/automemlimit/memlimit"
 	uberzap "go.uber.org/zap"
@@ -38,7 +39,7 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/config"
+	ctrlconfig "sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -109,6 +110,7 @@ func main() { // nolint:gocyclo
 		probeAddr               string
 		pprofAddr               string
 		maxConcurrentReconciles int
+		resyncPeriod            time.Duration
 	)
 
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
@@ -119,6 +121,7 @@ func main() { // nolint:gocyclo
 	flag.StringVar(&pprofAddr, "pprof-addr", ":8888", "The address to expose the pprof server. Empty string disables the pprof server.")
 	flag.IntVar(&maxConcurrentReconciles, "max-concurrent-reconciles", 1,
 		"Maximum number of concurrent reconciles for dashboard, datasource, folder controllers.")
+	flag.DurationVar(&resyncPeriod, "default-resync-period", controllers.DefaultReSyncPeriod, "The time to trigger re-sync for resources. CRs setting takes precedence over this.")
 
 	logCfg := uberzap.NewProductionEncoderConfig()
 	logCfg.EncodeTime = zapcore.ISO8601TimeEncoder
@@ -189,7 +192,7 @@ func main() { // nolint:gocyclo
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "f75f3bba.integreatly.org",
 		PprofBindAddress:       pprofAddr,
-		Controller: config.Controller{
+		Controller: ctrlconfig.Controller{
 			MaxConcurrentReconciles: maxConcurrentReconciles,
 		},
 	}
@@ -278,6 +281,7 @@ func main() { // nolint:gocyclo
 	if err = (&controllers.GrafanaDashboardReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+		Cfg:    controllers.Config{ResyncPeriod: resyncPeriod},
 	}).SetupWithManager(ctx, mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDashboard")
 		os.Exit(1)
@@ -286,6 +290,7 @@ func main() { // nolint:gocyclo
 	if err = (&controllers.GrafanaDatasourceReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+		Cfg:    controllers.Config{ResyncPeriod: resyncPeriod},
 	}).SetupWithManager(ctx, mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaDatasource")
 		os.Exit(1)
@@ -294,6 +299,7 @@ func main() { // nolint:gocyclo
 	if err = (&controllers.GrafanaServiceAccountReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+		Cfg:    controllers.Config{ResyncPeriod: resyncPeriod},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaServiceAccount")
 		os.Exit(1)
@@ -302,6 +308,7 @@ func main() { // nolint:gocyclo
 	if err = (&controllers.GrafanaFolderReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+		Cfg:    controllers.Config{ResyncPeriod: resyncPeriod},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaFolder")
 		os.Exit(1)
@@ -310,6 +317,7 @@ func main() { // nolint:gocyclo
 	if err = (&controllers.GrafanaLibraryPanelReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+		Cfg:    controllers.Config{ResyncPeriod: resyncPeriod},
 	}).SetupWithManager(ctx, mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaLibraryPanel")
 		os.Exit(1)
@@ -318,6 +326,7 @@ func main() { // nolint:gocyclo
 	if err = (&controllers.GrafanaAlertRuleGroupReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+		Cfg:    controllers.Config{ResyncPeriod: resyncPeriod},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaAlertRuleGroup")
 		os.Exit(1)
@@ -326,6 +335,7 @@ func main() { // nolint:gocyclo
 	if err = (&controllers.GrafanaContactPointReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+		Cfg:    controllers.Config{ResyncPeriod: resyncPeriod},
 	}).SetupWithManager(ctx, mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaContactPoint")
 		os.Exit(1)
@@ -335,6 +345,7 @@ func main() { // nolint:gocyclo
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("GrafanaNotificationPolicy"),
+		Cfg:      controllers.Config{ResyncPeriod: resyncPeriod},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaNotificationPolicy")
 		os.Exit(1)
@@ -343,6 +354,7 @@ func main() { // nolint:gocyclo
 	if err = (&controllers.GrafanaNotificationTemplateReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+		Cfg:    controllers.Config{ResyncPeriod: resyncPeriod},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaNotificationTemplate")
 		os.Exit(1)
@@ -351,6 +363,7 @@ func main() { // nolint:gocyclo
 	if err = (&controllers.GrafanaMuteTimingReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+		Cfg:    controllers.Config{ResyncPeriod: resyncPeriod},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaMuteTiming")
 		os.Exit(1)

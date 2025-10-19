@@ -58,6 +58,7 @@ const (
 type GrafanaDashboardReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	Cfg    Config
 }
 
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadashboards,verbs=get;list;watch;create;update;patch;delete
@@ -215,7 +216,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	cr.Status.Hash = hash
 	cr.Status.UID = uid
 
-	return ctrl.Result{RequeueAfter: cr.Spec.ResyncPeriod.Duration}, nil
+	return ctrl.Result{RequeueAfter: r.Cfg.evalRequeueAfter(cr.Spec.ResyncPeriod)}, nil
 }
 
 func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.GrafanaDashboard) error {

@@ -55,6 +55,7 @@ const (
 type GrafanaDatasourceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	Cfg    Config
 }
 
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadatasources,verbs=get;list;watch;create;update;patch;delete
@@ -189,7 +190,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	cr.Status.LastMessage = "" // nolint:staticcheck
 	cr.Status.UID = cr.CustomUIDOrUID()
 
-	return ctrl.Result{RequeueAfter: cr.Spec.ResyncPeriod.Duration}, nil
+	return ctrl.Result{RequeueAfter: r.Cfg.evalRequeueAfter(cr.Spec.ResyncPeriod)}, nil
 }
 
 func (r *GrafanaDatasourceReconciler) deleteOldDatasource(ctx context.Context, cr *v1beta1.GrafanaDatasource) error {

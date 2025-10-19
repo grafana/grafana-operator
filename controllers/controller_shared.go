@@ -30,9 +30,10 @@ import (
 
 const (
 	// Synchronization size and timeout values
-	syncBatchSize    = 100
-	initialSyncDelay = 10 * time.Second
-	RequeueDelay     = 10 * time.Second
+	syncBatchSize       = 100
+	initialSyncDelay    = 10 * time.Second
+	RequeueDelay        = 10 * time.Second
+	DefaultReSyncPeriod = 10 * time.Minute
 
 	// condition types
 	conditionNoMatchingInstance             = "NoMatchingInstance"
@@ -59,6 +60,21 @@ var (
 type GrafanaCommonReconciler interface {
 	Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error
 	Reconcile(ctx context.Context, req controllerruntime.Request) (controllerruntime.Result, error)
+}
+
+type Config struct {
+	ResyncPeriod time.Duration
+}
+
+func (c Config) evalRequeueAfter(d metav1.Duration) time.Duration {
+	// duration on CRs take precedence over global config.
+	// There is a catch. Even if d is set to `DefaultReSyncPeriod: 10m` explicitly
+	// global config will be taken. CRD default is set to 10m by `kubebuilder` tags
+	// meaning changing it would require a CRD change.
+	if d.Duration > 0 && d.Duration != DefaultReSyncPeriod {
+		return d.Duration
+	}
+	return c.ResyncPeriod
 }
 
 //+kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update;patch;delete
