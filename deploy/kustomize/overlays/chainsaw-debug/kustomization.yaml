@@ -7,7 +7,7 @@ kind: Kustomization
 images:
   - name: ko.local/grafana/grafana-operator
     newName: hashicorp/http-echo
-    newTag: latest
+    newTag: latest@sha256:fcb75f691c8b0414d670ae570240cbf95502cc18a9ba57e982ecac589760a186
 
 patches:
   - path: deployment-patch.yaml

@@ -7,4 +7,4 @@ kind: Kustomization
 images:
 - name: ghcr.io/grafana/grafana-operator
   newName: ghcr.io/grafana/grafana-operator
-  newTag: v5.18.0
+  newTag: v5.18.0@sha256:0af2faec9d6f40e0d01077b3da859f7687144c3aeab05ec07a4556ab37081fbd
