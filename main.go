@@ -39,7 +39,7 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	ctrlconfig "sigs.k8s.io/controller-runtime/pkg/config"
+	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -192,7 +192,7 @@ func main() { // nolint:gocyclo
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "f75f3bba.integreatly.org",
 		PprofBindAddress:       pprofAddr,
-		Controller: ctrlconfig.Controller{
+		Controller: config.Controller{
 			MaxConcurrentReconciles: maxConcurrentReconciles,
 		},
 	}
