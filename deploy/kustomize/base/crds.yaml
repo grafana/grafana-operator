@@ -2637,6 +2637,10 @@ spec:
               route:
                 description: Routes for alerts to match against
                 properties:
+                  active_time_intervals:
+                    items:
+                      type: string
+                    type: array
                   continue:
                     description: continue
                     type: boolean
@@ -2896,6 +2900,10 @@ spec:
             description: GrafanaNotificationPolicyRouteSpec defines the desired state
               of GrafanaNotificationPolicyRoute
             properties:
+              active_time_intervals:
+                items:
+                  type: string
+                type: array
               continue:
                 description: continue
                 type: boolean

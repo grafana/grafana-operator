@@ -5129,6 +5129,13 @@ Routes for alerts to match against
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>active_time_intervals</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>continue</b></td>
         <td>boolean</td>
         <td>
@@ -5544,6 +5551,13 @@ GrafanaNotificationPolicyRouteSpec defines the desired state of GrafanaNotificat
           receiver<br/>
         </td>
         <td>true</td>
+      </tr><tr>
+        <td><b>active_time_intervals</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr><tr>
         <td><b>continue</b></td>
         <td>boolean</td>
