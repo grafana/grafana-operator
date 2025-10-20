@@ -121,6 +121,10 @@ spec:
               route:
                 description: Routes for alerts to match against
                 properties:
+                  active_time_intervals:
+                    items:
+                      type: string
+                    type: array
                   continue:
                     description: continue
                     type: boolean

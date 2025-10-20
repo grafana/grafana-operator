@@ -39,11 +39,12 @@ func newNotificationPolicy(name string, editable *bool) *GrafanaNotificationPoli
 				},
 			},
 			Route: &Route{
-				Continue:          false,
-				Receiver:          "grafana-default-email",
-				GroupBy:           []string{"group_name", "alert_name"},
-				MuteTimeIntervals: []string{},
-				Routes:            []*Route{},
+				Continue:            false,
+				Receiver:            "grafana-default-email",
+				GroupBy:             []string{"group_name", "alert_name"},
+				MuteTimeIntervals:   []string{},
+				ActiveTimeIntervals: []string{},
+				Routes:              []*Route{},
 			},
 		},
 	}
