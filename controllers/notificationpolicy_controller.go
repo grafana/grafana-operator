@@ -57,6 +57,7 @@ type GrafanaNotificationPolicyReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
+	Cfg      *Config
 }
 
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafananotificationpolicies,verbs=get;list;watch;create;update;patch;delete
@@ -189,7 +190,7 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 		log.Error(err, "failed to add merged events to routes")
 	}
 
-	return ctrl.Result{RequeueAfter: notificationPolicy.Spec.ResyncPeriod.Duration}, nil
+	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(notificationPolicy.Spec.ResyncPeriod)}, nil
 }
 
 // assembleNotificationPolicyRoutes iterates over all routeSelectors transitively.

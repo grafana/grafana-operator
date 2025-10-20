@@ -56,6 +56,7 @@ var errLibraryPanelContentUIDImmutable = errors.New("library panel uid is immuta
 type GrafanaLibraryPanelReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	Cfg    *Config
 }
 
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanalibrarypanels,verbs=get;list;watch;create;update;patch;delete
@@ -172,7 +173,7 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
 	}
 
-	return ctrl.Result{RequeueAfter: libraryPanel.Spec.ResyncPeriod.Duration}, nil
+	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(libraryPanel.Spec.ResyncPeriod)}, nil
 }
 
 func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaLibraryPanel, model map[string]any, hash, folderUID string) error {

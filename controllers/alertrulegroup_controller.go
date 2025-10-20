@@ -46,6 +46,7 @@ const (
 type GrafanaAlertRuleGroupReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	Cfg    *Config
 }
 
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanaalertrulegroups,verbs=get;list;watch;create;update;patch;delete
@@ -147,7 +148,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
 	}
 
-	return ctrl.Result{RequeueAfter: group.Spec.ResyncPeriod.Duration}, nil
+	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(group.Spec.ResyncPeriod)}, nil
 }
 
 func crToModel(cr *grafanav1beta1.GrafanaAlertRuleGroup, folderUID string) models.AlertRuleGroup {
