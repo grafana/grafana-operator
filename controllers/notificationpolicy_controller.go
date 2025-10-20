@@ -57,7 +57,7 @@ type GrafanaNotificationPolicyReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
-	Cfg      Config
+	Cfg      *Config
 }
 
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafananotificationpolicies,verbs=get;list;watch;create;update;patch;delete

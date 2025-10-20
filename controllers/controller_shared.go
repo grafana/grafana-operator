@@ -66,7 +66,10 @@ type Config struct {
 	ResyncPeriod time.Duration
 }
 
-func (c Config) requeueAfter(d metav1.Duration) time.Duration {
+func (c *Config) requeueAfter(d metav1.Duration) time.Duration {
+	if c == nil {
+		return d.Duration
+	}
 	// duration on CRs take precedence over global config.
 	if d.Duration > 0 {
 		return d.Duration

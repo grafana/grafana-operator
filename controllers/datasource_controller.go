@@ -55,7 +55,7 @@ const (
 type GrafanaDatasourceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	Cfg    Config
+	Cfg    *Config
 }
 
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadatasources,verbs=get;list;watch;create;update;patch;delete

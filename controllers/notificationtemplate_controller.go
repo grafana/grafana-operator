@@ -42,7 +42,7 @@ const (
 type GrafanaNotificationTemplateReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	Cfg    Config
+	Cfg    *Config
 }
 
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafananotificationtemplates,verbs=get;list;watch;create;update;patch;delete

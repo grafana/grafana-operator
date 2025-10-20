@@ -56,7 +56,7 @@ var errLibraryPanelContentUIDImmutable = errors.New("library panel uid is immuta
 type GrafanaLibraryPanelReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	Cfg    Config
+	Cfg    *Config
 }
 
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanalibrarypanels,verbs=get;list;watch;create;update;patch;delete

@@ -49,7 +49,7 @@ const (
 type GrafanaFolderReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	Cfg    Config
+	Cfg    *Config
 }
 
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanafolders,verbs=get;list;watch;create;update;patch;delete
