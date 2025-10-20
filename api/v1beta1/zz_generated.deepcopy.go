@@ -2464,11 +2464,6 @@ func (in *Route) DeepCopyInto(out *Route) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
-	if in.ActiveTimeIntervals != nil {
-		in, out := &in.ActiveTimeIntervals, &out.ActiveTimeIntervals
-		*out = make([]string, len(*in))
-		copy(*out, *in)
-	}
 	if in.ObjectMatchers != nil {
 		in, out := &in.ObjectMatchers, &out.ObjectMatchers
 		*out = make(models.ObjectMatchers, len(*in))

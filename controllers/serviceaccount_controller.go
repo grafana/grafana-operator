@@ -40,7 +40,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
 	"slices"
 	"sort"
 	"strconv"
@@ -183,7 +182,7 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 	}
 
 	// 7. Schedule periodic reconciliation based on ResyncPeriod
-	return ctrl.Result{RequeueAfter: r.Cfg.evalRequeueAfter(cr.Spec.ResyncPeriod)}, nil
+	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(cr.Spec.ResyncPeriod)}, nil
 }
 
 // finalize handles the cleanup logic when a GrafanaServiceAccount resource is being deleted.

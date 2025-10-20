@@ -123,7 +123,7 @@ func (r *GrafanaMuteTimingReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
 	}
 
-	return ctrl.Result{RequeueAfter: r.Cfg.evalRequeueAfter(muteTiming.Spec.ResyncPeriod)}, nil
+	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(muteTiming.Spec.ResyncPeriod)}, nil
 }
 
 func (r *GrafanaMuteTimingReconciler) reconcileWithInstance(ctx context.Context, instance *grafanav1beta1.Grafana, muteTiming *grafanav1beta1.GrafanaMuteTiming) error {

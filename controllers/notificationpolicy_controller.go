@@ -190,7 +190,7 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 		log.Error(err, "failed to add merged events to routes")
 	}
 
-	return ctrl.Result{RequeueAfter: r.Cfg.evalRequeueAfter(notificationPolicy.Spec.ResyncPeriod)}, nil
+	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(notificationPolicy.Spec.ResyncPeriod)}, nil
 }
 
 // assembleNotificationPolicyRoutes iterates over all routeSelectors transitively.

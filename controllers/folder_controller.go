@@ -149,7 +149,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	folder.Status.Hash = folder.Hash()
 
-	return ctrl.Result{RequeueAfter: r.Cfg.evalRequeueAfter(folder.Spec.ResyncPeriod)}, nil
+	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(folder.Spec.ResyncPeriod)}, nil
 }
 
 func (r *GrafanaFolderReconciler) finalize(ctx context.Context, folder *grafanav1beta1.GrafanaFolder) error {

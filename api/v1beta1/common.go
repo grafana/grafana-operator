@@ -34,7 +34,6 @@ type GrafanaCommonSpec struct {
 	// +optional
 	// +kubebuilder:validation:Type=string
 	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
-	// +kubebuilder:default="10m0s"
 	ResyncPeriod metav1.Duration `json:"resyncPeriod,omitempty"`
 
 	// Selects Grafana instances for import

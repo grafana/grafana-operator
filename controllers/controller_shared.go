@@ -66,14 +66,12 @@ type Config struct {
 	ResyncPeriod time.Duration
 }
 
-func (c Config) evalRequeueAfter(d metav1.Duration) time.Duration {
+func (c Config) requeueAfter(d metav1.Duration) time.Duration {
 	// duration on CRs take precedence over global config.
-	// There is a catch. Even if d is set to `DefaultReSyncPeriod: 10m` explicitly
-	// global config will be taken. CRD default is set to 10m by `kubebuilder` tags
-	// meaning changing it would require a CRD change.
-	if d.Duration > 0 && d.Duration != DefaultReSyncPeriod {
+	if d.Duration > 0 {
 		return d.Duration
 	}
+
 	return c.ResyncPeriod
 }
 

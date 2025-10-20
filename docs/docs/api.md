@@ -184,8 +184,6 @@ Overrides the FolderSelector<br/>
         <td>string</td>
         <td>
           How often the resource is synced, defaults to 10m0s if not set<br/>
-          <br/>
-            <i>Default</i>: 10m0s<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -835,8 +833,6 @@ GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
         <td>string</td>
         <td>
           How often the resource is synced, defaults to 10m0s if not set<br/>
-          <br/>
-            <i>Default</i>: 10m0s<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1419,8 +1415,6 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         <td>string</td>
         <td>
           How often the resource is synced, defaults to 10m0s if not set<br/>
-          <br/>
-            <i>Default</i>: 10m0s<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2452,8 +2446,6 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         <td>string</td>
         <td>
           How often the resource is synced, defaults to 10m0s if not set<br/>
-          <br/>
-            <i>Default</i>: 10m0s<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3141,8 +3133,6 @@ GrafanaFolderSpec defines the desired state of GrafanaFolder
         <td>string</td>
         <td>
           How often the resource is synced, defaults to 10m0s if not set<br/>
-          <br/>
-            <i>Default</i>: 10m0s<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3568,8 +3558,6 @@ GrafanaLibraryPanelSpec defines the desired state of GrafanaLibraryPanel
         <td>string</td>
         <td>
           How often the resource is synced, defaults to 10m0s if not set<br/>
-          <br/>
-            <i>Default</i>: 10m0s<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -4604,8 +4592,6 @@ GrafanaMuteTimingSpec defines the desired state of GrafanaMuteTiming
         <td>string</td>
         <td>
           How often the resource is synced, defaults to 10m0s if not set<br/>
-          <br/>
-            <i>Default</i>: 10m0s<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5024,8 +5010,6 @@ GrafanaNotificationPolicySpec defines the desired state of GrafanaNotificationPo
         <td>string</td>
         <td>
           How often the resource is synced, defaults to 10m0s if not set<br/>
-          <br/>
-            <i>Default</i>: 10m0s<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -6017,8 +6001,6 @@ GrafanaNotificationTemplateSpec defines the desired state of GrafanaNotification
         <td>string</td>
         <td>
           How often the resource is synced, defaults to 10m0s if not set<br/>
-          <br/>
-            <i>Default</i>: 10m0s<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -23185,7 +23167,6 @@ GrafanaServiceAccountSpec defines the desired state of a GrafanaServiceAccount.
           How often the resource is synced, defaults to 10m0s if not set<br/>
           <br/>
             <i>Validations</i>:<li>duration(self) > duration('0s'): spec.resyncPeriod must be greater than 0</li>
-            <i>Default</i>: 10m0s<br/>
         </td>
         <td>false</td>
       </tr><tr>

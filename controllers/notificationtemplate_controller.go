@@ -122,7 +122,7 @@ func (r *GrafanaNotificationTemplateReconciler) Reconcile(ctx context.Context, r
 		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
 	}
 
-	return ctrl.Result{RequeueAfter: r.Cfg.evalRequeueAfter(notificationTemplate.Spec.ResyncPeriod)}, nil
+	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(notificationTemplate.Spec.ResyncPeriod)}, nil
 }
 
 func (r *GrafanaNotificationTemplateReconciler) reconcileWithInstance(ctx context.Context, instance *grafanav1beta1.Grafana, notificationTemplate *grafanav1beta1.GrafanaNotificationTemplate) error {
