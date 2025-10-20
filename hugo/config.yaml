@@ -24,7 +24,7 @@ params:
   copyright: Grafana Operator Team
   version_menu: Releases
   archived_version: false
-  version: v5.19.0
+  version: v5.20.0
   url_latest_version: https://example.com
   github_repo: https://github.com/grafana/grafana-operator
   github_branch: master
