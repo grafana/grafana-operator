@@ -59,6 +59,8 @@ type Route struct {
 	// mute time intervals
 	MuteTimeIntervals []string `json:"mute_time_intervals,omitempty"`
 
+	ActiveTimeIntervals []string `json:"active_time_intervals,omitempty"`
+
 	// object matchers
 	ObjectMatchers models.ObjectMatchers `json:"object_matchers,omitempty"`
 
@@ -113,18 +115,19 @@ func (m Matchers) ToModelMatchers() models.Matchers {
 
 func (r *Route) ToModelRoute() *models.Route {
 	out := &models.Route{
-		Continue:          r.Continue,
-		GroupBy:           r.GroupBy,
-		GroupInterval:     r.GroupInterval,
-		GroupWait:         r.GroupWait,
-		MatchRe:           r.MatchRe,
-		Matchers:          r.Matchers.ToModelMatchers(),
-		MuteTimeIntervals: r.MuteTimeIntervals,
-		ObjectMatchers:    r.ObjectMatchers,
-		Provenance:        r.Provenance,
-		Receiver:          r.Receiver,
-		RepeatInterval:    r.RepeatInterval,
-		Routes:            make([]*models.Route, len(r.Routes)),
+		Continue:            r.Continue,
+		GroupBy:             r.GroupBy,
+		GroupInterval:       r.GroupInterval,
+		GroupWait:           r.GroupWait,
+		MatchRe:             r.MatchRe,
+		Matchers:            r.Matchers.ToModelMatchers(),
+		MuteTimeIntervals:   r.MuteTimeIntervals,
+		ActiveTimeIntervals: r.ActiveTimeIntervals,
+		ObjectMatchers:      r.ObjectMatchers,
+		Provenance:          r.Provenance,
+		Receiver:            r.Receiver,
+		RepeatInterval:      r.RepeatInterval,
+		Routes:              make([]*models.Route, len(r.Routes)),
 	}
 	for i, v := range r.Routes {
 		out.Routes[i] = v.ToModelRoute()

@@ -24,7 +24,7 @@ params:
   copyright: Grafana Operator Team
   version_menu: Releases
   archived_version: false
-  version: v5.19.0
+  version: v5.20.0
   url_latest_version: https://example.com
   github_repo: https://github.com/grafana/grafana-operator
   github_branch: master
@@ -37,15 +37,11 @@ params:
     breadcrumb_disable: false
     navbar_logo: true
     navbar_translucent_over_cover_disable: true
-    sidebar_menu_compact: false
+    sidebar_menu_compact: true
     sidebar_search_disable: false
     showLightDarkModeMenu: true
-    feedback:
-      enable: false
-      yes: Glad to hear it! Please <a href="https://github.com/USERNAME/REPOSITORY/issues/new">tell us how we can improve</a>.
-      no: Sorry to hear that. Please <a href="https://github.com/USERNAME/REPOSITORY/issues/new">tell us how we can improve</a>.
-    readingtime:
-      enable: false
+    ul_show: 2
+    sidebar_menu_foldable: false
   links:
     developer:
       - name: GitHub

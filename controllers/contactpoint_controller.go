@@ -52,6 +52,7 @@ const (
 type GrafanaContactPointReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	Cfg    *Config
 }
 
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanacontactpoints,verbs=get;list;watch;create;update;patch;delete
@@ -141,7 +142,7 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
 	}
 
-	return ctrl.Result{RequeueAfter: contactPoint.Spec.ResyncPeriod.Duration}, nil
+	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(contactPoint.Spec.ResyncPeriod)}, nil
 }
 
 func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Context, instance *grafanav1beta1.Grafana, contactPoint *grafanav1beta1.GrafanaContactPoint, settings *models.JSON) error {

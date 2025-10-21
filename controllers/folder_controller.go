@@ -23,13 +23,14 @@ import (
 	"fmt"
 	"strings"
 
-	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	"github.com/grafana/grafana-openapi-client-go/client/folders"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
+
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 
+	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -48,6 +49,7 @@ const (
 type GrafanaFolderReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	Cfg    *Config
 }
 
 //+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanafolders,verbs=get;list;watch;create;update;patch;delete
@@ -147,7 +149,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	folder.Status.Hash = folder.Hash()
 
-	return ctrl.Result{RequeueAfter: folder.Spec.ResyncPeriod.Duration}, nil
+	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(folder.Spec.ResyncPeriod)}, nil
 }
 
 func (r *GrafanaFolderReconciler) finalize(ctx context.Context, folder *grafanav1beta1.GrafanaFolder) error {

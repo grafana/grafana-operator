@@ -30,9 +30,10 @@ import (
 
 const (
 	// Synchronization size and timeout values
-	syncBatchSize    = 100
-	initialSyncDelay = 10 * time.Second
-	RequeueDelay     = 10 * time.Second
+	syncBatchSize       = 100
+	initialSyncDelay    = 10 * time.Second
+	RequeueDelay        = 10 * time.Second
+	DefaultReSyncPeriod = 10 * time.Minute
 
 	// condition types
 	conditionNoMatchingInstance             = "NoMatchingInstance"
@@ -59,6 +60,22 @@ var (
 type GrafanaCommonReconciler interface {
 	Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error
 	Reconcile(ctx context.Context, req controllerruntime.Request) (controllerruntime.Result, error)
+}
+
+type Config struct {
+	ResyncPeriod time.Duration
+}
+
+func (c *Config) requeueAfter(d metav1.Duration) time.Duration {
+	if c == nil {
+		return d.Duration
+	}
+	// duration on CRs take precedence over global config.
+	if d.Duration > 0 {
+		return d.Duration
+	}
+
+	return c.ResyncPeriod
 }
 
 //+kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update;patch;delete

@@ -81,7 +81,7 @@ jobs:
           echo "AUTHTOKEN=${{ steps.app-token.outputs.token }}" >> $GITHUB_ENV
 
       - name: Make github release
-        uses: softprops/action-gh-release@62c96d0c4e8a889135c1f3a25910db8dbe0e85f7 # v2
+        uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 # v2
         with:
           body: |
             Helm chart for the [grafana-operator](https://github.com/${{ github.repository }})
@@ -119,7 +119,7 @@ jobs:
       packages: write
     steps:
       - name: install flux
-        uses: fluxcd/flux2/action@f251e8e8a9b289283be055d65ae4a4ee595f7a14 # v2.7.0
+        uses: fluxcd/flux2/action@4a15fa6a023259353ef750acf1c98fe88407d4d0 # v2.7.2
 
       - name: Clone repo
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
@@ -275,7 +275,7 @@ jobs:
           path: ./sboms/
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62 # v3.10.0
+        uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
         with:
           cosign-release: "v2.2.2"
 

@@ -76,6 +76,7 @@ const (
 type GrafanaServiceAccountReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	Cfg    *Config
 }
 
 // +kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanaserviceaccounts,verbs=get;list;watch;create;update;patch;delete
@@ -181,7 +182,7 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 	}
 
 	// 7. Schedule periodic reconciliation based on ResyncPeriod
-	return ctrl.Result{RequeueAfter: cr.Spec.ResyncPeriod.Duration}, nil
+	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(cr.Spec.ResyncPeriod)}, nil
 }
 
 // finalize handles the cleanup logic when a GrafanaServiceAccount resource is being deleted.
