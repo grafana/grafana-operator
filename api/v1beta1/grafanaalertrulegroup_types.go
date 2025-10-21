@@ -47,11 +47,9 @@ type GrafanaAlertRuleGroupSpec struct {
 	// +kubebuilder:validation:MinItems=1
 	Rules []AlertRule `json:"rules"`
 
-	// +kubebuilder:validation:Type=string
-	// +kubebuilder:validation:Format=duration
-	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
+	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h|d|w))+$"
 	// +kubebuilder:validation:Required
-	Interval metav1.Duration `json:"interval"`
+	Interval string `json:"interval"`
 
 	// Whether to enable or disable editing of the alert rule group in Grafana UI
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
@@ -71,11 +69,9 @@ type AlertRule struct {
 	// +kubebuilder:validation:Enum=OK;Alerting;Error;KeepLast
 	ExecErrState string `json:"execErrState"`
 
-	// +kubebuilder:validation:Type=string
-	// +kubebuilder:validation:Format=duration
-	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
+	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h|d|w))+$"
 	// +kubebuilder:default="0s"
-	For *metav1.Duration `json:"for"`
+	For *string `json:"for"`
 
 	IsPaused bool `json:"isPaused,omitempty"`
 

@@ -79,7 +79,7 @@ func (in *AlertRule) DeepCopyInto(out *AlertRule) {
 	}
 	if in.For != nil {
 		in, out := &in.For, &out.For
-		*out = new(metav1.Duration)
+		*out = new(string)
 		**out = **in
 	}
 	if in.NotificationSettings != nil {
@@ -499,7 +499,6 @@ func (in *GrafanaAlertRuleGroupSpec) DeepCopyInto(out *GrafanaAlertRuleGroupSpec
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	out.Interval = in.Interval
 	if in.Editable != nil {
 		in, out := &in.Editable, &out.Editable
 		*out = new(bool)

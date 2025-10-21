@@ -127,7 +127,7 @@ spec:
                   rule: self == oldSelf
               interval:
                 format: duration
-                pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
+                pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h|d|w))+$
                 type: string
               name:
                 description: Name of the alert rule group. If not specified, the resource
@@ -195,7 +195,7 @@ spec:
                     for:
                       default: 0s
                       format: duration
-                      pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
+                      pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h|d|w))+$
                       type: string
                     isPaused:
                       type: boolean
