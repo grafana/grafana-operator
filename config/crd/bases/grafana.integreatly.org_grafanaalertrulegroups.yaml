@@ -126,8 +126,7 @@ spec:
                 - message: spec.instanceSelector is immutable
                   rule: self == oldSelf
               interval:
-                format: duration
-                pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h|d|w))+$
+                pattern: ^([0-9]+(\.[0-9]+)?(s|m|h|d|w))+$
                 type: string
               name:
                 description: Name of the alert rule group. If not specified, the resource
@@ -194,8 +193,7 @@ spec:
                       type: string
                     for:
                       default: 0s
-                      format: duration
-                      pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h|d|w))+$
+                      pattern: ^([0-9]+(\.[0-9]+)?(s|m|h|d|w))+$
                       type: string
                     isPaused:
                       type: boolean

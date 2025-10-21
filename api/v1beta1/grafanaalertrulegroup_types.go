@@ -47,7 +47,7 @@ type GrafanaAlertRuleGroupSpec struct {
 	// +kubebuilder:validation:MinItems=1
 	Rules []AlertRule `json:"rules"`
 
-	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h|d|w))+$"
+	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(s|m|h|d|w))+$"
 	// +kubebuilder:validation:Required
 	Interval string `json:"interval"`
 
@@ -69,7 +69,7 @@ type AlertRule struct {
 	// +kubebuilder:validation:Enum=OK;Alerting;Error;KeepLast
 	ExecErrState string `json:"execErrState"`
 
-	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h|d|w))+$"
+	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(s|m|h|d|w))+$"
 	// +kubebuilder:default="0s"
 	For *string `json:"for"`
 
