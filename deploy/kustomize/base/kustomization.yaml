@@ -15,4 +15,4 @@ patches:
         value: grafana-operator-permissions
 images:
   - name: ghcr.io/grafana/grafana-operator
-    newTag: v5.20.0
+    newTag: v5.20.0@sha256:050174c79c5bfce80fb96769e48026a905057202fb089b66457fa67f272d683e
