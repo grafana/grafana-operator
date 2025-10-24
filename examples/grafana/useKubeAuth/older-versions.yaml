@@ -1,0 +1,39 @@
+# kubectl create configmap kube-root-jwks --from-literal=jwks.json="$(kubectl get --raw /openid/v1/jwks)"
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: jwt-grafana
+spec:
+  config:
+    security:
+      admin_user: root
+      admin_password: secret
+    auth.jwt:
+      enabled: "true"
+      header_name: Authorization
+      username_claim: sub
+      email_claim: sub
+      auto_sign_up: "true"
+      jwk_set_file: /var/run/kube-root-jwks.json
+      role_attribute_path: "contains(\"kubernetes.io\".namespace, 'grafana') && 'GrafanaAdmin' || 'None'" # Assigns normal Admin unless allow_assign_grafana_admin is enabled
+      # allow_assign_grafana_admin: "true"
+      role_attribute_strict: "true" # Disables auto_assign_org_role
+      # contains("kubernetes.io".namespace, 'grafana') && 'GrafanaAdmin' || 'None'
+  deployment:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: grafana
+              volumeMounts:
+                - mountPath: /var/run/
+                  name: cluster-jwks
+                  readOnly: true
+          volumes:
+            - name: cluster-jwks
+              configMap:
+                name: kube-root-jwks
+                defaultMode: 0444
+                items:
+                  - key: jwks.json
+                    path: kube-root-jwks.json
