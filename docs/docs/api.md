@@ -6442,6 +6442,14 @@ Client defines how the grafana-operator talks to the grafana instance.
             <i>Validations</i>:<li>(has(self.insecureSkipVerify) && !(has(self.certSecretRef))) || (has(self.certSecretRef) && !(has(self.insecureSkipVerify))): insecureSkipVerify and certSecretRef cannot be set at the same time</li>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>useKubeAuth</b></td>
+        <td>boolean</td>
+        <td>
+          Use Kubernetes Serviceaccount as authentication
+Requires configuring [auth.jwt] in the instance<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
