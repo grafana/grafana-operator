@@ -1,0 +1,15 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["github>grafana/grafana-renovate-config//presets/base"],
+  "ignoreDeps": ["ghcr.io/grafana/grafana-operator"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["operator_constants.go"],
+      "datasourceTemplate": "docker",
+      "matchStrings": [
+        "\\s*GrafanaImage\\s*=\\s*\"(?<depName>[^\\s]+?)\"\\s*\\n\\s*GrafanaVersion\\s*=\\s*\"(?<currentValue>[\\w+\\.\\-]*)\""
+      ]
+    }
+  ]
+}
