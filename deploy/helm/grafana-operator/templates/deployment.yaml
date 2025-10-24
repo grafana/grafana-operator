@@ -82,6 +82,7 @@ spec:
             - --zap-encoder={{ .Values.logging.encoder }}
             - --zap-log-level={{ .Values.logging.level }}
             - --zap-time-encoding={{ .Values.logging.time }}
+            - --default-resync-period={{ .Values.defaultResyncPeriod }}
             {{- if .Values.leaderElect }}
             - --leader-elect
             {{- end }}
