@@ -45,6 +45,10 @@ enforceCacheLabels: "safe"
 # for the default Kubernetes configuration.
 clusterDomain: ""
 
+# -- Sets the global default resyncPeriod for all resources.
+# Useful when you want to either lower or raise the duration between reconciliations.
+defaultResyncPeriod: 10m
+
 # -- Maximum number of concurrent reconciles per Custom Resource.
 maxConcurrentReconciles: 1
 
