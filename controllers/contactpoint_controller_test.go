@@ -28,6 +28,7 @@ var _ = Describe("ContactPoint Reconciler: Provoke Conditions", func() {
 				Name:              "ContactPointName",
 				Settings:          &v1.JSON{Raw: []byte("{}")},
 				Type:              "webhook",
+				// Integrations:      []v1beta1.ContactPointReceiver{},
 			},
 			want: metav1.Condition{
 				Type:   conditionSuspended,
