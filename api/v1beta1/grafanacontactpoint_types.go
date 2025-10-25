@@ -21,14 +21,22 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
-// +kubebuilder:validation:XValidation:rule="((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid)))", message="spec.uid is immutable"
 type GrafanaContactPointSpec struct {
 	GrafanaCommonSpec `json:",inline"`
 
+	// Receivers are grouped under the same ContactPoint using the Name
+	// Defaults to the name of the CR
+	// +optional
+	// +kubebuilder:validation:type=string
+	Name string `json:"name,omitempty"`
+
+	// List of receivers that Grafana will fan out notifications to
+	// +optional
+	// +kubebuilder:validation:MaxItems=99
+	Receivers []ContactPointReceiver `json:"receivers,omitempty"`
+
+	// Deprecated: define the receiver under .spec.receivers[]
 	// Manually specify the UID the Contact Point is created with. Can be any string consisting of alphanumeric characters, - and _ with a maximum length of 40
 	// +optional
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="spec.uid is immutable"
@@ -36,22 +44,46 @@ type GrafanaContactPointSpec struct {
 	// +kubebuilder:validation:Pattern="^[a-zA-Z0-9-_]+$"
 	CustomUID string `json:"uid,omitempty"`
 
+	// Deprecated: define the receiver under .spec.receivers[]
+	// Will be removed in a later version
 	// +optional
 	DisableResolveMessage bool `json:"disableResolveMessage,omitempty"`
 
-	// Receivers are grouped under the same Contact Point using the name
-	// Defaults to the name of the CR
+	// Deprecated: define the receiver under .spec.receivers[]
+	// Will be removed in a later version
 	// +optional
-	// +kubebuilder:validation:type=string
-	Name string `json:"name,omitempty"`
+	Settings *apiextensions.JSON `json:"settings,omitempty"`
+
+	// Deprecated: define the receiver under .spec.receivers[]
+	// Will be removed in a later version
+	// +kubebuilder:validation:MaxItems=99
+	ValuesFrom []ValueFrom `json:"valuesFrom,omitempty"`
+
+	// Deprecated: define the receiver under .spec.receivers[]
+	// Will be removed in a later version
+	// +optional
+	// +kubebuilder:validation:MinLength=1
+	Type string `json:"type,omitempty"`
+}
+
+// Represents an integration to external services that receive Grafana notifications
+type ContactPointReceiver struct {
+	// Manually specify the UID the Contact Point is created with. Can be any string consisting of alphanumeric characters, - and _ with a maximum length of 40
+	// +optional
+	// +kubebuilder:validation:MaxLength=40
+	// +kubebuilder:validation:Pattern="^[a-zA-Z0-9-_]+$"
+	CustomUID string `json:"uid,omitempty"`
+
+	// +kubebuilder:validation:MinLength=1
+	Type string `json:"type"`
+
+	// +optional
+	DisableResolveMessage bool `json:"disableResolveMessage,omitempty"`
 
 	Settings *apiextensions.JSON `json:"settings"`
 
 	// +kubebuilder:validation:MaxItems=99
 	ValuesFrom []ValueFrom `json:"valuesFrom,omitempty"`
-
-	// +kubebuilder:validation:MinLength=1
-	Type string `json:"type"`
 }
 
 //+kubebuilder:object:root=true
