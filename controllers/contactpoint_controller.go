@@ -162,7 +162,7 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 		// create
 		cp := &models.EmbeddedContactPoint{
 			DisableResolveMessage: contactPoint.Spec.DisableResolveMessage,
-			Name:                  contactPoint.Spec.Name,
+			Name:                  contactPoint.NameFromSpecOrMeta(),
 			Type:                  &contactPoint.Spec.Type,
 			Settings:              settings,
 			UID:                   contactPoint.CustomUIDOrUID(),
@@ -176,7 +176,7 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 		// update
 		var updatedCP models.EmbeddedContactPoint
 
-		updatedCP.Name = contactPoint.Spec.Name
+		updatedCP.Name = contactPoint.NameFromSpecOrMeta()
 		updatedCP.Type = &contactPoint.Spec.Type
 		updatedCP.Settings = settings
 		updatedCP.DisableResolveMessage = contactPoint.Spec.DisableResolveMessage

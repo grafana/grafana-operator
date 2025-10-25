@@ -39,8 +39,11 @@ type GrafanaContactPointSpec struct {
 	// +optional
 	DisableResolveMessage bool `json:"disableResolveMessage,omitempty"`
 
+	// Receivers are grouped under the same Contact Point using the name
+	// Defaults to the name of the CR
+	// +optional
 	// +kubebuilder:validation:type=string
-	Name string `json:"name"`
+	Name string `json:"name,omitempty"`
 
 	Settings *apiextensions.JSON `json:"settings"`
 
@@ -85,6 +88,15 @@ func (in *GrafanaContactPointList) Exists(namespace, name string) bool {
 	}
 
 	return false
+}
+
+// Wrapper around Name or default metadata.name
+func (in *GrafanaContactPoint) NameFromSpecOrMeta() string {
+	if in.Spec.Name != "" {
+		return in.Spec.Name
+	}
+
+	return in.Name
 }
 
 // Wrapper around CustomUID or default metadata.uid
