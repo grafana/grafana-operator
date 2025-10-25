@@ -22,7 +22,7 @@ kind: GrafanaDashboard
 metadata:
   name: grafanadashboard-with-custom-folder
 spec:
-  folder: "Custom Folder"
+  folder: "Custom Folder" # The title of the created folder if missing
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
