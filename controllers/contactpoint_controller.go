@@ -46,7 +46,10 @@ import (
 const (
 	conditionContactPointSynchronized = "ContactPointSynchronized"
 	conditionReasonInvalidSettings    = "InvalidSettings"
+	conditionReasonTopLevelReceiver   = "InvalidTopLevelReceiver"
 )
+
+var ErrInvalidTopLevelReceiver = fmt.Errorf(".spec.type and .spec.settings are mutually inclusive and deprecated, consider moving receiver configuration under .spec.receivers")
 
 // GrafanaContactPointReconciler reconciles a GrafanaContactPoint object
 type GrafanaContactPointReconciler struct {
@@ -115,6 +118,14 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 
 	removeNoMatchingInstance(&contactPoint.Status.Conditions)
 	log.Info("found matching Grafana instances for Contact point", "count", len(instances))
+
+	err = r.mergeTopLevelIntoReceivers(contactPoint)
+	if err != nil {
+		setInvalidSpec(&contactPoint.Status.Conditions, contactPoint.Generation, conditionReasonTopLevelReceiver, err.Error())
+		meta.RemoveStatusCondition(&contactPoint.Status.Conditions, conditionContactPointSynchronized)
+
+		return ctrl.Result{}, fmt.Errorf("validating contactpoint spec: %w", err)
+	}
 
 	settings, err := r.buildContactPointSettings(ctx, contactPoint)
 	if err != nil {
@@ -189,6 +200,30 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 
 	// Update grafana instance Status
 	return instance.AddNamespacedResource(ctx, r.Client, contactPoint, contactPoint.NamespacedResource())
+}
+
+func (r *GrafanaContactPointReconciler) mergeTopLevelIntoReceivers(cr *grafanav1beta1.GrafanaContactPoint) error {
+	// If the topLevelReceiver is valid, continue
+	if cr.Spec.Type != "" || cr.Spec.Settings != nil { //nolint:staticcheck
+		if cr.Spec.Settings == nil { //nolint:staticcheck
+			return ErrInvalidTopLevelReceiver
+		}
+
+		if cr.Spec.Type == "" { //nolint:staticcheck
+			return ErrInvalidTopLevelReceiver
+		}
+	}
+
+	topLevelReceiver := &grafanav1beta1.ContactPointReceiver{
+		CustomUID:             cr.Spec.CustomUID,             //nolint:staticcheck
+		Type:                  cr.Spec.Type,                  //nolint:staticcheck
+		DisableResolveMessage: cr.Spec.DisableResolveMessage, //nolint:staticcheck
+		Settings:              cr.Spec.Settings,              //nolint:staticcheck
+		ValuesFrom:            cr.Spec.ValuesFrom,            //nolint:staticcheck
+	}
+	cr.Spec.Receivers = append(cr.Spec.Receivers, *topLevelReceiver)
+
+	return nil
 }
 
 func (r *GrafanaContactPointReconciler) buildContactPointSettings(ctx context.Context, contactPoint *grafanav1beta1.GrafanaContactPoint) (models.JSON, error) {

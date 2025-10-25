@@ -90,6 +90,42 @@ var _ = Describe("ContactPoint Reconciler: Provoke Conditions", func() {
 			wantErr: "building contactpoint settings",
 		},
 		{
+			name: "Top level receiver missing settings with type defined",
+			meta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "missing-settings",
+			},
+			spec: v1beta1.GrafanaContactPointSpec{
+				GrafanaCommonSpec: commonSpecInvalidSpec,
+				Name:              "ContactPointName",
+				Settings:          nil,
+				Type:              "email",
+			},
+			want: metav1.Condition{
+				Type:   conditionInvalidSpec,
+				Reason: conditionReasonTopLevelReceiver,
+			},
+			wantErr: ErrInvalidTopLevelReceiver.Error(),
+		},
+		{
+			name: "Top level receiver missing type with settings defined",
+			meta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "missing-type",
+			},
+			spec: v1beta1.GrafanaContactPointSpec{
+				GrafanaCommonSpec: commonSpecInvalidSpec,
+				Name:              "ContactPointName",
+				Settings:          &v1.JSON{Raw: []byte("{}")},
+				Type:              "",
+			},
+			want: metav1.Condition{
+				Type:   conditionInvalidSpec,
+				Reason: conditionReasonTopLevelReceiver,
+			},
+			wantErr: ErrInvalidTopLevelReceiver.Error(),
+		},
+		{
 			name: "Successfully applied resource to instance",
 			meta: objectMetaSynchronized,
 			spec: v1beta1.GrafanaContactPointSpec{
