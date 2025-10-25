@@ -161,9 +161,9 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 	if applied.UID == "" {
 		// create
 		cp := &models.EmbeddedContactPoint{
-			DisableResolveMessage: contactPoint.Spec.DisableResolveMessage,
+			DisableResolveMessage: contactPoint.Spec.DisableResolveMessage, //nolint:staticcheck
 			Name:                  contactPoint.NameFromSpecOrMeta(),
-			Type:                  &contactPoint.Spec.Type,
+			Type:                  &contactPoint.Spec.Type, //nolint:staticcheck
 			Settings:              settings,
 			UID:                   contactPoint.CustomUIDOrUID(),
 		}
@@ -177,9 +177,9 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 		var updatedCP models.EmbeddedContactPoint
 
 		updatedCP.Name = contactPoint.NameFromSpecOrMeta()
-		updatedCP.Type = &contactPoint.Spec.Type
+		updatedCP.Type = &contactPoint.Spec.Type //nolint:staticcheck
 		updatedCP.Settings = settings
-		updatedCP.DisableResolveMessage = contactPoint.Spec.DisableResolveMessage
+		updatedCP.DisableResolveMessage = contactPoint.Spec.DisableResolveMessage //nolint:staticcheck
 
 		_, err := cl.Provisioning.PutContactpoint(provisioning.NewPutContactpointParams().WithUID(applied.UID).WithBody(&updatedCP)) //nolint:errcheck
 		if err != nil {
@@ -194,7 +194,7 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 func (r *GrafanaContactPointReconciler) buildContactPointSettings(ctx context.Context, contactPoint *grafanav1beta1.GrafanaContactPoint) (models.JSON, error) {
 	log := logf.FromContext(ctx)
 
-	marshaled, err := json.Marshal(contactPoint.Spec.Settings)
+	marshaled, err := json.Marshal(contactPoint.Spec.Settings) //nolint:staticcheck
 	if err != nil {
 		return nil, fmt.Errorf("encoding existing settings as json: %w", err)
 	}
@@ -204,7 +204,7 @@ func (r *GrafanaContactPointReconciler) buildContactPointSettings(ctx context.Co
 		return nil, fmt.Errorf("parsing marshaled json as simplejson")
 	}
 
-	for _, override := range contactPoint.Spec.ValuesFrom {
+	for _, override := range contactPoint.Spec.ValuesFrom { //nolint:staticcheck
 		val, _, err := getReferencedValue(ctx, r.Client, contactPoint, override.ValueFrom)
 		if err != nil {
 			return nil, fmt.Errorf("getting referenced value: %w", err)
@@ -308,7 +308,7 @@ func (r *GrafanaContactPointReconciler) indexSecretSource() func(o client.Object
 
 		var secretRefs []string
 
-		for _, valueFrom := range contactPoint.Spec.ValuesFrom {
+		for _, valueFrom := range contactPoint.Spec.ValuesFrom { //nolint:staticcheck
 			if valueFrom.ValueFrom.SecretKeyRef != nil {
 				secretRefs = append(secretRefs, fmt.Sprintf("%s/%s", contactPoint.Namespace, valueFrom.ValueFrom.SecretKeyRef.Name))
 			}
@@ -327,7 +327,7 @@ func (r *GrafanaContactPointReconciler) indexConfigMapSource() func(o client.Obj
 
 		var configMapRefs []string
 
-		for _, valueFrom := range contactPoint.Spec.ValuesFrom {
+		for _, valueFrom := range contactPoint.Spec.ValuesFrom { //nolint:staticcheck
 			if valueFrom.ValueFrom.ConfigMapKeyRef != nil {
 				configMapRefs = append(configMapRefs, fmt.Sprintf("%s/%s", contactPoint.Namespace, valueFrom.ValueFrom.ConfigMapKeyRef.Name))
 			}
