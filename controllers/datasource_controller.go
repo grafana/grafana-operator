@@ -449,7 +449,7 @@ func (r *GrafanaDatasourceReconciler) buildDatasourceModel(ctx context.Context, 
 	}
 
 	for _, override := range cr.Spec.ValuesFrom {
-		val, key, err := getReferencedValue(ctx, r.Client, cr, override.ValueFrom)
+		val, key, err := getReferencedValue(ctx, r.Client, cr.Namespace, override.ValueFrom)
 		if err != nil {
 			return nil, "", fmt.Errorf("getting referenced value: %w", err)
 		}

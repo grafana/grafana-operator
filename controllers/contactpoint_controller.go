@@ -140,7 +140,7 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 	applyErrors := make(map[string]string)
 
 	for _, grafana := range instances {
-		err := r.reconcileWithInstance(ctx, &grafana, contactPoint, &settings)
+		err := r.reconcileWithInstance(ctx, &grafana, contactPoint, settings)
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
@@ -156,7 +156,9 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(contactPoint.Spec.ResyncPeriod)}, nil
 }
 
-func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Context, instance *grafanav1beta1.Grafana, contactPoint *grafanav1beta1.GrafanaContactPoint, settings *models.JSON) error {
+func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Context, instance *grafanav1beta1.Grafana, contactPoint *grafanav1beta1.GrafanaContactPoint, allSettings []models.JSON) error {
+	settings := allSettings[0]
+
 	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
@@ -226,31 +228,36 @@ func (r *GrafanaContactPointReconciler) mergeTopLevelIntoReceivers(cr *grafanav1
 	return nil
 }
 
-func (r *GrafanaContactPointReconciler) buildContactPointSettings(ctx context.Context, contactPoint *grafanav1beta1.GrafanaContactPoint) (models.JSON, error) {
+func (r *GrafanaContactPointReconciler) buildContactPointSettings(ctx context.Context, cr *grafanav1beta1.GrafanaContactPoint) ([]models.JSON, error) {
 	log := logf.FromContext(ctx)
 
-	marshaled, err := json.Marshal(contactPoint.Spec.Settings) //nolint:staticcheck
-	if err != nil {
-		return nil, fmt.Errorf("encoding existing settings as json: %w", err)
-	}
-
-	simpleContent, err := simplejson.NewJson(marshaled)
-	if err != nil {
-		return nil, fmt.Errorf("parsing marshaled json as simplejson")
-	}
-
-	for _, override := range contactPoint.Spec.ValuesFrom { //nolint:staticcheck
-		val, _, err := getReferencedValue(ctx, r.Client, contactPoint, override.ValueFrom)
+	allSettings := make([]models.JSON, 0, len(cr.Spec.Receivers))
+	for _, rec := range cr.Spec.Receivers {
+		marshaled, err := json.Marshal(rec.Settings) //nolint:staticcheck
 		if err != nil {
-			return nil, fmt.Errorf("getting referenced value: %w", err)
+			return nil, fmt.Errorf("encoding existing settings as json: %w", err)
 		}
 
-		log.V(1).Info("overriding value", "key", override.TargetPath, "value", val)
+		simpleContent, err := simplejson.NewJson(marshaled)
+		if err != nil {
+			return nil, fmt.Errorf("parsing marshaled json as simplejson")
+		}
 
-		simpleContent.SetPath(strings.Split(override.TargetPath, "."), val)
+		for _, override := range rec.ValuesFrom { //nolint:staticcheck
+			val, _, err := getReferencedValue(ctx, r.Client, cr.Namespace, override.ValueFrom)
+			if err != nil {
+				return nil, fmt.Errorf("getting referenced value: %w", err)
+			}
+
+			log.V(1).Info("overriding value", "key", override.TargetPath, "value", val)
+
+			simpleContent.SetPath(strings.Split(override.TargetPath, "."), val)
+		}
+
+		allSettings = append(allSettings, simpleContent.Interface())
 	}
 
-	return simpleContent.Interface(), nil
+	return allSettings, nil
 }
 
 func (r *GrafanaContactPointReconciler) getContactPointFromUID(cl *genapi.GrafanaHTTPAPI, contactPoint *grafanav1beta1.GrafanaContactPoint) (models.EmbeddedContactPoint, error) {

@@ -408,13 +408,11 @@ func buildSynchronizedCondition(resource string, syncType string, generation int
 	return condition
 }
 
-func getReferencedValue(ctx context.Context, cl client.Client, cr metav1.ObjectMetaAccessor, source v1beta1.ValueFromSource) (string, string, error) {
-	objMeta := cr.GetObjectMeta()
-
+func getReferencedValue(ctx context.Context, cl client.Client, namespace string, source v1beta1.ValueFromSource) (string, string, error) {
 	if source.SecretKeyRef != nil {
 		s := &corev1.Secret{}
 
-		err := cl.Get(ctx, client.ObjectKey{Namespace: objMeta.GetNamespace(), Name: source.SecretKeyRef.Name}, s)
+		err := cl.Get(ctx, client.ObjectKey{Namespace: namespace, Name: source.SecretKeyRef.Name}, s)
 		if err != nil {
 			return "", "", err
 		}
@@ -427,7 +425,7 @@ func getReferencedValue(ctx context.Context, cl client.Client, cr metav1.ObjectM
 	} else {
 		s := &corev1.ConfigMap{}
 
-		err := cl.Get(ctx, client.ObjectKey{Namespace: objMeta.GetNamespace(), Name: source.ConfigMapKeyRef.Name}, s)
+		err := cl.Get(ctx, client.ObjectKey{Namespace: namespace, Name: source.ConfigMapKeyRef.Name}, s)
 		if err != nil {
 			return "", "", err
 		}
