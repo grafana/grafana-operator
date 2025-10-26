@@ -33,6 +33,9 @@ spec:
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- if semverCompare ">=1.33-0" .Capabilities.KubeVersion.Version }}
+      hostUsers: {{ .Values.hostUsers }}
+      {{- end}}
       containers:
         - name: {{ .Chart.Name }}
           {{- with .Values.securityContext }}

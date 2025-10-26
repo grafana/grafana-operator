@@ -91,6 +91,7 @@ It's easier to just manage this configuration outside of the operator.
 | extraVolumeMounts | list | `[]` | extra container volume mounts |
 | extraVolumes | list | `[]` | extra pod volumes |
 | fullnameOverride | string | `""` | Overrides the fully qualified app name. |
+| hostUsers | bool | `true` | Set to false to opt-in to use user namespaces |
 | image.pullPolicy | string | `"IfNotPresent"` | The image pull policy to use in grafana operator container |
 | image.repository | string | `"ghcr.io/grafana/grafana-operator"` | grafana operator image repository |
 | image.tag | string | `""` | Overrides the image tag whose default is the chart appVersion. |
