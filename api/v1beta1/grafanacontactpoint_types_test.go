@@ -78,6 +78,36 @@ var _ = Describe("ContactPoint type", func() {
 		})
 	})
 
+	Context("Ensure ContactPoint spec.editable is immutable", func() {
+		t := GinkgoT()
+
+		It("Should block enabling editable", func() {
+			contactpoint := newContactPoint("updating-editable")
+			contactpoint.Spec.Type = "webhook" // nolint:goconst
+			contactpoint.Spec.Editable = false
+
+			err := k8sClient.Create(t.Context(), contactpoint)
+			require.NoError(t, err)
+
+			contactpoint.Spec.Editable = true
+			err = k8sClient.Update(t.Context(), contactpoint)
+			require.Error(t, err)
+		})
+
+		It("Should block disabling editable", func() {
+			contactpoint := newContactPoint("removing-editable")
+			contactpoint.Spec.Type = "webhook"
+			contactpoint.Spec.Editable = true
+
+			err := k8sClient.Create(t.Context(), contactpoint)
+			require.NoError(t, err)
+
+			contactpoint.Spec.Editable = false
+			err = k8sClient.Update(t.Context(), contactpoint)
+			require.Error(t, err)
+		})
+	})
+
 	Context("Ensure ContactPoint receivers is correctly handled", func() {
 		settings := apiextensionsv1.JSON{Raw: []byte("{}")}
 
