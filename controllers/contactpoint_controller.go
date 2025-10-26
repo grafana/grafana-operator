@@ -268,7 +268,7 @@ func (r *GrafanaContactPointReconciler) buildContactPointSettings(ctx context.Co
 
 	allSettings := make([]models.JSON, 0, len(cr.Spec.Receivers))
 	for _, rec := range cr.Spec.Receivers {
-		marshaled, err := json.Marshal(rec.Settings) //nolint:staticcheck
+		marshaled, err := json.Marshal(rec.Settings)
 		if err != nil {
 			return nil, fmt.Errorf("encoding existing settings as json: %w", err)
 		}
@@ -278,7 +278,7 @@ func (r *GrafanaContactPointReconciler) buildContactPointSettings(ctx context.Co
 			return nil, fmt.Errorf("parsing marshaled json as simplejson")
 		}
 
-		for _, override := range rec.ValuesFrom { //nolint:staticcheck
+		for _, override := range rec.ValuesFrom {
 			val, _, err := getReferencedValue(ctx, r.Client, cr.Namespace, override.ValueFrom)
 			if err != nil {
 				return nil, fmt.Errorf("getting referenced value: %w", err)
@@ -385,11 +385,17 @@ func (r *GrafanaContactPointReconciler) indexSecretSource() func(o client.Object
 			panic(fmt.Sprintf("Expected a GrafanaContactPoint, got %T", o))
 		}
 
+		if len(cr.Spec.ValuesFrom) > 0 { //nolint:staticcheck
+			cr.Spec.Receivers = append(cr.Spec.Receivers, grafanav1beta1.ContactPointReceiver{ValuesFrom: cr.Spec.ValuesFrom}) //nolint:staticcheck
+		}
+
 		var secretRefs []string
 
-		for _, valueFrom := range cr.Spec.ValuesFrom { //nolint:staticcheck
-			if valueFrom.ValueFrom.SecretKeyRef != nil {
-				secretRefs = append(secretRefs, fmt.Sprintf("%s/%s", cr.Namespace, valueFrom.ValueFrom.SecretKeyRef.Name))
+		for _, rec := range cr.Spec.Receivers {
+			for _, valueFrom := range rec.ValuesFrom { //nolint:staticcheck
+				if valueFrom.ValueFrom.SecretKeyRef != nil {
+					secretRefs = append(secretRefs, fmt.Sprintf("%s/%s", cr.Namespace, valueFrom.ValueFrom.SecretKeyRef.Name))
+				}
 			}
 		}
 
@@ -404,11 +410,17 @@ func (r *GrafanaContactPointReconciler) indexConfigMapSource() func(o client.Obj
 			panic(fmt.Sprintf("Expected a GrafanaContactPoint, got %T", o))
 		}
 
+		if len(cr.Spec.ValuesFrom) > 0 { //nolint:staticcheck
+			cr.Spec.Receivers = append(cr.Spec.Receivers, grafanav1beta1.ContactPointReceiver{ValuesFrom: cr.Spec.ValuesFrom}) //nolint:staticcheck
+		}
+
 		var configMapRefs []string
 
-		for _, valueFrom := range cr.Spec.ValuesFrom { //nolint:staticcheck
-			if valueFrom.ValueFrom.ConfigMapKeyRef != nil {
-				configMapRefs = append(configMapRefs, fmt.Sprintf("%s/%s", cr.Namespace, valueFrom.ValueFrom.ConfigMapKeyRef.Name))
+		for _, rec := range cr.Spec.Receivers {
+			for _, valueFrom := range rec.ValuesFrom { //nolint:staticcheck
+				if valueFrom.ValueFrom.ConfigMapKeyRef != nil {
+					configMapRefs = append(configMapRefs, fmt.Sprintf("%s/%s", cr.Namespace, valueFrom.ValueFrom.ConfigMapKeyRef.Name))
+				}
 			}
 		}
 
