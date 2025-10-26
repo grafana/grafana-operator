@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"slices"
 	"strings"
 
@@ -184,7 +185,7 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 		return err
 	}
 
-	log.V(1).Info("receivers found", "count", len(remoteReceivers))
+	log.V(1).Info("contact point receivers found", "count", len(remoteReceivers))
 
 	for i, rec := range cr.Spec.Receivers {
 		recUID := rec.CustomUIDOrUID(cr.UID, i)
@@ -206,18 +207,25 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 
 		if existingIdx == -1 {
 			cp.UID = recUID
-			log.V(1).Info("creating missing contact point receiver", "uid", recUID)
+			log.Info("create missing contact point receiver", "uid", recUID)
 
 			_, err := cl.Provisioning.PostContactpoints(provisioning.NewPostContactpointsParams().WithBody(cp)) //nolint:errcheck
 			if err != nil {
 				return fmt.Errorf("creating contact point receiver: %w", err)
 			}
 		} else {
-			log.V(1).Info("updating existing contact point receiver", "uid", recUID)
+			// Equality check to skip requests
+			remote := remoteReceivers[existingIdx]
+			if cp.Name != remote.Name ||
+				*cp.Type != *remote.Type ||
+				cp.DisableResolveMessage != remote.DisableResolveMessage ||
+				!reflect.DeepEqual(cp.Settings, remote.Settings) {
+				log.Info("update existing contact point receiver", "uid", recUID)
 
-			_, err := cl.Provisioning.PutContactpoint(provisioning.NewPutContactpointParams().WithUID(recUID).WithBody(cp)) //nolint:errcheck
-			if err != nil {
-				return fmt.Errorf("updating contact point receiver: %w", err)
+				_, err := cl.Provisioning.PutContactpoint(provisioning.NewPutContactpointParams().WithUID(recUID).WithBody(cp)) //nolint:errcheck
+				if err != nil {
+					return fmt.Errorf("updating contact point receiver: %w", err)
+				}
 			}
 
 			// Track Receivers to delete at the end
