@@ -125,6 +125,22 @@ var _ = Describe("ContactPoint Reconciler: Provoke Conditions", func() {
 			wantErr: ErrInvalidTopLevelReceiver.Error(),
 		},
 		{
+			name: "No receivers defined",
+			meta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "missing-receiver-configs",
+			},
+			spec: v1beta1.GrafanaContactPointSpec{
+				GrafanaCommonSpec: commonSpecInvalidSpec,
+				Name:              "ContactPointName",
+			},
+			want: metav1.Condition{
+				Type:   conditionInvalidSpec,
+				Reason: conditionReasonInvalidContactPoint,
+			},
+			wantErr: ErrMissingContactPointReceiver.Error(),
+		},
+		{
 			name: "Successfully applied resource to instance",
 			meta: objectMetaSynchronized,
 			spec: v1beta1.GrafanaContactPointSpec{

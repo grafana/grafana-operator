@@ -45,12 +45,16 @@ import (
 )
 
 const (
-	conditionContactPointSynchronized = "ContactPointSynchronized"
-	conditionReasonInvalidSettings    = "InvalidSettings"
-	conditionReasonTopLevelReceiver   = "InvalidTopLevelReceiver"
+	conditionContactPointSynchronized  = "ContactPointSynchronized"
+	conditionReasonInvalidSettings     = "InvalidSettings"
+	conditionReasonInvalidContactPoint = "InvalidContactPoint"
+	conditionReasonTopLevelReceiver    = "InvalidTopLevelReceiver"
 )
 
-var ErrInvalidTopLevelReceiver = fmt.Errorf(".spec.type and .spec.settings are mutually inclusive and deprecated, consider moving receiver configuration under .spec.receivers")
+var (
+	ErrInvalidTopLevelReceiver     = fmt.Errorf(".spec.type and .spec.settings are mutually inclusive and deprecated, consider moving receiver configuration under .spec.receivers")
+	ErrMissingContactPointReceiver = fmt.Errorf("at least one receiver is needed to create a contact point")
+)
 
 // GrafanaContactPointReconciler reconciles a GrafanaContactPoint object
 type GrafanaContactPointReconciler struct {
@@ -120,6 +124,7 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 	removeNoMatchingInstance(&contactPoint.Status.Conditions)
 	log.Info("found matching Grafana instances for Contact point", "count", len(instances))
 
+	// Top level is valid
 	err = r.mergeTopLevelIntoReceivers(contactPoint)
 	if err != nil {
 		setInvalidSpec(&contactPoint.Status.Conditions, contactPoint.Generation, conditionReasonTopLevelReceiver, err.Error())
@@ -128,6 +133,15 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, fmt.Errorf("validating contactpoint spec: %w", err)
 	}
 
+	// At least one Receiver defined
+	if len(contactPoint.Spec.Receivers) == 0 {
+		setInvalidSpec(&contactPoint.Status.Conditions, contactPoint.Generation, conditionReasonInvalidContactPoint, ErrMissingContactPointReceiver.Error())
+		meta.RemoveStatusCondition(&contactPoint.Status.Conditions, conditionContactPointSynchronized)
+
+		return ctrl.Result{}, fmt.Errorf("validating contactpoint spec: %w", ErrMissingContactPointReceiver)
+	}
+
+	// All valuesFrom entries resolve correctly
 	settings, err := r.buildContactPointSettings(ctx, contactPoint)
 	if err != nil {
 		setInvalidSpec(&contactPoint.Status.Conditions, contactPoint.Generation, conditionReasonInvalidSettings, err.Error())
