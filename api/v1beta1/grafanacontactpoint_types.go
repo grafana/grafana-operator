@@ -26,6 +26,7 @@ import (
 
 // GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
 // +kubebuilder:validation:XValidation:rule="((!has(oldSelf.name) && !has(self.name)) || (has(oldSelf.name) && has(self.name)))", message="spec.name is immutable"
+// +kubebuilder:validation:XValidation:rule="((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable) && has(self.editable)))", message="spec.editable is immutable"
 type GrafanaContactPointSpec struct {
 	GrafanaCommonSpec `json:",inline"`
 
@@ -40,6 +41,11 @@ type GrafanaContactPointSpec struct {
 	// +optional
 	// +kubebuilder:validation:MaxItems=99
 	Receivers []ContactPointReceiver `json:"receivers,omitempty"`
+
+	// Whether to enable or disable editing of the contact point in Grafana UI
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="spec.editable is immutable"
+	// +optional
+	Editable bool `json:"editable,omitempty"`
 
 	// Deprecated: define the receiver under .spec.receivers[]
 	// Manually specify the UID the Contact Point is created with. Can be any string consisting of alphanumeric characters, - and _ with a maximum length of 40

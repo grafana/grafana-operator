@@ -198,10 +198,17 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 		}
 
 		if existingIdx == -1 {
-			cp.UID = recUID
 			log.Info("create missing contact point receiver", "uid", recUID)
 
-			_, err := cl.Provisioning.PostContactpoints(provisioning.NewPostContactpointsParams().WithBody(cp)) //nolint:errcheck
+			cp.UID = recUID
+			params := provisioning.NewPostContactpointsParams().WithBody(cp)
+
+			if cr.Spec.Editable {
+				editable := "true"
+				params = params.WithXDisableProvenance(&editable)
+			}
+
+			_, err := cl.Provisioning.PostContactpoints(params) //nolint:errcheck
 			if err != nil {
 				return fmt.Errorf("creating contact point receiver: %w", err)
 			}
@@ -214,6 +221,7 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 				!reflect.DeepEqual(cp.Settings, remote.Settings) {
 				log.Info("update existing contact point receiver", "uid", recUID)
 
+				// TODO Implement provenance when Grafana API allows changing it
 				_, err := cl.Provisioning.PutContactpoint(provisioning.NewPutContactpointParams().WithUID(recUID).WithBody(cp)) //nolint:errcheck
 				if err != nil {
 					return fmt.Errorf("updating contact point receiver: %w", err)
