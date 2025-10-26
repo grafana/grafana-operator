@@ -118,6 +118,8 @@ metricsService:
   metricsPort: 9090
   # -- port for the pprof profiling endpoint
   pprofPort: 8888
+  # -- annotations on the metrics service
+  annotations: {}
 
 # -- additional labels to add to all resources
 additionalLabels: {}
