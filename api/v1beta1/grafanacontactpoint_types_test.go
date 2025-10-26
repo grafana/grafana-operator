@@ -36,6 +36,48 @@ func newContactPoint(name string) *GrafanaContactPoint {
 }
 
 var _ = Describe("ContactPoint type", func() {
+	Context("Ensure ContactPoint spec.name is immutable", func() {
+		t := GinkgoT()
+
+		It("Should block adding name field when missing", func() {
+			contactpoint := newContactPoint("adding-name")
+			contactpoint.Spec.Type = "webhook" // nolint:goconst
+
+			err := k8sClient.Create(t.Context(), contactpoint)
+			require.NoError(t, err)
+
+			contactpoint.Spec.Name = "update-name"
+			err = k8sClient.Update(t.Context(), contactpoint)
+			require.Error(t, err)
+		})
+
+		It("Should block removing name field when set", func() {
+			contactpoint := newContactPoint("removing-name")
+			contactpoint.Spec.Type = "webhook"
+			contactpoint.Spec.Name = "initial-name"
+
+			err := k8sClient.Create(t.Context(), contactpoint)
+			require.NoError(t, err)
+
+			contactpoint.Spec.Name = ""
+			err = k8sClient.Update(t.Context(), contactpoint)
+			require.Error(t, err)
+		})
+
+		It("Should block changing value of name", func() {
+			contactpoint := newContactPoint("updating-name")
+			contactpoint.Spec.Type = "webhook" // nolint:goconst
+			contactpoint.Spec.Name = "initial-name"
+
+			err := k8sClient.Create(t.Context(), contactpoint)
+			require.NoError(t, err)
+
+			contactpoint.Spec.Name = "new-name"
+			err = k8sClient.Update(t.Context(), contactpoint)
+			require.Error(t, err)
+		})
+	})
+
 	Context("Ensure ContactPoint receivers is correctly handled", func() {
 		settings := apiextensionsv1.JSON{Raw: []byte("{}")}
 

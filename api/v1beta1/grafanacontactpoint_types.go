@@ -25,6 +25,7 @@ import (
 )
 
 // GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
+// +kubebuilder:validation:XValidation:rule="((!has(oldSelf.name) && !has(self.name)) || (has(oldSelf.name) && has(self.name)))", message="spec.name is immutable"
 type GrafanaContactPointSpec struct {
 	GrafanaCommonSpec `json:",inline"`
 
@@ -32,6 +33,7 @@ type GrafanaContactPointSpec struct {
 	// Defaults to the name of the CR
 	// +optional
 	// +kubebuilder:validation:type=string
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="spec.name is immutable"
 	Name string `json:"name,omitempty"`
 
 	// List of receivers that Grafana will fan out notifications to
