@@ -149,6 +149,18 @@ resources: {}
 # -- pod priority class name
 priorityClassName: ""
 
+# -- pod livenessProbe
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 8081
+
+# -- pod livenessProbe
+readinessProbe:
+  httpGet:
+    path: /readyz
+    port: 8081
+
 # -- pod node selector
 nodeSelector: {}
 
@@ -157,6 +169,12 @@ tolerations: []
 
 # -- pod affinity
 affinity: {}
+
+# -- extra pod volumes
+extraVolumes: []
+
+# -- extra container volume mounts
+extraVolumeMounts: []
 
 serviceMonitor:
   # -- Whether to create a ServiceMonitor
