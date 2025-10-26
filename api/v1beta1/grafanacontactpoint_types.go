@@ -167,7 +167,7 @@ func (in *GrafanaContactPoint) CommonStatus() *GrafanaCommonStatus {
 }
 
 func (in *GrafanaContactPoint) NamespacedResource() NamespacedResource {
-	return NewNamespacedResource(in.Namespace, in.Name, in.Spec.Name)
+	return NewNamespacedResource(in.Namespace, in.Name, in.NameFromSpecOrMeta())
 }
 
 func init() {
