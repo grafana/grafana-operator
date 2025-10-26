@@ -3,7 +3,7 @@ Copyright 2022.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+You may obtain a copy of the Licens_ at
 
     http://www.apache.org/licenses/LICENSE-2.0
 
@@ -17,8 +17,11 @@ limitations under the License.
 package v1beta1
 
 import (
+	"fmt"
+
 	apiextensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 // GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
@@ -131,13 +134,14 @@ func (in *GrafanaContactPoint) NameFromSpecOrMeta() string {
 	return in.Name
 }
 
-// Wrapper around CustomUID or default metadata.uid
-func (in *GrafanaContactPoint) CustomUIDOrUID() string {
-	if in.Spec.CustomUID != "" {
-		return in.Spec.CustomUID
+// Wrapper around receivers[].CustomUID or metadata.uid/idx
+func (in *ContactPointReceiver) CustomUIDOrUID(metaUID types.UID, idx int) string {
+	if in.CustomUID != "" {
+		return in.CustomUID
 	}
 
-	return string(in.UID)
+	// UID/idx is stable and allows overriding
+	return fmt.Sprintf("%s_%d", string(metaUID), idx)
 }
 
 func (in *GrafanaContactPoint) MatchLabels() *metav1.LabelSelector {
@@ -161,7 +165,7 @@ func (in *GrafanaContactPoint) CommonStatus() *GrafanaCommonStatus {
 }
 
 func (in *GrafanaContactPoint) NamespacedResource() NamespacedResource {
-	return NewNamespacedResource(in.Namespace, in.Name, in.CustomUIDOrUID())
+	return NewNamespacedResource(in.Namespace, in.Name, in.Spec.Name)
 }
 
 func init() {

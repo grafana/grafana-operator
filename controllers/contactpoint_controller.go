@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
@@ -156,52 +157,72 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(contactPoint.Spec.ResyncPeriod)}, nil
 }
 
-func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Context, instance *grafanav1beta1.Grafana, contactPoint *grafanav1beta1.GrafanaContactPoint, allSettings []models.JSON) error {
-	settings := allSettings[0]
+func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Context, instance *grafanav1beta1.Grafana, cr *grafanav1beta1.GrafanaContactPoint, settings []models.JSON) error {
+	log := logf.FromContext(ctx)
 
 	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
 	}
 
-	var applied models.EmbeddedContactPoint
-
-	applied, err = r.getContactPointFromUID(cl, contactPoint)
+	remoteReceivers, err := r.getReceiversFromName(cl, cr)
 	if err != nil {
-		return fmt.Errorf("getting contact point by UID: %w", err)
+		return err
 	}
 
-	if applied.UID == "" {
-		// create
+	log.V(1).Info("receivers found", "count", len(remoteReceivers))
+
+	for i, rec := range cr.Spec.Receivers {
+		recUID := rec.CustomUIDOrUID(cr.UID, i)
+		existingIdx := -1
+
+		for cpIdx, cp := range remoteReceivers {
+			if cp.UID == recUID {
+				existingIdx = cpIdx
+				break
+			}
+		}
+
 		cp := &models.EmbeddedContactPoint{
-			DisableResolveMessage: contactPoint.Spec.DisableResolveMessage, //nolint:staticcheck
-			Name:                  contactPoint.NameFromSpecOrMeta(),
-			Type:                  &contactPoint.Spec.Type, //nolint:staticcheck
-			Settings:              settings,
-			UID:                   contactPoint.CustomUIDOrUID(),
+			DisableResolveMessage: rec.DisableResolveMessage,
+			Name:                  cr.NameFromSpecOrMeta(),
+			Type:                  &rec.Type,
+			Settings:              settings[i],
 		}
 
-		_, err := cl.Provisioning.PostContactpoints(provisioning.NewPostContactpointsParams().WithBody(cp)) //nolint:errcheck
-		if err != nil {
-			return fmt.Errorf("creating contact point: %w", err)
+		if existingIdx == -1 {
+			cp.UID = recUID
+			log.V(1).Info("creating missing contact point receiver", "uid", recUID)
+
+			_, err := cl.Provisioning.PostContactpoints(provisioning.NewPostContactpointsParams().WithBody(cp)) //nolint:errcheck
+			if err != nil {
+				return fmt.Errorf("creating contact point receiver: %w", err)
+			}
+		} else {
+			log.V(1).Info("updating existing contact point receiver", "uid", recUID)
+
+			_, err := cl.Provisioning.PutContactpoint(provisioning.NewPutContactpointParams().WithUID(recUID).WithBody(cp)) //nolint:errcheck
+			if err != nil {
+				return fmt.Errorf("updating contact point receiver: %w", err)
+			}
+
+			// Track Receivers to delete at the end
+			remoteReceivers = slices.Delete(remoteReceivers, existingIdx, existingIdx+1)
 		}
-	} else {
-		// update
-		var updatedCP models.EmbeddedContactPoint
+	}
 
-		updatedCP.Name = contactPoint.NameFromSpecOrMeta()
-		updatedCP.Type = &contactPoint.Spec.Type //nolint:staticcheck
-		updatedCP.Settings = settings
-		updatedCP.DisableResolveMessage = contactPoint.Spec.DisableResolveMessage //nolint:staticcheck
+	// Delete receivers not present in ContactPoint spec
+	for _, rec := range remoteReceivers {
+		log.V(1).Info("deleting contact point receiver not in spec", "uid", rec.UID)
 
-		_, err := cl.Provisioning.PutContactpoint(provisioning.NewPutContactpointParams().WithUID(applied.UID).WithBody(&updatedCP)) //nolint:errcheck
+		_, err = cl.Provisioning.DeleteContactpoints(rec.UID) //nolint:errcheck
 		if err != nil {
-			return fmt.Errorf("updating contact point: %w", err)
+			return fmt.Errorf("deleting contact point: %w", err)
 		}
 	}
 
 	// Update grafana instance Status
-	return instance.AddNamespacedResource(ctx, r.Client, contactPoint, contactPoint.NamespacedResource())
+	return instance.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource())
 }
 
 func (r *GrafanaContactPointReconciler) mergeTopLevelIntoReceivers(cr *grafanav1beta1.GrafanaContactPoint) error {
@@ -214,16 +235,16 @@ func (r *GrafanaContactPointReconciler) mergeTopLevelIntoReceivers(cr *grafanav1
 		if cr.Spec.Type == "" { //nolint:staticcheck
 			return ErrInvalidTopLevelReceiver
 		}
-	}
 
-	topLevelReceiver := &grafanav1beta1.ContactPointReceiver{
-		CustomUID:             cr.Spec.CustomUID,             //nolint:staticcheck
-		Type:                  cr.Spec.Type,                  //nolint:staticcheck
-		DisableResolveMessage: cr.Spec.DisableResolveMessage, //nolint:staticcheck
-		Settings:              cr.Spec.Settings,              //nolint:staticcheck
-		ValuesFrom:            cr.Spec.ValuesFrom,            //nolint:staticcheck
+		topLevelReceiver := &grafanav1beta1.ContactPointReceiver{
+			CustomUID:             cr.Spec.CustomUID,             //nolint:staticcheck
+			Type:                  cr.Spec.Type,                  //nolint:staticcheck
+			DisableResolveMessage: cr.Spec.DisableResolveMessage, //nolint:staticcheck
+			Settings:              cr.Spec.Settings,              //nolint:staticcheck
+			ValuesFrom:            cr.Spec.ValuesFrom,            //nolint:staticcheck
+		}
+		cr.Spec.Receivers = append(cr.Spec.Receivers, *topLevelReceiver)
 	}
-	cr.Spec.Receivers = append(cr.Spec.Receivers, *topLevelReceiver)
 
 	return nil
 }
@@ -260,28 +281,23 @@ func (r *GrafanaContactPointReconciler) buildContactPointSettings(ctx context.Co
 	return allSettings, nil
 }
 
-func (r *GrafanaContactPointReconciler) getContactPointFromUID(cl *genapi.GrafanaHTTPAPI, contactPoint *grafanav1beta1.GrafanaContactPoint) (models.EmbeddedContactPoint, error) {
-	params := provisioning.NewGetContactpointsParams()
+func (r *GrafanaContactPointReconciler) getReceiversFromName(cl *genapi.GrafanaHTTPAPI, cr *grafanav1beta1.GrafanaContactPoint) ([]*models.EmbeddedContactPoint, error) {
+	name := cr.NameFromSpecOrMeta()
+	params := provisioning.NewGetContactpointsParams().WithName(&name)
 
 	remote, err := cl.Provisioning.GetContactpoints(params)
 	if err != nil {
-		return models.EmbeddedContactPoint{}, fmt.Errorf("getting contact points: %w", err)
+		return make([]*models.EmbeddedContactPoint, 0), fmt.Errorf("getting receivers in contactpoint by name: %w", err)
 	}
 
-	for _, cp := range remote.Payload {
-		if cp.UID == contactPoint.CustomUIDOrUID() {
-			return *cp, nil
-		}
-	}
-
-	return models.EmbeddedContactPoint{}, nil
+	return remote.Payload, nil
 }
 
-func (r *GrafanaContactPointReconciler) finalize(ctx context.Context, contactPoint *grafanav1beta1.GrafanaContactPoint) error {
+func (r *GrafanaContactPointReconciler) finalize(ctx context.Context, cr *grafanav1beta1.GrafanaContactPoint) error {
 	log := logf.FromContext(ctx)
 	log.Info("Finalizing GrafanaContactPoint")
 
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, contactPoint)
+	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
@@ -292,13 +308,20 @@ func (r *GrafanaContactPointReconciler) finalize(ctx context.Context, contactPoi
 			return fmt.Errorf("building grafana client: %w", err)
 		}
 
-		_, err = cl.Provisioning.DeleteContactpoints(contactPoint.CustomUIDOrUID()) //nolint:errcheck
+		remoteReceivers, err := r.getReceiversFromName(cl, cr)
 		if err != nil {
-			return fmt.Errorf("deleting contact point: %w", err)
+			return err
+		}
+
+		for _, rec := range remoteReceivers {
+			_, err = cl.Provisioning.DeleteContactpoints(rec.UID) //nolint:errcheck
+			if err != nil {
+				return fmt.Errorf("deleting contact point: %w", err)
+			}
 		}
 
 		// Update grafana instance Status
-		err = instance.RemoveNamespacedResource(ctx, r.Client, contactPoint)
+		err = instance.RemoveNamespacedResource(ctx, r.Client, cr)
 		if err != nil {
 			return fmt.Errorf("removing contact point from Grafana cr: %w", err)
 		}
