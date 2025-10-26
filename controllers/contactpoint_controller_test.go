@@ -138,6 +138,31 @@ var _ = Describe("ContactPoint Reconciler: Provoke Conditions", func() {
 				Reason: conditionReasonApplySuccessful,
 			},
 		},
+		{
+			name: "Successfully applied multiple receiver contactpoint to instance",
+			meta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "synchronized-multiple-receivers",
+			},
+			spec: v1beta1.GrafanaContactPointSpec{
+				GrafanaCommonSpec: commonSpecSynchronized,
+				Name:              "ContactPointName",
+				Receivers: []v1beta1.ContactPointReceiver{
+					{
+						Settings: &v1.JSON{Raw: []byte(`{"url": "http://test.io"}`)},
+						Type:     "webhook",
+					},
+					{
+						Settings: &v1.JSON{Raw: []byte(`{"url": "http://test.io"}`)},
+						Type:     "webhook",
+					},
+				},
+			},
+			want: metav1.Condition{
+				Type:   conditionContactPointSynchronized,
+				Reason: conditionReasonApplySuccessful,
+			},
+		},
 	}
 
 	for _, tt := range tests {
