@@ -752,7 +752,7 @@ GrafanaContactPoint is the Schema for the grafanacontactpoints API
         <td>
           GrafanaContactPointSpec defines the desired state of GrafanaContactPoint<br/>
           <br/>
-            <i>Validations</i>:<li>((!has(oldSelf.name) && !has(self.name)) || (has(oldSelf.name) && has(self.name))): spec.name is immutable</li><li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
+            <i>Validations</i>:<li>((!has(oldSelf.name) && !has(self.name)) || (has(oldSelf.name) && has(self.name))): spec.name is immutable</li><li>((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable) && has(self.editable))): spec.editable is immutable</li><li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
         </td>
         <td>true</td>
       </tr><tr>
@@ -806,6 +806,15 @@ GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
         <td>
           Deprecated: define the receiver under .spec.receivers[]
 Will be removed in a later version<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>editable</b></td>
+        <td>boolean</td>
+        <td>
+          Whether to enable or disable editing of the contact point in Grafana UI<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: spec.editable is immutable</li>
         </td>
         <td>false</td>
       </tr><tr>

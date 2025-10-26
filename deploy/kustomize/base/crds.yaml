@@ -433,6 +433,13 @@ spec:
                   Deprecated: define the receiver under .spec.receivers[]
                   Will be removed in a later version
                 type: boolean
+              editable:
+                description: Whether to enable or disable editing of the contact point
+                  in Grafana UI
+                type: boolean
+                x-kubernetes-validations:
+                - message: spec.editable is immutable
+                  rule: self == oldSelf
               instanceSelector:
                 description: Selects Grafana instances for import
                 properties:
@@ -688,6 +695,9 @@ spec:
             - message: spec.name is immutable
               rule: ((!has(oldSelf.name) && !has(self.name)) || (has(oldSelf.name)
                 && has(self.name)))
+            - message: spec.editable is immutable
+              rule: ((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable)
+                && has(self.editable)))
             - message: disabling spec.allowCrossNamespaceImport requires a recreate
                 to ensure desired state
               rule: '!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport
