@@ -71,9 +71,9 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 	log := logf.FromContext(ctx).WithName("GrafanaContactPointReconciler")
 	ctx = logf.IntoContext(ctx, log)
 
-	contactPoint := &grafanav1beta1.GrafanaContactPoint{}
+	cr := &grafanav1beta1.GrafanaContactPoint{}
 
-	err := r.Get(ctx, req.NamespacedName, contactPoint)
+	err := r.Get(ctx, req.NamespacedName, cr)
 	if err != nil {
 		if kuberr.IsNotFound(err) {
 			return ctrl.Result{}, nil
@@ -82,14 +82,14 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, fmt.Errorf("error getting grafana Contact point cr: %w", err)
 	}
 
-	if contactPoint.GetDeletionTimestamp() != nil {
+	if cr.GetDeletionTimestamp() != nil {
 		// Check if resource needs clean up
-		if controllerutil.ContainsFinalizer(contactPoint, grafanaFinalizer) {
-			if err := r.finalize(ctx, contactPoint); err != nil {
+		if controllerutil.ContainsFinalizer(cr, grafanaFinalizer) {
+			if err := r.finalize(ctx, cr); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaContactPoint: %w", err)
 			}
 
-			if err := removeFinalizer(ctx, r.Client, contactPoint); err != nil {
+			if err := removeFinalizer(ctx, r.Client, cr); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
 			}
 		}
@@ -97,78 +97,78 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	defer UpdateStatus(ctx, r.Client, contactPoint)
+	defer UpdateStatus(ctx, r.Client, cr)
 
-	if contactPoint.Spec.Suspend {
-		setSuspended(&contactPoint.Status.Conditions, contactPoint.Generation, conditionReasonApplySuspended)
+	if cr.Spec.Suspend {
+		setSuspended(&cr.Status.Conditions, cr.Generation, conditionReasonApplySuspended)
 		return ctrl.Result{}, nil
 	}
 
-	removeSuspended(&contactPoint.Status.Conditions)
+	removeSuspended(&cr.Status.Conditions)
 
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, contactPoint)
+	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
-		setNoMatchingInstancesCondition(&contactPoint.Status.Conditions, contactPoint.Generation, err)
-		meta.RemoveStatusCondition(&contactPoint.Status.Conditions, conditionContactPointSynchronized)
+		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionContactPointSynchronized)
 
 		return ctrl.Result{}, fmt.Errorf("failed fetching instances: %w", err)
 	}
 
 	if len(instances) == 0 {
-		setNoMatchingInstancesCondition(&contactPoint.Status.Conditions, contactPoint.Generation, err)
-		meta.RemoveStatusCondition(&contactPoint.Status.Conditions, conditionContactPointSynchronized)
+		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionContactPointSynchronized)
 
 		return ctrl.Result{}, ErrNoMatchingInstances
 	}
 
-	removeNoMatchingInstance(&contactPoint.Status.Conditions)
+	removeNoMatchingInstance(&cr.Status.Conditions)
 	log.Info("found matching Grafana instances for Contact point", "count", len(instances))
 
 	// Top level is valid
-	err = r.mergeTopLevelIntoReceivers(contactPoint)
+	err = r.mergeTopLevelIntoReceivers(cr)
 	if err != nil {
-		setInvalidSpec(&contactPoint.Status.Conditions, contactPoint.Generation, conditionReasonTopLevelReceiver, err.Error())
-		meta.RemoveStatusCondition(&contactPoint.Status.Conditions, conditionContactPointSynchronized)
+		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonTopLevelReceiver, err.Error())
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionContactPointSynchronized)
 
 		return ctrl.Result{}, fmt.Errorf("validating contactpoint spec: %w", err)
 	}
 
 	// At least one Receiver defined
-	if len(contactPoint.Spec.Receivers) == 0 {
-		setInvalidSpec(&contactPoint.Status.Conditions, contactPoint.Generation, conditionReasonInvalidContactPoint, ErrMissingContactPointReceiver.Error())
-		meta.RemoveStatusCondition(&contactPoint.Status.Conditions, conditionContactPointSynchronized)
+	if len(cr.Spec.Receivers) == 0 {
+		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidContactPoint, ErrMissingContactPointReceiver.Error())
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionContactPointSynchronized)
 
 		return ctrl.Result{}, fmt.Errorf("validating contactpoint spec: %w", ErrMissingContactPointReceiver)
 	}
 
 	// All valuesFrom entries resolve correctly
-	settings, err := r.buildContactPointSettings(ctx, contactPoint)
+	settings, err := r.buildContactPointSettings(ctx, cr)
 	if err != nil {
-		setInvalidSpec(&contactPoint.Status.Conditions, contactPoint.Generation, conditionReasonInvalidSettings, err.Error())
-		meta.RemoveStatusCondition(&contactPoint.Status.Conditions, conditionContactPointSynchronized)
+		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidSettings, err.Error())
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionContactPointSynchronized)
 
 		return ctrl.Result{}, fmt.Errorf("building contactpoint settings: %w", err)
 	}
 
-	removeInvalidSpec(&contactPoint.Status.Conditions)
+	removeInvalidSpec(&cr.Status.Conditions)
 
 	applyErrors := make(map[string]string)
 
 	for _, grafana := range instances {
-		err := r.reconcileWithInstance(ctx, &grafana, contactPoint, settings)
+		err := r.reconcileWithInstance(ctx, &grafana, cr, settings)
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
 	}
 
-	condition := buildSynchronizedCondition("Contact point", conditionContactPointSynchronized, contactPoint.Generation, applyErrors, len(instances))
-	meta.SetStatusCondition(&contactPoint.Status.Conditions, condition)
+	condition := buildSynchronizedCondition("Contact point", conditionContactPointSynchronized, cr.Generation, applyErrors, len(instances))
+	meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
 	if len(applyErrors) > 0 {
 		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
 	}
 
-	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(contactPoint.Spec.ResyncPeriod)}, nil
+	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(cr.Spec.ResyncPeriod)}, nil
 }
 
 func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Context, instance *grafanav1beta1.Grafana, cr *grafanav1beta1.GrafanaContactPoint, settings []models.JSON) error {
@@ -380,16 +380,16 @@ func (r *GrafanaContactPointReconciler) SetupWithManager(ctx context.Context, mg
 
 func (r *GrafanaContactPointReconciler) indexSecretSource() func(o client.Object) []string {
 	return func(o client.Object) []string {
-		contactPoint, ok := o.(*grafanav1beta1.GrafanaContactPoint)
+		cr, ok := o.(*grafanav1beta1.GrafanaContactPoint)
 		if !ok {
 			panic(fmt.Sprintf("Expected a GrafanaContactPoint, got %T", o))
 		}
 
 		var secretRefs []string
 
-		for _, valueFrom := range contactPoint.Spec.ValuesFrom { //nolint:staticcheck
+		for _, valueFrom := range cr.Spec.ValuesFrom { //nolint:staticcheck
 			if valueFrom.ValueFrom.SecretKeyRef != nil {
-				secretRefs = append(secretRefs, fmt.Sprintf("%s/%s", contactPoint.Namespace, valueFrom.ValueFrom.SecretKeyRef.Name))
+				secretRefs = append(secretRefs, fmt.Sprintf("%s/%s", cr.Namespace, valueFrom.ValueFrom.SecretKeyRef.Name))
 			}
 		}
 
@@ -399,16 +399,16 @@ func (r *GrafanaContactPointReconciler) indexSecretSource() func(o client.Object
 
 func (r *GrafanaContactPointReconciler) indexConfigMapSource() func(o client.Object) []string {
 	return func(o client.Object) []string {
-		contactPoint, ok := o.(*grafanav1beta1.GrafanaContactPoint)
+		cr, ok := o.(*grafanav1beta1.GrafanaContactPoint)
 		if !ok {
 			panic(fmt.Sprintf("Expected a GrafanaContactPoint, got %T", o))
 		}
 
 		var configMapRefs []string
 
-		for _, valueFrom := range contactPoint.Spec.ValuesFrom { //nolint:staticcheck
+		for _, valueFrom := range cr.Spec.ValuesFrom { //nolint:staticcheck
 			if valueFrom.ValueFrom.ConfigMapKeyRef != nil {
-				configMapRefs = append(configMapRefs, fmt.Sprintf("%s/%s", contactPoint.Namespace, valueFrom.ValueFrom.ConfigMapKeyRef.Name))
+				configMapRefs = append(configMapRefs, fmt.Sprintf("%s/%s", cr.Namespace, valueFrom.ValueFrom.ConfigMapKeyRef.Name))
 			}
 		}
 
@@ -427,10 +427,10 @@ func (r *GrafanaContactPointReconciler) requestsForChangeByField(indexKey string
 		}
 
 		var reqs []reconcile.Request
-		for _, contactPoint := range list.Items {
+		for _, cr := range list.Items {
 			reqs = append(reqs, reconcile.Request{NamespacedName: types.NamespacedName{
-				Namespace: contactPoint.Namespace,
-				Name:      contactPoint.Name,
+				Namespace: cr.Namespace,
+				Name:      cr.Name,
 			}})
 		}
 
