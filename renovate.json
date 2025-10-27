@@ -4,7 +4,8 @@
     "github>grafana/grafana-renovate-config//presets/base"
   ],
   "ignoreDeps": [
-    "ghcr.io/grafana/grafana-operator"
+    "ghcr.io/grafana/grafana-operator",
+    "github.com/openshift/api"
   ],
   "customManagers": [
     {
