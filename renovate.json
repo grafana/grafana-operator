@@ -9,12 +9,17 @@
   "customManagers": [
     {
       "customType": "regex",
+      "packageNameTemplate": "docker.io/grafana/grafana",
       "managerFilePatterns": [
-        "/operator_constants.go/"
+        "/controllers\/config\/operator_constants.go/",
+        "/config\/manager\/manager.yaml/",
+        "/tests\/e2e\/example-test\/00-assert.yaml/"
       ],
       "datasourceTemplate": "docker",
       "matchStrings": [
-        "\\s*GrafanaImage\\s*=\\s*\"(?<depName>[^\\s]+?)\"\\s*\\n\\s*GrafanaVersion\\s*=\\s*\"(?<currentValue>[\\w+\\.\\-]*)\""
+        "\\s*GrafanaVersion\\s*=\\s*\"(?<currentValue>[\\w+\\.\\-]*)\"",
+        "\\s*value:\\s*\"?[^\\s]+?:(?<currentValue>[\\w+\\.\\-]*)\"?",
+        "\\s*version:\\s*\"?(?<currentValue>[\\w+\\.\\-]*)\"?"
       ]
     }
   ]
