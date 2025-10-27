@@ -3,12 +3,12 @@ kind: Grafana
 metadata:
   name: grafana
 spec:
-  version: 12.2.0
+  version: 12.2.1
 status:
   (wildcard('http://grafana-service.*:3000', adminUrl || '')): true
   stage: complete
   stageStatus: success
-  version: 12.2.0
+  version: 12.2.1
   conditions:
     - reason: GrafanaReady
       status: "True"
@@ -22,7 +22,7 @@ status:
   adminUrl: (join('',['http://grafana-internal-service.',$namespace,':3000']))
   stage: complete
   stageStatus: success
-  version: 12.2.0
+  version: 12.2.1
   conditions:
     - reason: GrafanaReady
       status: "True"
@@ -33,12 +33,12 @@ kind: Grafana
 metadata:
   name: grafana-tls
 spec:
-  version: 12.2.0
+  version: 12.2.1
 status:
   (wildcard('https://grafana-tls-service.*:3000', adminUrl || '')): true
   stage: complete
   stageStatus: success
-  version: 12.2.0
+  version: 12.2.1
 ---
 apiVersion: apps/v1
 kind: Deployment
