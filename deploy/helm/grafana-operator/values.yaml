@@ -210,3 +210,11 @@ extraObjects: []
 #     dataFrom:
 #     - extract:
 #         key: my-secret-store-secret
+
+# -- PodDisruptionBudget https://kubernetes.io/docs/tasks/run-application/configure-pdb/
+podDisruptionBudget:
+  enabled: false
+  # This configures the number of pods from that set that can be unavailable after the eviction.
+  # maxUnavailable: 1
+  # This configures the number of pods from that set that must still be available after the eviction, even in the absence of the evicted pod.
+  # minAvailable: 1
