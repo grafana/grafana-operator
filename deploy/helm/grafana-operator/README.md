@@ -88,6 +88,8 @@ It's easier to just manage this configuration outside of the operator.
 | enforceCacheLabels | string | `"safe"` | Sets the `ENFORCE_CACHE_LABELS` environment variable, Allows to tweak how caching of various Kubernetes resources works inside the operator. Valid values are "off", "safe", and "all". When set to "off", all resources are cached (including Deployments, Services, Ingresses, and any other native resources that the operator interacts with), which results in much higher memory usage (essentially, grows with cluster size). When set to `safe`, ConfigMaps and Secrets are not cached, all other native resources are cached only when they have `app.kubernetes.io/managed-by: grafana-operator` label. The label is automatically set on all resources that are created/owned by the operator (applicable to any mode). When set to `all`, only resources that have `app.kubernetes.io/managed-by: grafana-operator` are cached. The caveat is that ConfigMaps and Secrets can be seen by the operator only if they have the label. Thus, usage of this mode requires more careful planning. |
 | env | list | `[]` | Additional environment variables |
 | extraObjects | list | `[]` | Array of extra K8s objects to deploy |
+| extraVolumeMounts | list | `[]` | extra container volume mounts |
+| extraVolumes | list | `[]` | extra pod volumes |
 | fullnameOverride | string | `""` | Overrides the fully qualified app name. |
 | image.pullPolicy | string | `"IfNotPresent"` | The image pull policy to use in grafana operator container |
 | image.repository | string | `"ghcr.io/grafana/grafana-operator"` | grafana operator image repository |
@@ -95,10 +97,12 @@ It's easier to just manage this configuration outside of the operator.
 | imagePullSecrets | list | `[]` | image pull secrets |
 | isOpenShift | bool | `false` | Determines if the target cluster is OpenShift. Additional rbac permissions for routes will be added on OpenShift |
 | leaderElect | bool | `true` | This is recommended in most scenarios, even when only running a single instance of the operator. |
+| livenessProbe | object | `{"httpGet":{"path":"/healthz","port":8081}}` | pod livenessProbe |
 | logging.encoder | string | `"console"` | Log encoding ("console", "json") |
 | logging.level | string | `"info"` | Configure the verbosity of logging ("debug", "error", "info") |
 | logging.time | string | `"rfc3339"` | Time encoding ("epoch", "iso8601", "millis", "nano", "rfc3339", "rfc3339nano") |
 | maxConcurrentReconciles | int | `1` | Maximum number of concurrent reconciles per Custom Resource. |
+| metricsService.annotations | object | `{}` | annotations on the metrics service |
 | metricsService.metricsPort | int | `9090` | metrics service port |
 | metricsService.pprofPort | int | `8888` | port for the pprof profiling endpoint |
 | metricsService.type | string | `"ClusterIP"` | metrics service type |
@@ -111,6 +115,7 @@ It's easier to just manage this configuration outside of the operator.
 | podSecurityContext | object | `{}` | pod security context |
 | priorityClassName | string | `""` | pod priority class name |
 | rbac.create | bool | `true` | Specifies whether to create the ClusterRole and ClusterRoleBinding. If "namespaceScope" is true or "watchNamespaces" is set, this will create Role and RoleBinding instead. |
+| readinessProbe | object | `{"httpGet":{"path":"/readyz","port":8081}}` | pod livenessProbe |
 | replicas | int | `1` | The number of operators to run simultaneously. With leader election, only one instance reconciles CRs preventing duplicate reconciliations. Note: Multiple replicas increase stability, it does not increase throughput. |
 | resources | object | `{}` | grafana operator container resources |
 | securityContext.allowPrivilegeEscalation | bool | `false` | Whether to allow privilege escalation |

@@ -90,6 +90,9 @@ spec:
           volumeMounts:
             - name: dashboards-dir
               mountPath: /tmp/dashboards
+            {{- with .Values.extraVolumeMounts }}
+            {{- . | toYaml | nindent 12 }}
+            {{- end }}
           ports:
             - containerPort: {{ .Values.metricsService.metricsPort }}
               name: metrics
@@ -97,14 +100,14 @@ spec:
             - containerPort: {{ .Values.metricsService.pprofPort }}
               name: pprof
               protocol: TCP
+          {{- with .Values.livenessProbe }}
           livenessProbe:
-            httpGet:
-              path: /healthz
-              port: 8081
+            {{- . | toYaml | nindent 12 }}
+          {{- end }}
+          {{- with .Values.readinessProbe }}
           readinessProbe:
-            httpGet:
-              path: /readyz
-              port: 8081
+            {{- . | toYaml | nindent 12 }}
+          {{- end }}
           {{- with .Values.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
@@ -112,6 +115,9 @@ spec:
       volumes:
         - name: dashboards-dir
           emptyDir: {}
+        {{- with .Values.extraVolumes }}
+        {{- . | toYaml | nindent 8 }}
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

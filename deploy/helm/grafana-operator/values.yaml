@@ -122,6 +122,8 @@ metricsService:
   metricsPort: 9090
   # -- port for the pprof profiling endpoint
   pprofPort: 8888
+  # -- annotations on the metrics service
+  annotations: {}
 
 # -- additional labels to add to all resources
 additionalLabels: {}
@@ -153,6 +155,18 @@ resources: {}
 # -- pod priority class name
 priorityClassName: ""
 
+# -- pod livenessProbe
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 8081
+
+# -- pod livenessProbe
+readinessProbe:
+  httpGet:
+    path: /readyz
+    port: 8081
+
 # -- pod node selector
 nodeSelector: {}
 
@@ -161,6 +175,12 @@ tolerations: []
 
 # -- pod affinity
 affinity: {}
+
+# -- extra pod volumes
+extraVolumes: []
+
+# -- extra container volume mounts
+extraVolumeMounts: []
 
 serviceMonitor:
   # -- Whether to create a ServiceMonitor
