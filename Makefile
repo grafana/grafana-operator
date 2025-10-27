@@ -336,5 +336,6 @@ prep-release: $(YQ)
 	$(YQ) -i '.params.version="v$(VERSION)"' hugo/config.yaml
 	sed -i 's/--version v5.*/--version v$(VERSION)/g' README.md
 	sed -i 's/^VERSION ?= 5.*/VERSION ?= $(VERSION)/g' Makefile
+	grep -q "$(GRAFANA_VERSION)" docs/docs/versioning.md || sed -Ei 's/\|-\|-\|/|-|-|\n| \`v$(VERSION)\` | \`$(GRAFANA_VERSION)\` |/' docs/docs/versioning.md
 	$(YQ) -i '.images[0].newTag="v$(VERSION)"' deploy/kustomize/base/kustomization.yaml
 	make helm-docs
