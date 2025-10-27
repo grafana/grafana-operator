@@ -9,7 +9,7 @@ metadata:
   {{- with .Values.metricsService.annotations }}
   annotations:
     {{- . | toYaml | nindent 4 }}
-  {{- end }} 
+  {{- end }}
 spec:
   type: {{ .Values.metricsService.type }}
   ports:
