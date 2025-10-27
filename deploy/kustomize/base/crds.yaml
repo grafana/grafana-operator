@@ -3412,6 +3412,11 @@ spec:
                         at the same time
                       rule: (has(self.insecureSkipVerify) && !(has(self.certSecretRef)))
                         || (has(self.certSecretRef) && !(has(self.insecureSkipVerify)))
+                  useKubeAuth:
+                    description: |-
+                      Use Kubernetes Serviceaccount as authentication
+                      Requires configuring [auth.jwt] in the instance
+                    type: boolean
                 type: object
               config:
                 additionalProperties:
