@@ -129,6 +129,10 @@ type JsonnetConfig struct {
 
 // GrafanaClient contains the Grafana API client settings
 type GrafanaClient struct {
+	// Use Kubernetes Serviceaccount as authentication
+	// Requires configuring [auth.jwt] in the instance
+	// +optional
+	UseKubeAuth bool `json:"useKubeAuth,omitempty"`
 	// +nullable
 	TimeoutSeconds *int `json:"timeout,omitempty"`
 	// +nullable

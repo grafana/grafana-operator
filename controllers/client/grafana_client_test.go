@@ -2,7 +2,11 @@ package client
 
 import (
 	"context"
+	"encoding/base64"
+	"fmt"
+	"os"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/stretchr/testify/assert"
@@ -310,5 +314,107 @@ func TestGetAdminCredentials(t *testing.T) {
 		require.Error(t, err)
 
 		assert.Nil(t, got)
+	})
+}
+
+func createTestJWTFile(t *testing.T) (*os.File, string) {
+	t.Helper()
+
+	now := time.Now().Add(60 * time.Second).Unix()
+	claims := fmt.Sprintf(`{"exp": %g}`, float64(now))
+	encodedClaims := base64.RawStdEncoding.EncodeToString([]byte(claims))
+
+	testJWT := fmt.Sprintf("header.%s.signature", encodedClaims)
+
+	tokenFile, err := os.CreateTemp(os.TempDir(), "token-*")
+	require.NoError(t, err)
+
+	written, err := tokenFile.WriteString(testJWT)
+	require.Equal(t, len([]byte(testJWT)), written)
+	require.NoError(t, err)
+
+	return tokenFile, testJWT
+}
+
+func tokenIsValid(t *testing.T, expectedToken, token string, err error) {
+	t.Helper()
+	require.NoError(t, err)
+	require.NotNil(t, jwtCache)
+	require.Equal(t, expectedToken, token)
+	require.Equal(t, expectedToken, jwtCache.Token)
+	require.False(t, jwtCache.Expiration.IsZero())
+	require.True(t, jwtCache.Expiration.After(time.Now()))
+}
+
+func TestGetBearerToken(t *testing.T) {
+	t.Parallel()
+
+	t.Run("error on empty token file", func(t *testing.T) {
+		jwtCache = nil
+
+		// Empty file
+		tokenFile, err := os.CreateTemp(os.TempDir(), "token-*")
+		require.NoError(t, err)
+
+		noToken, err := getBearerToken(tokenFile.Name() + "-dummy")
+		require.Error(t, err)
+		require.Empty(t, noToken)
+		require.Nil(t, jwtCache)
+	})
+
+	t.Run("decode test token with nil cache", func(t *testing.T) {
+		jwtCache = nil
+
+		tokenFile, token := createTestJWTFile(t)
+
+		parsedToken, err := getBearerToken(tokenFile.Name())
+		tokenIsValid(t, token, parsedToken, err)
+	})
+
+	t.Run("Read from cache", func(t *testing.T) {
+		jwtCache = nil
+
+		tokenFile, token := createTestJWTFile(t)
+		parsedToken, err := getBearerToken(tokenFile.Name())
+		tokenIsValid(t, token, parsedToken, err)
+
+		os.Remove(tokenFile.Name())
+		cachedToken, err := getBearerToken(tokenFile.Name())
+		tokenIsValid(t, token, cachedToken, err)
+	})
+
+	t.Run("Reset cache and error on mangled token", func(t *testing.T) {
+		jwtCache = nil
+
+		tokenFile, token := createTestJWTFile(t)
+		parsedToken, err := getBearerToken(tokenFile.Name())
+		tokenIsValid(t, token, parsedToken, err)
+
+		// Mangle token
+		_, err = tokenFile.WriteString("Invalid.JWT.Token")
+		require.NoError(t, err)
+
+		jwtCache = nil
+		emptyToken, err := getBearerToken(tokenFile.Name())
+		require.Error(t, err)
+		require.Empty(t, emptyToken)
+	})
+
+	t.Run("expire cache and re-parse token", func(t *testing.T) {
+		jwtCache = nil
+
+		tokenFile, token := createTestJWTFile(t)
+
+		parsedToken, err := getBearerToken(tokenFile.Name())
+		tokenIsValid(t, token, parsedToken, err)
+
+		// Store original expiration and overwrite cache
+		tokenExpiration := jwtCache.Expiration
+		jwtCache.Expiration = time.Now().Add(-60 * time.Second)
+		jwtCache.Token = ""
+
+		cachedToken, err := getBearerToken(tokenFile.Name())
+		tokenIsValid(t, token, cachedToken, err)
+		require.Equal(t, tokenExpiration, jwtCache.Expiration)
 	})
 }
