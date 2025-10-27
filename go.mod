@@ -14,7 +14,7 @@ require (
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20250925215610-d92957c70d5c
 	github.com/onsi/ginkgo/v2 v2.27.1
 	github.com/onsi/gomega v1.38.2
-	github.com/openshift/api v0.0.0-20251021211107-8c9accafe91d
+	github.com/openshift/api v0.0.0-20251023193535-8691c3014652
 	github.com/prometheus/client_golang v1.23.2
 	github.com/spyzhov/ajson v0.9.6
 	github.com/stretchr/testify v1.11.1
