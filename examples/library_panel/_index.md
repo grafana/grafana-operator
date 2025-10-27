@@ -158,7 +158,6 @@ kind: GrafanaDashboard
 metadata:
   name: jason-test-gcp-librarypanel
 spec:
-  folder: gcp
   instanceSelector:
     matchLabels:
       env: stg
