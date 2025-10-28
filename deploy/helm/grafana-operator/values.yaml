@@ -149,6 +149,9 @@ securityContext:
   # -- Whether to require a container to run as a non-root user
   runAsNonRoot: true
 
+# -- Set to false to opt-in to use user namespaces
+hostUsers: true
+
 # -- grafana operator container resources
 resources: {}
 
