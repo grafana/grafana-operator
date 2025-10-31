@@ -42,6 +42,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	gwapiv1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -101,6 +102,7 @@ func init() {
 	utilruntime.Must(grafanav1beta1.AddToScheme(scheme))
 
 	utilruntime.Must(routev1.AddToScheme(scheme))
+	utilruntime.Must(gwapiv1.Install(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 

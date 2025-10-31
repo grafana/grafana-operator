@@ -42,6 +42,7 @@ const (
 	OperatorStageServiceAccount OperatorStageName = "service account"
 	OperatorStageService        OperatorStageName = "service"
 	OperatorStageIngress        OperatorStageName = "ingress"
+	OperatorStageHTTPRoute      OperatorStageName = "http route"
 	OperatorStagePlugins        OperatorStageName = "plugins"
 	OperatorStageDeployment     OperatorStageName = "deployment"
 	OperatorStageComplete       OperatorStageName = "complete"
@@ -71,6 +72,8 @@ type GrafanaSpec struct {
 	Ingress *IngressNetworkingV1 `json:"ingress,omitempty"`
 	// Route sets how the ingress object should look like with your grafana instance, this only works in Openshift.
 	Route *RouteOpenshiftV1 `json:"route,omitempty"`
+	// HTTPRoute sets how the ingress object should look like with your grafana instance, this only works use gateway api.
+	HTTPRoute *HTTPRouteV1 `json:"httpRoute,omitempty"`
 	// Service sets how the service object should look like with your grafana instance, contains a number of defaults.
 	Service *ServiceV1 `json:"service,omitempty"`
 	// Version sets the tag of the default image: docker.io/grafana/grafana.

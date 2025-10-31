@@ -63,6 +63,8 @@ type GrafanaReconciler struct {
 // +kubebuilder:rbac:groups="",resources=events,verbs=get;list;watch;create;patch
 // +kubebuilder:rbac:groups="",resources=configmaps;secrets;serviceaccounts;services;persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=gateway.networking.k8s.io,resources=httproutes,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=gateway.networking.k8s.io,resources=gateways,verbs=get;list;watch;
 
 func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx).WithName("GrafanaReconciler")
@@ -349,6 +351,7 @@ func getInstallationStages() []grafanav1beta1.OperatorStageName {
 		grafanav1beta1.OperatorStageServiceAccount,
 		grafanav1beta1.OperatorStageService,
 		grafanav1beta1.OperatorStageIngress,
+		grafanav1beta1.OperatorStageHTTPRoute,
 		grafanav1beta1.OperatorStagePlugins,
 		grafanav1beta1.OperatorStageDeployment,
 		grafanav1beta1.OperatorStageComplete,
@@ -365,6 +368,8 @@ func (r *GrafanaReconciler) getReconcilerForStage(stage grafanav1beta1.OperatorS
 		return grafana.NewPvcReconciler(r.Client)
 	case grafanav1beta1.OperatorStageServiceAccount:
 		return grafana.NewServiceAccountReconciler(r.Client)
+	case grafanav1beta1.OperatorStageHTTPRoute:
+		return grafana.NewHTTPRouteReconciler(r.Client)
 	case grafanav1beta1.OperatorStageService:
 		return grafana.NewServiceReconciler(r.Client, r.ClusterDomain)
 	case grafanav1beta1.OperatorStageIngress:

@@ -13,6 +13,7 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
+	gwapiv1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
 // +kubebuilder:object:generate=true
@@ -325,6 +326,13 @@ type IngressNetworkingV1 struct {
 type RouteOpenshiftV1 struct {
 	ObjectMeta ObjectMeta            `json:"metadata,omitempty"`
 	Spec       *RouteOpenShiftV1Spec `json:"spec,omitempty"`
+}
+
+// +kubebuilder:object:generate=true
+
+type HTTPRouteV1 struct {
+	ObjectMeta ObjectMeta            `json:"metadata,omitempty"`
+	Spec       gwapiv1.HTTPRouteSpec `json:"spec,omitempty"`
 }
 
 // RouteTargetReference specifies the target that resolve into endpoints. Only the 'Service'
