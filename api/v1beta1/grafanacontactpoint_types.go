@@ -61,6 +61,7 @@ type GrafanaContactPointSpec struct {
 
 	// Deprecated: define the receiver under .spec.receivers[]
 	// Will be removed in a later version
+	// +optional
 	// +kubebuilder:validation:MaxItems=99
 	ValuesFrom []ValueFrom `json:"valuesFrom,omitempty"`
 
