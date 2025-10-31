@@ -1,25 +1,36 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: contact-mails
+  name: contacts
 stringData:
   alert-mails: "foo@example.com"
+  alert-hook: "webhook.example.invalid"
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaContactPoint
 metadata:
   name: grafanacontactpoint-sample
 spec:
-  name: grafanacontactpoint-sample
-  type: "email"
+  name: Optional Name
   instanceSelector:
     matchLabels:
       instance: my-grafana-stack
-  settings:
-    subject: 'Grafana Alert'
-  valuesFrom:
-    - targetPath: addresses
-      valueFrom:
-        secretKeyRef:
-          name: contact-mails
-          key: alert-mails
+  receivers:
+    - type: email
+      settings:
+        subject: Grafana Alert
+      valuesFrom:
+        - targetPath: addresses
+          valueFrom:
+            secretKeyRef:
+              name: contacts
+              key: alert-mails
+    - type: webhook
+      settings:
+        title: Grafana Alert
+      valuesFrom:
+        - targetPath: url
+          valueFrom:
+            secretKeyRef:
+              name: contacts
+              key: alert-hook
