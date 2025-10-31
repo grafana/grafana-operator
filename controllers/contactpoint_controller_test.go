@@ -25,7 +25,6 @@ var _ = Describe("ContactPoint Reconciler: Provoke Conditions", func() {
 			meta: objectMetaSuspended,
 			spec: v1beta1.GrafanaContactPointSpec{
 				GrafanaCommonSpec: commonSpecSuspended,
-				Name:              "ContactPointName",
 				Settings:          &v1.JSON{Raw: []byte("{}")},
 				Type:              "webhook",
 			},
@@ -39,7 +38,6 @@ var _ = Describe("ContactPoint Reconciler: Provoke Conditions", func() {
 			meta: objectMetaNoMatchingInstances,
 			spec: v1beta1.GrafanaContactPointSpec{
 				GrafanaCommonSpec: commonSpecNoMatchingInstances,
-				Name:              "ContactPointName",
 				Settings:          &v1.JSON{Raw: []byte("{}")},
 				Type:              "webhook",
 			},
@@ -54,7 +52,6 @@ var _ = Describe("ContactPoint Reconciler: Provoke Conditions", func() {
 			meta: objectMetaApplyFailed,
 			spec: v1beta1.GrafanaContactPointSpec{
 				GrafanaCommonSpec: commonSpecApplyFailed,
-				Name:              "ContactPointName",
 				Settings:          &v1.JSON{Raw: []byte("{}")},
 				Type:              "webhook",
 			},
@@ -69,7 +66,6 @@ var _ = Describe("ContactPoint Reconciler: Provoke Conditions", func() {
 			meta: objectMetaInvalidSpec,
 			spec: v1beta1.GrafanaContactPointSpec{
 				GrafanaCommonSpec: commonSpecInvalidSpec,
-				Name:              "ContactPointName",
 				Settings:          &v1.JSON{Raw: []byte("{}")},
 				Type:              "email",
 				ValuesFrom: []v1beta1.ValueFrom{{
@@ -89,11 +85,59 @@ var _ = Describe("ContactPoint Reconciler: Provoke Conditions", func() {
 			wantErr: "building contactpoint settings",
 		},
 		{
+			name: "Top level receiver missing settings with type defined",
+			meta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "missing-settings",
+			},
+			spec: v1beta1.GrafanaContactPointSpec{
+				GrafanaCommonSpec: commonSpecInvalidSpec,
+				Settings:          nil,
+				Type:              "email",
+			},
+			want: metav1.Condition{
+				Type:   conditionInvalidSpec,
+				Reason: conditionReasonInvalidContactPoint,
+			},
+			wantErr: ErrMissingContactPointReceiver.Error(),
+		},
+		{
+			name: "Top level receiver missing type with settings defined",
+			meta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "missing-type",
+			},
+			spec: v1beta1.GrafanaContactPointSpec{
+				GrafanaCommonSpec: commonSpecInvalidSpec,
+				Settings:          &v1.JSON{Raw: []byte("{}")},
+				Type:              "",
+			},
+			want: metav1.Condition{
+				Type:   conditionInvalidSpec,
+				Reason: conditionReasonInvalidContactPoint,
+			},
+			wantErr: ErrMissingContactPointReceiver.Error(),
+		},
+		{
+			name: "No receivers defined",
+			meta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "missing-receiver-configs",
+			},
+			spec: v1beta1.GrafanaContactPointSpec{
+				GrafanaCommonSpec: commonSpecInvalidSpec,
+			},
+			want: metav1.Condition{
+				Type:   conditionInvalidSpec,
+				Reason: conditionReasonInvalidContactPoint,
+			},
+			wantErr: ErrMissingContactPointReceiver.Error(),
+		},
+		{
 			name: "Successfully applied resource to instance",
 			meta: objectMetaSynchronized,
 			spec: v1beta1.GrafanaContactPointSpec{
 				GrafanaCommonSpec: commonSpecSynchronized,
-				Name:              "ContactPointName",
 				Settings:          &v1.JSON{Raw: []byte(`{"url": "http://test.io"}`)},
 				Type:              "webhook",
 			},
@@ -102,7 +146,180 @@ var _ = Describe("ContactPoint Reconciler: Provoke Conditions", func() {
 				Reason: conditionReasonApplySuccessful,
 			},
 		},
+		{
+			name: "Successfully applied multiple receiver contactpoint to instance",
+			meta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "synchronized-multiple-receivers",
+			},
+			spec: v1beta1.GrafanaContactPointSpec{
+				GrafanaCommonSpec: commonSpecSynchronized,
+				Receivers: []v1beta1.ContactPointReceiver{
+					{
+						Settings: &v1.JSON{Raw: []byte(`{"url": "http://test.io"}`)},
+						Type:     "webhook",
+					},
+					{
+						Settings: &v1.JSON{Raw: []byte(`{"url": "http://test.io"}`)},
+						Type:     "webhook",
+					},
+				},
+			},
+			want: metav1.Condition{
+				Type:   conditionContactPointSynchronized,
+				Reason: conditionReasonApplySuccessful,
+			},
+		},
 	}
+
+	for _, tt := range tests {
+		It(tt.name, func() {
+			cr := &v1beta1.GrafanaContactPoint{
+				ObjectMeta: tt.meta,
+				Spec:       tt.spec,
+			}
+
+			r := &GrafanaContactPointReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+
+			reconcileAndValidateCondition(r, cr, tt.want, tt.wantErr)
+		})
+	}
+})
+
+var _ = Describe("ContactPoint valuesFrom configurations", Ordered, func() {
+	sc := corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "contacts",
+		},
+		StringData: map[string]string{
+			"one": "one@example.invalid",
+			"two": "two@example.invalid",
+		},
+	}
+
+	tests := []struct {
+		name    string
+		meta    metav1.ObjectMeta
+		spec    v1beta1.GrafanaContactPointSpec
+		want    metav1.Condition
+		wantErr string
+	}{
+		{
+			name: "Referenced secrets missing",
+			meta: metav1.ObjectMeta{
+				GenerateName: "receiver-secrets-missing",
+				Namespace:    "default",
+			},
+			spec: v1beta1.GrafanaContactPointSpec{
+				GrafanaCommonSpec: commonSpecInvalidSpec,
+				Settings:          &v1.JSON{Raw: []byte("{}")},
+				Type:              "email",
+				ValuesFrom: []v1beta1.ValueFrom{{
+					TargetPath: "addresses",
+					ValueFrom: v1beta1.ValueFromSource{SecretKeyRef: &corev1.SecretKeySelector{
+						Key: "contact-mails",
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: "nil",
+						},
+					}},
+				}},
+				Receivers: []v1beta1.ContactPointReceiver{
+					{
+						Settings: &v1.JSON{Raw: []byte("{}")},
+						Type:     "email",
+						ValuesFrom: []v1beta1.ValueFrom{{
+							TargetPath: "addresses",
+							ValueFrom: v1beta1.ValueFromSource{SecretKeyRef: &corev1.SecretKeySelector{
+								Key: "contact-mails",
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: "nil",
+								},
+							}},
+						}},
+					},
+					{
+						Settings: &v1.JSON{Raw: []byte("{}")},
+						Type:     "email",
+						ValuesFrom: []v1beta1.ValueFrom{{
+							TargetPath: "addresses",
+							ValueFrom: v1beta1.ValueFromSource{SecretKeyRef: &corev1.SecretKeySelector{
+								Key: "contact-mails",
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: "nil",
+								},
+							}},
+						}},
+					},
+				},
+			},
+			want: metav1.Condition{
+				Type:   conditionInvalidSpec,
+				Reason: conditionReasonInvalidSettings,
+			},
+			wantErr: "building contactpoint settings",
+		},
+		{
+			name: "Referenced secret exist",
+			meta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "successful-apply",
+			},
+			spec: v1beta1.GrafanaContactPointSpec{
+				GrafanaCommonSpec: commonSpecSynchronized,
+				Settings:          &v1.JSON{Raw: []byte("{}")},
+				Type:              "email",
+				ValuesFrom: []v1beta1.ValueFrom{{
+					TargetPath: "addresses",
+					ValueFrom: v1beta1.ValueFromSource{SecretKeyRef: &corev1.SecretKeySelector{
+						Key: "one",
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: sc.Name,
+						},
+					}},
+				}},
+				Receivers: []v1beta1.ContactPointReceiver{
+					{
+						Settings: &v1.JSON{Raw: []byte("{}")},
+						Type:     "email",
+						ValuesFrom: []v1beta1.ValueFrom{{
+							TargetPath: "addresses",
+							ValueFrom: v1beta1.ValueFromSource{SecretKeyRef: &corev1.SecretKeySelector{
+								Key: "one",
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: sc.Name,
+								},
+							}},
+						}},
+					},
+					{
+						Settings: &v1.JSON{Raw: []byte("{}")},
+						Type:     "email",
+						ValuesFrom: []v1beta1.ValueFrom{{
+							TargetPath: "addresses",
+							ValueFrom: v1beta1.ValueFromSource{SecretKeyRef: &corev1.SecretKeySelector{
+								Key: "two",
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: sc.Name,
+								},
+							}},
+						}},
+					},
+				},
+			},
+			want: metav1.Condition{
+				Type:   conditionContactPointSynchronized,
+				Reason: conditionReasonApplySuccessful,
+			},
+		},
+	}
+
+	BeforeAll(func() {
+		t := GinkgoT()
+
+		err := k8sClient.Create(testCtx, &sc)
+		require.NoError(t, err)
+	})
 
 	for _, tt := range tests {
 		It(tt.name, func() {

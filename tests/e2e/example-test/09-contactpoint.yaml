@@ -1,9 +1,8 @@
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaContactPoint
 metadata:
-  name: test
+  name: single-receiver-format
 spec:
-  name: test
   type: "email"
   instanceSelector:
     matchLabels:
