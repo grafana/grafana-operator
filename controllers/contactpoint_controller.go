@@ -391,11 +391,20 @@ func (r *GrafanaContactPointReconciler) indexSecretSource() func(o client.Object
 			panic(fmt.Sprintf("Expected a GrafanaContactPoint, got %T", o))
 		}
 
-		if len(cr.Spec.ValuesFrom) > 0 { //nolint:staticcheck
-			cr.Spec.Receivers = append(cr.Spec.Receivers, grafanav1beta1.ContactPointReceiver{ValuesFrom: cr.Spec.ValuesFrom}) //nolint:staticcheck
-		}
-
 		var secretRefs []string
+
+		// Specifically omit Spec level values when receivers is defined.
+		// The index is created using the key name 'valuesFrom', which causes empty receivers to appear in .spec.receivers[]
+		// when ValuesFrom is defined in both .spec.valuesFrom and .spec.receivers[].valuesFrom
+		if len(cr.Spec.Receivers) == 0 {
+			for _, valueFrom := range cr.Spec.ValuesFrom { //nolint:staticcheck
+				if valueFrom.ValueFrom.SecretKeyRef != nil {
+					secretRefs = append(secretRefs, fmt.Sprintf("%s/%s", cr.Namespace, valueFrom.ValueFrom.SecretKeyRef.Name))
+				}
+			}
+
+			return secretRefs
+		}
 
 		for _, rec := range cr.Spec.Receivers {
 			for _, valueFrom := range rec.ValuesFrom { //nolint:staticcheck
@@ -416,11 +425,20 @@ func (r *GrafanaContactPointReconciler) indexConfigMapSource() func(o client.Obj
 			panic(fmt.Sprintf("Expected a GrafanaContactPoint, got %T", o))
 		}
 
-		if len(cr.Spec.ValuesFrom) > 0 { //nolint:staticcheck
-			cr.Spec.Receivers = append(cr.Spec.Receivers, grafanav1beta1.ContactPointReceiver{ValuesFrom: cr.Spec.ValuesFrom}) //nolint:staticcheck
-		}
-
 		var configMapRefs []string
+
+		// Specifically omit Spec level values when receivers is defined.
+		// The index is created using the key name 'valuesFrom', which causes empty receivers to appear in .spec.receivers[]
+		// when ValuesFrom is defined in both .spec.valuesFrom and .spec.receivers[].valuesFrom
+		if len(cr.Spec.Receivers) == 0 {
+			for _, valueFrom := range cr.Spec.ValuesFrom { //nolint:staticcheck
+				if valueFrom.ValueFrom.ConfigMapKeyRef != nil {
+					configMapRefs = append(configMapRefs, fmt.Sprintf("%s/%s", cr.Namespace, valueFrom.ValueFrom.ConfigMapKeyRef.Name))
+				}
+			}
+
+			return configMapRefs
+		}
 
 		for _, rec := range cr.Spec.Receivers {
 			for _, valueFrom := range rec.ValuesFrom { //nolint:staticcheck
