@@ -79,6 +79,7 @@ It's easier to just manage this configuration outside of the operator.
 |-----|------|---------|-------------|
 | additionalLabels | object | `{}` | additional labels to add to all resources |
 | affinity | object | `{}` | pod affinity |
+| annotations | object | `{}` | deployment annotations |
 | clusterDomain | string | `""` | Sets the `CLUSTER_DOMAIN` environment variable, it defines how internal Kubernetes services managed by the operator are addressed. By default, this is empty, and internal services are addressed without a cluster domain specified, i.e., a relative domain name that will resolve regardless of if a custom domain is configured for the cluster. If you wish to have services addressed using their FQDNs, you can specify the cluster domain explicitly, e.g., "cluster.local" for the default Kubernetes configuration. |
 | crds.immutable | bool | `true` | Immutable CustomResourceDefinitions are installed only once using `crds/` directory and require manual upgrade by `kubectl apply`. Mutable CRDs are installed and upgraded together with the Helm chart using `templates/` directory without manual `kubectl apply` step required. Use `helm upgrade -i --take-ownership` when switching to mutable CRDs for the first time only. Both types of CRDs are protected on the Helm chart uninstall to avoid cascading deletion. |
 | dashboard.annotations | object | `{}` | Annotations to add to the Grafana dashboard ConfigMap |
