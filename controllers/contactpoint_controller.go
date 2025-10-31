@@ -49,13 +49,9 @@ const (
 	conditionContactPointSynchronized  = "ContactPointSynchronized"
 	conditionReasonInvalidSettings     = "InvalidSettings"
 	conditionReasonInvalidContactPoint = "InvalidContactPoint"
-	conditionReasonTopLevelReceiver    = "InvalidTopLevelReceiver"
 )
 
-var (
-	ErrInvalidTopLevelReceiver     = fmt.Errorf(".spec.type and .spec.settings are mutually inclusive and deprecated, consider moving receiver configuration under .spec.receivers")
-	ErrMissingContactPointReceiver = fmt.Errorf("at least one receiver is needed to create a contact point")
-)
+var ErrMissingContactPointReceiver = fmt.Errorf("at least one receiver is needed to create a contact point")
 
 // GrafanaContactPointReconciler reconciles a GrafanaContactPoint object
 type GrafanaContactPointReconciler struct {
@@ -125,10 +121,10 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 	removeNoMatchingInstance(&cr.Status.Conditions)
 	log.Info("found matching Grafana instances for Contact point", "count", len(instances))
 
-	// Top level is valid
-	err = r.mergeTopLevelIntoReceivers(cr)
+	// Fallback to top level receiver if valid
+	err = r.TopLevelReceiverFallback(cr)
 	if err != nil {
-		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonTopLevelReceiver, err.Error())
+		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidContactPoint, err.Error())
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionContactPointSynchronized)
 
 		return ctrl.Result{}, fmt.Errorf("validating contactpoint spec: %w", err)
@@ -247,26 +243,28 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 	return instance.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource())
 }
 
-func (r *GrafanaContactPointReconciler) mergeTopLevelIntoReceivers(cr *grafanav1beta1.GrafanaContactPoint) error {
-	// If the topLevelReceiver is valid, continue
-	if cr.Spec.Type != "" || cr.Spec.Settings != nil { //nolint:staticcheck
-		if cr.Spec.Settings == nil { //nolint:staticcheck
-			return ErrInvalidTopLevelReceiver
-		}
-
-		if cr.Spec.Type == "" { //nolint:staticcheck
-			return ErrInvalidTopLevelReceiver
-		}
-
-		topLevelReceiver := &grafanav1beta1.ContactPointReceiver{
-			CustomUID:             cr.Spec.CustomUID,             //nolint:staticcheck
-			Type:                  cr.Spec.Type,                  //nolint:staticcheck
-			DisableResolveMessage: cr.Spec.DisableResolveMessage, //nolint:staticcheck
-			Settings:              cr.Spec.Settings,              //nolint:staticcheck
-			ValuesFrom:            cr.Spec.ValuesFrom,            //nolint:staticcheck
-		}
-		cr.Spec.Receivers = append(cr.Spec.Receivers, *topLevelReceiver)
+func (r *GrafanaContactPointReconciler) TopLevelReceiverFallback(cr *grafanav1beta1.GrafanaContactPoint) error {
+	// Skip Spec level receiver when list is set
+	if len(cr.Spec.Receivers) > 0 {
+		return nil
 	}
+
+	// If the spec receiver is valid, continue
+	if cr.Spec.Settings == nil { //nolint:staticcheck
+		return ErrMissingContactPointReceiver
+	}
+
+	if cr.Spec.Type == "" { //nolint:staticcheck
+		return ErrMissingContactPointReceiver
+	}
+
+	cr.Spec.Receivers = append(cr.Spec.Receivers, grafanav1beta1.ContactPointReceiver{
+		CustomUID:             cr.Spec.CustomUID,             //nolint:staticcheck
+		Type:                  cr.Spec.Type,                  //nolint:staticcheck
+		DisableResolveMessage: cr.Spec.DisableResolveMessage, //nolint:staticcheck
+		Settings:              cr.Spec.Settings,              //nolint:staticcheck
+		ValuesFrom:            cr.Spec.ValuesFrom,            //nolint:staticcheck
+	})
 
 	return nil
 }
