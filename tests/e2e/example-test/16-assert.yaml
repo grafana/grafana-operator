@@ -11,7 +11,7 @@ status:
     name: my-service-account
     role: Admin
     tokens:
-      - expires: "2099-12-31T11:59:59Z"
+      - (time_between(expires, '2099-12-31T11:59:58Z', '2099-12-31T12:00:10Z')): true
         name: my-token-a
         secret:
           name: thatsfine
