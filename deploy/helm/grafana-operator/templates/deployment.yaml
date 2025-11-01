@@ -6,6 +6,10 @@ metadata:
   labels:
     {{- include "grafana-operator.labels" . | nindent 4 }}
     app.kubernetes.io/component: operator
+  {{- with .Values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   replicas: {{ .Values.replicas }}
   selector:

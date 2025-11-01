@@ -131,6 +131,9 @@ additionalLabels: {}
 # -- pod labels
 podLabels: {}
 
+# -- deployment annotations
+annotations: {}
+
 # -- pod annotations
 podAnnotations: {}
 
