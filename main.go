@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -167,6 +168,12 @@ func main() { // nolint:gocyclo
 		setupLog.Error(fmt.Errorf("invalid value %s for %s", enforceCacheLabelsLevel, enforceCacheLabelsEnvVar), "falling back to disabling cache enforcement")
 	}
 
+	// Determine LeaderElectionID from
+	leHash := sha256.New()
+	leHash.Write([]byte(watchNamespace))
+	leHash.Write([]byte(watchNamespaceSelector))
+	leHash.Write([]byte(watchLabelSelectors))
+
 	clusterDomain, _ := os.LookupEnv(clusterDomainEnvVar)
 
 	// Fetch k8s api credentials and detect platform
@@ -190,7 +197,7 @@ func main() { // nolint:gocyclo
 		WebhookServer:          webhook.NewServer(webhook.Options{Port: 9443}),
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "f75f3bba.integreatly.org",
+		LeaderElectionID:       fmt.Sprintf("grafana-operator-%x", leHash.Sum(nil)),
 		PprofBindAddress:       pprofAddr,
 		Controller: config.Controller{
 			MaxConcurrentReconciles: maxConcurrentReconciles,
