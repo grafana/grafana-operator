@@ -5129,20 +5129,6 @@ Routes for alerts to match against
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b>active_time_intervals</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>continue</b></td>
-        <td>boolean</td>
-        <td>
-          continue<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>group_by</b></td>
         <td>[]string</td>
         <td>
@@ -5164,38 +5150,10 @@ Routes for alerts to match against
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>match_re</b></td>
-        <td>map[string]string</td>
-        <td>
-          match re<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#grafananotificationpolicyspecroutematchersindex">matchers</a></b></td>
-        <td>[]object</td>
-        <td>
-          matchers<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>mute_time_intervals</b></td>
-        <td>[]string</td>
-        <td>
-          mute time intervals<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>object_matchers</b></td>
-        <td>[][]string</td>
-        <td>
-          object matchers<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>provenance</b></td>
         <td>string</td>
         <td>
-          provenance<br/>
+          Deprecated: Does nothing<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5218,54 +5176,6 @@ mutually exclusive with Routes<br/>
         <td>JSON</td>
         <td>
           routes, mutually exclusive with RouteSelector<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### GrafanaNotificationPolicy.spec.route.matchers[index]
-<sup><sup>[↩ Parent](#grafananotificationpolicyspecroute)</sup></sup>
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>isRegex</b></td>
-        <td>boolean</td>
-        <td>
-          is regex<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>value</b></td>
-        <td>string</td>
-        <td>
-          value<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>isEqual</b></td>
-        <td>boolean</td>
-        <td>
-          is equal<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>name</b></td>
-        <td>string</td>
-        <td>
-          name<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5555,7 +5465,7 @@ GrafanaNotificationPolicyRouteSpec defines the desired state of GrafanaNotificat
         <td><b>active_time_intervals</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          active time intervals<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5618,7 +5528,7 @@ GrafanaNotificationPolicyRouteSpec defines the desired state of GrafanaNotificat
         <td><b>provenance</b></td>
         <td>string</td>
         <td>
-          provenance<br/>
+          Deprecated: Does nothing<br/>
         </td>
         <td>false</td>
       </tr><tr>
