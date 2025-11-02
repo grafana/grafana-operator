@@ -29,7 +29,7 @@ type GrafanaNotificationPolicySpec struct {
 	GrafanaCommonSpec `json:",inline"`
 
 	// Routes for alerts to match against
-	Route *Route `json:"route"`
+	Route *PartialRoute `json:"route"`
 
 	// Whether to enable or disable editing of the notification policy in Grafana UI
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
@@ -37,10 +37,7 @@ type GrafanaNotificationPolicySpec struct {
 	Editable *bool `json:"editable,omitempty"`
 }
 
-type Route struct {
-	// continue
-	Continue bool `json:"continue,omitempty"`
-
+type PartialRoute struct {
 	// group by
 	GroupBy []string `json:"group_by,omitempty"`
 
@@ -49,23 +46,6 @@ type Route struct {
 
 	// group wait
 	GroupWait string `json:"group_wait,omitempty"`
-
-	// match re
-	MatchRe models.MatchRegexps `json:"match_re,omitempty"`
-
-	// matchers
-	Matchers Matchers `json:"matchers,omitempty"`
-
-	// mute time intervals
-	MuteTimeIntervals []string `json:"mute_time_intervals,omitempty"`
-
-	ActiveTimeIntervals []string `json:"active_time_intervals,omitempty"`
-
-	// object matchers
-	ObjectMatchers models.ObjectMatchers `json:"object_matchers,omitempty"`
-
-	// provenance
-	Provenance models.Provenance `json:"provenance,omitempty"`
 
 	// receiver
 	// +kubebuilder:validation:MinLength=1
@@ -82,6 +62,31 @@ type Route struct {
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// +kubebuilder:validation:Schemaless
 	Routes []*Route `json:"routes,omitempty"`
+
+	// Deprecated: Does nothing
+	Provenance models.Provenance `json:"provenance,omitempty"`
+}
+
+type Route struct {
+	PartialRoute `json:",inline"`
+
+	// continue
+	Continue bool `json:"continue,omitempty"`
+
+	// match re
+	MatchRe models.MatchRegexps `json:"match_re,omitempty"`
+
+	// matchers
+	Matchers Matchers `json:"matchers,omitempty"`
+
+	// object matchers
+	ObjectMatchers models.ObjectMatchers `json:"object_matchers,omitempty"`
+
+	// mute time intervals
+	MuteTimeIntervals []string `json:"mute_time_intervals,omitempty"`
+
+	// active time intervals
+	ActiveTimeIntervals []string `json:"active_time_intervals,omitempty"`
 }
 
 type Matcher struct {
@@ -124,7 +129,6 @@ func (r *Route) ToModelRoute() *models.Route {
 		MuteTimeIntervals:   r.MuteTimeIntervals,
 		ActiveTimeIntervals: r.ActiveTimeIntervals,
 		ObjectMatchers:      r.ObjectMatchers,
-		Provenance:          r.Provenance,
 		Receiver:            r.Receiver,
 		RepeatInterval:      r.RepeatInterval,
 		Routes:              make([]*models.Route, len(r.Routes)),
@@ -136,15 +140,31 @@ func (r *Route) ToModelRoute() *models.Route {
 	return out
 }
 
+func (r *PartialRoute) ToModelRoute() *models.Route {
+	out := &models.Route{
+		GroupBy:        r.GroupBy,
+		GroupInterval:  r.GroupInterval,
+		GroupWait:      r.GroupWait,
+		Receiver:       r.Receiver,
+		RepeatInterval: r.RepeatInterval,
+		Routes:         make([]*models.Route, len(r.Routes)),
+	}
+	for i, v := range r.Routes {
+		out.Routes[i] = v.ToModelRoute()
+	}
+
+	return out
+}
+
 // selectorMutuallyExclusive checks if a single route satisfies the mutual exclusivity constraint
 // for checking the entire route including nested routes, use IsRouteSelectorMutuallyExclusive
-func (r *Route) selectorMutuallyExclusive() bool {
+func (r *PartialRoute) selectorMutuallyExclusive() bool {
 	return !(r.RouteSelector != nil && len(r.Routes) > 0) //nolint:staticcheck
 }
 
 // IsRouteSelectorMutuallyExclusive returns true when the route and all its sub-routes
 // satisfy the constraint of routes and routeSelector being mutually exclusive
-func (r *Route) IsRouteSelectorMutuallyExclusive() bool {
+func (r *PartialRoute) IsRouteSelectorMutuallyExclusive() bool {
 	if !r.selectorMutuallyExclusive() {
 		return false
 	}
@@ -160,7 +180,7 @@ func (r *Route) IsRouteSelectorMutuallyExclusive() bool {
 }
 
 // HasRouteSelector checks if the given Route or any of its nested Routes has a RouteSelector
-func (r *Route) HasRouteSelector() bool {
+func (r *PartialRoute) HasRouteSelector() bool {
 	if r.RouteSelector != nil {
 		return true
 	}
