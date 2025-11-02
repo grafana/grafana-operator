@@ -20,16 +20,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 
+	"github.com/go-logr/logr"
 	"github.com/go-openapi/strfmt"
 	"github.com/grafana/grafana-openapi-client-go/client/folders"
 	"github.com/grafana/grafana-openapi-client-go/client/provisioning"
 	"github.com/grafana/grafana-openapi-client-go/models"
+	gtime "github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -41,6 +44,12 @@ import (
 const (
 	conditionAlertGroupSynchronized = "AlertGroupSynchronized"
 )
+
+// parseDurationWithSDK parses duration strings using Grafana's SDK, supporting extended units like 'd' and 'w'
+func parseDurationWithSDK(durationStr string) (time.Duration, error) {
+	// Use Grafana SDK's gtime.ParseDuration which supports 'd' and 'w' units
+	return gtime.ParseDuration(durationStr)
+}
 
 // GrafanaAlertRuleGroupReconciler reconciles a GrafanaAlertRuleGroup object
 type GrafanaAlertRuleGroupReconciler struct {
@@ -125,7 +134,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 		disableProvenance = &trueStr
 	}
 
-	mGroup := crToModel(group, folderUID)
+	mGroup := crToModel(group, folderUID, log)
 
 	log.V(1).Info("converted cr to api model")
 
@@ -148,26 +157,43 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(group.Spec.ResyncPeriod)}, nil
 }
 
-func crToModel(cr *grafanav1beta1.GrafanaAlertRuleGroup, folderUID string) models.AlertRuleGroup {
+func crToModel(cr *grafanav1beta1.GrafanaAlertRuleGroup, folderUID string, log logr.Logger) models.AlertRuleGroup {
 	groupName := cr.GroupName()
 
 	mRules := make(models.ProvisionedAlertRules, 0, len(cr.Spec.Rules))
 
+	log.Info("**** converting cr to api model ****")
+
 	for _, r := range cr.Spec.Rules {
+		log.Info("**** converting rule ****", "rule", r.Title)
 		apiRule := &models.ProvisionedAlertRule{
 			Annotations:  r.Annotations,
 			Condition:    &r.Condition,
 			Data:         make([]*models.AlertQuery, len(r.Data)),
 			ExecErrState: &r.ExecErrState,
 			FolderUID:    &folderUID,
-			For:          (*strfmt.Duration)(&r.For.Duration),
-			IsPaused:     r.IsPaused,
-			Labels:       r.Labels,
-			NoDataState:  r.NoDataState,
-			RuleGroup:    &groupName,
-			Title:        &r.Title,
-			UID:          r.UID,
+			For: func() *strfmt.Duration {
+				if r.For == nil {
+					return nil
+				}
+				// Parse duration string to support 'd' and 'w' units
+				duration, err := parseDurationWithSDK(*r.For)
+				if err != nil {
+					log.V(1).Info(fmt.Sprintf("Invalid 'for' duration: %s", *r.For))
+					return nil
+				}
+				result := (strfmt.Duration)(duration)
+				return &result
+			}(),
+			IsPaused:    r.IsPaused,
+			Labels:      r.Labels,
+			NoDataState: r.NoDataState,
+			RuleGroup:   &groupName,
+			Title:       &r.Title,
+			UID:         r.UID,
 		}
+
+		log.Info("**** converted rule ****", "rule", apiRule)
 
 		if r.NotificationSettings != nil {
 			apiRule.NotificationSettings = &models.AlertRuleNotificationSettings{

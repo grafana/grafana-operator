@@ -3,7 +3,6 @@ package v1beta1
 import (
 	"context"
 	"testing"
-	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -22,6 +21,8 @@ func TestGrafanaStatusListAlertRuleGroup(t *testing.T) {
 
 func newAlertRuleGroup(name string, editable *bool) *GrafanaAlertRuleGroup {
 	noDataState := "NoData"
+
+	forDurationString := "60s"
 
 	return &GrafanaAlertRuleGroup{
 		TypeMeta: metav1.TypeMeta{
@@ -49,7 +50,7 @@ func newAlertRuleGroup(name string, editable *bool) *GrafanaAlertRuleGroup {
 					UID:          "akdj-wonvo",
 					ExecErrState: "KeepLast",
 					NoDataState:  &noDataState,
-					For:          &metav1.Duration{Duration: 60 * time.Second},
+					For:          &forDurationString,
 					Data:         []*AlertQuery{},
 				},
 			},
@@ -136,3 +137,37 @@ var _ = Describe("AlertRuleGroup type", func() {
 		})
 	})
 })
+
+func TestAlertRuleGroupDuration(t *testing.T) {
+	t.Run("Should accept day duration in For field", func(t *testing.T) {
+		dayDuration := "1d"
+		arg := newAlertRuleGroup("day-duration-test", nil)
+		arg.Spec.Rules[0].For = &dayDuration
+
+		assert.Equal(t, "1d", *arg.Spec.Rules[0].For)
+	})
+
+	t.Run("Should accept week duration in For field", func(t *testing.T) {
+		weekDuration := "1w"
+		arg := newAlertRuleGroup("week-duration-test", nil)
+		arg.Spec.Rules[0].For = &weekDuration
+
+		assert.Equal(t, "1w", *arg.Spec.Rules[0].For)
+	})
+
+	t.Run("Should accept fractional day duration in For field", func(t *testing.T) {
+		halfDayDuration := "12h"
+		arg := newAlertRuleGroup("half-day-duration-test", nil)
+		arg.Spec.Rules[0].For = &halfDayDuration
+
+		assert.Equal(t, "12h", *arg.Spec.Rules[0].For)
+	})
+
+	t.Run("Should accept combined duration in For field", func(t *testing.T) {
+		combinedDuration := "26h30m"
+		arg := newAlertRuleGroup("combined-duration-test", nil)
+		arg.Spec.Rules[0].For = &combinedDuration
+
+		assert.Equal(t, "26h30m", *arg.Spec.Rules[0].For)
+	})
+}
