@@ -136,8 +136,6 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 
 	mGroup := crToModel(group, folderUID, log)
 
-	log.V(1).Info("converted cr to api model")
-
 	applyErrors := make(map[string]string)
 
 	for _, grafana := range instances {
@@ -162,10 +160,7 @@ func crToModel(cr *grafanav1beta1.GrafanaAlertRuleGroup, folderUID string, log l
 
 	mRules := make(models.ProvisionedAlertRules, 0, len(cr.Spec.Rules))
 
-	log.Info("**** converting cr to api model ****")
-
 	for _, r := range cr.Spec.Rules {
-		log.Info("**** converting rule ****", "rule", r.Title)
 		apiRule := &models.ProvisionedAlertRule{
 			Annotations:  r.Annotations,
 			Condition:    &r.Condition,
@@ -193,7 +188,7 @@ func crToModel(cr *grafanav1beta1.GrafanaAlertRuleGroup, folderUID string, log l
 			UID:         r.UID,
 		}
 
-		log.Info("**** converted rule ****", "rule", apiRule)
+		log.V(1).Info("**** converted rule ****", "rule", apiRule)
 
 		if r.NotificationSettings != nil {
 			apiRule.NotificationSettings = &models.AlertRuleNotificationSettings{
