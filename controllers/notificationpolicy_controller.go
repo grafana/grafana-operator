@@ -208,9 +208,9 @@ func assembleNotificationPolicyRoutes(ctx context.Context, k8sClient client.Clie
 	// so we can detect loops
 	visitedChilds := make(map[string]bool)
 
-	var assembleRoute func(*v1beta1.Route) error
+	var assembleRoute func(*v1beta1.PartialRoute) error
 
-	assembleRoute = func(route *v1beta1.Route) error {
+	assembleRoute = func(route *v1beta1.PartialRoute) error {
 		if route.RouteSelector != nil {
 			routes, err := getMatchingNotificationPolicyRoutes(ctx, k8sClient, route.RouteSelector, namespace)
 			if err != nil {
@@ -236,7 +236,7 @@ func assembleNotificationPolicyRoutes(ctx context.Context, k8sClient client.Clie
 				visitedChilds[key] = true
 
 				// Recursively assemble the matched route
-				if err := assembleRoute(&matchedRoute.Spec.Route); err != nil {
+				if err := assembleRoute(&matchedRoute.Spec.PartialRoute); err != nil {
 					return err
 				}
 
@@ -247,7 +247,7 @@ func assembleNotificationPolicyRoutes(ctx context.Context, k8sClient client.Clie
 		} else {
 			// if no RouteSelector is specified, process inline routes, as they are mutually exclusive
 			for i, inlineRoute := range route.Routes {
-				if err := assembleRoute(inlineRoute); err != nil {
+				if err := assembleRoute(&inlineRoute.PartialRoute); err != nil {
 					return err
 				}
 
@@ -259,7 +259,7 @@ func assembleNotificationPolicyRoutes(ctx context.Context, k8sClient client.Clie
 	}
 
 	// Start with Spec.Route
-	if err := assembleRoute(cr.Spec.Route); err != nil {
+	if err := assembleRoute(&cr.Spec.Route.PartialRoute); err != nil {
 		return nil, err
 	}
 
@@ -375,7 +375,7 @@ func (r *GrafanaNotificationPolicyReconciler) SetupWithManager(mgr ctrl.Manager)
 			}()
 
 			// check if notification policy route is valid
-			if !npr.Spec.Route.IsRouteSelectorMutuallyExclusive() {
+			if !npr.Spec.PartialRoute.IsRouteSelectorMutuallyExclusive() {
 				setInvalidSpecMutuallyExclusive(&npr.Status.Conditions, npr.Generation)
 				return nil
 			}

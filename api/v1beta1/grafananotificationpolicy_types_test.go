@@ -39,13 +39,12 @@ func newNotificationPolicy(name string, editable *bool) *GrafanaNotificationPoli
 					},
 				},
 			},
-			Route: &Route{
-				Continue:            false,
-				Receiver:            "grafana-default-email",
-				GroupBy:             []string{"group_name", "alert_name"},
-				MuteTimeIntervals:   []string{},
-				ActiveTimeIntervals: []string{},
-				Routes:              []*Route{},
+			Route: &RootRoute{
+				PartialRoute: PartialRoute{
+					Receiver: "grafana-default-email",
+					GroupBy:  []string{"group_name", "alert_name"},
+					Routes:   []*Route{},
+				},
 			},
 		},
 	}
@@ -100,24 +99,24 @@ var _ = Describe("NotificationPolicy type", func() {
 func TestIsRouteSelectorMutuallyExclusive(t *testing.T) {
 	tests := []struct {
 		name     string
-		route    *Route
+		route    *PartialRoute
 		expected bool
 	}{
 		{
 			name:     "Empty route",
-			route:    &Route{},
+			route:    &PartialRoute{},
 			expected: true,
 		},
 		{
 			name: "Route with only RouteSelector",
-			route: &Route{
+			route: &PartialRoute{
 				RouteSelector: &metav1.LabelSelector{},
 			},
 			expected: true,
 		},
 		{
 			name: "Route with only sub-routes",
-			route: &Route{
+			route: &PartialRoute{
 				Routes: []*Route{
 					{},
 					{},
@@ -127,7 +126,7 @@ func TestIsRouteSelectorMutuallyExclusive(t *testing.T) {
 		},
 		{
 			name: "Route with both RouteSelector and sub-routes",
-			route: &Route{
+			route: &PartialRoute{
 				RouteSelector: &metav1.LabelSelector{},
 				Routes: []*Route{
 					{},
@@ -137,14 +136,18 @@ func TestIsRouteSelectorMutuallyExclusive(t *testing.T) {
 		},
 		{
 			name: "Nested routes with mutual exclusivity",
-			route: &Route{
+			route: &PartialRoute{
 				Routes: []*Route{
 					{
-						RouteSelector: &metav1.LabelSelector{},
+						PartialRoute: PartialRoute{
+							RouteSelector: &metav1.LabelSelector{},
+						},
 					},
 					{
-						Routes: []*Route{
-							{},
+						PartialRoute: PartialRoute{
+							Routes: []*Route{
+								{},
+							},
 						},
 					},
 				},
@@ -153,12 +156,14 @@ func TestIsRouteSelectorMutuallyExclusive(t *testing.T) {
 		},
 		{
 			name: "Nested routes without mutual exclusivity",
-			route: &Route{
+			route: &PartialRoute{
 				Routes: []*Route{
 					{
-						RouteSelector: &metav1.LabelSelector{},
-						Routes: []*Route{
-							{},
+						PartialRoute: PartialRoute{
+							RouteSelector: &metav1.LabelSelector{},
+							Routes: []*Route{
+								{},
+							},
 						},
 					},
 				},
