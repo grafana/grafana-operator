@@ -61,10 +61,6 @@ type GrafanaDashboardReconciler struct {
 	Cfg    *Config
 }
 
-//+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadashboards,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadashboards/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanadashboards/finalizers,verbs=update
-
 func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) { //nolint:gocyclo
 	log := logf.FromContext(ctx).WithName("GrafanaDashboardReconciler")
 	ctx = logf.IntoContext(ctx, log)

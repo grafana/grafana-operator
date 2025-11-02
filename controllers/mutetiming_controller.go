@@ -46,10 +46,6 @@ type GrafanaMuteTimingReconciler struct {
 	Cfg    *Config
 }
 
-//+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanamutetimings,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanamutetimings/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanamutetimings/finalizers,verbs=update
-
 func (r *GrafanaMuteTimingReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx).WithName("GrafanaMuteTimingReconciler")
 	ctx = logf.IntoContext(ctx, log)
