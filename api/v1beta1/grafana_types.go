@@ -73,7 +73,8 @@ type GrafanaSpec struct {
 	Route *RouteOpenshiftV1 `json:"route,omitempty"`
 	// Service sets how the service object should look like with your grafana instance, contains a number of defaults.
 	Service *ServiceV1 `json:"service,omitempty"`
-	// Version specifies the version of Grafana to use for this deployment. It follows the same format as the docker.io/grafana/grafana tags
+	// Version sets the tag of the default image: docker.io/grafana/grafana.
+	// Allows full image refs with/without sha256checksum: "registry/repo/image:tag@sha"
 	Version string `json:"version,omitempty"`
 	// Deployment sets how the deployment object should look like with your grafana instance, contains a number of defaults.
 	Deployment *DeploymentV1 `json:"deployment,omitempty"`
