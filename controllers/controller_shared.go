@@ -28,6 +28,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
+// +kubebuilder:rbac:groups=grafana.integreatly.org,resources=*,verbs=get;list;watch;patch
+// +kubebuilder:rbac:groups=grafana.integreatly.org,resources=*/status,verbs=get;update;patch
+
 const (
 	// Synchronization size and timeout values
 	syncBatchSize       = 100

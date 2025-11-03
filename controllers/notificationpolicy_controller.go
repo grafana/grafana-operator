@@ -60,13 +60,6 @@ type GrafanaNotificationPolicyReconciler struct {
 	Cfg      *Config
 }
 
-//+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafananotificationpolicies,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafananotificationpolicies/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafananotificationpolicies/finalizers,verbs=update
-//+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafananotificationpolicyroutes,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafananotificationpolicyroutes/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafananotificationpolicyroutes/finalizers,verbs=update
-
 func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx).WithName("GrafanaNotificationPolicyReconciler")
 	ctx = logf.IntoContext(ctx, log)

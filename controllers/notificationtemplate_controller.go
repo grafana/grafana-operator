@@ -45,10 +45,6 @@ type GrafanaNotificationTemplateReconciler struct {
 	Cfg    *Config
 }
 
-//+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafananotificationtemplates,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafananotificationtemplates/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafananotificationtemplates/finalizers,verbs=update
-
 func (r *GrafanaNotificationTemplateReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx).WithName("GrafanaNotificationTemplateReconciler")
 	ctx = logf.IntoContext(ctx, log)

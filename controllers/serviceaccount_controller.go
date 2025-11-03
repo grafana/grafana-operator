@@ -79,11 +79,6 @@ type GrafanaServiceAccountReconciler struct {
 	Cfg    *Config
 }
 
-// +kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanaserviceaccounts,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanaserviceaccounts/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanaserviceaccounts/finalizers,verbs=update
-// +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
-
 // Reconcile synchronizes the actual state (Grafana service accounts and Kubernetes secrets)
 // with the desired state defined in the GrafanaServiceAccount CR spec,
 // taking into account Kubernetes' eventual consistency model.

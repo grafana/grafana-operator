@@ -57,58 +57,16 @@ rules:
   - apiGroups:
       - grafana.integreatly.org
     resources:
-      - grafanaalertrulegroups
-      - grafanacontactpoints
-      - grafanadashboards
-      - grafanadatasources
-      - grafanafolders
-      - grafanalibrarypanels
-      - grafanamutetimings
-      - grafananotificationpolicies
-      - grafananotificationpolicyroutes
-      - grafananotificationtemplates
-      - grafanas
-      - grafanaserviceaccounts
+      - '*'
     verbs:
-      - create
-      - delete
       - get
       - list
       - patch
-      - update
       - watch
   - apiGroups:
       - grafana.integreatly.org
     resources:
-      - grafanaalertrulegroups/finalizers
-      - grafanacontactpoints/finalizers
-      - grafanadashboards/finalizers
-      - grafanadatasources/finalizers
-      - grafanafolders/finalizers
-      - grafanalibrarypanels/finalizers
-      - grafanamutetimings/finalizers
-      - grafananotificationpolicies/finalizers
-      - grafananotificationpolicyroutes/finalizers
-      - grafananotificationtemplates/finalizers
-      - grafanas/finalizers
-      - grafanaserviceaccounts/finalizers
-    verbs:
-      - update
-  - apiGroups:
-      - grafana.integreatly.org
-    resources:
-      - grafanaalertrulegroups/status
-      - grafanacontactpoints/status
-      - grafanadashboards/status
-      - grafanadatasources/status
-      - grafanafolders/status
-      - grafanalibrarypanels/status
-      - grafanamutetimings/status
-      - grafananotificationpolicies/status
-      - grafananotificationpolicyroutes/status
-      - grafananotificationtemplates/status
-      - grafanas/status
-      - grafanaserviceaccounts/status
+      - '*/status'
     verbs:
       - get
       - patch

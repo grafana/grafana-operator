@@ -55,10 +55,6 @@ type GrafanaContactPointReconciler struct {
 	Cfg    *Config
 }
 
-//+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanacontactpoints,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanacontactpoints/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=grafana.integreatly.org,resources=grafanacontactpoints/finalizers,verbs=update
-
 func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx).WithName("GrafanaContactPointReconciler")
 	ctx = logf.IntoContext(ctx, log)
