@@ -115,7 +115,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	removeInvalidSpec(&cr.Status.Conditions)
 
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
+	instances, _, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
@@ -221,7 +221,7 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 
 	uid := content.CustomUIDOrUID(cr, cr.Status.UID)
 
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
+	instances, _, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}

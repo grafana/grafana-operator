@@ -134,7 +134,7 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 
 	meta.RemoveStatusCondition(&notificationPolicy.Status.Conditions, conditionNotificationPolicyLoopDetected)
 
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, notificationPolicy)
+	instances, _, err := GetScopedMatchingInstances(ctx, r.Client, notificationPolicy)
 	if err != nil {
 		setNoMatchingInstancesCondition(&notificationPolicy.Status.Conditions, notificationPolicy.Generation, err)
 		meta.RemoveStatusCondition(&notificationPolicy.Status.Conditions, conditionNotificationPolicySynchronized)
@@ -304,7 +304,7 @@ func (r *GrafanaNotificationPolicyReconciler) finalize(ctx context.Context, noti
 	log := logf.FromContext(ctx)
 	log.Info("Finalizing GrafanaNotificationPolicy")
 
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, notificationPolicy)
+	instances, _, err := GetScopedMatchingInstances(ctx, r.Client, notificationPolicy)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}

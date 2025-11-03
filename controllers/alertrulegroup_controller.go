@@ -91,7 +91,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 
 	removeSuspended(&group.Status.Conditions)
 
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, group)
+	instances, _, err := GetScopedMatchingInstances(ctx, r.Client, group)
 	if err != nil {
 		setNoMatchingInstancesCondition(&group.Status.Conditions, group.Generation, err)
 		meta.RemoveStatusCondition(&group.Status.Conditions, conditionAlertGroupSynchronized)
@@ -299,7 +299,7 @@ func (r *GrafanaAlertRuleGroupReconciler) finalize(ctx context.Context, group *g
 		isCleanupInGrafanaRequired = false
 	}
 
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, group)
+	instances, _, err := GetScopedMatchingInstances(ctx, r.Client, group)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}

@@ -53,6 +53,9 @@ const (
 
 	// Finalizer
 	grafanaFinalizer = "operator.grafana.com/finalizer"
+
+	// Annotations
+	annotationMatchedInstances = "operator.grafana.com/matched-instances"
 )
 
 var (
@@ -92,13 +95,13 @@ func defaultRateLimiter() workqueue.TypedRateLimiter[reconcile.Request] {
 // Only matching instances in the scope of the resource are returned
 // Resources with allowCrossNamespaceImport expands the scope to the entire cluster
 // Intended to be used in reconciler functions
-func GetScopedMatchingInstances(ctx context.Context, k8sClient client.Client, cr v1beta1.CommonResource) ([]v1beta1.Grafana, error) {
+func GetScopedMatchingInstances(ctx context.Context, k8sClient client.Client, cr v1beta1.CommonResource) ([]v1beta1.Grafana, []types.NamespacedName, error) {
 	log := logf.FromContext(ctx)
 	instanceSelector := cr.MatchLabels()
 
 	// Should never happen, sanity check
 	if instanceSelector == nil {
-		return []v1beta1.Grafana{}, nil
+		return []v1beta1.Grafana{}, []types.NamespacedName{}, nil
 	}
 
 	opts := []client.ListOption{
@@ -115,11 +118,33 @@ func GetScopedMatchingInstances(ctx context.Context, k8sClient client.Client, cr
 
 	err := k8sClient.List(ctx, &list, opts...)
 	if err != nil {
-		return []v1beta1.Grafana{}, err
+		return []v1beta1.Grafana{}, []types.NamespacedName{}, err
 	}
 
+	matchedInstancesDelta := make([]types.NamespacedName, 0, len(list.Items))
+
+	// Find all previously matched instances
+	rawInst := cr.Metadata().Annotations[annotationMatchedInstances]
+	if rawInst != "" {
+		for inst := range strings.SplitSeq(rawInst, ",") {
+			meta := strings.Split(inst, "/")
+
+			// Remove duplicates
+			found := slices.ContainsFunc(matchedInstancesDelta, func(n types.NamespacedName) bool {
+				return n.Namespace == meta[0] && n.Name == meta[1]
+			})
+			if !found {
+				matchedInstancesDelta = append(matchedInstancesDelta, types.NamespacedName{
+					Namespace: meta[0],
+					Name:      meta[1],
+				})
+			}
+		}
+	}
+
+	// NOTE Triggers cleanup against all previously matched instances if any
 	if len(list.Items) == 0 {
-		return []v1beta1.Grafana{}, nil
+		return []v1beta1.Grafana{}, matchedInstancesDelta, nil
 	}
 
 	selectedList := make([]v1beta1.Grafana, 0, len(list.Items))
@@ -132,6 +157,10 @@ func GetScopedMatchingInstances(ctx context.Context, k8sClient client.Client, cr
 		if !selected {
 			continue
 		}
+
+		// Remove instances that were matched again
+		// This way a delta is built for later cleanup
+		matchedInstancesDelta = removeNamespacedNameEntry(matchedInstancesDelta, instance.Namespace, instance.Name)
 
 		// admin url is required to interact with Grafana
 		// the instance or route might not yet be ready
@@ -147,11 +176,22 @@ func GetScopedMatchingInstances(ctx context.Context, k8sClient client.Client, cr
 		log.Info("Grafana instances not ready, excluded from matching", "instances", unreadyInstances)
 	}
 
+	// TODO Decide whether to log recently excluded instances here or in each controller
+	// if len(matchedInstancesDelta) > 0 {
+	// 	log.Info("Grafana instances excluded by instanceSelector, to be removed from instances", "instances", matchedInstancesDelta)
+	// }
+
 	if len(selectedList) == 0 {
 		log.Info("None of the available Grafana instances matched the selector, skipping reconciliation", "AllowCrossNamespaceImport", cr.AllowCrossNamespace())
 	}
 
-	return selectedList, nil
+	return selectedList, matchedInstancesDelta, nil
+}
+
+func removeNamespacedNameEntry(s []types.NamespacedName, namespace, name string) []types.NamespacedName {
+	return slices.DeleteFunc(s, func(n types.NamespacedName) bool {
+		return n.Namespace == namespace && n.Name == name
+	})
 }
 
 // getFolderUID returns the folderUID from an existing GrafanaFolder CR within the same namespace

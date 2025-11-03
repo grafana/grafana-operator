@@ -85,7 +85,7 @@ func (r *GrafanaMuteTimingReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	removeSuspended(&muteTiming.Status.Conditions)
 
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, muteTiming)
+	instances, _, err := GetScopedMatchingInstances(ctx, r.Client, muteTiming)
 	if err != nil {
 		setNoMatchingInstancesCondition(&muteTiming.Status.Conditions, muteTiming.Generation, err)
 		meta.RemoveStatusCondition(&muteTiming.Status.Conditions, conditionMuteTimingSynchronized)
@@ -207,7 +207,7 @@ func (r *GrafanaMuteTimingReconciler) finalize(ctx context.Context, muteTiming *
 	log := logf.FromContext(ctx)
 	log.Info("Finalizing GrafanaMuteTiming")
 
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, muteTiming)
+	instances, _, err := GetScopedMatchingInstances(ctx, r.Client, muteTiming)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}

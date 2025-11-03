@@ -97,7 +97,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	removeSuspended(&cr.Status.Conditions)
 
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
+	instances, _, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDatasourceSynchronized)
@@ -190,7 +190,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 }
 
 func (r *GrafanaDatasourceReconciler) deleteOldDatasource(ctx context.Context, cr *v1beta1.GrafanaDatasource) error {
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
+	instances, _, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
@@ -223,7 +223,7 @@ func (r *GrafanaDatasourceReconciler) finalize(ctx context.Context, cr *v1beta1.
 	log := logf.FromContext(ctx)
 	log.Info("Finalizing GrafanaDatasource")
 
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
+	instances, _, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}

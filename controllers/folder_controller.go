@@ -100,7 +100,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	removeInvalidSpec(&folder.Status.Conditions)
 
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, folder)
+	instances, _, err := GetScopedMatchingInstances(ctx, r.Client, folder)
 	if err != nil {
 		setNoMatchingInstancesCondition(&folder.Status.Conditions, folder.Generation, err)
 		meta.RemoveStatusCondition(&folder.Status.Conditions, conditionFolderSynchronized)
@@ -154,7 +154,7 @@ func (r *GrafanaFolderReconciler) finalize(ctx context.Context, folder *grafanav
 
 	uid := folder.CustomUIDOrUID()
 
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, folder)
+	instances, _, err := GetScopedMatchingInstances(ctx, r.Client, folder)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}

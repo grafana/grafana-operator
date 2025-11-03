@@ -533,18 +533,18 @@ var _ = Describe("GetMatchingInstances functions", Ordered, func() {
 
 	Context("Ensure AllowCrossNamespaceImport is upheld by GetScopedMatchingInstances", func() {
 		It("Finds all ready instances when instanceSelector is empty", func() {
-			instances, err := GetScopedMatchingInstances(testCtx, k8sClient, matchAllFolder)
+			instances, _, err := GetScopedMatchingInstances(testCtx, k8sClient, matchAllFolder)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(instances).To(HaveLen(2 + 2)) // +2 To account for instances created in controllers/suite_test.go to provoke conditions
 		})
 		It("Finds all ready and Matching instances", func() {
-			instances, err := GetScopedMatchingInstances(testCtx, k8sClient, &allowFolder)
+			instances, _, err := GetScopedMatchingInstances(testCtx, k8sClient, &allowFolder)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(instances).ToNot(BeEmpty())
 			Expect(instances).To(HaveLen(2))
 		})
 		It("Finds matching and ready and matching instance in namespace", func() {
-			instances, err := GetScopedMatchingInstances(testCtx, k8sClient, denyFolder)
+			instances, _, err := GetScopedMatchingInstances(testCtx, k8sClient, denyFolder)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(instances).ToNot(BeEmpty())
 			Expect(instances).To(HaveLen(1))
