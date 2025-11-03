@@ -1,13 +1,11 @@
 package v1beta1
 
 import (
-	"context"
-	"encoding/json"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	// apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -23,68 +21,110 @@ func TestGrafanaStatusListContactPoint(t *testing.T) {
 	})
 }
 
-func newContactPoint(name string, uid string) *GrafanaContactPoint {
-	settings := new(apiextensionsv1.JSON)
-	json.Unmarshal([]byte("{}"), settings) //nolint:errcheck
-
+func newContactPoint(name string) *GrafanaContactPoint {
 	return &GrafanaContactPoint{
-		TypeMeta: v1.TypeMeta{
-			APIVersion: APIVersion,
-			Kind:       "GrafanaContactPoint",
-		},
 		ObjectMeta: v1.ObjectMeta{
 			Name:      name,
 			Namespace: "default",
 		},
 		Spec: GrafanaContactPointSpec{
-			CustomUID: uid,
 			GrafanaCommonSpec: GrafanaCommonSpec{
-				InstanceSelector: &v1.LabelSelector{
-					MatchLabels: map[string]string{
-						"test": "datasource",
-					},
-				},
+				InstanceSelector: &v1.LabelSelector{},
 			},
-			Settings: settings,
 		},
 	}
 }
 
 var _ = Describe("ContactPoint type", func() {
-	Context("Ensure ContactPoint spec.uid is immutable", func() {
-		ctx := context.Background()
+	Context("Ensure ContactPoint spec.name is immutable", func() {
+		t := GinkgoT()
 
-		It("Should block adding uid field when missing", func() {
-			contactpoint := newContactPoint("missing-uid", "")
+		It("Should block adding name field when missing", func() {
+			contactpoint := newContactPoint("adding-name")
 			contactpoint.Spec.Type = "webhook" // nolint:goconst
-			By("Create new ContactPoint without uid")
-			Expect(k8sClient.Create(ctx, contactpoint)).To(Succeed())
 
-			By("Adding a uid")
-			contactpoint.Spec.CustomUID = "new-contactpoint-uid"
-			Expect(k8sClient.Update(ctx, contactpoint)).To(HaveOccurred())
+			err := k8sClient.Create(t.Context(), contactpoint)
+			require.NoError(t, err)
+
+			contactpoint.Spec.Name = "update-name"
+			err = k8sClient.Update(t.Context(), contactpoint)
+			require.Error(t, err)
 		})
 
-		It("Should block removing uid field when set", func() {
-			contactpoint := newContactPoint("existing-uid", "existing-uid")
-			contactpoint.Spec.Type = "webhook" // nolint:goconst
-			By("Creating ContactPoint with existing UID")
-			Expect(k8sClient.Create(ctx, contactpoint)).To(Succeed())
+		It("Should block removing name field when set", func() {
+			contactpoint := newContactPoint("removing-name")
+			contactpoint.Spec.Type = "webhook"
+			contactpoint.Spec.Name = "initial-name"
 
-			By("And setting UID to ''")
-			contactpoint.Spec.CustomUID = ""
-			Expect(k8sClient.Update(ctx, contactpoint)).To(HaveOccurred())
+			err := k8sClient.Create(t.Context(), contactpoint)
+			require.NoError(t, err)
+
+			contactpoint.Spec.Name = ""
+			err = k8sClient.Update(t.Context(), contactpoint)
+			require.Error(t, err)
 		})
 
-		It("Should block changing value of uid", func() {
-			contactpoint := newContactPoint("removing-uid", "existing-uid")
+		It("Should block changing value of name", func() {
+			contactpoint := newContactPoint("updating-name")
 			contactpoint.Spec.Type = "webhook" // nolint:goconst
-			By("Create new ContactPoint with existing UID")
-			Expect(k8sClient.Create(ctx, contactpoint)).To(Succeed())
+			contactpoint.Spec.Name = "initial-name"
 
-			By("Changing the existing UID")
-			contactpoint.Spec.CustomUID = "new-contactpoint-uid"
-			Expect(k8sClient.Update(ctx, contactpoint)).To(HaveOccurred())
+			err := k8sClient.Create(t.Context(), contactpoint)
+			require.NoError(t, err)
+
+			contactpoint.Spec.Name = "new-name"
+			err = k8sClient.Update(t.Context(), contactpoint)
+			require.Error(t, err)
+		})
+	})
+
+	Context("Ensure ContactPoint receivers is correctly handled", func() {
+		settings := apiextensionsv1.JSON{Raw: []byte("{}")}
+
+		It("Succeeds when no receiver is found", func() {
+			t := GinkgoT()
+
+			contactpoint := newContactPoint("missing-receivers")
+			err := k8sClient.Create(t.Context(), contactpoint)
+			require.NoError(t, err)
+		})
+
+		It("Successfully created with top level receiver", func() {
+			t := GinkgoT()
+
+			contactpoint := newContactPoint("top-level-receiver")
+			contactpoint.Spec.Type = "webhook"
+			contactpoint.Spec.Settings = &settings
+
+			err := k8sClient.Create(t.Context(), contactpoint)
+			require.NoError(t, err)
+		})
+
+		It("Successfully created with list of receivers", func() {
+			t := GinkgoT()
+
+			contactpoint := newContactPoint("list-of-receivers")
+			contactpoint.Spec.Receivers = []ContactPointReceiver{{
+				Type:     "webhook",
+				Settings: &settings,
+			}}
+			err := k8sClient.Create(t.Context(), contactpoint)
+			require.NoError(t, err)
+		})
+
+		It("Successfully created with both top level and list of receivers", func() {
+			t := GinkgoT()
+
+			contactpoint := newContactPoint("both-top-level-and-list-of-receiver")
+			contactpoint.Spec.Type = "webhook"
+			contactpoint.Spec.Settings = &settings
+			contactpoint.Spec.Receivers = []ContactPointReceiver{{
+				Type:     "webhook",
+				Settings: &settings,
+			}}
+
+			err := k8sClient.Create(t.Context(), contactpoint)
+			require.NoError(t, err)
 		})
 	})
 })
