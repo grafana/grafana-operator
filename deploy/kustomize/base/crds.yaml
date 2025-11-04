@@ -267,7 +267,6 @@ spec:
                   - for
                   - noDataState
                   - title
-                  - uid
                   type: object
                 minItems: 1
                 type: array

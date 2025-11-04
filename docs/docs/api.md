@@ -345,13 +345,6 @@ AlertRule defines a specific rule to be evaluated. It is based on the upstream m
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b>uid</b></td>
-        <td>string</td>
-        <td>
-          UID of the alert rule. Can be any string consisting of alphanumeric characters, - and _ with a maximum length of 40<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
         <td><b>annotations</b></td>
         <td>map[string]string</td>
         <td>
@@ -402,6 +395,13 @@ AlertRule defines a specific rule to be evaluated. It is based on the upstream m
         <td>object</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>uid</b></td>
+        <td>string</td>
+        <td>
+          UID of the alert rule. Can be any string consisting of alphanumeric characters, - and _ with a maximum length of 40<br/>
         </td>
         <td>false</td>
       </tr></tbody>
