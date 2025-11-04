@@ -163,11 +163,20 @@ func TestAlertRuleGroupDuration(t *testing.T) {
 		assert.Equal(t, "12h", *arg.Spec.Rules[0].For)
 	})
 
-	t.Run("Should accept combined duration in For field", func(t *testing.T) {
-		combinedDuration := "26h30m"
-		arg := newAlertRuleGroup("combined-duration-test", nil)
-		arg.Spec.Rules[0].For = &combinedDuration
+	t.Run("Should accept fractional week minutes in For field", func(t *testing.T) {
+		halfWeekMinutes := "30m"
+		arg := newAlertRuleGroup("half-week-minutes-test", nil)
+		arg.Spec.Rules[0].For = &halfWeekMinutes
 
-		assert.Equal(t, "26h30m", *arg.Spec.Rules[0].For)
+		assert.Equal(t, "30m", *arg.Spec.Rules[0].For)
 	})
+
+	t.Run("Should accept fractional week seconds in For field", func(t *testing.T) {
+		halfWeekSeconds := "30s"
+		arg := newAlertRuleGroup("half-week-seconds-test", nil)
+		arg.Spec.Rules[0].For = &halfWeekSeconds
+
+		assert.Equal(t, "30s", *arg.Spec.Rules[0].For)
+	})
+
 }

@@ -167,28 +167,23 @@ func crToModel(cr *grafanav1beta1.GrafanaAlertRuleGroup, folderUID string, log l
 			Data:         make([]*models.AlertQuery, len(r.Data)),
 			ExecErrState: &r.ExecErrState,
 			FolderUID:    &folderUID,
-			For: func() *strfmt.Duration {
-				if r.For == nil {
-					return nil
-				}
-				// Parse duration string to support 'd' and 'w' units
-				duration, err := parseDurationWithSDK(*r.For)
-				if err != nil {
-					log.V(1).Info(fmt.Sprintf("Invalid 'for' duration: %s", *r.For))
-					return nil
-				}
-				result := (strfmt.Duration)(duration)
-				return &result
-			}(),
-			IsPaused:    r.IsPaused,
-			Labels:      r.Labels,
-			NoDataState: r.NoDataState,
-			RuleGroup:   &groupName,
-			Title:       &r.Title,
-			UID:         r.UID,
+			IsPaused:     r.IsPaused,
+			Labels:       r.Labels,
+			NoDataState:  r.NoDataState,
+			RuleGroup:    &groupName,
+			Title:        &r.Title,
+			UID:          r.UID,
 		}
 
-		log.V(1).Info("**** converted rule ****", "rule", apiRule)
+		if r.For != nil {
+			duration, err := gtime.ParseDuration(*r.For)
+			if err != nil {
+				log.V(1).Info(fmt.Sprintf("Invalid 'for' duration: %s", *r.For))
+			} else {
+				result := (strfmt.Duration)(duration)
+				apiRule.For = &result
+			}
+		}
 
 		if r.NotificationSettings != nil {
 			apiRule.NotificationSettings = &models.AlertRuleNotificationSettings{
