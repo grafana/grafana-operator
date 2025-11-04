@@ -15,7 +15,6 @@ var _ = Describe("AlertRulegroup Reconciler: Provoke Conditions", func() {
 	rules := []v1beta1.AlertRule{
 		{
 			Title:        "TestRule",
-			UID:          "akdj-wonvo",
 			ExecErrState: "KeepLast",
 			NoDataState:  &noDataState,
 			Data:         []*v1beta1.AlertQuery{},
@@ -80,7 +79,6 @@ var _ = Describe("AlertRulegroup Reconciler: Provoke Conditions", func() {
 				Rules: []v1beta1.AlertRule{
 					{
 						Title:     "MathRule",
-						UID:       "oefiodwa-dam-dwa",
 						Condition: "A",
 						Data: []*v1beta1.AlertQuery{
 							{

@@ -46,7 +46,6 @@ func newAlertRuleGroup(name string, editable *bool) *GrafanaAlertRuleGroup {
 			Rules: []AlertRule{
 				{
 					Title:        "TestRule",
-					UID:          "akdj-wonvo",
 					ExecErrState: "KeepLast",
 					NoDataState:  &noDataState,
 					For:          &metav1.Duration{Duration: 60 * time.Second},
