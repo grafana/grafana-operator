@@ -143,13 +143,13 @@ func (in *GrafanaContactPoint) NameFromSpecOrMeta() string {
 	return in.Name
 }
 
-// Wrapper around receivers[].CustomUID or metadata.uid/idx
+// Wrapper around receivers[].CustomUID or metadata.uid_idx
 func (in *ContactPointReceiver) CustomUIDOrUID(metaUID types.UID, idx int) string {
 	if in.CustomUID != "" {
 		return in.CustomUID
 	}
 
-	// UID/idx is stable and allows overriding
+	// UID_idx is stable and allows overriding
 	return fmt.Sprintf("%s_%d", string(metaUID), idx)
 }
 
