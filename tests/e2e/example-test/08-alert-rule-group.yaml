@@ -64,3 +64,56 @@ spec:
       record:
         from: A
         metric: "weather:temperature:celsius"
+    - condition: B
+      data:
+        - datasourceUid: grafanacloud-demoinfra-prom
+          model:
+            datasource:
+              type: prometheus
+              uid: grafanacloud-demoinfra-prom
+            editorMode: code
+            expr: weather_temp_c{location="Toronto"}
+            instant: true
+            intervalMs: 1000
+            legendFormat: __auto
+            maxDataPoints: 43200
+            range: false
+            refId: A
+          refId: A
+          relativeTimeRange:
+            from: 600
+        - datasourceUid: __expr__
+          model:
+            conditions:
+              - evaluator:
+                  params:
+                    - 10
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                reducer:
+                  params: []
+                  type: last
+                type: query
+            datasource:
+              type: __expr__
+              uid: __expr__
+            expression: A
+            intervalMs: 1000
+            maxDataPoints: 43200
+            refId: B
+            type: threshold
+          refId: B
+          relativeTimeRange:
+            from: 600
+      execErrState: Error
+      for: 5m0s
+      noDataState: NoData
+      title: Second test rule
+      ## Grafana-managed recording rule, which is an opt-in feature that must be first enabled and configured in a Grafana instance
+      record:
+        from: A
+        metric: "weather:temperature:celsius"
