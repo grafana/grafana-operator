@@ -151,7 +151,7 @@ func crToModel(cr *grafanav1beta1.GrafanaAlertRuleGroup, folderUID string) model
 
 	mRules := make(models.ProvisionedAlertRules, 0, len(cr.Spec.Rules))
 
-	for _, r := range cr.Spec.Rules {
+	for i, r := range cr.Spec.Rules {
 		apiRule := &models.ProvisionedAlertRule{
 			Annotations:  r.Annotations,
 			Condition:    &r.Condition,
@@ -164,7 +164,7 @@ func crToModel(cr *grafanav1beta1.GrafanaAlertRuleGroup, folderUID string) model
 			NoDataState:  r.NoDataState,
 			RuleGroup:    &groupName,
 			Title:        &r.Title,
-			UID:          r.UID,
+			UID:          r.CustomUIDOrUID(cr.UID, i),
 		}
 
 		if r.NotificationSettings != nil {
@@ -234,8 +234,8 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 
 	applied, err := cl.Provisioning.GetAlertRuleGroup(mGroup.Title, folderUID)
 
-	var ruleNotFound *provisioning.GetAlertRuleGroupNotFound
-	if err != nil && !errors.As(err, &ruleNotFound) {
+	var groupNotFound *provisioning.GetAlertRuleGroupNotFound
+	if err != nil && !errors.As(err, &groupNotFound) {
 		return fmt.Errorf("fetching existing alert rule group: %w", err)
 	}
 

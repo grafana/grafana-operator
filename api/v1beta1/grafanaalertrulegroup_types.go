@@ -17,10 +17,13 @@ limitations under the License.
 package v1beta1
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana-openapi-client-go/models"
 	operatorapi "github.com/grafana/grafana-operator/v5/api"
 	apiextensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 // GrafanaAlertRuleGroupSpec defines the desired state of GrafanaAlertRuleGroup
@@ -104,7 +107,7 @@ type AlertRule struct {
 	// UID of the alert rule. Can be any string consisting of alphanumeric characters, - and _ with a maximum length of 40
 	// +kubebuilder:validation:MaxLength=40
 	// +kubebuilder:validation:Pattern="^[a-zA-Z0-9-_]+$"
-	UID string `json:"uid"`
+	UID string `json:"uid,omitempty"`
 }
 
 type NotificationSettings struct {
@@ -216,6 +219,16 @@ func (in *GrafanaAlertRuleGroup) CommonStatus() *GrafanaCommonStatus {
 
 func (in *GrafanaAlertRuleGroup) NamespacedResource() NamespacedResource {
 	return NewNamespacedResource(in.Namespace, in.Name, in.GroupName())
+}
+
+// Wrapper around rules[].uid or metadata.uid_idx
+func (in *AlertRule) CustomUIDOrUID(metaUID types.UID, idx int) string {
+	if in.UID != "" {
+		return in.UID
+	}
+
+	// UID_idx is stable and allows overriding
+	return fmt.Sprintf("%s_%d", string(metaUID), idx)
 }
 
 var _ operatorapi.FolderReferencer = (*GrafanaAlertRuleGroup)(nil)
