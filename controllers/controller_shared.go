@@ -483,6 +483,10 @@ func addAnnotation(ctx context.Context, cl client.Client, cr client.Object, key 
 		return nil
 	}
 
+	if crAnnotations == nil {
+		crAnnotations = make(map[string]string, 0)
+	}
+
 	// Add key to map and create patch
 	crAnnotations[key] = value
 
