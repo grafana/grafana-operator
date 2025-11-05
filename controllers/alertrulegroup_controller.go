@@ -259,8 +259,10 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 
 		if !ruleExists {
 			params := provisioning.NewPostAlertRuleParams().
-				WithBody(mRule).
-				WithXDisableProvenance(&disableProvenance)
+				WithBody(mRule)
+			if disableProvenance == "true" {
+				params.SetXDisableProvenance(&disableProvenance)
+			}
 
 			_, err = cl.Provisioning.PostAlertRule(params) //nolint:errcheck
 			if err != nil {
@@ -274,8 +276,10 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 	params := provisioning.NewPutAlertRuleGroupParams().
 		WithBody(mGroup).
 		WithGroup(mGroup.Title).
-		WithFolderUID(folderUID).
-		WithXDisableProvenance(&disableProvenance)
+		WithFolderUID(folderUID)
+	if disableProvenance == "true" {
+		params.SetXDisableProvenance(&disableProvenance)
+	}
 
 	_, err = cl.Provisioning.PutAlertRuleGroup(params) //nolint:errcheck
 	if err != nil {
