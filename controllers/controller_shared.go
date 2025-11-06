@@ -479,12 +479,12 @@ func patchFinalizers(ctx context.Context, cl client.Client, cr client.Object) er
 func addAnnotation(ctx context.Context, cl client.Client, cr client.Object, key string, value string) error {
 	crAnnotations := cr.GetAnnotations()
 
-	if crAnnotations[key] == value {
-		return nil
-	}
-
 	if crAnnotations == nil {
 		crAnnotations = make(map[string]string, 0)
+	}
+
+	if crAnnotations[key] == value {
+		return nil
 	}
 
 	// Add key to map and create patch
