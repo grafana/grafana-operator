@@ -118,9 +118,10 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 		return ctrl.Result{}, fmt.Errorf("folder uid not found, alert rule must reference a folder")
 	}
 
-	editable := "true" //nolint:goconst
-	if group.Spec.Editable != nil && !*group.Spec.Editable {
-		editable = "false"
+	var disableProvenance *string
+	if group.Spec.Editable == nil || *group.Spec.Editable {
+		trueStr := "true"
+		disableProvenance = &trueStr
 	}
 
 	mGroup := crToModel(group, folderUID)
@@ -130,7 +131,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 	applyErrors := make(map[string]string)
 
 	for _, grafana := range instances {
-		err := r.reconcileWithInstance(ctx, &grafana, group, &mGroup, editable)
+		err := r.reconcileWithInstance(ctx, &grafana, group, &mGroup, disableProvenance)
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
@@ -214,7 +215,7 @@ func crToModel(cr *grafanav1beta1.GrafanaAlertRuleGroup, folderUID string) model
 	}
 }
 
-func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Context, instance *grafanav1beta1.Grafana, group *grafanav1beta1.GrafanaAlertRuleGroup, mGroup *models.AlertRuleGroup, disableProvenance string) error {
+func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Context, instance *grafanav1beta1.Grafana, group *grafanav1beta1.GrafanaAlertRuleGroup, mGroup *models.AlertRuleGroup, disableProvenance *string) error {
 	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
@@ -259,10 +260,8 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 
 		if !ruleExists {
 			params := provisioning.NewPostAlertRuleParams().
-				WithBody(mRule)
-			if disableProvenance == "true" {
-				params.SetXDisableProvenance(&disableProvenance)
-			}
+				WithBody(mRule).
+				WithXDisableProvenance(disableProvenance)
 
 			_, err = cl.Provisioning.PostAlertRule(params) //nolint:errcheck
 			if err != nil {
@@ -276,10 +275,8 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 	params := provisioning.NewPutAlertRuleGroupParams().
 		WithBody(mGroup).
 		WithGroup(mGroup.Title).
-		WithFolderUID(folderUID)
-	if disableProvenance == "true" {
-		params.SetXDisableProvenance(&disableProvenance)
-	}
+		WithFolderUID(folderUID).
+		WithXDisableProvenance(disableProvenance)
 
 	_, err = cl.Provisioning.PutAlertRuleGroup(params) //nolint:errcheck
 	if err != nil {
