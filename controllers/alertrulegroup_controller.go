@@ -119,7 +119,8 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 	}
 
 	var disableProvenance *string
-	if group.Spec.Editable == nil || *group.Spec.Editable {
+
+	if group.Spec.Editable != nil && *group.Spec.Editable {
 		trueStr := "true"
 		disableProvenance = &trueStr
 	}
