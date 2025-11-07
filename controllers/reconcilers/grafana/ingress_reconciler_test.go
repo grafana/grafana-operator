@@ -10,6 +10,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 
 	networkingv1 "k8s.io/api/networking/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
@@ -105,13 +106,13 @@ var _ = Describe("HTTPRoute support", func() {
 		Expect(err).ToNot(HaveOccurred())
 	})
 
-	It("Creates both Ingress and HTTPRoute when both are defined", func() {
+	It("Respects Ingress > HTTPRoute precedence when both are defined", func() {
 		r := NewIngressReconciler(k8sClient, false)
 		cr := &v1beta1.Grafana{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "ingress-and-httproute",
 				Namespace: "default",
-				Labels:    map[string]string{"test": "both"},
+				Labels:    map[string]string{"test": "precedence"},
 			},
 			Spec: v1beta1.GrafanaSpec{
 				Ingress:   &v1beta1.IngressNetworkingV1{},
@@ -128,7 +129,7 @@ var _ = Describe("HTTPRoute support", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(status).To(Equal(v1beta1.OperatorStageResultSuccess))
 
-		// Check Ingress was created
+		// Check Ingress was created (higher priority)
 		ingress := &networkingv1.Ingress{}
 		err = k8sClient.Get(ctx, types.NamespacedName{
 			Name:      fmt.Sprintf("%s-ingress", cr.Name),
@@ -136,12 +137,13 @@ var _ = Describe("HTTPRoute support", func() {
 		}, ingress)
 		Expect(err).ToNot(HaveOccurred())
 
-		// Check HTTPRoute was created
+		// Check HTTPRoute was NOT created (lower priority)
 		httpRoute := &gatewayv1.HTTPRoute{}
 		err = k8sClient.Get(ctx, types.NamespacedName{
 			Name:      fmt.Sprintf("%s-httproute", cr.Name),
 			Namespace: "default",
 		}, httpRoute)
-		Expect(err).ToNot(HaveOccurred())
+		Expect(err).To(HaveOccurred())
+		Expect(apierrors.IsNotFound(err)).To(BeTrue())
 	})
 })

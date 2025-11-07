@@ -60,7 +60,7 @@ var _ = BeforeSuite(func() {
 			filepath.Join("..", "..", "..", "config", "crd", "bases"),
 			filepath.Join("..", "..", "..", "tests", "fixtures", "gateway-api"),
 		},
-		ErrorIfCRDPathMissing: false,
+		ErrorIfCRDPathMissing: true,
 	}
 
 	cfg, err := testEnv.Start()
