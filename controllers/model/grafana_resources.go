@@ -11,7 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	v2 "sigs.k8s.io/gateway-api/apis/v1"
+	gwapiv1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
 func GetCommonLabels() map[string]string {
@@ -115,8 +115,8 @@ func GetGrafanaIngress(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v12.
 	return ingress
 }
 
-func GetGrafanaHTTPRoute(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v2.HTTPRoute {
-	httpRoute := &v2.HTTPRoute{
+func GetGrafanaHTTPRoute(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *gwapiv1.HTTPRoute {
+	httpRoute := &gwapiv1.HTTPRoute{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-httproute", cr.Name),
 			Namespace: cr.Namespace,

@@ -42,7 +42,6 @@ const (
 	OperatorStageServiceAccount OperatorStageName = "service account"
 	OperatorStageService        OperatorStageName = "service"
 	OperatorStageIngress        OperatorStageName = "ingress"
-	OperatorStageHTTPRoute      OperatorStageName = "http route"
 	OperatorStagePlugins        OperatorStageName = "plugins"
 	OperatorStageDeployment     OperatorStageName = "deployment"
 	OperatorStageComplete       OperatorStageName = "complete"

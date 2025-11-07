@@ -42,6 +42,11 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 		return r.reconcileRoute(ctx, cr, vars, scheme)
 	}
 
+	if cr.Spec.HTTPRoute != nil {
+		log.Info("reconciling http route")
+		return r.reconcileHTTPRoute(ctx, cr, vars, scheme)
+	}
+
 	log.Info("reconciling ingress")
 
 	return r.reconcileIngress(ctx, cr, vars, scheme)
