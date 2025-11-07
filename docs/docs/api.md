@@ -6672,13 +6672,6 @@ Client defines how the grafana-operator talks to the grafana instance.
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>preferHTTPRoute</b></td>
-        <td>boolean</td>
-        <td>
-          If the operator should send it's request through the grafana instances HTTPRoute object instead of through the service.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>preferIngress</b></td>
         <td>boolean</td>
         <td>

@@ -62,10 +62,6 @@ spec:
                         type: string
                       description: Custom HTTP headers to use when interacting with this Grafana.
                       type: object
-                    preferHTTPRoute:
-                      description: If the operator should send it's request through the grafana instances HTTPRoute object instead of through the service.
-                      nullable: true
-                      type: boolean
                     preferIngress:
                       description: If the operator should send it's request through the grafana instances ingress object instead of through the service.
                       nullable: true
