@@ -7,7 +7,7 @@ import (
 	"github.com/onsi/gomega/ghttp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -79,15 +79,15 @@ var _ = Describe("Fetching dashboards from URL", func() {
 						URL: server.URL(),
 						URLAuthorization: &v1beta1.GrafanaContentURLAuthorization{
 							BasicAuth: &v1beta1.GrafanaContentURLBasicAuth{
-								Username: &v1.SecretKeySelector{
-									LocalObjectReference: v1.LocalObjectReference{
+								Username: &corev1.SecretKeySelector{
+									LocalObjectReference: corev1.LocalObjectReference{
 										Name: "credentials",
 									},
 									Key:      "USERNAME",
 									Optional: nil,
 								},
-								Password: &v1.SecretKeySelector{
-									LocalObjectReference: v1.LocalObjectReference{
+								Password: &corev1.SecretKeySelector{
+									LocalObjectReference: corev1.LocalObjectReference{
 										Name: "credentials",
 									},
 									Key:      "PASSWORD",
@@ -100,7 +100,7 @@ var _ = Describe("Fetching dashboards from URL", func() {
 				Status: v1beta1.GrafanaDashboardStatus{},
 			}
 
-			credentialsSecret := &v1.Secret{
+			credentialsSecret := &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "credentials",
 					Namespace: "default",

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -16,7 +16,7 @@ func FetchDashboardFromConfigMap(cr v1beta1.GrafanaContentResource, c client.Cli
 	}
 
 	ref := spec.ConfigMapRef
-	dashboardConfigMap := &v1.ConfigMap{}
+	dashboardConfigMap := &corev1.ConfigMap{}
 	selector := client.ObjectKey{
 		Namespace: cr.GetNamespace(),
 		Name:      ref.Name,

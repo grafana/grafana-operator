@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/config"
 	"github.com/grafana/grafana-operator/v5/controllers/model"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -51,7 +51,7 @@ func (r *AdminSecretReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafa
 	return v1beta1.OperatorStageResultSuccess, nil
 }
 
-func getAdminUser(cr *v1beta1.Grafana, current *v1.Secret) []byte {
+func getAdminUser(cr *v1beta1.Grafana, current *corev1.Secret) []byte {
 	adminUser := cr.GetConfigSectionValue("security", "admin_user")
 	if adminUser != "" {
 		return []byte(adminUser)
@@ -65,7 +65,7 @@ func getAdminUser(cr *v1beta1.Grafana, current *v1.Secret) []byte {
 	return []byte(config.DefaultAdminUser)
 }
 
-func getAdminPassword(cr *v1beta1.Grafana, current *v1.Secret) []byte {
+func getAdminPassword(cr *v1beta1.Grafana, current *corev1.Secret) []byte {
 	adminPassword := cr.GetConfigSectionValue("security", "admin_password")
 	if adminPassword != "" {
 		return []byte(adminPassword)
@@ -79,7 +79,7 @@ func getAdminPassword(cr *v1beta1.Grafana, current *v1.Secret) []byte {
 	return []byte(model.RandStringRunes(10))
 }
 
-func getData(cr *v1beta1.Grafana, current *v1.Secret) map[string][]byte {
+func getData(cr *v1beta1.Grafana, current *corev1.Secret) map[string][]byte {
 	credentials := map[string][]byte{
 		config.GrafanaAdminUserEnvVar:     getAdminUser(cr, current),
 		config.GrafanaAdminPasswordEnvVar: getAdminPassword(cr, current),

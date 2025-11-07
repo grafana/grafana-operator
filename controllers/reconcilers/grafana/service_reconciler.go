@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/config"
 	"github.com/grafana/grafana-operator/v5/controllers/model"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -35,12 +35,12 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 	service := model.GetGrafanaService(cr, scheme)
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, service, func() error {
-		service.Spec = v1.ServiceSpec{
+		service.Spec = corev1.ServiceSpec{
 			Ports: getServicePorts(cr),
 			Selector: map[string]string{
 				"app": cr.Name,
 			},
-			Type: v1.ServiceTypeClusterIP,
+			Type: corev1.ServiceTypeClusterIP,
 		}
 
 		err := v1beta1.Merge(service, cr.Spec.Service)
@@ -83,13 +83,13 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 
 	_, err = controllerutil.CreateOrUpdate(ctx, r.client, headlessService, func() error {
 		model.SetInheritedLabels(headlessService, cr.Labels)
-		headlessService.Spec = v1.ServiceSpec{
+		headlessService.Spec = corev1.ServiceSpec{
 			ClusterIP: "None",
 			Ports:     getHeadlessServicePorts(cr),
 			Selector: map[string]string{
 				"app": cr.Name,
 			},
-			Type: v1.ServiceTypeClusterIP,
+			Type: corev1.ServiceTypeClusterIP,
 		}
 
 		return nil
@@ -121,10 +121,10 @@ func GetGrafanaPort(cr *v1beta1.Grafana) int {
 	return intPort
 }
 
-func getServicePorts(cr *v1beta1.Grafana) []v1.ServicePort {
+func getServicePorts(cr *v1beta1.Grafana) []corev1.ServicePort {
 	intPort := int32(GetGrafanaPort(cr)) // #nosec G115
 
-	defaultPorts := []v1.ServicePort{
+	defaultPorts := []corev1.ServicePort{
 		{
 			Name:       config.GrafanaHTTPPortName,
 			Protocol:   "TCP",
@@ -136,10 +136,10 @@ func getServicePorts(cr *v1beta1.Grafana) []v1.ServicePort {
 	return defaultPorts
 }
 
-func getHeadlessServicePorts(_ *v1beta1.Grafana) []v1.ServicePort {
+func getHeadlessServicePorts(_ *v1beta1.Grafana) []corev1.ServicePort {
 	intPort := int32(config.GrafanaAlertPort)
 
-	defaultPorts := []v1.ServicePort{
+	defaultPorts := []corev1.ServicePort{
 		{
 			Name:       config.GrafanaAlertPortName,
 			Protocol:   "TCP",
