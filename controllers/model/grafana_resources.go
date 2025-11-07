@@ -5,7 +5,7 @@ import (
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	routev1 "github.com/openshift/api/route/v1"
-	v13 "k8s.io/api/apps/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	v12 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -141,8 +141,8 @@ func GetGrafanaHTTPRoute(cr *v1beta1.Grafana, scheme *runtime.Scheme) *gwapiv1.H
 	return httpRoute
 }
 
-func GetGrafanaDeployment(cr *v1beta1.Grafana, scheme *runtime.Scheme) *v13.Deployment {
-	deployment := &v13.Deployment{
+func GetGrafanaDeployment(cr *v1beta1.Grafana, scheme *runtime.Scheme) *appsv1.Deployment {
+	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-deployment", cr.Name),
 			Namespace: cr.Namespace,

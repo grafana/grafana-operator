@@ -33,7 +33,7 @@ import (
 	"go.uber.org/zap/zapcore"
 
 	routev1 "github.com/openshift/api/route/v1"
-	v1 "k8s.io/api/apps/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 
@@ -293,7 +293,7 @@ func main() { //nolint:gocyclo
 
 		// ConfigMaps and secrets stay fully cached until we implement support for bypassing the cache for referenced objects
 		mgrOptions.Cache.ByObject = map[client.Object]cache.ByObject{
-			&v1.Deployment{}:                cacheLabelConfig,
+			&appsv1.Deployment{}:            cacheLabelConfig,
 			&corev1.Service{}:               cacheLabelConfig,
 			&corev1.ServiceAccount{}:        cacheLabelConfig,
 			&networkingv1.Ingress{}:         cacheLabelConfig,
