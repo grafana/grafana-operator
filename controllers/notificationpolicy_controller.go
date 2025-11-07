@@ -65,9 +65,9 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 	log := logf.FromContext(ctx).WithName("GrafanaNotificationPolicyReconciler")
 	ctx = logf.IntoContext(ctx, log)
 
-	notificationPolicy := &v1beta1.GrafanaNotificationPolicy{}
+	cr := &v1beta1.GrafanaNotificationPolicy{}
 
-	err := r.Get(ctx, req.NamespacedName, notificationPolicy)
+	err := r.Get(ctx, req.NamespacedName, cr)
 	if err != nil {
 		if kuberr.IsNotFound(err) {
 			return ctrl.Result{}, nil
@@ -76,14 +76,14 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 		return ctrl.Result{}, fmt.Errorf("error getting GrafanaNotificationPolicy cr: %w", err)
 	}
 
-	if notificationPolicy.GetDeletionTimestamp() != nil {
+	if cr.GetDeletionTimestamp() != nil {
 		// Check if resource needs clean up
-		if controllerutil.ContainsFinalizer(notificationPolicy, grafanaFinalizer) {
-			if err := r.finalize(ctx, notificationPolicy); err != nil {
+		if controllerutil.ContainsFinalizer(cr, grafanaFinalizer) {
+			if err := r.finalize(ctx, cr); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaNotificationPolicy: %w", err)
 			}
 
-			if err := removeFinalizer(ctx, r.Client, notificationPolicy); err != nil {
+			if err := removeFinalizer(ctx, r.Client, cr); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
 			}
 		}
@@ -91,85 +91,85 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 		return ctrl.Result{}, nil
 	}
 
-	defer UpdateStatus(ctx, r.Client, notificationPolicy)
+	defer UpdateStatus(ctx, r.Client, cr)
 
-	if notificationPolicy.Spec.Suspend {
-		setSuspended(&notificationPolicy.Status.Conditions, notificationPolicy.Generation, conditionReasonApplySuspended)
+	if cr.Spec.Suspend {
+		setSuspended(&cr.Status.Conditions, cr.Generation, conditionReasonApplySuspended)
 		return ctrl.Result{}, nil
 	}
 
-	removeSuspended(&notificationPolicy.Status.Conditions)
+	removeSuspended(&cr.Status.Conditions)
 
 	// check if spec is valid
-	if !notificationPolicy.Spec.Route.IsRouteSelectorMutuallyExclusive() {
-		setInvalidSpecMutuallyExclusive(&notificationPolicy.Status.Conditions, notificationPolicy.Generation)
-		meta.RemoveStatusCondition(&notificationPolicy.Status.Conditions, conditionNotificationPolicySynchronized)
+	if !cr.Spec.Route.IsRouteSelectorMutuallyExclusive() {
+		setInvalidSpecMutuallyExclusive(&cr.Status.Conditions, cr.Generation)
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionNotificationPolicySynchronized)
 
 		return ctrl.Result{}, fmt.Errorf("invalid route spec discovered: routeSelector is mutually exclusive with routes")
 	}
 
-	removeInvalidSpec(&notificationPolicy.Status.Conditions)
+	removeInvalidSpec(&cr.Status.Conditions)
 
 	// Assemble routes and check for loops
 	var mergedRoutes []*v1beta1.GrafanaNotificationPolicyRoute
-	if notificationPolicy.Spec.Route.HasRouteSelector() {
-		mergedRoutes, err = assembleNotificationPolicyRoutes(ctx, r.Client, notificationPolicy)
+	if cr.Spec.Route.HasRouteSelector() {
+		mergedRoutes, err = assembleNotificationPolicyRoutes(ctx, r.Client, cr)
 		if errors.Is(err, ErrLoopDetected) {
-			meta.SetStatusCondition(&notificationPolicy.Status.Conditions, metav1.Condition{
+			meta.SetStatusCondition(&cr.Status.Conditions, metav1.Condition{
 				Type:               conditionNotificationPolicyLoopDetected,
 				Status:             metav1.ConditionTrue,
-				ObservedGeneration: notificationPolicy.Generation,
+				ObservedGeneration: cr.Generation,
 				Reason:             conditionReasonLoopDetected,
 				Message:            fmt.Sprintf("Loop detected in notification policy routes: %s", err.Error()),
 			})
-			meta.RemoveStatusCondition(&notificationPolicy.Status.Conditions, conditionNotificationPolicySynchronized)
+			meta.RemoveStatusCondition(&cr.Status.Conditions, conditionNotificationPolicySynchronized)
 
 			return ctrl.Result{}, fmt.Errorf("failed to assemble notification policy routes: %w", err)
 		}
 
 		if err != nil {
-			r.Recorder.Event(notificationPolicy, corev1.EventTypeWarning, "AssemblyFailed", fmt.Sprintf("Failed to assemble GrafanaNotificationPolicy using routeSelectors: %v", err))
+			r.Recorder.Event(cr, corev1.EventTypeWarning, "AssemblyFailed", fmt.Sprintf("Failed to assemble GrafanaNotificationPolicy using routeSelectors: %v", err))
 			return ctrl.Result{}, fmt.Errorf("failed to assemble GrafanaNotificationPolicy using routeSelectors: %w", err)
 		}
 	}
 
-	meta.RemoveStatusCondition(&notificationPolicy.Status.Conditions, conditionNotificationPolicyLoopDetected)
+	meta.RemoveStatusCondition(&cr.Status.Conditions, conditionNotificationPolicyLoopDetected)
 
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, notificationPolicy)
+	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
-		setNoMatchingInstancesCondition(&notificationPolicy.Status.Conditions, notificationPolicy.Generation, err)
-		meta.RemoveStatusCondition(&notificationPolicy.Status.Conditions, conditionNotificationPolicySynchronized)
+		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionNotificationPolicySynchronized)
 
 		return ctrl.Result{}, fmt.Errorf("failed fetching instances: %w", err)
 	}
 
 	if len(instances) == 0 {
-		setNoMatchingInstancesCondition(&notificationPolicy.Status.Conditions, notificationPolicy.Generation, err)
-		meta.RemoveStatusCondition(&notificationPolicy.Status.Conditions, conditionNotificationPolicySynchronized)
+		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionNotificationPolicySynchronized)
 
 		return ctrl.Result{}, ErrNoMatchingInstances
 	}
 
-	removeNoMatchingInstance(&notificationPolicy.Status.Conditions)
-	log.Info("found matching Grafana instances for notificationPolicy", "count", len(instances))
+	removeNoMatchingInstance(&cr.Status.Conditions)
+	log.Info("found matching Grafana instances for notification policy", "count", len(instances))
 
 	applyErrors := make(map[string]string)
 
 	for _, grafana := range instances {
 		appliedPolicy := grafana.Annotations[annotationAppliedNotificationPolicy]
-		if appliedPolicy != "" && appliedPolicy != notificationPolicy.NamespacedResource() {
+		if appliedPolicy != "" && appliedPolicy != cr.NamespacedResource() {
 			log.Info("instance already has a different notification policy applied - skipping", "grafana", grafana.Name)
 			continue
 		}
 
-		err := r.reconcileWithInstance(ctx, &grafana, notificationPolicy)
+		err := r.reconcileWithInstance(ctx, &grafana, cr)
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
 	}
 
-	condition := buildSynchronizedCondition("Notification Policy", conditionNotificationPolicySynchronized, notificationPolicy.Generation, applyErrors, len(instances))
-	meta.SetStatusCondition(&notificationPolicy.Status.Conditions, condition)
+	condition := buildSynchronizedCondition("Notification Policy", conditionNotificationPolicySynchronized, cr.Generation, applyErrors, len(instances))
+	meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
 	if len(applyErrors) > 0 {
 		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
@@ -177,25 +177,25 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 
 	if len(mergedRoutes) > 0 {
 		status := statusDiscoveredRoutes(mergedRoutes)
-		notificationPolicy.Status.DiscoveredRoutes = &status
+		cr.Status.DiscoveredRoutes = &status
 	}
 
-	if err := r.updateNotificationPolicyRoutesStatus(ctx, notificationPolicy, mergedRoutes); err != nil {
+	if err := r.updateNotificationPolicyRoutesStatus(ctx, cr, mergedRoutes); err != nil {
 		log.Error(err, "failed to add merged events to routes")
 	}
 
-	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(notificationPolicy.Spec.ResyncPeriod)}, nil
+	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(cr.Spec.ResyncPeriod)}, nil
 }
 
 // assembleNotificationPolicyRoutes iterates over all routeSelectors transitively.
 // returns an assembled GrafanaNotificationPolicy as well as a list of all merged routes.
 // it ensures that there are no reference loops when discovering routes via labelSelectors
 
-func assembleNotificationPolicyRoutes(ctx context.Context, k8sClient client.Client, notificationPolicy *v1beta1.GrafanaNotificationPolicy) ([]*v1beta1.GrafanaNotificationPolicyRoute, error) {
+func assembleNotificationPolicyRoutes(ctx context.Context, k8sClient client.Client, cr *v1beta1.GrafanaNotificationPolicy) ([]*v1beta1.GrafanaNotificationPolicyRoute, error) {
 	var namespace *string
 
-	if !notificationPolicy.AllowCrossNamespace() {
-		ns := notificationPolicy.GetObjectMeta().GetNamespace()
+	if !cr.AllowCrossNamespace() {
+		ns := cr.GetObjectMeta().GetNamespace()
 		namespace = &ns
 	}
 
@@ -260,14 +260,14 @@ func assembleNotificationPolicyRoutes(ctx context.Context, k8sClient client.Clie
 	}
 
 	// Start with Spec.Route
-	if err := assembleRoute(notificationPolicy.Spec.Route); err != nil {
+	if err := assembleRoute(cr.Spec.Route); err != nil {
 		return nil, err
 	}
 
 	return mergedRoutes, nil
 }
 
-func (r *GrafanaNotificationPolicyReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, notificationPolicy *v1beta1.GrafanaNotificationPolicy) error {
+func (r *GrafanaNotificationPolicyReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaNotificationPolicy) error {
 	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
@@ -276,11 +276,11 @@ func (r *GrafanaNotificationPolicyReconciler) reconcileWithInstance(ctx context.
 	refTrue := ptr.To("true")
 
 	editable := true //nolint:staticcheck
-	if notificationPolicy.Spec.Editable != nil && !*notificationPolicy.Spec.Editable {
+	if cr.Spec.Editable != nil && !*cr.Spec.Editable {
 		editable = false
 	}
 
-	params := provisioning.NewPutPolicyTreeParams().WithBody(notificationPolicy.Spec.Route.ToModelRoute())
+	params := provisioning.NewPutPolicyTreeParams().WithBody(cr.Spec.Route.ToModelRoute())
 	if editable {
 		params.SetXDisableProvenance(refTrue)
 	}
@@ -293,7 +293,7 @@ func (r *GrafanaNotificationPolicyReconciler) reconcileWithInstance(ctx context.
 		instance.Annotations = make(map[string]string)
 	}
 
-	err = addAnnotation(ctx, r.Client, instance, annotationAppliedNotificationPolicy, notificationPolicy.NamespacedResource())
+	err = addAnnotation(ctx, r.Client, instance, annotationAppliedNotificationPolicy, cr.NamespacedResource())
 	if err != nil {
 		return fmt.Errorf("saving applied notification policy to Grafana CR: %w", err)
 	}
@@ -301,18 +301,18 @@ func (r *GrafanaNotificationPolicyReconciler) reconcileWithInstance(ctx context.
 	return nil
 }
 
-func (r *GrafanaNotificationPolicyReconciler) finalize(ctx context.Context, notificationPolicy *v1beta1.GrafanaNotificationPolicy) error {
+func (r *GrafanaNotificationPolicyReconciler) finalize(ctx context.Context, cr *v1beta1.GrafanaNotificationPolicy) error {
 	log := logf.FromContext(ctx)
 	log.Info("Finalizing GrafanaNotificationPolicy")
 
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, notificationPolicy)
+	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
 
 	for _, grafana := range instances {
 		appliedPolicy := grafana.Annotations[annotationAppliedNotificationPolicy]
-		if appliedPolicy != "" && appliedPolicy != notificationPolicy.NamespacedResource() {
+		if appliedPolicy != "" && appliedPolicy != cr.NamespacedResource() {
 			log.Info("instance already has a different notification policy applied - skipping", "grafana", grafana.Name)
 			continue
 		}
@@ -443,13 +443,13 @@ func getMatchingNotificationPolicyRoutes(ctx context.Context, k8sClient client.C
 }
 
 // updateNotificationPolicyRoutesStatus sets status conditions and emits a merged event to all matched notification policy routes
-func (r *GrafanaNotificationPolicyReconciler) updateNotificationPolicyRoutesStatus(ctx context.Context, notificationPolicy *v1beta1.GrafanaNotificationPolicy, routes []*v1beta1.GrafanaNotificationPolicyRoute) error {
-	if notificationPolicy == nil || routes == nil {
+func (r *GrafanaNotificationPolicyReconciler) updateNotificationPolicyRoutesStatus(ctx context.Context, cr *v1beta1.GrafanaNotificationPolicy, routes []*v1beta1.GrafanaNotificationPolicyRoute) error {
+	if cr == nil || routes == nil {
 		return nil
 	}
 
 	for _, route := range routes {
-		r.Recorder.Event(route, corev1.EventTypeNormal, "Merged", fmt.Sprintf("Route merged into NotificationPolicy %s/%s", notificationPolicy.GetNamespace(), notificationPolicy.GetName()))
+		r.Recorder.Event(route, corev1.EventTypeNormal, "Merged", fmt.Sprintf("Route merged into NotificationPolicy %s/%s", cr.GetNamespace(), cr.GetName()))
 
 		// Update the status of the route in case conditions have been set
 		if err := r.Status().Update(ctx, route); err != nil {
