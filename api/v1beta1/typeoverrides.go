@@ -13,6 +13,7 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
+	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
 // +kubebuilder:object:generate=true
@@ -484,6 +485,13 @@ type RouteOpenShiftV1Spec struct {
 	Subdomain string `json:"subdomain,omitempty" protobuf:"bytes,8,opt,name=subdomain"`
 
 	WildcardPolicy WildcardPolicyType `json:"wildcardPolicy,omitempty" protobuf:"bytes,7,opt,name=wildcardPolicy"`
+}
+
+// +kubebuilder:object:generate=true
+
+type HTTPRouteGatewayV1 struct {
+	ObjectMeta ObjectMeta               `json:"metadata,omitempty"`
+	Spec       *gatewayv1.HTTPRouteSpec `json:"spec,omitempty"`
 }
 
 type ServiceV1 struct {
