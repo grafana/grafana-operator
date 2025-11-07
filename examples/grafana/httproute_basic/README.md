@@ -1,4 +1,7 @@
-# Basic HTTPRoute Example
+---
+title: "Basic HTTPRoute Example"
+linkTitle: "Basic HTTPRoute"
+---
 
 This example demonstrates basic HTTPRoute configuration for Grafana using Gateway API.
 
@@ -20,15 +23,6 @@ kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/downloa
 kubectl apply -f resources.yaml
 ```
 
-## Configuration
+## Example Manifest
 
-The example creates:
-- Grafana instance with basic HTTP configuration
-- HTTPRoute resource pointing to `my-gateway`
-- Hostname: `grafana.example.com`
-
-## Access
-
-Once deployed, Grafana will be accessible at `http://grafana.example.com` (depending on your Gateway configuration).
-
-See `resources.yaml` for admin credentials configuration.
+{{< readfile file="resources.yaml" code="true" lang="yaml" >}}
