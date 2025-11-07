@@ -38,49 +38,24 @@ func NewIngressReconciler(client client.Client, isOpenShift bool) reconcilers.Op
 func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
 	log := logf.FromContext(ctx).WithName("IngressReconciler")
 
-	// Track overall status - if any reconciliation is in progress, return in progress
-	overallStatus := v1beta1.OperatorStageResultSuccess
-
-	// On OpenShift, preserve existing Route > Ingress precedence
-	// Route takes priority over Ingress for backwards compatibility
+	// Preserve existing precedence: Route > Ingress > HTTPRoute
+	// Users must pick a single option (no parallel execution)
 	if r.isOpenShift && cr.Spec.Route != nil {
 		log.Info("reconciling route")
+		return r.reconcileRoute(ctx, cr, vars, scheme)
+	}
 
-		status, err := r.reconcileRoute(ctx, cr, vars, scheme)
-		if err != nil {
-			return status, err
-		}
-
-		if status == v1beta1.OperatorStageResultInProgress {
-			overallStatus = v1beta1.OperatorStageResultInProgress
-		}
-	} else if cr.Spec.Ingress != nil {
-		// Reconcile Ingress only if Route is not specified (on OpenShift) or not on OpenShift
+	if cr.Spec.Ingress != nil {
 		log.Info("reconciling ingress")
-
-		status, err := r.reconcileIngress(ctx, cr, vars, scheme)
-		if err != nil {
-			return status, err
-		}
-
-		if status == v1beta1.OperatorStageResultInProgress {
-			overallStatus = v1beta1.OperatorStageResultInProgress
-		}
+		return r.reconcileIngress(ctx, cr, vars, scheme)
 	}
 
-	// HTTPRoute works in parallel with Route/Ingress (Gateway API is independent)
 	if cr.Spec.HTTPRoute != nil {
-		status, err := r.httpRouteReconciler.Reconcile(ctx, cr, vars, scheme)
-		if err != nil {
-			return status, err
-		}
-
-		if status == v1beta1.OperatorStageResultInProgress {
-			overallStatus = v1beta1.OperatorStageResultInProgress
-		}
+		log.Info("reconciling httproute")
+		return r.httpRouteReconciler.Reconcile(ctx, cr, vars, scheme)
 	}
 
-	return overallStatus, nil
+	return v1beta1.OperatorStageResultSuccess, nil
 }
 
 func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Grafana, _ *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
