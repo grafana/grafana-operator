@@ -752,7 +752,7 @@ GrafanaContactPoint is the Schema for the grafanacontactpoints API
         <td>
           GrafanaContactPointSpec defines the desired state of GrafanaContactPoint<br/>
           <br/>
-            <i>Validations</i>:<li>((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid))): spec.uid is immutable</li><li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
+            <i>Validations</i>:<li>((!has(oldSelf.name) && !has(self.name)) || (has(oldSelf.name) && has(self.name))): spec.name is immutable</li><li>((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable) && has(self.editable))): spec.editable is immutable</li><li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
         </td>
         <td>true</td>
       </tr><tr>
@@ -792,27 +792,6 @@ GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b>name</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>settings</b></td>
-        <td>JSON</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>type</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
         <td><b>allowCrossNamespaceImport</b></td>
         <td>boolean</td>
         <td>
@@ -825,7 +804,34 @@ GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
         <td><b>disableResolveMessage</b></td>
         <td>boolean</td>
         <td>
+          Deprecated: define the receiver under .spec.receivers[]
+Will be removed in a later version<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>editable</b></td>
+        <td>boolean</td>
+        <td>
+          Whether to enable or disable editing of the contact point in Grafana UI<br/>
           <br/>
+            <i>Validations</i>:<li>self == oldSelf: spec.editable is immutable</li>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Receivers are grouped under the same ContactPoint using the Name
+Defaults to the name of the CR<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: spec.name is immutable</li>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanacontactpointspecreceiversindex">receivers</a></b></td>
+        <td>[]object</td>
+        <td>
+          List of receivers that Grafana will fan out notifications to<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -836,6 +842,14 @@ GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>settings</b></td>
+        <td>JSON</td>
+        <td>
+          Deprecated: define the receiver under .spec.receivers[]
+Will be removed in a later version<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>suspend</b></td>
         <td>boolean</td>
         <td>
@@ -843,10 +857,19 @@ GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          Deprecated: define the receiver under .spec.receivers[]
+Will be removed in a later version<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>uid</b></td>
         <td>string</td>
         <td>
-          Manually specify the UID the Contact Point is created with. Can be any string consisting of alphanumeric characters, - and _ with a maximum length of 40<br/>
+          Deprecated: define the receiver under .spec.receivers[]
+Manually specify the UID the Contact Point is created with. Can be any string consisting of alphanumeric characters, - and _ with a maximum length of 40<br/>
           <br/>
             <i>Validations</i>:<li>self == oldSelf: spec.uid is immutable</li>
         </td>
@@ -855,7 +878,8 @@ GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
         <td><b><a href="#grafanacontactpointspecvaluesfromindex">valuesFrom</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          Deprecated: define the receiver under .spec.receivers[]
+Will be removed in a later version<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -938,6 +962,225 @@ Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
 the values array must be non-empty. If the operator is Exists or DoesNotExist,
 the values array must be empty. This array is replaced during a strategic
 merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaContactPoint.spec.receivers[index]
+<sup><sup>[↩ Parent](#grafanacontactpointspec)</sup></sup>
+
+
+
+Represents an integration to external services that receive Grafana notifications
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>settings</b></td>
+        <td>JSON</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>disableResolveMessage</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>uid</b></td>
+        <td>string</td>
+        <td>
+          Manually specify the UID the Contact Point is created with. Can be any string consisting of alphanumeric characters, - and _ with a maximum length of 40<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanacontactpointspecreceiversindexvaluesfromindex">valuesFrom</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaContactPoint.spec.receivers[index].valuesFrom[index]
+<sup><sup>[↩ Parent](#grafanacontactpointspecreceiversindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>targetPath</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanacontactpointspecreceiversindexvaluesfromindexvaluefrom">valueFrom</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Validations</i>:<li>(has(self.configMapKeyRef) && !has(self.secretKeyRef)) || (!has(self.configMapKeyRef) && has(self.secretKeyRef)): Either configMapKeyRef or secretKeyRef must be set</li>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaContactPoint.spec.receivers[index].valuesFrom[index].valueFrom
+<sup><sup>[↩ Parent](#grafanacontactpointspecreceiversindexvaluesfromindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanacontactpointspecreceiversindexvaluesfromindexvaluefromconfigmapkeyref">configMapKeyRef</a></b></td>
+        <td>object</td>
+        <td>
+          Selects a key of a ConfigMap.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanacontactpointspecreceiversindexvaluesfromindexvaluefromsecretkeyref">secretKeyRef</a></b></td>
+        <td>object</td>
+        <td>
+          Selects a key of a Secret.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaContactPoint.spec.receivers[index].valuesFrom[index].valueFrom.configMapKeyRef
+<sup><sup>[↩ Parent](#grafanacontactpointspecreceiversindexvaluesfromindexvaluefrom)</sup></sup>
+
+
+
+Selects a key of a ConfigMap.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          The key to select.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the referent.
+This field is effectively required, but due to backwards compatibility is
+allowed to be empty. Instances of this type with an empty value here are
+almost certainly wrong.
+More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>optional</b></td>
+        <td>boolean</td>
+        <td>
+          Specify whether the ConfigMap or its key must be defined<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaContactPoint.spec.receivers[index].valuesFrom[index].valueFrom.secretKeyRef
+<sup><sup>[↩ Parent](#grafanacontactpointspecreceiversindexvaluesfromindexvaluefrom)</sup></sup>
+
+
+
+Selects a key of a Secret.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          The key of the secret to select from.  Must be a valid secret key.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the referent.
+This field is effectively required, but due to backwards compatibility is
+allowed to be empty. Instances of this type with an empty value here are
+almost certainly wrong.
+More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>optional</b></td>
+        <td>boolean</td>
+        <td>
+          Specify whether the Secret or its key must be defined<br/>
         </td>
         <td>false</td>
       </tr></tbody>

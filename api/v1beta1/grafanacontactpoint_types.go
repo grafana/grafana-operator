@@ -17,18 +17,37 @@ limitations under the License.
 package v1beta1
 
 import (
+	"fmt"
+
 	apiextensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // GrafanaContactPointSpec defines the desired state of GrafanaContactPoint
-// +kubebuilder:validation:XValidation:rule="((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid)))", message="spec.uid is immutable"
+// +kubebuilder:validation:XValidation:rule="((!has(oldSelf.name) && !has(self.name)) || (has(oldSelf.name) && has(self.name)))", message="spec.name is immutable"
+// +kubebuilder:validation:XValidation:rule="((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable) && has(self.editable)))", message="spec.editable is immutable"
 type GrafanaContactPointSpec struct {
 	GrafanaCommonSpec `json:",inline"`
 
+	// Receivers are grouped under the same ContactPoint using the Name
+	// Defaults to the name of the CR
+	// +optional
+	// +kubebuilder:validation:type=string
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="spec.name is immutable"
+	Name string `json:"name,omitempty"`
+
+	// List of receivers that Grafana will fan out notifications to
+	// +optional
+	// +kubebuilder:validation:MaxItems=99
+	Receivers []ContactPointReceiver `json:"receivers,omitempty"`
+
+	// Whether to enable or disable editing of the contact point in Grafana UI
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="spec.editable is immutable"
+	// +optional
+	Editable bool `json:"editable,omitempty"`
+
+	// Deprecated: define the receiver under .spec.receivers[]
 	// Manually specify the UID the Contact Point is created with. Can be any string consisting of alphanumeric characters, - and _ with a maximum length of 40
 	// +optional
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="spec.uid is immutable"
@@ -36,19 +55,47 @@ type GrafanaContactPointSpec struct {
 	// +kubebuilder:validation:Pattern="^[a-zA-Z0-9-_]+$"
 	CustomUID string `json:"uid,omitempty"`
 
+	// Deprecated: define the receiver under .spec.receivers[]
+	// Will be removed in a later version
 	// +optional
 	DisableResolveMessage bool `json:"disableResolveMessage,omitempty"`
 
-	// +kubebuilder:validation:type=string
-	Name string `json:"name"`
+	// Deprecated: define the receiver under .spec.receivers[]
+	// Will be removed in a later version
+	// +optional
+	Settings *apiextensions.JSON `json:"settings,omitempty"`
+
+	// Deprecated: define the receiver under .spec.receivers[]
+	// Will be removed in a later version
+	// +optional
+	// +kubebuilder:validation:MaxItems=99
+	ValuesFrom []ValueFrom `json:"valuesFrom,omitempty"`
+
+	// Deprecated: define the receiver under .spec.receivers[]
+	// Will be removed in a later version
+	// +optional
+	// +kubebuilder:validation:MinLength=1
+	Type string `json:"type,omitempty"`
+}
+
+// Represents an integration to external services that receive Grafana notifications
+type ContactPointReceiver struct {
+	// Manually specify the UID the Contact Point is created with. Can be any string consisting of alphanumeric characters, - and _ with a maximum length of 40
+	// +optional
+	// +kubebuilder:validation:MaxLength=40
+	// +kubebuilder:validation:Pattern="^[a-zA-Z0-9-_]+$"
+	CustomUID string `json:"uid,omitempty"`
+
+	// +kubebuilder:validation:MinLength=1
+	Type string `json:"type"`
+
+	// +optional
+	DisableResolveMessage bool `json:"disableResolveMessage,omitempty"`
 
 	Settings *apiextensions.JSON `json:"settings"`
 
 	// +kubebuilder:validation:MaxItems=99
 	ValuesFrom []ValueFrom `json:"valuesFrom,omitempty"`
-
-	// +kubebuilder:validation:MinLength=1
-	Type string `json:"type"`
 }
 
 //+kubebuilder:object:root=true
@@ -87,13 +134,23 @@ func (in *GrafanaContactPointList) Exists(namespace, name string) bool {
 	return false
 }
 
-// Wrapper around CustomUID or default metadata.uid
-func (in *GrafanaContactPoint) CustomUIDOrUID() string {
-	if in.Spec.CustomUID != "" {
-		return in.Spec.CustomUID
+// Wrapper around Name or default metadata.name
+func (in *GrafanaContactPoint) NameFromSpecOrMeta() string {
+	if in.Spec.Name != "" {
+		return in.Spec.Name
 	}
 
-	return string(in.UID)
+	return in.Name
+}
+
+// Wrapper around receivers[].CustomUID or metadata.uid/idx
+func (in *ContactPointReceiver) CustomUIDOrUID(metaUID types.UID, idx int) string {
+	if in.CustomUID != "" {
+		return in.CustomUID
+	}
+
+	// UID/idx is stable and allows overriding
+	return fmt.Sprintf("%s_%d", string(metaUID), idx)
 }
 
 func (in *GrafanaContactPoint) MatchLabels() *metav1.LabelSelector {
@@ -117,7 +174,7 @@ func (in *GrafanaContactPoint) CommonStatus() *GrafanaCommonStatus {
 }
 
 func (in *GrafanaContactPoint) NamespacedResource() NamespacedResource {
-	return NewNamespacedResource(in.Namespace, in.Name, in.CustomUIDOrUID())
+	return NewNamespacedResource(in.Namespace, in.Name, in.NameFromSpecOrMeta())
 }
 
 func init() {

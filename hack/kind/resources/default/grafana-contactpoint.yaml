@@ -10,9 +10,13 @@ metadata:
   name: grafanacontactpoint-sample
 spec:
   name: grafanacontactpoint-sample
-  type: "email"
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
-  settings:
-    addresses: "email@email.com"
+  receivers:
+  - type: email
+    settings:
+      addresses: email1@email.com
+  - type: email
+    settings:
+      addresses: email2@email.com

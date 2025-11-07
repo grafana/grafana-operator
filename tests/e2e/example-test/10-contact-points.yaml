@@ -3,14 +3,14 @@ kind: GrafanaContactPoint
 metadata:
   name: first-test
 spec:
-  name: first-test
-  type: "email"
   resyncPeriod: 30s
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
-  settings:
-    addresses: "email@email.com"
+  receivers:
+    - type: "email"
+      settings:
+        addresses: "email@email.com"
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaContactPoint
@@ -18,10 +18,14 @@ metadata:
   name: second-test
 spec:
   name: second-test
-  type: "email"
   resyncPeriod: 30s
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
-  settings:
-    addresses: "email@email.com"
+  receivers:
+    - type: "email"
+      settings:
+        addresses: "email1@email.com"
+    - type: "email"
+      settings:
+        addresses: "email2@email.com"
