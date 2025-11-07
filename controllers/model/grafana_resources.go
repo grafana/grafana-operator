@@ -7,7 +7,7 @@ import (
 	routev1 "github.com/openshift/api/route/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	v12 "k8s.io/api/networking/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -102,8 +102,8 @@ func GetGrafanaHeadlessService(cr *v1beta1.Grafana, scheme *runtime.Scheme) *cor
 	return service
 }
 
-func GetGrafanaIngress(cr *v1beta1.Grafana, scheme *runtime.Scheme) *v12.Ingress {
-	ingress := &v12.Ingress{
+func GetGrafanaIngress(cr *v1beta1.Grafana, scheme *runtime.Scheme) *networkingv1.Ingress {
+	ingress := &networkingv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-ingress", cr.Name),
 			Namespace: cr.Namespace,

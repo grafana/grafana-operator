@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/model"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
 	routev1 "github.com/openshift/api/route/v1"
-	v1 "k8s.io/api/networking/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -284,7 +284,7 @@ func (r *IngressReconciler) reconcileHTTPRoute(ctx context.Context, cr *v1beta1.
 }
 
 // getIngressAdminURL returns the first valid URL (Host field is set) from the ingress spec
-func (r *IngressReconciler) getIngressAdminURL(ingress *v1.Ingress) string {
+func (r *IngressReconciler) getIngressAdminURL(ingress *networkingv1.Ingress) string {
 	if ingress == nil {
 		return ""
 	}
@@ -396,12 +396,12 @@ func getHTTPRouteSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) gwapiv1.HTTPR
 	}
 }
 
-func getIngressSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) v1.IngressSpec {
+func getIngressSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) networkingv1.IngressSpec {
 	service := model.GetGrafanaService(cr, scheme)
 
 	port := GetIngressTargetPort(cr)
 
-	var assignedPort v1.ServiceBackendPort
+	var assignedPort networkingv1.ServiceBackendPort
 	if port.IntVal > 0 {
 		assignedPort.Number = port.IntVal
 	}
@@ -410,19 +410,19 @@ func getIngressSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) v1.IngressSpec 
 		assignedPort.Name = port.StrVal
 	}
 
-	pathType := v1.PathTypePrefix
+	pathType := networkingv1.PathTypePrefix
 
-	return v1.IngressSpec{
-		Rules: []v1.IngressRule{
+	return networkingv1.IngressSpec{
+		Rules: []networkingv1.IngressRule{
 			{
-				IngressRuleValue: v1.IngressRuleValue{
-					HTTP: &v1.HTTPIngressRuleValue{
-						Paths: []v1.HTTPIngressPath{
+				IngressRuleValue: networkingv1.IngressRuleValue{
+					HTTP: &networkingv1.HTTPIngressRuleValue{
+						Paths: []networkingv1.HTTPIngressPath{
 							{
 								Path:     "/",
 								PathType: &pathType,
-								Backend: v1.IngressBackend{
-									Service: &v1.IngressServiceBackend{
+								Backend: networkingv1.IngressBackend{
+									Service: &networkingv1.IngressServiceBackend{
 										Name: service.Name,
 										Port: assignedPort,
 									},
