@@ -1,0 +1,20 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana-httproute
+  labels:
+    dashboards: "grafana"
+spec:
+  config:
+    log:
+      mode: "console"
+    security:
+      admin_user: root
+      admin_password: secret
+  httpRoute:
+    spec:
+      parentRefs:
+        - name: my-gateway
+          namespace: default
+      hostnames:
+        - grafana.example.com

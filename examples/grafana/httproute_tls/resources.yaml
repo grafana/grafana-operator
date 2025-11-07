@@ -1,0 +1,36 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana-httproute-tls
+  labels:
+    dashboards: "grafana"
+spec:
+  config:
+    log:
+      mode: "console"
+    security:
+      admin_user: root
+      admin_password: secret
+  httpRoute:
+    spec:
+      parentRefs:
+        - name: my-gateway
+          namespace: default
+          sectionName: https
+      hostnames:
+        - grafana.example.com
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grafana-tls-cert
+type: kubernetes.io/tls
+stringData:
+  tls.crt: |
+    -----BEGIN CERTIFICATE-----
+    # Your certificate here
+    -----END CERTIFICATE-----
+  tls.key: |
+    -----BEGIN PRIVATE KEY-----
+    # Your private key here
+    -----END PRIVATE KEY-----
