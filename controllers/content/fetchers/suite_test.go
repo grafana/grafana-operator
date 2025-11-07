@@ -3,7 +3,7 @@ package fetchers
 import (
 	"testing"
 
-	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/stretchr/testify/require"
 
 	"k8s.io/client-go/kubernetes/scheme"
@@ -40,7 +40,7 @@ var _ = BeforeSuite(func() {
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
-	err = grafanav1beta1.AddToScheme(scheme.Scheme)
+	err = v1beta1.AddToScheme(scheme.Scheme)
 	require.NoError(t, err)
 
 	//+kubebuilder:scaffold:scheme

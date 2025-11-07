@@ -3,7 +3,7 @@ package model
 import (
 	"fmt"
 
-	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	routev1 "github.com/openshift/api/route/v1"
 	v13 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -20,7 +20,7 @@ func GetCommonLabels() map[string]string {
 	}
 }
 
-func GetGrafanaConfigMap(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1.ConfigMap {
+func GetGrafanaConfigMap(cr *v1beta1.Grafana, scheme *runtime.Scheme) *v1.ConfigMap {
 	config := &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-ini", cr.Name),
@@ -33,7 +33,7 @@ func GetGrafanaConfigMap(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1
 	return config
 }
 
-func GetGrafanaAdminSecret(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1.Secret {
+func GetGrafanaAdminSecret(cr *v1beta1.Grafana, scheme *runtime.Scheme) *v1.Secret {
 	secret := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-admin-credentials", cr.Name),
@@ -49,7 +49,7 @@ func GetGrafanaAdminSecret(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *
 	return secret
 }
 
-func GetGrafanaDataPVC(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1.PersistentVolumeClaim {
+func GetGrafanaDataPVC(cr *v1beta1.Grafana, scheme *runtime.Scheme) *v1.PersistentVolumeClaim {
 	pvc := &v1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-pvc", cr.Name),
@@ -63,7 +63,7 @@ func GetGrafanaDataPVC(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1.P
 	return pvc
 }
 
-func GetGrafanaServiceAccount(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1.ServiceAccount {
+func GetGrafanaServiceAccount(cr *v1beta1.Grafana, scheme *runtime.Scheme) *v1.ServiceAccount {
 	sa := &v1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-sa", cr.Name),
@@ -76,7 +76,7 @@ func GetGrafanaServiceAccount(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme
 	return sa
 }
 
-func GetGrafanaService(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1.Service {
+func GetGrafanaService(cr *v1beta1.Grafana, scheme *runtime.Scheme) *v1.Service {
 	service := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-service", cr.Name),
@@ -89,7 +89,7 @@ func GetGrafanaService(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1.S
 	return service
 }
 
-func GetGrafanaHeadlessService(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v1.Service {
+func GetGrafanaHeadlessService(cr *v1beta1.Grafana, scheme *runtime.Scheme) *v1.Service {
 	service := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-alerting", cr.Name),
@@ -102,7 +102,7 @@ func GetGrafanaHeadlessService(cr *grafanav1beta1.Grafana, scheme *runtime.Schem
 	return service
 }
 
-func GetGrafanaIngress(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v12.Ingress {
+func GetGrafanaIngress(cr *v1beta1.Grafana, scheme *runtime.Scheme) *v12.Ingress {
 	ingress := &v12.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-ingress", cr.Name),
@@ -115,7 +115,7 @@ func GetGrafanaIngress(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v12.
 	return ingress
 }
 
-func GetGrafanaRoute(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *routev1.Route {
+func GetGrafanaRoute(cr *v1beta1.Grafana, scheme *runtime.Scheme) *routev1.Route {
 	route := &routev1.Route{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-route", cr.Name),
@@ -128,7 +128,7 @@ func GetGrafanaRoute(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *routev
 	return route
 }
 
-func GetGrafanaHTTPRoute(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *gwapiv1.HTTPRoute {
+func GetGrafanaHTTPRoute(cr *v1beta1.Grafana, scheme *runtime.Scheme) *gwapiv1.HTTPRoute {
 	httpRoute := &gwapiv1.HTTPRoute{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-httproute", cr.Name),
@@ -141,7 +141,7 @@ func GetGrafanaHTTPRoute(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *gw
 	return httpRoute
 }
 
-func GetGrafanaDeployment(cr *grafanav1beta1.Grafana, scheme *runtime.Scheme) *v13.Deployment {
+func GetGrafanaDeployment(cr *v1beta1.Grafana, scheme *runtime.Scheme) *v13.Deployment {
 	deployment := &v13.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-deployment", cr.Name),

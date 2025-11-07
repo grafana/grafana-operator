@@ -30,7 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	gwapiv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -68,7 +68,7 @@ var _ = BeforeSuite(func() {
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
-	err = grafanav1beta1.AddToScheme(scheme.Scheme)
+	err = v1beta1.AddToScheme(scheme.Scheme)
 	require.NoError(t, err)
 
 	err = routev1.AddToScheme(scheme.Scheme)
