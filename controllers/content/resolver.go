@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/content/cache"
 	"github.com/grafana/grafana-operator/v5/controllers/content/fetchers"
 	"github.com/grafana/grafana-operator/v5/embeds"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -209,7 +209,7 @@ func (h *ContentResolver) getContentEnvs(ctx context.Context) (map[string]string
 
 func (h *ContentResolver) getReferencedValue(ctx context.Context, cr v1beta1.GrafanaContentResource, source v1beta1.GrafanaContentEnvFromSource) (string, string, error) {
 	if source.SecretKeyRef != nil {
-		s := &v1.Secret{}
+		s := &corev1.Secret{}
 
 		err := h.Client.Get(ctx, client.ObjectKey{Namespace: cr.GetNamespace(), Name: source.SecretKeyRef.Name}, s)
 		if err != nil {
@@ -224,7 +224,7 @@ func (h *ContentResolver) getReferencedValue(ctx context.Context, cr v1beta1.Gra
 	}
 
 	if source.ConfigMapKeyRef != nil {
-		s := &v1.ConfigMap{}
+		s := &corev1.ConfigMap{}
 
 		err := h.Client.Get(ctx, client.ObjectKey{Namespace: cr.GetNamespace(), Name: source.ConfigMapKeyRef.Name}, s)
 		if err != nil {

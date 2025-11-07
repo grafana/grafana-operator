@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	routev1 "github.com/openshift/api/route/v1"
 	v13 "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	v12 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -20,8 +20,8 @@ func GetCommonLabels() map[string]string {
 	}
 }
 
-func GetGrafanaConfigMap(cr *v1beta1.Grafana, scheme *runtime.Scheme) *v1.ConfigMap {
-	config := &v1.ConfigMap{
+func GetGrafanaConfigMap(cr *v1beta1.Grafana, scheme *runtime.Scheme) *corev1.ConfigMap {
+	config := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-ini", cr.Name),
 			Namespace: cr.Namespace,
@@ -33,8 +33,8 @@ func GetGrafanaConfigMap(cr *v1beta1.Grafana, scheme *runtime.Scheme) *v1.Config
 	return config
 }
 
-func GetGrafanaAdminSecret(cr *v1beta1.Grafana, scheme *runtime.Scheme) *v1.Secret {
-	secret := &v1.Secret{
+func GetGrafanaAdminSecret(cr *v1beta1.Grafana, scheme *runtime.Scheme) *corev1.Secret {
+	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-admin-credentials", cr.Name),
 			Namespace: cr.Namespace,
@@ -49,8 +49,8 @@ func GetGrafanaAdminSecret(cr *v1beta1.Grafana, scheme *runtime.Scheme) *v1.Secr
 	return secret
 }
 
-func GetGrafanaDataPVC(cr *v1beta1.Grafana, scheme *runtime.Scheme) *v1.PersistentVolumeClaim {
-	pvc := &v1.PersistentVolumeClaim{
+func GetGrafanaDataPVC(cr *v1beta1.Grafana, scheme *runtime.Scheme) *corev1.PersistentVolumeClaim {
+	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-pvc", cr.Name),
 			Namespace: cr.Namespace,
@@ -63,8 +63,8 @@ func GetGrafanaDataPVC(cr *v1beta1.Grafana, scheme *runtime.Scheme) *v1.Persiste
 	return pvc
 }
 
-func GetGrafanaServiceAccount(cr *v1beta1.Grafana, scheme *runtime.Scheme) *v1.ServiceAccount {
-	sa := &v1.ServiceAccount{
+func GetGrafanaServiceAccount(cr *v1beta1.Grafana, scheme *runtime.Scheme) *corev1.ServiceAccount {
+	sa := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-sa", cr.Name),
 			Namespace: cr.Namespace,
@@ -76,8 +76,8 @@ func GetGrafanaServiceAccount(cr *v1beta1.Grafana, scheme *runtime.Scheme) *v1.S
 	return sa
 }
 
-func GetGrafanaService(cr *v1beta1.Grafana, scheme *runtime.Scheme) *v1.Service {
-	service := &v1.Service{
+func GetGrafanaService(cr *v1beta1.Grafana, scheme *runtime.Scheme) *corev1.Service {
+	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-service", cr.Name),
 			Namespace: cr.Namespace,
@@ -89,8 +89,8 @@ func GetGrafanaService(cr *v1beta1.Grafana, scheme *runtime.Scheme) *v1.Service 
 	return service
 }
 
-func GetGrafanaHeadlessService(cr *v1beta1.Grafana, scheme *runtime.Scheme) *v1.Service {
-	service := &v1.Service{
+func GetGrafanaHeadlessService(cr *v1beta1.Grafana, scheme *runtime.Scheme) *corev1.Service {
+	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-alerting", cr.Name),
 			Namespace: cr.Namespace,

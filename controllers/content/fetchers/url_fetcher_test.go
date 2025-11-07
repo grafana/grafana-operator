@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -22,7 +22,7 @@ const (
 	basicAuthPassword = "secret"
 )
 
-func getCredentials(secretName string) (*v1.Secret, *v1beta1.GrafanaContentURLAuthorization) {
+func getCredentials(secretName string) (*corev1.Secret, *v1beta1.GrafanaContentURLAuthorization) {
 	GinkgoHelper()
 
 	const (
@@ -30,7 +30,7 @@ func getCredentials(secretName string) (*v1.Secret, *v1beta1.GrafanaContentURLAu
 		passwordKey = "PASSWORD"
 	)
 
-	secret := &v1.Secret{
+	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      secretName,
 			Namespace: "default",
@@ -43,15 +43,15 @@ func getCredentials(secretName string) (*v1.Secret, *v1beta1.GrafanaContentURLAu
 
 	urlAuthorization := &v1beta1.GrafanaContentURLAuthorization{
 		BasicAuth: &v1beta1.GrafanaContentURLBasicAuth{
-			Username: &v1.SecretKeySelector{
-				LocalObjectReference: v1.LocalObjectReference{
+			Username: &corev1.SecretKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{
 					Name: secretName,
 				},
 				Key:      usernameKey,
 				Optional: nil,
 			},
-			Password: &v1.SecretKeySelector{
-				LocalObjectReference: v1.LocalObjectReference{
+			Password: &corev1.SecretKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{
 					Name: secretName,
 				},
 				Key:      passwordKey,

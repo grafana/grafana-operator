@@ -1,7 +1,7 @@
 package v1beta1
 
 import (
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -26,15 +26,15 @@ type GrafanaContentEnv struct {
 type GrafanaContentEnvFromSource struct {
 	// Selects a key of a ConfigMap.
 	// +optional
-	ConfigMapKeyRef *v1.ConfigMapKeySelector `json:"configMapKeyRef,omitempty"`
+	ConfigMapKeyRef *corev1.ConfigMapKeySelector `json:"configMapKeyRef,omitempty"`
 	// Selects a key of a Secret.
 	// +optional
-	SecretKeyRef *v1.SecretKeySelector `json:"secretKeyRef,omitempty"`
+	SecretKeyRef *corev1.SecretKeySelector `json:"secretKeyRef,omitempty"`
 }
 
 type GrafanaContentURLBasicAuth struct {
-	Username *v1.SecretKeySelector `json:"username,omitempty"`
-	Password *v1.SecretKeySelector `json:"password,omitempty"`
+	Username *corev1.SecretKeySelector `json:"username,omitempty"`
+	Password *corev1.SecretKeySelector `json:"password,omitempty"`
 }
 
 type GrafanaContentURLAuthorization struct {
@@ -87,7 +87,7 @@ type GrafanaContentSpec struct {
 
 	// model from configmap
 	// +optional
-	ConfigMapRef *v1.ConfigMapKeySelector `json:"configMapRef,omitempty"`
+	ConfigMapRef *corev1.ConfigMapKeySelector `json:"configMapRef,omitempty"`
 
 	// grafana.com/dashboards
 	// +optional

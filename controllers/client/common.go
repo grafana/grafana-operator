@@ -5,16 +5,16 @@ import (
 	"errors"
 	"fmt"
 
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func GetValueFromSecretKey(ctx context.Context, ref *v1.SecretKeySelector, c client.Client, namespace string) ([]byte, error) {
+func GetValueFromSecretKey(ctx context.Context, ref *corev1.SecretKeySelector, c client.Client, namespace string) ([]byte, error) {
 	if ref == nil {
 		return nil, errors.New("empty secret key selector")
 	}
 
-	secret := &v1.Secret{}
+	secret := &corev1.Secret{}
 	selector := client.ObjectKey{
 		Name:      ref.Name,
 		Namespace: namespace,

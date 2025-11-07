@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -44,7 +44,7 @@ func buildTLSConfiguration(ctx context.Context, c client.Client, grafana *v1beta
 		secretNamespace = tlsConfigBlock.CertSecretRef.Namespace
 	}
 
-	secret := &v1.Secret{}
+	secret := &corev1.Secret{}
 	selector := client.ObjectKey{
 		Name:      secretName,
 		Namespace: secretNamespace,
