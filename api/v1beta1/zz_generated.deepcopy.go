@@ -558,11 +558,6 @@ func (in *GrafanaClient) DeepCopyInto(out *GrafanaClient) {
 		*out = new(bool)
 		**out = **in
 	}
-	if in.PreferHTTPRoute != nil {
-		in, out := &in.PreferHTTPRoute, &out.PreferHTTPRoute
-		*out = new(bool)
-		**out = **in
-	}
 	if in.TLS != nil {
 		in, out := &in.TLS, &out.TLS
 		*out = new(TLSConfig)

@@ -141,9 +141,6 @@ type GrafanaClient struct {
 	// +nullable
 	// If the operator should send it's request through the grafana instances ingress object instead of through the service.
 	PreferIngress *bool `json:"preferIngress,omitempty"`
-	// +nullable
-	// If the operator should send it's request through the grafana instances HTTPRoute object instead of through the service.
-	PreferHTTPRoute *bool `json:"preferHTTPRoute,omitempty"`
 	// TLS Configuration used to talk with the grafana instance.
 	// +optional
 	TLS *TLSConfig `json:"tls,omitempty"`
@@ -248,10 +245,6 @@ func (in *Grafana) GetConfigSectionValue(name, key string) string {
 
 func (in *Grafana) PreferIngress() bool {
 	return in.Spec.Client != nil && in.Spec.Client.PreferIngress != nil && *in.Spec.Client.PreferIngress
-}
-
-func (in *Grafana) PreferHTTPRoute() bool {
-	return in.Spec.Client != nil && in.Spec.Client.PreferHTTPRoute != nil && *in.Spec.Client.PreferHTTPRoute
 }
 
 func (in *Grafana) IsInternal() bool {
