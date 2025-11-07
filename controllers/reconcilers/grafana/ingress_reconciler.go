@@ -41,7 +41,8 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 	// Track overall status - if any reconciliation is in progress, return in progress
 	overallStatus := v1beta1.OperatorStageResultSuccess
 
-	// On openshift, reconcile Route if specified
+	// On OpenShift, preserve existing Route > Ingress precedence
+	// Route takes priority over Ingress for backwards compatibility
 	if r.isOpenShift && cr.Spec.Route != nil {
 		log.Info("reconciling route")
 
@@ -53,10 +54,8 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 		if status == v1beta1.OperatorStageResultInProgress {
 			overallStatus = v1beta1.OperatorStageResultInProgress
 		}
-	}
-
-	// Reconcile Ingress if specified
-	if cr.Spec.Ingress != nil {
+	} else if cr.Spec.Ingress != nil {
+		// Reconcile Ingress only if Route is not specified (on OpenShift) or not on OpenShift
 		log.Info("reconciling ingress")
 
 		status, err := r.reconcileIngress(ctx, cr, vars, scheme)
@@ -69,7 +68,7 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 		}
 	}
 
-	// Reconcile HTTPRoute if specified
+	// HTTPRoute works in parallel with Route/Ingress (Gateway API is independent)
 	if cr.Spec.HTTPRoute != nil {
 		status, err := r.httpRouteReconciler.Reconcile(ctx, cr, vars, scheme)
 		if err != nil {
