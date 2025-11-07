@@ -57,7 +57,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
-	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers"
 	"github.com/grafana/grafana-operator/v5/controllers/autodetect"
 	"github.com/grafana/grafana-operator/v5/controllers/model"
@@ -98,7 +98,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(grafanav1beta1.AddToScheme(scheme))
+	utilruntime.Must(v1beta1.AddToScheme(scheme))
 
 	utilruntime.Must(routev1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme

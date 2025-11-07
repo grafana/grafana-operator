@@ -23,21 +23,18 @@ import (
 	"fmt"
 	"strings"
 
+	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	"github.com/grafana/grafana-openapi-client-go/client/folders"
 	"github.com/grafana/grafana-openapi-client-go/models"
+	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
-
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
-
-	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-
-	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 )
 
 const (
@@ -56,7 +53,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	log := logf.FromContext(ctx).WithName("GrafanaFolderReconciler")
 	ctx = logf.IntoContext(ctx, log)
 
-	folder := &grafanav1beta1.GrafanaFolder{}
+	folder := &v1beta1.GrafanaFolder{}
 
 	err := r.Get(ctx, req.NamespacedName, folder)
 	if err != nil {
@@ -148,7 +145,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(folder.Spec.ResyncPeriod)}, nil
 }
 
-func (r *GrafanaFolderReconciler) finalize(ctx context.Context, folder *grafanav1beta1.GrafanaFolder) error {
+func (r *GrafanaFolderReconciler) finalize(ctx context.Context, folder *v1beta1.GrafanaFolder) error {
 	log := logf.FromContext(ctx)
 	log.Info("Finalizing GrafanaFolder")
 
@@ -186,7 +183,7 @@ func (r *GrafanaFolderReconciler) finalize(ctx context.Context, folder *grafanav
 	return nil
 }
 
-func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *grafanav1beta1.Grafana, cr *grafanav1beta1.GrafanaFolder, parentFolderUID string) error {
+func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaFolder, parentFolderUID string) error {
 	log := logf.FromContext(ctx)
 
 	title := cr.GetTitle()
@@ -263,7 +260,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 }
 
 // Check if the folder exists. Matches UID first and fall back to title. Title matching only works for non-nested folders
-func (r *GrafanaFolderReconciler) Exists(client *genapi.GrafanaHTTPAPI, cr *grafanav1beta1.GrafanaFolder) (bool, string, string, error) {
+func (r *GrafanaFolderReconciler) Exists(client *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaFolder) (bool, string, string, error) {
 	title := cr.GetTitle()
 	uid := cr.CustomUIDOrUID()
 
@@ -307,7 +304,7 @@ func (r *GrafanaFolderReconciler) Exists(client *genapi.GrafanaHTTPAPI, cr *graf
 // SetupWithManager sets up the controller with the Manager.
 func (r *GrafanaFolderReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&grafanav1beta1.GrafanaFolder{}).
+		For(&v1beta1.GrafanaFolder{}).
 		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
 }

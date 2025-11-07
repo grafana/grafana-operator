@@ -40,7 +40,7 @@ import (
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	"github.com/grafana/grafana-openapi-client-go/client/provisioning"
 	"github.com/grafana/grafana-openapi-client-go/models"
-	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -64,7 +64,7 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 	log := logf.FromContext(ctx).WithName("GrafanaContactPointReconciler")
 	ctx = logf.IntoContext(ctx, log)
 
-	cr := &grafanav1beta1.GrafanaContactPoint{}
+	cr := &v1beta1.GrafanaContactPoint{}
 
 	err := r.Get(ctx, req.NamespacedName, cr)
 	if err != nil {
@@ -164,7 +164,7 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(cr.Spec.ResyncPeriod)}, nil
 }
 
-func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Context, instance *grafanav1beta1.Grafana, cr *grafanav1beta1.GrafanaContactPoint, settings []models.JSON) error {
+func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaContactPoint, settings []models.JSON) error {
 	log := logf.FromContext(ctx)
 
 	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
@@ -247,7 +247,7 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 	return instance.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource())
 }
 
-func (r *GrafanaContactPointReconciler) TopLevelReceiverFallback(cr *grafanav1beta1.GrafanaContactPoint) error {
+func (r *GrafanaContactPointReconciler) TopLevelReceiverFallback(cr *v1beta1.GrafanaContactPoint) error {
 	// Skip Spec level receiver when list is set
 	if len(cr.Spec.Receivers) > 0 {
 		return nil
@@ -262,7 +262,7 @@ func (r *GrafanaContactPointReconciler) TopLevelReceiverFallback(cr *grafanav1be
 		return ErrMissingContactPointReceiver
 	}
 
-	cr.Spec.Receivers = append(cr.Spec.Receivers, grafanav1beta1.ContactPointReceiver{
+	cr.Spec.Receivers = append(cr.Spec.Receivers, v1beta1.ContactPointReceiver{
 		CustomUID:             cr.Spec.CustomUID,             //nolint:staticcheck
 		Type:                  cr.Spec.Type,                  //nolint:staticcheck
 		DisableResolveMessage: cr.Spec.DisableResolveMessage, //nolint:staticcheck
@@ -273,7 +273,7 @@ func (r *GrafanaContactPointReconciler) TopLevelReceiverFallback(cr *grafanav1be
 	return nil
 }
 
-func (r *GrafanaContactPointReconciler) buildContactPointSettings(ctx context.Context, cr *grafanav1beta1.GrafanaContactPoint) ([]models.JSON, error) {
+func (r *GrafanaContactPointReconciler) buildContactPointSettings(ctx context.Context, cr *v1beta1.GrafanaContactPoint) ([]models.JSON, error) {
 	log := logf.FromContext(ctx)
 
 	allSettings := make([]models.JSON, 0, len(cr.Spec.Receivers))
@@ -305,7 +305,7 @@ func (r *GrafanaContactPointReconciler) buildContactPointSettings(ctx context.Co
 	return allSettings, nil
 }
 
-func (r *GrafanaContactPointReconciler) getReceiversFromName(cl *genapi.GrafanaHTTPAPI, cr *grafanav1beta1.GrafanaContactPoint) ([]*models.EmbeddedContactPoint, error) {
+func (r *GrafanaContactPointReconciler) getReceiversFromName(cl *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaContactPoint) ([]*models.EmbeddedContactPoint, error) {
 	name := cr.NameFromSpecOrMeta()
 	params := provisioning.NewGetContactpointsParams().WithName(&name)
 
@@ -317,7 +317,7 @@ func (r *GrafanaContactPointReconciler) getReceiversFromName(cl *genapi.GrafanaH
 	return remote.Payload, nil
 }
 
-func (r *GrafanaContactPointReconciler) finalize(ctx context.Context, cr *grafanav1beta1.GrafanaContactPoint) error {
+func (r *GrafanaContactPointReconciler) finalize(ctx context.Context, cr *v1beta1.GrafanaContactPoint) error {
 	log := logf.FromContext(ctx)
 	log.Info("Finalizing GrafanaContactPoint")
 
@@ -362,19 +362,19 @@ func (r *GrafanaContactPointReconciler) SetupWithManager(ctx context.Context, mg
 	)
 
 	// Index the contact points by the Secret references they (may) point at.
-	if err := mgr.GetCache().IndexField(ctx, &grafanav1beta1.GrafanaContactPoint{}, secretIndexKey,
+	if err := mgr.GetCache().IndexField(ctx, &v1beta1.GrafanaContactPoint{}, secretIndexKey,
 		r.indexSecretSource()); err != nil {
 		return fmt.Errorf("failed setting secret index fields: %w", err)
 	}
 
 	// Index the contact points by the ConfigMap references they (may) point at.
-	if err := mgr.GetCache().IndexField(ctx, &grafanav1beta1.GrafanaContactPoint{}, configMapIndexKey,
+	if err := mgr.GetCache().IndexField(ctx, &v1beta1.GrafanaContactPoint{}, configMapIndexKey,
 		r.indexConfigMapSource()); err != nil {
 		return fmt.Errorf("failed setting configmap index fields: %w", err)
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&grafanav1beta1.GrafanaContactPoint{}, builder.WithPredicates(
+		For(&v1beta1.GrafanaContactPoint{}, builder.WithPredicates(
 			ignoreStatusUpdates(),
 		)).
 		Watches(
@@ -390,7 +390,7 @@ func (r *GrafanaContactPointReconciler) SetupWithManager(ctx context.Context, mg
 
 func (r *GrafanaContactPointReconciler) indexSecretSource() func(o client.Object) []string {
 	return func(o client.Object) []string {
-		cr, ok := o.(*grafanav1beta1.GrafanaContactPoint)
+		cr, ok := o.(*v1beta1.GrafanaContactPoint)
 		if !ok {
 			panic(fmt.Sprintf("Expected a GrafanaContactPoint, got %T", o))
 		}
@@ -424,7 +424,7 @@ func (r *GrafanaContactPointReconciler) indexSecretSource() func(o client.Object
 
 func (r *GrafanaContactPointReconciler) indexConfigMapSource() func(o client.Object) []string {
 	return func(o client.Object) []string {
-		cr, ok := o.(*grafanav1beta1.GrafanaContactPoint)
+		cr, ok := o.(*v1beta1.GrafanaContactPoint)
 		if !ok {
 			panic(fmt.Sprintf("Expected a GrafanaContactPoint, got %T", o))
 		}
@@ -458,7 +458,7 @@ func (r *GrafanaContactPointReconciler) indexConfigMapSource() func(o client.Obj
 
 func (r *GrafanaContactPointReconciler) requestsForChangeByField(indexKey string) handler.MapFunc {
 	return func(ctx context.Context, o client.Object) []reconcile.Request {
-		var list grafanav1beta1.GrafanaContactPointList
+		var list v1beta1.GrafanaContactPointList
 		if err := r.List(ctx, &list, client.MatchingFields{
 			indexKey: fmt.Sprintf("%s/%s", o.GetNamespace(), o.GetName()),
 		}); err != nil {

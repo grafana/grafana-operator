@@ -34,7 +34,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 )
 
@@ -56,7 +56,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 	log := logf.FromContext(ctx).WithName("GrafanaAlertRuleGroupReconciler")
 	ctx = logf.IntoContext(ctx, log)
 
-	group := &grafanav1beta1.GrafanaAlertRuleGroup{}
+	group := &v1beta1.GrafanaAlertRuleGroup{}
 
 	err := r.Get(ctx, req.NamespacedName, group)
 	if err != nil {
@@ -148,7 +148,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(group.Spec.ResyncPeriod)}, nil
 }
 
-func crToModel(cr *grafanav1beta1.GrafanaAlertRuleGroup, folderUID string) models.AlertRuleGroup {
+func crToModel(cr *v1beta1.GrafanaAlertRuleGroup, folderUID string) models.AlertRuleGroup {
 	groupName := cr.GroupName()
 
 	mRules := make(models.ProvisionedAlertRules, 0, len(cr.Spec.Rules))
@@ -216,7 +216,7 @@ func crToModel(cr *grafanav1beta1.GrafanaAlertRuleGroup, folderUID string) model
 	}
 }
 
-func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Context, instance *grafanav1beta1.Grafana, group *grafanav1beta1.GrafanaAlertRuleGroup, mGroup *models.AlertRuleGroup, disableProvenance *string) error {
+func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, group *v1beta1.GrafanaAlertRuleGroup, mGroup *models.AlertRuleGroup, disableProvenance *string) error {
 	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
@@ -288,7 +288,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 	return instance.AddNamespacedResource(ctx, r.Client, group, group.NamespacedResource())
 }
 
-func (r *GrafanaAlertRuleGroupReconciler) finalize(ctx context.Context, group *grafanav1beta1.GrafanaAlertRuleGroup) error {
+func (r *GrafanaAlertRuleGroupReconciler) finalize(ctx context.Context, group *v1beta1.GrafanaAlertRuleGroup) error {
 	log := logf.FromContext(ctx)
 	log.Info("Finalizing GrafanaAlertRuleGroup")
 
@@ -336,7 +336,7 @@ func (r *GrafanaAlertRuleGroupReconciler) finalize(ctx context.Context, group *g
 // SetupWithManager sets up the controller with the Manager.
 func (r *GrafanaAlertRuleGroupReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&grafanav1beta1.GrafanaAlertRuleGroup{}).
+		For(&v1beta1.GrafanaAlertRuleGroup{}).
 		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
 }
