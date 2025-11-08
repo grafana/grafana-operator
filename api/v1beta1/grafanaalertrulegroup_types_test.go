@@ -178,5 +178,4 @@ func TestAlertRuleGroupDuration(t *testing.T) {
 
 		assert.Equal(t, "30s", *arg.Spec.Rules[0].For)
 	})
-
 }

@@ -3,7 +3,6 @@ package controllers
 import (
 	"time"
 
-	"github.com/go-logr/logr"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -251,7 +250,8 @@ var _ = Describe("AlertRuleGroup Controller Conversion", func() {
 				},
 			}
 
-			model := crToModel(arg, "test-folder", logr.Discard())
+			model, err := crToModel(arg, "test-folder")
+			Expect(err).ToNot(HaveOccurred())
 
 			Expect(model.Rules).To(HaveLen(1))
 			Expect(model.Rules[0].For).ToNot(BeNil())
@@ -282,7 +282,8 @@ var _ = Describe("AlertRuleGroup Controller Conversion", func() {
 				},
 			}
 
-			model := crToModel(arg, "test-folder", logr.Discard())
+			model, err := crToModel(arg, "test-folder")
+			Expect(err).ToNot(HaveOccurred())
 
 			Expect(model.Rules).To(HaveLen(1))
 			Expect(model.Rules[0].For).ToNot(BeNil())
