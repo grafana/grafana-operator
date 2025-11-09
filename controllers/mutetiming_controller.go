@@ -137,8 +137,6 @@ func (r *GrafanaMuteTimingReconciler) reconcileWithInstance(ctx context.Context,
 		return fmt.Errorf("getting mute timing by name: %w", err)
 	}
 
-	trueRef := "true" //nolint:goconst
-
 	var payload models.MuteTimeInterval
 
 	payload.Name = cr.Spec.Name
@@ -166,7 +164,7 @@ func (r *GrafanaMuteTimingReconciler) reconcileWithInstance(ctx context.Context,
 	if shouldCreate {
 		params := provisioning.NewPostMuteTimingParams().WithBody(&payload)
 		if cr.Spec.Editable {
-			params.SetXDisableProvenance(&trueRef)
+			params.SetXDisableProvenance(&trueStrVar)
 		}
 
 		_, err = cl.Provisioning.PostMuteTiming(params) //nolint:errcheck
@@ -176,7 +174,7 @@ func (r *GrafanaMuteTimingReconciler) reconcileWithInstance(ctx context.Context,
 	} else {
 		params := provisioning.NewPutMuteTimingParams().WithName(cr.Spec.Name).WithBody(&payload)
 		if cr.Spec.Editable {
-			params.SetXDisableProvenance(&trueRef)
+			params.SetXDisableProvenance(&trueStrVar)
 		}
 
 		_, err = cl.Provisioning.PutMuteTiming(params) //nolint:errcheck

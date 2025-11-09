@@ -121,8 +121,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 	var disableProvenance *string
 
 	if cr.Spec.Editable != nil && *cr.Spec.Editable {
-		trueStr := "true"
-		disableProvenance = &trueStr
+		disableProvenance = &trueStrVar
 	}
 
 	mGroup := crToModel(cr, folderUID)

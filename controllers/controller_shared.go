@@ -56,6 +56,8 @@ const (
 )
 
 var (
+	trueStrVar = "true"
+
 	ErrNoMatchingInstances = fmt.Errorf("no matching instances")
 	ErrFetchingFolder      = "fetching folder to resolve uid: %w"
 )

@@ -272,8 +272,6 @@ func (r *GrafanaNotificationPolicyReconciler) reconcileWithInstance(ctx context.
 		return fmt.Errorf("building grafana client: %w", err)
 	}
 
-	trueRef := "true" //nolint:goconst
-
 	editable := true //nolint:staticcheck
 	if cr.Spec.Editable != nil && !*cr.Spec.Editable {
 		editable = false
@@ -281,7 +279,7 @@ func (r *GrafanaNotificationPolicyReconciler) reconcileWithInstance(ctx context.
 
 	params := provisioning.NewPutPolicyTreeParams().WithBody(cr.Spec.Route.ToModelRoute())
 	if editable {
-		params.SetXDisableProvenance(&trueRef)
+		params.SetXDisableProvenance(&trueStrVar)
 	}
 
 	if _, err := cl.Provisioning.PutPolicyTree(params); err != nil { //nolint:errcheck
