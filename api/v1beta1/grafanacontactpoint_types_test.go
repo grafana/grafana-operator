@@ -12,6 +12,8 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const defaultReceiverType = "webhook"
+
 func TestGrafanaStatusListContactPoint(t *testing.T) {
 	t.Run("&ContactPoint{} maps to NamespacedResource list", func(t *testing.T) {
 		g := &Grafana{}
@@ -41,7 +43,7 @@ var _ = Describe("ContactPoint type", func() {
 
 		It("Should block adding name field when missing", func() {
 			contactpoint := newContactPoint("adding-name")
-			contactpoint.Spec.Type = "webhook" // nolint:goconst
+			contactpoint.Spec.Type = defaultReceiverType
 
 			err := k8sClient.Create(t.Context(), contactpoint)
 			require.NoError(t, err)
@@ -53,7 +55,7 @@ var _ = Describe("ContactPoint type", func() {
 
 		It("Should block removing name field when set", func() {
 			contactpoint := newContactPoint("removing-name")
-			contactpoint.Spec.Type = "webhook"
+			contactpoint.Spec.Type = defaultReceiverType
 			contactpoint.Spec.Name = "initial-name"
 
 			err := k8sClient.Create(t.Context(), contactpoint)
@@ -66,7 +68,7 @@ var _ = Describe("ContactPoint type", func() {
 
 		It("Should block changing value of name", func() {
 			contactpoint := newContactPoint("updating-name")
-			contactpoint.Spec.Type = "webhook" // nolint:goconst
+			contactpoint.Spec.Type = defaultReceiverType
 			contactpoint.Spec.Name = "initial-name"
 
 			err := k8sClient.Create(t.Context(), contactpoint)
@@ -83,7 +85,7 @@ var _ = Describe("ContactPoint type", func() {
 
 		It("Should block enabling editable", func() {
 			contactpoint := newContactPoint("updating-editable")
-			contactpoint.Spec.Type = "webhook" // nolint:goconst
+			contactpoint.Spec.Type = defaultReceiverType
 			contactpoint.Spec.Editable = false
 
 			err := k8sClient.Create(t.Context(), contactpoint)
@@ -96,7 +98,7 @@ var _ = Describe("ContactPoint type", func() {
 
 		It("Should block disabling editable", func() {
 			contactpoint := newContactPoint("removing-editable")
-			contactpoint.Spec.Type = "webhook"
+			contactpoint.Spec.Type = defaultReceiverType
 			contactpoint.Spec.Editable = true
 
 			err := k8sClient.Create(t.Context(), contactpoint)
@@ -123,7 +125,7 @@ var _ = Describe("ContactPoint type", func() {
 			t := GinkgoT()
 
 			contactpoint := newContactPoint("top-level-receiver")
-			contactpoint.Spec.Type = "webhook"
+			contactpoint.Spec.Type = defaultReceiverType
 			contactpoint.Spec.Settings = &settings
 
 			err := k8sClient.Create(t.Context(), contactpoint)
@@ -135,7 +137,7 @@ var _ = Describe("ContactPoint type", func() {
 
 			contactpoint := newContactPoint("list-of-receivers")
 			contactpoint.Spec.Receivers = []ContactPointReceiver{{
-				Type:     "webhook",
+				Type:     defaultReceiverType,
 				Settings: &settings,
 			}}
 			err := k8sClient.Create(t.Context(), contactpoint)
@@ -146,10 +148,10 @@ var _ = Describe("ContactPoint type", func() {
 			t := GinkgoT()
 
 			contactpoint := newContactPoint("both-top-level-and-list-of-receiver")
-			contactpoint.Spec.Type = "webhook"
+			contactpoint.Spec.Type = defaultReceiverType
 			contactpoint.Spec.Settings = &settings
 			contactpoint.Spec.Receivers = []ContactPointReceiver{{
-				Type:     "webhook",
+				Type:     defaultReceiverType,
 				Settings: &settings,
 			}}
 
