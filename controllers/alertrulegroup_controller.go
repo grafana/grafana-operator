@@ -225,12 +225,14 @@ func crToModel(cr *grafanav1beta1.GrafanaAlertRuleGroup, folderUID string) (mode
 		mRules = append(mRules, apiRule)
 	}
 
-	return models.AlertRuleGroup{
+	modelAlertGroup := models.AlertRuleGroup{
 		FolderUID: folderUID,
 		Interval:  int64(cr.Spec.Interval.Seconds()),
 		Rules:     mRules,
 		Title:     groupName,
-	}, nil
+	}
+
+	return modelAlertGroup, nil
 }
 
 func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Context, instance *grafanav1beta1.Grafana, group *grafanav1beta1.GrafanaAlertRuleGroup, mGroup *models.AlertRuleGroup, disableProvenance *string) error {
