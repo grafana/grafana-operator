@@ -233,6 +233,7 @@ func main() { // nolint:gocyclo
 			&corev1.PersistentVolumeClaim{}: cacheLabelConfig,
 			&corev1.ConfigMap{}:             cacheLabelConfig, // Matching just labeled ConfigMaps and Secrets greatly reduces cache size
 			&corev1.Secret{}:                cacheLabelConfig, // Omitting labels or supporting custom labels would require changes in Grafana Reconciler
+			&gwapiv1.HTTPRoute{}:            cacheLabelConfig,
 		}
 		if isOpenShift {
 			mgrOptions.Cache.ByObject[&routev1.Route{}] = cacheLabelConfig
