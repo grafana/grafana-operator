@@ -196,6 +196,17 @@ func main() { // nolint:gocyclo
 		os.Exit(1)
 	}
 
+	hasGatewayAPI, err := autodetect.HasGatewayAPI()
+	if err != nil {
+		setupLog.Error(err, "unable to detect Gateway API availability")
+		os.Exit(1)
+	}
+	if hasGatewayAPI {
+		setupLog.Info("Gateway API CRDs detected - HTTPRoute support enabled")
+	} else {
+		setupLog.Info("Gateway API CRDs not detected - HTTPRoute support disabled")
+	}
+
 	mgrOptions := ctrl.Options{
 		Scheme:                 scheme,
 		Metrics:                metricsserver.Options{BindAddress: metricsAddr},
@@ -240,10 +251,9 @@ func main() { // nolint:gocyclo
 		if isOpenShift {
 			mgrOptions.Cache.ByObject[&routev1.Route{}] = cacheLabelConfig
 		}
-
-		// Note: HTTPRoute cache configuration is omitted because Gateway API CRDs may not be installed.
-		// Controller-runtime would fail to start if we configure cache for a CRD that doesn't exist.
-		// HTTPRoute resources will still be cached, just without label-based filtering.
+		if hasGatewayAPI {
+			mgrOptions.Cache.ByObject[&gatewayv1.HTTPRoute{}] = cacheLabelConfig
+		}
 
 		if enforceCacheLabelsLevel == cachingLevelSafe {
 			mgrOptions.Client.Cache = &client.CacheOptions{
