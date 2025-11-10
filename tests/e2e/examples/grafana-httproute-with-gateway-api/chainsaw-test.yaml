@@ -9,7 +9,7 @@ spec:
   - name: install-gateway-api-crds
     try:
     - apply:
-        file: tests/fixtures/gateway-api/standard-install.yaml
+        file: ../../../fixtures/gateway-api/standard-install.yaml
   - name: create-resources
     try:
     - apply:
@@ -21,4 +21,4 @@ spec:
   - name: cleanup-gateway-api-crds
     try:
     - delete:
-        file: tests/fixtures/gateway-api/standard-install.yaml
+        file: ../../../fixtures/gateway-api/standard-install.yaml
