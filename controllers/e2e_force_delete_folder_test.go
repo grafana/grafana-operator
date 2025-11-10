@@ -25,6 +25,7 @@ var _ = Describe("Successfully delete GrafanaFolder with GrafanaAlertRuleGroup r
 		},
 	}
 	noDataState := "NoData"
+	durationString := "60s"
 	arg := &v1beta1.GrafanaAlertRuleGroup{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
@@ -83,7 +84,7 @@ var _ = Describe("Successfully delete GrafanaFolder with GrafanaAlertRuleGroup r
 					},
 					NoDataState:  &noDataState,
 					ExecErrState: "Error",
-					For:          &metav1.Duration{Duration: 60 * time.Second},
+					For:          &durationString,
 					Annotations:  map[string]string{},
 					Labels:       map[string]string{},
 					IsPaused:     true,
