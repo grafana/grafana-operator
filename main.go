@@ -103,9 +103,9 @@ func init() {
 
 	utilruntime.Must(routev1.AddToScheme(scheme))
 
-	// Gateway API is optional - operator should function without it
-	// nolint:errcheck // Intentionally ignoring error - operator should work without Gateway API CRDs
-	_ = gatewayv1.Install(scheme)
+	// Gateway API types are registered like other optional APIs (e.g., Routes).
+	// The reconciler handles missing CRDs gracefully via meta.IsNoMatchError().
+	utilruntime.Must(gatewayv1.Install(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
