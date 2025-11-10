@@ -36,12 +36,46 @@ func (r *HTTPRouteReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana
 	httpRoute := model.GetGrafanaHTTPRoute(cr, scheme)
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, httpRoute, func() error {
-		httpRoute.Spec = getHTTPRouteSpec(cr, scheme)
+		// Get default backendRefs that point to Grafana service
+		service := model.GetGrafanaService(cr, scheme)
+		port := gatewayv1.PortNumber(GetGrafanaPort(cr)) //nolint:gosec // Port number is always valid Grafana port
 
+		defaultBackendRefs := []gatewayv1.HTTPBackendRef{
+			{
+				BackendRef: gatewayv1.BackendRef{
+					BackendObjectReference: gatewayv1.BackendObjectReference{
+						Name: gatewayv1.ObjectName(service.Name),
+						Port: &port,
+					},
+				},
+			},
+		}
+
+		// Start with base spec (empty parentRefs, hostnames, default backendRefs)
+		httpRoute.Spec = gatewayv1.HTTPRouteSpec{
+			CommonRouteSpec: gatewayv1.CommonRouteSpec{
+				ParentRefs: []gatewayv1.ParentReference{},
+			},
+			Hostnames: []gatewayv1.Hostname{},
+			Rules: []gatewayv1.HTTPRouteRule{
+				{
+					BackendRefs: defaultBackendRefs,
+				},
+			},
+		}
+
+		// Merge user overrides (parentRefs, hostnames, custom rules if specified)
 		err := v1beta1.Merge(httpRoute, cr.Spec.HTTPRoute)
 		if err != nil {
 			setInvalidMergeCondition(cr, "HTTPRoute", err)
 			return err
+		}
+
+		// Ensure backendRefs are set if user didn't provide custom rules or backendRefs
+		if len(httpRoute.Spec.Rules) == 0 {
+			httpRoute.Spec.Rules = []gatewayv1.HTTPRouteRule{{BackendRefs: defaultBackendRefs}}
+		} else if len(httpRoute.Spec.Rules[0].BackendRefs) == 0 {
+			httpRoute.Spec.Rules[0].BackendRefs = defaultBackendRefs
 		}
 
 		removeInvalidMergeCondition(cr, "HTTPRoute")
@@ -68,28 +102,3 @@ func (r *HTTPRouteReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana
 	return v1beta1.OperatorStageResultSuccess, nil
 }
 
-func getHTTPRouteSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) gatewayv1.HTTPRouteSpec {
-	service := model.GetGrafanaService(cr, scheme)
-	port := gatewayv1.PortNumber(GetGrafanaPort(cr)) //nolint:gosec // Port number is always valid Grafana port
-
-	return gatewayv1.HTTPRouteSpec{
-		CommonRouteSpec: gatewayv1.CommonRouteSpec{
-			ParentRefs: []gatewayv1.ParentReference{},
-		},
-		Hostnames: []gatewayv1.Hostname{},
-		Rules: []gatewayv1.HTTPRouteRule{
-			{
-				BackendRefs: []gatewayv1.HTTPBackendRef{
-					{
-						BackendRef: gatewayv1.BackendRef{
-							BackendObjectReference: gatewayv1.BackendObjectReference{
-								Name: gatewayv1.ObjectName(service.Name),
-								Port: &port,
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-}

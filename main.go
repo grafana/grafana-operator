@@ -241,8 +241,9 @@ func main() { // nolint:gocyclo
 			mgrOptions.Cache.ByObject[&routev1.Route{}] = cacheLabelConfig
 		}
 
-		// Cache HTTPRoute objects (Gateway API is optional)
-		mgrOptions.Cache.ByObject[&gatewayv1.HTTPRoute{}] = cacheLabelConfig
+		// Note: HTTPRoute cache configuration is omitted because Gateway API CRDs may not be installed.
+		// Controller-runtime would fail to start if we configure cache for a CRD that doesn't exist.
+		// HTTPRoute resources will still be cached, just without label-based filtering.
 
 		if enforceCacheLabelsLevel == cachingLevelSafe {
 			mgrOptions.Client.Cache = &client.CacheOptions{
