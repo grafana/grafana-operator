@@ -1,0 +1,8 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana-nocdr
+status:
+  (wildcard('http://grafana-nocdr-service.*:3000', adminUrl || '')): true
+  stage: complete
+  stageStatus: success

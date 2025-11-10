@@ -1,0 +1,26 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana-httproute
+spec:
+  client:
+    preferIngress: false
+  config:
+    log:
+      mode: console
+    security:
+      admin_user: root
+      admin_password: secret
+  httpRoute:
+    spec:
+      hostnames:
+      - "test.io"
+      parentRefs:
+      - group: gateway.networking.k8s.io
+        kind: Gateway
+        name: eg
+      rules:
+      - matches:
+        - path:
+            type: PathPrefix
+            value: /

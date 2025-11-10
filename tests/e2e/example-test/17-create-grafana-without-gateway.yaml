@@ -1,0 +1,13 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana-nocdr
+spec:
+  client:
+    preferIngress: false
+  config:
+    log:
+      mode: console
+    security:
+      admin_user: root
+      admin_password: secret

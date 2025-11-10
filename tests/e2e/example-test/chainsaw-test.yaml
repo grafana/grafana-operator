@@ -109,3 +109,17 @@ spec:
             file: 16-serviceaccount.yaml
         - assert:
             file: 16-assert.yaml
+    - name: step17-create-grafana-without-gateway
+      try:
+        - apply:
+            file: 17-create-grafana-without-gateway.yaml
+        - assert:
+            file: 17-assert.yaml
+    - name: step18-install-gateway-crds-and-gateway
+      try:
+        - apply:
+            file: 18-gateway.yaml
+        - apply:
+            file: 18-create-grafana-with-gateway.yaml
+        - assert:
+            file: 18-assert.yaml
