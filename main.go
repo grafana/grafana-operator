@@ -241,6 +241,9 @@ func main() { // nolint:gocyclo
 			mgrOptions.Cache.ByObject[&routev1.Route{}] = cacheLabelConfig
 		}
 
+		// Cache HTTPRoute objects (Gateway API is optional)
+		mgrOptions.Cache.ByObject[&gatewayv1.HTTPRoute{}] = cacheLabelConfig
+
 		if enforceCacheLabelsLevel == cachingLevelSafe {
 			mgrOptions.Client.Cache = &client.CacheOptions{
 				DisableFor: []client.Object{&corev1.ConfigMap{}, &corev1.Secret{}},
