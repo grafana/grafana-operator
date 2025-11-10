@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana-openapi-client-go/client/folders"
 	"github.com/grafana/grafana-openapi-client-go/client/provisioning"
 	"github.com/grafana/grafana-openapi-client-go/models"
+	gtime "github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -40,6 +41,7 @@ import (
 
 const (
 	conditionAlertGroupSynchronized = "AlertGroupSynchronized"
+	conditionReasonInvalidDuration  = "InvalidDuration"
 )
 
 // GrafanaAlertRuleGroupReconciler reconciles a GrafanaAlertRuleGroup object
@@ -125,9 +127,15 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 		disableProvenance = &trueStr
 	}
 
-	mGroup := crToModel(group, folderUID)
+	mGroup, err := crToModel(group, folderUID)
+	if err != nil {
+		setInvalidSpec(&group.Status.Conditions, group.Generation, conditionReasonInvalidDuration, err.Error())
+		meta.RemoveStatusCondition(&group.Status.Conditions, conditionAlertGroupSynchronized)
 
-	log.V(1).Info("converted cr to api model")
+		return ctrl.Result{}, fmt.Errorf("converting alert rule group to model: %w", err)
+	}
+
+	removeInvalidSpec(&group.Status.Conditions)
 
 	applyErrors := make(map[string]string)
 
@@ -148,7 +156,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(group.Spec.ResyncPeriod)}, nil
 }
 
-func crToModel(cr *grafanav1beta1.GrafanaAlertRuleGroup, folderUID string) models.AlertRuleGroup {
+func crToModel(cr *grafanav1beta1.GrafanaAlertRuleGroup, folderUID string) (models.AlertRuleGroup, error) {
 	groupName := cr.GroupName()
 
 	mRules := make(models.ProvisionedAlertRules, 0, len(cr.Spec.Rules))
@@ -160,13 +168,22 @@ func crToModel(cr *grafanav1beta1.GrafanaAlertRuleGroup, folderUID string) model
 			Data:         make([]*models.AlertQuery, len(r.Data)),
 			ExecErrState: &r.ExecErrState,
 			FolderUID:    &folderUID,
-			For:          (*strfmt.Duration)(&r.For.Duration),
 			IsPaused:     r.IsPaused,
 			Labels:       r.Labels,
 			NoDataState:  r.NoDataState,
 			RuleGroup:    &groupName,
 			Title:        &r.Title,
 			UID:          r.UID,
+		}
+
+		if r.For != nil {
+			duration, err := gtime.ParseDuration(*r.For)
+			if err != nil {
+				return models.AlertRuleGroup{}, fmt.Errorf("invalid 'for' duration %s: %w", *r.For, err)
+			}
+
+			result := (strfmt.Duration)(duration)
+			apiRule.For = &result
 		}
 
 		if r.NotificationSettings != nil {
@@ -208,12 +225,14 @@ func crToModel(cr *grafanav1beta1.GrafanaAlertRuleGroup, folderUID string) model
 		mRules = append(mRules, apiRule)
 	}
 
-	return models.AlertRuleGroup{
+	modelAlertGroup := models.AlertRuleGroup{
 		FolderUID: folderUID,
 		Interval:  int64(cr.Spec.Interval.Seconds()),
 		Rules:     mRules,
 		Title:     groupName,
 	}
+
+	return modelAlertGroup, nil
 }
 
 func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Context, instance *grafanav1beta1.Grafana, group *grafanav1beta1.GrafanaAlertRuleGroup, mGroup *models.AlertRuleGroup, disableProvenance *string) error {

@@ -79,7 +79,7 @@ func (in *AlertRule) DeepCopyInto(out *AlertRule) {
 	}
 	if in.For != nil {
 		in, out := &in.For, &out.For
-		*out = new(metav1.Duration)
+		*out = new(string)
 		**out = **in
 	}
 	if in.NotificationSettings != nil {
