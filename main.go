@@ -36,6 +36,7 @@ import (
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
+	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
@@ -101,6 +102,10 @@ func init() {
 	utilruntime.Must(grafanav1beta1.AddToScheme(scheme))
 
 	utilruntime.Must(routev1.AddToScheme(scheme))
+
+	// Gateway API is optional - operator should function without it
+	// nolint:errcheck // Intentionally ignoring error - operator should work without Gateway API CRDs
+	_ = gatewayv1.Install(scheme)
 	//+kubebuilder:scaffold:scheme
 }
 

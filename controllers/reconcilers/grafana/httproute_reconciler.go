@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/model"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -55,6 +56,12 @@ func (r *HTTPRouteReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana
 		return nil
 	})
 	if err != nil {
+		// If Gateway API CRDs are not installed, gracefully skip HTTPRoute reconciliation
+		if meta.IsNoMatchError(err) {
+			log.Info("Gateway API CRDs not found, skipping HTTPRoute reconciliation. Install Gateway API CRDs to enable HTTPRoute support.")
+			return v1beta1.OperatorStageResultSuccess, nil
+		}
+
 		return v1beta1.OperatorStageResultFailed, err
 	}
 
