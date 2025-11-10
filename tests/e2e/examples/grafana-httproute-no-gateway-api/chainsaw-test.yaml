@@ -6,6 +6,15 @@ metadata:
 spec:
   concurrent: false
   steps:
+  - name: cleanup-gateway-api-crds-if-present
+    try:
+    - delete:
+        file: tests/fixtures/gateway-api/standard-install.yaml
+    catch:
+    - command:
+        entrypoint: echo
+        args:
+        - Gateway API CRDs not present (expected for this test)
   - name: create-resources-without-gateway-api
     try:
     - apply:

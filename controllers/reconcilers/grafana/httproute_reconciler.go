@@ -101,4 +101,3 @@ func (r *HTTPRouteReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana
 
 	return v1beta1.OperatorStageResultSuccess, nil
 }
-

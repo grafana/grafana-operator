@@ -9,7 +9,7 @@ spec:
   - name: install-gateway-api-crds
     try:
     - apply:
-        file: ../../../fixtures/gateway-api/standard-install.yaml
+        file: tests/fixtures/gateway-api/standard-install.yaml
   - name: create-resources-with-both-ingress-and-httproute
     try:
     - apply:
@@ -18,3 +18,7 @@ spec:
     - assert:
         template: true
         file: assertions.yaml
+  - name: cleanup-gateway-api-crds
+    try:
+    - delete:
+        file: tests/fixtures/gateway-api/standard-install.yaml
