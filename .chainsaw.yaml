@@ -8,7 +8,7 @@ spec:
     catch:
       - describe:
           apiVersion: grafana.integreatly.org/v1beta1
-          kind: grafana-operator
+          kind: Grafana
       - podLogs:
           namespace: grafana-operator-system
           tail: 100

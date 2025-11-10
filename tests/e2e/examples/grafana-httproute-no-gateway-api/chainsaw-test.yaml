@@ -15,6 +15,28 @@ spec:
         entrypoint: echo
         args:
         - Gateway API CRDs not present (expected for this test)
+  - name: restart-operator-after-crd-removal
+    try:
+    - command:
+        entrypoint: kubectl
+        args:
+        - delete
+        - pod
+        - -l
+        - app.kubernetes.io/name=grafana-operator
+        - -n
+        - default
+    - command:
+        entrypoint: kubectl
+        args:
+        - wait
+        - --for=condition=ready
+        - pod
+        - -l
+        - app.kubernetes.io/name=grafana-operator
+        - -n
+        - default
+        - --timeout=60s
   - name: create-resources-without-gateway-api
     try:
     - apply:
