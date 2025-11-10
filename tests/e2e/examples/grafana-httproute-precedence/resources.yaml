@@ -1,0 +1,61 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: test-gateway
+spec:
+  gatewayClassName: test-gateway-class
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: Same
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana-precedence
+  labels:
+    dashboards: "grafana"
+spec:
+  config:
+    log:
+      mode: "console"
+    auth:
+      disable_login_form: "false"
+    security:
+      admin_user: root
+      admin_password: secret
+  deployment:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: grafana
+              securityContext:
+                allowPrivilegeEscalation: true
+                readOnlyRootFilesystem: false
+              readinessProbe:
+                failureThreshold: 3
+                periodSeconds: 2
+  ingress:
+    spec:
+      ingressClassName: nginx
+      rules:
+        - host: grafana-ingress.example.com
+          http:
+            paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: grafana-precedence-service
+                    port:
+                      number: 3000
+  httpRoute:
+    spec:
+      parentRefs:
+        - name: test-gateway
+      hostnames:
+        - grafana-httproute.example.com

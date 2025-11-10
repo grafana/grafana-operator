@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana-precedence-deployment
+  ownerReferences:
+  - apiVersion: grafana.integreatly.org/v1beta1
+    kind: Grafana
+    name: grafana-precedence
+spec: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-precedence-service
+  ownerReferences:
+  - apiVersion: grafana.integreatly.org/v1beta1
+    kind: Grafana
+    name: grafana-precedence
+spec: {}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana-precedence-ingress
+  ownerReferences:
+  - apiVersion: grafana.integreatly.org/v1beta1
+    kind: Grafana
+    name: grafana-precedence
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: grafana-ingress.example.com
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana-precedence
+status:
+  (conditions != null): true

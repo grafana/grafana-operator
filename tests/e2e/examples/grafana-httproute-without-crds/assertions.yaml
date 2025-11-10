@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana-no-crds-deployment
+  ownerReferences:
+  - apiVersion: grafana.integreatly.org/v1beta1
+    kind: Grafana
+    name: grafana-no-crds
+spec: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-no-crds-service
+  ownerReferences:
+  - apiVersion: grafana.integreatly.org/v1beta1
+    kind: Grafana
+    name: grafana-no-crds
+spec: {}
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana-no-crds
+status:
+  (conditions != null): true
