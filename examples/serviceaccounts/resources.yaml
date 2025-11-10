@@ -1,14 +1,25 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: my-grafana
+spec:
+  config:
+    security:
+      admin_user: root
+      admin_password: secret
+---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaServiceAccount
 metadata:
-  name: mysa
+  name: my-service-account
 spec:
   name: "my-service-account"
-  role: "Admin"
+  instanceName: "my-grafana"  # Matches the exact metadata.name of a Grafana instance in the same namespace
+  role: "Admin"               # Admin, Editor, or Viewer
   isDisabled: false
-  instanceName: "grafana"
   tokens:
     - name: "my-token-a"
-      secretName: thatsfine
+      secretName: thatsfine   # If secretName is omitted, a name is generated prefixed with the serviceaccount and token names
       expires: 2029-12-31T14:00:00+02:00
     - name: "my-token-b"
