@@ -3,12 +3,18 @@ title: Service Accounts
 weight: 80
 ---
 
-Shows how to create/manage Grafana Service Accounts.
+`GrafanaServiceAccounts`(SA) are unique compared to other resources as the security implications are higher.
+In order to avoid unintended accounts in Grafana instances, the creation and matching of `SA` is intentionally limited.
 
-To find all possible configuration options, look at our [API documentation](/docs/api/#grafanalibrarypanelspec).
+Any `SA` matches exactly one Grafana instance through the `.spec.instanceName` field.
+The `instanceName` references the `.metadata.name` field of the `Grafana` resource.
+
+Additionally, service accounts are only supported in the same namespace as shown below.
 
 {{< readfile file="resources.yaml" code="true" lang="yaml" >}}
 
-Which should result in the following secrets:
+The operator will then create a Secret for each token in `.spec.tokens`.
 
 {{< readfile file="result.yaml" code="true" lang="yaml" >}}
+
+For all possible configuration options, take a look at the [GrafanaAPI reference](/docs/api/#grafanaserviceaccountspec).
