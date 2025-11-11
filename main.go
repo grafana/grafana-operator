@@ -121,6 +121,7 @@ func init() {
 
 func configureZap() (zap.Options, error) {
 	opts := zap.Options{}
+
 	opts.Development = operatorConfig.ZapDevel
 	switch operatorConfig.ZapEncoder {
 	case "json":
@@ -129,6 +130,7 @@ func configureZap() (zap.Options, error) {
 			for _, opt := range eco {
 				opt(&encoderConfig)
 			}
+
 			return zapcore.NewJSONEncoder(encoderConfig)
 		}
 	case "console":
@@ -137,30 +139,41 @@ func configureZap() (zap.Options, error) {
 			for _, opt := range eco {
 				opt(&encoderConfig)
 			}
+
 			return zapcore.NewConsoleEncoder(encoderConfig)
 		}
 	default:
 		return opts, fmt.Errorf("invalid encoder %s", operatorConfig.ZapEncoder)
 	}
+
 	numericLevel, err := strconv.Atoi(operatorConfig.ZapLogLevel)
 	if err == nil {
-		opts.Level = uberzap.NewAtomicLevelAt(zapcore.Level(int8(numericLevel)))
+		opts.Level = uberzap.NewAtomicLevelAt(zapcore.Level(int8(numericLevel))) //nolint:gosec
 	} else {
 		level, err := zapcore.ParseLevel(operatorConfig.ZapLogLevel)
 		if err != nil {
 			return opts, fmt.Errorf("invalid log level: %w", err)
 		}
+
 		opts.Level = level
 	}
+
 	stacktraceLevel, err := zapcore.ParseLevel(operatorConfig.ZapStacktraceLevel)
 	if err != nil {
 		return opts, fmt.Errorf("invalid log level: %w", err)
 	}
+
 	opts.StacktraceLevel = stacktraceLevel
 
 	var timeEncoder zapcore.TimeEncoder
-	timeEncoder.UnmarshalText([]byte(operatorConfig.ZapTimeEncoding))
+
+	err = timeEncoder.UnmarshalText([]byte(operatorConfig.ZapTimeEncoding))
+	if err != nil {
+		return opts, fmt.Errorf("invalid log encoder: %w", err)
+	}
+
 	opts.TimeEncoder = timeEncoder
+
 	return opts, nil
 }
 
@@ -178,10 +191,11 @@ func main() { // nolint:gocyclo
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
+
 		return
 	}
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
+	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 	slogger := slog.New(logr.ToSlogHandler(setupLog))
 	slog.SetDefault(slogger)
 
