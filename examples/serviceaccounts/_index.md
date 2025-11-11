@@ -9,7 +9,7 @@ In order to avoid roque accounts in Grafana instances, the creation and matching
 Any `SA` matches exactly one Grafana instance through the `.spec.instanceName` field.
 The `instanceName` references the `.metadata.name` field of the `Grafana` resource.
 
-Additionally, the matching is limited within the same namespace as shown below.
+Additionally, service accounts are only supported in the same namespace as shown below.
 
 {{< readfile file="resources.yaml" code="true" lang="yaml" >}}
 
