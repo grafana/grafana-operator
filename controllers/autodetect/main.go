@@ -11,10 +11,25 @@ var _ AutoDetect = (*autoDetect)(nil)
 // AutoDetect provides an assortment of routines that auto-detect traits based on the runtime.
 type AutoDetect interface {
 	IsOpenshift() (bool, error)
+	HasGatewayAPI() (bool, error)
 }
 
 type autoDetect struct {
 	dcl discovery.DiscoveryInterface
+}
+
+func (a *autoDetect) HasGatewayAPI() (bool, error) {
+	apiGroupList, err := a.dcl.ServerGroups()
+	if err != nil {
+		return false, err
+	}
+	apiGroups := apiGroupList.Groups
+	for _, apiGroup := range apiGroups {
+		if apiGroup.Name == "gateway.networking.k8s.io" {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // New creates a new auto-detection worker, using the given client when talking to the current cluster.

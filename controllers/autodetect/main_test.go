@@ -52,3 +52,43 @@ func TestDetectPlatformBasedOnAvailableAPIGroups(t *testing.T) {
 		assert.Equal(t, tt.expected, plt)
 	}
 }
+
+func Test_autoDetect_HasGatewayAPI(t *testing.T) {
+	for _, tt := range []struct {
+		apiGroupList *metav1.APIGroupList
+		expected     bool
+	}{
+		{
+			&metav1.APIGroupList{},
+			false,
+		},
+		{
+			&metav1.APIGroupList{
+				Groups: []metav1.APIGroup{
+					{
+						Name: "gateway.networking.k8s.io",
+					},
+				},
+			},
+			true,
+		},
+	} {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			output, err := json.Marshal(tt.apiGroupList)
+			assert.NoError(t, err)
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, err = w.Write(output)
+			assert.NoError(t, err)
+		}))
+		defer server.Close()
+
+		autoDetect, err := autodetect.New(&rest.Config{Host: server.URL})
+		require.NoError(t, err)
+
+		plt, err := autoDetect.HasGatewayAPI()
+		require.NoError(t, err)
+		assert.Equal(t, tt.expected, plt)
+	}
+}

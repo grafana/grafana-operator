@@ -193,6 +193,12 @@ func main() { // nolint:gocyclo
 		os.Exit(1)
 	}
 
+	hasGatewayAPI, err := autodetect.HasGatewayAPI()
+	if err != nil {
+		setupLog.Error(err, "unable to detect the gateway API")
+		os.Exit(1)
+	}
+
 	mgrOptions := ctrl.Options{
 		Scheme:                 scheme,
 		Metrics:                metricsserver.Options{BindAddress: metricsAddr},
@@ -233,10 +239,13 @@ func main() { // nolint:gocyclo
 			&corev1.PersistentVolumeClaim{}: cacheLabelConfig,
 			&corev1.ConfigMap{}:             cacheLabelConfig, // Matching just labeled ConfigMaps and Secrets greatly reduces cache size
 			&corev1.Secret{}:                cacheLabelConfig, // Omitting labels or supporting custom labels would require changes in Grafana Reconciler
-			&gwapiv1.HTTPRoute{}:            cacheLabelConfig,
 		}
 		if isOpenShift {
 			mgrOptions.Cache.ByObject[&routev1.Route{}] = cacheLabelConfig
+		}
+
+		if hasGatewayAPI {
+			mgrOptions.Cache.ByObject[&gwapiv1.HTTPRoute{}] = cacheLabelConfig
 		}
 
 		if enforceCacheLabelsLevel == cachingLevelSafe {
