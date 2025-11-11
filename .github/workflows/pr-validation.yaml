@@ -111,7 +111,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - docs_only_check
-    if: (needs.docs_only_check.outputs.docs_only != 'true')
+    if: (needs.docs_only_check.outputs.docs_only != 'true' && github.event_name != 'push')
     env:
       KUBECONFIG: /home/runner/.kube/kind-grafana-operator-e2e
     strategy:
