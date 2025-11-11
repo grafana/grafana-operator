@@ -7,7 +7,7 @@ weight: 80
 In order to avoid roque accounts in Grafana instances, the creation and matching of `SA` is intentionally limited.
 
 Any `SA` matches exactly one Grafana instance through the `.spec.instanceName` field.
-The `instanceName` being equal `.metadata.name`.
+The `instanceName` references the `.metadata.name` field of the `Grafana` resource.
 
 Additionally, the matching is limited within the same namespace as shown below.
 
