@@ -31,7 +31,7 @@ jobs:
           files_ignore: |
             **/*.md
             **/*.html
-            **/*_test.go
+            media/**
             hugo/**
             docs/**
             examples/**
