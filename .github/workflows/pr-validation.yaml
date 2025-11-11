@@ -1,6 +1,3 @@
-permissions:
-  contents: read
-
 name: PR Validation
 
 on:
@@ -11,8 +8,11 @@ on:
     branches:
       - master
 
+permissions:
+  contents: read
+
 jobs:
-  docs_only_check: # Identical to E2E docs_only_check
+  docs_only_check:
     name: Check for docs-only change
     runs-on: ubuntu-latest
     outputs:
@@ -88,7 +88,7 @@ jobs:
             exit 1
           fi
 
-  trivy:
+  trivy_scan:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repo
@@ -184,7 +184,7 @@ jobs:
   end-to-end:
     runs-on: ubuntu-latest
     needs:
-      - e2e-tests
+      - e2e_tests
     steps:
       - run: |
           echo "All E2E tests ran successfully"
