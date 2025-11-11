@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  docs_only_check:
+  docs_only_check: # Identical to PR-Validation docs_only_check
     name: Check for docs-only change
     runs-on: ubuntu-latest
     outputs:

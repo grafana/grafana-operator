@@ -12,6 +12,35 @@ on:
       - master
 
 jobs:
+  docs_only_check: # Identical to E2E docs_only_check
+    name: Check for docs-only change
+    runs-on: ubuntu-latest
+    outputs:
+      docs_only: ${{ steps.docs_only_check.outputs.docs_only }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - id: changed-files
+        name: Get changed files
+        uses: step-security/changed-files@95b56dadb92a30ca9036f16423fd3c088a71ee94 # v46.0.5
+        with:
+          files_ignore: |
+            **/*.md
+            **/*.html
+            **/*_test.go
+            hugo/**
+            docs/**
+            examples/**
+
+      - id: docs_only_check
+        if: steps.changed-files.outputs.any_changed != 'true'
+        name: Check for docs-only changes
+        run: echo "docs_only=true" >> $GITHUB_OUTPUT
+
   pre-commit:
     runs-on: ubuntu-latest
     steps:
@@ -27,6 +56,9 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    needs:
+      - docs_only_check
+    if: (needs.docs_only_check.outputs.docs_only != 'true')
     steps:
       - name: Clone repo
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
