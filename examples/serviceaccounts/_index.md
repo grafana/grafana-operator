@@ -3,7 +3,7 @@ title: Service Accounts
 weight: 80
 ---
 
-`GrafanaServiceAccounts`(SA) are quite unique compared to other resources to the security implications that can arise.
+`GrafanaServiceAccounts`(SA) are unique compared to other resources as the security implications are higher.
 In order to avoid roque accounts in Grafana instances, the creation and matching of `SA` is at the time of writing intentionally limited.
 
 Any `SA` matches exactly one Grafana instance through the `.spec.instanceName` field.
