@@ -96,18 +96,18 @@ var (
 )
 
 var operatorConfig struct {
-	MetricsAddr             string        `name:"metrics-bind-address" help:"The address the metric endpoint binds to." default:":8080"`
-	ProbeAddr               string        `name:"health-probe-bind-address" help:"The address the probe endpoint binds to." default:":8081"`
-	PprofAddr               string        `name:"pprof-addr" help:"The address to expose the pprof server. Empty string disables the pprof server."`
-	EnableLeaderElection    bool          `name:"leader-elect" help:"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager." default:"false" env:"ENABLE_LEADER_ELECTION"`
-	MaxConcurrentReconciles int           `name:"max-concurrent-reconciles" help:"Maximum number of concurrent reconciles for dashboard, datasource, folder controllers." default:"1" env:"MAX_CONCURRENT_RECONCILES"`
-	ResyncPeriod            time.Duration `name:"default-resync-period" help:"Controls the default .spec.resyncPeriod when undefined on CRs." default:"10m" env:"DEFAULT_RESYNC_PERIOD"`
+	MetricsAddr             string        `name:"metrics-bind-address"      default:":8080" help:"The address the metric endpoint binds to."`
+	ProbeAddr               string        `name:"health-probe-bind-address" default:":8081" help:"The address the probe endpoint binds to."`
+	PprofAddr               string        `name:"pprof-addr"                                help:"The address to expose the pprof server. Empty string disables the pprof server."`
+	EnableLeaderElection    bool          `name:"leader-elect"              default:"false" help:"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager." env:"ENABLE_LEADER_ELECTION"`
+	MaxConcurrentReconciles int           `name:"max-concurrent-reconciles" default:"1"     help:"Maximum number of concurrent reconciles for dashboard, datasource, folder controllers." env:"MAX_CONCURRENT_RECONCILES"`
+	ResyncPeriod            time.Duration `name:"default-resync-period"     default:"10m"   help:"Controls the default .spec.resyncPeriod when undefined on CRs." env:"DEFAULT_RESYNC_PERIOD"`
 
-	ZapDevel           bool   `name:"zap-devel" help:"Development Mode defaults(encoder=consoleEncoder,logLevel=Debug,stackTraceLevel=Warn)" default:"false"`
-	ZapEncoder         string `name:"zap-encoder" help:"Zap log encoding (one of 'json' or 'console')" default:"console"`
-	ZapLogLevel        string `name:"zap-log-level" help:"Zap Level to configure the verbosity of logging. Can be one of 'debug', 'info', 'error', 'panic' or any integer value > 0 which corresponds to custom debug levels of increasing verbosity" default:"info"`
-	ZapTimeEncoding    string `name:"zap-time-encoding" help:"Zap time encoding (one of 'epoch', 'millis', 'nanos', 'iso8601', 'rfc3339' or 'rfc3339nano')." default:"iso8601"`
-	ZapStacktraceLevel string `name:"zap-stacktrace-level" help:"Zap Level at and above which stacktraces are captured (one of 'info', 'error', 'panic')." default:"error"`
+	ZapDevel           bool   `name:"zap-devel"            default:"false"   help:"Development Mode defaults(encoder=consoleEncoder,logLevel=Debug,stackTraceLevel=Warn)"`
+	ZapEncoder         string `name:"zap-encoder"          default:"console" help:"Zap log encoding (one of 'json' or 'console')" enum:"console,json"`
+	ZapLogLevel        string `name:"zap-log-level"        default:"info"    help:"Zap Level to configure the verbosity of logging. Can be one of 'debug', 'info', 'error', 'panic' or any integer value > 0 which corresponds to custom debug levels of increasing verbosity"`
+	ZapTimeEncoding    string `name:"zap-time-encoding"    default:"iso8601" help:"Zap time encoding (one of 'epoch', 'millis', 'nanos', 'iso8601', 'rfc3339' or 'rfc3339nano')." enum:"epoch,millis,nanos,iso8601,rfc3339,rfc3339nano"`
+	ZapStacktraceLevel string `name:"zap-stacktrace-level" default:"error"   help:"Zap Level at and above which stacktraces are captured (one of 'info', 'error', 'panic')." enum:"info,error,panic"`
 }
 
 func init() {
