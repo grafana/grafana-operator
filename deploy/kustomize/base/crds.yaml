@@ -2754,13 +2754,6 @@ spec:
               route:
                 description: Routes for alerts to match against
                 properties:
-                  active_time_intervals:
-                    items:
-                      type: string
-                    type: array
-                  continue:
-                    description: continue
-                    type: boolean
                   group_by:
                     description: group by
                     items:
@@ -2772,50 +2765,8 @@ spec:
                   group_wait:
                     description: group wait
                     type: string
-                  match_re:
-                    additionalProperties:
-                      type: string
-                    description: match re
-                    type: object
-                  matchers:
-                    description: matchers
-                    items:
-                      properties:
-                        isEqual:
-                          description: is equal
-                          type: boolean
-                        isRegex:
-                          description: is regex
-                          type: boolean
-                        name:
-                          description: name
-                          type: string
-                        value:
-                          description: value
-                          type: string
-                      required:
-                      - isRegex
-                      - value
-                      type: object
-                    type: array
-                  mute_time_intervals:
-                    description: mute time intervals
-                    items:
-                      type: string
-                    type: array
-                  object_matchers:
-                    description: object matchers
-                    items:
-                      description: |-
-                        ObjectMatcher ObjectMatcher is a matcher that can be used to filter alerts.
-
-                        swagger:model ObjectMatcher
-                      items:
-                        type: string
-                      type: array
-                    type: array
                   provenance:
-                    description: provenance
+                    description: 'Deprecated: Does nothing'
                     type: string
                   receiver:
                     description: receiver
@@ -3018,6 +2969,7 @@ spec:
               of GrafanaNotificationPolicyRoute
             properties:
               active_time_intervals:
+                description: active time intervals
                 items:
                   type: string
                 type: array
@@ -3078,7 +3030,7 @@ spec:
                   type: array
                 type: array
               provenance:
-                description: provenance
+                description: 'Deprecated: Does nothing'
                 type: string
               receiver:
                 description: receiver
