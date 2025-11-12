@@ -11,6 +11,7 @@ var _ AutoDetect = (*autoDetect)(nil)
 // AutoDetect provides an assortment of routines that auto-detect traits based on the runtime.
 type AutoDetect interface {
 	IsOpenshift() (bool, error)
+	HasGatewayAPI() (bool, error)
 }
 
 type autoDetect struct {
@@ -32,19 +33,28 @@ func New(restConfig *rest.Config) (AutoDetect, error) {
 	}, nil
 }
 
-// Platform returns the detected platform this operator is running on. Possible values: Kubernetes, OpenShift.
-func (a *autoDetect) IsOpenshift() (bool, error) {
+func (a *autoDetect) hasAPIGroup(target string) (bool, error) {
 	apiList, err := a.dcl.ServerGroups()
 	if err != nil {
 		return false, err
 	}
 
 	apiGroups := apiList.Groups
-	for i := range apiGroups {
-		if apiGroups[i].Name == "route.openshift.io" {
+	for _, group := range apiGroups {
+		if group.Name == target {
 			return true, nil
 		}
 	}
 
 	return false, nil
+}
+
+// Tests for the presence of the `route.openshift.io` api group as an indicator of if we're running in OpenShift
+func (a *autoDetect) IsOpenshift() (bool, error) {
+	return a.hasAPIGroup("route.openshift.io")
+}
+
+// Tests if the GatewayAPI CRDs are present
+func (a *autoDetect) HasGatewayAPI() (bool, error) {
+	return a.hasAPIGroup("gateway.networking.k8s.io")
 }

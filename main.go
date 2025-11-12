@@ -56,6 +56,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+	gwapiv1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers"
@@ -101,6 +102,8 @@ func init() {
 	utilruntime.Must(grafanav1beta1.AddToScheme(scheme))
 
 	utilruntime.Must(routev1.AddToScheme(scheme))
+
+	utilruntime.Must(gwapiv1.Install(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -191,6 +194,12 @@ func main() { //nolint:gocyclo
 		os.Exit(1)
 	}
 
+	hasGatewayAPI, err := autodetect.HasGatewayAPI()
+	if err != nil {
+		setupLog.Error(err, "failed to test for GatewayAPI CRDs")
+		os.Exit(1)
+	}
+
 	mgrOptions := ctrl.Options{
 		Scheme:                 scheme,
 		Metrics:                metricsserver.Options{BindAddress: metricsAddr},
@@ -234,6 +243,12 @@ func main() { //nolint:gocyclo
 		}
 		if isOpenShift {
 			mgrOptions.Cache.ByObject[&routev1.Route{}] = cacheLabelConfig
+		}
+
+		if hasGatewayAPI {
+			mgrOptions.Cache.ByObject[&gwapiv1.HTTPRoute{}] = cacheLabelConfig
+		} else {
+			setupLog.Info("skipping cache fine tuning for HTTPRoute resources as GatewayAPI CRDs were not found in the cluster")
 		}
 
 		if enforceCacheLabelsLevel == cachingLevelSafe {

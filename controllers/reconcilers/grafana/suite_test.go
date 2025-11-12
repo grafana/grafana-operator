@@ -28,6 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	gwapiv1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 	//+kubebuilder:scaffold:imports
@@ -73,6 +74,8 @@ var _ = BeforeSuite(func() {
 	err = routev1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
+	err = gwapiv1.Install(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
 	//+kubebuilder:scaffold:scheme
 
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
