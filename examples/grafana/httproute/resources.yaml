@@ -1,0 +1,14 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana-httproute
+  labels:
+    dashboards: "grafana"
+spec:
+  httpRoute:
+    spec:
+      parentRefs:
+        - name: my-gateway
+          namespace: default
+      hostnames:
+        - grafana.example.com
