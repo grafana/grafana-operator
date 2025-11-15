@@ -234,7 +234,7 @@ func updatePluginConfigMap(cm *corev1.ConfigMap, value []byte, key string, depre
 		if _, ok := cm.BinaryData[key]; ok {
 			{
 				delete(cm.BinaryData, key)
-				isUpdated = true // nolint:wsl_v5
+				isUpdated = true //nolint:wsl_v5
 
 				return
 			}

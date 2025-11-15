@@ -214,7 +214,7 @@ func (r *GrafanaServiceAccountReconciler) finalize(ctx context.Context, cr *v1be
 	if err != nil {
 		// ATM, service_accounts.DeleteServiceAccountNotFound doesn't have Is, Unwrap, Unwrap.
 		// So, we cannot rely only on errors.Is().
-		_, ok := err.(*service_accounts.DeleteServiceAccountNotFound) // nolint:errorlint
+		_, ok := err.(*service_accounts.DeleteServiceAccountNotFound) //nolint:errorlint
 		if ok || errors.Is(err, service_accounts.NewDeleteServiceAccountNotFound()) {
 			logf.FromContext(ctx).Info("service account not found, skipping removal",
 				"serviceAccountID", cr.Status.Account.ID,
@@ -265,7 +265,7 @@ func (r *GrafanaServiceAccountReconciler) lookupGrafana(
 
 	// Check if Grafana instance is ready
 	if grafana.Status.Stage != v1beta1.OperatorStageComplete || grafana.Status.StageStatus != v1beta1.OperatorStageResultSuccess {
-		return nil, fmt.Errorf("Grafana instance %q is not ready (stage: %q, status: %q)", cr.Spec.InstanceName, grafana.Status.Stage, grafana.Status.StageStatus) // nolint:staticcheck
+		return nil, fmt.Errorf("Grafana instance %q is not ready (stage: %q, status: %q)", cr.Spec.InstanceName, grafana.Status.Stage, grafana.Status.StageStatus) //nolint:staticcheck
 	}
 
 	return &grafana, nil
@@ -661,7 +661,7 @@ func (r *GrafanaServiceAccountReconciler) upsertAccount(
 
 		// ATM, service_accounts.UpdateServiceAccountNotFound doesn't have Is, Unwrap, Unwrap.
 		// So, we cannot rely only on errors.Is().
-		_, ok := err.(*service_accounts.UpdateServiceAccountNotFound) // nolint:errorlint
+		_, ok := err.(*service_accounts.UpdateServiceAccountNotFound) //nolint:errorlint
 		if !ok && !errors.Is(err, service_accounts.NewUpdateServiceAccountNotFound()) {
 			return fmt.Errorf("updating service account: %w", err)
 		}
@@ -722,7 +722,7 @@ func (r *GrafanaServiceAccountReconciler) removeAccountToken(
 	if err != nil {
 		// ATM, service_accounts.DeleteTokenNotFound doesn't have Is, Unwrap, Unwrap.
 		// So, we cannot rely only on errors.Is().
-		_, ok := err.(*service_accounts.DeleteTokenNotFound) // nolint:errorlint
+		_, ok := err.(*service_accounts.DeleteTokenNotFound) //nolint:errorlint
 		if ok || errors.Is(err, service_accounts.NewDeleteTokenNotFound()) {
 			return nil
 		}

@@ -104,7 +104,7 @@ func init() {
 	//+kubebuilder:scaffold:scheme
 }
 
-func main() { // nolint:gocyclo
+func main() { //nolint:gocyclo
 	var (
 		metricsAddr             string
 		enableLeaderElection    bool

@@ -41,7 +41,7 @@ var _ = Describe("ContactPoint type", func() {
 
 		It("Should block adding name field when missing", func() {
 			contactpoint := newContactPoint("adding-name")
-			contactpoint.Spec.Type = "webhook" // nolint:goconst
+			contactpoint.Spec.Type = "webhook" //nolint:goconst
 
 			err := k8sClient.Create(t.Context(), contactpoint)
 			require.NoError(t, err)
@@ -66,7 +66,7 @@ var _ = Describe("ContactPoint type", func() {
 
 		It("Should block changing value of name", func() {
 			contactpoint := newContactPoint("updating-name")
-			contactpoint.Spec.Type = "webhook" // nolint:goconst
+			contactpoint.Spec.Type = "webhook" //nolint:goconst
 			contactpoint.Spec.Name = "initial-name"
 
 			err := k8sClient.Create(t.Context(), contactpoint)
@@ -83,7 +83,7 @@ var _ = Describe("ContactPoint type", func() {
 
 		It("Should block enabling editable", func() {
 			contactpoint := newContactPoint("updating-editable")
-			contactpoint.Spec.Type = "webhook" // nolint:goconst
+			contactpoint.Spec.Type = "webhook" //nolint:goconst
 			contactpoint.Spec.Editable = false
 
 			err := k8sClient.Create(t.Context(), contactpoint)
