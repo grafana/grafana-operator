@@ -266,11 +266,10 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 					return fmt.Errorf("deleting empty parent folder from instance: %w", err)
 				}
 
-				if resp.StatusCode == http.StatusOK {
+				switch resp.StatusCode {
+				case http.StatusOK:
 					log.Info("unused folder successfully removed")
-				}
-
-				if resp.StatusCode == 432 {
+				case 432:
 					log.Info("folder still in use by other dashboards, libraryPanels, or alertrules")
 				}
 			}
