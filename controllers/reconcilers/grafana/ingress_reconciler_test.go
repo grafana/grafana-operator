@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	routev1 "github.com/openshift/api/route/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 
 	networkingv1 "k8s.io/api/networking/v1"
@@ -68,7 +69,14 @@ var _ = Describe("Allow use of Ingress on OpenShift", func() {
 		vars := &v1beta1.OperatorReconcileVars{}
 		status, err := r.Reconcile(ctx, cr, vars, scheme.Scheme)
 
-		Expect(err).To(HaveOccurred())
-		Expect(status).To(Equal(v1beta1.OperatorStageResultFailed), "Route does not exist in Scheme outside of OpenShift")
+		Expect(err).ToNot(HaveOccurred())
+		Expect(status).To(Equal(v1beta1.OperatorStageResultSuccess))
+
+		route := &routev1.Route{}
+		err = k8sClient.Get(ctx, types.NamespacedName{
+			Name:      fmt.Sprintf("%s-route", cr.Name),
+			Namespace: "default",
+		}, route)
+		Expect(err).ToNot(HaveOccurred())
 	})
 })

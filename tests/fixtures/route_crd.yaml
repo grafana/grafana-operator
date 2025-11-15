@@ -1,0 +1,45 @@
+# https://raw.githubusercontent.com/openshift/router/refs/heads/release-4.21/deploy/route_crd.yaml
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  # name must match the spec fields below, and be in the form: <plural>.<group>
+  name: routes.route.openshift.io
+spec:
+  # group name to use for REST API: /apis/<group>/<version>
+  group: route.openshift.io
+  # list of versions supported by this CustomResourceDefinition
+  versions:
+    - name: v1
+      # Each version can be enabled/disabled by Served flag.
+      served: true
+      # One and only one version must be marked as the storage version.
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          x-kubernetes-preserve-unknown-fields: true
+      additionalPrinterColumns:
+        - name: Host
+          type: string
+          jsonPath: .status.ingress[0].host
+        - name: Admitted
+          type: string
+          jsonPath: .status.ingress[0].conditions[?(@.type=="Admitted")].status
+        - name: Service
+          type: string
+          jsonPath: .spec.to.name
+        - name: TLS
+          type: string
+          jsonPath: .spec.tls.type
+      subresources:
+        # enable spec/status
+        status: {}
+  # either Namespaced or Cluster
+  scope: Namespaced
+  names:
+    # plural name to be used in the URL: /apis/<group>/<version>/<plural>
+    plural: routes
+    # singular name to be used as an alias on the CLI and for display
+    singular: route
+    # kind is normally the CamelCased singular type. Your resource manifests use this.
+    kind: Route
