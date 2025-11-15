@@ -81,6 +81,55 @@ var _ = Describe("Allow use of Ingress on OpenShift", func() {
 		Expect(err).ToNot(HaveOccurred())
 	})
 
+	It("Removes Route when .spec.route is removed", func() {
+		r := NewIngressReconciler(k8sClient, true)
+		cr := &v1beta1.Grafana{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "route-nil",
+				Namespace: "default",
+				Labels:    map[string]string{"openshift": "route"},
+			},
+			Spec: v1beta1.GrafanaSpec{
+				Route: &v1beta1.RouteOpenshiftV1{
+					Spec: &v1beta1.RouteOpenShiftV1Spec{},
+				},
+			},
+		}
+
+		ctx := context.Background()
+		Expect(k8sClient.Create(ctx, cr)).To(Succeed())
+
+		vars := &v1beta1.OperatorReconcileVars{}
+		status, err := r.Reconcile(ctx, cr, vars, scheme.Scheme)
+
+		Expect(err).ToNot(HaveOccurred())
+		Expect(status).To(Equal(v1beta1.OperatorStageResultSuccess))
+
+		route := &routev1.Route{}
+		err = k8sClient.Get(ctx, types.NamespacedName{
+			Name:      fmt.Sprintf("%s-route", cr.Name),
+			Namespace: "default",
+		}, route)
+		Expect(err).ToNot(HaveOccurred())
+
+		cr.Spec.Route = nil
+
+		Expect(k8sClient.Update(ctx, cr)).To(Succeed())
+
+		status, err = r.Reconcile(ctx, cr, vars, scheme.Scheme)
+
+		Expect(err).ToNot(HaveOccurred())
+		Expect(status).To(Equal(v1beta1.OperatorStageResultSuccess))
+
+		route = &routev1.Route{}
+		err = k8sClient.Get(ctx, types.NamespacedName{
+			Name:      fmt.Sprintf("%s-route", cr.Name),
+			Namespace: "default",
+		}, route)
+
+		Expect(kuberr.IsNotFound(err)).To(BeTrue())
+	})
+
 	It("Removes Ingress when .spec.ingress is removed", func() {
 		r := NewIngressReconciler(k8sClient, false)
 		cr := &v1beta1.Grafana{
