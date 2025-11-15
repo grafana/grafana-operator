@@ -13,6 +13,7 @@ linters:
     - nakedret
     - nestif
     - nilerr
+    - nolintlint
     - prealloc
     - revive
     - testifylint
