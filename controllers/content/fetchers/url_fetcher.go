@@ -79,7 +79,7 @@ func FetchFromURL(ctx context.Context, cr v1beta1.GrafanaContentResource, c clie
 	if err != nil {
 		return nil, err
 	}
-	defer response.Body.Close() //nolint:errcheck
+	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status code from dashboard url request, get %v for dashboard %v", response.StatusCode, cr.GetName())

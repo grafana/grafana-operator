@@ -127,7 +127,7 @@ func (r *GrafanaNotificationTemplateReconciler) reconcileWithInstance(ctx contex
 		return fmt.Errorf("building grafana client: %w", err)
 	}
 
-	trueRef := "true" //nolint:goconst
+	trueRef := "true"
 
 	editable := true //nolint:staticcheck
 	if notificationTemplate.Spec.Editable != nil && !*notificationTemplate.Spec.Editable {

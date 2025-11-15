@@ -61,7 +61,7 @@ type GrafanaDashboardReconciler struct {
 	Cfg    *Config
 }
 
-func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) { //nolint:gocyclo
+func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx).WithName("GrafanaDashboardReconciler")
 	ctx = logf.IntoContext(ctx, log)
 
@@ -431,7 +431,7 @@ func (r *GrafanaDashboardReconciler) hasRemoteChange(exists bool, model map[stri
 		keys = append(keys, key)
 	}
 
-	skipKeys := []string{"id", "version"} //nolint
+	skipKeys := []string{"id", "version"}
 	for _, key := range keys {
 		// we do not keep track of those keys in the custom resource
 		if slices.Contains(skipKeys, key) {

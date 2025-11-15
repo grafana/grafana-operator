@@ -264,7 +264,7 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, cr *v1beta
 		// Skip cleanup in instances
 		if isCleanupInGrafanaRequired {
 			if resp.Payload.Result.Meta.ConnectedDashboards > 0 {
-				return fmt.Errorf("library panel %s/%s/%s on instance %s/%s has existing connections", cr.Namespace, cr.Name, uid, grafana.Namespace, grafana.Name) //nolint
+				return fmt.Errorf("library panel %s/%s/%s on instance %s/%s has existing connections", cr.Namespace, cr.Name, uid, grafana.Namespace, grafana.Name)
 			}
 
 			_, err = grafanaClient.LibraryElements.DeleteLibraryElementByUID(uid) //nolint:errcheck
