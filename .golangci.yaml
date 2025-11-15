@@ -55,7 +55,7 @@ linters:
       max-func-lines: 30
 
     nestif:
-      min-complexity: 30
+      min-complexity: 10
 
     nolintlint:
       allow-unused: false
