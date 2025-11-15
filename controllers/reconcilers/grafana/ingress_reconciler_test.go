@@ -82,7 +82,7 @@ var _ = Describe("Allow use of Ingress on OpenShift", func() {
 	})
 
 	It("Removes Ingress when .spec.ingress is removed", func() {
-		r := NewIngressReconciler(k8sClient, true)
+		r := NewIngressReconciler(k8sClient, false)
 		cr := &v1beta1.Grafana{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "ingress-nil",
