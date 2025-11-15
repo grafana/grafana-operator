@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers/grafana"
+	routev1 "github.com/openshift/api/route/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -296,7 +297,7 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *GrafanaReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
-	err := ctrl.NewControllerManagedBy(mgr).
+	b := ctrl.NewControllerManagedBy(mgr).
 		For(&grafanav1beta1.Grafana{}, builder.WithPredicates(ignoreStatusUpdates())).
 		Owns(&appsv1.Deployment{}, builder.WithPredicates(ignoreStatusUpdates())).
 		Owns(&corev1.ConfigMap{}).
@@ -305,8 +306,13 @@ func (r *GrafanaReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manag
 		Owns(&corev1.ServiceAccount{}).
 		Owns(&corev1.Service{}, builder.WithPredicates(ignoreStatusUpdates())).
 		Owns(&networkingv1.Ingress{}, builder.WithPredicates(ignoreStatusUpdates())).
-		WithOptions(controller.Options{RateLimiter: defaultRateLimiter()}).
-		Complete(r)
+		WithOptions(controller.Options{RateLimiter: defaultRateLimiter()})
+
+	if r.IsOpenShift {
+		b.Owns(&routev1.Route{}, builder.WithPredicates(ignoreStatusUpdates()))
+	}
+
+	err := b.Complete(r)
 	if err != nil {
 		return err
 	}
