@@ -199,7 +199,7 @@ func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Contex
 		}
 
 		// doesn't yet exist--should provision
-		// nolint:errcheck
+		//nolint:errcheck
 		_, err = grafanaClient.LibraryElements.CreateLibraryElement(&models.CreateLibraryElementCommand{
 			FolderUID: folderUID,
 			Kind:      int64(libraryElementTypePanel),
@@ -216,7 +216,7 @@ func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Contex
 
 	// handle content caching
 	if content.HasChanged(cr, hash) {
-		_, err = grafanaClient.LibraryElements.UpdateLibraryElement(uid, &models.PatchLibraryElementCommand{ // nolint:errcheck
+		_, err = grafanaClient.LibraryElements.UpdateLibraryElement(uid, &models.PatchLibraryElementCommand{ //nolint:errcheck
 			FolderUID: folderUID,
 			Kind:      int64(libraryElementTypePanel),
 			Model:     model,

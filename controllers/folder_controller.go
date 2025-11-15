@@ -237,7 +237,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 			ParentUID: parentFolderUID,
 		}
 
-		_, err := grafanaClient.Folders.CreateFolder(body) // nolint:errcheck
+		_, err := grafanaClient.Folders.CreateFolder(body) //nolint:errcheck
 		if err != nil {
 			return err
 		}

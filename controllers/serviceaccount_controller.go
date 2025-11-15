@@ -206,7 +206,7 @@ func (r *GrafanaServiceAccountReconciler) finalize(ctx context.Context, cr *v1be
 		return fmt.Errorf("creating Grafana client: %w", err)
 	}
 
-	_, err = gClient.ServiceAccounts.DeleteServiceAccountWithParams( // nolint:errcheck
+	_, err = gClient.ServiceAccounts.DeleteServiceAccountWithParams( //nolint:errcheck
 		service_accounts.
 			NewDeleteServiceAccountParamsWithContext(ctx).
 			WithServiceAccountID(cr.Status.Account.ID),
@@ -713,7 +713,7 @@ func (r *GrafanaServiceAccountReconciler) removeAccountToken(
 		tokenStatus.Secret = nil
 	}
 
-	_, err := gClient.ServiceAccounts.DeleteTokenWithParams( // nolint:errcheck
+	_, err := gClient.ServiceAccounts.DeleteTokenWithParams( //nolint:errcheck
 		service_accounts.
 			NewDeleteTokenParamsWithContext(ctx).
 			WithServiceAccountID(serviceAccountID).
