@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers/grafana"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -299,6 +300,11 @@ func (r *GrafanaReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manag
 		For(&grafanav1beta1.Grafana{}, builder.WithPredicates(ignoreStatusUpdates())).
 		Owns(&appsv1.Deployment{}, builder.WithPredicates(ignoreStatusUpdates())).
 		Owns(&corev1.ConfigMap{}).
+		Owns(&corev1.PersistentVolumeClaim{}, builder.WithPredicates(ignoreStatusUpdates())).
+		Owns(&corev1.Secret{}).
+		Owns(&corev1.ServiceAccount{}).
+		Owns(&corev1.Service{}, builder.WithPredicates(ignoreStatusUpdates())).
+		Owns(&networkingv1.Ingress{}, builder.WithPredicates(ignoreStatusUpdates())).
 		WithOptions(controller.Options{RateLimiter: defaultRateLimiter()}).
 		Complete(r)
 	if err != nil {
