@@ -199,7 +199,7 @@ func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Contex
 		}
 
 		// doesn't yet exist--should provision
-		// nolint:errcheck
+		//nolint:errcheck
 		_, err = grafanaClient.LibraryElements.CreateLibraryElement(&models.CreateLibraryElementCommand{
 			FolderUID: folderUID,
 			Kind:      int64(libraryElementTypePanel),
@@ -216,7 +216,7 @@ func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Contex
 
 	// handle content caching
 	if content.HasChanged(cr, hash) {
-		_, err = grafanaClient.LibraryElements.UpdateLibraryElement(uid, &models.PatchLibraryElementCommand{ // nolint:errcheck
+		_, err = grafanaClient.LibraryElements.UpdateLibraryElement(uid, &models.PatchLibraryElementCommand{ //nolint:errcheck
 			FolderUID: folderUID,
 			Kind:      int64(libraryElementTypePanel),
 			Model:     model,
@@ -264,7 +264,7 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, cr *v1beta
 		// Skip cleanup in instances
 		if isCleanupInGrafanaRequired {
 			if resp.Payload.Result.Meta.ConnectedDashboards > 0 {
-				return fmt.Errorf("library panel %s/%s/%s on instance %s/%s has existing connections", cr.Namespace, cr.Name, uid, grafana.Namespace, grafana.Name) //nolint
+				return fmt.Errorf("library panel %s/%s/%s on instance %s/%s has existing connections", cr.Namespace, cr.Name, uid, grafana.Namespace, grafana.Name)
 			}
 
 			_, err = grafanaClient.LibraryElements.DeleteLibraryElementByUID(uid) //nolint:errcheck

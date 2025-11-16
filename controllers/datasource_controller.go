@@ -183,7 +183,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	cr.Status.Hash = hash
-	cr.Status.LastMessage = "" // nolint:staticcheck
+	cr.Status.LastMessage = "" //nolint:staticcheck
 	cr.Status.UID = cr.CustomUIDOrUID()
 
 	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(cr.Spec.ResyncPeriod)}, nil
@@ -236,10 +236,9 @@ func (r *GrafanaDatasourceReconciler) finalize(ctx context.Context, cr *v1beta1.
 			return err
 		}
 
-		_, err = grafanaClient.Datasources.DeleteDataSourceByUID(uid) // nolint:errcheck
-
-		var notFound *datasources.DeleteDataSourceByUIDNotFound
+		_, err = grafanaClient.Datasources.DeleteDataSourceByUID(uid) //nolint:errcheck
 		if err != nil {
+			var notFound *datasources.DeleteDataSourceByUIDNotFound
 			if !errors.As(err, &notFound) {
 				return fmt.Errorf("deleting datasource %s: %w", uid, err)
 			}

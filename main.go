@@ -104,7 +104,7 @@ func init() {
 	//+kubebuilder:scaffold:scheme
 }
 
-func main() { // nolint:gocyclo
+func main() { //nolint:gocyclo
 	var (
 		metricsAddr             string
 		enableLeaderElection    bool
@@ -207,7 +207,7 @@ func main() { // nolint:gocyclo
 	labelSelectors, err := getLabelSelectors(watchLabelSelectors)
 	if err != nil {
 		setupLog.Error(err, fmt.Sprintf("unable to parse %s", watchLabelSelectorsEnvVar))
-		os.Exit(1) //nolint
+		os.Exit(1)
 	}
 
 	if enforceCacheLabels {
@@ -271,7 +271,7 @@ func main() { // nolint:gocyclo
 	mgr, err := ctrl.NewManager(restConfig, mgrOptions)
 	if err != nil {
 		setupLog.Error(err, "unable to create new manager")
-		os.Exit(1) //nolint
+		os.Exit(1)
 	}
 
 	ctrlCfg := &controllers.Config{
