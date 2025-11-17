@@ -29,8 +29,8 @@ params:
   github_repo: https://github.com/grafana/grafana-operator
   github_branch: master
   path_base_for_github_subdir:
-    from: ^.*?/grafana-operator/(?:docs/(examples/.*)|(docs/docs/.*)|(examples/.*))$
-    to: $1$2$3
+    from: .*?/grafana-operator/(.*)
+    to: $1
   offlineSearch: true
   prism_syntax_highlighting: false
   ui:
