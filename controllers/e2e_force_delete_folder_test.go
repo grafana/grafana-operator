@@ -113,10 +113,10 @@ var _ = Describe("Successfully delete GrafanaFolder with GrafanaAlertRuleGroup r
 		Expect(err).ToNot(HaveOccurred())
 
 		By("Verifying folder and alert rule group exist")
-		_, err = cl.Folders.GetFolderByUID(f.Spec.CustomUID) // nolint:errcheck
+		_, err = cl.Folders.GetFolderByUID(f.Spec.CustomUID) //nolint:errcheck
 		Expect(err).NotTo(HaveOccurred(), "Folder should exist in Grafana")
 
-		_, err = cl.Provisioning.GetAlertRuleGroup(arg.GroupName(), f.Spec.CustomUID) // nolint:errcheck
+		_, err = cl.Provisioning.GetAlertRuleGroup(arg.GroupName(), f.Spec.CustomUID) //nolint:errcheck
 		Expect(err).NotTo(HaveOccurred(), "AlertRuleGroup should exist in Grafana")
 
 		By("Deleting folder")
@@ -126,7 +126,7 @@ var _ = Describe("Successfully delete GrafanaFolder with GrafanaAlertRuleGroup r
 		Expect(err).ToNot(HaveOccurred())
 
 		By("Verifying folder is missing")
-		_, err = cl.Folders.GetFolderByUID(f.Spec.CustomUID) // nolint:errcheck
+		_, err = cl.Folders.GetFolderByUID(f.Spec.CustomUID) //nolint:errcheck
 		Expect(err).To(HaveOccurred())
 
 		var notFound *folders.GetFolderByUIDNotFound

@@ -61,7 +61,7 @@ type GrafanaDashboardReconciler struct {
 	Cfg    *Config
 }
 
-func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) { //nolint:gocyclo
+func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx).WithName("GrafanaDashboardReconciler")
 	ctx = logf.IntoContext(ctx, log)
 
@@ -266,11 +266,10 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 					return fmt.Errorf("deleting empty parent folder from instance: %w", err)
 				}
 
-				if resp.StatusCode == http.StatusOK {
+				switch resp.StatusCode {
+				case http.StatusOK:
 					log.Info("unused folder successfully removed")
-				}
-
-				if resp.StatusCode == 432 {
+				case 432:
 					log.Info("folder still in use by other dashboards, libraryPanels, or alertrules")
 				}
 			}
@@ -432,7 +431,7 @@ func (r *GrafanaDashboardReconciler) hasRemoteChange(exists bool, model map[stri
 		keys = append(keys, key)
 	}
 
-	skipKeys := []string{"id", "version"} //nolint
+	skipKeys := []string{"id", "version"}
 	for _, key := range keys {
 		// we do not keep track of those keys in the custom resource
 		if slices.Contains(skipKeys, key) {

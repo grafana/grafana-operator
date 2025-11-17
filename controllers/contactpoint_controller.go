@@ -411,7 +411,7 @@ func (r *GrafanaContactPointReconciler) indexSecretSource() func(o client.Object
 		}
 
 		for _, rec := range cr.Spec.Receivers {
-			for _, valueFrom := range rec.ValuesFrom { //nolint:staticcheck
+			for _, valueFrom := range rec.ValuesFrom {
 				if valueFrom.ValueFrom.SecretKeyRef != nil {
 					secretRefs = append(secretRefs, fmt.Sprintf("%s/%s", cr.Namespace, valueFrom.ValueFrom.SecretKeyRef.Name))
 				}
@@ -445,7 +445,7 @@ func (r *GrafanaContactPointReconciler) indexConfigMapSource() func(o client.Obj
 		}
 
 		for _, rec := range cr.Spec.Receivers {
-			for _, valueFrom := range rec.ValuesFrom { //nolint:staticcheck
+			for _, valueFrom := range rec.ValuesFrom {
 				if valueFrom.ValueFrom.ConfigMapKeyRef != nil {
 					configMapRefs = append(configMapRefs, fmt.Sprintf("%s/%s", cr.Namespace, valueFrom.ValueFrom.ConfigMapKeyRef.Name))
 				}

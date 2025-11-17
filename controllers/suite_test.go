@@ -61,7 +61,7 @@ var (
 	grafanaContainer  testcontainers.Container
 	externalGrafanaCr *v1beta1.Grafana
 
-	grafanaPort = nat.Port(fmt.Sprint(config.GrafanaHTTPPort)) //nolint
+	grafanaPort = nat.Port(fmt.Sprint(config.GrafanaHTTPPort))
 )
 
 func TestAPIs(t *testing.T) {

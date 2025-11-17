@@ -358,7 +358,7 @@ func untarGzip(archivePath, extractPath string) error {
 			if err != nil {
 				return err
 			}
-			defer fileToWrite.Close() //nolint:errcheck
+			defer fileToWrite.Close()
 
 			for {
 				_, err := io.CopyN(fileToWrite, tr, 4096)
@@ -468,13 +468,13 @@ func copyFile(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	defer srcFile.Close() //nolint:errcheck
+	defer srcFile.Close()
 
 	dstFile, err := os.Create(dst)
 	if err != nil {
 		return err
 	}
-	defer dstFile.Close() //nolint:errcheck
+	defer dstFile.Close()
 
 	_, err = io.Copy(dstFile, srcFile)
 	if err != nil {

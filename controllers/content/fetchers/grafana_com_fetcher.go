@@ -70,7 +70,7 @@ func getLatestGrafanaComRevision(cr v1beta1.GrafanaContentResource, tlsConfig *t
 	if err != nil {
 		return -1, err
 	}
-	defer response.Body.Close() //nolint:errcheck
+	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
 		return -1, fmt.Errorf("unexpected status code when requesting revisions, got %v for dashboard %v", response.StatusCode, cr.GetName())

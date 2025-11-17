@@ -10,8 +10,11 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
 	routev1 "github.com/openshift/api/route/v1"
 	v1 "k8s.io/api/networking/v1"
+	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -36,6 +39,18 @@ func NewIngressReconciler(client client.Client, isOpenShift bool) reconcilers.Op
 func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
 	log := logf.FromContext(ctx).WithName("IngressReconciler")
 
+	if r.isOpenShift {
+		err := r.deleteRouteIfNil(ctx, cr, scheme)
+		if err != nil {
+			return v1beta1.OperatorStageResultFailed, err
+		}
+	}
+
+	err := r.deleteIngressIfNil(ctx, cr, scheme)
+	if err != nil {
+		return v1beta1.OperatorStageResultFailed, err
+	}
+
 	// On openshift, Fallback to Ingress when spec.route is undefined
 	if r.isOpenShift && cr.Spec.Route != nil {
 		log.Info("reconciling route")
@@ -45,6 +60,32 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 	log.Info("reconciling ingress")
 
 	return r.reconcileIngress(ctx, cr, vars, scheme)
+}
+
+func (r *IngressReconciler) deleteIngressIfNil(ctx context.Context, cr *v1beta1.Grafana, scheme *runtime.Scheme) error {
+	if cr.Spec.Ingress != nil {
+		return nil
+	}
+
+	ingress := model.GetGrafanaIngress(cr, scheme)
+
+	req := ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      ingress.Name,
+			Namespace: ingress.Namespace,
+		},
+	}
+
+	err := r.client.Get(ctx, req.NamespacedName, ingress)
+	if err != nil {
+		if kuberr.IsNotFound(err) {
+			return nil
+		}
+
+		return fmt.Errorf("error getting Ingress: %w", err)
+	}
+
+	return r.client.Delete(ctx, ingress)
 }
 
 func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Grafana, _ *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
@@ -94,6 +135,32 @@ func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Gr
 	}
 
 	return v1beta1.OperatorStageResultSuccess, nil
+}
+
+func (r *IngressReconciler) deleteRouteIfNil(ctx context.Context, cr *v1beta1.Grafana, scheme *runtime.Scheme) error {
+	if cr.Spec.Route != nil {
+		return nil
+	}
+
+	route := model.GetGrafanaRoute(cr, scheme)
+
+	req := ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      route.Name,
+			Namespace: route.Namespace,
+		},
+	}
+
+	err := r.client.Get(ctx, req.NamespacedName, route)
+	if err != nil {
+		if kuberr.IsNotFound(err) {
+			return nil
+		}
+
+		return fmt.Errorf("error getting Route: %w", err)
+	}
+
+	return r.client.Delete(ctx, route)
 }
 
 func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Grafana, _ *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
