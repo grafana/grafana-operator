@@ -6,8 +6,9 @@ import (
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	routev1 "github.com/openshift/api/route/v1"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/kubernetes/scheme"
 
@@ -18,6 +19,8 @@ import (
 )
 
 var _ = Describe("Allow use of Ingress on OpenShift", func() {
+	t := GinkgoT()
+
 	It("Creates Ingress on OpenShift when .spec.ingress is defined", func() {
 		r := NewIngressReconciler(k8sClient, true, false)
 		cr := &v1beta1.Grafana{
@@ -33,20 +36,23 @@ var _ = Describe("Allow use of Ingress on OpenShift", func() {
 		}
 
 		ctx := context.Background()
-		Expect(k8sClient.Create(ctx, cr)).To(Succeed())
+
+		err := k8sClient.Create(ctx, cr)
+		require.NoError(t, err)
 
 		vars := &v1beta1.OperatorReconcileVars{}
+
 		status, err := r.Reconcile(ctx, cr, vars, scheme.Scheme)
 
-		Expect(err).ToNot(HaveOccurred())
-		Expect(status).To(Equal(v1beta1.OperatorStageResultSuccess))
+		require.NoError(t, err)
+		assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
 
 		ingress := &networkingv1.Ingress{}
 		err = k8sClient.Get(ctx, types.NamespacedName{
 			Name:      fmt.Sprintf("%s-ingress", cr.Name),
 			Namespace: "default",
 		}, ingress)
-		Expect(err).ToNot(HaveOccurred())
+		require.NoError(t, err)
 	})
 
 	It("Creates Route on OpenShift when .spec.ingress AND .spec.route is defined", func() {
@@ -66,20 +72,22 @@ var _ = Describe("Allow use of Ingress on OpenShift", func() {
 		}
 
 		ctx := context.Background()
-		Expect(k8sClient.Create(ctx, cr)).To(Succeed())
+
+		err := k8sClient.Create(ctx, cr)
+		require.NoError(t, err)
 
 		vars := &v1beta1.OperatorReconcileVars{}
 		status, err := r.Reconcile(ctx, cr, vars, scheme.Scheme)
 
-		Expect(err).ToNot(HaveOccurred())
-		Expect(status).To(Equal(v1beta1.OperatorStageResultSuccess))
+		require.NoError(t, err)
+		assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
 
 		route := &routev1.Route{}
 		err = k8sClient.Get(ctx, types.NamespacedName{
 			Name:      fmt.Sprintf("%s-route", cr.Name),
 			Namespace: "default",
 		}, route)
-		Expect(err).ToNot(HaveOccurred())
+		require.NoError(t, err)
 	})
 
 	It("Removes Route when .spec.route is removed", func() {
@@ -98,29 +106,31 @@ var _ = Describe("Allow use of Ingress on OpenShift", func() {
 		}
 
 		ctx := context.Background()
-		Expect(k8sClient.Create(ctx, cr)).To(Succeed())
+		err := k8sClient.Create(ctx, cr)
+		require.NoError(t, err)
 
 		vars := &v1beta1.OperatorReconcileVars{}
 		status, err := r.Reconcile(ctx, cr, vars, scheme.Scheme)
 
-		Expect(err).ToNot(HaveOccurred())
-		Expect(status).To(Equal(v1beta1.OperatorStageResultSuccess))
+		require.NoError(t, err)
+		assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
 
 		route := &routev1.Route{}
 		err = k8sClient.Get(ctx, types.NamespacedName{
 			Name:      fmt.Sprintf("%s-route", cr.Name),
 			Namespace: "default",
 		}, route)
-		Expect(err).ToNot(HaveOccurred())
+		require.NoError(t, err)
 
 		cr.Spec.Route = nil
 
-		Expect(k8sClient.Update(ctx, cr)).To(Succeed())
+		err = k8sClient.Update(ctx, cr)
+		require.NoError(t, err)
 
 		status, err = r.Reconcile(ctx, cr, vars, scheme.Scheme)
 
-		Expect(err).ToNot(HaveOccurred())
-		Expect(status).To(Equal(v1beta1.OperatorStageResultSuccess))
+		require.NoError(t, err)
+		assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
 
 		route = &routev1.Route{}
 		err = k8sClient.Get(ctx, types.NamespacedName{
@@ -128,7 +138,7 @@ var _ = Describe("Allow use of Ingress on OpenShift", func() {
 			Namespace: "default",
 		}, route)
 
-		Expect(kuberr.IsNotFound(err)).To(BeTrue())
+		assert.True(t, kuberr.IsNotFound(err))
 	})
 
 	It("Removes Ingress when .spec.ingress is removed", func() {
@@ -145,29 +155,31 @@ var _ = Describe("Allow use of Ingress on OpenShift", func() {
 		}
 
 		ctx := context.Background()
-		Expect(k8sClient.Create(ctx, cr)).To(Succeed())
+		err := k8sClient.Create(ctx, cr)
+		require.NoError(t, err)
 
 		vars := &v1beta1.OperatorReconcileVars{}
 		status, err := r.Reconcile(ctx, cr, vars, scheme.Scheme)
 
-		Expect(err).ToNot(HaveOccurred())
-		Expect(status).To(Equal(v1beta1.OperatorStageResultSuccess))
+		require.NoError(t, err)
+		assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
 
 		ingress := &networkingv1.Ingress{}
 		err = k8sClient.Get(ctx, types.NamespacedName{
 			Name:      fmt.Sprintf("%s-ingress", cr.Name),
 			Namespace: "default",
 		}, ingress)
-		Expect(err).ToNot(HaveOccurred())
+		require.NoError(t, err)
 
 		cr.Spec.Ingress = nil
 
-		Expect(k8sClient.Update(ctx, cr)).To(Succeed())
+		err = k8sClient.Update(ctx, cr)
+		require.NoError(t, err)
 
 		status, err = r.Reconcile(ctx, cr, vars, scheme.Scheme)
 
-		Expect(err).ToNot(HaveOccurred())
-		Expect(status).To(Equal(v1beta1.OperatorStageResultSuccess))
+		require.NoError(t, err)
+		assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
 
 		ingress = &networkingv1.Ingress{}
 		err = k8sClient.Get(ctx, types.NamespacedName{
@@ -175,7 +187,7 @@ var _ = Describe("Allow use of Ingress on OpenShift", func() {
 			Namespace: "default",
 		}, ingress)
 
-		Expect(kuberr.IsNotFound(err)).To(BeTrue())
+		assert.True(t, kuberr.IsNotFound(err))
 	})
 	It("Removes HTTPRoute when .spec.route is removed", func() {
 		r := NewIngressReconciler(k8sClient, false, true)
@@ -192,29 +204,31 @@ var _ = Describe("Allow use of Ingress on OpenShift", func() {
 		}
 
 		ctx := context.Background()
-		Expect(k8sClient.Create(ctx, cr)).To(Succeed())
+		err := k8sClient.Create(ctx, cr)
+		require.NoError(t, err)
 
 		vars := &v1beta1.OperatorReconcileVars{}
 		status, err := r.Reconcile(ctx, cr, vars, scheme.Scheme)
 
-		Expect(err).ToNot(HaveOccurred())
-		Expect(status).To(Equal(v1beta1.OperatorStageResultSuccess))
+		require.NoError(t, err)
+		assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
 
 		route := &gwapiv1.HTTPRoute{}
 		err = k8sClient.Get(ctx, types.NamespacedName{
 			Name:      fmt.Sprintf("%s-httproute", cr.Name),
 			Namespace: "default",
 		}, route)
-		Expect(err).ToNot(HaveOccurred())
+		require.NoError(t, err)
 
 		cr.Spec.HTTPRoute = nil
 
-		Expect(k8sClient.Update(ctx, cr)).To(Succeed())
+		err = k8sClient.Update(ctx, cr)
+		require.NoError(t, err)
 
 		status, err = r.Reconcile(ctx, cr, vars, scheme.Scheme)
 
-		Expect(err).ToNot(HaveOccurred())
-		Expect(status).To(Equal(v1beta1.OperatorStageResultSuccess))
+		require.NoError(t, err)
+		assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
 
 		route = &gwapiv1.HTTPRoute{}
 		err = k8sClient.Get(ctx, types.NamespacedName{
@@ -222,11 +236,13 @@ var _ = Describe("Allow use of Ingress on OpenShift", func() {
 			Namespace: "default",
 		}, route)
 
-		Expect(kuberr.IsNotFound(err)).To(BeTrue())
+		assert.True(t, kuberr.IsNotFound(err))
 	})
 })
 
 var _ = Describe("GatewayAPI support", func() {
+	t := GinkgoT()
+
 	It("Creates HTTPRoute when .spec.httpRoute is defined", func() {
 		r := NewIngressReconciler(k8sClient, false, true)
 		cr := &v1beta1.Grafana{
@@ -241,19 +257,20 @@ var _ = Describe("GatewayAPI support", func() {
 		}
 
 		ctx := context.Background()
-		Expect(k8sClient.Create(ctx, cr)).To(Succeed())
+		err := k8sClient.Create(ctx, cr)
+		require.NoError(t, err)
 
 		vars := &v1beta1.OperatorReconcileVars{}
 		status, err := r.Reconcile(ctx, cr, vars, scheme.Scheme)
 
-		Expect(err).ToNot(HaveOccurred())
-		Expect(status).To(Equal(v1beta1.OperatorStageResultSuccess))
+		require.NoError(t, err)
+		assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
 
 		httpRoute := &gwapiv1.HTTPRoute{}
 		err = k8sClient.Get(ctx, types.NamespacedName{
 			Name:      fmt.Sprintf("%s-httproute", cr.Name),
 			Namespace: "default",
 		}, httpRoute)
-		Expect(err).ToNot(HaveOccurred())
+		require.NoError(t, err)
 	})
 })
