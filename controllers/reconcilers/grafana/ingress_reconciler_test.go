@@ -150,6 +150,40 @@ var _ = Describe("Ingress Reconciler", func() {
 		const isOpenshift = false
 		const hasGatewayAPI = true
 
+		It("creates Ingress when .spec.ingress is defined", func() {
+			r := NewIngressReconciler(k8sClient, isOpenshift, hasGatewayAPI)
+			cr := &v1beta1.Grafana{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "ingress-on-k8s",
+					Namespace: "default",
+					Labels:    map[string]string{},
+				},
+				Spec: v1beta1.GrafanaSpec{
+					Ingress: &v1beta1.IngressNetworkingV1{},
+					Route:   nil,
+				},
+			}
+
+			ctx := context.Background()
+
+			err := k8sClient.Create(ctx, cr)
+			require.NoError(t, err)
+
+			vars := &v1beta1.OperatorReconcileVars{}
+
+			status, err := r.Reconcile(ctx, cr, vars, scheme.Scheme)
+
+			require.NoError(t, err)
+			assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
+
+			ingress := &networkingv1.Ingress{}
+			err = k8sClient.Get(ctx, types.NamespacedName{
+				Name:      fmt.Sprintf("%s-ingress", cr.Name),
+				Namespace: "default",
+			}, ingress)
+			require.NoError(t, err)
+		})
+
 		It("removes Ingress when .spec.ingress is removed", func() {
 			r := NewIngressReconciler(k8sClient, isOpenshift, hasGatewayAPI)
 			cr := &v1beta1.Grafana{
