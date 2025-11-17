@@ -6,8 +6,9 @@ import (
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	routev1 "github.com/openshift/api/route/v1"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/kubernetes/scheme"
 
@@ -17,243 +18,300 @@ import (
 	gwapiv1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
-var _ = Describe("Allow use of Ingress on OpenShift", func() {
-	It("Creates Ingress on OpenShift when .spec.ingress is defined", func() {
-		r := NewIngressReconciler(k8sClient, true, false)
-		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "ingress-on-openshift",
-				Namespace: "default",
-				Labels:    map[string]string{"openshift": "ingress"},
-			},
-			Spec: v1beta1.GrafanaSpec{
-				Ingress: &v1beta1.IngressNetworkingV1{},
-				Route:   nil,
-			},
-		}
+var _ = Describe("Ingress Reconciler", func() {
+	t := GinkgoT()
 
-		ctx := context.Background()
-		Expect(k8sClient.Create(ctx, cr)).To(Succeed())
+	Context("on Openshift", func() {
+		const isOpenshift = true
+		const hasGatewayAPI = false
 
-		vars := &v1beta1.OperatorReconcileVars{}
-		status, err := r.Reconcile(ctx, cr, vars, scheme.Scheme)
-
-		Expect(err).ToNot(HaveOccurred())
-		Expect(status).To(Equal(v1beta1.OperatorStageResultSuccess))
-
-		ingress := &networkingv1.Ingress{}
-		err = k8sClient.Get(ctx, types.NamespacedName{
-			Name:      fmt.Sprintf("%s-ingress", cr.Name),
-			Namespace: "default",
-		}, ingress)
-		Expect(err).ToNot(HaveOccurred())
-	})
-
-	It("Creates Route on OpenShift when .spec.ingress AND .spec.route is defined", func() {
-		r := NewIngressReconciler(k8sClient, true, false)
-		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "prefer-route-on-openshift",
-				Namespace: "default",
-				Labels:    map[string]string{"openshift": "route"},
-			},
-			Spec: v1beta1.GrafanaSpec{
-				Ingress: &v1beta1.IngressNetworkingV1{},
-				Route: &v1beta1.RouteOpenshiftV1{
-					Spec: &v1beta1.RouteOpenShiftV1Spec{},
+		It("creates Ingress when only .spec.ingress is defined", func() {
+			r := NewIngressReconciler(k8sClient, isOpenshift, hasGatewayAPI)
+			cr := &v1beta1.Grafana{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "ingress-on-openshift",
+					Namespace: "default",
+					Labels:    map[string]string{"openshift": "ingress"},
 				},
-			},
-		}
-
-		ctx := context.Background()
-		Expect(k8sClient.Create(ctx, cr)).To(Succeed())
-
-		vars := &v1beta1.OperatorReconcileVars{}
-		status, err := r.Reconcile(ctx, cr, vars, scheme.Scheme)
-
-		Expect(err).ToNot(HaveOccurred())
-		Expect(status).To(Equal(v1beta1.OperatorStageResultSuccess))
-
-		route := &routev1.Route{}
-		err = k8sClient.Get(ctx, types.NamespacedName{
-			Name:      fmt.Sprintf("%s-route", cr.Name),
-			Namespace: "default",
-		}, route)
-		Expect(err).ToNot(HaveOccurred())
-	})
-
-	It("Removes Route when .spec.route is removed", func() {
-		r := NewIngressReconciler(k8sClient, true, false)
-		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "route-nil",
-				Namespace: "default",
-				Labels:    map[string]string{"openshift": "route"},
-			},
-			Spec: v1beta1.GrafanaSpec{
-				Route: &v1beta1.RouteOpenshiftV1{
-					Spec: &v1beta1.RouteOpenShiftV1Spec{},
+				Spec: v1beta1.GrafanaSpec{
+					Ingress: &v1beta1.IngressNetworkingV1{},
+					Route:   nil,
 				},
-			},
-		}
+			}
 
-		ctx := context.Background()
-		Expect(k8sClient.Create(ctx, cr)).To(Succeed())
+			ctx := context.Background()
 
-		vars := &v1beta1.OperatorReconcileVars{}
-		status, err := r.Reconcile(ctx, cr, vars, scheme.Scheme)
+			err := k8sClient.Create(ctx, cr)
+			require.NoError(t, err)
 
-		Expect(err).ToNot(HaveOccurred())
-		Expect(status).To(Equal(v1beta1.OperatorStageResultSuccess))
+			vars := &v1beta1.OperatorReconcileVars{}
 
-		route := &routev1.Route{}
-		err = k8sClient.Get(ctx, types.NamespacedName{
-			Name:      fmt.Sprintf("%s-route", cr.Name),
-			Namespace: "default",
-		}, route)
-		Expect(err).ToNot(HaveOccurred())
+			status, err := r.Reconcile(ctx, cr, vars, scheme.Scheme)
 
-		cr.Spec.Route = nil
+			require.NoError(t, err)
+			assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
 
-		Expect(k8sClient.Update(ctx, cr)).To(Succeed())
-
-		status, err = r.Reconcile(ctx, cr, vars, scheme.Scheme)
-
-		Expect(err).ToNot(HaveOccurred())
-		Expect(status).To(Equal(v1beta1.OperatorStageResultSuccess))
-
-		route = &routev1.Route{}
-		err = k8sClient.Get(ctx, types.NamespacedName{
-			Name:      fmt.Sprintf("%s-route", cr.Name),
-			Namespace: "default",
-		}, route)
-
-		Expect(kuberr.IsNotFound(err)).To(BeTrue())
-	})
-
-	It("Removes Ingress when .spec.ingress is removed", func() {
-		r := NewIngressReconciler(k8sClient, false, false)
-		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "ingress-nil",
+			ingress := &networkingv1.Ingress{}
+			err = k8sClient.Get(ctx, types.NamespacedName{
+				Name:      fmt.Sprintf("%s-ingress", cr.Name),
 				Namespace: "default",
-				Labels:    map[string]string{},
-			},
-			Spec: v1beta1.GrafanaSpec{
-				Ingress: &v1beta1.IngressNetworkingV1{},
-			},
-		}
+			}, ingress)
+			require.NoError(t, err)
+		})
 
-		ctx := context.Background()
-		Expect(k8sClient.Create(ctx, cr)).To(Succeed())
-
-		vars := &v1beta1.OperatorReconcileVars{}
-		status, err := r.Reconcile(ctx, cr, vars, scheme.Scheme)
-
-		Expect(err).ToNot(HaveOccurred())
-		Expect(status).To(Equal(v1beta1.OperatorStageResultSuccess))
-
-		ingress := &networkingv1.Ingress{}
-		err = k8sClient.Get(ctx, types.NamespacedName{
-			Name:      fmt.Sprintf("%s-ingress", cr.Name),
-			Namespace: "default",
-		}, ingress)
-		Expect(err).ToNot(HaveOccurred())
-
-		cr.Spec.Ingress = nil
-
-		Expect(k8sClient.Update(ctx, cr)).To(Succeed())
-
-		status, err = r.Reconcile(ctx, cr, vars, scheme.Scheme)
-
-		Expect(err).ToNot(HaveOccurred())
-		Expect(status).To(Equal(v1beta1.OperatorStageResultSuccess))
-
-		ingress = &networkingv1.Ingress{}
-		err = k8sClient.Get(ctx, types.NamespacedName{
-			Name:      fmt.Sprintf("%s-ingress", cr.Name),
-			Namespace: "default",
-		}, ingress)
-
-		Expect(kuberr.IsNotFound(err)).To(BeTrue())
-	})
-	It("Removes HTTPRoute when .spec.route is removed", func() {
-		r := NewIngressReconciler(k8sClient, false, true)
-		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "httproute-nil",
-				Namespace: "default",
-			},
-			Spec: v1beta1.GrafanaSpec{
-				HTTPRoute: &v1beta1.HTTPRouteV1{
-					Spec: gwapiv1.HTTPRouteSpec{},
+		It("creates Route when .spec.ingress AND .spec.route are defined", func() {
+			r := NewIngressReconciler(k8sClient, isOpenshift, hasGatewayAPI)
+			cr := &v1beta1.Grafana{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "prefer-route-on-openshift",
+					Namespace: "default",
+					Labels:    map[string]string{"openshift": "route"},
 				},
-			},
-		}
+				Spec: v1beta1.GrafanaSpec{
+					Ingress: &v1beta1.IngressNetworkingV1{},
+					Route: &v1beta1.RouteOpenshiftV1{
+						Spec: &v1beta1.RouteOpenShiftV1Spec{},
+					},
+				},
+			}
 
-		ctx := context.Background()
-		Expect(k8sClient.Create(ctx, cr)).To(Succeed())
+			ctx := context.Background()
 
-		vars := &v1beta1.OperatorReconcileVars{}
-		status, err := r.Reconcile(ctx, cr, vars, scheme.Scheme)
+			err := k8sClient.Create(ctx, cr)
+			require.NoError(t, err)
 
-		Expect(err).ToNot(HaveOccurred())
-		Expect(status).To(Equal(v1beta1.OperatorStageResultSuccess))
+			vars := &v1beta1.OperatorReconcileVars{}
+			status, err := r.Reconcile(ctx, cr, vars, scheme.Scheme)
 
-		route := &gwapiv1.HTTPRoute{}
-		err = k8sClient.Get(ctx, types.NamespacedName{
-			Name:      fmt.Sprintf("%s-httproute", cr.Name),
-			Namespace: "default",
-		}, route)
-		Expect(err).ToNot(HaveOccurred())
+			require.NoError(t, err)
+			assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
 
-		cr.Spec.HTTPRoute = nil
-
-		Expect(k8sClient.Update(ctx, cr)).To(Succeed())
-
-		status, err = r.Reconcile(ctx, cr, vars, scheme.Scheme)
-
-		Expect(err).ToNot(HaveOccurred())
-		Expect(status).To(Equal(v1beta1.OperatorStageResultSuccess))
-
-		route = &gwapiv1.HTTPRoute{}
-		err = k8sClient.Get(ctx, types.NamespacedName{
-			Name:      fmt.Sprintf("%s-httproute", cr.Name),
-			Namespace: "default",
-		}, route)
-
-		Expect(kuberr.IsNotFound(err)).To(BeTrue())
-	})
-})
-
-var _ = Describe("GatewayAPI support", func() {
-	It("Creates HTTPRoute when .spec.httpRoute is defined", func() {
-		r := NewIngressReconciler(k8sClient, false, true)
-		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "httproute-test",
+			route := &routev1.Route{}
+			err = k8sClient.Get(ctx, types.NamespacedName{
+				Name:      fmt.Sprintf("%s-route", cr.Name),
 				Namespace: "default",
-				Labels:    map[string]string{"test": "httproute"},
-			},
-			Spec: v1beta1.GrafanaSpec{
-				HTTPRoute: &v1beta1.HTTPRouteV1{},
-			},
-		}
+			}, route)
+			require.NoError(t, err)
+		})
 
-		ctx := context.Background()
-		Expect(k8sClient.Create(ctx, cr)).To(Succeed())
+		It("removes Route when .spec.route is removed", func() {
+			r := NewIngressReconciler(k8sClient, isOpenshift, hasGatewayAPI)
+			cr := &v1beta1.Grafana{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "route-nil",
+					Namespace: "default",
+					Labels:    map[string]string{"openshift": "route"},
+				},
+				Spec: v1beta1.GrafanaSpec{
+					Route: &v1beta1.RouteOpenshiftV1{
+						Spec: &v1beta1.RouteOpenShiftV1Spec{},
+					},
+				},
+			}
 
-		vars := &v1beta1.OperatorReconcileVars{}
-		status, err := r.Reconcile(ctx, cr, vars, scheme.Scheme)
+			ctx := context.Background()
+			err := k8sClient.Create(ctx, cr)
+			require.NoError(t, err)
 
-		Expect(err).ToNot(HaveOccurred())
-		Expect(status).To(Equal(v1beta1.OperatorStageResultSuccess))
+			vars := &v1beta1.OperatorReconcileVars{}
+			status, err := r.Reconcile(ctx, cr, vars, scheme.Scheme)
 
-		httpRoute := &gwapiv1.HTTPRoute{}
-		err = k8sClient.Get(ctx, types.NamespacedName{
-			Name:      fmt.Sprintf("%s-httproute", cr.Name),
-			Namespace: "default",
-		}, httpRoute)
-		Expect(err).ToNot(HaveOccurred())
+			require.NoError(t, err)
+			assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
+
+			route := &routev1.Route{}
+			err = k8sClient.Get(ctx, types.NamespacedName{
+				Name:      fmt.Sprintf("%s-route", cr.Name),
+				Namespace: "default",
+			}, route)
+			require.NoError(t, err)
+
+			cr.Spec.Route = nil
+
+			err = k8sClient.Update(ctx, cr)
+			require.NoError(t, err)
+
+			status, err = r.Reconcile(ctx, cr, vars, scheme.Scheme)
+
+			require.NoError(t, err)
+			assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
+
+			route = &routev1.Route{}
+			err = k8sClient.Get(ctx, types.NamespacedName{
+				Name:      fmt.Sprintf("%s-route", cr.Name),
+				Namespace: "default",
+			}, route)
+
+			assert.True(t, kuberr.IsNotFound(err))
+		})
+	})
+
+	Context("on Kubernetes", func() {
+		const isOpenshift = false
+		const hasGatewayAPI = true
+
+		It("creates Ingress when .spec.ingress is defined", func() {
+			r := NewIngressReconciler(k8sClient, isOpenshift, hasGatewayAPI)
+			cr := &v1beta1.Grafana{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "ingress-on-k8s",
+					Namespace: "default",
+					Labels:    map[string]string{},
+				},
+				Spec: v1beta1.GrafanaSpec{
+					Ingress: &v1beta1.IngressNetworkingV1{},
+					Route:   nil,
+				},
+			}
+
+			ctx := context.Background()
+
+			err := k8sClient.Create(ctx, cr)
+			require.NoError(t, err)
+
+			vars := &v1beta1.OperatorReconcileVars{}
+
+			status, err := r.Reconcile(ctx, cr, vars, scheme.Scheme)
+
+			require.NoError(t, err)
+			assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
+
+			ingress := &networkingv1.Ingress{}
+			err = k8sClient.Get(ctx, types.NamespacedName{
+				Name:      fmt.Sprintf("%s-ingress", cr.Name),
+				Namespace: "default",
+			}, ingress)
+			require.NoError(t, err)
+		})
+
+		It("removes Ingress when .spec.ingress is removed", func() {
+			r := NewIngressReconciler(k8sClient, isOpenshift, hasGatewayAPI)
+			cr := &v1beta1.Grafana{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "ingress-nil",
+					Namespace: "default",
+					Labels:    map[string]string{},
+				},
+				Spec: v1beta1.GrafanaSpec{
+					Ingress: &v1beta1.IngressNetworkingV1{},
+				},
+			}
+
+			ctx := context.Background()
+			err := k8sClient.Create(ctx, cr)
+			require.NoError(t, err)
+
+			vars := &v1beta1.OperatorReconcileVars{}
+			status, err := r.Reconcile(ctx, cr, vars, scheme.Scheme)
+
+			require.NoError(t, err)
+			assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
+
+			ingress := &networkingv1.Ingress{}
+			err = k8sClient.Get(ctx, types.NamespacedName{
+				Name:      fmt.Sprintf("%s-ingress", cr.Name),
+				Namespace: "default",
+			}, ingress)
+			require.NoError(t, err)
+
+			cr.Spec.Ingress = nil
+
+			err = k8sClient.Update(ctx, cr)
+			require.NoError(t, err)
+
+			status, err = r.Reconcile(ctx, cr, vars, scheme.Scheme)
+
+			require.NoError(t, err)
+			assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
+
+			ingress = &networkingv1.Ingress{}
+			err = k8sClient.Get(ctx, types.NamespacedName{
+				Name:      fmt.Sprintf("%s-ingress", cr.Name),
+				Namespace: "default",
+			}, ingress)
+
+			assert.True(t, kuberr.IsNotFound(err))
+		})
+
+		It("creates HTTPRoute when .spec.httpRoute is defined", func() {
+			r := NewIngressReconciler(k8sClient, isOpenshift, hasGatewayAPI)
+			cr := &v1beta1.Grafana{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "httproute-test",
+					Namespace: "default",
+					Labels:    map[string]string{"test": "httproute"},
+				},
+				Spec: v1beta1.GrafanaSpec{
+					HTTPRoute: &v1beta1.HTTPRouteV1{},
+				},
+			}
+
+			ctx := context.Background()
+			err := k8sClient.Create(ctx, cr)
+			require.NoError(t, err)
+
+			vars := &v1beta1.OperatorReconcileVars{}
+			status, err := r.Reconcile(ctx, cr, vars, scheme.Scheme)
+
+			require.NoError(t, err)
+			assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
+
+			httpRoute := &gwapiv1.HTTPRoute{}
+			err = k8sClient.Get(ctx, types.NamespacedName{
+				Name:      fmt.Sprintf("%s-httproute", cr.Name),
+				Namespace: "default",
+			}, httpRoute)
+			require.NoError(t, err)
+		})
+
+		It("removes HTTPRoute when .spec.httpRoute is removed", func() {
+			r := NewIngressReconciler(k8sClient, isOpenshift, hasGatewayAPI)
+			cr := &v1beta1.Grafana{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "httproute-nil",
+					Namespace: "default",
+				},
+				Spec: v1beta1.GrafanaSpec{
+					HTTPRoute: &v1beta1.HTTPRouteV1{
+						Spec: gwapiv1.HTTPRouteSpec{},
+					},
+				},
+			}
+
+			ctx := context.Background()
+			err := k8sClient.Create(ctx, cr)
+			require.NoError(t, err)
+
+			vars := &v1beta1.OperatorReconcileVars{}
+			status, err := r.Reconcile(ctx, cr, vars, scheme.Scheme)
+
+			require.NoError(t, err)
+			assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
+
+			route := &gwapiv1.HTTPRoute{}
+			err = k8sClient.Get(ctx, types.NamespacedName{
+				Name:      fmt.Sprintf("%s-httproute", cr.Name),
+				Namespace: "default",
+			}, route)
+			require.NoError(t, err)
+
+			cr.Spec.HTTPRoute = nil
+
+			err = k8sClient.Update(ctx, cr)
+			require.NoError(t, err)
+
+			status, err = r.Reconcile(ctx, cr, vars, scheme.Scheme)
+
+			require.NoError(t, err)
+			assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
+
+			route = &gwapiv1.HTTPRoute{}
+			err = k8sClient.Get(ctx, types.NamespacedName{
+				Name:      fmt.Sprintf("%s-httproute", cr.Name),
+				Namespace: "default",
+			}, route)
+
+			assert.True(t, kuberr.IsNotFound(err))
+		})
 	})
 })
