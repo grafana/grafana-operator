@@ -36,6 +36,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	gwapiv1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -57,6 +58,7 @@ type GrafanaReconciler struct {
 	client.Client
 	Scheme        *runtime.Scheme
 	IsOpenShift   bool
+	HasGatewayAPI bool
 	ClusterDomain string
 }
 
@@ -65,6 +67,7 @@ type GrafanaReconciler struct {
 // +kubebuilder:rbac:groups="",resources=events,verbs=get;list;watch;create;patch
 // +kubebuilder:rbac:groups="",resources=configmaps;secrets;serviceaccounts;services;persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=gateway.networking.k8s.io,resources=httproutes,verbs=get;list;watch;create;update;patch;delete
 
 func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx).WithName("GrafanaReconciler")
@@ -312,6 +315,10 @@ func (r *GrafanaReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manag
 		b.Owns(&routev1.Route{}, builder.WithPredicates(ignoreStatusUpdates()))
 	}
 
+	if r.HasGatewayAPI {
+		b.Owns(&gwapiv1.HTTPRoute{}, builder.WithPredicates(ignoreStatusUpdates()))
+	}
+
 	err := b.Complete(r)
 	if err != nil {
 		return err
@@ -380,7 +387,7 @@ func (r *GrafanaReconciler) getReconcilerForStage(stage grafanav1beta1.OperatorS
 	case grafanav1beta1.OperatorStageService:
 		return grafana.NewServiceReconciler(r.Client, r.ClusterDomain)
 	case grafanav1beta1.OperatorStageIngress:
-		return grafana.NewIngressReconciler(r.Client, r.IsOpenShift)
+		return grafana.NewIngressReconciler(r.Client, r.IsOpenShift, r.HasGatewayAPI)
 	case grafanav1beta1.OperatorStagePlugins:
 		return grafana.NewPluginsReconciler(r.Client)
 	case grafanav1beta1.OperatorStageDeployment:

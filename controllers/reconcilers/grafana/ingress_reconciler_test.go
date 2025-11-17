@@ -14,11 +14,12 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	gwapiv1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
 var _ = Describe("Allow use of Ingress on OpenShift", func() {
 	It("Creates Ingress on OpenShift when .spec.ingress is defined", func() {
-		r := NewIngressReconciler(k8sClient, true)
+		r := NewIngressReconciler(k8sClient, true, false)
 		cr := &v1beta1.Grafana{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "ingress-on-openshift",
@@ -49,7 +50,7 @@ var _ = Describe("Allow use of Ingress on OpenShift", func() {
 	})
 
 	It("Creates Route on OpenShift when .spec.ingress AND .spec.route is defined", func() {
-		r := NewIngressReconciler(k8sClient, true)
+		r := NewIngressReconciler(k8sClient, true, false)
 		cr := &v1beta1.Grafana{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "prefer-route-on-openshift",
@@ -82,7 +83,7 @@ var _ = Describe("Allow use of Ingress on OpenShift", func() {
 	})
 
 	It("Removes Route when .spec.route is removed", func() {
-		r := NewIngressReconciler(k8sClient, true)
+		r := NewIngressReconciler(k8sClient, true, false)
 		cr := &v1beta1.Grafana{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "route-nil",
@@ -131,7 +132,7 @@ var _ = Describe("Allow use of Ingress on OpenShift", func() {
 	})
 
 	It("Removes Ingress when .spec.ingress is removed", func() {
-		r := NewIngressReconciler(k8sClient, false)
+		r := NewIngressReconciler(k8sClient, false, false)
 		cr := &v1beta1.Grafana{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "ingress-nil",
@@ -175,5 +176,84 @@ var _ = Describe("Allow use of Ingress on OpenShift", func() {
 		}, ingress)
 
 		Expect(kuberr.IsNotFound(err)).To(BeTrue())
+	})
+	It("Removes HTTPRoute when .spec.route is removed", func() {
+		r := NewIngressReconciler(k8sClient, false, true)
+		cr := &v1beta1.Grafana{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "httproute-nil",
+				Namespace: "default",
+			},
+			Spec: v1beta1.GrafanaSpec{
+				HTTPRoute: &v1beta1.HTTPRouteV1{
+					Spec: gwapiv1.HTTPRouteSpec{},
+				},
+			},
+		}
+
+		ctx := context.Background()
+		Expect(k8sClient.Create(ctx, cr)).To(Succeed())
+
+		vars := &v1beta1.OperatorReconcileVars{}
+		status, err := r.Reconcile(ctx, cr, vars, scheme.Scheme)
+
+		Expect(err).ToNot(HaveOccurred())
+		Expect(status).To(Equal(v1beta1.OperatorStageResultSuccess))
+
+		route := &gwapiv1.HTTPRoute{}
+		err = k8sClient.Get(ctx, types.NamespacedName{
+			Name:      fmt.Sprintf("%s-httproute", cr.Name),
+			Namespace: "default",
+		}, route)
+		Expect(err).ToNot(HaveOccurred())
+
+		cr.Spec.HTTPRoute = nil
+
+		Expect(k8sClient.Update(ctx, cr)).To(Succeed())
+
+		status, err = r.Reconcile(ctx, cr, vars, scheme.Scheme)
+
+		Expect(err).ToNot(HaveOccurred())
+		Expect(status).To(Equal(v1beta1.OperatorStageResultSuccess))
+
+		route = &gwapiv1.HTTPRoute{}
+		err = k8sClient.Get(ctx, types.NamespacedName{
+			Name:      fmt.Sprintf("%s-httproute", cr.Name),
+			Namespace: "default",
+		}, route)
+
+		Expect(kuberr.IsNotFound(err)).To(BeTrue())
+	})
+})
+
+var _ = Describe("GatewayAPI support", func() {
+	It("Creates HTTPRoute when .spec.httpRoute is defined", func() {
+		r := NewIngressReconciler(k8sClient, false, true)
+		cr := &v1beta1.Grafana{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "httproute-test",
+				Namespace: "default",
+				Labels:    map[string]string{"test": "httproute"},
+			},
+			Spec: v1beta1.GrafanaSpec{
+				HTTPRoute: &v1beta1.HTTPRouteV1{},
+			},
+		}
+
+		ctx := context.Background()
+		Expect(k8sClient.Create(ctx, cr)).To(Succeed())
+
+		vars := &v1beta1.OperatorReconcileVars{}
+		status, err := r.Reconcile(ctx, cr, vars, scheme.Scheme)
+
+		Expect(err).ToNot(HaveOccurred())
+		Expect(status).To(Equal(v1beta1.OperatorStageResultSuccess))
+
+		httpRoute := &gwapiv1.HTTPRoute{}
+		err = k8sClient.Get(ctx, types.NamespacedName{
+			Name:      fmt.Sprintf("%s-httproute", cr.Name),
+			Namespace: "default",
+		}, httpRoute)
+		Expect(err).ToNot(HaveOccurred())
 	})
 })

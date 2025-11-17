@@ -13,6 +13,7 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
+	gwapiv1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
 // +kubebuilder:object:generate=true
@@ -523,6 +524,12 @@ type ServiceAccountV1 struct {
 	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty" protobuf:"bytes,3,rep,name=imagePullSecrets"`
 	// +optional
 	AutomountServiceAccountToken *bool `json:"automountServiceAccountToken,omitempty" protobuf:"varint,4,opt,name=automountServiceAccountToken"`
+}
+
+// +kubebuilder:object:generate=true
+type HTTPRouteV1 struct {
+	ObjectMeta ObjectMeta            `json:"metadata,omitempty"`
+	Spec       gwapiv1.HTTPRouteSpec `json:"spec,omitempty"`
 }
 
 // Merge merges `overrides` into `base` using the SMP (structural merge patch) approach.

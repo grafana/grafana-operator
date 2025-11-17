@@ -18,6 +18,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	gwapiv1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
 const (
@@ -25,14 +26,16 @@ const (
 )
 
 type IngressReconciler struct {
-	client      client.Client
-	isOpenShift bool
+	client        client.Client
+	isOpenShift   bool
+	hasGatewayAPI bool
 }
 
-func NewIngressReconciler(client client.Client, isOpenShift bool) reconcilers.OperatorGrafanaReconciler {
+func NewIngressReconciler(client client.Client, isOpenShift bool, hasGatewayAPI bool) reconcilers.OperatorGrafanaReconciler {
 	return &IngressReconciler{
-		client:      client,
-		isOpenShift: isOpenShift,
+		client:        client,
+		isOpenShift:   isOpenShift,
+		hasGatewayAPI: hasGatewayAPI,
 	}
 }
 
@@ -41,6 +44,13 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 
 	if r.isOpenShift {
 		err := r.deleteRouteIfNil(ctx, cr, scheme)
+		if err != nil {
+			return v1beta1.OperatorStageResultFailed, err
+		}
+	}
+
+	if r.hasGatewayAPI {
+		err := r.deleteHTTPRouteIfNil(ctx, cr, scheme)
 		if err != nil {
 			return v1beta1.OperatorStageResultFailed, err
 		}
@@ -55,6 +65,11 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 	if r.isOpenShift && cr.Spec.Route != nil {
 		log.Info("reconciling route")
 		return r.reconcileRoute(ctx, cr, vars, scheme)
+	}
+
+	if cr.Spec.HTTPRoute != nil {
+		log.Info("reconciling HTTPRoute")
+		return r.reconcileHTTPRoute(ctx, cr, vars, scheme)
 	}
 
 	log.Info("reconciling ingress")
@@ -86,6 +101,32 @@ func (r *IngressReconciler) deleteIngressIfNil(ctx context.Context, cr *v1beta1.
 	}
 
 	return r.client.Delete(ctx, ingress)
+}
+
+func (r *IngressReconciler) deleteHTTPRouteIfNil(ctx context.Context, cr *v1beta1.Grafana, scheme *runtime.Scheme) error {
+	if cr.Spec.HTTPRoute != nil {
+		return nil
+	}
+
+	route := model.GetGrafanaHTTPRoute(cr, scheme)
+
+	req := ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      route.Name,
+			Namespace: route.Namespace,
+		},
+	}
+
+	err := r.client.Get(ctx, req.NamespacedName, route)
+	if err != nil {
+		if kuberr.IsNotFound(err) {
+			return nil
+		}
+
+		return fmt.Errorf("error getting HTTPRoute: %w", err)
+	}
+
+	return r.client.Delete(ctx, route)
 }
 
 func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Grafana, _ *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
@@ -206,6 +247,42 @@ func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Graf
 	return v1beta1.OperatorStageResultSuccess, nil
 }
 
+func (r *IngressReconciler) reconcileHTTPRoute(ctx context.Context, cr *v1beta1.Grafana, _ *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
+	if cr.Spec.HTTPRoute == nil {
+		return v1beta1.OperatorStageResultSuccess, nil
+	}
+
+	route := model.GetGrafanaHTTPRoute(cr, scheme)
+
+	_, err := controllerutil.CreateOrUpdate(ctx, r.client, route, func() error {
+		route.Spec = getHTTPRouteSpec(cr, scheme)
+
+		err := v1beta1.Merge(route, cr.Spec.HTTPRoute)
+		if err != nil {
+			setInvalidMergeCondition(cr, "HTTPRoute", err)
+			return err
+		}
+
+		removeInvalidMergeCondition(cr, "HTTPRoute")
+
+		if scheme != nil {
+			err = controllerutil.SetControllerReference(cr, route, scheme)
+			if err != nil {
+				return err
+			}
+		}
+
+		model.SetInheritedLabels(route, cr.Labels)
+
+		return nil
+	})
+	if err != nil {
+		return v1beta1.OperatorStageResultFailed, err
+	}
+
+	return v1beta1.OperatorStageResultSuccess, nil
+}
+
 // getIngressAdminURL returns the first valid URL (Host field is set) from the ingress spec
 func (r *IngressReconciler) getIngressAdminURL(ingress *v1.Ingress) string {
 	if ingress == nil {
@@ -293,6 +370,29 @@ func getRouteSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) routev1.RouteSpec
 		},
 		TLS:            getRouteTLS(),
 		WildcardPolicy: "None",
+	}
+}
+
+func getHTTPRouteSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) gwapiv1.HTTPRouteSpec {
+	service := model.GetGrafanaService(cr, scheme)
+	port := gwapiv1.PortNumber(GetGrafanaPort(cr)) //nolint:gosec
+	backendRefs := []gwapiv1.HTTPBackendRef{
+		{
+			BackendRef: gwapiv1.BackendRef{
+				BackendObjectReference: gwapiv1.BackendObjectReference{
+					Name: gwapiv1.ObjectName(service.Name),
+					Port: &port,
+				},
+			},
+		},
+	}
+
+	return gwapiv1.HTTPRouteSpec{
+		Rules: []gwapiv1.HTTPRouteRule{
+			{
+				BackendRefs: backendRefs,
+			},
+		},
 	}
 }
 

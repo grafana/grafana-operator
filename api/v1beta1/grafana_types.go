@@ -71,6 +71,8 @@ type GrafanaSpec struct {
 	Ingress *IngressNetworkingV1 `json:"ingress,omitempty"`
 	// Route sets how the ingress object should look like with your grafana instance, this only works in Openshift.
 	Route *RouteOpenshiftV1 `json:"route,omitempty"`
+	// HTTPRoute customizes the GatewayAPI HTTPRoute Object. It will not be created if this is not set
+	HTTPRoute *HTTPRouteV1 `json:"httpRoute,omitempty"`
 	// Service sets how the service object should look like with your grafana instance, contains a number of defaults.
 	Service *ServiceV1 `json:"service,omitempty"`
 	// Version sets the tag of the default image: docker.io/grafana/grafana.
