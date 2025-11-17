@@ -4,6 +4,7 @@ go 1.25.0
 
 require (
 	github.com/KimMachineGun/automemlimit v0.7.5
+	github.com/alecthomas/kong v1.12.1
 	github.com/bitly/go-simplejson v0.5.1
 	github.com/blang/semver/v4 v4.0.0
 	github.com/docker/go-connections v0.6.0
@@ -24,7 +25,7 @@ require (
 	k8s.io/apimachinery v0.34.2
 	k8s.io/client-go v0.34.2
 	sigs.k8s.io/controller-runtime v0.22.4
-	sigs.k8s.io/gateway-api v1.3.0
+	sigs.k8s.io/gateway-api v1.4.0
 )
 
 require (
@@ -32,7 +33,6 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/Masterminds/semver/v3 v3.4.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/alecthomas/kong v1.12.1 // indirect
 	github.com/apache/arrow-go/v18 v18.4.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
