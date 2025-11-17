@@ -36,6 +36,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	gwapiv1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -57,6 +58,7 @@ type GrafanaReconciler struct {
 	client.Client
 	Scheme        *runtime.Scheme
 	IsOpenShift   bool
+	HasGatewayAPI bool
 	ClusterDomain string
 }
 
@@ -311,6 +313,10 @@ func (r *GrafanaReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manag
 
 	if r.IsOpenShift {
 		b.Owns(&routev1.Route{}, builder.WithPredicates(ignoreStatusUpdates()))
+	}
+
+	if r.HasGatewayAPI {
+		b.Owns(&gwapiv1.HTTPRoute{}, builder.WithPredicates(ignoreStatusUpdates()))
 	}
 
 	err := b.Complete(r)

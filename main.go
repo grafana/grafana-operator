@@ -297,6 +297,7 @@ func main() { //nolint:gocyclo
 		Client:        mgr.GetClient(),
 		Scheme:        mgr.GetScheme(),
 		IsOpenShift:   isOpenShift,
+		HasGatewayAPI: hasGatewayAPI,
 		ClusterDomain: clusterDomain,
 	}).SetupWithManager(ctx, mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Grafana")
