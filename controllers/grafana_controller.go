@@ -387,7 +387,7 @@ func (r *GrafanaReconciler) getReconcilerForStage(stage grafanav1beta1.OperatorS
 	case grafanav1beta1.OperatorStageService:
 		return grafana.NewServiceReconciler(r.Client, r.ClusterDomain)
 	case grafanav1beta1.OperatorStageIngress:
-		return grafana.NewIngressReconciler(r.Client, r.IsOpenShift)
+		return grafana.NewIngressReconciler(r.Client, r.IsOpenShift, r.HasGatewayAPI)
 	case grafanav1beta1.OperatorStagePlugins:
 		return grafana.NewPluginsReconciler(r.Client)
 	case grafanav1beta1.OperatorStageDeployment:

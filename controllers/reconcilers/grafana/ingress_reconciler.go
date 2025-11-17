@@ -26,14 +26,16 @@ const (
 )
 
 type IngressReconciler struct {
-	client      client.Client
-	isOpenShift bool
+	client        client.Client
+	isOpenShift   bool
+	hasGatewayAPI bool
 }
 
-func NewIngressReconciler(client client.Client, isOpenShift bool) reconcilers.OperatorGrafanaReconciler {
+func NewIngressReconciler(client client.Client, isOpenShift bool, hasGatewayAPI bool) reconcilers.OperatorGrafanaReconciler {
 	return &IngressReconciler{
-		client:      client,
-		isOpenShift: isOpenShift,
+		client:        client,
+		isOpenShift:   isOpenShift,
+		hasGatewayAPI: hasGatewayAPI,
 	}
 }
 
@@ -42,6 +44,13 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 
 	if r.isOpenShift {
 		err := r.deleteRouteIfNil(ctx, cr, scheme)
+		if err != nil {
+			return v1beta1.OperatorStageResultFailed, err
+		}
+	}
+
+	if r.hasGatewayAPI {
+		err := r.deleteHTTPRouteIfNil(ctx, cr, scheme)
 		if err != nil {
 			return v1beta1.OperatorStageResultFailed, err
 		}
@@ -92,6 +101,32 @@ func (r *IngressReconciler) deleteIngressIfNil(ctx context.Context, cr *v1beta1.
 	}
 
 	return r.client.Delete(ctx, ingress)
+}
+
+func (r *IngressReconciler) deleteHTTPRouteIfNil(ctx context.Context, cr *v1beta1.Grafana, scheme *runtime.Scheme) error {
+	if cr.Spec.HTTPRoute != nil {
+		return nil
+	}
+
+	route := model.GetGrafanaHTTPRoute(cr, scheme)
+
+	req := ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      route.Name,
+			Namespace: route.Namespace,
+		},
+	}
+
+	err := r.client.Get(ctx, req.NamespacedName, route)
+	if err != nil {
+		if kuberr.IsNotFound(err) {
+			return nil
+		}
+
+		return fmt.Errorf("error getting HTTPRoute: %w", err)
+	}
+
+	return r.client.Delete(ctx, route)
 }
 
 func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Grafana, _ *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
