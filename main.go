@@ -19,17 +19,17 @@ package main
 import (
 	"context"
 	"crypto/sha256"
-	"flag"
 	"fmt"
 	"log/slog"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/KimMachineGun/automemlimit/memlimit"
-	uberzap "go.uber.org/zap"
-
+	"github.com/alecthomas/kong"
 	"github.com/go-logr/logr"
+	uberzap "go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
 	routev1 "github.com/openshift/api/route/v1"
@@ -95,6 +95,21 @@ var (
 	setupLog = ctrl.Log.WithName("setup").WithValues("version", embeds.Version)
 )
 
+var operatorConfig struct {
+	MetricsAddr             string        `name:"metrics-bind-address"      default:":8080" help:"The address the metric endpoint binds to."`
+	ProbeAddr               string        `name:"health-probe-bind-address" default:":8081" help:"The address the probe endpoint binds to."`
+	PprofAddr               string        `name:"pprof-addr"                                help:"The address to expose the pprof server. Empty string disables the pprof server."`
+	EnableLeaderElection    bool          `name:"leader-elect"              default:"false" help:"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager." env:"ENABLE_LEADER_ELECTION"`
+	MaxConcurrentReconciles int           `name:"max-concurrent-reconciles" default:"1"     help:"Maximum number of concurrent reconciles for dashboard, datasource, folder controllers." env:"MAX_CONCURRENT_RECONCILES"`
+	ResyncPeriod            time.Duration `name:"default-resync-period"     default:"10m"   help:"Controls the default .spec.resyncPeriod when undefined on CRs." env:"DEFAULT_RESYNC_PERIOD"`
+
+	ZapDevel           bool   `name:"zap-devel"            default:"false"   help:"Development Mode defaults(encoder=consoleEncoder,logLevel=Debug,stackTraceLevel=Warn)"`
+	ZapEncoder         string `name:"zap-encoder"          default:"console" help:"Zap log encoding (one of 'json' or 'console')" enum:"console,json"`
+	ZapLogLevel        string `name:"zap-log-level"        default:"info"    help:"Zap Level to configure the verbosity of logging. Can be one of 'debug', 'info', 'error', 'panic' or any integer value > 0 which corresponds to custom debug levels of increasing verbosity"`
+	ZapTimeEncoding    string `name:"zap-time-encoding"    default:"iso8601" help:"Zap time encoding (one of 'epoch', 'millis', 'nanos', 'iso8601', 'rfc3339' or 'rfc3339nano')." enum:"epoch,millis,nanos,iso8601,rfc3339,rfc3339nano"`
+	ZapStacktraceLevel string `name:"zap-stacktrace-level" default:"error"   help:"Zap Level at and above which stacktraces are captured (one of 'info', 'error', 'panic')." enum:"info,error,panic"`
+}
+
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
@@ -104,38 +119,83 @@ func init() {
 	//+kubebuilder:scaffold:scheme
 }
 
+func configureZap() (zap.Options, error) {
+	opts := zap.Options{}
+
+	opts.Development = operatorConfig.ZapDevel
+	switch operatorConfig.ZapEncoder {
+	case "json":
+		opts.NewEncoder = func(eco ...zap.EncoderConfigOption) zapcore.Encoder {
+			encoderConfig := uberzap.NewProductionEncoderConfig()
+			for _, opt := range eco {
+				opt(&encoderConfig)
+			}
+
+			return zapcore.NewJSONEncoder(encoderConfig)
+		}
+	case "console":
+		opts.NewEncoder = func(eco ...zap.EncoderConfigOption) zapcore.Encoder {
+			encoderConfig := uberzap.NewProductionEncoderConfig()
+			for _, opt := range eco {
+				opt(&encoderConfig)
+			}
+
+			return zapcore.NewConsoleEncoder(encoderConfig)
+		}
+	default:
+		return opts, fmt.Errorf("invalid encoder %s", operatorConfig.ZapEncoder)
+	}
+
+	numericLevel, err := strconv.Atoi(operatorConfig.ZapLogLevel)
+	if err == nil {
+		opts.Level = uberzap.NewAtomicLevelAt(zapcore.Level(int8(numericLevel))) //nolint:gosec
+	} else {
+		level, err := zapcore.ParseLevel(operatorConfig.ZapLogLevel)
+		if err != nil {
+			return opts, fmt.Errorf("invalid log level: %w", err)
+		}
+
+		opts.Level = level
+	}
+
+	stacktraceLevel, err := zapcore.ParseLevel(operatorConfig.ZapStacktraceLevel)
+	if err != nil {
+		return opts, fmt.Errorf("invalid log level: %w", err)
+	}
+
+	opts.StacktraceLevel = stacktraceLevel
+
+	var timeEncoder zapcore.TimeEncoder
+
+	err = timeEncoder.UnmarshalText([]byte(operatorConfig.ZapTimeEncoding))
+	if err != nil {
+		return opts, fmt.Errorf("invalid log encoder: %w", err)
+	}
+
+	opts.TimeEncoder = timeEncoder
+
+	return opts, nil
+}
+
 func main() { //nolint:gocyclo
-	var (
-		metricsAddr             string
-		enableLeaderElection    bool
-		probeAddr               string
-		pprofAddr               string
-		maxConcurrentReconciles int
-		resyncPeriod            time.Duration
+	kong.Parse(&operatorConfig,
+		kong.Name("grafana-operator"),
+		kong.UsageOnError(),
+		kong.ConfigureHelp(kong.HelpOptions{
+			Compact: true,
+			Summary: false,
+		}),
 	)
 
-	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
-	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
-		"Enable leader election for controller manager. "+
-			"Enabling this will ensure there is only one active controller manager.")
-	flag.StringVar(&pprofAddr, "pprof-addr", ":8888", "The address to expose the pprof server. Empty string disables the pprof server.")
-	flag.IntVar(&maxConcurrentReconciles, "max-concurrent-reconciles", 1,
-		"Maximum number of concurrent reconciles for dashboard, datasource, folder controllers.")
-	flag.DurationVar(&resyncPeriod, "default-resync-period", controllers.DefaultReSyncPeriod, "Controls the default .spec.resyncPeriod when undefined on CRs.")
+	opts, err := configureZap()
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
 
-	logCfg := uberzap.NewProductionEncoderConfig()
-	logCfg.EncodeTime = zapcore.ISO8601TimeEncoder
-	opts := zap.Options{
-		NewEncoder: func(eco ...zap.EncoderConfigOption) zapcore.Encoder {
-			return zapcore.NewConsoleEncoder(logCfg)
-		},
+		return
 	}
-	opts.BindFlags(flag.CommandLine)
-	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
-
 	slogger := slog.New(logr.ToSlogHandler(setupLog))
 	slog.SetDefault(slogger)
 
@@ -193,14 +253,14 @@ func main() { //nolint:gocyclo
 
 	mgrOptions := ctrl.Options{
 		Scheme:                 scheme,
-		Metrics:                metricsserver.Options{BindAddress: metricsAddr},
+		Metrics:                metricsserver.Options{BindAddress: operatorConfig.MetricsAddr},
 		WebhookServer:          webhook.NewServer(webhook.Options{Port: 9443}),
-		HealthProbeBindAddress: probeAddr,
-		LeaderElection:         enableLeaderElection,
+		HealthProbeBindAddress: operatorConfig.ProbeAddr,
+		LeaderElection:         operatorConfig.EnableLeaderElection,
 		LeaderElectionID:       fmt.Sprintf("grafana-operator-%x", leHash.Sum(nil)),
-		PprofBindAddress:       pprofAddr,
+		PprofBindAddress:       operatorConfig.PprofAddr,
 		Controller: config.Controller{
-			MaxConcurrentReconciles: maxConcurrentReconciles,
+			MaxConcurrentReconciles: operatorConfig.MaxConcurrentReconciles,
 		},
 	}
 
@@ -275,7 +335,7 @@ func main() { //nolint:gocyclo
 	}
 
 	ctrlCfg := &controllers.Config{
-		ResyncPeriod: resyncPeriod,
+		ResyncPeriod: operatorConfig.ResyncPeriod,
 	}
 	// Register controllers
 	if err = (&controllers.GrafanaReconciler{
