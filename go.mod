@@ -4,6 +4,7 @@ go 1.25.0
 
 require (
 	github.com/KimMachineGun/automemlimit v0.7.5
+	github.com/alecthomas/kong v1.12.1
 	github.com/bitly/go-simplejson v0.5.1
 	github.com/blang/semver/v4 v4.0.0
 	github.com/docker/go-connections v0.6.0
@@ -11,7 +12,7 @@ require (
 	github.com/go-openapi/runtime v0.29.2
 	github.com/go-openapi/strfmt v0.25.0
 	github.com/google/go-jsonnet v0.21.0
-	github.com/grafana/grafana-openapi-client-go v0.0.0-20250925215610-d92957c70d5c
+	github.com/grafana/grafana-openapi-client-go v0.0.0-20251118002049-9bc70ad4530f
 	github.com/grafana/grafana-plugin-sdk-go v0.281.0
 	github.com/onsi/ginkgo/v2 v2.27.2
 	github.com/onsi/gomega v1.38.2
@@ -32,7 +33,6 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/Masterminds/semver/v3 v3.4.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/alecthomas/kong v1.12.1 // indirect
 	github.com/apache/arrow-go/v18 v18.4.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
