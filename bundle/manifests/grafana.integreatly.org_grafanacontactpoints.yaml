@@ -110,6 +110,7 @@ spec:
                 - discord
                 - email
                 - googlechat
+                - jira
                 - kafka
                 - line
                 - opsgenie
