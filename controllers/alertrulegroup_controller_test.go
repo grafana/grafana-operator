@@ -4,11 +4,12 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("AlertRulegroup Reconciler: Provoke Conditions", func() {
@@ -225,6 +226,8 @@ var _ = Describe("AlertRulegroup Reconciler: Provoke Conditions", func() {
 })
 
 var _ = Describe("AlertRuleGroup Controller Conversion", func() {
+	t := GinkgoT()
+
 	Context("Duration conversion in crToModel", func() {
 		It("Should properly convert duration with day duration", func() {
 			dayDuration := "1d"
@@ -251,11 +254,11 @@ var _ = Describe("AlertRuleGroup Controller Conversion", func() {
 			}
 
 			model, err := crToModel(arg, "test-folder")
-			Expect(err).ToNot(HaveOccurred())
+			require.NoError(t, err)
 
-			Expect(model.Rules).To(HaveLen(1))
-			Expect(model.Rules[0].For).ToNot(BeNil())
-			Expect(model.Rules[0].For.String()).To(Equal("24h0m0s"))
+			assert.Len(t, model.Rules, 1)
+			assert.NotNil(t, model.Rules[0].For)
+			assert.Equal(t, "24h0m0s", model.Rules[0].For.String())
 		})
 
 		It("Should properly convert duration with week duration", func() {
@@ -283,11 +286,11 @@ var _ = Describe("AlertRuleGroup Controller Conversion", func() {
 			}
 
 			model, err := crToModel(arg, "test-folder")
-			Expect(err).ToNot(HaveOccurred())
+			require.NoError(t, err)
 
-			Expect(model.Rules).To(HaveLen(1))
-			Expect(model.Rules[0].For).ToNot(BeNil())
-			Expect(model.Rules[0].For.String()).To(Equal("168h0m0s"))
+			assert.Len(t, model.Rules, 1)
+			assert.NotNil(t, model.Rules[0].For)
+			assert.Equal(t, "168h0m0s", model.Rules[0].For.String())
 		})
 	})
 })
