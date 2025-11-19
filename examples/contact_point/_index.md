@@ -21,7 +21,7 @@ To view the entire configuration that you can do within Contact-Points, look at 
 
 `GrafanaContactPoint` did not support multiple receivers prior to `v5.21.0`.
 
-The old, format is now deprecated but is still supported.
+The previous format is now deprecated, but is still supported.
 
 The fields `.spec.type`, `.spec.settings`, and `.spec.valuesFrom` are entirely ignored when `.spec.recievers[...]` is configured, but the below configuration is still valid for the duration of `v1beta1`.
 
