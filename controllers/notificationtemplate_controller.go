@@ -84,7 +84,7 @@ func (r *GrafanaNotificationTemplateReconciler) Reconcile(ctx context.Context, r
 
 	removeSuspended(&notificationTemplate.Status.Conditions)
 
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, notificationTemplate)
+	instances, _, err := GetScopedMatchingInstances(ctx, r.Client, notificationTemplate)
 	if err != nil {
 		setNoMatchingInstancesCondition(&notificationTemplate.Status.Conditions, notificationTemplate.Generation, err)
 		meta.RemoveStatusCondition(&notificationTemplate.Status.Conditions, conditionNotificationTemplateSynchronized)
@@ -156,7 +156,7 @@ func (r *GrafanaNotificationTemplateReconciler) finalize(ctx context.Context, no
 	log := logf.FromContext(ctx)
 	log.Info("Finalizing GrafanaNotificationTemplate")
 
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, notificationTemplate)
+	instances, _, err := GetScopedMatchingInstances(ctx, r.Client, notificationTemplate)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}

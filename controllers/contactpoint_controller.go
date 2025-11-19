@@ -99,7 +99,7 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 
 	removeSuspended(&cr.Status.Conditions)
 
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
+	instances, instDelta, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionContactPointSynchronized)
@@ -154,11 +154,50 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 		}
 	}
 
-	condition := buildSynchronizedCondition("Contact point", conditionContactPointSynchronized, cr.Generation, applyErrors, len(instances))
+	cleanupErrors := make(map[string]string)
+	dirtyInstances := make([]grafanav1beta1.Grafana, 0, len(instDelta))
+
+	for _, namespacedName := range instDelta {
+		g := grafanav1beta1.Grafana{}
+
+		err := r.Get(ctx, namespacedName, &g)
+		if err != nil {
+			if kuberr.IsNotFound(err) {
+				continue
+			}
+
+			dirtyInstances = append(dirtyInstances, g)
+			cleanupErrors[namespacedName.String()] = err.Error()
+		}
+
+		err = r.deleteFromInstance(ctx, &g, cr)
+		if err != nil {
+			dirtyInstances = append(dirtyInstances, g)
+			cleanupErrors[namespacedName.String()] = err.Error()
+
+			continue
+		}
+	}
+
+	av := make([]string, 0, len(instances)+len(dirtyInstances))
+	for _, g := range append(instances, dirtyInstances...) {
+		av = append(av, fmt.Sprintf("%s/%s", g.Namespace, g.Name))
+	}
+
+	slices.Sort(av)
+	v := strings.Join(av, ",")
+
+	err = addAnnotation(ctx, r.Client, cr, annotationMatchedInstances, v)
+	if err != nil {
+		log.Error(err, "annotating contact point with matched instances", "annotation", annotationMatchedInstances)
+	}
+
+	allErrors := mergeReconcileErrors(applyErrors, cleanupErrors)
+	condition := buildSynchronizedCondition("Contact point", conditionContactPointSynchronized, cr.Generation, allErrors, len(instances))
 	meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
-	if len(applyErrors) > 0 {
-		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
+	if len(allErrors) > 0 {
+		return ctrl.Result{}, fmt.Errorf("syncing all instances: %v", allErrors)
 	}
 
 	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(cr.Spec.ResyncPeriod)}, nil
@@ -321,34 +360,43 @@ func (r *GrafanaContactPointReconciler) finalize(ctx context.Context, cr *grafan
 	log := logf.FromContext(ctx)
 	log.Info("Finalizing GrafanaContactPoint")
 
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
+	instances, _, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
 
 	for _, instance := range instances {
-		cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &instance)
-		if err != nil {
-			return fmt.Errorf("building grafana client: %w", err)
-		}
-
-		remoteReceivers, err := r.getReceiversFromName(cl, cr)
+		err := r.deleteFromInstance(ctx, &instance, cr)
 		if err != nil {
 			return err
 		}
+	}
 
-		for _, rec := range remoteReceivers {
-			_, err = cl.Provisioning.DeleteContactpoints(rec.UID) //nolint:errcheck
-			if err != nil {
-				return fmt.Errorf("deleting contact point: %w", err)
-			}
-		}
+	return nil
+}
 
-		// Update grafana instance Status
-		err = instance.RemoveNamespacedResource(ctx, r.Client, cr)
+func (r *GrafanaContactPointReconciler) deleteFromInstance(ctx context.Context, g *grafanav1beta1.Grafana, cr *grafanav1beta1.GrafanaContactPoint) error {
+	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, g)
+	if err != nil {
+		return fmt.Errorf("building grafana client: %w", err)
+	}
+
+	remoteReceivers, err := r.getReceiversFromName(cl, cr)
+	if err != nil {
+		return err
+	}
+
+	for _, rec := range remoteReceivers {
+		_, err = cl.Provisioning.DeleteContactpoints(rec.UID) //nolint:errcheck
 		if err != nil {
-			return fmt.Errorf("removing contact point from Grafana cr: %w", err)
+			return fmt.Errorf("deleting contact point: %w", err)
 		}
+	}
+
+	// Update grafana instance Status
+	err = g.RemoveNamespacedResource(ctx, r.Client, cr)
+	if err != nil {
+		return fmt.Errorf("removing contact point from Grafana cr: %w", err)
 	}
 
 	return nil

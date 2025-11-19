@@ -130,7 +130,7 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 
 	// begin instance selection and reconciliation
 
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, libraryPanel)
+	instances, _, err := GetScopedMatchingInstances(ctx, r.Client, libraryPanel)
 	if err != nil {
 		setNoMatchingInstancesCondition(&libraryPanel.Status.Conditions, libraryPanel.Generation, err)
 		meta.RemoveStatusCondition(&libraryPanel.Status.Conditions, conditionLibraryPanelSynchronized)
@@ -238,7 +238,7 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, cr *v1beta
 
 	uid := content.CustomUIDOrUID(cr, cr.Status.UID)
 
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
+	instances, _, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
