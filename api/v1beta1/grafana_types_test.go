@@ -62,7 +62,43 @@ var _ = Describe("Grafana status NamespacedResourceList all CRs works", func() {
 		muteTiming := &GrafanaMuteTiming{ObjectMeta: meta()}
 		notificationTemplate := &GrafanaNotificationTemplate{ObjectMeta: meta()}
 
-		crList := []client.Object{alertRuleGroup, contactPoint, dashboard, datasource, folder, libraryPanel, muteTiming, notificationTemplate}
+		crList := []struct {
+			obj client.Object
+			nr  NamespacedResource
+		}{
+			{
+				obj: alertRuleGroup,
+				nr:  alertRuleGroup.NamespacedResource(),
+			},
+			{
+				obj: contactPoint,
+				nr:  contactPoint.NamespacedResource(),
+			},
+			{
+				obj: dashboard,
+				nr:  dashboard.NamespacedResource(dashboard.Spec.CustomUID),
+			},
+			{
+				obj: datasource,
+				nr:  datasource.NamespacedResource(),
+			},
+			{
+				obj: folder,
+				nr:  folder.NamespacedResource(folder.Spec.CustomUID),
+			},
+			{
+				obj: libraryPanel,
+				nr:  libraryPanel.NamespacedResource(libraryPanel.Spec.CustomUID),
+			},
+			{
+				obj: muteTiming,
+				nr:  muteTiming.NamespacedResource(),
+			},
+			{
+				obj: notificationTemplate,
+				nr:  notificationTemplate.NamespacedResource(),
+			},
+		}
 
 		crGrafana := &Grafana{
 			ObjectMeta: metav1.ObjectMeta{
@@ -87,71 +123,33 @@ var _ = Describe("Grafana status NamespacedResourceList all CRs works", func() {
 		})
 
 		It("Adds item to status of Grafana", func() {
-			err := crGrafana.AddNamespacedResource(ctx, k8sClient, alertRuleGroup, alertRuleGroup.NamespacedResource())
-			require.NoError(t, err)
-
-			err = crGrafana.AddNamespacedResource(ctx, k8sClient, contactPoint, contactPoint.NamespacedResource())
-			require.NoError(t, err)
-
-			err = crGrafana.AddNamespacedResource(ctx, k8sClient, dashboard, dashboard.NamespacedResource(dashboard.Spec.CustomUID))
-			require.NoError(t, err)
-
-			err = crGrafana.AddNamespacedResource(ctx, k8sClient, datasource, datasource.NamespacedResource())
-			require.NoError(t, err)
-
-			err = crGrafana.AddNamespacedResource(ctx, k8sClient, folder, folder.NamespacedResource(folder.Spec.CustomUID))
-			require.NoError(t, err)
-
-			err = crGrafana.AddNamespacedResource(ctx, k8sClient, libraryPanel, libraryPanel.NamespacedResource(libraryPanel.Spec.CustomUID))
-			require.NoError(t, err)
-
-			err = crGrafana.AddNamespacedResource(ctx, k8sClient, muteTiming, muteTiming.NamespacedResource())
-			require.NoError(t, err)
-
-			err = crGrafana.AddNamespacedResource(ctx, k8sClient, notificationTemplate, notificationTemplate.NamespacedResource())
-			require.NoError(t, err)
+			for _, cr := range crList {
+				err := crGrafana.AddNamespacedResource(ctx, k8sClient, cr.obj, cr.nr)
+				require.NoError(t, err)
+			}
 
 			im := &Grafana{}
-			err = k8sClient.Get(ctx, types.NamespacedName{
+			err := k8sClient.Get(ctx, types.NamespacedName{
 				Namespace: crGrafana.Namespace,
 				Name:      crGrafana.Name,
 			}, im)
 			require.NoError(t, err)
 
 			for _, cr := range crList {
-				list, _, err := im.Status.StatusList(cr)
+				list, _, err := im.Status.StatusList(cr.obj)
 				require.NoError(t, err)
 				require.NotNil(t, list)
 				assert.NotEmpty(t, *list)
 				assert.Len(t, *list, 1)
 
-				idx := im.Status.Datasources.IndexOf(cr.GetNamespace(), cr.GetName())
+				idx := im.Status.Datasources.IndexOf(cr.obj.GetNamespace(), cr.obj.GetName())
 				assert.Equal(t, 0, idx)
 			}
 
-			err = crGrafana.RemoveNamespacedResource(ctx, k8sClient, alertRuleGroup)
-			require.NoError(t, err)
-
-			err = crGrafana.RemoveNamespacedResource(ctx, k8sClient, contactPoint)
-			require.NoError(t, err)
-
-			err = crGrafana.RemoveNamespacedResource(ctx, k8sClient, dashboard)
-			require.NoError(t, err)
-
-			err = crGrafana.RemoveNamespacedResource(ctx, k8sClient, datasource)
-			require.NoError(t, err)
-
-			err = crGrafana.RemoveNamespacedResource(ctx, k8sClient, folder)
-			require.NoError(t, err)
-
-			err = crGrafana.RemoveNamespacedResource(ctx, k8sClient, libraryPanel)
-			require.NoError(t, err)
-
-			err = crGrafana.RemoveNamespacedResource(ctx, k8sClient, muteTiming)
-			require.NoError(t, err)
-
-			err = crGrafana.RemoveNamespacedResource(ctx, k8sClient, notificationTemplate)
-			require.NoError(t, err)
+			for _, cr := range crList {
+				err = crGrafana.RemoveNamespacedResource(ctx, k8sClient, cr.obj)
+				require.NoError(t, err)
+			}
 
 			result := &Grafana{}
 			err = k8sClient.Get(ctx, types.NamespacedName{
@@ -161,11 +159,11 @@ var _ = Describe("Grafana status NamespacedResourceList all CRs works", func() {
 			require.NoError(t, err)
 
 			for _, cr := range crList {
-				list, _, err := result.Status.StatusList(cr)
+				list, _, err := result.Status.StatusList(cr.obj)
 				require.NoError(t, err)
 				assert.Empty(t, *list)
 
-				idx := result.Status.Datasources.IndexOf(cr.GetNamespace(), cr.GetName())
+				idx := result.Status.Datasources.IndexOf(cr.obj.GetNamespace(), cr.obj.GetName())
 				assert.Equal(t, -1, idx)
 			}
 		})
