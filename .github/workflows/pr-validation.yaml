@@ -184,7 +184,7 @@ jobs:
   end-to-end:
     runs-on: ubuntu-latest
     needs:
-      - e2e_tests
+      - e2e-tests
     steps:
       - run: |
           echo "All E2E tests ran successfully"
