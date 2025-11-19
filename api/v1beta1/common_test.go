@@ -7,12 +7,14 @@ import (
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var _ = Describe("GrafanaCommonSpec#AllowCrossNamespaceImport Validation rule tests", func() {
+	t := GinkgoT()
+
 	undefinedCrossImportFolder := &GrafanaFolder{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: APIVersion,
@@ -34,11 +36,13 @@ var _ = Describe("GrafanaCommonSpec#AllowCrossNamespaceImport Validation rule te
 			copyOfundefinedCrossImportFolder := undefinedCrossImportFolder.DeepCopy()
 			copyOfundefinedCrossImportFolder.Name = "disabled-from-undefined"
 			By("Creating a Folder without allowCrossNamespaceImport")
-			Expect(k8sClient.Create(ctx, copyOfundefinedCrossImportFolder)).To(Succeed())
+			err := k8sClient.Create(ctx, copyOfundefinedCrossImportFolder)
+			require.NoError(t, err)
 
 			By("Setting allowCrossNamespaceImport false")
 			copyOfundefinedCrossImportFolder.Spec.AllowCrossNamespaceImport = false
-			Expect(k8sClient.Update(ctx, copyOfundefinedCrossImportFolder)).To(Succeed())
+			err = k8sClient.Update(ctx, copyOfundefinedCrossImportFolder)
+			require.NoError(t, err)
 		})
 
 		It("Allows enabling allowCrossNamespaceImport from undefined", func() {
@@ -46,11 +50,13 @@ var _ = Describe("GrafanaCommonSpec#AllowCrossNamespaceImport Validation rule te
 			secondUndfinedCrossImportFolder.Name = "enabled-from-undefined"
 
 			By("Creating a Folder with false allowCrossNamespaceImport")
-			Expect(k8sClient.Create(ctx, secondUndfinedCrossImportFolder)).To(Succeed())
+			err := k8sClient.Create(ctx, secondUndfinedCrossImportFolder)
+			require.NoError(t, err)
 
 			By("Setting allowCrossNamespaceImport true")
 			secondUndfinedCrossImportFolder.Spec.AllowCrossNamespaceImport = true
-			Expect(k8sClient.Update(ctx, secondUndfinedCrossImportFolder)).To(Succeed())
+			err = k8sClient.Update(ctx, secondUndfinedCrossImportFolder)
+			require.NoError(t, err)
 		})
 
 		It("Allows enabling allowCrossNamespaceImport when false", func() {
@@ -58,11 +64,13 @@ var _ = Describe("GrafanaCommonSpec#AllowCrossNamespaceImport Validation rule te
 			explicitNoCrossImportFolder.Name = "enabled-from-false"
 			explicitNoCrossImportFolder.Spec.AllowCrossNamespaceImport = false
 			By("Creating a Folder with allowCrossNamespaceImport false")
-			Expect(k8sClient.Create(ctx, explicitNoCrossImportFolder)).To(Succeed())
+			err := k8sClient.Create(ctx, explicitNoCrossImportFolder)
+			require.NoError(t, err)
 
 			By("Setting allowCrossNamespaceImport true")
 			explicitNoCrossImportFolder.Spec.AllowCrossNamespaceImport = true
-			Expect(k8sClient.Update(ctx, explicitNoCrossImportFolder)).To(Succeed())
+			err = k8sClient.Update(ctx, explicitNoCrossImportFolder)
+			require.NoError(t, err)
 		})
 	})
 
@@ -72,11 +80,13 @@ var _ = Describe("GrafanaCommonSpec#AllowCrossNamespaceImport Validation rule te
 			crossImportFolder.Name = "disabled-from-true"
 			crossImportFolder.Spec.AllowCrossNamespaceImport = true
 			By("Creating a Folder with allowCrossNamespaceImport")
-			Expect(k8sClient.Create(ctx, crossImportFolder)).To(Succeed())
+			err := k8sClient.Create(ctx, crossImportFolder)
+			require.NoError(t, err)
 
 			By("Setting allowCrossNamespaceImport false")
 			crossImportFolder.Spec.AllowCrossNamespaceImport = false
-			Expect(k8sClient.Update(ctx, crossImportFolder)).To(HaveOccurred())
+			err = k8sClient.Update(ctx, crossImportFolder)
+			require.Error(t, err)
 		})
 
 		It("Blocks disabling allowCrossNamespaceImport after creation with undefined", func() {
@@ -84,12 +94,14 @@ var _ = Describe("GrafanaCommonSpec#AllowCrossNamespaceImport Validation rule te
 			secondCrossImportFolder.Name = "unset-from-true"
 			secondCrossImportFolder.Spec.AllowCrossNamespaceImport = true
 			By("Creating a Folder with allowCrossNamespaceImport")
-			Expect(k8sClient.Create(ctx, secondCrossImportFolder)).To(Succeed())
+			err := k8sClient.Create(ctx, secondCrossImportFolder)
+			require.NoError(t, err)
 
 			By("Setting allowCrossNamespaceImport false")
 			unsetCrossImportFolder := undefinedCrossImportFolder.DeepCopy()
 			unsetCrossImportFolder.Name = "unset-from-true" // Needs the same name as above
-			Expect(k8sClient.Update(ctx, unsetCrossImportFolder)).To(HaveOccurred())
+			err = k8sClient.Update(ctx, unsetCrossImportFolder)
+			require.Error(t, err)
 		})
 	})
 })
