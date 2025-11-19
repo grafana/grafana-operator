@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 jobs:
-  docs_only_check:
+  docs-only-check:
     name: Check for docs-only change
     runs-on: ubuntu-latest
     outputs:
@@ -57,8 +57,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     needs:
-      - docs_only_check
-    if: (needs.docs_only_check.outputs.docs_only != 'true')
+      - docs-only-check
+    if: (needs.docs-only-check.outputs.docs_only != 'true')
     steps:
       - name: Clone repo
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
@@ -88,7 +88,7 @@ jobs:
             exit 1
           fi
 
-  trivy_scan:
+  trivy:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repo
@@ -106,12 +106,12 @@ jobs:
           ignore-unfixed: true
           severity: "CRITICAL,HIGH"
 
-  e2e_tests:
+  e2e-tests:
     name: E2E on kind ${{ matrix.version }}
     runs-on: ubuntu-latest
     needs:
-      - docs_only_check
-    if: (needs.docs_only_check.outputs.docs_only != 'true' && github.event_name != 'push')
+      - docs-only-check
+    if: (needs.docs-only-check.outputs.docs_only != 'true' && github.event_name != 'push')
     env:
       KUBECONFIG: /home/runner/.kube/kind-grafana-operator-e2e
     strategy:
