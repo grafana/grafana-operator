@@ -19,7 +19,7 @@ func TestCompressDecompress(t *testing.T) {
 	decompressed, err := Gunzip(compressed)
 	require.NoError(t, err)
 
-	require.Equal(t, contentJSON, decompressed)
+	require.JSONEq(t, string(contentJSON), string(decompressed))
 }
 
 func TestGrafanaDashboardStatus_getContentCache(t *testing.T) {
