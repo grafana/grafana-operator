@@ -75,6 +75,8 @@ func TestAPIs(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
+	t := GinkgoT()
+
 	ctx := context.Background()
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 	log := logf.FromContext(ctx).WithName("ControllerTests")
@@ -88,16 +90,18 @@ var _ = BeforeSuite(func() {
 	}
 
 	cfg, err := testEnv.Start()
-	Expect(err).NotTo(HaveOccurred())
-	Expect(cfg).NotTo(BeNil())
-	Expect(v1beta1.AddToScheme(scheme.Scheme)).NotTo(HaveOccurred())
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+
+	err = v1beta1.AddToScheme(scheme.Scheme)
+	require.NoError(t, err)
 
 	//+kubebuilder:scaffold:scheme
 
 	By("Instantiating k8sClient")
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
-	Expect(err).NotTo(HaveOccurred())
-	Expect(k8sClient).NotTo(BeNil())
+	require.NoError(t, err)
+	require.NotNil(t, k8sClient)
 
 	By("Starting Grafana TestContainer")
 	grafanaContainer, err = testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
@@ -109,19 +113,25 @@ var _ = BeforeSuite(func() {
 			WaitingFor:   wait.ForHTTP("/").WithPort(grafanaPort),
 		},
 	})
-	Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	createSharedTestCRs()
 })
 
 var _ = AfterSuite(func() {
+	t := GinkgoT()
+
 	By("tearing down the test environment")
 	testcontainers.CleanupContainer(GinkgoTB(), grafanaContainer)
-	Expect(testEnv.Stop()).To(Succeed())
+
+	err := testEnv.Stop()
+	require.NoError(t, err)
 })
 
 func createSharedTestCRs() {
 	GinkgoHelper()
+
+	t := GinkgoT()
 
 	By("Creating Grafana CRs. One Fake and one External")
 
@@ -143,7 +153,7 @@ func createSharedTestCRs() {
 
 	// External Endpoint
 	endpoint, err := grafanaContainer.PortEndpoint(testCtx, grafanaPort, "http")
-	Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	external := &v1beta1.Grafana{
 		ObjectMeta: metav1.ObjectMeta{
@@ -169,8 +179,11 @@ func createSharedTestCRs() {
 		},
 	}
 
-	Expect(k8sClient.Create(testCtx, dummy)).Should(Succeed())
-	Expect(k8sClient.Create(testCtx, external)).Should(Succeed())
+	err = k8sClient.Create(testCtx, dummy)
+	require.NoError(t, err)
+
+	err = k8sClient.Create(testCtx, external)
+	require.NoError(t, err)
 
 	dummy.Status = v1beta1.GrafanaStatus{
 		Stage:       v1beta1.OperatorStageComplete,
@@ -178,7 +191,9 @@ func createSharedTestCRs() {
 		AdminURL:    fmt.Sprintf("http://%s-service", "invalid"),
 		Version:     config.GrafanaVersion,
 	}
-	Expect(k8sClient.Status().Update(testCtx, dummy)).ToNot(HaveOccurred())
+
+	err = k8sClient.Status().Update(testCtx, dummy)
+	require.NoError(t, err)
 
 	By("Reconciling External Grafana")
 
@@ -189,15 +204,17 @@ func createSharedTestCRs() {
 	}
 	reg := requestFromMeta(external.ObjectMeta)
 	_, err = r.Reconcile(testCtx, reg)
-	Expect(err).ToNot(HaveOccurred())
+	require.NoError(t, err)
 
 	By("Get External Grafana")
 
 	externalGrafanaCr = &v1beta1.Grafana{}
-	Expect(k8sClient.Get(testCtx, types.NamespacedName{
+
+	err = k8sClient.Get(testCtx, types.NamespacedName{
 		Namespace: external.Namespace,
 		Name:      external.Name,
-	}, externalGrafanaCr)).Should(Succeed())
+	}, externalGrafanaCr)
+	require.NoError(t, err)
 
 	By("Creating GrafanaFolder for testing")
 
@@ -211,14 +228,16 @@ func createSharedTestCRs() {
 			CustomUID:         "synchronized",
 		},
 	}
-	Expect(k8sClient.Create(testCtx, appliedFolder)).ToNot(HaveOccurred())
+
+	err = k8sClient.Create(testCtx, appliedFolder)
+	require.NoError(t, err)
 
 	By("Reconciling 'synchronized' folder")
 
 	req := requestFromMeta(appliedFolder.ObjectMeta)
 	fr := GrafanaFolderReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
 	_, err = fr.Reconcile(testCtx, req)
-	Expect(err).ToNot(HaveOccurred())
+	require.NoError(t, err)
 }
 
 func containsEqualCondition(conditions []metav1.Condition, target metav1.Condition) {

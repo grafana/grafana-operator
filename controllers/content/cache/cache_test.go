@@ -5,25 +5,22 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var _ = Describe("fetchers#Gzip", func() {
-	It("Can compress and uncompress", func() {
-		contentJSON := []byte(`{"dummyField": "dummyData"}`)
-		compressed, err := Gzip(contentJSON)
-		Expect(err).NotTo(HaveOccurred())
+func TestCompressDecompress(t *testing.T) {
+	contentJSON := []byte(`{"dummyField": "dummyData"}`)
 
-		decompressed, err := Gunzip(compressed)
-		Expect(err).NotTo(HaveOccurred())
+	compressed, err := Gzip(contentJSON)
+	require.NoError(t, err)
 
-		Expect(decompressed).To(Equal(contentJSON))
-	})
-})
+	decompressed, err := Gunzip(compressed)
+	require.NoError(t, err)
+
+	require.JSONEq(t, string(contentJSON), string(decompressed))
+}
 
 func TestGrafanaDashboardStatus_getContentCache(t *testing.T) {
 	timestamp := metav1.Time{Time: time.Now().Add(-1 * time.Hour)}

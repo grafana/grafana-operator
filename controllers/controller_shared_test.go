@@ -21,8 +21,8 @@ import (
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -470,6 +470,8 @@ func TestMergeReconcileErrors(t *testing.T) {
 }
 
 var _ = Describe("GetMatchingInstances functions", Ordered, func() {
+	t := GinkgoT()
+
 	ns := corev1.Namespace{ObjectMeta: metav1.ObjectMeta{
 		Name: "matching-instances",
 	}}
@@ -517,37 +519,42 @@ var _ = Describe("GetMatchingInstances functions", Ordered, func() {
 	// Pre-create all resources
 	BeforeAll(func() { // Necessary to use assertions
 		for _, cr := range createCRs {
-			Expect(k8sClient.Create(testCtx, cr)).Should(Succeed())
+			err := k8sClient.Create(testCtx, cr)
+			require.NoError(t, err)
 		}
 
 		grafanas := []v1beta1.Grafana{BaseGrafana, *matchesNothingGrafana}
 		for _, instance := range grafanas {
-			Expect(k8sClient.Create(testCtx, &instance)).NotTo(HaveOccurred())
+			err := k8sClient.Create(testCtx, &instance)
+			require.NoError(t, err)
 
 			// Apply status to pass instance ready check
 			instance.Status.Stage = v1beta1.OperatorStageComplete
 			instance.Status.StageStatus = v1beta1.OperatorStageResultSuccess
-			Expect(k8sClient.Status().Update(testCtx, &instance)).ToNot(HaveOccurred())
+
+			err = k8sClient.Status().Update(testCtx, &instance)
+			require.NoError(t, err)
 		}
 	})
 
 	Context("Ensure AllowCrossNamespaceImport is upheld by GetScopedMatchingInstances", func() {
 		It("Finds all ready instances when instanceSelector is empty", func() {
 			instances, err := GetScopedMatchingInstances(testCtx, k8sClient, matchAllFolder)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(instances).To(HaveLen(2 + 2)) // +2 To account for instances created in controllers/suite_test.go to provoke conditions
+			require.NoError(t, err)
+			assert.NotEmpty(t, instances)
+			assert.Len(t, instances, 2+2) // +2 To account for instances created in controllers/suite_test.go to provoke conditions
 		})
 		It("Finds all ready and Matching instances", func() {
 			instances, err := GetScopedMatchingInstances(testCtx, k8sClient, &allowFolder)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(instances).ToNot(BeEmpty())
-			Expect(instances).To(HaveLen(2))
+			require.NoError(t, err)
+			assert.NotEmpty(t, instances)
+			assert.Len(t, instances, 2)
 		})
 		It("Finds matching and ready and matching instance in namespace", func() {
 			instances, err := GetScopedMatchingInstances(testCtx, k8sClient, denyFolder)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(instances).ToNot(BeEmpty())
-			Expect(instances).To(HaveLen(1))
+			require.NoError(t, err)
+			assert.NotEmpty(t, instances)
+			assert.Len(t, instances, 1)
 		})
 	})
 })

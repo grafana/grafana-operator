@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -59,17 +59,21 @@ func newMuteTiming(name string, editable bool) *GrafanaMuteTiming {
 }
 
 var _ = Describe("MuteTiming type", func() {
+	t := GinkgoT()
+
 	Context("Ensure MuteTiming spec.editable is immutable", func() {
 		ctx := context.Background()
 
 		It("Should block changing value of editable", func() {
 			mutetiming := newMuteTiming("removing-editable", true)
 			By("Create new MuteTiming with existing editable")
-			Expect(k8sClient.Create(ctx, mutetiming)).To(Succeed())
+			err := k8sClient.Create(ctx, mutetiming)
+			require.NoError(t, err)
 
 			By("Changing the existing editable")
 			mutetiming.Spec.Editable = false
-			Expect(k8sClient.Update(ctx, mutetiming)).To(HaveOccurred())
+			err = k8sClient.Update(ctx, mutetiming)
+			require.Error(t, err)
 		})
 	})
 })

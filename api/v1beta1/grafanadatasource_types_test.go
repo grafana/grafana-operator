@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -48,42 +48,52 @@ func newDatasource(name string, uid string) *GrafanaDatasource {
 }
 
 var _ = Describe("Datasource type", func() {
+	t := GinkgoT()
+
 	Context("Ensure Datasource spec.uid is immutable", func() {
 		ctx := context.Background()
 
 		It("Should block adding uid field when missing", func() {
 			ds := newDatasource("missing-uid", "")
 			By("Create new Datasource without uid")
-			Expect(k8sClient.Create(ctx, ds)).To(Succeed())
+			err := k8sClient.Create(ctx, ds)
+			require.NoError(t, err)
 
 			By("Adding a uid")
 			ds.Spec.CustomUID = "new-ds-uid"
-			Expect(k8sClient.Update(ctx, ds)).To(HaveOccurred())
+			err = k8sClient.Update(ctx, ds)
+			require.Error(t, err)
 		})
 
 		It("Should block removing uid field when set", func() {
 			ds := newDatasource("existing-uid", "existing-uid")
 			By("Creating Datasource with existing UID")
-			Expect(k8sClient.Create(ctx, ds)).To(Succeed())
+			err := k8sClient.Create(ctx, ds)
+			require.NoError(t, err)
 
 			By("And setting UID to ''")
 			ds.Spec.CustomUID = ""
-			Expect(k8sClient.Update(ctx, ds)).To(HaveOccurred())
+			err = k8sClient.Update(ctx, ds)
+			require.Error(t, err)
 		})
 
 		It("Should block changing value of uid", func() {
 			ds := newDatasource("removing-uid", "existing-uid")
 			By("Create new Datasource with existing UID")
-			Expect(k8sClient.Create(ctx, ds)).To(Succeed())
+			err := k8sClient.Create(ctx, ds)
+			require.NoError(t, err)
 
 			By("Changing the existing UID")
 			ds.Spec.CustomUID = "new-ds-uid"
-			Expect(k8sClient.Update(ctx, ds)).To(HaveOccurred())
+			err = k8sClient.Update(ctx, ds)
+			require.Error(t, err)
 		})
 	})
 })
 
 var _ = Describe("Fail on field behavior changes", func() {
+	t := GinkgoT()
+
 	emptyDatasource := &GrafanaDatasource{
 		TypeMeta: v1.TypeMeta{
 			APIVersion: APIVersion,
@@ -103,6 +113,7 @@ var _ = Describe("Fail on field behavior changes", func() {
 
 	ctx := context.Background()
 	It("Fails creating GrafanaDatasource with undefined spec.datasource", func() {
-		Expect(k8sClient.Create(ctx, emptyDatasource)).To(HaveOccurred())
+		err := k8sClient.Create(ctx, emptyDatasource)
+		require.Error(t, err)
 	})
 })

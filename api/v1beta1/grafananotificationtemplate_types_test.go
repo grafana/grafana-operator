@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -46,6 +46,8 @@ func newNotificationTemplate(name string, editable *bool) *GrafanaNotificationTe
 
 var _ = Describe("NotificationTemplate type", func() {
 	Context("Ensure NotificationTemplate spec.editable is immutable", func() {
+		t := GinkgoT()
+
 		ctx := context.Background()
 		refTrue := true
 		refFalse := false
@@ -53,31 +55,37 @@ var _ = Describe("NotificationTemplate type", func() {
 		It("Should block adding editable field when missing", func() {
 			notificationtemplate := newNotificationTemplate("missing-editable", nil)
 			By("Create new NotificationTemplate without editable")
-			Expect(k8sClient.Create(ctx, notificationtemplate)).To(Succeed())
+			err := k8sClient.Create(ctx, notificationtemplate)
+			require.NoError(t, err)
 
 			By("Adding a editable")
 			notificationtemplate.Spec.Editable = &refTrue
-			Expect(k8sClient.Update(ctx, notificationtemplate)).To(HaveOccurred())
+			err = k8sClient.Update(ctx, notificationtemplate)
+			require.Error(t, err)
 		})
 
 		It("Should block removing editable field when set", func() {
 			notificationtemplate := newNotificationTemplate("existing-editable", &refTrue)
 			By("Creating NotificationTemplate with existing editable")
-			Expect(k8sClient.Create(ctx, notificationtemplate)).To(Succeed())
+			err := k8sClient.Create(ctx, notificationtemplate)
+			require.NoError(t, err)
 
 			By("And setting editable to ''")
 			notificationtemplate.Spec.Editable = nil
-			Expect(k8sClient.Update(ctx, notificationtemplate)).To(HaveOccurred())
+			err = k8sClient.Update(ctx, notificationtemplate)
+			require.Error(t, err)
 		})
 
 		It("Should block changing value of editable", func() {
 			notificationtemplate := newNotificationTemplate("removing-editable", &refTrue)
 			By("Create new NotificationTemplate with existing editable")
-			Expect(k8sClient.Create(ctx, notificationtemplate)).To(Succeed())
+			err := k8sClient.Create(ctx, notificationtemplate)
+			require.NoError(t, err)
 
 			By("Changing the existing editable")
 			notificationtemplate.Spec.Editable = &refFalse
-			Expect(k8sClient.Update(ctx, notificationtemplate)).To(HaveOccurred())
+			err = k8sClient.Update(ctx, notificationtemplate)
+			require.Error(t, err)
 		})
 	})
 })
