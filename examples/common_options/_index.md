@@ -8,7 +8,7 @@ weight: 20
 Grafana doesn't have any webhooks or similar ways of notifying the operator that a Grafana resource, like a dashboard, has changed.
 Due to this the Grafana operator constantly polls the Grafana API to test for changes and overwrite the resources, reconciling towards the desired state.
 
-We describe this loop as reconciling the manifest(Custom Resource/CR) and synchronizing with Grafana instances.
+We describe this loop as reconciling the manifest (Custom Resource/CR) and synchronizing with Grafana instances.
 
 To control how often this polling should occur, you can set the `spec.resyncPeriod` field.
 This tells the operator how often it should reconcile and synchronize the CR.
