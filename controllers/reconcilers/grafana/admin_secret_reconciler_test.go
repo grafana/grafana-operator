@@ -7,13 +7,15 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/config"
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
 var _ = Describe("Reconcile AdminSecret", func() {
+	t := GinkgoT()
+
 	It("runs successfully with disabled default admin secret", func() {
 		r := NewAdminSecretReconciler(k8sClient)
 		cr := &v1beta1.Grafana{
@@ -25,8 +27,8 @@ var _ = Describe("Reconcile AdminSecret", func() {
 		vars := &v1beta1.OperatorReconcileVars{}
 		status, err := r.Reconcile(context.Background(), cr, vars, scheme.Scheme)
 
-		Expect(err).ToNot(HaveOccurred())
-		Expect(status).To(Equal(v1beta1.OperatorStageResultSuccess))
+		require.NoError(t, err)
+		assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
 	})
 })
 
