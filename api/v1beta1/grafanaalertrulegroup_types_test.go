@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -59,6 +59,7 @@ func newAlertRuleGroup(name string, editable *bool) *GrafanaAlertRuleGroup {
 }
 
 var _ = Describe("AlertRuleGroup type", func() {
+	t := GinkgoT()
 	Context("Ensure AlertRuleGroup spec.editable is immutable", func() {
 		ctx := context.Background()
 		refTrue := true
@@ -67,31 +68,37 @@ var _ = Describe("AlertRuleGroup type", func() {
 		It("Should block adding editable field when missing", func() {
 			arg := newAlertRuleGroup("missing-editable", nil)
 			By("Create new AlertRuleGroup without editable")
-			Expect(k8sClient.Create(ctx, arg)).To(Succeed())
+			err := k8sClient.Create(ctx, arg)
+			require.NoError(t, err)
 
 			By("Adding a editable")
 			arg.Spec.Editable = &refTrue
-			Expect(k8sClient.Update(ctx, arg)).To(HaveOccurred())
+			err = k8sClient.Update(ctx, arg)
+			require.Error(t, err)
 		})
 
 		It("Should block removing editable field when set", func() {
 			arg := newAlertRuleGroup("existing-editable", &refTrue)
 			By("Creating AlertRuleGroup with existing editable")
-			Expect(k8sClient.Create(ctx, arg)).To(Succeed())
+			err := k8sClient.Create(ctx, arg)
+			require.NoError(t, err)
 
 			By("And setting editable to ''")
 			arg.Spec.Editable = nil
-			Expect(k8sClient.Update(ctx, arg)).To(HaveOccurred())
+			err = k8sClient.Update(ctx, arg)
+			require.Error(t, err)
 		})
 
 		It("Should block changing value of editable", func() {
 			arg := newAlertRuleGroup("removing-editable", &refTrue)
 			By("Create new AlertRuleGroup with existing editable")
-			Expect(k8sClient.Create(ctx, arg)).To(Succeed())
+			err := k8sClient.Create(ctx, arg)
+			require.NoError(t, err)
 
 			By("Changing the existing editable")
 			arg.Spec.Editable = &refFalse
-			Expect(k8sClient.Update(ctx, arg)).To(HaveOccurred())
+			err = k8sClient.Update(ctx, arg)
+			require.Error(t, err)
 		})
 	})
 	Context("Ensure AlertRuleGroup spec.folderRef and spec.folderUID are immutable", func() {
@@ -101,11 +108,13 @@ var _ = Describe("AlertRuleGroup type", func() {
 		It("Should block changing value of folderRef", func() {
 			arg := newAlertRuleGroup("changing-folder-ref", &refTrue)
 			By("Creating new AlertRuleGroup with existing folderRef")
-			Expect(k8sClient.Create(ctx, arg)).To(Succeed())
+			err := k8sClient.Create(ctx, arg)
+			require.NoError(t, err)
 
 			By("Changing folderRef")
 			arg.Spec.FolderRef = "newFolder"
-			Expect(k8sClient.Update(ctx, arg)).To(HaveOccurred())
+			err = k8sClient.Update(ctx, arg)
+			require.Error(t, err)
 		})
 
 		It("Should block changing value of folderUID", func() {
@@ -114,11 +123,13 @@ var _ = Describe("AlertRuleGroup type", func() {
 
 			arg.Spec.FolderUID = "originalUID"
 			By("Creating new AlertRuleGroup with existing folderUID")
-			Expect(k8sClient.Create(ctx, arg)).To(Succeed())
+			err := k8sClient.Create(ctx, arg)
+			require.NoError(t, err)
 
 			By("Changing folderUID")
 			arg.Spec.FolderUID = "newUID"
-			Expect(k8sClient.Update(ctx, arg)).To(HaveOccurred())
+			err = k8sClient.Update(ctx, arg)
+			require.Error(t, err)
 		})
 
 		It("At least one of spec.folderRef or spec.folderUID is defined", func() {
@@ -126,14 +137,16 @@ var _ = Describe("AlertRuleGroup type", func() {
 			arg.Spec.FolderRef = ""
 			arg.Spec.FolderUID = ""
 			By("Creating new AlertRuleGroup with neither folderUID")
-			Expect(k8sClient.Create(ctx, arg)).To(HaveOccurred())
+			err := k8sClient.Create(ctx, arg)
+			require.Error(t, err)
 		})
 
 		It("Only one of spec.folderRef or spec.folderUID is defined", func() {
 			arg := newAlertRuleGroup("mutually-exclusive-folder-reference", &refTrue)
 			arg.Spec.FolderUID = "DummyUID"
 			By("Creating new AlertRuleGroup with neither folderUID")
-			Expect(k8sClient.Create(ctx, arg)).To(HaveOccurred())
+			err := k8sClient.Create(ctx, arg)
+			require.Error(t, err)
 		})
 	})
 })
