@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -46,37 +46,45 @@ func newLibraryPanel(name string, uid string) *GrafanaLibraryPanel {
 }
 
 var _ = Describe("LibraryPanel type", func() {
+	t := GinkgoT()
+
 	Context("Ensure LibraryPanel spec.uid is immutable", func() {
 		ctx := context.Background()
 
 		It("Should block adding uid field when missing", func() {
 			dash := newLibraryPanel("missing-uid", "")
 			By("Create new LibraryPanel without uid")
-			Expect(k8sClient.Create(ctx, dash)).To(Succeed())
+			err := k8sClient.Create(ctx, dash)
+			require.NoError(t, err)
 
 			By("Adding a uid")
 			dash.Spec.CustomUID = "new-library-panel-uid"
-			Expect(k8sClient.Update(ctx, dash)).To(HaveOccurred())
+			err = k8sClient.Update(ctx, dash)
+			require.Error(t, err)
 		})
 
 		It("Should block removing uid field when set", func() {
 			dash := newLibraryPanel("existing-uid", "existing-uid")
 			By("Creating LibraryPanel with existing UID")
-			Expect(k8sClient.Create(ctx, dash)).To(Succeed())
+			err := k8sClient.Create(ctx, dash)
+			require.NoError(t, err)
 
 			By("And setting UID to ''")
 			dash.Spec.CustomUID = ""
-			Expect(k8sClient.Update(ctx, dash)).To(HaveOccurred())
+			err = k8sClient.Update(ctx, dash)
+			require.Error(t, err)
 		})
 
 		It("Should block changing value of uid", func() {
 			dash := newLibraryPanel("removing-uid", "existing-uid")
 			By("Create new LibraryPanel with existing UID")
-			Expect(k8sClient.Create(ctx, dash)).To(Succeed())
+			err := k8sClient.Create(ctx, dash)
+			require.NoError(t, err)
 
 			By("Changing the existing UID")
 			dash.Spec.CustomUID = "new-library-panel-uid"
-			Expect(k8sClient.Update(ctx, dash)).To(HaveOccurred())
+			err = k8sClient.Update(ctx, dash)
+			require.Error(t, err)
 		})
 	})
 })
