@@ -15,7 +15,6 @@ require (
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20251118002049-9bc70ad4530f
 	github.com/grafana/grafana-plugin-sdk-go v0.281.0
 	github.com/onsi/ginkgo/v2 v2.27.2
-	github.com/onsi/gomega v1.38.2
 	github.com/openshift/api v0.0.0-20251021211107-8c9accafe91d
 	github.com/prometheus/client_golang v1.23.2
 	github.com/spyzhov/ajson v0.9.6
