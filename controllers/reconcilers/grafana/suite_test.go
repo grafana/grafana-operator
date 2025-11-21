@@ -21,7 +21,6 @@ import (
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	routev1 "github.com/openshift/api/route/v1"
 	"github.com/stretchr/testify/require"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -47,8 +46,6 @@ func TestAPIs(t *testing.T) {
 	if testing.Short() {
 		t.Skip("-short was passed, skipping Reconcilers")
 	}
-
-	RegisterFailHandler(Fail)
 
 	RunSpecs(t, "Reconcilers Suite")
 }

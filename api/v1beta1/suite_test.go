@@ -21,7 +21,6 @@ import (
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/require"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -47,8 +46,6 @@ func TestAPIs(t *testing.T) {
 	if testing.Short() {
 		t.Skip("-short was passed, skipping CRDs")
 	}
-
-	RegisterFailHandler(Fail)
 
 	RunSpecs(t, "CRDs Suite")
 }
