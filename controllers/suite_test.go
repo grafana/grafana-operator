@@ -39,7 +39,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 	//+kubebuilder:scaffold:imports
@@ -68,8 +67,6 @@ func TestAPIs(t *testing.T) {
 	if testing.Short() {
 		t.Skip("-short was passed, skipping Controllers")
 	}
-
-	RegisterFailHandler(Fail)
 
 	RunSpecs(t, "Controllers Suite")
 }
