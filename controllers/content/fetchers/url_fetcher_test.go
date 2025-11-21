@@ -2,9 +2,10 @@ package fetchers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"net/http/httptest"
 
-	"github.com/onsi/gomega/ghttp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
@@ -16,7 +17,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 )
 
-var _ = Describe("Fetching dashboards from URL", func() {
+var _ = Describe("Fetching dashboards from URL", Ordered, func() {
 	t := GinkgoT()
 
 	want := []byte(`{"dummyField": "dummyData"}`)
@@ -24,24 +25,40 @@ var _ = Describe("Fetching dashboards from URL", func() {
 
 	require.NoError(t, err)
 
-	var server *ghttp.Server
+	basicAuthUsername := "root"
+	basicAuthPassword := "secret"
+	publicEndpoint := "/public"
+	privateEndpoint := "/private"
 
-	BeforeEach(func() {
-		server = ghttp.NewServer()
+	mux := http.NewServeMux()
+	mux.HandleFunc(publicEndpoint, func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, string(want))
+	})
+	mux.HandleFunc(privateEndpoint, func(w http.ResponseWriter, req *http.Request) {
+		username, password, ok := req.BasicAuth()
+		if !ok || username != basicAuthUsername || password != basicAuthPassword {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, string(want))
+	})
+
+	ts := httptest.NewServer(mux)
+	AfterAll(func() {
+		ts.Close()
 	})
 
 	When("using no authentication", func() {
-		BeforeEach(func() {
-			server.AppendHandlers(ghttp.CombineHandlers(
-				ghttp.RespondWith(http.StatusOK, want),
-			))
-		})
+		url := ts.URL + publicEndpoint
 
 		It("fetches the correct url", func() {
 			dashboard := &v1beta1.GrafanaDashboard{
 				Spec: v1beta1.GrafanaDashboardSpec{
 					GrafanaContentSpec: v1beta1.GrafanaContentSpec{
-						URL: server.URL(),
+						URL: url,
 					},
 				},
 				Status: v1beta1.GrafanaDashboardStatus{},
@@ -52,21 +69,13 @@ var _ = Describe("Fetching dashboards from URL", func() {
 
 			assert.Equal(t, want, got)
 			assert.Equal(t, wantCompressed, dashboard.Status.ContentCache)
-			assert.Equal(t, server.URL(), dashboard.Status.ContentURL)
+			assert.Equal(t, url, dashboard.Status.ContentURL)
 			assert.NotZero(t, dashboard.Status.ContentTimestamp.Time)
 		})
 	})
 
 	When("using authentication", func() {
-		basicAuthUsername := "admin"
-		basicAuthPassword := "admin"
-
-		BeforeEach(func() {
-			server.AppendHandlers(ghttp.CombineHandlers(
-				ghttp.VerifyBasicAuth(basicAuthUsername, basicAuthPassword),
-				ghttp.RespondWith(http.StatusOK, want),
-			))
-		})
+		url := ts.URL + privateEndpoint
 
 		It("fetches the correct url", func() {
 			dashboard := &v1beta1.GrafanaDashboard{
@@ -76,7 +85,7 @@ var _ = Describe("Fetching dashboards from URL", func() {
 				},
 				Spec: v1beta1.GrafanaDashboardSpec{
 					GrafanaContentSpec: v1beta1.GrafanaContentSpec{
-						URL: server.URL(),
+						URL: url,
 						URLAuthorization: &v1beta1.GrafanaContentURLAuthorization{
 							BasicAuth: &v1beta1.GrafanaContentURLBasicAuth{
 								Username: &v1.SecretKeySelector{
@@ -106,8 +115,8 @@ var _ = Describe("Fetching dashboards from URL", func() {
 					Namespace: "default",
 				},
 				StringData: map[string]string{
-					"USERNAME": "admin",
-					"PASSWORD": "admin",
+					"USERNAME": basicAuthUsername,
+					"PASSWORD": basicAuthPassword,
 				},
 			}
 
@@ -119,7 +128,7 @@ var _ = Describe("Fetching dashboards from URL", func() {
 
 			assert.Equal(t, want, got)
 			assert.Equal(t, wantCompressed, dashboard.Status.ContentCache)
-			assert.Equal(t, server.URL(), dashboard.Status.ContentURL)
+			assert.Equal(t, url, dashboard.Status.ContentURL)
 			assert.NotZero(t, dashboard.Status.ContentTimestamp.Time)
 		})
 	})

@@ -13,7 +13,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 var (
@@ -25,8 +24,6 @@ func TestAPIs(t *testing.T) {
 	if testing.Short() {
 		t.Skip("-short was passed, skipping Fetchers")
 	}
-
-	RegisterFailHandler(Fail)
 
 	RunSpecs(t, "Fetchers Suite")
 }
