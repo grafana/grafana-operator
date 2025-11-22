@@ -6640,7 +6640,7 @@ GrafanaSpec defines the desired state of Grafana
         <td>
           Version sets the tag of the default image: docker.io/grafana/grafana.
 Allows full image refs with/without sha256checksum: "registry/repo/image:tag@sha"
-default: 12.2.1<br/>
+default: 12.2.2<br/>
         </td>
         <td>false</td>
       </tr></tbody>
