@@ -125,8 +125,6 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 	}
 
 	removeInvalidSpec(&libraryPanel.Status.Conditions)
-	libraryPanel.Status.Hash = hash
-	libraryPanel.Status.UID = content.CustomUIDOrUID(libraryPanel, contentUID)
 
 	// begin instance selection and reconciliation
 
@@ -168,6 +166,9 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 	if len(applyErrors) > 0 {
 		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
 	}
+
+	libraryPanel.Status.Hash = hash
+	libraryPanel.Status.UID = content.CustomUIDOrUID(libraryPanel, contentUID)
 
 	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(libraryPanel.Spec.ResyncPeriod)}, nil
 }
