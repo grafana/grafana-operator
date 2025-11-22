@@ -3,7 +3,7 @@ package config
 const (
 	// Grafana
 	GrafanaImage   = "docker.io/grafana/grafana"
-	GrafanaVersion = "12.2.2"
+	GrafanaVersion = "12.3.0"
 
 	// Paths
 	GrafanaDataPath               = "/var/lib/grafana"
