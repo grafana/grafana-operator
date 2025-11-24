@@ -17,8 +17,15 @@ limitations under the License.
 package controllers
 
 import (
+	"fmt"
+	"net/http/httptest"
+
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	. "github.com/onsi/ginkgo/v2"
 )
@@ -128,4 +135,97 @@ var _ = Describe("Dashboard Reconciler: Provoke Conditions", func() {
 			reconcileAndValidateCondition(r, cr, tt.want, tt.wantErr)
 		})
 	}
+})
+
+var _ = Describe("Dashboard Reconciler", Ordered, func() {
+	t := GinkgoT()
+
+	const (
+		uid       = "url-based-dashboard"
+		title1    = "title1"
+		title2    = "title2"
+		endpoint1 = "/endpoint1"
+		endpoint2 = "/endpoint2"
+	)
+
+	dash1 := fmt.Sprintf(`{ "title": "%s", "uid": "%s", "links": [] }`, title1, uid)
+	dash2 := fmt.Sprintf(`{ "title": "%s", "uid": "%s", "links": [] }`, title2, uid)
+
+	mux := getJSONmux(
+		map[string]string{
+			endpoint1: dash1,
+			endpoint2: dash2,
+		},
+	)
+
+	ts := httptest.NewServer(mux)
+	AfterAll(func() {
+		ts.Close()
+	})
+
+	It("updates dashboard in Grafana upon .spec.url change", func() {
+		grafanaClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		require.NoError(t, err)
+
+		cr := &v1beta1.GrafanaDashboard{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "url-based-dashboard",
+			},
+			Spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
+					InstanceSelector: &metav1.LabelSelector{
+						MatchLabels: externalGrafanaCr.GetLabels(),
+					},
+				},
+			},
+		}
+
+		key := types.NamespacedName{
+			Namespace: cr.Namespace,
+			Name:      cr.Name,
+		}
+
+		r := &GrafanaDashboardReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+		req := requestFromMeta(cr.Metadata())
+
+		// First revision
+		cr.Spec.URL = ts.URL + endpoint1
+
+		err = k8sClient.Create(testCtx, cr)
+		require.NoError(t, err)
+
+		_, err = r.Reconcile(testCtx, req)
+		require.NoError(t, err)
+
+		dash, err := grafanaClient.Dashboards.GetDashboardByUID(uid)
+		require.NoError(t, err)
+
+		assert.Contains(t, dash.String(), title1)
+
+		// Second revision
+		cr = &v1beta1.GrafanaDashboard{}
+		err = k8sClient.Get(testCtx, key, cr)
+		require.NoError(t, err)
+
+		cr.Spec.URL = ts.URL + endpoint2
+
+		err = k8sClient.Update(testCtx, cr)
+		require.NoError(t, err)
+
+		_, err = r.Reconcile(testCtx, req)
+		require.NoError(t, err)
+
+		dash, err = grafanaClient.Dashboards.GetDashboardByUID(uid)
+		require.NoError(t, err)
+
+		assert.Contains(t, dash.String(), title2)
+
+		// Cleanup
+		err = k8sClient.Delete(testCtx, cr)
+		require.NoError(t, err)
+
+		_, err = r.Reconcile(testCtx, req)
+		require.NoError(t, err)
+	})
 })
