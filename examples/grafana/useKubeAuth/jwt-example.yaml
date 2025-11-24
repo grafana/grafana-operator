@@ -1,0 +1,23 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: jwt-grafana-ca
+spec:
+  # version: 12.2.0 # or newer
+  client:
+    useKubeAuth: true
+  disableAdminSecret: true
+  config:
+    auth.jwt:
+      enabled: "true"
+      header_name: Authorization
+      username_claim: sub
+      email_claim: sub
+      auto_sign_up: "true"
+      role_attribute_path: "contains(\"kubernetes.io\".namespace, 'grafana') && 'GrafanaAdmin' || 'None'" # Assigns normal Admin unless allow_assign_grafana_admin is enabled
+      role_attribute_strict: "true" # Disables auto_assign_org_role
+      jwk_set_url: https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT_HTTPS}/openid/v1/jwks
+      jwk_set_bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+      tls_client_ca: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+  #   security:
+  #     disable_initial_admin_creation: "true"
