@@ -1,0 +1,26 @@
+{
+  "aud": [
+    "https://kubernetes.default.svc.cluster.local"
+  ],
+  "exp": 1754331475,
+  "iat": 1754327875,
+  "iss": "https://kubernetes.default.svc.cluster.local",
+  "jti": "924ed6e1-e3e1-4d5d-8ef3-5fa9531af0fe",
+  "kubernetes.io": {
+    "namespace": "grafana",
+    "node": {
+      "name": "kind-grafana-control-plane",
+      "uid": "4a792812-ae7b-44c4-88d8-ec68bd928f3e"
+    },
+    "pod": {
+      "name": "grafana-operator-controller-manager-5b77b77989-rdd9p",
+      "uid": "1130fdf8-347e-4b2a-9343-dd53932d8a91"
+    },
+    "serviceaccount": {
+      "name": "grafana-operator-controller-manager",
+      "uid": "86d5de01-31da-4b97-9228-00b2ff0fcc7c"
+    }
+  },
+  "nbf": 1754327875,
+  "sub": "system:serviceaccount:grafana:grafana-operator-controller-manager"
+}
