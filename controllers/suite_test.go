@@ -288,10 +288,10 @@ func getJSONmux(content map[string]string) *http.ServeMux {
 
 	mux := http.NewServeMux()
 
-	for endpoint, content := range content {
+	for endpoint, payload := range content {
 		mux.HandleFunc(endpoint, func(w http.ResponseWriter, req *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
-			fmt.Fprint(w, content)
+			fmt.Fprint(w, payload)
 		})
 	}
 
