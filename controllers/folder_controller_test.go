@@ -185,7 +185,7 @@ var _ = Describe("Folder reconciler", func() {
 		_, err = grafanaClient.Provisioning.GetAlertRuleGroup(alertRuleGroup.cr.GroupName(), uid) //nolint:errcheck
 		require.NoErrorf(t, err, "AlertRuleGroup should exist in Grafana")
 
-		// Deleting folder
+		// Delete folder
 		err = k8sClient.Delete(testCtx, folder.cr)
 		require.NoError(t, err)
 
