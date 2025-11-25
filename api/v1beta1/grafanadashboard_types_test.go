@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestGrafanaStatusListDashboard(t *testing.T) {
@@ -21,17 +21,17 @@ func TestGrafanaStatusListDashboard(t *testing.T) {
 
 func newDashboard(name string, uid string) *GrafanaDashboard {
 	return &GrafanaDashboard{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			APIVersion: APIVersion,
 			Kind:       "GrafanaDashboard",
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: "default",
 		},
 		Spec: GrafanaDashboardSpec{
 			GrafanaCommonSpec: GrafanaCommonSpec{
-				InstanceSelector: &v1.LabelSelector{
+				InstanceSelector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{
 						"test": "datasource",
 					},
