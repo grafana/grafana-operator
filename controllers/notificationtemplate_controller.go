@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana-openapi-client-go/models"
 	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
+	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 )
 
 const (
@@ -127,7 +128,7 @@ func (r *GrafanaNotificationTemplateReconciler) reconcileWithInstance(ctx contex
 		return fmt.Errorf("building grafana client: %w", err)
 	}
 
-	trueRef := "true"
+	refTrue := ptr.To("true")
 
 	editable := true //nolint:staticcheck
 	if notificationTemplate.Spec.Editable != nil && !*notificationTemplate.Spec.Editable {
@@ -140,7 +141,7 @@ func (r *GrafanaNotificationTemplateReconciler) reconcileWithInstance(ctx contex
 
 	params := provisioning.NewPutTemplateParams().WithName(notificationTemplate.Spec.Name).WithBody(&updatedNT)
 	if editable {
-		params.SetXDisableProvenance(&trueRef)
+		params.SetXDisableProvenance(refTrue)
 	}
 
 	_, err = cl.Provisioning.PutTemplate(params) //nolint:errcheck
