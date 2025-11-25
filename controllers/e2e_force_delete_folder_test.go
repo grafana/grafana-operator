@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana-openapi-client-go/client/folders"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
+	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -27,8 +28,7 @@ var _ = Describe("Successfully delete GrafanaFolder with GrafanaAlertRuleGroup r
 			CustomUID:         "force-delete",
 		},
 	}
-	noDataState := "NoData"
-	durationString := "60s"
+
 	arg := &v1beta1.GrafanaAlertRuleGroup{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
@@ -85,9 +85,9 @@ var _ = Describe("Successfully delete GrafanaFolder with GrafanaAlertRuleGroup r
                             }`)},
 						},
 					},
-					NoDataState:  &noDataState,
+					NoDataState:  ptr.To("NoData"),
 					ExecErrState: "Error",
-					For:          &durationString,
+					For:          ptr.To("60s"),
 					Annotations:  map[string]string{},
 					Labels:       map[string]string{},
 					IsPaused:     true,
