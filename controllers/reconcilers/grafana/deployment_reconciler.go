@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/config"
 	"github.com/grafana/grafana-operator/v5/controllers/model"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
+	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -269,21 +270,21 @@ func getDefaultContainerSecurityContext(disableSecurityContext string, openshift
 	}
 	if openshiftPlatform {
 		return &corev1.SecurityContext{
-			AllowPrivilegeEscalation: model.BoolPtr(false),
-			ReadOnlyRootFilesystem:   model.BoolPtr(true),
-			Privileged:               model.BoolPtr(false),
-			RunAsNonRoot:             model.BoolPtr(true),
+			AllowPrivilegeEscalation: ptr.To(false),
+			ReadOnlyRootFilesystem:   ptr.To(true),
+			Privileged:               ptr.To(false),
+			RunAsNonRoot:             ptr.To(true),
 			Capabilities:             capability,
 		}
 	}
 
 	return &corev1.SecurityContext{
-		AllowPrivilegeEscalation: model.BoolPtr(false),
-		ReadOnlyRootFilesystem:   model.BoolPtr(true),
-		Privileged:               model.BoolPtr(false),
-		RunAsNonRoot:             model.BoolPtr(true),
-		RunAsUser:                model.IntPtr(10001),
-		RunAsGroup:               model.IntPtr(10001),
+		AllowPrivilegeEscalation: ptr.To(false),
+		ReadOnlyRootFilesystem:   ptr.To(true),
+		Privileged:               ptr.To(false),
+		RunAsNonRoot:             ptr.To(true),
+		RunAsUser:                ptr.To(int64(10001)),
+		RunAsGroup:               ptr.To(int64(10001)),
 		Capabilities:             capability,
 	}
 }
