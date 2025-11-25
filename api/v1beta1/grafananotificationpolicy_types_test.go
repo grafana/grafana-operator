@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -55,8 +56,8 @@ var _ = Describe("NotificationPolicy type", func() {
 
 	Context("Ensure NotificationPolicy spec.editable is immutable", func() {
 		ctx := context.Background()
-		refTrue := true
-		refFalse := false
+		refTrue := ptr.To(true)
+		refFalse := ptr.To(false)
 
 		It("Should block adding editable field when missing", func() {
 			notificationpolicy := newNotificationPolicy("missing-editable", nil)
@@ -65,13 +66,13 @@ var _ = Describe("NotificationPolicy type", func() {
 			require.NoError(t, err)
 
 			By("Adding a editable")
-			notificationpolicy.Spec.Editable = &refTrue
+			notificationpolicy.Spec.Editable = refTrue
 			err = k8sClient.Update(ctx, notificationpolicy)
 			require.Error(t, err)
 		})
 
 		It("Should block removing editable field when set", func() {
-			notificationpolicy := newNotificationPolicy("existing-editable", &refTrue)
+			notificationpolicy := newNotificationPolicy("existing-editable", refTrue)
 			By("Creating NotificationPolicy with existing editable")
 			err := k8sClient.Create(ctx, notificationpolicy)
 			require.NoError(t, err)
@@ -83,13 +84,13 @@ var _ = Describe("NotificationPolicy type", func() {
 		})
 
 		It("Should block changing value of editable", func() {
-			notificationpolicy := newNotificationPolicy("removing-editable", &refTrue)
+			notificationpolicy := newNotificationPolicy("removing-editable", refTrue)
 			By("Create new NotificationPolicy with existing editable")
 			err := k8sClient.Create(ctx, notificationpolicy)
 			require.NoError(t, err)
 
 			By("Changing the existing editable")
-			notificationpolicy.Spec.Editable = &refFalse
+			notificationpolicy.Spec.Editable = refFalse
 			err = k8sClient.Update(ctx, notificationpolicy)
 			require.Error(t, err)
 		})

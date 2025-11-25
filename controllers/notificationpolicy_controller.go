@@ -39,6 +39,7 @@ import (
 	"github.com/grafana/grafana-openapi-client-go/client/provisioning"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
+	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 )
 
 var ErrLoopDetected = errors.New("loop detected")
@@ -272,7 +273,7 @@ func (r *GrafanaNotificationPolicyReconciler) reconcileWithInstance(ctx context.
 		return fmt.Errorf("building grafana client: %w", err)
 	}
 
-	trueRef := "true"
+	refTrue := ptr.To("true")
 
 	editable := true //nolint:staticcheck
 	if notificationPolicy.Spec.Editable != nil && !*notificationPolicy.Spec.Editable {
@@ -281,7 +282,7 @@ func (r *GrafanaNotificationPolicyReconciler) reconcileWithInstance(ctx context.
 
 	params := provisioning.NewPutPolicyTreeParams().WithBody(notificationPolicy.Spec.Route.ToModelRoute())
 	if editable {
-		params.SetXDisableProvenance(&trueRef)
+		params.SetXDisableProvenance(refTrue)
 	}
 
 	if _, err := cl.Provisioning.PutPolicyTree(params); err != nil { //nolint:errcheck

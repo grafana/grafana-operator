@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana-openapi-client-go/client/folders"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
+	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -159,8 +160,8 @@ func (r *GrafanaFolderReconciler) finalize(ctx context.Context, folder *grafanav
 		return fmt.Errorf("fetching instances: %w", err)
 	}
 
-	reftrue := true
-	params := folders.NewDeleteFolderParams().WithForceDeleteRules(&reftrue)
+	refTrue := ptr.To(true)
+	params := folders.NewDeleteFolderParams().WithForceDeleteRules(refTrue)
 
 	for _, grafana := range instances {
 		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
