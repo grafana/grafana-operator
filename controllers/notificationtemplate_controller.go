@@ -50,9 +50,9 @@ func (r *GrafanaNotificationTemplateReconciler) Reconcile(ctx context.Context, r
 	log := logf.FromContext(ctx).WithName("GrafanaNotificationTemplateReconciler")
 	ctx = logf.IntoContext(ctx, log)
 
-	notificationTemplate := &v1beta1.GrafanaNotificationTemplate{}
+	cr := &v1beta1.GrafanaNotificationTemplate{}
 
-	err := r.Get(ctx, req.NamespacedName, notificationTemplate)
+	err := r.Get(ctx, req.NamespacedName, cr)
 	if err != nil {
 		if kuberr.IsNotFound(err) {
 			return ctrl.Result{}, nil
@@ -61,14 +61,14 @@ func (r *GrafanaNotificationTemplateReconciler) Reconcile(ctx context.Context, r
 		return ctrl.Result{}, fmt.Errorf("failed to get GrafanaNotificationTemplate: %w", err)
 	}
 
-	if notificationTemplate.GetDeletionTimestamp() != nil {
+	if cr.GetDeletionTimestamp() != nil {
 		// Check if resource needs clean up
-		if controllerutil.ContainsFinalizer(notificationTemplate, grafanaFinalizer) {
-			if err := r.finalize(ctx, notificationTemplate); err != nil {
+		if controllerutil.ContainsFinalizer(cr, grafanaFinalizer) {
+			if err := r.finalize(ctx, cr); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaNotificationTemplate: %w", err)
 			}
 
-			if err := removeFinalizer(ctx, r.Client, notificationTemplate); err != nil {
+			if err := removeFinalizer(ctx, r.Client, cr); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
 			}
 		}
@@ -76,53 +76,53 @@ func (r *GrafanaNotificationTemplateReconciler) Reconcile(ctx context.Context, r
 		return ctrl.Result{}, nil
 	}
 
-	defer UpdateStatus(ctx, r.Client, notificationTemplate)
+	defer UpdateStatus(ctx, r.Client, cr)
 
-	if notificationTemplate.Spec.Suspend {
-		setSuspended(&notificationTemplate.Status.Conditions, notificationTemplate.Generation, conditionReasonApplySuspended)
+	if cr.Spec.Suspend {
+		setSuspended(&cr.Status.Conditions, cr.Generation, conditionReasonApplySuspended)
 		return ctrl.Result{}, nil
 	}
 
-	removeSuspended(&notificationTemplate.Status.Conditions)
+	removeSuspended(&cr.Status.Conditions)
 
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, notificationTemplate)
+	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
-		setNoMatchingInstancesCondition(&notificationTemplate.Status.Conditions, notificationTemplate.Generation, err)
-		meta.RemoveStatusCondition(&notificationTemplate.Status.Conditions, conditionNotificationTemplateSynchronized)
+		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionNotificationTemplateSynchronized)
 
 		return ctrl.Result{}, fmt.Errorf("failed fetching instances: %w", err)
 	}
 
 	if len(instances) == 0 {
-		setNoMatchingInstancesCondition(&notificationTemplate.Status.Conditions, notificationTemplate.Generation, err)
-		meta.RemoveStatusCondition(&notificationTemplate.Status.Conditions, conditionNotificationTemplateSynchronized)
+		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionNotificationTemplateSynchronized)
 
 		return ctrl.Result{}, ErrNoMatchingInstances
 	}
 
-	removeNoMatchingInstance(&notificationTemplate.Status.Conditions)
+	removeNoMatchingInstance(&cr.Status.Conditions)
 	log.Info("found matching Grafana instances for notification template", "count", len(instances))
 
 	applyErrors := make(map[string]string)
 
 	for _, grafana := range instances {
-		err := r.reconcileWithInstance(ctx, &grafana, notificationTemplate)
+		err := r.reconcileWithInstance(ctx, &grafana, cr)
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
 	}
 
-	condition := buildSynchronizedCondition("Notification template", conditionNotificationTemplateSynchronized, notificationTemplate.Generation, applyErrors, len(instances))
-	meta.SetStatusCondition(&notificationTemplate.Status.Conditions, condition)
+	condition := buildSynchronizedCondition("Notification template", conditionNotificationTemplateSynchronized, cr.Generation, applyErrors, len(instances))
+	meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
 	if len(applyErrors) > 0 {
 		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
 	}
 
-	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(notificationTemplate.Spec.ResyncPeriod)}, nil
+	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(cr.Spec.ResyncPeriod)}, nil
 }
 
-func (r *GrafanaNotificationTemplateReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, notificationTemplate *v1beta1.GrafanaNotificationTemplate) error {
+func (r *GrafanaNotificationTemplateReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaNotificationTemplate) error {
 	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
@@ -131,15 +131,15 @@ func (r *GrafanaNotificationTemplateReconciler) reconcileWithInstance(ctx contex
 	refTrue := ptr.To("true")
 
 	editable := true //nolint:staticcheck
-	if notificationTemplate.Spec.Editable != nil && !*notificationTemplate.Spec.Editable {
+	if cr.Spec.Editable != nil && !*cr.Spec.Editable {
 		editable = false
 	}
 
 	var updatedNT models.NotificationTemplateContent
 
-	updatedNT.Template = notificationTemplate.Spec.Template
+	updatedNT.Template = cr.Spec.Template
 
-	params := provisioning.NewPutTemplateParams().WithName(notificationTemplate.Spec.Name).WithBody(&updatedNT)
+	params := provisioning.NewPutTemplateParams().WithName(cr.Spec.Name).WithBody(&updatedNT)
 	if editable {
 		params.SetXDisableProvenance(refTrue)
 	}
@@ -150,25 +150,25 @@ func (r *GrafanaNotificationTemplateReconciler) reconcileWithInstance(ctx contex
 	}
 
 	// Update grafana instance Status
-	return instance.AddNamespacedResource(ctx, r.Client, notificationTemplate, notificationTemplate.NamespacedResource())
+	return instance.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource())
 }
 
-func (r *GrafanaNotificationTemplateReconciler) finalize(ctx context.Context, notificationTemplate *v1beta1.GrafanaNotificationTemplate) error {
+func (r *GrafanaNotificationTemplateReconciler) finalize(ctx context.Context, cr *v1beta1.GrafanaNotificationTemplate) error {
 	log := logf.FromContext(ctx)
 	log.Info("Finalizing GrafanaNotificationTemplate")
 
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, notificationTemplate)
+	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
 
 	for _, instance := range instances {
-		if err := r.removeFromInstance(ctx, &instance, notificationTemplate); err != nil {
+		if err := r.removeFromInstance(ctx, &instance, cr); err != nil {
 			return fmt.Errorf("removing notification template from instance: %w", err)
 		}
 
 		// Update grafana instance Status
-		err = instance.RemoveNamespacedResource(ctx, r.Client, notificationTemplate)
+		err = instance.RemoveNamespacedResource(ctx, r.Client, cr)
 		if err != nil {
 			return fmt.Errorf("removing notification template from Grafana cr: %w", err)
 		}
@@ -177,13 +177,13 @@ func (r *GrafanaNotificationTemplateReconciler) finalize(ctx context.Context, no
 	return nil
 }
 
-func (r *GrafanaNotificationTemplateReconciler) removeFromInstance(ctx context.Context, instance *v1beta1.Grafana, notificationTemplate *v1beta1.GrafanaNotificationTemplate) error {
+func (r *GrafanaNotificationTemplateReconciler) removeFromInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaNotificationTemplate) error {
 	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
 	}
 
-	_, err = cl.Provisioning.DeleteTemplate(&provisioning.DeleteTemplateParams{Name: notificationTemplate.Spec.Name}) //nolint:errcheck
+	_, err = cl.Provisioning.DeleteTemplate(&provisioning.DeleteTemplateParams{Name: cr.Spec.Name}) //nolint:errcheck
 	if err != nil {
 		return fmt.Errorf("deleting notification template: %w", err)
 	}

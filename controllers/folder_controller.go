@@ -57,9 +57,9 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	log := logf.FromContext(ctx).WithName("GrafanaFolderReconciler")
 	ctx = logf.IntoContext(ctx, log)
 
-	folder := &v1beta1.GrafanaFolder{}
+	cr := &v1beta1.GrafanaFolder{}
 
-	err := r.Get(ctx, req.NamespacedName, folder)
+	err := r.Get(ctx, req.NamespacedName, cr)
 	if err != nil {
 		if kuberr.IsNotFound(err) {
 			return ctrl.Result{}, nil
@@ -68,14 +68,14 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, fmt.Errorf("error getting grafana folder cr: %w", err)
 	}
 
-	if folder.GetDeletionTimestamp() != nil {
+	if cr.GetDeletionTimestamp() != nil {
 		// Check if resource needs clean up
-		if controllerutil.ContainsFinalizer(folder, grafanaFinalizer) {
-			if err := r.finalize(ctx, folder); err != nil {
+		if controllerutil.ContainsFinalizer(cr, grafanaFinalizer) {
+			if err := r.finalize(ctx, cr); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaFolder: %w", err)
 			}
 
-			if err := removeFinalizer(ctx, r.Client, folder); err != nil {
+			if err := removeFinalizer(ctx, r.Client, cr); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
 			}
 		}
@@ -83,45 +83,45 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, nil
 	}
 
-	defer UpdateStatus(ctx, r.Client, folder)
+	defer UpdateStatus(ctx, r.Client, cr)
 
-	if folder.Spec.Suspend {
-		setSuspended(&folder.Status.Conditions, folder.Generation, conditionReasonApplySuspended)
+	if cr.Spec.Suspend {
+		setSuspended(&cr.Status.Conditions, cr.Generation, conditionReasonApplySuspended)
 		return ctrl.Result{}, nil
 	}
 
-	removeSuspended(&folder.Status.Conditions)
+	removeSuspended(&cr.Status.Conditions)
 
-	if folder.Spec.ParentFolderUID == folder.CustomUIDOrUID() {
-		setInvalidSpec(&folder.Status.Conditions, folder.Generation, conditionReasonCyclicParent, "The value of parentFolderUID must not be the uid of the current folder")
-		meta.RemoveStatusCondition(&folder.Status.Conditions, conditionFolderSynchronized)
+	if cr.Spec.ParentFolderUID == cr.CustomUIDOrUID() {
+		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonCyclicParent, "The value of parentFolderUID must not be the uid of the current folder")
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionFolderSynchronized)
 
 		return ctrl.Result{}, fmt.Errorf("cyclic folder reference")
 	}
 
-	removeInvalidSpec(&folder.Status.Conditions)
+	removeInvalidSpec(&cr.Status.Conditions)
 
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, folder)
+	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
-		setNoMatchingInstancesCondition(&folder.Status.Conditions, folder.Generation, err)
-		meta.RemoveStatusCondition(&folder.Status.Conditions, conditionFolderSynchronized)
-		folder.Status.NoMatchingInstances = true
+		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionFolderSynchronized)
+		cr.Status.NoMatchingInstances = true
 
 		return ctrl.Result{}, fmt.Errorf("failed fetching instances: %w", err)
 	}
 
 	if len(instances) == 0 {
-		setNoMatchingInstancesCondition(&folder.Status.Conditions, folder.Generation, err)
-		meta.RemoveStatusCondition(&folder.Status.Conditions, conditionFolderSynchronized)
-		folder.Status.NoMatchingInstances = true
+		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionFolderSynchronized)
+		cr.Status.NoMatchingInstances = true
 
 		return ctrl.Result{}, ErrNoMatchingInstances
 	}
 
-	removeNoMatchingInstance(&folder.Status.Conditions)
-	folder.Status.NoMatchingInstances = false
+	removeNoMatchingInstance(&cr.Status.Conditions)
+	cr.Status.NoMatchingInstances = false
 
-	parentFolderUID, err := getFolderUID(ctx, r.Client, folder)
+	parentFolderUID, err := getFolderUID(ctx, r.Client, cr)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf(ErrFetchingFolder, err)
 	}
@@ -131,31 +131,31 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	applyErrors := make(map[string]string)
 
 	for _, grafana := range instances {
-		err = r.onFolderCreated(ctx, &grafana, folder, parentFolderUID)
+		err = r.onFolderCreated(ctx, &grafana, cr, parentFolderUID)
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
 	}
 
-	condition := buildSynchronizedCondition("Folder", conditionFolderSynchronized, folder.Generation, applyErrors, len(instances))
-	meta.SetStatusCondition(&folder.Status.Conditions, condition)
+	condition := buildSynchronizedCondition("Folder", conditionFolderSynchronized, cr.Generation, applyErrors, len(instances))
+	meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
 	if len(applyErrors) > 0 {
 		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
 	}
 
-	folder.Status.Hash = folder.Hash()
+	cr.Status.Hash = cr.Hash()
 
-	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(folder.Spec.ResyncPeriod)}, nil
+	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(cr.Spec.ResyncPeriod)}, nil
 }
 
-func (r *GrafanaFolderReconciler) finalize(ctx context.Context, folder *v1beta1.GrafanaFolder) error {
+func (r *GrafanaFolderReconciler) finalize(ctx context.Context, cr *v1beta1.GrafanaFolder) error {
 	log := logf.FromContext(ctx)
 	log.Info("Finalizing GrafanaFolder")
 
-	uid := folder.CustomUIDOrUID()
+	uid := cr.CustomUIDOrUID()
 
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, folder)
+	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
 		return fmt.Errorf("fetching instances: %w", err)
 	}
@@ -178,7 +178,7 @@ func (r *GrafanaFolderReconciler) finalize(ctx context.Context, folder *v1beta1.
 		}
 
 		// Update grafana instance Status
-		err = grafana.RemoveNamespacedResource(ctx, r.Client, folder)
+		err = grafana.RemoveNamespacedResource(ctx, r.Client, cr)
 		if err != nil {
 			return fmt.Errorf("removing Folder from Grafana cr: %w", err)
 		}
