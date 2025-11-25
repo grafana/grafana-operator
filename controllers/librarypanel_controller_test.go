@@ -178,6 +178,7 @@ var _ = Describe("LibraryPanel Reconciler", Ordered, func() {
 		panel, err = grafanaClient.LibraryElements.GetLibraryElementByUID(uid)
 		require.NoError(t, err)
 
+		assert.NotContains(t, panel.String(), name1)
 		assert.Contains(t, panel.String(), name2)
 
 		// Cleanup
