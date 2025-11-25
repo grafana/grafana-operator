@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -92,7 +92,7 @@ var _ = Describe("AlertRulegroup Reconciler: Provoke Conditions", func() {
 								RefID:             "A",
 								RelativeTimeRange: nil,
 								DatasourceUID:     "__expr__",
-								Model: &v1.JSON{Raw: []byte(`{
+								Model: &apiextensionsv1.JSON{Raw: []byte(`{
 		                                "conditions": [
 		                                    {
 		                                        "evaluator": {
@@ -159,7 +159,7 @@ var _ = Describe("AlertRulegroup Reconciler: Provoke Conditions", func() {
 							{
 								RefID:         "A",
 								DatasourceUID: "__expr__",
-								Model:         &v1.JSON{Raw: []byte(`{"expression": "1", "refId": "A"}`)},
+								Model:         &apiextensionsv1.JSON{Raw: []byte(`{"expression": "1", "refId": "A"}`)},
 							},
 						},
 						NoDataState:  &noDataState,
@@ -192,7 +192,7 @@ var _ = Describe("AlertRulegroup Reconciler: Provoke Conditions", func() {
 							{
 								RefID:         "A",
 								DatasourceUID: "__expr__",
-								Model:         &v1.JSON{Raw: []byte(`{"expression": "1", "refId": "A"}`)},
+								Model:         &apiextensionsv1.JSON{Raw: []byte(`{"expression": "1", "refId": "A"}`)},
 							},
 						},
 						NoDataState:  &noDataState,

@@ -19,7 +19,7 @@ package v1beta1
 import (
 	"fmt"
 
-	apiextensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -63,7 +63,7 @@ type GrafanaContactPointSpec struct {
 	// Deprecated: define the receiver under .spec.receivers[]
 	// Will be removed in a later version
 	// +optional
-	Settings *apiextensions.JSON `json:"settings,omitempty"`
+	Settings *apiextensionsv1.JSON `json:"settings,omitempty"`
 
 	// Deprecated: define the receiver under .spec.receivers[]
 	// Will be removed in a later version
@@ -92,7 +92,7 @@ type ContactPointReceiver struct {
 	// +optional
 	DisableResolveMessage bool `json:"disableResolveMessage,omitempty"`
 
-	Settings *apiextensions.JSON `json:"settings"`
+	Settings *apiextensionsv1.JSON `json:"settings"`
 
 	// +kubebuilder:validation:MaxItems=99
 	ValuesFrom []ValueFrom `json:"valuesFrom,omitempty"`
