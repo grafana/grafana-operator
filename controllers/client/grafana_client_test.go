@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -88,7 +88,7 @@ func TestParseAdminURL(t *testing.T) {
 }
 
 func TestGetExternalAdminCredentials(t *testing.T) {
-	credSecret := &v1.Secret{
+	credSecret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
 			Name:      "grafana-credentials",
@@ -101,7 +101,7 @@ func TestGetExternalAdminCredentials(t *testing.T) {
 
 	testCtx := context.Background()
 	s := runtime.NewScheme()
-	err := v1.AddToScheme(s)
+	err := corev1.AddToScheme(s)
 	require.NoError(t, err, "adding scheme")
 
 	client := fake.NewClientBuilder().
@@ -120,14 +120,14 @@ func TestGetExternalAdminCredentials(t *testing.T) {
 				name: "User and Password from Secret",
 				spec: v1beta1.GrafanaSpec{
 					External: &v1beta1.External{
-						AdminUser: &v1.SecretKeySelector{
-							LocalObjectReference: v1.LocalObjectReference{
+						AdminUser: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
 								Name: "grafana-credentials",
 							},
 							Key: "user",
 						},
-						AdminPassword: &v1.SecretKeySelector{
-							LocalObjectReference: v1.LocalObjectReference{
+						AdminPassword: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
 								Name: "grafana-credentials",
 							},
 							Key: "pass",
@@ -141,8 +141,8 @@ func TestGetExternalAdminCredentials(t *testing.T) {
 				name: "User from config and Password from Secret",
 				spec: v1beta1.GrafanaSpec{
 					External: &v1beta1.External{
-						AdminPassword: &v1.SecretKeySelector{
-							LocalObjectReference: v1.LocalObjectReference{
+						AdminPassword: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
 								Name: "grafana-credentials",
 							},
 							Key: "pass",
@@ -218,7 +218,7 @@ func TestGetExternalAdminCredentials(t *testing.T) {
 
 // TODO currently only tests code paths for external grafanas
 func TestGetAdminCredentials(t *testing.T) {
-	credSecret := &v1.Secret{
+	credSecret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
 			Name:      "grafana-credentials",
@@ -232,7 +232,7 @@ func TestGetAdminCredentials(t *testing.T) {
 
 	testCtx := context.Background()
 	s := runtime.NewScheme()
-	err := v1.AddToScheme(s)
+	err := corev1.AddToScheme(s)
 	require.NoError(t, err, "adding scheme")
 
 	client := fake.NewClientBuilder().
@@ -249,8 +249,8 @@ func TestGetAdminCredentials(t *testing.T) {
 			{
 				name: "apiKey is preferred",
 				external: &v1beta1.External{
-					APIKey: &v1.SecretKeySelector{
-						LocalObjectReference: v1.LocalObjectReference{
+					APIKey: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
 							Name: "grafana-credentials",
 						},
 						Key: "token",

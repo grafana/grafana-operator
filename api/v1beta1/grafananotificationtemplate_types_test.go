@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestGrafanaStatusListNotificationTemplate(t *testing.T) {
@@ -22,18 +22,18 @@ func TestGrafanaStatusListNotificationTemplate(t *testing.T) {
 
 func newNotificationTemplate(name string, editable *bool) *GrafanaNotificationTemplate {
 	return &GrafanaNotificationTemplate{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			APIVersion: APIVersion,
 			Kind:       "GrafanaNotificationTemplate",
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: "default",
 		},
 		Spec: GrafanaNotificationTemplateSpec{
 			Editable: editable,
 			GrafanaCommonSpec: GrafanaCommonSpec{
-				InstanceSelector: &v1.LabelSelector{
+				InstanceSelector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{
 						"test": "notificationtemplate",
 					},

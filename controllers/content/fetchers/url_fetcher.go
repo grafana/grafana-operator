@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func FetchFromURL(ctx context.Context, cr v1beta1.GrafanaContentResource, c client.Client, tlsConfig *tls.Config) ([]byte, error) {
@@ -97,7 +97,7 @@ func FetchFromURL(ctx context.Context, cr v1beta1.GrafanaContentResource, c clie
 
 	status := cr.GrafanaContentStatus()
 	status.ContentCache = gz
-	status.ContentTimestamp = v1.Time{Time: time.Now()}
+	status.ContentTimestamp = metav1.Time{Time: time.Now()}
 	status.ContentURL = spec.URL
 
 	return content, nil

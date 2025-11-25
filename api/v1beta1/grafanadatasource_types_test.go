@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestGrafanaStatusListDatasource(t *testing.T) {
@@ -21,18 +21,18 @@ func TestGrafanaStatusListDatasource(t *testing.T) {
 
 func newDatasource(name string, uid string) *GrafanaDatasource {
 	return &GrafanaDatasource{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			APIVersion: APIVersion,
 			Kind:       "GrafanaDatasource",
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: "default",
 		},
 		Spec: GrafanaDatasourceSpec{
 			CustomUID: uid,
 			GrafanaCommonSpec: GrafanaCommonSpec{
-				InstanceSelector: &v1.LabelSelector{
+				InstanceSelector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{
 						"test": "datasource",
 					},
@@ -95,17 +95,17 @@ var _ = Describe("Fail on field behavior changes", func() {
 	t := GinkgoT()
 
 	emptyDatasource := &GrafanaDatasource{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			APIVersion: APIVersion,
 			Kind:       "GrafanaDatasource",
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-nil-datasource",
 			Namespace: "default",
 		},
 		Spec: GrafanaDatasourceSpec{
 			GrafanaCommonSpec: GrafanaCommonSpec{
-				InstanceSelector: &v1.LabelSelector{},
+				InstanceSelector: &metav1.LabelSelector{},
 			},
 			Datasource: nil,
 		},

@@ -5,7 +5,7 @@ import (
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -25,7 +25,7 @@ var _ = Describe("ContactPoint Reconciler: Provoke Conditions", func() {
 			meta: objectMetaSuspended,
 			spec: v1beta1.GrafanaContactPointSpec{
 				GrafanaCommonSpec: commonSpecSuspended,
-				Settings:          &v1.JSON{Raw: []byte("{}")},
+				Settings:          &apiextensionsv1.JSON{Raw: []byte("{}")},
 				Type:              "webhook",
 			},
 			want: metav1.Condition{
@@ -38,7 +38,7 @@ var _ = Describe("ContactPoint Reconciler: Provoke Conditions", func() {
 			meta: objectMetaNoMatchingInstances,
 			spec: v1beta1.GrafanaContactPointSpec{
 				GrafanaCommonSpec: commonSpecNoMatchingInstances,
-				Settings:          &v1.JSON{Raw: []byte("{}")},
+				Settings:          &apiextensionsv1.JSON{Raw: []byte("{}")},
 				Type:              "webhook",
 			},
 			want: metav1.Condition{
@@ -52,7 +52,7 @@ var _ = Describe("ContactPoint Reconciler: Provoke Conditions", func() {
 			meta: objectMetaApplyFailed,
 			spec: v1beta1.GrafanaContactPointSpec{
 				GrafanaCommonSpec: commonSpecApplyFailed,
-				Settings:          &v1.JSON{Raw: []byte("{}")},
+				Settings:          &apiextensionsv1.JSON{Raw: []byte("{}")},
 				Type:              "webhook",
 			},
 			want: metav1.Condition{
@@ -66,7 +66,7 @@ var _ = Describe("ContactPoint Reconciler: Provoke Conditions", func() {
 			meta: objectMetaInvalidSpec,
 			spec: v1beta1.GrafanaContactPointSpec{
 				GrafanaCommonSpec: commonSpecInvalidSpec,
-				Settings:          &v1.JSON{Raw: []byte("{}")},
+				Settings:          &apiextensionsv1.JSON{Raw: []byte("{}")},
 				Type:              "email",
 				ValuesFrom: []v1beta1.ValueFrom{{
 					TargetPath: "addresses",
@@ -109,7 +109,7 @@ var _ = Describe("ContactPoint Reconciler: Provoke Conditions", func() {
 			},
 			spec: v1beta1.GrafanaContactPointSpec{
 				GrafanaCommonSpec: commonSpecInvalidSpec,
-				Settings:          &v1.JSON{Raw: []byte("{}")},
+				Settings:          &apiextensionsv1.JSON{Raw: []byte("{}")},
 				Type:              "",
 			},
 			want: metav1.Condition{
@@ -138,7 +138,7 @@ var _ = Describe("ContactPoint Reconciler: Provoke Conditions", func() {
 			meta: objectMetaSynchronized,
 			spec: v1beta1.GrafanaContactPointSpec{
 				GrafanaCommonSpec: commonSpecSynchronized,
-				Settings:          &v1.JSON{Raw: []byte(`{"url": "http://test.io"}`)},
+				Settings:          &apiextensionsv1.JSON{Raw: []byte(`{"url": "http://test.io"}`)},
 				Type:              "webhook",
 			},
 			want: metav1.Condition{
@@ -156,11 +156,11 @@ var _ = Describe("ContactPoint Reconciler: Provoke Conditions", func() {
 				GrafanaCommonSpec: commonSpecSynchronized,
 				Receivers: []v1beta1.ContactPointReceiver{
 					{
-						Settings: &v1.JSON{Raw: []byte(`{"url": "http://test.io"}`)},
+						Settings: &apiextensionsv1.JSON{Raw: []byte(`{"url": "http://test.io"}`)},
 						Type:     "webhook",
 					},
 					{
-						Settings: &v1.JSON{Raw: []byte(`{"url": "http://test.io"}`)},
+						Settings: &apiextensionsv1.JSON{Raw: []byte(`{"url": "http://test.io"}`)},
 						Type:     "webhook",
 					},
 				},
@@ -213,7 +213,7 @@ var _ = Describe("ContactPoint valuesFrom configurations", Ordered, func() {
 			},
 			spec: v1beta1.GrafanaContactPointSpec{
 				GrafanaCommonSpec: commonSpecInvalidSpec,
-				Settings:          &v1.JSON{Raw: []byte("{}")},
+				Settings:          &apiextensionsv1.JSON{Raw: []byte("{}")},
 				Type:              "email",
 				ValuesFrom: []v1beta1.ValueFrom{{
 					TargetPath: "addresses",
@@ -226,7 +226,7 @@ var _ = Describe("ContactPoint valuesFrom configurations", Ordered, func() {
 				}},
 				Receivers: []v1beta1.ContactPointReceiver{
 					{
-						Settings: &v1.JSON{Raw: []byte("{}")},
+						Settings: &apiextensionsv1.JSON{Raw: []byte("{}")},
 						Type:     "email",
 						ValuesFrom: []v1beta1.ValueFrom{{
 							TargetPath: "addresses",
@@ -239,7 +239,7 @@ var _ = Describe("ContactPoint valuesFrom configurations", Ordered, func() {
 						}},
 					},
 					{
-						Settings: &v1.JSON{Raw: []byte("{}")},
+						Settings: &apiextensionsv1.JSON{Raw: []byte("{}")},
 						Type:     "email",
 						ValuesFrom: []v1beta1.ValueFrom{{
 							TargetPath: "addresses",
@@ -267,7 +267,7 @@ var _ = Describe("ContactPoint valuesFrom configurations", Ordered, func() {
 			},
 			spec: v1beta1.GrafanaContactPointSpec{
 				GrafanaCommonSpec: commonSpecSynchronized,
-				Settings:          &v1.JSON{Raw: []byte("{}")},
+				Settings:          &apiextensionsv1.JSON{Raw: []byte("{}")},
 				Type:              "email",
 				ValuesFrom: []v1beta1.ValueFrom{{
 					TargetPath: "addresses",
@@ -280,7 +280,7 @@ var _ = Describe("ContactPoint valuesFrom configurations", Ordered, func() {
 				}},
 				Receivers: []v1beta1.ContactPointReceiver{
 					{
-						Settings: &v1.JSON{Raw: []byte("{}")},
+						Settings: &apiextensionsv1.JSON{Raw: []byte("{}")},
 						Type:     "email",
 						ValuesFrom: []v1beta1.ValueFrom{{
 							TargetPath: "addresses",
@@ -293,7 +293,7 @@ var _ = Describe("ContactPoint valuesFrom configurations", Ordered, func() {
 						}},
 					},
 					{
-						Settings: &v1.JSON{Raw: []byte("{}")},
+						Settings: &apiextensionsv1.JSON{Raw: []byte("{}")},
 						Type:     "email",
 						ValuesFrom: []v1beta1.ValueFrom{{
 							TargetPath: "addresses",

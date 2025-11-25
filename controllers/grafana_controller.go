@@ -32,7 +32,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -45,7 +45,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 )
 
 const (
@@ -73,11 +73,11 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	log := logf.FromContext(ctx).WithName("GrafanaReconciler")
 	ctx = logf.IntoContext(ctx, log)
 
-	cr := &grafanav1beta1.Grafana{}
+	cr := &v1beta1.Grafana{}
 
 	err := r.Get(ctx, req.NamespacedName, cr)
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if kuberr.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
 
@@ -101,10 +101,10 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	removeSuspended(&cr.Status.Conditions)
 
-	var stages []grafanav1beta1.OperatorStageName
+	var stages []v1beta1.OperatorStageName
 	if cr.IsExternal() {
 		// Only reconcile the Completion stage for external instances
-		stages = []grafanav1beta1.OperatorStageName{grafanav1beta1.OperatorStageComplete}
+		stages = []v1beta1.OperatorStageName{v1beta1.OperatorStageComplete}
 		// AdminURL is normally set during ingress/route stage.
 		// External instances only use the complete stage
 		cr.Status.AdminURL = cr.Spec.External.URL
@@ -121,7 +121,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 	}
 
-	vars := &grafanav1beta1.OperatorReconcileVars{}
+	vars := &v1beta1.OperatorReconcileVars{}
 
 	for _, stage := range stages {
 		log.Info("running stage", "stage", stage)
@@ -146,7 +146,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 	}
 
-	cr.Status.StageStatus = grafanav1beta1.OperatorStageResultSuccess
+	cr.Status.StageStatus = v1beta1.OperatorStageResultSuccess
 	cr.Status.LastMessage = ""
 
 	meta.SetStatusCondition(&cr.Status.Conditions, metav1.Condition{
@@ -178,8 +178,8 @@ func (r *GrafanaReconciler) setDefaultGrafanaVersion(ctx context.Context, cr cli
 	return r.Patch(ctx, cr, client.RawPatch(types.MergePatchType, patch))
 }
 
-func removeMissingCRs(statusList *grafanav1beta1.NamespacedResourceList, crs grafanav1beta1.NamespacedResourceImpl, updateStatus *bool) {
-	toRemove := grafanav1beta1.NamespacedResourceList{}
+func removeMissingCRs(statusList *v1beta1.NamespacedResourceList, crs v1beta1.NamespacedResourceImpl, updateStatus *bool) {
+	toRemove := v1beta1.NamespacedResourceList{}
 
 	for _, r := range *statusList {
 		namespace, name, _ := r.Split()
@@ -198,7 +198,7 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 	log := logf.FromContext(ctx)
 
 	// get all grafana instances
-	grafanas := &grafanav1beta1.GrafanaList{}
+	grafanas := &v1beta1.GrafanaList{}
 
 	err := r.List(ctx, grafanas)
 	if err != nil {
@@ -210,56 +210,56 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 	}
 
 	// Fetch all resources
-	alertRuleGroups := &grafanav1beta1.GrafanaAlertRuleGroupList{}
+	alertRuleGroups := &v1beta1.GrafanaAlertRuleGroupList{}
 
 	err = r.List(ctx, alertRuleGroups)
 	if err != nil {
 		return err
 	}
 
-	contactPoints := &grafanav1beta1.GrafanaContactPointList{}
+	contactPoints := &v1beta1.GrafanaContactPointList{}
 
 	err = r.List(ctx, contactPoints)
 	if err != nil {
 		return err
 	}
 
-	dashboards := &grafanav1beta1.GrafanaDashboardList{}
+	dashboards := &v1beta1.GrafanaDashboardList{}
 
 	err = r.List(ctx, dashboards)
 	if err != nil {
 		return err
 	}
 
-	datasources := &grafanav1beta1.GrafanaDatasourceList{}
+	datasources := &v1beta1.GrafanaDatasourceList{}
 
 	err = r.List(ctx, datasources)
 	if err != nil {
 		return err
 	}
 
-	folders := &grafanav1beta1.GrafanaFolderList{}
+	folders := &v1beta1.GrafanaFolderList{}
 
 	err = r.List(ctx, folders)
 	if err != nil {
 		return err
 	}
 
-	libraryPanels := &grafanav1beta1.GrafanaLibraryPanelList{}
+	libraryPanels := &v1beta1.GrafanaLibraryPanelList{}
 
 	err = r.List(ctx, libraryPanels)
 	if err != nil {
 		return err
 	}
 
-	muteTimings := &grafanav1beta1.GrafanaLibraryPanelList{}
+	muteTimings := &v1beta1.GrafanaLibraryPanelList{}
 
 	err = r.List(ctx, muteTimings)
 	if err != nil {
 		return err
 	}
 
-	notificationTemplates := &grafanav1beta1.GrafanaNotificationTemplateList{}
+	notificationTemplates := &v1beta1.GrafanaNotificationTemplateList{}
 
 	err = r.List(ctx, notificationTemplates)
 	if err != nil {
@@ -301,7 +301,7 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 // SetupWithManager sets up the controller with the Manager.
 func (r *GrafanaReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
 	b := ctrl.NewControllerManagedBy(mgr).
-		For(&grafanav1beta1.Grafana{}, builder.WithPredicates(ignoreStatusUpdates())).
+		For(&v1beta1.Grafana{}, builder.WithPredicates(ignoreStatusUpdates())).
 		Owns(&appsv1.Deployment{}, builder.WithPredicates(ignoreStatusUpdates())).
 		Owns(&corev1.ConfigMap{}).
 		Owns(&corev1.PersistentVolumeClaim{}, builder.WithPredicates(ignoreStatusUpdates())).
@@ -360,39 +360,39 @@ func (r *GrafanaReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manag
 	return nil
 }
 
-func getInstallationStages() []grafanav1beta1.OperatorStageName {
-	return []grafanav1beta1.OperatorStageName{
-		grafanav1beta1.OperatorStageAdminUser,
-		grafanav1beta1.OperatorStageGrafanaConfig,
-		grafanav1beta1.OperatorStagePvc,
-		grafanav1beta1.OperatorStageServiceAccount,
-		grafanav1beta1.OperatorStageService,
-		grafanav1beta1.OperatorStageIngress,
-		grafanav1beta1.OperatorStagePlugins,
-		grafanav1beta1.OperatorStageDeployment,
-		grafanav1beta1.OperatorStageComplete,
+func getInstallationStages() []v1beta1.OperatorStageName {
+	return []v1beta1.OperatorStageName{
+		v1beta1.OperatorStageAdminUser,
+		v1beta1.OperatorStageGrafanaConfig,
+		v1beta1.OperatorStagePvc,
+		v1beta1.OperatorStageServiceAccount,
+		v1beta1.OperatorStageService,
+		v1beta1.OperatorStageIngress,
+		v1beta1.OperatorStagePlugins,
+		v1beta1.OperatorStageDeployment,
+		v1beta1.OperatorStageComplete,
 	}
 }
 
-func (r *GrafanaReconciler) getReconcilerForStage(stage grafanav1beta1.OperatorStageName) reconcilers.OperatorGrafanaReconciler {
+func (r *GrafanaReconciler) getReconcilerForStage(stage v1beta1.OperatorStageName) reconcilers.OperatorGrafanaReconciler {
 	switch stage {
-	case grafanav1beta1.OperatorStageGrafanaConfig:
+	case v1beta1.OperatorStageGrafanaConfig:
 		return grafana.NewConfigReconciler(r.Client)
-	case grafanav1beta1.OperatorStageAdminUser:
+	case v1beta1.OperatorStageAdminUser:
 		return grafana.NewAdminSecretReconciler(r.Client)
-	case grafanav1beta1.OperatorStagePvc:
+	case v1beta1.OperatorStagePvc:
 		return grafana.NewPvcReconciler(r.Client)
-	case grafanav1beta1.OperatorStageServiceAccount:
+	case v1beta1.OperatorStageServiceAccount:
 		return grafana.NewServiceAccountReconciler(r.Client)
-	case grafanav1beta1.OperatorStageService:
+	case v1beta1.OperatorStageService:
 		return grafana.NewServiceReconciler(r.Client, r.ClusterDomain)
-	case grafanav1beta1.OperatorStageIngress:
+	case v1beta1.OperatorStageIngress:
 		return grafana.NewIngressReconciler(r.Client, r.IsOpenShift, r.HasGatewayAPI)
-	case grafanav1beta1.OperatorStagePlugins:
+	case v1beta1.OperatorStagePlugins:
 		return grafana.NewPluginsReconciler(r.Client)
-	case grafanav1beta1.OperatorStageDeployment:
+	case v1beta1.OperatorStageDeployment:
 		return grafana.NewDeploymentReconciler(r.Client, r.IsOpenShift)
-	case grafanav1beta1.OperatorStageComplete:
+	case v1beta1.OperatorStageComplete:
 		return grafana.NewCompleteReconciler(r.Client)
 	default:
 		return nil

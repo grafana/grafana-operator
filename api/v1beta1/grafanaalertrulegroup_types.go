@@ -19,7 +19,7 @@ package v1beta1
 import (
 	"github.com/grafana/grafana-openapi-client-go/models"
 	operatorapi "github.com/grafana/grafana-operator/v5/api"
-	apiextensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -127,7 +127,7 @@ type AlertQuery struct {
 	DatasourceUID string `json:"datasourceUid,omitempty"`
 
 	// JSON is the raw JSON query and includes the above properties as well as custom properties.
-	Model *apiextensions.JSON `json:"model,omitempty"`
+	Model *apiextensionsv1.JSON `json:"model,omitempty"`
 
 	// QueryType is an optional identifier for the type of query.
 	// It can be used to distinguish different types of queries.

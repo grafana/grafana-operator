@@ -12,7 +12,7 @@ import (
 	controllerruntime "sigs.k8s.io/controller-runtime"
 
 	. "github.com/onsi/ginkgo/v2"
-	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -147,7 +147,7 @@ var _ = Describe("Folder reconciler", func() {
 							{
 								RefID:         "A",
 								DatasourceUID: "__expr__",
-								Model:         &v1.JSON{Raw: []byte(`{"expression": "1", "refId": "A"}`)},
+								Model:         &apiextensionsv1.JSON{Raw: []byte(`{"expression": "1", "refId": "A"}`)},
 							},
 						},
 						ExecErrState: "Error",

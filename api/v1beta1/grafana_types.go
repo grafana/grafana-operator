@@ -21,7 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -105,11 +105,11 @@ type External struct {
 	// URL of the external grafana instance you want to manage.
 	URL string `json:"url"`
 	// The API key to talk to the external grafana instance, you need to define ether apiKey or adminUser/adminPassword.
-	APIKey *v1.SecretKeySelector `json:"apiKey,omitempty"`
+	APIKey *corev1.SecretKeySelector `json:"apiKey,omitempty"`
 	// AdminUser key to talk to the external grafana instance.
-	AdminUser *v1.SecretKeySelector `json:"adminUser,omitempty"`
+	AdminUser *corev1.SecretKeySelector `json:"adminUser,omitempty"`
 	// AdminPassword key to talk to the external grafana instance.
-	AdminPassword *v1.SecretKeySelector `json:"adminPassword,omitempty"`
+	AdminPassword *corev1.SecretKeySelector `json:"adminPassword,omitempty"`
 	// DEPRECATED, use top level `tls` instead.
 	// +optional
 	TLS *TLSConfig `json:"tls,omitempty"`
@@ -123,7 +123,7 @@ type TLSConfig struct {
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 	// Use a secret as a reference to give TLS Certificate information
 	// +optional
-	CertSecretRef *v1.SecretReference `json:"certSecretRef,omitempty"`
+	CertSecretRef *corev1.SecretReference `json:"certSecretRef,omitempty"`
 }
 
 type JsonnetConfig struct {

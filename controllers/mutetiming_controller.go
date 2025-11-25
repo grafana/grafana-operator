@@ -31,7 +31,7 @@ import (
 
 	"github.com/grafana/grafana-openapi-client-go/client/provisioning"
 	"github.com/grafana/grafana-openapi-client-go/models"
-	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 )
@@ -51,7 +51,7 @@ func (r *GrafanaMuteTimingReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	log := logf.FromContext(ctx).WithName("GrafanaMuteTimingReconciler")
 	ctx = logf.IntoContext(ctx, log)
 
-	muteTiming := &grafanav1beta1.GrafanaMuteTiming{}
+	muteTiming := &v1beta1.GrafanaMuteTiming{}
 
 	err := r.Get(ctx, req.NamespacedName, muteTiming)
 	if err != nil {
@@ -123,7 +123,7 @@ func (r *GrafanaMuteTimingReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(muteTiming.Spec.ResyncPeriod)}, nil
 }
 
-func (r *GrafanaMuteTimingReconciler) reconcileWithInstance(ctx context.Context, instance *grafanav1beta1.Grafana, muteTiming *grafanav1beta1.GrafanaMuteTiming) error {
+func (r *GrafanaMuteTimingReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, muteTiming *v1beta1.GrafanaMuteTiming) error {
 	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
@@ -190,7 +190,7 @@ func (r *GrafanaMuteTimingReconciler) reconcileWithInstance(ctx context.Context,
 	return instance.AddNamespacedResource(ctx, r.Client, muteTiming, muteTiming.NamespacedResource())
 }
 
-func (r *GrafanaMuteTimingReconciler) getMuteTimingByName(ctx context.Context, name string, instance *grafanav1beta1.Grafana) (*models.MuteTimeInterval, error) {
+func (r *GrafanaMuteTimingReconciler) getMuteTimingByName(ctx context.Context, name string, instance *v1beta1.Grafana) (*models.MuteTimeInterval, error) {
 	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return nil, fmt.Errorf("building grafana client: %w", err)
@@ -204,7 +204,7 @@ func (r *GrafanaMuteTimingReconciler) getMuteTimingByName(ctx context.Context, n
 	return muteTiming.Payload, nil
 }
 
-func (r *GrafanaMuteTimingReconciler) finalize(ctx context.Context, muteTiming *grafanav1beta1.GrafanaMuteTiming) error {
+func (r *GrafanaMuteTimingReconciler) finalize(ctx context.Context, muteTiming *v1beta1.GrafanaMuteTiming) error {
 	log := logf.FromContext(ctx)
 	log.Info("Finalizing GrafanaMuteTiming")
 
@@ -228,7 +228,7 @@ func (r *GrafanaMuteTimingReconciler) finalize(ctx context.Context, muteTiming *
 	return nil
 }
 
-func (r *GrafanaMuteTimingReconciler) removeFromInstance(ctx context.Context, instance *grafanav1beta1.Grafana, muteTiming *grafanav1beta1.GrafanaMuteTiming) error {
+func (r *GrafanaMuteTimingReconciler) removeFromInstance(ctx context.Context, instance *v1beta1.Grafana, muteTiming *v1beta1.GrafanaMuteTiming) error {
 	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
@@ -245,7 +245,7 @@ func (r *GrafanaMuteTimingReconciler) removeFromInstance(ctx context.Context, in
 // SetupWithManager sets up the controller with the Manager.
 func (r *GrafanaMuteTimingReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&grafanav1beta1.GrafanaMuteTiming{}).
+		For(&v1beta1.GrafanaMuteTiming{}).
 		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
 }

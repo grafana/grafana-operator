@@ -30,7 +30,7 @@ import (
 
 	"github.com/grafana/grafana-openapi-client-go/client/provisioning"
 	"github.com/grafana/grafana-openapi-client-go/models"
-	grafanav1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 )
@@ -50,7 +50,7 @@ func (r *GrafanaNotificationTemplateReconciler) Reconcile(ctx context.Context, r
 	log := logf.FromContext(ctx).WithName("GrafanaNotificationTemplateReconciler")
 	ctx = logf.IntoContext(ctx, log)
 
-	notificationTemplate := &grafanav1beta1.GrafanaNotificationTemplate{}
+	notificationTemplate := &v1beta1.GrafanaNotificationTemplate{}
 
 	err := r.Get(ctx, req.NamespacedName, notificationTemplate)
 	if err != nil {
@@ -122,7 +122,7 @@ func (r *GrafanaNotificationTemplateReconciler) Reconcile(ctx context.Context, r
 	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(notificationTemplate.Spec.ResyncPeriod)}, nil
 }
 
-func (r *GrafanaNotificationTemplateReconciler) reconcileWithInstance(ctx context.Context, instance *grafanav1beta1.Grafana, notificationTemplate *grafanav1beta1.GrafanaNotificationTemplate) error {
+func (r *GrafanaNotificationTemplateReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, notificationTemplate *v1beta1.GrafanaNotificationTemplate) error {
 	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
@@ -153,7 +153,7 @@ func (r *GrafanaNotificationTemplateReconciler) reconcileWithInstance(ctx contex
 	return instance.AddNamespacedResource(ctx, r.Client, notificationTemplate, notificationTemplate.NamespacedResource())
 }
 
-func (r *GrafanaNotificationTemplateReconciler) finalize(ctx context.Context, notificationTemplate *grafanav1beta1.GrafanaNotificationTemplate) error {
+func (r *GrafanaNotificationTemplateReconciler) finalize(ctx context.Context, notificationTemplate *v1beta1.GrafanaNotificationTemplate) error {
 	log := logf.FromContext(ctx)
 	log.Info("Finalizing GrafanaNotificationTemplate")
 
@@ -177,7 +177,7 @@ func (r *GrafanaNotificationTemplateReconciler) finalize(ctx context.Context, no
 	return nil
 }
 
-func (r *GrafanaNotificationTemplateReconciler) removeFromInstance(ctx context.Context, instance *grafanav1beta1.Grafana, notificationTemplate *grafanav1beta1.GrafanaNotificationTemplate) error {
+func (r *GrafanaNotificationTemplateReconciler) removeFromInstance(ctx context.Context, instance *v1beta1.Grafana, notificationTemplate *v1beta1.GrafanaNotificationTemplate) error {
 	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
@@ -194,7 +194,7 @@ func (r *GrafanaNotificationTemplateReconciler) removeFromInstance(ctx context.C
 // SetupWithManager sets up the controller with the Manager.
 func (r *GrafanaNotificationTemplateReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&grafanav1beta1.GrafanaNotificationTemplate{}).
+		For(&v1beta1.GrafanaNotificationTemplate{}).
 		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
 }

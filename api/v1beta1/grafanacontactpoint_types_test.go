@@ -7,9 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	// apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestGrafanaStatusListContactPoint(t *testing.T) {
@@ -23,13 +22,13 @@ func TestGrafanaStatusListContactPoint(t *testing.T) {
 
 func newContactPoint(name string) *GrafanaContactPoint {
 	return &GrafanaContactPoint{
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: "default",
 		},
 		Spec: GrafanaContactPointSpec{
 			GrafanaCommonSpec: GrafanaCommonSpec{
-				InstanceSelector: &v1.LabelSelector{},
+				InstanceSelector: &metav1.LabelSelector{},
 			},
 		},
 	}
