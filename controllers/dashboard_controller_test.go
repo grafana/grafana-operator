@@ -219,6 +219,7 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 		dash, err = grafanaClient.Dashboards.GetDashboardByUID(uid)
 		require.NoError(t, err)
 
+		assert.NotContains(t, dash.String(), title1)
 		assert.Contains(t, dash.String(), title2)
 
 		// Cleanup
