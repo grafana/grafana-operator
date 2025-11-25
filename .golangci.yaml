@@ -8,6 +8,7 @@ linters:
     - gocritic
     - gocyclo
     - gosec
+    - importas
     - makezero
     - misspell
     - nakedret
@@ -45,6 +46,37 @@ linters:
 
     gocyclo:
       min-complexity: 25
+
+    importas:
+      no-unaliased: true
+
+      alias:
+        - pkg: github.com/grafana/grafana-operator/v5/api
+          alias: operatorapi
+        - pkg: github.com/grafana/grafana-operator/v5/controllers/client
+          alias: grafanaclient
+        - pkg: github.com/openshift/api/route/v1
+          alias: routev1
+        - pkg: go.uber.org/zap
+          alias: uberzap
+        - pkg: k8s.io/api/(\w+)/(v[\w\d]+)
+          alias: $1$2
+        - pkg: k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1
+          alias: apiextensionsv1
+        - pkg: k8s.io/apimachinery/pkg/api/errors
+          alias: kuberr
+        - pkg: k8s.io/apimachinery/pkg/apis/meta/v1
+          alias: metav1
+        - pkg: sigs.k8s.io/controller-runtime
+          alias: ctrl
+        - pkg: sigs.k8s.io/controller-runtime/pkg/log
+          alias: logf
+        - pkg: sigs.k8s.io/controller-runtime/pkg/metrics/server
+          alias: metricsserver
+        - pkg: k8s.io/apimachinery/pkg/util/runtime
+          alias: utilruntime
+        - pkg: sigs.k8s.io/gateway-api/apis/v1
+          alias: gwapiv1
 
     makezero:
       always: false
