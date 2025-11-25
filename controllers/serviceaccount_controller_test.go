@@ -25,7 +25,7 @@ import (
 	"github.com/grafana/grafana-openapi-client-go/client/service_accounts"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
+	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
@@ -158,7 +158,7 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 
 		originalStatus := cr.Status.DeepCopy()
 
-		gClient, err := client2.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
 		require.NoError(t, err)
 
 		_, err = gClient.ServiceAccounts.DeleteServiceAccount(cr.Status.Account.ID) //nolint:errcheck
@@ -208,7 +208,7 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 		err = k8sClient.Delete(testCtx, &originalSecret)
 		require.NoError(t, err)
 
-		gClient, err := client2.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
 		require.NoError(t, err)
 
 		// Expect secret to be recreated during reconcile
@@ -251,7 +251,7 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 
 		originalStatus := cr.Status.DeepCopy()
 
-		gClient, err := client2.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
 		require.NoError(t, err)
 
 		_, err = gClient.ServiceAccounts.UpdateServiceAccount( //nolint:errcheck
@@ -303,7 +303,7 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 		err := k8sClient.Update(testCtx, cr)
 		require.NoError(t, err)
 
-		gClient, err := client2.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
 		require.NoError(t, err)
 
 		reconcileAndCompareSpecWithStatus(t, cr, r, gClient)
@@ -338,7 +338,7 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 		err := k8sClient.Update(testCtx, cr)
 		require.NoError(t, err)
 
-		gClient, err := client2.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
 		require.NoError(t, err)
 
 		reconcileAndCompareSpecWithStatus(t, cr, r, gClient)
@@ -374,7 +374,7 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 		err := k8sClient.Update(testCtx, cr)
 		require.NoError(t, err)
 
-		gClient, err := client2.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
 		require.NoError(t, err)
 
 		reconcileAndCompareSpecWithStatus(t, cr, r, gClient)
@@ -431,7 +431,7 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 		err := k8sClient.Update(testCtx, cr)
 		require.NoError(t, err)
 
-		gClient, err := client2.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
 		require.NoError(t, err)
 
 		reconcileAndCompareSpecWithStatus(t, cr, r, gClient)
@@ -614,7 +614,7 @@ var _ = Describe("ServiceAccount Controller: Integration Tests", func() {
 
 			// Verify that the service account and token were actually created in Grafana
 			// Get Grafana client
-			gClient, err := client2.NewGeneratedGrafanaClient(ctx, k8sClient, externalGrafanaCr)
+			gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, k8sClient, externalGrafanaCr)
 			require.NoError(t, err)
 
 			// Retrieve the service account from Grafana API

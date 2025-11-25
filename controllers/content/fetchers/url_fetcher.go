@@ -12,7 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	grafanaClient "github.com/grafana/grafana-operator/v5/controllers/client"
+	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/controllers/content/cache"
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 	"github.com/prometheus/client_golang/prometheus"
@@ -55,15 +55,15 @@ func FetchFromURL(ctx context.Context, cr v1beta1.GrafanaContentResource, c clie
 		return nil, fmt.Errorf("building dashboards metric: %w", err)
 	}
 
-	client := grafanaClient.NewInstrumentedRoundTripper(true, tlsConfig, contentMetric, dashboardMetric)
+	client := grafanaclient.NewInstrumentedRoundTripper(true, tlsConfig, contentMetric, dashboardMetric)
 	// basic auth is supported for dashboards from url
 	if spec.URLAuthorization != nil && spec.URLAuthorization.BasicAuth != nil {
-		username, err := grafanaClient.GetValueFromSecretKey(ctx, spec.URLAuthorization.BasicAuth.Username, c, cr.GetNamespace())
+		username, err := grafanaclient.GetValueFromSecretKey(ctx, spec.URLAuthorization.BasicAuth.Username, c, cr.GetNamespace())
 		if err != nil {
 			return nil, err
 		}
 
-		password, err := grafanaClient.GetValueFromSecretKey(ctx, spec.URLAuthorization.BasicAuth.Password, c, cr.GetNamespace())
+		password, err := grafanaclient.GetValueFromSecretKey(ctx, spec.URLAuthorization.BasicAuth.Password, c, cr.GetNamespace())
 		if err != nil {
 			return nil, err
 		}

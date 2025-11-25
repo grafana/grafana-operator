@@ -64,7 +64,7 @@ import (
 	"github.com/grafana/grafana-openapi-client-go/client/service_accounts"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
+	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
 	model2 "github.com/grafana/grafana-operator/v5/controllers/model"
 )
 
@@ -201,7 +201,7 @@ func (r *GrafanaServiceAccountReconciler) finalize(ctx context.Context, cr *v1be
 		return err
 	}
 
-	gClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
+	gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
 		return fmt.Errorf("creating Grafana client: %w", err)
 	}
@@ -282,7 +282,7 @@ func (r *GrafanaServiceAccountReconciler) reconcileWithInstance(
 	cr *v1beta1.GrafanaServiceAccount,
 	grafana *v1beta1.Grafana,
 ) error {
-	gClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
+	gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
 	}

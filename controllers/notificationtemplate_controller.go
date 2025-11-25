@@ -31,7 +31,7 @@ import (
 	"github.com/grafana/grafana-openapi-client-go/client/provisioning"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
+	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 )
 
@@ -123,7 +123,7 @@ func (r *GrafanaNotificationTemplateReconciler) Reconcile(ctx context.Context, r
 }
 
 func (r *GrafanaNotificationTemplateReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaNotificationTemplate) error {
-	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
+	cl, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
 	}
@@ -178,7 +178,7 @@ func (r *GrafanaNotificationTemplateReconciler) finalize(ctx context.Context, cr
 }
 
 func (r *GrafanaNotificationTemplateReconciler) removeFromInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaNotificationTemplate) error {
-	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
+	cl, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
 	}

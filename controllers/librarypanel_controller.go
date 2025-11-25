@@ -24,7 +24,7 @@ import (
 	"github.com/grafana/grafana-openapi-client-go/client/library_elements"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
+	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/controllers/content"
 	corev1 "k8s.io/api/core/v1"
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
@@ -183,7 +183,7 @@ func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Contex
 		return fmt.Errorf("external grafana instances don't support plugins, please remove spec.plugins from your library panel cr")
 	}
 
-	grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
+	grafanaClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return err
 	}
@@ -245,7 +245,7 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, cr *v1beta
 	}
 
 	for _, grafana := range instances {
-		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
+		grafanaClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 		if err != nil {
 			return err
 		}

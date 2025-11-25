@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
+	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -43,12 +43,12 @@ func (r *CompleteReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana,
 }
 
 func (r *CompleteReconciler) getVersion(ctx context.Context, cr *v1beta1.Grafana) (string, error) {
-	cl, err := client2.NewHTTPClient(ctx, r.client, cr)
+	cl, err := grafanaclient.NewHTTPClient(ctx, r.client, cr)
 	if err != nil {
 		return "", fmt.Errorf("setup of the http client: %w", err)
 	}
 
-	gURL, err := client2.ParseAdminURL(cr.Status.AdminURL)
+	gURL, err := grafanaclient.ParseAdminURL(cr.Status.AdminURL)
 	if err != nil {
 		return "", err
 	}
@@ -60,7 +60,7 @@ func (r *CompleteReconciler) getVersion(ctx context.Context, cr *v1beta1.Grafana
 		return "", fmt.Errorf("building request to fetch version: %w", err)
 	}
 
-	err = client2.InjectAuthHeaders(context.Background(), r.client, cr, req)
+	err = grafanaclient.InjectAuthHeaders(context.Background(), r.client, cr, req)
 	if err != nil {
 		return "", fmt.Errorf("fetching credentials for version detection: %w", err)
 	}

@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	controllerruntime "sigs.k8s.io/controller-runtime"
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	. "github.com/onsi/ginkgo/v2"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -107,7 +107,7 @@ var _ = Describe("Folder reconciler", func() {
 		folder := struct {
 			cr  *v1beta1.GrafanaFolder
 			r   GrafanaFolderReconciler
-			req controllerruntime.Request
+			req ctrl.Request
 		}{}
 
 		folder.cr = &v1beta1.GrafanaFolder{
@@ -126,7 +126,7 @@ var _ = Describe("Folder reconciler", func() {
 		alertRuleGroup := struct {
 			cr  *v1beta1.GrafanaAlertRuleGroup
 			r   GrafanaAlertRuleGroupReconciler
-			req controllerruntime.Request
+			req ctrl.Request
 		}{}
 
 		alertRuleGroup.cr = &v1beta1.GrafanaAlertRuleGroup{

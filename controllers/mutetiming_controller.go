@@ -32,7 +32,7 @@ import (
 	"github.com/grafana/grafana-openapi-client-go/client/provisioning"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
+	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 )
 
@@ -124,7 +124,7 @@ func (r *GrafanaMuteTimingReconciler) Reconcile(ctx context.Context, req ctrl.Re
 }
 
 func (r *GrafanaMuteTimingReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaMuteTiming) error {
-	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
+	cl, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
 	}
@@ -191,7 +191,7 @@ func (r *GrafanaMuteTimingReconciler) reconcileWithInstance(ctx context.Context,
 }
 
 func (r *GrafanaMuteTimingReconciler) getMuteTimingByName(ctx context.Context, name string, instance *v1beta1.Grafana) (*models.MuteTimeInterval, error) {
-	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
+	cl, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return nil, fmt.Errorf("building grafana client: %w", err)
 	}
@@ -229,7 +229,7 @@ func (r *GrafanaMuteTimingReconciler) finalize(ctx context.Context, cr *v1beta1.
 }
 
 func (r *GrafanaMuteTimingReconciler) removeFromInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaMuteTiming) error {
-	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
+	cl, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
 	}

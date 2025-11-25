@@ -9,7 +9,7 @@ import (
 	"slices"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	grafanaClient "github.com/grafana/grafana-operator/v5/controllers/client"
+	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/controllers/content/cache"
 	"github.com/grafana/grafana-operator/v5/controllers/content/fetchers"
 	"github.com/grafana/grafana-operator/v5/embeds"
@@ -149,7 +149,7 @@ func (h *ContentResolver) fetchContentJSON(ctx context.Context) ([]byte, error) 
 	case ContentSourceTypeGzipJSON:
 		return cache.Gunzip([]byte(spec.GzipJSON))
 	case ContentSourceTypeURL:
-		return fetchers.FetchFromURL(ctx, h.resource, h.Client, grafanaClient.InsecureTLSConfiguration)
+		return fetchers.FetchFromURL(ctx, h.resource, h.Client, grafanaclient.InsecureTLSConfiguration)
 	case ContentSourceTypeJsonnet:
 		envs, err := h.getContentEnvs(ctx)
 		if err != nil {

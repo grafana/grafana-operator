@@ -10,7 +10,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
+	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/controllers/content/cache"
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 	"github.com/prometheus/client_golang/prometheus"
@@ -31,7 +31,7 @@ func FetchFromGrafanaCom(ctx context.Context, cr v1beta1.GrafanaContentResource,
 
 	source := spec.GrafanaCom
 
-	tlsConfig := client2.DefaultTLSConfiguration
+	tlsConfig := grafanaclient.DefaultTLSConfiguration
 
 	if source.Revision == nil {
 		rev, err := getLatestGrafanaComRevision(cr, tlsConfig)
@@ -61,7 +61,7 @@ func getLatestGrafanaComRevision(cr v1beta1.GrafanaContentResource, tlsConfig *t
 		return -1, err
 	}
 
-	client := client2.NewInstrumentedRoundTripper(true, tlsConfig, metrics.GrafanaComAPIRevisionRequests.MustCurryWith(prometheus.Labels{
+	client := grafanaclient.NewInstrumentedRoundTripper(true, tlsConfig, metrics.GrafanaComAPIRevisionRequests.MustCurryWith(prometheus.Labels{
 		"kind":     cr.GetObjectKind().GroupVersionKind().Kind,
 		"resource": fmt.Sprintf("%v/%v", cr.GetNamespace(), cr.GetName()),
 	}))

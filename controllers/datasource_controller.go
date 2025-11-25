@@ -29,7 +29,7 @@ import (
 	"github.com/spyzhov/ajson"
 
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
-	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
+	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
 	corev1 "k8s.io/api/core/v1"
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -201,7 +201,7 @@ func (r *GrafanaDatasourceReconciler) deleteOldDatasource(ctx context.Context, c
 			continue
 		}
 
-		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
+		grafanaClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 		if err != nil {
 			return err
 		}
@@ -231,7 +231,7 @@ func (r *GrafanaDatasourceReconciler) finalize(ctx context.Context, cr *v1beta1.
 	uid := cr.CustomUIDOrUID()
 
 	for _, grafana := range instances {
-		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
+		grafanaClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 		if err != nil {
 			return err
 		}
@@ -270,7 +270,7 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		return nil
 	}
 
-	grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
+	grafanaClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
 		return err
 	}

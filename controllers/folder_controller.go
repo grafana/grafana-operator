@@ -25,7 +25,7 @@ import (
 
 	"github.com/grafana/grafana-openapi-client-go/client/folders"
 	"github.com/grafana/grafana-openapi-client-go/models"
-	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
+	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
@@ -164,7 +164,7 @@ func (r *GrafanaFolderReconciler) finalize(ctx context.Context, cr *v1beta1.Graf
 	params := folders.NewDeleteFolderParams().WithForceDeleteRules(refTrue)
 
 	for _, grafana := range instances {
-		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
+		grafanaClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 		if err != nil {
 			return err
 		}
@@ -193,7 +193,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 	title := cr.GetTitle()
 	uid := cr.CustomUIDOrUID()
 
-	grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
+	grafanaClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
 		return err
 	}
