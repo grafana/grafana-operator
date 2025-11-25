@@ -36,7 +36,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
+	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
 )
 
 const (
@@ -236,7 +236,7 @@ func crToModel(cr *v1beta1.GrafanaAlertRuleGroup, folderUID string) (models.Aler
 }
 
 func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaAlertRuleGroup, mGroup *models.AlertRuleGroup, disableProvenance *string) error {
-	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
+	cl, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
 	}
@@ -328,7 +328,7 @@ func (r *GrafanaAlertRuleGroupReconciler) finalize(ctx context.Context, cr *v1be
 	for _, instance := range instances {
 		// Skip cleanup in instances
 		if isCleanupInGrafanaRequired {
-			cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &instance)
+			cl, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, &instance)
 			if err != nil {
 				return fmt.Errorf("building grafana client: %w", err)
 			}

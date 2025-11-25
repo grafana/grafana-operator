@@ -38,7 +38,7 @@ import (
 
 	"github.com/grafana/grafana-openapi-client-go/client/provisioning"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
+	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 )
 
@@ -268,7 +268,7 @@ func assembleNotificationPolicyRoutes(ctx context.Context, k8sClient client.Clie
 }
 
 func (r *GrafanaNotificationPolicyReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaNotificationPolicy) error {
-	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
+	cl, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
 	}
@@ -317,7 +317,7 @@ func (r *GrafanaNotificationPolicyReconciler) finalize(ctx context.Context, cr *
 			continue
 		}
 
-		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
+		grafanaClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 		if err != nil {
 			return fmt.Errorf("building grafana client: %w", err)
 		}
@@ -347,6 +347,7 @@ func (r *GrafanaNotificationPolicyReconciler) SetupWithManager(mgr ctrl.Manager)
 				log.Error(err, "failed to fetch notification policies for watch mapping")
 				return nil
 			}
+
 			requests := make([]reconcile.Request, len(nps.Items))
 			for i, np := range nps.Items {
 				requests[i] = reconcile.Request{
@@ -356,10 +357,12 @@ func (r *GrafanaNotificationPolicyReconciler) SetupWithManager(mgr ctrl.Manager)
 					},
 				}
 			}
+
 			return requests
 		})).
 		Watches(&v1beta1.GrafanaNotificationPolicyRoute{}, handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
 			log := logf.FromContext(ctx).WithName("GrafanaNotificationPolicyReconciler")
+
 			npr, ok := o.(*v1beta1.GrafanaNotificationPolicyRoute)
 			if !ok {
 				log.Error(fmt.Errorf("expected object to be NotificationPolicyRoute"), "skipping resource")
@@ -377,6 +380,7 @@ func (r *GrafanaNotificationPolicyReconciler) SetupWithManager(mgr ctrl.Manager)
 				setInvalidSpecMutuallyExclusive(&npr.Status.Conditions, npr.Generation)
 				return nil
 			}
+
 			removeInvalidSpec(&npr.Status.Conditions)
 
 			// resync all notification policies that have a routeSelector that matches the routes labels
@@ -385,7 +389,9 @@ func (r *GrafanaNotificationPolicyReconciler) SetupWithManager(mgr ctrl.Manager)
 				log.Error(err, "failed to fetch notification policies for watch mapping")
 				return nil
 			}
+
 			requests := []reconcile.Request{}
+
 			for _, np := range npList.Items {
 				if !np.Spec.Route.HasRouteSelector() {
 					continue
@@ -403,6 +409,7 @@ func (r *GrafanaNotificationPolicyReconciler) SetupWithManager(mgr ctrl.Manager)
 						},
 					})
 			}
+
 			return requests
 		})).
 		WithEventFilter(ignoreStatusUpdates()).

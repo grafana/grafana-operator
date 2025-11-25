@@ -41,7 +41,7 @@ import (
 	"github.com/grafana/grafana-openapi-client-go/client/provisioning"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
+	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -167,7 +167,7 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaContactPoint, settings []models.JSON) error {
 	log := logf.FromContext(ctx)
 
-	cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, instance)
+	cl, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
 	}
@@ -327,7 +327,7 @@ func (r *GrafanaContactPointReconciler) finalize(ctx context.Context, cr *v1beta
 	}
 
 	for _, instance := range instances {
-		cl, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &instance)
+		cl, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, &instance)
 		if err != nil {
 			return fmt.Errorf("building grafana client: %w", err)
 		}

@@ -19,7 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
-	controllerruntime "sigs.k8s.io/controller-runtime"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -62,7 +62,7 @@ var (
 
 type GrafanaCommonReconciler interface {
 	Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error
-	Reconcile(ctx context.Context, req controllerruntime.Request) (controllerruntime.Result, error)
+	Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error)
 }
 
 type Config struct {

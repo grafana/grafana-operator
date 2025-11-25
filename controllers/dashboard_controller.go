@@ -31,7 +31,7 @@ import (
 	"github.com/grafana/grafana-openapi-client-go/client/search"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	client2 "github.com/grafana/grafana-operator/v5/controllers/client"
+	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/controllers/content"
 	corev1 "k8s.io/api/core/v1"
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
@@ -226,7 +226,7 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 	}
 
 	for _, grafana := range instances {
-		grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
+		grafanaClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 		if err != nil {
 			return fmt.Errorf("creating grafana http client: %w", err)
 		}
@@ -298,7 +298,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		return fmt.Errorf("external grafana instances don't support plugins, please remove spec.plugins from your dashboard cr")
 	}
 
-	grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
+	grafanaClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
 		return fmt.Errorf("creating grafana http client: %w", err)
 	}
@@ -616,7 +616,7 @@ func (r *GrafanaDashboardReconciler) requestsForChangeByField(indexKey string) h
 func (r *GrafanaDashboardReconciler) UpdateHomeDashboard(ctx context.Context, grafana v1beta1.Grafana, uid string, dashboard *v1beta1.GrafanaDashboard) error {
 	log := logf.FromContext(ctx)
 
-	grafanaClient, err := client2.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
+	grafanaClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 	if err != nil {
 		return err
 	}
