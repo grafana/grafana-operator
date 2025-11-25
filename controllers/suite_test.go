@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -280,4 +281,19 @@ func reconcileAndValidateCondition(r GrafanaCommonReconciler, cr v1beta1.CommonR
 	} else {
 		require.NoError(t, err)
 	}
+}
+
+func getJSONmux(content map[string]string) *http.ServeMux {
+	GinkgoHelper()
+
+	mux := http.NewServeMux()
+
+	for endpoint, payload := range content {
+		mux.HandleFunc(endpoint, func(w http.ResponseWriter, req *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, payload)
+		})
+	}
+
+	return mux
 }

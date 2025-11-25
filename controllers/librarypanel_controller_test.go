@@ -1,8 +1,15 @@
 package controllers
 
 import (
+	"fmt"
+	"net/http/httptest"
+
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	. "github.com/onsi/ginkgo/v2"
 )
@@ -87,4 +94,98 @@ var _ = Describe("LibraryPanel Reconciler: Provoke Conditions", func() {
 			reconcileAndValidateCondition(r, cr, tt.want, tt.wantErr)
 		})
 	}
+})
+
+var _ = Describe("LibraryPanel Reconciler", Ordered, func() {
+	t := GinkgoT()
+
+	const (
+		uid       = "url-based-library-panel"
+		name1     = "name1"
+		name2     = "name2"
+		endpoint1 = "/endpoint1"
+		endpoint2 = "/endpoint2"
+	)
+
+	panel1 := fmt.Sprintf(`{ "name": "%s", "uid": "%s", "type": "text", "model": {} }`, name1, uid)
+	panel2 := fmt.Sprintf(`{ "name": "%s", "uid": "%s", "type": "text", "model": {} }`, name2, uid)
+
+	mux := getJSONmux(
+		map[string]string{
+			endpoint1: panel1,
+			endpoint2: panel2,
+		},
+	)
+
+	ts := httptest.NewServer(mux)
+	AfterAll(func() {
+		ts.Close()
+	})
+
+	It("updates librarypanel in Grafana upon .spec.url change", func() {
+		grafanaClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		require.NoError(t, err)
+
+		cr := &v1beta1.GrafanaLibraryPanel{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "url-based-library-panel",
+			},
+			Spec: v1beta1.GrafanaLibraryPanelSpec{
+				GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
+					InstanceSelector: &metav1.LabelSelector{
+						MatchLabels: externalGrafanaCr.GetLabels(),
+					},
+				},
+			},
+		}
+
+		key := types.NamespacedName{
+			Namespace: cr.Namespace,
+			Name:      cr.Name,
+		}
+
+		r := &GrafanaLibraryPanelReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+		req := requestFromMeta(cr.Metadata())
+
+		// First revision
+		cr.Spec.URL = ts.URL + endpoint1
+
+		err = k8sClient.Create(testCtx, cr)
+		require.NoError(t, err)
+
+		_, err = r.Reconcile(testCtx, req)
+		require.NoError(t, err)
+
+		panel, err := grafanaClient.LibraryElements.GetLibraryElementByUID(uid)
+		require.NoError(t, err)
+
+		assert.Contains(t, panel.String(), name1)
+
+		// Second revision
+		cr = &v1beta1.GrafanaLibraryPanel{}
+		err = k8sClient.Get(testCtx, key, cr)
+		require.NoError(t, err)
+
+		cr.Spec.URL = ts.URL + endpoint2
+
+		err = k8sClient.Update(testCtx, cr)
+		require.NoError(t, err)
+
+		_, err = r.Reconcile(testCtx, req)
+		require.NoError(t, err)
+
+		panel, err = grafanaClient.LibraryElements.GetLibraryElementByUID(uid)
+		require.NoError(t, err)
+
+		assert.NotContains(t, panel.String(), name1)
+		assert.Contains(t, panel.String(), name2)
+
+		// Cleanup
+		err = k8sClient.Delete(testCtx, cr)
+		require.NoError(t, err)
+
+		_, err = r.Reconcile(testCtx, req)
+		require.NoError(t, err)
+	})
 })
