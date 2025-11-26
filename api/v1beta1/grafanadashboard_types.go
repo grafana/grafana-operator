@@ -106,11 +106,6 @@ func (in *GrafanaDashboard) Conditions() *[]metav1.Condition {
 	return &in.Status.Conditions
 }
 
-// CurrentGeneration implements FolderReferencer.
-func (in *GrafanaDashboard) CurrentGeneration() int64 {
-	return in.Generation
-}
-
 // GrafanaContentSpec implements GrafanaContentResource
 func (in *GrafanaDashboard) GrafanaContentSpec() *GrafanaContentSpec {
 	return &in.Spec.GrafanaContentSpec

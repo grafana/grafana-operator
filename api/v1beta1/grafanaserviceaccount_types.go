@@ -146,6 +146,8 @@ type GrafanaServiceAccount struct {
 	Status GrafanaServiceAccountStatus `json:"status,omitempty"`
 }
 
+var _ CommonResource = (*GrafanaServiceAccount)(nil)
+
 //+kubebuilder:object:root=true
 
 // GrafanaServiceAccountList contains a list of GrafanaServiceAccount
@@ -166,14 +168,27 @@ func (in *GrafanaServiceAccountList) Find(namespace, name string) *GrafanaServic
 	return nil
 }
 
-// MatchNamespace returns the namespace where this service account is defined.
+// MatchLabels is a no-op for GrafanaServiceAccount
+func (in *GrafanaServiceAccount) MatchLabels() *metav1.LabelSelector {
+	labels := &metav1.LabelSelector{
+		MatchLabels: map[string]string{
+			"non-existent set of labels": "no-op",
+		},
+	}
+
+	return labels
+}
+
 func (in *GrafanaServiceAccount) MatchNamespace() string {
 	return in.Namespace
 }
 
-// AllowCrossNamespace indicates whether cross-namespace import is allowed for this resource.
+func (in *GrafanaServiceAccount) Metadata() metav1.ObjectMeta {
+	return in.ObjectMeta
+}
+
+// AllowCrossNamespace is a no-op for GrafanaServiceAccount
 func (in *GrafanaServiceAccount) AllowCrossNamespace() bool {
-	// return in.Spec.AllowCrossNamespaceImport
 	return false
 }
 

@@ -20,7 +20,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 
-	operatorapi "github.com/grafana/grafana-operator/v5/api"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -89,11 +88,6 @@ func (in *GrafanaFolder) Conditions() *[]metav1.Condition {
 	return &in.Status.Conditions
 }
 
-// CurrentGeneration implements FolderReferencer.
-func (in *GrafanaFolder) CurrentGeneration() int64 {
-	return in.Generation
-}
-
 // FolderNamespace implements FolderReferencer.
 func (in *GrafanaFolder) FolderNamespace() string {
 	return in.Namespace
@@ -118,7 +112,7 @@ func (in *GrafanaFolder) CustomUIDOrUID() string {
 	return string(in.UID)
 }
 
-var _ operatorapi.FolderReferencer = (*GrafanaFolder)(nil)
+var _ FolderReferencer = (*GrafanaFolder)(nil)
 
 //+kubebuilder:object:root=true
 

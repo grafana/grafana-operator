@@ -78,11 +78,6 @@ func (in *GrafanaLibraryPanel) Conditions() *[]metav1.Condition {
 	return &in.Status.Conditions
 }
 
-// CurrentGeneration implements FolderReferencer.
-func (in *GrafanaLibraryPanel) CurrentGeneration() int64 {
-	return in.Generation
-}
-
 func (in *GrafanaLibraryPanel) MatchLabels() *metav1.LabelSelector {
 	return in.Spec.InstanceSelector
 }
