@@ -43,7 +43,7 @@ func (r *CompleteReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana,
 }
 
 func (r *CompleteReconciler) getVersion(ctx context.Context, cr *v1beta1.Grafana) (string, error) {
-	cl, err := grafanaclient.NewHTTPClient(ctx, r.client, cr)
+	httpClient, err := grafanaclient.NewHTTPClient(ctx, r.client, cr)
 	if err != nil {
 		return "", fmt.Errorf("setup of the http client: %w", err)
 	}
@@ -65,7 +65,7 @@ func (r *CompleteReconciler) getVersion(ctx context.Context, cr *v1beta1.Grafana
 		return "", fmt.Errorf("fetching credentials for version detection: %w", err)
 	}
 
-	resp, err := cl.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return "", err
 	}

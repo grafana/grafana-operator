@@ -236,14 +236,14 @@ func crToModel(cr *v1beta1.GrafanaAlertRuleGroup, folderUID string) (models.Aler
 }
 
 func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaAlertRuleGroup, mGroup *models.AlertRuleGroup, disableProvenance *string) error {
-	cl, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
+	gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
 	}
 
 	folderUID := mGroup.FolderUID
 
-	_, err = cl.Folders.GetFolderByUID(folderUID) //nolint:errcheck
+	_, err = gClient.Folders.GetFolderByUID(folderUID) //nolint:errcheck
 	if err != nil {
 		var folderNotFound *folders.GetFolderByUIDNotFound
 		if errors.As(err, &folderNotFound) {
@@ -253,7 +253,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 		return fmt.Errorf("fetching folder: %w", err)
 	}
 
-	applied, err := cl.Provisioning.GetAlertRuleGroup(mGroup.Title, folderUID)
+	applied, err := gClient.Provisioning.GetAlertRuleGroup(mGroup.Title, folderUID)
 
 	var ruleNotFound *provisioning.GetAlertRuleGroupNotFound
 	if err != nil && !errors.As(err, &ruleNotFound) {
@@ -283,7 +283,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 				WithBody(mRule).
 				WithXDisableProvenance(disableProvenance)
 
-			_, err = cl.Provisioning.PostAlertRule(params) //nolint:errcheck
+			_, err = gClient.Provisioning.PostAlertRule(params) //nolint:errcheck
 			if err != nil {
 				return fmt.Errorf("creating rule: %w", err)
 			}
@@ -298,7 +298,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 		WithFolderUID(folderUID).
 		WithXDisableProvenance(disableProvenance)
 
-	_, err = cl.Provisioning.PutAlertRuleGroup(params) //nolint:errcheck
+	_, err = gClient.Provisioning.PutAlertRuleGroup(params) //nolint:errcheck
 	if err != nil {
 		return fmt.Errorf("updating group: %s", err.Error())
 	}
@@ -328,12 +328,12 @@ func (r *GrafanaAlertRuleGroupReconciler) finalize(ctx context.Context, cr *v1be
 	for _, instance := range instances {
 		// Skip cleanup in instances
 		if isCleanupInGrafanaRequired {
-			cl, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, &instance)
+			gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, &instance)
 			if err != nil {
 				return fmt.Errorf("building grafana client: %w", err)
 			}
 
-			_, err = cl.Provisioning.DeleteAlertRuleGroup(cr.GroupName(), folderUID) //nolint:errcheck
+			_, err = gClient.Provisioning.DeleteAlertRuleGroup(cr.GroupName(), folderUID) //nolint:errcheck
 			if err != nil {
 				var notFound *provisioning.DeleteAlertRuleGroupNotFound
 				if !errors.As(err, &notFound) {

@@ -201,12 +201,12 @@ func (r *GrafanaDatasourceReconciler) deleteOldDatasource(ctx context.Context, c
 			continue
 		}
 
-		grafanaClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 		if err != nil {
 			return err
 		}
 
-		_, err = grafanaClient.Datasources.DeleteDataSourceByUID(*uid) //nolint
+		_, err = gClient.Datasources.DeleteDataSourceByUID(*uid) //nolint
 
 		var notFound *datasources.GetDataSourceByUIDNotFound
 		if err != nil {
@@ -231,12 +231,12 @@ func (r *GrafanaDatasourceReconciler) finalize(ctx context.Context, cr *v1beta1.
 	uid := cr.CustomUIDOrUID()
 
 	for _, grafana := range instances {
-		grafanaClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 		if err != nil {
 			return err
 		}
 
-		_, err = grafanaClient.Datasources.DeleteDataSourceByUID(uid) //nolint:errcheck
+		_, err = gClient.Datasources.DeleteDataSourceByUID(uid) //nolint:errcheck
 		if err != nil {
 			var notFound *datasources.DeleteDataSourceByUIDNotFound
 			if !errors.As(err, &notFound) {
@@ -270,12 +270,12 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		return nil
 	}
 
-	grafanaClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
+	gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
 		return err
 	}
 
-	exists, uid, err := r.Exists(grafanaClient, datasource.UID, datasource.Name)
+	exists, uid, err := r.Exists(gClient, datasource.UID, datasource.Name)
 	if err != nil {
 		return err
 	}
@@ -296,7 +296,7 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		}
 
 		datasource.UID = uid
-		_, err := grafanaClient.Datasources.UpdateDataSourceByUID(datasource.UID, &body) //nolint
+		_, err := gClient.Datasources.UpdateDataSourceByUID(datasource.UID, &body) //nolint
 		if err != nil {
 			return err
 		}
@@ -305,7 +305,7 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		if err := json.Unmarshal(encoded, &body); err != nil {
 			return fmt.Errorf("representing data source as create command: %w", err)
 		}
-		_, err = grafanaClient.Datasources.AddDataSource(&body) //nolint
+		_, err = gClient.Datasources.AddDataSource(&body) //nolint
 		if err != nil {
 			return err
 		}

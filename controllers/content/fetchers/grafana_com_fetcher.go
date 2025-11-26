@@ -61,12 +61,12 @@ func getLatestGrafanaComRevision(cr v1beta1.GrafanaContentResource, tlsConfig *t
 		return -1, err
 	}
 
-	client := grafanaclient.NewInstrumentedRoundTripper(true, tlsConfig, metrics.GrafanaComAPIRevisionRequests.MustCurryWith(prometheus.Labels{
+	httpClient := grafanaclient.NewInstrumentedRoundTripper(true, tlsConfig, metrics.GrafanaComAPIRevisionRequests.MustCurryWith(prometheus.Labels{
 		"kind":     cr.GetObjectKind().GroupVersionKind().Kind,
 		"resource": fmt.Sprintf("%v/%v", cr.GetNamespace(), cr.GetName()),
 	}))
 
-	response, err := client.RoundTrip(request)
+	response, err := httpClient.RoundTrip(request)
 	if err != nil {
 		return -1, err
 	}

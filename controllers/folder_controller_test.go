@@ -159,7 +159,7 @@ var _ = Describe("Folder reconciler", func() {
 		alertRuleGroup.r = GrafanaAlertRuleGroupReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
 		alertRuleGroup.req = requestFromMeta(alertRuleGroup.cr.ObjectMeta)
 
-		grafanaClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
 		require.NoError(t, err)
 
 		// Create folder
@@ -179,10 +179,10 @@ var _ = Describe("Folder reconciler", func() {
 		// Make sure both resources exist in Grafana
 		uid := folder.cr.Spec.CustomUID
 
-		_, err = grafanaClient.Folders.GetFolderByUID(uid) //nolint:errcheck
+		_, err = gClient.Folders.GetFolderByUID(uid) //nolint:errcheck
 		require.NoErrorf(t, err, "Folder should exist in Grafana")
 
-		_, err = grafanaClient.Provisioning.GetAlertRuleGroup(alertRuleGroup.cr.GroupName(), uid) //nolint:errcheck
+		_, err = gClient.Provisioning.GetAlertRuleGroup(alertRuleGroup.cr.GroupName(), uid) //nolint:errcheck
 		require.NoErrorf(t, err, "AlertRuleGroup should exist in Grafana")
 
 		// Delete folder
@@ -193,7 +193,7 @@ var _ = Describe("Folder reconciler", func() {
 		require.NoError(t, err)
 
 		// Make sure the folder is gone
-		_, err = grafanaClient.Folders.GetFolderByUID(uid) //nolint:errcheck
+		_, err = gClient.Folders.GetFolderByUID(uid) //nolint:errcheck
 		require.Error(t, err)
 		assert.IsType(t, &folders.GetFolderByUIDNotFound{}, err)
 	})
