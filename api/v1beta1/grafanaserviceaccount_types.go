@@ -172,7 +172,7 @@ func (in *GrafanaServiceAccountList) Find(namespace, name string) *GrafanaServic
 func (in *GrafanaServiceAccount) MatchLabels() *metav1.LabelSelector {
 	labels := &metav1.LabelSelector{
 		MatchLabels: map[string]string{
-			"non-existent-set-of-labels": "no-op",
+			"non-existent set of labels": "no-op",
 		},
 	}
 
