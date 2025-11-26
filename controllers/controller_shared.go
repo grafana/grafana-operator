@@ -171,11 +171,11 @@ func getFolderUID(ctx context.Context, k8sClient client.Client, ref v1beta1.Fold
 	}, folder)
 	if err != nil {
 		if kuberr.IsNotFound(err) {
-			setNoMatchingFolder(ref.Conditions(), ref.CurrentGeneration(), "NotFound", fmt.Sprintf("Folder with name %s not found in namespace %s", ref.FolderRef(), ref.FolderNamespace()))
+			setNoMatchingFolder(ref.Conditions(), ref.GetGeneration(), "NotFound", fmt.Sprintf("Folder with name %s not found in namespace %s", ref.FolderRef(), ref.FolderNamespace()))
 			return "", err
 		}
 
-		setNoMatchingFolder(ref.Conditions(), ref.CurrentGeneration(), "ErrFetchingFolder", fmt.Sprintf("Failed to fetch folder: %s", err.Error()))
+		setNoMatchingFolder(ref.Conditions(), ref.GetGeneration(), "ErrFetchingFolder", fmt.Sprintf("Failed to fetch folder: %s", err.Error()))
 
 		return "", err
 	}

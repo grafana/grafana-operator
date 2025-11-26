@@ -166,11 +166,6 @@ func (in *GrafanaAlertRuleGroup) GroupName() string {
 	return groupName
 }
 
-// CurrentGeneration implements FolderReferencer.
-func (in *GrafanaAlertRuleGroup) CurrentGeneration() int64 {
-	return in.Generation
-}
-
 // Conditions implements FolderReferencer.
 func (in *GrafanaAlertRuleGroup) Conditions() *[]metav1.Condition {
 	return &in.Status.Conditions

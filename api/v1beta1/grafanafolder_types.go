@@ -88,11 +88,6 @@ func (in *GrafanaFolder) Conditions() *[]metav1.Condition {
 	return &in.Status.Conditions
 }
 
-// CurrentGeneration implements FolderReferencer.
-func (in *GrafanaFolder) CurrentGeneration() int64 {
-	return in.Generation
-}
-
 // FolderNamespace implements FolderReferencer.
 func (in *GrafanaFolder) FolderNamespace() string {
 	return in.Namespace
