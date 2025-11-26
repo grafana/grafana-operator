@@ -51,8 +51,6 @@ linters:
       no-unaliased: true
 
       alias:
-        - pkg: github.com/grafana/grafana-operator/v5/api
-          alias: operatorapi
         - pkg: github.com/grafana/grafana-operator/v5/controllers/client
           alias: grafanaclient
         - pkg: github.com/openshift/api/route/v1

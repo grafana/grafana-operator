@@ -18,7 +18,6 @@ package v1beta1
 
 import (
 	"github.com/grafana/grafana-openapi-client-go/models"
-	operatorapi "github.com/grafana/grafana-operator/v5/api"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -216,7 +215,7 @@ func (in *GrafanaAlertRuleGroup) NamespacedResource() NamespacedResource {
 	return NewNamespacedResource(in.Namespace, in.Name, in.GroupName())
 }
 
-var _ operatorapi.FolderReferencer = (*GrafanaAlertRuleGroup)(nil)
+var _ FolderReferencer = (*GrafanaAlertRuleGroup)(nil)
 
 //+kubebuilder:object:root=true
 
