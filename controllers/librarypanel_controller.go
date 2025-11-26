@@ -183,7 +183,7 @@ func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Contex
 		return fmt.Errorf("external grafana instances don't support plugins, please remove spec.plugins from your library panel cr")
 	}
 
-	grafanaClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
+	gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return err
 	}
@@ -191,7 +191,7 @@ func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Contex
 	uid := content.CustomUIDOrUID(cr, fmt.Sprintf("%s", model["uid"]))
 	name := fmt.Sprintf("%s", model["name"])
 
-	resp, err := grafanaClient.LibraryElements.GetLibraryElementByUID(uid)
+	resp, err := gClient.LibraryElements.GetLibraryElementByUID(uid)
 
 	var panelNotFound *library_elements.GetLibraryElementByUIDNotFound
 	if err != nil {
@@ -201,7 +201,7 @@ func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Contex
 
 		// doesn't yet exist--should provision
 		//nolint:errcheck
-		_, err = grafanaClient.LibraryElements.CreateLibraryElement(&models.CreateLibraryElementCommand{
+		_, err = gClient.LibraryElements.CreateLibraryElement(&models.CreateLibraryElementCommand{
 			FolderUID: folderUID,
 			Kind:      int64(libraryElementTypePanel),
 			Model:     model,
@@ -217,7 +217,7 @@ func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Contex
 
 	// handle content caching
 	if content.HasChanged(cr, hash) {
-		_, err = grafanaClient.LibraryElements.UpdateLibraryElement(uid, &models.PatchLibraryElementCommand{ //nolint:errcheck
+		_, err = gClient.LibraryElements.UpdateLibraryElement(uid, &models.PatchLibraryElementCommand{ //nolint:errcheck
 			FolderUID: folderUID,
 			Kind:      int64(libraryElementTypePanel),
 			Model:     model,
@@ -245,14 +245,14 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, cr *v1beta
 	}
 
 	for _, grafana := range instances {
-		grafanaClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 		if err != nil {
 			return err
 		}
 
 		isCleanupInGrafanaRequired := true
 
-		resp, err := grafanaClient.LibraryElements.GetLibraryElementByUID(uid)
+		resp, err := gClient.LibraryElements.GetLibraryElementByUID(uid)
 		if err != nil {
 			var notFound *library_elements.GetLibraryElementByUIDNotFound
 			if !errors.As(err, &notFound) {
@@ -268,7 +268,7 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, cr *v1beta
 				return fmt.Errorf("library panel %s/%s/%s on instance %s/%s has existing connections", cr.Namespace, cr.Name, uid, grafana.Namespace, grafana.Name)
 			}
 
-			_, err = grafanaClient.LibraryElements.DeleteLibraryElementByUID(uid) //nolint:errcheck
+			_, err = gClient.LibraryElements.DeleteLibraryElementByUID(uid) //nolint:errcheck
 			if err != nil {
 				var notFound *library_elements.DeleteLibraryElementByUIDNotFound
 				if !errors.As(err, &notFound) {

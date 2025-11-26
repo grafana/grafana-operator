@@ -164,12 +164,12 @@ func (r *GrafanaFolderReconciler) finalize(ctx context.Context, cr *v1beta1.Graf
 	params := folders.NewDeleteFolderParams().WithForceDeleteRules(refTrue)
 
 	for _, grafana := range instances {
-		grafanaClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 		if err != nil {
 			return err
 		}
 
-		_, err = grafanaClient.Folders.DeleteFolder(params.WithFolderUID(uid)) //nolint
+		_, err = gClient.Folders.DeleteFolder(params.WithFolderUID(uid)) //nolint
 		if err != nil {
 			var notFound *folders.DeleteFolderNotFound
 			if !errors.As(err, &notFound) {
@@ -193,12 +193,12 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 	title := cr.GetTitle()
 	uid := cr.CustomUIDOrUID()
 
-	grafanaClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
+	gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
 		return err
 	}
 
-	exists, remoteUID, remoteParent, err := r.Exists(grafanaClient, cr)
+	exists, remoteUID, remoteParent, err := r.Exists(gClient, cr)
 	if err != nil {
 		return err
 	}
@@ -214,7 +214,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 		uid = remoteUID
 
 		if !cr.Unchanged() {
-			_, err = grafanaClient.Folders.UpdateFolder(remoteUID, &models.UpdateFolderCommand{ //nolint:errcheck
+			_, err = gClient.Folders.UpdateFolder(remoteUID, &models.UpdateFolderCommand{ //nolint:errcheck
 				Overwrite: true,
 				Title:     title,
 			})
@@ -224,7 +224,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 		}
 
 		if parentFolderUID != remoteParent {
-			_, err = grafanaClient.Folders.MoveFolder(remoteUID, &models.MoveFolderCommand{ //nolint:errcheck
+			_, err = gClient.Folders.MoveFolder(remoteUID, &models.MoveFolderCommand{ //nolint:errcheck
 				ParentUID: parentFolderUID,
 			})
 			if err != nil {
@@ -238,7 +238,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 			ParentUID: parentFolderUID,
 		}
 
-		_, err := grafanaClient.Folders.CreateFolder(body) //nolint:errcheck
+		_, err := gClient.Folders.CreateFolder(body) //nolint:errcheck
 		if err != nil {
 			return err
 		}
@@ -253,7 +253,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 			return fmt.Errorf("failed to unmarshal spec.permissions: %w", err)
 		}
 
-		_, err = grafanaClient.FolderPermissions.UpdateFolderPermissions(uid, &permissions) //nolint:errcheck
+		_, err = gClient.FolderPermissions.UpdateFolderPermissions(uid, &permissions) //nolint:errcheck
 		if err != nil {
 			return fmt.Errorf("failed to update folder permissions: %w", err)
 		}

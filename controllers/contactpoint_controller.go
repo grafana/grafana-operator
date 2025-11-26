@@ -167,12 +167,12 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaContactPoint, settings []models.JSON) error {
 	log := logf.FromContext(ctx)
 
-	cl, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
+	gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
 	}
 
-	remoteReceivers, err := r.getReceiversFromName(cl, cr)
+	remoteReceivers, err := r.getReceiversFromName(gClient, cr)
 	if err != nil {
 		return err
 	}
@@ -208,7 +208,7 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 				params = params.WithXDisableProvenance(&editable)
 			}
 
-			_, err := cl.Provisioning.PostContactpoints(params) //nolint:errcheck
+			_, err := gClient.Provisioning.PostContactpoints(params) //nolint:errcheck
 			if err != nil {
 				return fmt.Errorf("creating contact point receiver: %w", err)
 			}
@@ -222,7 +222,7 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 				log.Info("update existing contact point receiver", "uid", recUID)
 
 				// TODO Implement provenance when Grafana API allows changing it
-				_, err := cl.Provisioning.PutContactpoint(provisioning.NewPutContactpointParams().WithUID(recUID).WithBody(cp)) //nolint:errcheck
+				_, err := gClient.Provisioning.PutContactpoint(provisioning.NewPutContactpointParams().WithUID(recUID).WithBody(cp)) //nolint:errcheck
 				if err != nil {
 					return fmt.Errorf("updating contact point receiver: %w", err)
 				}
@@ -237,7 +237,7 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 	for _, rec := range remoteReceivers {
 		log.V(1).Info("deleting contact point receiver not in spec", "uid", rec.UID)
 
-		_, err = cl.Provisioning.DeleteContactpoints(rec.UID) //nolint:errcheck
+		_, err = gClient.Provisioning.DeleteContactpoints(rec.UID) //nolint:errcheck
 		if err != nil {
 			return fmt.Errorf("deleting contact point: %w", err)
 		}
@@ -327,18 +327,18 @@ func (r *GrafanaContactPointReconciler) finalize(ctx context.Context, cr *v1beta
 	}
 
 	for _, instance := range instances {
-		cl, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, &instance)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, &instance)
 		if err != nil {
 			return fmt.Errorf("building grafana client: %w", err)
 		}
 
-		remoteReceivers, err := r.getReceiversFromName(cl, cr)
+		remoteReceivers, err := r.getReceiversFromName(gClient, cr)
 		if err != nil {
 			return err
 		}
 
 		for _, rec := range remoteReceivers {
-			_, err = cl.Provisioning.DeleteContactpoints(rec.UID) //nolint:errcheck
+			_, err = gClient.Provisioning.DeleteContactpoints(rec.UID) //nolint:errcheck
 			if err != nil {
 				return fmt.Errorf("deleting contact point: %w", err)
 			}

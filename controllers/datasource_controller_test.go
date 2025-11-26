@@ -324,10 +324,10 @@ var _ = Describe("Datasource: substitute reference values", func() {
 
 		containsEqualCondition(cr.Status.Conditions, condition)
 
-		cl, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
 		require.NoError(t, err)
 
-		model, err := cl.Datasources.GetDataSourceByUID(ds.Spec.CustomUID)
+		model, err := gClient.Datasources.GetDataSourceByUID(ds.Spec.CustomUID)
 		require.NoError(t, err)
 
 		assert.Equal(t, "https://demo.promlabs.com", model.Payload.URL)

@@ -123,7 +123,7 @@ func (r *GrafanaNotificationTemplateReconciler) Reconcile(ctx context.Context, r
 }
 
 func (r *GrafanaNotificationTemplateReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaNotificationTemplate) error {
-	cl, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
+	gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
 	}
@@ -144,7 +144,7 @@ func (r *GrafanaNotificationTemplateReconciler) reconcileWithInstance(ctx contex
 		params.SetXDisableProvenance(refTrue)
 	}
 
-	_, err = cl.Provisioning.PutTemplate(params) //nolint:errcheck
+	_, err = gClient.Provisioning.PutTemplate(params) //nolint:errcheck
 	if err != nil {
 		return fmt.Errorf("creating or updating notification template: %w", err)
 	}
@@ -178,12 +178,12 @@ func (r *GrafanaNotificationTemplateReconciler) finalize(ctx context.Context, cr
 }
 
 func (r *GrafanaNotificationTemplateReconciler) removeFromInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaNotificationTemplate) error {
-	cl, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
+	gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
 	}
 
-	_, err = cl.Provisioning.DeleteTemplate(&provisioning.DeleteTemplateParams{Name: cr.Spec.Name}) //nolint:errcheck
+	_, err = gClient.Provisioning.DeleteTemplate(&provisioning.DeleteTemplateParams{Name: cr.Spec.Name}) //nolint:errcheck
 	if err != nil {
 		return fmt.Errorf("deleting notification template: %w", err)
 	}

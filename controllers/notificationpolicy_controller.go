@@ -268,7 +268,7 @@ func assembleNotificationPolicyRoutes(ctx context.Context, k8sClient client.Clie
 }
 
 func (r *GrafanaNotificationPolicyReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaNotificationPolicy) error {
-	cl, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
+	gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
 	}
@@ -285,7 +285,7 @@ func (r *GrafanaNotificationPolicyReconciler) reconcileWithInstance(ctx context.
 		params.SetXDisableProvenance(refTrue)
 	}
 
-	if _, err := cl.Provisioning.PutPolicyTree(params); err != nil { //nolint:errcheck
+	if _, err := gClient.Provisioning.PutPolicyTree(params); err != nil { //nolint:errcheck
 		return fmt.Errorf("applying notification policy: %w", err)
 	}
 
@@ -317,12 +317,12 @@ func (r *GrafanaNotificationPolicyReconciler) finalize(ctx context.Context, cr *
 			continue
 		}
 
-		grafanaClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
 		if err != nil {
 			return fmt.Errorf("building grafana client: %w", err)
 		}
 
-		if _, err := grafanaClient.Provisioning.ResetPolicyTree(); err != nil { //nolint:errcheck
+		if _, err := gClient.Provisioning.ResetPolicyTree(); err != nil { //nolint:errcheck
 			return fmt.Errorf("resetting policy tree")
 		}
 

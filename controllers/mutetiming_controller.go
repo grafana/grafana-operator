@@ -124,7 +124,7 @@ func (r *GrafanaMuteTimingReconciler) Reconcile(ctx context.Context, req ctrl.Re
 }
 
 func (r *GrafanaMuteTimingReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaMuteTiming) error {
-	cl, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
+	gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
 	}
@@ -170,7 +170,7 @@ func (r *GrafanaMuteTimingReconciler) reconcileWithInstance(ctx context.Context,
 			params.SetXDisableProvenance(refTrue)
 		}
 
-		_, err = cl.Provisioning.PostMuteTiming(params) //nolint:errcheck
+		_, err = gClient.Provisioning.PostMuteTiming(params) //nolint:errcheck
 		if err != nil {
 			return fmt.Errorf("creating mute timing: %w", err)
 		}
@@ -180,7 +180,7 @@ func (r *GrafanaMuteTimingReconciler) reconcileWithInstance(ctx context.Context,
 			params.SetXDisableProvenance(refTrue)
 		}
 
-		_, err = cl.Provisioning.PutMuteTiming(params) //nolint:errcheck
+		_, err = gClient.Provisioning.PutMuteTiming(params) //nolint:errcheck
 		if err != nil {
 			return fmt.Errorf("updating mute timing: %w", err)
 		}
@@ -191,12 +191,12 @@ func (r *GrafanaMuteTimingReconciler) reconcileWithInstance(ctx context.Context,
 }
 
 func (r *GrafanaMuteTimingReconciler) getMuteTimingByName(ctx context.Context, name string, instance *v1beta1.Grafana) (*models.MuteTimeInterval, error) {
-	cl, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
+	gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return nil, fmt.Errorf("building grafana client: %w", err)
 	}
 
-	remoteMuteTiming, err := cl.Provisioning.GetMuteTiming(name)
+	remoteMuteTiming, err := gClient.Provisioning.GetMuteTiming(name)
 	if err != nil {
 		return nil, fmt.Errorf("getting mute timing: %w", err)
 	}
@@ -229,12 +229,12 @@ func (r *GrafanaMuteTimingReconciler) finalize(ctx context.Context, cr *v1beta1.
 }
 
 func (r *GrafanaMuteTimingReconciler) removeFromInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaMuteTiming) error {
-	cl, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
+	gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
 	}
 
-	_, err = cl.Provisioning.DeleteMuteTiming(&provisioning.DeleteMuteTimingParams{Name: cr.Spec.Name}) //nolint:errcheck
+	_, err = gClient.Provisioning.DeleteMuteTiming(&provisioning.DeleteMuteTimingParams{Name: cr.Spec.Name}) //nolint:errcheck
 	if err != nil {
 		return fmt.Errorf("deleting mute timing: %w", err)
 	}

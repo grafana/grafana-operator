@@ -123,7 +123,7 @@ var _ = Describe("LibraryPanel Reconciler", Ordered, func() {
 	})
 
 	It("updates librarypanel in Grafana upon .spec.url change", func() {
-		grafanaClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
 		require.NoError(t, err)
 
 		cr := &v1beta1.GrafanaLibraryPanel{
@@ -157,7 +157,7 @@ var _ = Describe("LibraryPanel Reconciler", Ordered, func() {
 		_, err = r.Reconcile(testCtx, req)
 		require.NoError(t, err)
 
-		panel, err := grafanaClient.LibraryElements.GetLibraryElementByUID(uid)
+		panel, err := gClient.LibraryElements.GetLibraryElementByUID(uid)
 		require.NoError(t, err)
 
 		assert.Contains(t, panel.String(), name1)
@@ -175,7 +175,7 @@ var _ = Describe("LibraryPanel Reconciler", Ordered, func() {
 		_, err = r.Reconcile(testCtx, req)
 		require.NoError(t, err)
 
-		panel, err = grafanaClient.LibraryElements.GetLibraryElementByUID(uid)
+		panel, err = gClient.LibraryElements.GetLibraryElementByUID(uid)
 		require.NoError(t, err)
 
 		assert.NotContains(t, panel.String(), name1)

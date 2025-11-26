@@ -164,7 +164,7 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 	})
 
 	It("updates dashboard in Grafana upon .spec.url change", func() {
-		grafanaClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
 		require.NoError(t, err)
 
 		cr := &v1beta1.GrafanaDashboard{
@@ -198,7 +198,7 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 		_, err = r.Reconcile(testCtx, req)
 		require.NoError(t, err)
 
-		dash, err := grafanaClient.Dashboards.GetDashboardByUID(uid)
+		dash, err := gClient.Dashboards.GetDashboardByUID(uid)
 		require.NoError(t, err)
 
 		assert.Contains(t, dash.String(), title1)
@@ -216,7 +216,7 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 		_, err = r.Reconcile(testCtx, req)
 		require.NoError(t, err)
 
-		dash, err = grafanaClient.Dashboards.GetDashboardByUID(uid)
+		dash, err = gClient.Dashboards.GetDashboardByUID(uid)
 		require.NoError(t, err)
 
 		assert.NotContains(t, dash.String(), title1)
