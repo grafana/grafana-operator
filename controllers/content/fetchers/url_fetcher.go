@@ -55,7 +55,7 @@ func FetchFromURL(ctx context.Context, cr v1beta1.GrafanaContentResource, c clie
 		return nil, fmt.Errorf("building dashboards metric: %w", err)
 	}
 
-	client := grafanaclient.NewInstrumentedRoundTripper(true, tlsConfig, contentMetric, dashboardMetric)
+	httpClient := grafanaclient.NewInstrumentedRoundTripper(true, tlsConfig, contentMetric, dashboardMetric)
 	// basic auth is supported for dashboards from url
 	if spec.URLAuthorization != nil && spec.URLAuthorization.BasicAuth != nil {
 		username, err := grafanaclient.GetValueFromSecretKey(ctx, spec.URLAuthorization.BasicAuth.Username, c, cr.GetNamespace())
@@ -75,7 +75,7 @@ func FetchFromURL(ctx context.Context, cr v1beta1.GrafanaContentResource, c clie
 		}
 	}
 
-	response, err := client.RoundTrip(request)
+	response, err := httpClient.RoundTrip(request)
 	if err != nil {
 		return nil, err
 	}
