@@ -1,28 +1,10 @@
 package model
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"maps"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-func generateRandomBytes(n int) []byte {
-	b := make([]byte, n)
-
-	_, err := rand.Read(b)
-	if err != nil {
-		panic(err)
-	}
-
-	return b
-}
-
-func RandStringRunes(s int) string {
-	b := generateRandomBytes(s)
-	return base64.URLEncoding.EncodeToString(b)
-}
 
 func SetInheritedLabels(obj metav1.ObjectMetaAccessor, extraLabels map[string]string) {
 	meta := obj.GetObjectMeta()

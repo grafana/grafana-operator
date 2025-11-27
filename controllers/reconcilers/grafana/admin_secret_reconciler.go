@@ -2,6 +2,8 @@ package grafana
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/config"
@@ -76,7 +78,7 @@ func getAdminPassword(cr *v1beta1.Grafana, current *corev1.Secret) []byte {
 		return current.Data[config.GrafanaAdminPasswordEnvVar]
 	}
 
-	return []byte(model.RandStringRunes(10))
+	return []byte(randStringRunes(10))
 }
 
 func getData(cr *v1beta1.Grafana, current *corev1.Secret) map[string][]byte {
@@ -86,4 +88,20 @@ func getData(cr *v1beta1.Grafana, current *corev1.Secret) map[string][]byte {
 	}
 
 	return credentials
+}
+
+func generateRandomBytes(n int) []byte {
+	b := make([]byte, n)
+
+	_, err := rand.Read(b)
+	if err != nil {
+		panic(err)
+	}
+
+	return b
+}
+
+func randStringRunes(s int) string {
+	b := generateRandomBytes(s)
+	return base64.URLEncoding.EncodeToString(b)
 }
