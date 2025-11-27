@@ -17,21 +17,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func HasChanged(cr v1beta1.GrafanaContentResource, hash string) bool {
-	return !Unchanged(cr, hash)
-}
-
-// Unchanged checks if the stored content hash on the status matches the input
-func Unchanged(cr v1beta1.GrafanaContentResource, hash string) bool {
-	status := cr.GrafanaContentStatus()
-	// This indicates an implementation error
-	if status == nil {
-		return true
-	}
-
-	return status.Hash == hash
-}
-
 type ContentResolver struct {
 	Client          client.Client
 	resource        v1beta1.GrafanaContentResource
