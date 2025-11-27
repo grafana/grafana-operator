@@ -178,7 +178,7 @@ func (r *GrafanaReconciler) setDefaultGrafanaVersion(ctx context.Context, cr cli
 	return r.Patch(ctx, cr, client.RawPatch(types.MergePatchType, patch))
 }
 
-func removeMissingCRs(statusList *v1beta1.NamespacedResourceList, crs v1beta1.NamespacedResourceImpl, updateStatus *bool) {
+func removeMissingCRs(statusList *v1beta1.NamespacedResourceList, crs v1beta1.NamespacedResourceChecker, updateStatus *bool) {
 	toRemove := v1beta1.NamespacedResourceList{}
 
 	for _, r := range *statusList {

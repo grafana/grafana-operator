@@ -11,7 +11,7 @@ type NamespacedResource string
 type NamespacedResourceList []NamespacedResource
 
 // +kubebuilder:object:generate=false
-type NamespacedResourceImpl interface {
+type NamespacedResourceChecker interface {
 	Exists(namespace string, name string) bool
 }
 
