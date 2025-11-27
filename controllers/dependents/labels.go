@@ -12,16 +12,16 @@ func GetCommonLabels() map[string]string {
 	}
 }
 
-func SetInheritedLabels(obj metav1.ObjectMetaAccessor, extraLabels map[string]string) {
+func SetInheritedLabels(obj metav1.ObjectMetaAccessor, inheritedLabels map[string]string) {
 	meta := obj.GetObjectMeta()
 
 	labels := meta.GetLabels()
 	if labels == nil {
 		labels = make(map[string]string)
 	}
-	// Inherit labels from the parent grafana instance if any
-	maps.Copy(labels, extraLabels)
-	// Ensure default CommonLabels for child resources
+
+	maps.Copy(labels, inheritedLabels)
 	maps.Copy(labels, GetCommonLabels())
+
 	meta.SetLabels(labels)
 }
