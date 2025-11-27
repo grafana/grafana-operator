@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	"github.com/grafana/grafana-operator/v5/controllers/model"
+	"github.com/grafana/grafana-operator/v5/controllers/dependents"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -30,7 +30,7 @@ func (r *PvcReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars
 		return v1beta1.OperatorStageResultSuccess, nil
 	}
 
-	pvc := model.GetGrafanaDataPVC(cr, scheme)
+	pvc := dependents.GetGrafanaDataPVC(cr, scheme)
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, pvc, func() error {
 		err := v1beta1.Merge(pvc, cr.Spec.PersistentVolumeClaim)
@@ -48,7 +48,7 @@ func (r *PvcReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars
 			}
 		}
 
-		model.SetInheritedLabels(pvc, cr.Labels)
+		dependents.SetInheritedLabels(pvc, cr.Labels)
 
 		return nil
 	})

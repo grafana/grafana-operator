@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/config"
-	"github.com/grafana/grafana-operator/v5/controllers/model"
+	"github.com/grafana/grafana-operator/v5/controllers/dependents"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -30,7 +30,7 @@ func (r *AdminSecretReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafa
 		return v1beta1.OperatorStageResultSuccess, nil
 	}
 
-	secret := model.GetGrafanaAdminSecret(cr, scheme)
+	secret := dependents.GetGrafanaAdminSecret(cr, scheme)
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, secret, func() error {
 		secret.Data = getData(cr, secret)
@@ -42,7 +42,7 @@ func (r *AdminSecretReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafa
 			}
 		}
 
-		model.SetInheritedLabels(secret, cr.Labels)
+		dependents.SetInheritedLabels(secret, cr.Labels)
 
 		return nil
 	})

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	"github.com/grafana/grafana-operator/v5/controllers/model"
+	"github.com/grafana/grafana-operator/v5/controllers/dependents"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -28,7 +28,7 @@ func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 
 	vars.Plugins = ""
 
-	cm := model.GetPluginsConfigMap(cr, scheme)
+	cm := dependents.GetPluginsConfigMap(cr, scheme)
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, cm, func() error {
 		if scheme != nil {
@@ -38,7 +38,7 @@ func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 			}
 		}
 
-		model.SetInheritedLabels(cm, cr.Labels)
+		dependents.SetInheritedLabels(cm, cr.Labels)
 
 		return nil
 	})

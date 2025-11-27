@@ -6,7 +6,7 @@ import (
 	"slices"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	"github.com/grafana/grafana-operator/v5/controllers/model"
+	"github.com/grafana/grafana-operator/v5/controllers/dependents"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
 	routev1 "github.com/openshift/api/route/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -82,7 +82,7 @@ func (r *IngressReconciler) deleteIngressIfNil(ctx context.Context, cr *v1beta1.
 		return nil
 	}
 
-	ingress := model.GetGrafanaIngress(cr, scheme)
+	ingress := dependents.GetGrafanaIngress(cr, scheme)
 
 	req := ctrl.Request{
 		NamespacedName: types.NamespacedName{
@@ -108,7 +108,7 @@ func (r *IngressReconciler) deleteHTTPRouteIfNil(ctx context.Context, cr *v1beta
 		return nil
 	}
 
-	route := model.GetGrafanaHTTPRoute(cr, scheme)
+	route := dependents.GetGrafanaHTTPRoute(cr, scheme)
 
 	req := ctrl.Request{
 		NamespacedName: types.NamespacedName{
@@ -134,7 +134,7 @@ func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Gr
 		return v1beta1.OperatorStageResultSuccess, nil
 	}
 
-	ingress := model.GetGrafanaIngress(cr, scheme)
+	ingress := dependents.GetGrafanaIngress(cr, scheme)
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, ingress, func() error {
 		ingress.Spec = getIngressSpec(cr, scheme)
@@ -152,7 +152,7 @@ func (r *IngressReconciler) reconcileIngress(ctx context.Context, cr *v1beta1.Gr
 			return err
 		}
 
-		model.SetInheritedLabels(ingress, cr.Labels)
+		dependents.SetInheritedLabels(ingress, cr.Labels)
 
 		return nil
 	})
@@ -183,7 +183,7 @@ func (r *IngressReconciler) deleteRouteIfNil(ctx context.Context, cr *v1beta1.Gr
 		return nil
 	}
 
-	route := model.GetGrafanaRoute(cr, scheme)
+	route := dependents.GetGrafanaRoute(cr, scheme)
 
 	req := ctrl.Request{
 		NamespacedName: types.NamespacedName{
@@ -209,7 +209,7 @@ func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Graf
 		return v1beta1.OperatorStageResultSuccess, nil
 	}
 
-	route := model.GetGrafanaRoute(cr, scheme)
+	route := dependents.GetGrafanaRoute(cr, scheme)
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, route, func() error {
 		route.Spec = getRouteSpec(cr, scheme)
@@ -229,7 +229,7 @@ func (r *IngressReconciler) reconcileRoute(ctx context.Context, cr *v1beta1.Graf
 			}
 		}
 
-		model.SetInheritedLabels(route, cr.Labels)
+		dependents.SetInheritedLabels(route, cr.Labels)
 
 		return nil
 	})
@@ -252,7 +252,7 @@ func (r *IngressReconciler) reconcileHTTPRoute(ctx context.Context, cr *v1beta1.
 		return v1beta1.OperatorStageResultSuccess, nil
 	}
 
-	route := model.GetGrafanaHTTPRoute(cr, scheme)
+	route := dependents.GetGrafanaHTTPRoute(cr, scheme)
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, route, func() error {
 		route.Spec = getHTTPRouteSpec(cr, scheme)
@@ -272,7 +272,7 @@ func (r *IngressReconciler) reconcileHTTPRoute(ctx context.Context, cr *v1beta1.
 			}
 		}
 
-		model.SetInheritedLabels(route, cr.Labels)
+		dependents.SetInheritedLabels(route, cr.Labels)
 
 		return nil
 	})
@@ -355,7 +355,7 @@ func GetIngressTargetPort(cr *v1beta1.Grafana) intstr.IntOrString {
 }
 
 func getRouteSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) routev1.RouteSpec {
-	service := model.GetGrafanaService(cr, scheme)
+	service := dependents.GetGrafanaService(cr, scheme)
 
 	port := GetIngressTargetPort(cr)
 
@@ -374,7 +374,7 @@ func getRouteSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) routev1.RouteSpec
 }
 
 func getHTTPRouteSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) gwapiv1.HTTPRouteSpec {
-	service := model.GetGrafanaService(cr, scheme)
+	service := dependents.GetGrafanaService(cr, scheme)
 	port := gwapiv1.PortNumber(GetGrafanaPort(cr)) //nolint:gosec
 	backendRefs := []gwapiv1.HTTPBackendRef{
 		{
@@ -397,7 +397,7 @@ func getHTTPRouteSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) gwapiv1.HTTPR
 }
 
 func getIngressSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) networkingv1.IngressSpec {
-	service := model.GetGrafanaService(cr, scheme)
+	service := dependents.GetGrafanaService(cr, scheme)
 
 	port := GetIngressTargetPort(cr)
 
