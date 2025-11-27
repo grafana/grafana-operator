@@ -3,14 +3,9 @@ package v1beta1
 import (
 	"testing"
 
+	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 	"github.com/stretchr/testify/assert"
 )
-
-func strP(t *testing.T, s string) *string {
-	t.Helper()
-
-	return &s
-}
 
 func TestNamespacedResourceSplit(t *testing.T) {
 	r := NamespacedResource("namespace/name/identifier")
@@ -46,7 +41,7 @@ func TestNamespacedResourceListFind(t *testing.T) {
 			rNamespace:     "default",
 			rName:          "folder1",
 			wantFound:      true,
-			wantIdentifier: strP(t, "bbbb"),
+			wantIdentifier: ptr.To("bbbb"),
 		},
 	}
 
