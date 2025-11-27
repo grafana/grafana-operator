@@ -14,12 +14,6 @@ import (
 	gwapiv1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
-func GetCommonLabels() map[string]string {
-	return map[string]string{
-		"app.kubernetes.io/managed-by": "grafana-operator",
-	}
-}
-
 func GetGrafanaConfigMap(cr *v1beta1.Grafana, scheme *runtime.Scheme) *corev1.ConfigMap {
 	config := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{

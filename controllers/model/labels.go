@@ -6,6 +6,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+func GetCommonLabels() map[string]string {
+	return map[string]string{
+		"app.kubernetes.io/managed-by": "grafana-operator",
+	}
+}
+
 func SetInheritedLabels(obj metav1.ObjectMetaAccessor, extraLabels map[string]string) {
 	meta := obj.GetObjectMeta()
 
