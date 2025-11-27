@@ -17,38 +17,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func IsUpdatedUID(cr v1beta1.GrafanaContentResource, uid string) bool {
-	status := cr.GrafanaContentStatus()
-	// This indicates an implementation error
-	if status == nil {
-		return false
-	}
-
-	// Resource has just been created, status is not yet updated
-	if status.UID == "" {
-		return false
-	}
-
-	uid = GetGrafanaUID(cr, uid)
-
-	return status.UID != uid
-}
-
-// GetGrafanaUID selects a UID to be used for Grafana API requests (preference: spec.CustomUID -> contentUID -> metadata.uid)
-func GetGrafanaUID(cr v1beta1.GrafanaContentResource, contentUID string) string {
-	if spec := cr.GrafanaContentSpec(); spec != nil {
-		if spec.CustomUID != "" {
-			return spec.CustomUID
-		}
-	}
-
-	if contentUID != "" {
-		return contentUID
-	}
-
-	return string(cr.GetUID())
-}
-
 func HasChanged(cr v1beta1.GrafanaContentResource, hash string) bool {
 	return !Unchanged(cr, hash)
 }
