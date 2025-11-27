@@ -33,6 +33,19 @@ func GetGrafanaConfigMap(cr *v1beta1.Grafana, scheme *runtime.Scheme) *corev1.Co
 	return config
 }
 
+func GetPluginsConfigMap(cr *v1beta1.Grafana, scheme *runtime.Scheme) *corev1.ConfigMap {
+	config := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-plugins", cr.Name),
+			Namespace: cr.Namespace,
+			Labels:    GetCommonLabels(),
+		},
+	}
+	controllerutil.SetControllerReference(cr, config, scheme) //nolint:errcheck
+
+	return config
+}
+
 func GetGrafanaAdminSecret(cr *v1beta1.Grafana, scheme *runtime.Scheme) *corev1.Secret {
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
