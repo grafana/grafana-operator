@@ -44,10 +44,8 @@ import (
 type libraryElementType int
 
 const (
-	conditionLibraryPanelSynchronized = "LibraryPanelSynchronized"
-
-	libraryElementTypePanel    libraryElementType = 1
-	libraryElementTypeVariable libraryElementType = 2
+	conditionLibraryPanelSynchronized                    = "LibraryPanelSynchronized"
+	libraryElementTypePanel           libraryElementType = 1
 )
 
 var errLibraryPanelContentUIDImmutable = errors.New("library panel uid is immutable, but was updated on the content model")

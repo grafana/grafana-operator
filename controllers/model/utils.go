@@ -24,16 +24,6 @@ func RandStringRunes(s int) string {
 	return base64.URLEncoding.EncodeToString(b)
 }
 
-func MergeAnnotations(requested map[string]string, existing map[string]string) map[string]string {
-	if existing == nil {
-		return requested
-	}
-
-	maps.Copy(existing, requested)
-
-	return existing
-}
-
 func SetInheritedLabels(obj metav1.ObjectMetaAccessor, extraLabels map[string]string) {
 	meta := obj.GetObjectMeta()
 

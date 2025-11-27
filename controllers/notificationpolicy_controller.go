@@ -45,9 +45,8 @@ import (
 var ErrLoopDetected = errors.New("loop detected")
 
 const (
-	conditionNotificationPolicySynchronized  = "NotificationPolicySynchronized"
-	conditionRoutesIgnoredDueToRouteSelector = "RoutesIgnoredDueToRouteSelector"
-	annotationAppliedNotificationPolicy      = "operator.grafana.com/applied-notificationpolicy"
+	conditionNotificationPolicySynchronized = "NotificationPolicySynchronized"
+	annotationAppliedNotificationPolicy     = "operator.grafana.com/applied-notificationpolicy"
 
 	conditionReasonFieldsMutuallyExclusive = "FieldsMutuallyExclusive"
 	conditionReasonLoopDetected            = "LoopDetected"
