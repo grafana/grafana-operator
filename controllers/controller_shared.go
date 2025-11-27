@@ -181,7 +181,7 @@ func getFolderUID(ctx context.Context, k8sClient client.Client, ref v1beta1.Fold
 
 	removeNoMatchingFolder(ref.Conditions())
 
-	return folder.CustomUIDOrUID(), nil
+	return folder.GetGrafanaUID(), nil
 }
 
 func labelsSatisfyMatchExpressions(labels map[string]string, matchExpressions []metav1.LabelSelectorRequirement) bool {

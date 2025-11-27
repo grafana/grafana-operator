@@ -92,7 +92,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	removeSuspended(&cr.Status.Conditions)
 
-	if cr.Spec.ParentFolderUID == cr.CustomUIDOrUID() {
+	if cr.Spec.ParentFolderUID == cr.GetGrafanaUID() {
 		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonCyclicParent, "The value of parentFolderUID must not be the uid of the current folder")
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionFolderSynchronized)
 
@@ -153,7 +153,7 @@ func (r *GrafanaFolderReconciler) finalize(ctx context.Context, cr *v1beta1.Graf
 	log := logf.FromContext(ctx)
 	log.Info("Finalizing GrafanaFolder")
 
-	uid := cr.CustomUIDOrUID()
+	uid := cr.GetGrafanaUID()
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
@@ -191,7 +191,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 	log := logf.FromContext(ctx)
 
 	title := cr.GetTitle()
-	uid := cr.CustomUIDOrUID()
+	uid := cr.GetGrafanaUID()
 
 	gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
@@ -266,7 +266,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 // Check if the folder exists. Matches UID first and fall back to title. Title matching only works for non-nested folders
 func (r *GrafanaFolderReconciler) Exists(client *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaFolder) (bool, string, string, error) {
 	title := cr.GetTitle()
-	uid := cr.CustomUIDOrUID()
+	uid := cr.GetGrafanaUID()
 
 	uidResp, err := client.Folders.GetFolderByUID(uid)
 	if err == nil {

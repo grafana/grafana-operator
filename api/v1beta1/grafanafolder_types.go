@@ -103,8 +103,8 @@ func (in *GrafanaFolder) FolderUID() string {
 	return in.Spec.ParentFolderUID
 }
 
-// Wrapper around CustomUID or default metadata.uid
-func (in *GrafanaFolder) CustomUIDOrUID() string {
+// GetGrafanaUID selects a UID to be used for Grafana API requests (preference: spec.CustomUID -> metadata.uid)
+func (in *GrafanaFolder) GetGrafanaUID() string {
 	if in.Spec.CustomUID != "" {
 		return in.Spec.CustomUID
 	}
@@ -178,7 +178,7 @@ func (in *GrafanaFolder) CommonStatus() *GrafanaCommonStatus {
 }
 
 func (in *GrafanaFolder) NamespacedResource(uid string) NamespacedResource {
-	// .CustomUIDOrUID() can be wrong when the fallback to search is used.
+	// .GetGrafanaUID() can be wrong when the fallback to search is used.
 	// Hence, use uid from args as the caller has more context
 	// TODO Remove uid arg along with the search fallback
 	return NewNamespacedResource(in.Namespace, in.Name, uid)

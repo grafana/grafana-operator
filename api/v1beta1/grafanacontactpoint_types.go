@@ -143,8 +143,8 @@ func (in *GrafanaContactPoint) NameFromSpecOrMeta() string {
 	return in.Name
 }
 
-// Wrapper around receivers[].CustomUID or metadata.uid/idx
-func (in *ContactPointReceiver) CustomUIDOrUID(metaUID types.UID, idx int) string {
+// GetGrafanaUID selects a UID to be used for Grafana API requests (preference: receivers[].CustomUID -> metadata.uid/idx)
+func (in *ContactPointReceiver) GetGrafanaUID(metaUID types.UID, idx int) string {
 	if in.CustomUID != "" {
 		return in.CustomUID
 	}

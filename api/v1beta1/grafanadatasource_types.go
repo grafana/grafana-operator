@@ -131,11 +131,11 @@ func (in *GrafanaDatasource) IsUpdatedUID() bool {
 		return false
 	}
 
-	return in.Status.UID != in.CustomUIDOrUID()
+	return in.Status.UID != in.GetGrafanaUID()
 }
 
-// Wrapper around CustomUID, datasourcelUID or default metadata.uid
-func (in *GrafanaDatasource) CustomUIDOrUID() string {
+// GetGrafanaUID selects a UID to be used for Grafana API requests (preference: spec.CustomUID -> Spec.Datasource.UID -> metadata.uid)
+func (in *GrafanaDatasource) GetGrafanaUID() string {
 	if in.Spec.CustomUID != "" {
 		return in.Spec.CustomUID
 	}
@@ -178,7 +178,7 @@ func (in *GrafanaDatasource) CommonStatus() *GrafanaCommonStatus {
 }
 
 func (in *GrafanaDatasource) NamespacedResource() NamespacedResource {
-	return NewNamespacedResource(in.Namespace, in.Name, in.CustomUIDOrUID())
+	return NewNamespacedResource(in.Namespace, in.Name, in.GetGrafanaUID())
 }
 
 func (in *GrafanaDatasource) GetPluginConfigMapKey() string {

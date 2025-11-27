@@ -50,7 +50,7 @@ func TestGetDashboardEnvs(t *testing.T) {
 	assert.Len(t, envs, 1)
 }
 
-func TestContentIsUpdatedUID(t *testing.T) {
+func TestIsUpdatedUID(t *testing.T) {
 	crUID := "crUID"
 	dashUID := "dashUID"
 	specUID := "specUID"
@@ -185,7 +185,7 @@ func TestContentIsUpdatedUID(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cr := getCR(t, tt.crUID, tt.statusUID, tt.specUID, tt.dashboardUID)
-			uid := CustomUIDOrUID(cr, tt.dashboardUID)
+			uid := GetGrafanaUID(cr, tt.dashboardUID)
 
 			got := IsUpdatedUID(cr, uid)
 			assert.Equal(t, tt.want, got)

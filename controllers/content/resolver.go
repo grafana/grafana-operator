@@ -29,13 +29,13 @@ func IsUpdatedUID(cr v1beta1.GrafanaContentResource, uid string) bool {
 		return false
 	}
 
-	uid = CustomUIDOrUID(cr, uid)
+	uid = GetGrafanaUID(cr, uid)
 
 	return status.UID != uid
 }
 
-// Wrapper around CustomUID, contentModelUID or default metadata.uid
-func CustomUIDOrUID(cr v1beta1.GrafanaContentResource, contentUID string) string {
+// GetGrafanaUID selects a UID to be used for Grafana API requests (preference: spec.CustomUID -> contentUID -> metadata.uid)
+func GetGrafanaUID(cr v1beta1.GrafanaContentResource, contentUID string) string {
 	if spec := cr.GrafanaContentSpec(); spec != nil {
 		if spec.CustomUID != "" {
 			return spec.CustomUID
@@ -263,7 +263,7 @@ func (h *ContentResolver) getContentModel(contentJSON []byte) (map[string]any, s
 	contentModel["id"] = nil
 
 	uid, _ := contentModel["uid"].(string) //nolint:errcheck
-	contentModel["uid"] = CustomUIDOrUID(h.resource, uid)
+	contentModel["uid"] = GetGrafanaUID(h.resource, uid)
 
 	return contentModel, fmt.Sprintf("%x", hash.Sum(nil)), nil
 }

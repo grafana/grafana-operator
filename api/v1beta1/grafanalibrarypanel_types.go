@@ -109,7 +109,7 @@ func (in *GrafanaLibraryPanel) GrafanaContentStatus() *GrafanaContentStatus {
 }
 
 func (in *GrafanaLibraryPanel) NamespacedResource(uid string) NamespacedResource {
-	// Not enough context to call content.CustomUIDOrUID(uid).
+	// Not enough context to call content.GetGrafanaUID(uid).
 	// Hence, use uid from args as the caller has more context
 	return NewNamespacedResource(in.Namespace, in.Name, uid)
 }
