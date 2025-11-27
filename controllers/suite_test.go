@@ -50,8 +50,6 @@ import (
 
 const (
 	grafanaName = "external-grafana"
-	grafanaUser = "root"
-	grafanaPass = "secret"
 )
 
 var (

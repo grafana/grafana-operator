@@ -32,7 +32,6 @@ import (
 
 const (
 	// Synchronization size and timeout values
-	syncBatchSize       = 100
 	initialSyncDelay    = 10 * time.Second
 	RequeueDelay        = 10 * time.Second
 	DefaultReSyncPeriod = 10 * time.Minute
