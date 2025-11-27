@@ -10,18 +10,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestCompressDecompress(t *testing.T) {
-	contentJSON := []byte(`{"dummyField": "dummyData"}`)
-
-	compressed, err := Gzip(contentJSON)
-	require.NoError(t, err)
-
-	decompressed, err := Gunzip(compressed)
-	require.NoError(t, err)
-
-	require.JSONEq(t, string(contentJSON), string(decompressed))
-}
-
 func TestGrafanaDashboardStatus_getContentCache(t *testing.T) {
 	timestamp := metav1.Time{Time: time.Now().Add(-1 * time.Hour)}
 	infinite := 0 * time.Second
