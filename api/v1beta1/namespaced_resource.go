@@ -6,14 +6,12 @@ import (
 	"strings"
 )
 
-type NamespacedResource string
-
-type NamespacedResourceList []NamespacedResource
-
 // +kubebuilder:object:generate=false
 type NamespacedResourceChecker interface {
 	Exists(namespace string, name string) bool
 }
+
+type NamespacedResource string
 
 func NewNamespacedResource(namespace, name, identifier string) NamespacedResource {
 	return NamespacedResource(fmt.Sprintf("%s/%s/%s", namespace, name, identifier))
@@ -23,6 +21,8 @@ func (in NamespacedResource) Split() (namespace, name, identifier string) {
 	parts := strings.Split(string(in), "/")
 	return parts[0], parts[1], parts[2]
 }
+
+type NamespacedResourceList []NamespacedResource
 
 func (in NamespacedResourceList) Find(namespace string, name string) (found bool, identifier *string) {
 	i := in.IndexOf(namespace, name)

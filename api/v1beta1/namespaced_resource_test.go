@@ -12,7 +12,7 @@ func strP(t *testing.T, s string) *string {
 	return &s
 }
 
-func TestSplit(t *testing.T) {
+func TestNamespacedResourceSplit(t *testing.T) {
 	r := NamespacedResource("namespace/name/identifier")
 	ns, n, i := r.Split()
 
@@ -21,7 +21,7 @@ func TestSplit(t *testing.T) {
 	assert.Equal(t, "identifier", i)
 }
 
-func TestFind(t *testing.T) {
+func TestNamespacedResourceListFind(t *testing.T) {
 	list := NamespacedResourceList{
 		NamespacedResource("default/folder0/aaaa"),
 		NamespacedResource("default/folder1/bbbb"),
@@ -60,7 +60,7 @@ func TestFind(t *testing.T) {
 	}
 }
 
-func TestIndexOf(t *testing.T) {
+func TestNamespacedResourceListIndexOf(t *testing.T) {
 	list := NamespacedResourceList{
 		NamespacedResource("default/folder0/aaaa"),
 		NamespacedResource("default/folder1/bbbb"),
@@ -102,7 +102,7 @@ func TestIndexOf(t *testing.T) {
 	}
 }
 
-func TestRemoveEntries(t *testing.T) {
+func TestNamespacedResourceListRemoveEntries(t *testing.T) {
 	r1 := NamespacedResource("1/1/1")
 	r2 := NamespacedResource("1/1/2")
 	r3 := NamespacedResource("3/3/3")
