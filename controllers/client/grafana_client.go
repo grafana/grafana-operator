@@ -99,7 +99,7 @@ func getBearerToken(bearerTokenPath string) (string, error) {
 
 func getExternalAdminUser(ctx context.Context, c client.Client, cr *v1beta1.Grafana) (string, error) {
 	if cr.Spec.External != nil && cr.Spec.External.AdminUser != nil {
-		adminUser, err := GetValueFromSecretKey(ctx, cr.Spec.External.AdminUser, c, cr.Namespace)
+		adminUser, err := GetValueFromSecretKey(ctx, c, cr.Namespace, cr.Spec.External.AdminUser)
 		if err != nil {
 			return "", err
 		}
@@ -117,7 +117,7 @@ func getExternalAdminUser(ctx context.Context, c client.Client, cr *v1beta1.Graf
 
 func getExternalAdminPassword(ctx context.Context, c client.Client, cr *v1beta1.Grafana) (string, error) {
 	if cr.Spec.External != nil && cr.Spec.External.AdminPassword != nil {
-		adminPassword, err := GetValueFromSecretKey(ctx, cr.Spec.External.AdminPassword, c, cr.Namespace)
+		adminPassword, err := GetValueFromSecretKey(ctx, c, cr.Namespace, cr.Spec.External.AdminPassword)
 		if err != nil {
 			return "", err
 		}
@@ -151,7 +151,7 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 	if grafana.IsExternal() {
 		// prefer api key if present
 		if grafana.Spec.External.APIKey != nil {
-			apikey, err := GetValueFromSecretKey(ctx, grafana.Spec.External.APIKey, c, grafana.Namespace)
+			apikey, err := GetValueFromSecretKey(ctx, c, grafana.Namespace, grafana.Spec.External.APIKey)
 			if err != nil {
 				return nil, err
 			}
@@ -197,7 +197,7 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 
 				if env.ValueFrom != nil {
 					if env.ValueFrom.SecretKeyRef != nil {
-						usernameFromSecret, err := GetValueFromSecretKey(ctx, env.ValueFrom.SecretKeyRef, c, grafana.Namespace)
+						usernameFromSecret, err := GetValueFromSecretKey(ctx, c, grafana.Namespace, env.ValueFrom.SecretKeyRef)
 						if err != nil {
 							return nil, err
 						}
@@ -215,7 +215,7 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 
 				if env.ValueFrom != nil {
 					if env.ValueFrom.SecretKeyRef != nil {
-						passwordFromSecret, err := GetValueFromSecretKey(ctx, env.ValueFrom.SecretKeyRef, c, grafana.Namespace)
+						passwordFromSecret, err := GetValueFromSecretKey(ctx, c, grafana.Namespace, env.ValueFrom.SecretKeyRef)
 						if err != nil {
 							return nil, err
 						}

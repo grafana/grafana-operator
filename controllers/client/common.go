@@ -9,14 +9,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func GetValueFromSecretKey(ctx context.Context, ref *corev1.SecretKeySelector, c client.Client, namespace string) ([]byte, error) {
-	if ref == nil {
+func GetValueFromSecretKey(ctx context.Context, c client.Client, namespace string, keySelector *corev1.SecretKeySelector) ([]byte, error) {
+	if keySelector == nil {
 		return nil, errors.New("empty secret key selector")
 	}
 
 	secret := &corev1.Secret{}
+
 	selector := client.ObjectKey{
-		Name:      ref.Name,
+		Name:      keySelector.Name,
 		Namespace: namespace,
 	}
 
@@ -26,12 +27,12 @@ func GetValueFromSecretKey(ctx context.Context, ref *corev1.SecretKeySelector, c
 	}
 
 	if secret.Data == nil {
-		return nil, fmt.Errorf("empty credential secret: %v/%v", namespace, ref.Name)
+		return nil, fmt.Errorf("empty credential secret: %v/%v", namespace, keySelector.Name)
 	}
 
-	if val, ok := secret.Data[ref.Key]; ok {
+	if val, ok := secret.Data[keySelector.Key]; ok {
 		return val, nil
 	}
 
-	return nil, fmt.Errorf("credentials not found in secret: %v/%v", namespace, ref.Name)
+	return nil, fmt.Errorf("credentials not found in secret: %v/%v", namespace, keySelector.Name)
 }
