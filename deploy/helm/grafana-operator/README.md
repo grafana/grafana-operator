@@ -92,9 +92,11 @@ It's easier to just manage this configuration outside of the operator.
 | extraVolumeMounts | list | `[]` | extra container volume mounts |
 | extraVolumes | list | `[]` | extra pod volumes |
 | fullnameOverride | string | `""` | Overrides the fully qualified app name. |
+| global.imageRegistry | string | `nil` | Overrides the Docker registry globally for all images |
 | hostUsers | bool | `true` | Set to false to opt-in to use user namespaces |
 | image.pullPolicy | string | `"IfNotPresent"` | The image pull policy to use in grafana operator container |
-| image.repository | string | `"ghcr.io/grafana/grafana-operator"` | grafana operator image repository |
+| image.registry | string | `"ghcr.io"` | grafana operator image registry |
+| image.repository | string | `"grafana/grafana-operator"` | grafana operator image repository |
 | image.tag | string | `""` | Overrides the image tag whose default is the chart appVersion. |
 | imagePullSecrets | list | `[]` | image pull secrets |
 | isOpenShift | bool | `false` | Determines if the target cluster is OpenShift. Additional rbac permissions for routes will be added on OpenShift |
