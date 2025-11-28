@@ -129,10 +129,10 @@ func getExternalAdminPassword(ctx context.Context, c client.Client, cr *v1beta1.
 	return "", fmt.Errorf("password not set for external instance: %s/%s", cr.Namespace, cr.Name)
 }
 
-func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (*grafanaAdminCredentials, error) {
+func getAdminCredentials(ctx context.Context, c client.Client, cr *v1beta1.Grafana) (*grafanaAdminCredentials, error) {
 	credentials := &grafanaAdminCredentials{}
 
-	if grafana.Spec.Client != nil && grafana.Spec.Client.UseKubeAuth {
+	if cr.Spec.Client != nil && cr.Spec.Client.UseKubeAuth {
 		t, err := getBearerToken(serviceAccountTokenPath)
 		if err != nil {
 			return nil, err
@@ -143,10 +143,10 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 		return credentials, nil
 	}
 
-	if grafana.IsExternal() {
+	if cr.IsExternal() {
 		// prefer api key if present
-		if grafana.Spec.External.APIKey != nil {
-			apikey, err := GetValueFromSecretKey(ctx, c, grafana.Namespace, grafana.Spec.External.APIKey)
+		if cr.Spec.External.APIKey != nil {
+			apikey, err := GetValueFromSecretKey(ctx, c, cr.Namespace, cr.Spec.External.APIKey)
 			if err != nil {
 				return nil, err
 			}
@@ -158,12 +158,12 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 
 		var err error
 
-		credentials.adminUser, err = getExternalAdminUser(ctx, c, grafana)
+		credentials.adminUser, err = getExternalAdminUser(ctx, c, cr)
 		if err != nil {
 			return nil, err
 		}
 
-		credentials.adminPassword, err = getExternalAdminPassword(ctx, c, grafana)
+		credentials.adminPassword, err = getExternalAdminPassword(ctx, c, cr)
 		if err != nil {
 			return nil, err
 		}
@@ -171,7 +171,7 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 		return credentials, nil
 	}
 
-	deployment := resources.GetGrafanaDeployment(grafana, nil)
+	deployment := resources.GetGrafanaDeployment(cr, nil)
 	selector := client.ObjectKey{
 		Namespace: deployment.Namespace,
 		Name:      deployment.Name,
@@ -192,7 +192,7 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 
 				if env.ValueFrom != nil {
 					if env.ValueFrom.SecretKeyRef != nil {
-						usernameFromSecret, err := GetValueFromSecretKey(ctx, c, grafana.Namespace, env.ValueFrom.SecretKeyRef)
+						usernameFromSecret, err := GetValueFromSecretKey(ctx, c, cr.Namespace, env.ValueFrom.SecretKeyRef)
 						if err != nil {
 							return nil, err
 						}
@@ -210,7 +210,7 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 
 				if env.ValueFrom != nil {
 					if env.ValueFrom.SecretKeyRef != nil {
-						passwordFromSecret, err := GetValueFromSecretKey(ctx, c, grafana.Namespace, env.ValueFrom.SecretKeyRef)
+						passwordFromSecret, err := GetValueFromSecretKey(ctx, c, cr.Namespace, env.ValueFrom.SecretKeyRef)
 						if err != nil {
 							return nil, err
 						}
@@ -225,8 +225,8 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 	return credentials, nil
 }
 
-func InjectAuthHeaders(ctx context.Context, c client.Client, grafana *v1beta1.Grafana, req *http.Request) error {
-	creds, err := getAdminCredentials(ctx, c, grafana)
+func InjectAuthHeaders(ctx context.Context, c client.Client, cr *v1beta1.Grafana, req *http.Request) error {
+	creds, err := getAdminCredentials(ctx, c, cr)
 	if err != nil {
 		return fmt.Errorf("fetching admin credentials: %w", err)
 	}
