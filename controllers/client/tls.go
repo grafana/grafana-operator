@@ -17,16 +17,16 @@ var (
 )
 
 // build the tls.Config object based on the content of the Grafana CR object
-func buildTLSConfiguration(ctx context.Context, c client.Client, grafana *v1beta1.Grafana) (*tls.Config, error) {
+func buildTLSConfiguration(ctx context.Context, c client.Client, cr *v1beta1.Grafana) (*tls.Config, error) {
 	var tlsConfigBlock *v1beta1.TLSConfig
 
 	switch {
-	case grafana.Spec.Client != nil && grafana.Spec.Client.TLS != nil:
+	case cr.Spec.Client != nil && cr.Spec.Client.TLS != nil:
 		// prefer top level if set, fall back to deprecated field
-		tlsConfigBlock = grafana.Spec.Client.TLS
-	case grafana.Spec.External != nil && grafana.Spec.External.TLS != nil:
+		tlsConfigBlock = cr.Spec.Client.TLS
+	case cr.Spec.External != nil && cr.Spec.External.TLS != nil:
 		// fall back to external tls field if set
-		tlsConfigBlock = grafana.Spec.External.TLS
+		tlsConfigBlock = cr.Spec.External.TLS
 	default:
 		// if nothing is specified, ignore tls settings
 		return nil, nil
@@ -39,7 +39,7 @@ func buildTLSConfiguration(ctx context.Context, c client.Client, grafana *v1beta
 	tlsConfig := &tls.Config{MinVersion: tls.VersionTLS12}
 	secretName := tlsConfigBlock.CertSecretRef.Name
 
-	secretNamespace := grafana.Namespace
+	secretNamespace := cr.Namespace
 	if tlsConfigBlock.CertSecretRef.Namespace != "" {
 		secretNamespace = tlsConfigBlock.CertSecretRef.Namespace
 	}
@@ -56,7 +56,7 @@ func buildTLSConfiguration(ctx context.Context, c client.Client, grafana *v1beta
 	}
 
 	if secret.Data == nil {
-		return nil, fmt.Errorf("empty credential secret: %v/%v", grafana.Namespace, tlsConfigBlock.CertSecretRef.Name)
+		return nil, fmt.Errorf("empty credential secret: %v/%v", cr.Namespace, tlsConfigBlock.CertSecretRef.Name)
 	}
 
 	crt, crtPresent := secret.Data["tls.crt"]
@@ -67,7 +67,7 @@ func buildTLSConfiguration(ctx context.Context, c client.Client, grafana *v1beta
 	} else if crtPresent && keyPresent {
 		loadedCrt, err := tls.X509KeyPair(crt, key)
 		if err != nil {
-			return nil, fmt.Errorf("certificate from secret %v/%v cannot be parsed : %w", grafana.Namespace, tlsConfigBlock.CertSecretRef.Name, err)
+			return nil, fmt.Errorf("certificate from secret %v/%v cannot be parsed : %w", cr.Namespace, tlsConfigBlock.CertSecretRef.Name, err)
 		}
 
 		tlsConfig.Certificates = []tls.Certificate{loadedCrt}
