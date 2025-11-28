@@ -1,4 +1,4 @@
-package dependents
+package resources
 
 import (
 	"fmt"

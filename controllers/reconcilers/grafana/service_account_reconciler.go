@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	"github.com/grafana/grafana-operator/v5/controllers/dependents"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
+	"github.com/grafana/grafana-operator/v5/controllers/resources"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -22,7 +22,7 @@ func NewServiceAccountReconciler(client client.Client) reconcilers.OperatorGrafa
 }
 
 func (r *ServiceAccountReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
-	sa := dependents.GetGrafanaServiceAccount(cr, scheme)
+	sa := resources.GetGrafanaServiceAccount(cr, scheme)
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, sa, func() error {
 		err := v1beta1.Merge(sa, cr.Spec.ServiceAccount)
@@ -40,7 +40,7 @@ func (r *ServiceAccountReconciler) Reconcile(ctx context.Context, cr *v1beta1.Gr
 			}
 		}
 
-		dependents.SetInheritedLabels(sa, cr.Labels)
+		resources.SetInheritedLabels(sa, cr.Labels)
 
 		return nil
 	})

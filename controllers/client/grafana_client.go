@@ -15,8 +15,8 @@ import (
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/config"
-	"github.com/grafana/grafana-operator/v5/controllers/dependents"
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
+	"github.com/grafana/grafana-operator/v5/controllers/resources"
 	"github.com/prometheus/client_golang/prometheus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -176,7 +176,7 @@ func getAdminCredentials(ctx context.Context, c client.Client, grafana *v1beta1.
 		return credentials, nil
 	}
 
-	deployment := dependents.GetGrafanaDeployment(grafana, nil)
+	deployment := resources.GetGrafanaDeployment(grafana, nil)
 	selector := client.ObjectKey{
 		Namespace: deployment.Namespace,
 		Name:      deployment.Name,
