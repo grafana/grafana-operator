@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	"github.com/grafana/grafana-operator/v5/controllers/model"
+	"github.com/grafana/grafana-operator/v5/controllers/resources"
 	corev1 "k8s.io/api/core/v1"
 	kuberr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -181,7 +181,7 @@ func getFolderUID(ctx context.Context, k8sClient client.Client, ref v1beta1.Fold
 
 	removeNoMatchingFolder(ref.Conditions())
 
-	return folder.CustomUIDOrUID(), nil
+	return folder.GetGrafanaUID(), nil
 }
 
 func labelsSatisfyMatchExpressions(labels map[string]string, matchExpressions []metav1.LabelSelectorRequirement) bool {
@@ -250,7 +250,7 @@ func updatePluginConfigMap(cm *corev1.ConfigMap, value []byte, key string, depre
 
 // TODO Refactor to use scheme from k8sClient.Scheme() as it's the same anyways
 func ReconcilePlugins(ctx context.Context, k8sClient client.Client, scheme *runtime.Scheme, grafana *v1beta1.Grafana, plugins v1beta1.PluginList, cmKey string, cmDeprecatedKey string) error {
-	cm := model.GetPluginsConfigMap(grafana, scheme)
+	cm := resources.GetPluginsConfigMap(grafana, scheme)
 	selector := client.ObjectKey{
 		Namespace: cm.Namespace,
 		Name:      cm.Name,

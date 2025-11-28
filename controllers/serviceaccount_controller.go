@@ -65,7 +65,7 @@ import (
 	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
-	model2 "github.com/grafana/grafana-operator/v5/controllers/model"
+	"github.com/grafana/grafana-operator/v5/controllers/resources"
 )
 
 const (
@@ -807,7 +807,7 @@ func buildTokenSecret(
 		secret.Annotations["operator.grafana.com/service-account-token-expiry"] = tokenStatus.Expires.Format(time.RFC3339)
 	}
 
-	model2.SetInheritedLabels(secret, cr.Labels)
+	resources.SetInheritedLabels(secret, cr.Labels)
 
 	if scheme != nil {
 		err := controllerutil.SetControllerReference(cr, secret, scheme)

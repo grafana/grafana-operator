@@ -1,4 +1,4 @@
-package model
+package resources
 
 import (
 	"fmt"
@@ -14,16 +14,23 @@ import (
 	gwapiv1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
-func GetCommonLabels() map[string]string {
-	return map[string]string{
-		"app.kubernetes.io/managed-by": "grafana-operator",
-	}
-}
-
 func GetGrafanaConfigMap(cr *v1beta1.Grafana, scheme *runtime.Scheme) *corev1.ConfigMap {
 	config := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-ini", cr.Name),
+			Namespace: cr.Namespace,
+			Labels:    GetCommonLabels(),
+		},
+	}
+	controllerutil.SetControllerReference(cr, config, scheme) //nolint:errcheck
+
+	return config
+}
+
+func GetPluginsConfigMap(cr *v1beta1.Grafana, scheme *runtime.Scheme) *corev1.ConfigMap {
+	config := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-plugins", cr.Name),
 			Namespace: cr.Namespace,
 			Labels:    GetCommonLabels(),
 		},

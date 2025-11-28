@@ -7,8 +7,8 @@ import (
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/config"
-	"github.com/grafana/grafana-operator/v5/controllers/model"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
+	"github.com/grafana/grafana-operator/v5/controllers/resources"
 	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -50,7 +50,7 @@ func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafan
 	openshiftPlatform := r.isOpenShift
 	log.Info("reconciling deployment", "openshift", openshiftPlatform)
 
-	deployment := model.GetGrafanaDeployment(cr, scheme)
+	deployment := resources.GetGrafanaDeployment(cr, scheme)
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, deployment, func() error {
 		deployment.Spec = getDeploymentSpec(cr, deployment.Name, scheme, vars, openshiftPlatform)
@@ -70,7 +70,7 @@ func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafan
 			}
 		}
 
-		model.SetInheritedLabels(deployment, cr.Labels)
+		resources.SetInheritedLabels(deployment, cr.Labels)
 
 		return nil
 	})
@@ -96,7 +96,7 @@ func getResources() corev1.ResourceRequirements {
 func getVolumes(cr *v1beta1.Grafana, scheme *runtime.Scheme) []corev1.Volume {
 	var volumes []corev1.Volume
 
-	cm := model.GetGrafanaConfigMap(cr, scheme)
+	cm := resources.GetGrafanaConfigMap(cr, scheme)
 
 	// Volume to mount the config file from a config map
 	volumes = append(volumes, corev1.Volume{
@@ -131,7 +131,7 @@ func getVolumes(cr *v1beta1.Grafana, scheme *runtime.Scheme) []corev1.Volume {
 func getVolumeMounts(cr *v1beta1.Grafana, scheme *runtime.Scheme) []corev1.VolumeMount {
 	var mounts []corev1.VolumeMount
 
-	cm := model.GetGrafanaConfigMap(cr, scheme)
+	cm := resources.GetGrafanaConfigMap(cr, scheme)
 
 	mounts = append(mounts, corev1.VolumeMount{
 		Name:      cm.Name,
@@ -227,7 +227,7 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 	})
 
 	// Use auto generated admin account?
-	secret := model.GetGrafanaAdminSecret(cr, scheme)
+	secret := resources.GetGrafanaAdminSecret(cr, scheme)
 
 	for i := range containers {
 		containers[i].Env = append(containers[i].Env, corev1.EnvVar{
@@ -319,7 +319,7 @@ func getDefaultPodSecurityContext(disableSecurityContext string) *corev1.PodSecu
 }
 
 func getDeploymentSpec(cr *v1beta1.Grafana, deploymentName string, scheme *runtime.Scheme, vars *v1beta1.OperatorReconcileVars, openshiftPlatform bool) appsv1.DeploymentSpec {
-	sa := model.GetGrafanaServiceAccount(cr, scheme)
+	sa := resources.GetGrafanaServiceAccount(cr, scheme)
 
 	return appsv1.DeploymentSpec{
 		Selector: &metav1.LabelSelector{

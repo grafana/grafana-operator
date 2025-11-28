@@ -7,8 +7,8 @@ import (
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/config"
-	"github.com/grafana/grafana-operator/v5/controllers/model"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
+	"github.com/grafana/grafana-operator/v5/controllers/resources"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -32,7 +32,7 @@ func NewServiceReconciler(client client.Client, clusterDomain string) reconciler
 func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
 	_ = logf.FromContext(ctx)
 
-	service := model.GetGrafanaService(cr, scheme)
+	service := resources.GetGrafanaService(cr, scheme)
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, service, func() error {
 		service.Spec = corev1.ServiceSpec{
@@ -58,7 +58,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 			}
 		}
 
-		model.SetInheritedLabels(service, cr.Labels)
+		resources.SetInheritedLabels(service, cr.Labels)
 
 		return nil
 	})
@@ -79,10 +79,10 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 	}
 
 	// Headless service for grafana unified alerting
-	headlessService := model.GetGrafanaHeadlessService(cr, scheme)
+	headlessService := resources.GetGrafanaHeadlessService(cr, scheme)
 
 	_, err = controllerutil.CreateOrUpdate(ctx, r.client, headlessService, func() error {
-		model.SetInheritedLabels(headlessService, cr.Labels)
+		resources.SetInheritedLabels(headlessService, cr.Labels)
 		headlessService.Spec = corev1.ServiceSpec{
 			ClusterIP: "None",
 			Ports:     getHeadlessServicePorts(cr),

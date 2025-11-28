@@ -17,53 +17,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func IsUpdatedUID(cr v1beta1.GrafanaContentResource, uid string) bool {
-	status := cr.GrafanaContentStatus()
-	// This indicates an implementation error
-	if status == nil {
-		return false
-	}
-
-	// Resource has just been created, status is not yet updated
-	if status.UID == "" {
-		return false
-	}
-
-	uid = CustomUIDOrUID(cr, uid)
-
-	return status.UID != uid
-}
-
-// Wrapper around CustomUID, contentModelUID or default metadata.uid
-func CustomUIDOrUID(cr v1beta1.GrafanaContentResource, contentUID string) string {
-	if spec := cr.GrafanaContentSpec(); spec != nil {
-		if spec.CustomUID != "" {
-			return spec.CustomUID
-		}
-	}
-
-	if contentUID != "" {
-		return contentUID
-	}
-
-	return string(cr.GetUID())
-}
-
-func HasChanged(cr v1beta1.GrafanaContentResource, hash string) bool {
-	return !Unchanged(cr, hash)
-}
-
-// Unchanged checks if the stored content hash on the status matches the input
-func Unchanged(cr v1beta1.GrafanaContentResource, hash string) bool {
-	status := cr.GrafanaContentStatus()
-	// This indicates an implementation error
-	if status == nil {
-		return true
-	}
-
-	return status.Hash == hash
-}
-
 type ContentResolver struct {
 	Client          client.Client
 	resource        v1beta1.GrafanaContentResource
@@ -263,7 +216,7 @@ func (h *ContentResolver) getContentModel(contentJSON []byte) (map[string]any, s
 	contentModel["id"] = nil
 
 	uid, _ := contentModel["uid"].(string) //nolint:errcheck
-	contentModel["uid"] = CustomUIDOrUID(h.resource, uid)
+	contentModel["uid"] = GetGrafanaUID(h.resource, uid)
 
 	return contentModel, fmt.Sprintf("%x", hash.Sum(nil)), nil
 }

@@ -180,7 +180,7 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 	log.V(1).Info("contact point receivers found", "count", len(remoteReceivers))
 
 	for i, rec := range cr.Spec.Receivers {
-		recUID := rec.CustomUIDOrUID(cr.UID, i)
+		recUID := rec.GetGrafanaUID(cr.UID, i)
 		existingIdx := -1
 
 		for cpIdx, cp := range remoteReceivers {

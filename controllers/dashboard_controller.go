@@ -218,7 +218,7 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 	log := logf.FromContext(ctx)
 	log.Info("Finalizing GrafanaDashboard")
 
-	uid := content.CustomUIDOrUID(cr, cr.Status.UID)
+	uid := content.GetGrafanaUID(cr, cr.Status.UID)
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {

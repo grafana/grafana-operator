@@ -52,7 +52,7 @@ func TestGrafanaFolder_GetTitle(t *testing.T) {
 	}
 }
 
-func TestGrafanaFolder_GetUID(t *testing.T) {
+func TestGrafanaFolder_GetGrafanaUID(t *testing.T) {
 	tests := []struct {
 		name string
 		cr   GrafanaFolder
@@ -79,7 +79,7 @@ func TestGrafanaFolder_GetUID(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.cr.CustomUIDOrUID()
+			got := tt.cr.GetGrafanaUID()
 			assert.Equal(t, tt.want, got)
 		})
 	}

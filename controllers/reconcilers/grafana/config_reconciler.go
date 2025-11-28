@@ -5,8 +5,8 @@ import (
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/config"
-	"github.com/grafana/grafana-operator/v5/controllers/model"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
+	"github.com/grafana/grafana-operator/v5/controllers/resources"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -29,7 +29,7 @@ func (r *ConfigReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, v
 	cfg := config.WriteIni(cr.Spec.Config)
 	vars.ConfigHash = config.GetHash(cfg)
 
-	configMap := model.GetGrafanaConfigMap(cr, scheme)
+	configMap := resources.GetGrafanaConfigMap(cr, scheme)
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, configMap, func() error {
 		if configMap.Data == nil {
@@ -45,7 +45,7 @@ func (r *ConfigReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, v
 			}
 		}
 
-		model.SetInheritedLabels(configMap, cr.Labels)
+		resources.SetInheritedLabels(configMap, cr.Labels)
 
 		return nil
 	})

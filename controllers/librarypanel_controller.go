@@ -166,7 +166,7 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 	}
 
 	cr.Status.Hash = hash
-	cr.Status.UID = content.CustomUIDOrUID(cr, contentUID)
+	cr.Status.UID = content.GetGrafanaUID(cr, contentUID)
 
 	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(cr.Spec.ResyncPeriod)}, nil
 }
@@ -186,7 +186,7 @@ func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Contex
 		return err
 	}
 
-	uid := content.CustomUIDOrUID(cr, fmt.Sprintf("%s", model["uid"]))
+	uid := content.GetGrafanaUID(cr, fmt.Sprintf("%s", model["uid"]))
 	name := fmt.Sprintf("%s", model["name"])
 
 	resp, err := gClient.LibraryElements.GetLibraryElementByUID(uid)
@@ -235,7 +235,7 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, cr *v1beta
 	log := logf.FromContext(ctx)
 	log.Info("Finalizing GrafanaLibraryPanel")
 
-	uid := content.CustomUIDOrUID(cr, cr.Status.UID)
+	uid := content.GetGrafanaUID(cr, cr.Status.UID)
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {

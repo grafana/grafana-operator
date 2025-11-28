@@ -2,11 +2,13 @@ package grafana
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/config"
-	"github.com/grafana/grafana-operator/v5/controllers/model"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
+	"github.com/grafana/grafana-operator/v5/controllers/resources"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -28,7 +30,7 @@ func (r *AdminSecretReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafa
 		return v1beta1.OperatorStageResultSuccess, nil
 	}
 
-	secret := model.GetGrafanaAdminSecret(cr, scheme)
+	secret := resources.GetGrafanaAdminSecret(cr, scheme)
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.client, secret, func() error {
 		secret.Data = getData(cr, secret)
@@ -40,7 +42,7 @@ func (r *AdminSecretReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafa
 			}
 		}
 
-		model.SetInheritedLabels(secret, cr.Labels)
+		resources.SetInheritedLabels(secret, cr.Labels)
 
 		return nil
 	})
@@ -76,7 +78,7 @@ func getAdminPassword(cr *v1beta1.Grafana, current *corev1.Secret) []byte {
 		return current.Data[config.GrafanaAdminPasswordEnvVar]
 	}
 
-	return []byte(model.RandStringRunes(10))
+	return []byte(randStringRunes(10))
 }
 
 func getData(cr *v1beta1.Grafana, current *corev1.Secret) map[string][]byte {
@@ -86,4 +88,20 @@ func getData(cr *v1beta1.Grafana, current *corev1.Secret) map[string][]byte {
 	}
 
 	return credentials
+}
+
+func generateRandomBytes(n int) []byte {
+	b := make([]byte, n)
+
+	_, err := rand.Read(b)
+	if err != nil {
+		panic(err)
+	}
+
+	return b
+}
+
+func randStringRunes(s int) string {
+	b := generateRandomBytes(s)
+	return base64.URLEncoding.EncodeToString(b)
 }

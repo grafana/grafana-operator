@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,10 +38,6 @@ func routesToRuntimeObjects(routes []v1beta1.GrafanaNotificationPolicyRoute) []r
 	}
 
 	return objects
-}
-
-func stringP(s string) *string {
-	return &s
 }
 
 func TestAssembleNotificationPolicyRoutes(t *testing.T) {
@@ -74,7 +71,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 					Spec: v1beta1.GrafanaNotificationPolicyRouteSpec{
 						Route: v1beta1.Route{
 							Receiver: "team-A-receiver",
-							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: stringP("team"), Value: "A", IsEqual: true}},
+							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: ptr.To("team"), Value: "A", IsEqual: true}},
 						},
 					},
 				},
@@ -86,7 +83,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 						Routes: []*v1beta1.Route{
 							{
 								Receiver: "team-A-receiver",
-								Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: stringP("team"), Value: "A", IsEqual: true}},
+								Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: ptr.To("team"), Value: "A", IsEqual: true}},
 							},
 						},
 					},
@@ -122,7 +119,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 					Spec: v1beta1.GrafanaNotificationPolicyRouteSpec{
 						Route: v1beta1.Route{
 							Receiver: "team-A-receiver",
-							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: stringP("team"), Value: "A", IsEqual: true}},
+							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: ptr.To("team"), Value: "A", IsEqual: true}},
 						},
 					},
 				},
@@ -135,7 +132,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 					Spec: v1beta1.GrafanaNotificationPolicyRouteSpec{
 						Route: v1beta1.Route{
 							Receiver: "team-A-receiver-other-namespace",
-							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: stringP("team"), Value: "A", IsEqual: true}},
+							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: ptr.To("team"), Value: "A", IsEqual: true}},
 						},
 					},
 				},
@@ -150,7 +147,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 						Routes: []*v1beta1.Route{
 							{
 								Receiver: "team-A-receiver",
-								Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: stringP("team"), Value: "A", IsEqual: true}},
+								Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: ptr.To("team"), Value: "A", IsEqual: true}},
 							},
 						},
 					},
@@ -180,7 +177,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 					Spec: v1beta1.GrafanaNotificationPolicyRouteSpec{
 						Route: v1beta1.Route{
 							Receiver: "team-A-receiver",
-							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: stringP("team"), Value: "A", IsEqual: true}},
+							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: ptr.To("team"), Value: "A", IsEqual: true}},
 							RouteSelector: &metav1.LabelSelector{
 								MatchLabels: map[string]string{"tier": "second"},
 							},
@@ -196,7 +193,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 					Spec: v1beta1.GrafanaNotificationPolicyRouteSpec{
 						Route: v1beta1.Route{
 							Receiver: "team-B-receiver",
-							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: stringP("team"), Value: "B", IsEqual: true}},
+							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: ptr.To("team"), Value: "B", IsEqual: true}},
 						},
 					},
 				},
@@ -208,11 +205,11 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 						Routes: []*v1beta1.Route{
 							{
 								Receiver: "team-A-receiver",
-								Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: stringP("team"), Value: "A", IsEqual: true}},
+								Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: ptr.To("team"), Value: "A", IsEqual: true}},
 								Routes: []*v1beta1.Route{
 									{
 										Receiver: "team-B-receiver",
-										Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: stringP("team"), Value: "B", IsEqual: true}},
+										Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: ptr.To("team"), Value: "B", IsEqual: true}},
 									},
 								},
 							},
@@ -231,14 +228,14 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 						Routes: []*v1beta1.Route{
 							{
 								Receiver: "team-A-receiver",
-								Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: stringP("team"), Value: "A", IsEqual: true}},
+								Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: ptr.To("team"), Value: "A", IsEqual: true}},
 								RouteSelector: &metav1.LabelSelector{
 									MatchLabels: map[string]string{"tier": "second", "team": "A"},
 								},
 							},
 							{
 								Receiver: "team-B-receiver",
-								Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: stringP("team"), Value: "B", IsEqual: true}},
+								Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: ptr.To("team"), Value: "B", IsEqual: true}},
 								RouteSelector: &metav1.LabelSelector{
 									MatchLabels: map[string]string{"tier": "second", "team": "B"},
 								},
@@ -257,7 +254,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 					Spec: v1beta1.GrafanaNotificationPolicyRouteSpec{
 						Route: v1beta1.Route{
 							Receiver: "project-X-receiver",
-							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: stringP("project"), Value: "X", IsEqual: true}},
+							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: ptr.To("project"), Value: "X", IsEqual: true}},
 						},
 					},
 				},
@@ -270,7 +267,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 					Spec: v1beta1.GrafanaNotificationPolicyRouteSpec{
 						Route: v1beta1.Route{
 							Receiver: "project-Y-receiver",
-							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: stringP("project"), Value: "Y", IsEqual: true}},
+							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: ptr.To("project"), Value: "Y", IsEqual: true}},
 						},
 					},
 				},
@@ -282,21 +279,21 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 						Routes: []*v1beta1.Route{
 							{
 								Receiver: "team-A-receiver",
-								Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: stringP("team"), Value: "A", IsEqual: true}},
+								Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: ptr.To("team"), Value: "A", IsEqual: true}},
 								Routes: []*v1beta1.Route{
 									{
 										Receiver: "project-X-receiver",
-										Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: stringP("project"), Value: "X", IsEqual: true}},
+										Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: ptr.To("project"), Value: "X", IsEqual: true}},
 									},
 								},
 							},
 							{
 								Receiver: "team-B-receiver",
-								Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: stringP("team"), Value: "B", IsEqual: true}},
+								Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: ptr.To("team"), Value: "B", IsEqual: true}},
 								Routes: []*v1beta1.Route{
 									{
 										Receiver: "project-Y-receiver",
-										Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: stringP("project"), Value: "Y", IsEqual: true}},
+										Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: ptr.To("project"), Value: "Y", IsEqual: true}},
 									},
 								},
 							},
@@ -328,7 +325,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 					Spec: v1beta1.GrafanaNotificationPolicyRouteSpec{
 						Route: v1beta1.Route{
 							Receiver: "team-A-receiver",
-							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: stringP("team"), Value: "A", IsEqual: true}},
+							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: ptr.To("team"), Value: "A", IsEqual: true}},
 							RouteSelector: &metav1.LabelSelector{
 								MatchLabels: map[string]string{"tier": "second"},
 							},
@@ -344,7 +341,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 					Spec: v1beta1.GrafanaNotificationPolicyRouteSpec{
 						Route: v1beta1.Route{
 							Receiver: "team-B-receiver",
-							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: stringP("team"), Value: "B", IsEqual: true}},
+							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: ptr.To("team"), Value: "B", IsEqual: true}},
 							RouteSelector: &metav1.LabelSelector{
 								MatchLabels: map[string]string{"tier": "first"},
 							},
@@ -496,7 +493,7 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke LoopDetected Condition"
 				Receiver: "grafana-default-email",
 				Routes: []*v1beta1.Route{{
 					Receiver: "grafana-default-email",
-					Matchers: v1beta1.Matchers{{Name: stringP("team"), Value: "a", IsEqual: true}},
+					Matchers: v1beta1.Matchers{{Name: ptr.To("team"), Value: "a", IsEqual: true}},
 					RouteSelector: &metav1.LabelSelector{
 						MatchLabels: map[string]string{"team-a": "child"},
 					},
@@ -513,7 +510,7 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke LoopDetected Condition"
 		Spec: v1beta1.GrafanaNotificationPolicyRouteSpec{
 			Route: v1beta1.Route{
 				Receiver: "grafana-default-email",
-				Matchers: v1beta1.Matchers{{Name: stringP("team"), Value: "b", IsEqual: true}},
+				Matchers: v1beta1.Matchers{{Name: ptr.To("team"), Value: "b", IsEqual: true}},
 				RouteSelector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{"team-b": "child"},
 				},
@@ -529,7 +526,7 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke LoopDetected Condition"
 		Spec: v1beta1.GrafanaNotificationPolicyRouteSpec{
 			Route: v1beta1.Route{
 				Receiver: "grafana-default-email",
-				Matchers: v1beta1.Matchers{{Name: stringP("team"), Value: "b", IsEqual: true}}, // Also matches team b
+				Matchers: v1beta1.Matchers{{Name: ptr.To("team"), Value: "b", IsEqual: true}}, // Also matches team b
 				RouteSelector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{"team-b": "child"},
 				},

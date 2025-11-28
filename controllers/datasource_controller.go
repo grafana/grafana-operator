@@ -119,7 +119,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	log.Info("found matching Grafana instances for datasource", "count", len(instances))
 
-	uid := cr.CustomUIDOrUID()
+	uid := cr.GetGrafanaUID()
 	log = log.WithValues("uid", uid)
 	ctx = logf.IntoContext(ctx, log)
 
@@ -184,7 +184,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	cr.Status.Hash = hash
 	cr.Status.LastMessage = "" //nolint:staticcheck
-	cr.Status.UID = cr.CustomUIDOrUID()
+	cr.Status.UID = cr.GetGrafanaUID()
 
 	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(cr.Spec.ResyncPeriod)}, nil
 }
@@ -228,7 +228,7 @@ func (r *GrafanaDatasourceReconciler) finalize(ctx context.Context, cr *v1beta1.
 		return fmt.Errorf("fetching instances: %w", err)
 	}
 
-	uid := cr.CustomUIDOrUID()
+	uid := cr.GetGrafanaUID()
 
 	for _, grafana := range instances {
 		gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
@@ -439,7 +439,7 @@ func (r *GrafanaDatasourceReconciler) buildDatasourceModel(ctx context.Context, 
 		return nil, "", fmt.Errorf("parsing marshaled json as abstract json: %w", err)
 	}
 
-	if err := jsonRoot.AppendObject("uid", ajson.StringNode("", cr.CustomUIDOrUID())); err != nil {
+	if err := jsonRoot.AppendObject("uid", ajson.StringNode("", cr.GetGrafanaUID())); err != nil {
 		return nil, "", fmt.Errorf("overriding uid: %w", err)
 	}
 
