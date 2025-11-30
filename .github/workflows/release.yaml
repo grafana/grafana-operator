@@ -119,7 +119,7 @@ jobs:
       packages: write
     steps:
       - name: install flux
-        uses: fluxcd/flux2/action@06ed49dcd3f3ce2fc8d1988848245873a91550bc # v2.7.4
+        uses: fluxcd/flux2/action@8454b02a32e48d775b9f563cb51fdcb1787b5b93 # v2.7.5
 
       - name: Clone repo
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
