@@ -256,14 +256,14 @@ func createTestJWTFile(t *testing.T) (*os.File, string) {
 
 	testJWT := fmt.Sprintf("header.%s.signature", encodedClaims)
 
-	tokenFile, err := os.CreateTemp(os.TempDir(), "token-*")
+	f, err := os.CreateTemp(os.TempDir(), "token-*")
 	require.NoError(t, err)
 
-	written, err := tokenFile.WriteString(testJWT)
+	written, err := f.WriteString(testJWT)
 	require.Equal(t, len([]byte(testJWT)), written)
 	require.NoError(t, err)
 
-	return tokenFile, testJWT
+	return f, testJWT
 }
 
 func createFileWithContent(t *testing.T, content string) *os.File {
@@ -368,43 +368,42 @@ func TestGetBearerToken(t *testing.T) {
 	t.Run("decode test token with nil cache", func(t *testing.T) {
 		jwtCache = nil
 
-		tokenFile, token := createTestJWTFile(t)
-		defer os.Remove(tokenFile.Name())
+		f, token := createTestJWTFile(t)
+		defer os.Remove(f.Name())
 
-		parsedToken, err := getBearerToken(tokenFile.Name())
+		parsedToken, err := getBearerToken(f.Name())
 		tokenIsValid(t, token, parsedToken, err)
 	})
 
-	// TODO
 	t.Run("Read from cache", func(t *testing.T) {
 		jwtCache = nil
 
-		tokenFile, token := createTestJWTFile(t)
-		defer os.Remove(tokenFile.Name())
+		f, token := createTestJWTFile(t)
+		defer os.Remove(f.Name())
 
-		parsedToken, err := getBearerToken(tokenFile.Name())
+		parsedToken, err := getBearerToken(f.Name())
 		tokenIsValid(t, token, parsedToken, err)
 
-		os.Remove(tokenFile.Name())
-		cachedToken, err := getBearerToken(tokenFile.Name())
+		os.Remove(f.Name())
+		cachedToken, err := getBearerToken(f.Name())
 		tokenIsValid(t, token, cachedToken, err)
 	})
 
 	t.Run("Reset cache and error on mangled token", func(t *testing.T) {
 		jwtCache = nil
 
-		tokenFile, token := createTestJWTFile(t)
-		defer os.Remove(tokenFile.Name())
+		f, token := createTestJWTFile(t)
+		defer os.Remove(f.Name())
 
-		parsedToken, err := getBearerToken(tokenFile.Name())
+		parsedToken, err := getBearerToken(f.Name())
 		tokenIsValid(t, token, parsedToken, err)
 
 		// Mangle token
-		_, err = tokenFile.WriteString("Invalid.JWT.Token")
+		_, err = f.WriteString("Invalid.JWT.Token")
 		require.NoError(t, err)
 
 		jwtCache = nil
-		emptyToken, err := getBearerToken(tokenFile.Name())
+		emptyToken, err := getBearerToken(f.Name())
 		require.Error(t, err)
 		require.Empty(t, emptyToken)
 	})
@@ -412,10 +411,10 @@ func TestGetBearerToken(t *testing.T) {
 	t.Run("expire cache and re-parse token", func(t *testing.T) {
 		jwtCache = nil
 
-		tokenFile, token := createTestJWTFile(t)
-		defer os.Remove(tokenFile.Name())
+		f, token := createTestJWTFile(t)
+		defer os.Remove(f.Name())
 
-		parsedToken, err := getBearerToken(tokenFile.Name())
+		parsedToken, err := getBearerToken(f.Name())
 		tokenIsValid(t, token, parsedToken, err)
 
 		// Store original expiration and overwrite cache
@@ -423,7 +422,7 @@ func TestGetBearerToken(t *testing.T) {
 		jwtCache.Expiration = time.Now().Add(-60 * time.Second)
 		jwtCache.Token = ""
 
-		cachedToken, err := getBearerToken(tokenFile.Name())
+		cachedToken, err := getBearerToken(f.Name())
 		tokenIsValid(t, token, cachedToken, err)
 		require.Equal(t, tokenExpiration, jwtCache.Expiration)
 	})
