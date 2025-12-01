@@ -347,6 +347,11 @@ func TestGetBearerToken(t *testing.T) {
 			claims:      `{"exp": "abc"}`,
 			wantErrText: "token exp claim (expiry) cannot be cast to a float64",
 		},
+		{
+			name:        "token not renewed",
+			claims:      `{"exp": 1}`, // 01 Jan 1970
+			wantErrText: "token expired at",
+		},
 	}
 
 	for _, tt := range tests {
@@ -365,31 +370,6 @@ func TestGetBearerToken(t *testing.T) {
 			require.Nil(t, jwtCache)
 		})
 	}
-
-	t.Run("token not renewed", func(t *testing.T) {
-		jwtCache = nil
-
-		exp := time.Now().Add(-60 * time.Second).Unix() // expired
-		claims := fmt.Sprintf(`{"exp": %g}`, float64(exp))
-
-		encodedClaims := base64.RawStdEncoding.EncodeToString([]byte(claims))
-
-		testJWT := fmt.Sprintf("header.%s.signature", encodedClaims)
-
-		tokenFile, err := os.CreateTemp(os.TempDir(), "token-*")
-		defer os.Remove(tokenFile.Name())
-
-		require.NoError(t, err)
-
-		written, err := tokenFile.WriteString(testJWT)
-		require.Equal(t, len([]byte(testJWT)), written)
-		require.NoError(t, err)
-
-		parsedToken, err := getBearerToken(tokenFile.Name())
-		require.ErrorContains(t, err, "token expired at")
-		require.Empty(t, parsedToken)
-		require.Nil(t, jwtCache)
-	})
 
 	t.Run("decode test token with nil cache", func(t *testing.T) {
 		jwtCache = nil
