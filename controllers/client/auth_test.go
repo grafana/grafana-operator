@@ -314,74 +314,51 @@ func TestGetBearerToken(t *testing.T) {
 		require.Nil(t, jwtCache)
 	})
 
-	t.Run("broken json in claims", func(t *testing.T) {
-		jwtCache = nil
+	tests := []struct {
+		name        string
+		claims      string
+		wantErrText string
+	}{
+		{
+			name:        "broken json in claims",
+			claims:      "{broken-json}",
+			wantErrText: "deserializing ServiceAccount JWT claims",
+		},
+		{
+			name:        "no exp in claims",
+			claims:      "{}",
+			wantErrText: "no expiry found in ServiceAccount JWT claims",
+		},
+		{
+			name:        "broken exp in claims",
+			claims:      `{"exp": "abc"}`,
+			wantErrText: "token exp claim (expiry) cannot be cast to a float64",
+		},
+	}
 
-		claims := `{broken-json}`
-		encodedClaims := base64.RawStdEncoding.EncodeToString([]byte(claims))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			jwtCache = nil
 
-		testJWT := fmt.Sprintf("header.%s.signature", encodedClaims)
+			encodedClaims := base64.RawStdEncoding.EncodeToString([]byte(tt.claims))
 
-		tokenFile, err := os.CreateTemp(os.TempDir(), "token-*")
-		defer os.Remove(tokenFile.Name())
+			testJWT := fmt.Sprintf("header.%s.signature", encodedClaims)
 
-		require.NoError(t, err)
+			tokenFile, err := os.CreateTemp(os.TempDir(), "token-*")
+			defer os.Remove(tokenFile.Name())
 
-		written, err := tokenFile.WriteString(testJWT)
-		require.Equal(t, len([]byte(testJWT)), written)
-		require.NoError(t, err)
+			require.NoError(t, err)
 
-		parsedToken, err := getBearerToken(tokenFile.Name())
-		require.ErrorContains(t, err, "deserializing ServiceAccount JWT claims")
-		require.Empty(t, parsedToken)
-		require.Nil(t, jwtCache)
-	})
+			written, err := tokenFile.WriteString(testJWT)
+			require.Equal(t, len([]byte(testJWT)), written)
+			require.NoError(t, err)
 
-	t.Run("no exp in claims", func(t *testing.T) {
-		jwtCache = nil
-
-		claims := `{}`
-		encodedClaims := base64.RawStdEncoding.EncodeToString([]byte(claims))
-
-		testJWT := fmt.Sprintf("header.%s.signature", encodedClaims)
-
-		tokenFile, err := os.CreateTemp(os.TempDir(), "token-*")
-		defer os.Remove(tokenFile.Name())
-
-		require.NoError(t, err)
-
-		written, err := tokenFile.WriteString(testJWT)
-		require.Equal(t, len([]byte(testJWT)), written)
-		require.NoError(t, err)
-
-		parsedToken, err := getBearerToken(tokenFile.Name())
-		require.ErrorContains(t, err, "no expiry found in ServiceAccount JWT claims")
-		require.Empty(t, parsedToken)
-		require.Nil(t, jwtCache)
-	})
-
-	t.Run("broken exp in claims", func(t *testing.T) {
-		jwtCache = nil
-
-		claims := `{"exp": "abc"}`
-		encodedClaims := base64.RawStdEncoding.EncodeToString([]byte(claims))
-
-		testJWT := fmt.Sprintf("header.%s.signature", encodedClaims)
-
-		tokenFile, err := os.CreateTemp(os.TempDir(), "token-*")
-		defer os.Remove(tokenFile.Name())
-
-		require.NoError(t, err)
-
-		written, err := tokenFile.WriteString(testJWT)
-		require.Equal(t, len([]byte(testJWT)), written)
-		require.NoError(t, err)
-
-		parsedToken, err := getBearerToken(tokenFile.Name())
-		require.ErrorContains(t, err, "token exp claim (expiry) cannot be cast to a float64")
-		require.Empty(t, parsedToken)
-		require.Nil(t, jwtCache)
-	})
+			parsedToken, err := getBearerToken(tokenFile.Name())
+			require.ErrorContains(t, err, tt.wantErrText)
+			require.Empty(t, parsedToken)
+			require.Nil(t, jwtCache)
+		})
+	}
 
 	t.Run("token not renewed", func(t *testing.T) {
 		jwtCache = nil
@@ -418,6 +395,7 @@ func TestGetBearerToken(t *testing.T) {
 		tokenIsValid(t, token, parsedToken, err)
 	})
 
+	// TODO
 	t.Run("Read from cache", func(t *testing.T) {
 		jwtCache = nil
 
