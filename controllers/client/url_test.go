@@ -37,6 +37,11 @@ func TestParseAdminURL(t *testing.T) {
 			wantError: false,
 		},
 		{
+			name:      "Invalid URL",
+			adminURL:  "%",
+			wantError: true,
+		},
+		{
 			name:      "No Path and no Scheme",
 			adminURL:  "grafana.example.com",
 			wantError: true,
