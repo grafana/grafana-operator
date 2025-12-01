@@ -303,6 +303,7 @@ func TestGetBearerToken(t *testing.T) {
 		token, err := getBearerToken(f.Name() + "-dummy")
 		require.ErrorContains(t, err, "reading token file at")
 		require.Empty(t, token)
+
 		require.Nil(t, jwtCache)
 	})
 
@@ -361,6 +362,7 @@ func TestGetBearerToken(t *testing.T) {
 			token, err := getBearerToken(f.Name())
 			require.ErrorContains(t, err, tt.wantErrText)
 			require.Empty(t, token)
+
 			require.Nil(t, jwtCache)
 		})
 	}
@@ -373,6 +375,8 @@ func TestGetBearerToken(t *testing.T) {
 
 		parsedToken, err := getBearerToken(f.Name())
 		tokenIsValid(t, token, parsedToken, err)
+
+		assert.NotNil(t, jwtCache)
 	})
 
 	t.Run("Read from cache", func(t *testing.T) {
@@ -387,6 +391,8 @@ func TestGetBearerToken(t *testing.T) {
 		os.Remove(f.Name())
 		cachedToken, err := getBearerToken(f.Name())
 		tokenIsValid(t, token, cachedToken, err)
+
+		assert.NotNil(t, jwtCache)
 	})
 
 	t.Run("Reset cache and error on mangled token", func(t *testing.T) {
@@ -406,6 +412,8 @@ func TestGetBearerToken(t *testing.T) {
 		emptyToken, err := getBearerToken(f.Name())
 		require.Error(t, err)
 		require.Empty(t, emptyToken)
+
+		assert.Nil(t, jwtCache)
 	})
 
 	t.Run("expire cache and re-parse token", func(t *testing.T) {
@@ -425,5 +433,7 @@ func TestGetBearerToken(t *testing.T) {
 		cachedToken, err := getBearerToken(f.Name())
 		tokenIsValid(t, token, cachedToken, err)
 		require.Equal(t, tokenExpiration, jwtCache.Expiration)
+
+		assert.NotNil(t, jwtCache)
 	})
 }
