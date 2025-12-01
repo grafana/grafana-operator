@@ -95,7 +95,7 @@ Switching to Grafana Operator from traditional deployments amplifies your effici
 
 ## Get In Touch
 
-Got questions or suggestions? Let us know! The quickest way to reach us is through our [GitHub Issues](https://github.com/grafana/grafana-operator/issues) or by joining our weekly public meeting on Mondays at 13:30 Central European (Summer) Time (11:30/12:30 UTC in Summer/Winter) (link [here](https://meet.google.com/spw-jtbk-mwj)).
+Got questions or suggestions? Let us know! The quickest way to reach us is through our [GitHub Issues](https://github.com/grafana/grafana-operator/issues) or by joining our weekly public meeting on Mondays at 13:30 Central European (Summer) Time (11:30/12:30 UTC in Summer/Winter) (link [here](https://meet.google.com/sqk-kdsc-ntv)).
 
 Feel free to drop into our Grafana Operator discussions on:
 
