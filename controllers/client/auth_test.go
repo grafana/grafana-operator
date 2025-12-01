@@ -307,50 +307,41 @@ func TestGetBearerToken(t *testing.T) {
 		require.Nil(t, jwtCache)
 	})
 
-	t.Run("broken base64", func(t *testing.T) {
-		jwtCache = nil
-
-		testJWT := fmt.Sprintf("header.%s.signature", "non-base64-string")
-
-		tokenFile, err := os.CreateTemp(os.TempDir(), "token-*")
-		defer os.Remove(tokenFile.Name())
-
-		require.NoError(t, err)
-
-		written, err := tokenFile.WriteString(testJWT)
-		require.Equal(t, len([]byte(testJWT)), written)
-		require.NoError(t, err)
-
-		parsedToken, err := getBearerToken(tokenFile.Name())
-		require.ErrorContains(t, err, "base64 decoding ServiceAccount JWT token")
-		require.Empty(t, parsedToken)
-		require.Nil(t, jwtCache)
-	})
-
 	tests := []struct {
-		name        string
-		claims      string
-		wantErrText string
+		name          string
+		claims        string // raw claims
+		encodedClaims string // base64-encoded
+		wantErrText   string
 	}{
 		{
-			name:        "broken json in claims",
-			claims:      "{broken-json}",
-			wantErrText: "deserializing ServiceAccount JWT claims",
+			name:          "broken base64",
+			claims:        "",
+			encodedClaims: "non-base64-string",
+			wantErrText:   "base64 decoding ServiceAccount JWT token",
 		},
 		{
-			name:        "no exp in claims",
-			claims:      "{}",
-			wantErrText: "no expiry found in ServiceAccount JWT claims",
+			name:          "broken json in claims",
+			claims:        "{broken-json}",
+			encodedClaims: "",
+			wantErrText:   "deserializing ServiceAccount JWT claims",
 		},
 		{
-			name:        "broken exp in claims",
-			claims:      `{"exp": "abc"}`,
-			wantErrText: "token exp claim (expiry) cannot be cast to a float64",
+			name:          "no exp in claims",
+			claims:        "{}",
+			encodedClaims: "",
+			wantErrText:   "no expiry found in ServiceAccount JWT claims",
 		},
 		{
-			name:        "token not renewed",
-			claims:      `{"exp": 1}`, // 01 Jan 1970
-			wantErrText: "token expired at",
+			name:          "broken exp in claims",
+			claims:        `{"exp": "abc"}`,
+			encodedClaims: "",
+			wantErrText:   "token exp claim (expiry) cannot be cast to a float64",
+		},
+		{
+			name:          "token not renewed",
+			claims:        `{"exp": 1}`, // 01 Jan 1970
+			encodedClaims: "",
+			wantErrText:   "token expired at",
 		},
 	}
 
@@ -359,6 +350,10 @@ func TestGetBearerToken(t *testing.T) {
 			jwtCache = nil
 
 			encodedClaims := base64.RawStdEncoding.EncodeToString([]byte(tt.claims))
+			if tt.encodedClaims != "" {
+				encodedClaims = tt.encodedClaims
+			}
+
 			jwt := fmt.Sprintf("header.%s.signature", encodedClaims)
 
 			f := createFileWithContent(t, jwt)
