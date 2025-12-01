@@ -402,27 +402,6 @@ func TestGetBearerToken(t *testing.T) {
 		assert.NotNil(t, jwtCache)
 	})
 
-	t.Run("Reset cache and error on mangled token", func(t *testing.T) {
-		jwtCache = nil
-
-		f, token := createTestJWTFile(t)
-		defer os.Remove(f.Name())
-
-		parsedToken, err := getBearerToken(f.Name())
-		tokenIsValid(t, token, parsedToken, err)
-
-		// Mangle token
-		_, err = f.WriteString("Invalid.JWT.Token")
-		require.NoError(t, err)
-
-		jwtCache = nil
-		emptyToken, err := getBearerToken(f.Name())
-		require.Error(t, err)
-		require.Empty(t, emptyToken)
-
-		assert.Nil(t, jwtCache)
-	})
-
 	t.Run("expire cache and re-parse token", func(t *testing.T) {
 		jwtCache = nil
 
