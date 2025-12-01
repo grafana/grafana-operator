@@ -266,6 +266,19 @@ func createTestJWTFile(t *testing.T) (*os.File, string) {
 	return tokenFile, testJWT
 }
 
+func createFileWithContent(t *testing.T, content string) *os.File {
+	t.Helper()
+
+	f, err := os.CreateTemp(os.TempDir(), "test-*")
+	require.NoError(t, err)
+
+	written, err := f.WriteString(content)
+	require.Equal(t, len([]byte(content)), written)
+	require.NoError(t, err)
+
+	return f
+}
+
 func tokenIsValid(t *testing.T, expectedToken, token string, err error) {
 	t.Helper()
 	require.NoError(t, err)
@@ -341,21 +354,14 @@ func TestGetBearerToken(t *testing.T) {
 			jwtCache = nil
 
 			encodedClaims := base64.RawStdEncoding.EncodeToString([]byte(tt.claims))
+			jwt := fmt.Sprintf("header.%s.signature", encodedClaims)
 
-			testJWT := fmt.Sprintf("header.%s.signature", encodedClaims)
+			f := createFileWithContent(t, jwt)
+			defer os.Remove(f.Name())
 
-			tokenFile, err := os.CreateTemp(os.TempDir(), "token-*")
-			defer os.Remove(tokenFile.Name())
-
-			require.NoError(t, err)
-
-			written, err := tokenFile.WriteString(testJWT)
-			require.Equal(t, len([]byte(testJWT)), written)
-			require.NoError(t, err)
-
-			parsedToken, err := getBearerToken(tokenFile.Name())
+			token, err := getBearerToken(f.Name())
 			require.ErrorContains(t, err, tt.wantErrText)
-			require.Empty(t, parsedToken)
+			require.Empty(t, token)
 			require.Nil(t, jwtCache)
 		})
 	}
