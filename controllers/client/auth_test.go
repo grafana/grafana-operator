@@ -281,6 +281,7 @@ func createFileWithContent(t *testing.T, content string) *os.File {
 
 func tokenIsValid(t *testing.T, expectedToken, token string, err error) {
 	t.Helper()
+
 	require.NoError(t, err)
 	require.NotNil(t, jwtCache)
 	require.Equal(t, expectedToken, token)
@@ -309,10 +310,16 @@ func TestGetBearerToken(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		claims        string // raw claims
-		encodedClaims string // base64-encoded
+		claims        string // raw claims, will get base64-encoded
+		encodedClaims string // treated as if it's base64-encoded string
 		wantErrText   string
 	}{
+		{
+			name:          "incorrect token structure",
+			claims:        "",
+			encodedClaims: "extra.parts.in.token",
+			wantErrText:   "ServiceAccount JWT token expected to have 3 parts, not 6",
+		},
 		{
 			name:          "broken base64",
 			claims:        "",
