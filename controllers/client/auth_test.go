@@ -279,7 +279,7 @@ func tokenIsValid(t *testing.T, expectedToken, token string, err error) {
 func TestGetBearerToken(t *testing.T) {
 	t.Parallel()
 
-	t.Run("error on empty token file", func(t *testing.T) {
+	t.Run("non-existent file", func(t *testing.T) {
 		jwtCache = nil
 
 		// Empty file
@@ -289,7 +289,7 @@ func TestGetBearerToken(t *testing.T) {
 		require.NoError(t, err)
 
 		noToken, err := getBearerToken(tokenFile.Name() + "-dummy")
-		require.Error(t, err)
+		require.ErrorContains(t, err, "reading token file at")
 		require.Empty(t, noToken)
 		require.Nil(t, jwtCache)
 	})
