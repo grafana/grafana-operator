@@ -295,15 +295,14 @@ func TestGetBearerToken(t *testing.T) {
 	t.Run("non-existent file", func(t *testing.T) {
 		jwtCache = nil
 
-		// Empty file
-		tokenFile, err := os.CreateTemp(os.TempDir(), "token-*")
-		defer os.Remove(tokenFile.Name())
+		f, err := os.CreateTemp(os.TempDir(), "token-*")
+		defer os.Remove(f.Name())
 
 		require.NoError(t, err)
 
-		noToken, err := getBearerToken(tokenFile.Name() + "-dummy")
+		token, err := getBearerToken(f.Name() + "-dummy")
 		require.ErrorContains(t, err, "reading token file at")
-		require.Empty(t, noToken)
+		require.Empty(t, token)
 		require.Nil(t, jwtCache)
 	})
 
