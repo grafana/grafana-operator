@@ -23,6 +23,7 @@ does, and justify that change in the commit messages. Using coding assistants or
 expectations.
 
 This policy is based on the contribution guidelines for the [mesa project](https://gitlab.freedesktop.org/mesa/mesa), adapted to fit our situation.
+
 ### Code standards
 
 We use a number of code standards in the project that we apply using a number of different tools.
