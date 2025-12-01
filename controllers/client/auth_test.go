@@ -284,6 +284,8 @@ func TestGetBearerToken(t *testing.T) {
 
 		// Empty file
 		tokenFile, err := os.CreateTemp(os.TempDir(), "token-*")
+		defer os.Remove(tokenFile.Name())
+
 		require.NoError(t, err)
 
 		noToken, err := getBearerToken(tokenFile.Name() + "-dummy")
@@ -296,6 +298,7 @@ func TestGetBearerToken(t *testing.T) {
 		jwtCache = nil
 
 		tokenFile, token := createTestJWTFile(t)
+		defer os.Remove(tokenFile.Name())
 
 		parsedToken, err := getBearerToken(tokenFile.Name())
 		tokenIsValid(t, token, parsedToken, err)
@@ -305,6 +308,8 @@ func TestGetBearerToken(t *testing.T) {
 		jwtCache = nil
 
 		tokenFile, token := createTestJWTFile(t)
+		defer os.Remove(tokenFile.Name())
+
 		parsedToken, err := getBearerToken(tokenFile.Name())
 		tokenIsValid(t, token, parsedToken, err)
 
@@ -317,6 +322,8 @@ func TestGetBearerToken(t *testing.T) {
 		jwtCache = nil
 
 		tokenFile, token := createTestJWTFile(t)
+		defer os.Remove(tokenFile.Name())
+
 		parsedToken, err := getBearerToken(tokenFile.Name())
 		tokenIsValid(t, token, parsedToken, err)
 
@@ -334,6 +341,7 @@ func TestGetBearerToken(t *testing.T) {
 		jwtCache = nil
 
 		tokenFile, token := createTestJWTFile(t)
+		defer os.Remove(tokenFile.Name())
 
 		parsedToken, err := getBearerToken(tokenFile.Name())
 		tokenIsValid(t, token, parsedToken, err)
