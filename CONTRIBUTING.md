@@ -10,6 +10,20 @@ The operator embeds [grafonnet-lib](https://github.com/grafana/grafonnet-lib) in
 
 **NOTE:** please, run `make all` before opening a PR to make sure your changes are compliant with our standards and all automatically generated files (like CRDs) are up-to-date.
 
+### Usage of Generative AI
+
+The submitter is responsible for the code change, regardless of where that code
+change came from, whether they wrote it themselves, used an "AI" or other tool,
+or got it from someone else. That responsibility includes making sure that the
+code change can be submitted under the Apache 2.0 license that we use.
+
+The submitter needs to understand what code they are changing, what the change
+does, and justify that change in the commit messages. Using coding assistants or
+"AI" or other tools does not grant additional privileges or reduce our
+expectations.
+
+This policy is based on the contribution guidelines for the [mesa project](https://gitlab.freedesktop.org/mesa/mesa), adapted to fit our situation.
+
 ### Code standards
 
 We use a number of code standards in the project that we apply using a number of different tools.
