@@ -4,16 +4,16 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.17.3
   creationTimestamp: null
-  name: grafanaalertrulegroups.grafana.integreatly.org
+  name: grafananotificationpolicies.grafana.integreatly.org
 spec:
   group: grafana.integreatly.org
   names:
     categories:
     - grafana-operator
-    kind: GrafanaAlertRuleGroup
-    listKind: GrafanaAlertRuleGroupList
-    plural: grafanaalertrulegroups
-    singular: grafanaalertrulegroup
+    kind: GrafanaNotificationPolicy
+    listKind: GrafanaNotificationPolicyList
+    plural: grafananotificationpolicies
+    singular: grafananotificationpolicy
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -27,7 +27,7 @@ spec:
     name: v1beta1
     schema:
       openAPIV3Schema:
-        description: GrafanaAlertRuleGroup is the Schema for the grafanaalertrulegroups
+        description: GrafanaNotificationPolicy is the Schema for the GrafanaNotificationPolicy
           API
         properties:
           apiVersion:
@@ -48,7 +48,8 @@ spec:
           metadata:
             type: object
           spec:
-            description: GrafanaAlertRuleGroupSpec defines the desired state of GrafanaAlertRuleGroup
+            description: GrafanaNotificationPolicySpec defines the desired state of
+              GrafanaNotificationPolicy
             properties:
               allowCrossNamespaceImport:
                 default: false
@@ -56,23 +57,9 @@ spec:
                   outside the current namespace
                 type: boolean
               editable:
-                description: Whether to enable or disable editing of the alert rule
-                  group in Grafana UI
+                description: Whether to enable or disable editing of the notification
+                  policy in Grafana UI
                 type: boolean
-                x-kubernetes-validations:
-                - message: Value is immutable
-                  rule: self == oldSelf
-              folderRef:
-                description: Match GrafanaFolders CRs to infer the uid
-                type: string
-                x-kubernetes-validations:
-                - message: Value is immutable
-                  rule: self == oldSelf
-              folderUID:
-                description: |-
-                  UID of the folder containing this rule group
-                  Overrides the FolderSelector
-                type: string
                 x-kubernetes-validations:
                 - message: Value is immutable
                   rule: self == oldSelf
@@ -125,181 +112,157 @@ spec:
                 x-kubernetes-validations:
                 - message: spec.instanceSelector is immutable
                   rule: self == oldSelf
-              interval:
-                format: duration
-                pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
-                type: string
-              name:
-                description: Name of the alert rule group. If not specified, the resource
-                  name will be used.
-                type: string
               resyncPeriod:
                 description: How often the resource is synced, defaults to 10m0s if
                   not set
                 pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 type: string
-              rules:
-                items:
-                  description: AlertRule defines a specific rule to be evaluated.
-                    It is based on the upstream model with some k8s specific type
-                    mappings
-                  properties:
-                    annotations:
-                      additionalProperties:
-                        type: string
-                      type: object
-                    condition:
+              route:
+                description: Routes for alerts to match against
+                properties:
+                  active_time_intervals:
+                    items:
                       type: string
-                    data:
+                    type: array
+                  continue:
+                    description: continue
+                    type: boolean
+                  group_by:
+                    description: group by
+                    items:
+                      type: string
+                    type: array
+                  group_interval:
+                    description: group interval
+                    type: string
+                  group_wait:
+                    description: group wait
+                    type: string
+                  match_re:
+                    additionalProperties:
+                      type: string
+                    description: match re
+                    type: object
+                  matchers:
+                    description: matchers
+                    items:
+                      properties:
+                        isEqual:
+                          description: is equal
+                          type: boolean
+                        isRegex:
+                          description: is regex
+                          type: boolean
+                        name:
+                          description: name
+                          type: string
+                        value:
+                          description: value
+                          type: string
+                      required:
+                      - isRegex
+                      - value
+                      type: object
+                    type: array
+                  mute_time_intervals:
+                    description: mute time intervals
+                    items:
+                      type: string
+                    type: array
+                  object_matchers:
+                    description: object matchers
+                    items:
+                      description: |-
+                        ObjectMatcher ObjectMatcher is a matcher that can be used to filter alerts.
+
+                        swagger:model ObjectMatcher
                       items:
-                        properties:
-                          datasourceUid:
-                            description: Grafana data source unique identifier; it
-                              should be '__expr__' for a Server Side Expression operation.
-                            type: string
-                          model:
-                            description: JSON is the raw JSON query and includes the
-                              above properties as well as custom properties.
-                            x-kubernetes-preserve-unknown-fields: true
-                          queryType:
-                            description: |-
-                              QueryType is an optional identifier for the type of query.
-                              It can be used to distinguish different types of queries.
-                            type: string
-                          refId:
-                            description: RefID is the unique identifier of the query,
-                              set by the frontend call.
-                            type: string
-                          relativeTimeRange:
-                            description: relative time range
-                            properties:
-                              from:
-                                description: from
-                                format: int64
-                                type: integer
-                              to:
-                                description: to
-                                format: int64
-                                type: integer
-                            type: object
-                        type: object
-                      type: array
-                    execErrState:
-                      enum:
-                      - OK
-                      - Alerting
-                      - Error
-                      - KeepLast
-                      type: string
-                    for:
-                      default: 0s
-                      pattern: ^([0-9]+(\.[0-9]+)?(s|m|h|d|w))+$
-                      type: string
-                    isPaused:
-                      type: boolean
-                    keepFiringFor:
-                      format: duration
-                      pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
-                      type: string
-                    labels:
-                      additionalProperties:
                         type: string
-                      type: object
-                    missingSeriesEvalsToResolve:
-                      description: The number of missing series evaluations that must
-                        occur before the rule is considered to be resolved.
-                      format: int64
-                      type: integer
-                    noDataState:
-                      enum:
-                      - Alerting
-                      - NoData
-                      - OK
-                      - KeepLast
-                      type: string
-                    notificationSettings:
-                      properties:
-                        group_by:
-                          items:
-                            type: string
-                          type: array
-                        group_interval:
+                      type: array
+                    type: array
+                  provenance:
+                    description: provenance
+                    type: string
+                  receiver:
+                    description: receiver
+                    minLength: 1
+                    type: string
+                  repeat_interval:
+                    description: repeat interval
+                    type: string
+                  routeSelector:
+                    description: |-
+                      selects GrafanaNotificationPolicyRoutes to merge in when specified
+                      mutually exclusive with Routes
+                    properties:
+                      matchExpressions:
+                        description: matchExpressions is a list of label selector
+                          requirements. The requirements are ANDed.
+                        items:
+                          description: |-
+                            A label selector requirement is a selector that contains values, a key, and an operator that
+                            relates the key and values.
+                          properties:
+                            key:
+                              description: key is the label key that the selector
+                                applies to.
+                              type: string
+                            operator:
+                              description: |-
+                                operator represents a key's relationship to a set of values.
+                                Valid operators are In, NotIn, Exists and DoesNotExist.
+                              type: string
+                            values:
+                              description: |-
+                                values is an array of string values. If the operator is In or NotIn,
+                                the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                                the values array must be empty. This array is replaced during a strategic
+                                merge patch.
+                              items:
+                                type: string
+                              type: array
+                              x-kubernetes-list-type: atomic
+                          required:
+                          - key
+                          - operator
+                          type: object
+                        type: array
+                        x-kubernetes-list-type: atomic
+                      matchLabels:
+                        additionalProperties:
                           type: string
-                        group_wait:
-                          type: string
-                        mute_time_intervals:
-                          items:
-                            type: string
-                          type: array
-                        receiver:
-                          type: string
-                        repeat_interval:
-                          type: string
-                      required:
-                      - receiver
-                      type: object
-                    record:
-                      properties:
-                        from:
-                          type: string
-                        metric:
-                          type: string
-                      required:
-                      - from
-                      - metric
-                      type: object
-                    title:
-                      example: Always firing
-                      maxLength: 190
-                      minLength: 1
-                      type: string
-                    uid:
-                      description: UID of the alert rule. Can be any string consisting
-                        of alphanumeric characters, - and _ with a maximum length
-                        of 40
-                      maxLength: 40
-                      pattern: ^[a-zA-Z0-9-_]+$
-                      type: string
-                  required:
-                  - condition
-                  - data
-                  - execErrState
-                  - for
-                  - noDataState
-                  - title
-                  - uid
-                  type: object
-                minItems: 1
-                type: array
+                        description: |-
+                          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                          map is equivalent to an element of matchExpressions, whose key field is "key", the
+                          operator is "In", and the values array contains only "value". The requirements are ANDed.
+                        type: object
+                    type: object
+                    x-kubernetes-map-type: atomic
+                  routes:
+                    description: routes, mutually exclusive with RouteSelector
+                    x-kubernetes-preserve-unknown-fields: true
+                required:
+                - receiver
+                type: object
               suspend:
                 description: Suspend pauses synchronizing attempts and tells the operator
                   to ignore changes
                 type: boolean
             required:
             - instanceSelector
-            - interval
-            - rules
+            - route
             type: object
             x-kubernetes-validations:
-            - message: Only one of FolderUID or FolderRef can be set and one must
-                be defined
-              rule: (has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef)
-                && !(has(self.folderUID)))
             - message: spec.editable is immutable
               rule: ((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable)
                 && has(self.editable)))
-            - message: spec.folderUID is immutable
-              rule: ((!has(oldSelf.folderUID) && !has(self.folderUID)) || (has(oldSelf.folderUID)
-                && has(self.folderUID)))
-            - message: spec.folderRef is immutable
-              rule: ((!has(oldSelf.folderRef) && !has(self.folderRef)) || (has(oldSelf.folderRef)
-                && has(self.folderRef)))
             - message: disabling spec.allowCrossNamespaceImport requires a recreate
                 to ensure desired state
               rule: '!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport
                 && self.allowCrossNamespaceImport)'
           status:
-            description: The most recent observed state of a Grafana resource
+            description: GrafanaNotificationPolicyStatus defines the observed state
+              of GrafanaNotificationPolicy
             properties:
               conditions:
                 description: Results when synchonizing resource with Grafana instances
@@ -357,6 +320,10 @@ spec:
                   - status
                   - type
                   type: object
+                type: array
+              discoveredRoutes:
+                items:
+                  type: string
                 type: array
               lastResync:
                 description: Last time the resource was synchronized with Grafana

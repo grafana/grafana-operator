@@ -8,14 +8,14 @@ metadata:
   name: grafana-operator-operator-metrics-service
 spec:
   ports:
-    - name: metrics
-      port: 8443
-      protocol: TCP
-      targetPort: metrics
-    - port: 8888
-      targetPort: pprof
-      protocol: TCP
-      name: pprof
+  - name: metrics
+    port: 9090
+    protocol: TCP
+    targetPort: metrics
+  - name: pprof
+    port: 8888
+    protocol: TCP
+    targetPort: pprof
   selector:
     app.kubernetes.io/managed-by: olm
     app.kubernetes.io/name: grafana-operator

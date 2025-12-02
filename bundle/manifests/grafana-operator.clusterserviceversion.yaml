@@ -205,426 +205,461 @@ metadata:
             },
             "title": "Example Folder"
           }
+        },
+        {
+          "apiVersion": "grafana.integreatly.org/v1beta1",
+          "kind": "GrafanaLibraryPanel",
+          "metadata": {
+            "name": "grafana-library-panel-inline-envs"
+          },
+          "spec": {
+            "envs": [
+              {
+                "name": "CUSTOM_RANGE_ENV",
+                "value": "now - 12h"
+              }
+            ],
+            "instanceSelector": {
+              "matchLabels": {
+                "dashboards": "grafana"
+              }
+            },
+            "jsonnet": "local myRange = std.extVar('CUSTOM_RANGE_ENV'); {\n\n  model: {}\n}\n",
+            "plugins": [
+              {
+                "name": "grafana-piechart-panel",
+                "version": "1.3.9"
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "grafana.integreatly.org/v1beta1",
+          "kind": "GrafanaMuteTiming",
+          "metadata": {
+            "name": "mutetiming-sample"
+          },
+          "spec": {
+            "editable": false,
+            "instanceSelector": {
+              "matchLabels": {
+                "dashboards": "grafana"
+              }
+            },
+            "name": "mutetiming-sample",
+            "time_intervals": [
+              {
+                "days_of_month": [
+                  "1",
+                  "15"
+                ],
+                "location": "Asia/Shanghai",
+                "times": [
+                  {
+                    "end_time": "06:00",
+                    "start_time": "00:00"
+                  }
+                ],
+                "weekdays": [
+                  "saturday"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "grafana.integreatly.org/v1beta1",
+          "kind": "GrafanaNotificationPolicy",
+          "metadata": {
+            "name": "grafananotificationpolicy-sample"
+          },
+          "spec": {
+            "instanceSelector": {
+              "matchLabels": {
+                "dashboards": "grafana"
+              }
+            },
+            "route": {
+              "group_by": [
+                "grafana_folder",
+                "alertname"
+              ],
+              "receiver": "Grafana Cloud OnCall",
+              "routes": [
+                {
+                  "object_matchers": [
+                    [
+                      "foo",
+                      "=",
+                      "bar"
+                    ]
+                  ],
+                  "receiver": "grafana-default-email",
+                  "routes": [
+                    {
+                      "object_matchers": [
+                        [
+                          "severity",
+                          "=",
+                          "critical"
+                        ]
+                      ],
+                      "receiver": "Grafana Cloud OnCall"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "apiVersion": "grafana.integreatly.org/v1beta1",
+          "kind": "GrafanaNotificationPolicyRoute",
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/created-by": "grafana-operator",
+              "app.kubernetes.io/instance": "grafananotificationpolicyroute-sample",
+              "app.kubernetes.io/managed-by": "kustomize",
+              "app.kubernetes.io/name": "grafananotificationpolicyroute",
+              "app.kubernetes.io/part-of": "grafana-operator"
+            },
+            "name": "grafananotificationpolicyroute-sample"
+          },
+          "spec": null
+        },
+        {
+          "apiVersion": "grafana.integreatly.org/v1beta1",
+          "kind": "GrafanaNotificationTemplate",
+          "metadata": {
+            "name": "test"
+          },
+          "spec": {
+            "instanceSelector": {
+              "matchLabels": {
+                "dashboards": "grafana"
+              }
+            },
+            "name": "test",
+            "template": "{{ define \"SlackAlert\" }}\n  [{{.Status}}] {{ .Labels.alertname }}\n  {{ .Annotations.AlertValues }}\n{{ end }}\n\n{{ define \"SlackAlertMessage\" }}\n  {{ if gt (len .Alerts.Firing) 0 }}\n    {{ len .Alerts.Firing }} firing:\n    {{ range .Alerts.Firing }} {{ template \"SlackAlert\" . }} {{ end }}\n  {{ end }}\n  {{ if gt (len .Alerts.Resolved) 0 }}\n    {{ len .Alerts.Resolved }} resolved:\n    {{ range .Alerts.Resolved }} {{ template \"SlackAlert\" . }} {{ end }}\n  {{ end }}\n{{ end }}\n\n{{ template \"SlackAlertMessage\" . }}\n"
+          }
         }
       ]
     capabilities: Basic Install
     categories: Monitoring
-    containerImage: ghcr.io/grafana/grafana-operator@sha256:97561cef949b58f55ec67d133c02ac205e2ec3fb77388aeb868dacfcebad0752
-    createdAt: "2024-06-13T13:49:44Z"
+    containerImage: ghcr.io/grafana/grafana-operator:v5.6.0
+    createdAt: "2025-12-02T16:26:16Z"
     description: Deploys and manages Grafana instances, dashboards and data sources
     operators.operatorframework.io/builder: operator-sdk-v1.32.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/grafana/grafana-operator
     support: Grafana Labs
-  name: grafana-operator.v5.9.2
+  name: grafana-operator.v5.20.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
-      - description: GrafanaAlertRuleGroup is the Schema for the grafanaalertrulegroups API
-        displayName: Grafana Alert Rule Group
-        kind: GrafanaAlertRuleGroup
-        name: grafanaalertrulegroups.grafana.integreatly.org
-        version: v1beta1
-      - description: GrafanaContactPoint is the Schema for the grafanacontactpoints API
-        displayName: Grafana Contact Point
-        kind: GrafanaContactPoint
-        name: grafanacontactpoints.grafana.integreatly.org
-        version: v1beta1
-      - description: GrafanaDashboard is the Schema for the grafanadashboards API
-        displayName: Grafana Dashboard
-        kind: GrafanaDashboard
-        name: grafanadashboards.grafana.integreatly.org
-        version: v1beta1
-      - description: GrafanaDatasource is the Schema for the grafanadatasources API
-        displayName: Grafana Datasource
-        kind: GrafanaDatasource
-        name: grafanadatasources.grafana.integreatly.org
-        version: v1beta1
-      - description: GrafanaFolder is the Schema for the grafanafolders API
-        displayName: Grafana Folder
-        kind: GrafanaFolder
-        name: grafanafolders.grafana.integreatly.org
-        version: v1beta1
-      - description: Grafana is the Schema for the grafanas API
-        displayName: Grafana
-        kind: Grafana
-        name: grafanas.grafana.integreatly.org
-        version: v1beta1
+    - description: GrafanaAlertRuleGroup is the Schema for the grafanaalertrulegroups
+        API
+      displayName: Grafana Alert Rule Group
+      kind: GrafanaAlertRuleGroup
+      name: grafanaalertrulegroups.grafana.integreatly.org
+      version: v1beta1
+    - description: GrafanaContactPoint is the Schema for the grafanacontactpoints
+        API
+      displayName: Grafana Contact Point
+      kind: GrafanaContactPoint
+      name: grafanacontactpoints.grafana.integreatly.org
+      version: v1beta1
+    - description: GrafanaDashboard is the Schema for the grafanadashboards API
+      displayName: Grafana Dashboard
+      kind: GrafanaDashboard
+      name: grafanadashboards.grafana.integreatly.org
+      version: v1beta1
+    - description: GrafanaDatasource is the Schema for the grafanadatasources API
+      displayName: Grafana Datasource
+      kind: GrafanaDatasource
+      name: grafanadatasources.grafana.integreatly.org
+      version: v1beta1
+    - description: GrafanaFolder is the Schema for the grafanafolders API
+      displayName: Grafana Folder
+      kind: GrafanaFolder
+      name: grafanafolders.grafana.integreatly.org
+      version: v1beta1
+    - kind: GrafanaLibraryPanel
+      name: grafanalibrarypanels.grafana.integreatly.org
+      version: v1beta1
+    - kind: GrafanaMuteTiming
+      name: grafanamutetimings.grafana.integreatly.org
+      version: v1beta1
+    - description: GrafanaNotificationPolicy is the Schema for the GrafanaNotificationPolicy
+        API
+      displayName: Grafana Notification policy
+      kind: GrafanaNotificationPolicy
+      name: grafananotificationpolicies.grafana.integreatly.org
+      version: v1beta1
+    - description: GrafanaNotificationPolicyRoute is the Schema for the grafananotificationpolicyroutes
+        API
+      displayName: Grafana Notification Policy Route
+      kind: GrafanaNotificationPolicyRoute
+      name: grafananotificationpolicyroutes.grafana.integreatly.org
+      version: v1beta1
+    - kind: GrafanaNotificationTemplate
+      name: grafananotificationtemplates.grafana.integreatly.org
+      version: v1beta1
+    - description: Grafana is the Schema for the grafanas API
+      displayName: Grafana
+      kind: Grafana
+      name: grafanas.grafana.integreatly.org
+      version: v1beta1
+    - kind: GrafanaServiceAccount
+      name: grafanaserviceaccounts.grafana.integreatly.org
+      version: v1beta1
   description: Deploys and manages Grafana instances, dashboards and data sources
   displayName: Grafana Operator
   icon:
-    - base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAyMC4xLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4KCjxzdmcKICAgeG1sbnM6ZGM9Imh0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvIgogICB4bWxuczpjYz0iaHR0cDovL2NyZWF0aXZlY29tbW9ucy5vcmcvbnMjIgogICB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiCiAgIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIKICAgeG1sbnM6c29kaXBvZGk9Imh0dHA6Ly9zb2RpcG9kaS5zb3VyY2Vmb3JnZS5uZXQvRFREL3NvZGlwb2RpLTAuZHRkIgogICB4bWxuczppbmtzY2FwZT0iaHR0cDovL3d3dy5pbmtzY2FwZS5vcmcvbmFtZXNwYWNlcy9pbmtzY2FwZSIKICAgdmVyc2lvbj0iMS4xIgogICBpZD0iTGF5ZXJfMSIKICAgeD0iMHB4IgogICB5PSIwcHgiCiAgIHdpZHRoPSI1Ny43OTk5OTkiCiAgIGhlaWdodD0iNTcuNzk5OTk5IgogICB2aWV3Qm94PSIwIDAgNTcuNzk5OTk5IDU3LjgiCiAgIHhtbDpzcGFjZT0icHJlc2VydmUiCiAgIHNvZGlwb2RpOmRvY25hbWU9ImxvZ29fc21hbGwuc3ZnIgogICBpbmtzY2FwZTp2ZXJzaW9uPSIwLjkyLjQgKDVkYTY4OWMzMTMsIDIwMTktMDEtMTQpIj48bWV0YWRhdGEKICAgaWQ9Im1ldGFkYXRhMzc4NSI+PHJkZjpSREY+PGNjOldvcmsKICAgICAgIHJkZjphYm91dD0iIj48ZGM6Zm9ybWF0PmltYWdlL3N2Zyt4bWw8L2RjOmZvcm1hdD48ZGM6dHlwZQogICAgICAgICByZGY6cmVzb3VyY2U9Imh0dHA6Ly9wdXJsLm9yZy9kYy9kY21pdHlwZS9TdGlsbEltYWdlIiAvPjxkYzp0aXRsZT48L2RjOnRpdGxlPjwvY2M6V29yaz48L3JkZjpSREY+PC9tZXRhZGF0YT48ZGVmcwogICBpZD0iZGVmczM3ODMiIC8+PHNvZGlwb2RpOm5hbWVkdmlldwogICBwYWdlY29sb3I9IiNmZmZmZmYiCiAgIGJvcmRlcmNvbG9yPSIjNjY2NjY2IgogICBib3JkZXJvcGFjaXR5PSIxIgogICBvYmplY3R0b2xlcmFuY2U9IjEwIgogICBncmlkdG9sZXJhbmNlPSIxMCIKICAgZ3VpZGV0b2xlcmFuY2U9IjEwIgogICBpbmtzY2FwZTpwYWdlb3BhY2l0eT0iMCIKICAgaW5rc2NhcGU6cGFnZXNoYWRvdz0iMiIKICAgaW5rc2NhcGU6d2luZG93LXdpZHRoPSIyNTYwIgogICBpbmtzY2FwZTp3aW5kb3ctaGVpZ2h0PSIxMzg2IgogICBpZD0ibmFtZWR2aWV3Mzc4MSIKICAgc2hvd2dyaWQ9ImZhbHNlIgogICBpbmtzY2FwZTp6b29tPSIxMy44NTg3MTQiCiAgIGlua3NjYXBlOmN4PSI3NS40MTI5MDQiCiAgIGlua3NjYXBlOmN5PSIyMy4wNzc2MDYiCiAgIGlua3NjYXBlOndpbmRvdy14PSIwIgogICBpbmtzY2FwZTp3aW5kb3cteT0iMCIKICAgaW5rc2NhcGU6d2luZG93LW1heGltaXplZD0iMSIKICAgaW5rc2NhcGU6Y3VycmVudC1sYXllcj0iTGF5ZXJfMSIgLz4KPHN0eWxlCiAgIHR5cGU9InRleHQvY3NzIgogICBpZD0ic3R5bGUzNzY5Ij4KCS5zdDB7ZmlsbDojRTZFN0U4O30KCS5zdDF7ZmlsbDp1cmwoI1NWR0lEXzFfKTt9Cjwvc3R5bGU+Cgo8bGluZWFyR3JhZGllbnQKICAgaWQ9IlNWR0lEXzFfIgogICBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIKICAgeDE9IjI2LjcwMDAwMSIKICAgeTE9Ii05Ljg1MDE5OTciCiAgIHgyPSIyNi43MDAwMDEiCiAgIHkyPSI0My4xNjYiCiAgIGdyYWRpZW50VHJhbnNmb3JtPSJtYXRyaXgoMSwwLDAsLTEsMiw2MC4wMDAwMDIpIj4KCTxzdG9wCiAgIG9mZnNldD0iMCIKICAgc3R5bGU9InN0b3AtY29sb3I6I0ZGRjEwMCIKICAgaWQ9InN0b3AzNzczIiAvPgoJPHN0b3AKICAgb2Zmc2V0PSIxIgogICBzdHlsZT0ic3RvcC1jb2xvcjojRjA1QTI4IgogICBpZD0ic3RvcDM3NzUiIC8+CjwvbGluZWFyR3JhZGllbnQ+CjxwYXRoCiAgIGNsYXNzPSJzdDEiCiAgIGQ9Im0gNTUuMSwyNS41MDAwMDIgYyAtMC4xLC0xIC0wLjMsLTIuMSAtMC42LC0zLjMgLTAuMywtMS4yIC0wLjgsLTIuNiAtMS41LC00IC0wLjcsLTEuNCAtMS42LC0yLjkgLTIuOCwtNC4zIC0wLjUsLTAuNiAtMSwtMS4xIC0xLjUsLTEuNiAwLjgsLTMuMjAwMDAwNCAtMSwtNi4wMDAwMDA0IC0xLC02LjAwMDAwMDQgLTMuMSwtMC4yIC01LjEsMSAtNS44LDEuNSAtMC4xLC0wLjEgLTAuMiwtMC4xIC0wLjQsLTAuMiAtMC41LC0wLjIgLTEsLTAuNCAtMS42LC0wLjYgLTAuNiwtMC4yIC0xLjEsLTAuMyAtMS43LC0wLjUgLTAuNiwtMC4xIC0xLjIsLTAuMyAtMS44LC0wLjMgLTAuMSwwIC0wLjIsMCAtMC4zLDAgQyAzNC44LDEuODAwMDAxNiAzMC45LDEuNTI1ODc4OWUtNiAzMC45LDEuNTI1ODc4OWUtNiAyNi42LDIuODAwMDAxNiAyNS43LDYuNjAwMDAxNiAyNS43LDYuNjAwMDAxNiBjIDAsMCAwLDAuMSAwLDAuMiAtMC4yLDAuMSAtMC41LDAuMSAtMC43LDAuMiAtMC4zLDAuMSAtMC43LDAuMiAtMSwwLjMgLTAuMywwLjEgLTAuNywwLjMgLTEsMC40IC0wLjcsMC4zIC0xLjMsMC42IC0xLjksMSAtMC42LDAuMyAtMS4yLDAuNyAtMS44LDEuMSAtMC4xLDAgLTAuMiwtMC4xIC0wLjIsLTAuMSAtNiwtMi4zIC0xMS40LDAuNTAwMDAwNCAtMTEuNCwwLjUwMDAwMDQgLTAuNSw2LjQgMi40LDEwLjQgMywxMS4yIC0wLjEsMC40IC0wLjMsMC44IC0wLjQsMS4yIC0wLjQsMS40IC0wLjgsMi45IC0xLDQuNSAwLDAuMiAtMC4xLDAuNCAtMC4xLDAuNyAtNS42LDIuNyAtNy4yLDguNCAtNy4yLDguNCA0LjYsNS4zIDEwLDUuNyAxMCw1LjcgdiAwIGMgMC43LDEuMiAxLjUsMi40IDIuNCwzLjUgMC40LDAuNSAwLjgsMC45IDEuMiwxLjMgLTEuNyw0LjggMC4yLDguOSAwLjIsOC45IDUuMiwwLjIgOC42LC0yLjMgOS4zLC0yLjggMC41LDAuMiAxLDAuMyAxLjYsMC41IDEuNiwwLjQgMy4yLDAuNiA0LjgsMC43IDAuNCwwIDAuOCwwIDEuMiwwIGggMC4yIDAuMSAwLjMgMC4zIHYgMCBjIDIuNCwzLjUgNi43LDQgNi43LDQgMy40LC0zLjYgMy4yLC03LjIgMy4yLC03LjIgbCAtMC4xLC0wLjEgYyAwLjcsLTAuNSAxLjMsLTEgMS45LC0xLjUgMS4yLC0xLjEgMi4zLC0yLjQgMy4yLC0zLjcgMC4xLC0wLjEgMC4yLC0wLjMgMC4yLC0wLjQgMy40LDAuMiA1LjksLTIuMSA1LjksLTIuMSAtMC42LC00IC0zLjEsLTUuNyAtMy4xLC01LjcgaCAtMC4xIGMgMCwtMC4yIDAsLTAuNSAwLjEsLTAuNyAwLC0wLjQgMCwtMC44IDAsLTEuMiB2IC0wLjMgLTAuMSAtMC4xIGMgMCwtMC4xIDAsLTAuMSAwLC0wLjEgdiAtMC4yIC0wLjMgYyAwLC0wLjEgMCwtMC4yIDAsLTAuMyAwLC0wLjEgMCwtMC4yIDAsLTAuMyB2IC0wLjMgLTAuMyBjIC0wLjEsLTAuNCAtMC4xLC0wLjggLTAuMiwtMS4yIC0wLjQsLTEuNSAtMSwtMyAtMS44LC00LjMgLTAuOCwtMS4zIC0xLjgsLTIuNSAtMi45LC0zLjUgLTEuMSwtMSAtMi40LC0xLjggLTMuNywtMi40IC0xLjMsLTAuNiAtMi43LC0xIC00LjEsLTEuMSAtMC43LC0wLjEgLTEuNCwtMC4xIC0yLC0wLjEgaCAtMC4zIC0wLjEgLTAuMSAtMC4xIC0wLjMgYyAtMC4xLDAgLTAuMiwwIC0wLjMsMCAtMC4zLDAgLTAuNywwLjEgLTEsMC4xIC0xLjQsMC4zIC0yLjcsMC43IC0zLjgsMS40IC0xLjEsMC43IC0yLjEsMS41IC0yLjksMi41IC0wLjgsMSAtMS40LDIgLTEuOSwzLjEgLTAuNCwxLjEgLTAuNywyLjIgLTAuNywzLjMgMCwwLjMgMCwwLjYgMCwwLjggMCwwLjEgMCwwLjEgMCwwLjIgdiAwLjIgYyAwLDAuMSAwLDAuMyAwLDAuNCAwLjEsMC42IDAuMiwxLjEgMC4zLDEuNiAwLjMsMSAwLjgsMiAxLjQsMi44IDAuNiwwLjggMS4zLDEuNSAyLjEsMiAwLjgsMC41IDEuNiwwLjkgMi40LDEuMSAwLjgsMC4yIDEuNiwwLjMgMi4zLDAuMyAwLjEsMCAwLjIsMCAwLjMsMCBoIDAuMSAwLjEgYyAwLjEsMCAwLjIsMCAwLjIsMCAwLDAgMCwwIDAuMSwwIGggMC4xIDAuMSBjIDAuMSwwIDAuMiwwIDAuMywwIDAuMSwwIDAuMiwwIDAuMywtMC4xIDAuMiwwIDAuMywtMC4xIDAuNSwtMC4xIDAuMywtMC4xIDAuNiwtMC4yIDAuOSwtMC40IDAuMywtMC4xIDAuNSwtMC4zIDAuOCwtMC41IDAuMSwtMC4xIDAuMSwtMC4xIDAuMiwtMC4yIDAuMywtMC4yIDAuMywtMC42IDAuMSwtMC44IC0wLjIsLTAuMiAtMC41LC0wLjMgLTAuNywtMC4xIC0wLjIsLTAuMiAtMC4yLC0wLjEgLTAuMywtMC4xIC0wLjIsMC4xIC0wLjQsMC4yIC0wLjcsMC4zIC0wLjIsMC4xIC0wLjUsMC4xIC0wLjgsMC4yIC0wLjEsMCAtMC4zLDAgLTAuNCwwIC0wLjEsMCAtMC4xLDAgLTAuMiwwIC0wLjEsMCAtMC4xLDAgLTAuMiwwIC0wLjEsMCAtMC4xLDAgLTAuMiwwIC0wLjEsMCAtMC4yLDAgLTAuMiwwIHYgMCAwIEggMzQuMSAzNCBjIC0wLjEsMCAtMC4xLDAgLTAuMiwwIC0wLjYsLTAuMSAtMS4yLC0wLjMgLTEuNywtMC41IC0wLjYsLTAuMyAtMS4xLC0wLjYgLTEuNiwtMS4xIC0wLjUsLTAuNCAtMC45LC0xIC0xLjMsLTEuNiAtMC4zLC0wLjYgLTAuNiwtMS4zIC0wLjcsLTIgLTAuMSwtMC4zIC0wLjEsLTAuNyAtMC4xLC0xLjEgMCwtMC4xIDAsLTAuMiAwLC0wLjMgdiAwIDAgLTAuMSAtMC4xIGMgMCwtMC4yIDAsLTAuNCAwLjEsLTAuNiAwLjMsLTEuNSAxLC0zIDIuMiwtNC4yIDAuMywtMC4zIDAuNiwtMC41IDEsLTAuOCAwLjMsLTAuMiAwLjcsLTAuNCAxLjEsLTAuNiAwLjQsLTAuMiAwLjgsLTAuMyAxLjIsLTAuNCAwLjQsLTAuMSAwLjgsLTAuMiAxLjIsLTAuMiAwLjIsMCAwLjQsMCAwLjYsMCAwLjEsMCAwLjEsMCAwLjEsMCBoIDAuMiAwLjEgdiAwIDAgaCAwLjIgYyAwLjUsMCAwLjksMC4xIDEuNCwwLjIgMC45LDAuMiAxLjgsMC41IDIuNiwxIDEuNiwwLjkgMywyLjMgMy45LDQgMC40LDAuOCAwLjcsMS44IDAuOSwyLjcgMCwwLjIgMC4xLDAuNSAwLjEsMC43IHYgMC4yIDAuMiBjIDAsMC4xIDAsMC4xIDAsMC4yIDAsMC4xIDAsMC4xIDAsMC4yIHYgMC4yIDAuMiBjIDAsMC4xIDAsMC4zIDAsMC40IDAsMC4zIDAsMC41IC0wLjEsMC44IDAsMC4zIC0wLjEsMC41IC0wLjEsMC44IC0wLjEsMC4xIC0wLjEsMC4zIC0wLjIsMC42IC0wLjEsMC41IC0wLjMsMSAtMC41LDEuNSAtMC40LDEgLTAuOSwxLjkgLTEuNSwyLjcgLTEuMiwxLjcgLTIuOSwzLjEgLTQuOCwzLjkgLTEsMC40IC0yLDAuNyAtMywwLjkgLTAuNSwwLjEgLTEsMC4xIC0xLjYsMC4yIGggLTAuMSAtMC4xIC0wLjIgLTAuMyAtMC4xIGMgMC4xLDAgMCwwIDAsMCBoIC0wLjEgYyAtMC4zLDAgLTAuNiwwIC0wLjgsMCAtMS4xLC0wLjEgLTIuMiwtMC4zIC0zLjMsLTAuNiAtMS4xLC0wLjMgLTIuMSwtMC43IC0zLjEsLTEuMiAtMiwtMSAtMy43LC0yLjUgLTUuMSwtNC4yIC0wLjcsLTAuOSAtMS4zLC0xLjggLTEuOCwtMi44IC0wLjUsLTEgLTAuOSwtMiAtMS4yLC0zIC0wLjMsLTEgLTAuNSwtMi4xIC0wLjUsLTMuMiB2IC0wLjIgLTAuMSAwIC0wLjEgLTAuMiAwIC0wLjEgLTAuMSAtMC4zIDAgMCAtMC4xIGMgMCwtMC4xIDAsLTAuMyAwLC0wLjQgMCwtMC41IDAuMSwtMS4xIDAuMSwtMS42IDAuMSwtMC41IDAuMiwtMS4xIDAuMywtMS42IDAuMSwtMC41IDAuMiwtMS4xIDAuNCwtMS42IDAuMywtMS4xIDAuNywtMi4xIDEuMSwtMy4xIDAuOSwtMiAyLjEsLTMuNyAzLjUsLTUuMSAwLjQsLTAuMyAwLjcsLTAuNyAxLjEsLTEgMC40LC0wLjMgMC44LC0wLjYgMS4yLC0wLjkgMC40LC0wLjMgMC44LC0wLjUgMS4zLC0wLjcgMC4yLC0wLjEgMC40LC0wLjIgMC43LC0wLjMgMC4xLDAgMC4yLC0wLjEgMC4zLC0wLjEgMC4xLC0wLjEgMC4yLC0wLjEgMC4zLC0wLjEgMC40LC0wLjIgMC45LC0wLjQgMS40LC0wLjUgMC4xLDAgMC4yLC0wLjEgMC40LC0wLjEgMC4xLDAgMC4yLC0wLjEgMC40LC0wLjEgMC4yLC0wLjEgMC41LC0wLjEgMC43LC0wLjIgMC4xLDAgMC4yLC0wLjEgMC40LC0wLjEgMC4xLDAgMC4yLC0wLjEgMC40LC0wLjEgMC4xLDAgMC4yLDAgMC40LC0wLjEgaCAwLjIgMC4yIGMgMC4xLDAgMC4yLDAgMC40LC0wLjEgMC4xLDAgMC4zLDAgMC40LC0wLjEgMC4xLDAgMC4zLDAgMC40LDAgMC4xLDAgMC4yLDAgMC4zLDAgaCAwLjIgMC4xIDAuMSBjIDAuMSwwIDAuMywwIDAuNCwwIGggMC4yIGMgMCwwIDAuMSwwIDAsMCB2IDAgaCAwLjEgYyAwLjEsMCAwLjIsMCAwLjQsMCAwLjUsMCAwLjksMCAxLjQsMCAwLjksMCAxLjgsMC4xIDIuNywwLjMgMS44LDAuMyAzLjQsMC45IDQuOSwxLjYgMS41LDAuNyAyLjksMS42IDQsMi42IDAuMSwwLjEgMC4xLDAuMSAwLjIsMC4yIDAuMSwwLjEgMC4xLDAuMSAwLjIsMC4yIDAuMSwwLjEgMC4zLDAuMyAwLjQsMC40IDAuMSwwLjEgMC4zLDAuMyAwLjQsMC40IDAuMSwwLjEgMC4zLDAuMyAwLjQsMC40IDAuNSwwLjUgMSwxLjEgMS40LDEuNiAwLjgsMS4xIDEuNSwyLjEgMiwzLjIgMCwwLjEgMC4xLDAuMSAwLjEsMC4yIDAsMC4xIDAuMSwwLjEgMC4xLDAuMiAwLjEsMC4xIDAuMSwwLjMgMC4yLDAuNCAwLjEsMC4xIDAuMSwwLjIgMC4yLDAuNCAwLjEsMC4xIDAuMSwwLjIgMC4yLDAuNCAwLjIsMC41IDAuNCwwLjkgMC41LDEuNCAwLjIsMC43IDAuNCwxLjMgMC42LDEuOSAwLjEsMC4yIDAuMywwLjQgMC41LDAuMyAwLjIsMCAwLjQsLTAuMiAwLjQsLTAuNCAtMC4yLC0xLjEgLTAuMiwtMS44IC0wLjMsLTIuNiB6IgogICBpZD0icGF0aDM3NzgiCiAgIGlua3NjYXBlOmNvbm5lY3Rvci1jdXJ2YXR1cmU9IjAiCiAgIHN0eWxlPSJmaWxsOnVybCgjU1ZHSURfMV8pIiAvPgo8L3N2Zz4=
-      mediatype: image/svg+xml
+  - base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAyMC4xLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4KCjxzdmcKICAgeG1sbnM6ZGM9Imh0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvIgogICB4bWxuczpjYz0iaHR0cDovL2NyZWF0aXZlY29tbW9ucy5vcmcvbnMjIgogICB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiCiAgIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIKICAgeG1sbnM6c29kaXBvZGk9Imh0dHA6Ly9zb2RpcG9kaS5zb3VyY2Vmb3JnZS5uZXQvRFREL3NvZGlwb2RpLTAuZHRkIgogICB4bWxuczppbmtzY2FwZT0iaHR0cDovL3d3dy5pbmtzY2FwZS5vcmcvbmFtZXNwYWNlcy9pbmtzY2FwZSIKICAgdmVyc2lvbj0iMS4xIgogICBpZD0iTGF5ZXJfMSIKICAgeD0iMHB4IgogICB5PSIwcHgiCiAgIHdpZHRoPSI1Ny43OTk5OTkiCiAgIGhlaWdodD0iNTcuNzk5OTk5IgogICB2aWV3Qm94PSIwIDAgNTcuNzk5OTk5IDU3LjgiCiAgIHhtbDpzcGFjZT0icHJlc2VydmUiCiAgIHNvZGlwb2RpOmRvY25hbWU9ImxvZ29fc21hbGwuc3ZnIgogICBpbmtzY2FwZTp2ZXJzaW9uPSIwLjkyLjQgKDVkYTY4OWMzMTMsIDIwMTktMDEtMTQpIj48bWV0YWRhdGEKICAgaWQ9Im1ldGFkYXRhMzc4NSI+PHJkZjpSREY+PGNjOldvcmsKICAgICAgIHJkZjphYm91dD0iIj48ZGM6Zm9ybWF0PmltYWdlL3N2Zyt4bWw8L2RjOmZvcm1hdD48ZGM6dHlwZQogICAgICAgICByZGY6cmVzb3VyY2U9Imh0dHA6Ly9wdXJsLm9yZy9kYy9kY21pdHlwZS9TdGlsbEltYWdlIiAvPjxkYzp0aXRsZT48L2RjOnRpdGxlPjwvY2M6V29yaz48L3JkZjpSREY+PC9tZXRhZGF0YT48ZGVmcwogICBpZD0iZGVmczM3ODMiIC8+PHNvZGlwb2RpOm5hbWVkdmlldwogICBwYWdlY29sb3I9IiNmZmZmZmYiCiAgIGJvcmRlcmNvbG9yPSIjNjY2NjY2IgogICBib3JkZXJvcGFjaXR5PSIxIgogICBvYmplY3R0b2xlcmFuY2U9IjEwIgogICBncmlkdG9sZXJhbmNlPSIxMCIKICAgZ3VpZGV0b2xlcmFuY2U9IjEwIgogICBpbmtzY2FwZTpwYWdlb3BhY2l0eT0iMCIKICAgaW5rc2NhcGU6cGFnZXNoYWRvdz0iMiIKICAgaW5rc2NhcGU6d2luZG93LXdpZHRoPSIyNTYwIgogICBpbmtzY2FwZTp3aW5kb3ctaGVpZ2h0PSIxMzg2IgogICBpZD0ibmFtZWR2aWV3Mzc4MSIKICAgc2hvd2dyaWQ9ImZhbHNlIgogICBpbmtzY2FwZTp6b29tPSIxMy44NTg3MTQiCiAgIGlua3NjYXBlOmN4PSI3NS40MTI5MDQiCiAgIGlua3NjYXBlOmN5PSIyMy4wNzc2MDYiCiAgIGlua3NjYXBlOndpbmRvdy14PSIwIgogICBpbmtzY2FwZTp3aW5kb3cteT0iMCIKICAgaW5rc2NhcGU6d2luZG93LW1heGltaXplZD0iMSIKICAgaW5rc2NhcGU6Y3VycmVudC1sYXllcj0iTGF5ZXJfMSIgLz4KPHN0eWxlCiAgIHR5cGU9InRleHQvY3NzIgogICBpZD0ic3R5bGUzNzY5Ij4KCS5zdDB7ZmlsbDojRTZFN0U4O30KCS5zdDF7ZmlsbDp1cmwoI1NWR0lEXzFfKTt9Cjwvc3R5bGU+Cgo8bGluZWFyR3JhZGllbnQKICAgaWQ9IlNWR0lEXzFfIgogICBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIKICAgeDE9IjI2LjcwMDAwMSIKICAgeTE9Ii05Ljg1MDE5OTciCiAgIHgyPSIyNi43MDAwMDEiCiAgIHkyPSI0My4xNjYiCiAgIGdyYWRpZW50VHJhbnNmb3JtPSJtYXRyaXgoMSwwLDAsLTEsMiw2MC4wMDAwMDIpIj4KCTxzdG9wCiAgIG9mZnNldD0iMCIKICAgc3R5bGU9InN0b3AtY29sb3I6I0ZGRjEwMCIKICAgaWQ9InN0b3AzNzczIiAvPgoJPHN0b3AKICAgb2Zmc2V0PSIxIgogICBzdHlsZT0ic3RvcC1jb2xvcjojRjA1QTI4IgogICBpZD0ic3RvcDM3NzUiIC8+CjwvbGluZWFyR3JhZGllbnQ+CjxwYXRoCiAgIGNsYXNzPSJzdDEiCiAgIGQ9Im0gNTUuMSwyNS41MDAwMDIgYyAtMC4xLC0xIC0wLjMsLTIuMSAtMC42LC0zLjMgLTAuMywtMS4yIC0wLjgsLTIuNiAtMS41LC00IC0wLjcsLTEuNCAtMS42LC0yLjkgLTIuOCwtNC4zIC0wLjUsLTAuNiAtMSwtMS4xIC0xLjUsLTEuNiAwLjgsLTMuMjAwMDAwNCAtMSwtNi4wMDAwMDA0IC0xLC02LjAwMDAwMDQgLTMuMSwtMC4yIC01LjEsMSAtNS44LDEuNSAtMC4xLC0wLjEgLTAuMiwtMC4xIC0wLjQsLTAuMiAtMC41LC0wLjIgLTEsLTAuNCAtMS42LC0wLjYgLTAuNiwtMC4yIC0xLjEsLTAuMyAtMS43LC0wLjUgLTAuNiwtMC4xIC0xLjIsLTAuMyAtMS44LC0wLjMgLTAuMSwwIC0wLjIsMCAtMC4zLDAgQyAzNC44LDEuODAwMDAxNiAzMC45LDEuNTI1ODc4OWUtNiAzMC45LDEuNTI1ODc4OWUtNiAyNi42LDIuODAwMDAxNiAyNS43LDYuNjAwMDAxNiAyNS43LDYuNjAwMDAxNiBjIDAsMCAwLDAuMSAwLDAuMiAtMC4yLDAuMSAtMC41LDAuMSAtMC43LDAuMiAtMC4zLDAuMSAtMC43LDAuMiAtMSwwLjMgLTAuMywwLjEgLTAuNywwLjMgLTEsMC40IC0wLjcsMC4zIC0xLjMsMC42IC0xLjksMSAtMC42LDAuMyAtMS4yLDAuNyAtMS44LDEuMSAtMC4xLDAgLTAuMiwtMC4xIC0wLjIsLTAuMSAtNiwtMi4zIC0xMS40LDAuNTAwMDAwNCAtMTEuNCwwLjUwMDAwMDQgLTAuNSw2LjQgMi40LDEwLjQgMywxMS4yIC0wLjEsMC40IC0wLjMsMC44IC0wLjQsMS4yIC0wLjQsMS40IC0wLjgsMi45IC0xLDQuNSAwLDAuMiAtMC4xLDAuNCAtMC4xLDAuNyAtNS42LDIuNyAtNy4yLDguNCAtNy4yLDguNCA0LjYsNS4zIDEwLDUuNyAxMCw1LjcgdiAwIGMgMC43LDEuMiAxLjUsMi40IDIuNCwzLjUgMC40LDAuNSAwLjgsMC45IDEuMiwxLjMgLTEuNyw0LjggMC4yLDguOSAwLjIsOC45IDUuMiwwLjIgOC42LC0yLjMgOS4zLC0yLjggMC41LDAuMiAxLDAuMyAxLjYsMC41IDEuNiwwLjQgMy4yLDAuNiA0LjgsMC43IDAuNCwwIDAuOCwwIDEuMiwwIGggMC4yIDAuMSAwLjMgMC4zIHYgMCBjIDIuNCwzLjUgNi43LDQgNi43LDQgMy40LC0zLjYgMy4yLC03LjIgMy4yLC03LjIgbCAtMC4xLC0wLjEgYyAwLjcsLTAuNSAxLjMsLTEgMS45LC0xLjUgMS4yLC0xLjEgMi4zLC0yLjQgMy4yLC0zLjcgMC4xLC0wLjEgMC4yLC0wLjMgMC4yLC0wLjQgMy40LDAuMiA1LjksLTIuMSA1LjksLTIuMSAtMC42LC00IC0zLjEsLTUuNyAtMy4xLC01LjcgaCAtMC4xIGMgMCwtMC4yIDAsLTAuNSAwLjEsLTAuNyAwLC0wLjQgMCwtMC44IDAsLTEuMiB2IC0wLjMgLTAuMSAtMC4xIGMgMCwtMC4xIDAsLTAuMSAwLC0wLjEgdiAtMC4yIC0wLjMgYyAwLC0wLjEgMCwtMC4yIDAsLTAuMyAwLC0wLjEgMCwtMC4yIDAsLTAuMyB2IC0wLjMgLTAuMyBjIC0wLjEsLTAuNCAtMC4xLC0wLjggLTAuMiwtMS4yIC0wLjQsLTEuNSAtMSwtMyAtMS44LC00LjMgLTAuOCwtMS4zIC0xLjgsLTIuNSAtMi45LC0zLjUgLTEuMSwtMSAtMi40LC0xLjggLTMuNywtMi40IC0xLjMsLTAuNiAtMi43LC0xIC00LjEsLTEuMSAtMC43LC0wLjEgLTEuNCwtMC4xIC0yLC0wLjEgaCAtMC4zIC0wLjEgLTAuMSAtMC4xIC0wLjMgYyAtMC4xLDAgLTAuMiwwIC0wLjMsMCAtMC4zLDAgLTAuNywwLjEgLTEsMC4xIC0xLjQsMC4zIC0yLjcsMC43IC0zLjgsMS40IC0xLjEsMC43IC0yLjEsMS41IC0yLjksMi41IC0wLjgsMSAtMS40LDIgLTEuOSwzLjEgLTAuNCwxLjEgLTAuNywyLjIgLTAuNywzLjMgMCwwLjMgMCwwLjYgMCwwLjggMCwwLjEgMCwwLjEgMCwwLjIgdiAwLjIgYyAwLDAuMSAwLDAuMyAwLDAuNCAwLjEsMC42IDAuMiwxLjEgMC4zLDEuNiAwLjMsMSAwLjgsMiAxLjQsMi44IDAuNiwwLjggMS4zLDEuNSAyLjEsMiAwLjgsMC41IDEuNiwwLjkgMi40LDEuMSAwLjgsMC4yIDEuNiwwLjMgMi4zLDAuMyAwLjEsMCAwLjIsMCAwLjMsMCBoIDAuMSAwLjEgYyAwLjEsMCAwLjIsMCAwLjIsMCAwLDAgMCwwIDAuMSwwIGggMC4xIDAuMSBjIDAuMSwwIDAuMiwwIDAuMywwIDAuMSwwIDAuMiwwIDAuMywtMC4xIDAuMiwwIDAuMywtMC4xIDAuNSwtMC4xIDAuMywtMC4xIDAuNiwtMC4yIDAuOSwtMC40IDAuMywtMC4xIDAuNSwtMC4zIDAuOCwtMC41IDAuMSwtMC4xIDAuMSwtMC4xIDAuMiwtMC4yIDAuMywtMC4yIDAuMywtMC42IDAuMSwtMC44IC0wLjIsLTAuMiAtMC41LC0wLjMgLTAuNywtMC4xIC0wLjIsLTAuMiAtMC4yLC0wLjEgLTAuMywtMC4xIC0wLjIsMC4xIC0wLjQsMC4yIC0wLjcsMC4zIC0wLjIsMC4xIC0wLjUsMC4xIC0wLjgsMC4yIC0wLjEsMCAtMC4zLDAgLTAuNCwwIC0wLjEsMCAtMC4xLDAgLTAuMiwwIC0wLjEsMCAtMC4xLDAgLTAuMiwwIC0wLjEsMCAtMC4xLDAgLTAuMiwwIC0wLjEsMCAtMC4yLDAgLTAuMiwwIHYgMCAwIEggMzQuMSAzNCBjIC0wLjEsMCAtMC4xLDAgLTAuMiwwIC0wLjYsLTAuMSAtMS4yLC0wLjMgLTEuNywtMC41IC0wLjYsLTAuMyAtMS4xLC0wLjYgLTEuNiwtMS4xIC0wLjUsLTAuNCAtMC45LC0xIC0xLjMsLTEuNiAtMC4zLC0wLjYgLTAuNiwtMS4zIC0wLjcsLTIgLTAuMSwtMC4zIC0wLjEsLTAuNyAtMC4xLC0xLjEgMCwtMC4xIDAsLTAuMiAwLC0wLjMgdiAwIDAgLTAuMSAtMC4xIGMgMCwtMC4yIDAsLTAuNCAwLjEsLTAuNiAwLjMsLTEuNSAxLC0zIDIuMiwtNC4yIDAuMywtMC4zIDAuNiwtMC41IDEsLTAuOCAwLjMsLTAuMiAwLjcsLTAuNCAxLjEsLTAuNiAwLjQsLTAuMiAwLjgsLTAuMyAxLjIsLTAuNCAwLjQsLTAuMSAwLjgsLTAuMiAxLjIsLTAuMiAwLjIsMCAwLjQsMCAwLjYsMCAwLjEsMCAwLjEsMCAwLjEsMCBoIDAuMiAwLjEgdiAwIDAgaCAwLjIgYyAwLjUsMCAwLjksMC4xIDEuNCwwLjIgMC45LDAuMiAxLjgsMC41IDIuNiwxIDEuNiwwLjkgMywyLjMgMy45LDQgMC40LDAuOCAwLjcsMS44IDAuOSwyLjcgMCwwLjIgMC4xLDAuNSAwLjEsMC43IHYgMC4yIDAuMiBjIDAsMC4xIDAsMC4xIDAsMC4yIDAsMC4xIDAsMC4xIDAsMC4yIHYgMC4yIDAuMiBjIDAsMC4xIDAsMC4zIDAsMC40IDAsMC4zIDAsMC41IC0wLjEsMC44IDAsMC4zIC0wLjEsMC41IC0wLjEsMC44IC0wLjEsMC4xIC0wLjEsMC4zIC0wLjIsMC42IC0wLjEsMC41IC0wLjMsMSAtMC41LDEuNSAtMC40LDEgLTAuOSwxLjkgLTEuNSwyLjcgLTEuMiwxLjcgLTIuOSwzLjEgLTQuOCwzLjkgLTEsMC40IC0yLDAuNyAtMywwLjkgLTAuNSwwLjEgLTEsMC4xIC0xLjYsMC4yIGggLTAuMSAtMC4xIC0wLjIgLTAuMyAtMC4xIGMgMC4xLDAgMCwwIDAsMCBoIC0wLjEgYyAtMC4zLDAgLTAuNiwwIC0wLjgsMCAtMS4xLC0wLjEgLTIuMiwtMC4zIC0zLjMsLTAuNiAtMS4xLC0wLjMgLTIuMSwtMC43IC0zLjEsLTEuMiAtMiwtMSAtMy43LC0yLjUgLTUuMSwtNC4yIC0wLjcsLTAuOSAtMS4zLC0xLjggLTEuOCwtMi44IC0wLjUsLTEgLTAuOSwtMiAtMS4yLC0zIC0wLjMsLTEgLTAuNSwtMi4xIC0wLjUsLTMuMiB2IC0wLjIgLTAuMSAwIC0wLjEgLTAuMiAwIC0wLjEgLTAuMSAtMC4zIDAgMCAtMC4xIGMgMCwtMC4xIDAsLTAuMyAwLC0wLjQgMCwtMC41IDAuMSwtMS4xIDAuMSwtMS42IDAuMSwtMC41IDAuMiwtMS4xIDAuMywtMS42IDAuMSwtMC41IDAuMiwtMS4xIDAuNCwtMS42IDAuMywtMS4xIDAuNywtMi4xIDEuMSwtMy4xIDAuOSwtMiAyLjEsLTMuNyAzLjUsLTUuMSAwLjQsLTAuMyAwLjcsLTAuNyAxLjEsLTEgMC40LC0wLjMgMC44LC0wLjYgMS4yLC0wLjkgMC40LC0wLjMgMC44LC0wLjUgMS4zLC0wLjcgMC4yLC0wLjEgMC40LC0wLjIgMC43LC0wLjMgMC4xLDAgMC4yLC0wLjEgMC4zLC0wLjEgMC4xLC0wLjEgMC4yLC0wLjEgMC4zLC0wLjEgMC40LC0wLjIgMC45LC0wLjQgMS40LC0wLjUgMC4xLDAgMC4yLC0wLjEgMC40LC0wLjEgMC4xLDAgMC4yLC0wLjEgMC40LC0wLjEgMC4yLC0wLjEgMC41LC0wLjEgMC43LC0wLjIgMC4xLDAgMC4yLC0wLjEgMC40LC0wLjEgMC4xLDAgMC4yLC0wLjEgMC40LC0wLjEgMC4xLDAgMC4yLDAgMC40LC0wLjEgaCAwLjIgMC4yIGMgMC4xLDAgMC4yLDAgMC40LC0wLjEgMC4xLDAgMC4zLDAgMC40LC0wLjEgMC4xLDAgMC4zLDAgMC40LDAgMC4xLDAgMC4yLDAgMC4zLDAgaCAwLjIgMC4xIDAuMSBjIDAuMSwwIDAuMywwIDAuNCwwIGggMC4yIGMgMCwwIDAuMSwwIDAsMCB2IDAgaCAwLjEgYyAwLjEsMCAwLjIsMCAwLjQsMCAwLjUsMCAwLjksMCAxLjQsMCAwLjksMCAxLjgsMC4xIDIuNywwLjMgMS44LDAuMyAzLjQsMC45IDQuOSwxLjYgMS41LDAuNyAyLjksMS42IDQsMi42IDAuMSwwLjEgMC4xLDAuMSAwLjIsMC4yIDAuMSwwLjEgMC4xLDAuMSAwLjIsMC4yIDAuMSwwLjEgMC4zLDAuMyAwLjQsMC40IDAuMSwwLjEgMC4zLDAuMyAwLjQsMC40IDAuMSwwLjEgMC4zLDAuMyAwLjQsMC40IDAuNSwwLjUgMSwxLjEgMS40LDEuNiAwLjgsMS4xIDEuNSwyLjEgMiwzLjIgMCwwLjEgMC4xLDAuMSAwLjEsMC4yIDAsMC4xIDAuMSwwLjEgMC4xLDAuMiAwLjEsMC4xIDAuMSwwLjMgMC4yLDAuNCAwLjEsMC4xIDAuMSwwLjIgMC4yLDAuNCAwLjEsMC4xIDAuMSwwLjIgMC4yLDAuNCAwLjIsMC41IDAuNCwwLjkgMC41LDEuNCAwLjIsMC43IDAuNCwxLjMgMC42LDEuOSAwLjEsMC4yIDAuMywwLjQgMC41LDAuMyAwLjIsMCAwLjQsLTAuMiAwLjQsLTAuNCAtMC4yLC0xLjEgLTAuMiwtMS44IC0wLjMsLTIuNiB6IgogICBpZD0icGF0aDM3NzgiCiAgIGlua3NjYXBlOmNvbm5lY3Rvci1jdXJ2YXR1cmU9IjAiCiAgIHN0eWxlPSJmaWxsOnVybCgjU1ZHSURfMV8pIiAvPgo8L3N2Zz4=
+    mediatype: image/svg+xml
   install:
     spec:
       clusterPermissions:
-        - rules:
-            - apiGroups:
-                - ""
-              resources:
-                - configmaps
-                - persistentvolumeclaims
-                - secrets
-                - serviceaccounts
-                - services
-              verbs:
-                - create
-                - delete
-                - get
-                - list
-                - patch
-                - update
-                - watch
-            - apiGroups:
-                - ""
-              resources:
-                - events
-              verbs:
-                - create
-                - get
-                - list
-                - patch
-                - watch
-            - apiGroups:
-                - apps
-              resources:
-                - deployments
-              verbs:
-                - create
-                - delete
-                - get
-                - list
-                - patch
-                - update
-                - watch
-            - apiGroups:
-                - coordination.k8s.io
-              resources:
-                - leases
-              verbs:
-                - create
-                - delete
-                - get
-                - list
-                - patch
-                - update
-                - watch
-            - apiGroups:
-                - grafana.integreatly.org
-              resources:
-                - grafanaalertrulegroups
-              verbs:
-                - create
-                - delete
-                - get
-                - list
-                - patch
-                - update
-                - watch
-            - apiGroups:
-                - grafana.integreatly.org
-              resources:
-                - grafanaalertrulegroups/finalizers
-              verbs:
-                - update
-            - apiGroups:
-                - grafana.integreatly.org
-              resources:
-                - grafanaalertrulegroups/status
-              verbs:
-                - get
-                - patch
-                - update
-            - apiGroups:
-                - grafana.integreatly.org
-              resources:
-                - grafanacontactpoints
-              verbs:
-                - create
-                - delete
-                - get
-                - list
-                - patch
-                - update
-                - watch
-            - apiGroups:
-                - grafana.integreatly.org
-              resources:
-                - grafanacontactpoints/finalizers
-              verbs:
-                - update
-            - apiGroups:
-                - grafana.integreatly.org
-              resources:
-                - grafanacontactpoints/status
-              verbs:
-                - get
-                - patch
-                - update
-            - apiGroups:
-                - grafana.integreatly.org
-              resources:
-                - grafanadashboards
-              verbs:
-                - create
-                - delete
-                - get
-                - list
-                - patch
-                - update
-                - watch
-            - apiGroups:
-                - grafana.integreatly.org
-              resources:
-                - grafanadashboards/finalizers
-              verbs:
-                - update
-            - apiGroups:
-                - grafana.integreatly.org
-              resources:
-                - grafanadashboards/status
-              verbs:
-                - get
-                - patch
-                - update
-            - apiGroups:
-                - grafana.integreatly.org
-              resources:
-                - grafanadatasources
-              verbs:
-                - create
-                - delete
-                - get
-                - list
-                - patch
-                - update
-                - watch
-            - apiGroups:
-                - grafana.integreatly.org
-              resources:
-                - grafanadatasources/finalizers
-              verbs:
-                - update
-            - apiGroups:
-                - grafana.integreatly.org
-              resources:
-                - grafanadatasources/status
-              verbs:
-                - get
-                - patch
-                - update
-            - apiGroups:
-                - grafana.integreatly.org
-              resources:
-                - grafanafolders
-              verbs:
-                - create
-                - delete
-                - get
-                - list
-                - patch
-                - update
-                - watch
-            - apiGroups:
-                - grafana.integreatly.org
-              resources:
-                - grafanafolders/finalizers
-              verbs:
-                - update
-            - apiGroups:
-                - grafana.integreatly.org
-              resources:
-                - grafanafolders/status
-              verbs:
-                - get
-                - patch
-                - update
-            - apiGroups:
-                - grafana.integreatly.org
-              resources:
-                - grafanas
-              verbs:
-                - create
-                - delete
-                - get
-                - list
-                - patch
-                - update
-                - watch
-            - apiGroups:
-                - grafana.integreatly.org
-              resources:
-                - grafanas/finalizers
-              verbs:
-                - update
-            - apiGroups:
-                - grafana.integreatly.org
-              resources:
-                - grafanas/status
-              verbs:
-                - get
-                - patch
-                - update
-            - apiGroups:
-                - networking.k8s.io
-              resources:
-                - ingresses
-              verbs:
-                - create
-                - delete
-                - get
-                - list
-                - patch
-                - update
-                - watch
-            - apiGroups:
-                - route.openshift.io
-              resources:
-                - routes
-                - routes/custom-host
-              verbs:
-                - create
-                - delete
-                - get
-                - list
-                - update
-                - watch
-          serviceAccountName: grafana-operator-controller-manager
+      - rules:
+        - apiGroups:
+          - ""
+          resources:
+          - configmaps
+          - persistentvolumeclaims
+          - secrets
+          - serviceaccounts
+          - services
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - ""
+          resources:
+          - events
+          verbs:
+          - create
+          - get
+          - list
+          - patch
+          - watch
+        - apiGroups:
+          - apps
+          resources:
+          - deployments
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - coordination.k8s.io
+          resources:
+          - leases
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - gateway.networking.k8s.io
+          resources:
+          - httproutes
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - grafana.integreatly.org
+          resources:
+          - '*'
+          verbs:
+          - get
+          - list
+          - patch
+          - watch
+        - apiGroups:
+          - grafana.integreatly.org
+          resources:
+          - '*/status'
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - networking.k8s.io
+          resources:
+          - ingresses
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - route.openshift.io
+          resources:
+          - routes
+          - routes/custom-host
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - update
+          - watch
+        serviceAccountName: grafana-operator-controller-manager
       deployments:
-        - label:
-            app.kubernetes.io/managed-by: olm
-            app.kubernetes.io/name: grafana-operator
-          name: grafana-operator-controller-manager-v5
-          spec:
-            replicas: 1
-            selector:
-              matchLabels:
+      - label:
+          app.kubernetes.io/managed-by: olm
+          app.kubernetes.io/name: grafana-operator
+        name: grafana-operator-controller-manager-v5
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app.kubernetes.io/managed-by: olm
+              app.kubernetes.io/name: grafana-operator
+          strategy: {}
+          template:
+            metadata:
+              labels:
                 app.kubernetes.io/managed-by: olm
                 app.kubernetes.io/name: grafana-operator
-            strategy: {}
-            template:
-              metadata:
-                labels:
-                  app.kubernetes.io/managed-by: olm
-                  app.kubernetes.io/name: grafana-operator
-              spec:
-                containers:
-                  - args:
-                      - --health-probe-bind-address=:8081
-                      - --metrics-bind-address=0.0.0.0:9090
-                      - --leader-elect
-                    env:
-                      - name: RELATED_IMAGE_GRAFANA
-                        value: docker.io/grafana/grafana@sha256:b7fcb534f7b3512801bb3f4e658238846435804deb479d105b5cdc680847c272
-                      - name: WATCH_NAMESPACE
-                        valueFrom:
-                          fieldRef:
-                            fieldPath: metadata.annotations['olm.targetNamespaces']
-                    image: ghcr.io/grafana/grafana-operator@sha256:e7923d1a71b90a8ad66d114aec4b2b4e4929f15ba91872f64c5e271629612284
-                    imagePullPolicy: Always
-                    livenessProbe:
-                      httpGet:
-                        path: /healthz
-                        port: 8081
-                      initialDelaySeconds: 15
-                      periodSeconds: 20
-                    name: manager
-                    ports:
-                      - containerPort: 9090
-                        name: metrics
-                        protocol: TCP
-                    readinessProbe:
-                      httpGet:
-                        path: /readyz
-                        port: 8081
-                      initialDelaySeconds: 5
-                      periodSeconds: 10
-                    resources:
-                      limits:
-                        cpu: 200m
-                        memory: 550Mi
-                      requests:
-                        cpu: 100m
-                        memory: 20Mi
-                    securityContext:
-                      allowPrivilegeEscalation: false
+            spec:
+              containers:
+              - args:
+                - --health-probe-bind-address=:8081
+                - --metrics-bind-address=0.0.0.0:9090
+                - --leader-elect
+                env:
+                - name: RELATED_IMAGE_GRAFANA
+                  value: docker.io/grafana/grafana:12.3.0
+                - name: WATCH_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.annotations['olm.targetNamespaces']
+                image: ghcr.io/grafana/grafana-operator:v5.20.0
+                imagePullPolicy: Always
+                livenessProbe:
+                  httpGet:
+                    path: /healthz
+                    port: 8081
+                  initialDelaySeconds: 15
+                  periodSeconds: 20
+                name: manager
+                ports:
+                - containerPort: 9090
+                  name: metrics
+                  protocol: TCP
+                - containerPort: 8888
+                  name: pprof
+                  protocol: TCP
+                readinessProbe:
+                  httpGet:
+                    path: /readyz
+                    port: 8081
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+                resources:
+                  limits:
+                    cpu: 200m
+                    memory: 550Mi
+                  requests:
+                    cpu: 100m
+                    memory: 20Mi
                 securityContext:
-                  runAsNonRoot: true
-                serviceAccountName: grafana-operator-controller-manager
-                terminationGracePeriodSeconds: 10
+                  allowPrivilegeEscalation: false
+              securityContext:
+                runAsNonRoot: true
+              serviceAccountName: grafana-operator-controller-manager
+              terminationGracePeriodSeconds: 10
       permissions:
-        - rules:
-            - apiGroups:
-                - ""
-              resources:
-                - configmaps
-              verbs:
-                - get
-                - list
-                - watch
-                - create
-                - update
-                - patch
-                - delete
-            - apiGroups:
-                - coordination.k8s.io
-              resources:
-                - leases
-              verbs:
-                - get
-                - list
-                - watch
-                - create
-                - update
-                - patch
-                - delete
-            - apiGroups:
-                - ""
-              resources:
-                - events
-              verbs:
-                - create
-                - patch
-          serviceAccountName: grafana-operator-controller-manager
+      - rules:
+        - apiGroups:
+          - ""
+          resources:
+          - configmaps
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - coordination.k8s.io
+          resources:
+          - leases
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - ""
+          resources:
+          - events
+          verbs:
+          - create
+          - patch
+        serviceAccountName: grafana-operator-controller-manager
     strategy: deployment
   installModes:
-    - supported: true
-      type: OwnNamespace
-    - supported: true
-      type: SingleNamespace
-    - supported: true
-      type: MultiNamespace
-    - supported: true
-      type: AllNamespaces
+  - supported: true
+    type: OwnNamespace
+  - supported: true
+    type: SingleNamespace
+  - supported: true
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
   keywords:
-    - Grafana
-    - Metrics
-    - Observability
+  - Grafana
+  - Metrics
+  - Observability
   links:
-    - name: Grafana Operator
-      url: https://grafana.github.io/grafana-operator
+  - name: Grafana Operator
+    url: https://grafana.github.io/grafana-operator
   maintainers:
-    - email: grafana-operator@grafana.com
-      name: Grafana-operator maintainers
+  - email: grafana-operator@grafana.com
+    name: Grafana-operator maintainers
   maturity: stable
   minKubeVersion: 1.23.0
   provider:
     name: Grafana Labs
     url: https://grafana.com
   relatedImages:
-    - image: docker.io/grafana/grafana@sha256:b7fcb534f7b3512801bb3f4e658238846435804deb479d105b5cdc680847c272
-      name: grafana
-    - image: ghcr.io/grafana/grafana-operator@sha256:e7923d1a71b90a8ad66d114aec4b2b4e4929f15ba91872f64c5e271629612284
-      name: manager
-    - image: ghcr.io/grafana/grafana-operator@sha256:97561cef949b58f55ec67d133c02ac205e2ec3fb77388aeb868dacfcebad0752
-      name: grafana-operator-97561cef949b58f55ec67d133c02ac205e2ec3fb77388aeb868dacfcebad0752-annotation
+  - image: docker.io/grafana/grafana:12.3.0
+    name: grafana
   replaces: grafana-operator.v5.6.0
   skips:
-    - grafana-operator.v5.6.1
-    - grafana-operator.v5.6.2
-    - grafana-operator.v5.6.3
-    - grafana-operator.v5.7.0
-    - grafana-operator.v5.8.0
-  version: 5.9.2
+  - grafana-operator.v5.6.1
+  - grafana-operator.v5.6.2
+  - grafana-operator.v5.6.3
+  - grafana-operator.v5.7.0
+  - grafana-operator.v5.8.0
+  version: 5.20.0

@@ -4,22 +4,19 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.17.3
   creationTimestamp: null
-  name: grafanadashboards.grafana.integreatly.org
+  name: grafanalibrarypanels.grafana.integreatly.org
 spec:
   group: grafana.integreatly.org
   names:
     categories:
     - grafana-operator
-    kind: GrafanaDashboard
-    listKind: GrafanaDashboardList
-    plural: grafanadashboards
-    singular: grafanadashboard
+    kind: GrafanaLibraryPanel
+    listKind: GrafanaLibraryPanelList
+    plural: grafanalibrarypanels
+    singular: grafanalibrarypanel
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .status.NoMatchingInstances
-      name: No matching instances
-      type: boolean
     - format: date-time
       jsonPath: .status.lastResync
       name: Last resync
@@ -30,7 +27,8 @@ spec:
     name: v1beta1
     schema:
       openAPIV3Schema:
-        description: GrafanaDashboard is the Schema for the grafanadashboards API
+        description: GrafanaLibraryPanel is the Schema for the grafanalibrarypanels
+          API
         properties:
           apiVersion:
             description: |-
@@ -50,7 +48,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: GrafanaDashboardSpec defines the desired state of GrafanaDashboard
+            description: GrafanaLibraryPanelSpec defines the desired state of GrafanaLibraryPanel
             properties:
               allowCrossNamespaceImport:
                 default: false
@@ -217,9 +215,6 @@ spec:
                   - name
                   type: object
                 type: array
-              folder:
-                description: folder assignment for dashboard
-                type: string
               folderRef:
                 description: Name of a `GrafanaFolder` resource in the same namespace
                 type: string
@@ -412,10 +407,6 @@ spec:
                 time
               rule: (has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef)
                 && !(has(self.folderUID))) || !(has(self.folderRef) && (has(self.folderUID)))
-            - message: folder field cannot be set when folderUID or folderRef is already
-                declared
-              rule: (has(self.folder) && !(has(self.folderRef) || has(self.folderUID)))
-                || !(has(self.folder))
             - message: spec.uid is immutable
               rule: ((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) &&
                 has(self.uid)))
@@ -424,12 +415,8 @@ spec:
               rule: '!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport
                 && self.allowCrossNamespaceImport)'
           status:
-            description: GrafanaDashboardStatus defines the observed state of GrafanaDashboard
+            description: GrafanaLibraryPanelStatus defines the observed state of GrafanaLibraryPanel
             properties:
-              NoMatchingInstances:
-                description: The dashboard instanceSelector can't find matching grafana
-                  instances
-                type: boolean
               conditions:
                 description: Results when synchonizing resource with Grafana instances
                 items:
