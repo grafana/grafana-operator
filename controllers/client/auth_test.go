@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -247,25 +248,6 @@ func TestGetAdminCredentials(t *testing.T) {
 	})
 }
 
-func createTestJWTFile(t *testing.T) (*os.File, string) {
-	t.Helper()
-
-	now := time.Now().Add(60 * time.Second).Unix()
-	claims := fmt.Sprintf(`{"exp": %g}`, float64(now))
-	encodedClaims := base64.RawStdEncoding.EncodeToString([]byte(claims))
-
-	testJWT := fmt.Sprintf("header.%s.signature", encodedClaims)
-
-	f, err := os.CreateTemp(os.TempDir(), "token-*")
-	require.NoError(t, err)
-
-	written, err := f.WriteString(testJWT)
-	require.Equal(t, len([]byte(testJWT)), written)
-	require.NoError(t, err)
-
-	return f, testJWT
-}
-
 func createFileWithContent(t *testing.T, content string) *os.File {
 	t.Helper()
 
@@ -279,15 +261,28 @@ func createFileWithContent(t *testing.T, content string) *os.File {
 	return f
 }
 
-func tokenIsValid(t *testing.T, expectedToken, token string, err error) {
+func getFakeToken(t *testing.T, exp time.Time) string {
 	t.Helper()
 
-	require.NoError(t, err)
+	claims := fmt.Sprintf(`{"exp": %g}`, float64(exp.Unix()))
+	encodedClaims := base64.RawStdEncoding.EncodeToString([]byte(claims))
+
+	jwt := fmt.Sprintf("header.%s.signature", encodedClaims)
+
+	return jwt
+}
+
+func tokenAndCacheAreValid(t *testing.T, got string, wantToken string, wantExp time.Time) {
+	t.Helper()
+
+	assert.NotEmpty(t, got)
+
 	require.NotNil(t, jwtCache)
-	require.Equal(t, expectedToken, token)
-	require.Equal(t, expectedToken, jwtCache.Token)
-	require.False(t, jwtCache.Expiration.IsZero())
-	require.True(t, jwtCache.Expiration.After(time.Now()))
+	assert.Equal(t, wantToken, got)
+	assert.Equal(t, wantToken, jwtCache.Token)
+	assert.Equal(t, wantExp.Unix(), jwtCache.Expiration.Unix())
+	assert.False(t, wantExp.IsZero())
+	assert.True(t, jwtCache.Expiration.After(time.Now()))
 }
 
 func TestGetBearerToken(t *testing.T) {
@@ -374,52 +369,53 @@ func TestGetBearerToken(t *testing.T) {
 		})
 	}
 
-	t.Run("decode test token with nil cache", func(t *testing.T) {
-		jwtCache = nil
+	t.Run("token expiration and renewal", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			jwtCache = nil
 
-		f, token := createTestJWTFile(t)
-		defer os.Remove(f.Name())
+			now := time.Now()
 
-		parsedToken, err := getBearerToken(f.Name())
-		tokenIsValid(t, token, parsedToken, err)
+			exp1 := now.Add(60 * time.Second)
+			exp2 := now.Add(120 * time.Second)
 
-		assert.NotNil(t, jwtCache)
-	})
+			jwt1 := getFakeToken(t, exp1)
+			jwt2 := getFakeToken(t, exp2)
 
-	t.Run("Read from cache", func(t *testing.T) {
-		jwtCache = nil
+			f1 := createFileWithContent(t, jwt1)
+			defer os.Remove(f1.Name())
 
-		f, token := createTestJWTFile(t)
-		defer os.Remove(f.Name())
+			f2 := createFileWithContent(t, jwt2)
+			defer os.Remove(f2.Name())
 
-		parsedToken, err := getBearerToken(f.Name())
-		tokenIsValid(t, token, parsedToken, err)
+			// Empty cache at first, we expect it to be populated with the data derived from jwt1
+			wantToken := jwt1
+			wantExp := exp1.Add(tokenExpirationCompensation)
 
-		os.Remove(f.Name())
-		cachedToken, err := getBearerToken(f.Name())
-		tokenIsValid(t, token, cachedToken, err)
+			got, err := getBearerToken(f1.Name())
+			require.NoError(t, err)
 
-		assert.NotNil(t, jwtCache)
-	})
+			tokenAndCacheAreValid(t, got, wantToken, wantExp)
 
-	t.Run("expire cache and re-parse token", func(t *testing.T) {
-		jwtCache = nil
+			// New token is already available, but the old one hasn't expired yet, so fetch jwt1 from cache
+			wantToken = jwt1
+			wantExp = exp1.Add(tokenExpirationCompensation)
 
-		f, token := createTestJWTFile(t)
-		defer os.Remove(f.Name())
+			got, err = getBearerToken(f2.Name()) // returns the old token despite the new file
+			require.NoError(t, err)
 
-		parsedToken, err := getBearerToken(f.Name())
-		tokenIsValid(t, token, parsedToken, err)
+			tokenAndCacheAreValid(t, got, wantToken, wantExp)
 
-		// Store original expiration and overwrite cache
-		tokenExpiration := jwtCache.Expiration
-		jwtCache.Expiration = time.Now().Add(-60 * time.Second)
-		jwtCache.Token = ""
+			// Token expiration and renewal
+			time.Sleep(60 * time.Second)
+			synctest.Wait()
 
-		cachedToken, err := getBearerToken(f.Name())
-		tokenIsValid(t, token, cachedToken, err)
-		require.Equal(t, tokenExpiration, jwtCache.Expiration)
+			wantToken = jwt2
+			wantExp = exp2.Add(tokenExpirationCompensation)
 
-		assert.NotNil(t, jwtCache)
+			got, err = getBearerToken(f2.Name()) // the new token this time
+			require.NoError(t, err)
+
+			tokenAndCacheAreValid(t, got, wantToken, wantExp)
+		})
 	})
 }
