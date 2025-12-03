@@ -396,7 +396,7 @@ func TestGetBearerToken(t *testing.T) {
 
 			tokenAndCacheAreValid(t, got, wantToken, wantExp)
 
-			// New token is already available, but the old one hasn't expired yet, so fetch jwt1 from cache
+			// New token is already available, but the old one hasn't expired yet, so we fetch jwt1 from cache
 			wantToken = jwt1
 			wantExp = exp1.Add(tokenExpirationCompensation)
 
@@ -411,7 +411,7 @@ func TestGetBearerToken(t *testing.T) {
 			wantToken = jwt2
 			wantExp = exp2.Add(tokenExpirationCompensation)
 
-			got, err = getBearerToken(f2.Name()) // the new token this time
+			got, err = getBearerToken(f2.Name()) // returns the new token this time
 			require.NoError(t, err)
 
 			tokenAndCacheAreValid(t, got, wantToken, wantExp)
