@@ -407,7 +407,6 @@ func TestGetBearerToken(t *testing.T) {
 
 			// Token expiration and renewal
 			time.Sleep(60 * time.Second)
-			synctest.Wait()
 
 			wantToken = jwt2
 			wantExp = exp2.Add(tokenExpirationCompensation)
