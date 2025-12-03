@@ -37,7 +37,7 @@ func TestGetValueFromSecretKey(t *testing.T) {
 		},
 	}
 
-	testCtx := context.Background()
+	testCtx := t.Context()
 	s := runtime.NewScheme()
 	err := corev1.AddToScheme(s)
 	require.NoError(t, err, "adding scheme")
