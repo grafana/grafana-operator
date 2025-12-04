@@ -253,7 +253,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 			return fmt.Errorf("failed to unmarshal spec.permissions: %w", err)
 		}
 
-		_, err = gClient.FolderPermissions.UpdateFolderPermissions(uid, &permissions) //nolint:errcheck
+		_, err = gClient.Folders.UpdateFolderPermissions(uid, &permissions) //nolint:errcheck
 		if err != nil {
 			return fmt.Errorf("failed to update folder permissions: %w", err)
 		}
