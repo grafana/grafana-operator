@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
@@ -92,6 +93,66 @@ var _ = Describe("NotificationPolicy type", func() {
 			notificationpolicy.Spec.Editable = refFalse
 			err = k8sClient.Update(ctx, notificationpolicy)
 			require.Error(t, err)
+		})
+	})
+
+	Context("Invalidate root routes when using invalid fields", func() {
+		ctx := context.Background()
+		invalidFieldErr := "is invalid on the top level route node"
+
+		It("Invalidate continue", func() {
+			np := newNotificationPolicy("invalid-route-fields", nil)
+			np.Spec.Route.Continue = true
+
+			err := k8sClient.Create(ctx, np)
+			require.Error(t, err)
+			assert.ErrorContains(t, err, invalidFieldErr)
+		})
+
+		It("Invalidate active_time_intervals", func() {
+			np := newNotificationPolicy("invalid-route-fields", nil)
+			np.Spec.Route.ActiveTimeIntervals = []string{"any-string"}
+
+			err := k8sClient.Create(ctx, np)
+			require.Error(t, err)
+			assert.ErrorContains(t, err, invalidFieldErr)
+		})
+
+		It("Invalidate mute_time_intervals", func() {
+			np := newNotificationPolicy("invalid-route-fields", nil)
+			np.Spec.Route.MuteTimeIntervals = []string{"any-string"}
+
+			err := k8sClient.Create(ctx, np)
+			require.Error(t, err)
+			assert.ErrorContains(t, err, invalidFieldErr)
+		})
+
+		It("Invalidate match_re", func() {
+			np := newNotificationPolicy("invalid-route-fields", nil)
+			np.Spec.Route.MatchRe = models.MatchRegexps{"match": "string"}
+
+			err := k8sClient.Create(ctx, np)
+			require.Error(t, err)
+			assert.ErrorContains(t, err, invalidFieldErr)
+		})
+
+		It("Invalidate matchers", func() {
+			np := newNotificationPolicy("invalid-route-fields", nil)
+			np.Spec.Route.Matchers = Matchers{&Matcher{}}
+			// Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: ptr.To("team"), Value: "A", IsEqual: true}},
+
+			err := k8sClient.Create(ctx, np)
+			require.Error(t, err)
+			assert.ErrorContains(t, err, invalidFieldErr)
+		})
+
+		It("Invalidate matchers", func() {
+			np := newNotificationPolicy("invalid-route-fields", nil)
+			np.Spec.Route.ObjectMatchers = models.ObjectMatchers{[]string{"any"}}
+
+			err := k8sClient.Create(ctx, np)
+			require.Error(t, err)
+			assert.ErrorContains(t, err, invalidFieldErr)
 		})
 	})
 })
