@@ -189,9 +189,10 @@ func TestGetContainerEnvCredentials(t *testing.T) {
 		WithObjects(secret).Build()
 
 	tests := []struct {
-		name string
-		envs []corev1.EnvVar
-		want *grafanaAdminCredentials
+		name        string
+		envs        []corev1.EnvVar
+		want        *grafanaAdminCredentials
+		wantErrText string
 	}{
 		{
 			name: "plaintext",
@@ -237,6 +238,52 @@ func TestGetContainerEnvCredentials(t *testing.T) {
 				adminPassword: password,
 			},
 		},
+		// error cases
+		{
+			name: "non-existent secret",
+			envs: []corev1.EnvVar{
+				{
+					Name:      config.GrafanaAdminUserEnvVar,
+					ValueFrom: getEnvValueFrom(t, nonExistent, usernameKey),
+				},
+				{
+					Name:      config.GrafanaAdminPasswordEnvVar,
+					ValueFrom: getEnvValueFrom(t, nonExistent, passwordKey),
+				},
+			},
+			want:        nil,
+			wantErrText: "not found",
+		},
+		{
+			name: "non-existent username key",
+			envs: []corev1.EnvVar{
+				{
+					Name:      config.GrafanaAdminUserEnvVar,
+					ValueFrom: getEnvValueFrom(t, secretName, nonExistent),
+				},
+				{
+					Name:      config.GrafanaAdminPasswordEnvVar,
+					ValueFrom: getEnvValueFrom(t, secretName, passwordKey),
+				},
+			},
+			want:        nil,
+			wantErrText: "credentials not found in secret",
+		},
+		{
+			name: "non-existent password key",
+			envs: []corev1.EnvVar{
+				{
+					Name:      config.GrafanaAdminUserEnvVar,
+					ValueFrom: getEnvValueFrom(t, secretName, usernameKey),
+				},
+				{
+					Name:      config.GrafanaAdminPasswordEnvVar,
+					ValueFrom: getEnvValueFrom(t, secretName, nonExistent),
+				},
+			},
+			want:        nil,
+			wantErrText: "credentials not found in secret",
+		},
 	}
 
 	for _, tt := range tests {
@@ -261,86 +308,13 @@ func TestGetContainerEnvCredentials(t *testing.T) {
 			})
 
 			got, err := getContainerEnvCredentials(ctx, c, cr)
-			require.NoError(t, err)
+			if tt.wantErrText == "" {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, tt.wantErrText)
+			}
 
 			assert.Equal(t, tt.want, got)
-		})
-	}
-
-	tests2 := []struct {
-		name        string
-		envs        []corev1.EnvVar
-		wantErrText string
-	}{
-		{
-			name: "non-existent secret",
-			envs: []corev1.EnvVar{
-				{
-					Name:      config.GrafanaAdminUserEnvVar,
-					ValueFrom: getEnvValueFrom(t, nonExistent, usernameKey),
-				},
-				{
-					Name:      config.GrafanaAdminPasswordEnvVar,
-					ValueFrom: getEnvValueFrom(t, nonExistent, passwordKey),
-				},
-			},
-			wantErrText: "not found",
-		},
-		{
-			name: "non-existent username key",
-			envs: []corev1.EnvVar{
-				{
-					Name:      config.GrafanaAdminUserEnvVar,
-					ValueFrom: getEnvValueFrom(t, secretName, nonExistent),
-				},
-				{
-					Name:      config.GrafanaAdminPasswordEnvVar,
-					ValueFrom: getEnvValueFrom(t, secretName, passwordKey),
-				},
-			},
-			wantErrText: "credentials not found in secret",
-		},
-		{
-			name: "non-existent password key",
-			envs: []corev1.EnvVar{
-				{
-					Name:      config.GrafanaAdminUserEnvVar,
-					ValueFrom: getEnvValueFrom(t, secretName, usernameKey),
-				},
-				{
-					Name:      config.GrafanaAdminPasswordEnvVar,
-					ValueFrom: getEnvValueFrom(t, secretName, nonExistent),
-				},
-			},
-			wantErrText: "credentials not found in secret",
-		},
-	}
-
-	for _, tt := range tests2 {
-		t.Run(tt.name, func(t *testing.T) {
-			cr := &v1beta1.Grafana{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "default",
-					Name:      "grafana-env-credentials",
-				},
-			}
-
-			deployment := resources.GetGrafanaDeployment(cr, nil)
-			deployment.Spec.Template.Spec.Containers = []corev1.Container{
-				{
-					Name: "grafana", // TODO: switch to const
-					Env:  tt.envs,
-				},
-			}
-
-			createAndCleanupResources(t, ctx, c, []client.Object{
-				cr, deployment,
-			})
-
-			got, err := getContainerEnvCredentials(ctx, c, cr)
-			require.ErrorContains(t, err, tt.wantErrText)
-
-			assert.Nil(t, got)
 		})
 	}
 
