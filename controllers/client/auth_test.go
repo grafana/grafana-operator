@@ -10,11 +10,15 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/controllers/config"
+	"github.com/grafana/grafana-operator/v5/controllers/resources"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -147,6 +151,230 @@ func TestGetExternalAdminCredentials(t *testing.T) {
 	})
 }
 
+func TestGetContainerEnvCredentials(t *testing.T) {
+	const (
+		username    = "root"
+		usernameKey = "user"
+		password    = "secret"
+		passwordKey = "password"
+		secretName  = "grafana-credentials"
+		nonExistent = "non-existent"
+	)
+
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      secretName,
+		},
+		Data: map[string][]byte{
+			usernameKey: []byte(username),
+			passwordKey: []byte(password),
+		},
+	}
+
+	ctx := t.Context()
+	s := runtime.NewScheme()
+
+	err := corev1.AddToScheme(s)
+	require.NoError(t, err, "adding scheme")
+
+	err = appsv1.AddToScheme(s)
+	require.NoError(t, err, "adding scheme")
+
+	err = v1beta1.AddToScheme(s)
+	require.NoError(t, err, "adding scheme")
+
+	c := fake.NewClientBuilder().
+		WithScheme(s).
+		WithObjects(secret).Build()
+
+	tests := []struct {
+		name string
+		envs []corev1.EnvVar
+		want *grafanaAdminCredentials
+	}{
+		{
+			name: "plaintext",
+			envs: []corev1.EnvVar{
+				{
+					Name:  config.GrafanaAdminUserEnvVar,
+					Value: username,
+				},
+				{
+					Name:  config.GrafanaAdminPasswordEnvVar,
+					Value: password,
+				},
+			},
+			want: &grafanaAdminCredentials{
+				adminUser:     username,
+				adminPassword: password,
+			},
+		},
+		{
+			name: "no credential envs",
+			envs: []corev1.EnvVar{
+				{
+					Name:  "a",
+					Value: "b",
+				},
+			},
+			want: &grafanaAdminCredentials{},
+		},
+		{
+			name: "from secret",
+			envs: []corev1.EnvVar{
+				{
+					Name:      config.GrafanaAdminUserEnvVar,
+					ValueFrom: getEnvValueFrom(t, secretName, usernameKey),
+				},
+				{
+					Name:      config.GrafanaAdminPasswordEnvVar,
+					ValueFrom: getEnvValueFrom(t, secretName, passwordKey),
+				},
+			},
+			want: &grafanaAdminCredentials{
+				adminUser:     username,
+				adminPassword: password,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cr := &v1beta1.Grafana{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "grafana-env-credentials",
+				},
+			}
+
+			deployment := resources.GetGrafanaDeployment(cr, nil)
+			deployment.Spec.Template.Spec.Containers = []corev1.Container{
+				{
+					Name: "grafana", // TODO: switch to const
+					Env:  tt.envs,
+				},
+			}
+
+			createAndCleanupResources(t, ctx, c, []client.Object{
+				cr, deployment,
+			})
+
+			got, err := getContainerEnvCredentials(ctx, c, cr)
+			require.NoError(t, err)
+
+			assert.Equal(t, tt.want, got)
+		})
+	}
+
+	tests2 := []struct {
+		name        string
+		envs        []corev1.EnvVar
+		wantErrText string
+	}{
+		{
+			name: "non-existent secret",
+			envs: []corev1.EnvVar{
+				{
+					Name:      config.GrafanaAdminUserEnvVar,
+					ValueFrom: getEnvValueFrom(t, nonExistent, usernameKey),
+				},
+				{
+					Name:      config.GrafanaAdminPasswordEnvVar,
+					ValueFrom: getEnvValueFrom(t, nonExistent, passwordKey),
+				},
+			},
+			wantErrText: "not found",
+		},
+		{
+			name: "non-existent username key",
+			envs: []corev1.EnvVar{
+				{
+					Name:      config.GrafanaAdminUserEnvVar,
+					ValueFrom: getEnvValueFrom(t, secretName, nonExistent),
+				},
+				{
+					Name:      config.GrafanaAdminPasswordEnvVar,
+					ValueFrom: getEnvValueFrom(t, secretName, passwordKey),
+				},
+			},
+			wantErrText: "credentials not found in secret",
+		},
+		{
+			name: "non-existent password key",
+			envs: []corev1.EnvVar{
+				{
+					Name:      config.GrafanaAdminUserEnvVar,
+					ValueFrom: getEnvValueFrom(t, secretName, usernameKey),
+				},
+				{
+					Name:      config.GrafanaAdminPasswordEnvVar,
+					ValueFrom: getEnvValueFrom(t, secretName, nonExistent),
+				},
+			},
+			wantErrText: "credentials not found in secret",
+		},
+	}
+
+	for _, tt := range tests2 {
+		t.Run(tt.name, func(t *testing.T) {
+			cr := &v1beta1.Grafana{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "grafana-env-credentials",
+				},
+			}
+
+			deployment := resources.GetGrafanaDeployment(cr, nil)
+			deployment.Spec.Template.Spec.Containers = []corev1.Container{
+				{
+					Name: "grafana", // TODO: switch to const
+					Env:  tt.envs,
+				},
+			}
+
+			createAndCleanupResources(t, ctx, c, []client.Object{
+				cr, deployment,
+			})
+
+			got, err := getContainerEnvCredentials(ctx, c, cr)
+			require.ErrorContains(t, err, tt.wantErrText)
+
+			assert.Nil(t, got)
+		})
+	}
+
+	// TODO: error case for non-existent deployment
+}
+
+func getEnvValueFrom(t *testing.T, secretName, key string) *corev1.EnvVarSource {
+	t.Helper()
+
+	v := &corev1.EnvVarSource{
+		SecretKeyRef: &corev1.SecretKeySelector{
+			LocalObjectReference: corev1.LocalObjectReference{
+				Name: secretName,
+			},
+			Key: key,
+		},
+	}
+
+	return v
+}
+
+func createAndCleanupResources(t *testing.T, ctx context.Context, c client.WithWatch, objects []client.Object) {
+	t.Helper()
+
+	for _, obj := range objects {
+		err := c.Create(ctx, obj)
+		require.NoError(t, err)
+
+		t.Cleanup(func() {
+			c.Delete(ctx, obj)
+		})
+	}
+}
+
 // TODO currently only tests code paths for external grafanas
 func TestGetAdminCredentials(t *testing.T) {
 	credSecret := &corev1.Secret{
@@ -250,6 +478,7 @@ func TestGetAdminCredentials(t *testing.T) {
 
 func createFileWithContent(t *testing.T, content string) *os.File {
 	t.Helper()
+	// TODO: add cleanup function and remove delete calls in other places
 
 	f, err := os.CreateTemp(os.TempDir(), "test-*")
 	require.NoError(t, err)
