@@ -8,7 +8,7 @@ spec:
   version: 12.1.3 # Relevant for 12.1.X or lower as jwk_set_bearer_token_file and tls_client_ca don't exist
   client:
     useKubeAuth: true # The Grafana-Operator switches JWT auth for API requests, making admin credentials unnecessary
-  disableAdminSecret: true # Prevents the creation of the secret containing admin credentials
+  disableDefaultAdminSecret: true # Prevents the creation of the secret containing admin credentials
   config:
     auth.jwt:
       enabled: "true"

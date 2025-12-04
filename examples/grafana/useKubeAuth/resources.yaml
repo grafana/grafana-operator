@@ -8,7 +8,7 @@ spec:
   # version: 12.2.0 # or newer
   client:
     useKubeAuth: true # The Grafana-Operator switches JWT auth for API requests, making admin credentials unnecessary
-  disableAdminSecret: true # Prevents the creation of the secret containing admin credentials
+  disableDefaultAdminSecret: true # Prevents the creation of the secret containing admin credentials
   config:
     auth.jwt:
       enabled: "true"
