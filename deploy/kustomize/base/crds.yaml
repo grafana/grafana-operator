@@ -2754,6 +2754,16 @@ spec:
               route:
                 description: Routes for alerts to match against
                 properties:
+                  active_time_intervals:
+                    description: 'Deprecated: Never worked on the top level route
+                      node'
+                    items:
+                      type: string
+                    type: array
+                  continue:
+                    description: 'Deprecated: Never worked on the top level route
+                      node'
+                    type: boolean
                   group_by:
                     description: group by
                     items:
@@ -2765,6 +2775,52 @@ spec:
                   group_wait:
                     description: group wait
                     type: string
+                  match_re:
+                    additionalProperties:
+                      type: string
+                    description: 'Deprecated: Never worked on the top level route
+                      node'
+                    type: object
+                  matchers:
+                    description: 'Deprecated: Never worked on the top level route
+                      node'
+                    items:
+                      properties:
+                        isEqual:
+                          description: is equal
+                          type: boolean
+                        isRegex:
+                          description: is regex
+                          type: boolean
+                        name:
+                          description: name
+                          type: string
+                        value:
+                          description: value
+                          type: string
+                      required:
+                      - isRegex
+                      - value
+                      type: object
+                    type: array
+                  mute_time_intervals:
+                    description: 'Deprecated: Never worked on the top level route
+                      node'
+                    items:
+                      type: string
+                    type: array
+                  object_matchers:
+                    description: 'Deprecated: Never worked on the top level route
+                      node'
+                    items:
+                      description: |-
+                        ObjectMatcher ObjectMatcher is a matcher that can be used to filter alerts.
+
+                        swagger:model ObjectMatcher
+                      items:
+                        type: string
+                      type: array
+                    type: array
                   provenance:
                     description: 'Deprecated: Does nothing'
                     type: string
@@ -2829,6 +2885,20 @@ spec:
                 required:
                 - receiver
                 type: object
+                x-kubernetes-validations:
+                - message: continue is invalid on the top level route node
+                  rule: '!has(self.continue)'
+                - message: match_re is invalid on the top level route node
+                  rule: '!has(self.match_re)'
+                - message: matchers is invalid on the top level route node
+                  rule: '!has(self.matchers)'
+                - message: object_matchers is invalid on the top level route node
+                  rule: '!has(self.object_matchers)'
+                - message: mute_time_intervals is invalid on the top level route node
+                  rule: '!has(self.mute_time_intervals)'
+                - message: active_time_intervals is invalid on the top level route
+                    node
+                  rule: '!has(self.active_time_intervals)'
               suspend:
                 description: Suspend pauses synchronizing attempts and tells the operator
                   to ignore changes

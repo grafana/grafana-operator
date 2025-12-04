@@ -5227,6 +5227,8 @@ GrafanaNotificationPolicySpec defines the desired state of GrafanaNotificationPo
         <td>object</td>
         <td>
           Routes for alerts to match against<br/>
+          <br/>
+            <i>Validations</i>:<li>!has(self.continue): continue is invalid on the top level route node</li><li>!has(self.match_re): match_re is invalid on the top level route node</li><li>!has(self.matchers): matchers is invalid on the top level route node</li><li>!has(self.object_matchers): object_matchers is invalid on the top level route node</li><li>!has(self.mute_time_intervals): mute_time_intervals is invalid on the top level route node</li><li>!has(self.active_time_intervals): active_time_intervals is invalid on the top level route node</li>
         </td>
         <td>true</td>
       </tr><tr>
@@ -5371,6 +5373,20 @@ Routes for alerts to match against
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>active_time_intervals</b></td>
+        <td>[]string</td>
+        <td>
+          Deprecated: Never worked on the top level route node<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>continue</b></td>
+        <td>boolean</td>
+        <td>
+          Deprecated: Never worked on the top level route node<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>group_by</b></td>
         <td>[]string</td>
         <td>
@@ -5389,6 +5405,34 @@ Routes for alerts to match against
         <td>string</td>
         <td>
           group wait<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>match_re</b></td>
+        <td>map[string]string</td>
+        <td>
+          Deprecated: Never worked on the top level route node<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafananotificationpolicyspecroutematchersindex">matchers</a></b></td>
+        <td>[]object</td>
+        <td>
+          Deprecated: Never worked on the top level route node<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mute_time_intervals</b></td>
+        <td>[]string</td>
+        <td>
+          Deprecated: Never worked on the top level route node<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>object_matchers</b></td>
+        <td>[][]string</td>
+        <td>
+          Deprecated: Never worked on the top level route node<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5418,6 +5462,54 @@ mutually exclusive with Routes<br/>
         <td>JSON</td>
         <td>
           routes, mutually exclusive with RouteSelector<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaNotificationPolicy.spec.route.matchers[index]
+<sup><sup>[↩ Parent](#grafananotificationpolicyspecroute)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>isRegex</b></td>
+        <td>boolean</td>
+        <td>
+          is regex<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>value</b></td>
+        <td>string</td>
+        <td>
+          value<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>isEqual</b></td>
+        <td>boolean</td>
+        <td>
+          is equal<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          name<br/>
         </td>
         <td>false</td>
       </tr></tbody>
