@@ -621,7 +621,7 @@ func (r *GrafanaDashboardReconciler) UpdateHomeDashboard(ctx context.Context, gr
 		return err
 	}
 
-	_, err = gClient.OrgPreferences.UpdateOrgPreferences(&models.UpdatePrefsCmd{ //nolint:errcheck
+	_, err = gClient.Org.UpdateOrgPreferences(&models.UpdatePrefsCmd{ //nolint:errcheck
 		HomeDashboardUID: uid,
 	})
 	if err != nil {
