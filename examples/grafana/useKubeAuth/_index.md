@@ -13,7 +13,7 @@ From `v5.21.0`, the Grafana-Operator can authenticate to Grafana instances using
 
 Enable JWT auth for a Grafana instance with `.spec.client.useKubeAuth=true` and configure Grafana to trust JWTs issued by Kubernetes:
 
-{{< readfile file="./jwt-example.yaml" code="true" lang="yaml" >}}
+{{< readfile file="./resources.yaml" code="true" lang="yaml" >}}
 
 ![Account created via JWT authentication in Grafana](./jwt-account.png)
 
@@ -30,7 +30,7 @@ Inspecting a standard JWT located at `/var/run/secrets/kubernetes.io/serviceacco
 Which can be used to determine the given role with `role_attribute_path`
 
 
-## Grafana versions prior to 12.2.0
+### Grafana versions prior to 12.2.0
 
 Older versions of Grafana cannot authenticate with a JWKS endpoint, which is necessary to retrieve the `JWKSet` from Kubernetes.
 
@@ -43,7 +43,7 @@ kubectl create configmap kube-root-jwks --from-literal=jwks.json="$(kubectl get 
 {{< readfile file="./older-versions.yaml" code="true" lang="yaml" >}}
 
 
-# Issuing Tokens for ServiceAccounts
+## Issuing Tokens for ServiceAccounts
 
 Tokens can be issued for a service account ad hoc with kubectl.
 
@@ -61,10 +61,3 @@ curl 'http://127.0.0.1:3000/api/folders' -H "Authorization: Bearer $(cat token)"
 
 # An array, even empty `[]`, is a successful response!
 ```
-
-
-## Disabling the default GrafanaAdmin account
-
-Before, if users wanted to disable the disable the default GrafanaAdmin account, it was necessary to manually create a Grafana Service/User Accounts before disabling it.
-
-But that is no longer the case with `[auth.jwt]` and `.spec.client.useKubeAuth=true`.
