@@ -464,10 +464,13 @@ func TestGetAdminCredentials(t *testing.T) {
 
 func createFileWithContent(t *testing.T, content string) *os.File {
 	t.Helper()
-	// TODO: add cleanup function and remove delete calls in other places
 
 	f, err := os.CreateTemp(os.TempDir(), "test-*")
 	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		os.Remove(f.Name())
+	})
 
 	written, err := f.WriteString(content)
 	require.Equal(t, len([]byte(content)), written)
@@ -574,7 +577,6 @@ func TestGetBearerToken(t *testing.T) {
 			jwt := fmt.Sprintf("header.%s.signature", encodedClaims)
 
 			f := createFileWithContent(t, jwt)
-			defer os.Remove(f.Name())
 
 			token, err := getBearerToken(f.Name())
 			require.ErrorContains(t, err, tt.wantErrText)
@@ -597,10 +599,7 @@ func TestGetBearerToken(t *testing.T) {
 			jwt2 := getFakeToken(t, exp2)
 
 			f1 := createFileWithContent(t, jwt1)
-			defer os.Remove(f1.Name())
-
 			f2 := createFileWithContent(t, jwt2)
-			defer os.Remove(f2.Name())
 
 			// Empty cache at first, we expect it to be populated with the data derived from jwt1
 			wantToken := jwt1
