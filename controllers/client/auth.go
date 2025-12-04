@@ -129,47 +129,8 @@ func getExternalAdminPassword(ctx context.Context, c client.Client, cr *v1beta1.
 	return "", fmt.Errorf("password not set for external instance: %s/%s", cr.Namespace, cr.Name)
 }
 
-func getAdminCredentials(ctx context.Context, c client.Client, cr *v1beta1.Grafana) (*grafanaAdminCredentials, error) {
+func getContainerEnvCredentials(ctx context.Context, c client.Client, cr *v1beta1.Grafana) (*grafanaAdminCredentials, error) {
 	credentials := &grafanaAdminCredentials{}
-
-	if cr.Spec.Client != nil && cr.Spec.Client.UseKubeAuth {
-		t, err := getBearerToken(serviceAccountTokenPath)
-		if err != nil {
-			return nil, err
-		}
-
-		credentials.apikey = t
-
-		return credentials, nil
-	}
-
-	if cr.IsExternal() {
-		// prefer api key if present
-		if cr.Spec.External.APIKey != nil {
-			apikey, err := GetValueFromSecretKey(ctx, c, cr.Namespace, cr.Spec.External.APIKey)
-			if err != nil {
-				return nil, err
-			}
-
-			credentials.apikey = string(apikey)
-
-			return credentials, nil
-		}
-
-		var err error
-
-		credentials.adminUser, err = getExternalAdminUser(ctx, c, cr)
-		if err != nil {
-			return nil, err
-		}
-
-		credentials.adminPassword, err = getExternalAdminPassword(ctx, c, cr)
-		if err != nil {
-			return nil, err
-		}
-
-		return credentials, nil
-	}
 
 	deployment := resources.GetGrafanaDeployment(cr, nil)
 	selector := client.ObjectKey{
@@ -220,6 +181,56 @@ func getAdminCredentials(ctx context.Context, c client.Client, cr *v1beta1.Grafa
 				}
 			}
 		}
+	}
+
+	return credentials, nil
+}
+
+func getAdminCredentials(ctx context.Context, c client.Client, cr *v1beta1.Grafana) (*grafanaAdminCredentials, error) {
+	credentials := &grafanaAdminCredentials{}
+
+	if cr.Spec.Client != nil && cr.Spec.Client.UseKubeAuth {
+		t, err := getBearerToken(serviceAccountTokenPath)
+		if err != nil {
+			return nil, err
+		}
+
+		credentials.apikey = t
+
+		return credentials, nil
+	}
+
+	if cr.IsExternal() {
+		// prefer api key if present
+		if cr.Spec.External.APIKey != nil {
+			apikey, err := GetValueFromSecretKey(ctx, c, cr.Namespace, cr.Spec.External.APIKey)
+			if err != nil {
+				return nil, err
+			}
+
+			credentials.apikey = string(apikey)
+
+			return credentials, nil
+		}
+
+		var err error
+
+		credentials.adminUser, err = getExternalAdminUser(ctx, c, cr)
+		if err != nil {
+			return nil, err
+		}
+
+		credentials.adminPassword, err = getExternalAdminPassword(ctx, c, cr)
+		if err != nil {
+			return nil, err
+		}
+
+		return credentials, nil
+	}
+
+	credentials, err := getContainerEnvCredentials(ctx, c, cr)
+	if err != nil {
+		return nil, err
 	}
 
 	return credentials, nil
