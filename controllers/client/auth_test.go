@@ -188,6 +188,20 @@ func TestGetContainerEnvCredentials(t *testing.T) {
 		WithScheme(s).
 		WithObjects(secret).Build()
 
+	t.Run("non-existent deployment", func(t *testing.T) {
+		cr := &v1beta1.Grafana{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "grafana-env-credentials",
+			},
+		}
+
+		got, err := getContainerEnvCredentials(ctx, c, cr)
+		require.ErrorContains(t, err, "not found")
+
+		assert.Nil(t, got)
+	})
+
 	tests := []struct {
 		name        string
 		envs        []corev1.EnvVar
@@ -317,8 +331,6 @@ func TestGetContainerEnvCredentials(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
-
-	// TODO: error case for non-existent deployment
 }
 
 func getEnvValueFrom(t *testing.T, secretName, key string) *corev1.EnvVarSource {
