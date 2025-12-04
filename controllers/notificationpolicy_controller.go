@@ -259,7 +259,7 @@ func assembleNotificationPolicyRoutes(ctx context.Context, k8sClient client.Clie
 	}
 
 	// Start with Spec.Route
-	if err := assembleRoute(cr.Spec.Route); err != nil {
+	if err := assembleRoute(&cr.Spec.Route.PartialRoute); err != nil {
 		return nil, err
 	}
 

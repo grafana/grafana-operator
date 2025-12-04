@@ -29,7 +29,7 @@ type GrafanaNotificationPolicySpec struct {
 	GrafanaCommonSpec `json:",inline"`
 
 	// Routes for alerts to match against
-	Route *PartialRoute `json:"route"`
+	Route *RootRoute `json:"route"`
 
 	// Whether to enable or disable editing of the notification policy in Grafana UI
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
@@ -65,6 +65,34 @@ type PartialRoute struct {
 
 	// Deprecated: Does nothing
 	Provenance models.Provenance `json:"provenance,omitempty"`
+}
+
+// +kubebuilder:validation:XValidation:rule="!has(self.continue)", message="continue is invalid on the top level route node"
+// +kubebuilder:validation:XValidation:rule="!has(self.match_re)", message="match_re is invalid on the top level route node"
+// +kubebuilder:validation:XValidation:rule="!has(self.matchers)", message="matchers is invalid on the top level route node"
+// +kubebuilder:validation:XValidation:rule="!has(self.object_matchers)", message="object_matchers is invalid on the top level route node"
+// +kubebuilder:validation:XValidation:rule="!has(self.mute_time_intervals)", message="mute_time_intervals is invalid on the top level route node"
+// +kubebuilder:validation:XValidation:rule="!has(self.active_time_intervals)", message="active_time_intervals is invalid on the top level route node"
+type RootRoute struct {
+	PartialRoute `json:",inline"`
+
+	// Deprecated: Never worked on the top level route node
+	Continue bool `json:"continue,omitempty"`
+
+	// Deprecated: Never worked on the top level route node
+	MatchRe models.MatchRegexps `json:"match_re,omitempty"`
+
+	// Deprecated: Never worked on the top level route node
+	Matchers Matchers `json:"matchers,omitempty"`
+
+	// Deprecated: Never worked on the top level route node
+	ObjectMatchers models.ObjectMatchers `json:"object_matchers,omitempty"`
+
+	// Deprecated: Never worked on the top level route node
+	MuteTimeIntervals []string `json:"mute_time_intervals,omitempty"`
+
+	// Deprecated: Never worked on the top level route node
+	ActiveTimeIntervals []string `json:"active_time_intervals,omitempty"`
 }
 
 type Route struct {
@@ -140,7 +168,7 @@ func (r *Route) ToModelRoute() *models.Route {
 	return out
 }
 
-func (r *PartialRoute) ToModelRoute() *models.Route {
+func (r *RootRoute) ToModelRoute() *models.Route {
 	out := &models.Route{
 		GroupBy:        r.GroupBy,
 		GroupInterval:  r.GroupInterval,
