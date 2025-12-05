@@ -144,6 +144,7 @@ func getContainerEnvCredentials(ctx context.Context, c client.Client, cr *v1beta
 	}
 
 	for _, container := range deployment.Spec.Template.Spec.Containers {
+		// TODO: refactor to pick only the relevant container
 		for _, env := range container.Env {
 			if env.Name == config.GrafanaAdminUserEnvVar {
 				if env.Value != "" {

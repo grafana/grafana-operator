@@ -157,7 +157,7 @@ func TestGetContainerEnvCredentials(t *testing.T) {
 		usernameKey = "user"
 		password    = "secret"
 		passwordKey = "password"
-		secretName  = "grafana-credentials"
+		secretName  = "grafana-credentials" //nolint:gosec
 		nonExistent = "non-existent"
 	)
 
@@ -240,11 +240,11 @@ func TestGetContainerEnvCredentials(t *testing.T) {
 			envs: []corev1.EnvVar{
 				{
 					Name:      config.GrafanaAdminUserEnvVar,
-					ValueFrom: getEnvValueFrom(t, secretName, usernameKey),
+					ValueFrom: getEnvVarSecretSource(t, secretName, usernameKey),
 				},
 				{
 					Name:      config.GrafanaAdminPasswordEnvVar,
-					ValueFrom: getEnvValueFrom(t, secretName, passwordKey),
+					ValueFrom: getEnvVarSecretSource(t, secretName, passwordKey),
 				},
 			},
 			want: &grafanaAdminCredentials{
@@ -258,11 +258,11 @@ func TestGetContainerEnvCredentials(t *testing.T) {
 			envs: []corev1.EnvVar{
 				{
 					Name:      config.GrafanaAdminUserEnvVar,
-					ValueFrom: getEnvValueFrom(t, nonExistent, usernameKey),
+					ValueFrom: getEnvVarSecretSource(t, nonExistent, usernameKey),
 				},
 				{
 					Name:      config.GrafanaAdminPasswordEnvVar,
-					ValueFrom: getEnvValueFrom(t, nonExistent, passwordKey),
+					ValueFrom: getEnvVarSecretSource(t, nonExistent, passwordKey),
 				},
 			},
 			want:        nil,
@@ -273,11 +273,11 @@ func TestGetContainerEnvCredentials(t *testing.T) {
 			envs: []corev1.EnvVar{
 				{
 					Name:      config.GrafanaAdminUserEnvVar,
-					ValueFrom: getEnvValueFrom(t, secretName, nonExistent),
+					ValueFrom: getEnvVarSecretSource(t, secretName, nonExistent),
 				},
 				{
 					Name:      config.GrafanaAdminPasswordEnvVar,
-					ValueFrom: getEnvValueFrom(t, secretName, passwordKey),
+					ValueFrom: getEnvVarSecretSource(t, secretName, passwordKey),
 				},
 			},
 			want:        nil,
@@ -288,11 +288,11 @@ func TestGetContainerEnvCredentials(t *testing.T) {
 			envs: []corev1.EnvVar{
 				{
 					Name:      config.GrafanaAdminUserEnvVar,
-					ValueFrom: getEnvValueFrom(t, secretName, usernameKey),
+					ValueFrom: getEnvVarSecretSource(t, secretName, usernameKey),
 				},
 				{
 					Name:      config.GrafanaAdminPasswordEnvVar,
-					ValueFrom: getEnvValueFrom(t, secretName, nonExistent),
+					ValueFrom: getEnvVarSecretSource(t, secretName, nonExistent),
 				},
 			},
 			want:        nil,
@@ -312,7 +312,7 @@ func TestGetContainerEnvCredentials(t *testing.T) {
 			deployment := resources.GetGrafanaDeployment(cr, nil)
 			deployment.Spec.Template.Spec.Containers = []corev1.Container{
 				{
-					Name: "grafana", // TODO: switch to const
+					Name: "grafana", // TODO: switch to const once it's done inside getContainerEnvCredentials
 					Env:  tt.envs,
 				},
 			}
@@ -333,7 +333,7 @@ func TestGetContainerEnvCredentials(t *testing.T) {
 	}
 }
 
-func getEnvValueFrom(t *testing.T, secretName, key string) *corev1.EnvVarSource {
+func getEnvVarSecretSource(t *testing.T, secretName, key string) *corev1.EnvVarSource {
 	t.Helper()
 
 	v := &corev1.EnvVarSource{
@@ -356,7 +356,7 @@ func createAndCleanupResources(t *testing.T, ctx context.Context, c client.WithW
 		require.NoError(t, err)
 
 		t.Cleanup(func() {
-			c.Delete(ctx, obj)
+			c.Delete(ctx, obj) //nolint:errcheck
 		})
 	}
 }
