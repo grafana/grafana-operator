@@ -10,11 +10,15 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/controllers/config"
+	"github.com/grafana/grafana-operator/v5/controllers/resources"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -147,6 +151,216 @@ func TestGetExternalAdminCredentials(t *testing.T) {
 	})
 }
 
+func TestGetContainerEnvCredentials(t *testing.T) {
+	const (
+		username    = "root"
+		usernameKey = "user"
+		password    = "secret"
+		passwordKey = "password"
+		secretName  = "grafana-credentials" //nolint:gosec
+		nonExistent = "non-existent"
+	)
+
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      secretName,
+		},
+		Data: map[string][]byte{
+			usernameKey: []byte(username),
+			passwordKey: []byte(password),
+		},
+	}
+
+	ctx := t.Context()
+	s := runtime.NewScheme()
+
+	err := corev1.AddToScheme(s)
+	require.NoError(t, err, "adding scheme")
+
+	err = appsv1.AddToScheme(s)
+	require.NoError(t, err, "adding scheme")
+
+	err = v1beta1.AddToScheme(s)
+	require.NoError(t, err, "adding scheme")
+
+	c := fake.NewClientBuilder().
+		WithScheme(s).
+		WithObjects(secret).Build()
+
+	t.Run("non-existent deployment", func(t *testing.T) {
+		cr := &v1beta1.Grafana{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "grafana-env-credentials",
+			},
+		}
+
+		got, err := getContainerEnvCredentials(ctx, c, cr)
+		require.ErrorContains(t, err, "not found")
+
+		assert.Nil(t, got)
+	})
+
+	tests := []struct {
+		name        string
+		envs        []corev1.EnvVar
+		want        *grafanaAdminCredentials
+		wantErrText string
+	}{
+		{
+			name: "plaintext",
+			envs: []corev1.EnvVar{
+				{
+					Name:  config.GrafanaAdminUserEnvVar,
+					Value: username,
+				},
+				{
+					Name:  config.GrafanaAdminPasswordEnvVar,
+					Value: password,
+				},
+			},
+			want: &grafanaAdminCredentials{
+				adminUser:     username,
+				adminPassword: password,
+			},
+		},
+		{
+			name: "no credential envs",
+			envs: []corev1.EnvVar{
+				{
+					Name:  "a",
+					Value: "b",
+				},
+			},
+			want: &grafanaAdminCredentials{},
+		},
+		{
+			name: "from secret",
+			envs: []corev1.EnvVar{
+				{
+					Name:      config.GrafanaAdminUserEnvVar,
+					ValueFrom: getEnvVarSecretSource(t, secretName, usernameKey),
+				},
+				{
+					Name:      config.GrafanaAdminPasswordEnvVar,
+					ValueFrom: getEnvVarSecretSource(t, secretName, passwordKey),
+				},
+			},
+			want: &grafanaAdminCredentials{
+				adminUser:     username,
+				adminPassword: password,
+			},
+		},
+		// error cases
+		{
+			name: "non-existent secret",
+			envs: []corev1.EnvVar{
+				{
+					Name:      config.GrafanaAdminUserEnvVar,
+					ValueFrom: getEnvVarSecretSource(t, nonExistent, usernameKey),
+				},
+				{
+					Name:      config.GrafanaAdminPasswordEnvVar,
+					ValueFrom: getEnvVarSecretSource(t, nonExistent, passwordKey),
+				},
+			},
+			want:        nil,
+			wantErrText: "not found",
+		},
+		{
+			name: "non-existent username key",
+			envs: []corev1.EnvVar{
+				{
+					Name:      config.GrafanaAdminUserEnvVar,
+					ValueFrom: getEnvVarSecretSource(t, secretName, nonExistent),
+				},
+				{
+					Name:      config.GrafanaAdminPasswordEnvVar,
+					ValueFrom: getEnvVarSecretSource(t, secretName, passwordKey),
+				},
+			},
+			want:        nil,
+			wantErrText: "credentials not found in secret",
+		},
+		{
+			name: "non-existent password key",
+			envs: []corev1.EnvVar{
+				{
+					Name:      config.GrafanaAdminUserEnvVar,
+					ValueFrom: getEnvVarSecretSource(t, secretName, usernameKey),
+				},
+				{
+					Name:      config.GrafanaAdminPasswordEnvVar,
+					ValueFrom: getEnvVarSecretSource(t, secretName, nonExistent),
+				},
+			},
+			want:        nil,
+			wantErrText: "credentials not found in secret",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cr := &v1beta1.Grafana{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "grafana-env-credentials",
+				},
+			}
+
+			deployment := resources.GetGrafanaDeployment(cr, nil)
+			deployment.Spec.Template.Spec.Containers = []corev1.Container{
+				{
+					Name: "grafana", // TODO: switch to const once it's done inside getContainerEnvCredentials
+					Env:  tt.envs,
+				},
+			}
+
+			createAndCleanupResources(t, ctx, c, []client.Object{
+				cr, deployment,
+			})
+
+			got, err := getContainerEnvCredentials(ctx, c, cr)
+			if tt.wantErrText == "" {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, tt.wantErrText)
+			}
+
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func getEnvVarSecretSource(t *testing.T, secretName, key string) *corev1.EnvVarSource {
+	t.Helper()
+
+	v := &corev1.EnvVarSource{
+		SecretKeyRef: &corev1.SecretKeySelector{
+			LocalObjectReference: corev1.LocalObjectReference{
+				Name: secretName,
+			},
+			Key: key,
+		},
+	}
+
+	return v
+}
+
+func createAndCleanupResources(t *testing.T, ctx context.Context, c client.WithWatch, objects []client.Object) {
+	t.Helper()
+
+	for _, obj := range objects {
+		err := c.Create(ctx, obj)
+		require.NoError(t, err)
+
+		t.Cleanup(func() {
+			c.Delete(ctx, obj) //nolint:errcheck
+		})
+	}
+}
+
 // TODO currently only tests code paths for external grafanas
 func TestGetAdminCredentials(t *testing.T) {
 	credSecret := &corev1.Secret{
@@ -254,6 +468,10 @@ func createFileWithContent(t *testing.T, content string) *os.File {
 	f, err := os.CreateTemp(os.TempDir(), "test-*")
 	require.NoError(t, err)
 
+	t.Cleanup(func() {
+		os.Remove(f.Name())
+	})
+
 	written, err := f.WriteString(content)
 	require.Equal(t, len([]byte(content)), written)
 	require.NoError(t, err)
@@ -359,7 +577,6 @@ func TestGetBearerToken(t *testing.T) {
 			jwt := fmt.Sprintf("header.%s.signature", encodedClaims)
 
 			f := createFileWithContent(t, jwt)
-			defer os.Remove(f.Name())
 
 			token, err := getBearerToken(f.Name())
 			require.ErrorContains(t, err, tt.wantErrText)
@@ -382,10 +599,7 @@ func TestGetBearerToken(t *testing.T) {
 			jwt2 := getFakeToken(t, exp2)
 
 			f1 := createFileWithContent(t, jwt1)
-			defer os.Remove(f1.Name())
-
 			f2 := createFileWithContent(t, jwt2)
-			defer os.Remove(f2.Name())
 
 			// Empty cache at first, we expect it to be populated with the data derived from jwt1
 			wantToken := jwt1

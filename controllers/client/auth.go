@@ -129,6 +129,64 @@ func getExternalAdminPassword(ctx context.Context, c client.Client, cr *v1beta1.
 	return "", fmt.Errorf("password not set for external instance: %s/%s", cr.Namespace, cr.Name)
 }
 
+func getContainerEnvCredentials(ctx context.Context, c client.Client, cr *v1beta1.Grafana) (*grafanaAdminCredentials, error) {
+	credentials := &grafanaAdminCredentials{}
+
+	deployment := resources.GetGrafanaDeployment(cr, nil)
+	selector := client.ObjectKey{
+		Namespace: deployment.Namespace,
+		Name:      deployment.Name,
+	}
+
+	err := c.Get(ctx, selector, deployment)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, container := range deployment.Spec.Template.Spec.Containers {
+		// TODO: refactor to pick only the relevant container
+		for _, env := range container.Env {
+			if env.Name == config.GrafanaAdminUserEnvVar {
+				if env.Value != "" {
+					credentials.adminUser = env.Value
+					continue
+				}
+
+				if env.ValueFrom != nil {
+					if env.ValueFrom.SecretKeyRef != nil {
+						usernameFromSecret, err := GetValueFromSecretKey(ctx, c, cr.Namespace, env.ValueFrom.SecretKeyRef)
+						if err != nil {
+							return nil, err
+						}
+
+						credentials.adminUser = string(usernameFromSecret)
+					}
+				}
+			}
+
+			if env.Name == config.GrafanaAdminPasswordEnvVar {
+				if env.Value != "" {
+					credentials.adminPassword = env.Value
+					continue
+				}
+
+				if env.ValueFrom != nil {
+					if env.ValueFrom.SecretKeyRef != nil {
+						passwordFromSecret, err := GetValueFromSecretKey(ctx, c, cr.Namespace, env.ValueFrom.SecretKeyRef)
+						if err != nil {
+							return nil, err
+						}
+
+						credentials.adminPassword = string(passwordFromSecret)
+					}
+				}
+			}
+		}
+	}
+
+	return credentials, nil
+}
+
 func getAdminCredentials(ctx context.Context, c client.Client, cr *v1beta1.Grafana) (*grafanaAdminCredentials, error) {
 	credentials := &grafanaAdminCredentials{}
 
@@ -171,55 +229,9 @@ func getAdminCredentials(ctx context.Context, c client.Client, cr *v1beta1.Grafa
 		return credentials, nil
 	}
 
-	deployment := resources.GetGrafanaDeployment(cr, nil)
-	selector := client.ObjectKey{
-		Namespace: deployment.Namespace,
-		Name:      deployment.Name,
-	}
-
-	err := c.Get(ctx, selector, deployment)
+	credentials, err := getContainerEnvCredentials(ctx, c, cr)
 	if err != nil {
 		return nil, err
-	}
-
-	for _, container := range deployment.Spec.Template.Spec.Containers {
-		for _, env := range container.Env {
-			if env.Name == config.GrafanaAdminUserEnvVar {
-				if env.Value != "" {
-					credentials.adminUser = env.Value
-					continue
-				}
-
-				if env.ValueFrom != nil {
-					if env.ValueFrom.SecretKeyRef != nil {
-						usernameFromSecret, err := GetValueFromSecretKey(ctx, c, cr.Namespace, env.ValueFrom.SecretKeyRef)
-						if err != nil {
-							return nil, err
-						}
-
-						credentials.adminUser = string(usernameFromSecret)
-					}
-				}
-			}
-
-			if env.Name == config.GrafanaAdminPasswordEnvVar {
-				if env.Value != "" {
-					credentials.adminPassword = env.Value
-					continue
-				}
-
-				if env.ValueFrom != nil {
-					if env.ValueFrom.SecretKeyRef != nil {
-						passwordFromSecret, err := GetValueFromSecretKey(ctx, c, cr.Namespace, env.ValueFrom.SecretKeyRef)
-						if err != nil {
-							return nil, err
-						}
-
-						credentials.adminPassword = string(passwordFromSecret)
-					}
-				}
-			}
-		}
 	}
 
 	return credentials, nil
