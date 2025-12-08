@@ -15,13 +15,20 @@ Enable JWT auth for a Grafana instance with `.spec.client.useKubeAuth=true` and 
 
 {{< readfile file="./resources.yaml" code="true" lang="yaml" >}}
 
+{{% alert title="Note" color="primary" %}}
+The example assumes the Grafana operator is installed in the `default` namespace and using the `grafana-operator` ServiceAccount.
+Both being the default when installing via the official Helm chart.
+
+Remember to update the `role_attribute_path` accordingly.
+{{% /alert %}}
+
 ![Account created via JWT authentication in Grafana](./jwt-account.png)
 
 `role_attribute_path` determines the assigned role by the claims in the JWT body:
 
-The example assigns `Admin`, or `GrafanaAdmin` if `allow_assign_grafana_admin: "true"`, to any ServiceAccount in the `grafana` namespace.
+The example assigns `Admin`, or `GrafanaAdmin` if `allow_assign_grafana_admin: "true"`, to the `grafana-operator` ServiceAccount in the `default` namespace.
 
-But this may not be secure or flexible enough depending on your setup.
+But this may not be flexible enough depending on your setup.
 
 Inspecting a standard JWT located at `/var/run/secrets/kubernetes.io/serviceaccount/token` in a pod contains the following claims:
 
@@ -29,6 +36,13 @@ Inspecting a standard JWT located at `/var/run/secrets/kubernetes.io/serviceacco
 
 Which can be used to determine the given role with `role_attribute_path`
 
+The below configuration will assign `GrafanaAdmin` to the main ServiceAccount, but `Editor` to any Service account in the `grafana` namespace.
+
+This can be used when other workloads in the cluster need access to Grafana through the same JWT authentication but with less permissions.
+
+```yaml
+role_attribute_path: "contains(sub, 'system:serviceaccount:default:grafana-operator') && 'GrafanaAdmin' || contains(\"kubernetes.io\".namespace, 'grafana') && 'Editor' || 'None'"
+```
 
 ### Grafana versions prior to 12.2.0
 

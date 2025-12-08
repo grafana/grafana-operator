@@ -18,7 +18,8 @@ spec:
       auto_sign_up: "true"
       jwk_set_file: /var/run/kube-root-jwks.json
       role_attribute_strict: "true" # Disables auto_assign_org_role
-      role_attribute_path: "contains(\"kubernetes.io\".namespace, 'grafana') && 'GrafanaAdmin' || 'None'" # Assigns normal Admin unless allow_assign_grafana_admin is enabled
+      # Assigns normal Admin unless allow_assign_grafana_admin is enabled, replace 'default' with the namespace of the operator
+      role_attribute_path: "contains(sub, 'system:serviceaccount:default:grafana-operator') && 'GrafanaAdmin' || 'None'"
       # allow_assign_grafana_admin: "true" # Tokens issued for the ServiceAccount can manage server-wide settings as described in the docs for "Grafana server administrators"
     # Optional: Disable basic auth and server admin creation, disables local accounts using username and passwords
     # auth.basic:
