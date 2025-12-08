@@ -14,7 +14,7 @@ DART_SASS_VERSION = 1.86.0
 # renovate: datasource=github-tags depName=kubernetes-sigs/controller-runtime
 ENVTEST_VERSION = v0.22.4
 # renovate: datasource=github-tags depName=golangci/golangci-lint
-GOLANGCI_LINT_VERSION = v2.4.0
+GOLANGCI_LINT_VERSION = v2.7.1
 # renovate: datasource=github-tags depName=norwoodj/helm-docs
 HELM_DOCS_VERSION = 1.14.2
 HELM_VERSION = v3.17.3

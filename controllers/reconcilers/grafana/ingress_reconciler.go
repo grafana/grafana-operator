@@ -375,7 +375,7 @@ func getRouteSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) routev1.RouteSpec
 
 func getHTTPRouteSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) gwapiv1.HTTPRouteSpec {
 	service := resources.GetGrafanaService(cr, scheme)
-	port := gwapiv1.PortNumber(GetGrafanaPort(cr)) //nolint:gosec
+	port := gwapiv1.PortNumber(GetGrafanaPort(cr))
 	backendRefs := []gwapiv1.HTTPBackendRef{
 		{
 			BackendRef: gwapiv1.BackendRef{
