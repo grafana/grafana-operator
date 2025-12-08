@@ -226,6 +226,10 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 		ReadinessProbe:           getReadinessProbe(cr),
 	})
 
+	if cr.Spec.DisableDefaultAdminSecret {
+		return containers
+	}
+
 	// Use auto generated admin account?
 	secret := resources.GetGrafanaAdminSecret(cr, scheme)
 
