@@ -195,6 +195,6 @@ var _ = Describe("Folder reconciler", func() {
 		// Make sure the folder is gone
 		_, err = gClient.Folders.GetFolderByUID(uid) //nolint:errcheck
 		require.Error(t, err)
-		assert.IsType(t, &folders.GetFolderByUIDNotFound{}, err)
+		assert.IsType(t, &folders.GetFolderByUIDNotFound{}, err) //nolint:testifylint
 	})
 })
