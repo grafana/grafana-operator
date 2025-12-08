@@ -129,7 +129,9 @@ type DeploymentV1PodSpec struct {
 	// +optional
 	ServiceAccountName string `json:"serviceAccountName,omitempty" protobuf:"bytes,8,opt,name=serviceAccountName"`
 	// DeprecatedServiceAccount is a depreciated alias for ServiceAccountName.
+	//
 	// Deprecated: Use serviceAccountName instead.
+	//
 	// +k8s:conversion-gen=false
 	// +optional
 	DeprecatedServiceAccount string `json:"serviceAccount,omitempty" protobuf:"bytes,9,opt,name=serviceAccount"`
