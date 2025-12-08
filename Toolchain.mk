@@ -24,7 +24,7 @@ KIND_VERSION = v0.30.0
 # renovate: datasource=github-tags depName=ko-build/ko
 KO_VERSION = 0.18.0
 # renovate: datasource=github-tags depName=kubernetes-sigs/kustomize extractVersion=^kustomize/(?<version>.*)$
-KUSTOMIZE_VERSION = v5.6.0
+KUSTOMIZE_VERSION = v5.8.0
 MUFFET_VERSION = v2.10.9
 OPERATOR_SDK_VERSION = v1.32.0
 OPM_VERSION = v1.23.2
