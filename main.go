@@ -151,7 +151,7 @@ func configureZap() (zap.Options, error) {
 
 	numericLevel, err := strconv.Atoi(operatorConfig.ZapLogLevel)
 	if err == nil {
-		opts.Level = uberzap.NewAtomicLevelAt(zapcore.Level(int8(numericLevel))) //nolint:gosec
+		opts.Level = uberzap.NewAtomicLevelAt(zapcore.Level(int8(numericLevel)))
 	} else {
 		level, err := zapcore.ParseLevel(operatorConfig.ZapLogLevel)
 		if err != nil {

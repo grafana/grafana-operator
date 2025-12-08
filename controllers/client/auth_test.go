@@ -587,7 +587,7 @@ func TestGetBearerToken(t *testing.T) {
 	}
 
 	t.Run("token expiration and renewal", func(t *testing.T) {
-		synctest.Test(t, func(t *testing.T) { //nolint:thelper
+		synctest.Test(t, func(t *testing.T) {
 			jwtCache = nil
 
 			now := time.Now()
