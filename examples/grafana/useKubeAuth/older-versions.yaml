@@ -33,9 +33,10 @@ spec:
           containers:
             - name: grafana
               volumeMounts:
-                - mountPath: /var/run/
+                - mountPath: /var/run/kube-root-jwks.json
                   name: cluster-jwks
                   readOnly: true
+                  subPath: kube-root-jwks.json
           volumes:
             - name: cluster-jwks
               configMap:
