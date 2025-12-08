@@ -251,10 +251,16 @@ func (r *GrafanaServiceAccountReconciler) lookupGrafana(
 ) (*v1beta1.Grafana, error) {
 	var grafana v1beta1.Grafana
 
-	err := r.Get(ctx, client.ObjectKey{
+	objectKey := client.ObjectKey{
 		Namespace: cr.Namespace,
 		Name:      cr.Spec.InstanceName,
-	}, &grafana)
+	}
+
+	if cr.Spec.InstanceNamespace != nil {
+		objectKey.Namespace = *cr.Spec.InstanceNamespace
+	}
+
+	err := r.Get(ctx, objectKey, &grafana)
 	if err != nil {
 		if kuberr.IsNotFound(err) {
 			return nil, nil

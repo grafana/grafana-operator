@@ -27421,6 +27421,15 @@ GrafanaServiceAccountSpec defines the desired state of a GrafanaServiceAccount.
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>instanceNamespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the Grafana instance to create the service account for<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: spec.InstanceNamespace is immutable</li>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>isDisabled</b></td>
         <td>boolean</td>
         <td>

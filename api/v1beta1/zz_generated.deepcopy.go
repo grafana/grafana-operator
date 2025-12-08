@@ -1874,6 +1874,11 @@ func (in *GrafanaServiceAccountSecretStatus) DeepCopy() *GrafanaServiceAccountSe
 func (in *GrafanaServiceAccountSpec) DeepCopyInto(out *GrafanaServiceAccountSpec) {
 	*out = *in
 	out.ResyncPeriod = in.ResyncPeriod
+	if in.InstanceNamespace != nil {
+		in, out := &in.InstanceNamespace, &out.InstanceNamespace
+		*out = new(string)
+		**out = **in
+	}
 	if in.Tokens != nil {
 		in, out := &in.Tokens, &out.Tokens
 		*out = make([]GrafanaServiceAccountTokenSpec, len(*in))

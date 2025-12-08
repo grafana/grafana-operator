@@ -62,3 +62,20 @@ spec:
     group_by:
       - grafana_folder
       - alertname
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaServiceAccount
+metadata:
+  name: mysa
+  namespace: (join('-', ['cross', $namespace]))
+spec:
+  name: "my-service-account"
+  role: "Admin"
+  isDisabled: false
+  instanceName: "grafana"
+  instanceNamespace: ($namespace)
+  tokens:
+    - name: "my-token-a"
+      secretName: thatsfine
+      expires: 2099-12-31T14:00:00+02:00
+    - name: "my-token-b"

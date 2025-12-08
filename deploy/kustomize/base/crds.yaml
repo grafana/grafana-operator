@@ -12171,6 +12171,14 @@ spec:
                 x-kubernetes-validations:
                 - message: spec.instanceName is immutable
                   rule: self == oldSelf
+              instanceNamespace:
+                description: Namespace of the Grafana instance to create the service
+                  account for
+                minLength: 1
+                type: string
+                x-kubernetes-validations:
+                - message: spec.InstanceNamespace is immutable
+                  rule: self == oldSelf
               isDisabled:
                 default: false
                 description: Whether the service account is disabled

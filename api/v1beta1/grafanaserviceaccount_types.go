@@ -59,6 +59,11 @@ type GrafanaServiceAccountSpec struct {
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="spec.instanceName is immutable"
 	InstanceName string `json:"instanceName"`
 
+	// Namespace of the Grafana instance to create the service account for
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="spec.InstanceNamespace is immutable"
+	InstanceNamespace *string `json:"instanceNamespace,omitempty"`
+
 	// Name of the service account in Grafana
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1

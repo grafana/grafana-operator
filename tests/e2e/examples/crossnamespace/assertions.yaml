@@ -63,3 +63,60 @@ status:
   conditions:
   - status: "True"
     type: NoMatchingInstance
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaServiceAccount
+metadata:
+  finalizers:
+    - operator.grafana.com/finalizer
+  name: mysa
+  namespace: (join('-', ['cross', $namespace]))
+status:
+  account:
+    isDisabled: false
+    login: sa-1-my-service-account
+    name: my-service-account
+    role: Admin
+    tokens:
+      - (time_between(expires, '2099-12-31T11:59:58Z', '2099-12-31T12:00:10Z')): true
+        name: my-token-a
+        secret:
+          name: thatsfine
+      - name: my-token-b
+  conditions:
+    - message: ServiceAccount was successfully applied to 1 instances
+      reason: ApplySuccessful
+      status: "True"
+      type: ServiceAccountSynchronized
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  annotations:
+    operator.grafana.com/service-account-spec-name: my-service-account
+    operator.grafana.com/service-account-token-name: my-token-b
+  labels:
+    app.kubernetes.io/managed-by: grafana-operator
+    operator.grafana.com/service-account-instance: grafana
+    operator.grafana.com/service-account-name: mysa
+  generateName: grafana-my-service-account-my-token-b-
+  ownerReferences:
+    - kind: GrafanaServiceAccount
+      name: mysa
+  namespace: (join('-', ['cross', $namespace]))
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  namespace: (join('-', ['cross', $namespace]))
+  annotations:
+    operator.grafana.com/service-account-spec-name: my-service-account
+    operator.grafana.com/service-account-token-name: my-token-a
+  labels:
+    app.kubernetes.io/managed-by: grafana-operator
+    operator.grafana.com/service-account-instance: grafana
+    operator.grafana.com/service-account-name: mysa
+  name: thatsfine
+  ownerReferences:
+    - kind: GrafanaServiceAccount
+      name: mysa

@@ -48,9 +48,10 @@ var _ = Describe("ServiceAccount Reconciler: Provoke Conditions", func() {
 			name: ".spec.suspend=true",
 			meta: objectMetaSuspended,
 			spec: v1beta1.GrafanaServiceAccountSpec{
-				Name:         objectMetaSuspended.Name,
-				InstanceName: grafanaName,
-				Suspend:      true,
+				Name:              objectMetaSuspended.Name,
+				InstanceName:      grafanaName,
+				InstanceNamespace: ptr.To("default"),
+				Suspend:           true,
 			},
 			want: metav1.Condition{
 				Type:   conditionSuspended,
@@ -61,8 +62,9 @@ var _ = Describe("ServiceAccount Reconciler: Provoke Conditions", func() {
 			name: "LookupGrafana returns nil",
 			meta: objectMetaNoMatchingInstances,
 			spec: v1beta1.GrafanaServiceAccountSpec{
-				Name:         objectMetaNoMatchingInstances.Name,
-				InstanceName: "does-not-exist",
+				Name:              objectMetaNoMatchingInstances.Name,
+				InstanceName:      "does-not-exist",
+				InstanceNamespace: ptr.To("default"),
 			},
 			want: metav1.Condition{
 				Type:   conditionNoMatchingInstance,
@@ -74,8 +76,9 @@ var _ = Describe("ServiceAccount Reconciler: Provoke Conditions", func() {
 			name: "Failed to create client",
 			meta: objectMetaApplyFailed,
 			spec: v1beta1.GrafanaServiceAccountSpec{
-				Name:         objectMetaApplyFailed.Name,
-				InstanceName: "dummy",
+				Name:              objectMetaApplyFailed.Name,
+				InstanceName:      "dummy",
+				InstanceNamespace: ptr.To("default"),
 			},
 			want: metav1.Condition{
 				Type:   conditionServiceAccountSynchronized,
@@ -87,8 +90,9 @@ var _ = Describe("ServiceAccount Reconciler: Provoke Conditions", func() {
 			name: "Successfully applied resource to instance",
 			meta: objectMetaSynchronized,
 			spec: v1beta1.GrafanaServiceAccountSpec{
-				Name:         objectMetaSynchronized.Name,
-				InstanceName: grafanaName,
+				Name:              objectMetaSynchronized.Name,
+				InstanceName:      grafanaName,
+				InstanceNamespace: ptr.To("default"),
 			},
 			want: metav1.Condition{
 				Type:   conditionServiceAccountSynchronized,
@@ -314,6 +318,47 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 		deleteCR(t, cr, r)
 	})
 
+	It("Grafana service account has another namespace", func() {
+		t := GinkgoT()
+
+		cr := &v1beta1.GrafanaServiceAccount{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "add-token",
+				Namespace: "default-1",
+			},
+			Spec: v1beta1.GrafanaServiceAccountSpec{
+				Name: "add-token",
+				Tokens: []v1beta1.GrafanaServiceAccountTokenSpec{{
+					Name: "to-be-renamed",
+				}},
+			},
+		}
+
+		err := k8sClient.Create(testCtx, &corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "default-1",
+			},
+		})
+		require.NoError(t, err)
+
+		r := createAndReconcileCR(t, cr)
+
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		require.NoError(t, err)
+
+		reconcileAndCompareSpecWithStatus(t, cr, r, gClient)
+
+		secret := corev1.Secret{}
+		err = k8sClient.Get(testCtx, types.NamespacedName{
+			Name:      cr.Status.Account.Tokens[0].Secret.Name,
+			Namespace: cr.Status.Account.Tokens[0].Secret.Namespace,
+		}, &secret)
+		require.NoError(t, err)
+		require.NotEmpty(t, secret.Data)
+
+		deleteCR(t, cr, r)
+	})
+
 	It("Update token name", func() {
 		t := GinkgoT()
 
@@ -454,6 +499,7 @@ func createAndReconcileCR(t FullGinkgoTInterface, cr *v1beta1.GrafanaServiceAcco
 
 	// Apply defaults
 	cr.Spec.InstanceName = grafanaName
+	cr.Spec.InstanceNamespace = ptr.To("default")
 	cr.Spec.Role = "Viewer"
 	cr.Spec.ResyncPeriod = metav1.Duration{Duration: 60 * time.Second}
 
@@ -554,10 +600,11 @@ var _ = Describe("ServiceAccount Controller: Integration Tests", func() {
 					Namespace: namespace,
 				},
 				Spec: v1beta1.GrafanaServiceAccountSpec{
-					ResyncPeriod: metav1.Duration{Duration: 10 * time.Minute},
-					InstanceName: grafanaName,
-					Name:         "test-account-with-token",
-					Role:         "Admin",
+					ResyncPeriod:      metav1.Duration{Duration: 10 * time.Minute},
+					InstanceName:      grafanaName,
+					InstanceNamespace: ptr.To(namespace),
+					Name:              "test-account-with-token",
+					Role:              "Admin",
 					Tokens: []v1beta1.GrafanaServiceAccountTokenSpec{
 						{
 							Name:       "test-token",
