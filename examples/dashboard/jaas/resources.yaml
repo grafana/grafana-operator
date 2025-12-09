@@ -1,0 +1,28 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana
+  labels:
+    dashboards: "grafana"
+spec:
+  client:
+    preferIngress: true
+  config:
+    log:
+      mode: "console"
+    auth:
+      disable_login_form: "false"
+    security:
+      admin_user: root
+      admin_password: secret
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: grafanadashboard-jaas
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  url: "http://jaas.jaas.svc.cluster.local:8080/jsonnet/your-dashboard"
