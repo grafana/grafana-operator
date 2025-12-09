@@ -120,6 +120,12 @@ crds:
   # Both types of CRDs are protected on the Helm chart uninstall to avoid cascading deletion.
   immutable: true
 
+kubeAuth:
+  # -- Ensures token is invalid against the kubernetes API preventing misuse
+  audience: "operator.grafana.com"
+  # -- The frequency with which kubernetes will rotate the token, should never be less than 300
+  expirationSeconds: 3600
+
 metricsService:
   # -- metrics service type
   type: ClusterIP
