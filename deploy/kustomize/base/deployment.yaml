@@ -62,9 +62,19 @@ spec:
           volumeMounts:
             - name: dashboards-dir
               mountPath: /tmp/dashboards
+            - name: kubeauth-token-volume
+              mountPath: /var/run/secrets/grafana.com/serviceaccount
+              readOnly: true
       volumes:
         - name: dashboards-dir
           emptyDir: {}
+        - name: kubeauth-token-volume
+          projected:
+            sources:
+            - serviceAccountToken:
+                audience: operator.grafana.com
+                expirationSeconds: 3600
+                path: token
       securityContext:
         runAsNonRoot: true
       serviceAccountName: grafana-operator-controller-manager
