@@ -67,7 +67,7 @@ This could be used for testing or just an easy way to create short lived JWTs fo
 
 ```bash
 # Create serviceaccount JWT and store it in ./token
-kubectl create token -n grafana grafana-operator-controller-manager --duration  >token
+kubectl create token -n grafana grafana-operator-controller-manager --audience 'operator.grafana.com' --duration 1h >token
 
 # Expose a port
 kubectl port-forward svc/jwt-grafana-ca-service 3000:3000 &>/dev/null &
