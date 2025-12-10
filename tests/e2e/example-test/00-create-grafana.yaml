@@ -26,6 +26,7 @@ spec:
     auth.jwt:
       enabled: "true"
       header_name: Authorization
+      expect_claims: '{"aud": ["operator.grafana.com"]}'
       username_claim: sub
       email_claim: sub
       auto_sign_up: "true"

@@ -97,6 +97,9 @@ spec:
           volumeMounts:
             - name: dashboards-dir
               mountPath: /tmp/dashboards
+            - name: kubeauth-token-volume
+              mountPath: /var/run/secrets/grafana.com/serviceaccount
+              readOnly: true
             {{- with .Values.extraVolumeMounts }}
             {{- . | toYaml | nindent 12 }}
             {{- end }}
@@ -122,6 +125,13 @@ spec:
       volumes:
         - name: dashboards-dir
           emptyDir: {}
+        - name: kubeauth-token-volume
+          projected:
+            sources:
+            - serviceAccountToken:
+                audience: {{ .Values.kubeAuth.audience }}
+                expirationSeconds: {{ .Values.kubeAuth.expirationSeconds }}
+                path: token
         {{- with .Values.extraVolumes }}
         {{- . | toYaml | nindent 8 }}
         {{- end }}

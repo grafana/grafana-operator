@@ -100,6 +100,8 @@ It's easier to just manage this configuration outside of the operator.
 | image.tag | string | `""` | Overrides the image tag whose default is the chart appVersion. |
 | imagePullSecrets | list | `[]` | image pull secrets |
 | isOpenShift | bool | `false` | Determines if the target cluster is OpenShift. Additional rbac permissions for routes will be added on OpenShift |
+| kubeAuth.audience | string | `"operator.grafana.com"` | Ensures token is invalid against the kubernetes API preventing misuse |
+| kubeAuth.expirationSeconds | int | `3600` | The frequency with which kubernetes will rotate the token, should never be less than 300 |
 | leaderElect | bool | `true` | This is recommended in most scenarios, even when only running a single instance of the operator. |
 | livenessProbe | object | `{"httpGet":{"path":"/healthz","port":8081}}` | pod livenessProbe |
 | logging.encoder | string | `"console"` | Log encoding ("console", "json") |

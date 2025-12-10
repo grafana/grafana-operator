@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	serviceAccountTokenPath = "/var/run/secrets/kubernetes.io/serviceaccount/token" //nolint:gosec
+	serviceAccountTokenPath = "/var/run/secrets/grafana.com/serviceaccount/token" //nolint:gosec
 )
 
 type grafanaAdminCredentials struct {
