@@ -1,6 +1,6 @@
 {
   "aud": [
-    "https://kubernetes.default.svc.cluster.local"
+    "operator.grafana.com"
   ],
   "exp": 1754331475,
   "iat": 1754327875,

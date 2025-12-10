@@ -30,7 +30,7 @@ The example assigns `Admin`, or `GrafanaAdmin` if `allow_assign_grafana_admin: "
 
 But this may not be flexible enough depending on your setup.
 
-Inspecting a standard JWT located at `/var/run/secrets/kubernetes.io/serviceaccount/token` in a pod contains the following claims:
+The grafana-operator ServiceAccount mounted at `/var/run/secrets/grafana.com/serviceaccount/token` contains the following claims by default:
 
 {{< readfile file="./jwt-claims.json" code="true" lang="yaml" >}}
 
@@ -43,6 +43,8 @@ This can be used when other workloads in the cluster need access to Grafana thro
 ```yaml
 role_attribute_path: "contains(sub, 'system:serviceaccount:default:grafana-operator') && 'GrafanaAdmin' || contains(\"kubernetes.io\".namespace, 'grafana') && 'Editor' || 'None'"
 ```
+
+If you intend to use ServiceAccount tokens with the default audience (`aud`) claim, remember to remove the `expect_claims` config from the examples.
 
 ### Grafana versions prior to 12.2.0
 
