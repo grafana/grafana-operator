@@ -5,12 +5,14 @@ tags:
   - Auth config
 ---
 
-Among the auth mechanisms, `[auth.jwt]` stands out as it is uniquely compatible with Kubernetes!
+Among the [auth mechanisms supported by Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/configure-access/configure-authentication/), `[auth.jwt]` stands out as it is uniquely compatible with Kubernetes!
 
-Meaning, it is possible to use Kubernetes ServiceAccount tokens (JWTs) to authenticate to with Grafana.
+By using this method, it is possible to use Kubernetes ServiceAccount tokens (JWTs) to authenticate with Grafana.
 
-From `v5.21.0`, the Grafana-Operator can authenticate to Grafana instances using the projected Kubernetes ServiceAccount JWT when `[auth.jwt]` is configured.
+Since version `v5.21.0` of the Grafana-Operator, we support authentication using the projected Kubernetes ServiceAccount JWT when `[auth.jwt]` is configured.
 
+
+## Configuration
 Enable JWT auth for a Grafana instance with `.spec.client.useKubeAuth=true` and configure Grafana to trust JWTs issued by Kubernetes:
 
 {{< readfile file="./resources.yaml" code="true" lang="yaml" >}}
@@ -28,13 +30,10 @@ Remember to update the `role_attribute_path` accordingly.
 
 The example assigns `Admin`, or `GrafanaAdmin` if `allow_assign_grafana_admin: "true"`, to the `grafana-operator` ServiceAccount in the `default` namespace.
 
-But this may not be flexible enough depending on your setup.
-
-The grafana-operator ServiceAccount mounted at `/var/run/secrets/grafana.com/serviceaccount/token` contains the following claims by default:
+If you require more flexibility, you can customize the `role_attribute_path`.
+By default, you have the following claims available from the kubernetes service account token:
 
 {{< readfile file="./jwt-claims.json" code="true" lang="yaml" >}}
-
-Which can be used to determine the given role with `role_attribute_path`
 
 The below configuration will assign `GrafanaAdmin` to the main ServiceAccount, but `Editor` to any Service account in the `grafana` namespace.
 
@@ -86,13 +85,11 @@ curl 'http://127.0.0.1:3000/api/folders' -H "Authorization: Bearer $(cat token)"
 
 If the default token at `/var/run/secrets/kubernetes.io/serviceaccount/token` is leaked, whatever permissions assigned to the ServiceAccount can be abused by whoever obtains it.
 
-Luckily, the values of the audience claim determines if Kubernetes allows authenticating with the API using the token.
+To prevent this, it's highly recommended to create tokens with custom audience claims (`"aud": ["..."]`) that invalidates the token from being used with the Kubernets API.
 
-It's highly recommended to create tokens with custom audience claims (`"aud": ["..."]`) that invalidates the token from being used with the Kubernets API.
-
-By default, the `grafana-operator` ServiceAccount can create, Update, and Delete deployments, secrets, ConfigMaps, etc. And is therefore security concern if leaked
-
-To avoid this, the operator mounts a second token at `/var/run/secrets/grafana.com/serviceaccount/token` that cannot be used with the Kubernetes API:
+By default, the `grafana-operator` ServiceAccount can create, Update, and Delete various resources on the cluster level.
+To avoid accidental exposure of this service account, the operator mounts a second token at `/var/run/secrets/grafana.com/serviceaccount/token` that cannot be used with the Kubernetes API.
+This is the token used for JWT authentication.
 
 ```yaml
 # The majority of the manifest is omitted for brevity

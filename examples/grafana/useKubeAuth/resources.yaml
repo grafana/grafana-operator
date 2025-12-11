@@ -7,7 +7,7 @@ metadata:
 spec:
   # version: 12.2.0 # or newer
   client:
-    useKubeAuth: true # The Grafana-Operator switches JWT auth for API requests, making admin credentials unnecessary
+    useKubeAuth: true # <- enables authentication using the kubernetes service account
   disableDefaultAdminSecret: true # Prevents the creation of the secret containing admin credentials
   config:
     auth.jwt:
@@ -18,9 +18,8 @@ spec:
       email_claim: sub
       auto_sign_up: "true"
       role_attribute_strict: "true" # Disables auto_assign_org_role
-      # Assigns normal Admin unless allow_assign_grafana_admin is enabled, replace 'default' with the namespace of the operator
+      # Assigns the Admin role to the operator service account, replace 'default' with the namespace of the operator
       role_attribute_path: "contains(sub, 'system:serviceaccount:default:grafana-operator') && 'GrafanaAdmin' || 'None'"
-      # allow_assign_grafana_admin: "true" # Tokens issued for the ServiceAccount can manage server-wide settings as described in the docs for "Grafana server administrators"
       jwk_set_url: https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT_HTTPS}/openid/v1/jwks
       jwk_set_bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
       tls_client_ca: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
