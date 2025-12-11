@@ -1,0 +1,30 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: jwt-grafana-ca
+  labels:
+    dashboards: "grafana"
+spec:
+  # version: 12.2.0 # or newer
+  client:
+    useKubeAuth: true # <- enables authentication using the kubernetes service account
+  disableDefaultAdminSecret: true # Prevents the creation of the secret containing admin credentials
+  config:
+    auth.jwt:
+      enabled: "true"
+      header_name: Authorization
+      expect_claims: '{"aud": ["operator.grafana.com"]}' # Optional security: Rejects default ServiceAccount tokens
+      username_claim: sub
+      email_claim: sub
+      auto_sign_up: "true"
+      role_attribute_strict: "true" # Disables auto_assign_org_role
+      # Assigns the Admin role to the operator service account, replace 'default' with the namespace of the operator
+      role_attribute_path: "contains(sub, 'system:serviceaccount:default:grafana-operator') && 'GrafanaAdmin' || 'None'"
+      jwk_set_url: https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT_HTTPS}/openid/v1/jwks
+      jwk_set_bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+      tls_client_ca: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    # Optional: Disable basic auth and server admin creation, disables local accounts using username and passwords
+    # auth.basic:
+    #   enabled: "false" # Disables BASIC auth in Grafana
+    # security:
+    #   disable_initial_admin_creation: "true" # Disables the creation of the default admin user in Grafana

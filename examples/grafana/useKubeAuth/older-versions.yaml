@@ -1,0 +1,47 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: older-versions
+  labels:
+    dashboards: "grafana"
+spec:
+  version: 12.1.3 # Relevant for 12.1.X or lower as jwk_set_bearer_token_file and tls_client_ca don't exist
+  client:
+    useKubeAuth: true # <- enables authentication using the kubernetes service account
+  disableDefaultAdminSecret: true # Prevents the creation of the secret containing admin credentials
+  config:
+    auth.jwt:
+      enabled: "true"
+      header_name: Authorization
+      expect_claims: '{"aud": ["operator.grafana.com"]}' # Optional security: Rejects default ServiceAccount tokens
+      username_claim: sub
+      email_claim: sub
+      auto_sign_up: "true"
+      jwk_set_file: /var/run/kube-root-jwks.json
+      role_attribute_strict: "true" # Disables auto_assign_org_role
+      # Assigns the Admin role to the operator service account, replace 'default' with the namespace of the operator
+      role_attribute_path: "contains(sub, 'system:serviceaccount:default:grafana-operator') && 'GrafanaAdmin' || 'None'"
+    # Optional: Disable basic auth and server admin creation, disables local accounts using username and passwords
+    # auth.basic:
+    #   enabled: "false" # Disables BASIC auth in Grafana
+    # security:
+    #   disable_initial_admin_creation: "true" # Disables the creation of the default admin user in Grafana
+  deployment:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: grafana
+              volumeMounts:
+                - mountPath: /var/run/kube-root-jwks.json
+                  name: cluster-jwks
+                  readOnly: true
+                  subPath: kube-root-jwks.json
+          volumes:
+            - name: cluster-jwks
+              configMap:
+                name: kube-root-jwks
+                defaultMode: 0444
+                items:
+                  - key: jwks.json
+                    path: kube-root-jwks.json
