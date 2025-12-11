@@ -46,7 +46,7 @@ role_attribute_path: "contains(sub, 'system:serviceaccount:default:grafana-opera
 
 If you intend to use ServiceAccount tokens with the default audience (`aud`) claim, remember to remove the `expect_claims` config from the examples.
 
-### Grafana versions prior to 12.2.0
+## Grafana versions prior to 12.2.0
 
 Older versions of Grafana cannot authenticate with a JWKS endpoint, which is necessary to retrieve the `JWKSet` from Kubernetes.
 
@@ -60,6 +60,10 @@ kubectl create configmap kube-root-jwks --from-literal=jwks.json="$(kubectl get 
 
 
 ## Issuing Tokens for ServiceAccounts
+
+{{% alert title="Warning" color="secondary" %}}
+Always be vary of tokens being leaked, especially when using long-lived Kubernetes ServiceAccount tokens for other purposes than authenticating with the Kubernetes API.
+{{% /alert %}}
 
 Tokens can be issued for a service account ad hoc with kubectl.
 
@@ -76,4 +80,43 @@ kubectl port-forward svc/jwt-grafana-ca-service 3000:3000 &>/dev/null &
 curl 'http://127.0.0.1:3000/api/folders' -H "Authorization: Bearer $(cat token)"
 
 # An array, even empty `[]`, is a successful response!
+```
+
+### Custom token audience
+
+If the default token at `/var/run/secrets/kubernetes.io/serviceaccount/token` is leaked, whatever permissions assigned to the ServiceAccount can be abused by whoever obtains it.
+
+Luckily, the values of the audience claim determines if Kubernetes allows authenticating with the API using the token.
+
+It's highly recommended to create tokens with custom audience claims (`"aud": ["..."]`) that invalidates the token from being used with the Kubernets API.
+
+By default, the `grafana-operator` ServiceAccount can create, Update, and Delete deployments, secrets, ConfigMaps, etc. And is therefore security concern if leaked
+
+To avoid this, the operator mounts a second token at `/var/run/secrets/grafana.com/serviceaccount/token` that cannot be used with the Kubernetes API:
+
+```yaml
+# The majority of the manifest is omitted for brevity
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana-operator
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: automation
+          image: ghcr.io/grafana/grafana-operator:v5.21.0
+          imagePullPolicy: IfNotPresent
+          volumeMounts: # Where to mount the serviceaccount
+            - name: kubeauth-token-volume
+              mountPath: /var/run/secrets/grafana.com/serviceaccount
+              readOnly: true
+      volumes:
+        - name: kubeauth-token-volume
+          projected:
+            sources:
+            - serviceAccountToken:
+                audience: operator.grafana.com # Ensures the token cannot authenticate with the Kubernetes API
+                path: token
 ```
