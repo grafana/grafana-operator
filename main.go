@@ -197,10 +197,6 @@ func main() { //nolint:gocyclo
 	// Optimize Go runtime based on CGroup limits (GOMEMLIMIT, sets a soft memory limit for the runtime)
 	memlimit.SetGoMemLimitWithOpts(memlimit.WithLogger(slogger)) //nolint:errcheck
 
-	if operatorConfig.WatchLabelSelectors != "" {
-		setupLog.Info(fmt.Sprintf("sharding is enabled via %s=%s. Beware: Always label Grafana CRs before enabling to ensure labels are inherited. Existing Secrets/ConfigMaps referenced in CRs also need to be labeled to continue working.", watchLabelSelectorsEnvVar, operatorConfig.WatchLabelSelectors))
-	}
-
 	// Detect environment variables
 	enforceCacheLabelsLevel, _ := os.LookupEnv(enforceCacheLabelsEnvVar)
 	if enforceCacheLabelsLevel == "" {
@@ -261,8 +257,12 @@ func main() { //nolint:gocyclo
 
 	labelSelectors, err := getLabelSelectors(operatorConfig.WatchLabelSelectors)
 	if err != nil {
-		setupLog.Error(err, fmt.Sprintf("unable to parse %s", watchLabelSelectorsEnvVar))
+		setupLog.Error(err, "invalid shard selector configuration")
 		os.Exit(1)
+	}
+
+	if operatorConfig.WatchLabelSelectors != "" {
+		setupLog.Info(fmt.Sprintf("sharding is enabled via %s=%s. Beware: Always label Grafana CRs before enabling to ensure labels are inherited. Existing Secrets/ConfigMaps referenced in CRs also need to be labeled to continue working.", watchLabelSelectorsEnvVar, operatorConfig.WatchLabelSelectors))
 	}
 
 	if enforceCacheLabels {
@@ -270,8 +270,6 @@ func main() { //nolint:gocyclo
 		if operatorConfig.WatchLabelSelectors != "" {
 			// When sharding, limit cache according to shard labels
 			cacheLabelConfig = cache.ByObject{Label: labelSelectors}
-
-			setupLog.Info(fmt.Sprintf("sharding is enabled via %s=%s. Beware: Always label Grafana CRs before enabling to ensure labels are inherited. Existing Secrets/ConfigMaps referenced in CRs also need to be labeled to continue working.", watchLabelSelectorsEnvVar, watchLabelSelectors))
 		} else {
 			// Otherwise limit it to managed-by label
 			cacheLabelConfig = cache.ByObject{Label: labels.SelectorFromSet(resources.GetCommonLabels())}
