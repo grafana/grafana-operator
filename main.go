@@ -71,11 +71,10 @@ const (
 	// eg: 'partition in (customerA, customerB),environment!=qa'
 	// If empty of undefined, the operator will watch all CRs.
 	watchLabelSelectorsEnvVar = "WATCH_LABEL_SELECTORS"
-	// Opt in to enable new experimental cache limits by setting this to `safe` or `all`. Valid values are `off`, `safe` and `all`
-	enforceCacheLabelsEnvVar = "ENFORCE_CACHE_LABELS"
-	cachingLevelAll          = "all"
-	cachingLevelOff          = "off"
-	cachingLevelSafe         = "safe"
+	// Caching levels enforced by Kong input validation
+	cachingLevelAll  = "all"
+	cachingLevelOff  = "off"
+	cachingLevelSafe = "safe"
 )
 
 var (
@@ -84,10 +83,11 @@ var (
 )
 
 var operatorConfig struct {
-	ClusterDomain          string `env:"CLUSTER_DOMAIN"           help:"Fully specify the domain to address services with using their FQDNs, e.g. 'cluster.local'"`
-	WatchNamespace         string `env:"WATCH_NAMESPACE"          help:"Comma separated Namespaces to watch, If empty or undefined, the operator will run in cluster scope."`
-	WatchNamespaceSelector string `env:"WATCH_NAMESPACE_SELECTOR" help:"The namespace label and key to watch, e.g. 'environment: dev', If empty or undefined, the operator will run in cluster scope."`
-	WatchLabelSelectors    string `env:"WATCH_LABEL_SELECTORS"    help:"The resources to watch according to their labels. e.g. 'partition in (customerA, customerB),environment!=qa'. If empty of undefined, the operator will watch all CRs."`
+	ClusterDomain          string `env:"CLUSTER_DOMAIN"                                              help:"Fully specify the domain to address services with using their FQDNs, e.g. 'cluster.local'"`
+	WatchNamespace         string `env:"WATCH_NAMESPACE"                                             help:"Comma separated Namespaces to watch, If empty or undefined, the operator will run in cluster scope."`
+	WatchNamespaceSelector string `env:"WATCH_NAMESPACE_SELECTOR"                                    help:"The namespace label and key to watch, e.g. 'environment: dev', If empty or undefined, the operator will run in cluster scope."`
+	WatchLabelSelectors    string `env:"WATCH_LABEL_SELECTORS"                                       help:"The resources to watch according to their labels. e.g. 'partition in (customerA, customerB),environment!=qa'. If empty of undefined, the operator will watch all CRs."`
+	CachingLevel           string `env:"ENFORCE_CACHE_LABELS"     default:"safe" enum:"all,safe,off" help:"Configure cache limits. Valid values are 'off', 'safe' and 'all'"`
 
 	MetricsAddr             string        `name:"metrics-bind-address"      default:":8080" help:"The address the metric endpoint binds to."`
 	ProbeAddr               string        `name:"health-probe-bind-address" default:":8081" help:"The address the probe endpoint binds to."`
@@ -195,24 +195,6 @@ func main() { //nolint:gocyclo
 	// Optimize Go runtime based on CGroup limits (GOMEMLIMIT, sets a soft memory limit for the runtime)
 	memlimit.SetGoMemLimitWithOpts(memlimit.WithLogger(slogger)) //nolint:errcheck
 
-	// Detect environment variables
-	enforceCacheLabelsLevel, _ := os.LookupEnv(enforceCacheLabelsEnvVar)
-	if enforceCacheLabelsLevel == "" {
-		enforceCacheLabelsLevel = cachingLevelSafe
-	}
-
-	enforceCacheLabels := false
-
-	switch enforceCacheLabelsLevel {
-	case cachingLevelSafe, cachingLevelAll:
-		enforceCacheLabels = true
-
-		setupLog.Info("label restrictions for cached resources are active", "level", enforceCacheLabelsLevel)
-	case cachingLevelOff:
-	default:
-		setupLog.Error(fmt.Errorf("invalid value %s for %s", enforceCacheLabelsLevel, enforceCacheLabelsEnvVar), "falling back to disabling cache enforcement")
-	}
-
 	// Determine LeaderElectionID from
 	leHash := sha256.New()
 	leHash.Write([]byte(operatorConfig.WatchNamespace))
@@ -263,7 +245,9 @@ func main() { //nolint:gocyclo
 		setupLog.Info(fmt.Sprintf("sharding is enabled via %s=%s. Beware: Always label Grafana CRs before enabling to ensure labels are inherited. Existing Secrets/ConfigMaps referenced in CRs also need to be labeled to continue working.", watchLabelSelectorsEnvVar, operatorConfig.WatchLabelSelectors))
 	}
 
-	if enforceCacheLabels {
+	if operatorConfig.CachingLevel != cachingLevelOff {
+		setupLog.Info("label restrictions for cached resources are active", "level", operatorConfig.CachingLevel)
+
 		var cacheLabelConfig cache.ByObject
 		if operatorConfig.WatchLabelSelectors != "" {
 			// When sharding, limit cache according to shard labels
@@ -293,7 +277,7 @@ func main() { //nolint:gocyclo
 			setupLog.Info("skipping cache fine tuning for HTTPRoute resources as GatewayAPI CRDs were not found in the cluster")
 		}
 
-		if enforceCacheLabelsLevel == cachingLevelSafe {
+		if operatorConfig.CachingLevel == cachingLevelSafe {
 			mgrOptions.Client.Cache = &client.CacheOptions{
 				DisableFor: []client.Object{&corev1.ConfigMap{}, &corev1.Secret{}},
 			}
