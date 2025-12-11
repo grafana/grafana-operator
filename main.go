@@ -83,12 +83,6 @@ const (
 	cachingLevelAll          = "all"
 	cachingLevelOff          = "off"
 	cachingLevelSafe         = "safe"
-	// clusterDomainEnvVar is the constant for env variable CLUSTER_DOMAIN, which specifies the cluster domain to use for addressing.
-	// By default, this is empty, and internal services are addressed without a cluster domain specified, i.e., a
-	// relative domain name that will resolve regardless of if a custom domain is configured for the cluster. If you
-	// wish to have services addressed using their FQDNs, you can specify the cluster domain explicitly, e.g., "cluster.local"
-	// for the default Kubernetes configuration.
-	clusterDomainEnvVar = "CLUSTER_DOMAIN"
 )
 
 var (
@@ -97,6 +91,8 @@ var (
 )
 
 var operatorConfig struct {
+	ClusterDomain string `env:"CLUSTER_DOMAIN" help:"Fully specify the domain to address services with using their FQDNs, e.g. 'cluster.local'"`
+
 	MetricsAddr             string        `name:"metrics-bind-address"      default:":8080" help:"The address the metric endpoint binds to."`
 	ProbeAddr               string        `name:"health-probe-bind-address" default:":8081" help:"The address the probe endpoint binds to."`
 	PprofAddr               string        `name:"pprof-addr"                                help:"The address to expose the pprof server. Empty string disables the pprof server."`
@@ -235,8 +231,6 @@ func main() { //nolint:gocyclo
 	leHash.Write([]byte(watchNamespaceSelector))
 	leHash.Write([]byte(watchLabelSelectors))
 
-	clusterDomain, _ := os.LookupEnv(clusterDomainEnvVar)
-
 	// Fetch k8s api credentials and detect platform
 	restConfig := ctrl.GetConfigOrDie()
 
@@ -356,7 +350,7 @@ func main() { //nolint:gocyclo
 		Scheme:        mgr.GetScheme(),
 		IsOpenShift:   isOpenShift,
 		HasGatewayAPI: hasGatewayAPI,
-		ClusterDomain: clusterDomain,
+		ClusterDomain: operatorConfig.ClusterDomain,
 	}).SetupWithManager(ctx, mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Grafana")
 		os.Exit(1)
