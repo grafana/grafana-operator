@@ -32,12 +32,14 @@ jobs:
           version: v3.17.3
 
       - name: Prepare
+        shell: bash
         run: |
           # OCI standard enforces lower-case paths
           GHCR_REPO=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           HELM_REPO=$(echo "oci://ghcr.io/${{ github.repository_owner }}/helm-charts" | tr '[:upper:]' '[:lower:]')
           echo "GHCR_REPO=$GHCR_REPO" >> $GITHUB_ENV
           echo "HELM_REPO=$HELM_REPO" >> $GITHUB_ENV
+          echo "HELM_RELEASE_VERSION=${RELEASE_NAME:1}" >> $GITHUB_ENV
 
       - name: Publish Helm charts
         env:
@@ -46,9 +48,9 @@ jobs:
           cd source/deploy/helm
           yq -i '.image.repository = "${{ env.GHCR_REPO }}"' grafana-operator/values.yaml
           helm registry login -u "${RELEASE_ACTOR}" -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
-          helm package --app-version ${RELEASE_NAME} --version ${RELEASE_NAME} grafana-operator
+          helm package --app-version ${RELEASE_NAME} --version ${HELM_RELEASE_VERSION} grafana-operator
 
-          helm push "grafana-operator-${RELEASE_NAME}.tgz" ${{ env.HELM_REPO }}
+          helm push "grafana-operator-${HELM_RELEASE_VERSION}.tgz" ${{ env.HELM_REPO }}
 
       - name: Install CR tool
         run: |
@@ -88,7 +90,7 @@ jobs:
 
             Tag on source: https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}
           files: |
-            source/deploy/helm/grafana-operator-${{ github.ref_name }}.tgz
+            source/deploy/helm/grafana-operator-${{ env.HELM_RELEASE_VERSION }}.tgz
           repository: grafana/helm-charts
           tag_name: grafana-operator-${{ github.ref_name }}
           token: ${{ env.AUTHTOKEN }}

@@ -332,7 +332,7 @@ catalog-push: ## Push a catalog image.
 .PHONY: prep-release
 prep-release: $(YQ)
 	$(info $(M) running $@)
-	$(YQ) -i '.version="v$(VERSION)"' deploy/helm/grafana-operator/Chart.yaml
+	$(YQ) -i '.version="$(VERSION)"' deploy/helm/grafana-operator/Chart.yaml
 	$(YQ) -i '.appVersion="v$(VERSION)"' deploy/helm/grafana-operator/Chart.yaml
 	$(YQ) -i '.params.version="v$(VERSION)"' hugo/config.yaml
 	sed -i 's/--version v5.*/--version v$(VERSION)/g' README.md
