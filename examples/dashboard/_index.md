@@ -16,7 +16,8 @@ You can configure and reference dashboards as code in many different ways.
 - [JSON](#json)
 - [gzipJson](#gzipjson)
 - [URL](#url)
-- [Jsonnet](#jsonnet)(Deprecated)
+- [Jsonnet](#jsonnet) (Deprecated)
+- [JaaS](#jaas)
 - [ConfigMap](#configmap)
 
 To view all configuration options for folders, look at our [API documentation](/docs/api/#grafanadashboardspec).
@@ -122,6 +123,8 @@ You don't have to rely on Grafana Dashboard registry for this, any URL reachable
 
 ### Jsonnet
 
+The Jsonnet dashboard type is deprecated. It uses the old and now unmaintained [grafonnet-lib](https://github.com/grafana/grafonnet-lib) library. Users who rely on Jsonnet based dashboards should switch to [JaaS](#jaas) instead which supports the new [grafonnet](https://github.com/grafana/grafonnet) library as well as any additional custom libraries you have created yourself. See the [discussion](https://github.com/grafana/grafana-operator/discussions/2171) for more details.
+
 ```yaml
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
@@ -198,6 +201,24 @@ spec:
    )
 ```
 
+## JaaS
+
+[Jsonnet-as-a-Service](https://github.com/metio/jaas) (JaaS) is a webservice that evaluates Jsonnet snippets which allows you to reference your Jsonnet based dashboards by [URL](#url) as explained above. It comes with [Grafonnet](https://grafana.github.io/grafonnet/) pre-installed and supports user supplied custom libraries as well.
+
+```yaml
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: grafanadashboard-jaas
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  url: "http://jaas.jaas.svc.cluster.local:8080/jsonnet/your-dashboard"
+```
+
+[Example documentation](./jaas/readme).
+
 ## Plugins
 
 [Plugins](https://grafana.com/grafana/plugins/) is a way to extend the grafana functionality in dashboards and datasources.
@@ -214,7 +235,7 @@ metadata:
 spec:
   instanceSelector:
     matchLabels:
-      dashboards: grafana
+      dashboards: "grafana"
   plugins:
     - name: grafana-piechart-panel
       version: 1.3.9
