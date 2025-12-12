@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -41,45 +40,19 @@ func NewHTTPClient(ctx context.Context, c client.Client, cr *v1beta1.Grafana) (*
 }
 
 func GetGrafanaVersion(ctx context.Context, c client.Client, cr *v1beta1.Grafana) (string, error) {
-	httpClient, err := NewHTTPClient(ctx, c, cr)
+	gClient, err := NewGeneratedGrafanaClient(ctx, c, cr)
 	if err != nil {
-		return "", fmt.Errorf("setup of the http client: %w", err)
+		return "", fmt.Errorf("building grafana client: %w", err)
 	}
 
-	gURL, err := ParseAdminURL(cr.Status.AdminURL)
+	data, err := gClient.Health.GetHealth()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("fetching grafana version: %w", err)
 	}
 
-	instanceURL := gURL.JoinPath("/frontend/settings").String()
-
-	req, err := http.NewRequest(http.MethodGet, instanceURL, nil)
-	if err != nil {
-		return "", fmt.Errorf("building request to fetch version: %w", err)
-	}
-
-	err = InjectAuthHeaders(ctx, c, cr, req)
-	if err != nil {
-		return "", fmt.Errorf("fetching credentials for version detection: %w", err)
-	}
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return "", err
-	}
-
-	data := struct {
-		BuildInfo struct {
-			Version string `json:"version"`
-		} `json:"buildInfo"`
-	}{}
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return "", fmt.Errorf("parsing health endpoint data: %w", err)
-	}
-
-	if data.BuildInfo.Version == "" {
+	if data.Payload.Version == "" {
 		return "", fmt.Errorf("empty version received from server")
 	}
 
-	return data.BuildInfo.Version, nil
+	return data.Payload.Version, nil
 }
