@@ -25,6 +25,14 @@ func NewCompleteReconciler(client client.Client) reconcilers.OperatorGrafanaReco
 func (r *CompleteReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, _ *v1beta1.OperatorReconcileVars, _ *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
 	log := logf.FromContext(ctx).WithName("CompleteReconciler")
 
+	log.V(1).Info("attempting to authenticate with instance")
+
+	_, err := grafanaclient.GetAuthenticationStatus(ctx, r.client, cr)
+	if err != nil {
+		cr.Status.Version = ""
+		return v1beta1.OperatorStageResultFailed, fmt.Errorf("failed to authenticate with instance: %w", err)
+	}
+
 	log.V(1).Info("fetching Grafana version from instance")
 
 	version, err := grafanaclient.GetGrafanaVersion(ctx, r.client, cr)
