@@ -67,10 +67,6 @@ import (
 )
 
 const (
-	// watchLabelSelectorsEnvVar is the constant for env variable WATCH_LABEL_SELECTORS which specifies the resources to watch according to their labels.
-	// eg: 'partition in (customerA, customerB),environment!=qa'
-	// If empty of undefined, the operator will watch all CRs.
-	watchLabelSelectorsEnvVar = "WATCH_LABEL_SELECTORS"
 	// Caching levels enforced by Kong input validation
 	cachingLevelAll  = "all"
 	cachingLevelOff  = "off"
@@ -235,6 +231,9 @@ func main() { //nolint:gocyclo
 		},
 	}
 
+	// A non-empty watchLabelSelector will attempt to enable sharding of the operator.
+	// An invalid configuration will produce and error and exit early
+	// If watchLabelSelector is empty, match any label configuration
 	labelSelectors, err := getLabelSelectors(operatorConfig.WatchLabelSelectors)
 	if err != nil {
 		setupLog.Error(err, "invalid shard selector configuration")
@@ -242,7 +241,7 @@ func main() { //nolint:gocyclo
 	}
 
 	if operatorConfig.WatchLabelSelectors != "" {
-		setupLog.Info(fmt.Sprintf("sharding is enabled via %s=%s. Beware: Always label Grafana CRs before enabling to ensure labels are inherited. Existing Secrets/ConfigMaps referenced in CRs also need to be labeled to continue working.", watchLabelSelectorsEnvVar, operatorConfig.WatchLabelSelectors))
+		setupLog.Info(fmt.Sprintf("sharding enabled via selector '%s'. Beware: Always label Grafana CRs before enabling to ensure labels are inherited. Existing Secrets/ConfigMaps referenced in CRs also need to be labeled to continue working.", operatorConfig.WatchLabelSelectors))
 	}
 
 	if operatorConfig.CachingLevel != cachingLevelOff {
@@ -502,7 +501,7 @@ func getLabelSelectors(watchLabelSelectors string) (labels.Selector, error) {
 	if watchLabelSelectors != "" {
 		labelSelectors, err = labels.Parse(watchLabelSelectors)
 		if err != nil {
-			return labelSelectors, fmt.Errorf("unable to parse %s: %w", watchLabelSelectorsEnvVar, err)
+			return labelSelectors, fmt.Errorf("unable to parse 'WATCH_LABEL_SELECTOR=%s': %w", watchLabelSelectors, err)
 		}
 	} else {
 		labelSelectors = labels.Everything() // Match any labels
