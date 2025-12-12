@@ -67,28 +67,10 @@ import (
 )
 
 const (
-	// watchNamespaceEnvVar is the constant for env variable WATCH_NAMESPACE which specifies the Namespace to watch.
-	// If empty or undefined, the operator will run in cluster scope.
-	watchNamespaceEnvVar = "WATCH_NAMESPACE"
-	// watchNamespaceEnvSelector is the constant for env variable WATCH_NAMESPACE_SELECTOR which specifies the Namespace label and key to watch.
-	// eg: "environment: dev"
-	// If empty or undefined, the operator will run in cluster scope.
-	watchNamespaceEnvSelector = "WATCH_NAMESPACE_SELECTOR"
-	// watchLabelSelectorsEnvVar is the constant for env variable WATCH_LABEL_SELECTORS which specifies the resources to watch according to their labels.
-	// eg: 'partition in (customerA, customerB),environment!=qa'
-	// If empty of undefined, the operator will watch all CRs.
-	watchLabelSelectorsEnvVar = "WATCH_LABEL_SELECTORS"
-	// Opt in to enable new experimental cache limits by setting this to `safe` or `all`. Valid values are `off`, `safe` and `all`
-	enforceCacheLabelsEnvVar = "ENFORCE_CACHE_LABELS"
-	cachingLevelAll          = "all"
-	cachingLevelOff          = "off"
-	cachingLevelSafe         = "safe"
-	// clusterDomainEnvVar is the constant for env variable CLUSTER_DOMAIN, which specifies the cluster domain to use for addressing.
-	// By default, this is empty, and internal services are addressed without a cluster domain specified, i.e., a
-	// relative domain name that will resolve regardless of if a custom domain is configured for the cluster. If you
-	// wish to have services addressed using their FQDNs, you can specify the cluster domain explicitly, e.g., "cluster.local"
-	// for the default Kubernetes configuration.
-	clusterDomainEnvVar = "CLUSTER_DOMAIN"
+	// Caching levels enforced by Kong input validation
+	cachingLevelAll  = "all"
+	cachingLevelOff  = "off"
+	cachingLevelSafe = "safe"
 )
 
 var (
@@ -97,6 +79,12 @@ var (
 )
 
 var operatorConfig struct {
+	ClusterDomain          string `env:"CLUSTER_DOMAIN"                                              help:"Fully specify the domain to address services with using their FQDNs, e.g. 'cluster.local'"`
+	WatchNamespace         string `env:"WATCH_NAMESPACE"                                             help:"Comma separated Namespaces to watch, If empty or undefined, the operator will run in cluster scope."`
+	WatchNamespaceSelector string `env:"WATCH_NAMESPACE_SELECTOR"                                    help:"The namespace label and key to watch, e.g. 'environment: dev', If empty or undefined, the operator will run in cluster scope."`
+	WatchLabelSelectors    string `env:"WATCH_LABEL_SELECTORS"                                       help:"The resources to watch according to their labels. e.g. 'partition in (customerA, customerB),environment!=qa'. If empty of undefined, the operator will watch all CRs."`
+	CachingLevel           string `env:"ENFORCE_CACHE_LABELS"     default:"safe" enum:"all,safe,off" help:"Configure cache limits. Valid values are 'off', 'safe' and 'all'"`
+
 	MetricsAddr             string        `name:"metrics-bind-address"      default:":8080" help:"The address the metric endpoint binds to."`
 	ProbeAddr               string        `name:"health-probe-bind-address" default:":8081" help:"The address the probe endpoint binds to."`
 	PprofAddr               string        `name:"pprof-addr"                                help:"The address to expose the pprof server. Empty string disables the pprof server."`
@@ -205,39 +193,11 @@ func main() { //nolint:gocyclo
 	// Optimize Go runtime based on CGroup limits (GOMEMLIMIT, sets a soft memory limit for the runtime)
 	memlimit.SetGoMemLimitWithOpts(memlimit.WithLogger(slogger)) //nolint:errcheck
 
-	// Detect environment variables
-	watchNamespace, _ := os.LookupEnv(watchNamespaceEnvVar)
-	watchNamespaceSelector, _ := os.LookupEnv(watchNamespaceEnvSelector)
-
-	watchLabelSelectors, _ := os.LookupEnv(watchLabelSelectorsEnvVar)
-	if watchLabelSelectors != "" {
-		setupLog.Info(fmt.Sprintf("sharding is enabled via %s=%s. Beware: Always label Grafana CRs before enabling to ensure labels are inherited. Existing Secrets/ConfigMaps referenced in CRs also need to be labeled to continue working.", watchLabelSelectorsEnvVar, watchLabelSelectors))
-	}
-
-	enforceCacheLabelsLevel, _ := os.LookupEnv(enforceCacheLabelsEnvVar)
-	if enforceCacheLabelsLevel == "" {
-		enforceCacheLabelsLevel = cachingLevelSafe
-	}
-
-	enforceCacheLabels := false
-
-	switch enforceCacheLabelsLevel {
-	case cachingLevelSafe, cachingLevelAll:
-		enforceCacheLabels = true
-
-		setupLog.Info("label restrictions for cached resources are active", "level", enforceCacheLabelsLevel)
-	case cachingLevelOff:
-	default:
-		setupLog.Error(fmt.Errorf("invalid value %s for %s", enforceCacheLabelsLevel, enforceCacheLabelsEnvVar), "falling back to disabling cache enforcement")
-	}
-
 	// Determine LeaderElectionID from
 	leHash := sha256.New()
-	leHash.Write([]byte(watchNamespace))
-	leHash.Write([]byte(watchNamespaceSelector))
-	leHash.Write([]byte(watchLabelSelectors))
-
-	clusterDomain, _ := os.LookupEnv(clusterDomainEnvVar)
+	leHash.Write([]byte(operatorConfig.WatchNamespace))
+	leHash.Write([]byte(operatorConfig.WatchNamespaceSelector))
+	leHash.Write([]byte(operatorConfig.WatchLabelSelectors))
 
 	// Fetch k8s api credentials and detect platform
 	restConfig := ctrl.GetConfigOrDie()
@@ -273,19 +233,26 @@ func main() { //nolint:gocyclo
 		},
 	}
 
-	labelSelectors, err := getLabelSelectors(watchLabelSelectors)
+	// A non-empty watchLabelSelector will attempt to enable sharding of the operator.
+	// An invalid configuration will produce and error and exit early
+	// If watchLabelSelector is empty, match any label configuration
+	labelSelectors, err := getLabelSelectors(operatorConfig.WatchLabelSelectors)
 	if err != nil {
-		setupLog.Error(err, fmt.Sprintf("unable to parse %s", watchLabelSelectorsEnvVar))
+		setupLog.Error(err, "invalid shard selector configuration")
 		os.Exit(1)
 	}
 
-	if enforceCacheLabels {
+	if operatorConfig.WatchLabelSelectors != "" {
+		setupLog.Info(fmt.Sprintf("sharding enabled via selector '%s'. Beware: Always label Grafana CRs before enabling to ensure labels are inherited. Existing Secrets/ConfigMaps referenced in CRs also need to be labeled to continue working.", operatorConfig.WatchLabelSelectors))
+	}
+
+	if operatorConfig.CachingLevel != cachingLevelOff {
+		setupLog.Info("label restrictions for cached resources are active", "level", operatorConfig.CachingLevel)
+
 		var cacheLabelConfig cache.ByObject
-		if watchLabelSelectors != "" {
+		if operatorConfig.WatchLabelSelectors != "" {
 			// When sharding, limit cache according to shard labels
 			cacheLabelConfig = cache.ByObject{Label: labelSelectors}
-
-			setupLog.Info(fmt.Sprintf("sharding is enabled via %s=%s. Beware: Always label Grafana CRs before enabling to ensure labels are inherited. Existing Secrets/ConfigMaps referenced in CRs also need to be labeled to continue working.", watchLabelSelectorsEnvVar, watchLabelSelectors))
 		} else {
 			// Otherwise limit it to managed-by label
 			cacheLabelConfig = cache.ByObject{Label: labels.SelectorFromSet(resources.GetCommonLabels())}
@@ -311,7 +278,7 @@ func main() { //nolint:gocyclo
 			setupLog.Info("skipping cache fine tuning for HTTPRoute resources as GatewayAPI CRDs were not found in the cluster")
 		}
 
-		if enforceCacheLabelsLevel == cachingLevelSafe {
+		if operatorConfig.CachingLevel == cachingLevelSafe {
 			mgrOptions.Client.Cache = &client.CacheOptions{
 				DisableFor: []client.Object{&corev1.ConfigMap{}, &corev1.Secret{}},
 			}
@@ -320,21 +287,21 @@ func main() { //nolint:gocyclo
 
 	// Determine Operator scope
 	switch {
-	case strings.Contains(watchNamespace, ","):
+	case strings.Contains(operatorConfig.WatchNamespace, ","):
 		// multi namespace scoped
-		mgrOptions.Cache.DefaultNamespaces = getNamespaceConfig(watchNamespace, labelSelectors)
-		setupLog.Info("operator running in namespace scoped mode for multiple namespaces", "namespaces", watchNamespace)
-	case watchNamespace != "":
+		mgrOptions.Cache.DefaultNamespaces = getNamespaceConfig(operatorConfig.WatchNamespace, labelSelectors)
+		setupLog.Info("operator running in namespace scoped mode for multiple namespaces", "namespaces", operatorConfig.WatchNamespace)
+	case operatorConfig.WatchNamespace != "":
 		// namespace scoped
-		mgrOptions.Cache.DefaultNamespaces = getNamespaceConfig(watchNamespace, labelSelectors)
-		setupLog.Info("operator running in namespace scoped mode", "namespace", watchNamespace)
-	case strings.Contains(watchNamespaceSelector, ":"):
+		mgrOptions.Cache.DefaultNamespaces = getNamespaceConfig(operatorConfig.WatchNamespace, labelSelectors)
+		setupLog.Info("operator running in namespace scoped mode", "namespace", operatorConfig.WatchNamespace)
+	case strings.Contains(operatorConfig.WatchNamespaceSelector, ":"):
 		// multi namespace scoped
-		mgrOptions.Cache.DefaultNamespaces = getNamespaceConfigSelector(restConfig, watchNamespaceSelector, labelSelectors)
+		mgrOptions.Cache.DefaultNamespaces = getNamespaceConfigSelector(restConfig, operatorConfig.WatchNamespaceSelector, labelSelectors)
 
-		setupLog.Info("operator running in namespace scoped mode using namespace selector", "namespace", watchNamespace)
+		setupLog.Info("operator running in namespace scoped mode using namespace selector", "selector", operatorConfig.WatchNamespaceSelector)
 
-	case watchNamespace == "" && watchNamespaceSelector == "":
+	case operatorConfig.WatchNamespace == "" && operatorConfig.WatchNamespaceSelector == "":
 		// cluster scoped
 		mgrOptions.Cache.DefaultLabelSelector = labelSelectors
 
@@ -358,7 +325,7 @@ func main() { //nolint:gocyclo
 		Scheme:        mgr.GetScheme(),
 		IsOpenShift:   isOpenShift,
 		HasGatewayAPI: hasGatewayAPI,
-		ClusterDomain: clusterDomain,
+		ClusterDomain: operatorConfig.ClusterDomain,
 	}).SetupWithManager(ctx, mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Grafana")
 		os.Exit(1)
@@ -481,7 +448,7 @@ func getNamespaceConfig(namespaces string, labelSelectors labels.Selector) map[s
 	defaultNamespaces := map[string]cache.Config{}
 	for v := range strings.SplitSeq(namespaces, ",") {
 		// Generate a mapping of namespaces to label/field selectors, set to Everything() to enable matching all
-		// instances in all namespaces from watchNamespace to be controlled by the operator
+		// instances in all namespaces from operatorConfig.WatchNamespace to be controlled by the operator
 		// this is the default behavior of the operator on v5, if you require finer grained control over this
 		// please file an issue in the grafana-operator/grafana-operator GH project
 		defaultNamespaces[v] = cache.Config{
@@ -514,7 +481,7 @@ func getNamespaceConfigSelector(restConfig *rest.Config, selector string, labelS
 	defaultNamespaces := map[string]cache.Config{}
 	for _, v := range nsList.Items {
 		// Generate a mapping of namespaces to label/field selectors, set to Everything() to enable matching all
-		// instances in all namespaces from watchNamespace to be controlled by the operator
+		// instances in all namespaces from operatorConfig.WatchNamespace to be controlled by the operator
 		// this is the default behavior of the operator on v5, if you require finer grained control over this
 		// please file an issue in the grafana-operator/grafana-operator GH project
 		defaultNamespaces[v.Name] = cache.Config{
@@ -536,7 +503,7 @@ func getLabelSelectors(watchLabelSelectors string) (labels.Selector, error) {
 	if watchLabelSelectors != "" {
 		labelSelectors, err = labels.Parse(watchLabelSelectors)
 		if err != nil {
-			return labelSelectors, fmt.Errorf("unable to parse %s: %w", watchLabelSelectorsEnvVar, err)
+			return labelSelectors, fmt.Errorf("unable to parse 'WATCH_LABEL_SELECTOR=%s': %w", watchLabelSelectors, err)
 		}
 	} else {
 		labelSelectors = labels.Everything() // Match any labels
