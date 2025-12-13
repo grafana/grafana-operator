@@ -111,7 +111,7 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionFolderSynchronized)
 		cr.Status.NoMatchingInstances = true
 
-		log.Error(err, "failed to get Grafana instances")
+		log.Error(err, ErrMsgGettingInstances)
 
 		return ctrl.Result{}, err
 	}
@@ -166,7 +166,7 @@ func (r *GrafanaFolderReconciler) finalize(ctx context.Context, cr *v1beta1.Graf
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
-		return fmt.Errorf("fetching instances: %w", err)
+		return fmt.Errorf("%s: %w", ErrMsgGettingInstances, err)
 	}
 
 	refTrue := ptr.To(true)

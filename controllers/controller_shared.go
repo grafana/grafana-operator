@@ -56,6 +56,7 @@ const (
 var (
 	ErrNoMatchingInstances    = fmt.Errorf("no matching instances")
 	ErrMsgNoMatchingInstances = "instanceSelector found no matching Grafana instances"
+	ErrMsgGettingInstances    = "failed to get Grafana instances"
 	ErrMsgResolvingFolderUID  = "fetching GrafanaFolder to resolve uid"
 )
 
