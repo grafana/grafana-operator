@@ -19,7 +19,9 @@ package controllers
 import (
 	"fmt"
 	"net/http/httptest"
+	"time"
 
+	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/stretchr/testify/assert"
@@ -221,6 +223,80 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 
 		assert.NotContains(t, dash.String(), title1)
 		assert.Contains(t, dash.String(), title2)
+
+		// Cleanup
+		err = k8sClient.Delete(testCtx, cr)
+		require.NoError(t, err)
+
+		_, err = r.Reconcile(testCtx, req)
+		require.NoError(t, err)
+	})
+
+	It("mitigates dashboard drift when it occurs", func() {
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		require.NoError(t, err)
+
+		cr := &v1beta1.GrafanaDashboard{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "url-based-dashboard-drift",
+			},
+			Spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
+					InstanceSelector: &metav1.LabelSelector{
+						MatchLabels: externalGrafanaCr.GetLabels(),
+					},
+				},
+			},
+		}
+
+		// Make it long enough, so we can play with reconciliation
+		cr.Spec.ResyncPeriod.Duration = 5 * time.Minute
+
+		r := &GrafanaDashboardReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+		req := requestFromMeta(cr.Metadata())
+
+		// Create dashboard
+		cr.Spec.URL = ts.URL + endpoint1
+
+		err = k8sClient.Create(testCtx, cr)
+		require.NoError(t, err)
+
+		_, err = r.Reconcile(testCtx, req)
+		require.NoError(t, err)
+
+		dash, err := gClient.Dashboards.GetDashboardByUID(uid)
+		require.NoError(t, err)
+
+		assert.Contains(t, dash.String(), title1)
+
+		// Modify the dashboard to simulate remote drift
+		model, ok := dash.GetPayload().Dashboard.(map[string]any)
+		require.True(t, ok)
+
+		model["title"] = title2
+
+		_, err = gClient.Dashboards.PostDashboard( //nolint:errcheck
+			&models.SaveDashboardCommand{
+				Dashboard: model,
+				FolderUID: dash.Payload.Meta.FolderUID,
+				Overwrite: true,
+			})
+		require.NoError(t, err)
+
+		dash, err = gClient.Dashboards.GetDashboardByUID(uid)
+		require.NoError(t, err)
+
+		assert.Contains(t, dash.String(), title2) // Make sure the drift is there
+
+		// Reconcile again to fix the drift
+		_, err = r.Reconcile(testCtx, req)
+		require.NoError(t, err)
+
+		dash, err = gClient.Dashboards.GetDashboardByUID(uid)
+		require.NoError(t, err)
+
+		assert.Contains(t, dash.String(), title1) // Make sure the drift is gone now
 
 		// Cleanup
 		err = k8sClient.Delete(testCtx, cr)
