@@ -291,7 +291,7 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 	return nil
 }
 
-func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDashboard, dashboardModel map[string]any, hash, folderUID string) error {
+func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDashboard, dashboardModel map[string]any, _, folderUID string) error {
 	log := logf.FromContext(ctx)
 
 	if grafana.IsExternal() && cr.Spec.Plugins != nil {
@@ -347,18 +347,13 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		exists = false
 	}
 
-	// Update when missing or the CR is updated
-	if exists && content.Unchanged(cr, hash) {
-		log.V(1).Info("dashboard model unchanged. skipping remaining requests")
-		return nil
-	}
-
 	remoteChanged, err := r.hasRemoteChange(exists, dashboardModel, dashWithMeta)
 	if err != nil {
 		return err
 	}
 
 	if !remoteChanged {
+		log.V(1).Info("dashboard hasn't changed, skipping update")
 		return nil
 	}
 
