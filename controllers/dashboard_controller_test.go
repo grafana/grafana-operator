@@ -19,8 +19,10 @@ package controllers
 import (
 	"fmt"
 	"net/http/httptest"
+	"testing"
 	"time"
 
+	"github.com/grafana/grafana-openapi-client-go/client/dashboards"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
@@ -306,3 +308,82 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 		require.NoError(t, err)
 	})
 })
+
+func TestGrafanaDashboardReconcilerHasRemoteChange(t *testing.T) {
+	const uid = "myuid"
+
+	tests := []struct {
+		name   string
+		exists bool
+		title1 string
+		title2 string
+		want   bool
+	}{
+		{
+			name:   "doesn't exist",
+			exists: false,
+			title1: "title",
+			title2: "title",
+			want:   true,
+		},
+		{
+			name:   "remote drift",
+			exists: true,
+			title1: "title",
+			title2: "different-title",
+			want:   true,
+		},
+		{
+			name:   "no drift",
+			exists: true,
+			title1: "title",
+			title2: "title",
+			want:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dash1 := map[string]any{
+				"uid":   uid,
+				"title": tt.title1,
+			}
+
+			dash2 := &dashboards.GetDashboardByUIDOK{
+				Payload: &models.DashboardFullWithMeta{
+					Dashboard: map[string]any{
+						"uid":   uid,
+						"title": tt.title2,
+					},
+				},
+			}
+
+			r := &GrafanaDashboardReconciler{}
+
+			got, err := r.hasRemoteChange(tt.exists, dash1, dash2)
+			require.NoError(t, err)
+
+			assert.Equal(t, tt.want, got)
+		})
+	}
+
+	t.Run("remote dashboard is not a valid object", func(t *testing.T) {
+		dash1 := map[string]any{
+			"uid":   uid,
+			"title": "title",
+		}
+
+		dash2 := &dashboards.GetDashboardByUIDOK{
+			Payload: &models.DashboardFullWithMeta{
+				Dashboard: nil,
+			},
+		}
+
+		r := &GrafanaDashboardReconciler{}
+
+		got, err := r.hasRemoteChange(true, dash1, dash2)
+		require.ErrorContains(t, err, "remote dashboard is not a valid object")
+
+		assert.True(t, got)
+	})
+}
