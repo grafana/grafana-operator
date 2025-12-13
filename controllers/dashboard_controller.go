@@ -347,12 +347,12 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 		exists = false
 	}
 
-	remoteChanged, err := r.hasRemoteChange(exists, dashboardModel, dashWithMeta)
+	matchesStateInGrafana, err := r.matchesStateInGrafana(exists, dashboardModel, dashWithMeta)
 	if err != nil {
 		return err
 	}
 
-	if !remoteChanged {
+	if matchesStateInGrafana {
 		log.V(1).Info("dashboard hasn't changed, skipping update")
 		return nil
 	}
@@ -408,16 +408,16 @@ func (r *GrafanaDashboardReconciler) Exists(client *genapi.GrafanaHTTPAPI, uid s
 	return "", nil
 }
 
-// HasRemoteChange checks if a dashboard in Grafana is different to the model defined in the custom resources
-func (r *GrafanaDashboardReconciler) hasRemoteChange(exists bool, model map[string]any, remoteDashboard *dashboards.GetDashboardByUIDOK) (bool, error) {
+// matchesStateInGrafana checks whether a dashboard exists in Grafana and its contents matches the model defined in the custom resources
+func (r *GrafanaDashboardReconciler) matchesStateInGrafana(exists bool, model map[string]any, remoteDashboard *dashboards.GetDashboardByUIDOK) (bool, error) {
 	if !exists {
 		// if the dashboard doesn't exist, don't even request
-		return true, nil
+		return false, nil
 	}
 
 	remoteModel, ok := (remoteDashboard.GetPayload().Dashboard).(map[string]any)
 	if !ok {
-		return true, fmt.Errorf("remote dashboard is not a valid object")
+		return false, fmt.Errorf("remote dashboard is not a valid object")
 	}
 
 	keys := make([]string, 0, len(model))
@@ -436,11 +436,11 @@ func (r *GrafanaDashboardReconciler) hasRemoteChange(exists bool, model map[stri
 
 		remoteValue := remoteModel[key]
 		if !reflect.DeepEqual(localValue, remoteValue) {
-			return true, nil
+			return false, nil
 		}
 	}
 
-	return false, nil
+	return true, nil
 }
 
 func (r *GrafanaDashboardReconciler) GetOrCreateFolder(client *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaDashboard) (string, error) {

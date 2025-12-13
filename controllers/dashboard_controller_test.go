@@ -309,7 +309,7 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 	})
 })
 
-func TestGrafanaDashboardReconcilerHasRemoteChange(t *testing.T) {
+func TestGrafanaDashboardReconcilerMatchesStateInGrafana(t *testing.T) {
 	const uid = "myuid"
 
 	tests := []struct {
@@ -324,21 +324,21 @@ func TestGrafanaDashboardReconcilerHasRemoteChange(t *testing.T) {
 			exists: false,
 			title1: "title",
 			title2: "title",
-			want:   true,
+			want:   false,
 		},
 		{
 			name:   "remote drift",
 			exists: true,
 			title1: "title",
 			title2: "different-title",
-			want:   true,
+			want:   false,
 		},
 		{
 			name:   "no drift",
 			exists: true,
 			title1: "title",
 			title2: "title",
-			want:   false,
+			want:   true,
 		},
 	}
 
@@ -360,7 +360,7 @@ func TestGrafanaDashboardReconcilerHasRemoteChange(t *testing.T) {
 
 			r := &GrafanaDashboardReconciler{}
 
-			got, err := r.hasRemoteChange(tt.exists, dash1, dash2)
+			got, err := r.matchesStateInGrafana(tt.exists, dash1, dash2)
 			require.NoError(t, err)
 
 			assert.Equal(t, tt.want, got)
@@ -381,9 +381,9 @@ func TestGrafanaDashboardReconcilerHasRemoteChange(t *testing.T) {
 
 		r := &GrafanaDashboardReconciler{}
 
-		got, err := r.hasRemoteChange(true, dash1, dash2)
+		got, err := r.matchesStateInGrafana(true, dash1, dash2)
 		require.ErrorContains(t, err, "remote dashboard is not a valid object")
 
-		assert.True(t, got)
+		assert.False(t, got)
 	})
 }
