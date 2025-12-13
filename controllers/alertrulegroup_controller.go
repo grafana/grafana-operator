@@ -113,11 +113,13 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 
 	folderUID, err := getFolderUID(ctx, r.Client, cr)
 	if err != nil {
-		return ctrl.Result{}, fmt.Errorf(ErrFetchingFolder, err)
+		log.Error(err, ErrMsgResolvingFolderUID)
+		return ctrl.Result{}, err
 	}
 
 	if folderUID == "" {
-		return ctrl.Result{}, fmt.Errorf("folder uid not found, alert rule must reference a folder")
+		log.Error(err, "folder uid not found, AlertRuleGroup must include a folder reference (folderUID/folderRef)")
+		return ctrl.Result{}, err
 	}
 
 	var disableProvenance *string
@@ -315,7 +317,7 @@ func (r *GrafanaAlertRuleGroupReconciler) finalize(ctx context.Context, cr *v1be
 
 	folderUID, err := getFolderUID(ctx, r.Client, cr)
 	if err != nil {
-		log.Info("Skipping Grafana finalize logic as folder no longer exists")
+		log.V(1).Info("Skipping Grafana finalize as folder no longer exists")
 
 		isCleanupInGrafanaRequired = false
 	}

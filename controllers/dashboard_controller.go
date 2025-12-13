@@ -157,7 +157,8 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	folderUID, err := getFolderUID(ctx, r.Client, cr)
 	if err != nil {
-		return ctrl.Result{}, fmt.Errorf(ErrFetchingFolder, err)
+		log.Error(err, ErrMsgResolvingFolderUID)
+		return ctrl.Result{}, err
 	}
 
 	applyHomeErrors := make(map[string]string)
