@@ -176,7 +176,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 
 		// then import the dashboard into the matching grafana instances
-		err = r.onDashboardCreated(ctx, &grafana, cr, dashboardModel, hash, folderUID)
+		err = r.onDashboardCreated(ctx, &grafana, cr, dashboardModel, folderUID)
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
@@ -291,7 +291,7 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 	return nil
 }
 
-func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDashboard, dashboardModel map[string]any, _, folderUID string) error {
+func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDashboard, dashboardModel map[string]any, folderUID string) error {
 	log := logf.FromContext(ctx)
 
 	if grafana.IsExternal() && cr.Spec.Plugins != nil {
