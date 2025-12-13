@@ -81,7 +81,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			return ctrl.Result{}, nil
 		}
 
-		log.Error(err, "error getting grafana cr")
+		log.Error(err, ErrMsgGettingCR)
 
 		return ctrl.Result{}, err
 	}

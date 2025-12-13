@@ -67,7 +67,9 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			return ctrl.Result{}, nil
 		}
 
-		return ctrl.Result{}, fmt.Errorf("error getting grafana folder cr: %w", err)
+		log.Error(err, ErrMsgGettingCR)
+
+		return ctrl.Result{}, err
 	}
 
 	if cr.GetDeletionTimestamp() != nil {
