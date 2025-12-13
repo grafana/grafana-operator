@@ -41,45 +41,66 @@ func NewHTTPClient(ctx context.Context, c client.Client, cr *v1beta1.Grafana) (*
 }
 
 func GetGrafanaVersion(ctx context.Context, c client.Client, cr *v1beta1.Grafana) (string, error) {
+	gClient, err := NewGeneratedGrafanaClient(ctx, c, cr)
+	if err != nil {
+		return "", fmt.Errorf("building grafana client: %w", err)
+	}
+
+	data, err := gClient.Health.GetHealth()
+	if err != nil {
+		return "", fmt.Errorf("fetching grafana version: %w", err)
+	}
+
+	if data.Payload.Version == "" {
+		return "", fmt.Errorf("empty version received from server")
+	}
+
+	return data.Payload.Version, nil
+}
+
+func GetAuthenticationStatus(ctx context.Context, c client.Client, cr *v1beta1.Grafana) (bool, error) {
 	httpClient, err := NewHTTPClient(ctx, c, cr)
 	if err != nil {
-		return "", fmt.Errorf("setup of the http client: %w", err)
+		return false, fmt.Errorf("setup of the http client: %w", err)
 	}
 
 	gURL, err := ParseAdminURL(cr.Status.AdminURL)
 	if err != nil {
-		return "", err
+		return false, err
 	}
 
-	instanceURL := gURL.JoinPath("/frontend/settings").String()
+	instanceURL := gURL.JoinPath("/login/ping").String()
 
 	req, err := http.NewRequest(http.MethodGet, instanceURL, nil)
 	if err != nil {
-		return "", fmt.Errorf("building request to fetch version: %w", err)
+		return false, fmt.Errorf("building request to fetch authentication status: %w", err)
 	}
 
 	err = InjectAuthHeaders(ctx, c, cr, req)
 	if err != nil {
-		return "", fmt.Errorf("fetching credentials for version detection: %w", err)
+		return false, fmt.Errorf("fetching credentials for authentication: %w", err)
 	}
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return "", err
+		return false, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return false, fmt.Errorf("failed to authenticate with grafana, ensure connectivity and valid credentials")
 	}
 
 	data := struct {
-		BuildInfo struct {
-			Version string `json:"version"`
-		} `json:"buildInfo"`
+		Message string `json:"message"`
 	}{}
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return "", fmt.Errorf("parsing health endpoint data: %w", err)
+		return false, fmt.Errorf("parsing health endpoint data: %w", err)
 	}
 
-	if data.BuildInfo.Version == "" {
-		return "", fmt.Errorf("empty version received from server")
+	// The endpoint response has never changed since being introduced on 2015-04-07 in 22adf0d06e891a555d9ec40ec09f89d6679bafec (Grafana)
+	if data.Message != "Logged in" {
+		return false, fmt.Errorf("unexpected api response, expected: {\"message\": \"Logged in\"}, got: %v", data)
 	}
 
-	return data.BuildInfo.Version, nil
+	return true, nil
 }
