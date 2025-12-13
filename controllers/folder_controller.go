@@ -109,35 +109,32 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
+		cr.Status.NoMatchingInstances = true
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionFolderSynchronized)
-		cr.Status.NoMatchingInstances = true
-
 		log.Error(err, ErrMsgGettingInstances)
 
 		return ctrl.Result{}, err
 	}
 
 	if len(instances) == 0 {
+		cr.Status.NoMatchingInstances = true
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionFolderSynchronized)
-		cr.Status.NoMatchingInstances = true
-
 		log.Error(ErrNoMatchingInstances, ErrMsgNoMatchingInstances)
 
 		return ctrl.Result{}, ErrNoMatchingInstances
 	}
 
-	removeNoMatchingInstance(&cr.Status.Conditions)
 	cr.Status.NoMatchingInstances = false
+	removeNoMatchingInstance(&cr.Status.Conditions)
+	log.V(1).Info(DbgMsgFoundMatchingInstances, "count", len(instances))
 
 	parentFolderUID, err := getFolderUID(ctx, r.Client, cr)
 	if err != nil {
 		log.Error(err, ErrMsgResolvingFolderUID)
 		return ctrl.Result{}, err
 	}
-
-	log.Info("found matching Grafana instances for folder", "count", len(instances))
 
 	applyErrors := make(map[string]string)
 

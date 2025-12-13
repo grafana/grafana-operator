@@ -119,7 +119,7 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 	}
 
 	removeNoMatchingInstance(&cr.Status.Conditions)
-	log.Info("found matching Grafana instances for Contact point", "count", len(instances))
+	log.V(1).Info(DbgMsgFoundMatchingInstances, "count", len(instances))
 
 	// Fallback to top level receiver if valid
 	err = r.TopLevelReceiverFallback(cr)

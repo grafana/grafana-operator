@@ -105,7 +105,7 @@ func (r *GrafanaNotificationTemplateReconciler) Reconcile(ctx context.Context, r
 	}
 
 	removeNoMatchingInstance(&cr.Status.Conditions)
-	log.Info("found matching Grafana instances for notification template", "count", len(instances))
+	log.V(1).Info(DbgMsgFoundMatchingInstances, "count", len(instances))
 
 	applyErrors := make(map[string]string)
 

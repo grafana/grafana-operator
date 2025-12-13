@@ -156,6 +156,7 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 	}
 
 	removeNoMatchingInstance(&cr.Status.Conditions)
+	log.V(1).Info(DbgMsgFoundMatchingInstances, "count", 1)
 
 	// 5. For active resources - reconcile the actual state with the desired state (creates, updates, removes as needed)
 	err = r.reconcileWithInstance(ctx, cr, grafana)

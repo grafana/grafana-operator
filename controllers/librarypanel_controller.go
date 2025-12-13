@@ -146,7 +146,7 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 	}
 
 	removeNoMatchingInstance(&cr.Status.Conditions)
-	log.Info("found matching Grafana instances for library panel", "count", len(instances))
+	log.V(1).Info(DbgMsgFoundMatchingInstances, "count", len(instances))
 
 	folderUID, err := getFolderUID(ctx, r.Client, cr)
 	if err != nil {
