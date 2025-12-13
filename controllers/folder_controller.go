@@ -46,6 +46,8 @@ const (
 	conditionReasonCyclicParent = "CyclicParent"
 )
 
+var ErrCyclicFolder = fmt.Errorf("cyclic folder reference")
+
 // GrafanaFolderReconciler reconciles a GrafanaFolder object
 type GrafanaFolderReconciler struct {
 	client.Client
@@ -96,7 +98,9 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonCyclicParent, "The value of parentFolderUID must not be the uid of the current folder")
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionFolderSynchronized)
 
-		return ctrl.Result{}, fmt.Errorf("cyclic folder reference")
+		log.Error(ErrCyclicFolder, "failed to validate GrafanaFolder, parentFolderUID must not reference the uid of the current folder")
+
+		return ctrl.Result{}, ErrCyclicFolder
 	}
 
 	removeInvalidSpec(&cr.Status.Conditions)
@@ -107,7 +111,9 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionFolderSynchronized)
 		cr.Status.NoMatchingInstances = true
 
-		return ctrl.Result{}, fmt.Errorf("failed fetching instances: %w", err)
+		log.Error(err, "failed to get Grafana instances")
+
+		return ctrl.Result{}, err
 	}
 
 	if len(instances) == 0 {
