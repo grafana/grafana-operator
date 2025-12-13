@@ -128,6 +128,8 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
 		cr.Status.NoMatchingInstances = true
 
+		log.Error(ErrNoMatchingInstances, ErrMsgNoMatchingInstances)
+
 		return ctrl.Result{}, ErrNoMatchingInstances
 	}
 

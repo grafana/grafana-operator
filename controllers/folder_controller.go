@@ -121,6 +121,8 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionFolderSynchronized)
 		cr.Status.NoMatchingInstances = true
 
+		log.Error(ErrNoMatchingInstances, ErrMsgNoMatchingInstances)
+
 		return ctrl.Result{}, ErrNoMatchingInstances
 	}
 
