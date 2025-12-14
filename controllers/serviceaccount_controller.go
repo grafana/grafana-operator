@@ -111,16 +111,17 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 
 	// 2. Handle resource deletion (removes service account from Grafana and cleans up secrets)
 	if cr.GetDeletionTimestamp() != nil {
-		err := r.finalize(ctx, cr)
-		if err != nil {
-			log.Error(err, ErrMsgRunningFinalizer)
-			return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgRunningFinalizer, err)
-		}
+		// Check if resource needs clean up
+		if controllerutil.ContainsFinalizer(cr, grafanaFinalizer) {
+			if err := r.finalize(ctx, cr); err != nil {
+				log.Error(err, ErrMsgRunningFinalizer)
+				return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgRunningFinalizer, err)
+			}
 
-		err = removeFinalizer(ctx, r.Client, cr)
-		if err != nil && !apierrors.IsNotFound(err) {
-			log.Error(err, ErrMsgRemoveFinalizer)
-			return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgRemoveFinalizer, err)
+			if err := removeFinalizer(ctx, r.Client, cr); err != nil {
+				log.Error(err, ErrMsgRemoveFinalizer)
+				return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgRemoveFinalizer, err)
+			}
 		}
 
 		return ctrl.Result{}, nil
@@ -189,10 +190,6 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 // finalize handles the cleanup logic when a GrafanaServiceAccount resource is being deleted.
 // It attempts to remove the service account from Grafana and clean up associated secrets.
 func (r *GrafanaServiceAccountReconciler) finalize(ctx context.Context, cr *v1beta1.GrafanaServiceAccount) error {
-	if !controllerutil.ContainsFinalizer(cr, grafanaFinalizer) {
-		return nil
-	}
-
 	if cr.Status.Account == nil {
 		return nil
 	}
