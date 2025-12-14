@@ -113,12 +113,14 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 	if cr.GetDeletionTimestamp() != nil {
 		err := r.finalize(ctx, cr)
 		if err != nil {
-			return ctrl.Result{}, fmt.Errorf("finalizing GrafanaServiceAccount: %w", err)
+			log.Error(err, ErrMsgRunningFinalizer)
+			return ctrl.Result{}, err
 		}
 
 		err = removeFinalizer(ctx, r.Client, cr)
 		if err != nil && !kuberr.IsNotFound(err) {
-			return ctrl.Result{}, fmt.Errorf("removing finalizer: %w", err)
+			log.Error(err, ErrMsgRemoveFinalizer)
+			return ctrl.Result{}, err
 		}
 
 		return ctrl.Result{}, nil

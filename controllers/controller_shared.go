@@ -59,6 +59,8 @@ var (
 	ErrMsgGettingCR           = "failed to get CR from API Server"
 	ErrMsgGettingInstances    = "failed to get Grafana instances"
 	ErrMsgResolvingFolderUID  = "fetching GrafanaFolder to resolve uid"
+	ErrMsgRunningFinalizer    = "failed to finalize CR"
+	ErrMsgRemoveFinalizer     = "failed to remove finalizer"
 
 	DbgMsgFoundMatchingInstances = "found matching Grafana instances"
 )
@@ -560,7 +562,7 @@ func UpdateStatus(ctx context.Context, cl client.Client, cr statusResource) {
 
 	if meta.IsStatusConditionTrue(cr.CommonStatus().Conditions, conditionNoMatchingInstance) {
 		if err := removeFinalizer(ctx, cl, cr); err != nil {
-			log.Error(err, "failed to remove finalizer")
+			log.Error(err, ErrMsgRemoveFinalizer)
 		}
 	} else {
 		if err := addFinalizer(ctx, cl, cr); err != nil {
