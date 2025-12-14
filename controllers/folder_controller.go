@@ -151,7 +151,10 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
 	if len(applyErrors) > 0 {
-		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
+		err = fmt.Errorf(ErrFmtApplyErrors, applyErrors)
+		log.Error(err, ErrMsgApplyErrors)
+
+		return ctrl.Result{}, err
 	}
 
 	cr.Status.Hash = cr.Hash()
