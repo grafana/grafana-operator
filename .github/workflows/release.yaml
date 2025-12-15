@@ -92,7 +92,7 @@ jobs:
           files: |
             source/deploy/helm/grafana-operator-${{ env.HELM_RELEASE_VERSION }}.tgz
           repository: grafana/helm-charts
-          tag_name: grafana-operator-${{ github.ref_name }}
+          tag_name: grafana-operator-${{ env.HELM_RELEASE_VERSION }}
           token: ${{ env.AUTHTOKEN }}
 
       - name: Checkout helm-charts # zizmor: ignore[artipacked] required to push using chart releaser in last step
