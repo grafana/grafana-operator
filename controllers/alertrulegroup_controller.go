@@ -45,6 +45,7 @@ const (
 	conditionReasonInvalidDuration  = "InvalidDuration"
 
 	ErrMsgMissingFolderReference = "folder uid not found, AlertRuleGroup must include a folder reference (folderUID/folderRef)"
+	ErrMsgConvertingToAPIModel   = "failed to convert GrafanaAlertRuleGroup to Grafana model"
 )
 
 // GrafanaAlertRuleGroupReconciler reconciles a GrafanaAlertRuleGroup object
@@ -142,8 +143,9 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 	if err != nil {
 		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidDuration, err.Error())
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionAlertGroupSynchronized)
+		log.Error(err, ErrMsgConvertingToAPIModel)
 
-		return ctrl.Result{}, fmt.Errorf("converting alert rule group to model: %w", err)
+		return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgConvertingToAPIModel, err)
 	}
 
 	removeInvalidSpec(&cr.Status.Conditions)
