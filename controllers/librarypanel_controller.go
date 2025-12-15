@@ -111,8 +111,9 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 	if err != nil {
 		setInvalidSpec(&cr.Status.Conditions, cr.Generation, "InvalidModelResolution", err.Error())
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionLibraryPanelSynchronized)
+		log.Error(err, "error resolving library panel contents")
 
-		return ctrl.Result{}, fmt.Errorf("error resolving library panel contents: %w", err)
+		return ctrl.Result{}, err
 	}
 
 	contentUID := fmt.Sprintf("%s", contentModel["uid"])
@@ -122,6 +123,7 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 	if content.IsUpdatedUID(cr, contentUID) {
 		setInvalidSpec(&cr.Status.Conditions, cr.Generation, "InvalidModel", errLibraryPanelContentUIDImmutable.Error())
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionLibraryPanelSynchronized)
+		log.Error(errLibraryPanelContentUIDImmutable, "invalid Library Panel spec")
 
 		return ctrl.Result{}, errLibraryPanelContentUIDImmutable
 	}
