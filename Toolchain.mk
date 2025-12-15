@@ -30,6 +30,8 @@ OPERATOR_SDK_VERSION = v1.32.0
 OPM_VERSION = v1.23.2
 # renovate: datasource=github-tags depName=mikefarah/yq
 YQ_VERSION = v4.49.2
+# renovate: datasource=github-tags depName=google/go-containerregistry
+CRANE_VERSION = v0.20.7
 
 ifdef GITHUB_TOKEN
 	CURL_GH_AUTH=-H 'Authorization: Bearer $(GITHUB_TOKEN)'
@@ -216,6 +218,19 @@ $(YQ): | $(BIN)
 	OSTYPE=$(shell uname | awk '{print tolower($$0)}') && ARCH=$(shell go env GOARCH) && \
 	curl -sSLfo $(YQ) $(CURL_GH_AUTH) https://github.com/mikefarah/yq/releases/download/$(YQ_VERSION)/yq_$${OSTYPE}_$${ARCH} ;\
 	chmod +x $(YQ) ;\
+	}
+
+CRANE := $(BIN)/crane-$(CRANE_VERSION)
+$(CRANE): | $(BIN)
+	$(info $(M) installing crane)
+	@{ \
+	set -e ;\
+	OSTYPE=$(shell uname | awk '{print ($$0)}') && ARCH=$(shell go env GOARCH) && \
+	if [ "`go env GOARCH`" = "amd64" ]; then ARCH="x86_64"; fi && \
+	curl -sSLfo $(CRANE).tar.gz $(CURL_GH_AUTH) https://github.com/google/go-containerregistry/releases/download/$(CRANE_VERSION)/go-containerregistry_$${OSTYPE}_$${ARCH}.tar.gz ;\
+	tar -zxvf $(CRANE).tar.gz crane && \
+	mv crane $(CRANE) && \
+	rm $(CRANE).tar.gz ;\
 	}
 
 PATH := $(DART_SASS):$(BIN):$(PATH)

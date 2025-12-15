@@ -252,10 +252,13 @@ endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
 .PHONY: bundle
-bundle: $(KUSTOMIZE) $(OPERATOR_SDK) manifests ## Generate bundle manifests and metadata, then validate generated files.
+bundle: $(KUSTOMIZE) $(OPERATOR_SDK) $(CRANE) manifests ## Generate bundle manifests and metadata, then validate generated files.
+	rm -rf bundle/
+	$(eval OLD_VERSION := $(shell $(CRANE) ls quay.io/community-operator-pipeline-prod/grafana-operator | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -n1))
 	$(info $(M) running $@)
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS)
+	$(YQ) -i '.spec.replaces="grafana-operator.$(OLD_VERSION)"' bundle/manifests/grafana-operator.clusterserviceversion.yaml
 	./hack/add-openshift-annotations.sh
 	$(OPERATOR_SDK) bundle validate ./bundle
 
