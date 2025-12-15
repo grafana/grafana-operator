@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -116,7 +115,9 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			err := r.setDefaultGrafanaVersion(ctx, cr)
 			if err != nil {
 				meta.RemoveStatusCondition(&cr.Status.Conditions, conditionTypeGrafanaReady)
-				return ctrl.Result{}, fmt.Errorf("patching grafana version in spec: %w", err)
+				log.Error(err, "patching grafana version in spec")
+
+				return ctrl.Result{}, err
 			}
 		}
 	}
@@ -141,8 +142,9 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 			metrics.GrafanaFailedReconciles.WithLabelValues(cr.Namespace, cr.Name, string(stage)).Inc()
 			meta.RemoveStatusCondition(&cr.Status.Conditions, conditionTypeGrafanaReady)
+			log.Error(err, "reconciler error in stage '%s': %w", "stage", stage, "stageStatus", stageStatus)
 
-			return ctrl.Result{}, fmt.Errorf("reconciler error in stage '%s': %w", stage, err)
+			return ctrl.Result{}, err
 		}
 	}
 
