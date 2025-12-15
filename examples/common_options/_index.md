@@ -8,17 +8,26 @@ weight: 20
 Grafana doesn't have any webhooks or similar ways of notifying the operator that a Grafana resource, like a dashboard, has changed.
 Due to this the Grafana operator constantly polls the Grafana API to test for changes and overwrite the resources, reconciling towards the desired state.
 
-We describe this loop as a synchronizing resources with Grafana instances.
+We describe this loop as reconciling the manifest (Custom Resource/CR) and synchronizing with Grafana instances.
 
 To control how often this polling should occur, you can set the `spec.resyncPeriod` field.
-This field tells the operator how often it should poll the Grafana instance for changes for the specific resource.
+This tells the operator how often it should reconcile and synchronize the CR.
 
-If a dashboard has changed, the operator will overwrite and synchronize the dashboard after `10m` by default.
+By default, the operator will reconcile with an interval of `10m`.
+The default is configurable through the `--default-resync-period=10m` cli option and applies when `.spec.resyncPeriod` is omitted.
 
-This can of course be annoying for developers actively updating a resource. The recommended workflow is to duplicate the dashboard/alert/other and work on the copy.
-When finished, export the changes and update the resource manifest to update the original.
+The `resyncPeriod` is applied on **successful** synchronizations.
 
-This can be disabled by setting a the value to `0m`
+When an error is encountered during a synchronization, like a request timeout, the operator repeatedly retries the full synchronization with an exponential backoff.
+
+The first retry is immediate, the second retry is delayed by a second and so on.
+
+#### Disable Resync
+
+Periodic synchronization can of course be annoying for developers actively working in Grafana. The recommended workflow is to duplicate the dashboard/alert/other and work on the copy.
+When finished, export the changes and update the manifest and let the operator synchronize the original.
+
+Alternatively, resync can be disabled by setting `.spec.resyncPeriod=0m` or by suspending reconciliation entirely with `.spec.suspend=true`(Read more below)
 
 ```yaml
 apiVersion: grafana.integreatly.org/v1beta1
@@ -32,12 +41,6 @@ spec:
       dashboards: "grafana"
   url: "https://grafana.com/api/dashboards/7651/revisions/44/download"
 ```
-
-The `resyncPeriod` is applied on successful synchronizations.
-
-When an error is encountered during a synchronization, like a request timeout, the operator repeatedly retries the full synchronization with an exponential backoff.
-
-The first retry is immediate, the second retry is delayed by a second and so on.
 
 {{% alert title="Warning" color="warning" %}}
 Even after setting `resyncPeriod` to `0m`, the operator will still sync the resource whenever it changes or the operator is restarted
