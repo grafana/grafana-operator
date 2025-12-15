@@ -30,7 +30,7 @@ resource "helm_release" "grafana_kubernetes_operator" {
   repository = "oci://ghcr.io/grafana/helm-charts"
   chart      = "grafana-operator"
   verify     = false
-  version    = "{{ template "chart.appVersion" . }}"
+  version    = "{{ template "chart.version" . }}"
 }
 ```
 
