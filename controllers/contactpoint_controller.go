@@ -49,6 +49,8 @@ const (
 	conditionContactPointSynchronized  = "ContactPointSynchronized"
 	conditionReasonInvalidSettings     = "InvalidSettings"
 	conditionReasonInvalidContactPoint = "InvalidContactPoint"
+
+	ErrMsgInvalidContactPoint = "invalid Contact Point spec"
 )
 
 var ErrMissingContactPointReceiver = fmt.Errorf("at least one receiver is needed to create a contact point")
@@ -128,16 +130,18 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 	if err != nil {
 		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidContactPoint, err.Error())
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionContactPointSynchronized)
+		log.Error(err, ErrMsgInvalidContactPoint)
 
-		return ctrl.Result{}, fmt.Errorf("validating contactpoint spec: %w", err)
+		return ctrl.Result{}, err
 	}
 
 	// At least one Receiver defined
 	if len(cr.Spec.Receivers) == 0 {
 		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidContactPoint, ErrMissingContactPointReceiver.Error())
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionContactPointSynchronized)
+		log.Error(ErrMissingContactPointReceiver, ErrMsgInvalidContactPoint)
 
-		return ctrl.Result{}, fmt.Errorf("validating contactpoint spec: %w", ErrMissingContactPointReceiver)
+		return ctrl.Result{}, ErrMissingContactPointReceiver
 	}
 
 	// All valuesFrom entries resolve correctly
@@ -145,8 +149,9 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 	if err != nil {
 		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidSettings, err.Error())
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionContactPointSynchronized)
+		log.Error(err, "building contactpoint settings")
 
-		return ctrl.Result{}, fmt.Errorf("building contactpoint settings: %w", err)
+		return ctrl.Result{}, err
 	}
 
 	removeInvalidSpec(&cr.Status.Conditions)
