@@ -124,7 +124,9 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 	}
 
 	if folderUID == "" {
-		log.Error(err, "folder uid not found, AlertRuleGroup must include a folder reference (folderUID/folderRef)")
+		err = fmt.Errorf("AlertRuleGroup must include a folder reference (folderUID/folderRef)")
+		log.Error(err, "folder uid not found")
+
 		return ctrl.Result{}, err
 	}
 
@@ -139,8 +141,9 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 	if err != nil {
 		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidDuration, err.Error())
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionAlertGroupSynchronized)
+		log.Error(err, "failed to convert GrafanaAlertRuleGroup to Grafana model")
 
-		return ctrl.Result{}, fmt.Errorf("converting alert rule group to model: %w", err)
+		return ctrl.Result{}, err
 	}
 
 	removeInvalidSpec(&cr.Status.Conditions)
