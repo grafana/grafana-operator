@@ -42,7 +42,10 @@ import (
 	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 )
 
-var ErrLoopDetected = errors.New("loop detected")
+var (
+	ErrLoopDetected                  = errors.New("loop detected")
+	ErrConflictRouteSelectorAndRoute = errors.New("routeSelector is mutually exclusive with routes")
+)
 
 const (
 	conditionNotificationPolicySynchronized = "NotificationPolicySynchronized"
@@ -107,8 +110,9 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 	if !cr.Spec.Route.IsRouteSelectorMutuallyExclusive() {
 		setInvalidSpecMutuallyExclusive(&cr.Status.Conditions, cr.Generation)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionNotificationPolicySynchronized)
+		log.Error(ErrConflictRouteSelectorAndRoute, "invalid route spec discovered")
 
-		return ctrl.Result{}, fmt.Errorf("invalid route spec discovered: routeSelector is mutually exclusive with routes")
+		return ctrl.Result{}, ErrConflictRouteSelectorAndRoute
 	}
 
 	removeInvalidSpec(&cr.Status.Conditions)
@@ -126,13 +130,16 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 				Message:            fmt.Sprintf("Loop detected in notification policy routes: %s", err.Error()),
 			})
 			meta.RemoveStatusCondition(&cr.Status.Conditions, conditionNotificationPolicySynchronized)
+			log.Error(err, "failed to assemble notification policy routes")
 
-			return ctrl.Result{}, fmt.Errorf("failed to assemble notification policy routes: %w", err)
+			return ctrl.Result{}, err
 		}
 
 		if err != nil {
 			r.Recorder.Event(cr, corev1.EventTypeWarning, "AssemblyFailed", fmt.Sprintf("Failed to assemble GrafanaNotificationPolicy using routeSelectors: %v", err))
-			return ctrl.Result{}, fmt.Errorf("failed to assemble GrafanaNotificationPolicy using routeSelectors: %w", err)
+			log.Error(err, "failed to assemble GrafanaNotificationPolicy using routeSelectors")
+
+			return ctrl.Result{}, err
 		}
 	}
 
