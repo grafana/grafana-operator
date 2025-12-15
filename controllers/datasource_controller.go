@@ -129,9 +129,10 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	ctx = logf.IntoContext(ctx, log)
 
 	if cr.IsUpdatedUID() {
-		log.Info("datasource uid got updated, deleting datasources with the old uid")
+		log.Info("datasource uid got updated, deleting datasources with the old uid", "uid", cr.Status.UID)
 
 		if err = r.deleteOldDatasource(ctx, cr); err != nil {
+			log.Error(err, "failed to delete datasource with the old uid", "uid", cr.Status.UID)
 			return ctrl.Result{}, err
 		}
 
@@ -146,8 +147,9 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	if err != nil {
 		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidModel, err.Error())
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDatasourceSynchronized)
+		log.Error(err, "building datasource model")
 
-		return ctrl.Result{}, fmt.Errorf("building datasource model: %w", err)
+		return ctrl.Result{}, err
 	}
 
 	removeInvalidSpec(&cr.Status.Conditions)
