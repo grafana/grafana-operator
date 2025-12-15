@@ -42,3 +42,6 @@ kubeconfig
 hack/
 
 __debug_bin*
+
+bundle/
+bundle.Dockerfile

@@ -5,8 +5,6 @@ metadata:
     alm-examples: '[]'
     capabilities: Basic Install
     categories: Monitoring
-    containerImage: ghcr.io/grafana/grafana-operator:v5.6.0
-    createdAt: "2023-12-11T09:21:22Z"
     description: Deploys and manages Grafana instances, dashboards and data sources
     repository: https://github.com/grafana/grafana-operator
     support: Grafana Labs
@@ -93,11 +91,4 @@ spec:
   provider:
     name: Grafana Labs
     url: https://grafana.com
-  replaces: grafana-operator.v5.6.0
-  skips:
-  - grafana-operator.v5.6.1
-  - grafana-operator.v5.6.2
-  - grafana-operator.v5.6.3
-  - grafana-operator.v5.7.0
-  - grafana-operator.v5.8.0
   version: 0.0.0

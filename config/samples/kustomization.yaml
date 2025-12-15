@@ -11,4 +11,5 @@ resources:
 - grafana_v1beta1_grafananotificationpolicyroute.yaml
 - grafana_v1beta1_grafanalibrarypanel.yaml
 - grafana_v1beta1_grafanamutetiming.yaml
+- grafana_v1beta1_grafanaserviceaccount.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

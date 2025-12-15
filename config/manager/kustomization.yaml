@@ -15,4 +15,4 @@ configMapGenerator:
 images:
 - name: controller
   newName: ghcr.io/grafana/grafana-operator
-  newTag: v5.8.1
+  newTag: v5.20.0
