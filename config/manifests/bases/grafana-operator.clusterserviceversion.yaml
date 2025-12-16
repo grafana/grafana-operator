@@ -14,35 +14,32 @@ spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
-    - description: GrafanaNotificationPolicy is the Schema for the GrafanaNotificationPolicy
-        API
+    - description: Notification Policy Tree
       displayName: Grafana Notification policy
       kind: GrafanaNotificationPolicy
       name: grafananotificationpolicies.grafana.integreatly.org
       version: v1beta1
-    - description: GrafanaAlertRuleGroup is the Schema for the grafanaalertrulegroups
-        API
+    - description: Alert rule groups that contain multiple alert rules
       displayName: Grafana Alert Rule Group
       kind: GrafanaAlertRuleGroup
       name: grafanaalertrulegroups.grafana.integreatly.org
       version: v1beta1
-    - description: GrafanaContactPoint is the Schema for the grafanacontactpoints
-        API
+    - description: Contact Points
       displayName: Grafana Contact Point
       kind: GrafanaContactPoint
       name: grafanacontactpoints.grafana.integreatly.org
       version: v1beta1
-    - description: GrafanaDashboard is the Schema for the grafanadashboards API
+    - description: Dashboards
       displayName: Grafana Dashboard
       kind: GrafanaDashboard
       name: grafanadashboards.grafana.integreatly.org
       version: v1beta1
-    - description: GrafanaDatasource is the Schema for the grafanadatasources API
+    - description: Data Sources
       displayName: Grafana Datasource
       kind: GrafanaDatasource
       name: grafanadatasources.grafana.integreatly.org
       version: v1beta1
-    - description: GrafanaFolder is the Schema for the grafanafolders API
+    - description: Folder for dashboards & alerts
       displayName: Grafana Folder
       kind: GrafanaFolder
       name: grafanafolders.grafana.integreatly.org
@@ -53,11 +50,29 @@ spec:
       kind: GrafanaNotificationPolicyRoute
       name: grafananotificationpolicyroutes.grafana.integreatly.org
       version: v1beta1
-    - description: Grafana is the Schema for the grafanas API
+    - description: Grafana Instances
       displayName: Grafana
       kind: Grafana
       name: grafanas.grafana.integreatly.org
       version: v1beta1
+    - description: Library Panel for use in dashboards
+      displayName: GrafanaLibraryPanel
+      kind: GrafanaLibraryPanel
+      name: grafanalibrarypanels.grafana.integreatly.org
+      version: v1beta1
+    - description: Mute Timings that silence alerts
+      kind: GrafanaMuteTiming
+      name: grafanamutetimings.grafana.integreatly.org
+      version: v1beta1
+    - description: Grafana service accounts
+      kind: GrafanaServiceAccount
+      name: grafanaserviceaccounts.grafana.integreatly.org
+      version: v1beta1
+    - description: Templates for use in notifications
+      kind: GrafanaNotificationTemplate
+      name: grafananotificationtemplates.grafana.integreatly.org
+      version: v1beta1
+
   description: Deploys and manages Grafana instances, dashboards and data sources
   displayName: Grafana Operator
   icon:

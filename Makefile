@@ -258,9 +258,10 @@ bundle: $(KUSTOMIZE) $(OPERATOR_SDK) $(CRANE) manifests ## Generate bundle manif
 	$(info $(M) running $@)
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS)
-	$(YQ) -i '.spec.replaces="grafana-operator.$(OLD_VERSION)"' bundle/manifests/grafana-operator.clusterserviceversion.yaml
+	$(YQ) -i '.metadata.annotations.containerImage=.spec.install.spec.deployments[0].spec.template.spec.containers[0].image' bundle/manifests/grafana-operator.clusterserviceversion.yaml
+	$(YQ) -i '.spec.replaces="grafana-operator.v$(OLD_VERSION)"' bundle/manifests/grafana-operator.clusterserviceversion.yaml
 	./hack/add-openshift-annotations.sh
-	$(OPERATOR_SDK) bundle validate ./bundle
+	$(OPERATOR_SDK) bundle validate ./bundle --select-optional suite=operatorframework
 
 .PHONY: bundle/redhat
 bundle/redhat: BUNDLE_GEN_FLAGS += --use-image-digests
