@@ -35,9 +35,7 @@ jobs:
         shell: bash
         run: |
           # OCI standard enforces lower-case paths
-          GHCR_REPO=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           HELM_REPO=$(echo "oci://ghcr.io/${{ github.repository_owner }}/helm-charts" | tr '[:upper:]' '[:lower:]')
-          echo "GHCR_REPO=$GHCR_REPO" >> $GITHUB_ENV
           echo "HELM_REPO=$HELM_REPO" >> $GITHUB_ENV
           echo "HELM_RELEASE_VERSION=${RELEASE_NAME:1}" >> $GITHUB_ENV
 
@@ -46,7 +44,6 @@ jobs:
           RELEASE_ACTOR: ${{ github.actor }}
         run: |
           cd source/deploy/helm
-          yq -i '.image.repository = "${{ env.GHCR_REPO }}"' grafana-operator/values.yaml
           helm registry login -u "${RELEASE_ACTOR}" -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
           helm package --app-version ${RELEASE_NAME} --version ${HELM_RELEASE_VERSION} grafana-operator
 
