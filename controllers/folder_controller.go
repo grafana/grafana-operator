@@ -46,6 +46,8 @@ const (
 	conditionReasonCyclicParent = "CyclicParent"
 )
 
+var ErrCyclicFolder = fmt.Errorf("cyclic folder reference")
+
 // GrafanaFolderReconciler reconciles a GrafanaFolder object
 type GrafanaFolderReconciler struct {
 	client.Client
@@ -65,18 +67,22 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			return ctrl.Result{}, nil
 		}
 
-		return ctrl.Result{}, fmt.Errorf("error getting grafana folder cr: %w", err)
+		log.Error(err, ErrMsgGettingCR)
+
+		return ctrl.Result{}, err
 	}
 
 	if cr.GetDeletionTimestamp() != nil {
 		// Check if resource needs clean up
 		if controllerutil.ContainsFinalizer(cr, grafanaFinalizer) {
 			if err := r.finalize(ctx, cr); err != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaFolder: %w", err)
+				log.Error(err, ErrMsgRunningFinalizer)
+				return ctrl.Result{}, err
 			}
 
 			if err := removeFinalizer(ctx, r.Client, cr); err != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
+				log.Error(err, ErrMsgRemoveFinalizer)
+				return ctrl.Result{}, err
 			}
 		}
 
@@ -96,37 +102,41 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonCyclicParent, "The value of parentFolderUID must not be the uid of the current folder")
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionFolderSynchronized)
 
-		return ctrl.Result{}, fmt.Errorf("cyclic folder reference")
+		log.Error(ErrCyclicFolder, "failed to validate GrafanaFolder, parentFolderUID must not reference the uid of the current folder")
+
+		return ctrl.Result{}, ErrCyclicFolder
 	}
 
 	removeInvalidSpec(&cr.Status.Conditions)
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
+		cr.Status.NoMatchingInstances = true
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionFolderSynchronized)
-		cr.Status.NoMatchingInstances = true
+		log.Error(err, ErrMsgGettingInstances)
 
-		return ctrl.Result{}, fmt.Errorf("failed fetching instances: %w", err)
+		return ctrl.Result{}, err
 	}
 
 	if len(instances) == 0 {
+		cr.Status.NoMatchingInstances = true
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionFolderSynchronized)
-		cr.Status.NoMatchingInstances = true
+		log.Error(ErrNoMatchingInstances, ErrMsgNoMatchingInstances)
 
 		return ctrl.Result{}, ErrNoMatchingInstances
 	}
 
-	removeNoMatchingInstance(&cr.Status.Conditions)
 	cr.Status.NoMatchingInstances = false
+	removeNoMatchingInstance(&cr.Status.Conditions)
+	log.V(1).Info(DbgMsgFoundMatchingInstances, "count", len(instances))
 
 	parentFolderUID, err := getFolderUID(ctx, r.Client, cr)
 	if err != nil {
-		return ctrl.Result{}, fmt.Errorf(ErrFetchingFolder, err)
+		log.Error(err, ErrMsgResolvingFolderUID)
+		return ctrl.Result{}, err
 	}
-
-	log.Info("found matching Grafana instances for folder", "count", len(instances))
 
 	applyErrors := make(map[string]string)
 
@@ -141,7 +151,10 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
 	if len(applyErrors) > 0 {
-		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
+		err = fmt.Errorf(ErrFmtApplyErrors, applyErrors)
+		log.Error(err, ErrMsgApplyErrors)
+
+		return ctrl.Result{}, err
 	}
 
 	cr.Status.Hash = cr.Hash()
@@ -157,7 +170,7 @@ func (r *GrafanaFolderReconciler) finalize(ctx context.Context, cr *v1beta1.Graf
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
-		return fmt.Errorf("fetching instances: %w", err)
+		return fmt.Errorf("%s: %w", ErrMsgGettingInstances, err)
 	}
 
 	refTrue := ptr.To(true)

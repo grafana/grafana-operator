@@ -72,18 +72,22 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			return ctrl.Result{}, nil
 		}
 
-		return ctrl.Result{}, fmt.Errorf("getting grafana dashboard cr: %w", err)
+		log.Error(err, ErrMsgGettingCR)
+
+		return ctrl.Result{}, err
 	}
 
 	if cr.GetDeletionTimestamp() != nil {
 		// Check if resource needs clean up
 		if controllerutil.ContainsFinalizer(cr, grafanaFinalizer) {
 			if err := r.finalize(ctx, cr); err != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaDatasource: %w", err)
+				log.Error(err, ErrMsgRunningFinalizer)
+				return ctrl.Result{}, err
 			}
 
 			if err := removeFinalizer(ctx, r.Client, cr); err != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
+				log.Error(err, ErrMsgRemoveFinalizer)
+				return ctrl.Result{}, err
 			}
 		}
 
@@ -108,33 +112,35 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		// fetch content errors could be a temporary network issue but would result in an InvalidSpec condition
 		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidModelResolution, err.Error())
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
+		log.Error(err, "resolving dashboard contents")
 
-		return ctrl.Result{}, fmt.Errorf("resolving dashboard contents: %w", err)
+		return ctrl.Result{}, err
 	}
 
 	removeInvalidSpec(&cr.Status.Conditions)
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
+		cr.Status.NoMatchingInstances = true
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
-		cr.Status.NoMatchingInstances = true
+		log.Error(err, ErrMsgGettingInstances)
 
-		return ctrl.Result{}, fmt.Errorf("failed fetching instances: %w", err)
+		return ctrl.Result{}, err
 	}
 
 	if len(instances) == 0 {
+		cr.Status.NoMatchingInstances = true
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
-		cr.Status.NoMatchingInstances = true
+		log.Error(ErrNoMatchingInstances, ErrMsgNoMatchingInstances)
 
 		return ctrl.Result{}, ErrNoMatchingInstances
 	}
 
-	removeNoMatchingInstance(&cr.Status.Conditions)
 	cr.Status.NoMatchingInstances = false
-
-	log.Info("found matching Grafana instances for dashboard", "count", len(instances))
+	removeNoMatchingInstance(&cr.Status.Conditions)
+	log.V(1).Info(DbgMsgFoundMatchingInstances, "count", len(instances))
 
 	uid := fmt.Sprintf("%s", dashboardModel["uid"])
 	log = log.WithValues("uid", uid)
@@ -157,7 +163,8 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	folderUID, err := getFolderUID(ctx, r.Client, cr)
 	if err != nil {
-		return ctrl.Result{}, fmt.Errorf(ErrFetchingFolder, err)
+		log.Error(err, ErrMsgResolvingFolderUID)
+		return ctrl.Result{}, err
 	}
 
 	applyHomeErrors := make(map[string]string)
@@ -205,7 +212,10 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
 	if len(allApplyErrors) > 0 {
-		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", allApplyErrors)
+		err = fmt.Errorf(ErrFmtApplyErrors, allApplyErrors)
+		log.Error(err, ErrMsgApplyErrors)
+
+		return ctrl.Result{}, err
 	}
 
 	cr.Status.Hash = hash
@@ -222,7 +232,7 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
-		return fmt.Errorf("fetching instances: %w", err)
+		return fmt.Errorf("%s: %w", ErrMsgGettingInstances, err)
 	}
 
 	for _, grafana := range instances {

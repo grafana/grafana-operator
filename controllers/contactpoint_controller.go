@@ -49,6 +49,8 @@ const (
 	conditionContactPointSynchronized  = "ContactPointSynchronized"
 	conditionReasonInvalidSettings     = "InvalidSettings"
 	conditionReasonInvalidContactPoint = "InvalidContactPoint"
+
+	ErrMsgInvalidContactPoint = "invalid Contact Point spec"
 )
 
 var ErrMissingContactPointReceiver = fmt.Errorf("at least one receiver is needed to create a contact point")
@@ -72,18 +74,22 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 			return ctrl.Result{}, nil
 		}
 
-		return ctrl.Result{}, fmt.Errorf("error getting grafana Contact point cr: %w", err)
+		log.Error(err, ErrMsgGettingCR)
+
+		return ctrl.Result{}, err
 	}
 
 	if cr.GetDeletionTimestamp() != nil {
 		// Check if resource needs clean up
 		if controllerutil.ContainsFinalizer(cr, grafanaFinalizer) {
 			if err := r.finalize(ctx, cr); err != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaContactPoint: %w", err)
+				log.Error(err, ErrMsgRunningFinalizer)
+				return ctrl.Result{}, err
 			}
 
 			if err := removeFinalizer(ctx, r.Client, cr); err != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
+				log.Error(err, ErrMsgRemoveFinalizer)
+				return ctrl.Result{}, err
 			}
 		}
 
@@ -103,35 +109,39 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 	if err != nil {
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionContactPointSynchronized)
+		log.Error(err, ErrMsgGettingInstances)
 
-		return ctrl.Result{}, fmt.Errorf("failed fetching instances: %w", err)
+		return ctrl.Result{}, err
 	}
 
 	if len(instances) == 0 {
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionContactPointSynchronized)
+		log.Error(ErrNoMatchingInstances, ErrMsgNoMatchingInstances)
 
 		return ctrl.Result{}, ErrNoMatchingInstances
 	}
 
 	removeNoMatchingInstance(&cr.Status.Conditions)
-	log.Info("found matching Grafana instances for Contact point", "count", len(instances))
+	log.V(1).Info(DbgMsgFoundMatchingInstances, "count", len(instances))
 
 	// Fallback to top level receiver if valid
 	err = r.TopLevelReceiverFallback(cr)
 	if err != nil {
 		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidContactPoint, err.Error())
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionContactPointSynchronized)
+		log.Error(err, ErrMsgInvalidContactPoint)
 
-		return ctrl.Result{}, fmt.Errorf("validating contactpoint spec: %w", err)
+		return ctrl.Result{}, err
 	}
 
 	// At least one Receiver defined
 	if len(cr.Spec.Receivers) == 0 {
 		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidContactPoint, ErrMissingContactPointReceiver.Error())
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionContactPointSynchronized)
+		log.Error(ErrMissingContactPointReceiver, ErrMsgInvalidContactPoint)
 
-		return ctrl.Result{}, fmt.Errorf("validating contactpoint spec: %w", ErrMissingContactPointReceiver)
+		return ctrl.Result{}, ErrMissingContactPointReceiver
 	}
 
 	// All valuesFrom entries resolve correctly
@@ -139,8 +149,9 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 	if err != nil {
 		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidSettings, err.Error())
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionContactPointSynchronized)
+		log.Error(err, "building contactpoint settings")
 
-		return ctrl.Result{}, fmt.Errorf("building contactpoint settings: %w", err)
+		return ctrl.Result{}, err
 	}
 
 	removeInvalidSpec(&cr.Status.Conditions)
@@ -158,7 +169,10 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 	meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
 	if len(applyErrors) > 0 {
-		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
+		err = fmt.Errorf(ErrFmtApplyErrors, applyErrors)
+		log.Error(err, ErrMsgApplyErrors)
+
+		return ctrl.Result{}, err
 	}
 
 	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(cr.Spec.ResyncPeriod)}, nil
@@ -323,7 +337,7 @@ func (r *GrafanaContactPointReconciler) finalize(ctx context.Context, cr *v1beta
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
-		return fmt.Errorf("fetching instances: %w", err)
+		return fmt.Errorf("%s: %w", ErrMsgGettingInstances, err)
 	}
 
 	for _, instance := range instances {

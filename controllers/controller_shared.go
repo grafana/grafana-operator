@@ -55,8 +55,18 @@ const (
 )
 
 var (
-	ErrNoMatchingInstances = fmt.Errorf("no matching instances")
-	ErrFetchingFolder      = "fetching folder to resolve uid: %w"
+	ErrNoMatchingInstances    = fmt.Errorf("no matching instances")
+	ErrMsgNoMatchingInstances = "instanceSelector found no matching Grafana instances"
+	ErrMsgGettingCR           = "failed to get CR from API Server"
+	ErrMsgGettingInstances    = "failed to get Grafana instances"
+	ErrMsgResolvingFolderUID  = "fetching GrafanaFolder to resolve uid"
+	ErrMsgRunningFinalizer    = "failed to finalize CR"
+	ErrMsgRemoveFinalizer     = "failed to remove finalizer"
+	ErrMsgApplyErrors         = "failed to sync CR to all Grafana instances"
+
+	ErrFmtApplyErrors = "%v"
+
+	DbgMsgFoundMatchingInstances = "found matching Grafana instances"
 )
 
 type GrafanaCommonReconciler interface {
@@ -556,7 +566,7 @@ func UpdateStatus(ctx context.Context, cl client.Client, cr statusResource) {
 
 	if meta.IsStatusConditionTrue(cr.CommonStatus().Conditions, conditionNoMatchingInstance) {
 		if err := removeFinalizer(ctx, cl, cr); err != nil {
-			log.Error(err, "failed to remove finalizer")
+			log.Error(err, ErrMsgRemoveFinalizer)
 		}
 	} else {
 		if err := addFinalizer(ctx, cl, cr); err != nil {

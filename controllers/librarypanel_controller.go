@@ -69,18 +69,22 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 			return ctrl.Result{}, nil
 		}
 
-		return ctrl.Result{}, fmt.Errorf("failed to get GrafanaLibraryPanel: %w", err)
+		log.Error(err, ErrMsgGettingCR)
+
+		return ctrl.Result{}, err
 	}
 
 	if cr.GetDeletionTimestamp() != nil {
 		// Check if resource needs clean up
 		if controllerutil.ContainsFinalizer(cr, grafanaFinalizer) {
 			if err := r.finalize(ctx, cr); err != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaLibraryPanel: %w", err)
+				log.Error(err, ErrMsgRunningFinalizer)
+				return ctrl.Result{}, err
 			}
 
 			if err := removeFinalizer(ctx, r.Client, cr); err != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
+				log.Error(err, ErrMsgRemoveFinalizer)
+				return ctrl.Result{}, err
 			}
 		}
 
@@ -107,8 +111,9 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 	if err != nil {
 		setInvalidSpec(&cr.Status.Conditions, cr.Generation, "InvalidModelResolution", err.Error())
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionLibraryPanelSynchronized)
+		log.Error(err, "error resolving library panel contents")
 
-		return ctrl.Result{}, fmt.Errorf("error resolving library panel contents: %w", err)
+		return ctrl.Result{}, err
 	}
 
 	contentUID := fmt.Sprintf("%s", contentModel["uid"])
@@ -118,6 +123,7 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 	if content.IsUpdatedUID(cr, contentUID) {
 		setInvalidSpec(&cr.Status.Conditions, cr.Generation, "InvalidModel", errLibraryPanelContentUIDImmutable.Error())
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionLibraryPanelSynchronized)
+		log.Error(errLibraryPanelContentUIDImmutable, "invalid Library Panel spec")
 
 		return ctrl.Result{}, errLibraryPanelContentUIDImmutable
 	}
@@ -130,23 +136,26 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 	if err != nil {
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionLibraryPanelSynchronized)
+		log.Error(err, ErrMsgGettingInstances)
 
-		return ctrl.Result{}, fmt.Errorf("could not find matching instances: %w", err)
+		return ctrl.Result{}, err
 	}
 
 	if len(instances) == 0 {
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionLibraryPanelSynchronized)
+		log.Error(ErrNoMatchingInstances, ErrMsgNoMatchingInstances)
 
 		return ctrl.Result{}, ErrNoMatchingInstances
 	}
 
 	removeNoMatchingInstance(&cr.Status.Conditions)
-	log.Info("found matching Grafana instances for library panel", "count", len(instances))
+	log.V(1).Info(DbgMsgFoundMatchingInstances, "count", len(instances))
 
 	folderUID, err := getFolderUID(ctx, r.Client, cr)
 	if err != nil {
-		return ctrl.Result{}, fmt.Errorf(ErrFetchingFolder, err)
+		log.Error(err, ErrMsgResolvingFolderUID)
+		return ctrl.Result{}, err
 	}
 
 	applyErrors := make(map[string]string)
@@ -162,7 +171,10 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 	meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
 	if len(applyErrors) > 0 {
-		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
+		err = fmt.Errorf(ErrFmtApplyErrors, applyErrors)
+		log.Error(err, ErrMsgApplyErrors)
+
+		return ctrl.Result{}, err
 	}
 
 	cr.Status.Hash = hash
@@ -239,7 +251,7 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, cr *v1beta
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
-		return fmt.Errorf("fetching instances: %w", err)
+		return fmt.Errorf("%s: %w", ErrMsgGettingInstances, err)
 	}
 
 	for _, grafana := range instances {
