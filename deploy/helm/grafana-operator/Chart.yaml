@@ -12,8 +12,8 @@ description: Helm chart for the Grafana Operator
 type: application
 # We keep the version and appVersion in sync as most updates also include
 # changes to the CRDs which are bundled with the helm resources
-version: 5.21.1
-appVersion: "v5.21.1"
+version: 5.21.2
+appVersion: "v5.21.2"
 dependencies:
   - name: crds
     version: "0.0.*"
