@@ -16,7 +16,7 @@ The suggested new features are:
 
 ## Info
 
-status: Decided <!-- TODO: update when validated by maintainers -->
+status: Implemented
 
 ## Motivation
 

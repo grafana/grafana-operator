@@ -11,7 +11,7 @@ This proposal outlines a new custom resource called `GrafanaServiceAccount` that
 
 ## Info
 
-Status: Suggested
+status: Implemented
 
 ## Motivation
 

@@ -11,7 +11,7 @@ This document contains the complete design required to support configuring Alert
 
 ## Info
 
-status: Decided
+status: Implemented
 
 
 ## Motivation

@@ -18,7 +18,7 @@ The suggested new feature is:
 
 ## Info
 
-status: Decided
+status: Implemented
 
 ## Motivation
 

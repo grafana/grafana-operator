@@ -15,7 +15,7 @@ The suggested new features are:
 
 ## Info
 
-status: Suggested
+status: Implemented
 
 ## Motivation
 
