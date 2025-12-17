@@ -78,6 +78,13 @@ rules:
   - apiGroups:
       - grafana.integreatly.org
     resources:
+      - '*/finalizers'
+    verbs:
+      - patch
+      - update
+  - apiGroups:
+      - grafana.integreatly.org
+    resources:
       - '*/status'
     verbs:
       - get

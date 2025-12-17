@@ -29,6 +29,7 @@ import (
 
 // +kubebuilder:rbac:groups=grafana.integreatly.org,resources=*,verbs=get;list;watch;patch
 // +kubebuilder:rbac:groups=grafana.integreatly.org,resources=*/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=grafana.integreatly.org,resources=*/finalizers,verbs=update;patch
 
 const (
 	// Synchronization size and timeout values
