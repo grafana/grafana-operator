@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/resources"
 	routev1 "github.com/openshift/api/route/v1"
 	networkingv1 "k8s.io/api/networking/v1"
-	kuberr "k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -93,7 +93,7 @@ func (r *IngressReconciler) deleteIngressIfNil(ctx context.Context, cr *v1beta1.
 
 	err := r.client.Get(ctx, req.NamespacedName, ingress)
 	if err != nil {
-		if kuberr.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			return nil
 		}
 
@@ -119,7 +119,7 @@ func (r *IngressReconciler) deleteHTTPRouteIfNil(ctx context.Context, cr *v1beta
 
 	err := r.client.Get(ctx, req.NamespacedName, route)
 	if err != nil {
-		if kuberr.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			return nil
 		}
 
@@ -194,7 +194,7 @@ func (r *IngressReconciler) deleteRouteIfNil(ctx context.Context, cr *v1beta1.Gr
 
 	err := r.client.Get(ctx, req.NamespacedName, route)
 	if err != nil {
-		if kuberr.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			return nil
 		}
 

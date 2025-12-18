@@ -9,7 +9,7 @@ import (
 	routev1 "github.com/openshift/api/route/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	kuberr "k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/kubernetes/scheme"
 
 	networkingv1 "k8s.io/api/networking/v1"
@@ -142,7 +142,7 @@ var _ = Describe("Ingress Reconciler", func() {
 				Namespace: "default",
 			}, route)
 
-			assert.True(t, kuberr.IsNotFound(err))
+			assert.True(t, apierrors.IsNotFound(err))
 		})
 	})
 
@@ -230,7 +230,7 @@ var _ = Describe("Ingress Reconciler", func() {
 				Namespace: "default",
 			}, ingress)
 
-			assert.True(t, kuberr.IsNotFound(err))
+			assert.True(t, apierrors.IsNotFound(err))
 		})
 
 		It("creates HTTPRoute when .spec.httpRoute is defined", func() {
@@ -311,7 +311,7 @@ var _ = Describe("Ingress Reconciler", func() {
 				Namespace: "default",
 			}, route)
 
-			assert.True(t, kuberr.IsNotFound(err))
+			assert.True(t, apierrors.IsNotFound(err))
 		})
 	})
 })
