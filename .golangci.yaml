@@ -11,6 +11,7 @@ linters:
     - importas
     - makezero
     - misspell
+    - modernize
     - nakedret
     - nestif
     - nilerr
@@ -81,6 +82,10 @@ linters:
 
     misspell:
       locale: US
+
+    modernize:
+      disable:
+        - omitzero
 
     nakedret:
       max-func-lines: 30
