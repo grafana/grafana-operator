@@ -49,7 +49,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 	corev1 "k8s.io/api/core/v1"
-	kuberr "k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -100,7 +100,7 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 
 	err := r.Get(ctx, req.NamespacedName, cr)
 	if err != nil {
-		if kuberr.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
 
@@ -115,7 +115,7 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 		}
 
 		err = removeFinalizer(ctx, r.Client, cr)
-		if err != nil && !kuberr.IsNotFound(err) {
+		if err != nil && !apierrors.IsNotFound(err) {
 			return ctrl.Result{}, fmt.Errorf("removing finalizer: %w", err)
 		}
 
@@ -194,7 +194,7 @@ func (r *GrafanaServiceAccountReconciler) finalize(ctx context.Context, cr *v1be
 	// Get the Grafana CR for deletion
 	grafana, err := r.lookupGrafana(ctx, cr)
 	if err != nil {
-		if kuberr.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			return nil
 		}
 
@@ -256,7 +256,7 @@ func (r *GrafanaServiceAccountReconciler) lookupGrafana(
 		Name:      cr.Spec.InstanceName,
 	}, &grafana)
 	if err != nil {
-		if kuberr.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			return nil, nil
 		}
 
@@ -600,7 +600,7 @@ func (r *GrafanaServiceAccountReconciler) pruneAndIndexSecrets(
 		logf.FromContext(ctx).Info("Deleting invalid or orphaned secret", "name", secret.Name, "namespace", secret.Namespace)
 
 		err := r.Delete(ctx, &secret)
-		if err != nil && !kuberr.IsNotFound(err) {
+		if err != nil && !apierrors.IsNotFound(err) {
 			return nil, fmt.Errorf("deleting invalid or orphaned secret %q: %w", secret.Name, err)
 		}
 	}
@@ -706,7 +706,7 @@ func (r *GrafanaServiceAccountReconciler) removeAccountToken(
 		}}
 
 		err := r.Delete(ctx, secret)
-		if err != nil && !kuberr.IsNotFound(err) {
+		if err != nil && !apierrors.IsNotFound(err) {
 			return fmt.Errorf("deleting token secret %q: %w", secret.Name, err)
 		}
 

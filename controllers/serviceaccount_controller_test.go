@@ -29,7 +29,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
-	kuberr "k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -391,7 +391,7 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 			Namespace: originalStatus.Account.Tokens[0].Secret.Namespace,
 		}, &originalSecret)
 		require.Error(t, err)
-		require.True(t, kuberr.IsNotFound(err))
+		require.True(t, apierrors.IsNotFound(err))
 
 		updatedStatus := cr.Status.DeepCopy()
 		require.NotEqual(t, originalStatus.Account.Tokens[0].Secret.Name, updatedStatus.Account.Tokens[0].Secret.Name)
