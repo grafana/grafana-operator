@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
@@ -39,13 +40,12 @@ func newNotificationPolicy(name string, editable *bool) *GrafanaNotificationPoli
 					},
 				},
 			},
-			Route: &Route{
-				Continue:            false,
-				Receiver:            "grafana-default-email",
-				GroupBy:             []string{"group_name", "alert_name"},
-				MuteTimeIntervals:   []string{},
-				ActiveTimeIntervals: []string{},
-				Routes:              []*Route{},
+			Route: &TopLevelRoute{
+				PartialRoute: PartialRoute{
+					Receiver: "grafana-default-email",
+					GroupBy:  []string{"group_name", "alert_name"},
+					Routes:   []*Route{},
+				},
 			},
 		},
 	}
@@ -95,29 +95,89 @@ var _ = Describe("NotificationPolicy type", func() {
 			require.Error(t, err)
 		})
 	})
+
+	Context("Invalidate root routes when using invalid fields", func() {
+		ctx := context.Background()
+		invalidFieldErr := "is invalid on the top level route node"
+
+		It("Invalidate continue", func() {
+			np := newNotificationPolicy("invalid-route-fields", nil)
+			np.Spec.Route.Continue = true
+
+			err := k8sClient.Create(ctx, np)
+			require.Error(t, err)
+			assert.ErrorContains(t, err, invalidFieldErr)
+		})
+
+		It("Invalidate active_time_intervals", func() {
+			np := newNotificationPolicy("invalid-route-fields", nil)
+			np.Spec.Route.ActiveTimeIntervals = []string{"any-string"}
+
+			err := k8sClient.Create(ctx, np)
+			require.Error(t, err)
+			assert.ErrorContains(t, err, invalidFieldErr)
+		})
+
+		It("Invalidate mute_time_intervals", func() {
+			np := newNotificationPolicy("invalid-route-fields", nil)
+			np.Spec.Route.MuteTimeIntervals = []string{"any-string"}
+
+			err := k8sClient.Create(ctx, np)
+			require.Error(t, err)
+			assert.ErrorContains(t, err, invalidFieldErr)
+		})
+
+		It("Invalidate match_re", func() {
+			np := newNotificationPolicy("invalid-route-fields", nil)
+			np.Spec.Route.MatchRe = models.MatchRegexps{"match": "string"}
+
+			err := k8sClient.Create(ctx, np)
+			require.Error(t, err)
+			assert.ErrorContains(t, err, invalidFieldErr)
+		})
+
+		It("Invalidate matchers", func() {
+			np := newNotificationPolicy("invalid-route-fields", nil)
+			np.Spec.Route.Matchers = Matchers{&Matcher{}}
+			// Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: ptr.To("team"), Value: "A", IsEqual: true}},
+
+			err := k8sClient.Create(ctx, np)
+			require.Error(t, err)
+			assert.ErrorContains(t, err, invalidFieldErr)
+		})
+
+		It("Invalidate matchers", func() {
+			np := newNotificationPolicy("invalid-route-fields", nil)
+			np.Spec.Route.ObjectMatchers = models.ObjectMatchers{[]string{"any"}}
+
+			err := k8sClient.Create(ctx, np)
+			require.Error(t, err)
+			assert.ErrorContains(t, err, invalidFieldErr)
+		})
+	})
 })
 
 func TestIsRouteSelectorMutuallyExclusive(t *testing.T) {
 	tests := []struct {
 		name     string
-		route    *Route
+		route    *PartialRoute
 		expected bool
 	}{
 		{
 			name:     "Empty route",
-			route:    &Route{},
+			route:    &PartialRoute{},
 			expected: true,
 		},
 		{
 			name: "Route with only RouteSelector",
-			route: &Route{
+			route: &PartialRoute{
 				RouteSelector: &metav1.LabelSelector{},
 			},
 			expected: true,
 		},
 		{
 			name: "Route with only sub-routes",
-			route: &Route{
+			route: &PartialRoute{
 				Routes: []*Route{
 					{},
 					{},
@@ -127,7 +187,7 @@ func TestIsRouteSelectorMutuallyExclusive(t *testing.T) {
 		},
 		{
 			name: "Route with both RouteSelector and sub-routes",
-			route: &Route{
+			route: &PartialRoute{
 				RouteSelector: &metav1.LabelSelector{},
 				Routes: []*Route{
 					{},
@@ -137,14 +197,18 @@ func TestIsRouteSelectorMutuallyExclusive(t *testing.T) {
 		},
 		{
 			name: "Nested routes with mutual exclusivity",
-			route: &Route{
+			route: &PartialRoute{
 				Routes: []*Route{
 					{
-						RouteSelector: &metav1.LabelSelector{},
+						PartialRoute: PartialRoute{
+							RouteSelector: &metav1.LabelSelector{},
+						},
 					},
 					{
-						Routes: []*Route{
-							{},
+						PartialRoute: PartialRoute{
+							Routes: []*Route{
+								{},
+							},
 						},
 					},
 				},
@@ -153,12 +217,14 @@ func TestIsRouteSelectorMutuallyExclusive(t *testing.T) {
 		},
 		{
 			name: "Nested routes without mutual exclusivity",
-			route: &Route{
+			route: &PartialRoute{
 				Routes: []*Route{
 					{
-						RouteSelector: &metav1.LabelSelector{},
-						Routes: []*Route{
-							{},
+						PartialRoute: PartialRoute{
+							RouteSelector: &metav1.LabelSelector{},
+							Routes: []*Route{
+								{},
+							},
 						},
 					},
 				},

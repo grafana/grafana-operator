@@ -44,6 +44,7 @@ spec:
               of GrafanaNotificationPolicyRoute
             properties:
               active_time_intervals:
+                description: active time intervals
                 items:
                   type: string
                 type: array
@@ -104,7 +105,7 @@ spec:
                   type: array
                 type: array
               provenance:
-                description: provenance
+                description: 'Deprecated: Does nothing'
                 type: string
               receiver:
                 description: receiver

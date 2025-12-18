@@ -2755,11 +2755,14 @@ spec:
                 description: Routes for alerts to match against
                 properties:
                   active_time_intervals:
+                    description: 'Deprecated: Never worked on the top level route
+                      node'
                     items:
                       type: string
                     type: array
                   continue:
-                    description: continue
+                    description: 'Deprecated: Never worked on the top level route
+                      node'
                     type: boolean
                   group_by:
                     description: group by
@@ -2775,10 +2778,12 @@ spec:
                   match_re:
                     additionalProperties:
                       type: string
-                    description: match re
+                    description: 'Deprecated: Never worked on the top level route
+                      node'
                     type: object
                   matchers:
-                    description: matchers
+                    description: 'Deprecated: Never worked on the top level route
+                      node'
                     items:
                       properties:
                         isEqual:
@@ -2799,12 +2804,14 @@ spec:
                       type: object
                     type: array
                   mute_time_intervals:
-                    description: mute time intervals
+                    description: 'Deprecated: Never worked on the top level route
+                      node'
                     items:
                       type: string
                     type: array
                   object_matchers:
-                    description: object matchers
+                    description: 'Deprecated: Never worked on the top level route
+                      node'
                     items:
                       description: |-
                         ObjectMatcher ObjectMatcher is a matcher that can be used to filter alerts.
@@ -2815,7 +2822,7 @@ spec:
                       type: array
                     type: array
                   provenance:
-                    description: provenance
+                    description: 'Deprecated: Does nothing'
                     type: string
                   receiver:
                     description: receiver
@@ -2878,6 +2885,20 @@ spec:
                 required:
                 - receiver
                 type: object
+                x-kubernetes-validations:
+                - message: continue is invalid on the top level route node
+                  rule: '!has(self.continue)'
+                - message: match_re is invalid on the top level route node
+                  rule: '!has(self.match_re)'
+                - message: matchers is invalid on the top level route node
+                  rule: '!has(self.matchers)'
+                - message: object_matchers is invalid on the top level route node
+                  rule: '!has(self.object_matchers)'
+                - message: mute_time_intervals is invalid on the top level route node
+                  rule: '!has(self.mute_time_intervals)'
+                - message: active_time_intervals is invalid on the top level route
+                    node
+                  rule: '!has(self.active_time_intervals)'
               suspend:
                 description: Suspend pauses synchronizing attempts and tells the operator
                   to ignore changes
@@ -3018,6 +3039,7 @@ spec:
               of GrafanaNotificationPolicyRoute
             properties:
               active_time_intervals:
+                description: active time intervals
                 items:
                   type: string
                 type: array
@@ -3078,7 +3100,7 @@ spec:
                   type: array
                 type: array
               provenance:
-                description: provenance
+                description: 'Deprecated: Does nothing'
                 type: string
               receiver:
                 description: receiver

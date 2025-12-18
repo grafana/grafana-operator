@@ -5227,6 +5227,8 @@ GrafanaNotificationPolicySpec defines the desired state of GrafanaNotificationPo
         <td>object</td>
         <td>
           Routes for alerts to match against<br/>
+          <br/>
+            <i>Validations</i>:<li>!has(self.continue): continue is invalid on the top level route node</li><li>!has(self.match_re): match_re is invalid on the top level route node</li><li>!has(self.matchers): matchers is invalid on the top level route node</li><li>!has(self.object_matchers): object_matchers is invalid on the top level route node</li><li>!has(self.mute_time_intervals): mute_time_intervals is invalid on the top level route node</li><li>!has(self.active_time_intervals): active_time_intervals is invalid on the top level route node</li>
         </td>
         <td>true</td>
       </tr><tr>
@@ -5374,14 +5376,14 @@ Routes for alerts to match against
         <td><b>active_time_intervals</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          Deprecated: Never worked on the top level route node<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>continue</b></td>
         <td>boolean</td>
         <td>
-          continue<br/>
+          Deprecated: Never worked on the top level route node<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5409,35 +5411,35 @@ Routes for alerts to match against
         <td><b>match_re</b></td>
         <td>map[string]string</td>
         <td>
-          match re<br/>
+          Deprecated: Never worked on the top level route node<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#grafananotificationpolicyspecroutematchersindex">matchers</a></b></td>
         <td>[]object</td>
         <td>
-          matchers<br/>
+          Deprecated: Never worked on the top level route node<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>mute_time_intervals</b></td>
         <td>[]string</td>
         <td>
-          mute time intervals<br/>
+          Deprecated: Never worked on the top level route node<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>object_matchers</b></td>
         <td>[][]string</td>
         <td>
-          object matchers<br/>
+          Deprecated: Never worked on the top level route node<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>provenance</b></td>
         <td>string</td>
         <td>
-          provenance<br/>
+          Deprecated: Does nothing<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5797,7 +5799,7 @@ GrafanaNotificationPolicyRouteSpec defines the desired state of GrafanaNotificat
         <td><b>active_time_intervals</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          active time intervals<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5860,7 +5862,7 @@ GrafanaNotificationPolicyRouteSpec defines the desired state of GrafanaNotificat
         <td><b>provenance</b></td>
         <td>string</td>
         <td>
-          provenance<br/>
+          Deprecated: Does nothing<br/>
         </td>
         <td>false</td>
       </tr><tr>
