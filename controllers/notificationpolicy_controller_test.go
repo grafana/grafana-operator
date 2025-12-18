@@ -53,7 +53,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 			name: "Simple assembly with one level of routes",
 			notificationPolicy: &v1beta1.GrafanaNotificationPolicy{
 				Spec: v1beta1.GrafanaNotificationPolicySpec{
-					Route: &v1beta1.RootRoute{
+					Route: &v1beta1.TopLevelRoute{
 						PartialRoute: v1beta1.PartialRoute{
 							Receiver: "default-receiver",
 							RouteSelector: &metav1.LabelSelector{
@@ -82,7 +82,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 			},
 			want: &v1beta1.GrafanaNotificationPolicy{
 				Spec: v1beta1.GrafanaNotificationPolicySpec{
-					Route: &v1beta1.RootRoute{
+					Route: &v1beta1.TopLevelRoute{
 						PartialRoute: v1beta1.PartialRoute{
 							Receiver: "default-receiver",
 							Routes: []*v1beta1.Route{{
@@ -107,7 +107,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 					GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
 						AllowCrossNamespaceImport: false,
 					},
-					Route: &v1beta1.RootRoute{
+					Route: &v1beta1.TopLevelRoute{
 						PartialRoute: v1beta1.PartialRoute{
 							Receiver: "default-receiver",
 							RouteSelector: &metav1.LabelSelector{
@@ -154,7 +154,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: v1beta1.GrafanaNotificationPolicySpec{
-					Route: &v1beta1.RootRoute{
+					Route: &v1beta1.TopLevelRoute{
 						PartialRoute: v1beta1.PartialRoute{
 							Receiver: "default-receiver",
 							Routes: []*v1beta1.Route{
@@ -175,7 +175,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 			name: "Assembly with nested routes",
 			notificationPolicy: &v1beta1.GrafanaNotificationPolicy{
 				Spec: v1beta1.GrafanaNotificationPolicySpec{
-					Route: &v1beta1.RootRoute{
+					Route: &v1beta1.TopLevelRoute{
 						PartialRoute: v1beta1.PartialRoute{
 							Receiver: "default-receiver",
 							RouteSelector: &metav1.LabelSelector{
@@ -222,7 +222,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 			},
 			want: &v1beta1.GrafanaNotificationPolicy{
 				Spec: v1beta1.GrafanaNotificationPolicySpec{
-					Route: &v1beta1.RootRoute{
+					Route: &v1beta1.TopLevelRoute{
 						PartialRoute: v1beta1.PartialRoute{
 							Receiver: "default-receiver",
 							Routes: []*v1beta1.Route{
@@ -251,7 +251,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 			name: "Assembly with nested routes and multiple RouteSelectors inside Routes",
 			notificationPolicy: &v1beta1.GrafanaNotificationPolicy{
 				Spec: v1beta1.GrafanaNotificationPolicySpec{
-					Route: &v1beta1.RootRoute{
+					Route: &v1beta1.TopLevelRoute{
 						PartialRoute: v1beta1.PartialRoute{
 							Receiver: "default-receiver",
 							Routes: []*v1beta1.Route{
@@ -312,7 +312,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 			},
 			want: &v1beta1.GrafanaNotificationPolicy{
 				Spec: v1beta1.GrafanaNotificationPolicySpec{
-					Route: &v1beta1.RootRoute{
+					Route: &v1beta1.TopLevelRoute{
 						PartialRoute: v1beta1.PartialRoute{
 							Receiver: "default-receiver",
 							Routes: []*v1beta1.Route{
@@ -355,7 +355,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 			name: "Detect loop in routes",
 			notificationPolicy: &v1beta1.GrafanaNotificationPolicy{
 				Spec: v1beta1.GrafanaNotificationPolicySpec{
-					Route: &v1beta1.RootRoute{
+					Route: &v1beta1.TopLevelRoute{
 						PartialRoute: v1beta1.PartialRoute{
 							Receiver: "default-receiver",
 							RouteSelector: &metav1.LabelSelector{
@@ -445,7 +445,7 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke Conditions", func() {
 			meta: objectMetaSuspended,
 			spec: v1beta1.GrafanaNotificationPolicySpec{
 				GrafanaCommonSpec: commonSpecSuspended,
-				Route: &v1beta1.RootRoute{
+				Route: &v1beta1.TopLevelRoute{
 					PartialRoute: v1beta1.PartialRoute{Receiver: "default-receiver"},
 				},
 			},
@@ -459,7 +459,7 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke Conditions", func() {
 			meta: objectMetaNoMatchingInstances,
 			spec: v1beta1.GrafanaNotificationPolicySpec{
 				GrafanaCommonSpec: commonSpecNoMatchingInstances,
-				Route: &v1beta1.RootRoute{
+				Route: &v1beta1.TopLevelRoute{
 					PartialRoute: v1beta1.PartialRoute{Receiver: "default-receiver"},
 				},
 			},
@@ -474,7 +474,7 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke Conditions", func() {
 			meta: objectMetaApplyFailed,
 			spec: v1beta1.GrafanaNotificationPolicySpec{
 				GrafanaCommonSpec: commonSpecApplyFailed,
-				Route: &v1beta1.RootRoute{
+				Route: &v1beta1.TopLevelRoute{
 					PartialRoute: v1beta1.PartialRoute{Receiver: "default-receiver"},
 				},
 			},
@@ -489,7 +489,7 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke Conditions", func() {
 			meta: objectMetaInvalidSpec,
 			spec: v1beta1.GrafanaNotificationPolicySpec{
 				GrafanaCommonSpec: commonSpecInvalidSpec,
-				Route: &v1beta1.RootRoute{
+				Route: &v1beta1.TopLevelRoute{
 					PartialRoute: v1beta1.PartialRoute{
 						Receiver: "default-receiver",
 						Routes: []*v1beta1.Route{{
@@ -514,7 +514,7 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke Conditions", func() {
 			meta: objectMetaSynchronized,
 			spec: v1beta1.GrafanaNotificationPolicySpec{
 				GrafanaCommonSpec: commonSpecSynchronized,
-				Route: &v1beta1.RootRoute{
+				Route: &v1beta1.TopLevelRoute{
 					PartialRoute: v1beta1.PartialRoute{Receiver: "grafana-default-email"},
 				},
 			},
@@ -553,7 +553,7 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke LoopDetected Condition"
 					MatchLabels: map[string]string{"loop-detected": "test"},
 				},
 			},
-			Route: &v1beta1.RootRoute{
+			Route: &v1beta1.TopLevelRoute{
 				PartialRoute: v1beta1.PartialRoute{
 					Receiver: "grafana-default-email",
 					Routes: []*v1beta1.Route{{

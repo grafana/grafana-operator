@@ -29,7 +29,7 @@ type GrafanaNotificationPolicySpec struct {
 	GrafanaCommonSpec `json:",inline"`
 
 	// Routes for alerts to match against
-	Route *RootRoute `json:"route"`
+	Route *TopLevelRoute `json:"route"`
 
 	// Whether to enable or disable editing of the notification policy in Grafana UI
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
@@ -73,7 +73,7 @@ type PartialRoute struct {
 // +kubebuilder:validation:XValidation:rule="!has(self.object_matchers)", message="object_matchers is invalid on the top level route node"
 // +kubebuilder:validation:XValidation:rule="!has(self.mute_time_intervals)", message="mute_time_intervals is invalid on the top level route node"
 // +kubebuilder:validation:XValidation:rule="!has(self.active_time_intervals)", message="active_time_intervals is invalid on the top level route node"
-type RootRoute struct {
+type TopLevelRoute struct {
 	PartialRoute `json:",inline"`
 
 	// Deprecated: Never worked on the top level route node
@@ -168,7 +168,7 @@ func (r *Route) ToModelRoute() *models.Route {
 	return out
 }
 
-func (r *RootRoute) ToModelRoute() *models.Route {
+func (r *TopLevelRoute) ToModelRoute() *models.Route {
 	out := &models.Route{
 		GroupBy:        r.GroupBy,
 		GroupInterval:  r.GroupInterval,
