@@ -4,11 +4,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-type testHelper interface {
+type tHelper interface {
 	Helper()
 }
 
-func GetConfigMapKeySelector(t testHelper, configMapName, key string) *corev1.ConfigMapKeySelector {
+func GetConfigMapKeySelector(t tHelper, configMapName, key string) *corev1.ConfigMapKeySelector {
 	t.Helper()
 
 	v := &corev1.ConfigMapKeySelector{
@@ -21,7 +21,7 @@ func GetConfigMapKeySelector(t testHelper, configMapName, key string) *corev1.Co
 	return v
 }
 
-func GetEnvVarSecretSource(t testHelper, secretName, key string) *corev1.EnvVarSource {
+func GetEnvVarSecretSource(t tHelper, secretName, key string) *corev1.EnvVarSource {
 	t.Helper()
 
 	v := &corev1.EnvVarSource{
@@ -36,7 +36,7 @@ func GetEnvVarSecretSource(t testHelper, secretName, key string) *corev1.EnvVarS
 	return v
 }
 
-func GetSecretKeySelector(t testHelper, secretName, key string) *corev1.SecretKeySelector {
+func GetSecretKeySelector(t tHelper, secretName, key string) *corev1.SecretKeySelector {
 	t.Helper()
 
 	v := &corev1.SecretKeySelector{
