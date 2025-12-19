@@ -20,3 +20,16 @@ func GetEnvVarSecretSource(t *testing.T, secretName, key string) *corev1.EnvVarS
 
 	return v
 }
+
+func GetSecretKeySelector(t *testing.T, secretName, key string) *corev1.SecretKeySelector {
+	t.Helper()
+
+	v := &corev1.SecretKeySelector{
+		LocalObjectReference: corev1.LocalObjectReference{
+			Name: secretName,
+		},
+		Key: key,
+	}
+
+	return v
+}
