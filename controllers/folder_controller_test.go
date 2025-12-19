@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/pkg/ptr"
+	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -121,7 +122,7 @@ var _ = Describe("Folder reconciler", func() {
 			},
 		}
 		folder.r = GrafanaFolderReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
-		folder.req = requestFromMeta(folder.cr.ObjectMeta)
+		folder.req = tk8s.GetRequest(t, folder.cr)
 
 		alertRuleGroup := struct {
 			cr  *v1beta1.GrafanaAlertRuleGroup
@@ -157,7 +158,7 @@ var _ = Describe("Folder reconciler", func() {
 			},
 		}
 		alertRuleGroup.r = GrafanaAlertRuleGroupReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
-		alertRuleGroup.req = requestFromMeta(alertRuleGroup.cr.ObjectMeta)
+		alertRuleGroup.req = tk8s.GetRequest(t, alertRuleGroup.cr)
 
 		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
 		require.NoError(t, err)

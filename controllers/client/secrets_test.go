@@ -3,6 +3,7 @@ package client
 import (
 	"testing"
 
+	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
@@ -57,33 +58,18 @@ func TestGetValueFromSecretKey(t *testing.T) {
 			wantErrText: "empty secret key selector",
 		},
 		{
-			name: "non-existent secret",
-			keySelector: &corev1.SecretKeySelector{
-				LocalObjectReference: corev1.LocalObjectReference{
-					Name: "non-existent-secret",
-				},
-				Key: key,
-			},
+			name:        "non-existent secret",
+			keySelector: tk8s.GetSecretKeySelector(t, "non-existent-secret", key),
 			wantErrText: "not found",
 		},
 		{
-			name: "empty credential secret",
-			keySelector: &corev1.SecretKeySelector{
-				LocalObjectReference: corev1.LocalObjectReference{
-					Name: emptySecret.Name,
-				},
-				Key: key,
-			},
+			name:        "empty credential secret",
+			keySelector: tk8s.GetSecretKeySelector(t, emptySecret.Name, key),
 			wantErrText: "empty credential secret",
 		},
 		{
-			name: "credentials not found",
-			keySelector: &corev1.SecretKeySelector{
-				LocalObjectReference: corev1.LocalObjectReference{
-					Name: secretWithData.Name,
-				},
-				Key: "non-existent-key",
-			},
+			name:        "credentials not found",
+			keySelector: tk8s.GetSecretKeySelector(t, secretWithData.Name, "non-existent-key"),
 			wantErrText: "credentials not found in secret",
 		},
 	}
@@ -99,12 +85,7 @@ func TestGetValueFromSecretKey(t *testing.T) {
 	t.Run("correct value", func(t *testing.T) {
 		want := []byte(value)
 
-		keySelector := &corev1.SecretKeySelector{
-			LocalObjectReference: corev1.LocalObjectReference{
-				Name: secretWithData.Name,
-			},
-			Key: key,
-		}
+		keySelector := tk8s.GetSecretKeySelector(t, secretWithData.Name, key)
 
 		got, err := GetValueFromSecretKey(testCtx, client, namespace, keySelector)
 		require.NoError(t, err)

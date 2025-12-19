@@ -25,8 +25,6 @@ import (
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -83,17 +81,6 @@ var (
 		},
 	}
 )
-
-func requestFromMeta(obj metav1.ObjectMeta) ctrl.Request {
-	GinkgoHelper()
-
-	return ctrl.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      obj.Name,
-			Namespace: obj.Namespace,
-		},
-	}
-}
 
 func TestLabelsSatisfyMatchExpressions(t *testing.T) {
 	tests := []struct {

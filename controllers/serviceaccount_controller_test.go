@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/pkg/ptr"
+	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -113,7 +114,7 @@ var _ = Describe("ServiceAccount Reconciler: Provoke Conditions", func() {
 			err := k8sClient.Create(testCtx, cr)
 			require.NoError(t, err)
 
-			req := requestFromMeta(cr.ObjectMeta)
+			req := tk8s.GetRequest(t, cr)
 
 			_, err = r.Reconcile(testCtx, req)
 			if tt.wantErr == "" {
@@ -448,7 +449,7 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 })
 
 func createAndReconcileCR(t FullGinkgoTInterface, cr *v1beta1.GrafanaServiceAccount) *GrafanaServiceAccountReconciler {
-	req := requestFromMeta(cr.ObjectMeta)
+	req := tk8s.GetRequest(t, cr)
 
 	r := &GrafanaServiceAccountReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
 
@@ -470,7 +471,7 @@ func createAndReconcileCR(t FullGinkgoTInterface, cr *v1beta1.GrafanaServiceAcco
 }
 
 func reconcileAndCompareSpecWithStatus(t FullGinkgoTInterface, cr *v1beta1.GrafanaServiceAccount, r *GrafanaServiceAccountReconciler, gClient *genapi.GrafanaHTTPAPI) {
-	req := requestFromMeta(cr.ObjectMeta)
+	req := tk8s.GetRequest(t, cr)
 
 	// Reconcile and fetch new object
 	_, err := r.Reconcile(testCtx, req)
@@ -530,7 +531,7 @@ func reconcileAndCompareSpecWithStatus(t FullGinkgoTInterface, cr *v1beta1.Grafa
 }
 
 func deleteCR(t FullGinkgoTInterface, cr *v1beta1.GrafanaServiceAccount, r *GrafanaServiceAccountReconciler) {
-	req := requestFromMeta(cr.ObjectMeta)
+	req := tk8s.GetRequest(t, cr)
 
 	err := k8sClient.Delete(testCtx, cr)
 	require.NoError(t, err)
@@ -577,7 +578,7 @@ var _ = Describe("ServiceAccount Controller: Integration Tests", func() {
 				Scheme: k8sClient.Scheme(),
 			}
 
-			req := requestFromMeta(sa.ObjectMeta)
+			req := tk8s.GetRequest(t, sa)
 			_, err = r.Reconcile(ctx, req)
 			require.NoError(t, err)
 

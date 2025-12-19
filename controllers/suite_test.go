@@ -36,6 +36,8 @@ import (
 	"github.com/docker/go-connections/nat"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/config"
+	"github.com/grafana/grafana-operator/v5/pkg/ptr"
+	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -131,7 +133,6 @@ func createSharedTestCRs() {
 
 	By("Creating Grafana CRs. One Fake and one External")
 
-	intP := 1
 	dummy := &v1beta1.Grafana{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
@@ -143,7 +144,7 @@ func createSharedTestCRs() {
 			},
 		},
 		Spec: v1beta1.GrafanaSpec{
-			Client: &v1beta1.GrafanaClient{TimeoutSeconds: &intP},
+			Client: &v1beta1.GrafanaClient{TimeoutSeconds: ptr.To(1)},
 		},
 	}
 
@@ -171,7 +172,7 @@ func createSharedTestCRs() {
 					"admin_password": config.DefaultAdminPassword,
 				},
 			},
-			Client: &v1beta1.GrafanaClient{TimeoutSeconds: &intP},
+			Client: &v1beta1.GrafanaClient{TimeoutSeconds: ptr.To(1)},
 		},
 	}
 
@@ -198,7 +199,7 @@ func createSharedTestCRs() {
 		Scheme:      k8sClient.Scheme(),
 		IsOpenShift: false,
 	}
-	reg := requestFromMeta(external.ObjectMeta)
+	reg := tk8s.GetRequest(t, external)
 	_, err = r.Reconcile(testCtx, reg)
 	require.NoError(t, err)
 
@@ -230,7 +231,7 @@ func createSharedTestCRs() {
 
 	By("Reconciling 'synchronized' folder")
 
-	req := requestFromMeta(appliedFolder.ObjectMeta)
+	req := tk8s.GetRequest(t, appliedFolder)
 	fr := GrafanaFolderReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
 	_, err = fr.Reconcile(testCtx, req)
 	require.NoError(t, err)
@@ -256,7 +257,7 @@ func reconcileAndValidateCondition(r GrafanaCommonReconciler, cr v1beta1.CommonR
 	err := k8sClient.Create(testCtx, cr)
 	require.NoError(t, err)
 
-	req := requestFromMeta(cr.Metadata())
+	req := tk8s.GetRequest(t, cr)
 
 	_, err = r.Reconcile(testCtx, req)
 	if wantErr == "" {

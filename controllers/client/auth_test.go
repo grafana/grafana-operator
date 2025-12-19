@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/config"
 	"github.com/grafana/grafana-operator/v5/controllers/resources"
+	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
@@ -55,18 +56,8 @@ func TestGetExternalAdminCredentials(t *testing.T) {
 				name: "User and Password from Secret",
 				spec: v1beta1.GrafanaSpec{
 					External: &v1beta1.External{
-						AdminUser: &corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "grafana-credentials",
-							},
-							Key: "user",
-						},
-						AdminPassword: &corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "grafana-credentials",
-							},
-							Key: "pass",
-						},
+						AdminUser:     tk8s.GetSecretKeySelector(t, "grafana-credentials", "user"),
+						AdminPassword: tk8s.GetSecretKeySelector(t, "grafana-credentials", "pass"),
 					},
 				},
 				wantAdminUser: "root",
@@ -76,12 +67,7 @@ func TestGetExternalAdminCredentials(t *testing.T) {
 				name: "User from config and Password from Secret",
 				spec: v1beta1.GrafanaSpec{
 					External: &v1beta1.External{
-						AdminPassword: &corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "grafana-credentials",
-							},
-							Key: "pass",
-						},
+						AdminPassword: tk8s.GetSecretKeySelector(t, "grafana-credentials", "pass"),
 					},
 					Config: map[string]map[string]string{
 						"security": {
@@ -240,11 +226,11 @@ func TestGetContainerEnvCredentials(t *testing.T) {
 			envs: []corev1.EnvVar{
 				{
 					Name:      config.GrafanaAdminUserEnvVar,
-					ValueFrom: getEnvVarSecretSource(t, secretName, usernameKey),
+					ValueFrom: tk8s.GetEnvVarSecretSource(t, secretName, usernameKey),
 				},
 				{
 					Name:      config.GrafanaAdminPasswordEnvVar,
-					ValueFrom: getEnvVarSecretSource(t, secretName, passwordKey),
+					ValueFrom: tk8s.GetEnvVarSecretSource(t, secretName, passwordKey),
 				},
 			},
 			want: &grafanaAdminCredentials{
@@ -258,11 +244,11 @@ func TestGetContainerEnvCredentials(t *testing.T) {
 			envs: []corev1.EnvVar{
 				{
 					Name:      config.GrafanaAdminUserEnvVar,
-					ValueFrom: getEnvVarSecretSource(t, nonExistent, usernameKey),
+					ValueFrom: tk8s.GetEnvVarSecretSource(t, nonExistent, usernameKey),
 				},
 				{
 					Name:      config.GrafanaAdminPasswordEnvVar,
-					ValueFrom: getEnvVarSecretSource(t, nonExistent, passwordKey),
+					ValueFrom: tk8s.GetEnvVarSecretSource(t, nonExistent, passwordKey),
 				},
 			},
 			want:        nil,
@@ -273,11 +259,11 @@ func TestGetContainerEnvCredentials(t *testing.T) {
 			envs: []corev1.EnvVar{
 				{
 					Name:      config.GrafanaAdminUserEnvVar,
-					ValueFrom: getEnvVarSecretSource(t, secretName, nonExistent),
+					ValueFrom: tk8s.GetEnvVarSecretSource(t, secretName, nonExistent),
 				},
 				{
 					Name:      config.GrafanaAdminPasswordEnvVar,
-					ValueFrom: getEnvVarSecretSource(t, secretName, passwordKey),
+					ValueFrom: tk8s.GetEnvVarSecretSource(t, secretName, passwordKey),
 				},
 			},
 			want:        nil,
@@ -288,11 +274,11 @@ func TestGetContainerEnvCredentials(t *testing.T) {
 			envs: []corev1.EnvVar{
 				{
 					Name:      config.GrafanaAdminUserEnvVar,
-					ValueFrom: getEnvVarSecretSource(t, secretName, usernameKey),
+					ValueFrom: tk8s.GetEnvVarSecretSource(t, secretName, usernameKey),
 				},
 				{
 					Name:      config.GrafanaAdminPasswordEnvVar,
-					ValueFrom: getEnvVarSecretSource(t, secretName, nonExistent),
+					ValueFrom: tk8s.GetEnvVarSecretSource(t, secretName, nonExistent),
 				},
 			},
 			want:        nil,
@@ -331,21 +317,6 @@ func TestGetContainerEnvCredentials(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
-}
-
-func getEnvVarSecretSource(t *testing.T, secretName, key string) *corev1.EnvVarSource {
-	t.Helper()
-
-	v := &corev1.EnvVarSource{
-		SecretKeyRef: &corev1.SecretKeySelector{
-			LocalObjectReference: corev1.LocalObjectReference{
-				Name: secretName,
-			},
-			Key: key,
-		},
-	}
-
-	return v
 }
 
 func createAndCleanupResources(t *testing.T, ctx context.Context, c client.WithWatch, objects []client.Object) {
@@ -394,12 +365,7 @@ func TestGetAdminCredentials(t *testing.T) {
 			{
 				name: "apiKey is preferred",
 				external: &v1beta1.External{
-					APIKey: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: "grafana-credentials",
-						},
-						Key: "token",
-					},
+					APIKey: tk8s.GetSecretKeySelector(t, "grafana-credentials", "token"),
 				},
 				want: &grafanaAdminCredentials{
 					adminUser:     "",
