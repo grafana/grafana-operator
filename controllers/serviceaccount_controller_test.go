@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"strings"
 	"time"
 
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
@@ -98,8 +97,6 @@ var _ = Describe("ServiceAccount Reconciler: Provoke Conditions", func() {
 		},
 	}
 
-	t := GinkgoT()
-
 	for _, tt := range tests {
 		It(tt.name, func() {
 			cr := &v1beta1.GrafanaServiceAccount{
@@ -111,32 +108,7 @@ var _ = Describe("ServiceAccount Reconciler: Provoke Conditions", func() {
 
 			r := &GrafanaServiceAccountReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
 
-			err := k8sClient.Create(testCtx, cr)
-			require.NoError(t, err)
-
-			req := tk8s.GetRequest(t, cr)
-
-			_, err = r.Reconcile(testCtx, req)
-			if tt.wantErr == "" {
-				require.NoError(t, err)
-			} else {
-				require.ErrorContains(t, err, tt.wantErr)
-			}
-
-			err = r.Get(testCtx, req.NamespacedName, cr)
-			require.NoError(t, err)
-
-			containsEqualCondition(cr.CommonStatus().Conditions, tt.want)
-
-			err = k8sClient.Delete(testCtx, cr)
-			require.NoError(t, err)
-
-			_, err = r.Reconcile(testCtx, req)
-			if err != nil && strings.Contains(err.Error(), "dummy-deployment") {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-			}
+			reconcileAndValidateCondition(r, cr, tt.want, tt.wantErr)
 		})
 	}
 })
