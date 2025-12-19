@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,6 +14,8 @@ import (
 )
 
 var _ = Describe("ContactPoint Reconciler: Provoke Conditions", func() {
+	t := GinkgoT()
+
 	tests := []struct {
 		name    string
 		meta    metav1.ObjectMeta
@@ -70,12 +73,9 @@ var _ = Describe("ContactPoint Reconciler: Provoke Conditions", func() {
 				Type:              "email",
 				ValuesFrom: []v1beta1.ValueFrom{{
 					TargetPath: "addresses",
-					ValueFrom: v1beta1.ValueFromSource{SecretKeyRef: &corev1.SecretKeySelector{
-						Key: "contact-mails",
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: "alert-mails",
-						},
-					}},
+					ValueFrom: v1beta1.ValueFromSource{
+						SecretKeyRef: tk8s.GetSecretKeySelector(t, "alert-mails", "contact-mails"),
+					},
 				}},
 			},
 			want: metav1.Condition{
@@ -187,6 +187,8 @@ var _ = Describe("ContactPoint Reconciler: Provoke Conditions", func() {
 })
 
 var _ = Describe("ContactPoint valuesFrom configurations", Ordered, func() {
+	t := GinkgoT()
+
 	sc := corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
@@ -217,12 +219,9 @@ var _ = Describe("ContactPoint valuesFrom configurations", Ordered, func() {
 				Type:              "email",
 				ValuesFrom: []v1beta1.ValueFrom{{
 					TargetPath: "addresses",
-					ValueFrom: v1beta1.ValueFromSource{SecretKeyRef: &corev1.SecretKeySelector{
-						Key: "contact-mails",
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: "nil",
-						},
-					}},
+					ValueFrom: v1beta1.ValueFromSource{
+						SecretKeyRef: tk8s.GetSecretKeySelector(t, "nil", "contact-mails"),
+					},
 				}},
 				Receivers: []v1beta1.ContactPointReceiver{
 					{
@@ -230,12 +229,9 @@ var _ = Describe("ContactPoint valuesFrom configurations", Ordered, func() {
 						Type:     "email",
 						ValuesFrom: []v1beta1.ValueFrom{{
 							TargetPath: "addresses",
-							ValueFrom: v1beta1.ValueFromSource{SecretKeyRef: &corev1.SecretKeySelector{
-								Key: "contact-mails",
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "nil",
-								},
-							}},
+							ValueFrom: v1beta1.ValueFromSource{
+								SecretKeyRef: tk8s.GetSecretKeySelector(t, "nil", "contact-mails"),
+							},
 						}},
 					},
 					{
@@ -243,12 +239,9 @@ var _ = Describe("ContactPoint valuesFrom configurations", Ordered, func() {
 						Type:     "email",
 						ValuesFrom: []v1beta1.ValueFrom{{
 							TargetPath: "addresses",
-							ValueFrom: v1beta1.ValueFromSource{SecretKeyRef: &corev1.SecretKeySelector{
-								Key: "contact-mails",
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "nil",
-								},
-							}},
+							ValueFrom: v1beta1.ValueFromSource{
+								SecretKeyRef: tk8s.GetSecretKeySelector(t, "nil", "contact-mails"),
+							},
 						}},
 					},
 				},
@@ -271,12 +264,9 @@ var _ = Describe("ContactPoint valuesFrom configurations", Ordered, func() {
 				Type:              "email",
 				ValuesFrom: []v1beta1.ValueFrom{{
 					TargetPath: "addresses",
-					ValueFrom: v1beta1.ValueFromSource{SecretKeyRef: &corev1.SecretKeySelector{
-						Key: "one",
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: sc.Name,
-						},
-					}},
+					ValueFrom: v1beta1.ValueFromSource{
+						SecretKeyRef: tk8s.GetSecretKeySelector(t, sc.Name, "one"),
+					},
 				}},
 				Receivers: []v1beta1.ContactPointReceiver{
 					{
@@ -284,12 +274,9 @@ var _ = Describe("ContactPoint valuesFrom configurations", Ordered, func() {
 						Type:     "email",
 						ValuesFrom: []v1beta1.ValueFrom{{
 							TargetPath: "addresses",
-							ValueFrom: v1beta1.ValueFromSource{SecretKeyRef: &corev1.SecretKeySelector{
-								Key: "one",
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: sc.Name,
-								},
-							}},
+							ValueFrom: v1beta1.ValueFromSource{
+								SecretKeyRef: tk8s.GetSecretKeySelector(t, sc.Name, "one"),
+							},
 						}},
 					},
 					{
@@ -297,12 +284,9 @@ var _ = Describe("ContactPoint valuesFrom configurations", Ordered, func() {
 						Type:     "email",
 						ValuesFrom: []v1beta1.ValueFrom{{
 							TargetPath: "addresses",
-							ValueFrom: v1beta1.ValueFromSource{SecretKeyRef: &corev1.SecretKeySelector{
-								Key: "two",
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: sc.Name,
-								},
-							}},
+							ValueFrom: v1beta1.ValueFromSource{
+								SecretKeyRef: tk8s.GetSecretKeySelector(t, sc.Name, "two"),
+							},
 						}},
 					},
 				},
@@ -350,22 +334,12 @@ func TestContactPointIndexing(t *testing.T) {
 				ValuesFrom: []v1beta1.ValueFrom{
 					{
 						ValueFrom: v1beta1.ValueFromSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "secret1",
-								},
-								Key: "key1",
-							},
+							SecretKeyRef: tk8s.GetSecretKeySelector(t, "secret1", "key1"),
 						},
 					},
 					{
 						ValueFrom: v1beta1.ValueFromSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "secret2",
-								},
-								Key: "key2",
-							},
+							SecretKeyRef: tk8s.GetSecretKeySelector(t, "secret2", "key2"),
 						},
 					},
 					{
@@ -399,12 +373,7 @@ func TestContactPointIndexing(t *testing.T) {
 				ValuesFrom: []v1beta1.ValueFrom{
 					{
 						ValueFrom: v1beta1.ValueFromSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "secret1",
-								},
-								Key: "key1",
-							},
+							SecretKeyRef: tk8s.GetSecretKeySelector(t, "secret1", "key1"),
 						},
 					},
 					{
@@ -476,12 +445,7 @@ func TestContactPointIndexing(t *testing.T) {
 				ValuesFrom: []v1beta1.ValueFrom{
 					{
 						ValueFrom: v1beta1.ValueFromSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "secret1",
-								},
-								Key: "key1",
-							},
+							SecretKeyRef: tk8s.GetSecretKeySelector(t, "secret1", "key1"),
 						},
 					},
 				},

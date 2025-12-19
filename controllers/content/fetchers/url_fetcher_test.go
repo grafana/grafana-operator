@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/content/cache"
+	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 
 	. "github.com/onsi/ginkgo/v2"
 )
@@ -24,6 +25,8 @@ const (
 
 func getCredentials(secretName string) (*corev1.Secret, *v1beta1.GrafanaContentURLAuthorization) {
 	GinkgoHelper()
+
+	t := GinkgoT()
 
 	const (
 		usernameKey = "USERNAME"
@@ -43,20 +46,8 @@ func getCredentials(secretName string) (*corev1.Secret, *v1beta1.GrafanaContentU
 
 	urlAuthorization := &v1beta1.GrafanaContentURLAuthorization{
 		BasicAuth: &v1beta1.GrafanaContentURLBasicAuth{
-			Username: &corev1.SecretKeySelector{
-				LocalObjectReference: corev1.LocalObjectReference{
-					Name: secretName,
-				},
-				Key:      usernameKey,
-				Optional: nil,
-			},
-			Password: &corev1.SecretKeySelector{
-				LocalObjectReference: corev1.LocalObjectReference{
-					Name: secretName,
-				},
-				Key:      passwordKey,
-				Optional: nil,
-			},
+			Username: tk8s.GetSecretKeySelector(t, secretName, usernameKey),
+			Password: tk8s.GetSecretKeySelector(t, secretName, passwordKey),
 		},
 	}
 

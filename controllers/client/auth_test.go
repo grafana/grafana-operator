@@ -56,18 +56,8 @@ func TestGetExternalAdminCredentials(t *testing.T) {
 				name: "User and Password from Secret",
 				spec: v1beta1.GrafanaSpec{
 					External: &v1beta1.External{
-						AdminUser: &corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "grafana-credentials",
-							},
-							Key: "user",
-						},
-						AdminPassword: &corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "grafana-credentials",
-							},
-							Key: "pass",
-						},
+						AdminUser:     tk8s.GetSecretKeySelector(t, "grafana-credentials", "user"),
+						AdminPassword: tk8s.GetSecretKeySelector(t, "grafana-credentials", "pass"),
 					},
 				},
 				wantAdminUser: "root",
@@ -77,12 +67,7 @@ func TestGetExternalAdminCredentials(t *testing.T) {
 				name: "User from config and Password from Secret",
 				spec: v1beta1.GrafanaSpec{
 					External: &v1beta1.External{
-						AdminPassword: &corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "grafana-credentials",
-							},
-							Key: "pass",
-						},
+						AdminPassword: tk8s.GetSecretKeySelector(t, "grafana-credentials", "pass"),
 					},
 					Config: map[string]map[string]string{
 						"security": {
@@ -380,12 +365,7 @@ func TestGetAdminCredentials(t *testing.T) {
 			{
 				name: "apiKey is preferred",
 				external: &v1beta1.External{
-					APIKey: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: "grafana-credentials",
-						},
-						Key: "token",
-					},
+					APIKey: tk8s.GetSecretKeySelector(t, "grafana-credentials", "token"),
 				},
 				want: &grafanaAdminCredentials{
 					adminUser:     "",
