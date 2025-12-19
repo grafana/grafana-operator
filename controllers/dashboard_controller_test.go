@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
+	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -191,7 +192,7 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 		}
 
 		r := &GrafanaDashboardReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
-		req := requestFromMeta(cr.Metadata())
+		req := tk8s.GetRequest(t, cr)
 
 		// First revision
 		cr.Spec.URL = ts.URL + endpoint1
@@ -256,7 +257,7 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 		cr.Spec.ResyncPeriod.Duration = 5 * time.Minute
 
 		r := &GrafanaDashboardReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
-		req := requestFromMeta(cr.Metadata())
+		req := tk8s.GetRequest(t, cr)
 
 		// Create dashboard
 		cr.Spec.URL = ts.URL + endpoint1

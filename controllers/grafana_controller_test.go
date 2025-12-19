@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	v1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -83,7 +84,7 @@ var _ = Describe("Grafana Reconciler: Provoke Conditions", func() {
 			require.NoError(t, err)
 
 			r := GrafanaReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
-			req := requestFromMeta(tt.meta)
+			req := tk8s.GetRequest(t, cr)
 
 			_, err = r.Reconcile(testCtx, req)
 			require.NoError(t, err)

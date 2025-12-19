@@ -251,7 +251,7 @@ var _ = Describe("Datasource: substitute reference values", func() {
 		require.NoError(t, err)
 
 		r := GrafanaDatasourceReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
-		req := requestFromMeta(ds.ObjectMeta)
+		req := tk8s.GetRequest(t, ds)
 
 		_, err = r.Reconcile(testCtx, req)
 		require.NoError(t, err)
