@@ -97,7 +97,7 @@ Tests will require an update to Grafana 10 or 11.
 
 ## Decision Outcome
 
-We will implement this proposal by combining both options, simmilar to the way we handle this topic in alert rule groups. Both `parentFolderUID` and `parentFolderRef` will be available (mutually exclusivity validated by the CR spec).
+We will implement this proposal by combining both options, similar to the way we handle this topic in alert rule groups. Both `parentFolderUID` and `parentFolderRef` will be available (mutually exclusivity validated by the CR spec).
 
 ## Related discussions
 

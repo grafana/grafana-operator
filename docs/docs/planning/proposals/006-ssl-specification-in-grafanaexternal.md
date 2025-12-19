@@ -63,7 +63,7 @@ However, because this functionality touch to the Grafana client, we need to be s
 
 ## Decision Outcome
 
-We're going to implement CA verification simmilar to [the way flux does it](https://fluxcd.io/flux/components/source/helmrepositories/#cert-secret-reference) to keep in line with the rest of the Kubernetes ecosystem
+We're going to implement CA verification similar to [the way flux does it](https://fluxcd.io/flux/components/source/helmrepositories/#cert-secret-reference) to keep in line with the rest of the Kubernetes ecosystem
 
 ## Related discussions
 

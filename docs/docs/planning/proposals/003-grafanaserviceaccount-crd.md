@@ -21,7 +21,7 @@ We want to cover the following use cases:
 
 * As an administrator of a Grafana instance, I want to create a service account for it
 * As a developer requiring a Grafana service account, I want to create a service account on demand per application
-* As a security concious SRE, I want to ensure nobody can compromise a Grafana instance through the Grafana operator
+* As a security conscious SRE, I want to ensure nobody can compromise a Grafana instance through the Grafana operator
 
 
 ## Verification
@@ -62,10 +62,10 @@ spec:
 
 ```
 
-Since reconciling lists is a complex operation to implement, both the permissions & tokens lists are seen as authoritive.
+Since reconciling lists is a complex operation to implement, both the permissions & tokens lists are seen as authoritative.
 This means that, if defined, these lists are the full set of specified values and any customizations made through the Grafana UI are replaced/removed on reconciliation.
 
-Service accounts reference an instance by resource name directly to ensure correct targeting and avoid accidentially creating accounts on instances which should not be targeted.
+Service accounts reference an instance by resource name directly to ensure correct targeting and avoid accidentally creating accounts on instances which should not be targeted.
 For now, service accounts can only exist in the same namespace as the Grafana resource as a security precaution.
 
 
@@ -82,9 +82,9 @@ As service accounts are a sensitive topic when it comes to security and auditing
 
 Pointed out by @nissessenap in [the original proposal discussions](https://github.com/grafana/grafana-operator/pull/1413#issuecomment-1962404070), users need a way to restrict who can create service accounts for a specific Grafana instance.
 
-By having a dedicated resource, the permission to create service accounts can be granted through standard kuberentes RBAC on a namespace level.
+By having a dedicated resource, the permission to create service accounts can be granted through standard kubernetes RBAC on a namespace level.
 This works to ensure kubernetes users can only create Grafana service accounts when explicitly granted access to do so in a specific namespace.
-Granting cluster-wide permissions to create service accounts is not adviseable.
+Granting cluster-wide permissions to create service accounts is not advisable.
 For now, namespaces are the finest granularity on which we grant access control.
 This means, it is not possible to have multiple Grafana instances in one namespace with different access rules.
 Future implementations could support creation of service accounts through the Grafana resource itself, solving for this situation as well.

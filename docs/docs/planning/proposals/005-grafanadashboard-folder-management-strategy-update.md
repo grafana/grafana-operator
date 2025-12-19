@@ -241,7 +241,7 @@ By keeping the behaviour backwards compatible, existing CRDs will continue to be
 
 ## Decision Outcome
 
-`folderUid` and `folderRef` will be added to the `GrafanaDashboard` CRD. The behaviour is as follows:
+`folderUID` and `folderRef` will be added to the `GrafanaDashboard` CRD. The behaviour is as follows:
 
 - If no folder specification (old or new) is set -> use namespace folder
 - If `folder` is set and none of the other fields is set (backwards compat. case) -> Create the folder
