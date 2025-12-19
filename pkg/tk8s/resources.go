@@ -10,12 +10,12 @@ import (
 func GetRequest(t tHelper, obj client.Object) ctrl.Request {
 	t.Helper()
 
-	req := ctrl.Request{
+	v := ctrl.Request{
 		NamespacedName: types.NamespacedName{
 			Name:      obj.GetName(),
 			Namespace: obj.GetNamespace(),
 		},
 	}
 
-	return req
+	return v
 }
