@@ -344,12 +344,7 @@ func TestContactPointIndexing(t *testing.T) {
 					},
 					{
 						ValueFrom: v1beta1.ValueFromSource{
-							ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "configmap1",
-								},
-								Key: "key1",
-							},
+							ConfigMapKeyRef: tk8s.GetConfigMapKeySelector(t, "configmap1", "key1"),
 						},
 					},
 				},
@@ -378,22 +373,12 @@ func TestContactPointIndexing(t *testing.T) {
 					},
 					{
 						ValueFrom: v1beta1.ValueFromSource{
-							ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "configmap1",
-								},
-								Key: "key1",
-							},
+							ConfigMapKeyRef: tk8s.GetConfigMapKeySelector(t, "configmap1", "key1"),
 						},
 					},
 					{
 						ValueFrom: v1beta1.ValueFromSource{
-							ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "configmap2",
-								},
-								Key: "key2",
-							},
+							ConfigMapKeyRef: tk8s.GetConfigMapKeySelector(t, "configmap2", "key2"),
 						},
 					},
 				},
@@ -417,12 +402,7 @@ func TestContactPointIndexing(t *testing.T) {
 				ValuesFrom: []v1beta1.ValueFrom{
 					{
 						ValueFrom: v1beta1.ValueFromSource{
-							ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "configmap1",
-								},
-								Key: "key1",
-							},
+							ConfigMapKeyRef: tk8s.GetConfigMapKeySelector(t, "configmap1", "key1"),
 						},
 					},
 				},

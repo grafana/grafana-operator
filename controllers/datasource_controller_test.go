@@ -68,12 +68,7 @@ func TestDatasourceIndexing(t *testing.T) {
 					},
 					{
 						ValueFrom: v1beta1.ValueFromSource{
-							ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "configmap1",
-								},
-								Key: "key1",
-							},
+							ConfigMapKeyRef: tk8s.GetConfigMapKeySelector(t, "configmap1", "key1"),
 						},
 					},
 				},
@@ -102,22 +97,12 @@ func TestDatasourceIndexing(t *testing.T) {
 					},
 					{
 						ValueFrom: v1beta1.ValueFromSource{
-							ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "configmap1",
-								},
-								Key: "key1",
-							},
+							ConfigMapKeyRef: tk8s.GetConfigMapKeySelector(t, "configmap1", "key1"),
 						},
 					},
 					{
 						ValueFrom: v1beta1.ValueFromSource{
-							ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "configmap2",
-								},
-								Key: "key2",
-							},
+							ConfigMapKeyRef: tk8s.GetConfigMapKeySelector(t, "configmap2", "key2"),
 						},
 					},
 				},
@@ -141,12 +126,7 @@ func TestDatasourceIndexing(t *testing.T) {
 				ValuesFrom: []v1beta1.ValueFrom{
 					{
 						ValueFrom: v1beta1.ValueFromSource{
-							ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "configmap1",
-								},
-								Key: "key1",
-							},
+							ConfigMapKeyRef: tk8s.GetConfigMapKeySelector(t, "configmap1", "key1"),
 						},
 					},
 				},
@@ -236,12 +216,7 @@ var _ = Describe("Datasource: substitute reference values", func() {
 					{
 						TargetPath: "jsonData.exemplarTraceIdDestinations[1].name",
 						ValueFrom: v1beta1.ValueFromSource{
-							ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: cm.Name,
-								},
-								Key: "customTraceId",
-							},
+							ConfigMapKeyRef: tk8s.GetConfigMapKeySelector(t, cm.Name, "customTraceId"),
 						},
 					},
 				},
@@ -326,6 +301,8 @@ var _ = Describe("Datasource: substitute reference values", func() {
 })
 
 var _ = Describe("Datasource Reconciler: Provoke Conditions", func() {
+	t := GinkgoT()
+
 	tests := []struct {
 		name    string
 		meta    metav1.ObjectMeta
@@ -379,12 +356,9 @@ var _ = Describe("Datasource Reconciler: Provoke Conditions", func() {
 				Datasource:        &v1beta1.GrafanaDatasourceInternal{},
 				ValuesFrom: []v1beta1.ValueFrom{{
 					TargetPath: "secureJsonData.httpHeaderValue1",
-					ValueFrom: v1beta1.ValueFromSource{SecretKeyRef: &corev1.SecretKeySelector{
-						Key: "credentials",
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: "PROMETHEUS_TOKEN",
-						},
-					}},
+					ValueFrom: v1beta1.ValueFromSource{
+						SecretKeyRef: tk8s.GetSecretKeySelector(t, "non-existent-secret", "PROMETHEUS_TOKEN"),
+					},
 				}},
 			},
 			want: metav1.Condition{
