@@ -68,6 +68,8 @@ func GetGrafanaVersion(ctx context.Context, c client.Client, cr *v1beta1.Grafana
 		return "", err
 	}
 
+	defer resp.Body.Close()
+
 	data := struct {
 		BuildInfo struct {
 			Version string `json:"version"`
@@ -111,6 +113,8 @@ func GetAuthenticationStatus(ctx context.Context, c client.Client, cr *v1beta1.G
 	if err != nil {
 		return false, err
 	}
+
+	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		return false, fmt.Errorf("failed to authenticate with grafana, ensure connectivity and valid credentials")
