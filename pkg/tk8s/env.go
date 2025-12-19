@@ -1,12 +1,14 @@
 package tk8s
 
 import (
-	"testing"
-
 	corev1 "k8s.io/api/core/v1"
 )
 
-func GetEnvVarSecretSource(t *testing.T, secretName, key string) *corev1.EnvVarSource {
+type testHelper interface {
+	Helper()
+}
+
+func GetEnvVarSecretSource(t testHelper, secretName, key string) *corev1.EnvVarSource {
 	t.Helper()
 
 	v := &corev1.EnvVarSource{
@@ -21,7 +23,7 @@ func GetEnvVarSecretSource(t *testing.T, secretName, key string) *corev1.EnvVarS
 	return v
 }
 
-func GetSecretKeySelector(t *testing.T, secretName, key string) *corev1.SecretKeySelector {
+func GetSecretKeySelector(t testHelper, secretName, key string) *corev1.SecretKeySelector {
 	t.Helper()
 
 	v := &corev1.SecretKeySelector{
