@@ -98,7 +98,6 @@ spec:
       {{ range .Alerts.Firing }}
       {{ template "Alert Instance Template" . }}
       {{ end }}
-    |
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: NotificationPolicy
@@ -165,7 +164,6 @@ spec:
         {{ range .Alerts.Firing }}
         {{ template "Alert Instance Template" . }}
         {{ end }}
-      |
 
   notificationPolicy:
     groupBy:  ["alertname"]
