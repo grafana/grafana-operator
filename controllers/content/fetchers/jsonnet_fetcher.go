@@ -254,11 +254,16 @@ func BuildProjectAndFetchJsonnetFrom(cr v1beta1.GrafanaContentResource, envs map
 	}
 
 	jsonBytes, err := buildJsonnetProject(jsonnetProjectBuildName, envs, cr)
-	if postErr := postJsonnetProjectBuild(jsonnetProjectBuildName); postErr != nil {
-		fmt.Println("error cleaning up jsonnet project build: %w", postErr)
+	if err != nil {
+		return nil, fmt.Errorf("error building jsonnet project: %w", err)
 	}
 
-	return jsonBytes, err
+	err = postJsonnetProjectBuild(jsonnetProjectBuildName)
+	if err != nil {
+		return nil, fmt.Errorf("error cleaning up jsonnet project build: %w", err)
+	}
+
+	return jsonBytes, nil
 }
 
 // check for path traversal and correct forward slashes
