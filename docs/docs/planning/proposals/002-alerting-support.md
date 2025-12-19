@@ -56,7 +56,7 @@ are fired with a set of labels (not k8s-labels) which get matched by the policy.
 
 | Pro                                      | Contra                                                                   |
 |------------------------------------------|--------------------------------------------------------------------------|
-| Simple and straightforward to implement   | Lots of repetition to link multiple resources                            |
+| Simple and straightforward to implement  | Lots of repetition to link multiple resources                            |
 | Granular permission management for users | NotificationPolicy is a singleton object, no clean way to represent this |
 
 #### Example CRs
