@@ -194,8 +194,6 @@ func main() { //nolint:gocyclo
 	if err != nil {
 		fmt.Println(err.Error()) //nolint:forbidigo
 		os.Exit(1)
-
-		return
 	}
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
