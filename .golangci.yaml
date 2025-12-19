@@ -5,6 +5,7 @@ linters:
     - dogsled
     - errorlint
     - exhaustive
+    - forbidigo
     - goconst
     - gocritic
     - gocyclo
