@@ -342,7 +342,7 @@ func untarGzip(archivePath, extractPath string) error {
 				}
 			}
 		default:
-			fmt.Printf("Unable to untar type : %c in file %s\n", header.Typeflag, target)
+			return fmt.Errorf("unable to untar type : %c in file %s", header.Typeflag, target)
 		}
 	}
 
