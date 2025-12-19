@@ -216,7 +216,7 @@ func buildJsonnetProject(buildName string, envs map[string]string, cr v1beta1.Gr
 		jPath = append(jPath, spec.JsonnetProjectBuild.JPath...)
 	}
 
-	base64EncodedGzipJsonnetProject := []byte(spec.JsonnetProjectBuild.GzipJsonnetProject)
+	base64EncodedGzipJsonnetProject := spec.JsonnetProjectBuild.GzipJsonnetProject
 
 	gzipFileLocalPath, err := storeByteArrayGzipOnDisk(buildName, base64EncodedGzipJsonnetProject)
 	if err != nil {

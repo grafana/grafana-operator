@@ -25,6 +25,7 @@ linters:
     - usestdlibvars
     - whitespace
     - wsl_v5
+    - unconvert
 
   settings:
     dogsled:
