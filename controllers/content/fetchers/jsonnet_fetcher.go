@@ -122,22 +122,6 @@ func FetchJsonnet(cr v1beta1.GrafanaContentResource, envs map[string]string, lib
 	return []byte(jsonString), err
 }
 
-func listDirectoryContents(dirPath string) error {
-	fileInfos, err := os.ReadDir(dirPath)
-	fmt.Println("Reading directory:", dirPath, "file infos:", fileInfos)
-
-	if err != nil {
-		fmt.Println("Error reading directory:", err)
-		return err
-	}
-
-	for _, fileInfo := range fileInfos {
-		fmt.Println(fileInfo.Name())
-	}
-
-	return nil
-}
-
 func generateRandomString(length int) (string, error) {
 	randomBytes := make([]byte, length)
 
@@ -216,11 +200,10 @@ func buildJsonnetProject(buildName string, envs map[string]string, cr v1beta1.Gr
 		jPath = append(jPath, spec.JsonnetProjectBuild.JPath...)
 	}
 
-	base64EncodedGzipJsonnetProject := []byte(spec.JsonnetProjectBuild.GzipJsonnetProject)
+	base64EncodedGzipJsonnetProject := spec.JsonnetProjectBuild.GzipJsonnetProject
 
 	gzipFileLocalPath, err := storeByteArrayGzipOnDisk(buildName, base64EncodedGzipJsonnetProject)
 	if err != nil {
-		fmt.Println("Error placing gzip file on local disk:", err)
 		return nil, err
 	}
 
@@ -254,25 +237,10 @@ func postJsonnetProjectBuild(buildName string) error {
 	buildFolderPath := getDecompressedGzipArchiveFilePath(buildName)
 	buildGzipArchivePath := getGzipArchiveFilePath(buildName)
 
-	err := listDirectoryContents(config.GrafanaDashboardsRuntimeBuild)
-	if err != nil {
-		fmt.Println("Error listing directory contents:", err)
-		return err
-	}
-
 	deleteFoldersList := []string{buildFolderPath, buildGzipArchivePath}
-	fmt.Println("Delete list candidates: ", deleteFoldersList)
 
-	err = deleteFilesAndFolders(deleteFoldersList)
+	err := deleteFilesAndFolders(deleteFoldersList)
 	if err != nil {
-		return err
-	}
-
-	fmt.Println("Listing dashboards dir after deletion")
-
-	err = listDirectoryContents(config.GrafanaDashboardsRuntimeBuild)
-	if err != nil {
-		fmt.Println("Error listing directory contents:", err)
 		return err
 	}
 
@@ -286,11 +254,16 @@ func BuildProjectAndFetchJsonnetFrom(cr v1beta1.GrafanaContentResource, envs map
 	}
 
 	jsonBytes, err := buildJsonnetProject(jsonnetProjectBuildName, envs, cr)
-	if postErr := postJsonnetProjectBuild(jsonnetProjectBuildName); postErr != nil {
-		fmt.Println("error cleaning up jsonnet project build: %w", postErr)
+	if err != nil {
+		return nil, fmt.Errorf("error building jsonnet project: %w", err)
 	}
 
-	return jsonBytes, err
+	err = postJsonnetProjectBuild(jsonnetProjectBuildName)
+	if err != nil {
+		return nil, fmt.Errorf("error cleaning up jsonnet project build: %w", err)
+	}
+
+	return jsonBytes, nil
 }
 
 // check for path traversal and correct forward slashes
@@ -307,13 +280,11 @@ func validRelPath(p string) bool {
 func untarGzip(archivePath, extractPath string) error {
 	err := os.MkdirAll(extractPath, os.ModePerm)
 	if err != nil {
-		fmt.Println("Error creating directory:", err)
 		return err
 	}
 
 	src, err := os.Open(archivePath)
 	if err != nil {
-		fmt.Println("Error opening archive:", err)
 		return err
 	}
 
@@ -371,13 +342,12 @@ func untarGzip(archivePath, extractPath string) error {
 				}
 			}
 		default:
-			fmt.Printf("Unable to untar type : %c in file %s\n", header.Typeflag, target)
+			return fmt.Errorf("unable to untar type : %c in file %s", header.Typeflag, target)
 		}
 	}
 
 	err = unwrapSingleSubdirectory(extractPath)
 	if err != nil {
-		fmt.Println("Error unwrapping dir", err)
 		return err
 	}
 
@@ -404,10 +374,8 @@ func unwrapSingleSubdirectory(dirPath string) error {
 		fileCount++
 	}
 
+	// No unwrapping needed. Either no subdirectories or more than one subdirectory or there are several files in current directory.
 	if subDirCount != 1 || fileCount > 1 {
-		fmt.Println("No unwrapping needed. Either no subdirectories or more than one subdirectory or there are several files in current directory."+
-			"dirCount - ", subDirCount, " fileCount - ", fileCount)
-
 		return nil
 	}
 
@@ -415,7 +383,6 @@ func unwrapSingleSubdirectory(dirPath string) error {
 
 	err = copyDir(subDirPath, dirPath)
 	if err != nil {
-		fmt.Println("Error copying dir", err)
 		return err
 	}
 
@@ -486,8 +453,6 @@ func copyFile(src, dst string) error {
 
 func deleteFilesAndFolders(paths []string) error {
 	for _, path := range paths {
-		fmt.Println("Deleting path: ", path)
-
 		err := os.RemoveAll(path)
 		if err != nil {
 			return fmt.Errorf("error during path \"%s\" deletion, error: %w", path, err)

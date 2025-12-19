@@ -1,9 +1,11 @@
 version: "2"
 linters:
   enable:
+    - bodyclose
     - dogsled
     - errorlint
     - exhaustive
+    - forbidigo
     - goconst
     - gocritic
     - gocyclo
@@ -24,6 +26,7 @@ linters:
     - usestdlibvars
     - whitespace
     - wsl_v5
+    - unconvert
 
   settings:
     dogsled:
