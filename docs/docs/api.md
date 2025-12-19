@@ -617,7 +617,7 @@ The most recent observed state of a Grafana resource
         <td><b><a href="#grafanaalertrulegroupstatusconditionsindex">conditions</a></b></td>
         <td>[]object</td>
         <td>
-          Results when synchonizing resource with Grafana instances<br/>
+          Results when synchronizing resource with Grafana instances<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1370,7 +1370,7 @@ The most recent observed state of a Grafana resource
         <td><b><a href="#grafanacontactpointstatusconditionsindex">conditions</a></b></td>
         <td>[]object</td>
         <td>
-          Results when synchonizing resource with Grafana instances<br/>
+          Results when synchronizing resource with Grafana instances<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2448,7 +2448,7 @@ GrafanaDashboardStatus defines the observed state of GrafanaDashboard
         <td><b><a href="#grafanadashboardstatusconditionsindex">conditions</a></b></td>
         <td>[]object</td>
         <td>
-          Results when synchonizing resource with Grafana instances<br/>
+          Results when synchronizing resource with Grafana instances<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3146,7 +3146,7 @@ GrafanaDatasourceStatus defines the observed state of GrafanaDatasource
         <td><b><a href="#grafanadatasourcestatusconditionsindex">conditions</a></b></td>
         <td>[]object</td>
         <td>
-          Results when synchonizing resource with Grafana instances<br/>
+          Results when synchronizing resource with Grafana instances<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3513,7 +3513,7 @@ GrafanaFolderStatus defines the observed state of GrafanaFolder
         <td><b><a href="#grafanafolderstatusconditionsindex">conditions</a></b></td>
         <td>[]object</td>
         <td>
-          Results when synchonizing resource with Grafana instances<br/>
+          Results when synchronizing resource with Grafana instances<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -4584,7 +4584,7 @@ GrafanaLibraryPanelStatus defines the observed state of GrafanaLibraryPanel
         <td><b><a href="#grafanalibrarypanelstatusconditionsindex">conditions</a></b></td>
         <td>[]object</td>
         <td>
-          Results when synchonizing resource with Grafana instances<br/>
+          Results when synchronizing resource with Grafana instances<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5049,7 +5049,7 @@ The most recent observed state of a Grafana resource
         <td><b><a href="#grafanamutetimingstatusconditionsindex">conditions</a></b></td>
         <td>[]object</td>
         <td>
-          Results when synchonizing resource with Grafana instances<br/>
+          Results when synchronizing resource with Grafana instances<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5617,7 +5617,7 @@ GrafanaNotificationPolicyStatus defines the observed state of GrafanaNotificatio
         <td><b><a href="#grafananotificationpolicystatusconditionsindex">conditions</a></b></td>
         <td>[]object</td>
         <td>
-          Results when synchonizing resource with Grafana instances<br/>
+          Results when synchronizing resource with Grafana instances<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -6040,7 +6040,7 @@ The most recent observed state of a Grafana resource
         <td><b><a href="#grafananotificationpolicyroutestatusconditionsindex">conditions</a></b></td>
         <td>[]object</td>
         <td>
-          Results when synchonizing resource with Grafana instances<br/>
+          Results when synchronizing resource with Grafana instances<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -6365,7 +6365,7 @@ The most recent observed state of a Grafana resource
         <td><b><a href="#grafananotificationtemplatestatusconditionsindex">conditions</a></b></td>
         <td>[]object</td>
         <td>
-          Results when synchonizing resource with Grafana instances<br/>
+          Results when synchronizing resource with Grafana instances<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -27528,7 +27528,7 @@ GrafanaServiceAccountStatus defines the observed state of a GrafanaServiceAccoun
         <td><b><a href="#grafanaserviceaccountstatusconditionsindex">conditions</a></b></td>
         <td>[]object</td>
         <td>
-          Results when synchonizing resource with Grafana instances<br/>
+          Results when synchronizing resource with Grafana instances<br/>
         </td>
         <td>false</td>
       </tr><tr>
