@@ -8,6 +8,19 @@ type testHelper interface {
 	Helper()
 }
 
+func GetConfigMapKeySelector(t testHelper, configMapName, key string) *corev1.ConfigMapKeySelector {
+	t.Helper()
+
+	v := &corev1.ConfigMapKeySelector{
+		LocalObjectReference: corev1.LocalObjectReference{
+			Name: configMapName,
+		},
+		Key: key,
+	}
+
+	return v
+}
+
 func GetEnvVarSecretSource(t testHelper, secretName, key string) *corev1.EnvVarSource {
 	t.Helper()
 
