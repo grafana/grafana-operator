@@ -63,7 +63,7 @@ type CommonResource interface {
 
 // The most recent observed state of a Grafana resource
 type GrafanaCommonStatus struct {
-	// Results when synchonizing resource with Grafana instances
+	// Results when synchronizing resource with Grafana instances
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 	// Last time the resource was synchronized with Grafana instances
 	LastResync metav1.Time `json:"lastResync,omitempty"`

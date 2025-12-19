@@ -301,7 +301,7 @@ spec:
             description: The most recent observed state of a Grafana resource
             properties:
               conditions:
-                description: Results when synchonizing resource with Grafana instances
+                description: Results when synchronizing resource with Grafana instances
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -705,7 +705,7 @@ spec:
             description: The most recent observed state of a Grafana resource
             properties:
               conditions:
-                description: Results when synchonizing resource with Grafana instances
+                description: Results when synchronizing resource with Grafana instances
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -1207,7 +1207,7 @@ spec:
                   instances
                 type: boolean
               conditions:
-                description: Results when synchonizing resource with Grafana instances
+                description: Results when synchronizing resource with Grafana instances
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -1555,7 +1555,7 @@ spec:
                   instances
                 type: boolean
               conditions:
-                description: Results when synchonizing resource with Grafana instances
+                description: Results when synchronizing resource with Grafana instances
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -1796,7 +1796,7 @@ spec:
                   instances
                 type: boolean
               conditions:
-                description: Results when synchonizing resource with Grafana instances
+                description: Results when synchronizing resource with Grafana instances
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -2287,7 +2287,7 @@ spec:
             description: GrafanaLibraryPanelStatus defines the observed state of GrafanaLibraryPanel
             properties:
               conditions:
-                description: Results when synchonizing resource with Grafana instances
+                description: Results when synchronizing resource with Grafana instances
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -2563,7 +2563,7 @@ spec:
             description: The most recent observed state of a Grafana resource
             properties:
               conditions:
-                description: Results when synchonizing resource with Grafana instances
+                description: Results when synchronizing resource with Grafana instances
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -2920,7 +2920,7 @@ spec:
               of GrafanaNotificationPolicy
             properties:
               conditions:
-                description: Results when synchonizing resource with Grafana instances
+                description: Results when synchronizing resource with Grafana instances
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -3167,7 +3167,7 @@ spec:
             description: The most recent observed state of a Grafana resource
             properties:
               conditions:
-                description: Results when synchonizing resource with Grafana instances
+                description: Results when synchronizing resource with Grafana instances
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -3381,7 +3381,7 @@ spec:
             description: The most recent observed state of a Grafana resource
             properties:
               conditions:
-                description: Results when synchonizing resource with Grafana instances
+                description: Results when synchronizing resource with Grafana instances
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -12317,7 +12317,7 @@ spec:
                 - role
                 type: object
               conditions:
-                description: Results when synchonizing resource with Grafana instances
+                description: Results when synchronizing resource with Grafana instances
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.

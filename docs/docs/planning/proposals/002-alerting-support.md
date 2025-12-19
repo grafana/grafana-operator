@@ -11,7 +11,7 @@ This document contains the complete design required to support configuring Alert
 
 ## Info
 
-status: Decided
+status: Implemented
 
 
 ## Motivation
@@ -22,7 +22,7 @@ Currently this is only possible via Terraform. This feature would enable more us
 
 ## Proposal
 
-This document proposes extending the CRDs to support Alert Rules, Contact Points and Notificaton Policies.
+This document proposes extending the CRDs to support Alert Rules, Contact Points and Notification Policies.
 
 To realise this, one of several paths can be taken.
 
@@ -56,7 +56,7 @@ are fired with a set of labels (not k8s-labels) which get matched by the policy.
 
 | Pro                                      | Contra                                                                   |
 |------------------------------------------|--------------------------------------------------------------------------|
-| Simple and straighforward to implement   | Lots of repetition to link multiple resources                            |
+| Simple and straightforward to implement  | Lots of repetition to link multiple resources                            |
 | Granular permission management for users | NotificationPolicy is a singleton object, no clean way to represent this |
 
 #### Example CRs
@@ -98,7 +98,6 @@ spec:
       {{ range .Alerts.Firing }}
       {{ template "Alert Instance Template" . }}
       {{ end }}
-    |
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: NotificationPolicy
@@ -165,7 +164,6 @@ spec:
         {{ range .Alerts.Firing }}
         {{ template "Alert Instance Template" . }}
         {{ end }}
-      |
 
   notificationPolicy:
     groupBy:  ["alertname"]
@@ -212,7 +210,8 @@ Merging both approaches where appropriate is also an option. Further details nee
 
 ## Decision Outcome
 
-The maintianrs have decided to use _Option 1_ to keep Alerting separated from other resources and keep the existing APIs as simple as possible. Implementation will be tracked in upcoming PRs and issues and linked in this document.
+The maintainers have decided to use _Option 1_ to keep Alerting separated from other resources and keep the existing APIs as simple as possible. Implementation will be tracked in upcoming PRs and issues and linked in this document.
+
 ## Related discussions
 
 - [Issue 911](https://github.com/grafana/grafana-operator/issues/911)
