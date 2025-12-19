@@ -19,3 +19,14 @@ func GetRequest(t tHelper, obj client.Object) ctrl.Request {
 
 	return v
 }
+
+func GetRequestKey(t tHelper, obj client.Object) types.NamespacedName {
+	t.Helper()
+
+	v := types.NamespacedName{
+		Name:      obj.GetName(),
+		Namespace: obj.GetNamespace(),
+	}
+
+	return v
+}
