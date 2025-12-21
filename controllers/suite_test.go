@@ -19,9 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"path/filepath"
-	"slices"
 	"strings"
 	"testing"
 
@@ -237,18 +235,6 @@ func createSharedTestCRs() {
 	require.NoError(t, err)
 }
 
-func containsEqualCondition(conditions []metav1.Condition, target metav1.Condition) {
-	GinkgoHelper()
-
-	t := GinkgoT()
-
-	found := slices.ContainsFunc(conditions, func(c metav1.Condition) bool {
-		return c.Type == target.Type && c.Reason == target.Reason
-	})
-
-	assert.True(t, found)
-}
-
 func reconcileAndValidateCondition(r GrafanaCommonReconciler, cr v1beta1.CommonResource, condition metav1.Condition, wantErr string) {
 	GinkgoHelper()
 
@@ -269,7 +255,8 @@ func reconcileAndValidateCondition(r GrafanaCommonReconciler, cr v1beta1.CommonR
 	err = r.Get(testCtx, req.NamespacedName, cr)
 	require.NoError(t, err)
 
-	containsEqualCondition(cr.CommonStatus().Conditions, condition)
+	hasCondition := tk8s.HasCondition(t, cr, condition)
+	assert.True(t, hasCondition)
 
 	err = k8sClient.Delete(testCtx, cr)
 	require.NoError(t, err)
@@ -280,19 +267,4 @@ func reconcileAndValidateCondition(r GrafanaCommonReconciler, cr v1beta1.CommonR
 	} else {
 		require.NoError(t, err)
 	}
-}
-
-func getJSONmux(content map[string]string) *http.ServeMux {
-	GinkgoHelper()
-
-	mux := http.NewServeMux()
-
-	for endpoint, payload := range content {
-		mux.HandleFunc(endpoint, func(w http.ResponseWriter, req *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
-			fmt.Fprint(w, payload)
-		})
-	}
-
-	return mux
 }

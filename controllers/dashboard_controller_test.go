@@ -156,12 +156,12 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 	dash1 := fmt.Sprintf(`{ "title": "%s", "uid": "%s", "links": [] }`, title1, uid)
 	dash2 := fmt.Sprintf(`{ "title": "%s", "uid": "%s", "links": [] }`, title2, uid)
 
-	mux := getJSONmux(
-		map[string]string{
-			endpoint1: dash1,
-			endpoint2: dash2,
-		},
-	)
+	data := map[string]string{
+		endpoint1: dash1,
+		endpoint2: dash2,
+	}
+
+	mux := tk8s.GetJSONmux(t, data)
 
 	ts := httptest.NewServer(mux)
 	AfterAll(func() {

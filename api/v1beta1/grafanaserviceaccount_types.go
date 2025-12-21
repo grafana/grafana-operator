@@ -196,6 +196,10 @@ func (in *GrafanaServiceAccount) CommonStatus() *GrafanaCommonStatus {
 	return &in.Status.GrafanaCommonStatus
 }
 
+func (in *GrafanaServiceAccount) Conditions() *[]metav1.Condition {
+	return &in.Status.Conditions
+}
+
 func init() {
 	SchemeBuilder.Register(&GrafanaServiceAccount{}, &GrafanaServiceAccountList{})
 }

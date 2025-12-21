@@ -94,7 +94,8 @@ var _ = Describe("Grafana Reconciler: Provoke Conditions", func() {
 			err = r.Get(testCtx, req.NamespacedName, cr)
 			require.NoError(t, err)
 
-			containsEqualCondition(cr.Status.Conditions, tt.want)
+			hasCondition := tk8s.HasCondition(t, cr, tt.want)
+			assert.True(t, hasCondition)
 		})
 	}
 })

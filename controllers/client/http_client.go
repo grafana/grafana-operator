@@ -13,6 +13,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const GrafanaVersionEndpoint = "/frontend/settings"
+
 func NewHTTPClient(ctx context.Context, c client.Client, cr *v1beta1.Grafana) (*http.Client, error) {
 	var timeout time.Duration
 	if cr.Spec.Client != nil && cr.Spec.Client.TimeoutSeconds != nil {
@@ -51,7 +53,7 @@ func GetGrafanaVersion(ctx context.Context, c client.Client, cr *v1beta1.Grafana
 		return "", err
 	}
 
-	instanceURL := gURL.JoinPath("/frontend/settings").String()
+	instanceURL := gURL.JoinPath(GrafanaVersionEndpoint).String()
 
 	req, err := http.NewRequest(http.MethodGet, instanceURL, nil)
 	if err != nil {
@@ -76,7 +78,7 @@ func GetGrafanaVersion(ctx context.Context, c client.Client, cr *v1beta1.Grafana
 		} `json:"buildInfo"`
 	}{}
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return "", fmt.Errorf("parsing health endpoint data: %w", err)
+		return "", fmt.Errorf("parsing data from %s: %w", GrafanaVersionEndpoint, err)
 	}
 
 	if data.BuildInfo.Version == "" {

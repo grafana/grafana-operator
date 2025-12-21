@@ -111,12 +111,12 @@ var _ = Describe("LibraryPanel Reconciler", Ordered, func() {
 	panel1 := fmt.Sprintf(`{ "name": "%s", "uid": "%s", "type": "text", "model": {} }`, name1, uid)
 	panel2 := fmt.Sprintf(`{ "name": "%s", "uid": "%s", "type": "text", "model": {} }`, name2, uid)
 
-	mux := getJSONmux(
-		map[string]string{
-			endpoint1: panel1,
-			endpoint2: panel2,
-		},
-	)
+	data := map[string]string{
+		endpoint1: panel1,
+		endpoint2: panel2,
+	}
+
+	mux := tk8s.GetJSONmux(t, data)
 
 	ts := httptest.NewServer(mux)
 	AfterAll(func() {

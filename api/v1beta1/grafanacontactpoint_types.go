@@ -173,6 +173,10 @@ func (in *GrafanaContactPoint) CommonStatus() *GrafanaCommonStatus {
 	return &in.Status
 }
 
+func (in *GrafanaContactPoint) Conditions() *[]metav1.Condition {
+	return &in.Status.Conditions
+}
+
 func (in *GrafanaContactPoint) NamespacedResource() NamespacedResource {
 	return NewNamespacedResource(in.Namespace, in.Name, in.NameFromSpecOrMeta())
 }
