@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/grafana/grafana-operator/v5/controllers/autodetect"
+	"github.com/grafana/grafana-operator/v5/pkg/autodetect"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

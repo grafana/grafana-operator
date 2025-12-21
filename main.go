@@ -60,9 +60,9 @@ import (
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers"
-	"github.com/grafana/grafana-operator/v5/controllers/autodetect"
 	"github.com/grafana/grafana-operator/v5/controllers/resources"
 	"github.com/grafana/grafana-operator/v5/embeds"
+	"github.com/grafana/grafana-operator/v5/pkg/autodetect"
 	//+kubebuilder:scaffold:imports
 )
 
