@@ -99,7 +99,7 @@ Got questions or suggestions? Let us know! The quickest way to reach us is throu
 
 Feel free to drop into our Grafana Operator discussions on:
 
-[![Grafana Slack](https://img.shields.io/badge/grafana%20community%20Slack-4A254A?logo=slack&logoColor=white)](https://join.slack.com/t/grafana/shared_invite/zt-2eqidcplt-QzkxMuhZA4tGQeFQenE_MQ) [![Kubernetes Slack](https://img.shields.io/badge/kubernetes%20slack-white?logo=slack&logoColor=black)](https://kubernetes.slack.com/archives/C019A1KTYKC)
+[![Grafana Slack](https://img.shields.io/badge/grafana%20community%20Slack-4A254A?logo=slack&logoColor=white)](https://join.slack.com/t/grafana/shared_invite/zt-2eqidcplt-QzkxMuhZA4tGQeFQenE_MQ)
 
 ## Contributing
 
