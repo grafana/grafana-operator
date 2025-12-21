@@ -10,13 +10,13 @@ changelog:
         - release-note-action-required
     - title: Features
       labels:
-        - 'feature'
+        - feature
     - title: Fixes
       labels:
-        - 'bugfix'
+        - bugfix
     - title: Dependencies
       labels:
         - dependencies
     - title: Documentation
       labels:
-        - 'documentation'
+        - documentation
