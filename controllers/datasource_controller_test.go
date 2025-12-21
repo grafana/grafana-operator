@@ -268,7 +268,8 @@ var _ = Describe("Datasource: substitute reference values", func() {
 		err = r.Get(testCtx, req.NamespacedName, cr)
 		require.NoError(t, err)
 
-		containsEqualCondition(cr.Status.Conditions, condition)
+		hasCondition := tk8s.HasCondition(t, cr, condition)
+		assert.True(t, hasCondition)
 
 		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
 		require.NoError(t, err)

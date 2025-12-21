@@ -575,10 +575,12 @@ var _ = Describe("ServiceAccount Controller: Integration Tests", func() {
 			require.NoError(t, err)
 
 			// Verify that ServiceAccountSynchronized condition is set to success
-			containsEqualCondition(updatedSA.Status.Conditions, metav1.Condition{
+			condition := metav1.Condition{
 				Type:   conditionServiceAccountSynchronized,
 				Reason: conditionReasonApplySuccessful,
-			})
+			}
+			hasCondition := tk8s.HasCondition(t, updatedSA, condition)
+			require.True(t, hasCondition)
 
 			// Verify that tokens are populated in status
 			require.Equal(t, "test-token", updatedSA.Status.Account.Tokens[0].Name)
