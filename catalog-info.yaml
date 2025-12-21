@@ -12,7 +12,7 @@ metadata:
       url: https://grafanalabs.enterprise.slack.com/archives/C06K5TJ469W
     - title: "Community Slack Channel #grafana-operator"
       url: https://grafana.slack.com/archives/C0692KN29K3
-    - title: "Kubernetes Slack Channel #grafana-operator"
+    - title: "Kubernetes Slack Channel #grafana-operator (legacy)"
       url: https://kubernetes.slack.com/archives/C019A1KTYKC
   annotations:
     backstage.io/techdocs-ref: dir:.

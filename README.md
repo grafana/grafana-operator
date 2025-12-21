@@ -99,57 +99,12 @@ Got questions or suggestions? Let us know! The quickest way to reach us is throu
 
 Feel free to drop into our Grafana Operator discussions on:
 
-[![Grafana Slack](https://img.shields.io/badge/grafana%20community%20Slack-4A254A?logo=slack&logoColor=white)](https://join.slack.com/t/grafana/shared_invite/zt-2eqidcplt-QzkxMuhZA4tGQeFQenE_MQ) [![Kubernetes Slack](https://img.shields.io/badge/kubernetes%20slack-white?logo=slack&logoColor=black)](https://kubernetes.slack.com/archives/C019A1KTYKC)
+[![Grafana Slack](https://img.shields.io/badge/grafana%20community%20Slack-4A254A?logo=slack&logoColor=white)](https://join.slack.com/t/grafana/shared_invite/zt-2eqidcplt-QzkxMuhZA4tGQeFQenE_MQ)
 
 ## Contributing
 
 For more information on how to contribute to the operator look at [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## Version Support and Development Mindset
+## Star History
 
-> [!CAUTION]
-> v4 will stop receiving bug fixes and security updates as of the 22nd of December 2023.
-> We recommend you migrate to v5 if you haven't yet! Please follow our [v4 -> v5 Migration Guide](https://grafana.github.io/grafana-operator/blog/2023/05/27/v4-to-v5-migration/) to mitigate any potential future risks.
-
-V5 is the current, actively developed and maintained version of the operator, which you can find on the
-***[Master Branch](https://github.com/grafana/grafana-operator/tree/master)***.
-
-A more in-depth overview of v5 is available in the [intro blog](docs/blog/v5-intro.md)
-
-V5 is a ground-up rewrite of the operator to refocus development on:
-
-- Performance
-- Reliability
-- Maintainability
-- Extensibility
-- Testability
-- Usability
-
-The previous versions of the operator have some serious tech-debt issues, which effectively prevent community members
-that aren't massively
-familiar with the project and/or its codebase from contributing features that they wish to see.
-
-These previous versions, we're built on a "as-needed" basis, meaning that whatever was the fastest way to reach the
-desired feature, was the way
-it was implemented. This lead to situations where controllers for different resources were using massively different
-logic, and features were added
-wherever and however they could be made to work.
-
-V5 aims to re-focus the operator with a more thought out architecture and framework, that will work better,
-both for developers and users.
-With certain standards and approaches, we can provide a better user experience through:
-
-- Better designed Custom Resource Definitions (Upstream Grafana Native fields will be supported without having to
-  whitelist them in the operator logic).
-  - Upstream documentation can be followed to define the Grafana Operator Custom Resources.
-  - This also means a change in API versions for the resources, but we see this as a benefit, our previous mantra of
-      maintaining a seamless upgrade from version to version, limited us in the changes we wanted to make for a long
-      time.
-- A more streamlined Grafana resource management workflow, one that will be reflected across all controllers.
-- Using an upstream Grafana API client (standardizing our interactions with the Grafana API, moving away from bespoke
-  logic).
-- The use of a more up-to-date Operator-SDK version, making use of newer features.
-  - along with all relevant dependencies being kept up-to-date.
-- Proper testing.
-- Cleaning and cutting down on code.
-- Multi-instance and Multi-namespace support!
+[![Star History Chart](https://api.star-history.com/svg?repos=grafana/grafana-operator&type=date&legend=top-left)](https://www.star-history.com/#grafana/grafana-operator&type=date&legend=top-left)
