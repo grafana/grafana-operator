@@ -5,6 +5,9 @@ changelog:
       - refactor
       - release-ignore
   categories:
+    - title: Breaking changes
+      labels:
+        - release-note-action-required
     - title: Features
       labels:
         - 'feature'
