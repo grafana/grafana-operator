@@ -59,6 +59,7 @@ type CommonResource interface {
 	Metadata() metav1.ObjectMeta
 	AllowCrossNamespace() bool
 	CommonStatus() *GrafanaCommonStatus
+	Conditions() *[]metav1.Condition
 }
 
 // The most recent observed state of a Grafana resource

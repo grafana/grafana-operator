@@ -78,6 +78,10 @@ func (in *GrafanaNotificationTemplate) CommonStatus() *GrafanaCommonStatus {
 	return &in.Status
 }
 
+func (in *GrafanaNotificationTemplate) Conditions() *[]metav1.Condition {
+	return &in.Status.Conditions
+}
+
 //+kubebuilder:object:root=true
 
 // GrafanaNotificationTemplateList contains a list of GrafanaNotificationTemplate

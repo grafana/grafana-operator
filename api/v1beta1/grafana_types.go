@@ -327,3 +327,7 @@ func (in *Grafana) RemoveNamespacedResource(ctx context.Context, cl client.Clien
 
 	return cl.Status().Patch(ctx, in, client.RawPatch(types.JSONPatchType, patch))
 }
+
+func (in *Grafana) Conditions() *[]metav1.Condition {
+	return &in.Status.Conditions
+}
