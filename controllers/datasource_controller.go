@@ -316,12 +316,12 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 }
 
 func (r *GrafanaDatasourceReconciler) Exists(gClient *genapi.GrafanaHTTPAPI, uid, name string) (bool, string, error) {
-	datasources, err := gClient.Datasources.GetDataSources()
+	items, err := gClient.Datasources.GetDataSources()
 	if err != nil {
 		return false, "", fmt.Errorf("fetching data sources: %w", err)
 	}
 
-	for _, datasource := range datasources.Payload {
+	for _, datasource := range items.Payload {
 		if datasource.UID == uid || datasource.Name == name {
 			return true, datasource.UID, nil
 		}

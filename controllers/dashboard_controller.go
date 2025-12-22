@@ -496,15 +496,15 @@ func (r *GrafanaDashboardReconciler) GetFolderUID(
 			return false, "", err
 		}
 
-		folders := foldersResp.GetPayload()
+		items := foldersResp.GetPayload()
 
-		for _, remoteFolder := range folders {
+		for _, remoteFolder := range items {
 			if strings.EqualFold(remoteFolder.Title, title) {
 				return true, remoteFolder.UID, nil
 			}
 		}
 
-		if len(folders) < int(limit) {
+		if len(items) < int(limit) {
 			break
 		}
 
