@@ -45,12 +45,12 @@ func NewContentResolver(cr v1beta1.GrafanaContentResource, cl client.Client, opt
 }
 
 func (h *ContentResolver) Resolve(ctx context.Context) (map[string]any, string, error) {
-	json, err := h.fetchContentJSON(ctx)
+	j, err := h.fetchContentJSON(ctx)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to fetch contents: %w", err)
 	}
 
-	model, hash, err := h.getContentModel(json)
+	model, hash, err := h.getContentModel(j)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to extract model: %w", err)
 	}

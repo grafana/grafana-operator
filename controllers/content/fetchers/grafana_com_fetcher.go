@@ -19,9 +19,9 @@ import (
 const grafanaComDashboardsAPIEndpoint = "https://grafana.com/api/dashboards"
 
 func FetchFromGrafanaCom(ctx context.Context, cr v1beta1.GrafanaContentResource, cl client.Client) ([]byte, error) {
-	cache := cache.GetContentCache(cr)
-	if len(cache) > 0 {
-		return cache, nil
+	c := cache.GetContentCache(cr)
+	if len(c) > 0 {
+		return c, nil
 	}
 
 	spec := cr.GrafanaContentSpec()
