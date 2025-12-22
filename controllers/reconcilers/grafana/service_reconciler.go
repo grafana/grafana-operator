@@ -22,9 +22,9 @@ type ServiceReconciler struct {
 	clusterDomain string
 }
 
-func NewServiceReconciler(client client.Client, clusterDomain string) reconcilers.OperatorGrafanaReconciler {
+func NewServiceReconciler(cl client.Client, clusterDomain string) reconcilers.OperatorGrafanaReconciler {
 	return &ServiceReconciler{
-		client:        client,
+		client:        cl,
 		clusterDomain: clusterDomain,
 	}
 }

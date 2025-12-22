@@ -315,8 +315,8 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 	return grafana.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource())
 }
 
-func (r *GrafanaDatasourceReconciler) Exists(client *genapi.GrafanaHTTPAPI, uid, name string) (bool, string, error) {
-	datasources, err := client.Datasources.GetDataSources()
+func (r *GrafanaDatasourceReconciler) Exists(gClient *genapi.GrafanaHTTPAPI, uid, name string) (bool, string, error) {
+	datasources, err := gClient.Datasources.GetDataSources()
 	if err != nil {
 		return false, "", fmt.Errorf("fetching data sources: %w", err)
 	}

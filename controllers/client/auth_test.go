@@ -40,7 +40,7 @@ func TestGetExternalAdminCredentials(t *testing.T) {
 	err := corev1.AddToScheme(s)
 	require.NoError(t, err, "adding scheme")
 
-	client := fake.NewClientBuilder().
+	cl := fake.NewClientBuilder().
 		WithScheme(s).
 		WithObjects(credSecret).
 		Build()
@@ -104,10 +104,10 @@ func TestGetExternalAdminCredentials(t *testing.T) {
 					Spec: tt.spec,
 				}
 
-				adminUser, err := getExternalAdminUser(testCtx, client, cr)
+				adminUser, err := getExternalAdminUser(testCtx, cl, cr)
 				require.NoError(t, err)
 
-				adminPassword, err := getExternalAdminPassword(testCtx, client, cr)
+				adminPassword, err := getExternalAdminPassword(testCtx, cl, cr)
 				require.NoError(t, err)
 
 				assert.Equal(t, tt.wantAdminUser, adminUser)
@@ -127,11 +127,11 @@ func TestGetExternalAdminCredentials(t *testing.T) {
 			},
 		}
 
-		adminUser, err := getExternalAdminUser(testCtx, client, cr)
+		adminUser, err := getExternalAdminUser(testCtx, cl, cr)
 		require.Error(t, err)
 		assert.Empty(t, adminUser)
 
-		adminPassword, err := getExternalAdminPassword(testCtx, client, cr)
+		adminPassword, err := getExternalAdminPassword(testCtx, cl, cr)
 		require.Error(t, err)
 		assert.Empty(t, adminPassword)
 	})
@@ -351,7 +351,7 @@ func TestGetAdminCredentials(t *testing.T) {
 	err := corev1.AddToScheme(s)
 	require.NoError(t, err, "adding scheme")
 
-	client := fake.NewClientBuilder().
+	cl := fake.NewClientBuilder().
 		WithScheme(s).
 		WithObjects(credSecret).
 		Build()
@@ -402,7 +402,7 @@ func TestGetAdminCredentials(t *testing.T) {
 					},
 				}
 
-				got, err := getAdminCredentials(testCtx, client, cr)
+				got, err := getAdminCredentials(testCtx, cl, cr)
 				require.NoError(t, err)
 
 				assert.Equal(t, tt.want, got)
@@ -421,7 +421,7 @@ func TestGetAdminCredentials(t *testing.T) {
 			},
 		}
 
-		got, err := getAdminCredentials(testCtx, client, cr)
+		got, err := getAdminCredentials(testCtx, cl, cr)
 		require.Error(t, err)
 
 		assert.Nil(t, got)

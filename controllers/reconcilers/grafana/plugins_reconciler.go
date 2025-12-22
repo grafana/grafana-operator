@@ -17,9 +17,9 @@ type PluginsReconciler struct {
 	client client.Client
 }
 
-func NewPluginsReconciler(client client.Client) reconcilers.OperatorGrafanaReconciler {
+func NewPluginsReconciler(cl client.Client) reconcilers.OperatorGrafanaReconciler {
 	return &PluginsReconciler{
-		client: client,
+		client: cl,
 	}
 }
 

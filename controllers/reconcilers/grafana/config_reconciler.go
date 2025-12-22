@@ -17,9 +17,9 @@ type ConfigReconciler struct {
 	client client.Client
 }
 
-func NewConfigReconciler(client client.Client) reconcilers.OperatorGrafanaReconciler {
+func NewConfigReconciler(cl client.Client) reconcilers.OperatorGrafanaReconciler {
 	return &ConfigReconciler{
-		client: client,
+		client: cl,
 	}
 }
 

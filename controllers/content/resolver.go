@@ -31,9 +31,9 @@ func WithDisabledSources(disabledSources []ContentSourceType) Option {
 	}
 }
 
-func NewContentResolver(cr v1beta1.GrafanaContentResource, client client.Client, opts ...Option) *ContentResolver {
+func NewContentResolver(cr v1beta1.GrafanaContentResource, cl client.Client, opts ...Option) *ContentResolver {
 	resolver := &ContentResolver{
-		Client:   client,
+		Client:   cl,
 		resource: cr,
 	}
 

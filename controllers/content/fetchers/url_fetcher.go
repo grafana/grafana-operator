@@ -23,7 +23,7 @@ import (
 func FetchFromURL(ctx context.Context, cr v1beta1.GrafanaContentResource, c client.Client, tlsConfig *tls.Config) ([]byte, error) {
 	spec := cr.GrafanaContentSpec()
 
-	url, err := url.Parse(spec.URL)
+	u, err := url.Parse(spec.URL)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +33,7 @@ func FetchFromURL(ctx context.Context, cr v1beta1.GrafanaContentResource, c clie
 		return cached, nil
 	}
 
-	request, err := http.NewRequest(http.MethodGet, url.String(), nil)
+	request, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
 		return nil, err
 	}

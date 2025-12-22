@@ -376,7 +376,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	return grafana.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource(uid))
 }
 
-func (r *GrafanaDashboardReconciler) Exists(client *genapi.GrafanaHTTPAPI, uid string, title string, folderUID string) (string, error) {
+func (r *GrafanaDashboardReconciler) Exists(gClient *genapi.GrafanaHTTPAPI, uid string, title string, folderUID string) (string, error) {
 	tvar := "dash-db"
 
 	page := int64(1)
@@ -385,7 +385,7 @@ func (r *GrafanaDashboardReconciler) Exists(client *genapi.GrafanaHTTPAPI, uid s
 	for {
 		params := search.NewSearchParams().WithType(&tvar).WithLimit(&limit).WithPage(&page)
 
-		resp, err := client.Search.Search(params)
+		resp, err := gClient.Search.Search(params)
 		if err != nil {
 			return "", err
 		}
@@ -443,13 +443,13 @@ func (r *GrafanaDashboardReconciler) matchesStateInGrafana(exists bool, model ma
 	return true, nil
 }
 
-func (r *GrafanaDashboardReconciler) GetOrCreateFolder(client *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaDashboard) (string, error) {
+func (r *GrafanaDashboardReconciler) GetOrCreateFolder(gClient *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaDashboard) (string, error) {
 	title := cr.Namespace
 	if cr.Spec.FolderTitle != "" {
 		title = cr.Spec.FolderTitle
 	}
 
-	exists, folderUID, err := r.GetFolderUID(client, title)
+	exists, folderUID, err := r.GetFolderUID(gClient, title)
 	if err != nil {
 		return "", err
 	}
@@ -463,7 +463,7 @@ func (r *GrafanaDashboardReconciler) GetOrCreateFolder(client *genapi.GrafanaHTT
 		Title: title,
 	}
 
-	resp, err := client.Folders.CreateFolder(body)
+	resp, err := gClient.Folders.CreateFolder(body)
 	if err != nil {
 		return "", err
 	}
@@ -477,7 +477,7 @@ func (r *GrafanaDashboardReconciler) GetOrCreateFolder(client *genapi.GrafanaHTT
 }
 
 func (r *GrafanaDashboardReconciler) GetFolderUID(
-	client *genapi.GrafanaHTTPAPI,
+	gClient *genapi.GrafanaHTTPAPI,
 	title string,
 ) (bool, string, error) {
 	// Pre-existing folder that is not returned in Folder API
@@ -491,7 +491,7 @@ func (r *GrafanaDashboardReconciler) GetFolderUID(
 	for {
 		params := folders.NewGetFoldersParams().WithPage(&page).WithLimit(&limit)
 
-		foldersResp, err := client.Folders.GetFolders(params)
+		foldersResp, err := gClient.Folders.GetFolders(params)
 		if err != nil {
 			return false, "", err
 		}
@@ -514,10 +514,10 @@ func (r *GrafanaDashboardReconciler) GetFolderUID(
 	return false, "", nil
 }
 
-func (r *GrafanaDashboardReconciler) DeleteFolderIfEmpty(client *genapi.GrafanaHTTPAPI, folderUID string) (http.Response, error) {
+func (r *GrafanaDashboardReconciler) DeleteFolderIfEmpty(gClient *genapi.GrafanaHTTPAPI, folderUID string) (http.Response, error) {
 	params := search.NewSearchParams().WithFolderUIDs([]string{folderUID})
 
-	results, err := client.Search.Search(params)
+	results, err := gClient.Search.Search(params)
 	if err != nil {
 		return http.Response{
 			Status:     "internal grafana client error getting dashboards",
@@ -533,7 +533,7 @@ func (r *GrafanaDashboardReconciler) DeleteFolderIfEmpty(client *genapi.GrafanaH
 	}
 
 	deleteParams := folders.NewDeleteFolderParams().WithFolderUID(folderUID)
-	if _, err = client.Folders.DeleteFolder(deleteParams); err != nil { //nolint:errcheck
+	if _, err = gClient.Folders.DeleteFolder(deleteParams); err != nil { //nolint:errcheck
 		var notFound *folders.DeleteFolderNotFound
 		if !errors.As(err, &notFound) {
 			return http.Response{

@@ -415,9 +415,9 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 			err := v1beta1.AddToScheme(s)
 			require.NoError(t, err, "adding scheme")
 
-			client := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(routesToRuntimeObjects(tt.existingRoutes)...).Build()
+			cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(routesToRuntimeObjects(tt.existingRoutes)...).Build()
 
-			_, err = assembleNotificationPolicyRoutes(testCtx, client, tt.notificationPolicy)
+			_, err = assembleNotificationPolicyRoutes(testCtx, cl, tt.notificationPolicy)
 			if tt.wantLoopDetectedErr {
 				require.ErrorIs(t, err, ErrLoopDetected)
 			}
