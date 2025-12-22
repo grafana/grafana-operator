@@ -1,11 +1,13 @@
 package fetchers
 
 import (
+	"cmp"
 	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -91,12 +93,9 @@ func getLatestGrafanaComRevision(cr v1beta1.GrafanaContentResource, tlsConfig *t
 		return -1, err
 	}
 
-	max := 0
-	for _, i := range listResponse.Items {
-		if i.Revision > max {
-			max = i.Revision
-		}
-	}
+	latest := slices.MaxFunc(listResponse.Items, func(a, b dashboardRevisionItem) int {
+		return cmp.Compare(a.Revision, b.Revision)
+	})
 
-	return max, nil
+	return latest.Revision, nil
 }

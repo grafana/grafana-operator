@@ -24,7 +24,7 @@ func TestFetchDashboardFromGrafanaCom(t *testing.T) {
 	fetchedDashboard, err := FetchFromGrafanaCom(context.Background(), dashboard, k8sClient)
 	require.NoError(t, err)
 	assert.NotNil(t, fetchedDashboard, "Fetched dashboard shouldn't be empty")
-	assert.GreaterOrEqual(t, *dashboard.Spec.GrafanaCom.Revision, 30, "At least 30 revisions exist for dashboard 1860 as of 2023-03-29")
+	assert.GreaterOrEqual(t, *dashboard.Spec.GrafanaCom.Revision, 42, "At least 42 revisions exist for dashboard 1860 as of 2024-12-22")
 
 	assert.False(t, dashboard.Status.ContentTimestamp.Time.IsZero(), "ContentTimestamp should have been set")
 	assert.NotEmpty(t, dashboard.Status.ContentURL, "ContentURL should have been set")
