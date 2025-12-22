@@ -39,7 +39,7 @@ func TestGetDashboardEnvs(t *testing.T) {
 	assert.NotNil(t, contentResource.GrafanaContentSpec(), "resource does not properly implement content spec or status fields; this indicates a bug in implementation")
 	assert.NotNil(t, contentResource.GrafanaContentStatus(), "resource does not properly implement content spec or status fields; this indicates a bug in implementation")
 
-	resolver := NewContentResolver(&dashboard, k8sClient)
+	resolver := NewResolver(&dashboard, k8sClient)
 
 	envs, err := resolver.getContentEnvs(ctx)
 

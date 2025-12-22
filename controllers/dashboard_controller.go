@@ -100,7 +100,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	removeSuspended(&cr.Status.Conditions)
 
 	// Retrieving the model before the loop ensures to exit early in case of failure and not fail once per matching instance
-	resolver := content.NewContentResolver(cr, r.Client)
+	resolver := content.NewResolver(cr, r.Client)
 
 	dashboardModel, hash, err := resolver.Resolve(ctx)
 	if err != nil {
