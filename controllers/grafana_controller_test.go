@@ -3,7 +3,7 @@ package controllers
 import (
 	"testing"
 
-	v1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -80,10 +80,10 @@ var _ = Describe("Grafana Reconciler: Provoke Conditions", func() {
 				Spec:       tt.spec,
 			}
 
-			err := k8sClient.Create(testCtx, cr)
+			err := cl.Create(testCtx, cr)
 			require.NoError(t, err)
 
-			r := GrafanaReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+			r := GrafanaReconciler{Client: cl, Scheme: cl.Scheme()}
 			req := tk8s.GetRequest(t, cr)
 
 			_, err = r.Reconcile(testCtx, req)

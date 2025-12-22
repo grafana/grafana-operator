@@ -15,7 +15,7 @@ import (
 
 const GrafanaVersionEndpoint = "/frontend/settings"
 
-func NewHTTPClient(ctx context.Context, c client.Client, cr *v1beta1.Grafana) (*http.Client, error) {
+func NewHTTPClient(ctx context.Context, cl client.Client, cr *v1beta1.Grafana) (*http.Client, error) {
 	var timeout time.Duration
 	if cr.Spec.Client != nil && cr.Spec.Client.TimeoutSeconds != nil {
 		timeout = max(time.Duration(*cr.Spec.Client.TimeoutSeconds), 0)
@@ -23,7 +23,7 @@ func NewHTTPClient(ctx context.Context, c client.Client, cr *v1beta1.Grafana) (*
 		timeout = 10
 	}
 
-	tlsConfig, err := buildTLSConfiguration(ctx, c, cr)
+	tlsConfig, err := buildTLSConfiguration(ctx, cl, cr)
 	if err != nil {
 		return nil, err
 	}
@@ -42,8 +42,8 @@ func NewHTTPClient(ctx context.Context, c client.Client, cr *v1beta1.Grafana) (*
 	}, nil
 }
 
-func GetGrafanaVersion(ctx context.Context, c client.Client, cr *v1beta1.Grafana) (string, error) {
-	httpClient, err := NewHTTPClient(ctx, c, cr)
+func GetGrafanaVersion(ctx context.Context, cl client.Client, cr *v1beta1.Grafana) (string, error) {
+	httpClient, err := NewHTTPClient(ctx, cl, cr)
 	if err != nil {
 		return "", fmt.Errorf("setup of the http client: %w", err)
 	}
@@ -60,7 +60,7 @@ func GetGrafanaVersion(ctx context.Context, c client.Client, cr *v1beta1.Grafana
 		return "", fmt.Errorf("building request to fetch version: %w", err)
 	}
 
-	err = InjectAuthHeaders(ctx, c, cr, req)
+	err = InjectAuthHeaders(ctx, cl, cr, req)
 	if err != nil {
 		return "", fmt.Errorf("fetching credentials for version detection: %w", err)
 	}
@@ -88,8 +88,8 @@ func GetGrafanaVersion(ctx context.Context, c client.Client, cr *v1beta1.Grafana
 	return data.BuildInfo.Version, nil
 }
 
-func GetAuthenticationStatus(ctx context.Context, c client.Client, cr *v1beta1.Grafana) (bool, error) {
-	httpClient, err := NewHTTPClient(ctx, c, cr)
+func GetAuthenticationStatus(ctx context.Context, cl client.Client, cr *v1beta1.Grafana) (bool, error) {
+	httpClient, err := NewHTTPClient(ctx, cl, cr)
 	if err != nil {
 		return false, fmt.Errorf("setup of the http client: %w", err)
 	}
@@ -106,7 +106,7 @@ func GetAuthenticationStatus(ctx context.Context, c client.Client, cr *v1beta1.G
 		return false, fmt.Errorf("building request to fetch authentication status: %w", err)
 	}
 
-	err = InjectAuthHeaders(ctx, c, cr, req)
+	err = InjectAuthHeaders(ctx, cl, cr, req)
 	if err != nil {
 		return false, fmt.Errorf("fetching credentials for authentication: %w", err)
 	}

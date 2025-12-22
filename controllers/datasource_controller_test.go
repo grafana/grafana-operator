@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	v1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 	"github.com/stretchr/testify/assert"
@@ -17,7 +17,7 @@ import (
 
 func TestGetDatasourceContent(t *testing.T) {
 	reconciler := &GrafanaDatasourceReconciler{
-		Client: k8sClient,
+		Client: cl,
 	}
 
 	t.Run("secureJsonData is preserved", func(t *testing.T) {
@@ -45,7 +45,7 @@ func TestGetDatasourceContent(t *testing.T) {
 
 func TestDatasourceIndexing(t *testing.T) {
 	reconciler := &GrafanaDatasourceReconciler{
-		Client: k8sClient,
+		Client: cl,
 	}
 
 	t.Run("indexSecretSource returns correct secret references", func(t *testing.T) {
@@ -241,16 +241,16 @@ var _ = Describe("Datasource: substitute reference values", func() {
 			},
 		}
 
-		err := k8sClient.Create(testCtx, cm)
+		err := cl.Create(testCtx, cm)
 		require.NoError(t, err)
 
-		err = k8sClient.Create(testCtx, sc)
+		err = cl.Create(testCtx, sc)
 		require.NoError(t, err)
 
-		err = k8sClient.Create(testCtx, ds)
+		err = cl.Create(testCtx, ds)
 		require.NoError(t, err)
 
-		r := GrafanaDatasourceReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+		r := GrafanaDatasourceReconciler{Client: cl, Scheme: cl.Scheme()}
 		req := tk8s.GetRequest(t, ds)
 
 		_, err = r.Reconcile(testCtx, req)
@@ -271,7 +271,7 @@ var _ = Describe("Datasource: substitute reference values", func() {
 		hasCondition := tk8s.HasCondition(t, cr, condition)
 		assert.True(t, hasCondition)
 
-		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, cl, externalGrafanaCr)
 		require.NoError(t, err)
 
 		model, err := gClient.Datasources.GetDataSourceByUID(ds.Spec.CustomUID)
@@ -394,7 +394,7 @@ var _ = Describe("Datasource Reconciler: Provoke Conditions", func() {
 				Spec:       tt.spec,
 			}
 
-			r := &GrafanaDatasourceReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+			r := &GrafanaDatasourceReconciler{Client: cl, Scheme: cl.Scheme()}
 
 			reconcileAndValidateCondition(r, cr, tt.want, tt.wantErr)
 		})

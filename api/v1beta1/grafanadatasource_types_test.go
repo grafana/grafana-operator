@@ -56,36 +56,36 @@ var _ = Describe("Datasource type", func() {
 		It("Should block adding uid field when missing", func() {
 			ds := newDatasource("missing-uid", "")
 			By("Create new Datasource without uid")
-			err := k8sClient.Create(ctx, ds)
+			err := cl.Create(ctx, ds)
 			require.NoError(t, err)
 
 			By("Adding a uid")
 			ds.Spec.CustomUID = "new-ds-uid"
-			err = k8sClient.Update(ctx, ds)
+			err = cl.Update(ctx, ds)
 			require.Error(t, err)
 		})
 
 		It("Should block removing uid field when set", func() {
 			ds := newDatasource("existing-uid", "existing-uid")
 			By("Creating Datasource with existing UID")
-			err := k8sClient.Create(ctx, ds)
+			err := cl.Create(ctx, ds)
 			require.NoError(t, err)
 
 			By("And setting UID to ''")
 			ds.Spec.CustomUID = ""
-			err = k8sClient.Update(ctx, ds)
+			err = cl.Update(ctx, ds)
 			require.Error(t, err)
 		})
 
 		It("Should block changing value of uid", func() {
 			ds := newDatasource("removing-uid", "existing-uid")
 			By("Create new Datasource with existing UID")
-			err := k8sClient.Create(ctx, ds)
+			err := cl.Create(ctx, ds)
 			require.NoError(t, err)
 
 			By("Changing the existing UID")
 			ds.Spec.CustomUID = "new-ds-uid"
-			err = k8sClient.Update(ctx, ds)
+			err = cl.Update(ctx, ds)
 			require.Error(t, err)
 		})
 	})
@@ -113,7 +113,7 @@ var _ = Describe("Fail on field behavior changes", func() {
 
 	ctx := context.Background()
 	It("Fails creating GrafanaDatasource with undefined spec.datasource", func() {
-		err := k8sClient.Create(ctx, emptyDatasource)
+		err := cl.Create(ctx, emptyDatasource)
 		require.Error(t, err)
 	})
 })

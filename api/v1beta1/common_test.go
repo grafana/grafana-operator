@@ -36,12 +36,12 @@ var _ = Describe("GrafanaCommonSpec#AllowCrossNamespaceImport Validation rule te
 			copyOfundefinedCrossImportFolder := undefinedCrossImportFolder.DeepCopy()
 			copyOfundefinedCrossImportFolder.Name = "disabled-from-undefined"
 			By("Creating a Folder without allowCrossNamespaceImport")
-			err := k8sClient.Create(ctx, copyOfundefinedCrossImportFolder)
+			err := cl.Create(ctx, copyOfundefinedCrossImportFolder)
 			require.NoError(t, err)
 
 			By("Setting allowCrossNamespaceImport false")
 			copyOfundefinedCrossImportFolder.Spec.AllowCrossNamespaceImport = false
-			err = k8sClient.Update(ctx, copyOfundefinedCrossImportFolder)
+			err = cl.Update(ctx, copyOfundefinedCrossImportFolder)
 			require.NoError(t, err)
 		})
 
@@ -50,12 +50,12 @@ var _ = Describe("GrafanaCommonSpec#AllowCrossNamespaceImport Validation rule te
 			secondUndfinedCrossImportFolder.Name = "enabled-from-undefined"
 
 			By("Creating a Folder with false allowCrossNamespaceImport")
-			err := k8sClient.Create(ctx, secondUndfinedCrossImportFolder)
+			err := cl.Create(ctx, secondUndfinedCrossImportFolder)
 			require.NoError(t, err)
 
 			By("Setting allowCrossNamespaceImport true")
 			secondUndfinedCrossImportFolder.Spec.AllowCrossNamespaceImport = true
-			err = k8sClient.Update(ctx, secondUndfinedCrossImportFolder)
+			err = cl.Update(ctx, secondUndfinedCrossImportFolder)
 			require.NoError(t, err)
 		})
 
@@ -64,12 +64,12 @@ var _ = Describe("GrafanaCommonSpec#AllowCrossNamespaceImport Validation rule te
 			explicitNoCrossImportFolder.Name = "enabled-from-false"
 			explicitNoCrossImportFolder.Spec.AllowCrossNamespaceImport = false
 			By("Creating a Folder with allowCrossNamespaceImport false")
-			err := k8sClient.Create(ctx, explicitNoCrossImportFolder)
+			err := cl.Create(ctx, explicitNoCrossImportFolder)
 			require.NoError(t, err)
 
 			By("Setting allowCrossNamespaceImport true")
 			explicitNoCrossImportFolder.Spec.AllowCrossNamespaceImport = true
-			err = k8sClient.Update(ctx, explicitNoCrossImportFolder)
+			err = cl.Update(ctx, explicitNoCrossImportFolder)
 			require.NoError(t, err)
 		})
 	})
@@ -80,12 +80,12 @@ var _ = Describe("GrafanaCommonSpec#AllowCrossNamespaceImport Validation rule te
 			crossImportFolder.Name = "disabled-from-true"
 			crossImportFolder.Spec.AllowCrossNamespaceImport = true
 			By("Creating a Folder with allowCrossNamespaceImport")
-			err := k8sClient.Create(ctx, crossImportFolder)
+			err := cl.Create(ctx, crossImportFolder)
 			require.NoError(t, err)
 
 			By("Setting allowCrossNamespaceImport false")
 			crossImportFolder.Spec.AllowCrossNamespaceImport = false
-			err = k8sClient.Update(ctx, crossImportFolder)
+			err = cl.Update(ctx, crossImportFolder)
 			require.Error(t, err)
 		})
 
@@ -94,13 +94,13 @@ var _ = Describe("GrafanaCommonSpec#AllowCrossNamespaceImport Validation rule te
 			secondCrossImportFolder.Name = "unset-from-true"
 			secondCrossImportFolder.Spec.AllowCrossNamespaceImport = true
 			By("Creating a Folder with allowCrossNamespaceImport")
-			err := k8sClient.Create(ctx, secondCrossImportFolder)
+			err := cl.Create(ctx, secondCrossImportFolder)
 			require.NoError(t, err)
 
 			By("Setting allowCrossNamespaceImport false")
 			unsetCrossImportFolder := undefinedCrossImportFolder.DeepCopy()
 			unsetCrossImportFolder.Name = "unset-from-true" // Needs the same name as above
-			err = k8sClient.Update(ctx, unsetCrossImportFolder)
+			err = cl.Update(ctx, unsetCrossImportFolder)
 			require.Error(t, err)
 		})
 	})

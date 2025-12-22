@@ -506,39 +506,39 @@ var _ = Describe("GetMatchingInstances functions", Ordered, func() {
 	// Pre-create all resources
 	BeforeAll(func() { // Necessary to use assertions
 		for _, cr := range createCRs {
-			err := k8sClient.Create(testCtx, cr)
+			err := cl.Create(testCtx, cr)
 			require.NoError(t, err)
 		}
 
 		grafanas := []v1beta1.Grafana{BaseGrafana, *matchesNothingGrafana}
 		for _, instance := range grafanas {
-			err := k8sClient.Create(testCtx, &instance)
+			err := cl.Create(testCtx, &instance)
 			require.NoError(t, err)
 
 			// Apply status to pass instance ready check
 			instance.Status.Stage = v1beta1.OperatorStageComplete
 			instance.Status.StageStatus = v1beta1.OperatorStageResultSuccess
 
-			err = k8sClient.Status().Update(testCtx, &instance)
+			err = cl.Status().Update(testCtx, &instance)
 			require.NoError(t, err)
 		}
 	})
 
 	Context("Ensure AllowCrossNamespaceImport is upheld by GetScopedMatchingInstances", func() {
 		It("Finds all ready instances when instanceSelector is empty", func() {
-			instances, err := GetScopedMatchingInstances(testCtx, k8sClient, matchAllFolder)
+			instances, err := GetScopedMatchingInstances(testCtx, cl, matchAllFolder)
 			require.NoError(t, err)
 			assert.NotEmpty(t, instances)
 			assert.Len(t, instances, 2+2) // +2 To account for instances created in controllers/suite_test.go to provoke conditions
 		})
 		It("Finds all ready and Matching instances", func() {
-			instances, err := GetScopedMatchingInstances(testCtx, k8sClient, &allowFolder)
+			instances, err := GetScopedMatchingInstances(testCtx, cl, &allowFolder)
 			require.NoError(t, err)
 			assert.NotEmpty(t, instances)
 			assert.Len(t, instances, 2)
 		})
 		It("Finds matching and ready and matching instance in namespace", func() {
-			instances, err := GetScopedMatchingInstances(testCtx, k8sClient, denyFolder)
+			instances, err := GetScopedMatchingInstances(testCtx, cl, denyFolder)
 			require.NoError(t, err)
 			assert.NotEmpty(t, instances)
 			assert.Len(t, instances, 1)

@@ -20,10 +20,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func FetchFromURL(ctx context.Context, cr v1beta1.GrafanaContentResource, c client.Client, tlsConfig *tls.Config) ([]byte, error) {
+func FetchFromURL(ctx context.Context, cr v1beta1.GrafanaContentResource, cl client.Client, tlsConfig *tls.Config) ([]byte, error) {
 	spec := cr.GrafanaContentSpec()
 
-	url, err := url.Parse(spec.URL)
+	u, err := url.Parse(spec.URL)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +33,7 @@ func FetchFromURL(ctx context.Context, cr v1beta1.GrafanaContentResource, c clie
 		return cached, nil
 	}
 
-	request, err := http.NewRequest(http.MethodGet, url.String(), nil)
+	request, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -58,12 +58,12 @@ func FetchFromURL(ctx context.Context, cr v1beta1.GrafanaContentResource, c clie
 	httpClient := grafanaclient.NewInstrumentedRoundTripper(true, tlsConfig, contentMetric, dashboardMetric)
 	// basic auth is supported for dashboards from url
 	if spec.URLAuthorization != nil && spec.URLAuthorization.BasicAuth != nil {
-		username, err := grafanaclient.GetValueFromSecretKey(ctx, c, cr.GetNamespace(), spec.URLAuthorization.BasicAuth.Username)
+		username, err := grafanaclient.GetValueFromSecretKey(ctx, cl, cr.GetNamespace(), spec.URLAuthorization.BasicAuth.Username)
 		if err != nil {
 			return nil, err
 		}
 
-		password, err := grafanaclient.GetValueFromSecretKey(ctx, c, cr.GetNamespace(), spec.URLAuthorization.BasicAuth.Password)
+		password, err := grafanaclient.GetValueFromSecretKey(ctx, cl, cr.GetNamespace(), spec.URLAuthorization.BasicAuth.Password)
 		if err != nil {
 			return nil, err
 		}

@@ -48,6 +48,12 @@ linters:
       min-len: 3
       min-occurrences: 3
 
+    gocritic:
+      enabled-checks:
+        - builtinShadow
+        - builtinShadowDecl
+        - importShadow
+
     gocyclo:
       min-complexity: 25
 
@@ -55,8 +61,14 @@ linters:
       no-unaliased: true
 
       alias:
+        - pkg: github.com/bitly/go-simplejson
+          alias: simplejson
+        - pkg: github.com/grafana/grafana-openapi-client-go/client
+          alias: genapi
         - pkg: github.com/grafana/grafana-operator/v5/controllers/client
           alias: grafanaclient
+        - pkg: github.com/go-openapi/runtime/client
+          alias: httptransport
         - pkg: github.com/openshift/api/route/v1
           alias: routev1
         - pkg: go.uber.org/zap
@@ -154,3 +166,7 @@ linters:
 formatters:
   enable:
     - gofumpt
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

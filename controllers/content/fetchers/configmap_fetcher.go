@@ -9,7 +9,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func FetchDashboardFromConfigMap(cr v1beta1.GrafanaContentResource, c client.Client) ([]byte, error) {
+func FetchDashboardFromConfigMap(cr v1beta1.GrafanaContentResource, cl client.Client) ([]byte, error) {
 	spec := cr.GrafanaContentSpec()
 	if spec == nil {
 		return nil, nil // TODO
@@ -22,7 +22,7 @@ func FetchDashboardFromConfigMap(cr v1beta1.GrafanaContentResource, c client.Cli
 		Name:      ref.Name,
 	}
 
-	err := c.Get(context.Background(), selector, dashboardConfigMap)
+	err := cl.Get(context.Background(), selector, dashboardConfigMap)
 	if err != nil {
 		return nil, err
 	}

@@ -26,7 +26,7 @@ var _ = Describe("Ingress Reconciler", func() {
 		const hasGatewayAPI = false
 
 		It("creates Ingress when only .spec.ingress is defined", func() {
-			r := NewIngressReconciler(k8sClient, isOpenshift, hasGatewayAPI)
+			r := NewIngressReconciler(cl, isOpenshift, hasGatewayAPI)
 			cr := &v1beta1.Grafana{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "ingress-on-openshift",
@@ -41,7 +41,7 @@ var _ = Describe("Ingress Reconciler", func() {
 
 			ctx := context.Background()
 
-			err := k8sClient.Create(ctx, cr)
+			err := cl.Create(ctx, cr)
 			require.NoError(t, err)
 
 			vars := &v1beta1.OperatorReconcileVars{}
@@ -52,7 +52,7 @@ var _ = Describe("Ingress Reconciler", func() {
 			assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
 
 			ingress := &networkingv1.Ingress{}
-			err = k8sClient.Get(ctx, types.NamespacedName{
+			err = cl.Get(ctx, types.NamespacedName{
 				Name:      fmt.Sprintf("%s-ingress", cr.Name),
 				Namespace: "default",
 			}, ingress)
@@ -60,7 +60,7 @@ var _ = Describe("Ingress Reconciler", func() {
 		})
 
 		It("creates Route when .spec.ingress AND .spec.route are defined", func() {
-			r := NewIngressReconciler(k8sClient, isOpenshift, hasGatewayAPI)
+			r := NewIngressReconciler(cl, isOpenshift, hasGatewayAPI)
 			cr := &v1beta1.Grafana{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "prefer-route-on-openshift",
@@ -77,7 +77,7 @@ var _ = Describe("Ingress Reconciler", func() {
 
 			ctx := context.Background()
 
-			err := k8sClient.Create(ctx, cr)
+			err := cl.Create(ctx, cr)
 			require.NoError(t, err)
 
 			vars := &v1beta1.OperatorReconcileVars{}
@@ -87,7 +87,7 @@ var _ = Describe("Ingress Reconciler", func() {
 			assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
 
 			route := &routev1.Route{}
-			err = k8sClient.Get(ctx, types.NamespacedName{
+			err = cl.Get(ctx, types.NamespacedName{
 				Name:      fmt.Sprintf("%s-route", cr.Name),
 				Namespace: "default",
 			}, route)
@@ -95,7 +95,7 @@ var _ = Describe("Ingress Reconciler", func() {
 		})
 
 		It("removes Route when .spec.route is removed", func() {
-			r := NewIngressReconciler(k8sClient, isOpenshift, hasGatewayAPI)
+			r := NewIngressReconciler(cl, isOpenshift, hasGatewayAPI)
 			cr := &v1beta1.Grafana{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "route-nil",
@@ -110,7 +110,7 @@ var _ = Describe("Ingress Reconciler", func() {
 			}
 
 			ctx := context.Background()
-			err := k8sClient.Create(ctx, cr)
+			err := cl.Create(ctx, cr)
 			require.NoError(t, err)
 
 			vars := &v1beta1.OperatorReconcileVars{}
@@ -120,7 +120,7 @@ var _ = Describe("Ingress Reconciler", func() {
 			assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
 
 			route := &routev1.Route{}
-			err = k8sClient.Get(ctx, types.NamespacedName{
+			err = cl.Get(ctx, types.NamespacedName{
 				Name:      fmt.Sprintf("%s-route", cr.Name),
 				Namespace: "default",
 			}, route)
@@ -128,7 +128,7 @@ var _ = Describe("Ingress Reconciler", func() {
 
 			cr.Spec.Route = nil
 
-			err = k8sClient.Update(ctx, cr)
+			err = cl.Update(ctx, cr)
 			require.NoError(t, err)
 
 			status, err = r.Reconcile(ctx, cr, vars, scheme.Scheme)
@@ -137,7 +137,7 @@ var _ = Describe("Ingress Reconciler", func() {
 			assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
 
 			route = &routev1.Route{}
-			err = k8sClient.Get(ctx, types.NamespacedName{
+			err = cl.Get(ctx, types.NamespacedName{
 				Name:      fmt.Sprintf("%s-route", cr.Name),
 				Namespace: "default",
 			}, route)
@@ -151,7 +151,7 @@ var _ = Describe("Ingress Reconciler", func() {
 		const hasGatewayAPI = true
 
 		It("creates Ingress when .spec.ingress is defined", func() {
-			r := NewIngressReconciler(k8sClient, isOpenshift, hasGatewayAPI)
+			r := NewIngressReconciler(cl, isOpenshift, hasGatewayAPI)
 			cr := &v1beta1.Grafana{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "ingress-on-k8s",
@@ -166,7 +166,7 @@ var _ = Describe("Ingress Reconciler", func() {
 
 			ctx := context.Background()
 
-			err := k8sClient.Create(ctx, cr)
+			err := cl.Create(ctx, cr)
 			require.NoError(t, err)
 
 			vars := &v1beta1.OperatorReconcileVars{}
@@ -177,7 +177,7 @@ var _ = Describe("Ingress Reconciler", func() {
 			assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
 
 			ingress := &networkingv1.Ingress{}
-			err = k8sClient.Get(ctx, types.NamespacedName{
+			err = cl.Get(ctx, types.NamespacedName{
 				Name:      fmt.Sprintf("%s-ingress", cr.Name),
 				Namespace: "default",
 			}, ingress)
@@ -185,7 +185,7 @@ var _ = Describe("Ingress Reconciler", func() {
 		})
 
 		It("removes Ingress when .spec.ingress is removed", func() {
-			r := NewIngressReconciler(k8sClient, isOpenshift, hasGatewayAPI)
+			r := NewIngressReconciler(cl, isOpenshift, hasGatewayAPI)
 			cr := &v1beta1.Grafana{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "ingress-nil",
@@ -198,7 +198,7 @@ var _ = Describe("Ingress Reconciler", func() {
 			}
 
 			ctx := context.Background()
-			err := k8sClient.Create(ctx, cr)
+			err := cl.Create(ctx, cr)
 			require.NoError(t, err)
 
 			vars := &v1beta1.OperatorReconcileVars{}
@@ -208,7 +208,7 @@ var _ = Describe("Ingress Reconciler", func() {
 			assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
 
 			ingress := &networkingv1.Ingress{}
-			err = k8sClient.Get(ctx, types.NamespacedName{
+			err = cl.Get(ctx, types.NamespacedName{
 				Name:      fmt.Sprintf("%s-ingress", cr.Name),
 				Namespace: "default",
 			}, ingress)
@@ -216,7 +216,7 @@ var _ = Describe("Ingress Reconciler", func() {
 
 			cr.Spec.Ingress = nil
 
-			err = k8sClient.Update(ctx, cr)
+			err = cl.Update(ctx, cr)
 			require.NoError(t, err)
 
 			status, err = r.Reconcile(ctx, cr, vars, scheme.Scheme)
@@ -225,7 +225,7 @@ var _ = Describe("Ingress Reconciler", func() {
 			assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
 
 			ingress = &networkingv1.Ingress{}
-			err = k8sClient.Get(ctx, types.NamespacedName{
+			err = cl.Get(ctx, types.NamespacedName{
 				Name:      fmt.Sprintf("%s-ingress", cr.Name),
 				Namespace: "default",
 			}, ingress)
@@ -234,7 +234,7 @@ var _ = Describe("Ingress Reconciler", func() {
 		})
 
 		It("creates HTTPRoute when .spec.httpRoute is defined", func() {
-			r := NewIngressReconciler(k8sClient, isOpenshift, hasGatewayAPI)
+			r := NewIngressReconciler(cl, isOpenshift, hasGatewayAPI)
 			cr := &v1beta1.Grafana{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "httproute-test",
@@ -247,7 +247,7 @@ var _ = Describe("Ingress Reconciler", func() {
 			}
 
 			ctx := context.Background()
-			err := k8sClient.Create(ctx, cr)
+			err := cl.Create(ctx, cr)
 			require.NoError(t, err)
 
 			vars := &v1beta1.OperatorReconcileVars{}
@@ -257,7 +257,7 @@ var _ = Describe("Ingress Reconciler", func() {
 			assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
 
 			httpRoute := &gwapiv1.HTTPRoute{}
-			err = k8sClient.Get(ctx, types.NamespacedName{
+			err = cl.Get(ctx, types.NamespacedName{
 				Name:      fmt.Sprintf("%s-httproute", cr.Name),
 				Namespace: "default",
 			}, httpRoute)
@@ -265,7 +265,7 @@ var _ = Describe("Ingress Reconciler", func() {
 		})
 
 		It("removes HTTPRoute when .spec.httpRoute is removed", func() {
-			r := NewIngressReconciler(k8sClient, isOpenshift, hasGatewayAPI)
+			r := NewIngressReconciler(cl, isOpenshift, hasGatewayAPI)
 			cr := &v1beta1.Grafana{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "httproute-nil",
@@ -279,7 +279,7 @@ var _ = Describe("Ingress Reconciler", func() {
 			}
 
 			ctx := context.Background()
-			err := k8sClient.Create(ctx, cr)
+			err := cl.Create(ctx, cr)
 			require.NoError(t, err)
 
 			vars := &v1beta1.OperatorReconcileVars{}
@@ -289,7 +289,7 @@ var _ = Describe("Ingress Reconciler", func() {
 			assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
 
 			route := &gwapiv1.HTTPRoute{}
-			err = k8sClient.Get(ctx, types.NamespacedName{
+			err = cl.Get(ctx, types.NamespacedName{
 				Name:      fmt.Sprintf("%s-httproute", cr.Name),
 				Namespace: "default",
 			}, route)
@@ -297,7 +297,7 @@ var _ = Describe("Ingress Reconciler", func() {
 
 			cr.Spec.HTTPRoute = nil
 
-			err = k8sClient.Update(ctx, cr)
+			err = cl.Update(ctx, cr)
 			require.NoError(t, err)
 
 			status, err = r.Reconcile(ctx, cr, vars, scheme.Scheme)
@@ -306,7 +306,7 @@ var _ = Describe("Ingress Reconciler", func() {
 			assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
 
 			route = &gwapiv1.HTTPRoute{}
-			err = k8sClient.Get(ctx, types.NamespacedName{
+			err = cl.Get(ctx, types.NamespacedName{
 				Name:      fmt.Sprintf("%s-httproute", cr.Name),
 				Namespace: "default",
 			}, route)

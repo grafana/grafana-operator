@@ -1,11 +1,13 @@
 package fetchers
 
 import (
+	"cmp"
 	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -18,10 +20,10 @@ import (
 
 const grafanaComDashboardsAPIEndpoint = "https://grafana.com/api/dashboards"
 
-func FetchFromGrafanaCom(ctx context.Context, cr v1beta1.GrafanaContentResource, c client.Client) ([]byte, error) {
-	cache := cache.GetContentCache(cr)
-	if len(cache) > 0 {
-		return cache, nil
+func FetchFromGrafanaCom(ctx context.Context, cr v1beta1.GrafanaContentResource, cl client.Client) ([]byte, error) {
+	c := cache.GetContentCache(cr)
+	if len(c) > 0 {
+		return c, nil
 	}
 
 	spec := cr.GrafanaContentSpec()
@@ -44,7 +46,7 @@ func FetchFromGrafanaCom(ctx context.Context, cr v1beta1.GrafanaContentResource,
 
 	spec.URL = fmt.Sprintf("%s/%d/revisions/%d/download", grafanaComDashboardsAPIEndpoint, source.ID, *source.Revision)
 
-	return FetchFromURL(ctx, cr, c, tlsConfig)
+	return FetchFromURL(ctx, cr, cl, tlsConfig)
 }
 
 func getLatestGrafanaComRevision(cr v1beta1.GrafanaContentResource, tlsConfig *tls.Config) (int, error) {
@@ -91,12 +93,9 @@ func getLatestGrafanaComRevision(cr v1beta1.GrafanaContentResource, tlsConfig *t
 		return -1, err
 	}
 
-	max := 0
-	for _, i := range listResponse.Items {
-		if i.Revision > max {
-			max = i.Revision
-		}
-	}
+	latest := slices.MaxFunc(listResponse.Items, func(a, b dashboardRevisionItem) int {
+		return cmp.Compare(a.Revision, b.Revision)
+	})
 
-	return max, nil
+	return latest.Revision, nil
 }

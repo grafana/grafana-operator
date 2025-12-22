@@ -240,19 +240,19 @@ func main() { //nolint:gocyclo
 	// Fetch k8s api credentials and detect platform
 	restConfig := ctrl.GetConfigOrDie()
 
-	autodetect, err := autodetect.New(restConfig)
+	cluster, err := autodetect.New(restConfig)
 	if err != nil {
 		setupLog.Error(err, "failed to setup auto-detect routine")
 		os.Exit(1)
 	}
 
-	isOpenShift, err := autodetect.IsOpenshift()
+	isOpenShift, err := cluster.IsOpenshift()
 	if err != nil {
 		setupLog.Error(err, "unable to detect the platform")
 		os.Exit(1)
 	}
 
-	hasGatewayAPI, err := autodetect.HasGatewayAPI()
+	hasGatewayAPI, err := cluster.HasGatewayAPI()
 	if err != nil {
 		setupLog.Error(err, "failed to test for GatewayAPI CRDs")
 		os.Exit(1)

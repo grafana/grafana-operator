@@ -19,9 +19,9 @@ type AdminSecretReconciler struct {
 	client client.Client
 }
 
-func NewAdminSecretReconciler(client client.Client) reconcilers.OperatorGrafanaReconciler {
+func NewAdminSecretReconciler(cl client.Client) reconcilers.OperatorGrafanaReconciler {
 	return &AdminSecretReconciler{
-		client: client,
+		client: cl,
 	}
 }
 

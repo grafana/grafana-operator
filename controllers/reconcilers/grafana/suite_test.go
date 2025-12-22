@@ -38,8 +38,8 @@ import (
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
 var (
-	k8sClient client.Client
-	testEnv   *envtest.Environment
+	cl      client.Client
+	testEnv *envtest.Environment
 )
 
 func TestAPIs(t *testing.T) {
@@ -78,9 +78,9 @@ var _ = BeforeSuite(func() {
 	require.NoError(t, err)
 	//+kubebuilder:scaffold:scheme
 
-	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	cl, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	require.NoError(t, err)
-	require.NotNil(t, k8sClient)
+	require.NotNil(t, cl)
 })
 
 var _ = AfterSuite(func() {

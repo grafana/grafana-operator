@@ -179,7 +179,7 @@ var _ = Describe("ContactPoint Reconciler: Provoke Conditions", func() {
 				Spec:       tt.spec,
 			}
 
-			r := &GrafanaContactPointReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+			r := &GrafanaContactPointReconciler{Client: cl, Scheme: cl.Scheme()}
 
 			reconcileAndValidateCondition(r, cr, tt.want, tt.wantErr)
 		})
@@ -301,7 +301,7 @@ var _ = Describe("ContactPoint valuesFrom configurations", Ordered, func() {
 	BeforeAll(func() {
 		t := GinkgoT()
 
-		err := k8sClient.Create(testCtx, &sc)
+		err := cl.Create(testCtx, &sc)
 		require.NoError(t, err)
 	})
 
@@ -312,7 +312,7 @@ var _ = Describe("ContactPoint valuesFrom configurations", Ordered, func() {
 				Spec:       tt.spec,
 			}
 
-			r := &GrafanaContactPointReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+			r := &GrafanaContactPointReconciler{Client: cl, Scheme: cl.Scheme()}
 
 			reconcileAndValidateCondition(r, cr, tt.want, tt.wantErr)
 		})
@@ -321,7 +321,7 @@ var _ = Describe("ContactPoint valuesFrom configurations", Ordered, func() {
 
 func TestContactPointIndexing(t *testing.T) {
 	reconciler := &GrafanaContactPointReconciler{
-		Client: k8sClient,
+		Client: cl,
 	}
 
 	t.Run("indexSecretSource returns correct secret references", func(t *testing.T) {

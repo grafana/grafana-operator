@@ -16,9 +16,9 @@ type PvcReconciler struct {
 	client client.Client
 }
 
-func NewPvcReconciler(client client.Client) reconcilers.OperatorGrafanaReconciler {
+func NewPvcReconciler(cl client.Client) reconcilers.OperatorGrafanaReconciler {
 	return &PvcReconciler{
-		client: client,
+		client: cl,
 	}
 }
 

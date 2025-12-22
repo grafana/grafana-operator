@@ -17,7 +17,7 @@ var (
 )
 
 // build the tls.Config object based on the content of the Grafana CR object
-func buildTLSConfiguration(ctx context.Context, c client.Client, cr *v1beta1.Grafana) (*tls.Config, error) {
+func buildTLSConfiguration(ctx context.Context, cl client.Client, cr *v1beta1.Grafana) (*tls.Config, error) {
 	var tlsConfigBlock *v1beta1.TLSConfig
 
 	switch {
@@ -50,7 +50,7 @@ func buildTLSConfiguration(ctx context.Context, c client.Client, cr *v1beta1.Gra
 		Namespace: secretNamespace,
 	}
 
-	err := c.Get(ctx, selector, secret)
+	err := cl.Get(ctx, selector, secret)
 	if err != nil {
 		return nil, err
 	}

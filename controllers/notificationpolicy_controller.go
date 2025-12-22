@@ -190,7 +190,7 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 // returns an assembled GrafanaNotificationPolicy as well as a list of all merged routes.
 // it ensures that there are no reference loops when discovering routes via labelSelectors
 
-func assembleNotificationPolicyRoutes(ctx context.Context, k8sClient client.Client, cr *v1beta1.GrafanaNotificationPolicy) ([]*v1beta1.GrafanaNotificationPolicyRoute, error) {
+func assembleNotificationPolicyRoutes(ctx context.Context, cl client.Client, cr *v1beta1.GrafanaNotificationPolicy) ([]*v1beta1.GrafanaNotificationPolicyRoute, error) {
 	var namespace *string
 
 	if !cr.AllowCrossNamespace() {
@@ -212,7 +212,7 @@ func assembleNotificationPolicyRoutes(ctx context.Context, k8sClient client.Clie
 
 	assembleRoute = func(route *v1beta1.PartialRoute) error {
 		if route.RouteSelector != nil {
-			routes, err := getMatchingNotificationPolicyRoutes(ctx, k8sClient, route.RouteSelector, namespace)
+			routes, err := getMatchingNotificationPolicyRoutes(ctx, cl, route.RouteSelector, namespace)
 			if err != nil {
 				return fmt.Errorf("failed to get matching routes: %w", err)
 			}
@@ -417,7 +417,7 @@ func (r *GrafanaNotificationPolicyReconciler) SetupWithManager(mgr ctrl.Manager)
 
 // getMatchingNotificationPolicyRoutes retrieves all valid GrafanaNotificationPolicyRoutes for the given labelSelector
 // results will be limited to namespace when specified and excludes routes with invalidSpec status condition
-func getMatchingNotificationPolicyRoutes(ctx context.Context, k8sClient client.Client, labelSelector *metav1.LabelSelector, namespace *string) ([]v1beta1.GrafanaNotificationPolicyRoute, error) {
+func getMatchingNotificationPolicyRoutes(ctx context.Context, cl client.Client, labelSelector *metav1.LabelSelector, namespace *string) ([]v1beta1.GrafanaNotificationPolicyRoute, error) {
 	if labelSelector == nil {
 		return nil, nil
 	}
@@ -432,7 +432,7 @@ func getMatchingNotificationPolicyRoutes(ctx context.Context, k8sClient client.C
 		opts = append(opts, client.InNamespace(*namespace))
 	}
 
-	err := k8sClient.List(ctx, &list, opts...)
+	err := cl.List(ctx, &list, opts...)
 	if err != nil {
 		return nil, err
 	}

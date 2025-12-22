@@ -15,9 +15,9 @@ type ServiceAccountReconciler struct {
 	client client.Client
 }
 
-func NewServiceAccountReconciler(client client.Client) reconcilers.OperatorGrafanaReconciler {
+func NewServiceAccountReconciler(cl client.Client) reconcilers.OperatorGrafanaReconciler {
 	return &ServiceAccountReconciler{
-		client: client,
+		client: cl,
 	}
 }
 

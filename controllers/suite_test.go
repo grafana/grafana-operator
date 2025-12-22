@@ -53,7 +53,7 @@ const (
 )
 
 var (
-	k8sClient         client.Client
+	cl                client.Client
 	testEnv           *envtest.Environment
 	testCtx           context.Context
 	grafanaContainer  testcontainers.Container
@@ -94,10 +94,10 @@ var _ = BeforeSuite(func() {
 
 	//+kubebuilder:scaffold:scheme
 
-	By("Instantiating k8sClient")
-	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	By("Instantiating cl")
+	cl, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	require.NoError(t, err)
-	require.NotNil(t, k8sClient)
+	require.NotNil(t, cl)
 
 	By("Starting Grafana TestContainer")
 	grafanaContainer, err = testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
@@ -174,10 +174,10 @@ func createSharedTestCRs() {
 		},
 	}
 
-	err = k8sClient.Create(testCtx, dummy)
+	err = cl.Create(testCtx, dummy)
 	require.NoError(t, err)
 
-	err = k8sClient.Create(testCtx, external)
+	err = cl.Create(testCtx, external)
 	require.NoError(t, err)
 
 	dummy.Status = v1beta1.GrafanaStatus{
@@ -187,14 +187,14 @@ func createSharedTestCRs() {
 		Version:     config.GrafanaVersion,
 	}
 
-	err = k8sClient.Status().Update(testCtx, dummy)
+	err = cl.Status().Update(testCtx, dummy)
 	require.NoError(t, err)
 
 	By("Reconciling External Grafana")
 
 	r := GrafanaReconciler{
-		Client:      k8sClient,
-		Scheme:      k8sClient.Scheme(),
+		Client:      cl,
+		Scheme:      cl.Scheme(),
 		IsOpenShift: false,
 	}
 	reg := tk8s.GetRequest(t, external)
@@ -205,7 +205,7 @@ func createSharedTestCRs() {
 
 	externalGrafanaCr = &v1beta1.Grafana{}
 
-	err = k8sClient.Get(testCtx, types.NamespacedName{
+	err = cl.Get(testCtx, types.NamespacedName{
 		Namespace: external.Namespace,
 		Name:      external.Name,
 	}, externalGrafanaCr)
@@ -224,13 +224,13 @@ func createSharedTestCRs() {
 		},
 	}
 
-	err = k8sClient.Create(testCtx, appliedFolder)
+	err = cl.Create(testCtx, appliedFolder)
 	require.NoError(t, err)
 
 	By("Reconciling 'synchronized' folder")
 
 	req := tk8s.GetRequest(t, appliedFolder)
-	fr := GrafanaFolderReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+	fr := GrafanaFolderReconciler{Client: cl, Scheme: cl.Scheme()}
 	_, err = fr.Reconcile(testCtx, req)
 	require.NoError(t, err)
 }
@@ -240,7 +240,7 @@ func reconcileAndValidateCondition(r GrafanaCommonReconciler, cr v1beta1.CommonR
 
 	t := GinkgoT()
 
-	err := k8sClient.Create(testCtx, cr)
+	err := cl.Create(testCtx, cr)
 	require.NoError(t, err)
 
 	req := tk8s.GetRequest(t, cr)
@@ -258,7 +258,7 @@ func reconcileAndValidateCondition(r GrafanaCommonReconciler, cr v1beta1.CommonR
 	hasCondition := tk8s.HasCondition(t, cr, condition)
 	assert.True(t, hasCondition)
 
-	err = k8sClient.Delete(testCtx, cr)
+	err = cl.Delete(testCtx, cr)
 	require.NoError(t, err)
 
 	_, err = r.Reconcile(testCtx, req)

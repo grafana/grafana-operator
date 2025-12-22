@@ -37,9 +37,9 @@ type DeploymentReconciler struct {
 	isOpenShift bool
 }
 
-func NewDeploymentReconciler(client client.Client, isOpenShift bool) reconcilers.OperatorGrafanaReconciler {
+func NewDeploymentReconciler(cl client.Client, isOpenShift bool) reconcilers.OperatorGrafanaReconciler {
 	return &DeploymentReconciler{
-		client:      client,
+		client:      cl,
 		isOpenShift: isOpenShift,
 	}
 }

@@ -31,9 +31,9 @@ type IngressReconciler struct {
 	hasGatewayAPI bool
 }
 
-func NewIngressReconciler(client client.Client, isOpenShift bool, hasGatewayAPI bool) reconcilers.OperatorGrafanaReconciler {
+func NewIngressReconciler(cl client.Client, isOpenShift bool, hasGatewayAPI bool) reconcilers.OperatorGrafanaReconciler {
 	return &IngressReconciler{
-		client:        client,
+		client:        cl,
 		isOpenShift:   isOpenShift,
 		hasGatewayAPI: hasGatewayAPI,
 	}

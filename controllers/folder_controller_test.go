@@ -94,7 +94,7 @@ var _ = Describe("Folder Reconciler: Provoke Conditions", func() {
 				Spec:       tt.spec,
 			}
 
-			r := &GrafanaFolderReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+			r := &GrafanaFolderReconciler{Client: cl, Scheme: cl.Scheme()}
 
 			reconcileAndValidateCondition(r, cr, tt.want, tt.wantErr)
 		})
@@ -121,7 +121,7 @@ var _ = Describe("Folder reconciler", func() {
 				CustomUID:         "force-delete",
 			},
 		}
-		folder.r = GrafanaFolderReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+		folder.r = GrafanaFolderReconciler{Client: cl, Scheme: cl.Scheme()}
 		folder.req = tk8s.GetRequest(t, folder.cr)
 
 		alertRuleGroup := struct {
@@ -157,21 +157,21 @@ var _ = Describe("Folder reconciler", func() {
 				},
 			},
 		}
-		alertRuleGroup.r = GrafanaAlertRuleGroupReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+		alertRuleGroup.r = GrafanaAlertRuleGroupReconciler{Client: cl, Scheme: cl.Scheme()}
 		alertRuleGroup.req = tk8s.GetRequest(t, alertRuleGroup.cr)
 
-		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, cl, externalGrafanaCr)
 		require.NoError(t, err)
 
 		// Create folder
-		err = k8sClient.Create(testCtx, folder.cr)
+		err = cl.Create(testCtx, folder.cr)
 		require.NoError(t, err)
 
 		_, err = folder.r.Reconcile(testCtx, folder.req)
 		require.NoError(t, err)
 
 		// Create AlertRuleGroup
-		err = k8sClient.Create(testCtx, alertRuleGroup.cr)
+		err = cl.Create(testCtx, alertRuleGroup.cr)
 		require.NoError(t, err)
 
 		_, err = alertRuleGroup.r.Reconcile(testCtx, alertRuleGroup.req)
@@ -187,7 +187,7 @@ var _ = Describe("Folder reconciler", func() {
 		require.NoErrorf(t, err, "AlertRuleGroup should exist in Grafana")
 
 		// Delete folder
-		err = k8sClient.Delete(testCtx, folder.cr)
+		err = cl.Delete(testCtx, folder.cr)
 		require.NoError(t, err)
 
 		_, err = folder.r.Reconcile(testCtx, folder.req)

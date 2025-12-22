@@ -42,7 +42,7 @@ func TestGetValueFromSecretKey(t *testing.T) {
 	err := corev1.AddToScheme(s)
 	require.NoError(t, err, "adding scheme")
 
-	client := fake.NewClientBuilder().
+	cl := fake.NewClientBuilder().
 		WithScheme(s).
 		WithObjects(emptySecret, secretWithData).
 		Build()
@@ -76,7 +76,7 @@ func TestGetValueFromSecretKey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := GetValueFromSecretKey(testCtx, client, namespace, tt.keySelector)
+			got, err := GetValueFromSecretKey(testCtx, cl, namespace, tt.keySelector)
 			require.ErrorContains(t, err, tt.wantErrText)
 			assert.Nil(t, got)
 		})
@@ -87,7 +87,7 @@ func TestGetValueFromSecretKey(t *testing.T) {
 
 		keySelector := tk8s.GetSecretKeySelector(t, secretWithData.Name, key)
 
-		got, err := GetValueFromSecretKey(testCtx, client, namespace, keySelector)
+		got, err := GetValueFromSecretKey(testCtx, cl, namespace, keySelector)
 		require.NoError(t, err)
 		assert.Equal(t, want, got)
 	})

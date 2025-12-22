@@ -282,7 +282,7 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 		removeMissingCRs(&grafana.Status.NotificationTemplates, notificationTemplates, &updateStatus)
 
 		if updateStatus {
-			statusUpdates += 1
+			statusUpdates++
 
 			err = r.Client.Status().Update(ctx, &grafana)
 			if err != nil {

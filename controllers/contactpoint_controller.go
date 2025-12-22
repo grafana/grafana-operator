@@ -305,11 +305,11 @@ func (r *GrafanaContactPointReconciler) buildContactPointSettings(ctx context.Co
 	return allSettings, nil
 }
 
-func (r *GrafanaContactPointReconciler) getReceiversFromName(cl *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaContactPoint) ([]*models.EmbeddedContactPoint, error) {
+func (r *GrafanaContactPointReconciler) getReceiversFromName(gClient *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaContactPoint) ([]*models.EmbeddedContactPoint, error) {
 	name := cr.NameFromSpecOrMeta()
 	params := provisioning.NewGetContactpointsParams().WithName(&name)
 
-	remote, err := cl.Provisioning.GetContactpoints(params)
+	remote, err := gClient.Provisioning.GetContactpoints(params)
 	if err != nil {
 		return make([]*models.EmbeddedContactPoint, 0), fmt.Errorf("getting receivers in contactpoint by name: %w", err)
 	}

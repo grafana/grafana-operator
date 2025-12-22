@@ -415,9 +415,9 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 			err := v1beta1.AddToScheme(s)
 			require.NoError(t, err, "adding scheme")
 
-			client := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(routesToRuntimeObjects(tt.existingRoutes)...).Build()
+			cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(routesToRuntimeObjects(tt.existingRoutes)...).Build()
 
-			_, err = assembleNotificationPolicyRoutes(testCtx, client, tt.notificationPolicy)
+			_, err = assembleNotificationPolicyRoutes(testCtx, cl, tt.notificationPolicy)
 			if tt.wantLoopDetectedErr {
 				require.ErrorIs(t, err, ErrLoopDetected)
 			}
@@ -532,7 +532,7 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke Conditions", func() {
 				Spec:       tt.spec,
 			}
 
-			r := &GrafanaNotificationPolicyReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+			r := &GrafanaNotificationPolicyReconciler{Client: cl, Scheme: cl.Scheme()}
 
 			reconcileAndValidateCondition(r, cr, tt.want, tt.wantErr)
 		})
@@ -607,13 +607,13 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke LoopDetected Condition"
 	}
 
 	It("Provokes the NotificationPolicyLoopDetected Condition", func() {
-		err := k8sClient.Create(testCtx, teamB)
+		err := cl.Create(testCtx, teamB)
 		require.NoError(t, err)
 
-		err = k8sClient.Create(testCtx, teamC)
+		err = cl.Create(testCtx, teamC)
 		require.NoError(t, err)
 
-		r := &GrafanaNotificationPolicyReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+		r := &GrafanaNotificationPolicyReconciler{Client: cl, Scheme: cl.Scheme()}
 
 		want := metav1.Condition{
 			Type:   conditionNotificationPolicyLoopDetected,

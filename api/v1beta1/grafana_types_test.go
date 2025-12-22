@@ -112,24 +112,24 @@ var _ = Describe("Grafana status NamespacedResourceList all CRs works", func() {
 		}
 
 		BeforeAll(func() {
-			err := k8sClient.Create(ctx, crGrafana)
+			err := cl.Create(ctx, crGrafana)
 			require.NoError(t, err)
 
 			crGrafana.Status.Stage = OperatorStageComplete
 			crGrafana.Status.StageStatus = OperatorStageResultSuccess
 
-			err = k8sClient.Status().Update(ctx, crGrafana)
+			err = cl.Status().Update(ctx, crGrafana)
 			require.NoError(t, err)
 		})
 
 		It("Adds item to status of Grafana", func() {
 			for _, cr := range crList {
-				err := crGrafana.AddNamespacedResource(ctx, k8sClient, cr.obj, cr.nr)
+				err := crGrafana.AddNamespacedResource(ctx, cl, cr.obj, cr.nr)
 				require.NoError(t, err)
 			}
 
 			im := &Grafana{}
-			err := k8sClient.Get(ctx, types.NamespacedName{
+			err := cl.Get(ctx, types.NamespacedName{
 				Namespace: crGrafana.Namespace,
 				Name:      crGrafana.Name,
 			}, im)
@@ -147,12 +147,12 @@ var _ = Describe("Grafana status NamespacedResourceList all CRs works", func() {
 			}
 
 			for _, cr := range crList {
-				err = crGrafana.RemoveNamespacedResource(ctx, k8sClient, cr.obj)
+				err = crGrafana.RemoveNamespacedResource(ctx, cl, cr.obj)
 				require.NoError(t, err)
 			}
 
 			result := &Grafana{}
-			err = k8sClient.Get(ctx, types.NamespacedName{
+			err = cl.Get(ctx, types.NamespacedName{
 				Namespace: crGrafana.Namespace,
 				Name:      crGrafana.Name,
 			}, result)
@@ -188,13 +188,13 @@ var _ = Describe("Grafana Status NamespacedResourceList CRUD", Ordered, func() {
 
 	BeforeAll(func() {
 		By("creating Grafana cr and updating the status before testing")
-		err := k8sClient.Create(ctx, g)
+		err := cl.Create(ctx, g)
 		require.NoError(t, err)
 
 		g.Status.Stage = OperatorStageComplete
 		g.Status.StageStatus = OperatorStageResultSuccess
 
-		err = k8sClient.Status().Update(ctx, g)
+		err = cl.Status().Update(ctx, g)
 		require.NoError(t, err)
 	})
 
@@ -203,7 +203,7 @@ var _ = Describe("Grafana Status NamespacedResourceList CRUD", Ordered, func() {
 		By("fetching latest Grafana manifest")
 		tmpGrafana := &Grafana{}
 
-		err := k8sClient.Get(ctx, types.NamespacedName{
+		err := cl.Get(ctx, types.NamespacedName{
 			Namespace: g.Namespace,
 			Name:      g.Name,
 		}, tmpGrafana)
@@ -248,11 +248,11 @@ var _ = Describe("Grafana Status NamespacedResourceList CRUD", Ordered, func() {
 		}
 
 		It("Can add new LibraryPanel entry when list is empty", func() {
-			err := g.AddNamespacedResource(ctx, k8sClient, lp1, lp1.NamespacedResource(lp1.Spec.CustomUID))
+			err := g.AddNamespacedResource(ctx, cl, lp1, lp1.NamespacedResource(lp1.Spec.CustomUID))
 			require.NoError(t, err)
 
 			result := &Grafana{}
-			err = k8sClient.Get(ctx, types.NamespacedName{
+			err = cl.Get(ctx, types.NamespacedName{
 				Namespace: g.Namespace,
 				Name:      g.Name,
 			}, result)
@@ -268,14 +268,14 @@ var _ = Describe("Grafana Status NamespacedResourceList CRUD", Ordered, func() {
 		})
 
 		It("Adds an additional LibraryPanel entries when list is not empty", func() {
-			err := g.AddNamespacedResource(ctx, k8sClient, lp2, lp2.NamespacedResource(lp2.Spec.CustomUID))
+			err := g.AddNamespacedResource(ctx, cl, lp2, lp2.NamespacedResource(lp2.Spec.CustomUID))
 			require.NoError(t, err)
 
-			err = g.AddNamespacedResource(ctx, k8sClient, lp3, lp3.NamespacedResource(lp3.Spec.CustomUID))
+			err = g.AddNamespacedResource(ctx, cl, lp3, lp3.NamespacedResource(lp3.Spec.CustomUID))
 			require.NoError(t, err)
 
 			result := &Grafana{}
-			err = k8sClient.Get(ctx, types.NamespacedName{
+			err = cl.Get(ctx, types.NamespacedName{
 				Namespace: g.Namespace,
 				Name:      g.Name,
 			}, result)
@@ -300,11 +300,11 @@ var _ = Describe("Grafana Status NamespacedResourceList CRUD", Ordered, func() {
 			assert.Equal(t, lp3.NamespacedResource(lp3.Spec.CustomUID), g.Status.LibraryPanels[idx])
 
 			// Remove middle entry
-			err := g.RemoveNamespacedResource(ctx, k8sClient, lp2)
+			err := g.RemoveNamespacedResource(ctx, cl, lp2)
 			require.NoError(t, err)
 
 			result := &Grafana{}
-			err = k8sClient.Get(ctx, types.NamespacedName{
+			err = cl.Get(ctx, types.NamespacedName{
 				Namespace: g.Namespace,
 				Name:      g.Name,
 			}, result)
@@ -331,14 +331,14 @@ var _ = Describe("Grafana Status NamespacedResourceList CRUD", Ordered, func() {
 			assert.NotEmpty(t, g.Status.LibraryPanels)
 			assert.Len(t, g.Status.LibraryPanels, 2)
 
-			err := g.RemoveNamespacedResource(ctx, k8sClient, lp1)
+			err := g.RemoveNamespacedResource(ctx, cl, lp1)
 			require.NoError(t, err)
 
-			err = g.RemoveNamespacedResource(ctx, k8sClient, lp3)
+			err = g.RemoveNamespacedResource(ctx, cl, lp3)
 			require.NoError(t, err)
 
 			result := &Grafana{}
-			err = k8sClient.Get(ctx, types.NamespacedName{
+			err = cl.Get(ctx, types.NamespacedName{
 				Namespace: g.Namespace,
 				Name:      g.Name,
 			}, result)
@@ -356,11 +356,11 @@ var _ = Describe("Grafana Status NamespacedResourceList CRUD", Ordered, func() {
 		It("Removes LibraryPanels from undefined list", func() {
 			assert.Empty(t, g.Status.LibraryPanels)
 
-			err := g.RemoveNamespacedResource(ctx, k8sClient, lp1)
+			err := g.RemoveNamespacedResource(ctx, cl, lp1)
 			require.NoError(t, err)
 
 			result := &Grafana{}
-			err = k8sClient.Get(ctx, types.NamespacedName{
+			err = cl.Get(ctx, types.NamespacedName{
 				Namespace: g.Namespace,
 				Name:      g.Name,
 			}, result)
@@ -402,22 +402,22 @@ var _ = Describe("Grafana Status NamespacedResourceList CRUD", Ordered, func() {
 		}
 
 		It("Does not add new Datasource when entry exists", func() {
-			err := g.AddNamespacedResource(ctx, k8sClient, ds1, ds1.NamespacedResource())
+			err := g.AddNamespacedResource(ctx, cl, ds1, ds1.NamespacedResource())
 			require.NoError(t, err)
 
 			// Intermediate
 			im := &Grafana{}
-			err = k8sClient.Get(ctx, types.NamespacedName{
+			err = cl.Get(ctx, types.NamespacedName{
 				Namespace: g.Namespace,
 				Name:      g.Name,
 			}, im)
 			require.NoError(t, err)
 
-			err = im.AddNamespacedResource(ctx, k8sClient, ds1, ds1.NamespacedResource())
+			err = im.AddNamespacedResource(ctx, cl, ds1, ds1.NamespacedResource())
 			require.NoError(t, err)
 
 			result := &Grafana{}
-			err = k8sClient.Get(ctx, types.NamespacedName{
+			err = cl.Get(ctx, types.NamespacedName{
 				Namespace: g.Namespace,
 				Name:      g.Name,
 			}, result)
@@ -433,19 +433,19 @@ var _ = Describe("Grafana Status NamespacedResourceList CRUD", Ordered, func() {
 		})
 
 		It("Updates existing Datasource on uid changed", func() {
-			err := g.AddNamespacedResource(ctx, k8sClient, ds2, ds2.NamespacedResource())
+			err := g.AddNamespacedResource(ctx, cl, ds2, ds2.NamespacedResource())
 			require.NoError(t, err)
 
-			err = k8sClient.Get(ctx, types.NamespacedName{
+			err = cl.Get(ctx, types.NamespacedName{
 				Namespace: g.Namespace,
 				Name:      g.Name,
 			}, g)
 			require.NoError(t, err)
 
-			err = g.AddNamespacedResource(ctx, k8sClient, ds3, ds3.NamespacedResource())
+			err = g.AddNamespacedResource(ctx, cl, ds3, ds3.NamespacedResource())
 			require.NoError(t, err)
 
-			err = k8sClient.Get(ctx, types.NamespacedName{
+			err = cl.Get(ctx, types.NamespacedName{
 				Namespace: g.Namespace,
 				Name:      g.Name,
 			}, g)
@@ -456,11 +456,11 @@ var _ = Describe("Grafana Status NamespacedResourceList CRUD", Ordered, func() {
 
 			// Update entry at the middle of the list
 			ds2.Spec.CustomUID = "ds-2-unique-identifier"
-			err = g.AddNamespacedResource(ctx, k8sClient, ds2, ds2.NamespacedResource())
+			err = g.AddNamespacedResource(ctx, cl, ds2, ds2.NamespacedResource())
 			require.NoError(t, err)
 
 			result := &Grafana{}
-			err = k8sClient.Get(ctx, types.NamespacedName{
+			err = cl.Get(ctx, types.NamespacedName{
 				Namespace: g.Namespace,
 				Name:      g.Name,
 			}, result)

@@ -96,10 +96,10 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 
 	removeSuspended(&cr.Status.Conditions)
 
-	resolver := content.NewContentResolver(cr, r.Client, content.WithDisabledSources([]content.ContentSourceType{
+	resolver := content.NewResolver(cr, r.Client, content.WithDisabledSources([]content.SourceType{
 		// grafana.com does not currently support hosting library panels for distribution, but perhaps
 		// this will change in the future.
-		content.ContentSourceTypeGrafanaCom,
+		content.SourceTypeGrafanaCom,
 	}))
 
 	// Retrieving the model before the loop ensures to exit early in case of failure and not fail once per matching instance

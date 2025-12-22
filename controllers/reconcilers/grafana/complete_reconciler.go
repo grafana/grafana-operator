@@ -16,9 +16,9 @@ type CompleteReconciler struct {
 	client client.Client
 }
 
-func NewCompleteReconciler(client client.Client) reconcilers.OperatorGrafanaReconciler {
+func NewCompleteReconciler(cl client.Client) reconcilers.OperatorGrafanaReconciler {
 	return &CompleteReconciler{
-		client: client,
+		client: cl,
 	}
 }
 

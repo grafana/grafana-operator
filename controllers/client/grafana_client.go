@@ -15,7 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, cr *v1beta1.Grafana) (*genapi.GrafanaHTTPAPI, error) {
+func NewGeneratedGrafanaClient(ctx context.Context, cl client.Client, cr *v1beta1.Grafana) (*genapi.GrafanaHTTPAPI, error) {
 	var timeout time.Duration
 	if cr.Spec.Client != nil && cr.Spec.Client.TimeoutSeconds != nil {
 		timeout = max(time.Duration(*cr.Spec.Client.TimeoutSeconds), 0)
@@ -23,7 +23,7 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, cr *v1beta1
 		timeout = 10
 	}
 
-	tlsConfig, err := buildTLSConfiguration(ctx, c, cr)
+	tlsConfig, err := buildTLSConfiguration(ctx, cl, cr)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, cr *v1beta1
 	}
 
 	// Secrets and ConfigMaps are not cached by default, get credentials as the last step.
-	credentials, err := getAdminCredentials(ctx, c, cr)
+	credentials, err := getAdminCredentials(ctx, cl, cr)
 	if err != nil {
 		return nil, err
 	}
@@ -65,14 +65,14 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, cr *v1beta1
 		cfg.BasicAuth = url.UserPassword(credentials.adminUser, credentials.adminPassword)
 	}
 
-	cl := genapi.NewHTTPClientWithConfig(nil, cfg)
+	gClient := genapi.NewHTTPClientWithConfig(nil, cfg)
 
-	runtime, ok := cl.Transport.(*httptransport.Runtime)
+	runtime, ok := gClient.Transport.(*httptransport.Runtime)
 	if !ok {
 		return nil, fmt.Errorf("casting client transport into *httptransport.Runtime to overwrite the default context")
 	}
 
 	runtime.Context = ctx
 
-	return cl, nil
+	return gClient, nil
 }

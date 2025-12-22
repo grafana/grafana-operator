@@ -43,7 +43,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	v1beta1 "github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 )
 
 const (
@@ -315,13 +315,13 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 	return grafana.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource())
 }
 
-func (r *GrafanaDatasourceReconciler) Exists(client *genapi.GrafanaHTTPAPI, uid, name string) (bool, string, error) {
-	datasources, err := client.Datasources.GetDataSources()
+func (r *GrafanaDatasourceReconciler) Exists(gClient *genapi.GrafanaHTTPAPI, uid, name string) (bool, string, error) {
+	items, err := gClient.Datasources.GetDataSources()
 	if err != nil {
 		return false, "", fmt.Errorf("fetching data sources: %w", err)
 	}
 
-	for _, datasource := range datasources.Payload {
+	for _, datasource := range items.Payload {
 		if datasource.UID == uid || datasource.Name == name {
 			return true, datasource.UID, nil
 		}
