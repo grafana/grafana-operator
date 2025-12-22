@@ -48,6 +48,12 @@ linters:
       min-len: 3
       min-occurrences: 3
 
+    gocritic:
+      enabled-checks:
+        - builtinShadow
+        - builtinShadowDecl
+        - importShadow
+
     gocyclo:
       min-complexity: 25
 
