@@ -65,14 +65,14 @@ func NewGeneratedGrafanaClient(ctx context.Context, c client.Client, cr *v1beta1
 		cfg.BasicAuth = url.UserPassword(credentials.adminUser, credentials.adminPassword)
 	}
 
-	cl := genapi.NewHTTPClientWithConfig(nil, cfg)
+	gClient := genapi.NewHTTPClientWithConfig(nil, cfg)
 
-	runtime, ok := cl.Transport.(*httptransport.Runtime)
+	runtime, ok := gClient.Transport.(*httptransport.Runtime)
 	if !ok {
 		return nil, fmt.Errorf("casting client transport into *httptransport.Runtime to overwrite the default context")
 	}
 
 	runtime.Context = ctx
 
-	return cl, nil
+	return gClient, nil
 }

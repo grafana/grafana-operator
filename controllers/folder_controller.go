@@ -264,11 +264,11 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 }
 
 // Check if the folder exists. Matches UID first and fall back to title. Title matching only works for non-nested folders
-func (r *GrafanaFolderReconciler) Exists(client *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaFolder) (bool, string, string, error) {
+func (r *GrafanaFolderReconciler) Exists(gClient *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaFolder) (bool, string, string, error) {
 	title := cr.GetTitle()
 	uid := cr.GetGrafanaUID()
 
-	uidResp, err := client.Folders.GetFolderByUID(uid)
+	uidResp, err := gClient.Folders.GetFolderByUID(uid)
 	if err == nil {
 		return true, uidResp.Payload.UID, uidResp.Payload.ParentUID, nil
 	}
@@ -284,7 +284,7 @@ func (r *GrafanaFolderReconciler) Exists(client *genapi.GrafanaHTTPAPI, cr *v1be
 	for {
 		params := folders.NewGetFoldersParams().WithPage(&page).WithLimit(&limit)
 
-		foldersResp, err := client.Folders.GetFolders(params)
+		foldersResp, err := gClient.Folders.GetFolders(params)
 		if err != nil {
 			return false, "", "", err
 		}
