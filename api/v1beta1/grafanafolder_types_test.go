@@ -117,36 +117,36 @@ var _ = Describe("Folder type", func() {
 		It("Should block adding uid field when missing", func() {
 			folder := newFolder("missing-uid", "")
 			By("Create new Folder without uid")
-			err := k8sClient.Create(ctx, folder)
+			err := cl.Create(ctx, folder)
 			require.NoError(t, err)
 
 			By("Adding a uid")
 			folder.Spec.CustomUID = "new-folder-uid"
-			err = k8sClient.Update(ctx, folder)
+			err = cl.Update(ctx, folder)
 			require.Error(t, err)
 		})
 
 		It("Should block removing uid field when set", func() {
 			folder := newFolder("existing-uid", "existing-uid")
 			By("Creating Folder with existing UID")
-			err := k8sClient.Create(ctx, folder)
+			err := cl.Create(ctx, folder)
 			require.NoError(t, err)
 
 			By("And setting UID to ''")
 			folder.Spec.CustomUID = ""
-			err = k8sClient.Update(ctx, folder)
+			err = cl.Update(ctx, folder)
 			require.Error(t, err)
 		})
 
 		It("Should block changing value of uid", func() {
 			folder := newFolder("removing-uid", "existing-uid")
 			By("Create new Folder with existing UID")
-			err := k8sClient.Create(ctx, folder)
+			err := cl.Create(ctx, folder)
 			require.NoError(t, err)
 
 			By("Changing the existing UID")
 			folder.Spec.CustomUID = "new-folder-uid"
-			err = k8sClient.Update(ctx, folder)
+			err = cl.Update(ctx, folder)
 			require.Error(t, err)
 		})
 	})

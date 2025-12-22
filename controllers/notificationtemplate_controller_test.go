@@ -75,7 +75,7 @@ var _ = Describe("NotificationTemplate Reconciler: Provoke Conditions", func() {
 				Spec:       tt.spec,
 			}
 
-			r := &GrafanaNotificationTemplateReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+			r := &GrafanaNotificationTemplateReconciler{Client: cl, Scheme: cl.Scheme()}
 
 			reconcileAndValidateCondition(r, cr, tt.want, tt.wantErr)
 		})

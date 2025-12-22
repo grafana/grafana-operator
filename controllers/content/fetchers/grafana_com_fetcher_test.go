@@ -21,7 +21,7 @@ func TestFetchDashboardFromGrafanaCom(t *testing.T) {
 		Status: v1beta1.GrafanaDashboardStatus{},
 	}
 
-	fetchedDashboard, err := FetchFromGrafanaCom(context.Background(), dashboard, k8sClient)
+	fetchedDashboard, err := FetchFromGrafanaCom(context.Background(), dashboard, cl)
 	require.NoError(t, err)
 	assert.NotNil(t, fetchedDashboard, "Fetched dashboard shouldn't be empty")
 	assert.GreaterOrEqual(t, *dashboard.Spec.GrafanaCom.Revision, 42, "At least 42 revisions exist for dashboard 1860 as of 2024-12-22")

@@ -99,7 +99,7 @@ var _ = Describe("URL fetcher", Ordered, func() {
 				Status: v1beta1.GrafanaDashboardStatus{},
 			}
 
-			got, err := FetchFromURL(context.Background(), dashboard, k8sClient, nil)
+			got, err := FetchFromURL(context.Background(), dashboard, cl, nil)
 			require.NoError(t, err)
 
 			assert.Equal(t, want, got)
@@ -129,10 +129,10 @@ var _ = Describe("URL fetcher", Ordered, func() {
 				Status: v1beta1.GrafanaDashboardStatus{},
 			}
 
-			err = k8sClient.Create(context.Background(), credentialsSecret)
+			err = cl.Create(context.Background(), credentialsSecret)
 			require.NoError(t, err)
 
-			got, err := FetchFromURL(context.Background(), dashboard, k8sClient, nil)
+			got, err := FetchFromURL(context.Background(), dashboard, cl, nil)
 			require.NoError(t, err)
 
 			assert.Equal(t, want, got)

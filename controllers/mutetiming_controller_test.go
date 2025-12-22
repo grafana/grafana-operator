@@ -89,7 +89,7 @@ var _ = Describe("MuteTiming Reconciler: Provoke Conditions", func() {
 				Spec:       tt.spec,
 			}
 
-			r := &GrafanaMuteTimingReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+			r := &GrafanaMuteTimingReconciler{Client: cl, Scheme: cl.Scheme()}
 
 			reconcileAndValidateCondition(r, cr, tt.want, tt.wantErr)
 		})

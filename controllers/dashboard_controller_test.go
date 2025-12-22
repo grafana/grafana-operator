@@ -135,7 +135,7 @@ var _ = Describe("Dashboard Reconciler: Provoke Conditions", func() {
 				Spec:       tt.spec,
 			}
 
-			r := &GrafanaDashboardReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+			r := &GrafanaDashboardReconciler{Client: cl, Scheme: cl.Scheme()}
 
 			reconcileAndValidateCondition(r, cr, tt.want, tt.wantErr)
 		})
@@ -169,7 +169,7 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 	})
 
 	It("updates dashboard in Grafana upon .spec.url change", func() {
-		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, cl, externalGrafanaCr)
 		require.NoError(t, err)
 
 		cr := &v1beta1.GrafanaDashboard{
@@ -191,13 +191,13 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 			Name:      cr.Name,
 		}
 
-		r := &GrafanaDashboardReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+		r := &GrafanaDashboardReconciler{Client: cl, Scheme: cl.Scheme()}
 		req := tk8s.GetRequest(t, cr)
 
 		// First revision
 		cr.Spec.URL = ts.URL + endpoint1
 
-		err = k8sClient.Create(testCtx, cr)
+		err = cl.Create(testCtx, cr)
 		require.NoError(t, err)
 
 		_, err = r.Reconcile(testCtx, req)
@@ -210,12 +210,12 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 
 		// Second revision
 		cr = &v1beta1.GrafanaDashboard{}
-		err = k8sClient.Get(testCtx, key, cr)
+		err = cl.Get(testCtx, key, cr)
 		require.NoError(t, err)
 
 		cr.Spec.URL = ts.URL + endpoint2
 
-		err = k8sClient.Update(testCtx, cr)
+		err = cl.Update(testCtx, cr)
 		require.NoError(t, err)
 
 		_, err = r.Reconcile(testCtx, req)
@@ -228,7 +228,7 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 		assert.Contains(t, dash.String(), title2)
 
 		// Cleanup
-		err = k8sClient.Delete(testCtx, cr)
+		err = cl.Delete(testCtx, cr)
 		require.NoError(t, err)
 
 		_, err = r.Reconcile(testCtx, req)
@@ -236,7 +236,7 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 	})
 
 	It("mitigates dashboard drift when it occurs", func() {
-		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, cl, externalGrafanaCr)
 		require.NoError(t, err)
 
 		cr := &v1beta1.GrafanaDashboard{
@@ -256,13 +256,13 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 		// Make it long enough, so we can play with reconciliation
 		cr.Spec.ResyncPeriod.Duration = 5 * time.Minute
 
-		r := &GrafanaDashboardReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+		r := &GrafanaDashboardReconciler{Client: cl, Scheme: cl.Scheme()}
 		req := tk8s.GetRequest(t, cr)
 
 		// Create dashboard
 		cr.Spec.URL = ts.URL + endpoint1
 
-		err = k8sClient.Create(testCtx, cr)
+		err = cl.Create(testCtx, cr)
 		require.NoError(t, err)
 
 		_, err = r.Reconcile(testCtx, req)
@@ -302,7 +302,7 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 		assert.Contains(t, dash.String(), title1) // Make sure the drift is gone now
 
 		// Cleanup
-		err = k8sClient.Delete(testCtx, cr)
+		err = cl.Delete(testCtx, cr)
 		require.NoError(t, err)
 
 		_, err = r.Reconcile(testCtx, req)

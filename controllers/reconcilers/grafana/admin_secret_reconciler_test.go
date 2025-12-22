@@ -17,7 +17,7 @@ var _ = Describe("Reconcile AdminSecret", func() {
 	t := GinkgoT()
 
 	It("runs successfully with disabled default admin secret", func() {
-		r := NewAdminSecretReconciler(k8sClient)
+		r := NewAdminSecretReconciler(cl)
 		cr := &v1beta1.Grafana{
 			Spec: v1beta1.GrafanaSpec{
 				DisableDefaultAdminSecret: true,

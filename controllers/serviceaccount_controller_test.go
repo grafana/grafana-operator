@@ -106,7 +106,7 @@ var _ = Describe("ServiceAccount Reconciler: Provoke Conditions", func() {
 			cr.Spec.Role = "Viewer"
 			cr.Spec.ResyncPeriod = metav1.Duration{Duration: 60 * time.Second}
 
-			r := &GrafanaServiceAccountReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+			r := &GrafanaServiceAccountReconciler{Client: cl, Scheme: cl.Scheme()}
 
 			reconcileAndValidateCondition(r, cr, tt.want, tt.wantErr)
 		})
@@ -131,7 +131,7 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 
 		originalStatus := cr.Status.DeepCopy()
 
-		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, cl, externalGrafanaCr)
 		require.NoError(t, err)
 
 		_, err = gClient.ServiceAccounts.DeleteServiceAccount(cr.Status.Account.ID) //nolint:errcheck
@@ -170,7 +170,7 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 				Namespace: cr.Status.Account.Tokens[0].Secret.Namespace,
 			},
 		}
-		err := k8sClient.Get(testCtx, types.NamespacedName{
+		err := cl.Get(testCtx, types.NamespacedName{
 			Name:      cr.Status.Account.Tokens[0].Secret.Name,
 			Namespace: cr.Status.Account.Tokens[0].Secret.Namespace,
 		}, &originalSecret)
@@ -178,10 +178,10 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 		require.NotNil(t, originalSecret.Data)
 
 		// Delete secret
-		err = k8sClient.Delete(testCtx, &originalSecret)
+		err = cl.Delete(testCtx, &originalSecret)
 		require.NoError(t, err)
 
-		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, cl, externalGrafanaCr)
 		require.NoError(t, err)
 
 		// Expect secret to be recreated during reconcile
@@ -194,7 +194,7 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 				Namespace: cr.Status.Account.Tokens[0].Secret.Namespace,
 			},
 		}
-		err = k8sClient.Get(testCtx, types.NamespacedName{
+		err = cl.Get(testCtx, types.NamespacedName{
 			Name:      cr.Status.Account.Tokens[0].Secret.Name,
 			Namespace: cr.Status.Account.Tokens[0].Secret.Namespace,
 		}, &updatedSecret)
@@ -224,7 +224,7 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 
 		originalStatus := cr.Status.DeepCopy()
 
-		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, cl, externalGrafanaCr)
 		require.NoError(t, err)
 
 		_, err = gClient.ServiceAccounts.UpdateServiceAccount( //nolint:errcheck
@@ -273,10 +273,10 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 		cr.Spec.Tokens = append(cr.Spec.Tokens, v1beta1.GrafanaServiceAccountTokenSpec{
 			Name: "second",
 		})
-		err := k8sClient.Update(testCtx, cr)
+		err := cl.Update(testCtx, cr)
 		require.NoError(t, err)
 
-		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, cl, externalGrafanaCr)
 		require.NoError(t, err)
 
 		reconcileAndCompareSpecWithStatus(t, cr, r, gClient)
@@ -308,10 +308,10 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 		originalStatus := cr.Status.DeepCopy()
 
 		cr.Spec.Tokens[0].Name = "new-token-name"
-		err := k8sClient.Update(testCtx, cr)
+		err := cl.Update(testCtx, cr)
 		require.NoError(t, err)
 
-		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, cl, externalGrafanaCr)
 		require.NoError(t, err)
 
 		reconcileAndCompareSpecWithStatus(t, cr, r, gClient)
@@ -344,10 +344,10 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 		originalStatus := cr.Status.DeepCopy()
 
 		cr.Spec.Tokens[0].SecretName = "new-secret-name"
-		err := k8sClient.Update(testCtx, cr)
+		err := cl.Update(testCtx, cr)
 		require.NoError(t, err)
 
-		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, cl, externalGrafanaCr)
 		require.NoError(t, err)
 
 		reconcileAndCompareSpecWithStatus(t, cr, r, gClient)
@@ -359,7 +359,7 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 				Namespace: originalStatus.Account.Tokens[0].Secret.Namespace,
 			},
 		}
-		err = k8sClient.Get(testCtx, types.NamespacedName{
+		err = cl.Get(testCtx, types.NamespacedName{
 			Name:      originalStatus.Account.Tokens[0].Secret.Name,
 			Namespace: originalStatus.Account.Tokens[0].Secret.Namespace,
 		}, &originalSecret)
@@ -401,10 +401,10 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 
 		cr.Spec.Tokens[0].Expires.Time = time.Now().Add(2 * time.Hour)
 		cr.Spec.Tokens[1].Expires = nil
-		err := k8sClient.Update(testCtx, cr)
+		err := cl.Update(testCtx, cr)
 		require.NoError(t, err)
 
-		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, cl, externalGrafanaCr)
 		require.NoError(t, err)
 
 		reconcileAndCompareSpecWithStatus(t, cr, r, gClient)
@@ -423,20 +423,20 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 func createAndReconcileCR(t FullGinkgoTInterface, cr *v1beta1.GrafanaServiceAccount) *GrafanaServiceAccountReconciler {
 	req := tk8s.GetRequest(t, cr)
 
-	r := &GrafanaServiceAccountReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+	r := &GrafanaServiceAccountReconciler{Client: cl, Scheme: cl.Scheme()}
 
 	// Apply defaults
 	cr.Spec.InstanceName = grafanaName
 	cr.Spec.Role = "Viewer"
 	cr.Spec.ResyncPeriod = metav1.Duration{Duration: time.Minute}
 
-	err := k8sClient.Create(testCtx, cr)
+	err := cl.Create(testCtx, cr)
 	require.NoError(t, err)
 
 	_, err = r.Reconcile(testCtx, req)
 	require.NoError(t, err)
 
-	err = k8sClient.Get(testCtx, req.NamespacedName, cr)
+	err = cl.Get(testCtx, req.NamespacedName, cr)
 	require.NoError(t, err)
 
 	return r
@@ -449,7 +449,7 @@ func reconcileAndCompareSpecWithStatus(t FullGinkgoTInterface, cr *v1beta1.Grafa
 	_, err := r.Reconcile(testCtx, req)
 	require.NoError(t, err)
 
-	err = k8sClient.Get(testCtx, req.NamespacedName, cr)
+	err = cl.Get(testCtx, req.NamespacedName, cr)
 	require.NoError(t, err)
 
 	// Verify status reflects spec
@@ -495,7 +495,7 @@ func reconcileAndCompareSpecWithStatus(t FullGinkgoTInterface, cr *v1beta1.Grafa
 			Namespace: tkStatus.Secret.Namespace,
 		}
 		s := corev1.Secret{}
-		err = k8sClient.Get(testCtx, secretRequest, &s)
+		err = cl.Get(testCtx, secretRequest, &s)
 		require.NoError(t, err)
 		require.NotNil(t, s)
 		require.NotEmpty(t, s.Data["token"])
@@ -505,7 +505,7 @@ func reconcileAndCompareSpecWithStatus(t FullGinkgoTInterface, cr *v1beta1.Grafa
 func deleteCR(t FullGinkgoTInterface, cr *v1beta1.GrafanaServiceAccount, r *GrafanaServiceAccountReconciler) {
 	req := tk8s.GetRequest(t, cr)
 
-	err := k8sClient.Delete(testCtx, cr)
+	err := cl.Delete(testCtx, cr)
 	require.NoError(t, err)
 
 	_, err = r.Reconcile(testCtx, req)
@@ -541,13 +541,13 @@ var _ = Describe("ServiceAccount Controller: Integration Tests", func() {
 			}
 
 			t := GinkgoT()
-			err := k8sClient.Create(ctx, sa)
+			err := cl.Create(ctx, sa)
 			require.NoError(t, err)
 
 			// Reconcile
 			r := &GrafanaServiceAccountReconciler{
-				Client: k8sClient,
-				Scheme: k8sClient.Scheme(),
+				Client: cl,
+				Scheme: cl.Scheme(),
 			}
 
 			req := tk8s.GetRequest(t, sa)
@@ -556,7 +556,7 @@ var _ = Describe("ServiceAccount Controller: Integration Tests", func() {
 
 			// Check that the secret was created with correct metadata and data
 			secret := &corev1.Secret{}
-			err = k8sClient.Get(ctx, types.NamespacedName{
+			err = cl.Get(ctx, types.NamespacedName{
 				Name:      secretName,
 				Namespace: namespace,
 			}, secret)
@@ -568,7 +568,7 @@ var _ = Describe("ServiceAccount Controller: Integration Tests", func() {
 
 			// Check the status
 			updatedSA := &v1beta1.GrafanaServiceAccount{}
-			err = k8sClient.Get(ctx, types.NamespacedName{
+			err = cl.Get(ctx, types.NamespacedName{
 				Name:      name,
 				Namespace: namespace,
 			}, updatedSA)
@@ -589,7 +589,7 @@ var _ = Describe("ServiceAccount Controller: Integration Tests", func() {
 
 			// Verify that the service account and token were actually created in Grafana
 			// Get Grafana client
-			gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, k8sClient, externalGrafanaCr)
+			gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, cl, externalGrafanaCr)
 			require.NoError(t, err)
 
 			// Retrieve the service account from Grafana API

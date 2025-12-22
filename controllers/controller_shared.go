@@ -249,7 +249,7 @@ func updatePluginConfigMap(cm *corev1.ConfigMap, value []byte, key string, depre
 	return isUpdated
 }
 
-// TODO Refactor to use scheme from k8sClient.Scheme() as it's the same anyways
+// TODO Refactor to use scheme from cl.Scheme() as it's the same anyways
 func ReconcilePlugins(ctx context.Context, cl client.Client, scheme *runtime.Scheme, grafana *v1beta1.Grafana, plugins v1beta1.PluginList, cmKey string, cmDeprecatedKey string) error {
 	cm := resources.GetPluginsConfigMap(grafana, scheme)
 	selector := client.ObjectKey{
@@ -263,7 +263,7 @@ func ReconcilePlugins(ctx context.Context, cl client.Client, scheme *runtime.Sch
 	}
 
 	// Even though model.GetPluginsConfigMap already sets an owner reference, it gets overwritten
-	// when we fetch the actual contents of the ConfigMap using k8sClient, so we need to set it here again
+	// when we fetch the actual contents of the ConfigMap using cl, so we need to set it here again
 	controllerutil.SetControllerReference(grafana, cm, scheme) //nolint:errcheck
 
 	val := []byte{}

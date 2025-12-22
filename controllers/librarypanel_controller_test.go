@@ -90,7 +90,7 @@ var _ = Describe("LibraryPanel Reconciler: Provoke Conditions", func() {
 				Spec:       tt.spec,
 			}
 
-			r := &GrafanaLibraryPanelReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+			r := &GrafanaLibraryPanelReconciler{Client: cl, Scheme: cl.Scheme()}
 
 			reconcileAndValidateCondition(r, cr, tt.want, tt.wantErr)
 		})
@@ -124,7 +124,7 @@ var _ = Describe("LibraryPanel Reconciler", Ordered, func() {
 	})
 
 	It("updates librarypanel in Grafana upon .spec.url change", func() {
-		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, k8sClient, externalGrafanaCr)
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, cl, externalGrafanaCr)
 		require.NoError(t, err)
 
 		cr := &v1beta1.GrafanaLibraryPanel{
@@ -146,13 +146,13 @@ var _ = Describe("LibraryPanel Reconciler", Ordered, func() {
 			Name:      cr.Name,
 		}
 
-		r := &GrafanaLibraryPanelReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+		r := &GrafanaLibraryPanelReconciler{Client: cl, Scheme: cl.Scheme()}
 		req := tk8s.GetRequest(t, cr)
 
 		// First revision
 		cr.Spec.URL = ts.URL + endpoint1
 
-		err = k8sClient.Create(testCtx, cr)
+		err = cl.Create(testCtx, cr)
 		require.NoError(t, err)
 
 		_, err = r.Reconcile(testCtx, req)
@@ -165,12 +165,12 @@ var _ = Describe("LibraryPanel Reconciler", Ordered, func() {
 
 		// Second revision
 		cr = &v1beta1.GrafanaLibraryPanel{}
-		err = k8sClient.Get(testCtx, key, cr)
+		err = cl.Get(testCtx, key, cr)
 		require.NoError(t, err)
 
 		cr.Spec.URL = ts.URL + endpoint2
 
-		err = k8sClient.Update(testCtx, cr)
+		err = cl.Update(testCtx, cr)
 		require.NoError(t, err)
 
 		_, err = r.Reconcile(testCtx, req)
@@ -183,7 +183,7 @@ var _ = Describe("LibraryPanel Reconciler", Ordered, func() {
 		assert.Contains(t, panel.String(), name2)
 
 		// Cleanup
-		err = k8sClient.Delete(testCtx, cr)
+		err = cl.Delete(testCtx, cr)
 		require.NoError(t, err)
 
 		_, err = r.Reconcile(testCtx, req)

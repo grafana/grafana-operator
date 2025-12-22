@@ -44,11 +44,11 @@ var _ = Describe("ContactPoint type", func() {
 			contactpoint := newContactPoint("adding-name")
 			contactpoint.Spec.Type = webhookType
 
-			err := k8sClient.Create(t.Context(), contactpoint)
+			err := cl.Create(t.Context(), contactpoint)
 			require.NoError(t, err)
 
 			contactpoint.Spec.Name = "update-name"
-			err = k8sClient.Update(t.Context(), contactpoint)
+			err = cl.Update(t.Context(), contactpoint)
 			require.Error(t, err)
 		})
 
@@ -57,11 +57,11 @@ var _ = Describe("ContactPoint type", func() {
 			contactpoint.Spec.Type = webhookType
 			contactpoint.Spec.Name = "initial-name"
 
-			err := k8sClient.Create(t.Context(), contactpoint)
+			err := cl.Create(t.Context(), contactpoint)
 			require.NoError(t, err)
 
 			contactpoint.Spec.Name = ""
-			err = k8sClient.Update(t.Context(), contactpoint)
+			err = cl.Update(t.Context(), contactpoint)
 			require.Error(t, err)
 		})
 
@@ -70,11 +70,11 @@ var _ = Describe("ContactPoint type", func() {
 			contactpoint.Spec.Type = webhookType
 			contactpoint.Spec.Name = "initial-name"
 
-			err := k8sClient.Create(t.Context(), contactpoint)
+			err := cl.Create(t.Context(), contactpoint)
 			require.NoError(t, err)
 
 			contactpoint.Spec.Name = "new-name"
-			err = k8sClient.Update(t.Context(), contactpoint)
+			err = cl.Update(t.Context(), contactpoint)
 			require.Error(t, err)
 		})
 	})
@@ -87,11 +87,11 @@ var _ = Describe("ContactPoint type", func() {
 			contactpoint.Spec.Type = webhookType
 			contactpoint.Spec.Editable = false
 
-			err := k8sClient.Create(t.Context(), contactpoint)
+			err := cl.Create(t.Context(), contactpoint)
 			require.NoError(t, err)
 
 			contactpoint.Spec.Editable = true
-			err = k8sClient.Update(t.Context(), contactpoint)
+			err = cl.Update(t.Context(), contactpoint)
 			require.Error(t, err)
 		})
 
@@ -100,11 +100,11 @@ var _ = Describe("ContactPoint type", func() {
 			contactpoint.Spec.Type = webhookType
 			contactpoint.Spec.Editable = true
 
-			err := k8sClient.Create(t.Context(), contactpoint)
+			err := cl.Create(t.Context(), contactpoint)
 			require.NoError(t, err)
 
 			contactpoint.Spec.Editable = false
-			err = k8sClient.Update(t.Context(), contactpoint)
+			err = cl.Update(t.Context(), contactpoint)
 			require.Error(t, err)
 		})
 	})
@@ -116,7 +116,7 @@ var _ = Describe("ContactPoint type", func() {
 			t := GinkgoT()
 
 			contactpoint := newContactPoint("missing-receivers")
-			err := k8sClient.Create(t.Context(), contactpoint)
+			err := cl.Create(t.Context(), contactpoint)
 			require.NoError(t, err)
 		})
 
@@ -127,7 +127,7 @@ var _ = Describe("ContactPoint type", func() {
 			contactpoint.Spec.Type = webhookType
 			contactpoint.Spec.Settings = &settings
 
-			err := k8sClient.Create(t.Context(), contactpoint)
+			err := cl.Create(t.Context(), contactpoint)
 			require.NoError(t, err)
 		})
 
@@ -139,7 +139,7 @@ var _ = Describe("ContactPoint type", func() {
 				Type:     "webhook",
 				Settings: &settings,
 			}}
-			err := k8sClient.Create(t.Context(), contactpoint)
+			err := cl.Create(t.Context(), contactpoint)
 			require.NoError(t, err)
 		})
 
@@ -154,7 +154,7 @@ var _ = Describe("ContactPoint type", func() {
 				Settings: &settings,
 			}}
 
-			err := k8sClient.Create(t.Context(), contactpoint)
+			err := cl.Create(t.Context(), contactpoint)
 			require.NoError(t, err)
 		})
 	})

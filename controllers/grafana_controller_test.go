@@ -80,10 +80,10 @@ var _ = Describe("Grafana Reconciler: Provoke Conditions", func() {
 				Spec:       tt.spec,
 			}
 
-			err := k8sClient.Create(testCtx, cr)
+			err := cl.Create(testCtx, cr)
 			require.NoError(t, err)
 
-			r := GrafanaReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+			r := GrafanaReconciler{Client: cl, Scheme: cl.Scheme()}
 			req := tk8s.GetRequest(t, cr)
 
 			_, err = r.Reconcile(testCtx, req)

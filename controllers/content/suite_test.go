@@ -32,8 +32,8 @@ import (
 )
 
 var (
-	cfg       *rest.Config
-	k8sClient client.Client
+	cfg *rest.Config
+	cl  client.Client
 )
 
 // NopContentResource is intended for testing only.
@@ -93,7 +93,7 @@ var _ = BeforeSuite(func() {
 
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
-	k8sClient, err := client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	cl, err := client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	require.NoError(t, err)
-	require.NotNil(t, k8sClient)
+	require.NotNil(t, cl)
 })

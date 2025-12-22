@@ -62,36 +62,36 @@ var _ = Describe("NotificationPolicy type", func() {
 		It("Should block adding editable field when missing", func() {
 			notificationpolicy := newNotificationPolicy("missing-editable", nil)
 			By("Create new NotificationPolicy without editable")
-			err := k8sClient.Create(ctx, notificationpolicy)
+			err := cl.Create(ctx, notificationpolicy)
 			require.NoError(t, err)
 
 			By("Adding a editable")
 			notificationpolicy.Spec.Editable = refTrue
-			err = k8sClient.Update(ctx, notificationpolicy)
+			err = cl.Update(ctx, notificationpolicy)
 			require.Error(t, err)
 		})
 
 		It("Should block removing editable field when set", func() {
 			notificationpolicy := newNotificationPolicy("existing-editable", refTrue)
 			By("Creating NotificationPolicy with existing editable")
-			err := k8sClient.Create(ctx, notificationpolicy)
+			err := cl.Create(ctx, notificationpolicy)
 			require.NoError(t, err)
 
 			By("And setting editable to ''")
 			notificationpolicy.Spec.Editable = nil
-			err = k8sClient.Update(ctx, notificationpolicy)
+			err = cl.Update(ctx, notificationpolicy)
 			require.Error(t, err)
 		})
 
 		It("Should block changing value of editable", func() {
 			notificationpolicy := newNotificationPolicy("removing-editable", refTrue)
 			By("Create new NotificationPolicy with existing editable")
-			err := k8sClient.Create(ctx, notificationpolicy)
+			err := cl.Create(ctx, notificationpolicy)
 			require.NoError(t, err)
 
 			By("Changing the existing editable")
 			notificationpolicy.Spec.Editable = refFalse
-			err = k8sClient.Update(ctx, notificationpolicy)
+			err = cl.Update(ctx, notificationpolicy)
 			require.Error(t, err)
 		})
 	})
@@ -104,7 +104,7 @@ var _ = Describe("NotificationPolicy type", func() {
 			np := newNotificationPolicy("invalid-route-fields", nil)
 			np.Spec.Route.Continue = true
 
-			err := k8sClient.Create(ctx, np)
+			err := cl.Create(ctx, np)
 			require.Error(t, err)
 			assert.ErrorContains(t, err, invalidFieldErr)
 		})
@@ -113,7 +113,7 @@ var _ = Describe("NotificationPolicy type", func() {
 			np := newNotificationPolicy("invalid-route-fields", nil)
 			np.Spec.Route.ActiveTimeIntervals = []string{"any-string"}
 
-			err := k8sClient.Create(ctx, np)
+			err := cl.Create(ctx, np)
 			require.Error(t, err)
 			assert.ErrorContains(t, err, invalidFieldErr)
 		})
@@ -122,7 +122,7 @@ var _ = Describe("NotificationPolicy type", func() {
 			np := newNotificationPolicy("invalid-route-fields", nil)
 			np.Spec.Route.MuteTimeIntervals = []string{"any-string"}
 
-			err := k8sClient.Create(ctx, np)
+			err := cl.Create(ctx, np)
 			require.Error(t, err)
 			assert.ErrorContains(t, err, invalidFieldErr)
 		})
@@ -131,7 +131,7 @@ var _ = Describe("NotificationPolicy type", func() {
 			np := newNotificationPolicy("invalid-route-fields", nil)
 			np.Spec.Route.MatchRe = models.MatchRegexps{"match": "string"}
 
-			err := k8sClient.Create(ctx, np)
+			err := cl.Create(ctx, np)
 			require.Error(t, err)
 			assert.ErrorContains(t, err, invalidFieldErr)
 		})
@@ -141,7 +141,7 @@ var _ = Describe("NotificationPolicy type", func() {
 			np.Spec.Route.Matchers = Matchers{&Matcher{}}
 			// Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: ptr.To("team"), Value: "A", IsEqual: true}},
 
-			err := k8sClient.Create(ctx, np)
+			err := cl.Create(ctx, np)
 			require.Error(t, err)
 			assert.ErrorContains(t, err, invalidFieldErr)
 		})
@@ -150,7 +150,7 @@ var _ = Describe("NotificationPolicy type", func() {
 			np := newNotificationPolicy("invalid-route-fields", nil)
 			np.Spec.Route.ObjectMatchers = models.ObjectMatchers{[]string{"any"}}
 
-			err := k8sClient.Create(ctx, np)
+			err := cl.Create(ctx, np)
 			require.Error(t, err)
 			assert.ErrorContains(t, err, invalidFieldErr)
 		})
