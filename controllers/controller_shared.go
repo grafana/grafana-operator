@@ -91,7 +91,7 @@ func defaultRateLimiter() workqueue.TypedRateLimiter[reconcile.Request] {
 // Only matching instances in the scope of the resource are returned
 // Resources with allowCrossNamespaceImport expands the scope to the entire cluster
 // Intended to be used in reconciler functions
-func GetScopedMatchingInstances(ctx context.Context, k8sClient client.Client, cr v1beta1.CommonResource) ([]v1beta1.Grafana, error) {
+func GetScopedMatchingInstances(ctx context.Context, cl client.Client, cr v1beta1.CommonResource) ([]v1beta1.Grafana, error) {
 	log := logf.FromContext(ctx)
 	instanceSelector := cr.MatchLabels()
 
@@ -112,7 +112,7 @@ func GetScopedMatchingInstances(ctx context.Context, k8sClient client.Client, cr
 
 	var list v1beta1.GrafanaList
 
-	err := k8sClient.List(ctx, &list, opts...)
+	err := cl.List(ctx, &list, opts...)
 	if err != nil {
 		return []v1beta1.Grafana{}, err
 	}
@@ -154,7 +154,7 @@ func GetScopedMatchingInstances(ctx context.Context, k8sClient client.Client, cr
 }
 
 // getFolderUID returns the folderUID from an existing GrafanaFolder CR within the same namespace
-func getFolderUID(ctx context.Context, k8sClient client.Client, ref v1beta1.FolderReferencer) (string, error) {
+func getFolderUID(ctx context.Context, cl client.Client, ref v1beta1.FolderReferencer) (string, error) {
 	if ref.FolderUID() != "" {
 		return ref.FolderUID(), nil
 	}
@@ -165,7 +165,7 @@ func getFolderUID(ctx context.Context, k8sClient client.Client, ref v1beta1.Fold
 
 	folder := &v1beta1.GrafanaFolder{}
 
-	err := k8sClient.Get(ctx, client.ObjectKey{
+	err := cl.Get(ctx, client.ObjectKey{
 		Namespace: ref.FolderNamespace(),
 		Name:      ref.FolderRef(),
 	}, folder)
@@ -250,14 +250,14 @@ func updatePluginConfigMap(cm *corev1.ConfigMap, value []byte, key string, depre
 }
 
 // TODO Refactor to use scheme from k8sClient.Scheme() as it's the same anyways
-func ReconcilePlugins(ctx context.Context, k8sClient client.Client, scheme *runtime.Scheme, grafana *v1beta1.Grafana, plugins v1beta1.PluginList, cmKey string, cmDeprecatedKey string) error {
+func ReconcilePlugins(ctx context.Context, cl client.Client, scheme *runtime.Scheme, grafana *v1beta1.Grafana, plugins v1beta1.PluginList, cmKey string, cmDeprecatedKey string) error {
 	cm := resources.GetPluginsConfigMap(grafana, scheme)
 	selector := client.ObjectKey{
 		Namespace: cm.Namespace,
 		Name:      cm.Name,
 	}
 
-	err := k8sClient.Get(ctx, selector, cm)
+	err := cl.Get(ctx, selector, cm)
 	if err != nil {
 		return err
 	}
@@ -280,7 +280,7 @@ func ReconcilePlugins(ctx context.Context, k8sClient client.Client, scheme *runt
 	isUpdated := updatePluginConfigMap(cm, val, cmKey, cmDeprecatedKey)
 
 	if isUpdated {
-		return k8sClient.Update(ctx, cm)
+		return cl.Update(ctx, cm)
 	}
 
 	return nil

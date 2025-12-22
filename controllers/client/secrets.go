@@ -9,7 +9,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func GetValueFromSecretKey(ctx context.Context, c client.Client, namespace string, keySelector *corev1.SecretKeySelector) ([]byte, error) {
+func GetValueFromSecretKey(ctx context.Context, cl client.Client, namespace string, keySelector *corev1.SecretKeySelector) ([]byte, error) {
 	if keySelector == nil {
 		return nil, errors.New("empty secret key selector")
 	}
@@ -21,7 +21,7 @@ func GetValueFromSecretKey(ctx context.Context, c client.Client, namespace strin
 		Namespace: namespace,
 	}
 
-	err := c.Get(ctx, selector, secret)
+	err := cl.Get(ctx, selector, secret)
 	if err != nil {
 		return nil, err
 	}
