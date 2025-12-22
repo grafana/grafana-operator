@@ -428,7 +428,7 @@ func createAndReconcileCR(t FullGinkgoTInterface, cr *v1beta1.GrafanaServiceAcco
 	// Apply defaults
 	cr.Spec.InstanceName = grafanaName
 	cr.Spec.Role = "Viewer"
-	cr.Spec.ResyncPeriod = metav1.Duration{Duration: 60 * time.Second}
+	cr.Spec.ResyncPeriod = metav1.Duration{Duration: time.Minute}
 
 	err := k8sClient.Create(testCtx, cr)
 	require.NoError(t, err)
