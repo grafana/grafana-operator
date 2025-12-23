@@ -470,7 +470,7 @@ func getNamespaceConfigSelector(restConfig *rest.Config, selector string, labelS
 
 	cl, err := client.New(restConfig, client.Options{})
 	if err != nil {
-		setupLog.Error(err, "Failed to get watch namespaces")
+		setupLog.Error(err, "failed to get watch namespaces")
 	}
 
 	nsList := &corev1.NamespaceList{}
@@ -480,7 +480,7 @@ func getNamespaceConfigSelector(restConfig *rest.Config, selector string, labelS
 
 	err = cl.List(context.Background(), nsList, listOpts...)
 	if err != nil {
-		setupLog.Error(err, "Failed to get watch namespaces")
+		setupLog.Error(err, "failed to get watch namespaces")
 	}
 
 	defaultNamespaces := map[string]cache.Config{}
