@@ -461,6 +461,13 @@ func getNamespaceConfig(namespaces string, labelSelectors labels.Selector) map[s
 }
 
 func getNamespaceConfigSelector(restConfig *rest.Config, selector string, labelSelectors labels.Selector) map[string]cache.Config {
+	kv := strings.Split(selector, ":")
+	if len(kv) != 2 {
+		err := fmt.Errorf("want pattern 'key:val', got: '%s'", selector)
+		setupLog.Error(err, "failed to parse WATCH_NAMESPACE_SELECTOR")
+		os.Exit(1)
+	}
+
 	cl, err := client.New(restConfig, client.Options{})
 	if err != nil {
 		setupLog.Error(err, "Failed to get watch namespaces")
@@ -468,7 +475,7 @@ func getNamespaceConfigSelector(restConfig *rest.Config, selector string, labelS
 
 	nsList := &corev1.NamespaceList{}
 	listOpts := []client.ListOption{
-		client.MatchingLabels(map[string]string{strings.Split(selector, ":")[0]: strings.Split(selector, ":")[1]}),
+		client.MatchingLabels(map[string]string{kv[0]: kv[1]}),
 	}
 
 	err = cl.List(context.Background(), nsList, listOpts...)
