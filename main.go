@@ -60,9 +60,9 @@ import (
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers"
-	"github.com/grafana/grafana-operator/v5/controllers/autodetect"
 	"github.com/grafana/grafana-operator/v5/controllers/resources"
 	"github.com/grafana/grafana-operator/v5/embeds"
+	"github.com/grafana/grafana-operator/v5/pkg/autodetect"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -283,6 +283,8 @@ func main() { //nolint:gocyclo
 		}
 	}
 
+	ctx := ctrl.SetupSignalHandler()
+
 	// Determine Operator scope
 	switch {
 	case strings.Contains(operatorConfig.WatchNamespace, ","):
@@ -295,18 +297,15 @@ func main() { //nolint:gocyclo
 		setupLog.Info("operator running in namespace scoped mode", "namespace", operatorConfig.WatchNamespace)
 	case strings.Contains(operatorConfig.WatchNamespaceSelector, ":"):
 		// multi namespace scoped
-		mgrOptions.Cache.DefaultNamespaces = getNamespaceConfigSelector(restConfig, operatorConfig.WatchNamespaceSelector, labelSelectors)
+		mgrOptions.Cache.DefaultNamespaces = getNamespaceConfigSelector(ctx, restConfig, operatorConfig.WatchNamespaceSelector, labelSelectors)
 
 		setupLog.Info("operator running in namespace scoped mode using namespace selector", "selector", operatorConfig.WatchNamespaceSelector)
-
 	case operatorConfig.WatchNamespace == "" && operatorConfig.WatchNamespaceSelector == "":
 		// cluster scoped
 		mgrOptions.Cache.DefaultLabelSelector = labelSelectors
 
 		setupLog.Info("operator running in cluster scoped mode")
 	}
-
-	ctx := ctrl.SetupSignalHandler()
 
 	mgr, err := ctrl.NewManager(restConfig, mgrOptions)
 	if err != nil {
@@ -431,15 +430,14 @@ func main() { //nolint:gocyclo
 		os.Exit(1)
 	}
 
-	setupLog.Info("starting manager")
+	setupLog.Info("starting operator")
 
 	if err := mgr.Start(ctx); err != nil {
-		setupLog.Error(err, "problem running manager")
+		setupLog.Error(err, "problem running operator")
 		os.Exit(1)
 	}
 
-	<-ctx.Done()
-	setupLog.Info("SIGTERM request gotten, shutting down operator")
+	setupLog.Info("shutting down operator")
 }
 
 func getNamespaceConfig(namespaces string, labelSelectors labels.Selector) map[string]cache.Config {
@@ -460,7 +458,7 @@ func getNamespaceConfig(namespaces string, labelSelectors labels.Selector) map[s
 	return defaultNamespaces
 }
 
-func getNamespaceConfigSelector(restConfig *rest.Config, selector string, labelSelectors labels.Selector) map[string]cache.Config {
+func getNamespaceConfigSelector(ctx context.Context, restConfig *rest.Config, selector string, labelSelectors labels.Selector) map[string]cache.Config {
 	kv := strings.Split(selector, ":")
 	if len(kv) != 2 {
 		err := fmt.Errorf("want pattern 'key:val', got: '%s'", selector)
@@ -479,7 +477,7 @@ func getNamespaceConfigSelector(restConfig *rest.Config, selector string, labelS
 		client.MatchingLabels(map[string]string{kv[0]: kv[1]}),
 	}
 
-	err = cl.List(context.Background(), nsList, listOpts...)
+	err = cl.List(ctx, nsList, listOpts...)
 	if err != nil {
 		setupLog.Error(err, "failed to get watch namespaces")
 		os.Exit(1)
