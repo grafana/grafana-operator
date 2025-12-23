@@ -470,7 +470,7 @@ func getNamespaceConfigSelector(restConfig *rest.Config, selector string, labelS
 
 	cl, err := client.New(restConfig, client.Options{})
 	if err != nil {
-		setupLog.Error(err, "failed to get watch namespaces")
+		setupLog.Error(err, "failed to create a kubernetes client")
 		os.Exit(1)
 	}
 
