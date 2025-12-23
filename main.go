@@ -244,9 +244,9 @@ func main() { //nolint:gocyclo
 		setupLog.Info(fmt.Sprintf("sharding enabled via selector '%s'. Beware: Always label Grafana CRs before enabling to ensure labels are inherited. Existing Secrets/ConfigMaps referenced in CRs also need to be labeled to continue working.", operatorConfig.WatchLabelSelectors))
 	}
 
-	if operatorConfig.CachingLevel != cachingLevelOff {
-		setupLog.Info("label restrictions for cached resources are active", "level", operatorConfig.CachingLevel)
+	setupLog.Info("label restrictions for caching resources", "level", operatorConfig.CachingLevel)
 
+	if operatorConfig.CachingLevel != cachingLevelOff {
 		var cacheLabelConfig cache.ByObject
 		if operatorConfig.WatchLabelSelectors != "" {
 			// When sharding, limit cache according to shard labels
@@ -468,7 +468,8 @@ func getNamespaceConfigSelector(ctx context.Context, restConfig *rest.Config, se
 
 	cl, err := client.New(restConfig, client.Options{})
 	if err != nil {
-		setupLog.Error(err, "failed to get watch namespaces")
+		setupLog.Error(err, "failed to create a kubernetes client")
+		os.Exit(1)
 	}
 
 	nsList := &corev1.NamespaceList{}
@@ -479,6 +480,7 @@ func getNamespaceConfigSelector(ctx context.Context, restConfig *rest.Config, se
 	err = cl.List(ctx, nsList, listOpts...)
 	if err != nil {
 		setupLog.Error(err, "failed to get watch namespaces")
+		os.Exit(1)
 	}
 
 	defaultNamespaces := map[string]cache.Config{}
