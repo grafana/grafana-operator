@@ -438,7 +438,6 @@ func main() { //nolint:gocyclo
 		os.Exit(1)
 	}
 
-	<-ctx.Done()
 	setupLog.Info("SIGTERM request gotten, shutting down operator")
 }
 
