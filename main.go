@@ -430,14 +430,14 @@ func main() { //nolint:gocyclo
 		os.Exit(1)
 	}
 
-	setupLog.Info("starting manager")
+	setupLog.Info("starting operator")
 
 	if err := mgr.Start(ctx); err != nil {
-		setupLog.Error(err, "problem running manager")
+		setupLog.Error(err, "problem running operator")
 		os.Exit(1)
 	}
 
-	setupLog.Info("SIGTERM request gotten, shutting down operator")
+	setupLog.Info("shutting down operator")
 }
 
 func getNamespaceConfig(namespaces string, labelSelectors labels.Selector) map[string]cache.Config {
