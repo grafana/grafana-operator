@@ -376,7 +376,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	return grafana.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource(uid))
 }
 
-func (r *GrafanaDashboardReconciler) Exists(gClient *genapi.GrafanaHTTPAPI, uid string, title string, folderUID string) (string, error) {
+func (r *GrafanaDashboardReconciler) Exists(gClient *genapi.GrafanaHTTPAPI, uid, title, folderUID string) (string, error) {
 	tvar := "dash-db"
 
 	page := int64(1)

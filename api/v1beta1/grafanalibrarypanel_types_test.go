@@ -19,7 +19,7 @@ func TestGrafanaStatusListLibraryPanel(t *testing.T) {
 	})
 }
 
-func newLibraryPanel(name string, uid string) *GrafanaLibraryPanel {
+func newLibraryPanel(name, uid string) *GrafanaLibraryPanel {
 	return &GrafanaLibraryPanel{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: APIVersion,

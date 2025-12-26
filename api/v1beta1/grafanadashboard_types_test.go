@@ -19,7 +19,7 @@ func TestGrafanaStatusListDashboard(t *testing.T) {
 	})
 }
 
-func newDashboard(name string, uid string) *GrafanaDashboard {
+func newDashboard(name, uid string) *GrafanaDashboard {
 	return &GrafanaDashboard{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: APIVersion,

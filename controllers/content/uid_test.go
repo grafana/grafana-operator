@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func getCR(t *testing.T, crUID string, statusUID string, specUID string, dashUID string) *NopContentResource {
+func getCR(t *testing.T, crUID, statusUID, specUID, dashUID string) *NopContentResource {
 	t.Helper()
 
 	dashboardModel := make(map[string]any)

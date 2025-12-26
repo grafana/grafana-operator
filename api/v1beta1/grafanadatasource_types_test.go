@@ -19,7 +19,7 @@ func TestGrafanaStatusListDatasource(t *testing.T) {
 	})
 }
 
-func newDatasource(name string, uid string) *GrafanaDatasource {
+func newDatasource(name, uid string) *GrafanaDatasource {
 	return &GrafanaDatasource{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: APIVersion,

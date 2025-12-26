@@ -54,6 +54,7 @@ linters:
         - builtinShadowDecl
         - importShadow
         - httpNoBody
+        - paramTypeCombine
         - typeUnparen
 
     gocyclo:
