@@ -126,7 +126,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	if cr.IsUpdatedUID() {
 		log.Info("datasource uid got updated, deleting datasources with the old uid")
 
-		if err = r.deleteOldDatasource(ctx, cr); err != nil {
+		if err := r.deleteOldDatasource(ctx, cr); err != nil {
 			return ctrl.Result{}, err
 		}
 

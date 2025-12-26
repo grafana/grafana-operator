@@ -144,7 +144,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	if content.IsUpdatedUID(cr, uid) {
 		log.Info("dashboard uid got updated, deleting dashboards with the old uid")
 
-		if err = r.finalize(ctx, cr); err != nil {
+		if err := r.finalize(ctx, cr); err != nil {
 			return ctrl.Result{}, err
 		}
 
