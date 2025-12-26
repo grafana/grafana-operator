@@ -85,7 +85,7 @@ func TestGrafanaFolder_GetGrafanaUID(t *testing.T) {
 	}
 }
 
-func newFolder(name string, uid string) *GrafanaFolder {
+func newFolder(name, uid string) *GrafanaFolder {
 	return &GrafanaFolder{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: APIVersion,

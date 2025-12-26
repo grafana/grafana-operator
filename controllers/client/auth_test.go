@@ -456,7 +456,7 @@ func getFakeToken(t *testing.T, exp time.Time) string {
 	return jwt
 }
 
-func tokenAndCacheAreValid(t *testing.T, got string, wantToken string, wantExp time.Time) {
+func tokenAndCacheAreValid(t *testing.T, got, wantToken string, wantExp time.Time) {
 	t.Helper()
 
 	assert.NotEmpty(t, got)

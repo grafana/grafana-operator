@@ -216,7 +216,7 @@ func labelsSatisfyMatchExpressions(labels map[string]string, matchExpressions []
 	return true
 }
 
-func updatePluginConfigMap(cm *corev1.ConfigMap, value []byte, key string, deprecatedKey string) (isUpdated bool) {
+func updatePluginConfigMap(cm *corev1.ConfigMap, value []byte, key, deprecatedKey string) (isUpdated bool) {
 	if cm.BinaryData == nil {
 		cm.BinaryData = make(map[string][]byte)
 	}
@@ -231,13 +231,11 @@ func updatePluginConfigMap(cm *corev1.ConfigMap, value []byte, key string, depre
 	// Delete the key if no plugins left
 	if len(value) == 0 {
 		if _, ok := cm.BinaryData[key]; ok {
-			{
-				delete(cm.BinaryData, key)
+			delete(cm.BinaryData, key)
 
-				isUpdated = true
+			isUpdated = true
 
-				return isUpdated
-			}
+			return isUpdated
 		}
 	}
 
@@ -250,7 +248,7 @@ func updatePluginConfigMap(cm *corev1.ConfigMap, value []byte, key string, depre
 }
 
 // TODO Refactor to use scheme from cl.Scheme() as it's the same anyways
-func ReconcilePlugins(ctx context.Context, cl client.Client, scheme *runtime.Scheme, grafana *v1beta1.Grafana, plugins v1beta1.PluginList, cmKey string, cmDeprecatedKey string) error {
+func ReconcilePlugins(ctx context.Context, cl client.Client, scheme *runtime.Scheme, grafana *v1beta1.Grafana, plugins v1beta1.PluginList, cmKey, cmDeprecatedKey string) error {
 	cm := resources.GetPluginsConfigMap(grafana, scheme)
 	selector := client.ObjectKey{
 		Namespace: cm.Namespace,
@@ -383,7 +381,7 @@ func ignoreStatusUpdates() predicate.Predicate {
 	}
 }
 
-func buildSynchronizedCondition(resource string, syncType string, generation int64, applyErrors map[string]string, total int) metav1.Condition {
+func buildSynchronizedCondition(resource, syncType string, generation int64, applyErrors map[string]string, total int) metav1.Condition {
 	condition := metav1.Condition{
 		Type:               syncType,
 		ObservedGeneration: generation,
@@ -476,7 +474,7 @@ func patchFinalizers(ctx context.Context, cl client.Client, cr client.Object) er
 	return cl.Patch(ctx, cr, client.RawPatch(types.MergePatchType, patch))
 }
 
-func addAnnotation(ctx context.Context, cl client.Client, cr client.Object, key string, value string) error {
+func addAnnotation(ctx context.Context, cl client.Client, cr client.Object, key, value string) error {
 	crAnnotations := cr.GetAnnotations()
 
 	if crAnnotations == nil {

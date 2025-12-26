@@ -182,7 +182,7 @@ func crToModel(cr *v1beta1.GrafanaAlertRuleGroup, folderUID string) (models.Aler
 				return models.AlertRuleGroup{}, fmt.Errorf("invalid 'for' duration %s: %w", *r.For, err)
 			}
 
-			result := (strfmt.Duration)(duration)
+			result := strfmt.Duration(duration)
 			apiRule.For = &result
 		}
 
@@ -219,7 +219,7 @@ func crToModel(cr *v1beta1.GrafanaAlertRuleGroup, folderUID string) (models.Aler
 		}
 
 		if r.KeepFiringFor != nil {
-			apiRule.KeepFiringFor = (strfmt.Duration)(r.KeepFiringFor.Duration)
+			apiRule.KeepFiringFor = strfmt.Duration(r.KeepFiringFor.Duration)
 		}
 
 		mRules = append(mRules, apiRule)

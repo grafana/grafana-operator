@@ -24,7 +24,7 @@ func (in NamespacedResource) Split() (namespace, name, identifier string) {
 
 type NamespacedResourceList []NamespacedResource
 
-func (in NamespacedResourceList) Find(namespace string, name string) (found bool, identifier *string) {
+func (in NamespacedResourceList) Find(namespace, name string) (found bool, identifier *string) {
 	i := in.IndexOf(namespace, name)
 
 	if i == -1 {
@@ -36,7 +36,7 @@ func (in NamespacedResourceList) Find(namespace string, name string) (found bool
 	return true, &uid
 }
 
-func (in NamespacedResourceList) IndexOf(namespace string, name string) int {
+func (in NamespacedResourceList) IndexOf(namespace, name string) int {
 	p := fmt.Sprintf("%s/%s/", namespace, name)
 
 	i := slices.IndexFunc(in, func(r NamespacedResource) bool {
