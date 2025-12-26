@@ -55,7 +55,6 @@ linters:
         - builtinShadowDecl
         - httpNoBody
         - importShadow
-        - httpNoBody
         - paramTypeCombine
         - sloppyReassign
         - typeUnparen
