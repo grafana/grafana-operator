@@ -50,6 +50,7 @@ linters:
 
     gocritic:
       enabled-checks:
+        - appendCombine
         - builtinShadow
         - builtinShadowDecl
         - importShadow

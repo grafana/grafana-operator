@@ -169,35 +169,32 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 
 	image := getGrafanaImage(cr)
 
-	var envVars []corev1.EnvVar
-
-	// env var to restart container if config changes
-	envVars = append(envVars, corev1.EnvVar{
-		Name:  "CONFIG_HASH",
-		Value: vars.ConfigHash,
-	})
-
-	// env var to restart container if plugins change
-	envVars = append(envVars, corev1.EnvVar{
-		Name:  "GF_INSTALL_PLUGINS",
-		Value: vars.Plugins,
-	})
-
-	// env var to set location where temporary files can be written (e.g. plugin downloads)
-	envVars = append(envVars, corev1.EnvVar{
-		Name:  "TMPDIR",
-		Value: config.GrafanaDataPath,
-	})
-
-	// env var to get Pod IP from downward API for gossip (useful for unified alerting).
-	envVars = append(envVars, corev1.EnvVar{
-		Name: "POD_IP",
-		ValueFrom: &corev1.EnvVarSource{
-			FieldRef: &corev1.ObjectFieldSelector{
-				FieldPath: "status.podIP",
+	envVars := []corev1.EnvVar{
+		{
+			// helps to restart Grafana upon configuration changes
+			Name:  "CONFIG_HASH",
+			Value: vars.ConfigHash,
+		},
+		{
+			// helps to restart Grafana upon plugin changes
+			Name:  "GF_INSTALL_PLUGINS",
+			Value: vars.Plugins,
+		},
+		{
+			// sets location where temporary files can be written (e.g. plugin downloads)
+			Name:  "TMPDIR",
+			Value: config.GrafanaDataPath,
+		},
+		{
+			// useful for unified alerting gossiping in HA-enabled setups
+			Name: "POD_IP",
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
+					FieldPath: "status.podIP",
+				},
 			},
 		},
-	})
+	}
 
 	containers = append(containers, corev1.Container{
 		Name:       "grafana",
