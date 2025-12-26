@@ -53,11 +53,13 @@ linters:
         - appendCombine
         - builtinShadow
         - builtinShadowDecl
+        - httpNoBody
         - importShadow
         - httpNoBody
         - paramTypeCombine
         - sloppyReassign
         - typeUnparen
+        - unnecessaryBlock
 
     gocyclo:
       min-complexity: 25

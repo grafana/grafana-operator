@@ -231,13 +231,11 @@ func updatePluginConfigMap(cm *corev1.ConfigMap, value []byte, key, deprecatedKe
 	// Delete the key if no plugins left
 	if len(value) == 0 {
 		if _, ok := cm.BinaryData[key]; ok {
-			{
-				delete(cm.BinaryData, key)
+			delete(cm.BinaryData, key)
 
-				isUpdated = true
+			isUpdated = true
 
-				return isUpdated
-			}
+			return isUpdated
 		}
 	}
 
