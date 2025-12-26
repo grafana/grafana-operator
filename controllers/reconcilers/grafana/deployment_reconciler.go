@@ -94,60 +94,56 @@ func getResources() corev1.ResourceRequirements {
 }
 
 func getVolumes(cr *v1beta1.Grafana, scheme *runtime.Scheme) []corev1.Volume {
-	var volumes []corev1.Volume
-
 	cm := resources.GetGrafanaConfigMap(cr, scheme)
 
-	// Volume to mount the config file from a config map
-	volumes = append(volumes, corev1.Volume{
-		Name: cm.Name,
-		VolumeSource: corev1.VolumeSource{
-			ConfigMap: &corev1.ConfigMapVolumeSource{
-				LocalObjectReference: corev1.LocalObjectReference{
-					Name: cm.Name,
+	volumes := []corev1.Volume{
+		{
+			// Volume to mount the config file from a config map
+			Name: cm.Name,
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: cm.Name,
+					},
 				},
 			},
 		},
-	})
-
-	// Volume to store the logs
-	volumes = append(volumes, corev1.Volume{
-		Name: config.GrafanaLogsVolumeName,
-		VolumeSource: corev1.VolumeSource{
-			EmptyDir: &corev1.EmptyDirVolumeSource{},
+		{
+			// Volume to store the logs
+			Name: config.GrafanaLogsVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
+			},
 		},
-	})
-
-	volumes = append(volumes, corev1.Volume{
-		Name: config.GrafanaDataVolumeName,
-		VolumeSource: corev1.VolumeSource{
-			EmptyDir: &corev1.EmptyDirVolumeSource{},
+		{
+			Name: config.GrafanaDataVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
+			},
 		},
-	})
+	}
 
 	return volumes
 }
 
 func getVolumeMounts(cr *v1beta1.Grafana, scheme *runtime.Scheme) []corev1.VolumeMount {
-	var mounts []corev1.VolumeMount
-
 	cm := resources.GetGrafanaConfigMap(cr, scheme)
 
-	mounts = append(mounts, corev1.VolumeMount{
-		Name:      cm.Name,
-		MountPath: "/etc/grafana/grafana.ini",
-		SubPath:   "grafana.ini",
-	})
-
-	mounts = append(mounts, corev1.VolumeMount{
-		Name:      config.GrafanaDataVolumeName,
-		MountPath: config.GrafanaDataPath,
-	})
-
-	mounts = append(mounts, corev1.VolumeMount{
-		Name:      config.GrafanaLogsVolumeName,
-		MountPath: config.GrafanaLogsPath,
-	})
+	mounts := []corev1.VolumeMount{
+		{
+			Name:      cm.Name,
+			MountPath: "/etc/grafana/grafana.ini",
+			SubPath:   "grafana.ini",
+		},
+		{
+			Name:      config.GrafanaDataVolumeName,
+			MountPath: config.GrafanaDataPath,
+		},
+		{
+			Name:      config.GrafanaLogsVolumeName,
+			MountPath: config.GrafanaLogsPath,
+		},
+	}
 
 	return mounts
 }
