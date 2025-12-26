@@ -58,7 +58,7 @@ func getLatestGrafanaComRevision(cr v1beta1.GrafanaContentResource, tlsConfig *t
 	source := spec.GrafanaCom
 	url := fmt.Sprintf("%s/%d/revisions", grafanaComDashboardsAPIEndpoint, source.ID)
 
-	request, err := http.NewRequest(http.MethodGet, url, nil)
+	request, err := http.NewRequest(http.MethodGet, url, http.NoBody)
 	if err != nil {
 		return -1, err
 	}
