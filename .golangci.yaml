@@ -54,6 +54,7 @@ linters:
         - builtinShadowDecl
         - importShadow
         - httpNoBody
+        - typeUnparen
 
     gocyclo:
       min-complexity: 25
