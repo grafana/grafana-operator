@@ -161,8 +161,6 @@ func getGrafanaImage(cr *v1beta1.Grafana) string {
 }
 
 func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.OperatorReconcileVars, openshiftPlatform bool) []corev1.Container {
-	var containers []corev1.Container
-
 	image := getGrafanaImage(cr)
 
 	envVars := []corev1.EnvVar{
@@ -192,7 +190,7 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 		},
 	}
 
-	containers = append(containers, corev1.Container{
+	container := corev1.Container{
 		Name:       "grafana",
 		Image:      image,
 		Args:       []string{"-config=/etc/grafana/grafana.ini"},
@@ -217,39 +215,42 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 		ImagePullPolicy:          "IfNotPresent",
 		SecurityContext:          getDefaultContainerSecurityContext(cr.Spec.DisableDefaultSecurityContext, openshiftPlatform),
 		ReadinessProbe:           getReadinessProbe(cr),
-	})
-
-	if cr.Spec.DisableDefaultAdminSecret {
-		return containers
 	}
 
-	// Use auto generated admin account?
-	secret := resources.GetGrafanaAdminSecret(cr, scheme)
+	useEnvCredentials := !cr.Spec.DisableDefaultAdminSecret
 
-	for i := range containers {
-		containers[i].Env = append(containers[i].Env, corev1.EnvVar{
-			Name: config.GrafanaAdminUserEnvVar,
-			ValueFrom: &corev1.EnvVarSource{
-				SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: secret.Name,
+	if useEnvCredentials {
+		secret := resources.GetGrafanaAdminSecret(cr, scheme)
+
+		envCredentials := []corev1.EnvVar{
+			{
+				Name: config.GrafanaAdminUserEnvVar,
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: secret.Name,
+						},
+						Key: config.GrafanaAdminUserEnvVar,
 					},
-					Key: config.GrafanaAdminUserEnvVar,
 				},
 			},
-		})
-		containers[i].Env = append(containers[i].Env, corev1.EnvVar{
-			Name: config.GrafanaAdminPasswordEnvVar,
-			ValueFrom: &corev1.EnvVarSource{
-				SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: secret.Name,
+			{
+				Name: config.GrafanaAdminPasswordEnvVar,
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: secret.Name,
+						},
+						Key: config.GrafanaAdminPasswordEnvVar,
 					},
-					Key: config.GrafanaAdminPasswordEnvVar,
 				},
 			},
-		})
+		}
+
+		container.Env = append(container.Env, envCredentials...)
 	}
+
+	containers := []corev1.Container{container}
 
 	return containers
 }
