@@ -173,9 +173,7 @@ func TestIsUpdatedUID(t *testing.T) {
 				},
 			}
 
-			uid := GetGrafanaUID(cr, tt.contentUID)
-
-			got := IsUpdatedUID(cr, uid)
+			got := IsUpdatedUID(cr, tt.contentUID)
 			assert.Equal(t, tt.want, got)
 		})
 	}
