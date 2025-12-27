@@ -14,13 +14,13 @@ import (
 func TestIsUpdatedUID(t *testing.T) {
 	const (
 		contentUID = "contentUID"
-		crUID      = "crUID"
 		customUID  = "customUID"
+		metaUID    = "metaUID"
 	)
 
 	tests := []struct {
 		name       string
-		crUID      string
+		metaUID    string
 		statusUID  string
 		contentUID string
 		customUID  string
@@ -31,7 +31,7 @@ func TestIsUpdatedUID(t *testing.T) {
 		//
 		{
 			name:       "No UID in status (no contentUID/customUID overrides)",
-			crUID:      crUID,
+			metaUID:    metaUID,
 			statusUID:  "",
 			contentUID: "",
 			customUID:  "",
@@ -39,7 +39,7 @@ func TestIsUpdatedUID(t *testing.T) {
 		},
 		{
 			name:       "No UID in status (contentUID is set)",
-			crUID:      crUID,
+			metaUID:    metaUID,
 			statusUID:  "",
 			contentUID: contentUID,
 			customUID:  "",
@@ -47,7 +47,7 @@ func TestIsUpdatedUID(t *testing.T) {
 		},
 		{
 			name:       "No UID in status (customUID is set)",
-			crUID:      crUID,
+			metaUID:    metaUID,
 			statusUID:  "",
 			contentUID: "",
 			customUID:  customUID,
@@ -55,7 +55,7 @@ func TestIsUpdatedUID(t *testing.T) {
 		},
 		{
 			name:       "No UID in status (customUID and contentUID are set)",
-			crUID:      crUID,
+			metaUID:    metaUID,
 			statusUID:  "",
 			contentUID: contentUID,
 			customUID:  customUID,
@@ -63,19 +63,19 @@ func TestIsUpdatedUID(t *testing.T) {
 		},
 		//
 		// Returns false as the value in status already reflects the highest precedence
-		// (spec.CustomUID -> contentUID -> metadata.uid)
+		// (customUID -> contentUID -> metaUID)
 		//
 		{
-			name:       "metadata.uid in status (no contentUID/customUID overrides)",
-			crUID:      crUID,
-			statusUID:  crUID,
+			name:       "metaUID in status (no contentUID/customUID overrides)",
+			metaUID:    metaUID,
+			statusUID:  metaUID,
 			contentUID: "",
 			customUID:  "",
 			want:       false,
 		},
 		{
 			name:       "contentUID in status (no customUID)",
-			crUID:      crUID,
+			metaUID:    metaUID,
 			statusUID:  contentUID,
 			contentUID: contentUID,
 			customUID:  "",
@@ -83,7 +83,7 @@ func TestIsUpdatedUID(t *testing.T) {
 		},
 		{
 			name:       "customUID in status (contentUID is set)",
-			crUID:      crUID,
+			metaUID:    metaUID,
 			statusUID:  customUID,
 			contentUID: contentUID,
 			customUID:  customUID,
@@ -91,7 +91,7 @@ func TestIsUpdatedUID(t *testing.T) {
 		},
 		{
 			name:       "customUID in status (same customUID is set)",
-			crUID:      crUID,
+			metaUID:    metaUID,
 			statusUID:  customUID,
 			contentUID: "",
 			customUID:  customUID,
@@ -101,16 +101,16 @@ func TestIsUpdatedUID(t *testing.T) {
 		// Returns true as the higher precedence value is now set
 		//
 		{
-			name:       ".metadata.uid in status, contentUID got added (no customUID)",
-			crUID:      crUID,
-			statusUID:  crUID,
+			name:       ".metaUID in status, contentUID got added (no customUID)",
+			metaUID:    metaUID,
+			statusUID:  metaUID,
 			contentUID: contentUID,
 			customUID:  "",
 			want:       true,
 		},
 		{
 			name:       "old contentUID in status, contentUID has changed (no customUID)",
-			crUID:      crUID,
+			metaUID:    metaUID,
 			statusUID:  "oldContentUID",
 			contentUID: contentUID,
 			customUID:  "",
@@ -118,7 +118,7 @@ func TestIsUpdatedUID(t *testing.T) {
 		},
 		{
 			name:       "old contentUID in status, contentUID got removed (no customUID)",
-			crUID:      crUID,
+			metaUID:    metaUID,
 			statusUID:  "oldContentUID",
 			contentUID: "",
 			customUID:  "",
@@ -130,7 +130,7 @@ func TestIsUpdatedUID(t *testing.T) {
 		//
 		{
 			name:       "old customUID value in status, customUID has changed (no contentUID)",
-			crUID:      crUID,
+			metaUID:    metaUID,
 			statusUID:  "oldCustomUID",
 			contentUID: "",
 			customUID:  customUID,
@@ -138,7 +138,7 @@ func TestIsUpdatedUID(t *testing.T) {
 		},
 		{
 			name:       "old customUID value in status, customUID has changed (contentUID is set)",
-			crUID:      crUID,
+			metaUID:    metaUID,
 			statusUID:  "oldCustomUID",
 			contentUID: contentUID,
 			customUID:  customUID,
@@ -157,7 +157,7 @@ func TestIsUpdatedUID(t *testing.T) {
 
 			cr := &v1beta1.GrafanaDashboard{
 				ObjectMeta: metav1.ObjectMeta{
-					UID: types.UID(tt.crUID),
+					UID: types.UID(tt.metaUID),
 				},
 				Spec: v1beta1.GrafanaDashboardSpec{
 					GrafanaContentSpec: v1beta1.GrafanaContentSpec{
