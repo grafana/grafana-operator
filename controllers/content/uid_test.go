@@ -15,7 +15,7 @@ func TestIsUpdatedUID(t *testing.T) {
 	const (
 		contentUID = "contentUID"
 		crUID      = "crUID"
-		specUID    = "specUID"
+		customUID  = "customUID"
 	)
 
 	tests := []struct {
@@ -23,40 +23,42 @@ func TestIsUpdatedUID(t *testing.T) {
 		crUID      string
 		statusUID  string
 		contentUID string
-		specUID    string
+		customUID  string
 		want       bool
 	}{
-		// Validate always false when statusUID is empty
+		//
+		// Returns false when uid in status (statusUID) is not set
+		//
 		{
-			name:       "Empty StatusUID always results in false",
+			name:       "No UID in status (no contentUID/customUID overrides)",
 			crUID:      crUID,
 			statusUID:  "",
 			contentUID: "",
-			specUID:    "",
+			customUID:  "",
 			want:       false,
 		},
 		{
-			name:       "Always false when statusUID is empty regardless of contentUID being set",
+			name:       "No UID in status (contentUID is set)",
 			crUID:      crUID,
 			statusUID:  "",
 			contentUID: contentUID,
-			specUID:    "",
+			customUID:  "",
 			want:       false,
 		},
 		{
-			name:       "Always false when statusUID is empty regardless of customUID being set",
+			name:       "No UID in status (customUID is set)",
 			crUID:      crUID,
 			statusUID:  "",
 			contentUID: "",
-			specUID:    specUID,
+			customUID:  customUID,
 			want:       false,
 		},
 		{
-			name:       "Always false when statusUID is empty regardless of customUID or contentUID being set",
+			name:       "No UID in status (customUID and contentUID are set)",
 			crUID:      crUID,
 			statusUID:  "",
 			contentUID: contentUID,
-			specUID:    specUID,
+			customUID:  customUID,
 			want:       false,
 		},
 		// Validate that crUID is always overwritten by contentUID or customUID
@@ -66,7 +68,7 @@ func TestIsUpdatedUID(t *testing.T) {
 			crUID:      crUID,
 			statusUID:  crUID,
 			contentUID: "",
-			specUID:    "",
+			customUID:  "",
 			want:       false,
 		},
 		{
@@ -74,23 +76,23 @@ func TestIsUpdatedUID(t *testing.T) {
 			crUID:      crUID,
 			statusUID:  contentUID,
 			contentUID: contentUID,
-			specUID:    "",
+			customUID:  "",
 			want:       false,
 		},
 		{
 			name:       "contentUID set and customUID set",
 			crUID:      crUID,
-			statusUID:  specUID,
+			statusUID:  customUID,
 			contentUID: contentUID,
-			specUID:    specUID,
+			customUID:  customUID,
 			want:       false,
 		},
 		{
 			name:       "contentUID empty and customUID set",
 			crUID:      crUID,
-			statusUID:  specUID,
+			statusUID:  customUID,
 			contentUID: "",
-			specUID:    specUID,
+			customUID:  customUID,
 			want:       false,
 		},
 		// Validate updates are detected correctly
@@ -99,15 +101,15 @@ func TestIsUpdatedUID(t *testing.T) {
 			crUID:      crUID,
 			statusUID:  crUID,
 			contentUID: contentUID,
-			specUID:    "",
+			customUID:  "",
 			want:       true,
 		},
 		{
 			name:       "contentUID updated and customUID set",
 			crUID:      crUID,
-			statusUID:  specUID,
+			statusUID:  customUID,
 			contentUID: contentUID,
-			specUID:    specUID,
+			customUID:  customUID,
 			want:       false,
 		},
 		{
@@ -115,7 +117,7 @@ func TestIsUpdatedUID(t *testing.T) {
 			crUID:      crUID,
 			statusUID:  "oldUID",
 			contentUID: contentUID,
-			specUID:    "",
+			customUID:  "",
 			want:       true,
 		},
 		{
@@ -123,7 +125,7 @@ func TestIsUpdatedUID(t *testing.T) {
 			crUID:      crUID,
 			statusUID:  "oldUID",
 			contentUID: "",
-			specUID:    "",
+			customUID:  "",
 			want:       true,
 		},
 		// Validate that statusUID detection works even in impossible cases expecting cr or customUID to change
@@ -132,7 +134,7 @@ func TestIsUpdatedUID(t *testing.T) {
 			crUID:      crUID,
 			statusUID:  "oldUID",
 			contentUID: "",
-			specUID:    specUID,
+			customUID:  customUID,
 			want:       true,
 		},
 		{
@@ -140,7 +142,7 @@ func TestIsUpdatedUID(t *testing.T) {
 			crUID:      crUID,
 			statusUID:  "oldUID",
 			contentUID: crUID,
-			specUID:    crUID,
+			customUID:  crUID,
 			want:       true,
 		},
 	}
@@ -160,7 +162,7 @@ func TestIsUpdatedUID(t *testing.T) {
 				},
 				Spec: v1beta1.GrafanaDashboardSpec{
 					GrafanaContentSpec: v1beta1.GrafanaContentSpec{
-						CustomUID: tt.specUID,
+						CustomUID: tt.customUID,
 						JSON:      string(dashboard),
 					},
 				},
