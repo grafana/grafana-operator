@@ -61,10 +61,12 @@ func TestIsUpdatedUID(t *testing.T) {
 			customUID:  customUID,
 			want:       false,
 		},
-		// Validate that crUID is always overwritten by contentUID or customUID
-		// contentUID is always overwritten by customUID which falls back to crUID
+		//
+		// Returns false as the value in status already reflects the highest precedence
+		// (spec.CustomUID -> contentUID -> metadata.uid)
+		//
 		{
-			name:       "contentUID and customUID empty",
+			name:       "metadata.uid in status (no contentUID/customUID overrides)",
 			crUID:      crUID,
 			statusUID:  crUID,
 			contentUID: "",
@@ -72,7 +74,7 @@ func TestIsUpdatedUID(t *testing.T) {
 			want:       false,
 		},
 		{
-			name:       "contentUID set and customUID empty",
+			name:       "contentUID in status (no customUID)",
 			crUID:      crUID,
 			statusUID:  contentUID,
 			contentUID: contentUID,
@@ -80,7 +82,7 @@ func TestIsUpdatedUID(t *testing.T) {
 			want:       false,
 		},
 		{
-			name:       "contentUID set and customUID set",
+			name:       "customUID in status (contentUID is set)",
 			crUID:      crUID,
 			statusUID:  customUID,
 			contentUID: contentUID,
@@ -88,16 +90,18 @@ func TestIsUpdatedUID(t *testing.T) {
 			want:       false,
 		},
 		{
-			name:       "contentUID empty and customUID set",
+			name:       "customUID in status (same customUID is set)",
 			crUID:      crUID,
 			statusUID:  customUID,
 			contentUID: "",
 			customUID:  customUID,
 			want:       false,
 		},
-		// Validate updates are detected correctly
+		//
+		// Returns true as the higher precedence value is now set
+		//
 		{
-			name:       "contentUID updated and customUID empty",
+			name:       ".metadata.uid in status, contentUID got added (no customUID)",
 			crUID:      crUID,
 			statusUID:  crUID,
 			contentUID: contentUID,
@@ -105,44 +109,39 @@ func TestIsUpdatedUID(t *testing.T) {
 			want:       true,
 		},
 		{
-			name:       "contentUID updated and customUID set",
+			name:       "old contentUID in status, contentUID has changed (no customUID)",
 			crUID:      crUID,
-			statusUID:  customUID,
-			contentUID: contentUID,
-			customUID:  customUID,
-			want:       false,
-		},
-		{
-			name:       "new contentUID and no customUID",
-			crUID:      crUID,
-			statusUID:  "oldUID",
+			statusUID:  "oldContentUID",
 			contentUID: contentUID,
 			customUID:  "",
 			want:       true,
 		},
 		{
-			name:       "contentUID removed and no customUID",
+			name:       "old contentUID in status, contentUID got removed (no customUID)",
 			crUID:      crUID,
-			statusUID:  "oldUID",
+			statusUID:  "oldContentUID",
 			contentUID: "",
 			customUID:  "",
 			want:       true,
 		},
-		// Validate that statusUID detection works even in impossible cases expecting cr or customUID to change
+		//
+		// Returns true for changes in customUID (the field is marked as immutable through CEL,
+		// so the scenario is unlikely to happen)
+		//
 		{
-			name:       "IMPOSSIBLE: Old status with new customUID",
+			name:       "old customUID value in status, customUID has changed (no contentUID)",
 			crUID:      crUID,
-			statusUID:  "oldUID",
+			statusUID:  "oldCustomUID",
 			contentUID: "",
 			customUID:  customUID,
 			want:       true,
 		},
 		{
-			name:       "IMPOSSIBLE: Old Status with all UIDs being equal",
+			name:       "old customUID value in status, customUID has changed (contentUID is set)",
 			crUID:      crUID,
-			statusUID:  "oldUID",
-			contentUID: crUID,
-			customUID:  crUID,
+			statusUID:  "oldCustomUID",
+			contentUID: contentUID,
+			customUID:  customUID,
 			want:       true,
 		},
 	}
