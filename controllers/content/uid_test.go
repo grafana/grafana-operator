@@ -10,26 +10,30 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func getCR(t *testing.T, crUID, statusUID, specUID, dashUID string) *NopContentResource {
+func getCR(t *testing.T, crUID, statusUID, specUID, dashUID string) *v1beta1.GrafanaDashboard {
 	t.Helper()
 
 	dashboardModel := make(map[string]any)
 	dashboardModel["uid"] = dashUID
 	dashboard, _ := json.Marshal(dashboardModel) //nolint:errcheck
 
-	cr := NopContentResource{
+	cr := v1beta1.GrafanaDashboard{
 		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "mydashboard",
 			Namespace: "grafana-operator-system",
 			UID:       types.UID(crUID),
 		},
-		Spec: v1beta1.GrafanaContentSpec{
-			CustomUID: specUID,
-			JSON:      string(dashboard),
+		Spec: v1beta1.GrafanaDashboardSpec{
+			GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+				CustomUID: specUID,
+				JSON:      string(dashboard),
+			},
 		},
-		Status: v1beta1.GrafanaContentStatus{
-			UID: statusUID,
+		Status: v1beta1.GrafanaDashboardStatus{
+			GrafanaContentStatus: v1beta1.GrafanaContentStatus{
+				UID: statusUID,
+			},
 		},
 	}
 
