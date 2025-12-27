@@ -13,9 +13,11 @@ import (
 
 func TestIsUpdatedUID(t *testing.T) {
 	const (
-		contentUID = "contentUID"
-		customUID  = "customUID"
-		metaUID    = "metaUID"
+		contentUID    = "contentUID"
+		oldContentUID = "oldContentUID"
+		customUID     = "customUID"
+		oldCustomUID  = "oldCustomUID"
+		metaUID       = "metaUID"
 	)
 
 	tests := []struct {
@@ -111,7 +113,7 @@ func TestIsUpdatedUID(t *testing.T) {
 		{
 			name:       "old contentUID in status, contentUID has changed (no customUID)",
 			metaUID:    metaUID,
-			statusUID:  "oldContentUID",
+			statusUID:  oldContentUID,
 			contentUID: contentUID,
 			customUID:  "",
 			want:       true,
@@ -119,7 +121,7 @@ func TestIsUpdatedUID(t *testing.T) {
 		{
 			name:       "old contentUID in status, contentUID got removed (no customUID)",
 			metaUID:    metaUID,
-			statusUID:  "oldContentUID",
+			statusUID:  oldContentUID,
 			contentUID: "",
 			customUID:  "",
 			want:       true,
@@ -131,7 +133,7 @@ func TestIsUpdatedUID(t *testing.T) {
 		{
 			name:       "old customUID value in status, customUID has changed (no contentUID)",
 			metaUID:    metaUID,
-			statusUID:  "oldCustomUID",
+			statusUID:  oldCustomUID,
 			contentUID: "",
 			customUID:  customUID,
 			want:       true,
@@ -139,7 +141,7 @@ func TestIsUpdatedUID(t *testing.T) {
 		{
 			name:       "old customUID value in status, customUID has changed (contentUID is set)",
 			metaUID:    metaUID,
-			statusUID:  "oldCustomUID",
+			statusUID:  oldCustomUID,
 			contentUID: contentUID,
 			customUID:  customUID,
 			want:       true,
