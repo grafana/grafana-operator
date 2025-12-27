@@ -11,37 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func getCR(t *testing.T, crUID, statusUID, specUID, dashUID string) *v1beta1.GrafanaDashboard {
-	t.Helper()
-
-	model := map[string]any{
-		"uid": dashUID,
-	}
-
-	dashboard, err := json.Marshal(model)
-	require.NoError(t, err)
-
-	cr := &v1beta1.GrafanaDashboard{
-		TypeMeta: metav1.TypeMeta{},
-		ObjectMeta: metav1.ObjectMeta{
-			UID: types.UID(crUID),
-		},
-		Spec: v1beta1.GrafanaDashboardSpec{
-			GrafanaContentSpec: v1beta1.GrafanaContentSpec{
-				CustomUID: specUID,
-				JSON:      string(dashboard),
-			},
-		},
-		Status: v1beta1.GrafanaDashboardStatus{
-			GrafanaContentStatus: v1beta1.GrafanaContentStatus{
-				UID: statusUID,
-			},
-		},
-	}
-
-	return cr
-}
-
 func TestIsUpdatedUID(t *testing.T) {
 	crUID := "crUID"
 	dashUID := "dashUID"
@@ -176,7 +145,30 @@ func TestIsUpdatedUID(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cr := getCR(t, tt.crUID, tt.statusUID, tt.specUID, tt.dashboardUID)
+			model := map[string]any{
+				"uid": tt.dashboardUID,
+			}
+
+			dashboard, err := json.Marshal(model)
+			require.NoError(t, err)
+
+			cr := &v1beta1.GrafanaDashboard{
+				ObjectMeta: metav1.ObjectMeta{
+					UID: types.UID(tt.crUID),
+				},
+				Spec: v1beta1.GrafanaDashboardSpec{
+					GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+						CustomUID: tt.specUID,
+						JSON:      string(dashboard),
+					},
+				},
+				Status: v1beta1.GrafanaDashboardStatus{
+					GrafanaContentStatus: v1beta1.GrafanaContentStatus{
+						UID: tt.statusUID,
+					},
+				},
+			}
+
 			uid := GetGrafanaUID(cr, tt.dashboardUID)
 
 			got := IsUpdatedUID(cr, uid)
