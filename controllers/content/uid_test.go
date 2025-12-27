@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -13,16 +14,17 @@ import (
 func getCR(t *testing.T, crUID, statusUID, specUID, dashUID string) *v1beta1.GrafanaDashboard {
 	t.Helper()
 
-	dashboardModel := make(map[string]any)
-	dashboardModel["uid"] = dashUID
-	dashboard, _ := json.Marshal(dashboardModel) //nolint:errcheck
+	model := map[string]any{
+		"uid": dashUID,
+	}
 
-	cr := v1beta1.GrafanaDashboard{
+	dashboard, err := json.Marshal(model)
+	require.NoError(t, err)
+
+	cr := &v1beta1.GrafanaDashboard{
 		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "mydashboard",
-			Namespace: "grafana-operator-system",
-			UID:       types.UID(crUID),
+			UID: types.UID(crUID),
 		},
 		Spec: v1beta1.GrafanaDashboardSpec{
 			GrafanaContentSpec: v1beta1.GrafanaContentSpec{
@@ -37,7 +39,7 @@ func getCR(t *testing.T, crUID, statusUID, specUID, dashUID string) *v1beta1.Gra
 		},
 	}
 
-	return &cr
+	return cr
 }
 
 func TestIsUpdatedUID(t *testing.T) {
