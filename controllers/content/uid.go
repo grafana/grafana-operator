@@ -2,7 +2,7 @@ package content
 
 import "github.com/grafana/grafana-operator/v5/api/v1beta1"
 
-func IsUpdatedUID(cr v1beta1.GrafanaContentResource, uid string) bool {
+func IsUpdatedUID(cr v1beta1.GrafanaContentResource, contentUID string) bool {
 	status := cr.GrafanaContentStatus()
 	// This indicates an implementation error
 	if status == nil {
@@ -14,7 +14,7 @@ func IsUpdatedUID(cr v1beta1.GrafanaContentResource, uid string) bool {
 		return false
 	}
 
-	uid = GetGrafanaUID(cr, uid)
+	uid := GetGrafanaUID(cr, contentUID)
 
 	return status.UID != uid
 }

@@ -19,11 +19,8 @@ package content
 import (
 	"testing"
 
-	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -35,50 +32,6 @@ var (
 	cfg *rest.Config
 	cl  client.Client
 )
-
-// NopContentResource is intended for testing only.
-type NopContentResource struct {
-	metav1.TypeMeta
-	metav1.ObjectMeta
-
-	Spec   v1beta1.GrafanaContentSpec
-	Status v1beta1.GrafanaContentStatus
-}
-
-func (in *NopContentResource) GrafanaContentSpec() *v1beta1.GrafanaContentSpec {
-	return &in.Spec
-}
-
-func (in *NopContentResource) GrafanaContentStatus() *v1beta1.GrafanaContentStatus {
-	return &in.Status
-}
-
-func (in *NopContentResource) DeepCopyObject() runtime.Object {
-	if c := in.DeepCopy(); c != nil {
-		return c
-	}
-
-	return nil
-}
-
-func (in *NopContentResource) DeepCopy() *NopContentResource {
-	if in == nil {
-		return nil
-	}
-
-	out := new(NopContentResource)
-	in.DeepCopyInto(out)
-
-	return out
-}
-
-func (in *NopContentResource) DeepCopyInto(out *NopContentResource) {
-	*out = *in
-	out.TypeMeta = in.TypeMeta
-	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
-	in.Spec.DeepCopyInto(&out.Spec)
-	in.Status.DeepCopyInto(&out.Status)
-}
 
 func TestAPIs(t *testing.T) {
 	if testing.Short() {
