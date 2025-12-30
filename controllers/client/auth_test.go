@@ -15,12 +15,9 @@ import (
 	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 func TestGetExternalAdminCredentials(t *testing.T) {
@@ -153,20 +150,11 @@ func TestGetContainerEnvCredentials(t *testing.T) {
 	}
 
 	ctx := t.Context()
-	s := runtime.NewScheme()
 
-	err := corev1.AddToScheme(s)
+	cl := tk8s.GetFakeClient(t, secret)
+
+	err := v1beta1.AddToScheme(cl.Scheme())
 	require.NoError(t, err, "adding scheme")
-
-	err = appsv1.AddToScheme(s)
-	require.NoError(t, err, "adding scheme")
-
-	err = v1beta1.AddToScheme(s)
-	require.NoError(t, err, "adding scheme")
-
-	c := fake.NewClientBuilder().
-		WithScheme(s).
-		WithObjects(secret).Build()
 
 	t.Run("non-existent deployment", func(t *testing.T) {
 		cr := &v1beta1.Grafana{
@@ -176,7 +164,7 @@ func TestGetContainerEnvCredentials(t *testing.T) {
 			},
 		}
 
-		got, err := getContainerEnvCredentials(ctx, c, cr)
+		got, err := getContainerEnvCredentials(ctx, cl, cr)
 		require.ErrorContains(t, err, "not found")
 
 		assert.Nil(t, got)
@@ -297,11 +285,11 @@ func TestGetContainerEnvCredentials(t *testing.T) {
 				},
 			}
 
-			createAndCleanupResources(t, ctx, c, []client.Object{
+			createAndCleanupResources(t, ctx, cl, []client.Object{
 				cr, deployment,
 			})
 
-			got, err := getContainerEnvCredentials(ctx, c, cr)
+			got, err := getContainerEnvCredentials(ctx, cl, cr)
 			if tt.wantErrText == "" {
 				require.NoError(t, err)
 			} else {
