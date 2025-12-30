@@ -1,10 +1,29 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
 namespace: grafana
 
 resources:
-- ../../base
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-images:
-- name: ghcr.io/grafana/grafana-operator
-  newName: ghcr.io/grafana/grafana-operator
-  newTag: v5.18.0
+  - ../../base
+
+# Example customizations (uncomment and modify as needed):
+#
+# Override the operator image:
+# images:
+#   - name: ghcr.io/grafana/grafana-operator
+#     newName: my-registry.example.com/grafana-operator
+#     newTag: v5.21.3
+#
+# Add labels to all resources:
+# commonLabels:
+#   environment: production
+#
+# Adjust resource limits via a patch:
+# patches:
+#   - target:
+#       kind: Deployment
+#       name: grafana-operator-controller-manager
+#     patch: |
+#       - op: replace
+#         path: /spec/template/spec/containers/0/resources/limits/memory
+#         value: 512Mi
