@@ -1,0 +1,9 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: grafanadashboard-jaas
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  url: "http://jaas.jaas.svc.cluster.local:8080/jsonnet/your-dashboard"
