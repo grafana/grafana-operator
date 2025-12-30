@@ -11,8 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/content/cache"
@@ -84,13 +82,7 @@ func TestFetchFromURL(t *testing.T) {
 		ts.Close()
 	})
 
-	s := runtime.NewScheme()
-	err = corev1.AddToScheme(s)
-	require.NoError(t, err)
-
-	cl := fake.NewClientBuilder().
-		WithScheme(s).
-		Build()
+	cl := tk8s.GetFakeClient(t)
 
 	t.Run("no authentication", func(t *testing.T) {
 		url := ts.URL + publicEndpoint

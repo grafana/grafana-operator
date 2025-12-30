@@ -8,22 +8,14 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 func TestGetDashboardEnvs(t *testing.T) {
-	s := runtime.NewScheme()
-	err := corev1.AddToScheme(s)
-	require.NoError(t, err, "adding scheme")
-
-	cl := fake.NewClientBuilder().
-		WithScheme(s).
-		Build()
+	cl := tk8s.GetFakeClient(t)
 
 	dashboard := v1beta1.GrafanaDashboard{
 		TypeMeta: metav1.TypeMeta{},
