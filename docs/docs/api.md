@@ -31,6 +31,8 @@ Resource Types:
 
 - [GrafanaNotificationTemplate](#grafananotificationtemplate)
 
+- [GrafanaPrometheusRuleGroup](#grafanaprometheusrulegroup)
+
 - [Grafana](#grafana)
 
 - [GrafanaServiceAccount](#grafanaserviceaccount)
@@ -6385,6 +6387,440 @@ The most recent observed state of a Grafana resource
 
 ### GrafanaNotificationTemplate.status.conditions[index]
 <sup><sup>[↩ Parent](#grafananotificationtemplatestatus)</sup></sup>
+
+
+
+Condition contains details for one aspect of the current state of this API Resource.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>lastTransitionTime</b></td>
+        <td>string</td>
+        <td>
+          lastTransitionTime is the last time the condition transitioned from one status to another.
+This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.<br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>message</b></td>
+        <td>string</td>
+        <td>
+          message is a human readable message indicating details about the transition.
+This may be an empty string.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>reason</b></td>
+        <td>string</td>
+        <td>
+          reason contains a programmatic identifier indicating the reason for the condition's last transition.
+Producers of specific condition types may define expected values and meanings for this field,
+and whether the values are considered a guaranteed API.
+The value should be a CamelCase string.
+This field may not be empty.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>status</b></td>
+        <td>enum</td>
+        <td>
+          status of the condition, one of True, False, Unknown.<br/>
+          <br/>
+            <i>Enum</i>: True, False, Unknown<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          type of condition in CamelCase or in foo.example.com/CamelCase.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>observedGeneration</b></td>
+        <td>integer</td>
+        <td>
+          observedGeneration represents the .metadata.generation that the condition was set based upon.
+For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+with respect to the current state of the instance.<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+            <i>Minimum</i>: 0<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+## GrafanaPrometheusRuleGroup
+<sup><sup>[↩ Parent](#grafanaintegreatlyorgv1beta1 )</sup></sup>
+
+
+
+
+
+
+GrafanaPrometheusRuleGroup is the Schema for the grafanaprometheusrulegroups API
+It allows defining alert rules using Prometheus-style syntax that will be converted
+to Grafana managed alerts.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+      <td><b>apiVersion</b></td>
+      <td>string</td>
+      <td>grafana.integreatly.org/v1beta1</td>
+      <td>true</td>
+      </tr>
+      <tr>
+      <td><b>kind</b></td>
+      <td>string</td>
+      <td>GrafanaPrometheusRuleGroup</td>
+      <td>true</td>
+      </tr>
+      <tr>
+      <td><b><a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta">metadata</a></b></td>
+      <td>object</td>
+      <td>Refer to the Kubernetes API documentation for the fields of the `metadata` field.</td>
+      <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanaprometheusrulegroupspec">spec</a></b></td>
+        <td>object</td>
+        <td>
+          GrafanaPrometheusRuleGroupSpec defines the desired state of GrafanaPrometheusRuleGroup<br/>
+          <br/>
+            <i>Validations</i>:<li>(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID))): Only one of FolderUID or FolderRef can be set and one must be defined</li><li>((!has(oldSelf.editable) && !has(self.editable)) || (has(oldSelf.editable) && has(self.editable))): spec.editable is immutable</li><li>((!has(oldSelf.folderUID) && !has(self.folderUID)) || (has(oldSelf.folderUID) && has(self.folderUID))): spec.folderUID is immutable</li><li>((!has(oldSelf.folderRef) && !has(self.folderRef)) || (has(oldSelf.folderRef) && has(self.folderRef))): spec.folderRef is immutable</li><li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanaprometheusrulegroupstatus">status</a></b></td>
+        <td>object</td>
+        <td>
+          The most recent observed state of a Grafana resource<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaPrometheusRuleGroup.spec
+<sup><sup>[↩ Parent](#grafanaprometheusrulegroup)</sup></sup>
+
+
+
+GrafanaPrometheusRuleGroupSpec defines the desired state of GrafanaPrometheusRuleGroup
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>datasourceUID</b></td>
+        <td>string</td>
+        <td>
+          DatasourceUID is the UID of the Prometheus datasource in Grafana to use for queries.
+This is required to convert PromQL expressions to Grafana alert queries.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanaprometheusrulegroupspecinstanceselector">instanceSelector</a></b></td>
+        <td>object</td>
+        <td>
+          Selects Grafana instances for import<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: spec.instanceSelector is immutable</li>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>interval</b></td>
+        <td>string</td>
+        <td>
+          Interval is the time interval between evaluation of the rule group.<br/>
+          <br/>
+            <i>Format</i>: duration<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanaprometheusrulegroupspecrulesindex">rules</a></b></td>
+        <td>[]object</td>
+        <td>
+          Rules define the alerting and recording rules in Prometheus format.
+Recording rules are ignored as they are not supported in Grafana alerting.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>allowCrossNamespaceImport</b></td>
+        <td>boolean</td>
+        <td>
+          Allow the Operator to match this resource with Grafanas outside the current namespace<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>editable</b></td>
+        <td>boolean</td>
+        <td>
+          Whether to enable or disable editing of the alert rule group in Grafana UI<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: Value is immutable</li>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>folderRef</b></td>
+        <td>string</td>
+        <td>
+          Match GrafanaFolders CRs to infer the uid<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: Value is immutable</li>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>folderUID</b></td>
+        <td>string</td>
+        <td>
+          UID of the folder containing this rule group
+Overrides the FolderSelector<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: Value is immutable</li>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the alert rule group. If not specified, the resource name will be used.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>resyncPeriod</b></td>
+        <td>string</td>
+        <td>
+          How often the resource is synced, defaults to 10m0s if not set<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>suspend</b></td>
+        <td>boolean</td>
+        <td>
+          Suspend pauses synchronizing attempts and tells the operator to ignore changes<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaPrometheusRuleGroup.spec.instanceSelector
+<sup><sup>[↩ Parent](#grafanaprometheusrulegroupspec)</sup></sup>
+
+
+
+Selects Grafana instances for import
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanaprometheusrulegroupspecinstanceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaPrometheusRuleGroup.spec.instanceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#grafanaprometheusrulegroupspecinstanceselector)</sup></sup>
+
+
+
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          key is the label key that the selector applies to.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaPrometheusRuleGroup.spec.rules[index]
+<sup><sup>[↩ Parent](#grafanaprometheusrulegroupspec)</sup></sup>
+
+
+
+PrometheusRule represents a Prometheus-style alerting or recording rule
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>expr</b></td>
+        <td>string</td>
+        <td>
+          Expr is the PromQL expression to evaluate<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>alert</b></td>
+        <td>string</td>
+        <td>
+          Alert is the name of the alerting rule. Mutually exclusive with Record.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>annotations</b></td>
+        <td>map[string]string</td>
+        <td>
+          Annotations to add to each alert<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>for</b></td>
+        <td>string</td>
+        <td>
+          For is the duration for which the condition must be true before firing<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>keep_firing_for</b></td>
+        <td>string</td>
+        <td>
+          KeepFiringFor is the minimum duration an alert will continue firing after the condition clears<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>labels</b></td>
+        <td>map[string]string</td>
+        <td>
+          Labels to add or overwrite for each alert<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>record</b></td>
+        <td>string</td>
+        <td>
+          Record is the name of the recording rule. Mutually exclusive with Alert.
+Note: Recording rules are not supported in Grafana alerting and will be ignored.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaPrometheusRuleGroup.status
+<sup><sup>[↩ Parent](#grafanaprometheusrulegroup)</sup></sup>
+
+
+
+The most recent observed state of a Grafana resource
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanaprometheusrulegroupstatusconditionsindex">conditions</a></b></td>
+        <td>[]object</td>
+        <td>
+          Results when synchronizing resource with Grafana instances<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>lastResync</b></td>
+        <td>string</td>
+        <td>
+          Last time the resource was synchronized with Grafana instances<br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaPrometheusRuleGroup.status.conditions[index]
+<sup><sup>[↩ Parent](#grafanaprometheusrulegroupstatus)</sup></sup>
 
 
 

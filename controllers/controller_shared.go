@@ -37,6 +37,9 @@ const (
 	RequeueDelay        = 10 * time.Second
 	DefaultReSyncPeriod = 10 * time.Minute
 
+	// disableProvenanceTrue is used to disable provenance for editable resources
+	disableProvenanceTrue = "true"
+
 	// condition types
 	conditionNoMatchingInstance             = "NoMatchingInstance"
 	conditionNoMatchingFolder               = "NoMatchingFolder"
