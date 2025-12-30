@@ -26,13 +26,15 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	. "github.com/onsi/ginkgo/v2"
 )
 
-func routesToRuntimeObjects(routes []v1beta1.GrafanaNotificationPolicyRoute) []runtime.Object {
-	objects := make([]runtime.Object, len(routes))
+func convertRoutesToClientObjects(routes []v1beta1.GrafanaNotificationPolicyRoute) []client.Object {
+	objects := make([]client.Object, len(routes))
+
 	for i := range routes {
 		objects[i] = &routes[i]
 	}
@@ -415,7 +417,12 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 			err := v1beta1.AddToScheme(s)
 			require.NoError(t, err, "adding scheme")
 
-			cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(routesToRuntimeObjects(tt.existingRoutes)...).Build()
+			initObjs := convertRoutesToClientObjects(tt.existingRoutes)
+
+			cl := fake.NewClientBuilder().
+				WithScheme(s).
+				WithObjects(initObjs...).
+				Build()
 
 			_, err = assembleNotificationPolicyRoutes(testCtx, cl, tt.notificationPolicy)
 			if tt.wantLoopDetectedErr {

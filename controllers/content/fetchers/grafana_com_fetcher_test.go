@@ -5,11 +5,14 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestFetchDashboardFromGrafanaCom(t *testing.T) {
+	cl := tk8s.GetFakeClient(t)
+
 	dashboard := &v1beta1.GrafanaDashboard{
 		Spec: v1beta1.GrafanaDashboardSpec{
 			GrafanaContentSpec: v1beta1.GrafanaContentSpec{
