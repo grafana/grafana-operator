@@ -11,7 +11,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-func GetFakeClient(t *testing.T) client.WithWatch {
+func GetFakeClient(t *testing.T, initObjs ...client.Object) client.WithWatch {
 	t.Helper()
 
 	s := runtime.NewScheme()
@@ -23,6 +23,7 @@ func GetFakeClient(t *testing.T) client.WithWatch {
 
 	cl := fake.NewClientBuilder().
 		WithScheme(s).
+		WithObjects(initObjs...).
 		Build()
 
 	return cl
