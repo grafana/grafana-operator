@@ -11,10 +11,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
+// GetFakeClient returns a fake k8s client with preconfigured runtime scheme and, optionally, initObjects
 func GetFakeClient(t *testing.T, initObjs ...client.Object) client.WithWatch {
 	t.Helper()
 
 	s := runtime.NewScheme()
+
 	err := corev1.AddToScheme(s)
 	require.NoError(t, err)
 
