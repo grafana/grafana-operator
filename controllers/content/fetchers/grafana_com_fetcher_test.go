@@ -7,9 +7,20 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 func TestFetchDashboardFromGrafanaCom(t *testing.T) {
+	s := runtime.NewScheme()
+	err := corev1.AddToScheme(s)
+	require.NoError(t, err, "adding scheme")
+
+	cl := fake.NewClientBuilder().
+		WithScheme(s).
+		Build()
+
 	dashboard := &v1beta1.GrafanaDashboard{
 		Spec: v1beta1.GrafanaDashboardSpec{
 			GrafanaContentSpec: v1beta1.GrafanaContentSpec{

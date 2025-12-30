@@ -5,17 +5,18 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/content/cache"
 	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
-
-	. "github.com/onsi/ginkgo/v2"
 )
 
 const (
@@ -23,10 +24,8 @@ const (
 	basicAuthPassword = "secret"
 )
 
-func getCredentials(secretName string) (*corev1.Secret, *v1beta1.GrafanaContentURLAuthorization) {
-	GinkgoHelper()
-
-	t := GinkgoT()
+func getCredentials(t *testing.T, secretName string) (*corev1.Secret, *v1beta1.GrafanaContentURLAuthorization) {
+	t.Helper()
 
 	const (
 		usernameKey = "USERNAME"
@@ -38,9 +37,9 @@ func getCredentials(secretName string) (*corev1.Secret, *v1beta1.GrafanaContentU
 			Name:      secretName,
 			Namespace: "default",
 		},
-		StringData: map[string]string{
-			usernameKey: basicAuthUsername,
-			passwordKey: basicAuthPassword,
+		Data: map[string][]byte{
+			usernameKey: []byte(basicAuthUsername),
+			passwordKey: []byte(basicAuthPassword),
 		},
 	}
 
@@ -54,9 +53,7 @@ func getCredentials(secretName string) (*corev1.Secret, *v1beta1.GrafanaContentU
 	return secret, urlAuthorization
 }
 
-var _ = Describe("URL fetcher", Ordered, func() {
-	t := GinkgoT()
-
+func TestFetchFromURL(t *testing.T) {
 	want := []byte(`{"dummyField": "dummyData"}`)
 	wantCompressed, err := cache.Gzip(want)
 
@@ -82,63 +79,68 @@ var _ = Describe("URL fetcher", Ordered, func() {
 	})
 
 	ts := httptest.NewServer(mux)
-	AfterAll(func() {
+
+	t.Cleanup(func() {
 		ts.Close()
 	})
 
-	When("no authentication", func() {
+	s := runtime.NewScheme()
+	err = corev1.AddToScheme(s)
+	require.NoError(t, err)
+
+	cl := fake.NewClientBuilder().
+		WithScheme(s).
+		Build()
+
+	t.Run("no authentication", func(t *testing.T) {
 		url := ts.URL + publicEndpoint
 
-		It("successfully fetches the dashboard", func() {
-			dashboard := &v1beta1.GrafanaDashboard{
-				Spec: v1beta1.GrafanaDashboardSpec{
-					GrafanaContentSpec: v1beta1.GrafanaContentSpec{
-						URL: url,
-					},
+		dashboard := &v1beta1.GrafanaDashboard{
+			Spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+					URL: url,
 				},
-				Status: v1beta1.GrafanaDashboardStatus{},
-			}
+			},
+			Status: v1beta1.GrafanaDashboardStatus{},
+		}
 
-			got, err := FetchFromURL(context.Background(), dashboard, cl, nil)
-			require.NoError(t, err)
+		got, err := FetchFromURL(context.Background(), dashboard, cl, nil)
+		require.NoError(t, err)
 
-			assert.Equal(t, want, got)
-			assert.Equal(t, wantCompressed, dashboard.Status.ContentCache)
-			assert.Equal(t, url, dashboard.Status.ContentURL)
-			assert.NotZero(t, dashboard.Status.ContentTimestamp.Time)
-		})
+		assert.Equal(t, want, got)
+		assert.Equal(t, wantCompressed, dashboard.Status.ContentCache)
+		assert.Equal(t, url, dashboard.Status.ContentURL)
+		assert.NotZero(t, dashboard.Status.ContentTimestamp.Time)
 	})
 
-	When("using authentication", func() {
+	t.Run("using authentication", func(t *testing.T) {
 		url := ts.URL + privateEndpoint
 
-		It("successfully fetches the dashboard", func() {
-			credentialsSecret, urlAuthorization := getCredentials("credentials")
+		credentialsSecret, urlAuthorization := getCredentials(t, "credentials")
 
-			dashboard := &v1beta1.GrafanaDashboard{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "url-basic-auth",
-					Namespace: "default",
+		dashboard := &v1beta1.GrafanaDashboard{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "url-basic-auth",
+				Namespace: "default",
+			},
+			Spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+					URL:              url,
+					URLAuthorization: urlAuthorization,
 				},
-				Spec: v1beta1.GrafanaDashboardSpec{
-					GrafanaContentSpec: v1beta1.GrafanaContentSpec{
-						URL:              url,
-						URLAuthorization: urlAuthorization,
-					},
-				},
-				Status: v1beta1.GrafanaDashboardStatus{},
-			}
+			},
+			Status: v1beta1.GrafanaDashboardStatus{},
+		}
 
-			err = cl.Create(context.Background(), credentialsSecret)
-			require.NoError(t, err)
+		err = cl.Create(context.Background(), credentialsSecret)
+		require.NoError(t, err)
 
-			got, err := FetchFromURL(context.Background(), dashboard, cl, nil)
-			require.NoError(t, err)
+		got, err := FetchFromURL(context.Background(), dashboard, cl, nil)
+		require.NoError(t, err)
 
-			assert.Equal(t, want, got)
-			assert.Equal(t, wantCompressed, dashboard.Status.ContentCache)
-			assert.Equal(t, url, dashboard.Status.ContentURL)
-			assert.NotZero(t, dashboard.Status.ContentTimestamp.Time)
-		})
+		assert.Equal(t, want, got)
+		assert.Equal(t, wantCompressed, dashboard.Status.ContentCache)
+		assert.Equal(t, url, dashboard.Status.ContentURL)
+		assert.NotZero(t, dashboard.Status.ContentTimestamp.Time)
 	})
-})
+}
