@@ -2677,6 +2677,13 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanadatasourcespeccorrelationsindex">correlations</a></b></td>
+        <td>[]object</td>
+        <td>
+          Correlations to create for this datasource<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanadatasourcespecpluginsindex">plugins</a></b></td>
         <td>[]object</td>
         <td>
@@ -2915,6 +2922,171 @@ Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
 the values array must be non-empty. If the operator is Exists or DoesNotExist,
 the values array must be empty. This array is replaced during a strategic
 merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDatasource.spec.correlations[index]
+<sup><sup>[↩ Parent](#grafanadatasourcespec)</sup></sup>
+
+
+
+GrafanaDatasourceCorrelation defines a correlation from this datasource to a target datasource
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>targetUID</b></td>
+        <td>string</td>
+        <td>
+          UID of the target datasource<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanadatasourcespeccorrelationsindexconfig">config</a></b></td>
+        <td>object</td>
+        <td>
+          Config for the correlation<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>description</b></td>
+        <td>string</td>
+        <td>
+          Optional description of the correlation<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>label</b></td>
+        <td>string</td>
+        <td>
+          Optional label for the correlation<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type of correlation: "query" or "external"<br/>
+          <br/>
+            <i>Enum</i>: query, external<br/>
+            <i>Default</i>: query<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>uid</b></td>
+        <td>string</td>
+        <td>
+          UID of the correlation. If not specified, a UID will be generated<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDatasource.spec.correlations[index].config
+<sup><sup>[↩ Parent](#grafanadatasourcespeccorrelationsindex)</sup></sup>
+
+
+
+Config for the correlation
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>field</b></td>
+        <td>string</td>
+        <td>
+          Field used to attach the correlation link<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>target</b></td>
+        <td>object</td>
+        <td>
+          Target query configuration<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanadatasourcespeccorrelationsindexconfigtransformationsindex">transformations</a></b></td>
+        <td>[]object</td>
+        <td>
+          Transformations to apply to the source data<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type of config: "query" or "external"<br/>
+          <br/>
+            <i>Enum</i>: query, external<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDatasource.spec.correlations[index].config.transformations[index]
+<sup><sup>[↩ Parent](#grafanadatasourcespeccorrelationsindexconfig)</sup></sup>
+
+
+
+GrafanaDatasourceCorrelationTransformation defines a transformation for correlation
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>expression</b></td>
+        <td>string</td>
+        <td>
+          Expression for regex transformations<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>field</b></td>
+        <td>string</td>
+        <td>
+          Field to transform<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mapValue</b></td>
+        <td>string</td>
+        <td>
+          MapValue for logfmt transformations<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type of transformation: "regex" or "logfmt"<br/>
+          <br/>
+            <i>Enum</i>: regex, logfmt<br/>
         </td>
         <td>false</td>
       </tr></tbody>
