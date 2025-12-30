@@ -36,14 +36,8 @@ func TestGetExternalAdminCredentials(t *testing.T) {
 	}
 
 	testCtx := context.Background()
-	s := runtime.NewScheme()
-	err := corev1.AddToScheme(s)
-	require.NoError(t, err, "adding scheme")
 
-	cl := fake.NewClientBuilder().
-		WithScheme(s).
-		WithObjects(credSecret).
-		Build()
+	cl := tk8s.GetFakeClient(t, credSecret)
 
 	t.Run("with defined credentials", func(t *testing.T) {
 		tests := []struct {
@@ -347,14 +341,8 @@ func TestGetAdminCredentials(t *testing.T) {
 	}
 
 	testCtx := context.Background()
-	s := runtime.NewScheme()
-	err := corev1.AddToScheme(s)
-	require.NoError(t, err, "adding scheme")
 
-	cl := fake.NewClientBuilder().
-		WithScheme(s).
-		WithObjects(credSecret).
-		Build()
+	cl := tk8s.GetFakeClient(t, credSecret)
 
 	t.Run("with defined credentials", func(t *testing.T) {
 		tests := []struct {

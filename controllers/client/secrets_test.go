@@ -8,8 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 func TestGetValueFromSecretKey(t *testing.T) {
@@ -38,14 +36,8 @@ func TestGetValueFromSecretKey(t *testing.T) {
 	}
 
 	testCtx := t.Context()
-	s := runtime.NewScheme()
-	err := corev1.AddToScheme(s)
-	require.NoError(t, err, "adding scheme")
 
-	cl := fake.NewClientBuilder().
-		WithScheme(s).
-		WithObjects(emptySecret, secretWithData).
-		Build()
+	cl := tk8s.GetFakeClient(t, emptySecret, secretWithData)
 
 	tests := []struct {
 		name        string
