@@ -282,7 +282,6 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 	}
 
 	if exists && cr.Unchanged(hash) {
-		// Even if datasource is unchanged, sync correlations
 		if err := r.syncCorrelations(ctx, gClient, cr); err != nil {
 			return fmt.Errorf("syncing correlations: %w", err)
 		}
@@ -317,7 +316,6 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		}
 	}
 
-	// Sync correlations after datasource is created/updated
 	if err := r.syncCorrelations(ctx, gClient, cr); err != nil {
 		return fmt.Errorf("syncing correlations: %w", err)
 	}
@@ -500,32 +498,26 @@ func (r *GrafanaDatasourceReconciler) buildDatasourceModel(ctx context.Context, 
 	return &res, fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
 
-// correlationKey returns a unique key for matching correlations by targetUID and label
 func correlationKey(targetUID, label string) string {
 	return fmt.Sprintf("%s:%s", targetUID, label)
 }
 
-// syncCorrelations synchronizes correlations defined in the CR with Grafana
 func (r *GrafanaDatasourceReconciler) syncCorrelations(ctx context.Context, gClient *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaDatasource) error {
 	log := logf.FromContext(ctx)
 	sourceUID := cr.GetGrafanaUID()
 
-	// If no correlations defined, delete all existing correlations
 	if len(cr.Spec.Correlations) == 0 {
 		return r.deleteAllCorrelations(ctx, gClient, sourceUID)
 	}
 
-	// Get existing correlations from Grafana
 	existingCorrelations, err := gClient.Datasources.GetCorrelationsBySourceUID(sourceUID)
 	if err != nil {
 		var notFound *datasources.GetCorrelationsBySourceUIDNotFound
 		if !errors.As(err, &notFound) {
 			return fmt.Errorf("fetching existing correlations: %w", err)
 		}
-		// No correlations exist yet, that's fine
 	}
 
-	// Build a map of existing correlations by composite key (targetUID:label) for matching
 	existingByKey := make(map[string]*models.Correlation)
 	if existingCorrelations != nil {
 		for _, c := range existingCorrelations.Payload {
@@ -534,14 +526,12 @@ func (r *GrafanaDatasourceReconciler) syncCorrelations(ctx context.Context, gCli
 		}
 	}
 
-	// Build a set of desired correlation keys
 	desiredKeys := make(map[string]struct{})
 	for _, c := range cr.Spec.Correlations {
 		key := correlationKey(c.TargetUID, c.Label)
 		desiredKeys[key] = struct{}{}
 	}
 
-	// Delete correlations that are no longer in the spec
 	for key, existing := range existingByKey {
 		if _, found := desiredKeys[key]; !found {
 			log.Info("Deleting correlation", "uid", existing.UID, "targetUID", existing.TargetUID, "label", existing.Label)
@@ -555,16 +545,13 @@ func (r *GrafanaDatasourceReconciler) syncCorrelations(ctx context.Context, gCli
 		}
 	}
 
-	// Create or update correlations from the spec
 	for _, desired := range cr.Spec.Correlations {
 		key := correlationKey(desired.TargetUID, desired.Label)
 		if existing, found := existingByKey[key]; found {
-			// Update existing correlation
 			if err := r.updateCorrelationByUID(gClient, sourceUID, existing.UID, desired); err != nil {
 				return fmt.Errorf("updating correlation (targetUID=%s, label=%s): %w", desired.TargetUID, desired.Label, err)
 			}
 		} else {
-			// Create new correlation
 			if err := r.createCorrelation(gClient, sourceUID, desired); err != nil {
 				return fmt.Errorf("creating correlation (targetUID=%s, label=%s): %w", desired.TargetUID, desired.Label, err)
 			}
@@ -574,7 +561,6 @@ func (r *GrafanaDatasourceReconciler) syncCorrelations(ctx context.Context, gCli
 	return nil
 }
 
-// deleteAllCorrelations removes all correlations for a datasource
 func (r *GrafanaDatasourceReconciler) deleteAllCorrelations(ctx context.Context, gClient *genapi.GrafanaHTTPAPI, sourceUID string) error {
 	log := logf.FromContext(ctx)
 
@@ -582,7 +568,7 @@ func (r *GrafanaDatasourceReconciler) deleteAllCorrelations(ctx context.Context,
 	if err != nil {
 		var notFound *datasources.GetCorrelationsBySourceUIDNotFound
 		if errors.As(err, &notFound) {
-			return nil // No correlations to delete
+			return nil
 		}
 
 		return fmt.Errorf("fetching existing correlations: %w", err)
@@ -606,14 +592,12 @@ func (r *GrafanaDatasourceReconciler) deleteAllCorrelations(ctx context.Context,
 	return nil
 }
 
-// createCorrelation creates a new correlation in Grafana
 func (r *GrafanaDatasourceReconciler) createCorrelation(gClient *genapi.GrafanaHTTPAPI, sourceUID string, c v1beta1.GrafanaDatasourceCorrelation) error {
 	cmd := &models.CreateCorrelationCommand{
 		TargetUID:   c.TargetUID,
 		Label:       c.Label,
 		Description: c.Description,
 		Type:        models.CorrelationType(c.Type),
-		Provisioned: true,
 	}
 
 	if c.Config != nil {
@@ -625,7 +609,6 @@ func (r *GrafanaDatasourceReconciler) createCorrelation(gClient *genapi.GrafanaH
 	return err
 }
 
-// updateCorrelationByUID updates an existing correlation in Grafana by its UID
 func (r *GrafanaDatasourceReconciler) updateCorrelationByUID(gClient *genapi.GrafanaHTTPAPI, sourceUID, correlationUID string, desired v1beta1.GrafanaDatasourceCorrelation) error {
 	cmd := &models.UpdateCorrelationCommand{
 		Label:       desired.Label,
@@ -646,7 +629,6 @@ func (r *GrafanaDatasourceReconciler) updateCorrelationByUID(gClient *genapi.Gra
 	return err
 }
 
-// buildCorrelationConfig converts the CR config to the API model
 func (r *GrafanaDatasourceReconciler) buildCorrelationConfig(config *v1beta1.GrafanaDatasourceCorrelationConfig) *models.CorrelationConfig {
 	field := config.Field
 	result := &models.CorrelationConfig{
@@ -673,7 +655,6 @@ func (r *GrafanaDatasourceReconciler) buildCorrelationConfig(config *v1beta1.Gra
 	return result
 }
 
-// buildCorrelationConfigUpdate converts the CR config to the update API model
 func (r *GrafanaDatasourceReconciler) buildCorrelationConfigUpdate(config *v1beta1.GrafanaDatasourceCorrelationConfig) *models.CorrelationConfigUpdateDTO {
 	result := &models.CorrelationConfigUpdateDTO{
 		Field: config.Field,
@@ -698,7 +679,6 @@ func (r *GrafanaDatasourceReconciler) buildCorrelationConfigUpdate(config *v1bet
 	return result
 }
 
-// convertJSONToInterface converts apiextensionsv1.JSON to any
 func convertJSONToInterface(j *apiextensionsv1.JSON) any {
 	if j == nil || j.Raw == nil {
 		return nil
