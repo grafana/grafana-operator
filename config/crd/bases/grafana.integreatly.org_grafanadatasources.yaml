@@ -57,6 +57,81 @@ spec:
                 description: Allow the Operator to match this resource with Grafanas
                   outside the current namespace
                 type: boolean
+              correlations:
+                description: Correlations to create for this datasource
+                items:
+                  description: GrafanaDatasourceCorrelation defines a correlation
+                    from this datasource to a target datasource
+                  properties:
+                    config:
+                      description: Config for the correlation
+                      properties:
+                        field:
+                          description: Field used to attach the correlation link
+                          type: string
+                        target:
+                          description: Target query configuration
+                          type: object
+                          x-kubernetes-preserve-unknown-fields: true
+                        transformations:
+                          description: Transformations to apply to the source data
+                          items:
+                            description: GrafanaDatasourceCorrelationTransformation
+                              defines a transformation for correlation
+                            properties:
+                              expression:
+                                description: Expression for regex transformations
+                                type: string
+                              field:
+                                description: Field to transform
+                                type: string
+                              mapValue:
+                                description: MapValue for logfmt transformations
+                                type: string
+                              type:
+                                description: 'Type of transformation: "regex" or "logfmt"'
+                                enum:
+                                - regex
+                                - logfmt
+                                type: string
+                            type: object
+                          type: array
+                        type:
+                          description: 'Type of config: "query" or "external"'
+                          enum:
+                          - query
+                          - external
+                          type: string
+                      required:
+                      - field
+                      - target
+                      type: object
+                    description:
+                      description: Optional description of the correlation
+                      type: string
+                    label:
+                      description: Optional label for the correlation
+                      type: string
+                    targetUID:
+                      description: UID of the target datasource
+                      type: string
+                    type:
+                      default: query
+                      description: 'Type of correlation: "query" or "external"'
+                      enum:
+                      - query
+                      - external
+                      type: string
+                    uid:
+                      description: UID of the correlation. Read-only field populated
+                        by Grafana.
+                      maxLength: 40
+                      pattern: ^[a-zA-Z0-9-_]+$
+                      type: string
+                  required:
+                  - targetUID
+                  type: object
+                type: array
               datasource:
                 properties:
                   access:

@@ -31,6 +31,7 @@ import (
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
 	corev1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -281,6 +282,10 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 	}
 
 	if exists && cr.Unchanged(hash) {
+		if err := r.syncCorrelations(ctx, gClient, cr); err != nil {
+			return fmt.Errorf("syncing correlations: %w", err)
+		}
+
 		return nil
 	}
 
@@ -309,6 +314,10 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		if err != nil {
 			return err
 		}
+	}
+
+	if err := r.syncCorrelations(ctx, gClient, cr); err != nil {
+		return fmt.Errorf("syncing correlations: %w", err)
 	}
 
 	// Update grafana instance Status
@@ -487,4 +496,198 @@ func (r *GrafanaDatasourceReconciler) buildDatasourceModel(ctx context.Context, 
 	hash.Write(newBytes)
 
 	return &res, fmt.Sprintf("%x", hash.Sum(nil)), nil
+}
+
+func correlationKey(targetUID, label string) string {
+	return fmt.Sprintf("%s:%s", targetUID, label)
+}
+
+func (r *GrafanaDatasourceReconciler) syncCorrelations(ctx context.Context, gClient *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaDatasource) error {
+	log := logf.FromContext(ctx)
+	sourceUID := cr.GetGrafanaUID()
+
+	if len(cr.Spec.Correlations) == 0 {
+		return r.deleteAllCorrelations(ctx, gClient, sourceUID)
+	}
+
+	existingCorrelations, err := gClient.Datasources.GetCorrelationsBySourceUID(sourceUID)
+	if err != nil {
+		var notFound *datasources.GetCorrelationsBySourceUIDNotFound
+		if !errors.As(err, &notFound) {
+			return fmt.Errorf("fetching existing correlations: %w", err)
+		}
+	}
+
+	existingByKey := make(map[string]*models.Correlation)
+	if existingCorrelations != nil {
+		for _, c := range existingCorrelations.Payload {
+			key := correlationKey(c.TargetUID, c.Label)
+			existingByKey[key] = c
+		}
+	}
+
+	desiredKeys := make(map[string]struct{})
+	for _, c := range cr.Spec.Correlations {
+		key := correlationKey(c.TargetUID, c.Label)
+		desiredKeys[key] = struct{}{}
+	}
+
+	for key, existing := range existingByKey {
+		if _, found := desiredKeys[key]; !found {
+			log.Info("Deleting correlation", "uid", existing.UID, "targetUID", existing.TargetUID, "label", existing.Label)
+			_, err := gClient.Datasources.DeleteCorrelation(sourceUID, existing.UID) //nolint
+			if err != nil {
+				var notFound *datasources.DeleteCorrelationNotFound
+				if !errors.As(err, &notFound) {
+					return fmt.Errorf("deleting correlation %s: %w", existing.UID, err)
+				}
+			}
+		}
+	}
+
+	for _, desired := range cr.Spec.Correlations {
+		key := correlationKey(desired.TargetUID, desired.Label)
+		if existing, found := existingByKey[key]; found {
+			if err := r.updateCorrelationByUID(gClient, sourceUID, existing.UID, desired); err != nil {
+				return fmt.Errorf("updating correlation (targetUID=%s, label=%s): %w", desired.TargetUID, desired.Label, err)
+			}
+		} else {
+			if err := r.createCorrelation(gClient, sourceUID, desired); err != nil {
+				return fmt.Errorf("creating correlation (targetUID=%s, label=%s): %w", desired.TargetUID, desired.Label, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (r *GrafanaDatasourceReconciler) deleteAllCorrelations(ctx context.Context, gClient *genapi.GrafanaHTTPAPI, sourceUID string) error {
+	log := logf.FromContext(ctx)
+
+	existingCorrelations, err := gClient.Datasources.GetCorrelationsBySourceUID(sourceUID)
+	if err != nil {
+		var notFound *datasources.GetCorrelationsBySourceUIDNotFound
+		if errors.As(err, &notFound) {
+			return nil
+		}
+
+		return fmt.Errorf("fetching existing correlations: %w", err)
+	}
+
+	if existingCorrelations == nil {
+		return nil
+	}
+
+	for _, c := range existingCorrelations.Payload {
+		log.Info("Deleting correlation", "uid", c.UID)
+		_, err := gClient.Datasources.DeleteCorrelation(sourceUID, c.UID) //nolint
+		if err != nil {
+			var notFound *datasources.DeleteCorrelationNotFound
+			if !errors.As(err, &notFound) {
+				return fmt.Errorf("deleting correlation %s: %w", c.UID, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (r *GrafanaDatasourceReconciler) createCorrelation(gClient *genapi.GrafanaHTTPAPI, sourceUID string, c v1beta1.GrafanaDatasourceCorrelation) error {
+	cmd := &models.CreateCorrelationCommand{
+		TargetUID:   c.TargetUID,
+		Label:       c.Label,
+		Description: c.Description,
+		Type:        models.CorrelationType(c.Type),
+	}
+
+	if c.Config != nil {
+		cmd.Config = r.buildCorrelationConfig(c.Config)
+	}
+
+	_, err := gClient.Datasources.CreateCorrelation(sourceUID, cmd) //nolint
+
+	return err
+}
+
+func (r *GrafanaDatasourceReconciler) updateCorrelationByUID(gClient *genapi.GrafanaHTTPAPI, sourceUID, correlationUID string, desired v1beta1.GrafanaDatasourceCorrelation) error {
+	cmd := &models.UpdateCorrelationCommand{
+		Label:       desired.Label,
+		Description: desired.Description,
+	}
+
+	if desired.Config != nil {
+		cmd.Config = r.buildCorrelationConfigUpdate(desired.Config)
+	}
+
+	params := datasources.NewUpdateCorrelationParams().
+		WithSourceUID(sourceUID).
+		WithCorrelationUID(correlationUID).
+		WithBody(cmd)
+
+	_, err := gClient.Datasources.UpdateCorrelation(params) //nolint
+
+	return err
+}
+
+func (r *GrafanaDatasourceReconciler) buildCorrelationConfig(config *v1beta1.GrafanaDatasourceCorrelationConfig) *models.CorrelationConfig {
+	field := config.Field
+	result := &models.CorrelationConfig{
+		Field: &field,
+		Type:  models.CorrelationType(config.Type),
+	}
+
+	if config.Target != nil {
+		result.Target = convertJSONToInterface(config.Target)
+	}
+
+	if len(config.Transformations) > 0 {
+		result.Transformations = make(models.Transformations, len(config.Transformations))
+		for i, t := range config.Transformations {
+			result.Transformations[i] = &models.Transformation{
+				Type:       t.Type,
+				Field:      t.Field,
+				Expression: t.Expression,
+				MapValue:   t.MapValue,
+			}
+		}
+	}
+
+	return result
+}
+
+func (r *GrafanaDatasourceReconciler) buildCorrelationConfigUpdate(config *v1beta1.GrafanaDatasourceCorrelationConfig) *models.CorrelationConfigUpdateDTO {
+	result := &models.CorrelationConfigUpdateDTO{
+		Field: config.Field,
+	}
+
+	if config.Target != nil {
+		result.Target = convertJSONToInterface(config.Target)
+	}
+
+	if len(config.Transformations) > 0 {
+		result.Transformations = make([]*models.Transformation, len(config.Transformations))
+		for i, t := range config.Transformations {
+			result.Transformations[i] = &models.Transformation{
+				Type:       t.Type,
+				Field:      t.Field,
+				Expression: t.Expression,
+				MapValue:   t.MapValue,
+			}
+		}
+	}
+
+	return result
+}
+
+func convertJSONToInterface(j *apiextensionsv1.JSON) any {
+	if j == nil || j.Raw == nil {
+		return nil
+	}
+
+	var result any
+	if err := json.Unmarshal(j.Raw, &result); err != nil {
+		return nil
+	}
+
+	return result
 }
