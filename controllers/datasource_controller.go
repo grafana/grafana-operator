@@ -613,6 +613,7 @@ func (r *GrafanaDatasourceReconciler) updateCorrelationByUID(gClient *genapi.Gra
 	cmd := &models.UpdateCorrelationCommand{
 		Label:       desired.Label,
 		Description: desired.Description,
+		Type:        models.CorrelationType(desired.Type),
 	}
 
 	if desired.Config != nil {

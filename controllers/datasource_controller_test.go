@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/grafana/grafana-openapi-client-go/client/datasources"
@@ -419,11 +420,12 @@ var _ = Describe("Datasource correlations", Ordered, func() {
 	)
 
 	var (
-		r         *GrafanaDatasourceReconciler
-		sourceReq ctrl.Request
-		targetReq ctrl.Request
-		sourceKey types.NamespacedName
-		targetKey types.NamespacedName
+		r             *GrafanaDatasourceReconciler
+		sourceReq     ctrl.Request
+		targetReq     ctrl.Request
+		sourceKey     types.NamespacedName
+		targetKey     types.NamespacedName
+		datasourceURL string
 	)
 
 	findCorrelation := func(correlations []*models.Correlation) *models.Correlation {
@@ -457,6 +459,13 @@ var _ = Describe("Datasource correlations", Ordered, func() {
 	BeforeAll(func() {
 		r = &GrafanaDatasourceReconciler{Client: cl, Scheme: cl.Scheme()}
 
+		mux := tk8s.GetJSONmux(t, map[string]string{
+			"/": "{}",
+		})
+		ts := httptest.NewServer(mux)
+		DeferCleanup(ts.Close)
+		datasourceURL = ts.URL
+
 		target := &v1beta1.GrafanaDatasource{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "default",
@@ -469,7 +478,7 @@ var _ = Describe("Datasource correlations", Ordered, func() {
 					Name:   targetName,
 					Type:   "prometheus",
 					Access: "proxy",
-					URL:    "https://demo.promlabs.com",
+					URL:    datasourceURL,
 				},
 			},
 		}
@@ -502,7 +511,7 @@ var _ = Describe("Datasource correlations", Ordered, func() {
 					Name:   sourceName,
 					Type:   "prometheus",
 					Access: "proxy",
-					URL:    "https://demo.promlabs.com",
+					URL:    datasourceURL,
 				},
 				Correlations: []v1beta1.GrafanaDatasourceCorrelation{
 					{
