@@ -2,6 +2,9 @@
 package autodetect
 
 import (
+	"slices"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 )
@@ -34,17 +37,17 @@ func New(restConfig *rest.Config) (AutoDetect, error) {
 }
 
 func (a *autoDetect) hasAPIGroup(target string) (bool, error) {
-	apiList, err := a.dcl.ServerGroups()
+	l, err := a.dcl.ServerGroups()
 	if err != nil {
 		return false, err
 	}
 
-	apiGroups := apiList.Groups
-	for _, group := range apiGroups {
-		if group.Name == target {
-			return true, nil
-		}
-	}
+	isFound := slices.ContainsFunc(l.Groups, func(g metav1.APIGroup) bool {
+		return g.Name == target
+	})
+
+	return isFound, nil
+}
 
 	return false, nil
 }
