@@ -26,16 +26,16 @@ const (
 )
 
 type IngressReconciler struct {
-	client        client.Client
-	isOpenShift   bool
-	hasGatewayAPI bool
+	client          client.Client
+	isOpenShift     bool
+	hasHTTPRouteCRD bool
 }
 
-func NewIngressReconciler(cl client.Client, isOpenShift, hasGatewayAPI bool) reconcilers.OperatorGrafanaReconciler {
+func NewIngressReconciler(cl client.Client, isOpenShift, hasHTTPRouteCRD bool) reconcilers.OperatorGrafanaReconciler {
 	return &IngressReconciler{
-		client:        cl,
-		isOpenShift:   isOpenShift,
-		hasGatewayAPI: hasGatewayAPI,
+		client:          cl,
+		isOpenShift:     isOpenShift,
+		hasHTTPRouteCRD: hasHTTPRouteCRD,
 	}
 }
 
@@ -49,7 +49,7 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 		}
 	}
 
-	if r.hasGatewayAPI {
+	if r.hasHTTPRouteCRD {
 		err := r.deleteHTTPRouteIfNil(ctx, cr, scheme)
 		if err != nil {
 			return v1beta1.OperatorStageResultFailed, err

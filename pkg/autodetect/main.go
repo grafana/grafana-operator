@@ -15,7 +15,7 @@ var _ AutoDetect = (*autoDetect)(nil)
 // AutoDetect provides an assortment of routines that auto-detect traits based on the runtime.
 type AutoDetect interface {
 	IsOpenshift() (bool, error)
-	HasGatewayAPI() (bool, error)
+	HasHTTPRouteCRD() (bool, error)
 }
 
 type autoDetect struct {
@@ -72,7 +72,7 @@ func (a *autoDetect) IsOpenshift() (bool, error) {
 	return a.hasAPIGroup("route.openshift.io")
 }
 
-// Tests if the GatewayAPI CRDs are present
-func (a *autoDetect) HasGatewayAPI() (bool, error) {
+// Tests if the HTTPRoute CRD is present
+func (a *autoDetect) HasHTTPRouteCRD() (bool, error) {
 	return a.hasKind("gateway.networking.k8s.io/v1", "HTTPRoute")
 }
