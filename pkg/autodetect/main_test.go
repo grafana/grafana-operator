@@ -1,57 +1,10 @@
 package autodetect
 
 import (
-	"encoding/json"
-	"net/http"
-	"net/http/httptest"
-	"testing"
-
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/rest"
 )
-
-func TestDetectPlatformBasedOnAvailableAPIGroups(t *testing.T) {
-	for _, tt := range []struct {
-		apiGroupList *metav1.APIGroupList
-		expected     bool
-	}{
-		{
-			&metav1.APIGroupList{},
-			false,
-		},
-		{
-			&metav1.APIGroupList{
-				Groups: []metav1.APIGroup{
-					{
-						Name: "route.openshift.io",
-					},
-				},
-			},
-			true,
-		},
-	} {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			output, err := json.Marshal(tt.apiGroupList)
-			assert.NoError(t, err)
-
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			_, err = w.Write(output)
-			assert.NoError(t, err)
-		}))
-		defer server.Close()
-
-		autoDetect, err := NewAutoDetect(&rest.Config{Host: server.URL})
-		require.NoError(t, err)
-
-		plt, err := autoDetect.IsOpenshift()
-		require.NoError(t, err)
-		assert.Equal(t, tt.expected, plt)
-	}
-}
 
 var _ = Describe("AutoDetect", func() {
 	t := GinkgoT()
