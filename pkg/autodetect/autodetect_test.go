@@ -86,3 +86,59 @@ var _ = Describe("HasKind", func() {
 		}
 	})
 })
+
+var _ = Describe("IsOpenshift", func() {
+	t := GinkgoT()
+
+	Context("correctly tests for CRD presence when", func() {
+		It("Route CRD exists", func() {
+			autoDetect, err := NewAutoDetect(cfgWithCRDs)
+			require.NoError(t, err)
+			require.NotNil(t, autoDetect)
+
+			got, err := autoDetect.IsOpenshift()
+			require.NoError(t, err)
+
+			assert.True(t, got)
+		})
+
+		It("Route CRD does NOT exist", func() {
+			autoDetect, err := NewAutoDetect(cfgNoCRDs)
+			require.NoError(t, err)
+			require.NotNil(t, autoDetect)
+
+			got, err := autoDetect.IsOpenshift()
+			require.NoError(t, err)
+
+			assert.False(t, got)
+		})
+	})
+})
+
+var _ = Describe("HasHTTPRouteCRD", func() {
+	t := GinkgoT()
+
+	Context("correctly tests for CRD presence when", func() {
+		It("HTTPRoute CRD exists", func() {
+			autoDetect, err := NewAutoDetect(cfgWithCRDs)
+			require.NoError(t, err)
+			require.NotNil(t, autoDetect)
+
+			got, err := autoDetect.HasHTTPRouteCRD()
+			require.NoError(t, err)
+
+			assert.True(t, got)
+		})
+
+		It("HTTPRoute CRD does NOT exist", func() {
+			autoDetect, err := NewAutoDetect(cfgNoCRDs)
+			require.NoError(t, err)
+			require.NotNil(t, autoDetect)
+
+			got, err := autoDetect.HasHTTPRouteCRD()
+			require.NoError(t, err)
+
+			assert.False(t, got)
+		})
+	})
+})
