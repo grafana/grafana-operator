@@ -4,6 +4,7 @@ package autodetect
 import (
 	"slices"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
@@ -49,7 +50,21 @@ func (a *autoDetect) hasAPIGroup(target string) (bool, error) {
 	return isFound, nil
 }
 
-	return false, nil
+func (a *autoDetect) hasKind(apiVersion, kind string) (bool, error) {
+	l, err := a.dcl.ServerResourcesForGroupVersion(apiVersion)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	isFound := slices.ContainsFunc(l.APIResources, func(k metav1.APIResource) bool {
+		return k.Kind == kind
+	})
+
+	return isFound, nil
 }
 
 // Tests for the presence of the `route.openshift.io` api group as an indicator of if we're running in OpenShift
