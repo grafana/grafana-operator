@@ -200,7 +200,7 @@ func main() { //nolint:gocyclo
 	// Fetch k8s api credentials and detect platform
 	restConfig := ctrl.GetConfigOrDie()
 
-	cluster, err := autodetect.New(restConfig)
+	cluster, err := autodetect.NewAutoDetect(restConfig)
 	if err != nil {
 		setupLog.Error(err, "failed to setup auto-detect routine")
 		os.Exit(1)

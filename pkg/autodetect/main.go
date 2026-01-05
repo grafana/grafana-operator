@@ -13,7 +13,7 @@ type AutoDetect struct {
 	dcl discovery.DiscoveryInterface
 }
 
-func New(restConfig *rest.Config) (*AutoDetect, error) {
+func NewAutoDetect(restConfig *rest.Config) (*AutoDetect, error) {
 	dcl, err := discovery.NewDiscoveryClientForConfig(restConfig)
 	if err != nil {
 		return nil, err

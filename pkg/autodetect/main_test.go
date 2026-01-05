@@ -1,4 +1,4 @@
-package autodetect_test
+package autodetect
 
 import (
 	"encoding/json"
@@ -6,7 +6,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/grafana/grafana-operator/v5/pkg/autodetect"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -44,7 +43,7 @@ func TestDetectPlatformBasedOnAvailableAPIGroups(t *testing.T) {
 		}))
 		defer server.Close()
 
-		autoDetect, err := autodetect.New(&rest.Config{Host: server.URL})
+		autoDetect, err := NewAutoDetect(&rest.Config{Host: server.URL})
 		require.NoError(t, err)
 
 		plt, err := autoDetect.IsOpenshift()
