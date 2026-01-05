@@ -1,4 +1,3 @@
-// Package autodetect is for auto-detecting traits from the environment (platform, APIs, ...).
 package autodetect
 
 import (
@@ -10,34 +9,22 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-var _ AutoDetect = (*autoDetect)(nil)
-
-// AutoDetect provides an assortment of routines that auto-detect traits based on the runtime.
-type AutoDetect interface {
-	IsOpenshift() (bool, error)
-	HasHTTPRouteCRD() (bool, error)
-}
-
-type autoDetect struct {
+type AutoDetect struct {
 	dcl discovery.DiscoveryInterface
 }
 
-// New creates a new auto-detection worker, using the given client when talking to the current cluster.
-func New(restConfig *rest.Config) (AutoDetect, error) {
+func New(restConfig *rest.Config) (*AutoDetect, error) {
 	dcl, err := discovery.NewDiscoveryClientForConfig(restConfig)
 	if err != nil {
-		// it's pretty much impossible to get into this problem, as most of the
-		// code branches from the previous call just won't fail at all,
-		// but let's handle this error anyway...
 		return nil, err
 	}
 
-	return &autoDetect{
+	return &AutoDetect{
 		dcl: dcl,
 	}, nil
 }
 
-func (a *autoDetect) hasAPIGroup(target string) (bool, error) {
+func (a *AutoDetect) HasAPIGroup(target string) (bool, error) {
 	l, err := a.dcl.ServerGroups()
 	if err != nil {
 		return false, err
@@ -50,7 +37,7 @@ func (a *autoDetect) hasAPIGroup(target string) (bool, error) {
 	return isFound, nil
 }
 
-func (a *autoDetect) hasKind(apiVersion, kind string) (bool, error) {
+func (a *AutoDetect) HasKind(apiVersion, kind string) (bool, error) {
 	l, err := a.dcl.ServerResourcesForGroupVersion(apiVersion)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -68,11 +55,11 @@ func (a *autoDetect) hasKind(apiVersion, kind string) (bool, error) {
 }
 
 // Tests for the presence of the `route.openshift.io` api group as an indicator of if we're running in OpenShift
-func (a *autoDetect) IsOpenshift() (bool, error) {
-	return a.hasAPIGroup("route.openshift.io")
+func (a *AutoDetect) IsOpenshift() (bool, error) {
+	return a.HasAPIGroup("route.openshift.io")
 }
 
 // Tests if the HTTPRoute CRD is present
-func (a *autoDetect) HasHTTPRouteCRD() (bool, error) {
-	return a.hasKind("gateway.networking.k8s.io/v1", "HTTPRoute")
+func (a *AutoDetect) HasHTTPRouteCRD() (bool, error) {
+	return a.HasKind("gateway.networking.k8s.io/v1", "HTTPRoute")
 }
