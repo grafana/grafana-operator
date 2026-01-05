@@ -6,22 +6,22 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var _ = Describe("AutoDetect", func() {
+var _ = Describe("HasAPIGroup", func() {
 	t := GinkgoT()
 
-	Context("HasAPIGroup correctly discovers apiGroup presence when", func() {
+	Context("correctly discovers apiGroup presence when", func() {
 		tests := []struct {
 			name     string
 			apiGroup string
 			want     bool
 		}{
 			{
-				name:     "apiVersion exists",
+				name:     "apiGroup exists",
 				apiGroup: "gateway.networking.k8s.io",
 				want:     true,
 			},
 			{
-				name:     "apiVersion does not exist",
+				name:     "apiGroup does not exist",
 				apiGroup: "non.existent.api.io",
 				want:     false,
 			},
@@ -40,8 +40,12 @@ var _ = Describe("AutoDetect", func() {
 			})
 		}
 	})
+})
 
-	Context("HasKind correctly discovers CRD presence when", func() {
+var _ = Describe("HasKind", func() {
+	t := GinkgoT()
+
+	Context("correctly discovers CRD presence when", func() {
 		tests := []struct {
 			name       string
 			apiVersion string
