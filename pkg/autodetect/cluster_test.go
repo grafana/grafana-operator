@@ -33,7 +33,7 @@ var _ = Describe("HasAPIGroup", func() {
 				require.NoError(t, err)
 				require.NotNil(t, cluster)
 
-				got, err := cluster.HasAPIGroup(tt.apiGroup)
+				got, err := cluster.hasAPIGroup(tt.apiGroup)
 				require.NoError(t, err)
 
 				assert.Equal(t, tt.want, got)
@@ -78,7 +78,7 @@ var _ = Describe("HasKind", func() {
 				require.NoError(t, err)
 				require.NotNil(t, cluster)
 
-				got, err := cluster.HasKind(tt.apiVersion, tt.kind)
+				got, err := cluster.hasKind(tt.apiVersion, tt.kind)
 				require.NoError(t, err)
 
 				assert.Equal(t, tt.want, got)

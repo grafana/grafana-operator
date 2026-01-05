@@ -24,7 +24,7 @@ func NewClusterDiscovery(restConfig *rest.Config) (*ClusterDiscovery, error) {
 	}, nil
 }
 
-func (c *ClusterDiscovery) HasAPIGroup(target string) (bool, error) {
+func (c *ClusterDiscovery) hasAPIGroup(target string) (bool, error) {
 	l, err := c.dcl.ServerGroups()
 	if err != nil {
 		return false, err
@@ -37,7 +37,7 @@ func (c *ClusterDiscovery) HasAPIGroup(target string) (bool, error) {
 	return isFound, nil
 }
 
-func (c *ClusterDiscovery) HasKind(apiVersion, kind string) (bool, error) {
+func (c *ClusterDiscovery) hasKind(apiVersion, kind string) (bool, error) {
 	l, err := c.dcl.ServerResourcesForGroupVersion(apiVersion)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -56,10 +56,10 @@ func (c *ClusterDiscovery) HasKind(apiVersion, kind string) (bool, error) {
 
 // Tests for the presence of the `route.openshift.io` api group as an indicator of if we're running in OpenShift
 func (c *ClusterDiscovery) IsOpenshift() (bool, error) {
-	return c.HasAPIGroup("route.openshift.io")
+	return c.hasAPIGroup("route.openshift.io")
 }
 
 // Tests if the HTTPRoute CRD is present
 func (c *ClusterDiscovery) HasHTTPRouteCRD() (bool, error) {
-	return c.HasKind("gateway.networking.k8s.io/v1", "HTTPRoute")
+	return c.hasKind("gateway.networking.k8s.io/v1", "HTTPRoute")
 }
