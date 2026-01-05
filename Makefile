@@ -3,7 +3,7 @@ include Toolchain.mk
 .DEFAULT_GOAL := all
 
 # Current Operator version
-VERSION ?= 5.21.3
+VERSION ?= 5.21.4
 
 # BUNDLE_GEN_FLAGS are the flags passed to the operator-sdk generate bundle command
 BUNDLE_GEN_FLAGS ?= -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
