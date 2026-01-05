@@ -9,7 +9,7 @@ import (
 var _ = Describe("HasAPIGroup", func() {
 	t := GinkgoT()
 
-	Context("correctly discovers apiGroup presence when", func() {
+	Context("correctly tests for apiGroup presence when", func() {
 		tests := []struct {
 			name     string
 			apiGroup string
@@ -21,7 +21,7 @@ var _ = Describe("HasAPIGroup", func() {
 				want:     true,
 			},
 			{
-				name:     "apiGroup does not exist",
+				name:     "apiGroup does NOT exist",
 				apiGroup: "non.existent.api.io",
 				want:     false,
 			},
@@ -45,7 +45,7 @@ var _ = Describe("HasAPIGroup", func() {
 var _ = Describe("HasKind", func() {
 	t := GinkgoT()
 
-	Context("correctly discovers CRD presence when", func() {
+	Context("correctly tests for CRD presence when", func() {
 		tests := []struct {
 			name       string
 			apiVersion string
@@ -59,13 +59,13 @@ var _ = Describe("HasKind", func() {
 				want:       true,
 			},
 			{
-				name:       "kind does not exist",
+				name:       "kind does NOT exist",
 				apiVersion: "gateway.networking.k8s.io/v1",
 				kind:       "NonExistentKind",
 				want:       false,
 			},
 			{
-				name:       "apiVersion does not exist",
+				name:       "apiVersion does NOT exist",
 				apiVersion: "non.existent.api.io/v1",
 				kind:       "HTTPRoute",
 				want:       false,
