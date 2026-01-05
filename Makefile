@@ -193,6 +193,8 @@ ifndef ignore-not-found
   ignore-not-found = false
 endif
 
+DEPLOY_OVERLAY_PATH := deploy/kustomize/overlays/local
+
 .PHONY: install
 install: $(KUSTOMIZE) manifests ## Install CRDs into the K8s cluster specified in ~/.kube/config.
 	$(info $(M) running $@)
@@ -206,8 +208,10 @@ uninstall: $(KUSTOMIZE) manifests ## Uninstall CRDs from the K8s cluster specifi
 .PHONY: deploy
 deploy: $(KUSTOMIZE) manifests ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	$(info $(M) running $@)
-	cd deploy/kustomize/overlays/cluster_scoped && $(KUSTOMIZE) edit set image ghcr.io/grafana/grafana-operator=${IMG}
-	$(KUSTOMIZE) build deploy/kustomize/overlays/cluster_scoped | kubectl apply --server-side --force-conflicts -f -
+	mkdir -p $(DEPLOY_OVERLAY_PATH)
+	cp deploy/kustomize/overlays/cluster_scoped/kustomization.yaml $(DEPLOY_OVERLAY_PATH)/kustomization.yaml
+	cd $(DEPLOY_OVERLAY_PATH) && $(KUSTOMIZE) edit set image ghcr.io/grafana/grafana-operator=${IMG}
+	$(KUSTOMIZE) build $(DEPLOY_OVERLAY_PATH) | kubectl apply --server-side --force-conflicts -f -
 
 .PHONY: deploy-chainsaw
 deploy-chainsaw: $(KUSTOMIZE) manifests ## Deploy controller to the K8s cluster specified in ~/.kube/config.

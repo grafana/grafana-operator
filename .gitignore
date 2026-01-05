@@ -46,3 +46,5 @@ __debug_bin*
 
 bundle/
 bundle.Dockerfile
+
+deploy/kustomize/overlays/local/
