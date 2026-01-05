@@ -13,8 +13,10 @@ import (
 )
 
 var (
-	testEnv *envtest.Environment
-	cfg     *rest.Config
+	cfgNoCRDs       *rest.Config
+	cfgWithCRDs     *rest.Config
+	testEnvNoCRDs   *envtest.Environment
+	testEnvWithCRDs *envtest.Environment
 )
 
 func TestAPIs(t *testing.T) {
@@ -30,17 +32,22 @@ var _ = BeforeSuite(func() {
 
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
+	var err error
+
 	By("bootstrapping test environment")
-	testEnv = &envtest.Environment{
+	testEnvNoCRDs = &envtest.Environment{}
+
+	testEnvWithCRDs = &envtest.Environment{
 		CRDDirectoryPaths: []string{
 			filepath.Join("..", "..", "tests", "fixtures"),
 		},
 		ErrorIfCRDPathMissing: true,
 	}
 
-	var err error
+	cfgNoCRDs, err = testEnvNoCRDs.Start()
+	require.NoError(t, err)
 
-	cfg, err = testEnv.Start()
+	cfgWithCRDs, err = testEnvWithCRDs.Start()
 	require.NoError(t, err)
 })
 
@@ -48,6 +55,9 @@ var _ = AfterSuite(func() {
 	t := GinkgoT()
 
 	By("tearing down the test environment")
-	err := testEnv.Stop()
+	err := testEnvNoCRDs.Stop()
+	require.NoError(t, err)
+
+	err = testEnvWithCRDs.Stop()
 	require.NoError(t, err)
 })

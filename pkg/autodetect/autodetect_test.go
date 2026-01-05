@@ -29,7 +29,7 @@ var _ = Describe("HasAPIGroup", func() {
 
 		for _, tt := range tests {
 			It(tt.name, func() {
-				autoDetect, err := NewAutoDetect(cfg)
+				autoDetect, err := NewAutoDetect(cfgWithCRDs)
 				require.NoError(t, err)
 				require.NotNil(t, autoDetect)
 
@@ -74,7 +74,7 @@ var _ = Describe("HasKind", func() {
 
 		for _, tt := range tests {
 			It(tt.name, func() {
-				autoDetect, err := NewAutoDetect(cfg)
+				autoDetect, err := NewAutoDetect(cfgWithCRDs)
 				require.NoError(t, err)
 				require.NotNil(t, autoDetect)
 
