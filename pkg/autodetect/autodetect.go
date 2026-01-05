@@ -9,23 +9,23 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-type AutoDetect struct {
+type ClusterDiscovery struct {
 	dcl discovery.DiscoveryInterface
 }
 
-func NewAutoDetect(restConfig *rest.Config) (*AutoDetect, error) {
+func NewClusterDiscovery(restConfig *rest.Config) (*ClusterDiscovery, error) {
 	dcl, err := discovery.NewDiscoveryClientForConfig(restConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	return &AutoDetect{
+	return &ClusterDiscovery{
 		dcl: dcl,
 	}, nil
 }
 
-func (a *AutoDetect) HasAPIGroup(target string) (bool, error) {
-	l, err := a.dcl.ServerGroups()
+func (c *ClusterDiscovery) HasAPIGroup(target string) (bool, error) {
+	l, err := c.dcl.ServerGroups()
 	if err != nil {
 		return false, err
 	}
@@ -37,8 +37,8 @@ func (a *AutoDetect) HasAPIGroup(target string) (bool, error) {
 	return isFound, nil
 }
 
-func (a *AutoDetect) HasKind(apiVersion, kind string) (bool, error) {
-	l, err := a.dcl.ServerResourcesForGroupVersion(apiVersion)
+func (c *ClusterDiscovery) HasKind(apiVersion, kind string) (bool, error) {
+	l, err := c.dcl.ServerResourcesForGroupVersion(apiVersion)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return false, nil
@@ -55,11 +55,11 @@ func (a *AutoDetect) HasKind(apiVersion, kind string) (bool, error) {
 }
 
 // Tests for the presence of the `route.openshift.io` api group as an indicator of if we're running in OpenShift
-func (a *AutoDetect) IsOpenshift() (bool, error) {
-	return a.HasAPIGroup("route.openshift.io")
+func (c *ClusterDiscovery) IsOpenshift() (bool, error) {
+	return c.HasAPIGroup("route.openshift.io")
 }
 
 // Tests if the HTTPRoute CRD is present
-func (a *AutoDetect) HasHTTPRouteCRD() (bool, error) {
-	return a.HasKind("gateway.networking.k8s.io/v1", "HTTPRoute")
+func (c *ClusterDiscovery) HasHTTPRouteCRD() (bool, error) {
+	return c.HasKind("gateway.networking.k8s.io/v1", "HTTPRoute")
 }

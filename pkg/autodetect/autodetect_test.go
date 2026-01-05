@@ -29,11 +29,11 @@ var _ = Describe("HasAPIGroup", func() {
 
 		for _, tt := range tests {
 			It(tt.name, func() {
-				autoDetect, err := NewAutoDetect(cfgWithCRDs)
+				cluster, err := NewClusterDiscovery(cfgWithCRDs)
 				require.NoError(t, err)
-				require.NotNil(t, autoDetect)
+				require.NotNil(t, cluster)
 
-				got, err := autoDetect.HasAPIGroup(tt.apiGroup)
+				got, err := cluster.HasAPIGroup(tt.apiGroup)
 				require.NoError(t, err)
 
 				assert.Equal(t, tt.want, got)
@@ -74,11 +74,11 @@ var _ = Describe("HasKind", func() {
 
 		for _, tt := range tests {
 			It(tt.name, func() {
-				autoDetect, err := NewAutoDetect(cfgWithCRDs)
+				cluster, err := NewClusterDiscovery(cfgWithCRDs)
 				require.NoError(t, err)
-				require.NotNil(t, autoDetect)
+				require.NotNil(t, cluster)
 
-				got, err := autoDetect.HasKind(tt.apiVersion, tt.kind)
+				got, err := cluster.HasKind(tt.apiVersion, tt.kind)
 				require.NoError(t, err)
 
 				assert.Equal(t, tt.want, got)
@@ -92,22 +92,22 @@ var _ = Describe("IsOpenshift", func() {
 
 	Context("correctly tests for CRD presence when", func() {
 		It("Route CRD exists", func() {
-			autoDetect, err := NewAutoDetect(cfgWithCRDs)
+			cluster, err := NewClusterDiscovery(cfgWithCRDs)
 			require.NoError(t, err)
-			require.NotNil(t, autoDetect)
+			require.NotNil(t, cluster)
 
-			got, err := autoDetect.IsOpenshift()
+			got, err := cluster.IsOpenshift()
 			require.NoError(t, err)
 
 			assert.True(t, got)
 		})
 
 		It("Route CRD does NOT exist", func() {
-			autoDetect, err := NewAutoDetect(cfgNoCRDs)
+			cluster, err := NewClusterDiscovery(cfgNoCRDs)
 			require.NoError(t, err)
-			require.NotNil(t, autoDetect)
+			require.NotNil(t, cluster)
 
-			got, err := autoDetect.IsOpenshift()
+			got, err := cluster.IsOpenshift()
 			require.NoError(t, err)
 
 			assert.False(t, got)
@@ -120,22 +120,22 @@ var _ = Describe("HasHTTPRouteCRD", func() {
 
 	Context("correctly tests for CRD presence when", func() {
 		It("HTTPRoute CRD exists", func() {
-			autoDetect, err := NewAutoDetect(cfgWithCRDs)
+			cluster, err := NewClusterDiscovery(cfgWithCRDs)
 			require.NoError(t, err)
-			require.NotNil(t, autoDetect)
+			require.NotNil(t, cluster)
 
-			got, err := autoDetect.HasHTTPRouteCRD()
+			got, err := cluster.HasHTTPRouteCRD()
 			require.NoError(t, err)
 
 			assert.True(t, got)
 		})
 
 		It("HTTPRoute CRD does NOT exist", func() {
-			autoDetect, err := NewAutoDetect(cfgNoCRDs)
+			cluster, err := NewClusterDiscovery(cfgNoCRDs)
 			require.NoError(t, err)
-			require.NotNil(t, autoDetect)
+			require.NotNil(t, cluster)
 
-			got, err := autoDetect.HasHTTPRouteCRD()
+			got, err := cluster.HasHTTPRouteCRD()
 			require.NoError(t, err)
 
 			assert.False(t, got)
