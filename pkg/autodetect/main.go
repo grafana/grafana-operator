@@ -74,5 +74,5 @@ func (a *autoDetect) IsOpenshift() (bool, error) {
 
 // Tests if the GatewayAPI CRDs are present
 func (a *autoDetect) HasGatewayAPI() (bool, error) {
-	return a.hasAPIGroup("gateway.networking.k8s.io")
+	return a.hasKind("gateway.networking.k8s.io/v1", "HTTPRoute")
 }
