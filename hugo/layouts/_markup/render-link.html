@@ -1,0 +1,26 @@
+{{- $u := urls.Parse .Destination -}}
+{{- $href := $u.String -}}
+{{- if strings.HasPrefix $u.String "#" -}}
+  {{- $href = printf "%s#%s" .PageInner.RelPermalink $u.Fragment -}}
+{{- else if and $href (not $u.IsAbs) -}}
+  {{- $path := strings.TrimPrefix "./" $u.Path -}}
+  {{- with or
+    ($.PageInner.GetPage $path)
+    ($.PageInner.Resources.Get $path)
+    (resources.Get $path)
+  -}}
+    {{- $href = .RelPermalink -}}
+    {{- with $u.RawQuery -}}
+      {{- $href = printf "%s?%s" $href . -}}
+    {{- end -}}
+    {{- with $u.Fragment -}}
+      {{- $href = printf "%s#%s" $href . -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- if strings.HasPrefix $href "gateway:experimental" -}}
+{{- /* Workaround for gateway api doc comments containing invalid markdown links */ -}}
+{{- else -}}
+<a href="{{ $href }}" {{- with .Title }} title="{{ . }}" {{- end }}>{{ .Text }}</a>
+{{ end }}
+{{- /**/ -}}
