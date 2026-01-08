@@ -19847,6 +19847,13 @@ Deployment sets how the deployment object should look like with your grafana ins
             <i>Format</i>: int32<br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>userAnnotations</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
