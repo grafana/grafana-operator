@@ -127,7 +127,7 @@ hugo-dev: $(DART_SASS) $(HUGO) ## Start development server for hugo.
 	@echo -- Checking presence of dart-sass
 	@cd hugo && $(HUGO) env | grep dart-sass
 	@echo -- Starting dev server
-	@cd hugo && $(HUGO) env && $(HUGO) server --baseURL http://127.0.0.1/
+	@cd hugo && $(HUGO) env && $(HUGO) server --baseURL http://127.0.0.1/grafana-operator/
 
 .PHONY: kustomize-lint
 kustomize-lint: $(KUSTOMIZE) ## Lint kustomize overlays.
@@ -152,7 +152,7 @@ kustomize-github-assets: $(KUSTOMIZE) ## Generates GitHub assets.
 
 .PHONY:
 muffet-dev: $(MUFFET) ## Detect broken internal links in docs.
-	$(MUFFET) --include=http://localhost:1313 http://localhost:1313
+	$(MUFFET) --include=http://localhost:1313/grafana-operator http://localhost:1313/grafana-operator
 
 .PHONY:
 test-image-pre-pull: ## Pre-pulls Grafana image used in tests to speed up CI
