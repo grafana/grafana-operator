@@ -506,10 +506,6 @@ func (r *GrafanaDatasourceReconciler) syncCorrelations(ctx context.Context, gCli
 	log := logf.FromContext(ctx)
 	sourceUID := cr.GetGrafanaUID()
 
-	if len(cr.Spec.Correlations) == 0 {
-		return r.deleteAllCorrelations(ctx, gClient, sourceUID)
-	}
-
 	existingCorrelations, err := gClient.Datasources.GetCorrelationsBySourceUID(sourceUID)
 	if err != nil {
 		var notFound *datasources.GetCorrelationsBySourceUIDNotFound
@@ -519,73 +515,59 @@ func (r *GrafanaDatasourceReconciler) syncCorrelations(ctx context.Context, gCli
 	}
 
 	existingByKey := make(map[string]*models.Correlation)
-	if existingCorrelations != nil {
-		for _, c := range existingCorrelations.Payload {
-			key := correlationKey(c.TargetUID, c.Label)
-			existingByKey[key] = c
+	existingByUID := make(map[string]*models.Correlation)
+	for _, c := range existingCorrelations.Payload {
+		key := correlationKey(c.TargetUID, c.Label)
+		existingByKey[key] = c
+		if c.UID != "" {
+			existingByUID[c.UID] = c
 		}
 	}
 
 	desiredKeys := make(map[string]struct{})
+	desiredUIDs := make(map[string]struct{})
 	for _, c := range cr.Spec.Correlations {
-		key := correlationKey(c.TargetUID, c.Label)
-		desiredKeys[key] = struct{}{}
+		if c.UID != "" {
+			desiredUIDs[c.UID] = struct{}{}
+			continue
+		}
+		desiredKeys[correlationKey(c.TargetUID, c.Label)] = struct{}{}
 	}
 
 	for key, existing := range existingByKey {
-		if _, found := desiredKeys[key]; !found {
-			log.Info("Deleting correlation", "uid", existing.UID, "targetUID", existing.TargetUID, "label", existing.Label)
-			_, err := gClient.Datasources.DeleteCorrelation(sourceUID, existing.UID) //nolint
-			if err != nil {
-				var notFound *datasources.DeleteCorrelationNotFound
-				if !errors.As(err, &notFound) {
-					return fmt.Errorf("deleting correlation %s: %w", existing.UID, err)
-				}
+		if _, found := desiredKeys[key]; found {
+			continue
+		}
+		if existing.UID != "" {
+			if _, found := desiredUIDs[existing.UID]; found {
+				continue
+			}
+		}
+		log.Info("Deleting correlation", "uid", existing.UID, "targetUID", existing.TargetUID, "label", existing.Label)
+		_, err := gClient.Datasources.DeleteCorrelation(sourceUID, existing.UID) //nolint
+		if err != nil {
+			var notFound *datasources.DeleteCorrelationNotFound
+			if !errors.As(err, &notFound) {
+				return fmt.Errorf("deleting correlation: %w", err)
 			}
 		}
 	}
 
 	for _, desired := range cr.Spec.Correlations {
-		key := correlationKey(desired.TargetUID, desired.Label)
-		if existing, found := existingByKey[key]; found {
+		existing := existingByUID[desired.UID]
+		if existing == nil {
+			existing = existingByKey[correlationKey(desired.TargetUID, desired.Label)]
+		}
+		if existing != nil {
 			if err := r.updateCorrelationByUID(gClient, sourceUID, existing.UID, desired); err != nil {
-				return fmt.Errorf("updating correlation (targetUID=%s, label=%s): %w", desired.TargetUID, desired.Label, err)
+				log.Error(err, "Failed to update correlation", "targetUID", desired.TargetUID, "label", desired.Label)
+				return fmt.Errorf("updating correlation: %w", err)
 			}
-		} else {
-			if err := r.createCorrelation(gClient, sourceUID, desired); err != nil {
-				return fmt.Errorf("creating correlation (targetUID=%s, label=%s): %w", desired.TargetUID, desired.Label, err)
-			}
+			continue
 		}
-	}
-
-	return nil
-}
-
-func (r *GrafanaDatasourceReconciler) deleteAllCorrelations(ctx context.Context, gClient *genapi.GrafanaHTTPAPI, sourceUID string) error {
-	log := logf.FromContext(ctx)
-
-	existingCorrelations, err := gClient.Datasources.GetCorrelationsBySourceUID(sourceUID)
-	if err != nil {
-		var notFound *datasources.GetCorrelationsBySourceUIDNotFound
-		if errors.As(err, &notFound) {
-			return nil
-		}
-
-		return fmt.Errorf("fetching existing correlations: %w", err)
-	}
-
-	if existingCorrelations == nil {
-		return nil
-	}
-
-	for _, c := range existingCorrelations.Payload {
-		log.Info("Deleting correlation", "uid", c.UID)
-		_, err := gClient.Datasources.DeleteCorrelation(sourceUID, c.UID) //nolint
-		if err != nil {
-			var notFound *datasources.DeleteCorrelationNotFound
-			if !errors.As(err, &notFound) {
-				return fmt.Errorf("deleting correlation %s: %w", c.UID, err)
-			}
+		if err := r.createCorrelation(gClient, sourceUID, desired); err != nil {
+			log.Error(err, "Failed to create correlation", "targetUID", desired.TargetUID, "label", desired.Label)
+			return fmt.Errorf("creating correlation: %w", err)
 		}
 	}
 
@@ -637,19 +619,15 @@ func (r *GrafanaDatasourceReconciler) buildCorrelationConfig(config *v1beta1.Gra
 		Type:  models.CorrelationType(config.Type),
 	}
 
-	if config.Target != nil {
-		result.Target = convertJSONToInterface(config.Target)
-	}
+	result.Target = convertJSONToInterface(config.Target)
 
-	if len(config.Transformations) > 0 {
-		result.Transformations = make(models.Transformations, len(config.Transformations))
-		for i, t := range config.Transformations {
-			result.Transformations[i] = &models.Transformation{
-				Type:       t.Type,
-				Field:      t.Field,
-				Expression: t.Expression,
-				MapValue:   t.MapValue,
-			}
+	result.Transformations = make(models.Transformations, len(config.Transformations))
+	for i, t := range config.Transformations {
+		result.Transformations[i] = &models.Transformation{
+			Type:       t.Type,
+			Field:      t.Field,
+			Expression: t.Expression,
+			MapValue:   t.MapValue,
 		}
 	}
 
@@ -661,19 +639,15 @@ func (r *GrafanaDatasourceReconciler) buildCorrelationConfigUpdate(config *v1bet
 		Field: config.Field,
 	}
 
-	if config.Target != nil {
-		result.Target = convertJSONToInterface(config.Target)
-	}
+	result.Target = convertJSONToInterface(config.Target)
 
-	if len(config.Transformations) > 0 {
-		result.Transformations = make([]*models.Transformation, len(config.Transformations))
-		for i, t := range config.Transformations {
-			result.Transformations[i] = &models.Transformation{
-				Type:       t.Type,
-				Field:      t.Field,
-				Expression: t.Expression,
-				MapValue:   t.MapValue,
-			}
+	result.Transformations = make([]*models.Transformation, len(config.Transformations))
+	for i, t := range config.Transformations {
+		result.Transformations[i] = &models.Transformation{
+			Type:       t.Type,
+			Field:      t.Field,
+			Expression: t.Expression,
+			MapValue:   t.MapValue,
 		}
 	}
 
