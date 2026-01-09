@@ -6814,7 +6814,7 @@ GrafanaSpec defines the desired state of Grafana
         <td>
           Version sets the tag of the default image: docker.io/grafana/grafana.
 Allows full image refs with/without sha256checksum: "registry/repo/image:tag@sha"
-default: 12.3.0<br/>
+default: 12.3.1<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -20017,6 +20017,13 @@ Deployment sets how the deployment object should look like with your grafana ins
           <br/>
           <br/>
             <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>userAnnotations</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>

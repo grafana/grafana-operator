@@ -200,7 +200,7 @@ func main() { //nolint:gocyclo
 	// Fetch k8s api credentials and detect platform
 	restConfig := ctrl.GetConfigOrDie()
 
-	cluster, err := autodetect.New(restConfig)
+	cluster, err := autodetect.NewClusterDiscovery(restConfig)
 	if err != nil {
 		setupLog.Error(err, "failed to setup auto-detect routine")
 		os.Exit(1)
@@ -212,9 +212,9 @@ func main() { //nolint:gocyclo
 		os.Exit(1)
 	}
 
-	hasGatewayAPI, err := cluster.HasGatewayAPI()
+	hasHTTPRouteCRD, err := cluster.HasHTTPRouteCRD()
 	if err != nil {
-		setupLog.Error(err, "failed to test for GatewayAPI CRDs")
+		setupLog.Error(err, "failed to test for HTTPRoute CRD")
 		os.Exit(1)
 	}
 
@@ -270,7 +270,7 @@ func main() { //nolint:gocyclo
 			mgrOptions.Cache.ByObject[&routev1.Route{}] = cacheLabelConfig
 		}
 
-		if hasGatewayAPI {
+		if hasHTTPRouteCRD {
 			mgrOptions.Cache.ByObject[&gwapiv1.HTTPRoute{}] = cacheLabelConfig
 		} else {
 			setupLog.Info("skipping cache fine tuning for HTTPRoute resources as GatewayAPI CRDs were not found in the cluster")
@@ -318,11 +318,11 @@ func main() { //nolint:gocyclo
 	}
 	// Register controllers
 	if err = (&controllers.GrafanaReconciler{
-		Client:        mgr.GetClient(),
-		Scheme:        mgr.GetScheme(),
-		IsOpenShift:   isOpenShift,
-		HasGatewayAPI: hasGatewayAPI,
-		ClusterDomain: operatorConfig.ClusterDomain,
+		Client:          mgr.GetClient(),
+		Scheme:          mgr.GetScheme(),
+		IsOpenShift:     isOpenShift,
+		HasHTTPRouteCRD: hasHTTPRouteCRD,
+		ClusterDomain:   operatorConfig.ClusterDomain,
 	}).SetupWithManager(ctx, mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Grafana")
 		os.Exit(1)

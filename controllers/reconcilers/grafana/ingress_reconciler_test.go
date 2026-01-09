@@ -23,10 +23,10 @@ var _ = Describe("Ingress Reconciler", func() {
 
 	Context("on Openshift", func() {
 		const isOpenshift = true
-		const hasGatewayAPI = false
+		const hasHTTPRouteCRD = false
 
 		It("creates Ingress when only .spec.ingress is defined", func() {
-			r := NewIngressReconciler(cl, isOpenshift, hasGatewayAPI)
+			r := NewIngressReconciler(cl, isOpenshift, hasHTTPRouteCRD)
 			cr := &v1beta1.Grafana{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "ingress-on-openshift",
@@ -60,7 +60,7 @@ var _ = Describe("Ingress Reconciler", func() {
 		})
 
 		It("creates Route when .spec.ingress AND .spec.route are defined", func() {
-			r := NewIngressReconciler(cl, isOpenshift, hasGatewayAPI)
+			r := NewIngressReconciler(cl, isOpenshift, hasHTTPRouteCRD)
 			cr := &v1beta1.Grafana{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "prefer-route-on-openshift",
@@ -95,7 +95,7 @@ var _ = Describe("Ingress Reconciler", func() {
 		})
 
 		It("removes Route when .spec.route is removed", func() {
-			r := NewIngressReconciler(cl, isOpenshift, hasGatewayAPI)
+			r := NewIngressReconciler(cl, isOpenshift, hasHTTPRouteCRD)
 			cr := &v1beta1.Grafana{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "route-nil",
@@ -148,10 +148,10 @@ var _ = Describe("Ingress Reconciler", func() {
 
 	Context("on Kubernetes", func() {
 		const isOpenshift = false
-		const hasGatewayAPI = true
+		const hasHTTPRouteCRD = true
 
 		It("creates Ingress when .spec.ingress is defined", func() {
-			r := NewIngressReconciler(cl, isOpenshift, hasGatewayAPI)
+			r := NewIngressReconciler(cl, isOpenshift, hasHTTPRouteCRD)
 			cr := &v1beta1.Grafana{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "ingress-on-k8s",
@@ -185,7 +185,7 @@ var _ = Describe("Ingress Reconciler", func() {
 		})
 
 		It("removes Ingress when .spec.ingress is removed", func() {
-			r := NewIngressReconciler(cl, isOpenshift, hasGatewayAPI)
+			r := NewIngressReconciler(cl, isOpenshift, hasHTTPRouteCRD)
 			cr := &v1beta1.Grafana{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "ingress-nil",
@@ -234,7 +234,7 @@ var _ = Describe("Ingress Reconciler", func() {
 		})
 
 		It("creates HTTPRoute when .spec.httpRoute is defined", func() {
-			r := NewIngressReconciler(cl, isOpenshift, hasGatewayAPI)
+			r := NewIngressReconciler(cl, isOpenshift, hasHTTPRouteCRD)
 			cr := &v1beta1.Grafana{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "httproute-test",
@@ -265,7 +265,7 @@ var _ = Describe("Ingress Reconciler", func() {
 		})
 
 		It("removes HTTPRoute when .spec.httpRoute is removed", func() {
-			r := NewIngressReconciler(cl, isOpenshift, hasGatewayAPI)
+			r := NewIngressReconciler(cl, isOpenshift, hasHTTPRouteCRD)
 			cr := &v1beta1.Grafana{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "httproute-nil",

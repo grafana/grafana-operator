@@ -24,12 +24,12 @@ params:
   copyright: Grafana Operator Team
   version_menu: Releases
   archived_version: false
-  version: v5.21.3
+  version: v5.21.4
   url_latest_version: https://example.com
   github_repo: https://github.com/grafana/grafana-operator
   github_branch: master
   path_base_for_github_subdir:
-    from: .*?/grafana-operator/(.*)
+    from: .*/grafana-operator/(.*)
     to: $1
   offlineSearch: true
   prism_syntax_highlighting: false

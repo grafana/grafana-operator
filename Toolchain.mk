@@ -7,7 +7,7 @@ M = $(shell printf "\033[34;1m▶\033[0m")
 # renovate: datasource=github-tags depName=kyverno/chainsaw
 CHAINSAW_VERSION = v0.2.14
 # renovate: datasource=github-tags depName=kubernetes-sigs/controller-tools versioning=semver
-CONTROLLER_GEN_VERSION = v0.19.0
+CONTROLLER_GEN_VERSION = v0.20.0
 # renovate: datasource=github-tags depName=fybrik/crdoc
 CRDOC_VERSION = v0.6.4
 DART_SASS_VERSION = 1.86.0
@@ -22,14 +22,14 @@ HUGO_VERSION = 0.151.0
 # renovate: datasource=github-tags depName=kubernetes-sigs/kind
 KIND_VERSION = v0.31.0
 # renovate: datasource=github-tags depName=ko-build/ko
-KO_VERSION = 0.18.0
+KO_VERSION = 0.18.1
 # renovate: datasource=github-tags depName=kubernetes-sigs/kustomize extractVersion=^kustomize/(?<version>.*)$
 KUSTOMIZE_VERSION = v5.8.0
 MUFFET_VERSION = v2.10.9
 OPERATOR_SDK_VERSION = v1.32.0
 OPM_VERSION = v1.23.2
 # renovate: datasource=github-tags depName=mikefarah/yq
-YQ_VERSION = v4.49.2
+YQ_VERSION = v4.50.1
 # renovate: datasource=github-tags depName=google/go-containerregistry
 CRANE_VERSION = v0.20.7
 

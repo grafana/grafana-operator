@@ -56,10 +56,10 @@ const (
 // GrafanaReconciler reconciles a Grafana object
 type GrafanaReconciler struct {
 	client.Client
-	Scheme        *runtime.Scheme
-	IsOpenShift   bool
-	HasGatewayAPI bool
-	ClusterDomain string
+	Scheme          *runtime.Scheme
+	IsOpenShift     bool
+	HasHTTPRouteCRD bool
+	ClusterDomain   string
 }
 
 // +kubebuilder:rbac:groups=route.openshift.io,resources=routes;routes/custom-host,verbs=get;list;create;update;delete;watch
@@ -315,7 +315,7 @@ func (r *GrafanaReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manag
 		b.Owns(&routev1.Route{}, builder.WithPredicates(ignoreStatusUpdates()))
 	}
 
-	if r.HasGatewayAPI {
+	if r.HasHTTPRouteCRD {
 		b.Owns(&gwapiv1.HTTPRoute{}, builder.WithPredicates(ignoreStatusUpdates()))
 	}
 
@@ -387,7 +387,7 @@ func (r *GrafanaReconciler) getReconcilerForStage(stage v1beta1.OperatorStageNam
 	case v1beta1.OperatorStageService:
 		return grafana.NewServiceReconciler(r.Client, r.ClusterDomain)
 	case v1beta1.OperatorStageIngress:
-		return grafana.NewIngressReconciler(r.Client, r.IsOpenShift, r.HasGatewayAPI)
+		return grafana.NewIngressReconciler(r.Client, r.IsOpenShift, r.HasHTTPRouteCRD)
 	case v1beta1.OperatorStagePlugins:
 		return grafana.NewPluginsReconciler(r.Client)
 	case v1beta1.OperatorStageDeployment:

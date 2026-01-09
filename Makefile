@@ -3,7 +3,7 @@ include Toolchain.mk
 .DEFAULT_GOAL := all
 
 # Current Operator version
-VERSION ?= 5.21.3
+VERSION ?= 5.21.4
 
 # BUNDLE_GEN_FLAGS are the flags passed to the operator-sdk generate bundle command
 BUNDLE_GEN_FLAGS ?= -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
@@ -26,7 +26,7 @@ ORG ?= grafana
 IMG ?= $(REGISTRY)/$(ORG)/grafana-operator:v$(VERSION)
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 # renovate: datasource=github-tags depName=kubernetes-sigs/controller-tools extractVersion=^envtest-(?<version>v\d+\.\d+\.\d+)$
-ENVTEST_K8S_VERSION = 1.34.1
+ENVTEST_K8S_VERSION = 1.35.0
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -127,7 +127,7 @@ hugo-dev: $(DART_SASS) $(HUGO) ## Start development server for hugo.
 	@echo -- Checking presence of dart-sass
 	@cd hugo && $(HUGO) env | grep dart-sass
 	@echo -- Starting dev server
-	@cd hugo && $(HUGO) env && $(HUGO) server --baseURL http://127.0.0.1/
+	@cd hugo && $(HUGO) env && $(HUGO) server --baseURL http://127.0.0.1/grafana-operator/
 
 .PHONY: kustomize-lint
 kustomize-lint: $(KUSTOMIZE) ## Lint kustomize overlays.
@@ -152,7 +152,7 @@ kustomize-github-assets: $(KUSTOMIZE) ## Generates GitHub assets.
 
 .PHONY:
 muffet-dev: $(MUFFET) ## Detect broken internal links in docs.
-	$(MUFFET) --include=http://localhost:1313 http://localhost:1313
+	$(MUFFET) --include=http://localhost:1313/grafana-operator http://localhost:1313/grafana-operator
 
 .PHONY:
 test-image-pre-pull: ## Pre-pulls Grafana image used in tests to speed up CI
@@ -193,6 +193,8 @@ ifndef ignore-not-found
   ignore-not-found = false
 endif
 
+DEPLOY_OVERLAY_PATH := deploy/kustomize/overlays/local
+
 .PHONY: install
 install: $(KUSTOMIZE) manifests ## Install CRDs into the K8s cluster specified in ~/.kube/config.
 	$(info $(M) running $@)
@@ -206,8 +208,10 @@ uninstall: $(KUSTOMIZE) manifests ## Uninstall CRDs from the K8s cluster specifi
 .PHONY: deploy
 deploy: $(KUSTOMIZE) manifests ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	$(info $(M) running $@)
-	cd deploy/kustomize/overlays/cluster_scoped && $(KUSTOMIZE) edit set image ghcr.io/grafana/grafana-operator=${IMG}
-	$(KUSTOMIZE) build deploy/kustomize/overlays/cluster_scoped | kubectl apply --server-side --force-conflicts -f -
+	mkdir -p $(DEPLOY_OVERLAY_PATH)
+	cp deploy/kustomize/overlays/cluster_scoped/kustomization.yaml $(DEPLOY_OVERLAY_PATH)/kustomization.yaml
+	cd $(DEPLOY_OVERLAY_PATH) && $(KUSTOMIZE) edit set image ghcr.io/grafana/grafana-operator=${IMG}
+	$(KUSTOMIZE) build $(DEPLOY_OVERLAY_PATH) | kubectl apply --server-side --force-conflicts -f -
 
 .PHONY: deploy-chainsaw
 deploy-chainsaw: $(KUSTOMIZE) manifests ## Deploy controller to the K8s cluster specified in ~/.kube/config.
