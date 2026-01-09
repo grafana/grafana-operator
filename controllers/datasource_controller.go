@@ -516,11 +516,13 @@ func (r *GrafanaDatasourceReconciler) syncCorrelations(ctx context.Context, gCli
 
 	existingByKey := make(map[string]*models.Correlation)
 	existingByUID := make(map[string]*models.Correlation)
-	for _, c := range existingCorrelations.Payload {
-		key := correlationKey(c.TargetUID, c.Label)
-		existingByKey[key] = c
-		if c.UID != "" {
-			existingByUID[c.UID] = c
+	if existingCorrelations != nil {
+		for _, c := range existingCorrelations.Payload {
+			key := correlationKey(c.TargetUID, c.Label)
+			existingByKey[key] = c
+			if c.UID != "" {
+				existingByUID[c.UID] = c
+			}
 		}
 	}
 
