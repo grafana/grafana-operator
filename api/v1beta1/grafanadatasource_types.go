@@ -20,8 +20,82 @@ import (
 	"encoding/json"
 	"fmt"
 
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+// GrafanaDatasourceCorrelation defines a correlation from this datasource to a target datasource
+type GrafanaDatasourceCorrelation struct {
+	// UID of the correlation. Read-only field populated by Grafana.
+	// +optional
+	// +kubebuilder:validation:MaxLength=40
+	// +kubebuilder:validation:Pattern="^[a-zA-Z0-9-_]+$"
+	UID string `json:"uid,omitempty"`
+
+	// UID of the target datasource
+	// +kubebuilder:validation:Required
+	TargetUID string `json:"targetUID"`
+
+	// Optional label for the correlation
+	// +optional
+	Label string `json:"label,omitempty"`
+
+	// Optional description of the correlation
+	// +optional
+	Description string `json:"description,omitempty"`
+
+	// Type of correlation: "query" or "external"
+	// +kubebuilder:validation:Enum=query;external
+	// +kubebuilder:default=query
+	// +optional
+	Type string `json:"type,omitempty"`
+
+	// Config for the correlation
+	// +optional
+	Config *GrafanaDatasourceCorrelationConfig `json:"config,omitempty"`
+}
+
+// GrafanaDatasourceCorrelationConfig defines configuration for a correlation
+type GrafanaDatasourceCorrelationConfig struct {
+	// Field used to attach the correlation link
+	// +kubebuilder:validation:Required
+	Field string `json:"field"`
+
+	// Target query configuration
+	// +kubebuilder:validation:Schemaless
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// +kubebuilder:validation:Type=object
+	// +kubebuilder:validation:Required
+	Target *apiextensionsv1.JSON `json:"target"`
+
+	// Type of config: "query" or "external"
+	// +kubebuilder:validation:Enum=query;external
+	// +optional
+	Type string `json:"type,omitempty"`
+
+	// Transformations to apply to the source data
+	// +optional
+	Transformations []GrafanaDatasourceCorrelationTransformation `json:"transformations,omitempty"`
+}
+
+// GrafanaDatasourceCorrelationTransformation defines a transformation for correlation
+type GrafanaDatasourceCorrelationTransformation struct {
+	// Type of transformation: "regex" or "logfmt"
+	// +kubebuilder:validation:Enum=regex;logfmt
+	Type string `json:"type,omitempty"`
+
+	// Field to transform
+	// +optional
+	Field string `json:"field,omitempty"`
+
+	// Expression for regex transformations
+	// +optional
+	Expression string `json:"expression,omitempty"`
+
+	// MapValue for logfmt transformations
+	// +optional
+	MapValue string `json:"mapValue,omitempty"`
+}
 
 type GrafanaDatasourceInternal struct {
 	// Deprecated field, use spec.uid instead
@@ -80,6 +154,10 @@ type GrafanaDatasourceSpec struct {
 	// +optional
 	// +kubebuilder:validation:MaxItems=99
 	ValuesFrom []ValueFrom `json:"valuesFrom,omitempty"`
+
+	// Correlations to create for this datasource
+	// +optional
+	Correlations []GrafanaDatasourceCorrelation `json:"correlations,omitempty"`
 }
 
 // GrafanaDatasourceStatus defines the observed state of GrafanaDatasource
