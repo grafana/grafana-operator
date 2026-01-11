@@ -26,19 +26,14 @@ import (
 
 // GrafanaDatasourceCorrelation defines a correlation from this datasource to a target datasource
 type GrafanaDatasourceCorrelation struct {
-	// UID of the correlation. Read-only field populated by Grafana.
-	// +optional
-	// +kubebuilder:validation:MaxLength=40
-	// +kubebuilder:validation:Pattern="^[a-zA-Z0-9-_]+$"
-	UID string `json:"uid,omitempty"`
-
 	// UID of the target datasource
 	// +kubebuilder:validation:Required
 	TargetUID string `json:"targetUID"`
 
-	// Optional label for the correlation
-	// +optional
-	Label string `json:"label,omitempty"`
+	// Label for the correlation, used as part of the correlation key
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	Label string `json:"label"`
 
 	// Optional description of the correlation
 	// +optional

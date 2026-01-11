@@ -1400,7 +1400,9 @@ spec:
                       description: Optional description of the correlation
                       type: string
                     label:
-                      description: Optional label for the correlation
+                      description: Label for the correlation, used as part of the
+                        correlation key
+                      minLength: 1
                       type: string
                     targetUID:
                       description: UID of the target datasource
@@ -1412,13 +1414,8 @@ spec:
                       - query
                       - external
                       type: string
-                    uid:
-                      description: UID of the correlation. Read-only field populated
-                        by Grafana.
-                      maxLength: 40
-                      pattern: ^[a-zA-Z0-9-_]+$
-                      type: string
                   required:
+                  - label
                   - targetUID
                   type: object
                 type: array

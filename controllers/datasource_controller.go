@@ -515,35 +515,19 @@ func (r *GrafanaDatasourceReconciler) syncCorrelations(ctx context.Context, gCli
 	}
 
 	existingByKey := make(map[string]*models.Correlation)
-	existingByUID := make(map[string]*models.Correlation)
-	if existingCorrelations != nil {
-		for _, c := range existingCorrelations.Payload {
-			key := correlationKey(c.TargetUID, c.Label)
-			existingByKey[key] = c
-			if c.UID != "" {
-				existingByUID[c.UID] = c
-			}
-		}
+	for _, c := range existingCorrelations.GetPayload() {
+		key := correlationKey(c.TargetUID, c.Label)
+		existingByKey[key] = c
 	}
 
 	desiredKeys := make(map[string]struct{})
-	desiredUIDs := make(map[string]struct{})
 	for _, c := range cr.Spec.Correlations {
-		if c.UID != "" {
-			desiredUIDs[c.UID] = struct{}{}
-			continue
-		}
 		desiredKeys[correlationKey(c.TargetUID, c.Label)] = struct{}{}
 	}
 
 	for key, existing := range existingByKey {
 		if _, found := desiredKeys[key]; found {
 			continue
-		}
-		if existing.UID != "" {
-			if _, found := desiredUIDs[existing.UID]; found {
-				continue
-			}
 		}
 		log.Info("Deleting correlation", "uid", existing.UID, "targetUID", existing.TargetUID, "label", existing.Label)
 		_, err := gClient.Datasources.DeleteCorrelation(sourceUID, existing.UID) //nolint
@@ -556,10 +540,7 @@ func (r *GrafanaDatasourceReconciler) syncCorrelations(ctx context.Context, gCli
 	}
 
 	for _, desired := range cr.Spec.Correlations {
-		existing := existingByUID[desired.UID]
-		if existing == nil {
-			existing = existingByKey[correlationKey(desired.TargetUID, desired.Label)]
-		}
+		existing := existingByKey[correlationKey(desired.TargetUID, desired.Label)]
 		if existing != nil {
 			if err := r.updateCorrelationByUID(gClient, sourceUID, existing.UID, desired); err != nil {
 				log.Error(err, "Failed to update correlation", "targetUID", desired.TargetUID, "label", desired.Label)
@@ -585,7 +566,11 @@ func (r *GrafanaDatasourceReconciler) createCorrelation(gClient *genapi.GrafanaH
 	}
 
 	if c.Config != nil {
-		cmd.Config = r.buildCorrelationConfig(c.Config)
+		config, err := r.buildCorrelationConfig(c.Config)
+		if err != nil {
+			return fmt.Errorf("building correlation config: %w", err)
+		}
+		cmd.Config = config
 	}
 
 	_, err := gClient.Datasources.CreateCorrelation(sourceUID, cmd) //nolint
@@ -601,7 +586,11 @@ func (r *GrafanaDatasourceReconciler) updateCorrelationByUID(gClient *genapi.Gra
 	}
 
 	if desired.Config != nil {
-		cmd.Config = r.buildCorrelationConfigUpdate(desired.Config)
+		config, err := r.buildCorrelationConfigUpdate(desired.Config)
+		if err != nil {
+			return fmt.Errorf("building correlation config update: %w", err)
+		}
+		cmd.Config = config
 	}
 
 	params := datasources.NewUpdateCorrelationParams().
@@ -614,14 +603,18 @@ func (r *GrafanaDatasourceReconciler) updateCorrelationByUID(gClient *genapi.Gra
 	return err
 }
 
-func (r *GrafanaDatasourceReconciler) buildCorrelationConfig(config *v1beta1.GrafanaDatasourceCorrelationConfig) *models.CorrelationConfig {
+func (r *GrafanaDatasourceReconciler) buildCorrelationConfig(config *v1beta1.GrafanaDatasourceCorrelationConfig) (*models.CorrelationConfig, error) {
 	field := config.Field
 	result := &models.CorrelationConfig{
 		Field: &field,
 		Type:  models.CorrelationType(config.Type),
 	}
 
-	result.Target = convertJSONToInterface(config.Target)
+	target, err := convertJSONToInterface(config.Target)
+	if err != nil {
+		return nil, fmt.Errorf("converting target config: %w", err)
+	}
+	result.Target = target
 
 	result.Transformations = make(models.Transformations, len(config.Transformations))
 	for i, t := range config.Transformations {
@@ -633,15 +626,19 @@ func (r *GrafanaDatasourceReconciler) buildCorrelationConfig(config *v1beta1.Gra
 		}
 	}
 
-	return result
+	return result, nil
 }
 
-func (r *GrafanaDatasourceReconciler) buildCorrelationConfigUpdate(config *v1beta1.GrafanaDatasourceCorrelationConfig) *models.CorrelationConfigUpdateDTO {
+func (r *GrafanaDatasourceReconciler) buildCorrelationConfigUpdate(config *v1beta1.GrafanaDatasourceCorrelationConfig) (*models.CorrelationConfigUpdateDTO, error) {
 	result := &models.CorrelationConfigUpdateDTO{
 		Field: config.Field,
 	}
 
-	result.Target = convertJSONToInterface(config.Target)
+	target, err := convertJSONToInterface(config.Target)
+	if err != nil {
+		return nil, fmt.Errorf("converting target config: %w", err)
+	}
+	result.Target = target
 
 	result.Transformations = make([]*models.Transformation, len(config.Transformations))
 	for i, t := range config.Transformations {
@@ -653,18 +650,18 @@ func (r *GrafanaDatasourceReconciler) buildCorrelationConfigUpdate(config *v1bet
 		}
 	}
 
-	return result
+	return result, nil
 }
 
-func convertJSONToInterface(j *apiextensionsv1.JSON) any {
+func convertJSONToInterface(j *apiextensionsv1.JSON) (any, error) {
 	if j == nil || j.Raw == nil {
-		return nil
+		return nil, nil
 	}
 
 	var result any
 	if err := json.Unmarshal(j.Raw, &result); err != nil {
-		return nil
+		return nil, fmt.Errorf("unmarshaling JSON: %w", err)
 	}
 
-	return result
+	return result, nil
 }
