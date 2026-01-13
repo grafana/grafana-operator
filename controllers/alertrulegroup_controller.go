@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -236,6 +237,8 @@ func crToModel(cr *v1beta1.GrafanaAlertRuleGroup, folderUID string) (models.Aler
 }
 
 func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaAlertRuleGroup, mGroup *models.AlertRuleGroup, disableProvenance *string) error {
+	log := logf.FromContext(ctx)
+
 	gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
@@ -290,17 +293,36 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 		}
 	}
 
-	// Update whole group and all rules existing rules at once
-	// Will delete rules not present in the body
-	params := provisioning.NewPutAlertRuleGroupParams().
-		WithBody(mGroup).
-		WithGroup(mGroup.Title).
-		WithFolderUID(folderUID).
-		WithXDisableProvenance(disableProvenance)
+	needsUpdate := false
+	if applied != nil && applied.Payload != nil {
+		remote := applied.Payload
+		if remote.FolderUID != mGroup.FolderUID ||
+			remote.Interval != mGroup.Interval ||
+			remote.Title != mGroup.Title ||
+			!reflect.DeepEqual(remote.Rules, mGroup.Rules) {
+			log.Info("updating alert rule group", "title", mGroup.Title)
+			needsUpdate = true
+		} else {
+			log.V(1).Info("alert rule group unchanged, skipping update")
+		}
+	} else {
+		log.Info("creating alert rule group", "title", mGroup.Title)
+		needsUpdate = true
+	}
 
-	_, err = gClient.Provisioning.PutAlertRuleGroup(params) //nolint:errcheck
-	if err != nil {
-		return fmt.Errorf("updating group: %s", err.Error())
+	// Update whole group and all existing rules at once
+	// Will delete rules not present in the body
+	if needsUpdate {
+		params := provisioning.NewPutAlertRuleGroupParams().
+			WithBody(mGroup).
+			WithGroup(mGroup.Title).
+			WithFolderUID(folderUID).
+			WithXDisableProvenance(disableProvenance)
+
+		_, err = gClient.Provisioning.PutAlertRuleGroup(params) //nolint:errcheck
+		if err != nil {
+			return fmt.Errorf("updating group: %s", err.Error())
+		}
 	}
 
 	// Update grafana instance Status
