@@ -6,7 +6,6 @@
 {{- if or (.Values.namespaceScope) (.Values.watchNamespaces) }}
 {{- $namespaceScoped = true }}
 {{- end }}
-{{- $operatorNamespace := .Release.Namespace }}
 {{- range $watchNamespaces }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
