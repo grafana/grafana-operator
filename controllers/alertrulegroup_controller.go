@@ -292,7 +292,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 
 	if matchesStateInGrafana {
 		log.V(1).Info("alert rule group hasn't changed, skipping update")
-		return nil
+		return instance.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource())
 	}
 
 	log.Info("updating alert rule group", "title", mGroup.Title)
