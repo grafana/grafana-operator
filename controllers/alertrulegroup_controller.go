@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -235,7 +236,31 @@ func crToModel(cr *v1beta1.GrafanaAlertRuleGroup, folderUID string) (models.Aler
 	return modelAlertGroup, nil
 }
 
+func (r *GrafanaAlertRuleGroupReconciler) matchesStateInGrafana(exists bool, model *models.AlertRuleGroup, remoteARG *provisioning.GetAlertRuleGroupOK) bool {
+	if !exists {
+		return false
+	}
+
+	if model == nil || remoteARG == nil {
+		return false
+	}
+
+	remoteModel := remoteARG.GetPayload()
+	if remoteModel == nil {
+		return false
+	}
+
+	matchesRemoteState := remoteModel.FolderUID == model.FolderUID &&
+		remoteModel.Interval == model.Interval &&
+		reflect.DeepEqual(remoteModel.Rules, model.Rules) &&
+		remoteModel.Title == model.Title
+
+	return matchesRemoteState
+}
+
 func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaAlertRuleGroup, mGroup *models.AlertRuleGroup, disableProvenance *string) error {
+	log := logf.FromContext(ctx)
+
 	gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana client: %w", err)
@@ -254,11 +279,23 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 	}
 
 	applied, err := gClient.Provisioning.GetAlertRuleGroup(mGroup.Title, folderUID)
-
-	var ruleNotFound *provisioning.GetAlertRuleGroupNotFound
-	if err != nil && !errors.As(err, &ruleNotFound) {
-		return fmt.Errorf("fetching existing alert rule group: %w", err)
+	if err != nil {
+		var ruleNotFound *provisioning.GetAlertRuleGroupNotFound
+		if !errors.As(err, &ruleNotFound) {
+			return fmt.Errorf("fetching existing alert rule group: %w", err)
+		}
 	}
+
+	exists := applied != nil
+
+	matchesStateInGrafana := r.matchesStateInGrafana(exists, mGroup, applied)
+
+	if matchesStateInGrafana {
+		log.V(1).Info("alert rule group hasn't changed, skipping update")
+		return instance.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource())
+	}
+
+	log.Info("updating alert rule group", "title", mGroup.Title)
 
 	// Create an empty collection to loop over if group does not exist on remote
 	remoteRules := models.ProvisionedAlertRules{}
@@ -266,6 +303,8 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 		remoteRules = applied.Payload.Rules
 	}
 
+	// TODO: workaround for < 11.6.0 where a rule group and rules cannot be created at once.
+	//       Otherwise, Grafana will fail to calculate rule diff and respond with 500. Deprecate it later.
 	// Rules must be created individually
 	// Find rules missing on the instance and create them
 	for _, mRule := range mGroup.Rules {
@@ -290,7 +329,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 		}
 	}
 
-	// Update whole group and all rules existing rules at once
+	// Update whole group and all existing rules at once
 	// Will delete rules not present in the body
 	params := provisioning.NewPutAlertRuleGroupParams().
 		WithBody(mGroup).
@@ -300,7 +339,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 
 	_, err = gClient.Provisioning.PutAlertRuleGroup(params) //nolint:errcheck
 	if err != nil {
-		return fmt.Errorf("updating group: %s", err.Error())
+		return fmt.Errorf("updating alert rule group: %s", err.Error())
 	}
 
 	// Update grafana instance Status
