@@ -354,7 +354,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 
 	if matchesStateInGrafana {
 		log.V(1).Info("dashboard hasn't changed, skipping update")
-		return nil
+		return grafana.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource(uid))
 	}
 
 	resp, err := gClient.Dashboards.PostDashboard(&models.SaveDashboardCommand{
