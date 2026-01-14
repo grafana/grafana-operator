@@ -3,12 +3,8 @@
 {{ $rbacOpenShift := .Files.Get "files/rbac-openshift.yaml" | fromYaml  }}
 {{- $watchNamespaces := coalesce .Values.watchNamespaces .Values.namespaceOverride .Release.Namespace | splitList "," }}
 {{- $namespaceScoped := false }}
-{{- $isOpenShift := false }}
 {{- if or (.Values.namespaceScope) (.Values.watchNamespaces) }}
 {{- $namespaceScoped = true }}
-{{- end }}
-{{- if (.Values.isOpenShift) }}
-  {{- $isOpenShift = true }}
 {{- end }}
 {{- $operatorNamespace := .Release.Namespace }}
 {{- range $watchNamespaces }}
@@ -25,7 +21,7 @@ metadata:
     app.kubernetes.io/component: operator
 rules:
   {{- toYaml $rbac.rules | nindent 2 }}
-  {{- if $isOpenShift }}
+  {{- if $.Values.isOpenShift }}
   {{- toYaml $rbacOpenShift.rules | nindent 2 -}}
   {{- end }}
 ---
