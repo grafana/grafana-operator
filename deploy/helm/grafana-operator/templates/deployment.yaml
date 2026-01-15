@@ -56,7 +56,7 @@ spec:
               value: {{ .Values.watchNamespaces }}
               {{- end }}
             - name: WATCH_NAMESPACE_SELECTOR
-              {{- if and .Values.namespaceScope (eq .Values.watchNamespaceSelector "") }}
+              {{- if eq .Values.watchNamespaceSelector "" }}
               value: ""
               {{ else }}
               value: {{quote .Values.watchNamespaceSelector }}
