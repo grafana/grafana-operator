@@ -51,7 +51,7 @@ spec:
           env:
             - name: WATCH_NAMESPACE
               {{- if and .Values.namespaceScope (eq .Values.watchNamespaces "") }}
-              value: {{ .Release.Namespace }}
+              value: {{ include "grafana-operator.namespace" . }}
               {{ else }}
               value: {{ .Values.watchNamespaces }}
               {{- end }}

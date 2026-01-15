@@ -7,7 +7,7 @@
 {{- $namespaceScoped = true }}
 {{- end }}
 
-{{- $watchNamespaces := coalesce .Values.watchNamespaces .Values.namespaceOverride .Release.Namespace | splitList "," }}
+{{- $watchNamespaces := coalesce .Values.watchNamespaces (include "grafana-operator.namespace" .) | splitList "," }}
 {{- range $watchNamespaces }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -45,12 +45,12 @@ roleRef:
   name: {{ include "grafana-operator.fullname" $ }}
   apiGroup: rbac.authorization.k8s.io
 {{- end }}
-{{- if and $namespaceScoped (not (has .Release.Namespace $watchNamespaces)) }}
+{{- if and $namespaceScoped (not (has (include "grafana-operator.namespace" .) $watchNamespaces)) }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ include "grafana-operator.namespace" $ }}
   name: {{ include "grafana-operator.fullname" $ }}
   labels:
     {{- include "grafana-operator.labels" $ | nindent 4 }}
@@ -73,7 +73,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: {{ include "grafana-operator.fullname" $ }}
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ include "grafana-operator.namespace" $ }}
   labels:
     {{- include "grafana-operator.labels" $ | nindent 4 }}
     app.kubernetes.io/component: operator
