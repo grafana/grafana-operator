@@ -113,6 +113,11 @@ type External struct {
 	// DEPRECATED, use top level `tls` instead.
 	// +optional
 	TLS *TLSConfig `json:"tls,omitempty"`
+	// TenantNamespace is used as the `namespace` value for GrafanaManifest resources in multi-tenant scenarios
+	// defaults to `default`
+	// +kubebuilder:default=default
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
+	TenantNamespace string `json:"tenantNamespace"`
 }
 
 // TLSConfig specifies options to use when communicating with the Grafana endpoint

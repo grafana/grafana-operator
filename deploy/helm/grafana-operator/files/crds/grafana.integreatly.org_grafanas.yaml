@@ -3962,6 +3962,15 @@ spec:
                         - key
                       type: object
                       x-kubernetes-map-type: atomic
+                    tenantNamespace:
+                      default: default
+                      description: |-
+                        TenantNamespace is used as the `namespace` value for GrafanaManifest resources in multi-tenant scenarios
+                        defaults to `default`
+                      type: string
+                      x-kubernetes-validations:
+                        - message: Value is immutable
+                          rule: self == oldSelf
                     tls:
                       description: DEPRECATED, use top level `tls` instead.
                       properties:
@@ -3987,6 +3996,7 @@ spec:
                       description: URL of the external grafana instance you want to manage.
                       type: string
                   required:
+                    - tenantNamespace
                     - url
                   type: object
                 httpRoute:

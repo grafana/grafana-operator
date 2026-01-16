@@ -18,6 +18,27 @@ import (
 
 // +kubebuilder:object:generate=true
 
+// RequiredObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).
+// It requires `name` to be set
+// +kubebuilder:validation:XValidation:rule="(!(has(oldSelf.namespace) && !has(self.namespace)))", message="namespace is immutable"
+type RequiredObjectMeta struct {
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
+	Name string `json:"name" protobuf:"bytes,1,opt,name=name"`
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
+	Namespace   string            `json:"namespace,omitempty" protobuf:"bytes,3,opt,name=namespace"`
+	Labels      map[string]string `json:"labels,omitempty" protobuf:"bytes,11,rep,name=labels"`
+	Annotations map[string]string `json:"annotations,omitempty" protobuf:"bytes,12,rep,name=annotations"`
+}
+
+type RequiredTypeMeta struct {
+	// Kind is a string value representing the REST resource this object represents.
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
+	Kind string `json:"kind" protobuf:"bytes,1,opt,name=kind"`
+
+	// APIVersion defines the versioned schema of this representation of an object.
+	APIVersion string `json:"apiVersion" protobuf:"bytes,2,opt,name=apiVersion"`
+}
+
 // ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).
 type ObjectMeta struct {
 	Annotations map[string]string `json:"annotations,omitempty"`
