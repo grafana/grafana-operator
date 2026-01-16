@@ -31,7 +31,6 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	"github.com/docker/go-connections/nat"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/config"
 	"github.com/grafana/grafana-operator/v5/pkg/ptr"
@@ -41,7 +40,6 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -58,8 +56,6 @@ var (
 	testCtx           context.Context
 	grafanaContainer  testcontainers.Container
 	externalGrafanaCr *v1beta1.Grafana
-
-	grafanaPort = nat.Port(fmt.Sprint(config.GrafanaHTTPPort))
 )
 
 func TestAPIs(t *testing.T) {
@@ -99,17 +95,10 @@ var _ = BeforeSuite(func() {
 	require.NoError(t, err)
 	require.NotNil(t, cl)
 
+	image := fmt.Sprintf("%s:%s", config.GrafanaImage, config.GrafanaVersion)
+
 	By("Starting Grafana TestContainer")
-	grafanaContainer, err = testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		Started: true,
-		ContainerRequest: testcontainers.ContainerRequest{
-			Name:         fmt.Sprintf("%s-%d", grafanaName, GinkgoRandomSeed()),
-			Image:        fmt.Sprintf("%s:%s", config.GrafanaImage, config.GrafanaVersion),
-			ExposedPorts: []string{grafanaPort.Port()},
-			WaitingFor:   wait.ForHTTP("/").WithPort(grafanaPort),
-		},
-	})
-	require.NoError(t, err)
+	grafanaContainer = tk8s.GetGrafanaTestContainer(t, ctx, image)
 
 	createSharedTestCRs()
 })
@@ -147,7 +136,7 @@ func createSharedTestCRs() {
 	}
 
 	// External Endpoint
-	endpoint, err := grafanaContainer.PortEndpoint(testCtx, grafanaPort, "http")
+	endpoint, err := grafanaContainer.Endpoint(testCtx, "http")
 	require.NoError(t, err)
 
 	external := &v1beta1.Grafana{
