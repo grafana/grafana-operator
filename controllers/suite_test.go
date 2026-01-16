@@ -22,7 +22,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -41,7 +40,6 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -100,15 +98,7 @@ var _ = BeforeSuite(func() {
 	image := fmt.Sprintf("%s:%s", config.GrafanaImage, config.GrafanaVersion)
 
 	By("Starting Grafana TestContainer")
-	grafanaContainer, err = testcontainers.Run(ctx, image,
-		testcontainers.WithExposedPorts(
-			fmt.Sprintf("%d/tcp", config.GrafanaHTTPPort),
-		),
-		testcontainers.WithAdditionalWaitStrategy(
-			wait.ForHTTP("/").WithStartupTimeout(10*time.Second),
-		),
-	)
-	require.NoError(t, err)
+	grafanaContainer = tk8s.GetGrafanaTestContainer(t, ctx, image)
 
 	createSharedTestCRs()
 })
