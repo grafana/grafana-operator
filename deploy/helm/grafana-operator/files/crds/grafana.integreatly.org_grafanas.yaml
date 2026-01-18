@@ -3985,6 +3985,7 @@ spec:
                           rule: (has(self.insecureSkipVerify) && !(has(self.certSecretRef))) || (has(self.certSecretRef) && !(has(self.insecureSkipVerify)))
                     url:
                       description: URL of the external grafana instance you want to manage.
+                      pattern: ^https?://.+$
                       type: string
                   required:
                     - url
