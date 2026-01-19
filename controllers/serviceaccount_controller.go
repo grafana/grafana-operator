@@ -170,17 +170,14 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 		applyErrors[grafana.Name] = err.Error()
 	}
 
-	condition := buildSynchronizedCondition(
-		"ServiceAccount",
-		conditionServiceAccountSynchronized,
-		cr.Generation,
-		applyErrors,
-		1, // We always synchronize with a single Grafana instance.
-	)
+	condition := buildSynchronizedCondition("Service Account", conditionServiceAccountSynchronized, cr.Generation, applyErrors, 1)
 	meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
-	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("reconciling service account: %w", err)
+	if len(applyErrors) > 0 {
+		err = fmt.Errorf(ErrFmtApplyErrors, applyErrors)
+		log.Error(err, ErrMsgApplyErrors)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgApplyErrors, err)
 	}
 
 	// 7. Schedule periodic reconciliation based on ResyncPeriod

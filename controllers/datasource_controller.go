@@ -184,7 +184,10 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
 	if len(allApplyErrors) > 0 {
-		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", allApplyErrors)
+		err = fmt.Errorf(ErrFmtApplyErrors, allApplyErrors)
+		log.Error(err, ErrMsgApplyErrors)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgApplyErrors, err)
 	}
 
 	cr.Status.Hash = hash

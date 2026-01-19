@@ -62,6 +62,9 @@ var (
 	ErrMsgResolvingFolderUID  = "fetching GrafanaFolder to resolve uid"
 	ErrMsgRunningFinalizer    = "failed to finalize CR"
 	ErrMsgRemoveFinalizer     = "failed to remove finalizer"
+	ErrMsgApplyErrors         = "failed to sync CR to all Grafana instances"
+
+	ErrFmtApplyErrors = "%v"
 
 	DbgMsgFoundMatchingInstances = "found matching Grafana instances"
 )
