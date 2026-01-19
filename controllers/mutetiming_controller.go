@@ -106,7 +106,7 @@ func (r *GrafanaMuteTimingReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	removeNoMatchingInstance(&cr.Status.Conditions)
-	log.Info("found matching Grafana instances for mute timing", "count", len(instances))
+	log.V(1).Info(DbgMsgFoundMatchingInstances, "count", len(instances))
 
 	applyErrors := make(map[string]string)
 

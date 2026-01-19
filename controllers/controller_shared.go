@@ -60,6 +60,8 @@ var (
 	ErrMsgGettingCR           = "failed to get CR from API Server"
 	ErrMsgGettingInstances    = "failed to get Grafana instances"
 	ErrMsgResolvingFolderUID  = "fetching GrafanaFolder to resolve uid"
+
+	DbgMsgFoundMatchingInstances = "found matching Grafana instances"
 )
 
 type GrafanaCommonReconciler interface {
