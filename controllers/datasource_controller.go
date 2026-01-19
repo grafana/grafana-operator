@@ -49,6 +49,9 @@ import (
 const (
 	conditionDatasourceSynchronized = "DatasourceSynchronized"
 	conditionReasonInvalidModel     = "InvalidModel"
+
+	ErrMsgBuildingDatasourceAPIModel = "building datasource model"
+	ErrMsgDeletingOldDatasourceUID   = "failed to delete datasource with the old uid"
 )
 
 // GrafanaDatasourceReconciler reconciles a GrafanaDatasource object
@@ -129,10 +132,11 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	ctx = logf.IntoContext(ctx, log)
 
 	if cr.IsUpdatedUID() {
-		log.Info("datasource uid got updated, deleting datasources with the old uid")
+		log.Info(ErrMsgDeletingOldDatasourceUID, "uid", cr.Status.UID)
 
 		if err := r.deleteOldDatasource(ctx, cr); err != nil {
-			return ctrl.Result{}, err
+			log.Error(err, "failed to delete datasource with the old uid", "uid", cr.Status.UID)
+			return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgDeletingOldDatasourceUID, err)
 		}
 
 		// Clean up uid, so further reconcilications can track changes there
@@ -146,8 +150,9 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	if err != nil {
 		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidModel, err.Error())
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDatasourceSynchronized)
+		log.Error(err, ErrMsgBuildingDatasourceAPIModel)
 
-		return ctrl.Result{}, fmt.Errorf("building datasource model: %w", err)
+		return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgBuildingDatasourceAPIModel, err)
 	}
 
 	removeInvalidSpec(&cr.Status.Conditions)
