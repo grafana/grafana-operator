@@ -120,7 +120,9 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
 		cr.Status.NoMatchingInstances = true
 
-		return ctrl.Result{}, fmt.Errorf("failed fetching instances: %w", err)
+		log.Error(err, ErrMsgGettingInstances)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgGettingInstances, err)
 	}
 
 	if len(instances) == 0 {
@@ -225,7 +227,8 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
-		return fmt.Errorf("fetching instances: %w", err)
+		log.Error(err, ErrMsgGettingInstances)
+		return fmt.Errorf("%s: %w", ErrMsgGettingInstances, err)
 	}
 
 	for _, grafana := range instances {
