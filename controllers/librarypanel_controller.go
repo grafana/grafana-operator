@@ -46,6 +46,9 @@ type libraryElementType int
 const (
 	conditionLibraryPanelSynchronized                    = "LibraryPanelSynchronized"
 	libraryElementTypePanel           libraryElementType = 1
+
+	ErrMsgInvalidPanelSpec       = "invalid Library Panel spec"
+	ErrMsgResolvingPanelContents = "error resolving library panel contents"
 )
 
 var errLibraryPanelContentUIDImmutable = errors.New("library panel uid is immutable, but was updated on the content model")
@@ -111,8 +114,9 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 	if err != nil {
 		setInvalidSpec(&cr.Status.Conditions, cr.Generation, "InvalidModelResolution", err.Error())
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionLibraryPanelSynchronized)
+		log.Error(err, ErrMsgResolvingPanelContents)
 
-		return ctrl.Result{}, fmt.Errorf("error resolving library panel contents: %w", err)
+		return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgResolvingPanelContents, err)
 	}
 
 	contentUID := fmt.Sprintf("%s", contentModel["uid"])
@@ -122,8 +126,9 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 	if content.IsUpdatedUID(cr, contentUID) {
 		setInvalidSpec(&cr.Status.Conditions, cr.Generation, "InvalidModel", errLibraryPanelContentUIDImmutable.Error())
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionLibraryPanelSynchronized)
+		log.Error(errLibraryPanelContentUIDImmutable, ErrMsgInvalidPanelSpec)
 
-		return ctrl.Result{}, errLibraryPanelContentUIDImmutable
+		return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgInvalidPanelSpec, errLibraryPanelContentUIDImmutable)
 	}
 
 	removeInvalidSpec(&cr.Status.Conditions)
