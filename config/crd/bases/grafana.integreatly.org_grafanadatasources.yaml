@@ -91,7 +91,6 @@ spec:
                     description: Deprecated field, use spec.uid instead
                     type: string
                   url:
-                    pattern: ^(https?://.+|\$\{.+\})$
                     type: string
                   user:
                     type: string

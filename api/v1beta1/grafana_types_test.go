@@ -529,6 +529,98 @@ func TestGetConfigSection(t *testing.T) {
 	}
 }
 
+var _ = Describe("Grafana External URL validation", func() {
+	t := GinkgoT()
+	Context("Ensure External.URL follows http/https pattern", func() {
+		ctx := context.Background()
+
+		It("Should accept valid http URLs", func() {
+			g := &Grafana{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "external-http",
+					Namespace: "default",
+				},
+				Spec: GrafanaSpec{
+					External: &External{
+						URL: "http://grafana.example.com",
+					},
+				},
+			}
+
+			err := cl.Create(ctx, g)
+			require.NoError(t, err)
+		})
+
+		It("Should accept valid https URLs", func() {
+			g := &Grafana{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "external-https",
+					Namespace: "default",
+				},
+				Spec: GrafanaSpec{
+					External: &External{
+						URL: "https://grafana.example.com:3000/subpath",
+					},
+				},
+			}
+
+			err := cl.Create(ctx, g)
+			require.NoError(t, err)
+		})
+
+		It("Should reject URLs without protocol", func() {
+			g := &Grafana{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "external-no-protocol",
+					Namespace: "default",
+				},
+				Spec: GrafanaSpec{
+					External: &External{
+						URL: "grafana.example.com",
+					},
+				},
+			}
+
+			err := cl.Create(ctx, g)
+			require.Error(t, err)
+		})
+
+		It("Should reject invalid protocols", func() {
+			g := &Grafana{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "external-ftp",
+					Namespace: "default",
+				},
+				Spec: GrafanaSpec{
+					External: &External{
+						URL: "ftp://grafana.example.com",
+					},
+				},
+			}
+
+			err := cl.Create(ctx, g)
+			require.Error(t, err)
+		})
+
+		It("Should reject empty URLs after protocol", func() {
+			g := &Grafana{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "external-empty",
+					Namespace: "default",
+				},
+				Spec: GrafanaSpec{
+					External: &External{
+						URL: "http://",
+					},
+				},
+			}
+
+			err := cl.Create(ctx, g)
+			require.Error(t, err)
+		})
+	})
+})
+
 func TestGetConfigSectionValue(t *testing.T) {
 	cr := Grafana{
 		Spec: GrafanaSpec{

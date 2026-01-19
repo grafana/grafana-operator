@@ -26,11 +26,9 @@ import (
 type GrafanaDatasourceInternal struct {
 	// Deprecated field, use spec.uid instead
 	// +optional
-	UID  string `json:"uid,omitempty"`
-	Name string `json:"name,omitempty"`
-	Type string `json:"type,omitempty"`
-
-	// +kubebuilder:validation:Pattern=`^(https?://.+|\$\{.+\})$`
+	UID           string `json:"uid,omitempty"`
+	Name          string `json:"name,omitempty"`
+	Type          string `json:"type,omitempty"`
 	URL           string `json:"url,omitempty"`
 	Access        string `json:"access,omitempty"`
 	Database      string `json:"database,omitempty"`
