@@ -137,8 +137,9 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 	if len(instances) == 0 {
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionLibraryPanelSynchronized)
+		log.Error(ErrNoMatchingInstances, ErrMsgNoMatchingInstances)
 
-		return ctrl.Result{}, ErrNoMatchingInstances
+		return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgNoMatchingInstances, ErrNoMatchingInstances)
 	}
 
 	removeNoMatchingInstance(&cr.Status.Conditions)

@@ -55,8 +55,9 @@ const (
 )
 
 var (
-	ErrNoMatchingInstances   = fmt.Errorf("no matching instances")
-	ErrMsgResolvingFolderUID = "fetching GrafanaFolder to resolve uid"
+	ErrNoMatchingInstances    = fmt.Errorf("no matching instances")
+	ErrMsgNoMatchingInstances = "instanceSelector found no matching Grafana instances"
+	ErrMsgResolvingFolderUID  = "fetching GrafanaFolder to resolve uid"
 )
 
 type GrafanaCommonReconciler interface {
