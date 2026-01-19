@@ -79,11 +79,13 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		// Check if resource needs clean up
 		if controllerutil.ContainsFinalizer(cr, grafanaFinalizer) {
 			if err := r.finalize(ctx, cr); err != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaDatasource: %w", err)
+				log.Error(err, ErrMsgRunningFinalizer)
+				return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgRunningFinalizer, err)
 			}
 
 			if err := removeFinalizer(ctx, r.Client, cr); err != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
+				log.Error(err, ErrMsgRemoveFinalizer)
+				return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgRemoveFinalizer, err)
 			}
 		}
 
