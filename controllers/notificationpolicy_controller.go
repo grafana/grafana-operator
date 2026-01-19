@@ -42,7 +42,10 @@ import (
 	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 )
 
-var ErrLoopDetected = errors.New("loop detected")
+var (
+	ErrLoopDetected                  = errors.New("loop detected")
+	ErrConflictRouteSelectorAndRoute = errors.New("routeSelector is mutually exclusive with routes")
+)
 
 const (
 	conditionNotificationPolicySynchronized = "NotificationPolicySynchronized"
@@ -50,6 +53,10 @@ const (
 
 	conditionReasonFieldsMutuallyExclusive = "FieldsMutuallyExclusive"
 	conditionReasonLoopDetected            = "LoopDetected"
+
+	ErrMsgInvalidRouteSpec        = "invalid route spec discovered"
+	ErrMsgAssemblingRoutes        = "failed to assemble notification policy routes"
+	ErrMsgAssemblingUsingSelector = "failed to assemble GrafanaNotificationPolicy using routeSelectors"
 )
 
 // GrafanaNotificationPolicyReconciler reconciles a GrafanaNotificationPolicy object
@@ -107,8 +114,9 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 	if !cr.Spec.Route.IsRouteSelectorMutuallyExclusive() {
 		setInvalidSpecMutuallyExclusive(&cr.Status.Conditions, cr.Generation)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionNotificationPolicySynchronized)
+		log.Error(ErrConflictRouteSelectorAndRoute, ErrMsgInvalidRouteSpec)
 
-		return ctrl.Result{}, fmt.Errorf("invalid route spec discovered: routeSelector is mutually exclusive with routes")
+		return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgInvalidRouteSpec, ErrConflictRouteSelectorAndRoute)
 	}
 
 	removeInvalidSpec(&cr.Status.Conditions)
@@ -126,13 +134,16 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 				Message:            fmt.Sprintf("Loop detected in notification policy routes: %s", err.Error()),
 			})
 			meta.RemoveStatusCondition(&cr.Status.Conditions, conditionNotificationPolicySynchronized)
+			log.Error(err, ErrMsgAssemblingRoutes)
 
-			return ctrl.Result{}, fmt.Errorf("failed to assemble notification policy routes: %w", err)
+			return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgAssemblingRoutes, err)
 		}
 
 		if err != nil {
-			r.Recorder.Eventf(cr, nil, corev1.EventTypeWarning, "NotificationPolicyAssemblyFailed", "AssembleRoutes", "Failed to assemble GrafanaNotificationPolicy using routeSelectors: %v", err)
-			return ctrl.Result{}, fmt.Errorf("failed to assemble GrafanaNotificationPolicy using routeSelectors: %w", err)
+			r.Recorder.Eventf(cr, nil, corev1.EventTypeWarning, "NotificationPolicyAssemblyFailed", "AssembleRoutes", "%s: %v", ErrMsgAssemblingUsingSelector, err)
+			log.Error(err, ErrMsgAssemblingUsingSelector)
+
+			return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgAssemblingUsingSelector, err)
 		}
 	}
 
