@@ -146,8 +146,9 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 	if err != nil {
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionContactPointSynchronized)
+		log.Error(err, ErrMsgGettingInstances)
 
-		return ctrl.Result{}, fmt.Errorf("failed fetching instance: %w", err)
+		return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgGettingInstances, err)
 	}
 
 	if grafana == nil {
