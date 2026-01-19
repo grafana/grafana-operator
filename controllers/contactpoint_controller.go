@@ -72,7 +72,9 @@ func (r *GrafanaContactPointReconciler) Reconcile(ctx context.Context, req ctrl.
 			return ctrl.Result{}, nil
 		}
 
-		return ctrl.Result{}, fmt.Errorf("error getting grafana Contact point cr: %w", err)
+		log.Error(err, ErrMsgGettingCR)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgGettingCR, err)
 	}
 
 	if cr.GetDeletionTimestamp() != nil {

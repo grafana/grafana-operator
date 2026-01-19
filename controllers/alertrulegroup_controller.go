@@ -69,7 +69,9 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 			return ctrl.Result{}, nil
 		}
 
-		return ctrl.Result{}, fmt.Errorf("error getting GrafanaAlertRuleGroup: %w", err)
+		log.Error(err, ErrMsgGettingCR)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgGettingCR, err)
 	}
 
 	if cr.GetDeletionTimestamp() != nil {

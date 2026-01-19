@@ -70,7 +70,9 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			return ctrl.Result{}, nil
 		}
 
-		return ctrl.Result{}, fmt.Errorf("error getting grafana datasource cr: %w", err)
+		log.Error(err, ErrMsgGettingCR)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgGettingCR, err)
 	}
 
 	if cr.GetDeletionTimestamp() != nil {

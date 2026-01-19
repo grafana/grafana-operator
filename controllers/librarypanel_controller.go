@@ -69,7 +69,9 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 			return ctrl.Result{}, nil
 		}
 
-		return ctrl.Result{}, fmt.Errorf("failed to get GrafanaLibraryPanel: %w", err)
+		log.Error(err, ErrMsgGettingCR)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgGettingCR, err)
 	}
 
 	if cr.GetDeletionTimestamp() != nil {

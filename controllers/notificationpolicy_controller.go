@@ -72,7 +72,9 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 			return ctrl.Result{}, nil
 		}
 
-		return ctrl.Result{}, fmt.Errorf("error getting GrafanaNotificationPolicy cr: %w", err)
+		log.Error(err, ErrMsgGettingCR)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgGettingCR, err)
 	}
 
 	if cr.GetDeletionTimestamp() != nil {
