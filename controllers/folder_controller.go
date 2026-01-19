@@ -123,7 +123,8 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	parentFolderUID, err := getFolderUID(ctx, r.Client, cr)
 	if err != nil {
-		return ctrl.Result{}, fmt.Errorf(ErrFetchingFolder, err)
+		log.Error(err, ErrMsgResolvingFolderUID)
+		return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgResolvingFolderUID, err)
 	}
 
 	log.Info("found matching Grafana instances for folder", "count", len(instances))

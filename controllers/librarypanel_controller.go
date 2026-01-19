@@ -146,7 +146,8 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 
 	folderUID, err := getFolderUID(ctx, r.Client, cr)
 	if err != nil {
-		return ctrl.Result{}, fmt.Errorf(ErrFetchingFolder, err)
+		log.Error(err, ErrMsgResolvingFolderUID)
+		return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgResolvingFolderUID, err)
 	}
 
 	applyErrors := make(map[string]string)

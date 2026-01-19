@@ -43,6 +43,8 @@ import (
 const (
 	conditionAlertGroupSynchronized = "AlertGroupSynchronized"
 	conditionReasonInvalidDuration  = "InvalidDuration"
+
+	ErrMsgMissingFolderReference = "folder uid not found, AlertRuleGroup must include a folder reference (folderUID/folderRef)"
 )
 
 // GrafanaAlertRuleGroupReconciler reconciles a GrafanaAlertRuleGroup object
@@ -114,11 +116,13 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 
 	folderUID, err := getFolderUID(ctx, r.Client, cr)
 	if err != nil {
-		return ctrl.Result{}, fmt.Errorf(ErrFetchingFolder, err)
+		log.Error(err, ErrMsgResolvingFolderUID)
+		return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgResolvingFolderUID, err)
 	}
 
 	if folderUID == "" {
-		return ctrl.Result{}, fmt.Errorf("folder uid not found, alert rule must reference a folder")
+		log.Error(err, ErrMsgMissingFolderReference)
+		return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgMissingFolderReference, err)
 	}
 
 	var disableProvenance *string
@@ -354,7 +358,7 @@ func (r *GrafanaAlertRuleGroupReconciler) finalize(ctx context.Context, cr *v1be
 
 	folderUID, err := getFolderUID(ctx, r.Client, cr)
 	if err != nil {
-		log.Info("Skipping Grafana finalize logic as folder no longer exists")
+		log.V(1).Info("Skipping Grafana finalize as folder no longer exists")
 
 		isCleanupInGrafanaRequired = false
 	}
