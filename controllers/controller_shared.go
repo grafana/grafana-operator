@@ -52,10 +52,8 @@ const (
 
 	// Finalizer
 	grafanaFinalizer = "operator.grafana.com/finalizer"
-)
 
-var (
-	ErrNoMatchingInstances    = fmt.Errorf("no matching instances")
+	// Log messages
 	ErrMsgNoMatchingInstances = "instanceSelector found no matching Grafana instances"
 	ErrMsgGettingCR           = "failed to get CR from API Server"
 	ErrMsgGettingInstances    = "failed to get Grafana instances"
@@ -64,10 +62,12 @@ var (
 	ErrMsgRemoveFinalizer     = "failed to remove finalizer"
 	ErrMsgApplyErrors         = "failed to sync CR to all Grafana instances"
 
-	ErrFmtApplyErrors = "%v"
-
 	DbgMsgFoundMatchingInstances = "found matching Grafana instances"
+
+	ErrFmtApplyErrors = "%v"
 )
+
+var ErrNoMatchingInstances = fmt.Errorf("no matching instances")
 
 type GrafanaCommonReconciler interface {
 	Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error
