@@ -44,7 +44,11 @@ import (
 const (
 	conditionFolderSynchronized = "FolderSynchronized"
 	conditionReasonCyclicParent = "CyclicParent"
+
+	ErrMsgCyclicFolder = "failed to validate GrafanaFolder, parentFolderUID must not reference the uid of the current folder"
 )
+
+var ErrCyclicFolder = fmt.Errorf("cyclic folder reference")
 
 // GrafanaFolderReconciler reconciles a GrafanaFolder object
 type GrafanaFolderReconciler struct {
@@ -96,7 +100,9 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonCyclicParent, "The value of parentFolderUID must not be the uid of the current folder")
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionFolderSynchronized)
 
-		return ctrl.Result{}, fmt.Errorf("cyclic folder reference")
+		log.Error(ErrCyclicFolder, ErrMsgCyclicFolder)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgCyclicFolder, ErrCyclicFolder)
 	}
 
 	removeInvalidSpec(&cr.Status.Conditions)
