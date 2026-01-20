@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"slices"
@@ -54,7 +55,7 @@ const (
 	ErrMsgInvalidContactPoint  = "invalid Contact Point spec"
 )
 
-var ErrMissingContactPointReceiver = fmt.Errorf("at least one receiver is needed to create a contact point")
+var ErrMissingContactPointReceiver = errors.New("at least one receiver is needed to create a contact point")
 
 // GrafanaContactPointReconciler reconciles a GrafanaContactPoint object
 type GrafanaContactPointReconciler struct {

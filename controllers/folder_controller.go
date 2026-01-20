@@ -48,7 +48,7 @@ const (
 	ErrMsgCyclicFolder = "failed to validate GrafanaFolder, parentFolderUID must not reference the uid of the current folder"
 )
 
-var ErrCyclicFolder = fmt.Errorf("cyclic folder reference")
+var ErrCyclicFolder = errors.New("cyclic folder reference")
 
 // GrafanaFolderReconciler reconciles a GrafanaFolder object
 type GrafanaFolderReconciler struct {

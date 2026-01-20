@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -67,7 +68,7 @@ const (
 	ErrFmtApplyErrors = "%v"
 )
 
-var ErrNoMatchingInstances = fmt.Errorf("no matching instances")
+var ErrNoMatchingInstances = errors.New("no matching instances")
 
 type GrafanaCommonReconciler interface {
 	Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error
