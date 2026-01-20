@@ -33,7 +33,7 @@ func FetchFromURL(ctx context.Context, cr v1beta1.GrafanaContentResource, cl cli
 		return cached, nil
 	}
 
-	request, err := http.NewRequest(http.MethodGet, u.String(), http.NoBody)
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), http.NoBody)
 	if err != nil {
 		return nil, err
 	}

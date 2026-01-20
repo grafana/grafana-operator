@@ -55,7 +55,7 @@ func GetGrafanaVersion(ctx context.Context, cl client.Client, cr *v1beta1.Grafan
 
 	instanceURL := gURL.JoinPath(GrafanaVersionEndpoint).String()
 
-	req, err := http.NewRequest(http.MethodGet, instanceURL, http.NoBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, instanceURL, http.NoBody)
 	if err != nil {
 		return "", fmt.Errorf("building request to fetch version: %w", err)
 	}
@@ -101,7 +101,7 @@ func GetAuthenticationStatus(ctx context.Context, cl client.Client, cr *v1beta1.
 
 	instanceURL := gURL.JoinPath("/login/ping").String()
 
-	req, err := http.NewRequest(http.MethodGet, instanceURL, http.NoBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, instanceURL, http.NoBody)
 	if err != nil {
 		return false, fmt.Errorf("building request to fetch authentication status: %w", err)
 	}

@@ -36,7 +36,7 @@ func FetchFromGrafanaCom(ctx context.Context, cr v1beta1.GrafanaContentResource,
 	tlsConfig := grafanaclient.DefaultTLSConfiguration
 
 	if source.Revision == nil {
-		rev, err := getLatestGrafanaComRevision(cr, tlsConfig)
+		rev, err := getLatestGrafanaComRevision(ctx, cr, tlsConfig)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get latest revision for dashboard id %d: %w", source.ID, err)
 		}
@@ -49,7 +49,7 @@ func FetchFromGrafanaCom(ctx context.Context, cr v1beta1.GrafanaContentResource,
 	return FetchFromURL(ctx, cr, cl, tlsConfig)
 }
 
-func getLatestGrafanaComRevision(cr v1beta1.GrafanaContentResource, tlsConfig *tls.Config) (int, error) {
+func getLatestGrafanaComRevision(ctx context.Context, cr v1beta1.GrafanaContentResource, tlsConfig *tls.Config) (int, error) {
 	spec := cr.GrafanaContentSpec()
 	if spec == nil {
 		return -1, nil
@@ -58,7 +58,7 @@ func getLatestGrafanaComRevision(cr v1beta1.GrafanaContentResource, tlsConfig *t
 	source := spec.GrafanaCom
 	url := fmt.Sprintf("%s/%d/revisions", grafanaComDashboardsAPIEndpoint, source.ID)
 
-	request, err := http.NewRequest(http.MethodGet, url, http.NoBody)
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
 	if err != nil {
 		return -1, err
 	}
