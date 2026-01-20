@@ -76,11 +76,6 @@ func (in *GrafanaManifest) Conditions() *[]metav1.Condition {
 
 var _ CommonResource = (*GrafanaManifest)(nil)
 
-// GetGrafanaUID selects a UID to be used for Grafana API requests (preference: spec.CustomUID -> metadata.uid)
-func (in *GrafanaManifest) GetGrafanaUID() string {
-	return string(in.UID)
-}
-
 //+kubebuilder:object:root=true
 
 // GrafanaManifestList contains a list of GrafanaManifest
@@ -125,8 +120,5 @@ func (in *GrafanaManifest) CommonStatus() *GrafanaCommonStatus {
 }
 
 func (in *GrafanaManifest) NamespacedResource(uid string) NamespacedResource {
-	// .GetGrafanaUID() can be wrong when the fallback to search is used.
-	// Hence, use uid from args as the caller has more context
-	// TODO Remove uid arg along with the search fallback
 	return NewNamespacedResource(in.Namespace, in.Name, uid)
 }
