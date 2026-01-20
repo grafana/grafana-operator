@@ -199,12 +199,12 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	if len(pluginErrors) > 0 {
-		err := fmt.Errorf("%v", pluginErrors)
+		err := fmt.Errorf(ErrFmtApplyErrors, pluginErrors)
 		log.Error(err, "failed to apply plugins to all instances")
 	}
 
 	if len(applyHomeErrors) > 0 {
-		err := fmt.Errorf("%v", applyHomeErrors)
+		err := fmt.Errorf(ErrFmtApplyErrors, applyHomeErrors)
 		log.Error(err, "failed to apply home dashboards to all instances")
 	}
 

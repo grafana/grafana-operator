@@ -179,7 +179,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	if len(pluginErrors) > 0 {
-		err := fmt.Errorf("%v", pluginErrors)
+		err := fmt.Errorf(ErrFmtApplyErrors, pluginErrors)
 		log.Error(err, "failed to apply plugins to all instances")
 	}
 
