@@ -102,6 +102,12 @@ type AlertRule struct {
 	// +kubebuilder:validation:MaxLength=40
 	// +kubebuilder:validation:Pattern="^[a-zA-Z0-9-_]+$"
 	UID string `json:"uid"`
+
+	// Deprecated: The field is inert, use rules[].annotations.__dashboardUid__
+	DashboardUID string `json:"dashboardUid,omitempty"`
+
+	// Deprecated: The field is inert, use rules[].annotations.__panelId__
+	PanelID int `json:"panelId,omitempty"`
 }
 
 type NotificationSettings struct {

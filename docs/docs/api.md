@@ -358,6 +358,13 @@ AlertRule defines a specific rule to be evaluated. It is based on the upstream m
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>dashboardUid</b></td>
+        <td>string</td>
+        <td>
+          Deprecated: The field is inert, use rules[].annotations.__dashboardUid__<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>isPaused</b></td>
         <td>boolean</td>
         <td>
@@ -394,6 +401,13 @@ AlertRule defines a specific rule to be evaluated. It is based on the upstream m
         <td>object</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>panelId</b></td>
+        <td>integer</td>
+        <td>
+          Deprecated: The field is inert, use rules[].annotations.__panelId__<br/>
         </td>
         <td>false</td>
       </tr><tr>
