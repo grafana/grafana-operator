@@ -148,3 +148,6 @@ You will find the dashboard in a folder with the same name as your namespace.
 
 Always update a resource configurations, via the Custom Resources(CR) when the resource is created/managed by the operator.
 Any changes made directly in Grafana will be overwritten by the Grafana-operator as per the configuration defined in the CR.
+
+If the `resyncPeriod` is so short that it interferes with editing, suspend reconciliation by setting `.spec.suspend=true` on any Grafana CR in kubernetes.
+More about `suspend` and other common CR fields can be found under [Common Options](/docs/examples/common_options)
