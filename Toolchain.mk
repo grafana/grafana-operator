@@ -12,7 +12,7 @@ CONTROLLER_GEN_VERSION = v0.20.0
 CRDOC_VERSION = v0.6.4
 DART_SASS_VERSION = 1.86.0
 # renovate: datasource=github-tags depName=kubernetes-sigs/controller-runtime
-ENVTEST_VERSION = v0.22.5
+ENVTEST_VERSION = v0.23.0
 # renovate: datasource=github-tags depName=golangci/golangci-lint
 GOLANGCI_LINT_VERSION = v2.8.0
 # renovate: datasource=github-tags depName=norwoodj/helm-docs
