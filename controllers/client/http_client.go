@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -15,17 +16,12 @@ import (
 
 const GrafanaVersionEndpoint = "/frontend/settings"
 
-func NewHTTPClient(ctx context.Context, cl client.Client, cr *v1beta1.Grafana) (*http.Client, error) {
+func NewHTTPClient(cr *v1beta1.Grafana, tlsConfig *tls.Config) *http.Client {
 	var timeout time.Duration
 	if cr.Spec.Client != nil && cr.Spec.Client.TimeoutSeconds != nil {
 		timeout = max(time.Duration(*cr.Spec.Client.TimeoutSeconds), 0)
 	} else {
 		timeout = 10
-	}
-
-	tlsConfig, err := buildTLSConfiguration(ctx, cl, cr)
-	if err != nil {
-		return nil, err
 	}
 
 	transport := NewInstrumentedRoundTripper(cr.IsExternal(), tlsConfig, metrics.GrafanaAPIRequests.MustCurryWith(prometheus.Labels{
@@ -39,14 +35,16 @@ func NewHTTPClient(ctx context.Context, cl client.Client, cr *v1beta1.Grafana) (
 	return &http.Client{
 		Transport: transport,
 		Timeout:   time.Second * timeout,
-	}, nil
+	}
 }
 
 func GetGrafanaVersion(ctx context.Context, cl client.Client, cr *v1beta1.Grafana) (string, error) {
-	httpClient, err := NewHTTPClient(ctx, cl, cr)
+	tlsConfig, err := buildTLSConfiguration(ctx, cl, cr)
 	if err != nil {
-		return "", fmt.Errorf("setup of the http client: %w", err)
+		return "", fmt.Errorf("building tls config: %w", err)
 	}
+
+	httpClient := NewHTTPClient(cr, tlsConfig)
 
 	gURL, err := ParseAdminURL(cr.Status.AdminURL)
 	if err != nil {
@@ -55,7 +53,7 @@ func GetGrafanaVersion(ctx context.Context, cl client.Client, cr *v1beta1.Grafan
 
 	instanceURL := gURL.JoinPath(GrafanaVersionEndpoint).String()
 
-	req, err := http.NewRequest(http.MethodGet, instanceURL, http.NoBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, instanceURL, http.NoBody)
 	if err != nil {
 		return "", fmt.Errorf("building request to fetch version: %w", err)
 	}
@@ -89,10 +87,12 @@ func GetGrafanaVersion(ctx context.Context, cl client.Client, cr *v1beta1.Grafan
 }
 
 func GetAuthenticationStatus(ctx context.Context, cl client.Client, cr *v1beta1.Grafana) (bool, error) {
-	httpClient, err := NewHTTPClient(ctx, cl, cr)
+	tlsConfig, err := buildTLSConfiguration(ctx, cl, cr)
 	if err != nil {
-		return false, fmt.Errorf("setup of the http client: %w", err)
+		return false, fmt.Errorf("building tls config: %w", err)
 	}
+
+	httpClient := NewHTTPClient(cr, tlsConfig)
 
 	gURL, err := ParseAdminURL(cr.Status.AdminURL)
 	if err != nil {
@@ -101,7 +101,7 @@ func GetAuthenticationStatus(ctx context.Context, cl client.Client, cr *v1beta1.
 
 	instanceURL := gURL.JoinPath("/login/ping").String()
 
-	req, err := http.NewRequest(http.MethodGet, instanceURL, http.NoBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, instanceURL, http.NoBody)
 	if err != nil {
 		return false, fmt.Errorf("building request to fetch authentication status: %w", err)
 	}
