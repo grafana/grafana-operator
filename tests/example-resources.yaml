@@ -246,8 +246,8 @@ spec:
       noDataState: NoData
       execErrState: Error
       for: 5m
-      dashboardUid: testdata-dash
-      panelId: 2
+      dashboardUid: testdata-dash # Ensure dashboardUid and panelId does not cause apply errors, included by Grafana when exporting rules
+      panelId: 2                  # Both the dashboard and panel exist in this file
       annotations:
         __dashboardUid__: testdata-dash
         __panelId__: "2"

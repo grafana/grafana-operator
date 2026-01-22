@@ -56,8 +56,8 @@ spec:
           relativeTimeRange:
             from: 600
       execErrState: Error
-      dashboardUid: "1" # Does not exist
-      panelId: 1
+      dashboardUid: "1" # Ensure dashboardUid and panelId does not cause apply errors, included by Grafana when exporting rules
+      panelId: 1        # Neither the dashboard nor panel exists or is created
       for: 5m0s
       noDataState: NoData
       title: test rule from operator updated
