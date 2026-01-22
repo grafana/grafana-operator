@@ -155,6 +155,7 @@ spec:
     matchLabels:
       test: "testdata"
   interval: 5m
+  editable: true
   rules:
     - uid: ae1rhq
       title: Test
@@ -245,7 +246,11 @@ spec:
       noDataState: NoData
       execErrState: Error
       for: 5m
-      annotations: {}
+      dashboardUid: testdata-dash # Ensure dashboardUid and panelId does not cause apply errors, included by Grafana when exporting rules
+      panelId: 2                  # Both the dashboard and panel exist in this file
+      annotations:
+        __dashboardUid__: testdata-dash
+        __panelId__: "2"
       labels: {}
       isPaused: false
     - uid: ae1rhq2
