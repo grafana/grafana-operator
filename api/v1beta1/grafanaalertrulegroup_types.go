@@ -103,10 +103,10 @@ type AlertRule struct {
 	// +kubebuilder:validation:Pattern="^[a-zA-Z0-9-_]+$"
 	UID string `json:"uid"`
 
-	// Deprecated: The field is inert, use rules[].annotations.__dashboardUid__
+	// Deprecated: The field is not used, use rules[].annotations.__dashboardUid__
 	DashboardUID string `json:"dashboardUid,omitempty"`
 
-	// Deprecated: The field is inert, use rules[].annotations.__panelId__
+	// Deprecated: The field is not used, use rules[].annotations.__panelId__
 	PanelID int `json:"panelId,omitempty"`
 }
 

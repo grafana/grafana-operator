@@ -151,7 +151,7 @@ spec:
                     condition:
                       type: string
                     dashboardUid:
-                      description: 'Deprecated: The field is inert, use rules[].annotations.__dashboardUid__'
+                      description: 'Deprecated: The field is not used, use rules[].annotations.__dashboardUid__'
                       type: string
                     data:
                       items:
@@ -242,7 +242,7 @@ spec:
                       - receiver
                       type: object
                     panelId:
-                      description: 'Deprecated: The field is inert, use rules[].annotations.__panelId__'
+                      description: 'Deprecated: The field is not used, use rules[].annotations.__panelId__'
                       type: integer
                     record:
                       properties:

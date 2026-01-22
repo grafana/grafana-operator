@@ -361,7 +361,7 @@ AlertRule defines a specific rule to be evaluated. It is based on the upstream m
         <td><b>dashboardUid</b></td>
         <td>string</td>
         <td>
-          Deprecated: The field is inert, use rules[].annotations.__dashboardUid__<br/>
+          Deprecated: The field is not used, use rules[].annotations.__dashboardUid__<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -407,7 +407,7 @@ AlertRule defines a specific rule to be evaluated. It is based on the upstream m
         <td><b>panelId</b></td>
         <td>integer</td>
         <td>
-          Deprecated: The field is inert, use rules[].annotations.__panelId__<br/>
+          Deprecated: The field is not used, use rules[].annotations.__panelId__<br/>
         </td>
         <td>false</td>
       </tr><tr>
