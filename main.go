@@ -394,7 +394,7 @@ func main() { //nolint:gocyclo
 	if err = (&controllers.GrafanaNotificationPolicyReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor("GrafanaNotificationPolicy"),
+		Recorder: mgr.GetEventRecorder("GrafanaNotificationPolicy"),
 		Cfg:      ctrlCfg,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaNotificationPolicy")
