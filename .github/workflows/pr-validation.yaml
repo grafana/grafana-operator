@@ -182,7 +182,7 @@ jobs:
           kubectl logs -p -n $NAMESPACE $POD -c manager || true
 
   end-to-end:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     needs:
       - e2e-tests
     steps:
