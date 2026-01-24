@@ -28,7 +28,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/tools/events"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -56,7 +56,7 @@ const (
 type GrafanaNotificationPolicyReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
-	Recorder record.EventRecorder
+	Recorder events.EventRecorder
 	Cfg      *Config
 }
 
@@ -127,7 +127,7 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 		}
 
 		if err != nil {
-			r.Recorder.Event(cr, corev1.EventTypeWarning, "AssemblyFailed", fmt.Sprintf("Failed to assemble GrafanaNotificationPolicy using routeSelectors: %v", err))
+			r.Recorder.Eventf(cr, nil, corev1.EventTypeWarning, "NotificationPolicyAssemblyFailed", "AssembleRoutes", "Failed to assemble GrafanaNotificationPolicy using routeSelectors: %v", err)
 			return ctrl.Result{}, fmt.Errorf("failed to assemble GrafanaNotificationPolicy using routeSelectors: %w", err)
 		}
 	}
@@ -455,7 +455,7 @@ func (r *GrafanaNotificationPolicyReconciler) updateNotificationPolicyRoutesStat
 	}
 
 	for _, route := range routes {
-		r.Recorder.Event(route, corev1.EventTypeNormal, "Merged", fmt.Sprintf("Route merged into NotificationPolicy %s/%s", cr.GetNamespace(), cr.GetName()))
+		r.Recorder.Eventf(route, cr, corev1.EventTypeNormal, "NotificationPolicyRouteMerged", "MergeRoute", "Route merged into NotificationPolicy %s/%s", cr.GetNamespace(), cr.GetName())
 
 		// Update the status of the route in case conditions have been set
 		if err := r.Status().Update(ctx, route); err != nil {

@@ -21,16 +21,6 @@ rules:
       - update
       - watch
   - apiGroups:
-      - ""
-    resources:
-      - events
-    verbs:
-      - create
-      - get
-      - list
-      - patch
-      - watch
-  - apiGroups:
       - apps
     resources:
       - deployments
@@ -54,6 +44,13 @@ rules:
       - patch
       - update
       - watch
+  - apiGroups:
+      - events.k8s.io
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
   - apiGroups:
       - gateway.networking.k8s.io
     resources:
