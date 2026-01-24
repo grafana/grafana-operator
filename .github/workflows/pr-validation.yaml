@@ -14,7 +14,7 @@ permissions:
 jobs:
   docs-only-check:
     name: Check for docs-only change
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     outputs:
       docs_only: ${{ steps.docs_only_check.outputs.docs_only }}
     steps:
@@ -42,7 +42,7 @@ jobs:
         run: echo "docs_only=true" >> $GITHUB_OUTPUT
 
   pre-commit:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
         with:
@@ -89,7 +89,7 @@ jobs:
           fi
 
   trivy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - name: Clone repo
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
