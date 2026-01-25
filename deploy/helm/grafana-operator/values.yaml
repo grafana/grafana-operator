@@ -3,7 +3,7 @@ global:
   imageRegistry: null
 
 # -- If the operator should run in namespace-scope or not,
-# if true the operator will only be able to manage resources in the same namespace and namespaces selected via `watchNamespaces` or `watchNamespaceSelector`
+# if true the operator will only manage resources in the same namespace and namespaces selected via `watchNamespaces` OR `watchNamespaceSelector`
 namespaceScope: false
 
 # -- This is recommended in most scenarios, even when only running a single instance of the operator.
@@ -108,8 +108,8 @@ serviceAccount:
 
 rbac:
   # -- Specifies whether to create the ClusterRole and ClusterRoleBinding.
-  # If "namespaceScope" is true, this will create Role and RoleBinding instead.
-  # If "watchnamespaces" is set with "namespaceScope", a Role and RoleBinding is created in each namespace.
+  # If "namespaceScope" is true, this will create a RoleBinding instead of ClusterRoleBinding.
+  # If "watchnamespaces" is set with "namespaceScope", a RoleBinding is created in each namespace.
   create: true
 
 crds:
