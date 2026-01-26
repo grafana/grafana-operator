@@ -19,7 +19,7 @@ rules:
 
 {{- /* Namespace scope, one or more namespaces */}}
 {{- if .Values.namespaceScope }}
-{{- $watchNamespaces := append (splitList "," .Values.watchNamespaces) (include "grafana-operator.namespace" .) }}
+{{- $watchNamespaces := append (splitList "," .Values.watchNamespaces) (include "grafana-operator.namespace" $) }}
 {{- range $watchNamespaces }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -66,10 +66,10 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  namespace: {{ include "grafana-operator.namespace" . }}
-  name: {{ include "grafana-operator.fullname" . }}-leases
+  namespace: {{ include "grafana-operator.namespace" $ }}
+  name: {{ include "grafana-operator.fullname" $ }}-leases
   labels:
-    {{- include "grafana-operator.labels" . | nindent 4 }}
+    {{- include "grafana-operator.labels" $ | nindent 4 }}
     app.kubernetes.io/component: operator
 rules:
   - apiGroups:
@@ -84,18 +84,18 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: {{ include "grafana-operator.fullname" . }}-leases
-  namespace: {{ include "grafana-operator.namespace" . }}
+  name: {{ include "grafana-operator.fullname" $ }}-leases
+  namespace: {{ include "grafana-operator.namespace" $ }}
   labels:
     {{- include "grafana-operator.labels" $ | nindent 4 }}
     app.kubernetes.io/component: operator
 subjects:
   - kind: ServiceAccount
-    name: {{ include "grafana-operator.serviceAccountName" . }}
-    namespace: {{ include "grafana-operator.namespace" . }}
+    name: {{ include "grafana-operator.serviceAccountName" $ }}
+    namespace: {{ include "grafana-operator.namespace" $ }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ include "grafana-operator.fullname" . }}-leases
+  name: {{ include "grafana-operator.fullname" $ }}-leases
 {{- end }}
 {{- end }}{{- /* rbac.create */}}
