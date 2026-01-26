@@ -59,4 +59,43 @@ subjects:
     name: {{ include "grafana-operator.serviceAccountName" $ }}
     namespace: {{ include "grafana-operator.namespace" $ }}
 {{- end }}{{- /* else namespaceScope */}}
+
+{{- /*Lease permissions needed for leaderElection*/}}
+{{- if .Values.leaderElect }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: {{ include "grafana-operator.namespace" . }}
+  name: {{ include "grafana-operator.fullname" . }}-leases
+  labels:
+    {{- include "grafana-operator.labels" . | nindent 4 }}
+    app.kubernetes.io/component: operator
+rules:
+  - apiGroups:
+    - coordination.k8s.io
+    resources:
+    - leases
+    verbs:
+    - get
+    - create
+    - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "grafana-operator.fullname" . }}-leases
+  namespace: {{ include "grafana-operator.namespace" . }}
+  labels:
+    {{- include "grafana-operator.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: operator
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "grafana-operator.serviceAccountName" . }}
+    namespace: {{ include "grafana-operator.namespace" . }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "grafana-operator.fullname" . }}-leases
+{{- end }}
 {{- end }}{{- /* rbac.create */}}
