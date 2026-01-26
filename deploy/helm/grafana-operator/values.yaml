@@ -109,7 +109,7 @@ serviceAccount:
 rbac:
   # -- Specifies whether to create the ClusterRole and ClusterRoleBinding.
   # If "namespaceScope" is true, this will create a RoleBinding instead of ClusterRoleBinding.
-  # If "watchnamespaces" is set with "namespaceScope", a RoleBinding is created in each namespace.
+  # If "watchNamespaces" is set with "namespaceScope", a RoleBinding is created in each namespace.
   create: true
 
 crds:
