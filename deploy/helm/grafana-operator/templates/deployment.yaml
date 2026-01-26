@@ -51,34 +51,18 @@ spec:
           env:
             - name: WATCH_NAMESPACE
               {{- if and .Values.namespaceScope (eq .Values.watchNamespaces "") }}
-              value: {{ .Release.Namespace }}
+              value: {{ include "grafana-operator.namespace" . }}
               {{ else }}
-              value: {{ .Values.watchNamespaces }}
+              value: {{ .Values.watchNamespaces | quote }}
               {{- end }}
             - name: WATCH_NAMESPACE_SELECTOR
-              {{- if and .Values.namespaceScope (eq .Values.watchNamespaceSelector "") }}
-              value: ""
-              {{ else }}
-              value: {{quote .Values.watchNamespaceSelector }}
-              {{- end }}
+              value: {{ .Values.watchNamespaceSelector | quote }}
             - name: WATCH_LABEL_SELECTORS
-              {{- if and .Values.watchLabelSelectors (eq .Values.watchLabelSelectors "") }}
-              value: ""
-              {{ else }}
-              value: {{quote .Values.watchLabelSelectors }}
-              {{- end }}
+              value: {{ .Values.watchLabelSelectors | quote }}
             - name: ENFORCE_CACHE_LABELS
-              {{- if .Values.enforceCacheLabels }}
-              value: {{quote .Values.enforceCacheLabels }}
-              {{ else }}
-              value: "off"
-              {{- end }}
+              value: {{ .Values.enforceCacheLabels | quote }}
             - name: CLUSTER_DOMAIN
-              {{- if and .Values.clusterDomain (eq .Values.clusterDomain "") }}
-              value: ""
-              {{ else }}
-              value: {{quote .Values.clusterDomain }}
-              {{- end }}
+              value: {{ .Values.clusterDomain | quote }}
             {{- with .Values.env }}
               {{- toYaml . | nindent 12 }}
             {{- end }}
