@@ -60,7 +60,7 @@ spec:
             - name: WATCH_LABEL_SELECTORS
               value: {{ .Values.watchLabelSelectors | quote }}
             - name: ENFORCE_CACHE_LABELS
-              value: {{ (.Values.enforceCacheLabels | default "off") | quote }}
+              value: {{ .Values.enforceCacheLabels | default "off" | quote }}
             - name: CLUSTER_DOMAIN
               value: {{ .Values.clusterDomain | quote }}
             {{- with .Values.env }}
