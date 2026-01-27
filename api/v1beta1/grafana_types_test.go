@@ -554,37 +554,31 @@ var _ = Describe("Grafana URL validation", func() {
 
 		tests := []struct {
 			name      string
-			grafName  string
 			url       string
 			wantError bool
 		}{
 			{
 				name:      "Valid http URL",
-				grafName:  "external-http",
 				url:       "http://grafana.example.com",
 				wantError: false,
 			},
 			{
 				name:      "Valid https URL",
-				grafName:  "external-https",
 				url:       "https://grafana.example.com:3000/subpath",
 				wantError: false,
 			},
 			{
 				name:      "URL without protocol",
-				grafName:  "external-no-protocol",
 				url:       "grafana.example.com",
 				wantError: true,
 			},
 			{
 				name:      "Invalid protocol",
-				grafName:  "external-ftp",
 				url:       "ftp://grafana.example.com",
 				wantError: true,
 			},
 			{
 				name:      "Empty URL after protocol",
-				grafName:  "external-empty",
 				url:       "http://",
 				wantError: true,
 			},
@@ -592,9 +586,9 @@ var _ = Describe("Grafana URL validation", func() {
 
 		for _, tt := range tests {
 			It(tt.name, func() {
-				g := &Grafana{
+				cr := &Grafana{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      tt.grafName,
+						Name:      "url-validation",
 						Namespace: "default",
 					},
 					Spec: GrafanaSpec{
@@ -604,13 +598,13 @@ var _ = Describe("Grafana URL validation", func() {
 					},
 				}
 
-				err := cl.Create(ctx, g)
+				err := cl.Create(ctx, cr)
 
 				if tt.wantError {
 					require.Error(t, err)
 				} else {
 					require.NoError(t, err)
-					err = cl.Delete(ctx, g)
+					err = cl.Delete(ctx, cr)
 					require.NoError(t, err)
 				}
 			})
