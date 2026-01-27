@@ -205,7 +205,8 @@ func (r *GrafanaManifestReconciler) reconcileWithInstance(ctx context.Context, i
 		return fmt.Errorf("updating resource: %w", err)
 	}
 
-	return nil
+	// Update grafana instance Status
+	return instance.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource())
 }
 
 func (r *GrafanaManifestReconciler) loadGVR(cl *discovery.DiscoveryClient, template v1beta1.GrafanaManifestTemplate) (schema.GroupVersionResource, error) {

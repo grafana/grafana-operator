@@ -272,6 +272,13 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 		return err
 	}
 
+	manifests := &v1beta1.GrafanaManifestList{}
+
+	err = r.List(ctx, manifests)
+	if err != nil {
+		return err
+	}
+
 	// delete resources from grafana statuses that no longer have a CR
 	statusUpdates := 0
 
@@ -286,6 +293,7 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 		removeMissingCRs(&grafana.Status.LibraryPanels, libraryPanels, &updateStatus)
 		removeMissingCRs(&grafana.Status.MuteTimings, muteTimings, &updateStatus)
 		removeMissingCRs(&grafana.Status.NotificationTemplates, notificationTemplates, &updateStatus)
+		removeMissingCRs(&grafana.Status.Manifests, manifests, &updateStatus)
 
 		if updateStatus {
 			statusUpdates++

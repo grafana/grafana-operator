@@ -12126,6 +12126,10 @@ spec:
                 items:
                   type: string
                 type: array
+              manifests:
+                items:
+                  type: string
+                type: array
               muteTimings:
                 items:
                   type: string

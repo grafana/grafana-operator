@@ -119,6 +119,6 @@ func (in *GrafanaManifest) CommonStatus() *GrafanaCommonStatus {
 	return &in.Status.GrafanaCommonStatus
 }
 
-func (in *GrafanaManifest) NamespacedResource(uid string) NamespacedResource {
-	return NewNamespacedResource(in.Namespace, in.Name, uid)
+func (in *GrafanaManifest) NamespacedResource() NamespacedResource {
+	return NewNamespacedResource(in.Namespace, in.Name, string(in.UID))
 }
