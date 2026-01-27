@@ -58,7 +58,7 @@ var _ = Describe("Folder Reconciler: Provoke Conditions", func() {
 				Type:   conditionFolderSynchronized,
 				Reason: conditionReasonApplyFailed,
 			},
-			wantErr: "failed to apply to all instances",
+			wantErr: LogMsgApplyErrors,
 		},
 		{
 			name: "InvalidSpec Condition",

@@ -31,6 +31,7 @@ import (
 	"github.com/go-logr/logr"
 	uberzap "go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"k8s.io/klog/v2"
 
 	routev1 "github.com/openshift/api/route/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -284,6 +285,7 @@ func main() { //nolint:gocyclo
 	}
 
 	ctx := ctrl.SetupSignalHandler()
+	ctx = klog.NewContext(ctx, setupLog) // Leader election logger is set through the ctx
 
 	// Determine Operator scope
 	switch {

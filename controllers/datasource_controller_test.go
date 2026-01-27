@@ -347,7 +347,7 @@ var _ = Describe("Datasource Reconciler: Provoke Conditions", func() {
 				Type:   conditionDatasourceSynchronized,
 				Reason: conditionReasonApplyFailed,
 			},
-			wantErr: "failed to apply to all instances",
+			wantErr: LogMsgApplyErrors,
 		},
 		{
 			name: "Referenced secret does not exist",

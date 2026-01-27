@@ -59,7 +59,7 @@ var _ = Describe("LibraryPanel Reconciler: Provoke Conditions", func() {
 				Type:   conditionLibraryPanelSynchronized,
 				Reason: conditionReasonApplyFailed,
 			},
-			wantErr: "failed to apply to all instances",
+			wantErr: LogMsgApplyErrors,
 		},
 		{
 			name: "Successfully applied resource to instance",

@@ -104,19 +104,24 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 			return ctrl.Result{}, nil
 		}
 
-		return ctrl.Result{}, fmt.Errorf("getting GrafanaServiceAccount %q: %w", req, err)
+		log.Error(err, LogMsgGettingCR)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgGettingCR, err)
 	}
 
 	// 2. Handle resource deletion (removes service account from Grafana and cleans up secrets)
 	if cr.GetDeletionTimestamp() != nil {
-		err := r.finalize(ctx, cr)
-		if err != nil {
-			return ctrl.Result{}, fmt.Errorf("finalizing GrafanaServiceAccount: %w", err)
-		}
+		// Check if resource needs clean up
+		if controllerutil.ContainsFinalizer(cr, grafanaFinalizer) {
+			if err := r.finalize(ctx, cr); err != nil {
+				log.Error(err, LogMsgRunningFinalizer)
+				return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgRunningFinalizer, err)
+			}
 
-		err = removeFinalizer(ctx, r.Client, cr)
-		if err != nil && !apierrors.IsNotFound(err) {
-			return ctrl.Result{}, fmt.Errorf("removing finalizer: %w", err)
+			if err := removeFinalizer(ctx, r.Client, cr); err != nil {
+				log.Error(err, LogMsgRemoveFinalizer)
+				return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgRemoveFinalizer, err)
+			}
 		}
 
 		return ctrl.Result{}, nil
@@ -141,18 +146,21 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 	if err != nil {
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionContactPointSynchronized)
+		log.Error(err, LogMsgGettingInstances)
 
-		return ctrl.Result{}, fmt.Errorf("failed fetching instance: %w", err)
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgGettingInstances, err)
 	}
 
 	if grafana == nil {
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionContactPointSynchronized)
+		log.Error(ErrNoMatchingInstances, LogMsgNoMatchingInstances)
 
-		return ctrl.Result{}, ErrNoMatchingInstances
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgNoMatchingInstances, ErrNoMatchingInstances)
 	}
 
 	removeNoMatchingInstance(&cr.Status.Conditions)
+	log.V(1).Info(DbgMsgFoundMatchingInstances, "count", 1)
 
 	// 5. For active resources - reconcile the actual state with the desired state (creates, updates, removes as needed)
 	err = r.reconcileWithInstance(ctx, cr, grafana)
@@ -163,17 +171,14 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 		applyErrors[grafana.Name] = err.Error()
 	}
 
-	condition := buildSynchronizedCondition(
-		"ServiceAccount",
-		conditionServiceAccountSynchronized,
-		cr.Generation,
-		applyErrors,
-		1, // We always synchronize with a single Grafana instance.
-	)
+	condition := buildSynchronizedCondition("Service Account", conditionServiceAccountSynchronized, cr.Generation, applyErrors, 1)
 	meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
-	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("reconciling service account: %w", err)
+	if len(applyErrors) > 0 {
+		err = fmt.Errorf(FmtStrApplyErrors, applyErrors)
+		log.Error(err, LogMsgApplyErrors)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgApplyErrors, err)
 	}
 
 	// 7. Schedule periodic reconciliation based on ResyncPeriod
@@ -183,10 +188,6 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 // finalize handles the cleanup logic when a GrafanaServiceAccount resource is being deleted.
 // It attempts to remove the service account from Grafana and clean up associated secrets.
 func (r *GrafanaServiceAccountReconciler) finalize(ctx context.Context, cr *v1beta1.GrafanaServiceAccount) error {
-	if !controllerutil.ContainsFinalizer(cr, grafanaFinalizer) {
-		return nil
-	}
-
 	if cr.Status.Account == nil {
 		return nil
 	}

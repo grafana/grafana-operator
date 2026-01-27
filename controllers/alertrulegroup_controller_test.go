@@ -73,7 +73,7 @@ var _ = Describe("AlertRulegroup Reconciler: Provoke Conditions", func() {
 				Type:   conditionAlertGroupSynchronized,
 				Reason: conditionReasonApplyFailed,
 			},
-			wantErr: "failed to apply to all instances",
+			wantErr: LogMsgApplyErrors,
 		},
 		{
 			name: "Successfully applied resource to instance",
