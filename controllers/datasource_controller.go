@@ -49,6 +49,9 @@ import (
 const (
 	conditionDatasourceSynchronized = "DatasourceSynchronized"
 	conditionReasonInvalidModel     = "InvalidModel"
+
+	LogMsgBuildingDatasourceAPIModel = "building datasource model"
+	LogMsgDeletingOldDatasourceUID   = "failed to delete datasource with the old uid"
 )
 
 // GrafanaDatasourceReconciler reconciles a GrafanaDatasource object
@@ -70,18 +73,22 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			return ctrl.Result{}, nil
 		}
 
-		return ctrl.Result{}, fmt.Errorf("error getting grafana datasource cr: %w", err)
+		log.Error(err, LogMsgGettingCR)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgGettingCR, err)
 	}
 
 	if cr.GetDeletionTimestamp() != nil {
 		// Check if resource needs clean up
 		if controllerutil.ContainsFinalizer(cr, grafanaFinalizer) {
 			if err := r.finalize(ctx, cr); err != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaDatasource: %w", err)
+				log.Error(err, LogMsgRunningFinalizer)
+				return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgRunningFinalizer, err)
 			}
 
 			if err := removeFinalizer(ctx, r.Client, cr); err != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
+				log.Error(err, LogMsgRemoveFinalizer)
+				return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgRemoveFinalizer, err)
 			}
 		}
 
@@ -99,35 +106,37 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
+		cr.Status.NoMatchingInstances = true
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDatasourceSynchronized)
-		cr.Status.NoMatchingInstances = true
+		log.Error(err, LogMsgGettingInstances)
 
-		return ctrl.Result{}, fmt.Errorf("failed fetching instances: %w", err)
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgGettingInstances, err)
 	}
 
 	if len(instances) == 0 {
+		cr.Status.NoMatchingInstances = true
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDatasourceSynchronized)
-		cr.Status.NoMatchingInstances = true
+		log.Error(ErrNoMatchingInstances, LogMsgNoMatchingInstances)
 
-		return ctrl.Result{}, ErrNoMatchingInstances
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgNoMatchingInstances, ErrNoMatchingInstances)
 	}
 
-	removeNoMatchingInstance(&cr.Status.Conditions)
 	cr.Status.NoMatchingInstances = false
-
-	log.Info("found matching Grafana instances for datasource", "count", len(instances))
+	removeNoMatchingInstance(&cr.Status.Conditions)
+	log.V(1).Info(DbgMsgFoundMatchingInstances, "count", len(instances))
 
 	uid := cr.GetGrafanaUID()
 	log = log.WithValues("uid", uid)
 	ctx = logf.IntoContext(ctx, log)
 
 	if cr.IsUpdatedUID() {
-		log.Info("datasource uid got updated, deleting datasources with the old uid")
+		log.Info(LogMsgDeletingOldDatasourceUID, "uid", cr.Status.UID)
 
 		if err := r.deleteOldDatasource(ctx, cr); err != nil {
-			return ctrl.Result{}, err
+			log.Error(err, "failed to delete datasource with the old uid", "uid", cr.Status.UID)
+			return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgDeletingOldDatasourceUID, err)
 		}
 
 		// Clean up uid, so further reconcilications can track changes there
@@ -141,8 +150,9 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	if err != nil {
 		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidModel, err.Error())
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDatasourceSynchronized)
+		log.Error(err, LogMsgBuildingDatasourceAPIModel)
 
-		return ctrl.Result{}, fmt.Errorf("building datasource model: %w", err)
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgBuildingDatasourceAPIModel, err)
 	}
 
 	removeInvalidSpec(&cr.Status.Conditions)
@@ -169,7 +179,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	if len(pluginErrors) > 0 {
-		err := fmt.Errorf("%v", pluginErrors)
+		err := fmt.Errorf(FmtStrApplyErrors, pluginErrors)
 		log.Error(err, "failed to apply plugins to all instances")
 	}
 
@@ -179,7 +189,10 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
 	if len(allApplyErrors) > 0 {
-		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", allApplyErrors)
+		err = fmt.Errorf(FmtStrApplyErrors, allApplyErrors)
+		log.Error(err, LogMsgApplyErrors)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgApplyErrors, err)
 	}
 
 	cr.Status.Hash = hash
@@ -190,9 +203,13 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 }
 
 func (r *GrafanaDatasourceReconciler) deleteOldDatasource(ctx context.Context, cr *v1beta1.GrafanaDatasource) error {
+	log := logf.FromContext(ctx)
+	log.Info("Finalizing GrafanaDatasource")
+
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
-		return fmt.Errorf("fetching instances: %w", err)
+		log.Error(err, LogMsgGettingInstances)
+		return fmt.Errorf("%s: %w", LogMsgGettingInstances, err)
 	}
 
 	for _, grafana := range instances {
@@ -225,7 +242,7 @@ func (r *GrafanaDatasourceReconciler) finalize(ctx context.Context, cr *v1beta1.
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
-		return fmt.Errorf("fetching instances: %w", err)
+		return fmt.Errorf("%s: %w", LogMsgGettingInstances, err)
 	}
 
 	uid := cr.GetGrafanaUID()

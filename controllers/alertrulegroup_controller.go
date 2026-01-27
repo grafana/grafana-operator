@@ -43,6 +43,9 @@ import (
 const (
 	conditionAlertGroupSynchronized = "AlertGroupSynchronized"
 	conditionReasonInvalidDuration  = "InvalidDuration"
+
+	LogMsgMissingFolderReference = "folder uid not found, AlertRuleGroup must include a folder reference (folderUID/folderRef)"
+	LogMsgConvertingToAPIModel   = "failed to convert GrafanaAlertRuleGroup to Grafana model"
 )
 
 // GrafanaAlertRuleGroupReconciler reconciles a GrafanaAlertRuleGroup object
@@ -67,18 +70,22 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 			return ctrl.Result{}, nil
 		}
 
-		return ctrl.Result{}, fmt.Errorf("error getting GrafanaAlertRuleGroup: %w", err)
+		log.Error(err, LogMsgGettingCR)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgGettingCR, err)
 	}
 
 	if cr.GetDeletionTimestamp() != nil {
 		// Check if resource needs clean up
 		if controllerutil.ContainsFinalizer(cr, grafanaFinalizer) {
 			if err := r.finalize(ctx, cr); err != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaAlertRuleGroup: %w", err)
+				log.Error(err, LogMsgRunningFinalizer)
+				return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgRunningFinalizer, err)
 			}
 
 			if err := removeFinalizer(ctx, r.Client, cr); err != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
+				log.Error(err, LogMsgRemoveFinalizer)
+				return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgRemoveFinalizer, err)
 			}
 		}
 
@@ -98,27 +105,31 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 	if err != nil {
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionAlertGroupSynchronized)
+		log.Error(err, LogMsgGettingInstances)
 
-		return ctrl.Result{}, fmt.Errorf("failed fetching instances: %w", err)
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgGettingInstances, err)
 	}
 
 	if len(instances) == 0 {
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionAlertGroupSynchronized)
+		log.Error(ErrNoMatchingInstances, LogMsgNoMatchingInstances)
 
-		return ctrl.Result{}, ErrNoMatchingInstances
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgNoMatchingInstances, ErrNoMatchingInstances)
 	}
 
 	removeNoMatchingInstance(&cr.Status.Conditions)
-	log.Info("found matching Grafana instances for group", "count", len(instances))
+	log.V(1).Info(DbgMsgFoundMatchingInstances, "count", len(instances))
 
 	folderUID, err := getFolderUID(ctx, r.Client, cr)
 	if err != nil {
-		return ctrl.Result{}, fmt.Errorf(ErrFetchingFolder, err)
+		log.Error(err, LogMsgResolvingFolderUID)
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgResolvingFolderUID, err)
 	}
 
 	if folderUID == "" {
-		return ctrl.Result{}, fmt.Errorf("folder uid not found, alert rule must reference a folder")
+		log.Error(err, LogMsgMissingFolderReference)
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgMissingFolderReference, err)
 	}
 
 	var disableProvenance *string
@@ -132,8 +143,9 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 	if err != nil {
 		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidDuration, err.Error())
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionAlertGroupSynchronized)
+		log.Error(err, LogMsgConvertingToAPIModel)
 
-		return ctrl.Result{}, fmt.Errorf("converting alert rule group to model: %w", err)
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgConvertingToAPIModel, err)
 	}
 
 	removeInvalidSpec(&cr.Status.Conditions)
@@ -151,7 +163,10 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 	meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
 	if len(applyErrors) > 0 {
-		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
+		err = fmt.Errorf(FmtStrApplyErrors, applyErrors)
+		log.Error(err, LogMsgApplyErrors)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgApplyErrors, err)
 	}
 
 	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(cr.Spec.ResyncPeriod)}, nil
@@ -354,14 +369,15 @@ func (r *GrafanaAlertRuleGroupReconciler) finalize(ctx context.Context, cr *v1be
 
 	folderUID, err := getFolderUID(ctx, r.Client, cr)
 	if err != nil {
-		log.Info("Skipping Grafana finalize logic as folder no longer exists")
+		log.V(1).Info("Skipping Grafana finalize as folder no longer exists")
 
 		isCleanupInGrafanaRequired = false
 	}
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
-		return fmt.Errorf("fetching instances: %w", err)
+		log.Error(err, LogMsgGettingInstances)
+		return fmt.Errorf("%s: %w", LogMsgGettingInstances, err)
 	}
 
 	for _, instance := range instances {

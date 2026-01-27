@@ -42,7 +42,10 @@ import (
 	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 )
 
-var ErrLoopDetected = errors.New("loop detected")
+var (
+	ErrLoopDetected                  = errors.New("loop detected")
+	ErrConflictRouteSelectorAndRoute = errors.New("routeSelector is mutually exclusive with routes")
+)
 
 const (
 	conditionNotificationPolicySynchronized = "NotificationPolicySynchronized"
@@ -50,6 +53,10 @@ const (
 
 	conditionReasonFieldsMutuallyExclusive = "FieldsMutuallyExclusive"
 	conditionReasonLoopDetected            = "LoopDetected"
+
+	LogMsgInvalidRouteSpec        = "invalid route spec discovered"
+	LogMsgAssemblingRoutes        = "failed to assemble notification policy routes"
+	LogMsgAssemblingUsingSelector = "failed to assemble GrafanaNotificationPolicy using routeSelectors"
 )
 
 // GrafanaNotificationPolicyReconciler reconciles a GrafanaNotificationPolicy object
@@ -72,18 +79,22 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 			return ctrl.Result{}, nil
 		}
 
-		return ctrl.Result{}, fmt.Errorf("error getting GrafanaNotificationPolicy cr: %w", err)
+		log.Error(err, LogMsgGettingCR)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgGettingCR, err)
 	}
 
 	if cr.GetDeletionTimestamp() != nil {
 		// Check if resource needs clean up
 		if controllerutil.ContainsFinalizer(cr, grafanaFinalizer) {
 			if err := r.finalize(ctx, cr); err != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaNotificationPolicy: %w", err)
+				log.Error(err, LogMsgRunningFinalizer)
+				return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgRunningFinalizer, err)
 			}
 
 			if err := removeFinalizer(ctx, r.Client, cr); err != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
+				log.Error(err, LogMsgRemoveFinalizer)
+				return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgRemoveFinalizer, err)
 			}
 		}
 
@@ -103,8 +114,9 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 	if !cr.Spec.Route.IsRouteSelectorMutuallyExclusive() {
 		setInvalidSpecMutuallyExclusive(&cr.Status.Conditions, cr.Generation)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionNotificationPolicySynchronized)
+		log.Error(ErrConflictRouteSelectorAndRoute, LogMsgInvalidRouteSpec)
 
-		return ctrl.Result{}, fmt.Errorf("invalid route spec discovered: routeSelector is mutually exclusive with routes")
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgInvalidRouteSpec, ErrConflictRouteSelectorAndRoute)
 	}
 
 	removeInvalidSpec(&cr.Status.Conditions)
@@ -122,13 +134,16 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 				Message:            fmt.Sprintf("Loop detected in notification policy routes: %s", err.Error()),
 			})
 			meta.RemoveStatusCondition(&cr.Status.Conditions, conditionNotificationPolicySynchronized)
+			log.Error(err, LogMsgAssemblingRoutes)
 
-			return ctrl.Result{}, fmt.Errorf("failed to assemble notification policy routes: %w", err)
+			return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgAssemblingRoutes, err)
 		}
 
 		if err != nil {
-			r.Recorder.Eventf(cr, nil, corev1.EventTypeWarning, "NotificationPolicyAssemblyFailed", "AssembleRoutes", "Failed to assemble GrafanaNotificationPolicy using routeSelectors: %v", err)
-			return ctrl.Result{}, fmt.Errorf("failed to assemble GrafanaNotificationPolicy using routeSelectors: %w", err)
+			r.Recorder.Eventf(cr, nil, corev1.EventTypeWarning, "NotificationPolicyAssemblyFailed", "AssembleRoutes", "%s: %v", LogMsgAssemblingUsingSelector, err)
+			log.Error(err, LogMsgAssemblingUsingSelector)
+
+			return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgAssemblingUsingSelector, err)
 		}
 	}
 
@@ -138,19 +153,21 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 	if err != nil {
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionNotificationPolicySynchronized)
+		log.Error(err, LogMsgGettingInstances)
 
-		return ctrl.Result{}, fmt.Errorf("failed fetching instances: %w", err)
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgGettingInstances, err)
 	}
 
 	if len(instances) == 0 {
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionNotificationPolicySynchronized)
+		log.Error(ErrNoMatchingInstances, LogMsgNoMatchingInstances)
 
-		return ctrl.Result{}, ErrNoMatchingInstances
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgNoMatchingInstances, ErrNoMatchingInstances)
 	}
 
 	removeNoMatchingInstance(&cr.Status.Conditions)
-	log.Info("found matching Grafana instances for notification policy", "count", len(instances))
+	log.V(1).Info(DbgMsgFoundMatchingInstances, "count", len(instances))
 
 	applyErrors := make(map[string]string)
 
@@ -171,7 +188,10 @@ func (r *GrafanaNotificationPolicyReconciler) Reconcile(ctx context.Context, req
 	meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
 	if len(applyErrors) > 0 {
-		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
+		err = fmt.Errorf(FmtStrApplyErrors, applyErrors)
+		log.Error(err, LogMsgApplyErrors)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgApplyErrors, err)
 	}
 
 	if len(mergedRoutes) > 0 {
@@ -306,7 +326,8 @@ func (r *GrafanaNotificationPolicyReconciler) finalize(ctx context.Context, cr *
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
-		return fmt.Errorf("fetching instances: %w", err)
+		log.Error(err, LogMsgGettingInstances)
+		return fmt.Errorf("%s: %w", LogMsgGettingInstances, err)
 	}
 
 	for _, grafana := range instances {

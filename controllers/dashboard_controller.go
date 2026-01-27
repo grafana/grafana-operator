@@ -51,6 +51,8 @@ import (
 const (
 	conditionDashboardSynchronized        = "DashboardSynchronized"
 	conditionReasonInvalidModelResolution = "InvalidModelResolution"
+
+	LogMsgResolvingDashboardContents = "error resolving dashboard contents"
 )
 
 // GrafanaDashboardReconciler reconciles a GrafanaDashboard object
@@ -72,18 +74,22 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			return ctrl.Result{}, nil
 		}
 
-		return ctrl.Result{}, fmt.Errorf("getting grafana dashboard cr: %w", err)
+		log.Error(err, LogMsgGettingCR)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgGettingCR, err)
 	}
 
 	if cr.GetDeletionTimestamp() != nil {
 		// Check if resource needs clean up
 		if controllerutil.ContainsFinalizer(cr, grafanaFinalizer) {
 			if err := r.finalize(ctx, cr); err != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaDatasource: %w", err)
+				log.Error(err, LogMsgRunningFinalizer)
+				return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgRunningFinalizer, err)
 			}
 
 			if err := removeFinalizer(ctx, r.Client, cr); err != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
+				log.Error(err, LogMsgRemoveFinalizer)
+				return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgRemoveFinalizer, err)
 			}
 		}
 
@@ -108,33 +114,35 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		// fetch content errors could be a temporary network issue but would result in an InvalidSpec condition
 		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidModelResolution, err.Error())
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
+		log.Error(err, LogMsgResolvingDashboardContents)
 
-		return ctrl.Result{}, fmt.Errorf("resolving dashboard contents: %w", err)
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgResolvingDashboardContents, err)
 	}
 
 	removeInvalidSpec(&cr.Status.Conditions)
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
+		cr.Status.NoMatchingInstances = true
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
-		cr.Status.NoMatchingInstances = true
+		log.Error(err, LogMsgGettingInstances)
 
-		return ctrl.Result{}, fmt.Errorf("failed fetching instances: %w", err)
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgGettingInstances, err)
 	}
 
 	if len(instances) == 0 {
+		cr.Status.NoMatchingInstances = true
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
-		cr.Status.NoMatchingInstances = true
+		log.Error(ErrNoMatchingInstances, LogMsgNoMatchingInstances)
 
-		return ctrl.Result{}, ErrNoMatchingInstances
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgNoMatchingInstances, ErrNoMatchingInstances)
 	}
 
-	removeNoMatchingInstance(&cr.Status.Conditions)
 	cr.Status.NoMatchingInstances = false
-
-	log.Info("found matching Grafana instances for dashboard", "count", len(instances))
+	removeNoMatchingInstance(&cr.Status.Conditions)
+	log.V(1).Info(DbgMsgFoundMatchingInstances, "count", len(instances))
 
 	uid := fmt.Sprintf("%s", dashboardModel["uid"])
 	log = log.WithValues("uid", uid)
@@ -157,7 +165,8 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	folderUID, err := getFolderUID(ctx, r.Client, cr)
 	if err != nil {
-		return ctrl.Result{}, fmt.Errorf(ErrFetchingFolder, err)
+		log.Error(err, LogMsgResolvingFolderUID)
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgResolvingFolderUID, err)
 	}
 
 	applyHomeErrors := make(map[string]string)
@@ -190,12 +199,12 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	if len(pluginErrors) > 0 {
-		err := fmt.Errorf("%v", pluginErrors)
+		err := fmt.Errorf(FmtStrApplyErrors, pluginErrors)
 		log.Error(err, "failed to apply plugins to all instances")
 	}
 
 	if len(applyHomeErrors) > 0 {
-		err := fmt.Errorf("%v", applyHomeErrors)
+		err := fmt.Errorf(FmtStrApplyErrors, applyHomeErrors)
 		log.Error(err, "failed to apply home dashboards to all instances")
 	}
 
@@ -205,7 +214,10 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
 	if len(allApplyErrors) > 0 {
-		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", allApplyErrors)
+		err = fmt.Errorf(FmtStrApplyErrors, allApplyErrors)
+		log.Error(err, LogMsgApplyErrors)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgApplyErrors, err)
 	}
 
 	cr.Status.Hash = hash
@@ -222,7 +234,8 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
-		return fmt.Errorf("fetching instances: %w", err)
+		log.Error(err, LogMsgGettingInstances)
+		return fmt.Errorf("%s: %w", LogMsgGettingInstances, err)
 	}
 
 	for _, grafana := range instances {

@@ -17,7 +17,7 @@ status:
           name: thatsfine
       - name: my-token-b
   conditions:
-    - message: ServiceAccount was successfully applied to 1 instances
+    - message: Service Account was successfully applied to 1 instances
       reason: ApplySuccessful
       status: "True"
       type: ServiceAccountSynchronized
