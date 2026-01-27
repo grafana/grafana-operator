@@ -489,7 +489,7 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke Conditions", func() {
 				Type:   conditionNotificationPolicySynchronized,
 				Reason: conditionReasonApplyFailed,
 			},
-			wantErr: ErrMsgApplyErrors,
+			wantErr: LogMsgApplyErrors,
 		},
 		{
 			name: "Mutually Exclusive fields routes/routeSelector",

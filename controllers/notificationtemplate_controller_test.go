@@ -51,7 +51,7 @@ var _ = Describe("NotificationTemplate Reconciler: Provoke Conditions", func() {
 				Type:   conditionNotificationTemplateSynchronized,
 				Reason: conditionReasonApplyFailed,
 			},
-			wantErr: ErrMsgApplyErrors,
+			wantErr: LogMsgApplyErrors,
 		},
 		{
 			name: "Successfully applied resource to instance",

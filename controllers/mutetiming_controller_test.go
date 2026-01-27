@@ -65,7 +65,7 @@ var _ = Describe("MuteTiming Reconciler: Provoke Conditions", func() {
 				Type:   conditionMuteTimingSynchronized,
 				Reason: conditionReasonApplyFailed,
 			},
-			wantErr: ErrMsgApplyErrors,
+			wantErr: LogMsgApplyErrors,
 		},
 		{
 			name: "Successfully applied resource to instance",

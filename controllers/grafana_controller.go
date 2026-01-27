@@ -52,8 +52,8 @@ const (
 	conditionTypeGrafanaReady         = "GrafanaReady"
 	conditionReasonReconcileSuspended = "ReconcileSuspended"
 
-	ErrMsgSettingGrafanaVersion = "patching grafana version in spec"
-	ErrMsgStageFailed           = "failed to reconcile Grafana stage"
+	LogMsgSettingGrafanaVersion = "patching grafana version in spec"
+	LogMsgStageFailed           = "failed to reconcile Grafana stage"
 )
 
 // GrafanaReconciler reconciles a Grafana object
@@ -84,9 +84,9 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			return ctrl.Result{}, nil
 		}
 
-		log.Error(err, ErrMsgGettingCR)
+		log.Error(err, LogMsgGettingCR)
 
-		return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgGettingCR, err)
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgGettingCR, err)
 	}
 
 	metrics.GrafanaReconciles.WithLabelValues(cr.Namespace, cr.Name).Inc()
@@ -119,9 +119,9 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			err := r.setDefaultGrafanaVersion(ctx, cr)
 			if err != nil {
 				meta.RemoveStatusCondition(&cr.Status.Conditions, conditionTypeGrafanaReady)
-				log.Error(err, ErrMsgSettingGrafanaVersion)
+				log.Error(err, LogMsgSettingGrafanaVersion)
 
-				return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgSettingGrafanaVersion, err)
+				return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgSettingGrafanaVersion, err)
 			}
 		}
 	}
@@ -146,9 +146,9 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 			metrics.GrafanaFailedReconciles.WithLabelValues(cr.Namespace, cr.Name, string(stage)).Inc()
 			meta.RemoveStatusCondition(&cr.Status.Conditions, conditionTypeGrafanaReady)
-			log.Error(err, ErrMsgStageFailed, "stage", stage, "stageStatus", stageStatus)
+			log.Error(err, LogMsgStageFailed, "stage", stage, "stageStatus", stageStatus)
 
-			return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgStageFailed, err)
+			return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgStageFailed, err)
 		}
 	}
 

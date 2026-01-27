@@ -45,7 +45,7 @@ const (
 	conditionFolderSynchronized = "FolderSynchronized"
 	conditionReasonCyclicParent = "CyclicParent"
 
-	ErrMsgCyclicFolder = "failed to validate GrafanaFolder, parentFolderUID must not reference the uid of the current folder"
+	LogMsgCyclicFolder = "failed to validate GrafanaFolder, parentFolderUID must not reference the uid of the current folder"
 )
 
 var ErrCyclicFolder = errors.New("cyclic folder reference")
@@ -69,22 +69,22 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			return ctrl.Result{}, nil
 		}
 
-		log.Error(err, ErrMsgGettingCR)
+		log.Error(err, LogMsgGettingCR)
 
-		return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgGettingCR, err)
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgGettingCR, err)
 	}
 
 	if cr.GetDeletionTimestamp() != nil {
 		// Check if resource needs clean up
 		if controllerutil.ContainsFinalizer(cr, grafanaFinalizer) {
 			if err := r.finalize(ctx, cr); err != nil {
-				log.Error(err, ErrMsgRunningFinalizer)
-				return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgRunningFinalizer, err)
+				log.Error(err, LogMsgRunningFinalizer)
+				return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgRunningFinalizer, err)
 			}
 
 			if err := removeFinalizer(ctx, r.Client, cr); err != nil {
-				log.Error(err, ErrMsgRemoveFinalizer)
-				return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgRemoveFinalizer, err)
+				log.Error(err, LogMsgRemoveFinalizer)
+				return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgRemoveFinalizer, err)
 			}
 		}
 
@@ -104,9 +104,9 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonCyclicParent, "The value of parentFolderUID must not be the uid of the current folder")
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionFolderSynchronized)
 
-		log.Error(ErrCyclicFolder, ErrMsgCyclicFolder)
+		log.Error(ErrCyclicFolder, LogMsgCyclicFolder)
 
-		return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgCyclicFolder, ErrCyclicFolder)
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgCyclicFolder, ErrCyclicFolder)
 	}
 
 	removeInvalidSpec(&cr.Status.Conditions)
@@ -116,18 +116,18 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		cr.Status.NoMatchingInstances = true
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionFolderSynchronized)
-		log.Error(err, ErrMsgGettingInstances)
+		log.Error(err, LogMsgGettingInstances)
 
-		return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgGettingInstances, err)
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgGettingInstances, err)
 	}
 
 	if len(instances) == 0 {
 		cr.Status.NoMatchingInstances = true
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionFolderSynchronized)
-		log.Error(ErrNoMatchingInstances, ErrMsgNoMatchingInstances)
+		log.Error(ErrNoMatchingInstances, LogMsgNoMatchingInstances)
 
-		return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgNoMatchingInstances, ErrNoMatchingInstances)
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgNoMatchingInstances, ErrNoMatchingInstances)
 	}
 
 	cr.Status.NoMatchingInstances = false
@@ -136,8 +136,8 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	parentFolderUID, err := getFolderUID(ctx, r.Client, cr)
 	if err != nil {
-		log.Error(err, ErrMsgResolvingFolderUID)
-		return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgResolvingFolderUID, err)
+		log.Error(err, LogMsgResolvingFolderUID)
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgResolvingFolderUID, err)
 	}
 
 	applyErrors := make(map[string]string)
@@ -153,10 +153,10 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
 	if len(applyErrors) > 0 {
-		err = fmt.Errorf(ErrFmtApplyErrors, applyErrors)
-		log.Error(err, ErrMsgApplyErrors)
+		err = fmt.Errorf(FmtStrApplyErrors, applyErrors)
+		log.Error(err, LogMsgApplyErrors)
 
-		return ctrl.Result{}, fmt.Errorf("%s: %w", ErrMsgApplyErrors, err)
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgApplyErrors, err)
 	}
 
 	cr.Status.Hash = cr.Hash()
@@ -172,8 +172,8 @@ func (r *GrafanaFolderReconciler) finalize(ctx context.Context, cr *v1beta1.Graf
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
-		log.Error(err, ErrMsgGettingInstances)
-		return fmt.Errorf("%s: %w", ErrMsgGettingInstances, err)
+		log.Error(err, LogMsgGettingInstances)
+		return fmt.Errorf("%s: %w", LogMsgGettingInstances, err)
 	}
 
 	refTrue := ptr.To(true)

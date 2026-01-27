@@ -62,7 +62,7 @@ var _ = Describe("ContactPoint Reconciler: Provoke Conditions", func() {
 				Type:   conditionContactPointSynchronized,
 				Reason: conditionReasonApplyFailed,
 			},
-			wantErr: ErrMsgApplyErrors,
+			wantErr: LogMsgApplyErrors,
 		},
 		{
 			name: "Referenced secret does not exist",

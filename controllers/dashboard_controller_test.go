@@ -79,7 +79,7 @@ var _ = Describe("Dashboard Reconciler: Provoke Conditions", func() {
 				Type:   conditionDashboardSynchronized,
 				Reason: conditionReasonApplyFailed,
 			},
-			wantErr: ErrMsgApplyErrors,
+			wantErr: LogMsgApplyErrors,
 		},
 		{
 			name: "Invalid JSON",
