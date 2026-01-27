@@ -2,20 +2,11 @@
 {{- $rbac := .Files.Get "files/rbac.yaml" | fromYaml  }}
 {{- $rbacOpenShift := .Files.Get "files/rbac-openshift.yaml" | fromYaml  }}
 
-{{- $namespaceScoped := false }}
-{{- if or (.Values.namespaceScope) (.Values.watchNamespaces) }}
-{{- $namespaceScoped = true }}
-{{- end }}
-
-{{- $watchNamespaces := coalesce .Values.watchNamespaces (include "grafana-operator.namespace" .) | splitList "," }}
-{{- range $watchNamespaces }}
+{{- /* ClusterRole referenced by either ClusterRoleBinding or Rolebindings for all watchNamespaces*/}}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: {{ if not $namespaceScoped }}Cluster{{ end }}Role
+kind: ClusterRole
 metadata:
-  {{- if $namespaceScoped }}
-  namespace: {{ . }}
-  {{- end }}
   name: {{ include "grafana-operator.fullname" $ }}
   labels:
     {{- include "grafana-operator.labels" $ | nindent 4 }}
@@ -25,54 +16,79 @@ rules:
   {{- if $.Values.isOpenShift }}
   {{- toYaml $rbacOpenShift.rules | nindent 2 -}}
   {{- end }}
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: {{ if not $namespaceScoped }}Cluster{{ end }}RoleBinding
-metadata:
-  name: {{ include "grafana-operator.fullname" $ }}
-  {{- if $namespaceScoped }}
-  namespace: {{ . }}
-  {{- end }}
-  labels:
-    {{- include "grafana-operator.labels" $ | nindent 4 }}
-    app.kubernetes.io/component: operator
-subjects:
-  - kind: ServiceAccount
-    name: {{ include "grafana-operator.serviceAccountName" $ }}
-    namespace: {{ include "grafana-operator.namespace" $ }}
-roleRef:
-  kind: {{ if not $namespaceScoped }}Cluster{{ end }}Role
-  name: {{ include "grafana-operator.fullname" $ }}
-  apiGroup: rbac.authorization.k8s.io
-{{- end }}
-{{- if and $namespaceScoped (not (has (include "grafana-operator.namespace" .) $watchNamespaces)) }}
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  namespace: {{ include "grafana-operator.namespace" $ }}
-  name: {{ include "grafana-operator.fullname" $ }}
-  labels:
-    {{- include "grafana-operator.labels" $ | nindent 4 }}
-    app.kubernetes.io/component: operator
-rules:
-- apiGroups:
-  - coordination.k8s.io
-  resources:
-  - leases
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-  - delete
+
+{{- /* Namespace scope, one or more namespaces */}}
+{{- if .Values.namespaceScope }}
+{{- $watchNamespaces := append (splitList "," .Values.watchNamespaces) (include "grafana-operator.namespace" $) }}
+{{- range $watchNamespaces }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: {{ include "grafana-operator.fullname" $ }}
+  namespace: {{ trim . }}
+  labels:
+    {{- include "grafana-operator.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: operator
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "grafana-operator.serviceAccountName" $ }}
+    namespace: {{ include "grafana-operator.namespace" $ }}
+roleRef:
+  kind: ClusterRole
+  name: {{ include "grafana-operator.fullname" $ }}
+  apiGroup: rbac.authorization.k8s.io
+{{- end }}{{- /* range $watchNamespaces */}}
+
+{{- else }}{{- /* namespaceScope */}}
+{{- /* ClusterScope (default) */}}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "grafana-operator.fullname" $ }}
+  labels:
+    {{- include "grafana-operator.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: operator
+roleRef:
+  kind: ClusterRole
+  name: {{ include "grafana-operator.fullname" $ }}
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "grafana-operator.serviceAccountName" $ }}
+    namespace: {{ include "grafana-operator.namespace" $ }}
+{{- end }}{{- /* else namespaceScope */}}
+
+{{- /*Lease permissions needed for leaderElection*/}}
+{{- if .Values.leaderElect }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: {{ include "grafana-operator.namespace" $ }}
+  name: {{ include "grafana-operator.fullname" $ }}-leases
+  labels:
+    {{- include "grafana-operator.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: operator
+rules:
+  - apiGroups:
+    - coordination.k8s.io
+    resources:
+    - leases
+    verbs:
+    - get
+    - list
+    - watch
+    - create
+    - update
+    - patch
+    - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "grafana-operator.fullname" $ }}-leases
   namespace: {{ include "grafana-operator.namespace" $ }}
   labels:
     {{- include "grafana-operator.labels" $ | nindent 4 }}
@@ -82,8 +98,8 @@ subjects:
     name: {{ include "grafana-operator.serviceAccountName" $ }}
     namespace: {{ include "grafana-operator.namespace" $ }}
 roleRef:
-  kind: Role
-  name: {{ include "grafana-operator.fullname" $ }}
   apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "grafana-operator.fullname" $ }}-leases
 {{- end }}
-{{- end }}
+{{- end }}{{- /* rbac.create */}}
