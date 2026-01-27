@@ -529,98 +529,6 @@ func TestGetConfigSection(t *testing.T) {
 	}
 }
 
-var _ = Describe("Grafana External URL validation", func() {
-	t := GinkgoT()
-	Context("Ensure External.URL follows http/https pattern", func() {
-		ctx := context.Background()
-
-		It("Should accept valid http URLs", func() {
-			g := &Grafana{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "external-http",
-					Namespace: "default",
-				},
-				Spec: GrafanaSpec{
-					External: &External{
-						URL: "http://grafana.example.com",
-					},
-				},
-			}
-
-			err := cl.Create(ctx, g)
-			require.NoError(t, err)
-		})
-
-		It("Should accept valid https URLs", func() {
-			g := &Grafana{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "external-https",
-					Namespace: "default",
-				},
-				Spec: GrafanaSpec{
-					External: &External{
-						URL: "https://grafana.example.com:3000/subpath",
-					},
-				},
-			}
-
-			err := cl.Create(ctx, g)
-			require.NoError(t, err)
-		})
-
-		It("Should reject URLs without protocol", func() {
-			g := &Grafana{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "external-no-protocol",
-					Namespace: "default",
-				},
-				Spec: GrafanaSpec{
-					External: &External{
-						URL: "grafana.example.com",
-					},
-				},
-			}
-
-			err := cl.Create(ctx, g)
-			require.Error(t, err)
-		})
-
-		It("Should reject invalid protocols", func() {
-			g := &Grafana{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "external-ftp",
-					Namespace: "default",
-				},
-				Spec: GrafanaSpec{
-					External: &External{
-						URL: "ftp://grafana.example.com",
-					},
-				},
-			}
-
-			err := cl.Create(ctx, g)
-			require.Error(t, err)
-		})
-
-		It("Should reject empty URLs after protocol", func() {
-			g := &Grafana{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "external-empty",
-					Namespace: "default",
-				},
-				Spec: GrafanaSpec{
-					External: &External{
-						URL: "http://",
-					},
-				},
-			}
-
-			err := cl.Create(ctx, g)
-			require.Error(t, err)
-		})
-	})
-})
-
 func TestGetConfigSectionValue(t *testing.T) {
 	cr := Grafana{
 		Spec: GrafanaSpec{
@@ -637,3 +545,75 @@ func TestGetConfigSectionValue(t *testing.T) {
 
 	assert.Equal(t, want, got)
 }
+
+var _ = Describe("Grafana URL validation", func() {
+	t := GinkgoT()
+
+	Context("Ensure URL follows http/https pattern", func() {
+		ctx := context.Background()
+
+		tests := []struct {
+			name      string
+			grafName  string
+			url       string
+			wantError bool
+		}{
+			{
+				name:      "Valid http URL",
+				grafName:  "external-http",
+				url:       "http://grafana.example.com",
+				wantError: false,
+			},
+			{
+				name:      "Valid https URL",
+				grafName:  "external-https",
+				url:       "https://grafana.example.com:3000/subpath",
+				wantError: false,
+			},
+			{
+				name:      "URL without protocol",
+				grafName:  "external-no-protocol",
+				url:       "grafana.example.com",
+				wantError: true,
+			},
+			{
+				name:      "Invalid protocol",
+				grafName:  "external-ftp",
+				url:       "ftp://grafana.example.com",
+				wantError: true,
+			},
+			{
+				name:      "Empty URL after protocol",
+				grafName:  "external-empty",
+				url:       "http://",
+				wantError: true,
+			},
+		}
+
+		for _, tt := range tests {
+			It(tt.name, func() {
+				g := &Grafana{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      tt.grafName,
+						Namespace: "default",
+					},
+					Spec: GrafanaSpec{
+						External: &External{
+							URL: tt.url,
+						},
+					},
+				}
+
+				err := cl.Create(ctx, g)
+
+				if tt.wantError {
+					require.Error(t, err)
+				} else {
+					require.NoError(t, err)
+					err = cl.Delete(ctx, g)
+					require.NoError(t, err)
+				}
+			})
+		}
+	})
+})
