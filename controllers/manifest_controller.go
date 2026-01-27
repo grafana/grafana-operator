@@ -203,9 +203,23 @@ func (r *GrafanaManifestReconciler) reconcileWithInstance(ctx context.Context, i
 	ns := getManifestNamespace(cr, instance)
 	resourceClient := cl.Resource(gvr).Namespace(ns)
 
+	template := cr.Spec.Template.ToUnstructured()
+
+	patchEnv, err := CollectPatchEnv(ctx, r.Client, cr.Namespace, instance, cr.Spec.Patch.Env)
+	if err != nil {
+		return fmt.Errorf("failed to collect environment for patch: %w", err)
+	}
+
+	patched, err := ApplyPatch(cr.Spec.Patch, template.Object, patchEnv)
+	if err != nil {
+		return fmt.Errorf("failed to apply patch: %w", err)
+	}
+
+	template.Object = patched
+
 	_, err = resourceClient.Get(ctx, cr.Spec.Template.Metadata.Name, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
-		_, err := resourceClient.Create(ctx, cr.Spec.Template.ToUnstructured(), metav1.CreateOptions{})
+		_, err := resourceClient.Create(ctx, template, metav1.CreateOptions{})
 		if err != nil {
 			return fmt.Errorf("creating resource: %w", err)
 		}
@@ -215,7 +229,7 @@ func (r *GrafanaManifestReconciler) reconcileWithInstance(ctx context.Context, i
 		return fmt.Errorf("fetching existing resource: %w", err)
 	}
 
-	if _, err := resourceClient.Update(ctx, cr.Spec.Template.ToUnstructured(), metav1.UpdateOptions{}); err != nil {
+	if _, err := resourceClient.Update(ctx, template, metav1.UpdateOptions{}); err != nil {
 		return fmt.Errorf("updating resource: %w", err)
 	}
 
