@@ -348,6 +348,7 @@ spec:
                   rule: self == oldSelf
               url:
                 description: model url
+                pattern: ^https?://.+$
                 type: string
               urlAuthorization:
                 description: authorization options for model from url

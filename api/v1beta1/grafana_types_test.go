@@ -545,3 +545,69 @@ func TestGetConfigSectionValue(t *testing.T) {
 
 	assert.Equal(t, want, got)
 }
+
+var _ = Describe("Grafana URL validation", func() {
+	t := GinkgoT()
+
+	Context("Ensure URL follows http/https pattern", func() {
+		ctx := context.Background()
+
+		tests := []struct {
+			name      string
+			url       string
+			wantError bool
+		}{
+			{
+				name:      "Valid http URL",
+				url:       "http://grafana.example.com",
+				wantError: false,
+			},
+			{
+				name:      "Valid https URL",
+				url:       "https://grafana.example.com:3000/subpath",
+				wantError: false,
+			},
+			{
+				name:      "URL without protocol",
+				url:       "grafana.example.com",
+				wantError: true,
+			},
+			{
+				name:      "Invalid protocol",
+				url:       "ftp://grafana.example.com",
+				wantError: true,
+			},
+			{
+				name:      "Empty URL after protocol",
+				url:       "http://",
+				wantError: true,
+			},
+		}
+
+		for _, tt := range tests {
+			It(tt.name, func() {
+				cr := &Grafana{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "url-validation",
+						Namespace: "default",
+					},
+					Spec: GrafanaSpec{
+						External: &External{
+							URL: tt.url,
+						},
+					},
+				}
+
+				err := cl.Create(ctx, cr)
+
+				if tt.wantError {
+					require.Error(t, err)
+				} else {
+					require.NoError(t, err)
+					err = cl.Delete(ctx, cr)
+					require.NoError(t, err)
+				}
+			})
+		}
+	})
+})

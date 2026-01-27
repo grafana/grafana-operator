@@ -72,6 +72,7 @@ type GrafanaContentSpec struct {
 
 	// model url
 	// +optional
+	// +kubebuilder:validation:Pattern=`^https?://.+$`
 	URL string `json:"url,omitempty"`
 
 	// authorization options for model from url

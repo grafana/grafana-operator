@@ -103,6 +103,7 @@ type GrafanaSpec struct {
 
 type External struct {
 	// URL of the external grafana instance you want to manage.
+	// +kubebuilder:validation:Pattern=`^https?://.+$`
 	URL string `json:"url"`
 	// The API key to talk to the external grafana instance, you need to define ether apiKey or adminUser/adminPassword.
 	APIKey *corev1.SecretKeySelector `json:"apiKey,omitempty"`
