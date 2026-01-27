@@ -72,11 +72,13 @@ func (r *GrafanaManifestReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		// Check if resource needs clean up
 		if controllerutil.ContainsFinalizer(cr, grafanaFinalizer) {
 			if err := r.finalize(ctx, cr); err != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to finalize GrafanaManifest: %w", err)
+				log.Error(err, LogMsgRunningFinalizer)
+				return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgRunningFinalizer, err)
 			}
 
 			if err := removeFinalizer(ctx, r.Client, cr); err != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
+				log.Error(err, LogMsgRemoveFinalizer)
+				return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgRemoveFinalizer, err)
 			}
 		}
 
@@ -97,14 +99,18 @@ func (r *GrafanaManifestReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionManifestSynchronized)
 
-		return ctrl.Result{}, fmt.Errorf("failed fetching instances: %w", err)
+		log.Error(err, LogMsgGettingInstances)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgGettingInstances, err)
 	}
 
 	if len(instances) == 0 {
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
 		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionManifestSynchronized)
 
-		return ctrl.Result{}, ErrNoMatchingInstances
+		log.Error(ErrNoMatchingInstances, LogMsgNoMatchingInstances)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgNoMatchingInstances, ErrNoMatchingInstances)
 	}
 
 	removeNoMatchingInstance(&cr.Status.Conditions)
@@ -122,7 +128,10 @@ func (r *GrafanaManifestReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	meta.SetStatusCondition(&cr.Status.Conditions, condition)
 
 	if len(applyErrors) > 0 {
-		return ctrl.Result{}, fmt.Errorf("failed to apply to all instances: %v", applyErrors)
+		err = fmt.Errorf(FmtStrApplyErrors, applyErrors)
+		log.Error(err, LogMsgApplyErrors)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgApplyErrors, err)
 	}
 
 	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(cr.Spec.ResyncPeriod)}, nil
@@ -146,7 +155,8 @@ func (r *GrafanaManifestReconciler) finalize(ctx context.Context, cr *v1beta1.Gr
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
-		return fmt.Errorf("fetching instances: %w", err)
+		log.Error(err, LogMsgGettingInstances)
+		return fmt.Errorf("%s: %w", LogMsgGettingInstances, err)
 	}
 
 	for _, instance := range instances {
