@@ -21,9 +21,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/alecthomas/kong"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/pkg/converter"
-	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 )
@@ -34,49 +34,44 @@ var (
 	date    = "unknown"
 )
 
-var (
-	inputDir     string
-	outputFile   string
-	namespace    string
-	labels       []string
-	annotations  []string
-	instanceRef  string
-	resyncPeriod string
-	folderUID    string
-)
+var cli struct {
+	Input            string   `arg:"" type:"path" help:"Path to Prometheus rule file or directory containing rule files"`
+	Output           string   `short:"o" type:"path" help:"Output file path (default: stdout)"`
+	Namespace        string   `short:"n" default:"default" help:"Target Kubernetes namespace for the CRs"`
+	Labels           []string `short:"l" help:"Extra labels to add to the CR metadata (e.g., 'team=sre')"`
+	Annotations      []string `short:"a" help:"Extra annotations to add to the CR metadata (e.g., 'imported=true')"`
+	InstanceSelector string   `help:"Label selector to match Grafana instances (e.g., 'grafana=main')"`
+	ResyncPeriod     string   `default:"5m" help:"Resync period for alert rules"`
+	FolderUID        string   `default:"prometheus-alerts" help:"UID of the folder in Grafana to store alerts"`
+}
 
 func main() {
-	rootCmd := &cobra.Command{
-		Use:     "grafana-alert-importer",
-		Short:   "Import Prometheus alert rules and convert them to GrafanaAlertRuleGroup CRs",
-		Long:    `A tool that converts Prometheus alert rule files to GrafanaAlertRuleGroup Custom Resources for use with the Grafana Operator.`,
-		Version: fmt.Sprintf("%s (commit: %s, date: %s)", version, commit, date),
-		RunE:    runImport,
-	}
+	ctx := kong.Parse(&cli,
+		kong.Name("grafana-alert-importer"),
+		kong.Description("Import Prometheus alert rules and convert them to GrafanaAlertRuleGroup CRs"),
+		kong.UsageOnError(),
+		kong.ConfigureHelp(kong.HelpOptions{
+			Compact: true,
+		}),
+		kong.Vars{
+			"version": fmt.Sprintf("%s (commit: %s, date: %s)", version, commit, date),
+		},
+	)
 
-	rootCmd.Flags().StringVarP(&inputDir, "input", "i", "", "Path to Prometheus rule file or directory containing rule files (required)")
-	rootCmd.Flags().StringVarP(&outputFile, "output", "o", "", "Output file path (default: stdout)")
-	rootCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "Target Kubernetes namespace for the CRs")
-	rootCmd.Flags().StringArrayVarP(&labels, "label", "l", []string{}, "Extra labels to add to the CR metadata (e.g., 'team=sre')")
-	rootCmd.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, "Extra annotations to add to the CR metadata (e.g., 'imported=true')")
-	rootCmd.Flags().StringVar(&instanceRef, "instance-selector", "", "Label selector to match Grafana instances (e.g., 'grafana=main')")
-	rootCmd.Flags().StringVar(&resyncPeriod, "resync-period", "5m", "Resync period for alert rules")
-	rootCmd.Flags().StringVar(&folderUID, "folder-uid", "prometheus-alerts", "UID of the folder in Grafana to store alerts")
-
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+	if err := run(); err != nil {
+		ctx.Errorf("%v", err)
 		os.Exit(1)
 	}
 }
 
-func runImport(cmd *cobra.Command, args []string) error {
-	if inputDir == "" {
-		return fmt.Errorf("--input/-i is required")
+func run() error {
+	if cli.Input == "" {
+		return fmt.Errorf("input path is required")
 	}
 
 	// Parse labels
 	additionalLabels := make(map[string]string)
-	for _, label := range labels {
+	for _, label := range cli.Labels {
 		parts := strings.SplitN(label, "=", 2)
 		if len(parts) != 2 {
 			return fmt.Errorf("invalid label format: %s (expected key=value)", label)
@@ -86,7 +81,7 @@ func runImport(cmd *cobra.Command, args []string) error {
 
 	// Parse annotations
 	additionalAnnotations := make(map[string]string)
-	for _, annotation := range annotations {
+	for _, annotation := range cli.Annotations {
 		parts := strings.SplitN(annotation, "=", 2)
 		if len(parts) != 2 {
 			return fmt.Errorf("invalid annotation format: %s (expected key=value)", annotation)
@@ -96,10 +91,10 @@ func runImport(cmd *cobra.Command, args []string) error {
 
 	// Parse instance selector if provided
 	var instanceSelector *metav1.LabelSelector
-	if instanceRef != "" {
-		parts := strings.SplitN(instanceRef, "=", 2)
+	if cli.InstanceSelector != "" {
+		parts := strings.SplitN(cli.InstanceSelector, "=", 2)
 		if len(parts) != 2 {
-			return fmt.Errorf("invalid instance-selector format: %s (expected key=value)", instanceRef)
+			return fmt.Errorf("invalid instance-selector format: %s (expected key=value)", cli.InstanceSelector)
 		}
 		instanceSelector = &metav1.LabelSelector{
 			MatchLabels: map[string]string{
@@ -109,12 +104,12 @@ func runImport(cmd *cobra.Command, args []string) error {
 	}
 
 	opts := converter.ConverterOptions{
-		Namespace:             namespace,
+		Namespace:             cli.Namespace,
 		InstanceSelector:      instanceSelector,
 		AdditionalLabels:      additionalLabels,
 		AdditionalAnnotations: additionalAnnotations,
-		FolderUID:             folderUID,
-		ResyncPeriod:          resyncPeriod,
+		FolderUID:             cli.FolderUID,
+		ResyncPeriod:          cli.ResyncPeriod,
 	}
 
 	conv := converter.NewConverter(opts)
@@ -122,15 +117,15 @@ func runImport(cmd *cobra.Command, args []string) error {
 	var groups []v1beta1.GrafanaAlertRuleGroup
 	var err error
 
-	info, err := os.Stat(inputDir)
+	info, err := os.Stat(cli.Input)
 	if err != nil {
 		return fmt.Errorf("stat input path: %w", err)
 	}
 
 	if info.IsDir() {
-		groups, err = conv.ConvertDirectory(inputDir)
+		groups, err = conv.ConvertDirectory(cli.Input)
 	} else {
-		groups, err = conv.ConvertFile(inputDir)
+		groups, err = conv.ConvertFile(cli.Input)
 	}
 
 	if err != nil {
@@ -143,7 +138,7 @@ func runImport(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("generating YAML: %w", err)
 	}
 
-	if outputFile == "" {
+	if cli.Output == "" {
 		// Write to stdout
 		_, err := os.Stdout.Write(output)
 		if err != nil {
@@ -151,10 +146,10 @@ func runImport(cmd *cobra.Command, args []string) error {
 		}
 	} else {
 		// Write to file
-		if err := os.WriteFile(outputFile, output, 0644); err != nil {
+		if err := os.WriteFile(cli.Output, output, 0644); err != nil {
 			return fmt.Errorf("writing to output file: %w", err)
 		}
-		fmt.Printf("Successfully converted %d rule group(s) to %s\n", len(groups), outputFile)
+		fmt.Printf("Successfully converted %d rule group(s) to %s\n", len(groups), cli.Output)
 	}
 
 	return nil
