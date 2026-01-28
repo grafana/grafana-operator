@@ -420,6 +420,15 @@ func main() { //nolint:gocyclo
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaMuteTiming")
 		os.Exit(1)
 	}
+
+	if err = (&controllers.GrafanaManifestReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		Cfg:    ctrlCfg,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "GrafanaManifest")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
