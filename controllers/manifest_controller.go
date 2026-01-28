@@ -174,7 +174,11 @@ func (r *GrafanaManifestReconciler) finalize(ctx context.Context, cr *v1beta1.Gr
 
 		err = cl.Resource(gvr).Namespace(ns).Delete(ctx, cr.Spec.Template.Metadata.Name, metav1.DeleteOptions{})
 		if err != nil && !apierrors.IsNotFound(err) {
-			return fmt.Errorf("failed to delete resource: %w", err)
+			if apierrors.IsForbidden(err) {
+				log.Info("treating forbidden as delete success in case of invalid namespaces")
+			} else {
+				return fmt.Errorf("failed to delete resource: %w", err)
+			}
 		}
 
 		if err := instance.RemoveNamespacedResource(ctx, r.Client, cr); err != nil {
