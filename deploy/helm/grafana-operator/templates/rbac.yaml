@@ -16,6 +16,16 @@ rules:
   {{- if $.Values.isOpenShift }}
   {{- toYaml $rbacOpenShift.rules | nindent 2 -}}
   {{- end }}
+{{- if .Values.watchNamespaceSelector }}
+{{- /* The operator lists namespaces when WATCH_NAMESPACE_SELECTOR != "" */}}
+  - apiGroups:
+    - ""
+    resources:
+    - namespaces
+    verbs:
+    - get
+    - list
+{{- end }}
 
 {{- /* Namespace scope, one or more namespaces */}}
 {{- if .Values.namespaceScope }}

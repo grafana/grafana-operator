@@ -22,6 +22,7 @@ watchNamespaces: ""
 # -- Sets the `WATCH_NAMESPACE_SELECTOR` environment variable,
 # it defines which namespaces the operator should be listening for based on a namespace label (e.g. `"environment: dev"`).
 # By default, the operator watches all namespaces. To make it watch only its own namespace, check out `namespaceScope` option instead.
+# When combined with "namespaceScope" users must manually create the `RoleBindings` for the matched namespaces.
 watchNamespaceSelector: ""
 
 # -- Sets the `WATCH_LABEL_SELECTORS` environment variable,
