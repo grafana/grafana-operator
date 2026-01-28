@@ -31,6 +31,7 @@ import (
 type GrafanaManifestSpec struct {
 	GrafanaCommonSpec `json:",inline"`
 	Template          GrafanaManifestTemplate `json:"template"`
+	Patch             *Patch                  `json:"patch,omitempty"`
 }
 
 type GrafanaManifestTemplate struct {
