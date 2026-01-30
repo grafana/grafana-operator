@@ -17,7 +17,7 @@ func GetGrafanaTestContainer(t tHelper, ctx context.Context, image string) testc
 			"3000/tcp",
 		),
 		testcontainers.WithAdditionalWaitStrategy(
-			wait.ForHTTP("/").WithStartupTimeout(10*time.Second),
+			wait.ForHTTP("/").WithStartupTimeout(2*time.Minute),
 		),
 	)
 

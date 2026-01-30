@@ -62,8 +62,8 @@ type Result struct {
 
 // PrometheusRuleGroup is an intermediate representation for parsing Prometheus rules
 type PrometheusRuleGroup struct {
-	Name     string         `yaml:"name" json:"name"`
-	Interval string         `yaml:"interval,omitempty" json:"interval,omitempty"`
+	Name     string           `yaml:"name" json:"name"`
+	Interval string           `yaml:"interval,omitempty" json:"interval,omitempty"`
 	Rules    []PrometheusRule `yaml:"rules" json:"rules"`
 }
 

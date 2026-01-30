@@ -18,6 +18,7 @@ package converter
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -75,6 +76,7 @@ func (c *Converter) ConvertDirectory(inputDir string) ([]v1beta1.GrafanaAlertRul
 		}
 
 		path := filepath.Join(inputDir, entry.Name())
+
 		groups, err := c.ConvertFile(path)
 		if err != nil {
 			return nil, fmt.Errorf("converting %s: %w", entry.Name(), err)
@@ -88,7 +90,7 @@ func (c *Converter) ConvertDirectory(inputDir string) ([]v1beta1.GrafanaAlertRul
 
 // convertRuleGroups converts Prometheus rule groups to GrafanaAlertRuleGroup CRs
 func (c *Converter) convertRuleGroups(groups []rulefmt.RuleGroup, sourceFile string) []v1beta1.GrafanaAlertRuleGroup {
-	var result []v1beta1.GrafanaAlertRuleGroup
+	result := make([]v1beta1.GrafanaAlertRuleGroup, 0, len(groups))
 
 	for _, group := range groups {
 		cr := c.convertRuleGroup(group, sourceFile)
@@ -105,16 +107,18 @@ func (c *Converter) convertRuleGroup(group rulefmt.RuleGroup, sourceFile string)
 
 	// Create labels merging additional labels with default ones
 	labels := make(map[string]string)
-	for k, v := range c.opts.AdditionalLabels {
-		labels[k] = v
+	if c.opts.AdditionalLabels != nil {
+		maps.Copy(labels, c.opts.AdditionalLabels)
 	}
+
 	labels["source"] = sourceFile
 
 	// Create annotations merging additional annotations with default ones
 	annotations := make(map[string]string)
-	for k, v := range c.opts.AdditionalAnnotations {
-		annotations[k] = v
+	if c.opts.AdditionalAnnotations != nil {
+		maps.Copy(annotations, c.opts.AdditionalAnnotations)
 	}
+
 	annotations["original-file"] = sourceFile
 
 	// Convert rules
@@ -177,13 +181,13 @@ func (c *Converter) convertRule(rule rulefmt.Rule) v1beta1.AlertRule {
 	}
 
 	// Add labels (merge with any from the rule)
-	for k, v := range rule.Labels {
-		alertRule.Labels[k] = v
+	if rule.Labels != nil {
+		maps.Copy(alertRule.Labels, rule.Labels)
 	}
 
 	// Add annotations
-	for k, v := range rule.Annotations {
-		alertRule.Annotations[k] = v
+	if rule.Annotations != nil {
+		maps.Copy(alertRule.Annotations, rule.Annotations)
 	}
 
 	return alertRule
@@ -194,12 +198,14 @@ func sanitizeName(name string) string {
 	// Convert to lowercase
 	name = strings.ToLower(name)
 
-	// Replace underscores and dots with hyphens
+	// Replace underscores, dots and spaces with hyphens
 	name = strings.ReplaceAll(name, "_", "-")
 	name = strings.ReplaceAll(name, ".", "-")
+	name = strings.ReplaceAll(name, " ", "-")
 
 	// Remove any characters that are not alphanumeric or hyphens
 	var result strings.Builder
+
 	for _, c := range name {
 		if (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-' {
 			result.WriteRune(c)
@@ -246,14 +252,14 @@ func parseDuration(durationStr string) metav1.Duration {
 func generateUID(name string) string {
 	// Start with sanitized name
 	uid := sanitizeName(name)
-	
+
 	// Replace hyphens with underscores for UID
 	uid = strings.ReplaceAll(uid, "-", "_")
-	
+
 	// Truncate to 40 characters
 	if len(uid) > 40 {
 		uid = uid[:40]
 	}
-	
+
 	return uid
 }

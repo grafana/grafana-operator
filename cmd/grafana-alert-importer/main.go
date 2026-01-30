@@ -71,31 +71,37 @@ func run() error {
 
 	// Parse labels
 	additionalLabels := make(map[string]string)
+
 	for _, label := range cli.Labels {
 		parts := strings.SplitN(label, "=", 2)
 		if len(parts) != 2 {
 			return fmt.Errorf("invalid label format: %s (expected key=value)", label)
 		}
+
 		additionalLabels[parts[0]] = parts[1]
 	}
 
 	// Parse annotations
 	additionalAnnotations := make(map[string]string)
+
 	for _, annotation := range cli.Annotations {
 		parts := strings.SplitN(annotation, "=", 2)
 		if len(parts) != 2 {
 			return fmt.Errorf("invalid annotation format: %s (expected key=value)", annotation)
 		}
+
 		additionalAnnotations[parts[0]] = parts[1]
 	}
 
 	// Parse instance selector if provided
 	var instanceSelector *metav1.LabelSelector
+
 	if cli.InstanceSelector != "" {
 		parts := strings.SplitN(cli.InstanceSelector, "=", 2)
 		if len(parts) != 2 {
 			return fmt.Errorf("invalid instance-selector format: %s (expected key=value)", cli.InstanceSelector)
 		}
+
 		instanceSelector = &metav1.LabelSelector{
 			MatchLabels: map[string]string{
 				parts[0]: parts[1],
@@ -115,6 +121,7 @@ func run() error {
 	conv := converter.NewConverter(opts)
 
 	var groups []v1beta1.GrafanaAlertRuleGroup
+
 	var err error
 
 	info, err := os.Stat(cli.Input)
@@ -146,10 +153,11 @@ func run() error {
 		}
 	} else {
 		// Write to file
-		if err := os.WriteFile(cli.Output, output, 0644); err != nil {
+		if err := os.WriteFile(cli.Output, output, 0o600); err != nil {
 			return fmt.Errorf("writing to output file: %w", err)
 		}
-		fmt.Printf("Successfully converted %d rule group(s) to %s\n", len(groups), cli.Output)
+
+		fmt.Fprintf(os.Stdout, "Successfully converted %d rule group(s) to %s\n", len(groups), cli.Output)
 	}
 
 	return nil
@@ -163,7 +171,9 @@ func generateYAML(groups []v1beta1.GrafanaAlertRuleGroup) ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("marshaling group %d: %w", i, err)
 		}
+
 		sb.Write(yamlBytes)
+
 		if i < len(groups)-1 {
 			sb.WriteString("\n---\n\n")
 		}

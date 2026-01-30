@@ -21,7 +21,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -67,8 +66,9 @@ groups:
     annotations:
       summary: High memory usage detected
 `
+
 	inputFile := filepath.Join(tmpDir, "test-rules.yaml")
-	if err := os.WriteFile(inputFile, []byte(inputYAML), 0644); err != nil {
+	if err := os.WriteFile(inputFile, []byte(inputYAML), 0o600); err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
@@ -97,9 +97,11 @@ groups:
 	if group.Name != "test-alerts" {
 		t.Errorf("expected name 'test-alerts', got '%s'", group.Name)
 	}
+
 	if group.Namespace != "monitoring" {
 		t.Errorf("expected namespace 'monitoring', got '%s'", group.Namespace)
 	}
+
 	if group.Labels["managed_by"] != "grafana-operator" {
 		t.Errorf("expected label 'managed_by' to be 'grafana-operator', got '%s'", group.Labels["managed_by"])
 	}
@@ -114,15 +116,19 @@ groups:
 	if rule.Title != "HighCPUUsage" {
 		t.Errorf("expected rule title 'HighCPUUsage', got '%s'", rule.Title)
 	}
+
 	if rule.Condition != "cpu_usage > 80" {
 		t.Errorf("expected condition 'cpu_usage > 80', got '%s'", rule.Condition)
 	}
+
 	if rule.For == nil || *rule.For != "5m" {
 		t.Errorf("expected 'for' to be '5m', got '%v'", rule.For)
 	}
+
 	if rule.Labels["severity"] != "critical" {
 		t.Errorf("expected severity label 'critical', got '%s'", rule.Labels["severity"])
 	}
+
 	if rule.Annotations["summary"] != "High CPU usage detected" {
 		t.Errorf("expected summary annotation 'High CPU usage detected', got '%s'", rule.Annotations["summary"])
 	}
@@ -160,7 +166,7 @@ func TestParseDuration(t *testing.T) {
 		{"1m", "1m0s"},
 		{"5m30s", "5m30s"},
 		{"1h", "1h0m0s"},
-		{"", "1m0s"},      // Default
+		{"", "1m0s"},        // Default
 		{"invalid", "1m0s"}, // Default on error
 	}
 
@@ -203,7 +209,7 @@ This is not a YAML file and should be skipped
 
 	for filename, content := range files {
 		path := filepath.Join(tmpDir, filename)
-		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
 			t.Fatalf("failed to write %s: %v", filename, err)
 		}
 	}
@@ -235,8 +241,9 @@ groups:
 - name: test
   invalid: [[[
 `
+
 	inputFile := filepath.Join(tmpDir, "invalid.yaml")
-	if err := os.WriteFile(inputFile, []byte(inputYAML), 0644); err != nil {
+	if err := os.WriteFile(inputFile, []byte(inputYAML), 0o600); err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
@@ -264,8 +271,9 @@ groups:
     labels:
       severity: warning
 `
+
 	inputFile := filepath.Join(tmpDir, "invalid-rule.yaml")
-	if err := os.WriteFile(inputFile, []byte(inputYAML), 0644); err != nil {
+	if err := os.WriteFile(inputFile, []byte(inputYAML), 0o600); err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
@@ -285,7 +293,7 @@ func TestConverterOptions(t *testing.T) {
 	}
 
 	opts := ConverterOptions{
-		Namespace: "monitoring",
+		Namespace:        "monitoring",
 		InstanceSelector: selector,
 		AdditionalLabels: map[string]string{
 			"team": "sre",
@@ -293,8 +301,8 @@ func TestConverterOptions(t *testing.T) {
 		AdditionalAnnotations: map[string]string{
 			"imported": "true",
 		},
-		FolderRef: "my-folder",
-		FolderUID: "abc123",
+		FolderRef:    "my-folder",
+		FolderUID:    "abc123",
 		ResyncPeriod: "5m",
 	}
 
@@ -303,12 +311,15 @@ func TestConverterOptions(t *testing.T) {
 	if converter.opts.Namespace != "monitoring" {
 		t.Error("namespace not set correctly")
 	}
+
 	if converter.opts.InstanceSelector != selector {
 		t.Error("instance selector not set correctly")
 	}
+
 	if converter.opts.AdditionalLabels["team"] != "sre" {
 		t.Error("additional labels not set correctly")
 	}
+
 	if converter.opts.AdditionalAnnotations["imported"] != "true" {
 		t.Error("additional annotations not set correctly")
 	}
