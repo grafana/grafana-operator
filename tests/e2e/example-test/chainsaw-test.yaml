@@ -109,3 +109,9 @@ spec:
             file: 16-serviceaccount.yaml
         - assert:
             file: 16-assert.yaml
+    - name: step-17
+      try:
+        - apply:
+            file: 17-manifest.yaml
+        - assert:
+            file: 17-assert.yaml
