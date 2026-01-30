@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/rulefmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -102,10 +103,8 @@ func (c *Converter) convertRuleGroups(groups []rulefmt.RuleGroup, sourceFile str
 
 // convertRuleGroup converts a single Prometheus rule group to a GrafanaAlertRuleGroup CR
 func (c *Converter) convertRuleGroup(group rulefmt.RuleGroup, sourceFile string) v1beta1.GrafanaAlertRuleGroup {
-	// Generate a unique name for the CR
 	name := sanitizeName(group.Name)
 
-	// Create labels merging additional labels with default ones
 	labels := make(map[string]string)
 	if c.opts.AdditionalLabels != nil {
 		maps.Copy(labels, c.opts.AdditionalLabels)
@@ -113,7 +112,6 @@ func (c *Converter) convertRuleGroup(group rulefmt.RuleGroup, sourceFile string)
 
 	labels["source"] = sourceFile
 
-	// Create annotations merging additional annotations with default ones
 	annotations := make(map[string]string)
 	if c.opts.AdditionalAnnotations != nil {
 		maps.Copy(annotations, c.opts.AdditionalAnnotations)
@@ -121,23 +119,20 @@ func (c *Converter) convertRuleGroup(group rulefmt.RuleGroup, sourceFile string)
 
 	annotations["original-file"] = sourceFile
 
-	// Convert rules
 	rules := make([]v1beta1.AlertRule, 0, len(group.Rules))
 	for _, rule := range group.Rules {
 		alertRule := c.convertRule(rule)
 		rules = append(rules, alertRule)
 	}
 
-	// Parse interval
 	interval := parseDurationFromModel(group.Interval)
 
-	// Default folderUID if not provided
 	folderUID := c.opts.FolderUID
 	if folderUID == "" {
 		folderUID = "prometheus-alerts"
 	}
 
-	return v1beta1.GrafanaAlertRuleGroup{
+	cr := v1beta1.GrafanaAlertRuleGroup{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "grafana.integreatly.org/v1beta1",
 			Kind:       "GrafanaAlertRuleGroup",
@@ -158,34 +153,32 @@ func (c *Converter) convertRuleGroup(group rulefmt.RuleGroup, sourceFile string)
 			Interval:  interval,
 		},
 	}
+
+	return cr
 }
 
 // convertRule converts a single Prometheus rule to a Grafana AlertRule
 func (c *Converter) convertRule(rule rulefmt.Rule) v1beta1.AlertRule {
-	noDataState := "NoData"
 	alertRule := v1beta1.AlertRule{
 		Title:        rule.Alert,
 		Condition:    rule.Expr,
 		ExecErrState: "Error",
-		NoDataState:  &noDataState,
+		NoDataState:  ptr.To("NoData"),
 		UID:          generateUID(rule.Alert),
 		Data:         []*v1beta1.AlertQuery{},
 		Labels:       make(map[string]string),
 		Annotations:  make(map[string]string),
 	}
 
-	// Add for duration if specified (model.Duration is a duration string)
 	if rule.For > 0 {
 		forStr := rule.For.String()
 		alertRule.For = &forStr
 	}
 
-	// Add labels (merge with any from the rule)
 	if rule.Labels != nil {
 		maps.Copy(alertRule.Labels, rule.Labels)
 	}
 
-	// Add annotations
 	if rule.Annotations != nil {
 		maps.Copy(alertRule.Annotations, rule.Annotations)
 	}
@@ -195,15 +188,12 @@ func (c *Converter) convertRule(rule rulefmt.Rule) v1beta1.AlertRule {
 
 // sanitizeName converts a name to be DNS-1123 compliant
 func sanitizeName(name string) string {
-	// Convert to lowercase
 	name = strings.ToLower(name)
 
-	// Replace underscores, dots and spaces with hyphens
 	name = strings.ReplaceAll(name, "_", "-")
 	name = strings.ReplaceAll(name, ".", "-")
 	name = strings.ReplaceAll(name, " ", "-")
 
-	// Remove any characters that are not alphanumeric or hyphens
 	var result strings.Builder
 
 	for _, c := range name {
@@ -212,10 +202,8 @@ func sanitizeName(name string) string {
 		}
 	}
 
-	// Remove leading/trailing hyphens
 	name = strings.Trim(result.String(), "-")
 
-	// If empty after sanitization, use a hash of the original name
 	if name == "" {
 		name = fmt.Sprintf("alert-%x", time.Now().UnixNano())
 	}
@@ -250,13 +238,10 @@ func parseDuration(durationStr string) metav1.Duration {
 // generateUID generates a UID for an alert rule from its name
 // UIDs must be alphanumeric, dash, or underscore, max 40 chars
 func generateUID(name string) string {
-	// Start with sanitized name
 	uid := sanitizeName(name)
 
-	// Replace hyphens with underscores for UID
 	uid = strings.ReplaceAll(uid, "-", "_")
 
-	// Truncate to 40 characters
 	if len(uid) > 40 {
 		uid = uid[:40]
 	}

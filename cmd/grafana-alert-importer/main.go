@@ -35,7 +35,7 @@ var (
 )
 
 var cli struct {
-	Input            string   `arg:"" type:"path" help:"Path to Prometheus rule file or directory containing rule files"`
+	Input            string   `arg:"" required:"" type:"path" help:"Path to Prometheus rule file or directory containing rule files"`
 	Output           string   `short:"o" type:"path" help:"Output file path (default: stdout)"`
 	Namespace        string   `short:"n" default:"default" help:"Target Kubernetes namespace for the CRs"`
 	Labels           []string `short:"l" help:"Extra labels to add to the CR metadata (e.g., 'team=sre')"`
@@ -65,11 +65,6 @@ func main() {
 }
 
 func run() error {
-	if cli.Input == "" {
-		return fmt.Errorf("input path is required")
-	}
-
-	// Parse labels
 	additionalLabels := make(map[string]string)
 
 	for _, label := range cli.Labels {
@@ -81,7 +76,6 @@ func run() error {
 		additionalLabels[parts[0]] = parts[1]
 	}
 
-	// Parse annotations
 	additionalAnnotations := make(map[string]string)
 
 	for _, annotation := range cli.Annotations {
@@ -93,7 +87,6 @@ func run() error {
 		additionalAnnotations[parts[0]] = parts[1]
 	}
 
-	// Parse instance selector if provided
 	var instanceSelector *metav1.LabelSelector
 
 	if cli.InstanceSelector != "" {
@@ -139,20 +132,17 @@ func run() error {
 		return fmt.Errorf("conversion failed: %w", err)
 	}
 
-	// Generate output
 	output, err := generateYAML(groups)
 	if err != nil {
 		return fmt.Errorf("generating YAML: %w", err)
 	}
 
 	if cli.Output == "" {
-		// Write to stdout
 		_, err := os.Stdout.Write(output)
 		if err != nil {
 			return fmt.Errorf("writing to stdout: %w", err)
 		}
 	} else {
-		// Write to file
 		if err := os.WriteFile(cli.Output, output, 0o600); err != nil {
 			return fmt.Errorf("writing to output file: %w", err)
 		}

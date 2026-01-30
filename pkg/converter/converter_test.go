@@ -21,6 +21,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -32,21 +34,11 @@ func TestNewConverter(t *testing.T) {
 		},
 	}
 
-	converter := NewConverter(opts)
-	if converter == nil {
-		t.Fatal("expected non-nil converter")
-	}
+	got := NewConverter(opts)
+	require.NotNil(t, got)
 }
 
 func TestConvertFile(t *testing.T) {
-	// Create a temporary directory with test data
-	tmpDir, err := os.MkdirTemp("", "converter-test")
-	if err != nil {
-		t.Fatalf("failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tmpDir)
-
-	// Create test input file
 	inputYAML := `
 groups:
 - name: test-alerts
@@ -67,12 +59,16 @@ groups:
       summary: High memory usage detected
 `
 
-	inputFile := filepath.Join(tmpDir, "test-rules.yaml")
-	if err := os.WriteFile(inputFile, []byte(inputYAML), 0o600); err != nil {
-		t.Fatalf("failed to write test file: %v", err)
-	}
+	tmpFile, err := os.CreateTemp("", "test-rules-*.yaml")
+	require.NoError(t, err)
 
-	converter := NewConverter(ConverterOptions{
+	defer os.Remove(tmpFile.Name())
+
+	_, err = tmpFile.WriteString(inputYAML)
+	require.NoError(t, err)
+	require.NoError(t, tmpFile.Close())
+
+	conv := NewConverter(ConverterOptions{
 		Namespace: "monitoring",
 		AdditionalLabels: map[string]string{
 			"managed_by": "grafana-operator",
@@ -82,111 +78,133 @@ groups:
 		},
 	})
 
-	groups, err := converter.ConvertFile(inputFile)
-	if err != nil {
-		t.Fatalf("conversion failed: %v", err)
-	}
+	groups, err := conv.ConvertFile(tmpFile.Name())
+	require.NoError(t, err)
+	require.Len(t, groups, 1)
 
-	if len(groups) != 1 {
-		t.Fatalf("expected 1 group, got %d", len(groups))
-	}
+	got := groups[0]
+	assert.Equal(t, "test-alerts", got.Name)
+	assert.Equal(t, "monitoring", got.Namespace)
+	assert.Equal(t, "grafana-operator", got.Labels["managed_by"])
+	require.Len(t, got.Spec.Rules, 2)
 
-	group := groups[0]
-
-	// Check metadata
-	if group.Name != "test-alerts" {
-		t.Errorf("expected name 'test-alerts', got '%s'", group.Name)
-	}
-
-	if group.Namespace != "monitoring" {
-		t.Errorf("expected namespace 'monitoring', got '%s'", group.Namespace)
-	}
-
-	if group.Labels["managed_by"] != "grafana-operator" {
-		t.Errorf("expected label 'managed_by' to be 'grafana-operator', got '%s'", group.Labels["managed_by"])
-	}
-
-	// Check rules
-	if len(group.Spec.Rules) != 2 {
-		t.Fatalf("expected 2 rules, got %d", len(group.Spec.Rules))
-	}
-
-	// Check first rule
-	rule := group.Spec.Rules[0]
-	if rule.Title != "HighCPUUsage" {
-		t.Errorf("expected rule title 'HighCPUUsage', got '%s'", rule.Title)
-	}
-
-	if rule.Condition != "cpu_usage > 80" {
-		t.Errorf("expected condition 'cpu_usage > 80', got '%s'", rule.Condition)
-	}
-
-	if rule.For == nil || *rule.For != "5m" {
-		t.Errorf("expected 'for' to be '5m', got '%v'", rule.For)
-	}
-
-	if rule.Labels["severity"] != "critical" {
-		t.Errorf("expected severity label 'critical', got '%s'", rule.Labels["severity"])
-	}
-
-	if rule.Annotations["summary"] != "High CPU usage detected" {
-		t.Errorf("expected summary annotation 'High CPU usage detected', got '%s'", rule.Annotations["summary"])
-	}
+	rule := got.Spec.Rules[0]
+	assert.Equal(t, "HighCPUUsage", rule.Title)
+	assert.Equal(t, "cpu_usage > 80", rule.Condition)
+	require.NotNil(t, rule.For)
+	assert.Equal(t, "5m", *rule.For)
+	assert.Equal(t, "critical", rule.Labels["severity"])
+	assert.Equal(t, "High CPU usage detected", rule.Annotations["summary"])
 }
 
 func TestSanitizeName(t *testing.T) {
-	testCases := []struct {
-		input    string
-		expected string
+	tests := []struct {
+		name  string
+		input string
+		want  string
 	}{
-		{"simple-name", "simple-name"},
-		{"UPPERCASE", "uppercase"},
-		{"with_underscore", "with-underscore"},
-		{"with.dot", "with-dot"},
-		{"name with spaces", "name-with-spaces"},
-		{"123test", "123test"},
-		{"-leading-hyphen", "leading-hyphen"},
-		{"trailing-hyphen-", "trailing-hyphen"},
-		{"mixed-CASE_123.dot", "mixed-case-123-dot"},
+		{
+			name:  "simple-name",
+			input: "simple-name",
+			want:  "simple-name",
+		},
+		{
+			name:  "uppercase",
+			input: "UPPERCASE",
+			want:  "uppercase",
+		},
+		{
+			name:  "with underscore",
+			input: "with_underscore",
+			want:  "with-underscore",
+		},
+		{
+			name:  "with dot",
+			input: "with.dot",
+			want:  "with-dot",
+		},
+		{
+			name:  "with spaces",
+			input: "name with spaces",
+			want:  "name-with-spaces",
+		},
+		{
+			name:  "numeric prefix",
+			input: "123test",
+			want:  "123test",
+		},
+		{
+			name:  "leading hyphen",
+			input: "-leading-hyphen",
+			want:  "leading-hyphen",
+		},
+		{
+			name:  "trailing hyphen",
+			input: "trailing-hyphen-",
+			want:  "trailing-hyphen",
+		},
+		{
+			name:  "mixed case underscore dot",
+			input: "mixed-CASE_123.dot",
+			want:  "mixed-case-123-dot",
+		},
 	}
 
-	for _, tc := range testCases {
-		result := sanitizeName(tc.input)
-		if result != tc.expected {
-			t.Errorf("sanitizeName(%q) = %q, want %q", tc.input, result, tc.expected)
-		}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := sanitizeName(tt.input)
+			assert.Equal(t, tt.want, got)
+		})
 	}
 }
 
 func TestParseDuration(t *testing.T) {
-	testCases := []struct {
-		input    string
-		expected string
+	tests := []struct {
+		name  string
+		input string
+		want  string
 	}{
-		{"1m", "1m0s"},
-		{"5m30s", "5m30s"},
-		{"1h", "1h0m0s"},
-		{"", "1m0s"},        // Default
-		{"invalid", "1m0s"}, // Default on error
+		{
+			name:  "one minute",
+			input: "1m",
+			want:  "1m0s",
+		},
+		{
+			name:  "five minutes thirty seconds",
+			input: "5m30s",
+			want:  "5m30s",
+		},
+		{
+			name:  "one hour",
+			input: "1h",
+			want:  "1h0m0s",
+		},
+		{
+			name:  "empty defaults to 1m",
+			input: "",
+			want:  "1m0s",
+		},
+		{
+			name:  "invalid defaults to 1m",
+			input: "invalid",
+			want:  "1m0s",
+		},
 	}
 
-	for _, tc := range testCases {
-		result := parseDuration(tc.input)
-		if result.Duration.String() != tc.expected {
-			t.Errorf("parseDuration(%q) = %s, want %s", tc.input, result.Duration.String(), tc.expected)
-		}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := parseDuration(tt.input)
+			assert.Equal(t, tt.want, got.Duration.String())
+		})
 	}
 }
 
 func TestConvertDirectory(t *testing.T) {
-	// Create a temporary directory with test data
 	tmpDir, err := os.MkdirTemp("", "converter-test")
-	if err != nil {
-		t.Fatalf("failed to create temp dir: %v", err)
-	}
+	require.NoError(t, err)
+
 	defer os.RemoveAll(tmpDir)
 
-	// Create multiple test files
 	files := map[string]string{
 		"alerts1.yaml": `
 groups:
@@ -209,60 +227,42 @@ This is not a YAML file and should be skipped
 
 	for filename, content := range files {
 		path := filepath.Join(tmpDir, filename)
-		if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
-			t.Fatalf("failed to write %s: %v", filename, err)
-		}
+		err := os.WriteFile(path, []byte(content), 0o600)
+		require.NoError(t, err)
 	}
 
-	converter := NewConverter(ConverterOptions{
+	conv := NewConverter(ConverterOptions{
 		Namespace: "test-ns",
 	})
 
-	groups, err := converter.ConvertDirectory(tmpDir)
-	if err != nil {
-		t.Fatalf("conversion failed: %v", err)
-	}
-
-	if len(groups) != 2 {
-		t.Errorf("expected 2 groups (one from each YAML file), got %d", len(groups))
-	}
+	groups, err := conv.ConvertDirectory(tmpDir)
+	require.NoError(t, err)
+	assert.Len(t, groups, 2)
 }
 
 func TestConvertFileWithInvalidYAML(t *testing.T) {
-	tmpDir, err := os.MkdirTemp("", "converter-test")
-	if err != nil {
-		t.Fatalf("failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tmpDir)
-
-	// Create invalid YAML
 	inputYAML := `
 groups:
 - name: test
   invalid: [[[
 `
 
-	inputFile := filepath.Join(tmpDir, "invalid.yaml")
-	if err := os.WriteFile(inputFile, []byte(inputYAML), 0o600); err != nil {
-		t.Fatalf("failed to write test file: %v", err)
-	}
+	tmpFile, err := os.CreateTemp("", "invalid-*.yaml")
+	require.NoError(t, err)
 
-	converter := NewConverter(ConverterOptions{})
+	defer os.Remove(tmpFile.Name())
 
-	_, err = converter.ConvertFile(inputFile)
-	if err == nil {
-		t.Error("expected error for invalid YAML, got nil")
-	}
+	_, err = tmpFile.WriteString(inputYAML)
+	require.NoError(t, err)
+	require.NoError(t, tmpFile.Close())
+
+	conv := NewConverter(ConverterOptions{})
+
+	_, err = conv.ConvertFile(tmpFile.Name())
+	assert.Error(t, err)
 }
 
 func TestConvertFileWithInvalidPrometheusRules(t *testing.T) {
-	tmpDir, err := os.MkdirTemp("", "converter-test")
-	if err != nil {
-		t.Fatalf("failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tmpDir)
-
-	// Create YAML with invalid Prometheus rule (missing 'expr')
 	inputYAML := `
 groups:
 - name: test
@@ -272,17 +272,19 @@ groups:
       severity: warning
 `
 
-	inputFile := filepath.Join(tmpDir, "invalid-rule.yaml")
-	if err := os.WriteFile(inputFile, []byte(inputYAML), 0o600); err != nil {
-		t.Fatalf("failed to write test file: %v", err)
-	}
+	tmpFile, err := os.CreateTemp("", "invalid-rule-*.yaml")
+	require.NoError(t, err)
 
-	converter := NewConverter(ConverterOptions{})
+	defer os.Remove(tmpFile.Name())
 
-	_, err = converter.ConvertFile(inputFile)
-	if err == nil {
-		t.Error("expected error for invalid Prometheus rule, got nil")
-	}
+	_, err = tmpFile.WriteString(inputYAML)
+	require.NoError(t, err)
+	require.NoError(t, tmpFile.Close())
+
+	conv := NewConverter(ConverterOptions{})
+
+	_, err = conv.ConvertFile(tmpFile.Name())
+	assert.Error(t, err)
 }
 
 func TestConverterOptions(t *testing.T) {
@@ -306,21 +308,10 @@ func TestConverterOptions(t *testing.T) {
 		ResyncPeriod: "5m",
 	}
 
-	converter := NewConverter(opts)
+	conv := NewConverter(opts)
 
-	if converter.opts.Namespace != "monitoring" {
-		t.Error("namespace not set correctly")
-	}
-
-	if converter.opts.InstanceSelector != selector {
-		t.Error("instance selector not set correctly")
-	}
-
-	if converter.opts.AdditionalLabels["team"] != "sre" {
-		t.Error("additional labels not set correctly")
-	}
-
-	if converter.opts.AdditionalAnnotations["imported"] != "true" {
-		t.Error("additional annotations not set correctly")
-	}
+	assert.Equal(t, "monitoring", conv.opts.Namespace)
+	assert.Equal(t, selector, conv.opts.InstanceSelector)
+	assert.Equal(t, "sre", conv.opts.AdditionalLabels["team"])
+	assert.Equal(t, "true", conv.opts.AdditionalAnnotations["imported"])
 }
