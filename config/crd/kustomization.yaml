@@ -2,19 +2,19 @@
 # since it depends on service name and namespace that are out of this kustomize package.
 # It should be run by config/default
 resources:
-- bases/grafana.integreatly.org_grafanas.yaml
-- bases/grafana.integreatly.org_grafanadashboards.yaml
-- bases/grafana.integreatly.org_grafanadatasources.yaml
-- bases/grafana.integreatly.org_grafanaserviceaccounts.yaml
-- bases/grafana.integreatly.org_grafanafolders.yaml
 - bases/grafana.integreatly.org_grafanaalertrulegroups.yaml
 - bases/grafana.integreatly.org_grafanacontactpoints.yaml
+- bases/grafana.integreatly.org_grafanadashboards.yaml
+- bases/grafana.integreatly.org_grafanadatasources.yaml
+- bases/grafana.integreatly.org_grafanafolders.yaml
+- bases/grafana.integreatly.org_grafanalibrarypanels.yaml
+- bases/grafana.integreatly.org_grafanamanifests.yaml
+- bases/grafana.integreatly.org_grafanamutetimings.yaml
 - bases/grafana.integreatly.org_grafananotificationpolicies.yaml
 - bases/grafana.integreatly.org_grafananotificationpolicyroutes.yaml
 - bases/grafana.integreatly.org_grafananotificationtemplates.yaml
-- bases/grafana.integreatly.org_grafanamutetimings.yaml
-- bases/grafana.integreatly.org_grafanalibrarypanels.yaml
-- bases/grafana.integreatly.org_grafanamanifests.yaml
+- bases/grafana.integreatly.org_grafanas.yaml
+- bases/grafana.integreatly.org_grafanaserviceaccounts.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
