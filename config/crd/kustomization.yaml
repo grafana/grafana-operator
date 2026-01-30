@@ -14,6 +14,7 @@ resources:
 - bases/grafana.integreatly.org_grafananotificationtemplates.yaml
 - bases/grafana.integreatly.org_grafanamutetimings.yaml
 - bases/grafana.integreatly.org_grafanalibrarypanels.yaml
+- bases/grafana.integreatly.org_grafanamanifests.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
