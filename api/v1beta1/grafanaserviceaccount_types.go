@@ -37,6 +37,10 @@ type GrafanaServiceAccountTokenSpec struct {
 	// +optional
 	// +kubebuilder:validation:MinLength=1
 	SecretName string `json:"secretName,omitempty"`
+
+	// Namespace in which the secret will be created. If not set, the namespace of the GrafanaServiceAccount will be used.
+	// +kubebuilder:validation:MinLength=1
+	SecretNamespace string `json:"namespace,omitempty"`
 }
 
 // GrafanaServiceAccountSpec defines the desired state of a GrafanaServiceAccount.

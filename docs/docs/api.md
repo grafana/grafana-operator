@@ -27997,6 +27997,13 @@ GrafanaServiceAccountTokenSpec defines a token for a service account
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace in which the secret will be created. If not set, the namespace of the GrafanaServiceAccount will be used.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>secretName</b></td>
         <td>string</td>
         <td>
