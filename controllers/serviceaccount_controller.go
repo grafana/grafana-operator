@@ -219,7 +219,7 @@ func (r *GrafanaServiceAccountReconciler) finalize(ctx context.Context, cr *v1be
 		if ok || errors.Is(err, service_accounts.NewDeleteServiceAccountNotFound()) {
 			logf.FromContext(ctx).Info("service account not found, skipping removal",
 				"serviceAccountID", cr.Status.Account.ID,
-				"serviceAccountName", cr.Spec.Name,
+				"serviceAccountName", cr.GetGrafanaName(),
 			)
 
 			return nil
@@ -236,7 +236,7 @@ func (r *GrafanaServiceAccountReconciler) finalize(ctx context.Context, cr *v1be
 		// Until then, we treat any non-nil error from the delete call as "already removed" and just log it for visibility.
 		logf.FromContext(ctx).Error(err, "failed to delete service account (may already be deleted)",
 			"serviceAccountID", cr.Status.Account.ID,
-			"serviceAccountName", cr.Spec.Name,
+			"serviceAccountName", cr.GetGrafanaName(),
 		)
 		// return fmt.Errorf("deleting service account %q: %w", status.SpecID, err)
 	}
@@ -622,7 +622,7 @@ func (r *GrafanaServiceAccountReconciler) upsertAccount(
 				WithServiceAccountID(cr.Status.Account.ID).
 				WithBody(&models.UpdateServiceAccountForm{
 					// The form contains a ServiceAccountID field which is unused in Grafana, so it's ignored here.
-					Name:       cr.Spec.Name,
+					Name:       cr.GetGrafanaName(),
 					Role:       cr.Spec.Role,
 					IsDisabled: ptr.To(cr.Spec.IsDisabled),
 				}),
@@ -674,7 +674,7 @@ func (r *GrafanaServiceAccountReconciler) upsertAccount(
 		service_accounts.
 			NewCreateServiceAccountParamsWithContext(ctx).
 			WithBody(&models.CreateServiceAccountForm{
-				Name:       cr.Spec.Name,
+				Name:       cr.GetGrafanaName(),
 				Role:       cr.Spec.Role,
 				IsDisabled: cr.Spec.IsDisabled,
 			}),
@@ -764,7 +764,7 @@ func buildSecretLabels(cr *v1beta1.GrafanaServiceAccount) map[string]string {
 }
 
 func generateSecretName(cr *v1beta1.GrafanaServiceAccount, tokenSpec v1beta1.GrafanaServiceAccountTokenSpec) string {
-	return fmt.Sprintf("%s-%s-%s-", cr.Spec.InstanceName, cr.Spec.Name, tokenSpec.Name)
+	return fmt.Sprintf("%s-%s-%s-", cr.Spec.InstanceName, cr.Name, tokenSpec.Name)
 }
 
 func extractTokenNameFromSecret(secret *corev1.Secret) (string, bool) {
@@ -791,9 +791,10 @@ func buildTokenSecret(
 			Namespace: cr.Namespace,
 			Labels:    buildSecretLabels(cr),
 			Annotations: map[string]string{
-				"operator.grafana.com/service-account-spec-name":  cr.Spec.Name,
-				"operator.grafana.com/service-account-uid":        string(cr.UID),
-				"operator.grafana.com/service-account-token-name": tokenStatus.Name,
+				"operator.grafana.com/service-account-name":         cr.Name,
+				"operator.grafana.com/service-account-display-name": cr.GetGrafanaName(),
+				"operator.grafana.com/service-account-uid":          string(cr.UID),
+				"operator.grafana.com/service-account-token-name":   tokenStatus.Name,
 			},
 		},
 		Type: corev1.SecretTypeOpaque,
