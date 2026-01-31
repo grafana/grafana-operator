@@ -1,22 +1,25 @@
 # This kustomization.yaml is not intended to be run by itself,
 # since it depends on service name and namespace that are out of this kustomize package.
 # It should be run by config/default
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
 resources:
-- bases/grafana.integreatly.org_grafanas.yaml
-- bases/grafana.integreatly.org_grafanadashboards.yaml
-- bases/grafana.integreatly.org_grafanadatasources.yaml
-- bases/grafana.integreatly.org_grafanaserviceaccounts.yaml
-- bases/grafana.integreatly.org_grafanafolders.yaml
 - bases/grafana.integreatly.org_grafanaalertrulegroups.yaml
 - bases/grafana.integreatly.org_grafanacontactpoints.yaml
+- bases/grafana.integreatly.org_grafanadashboards.yaml
+- bases/grafana.integreatly.org_grafanadatasources.yaml
+- bases/grafana.integreatly.org_grafanafolders.yaml
+- bases/grafana.integreatly.org_grafanalibrarypanels.yaml
+- bases/grafana.integreatly.org_grafanamanifests.yaml
+- bases/grafana.integreatly.org_grafanamutetimings.yaml
 - bases/grafana.integreatly.org_grafananotificationpolicies.yaml
 - bases/grafana.integreatly.org_grafananotificationpolicyroutes.yaml
 - bases/grafana.integreatly.org_grafananotificationtemplates.yaml
-- bases/grafana.integreatly.org_grafanamutetimings.yaml
-- bases/grafana.integreatly.org_grafanalibrarypanels.yaml
-#+kubebuilder:scaffold:crdkustomizeresource
+- bases/grafana.integreatly.org_grafanas.yaml
+- bases/grafana.integreatly.org_grafanaserviceaccounts.yaml
+#+kubebuilder:scaffold:crdkustomizecainjectionpatch
 
-patchesStrategicMerge:
+#patchesStrategicMerge:
 # [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix.
 # patches here are for enabling the conversion webhook for each CRD
 #- patches/webhook_in_grafanas.yaml

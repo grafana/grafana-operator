@@ -25,8 +25,6 @@ Resource Types:
 
 - [GrafanaManifest](#grafanamanifest)
 
-- [GrafanaManifestTemplate](#grafanamanifesttemplate)
-
 - [GrafanaMuteTiming](#grafanamutetiming)
 
 - [GrafanaNotificationPolicy](#grafananotificationpolicy)
@@ -5143,52 +5141,6 @@ with respect to the current state of the instance.<br/>
           <br/>
             <i>Format</i>: int64<br/>
             <i>Minimum</i>: 0<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-## GrafanaManifestTemplate
-<sup><sup>[↩ Parent](#grafanaintegreatlyorgv1beta1 )</sup></sup>
-
-
-
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-      <td><b>apiVersion</b></td>
-      <td>string</td>
-      <td>grafana.integreatly.org/v1beta1</td>
-      <td>true</td>
-      </tr>
-      <tr>
-      <td><b>kind</b></td>
-      <td>string</td>
-      <td>GrafanaManifestTemplate</td>
-      <td>true</td>
-      </tr>
-      <tr>
-      <td><b><a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta">metadata</a></b></td>
-      <td>object</td>
-      <td>Refer to the Kubernetes API documentation for the fields of the `metadata` field.</td>
-      <td>true</td>
-      </tr><tr>
-        <td><b>spec</b></td>
-        <td>JSON</td>
-        <td>
-          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
