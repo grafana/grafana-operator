@@ -6,6 +6,8 @@ resources:
   - deployment.yaml
   - rolebinding.yaml
   - role.yaml
+  - leader_election_role.yaml
+  - leader_election_role_binding.yaml
 patches:
   - target:
       kind: ClusterRole

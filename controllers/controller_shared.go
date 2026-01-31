@@ -91,8 +91,6 @@ func (c *Config) requeueAfter(d metav1.Duration) time.Duration {
 	return c.ResyncPeriod
 }
 
-//+kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update;patch;delete
-
 // Allow slower initial retry on any failure
 // Significantly slower compared to the default exponential backoff
 func defaultRateLimiter() workqueue.TypedRateLimiter[reconcile.Request] {
