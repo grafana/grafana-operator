@@ -1,6 +1,8 @@
 # This kustomization.yaml is not intended to be run by itself,
 # since it depends on service name and namespace that are out of this kustomize package.
 # It should be run by config/default
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
 resources:
 - bases/grafana.integreatly.org_grafanaalertrulegroups.yaml
 - bases/grafana.integreatly.org_grafanacontactpoints.yaml
@@ -15,9 +17,8 @@ resources:
 - bases/grafana.integreatly.org_grafananotificationtemplates.yaml
 - bases/grafana.integreatly.org_grafanas.yaml
 - bases/grafana.integreatly.org_grafanaserviceaccounts.yaml
-#+kubebuilder:scaffold:crdkustomizeresource
 
-patchesStrategicMerge:
+#patchesStrategicMerge:
 # [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix.
 # patches here are for enabling the conversion webhook for each CRD
 #- patches/webhook_in_grafanas.yaml
@@ -38,7 +39,6 @@ patchesStrategicMerge:
 #- patches/cainjection_in_grafanaalertrulegroups.yaml
 #- patches/cainjection_in_grafanacontactpoints.yaml
 #- patches/cainjection_in_grafananotificationpolicyroutes.yaml
-#+kubebuilder:scaffold:crdkustomizecainjectionpatch
 
 # the following config is for teaching kustomize how to do kustomization for CRDs.
 configurations:
