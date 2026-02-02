@@ -125,6 +125,9 @@ type Record struct {
 
 	// +kubebuilder:validation:Required
 	Metric string `json:"metric"`
+
+	// +optional
+	TargetDatasourceUID string `json:"targetDatasourceUid,omitempty"`
 }
 
 type AlertQuery struct {

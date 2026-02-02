@@ -66,3 +66,4 @@ spec:
       record:
         from: A
         metric: "weather:temperature:celsius"
+        targetDatasourceUid: grafanacloud-demoinfra-prom

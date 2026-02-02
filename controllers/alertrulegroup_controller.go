@@ -215,8 +215,9 @@ func crToModel(cr *v1beta1.GrafanaAlertRuleGroup, folderUID string) (models.Aler
 
 		if r.Record != nil {
 			apiRule.Record = &models.Record{
-				From:   &r.Record.From,
-				Metric: &r.Record.Metric,
+				From:                &r.Record.From,
+				Metric:              &r.Record.Metric,
+				TargetDatasourceUID: r.Record.TargetDatasourceUID,
 			}
 		}
 
