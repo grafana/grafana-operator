@@ -541,6 +541,13 @@ relative time range
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>active_time_intervals</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>group_by</b></td>
         <td>[]string</td>
         <td>

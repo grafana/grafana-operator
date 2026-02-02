@@ -111,12 +111,13 @@ type AlertRule struct {
 }
 
 type NotificationSettings struct {
-	GroupBy           []string `json:"group_by,omitempty"`
-	GroupInterval     string   `json:"group_interval,omitempty"`
-	GroupWait         string   `json:"group_wait,omitempty"`
-	Receiver          string   `json:"receiver"`
-	MuteTimeIntervals []string `json:"mute_time_intervals,omitempty"`
-	RepeatInterval    string   `json:"repeat_interval,omitempty"`
+	GroupBy             []string `json:"group_by,omitempty"`
+	GroupInterval       string   `json:"group_interval,omitempty"`
+	GroupWait           string   `json:"group_wait,omitempty"`
+	Receiver            string   `json:"receiver"`
+	MuteTimeIntervals   []string `json:"mute_time_intervals,omitempty"`
+	RepeatInterval      string   `json:"repeat_interval,omitempty"`
+	ActiveTimeIntervals []string `json:"active_time_intervals,omitempty"`
 }
 
 type Record struct {

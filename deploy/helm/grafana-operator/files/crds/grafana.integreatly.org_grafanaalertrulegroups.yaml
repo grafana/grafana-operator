@@ -222,6 +222,10 @@ spec:
                       type: string
                     notificationSettings:
                       properties:
+                        active_time_intervals:
+                          items:
+                            type: string
+                          type: array
                         group_by:
                           items:
                             type: string
