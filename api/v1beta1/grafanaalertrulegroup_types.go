@@ -127,7 +127,7 @@ type Record struct {
 	Metric string `json:"metric"`
 
 	// +optional
-	TargetDatasourceUID string `json:"targetDatasourceUid"`
+	TargetDatasourceUID string `json:"targetDatasourceUid,omitempty"`
 }
 
 type AlertQuery struct {
