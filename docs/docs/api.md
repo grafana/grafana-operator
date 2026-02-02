@@ -620,6 +620,13 @@ Should not be less than GroupInterval.<br/>
           <br/>
         </td>
         <td>true</td>
+      </tr><tr>
+        <td><b>targetDatasourceUid</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 

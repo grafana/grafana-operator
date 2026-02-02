@@ -272,6 +272,8 @@ spec:
                           type: string
                         metric:
                           type: string
+                        targetDatasourceUid:
+                          type: string
                       required:
                       - from
                       - metric
