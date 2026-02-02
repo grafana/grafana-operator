@@ -559,14 +559,14 @@ relative time range
         <td>string</td>
         <td>
           GroupInterval defines how long to wait before sending a notification about new alerts added
-to a group for which an initial notification has already been sent.<br/>
+to a group for which an initial notification has already been sent. (e.g. 5m)<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>group_wait</b></td>
         <td>string</td>
         <td>
-          GroupWait defines how long to initially wait to send a notification for a group of alerts.<br/>
+          GroupWait defines how long to initially wait to send a notification for a group of alerts. (e.g. 30s)<br/>
         </td>
         <td>false</td>
       </tr><tr>

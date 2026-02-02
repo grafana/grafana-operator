@@ -118,11 +118,11 @@ type NotificationSettings struct {
 	// GroupBy defines the labels by which incoming alerts are grouped together.
 	// +optional
 	GroupBy []string `json:"group_by,omitempty"`
-	// GroupWait defines how long to initially wait to send a notification for a group of alerts.
+	// GroupWait defines how long to initially wait to send a notification for a group of alerts. (e.g. 30s)
 	// +optional
 	GroupWait string `json:"group_wait,omitempty"`
 	// GroupInterval defines how long to wait before sending a notification about new alerts added
-	// to a group for which an initial notification has already been sent.
+	// to a group for which an initial notification has already been sent. (e.g. 5m)
 	// +optional
 	GroupInterval string `json:"group_interval,omitempty"`
 	// RepeatInterval defines how long to wait before sending a notification again if it has already

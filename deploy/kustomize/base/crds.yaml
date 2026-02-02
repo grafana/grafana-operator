@@ -236,11 +236,11 @@ spec:
                         group_interval:
                           description: |-
                             GroupInterval defines how long to wait before sending a notification about new alerts added
-                            to a group for which an initial notification has already been sent.
+                            to a group for which an initial notification has already been sent. (e.g. 5m)
                           type: string
                         group_wait:
                           description: GroupWait defines how long to initially wait
-                            to send a notification for a group of alerts.
+                            to send a notification for a group of alerts. (e.g. 30s)
                           type: string
                         mute_time_intervals:
                           description: |-
