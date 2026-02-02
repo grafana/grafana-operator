@@ -111,12 +111,31 @@ type AlertRule struct {
 }
 
 type NotificationSettings struct {
-	GroupBy             []string `json:"group_by,omitempty"`
-	GroupInterval       string   `json:"group_interval,omitempty"`
-	GroupWait           string   `json:"group_wait,omitempty"`
-	Receiver            string   `json:"receiver"`
-	MuteTimeIntervals   []string `json:"mute_time_intervals,omitempty"`
-	RepeatInterval      string   `json:"repeat_interval,omitempty"`
+	// Receiver is the name of the receiver to send notifications to.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	Receiver string `json:"receiver"`
+	// GroupBy defines the labels by which incoming alerts are grouped together.
+	// +optional
+	GroupBy []string `json:"group_by,omitempty"`
+	// GroupWait defines how long to initially wait to send a notification for a group of alerts.
+	// +optional
+	GroupWait string `json:"group_wait,omitempty"`
+	// GroupInterval defines how long to wait before sending a notification about new alerts added
+	// to a group for which an initial notification has already been sent. (Usually ~5m or more.)
+	// +optional
+	GroupInterval string `json:"group_interval,omitempty"`
+	// RepeatInterval defines how long to wait before sending a notification again if it has already
+	// been sent successfully for an alert. (Usually ~3h or more.)
+	// Should not be less than GroupInterval.
+	// +optional
+	RepeatInterval string `json:"repeat_interval,omitempty"`
+	// MuteTimeIntervals defines the time intervals during which notifications should be muted.
+	// These must match the name of a mute time interval defined in the Alertmanager configuration.
+	// +optional
+	MuteTimeIntervals []string `json:"mute_time_intervals,omitempty"`
+	// ActiveTimeIntervals defines the time intervals during which notifications should NOT be muted.
+	// +optional
 	ActiveTimeIntervals []string `json:"active_time_intervals,omitempty"`
 }
 
