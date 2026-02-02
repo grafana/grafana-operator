@@ -122,11 +122,11 @@ type NotificationSettings struct {
 	// +optional
 	GroupWait string `json:"group_wait,omitempty"`
 	// GroupInterval defines how long to wait before sending a notification about new alerts added
-	// to a group for which an initial notification has already been sent. (Usually ~5m or more.)
+	// to a group for which an initial notification has already been sent.
 	// +optional
 	GroupInterval string `json:"group_interval,omitempty"`
 	// RepeatInterval defines how long to wait before sending a notification again if it has already
-	// been sent successfully for an alert. (Usually ~3h or more.)
+	// been sent successfully for an alert. (e.g. 4h)
 	// Should not be less than GroupInterval.
 	// +optional
 	RepeatInterval string `json:"repeat_interval,omitempty"`

@@ -237,7 +237,7 @@ spec:
                         group_interval:
                           description: |-
                             GroupInterval defines how long to wait before sending a notification about new alerts added
-                            to a group for which an initial notification has already been sent. (Usually ~5m or more.)
+                            to a group for which an initial notification has already been sent.
                           type: string
                         group_wait:
                           description: GroupWait defines how long to initially wait
@@ -258,7 +258,7 @@ spec:
                         repeat_interval:
                           description: |-
                             RepeatInterval defines how long to wait before sending a notification again if it has already
-                            been sent successfully for an alert. (Usually ~3h or more.)
+                            been sent successfully for an alert. (e.g. 4h)
                             Should not be less than GroupInterval.
                           type: string
                       required:

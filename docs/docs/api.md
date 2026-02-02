@@ -559,7 +559,7 @@ relative time range
         <td>string</td>
         <td>
           GroupInterval defines how long to wait before sending a notification about new alerts added
-to a group for which an initial notification has already been sent. (Usually ~5m or more.)<br/>
+to a group for which an initial notification has already been sent.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -582,7 +582,7 @@ These must match the name of a mute time interval defined in the Alertmanager co
         <td>string</td>
         <td>
           RepeatInterval defines how long to wait before sending a notification again if it has already
-been sent successfully for an alert. (Usually ~3h or more.)
+been sent successfully for an alert. (e.g. 4h)
 Should not be less than GroupInterval.<br/>
         </td>
         <td>false</td>
