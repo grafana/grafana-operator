@@ -537,42 +537,53 @@ relative time range
         <td><b>receiver</b></td>
         <td>string</td>
         <td>
-          <br/>
+          Receiver is the name of the receiver to send notifications to.<br/>
         </td>
         <td>true</td>
+      </tr><tr>
+        <td><b>active_time_intervals</b></td>
+        <td>[]string</td>
+        <td>
+          ActiveTimeIntervals defines the time intervals during which notifications should NOT be muted.<br/>
+        </td>
+        <td>false</td>
       </tr><tr>
         <td><b>group_by</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          GroupBy defines the labels by which incoming alerts are grouped together.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>group_interval</b></td>
         <td>string</td>
         <td>
-          <br/>
+          GroupInterval defines how long to wait before sending a notification about new alerts added
+to a group for which an initial notification has already been sent. (e.g. 5m)<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>group_wait</b></td>
         <td>string</td>
         <td>
-          <br/>
+          GroupWait defines how long to initially wait to send a notification for a group of alerts. (e.g. 30s)<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>mute_time_intervals</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          MuteTimeIntervals defines the time intervals during which notifications should be muted.
+These must match the name of a mute time interval defined in the Alertmanager configuration.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>repeat_interval</b></td>
         <td>string</td>
         <td>
-          <br/>
+          RepeatInterval defines how long to wait before sending a notification again if it has already
+been sent successfully for an alert. (e.g. 4h)
+Should not be less than GroupInterval.<br/>
         </td>
         <td>false</td>
       </tr></tbody>

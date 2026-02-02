@@ -204,12 +204,13 @@ func crToModel(cr *v1beta1.GrafanaAlertRuleGroup, folderUID string) (models.Aler
 
 		if r.NotificationSettings != nil {
 			apiRule.NotificationSettings = &models.AlertRuleNotificationSettings{
-				Receiver:          &r.NotificationSettings.Receiver,
-				GroupBy:           r.NotificationSettings.GroupBy,
-				GroupWait:         r.NotificationSettings.GroupWait,
-				MuteTimeIntervals: r.NotificationSettings.MuteTimeIntervals,
-				GroupInterval:     r.NotificationSettings.GroupInterval,
-				RepeatInterval:    r.NotificationSettings.RepeatInterval,
+				Receiver:            &r.NotificationSettings.Receiver,
+				GroupBy:             r.NotificationSettings.GroupBy,
+				GroupWait:           r.NotificationSettings.GroupWait,
+				MuteTimeIntervals:   r.NotificationSettings.MuteTimeIntervals,
+				GroupInterval:       r.NotificationSettings.GroupInterval,
+				RepeatInterval:      r.NotificationSettings.RepeatInterval,
+				ActiveTimeIntervals: r.NotificationSettings.ActiveTimeIntervals,
 			}
 		}
 
