@@ -51,6 +51,7 @@ const (
 	conditionReasonApplyFailed     = "ApplyFailed"
 	conditionReasonApplySuspended  = "ApplySuspended"
 	conditionReasonEmptyAPIReply   = "EmptyAPIReply"
+	conditionReasonInvalidPatch    = "InvalidPatch"
 
 	// Finalizer
 	grafanaFinalizer = "operator.grafana.com/finalizer"
@@ -448,7 +449,7 @@ func getConfigMapValue(ctx context.Context, cl client.Client, namespace string, 
 	}
 }
 
-func getGrafanaRefValue(ctx context.Context, cl client.Client, namespace string, instance *v1beta1.Grafana, fieldSelector *corev1.ObjectFieldSelector) (string, string, error) {
+func getGrafanaRefValue(instance *v1beta1.Grafana, fieldSelector *corev1.ObjectFieldSelector) (string, string, error) {
 	data, _ := json.Marshal(instance) //nolint:errcheck // cannot fail
 
 	content, err := simplejson.NewJson(data)
@@ -472,19 +473,6 @@ func getReferencedValue(ctx context.Context, cl client.Client, namespace string,
 	} else {
 		return getConfigMapValue(ctx, cl, namespace, source.ConfigMapKeyRef)
 	}
-}
-
-func getReferencedPatchValue(ctx context.Context, cl client.Client, namespace string, source v1beta1.PatchValueFromSource, instance *v1beta1.Grafana) (string, string, error) {
-	switch {
-	case source.SecretKeyRef != nil:
-		return getSecretValue(ctx, cl, namespace, source.SecretKeyRef)
-	case source.ConfigMapKeyRef != nil:
-		return getConfigMapValue(ctx, cl, namespace, source.ConfigMapKeyRef)
-	case source.GrafanaRef != nil:
-		return getGrafanaRefValue(ctx, cl, namespace, instance, source.GrafanaRef)
-	}
-
-	return "", "", ErrValueFromSourceUnset
 }
 
 // Add finalizer through a MergePatch

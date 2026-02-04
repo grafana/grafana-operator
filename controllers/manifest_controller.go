@@ -24,6 +24,7 @@ import (
 	"sync"
 
 	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
+	"github.com/itchyny/gojq"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -94,6 +95,26 @@ func (r *GrafanaManifestReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 
 	removeSuspended(&cr.Status.Conditions)
 
+	patches, err := ParsePatches(cr.Spec.Patch)
+	if err != nil {
+		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidPatch, err.Error())
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionManifestSynchronized)
+
+		log.Error(ErrCyclicFolder, LogMsgParsingPatches)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgParsingPatches, err)
+	}
+
+	patchEnvironment, err := CollectPatchEnv(ctx, r.Client, cr.Namespace, cr.Spec.Patch.Env)
+	if err != nil {
+		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidPatch, err.Error())
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionManifestSynchronized)
+
+		log.Error(ErrCyclicFolder, LogMsgResolvingPatchEnv)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgResolvingPatchEnv, err)
+	}
+
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
@@ -118,7 +139,7 @@ func (r *GrafanaManifestReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	applyErrors := make(map[string]string)
 
 	for _, grafana := range instances {
-		err := r.reconcileWithInstance(ctx, &grafana, cr)
+		err := r.reconcileWithInstance(ctx, &grafana, cr, patches, patchEnvironment)
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
@@ -189,7 +210,7 @@ func (r *GrafanaManifestReconciler) finalize(ctx context.Context, cr *v1beta1.Gr
 	return nil
 }
 
-func (r *GrafanaManifestReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaManifest) error {
+func (r *GrafanaManifestReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaManifest, patches []*gojq.Query, env []patchEnvResolver) error {
 	cl, dc, err := grafanaclient.NewDynamicClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana api client: %w", err)
@@ -205,12 +226,15 @@ func (r *GrafanaManifestReconciler) reconcileWithInstance(ctx context.Context, i
 
 	template := cr.Spec.Template.ToUnstructured()
 
-	patchEnv, err := CollectPatchEnv(ctx, r.Client, cr.Namespace, instance, cr.Spec.Patch.Env)
-	if err != nil {
-		return fmt.Errorf("failed to collect environment for patch: %w", err)
+	resolvedEnv := make([]string, len(env))
+	for idx, resolve := range env {
+		resolvedEnv[idx], err = resolve(instance)
+		if err != nil {
+			return fmt.Errorf("resolving environment: %w", err)
+		}
 	}
 
-	patched, err := ApplyPatch(cr.Spec.Patch, template.Object, patchEnv)
+	patched, err := ApplyPatch(patches, template.Object, resolvedEnv)
 	if err != nil {
 		return fmt.Errorf("failed to apply patch: %w", err)
 	}
