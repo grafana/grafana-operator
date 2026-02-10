@@ -4,7 +4,7 @@ go 1.25.6
 
 require (
 	github.com/KimMachineGun/automemlimit v0.7.5
-	github.com/alecthomas/kong v1.13.0
+	github.com/alecthomas/kong v1.14.0
 	github.com/bitly/go-simplejson v0.5.1
 	github.com/blang/semver/v4 v4.0.0
 	github.com/go-logr/logr v1.4.3
