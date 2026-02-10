@@ -422,9 +422,10 @@ func main() { //nolint:gocyclo
 	}
 
 	if err = (&controllers.GrafanaManifestReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		Cfg:    ctrlCfg,
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Cfg:      ctrlCfg,
+		Recorder: mgr.GetEventRecorder("GrafanaManifest"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaManifest")
 		os.Exit(1)
