@@ -23,6 +23,9 @@ const (
 	GrafanaAdminPasswordEnvVar = "GF_SECURITY_ADMIN_PASSWORD" // #nosec G101
 	GrafanaPluginsEnvVar       = "GF_INSTALL_PLUGINS"
 
+	// grafana-operator env vars
+	GrafanaTestVersionEnvVar = "GF_TEST_CONTAINER_VERSION"
+
 	// Networking
 	GrafanaHTTPPort       int = 3000
 	GrafanaHTTPPortName       = "grafana"

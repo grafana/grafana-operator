@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -95,7 +96,12 @@ var _ = BeforeSuite(func() {
 	require.NoError(t, err)
 	require.NotNil(t, cl)
 
-	image := fmt.Sprintf("%s:%s", config.GrafanaImage, config.GrafanaVersion)
+	version := os.Getenv(config.GrafanaTestVersionEnvVar)
+	if version == "" {
+		version = config.GrafanaVersion
+	}
+
+	image := fmt.Sprintf("%s:%s", config.GrafanaImage, version)
 
 	By("Starting Grafana TestContainer")
 	grafanaContainer = tk8s.GetGrafanaTestContainer(t, ctx, image)

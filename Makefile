@@ -19,6 +19,7 @@ endif
 # Read Grafana Image and Version from go code
 GRAFANA_IMAGE := $(shell grep 'GrafanaImage' controllers/config/operator_constants.go | sed 's/.*"\(.*\)".*/\1/')
 GRAFANA_VERSION := $(shell grep 'GrafanaVersion' controllers/config/operator_constants.go | sed 's/.*"\(.*\)".*/\1/')
+GF_TEST_CONTAINER_VERSION := $(if $(GF_TEST_CONTAINER_VERSION),$(GF_TEST_CONTAINER_VERSION),$(GRAFANA_VERSION)) # Workaround for empty env
 
 # Image URL to use all building/pushing image targets
 REGISTRY ?= ghcr.io
@@ -161,8 +162,8 @@ test-image-pre-pull: ## Pre-pulls Grafana image used in tests to speed up CI
 
 .PHONY: test
 test: $(ENVTEST) manifests generate vet golangci-lint api-docs kustomize-lint helm-docs helm-lint ## Run tests.
-	$(info $(M) running $@)
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(BIN) -p path)" go test ./... -coverprofile cover.out
+	$(info $(M) running $@ using Grafana $(GF_TEST_CONTAINER_VERSION))
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(BIN) -p path)" GF_TEST_CONTAINER_VERSION=$(GF_TEST_CONTAINER_VERSION) go test ./... -coverprofile cover.out
 
 .PHONY: test-short
 test-short: ## Skips slow integration tests
