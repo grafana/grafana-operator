@@ -54,11 +54,19 @@ jobs:
 
       - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
 
-  test:
+  golang-tests:
+    name: test / grafana ${{ matrix.grafana_version }}
     runs-on: ubuntu-latest
     needs:
       - docs-only-check
     if: (needs.docs-only-check.outputs.docs_only != 'true')
+    strategy:
+      matrix:
+        grafana_version:
+          - 10.4.6
+          - "" # latest
+    env:
+      GF_TEST_CONTAINER_VERSION: ${{ matrix.grafana_version }}
     steps:
       - name: Clone repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -88,6 +96,14 @@ jobs:
             exit 1
           fi
 
+  test:
+    runs-on: ubuntu-slim
+    needs:
+      - golang-tests
+    steps:
+      - run: |
+          echo "All golang-tests jobs ran successfully"
+
   trivy:
     runs-on: ubuntu-slim
     steps:
@@ -107,13 +123,11 @@ jobs:
           severity: "CRITICAL,HIGH"
 
   e2e-tests:
-    name: E2E on kind ${{ matrix.version }}
+    name: E2E on kind ${{ matrix.version }} / grafana ${{ matrix.grafana_version }}
     runs-on: ubuntu-latest
     needs:
       - docs-only-check
     if: (needs.docs-only-check.outputs.docs_only != 'true' && github.event_name != 'push')
-    env:
-      KUBECONFIG: /home/runner/.kube/kind-grafana-operator-e2e
     strategy:
       matrix:
         version:
@@ -121,6 +135,12 @@ jobs:
           - v1.33.7
           - v1.34.3
           - v1.35.0
+        grafana_version:
+          - "10.4.6"
+          - "" # latest
+    env:
+      GF_TEST_CONTAINER_VERSION: ${{ matrix.grafana_version }}
+      KUBECONFIG: /home/runner/.kube/kind-grafana-operator-e2e
     steps:
       - name: Pre-pull kind image
         run: |
