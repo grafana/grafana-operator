@@ -130,14 +130,15 @@ jobs:
     if: (needs.docs-only-check.outputs.docs_only != 'true' && github.event_name != 'push')
     strategy:
       matrix:
-        version:
-          - v1.32.11
-          - v1.33.7
-          - v1.34.3
-          - v1.35.0
-        grafana_version:
-          - "10.4.6"
-          - "" # latest
+        include:
+          - version: v1.32.11
+            grafana_version: "10.4.6"
+          - version: v1.33.7
+            grafana_version: "10.4.6"
+          - version: v1.34.3
+            grafana_version: "" # latest
+          - version: v1.35.0
+            grafana_version: "" # latest
     env:
       GF_TEST_CONTAINER_VERSION: ${{ matrix.grafana_version }}
       KUBECONFIG: /home/runner/.kube/kind-grafana-operator-e2e
