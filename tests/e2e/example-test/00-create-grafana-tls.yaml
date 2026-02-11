@@ -103,6 +103,7 @@ metadata:
   labels:
     dashboards: "grafana-tls"
 spec:
+  version: (env('GF_TEST_CONTAINER_VERSION'))
   client:
     tls:
       insecureSkipVerify: true

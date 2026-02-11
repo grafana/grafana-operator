@@ -284,8 +284,8 @@ e2e-local-gh-actions: e2e-kind ko-build-kind e2e
 
 .PHONY: e2e
 e2e: $(CHAINSAW) install deploy-chainsaw ## Run e2e tests using chainsaw.
-	$(info $(M) running $@)
-	$(CHAINSAW) test --quiet --test-dir ./tests/e2e/$(TESTS)
+	$(info $(M) running $@ using Grafana $(GF_TEST_CONTAINER_VERSION))
+	GF_TEST_CONTAINER_VERSION=$(GF_TEST_CONTAINER_VERSION) $(CHAINSAW) test --quiet --test-dir ./tests/e2e/$(TESTS)
 
 export KO_DOCKER_REPO ?= ko.local/grafana/grafana-operator
 export KIND_CLUSTER_NAME ?= kind-grafana

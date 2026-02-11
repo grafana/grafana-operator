@@ -5,9 +5,10 @@ metadata:
   labels:
     dashboards: "grafana"
 spec:
-  disableDefaultAdminSecret: true # Ensure config is valid without admin secret
+  version: (env('GF_TEST_CONTAINER_VERSION'))
+  disableDefaultAdminSecret: (semver_compare(env('GF_TEST_CONTAINER_VERSION'),'>=12.2.x')) # Ensure config is valid without admin secret
   client:
-    useKubeAuth: true
+    useKubeAuth: (semver_compare(env('GF_TEST_CONTAINER_VERSION'),'>=12.2.x'))
     preferIngress: false
   config:
     log:
