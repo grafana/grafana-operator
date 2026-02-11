@@ -88,7 +88,7 @@ spec:
     # Configure HA for Grafana alerting
     # https://grafana.com/docs/grafana/latest/alerting/set-up/configure-high-availability/
     unified_alerting:
-      enabled: true
+      enabled: "true"
       ha_listen_address: "${POD_IP}:9094"
       ha_peers: "grafana-alerting:9094"
       ha_advertise_address: "${POD_IP}:9094"
