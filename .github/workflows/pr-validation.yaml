@@ -65,14 +65,26 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Pre-pull Grafana test image
-        run: |
-          make test-image-pre-pull
-
       - name: Setup go
         uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6
         with:
           go-version-file: "go.mod"
+          cache: false
+
+      - name: Pre-pull Grafana test image
+        run: |
+          make test-image-pre-pull
+
+      # NOTE: use separate cache, so it doesn't clash with e2e builds
+      - uses: actions/cache@b7e8d49f17405cc70c1c120101943203c98d3a4b # v5
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+            ~/.cache/golangci-lint
+          key: ${{ runner.os }}-go-test-${{ hashFiles('**/go.mod') }}
+          restore-keys: |
+            ${{ runner.os }}-go-test-
 
       - name: Run test
         env:
