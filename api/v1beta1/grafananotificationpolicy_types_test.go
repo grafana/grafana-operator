@@ -61,11 +61,14 @@ var _ = Describe("NotificationPolicy type", func() {
 
 		It("Should block adding editable field when missing", func() {
 			notificationpolicy := newNotificationPolicy("missing-editable", nil)
+
 			By("Create new NotificationPolicy without editable")
+
 			err := cl.Create(ctx, notificationpolicy)
 			require.NoError(t, err)
 
 			By("Adding a editable")
+
 			notificationpolicy.Spec.Editable = refTrue
 			err = cl.Update(ctx, notificationpolicy)
 			require.Error(t, err)
@@ -73,11 +76,14 @@ var _ = Describe("NotificationPolicy type", func() {
 
 		It("Should block removing editable field when set", func() {
 			notificationpolicy := newNotificationPolicy("existing-editable", refTrue)
+
 			By("Creating NotificationPolicy with existing editable")
+
 			err := cl.Create(ctx, notificationpolicy)
 			require.NoError(t, err)
 
 			By("And setting editable to ''")
+
 			notificationpolicy.Spec.Editable = nil
 			err = cl.Update(ctx, notificationpolicy)
 			require.Error(t, err)
@@ -85,11 +91,14 @@ var _ = Describe("NotificationPolicy type", func() {
 
 		It("Should block changing value of editable", func() {
 			notificationpolicy := newNotificationPolicy("removing-editable", refTrue)
+
 			By("Create new NotificationPolicy with existing editable")
+
 			err := cl.Create(ctx, notificationpolicy)
 			require.NoError(t, err)
 
 			By("Changing the existing editable")
+
 			notificationpolicy.Spec.Editable = refFalse
 			err = cl.Update(ctx, notificationpolicy)
 			require.Error(t, err)

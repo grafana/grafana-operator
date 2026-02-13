@@ -53,11 +53,14 @@ var _ = Describe("LibraryPanel type", func() {
 
 		It("Should block adding uid field when missing", func() {
 			dash := newLibraryPanel("missing-uid", "")
+
 			By("Create new LibraryPanel without uid")
+
 			err := cl.Create(ctx, dash)
 			require.NoError(t, err)
 
 			By("Adding a uid")
+
 			dash.Spec.CustomUID = "new-library-panel-uid"
 			err = cl.Update(ctx, dash)
 			require.Error(t, err)
@@ -65,11 +68,14 @@ var _ = Describe("LibraryPanel type", func() {
 
 		It("Should block removing uid field when set", func() {
 			dash := newLibraryPanel("existing-uid", "existing-uid")
+
 			By("Creating LibraryPanel with existing UID")
+
 			err := cl.Create(ctx, dash)
 			require.NoError(t, err)
 
 			By("And setting UID to ''")
+
 			dash.Spec.CustomUID = ""
 			err = cl.Update(ctx, dash)
 			require.Error(t, err)
@@ -77,11 +83,14 @@ var _ = Describe("LibraryPanel type", func() {
 
 		It("Should block changing value of uid", func() {
 			dash := newLibraryPanel("removing-uid", "existing-uid")
+
 			By("Create new LibraryPanel with existing UID")
+
 			err := cl.Create(ctx, dash)
 			require.NoError(t, err)
 
 			By("Changing the existing UID")
+
 			dash.Spec.CustomUID = "new-library-panel-uid"
 			err = cl.Update(ctx, dash)
 			require.Error(t, err)

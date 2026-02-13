@@ -516,8 +516,12 @@ var _ = Describe("ServiceAccount Controller: Integration Tests", func() {
 	Context("When creating service account with token", func() {
 		It("should create secret and verify Grafana API state", func() {
 			ctx := context.Background()
-			const namespace = "default"
-			const name = "test-sa-with-token"
+
+			const (
+				namespace = "default"
+				name      = "test-sa-with-token"
+			)
+
 			const secretName = "test-sa-token-secret" //nolint:gosec
 
 			// Create a GrafanaServiceAccount with a token

@@ -55,11 +55,14 @@ var _ = Describe("NotificationTemplate type", func() {
 
 		It("Should block adding editable field when missing", func() {
 			notificationtemplate := newNotificationTemplate("missing-editable", nil)
+
 			By("Create new NotificationTemplate without editable")
+
 			err := cl.Create(ctx, notificationtemplate)
 			require.NoError(t, err)
 
 			By("Adding a editable")
+
 			notificationtemplate.Spec.Editable = refTrue
 			err = cl.Update(ctx, notificationtemplate)
 			require.Error(t, err)
@@ -67,11 +70,14 @@ var _ = Describe("NotificationTemplate type", func() {
 
 		It("Should block removing editable field when set", func() {
 			notificationtemplate := newNotificationTemplate("existing-editable", refTrue)
+
 			By("Creating NotificationTemplate with existing editable")
+
 			err := cl.Create(ctx, notificationtemplate)
 			require.NoError(t, err)
 
 			By("And setting editable to ''")
+
 			notificationtemplate.Spec.Editable = nil
 			err = cl.Update(ctx, notificationtemplate)
 			require.Error(t, err)
@@ -79,11 +85,14 @@ var _ = Describe("NotificationTemplate type", func() {
 
 		It("Should block changing value of editable", func() {
 			notificationtemplate := newNotificationTemplate("removing-editable", refTrue)
+
 			By("Create new NotificationTemplate with existing editable")
+
 			err := cl.Create(ctx, notificationtemplate)
 			require.NoError(t, err)
 
 			By("Changing the existing editable")
+
 			notificationtemplate.Spec.Editable = refFalse
 			err = cl.Update(ctx, notificationtemplate)
 			require.Error(t, err)

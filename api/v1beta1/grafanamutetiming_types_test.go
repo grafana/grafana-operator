@@ -66,11 +66,14 @@ var _ = Describe("MuteTiming type", func() {
 
 		It("Should block changing value of editable", func() {
 			mutetiming := newMuteTiming("removing-editable", true)
+
 			By("Create new MuteTiming with existing editable")
+
 			err := cl.Create(ctx, mutetiming)
 			require.NoError(t, err)
 
 			By("Changing the existing editable")
+
 			mutetiming.Spec.Editable = false
 			err = cl.Update(ctx, mutetiming)
 			require.Error(t, err)

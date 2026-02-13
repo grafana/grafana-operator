@@ -53,11 +53,14 @@ var _ = Describe("Dashboard type", func() {
 
 		It("Should block adding uid field when missing", func() {
 			dash := newDashboard("missing-uid", "")
+
 			By("Create new Dashboard without uid")
+
 			err := cl.Create(ctx, dash)
 			require.NoError(t, err)
 
 			By("Adding a uid")
+
 			dash.Spec.CustomUID = "new-dash-uid"
 			err = cl.Update(ctx, dash)
 			require.Error(t, err)
@@ -65,11 +68,14 @@ var _ = Describe("Dashboard type", func() {
 
 		It("Should block removing uid field when set", func() {
 			dash := newDashboard("existing-uid", "existing-uid")
+
 			By("Creating Dashboard with existing UID")
+
 			err := cl.Create(ctx, dash)
 			require.NoError(t, err)
 
 			By("And setting UID to ''")
+
 			dash.Spec.CustomUID = ""
 			err = cl.Update(ctx, dash)
 			require.Error(t, err)
@@ -77,11 +83,14 @@ var _ = Describe("Dashboard type", func() {
 
 		It("Should block changing value of uid", func() {
 			dash := newDashboard("removing-uid", "existing-uid")
+
 			By("Create new Dashboard with existing UID")
+
 			err := cl.Create(ctx, dash)
 			require.NoError(t, err)
 
 			By("Changing the existing UID")
+
 			dash.Spec.CustomUID = "new-dash-uid"
 			err = cl.Update(ctx, dash)
 			require.Error(t, err)

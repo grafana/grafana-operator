@@ -164,6 +164,7 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 	mux := tk8s.GetJSONmux(t, data)
 
 	ts := httptest.NewServer(mux)
+
 	AfterAll(func() {
 		ts.Close()
 	})

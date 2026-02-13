@@ -70,12 +70,15 @@ var _ = BeforeSuite(func() {
 	t := GinkgoT()
 
 	ctx := context.Background()
+
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
+
 	log := logf.FromContext(ctx).WithName("ControllerTests")
 
 	testCtx = logf.IntoContext(ctx, log)
 
 	By("bootstrapping test environment")
+
 	testEnv = &envtest.Environment{
 		CRDDirectoryPaths:     []string{filepath.Join("..", "config", "crd", "bases")},
 		ErrorIfCRDPathMissing: true,
@@ -91,6 +94,7 @@ var _ = BeforeSuite(func() {
 	//+kubebuilder:scaffold:scheme
 
 	By("Instantiating cl")
+
 	cl, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	require.NoError(t, err)
 	require.NotNil(t, cl)
@@ -98,6 +102,7 @@ var _ = BeforeSuite(func() {
 	image := fmt.Sprintf("%s:%s", config.GrafanaImage, config.GrafanaVersion)
 
 	By("Starting Grafana TestContainer")
+
 	grafanaContainer = tk8s.GetGrafanaTestContainer(t, ctx, image)
 
 	createSharedTestCRs()
