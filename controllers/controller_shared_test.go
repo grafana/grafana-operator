@@ -545,3 +545,53 @@ var _ = Describe("GetMatchingInstances functions", Ordered, func() {
 		})
 	})
 })
+
+type errTypeA struct{}
+
+func (e errTypeA) Error() string {
+	return "a"
+}
+
+type errTypeB struct{}
+
+func (e errTypeB) Error() string {
+	return "B"
+}
+
+func TestIsErrorType(t *testing.T) {
+	var (
+		errA errTypeA
+		errB errTypeB
+	)
+
+	t.Run("same type", func(t *testing.T) {
+		want := true
+		got := IsErrorType[errTypeA](errA)
+		assert.Equal(t, want, got)
+	})
+
+	t.Run("different type", func(t *testing.T) {
+		want := false
+		got := IsErrorType[errTypeA](errB)
+		assert.Equal(t, want, got)
+	})
+}
+
+func TestIsNotErrorType(t *testing.T) {
+	var (
+		errA errTypeA
+		errB errTypeB
+	)
+
+	t.Run("same type", func(t *testing.T) {
+		want := false
+		got := IsNotErrorType[errTypeA](errA)
+		assert.Equal(t, want, got)
+	})
+
+	t.Run("different type", func(t *testing.T) {
+		want := true
+		got := IsNotErrorType[errTypeA](errB)
+		assert.Equal(t, want, got)
+	})
+}
