@@ -220,8 +220,7 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 			params := provisioning.NewPostContactpointsParams().WithBody(cp)
 
 			if cr.Spec.Editable {
-				editable := "true"
-				params = params.WithXDisableProvenance(&editable)
+				params = params.WithXDisableProvenance(new("true"))
 			}
 
 			_, err := gClient.Provisioning.PostContactpoints(params) //nolint:errcheck

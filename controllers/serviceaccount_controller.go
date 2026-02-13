@@ -47,7 +47,6 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -341,7 +340,7 @@ func convertGrafanaExpiration(expiration strfmt.DateTime) *metav1.Time {
 		return nil
 	}
 
-	return ptr.To(metav1.NewTime(time.Time(expiration)))
+	return new(metav1.NewTime(time.Time(expiration)))
 }
 
 // removeOutdatedTokens removes tokens that are not in the desired spec or have mismatched expiration times.
@@ -624,7 +623,7 @@ func (r *GrafanaServiceAccountReconciler) upsertAccount(
 					// The form contains a ServiceAccountID field which is unused in Grafana, so it's ignored here.
 					Name:       cr.Spec.Name,
 					Role:       cr.Spec.Role,
-					IsDisabled: ptr.To(cr.Spec.IsDisabled),
+					IsDisabled: new(cr.Spec.IsDisabled),
 				}),
 		)
 		if err == nil {

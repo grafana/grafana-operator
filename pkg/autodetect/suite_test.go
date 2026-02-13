@@ -35,6 +35,7 @@ var _ = BeforeSuite(func() {
 	var err error
 
 	By("bootstrapping test environment")
+
 	testEnvNoCRDs = &envtest.Environment{}
 
 	testEnvWithCRDs = &envtest.Environment{
@@ -55,6 +56,7 @@ var _ = AfterSuite(func() {
 	t := GinkgoT()
 
 	By("tearing down the test environment")
+
 	err := testEnvNoCRDs.Stop()
 	require.NoError(t, err)
 

@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
-	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
@@ -234,7 +233,7 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 				WithBody(&models.UpdateServiceAccountForm{
 					Role:       "Admin",
 					Name:       "new-name",
-					IsDisabled: ptr.To(true),
+					IsDisabled: new(true),
 				}),
 		)
 		require.NoError(t, err)
@@ -516,8 +515,12 @@ var _ = Describe("ServiceAccount Controller: Integration Tests", func() {
 	Context("When creating service account with token", func() {
 		It("should create secret and verify Grafana API state", func() {
 			ctx := context.Background()
-			const namespace = "default"
-			const name = "test-sa-with-token"
+
+			const (
+				namespace = "default"
+				name      = "test-sa-with-token"
+			)
+
 			const secretName = "test-sa-token-secret" //nolint:gosec
 
 			// Create a GrafanaServiceAccount with a token

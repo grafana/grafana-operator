@@ -16,6 +16,7 @@ var _ = Describe("Grafana status NamespacedResourceList all CRs works", func() {
 	t := GinkgoT()
 
 	ctx := context.Background()
+
 	Context("Update entry in NamespacedResourceList", Ordered, func() {
 		meta := func() metav1.ObjectMeta {
 			return metav1.ObjectMeta{
@@ -188,6 +189,7 @@ var _ = Describe("Grafana Status NamespacedResourceList CRUD", Ordered, func() {
 
 	BeforeAll(func() {
 		By("creating Grafana cr and updating the status before testing")
+
 		err := cl.Create(ctx, g)
 		require.NoError(t, err)
 
@@ -201,6 +203,7 @@ var _ = Describe("Grafana Status NamespacedResourceList CRUD", Ordered, func() {
 	// Fetch latest status before each Spec
 	BeforeEach(func() {
 		By("fetching latest Grafana manifest")
+
 		tmpGrafana := &Grafana{}
 
 		err := cl.Get(ctx, types.NamespacedName{

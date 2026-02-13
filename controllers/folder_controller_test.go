@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana-openapi-client-go/client/folders"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
-	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -152,7 +151,7 @@ var _ = Describe("Folder reconciler", func() {
 							},
 						},
 						ExecErrState: "Error",
-						NoDataState:  ptr.To("NoData"),
+						NoDataState:  new("NoData"),
 					},
 				},
 			},

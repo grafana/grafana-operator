@@ -22,8 +22,10 @@ var _ = Describe("Ingress Reconciler", func() {
 	t := GinkgoT()
 
 	Context("on Openshift", func() {
-		const isOpenshift = true
-		const hasHTTPRouteCRD = false
+		const (
+			isOpenshift     = true
+			hasHTTPRouteCRD = false
+		)
 
 		It("creates Ingress when only .spec.ingress is defined", func() {
 			r := NewIngressReconciler(cl, isOpenshift, hasHTTPRouteCRD)
@@ -147,8 +149,10 @@ var _ = Describe("Ingress Reconciler", func() {
 	})
 
 	Context("on Kubernetes", func() {
-		const isOpenshift = false
-		const hasHTTPRouteCRD = true
+		const (
+			isOpenshift     = false
+			hasHTTPRouteCRD = true
+		)
 
 		It("creates Ingress when .spec.ingress is defined", func() {
 			r := NewIngressReconciler(cl, isOpenshift, hasHTTPRouteCRD)

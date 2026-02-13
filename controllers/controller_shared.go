@@ -571,3 +571,19 @@ func UpdateStatus(ctx context.Context, cl client.Client, cr statusResource) {
 		}
 	}
 }
+
+// IsErrorType finds the first error in err's tree that matches the type E, and
+// if one is found, returns true. Otherwise, false.
+func IsErrorType[E error](err error) bool {
+	if _, ok := errors.AsType[E](err); ok {
+		return true
+	}
+
+	return false
+}
+
+// IsNotErrorType finds the first error in err's tree that matches the type E, and
+// if one is found, returns false. Otherwise, true.
+func IsNotErrorType[E error](err error) bool {
+	return !IsErrorType[E](err)
+}

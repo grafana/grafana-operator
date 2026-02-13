@@ -56,6 +56,7 @@ var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
 	By("bootstrapping test environment")
+
 	testEnv = &envtest.Environment{
 		CRDDirectoryPaths: []string{
 			filepath.Join("..", "..", "..", "config", "crd", "bases"),
@@ -87,6 +88,7 @@ var _ = AfterSuite(func() {
 	t := GinkgoT()
 
 	By("tearing down the test environment")
+
 	err := testEnv.Stop()
 	require.NoError(t, err)
 })
