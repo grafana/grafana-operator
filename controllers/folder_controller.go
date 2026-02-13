@@ -185,8 +185,7 @@ func (r *GrafanaFolderReconciler) finalize(ctx context.Context, cr *v1beta1.Graf
 
 		_, err = gClient.Folders.DeleteFolder(params.WithFolderUID(uid)) //nolint
 		if err != nil {
-			var notFound *folders.DeleteFolderNotFound
-			if !errors.As(err, &notFound) {
+			if IsNotErrorType[*folders.DeleteFolderNotFound](err) {
 				return err
 			}
 		}

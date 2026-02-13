@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"reflect"
@@ -248,8 +247,7 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 
 		resp, err := gClient.Dashboards.GetDashboardByUID(uid)
 		if err != nil {
-			var notFound *dashboards.GetDashboardByUIDNotFound
-			if !errors.As(err, &notFound) {
+			if IsNotErrorType[*dashboards.GetDashboardByUIDNotFound](err) {
 				return fmt.Errorf("fetching dashboard from instance: %w", err)
 			}
 
@@ -264,8 +262,7 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 
 			_, err = gClient.Dashboards.DeleteDashboardByUID(uid) //nolint:errcheck
 			if err != nil {
-				var notFound *dashboards.DeleteDashboardByUIDNotFound
-				if !errors.As(err, &notFound) {
+				if IsNotErrorType[*dashboards.DeleteDashboardByUIDNotFound](err) {
 					return fmt.Errorf("deleting dashboard from instance: %w", err)
 				}
 			}
@@ -338,8 +335,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 
 	dashWithMeta, err := gClient.Dashboards.GetDashboardByUID(remoteUID)
 	if err != nil {
-		var notFound *dashboards.GetDashboardByUIDNotFound
-		if !errors.As(err, &notFound) {
+		if IsNotErrorType[*dashboards.GetDashboardByUIDNotFound](err) {
 			return err
 		}
 	}
@@ -351,8 +347,7 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 
 		_, err = gClient.Dashboards.DeleteDashboardByUID(remoteUID) //nolint:errcheck
 		if err != nil {
-			var notFound *dashboards.DeleteDashboardByUIDNotFound
-			if !errors.As(err, &notFound) {
+			if IsNotErrorType[*dashboards.DeleteDashboardByUIDNotFound](err) {
 				return err
 			}
 		}
@@ -547,8 +542,7 @@ func (r *GrafanaDashboardReconciler) DeleteFolderIfEmpty(gClient *genapi.Grafana
 
 	deleteParams := folders.NewDeleteFolderParams().WithFolderUID(folderUID)
 	if _, err = gClient.Folders.DeleteFolder(deleteParams); err != nil { //nolint:errcheck
-		var notFound *folders.DeleteFolderNotFound
-		if !errors.As(err, &notFound) {
+		if IsNotErrorType[*folders.DeleteFolderNotFound](err) {
 			return http.Response{
 				Status:     "internal grafana client error deleting grafana folder",
 				StatusCode: http.StatusInternalServerError,

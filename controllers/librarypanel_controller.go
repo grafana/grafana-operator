@@ -205,10 +205,8 @@ func (r *GrafanaLibraryPanelReconciler) reconcileWithInstance(ctx context.Contex
 	name := fmt.Sprintf("%s", model["name"])
 
 	resp, err := gClient.LibraryElements.GetLibraryElementByUID(uid)
-
-	var panelNotFound *library_elements.GetLibraryElementByUIDNotFound
 	if err != nil {
-		if !errors.As(err, &panelNotFound) {
+		if IsNotErrorType[*library_elements.GetLibraryElementByUIDNotFound](err) {
 			return err
 		}
 
@@ -268,8 +266,7 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, cr *v1beta
 
 		resp, err := gClient.LibraryElements.GetLibraryElementByUID(uid)
 		if err != nil {
-			var notFound *library_elements.GetLibraryElementByUIDNotFound
-			if !errors.As(err, &notFound) {
+			if IsNotErrorType[*library_elements.GetLibraryElementByUIDNotFound](err) {
 				return fmt.Errorf("fetching library panel from instance %s/%s: %w", grafana.Namespace, grafana.Name, err)
 			}
 
@@ -284,8 +281,7 @@ func (r *GrafanaLibraryPanelReconciler) finalize(ctx context.Context, cr *v1beta
 
 			_, err = gClient.LibraryElements.DeleteLibraryElementByUID(uid) //nolint:errcheck
 			if err != nil {
-				var notFound *library_elements.DeleteLibraryElementByUIDNotFound
-				if !errors.As(err, &notFound) {
+				if IsNotErrorType[*library_elements.DeleteLibraryElementByUIDNotFound](err) {
 					return err
 				}
 			}
