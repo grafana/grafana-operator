@@ -3,7 +3,6 @@ package v1beta1
 import (
 	"testing"
 
-	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -41,7 +40,7 @@ func TestNamespacedResourceListFind(t *testing.T) {
 			rNamespace:     "default",
 			rName:          "folder1",
 			wantFound:      true,
-			wantIdentifier: ptr.To("bbbb"),
+			wantIdentifier: new("bbbb"),
 		},
 	}
 

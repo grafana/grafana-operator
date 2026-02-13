@@ -33,7 +33,6 @@ import (
 	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
-	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 )
 
 const (
@@ -147,8 +146,6 @@ func (r *GrafanaMuteTimingReconciler) reconcileWithInstance(ctx context.Context,
 		return fmt.Errorf("getting mute timing by name: %w", err)
 	}
 
-	refTrue := ptr.To("true")
-
 	var payload models.MuteTimeInterval
 
 	payload.Name = cr.Spec.Name
@@ -176,7 +173,7 @@ func (r *GrafanaMuteTimingReconciler) reconcileWithInstance(ctx context.Context,
 	if shouldCreate {
 		params := provisioning.NewPostMuteTimingParams().WithBody(&payload)
 		if cr.Spec.Editable {
-			params.SetXDisableProvenance(refTrue)
+			params.SetXDisableProvenance(new("true"))
 		}
 
 		_, err = gClient.Provisioning.PostMuteTiming(params) //nolint:errcheck
@@ -186,7 +183,7 @@ func (r *GrafanaMuteTimingReconciler) reconcileWithInstance(ctx context.Context,
 	} else {
 		params := provisioning.NewPutMuteTimingParams().WithName(cr.Spec.Name).WithBody(&payload)
 		if cr.Spec.Editable {
-			params.SetXDisableProvenance(refTrue)
+			params.SetXDisableProvenance(new("true"))
 		}
 
 		_, err = gClient.Provisioning.PutMuteTiming(params) //nolint:errcheck

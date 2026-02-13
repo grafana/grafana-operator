@@ -33,7 +33,6 @@ import (
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/config"
-	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -136,7 +135,7 @@ func createSharedTestCRs() {
 			},
 		},
 		Spec: v1beta1.GrafanaSpec{
-			Client: &v1beta1.GrafanaClient{TimeoutSeconds: ptr.To(1)},
+			Client: &v1beta1.GrafanaClient{TimeoutSeconds: new(1)},
 		},
 	}
 
@@ -164,7 +163,7 @@ func createSharedTestCRs() {
 					"admin_password": config.DefaultAdminPassword,
 				},
 			},
-			Client: &v1beta1.GrafanaClient{TimeoutSeconds: ptr.To(1)},
+			Client: &v1beta1.GrafanaClient{TimeoutSeconds: new(1)},
 		},
 	}
 

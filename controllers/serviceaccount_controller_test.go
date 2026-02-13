@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
-	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
@@ -234,7 +233,7 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 				WithBody(&models.UpdateServiceAccountForm{
 					Role:       "Admin",
 					Name:       "new-name",
-					IsDisabled: ptr.To(true),
+					IsDisabled: new(true),
 				}),
 		)
 		require.NoError(t, err)

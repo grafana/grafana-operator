@@ -39,7 +39,6 @@ import (
 	"github.com/grafana/grafana-openapi-client-go/client/provisioning"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
-	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 )
 
 var (
@@ -292,8 +291,6 @@ func (r *GrafanaNotificationPolicyReconciler) reconcileWithInstance(ctx context.
 		return fmt.Errorf("building grafana client: %w", err)
 	}
 
-	refTrue := ptr.To("true")
-
 	editable := true //nolint:staticcheck
 	if cr.Spec.Editable != nil && !*cr.Spec.Editable {
 		editable = false
@@ -301,7 +298,7 @@ func (r *GrafanaNotificationPolicyReconciler) reconcileWithInstance(ctx context.
 
 	params := provisioning.NewPutPolicyTreeParams().WithBody(cr.Spec.Route.ToModelRoute())
 	if editable {
-		params.SetXDisableProvenance(refTrue)
+		params.SetXDisableProvenance(new("true"))
 	}
 
 	if _, err := gClient.Provisioning.PutPolicyTree(params); err != nil { //nolint:errcheck

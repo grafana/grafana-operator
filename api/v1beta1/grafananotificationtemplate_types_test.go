@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -50,8 +49,6 @@ var _ = Describe("NotificationTemplate type", func() {
 		t := GinkgoT()
 
 		ctx := context.Background()
-		refTrue := ptr.To(true)
-		refFalse := ptr.To(false)
 
 		It("Should block adding editable field when missing", func() {
 			notificationtemplate := newNotificationTemplate("missing-editable", nil)
@@ -63,13 +60,13 @@ var _ = Describe("NotificationTemplate type", func() {
 
 			By("Adding a editable")
 
-			notificationtemplate.Spec.Editable = refTrue
+			notificationtemplate.Spec.Editable = new(true)
 			err = cl.Update(ctx, notificationtemplate)
 			require.Error(t, err)
 		})
 
 		It("Should block removing editable field when set", func() {
-			notificationtemplate := newNotificationTemplate("existing-editable", refTrue)
+			notificationtemplate := newNotificationTemplate("existing-editable", new(true))
 
 			By("Creating NotificationTemplate with existing editable")
 
@@ -84,7 +81,7 @@ var _ = Describe("NotificationTemplate type", func() {
 		})
 
 		It("Should block changing value of editable", func() {
-			notificationtemplate := newNotificationTemplate("removing-editable", refTrue)
+			notificationtemplate := newNotificationTemplate("removing-editable", new(true))
 
 			By("Create new NotificationTemplate with existing editable")
 
@@ -93,7 +90,7 @@ var _ = Describe("NotificationTemplate type", func() {
 
 			By("Changing the existing editable")
 
-			notificationtemplate.Spec.Editable = refFalse
+			notificationtemplate.Spec.Editable = new(false)
 			err = cl.Update(ctx, notificationtemplate)
 			require.Error(t, err)
 		})

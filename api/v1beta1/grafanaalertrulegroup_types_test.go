@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -64,8 +63,6 @@ var _ = Describe("AlertRuleGroup type", func() {
 
 	Context("Ensure AlertRuleGroup spec.editable is immutable", func() {
 		ctx := context.Background()
-		refTrue := ptr.To(true)
-		refFalse := ptr.To(false)
 
 		It("Should block adding editable field when missing", func() {
 			arg := newAlertRuleGroup("missing-editable", nil)
@@ -77,13 +74,13 @@ var _ = Describe("AlertRuleGroup type", func() {
 
 			By("Adding a editable")
 
-			arg.Spec.Editable = refTrue
+			arg.Spec.Editable = new(true)
 			err = cl.Update(ctx, arg)
 			require.Error(t, err)
 		})
 
 		It("Should block removing editable field when set", func() {
-			arg := newAlertRuleGroup("existing-editable", refTrue)
+			arg := newAlertRuleGroup("existing-editable", new(true))
 
 			By("Creating AlertRuleGroup with existing editable")
 
@@ -98,7 +95,7 @@ var _ = Describe("AlertRuleGroup type", func() {
 		})
 
 		It("Should block changing value of editable", func() {
-			arg := newAlertRuleGroup("removing-editable", refTrue)
+			arg := newAlertRuleGroup("removing-editable", new(true))
 
 			By("Create new AlertRuleGroup with existing editable")
 
@@ -107,17 +104,16 @@ var _ = Describe("AlertRuleGroup type", func() {
 
 			By("Changing the existing editable")
 
-			arg.Spec.Editable = refFalse
+			arg.Spec.Editable = new(false)
 			err = cl.Update(ctx, arg)
 			require.Error(t, err)
 		})
 	})
 	Context("Ensure AlertRuleGroup spec.folderRef and spec.folderUID are immutable", func() {
 		ctx := context.Background()
-		refTrue := ptr.To(true)
 
 		It("Should block changing value of folderRef", func() {
-			arg := newAlertRuleGroup("changing-folder-ref", refTrue)
+			arg := newAlertRuleGroup("changing-folder-ref", new(true))
 
 			By("Creating new AlertRuleGroup with existing folderRef")
 
@@ -132,7 +128,7 @@ var _ = Describe("AlertRuleGroup type", func() {
 		})
 
 		It("Should block changing value of folderUID", func() {
-			arg := newAlertRuleGroup("changing-folder-uid", refTrue)
+			arg := newAlertRuleGroup("changing-folder-uid", new(true))
 			arg.Spec.FolderRef = ""
 
 			arg.Spec.FolderUID = "originalUID"
@@ -150,7 +146,7 @@ var _ = Describe("AlertRuleGroup type", func() {
 		})
 
 		It("At least one of spec.folderRef or spec.folderUID is defined", func() {
-			arg := newAlertRuleGroup("missing-folder", refTrue)
+			arg := newAlertRuleGroup("missing-folder", new(true))
 			arg.Spec.FolderRef = ""
 			arg.Spec.FolderUID = ""
 
@@ -161,7 +157,7 @@ var _ = Describe("AlertRuleGroup type", func() {
 		})
 
 		It("Only one of spec.folderRef or spec.folderUID is defined", func() {
-			arg := newAlertRuleGroup("mutually-exclusive-folder-reference", refTrue)
+			arg := newAlertRuleGroup("mutually-exclusive-folder-reference", new(true))
 			arg.Spec.FolderUID = "DummyUID"
 
 			By("Creating new AlertRuleGroup with neither folderUID")
