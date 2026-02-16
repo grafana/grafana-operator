@@ -420,59 +420,60 @@ func buildSynchronizedCondition(resource, syncType string, generation int64, app
 	return condition
 }
 
-func getSecretValue(ctx context.Context, cl client.Client, namespace string, source *corev1.SecretKeySelector) (string, string, error) {
+func getSecretValue(ctx context.Context, cl client.Client, namespace string, source *corev1.SecretKeySelector) (value, name string, err error) {
 	s := &corev1.Secret{}
 
-	err := cl.Get(ctx, client.ObjectKey{Namespace: namespace, Name: source.Name}, s)
+	err = cl.Get(ctx, client.ObjectKey{Namespace: namespace, Name: source.Name}, s)
 	if err != nil {
 		return "", "", err
 	}
 
 	if val, ok := s.Data[source.Key]; ok {
 		return string(val), source.Key, nil
-	} else {
-		return "", "", fmt.Errorf("missing key %s in secret %s", source.Key, source.Name)
 	}
-}
-func getConfigMapValue(ctx context.Context, cl client.Client, namespace string, source *corev1.ConfigMapKeySelector) (string, string, error) {
-	s := &corev1.ConfigMap{}
 
-	err := cl.Get(ctx, client.ObjectKey{Namespace: namespace, Name: source.Name}, s)
+	return "", "", fmt.Errorf("missing key %s in secret %s", source.Key, source.Name)
+}
+
+func getConfigMapValue(ctx context.Context, cl client.Client, namespace string, source *corev1.ConfigMapKeySelector) (value, name string, err error) {
+	cm := &corev1.ConfigMap{}
+
+	err = cl.Get(ctx, client.ObjectKey{Namespace: namespace, Name: source.Name}, cm)
 	if err != nil {
 		return "", "", err
 	}
 
-	if val, ok := s.Data[source.Key]; ok {
+	if val, ok := cm.Data[source.Key]; ok {
 		return val, source.Key, nil
-	} else {
-		return "", "", fmt.Errorf("missing key %s in configmap %s", source.Key, source.Name)
 	}
+
+	return "", "", fmt.Errorf("missing key %s in configmap %s", source.Key, source.Name)
 }
 
-func getGrafanaRefValue(instance *v1beta1.Grafana, fieldSelector *corev1.ObjectFieldSelector) (string, string, error) {
+func getGrafanaRefValue(instance *v1beta1.Grafana, fieldSelector *corev1.ObjectFieldSelector) (string, error) {
 	data, _ := json.Marshal(instance) //nolint:errcheck // cannot fail
 
 	content, err := simplejson.NewJson(data)
 	if err != nil {
-		return "", "", fmt.Errorf("parsing grafana instance as json: %w", err)
+		return "", fmt.Errorf("parsing grafana instance as json: %w", err)
 	}
 
 	field := content.GetPath(strings.Split(fieldSelector.FieldPath, ".")...)
 
 	val, err := field.String()
 	if err != nil {
-		return "", "", fmt.Errorf("referenced path is not a string value: %w", err)
+		return "", fmt.Errorf("referenced path is not a string value: %w", err)
 	}
 
-	return val, fieldSelector.FieldPath, nil
+	return val, nil
 }
 
 func getReferencedValue(ctx context.Context, cl client.Client, namespace string, source v1beta1.ValueFromSource) (string, string, error) {
 	if source.SecretKeyRef != nil {
 		return getSecretValue(ctx, cl, namespace, source.SecretKeyRef)
-	} else {
-		return getConfigMapValue(ctx, cl, namespace, source.ConfigMapKeyRef)
 	}
+
+	return getConfigMapValue(ctx, cl, namespace, source.ConfigMapKeyRef)
 }
 
 // Add finalizer through a MergePatch

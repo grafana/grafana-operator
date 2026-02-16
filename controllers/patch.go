@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -24,7 +23,7 @@ func ParsePatches(p *v1beta1.Patch) ([]*gojq.Query, error) {
 	for idx, s := range p.Scripts {
 		q, err := gojq.Parse(s)
 		if err != nil {
-			return nil, fmt.Errorf("script %d failed to parse: %w", idx, err)
+			return []*gojq.Query{}, fmt.Errorf("script %d failed to parse: %w", idx, err)
 		}
 
 		patches[idx] = q
@@ -59,7 +58,7 @@ func CollectPatchEnv(ctx context.Context, cl client.Client, namespace string, re
 			}
 		case r.ValueFrom.GrafanaRef != nil:
 			out[idx] = func(g *v1beta1.Grafana) (string, error) {
-				value, _, err := getGrafanaRefValue(g, r.ValueFrom.GrafanaRef)
+				value, err := getGrafanaRefValue(g, r.ValueFrom.GrafanaRef)
 				if err != nil {
 					return "", fmt.Errorf("getting grafana field value: %w", err)
 				}
@@ -93,8 +92,7 @@ func ApplyPatch(patches []*gojq.Query, resource map[string]any, env []string) (m
 			}
 
 			if err, ok := v.(error); ok {
-				haltError := &gojq.HaltError{}
-				if errors.As(err, &haltError) {
+				if IsErrorType[*gojq.HaltError](err) {
 					break
 				}
 

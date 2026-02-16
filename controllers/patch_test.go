@@ -10,13 +10,13 @@ import (
 )
 
 func TestParsePatches(t *testing.T) {
-	cases := []struct {
-		p      *v1beta1.Patch
-		target any
+	tests := []struct {
+		p    *v1beta1.Patch
+		want any
 	}{
 		{
-			p:      &v1beta1.Patch{},
-			target: nil,
+			p:    &v1beta1.Patch{},
+			want: nil,
 		},
 		{
 			p: &v1beta1.Patch{
@@ -24,7 +24,7 @@ func TestParsePatches(t *testing.T) {
 					`.spec.title="foo"`,
 				},
 			},
-			target: nil,
+			want: nil,
 		},
 		{
 			p: &v1beta1.Patch{
@@ -32,64 +32,64 @@ func TestParsePatches(t *testing.T) {
 					".spec.title=-",
 				},
 			},
-			target: &gojq.ParseError{},
+			want: &gojq.ParseError{},
 		},
 	}
-	for _, c := range cases {
-		_, err := ParsePatches(c.p)
-		if c.target == nil {
+	for _, tt := range tests {
+		_, err := ParsePatches(tt.p)
+		if tt.want == nil {
 			assert.NoError(t, err)
 		} else {
-			assert.ErrorAs(t, err, &c.target)
+			assert.ErrorAs(t, err, &tt.want)
 		}
 	}
 }
 
 func TestApplyPatches(t *testing.T) {
-	cases := []struct {
+	tests := []struct {
 		patches  []string
 		env      []string
 		original map[string]any
-		expected map[string]any
+		want     map[string]any
 	}{
 		{
 			patches:  []string{`.foo="bar"`},
 			env:      nil,
 			original: map[string]any{},
-			expected: map[string]any{"foo": "bar"},
+			want:     map[string]any{"foo": "bar"},
 		},
 		{
 			patches:  []string{`.foo="baz"`},
 			env:      nil,
 			original: map[string]any{"foo": "bar"},
-			expected: map[string]any{"foo": "baz"},
+			want:     map[string]any{"foo": "baz"},
 		},
 		{
 			patches:  []string{`.foo="bar"`, `.foo="baz"`},
 			env:      nil,
 			original: map[string]any{"foo": "start"},
-			expected: map[string]any{"foo": "baz"},
+			want:     map[string]any{"foo": "baz"},
 		},
 		{
 			patches:  []string{`.foo=env.E`},
 			env:      []string{"E=bar"},
 			original: map[string]any{},
-			expected: map[string]any{"foo": "bar"},
+			want:     map[string]any{"foo": "bar"},
 		},
 		{
 			patches:  []string{`.foo=env.E`},
 			env:      nil,
 			original: map[string]any{},
-			expected: map[string]any{"foo": nil},
+			want:     map[string]any{"foo": nil},
 		},
 	}
-	for _, c := range cases {
+	for _, tt := range tests {
 		compiled, err := ParsePatches(&v1beta1.Patch{
-			Scripts: c.patches,
+			Scripts: tt.patches,
 		})
 		require.NoError(t, err)
-		out, err := ApplyPatch(compiled, c.original, c.env)
+		got, err := ApplyPatch(compiled, tt.original, tt.env)
 		require.NoError(t, err)
-		assert.Equal(t, c.expected, out)
+		assert.Equal(t, tt.want, got)
 	}
 }

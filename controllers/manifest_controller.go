@@ -109,14 +109,17 @@ func (r *GrafanaManifestReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgParsingPatches, err)
 	}
 
-	patchEnvironment, err := CollectPatchEnv(ctx, r.Client, cr.Namespace, cr.Spec.Patch.Env)
-	if err != nil {
-		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidPatch, err.Error())
-		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionManifestSynchronized)
+	patchEnvironment := []patchEnvResolver{}
+	if cr.Spec.Patch != nil {
+		patchEnvironment, err = CollectPatchEnv(ctx, r.Client, cr.Namespace, cr.Spec.Patch.Env)
+		if err != nil {
+			setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidPatch, err.Error())
+			meta.RemoveStatusCondition(&cr.Status.Conditions, conditionManifestSynchronized)
 
-		log.Error(ErrCyclicFolder, LogMsgResolvingPatchEnv)
+			log.Error(ErrCyclicFolder, LogMsgResolvingPatchEnv)
 
-		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgResolvingPatchEnv, err)
+			return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgResolvingPatchEnv, err)
+		}
 	}
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
