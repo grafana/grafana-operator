@@ -44,6 +44,14 @@ linters:
     exhaustive:
       default-signifies-exhaustive: false
 
+    forbidigo:
+      forbid:
+        # Default pattern
+        - pattern: ^(fmt\.Print(|f|ln)|print|println)$
+        # Custom rules
+        - pattern: ^errors\.As(Type)?$
+          msg: Use IsErrorType or IsNotErrorType instead
+
     goconst:
       min-len: 3
       min-occurrences: 3
