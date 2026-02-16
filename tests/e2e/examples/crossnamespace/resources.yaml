@@ -10,6 +10,7 @@ metadata:
   labels:
     dashboards: "grafana"
 spec:
+  version: (env('GF_TEST_CONTAINER_VERSION'))
   config:
     log:
       mode: "console"

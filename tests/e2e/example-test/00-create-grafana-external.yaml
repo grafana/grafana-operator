@@ -5,6 +5,7 @@ metadata:
   labels:
     dashboards: "grafana-internal"
 spec:
+  version: (env('GF_TEST_CONTAINER_VERSION'))
   client:
     preferIngress: false
   config:
@@ -43,6 +44,7 @@ metadata:
   labels:
     dashboards: grafana-external
 spec:
+  version: (env('GF_TEST_CONTAINER_VERSION'))
   external:
     url: (join('',['http://grafana-internal-service.',$namespace,':3000']))
     adminPassword:

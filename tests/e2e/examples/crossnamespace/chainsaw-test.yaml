@@ -4,13 +4,12 @@ kind: Test
 metadata:
   name: crossnamespace
 spec:
+  template: true
   concurrent: false
   steps:
-  - name: step-00
-    try:
-    - apply:
-        template: true
-        file: resources.yaml
-    - assert:
-        template: true
-        file: assertions.yaml
+    - name: step-00
+      try:
+        - apply:
+            file: resources.yaml
+        - assert:
+            file: assertions.yaml
