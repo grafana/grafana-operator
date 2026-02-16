@@ -11,6 +11,17 @@ import (
 
 // WARN Run `make` on all file changes
 
+type Patch struct {
+	Scripts []string `json:"scripts"`
+	// +optional
+	Env []PatchEnvVar `json:"env,omitempty"`
+}
+
+type PatchEnvVar struct {
+	Name      string               `json:"name"`
+	ValueFrom PatchValueFromSource `json:"valueFrom"`
+}
+
 type ValueFrom struct {
 	TargetPath string          `json:"targetPath"`
 	ValueFrom  ValueFromSource `json:"valueFrom"`
@@ -24,6 +35,17 @@ type ValueFromSource struct {
 	// Selects a key of a Secret.
 	// +optional
 	SecretKeyRef *corev1.SecretKeySelector `json:"secretKeyRef,omitempty"`
+}
+
+type PatchValueFromSource struct {
+	// Selects a key of a ConfigMap.
+	// +optional
+	ConfigMapKeyRef *corev1.ConfigMapKeySelector `json:"configMapKeyRef,omitempty"`
+	// Selects a key of a Secret.
+	// +optional
+	SecretKeyRef *corev1.SecretKeySelector `json:"secretKeyRef,omitempty"`
+	// +optional
+	GrafanaRef *corev1.ObjectFieldSelector `json:"grafanaRef,omitempty"`
 }
 
 // Common Options that all CRs should embed, excluding GrafanaSpec

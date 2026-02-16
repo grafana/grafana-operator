@@ -24,13 +24,17 @@ import (
 	"sync"
 
 	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
+	"github.com/itchyny/gojq"
 
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/tools/events"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -49,6 +53,7 @@ type GrafanaManifestReconciler struct {
 	Scheme   *runtime.Scheme
 	Cfg      *Config
 	GVRCache sync.Map
+	Recorder events.EventRecorder
 }
 
 func (r *GrafanaManifestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -94,6 +99,29 @@ func (r *GrafanaManifestReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 
 	removeSuspended(&cr.Status.Conditions)
 
+	patches, err := ParsePatches(cr.Spec.Patch)
+	if err != nil {
+		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidPatch, err.Error())
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionManifestSynchronized)
+
+		log.Error(ErrCyclicFolder, LogMsgParsingPatches)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgParsingPatches, err)
+	}
+
+	patchEnvironment := []patchEnvResolver{}
+	if cr.Spec.Patch != nil {
+		patchEnvironment, err = CollectPatchEnv(ctx, r.Client, cr.Namespace, cr.Spec.Patch.Env)
+		if err != nil {
+			setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidPatch, err.Error())
+			meta.RemoveStatusCondition(&cr.Status.Conditions, conditionManifestSynchronized)
+
+			log.Error(ErrCyclicFolder, LogMsgResolvingPatchEnv)
+
+			return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgResolvingPatchEnv, err)
+		}
+	}
+
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
 		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
@@ -118,7 +146,7 @@ func (r *GrafanaManifestReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	applyErrors := make(map[string]string)
 
 	for _, grafana := range instances {
-		err := r.reconcileWithInstance(ctx, &grafana, cr)
+		err := r.reconcileWithInstance(ctx, &grafana, cr, patches, patchEnvironment)
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
@@ -189,7 +217,9 @@ func (r *GrafanaManifestReconciler) finalize(ctx context.Context, cr *v1beta1.Gr
 	return nil
 }
 
-func (r *GrafanaManifestReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaManifest) error {
+func (r *GrafanaManifestReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaManifest, patches []*gojq.Query, env []patchEnvResolver) error {
+	log := logf.FromContext(ctx)
+
 	cl, dc, err := grafanaclient.NewDynamicClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana api client: %w", err)
@@ -203,9 +233,53 @@ func (r *GrafanaManifestReconciler) reconcileWithInstance(ctx context.Context, i
 	ns := getManifestNamespace(cr, instance)
 	resourceClient := cl.Resource(gvr).Namespace(ns)
 
+	template := cr.Spec.Template.ToUnstructured()
+
+	resolvedEnv := make([]string, len(env))
+	for idx, resolve := range env {
+		resolvedEnv[idx], err = resolve(instance)
+		if err != nil {
+			return fmt.Errorf("resolving environment: %w", err)
+		}
+	}
+
+	patchedRaw, err := ApplyPatch(patches, template.Object, resolvedEnv)
+	if err != nil {
+		return fmt.Errorf("failed to apply patch: %w", err)
+	}
+
+	patched := &unstructured.Unstructured{
+		Object: patchedRaw,
+	}
+
+	recordProhibitedPatch := func(name string) {
+		log.Info("Prevented prohibited patch of restricted field", "field", name)
+		r.Recorder.Eventf(cr, nil, corev1.EventTypeWarning, "ProhibitedPatchDetected", "ReplacedMetadata", "Patch modified a restricted field '%s', restored original value", name)
+	}
+
+	if patched.GetName() != template.GetName() {
+		recordProhibitedPatch("metadata.name")
+		patched.SetName(template.GetName())
+	}
+
+	if patched.GetNamespace() != template.GetNamespace() {
+		recordProhibitedPatch("metadata.namespace")
+		patched.SetNamespace(template.GetNamespace())
+	}
+
+	if patched.GetAPIVersion() != template.GetAPIVersion() {
+		recordProhibitedPatch("apiVersion")
+		patched.SetAPIVersion(template.GetAPIVersion())
+	}
+
+	if patched.GetKind() != template.GetKind() {
+		recordProhibitedPatch("kind")
+		patched.SetKind(template.GetKind())
+	}
+
 	_, err = resourceClient.Get(ctx, cr.Spec.Template.Metadata.Name, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
-		_, err := resourceClient.Create(ctx, cr.Spec.Template.ToUnstructured(), metav1.CreateOptions{})
+		_, err := resourceClient.Create(ctx, patched, metav1.CreateOptions{})
 		if err != nil {
 			return fmt.Errorf("creating resource: %w", err)
 		}
@@ -215,7 +289,7 @@ func (r *GrafanaManifestReconciler) reconcileWithInstance(ctx context.Context, i
 		return fmt.Errorf("fetching existing resource: %w", err)
 	}
 
-	if _, err := resourceClient.Update(ctx, cr.Spec.Template.ToUnstructured(), metav1.UpdateOptions{}); err != nil {
+	if _, err := resourceClient.Update(ctx, patched, metav1.UpdateOptions{}); err != nil {
 		return fmt.Errorf("updating resource: %w", err)
 	}
 
