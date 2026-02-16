@@ -9,6 +9,7 @@ linters:
     - goconst
     - gocritic
     - gocyclo
+    - gomodguard
     - gosec
     - importas
     - makezero
@@ -70,6 +71,14 @@ linters:
 
     gocyclo:
       min-complexity: 25
+
+    gomodguard:
+      blocked:
+        modules:
+          - github.com/onsi/gomega:
+              recommendations:
+                - github.com/stretchr/testify/assert
+                - github.com/stretchr/testify/require
 
     importas:
       no-unaliased: true
