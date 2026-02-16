@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"reflect"
 
@@ -135,8 +134,7 @@ func (r *GrafanaAlertRuleGroupReconciler) Reconcile(ctx context.Context, req ctr
 	var disableProvenance *string
 
 	if cr.Spec.Editable != nil && *cr.Spec.Editable {
-		trueStr := "true"
-		disableProvenance = &trueStr
+		disableProvenance = new("true")
 	}
 
 	mGroup, err := crToModel(cr, folderUID)
@@ -287,8 +285,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 
 	_, err = gClient.Folders.GetFolderByUID(folderUID) //nolint:errcheck
 	if err != nil {
-		var folderNotFound *folders.GetFolderByUIDNotFound
-		if errors.As(err, &folderNotFound) {
+		if IsErrorType[*folders.GetFolderByUIDNotFound](err) {
 			return fmt.Errorf("folder with uid %s not found", folderUID)
 		}
 
@@ -297,8 +294,7 @@ func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Cont
 
 	applied, err := gClient.Provisioning.GetAlertRuleGroup(mGroup.Title, folderUID)
 	if err != nil {
-		var ruleNotFound *provisioning.GetAlertRuleGroupNotFound
-		if !errors.As(err, &ruleNotFound) {
+		if IsNotErrorType[*provisioning.GetAlertRuleGroupNotFound](err) {
 			return fmt.Errorf("fetching existing alert rule group: %w", err)
 		}
 	}
@@ -392,8 +388,7 @@ func (r *GrafanaAlertRuleGroupReconciler) finalize(ctx context.Context, cr *v1be
 
 			_, err = gClient.Provisioning.DeleteAlertRuleGroup(cr.GroupName(), folderUID) //nolint:errcheck
 			if err != nil {
-				var notFound *provisioning.DeleteAlertRuleGroupNotFound
-				if !errors.As(err, &notFound) {
+				if IsNotErrorType[*provisioning.DeleteAlertRuleGroupNotFound](err) {
 					return fmt.Errorf("deleting alert rule group: %w", err)
 				}
 			}

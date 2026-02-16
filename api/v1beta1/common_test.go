@@ -31,15 +31,19 @@ var _ = Describe("GrafanaCommonSpec#AllowCrossNamespaceImport Validation rule te
 	}
 
 	ctx := context.Background()
+
 	Context("Enabling allowCrossNamespaceImport", func() {
 		It("Allows setting allowCrossNamespaceImport after creation", func() {
 			copyOfundefinedCrossImportFolder := undefinedCrossImportFolder.DeepCopy()
 			copyOfundefinedCrossImportFolder.Name = "disabled-from-undefined"
+
 			By("Creating a Folder without allowCrossNamespaceImport")
+
 			err := cl.Create(ctx, copyOfundefinedCrossImportFolder)
 			require.NoError(t, err)
 
 			By("Setting allowCrossNamespaceImport false")
+
 			copyOfundefinedCrossImportFolder.Spec.AllowCrossNamespaceImport = false
 			err = cl.Update(ctx, copyOfundefinedCrossImportFolder)
 			require.NoError(t, err)
@@ -50,10 +54,12 @@ var _ = Describe("GrafanaCommonSpec#AllowCrossNamespaceImport Validation rule te
 			secondUndfinedCrossImportFolder.Name = "enabled-from-undefined"
 
 			By("Creating a Folder with false allowCrossNamespaceImport")
+
 			err := cl.Create(ctx, secondUndfinedCrossImportFolder)
 			require.NoError(t, err)
 
 			By("Setting allowCrossNamespaceImport true")
+
 			secondUndfinedCrossImportFolder.Spec.AllowCrossNamespaceImport = true
 			err = cl.Update(ctx, secondUndfinedCrossImportFolder)
 			require.NoError(t, err)
@@ -63,11 +69,14 @@ var _ = Describe("GrafanaCommonSpec#AllowCrossNamespaceImport Validation rule te
 			explicitNoCrossImportFolder := undefinedCrossImportFolder.DeepCopy()
 			explicitNoCrossImportFolder.Name = "enabled-from-false"
 			explicitNoCrossImportFolder.Spec.AllowCrossNamespaceImport = false
+
 			By("Creating a Folder with allowCrossNamespaceImport false")
+
 			err := cl.Create(ctx, explicitNoCrossImportFolder)
 			require.NoError(t, err)
 
 			By("Setting allowCrossNamespaceImport true")
+
 			explicitNoCrossImportFolder.Spec.AllowCrossNamespaceImport = true
 			err = cl.Update(ctx, explicitNoCrossImportFolder)
 			require.NoError(t, err)
@@ -79,11 +88,14 @@ var _ = Describe("GrafanaCommonSpec#AllowCrossNamespaceImport Validation rule te
 			crossImportFolder := undefinedCrossImportFolder.DeepCopy()
 			crossImportFolder.Name = "disabled-from-true"
 			crossImportFolder.Spec.AllowCrossNamespaceImport = true
+
 			By("Creating a Folder with allowCrossNamespaceImport")
+
 			err := cl.Create(ctx, crossImportFolder)
 			require.NoError(t, err)
 
 			By("Setting allowCrossNamespaceImport false")
+
 			crossImportFolder.Spec.AllowCrossNamespaceImport = false
 			err = cl.Update(ctx, crossImportFolder)
 			require.Error(t, err)
@@ -93,11 +105,14 @@ var _ = Describe("GrafanaCommonSpec#AllowCrossNamespaceImport Validation rule te
 			secondCrossImportFolder := undefinedCrossImportFolder.DeepCopy()
 			secondCrossImportFolder.Name = "unset-from-true"
 			secondCrossImportFolder.Spec.AllowCrossNamespaceImport = true
+
 			By("Creating a Folder with allowCrossNamespaceImport")
+
 			err := cl.Create(ctx, secondCrossImportFolder)
 			require.NoError(t, err)
 
 			By("Setting allowCrossNamespaceImport false")
+
 			unsetCrossImportFolder := undefinedCrossImportFolder.DeepCopy()
 			unsetCrossImportFolder.Name = "unset-from-true" // Needs the same name as above
 			err = cl.Update(ctx, unsetCrossImportFolder)

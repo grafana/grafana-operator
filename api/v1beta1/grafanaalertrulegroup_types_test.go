@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana-operator/v5/pkg/ptr"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -61,91 +60,108 @@ func newAlertRuleGroup(name string, editable *bool) *GrafanaAlertRuleGroup {
 
 var _ = Describe("AlertRuleGroup type", func() {
 	t := GinkgoT()
+
 	Context("Ensure AlertRuleGroup spec.editable is immutable", func() {
 		ctx := context.Background()
-		refTrue := ptr.To(true)
-		refFalse := ptr.To(false)
 
 		It("Should block adding editable field when missing", func() {
 			arg := newAlertRuleGroup("missing-editable", nil)
+
 			By("Create new AlertRuleGroup without editable")
+
 			err := cl.Create(ctx, arg)
 			require.NoError(t, err)
 
 			By("Adding a editable")
-			arg.Spec.Editable = refTrue
+
+			arg.Spec.Editable = new(true)
 			err = cl.Update(ctx, arg)
 			require.Error(t, err)
 		})
 
 		It("Should block removing editable field when set", func() {
-			arg := newAlertRuleGroup("existing-editable", refTrue)
+			arg := newAlertRuleGroup("existing-editable", new(true))
+
 			By("Creating AlertRuleGroup with existing editable")
+
 			err := cl.Create(ctx, arg)
 			require.NoError(t, err)
 
 			By("And setting editable to ''")
+
 			arg.Spec.Editable = nil
 			err = cl.Update(ctx, arg)
 			require.Error(t, err)
 		})
 
 		It("Should block changing value of editable", func() {
-			arg := newAlertRuleGroup("removing-editable", refTrue)
+			arg := newAlertRuleGroup("removing-editable", new(true))
+
 			By("Create new AlertRuleGroup with existing editable")
+
 			err := cl.Create(ctx, arg)
 			require.NoError(t, err)
 
 			By("Changing the existing editable")
-			arg.Spec.Editable = refFalse
+
+			arg.Spec.Editable = new(false)
 			err = cl.Update(ctx, arg)
 			require.Error(t, err)
 		})
 	})
 	Context("Ensure AlertRuleGroup spec.folderRef and spec.folderUID are immutable", func() {
 		ctx := context.Background()
-		refTrue := ptr.To(true)
 
 		It("Should block changing value of folderRef", func() {
-			arg := newAlertRuleGroup("changing-folder-ref", refTrue)
+			arg := newAlertRuleGroup("changing-folder-ref", new(true))
+
 			By("Creating new AlertRuleGroup with existing folderRef")
+
 			err := cl.Create(ctx, arg)
 			require.NoError(t, err)
 
 			By("Changing folderRef")
+
 			arg.Spec.FolderRef = "newFolder"
 			err = cl.Update(ctx, arg)
 			require.Error(t, err)
 		})
 
 		It("Should block changing value of folderUID", func() {
-			arg := newAlertRuleGroup("changing-folder-uid", refTrue)
+			arg := newAlertRuleGroup("changing-folder-uid", new(true))
 			arg.Spec.FolderRef = ""
 
 			arg.Spec.FolderUID = "originalUID"
+
 			By("Creating new AlertRuleGroup with existing folderUID")
+
 			err := cl.Create(ctx, arg)
 			require.NoError(t, err)
 
 			By("Changing folderUID")
+
 			arg.Spec.FolderUID = "newUID"
 			err = cl.Update(ctx, arg)
 			require.Error(t, err)
 		})
 
 		It("At least one of spec.folderRef or spec.folderUID is defined", func() {
-			arg := newAlertRuleGroup("missing-folder", refTrue)
+			arg := newAlertRuleGroup("missing-folder", new(true))
 			arg.Spec.FolderRef = ""
 			arg.Spec.FolderUID = ""
+
 			By("Creating new AlertRuleGroup with neither folderUID")
+
 			err := cl.Create(ctx, arg)
 			require.Error(t, err)
 		})
 
 		It("Only one of spec.folderRef or spec.folderUID is defined", func() {
-			arg := newAlertRuleGroup("mutually-exclusive-folder-reference", refTrue)
+			arg := newAlertRuleGroup("mutually-exclusive-folder-reference", new(true))
 			arg.Spec.FolderUID = "DummyUID"
+
 			By("Creating new AlertRuleGroup with neither folderUID")
+
 			err := cl.Create(ctx, arg)
 			require.Error(t, err)
 		})

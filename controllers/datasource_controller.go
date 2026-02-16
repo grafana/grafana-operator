@@ -20,7 +20,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -224,10 +223,8 @@ func (r *GrafanaDatasourceReconciler) deleteOldDatasource(ctx context.Context, c
 		}
 
 		_, err = gClient.Datasources.DeleteDataSourceByUID(*uid) //nolint
-
-		var notFound *datasources.GetDataSourceByUIDNotFound
 		if err != nil {
-			if !errors.As(err, &notFound) {
+			if IsNotErrorType[*datasources.GetDataSourceByUIDNotFound](err) {
 				return fmt.Errorf("deleting datasource to update uid %s: %w", *uid, err)
 			}
 		}
@@ -255,8 +252,7 @@ func (r *GrafanaDatasourceReconciler) finalize(ctx context.Context, cr *v1beta1.
 
 		_, err = gClient.Datasources.DeleteDataSourceByUID(uid) //nolint:errcheck
 		if err != nil {
-			var notFound *datasources.DeleteDataSourceByUIDNotFound
-			if !errors.As(err, &notFound) {
+			if IsNotErrorType[*datasources.DeleteDataSourceByUIDNotFound](err) {
 				return fmt.Errorf("deleting datasource %s: %w", uid, err)
 			}
 		}

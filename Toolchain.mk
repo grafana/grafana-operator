@@ -14,7 +14,7 @@ DART_SASS_VERSION = 1.86.0
 # renovate: datasource=github-tags depName=kubernetes-sigs/controller-runtime
 ENVTEST_VERSION = v0.23.1
 # renovate: datasource=github-tags depName=golangci/golangci-lint
-GOLANGCI_LINT_VERSION = v2.8.0
+GOLANGCI_LINT_VERSION = v2.9.0
 # renovate: datasource=github-tags depName=norwoodj/helm-docs
 HELM_DOCS_VERSION = 1.14.2
 HELM_VERSION = v3.17.3
@@ -24,7 +24,7 @@ KIND_VERSION = v0.31.0
 # renovate: datasource=github-tags depName=ko-build/ko
 KO_VERSION = 0.18.1
 # renovate: datasource=github-tags depName=kubernetes-sigs/kustomize extractVersion=^kustomize/(?<version>.*)$
-KUSTOMIZE_VERSION = v5.8.0
+KUSTOMIZE_VERSION = v5.8.1
 MUFFET_VERSION = v2.10.9
 OPERATOR_SDK_VERSION = v1.32.0
 OPM_VERSION = v1.23.2

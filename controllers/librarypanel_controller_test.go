@@ -119,6 +119,7 @@ var _ = Describe("LibraryPanel Reconciler", Ordered, func() {
 	mux := tk8s.GetJSONmux(t, data)
 
 	ts := httptest.NewServer(mux)
+
 	AfterAll(func() {
 		ts.Close()
 	})
