@@ -68,6 +68,9 @@ manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) $(YQ) ## Generate WebhookConfiguration
 	$(info $(M) running $@)
 	$(CONTROLLER_GEN) rbac:roleName=manager-role webhook paths="./..." crd output:crd:artifacts:config=config/crd/bases
 	$(CONTROLLER_GEN) rbac:roleName=manager-role webhook paths="./..." crd output:crd:artifacts:config=deploy/helm/grafana-operator/files/crds
+	@# Remove default values for HTTPRoute rules
+	$(YQ) -i '.spec.versions[] |= del(.schema.openAPIV3Schema.properties.spec.properties.httpRoute.properties.spec.properties.rules.default)' config/crd/bases/grafana.integreatly.org_grafanas.yaml
+	$(YQ) -i '.spec.versions[] |= del(.schema.openAPIV3Schema.properties.spec.properties.httpRoute.properties.spec.properties.rules.default)' deploy/helm/grafana-operator/files/crds/grafana.integreatly.org_grafanas.yaml
 	@# Remove CRD descriptions under Grafana#.spec.deployment
 	$(YQ) -i '.spec.versions[] |= del(.schema.openAPIV3Schema.properties.spec.properties.deployment.properties | .. | select(has("description")).description)' config/crd/bases/grafana.integreatly.org_grafanas.yaml
 	$(YQ) -i '.spec.versions[] |= del(.schema.openAPIV3Schema.properties.spec.properties.deployment.properties | .. | select(has("description")).description)' deploy/helm/grafana-operator/files/crds/grafana.integreatly.org_grafanas.yaml

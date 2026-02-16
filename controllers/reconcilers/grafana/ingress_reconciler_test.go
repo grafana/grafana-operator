@@ -266,6 +266,10 @@ var _ = Describe("Ingress Reconciler", func() {
 				Namespace: "default",
 			}, httpRoute)
 			require.NoError(t, err)
+
+			require.Len(t, httpRoute.Spec.Rules, 1)
+			require.Len(t, httpRoute.Spec.Rules[0].BackendRefs, 1)
+			require.Len(t, httpRoute.Spec.Rules[0].Matches, 1)
 		})
 
 		It("removes HTTPRoute when .spec.httpRoute is removed", func() {
