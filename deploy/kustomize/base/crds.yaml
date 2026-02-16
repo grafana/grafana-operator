@@ -8162,11 +8162,6 @@ spec:
                         maxItems: 32
                         type: array
                       rules:
-                        default:
-                        - matches:
-                          - path:
-                              type: PathPrefix
-                              value: /
                         description: |-
                           Rules are a list of HTTP matchers, filters and actions.
 
