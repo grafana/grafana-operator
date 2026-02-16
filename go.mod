@@ -12,7 +12,7 @@ require (
 	github.com/go-openapi/strfmt v0.25.0
 	github.com/google/go-jsonnet v0.21.0
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20251202103709-7ef691d4df1d
-	github.com/grafana/grafana-plugin-sdk-go v0.286.0
+	github.com/grafana/grafana-plugin-sdk-go v0.288.0
 	github.com/itchyny/gojq v0.12.18
 	github.com/onsi/ginkgo/v2 v2.28.1
 	github.com/openshift/api v0.0.0-20251021211107-8c9accafe91d
