@@ -21505,7 +21505,7 @@ HTTPRoute customizes the GatewayAPI HTTPRoute Object. It will not be created if 
         <td><b><a href="#grafanaspechttproutespec">spec</a></b></td>
         <td>object</td>
         <td>
-          HTTPRouteSpec defines the desired state of HTTPRoute<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -21551,7 +21551,7 @@ ObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery
 
 
 
-HTTPRouteSpec defines the desired state of HTTPRoute
+
 
 <table>
     <thead>
@@ -21566,59 +21566,7 @@ HTTPRouteSpec defines the desired state of HTTPRoute
         <td><b>hostnames</b></td>
         <td>[]string</td>
         <td>
-          Hostnames defines a set of hostnames that should match against the HTTP Host
-header to select a HTTPRoute used to process the request. Implementations
-MUST ignore any port value specified in the HTTP Host header while
-performing a match and (absent of any applicable header modification
-configuration) MUST forward this header unmodified to the backend.
-
-Valid values for Hostnames are determined by RFC 1123 definition of a
-hostname with 2 notable exceptions:
-
-1. IPs are not allowed.
-2. A hostname may be prefixed with a wildcard label (`*.`). The wildcard
-   label must appear by itself as the first label.
-
-If a hostname is specified by both the Listener and HTTPRoute, there
-must be at least one intersecting hostname for the HTTPRoute to be
-attached to the Listener. For example:
-
-* A Listener with `test.example.com` as the hostname matches HTTPRoutes
-  that have either not specified any hostnames, or have specified at
-  least one of `test.example.com` or `*.example.com`.
-* A Listener with `*.example.com` as the hostname matches HTTPRoutes
-  that have either not specified any hostnames or have specified at least
-  one hostname that matches the Listener hostname. For example,
-  `*.example.com`, `test.example.com`, and `foo.test.example.com` would
-  all match. On the other hand, `example.com` and `test.example.net` would
-  not match.
-
-Hostnames that are prefixed with a wildcard label (`*.`) are interpreted
-as a suffix match. That means that a match for `*.example.com` would match
-both `test.example.com`, and `foo.test.example.com`, but not `example.com`.
-
-If both the Listener and HTTPRoute have specified hostnames, any
-HTTPRoute hostnames that do not match the Listener hostname MUST be
-ignored. For example, if a Listener specified `*.example.com`, and the
-HTTPRoute specified `test.example.com` and `test.example.net`,
-`test.example.net` must not be considered for a match.
-
-If both the Listener and HTTPRoute have specified hostnames, and none
-match with the criteria above, then the HTTPRoute is not accepted. The
-implementation must raise an 'Accepted' Condition with a status of
-`False` in the corresponding RouteParentStatus.
-
-In the event that multiple HTTPRoutes specify intersecting hostnames (e.g.
-overlapping wildcard matching and exact matching hostnames), precedence must
-be given to rules from the HTTPRoute with the largest number of:
-
-* Characters in a matching non-wildcard hostname.
-* Characters in a matching hostname.
-
-If ties exist across multiple Routes, the matching precedence rules for
-HTTPRouteMatches takes over.
-
-Support: Core<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -21698,12 +21646,7 @@ ParentRef of the Route.
         <td><b><a href="#grafanaspechttproutespecrulesindex">rules</a></b></td>
         <td>[]object</td>
         <td>
-          Rules are a list of HTTP matchers, filters and actions.
-
-<gateway:experimental:validation:XValidation:message="Rule name must be unique within the route",rule="self.all(l1, !has(l1.name) || self.exists_one(l2, has(l2.name) && l1.name == l2.name))"><br/>
           <br/>
-            <i>Validations</i>:<li>(self.size() > 0 ? self[0].matches.size() : 0) + (self.size() > 1 ? self[1].matches.size() : 0) + (self.size() > 2 ? self[2].matches.size() : 0) + (self.size() > 3 ? self[3].matches.size() : 0) + (self.size() > 4 ? self[4].matches.size() : 0) + (self.size() > 5 ? self[5].matches.size() : 0) + (self.size() > 6 ? self[6].matches.size() : 0) + (self.size() > 7 ? self[7].matches.size() : 0) + (self.size() > 8 ? self[8].matches.size() : 0) + (self.size() > 9 ? self[9].matches.size() : 0) + (self.size() > 10 ? self[10].matches.size() : 0) + (self.size() > 11 ? self[11].matches.size() : 0) + (self.size() > 12 ? self[12].matches.size() : 0) + (self.size() > 13 ? self[13].matches.size() : 0) + (self.size() > 14 ? self[14].matches.size() : 0) + (self.size() > 15 ? self[15].matches.size() : 0) <= 128: While 16 rules and 64 matches per rule are allowed, the total number of matches across all rules in a route must be less than 128</li>
-            <i>Default</i>: [map[matches:[map[path:map[type:PathPrefix value:/]]]]]<br/>
         </td>
         <td>false</td>
       </tr></tbody>
