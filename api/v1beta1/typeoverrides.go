@@ -551,8 +551,16 @@ type ServiceAccountV1 struct {
 
 // +kubebuilder:object:generate=true
 type HTTPRouteV1 struct {
-	ObjectMeta ObjectMeta            `json:"metadata,omitempty"`
-	Spec       gwapiv1.HTTPRouteSpec `json:"spec,omitempty"`
+	ObjectMeta ObjectMeta      `json:"metadata,omitempty"`
+	Spec       HTTPRouteV1Spec `json:"spec,omitempty"`
+}
+
+type HTTPRouteV1Spec struct {
+	gwapiv1.CommonRouteSpec `json:",inline"`
+	// +kubebuilder:validation:MaxItems=16
+	Hostnames []gwapiv1.Hostname `json:"hostnames,omitempty"`
+	// +kubebuilder:validation:MaxItems=16
+	Rules []gwapiv1.HTTPRouteRule `json:"rules,omitempty"`
 }
 
 // Merge merges `overrides` into `base` using the SMP (structural merge patch) approach.

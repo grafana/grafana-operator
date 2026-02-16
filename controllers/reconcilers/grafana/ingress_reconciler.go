@@ -386,11 +386,20 @@ func getHTTPRouteSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) gwapiv1.HTTPR
 			},
 		},
 	}
+	matches := []gwapiv1.HTTPRouteMatch{
+		{
+			Path: &gwapiv1.HTTPPathMatch{
+				Type:  new(gwapiv1.PathMatchPathPrefix),
+				Value: new("/"),
+			},
+		},
+	}
 
 	return gwapiv1.HTTPRouteSpec{
 		Rules: []gwapiv1.HTTPRouteRule{
 			{
 				BackendRefs: backendRefs,
+				Matches:     matches,
 			},
 		},
 	}
