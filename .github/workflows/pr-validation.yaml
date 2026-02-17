@@ -63,7 +63,7 @@ jobs:
     strategy:
       matrix:
         grafana_version:
-          - 10.4.6
+          - 10.4.5
           - "" # default
     env:
       GF_TEST_CONTAINER_VERSION: ${{ matrix.grafana_version }}
@@ -144,9 +144,9 @@ jobs:
       matrix:
         include:
           - version: v1.32.11
-            grafana_version: "10.4.6"
+            grafana_version: "10.4.5"
           - version: v1.33.7
-            grafana_version: "10.4.6"
+            grafana_version: "10.4.5"
           - version: v1.34.3
             grafana_version: "" # default
           - version: v1.35.0
