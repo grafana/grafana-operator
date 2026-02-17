@@ -168,8 +168,10 @@ func TestParse(t *testing.T) {
 			if tt.wantErrRegex != nil {
 				require.Error(t, err)
 				require.Regexp(t, tt.wantErrRegex, err.Error())
+
 				return
 			}
+
 			require.NoError(t, err)
 			require.Equal(t, tt.wantDur, gotDur)
 			require.Equal(t, tt.wantPeriod, gotPeriod)

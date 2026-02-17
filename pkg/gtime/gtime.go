@@ -17,16 +17,19 @@ func ParseDuration(inp string) (time.Duration, error) {
 	if err != nil {
 		return 0, err
 	}
+
 	if period == "" {
 		return dur, nil
 	}
 
 	// The average number of days in a year, using the Julian calendar
-	const daysInAYear = 365.25
-	const day = 24 * time.Hour
-	const week = 7 * day
-	const year = time.Duration(float64(day) * daysInAYear)
-	const month = time.Duration(float64(year) / 12)
+	const (
+		daysInAYear = 365.25
+		day         = 24 * time.Hour
+		week        = 7 * day
+		year        = time.Duration(float64(day) * daysInAYear)
+		month       = time.Duration(float64(year) / 12)
+	)
 
 	switch period {
 	case "d":
@@ -57,17 +60,20 @@ func parse(inp string) (time.Duration, string, error) {
 	// Check if the rest is a number for date units
 	numPart := inp[:len(inp)-1]
 	isNum := true
+
 	for _, c := range numPart {
 		if c < '0' || c > '9' {
 			isNum = false
 			break
 		}
 	}
+
 	if isNum {
 		num, err := strconv.Atoi(numPart)
 		if err != nil {
 			return 0, "", err
 		}
+
 		return time.Duration(num), string(lastChar), nil
 	}
 
