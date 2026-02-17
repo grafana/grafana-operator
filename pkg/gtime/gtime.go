@@ -6,8 +6,6 @@ import (
 	"regexp"
 	"strconv"
 	"time"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 var dateUnitPattern = regexp.MustCompile(`^(\d+)([dwMy])$`)
@@ -17,7 +15,7 @@ var dateUnitPattern = regexp.MustCompile(`^(\d+)([dwMy])$`)
 func ParseDuration(inp string) (time.Duration, error) {
 	dur, period, err := parse(inp)
 	if err != nil {
-		return 0, backend.DownstreamError(err)
+		return 0, err
 	}
 	if period == "" {
 		return dur, nil
@@ -41,12 +39,12 @@ func ParseDuration(inp string) (time.Duration, error) {
 		return dur * year, nil
 	}
 
-	return 0, backend.DownstreamError(fmt.Errorf("invalid duration %q", inp))
+	return 0, fmt.Errorf("invalid duration %q", inp)
 }
 
 func parse(inp string) (time.Duration, string, error) {
 	if inp == "" {
-		return 0, "", backend.DownstreamError(errors.New("empty input"))
+		return 0, "", errors.New("empty input")
 	}
 
 	// Fast path for simple duration formats (no date units)
