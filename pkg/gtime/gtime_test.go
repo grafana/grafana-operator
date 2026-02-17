@@ -1,3 +1,5 @@
+// NOTE: this is a stripped down version of github.com/grafana/grafana-plugin-sdk-go v0.288.0,
+// it was created to reduce build time and to drop plenty of indirect dependencies
 package gtime
 
 import (
