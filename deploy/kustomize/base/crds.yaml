@@ -2,7 +2,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.0
+    controller-gen.kubebuilder.io/version: v0.20.1
   name: grafanaalertrulegroups.grafana.integreatly.org
 spec:
   group: grafana.integreatly.org
@@ -406,7 +406,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.0
+    controller-gen.kubebuilder.io/version: v0.20.1
   name: grafanacontactpoints.grafana.integreatly.org
 spec:
   group: grafana.integreatly.org
@@ -810,7 +810,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.0
+    controller-gen.kubebuilder.io/version: v0.20.1
   name: grafanadashboards.grafana.integreatly.org
 spec:
   group: grafana.integreatly.org
@@ -1325,7 +1325,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.0
+    controller-gen.kubebuilder.io/version: v0.20.1
   name: grafanadatasources.grafana.integreatly.org
 spec:
   group: grafana.integreatly.org
@@ -1668,7 +1668,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.0
+    controller-gen.kubebuilder.io/version: v0.20.1
   name: grafanafolders.grafana.integreatly.org
 spec:
   group: grafana.integreatly.org
@@ -1904,7 +1904,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.0
+    controller-gen.kubebuilder.io/version: v0.20.1
   name: grafanalibrarypanels.grafana.integreatly.org
 spec:
   group: grafana.integreatly.org
@@ -2406,7 +2406,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.0
+    controller-gen.kubebuilder.io/version: v0.20.1
   name: grafanamanifests.grafana.integreatly.org
 spec:
   group: grafana.integreatly.org
@@ -2739,7 +2739,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.0
+    controller-gen.kubebuilder.io/version: v0.20.1
   name: grafanamutetimings.grafana.integreatly.org
 spec:
   group: grafana.integreatly.org
@@ -3003,7 +3003,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.0
+    controller-gen.kubebuilder.io/version: v0.20.1
   name: grafananotificationpolicies.grafana.integreatly.org
 spec:
   group: grafana.integreatly.org
@@ -3364,7 +3364,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.0
+    controller-gen.kubebuilder.io/version: v0.20.1
   name: grafananotificationpolicyroutes.grafana.integreatly.org
 spec:
   group: grafana.integreatly.org
@@ -3607,7 +3607,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.0
+    controller-gen.kubebuilder.io/version: v0.20.1
   name: grafananotificationtemplates.grafana.integreatly.org
 spec:
   group: grafana.integreatly.org
@@ -3821,7 +3821,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.0
+    controller-gen.kubebuilder.io/version: v0.20.1
   name: grafanas.grafana.integreatly.org
 spec:
   group: grafana.integreatly.org
@@ -12517,7 +12517,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.0
+    controller-gen.kubebuilder.io/version: v0.20.1
   name: grafanaserviceaccounts.grafana.integreatly.org
 spec:
   group: grafana.integreatly.org
