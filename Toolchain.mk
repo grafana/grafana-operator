@@ -29,7 +29,7 @@ MUFFET_VERSION = v2.10.9
 OPERATOR_SDK_VERSION = v1.32.0
 OPM_VERSION = v1.23.2
 # renovate: datasource=github-tags depName=mikefarah/yq
-YQ_VERSION = v4.52.2
+YQ_VERSION = v4.52.3
 # renovate: datasource=github-tags depName=google/go-containerregistry
 CRANE_VERSION = v0.20.7
 
