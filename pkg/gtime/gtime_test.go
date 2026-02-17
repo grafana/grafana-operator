@@ -42,21 +42,6 @@ func TestParseDuration(t *testing.T) {
 	}
 }
 
-func calculateDays() (int, int) {
-	now := time.Now().UTC()
-	currentYear, currentMonth, currentDay := now.Date()
-
-	firstDayOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, time.UTC)
-	daysInMonth := firstDayOfMonth.AddDate(0, 1, -1).Day()
-
-	t1 := time.Date(currentYear, currentMonth, currentDay, 0, 0, 0, 0, time.UTC)
-	t2 := t1.AddDate(1, 0, 0)
-
-	daysInYear := int(t2.Sub(t1).Hours() / 24)
-
-	return daysInMonth, daysInYear
-}
-
 func TestParse(t *testing.T) {
 	tests := []struct {
 		name         string
