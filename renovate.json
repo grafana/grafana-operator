@@ -7,6 +7,25 @@
     "ghcr.io/grafana/grafana-operator",
     "github.com/openshift/api"
   ],
+  "packageRules": [
+    {
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchDatasources": [
+        "github-tags"
+      ],
+      "matchDepNames": [
+        "fybrik/crdoc",
+        "golangci/golangci-lint",
+        "google/go-containerregistry",
+        "kyverno/chainsaw",
+        "mikefarah/yq",
+        "norwoodj/helm-docs"
+      ],
+      "addLabels": ["release-ignore"]
+    }
+  ],
   "customManagers": [
     {
       "customType": "regex",
