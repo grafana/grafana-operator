@@ -12,5 +12,8 @@ bugfix:
 chore:
  - head-branch: ['^chore', '^ci', ^refactor]
 
+dependencies:
+  - head-branch: ['^renovate']
+
 test:
  - head-branch: ['^test']
