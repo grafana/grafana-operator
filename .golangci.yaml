@@ -114,6 +114,10 @@ linters:
           alias: utilruntime
         - pkg: sigs.k8s.io/gateway-api/apis/v1
           alias: gwapiv1
+        - pkg: sigs.k8s.io/kustomize/kyaml/yaml
+          alias: kyaml
+        - pkg: sigs.k8s.io/kustomize/kyaml/utils
+          alias: kyaml_utils
 
     makezero:
       always: false

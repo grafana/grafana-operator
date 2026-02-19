@@ -17,6 +17,7 @@ limitations under the License.
 package controllers
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -451,6 +452,64 @@ func TestMergeReconcileErrors(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := mergeReconcileErrors(tt.sources...)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestGetGrafanaRefValue(t *testing.T) {
+	tests := []struct {
+		name     string
+		instance *v1beta1.Grafana
+		selector *corev1.ObjectFieldSelector
+		want     string
+		wantErr  error
+	}{
+		{
+			name: "Get simple value",
+			instance: &v1beta1.Grafana{
+				Spec: v1beta1.GrafanaSpec{
+					Version: "0.0.1",
+				},
+			},
+			selector: &corev1.ObjectFieldSelector{
+				FieldPath: "spec.version",
+			},
+			want: "0.0.1",
+		},
+		{
+			name: "Get value with dots",
+			instance: &v1beta1.Grafana{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"foo.bar/baz": "some-value",
+					},
+				},
+			},
+			selector: &corev1.ObjectFieldSelector{
+				FieldPath: "metadata.annotations.[foo.bar/baz]",
+			},
+			want: "some-value",
+		},
+		{
+			name:     "Get missing value",
+			instance: &v1beta1.Grafana{},
+			selector: &corev1.ObjectFieldSelector{
+				FieldPath: "metadata.annotations.[foo.bar/baz]",
+			},
+			wantErr: errors.New("field 'metadata.annotations.[foo.bar/baz]' not found"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := getGrafanaRefValue(tt.instance, tt.selector)
+			if tt.wantErr != nil {
+				assert.Equal(t, tt.wantErr, err)
+			} else {
+				require.NoError(t, err)
+			}
+
 			assert.Equal(t, tt.want, got)
 		})
 	}
