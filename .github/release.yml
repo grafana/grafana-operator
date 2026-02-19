@@ -1,8 +1,6 @@
 changelog:
   exclude:
     labels:
-      - chore
-      - refactor
       - release-ignore
   categories:
     - title: Breaking changes
