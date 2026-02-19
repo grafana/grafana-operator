@@ -1,16 +1,19 @@
+bugfix:
+  - head-branch: ['^fix', 'fix', '^bugfix']
+
+chore:
+  - head-branch: ['^chore', '^ci', ^refactor]
+
+dependencies:
+  - head-branch: ['^renovate']
+
 documentation:
 - changed-files:
   - any-glob-to-any-file: docs/**
   - any-glob-to-any-file: examples/**
 
 feature:
- - head-branch: ['^feature', 'feature', '^feat']
-
-bugfix:
- - head-branch: ['^fix', 'fix', '^bugfix']
-
-chore:
- - head-branch: ['^chore', '^ci', ^refactor]
+  - head-branch: ['^feature', 'feature', '^feat']
 
 test:
- - head-branch: ['^test']
+  - head-branch: ['^test']
