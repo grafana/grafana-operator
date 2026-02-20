@@ -24,6 +24,7 @@ require (
 	k8s.io/client-go v0.35.1
 	sigs.k8s.io/controller-runtime v0.23.1
 	sigs.k8s.io/gateway-api v1.3.0
+	sigs.k8s.io/kustomize/kyaml v0.21.1
 )
 
 require (
@@ -45,6 +46,7 @@ require (
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
+	github.com/go-errors/errors v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-openapi/analysis v0.24.1 // indirect

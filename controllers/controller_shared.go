@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	simplejson "github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/resources"
 	corev1 "k8s.io/api/core/v1"
@@ -27,6 +26,8 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	kyaml_utils "sigs.k8s.io/kustomize/kyaml/utils"
+	kyaml "sigs.k8s.io/kustomize/kyaml/yaml"
 )
 
 // +kubebuilder:rbac:groups=grafana.integreatly.org,resources=*,verbs=get;list;watch;patch
@@ -451,19 +452,20 @@ func getConfigMapValue(ctx context.Context, cl client.Client, namespace string, 
 }
 
 func getGrafanaRefValue(instance *v1beta1.Grafana, fieldSelector *corev1.ObjectFieldSelector) (string, error) {
-	data, _ := json.Marshal(instance) //nolint:errcheck // cannot fail
+	data, _ := json.Marshal(instance)    //nolint:errcheck // cannot fail
+	node, _ := kyaml.Parse(string(data)) //nolint:errcheck // cannot fail
+	selector := kyaml_utils.SmarterPathSplitter(fieldSelector.FieldPath, ".")
 
-	content, err := simplejson.NewJson(data)
+	out, err := node.Pipe(kyaml.Lookup(selector...))
 	if err != nil {
-		return "", fmt.Errorf("parsing grafana instance as json: %w", err)
+		return "", fmt.Errorf("failed to perform field path lookup: %w", err)
 	}
 
-	field := content.GetPath(strings.Split(fieldSelector.FieldPath, ".")...)
-
-	val, err := field.String()
-	if err != nil {
-		return "", fmt.Errorf("referenced path is not a string value: %w", err)
+	if out == nil {
+		return "", fmt.Errorf("field '%s' not found", fieldSelector.FieldPath)
 	}
+
+	val := out.Document().Value
 
 	return val, nil
 }
