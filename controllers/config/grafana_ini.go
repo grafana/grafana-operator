@@ -68,7 +68,7 @@ func WriteIni(cfg map[string]map[string]string) string {
 	sb := &strings.Builder{}
 
 	for _, section := range sections {
-		if cfg[section] == nil || len(cfg[section]) == 0 {
+		if len(cfg[section]) == 0 {
 			continue
 		}
 
