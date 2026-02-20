@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	serviceAccountTokenPath = "/var/run/secrets/grafana.com/serviceaccount/token" //nolint:gosec
+	serviceAccountTokenPath = "/var/run/secrets/grafana.com/serviceaccount/token" //#nosec G101
 )
 
 type grafanaAdminCredentials struct {

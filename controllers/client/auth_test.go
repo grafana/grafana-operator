@@ -134,7 +134,7 @@ func TestGetContainerEnvCredentials(t *testing.T) {
 		usernameKey = "user"
 		password    = "secret"
 		passwordKey = "password"
-		secretName  = "grafana-credentials" //nolint:gosec
+		secretName  = "grafana-credentials" //#nosec G101
 		nonExistent = "non-existent"
 	)
 
