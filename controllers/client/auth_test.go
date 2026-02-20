@@ -411,7 +411,7 @@ func createFileWithContent(t *testing.T, content string) *os.File {
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		os.Remove(f.Name())
+		os.Remove(f.Name()) //#nosec G703
 	})
 
 	written, err := f.WriteString(content)

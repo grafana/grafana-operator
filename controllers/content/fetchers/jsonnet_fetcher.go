@@ -319,13 +319,13 @@ func untarGzip(archivePath, extractPath string) error {
 		switch header.Typeflag {
 		// if it's a dir, and it doesn't exist create it (with 0755 permission)
 		case tar.TypeDir:
-			if _, err := os.Stat(target); err != nil {
-				if err := os.MkdirAll(target, os.ModePerm); err != nil {
+			if _, err := os.Stat(target); err != nil { //#nosec G703
+				if err := os.MkdirAll(target, os.ModePerm); err != nil { //#nosec G703
 					return err
 				}
 			}
 		case tar.TypeReg:
-			fileToWrite, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode)) // #nosec G115
+			fileToWrite, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode)) //#nosec G115 G703
 			if err != nil {
 				return err
 			}

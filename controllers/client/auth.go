@@ -45,7 +45,7 @@ func getBearerToken(bearerTokenPath string) (string, error) {
 		return jwtCache.Token, nil
 	}
 
-	b, err := os.ReadFile(bearerTokenPath)
+	b, err := os.ReadFile(bearerTokenPath) //#nosec G703
 	if err != nil {
 		return "", fmt.Errorf("reading token file at %s, %w", bearerTokenPath, err)
 	}

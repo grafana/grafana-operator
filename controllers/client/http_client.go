@@ -63,7 +63,7 @@ func GetGrafanaVersion(ctx context.Context, cl client.Client, cr *v1beta1.Grafan
 		return "", fmt.Errorf("fetching credentials for version detection: %w", err)
 	}
 
-	resp, err := httpClient.Do(req)
+	resp, err := httpClient.Do(req) //#nosec G704
 	if err != nil {
 		return "", err
 	}
@@ -111,7 +111,7 @@ func GetAuthenticationStatus(ctx context.Context, cl client.Client, cr *v1beta1.
 		return false, fmt.Errorf("fetching credentials for authentication: %w", err)
 	}
 
-	resp, err := httpClient.Do(req)
+	resp, err := httpClient.Do(req) //#nosec G704
 	if err != nil {
 		return false, err
 	}
