@@ -134,7 +134,7 @@ func TestGetContainerEnvCredentials(t *testing.T) {
 		usernameKey = "user"
 		password    = "secret"
 		passwordKey = "password"
-		secretName  = "grafana-credentials" //nolint:gosec
+		secretName  = "grafana-credentials" //#nosec G101
 		nonExistent = "non-existent"
 	)
 
@@ -411,7 +411,7 @@ func createFileWithContent(t *testing.T, content string) *os.File {
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		os.Remove(f.Name())
+		os.Remove(f.Name()) //#nosec G703
 	})
 
 	written, err := f.WriteString(content)

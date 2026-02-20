@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	serviceAccountTokenPath = "/var/run/secrets/grafana.com/serviceaccount/token" //nolint:gosec
+	serviceAccountTokenPath = "/var/run/secrets/grafana.com/serviceaccount/token" //#nosec G101
 )
 
 type grafanaAdminCredentials struct {
@@ -45,7 +45,7 @@ func getBearerToken(bearerTokenPath string) (string, error) {
 		return jwtCache.Token, nil
 	}
 
-	b, err := os.ReadFile(bearerTokenPath)
+	b, err := os.ReadFile(bearerTokenPath) //#nosec G703
 	if err != nil {
 		return "", fmt.Errorf("reading token file at %s, %w", bearerTokenPath, err)
 	}
