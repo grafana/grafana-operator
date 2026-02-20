@@ -1,6 +1,7 @@
 changelog:
   exclude:
     labels:
+      - github-actions
       - release-ignore
   categories:
     - title: Breaking changes
