@@ -412,7 +412,7 @@ func buildSynchronizedCondition(resource, syncType string, generation int64, app
 
 		var sb strings.Builder
 		for i, err := range applyErrors {
-			sb.WriteString(fmt.Sprintf("\n- %s: %s", i, err))
+			fmt.Fprintf(&sb, "\n- %s: %s", i, err)
 		}
 
 		condition.Message = fmt.Sprintf("%s failed to be applied for %d out of %d instances. Errors:%s", resource, len(applyErrors), total, sb.String())
