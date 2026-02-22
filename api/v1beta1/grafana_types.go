@@ -43,6 +43,7 @@ const (
 	OperatorStageService        OperatorStageName = "service"
 	OperatorStageIngress        OperatorStageName = "ingress"
 	OperatorStagePlugins        OperatorStageName = "plugins"
+	OperatorStageSecrets        OperatorStageName = "secrets"
 	OperatorStageDeployment     OperatorStageName = "deployment"
 	OperatorStageComplete       OperatorStageName = "complete"
 )
@@ -60,6 +61,9 @@ type OperatorReconcileVars struct {
 
 	// env var value for installed plugins
 	Plugins string
+
+	// used to restart the Grafana container when referenced secrets or configmaps change
+	SecretsHash string
 }
 
 // GrafanaSpec defines the desired state of Grafana

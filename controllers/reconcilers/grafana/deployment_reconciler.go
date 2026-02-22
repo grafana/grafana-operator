@@ -174,6 +174,11 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 			Value: vars.Plugins,
 		},
 		{
+			// helps to restart Grafana when referenced secrets or configmaps are rotated
+			Name:  "SECRETS_HASH",
+			Value: vars.SecretsHash,
+		},
+		{
 			// sets location where temporary files can be written (e.g. plugin downloads)
 			Name:  "TMPDIR",
 			Value: config.GrafanaDataPath,
