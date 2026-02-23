@@ -28083,6 +28083,8 @@ GrafanaServiceAccount is the Schema for the grafanaserviceaccounts API
         <td>object</td>
         <td>
           GrafanaServiceAccountSpec defines the desired state of a GrafanaServiceAccount.<br/>
+          <br/>
+            <i>Validations</i>:<li>((!has(oldSelf.name) && !has(self.name)) || (has(oldSelf.name) && has(self.name))): spec.name is immutable</li>
         </td>
         <td>false</td>
       </tr><tr>
@@ -28122,15 +28124,6 @@ GrafanaServiceAccountSpec defines the desired state of a GrafanaServiceAccount.
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b>name</b></td>
-        <td>string</td>
-        <td>
-          Name of the service account in Grafana<br/>
-          <br/>
-            <i>Validations</i>:<li>self == oldSelf: spec.name is immutable</li>
-        </td>
-        <td>true</td>
-      </tr><tr>
         <td><b>role</b></td>
         <td>enum</td>
         <td>
@@ -28146,6 +28139,15 @@ GrafanaServiceAccountSpec defines the desired state of a GrafanaServiceAccount.
           Whether the service account is disabled<br/>
           <br/>
             <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the service account in Grafana<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: spec.name is immutable</li>
         </td>
         <td>false</td>
       </tr><tr>

@@ -26,13 +26,14 @@ kind: Secret
 apiVersion: v1
 metadata:
   annotations:
-    operator.grafana.com/service-account-spec-name: my-service-account
+    operator.grafana.com/service-account-name: mysa
+    operator.grafana.com/service-account-display-name: my-service-account
     operator.grafana.com/service-account-token-name: my-token-b
   labels:
     app.kubernetes.io/managed-by: grafana-operator
     operator.grafana.com/service-account-instance: grafana
     operator.grafana.com/service-account-name: mysa
-  generateName: grafana-my-service-account-my-token-b-
+  generateName: grafana-mysa-my-token-b-
   ownerReferences:
     - kind: GrafanaServiceAccount
       name: mysa
@@ -41,7 +42,8 @@ apiVersion: v1
 kind: Secret
 metadata:
   annotations:
-    operator.grafana.com/service-account-spec-name: my-service-account
+    operator.grafana.com/service-account-name: mysa
+    operator.grafana.com/service-account-display-name: my-service-account
     operator.grafana.com/service-account-token-name: my-token-a
   labels:
     app.kubernetes.io/managed-by: grafana-operator

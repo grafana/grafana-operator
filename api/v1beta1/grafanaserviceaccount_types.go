@@ -40,6 +40,7 @@ type GrafanaServiceAccountTokenSpec struct {
 }
 
 // GrafanaServiceAccountSpec defines the desired state of a GrafanaServiceAccount.
+// +kubebuilder:validation:XValidation:rule="((!has(oldSelf.name) && !has(self.name)) || (has(oldSelf.name) && has(self.name)))", message="spec.name is immutable"
 type GrafanaServiceAccountSpec struct {
 	// How often the resource is synced, defaults to 10m0s if not set
 	// +optional
@@ -60,10 +61,9 @@ type GrafanaServiceAccountSpec struct {
 	InstanceName string `json:"instanceName"`
 
 	// Name of the service account in Grafana
-	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="spec.name is immutable"
-	Name string `json:"name"`
+	Name string `json:"name,omitempty"`
 
 	// Role of the service account (Viewer, Editor, Admin)
 	// +kubebuilder:validation:Required
@@ -198,6 +198,15 @@ func (in *GrafanaServiceAccount) CommonStatus() *GrafanaCommonStatus {
 
 func (in *GrafanaServiceAccount) Conditions() *[]metav1.Condition {
 	return &in.Status.Conditions
+}
+
+// GetGrafanaName selects a display name to be used for the resulting Grafana Service Account(preference: spec.name -> metadata.name)
+func (in *GrafanaServiceAccount) GetGrafanaName() string {
+	if in.Spec.Name != "" {
+		return in.Spec.Name
+	}
+
+	return in.Name
 }
 
 func init() {

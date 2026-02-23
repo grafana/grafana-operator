@@ -12632,9 +12632,12 @@ spec:
                 x-kubernetes-list-type: map
             required:
             - instanceName
-            - name
             - role
             type: object
+            x-kubernetes-validations:
+            - message: spec.name is immutable
+              rule: ((!has(oldSelf.name) && !has(self.name)) || (has(oldSelf.name)
+                && has(self.name)))
           status:
             description: GrafanaServiceAccountStatus defines the observed state of
               a GrafanaServiceAccount

@@ -94,6 +94,20 @@ var _ = Describe("ServiceAccount Reconciler: Provoke Conditions", func() {
 				Reason: conditionReasonApplySuccessful,
 			},
 		},
+		{
+			name: "Successfully applied resource without spec name",
+			meta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "use-meta-name",
+			},
+			spec: v1beta1.GrafanaServiceAccountSpec{
+				InstanceName: grafanaName,
+			},
+			want: metav1.Condition{
+				Type:   conditionServiceAccountSynchronized,
+				Reason: conditionReasonApplySuccessful,
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -121,9 +135,7 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 				Name:      "delete-and-recreate",
 				Namespace: "default",
 			},
-			Spec: v1beta1.GrafanaServiceAccountSpec{
-				Name: "delete-and-recreate",
-			},
+			Spec: v1beta1.GrafanaServiceAccountSpec{},
 		}
 
 		r := createAndReconcileCR(t, cr)
@@ -153,7 +165,6 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 				Namespace: "default",
 			},
 			Spec: v1beta1.GrafanaServiceAccountSpec{
-				Name: "token-delete-and-recreated",
 				Tokens: []v1beta1.GrafanaServiceAccountTokenSpec{{
 					Name: "should-be-recreated",
 				}},
@@ -214,9 +225,7 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 				Name:      "revert-to-spec",
 				Namespace: "default",
 			},
-			Spec: v1beta1.GrafanaServiceAccountSpec{
-				Name: "revert-to-spec",
-			},
+			Spec: v1beta1.GrafanaServiceAccountSpec{},
 		}
 
 		r := createAndReconcileCR(t, cr)
@@ -258,7 +267,6 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 				Namespace: "default",
 			},
 			Spec: v1beta1.GrafanaServiceAccountSpec{
-				Name: "add-token",
 				Tokens: []v1beta1.GrafanaServiceAccountTokenSpec{{
 					Name: "first",
 				}},
@@ -460,7 +468,7 @@ func reconcileAndCompareSpecWithStatus(t FullGinkgoTInterface, cr *v1beta1.Grafa
 	require.NotNil(t, sa)
 	require.NotNil(t, sa.Payload)
 
-	require.Equal(t, cr.Spec.Name, sa.Payload.Name)
+	require.Equal(t, cr.GetGrafanaName(), sa.Payload.Name)
 	require.Equal(t, cr.Spec.Role, sa.Payload.Role)
 	require.Equal(t, cr.Spec.IsDisabled, sa.Payload.IsDisabled)
 	require.Len(t, cr.Spec.Tokens, int(sa.Payload.Tokens))
@@ -532,7 +540,6 @@ var _ = Describe("ServiceAccount Controller: Integration Tests", func() {
 				Spec: v1beta1.GrafanaServiceAccountSpec{
 					ResyncPeriod: metav1.Duration{Duration: 10 * time.Minute},
 					InstanceName: grafanaName,
-					Name:         "test-account-with-token",
 					Role:         "Admin",
 					Tokens: []v1beta1.GrafanaServiceAccountTokenSpec{
 						{
@@ -603,7 +610,7 @@ var _ = Describe("ServiceAccount Controller: Integration Tests", func() {
 			)
 			require.NoError(t, err)
 			require.Equal(t, "Admin", saFromGrafana.Payload.Role)
-			require.Equal(t, "test-account-with-token", saFromGrafana.Payload.Name)
+			require.Equal(t, name, saFromGrafana.Payload.Name)
 			require.False(t, saFromGrafana.Payload.IsDisabled)
 
 			// Verify that the token exists in Grafana
