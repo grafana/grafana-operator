@@ -36,6 +36,9 @@ As a part of the CI solution these settings will be validated, but all of them c
 Before pushing any code we recommend that you run the following make commands:
 
 ```shell
+# When making changes to dependencies
+make tidy
+# Always
 make test
 ```
 

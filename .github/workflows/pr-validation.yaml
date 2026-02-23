@@ -108,7 +108,7 @@ jobs:
         run: |
           if [[ $(git status --porcelain) ]]; then
             git diff
-            echo '::error::run make test and commit changes'
+            echo '::error::run make tidy (if changing dependencies) and/or make test and commit changes'
             exit 1
           fi
 
