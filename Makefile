@@ -173,6 +173,11 @@ test-short: ## Skips slow integration tests
 	$(info $(M) running $@)
 	go test ./... -short -coverprofile cover.out
 
+.PHONY: tidy
+tidy: ## Run go mod tidy.
+	$(info $(M) running $@)
+	go mod tidy
+
 .PHONY: vet
 vet: ## Run go vet against code.
 	$(info $(M) running $@)
