@@ -12,9 +12,9 @@ func SkipTestIfInRange(t tHelper, semverRange, version string) {
 	rangeChecker, err := semver.ParseRange(semverRange)
 	require.NoError(t, err)
 
-	isWithinRange := rangeChecker(v)
+	isInRange := rangeChecker(v)
 
-	if isWithinRange {
+	if isInRange {
 		t.Skip()
 	}
 }
