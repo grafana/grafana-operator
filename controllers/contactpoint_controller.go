@@ -328,9 +328,13 @@ func (r *GrafanaContactPointReconciler) getReceivers(gClient *genapi.GrafanaHTTP
 		version = semver.MustParse(config.GrafanaVersion)
 	}
 
+	// Versions that do not support "name" parameter in GetContactpoints API calls
+	// E.g. Amazon Managed Grafana is still pinned to <10.4.6
+	rangeChecker := semver.MustParseRange(">=10.4.0 <=10.4.5")
+	hasOldAPI := rangeChecker(version)
+
 	switch {
-	case version.GTE(semver.MustParse("10.4.0")) && version.LTE(semver.MustParse("10.4.5")):
-		// workaround for an issue with Amazon Managed Grafana which is still pinned to <10.4.6
+	case hasOldAPI:
 		return r.getReceiversFromList(gClient, cr)
 	default:
 		return r.getReceiversFromName(gClient, cr)
