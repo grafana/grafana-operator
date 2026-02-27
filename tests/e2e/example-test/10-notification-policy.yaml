@@ -8,7 +8,7 @@ spec:
     matchLabels:
       dashboards: "grafana"
   route:
-    receiver: grafana-default-email
+    receiver: single-receiver-format
     group_by:
       - grafana_folder
       - alertname
