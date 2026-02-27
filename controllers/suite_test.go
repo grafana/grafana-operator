@@ -24,6 +24,7 @@ import (
 	"strings"
 	"testing"
 
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -47,7 +48,8 @@ import (
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
 const (
-	grafanaName = "external-grafana"
+	grafanaName     = "external-grafana"
+	defaultReceiver = "test-contact-point"
 )
 
 var (
@@ -231,6 +233,37 @@ func createSharedTestCRs() {
 	req := tk8s.GetRequest(t, appliedFolder)
 	fr := GrafanaFolderReconciler{Client: cl, Scheme: cl.Scheme()}
 	_, err = fr.Reconcile(testCtx, req)
+	require.NoError(t, err)
+
+	By("Creating GrafanaContactPoint for testing")
+
+	contactPoint := &v1beta1.GrafanaContactPoint{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "pre-existing",
+		},
+		Spec: v1beta1.GrafanaContactPointSpec{
+			Name:              defaultReceiver,
+			GrafanaCommonSpec: commonSpecSynchronized,
+			Receivers: []v1beta1.ContactPointReceiver{
+				{
+					Type: "email",
+					Settings: &apiextensionsv1.JSON{
+						Raw: []byte(`{"addresses": "noreply@example.com"}`),
+					},
+				},
+			},
+		},
+	}
+
+	By("Reconciling GrafanaContactPoint")
+
+	err = cl.Create(testCtx, contactPoint)
+	require.NoError(t, err)
+
+	req = tk8s.GetRequest(t, contactPoint)
+	cpr := GrafanaContactPointReconciler{Client: cl, Scheme: cl.Scheme()}
+	_, err = cpr.Reconcile(testCtx, req)
 	require.NoError(t, err)
 }
 

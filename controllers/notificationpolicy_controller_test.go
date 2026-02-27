@@ -452,7 +452,7 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke Conditions", func() {
 			spec: v1beta1.GrafanaNotificationPolicySpec{
 				GrafanaCommonSpec: commonSpecSuspended,
 				Route: &v1beta1.TopLevelRoute{
-					PartialRoute: v1beta1.PartialRoute{Receiver: "default-receiver"},
+					PartialRoute: v1beta1.PartialRoute{Receiver: defaultReceiver},
 				},
 			},
 			want: metav1.Condition{
@@ -466,7 +466,7 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke Conditions", func() {
 			spec: v1beta1.GrafanaNotificationPolicySpec{
 				GrafanaCommonSpec: commonSpecNoMatchingInstances,
 				Route: &v1beta1.TopLevelRoute{
-					PartialRoute: v1beta1.PartialRoute{Receiver: "default-receiver"},
+					PartialRoute: v1beta1.PartialRoute{Receiver: defaultReceiver},
 				},
 			},
 			want: metav1.Condition{
@@ -481,7 +481,7 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke Conditions", func() {
 			spec: v1beta1.GrafanaNotificationPolicySpec{
 				GrafanaCommonSpec: commonSpecApplyFailed,
 				Route: &v1beta1.TopLevelRoute{
-					PartialRoute: v1beta1.PartialRoute{Receiver: "default-receiver"},
+					PartialRoute: v1beta1.PartialRoute{Receiver: defaultReceiver},
 				},
 			},
 			want: metav1.Condition{
@@ -497,10 +497,10 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke Conditions", func() {
 				GrafanaCommonSpec: commonSpecInvalidSpec,
 				Route: &v1beta1.TopLevelRoute{
 					PartialRoute: v1beta1.PartialRoute{
-						Receiver: "default-receiver",
+						Receiver: defaultReceiver,
 						Routes: []*v1beta1.Route{{
 							PartialRoute: v1beta1.PartialRoute{
-								Receiver: "default-receiver",
+								Receiver: defaultReceiver,
 							},
 						}},
 						RouteSelector: &metav1.LabelSelector{
@@ -521,7 +521,7 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke Conditions", func() {
 			spec: v1beta1.GrafanaNotificationPolicySpec{
 				GrafanaCommonSpec: commonSpecSynchronized,
 				Route: &v1beta1.TopLevelRoute{
-					PartialRoute: v1beta1.PartialRoute{Receiver: "grafana-default-email"},
+					PartialRoute: v1beta1.PartialRoute{Receiver: defaultReceiver},
 				},
 			},
 			want: metav1.Condition{
