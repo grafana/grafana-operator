@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -60,6 +61,9 @@ type OperatorReconcileVars struct {
 
 	// env var value for installed plugins
 	Plugins string
+
+	// used to restart the Grafana container when referenced secrets or configmaps change
+	SecretsHash string
 }
 
 // GrafanaSpec defines the desired state of Grafana
@@ -339,4 +343,154 @@ func (in *Grafana) RemoveNamespacedResource(ctx context.Context, cl client.Clien
 
 func (in *Grafana) Conditions() *[]metav1.Condition {
 	return &in.Status.Conditions
+}
+
+// ReferencedSecretsAndConfigMaps returns deduplicated, sorted lists of Secret and ConfigMap names
+// that the Grafana spec actually uses. Only these resources should drive a content hash so that
+// when they change, the deployment's pod template changes and Kubernetes rolls out new pods.
+//
+// Refs are collected from: (1) deployment pod template — container Env ValueFrom (SecretKeyRef/
+// ConfigMapKeyRef) and EnvFrom (SecretRef/ConfigMapRef), plus volume Secret and ConfigMap;
+// (2) external — AdminUser, AdminPassword, APIKey, TLS cert Secret if set; (3) client TLS cert
+// Secret if set. The deployment reconciler uses this to compute a hash of those resources'
+// ResourceVersions and sets the checksum/secrets pod template annotation.
+func (in *Grafana) ReferencedSecretsAndConfigMaps() (secretNames, configMapNames []string) {
+	secretSet := make(map[string]struct{})
+	configMapSet := make(map[string]struct{})
+
+	sec, cm := in.collectDeploymentRefs()
+	for _, s := range sec {
+		if s != "" {
+			secretSet[s] = struct{}{}
+		}
+	}
+
+	for _, c := range cm {
+		if c != "" {
+			configMapSet[c] = struct{}{}
+		}
+	}
+
+	for _, s := range in.collectExternalRefs() {
+		if s != "" {
+			secretSet[s] = struct{}{}
+		}
+	}
+
+	for _, s := range in.collectClientRefs() {
+		if s != "" {
+			secretSet[s] = struct{}{}
+		}
+	}
+
+	secretNames = make([]string, 0, len(secretSet))
+	for n := range secretSet {
+		secretNames = append(secretNames, n)
+	}
+
+	configMapNames = make([]string, 0, len(configMapSet))
+	for n := range configMapSet {
+		configMapNames = append(configMapNames, n)
+	}
+
+	sort.Strings(secretNames)
+	sort.Strings(configMapNames)
+
+	return secretNames, configMapNames
+}
+
+func (in *Grafana) collectDeploymentRefs() (secrets, configMaps []string) {
+	if in.Spec.Deployment == nil ||
+		in.Spec.Deployment.Spec.Template == nil ||
+		in.Spec.Deployment.Spec.Template.Spec == nil {
+		return nil, nil
+	}
+
+	podSpec := in.Spec.Deployment.Spec.Template.Spec
+
+	allContainers := make([]corev1.Container, 0, len(podSpec.Containers)+len(podSpec.InitContainers))
+	allContainers = append(allContainers, podSpec.Containers...)
+	allContainers = append(allContainers, podSpec.InitContainers...)
+
+	for _, c := range allContainers {
+		sec, cm := collectContainerEnvRefs(c)
+		secrets = append(secrets, sec...)
+		configMaps = append(configMaps, cm...)
+	}
+
+	for _, vol := range podSpec.Volumes {
+		if vol.Secret != nil {
+			secrets = append(secrets, vol.Secret.SecretName)
+		}
+
+		if vol.ConfigMap != nil {
+			configMaps = append(configMaps, vol.ConfigMap.Name)
+		}
+	}
+
+	return secrets, configMaps
+}
+
+func collectContainerEnvRefs(c corev1.Container) (secrets, configMaps []string) {
+	for _, env := range c.Env {
+		if env.ValueFrom == nil {
+			continue
+		}
+
+		if env.ValueFrom.SecretKeyRef != nil {
+			secrets = append(secrets, env.ValueFrom.SecretKeyRef.Name)
+		}
+
+		if env.ValueFrom.ConfigMapKeyRef != nil {
+			configMaps = append(configMaps, env.ValueFrom.ConfigMapKeyRef.Name)
+		}
+	}
+
+	for _, envFrom := range c.EnvFrom {
+		if envFrom.SecretRef != nil {
+			secrets = append(secrets, envFrom.SecretRef.Name)
+		}
+
+		if envFrom.ConfigMapRef != nil {
+			configMaps = append(configMaps, envFrom.ConfigMapRef.Name)
+		}
+	}
+
+	return secrets, configMaps
+}
+
+func (in *Grafana) collectExternalRefs() []string {
+	if in.Spec.External == nil {
+		return nil
+	}
+
+	ext := in.Spec.External
+
+	var refs []string
+
+	if ext.APIKey != nil {
+		refs = append(refs, ext.APIKey.Name)
+	}
+
+	if ext.AdminUser != nil {
+		refs = append(refs, ext.AdminUser.Name)
+	}
+
+	if ext.AdminPassword != nil {
+		refs = append(refs, ext.AdminPassword.Name)
+	}
+
+	if ext.TLS != nil && ext.TLS.CertSecretRef != nil {
+		refs = append(refs, ext.TLS.CertSecretRef.Name)
+	}
+
+	return refs
+}
+
+func (in *Grafana) collectClientRefs() []string {
+	if in.Spec.Client == nil || in.Spec.Client.TLS == nil || in.Spec.Client.TLS.CertSecretRef == nil {
+		return nil
+	}
+
+	return []string{in.Spec.Client.TLS.CertSecretRef.Name}
 }

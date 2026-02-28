@@ -43,7 +43,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 )
@@ -314,6 +316,21 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *GrafanaReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
+	const (
+		secretIndexKey    string = ".metadata.secret"
+		configMapIndexKey string = ".metadata.configMap"
+	)
+
+	if err := mgr.GetCache().IndexField(ctx, &v1beta1.Grafana{}, secretIndexKey,
+		r.indexSecretSource()); err != nil {
+		return fmt.Errorf("failed setting secret index fields: %w", err)
+	}
+
+	if err := mgr.GetCache().IndexField(ctx, &v1beta1.Grafana{}, configMapIndexKey,
+		r.indexConfigMapSource()); err != nil {
+		return fmt.Errorf("failed setting configmap index fields: %w", err)
+	}
+
 	b := ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.Grafana{}, builder.WithPredicates(ignoreStatusUpdates())).
 		Owns(&appsv1.Deployment{}, builder.WithPredicates(ignoreStatusUpdates())).
@@ -323,6 +340,14 @@ func (r *GrafanaReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manag
 		Owns(&corev1.ServiceAccount{}).
 		Owns(&corev1.Service{}, builder.WithPredicates(ignoreStatusUpdates())).
 		Owns(&networkingv1.Ingress{}, builder.WithPredicates(ignoreStatusUpdates())).
+		Watches(
+			&corev1.Secret{},
+			handler.EnqueueRequestsFromMapFunc(r.requestsForChangeByField(secretIndexKey)),
+		).
+		Watches(
+			&corev1.ConfigMap{},
+			handler.EnqueueRequestsFromMapFunc(r.requestsForChangeByField(configMapIndexKey)),
+		).
 		WithOptions(controller.Options{RateLimiter: defaultRateLimiter()})
 
 	if r.IsOpenShift {
@@ -415,4 +440,62 @@ func (r *GrafanaReconciler) getReconcilerForStage(stage v1beta1.OperatorStageNam
 
 func isImageSHA256(image string) bool {
 	return strings.Contains(image, "@sha256:")
+}
+
+func (r *GrafanaReconciler) indexSecretSource() func(client.Object) []string {
+	return func(o client.Object) []string {
+		cr, ok := o.(*v1beta1.Grafana)
+		if !ok {
+			panic(fmt.Sprintf("Expected a Grafana, got %T", o))
+		}
+
+		secretNames, _ := cr.ReferencedSecretsAndConfigMaps()
+
+		refs := make([]string, 0, len(secretNames))
+		for _, name := range secretNames {
+			refs = append(refs, fmt.Sprintf("%s/%s", cr.Namespace, name))
+		}
+
+		return refs
+	}
+}
+
+func (r *GrafanaReconciler) indexConfigMapSource() func(client.Object) []string {
+	return func(o client.Object) []string {
+		cr, ok := o.(*v1beta1.Grafana)
+		if !ok {
+			panic(fmt.Sprintf("Expected a Grafana, got %T", o))
+		}
+
+		_, configMapNames := cr.ReferencedSecretsAndConfigMaps()
+
+		refs := make([]string, 0, len(configMapNames))
+		for _, name := range configMapNames {
+			refs = append(refs, fmt.Sprintf("%s/%s", cr.Namespace, name))
+		}
+
+		return refs
+	}
+}
+
+func (r *GrafanaReconciler) requestsForChangeByField(indexKey string) handler.MapFunc {
+	return func(ctx context.Context, o client.Object) []reconcile.Request {
+		var list v1beta1.GrafanaList
+		if err := r.List(ctx, &list, client.MatchingFields{
+			indexKey: fmt.Sprintf("%s/%s", o.GetNamespace(), o.GetName()),
+		}); err != nil {
+			logf.FromContext(ctx).Error(err, "failed to list grafana instances for watch mapping")
+			return nil
+		}
+
+		var reqs []reconcile.Request
+		for _, gr := range list.Items {
+			reqs = append(reqs, reconcile.Request{NamespacedName: types.NamespacedName{
+				Namespace: gr.Namespace,
+				Name:      gr.Name,
+			}})
+		}
+
+		return reqs
+	}
 }
