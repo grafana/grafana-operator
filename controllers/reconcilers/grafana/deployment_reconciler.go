@@ -75,7 +75,9 @@ func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafan
 
 		removeInvalidMergeCondition(cr, "Deployment")
 
-		// Set checksum annotation after merge so it is not overwritten by user spec; triggers rollout on secret rotation.
+		// Set checksum annotation after merge so it is not overwritten by user spec. We recompute the hash
+		// each reconcile from referenced Secrets/ConfigMaps' ResourceVersions; when any of them change, the
+		// hash changes, so the pod template changes and the deployment controller rolls out new pods.
 		if deployment.Spec.Template.Annotations == nil {
 			deployment.Spec.Template.Annotations = make(map[string]string)
 		}
@@ -367,7 +369,7 @@ func (r *DeploymentReconciler) computeSecretsHash(ctx context.Context, cr *v1bet
 	log := logf.FromContext(ctx).WithName("DeploymentReconciler")
 	secretNames, configMapNames := cr.ReferencedSecretsAndConfigMaps()
 
-	var resourceVersions []string
+	var resourceVersions []string // entries "secret/name=rv" or "configmap/name=rv", later sorted and hashed
 
 	for _, name := range secretNames {
 		secret := &corev1.Secret{}
@@ -406,6 +408,8 @@ func (r *DeploymentReconciler) computeSecretsHash(ctx context.Context, cr *v1bet
 	return hashResourceVersions(resourceVersions), nil
 }
 
+// hashResourceVersions produces a deterministic hex hash from a slice of "kind/name=resourceVersion"
+// entries. Sorts the slice so order does not affect the hash, then SHA-256 hashes the concatenated strings.
 func hashResourceVersions(versions []string) string {
 	if len(versions) == 0 {
 		return ""

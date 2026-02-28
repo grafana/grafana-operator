@@ -346,7 +346,14 @@ func (in *Grafana) Conditions() *[]metav1.Condition {
 }
 
 // ReferencedSecretsAndConfigMaps returns deduplicated, sorted lists of Secret and ConfigMap names
-// referenced in the Grafana spec (deployment containers/volumes, external, client TLS).
+// that the Grafana spec actually uses. Only these resources should drive a content hash so that
+// when they change, the deployment's pod template changes and Kubernetes rolls out new pods.
+//
+// Refs are collected from: (1) deployment pod template — container Env ValueFrom (SecretKeyRef/
+// ConfigMapKeyRef) and EnvFrom (SecretRef/ConfigMapRef), plus volume Secret and ConfigMap;
+// (2) external — AdminUser, AdminPassword, APIKey, TLS cert Secret if set; (3) client TLS cert
+// Secret if set. The deployment reconciler uses this to compute a hash of those resources'
+// ResourceVersions and sets the checksum/secrets pod template annotation.
 func (in *Grafana) ReferencedSecretsAndConfigMaps() (secretNames, configMapNames []string) {
 	secretSet := make(map[string]struct{})
 	configMapSet := make(map[string]struct{})
