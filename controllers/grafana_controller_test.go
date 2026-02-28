@@ -196,9 +196,7 @@ func TestGrafanaIndexing(t *testing.T) {
 									{
 										Env: []corev1.EnvVar{
 											{
-												ValueFrom: &corev1.EnvVarSource{
-													ConfigMapKeyRef: tk8s.GetConfigMapKeySelector(t, "app-config", "log_level"),
-												},
+												ValueFrom: tk8s.GetEnvVarConfigMapSource(t, "app-config", "log_level"),
 											},
 										},
 									},
@@ -335,9 +333,7 @@ func TestGrafanaIndexing(t *testing.T) {
 											{ValueFrom: &corev1.EnvVarSource{
 												SecretKeyRef: tk8s.GetSecretKeySelector(t, "secret1", "key"),
 											}},
-											{ValueFrom: &corev1.EnvVarSource{
-												ConfigMapKeyRef: tk8s.GetConfigMapKeySelector(t, "cm1", "key"),
-											}},
+											{ValueFrom: tk8s.GetEnvVarConfigMapSource(t, "cm1", "key")},
 										},
 									},
 								},

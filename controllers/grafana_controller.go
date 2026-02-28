@@ -408,7 +408,6 @@ func getInstallationStages() []v1beta1.OperatorStageName {
 		v1beta1.OperatorStageService,
 		v1beta1.OperatorStageIngress,
 		v1beta1.OperatorStagePlugins,
-		v1beta1.OperatorStageSecrets,
 		v1beta1.OperatorStageDeployment,
 		v1beta1.OperatorStageComplete,
 	}
@@ -430,8 +429,6 @@ func (r *GrafanaReconciler) getReconcilerForStage(stage v1beta1.OperatorStageNam
 		return grafana.NewIngressReconciler(r.Client, r.IsOpenShift, r.HasHTTPRouteCRD)
 	case v1beta1.OperatorStagePlugins:
 		return grafana.NewPluginsReconciler(r.Client)
-	case v1beta1.OperatorStageSecrets:
-		return grafana.NewSecretsReconciler(r.Client)
 	case v1beta1.OperatorStageDeployment:
 		return grafana.NewDeploymentReconciler(r.Client, r.IsOpenShift)
 	case v1beta1.OperatorStageComplete:
@@ -452,7 +449,7 @@ func (r *GrafanaReconciler) indexSecretSource() func(client.Object) []string {
 			panic(fmt.Sprintf("Expected a Grafana, got %T", o))
 		}
 
-		secretNames, _ := grafana.ReferencedSecretsAndConfigMaps(cr)
+		secretNames, _ := cr.ReferencedSecretsAndConfigMaps()
 
 		refs := make([]string, 0, len(secretNames))
 		for _, name := range secretNames {
@@ -470,7 +467,7 @@ func (r *GrafanaReconciler) indexConfigMapSource() func(client.Object) []string 
 			panic(fmt.Sprintf("Expected a Grafana, got %T", o))
 		}
 
-		_, configMapNames := grafana.ReferencedSecretsAndConfigMaps(cr)
+		_, configMapNames := cr.ReferencedSecretsAndConfigMaps()
 
 		refs := make([]string, 0, len(configMapNames))
 		for _, name := range configMapNames {
