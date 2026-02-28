@@ -41,7 +41,7 @@ func newNotificationPolicy(name string, editable *bool) *GrafanaNotificationPoli
 			},
 			Route: &TopLevelRoute{
 				PartialRoute: PartialRoute{
-					Receiver: "grafana-default-email",
+					Receiver: "empty",
 					GroupBy:  []string{"group_name", "alert_name"},
 					Routes:   []*Route{},
 				},

@@ -8883,7 +8883,7 @@ spec:
                   description: |-
                     Version sets the tag of the default image: docker.io/grafana/grafana.
                     Allows full image refs with/without sha256checksum: "registry/repo/image:tag@sha"
-                    default: 12.3.3
+                    default: 12.4.0
                   type: string
               type: object
             status:

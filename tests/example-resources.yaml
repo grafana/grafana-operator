@@ -72,12 +72,12 @@ spec:
       test: "testdata"
   resyncPeriod: 3s
   route:
-    receiver: grafana-default-email
+    receiver: testdata
     group_by:
       - grafana_folder
       - alertname
     routes:
-      - receiver: grafana-default-email
+      - receiver: testdata
         object_matchers:
           - - team
             - =
@@ -93,7 +93,7 @@ metadata:
     team-a: "child"
   name: team-b
 spec:
-  receiver: grafana-default-email
+  receiver: testdata
   object_matchers:
     - - team
       - =
@@ -109,7 +109,7 @@ metadata:
     team-b: "child"
   name: team-c
 spec:
-  receiver: grafana-default-email
+  receiver: testdata
   object_matchers:
     - - team
       - =

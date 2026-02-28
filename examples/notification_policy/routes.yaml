@@ -8,12 +8,13 @@ spec:
     matchLabels:
       dashboards: "grafana"
   route:
-    receiver: grafana-default-email
+    # NOTE: starting from Grafana 12.4.0, "empty" receiver is pre-provisioned instead of grafana-default-email
+    receiver: empty
     group_by:
       - grafana_folder
       - alertname
     routes:
-      - receiver: grafana-default-email
+      - receiver: empty
         object_matchers:
           - - team
             - =
@@ -24,7 +25,7 @@ spec:
         routeSelector:
           matchLabels:
             team-a: "child"
-      - receiver: grafana-default-email
+      - receiver: empty
         object_matchers:
           - - team
             - =
@@ -41,7 +42,7 @@ metadata:
   labels:
     team-a: "child"
 spec:
-  receiver: grafana-default-email
+  receiver: empty
   object_matchers:
     - - crossNamespace
       - =
@@ -60,7 +61,7 @@ metadata:
   labels:
     team-c: "child"
 spec:
-  receiver: grafana-default-email
+  receiver: empty
   object_matchers:
     - - dynamic
       - =
@@ -73,7 +74,7 @@ metadata:
   labels:
     team-a: "child"
 spec:
-  receiver: grafana-default-email
+  receiver: empty
   object_matchers:
     - - dynamic
       - =

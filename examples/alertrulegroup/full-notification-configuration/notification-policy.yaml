@@ -8,7 +8,8 @@ spec:
     matchLabels:
       instance: "my-grafana-stack"
   route:
-    receiver: grafana-default-email
+    # NOTE: starting from Grafana 12.4.0, "empty" receiver is pre-provisioned instead of grafana-default-email
+    receiver: empty
     group_by:
       - grafana_folder
       - alertname
