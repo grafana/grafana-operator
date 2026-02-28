@@ -3,7 +3,7 @@ include Toolchain.mk
 .DEFAULT_GOAL := all
 
 # Current Operator version
-VERSION ?= 5.21.4
+VERSION ?= 5.22.0
 
 # BUNDLE_GEN_FLAGS are the flags passed to the operator-sdk generate bundle command
 BUNDLE_GEN_FLAGS ?= -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
@@ -172,6 +172,11 @@ test: $(ENVTEST) manifests generate vet golangci-lint api-docs kustomize-lint he
 test-short: ## Skips slow integration tests
 	$(info $(M) running $@)
 	go test ./... -short -coverprofile cover.out
+
+.PHONY: tidy
+tidy: ## Run go mod tidy.
+	$(info $(M) running $@)
+	go mod tidy
 
 .PHONY: vet
 vet: ## Run go vet against code.

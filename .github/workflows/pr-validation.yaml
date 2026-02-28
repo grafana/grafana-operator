@@ -74,7 +74,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup go
-        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6
+        uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6
         with:
           go-version-file: "go.mod"
           cache: false
@@ -100,11 +100,15 @@ jobs:
         run: |
           make test
 
+      - name: Run go mod tidy
+        run: |
+          make tidy
+
       - name: Check if working tree is dirty
         run: |
           if [[ $(git status --porcelain) ]]; then
             git diff
-            echo '::error::run make test and commit changes'
+            echo '::error::run make tidy (if changing dependencies) and/or make test and commit changes'
             exit 1
           fi
 
@@ -125,7 +129,7 @@ jobs:
           persist-credentials: false
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@c1824fd6edce30d7ab345a9989de00bbd46ef284 # 0.34.0
+        uses: aquasecurity/trivy-action@e368e328979b113139d6f9068e03accaed98a518 # 0.34.1
         with:
           scan-type: "fs"
           scan-ref: "."
@@ -165,7 +169,7 @@ jobs:
           persist-credentials: false
 
       - name: Install go
-        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6
+        uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6
         with:
           go-version-file: "go.mod"
           cache: true

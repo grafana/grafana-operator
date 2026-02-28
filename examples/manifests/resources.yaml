@@ -1,0 +1,27 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaManifest
+metadata:
+  name: some-playlist
+spec:
+  instanceSelector:
+    matchLabels:
+      instance: grafana
+  patch:
+    env:
+    - name: PLAYLIST_NAME
+      valueFrom:
+        grafanaRef:
+          fieldPath: status.version
+    scripts:
+    - .spec.title=env.PLAYLIST_NAME
+  template:
+    apiVersion: playlist.grafana.app/v0alpha1
+    kind: Playlist
+    metadata:
+      name: manifest-test
+    spec:
+      interval: 5m
+      items:
+      - type: dashboard_by_uid
+        value: 19f285e5-c42d-4007-b671-31d493686316
