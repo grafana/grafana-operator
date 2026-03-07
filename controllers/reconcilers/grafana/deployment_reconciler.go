@@ -2,7 +2,10 @@ package grafana
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
+	"io"
+	"sort"
 	"strings"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -11,9 +14,11 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/resources"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -49,9 +54,17 @@ func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafan
 	openshiftPlatform := r.isOpenShift
 	log.Info("reconciling deployment", "openshift", openshiftPlatform)
 
+	// Compute hash of referenced secrets/configmaps so pod template changes when they rotate (triggers rollout).
+	hash, err := r.computeSecretsHash(ctx, cr)
+	if err != nil {
+		return v1beta1.OperatorStageResultFailed, err
+	}
+
+	vars.SecretsHash = hash
+
 	deployment := resources.GetGrafanaDeployment(cr, scheme)
 
-	_, err := controllerutil.CreateOrUpdate(ctx, r.client, deployment, func() error {
+	_, err = controllerutil.CreateOrUpdate(ctx, r.client, deployment, func() error {
 		deployment.Spec = getDeploymentSpec(cr, deployment.Name, scheme, vars, openshiftPlatform)
 
 		err := v1beta1.Merge(deployment, cr.Spec.Deployment)
@@ -61,6 +74,15 @@ func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafan
 		}
 
 		removeInvalidMergeCondition(cr, "Deployment")
+
+		// Set checksum annotation after merge so it is not overwritten by user spec. We recompute the hash
+		// each reconcile from referenced Secrets/ConfigMaps' ResourceVersions; when any of them change, the
+		// hash changes, so the pod template changes and the deployment controller rolls out new pods.
+		if deployment.Spec.Template.Annotations == nil {
+			deployment.Spec.Template.Annotations = make(map[string]string)
+		}
+
+		deployment.Spec.Template.Annotations["checksum/secrets"] = vars.SecretsHash
 
 		if scheme != nil {
 			err = controllerutil.SetControllerReference(cr, deployment, scheme)
@@ -339,4 +361,67 @@ func getDeploymentSpec(cr *v1beta1.Grafana, deploymentName string, scheme *runti
 			},
 		},
 	}
+}
+
+// computeSecretsHash returns a SHA-256 hash of the ResourceVersions of all Secrets and ConfigMaps
+// referenced in the Grafana CR. Empty string if none referenced. Used as pod annotation to trigger rollout on rotation.
+func (r *DeploymentReconciler) computeSecretsHash(ctx context.Context, cr *v1beta1.Grafana) (string, error) {
+	log := logf.FromContext(ctx).WithName("DeploymentReconciler")
+	secretNames, configMapNames := cr.ReferencedSecretsAndConfigMaps()
+
+	var resourceVersions []string // entries "secret/name=rv" or "configmap/name=rv", later sorted and hashed
+
+	for _, name := range secretNames {
+		secret := &corev1.Secret{}
+
+		err := r.client.Get(ctx, types.NamespacedName{Namespace: cr.Namespace, Name: name}, secret)
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				log.Info("referenced secret not found, skipping", "secret", name)
+
+				continue
+			}
+
+			return "", fmt.Errorf("fetching secret %s: %w", name, err)
+		}
+
+		resourceVersions = append(resourceVersions, fmt.Sprintf("secret/%s=%s", name, secret.ResourceVersion))
+	}
+
+	for _, name := range configMapNames {
+		cm := &corev1.ConfigMap{}
+
+		err := r.client.Get(ctx, types.NamespacedName{Namespace: cr.Namespace, Name: name}, cm)
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				log.Info("referenced configmap not found, skipping", "configmap", name)
+
+				continue
+			}
+
+			return "", fmt.Errorf("fetching configmap %s: %w", name, err)
+		}
+
+		resourceVersions = append(resourceVersions, fmt.Sprintf("configmap/%s=%s", name, cm.ResourceVersion))
+	}
+
+	return hashResourceVersions(resourceVersions), nil
+}
+
+// hashResourceVersions produces a deterministic hex hash from a slice of "kind/name=resourceVersion"
+// entries. Sorts the slice so order does not affect the hash, then SHA-256 hashes the concatenated strings.
+func hashResourceVersions(versions []string) string {
+	if len(versions) == 0 {
+		return ""
+	}
+
+	sort.Strings(versions)
+
+	h := sha256.New()
+
+	for _, v := range versions {
+		io.WriteString(h, v) //nolint:errcheck
+	}
+
+	return fmt.Sprintf("%x", h.Sum(nil))
 }
