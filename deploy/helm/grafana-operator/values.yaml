@@ -218,6 +218,10 @@ serviceMonitor:
   metricRelabelings: []
   # -- Set relabel_configs as per https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config
   relabelings: []
+  # -- Set scrape scheme (http or https)
+  scheme: http
+  # -- Set the tlsConfig for the scrape
+  tlsConfig: {}
 
 dashboard:
   # -- Whether to create a ConfigMap containing a dashboard monitoring the operator metrics.

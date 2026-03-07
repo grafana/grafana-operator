@@ -136,9 +136,11 @@ It's easier to just manage this configuration outside of the operator.
 | serviceMonitor.interval | string | `"1m"` | Set how frequently Prometheus should scrape |
 | serviceMonitor.metricRelabelings | list | `[]` | MetricRelabelConfigs to apply to samples before ingestion |
 | serviceMonitor.relabelings | list | `[]` | Set relabel_configs as per https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config |
+| serviceMonitor.scheme | string | `"http"` | Set scrape scheme (http or https) |
 | serviceMonitor.scrapeTimeout | string | `"10s"` | Set timeout for scrape |
 | serviceMonitor.targetLabels | list | `[]` | Set of labels to transfer from the Kubernetes Service onto the target |
 | serviceMonitor.telemetryPath | string | `"/metrics"` | Set path to metrics path |
+| serviceMonitor.tlsConfig | object | `{}` | Set the tlsConfig for the scrape |
 | tolerations | list | `[]` | pod tolerations |
 | watchLabelSelectors | string | `""` | Sets the `WATCH_LABEL_SELECTORS` environment variable, it defines which CRs are watched according to their labels. By default, the operator watches all CRs. To make it watch only a subset of CRs, define the variable as a *stringified label selector*. See also: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/ Beware: Always label Grafana CRs before enabling to ensure labels are inherited. # Existing Secrets/ConfigMaps referenced in CRs also need to be labeled to continue working. |
 | watchNamespaceSelector | string | `""` | Sets the `WATCH_NAMESPACE_SELECTOR` environment variable, it defines which namespaces the operator should be listening for based on a namespace label (e.g. `"environment: dev"`). By default, the operator watches all namespaces. To make it watch only its own namespace, check out `namespaceScope` option instead. When combined with "namespaceScope" users must manually create the `RoleBindings` for the matched namespaces. |

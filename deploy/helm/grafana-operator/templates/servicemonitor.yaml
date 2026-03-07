@@ -35,6 +35,11 @@ spec:
       relabelings:
       {{- toYaml .Values.serviceMonitor.relabelings | nindent 8 }}
       {{- end }}
+      scheme: {{ .Values.serviceMonitor.scheme }}
+      {{- if .Values.serviceMonitor.tlsConfig }}
+      tlsConfig:
+      {{- toYaml .Values.serviceMonitor.tlsConfig | nindent 8 }}
+      {{- end }}
   {{- if .Values.serviceMonitor.targetLabels }}
   targetLabels:
   {{- range .Values.serviceMonitor.targetLabels }}
