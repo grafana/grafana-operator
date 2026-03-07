@@ -1,6 +1,6 @@
 module github.com/grafana/grafana-operator/v5
 
-go 1.26.0
+go 1.26.1
 
 require (
 	github.com/KimMachineGun/automemlimit v0.7.5
