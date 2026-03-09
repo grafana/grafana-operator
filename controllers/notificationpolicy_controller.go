@@ -305,10 +305,6 @@ func (r *GrafanaNotificationPolicyReconciler) reconcileWithInstance(ctx context.
 		return fmt.Errorf("applying notification policy: %w", err)
 	}
 
-	if instance.Annotations == nil {
-		instance.Annotations = make(map[string]string)
-	}
-
 	err = addAnnotation(ctx, r.Client, instance, annotationAppliedNotificationPolicy, cr.NamespacedResource())
 	if err != nil {
 		return fmt.Errorf("saving applied notification policy to Grafana CR: %w", err)
