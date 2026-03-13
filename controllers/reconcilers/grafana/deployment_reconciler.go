@@ -120,6 +120,12 @@ func getVolumes(cr *v1beta1.Grafana, scheme *runtime.Scheme) []corev1.Volume {
 				EmptyDir: &corev1.EmptyDirVolumeSource{},
 			},
 		},
+		{
+			Name: config.GrafanaTmpVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
+			},
+		},
 	}
 
 	return volumes
@@ -141,6 +147,10 @@ func getVolumeMounts(cr *v1beta1.Grafana, scheme *runtime.Scheme) []corev1.Volum
 		{
 			Name:      config.GrafanaLogsVolumeName,
 			MountPath: config.GrafanaLogsPath,
+		},
+		{
+			Name:      config.GrafanaTmpVolumeName,
+			MountPath: config.GrafanaTmpPath,
 		},
 	}
 
@@ -172,11 +182,6 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 			// helps to restart Grafana upon plugin changes
 			Name:  "GF_INSTALL_PLUGINS",
 			Value: vars.Plugins,
-		},
-		{
-			// sets location where temporary files can be written (e.g. plugin downloads)
-			Name:  "TMPDIR",
-			Value: config.GrafanaDataPath,
 		},
 		{
 			// useful for unified alerting gossiping in HA-enabled setups

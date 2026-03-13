@@ -10,6 +10,7 @@ const (
 	GrafanaLogsPath               = "/var/log/grafana"
 	GrafanaPluginsPath            = "/var/lib/grafana/plugins"
 	GrafanaProvisioningPath       = "/etc/grafana/provisioning/"
+	GrafanaTmpPath                = "/tmp"
 	GrafanaDashboardsRuntimeBuild = "/tmp/dashboards"
 
 	// Default limits
@@ -40,6 +41,7 @@ const (
 	GrafanaProvisionNotifierVolumeName  = "grafana-provision-notifiers"
 	GrafanaLogsVolumeName               = "grafana-logs"
 	GrafanaDataVolumeName               = "grafana-data"
+	GrafanaTmpVolumeName                = "grafana-tmp"
 	SecretsMountDir                     = "/etc/grafana-secrets/" // #nosec G101
 	ConfigMapsMountDir                  = "/etc/grafana-configmaps/"
 )
