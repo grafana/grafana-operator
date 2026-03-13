@@ -120,6 +120,12 @@ func getVolumes(cr *v1beta1.Grafana, scheme *runtime.Scheme) []corev1.Volume {
 				EmptyDir: &corev1.EmptyDirVolumeSource{},
 			},
 		},
+		{
+			Name: config.GrafanaTmpVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
+			},
+		},
 	}
 
 	return volumes
@@ -141,6 +147,10 @@ func getVolumeMounts(cr *v1beta1.Grafana, scheme *runtime.Scheme) []corev1.Volum
 		{
 			Name:      config.GrafanaLogsVolumeName,
 			MountPath: config.GrafanaLogsPath,
+		},
+		{
+			Name:      config.GrafanaTmpVolumeName,
+			MountPath: config.GrafanaTmpPath,
 		},
 	}
 
