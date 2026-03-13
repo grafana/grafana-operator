@@ -184,11 +184,6 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 			Value: vars.Plugins,
 		},
 		{
-			// sets location where temporary files can be written (e.g. plugin downloads)
-			Name:  "TMPDIR",
-			Value: config.GrafanaDataPath,
-		},
-		{
 			// useful for unified alerting gossiping in HA-enabled setups
 			Name: "POD_IP",
 			ValueFrom: &corev1.EnvVarSource{
