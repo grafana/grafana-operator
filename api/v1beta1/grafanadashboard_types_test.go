@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,10 +22,6 @@ func TestGrafanaStatusListDashboard(t *testing.T) {
 
 func newDashboard(name, uid string) *GrafanaDashboard {
 	return &GrafanaDashboard{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: APIVersion,
-			Kind:       "GrafanaDashboard",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: "default",
@@ -41,6 +38,7 @@ func newDashboard(name, uid string) *GrafanaDashboard {
 				CustomUID: uid,
 				JSON:      "",
 			},
+			PublicDashboard: &GrafanaPublicDashboard{},
 		},
 	}
 }
@@ -48,52 +46,178 @@ func newDashboard(name, uid string) *GrafanaDashboard {
 var _ = Describe("Dashboard type", func() {
 	Context("Ensure Dashboard spec.uid is immutable", func() {
 		t := GinkgoT()
-
 		ctx := context.Background()
 
-		It("Should block adding uid field when missing", func() {
+		It("Should block adding 'uid' when missing", func() {
 			dash := newDashboard("missing-uid", "")
 
-			By("Create new Dashboard without uid")
-
+			// create: Dashboard without uid
 			err := cl.Create(ctx, dash)
 			require.NoError(t, err)
 
-			By("Adding a uid")
-
+			// edit: Add uid
 			dash.Spec.CustomUID = "new-dash-uid"
 			err = cl.Update(ctx, dash)
 			require.Error(t, err)
 		})
 
-		It("Should block removing uid field when set", func() {
+		It("Should block removing 'uid' when set", func() {
 			dash := newDashboard("existing-uid", "existing-uid")
 
-			By("Creating Dashboard with existing UID")
-
+			// create: Dashboard with uid
 			err := cl.Create(ctx, dash)
 			require.NoError(t, err)
 
-			By("And setting UID to ''")
-
+			// edit: Remove uid
 			dash.Spec.CustomUID = ""
 			err = cl.Update(ctx, dash)
 			require.Error(t, err)
 		})
 
-		It("Should block changing value of uid", func() {
+		It("Should block updating 'uid'", func() {
 			dash := newDashboard("removing-uid", "existing-uid")
 
-			By("Create new Dashboard with existing UID")
-
+			// create: Dashboard with uid
 			err := cl.Create(ctx, dash)
 			require.NoError(t, err)
 
-			By("Changing the existing UID")
-
+			// edit: Update uid
 			dash.Spec.CustomUID = "new-dash-uid"
 			err = cl.Update(ctx, dash)
 			require.Error(t, err)
+		})
+	})
+
+	Context("Ensure Public Dashboard 'uid' is immutable", func() {
+		t := GinkgoT()
+		ctx := context.Background()
+
+		It("Should block adding 'uid' when missing", func() {
+			dash := newDashboard("missing-public-uid", "dash-uid")
+
+			// create: Dashboard without uid
+			dash.Spec.PublicDashboard.UID = ""
+			err := cl.Create(ctx, dash)
+			require.NoError(t, err)
+
+			// edit: Add uid
+			dash.Spec.PublicDashboard.UID = "new-public-uid"
+			err = cl.Update(ctx, dash)
+			require.Error(t, err)
+		})
+
+		It("Should block removing 'uid' when set", func() {
+			dash := newDashboard("existing-public-uid", "dash-uid")
+
+			// create: Dashboard with uid
+			dash.Spec.PublicDashboard.UID = uuid.New().String()
+			err := cl.Create(ctx, dash)
+			require.NoError(t, err)
+
+			// edit: Remove uid
+			dash.Spec.PublicDashboard.UID = ""
+			err = cl.Update(ctx, dash)
+			require.Error(t, err)
+		})
+
+		It("Should block updating 'uid'", func() {
+			dash := newDashboard("removing-public-uid", "dash-uid")
+
+			// create: Dashboard with uid
+			dash.Spec.PublicDashboard.UID = uuid.New().String()
+			err := cl.Create(ctx, dash)
+			require.NoError(t, err)
+
+			// edit: Update uid
+			dash.Spec.PublicDashboard.UID = "new-public-uid"
+			err = cl.Update(ctx, dash)
+			require.Error(t, err)
+		})
+
+		It("Should allow updating 'uid' when publicDashboard is recreated", func() {
+			dash := newDashboard("update-public-uid", "dash-uid")
+
+			// create: Dashboard with uid
+			dash.Spec.PublicDashboard.UID = uuid.New().String()
+			err := cl.Create(ctx, dash)
+			require.NoError(t, err)
+
+			// edit: Disable public dashboard
+			dash.Spec.PublicDashboard = nil
+			err = cl.Update(ctx, dash)
+			require.NoError(t, err)
+
+			// edit: Enable public dashboard with new uid
+			dash.Spec.PublicDashboard = &GrafanaPublicDashboard{UID: "new-public-uid"}
+			err = cl.Update(ctx, dash)
+			require.NoError(t, err)
+		})
+	})
+
+	Context("Ensure Public Dashboard 'accessToken' is immutable", func() {
+		t := GinkgoT()
+		ctx := context.Background()
+
+		It("Should block adding 'accessToken' when missing", func() {
+			dash := newDashboard("missing-public-at", "dash-uid")
+
+			// create: Dashboard without accessToken
+			dash.Spec.PublicDashboard.AccessToken = ""
+			err := cl.Create(ctx, dash)
+			require.NoError(t, err)
+
+			// edit: Add accessToken
+			// The accessToken of public dashboards must be a uuid
+			dash.Spec.PublicDashboard.AccessToken = uuid.New().String()
+			err = cl.Update(ctx, dash)
+			require.Error(t, err)
+		})
+
+		It("Should block removing 'accessToken' when set", func() {
+			dash := newDashboard("existing-public-at", "dash-uid")
+
+			// create: Dashboard with accessToken
+			dash.Spec.PublicDashboard.AccessToken = uuid.New().String()
+			err := cl.Create(ctx, dash)
+			require.NoError(t, err)
+
+			// edit: Remove accessToken
+			dash.Spec.PublicDashboard.AccessToken = ""
+			err = cl.Update(ctx, dash)
+			require.Error(t, err)
+		})
+
+		It("Should block updating 'accessToken'", func() {
+			dash := newDashboard("removing-public-at", "dash-uid")
+
+			// create: Dashboard with accessToken
+			dash.Spec.PublicDashboard.AccessToken = uuid.New().String()
+			err := cl.Create(ctx, dash)
+			require.NoError(t, err)
+
+			// edit: Update accessToken
+			dash.Spec.PublicDashboard.AccessToken = uuid.New().String()
+			err = cl.Update(ctx, dash)
+			require.Error(t, err)
+		})
+
+		It("Should allow updating 'accessToken' when publicDashboard is recreated", func() {
+			dash := newDashboard("update-public-at", "dash-uid")
+
+			// create: Dashboard with accessToken
+			dash.Spec.PublicDashboard.AccessToken = uuid.New().String()
+			err := cl.Create(ctx, dash)
+			require.NoError(t, err)
+
+			// edit: Disable public dashboard
+			dash.Spec.PublicDashboard = nil
+			err = cl.Update(ctx, dash)
+			require.NoError(t, err)
+
+			// edit: Enable public dashboard with new accessToken
+			dash.Spec.PublicDashboard = &GrafanaPublicDashboard{AccessToken: uuid.New().String()}
+			err = cl.Update(ctx, dash)
+			require.NoError(t, err)
 		})
 	})
 })
