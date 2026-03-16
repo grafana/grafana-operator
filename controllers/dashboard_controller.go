@@ -68,7 +68,7 @@ type GrafanaDashboardReconciler struct {
 	Cfg    *Config
 }
 
-func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) { //nolint:gocyclo
 	log := logf.FromContext(ctx).WithName("GrafanaDashboardReconciler")
 	ctx = logf.IntoContext(ctx, log)
 
@@ -176,6 +176,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	applyHomeErrors := make(map[string]string)
+	publicDashErrors := make(map[string]string)
 	pluginErrors := make(map[string]string)
 	applyErrors := make(map[string]string)
 
@@ -196,8 +197,14 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
 
+		// then reconcile the public dashboard config
+		err = r.reconcilePublicDashboard(ctx, &grafana, cr, uid)
+		if err != nil {
+			publicDashErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
+		}
+
 		if grafana.Spec.Preferences != nil && uid == grafana.Spec.Preferences.HomeDashboardUID {
-			err = r.UpdateHomeDashboard(ctx, grafana, uid, cr)
+			err = r.UpdateHomeDashboard(ctx, &grafana, uid, cr)
 			if err != nil {
 				applyHomeErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 			}
@@ -207,6 +214,11 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	if len(pluginErrors) > 0 {
 		err := fmt.Errorf(FmtStrApplyErrors, pluginErrors)
 		log.Error(err, "failed to apply plugins to all instances")
+	}
+
+	if len(publicDashErrors) > 0 {
+		err := fmt.Errorf(FmtStrApplyErrors, publicDashErrors)
+		log.Error(err, "failed to apply public dashboards to all instances")
 	}
 
 	if len(applyHomeErrors) > 0 {
@@ -377,11 +389,6 @@ func (r *GrafanaDashboardReconciler) reconcileWithInstance(ctx context.Context, 
 		return err
 	}
 
-	err = r.reconcilePublicDashboard(ctx, gClient, cr, uid)
-	if err != nil {
-		return err
-	}
-
 	if matchesStateInGrafana {
 		log.V(1).Info("dashboard hasn't changed, skipping update")
 		return grafana.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource(uid))
@@ -406,8 +413,13 @@ func (r *GrafanaDashboardReconciler) reconcileWithInstance(ctx context.Context, 
 	return grafana.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource(uid))
 }
 
-func (r *GrafanaDashboardReconciler) reconcilePublicDashboard(ctx context.Context, gClient *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaDashboard, dashUID string) error {
+func (r *GrafanaDashboardReconciler) reconcilePublicDashboard(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDashboard, dashUID string) error {
 	log := logf.FromContext(ctx).WithName("PublicDashboard")
+
+	gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
+	if err != nil {
+		return err
+	}
 
 	// Early check if public dashboard should be deleted or ignored entirely
 	if cr.Spec.PublicDashboard == nil {
@@ -779,10 +791,10 @@ func (r *GrafanaDashboardReconciler) requestsForChangeByField(indexKey string) h
 	}
 }
 
-func (r *GrafanaDashboardReconciler) UpdateHomeDashboard(ctx context.Context, grafana v1beta1.Grafana, uid string, dashboard *v1beta1.GrafanaDashboard) error {
+func (r *GrafanaDashboardReconciler) UpdateHomeDashboard(ctx context.Context, grafana *v1beta1.Grafana, uid string, dashboard *v1beta1.GrafanaDashboard) error {
 	log := logf.FromContext(ctx)
 
-	gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
+	gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
 		return err
 	}
