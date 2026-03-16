@@ -253,7 +253,7 @@ spec:
                 type: object
                 x-kubernetes-validations:
                 - message: continue is invalid on the top level route node
-                  rule: '!has(self.continue)'
+                  rule: '!has(self.__continue__)'
                 - message: match_re is invalid on the top level route node
                   rule: '!has(self.match_re)'
                 - message: matchers is invalid on the top level route node
