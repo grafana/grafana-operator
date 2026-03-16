@@ -4992,7 +4992,7 @@ merge patch.<br/>
           RequiredObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).
 It requires `name` to be set<br/>
           <br/>
-            <i>Validations</i>:<li>(!(has(oldSelf.__namespace__) && !has(self.__namespace__))): namespace is immutable</li>
+            <i>Validations</i>:<li>((!has(oldSelf.__namespace__) && !has(self.__namespace__)) || (has(oldSelf.__namespace__) && has(self.__namespace__))): namespace is immutable</li>
         </td>
         <td>true</td>
       </tr><tr>
