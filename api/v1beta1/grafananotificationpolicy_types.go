@@ -67,7 +67,7 @@ type PartialRoute struct {
 	Provenance models.Provenance `json:"provenance,omitempty"`
 }
 
-// +kubebuilder:validation:XValidation:rule="!has(self.continue)", message="continue is invalid on the top level route node"
+// +kubebuilder:validation:XValidation:rule="!has(self.__continue__)", message="continue is invalid on the top level route node"
 // +kubebuilder:validation:XValidation:rule="!has(self.match_re)", message="match_re is invalid on the top level route node"
 // +kubebuilder:validation:XValidation:rule="!has(self.matchers)", message="matchers is invalid on the top level route node"
 // +kubebuilder:validation:XValidation:rule="!has(self.object_matchers)", message="object_matchers is invalid on the top level route node"

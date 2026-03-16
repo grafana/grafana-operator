@@ -20,7 +20,7 @@ import (
 
 // RequiredObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).
 // It requires `name` to be set
-// +kubebuilder:validation:XValidation:rule="(!(has(oldSelf.namespace) && !has(self.namespace)))", message="namespace is immutable"
+// +kubebuilder:validation:XValidation:rule="(!(has(oldSelf.__namespace__) && !has(self.__namespace__)))", message="namespace is immutable"
 type RequiredObjectMeta struct {
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
 	Name string `json:"name" protobuf:"bytes,1,opt,name=name"`
