@@ -27,6 +27,8 @@ require (
 	sigs.k8s.io/kustomize/kyaml v0.21.1
 )
 
+replace github.com/grafana/grafana-openapi-client-go v0.0.0-20251202103709-7ef691d4df1d => github.com/baarsgaard/grafana-openapi-client-go v0.0.0-20260309001150-7ca527274437
+
 require (
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect

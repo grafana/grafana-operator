@@ -51,7 +51,14 @@ const (
 	conditionDashboardSynchronized        = "DashboardSynchronized"
 	conditionReasonInvalidModelResolution = "InvalidModelResolution"
 
-	LogMsgResolvingDashboardContents = "error resolving dashboard contents"
+	LogMsgResolvingDashboardContents        = "error resolving dashboard contents"
+	LogMsgGettingPublicDashboard            = "failed to get existing public dashboard configuration from Grafana"
+	LogMsgSyncingPublicDashboard            = "failed to sync public dashboard configuration to Grafana"
+	LogMsgDeletingPublicDashboard           = "failed to delete public dashboard from Grafana"
+	LogMsgRemovingPublicDashboardAnnotation = "removing 'operator.grafana.com/public-dashboard' annotation from GrafanaDashboard CR"
+
+	// If present, DELETE the publicDashboard if Spec.PublishDashboards == nil before removing
+	annotationSyncedPublicDashboard = "operator.grafana.com/public-dashboard"
 )
 
 // GrafanaDashboardReconciler reconciles a GrafanaDashboard object
@@ -61,7 +68,7 @@ type GrafanaDashboardReconciler struct {
 	Cfg    *Config
 }
 
-func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) { //nolint:gocyclo
 	log := logf.FromContext(ctx).WithName("GrafanaDashboardReconciler")
 	ctx = logf.IntoContext(ctx, log)
 
@@ -169,6 +176,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	applyHomeErrors := make(map[string]string)
+	publicDashErrors := make(map[string]string)
 	pluginErrors := make(map[string]string)
 	applyErrors := make(map[string]string)
 
@@ -184,13 +192,19 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 
 		// then import the dashboard into the matching grafana instances
-		err = r.onDashboardCreated(ctx, &grafana, cr, dashboardModel, folderUID)
+		err = r.reconcileWithInstance(ctx, &grafana, cr, dashboardModel, folderUID)
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
 
+		// then reconcile the public dashboard config
+		err = r.reconcilePublicDashboard(ctx, &grafana, cr, uid)
+		if err != nil {
+			publicDashErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
+		}
+
 		if grafana.Spec.Preferences != nil && uid == grafana.Spec.Preferences.HomeDashboardUID {
-			err = r.UpdateHomeDashboard(ctx, grafana, uid, cr)
+			err = r.UpdateHomeDashboard(ctx, &grafana, uid, cr)
 			if err != nil {
 				applyHomeErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 			}
@@ -200,6 +214,11 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	if len(pluginErrors) > 0 {
 		err := fmt.Errorf(FmtStrApplyErrors, pluginErrors)
 		log.Error(err, "failed to apply plugins to all instances")
+	}
+
+	if len(publicDashErrors) > 0 {
+		err := fmt.Errorf(FmtStrApplyErrors, publicDashErrors)
+		log.Error(err, "failed to apply public dashboards to all instances")
 	}
 
 	if len(applyHomeErrors) > 0 {
@@ -217,6 +236,16 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		log.Error(err, LogMsgApplyErrors)
 
 		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgApplyErrors, err)
+	}
+
+	// Delete annotation from GrafanaDashboard
+	if cr.Spec.PublicDashboard == nil && cr.Annotations != nil {
+		err := removeAnnotation(ctx, r.Client, cr, annotationSyncedPublicDashboard)
+		if err != nil {
+			log.Error(err, LogMsgRemovingPublicDashboardAnnotation)
+
+			return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgRemovingPublicDashboardAnnotation, err)
+		}
 	}
 
 	cr.Status.Hash = hash
@@ -301,7 +330,7 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 	return nil
 }
 
-func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDashboard, dashboardModel map[string]any, folderUID string) error {
+func (r *GrafanaDashboardReconciler) reconcileWithInstance(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDashboard, dashboardModel map[string]any, folderUID string) error {
 	log := logf.FromContext(ctx)
 
 	if grafana.IsExternal() && cr.Spec.Plugins != nil {
@@ -384,6 +413,130 @@ func (r *GrafanaDashboardReconciler) onDashboardCreated(ctx context.Context, gra
 	return grafana.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource(uid))
 }
 
+func (r *GrafanaDashboardReconciler) reconcilePublicDashboard(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDashboard, dashUID string) error {
+	log := logf.FromContext(ctx).WithName("PublicDashboard")
+
+	gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
+	if err != nil {
+		return err
+	}
+
+	// Early check if public dashboard should be deleted or ignored entirely
+	if cr.Spec.PublicDashboard == nil {
+		if cr.Annotations == nil || cr.Annotations[annotationSyncedPublicDashboard] == "" {
+			log.V(1).Info("public dashboard hasn't changed, skipping update")
+			return nil
+		}
+
+		log.Info("deleting public dashboard from Grafana")
+
+		pDashUID := cr.Annotations[annotationSyncedPublicDashboard]
+
+		_, err := gClient.Dashboards.DeletePublicDashboardWithParams(&dashboards.DeletePublicDashboardParams{ //nolint:errcheck
+			DashboardUID: dashUID,
+			UID:          pDashUID,
+			Context:      ctx,
+		})
+		if err != nil {
+			log.Error(err, LogMsgDeletingPublicDashboard, "publicDashboardUID", pDashUID)
+			return fmt.Errorf("%s: %w", LogMsgDeletingPublicDashboard, err)
+		}
+
+		return nil
+	}
+
+	log.V(1).Info("retrieving public dashboard from Grafana")
+	// Get remote dashboard and reconcile
+	pDashMeta, err := gClient.Dashboards.GetPublicDashboardWithParams(&dashboards.GetPublicDashboardParams{
+		DashboardUID: dashUID,
+		Context:      ctx,
+	})
+	if err != nil {
+		if IsNotErrorType[*dashboards.GetPublicDashboardNotFound](err) {
+			log.Error(err, LogMsgGettingPublicDashboard)
+			return fmt.Errorf("%s: %w", LogMsgGettingPublicDashboard, err)
+		}
+	}
+
+	pDashUID := cr.Spec.PublicDashboard.UID
+	if pDashUID == "" {
+		pDashUID = string(cr.UID) // metadata.uid is used as the Dashboard UID may not be a valid UUID
+	}
+
+	dto := r.getPublicDashboardDTO(cr, pDashUID)
+
+	// TODO remove this
+	log.V(1).Info("------------------------------", "dto", dto)
+
+	// Only Create/Update when necessary
+	pDashMatchesStateInGrafana, recreate := r.publicDashboardMatchesStateInGrafana(dto, pDashMeta)
+	if pDashMatchesStateInGrafana {
+		log.V(1).Info("skipping public dashboard from Grafana")
+		return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicDashboard, pDashUID)
+	}
+
+	// It is not possible to update the the uid or accessToken
+	if recreate || cr.Annotations != nil && cr.Annotations[annotationSyncedPublicDashboard] != pDashUID {
+		log.V(1).Info("deleting public dashboard from Grafana due to uid or accessToken mismatch")
+
+		_, err := gClient.Dashboards.DeletePublicDashboardWithParams(&dashboards.DeletePublicDashboardParams{ //nolint:errcheck
+			DashboardUID: dashUID,
+			UID:          pDashMeta.Payload.UID,
+			Context:      ctx,
+		})
+		if err != nil {
+			log.Error(err, LogMsgDeletingPublicDashboard)
+			return fmt.Errorf("%s: %w", LogMsgDeletingPublicDashboard, err)
+		}
+	}
+
+	if recreate || IsErrorType[*dashboards.GetPublicDashboardNotFound](err) {
+		log.Info("creating public dashboard in Grafana")
+
+		_, err = gClient.Dashboards.CreatePublicDashboardWithParams(&dashboards.CreatePublicDashboardParams{ //nolint:errcheck
+			Body:         dto,
+			DashboardUID: dashUID,
+			Context:      ctx,
+		})
+		if err != nil {
+			log.Error(err, LogMsgSyncingPublicDashboard)
+			return fmt.Errorf("%s: %w", LogMsgSyncingPublicDashboard, err)
+		}
+	} else {
+		log.Info("updating public dashboard in Grafana")
+
+		_, err = gClient.Dashboards.UpdatePublicDashboard(&dashboards.UpdatePublicDashboardParams{ //nolint:errcheck
+			Body:         dto,
+			UID:          pDashUID,
+			DashboardUID: dashUID,
+			Context:      ctx,
+		})
+		if err != nil {
+			log.Error(err, LogMsgSyncingPublicDashboard)
+			return fmt.Errorf("%s: %w", LogMsgSyncingPublicDashboard, err)
+		}
+	}
+
+	return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicDashboard, pDashUID)
+}
+
+func (r *GrafanaDashboardReconciler) getPublicDashboardDTO(cr *v1beta1.GrafanaDashboard, uid string) *models.PublicDashboardDTO {
+	pdash := cr.Spec.PublicDashboard
+
+	token := pdash.AccessToken
+	if token == "" {
+		token = string(cr.UID)
+	}
+
+	return &models.PublicDashboardDTO{
+		UID:                  uid,
+		AccessToken:          token,
+		IsEnabled:            &pdash.Enabled,
+		AnnotationsEnabled:   &pdash.AnnotationsEnabled,
+		TimeSelectionEnabled: &pdash.TimeSelectionEnabled,
+	}
+}
+
 func (r *GrafanaDashboardReconciler) Exists(gClient *genapi.GrafanaHTTPAPI, uid, title, folderUID string) (string, error) {
 	tvar := "dash-db"
 
@@ -449,6 +602,29 @@ func (r *GrafanaDashboardReconciler) matchesStateInGrafana(exists bool, model ma
 	}
 
 	return true, nil
+}
+
+// matchesStateInGrafana checks whether a public dashboard exists in Grafana and its contents matches the model defined in the custom resources
+func (r *GrafanaDashboardReconciler) publicDashboardMatchesStateInGrafana(model *models.PublicDashboardDTO, remoteDashboard *dashboards.GetPublicDashboardOK) (matchesRemoteState, recreate bool) {
+	if remoteDashboard == nil {
+		return false, false
+	}
+
+	remoteModel := remoteDashboard.GetPayload()
+	if remoteModel == nil {
+		return false, false
+	}
+
+	// Determine whether to update or recreate
+	recreate = model.AccessToken != remoteModel.AccessToken ||
+		model.UID != remoteModel.UID
+
+	// Only when recreate is false should a PATCH be sent, otherwise delete and recreate
+	matchesRemoteState = !recreate && *model.IsEnabled == remoteModel.IsEnabled &&
+		*model.TimeSelectionEnabled == remoteModel.TimeSelectionEnabled &&
+		*model.AnnotationsEnabled == remoteModel.AnnotationsEnabled
+
+	return matchesRemoteState, recreate
 }
 
 func (r *GrafanaDashboardReconciler) GetOrCreateFolder(gClient *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaDashboard) (string, error) {
@@ -615,10 +791,10 @@ func (r *GrafanaDashboardReconciler) requestsForChangeByField(indexKey string) h
 	}
 }
 
-func (r *GrafanaDashboardReconciler) UpdateHomeDashboard(ctx context.Context, grafana v1beta1.Grafana, uid string, dashboard *v1beta1.GrafanaDashboard) error {
+func (r *GrafanaDashboardReconciler) UpdateHomeDashboard(ctx context.Context, grafana *v1beta1.Grafana, uid string, dashboard *v1beta1.GrafanaDashboard) error {
 	log := logf.FromContext(ctx)
 
-	gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
+	gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
 		return err
 	}
