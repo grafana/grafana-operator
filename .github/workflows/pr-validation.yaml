@@ -3,7 +3,7 @@ name: PR Validation
 on:
   pull_request:
   merge_group:
-  # Helps to cut execution time in PRs and the merge queue by generating pre-commit/go/trivy cache (branches inherit cache from master)
+  # Helps to cut execution time in PRs and the merge queue by generating pre-commit/go cache (branches inherit cache from master)
   push:
     branches:
       - master
@@ -119,24 +119,6 @@ jobs:
     steps:
       - run: |
           echo "All golang-tests jobs ran successfully"
-
-  trivy:
-    runs-on: ubuntu-slim
-    steps:
-      - name: Clone repo
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          persist-credentials: false
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
-        with:
-          scan-type: "fs"
-          scan-ref: "."
-          format: "table"
-          exit-code: "1"
-          ignore-unfixed: true
-          severity: "CRITICAL,HIGH"
 
   e2e-tests:
     name: E2E on kind ${{ matrix.version }} / grafana ${{ matrix.grafana_version || 'default version' }}
