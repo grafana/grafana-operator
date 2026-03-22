@@ -108,9 +108,9 @@ serviceAccount:
   name: ""
 
 rbac:
-  # -- Specifies whether to create the ClusterRole and ClusterRoleBinding.
-  # If "namespaceScope" is true, this will create a RoleBinding instead of ClusterRoleBinding.
-  # If "watchNamespaces" is set with "namespaceScope", a RoleBinding is created in each namespace.
+  # -- Specifies whether to create RBAC resources for the operator.
+  # When "namespaceScope" is true, the chart creates a Role + RoleBinding (per watched namespace) instead of a ClusterRole/ClusterRoleBinding.
+  # Note: "watchNamespaceSelector" requires cluster-scoped permission to list namespaces and therefore still needs a ClusterRole.
   create: true
 
 crds:
