@@ -35,6 +35,13 @@ spec:
       relabelings:
       {{- toYaml .Values.serviceMonitor.relabelings | nindent 8 }}
       {{- end }}
+      {{- if .Values.metricsService.secure }}
+      scheme: https
+      {{- if .Values.serviceMonitor.tlsConfig }}
+      tlsConfig:
+      {{- toYaml .Values.serviceMonitor.tlsConfig | nindent 8 }}
+      {{- end }}
+      {{- end }}
   {{- if .Values.serviceMonitor.targetLabels }}
   targetLabels:
   {{- range .Values.serviceMonitor.targetLabels }}

@@ -111,6 +111,7 @@ It's easier to just manage this configuration outside of the operator.
 | metricsService.annotations | object | `{}` | annotations on the metrics service |
 | metricsService.metricsPort | int | `9090` | metrics service port |
 | metricsService.pprofPort | int | `8888` | port for the pprof profiling endpoint |
+| metricsService.secure | bool | `false` | metrics serve https |
 | metricsService.type | string | `"ClusterIP"` | metrics service type |
 | nameOverride | string | `""` | Overrides the name of the chart. |
 | namespaceOverride | string | `""` | Overrides the namespace name. |
@@ -139,6 +140,7 @@ It's easier to just manage this configuration outside of the operator.
 | serviceMonitor.scrapeTimeout | string | `"10s"` | Set timeout for scrape |
 | serviceMonitor.targetLabels | list | `[]` | Set of labels to transfer from the Kubernetes Service onto the target |
 | serviceMonitor.telemetryPath | string | `"/metrics"` | Set path to metrics path |
+| serviceMonitor.tlsConfig | object | `{}` | Set the tlsConfig for the scrape. Only valid if `.metricsService.secure=true` |
 | tolerations | list | `[]` | pod tolerations |
 | watchLabelSelectors | string | `""` | Sets the `WATCH_LABEL_SELECTORS` environment variable, it defines which CRs are watched according to their labels. By default, the operator watches all CRs. To make it watch only a subset of CRs, define the variable as a *stringified label selector*. See also: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/ Beware: Always label Grafana CRs before enabling to ensure labels are inherited. # Existing Secrets/ConfigMaps referenced in CRs also need to be labeled to continue working. |
 | watchNamespaceSelector | string | `""` | Sets the `WATCH_NAMESPACE_SELECTOR` environment variable, it defines which namespaces the operator should be listening for based on a namespace label (e.g. `"environment: dev"`). By default, the operator watches all namespaces. To make it watch only its own namespace, check out `namespaceScope` option instead. When combined with "namespaceScope" users must manually create the `RoleBindings` for the matched namespaces. |

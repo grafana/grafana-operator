@@ -87,6 +87,7 @@ var operatorConfig struct {
 	CachingLevel           string `env:"ENFORCE_CACHE_LABELS"     default:"safe" enum:"all,safe,off" help:"Configure cache limits. Valid values are 'off', 'safe' and 'all'"`
 
 	MetricsAddr             string        `name:"metrics-bind-address"      default:":8080"                                 help:"The address the metric endpoint binds to."`
+	MetricsSecure           bool          `name:"metrics-serve-secure"      default:"false"                                 help:"Serve the metrics endpoint over HTTPS."`
 	ProbeAddr               string        `name:"health-probe-bind-address" default:":8081"                                 help:"The address the probe endpoint binds to."`
 	PprofAddr               string        `name:"pprof-addr"                                                                help:"The address to expose the pprof server. Empty string disables the pprof server."`
 	EnableLeaderElection    bool          `name:"leader-elect"              default:"false" env:"ENABLE_LEADER_ELECTION"    help:"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager."`
@@ -225,7 +226,7 @@ func main() { //nolint:gocyclo
 
 	mgrOptions := ctrl.Options{
 		Scheme:                 scheme,
-		Metrics:                metricsserver.Options{BindAddress: operatorConfig.MetricsAddr},
+		Metrics:                metricsserver.Options{BindAddress: operatorConfig.MetricsAddr, SecureServing: operatorConfig.MetricsSecure},
 		WebhookServer:          webhook.NewServer(webhook.Options{Port: 9443}),
 		HealthProbeBindAddress: operatorConfig.ProbeAddr,
 		LeaderElection:         operatorConfig.EnableLeaderElection,

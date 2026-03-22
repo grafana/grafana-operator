@@ -69,6 +69,7 @@ spec:
           args:
             - --health-probe-bind-address=:8081
             - --metrics-bind-address=0.0.0.0:{{ .Values.metricsService.metricsPort }}
+            - --metrics-serve-secure={{ .Values.metricsService.serveSecure }}
             - --pprof-addr=0.0.0.0:{{ .Values.metricsService.pprofPort }}
             - --zap-encoder={{ .Values.logging.encoder }}
             - --zap-log-level={{ .Values.logging.level }}
