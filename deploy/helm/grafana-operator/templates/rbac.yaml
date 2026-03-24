@@ -2,13 +2,9 @@
 {{- $rbac := .Files.Get "files/rbac.yaml" | fromYaml  }}
 {{- $rbacOpenShift := .Files.Get "files/rbac-openshift.yaml" | fromYaml  }}
 {{- $watchNamespaceSelector := trim .Values.watchNamespaceSelector -}}
-{{- /*
-We can only support watchNamespaceSelector with a ClusterRole because listing namespaces is a cluster-scoped permission.
-*/ -}}
 {{- $useClusterRole := or (not .Values.namespaceScope) (ne $watchNamespaceSelector "") -}}
 
 {{- if $useClusterRole }}
-{{- /* ClusterRole referenced by either ClusterRoleBinding or RoleBindings */}}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -23,7 +19,6 @@ rules:
   {{- toYaml $rbacOpenShift.rules | nindent 2 -}}
   {{- end }}
   {{- if ne $watchNamespaceSelector "" }}
-  {{- /* The operator lists namespaces when WATCH_NAMESPACE_SELECTOR != "" */}}
   - apiGroups:
     - ""
     resources:
@@ -40,25 +35,7 @@ rules:
 {{- range $watchNamespaces }}
 {{- $ns := trim . }}
 {{- if $ns }}
-{{- if $useClusterRole }}
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: {{ include "grafana-operator.fullname" $ }}
-  namespace: {{ $ns }}
-  labels:
-    {{- include "grafana-operator.labels" $ | nindent 4 }}
-    app.kubernetes.io/component: operator
-subjects:
-  - kind: ServiceAccount
-    name: {{ include "grafana-operator.serviceAccountName" $ }}
-    namespace: {{ include "grafana-operator.namespace" $ }}
-roleRef:
-  kind: ClusterRole
-  name: {{ include "grafana-operator.fullname" $ }}
-  apiGroup: rbac.authorization.k8s.io
-{{- else }}
+{{- if not $useClusterRole }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -73,6 +50,7 @@ rules:
   {{- if $.Values.isOpenShift }}
   {{- toYaml $rbacOpenShift.rules | nindent 2 -}}
   {{- end }}
+{{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -87,15 +65,13 @@ subjects:
     name: {{ include "grafana-operator.serviceAccountName" $ }}
     namespace: {{ include "grafana-operator.namespace" $ }}
 roleRef:
-  kind: Role
+  kind: {{ ternary "ClusterRole" "Role" $useClusterRole }}
   name: {{ include "grafana-operator.fullname" $ }}
   apiGroup: rbac.authorization.k8s.io
-{{- end }}
 {{- end }}
 {{- end }}{{- /* range $watchNamespaces */}}
 
 {{- else }}{{- /* namespaceScope */}}
-{{- /* ClusterScope (default) */}}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
