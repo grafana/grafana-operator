@@ -2,7 +2,23 @@
 {{- $rbac := .Files.Get "files/rbac.yaml" | fromYaml  }}
 {{- $rbacOpenShift := .Files.Get "files/rbac-openshift.yaml" | fromYaml  }}
 {{- $watchNamespaceSelector := trim .Values.watchNamespaceSelector -}}
-{{- $useClusterRole := or (not .Values.namespaceScope) (ne $watchNamespaceSelector "") -}}
+
+{{- /*
+RBAC behavior:
+- Default is to use ClusterRole (and bind it either cluster-wide or via RoleBindings).
+- In restricted clusters you may set namespaceScope=true and rbac.useClusterRole=false to render namespaced Role+RoleBinding instead.
+
+Note: watchNamespaceSelector requires cluster-scoped permission to list namespaces and therefore requires a ClusterRole.
+*/ -}}
+{{- $useClusterRole := true -}}
+{{- if hasKey .Values.rbac "useClusterRole" -}}
+{{- $useClusterRole = .Values.rbac.useClusterRole -}}
+{{- end -}}
+{{- $useClusterRole = or (not .Values.namespaceScope) $useClusterRole -}}
+
+{{- if and .Values.namespaceScope (not $useClusterRole) (ne $watchNamespaceSelector "") -}}
+{{- fail "watchNamespaceSelector requires cluster-scoped RBAC (ClusterRole). Set rbac.useClusterRole=true or disable watchNamespaceSelector." -}}
+{{- end -}}
 
 {{- if $useClusterRole }}
 ---

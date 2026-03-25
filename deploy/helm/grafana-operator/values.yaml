@@ -109,9 +109,13 @@ serviceAccount:
 
 rbac:
   # -- Specifies whether to create RBAC resources for the operator.
-  # When "namespaceScope" is true, the chart creates a Role + RoleBinding (per watched namespace) instead of a ClusterRole/ClusterRoleBinding.
-  # Note: "watchNamespaceSelector" requires cluster-scoped permission to list namespaces and therefore still needs a ClusterRole.
   create: true
+
+  # -- Whether to use ClusterRole for operator RBAC.
+  # When true (default), the chart creates a ClusterRole and binds it either cluster-wide (ClusterRoleBinding) or per-namespace (RoleBinding) when namespaceScope=true.
+  # When false and namespaceScope=true, the chart renders namespaced Role + RoleBinding instead (useful for restricted clusters where ClusterRole is not allowed).
+  # Note: watchNamespaceSelector requires cluster-scoped permission to list namespaces and therefore requires ClusterRole (useClusterRole=true).
+  useClusterRole: true
 
 crds:
   # -- Immutable CustomResourceDefinitions are installed only once using `crds/` directory
