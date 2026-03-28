@@ -31,9 +31,8 @@
       "customType": "regex",
       "packageNameTemplate": "docker.io/grafana/grafana",
       "managerFilePatterns": [
-        "/controllers\/config\/operator_constants.go/",
-        "/config\/manager\/manager.yaml/",
-        "/tests\/e2e\/example-test\/00-assert.yaml/"
+        "controllers/config/operator_constants.go",
+        "config/manager/manager.yaml"
       ],
       "datasourceTemplate": "docker",
       "matchStrings": [
@@ -45,8 +44,8 @@
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "/(^|/)Makefile$/",
-        "/\\.mk$/"
+        "Makefile",
+        "*.mk"
       ],
       "matchStrings": [
         "# renovate: datasource=(?<datasource>[a-zA-Z0-9-._]+?) depName=(?<depName>[^\\s]+?)(?: (?:packageName)=(?<packageName>[^\\s]+?))?(?: versioning=(?<versioning>[^\\s]+?))?(?: extractVersion=(?<extractVersion>[^\\s]+?))?(?: registryUrl=(?<registryUrl>[^\\s]+?))?\\s+[A-Za-z0-9_]+?_VERSION\\s*:*\\??=\\s*[\"']?(?<currentValue>.+?)[\"']?\\s"
