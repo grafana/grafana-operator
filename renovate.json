@@ -28,17 +28,30 @@
   ],
   "customManagers": [
     {
+      "customType": "jsonata",
+      "fileFormat": "yaml",
+      "datasourceTemplate": "docker",
+      "packageNameTemplate": "docker.io/grafana/grafana",
+      "managerFilePatterns": [
+        "config/manager/manager.yaml",
+        "config/crd/bases/grafana.integreatly.org_grafanas.yaml",
+        "deploy/helm/grafana-operator/files/crds/grafana.integreatly.org_grafanas.yaml",
+        "deploy/kustomize/base/crds.yaml"
+      ],
+      "matchStrings": [
+        "{\"currentValue\": $split(spec.template.spec.containers[0].env[0].value, \":\")[1] }",
+        "{\"currentValue\": $split(spec.versions[0].schema.openAPIV3Schema.properties.spec.properties.version.description, \"default: \")[1] }"
+      ]
+    },
+    {
       "customType": "regex",
       "packageNameTemplate": "docker.io/grafana/grafana",
       "managerFilePatterns": [
-        "controllers/config/operator_constants.go",
-        "config/manager/manager.yaml"
+        "controllers/config/operator_constants.go"
       ],
       "datasourceTemplate": "docker",
       "matchStrings": [
-        "\\s*GrafanaVersion\\s*=\\s*\"(?<currentValue>[\\w+\\.\\-]*)\"",
-        "\\s*value:\\s*\"?[^\\s]+?:(?<currentValue>[\\w+\\.\\-]*)\"?",
-        "\\s*version:\\s*\"?(?<currentValue>[\\w+\\.\\-]*)\"?"
+        "\\s*GrafanaVersion\\s*=\\s*\"(?<currentValue>[\\w+\\.\\-]*)\""
       ]
     },
     {
