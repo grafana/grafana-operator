@@ -45,13 +45,15 @@
     },
     {
       "customType": "regex",
+      "datasourceTemplate": "docker",
       "packageNameTemplate": "docker.io/grafana/grafana",
       "managerFilePatterns": [
-        "controllers/config/operator_constants.go"
+        "controllers/config/operator_constants.go",
+        "docs/docs/api.md"
       ],
-      "datasourceTemplate": "docker",
       "matchStrings": [
-        "\\s*GrafanaVersion\\s*=\\s*\"(?<currentValue>[\\w+\\.\\-]*)\""
+        "\\s*GrafanaVersion\\s*=\\s*\"(?<currentValue>[\\w+\\.\\-]*)\"",
+        "default: (?<currentValue>\\d+\\.\\d+\\.\\d+)<br\\/>"
       ]
     },
     {
