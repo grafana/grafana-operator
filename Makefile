@@ -65,8 +65,8 @@ help: ## Display this help.
 .PHONY: manifests
 manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) $(YQ) ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(info $(M) running $@)
-	@# Regenerate manifests
-	-rm config/crd/bases/*
+	@# Regenerate manifests. Allows failures if files are not found
+	-rm config/crd/bases/* deploy/helm/grafana-operator/files/crds/*
 	$(CONTROLLER_GEN) rbac:roleName=manager-role webhook paths="./..." crd output:crd:artifacts:config=config/crd/bases
 
 	@# Remove default values for HTTPRoute rules
@@ -78,15 +78,16 @@ manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) $(YQ) ## Generate WebhookConfiguration
 
 	$(YQ) -i '(select(.kind == "Deployment") | .spec.template.spec.containers[0].env[] | select (.name == "RELATED_IMAGE_GRAFANA")).value="$(GRAFANA_IMAGE):$(GRAFANA_VERSION)"' config/manager/manager.yaml
 
+	@# Replace manifests and roles in Helm chart
+	mkdir -p deploy/helm/grafana-operator/files/crds
+	cp config/crd/bases/* deploy/helm/grafana-operator/files/crds/
+	cat config/rbac/role.yaml | $(YQ) -r 'del(.rules[] | select (.apiGroups | contains(["route.openshift.io"])))' > deploy/helm/grafana-operator/files/rbac.yaml
+	cat config/rbac/role.yaml | $(YQ) -r 'del(.rules[] | select (.apiGroups | contains(["route.openshift.io"]) | not))'  > deploy/helm/grafana-operator/files/rbac-openshift.yaml
+
 	@# NOTE: As we publish the whole kustomize folder structure (deploy/kustomize) as an OCI arfifact via flux, in kustomization.yaml, we cannot reference files that reside outside of deploy/kustomize. Thus, we need to maintain an additional copy of CRDs and the ClusterRole
 	cd config/crd && $(KUSTOMIZE) edit add resource bases/*
 	$(KUSTOMIZE) build config/crd -o deploy/kustomize/base/crds.yaml
 	cp config/rbac/role.yaml deploy/kustomize/base/role.yaml
-
-	@# Sync role definitions to helm chart
-	mkdir -p deploy/helm/grafana-operator/files
-	cat config/rbac/role.yaml | $(YQ) -r 'del(.rules[] | select (.apiGroups | contains(["route.openshift.io"])))' > deploy/helm/grafana-operator/files/rbac.yaml
-	cat config/rbac/role.yaml | $(YQ) -r 'del(.rules[] | select (.apiGroups | contains(["route.openshift.io"]) | not))'  > deploy/helm/grafana-operator/files/rbac-openshift.yaml
 
 # Generate API reference documentation
 .PHONY: api-docs
