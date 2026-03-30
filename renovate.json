@@ -28,25 +28,39 @@
   ],
   "customManagers": [
     {
-      "customType": "regex",
+      "customType": "jsonata",
+      "fileFormat": "yaml",
+      "datasourceTemplate": "docker",
       "packageNameTemplate": "docker.io/grafana/grafana",
       "managerFilePatterns": [
-        "/controllers\/config\/operator_constants.go/",
-        "/config\/manager\/manager.yaml/",
-        "/tests\/e2e\/example-test\/00-assert.yaml/"
+        "config/manager/manager.yaml",
+        "config/crd/bases/grafana.integreatly.org_grafanas.yaml",
+        "deploy/helm/grafana-operator/files/crds/grafana.integreatly.org_grafanas.yaml",
+        "deploy/kustomize/base/crds.yaml"
       ],
+      "matchStrings": [
+        "{\"currentValue\": $split(spec.template.spec.containers[0].env[0].value, \":\")[1] }",
+        "{\"currentValue\": $split(spec.versions[0].schema.openAPIV3Schema.properties.spec.properties.version.description, \"default: \")[1] }"
+      ]
+    },
+    {
+      "customType": "regex",
       "datasourceTemplate": "docker",
+      "packageNameTemplate": "docker.io/grafana/grafana",
+      "managerFilePatterns": [
+        "controllers/config/operator_constants.go",
+        "docs/docs/api.md"
+      ],
       "matchStrings": [
         "\\s*GrafanaVersion\\s*=\\s*\"(?<currentValue>[\\w+\\.\\-]*)\"",
-        "\\s*value:\\s*\"?[^\\s]+?:(?<currentValue>[\\w+\\.\\-]*)\"?",
-        "\\s*version:\\s*\"?(?<currentValue>[\\w+\\.\\-]*)\"?"
+        "default: (?<currentValue>\\d+\\.\\d+\\.\\d+)<br\\/>"
       ]
     },
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "/(^|/)Makefile$/",
-        "/\\.mk$/"
+        "Makefile",
+        "*.mk"
       ],
       "matchStrings": [
         "# renovate: datasource=(?<datasource>[a-zA-Z0-9-._]+?) depName=(?<depName>[^\\s]+?)(?: (?:packageName)=(?<packageName>[^\\s]+?))?(?: versioning=(?<versioning>[^\\s]+?))?(?: extractVersion=(?<extractVersion>[^\\s]+?))?(?: registryUrl=(?<registryUrl>[^\\s]+?))?\\s+[A-Za-z0-9_]+?_VERSION\\s*:*\\??=\\s*[\"']?(?<currentValue>.+?)[\"']?\\s"
