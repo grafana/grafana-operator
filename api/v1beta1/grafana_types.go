@@ -349,16 +349,18 @@ func (in *Grafana) Conditions() *[]metav1.Condition {
 // that the Grafana spec actually uses. Only these resources should drive a content hash so that
 // when they change, the deployment's pod template changes and Kubernetes rolls out new pods.
 //
-// Refs are collected from: (1) deployment pod template — container Env ValueFrom (SecretKeyRef/
-// ConfigMapKeyRef) and EnvFrom (SecretRef/ConfigMapRef), plus volume Secret and ConfigMap;
-// (2) external — AdminUser, AdminPassword, APIKey, TLS cert Secret if set; (3) client TLS cert
-// Secret if set. The deployment reconciler uses this to compute a hash of those resources'
-// ResourceVersions and sets the checksum/secrets pod template annotation.
+// Refs are collected from:
+//   - Deployment pod template — container Env ValueFrom (SecretKeyRef/ConfigMapKeyRef) and
+//     EnvFrom (SecretRef/ConfigMapRef), plus volume Secret and ConfigMap.
+//   - Client TLS cert Secret, if set.
+//
+// The deployment reconciler uses this to compute a hash of those resources' ResourceVersions
+// and sets the checksum/secrets pod template annotation.
 func (in *Grafana) ReferencedSecretsAndConfigMaps() (secretNames, configMapNames []string) {
 	secretSet := make(map[string]struct{})
 	configMapSet := make(map[string]struct{})
 
-	sec, cm := in.collectDeploymentRefs()
+	sec, cm := in.deploymentRefs()
 	for _, s := range sec {
 		if s != "" {
 			secretSet[s] = struct{}{}
@@ -368,12 +370,6 @@ func (in *Grafana) ReferencedSecretsAndConfigMaps() (secretNames, configMapNames
 	for _, c := range cm {
 		if c != "" {
 			configMapSet[c] = struct{}{}
-		}
-	}
-
-	for _, s := range in.collectExternalRefs() {
-		if s != "" {
-			secretSet[s] = struct{}{}
 		}
 	}
 
@@ -399,7 +395,7 @@ func (in *Grafana) ReferencedSecretsAndConfigMaps() (secretNames, configMapNames
 	return secretNames, configMapNames
 }
 
-func (in *Grafana) collectDeploymentRefs() (secrets, configMaps []string) {
+func (in *Grafana) deploymentRefs() (secrets, configMaps []string) {
 	if in.Spec.Deployment == nil ||
 		in.Spec.Deployment.Spec.Template == nil ||
 		in.Spec.Deployment.Spec.Template.Spec == nil {
@@ -413,7 +409,7 @@ func (in *Grafana) collectDeploymentRefs() (secrets, configMaps []string) {
 	allContainers = append(allContainers, podSpec.InitContainers...)
 
 	for _, c := range allContainers {
-		sec, cm := collectContainerEnvRefs(c)
+		sec, cm := containerEnvRefs(c)
 		secrets = append(secrets, sec...)
 		configMaps = append(configMaps, cm...)
 	}
@@ -431,7 +427,7 @@ func (in *Grafana) collectDeploymentRefs() (secrets, configMaps []string) {
 	return secrets, configMaps
 }
 
-func collectContainerEnvRefs(c corev1.Container) (secrets, configMaps []string) {
+func containerEnvRefs(c corev1.Container) (secrets, configMaps []string) {
 	for _, env := range c.Env {
 		if env.ValueFrom == nil {
 			continue
@@ -457,34 +453,6 @@ func collectContainerEnvRefs(c corev1.Container) (secrets, configMaps []string) 
 	}
 
 	return secrets, configMaps
-}
-
-func (in *Grafana) collectExternalRefs() []string {
-	if in.Spec.External == nil {
-		return nil
-	}
-
-	ext := in.Spec.External
-
-	var refs []string
-
-	if ext.APIKey != nil {
-		refs = append(refs, ext.APIKey.Name)
-	}
-
-	if ext.AdminUser != nil {
-		refs = append(refs, ext.AdminUser.Name)
-	}
-
-	if ext.AdminPassword != nil {
-		refs = append(refs, ext.AdminPassword.Name)
-	}
-
-	if ext.TLS != nil && ext.TLS.CertSecretRef != nil {
-		refs = append(refs, ext.TLS.CertSecretRef.Name)
-	}
-
-	return refs
 }
 
 func (in *Grafana) collectClientRefs() []string {
