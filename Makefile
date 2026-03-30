@@ -25,9 +25,8 @@ GF_TEST_CONTAINER_VERSION := $(if $(GF_TEST_CONTAINER_VERSION),$(GF_TEST_CONTAIN
 REGISTRY ?= ghcr.io
 ORG ?= grafana
 IMG ?= $(REGISTRY)/$(ORG)/grafana-operator:v$(VERSION)
-# ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-# renovate: datasource=github-tags depName=kubernetes-sigs/controller-tools extractVersion=^envtest-(?<version>v\d+\.\d+\.\d+)$
-ENVTEST_K8S_VERSION = 1.35.0
+# ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary. (i.e. 1.35)
+ENVTEST_K8S_VERSION ?= $(shell go list -m -f "{{ .Version }}" k8s.io/api | awk -F'[v.]' '{printf "1.%d", $$3}')
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
