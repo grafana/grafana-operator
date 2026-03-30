@@ -3,13 +3,14 @@ package config
 const (
 	// Grafana
 	GrafanaImage   = "docker.io/grafana/grafana"
-	GrafanaVersion = "12.4.0"
+	GrafanaVersion = "12.4.1"
 
 	// Paths
 	GrafanaDataPath               = "/var/lib/grafana"
 	GrafanaLogsPath               = "/var/log/grafana"
 	GrafanaPluginsPath            = "/var/lib/grafana/plugins"
 	GrafanaProvisioningPath       = "/etc/grafana/provisioning/"
+	GrafanaTmpPath                = "/tmp"
 	GrafanaDashboardsRuntimeBuild = "/tmp/dashboards"
 
 	// Default limits
@@ -40,6 +41,7 @@ const (
 	GrafanaProvisionNotifierVolumeName  = "grafana-provision-notifiers"
 	GrafanaLogsVolumeName               = "grafana-logs"
 	GrafanaDataVolumeName               = "grafana-data"
+	GrafanaTmpVolumeName                = "grafana-tmp"
 	SecretsMountDir                     = "/etc/grafana-secrets/" // #nosec G101
 	ConfigMapsMountDir                  = "/etc/grafana-configmaps/"
 )

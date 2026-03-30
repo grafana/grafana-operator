@@ -26,7 +26,7 @@ Whether you’re running one Grafana instance or many, the Grafana Operator simp
 Deploy the Grafana Operator easily in your cluster using Helm:
 
 ```bash
-helm upgrade -i grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-operator --version 5.22.0
+helm upgrade -i grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-operator --version 5.22.2
 ```
 
 **Option 2: Kustomize & More**

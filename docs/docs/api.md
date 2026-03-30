@@ -4992,7 +4992,7 @@ merge patch.<br/>
           RequiredObjectMeta contains only a [subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta).
 It requires `name` to be set<br/>
           <br/>
-            <i>Validations</i>:<li>(!(has(oldSelf.namespace) && !has(self.namespace))): namespace is immutable</li>
+            <i>Validations</i>:<li>((!has(oldSelf.__namespace__) && !has(self.__namespace__)) || (has(oldSelf.__namespace__) && has(self.__namespace__))): namespace is immutable</li>
         </td>
         <td>true</td>
       </tr><tr>
@@ -5921,7 +5921,7 @@ GrafanaNotificationPolicySpec defines the desired state of GrafanaNotificationPo
         <td>
           Routes for alerts to match against<br/>
           <br/>
-            <i>Validations</i>:<li>!has(self.continue): continue is invalid on the top level route node</li><li>!has(self.match_re): match_re is invalid on the top level route node</li><li>!has(self.matchers): matchers is invalid on the top level route node</li><li>!has(self.object_matchers): object_matchers is invalid on the top level route node</li><li>!has(self.mute_time_intervals): mute_time_intervals is invalid on the top level route node</li><li>!has(self.active_time_intervals): active_time_intervals is invalid on the top level route node</li>
+            <i>Validations</i>:<li>!has(self.__continue__): continue is invalid on the top level route node</li><li>!has(self.match_re): match_re is invalid on the top level route node</li><li>!has(self.matchers): matchers is invalid on the top level route node</li><li>!has(self.object_matchers): object_matchers is invalid on the top level route node</li><li>!has(self.mute_time_intervals): mute_time_intervals is invalid on the top level route node</li><li>!has(self.active_time_intervals): active_time_intervals is invalid on the top level route node</li>
         </td>
         <td>true</td>
       </tr><tr>
@@ -7335,7 +7335,7 @@ GrafanaSpec defines the desired state of Grafana
         <td>
           Version sets the tag of the default image: docker.io/grafana/grafana.
 Allows full image refs with/without sha256checksum: "registry/repo/image:tag@sha"
-default: 12.4.0<br/>
+default: 12.4.1<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -21999,7 +21999,7 @@ this configuration error.
 
 Support: Core<br/>
           <br/>
-            <i>Validations</i>:<li>!(self.exists(f, f.type == 'RequestRedirect') && self.exists(f, f.type == 'URLRewrite')): May specify either httpRouteFilterRequestRedirect or httpRouteFilterRequestRewrite, but not both</li><li>self.filter(f, f.type == 'RequestHeaderModifier').size() <= 1: RequestHeaderModifier filter cannot be repeated</li><li>self.filter(f, f.type == 'ResponseHeaderModifier').size() <= 1: ResponseHeaderModifier filter cannot be repeated</li><li>self.filter(f, f.type == 'RequestRedirect').size() <= 1: RequestRedirect filter cannot be repeated</li><li>self.filter(f, f.type == 'URLRewrite').size() <= 1: URLRewrite filter cannot be repeated</li>
+            <i>Validations</i>:<li>!(self.exists(f, f.type == 'RequestRedirect') && self.exists(f, f.type == 'URLRewrite')): May specify either httpRouteFilterRequestRedirect or httpRouteFilterRequestRewrite, but not both</li><li>self.filter(f, f.type == 'CORS').size() <= 1: CORS filter cannot be repeated</li><li>self.filter(f, f.type == 'RequestHeaderModifier').size() <= 1: RequestHeaderModifier filter cannot be repeated</li><li>self.filter(f, f.type == 'ResponseHeaderModifier').size() <= 1: ResponseHeaderModifier filter cannot be repeated</li><li>self.filter(f, f.type == 'RequestRedirect').size() <= 1: RequestRedirect filter cannot be repeated</li><li>self.filter(f, f.type == 'URLRewrite').size() <= 1: URLRewrite filter cannot be repeated</li>
         </td>
         <td>false</td>
       </tr><tr>
@@ -22171,7 +22171,7 @@ request is being forwarded to the backend defined here.
 Support: Implementation-specific (For broader support of filters, use the
 Filters field in HTTPRouteRule.)<br/>
           <br/>
-            <i>Validations</i>:<li>!(self.exists(f, f.type == 'RequestRedirect') && self.exists(f, f.type == 'URLRewrite')): May specify either httpRouteFilterRequestRedirect or httpRouteFilterRequestRewrite, but not both</li><li>self.filter(f, f.type == 'RequestHeaderModifier').size() <= 1: RequestHeaderModifier filter cannot be repeated</li><li>self.filter(f, f.type == 'ResponseHeaderModifier').size() <= 1: ResponseHeaderModifier filter cannot be repeated</li><li>self.filter(f, f.type == 'RequestRedirect').size() <= 1: RequestRedirect filter cannot be repeated</li><li>self.filter(f, f.type == 'URLRewrite').size() <= 1: URLRewrite filter cannot be repeated</li>
+            <i>Validations</i>:<li>!(self.exists(f, f.type == 'RequestRedirect') && self.exists(f, f.type == 'URLRewrite')): May specify either httpRouteFilterRequestRedirect or httpRouteFilterRequestRewrite, but not both</li><li>self.filter(f, f.type == 'CORS').size() <= 1: CORS filter cannot be repeated</li><li>self.filter(f, f.type == 'RequestHeaderModifier').size() <= 1: RequestHeaderModifier filter cannot be repeated</li><li>self.filter(f, f.type == 'ResponseHeaderModifier').size() <= 1: ResponseHeaderModifier filter cannot be repeated</li><li>self.filter(f, f.type == 'RequestRedirect').size() <= 1: RequestRedirect filter cannot be repeated</li><li>self.filter(f, f.type == 'URLRewrite').size() <= 1: URLRewrite filter cannot be repeated</li>
         </td>
         <td>false</td>
       </tr><tr>

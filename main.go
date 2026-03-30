@@ -147,6 +147,10 @@ func configureZap() (zap.Options, error) {
 			return opts, fmt.Errorf("invalid log level: %w", err)
 		}
 
+		if opts.Development {
+			level = zapcore.DebugLevel
+		}
+
 		opts.Level = level
 	}
 

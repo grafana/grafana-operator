@@ -2644,7 +2644,8 @@ spec:
                     type: object
                     x-kubernetes-validations:
                     - message: namespace is immutable
-                      rule: (!(has(oldSelf.namespace) && !has(self.namespace)))
+                      rule: ((!has(oldSelf.__namespace__) && !has(self.__namespace__))
+                        || (has(oldSelf.__namespace__) && has(self.__namespace__)))
                   spec:
                     x-kubernetes-preserve-unknown-fields: true
                 required:
@@ -3253,7 +3254,7 @@ spec:
                 type: object
                 x-kubernetes-validations:
                 - message: continue is invalid on the top level route node
-                  rule: '!has(self.continue)'
+                  rule: '!has(self.__continue__)'
                 - message: match_re is invalid on the top level route node
                   rule: '!has(self.match_re)'
                 - message: matchers is invalid on the top level route node
@@ -9665,6 +9666,9 @@ spec:
                                         both
                                       rule: '!(self.exists(f, f.type == ''RequestRedirect'')
                                         && self.exists(f, f.type == ''URLRewrite''))'
+                                    - message: CORS filter cannot be repeated
+                                      rule: self.filter(f, f.type == 'CORS').size()
+                                        <= 1
                                     - message: RequestHeaderModifier filter cannot
                                         be repeated
                                       rule: self.filter(f, f.type == 'RequestHeaderModifier').size()
@@ -11210,6 +11214,8 @@ spec:
                                   or httpRouteFilterRequestRewrite, but not both
                                 rule: '!(self.exists(f, f.type == ''RequestRedirect'')
                                   && self.exists(f, f.type == ''URLRewrite''))'
+                              - message: CORS filter cannot be repeated
+                                rule: self.filter(f, f.type == 'CORS').size() <= 1
                               - message: RequestHeaderModifier filter cannot be repeated
                                 rule: self.filter(f, f.type == 'RequestHeaderModifier').size()
                                   <= 1
@@ -13050,7 +13056,7 @@ spec:
                 description: |-
                   Version sets the tag of the default image: docker.io/grafana/grafana.
                   Allows full image refs with/without sha256checksum: "registry/repo/image:tag@sha"
-                  default: 12.4.0
+                  default: 12.4.1
                 type: string
             type: object
           status:

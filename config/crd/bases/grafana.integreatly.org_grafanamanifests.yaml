@@ -241,7 +241,8 @@ spec:
                     type: object
                     x-kubernetes-validations:
                     - message: namespace is immutable
-                      rule: (!(has(oldSelf.namespace) && !has(self.namespace)))
+                      rule: ((!has(oldSelf.__namespace__) && !has(self.__namespace__))
+                        || (has(oldSelf.__namespace__) && has(self.__namespace__)))
                   spec:
                     x-kubernetes-preserve-unknown-fields: true
                 required:
