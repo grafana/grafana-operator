@@ -84,7 +84,7 @@ jobs:
           make test-image-pre-pull
 
       # NOTE: use separate cache, so it doesn't clash with e2e builds
-      - uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5
+      - uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
         with:
           path: |
             ~/.cache/go-build
@@ -163,7 +163,7 @@ jobs:
           make e2e-kind
 
       - name: Install kubectl
-        uses: azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede # v4
+        uses: azure/setup-kubectl@15650b3ad78fff148532a140b8a4c821796b2d7b # v5
         with:
           version: ${{ matrix.version }}
 
