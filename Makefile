@@ -77,15 +77,13 @@ manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) $(YQ) ## Generate WebhookConfiguration
 	@# Append the default Grafana version in CRD field description
 	$(YQ) -i '.spec.versions[0].schema.openAPIV3Schema.properties.spec.properties.version.description += "\ndefault: $(GRAFANA_VERSION)"' $(GRAFANA_CRD_PATH)
 
-	$(YQ) -i '(select(.kind == "Deployment") | .spec.template.spec.containers[0].env[] | select (.name == "RELATED_IMAGE_GRAFANA")).value="$(GRAFANA_IMAGE):$(GRAFANA_VERSION)"' config/manager/manager.yaml
-
 	@# Replace manifests and roles in Helm chart
 	mkdir -p deploy/helm/grafana-operator/files/crds
 	cp config/crd/bases/* deploy/helm/grafana-operator/files/crds/
 	cat config/rbac/role.yaml | $(YQ) -r 'del(.rules[] | select (.apiGroups | contains(["route.openshift.io"])))' > deploy/helm/grafana-operator/files/rbac.yaml
 	cat config/rbac/role.yaml | $(YQ) -r 'del(.rules[] | select (.apiGroups | contains(["route.openshift.io"]) | not))'  > deploy/helm/grafana-operator/files/rbac-openshift.yaml
 
-	@# NOTE: As we publish the whole kustomize folder structure (deploy/kustomize) as an OCI arfifact via flux, in kustomization.yaml, we cannot reference files that reside outside of deploy/kustomize. Thus, we need to maintain an additional copy of CRDs and the ClusterRole
+	@# As we publish the whole kustomize folder structure (deploy/kustomize) as an OCI arfifact via flux, in kustomization.yaml, we cannot reference files that reside outside of deploy/kustomize. Thus, we need to maintain an additional copy of CRDs and the ClusterRole
 	cd config/crd && $(KUSTOMIZE) edit add resource bases/*
 	$(KUSTOMIZE) build config/crd -o deploy/kustomize/base/crds.yaml
 	cp config/rbac/role.yaml deploy/kustomize/base/role.yaml
@@ -358,4 +356,5 @@ prep-release: $(YQ)
 	sed -i.bak 's/^VERSION ?= 5.*/VERSION ?= $(VERSION)/g' Makefile
 	grep -q "$(GRAFANA_VERSION)" docs/docs/versioning.md || sed -E -i.bak 's/\|-\|-\|/|-|-|\n| \`v$(VERSION)\` | \`$(GRAFANA_VERSION)\` |/' docs/docs/versioning.md
 	$(YQ) -i '.images[0].newTag="v$(VERSION)"' deploy/kustomize/base/kustomization.yaml
+	$(YQ) -i '(select(.kind == "Deployment") | .spec.template.spec.containers[0].env[] | select (.name == "RELATED_IMAGE_GRAFANA")).value="$(GRAFANA_IMAGE):$(GRAFANA_VERSION)"' config/manager/manager.yaml
 	make helm-docs
