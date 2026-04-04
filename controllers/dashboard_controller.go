@@ -394,12 +394,15 @@ func (r *GrafanaDashboardReconciler) reconcileWithInstance(ctx context.Context, 
 		return grafana.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource(uid))
 	}
 
+	log.V(1).Info("updating dashboard in grafana instance")
+
 	resp, err := gClient.Dashboards.PostDashboard(&models.SaveDashboardCommand{
 		Dashboard: dashboardModel,
 		FolderUID: folderUID,
 		Overwrite: true,
 	})
 	if err != nil {
+		log.Error(err, "failed to update dashboard in grafana instance")
 		return err
 	}
 
@@ -460,7 +463,9 @@ func (r *GrafanaDashboardReconciler) reconcilePublicDashboard(ctx context.Contex
 
 	pDashUID := cr.Spec.PublicDashboard.UID
 	if pDashUID == "" {
-		pDashUID = string(cr.UID) // metadata.uid is used as the Dashboard UID may not be a valid UUID
+		// metadata.uid is used as the Dashboard UID may not be a valid UUID
+		// Safe as it is recreated if the it ever changes
+		pDashUID = string(cr.UID)
 	}
 
 	dto := r.getPublicDashboardDTO(cr, pDashUID)
@@ -525,12 +530,20 @@ func (r *GrafanaDashboardReconciler) getPublicDashboardDTO(cr *v1beta1.GrafanaDa
 		token = string(cr.UID)
 	}
 
+	getDefault := func(b *bool, d bool) *bool {
+		if b == nil {
+			return &d
+		}
+
+		return b
+	}
+
 	return &models.PublicDashboardDTO{
 		UID:                  uid,
 		AccessToken:          token,
-		IsEnabled:            &pdash.Enabled,
-		AnnotationsEnabled:   &pdash.AnnotationsEnabled,
-		TimeSelectionEnabled: &pdash.TimeSelectionEnabled,
+		IsEnabled:            getDefault(&pdash.Enabled, true),
+		AnnotationsEnabled:   getDefault(&pdash.AnnotationsEnabled, false),
+		TimeSelectionEnabled: getDefault(&pdash.TimeSelectionEnabled, false),
 	}
 }
 
