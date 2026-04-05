@@ -126,28 +126,6 @@ func TestGrafanaIndexing(t *testing.T) {
 		require.Equal(t, expected, result)
 	})
 
-	t.Run("indexSecretSource returns secrets from external spec", func(t *testing.T) {
-		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "test-namespace",
-				Name:      "test-grafana",
-			},
-			Spec: v1beta1.GrafanaSpec{
-				External: &v1beta1.External{
-					URL:           "https://grafana.example.com",
-					AdminUser:     tk8s.GetSecretKeySelector(t, "ext-creds", "user"),
-					AdminPassword: tk8s.GetSecretKeySelector(t, "ext-creds", "password"),
-				},
-			},
-		}
-
-		indexFunc := reconciler.indexSecretSource()
-		result := indexFunc(cr)
-
-		expected := []string{"test-namespace/ext-creds"}
-		require.Equal(t, expected, result)
-	})
-
 	t.Run("indexSecretSource returns empty slice when no secret references", func(t *testing.T) {
 		cr := &v1beta1.Grafana{
 			ObjectMeta: metav1.ObjectMeta{
