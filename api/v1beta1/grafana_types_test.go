@@ -739,20 +739,6 @@ func TestGrafana_ReferencedSecretsAndConfigMaps(t *testing.T) {
 		assert.Equal(t, []string{"config-vol"}, configMaps)
 	})
 
-	t.Run("client tls secret reference", func(t *testing.T) {
-		cr := &Grafana{}
-		cr.Spec.Client = &GrafanaClient{
-			TLS: &TLSConfig{
-				CertSecretRef: &corev1.SecretReference{Name: "client-tls"},
-			},
-		}
-
-		secrets, configMaps := cr.ReferencedSecretsAndConfigMaps()
-
-		assert.Equal(t, []string{"client-tls"}, secrets)
-		assert.Empty(t, configMaps)
-	})
-
 	t.Run("deduplicates repeated secret references", func(t *testing.T) {
 		cr := &Grafana{}
 		cr.Spec.Deployment = &DeploymentV1{

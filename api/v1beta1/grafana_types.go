@@ -352,7 +352,6 @@ func (in *Grafana) Conditions() *[]metav1.Condition {
 // Refs are collected from:
 //   - Deployment pod template — container Env ValueFrom (SecretKeyRef/ConfigMapKeyRef) and
 //     EnvFrom (SecretRef/ConfigMapRef), plus volume Secret and ConfigMap.
-//   - Client TLS cert Secret, if set.
 //
 // The deployment reconciler uses this to compute a hash of those resources' ResourceVersions
 // and sets the checksum/secrets pod template annotation.
@@ -370,12 +369,6 @@ func (in *Grafana) ReferencedSecretsAndConfigMaps() (secretNames, configMapNames
 	for _, c := range cm {
 		if c != "" {
 			configMapSet[c] = struct{}{}
-		}
-	}
-
-	for _, s := range in.collectClientRefs() {
-		if s != "" {
-			secretSet[s] = struct{}{}
 		}
 	}
 
@@ -453,12 +446,4 @@ func containerEnvRefs(c corev1.Container) (secrets, configMaps []string) {
 	}
 
 	return secrets, configMaps
-}
-
-func (in *Grafana) collectClientRefs() []string {
-	if in.Spec.Client == nil || in.Spec.Client.TLS == nil || in.Spec.Client.TLS.CertSecretRef == nil {
-		return nil
-	}
-
-	return []string{in.Spec.Client.TLS.CertSecretRef.Name}
 }
