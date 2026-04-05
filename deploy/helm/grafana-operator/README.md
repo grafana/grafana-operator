@@ -120,7 +120,8 @@ It's easier to just manage this configuration outside of the operator.
 | podLabels | object | `{}` | pod labels |
 | podSecurityContext | object | `{}` | pod security context |
 | priorityClassName | string | `""` | pod priority class name |
-| rbac.create | bool | `true` | Specifies whether to create the ClusterRole and ClusterRoleBinding. If "namespaceScope" is true, this will create a RoleBinding instead of ClusterRoleBinding. If "watchNamespaces" is set with "namespaceScope", a RoleBinding is created in each namespace. |
+| rbac.create | bool | `true` | Specifies whether to create RBAC resources for the operator. |
+| rbac.useClusterRole | bool | `true` | Whether to use ClusterRole for operator RBAC. When true (default), the chart creates a ClusterRole and binds it either cluster-wide (ClusterRoleBinding) or per-namespace (RoleBinding) when namespaceScope=true. When false and namespaceScope=true, the chart renders namespaced Role + RoleBinding instead (useful for restricted clusters where ClusterRole is not allowed). Note: watchNamespaceSelector requires cluster-scoped permission to list namespaces and therefore requires ClusterRole (useClusterRole=true). |
 | readinessProbe | object | `{"httpGet":{"path":"/readyz","port":8081}}` | pod livenessProbe |
 | replicas | int | `1` | The number of operators to run simultaneously. With leader election, only one instance reconciles CRs preventing duplicate reconciliations. Note: Multiple replicas increase stability, it does not increase throughput. |
 | resources | object | `{}` | grafana operator container resources |

@@ -1,8 +1,26 @@
 {{- if .Values.rbac.create -}}
 {{- $rbac := .Files.Get "files/rbac.yaml" | fromYaml  }}
 {{- $rbacOpenShift := .Files.Get "files/rbac-openshift.yaml" | fromYaml  }}
+{{- $watchNamespaceSelector := trim .Values.watchNamespaceSelector -}}
 
-{{- /* ClusterRole referenced by either ClusterRoleBinding or Rolebindings for all watchNamespaces*/}}
+{{- /*
+RBAC behavior:
+- Default is to use ClusterRole (and bind it either cluster-wide or via RoleBindings).
+- In restricted clusters you may set namespaceScope=true and rbac.useClusterRole=false to render namespaced Role+RoleBinding instead.
+
+Note: watchNamespaceSelector requires cluster-scoped permission to list namespaces and therefore requires a ClusterRole.
+*/ -}}
+{{- $useClusterRole := true -}}
+{{- if hasKey .Values.rbac "useClusterRole" -}}
+{{- $useClusterRole = .Values.rbac.useClusterRole -}}
+{{- end -}}
+{{- $useClusterRole = or (not .Values.namespaceScope) $useClusterRole -}}
+
+{{- if and .Values.namespaceScope (not $useClusterRole) (ne $watchNamespaceSelector "") -}}
+{{- fail "watchNamespaceSelector requires cluster-scoped RBAC (ClusterRole). Set rbac.useClusterRole=true or disable watchNamespaceSelector." -}}
+{{- end -}}
+
+{{- if $useClusterRole }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -16,8 +34,7 @@ rules:
   {{- if $.Values.isOpenShift }}
   {{- toYaml $rbacOpenShift.rules | nindent 2 -}}
   {{- end }}
-{{- if .Values.watchNamespaceSelector }}
-{{- /* The operator lists namespaces when WATCH_NAMESPACE_SELECTOR != "" */}}
+  {{- if ne $watchNamespaceSelector "" }}
   - apiGroups:
     - ""
     resources:
@@ -25,19 +42,41 @@ rules:
     verbs:
     - get
     - list
+  {{- end }}
 {{- end }}
 
 {{- /* Namespace scope, one or more namespaces */}}
 {{- if .Values.namespaceScope }}
-{{- $watchNamespaces := append (splitList "," .Values.watchNamespaces) (include "grafana-operator.namespace" $) }}
+{{- $watchNamespaces := append (splitList "," .Values.watchNamespaces) (include "grafana-operator.namespace" $) | uniq }}
+{{- $roleBindingName := include "grafana-operator.fullname" $ -}}
+{{- if not $useClusterRole -}}
+{{- $roleBindingName = printf "%s-role" (include "grafana-operator.fullname" $) -}}
+{{- end -}}
 {{- range $watchNamespaces }}
-{{- if trim . }}
+{{- $ns := trim . }}
+{{- if $ns }}
+{{- if not $useClusterRole }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "grafana-operator.fullname" $ }}
+  namespace: {{ $ns }}
+  labels:
+    {{- include "grafana-operator.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: operator
+rules:
+  {{- toYaml $rbac.rules | nindent 2 }}
+  {{- if $.Values.isOpenShift }}
+  {{- toYaml $rbacOpenShift.rules | nindent 2 -}}
+  {{- end }}
+{{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: {{ include "grafana-operator.fullname" $ }}
-  namespace: {{ trim . }}
+  name: {{ $roleBindingName }}
+  namespace: {{ $ns }}
   labels:
     {{- include "grafana-operator.labels" $ | nindent 4 }}
     app.kubernetes.io/component: operator
@@ -46,14 +85,13 @@ subjects:
     name: {{ include "grafana-operator.serviceAccountName" $ }}
     namespace: {{ include "grafana-operator.namespace" $ }}
 roleRef:
-  kind: ClusterRole
+  kind: {{ ternary "ClusterRole" "Role" $useClusterRole }}
   name: {{ include "grafana-operator.fullname" $ }}
   apiGroup: rbac.authorization.k8s.io
 {{- end }}
 {{- end }}{{- /* range $watchNamespaces */}}
 
 {{- else }}{{- /* namespaceScope */}}
-{{- /* ClusterScope (default) */}}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -72,7 +110,7 @@ subjects:
     namespace: {{ include "grafana-operator.namespace" $ }}
 {{- end }}{{- /* else namespaceScope */}}
 
-{{- /*Lease permissions needed for leaderElection*/}}
+{{- /* Lease permissions needed for leaderElection */}}
 {{- if .Values.leaderElect }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
