@@ -11,8 +11,7 @@ CONTROLLER_GEN_VERSION = v0.20.1
 # renovate: datasource=github-tags depName=fybrik/crdoc
 CRDOC_VERSION = v0.6.4
 DART_SASS_VERSION = 1.86.0
-# renovate: datasource=github-tags depName=kubernetes-sigs/controller-runtime
-ENVTEST_VERSION = v0.23.3
+ENVTEST_VERSION ?= $(shell go list -m -f "{{ .Version }}" sigs.k8s.io/controller-runtime)
 # renovate: datasource=github-tags depName=golangci/golangci-lint
 GOLANGCI_LINT_VERSION = v2.11.4
 # renovate: datasource=github-tags depName=norwoodj/helm-docs
@@ -29,7 +28,7 @@ MUFFET_VERSION = v2.10.9
 OPERATOR_SDK_VERSION = v1.32.0
 OPM_VERSION = v1.23.2
 # renovate: datasource=github-tags depName=mikefarah/yq
-YQ_VERSION = v4.52.4
+YQ_VERSION = v4.52.5
 # renovate: datasource=github-tags depName=google/go-containerregistry
 CRANE_VERSION = v0.21.3
 

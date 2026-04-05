@@ -25,9 +25,8 @@ GF_TEST_CONTAINER_VERSION := $(if $(GF_TEST_CONTAINER_VERSION),$(GF_TEST_CONTAIN
 REGISTRY ?= ghcr.io
 ORG ?= grafana
 IMG ?= $(REGISTRY)/$(ORG)/grafana-operator:v$(VERSION)
-# ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-# renovate: datasource=github-tags depName=kubernetes-sigs/controller-tools extractVersion=^envtest-(?<version>v\d+\.\d+\.\d+)$
-ENVTEST_K8S_VERSION = 1.35.0
+# ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary. (i.e. 1.35)
+ENVTEST_K8S_VERSION ?= $(shell go list -m -f "{{ .Version }}" k8s.io/api | awk -F'[v.]' '{printf "1.%d", $$3}')
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -64,30 +63,30 @@ help: ## Display this help.
 ##@ Development
 
 .PHONY: manifests
+manifests: GRAFANA_CRD_PATH = config/crd/bases/grafana.integreatly.org_grafanas.yaml
 manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) $(YQ) ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(info $(M) running $@)
+	@# Regenerate manifests. Allows failures if files are not found
+	-rm config/crd/bases/* deploy/helm/grafana-operator/files/crds/*
 	$(CONTROLLER_GEN) rbac:roleName=manager-role webhook paths="./..." crd output:crd:artifacts:config=config/crd/bases
-	$(CONTROLLER_GEN) rbac:roleName=manager-role webhook paths="./..." crd output:crd:artifacts:config=deploy/helm/grafana-operator/files/crds
+
 	@# Remove default values for HTTPRoute rules
-	$(YQ) -i '.spec.versions[] |= del(.schema.openAPIV3Schema.properties.spec.properties.httpRoute.properties.spec.properties.rules.default)' config/crd/bases/grafana.integreatly.org_grafanas.yaml
-	$(YQ) -i '.spec.versions[] |= del(.schema.openAPIV3Schema.properties.spec.properties.httpRoute.properties.spec.properties.rules.default)' deploy/helm/grafana-operator/files/crds/grafana.integreatly.org_grafanas.yaml
+	$(YQ) -i '.spec.versions[] |= del(.schema.openAPIV3Schema.properties.spec.properties.httpRoute.properties.spec.properties.rules.default)' $(GRAFANA_CRD_PATH)
 	@# Remove CRD descriptions under Grafana#.spec.deployment
-	$(YQ) -i '.spec.versions[] |= del(.schema.openAPIV3Schema.properties.spec.properties.deployment.properties | .. | select(has("description")).description)' config/crd/bases/grafana.integreatly.org_grafanas.yaml
-	$(YQ) -i '.spec.versions[] |= del(.schema.openAPIV3Schema.properties.spec.properties.deployment.properties | .. | select(has("description")).description)' deploy/helm/grafana-operator/files/crds/grafana.integreatly.org_grafanas.yaml
-	$(YQ) -i '.spec.versions[0].schema.openAPIV3Schema.properties.spec.properties.version.description += "\ndefault: $(GRAFANA_VERSION)"' config/crd/bases/grafana.integreatly.org_grafanas.yaml
-	$(YQ) -i '.spec.versions[0].schema.openAPIV3Schema.properties.spec.properties.version.description += "\ndefault: $(GRAFANA_VERSION)"' deploy/helm/grafana-operator/files/crds/grafana.integreatly.org_grafanas.yaml
+	$(YQ) -i '.spec.versions[] |= del(.schema.openAPIV3Schema.properties.spec.properties.deployment.properties | .. | select(has("description")).description)' $(GRAFANA_CRD_PATH)
+	@# Append the default Grafana version in CRD field description
+	$(YQ) -i '.spec.versions[0].schema.openAPIV3Schema.properties.spec.properties.version.description += "\ndefault: $(GRAFANA_VERSION)"' $(GRAFANA_CRD_PATH)
 
-	$(YQ) -i '(select(.kind == "Deployment") | .spec.template.spec.containers[0].env[] | select (.name == "RELATED_IMAGE_GRAFANA")).value="$(GRAFANA_IMAGE):$(GRAFANA_VERSION)"' config/manager/manager.yaml
+	@# Replace manifests and roles in Helm chart
+	mkdir -p deploy/helm/grafana-operator/files/crds
+	cp config/crd/bases/* deploy/helm/grafana-operator/files/crds/
+	cat config/rbac/role.yaml | $(YQ) -r 'del(.rules[] | select (.apiGroups | contains(["route.openshift.io"])))' > deploy/helm/grafana-operator/files/rbac.yaml
+	cat config/rbac/role.yaml | $(YQ) -r 'del(.rules[] | select (.apiGroups | contains(["route.openshift.io"]) | not))'  > deploy/helm/grafana-operator/files/rbac-openshift.yaml
 
-	@# NOTE: As we publish the whole kustomize folder structure (deploy/kustomize) as an OCI arfifact via flux, in kustomization.yaml, we cannot reference files that reside outside of deploy/kustomize. Thus, we need to maintain an additional copy of CRDs and the ClusterRole
+	@# As we publish the whole kustomize folder structure (deploy/kustomize) as an OCI arfifact via flux, in kustomization.yaml, we cannot reference files that reside outside of deploy/kustomize. Thus, we need to maintain an additional copy of CRDs and the ClusterRole
 	cd config/crd && $(KUSTOMIZE) edit add resource bases/*
 	$(KUSTOMIZE) build config/crd -o deploy/kustomize/base/crds.yaml
 	cp config/rbac/role.yaml deploy/kustomize/base/role.yaml
-
-	@# Sync role definitions to helm chart
-	mkdir -p deploy/helm/grafana-operator/files
-	cat config/rbac/role.yaml | $(YQ) -r 'del(.rules[] | select (.apiGroups | contains(["route.openshift.io"])))' > deploy/helm/grafana-operator/files/rbac.yaml
-	cat config/rbac/role.yaml | $(YQ) -r 'del(.rules[] | select (.apiGroups | contains(["route.openshift.io"]) | not))'  > deploy/helm/grafana-operator/files/rbac-openshift.yaml
 
 # Generate API reference documentation
 .PHONY: api-docs
@@ -357,4 +356,5 @@ prep-release: $(YQ)
 	sed -i.bak 's/^VERSION ?= 5.*/VERSION ?= $(VERSION)/g' Makefile
 	grep -q "$(GRAFANA_VERSION)" docs/docs/versioning.md || sed -E -i.bak 's/\|-\|-\|/|-|-|\n| \`v$(VERSION)\` | \`$(GRAFANA_VERSION)\` |/' docs/docs/versioning.md
 	$(YQ) -i '.images[0].newTag="v$(VERSION)"' deploy/kustomize/base/kustomization.yaml
+	$(YQ) -i '(select(.kind == "Deployment") | .spec.template.spec.containers[0].env[] | select (.name == "RELATED_IMAGE_GRAFANA")).value="$(GRAFANA_IMAGE):$(GRAFANA_VERSION)"' config/manager/manager.yaml
 	make helm-docs
