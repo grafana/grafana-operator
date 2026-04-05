@@ -5,12 +5,13 @@ weight: 60
 
 The Grafana version when unspecified in `Grafana#spec.version`
 
+> Only versions that have changes around Grafana image tags are mentioned below.
+
 | Operator Version | Default Grafana Image |
 |-|-|
 | `v5.22.1` | `12.4.1` |
 | `v5.22.0` | `12.3.3` |
 | `v5.21.0` | `12.3.0` |
-| `v5.20.0` | `12.2.0` |
 | `v5.19.0` | `12.1.0` |
 | `v5.16.0` | `11.3.0` |
 | `v5.9.2` | `10.4.3` |
