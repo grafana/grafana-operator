@@ -110,34 +110,25 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 		err := cl.Create(ctx, secret)
 		require.NoError(t, err)
 
-		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "deploy-secrets-hash-test-grafana",
-				UID:       types.UID("deploy-secrets-hash-test-grafana-uid"),
-			},
-			Spec: v1beta1.GrafanaSpec{
-				Deployment: &v1beta1.DeploymentV1{
-					Spec: v1beta1.DeploymentV1Spec{
-						Template: &v1beta1.DeploymentV1PodTemplateSpec{
-							Spec: &v1beta1.DeploymentV1PodSpec{
-								Containers: []corev1.Container{
-									{
-										Name: "grafana",
-										Env: []corev1.EnvVar{
-											{
-												Name:      "PASSWORD",
-												ValueFrom: tk8s.GetEnvVarSecretSource(t, secret.Name, "password"),
-											},
-										},
-									},
-								},
-							},
-						},
+		containers := []corev1.Container{
+			{
+				Name: "grafana",
+				Env: []corev1.EnvVar{
+					{
+						Name:      "PASSWORD",
+						ValueFrom: tk8s.GetEnvVarSecretSource(t, secret.Name, "password"),
 					},
 				},
 			},
 		}
+
+		cr := &v1beta1.Grafana{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "deploy-secrets-hash-test-grafana",
+			},
+		}
+		cr.Spec.SetContainers(containers)
 
 		err = cl.Create(ctx, cr)
 		require.NoError(t, err)
@@ -190,32 +181,25 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 		err := cl.Create(ctx, secret)
 		require.NoError(t, err)
 
+		containers := []corev1.Container{
+			{
+				Name: "grafana",
+				EnvFrom: []corev1.EnvFromSource{
+					{
+						SecretRef: tk8s.GetEnvFromSecretSource(t, secret.Name),
+					},
+				},
+			},
+		}
+
 		cr := &v1beta1.Grafana{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "default",
 				Name:      "deploy-secrets-hash-rotation-grafana",
 			},
-			Spec: v1beta1.GrafanaSpec{
-				Deployment: &v1beta1.DeploymentV1{
-					Spec: v1beta1.DeploymentV1Spec{
-						Template: &v1beta1.DeploymentV1PodTemplateSpec{
-							Spec: &v1beta1.DeploymentV1PodSpec{
-								Containers: []corev1.Container{
-									{
-										Name: "grafana",
-										EnvFrom: []corev1.EnvFromSource{
-											{
-												SecretRef: tk8s.GetEnvFromSecretSource(t, secret.Name),
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
 		}
+
+		cr.Spec.SetContainers(containers)
 
 		err = cl.Create(ctx, cr)
 		require.NoError(t, err)
@@ -244,33 +228,26 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 	It("skips missing secrets without failing", func() {
 		ctx := context.Background()
 
+		containers := []corev1.Container{
+			{
+				Name: "grafana",
+				Env: []corev1.EnvVar{
+					{
+						Name:      "MISSING_KEY",
+						ValueFrom: tk8s.GetEnvVarSecretSource(t, "does-not-exist", "key"),
+					},
+				},
+			},
+		}
+
 		cr := &v1beta1.Grafana{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "default",
 				Name:      "deploy-secrets-hash-missing-secret",
 			},
-			Spec: v1beta1.GrafanaSpec{
-				Deployment: &v1beta1.DeploymentV1{
-					Spec: v1beta1.DeploymentV1Spec{
-						Template: &v1beta1.DeploymentV1PodTemplateSpec{
-							Spec: &v1beta1.DeploymentV1PodSpec{
-								Containers: []corev1.Container{
-									{
-										Name: "grafana",
-										Env: []corev1.EnvVar{
-											{
-												Name:      "MISSING_KEY",
-												ValueFrom: tk8s.GetEnvVarSecretSource(t, "does-not-exist", "key"),
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
 		}
+
+		cr.Spec.SetContainers(containers)
 
 		err := cl.Create(ctx, cr)
 		require.NoError(t, err)
