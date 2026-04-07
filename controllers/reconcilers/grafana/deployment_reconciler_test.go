@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
@@ -106,7 +105,9 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 			StringData: map[string]string{"password": "s3cr3t"},
 		}
 
-		err := cl.Create(context.Background(), secret)
+		ctx := context.Background()
+
+		err := cl.Create(ctx, secret)
 		require.NoError(t, err)
 
 		cr := &v1beta1.Grafana{
@@ -122,8 +123,7 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 							Spec: &v1beta1.DeploymentV1PodSpec{
 								Containers: []corev1.Container{
 									{
-										Name:  "grafana",
-										Image: "grafana/grafana:test",
+										Name: "grafana",
 										Env: []corev1.EnvVar{
 											{
 												Name:      "PASSWORD",
@@ -139,6 +139,9 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 			},
 		}
 
+		err = cl.Create(ctx, cr)
+		require.NoError(t, err)
+
 		r := NewDeploymentReconciler(cl, false)
 		vars := &v1beta1.OperatorReconcileVars{}
 
@@ -150,14 +153,18 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 	})
 
 	It("sets empty SecretsHash when no secrets are referenced", func() {
+		ctx := context.Background()
+
 		cr := &v1beta1.Grafana{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "default",
 				Name:      "deploy-secrets-hash-no-refs",
-				UID:       types.UID("deploy-secrets-hash-no-refs-uid"),
 			},
 			Spec: v1beta1.GrafanaSpec{},
 		}
+
+		err := cl.Create(ctx, cr)
+		require.NoError(t, err)
 
 		r := NewDeploymentReconciler(cl, false)
 		vars := &v1beta1.OperatorReconcileVars{}
@@ -170,6 +177,8 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 	})
 
 	It("produces a different hash after a referenced secret is updated", func() {
+		ctx := context.Background()
+
 		secret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "default",
@@ -178,14 +187,13 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 			StringData: map[string]string{"password": "initial"},
 		}
 
-		err := cl.Create(context.Background(), secret)
+		err := cl.Create(ctx, secret)
 		require.NoError(t, err)
 
 		cr := &v1beta1.Grafana{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "default",
 				Name:      "deploy-secrets-hash-rotation-grafana",
-				UID:       types.UID("deploy-secrets-hash-rotation-grafana-uid"),
 			},
 			Spec: v1beta1.GrafanaSpec{
 				Deployment: &v1beta1.DeploymentV1{
@@ -194,8 +202,7 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 							Spec: &v1beta1.DeploymentV1PodSpec{
 								Containers: []corev1.Container{
 									{
-										Name:  "grafana",
-										Image: "grafana/grafana:test",
+										Name: "grafana",
 										EnvFrom: []corev1.EnvFromSource{
 											{
 												SecretRef: tk8s.GetEnvFromSecretSource(t, secret.Name),
@@ -209,6 +216,9 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 				},
 			},
 		}
+
+		err = cl.Create(ctx, cr)
+		require.NoError(t, err)
 
 		r := NewDeploymentReconciler(cl, false)
 
@@ -232,11 +242,12 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 	})
 
 	It("skips missing secrets without failing", func() {
+		ctx := context.Background()
+
 		cr := &v1beta1.Grafana{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "default",
 				Name:      "deploy-secrets-hash-missing-secret",
-				UID:       types.UID("deploy-secrets-hash-missing-secret-uid"),
 			},
 			Spec: v1beta1.GrafanaSpec{
 				Deployment: &v1beta1.DeploymentV1{
@@ -245,8 +256,7 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 							Spec: &v1beta1.DeploymentV1PodSpec{
 								Containers: []corev1.Container{
 									{
-										Name:  "grafana",
-										Image: "grafana/grafana:test",
+										Name: "grafana",
 										Env: []corev1.EnvVar{
 											{
 												Name:      "MISSING_KEY",
@@ -261,6 +271,9 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 				},
 			},
 		}
+
+		err := cl.Create(ctx, cr)
+		require.NoError(t, err)
 
 		r := NewDeploymentReconciler(cl, false)
 		vars := &v1beta1.OperatorReconcileVars{}
