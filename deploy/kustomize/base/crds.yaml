@@ -1161,18 +1161,8 @@ spec:
                     description: Optional. when set to true, the time picker is enabled
                       in the shared dashboard. The default value is false.
                     type: boolean
-                  uid:
-                    description: Optional. Unique identifier when creating a shared
-                      dashboard. If not set the dashboard UID will be re-used.
-                    type: string
-                    x-kubernetes-validations:
-                    - message: spec.publicDashboard.uid is immutable
-                      rule: self == oldSelf
                 type: object
                 x-kubernetes-validations:
-                - message: spec.publicDashboard.uid is immutable
-                  rule: ((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid)
-                    && has(self.uid)))
                 - message: spec.publicDashboard.accessToken is immutable
                   rule: ((!has(oldSelf.accessToken) && !has(self.accessToken)) ||
                     (has(oldSelf.accessToken) && has(self.accessToken)))
