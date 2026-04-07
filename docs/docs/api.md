@@ -1694,12 +1694,12 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#grafanadashboardspecpublicdashboard">publicDashboard</a></b></td>
+        <td><b><a href="#grafanadashboardspecpublicsharing">publicSharing</a></b></td>
         <td>object</td>
         <td>
           Allows configuration of sharing the dashboard publicly<br/>
           <br/>
-            <i>Validations</i>:<li>((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid))): spec.publicDashboard.uid is immutable</li><li>((!has(oldSelf.accessToken) && !has(self.accessToken)) || (has(oldSelf.accessToken) && has(self.accessToken))): spec.publicDashboard.accessToken is immutable</li>
+            <i>Validations</i>:<li>((!has(oldSelf.accessToken) && !has(self.accessToken)) || (has(oldSelf.accessToken) && has(self.accessToken))): spec.publicDashboard.accessToken is immutable</li>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2404,7 +2404,7 @@ More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/nam
 </table>
 
 
-### GrafanaDashboard.spec.publicDashboard
+### GrafanaDashboard.spec.publicSharing
 <sup><sup>[↩ Parent](#grafanadashboardspec)</sup></sup>
 
 
@@ -2450,15 +2450,6 @@ Allows configuration of sharing the dashboard publicly
         <td>boolean</td>
         <td>
           Optional. when set to true, the time picker is enabled in the shared dashboard. The default value is false.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>uid</b></td>
-        <td>string</td>
-        <td>
-          Optional. Unique identifier when creating a shared dashboard. If not set the dashboard UID will be re-used.<br/>
-          <br/>
-            <i>Validations</i>:<li>self == oldSelf: spec.publicDashboard.uid is immutable</li>
         </td>
         <td>false</td>
       </tr></tbody>
