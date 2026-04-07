@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -621,12 +622,7 @@ func TestContainerEnvRefs(t *testing.T) {
 		c := corev1.Container{
 			Env: []corev1.EnvVar{
 				{
-					ValueFrom: &corev1.EnvVarSource{
-						SecretKeyRef: &corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{Name: "db-secret"},
-							Key:                  "password",
-						},
-					},
+					ValueFrom: tk8s.GetEnvVarSecretSource(t, "db-secret", "password"),
 				},
 			},
 		}
@@ -641,12 +637,7 @@ func TestContainerEnvRefs(t *testing.T) {
 		c := corev1.Container{
 			Env: []corev1.EnvVar{
 				{
-					ValueFrom: &corev1.EnvVarSource{
-						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{Name: "app-config"},
-							Key:                  "setting",
-						},
-					},
+					ValueFrom: tk8s.GetEnvVarConfigMapSource(t, "app-config", "setting"),
 				},
 			},
 		}
@@ -660,8 +651,12 @@ func TestContainerEnvRefs(t *testing.T) {
 	t.Run("envFrom secretRef and configMapRef", func(t *testing.T) {
 		c := corev1.Container{
 			EnvFrom: []corev1.EnvFromSource{
-				{SecretRef: &corev1.SecretEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "bulk-secret"}}},
-				{ConfigMapRef: &corev1.ConfigMapEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "bulk-cm"}}},
+				{
+					SecretRef: tk8s.GetEnvFromSecretSource(t, "bulk-secret"),
+				},
+				{
+					ConfigMapRef: tk8s.GetEnvFromConfigMapSource(t, "bulk-cm"),
+				},
 			},
 		}
 
