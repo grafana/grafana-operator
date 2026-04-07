@@ -327,7 +327,7 @@ spec:
                   - version
                   type: object
                 type: array
-              publicDashboard:
+              publicSharing:
                 description: Allows configuration of sharing the dashboard publicly
                 properties:
                   accessToken:
