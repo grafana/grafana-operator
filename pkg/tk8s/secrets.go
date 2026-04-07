@@ -43,3 +43,15 @@ func GetSecretKeySelector(t tHelper, secretName, key string) *corev1.SecretKeySe
 
 	return v
 }
+
+func GetVolumeSecretSource(t tHelper, secretName string) corev1.VolumeSource {
+	t.Helper()
+
+	v := corev1.VolumeSource{
+		Secret: &corev1.SecretVolumeSource{
+			SecretName: secretName,
+		},
+	}
+
+	return v
+}

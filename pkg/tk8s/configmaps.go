@@ -41,3 +41,17 @@ func GetConfigMapKeySelector(t tHelper, configMapName, key string) *corev1.Confi
 
 	return v
 }
+
+func GetVolumeConfigMapSource(t tHelper, configMapName string) corev1.VolumeSource {
+	t.Helper()
+
+	v := corev1.VolumeSource{
+		ConfigMap: &corev1.ConfigMapVolumeSource{
+			LocalObjectReference: corev1.LocalObjectReference{
+				Name: configMapName,
+			},
+		},
+	}
+
+	return v
+}
