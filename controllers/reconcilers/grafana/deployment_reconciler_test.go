@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/config"
+	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -125,13 +126,8 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 										Image: "grafana/grafana:test",
 										Env: []corev1.EnvVar{
 											{
-												Name: "PASSWORD",
-												ValueFrom: &corev1.EnvVarSource{
-													SecretKeyRef: &corev1.SecretKeySelector{
-														LocalObjectReference: corev1.LocalObjectReference{Name: secret.Name},
-														Key:                  "password",
-													},
-												},
+												Name:      "PASSWORD",
+												ValueFrom: tk8s.GetEnvVarSecretSource(t, secret.Name, "password"),
 											},
 										},
 									},
@@ -201,9 +197,9 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 										Name:  "grafana",
 										Image: "grafana/grafana:test",
 										EnvFrom: []corev1.EnvFromSource{
-											{SecretRef: &corev1.SecretEnvSource{
-												LocalObjectReference: corev1.LocalObjectReference{Name: secret.Name},
-											}},
+											{
+												SecretRef: tk8s.GetEnvFromSecretSource(t, secret.Name),
+											},
 										},
 									},
 								},
@@ -253,13 +249,8 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 										Image: "grafana/grafana:test",
 										Env: []corev1.EnvVar{
 											{
-												Name: "MISSING_KEY",
-												ValueFrom: &corev1.EnvVarSource{
-													SecretKeyRef: &corev1.SecretKeySelector{
-														LocalObjectReference: corev1.LocalObjectReference{Name: "does-not-exist"},
-														Key:                  "key",
-													},
-												},
+												Name:      "MISSING_KEY",
+												ValueFrom: tk8s.GetEnvVarSecretSource(t, "does-not-exist", "key"),
 											},
 										},
 									},
