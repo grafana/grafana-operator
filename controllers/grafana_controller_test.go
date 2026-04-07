@@ -52,9 +52,7 @@ func TestRemoveMissingCRs(t *testing.T) {
 }
 
 func TestGrafanaIndexing(t *testing.T) {
-	reconciler := &GrafanaReconciler{
-		Client: cl,
-	}
+	reconciler := &GrafanaReconciler{}
 
 	t.Run("indexSecretSource returns secrets from container env secretKeyRef", func(t *testing.T) {
 		containers := []corev1.Container{
