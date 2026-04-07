@@ -453,7 +453,6 @@ func (r *GrafanaDashboardReconciler) reconcilePublicDashboard(ctx context.Contex
 	}
 
 	log.V(1).Info("retrieving public dashboard from Grafana")
-	// Get remote dashboard and reconcile
 	pDashMeta, err := gClient.Dashboards.GetPublicDashboardWithParams(&dashboards.GetPublicDashboardParams{
 		DashboardUID: dashUID,
 		Context:      ctx,
