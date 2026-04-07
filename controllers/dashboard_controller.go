@@ -471,14 +471,14 @@ func (r *GrafanaDashboardReconciler) reconcilePublicDashboard(ctx context.Contex
 	dto := r.getPublicDashboardDTO(cr, pDashUID)
 
 	// Only Create/Update when necessary
-	pDashMatchesStateInGrafana, recreate := r.publicDashboardMatchesStateInGrafana(dto, pDashMeta)
+	pDashMatchesStateInGrafana, recreate := r.publicDashboardMatchesStateInGrafana(cr, dto, pDashMeta)
 	if pDashMatchesStateInGrafana {
 		log.V(1).Info("skipping public dashboard from Grafana")
 		return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicDashboard, pDashUID)
 	}
 
 	// It is not possible to update the the uid or accessToken
-	if recreate || cr.Annotations != nil && cr.Annotations[annotationSyncedPublicDashboard] != pDashUID {
+	if recreate {
 		log.V(1).Info("deleting public dashboard from Grafana due to uid or accessToken mismatch")
 
 		_, err := gClient.Dashboards.DeletePublicDashboardWithParams(&dashboards.DeletePublicDashboardParams{ //nolint:errcheck
@@ -615,7 +615,11 @@ func (r *GrafanaDashboardReconciler) matchesStateInGrafana(exists bool, model ma
 }
 
 // matchesStateInGrafana checks whether a public dashboard exists in Grafana and its contents matches the model defined in the custom resources
-func (r *GrafanaDashboardReconciler) publicDashboardMatchesStateInGrafana(model *models.PublicDashboardDTO, remoteDashboard *dashboards.GetPublicDashboardOK) (matchesRemoteState, recreate bool) {
+func (r *GrafanaDashboardReconciler) publicDashboardMatchesStateInGrafana(cr *v1beta1.GrafanaDashboard, model *models.PublicDashboardDTO, remoteDashboard *dashboards.GetPublicDashboardOK) (matchesRemoteState, recreate bool) {
+	if cr.Annotations != nil && cr.Annotations[annotationSyncedPublicDashboard] != model.UID {
+		return false, true
+	}
+
 	if remoteDashboard == nil {
 		return false, false
 	}
