@@ -52,38 +52,26 @@ func TestRemoveMissingCRs(t *testing.T) {
 }
 
 func TestGrafanaIndexing(t *testing.T) {
-	reconciler := &GrafanaReconciler{
-		Client: cl,
-	}
+	reconciler := &GrafanaReconciler{}
 
 	t.Run("indexSecretSource returns secrets from container env secretKeyRef", func(t *testing.T) {
+		containers := []corev1.Container{
+			{
+				Env: []corev1.EnvVar{
+					{
+						ValueFrom: tk8s.GetEnvVarSecretSource(t, "db-secret", "password"),
+					},
+				},
+			},
+		}
+
 		cr := &v1beta1.Grafana{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "test-namespace",
 				Name:      "test-grafana",
 			},
-			Spec: v1beta1.GrafanaSpec{
-				Deployment: &v1beta1.DeploymentV1{
-					Spec: v1beta1.DeploymentV1Spec{
-						Template: &v1beta1.DeploymentV1PodTemplateSpec{
-							Spec: &v1beta1.DeploymentV1PodSpec{
-								Containers: []corev1.Container{
-									{
-										Env: []corev1.EnvVar{
-											{
-												ValueFrom: &corev1.EnvVarSource{
-													SecretKeyRef: tk8s.GetSecretKeySelector(t, "db-secret", "password"),
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
 		}
+		cr.Spec.SetContainers(containers)
 
 		indexFunc := reconciler.indexSecretSource()
 		result := indexFunc(cr)
@@ -93,31 +81,24 @@ func TestGrafanaIndexing(t *testing.T) {
 	})
 
 	t.Run("indexSecretSource returns secrets from container envFrom secretRef", func(t *testing.T) {
+		containers := []corev1.Container{
+			{
+				EnvFrom: []corev1.EnvFromSource{
+					{
+						SecretRef: tk8s.GetEnvFromSecretSource(t, "bulk-secret"),
+					},
+				},
+			},
+		}
+
 		cr := &v1beta1.Grafana{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "test-namespace",
 				Name:      "test-grafana",
 			},
-			Spec: v1beta1.GrafanaSpec{
-				Deployment: &v1beta1.DeploymentV1{
-					Spec: v1beta1.DeploymentV1Spec{
-						Template: &v1beta1.DeploymentV1PodTemplateSpec{
-							Spec: &v1beta1.DeploymentV1PodSpec{
-								Containers: []corev1.Container{
-									{
-										EnvFrom: []corev1.EnvFromSource{
-											{SecretRef: &corev1.SecretEnvSource{
-												LocalObjectReference: corev1.LocalObjectReference{Name: "bulk-secret"},
-											}},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
 		}
+
+		cr.Spec.SetContainers(containers)
 
 		indexFunc := reconciler.indexSecretSource()
 		result := indexFunc(cr)
@@ -127,31 +108,24 @@ func TestGrafanaIndexing(t *testing.T) {
 	})
 
 	t.Run("indexSecretSource returns empty slice when no secret references", func(t *testing.T) {
+		containers := []corev1.Container{
+			{
+				EnvFrom: []corev1.EnvFromSource{
+					{
+						ConfigMapRef: tk8s.GetEnvFromConfigMapSource(t, "only-a-cm"),
+					},
+				},
+			},
+		}
+
 		cr := &v1beta1.Grafana{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "test-namespace",
 				Name:      "test-grafana",
 			},
-			Spec: v1beta1.GrafanaSpec{
-				Deployment: &v1beta1.DeploymentV1{
-					Spec: v1beta1.DeploymentV1Spec{
-						Template: &v1beta1.DeploymentV1PodTemplateSpec{
-							Spec: &v1beta1.DeploymentV1PodSpec{
-								Containers: []corev1.Container{
-									{
-										EnvFrom: []corev1.EnvFromSource{
-											{ConfigMapRef: &corev1.ConfigMapEnvSource{
-												LocalObjectReference: corev1.LocalObjectReference{Name: "only-a-cm"},
-											}},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
 		}
+
+		cr.Spec.SetContainers(containers)
 
 		indexFunc := reconciler.indexSecretSource()
 		result := indexFunc(cr)
@@ -160,31 +134,24 @@ func TestGrafanaIndexing(t *testing.T) {
 	})
 
 	t.Run("indexConfigMapSource returns configmaps from container env configMapKeyRef", func(t *testing.T) {
+		containers := []corev1.Container{
+			{
+				Env: []corev1.EnvVar{
+					{
+						ValueFrom: tk8s.GetEnvVarConfigMapSource(t, "app-config", "log_level"),
+					},
+				},
+			},
+		}
+
 		cr := &v1beta1.Grafana{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "test-namespace",
 				Name:      "test-grafana",
 			},
-			Spec: v1beta1.GrafanaSpec{
-				Deployment: &v1beta1.DeploymentV1{
-					Spec: v1beta1.DeploymentV1Spec{
-						Template: &v1beta1.DeploymentV1PodTemplateSpec{
-							Spec: &v1beta1.DeploymentV1PodSpec{
-								Containers: []corev1.Container{
-									{
-										Env: []corev1.EnvVar{
-											{
-												ValueFrom: tk8s.GetEnvVarConfigMapSource(t, "app-config", "log_level"),
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
 		}
+
+		cr.Spec.SetContainers(containers)
 
 		indexFunc := reconciler.indexConfigMapSource()
 		result := indexFunc(cr)
@@ -194,31 +161,24 @@ func TestGrafanaIndexing(t *testing.T) {
 	})
 
 	t.Run("indexConfigMapSource returns configmaps from container envFrom configMapRef", func(t *testing.T) {
+		containers := []corev1.Container{
+			{
+				EnvFrom: []corev1.EnvFromSource{
+					{
+						ConfigMapRef: tk8s.GetEnvFromConfigMapSource(t, "bulk-cm"),
+					},
+				},
+			},
+		}
+
 		cr := &v1beta1.Grafana{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "test-namespace",
 				Name:      "test-grafana",
 			},
-			Spec: v1beta1.GrafanaSpec{
-				Deployment: &v1beta1.DeploymentV1{
-					Spec: v1beta1.DeploymentV1Spec{
-						Template: &v1beta1.DeploymentV1PodTemplateSpec{
-							Spec: &v1beta1.DeploymentV1PodSpec{
-								Containers: []corev1.Container{
-									{
-										EnvFrom: []corev1.EnvFromSource{
-											{ConfigMapRef: &corev1.ConfigMapEnvSource{
-												LocalObjectReference: corev1.LocalObjectReference{Name: "bulk-cm"},
-											}},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
 		}
+
+		cr.Spec.SetContainers(containers)
 
 		indexFunc := reconciler.indexConfigMapSource()
 		result := indexFunc(cr)
@@ -228,31 +188,20 @@ func TestGrafanaIndexing(t *testing.T) {
 	})
 
 	t.Run("indexConfigMapSource returns configmaps from volume configMap reference", func(t *testing.T) {
+		volumes := []corev1.Volume{
+			{
+				VolumeSource: tk8s.GetVolumeConfigMapSource(t, "vol-cm"),
+			},
+		}
+
 		cr := &v1beta1.Grafana{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "test-namespace",
 				Name:      "test-grafana",
 			},
-			Spec: v1beta1.GrafanaSpec{
-				Deployment: &v1beta1.DeploymentV1{
-					Spec: v1beta1.DeploymentV1Spec{
-						Template: &v1beta1.DeploymentV1PodTemplateSpec{
-							Spec: &v1beta1.DeploymentV1PodSpec{
-								Volumes: []corev1.Volume{
-									{
-										VolumeSource: corev1.VolumeSource{
-											ConfigMap: &corev1.ConfigMapVolumeSource{
-												LocalObjectReference: corev1.LocalObjectReference{Name: "vol-cm"},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
 		}
+
+		cr.Spec.SetVolumes(volumes)
 
 		indexFunc := reconciler.indexConfigMapSource()
 		result := indexFunc(cr)
@@ -262,31 +211,24 @@ func TestGrafanaIndexing(t *testing.T) {
 	})
 
 	t.Run("indexConfigMapSource returns empty slice when no configmap references", func(t *testing.T) {
+		containers := []corev1.Container{
+			{
+				EnvFrom: []corev1.EnvFromSource{
+					{
+						SecretRef: tk8s.GetEnvFromSecretSource(t, "only-a-secret"),
+					},
+				},
+			},
+		}
+
 		cr := &v1beta1.Grafana{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "test-namespace",
 				Name:      "test-grafana",
 			},
-			Spec: v1beta1.GrafanaSpec{
-				Deployment: &v1beta1.DeploymentV1{
-					Spec: v1beta1.DeploymentV1Spec{
-						Template: &v1beta1.DeploymentV1PodTemplateSpec{
-							Spec: &v1beta1.DeploymentV1PodSpec{
-								Containers: []corev1.Container{
-									{
-										EnvFrom: []corev1.EnvFromSource{
-											{SecretRef: &corev1.SecretEnvSource{
-												LocalObjectReference: corev1.LocalObjectReference{Name: "only-a-secret"},
-											}},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
 		}
+
+		cr.Spec.SetContainers(containers)
 
 		indexFunc := reconciler.indexConfigMapSource()
 		result := indexFunc(cr)
@@ -295,40 +237,41 @@ func TestGrafanaIndexing(t *testing.T) {
 	})
 
 	t.Run("both index functions handle multiple references across containers and initContainers", func(t *testing.T) {
+		containers := []corev1.Container{
+			{
+				Env: []corev1.EnvVar{
+					{
+						ValueFrom: tk8s.GetEnvVarSecretSource(t, "secret1", "key"),
+					},
+					{
+						ValueFrom: tk8s.GetEnvVarConfigMapSource(t, "cm1", "key"),
+					},
+				},
+			},
+		}
+
+		initContainers := []corev1.Container{
+			{
+				EnvFrom: []corev1.EnvFromSource{
+					{
+						SecretRef: tk8s.GetEnvFromSecretSource(t, "secret2"),
+					},
+					{
+						ConfigMapRef: tk8s.GetEnvFromConfigMapSource(t, "cm2"),
+					},
+				},
+			},
+		}
+
 		cr := &v1beta1.Grafana{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "test-namespace",
 				Name:      "test-grafana",
 			},
-			Spec: v1beta1.GrafanaSpec{
-				Deployment: &v1beta1.DeploymentV1{
-					Spec: v1beta1.DeploymentV1Spec{
-						Template: &v1beta1.DeploymentV1PodTemplateSpec{
-							Spec: &v1beta1.DeploymentV1PodSpec{
-								Containers: []corev1.Container{
-									{
-										Env: []corev1.EnvVar{
-											{ValueFrom: &corev1.EnvVarSource{
-												SecretKeyRef: tk8s.GetSecretKeySelector(t, "secret1", "key"),
-											}},
-											{ValueFrom: tk8s.GetEnvVarConfigMapSource(t, "cm1", "key")},
-										},
-									},
-								},
-								InitContainers: []corev1.Container{
-									{
-										EnvFrom: []corev1.EnvFromSource{
-											{SecretRef: &corev1.SecretEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "secret2"}}},
-											{ConfigMapRef: &corev1.ConfigMapEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "cm2"}}},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
 		}
+
+		cr.Spec.SetContainers(containers)
+		cr.Spec.SetInitContainers(initContainers)
 
 		secretIndexFunc := reconciler.indexSecretSource()
 		secretResult := secretIndexFunc(cr)

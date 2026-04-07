@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -12,6 +13,113 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+func TestGrafanaSpecInitPodTemplateSpec(t *testing.T) {
+	spec := GrafanaSpec{}
+
+	want := GrafanaSpec{
+		Deployment: &DeploymentV1{
+			Spec: DeploymentV1Spec{
+				Template: &DeploymentV1PodTemplateSpec{
+					Spec: &DeploymentV1PodSpec{},
+				},
+			},
+		},
+	}
+
+	spec.initPodTemplateSpec()
+	got := spec
+
+	assert.Equal(t, want, got)
+}
+
+func TestGrafanaSpecSetContainers(t *testing.T) {
+	spec := GrafanaSpec{}
+
+	containers := []corev1.Container{
+		{
+			Name: "test-container",
+		},
+	}
+
+	want := GrafanaSpec{
+		Deployment: &DeploymentV1{
+			Spec: DeploymentV1Spec{
+				Template: &DeploymentV1PodTemplateSpec{
+					Spec: &DeploymentV1PodSpec{
+						Containers: containers,
+					},
+				},
+			},
+		},
+	}
+
+	spec.SetContainers(containers)
+	got := spec
+
+	assert.Equal(t, want, got)
+}
+
+func TestGrafanaSpecSetInitContainers(t *testing.T) {
+	spec := GrafanaSpec{}
+
+	initContainers := []corev1.Container{
+		{
+			Name: "test-container",
+		},
+	}
+
+	want := GrafanaSpec{
+		Deployment: &DeploymentV1{
+			Spec: DeploymentV1Spec{
+				Template: &DeploymentV1PodTemplateSpec{
+					Spec: &DeploymentV1PodSpec{
+						InitContainers: initContainers,
+					},
+				},
+			},
+		},
+	}
+
+	spec.SetInitContainers(initContainers)
+	got := spec
+
+	assert.Equal(t, want, got)
+}
+
+func TestGrafanaSpecSetVolumes(t *testing.T) {
+	spec := GrafanaSpec{}
+
+	volumes := []corev1.Volume{
+		{
+			Name: "test-volume",
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: "test-volume-cm",
+					},
+				},
+			},
+		},
+	}
+
+	want := GrafanaSpec{
+		Deployment: &DeploymentV1{
+			Spec: DeploymentV1Spec{
+				Template: &DeploymentV1PodTemplateSpec{
+					Spec: &DeploymentV1PodSpec{
+						Volumes: volumes,
+					},
+				},
+			},
+		},
+	}
+
+	spec.SetVolumes(volumes)
+	got := spec
+
+	assert.Equal(t, want, got)
+}
 
 var _ = Describe("Grafana status NamespacedResourceList all CRs works", func() {
 	t := GinkgoT()
@@ -621,12 +729,7 @@ func TestContainerEnvRefs(t *testing.T) {
 		c := corev1.Container{
 			Env: []corev1.EnvVar{
 				{
-					ValueFrom: &corev1.EnvVarSource{
-						SecretKeyRef: &corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{Name: "db-secret"},
-							Key:                  "password",
-						},
-					},
+					ValueFrom: tk8s.GetEnvVarSecretSource(t, "db-secret", "password"),
 				},
 			},
 		}
@@ -641,12 +744,7 @@ func TestContainerEnvRefs(t *testing.T) {
 		c := corev1.Container{
 			Env: []corev1.EnvVar{
 				{
-					ValueFrom: &corev1.EnvVarSource{
-						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{Name: "app-config"},
-							Key:                  "setting",
-						},
-					},
+					ValueFrom: tk8s.GetEnvVarConfigMapSource(t, "app-config", "setting"),
 				},
 			},
 		}
@@ -660,8 +758,12 @@ func TestContainerEnvRefs(t *testing.T) {
 	t.Run("envFrom secretRef and configMapRef", func(t *testing.T) {
 		c := corev1.Container{
 			EnvFrom: []corev1.EnvFromSource{
-				{SecretRef: &corev1.SecretEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "bulk-secret"}}},
-				{ConfigMapRef: &corev1.ConfigMapEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "bulk-cm"}}},
+				{
+					SecretRef: tk8s.GetEnvFromSecretSource(t, "bulk-secret"),
+				},
+				{
+					ConfigMapRef: tk8s.GetEnvFromConfigMapSource(t, "bulk-cm"),
+				},
 			},
 		}
 
@@ -699,16 +801,13 @@ func TestGrafana_ReferencedSecretsAndConfigMaps(t *testing.T) {
 			{
 				Env: []corev1.EnvVar{
 					{
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{Name: "init-secret"},
-								Key:                  "token",
-							},
-						},
+						ValueFrom: tk8s.GetEnvVarSecretSource(t, "init-secret", "token"),
 					},
 				},
 				EnvFrom: []corev1.EnvFromSource{
-					{ConfigMapRef: &corev1.ConfigMapEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "init-cm"}}},
+					{
+						ConfigMapRef: tk8s.GetEnvFromConfigMapSource(t, "init-cm"),
+					},
 				},
 			},
 		}
@@ -729,8 +828,12 @@ func TestGrafana_ReferencedSecretsAndConfigMaps(t *testing.T) {
 			},
 		}
 		cr.Spec.Deployment.Spec.Template.Spec.Volumes = []corev1.Volume{
-			{VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{SecretName: "tls-secret"}}},
-			{VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: "config-vol"}}}},
+			{
+				VolumeSource: tk8s.GetVolumeSecretSource(t, "tls-secret"),
+			},
+			{
+				VolumeSource: tk8s.GetVolumeConfigMapSource(t, "config-vol"),
+			},
 		}
 
 		secrets, configMaps := cr.ReferencedSecretsAndConfigMaps()
@@ -751,8 +854,12 @@ func TestGrafana_ReferencedSecretsAndConfigMaps(t *testing.T) {
 		cr.Spec.Deployment.Spec.Template.Spec.Containers = []corev1.Container{
 			{
 				Env: []corev1.EnvVar{
-					{ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "shared-secret"}, Key: "user"}}},
-					{ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "shared-secret"}, Key: "password"}}},
+					{
+						ValueFrom: tk8s.GetEnvVarSecretSource(t, "shared-secret", "user"),
+					},
+					{
+						ValueFrom: tk8s.GetEnvVarSecretSource(t, "shared-secret", "password"),
+					},
 				},
 			},
 		}
@@ -774,8 +881,12 @@ func TestGrafana_ReferencedSecretsAndConfigMaps(t *testing.T) {
 		cr.Spec.Deployment.Spec.Template.Spec.Containers = []corev1.Container{
 			{
 				EnvFrom: []corev1.EnvFromSource{
-					{SecretRef: &corev1.SecretEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "zebra-secret"}}},
-					{SecretRef: &corev1.SecretEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "alpha-secret"}}},
+					{
+						SecretRef: tk8s.GetEnvFromSecretSource(t, "zebra-secret"),
+					},
+					{
+						SecretRef: tk8s.GetEnvFromSecretSource(t, "alpha-secret"),
+					},
 				},
 			},
 		}

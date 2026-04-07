@@ -105,6 +105,38 @@ type GrafanaSpec struct {
 	DisableDefaultSecurityContext string `json:"disableDefaultSecurityContext,omitempty"`
 }
 
+func (in *GrafanaSpec) initPodTemplateSpec() {
+	if in.Deployment == nil {
+		in.Deployment = &DeploymentV1{}
+	}
+
+	if in.Deployment.Spec.Template == nil {
+		in.Deployment.Spec.Template = &DeploymentV1PodTemplateSpec{}
+	}
+
+	if in.Deployment.Spec.Template.Spec == nil {
+		in.Deployment.Spec.Template.Spec = &DeploymentV1PodSpec{}
+	}
+}
+
+func (in *GrafanaSpec) SetContainers(containers []corev1.Container) {
+	in.initPodTemplateSpec()
+
+	in.Deployment.Spec.Template.Spec.Containers = containers
+}
+
+func (in *GrafanaSpec) SetInitContainers(initContainers []corev1.Container) {
+	in.initPodTemplateSpec()
+
+	in.Deployment.Spec.Template.Spec.InitContainers = initContainers
+}
+
+func (in *GrafanaSpec) SetVolumes(volumes []corev1.Volume) {
+	in.initPodTemplateSpec()
+
+	in.Deployment.Spec.Template.Spec.Volumes = volumes
+}
+
 type External struct {
 	// URL of the external grafana instance you want to manage.
 	// +kubebuilder:validation:Pattern=`^https?://.+$`
