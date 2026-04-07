@@ -51,14 +51,14 @@ const (
 	conditionDashboardSynchronized        = "DashboardSynchronized"
 	conditionReasonInvalidModelResolution = "InvalidModelResolution"
 
-	LogMsgResolvingDashboardContents        = "error resolving dashboard contents"
-	LogMsgGettingPublicDashboard            = "failed to get existing public dashboard configuration from Grafana"
-	LogMsgSyncingPublicDashboard            = "failed to sync public dashboard configuration to Grafana"
-	LogMsgDeletingPublicDashboard           = "failed to delete public dashboard from Grafana"
-	LogMsgRemovingPublicDashboardAnnotation = "removing 'operator.grafana.com/public-dashboard' annotation from GrafanaDashboard CR"
+	LogMsgResolvingDashboardContents      = "error resolving dashboard contents"
+	LogMsgGettingPublicSharing            = "failed to get existing public dashboard share configuration from Grafana"
+	LogMsgSyncingPublicSharing            = "failed to sync public dashboard share configuration to Grafana"
+	LogMsgDeletingPublicSharing           = "failed to delete public dashboard share from Grafana"
+	LogMsgRemovingPublicSharingAnnotation = "removing 'operator.grafana.com/public-sharing' annotation from GrafanaDashboard CR"
 
-	// If present, DELETE the publicDashboard if Spec.PublishDashboards == nil before removing
-	annotationSyncedPublicDashboard = "operator.grafana.com/public-dashboard"
+	// If present, DELETE the publicSharing if Spec.PublishSharing == nil before removing
+	annotationSyncedPublicSharing = "operator.grafana.com/public-sharing"
 )
 
 // GrafanaDashboardReconciler reconciles a GrafanaDashboard object
@@ -176,7 +176,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	applyHomeErrors := make(map[string]string)
-	publicDashErrors := make(map[string]string)
+	publicShareErrors := make(map[string]string)
 	pluginErrors := make(map[string]string)
 	applyErrors := make(map[string]string)
 
@@ -197,10 +197,10 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
 
-		// then reconcile the public dashboard config
-		err = r.reconcilePublicDashboard(ctx, &grafana, cr, uid)
+		// then reconcile the public share config
+		err = r.reconcilePublicSharing(ctx, &grafana, cr, uid)
 		if err != nil {
-			publicDashErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
+			publicShareErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
 
 		if grafana.Spec.Preferences != nil && uid == grafana.Spec.Preferences.HomeDashboardUID {
@@ -216,9 +216,9 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		log.Error(err, "failed to apply plugins to all instances")
 	}
 
-	if len(publicDashErrors) > 0 {
-		err := fmt.Errorf(FmtStrApplyErrors, publicDashErrors)
-		log.Error(err, "failed to apply public dashboards to all instances")
+	if len(publicShareErrors) > 0 {
+		err := fmt.Errorf(FmtStrApplyErrors, publicShareErrors)
+		log.Error(err, "failed to apply public dashboard share to all instances")
 	}
 
 	if len(applyHomeErrors) > 0 {
@@ -226,7 +226,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		log.Error(err, "failed to apply home dashboards to all instances")
 	}
 
-	allApplyErrors := mergeReconcileErrors(applyErrors, pluginErrors, applyHomeErrors)
+	allApplyErrors := mergeReconcileErrors(applyErrors, pluginErrors, publicShareErrors, applyHomeErrors)
 
 	condition := buildSynchronizedCondition("Dashboard", conditionDashboardSynchronized, cr.Generation, allApplyErrors, len(instances))
 	meta.SetStatusCondition(&cr.Status.Conditions, condition)
@@ -239,12 +239,12 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	// Delete annotation from GrafanaDashboard
-	if cr.Spec.PublicDashboard == nil && cr.Annotations != nil {
-		err := removeAnnotation(ctx, r.Client, cr, annotationSyncedPublicDashboard)
+	if cr.Spec.PublicSharing == nil && cr.Annotations != nil {
+		err := removeAnnotation(ctx, r.Client, cr, annotationSyncedPublicSharing)
 		if err != nil {
-			log.Error(err, LogMsgRemovingPublicDashboardAnnotation)
+			log.Error(err, LogMsgRemovingPublicSharingAnnotation)
 
-			return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgRemovingPublicDashboardAnnotation, err)
+			return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgRemovingPublicSharingAnnotation, err)
 		}
 	}
 
@@ -416,61 +416,61 @@ func (r *GrafanaDashboardReconciler) reconcileWithInstance(ctx context.Context, 
 	return grafana.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource(uid))
 }
 
-func (r *GrafanaDashboardReconciler) reconcilePublicDashboard(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDashboard, dashUID string) error {
-	log := logf.FromContext(ctx).WithName("PublicDashboard")
+func (r *GrafanaDashboardReconciler) reconcilePublicSharing(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDashboard, dashUID string) error {
+	log := logf.FromContext(ctx).WithName("PublicSharing")
 
 	gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
 		return err
 	}
 
-	// Early check if public dashboard should be deleted or ignored entirely
-	if cr.Spec.PublicDashboard == nil {
-		if cr.Annotations == nil || cr.Annotations[annotationSyncedPublicDashboard] == "" {
-			log.V(1).Info("public dashboard hasn't changed, skipping update")
+	// Early check if public sharing should be deleted or ignored entirely
+	if cr.Spec.PublicSharing == nil {
+		if cr.Annotations == nil || cr.Annotations[annotationSyncedPublicSharing] == "" {
+			log.V(1).Info("public dashboard share unchanged, skipping update")
 			return nil
 		}
 
-		log.Info("deleting public dashboard from Grafana")
-
-		pDashUID := cr.Annotations[annotationSyncedPublicDashboard]
+		shareUID := cr.Annotations[annotationSyncedPublicSharing]
+		log.Info("deleting public dashboard share from Grafana", "uid", shareUID)
 
 		_, err := gClient.Dashboards.DeletePublicDashboardWithParams(&dashboards.DeletePublicDashboardParams{ //nolint:errcheck
 			DashboardUID: dashUID,
-			UID:          pDashUID,
+			UID:          shareUID,
 			Context:      ctx,
 		})
 		if err != nil {
-			log.Error(err, LogMsgDeletingPublicDashboard, "publicDashboardUID", pDashUID)
-			return fmt.Errorf("%s: %w", LogMsgDeletingPublicDashboard, err)
+			log.Error(err, LogMsgDeletingPublicSharing, "publicDashboardUID", shareUID)
+			return fmt.Errorf("%s: %w", LogMsgDeletingPublicSharing, err)
 		}
 
 		return nil
 	}
 
-	log.V(1).Info("retrieving public dashboard from Grafana")
-	pDashMeta, err := gClient.Dashboards.GetPublicDashboardWithParams(&dashboards.GetPublicDashboardParams{
+	log.V(1).Info("retrieving public dashboard share from Grafana")
+
+	shareMeta, err := gClient.Dashboards.GetPublicDashboardWithParams(&dashboards.GetPublicDashboardParams{
 		DashboardUID: dashUID,
 		Context:      ctx,
 	})
 	if err != nil {
 		if IsNotErrorType[*dashboards.GetPublicDashboardNotFound](err) {
-			log.Error(err, LogMsgGettingPublicDashboard)
-			return fmt.Errorf("%s: %w", LogMsgGettingPublicDashboard, err)
+			log.Error(err, LogMsgGettingPublicSharing)
+			return fmt.Errorf("%s: %w", LogMsgGettingPublicSharing, err)
 		}
 	}
 
-	dto := r.getPublicDashboardDTO(cr)
+	dto := r.getPublicSharingDTO(cr)
 
 	// Only Create/Update when necessary
-	pDashMatchesStateInGrafana, recreate := r.publicDashboardMatchesStateInGrafana(cr, dto, pDashMeta)
-	if pDashMatchesStateInGrafana {
-		log.V(1).Info("skipping public dashboard from Grafana")
-		return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicDashboard, string(cr.UID))
+	publicSharingMatchesStateInGrafana, recreate := r.publicSharingMatchesStateInGrafana(cr, dto, shareMeta)
+	if publicSharingMatchesStateInGrafana {
+		log.V(1).Info("skipping public dashboard share from Grafana")
+		return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicSharing, string(cr.UID))
 	}
 
 	if !recreate {
-		log.Info("updating public dashboard in Grafana")
+		log.Info("updating public dashboard share in Grafana")
 
 		_, err = gClient.Dashboards.UpdatePublicDashboard(&dashboards.UpdatePublicDashboardParams{ //nolint:errcheck
 			Body:         dto,
@@ -479,40 +479,42 @@ func (r *GrafanaDashboardReconciler) reconcilePublicDashboard(ctx context.Contex
 			Context:      ctx,
 		})
 		if err != nil {
-			log.Error(err, LogMsgSyncingPublicDashboard)
-			return fmt.Errorf("%s: %w", LogMsgSyncingPublicDashboard, err)
+			log.Error(err, LogMsgSyncingPublicSharing)
+			return fmt.Errorf("%s: %w", LogMsgSyncingPublicSharing, err)
 		}
 
-		return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicDashboard, string(cr.UID))
+		return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicSharing, string(cr.UID))
 	}
 
-	log.V(1).Info("deleting public dashboard from Grafana due to uid or accessToken mismatch")
+	log.V(1).Info("deleting public dashboard share from Grafana due to uid or accessToken mismatch")
+
 	_, err = gClient.Dashboards.DeletePublicDashboardWithParams(&dashboards.DeletePublicDashboardParams{ //nolint:errcheck
 		DashboardUID: dashUID,
-		UID:          pDashMeta.Payload.UID,
+		UID:          shareMeta.Payload.UID,
 		Context:      ctx,
 	})
 	if err != nil {
-		log.Error(err, LogMsgDeletingPublicDashboard)
-		return fmt.Errorf("%s: %w", LogMsgDeletingPublicDashboard, err)
+		log.Error(err, LogMsgDeletingPublicSharing)
+		return fmt.Errorf("%s: %w", LogMsgDeletingPublicSharing, err)
 	}
 
-	log.Info("creating public dashboard in Grafana")
+	log.Info("creating public dashboard share in Grafana")
+
 	_, err = gClient.Dashboards.CreatePublicDashboardWithParams(&dashboards.CreatePublicDashboardParams{ //nolint:errcheck
 		Body:         dto,
 		DashboardUID: dashUID,
 		Context:      ctx,
 	})
 	if err != nil {
-		log.Error(err, LogMsgSyncingPublicDashboard)
-		return fmt.Errorf("%s: %w", LogMsgSyncingPublicDashboard, err)
+		log.Error(err, LogMsgSyncingPublicSharing)
+		return fmt.Errorf("%s: %w", LogMsgSyncingPublicSharing, err)
 	}
 
-	return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicDashboard, string(cr.UID))
+	return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicSharing, string(cr.UID))
 }
 
-func (r *GrafanaDashboardReconciler) getPublicDashboardDTO(cr *v1beta1.GrafanaDashboard) *models.PublicDashboardDTO {
-	pdash := cr.Spec.PublicDashboard
+func (r *GrafanaDashboardReconciler) getPublicSharingDTO(cr *v1beta1.GrafanaDashboard) *models.PublicDashboardDTO {
+	pdash := cr.Spec.PublicSharing
 
 	token := pdash.AccessToken
 	if token == "" {
@@ -603,9 +605,9 @@ func (r *GrafanaDashboardReconciler) matchesStateInGrafana(exists bool, model ma
 	return true, nil
 }
 
-// matchesStateInGrafana checks whether a public dashboard exists in Grafana and its contents matches the model defined in the custom resources
-func (r *GrafanaDashboardReconciler) publicDashboardMatchesStateInGrafana(cr *v1beta1.GrafanaDashboard, model *models.PublicDashboardDTO, remoteDashboard *dashboards.GetPublicDashboardOK) (matchesRemoteState, recreate bool) {
-	if cr.Annotations != nil && cr.Annotations[annotationSyncedPublicDashboard] != model.UID {
+// publicSharingMatchesStateInGrafana checks whether a public dashboard share exists in Grafana and its contents matches the model defined in the custom resources
+func (r *GrafanaDashboardReconciler) publicSharingMatchesStateInGrafana(cr *v1beta1.GrafanaDashboard, model *models.PublicDashboardDTO, remoteDashboard *dashboards.GetPublicDashboardOK) (matchesRemoteState, recreate bool) {
+	if cr.Annotations != nil && cr.Annotations[annotationSyncedPublicSharing] != model.UID {
 		return false, true
 	}
 

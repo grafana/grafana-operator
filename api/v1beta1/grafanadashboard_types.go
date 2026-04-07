@@ -51,11 +51,11 @@ type GrafanaDashboardSpec struct {
 
 	// Allows configuration of sharing the dashboard publicly
 	// +optional
-	PublicDashboard *GrafanaPublicDashboard `json:"publicDashboard,omitempty"`
+	PublicSharing *GrafanaDashboardPublicSharing `json:"publicSharing,omitempty"`
 }
 
 // +kubebuilder:validation:XValidation:rule="((!has(oldSelf.accessToken) && !has(self.accessToken)) || (has(oldSelf.accessToken) && has(self.accessToken)))", message="spec.publicDashboard.accessToken is immutable"
-type GrafanaPublicDashboard struct {
+type GrafanaDashboardPublicSharing struct {
 	// Optional. Set to false to disable sharing, the public dashboard is still created. The default value is true.
 	// +optional
 	// +kubebuilder:default=true
