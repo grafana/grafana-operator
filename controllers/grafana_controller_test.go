@@ -71,9 +71,7 @@ func TestGrafanaIndexing(t *testing.T) {
 									{
 										Env: []corev1.EnvVar{
 											{
-												ValueFrom: &corev1.EnvVarSource{
-													SecretKeyRef: tk8s.GetSecretKeySelector(t, "db-secret", "password"),
-												},
+												ValueFrom: tk8s.GetEnvVarSecretSource(t, "db-secret", "password"),
 											},
 										},
 									},
@@ -106,9 +104,9 @@ func TestGrafanaIndexing(t *testing.T) {
 								Containers: []corev1.Container{
 									{
 										EnvFrom: []corev1.EnvFromSource{
-											{SecretRef: &corev1.SecretEnvSource{
-												LocalObjectReference: corev1.LocalObjectReference{Name: "bulk-secret"},
-											}},
+											{
+												SecretRef: tk8s.GetEnvFromSecretSource(t, "bulk-secret"),
+											},
 										},
 									},
 								},
@@ -140,9 +138,9 @@ func TestGrafanaIndexing(t *testing.T) {
 								Containers: []corev1.Container{
 									{
 										EnvFrom: []corev1.EnvFromSource{
-											{ConfigMapRef: &corev1.ConfigMapEnvSource{
-												LocalObjectReference: corev1.LocalObjectReference{Name: "only-a-cm"},
-											}},
+											{
+												ConfigMapRef: tk8s.GetEnvFromConfigMapSource(t, "only-a-cm"),
+											},
 										},
 									},
 								},
@@ -207,9 +205,9 @@ func TestGrafanaIndexing(t *testing.T) {
 								Containers: []corev1.Container{
 									{
 										EnvFrom: []corev1.EnvFromSource{
-											{ConfigMapRef: &corev1.ConfigMapEnvSource{
-												LocalObjectReference: corev1.LocalObjectReference{Name: "bulk-cm"},
-											}},
+											{
+												ConfigMapRef: tk8s.GetEnvFromConfigMapSource(t, "bulk-cm"),
+											},
 										},
 									},
 								},
@@ -240,11 +238,7 @@ func TestGrafanaIndexing(t *testing.T) {
 							Spec: &v1beta1.DeploymentV1PodSpec{
 								Volumes: []corev1.Volume{
 									{
-										VolumeSource: corev1.VolumeSource{
-											ConfigMap: &corev1.ConfigMapVolumeSource{
-												LocalObjectReference: corev1.LocalObjectReference{Name: "vol-cm"},
-											},
-										},
+										VolumeSource: tk8s.GetVolumeConfigMapSource(t, "vol-cm"),
 									},
 								},
 							},
@@ -275,9 +269,9 @@ func TestGrafanaIndexing(t *testing.T) {
 								Containers: []corev1.Container{
 									{
 										EnvFrom: []corev1.EnvFromSource{
-											{SecretRef: &corev1.SecretEnvSource{
-												LocalObjectReference: corev1.LocalObjectReference{Name: "only-a-secret"},
-											}},
+											{
+												SecretRef: tk8s.GetEnvFromSecretSource(t, "only-a-secret"),
+											},
 										},
 									},
 								},
@@ -308,18 +302,24 @@ func TestGrafanaIndexing(t *testing.T) {
 								Containers: []corev1.Container{
 									{
 										Env: []corev1.EnvVar{
-											{ValueFrom: &corev1.EnvVarSource{
-												SecretKeyRef: tk8s.GetSecretKeySelector(t, "secret1", "key"),
-											}},
-											{ValueFrom: tk8s.GetEnvVarConfigMapSource(t, "cm1", "key")},
+											{
+												ValueFrom: tk8s.GetEnvVarSecretSource(t, "secret1", "key"),
+											},
+											{
+												ValueFrom: tk8s.GetEnvVarConfigMapSource(t, "cm1", "key"),
+											},
 										},
 									},
 								},
 								InitContainers: []corev1.Container{
 									{
 										EnvFrom: []corev1.EnvFromSource{
-											{SecretRef: &corev1.SecretEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "secret2"}}},
-											{ConfigMapRef: &corev1.ConfigMapEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "cm2"}}},
+											{
+												SecretRef: tk8s.GetEnvFromSecretSource(t, "secret2"),
+											},
+											{
+												ConfigMapRef: tk8s.GetEnvFromConfigMapSource(t, "cm2"),
+											},
 										},
 									},
 								},
