@@ -38,7 +38,7 @@ func newDashboard(name, uid string) *GrafanaDashboard {
 				CustomUID: uid,
 				JSON:      "",
 			},
-			PublicDashboard: &GrafanaPublicDashboard{},
+			PublicSharing: &GrafanaDashboardPublicSharing{},
 		},
 	}
 }
@@ -96,13 +96,13 @@ var _ = Describe("Dashboard type", func() {
 			dash := newDashboard("missing-public-at", "dash-uid")
 
 			// create: Dashboard without accessToken
-			dash.Spec.PublicDashboard.AccessToken = ""
+			dash.Spec.PublicSharing.AccessToken = ""
 			err := cl.Create(ctx, dash)
 			require.NoError(t, err)
 
 			// edit: Add accessToken
 			// The accessToken of public dashboards must be a uuid
-			dash.Spec.PublicDashboard.AccessToken = uuid.New().String()
+			dash.Spec.PublicSharing.AccessToken = uuid.New().String()
 			err = cl.Update(ctx, dash)
 			require.Error(t, err)
 		})
@@ -111,12 +111,12 @@ var _ = Describe("Dashboard type", func() {
 			dash := newDashboard("existing-public-at", "dash-uid")
 
 			// create: Dashboard with accessToken
-			dash.Spec.PublicDashboard.AccessToken = uuid.New().String()
+			dash.Spec.PublicSharing.AccessToken = uuid.New().String()
 			err := cl.Create(ctx, dash)
 			require.NoError(t, err)
 
 			// edit: Remove accessToken
-			dash.Spec.PublicDashboard.AccessToken = ""
+			dash.Spec.PublicSharing.AccessToken = ""
 			err = cl.Update(ctx, dash)
 			require.Error(t, err)
 		})
@@ -125,12 +125,12 @@ var _ = Describe("Dashboard type", func() {
 			dash := newDashboard("removing-public-at", "dash-uid")
 
 			// create: Dashboard with accessToken
-			dash.Spec.PublicDashboard.AccessToken = uuid.New().String()
+			dash.Spec.PublicSharing.AccessToken = uuid.New().String()
 			err := cl.Create(ctx, dash)
 			require.NoError(t, err)
 
 			// edit: Update accessToken
-			dash.Spec.PublicDashboard.AccessToken = uuid.New().String()
+			dash.Spec.PublicSharing.AccessToken = uuid.New().String()
 			err = cl.Update(ctx, dash)
 			require.Error(t, err)
 		})
@@ -139,17 +139,17 @@ var _ = Describe("Dashboard type", func() {
 			dash := newDashboard("update-public-at", "dash-uid")
 
 			// create: Dashboard with accessToken
-			dash.Spec.PublicDashboard.AccessToken = uuid.New().String()
+			dash.Spec.PublicSharing.AccessToken = uuid.New().String()
 			err := cl.Create(ctx, dash)
 			require.NoError(t, err)
 
 			// edit: Disable public dashboard
-			dash.Spec.PublicDashboard = nil
+			dash.Spec.PublicSharing = nil
 			err = cl.Update(ctx, dash)
 			require.NoError(t, err)
 
 			// edit: Enable public dashboard with new accessToken
-			dash.Spec.PublicDashboard = &GrafanaPublicDashboard{AccessToken: uuid.New().String()}
+			dash.Spec.PublicSharing = &GrafanaDashboardPublicSharing{AccessToken: uuid.New().String()}
 			err = cl.Update(ctx, dash)
 			require.NoError(t, err)
 		})
