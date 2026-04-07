@@ -694,16 +694,13 @@ func TestGrafana_ReferencedSecretsAndConfigMaps(t *testing.T) {
 			{
 				Env: []corev1.EnvVar{
 					{
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{Name: "init-secret"},
-								Key:                  "token",
-							},
-						},
+						ValueFrom: tk8s.GetEnvVarSecretSource(t, "init-secret", "token"),
 					},
 				},
 				EnvFrom: []corev1.EnvFromSource{
-					{ConfigMapRef: &corev1.ConfigMapEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "init-cm"}}},
+					{
+						ConfigMapRef: tk8s.GetEnvFromConfigMapSource(t, "init-cm"),
+					},
 				},
 			},
 		}
@@ -724,8 +721,12 @@ func TestGrafana_ReferencedSecretsAndConfigMaps(t *testing.T) {
 			},
 		}
 		cr.Spec.Deployment.Spec.Template.Spec.Volumes = []corev1.Volume{
-			{VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{SecretName: "tls-secret"}}},
-			{VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: "config-vol"}}}},
+			{
+				VolumeSource: tk8s.GetVolumeSecretSource(t, "tls-secret"),
+			},
+			{
+				VolumeSource: tk8s.GetVolumeConfigMapSource(t, "config-vol"),
+			},
 		}
 
 		secrets, configMaps := cr.ReferencedSecretsAndConfigMaps()
@@ -746,8 +747,12 @@ func TestGrafana_ReferencedSecretsAndConfigMaps(t *testing.T) {
 		cr.Spec.Deployment.Spec.Template.Spec.Containers = []corev1.Container{
 			{
 				Env: []corev1.EnvVar{
-					{ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "shared-secret"}, Key: "user"}}},
-					{ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "shared-secret"}, Key: "password"}}},
+					{
+						ValueFrom: tk8s.GetEnvVarSecretSource(t, "shared-secret", "user"),
+					},
+					{
+						ValueFrom: tk8s.GetEnvVarSecretSource(t, "shared-secret", "password"),
+					},
 				},
 			},
 		}
@@ -769,8 +774,12 @@ func TestGrafana_ReferencedSecretsAndConfigMaps(t *testing.T) {
 		cr.Spec.Deployment.Spec.Template.Spec.Containers = []corev1.Container{
 			{
 				EnvFrom: []corev1.EnvFromSource{
-					{SecretRef: &corev1.SecretEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "zebra-secret"}}},
-					{SecretRef: &corev1.SecretEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "alpha-secret"}}},
+					{
+						SecretRef: tk8s.GetEnvFromSecretSource(t, "zebra-secret"),
+					},
+					{
+						SecretRef: tk8s.GetEnvFromSecretSource(t, "alpha-secret"),
+					},
 				},
 			},
 		}
