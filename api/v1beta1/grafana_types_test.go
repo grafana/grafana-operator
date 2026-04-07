@@ -789,15 +789,7 @@ func TestContainerEnvRefs(t *testing.T) {
 
 func TestGrafana_ReferencedSecretsAndConfigMaps(t *testing.T) {
 	t.Run("initContainer env references", func(t *testing.T) {
-		cr := &Grafana{}
-		cr.Spec.Deployment = &DeploymentV1{
-			Spec: DeploymentV1Spec{
-				Template: &DeploymentV1PodTemplateSpec{
-					Spec: &DeploymentV1PodSpec{},
-				},
-			},
-		}
-		cr.Spec.Deployment.Spec.Template.Spec.InitContainers = []corev1.Container{
+		initContainers := []corev1.Container{
 			{
 				Env: []corev1.EnvVar{
 					{
@@ -812,6 +804,9 @@ func TestGrafana_ReferencedSecretsAndConfigMaps(t *testing.T) {
 			},
 		}
 
+		cr := &Grafana{}
+		cr.Spec.SetInitContainers(initContainers)
+
 		secrets, configMaps := cr.ReferencedSecretsAndConfigMaps()
 
 		assert.Equal(t, []string{"init-secret"}, secrets)
@@ -819,15 +814,7 @@ func TestGrafana_ReferencedSecretsAndConfigMaps(t *testing.T) {
 	})
 
 	t.Run("volume secret and configmap references", func(t *testing.T) {
-		cr := &Grafana{}
-		cr.Spec.Deployment = &DeploymentV1{
-			Spec: DeploymentV1Spec{
-				Template: &DeploymentV1PodTemplateSpec{
-					Spec: &DeploymentV1PodSpec{},
-				},
-			},
-		}
-		cr.Spec.Deployment.Spec.Template.Spec.Volumes = []corev1.Volume{
+		volumes := []corev1.Volume{
 			{
 				VolumeSource: tk8s.GetVolumeSecretSource(t, "tls-secret"),
 			},
@@ -836,6 +823,9 @@ func TestGrafana_ReferencedSecretsAndConfigMaps(t *testing.T) {
 			},
 		}
 
+		cr := &Grafana{}
+		cr.Spec.SetVolumes(volumes)
+
 		secrets, configMaps := cr.ReferencedSecretsAndConfigMaps()
 
 		assert.Equal(t, []string{"tls-secret"}, secrets)
@@ -843,15 +833,7 @@ func TestGrafana_ReferencedSecretsAndConfigMaps(t *testing.T) {
 	})
 
 	t.Run("deduplicates repeated secret references", func(t *testing.T) {
-		cr := &Grafana{}
-		cr.Spec.Deployment = &DeploymentV1{
-			Spec: DeploymentV1Spec{
-				Template: &DeploymentV1PodTemplateSpec{
-					Spec: &DeploymentV1PodSpec{},
-				},
-			},
-		}
-		cr.Spec.Deployment.Spec.Template.Spec.Containers = []corev1.Container{
+		containers := []corev1.Container{
 			{
 				Env: []corev1.EnvVar{
 					{
@@ -864,21 +846,16 @@ func TestGrafana_ReferencedSecretsAndConfigMaps(t *testing.T) {
 			},
 		}
 
+		cr := &Grafana{}
+		cr.Spec.SetContainers(containers)
+
 		secrets, _ := cr.ReferencedSecretsAndConfigMaps()
 
 		assert.Equal(t, []string{"shared-secret"}, secrets)
 	})
 
 	t.Run("returns sorted results", func(t *testing.T) {
-		cr := &Grafana{}
-		cr.Spec.Deployment = &DeploymentV1{
-			Spec: DeploymentV1Spec{
-				Template: &DeploymentV1PodTemplateSpec{
-					Spec: &DeploymentV1PodSpec{},
-				},
-			},
-		}
-		cr.Spec.Deployment.Spec.Template.Spec.Containers = []corev1.Container{
+		containers := []corev1.Container{
 			{
 				EnvFrom: []corev1.EnvFromSource{
 					{
@@ -890,6 +867,9 @@ func TestGrafana_ReferencedSecretsAndConfigMaps(t *testing.T) {
 				},
 			},
 		}
+
+		cr := &Grafana{}
+		cr.Spec.SetContainers(containers)
 
 		secrets, _ := cr.ReferencedSecretsAndConfigMaps()
 
