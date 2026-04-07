@@ -54,17 +54,12 @@ type GrafanaDashboardSpec struct {
 	PublicDashboard *GrafanaPublicDashboard `json:"publicDashboard,omitempty"`
 }
 
-// +kubebuilder:validation:XValidation:rule="((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid)))", message="spec.publicDashboard.uid is immutable"
 // +kubebuilder:validation:XValidation:rule="((!has(oldSelf.accessToken) && !has(self.accessToken)) || (has(oldSelf.accessToken) && has(self.accessToken)))", message="spec.publicDashboard.accessToken is immutable"
 type GrafanaPublicDashboard struct {
 	// Optional. Set to false to disable sharing, the public dashboard is still created. The default value is true.
 	// +optional
 	// +kubebuilder:default=true
 	Enabled bool `json:"enabled,omitempty"`
-
-	// Optional. Unique identifier when creating a shared dashboard. If not set the dashboard UID will be re-used.
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="spec.publicDashboard.uid is immutable"
-	UID string `json:"uid,omitempty"`
 
 	// Optional. Unique access token. If empty it will generate a new access token per instance.
 	// +kubebuilder:validation:MaxLength=36
