@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -614,3 +615,192 @@ var _ = Describe("Grafana URL validation", func() {
 		}
 	})
 })
+
+func TestContainerEnvRefs(t *testing.T) {
+	t.Run("env secretKeyRef", func(t *testing.T) {
+		c := corev1.Container{
+			Env: []corev1.EnvVar{
+				{
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{Name: "db-secret"},
+							Key:                  "password",
+						},
+					},
+				},
+			},
+		}
+
+		secrets, configMaps := containerEnvRefs(c)
+
+		assert.Equal(t, []string{"db-secret"}, secrets)
+		assert.Empty(t, configMaps)
+	})
+
+	t.Run("env configMapKeyRef", func(t *testing.T) {
+		c := corev1.Container{
+			Env: []corev1.EnvVar{
+				{
+					ValueFrom: &corev1.EnvVarSource{
+						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{Name: "app-config"},
+							Key:                  "setting",
+						},
+					},
+				},
+			},
+		}
+
+		secrets, configMaps := containerEnvRefs(c)
+
+		assert.Empty(t, secrets)
+		assert.Equal(t, []string{"app-config"}, configMaps)
+	})
+
+	t.Run("envFrom secretRef and configMapRef", func(t *testing.T) {
+		c := corev1.Container{
+			EnvFrom: []corev1.EnvFromSource{
+				{SecretRef: &corev1.SecretEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "bulk-secret"}}},
+				{ConfigMapRef: &corev1.ConfigMapEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "bulk-cm"}}},
+			},
+		}
+
+		secrets, configMaps := containerEnvRefs(c)
+
+		assert.Equal(t, []string{"bulk-secret"}, secrets)
+		assert.Equal(t, []string{"bulk-cm"}, configMaps)
+	})
+
+	t.Run("skips env vars without ValueFrom", func(t *testing.T) {
+		c := corev1.Container{
+			Env: []corev1.EnvVar{
+				{Name: "PLAIN", Value: "literal"},
+			},
+		}
+
+		secrets, configMaps := containerEnvRefs(c)
+
+		assert.Empty(t, secrets)
+		assert.Empty(t, configMaps)
+	})
+}
+
+func TestGrafana_ReferencedSecretsAndConfigMaps(t *testing.T) {
+	t.Run("initContainer env references", func(t *testing.T) {
+		cr := &Grafana{}
+		cr.Spec.Deployment = &DeploymentV1{
+			Spec: DeploymentV1Spec{
+				Template: &DeploymentV1PodTemplateSpec{
+					Spec: &DeploymentV1PodSpec{},
+				},
+			},
+		}
+		cr.Spec.Deployment.Spec.Template.Spec.InitContainers = []corev1.Container{
+			{
+				Env: []corev1.EnvVar{
+					{
+						ValueFrom: &corev1.EnvVarSource{
+							SecretKeyRef: &corev1.SecretKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{Name: "init-secret"},
+								Key:                  "token",
+							},
+						},
+					},
+				},
+				EnvFrom: []corev1.EnvFromSource{
+					{ConfigMapRef: &corev1.ConfigMapEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "init-cm"}}},
+				},
+			},
+		}
+
+		secrets, configMaps := cr.ReferencedSecretsAndConfigMaps()
+
+		assert.Equal(t, []string{"init-secret"}, secrets)
+		assert.Equal(t, []string{"init-cm"}, configMaps)
+	})
+
+	t.Run("volume secret and configmap references", func(t *testing.T) {
+		cr := &Grafana{}
+		cr.Spec.Deployment = &DeploymentV1{
+			Spec: DeploymentV1Spec{
+				Template: &DeploymentV1PodTemplateSpec{
+					Spec: &DeploymentV1PodSpec{},
+				},
+			},
+		}
+		cr.Spec.Deployment.Spec.Template.Spec.Volumes = []corev1.Volume{
+			{VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{SecretName: "tls-secret"}}},
+			{VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: "config-vol"}}}},
+		}
+
+		secrets, configMaps := cr.ReferencedSecretsAndConfigMaps()
+
+		assert.Equal(t, []string{"tls-secret"}, secrets)
+		assert.Equal(t, []string{"config-vol"}, configMaps)
+	})
+
+	t.Run("deduplicates repeated secret references", func(t *testing.T) {
+		cr := &Grafana{}
+		cr.Spec.Deployment = &DeploymentV1{
+			Spec: DeploymentV1Spec{
+				Template: &DeploymentV1PodTemplateSpec{
+					Spec: &DeploymentV1PodSpec{},
+				},
+			},
+		}
+		cr.Spec.Deployment.Spec.Template.Spec.Containers = []corev1.Container{
+			{
+				Env: []corev1.EnvVar{
+					{ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "shared-secret"}, Key: "user"}}},
+					{ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "shared-secret"}, Key: "password"}}},
+				},
+			},
+		}
+
+		secrets, _ := cr.ReferencedSecretsAndConfigMaps()
+
+		assert.Equal(t, []string{"shared-secret"}, secrets)
+	})
+
+	t.Run("returns sorted results", func(t *testing.T) {
+		cr := &Grafana{}
+		cr.Spec.Deployment = &DeploymentV1{
+			Spec: DeploymentV1Spec{
+				Template: &DeploymentV1PodTemplateSpec{
+					Spec: &DeploymentV1PodSpec{},
+				},
+			},
+		}
+		cr.Spec.Deployment.Spec.Template.Spec.Containers = []corev1.Container{
+			{
+				EnvFrom: []corev1.EnvFromSource{
+					{SecretRef: &corev1.SecretEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "zebra-secret"}}},
+					{SecretRef: &corev1.SecretEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "alpha-secret"}}},
+				},
+			},
+		}
+
+		secrets, _ := cr.ReferencedSecretsAndConfigMaps()
+
+		assert.Equal(t, []string{"alpha-secret", "zebra-secret"}, secrets)
+	})
+
+	t.Run("returns empty slices when no references exist", func(t *testing.T) {
+		cr := &Grafana{}
+
+		secrets, configMaps := cr.ReferencedSecretsAndConfigMaps()
+
+		assert.Empty(t, secrets)
+		assert.Empty(t, configMaps)
+	})
+
+	t.Run("ignores nil deployment spec fields", func(t *testing.T) {
+		cr := &Grafana{}
+		cr.Spec.Deployment = &DeploymentV1{}
+
+		secrets, configMaps := cr.ReferencedSecretsAndConfigMaps()
+
+		assert.Empty(t, secrets)
+		assert.Empty(t, configMaps)
+	})
+}
