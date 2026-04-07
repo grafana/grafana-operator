@@ -565,6 +565,7 @@ func TestGrafanaDashboardReconcilerPublicDashboardMatchesStateInGrafana(t *testi
 			wantRecreate: false,
 		},
 		{
+			// In case the cr is recreated without running the finalizer or EtcD state is lost, we need to recover
 			name: "UID changes should recreate",
 			changes: &models.PublicDashboardDTO{
 				UID:         "changed-uid",
@@ -582,11 +583,42 @@ func TestGrafanaDashboardReconcilerPublicDashboardMatchesStateInGrafana(t *testi
 			wantMatch:    false,
 			wantRecreate: true,
 		},
+		{
+			name: "status annotation is empty",
+			changes: &models.PublicDashboardDTO{
+				UID:         uid,
+				AccessToken: uid,
+			},
+			annotations:  map[string]string{annotationSyncedPublicSharing: ""},
+			wantMatch:    false,
+			wantRecreate: true,
+		},
+		{
+			name: "status annotation does not match",
+			changes: &models.PublicDashboardDTO{
+				UID:         uid,
+				AccessToken: uid,
+			},
+			annotations:  map[string]string{annotationSyncedPublicSharing: uuid.NewString()},
+			wantMatch:    false,
+			wantRecreate: true,
+		},
+		{
+			name: "status annotation matches uid",
+			changes: &models.PublicDashboardDTO{
+				UID:                  uid,
+				AccessToken:          uid,
+				IsEnabled:            new(true),
+				AnnotationsEnabled:   new(false),
+				TimeSelectionEnabled: new(false),
+			},
+			annotations:  map[string]string{annotationSyncedPublicSharing: uid},
+			wantMatch:    true,
+			wantRecreate: false,
+		},
 	}
 
-	cr := &v1beta1.GrafanaDashboard{
-		ObjectMeta: metav1.ObjectMeta{},
-	}
+	cr := &v1beta1.GrafanaDashboard{}
 	r := &GrafanaDashboardReconciler{}
 
 	for _, tt := range tests {
@@ -598,4 +630,10 @@ func TestGrafanaDashboardReconcilerPublicDashboardMatchesStateInGrafana(t *testi
 			assert.Equal(t, tt.wantRecreate, recreate, "'recreate' did not match 'wantRecreate'")
 		})
 	}
+
+	t.Run("remote model is nil", func(t *testing.T) {
+		matches, recreate := r.publicSharingMatchesStateInGrafana(cr, &models.PublicDashboardDTO{UID: uid, AccessToken: uid}, nil)
+		assert.False(t, matches)
+		assert.True(t, recreate)
+	})
 }
