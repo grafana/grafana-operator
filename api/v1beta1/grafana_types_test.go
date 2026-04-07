@@ -14,6 +14,113 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+func TestGrafanaSpecInitPodTemplateSpec(t *testing.T) {
+	spec := GrafanaSpec{}
+
+	want := GrafanaSpec{
+		Deployment: &DeploymentV1{
+			Spec: DeploymentV1Spec{
+				Template: &DeploymentV1PodTemplateSpec{
+					Spec: &DeploymentV1PodSpec{},
+				},
+			},
+		},
+	}
+
+	spec.initPodTemplateSpec()
+	got := spec
+
+	assert.Equal(t, want, got)
+}
+
+func TestGrafanaSpecSetContainers(t *testing.T) {
+	spec := GrafanaSpec{}
+
+	containers := []corev1.Container{
+		{
+			Name: "test-container",
+		},
+	}
+
+	want := GrafanaSpec{
+		Deployment: &DeploymentV1{
+			Spec: DeploymentV1Spec{
+				Template: &DeploymentV1PodTemplateSpec{
+					Spec: &DeploymentV1PodSpec{
+						Containers: containers,
+					},
+				},
+			},
+		},
+	}
+
+	spec.SetContainers(containers)
+	got := spec
+
+	assert.Equal(t, want, got)
+}
+
+func TestGrafanaSpecSetInitContainers(t *testing.T) {
+	spec := GrafanaSpec{}
+
+	initContainers := []corev1.Container{
+		{
+			Name: "test-container",
+		},
+	}
+
+	want := GrafanaSpec{
+		Deployment: &DeploymentV1{
+			Spec: DeploymentV1Spec{
+				Template: &DeploymentV1PodTemplateSpec{
+					Spec: &DeploymentV1PodSpec{
+						InitContainers: initContainers,
+					},
+				},
+			},
+		},
+	}
+
+	spec.SetInitContainers(initContainers)
+	got := spec
+
+	assert.Equal(t, want, got)
+}
+
+func TestGrafanaSpecSetVolumes(t *testing.T) {
+	spec := GrafanaSpec{}
+
+	volumes := []corev1.Volume{
+		{
+			Name: "test-volume",
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: "test-volume-cm",
+					},
+				},
+			},
+		},
+	}
+
+	want := GrafanaSpec{
+		Deployment: &DeploymentV1{
+			Spec: DeploymentV1Spec{
+				Template: &DeploymentV1PodTemplateSpec{
+					Spec: &DeploymentV1PodSpec{
+						Volumes: volumes,
+					},
+				},
+			},
+		},
+	}
+
+	spec.SetVolumes(volumes)
+	got := spec
+
+	assert.Equal(t, want, got)
+}
+
 var _ = Describe("Grafana status NamespacedResourceList all CRs works", func() {
 	t := GinkgoT()
 
