@@ -486,16 +486,18 @@ func (r *GrafanaDashboardReconciler) reconcilePublicSharing(ctx context.Context,
 		return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicSharing, string(cr.UID))
 	}
 
-	log.V(1).Info("deleting public dashboard share from Grafana due to uid or accessToken mismatch")
+	if IsNotErrorType[*dashboards.GetPublicDashboardNotFound](err) {
+		log.V(1).Info("deleting public dashboard share from Grafana due to uid or accessToken mismatch")
 
-	_, err = gClient.Dashboards.DeletePublicDashboardWithParams(&dashboards.DeletePublicDashboardParams{ //nolint:errcheck
-		DashboardUID: dashUID,
-		UID:          shareMeta.Payload.UID,
-		Context:      ctx,
-	})
-	if err != nil {
-		log.Error(err, LogMsgDeletingPublicSharing)
-		return fmt.Errorf("%s: %w", LogMsgDeletingPublicSharing, err)
+		_, err = gClient.Dashboards.DeletePublicDashboardWithParams(&dashboards.DeletePublicDashboardParams{ //nolint:errcheck
+			DashboardUID: dashUID,
+			UID:          shareMeta.Payload.UID,
+			Context:      ctx,
+		})
+		if err != nil {
+			log.Error(err, LogMsgDeletingPublicSharing)
+			return fmt.Errorf("%s: %w", LogMsgDeletingPublicSharing, err)
+		}
 	}
 
 	log.Info("creating public dashboard share in Grafana")
@@ -612,12 +614,12 @@ func (r *GrafanaDashboardReconciler) publicSharingMatchesStateInGrafana(cr *v1be
 	}
 
 	if remoteDashboard == nil {
-		return false, false
+		return false, true
 	}
 
 	remoteModel := remoteDashboard.GetPayload()
 	if remoteModel == nil {
-		return false, false
+		return false, true
 	}
 
 	// Determine whether to update or recreate
