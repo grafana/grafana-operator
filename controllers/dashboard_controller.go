@@ -460,29 +460,21 @@ func (r *GrafanaDashboardReconciler) reconcilePublicDashboard(ctx context.Contex
 		}
 	}
 
-	pDashUID := cr.Spec.PublicDashboard.UID
-	if pDashUID == "" {
-		// metadata.uid is used as the Dashboard UID may not be a valid UUID
-		// Safe as it is recreated if the it ever changes
-		pDashUID = string(cr.UID)
-	}
-
-	dto := r.getPublicDashboardDTO(cr, pDashUID)
+	dto := r.getPublicDashboardDTO(cr)
 
 	// Only Create/Update when necessary
 	pDashMatchesStateInGrafana, recreate := r.publicDashboardMatchesStateInGrafana(cr, dto, pDashMeta)
 	if pDashMatchesStateInGrafana {
 		log.V(1).Info("skipping public dashboard from Grafana")
-		return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicDashboard, pDashUID)
+		return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicDashboard, string(cr.UID))
 	}
 
-	// Update existing dashboard, otherwise delete and recreate it
 	if !recreate {
 		log.Info("updating public dashboard in Grafana")
 
 		_, err = gClient.Dashboards.UpdatePublicDashboard(&dashboards.UpdatePublicDashboardParams{ //nolint:errcheck
 			Body:         dto,
-			UID:          pDashUID,
+			UID:          dto.UID,
 			DashboardUID: dashUID,
 			Context:      ctx,
 		})
@@ -491,7 +483,7 @@ func (r *GrafanaDashboardReconciler) reconcilePublicDashboard(ctx context.Contex
 			return fmt.Errorf("%s: %w", LogMsgSyncingPublicDashboard, err)
 		}
 
-		return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicDashboard, pDashUID)
+		return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicDashboard, string(cr.UID))
 	}
 
 	log.V(1).Info("deleting public dashboard from Grafana due to uid or accessToken mismatch")
@@ -516,10 +508,10 @@ func (r *GrafanaDashboardReconciler) reconcilePublicDashboard(ctx context.Contex
 		return fmt.Errorf("%s: %w", LogMsgSyncingPublicDashboard, err)
 	}
 
-	return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicDashboard, pDashUID)
+	return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicDashboard, string(cr.UID))
 }
 
-func (r *GrafanaDashboardReconciler) getPublicDashboardDTO(cr *v1beta1.GrafanaDashboard, uid string) *models.PublicDashboardDTO {
+func (r *GrafanaDashboardReconciler) getPublicDashboardDTO(cr *v1beta1.GrafanaDashboard) *models.PublicDashboardDTO {
 	pdash := cr.Spec.PublicDashboard
 
 	token := pdash.AccessToken
@@ -536,7 +528,7 @@ func (r *GrafanaDashboardReconciler) getPublicDashboardDTO(cr *v1beta1.GrafanaDa
 	}
 
 	return &models.PublicDashboardDTO{
-		UID:                  uid,
+		UID:                  string(cr.UID),
 		AccessToken:          token,
 		IsEnabled:            getDefault(&pdash.Enabled, true),
 		AnnotationsEnabled:   getDefault(&pdash.AnnotationsEnabled, false),

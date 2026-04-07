@@ -389,7 +389,7 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 			AnnotationsEnabled:   new(false),
 		}
 
-		matches, recreate := r.publicDashboardMatchesStateInGrafana(expectedDTO, remoteDTO)
+		matches, recreate := r.publicDashboardMatchesStateInGrafana(cr, expectedDTO, remoteDTO)
 		assert.True(t, matches)
 		assert.False(t, recreate)
 
@@ -414,7 +414,7 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 
 		// Should not match
 		// Recreate is unnecessary as only mutable fields changed (UID ignored).
-		matches, recreate = r.publicDashboardMatchesStateInGrafana(expectedDTO, remoteDTO)
+		matches, recreate = r.publicDashboardMatchesStateInGrafana(cr, expectedDTO, remoteDTO)
 		assert.False(t, matches)
 		assert.False(t, recreate)
 
@@ -428,7 +428,7 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 		assert.NotNil(t, remoteDTO)
 		assert.NotNil(t, remoteDTO.Payload)
 
-		matches, _ = r.publicDashboardMatchesStateInGrafana(expectedDTO, remoteDTO)
+		matches, _ = r.publicDashboardMatchesStateInGrafana(cr, expectedDTO, remoteDTO)
 		assert.True(t, matches)
 		assert.False(t, recreate)
 
@@ -536,6 +536,7 @@ func TestGrafanaDashboardReconcilerPublicDashboardMatchesStateInGrafana(t *testi
 	tests := []struct {
 		name         string
 		changes      *models.PublicDashboardDTO
+		annotations  map[string]string
 		wantMatch    bool
 		wantRecreate bool
 	}{
@@ -583,11 +584,16 @@ func TestGrafanaDashboardReconcilerPublicDashboardMatchesStateInGrafana(t *testi
 		},
 	}
 
+	cr := &v1beta1.GrafanaDashboard{
+		ObjectMeta: metav1.ObjectMeta{},
+	}
+	r := &GrafanaDashboardReconciler{}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := &GrafanaDashboardReconciler{}
+			cr.Annotations = tt.annotations
 
-			matches, recreate := r.publicDashboardMatchesStateInGrafana(tt.changes, &defaultPublicDashboard)
+			matches, recreate := r.publicDashboardMatchesStateInGrafana(cr, tt.changes, &defaultPublicDashboard)
 			assert.Equal(t, tt.wantMatch, matches, "'matches' did not match 'wantMatches'")
 			assert.Equal(t, tt.wantRecreate, recreate, "'recreate' did not match 'wantRecreate'")
 		})
