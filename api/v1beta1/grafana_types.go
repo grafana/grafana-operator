@@ -453,6 +453,9 @@ func (in *Grafana) deploymentRefs() (secrets, configMaps []string) {
 }
 
 func containerEnvRefs(c corev1.Container) (secrets, configMaps []string) {
+	secrets = []string{}
+	configMaps = []string{}
+
 	for _, env := range c.Env {
 		if env.ValueFrom == nil {
 			continue
