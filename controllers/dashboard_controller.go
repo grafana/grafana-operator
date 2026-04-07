@@ -476,34 +476,8 @@ func (r *GrafanaDashboardReconciler) reconcilePublicDashboard(ctx context.Contex
 		return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicDashboard, pDashUID)
 	}
 
-	// It is not possible to update the the uid or accessToken
-	if recreate {
-		log.V(1).Info("deleting public dashboard from Grafana due to uid or accessToken mismatch")
-
-		_, err := gClient.Dashboards.DeletePublicDashboardWithParams(&dashboards.DeletePublicDashboardParams{ //nolint:errcheck
-			DashboardUID: dashUID,
-			UID:          pDashMeta.Payload.UID,
-			Context:      ctx,
-		})
-		if err != nil {
-			log.Error(err, LogMsgDeletingPublicDashboard)
-			return fmt.Errorf("%s: %w", LogMsgDeletingPublicDashboard, err)
-		}
-	}
-
-	if recreate || IsErrorType[*dashboards.GetPublicDashboardNotFound](err) {
-		log.Info("creating public dashboard in Grafana")
-
-		_, err = gClient.Dashboards.CreatePublicDashboardWithParams(&dashboards.CreatePublicDashboardParams{ //nolint:errcheck
-			Body:         dto,
-			DashboardUID: dashUID,
-			Context:      ctx,
-		})
-		if err != nil {
-			log.Error(err, LogMsgSyncingPublicDashboard)
-			return fmt.Errorf("%s: %w", LogMsgSyncingPublicDashboard, err)
-		}
-	} else {
+	// Update existing dashboard, otherwise delete and recreate it
+	if !recreate {
 		log.Info("updating public dashboard in Grafana")
 
 		_, err = gClient.Dashboards.UpdatePublicDashboard(&dashboards.UpdatePublicDashboardParams{ //nolint:errcheck
@@ -516,6 +490,30 @@ func (r *GrafanaDashboardReconciler) reconcilePublicDashboard(ctx context.Contex
 			log.Error(err, LogMsgSyncingPublicDashboard)
 			return fmt.Errorf("%s: %w", LogMsgSyncingPublicDashboard, err)
 		}
+
+		return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicDashboard, pDashUID)
+	}
+
+	log.V(1).Info("deleting public dashboard from Grafana due to uid or accessToken mismatch")
+	_, err = gClient.Dashboards.DeletePublicDashboardWithParams(&dashboards.DeletePublicDashboardParams{ //nolint:errcheck
+		DashboardUID: dashUID,
+		UID:          pDashMeta.Payload.UID,
+		Context:      ctx,
+	})
+	if err != nil {
+		log.Error(err, LogMsgDeletingPublicDashboard)
+		return fmt.Errorf("%s: %w", LogMsgDeletingPublicDashboard, err)
+	}
+
+	log.Info("creating public dashboard in Grafana")
+	_, err = gClient.Dashboards.CreatePublicDashboardWithParams(&dashboards.CreatePublicDashboardParams{ //nolint:errcheck
+		Body:         dto,
+		DashboardUID: dashUID,
+		Context:      ctx,
+	})
+	if err != nil {
+		log.Error(err, LogMsgSyncingPublicDashboard)
+		return fmt.Errorf("%s: %w", LogMsgSyncingPublicDashboard, err)
 	}
 
 	return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicDashboard, pDashUID)
