@@ -428,11 +428,15 @@ func (in *Grafana) ReferencedSecretsAndConfigMaps() (secrets, configMaps []strin
 }
 
 func (in *Grafana) deploymentRefs() (secrets, configMaps []string) {
+	secrets = []string{}
+	configMaps = []string{}
+
 	containers := in.Spec.GetAllContainers()
 	volumes := in.Spec.GetVolumes()
 
 	for _, c := range containers {
 		sec, cm := containerEnvRefs(c)
+
 		secrets = append(secrets, sec...)
 		configMaps = append(configMaps, cm...)
 	}
@@ -447,7 +451,7 @@ func (in *Grafana) deploymentRefs() (secrets, configMaps []string) {
 		}
 	}
 
-	return secrets, configMaps
+	return
 }
 
 func containerEnvRefs(c corev1.Container) (secrets, configMaps []string) {
@@ -476,5 +480,5 @@ func containerEnvRefs(c corev1.Container) (secrets, configMaps []string) {
 		}
 	}
 
-	return secrets, configMaps
+	return
 }
