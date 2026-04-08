@@ -450,13 +450,13 @@ func (in *Grafana) deploymentRefs() (secrets, configMaps []string) {
 		configMaps = append(configMaps, cm...)
 	}
 
-	for _, vol := range volumes {
-		if vol.Secret != nil {
-			secrets = append(secrets, vol.Secret.SecretName)
+	for _, v := range volumes {
+		if v.Secret != nil && v.Secret.SecretName != "" {
+			secrets = append(secrets, v.Secret.SecretName)
 		}
 
-		if vol.ConfigMap != nil {
-			configMaps = append(configMaps, vol.ConfigMap.Name)
+		if v.ConfigMap != nil && v.ConfigMap.Name != "" {
+			configMaps = append(configMaps, v.ConfigMap.Name)
 		}
 	}
 
