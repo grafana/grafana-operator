@@ -449,25 +449,16 @@ func (in *Grafana) ReferencedSecretsAndConfigMaps() (secretNames, configMapNames
 }
 
 func (in *Grafana) deploymentRefs() (secrets, configMaps []string) {
-	if in.Spec.Deployment == nil ||
-		in.Spec.Deployment.Spec.Template == nil ||
-		in.Spec.Deployment.Spec.Template.Spec == nil {
-		return nil, nil
-	}
+	containers := in.Spec.GetAllContainers()
+	volumes := in.Spec.GetVolumes()
 
-	podSpec := in.Spec.Deployment.Spec.Template.Spec
-
-	allContainers := make([]corev1.Container, 0, len(podSpec.Containers)+len(podSpec.InitContainers))
-	allContainers = append(allContainers, podSpec.Containers...)
-	allContainers = append(allContainers, podSpec.InitContainers...)
-
-	for _, c := range allContainers {
+	for _, c := range containers {
 		sec, cm := containerEnvRefs(c)
 		secrets = append(secrets, sec...)
 		configMaps = append(configMaps, cm...)
 	}
 
-	for _, vol := range podSpec.Volumes {
+	for _, vol := range volumes {
 		if vol.Secret != nil {
 			secrets = append(secrets, vol.Secret.SecretName)
 		}
