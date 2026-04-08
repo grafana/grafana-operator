@@ -741,11 +741,27 @@ func TestContainerEnvRefs(t *testing.T) {
 			wantSecretRefs:    []string{"secret"},
 		},
 		{
+			name: "env secretKeyRef without name is skipped",
+			env: []corev1.EnvVar{{
+				ValueFrom: tk8s.GetEnvVarSecretSource(t, "", "secret-key"),
+			}},
+			wantConfigMapRefs: []string{},
+			wantSecretRefs:    []string{},
+		},
+		{
 			name: "env configMapKeyRef",
 			env: []corev1.EnvVar{{
 				ValueFrom: tk8s.GetEnvVarConfigMapSource(t, "cm", "cm-key"),
 			}},
 			wantConfigMapRefs: []string{"cm"},
+			wantSecretRefs:    []string{},
+		},
+		{
+			name: "env configMapKeyRef without name is skipped",
+			env: []corev1.EnvVar{{
+				ValueFrom: tk8s.GetEnvVarConfigMapSource(t, "", "cm-key"),
+			}},
+			wantConfigMapRefs: []string{},
 			wantSecretRefs:    []string{},
 		},
 		{
@@ -757,17 +773,44 @@ func TestContainerEnvRefs(t *testing.T) {
 			wantSecretRefs:    []string{},
 		},
 		{
-			name: "envFrom secretRef and configMapRef",
+			name: "envFrom secretRef",
 			envFrom: []corev1.EnvFromSource{
-				{
-					ConfigMapRef: tk8s.GetEnvFromConfigMapSource(t, "cm"),
-				},
 				{
 					SecretRef: tk8s.GetEnvFromSecretSource(t, "secret"),
 				},
 			},
-			wantConfigMapRefs: []string{"cm"},
+			wantConfigMapRefs: []string{},
 			wantSecretRefs:    []string{"secret"},
+		},
+		{
+			name: "envFrom secretRef without name is skipped",
+			envFrom: []corev1.EnvFromSource{
+				{
+					SecretRef: tk8s.GetEnvFromSecretSource(t, ""),
+				},
+			},
+			wantConfigMapRefs: []string{},
+			wantSecretRefs:    []string{},
+		},
+		{
+			name: "envFrom configMapRef",
+			envFrom: []corev1.EnvFromSource{
+				{
+					ConfigMapRef: tk8s.GetEnvFromConfigMapSource(t, "cm"),
+				},
+			},
+			wantConfigMapRefs: []string{"cm"},
+			wantSecretRefs:    []string{},
+		},
+		{
+			name: "envFrom configMapRef without name is skipped",
+			envFrom: []corev1.EnvFromSource{
+				{
+					ConfigMapRef: tk8s.GetEnvFromConfigMapSource(t, ""),
+				},
+			},
+			wantConfigMapRefs: []string{},
+			wantSecretRefs:    []string{},
 		},
 	}
 

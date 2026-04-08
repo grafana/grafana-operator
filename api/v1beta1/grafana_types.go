@@ -467,27 +467,25 @@ func containerEnvRefs(c corev1.Container) (secrets, configMaps []string) {
 	secrets = []string{}
 	configMaps = []string{}
 
-	for _, env := range c.Env {
-		if env.ValueFrom == nil {
-			continue
-		}
+	for _, e := range c.Env {
+		if vf := e.ValueFrom; vf != nil {
+			if vf.SecretKeyRef != nil && vf.SecretKeyRef.Name != "" {
+				secrets = append(secrets, vf.SecretKeyRef.Name)
+			}
 
-		if env.ValueFrom.SecretKeyRef != nil {
-			secrets = append(secrets, env.ValueFrom.SecretKeyRef.Name)
-		}
-
-		if env.ValueFrom.ConfigMapKeyRef != nil {
-			configMaps = append(configMaps, env.ValueFrom.ConfigMapKeyRef.Name)
+			if vf.ConfigMapKeyRef != nil && vf.ConfigMapKeyRef.Name != "" {
+				configMaps = append(configMaps, vf.ConfigMapKeyRef.Name)
+			}
 		}
 	}
 
-	for _, envFrom := range c.EnvFrom {
-		if envFrom.SecretRef != nil {
-			secrets = append(secrets, envFrom.SecretRef.Name)
+	for _, e := range c.EnvFrom {
+		if e.SecretRef != nil && e.SecretRef.Name != "" {
+			secrets = append(secrets, e.SecretRef.Name)
 		}
 
-		if envFrom.ConfigMapRef != nil {
-			configMaps = append(configMaps, envFrom.ConfigMapRef.Name)
+		if e.ConfigMapRef != nil && e.ConfigMapRef.Name != "" {
+			configMaps = append(configMaps, e.ConfigMapRef.Name)
 		}
 	}
 
