@@ -105,20 +105,6 @@ type GrafanaSpec struct {
 	DisableDefaultSecurityContext string `json:"disableDefaultSecurityContext,omitempty"`
 }
 
-func (in *GrafanaSpec) initPodTemplateSpec() {
-	if in.Deployment == nil {
-		in.Deployment = &DeploymentV1{}
-	}
-
-	if in.Deployment.Spec.Template == nil {
-		in.Deployment.Spec.Template = &DeploymentV1PodTemplateSpec{}
-	}
-
-	if in.Deployment.Spec.Template.Spec == nil {
-		in.Deployment.Spec.Template.Spec = &DeploymentV1PodSpec{}
-	}
-}
-
 func (in *GrafanaSpec) GetAllContainers() []corev1.Container {
 	if in.Deployment == nil ||
 		in.Deployment.Spec.Template == nil ||
@@ -145,6 +131,20 @@ func (in *GrafanaSpec) GetVolumes() []corev1.Volume {
 	podSpec := in.Deployment.Spec.Template.Spec
 
 	return podSpec.Volumes
+}
+
+func (in *GrafanaSpec) initPodTemplateSpec() {
+	if in.Deployment == nil {
+		in.Deployment = &DeploymentV1{}
+	}
+
+	if in.Deployment.Spec.Template == nil {
+		in.Deployment.Spec.Template = &DeploymentV1PodTemplateSpec{}
+	}
+
+	if in.Deployment.Spec.Template.Spec == nil {
+		in.Deployment.Spec.Template.Spec = &DeploymentV1PodSpec{}
+	}
 }
 
 func (in *GrafanaSpec) SetContainers(containers []corev1.Container) {

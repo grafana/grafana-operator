@@ -14,6 +14,81 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+func TestGetAllContainers(t *testing.T) {
+	t.Run("empty list of containers", func(t *testing.T) {
+		spec := GrafanaSpec{}
+
+		want := []corev1.Container{}
+		got := spec.GetAllContainers()
+
+		assert.Equal(t, want, got)
+	})
+
+	t.Run("containers", func(t *testing.T) {
+		spec := GrafanaSpec{
+			Deployment: &DeploymentV1{
+				Spec: DeploymentV1Spec{
+					Template: &DeploymentV1PodTemplateSpec{
+						Spec: &DeploymentV1PodSpec{
+							Containers: []corev1.Container{{
+								Name: "regular-container",
+							}},
+							InitContainers: []corev1.Container{{
+								Name: "init-container",
+							}},
+						},
+					},
+				},
+			},
+		}
+
+		want := []corev1.Container{
+			{
+				Name: "regular-container",
+			},
+			{
+				Name: "init-container",
+			},
+		}
+		got := spec.GetAllContainers()
+
+		assert.Equal(t, want, got)
+	})
+}
+
+func TestGrafanaGetVolumes(t *testing.T) {
+	t.Run("empty list of volumes", func(t *testing.T) {
+		spec := GrafanaSpec{}
+
+		want := []corev1.Volume{}
+		got := spec.GetVolumes()
+
+		assert.Equal(t, want, got)
+	})
+	t.Run("volumes", func(t *testing.T) {
+		spec := GrafanaSpec{
+			Deployment: &DeploymentV1{
+				Spec: DeploymentV1Spec{
+					Template: &DeploymentV1PodTemplateSpec{
+						Spec: &DeploymentV1PodSpec{
+							Volumes: []corev1.Volume{{
+								Name: "test-volume",
+							}},
+						},
+					},
+				},
+			},
+		}
+
+		want := []corev1.Volume{{
+			Name: "test-volume",
+		}}
+		got := spec.GetVolumes()
+
+		assert.Equal(t, want, got)
+	})
+}
+
 func TestGrafanaSpecInitPodTemplateSpec(t *testing.T) {
 	spec := GrafanaSpec{}
 
