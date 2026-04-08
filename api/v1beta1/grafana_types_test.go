@@ -725,79 +725,70 @@ var _ = Describe("Grafana URL validation", func() {
 })
 
 func TestContainerEnvRefs(t *testing.T) {
-	t.Run("env secretKeyRef", func(t *testing.T) {
-		c := corev1.Container{
-			Env: []corev1.EnvVar{
+	tests := []struct {
+		name              string
+		env               []corev1.EnvVar
+		envFrom           []corev1.EnvFromSource
+		wantConfigMapRefs []string
+		wantSecretRefs    []string
+	}{
+		{
+			name: "env secretKeyRef",
+			env: []corev1.EnvVar{{
+				ValueFrom: tk8s.GetEnvVarSecretSource(t, "secret", "secret-key"),
+			}},
+			wantConfigMapRefs: []string{},
+			wantSecretRefs:    []string{"secret"},
+		},
+		{
+			name: "env configMapKeyRef",
+			env: []corev1.EnvVar{{
+				ValueFrom: tk8s.GetEnvVarConfigMapSource(t, "cm", "cm-key"),
+			}},
+			wantConfigMapRefs: []string{"cm"},
+			wantSecretRefs:    []string{},
+		},
+		{
+			name: "env plain value",
+			env: []corev1.EnvVar{{
+				Name: "name", Value: "value",
+			}},
+			wantConfigMapRefs: []string{},
+			wantSecretRefs:    []string{},
+		},
+		{
+			name: "envFrom secretRef and configMapRef",
+			envFrom: []corev1.EnvFromSource{
 				{
-					ValueFrom: tk8s.GetEnvVarSecretSource(t, "db-secret", "password"),
+					ConfigMapRef: tk8s.GetEnvFromConfigMapSource(t, "cm"),
+				},
+				{
+					SecretRef: tk8s.GetEnvFromSecretSource(t, "secret"),
 				},
 			},
-		}
+			wantConfigMapRefs: []string{"cm"},
+			wantSecretRefs:    []string{"secret"},
+		},
+	}
 
-		secrets, configMaps := containerEnvRefs(c)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := corev1.Container{
+				Env:     tt.env,
+				EnvFrom: tt.envFrom,
+			}
 
-		assert.Equal(t, []string{"db-secret"}, secrets)
-		assert.Empty(t, configMaps)
-	})
+			secretRefs, configMapRefs := containerEnvRefs(c)
 
-	t.Run("env configMapKeyRef", func(t *testing.T) {
-		c := corev1.Container{
-			Env: []corev1.EnvVar{
-				{
-					ValueFrom: tk8s.GetEnvVarConfigMapSource(t, "app-config", "setting"),
-				},
-			},
-		}
-
-		secrets, configMaps := containerEnvRefs(c)
-
-		assert.Empty(t, secrets)
-		assert.Equal(t, []string{"app-config"}, configMaps)
-	})
-
-	t.Run("envFrom secretRef and configMapRef", func(t *testing.T) {
-		c := corev1.Container{
-			EnvFrom: []corev1.EnvFromSource{
-				{
-					SecretRef: tk8s.GetEnvFromSecretSource(t, "bulk-secret"),
-				},
-				{
-					ConfigMapRef: tk8s.GetEnvFromConfigMapSource(t, "bulk-cm"),
-				},
-			},
-		}
-
-		secrets, configMaps := containerEnvRefs(c)
-
-		assert.Equal(t, []string{"bulk-secret"}, secrets)
-		assert.Equal(t, []string{"bulk-cm"}, configMaps)
-	})
-
-	t.Run("skips env vars without ValueFrom", func(t *testing.T) {
-		c := corev1.Container{
-			Env: []corev1.EnvVar{
-				{Name: "PLAIN", Value: "literal"},
-			},
-		}
-
-		secrets, configMaps := containerEnvRefs(c)
-
-		assert.Empty(t, secrets)
-		assert.Empty(t, configMaps)
-	})
+			assert.Equal(t, tt.wantConfigMapRefs, configMapRefs)
+			assert.Equal(t, tt.wantSecretRefs, secretRefs)
+		})
+	}
 }
 
 func TestGrafana_ReferencedSecretsAndConfigMaps(t *testing.T) {
 	t.Run("initContainer env references", func(t *testing.T) {
-		cr := &Grafana{}
-		cr.Spec.Deployment = &DeploymentV1{
-			Spec: DeploymentV1Spec{
-				Template: &DeploymentV1PodTemplateSpec{
-					Spec: &DeploymentV1PodSpec{},
-				},
-			},
-		}
-		cr.Spec.Deployment.Spec.Template.Spec.InitContainers = []corev1.Container{
+		initContainers := []corev1.Container{
 			{
 				Env: []corev1.EnvVar{
 					{
@@ -812,6 +803,9 @@ func TestGrafana_ReferencedSecretsAndConfigMaps(t *testing.T) {
 			},
 		}
 
+		cr := &Grafana{}
+		cr.Spec.SetInitContainers(initContainers)
+
 		secrets, configMaps := cr.ReferencedSecretsAndConfigMaps()
 
 		assert.Equal(t, []string{"init-secret"}, secrets)
@@ -819,15 +813,7 @@ func TestGrafana_ReferencedSecretsAndConfigMaps(t *testing.T) {
 	})
 
 	t.Run("volume secret and configmap references", func(t *testing.T) {
-		cr := &Grafana{}
-		cr.Spec.Deployment = &DeploymentV1{
-			Spec: DeploymentV1Spec{
-				Template: &DeploymentV1PodTemplateSpec{
-					Spec: &DeploymentV1PodSpec{},
-				},
-			},
-		}
-		cr.Spec.Deployment.Spec.Template.Spec.Volumes = []corev1.Volume{
+		volumes := []corev1.Volume{
 			{
 				VolumeSource: tk8s.GetVolumeSecretSource(t, "tls-secret"),
 			},
@@ -836,6 +822,9 @@ func TestGrafana_ReferencedSecretsAndConfigMaps(t *testing.T) {
 			},
 		}
 
+		cr := &Grafana{}
+		cr.Spec.SetVolumes(volumes)
+
 		secrets, configMaps := cr.ReferencedSecretsAndConfigMaps()
 
 		assert.Equal(t, []string{"tls-secret"}, secrets)
@@ -843,15 +832,7 @@ func TestGrafana_ReferencedSecretsAndConfigMaps(t *testing.T) {
 	})
 
 	t.Run("deduplicates repeated secret references", func(t *testing.T) {
-		cr := &Grafana{}
-		cr.Spec.Deployment = &DeploymentV1{
-			Spec: DeploymentV1Spec{
-				Template: &DeploymentV1PodTemplateSpec{
-					Spec: &DeploymentV1PodSpec{},
-				},
-			},
-		}
-		cr.Spec.Deployment.Spec.Template.Spec.Containers = []corev1.Container{
+		containers := []corev1.Container{
 			{
 				Env: []corev1.EnvVar{
 					{
@@ -864,21 +845,16 @@ func TestGrafana_ReferencedSecretsAndConfigMaps(t *testing.T) {
 			},
 		}
 
+		cr := &Grafana{}
+		cr.Spec.SetContainers(containers)
+
 		secrets, _ := cr.ReferencedSecretsAndConfigMaps()
 
 		assert.Equal(t, []string{"shared-secret"}, secrets)
 	})
 
 	t.Run("returns sorted results", func(t *testing.T) {
-		cr := &Grafana{}
-		cr.Spec.Deployment = &DeploymentV1{
-			Spec: DeploymentV1Spec{
-				Template: &DeploymentV1PodTemplateSpec{
-					Spec: &DeploymentV1PodSpec{},
-				},
-			},
-		}
-		cr.Spec.Deployment.Spec.Template.Spec.Containers = []corev1.Container{
+		containers := []corev1.Container{
 			{
 				EnvFrom: []corev1.EnvFromSource{
 					{
@@ -890,6 +866,9 @@ func TestGrafana_ReferencedSecretsAndConfigMaps(t *testing.T) {
 				},
 			},
 		}
+
+		cr := &Grafana{}
+		cr.Spec.SetContainers(containers)
 
 		secrets, _ := cr.ReferencedSecretsAndConfigMaps()
 
