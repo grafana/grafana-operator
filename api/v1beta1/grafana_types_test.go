@@ -874,6 +874,25 @@ func TestGrafana_ReferencedSecretsAndConfigMaps(t *testing.T) {
 		assert.Equal(t, []string{"config-vol"}, configMaps)
 	})
 
+	t.Run("volume secret and configmap references without names are ignored", func(t *testing.T) {
+		volumes := []corev1.Volume{
+			{
+				VolumeSource: tk8s.GetVolumeSecretSource(t, ""),
+			},
+			{
+				VolumeSource: tk8s.GetVolumeConfigMapSource(t, ""),
+			},
+		}
+
+		cr := &Grafana{}
+		cr.Spec.SetVolumes(volumes)
+
+		secrets, configMaps := cr.ReferencedSecretsAndConfigMaps()
+
+		assert.Equal(t, []string{}, secrets)
+		assert.Equal(t, []string{}, configMaps)
+	})
+
 	t.Run("deduplicates repeated secret references", func(t *testing.T) {
 		containers := []corev1.Container{
 			{

@@ -20,7 +20,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"maps"
 	"slices"
 
 	corev1 "k8s.io/api/core/v1"
@@ -416,26 +415,14 @@ func (in *Grafana) Conditions() *[]metav1.Condition {
 //
 // The deployment reconciler uses this to compute a hash of those resources' ResourceVersions
 // and sets the checksum/secrets pod template annotation.
-func (in *Grafana) ReferencedSecretsAndConfigMaps() (secretNames, configMapNames []string) {
-	secretSet := make(map[string]struct{})
-	configMapSet := make(map[string]struct{})
+func (in *Grafana) ReferencedSecretsAndConfigMaps() (secrets, configMaps []string) {
+	secrets, configMaps = in.deploymentRefs()
 
-	sec, cm := in.deploymentRefs()
+	slices.Sort(secrets)
+	secrets = slices.Compact(secrets)
 
-	for _, s := range sec {
-		if s != "" {
-			secretSet[s] = struct{}{}
-		}
-	}
-
-	for _, c := range cm {
-		if c != "" {
-			configMapSet[c] = struct{}{}
-		}
-	}
-
-	secretNames = slices.Sorted(maps.Keys(secretSet))
-	configMapNames = slices.Sorted(maps.Keys(configMapSet))
+	slices.Sort(configMaps)
+	configMaps = slices.Compact(configMaps)
 
 	return
 }
