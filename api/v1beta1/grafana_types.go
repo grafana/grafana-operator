@@ -119,6 +119,34 @@ func (in *GrafanaSpec) initPodTemplateSpec() {
 	}
 }
 
+func (in *GrafanaSpec) GetAllContainers() []corev1.Container {
+	if in.Deployment == nil ||
+		in.Deployment.Spec.Template == nil ||
+		in.Deployment.Spec.Template.Spec == nil {
+		return []corev1.Container{}
+	}
+
+	podSpec := in.Deployment.Spec.Template.Spec
+	containers := make([]corev1.Container, 0, len(podSpec.Containers)+len(podSpec.InitContainers))
+
+	containers = append(containers, podSpec.Containers...)
+	containers = append(containers, podSpec.InitContainers...)
+
+	return containers
+}
+
+func (in *GrafanaSpec) GetVolumes() []corev1.Volume {
+	if in.Deployment == nil ||
+		in.Deployment.Spec.Template == nil ||
+		in.Deployment.Spec.Template.Spec == nil {
+		return []corev1.Volume{}
+	}
+
+	podSpec := in.Deployment.Spec.Template.Spec
+
+	return podSpec.Volumes
+}
+
 func (in *GrafanaSpec) SetContainers(containers []corev1.Container) {
 	in.initPodTemplateSpec()
 
