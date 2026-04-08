@@ -20,7 +20,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sort"
+	"maps"
+	"slices"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -420,6 +421,7 @@ func (in *Grafana) ReferencedSecretsAndConfigMaps() (secretNames, configMapNames
 	configMapSet := make(map[string]struct{})
 
 	sec, cm := in.deploymentRefs()
+
 	for _, s := range sec {
 		if s != "" {
 			secretSet[s] = struct{}{}
@@ -432,20 +434,10 @@ func (in *Grafana) ReferencedSecretsAndConfigMaps() (secretNames, configMapNames
 		}
 	}
 
-	secretNames = make([]string, 0, len(secretSet))
-	for n := range secretSet {
-		secretNames = append(secretNames, n)
-	}
+	secretNames = slices.Sorted(maps.Keys(secretSet))
+	configMapNames = slices.Sorted(maps.Keys(configMapSet))
 
-	configMapNames = make([]string, 0, len(configMapSet))
-	for n := range configMapSet {
-		configMapNames = append(configMapNames, n)
-	}
-
-	sort.Strings(secretNames)
-	sort.Strings(configMapNames)
-
-	return secretNames, configMapNames
+	return
 }
 
 func (in *Grafana) deploymentRefs() (secrets, configMaps []string) {
