@@ -20,7 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sort"
+	"slices"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -103,6 +103,34 @@ type GrafanaSpec struct {
 	// DisableDefaultSecurityContext prevents the operator from populating securityContext on deployments
 	// +kubebuilder:validation:Enum=Pod;Container;All
 	DisableDefaultSecurityContext string `json:"disableDefaultSecurityContext,omitempty"`
+}
+
+func (in *GrafanaSpec) GetAllContainers() []corev1.Container {
+	if in.Deployment == nil ||
+		in.Deployment.Spec.Template == nil ||
+		in.Deployment.Spec.Template.Spec == nil {
+		return []corev1.Container{}
+	}
+
+	podSpec := in.Deployment.Spec.Template.Spec
+	containers := make([]corev1.Container, 0, len(podSpec.Containers)+len(podSpec.InitContainers))
+
+	containers = append(containers, podSpec.Containers...)
+	containers = append(containers, podSpec.InitContainers...)
+
+	return containers
+}
+
+func (in *GrafanaSpec) GetVolumes() []corev1.Volume {
+	if in.Deployment == nil ||
+		in.Deployment.Spec.Template == nil ||
+		in.Deployment.Spec.Template.Spec == nil {
+		return []corev1.Volume{}
+	}
+
+	podSpec := in.Deployment.Spec.Template.Spec
+
+	return podSpec.Volumes
 }
 
 func (in *GrafanaSpec) initPodTemplateSpec() {
@@ -387,98 +415,70 @@ func (in *Grafana) Conditions() *[]metav1.Condition {
 //
 // The deployment reconciler uses this to compute a hash of those resources' ResourceVersions
 // and sets the checksum/secrets pod template annotation.
-func (in *Grafana) ReferencedSecretsAndConfigMaps() (secretNames, configMapNames []string) {
-	secretSet := make(map[string]struct{})
-	configMapSet := make(map[string]struct{})
+func (in *Grafana) ReferencedSecretsAndConfigMaps() (secrets, configMaps []string) {
+	secrets, configMaps = in.deploymentRefs()
 
-	sec, cm := in.deploymentRefs()
-	for _, s := range sec {
-		if s != "" {
-			secretSet[s] = struct{}{}
-		}
-	}
+	slices.Sort(secrets)
+	secrets = slices.Compact(secrets)
 
-	for _, c := range cm {
-		if c != "" {
-			configMapSet[c] = struct{}{}
-		}
-	}
+	slices.Sort(configMaps)
+	configMaps = slices.Compact(configMaps)
 
-	secretNames = make([]string, 0, len(secretSet))
-	for n := range secretSet {
-		secretNames = append(secretNames, n)
-	}
-
-	configMapNames = make([]string, 0, len(configMapSet))
-	for n := range configMapSet {
-		configMapNames = append(configMapNames, n)
-	}
-
-	sort.Strings(secretNames)
-	sort.Strings(configMapNames)
-
-	return secretNames, configMapNames
+	return
 }
 
 func (in *Grafana) deploymentRefs() (secrets, configMaps []string) {
-	if in.Spec.Deployment == nil ||
-		in.Spec.Deployment.Spec.Template == nil ||
-		in.Spec.Deployment.Spec.Template.Spec == nil {
-		return nil, nil
-	}
+	secrets = []string{}
+	configMaps = []string{}
 
-	podSpec := in.Spec.Deployment.Spec.Template.Spec
+	containers := in.Spec.GetAllContainers()
+	volumes := in.Spec.GetVolumes()
 
-	allContainers := make([]corev1.Container, 0, len(podSpec.Containers)+len(podSpec.InitContainers))
-	allContainers = append(allContainers, podSpec.Containers...)
-	allContainers = append(allContainers, podSpec.InitContainers...)
-
-	for _, c := range allContainers {
+	for _, c := range containers {
 		sec, cm := containerEnvRefs(c)
+
 		secrets = append(secrets, sec...)
 		configMaps = append(configMaps, cm...)
 	}
 
-	for _, vol := range podSpec.Volumes {
-		if vol.Secret != nil {
-			secrets = append(secrets, vol.Secret.SecretName)
+	for _, v := range volumes {
+		if v.Secret != nil && v.Secret.SecretName != "" {
+			secrets = append(secrets, v.Secret.SecretName)
 		}
 
-		if vol.ConfigMap != nil {
-			configMaps = append(configMaps, vol.ConfigMap.Name)
+		if v.ConfigMap != nil && v.ConfigMap.Name != "" {
+			configMaps = append(configMaps, v.ConfigMap.Name)
 		}
 	}
 
-	return secrets, configMaps
+	return
 }
 
 func containerEnvRefs(c corev1.Container) (secrets, configMaps []string) {
 	secrets = []string{}
 	configMaps = []string{}
 
-	for _, env := range c.Env {
-		if env.ValueFrom == nil {
-			continue
-		}
+	for _, e := range c.Env {
+		if vf := e.ValueFrom; vf != nil {
+			if vf.SecretKeyRef != nil && vf.SecretKeyRef.Name != "" {
+				secrets = append(secrets, vf.SecretKeyRef.Name)
+			}
 
-		if env.ValueFrom.SecretKeyRef != nil {
-			secrets = append(secrets, env.ValueFrom.SecretKeyRef.Name)
-		}
-
-		if env.ValueFrom.ConfigMapKeyRef != nil {
-			configMaps = append(configMaps, env.ValueFrom.ConfigMapKeyRef.Name)
+			if vf.ConfigMapKeyRef != nil && vf.ConfigMapKeyRef.Name != "" {
+				configMaps = append(configMaps, vf.ConfigMapKeyRef.Name)
+			}
 		}
 	}
 
-	for _, envFrom := range c.EnvFrom {
-		if envFrom.SecretRef != nil {
-			secrets = append(secrets, envFrom.SecretRef.Name)
+	for _, e := range c.EnvFrom {
+		if e.SecretRef != nil && e.SecretRef.Name != "" {
+			secrets = append(secrets, e.SecretRef.Name)
 		}
 
-		if envFrom.ConfigMapRef != nil {
-			configMaps = append(configMaps, envFrom.ConfigMapRef.Name)
+		if e.ConfigMapRef != nil && e.ConfigMapRef.Name != "" {
+			configMaps = append(configMaps, e.ConfigMapRef.Name)
 		}
 	}
 
-	return secrets, configMaps
+	return
 }

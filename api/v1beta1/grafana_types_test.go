@@ -14,6 +14,81 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+func TestGetAllContainers(t *testing.T) {
+	t.Run("empty list of containers", func(t *testing.T) {
+		spec := GrafanaSpec{}
+
+		want := []corev1.Container{}
+		got := spec.GetAllContainers()
+
+		assert.Equal(t, want, got)
+	})
+
+	t.Run("containers", func(t *testing.T) {
+		spec := GrafanaSpec{
+			Deployment: &DeploymentV1{
+				Spec: DeploymentV1Spec{
+					Template: &DeploymentV1PodTemplateSpec{
+						Spec: &DeploymentV1PodSpec{
+							Containers: []corev1.Container{{
+								Name: "regular-container",
+							}},
+							InitContainers: []corev1.Container{{
+								Name: "init-container",
+							}},
+						},
+					},
+				},
+			},
+		}
+
+		want := []corev1.Container{
+			{
+				Name: "regular-container",
+			},
+			{
+				Name: "init-container",
+			},
+		}
+		got := spec.GetAllContainers()
+
+		assert.Equal(t, want, got)
+	})
+}
+
+func TestGrafanaGetVolumes(t *testing.T) {
+	t.Run("empty list of volumes", func(t *testing.T) {
+		spec := GrafanaSpec{}
+
+		want := []corev1.Volume{}
+		got := spec.GetVolumes()
+
+		assert.Equal(t, want, got)
+	})
+	t.Run("volumes", func(t *testing.T) {
+		spec := GrafanaSpec{
+			Deployment: &DeploymentV1{
+				Spec: DeploymentV1Spec{
+					Template: &DeploymentV1PodTemplateSpec{
+						Spec: &DeploymentV1PodSpec{
+							Volumes: []corev1.Volume{{
+								Name: "test-volume",
+							}},
+						},
+					},
+				},
+			},
+		}
+
+		want := []corev1.Volume{{
+			Name: "test-volume",
+		}}
+		got := spec.GetVolumes()
+
+		assert.Equal(t, want, got)
+	})
+}
+
 func TestGrafanaSpecInitPodTemplateSpec(t *testing.T) {
 	spec := GrafanaSpec{}
 
@@ -741,11 +816,27 @@ func TestContainerEnvRefs(t *testing.T) {
 			wantSecretRefs:    []string{"secret"},
 		},
 		{
+			name: "env secretKeyRef without name is skipped",
+			env: []corev1.EnvVar{{
+				ValueFrom: tk8s.GetEnvVarSecretSource(t, "", "secret-key"),
+			}},
+			wantConfigMapRefs: []string{},
+			wantSecretRefs:    []string{},
+		},
+		{
 			name: "env configMapKeyRef",
 			env: []corev1.EnvVar{{
 				ValueFrom: tk8s.GetEnvVarConfigMapSource(t, "cm", "cm-key"),
 			}},
 			wantConfigMapRefs: []string{"cm"},
+			wantSecretRefs:    []string{},
+		},
+		{
+			name: "env configMapKeyRef without name is skipped",
+			env: []corev1.EnvVar{{
+				ValueFrom: tk8s.GetEnvVarConfigMapSource(t, "", "cm-key"),
+			}},
+			wantConfigMapRefs: []string{},
 			wantSecretRefs:    []string{},
 		},
 		{
@@ -757,17 +848,44 @@ func TestContainerEnvRefs(t *testing.T) {
 			wantSecretRefs:    []string{},
 		},
 		{
-			name: "envFrom secretRef and configMapRef",
+			name: "envFrom secretRef",
 			envFrom: []corev1.EnvFromSource{
-				{
-					ConfigMapRef: tk8s.GetEnvFromConfigMapSource(t, "cm"),
-				},
 				{
 					SecretRef: tk8s.GetEnvFromSecretSource(t, "secret"),
 				},
 			},
-			wantConfigMapRefs: []string{"cm"},
+			wantConfigMapRefs: []string{},
 			wantSecretRefs:    []string{"secret"},
+		},
+		{
+			name: "envFrom secretRef without name is skipped",
+			envFrom: []corev1.EnvFromSource{
+				{
+					SecretRef: tk8s.GetEnvFromSecretSource(t, ""),
+				},
+			},
+			wantConfigMapRefs: []string{},
+			wantSecretRefs:    []string{},
+		},
+		{
+			name: "envFrom configMapRef",
+			envFrom: []corev1.EnvFromSource{
+				{
+					ConfigMapRef: tk8s.GetEnvFromConfigMapSource(t, "cm"),
+				},
+			},
+			wantConfigMapRefs: []string{"cm"},
+			wantSecretRefs:    []string{},
+		},
+		{
+			name: "envFrom configMapRef without name is skipped",
+			envFrom: []corev1.EnvFromSource{
+				{
+					ConfigMapRef: tk8s.GetEnvFromConfigMapSource(t, ""),
+				},
+			},
+			wantConfigMapRefs: []string{},
+			wantSecretRefs:    []string{},
 		},
 	}
 
@@ -829,6 +947,25 @@ func TestGrafana_ReferencedSecretsAndConfigMaps(t *testing.T) {
 
 		assert.Equal(t, []string{"tls-secret"}, secrets)
 		assert.Equal(t, []string{"config-vol"}, configMaps)
+	})
+
+	t.Run("volume secret and configmap references without names are ignored", func(t *testing.T) {
+		volumes := []corev1.Volume{
+			{
+				VolumeSource: tk8s.GetVolumeSecretSource(t, ""),
+			},
+			{
+				VolumeSource: tk8s.GetVolumeConfigMapSource(t, ""),
+			},
+		}
+
+		cr := &Grafana{}
+		cr.Spec.SetVolumes(volumes)
+
+		secrets, configMaps := cr.ReferencedSecretsAndConfigMaps()
+
+		assert.Equal(t, []string{}, secrets)
+		assert.Equal(t, []string{}, configMaps)
 	})
 
 	t.Run("deduplicates repeated secret references", func(t *testing.T) {
