@@ -30,7 +30,7 @@ OPM_VERSION = v1.23.2
 # renovate: datasource=github-tags depName=mikefarah/yq
 YQ_VERSION = v4.52.5
 # renovate: datasource=github-tags depName=google/go-containerregistry
-CRANE_VERSION = v0.21.4
+CRANE_VERSION = v0.21.5
 
 ifdef GITHUB_TOKEN
 	CURL_GH_AUTH=-H 'Authorization: Bearer $(GITHUB_TOKEN)'
