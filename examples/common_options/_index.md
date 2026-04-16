@@ -157,6 +157,54 @@ status:
 
 When `.spec.suspend` is `true` The Operator will ignore any changes where they are normally synchronized immediately.
 
+## Leader election tuning
+
+When leader election is enabled (`--leader-elect` / `ENABLE_LEADER_ELECTION=true`), the operator uses controller-runtime's default timing of 15s lease / 10s renew / 2s retry. These defaults assume low-latency API server access and may be unsuitable for environments with elevated API server or etcd latency.
+
+The following options allow tuning the leader election timing parameters via CLI flags or environment variables:
+
+| CLI Flag | Environment Variable | Default | Description |
+|----------|---------------------|---------|-------------|
+| `--leader-election-lease-duration` | `LEADER_ELECTION_LEASE_DURATION` | 15s (controller-runtime) | Duration that non-leader candidates wait before force-acquiring leadership |
+| `--leader-election-renew-deadline` | `LEADER_ELECTION_RENEW_DEADLINE` | 10s (controller-runtime) | Duration that the leader retries refreshing before giving up |
+| `--leader-election-retry-period` | `LEADER_ELECTION_RETRY_PERIOD` | 2s (controller-runtime) | Duration between each leadership acquisition/renewal attempt |
+
+Setting any value to `0s` (or omitting it) leaves the controller-runtime default in place.
+
+**Constraints:**
+- `lease-duration` must be greater than `renew-deadline`
+- `renew-deadline` must be greater than `retry-period`
+
+### Example: Environment variables (OLM / Subscription)
+
+For OLM-managed deployments, timing can be configured via `Subscription.spec.config.env` without modifying the Deployment or CSV directly:
+
+```yaml
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: grafana-operator
+spec:
+  config:
+    env:
+      - name: LEADER_ELECTION_LEASE_DURATION
+        value: "60s"
+      - name: LEADER_ELECTION_RENEW_DEADLINE
+        value: "40s"
+      - name: LEADER_ELECTION_RETRY_PERIOD
+        value: "10s"
+```
+
+### Example: CLI flags
+
+```bash
+grafana-operator \
+  --leader-elect \
+  --leader-election-lease-duration=60s \
+  --leader-election-renew-deadline=40s \
+  --leader-election-retry-period=10s
+```
+
 ## Using a proxy server
 
 The Operator can use a proxy server when fetching URL-based / Grafana.com dashboards or making requests to external Grafana instances.

@@ -86,12 +86,15 @@ var operatorConfig struct {
 	WatchLabelSelectors    string `env:"WATCH_LABEL_SELECTORS"                                       help:"The resources to watch according to their labels. e.g. 'partition in (customerA, customerB),environment!=qa'. If empty of undefined, the operator will watch all CRs."`
 	CachingLevel           string `env:"ENFORCE_CACHE_LABELS"     default:"safe" enum:"all,safe,off" help:"Configure cache limits. Valid values are 'off', 'safe' and 'all'"`
 
-	MetricsAddr             string        `name:"metrics-bind-address"      default:":8080"                                 help:"The address the metric endpoint binds to."`
-	ProbeAddr               string        `name:"health-probe-bind-address" default:":8081"                                 help:"The address the probe endpoint binds to."`
-	PprofAddr               string        `name:"pprof-addr"                                                                help:"The address to expose the pprof server. Empty string disables the pprof server."`
-	EnableLeaderElection    bool          `name:"leader-elect"              default:"false" env:"ENABLE_LEADER_ELECTION"    help:"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager."`
-	MaxConcurrentReconciles int           `name:"max-concurrent-reconciles" default:"1"     env:"MAX_CONCURRENT_RECONCILES" help:"Maximum number of concurrent reconciles for dashboard, datasource, folder controllers."`
-	ResyncPeriod            time.Duration `name:"default-resync-period"     default:"10m"   env:"DEFAULT_RESYNC_PERIOD"     help:"Controls the default .spec.resyncPeriod when undefined on CRs."`
+	MetricsAddr                 string        `name:"metrics-bind-address"      default:":8080"                                 help:"The address the metric endpoint binds to."`
+	ProbeAddr                   string        `name:"health-probe-bind-address" default:":8081"                                 help:"The address the probe endpoint binds to."`
+	PprofAddr                   string        `name:"pprof-addr"                                                                help:"The address to expose the pprof server. Empty string disables the pprof server."`
+	EnableLeaderElection        bool          `name:"leader-elect"                      default:"false" env:"ENABLE_LEADER_ELECTION"              help:"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager."`
+	LeaderElectionLeaseDuration time.Duration `name:"leader-election-lease-duration"     default:"0s"    env:"LEADER_ELECTION_LEASE_DURATION"      help:"Duration that non-leader candidates will wait to force acquire leadership. Defaults to 15s from controller-runtime when unset (0s)."`
+	LeaderElectionRenewDeadline time.Duration `name:"leader-election-renew-deadline"     default:"0s"    env:"LEADER_ELECTION_RENEW_DEADLINE"      help:"Duration that the acting leader will retry refreshing leadership before giving up. Defaults to 10s from controller-runtime when unset (0s)."`
+	LeaderElectionRetryPeriod   time.Duration `name:"leader-election-retry-period"       default:"0s"    env:"LEADER_ELECTION_RETRY_PERIOD"        help:"Duration between each leadership acquisition/renewal attempt. Defaults to 2s from controller-runtime when unset (0s)."`
+	MaxConcurrentReconciles     int           `name:"max-concurrent-reconciles"          default:"1"     env:"MAX_CONCURRENT_RECONCILES"           help:"Maximum number of concurrent reconciles for dashboard, datasource, folder controllers."`
+	ResyncPeriod                time.Duration `name:"default-resync-period"              default:"10m"   env:"DEFAULT_RESYNC_PERIOD"               help:"Controls the default .spec.resyncPeriod when undefined on CRs."`
 
 	ZapDevel           bool   `name:"zap-devel"            default:"false"                                                         help:"Development Mode defaults(encoder=consoleEncoder,logLevel=Debug,stackTraceLevel=Warn)"`
 	ZapEncoder         string `name:"zap-encoder"          default:"console" enum:"console,json"                                   help:"Zap log encoding ('json' or 'console')"`
@@ -234,6 +237,11 @@ func main() { //nolint:gocyclo
 		Controller: config.Controller{
 			MaxConcurrentReconciles: operatorConfig.MaxConcurrentReconciles,
 		},
+	}
+
+	if err := applyLeaderElectionTiming(&mgrOptions); err != nil {
+		setupLog.Error(err, "invalid leader election timing configuration")
+		os.Exit(1)
 	}
 
 	// A non-empty watchLabelSelector will attempt to enable sharding of the operator.
@@ -514,6 +522,45 @@ func getNamespaceConfigSelector(ctx context.Context, restConfig *rest.Config, se
 	}
 
 	return defaultNamespaces
+}
+
+func applyLeaderElectionTiming(opts *ctrl.Options) error {
+	lease := operatorConfig.LeaderElectionLeaseDuration
+	renew := operatorConfig.LeaderElectionRenewDeadline
+	retry := operatorConfig.LeaderElectionRetryPeriod
+
+	if lease == 0 && renew == 0 && retry == 0 {
+		return nil
+	}
+
+	if lease < 0 || renew < 0 || retry < 0 {
+		return fmt.Errorf("leader election durations must be positive: lease=%v, renew=%v, retry=%v", lease, renew, retry)
+	}
+
+	if lease > 0 && renew > 0 && lease <= renew {
+		return fmt.Errorf("lease duration (%v) must be greater than renew deadline (%v)", lease, renew)
+	}
+
+	if renew > 0 && retry > 0 && renew <= retry {
+		return fmt.Errorf("renew deadline (%v) must be greater than retry period (%v)", renew, retry)
+	}
+
+	if lease > 0 {
+		opts.LeaseDuration = &lease
+		setupLog.Info("overriding leader election lease duration", "leaseDuration", lease)
+	}
+
+	if renew > 0 {
+		opts.RenewDeadline = &renew
+		setupLog.Info("overriding leader election renew deadline", "renewDeadline", renew)
+	}
+
+	if retry > 0 {
+		opts.RetryPeriod = &retry
+		setupLog.Info("overriding leader election retry period", "retryPeriod", retry)
+	}
+
+	return nil
 }
 
 func getLabelSelectors(watchLabelSelectors string) (labels.Selector, error) {
