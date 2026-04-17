@@ -76,7 +76,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 							PartialRoute: v1beta1.PartialRoute{
 								Receiver: "team-A-receiver",
 							},
-							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: new("team"), Value: "A", IsEqual: true}},
+							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: "team", Value: "A", Type: 0}},
 						},
 					},
 				},
@@ -90,7 +90,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 								PartialRoute: v1beta1.PartialRoute{
 									Receiver: "team-A-receiver",
 								},
-								Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: new("team"), Value: "A", IsEqual: true}},
+								Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: "team", Value: "A", Type: 0}},
 							}},
 						},
 					},
@@ -127,7 +127,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 					},
 					Spec: v1beta1.GrafanaNotificationPolicyRouteSpec{
 						Route: v1beta1.Route{
-							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: new("team"), Value: "A", IsEqual: true}},
+							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: "team", Value: "A", Type: 0}},
 							PartialRoute: v1beta1.PartialRoute{
 								Receiver: "team-A-receiver",
 							},
@@ -142,7 +142,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 					},
 					Spec: v1beta1.GrafanaNotificationPolicyRouteSpec{
 						Route: v1beta1.Route{
-							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: new("team"), Value: "A", IsEqual: true}},
+							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: "team", Value: "A", Type: 0}},
 							PartialRoute: v1beta1.PartialRoute{
 								Receiver: "team-A-receiver-other-namespace",
 							},
@@ -160,7 +160,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 							Receiver: defaultReceiver,
 							Routes: []*v1beta1.Route{
 								{
-									Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: new("team"), Value: "A", IsEqual: true}},
+									Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: "team", Value: "A", Type: 0}},
 									PartialRoute: v1beta1.PartialRoute{
 										Receiver: "team-A-receiver",
 									},
@@ -195,7 +195,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 					},
 					Spec: v1beta1.GrafanaNotificationPolicyRouteSpec{
 						Route: v1beta1.Route{
-							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: new("team"), Value: "A", IsEqual: true}},
+							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: "team", Value: "A", Type: 0}},
 							PartialRoute: v1beta1.PartialRoute{
 								Receiver: "team-A-receiver",
 								RouteSelector: &metav1.LabelSelector{
@@ -216,7 +216,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 							PartialRoute: v1beta1.PartialRoute{
 								Receiver: "team-B-receiver",
 							},
-							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: new("team"), Value: "B", IsEqual: true}},
+							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: "team", Value: "B", Type: 0}},
 						},
 					},
 				},
@@ -228,12 +228,12 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 							Receiver: defaultReceiver,
 							Routes: []*v1beta1.Route{
 								{
-									Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: new("team"), Value: "A", IsEqual: true}},
+									Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: "team", Value: "A", Type: 0}},
 									PartialRoute: v1beta1.PartialRoute{
 										Receiver: "team-A-receiver",
 										Routes: []*v1beta1.Route{
 											{
-												Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: new("team"), Value: "B", IsEqual: true}},
+												Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: "team", Value: "B", Type: 0}},
 												PartialRoute: v1beta1.PartialRoute{
 													Receiver: "team-B-receiver",
 												},
@@ -257,7 +257,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 							Receiver: defaultReceiver,
 							Routes: []*v1beta1.Route{
 								{
-									Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: new("team"), Value: "A", IsEqual: true}},
+									Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: "team", Value: "A", Type: 0}},
 									PartialRoute: v1beta1.PartialRoute{
 										Receiver: "team-A-receiver",
 										RouteSelector: &metav1.LabelSelector{
@@ -266,7 +266,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 									},
 								},
 								{
-									Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: new("team"), Value: "B", IsEqual: true}},
+									Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: "team", Value: "B", Type: 0}},
 									PartialRoute: v1beta1.PartialRoute{
 										Receiver: "team-B-receiver",
 										RouteSelector: &metav1.LabelSelector{
@@ -288,7 +288,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 					},
 					Spec: v1beta1.GrafanaNotificationPolicyRouteSpec{
 						Route: v1beta1.Route{
-							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: new("project"), Value: "X", IsEqual: true}},
+							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: "project", Value: "X", Type: 0}},
 							PartialRoute: v1beta1.PartialRoute{
 								Receiver: "project-X-receiver",
 							},
@@ -303,7 +303,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 					},
 					Spec: v1beta1.GrafanaNotificationPolicyRouteSpec{
 						Route: v1beta1.Route{
-							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: new("project"), Value: "Y", IsEqual: true}},
+							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: "project", Value: "Y", Type: 0}},
 							PartialRoute: v1beta1.PartialRoute{
 								Receiver: "project-Y-receiver",
 							},
@@ -318,12 +318,12 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 							Receiver: defaultReceiver,
 							Routes: []*v1beta1.Route{
 								{
-									Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: new("team"), Value: "A", IsEqual: true}},
+									Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: "team", Value: "A", Type: 0}},
 									PartialRoute: v1beta1.PartialRoute{
 										Receiver: "team-A-receiver",
 										Routes: []*v1beta1.Route{
 											{
-												Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: new("project"), Value: "X", IsEqual: true}},
+												Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: "project", Value: "X", Type: 0}},
 												PartialRoute: v1beta1.PartialRoute{
 													Receiver: "project-X-receiver",
 												},
@@ -332,12 +332,12 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 									},
 								},
 								{
-									Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: new("team"), Value: "B", IsEqual: true}},
+									Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: "team", Value: "B", Type: 0}},
 									PartialRoute: v1beta1.PartialRoute{
 										Receiver: "team-B-receiver",
 										Routes: []*v1beta1.Route{
 											{
-												Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: new("project"), Value: "Y", IsEqual: true}},
+												Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: "project", Value: "Y", Type: 0}},
 												PartialRoute: v1beta1.PartialRoute{
 													Receiver: "project-Y-receiver",
 												},
@@ -375,7 +375,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 					},
 					Spec: v1beta1.GrafanaNotificationPolicyRouteSpec{
 						Route: v1beta1.Route{
-							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: new("team"), Value: "A", IsEqual: true}},
+							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: "team", Value: "A", Type: 0}},
 							PartialRoute: v1beta1.PartialRoute{
 								Receiver: "team-A-receiver",
 								RouteSelector: &metav1.LabelSelector{
@@ -393,7 +393,7 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 					},
 					Spec: v1beta1.GrafanaNotificationPolicyRouteSpec{
 						Route: v1beta1.Route{
-							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: new("team"), Value: "B", IsEqual: true}},
+							Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: "team", Value: "B", Type: 0}},
 							PartialRoute: v1beta1.PartialRoute{
 								Receiver: "team-B-receiver",
 								RouteSelector: &metav1.LabelSelector{
@@ -569,7 +569,7 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke LoopDetected Condition"
 								MatchLabels: map[string]string{"team-a": "child"},
 							},
 						},
-						Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: new("team"), Value: "a", IsEqual: true}},
+						Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: "team", Value: "a", Type: 0}},
 					}},
 				},
 			},
@@ -583,7 +583,7 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke LoopDetected Condition"
 		},
 		Spec: v1beta1.GrafanaNotificationPolicyRouteSpec{
 			Route: v1beta1.Route{
-				Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: new("team"), Value: "b", IsEqual: true}},
+				Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: "team", Value: "b", Type: 0}},
 				PartialRoute: v1beta1.PartialRoute{
 					Receiver: defaultReceiver,
 					RouteSelector: &metav1.LabelSelector{
@@ -601,7 +601,7 @@ var _ = Describe("NotificationPolicy Reconciler: Provoke LoopDetected Condition"
 		},
 		Spec: v1beta1.GrafanaNotificationPolicyRouteSpec{
 			Route: v1beta1.Route{
-				Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: new("team"), Value: "b", IsEqual: true}}, // Also matches team b
+				Matchers: v1beta1.Matchers{&v1beta1.Matcher{Name: "team", Value: "b", Type: 0}}, // Also matches team b
 				PartialRoute: v1beta1.PartialRoute{
 					Receiver: defaultReceiver,
 					RouteSelector: &metav1.LabelSelector{
