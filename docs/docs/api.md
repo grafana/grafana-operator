@@ -6181,7 +6181,7 @@ mutually exclusive with Routes<br/>
         <td><b>isRegex</b></td>
         <td>boolean</td>
         <td>
-          is regex<br/>
+          Deprecated: Does nothing and is not exported by Grafana<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -6195,7 +6195,7 @@ mutually exclusive with Routes<br/>
         <td><b>isEqual</b></td>
         <td>boolean</td>
         <td>
-          is equal<br/>
+          Deprecated: Does nothing and is not exported by Grafana<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -6203,6 +6203,15 @@ mutually exclusive with Routes<br/>
         <td>string</td>
         <td>
           name<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>integer</td>
+        <td>
+          type<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6604,7 +6613,7 @@ mutually exclusive with Routes<br/>
         <td><b>isRegex</b></td>
         <td>boolean</td>
         <td>
-          is regex<br/>
+          Deprecated: Does nothing and is not exported by Grafana<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -6618,7 +6627,7 @@ mutually exclusive with Routes<br/>
         <td><b>isEqual</b></td>
         <td>boolean</td>
         <td>
-          is equal<br/>
+          Deprecated: Does nothing and is not exported by Grafana<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -6626,6 +6635,15 @@ mutually exclusive with Routes<br/>
         <td>string</td>
         <td>
           name<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>integer</td>
+        <td>
+          type<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
         </td>
         <td>false</td>
       </tr></tbody>
