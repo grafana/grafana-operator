@@ -22,7 +22,20 @@ does, and justify that change in the commit messages. Using coding assistants or
 "AI" or other tools does not grant additional privileges or reduce our
 expectations.
 
-This policy is based on the contribution guidelines for the [mesa project](https://gitlab.freedesktop.org/mesa/mesa), adapted to fit our situation.
+**⚠️ First time contributors take note!**
+
+If you are a first-time contributor, please note the following:
+
+Your first 3 contributions to our repository must be primarily human-written, with only minor AI assistance allowed.
+This means your code should be written by hand, but AI may assist with code completion, formatting, linting, and following best practices.
+Your PR description must be entirely human-written, with no AI involvement.
+
+Of course, you can use AI tools to ask questions and learn about our repository, our project, how to contribute, and more.
+
+We put this requirement in place to help you learn while contributing and to help maintainers and approvers to protect their time and bandwidth, which is a scarce resource.
+Maintainers may make an exception, if it is clear that your contribution is “drive-by” and can be merged without a lot of additional effort from their side.
+
+This policy is based on the contribution guidelines for the [mesa project](https://gitlab.freedesktop.org/mesa/mesa) and the [OpenTelemetry contribution guidelines](https://opentelemetry.io/docs/contributing/pull-requests/), adapted to fit our situation.
 
 ### Code standards
 
