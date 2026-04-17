@@ -151,8 +151,8 @@ github.com/google/pprof v0.0.0-20260115054156-294ebfa9ad83 h1:z2ogiKUYzX5Is6zr/v
 github.com/google/pprof v0.0.0-20260115054156-294ebfa9ad83/go.mod h1:MxpfABSjhmINe3F1It9d+8exIHFvUqtLIRCdOGNXqiI=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/grafana/grafana-openapi-client-go v0.0.0-20260330113218-ee77c4f6f90e h1:P/SerquhsX/4a3kreHR5mrJmohlWRqaxei/ZUSA6zkA=
-github.com/grafana/grafana-openapi-client-go v0.0.0-20260330113218-ee77c4f6f90e/go.mod h1:sMcpxegie6TcvI6eVm+MbNneNC249GGWRcEO1M+UfSE=
+github.com/grafana/grafana-openapi-client-go v0.0.0-20260414120814-5b95bb183fae h1:ExiJ4Ha24+MRuKxymlGp5bAJwbUSHe+QXcf6E8pwlo0=
+github.com/grafana/grafana-openapi-client-go v0.0.0-20260414120814-5b95bb183fae/go.mod h1:4WkWL9W7QMnRgRA1XrrSbZRg/UIoTx4x5ynx5RjJldU=
 github.com/hexops/gotextdiff v1.0.3 h1:gitA9+qJrrTCsiCl7+kh75nPqQt1cx4ZkudSTLoUqJM=
 github.com/hexops/gotextdiff v1.0.3/go.mod h1:pSWU5MAI3yDq+fZBTazCSJysOMbxWL1BSow5/V2vxeg=
 github.com/itchyny/gojq v0.12.19 h1:ttXA0XCLEMoaLOz5lSeFOZ6u6Q3QxmG46vfgI4O0DEs=
