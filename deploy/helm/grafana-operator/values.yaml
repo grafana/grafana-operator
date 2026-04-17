@@ -137,6 +137,8 @@ metricsService:
   type: ClusterIP
   # -- metrics service port
   metricsPort: 9090
+  # -- metrics serve https
+  secure: false
   # -- port for the pprof profiling endpoint
   pprofPort: 8888
   # -- annotations on the metrics service
@@ -222,6 +224,8 @@ serviceMonitor:
   metricRelabelings: []
   # -- Set relabel_configs as per https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config
   relabelings: []
+  # -- Set the tlsConfig for the scrape. Only valid if `.metricsService.secure=true`
+  tlsConfig: {}
 
 dashboard:
   # -- Whether to create a ConfigMap containing a dashboard monitoring the operator metrics.
