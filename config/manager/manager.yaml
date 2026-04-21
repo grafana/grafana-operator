@@ -32,7 +32,7 @@ spec:
         - args:
             - --health-probe-bind-address=:8081
             - --metrics-bind-address=0.0.0.0:9090
-            - --leader-elect
+            # - --leader-elect
             # - --max-concurrent-reconciles=1
           image: controller:latest
           name: manager

@@ -12,3 +12,5 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: ENABLE_LEADER_ELECTION
+              value: "true"
