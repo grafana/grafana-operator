@@ -66,6 +66,8 @@ spec:
               cpu: 100m
               memory: 20Mi
           env:
+            - name: ENABLE_LEADER_ELECTION
+              value: "true"
             - name: RELATED_IMAGE_GRAFANA
               value: "docker.io/grafana/grafana:13.0.1"
             - name: WATCH_NAMESPACE
