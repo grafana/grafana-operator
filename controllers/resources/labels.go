@@ -2,9 +2,12 @@ package resources
 
 import (
 	"maps"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+const ignoredLabelsPrefix = "applyset.kubernetes.io/"
 
 func GetCommonLabels() map[string]string {
 	return map[string]string{
@@ -20,7 +23,15 @@ func SetInheritedLabels(obj metav1.ObjectMetaAccessor, inheritedLabels map[strin
 		labels = make(map[string]string)
 	}
 
-	maps.Copy(labels, inheritedLabels)
+	for k, v := range inheritedLabels {
+		// https://github.com/grafana/grafana-operator/issues/2642
+		if strings.HasPrefix(k, ignoredLabelsPrefix) {
+			continue
+		}
+
+		labels[k] = v
+	}
+
 	maps.Copy(labels, GetCommonLabels())
 
 	meta.SetLabels(labels)
