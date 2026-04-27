@@ -21218,17 +21218,6 @@ External enables you to configure external grafana instances that is not managed
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>tenantNamespace</b></td>
-        <td>string</td>
-        <td>
-          TenantNamespace is used as the `namespace` value for GrafanaManifest resources in multi-tenant scenarios
-defaults to `default`<br/>
-          <br/>
-            <i>Validations</i>:<li>self == oldSelf: Value is immutable</li>
-            <i>Default</i>: default<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
         <td><b>url</b></td>
         <td>string</td>
         <td>
@@ -21254,6 +21243,17 @@ defaults to `default`<br/>
         <td>object</td>
         <td>
           The API key to talk to the external grafana instance, you need to define ether apiKey or adminUser/adminPassword.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>tenantNamespace</b></td>
+        <td>string</td>
+        <td>
+          TenantNamespace is used as the `namespace` value for GrafanaManifest resources in multi-tenant scenarios
+defaults to `default`<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: Value is immutable</li>
+            <i>Default</i>: default<br/>
         </td>
         <td>false</td>
       </tr><tr>
