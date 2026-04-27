@@ -182,7 +182,7 @@ type External struct {
 	// defaults to `default`
 	// +kubebuilder:default=default
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
-	TenantNamespace string `json:"tenantNamespace"`
+	TenantNamespace string `json:"tenantNamespace,omitempty"`
 }
 
 // TLSConfig specifies options to use when communicating with the Grafana endpoint

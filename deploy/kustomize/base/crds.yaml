@@ -7844,7 +7844,6 @@ spec:
                     pattern: ^https?://.+$
                     type: string
                 required:
-                - tenantNamespace
                 - url
                 type: object
               httpRoute:
