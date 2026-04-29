@@ -118,14 +118,14 @@ type Route struct {
 }
 
 type Matcher struct {
-	// is equal
+	// Deprecated: Does nothing and is not exported by Grafana
 	IsEqual bool `json:"isEqual,omitempty"`
 
-	// is regex
+	// Deprecated: Does nothing and is not exported by Grafana
 	IsRegex bool `json:"isRegex"`
 
 	// name
-	Name *string `json:"name,omitempty"`
+	Name string `json:"name,omitempty"`
 
 	// value
 	Value string `json:"value"`
@@ -136,10 +136,8 @@ func (m Matchers) ToModelMatchers() models.Matchers {
 	out := make(models.Matchers, len(m))
 	for i, v := range m {
 		out[i] = &models.Matcher{
-			IsEqual: v.IsEqual,
-			IsRegex: &v.IsRegex,
-			Name:    v.Name,
-			Value:   &v.Value,
+			Name:  v.Name,
+			Value: v.Value,
 		}
 	}
 
