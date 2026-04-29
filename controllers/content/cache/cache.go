@@ -1,9 +1,13 @@
 package cache
 
 import (
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func GetContentCache(cr v1beta1.GrafanaContentResource) []byte {
@@ -37,4 +41,34 @@ func getContentCache(in *v1beta1.GrafanaContentStatus, url string, cacheDuration
 	}
 
 	return cache
+}
+
+func SetContentCache(cr v1beta1.GrafanaContentResource, data map[string]any) error {
+	spec := cr.GrafanaContentSpec()
+	status := cr.GrafanaContentStatus()
+
+	return setContentCache(status, spec.URL, data, spec.ContentCacheDuration.Duration)
+}
+
+func setContentCache(in *v1beta1.GrafanaContentStatus, url string, data map[string]any, cacheDuration time.Duration) error {
+	notExpired := cacheDuration <= 0 || in.ContentTimestamp.Add(cacheDuration).After(time.Now())
+	if notExpired && in.ContentURL == url {
+		return nil
+	}
+
+	encoded, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("marshaling content: %w", err)
+	}
+
+	gz, err := Gzip(encoded)
+	if err != nil {
+		return fmt.Errorf("compressing content: %w", err)
+	}
+
+	in.ContentCache = gz
+	in.ContentTimestamp = metav1.Time{Time: time.Now()}
+	in.ContentURL = url
+
+	return nil
 }

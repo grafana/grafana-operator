@@ -104,22 +104,6 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	removeSuspended(&cr.Status.Conditions)
 
-	// Retrieving the model before the loop ensures to exit early in case of failure and not fail once per matching instance
-	resolver := content.NewResolver(cr, r.Client)
-
-	dashboardModel, hash, err := resolver.Resolve(ctx)
-	if err != nil {
-		// Resolve has a lot of failure cases.
-		// fetch content errors could be a temporary network issue but would result in an InvalidSpec condition
-		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidModelResolution, err.Error())
-		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
-		log.Error(err, LogMsgResolvingDashboardContents)
-
-		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgResolvingDashboardContents, err)
-	}
-
-	removeInvalidSpec(&cr.Status.Conditions)
-
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
 		cr.Status.NoMatchingInstances = true
@@ -142,6 +126,22 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	cr.Status.NoMatchingInstances = false
 	removeNoMatchingInstance(&cr.Status.Conditions)
 	log.V(1).Info(DbgMsgFoundMatchingInstances, "count", len(instances))
+
+	// Retrieving the model before the loop ensures to exit early in case of failure and not fail once per matching instance
+	resolver := content.NewResolver(cr, r.Client)
+
+	dashboardModel, hash, err := resolver.Resolve(ctx)
+	if err != nil {
+		// Resolve has a lot of failure cases.
+		// fetch content errors could be a temporary network issue but would result in an InvalidSpec condition
+		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidModelResolution, err.Error())
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
+		log.Error(err, LogMsgResolvingDashboardContents)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgResolvingDashboardContents, err)
+	}
+
+	removeInvalidSpec(&cr.Status.Conditions)
 
 	uid := fmt.Sprintf("%s", dashboardModel["uid"])
 	log = log.WithValues("uid", uid)
@@ -221,6 +221,10 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	cr.Status.Hash = hash
 	cr.Status.UID = uid
+
+	if err := resolver.UpdateCache(dashboardModel); err != nil {
+		log.Error(err, LogMsgUpdateCache)
+	}
 
 	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(cr.Spec.ResyncPeriod)}, nil
 }
