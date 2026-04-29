@@ -24,6 +24,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/google/uuid"
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	"github.com/grafana/grafana-openapi-client-go/client/dashboards"
 	"github.com/grafana/grafana-openapi-client-go/client/folders"
@@ -56,6 +57,7 @@ const (
 	LogMsgSyncingPublicSharing            = "failed to sync public dashboard share configuration to Grafana"
 	LogMsgDeletingPublicSharing           = "failed to delete public dashboard share from Grafana"
 	LogMsgRemovingPublicSharingAnnotation = "removing 'operator.grafana.com/public-sharing' annotation from GrafanaDashboard CR"
+	LogMsgParsingResourceUID              = "failed to parse .metadata.UID to use as the accessToken"
 
 	// If present, DELETE the publicSharing if Spec.PublishSharing == nil before removing
 	annotationSyncedPublicSharing = "operator.grafana.com/public-sharing"
@@ -464,13 +466,21 @@ func (r *GrafanaDashboardReconciler) reconcilePublicSharing(ctx context.Context,
 		}
 	}
 
-	dto := r.getPublicSharingDTO(cr)
+	rawUID, err := uuid.Parse(string(cr.UID))
+	if err != nil {
+		log.Error(err, LogMsgParsingResourceUID)
+		return fmt.Errorf("%s: %w", LogMsgParsingResourceUID, err)
+	}
+
+	shareUID := fmt.Sprintf("%x", rawUID[:])
+	dto := r.getPublicSharingDTO(cr, shareUID)
+	shareUID = dto.AccessToken // Overwrite if a custom accessToken was passed
 
 	// Only Create/Update when necessary
 	publicSharingMatchesStateInGrafana, recreate := r.publicSharingMatchesStateInGrafana(cr, dto, shareMeta)
 	if publicSharingMatchesStateInGrafana {
 		log.V(1).Info("skipping public dashboard share from Grafana")
-		return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicSharing, string(cr.UID))
+		return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicSharing, shareUID)
 	}
 
 	if !recreate {
@@ -487,10 +497,11 @@ func (r *GrafanaDashboardReconciler) reconcilePublicSharing(ctx context.Context,
 			return fmt.Errorf("%s: %w", LogMsgSyncingPublicSharing, err)
 		}
 
-		return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicSharing, string(cr.UID))
+		return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicSharing, shareUID)
 	}
 
-	if IsNotErrorType[*dashboards.GetPublicDashboardNotFound](err) {
+	// Maybe here???
+	if IsNotErrorType[*dashboards.GetPublicDashboardNotFound](err) && shareMeta != nil && shareMeta.Payload != nil {
 		log.V(1).Info("deleting public dashboard share from Grafana due to uid or accessToken mismatch")
 
 		_, err = gClient.Dashboards.DeletePublicDashboardWithParams(&dashboards.DeletePublicDashboardParams{ //nolint:errcheck
@@ -516,15 +527,15 @@ func (r *GrafanaDashboardReconciler) reconcilePublicSharing(ctx context.Context,
 		return fmt.Errorf("%s: %w", LogMsgSyncingPublicSharing, err)
 	}
 
-	return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicSharing, string(cr.UID))
+	return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicSharing, shareUID)
 }
 
-func (r *GrafanaDashboardReconciler) getPublicSharingDTO(cr *v1beta1.GrafanaDashboard) *models.PublicDashboardDTO {
+func (r *GrafanaDashboardReconciler) getPublicSharingDTO(cr *v1beta1.GrafanaDashboard, shareUID string) *models.PublicDashboardDTO {
 	pdash := cr.Spec.PublicSharing
 
 	token := pdash.AccessToken
 	if token == "" {
-		token = string(cr.UID)
+		token = shareUID
 	}
 
 	getDefault := func(b *bool, d bool) *bool {
