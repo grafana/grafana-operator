@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"reflect"
 	"slices"
 	"strings"
 
@@ -230,19 +229,12 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 				return fmt.Errorf("creating contact point receiver: %w", err)
 			}
 		} else {
-			// Equality check to skip requests
-			remote := remoteReceivers[existingIdx]
-			if cp.Name != remote.Name ||
-				*cp.Type != *remote.Type ||
-				cp.DisableResolveMessage != remote.DisableResolveMessage ||
-				!reflect.DeepEqual(cp.Settings, remote.Settings) {
-				log.Info("update existing contact point receiver", "uid", recUID)
+			log.Info("update existing contact point receiver", "uid", recUID)
 
-				// TODO Implement provenance when Grafana API allows changing it
-				_, err := gClient.Provisioning.PutContactpoint(provisioning.NewPutContactpointParams().WithUID(recUID).WithBody(cp)) //nolint:errcheck
-				if err != nil {
-					return fmt.Errorf("updating contact point receiver: %w", err)
-				}
+			// TODO Implement provenance when Grafana API allows updating post creation
+			_, err := gClient.Provisioning.PutContactpoint(provisioning.NewPutContactpointParams().WithUID(recUID).WithBody(cp)) //nolint:errcheck
+			if err != nil {
+				return fmt.Errorf("updating contact point receiver: %w", err)
 			}
 
 			// Track Receivers to delete at the end
