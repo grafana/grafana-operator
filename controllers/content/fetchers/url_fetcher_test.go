@@ -13,7 +13,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	"github.com/grafana/grafana-operator/v5/controllers/content/cache"
 	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 )
 
@@ -53,9 +52,6 @@ func getCredentials(t *testing.T, secretName string) (*corev1.Secret, *v1beta1.G
 
 func TestFetchFromURL(t *testing.T) {
 	want := []byte(`{"dummyField": "dummyData"}`)
-	wantCompressed, err := cache.Gzip(want)
-
-	require.NoError(t, err)
 
 	publicEndpoint := "/public"
 	privateEndpoint := "/private"
@@ -100,9 +96,6 @@ func TestFetchFromURL(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, want, got)
-		assert.Equal(t, wantCompressed, dashboard.Status.ContentCache)
-		assert.Equal(t, url, dashboard.Status.ContentURL)
-		assert.NotZero(t, dashboard.Status.ContentTimestamp.Time)
 	})
 
 	t.Run("using authentication", func(t *testing.T) {
@@ -124,15 +117,12 @@ func TestFetchFromURL(t *testing.T) {
 			Status: v1beta1.GrafanaDashboardStatus{},
 		}
 
-		err = cl.Create(context.Background(), credentialsSecret)
+		err := cl.Create(context.Background(), credentialsSecret)
 		require.NoError(t, err)
 
 		got, err := FetchFromURL(context.Background(), dashboard, cl, nil)
 		require.NoError(t, err)
 
 		assert.Equal(t, want, got)
-		assert.Equal(t, wantCompressed, dashboard.Status.ContentCache)
-		assert.Equal(t, url, dashboard.Status.ContentURL)
-		assert.NotZero(t, dashboard.Status.ContentTimestamp.Time)
 	})
 }

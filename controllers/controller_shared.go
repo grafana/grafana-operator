@@ -65,6 +65,7 @@ const (
 	LogMsgRunningFinalizer    = "failed to finalize CR"
 	LogMsgRemoveFinalizer     = "failed to remove finalizer"
 	LogMsgApplyErrors         = "failed to sync CR to all Grafana instances"
+	LogMsgUpdateCache         = "failed to update cache for remote resource"
 
 	DbgMsgFoundMatchingInstances = "found matching Grafana instances"
 

@@ -103,6 +103,28 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 
 	removeSuspended(&cr.Status.Conditions)
 
+	// begin instance selection and reconciliation
+
+	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
+	if err != nil {
+		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionLibraryPanelSynchronized)
+		log.Error(err, LogMsgGettingInstances)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgGettingInstances, err)
+	}
+
+	if len(instances) == 0 {
+		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionLibraryPanelSynchronized)
+		log.Error(ErrNoMatchingInstances, LogMsgNoMatchingInstances)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgNoMatchingInstances, ErrNoMatchingInstances)
+	}
+
+	removeNoMatchingInstance(&cr.Status.Conditions)
+	log.V(1).Info(DbgMsgFoundMatchingInstances, "count", len(instances))
+
 	resolver := content.NewResolver(cr, r.Client, content.WithDisabledSources([]content.SourceType{
 		// grafana.com does not currently support hosting library panels for distribution, but perhaps
 		// this will change in the future.
@@ -133,28 +155,6 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 
 	removeInvalidSpec(&cr.Status.Conditions)
 
-	// begin instance selection and reconciliation
-
-	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
-	if err != nil {
-		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
-		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionLibraryPanelSynchronized)
-		log.Error(err, LogMsgGettingInstances)
-
-		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgGettingInstances, err)
-	}
-
-	if len(instances) == 0 {
-		setNoMatchingInstancesCondition(&cr.Status.Conditions, cr.Generation, err)
-		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionLibraryPanelSynchronized)
-		log.Error(ErrNoMatchingInstances, LogMsgNoMatchingInstances)
-
-		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgNoMatchingInstances, ErrNoMatchingInstances)
-	}
-
-	removeNoMatchingInstance(&cr.Status.Conditions)
-	log.V(1).Info(DbgMsgFoundMatchingInstances, "count", len(instances))
-
 	folderUID, err := getFolderUID(ctx, r.Client, cr)
 	if err != nil {
 		log.Error(err, LogMsgResolvingFolderUID)
@@ -182,6 +182,10 @@ func (r *GrafanaLibraryPanelReconciler) Reconcile(ctx context.Context, req ctrl.
 
 	cr.Status.Hash = hash
 	cr.Status.UID = content.GetGrafanaUID(cr, contentUID)
+
+	if err := resolver.UpdateCache(contentModel); err != nil {
+		log.Error(err, LogMsgUpdateCache)
+	}
 
 	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(cr.Spec.ResyncPeriod)}, nil
 }

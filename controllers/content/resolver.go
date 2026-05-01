@@ -220,3 +220,15 @@ func (h *Resolver) getContentModel(contentJSON []byte) (map[string]any, string, 
 
 	return contentModel, fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
+
+func (h *Resolver) UpdateCache(model map[string]any) error {
+	// GetSourceTypes needs to be of length 1 for this function to even be called
+	sourceType := GetSourceTypes(h.resource)[0]
+
+	// only cache remote resources
+	if sourceType != SourceTypeURL && sourceType != SourceTypeGrafanaCom {
+		return nil
+	}
+
+	return cache.SetContentCache(h.resource, model)
+}
