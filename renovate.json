@@ -14,11 +14,6 @@
       "groupName": "github-actions (non-major)"
     },
     {
-      "matchManagers": ["gomod"],
-      "matchUpdateTypes": ["minor", "patch", "digest"],
-      "groupName": "go-dependencies (non-major)"
-    },
-    {
       "matchManagers": [
         "custom.regex"
       ],
