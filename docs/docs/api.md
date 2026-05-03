@@ -1687,6 +1687,15 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanadashboardspecpublicsharing">publicSharing</a></b></td>
+        <td>object</td>
+        <td>
+          Allows configuration of sharing the dashboard publicly<br/>
+          <br/>
+            <i>Validations</i>:<li>((!has(oldSelf.accessToken) && !has(self.accessToken)) || (has(oldSelf.accessToken) && has(self.accessToken))): spec.publicDashboard.accessToken is immutable</li>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>resyncPeriod</b></td>
         <td>string</td>
         <td>
@@ -2296,6 +2305,58 @@ Jsonnet project build
           <br/>
         </td>
         <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.spec.publicSharing
+<sup><sup>[↩ Parent](#grafanadashboardspec)</sup></sup>
+
+
+
+Allows configuration of sharing the dashboard publicly
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>accessToken</b></td>
+        <td>string</td>
+        <td>
+          Optional. Unique access token. If empty it will generate a new access token per instance.<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: spec.publicDashboard.accessToken is immutable</li><li>!format.uuid().validate(self).hasValue(): spec.publicDashboard.accessToken must be a valid uuid</li>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>annotationsEnabled</b></td>
+        <td>boolean</td>
+        <td>
+          Optional. When set to true, shows annotations. The default value is false.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enabled</b></td>
+        <td>boolean</td>
+        <td>
+          Optional. Set to false to disable sharing, the public dashboard is still created. The default value is true.<br/>
+          <br/>
+            <i>Default</i>: true<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>timeSelectionEnabled</b></td>
+        <td>boolean</td>
+        <td>
+          Optional. when set to true, the time picker is enabled in the shared dashboard. The default value is false.<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 

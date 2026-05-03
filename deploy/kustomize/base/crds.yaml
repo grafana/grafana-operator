@@ -1134,6 +1134,38 @@ spec:
                   - version
                   type: object
                 type: array
+              publicSharing:
+                description: Allows configuration of sharing the dashboard publicly
+                properties:
+                  accessToken:
+                    description: Optional. Unique access token. If empty it will generate
+                      a new access token per instance.
+                    maxLength: 36
+                    minLength: 36
+                    type: string
+                    x-kubernetes-validations:
+                    - message: spec.publicDashboard.accessToken is immutable
+                      rule: self == oldSelf
+                    - message: spec.publicDashboard.accessToken must be a valid uuid
+                      rule: '!format.uuid().validate(self).hasValue()'
+                  annotationsEnabled:
+                    description: Optional. When set to true, shows annotations. The
+                      default value is false.
+                    type: boolean
+                  enabled:
+                    default: true
+                    description: Optional. Set to false to disable sharing, the public
+                      dashboard is still created. The default value is true.
+                    type: boolean
+                  timeSelectionEnabled:
+                    description: Optional. when set to true, the time picker is enabled
+                      in the shared dashboard. The default value is false.
+                    type: boolean
+                type: object
+                x-kubernetes-validations:
+                - message: spec.publicDashboard.accessToken is immutable
+                  rule: ((!has(oldSelf.accessToken) && !has(self.accessToken)) ||
+                    (has(oldSelf.accessToken) && has(self.accessToken)))
               resyncPeriod:
                 description: How often the resource is synced, defaults to 10m0s if
                   not set
