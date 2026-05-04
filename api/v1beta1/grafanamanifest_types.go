@@ -86,10 +86,6 @@ type GrafanaManifestList struct {
 	Items           []GrafanaManifest `json:"items"`
 }
 
-func init() {
-	SchemeBuilder.Register(&GrafanaManifest{}, &GrafanaManifestList{})
-}
-
 func (in *GrafanaManifestList) Exists(namespace, name string) bool {
 	for _, item := range in.Items {
 		if item.Namespace == namespace && item.Name == name {

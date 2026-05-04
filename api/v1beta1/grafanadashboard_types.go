@@ -161,7 +161,3 @@ func (in *GrafanaDashboard) GetPluginConfigMapKey() string {
 func (in *GrafanaDashboard) GetPluginConfigMapDeprecatedKey() string {
 	return fmt.Sprintf("%v-dashboard", in.Name)
 }
-
-func init() {
-	SchemeBuilder.Register(&GrafanaDashboard{}, &GrafanaDashboardList{})
-}

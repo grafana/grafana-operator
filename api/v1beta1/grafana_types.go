@@ -294,10 +294,6 @@ type GrafanaList struct {
 	Items           []Grafana `json:"items"`
 }
 
-func init() {
-	SchemeBuilder.Register(&Grafana{}, &GrafanaList{})
-}
-
 func (in *Grafana) GetConfigSection(name string) map[string]string {
 	if in.Spec.Config == nil {
 		return map[string]string{}

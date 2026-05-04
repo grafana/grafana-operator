@@ -259,7 +259,3 @@ func (in *GrafanaAlertRuleGroupList) Exists(namespace, name string) bool {
 
 	return false
 }
-
-func init() {
-	SchemeBuilder.Register(&GrafanaAlertRuleGroup{}, &GrafanaAlertRuleGroupList{})
-}
