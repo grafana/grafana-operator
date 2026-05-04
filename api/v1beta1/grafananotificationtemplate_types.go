@@ -100,7 +100,3 @@ func (in *GrafanaNotificationTemplateList) Exists(namespace, name string) bool {
 
 	return false
 }
-
-func init() {
-	SchemeBuilder.Register(&GrafanaNotificationTemplate{}, &GrafanaNotificationTemplateList{})
-}

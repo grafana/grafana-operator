@@ -180,7 +180,3 @@ func (in *GrafanaContactPoint) Conditions() *[]metav1.Condition {
 func (in *GrafanaContactPoint) NamespacedResource() NamespacedResource {
 	return NewNamespacedResource(in.Namespace, in.Name, in.NameFromSpecOrMeta())
 }
-
-func init() {
-	SchemeBuilder.Register(&GrafanaContactPoint{}, &GrafanaContactPointList{})
-}

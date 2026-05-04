@@ -192,7 +192,3 @@ func (in *GrafanaDatasource) GetPluginConfigMapKey() string {
 func (in *GrafanaDatasource) GetPluginConfigMapDeprecatedKey() string {
 	return fmt.Sprintf("%v-datasource", in.Name)
 }
-
-func init() {
-	SchemeBuilder.Register(&GrafanaDatasource{}, &GrafanaDatasourceList{})
-}

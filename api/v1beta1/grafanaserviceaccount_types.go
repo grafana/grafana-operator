@@ -208,7 +208,3 @@ func (in *GrafanaServiceAccount) GetGrafanaName() string {
 
 	return in.Name
 }
-
-func init() {
-	SchemeBuilder.Register(&GrafanaServiceAccount{}, &GrafanaServiceAccountList{})
-}

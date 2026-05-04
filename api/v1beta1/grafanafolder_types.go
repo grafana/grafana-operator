@@ -123,10 +123,6 @@ type GrafanaFolderList struct {
 	Items           []GrafanaFolder `json:"items"`
 }
 
-func init() {
-	SchemeBuilder.Register(&GrafanaFolder{}, &GrafanaFolderList{})
-}
-
 func (in *GrafanaFolderList) Exists(namespace, name string) bool {
 	for _, item := range in.Items {
 		if item.Namespace == namespace && item.Name == name {

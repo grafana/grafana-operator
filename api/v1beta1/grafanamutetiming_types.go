@@ -139,7 +139,3 @@ func (in *GrafanaMuteTimingList) Exists(namespace, name string) bool {
 
 	return false
 }
-
-func init() {
-	SchemeBuilder.Register(&GrafanaMuteTiming{}, &GrafanaMuteTimingList{})
-}

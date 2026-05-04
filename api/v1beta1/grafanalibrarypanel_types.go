@@ -133,7 +133,3 @@ func (in *GrafanaLibraryPanelList) Exists(namespace, name string) bool {
 
 	return false
 }
-
-func init() {
-	SchemeBuilder.Register(&GrafanaLibraryPanel{}, &GrafanaLibraryPanelList{})
-}

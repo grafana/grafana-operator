@@ -59,7 +59,3 @@ type GrafanaNotificationPolicyRouteList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []GrafanaNotificationPolicyRoute `json:"items"`
 }
-
-func init() {
-	SchemeBuilder.Register(&GrafanaNotificationPolicyRoute{}, &GrafanaNotificationPolicyRouteList{})
-}

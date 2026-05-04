@@ -280,7 +280,3 @@ func (in *GrafanaNotificationPolicy) CommonStatus() *GrafanaCommonStatus {
 func (in *GrafanaNotificationPolicy) Conditions() *[]metav1.Condition {
 	return &in.Status.Conditions
 }
-
-func init() {
-	SchemeBuilder.Register(&GrafanaNotificationPolicy{}, &GrafanaNotificationPolicyList{})
-}
