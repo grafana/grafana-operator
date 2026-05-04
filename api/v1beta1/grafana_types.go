@@ -341,8 +341,8 @@ func (in *Grafana) AddNamespacedResource(ctx context.Context, cl client.Client, 
 		// Create list if previously empty or append to the end
 		jsonPatch = []any{map[string]any{
 			"op":    "add",
-			"path":  fmt.Sprintf("/status/%s", kind),
-			"value": []string{string(r)},
+			"path":  fmt.Sprintf("/status/%s", kind), //nolint:goconst
+			"value": []string{string(r)},             //nolint:goconst
 		}}
 	case idx == -1:
 		// Add resource to the end of the status list

@@ -9,7 +9,7 @@ linters:
     - goconst
     - gocritic
     - gocyclo
-    - gomodguard
+    - gomodguard_v2
     - gosec
     - importas
     - makezero
@@ -54,6 +54,7 @@ linters:
           msg: Use IsErrorType or IsNotErrorType instead
 
     goconst:
+      ignore-tests: true
       min-len: 3
       min-occurrences: 3
 
@@ -72,13 +73,12 @@ linters:
     gocyclo:
       min-complexity: 25
 
-    gomodguard:
+    gomodguard_v2:
       blocked:
-        modules:
-          - github.com/onsi/gomega:
-              recommendations:
-                - github.com/stretchr/testify/assert
-                - github.com/stretchr/testify/require
+        - module: github.com/onsi/gomega
+          recommendations:
+            - github.com/stretchr/testify/assert
+            - github.com/stretchr/testify/require
 
     importas:
       no-unaliased: true

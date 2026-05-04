@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+const globalSection = "global"
+
 // NOTE: even though there is no need to return map, it's added here to make sure
 // we can test the case where the passed value is nil
 func setDefaults(cfg map[string]map[string]string) map[string]map[string]string {
@@ -51,7 +53,7 @@ func WriteIni(cfg map[string]map[string]string) string {
 	hasGlobal := false
 
 	for key := range cfg {
-		if key == "global" {
+		if key == globalSection {
 			hasGlobal = true
 			continue
 		}
@@ -62,7 +64,7 @@ func WriteIni(cfg map[string]map[string]string) string {
 	sort.Strings(sections)
 
 	if hasGlobal {
-		sections = append([]string{"global"}, sections...)
+		sections = append([]string{globalSection}, sections...)
 	}
 
 	sb := &strings.Builder{}
@@ -79,7 +81,7 @@ func WriteIni(cfg map[string]map[string]string) string {
 }
 
 func writeSection(name string, settings map[string]string, sb *strings.Builder) {
-	if name != "global" {
+	if name != globalSection {
 		fmt.Fprintf(sb, "[%s]", name)
 		sb.WriteByte('\n')
 	}

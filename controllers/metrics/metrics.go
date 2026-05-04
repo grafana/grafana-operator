@@ -5,95 +5,106 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 )
 
+const (
+	initialSyncDuration = "initial_sync_duration"
+	instanceName        = "instance_name"
+	instanceNamespace   = "instance_namespace"
+	method              = "method"
+	namespace           = "grafana_operator"
+	requests            = "requests"
+	status              = "status"
+	subsystemReconciler = "reconciler"
+)
+
 var (
 	GrafanaReconciles = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "grafana_operator",
-		Subsystem: "reconciler",
+		Namespace: namespace,
+		Subsystem: subsystemReconciler,
 		Name:      "reconciles",
 		Help:      "reconciles per Grafana instance",
-	}, []string{"instance_namespace", "instance_name"})
+	}, []string{instanceNamespace, instanceName})
 
 	GrafanaFailedReconciles = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "grafana_operator",
-		Subsystem: "reconciler",
+		Namespace: namespace,
+		Subsystem: subsystemReconciler,
 		Name:      "failed_reconciles",
 		Help:      "failed reconciles per Grafana instance and stage",
-	}, []string{"instance_namespace", "instance_name", "stage"})
+	}, []string{instanceNamespace, instanceName, "stage"})
 
 	GrafanaAPIRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "grafana_operator",
+		Namespace: namespace,
 		Subsystem: "grafana_api",
-		Name:      "requests",
+		Name:      requests,
 		Help:      "requests against the grafana api per instance",
-	}, []string{"instance_namespace", "instance_name", "method", "status"})
+	}, []string{instanceNamespace, instanceName, method, status})
 
 	// Deprecated: will be removed in a future version of the operator. Use
 	// ContentURLRequests instead, which handles more types of resources that
 	// directly utilize Grafana model JSON.
 	DashboardURLRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "grafana_operator",
+		Namespace: namespace,
 		Subsystem: "dashboards",
-		Name:      "requests",
+		Name:      requests,
 		Help:      "requests to fetch dashboards from urls",
-	}, []string{"dashboard", "method", "status"})
+	}, []string{"dashboard", method, status})
 
 	ContentURLRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "grafana_operator",
+		Namespace: namespace,
 		Subsystem: "content",
-		Name:      "requests",
+		Name:      requests,
 		Help:      "requests to fetch model contents from urls",
-	}, []string{"kind", "resource", "method", "status"})
+	}, []string{"kind", "resource", method, status})
 
 	GrafanaComAPIRevisionRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "grafana_operator",
+		Namespace: namespace,
 		Name:      "revision_requests",
 		Help:      "requests to list content revisions on grafana.com",
-	}, []string{"kind", "resource", "method", "status"})
+	}, []string{"kind", "resource", method, status})
 
 	InitialStatusSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: "grafana_operator",
-		Subsystem: "reconciler",
-		Name:      "initial_sync_duration",
+		Namespace: namespace,
+		Subsystem: subsystemReconciler,
+		Name:      initialSyncDuration,
 		Help:      "time in ms to sync statuses after operator restart",
 	})
 
 	// Deprecated: All Initial Sync Duration metrics have merged into a single metric
 	InitialContactPointSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: "grafana_operator",
+		Namespace: namespace,
 		Subsystem: "contactpoints",
-		Name:      "initial_sync_duration",
+		Name:      initialSyncDuration,
 		Help:      "time in ms to sync contact-points after operator restart",
 	})
 
 	// Deprecated: All Initial Sync Duration metrics have merged into a single metric
 	InitialDashboardSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: "grafana_operator",
+		Namespace: namespace,
 		Subsystem: "dashboards",
-		Name:      "initial_sync_duration",
+		Name:      initialSyncDuration,
 		Help:      "time in ms to sync dashboards after operator restart",
 	})
 
 	// Deprecated: All Initial Sync Duration metrics have merged into a single metric
 	InitialLibraryPanelSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: "grafana_operator",
+		Namespace: namespace,
 		Subsystem: "librarypanels",
-		Name:      "initial_sync_duration",
+		Name:      initialSyncDuration,
 		Help:      "time in ms to sync library panels after operator restart",
 	})
 
 	// Deprecated: All Initial Sync Duration metrics have merged into a single metric
 	InitialDatasourceSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: "grafana_operator",
+		Namespace: namespace,
 		Subsystem: "datasources",
-		Name:      "initial_sync_duration",
+		Name:      initialSyncDuration,
 		Help:      "time in ms to sync datasources after operator restart",
 	})
 
 	// Deprecated: All Initial Sync Duration metrics have merged into a single metric
 	InitialFoldersSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: "grafana_operator",
+		Namespace: namespace,
 		Subsystem: "folders",
-		Name:      "initial_sync_duration",
+		Name:      initialSyncDuration,
 		Help:      "time in ms to sync folders after operator restart",
 	})
 )
