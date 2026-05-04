@@ -225,12 +225,12 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 			{
 				Name:          "grafana-http",
 				ContainerPort: int32(GetGrafanaPort(cr)), // #nosec G115
-				Protocol:      "TCP",
+				Protocol:      protocolTCP,
 			},
 			{
 				Name:          config.GrafanaAlertPortName,
 				ContainerPort: int32(config.GrafanaAlertPort),
-				Protocol:      "TCP",
+				Protocol:      protocolTCP,
 			},
 		},
 		Env:                      envVars,
@@ -348,14 +348,14 @@ func getDeploymentSpec(cr *v1beta1.Grafana, deploymentName string, scheme *runti
 	return appsv1.DeploymentSpec{
 		Selector: &metav1.LabelSelector{
 			MatchLabels: map[string]string{
-				"app": cr.Name,
+				appLabel: cr.Name,
 			},
 		},
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: deploymentName,
 				Labels: map[string]string{
-					"app": cr.Name,
+					appLabel: cr.Name,
 				},
 			},
 			Spec: corev1.PodSpec{

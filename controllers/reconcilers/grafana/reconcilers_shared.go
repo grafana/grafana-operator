@@ -9,6 +9,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	appLabel    = "app"
+	protocolTCP = "TCP"
+)
+
 func setInvalidMergeCondition(cr *v1beta1.Grafana, object string, err error) {
 	meta.SetStatusCondition(&cr.Status.Conditions, metav1.Condition{
 		Type:               fmt.Sprintf("Invalid%sOverride", object),
