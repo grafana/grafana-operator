@@ -54,6 +54,7 @@ linters:
           msg: Use IsErrorType or IsNotErrorType instead
 
     goconst:
+      ignore-tests: true
       min-len: 3
       min-occurrences: 3
 
